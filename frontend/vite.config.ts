@@ -8,17 +8,22 @@ export default defineConfig({
     host: true,
     allowedHosts: ["contract-ai.de", "www.contract-ai.de"],
     headers: {
-      "Cache-Control": "public, max-age=31536000", // 1 Jahr Caching
-    },
+      "Cache-Control": "public, max-age=31536000",
+      "Content-Security-Policy": "default-src 'self'; script-src 'self'; object-src 'none';",
+      "X-Content-Type-Options": "nosniff",
+      "X-Frame-Options": "DENY",
+      "Referrer-Policy": "strict-origin-when-cross-origin",
+      "Permissions-Policy": "geolocation=(), camera=()"
+    }
   },
   build: {
     outDir: "dist",
-    sourcemap: false, // kein Quellcode sichtbar
-    minify: "esbuild", // effizientere JS-Komprimierung
-    chunkSizeWarningLimit: 1000, // Warnung bei zu großen Chunks
+    sourcemap: false,
+    minify: "esbuild",
+    chunkSizeWarningLimit: 1000,
   },
   server: {
-    host: true, // wichtig für Render
+    host: true,
     fs: {
       strict: true,
     },
