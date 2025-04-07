@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
+    "start": "vite preview --port $PORT",
+    "lint": "eslint ."
   },
   "dependencies": {
     "@fullcalendar/daygrid": "^6.1.15",
