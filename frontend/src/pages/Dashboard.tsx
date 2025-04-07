@@ -6,6 +6,7 @@ import { generateICS } from "../utils/icsGenerator";
 import StatusPieChart from "../components/StatusPieChart";
 import UploadBarChart from "../components/UploadBarChart";
 import Notification from "../components/Notification";
+import { Helmet } from "react-helmet-async"; // ✅ Meta-Tags
 
 interface Contract {
   _id: string;
@@ -194,6 +195,11 @@ export default function Dashboard() {
 
   return (
     <div className={styles.dashboard}>
+      <Helmet>
+        <title>📊 Dashboard – Contract AI</title>
+        <meta name="description" content="Deine Vertragsübersicht mit Analyse, Export und Reminder auf einen Blick." />
+      </Helmet>
+
       <h1>📊 Vertragsübersicht</h1>
 
       {userEmail && (
@@ -321,3 +327,4 @@ export default function Dashboard() {
     </div>
   );
 }
+

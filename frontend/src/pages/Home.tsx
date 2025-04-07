@@ -1,9 +1,9 @@
-// 📁 src/pages/Home.tsx
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import styles from "../styles/Home.module.css";
-import logo from "../assets/logo-contractai.png"; // ← dein Logo
+import logo from "../assets/logo-contractai.png";
+import { Helmet } from "react-helmet-async";
 
 interface DecodedToken {
   email: string;
@@ -25,7 +25,6 @@ export default function Home() {
         const decoded = jwtDecode<DecodedToken>(token);
         setUserEmail(decoded.email);
 
-        // ✅ Premium-Status abrufen
         fetch("http://localhost:5000/auth/me", {
           method: "GET",
           headers: {
@@ -52,6 +51,27 @@ export default function Home() {
 
   return (
     <div className={styles.container}>
+      {/* ✅ SEO + Social Tags */}
+      <Helmet>
+        <title>Contract AI – Verträge smarter managen</title>
+        <meta
+          name="description"
+          content="Verwalte, analysiere und optimiere Verträge mit Contract AI – deinem smarten Vertragsassistenten."
+        />
+        <meta
+          name="keywords"
+          content="Verträge, KI, Contract AI, Vertragsanalyse, Vertragsoptimierung, SaaS"
+        />
+        <meta property="og:title" content="Contract AI – Verträge smarter managen" />
+        <meta
+          property="og:description"
+          content="Mit Contract AI kannst du Verträge KI-gestützt analysieren, vergleichen und optimieren."
+        />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://contract-ai.de" />
+        <meta property="og:image" content="https://contract-ai.de/og-image.png" />
+      </Helmet>
+
       {/* HERO-Bereich */}
       <section className={styles.hero}>
         <img src={logo} alt="Contract AI Logo" className={styles.logo} />

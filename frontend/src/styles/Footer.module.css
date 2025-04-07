@@ -1,0 +1,30 @@
+.footer {
+    background-color: #f7f7f7;
+    padding: 1rem;
+    text-align: center;
+    font-size: 0.85rem;
+    border-top: 1px solid #ddd;
+    margin-top: 4rem;
+  }
+  
+  .links {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .links a {
+    color: #444;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  
+  .links a:hover {
+    color: #000;
+  }
+  
+  .copy {
+    color: #777;
+  }
+  

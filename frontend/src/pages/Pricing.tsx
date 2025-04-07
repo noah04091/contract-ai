@@ -1,7 +1,9 @@
+// src/pages/Pricing.tsx
 import styles from "../styles/Pricing.module.css";
 import { CheckCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { Helmet } from "react-helmet-async";
 
 export default function Pricing() {
   const [loading, setLoading] = useState(false);
@@ -87,6 +89,14 @@ export default function Pricing() {
 
   return (
     <div className={styles.container}>
+      <Helmet>
+        <title>Preise | Contract AI</title>
+        <meta
+          name="description"
+          content="Vergleiche unsere Contract-AI-Pakete: Kostenloser Einstieg oder Premium mit unbegrenzten Analysen, KI-Optimierung und Support."
+        />
+      </Helmet>
+
       <h1 className={styles.title}>💰 Unsere Preise</h1>
       <p className={styles.subtitle}>Wähle das passende Paket für deinen Bedarf</p>
 
