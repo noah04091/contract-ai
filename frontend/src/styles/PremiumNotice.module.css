@@ -1,0 +1,30 @@
+/* 📁 src/styles/PremiumNotice.module.css */
+
+.notice {
+    background-color: #fff8db;
+    border: 1px solid #facc15;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    margin: 1.5rem 0;
+    color: #92400e;
+    font-weight: 500;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    text-align: center;
+  }
+  
+  .upgradeButton {
+    background-color: #4f46e5;
+    color: white;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    margin-top: 1rem;
+    transition: background 0.2s ease;
+  }
+  
+  .upgradeButton:hover {
+    background-color: #4338ca;
+  }
+  

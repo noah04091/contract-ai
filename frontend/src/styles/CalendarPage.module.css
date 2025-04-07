@@ -1,0 +1,31 @@
+.container {
+    padding: 2rem;
+    background-color: #1a1a1a;
+    color: white;
+    border-radius: 10px;
+    max-width: 700px;
+    margin: 2rem auto;
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.1);
+  }
+  
+  h2 {
+    text-align: center;
+    color: #00e5ff;
+    margin-bottom: 2rem;
+  }
+  
+  .calendar {
+    background-color: white;
+    border-radius: 10px;
+    padding: 1rem;
+    color: black;
+  }
+  
+  .dateInfo {
+    margin-top: 2rem;
+    padding: 1rem;
+    border-left: 5px solid #00e5ff;
+    background-color: #2a2a2a;
+    border-radius: 5px;
+  }
+  

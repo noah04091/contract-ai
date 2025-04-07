@@ -1,0 +1,231 @@
+.dashboard {
+  padding: 2rem;
+  font-family: Arial, sans-serif;
+  background-color: #0f0f17;
+  color: #fff;
+  min-height: 100vh;
+}
+
+/* 🟢 Haupttitel */
+h1 {
+  margin-bottom: 1.5rem;
+  font-size: 2rem;
+  color: #ffffff;
+}
+
+/* 👤 Benutzerinfo */
+.userInfo {
+  margin-bottom: 1rem;
+  font-size: 1rem;
+  color: #90ee90;
+}
+
+/* 📈 Neue Statistiken */
+.statsBox {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+.statsBox div {
+  flex: 1;
+  min-width: 180px;
+  background-color: #202035;
+  padding: 0.8rem;
+  border-radius: 8px;
+  text-align: center;
+  font-weight: 500;
+  color: #ddd;
+  border: 1px solid #333;
+}
+
+/* ✅ Status Cards */
+.statusOverview {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.statusCard {
+  flex: 1;
+  background: #1e1e2e;
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: center;
+  font-weight: bold;
+  font-size: 1rem;
+  border: 1px solid #2f2f3f;
+}
+
+/* 🔍 Suchfeld + Filter + Buttons */
+.actionsRow {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.searchInput,
+.filterSelect {
+  flex: 1;
+  min-width: 200px;
+  padding: 0.5rem;
+  font-size: 1rem;
+  border-radius: 6px;
+  border: 1px solid #444;
+  background-color: #1c1c2b;
+  color: #fff;
+}
+
+.uploadButton,
+.exportButton {
+  padding: 0.5rem 1rem;
+  font-size: 1rem;
+  cursor: pointer;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  transition: background 0.2s ease-in-out;
+}
+
+.uploadButton {
+  background-color: #2e7d32;
+}
+
+.uploadButton:hover {
+  background-color: #1b5e20;
+}
+
+.exportButton {
+  background-color: #1565c0;
+}
+
+.exportButton:hover {
+  background-color: #0d47a1;
+}
+
+/* 📋 Tabelle */
+.contractTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  background-color: #181829;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.contractTable th,
+.contractTable td {
+  padding: 0.8rem;
+  border-bottom: 1px solid #2e2e3e;
+  text-align: left;
+}
+
+.contractTable th {
+  background-color: #1f1f31;
+  color: #fff;
+}
+
+.clickableRow:hover {
+  background-color: #232342;
+  cursor: pointer;
+}
+
+/* 🗑️ / 🔔 / 📅 Buttons */
+.deleteButton,
+.reminderButton,
+.calendarButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2rem;
+  margin-right: 0.5rem;
+  transition: transform 0.1s ease-in-out;
+}
+
+.deleteButton:hover {
+  color: #e53935;
+  transform: scale(1.1);
+}
+
+.reminderButton {
+  color: #ffc107;
+}
+
+.reminderButton:hover {
+  color: #ffb300;
+  transform: scale(1.1);
+}
+
+.calendarButton {
+  color: #0dcaf0;
+}
+
+.calendarButton:hover {
+  color: #00bcd4;
+  transform: scale(1.1);
+}
+
+/* 📤 Modal */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(15, 15, 23, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+}
+
+.modalContent {
+  background: #1f1f31;
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.modalContent h2 {
+  margin: 0;
+  color: #fff;
+}
+
+/* 🔎 Zeile oben */
+.statsRow {
+  display: flex;
+  justify-content: space-between;
+  background-color: #1e1e1e;
+  padding: 1rem;
+  border-radius: 10px;
+  margin: 1rem 0;
+  color: #fff;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.chartGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  margin-top: 3rem;
+  justify-content: center;
+}
+
+.chartCard {
+  flex: 1 1 400px;
+  background-color: #1a1a28;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  max-width: 600px;
+  min-height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

@@ -1,0 +1,97 @@
+/* src/styles/Auth.module.css */
+
+.authContainer {
+  max-width: 420px;
+  margin: 5rem auto;
+  padding: 2.5rem 2rem; /* etwas schmaler für mobile & keine Ränder sprengen */
+  background: rgba(20, 20, 30, 0.95);
+  border-radius: 16px;
+  box-shadow: 0 0 30px rgba(0, 255, 255, 0.06);
+  backdrop-filter: blur(12px);
+  color: #fff;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.authContainer h2 {
+  font-size: 2rem;
+  margin-bottom: 2rem;
+  color: #0cf;
+}
+
+.authForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  width: 100%;
+}
+
+/* Eingabegruppen mit Icon */
+.inputGroup {
+  position: relative;
+  width: 100%;
+}
+
+.input {
+  width: 100%;
+  padding: 0.9rem 1rem 0.9rem 2.8rem;
+  border-radius: 10px;
+  border: none;
+  background-color: #111;
+  color: #fff;
+  font-size: 1rem;
+  box-shadow: inset 0 0 0 1px #333;
+  transition: all 0.2s ease;
+  box-sizing: border-box; /* Fix: verhindert Überlauf */
+}
+
+.input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px #0cf;
+}
+
+.inputIcon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #0cf;
+  font-size: 1.1rem;
+  pointer-events: none;
+}
+
+/* Button */
+.authButton {
+  width: 100%;
+  background-color: #00c851;
+  border: none;
+  border-radius: 10px;
+  padding: 0.9rem;
+  font-weight: bold;
+  font-size: 1rem;
+  color: white;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.authButton:hover {
+  background-color: #00b44e;
+  transform: scale(1.02);
+}
+
+/* Link unter dem Formular */
+.authContainer p {
+  margin-top: 1.5rem;
+  font-size: 0.95rem;
+  color: #ccc;
+}
+
+.linkText {
+  color: #0cf;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.linkText:hover {
+  text-decoration: underline;
+}

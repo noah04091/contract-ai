@@ -1,0 +1,54 @@
+.container {
+    padding: 2rem;
+    color: white;
+  }
+  
+  h2 {
+    margin-bottom: 1rem;
+  }
+  
+  .uploadSection {
+    margin-bottom: 2rem;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+  }
+  
+  .contractsTable {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .contractsTable th,
+  .contractsTable td {
+    border: 1px solid #333;
+    padding: 0.75rem;
+    text-align: center;
+  }
+  
+  .contractsTable th {
+    background-color: #222;
+  }
+  
+  .contractsTable tr:nth-child(even) {
+    background-color: #2e2e2e;
+  }
+  
+  .contractsTable tr:hover {
+    background-color: #444;
+  }
+  .analysisSection {
+    margin-top: 3rem;
+    padding: 1.5rem;
+    border: 1px solid #444;
+    border-radius: 8px;
+    background-color: #1e1e1e;
+  }
+  .clickableRow {
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  .clickableRow:hover {
+    background-color: #222;
+  }
+  

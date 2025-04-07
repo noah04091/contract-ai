@@ -1,0 +1,71 @@
+/* src/styles/Navbar.module.css */
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background-color: #121212;
+  color: white;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+/* Link-Wrapper für Logo */
+.logoWrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+  margin-left: 1rem;
+}
+
+.logoImage {
+  height: 42px;
+  object-fit: contain;
+}
+
+.logoText {
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: white;
+}
+
+/* Rechte Seite */
+.navRight {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.navLink {
+  color: white;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s ease-in-out;
+}
+
+.navLink:hover {
+  color: #00bcd4;
+}
+
+.userInfo {
+  color: #ffffffcc;
+  font-weight: bold;
+}
+
+.logoutButton {
+  background-color: transparent;
+  border: 1px solid #fff;
+  color: #fff;
+  padding: 0.35rem 0.8rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: 0.2s ease-in-out;
+}
+
+.logoutButton:hover {
+  background-color: #e53935;
+  border-color: #e53935;
+}

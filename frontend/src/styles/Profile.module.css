@@ -1,0 +1,145 @@
+/* src/styles/Profile.module.css */
+
+.container {
+  max-width: 600px;
+  margin: 4rem auto;
+  padding: 2rem;
+  background-color: rgba(25, 25, 35, 0.9);
+  border-radius: 16px;
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.05);
+  color: white;
+  backdrop-filter: blur(8px);
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+h1 {
+  font-size: 2.2rem;
+  margin-bottom: 1rem;
+}
+
+.welcome {
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+  color: #ccc;
+}
+
+/* 💎 Premium-/Standard-Anzeige */
+.subscriptionInfo {
+  font-size: 1rem;
+  margin-bottom: 1.2rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  color: #0cf;
+}
+
+.subscriptionInfo .standard {
+  color: #999;
+}
+
+.subscriptionInfo .premium {
+  color: #ffd700;
+  text-shadow: 0 0 6px #ffd700;
+}
+
+/* 💳 Upgrade-Button */
+.upgradeButton {
+  background-color: #0cf;
+  color: #000;
+  padding: 0.8rem 1.6rem;
+  border-radius: 10px;
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+  border: none;
+  transition: 0.2s ease;
+}
+
+.upgradeButton:hover {
+  background-color: #00bcd4;
+  transform: scale(1.03);
+}
+
+/* 🔐 Passwort ändern */
+.sectionTitle {
+  font-size: 1.3rem;
+  color: #0cf;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.input {
+  width: 100%;
+  padding: 0.7rem;
+  margin-bottom: 1rem;
+  border-radius: 8px;
+  border: 1px solid #444;
+  background-color: #181818;
+  color: white;
+}
+
+.input:focus {
+  border-color: #0cf;
+  outline: none;
+}
+
+/* 🔄 Button für Aktionen */
+.button {
+  background-color: #1e90ff;
+  color: white;
+  padding: 0.7rem 1.4rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.button:hover {
+  background-color: #1c86ee;
+}
+
+/* ✅/❌ Feedback */
+.message {
+  margin-top: 0.6rem;
+  font-size: 0.95rem;
+  font-weight: bold;
+  color: #ff6f91;
+}
+
+.message.success {
+  color: #48ffae;
+}
+
+.message.error {
+  color: #ff6f91;
+}
+
+.divider {
+  margin: 2.5rem 0;
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* 🗑️ Account löschen */
+.deleteButton {
+  background-color: #ff4d4f;
+  color: white;
+  padding: 0.7rem 1.6rem;
+  border-radius: 8px;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.deleteButton:hover {
+  background-color: #d9363e;
+}

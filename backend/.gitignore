@@ -1,0 +1,6 @@
+# Ignoriere Umgebungsvariablen
+.env
+
+# Optional noch andere Dinge
+node_modules/
+uploads/

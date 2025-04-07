@@ -1,0 +1,23 @@
+.upgradeContainer {
+    padding: 2rem;
+    text-align: center;
+    color: white;
+  }
+  
+  .upgradeButton {
+    margin-top: 1.5rem;
+    background-color: #0cf;
+    color: black;
+    padding: 0.8rem 1.6rem;
+    border: none;
+    border-radius: 10px;
+    font-weight: bold;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  .upgradeButton:hover {
+    background-color: #00bcd4;
+  }
+  

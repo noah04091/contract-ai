@@ -1,0 +1,74 @@
+/* src/styles/Optimizer.module.css */
+
+.container {
+    padding: 2rem;
+    background-color: #1a1a1a;
+    color: white;
+    border-radius: 8px;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  
+  input[type="file"] {
+    margin-top: 1rem;
+    background: #2a2a2a;
+    padding: 0.4rem;
+    border-radius: 5px;
+    color: white;
+    border: 1px solid #444;
+  }
+  
+  button {
+    margin-top: 1rem;
+    padding: 0.5rem 1.2rem;
+    background-color: #0cf;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    color: #000;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+  }
+  
+  button:hover {
+    background-color: #09c;
+  }
+  
+  .resetButton {
+    margin-top: 1rem;
+    margin-left: 1rem;
+    padding: 0.5rem 1rem;
+    background-color: #444;
+    color: white;
+    border: 1px solid #666;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .resetButton:hover {
+    background-color: #666;
+  }
+  
+  .resultBox {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: #111;
+    border-radius: 8px;
+    border: 1px solid #333;
+  }
+  
+  .card {
+    margin-bottom: 1.5rem;
+    background-color: #222;
+    padding: 1rem;
+    border-radius: 6px;
+    border-left: 4px solid #0f0;
+    box-shadow: 0 0 5px rgba(0, 255, 0, 0.1);
+  }
+  
+  .card p {
+    margin: 0.5rem 0;
+    line-height: 1.5;
+  }
+  

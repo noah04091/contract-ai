@@ -1,0 +1,129 @@
+.dashboardContainer {
+    padding: 40px;
+    text-align: center;
+  }
+  
+  .uploadButton {
+    background-color: #00bcd4;
+    color: white;
+    padding: 10px 20px;
+    margin-bottom: 20px;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+    border-radius: 6px;
+  }
+  
+  .uploadButton:hover {
+    background-color: #0097a7;
+  }
+  
+  .contractTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+  }
+  
+  .contractTable th,
+  .contractTable td {
+    border: 1px solid #ddd;
+    padding: 12px;
+  }
+  
+  .contractTable th {
+    background-color: #333;
+    color: white;
+  }
+  
+  .contractTable td {
+    background-color: #1e1e1e;
+    color: white;
+  }
+  
+  .aktiv {
+    color: #4caf50;
+    font-weight: bold;
+  }
+  
+  .abgelaufen {
+    color: #f44336;
+    font-weight: bold;
+  }
+  
+  .neu {
+    color: #ff9800;
+    font-weight: bold;
+  }
+  
+  .modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .modalContent {
+    background: #2c2c2c;
+    padding: 30px;
+    border-radius: 8px;
+    text-align: center;
+    width: 300px;
+    color: white;
+  }
+  
+  .modalButtons {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 20px;
+  }
+  .statusActive {
+    color: green;
+    font-weight: bold;
+  }
+  
+  .statusWarning {
+    color: orange;
+    font-weight: bold;
+  }
+  
+  .statusExpired {
+    color: red;
+    font-weight: bold;
+  }
+  
+  .statusUnknown {
+    color: gray;
+  }
+  /* src/styles/Dashboard.module.css */
+.actionsRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.searchInput {
+  padding: 0.5rem;
+  font-size: 1rem;
+  width: 50%;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+.statusOverview {
+  display: flex;
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.statusCard {
+  background-color: #f2f2f2;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-weight: 500;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}

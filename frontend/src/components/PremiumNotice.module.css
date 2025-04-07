@@ -1,0 +1,25 @@
+.notice {
+    background-color: #fef3c7;
+    color: #92400e;
+    padding: 1rem;
+    border: 1px solid #fcd34d;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    text-align: center;
+  }
+  
+  .upgradeButton {
+    background-color: #facc15;
+    color: black;
+    font-weight: bold;
+    border: none;
+    padding: 0.5rem 1rem;
+    margin-top: 0.5rem;
+    cursor: pointer;
+    border-radius: 6px;
+  }
+  
+  .upgradeButton:hover {
+    background-color: #eab308;
+  }
+  

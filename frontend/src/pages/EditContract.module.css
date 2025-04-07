@@ -1,0 +1,47 @@
+/* src/pages/EditContract.module.css */
+.editContainer {
+    background-color: #121212;
+    color: #ffffff;
+    padding: 2rem;
+    max-width: 600px;
+    margin: 0 auto;
+    font-family: 'Segoe UI', sans-serif;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+  }
+  
+  label {
+    display: block;
+    margin-top: 1rem;
+    font-weight: bold;
+  }
+  
+  .input {
+    width: 100%;
+    padding: 0.6rem;
+    margin-top: 0.3rem;
+    background-color: #1e1e1e;
+    color: #fff;
+    border: 1px solid #333;
+    border-radius: 4px;
+  }
+  
+  .saveButton {
+    margin-top: 1.5rem;
+    padding: 0.6rem 1rem;
+    background-color: #28a745;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .saveButton:hover {
+    background-color: #218838;
+  }
+  
+  .message {
+    margin-top: 1rem;
+    font-weight: bold;
+  }
+  
