@@ -24,10 +24,10 @@ export default function AnalysisHistory() {
   const fetchAnalyses = async () => {
     try {
       const token = localStorage.getItem("token") || "";
-      const res = await axios.get("http://localhost:5000/analyses", {
+      const res = await axios.get<Analysis[]>("http://localhost:5000/analyses", {
         headers: { Authorization: token },
       });
-      setAnalyses(res.data);
+      setAnalyses(res.data); // res.data ist jetzt sicher vom Typ Analysis[]
     } catch (err) {
       console.error("❌ Fehler beim Laden der Analyse-Historie:", err);
     }
@@ -41,7 +41,6 @@ export default function AnalysisHistory() {
     setExpandedId(expandedId === id ? null : id);
   };
 
-  // 🔍 Gefilterte Liste basierend auf Eingabe
   const filteredAnalyses = analyses.filter(
     (a) =>
       a.contractName.toLowerCase().includes(searchTerm.toLowerCase()) &&
