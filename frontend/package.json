@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "start": "vite preview --port $PORT",
+    "start": "vite preview --host --port $PORT",
     "lint": "eslint ."
   },
   "dependencies": {
