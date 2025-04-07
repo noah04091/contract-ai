@@ -1,0 +1,22 @@
+{
+    "headers": {
+      "/**/*.@(js|css|woff2|png|jpg|jpeg|svg|gif|ico)": {
+        "Cache-Control": "public, max-age=31536000, immutable"
+      },
+      "/**": {
+        "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "DENY",
+        "Referrer-Policy": "no-referrer-when-downgrade",
+        "X-XSS-Protection": "1; mode=block"
+      }
+    },
+    "redirects": [
+      {
+        "source": "/**",
+        "destination": "/index.html",
+        "type": 200
+      }
+    ]
+  }
+  
