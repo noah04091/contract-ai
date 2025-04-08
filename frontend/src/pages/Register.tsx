@@ -1,3 +1,4 @@
+// 📁 src/pages/Register.tsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "../styles/Auth.module.css";
@@ -20,10 +21,14 @@ export default function Register() {
     e.preventDefault();
     setLoading(true);
 
+    console.log("➡️ Registrierung absenden:", { email, password });
+
     try {
       const res = await fetch(`${API_BASE_URL}/auth/register`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ email, password }),
       });
 
