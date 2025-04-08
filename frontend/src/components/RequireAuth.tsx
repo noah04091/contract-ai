@@ -1,5 +1,4 @@
-// 📁 src/components/RequireAuth.tsx
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import React from "react";
@@ -12,14 +11,16 @@ interface DecodedToken {
 
 export default function RequireAuth({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const checkToken = () => {
       const token = localStorage.getItem("token");
 
       if (!token) {
-        alert("⚠️ Bitte einloggen, um fortzufahren.");
-        return navigate("/login");
+        alert("⚠️ Bitte logge dich ein, um fortzufahren.");
+        navigate("/login");
+        return;
       }
 
       try {
@@ -29,17 +30,23 @@ export default function RequireAuth({ children }: { children: React.ReactNode })
         if (!decoded?.exp || decoded.exp < now) {
           localStorage.removeItem("token");
           alert("🔒 Deine Sitzung ist abgelaufen. Bitte logge dich erneut ein.");
-          return navigate("/login");
+          navigate("/login");
+          return;
         }
-      } catch (error) {
-        console.error("❌ Fehler beim Token-Check:", error);
+
+        // ✅ Alles gut – Zugriff erlaubt
+        setLoading(false);
+      } catch (err) {
+        console.error("❌ Fehler beim Token-Check:", err);
         localStorage.removeItem("token");
-        return navigate("/login");
+        navigate("/login");
       }
     };
 
     checkToken();
   }, [navigate]);
+
+  if (loading) return null; // oder: <div>Lade...</div>
 
   return <>{children}</>;
 }
