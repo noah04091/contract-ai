@@ -10,14 +10,8 @@ export default defineConfig({
     allowedHosts: ["contract-ai.de", "www.contract-ai.de"],
     headers: {
       "Cache-Control": "public, max-age=31536000",
-      "Content-Security-Policy": `
-        default-src 'self';
-        script-src 'self' 'unsafe-inline';
-        connect-src 'self' https://contract-ai-backend.onrender.com;
-        font-src 'self' data:;
-        style-src 'self' 'unsafe-inline';
-        object-src 'none';
-      `,
+      "Content-Security-Policy":
+        "default-src 'self'; script-src 'self' 'unsafe-inline'; connect-src 'self' https://contract-ai-backend.onrender.com; font-src 'self' data:; style-src 'self' 'unsafe-inline'; object-src 'none';",
       "X-Content-Type-Options": "nosniff",
       "X-Frame-Options": "DENY",
       "Referrer-Policy": "strict-origin-when-cross-origin",
