@@ -5,37 +5,35 @@ export default function Footer() {
   return (
     <footer
       style={{
-        backgroundColor: "rgba(0,0,0,0.7)",
+        background: "#111", // dunkler Hintergrund
         color: "#ccc",
-        fontSize: "0.85rem",
-        textAlign: "center",
         padding: "1rem 0",
+        textAlign: "center",
+        fontSize: "0.875rem",
         marginTop: "4rem",
         borderTop: "1px solid rgba(255, 255, 255, 0.1)",
       }}
     >
-      <div>
+      <div style={{ marginBottom: "0.25rem" }}>
         <Link to="/impressum" style={linkStyle}>
           Impressum
-        </Link>
-        {" · "}
+        </Link>{" "}
+        ·{" "}
         <Link to="/datenschutz" style={linkStyle}>
           Datenschutz
-        </Link>
-        {" · "}
+        </Link>{" "}
+        ·{" "}
         <Link to="/agb" style={linkStyle}>
           AGB
         </Link>
       </div>
-      <div style={{ marginTop: "0.5rem", fontSize: "0.75rem", opacity: 0.6 }}>
-        © {new Date().getFullYear()} Contract AI – Alle Rechte vorbehalten
-      </div>
+      <div style={{ color: "#777" }}>© 2025 Contract AI – Alle Rechte vorbehalten</div>
     </footer>
   );
 }
 
 const linkStyle = {
-  color: "#ccc",
+  color: "#61dafb",
   textDecoration: "none",
-  margin: "0 0.3rem",
+  margin: "0 0.5rem",
 };
