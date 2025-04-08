@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import styles from "../styles/Auth.module.css";
 import Notification from "../components/Notification";
 import { FaEnvelope, FaLock } from "react-icons/fa";
+import API_BASE_URL from "../utils/api"; // ✅ zentrale API-URL
 
 export default function Register() {
   const [email, setEmail] = useState("");
@@ -20,13 +21,14 @@ export default function Register() {
     setLoading(true);
 
     try {
-      const res = await fetch("https://://contract-ai-backend.onrender.com/auth/register", {
+      const res = await fetch(`${API_BASE_URL}/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
 
       const data = await res.json();
+      console.log("⬅️ Server-Antwort:", data);
 
       if (res.ok) {
         setNotification({ message: "✅ Registrierung erfolgreich!", type: "success" });
@@ -35,6 +37,7 @@ export default function Register() {
         setNotification({ message: "❌ " + data.message, type: "error" });
       }
     } catch (err) {
+      console.error("❌ Fehler bei Registrierung:", err);
       setNotification({ message: "❌ Verbindung fehlgeschlagen", type: "error" });
     } finally {
       setLoading(false);
@@ -70,11 +73,7 @@ export default function Register() {
           />
         </div>
 
-        <button
-          type="submit"
-          className={styles.authButton}
-          disabled={loading}
-        >
+        <button type="submit" className={styles.authButton} disabled={loading}>
           {loading ? "⏳ Wird erstellt..." : "🚀 Konto erstellen"}
         </button>
       </form>
