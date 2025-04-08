@@ -19,7 +19,7 @@ export default function Pricing() {
     setLoading(true);
 
     try {
-      const res = await fetch("http://https://contract-ai-backend.onrender.com/stripe/create-checkout-session", {
+      const res = await fetch("https://://contract-ai-backend.onrender.com/stripe/create-checkout-session", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

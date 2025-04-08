@@ -51,14 +51,14 @@ export default function Dashboard() {
     const token = localStorage.getItem("token");
     if (!token) return;
 
-    fetch("http://https://contract-ai-backend.onrender.com/auth/me", {
+    fetch("https://://contract-ai-backend.onrender.com/auth/me", {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
       .then((data) => setUserEmail(data.email))
       .catch((err) => console.error("Fehler beim Abrufen des Benutzers:", err));
 
-    fetch("http://https://contract-ai-backend.onrender.com/contracts", {
+    fetch("https://://contract-ai-backend.onrender.com/contracts", {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
@@ -94,7 +94,7 @@ export default function Dashboard() {
     const formData = new FormData();
     formData.append("file", file);
 
-    const res = await fetch("http://https://contract-ai-backend.onrender.com/upload", {
+    const res = await fetch("https://://contract-ai-backend.onrender.com/upload", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
@@ -118,7 +118,7 @@ export default function Dashboard() {
     const confirmDelete = confirm("Bist du sicher, dass du diesen Vertrag löschen möchtest?");
     if (!confirmDelete) return;
 
-    const res = await fetch(`http://https://contract-ai-backend.onrender.com/contracts/${id}`, {
+    const res = await fetch(`https://://contract-ai-backend.onrender.com/contracts/${id}`, {
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
@@ -136,7 +136,7 @@ export default function Dashboard() {
 
   const toggleReminder = async (id: string) => {
     try {
-      const res = await fetch(`http://https://contract-ai-backend.onrender.com/contracts/${id}/reminder`, {
+      const res = await fetch(`https://://contract-ai-backend.onrender.com/contracts/${id}/reminder`, {
         method: "PATCH",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token") || ""}`,

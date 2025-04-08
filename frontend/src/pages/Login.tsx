@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import styles from "../styles/Auth.module.css";
 import { Mail, Lock } from "lucide-react";
 import Notification from "../components/Notification";
-import API_BASE_URL from "../utils/api"; // ✅ API URL zentral importiert
+import API_BASE_URL from "../utils/api";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -14,14 +14,19 @@ export default function Login() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    console.log("➡️ Login senden:", { email, password });
+
     try {
       const res = await fetch(`${API_BASE_URL}/auth/login`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ email, password }),
       });
 
       const data = await res.json();
+      console.log("⬅️ Server-Antwort:", data);
 
       if (res.ok) {
         localStorage.setItem("token", data.token);
@@ -34,6 +39,7 @@ export default function Login() {
         setNotification({ message: "❌ " + data.message, type: "error" });
       }
     } catch (err) {
+      console.error("❌ Fehler beim Login-Fetch:", err);
       setNotification({ message: "❌ Fehler beim Login", type: "error" });
     }
   };

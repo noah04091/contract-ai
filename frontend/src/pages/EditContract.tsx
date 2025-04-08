@@ -18,7 +18,7 @@ export default function EditContract() {
   useEffect(() => {
     const fetchContract = async () => {
       try {
-        const res = await fetch(`http://https://contract-ai-backend.onrender.com/contracts/${id}`, {
+        const res = await fetch(`https://://contract-ai-backend.onrender.com/contracts/${id}`, {
           headers: {
             Authorization: localStorage.getItem("token") || "",
           },
@@ -42,7 +42,7 @@ export default function EditContract() {
   }, [id]);
 
   const handleUpdate = async () => {
-    const res = await fetch(`http://https://contract-ai-backend.onrender.com/contracts/${id}`, {
+    const res = await fetch(`https://://contract-ai-backend.onrender.com/contracts/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",

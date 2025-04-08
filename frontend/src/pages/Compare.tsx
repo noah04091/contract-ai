@@ -23,7 +23,7 @@ export default function Compare() {
       if (!token) return setIsPremium(false);
 
       try {
-        const res = await fetch("http://https://contract-ai-backend.onrender.com/auth/me", {
+        const res = await fetch("https://://contract-ai-backend.onrender.com/auth/me", {
           headers: { Authorization: token },
         });
         const data = await res.json();
@@ -48,7 +48,7 @@ export default function Compare() {
     const token = localStorage.getItem("token") || "";
 
     try {
-      const res = await fetch("http://https://contract-ai-backend.onrender.com/compare", {
+      const res = await fetch("https://://contract-ai-backend.onrender.com/compare", {
         method: "POST",
         headers: { Authorization: token },
         body: formData,

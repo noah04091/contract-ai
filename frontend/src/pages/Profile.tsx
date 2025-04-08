@@ -34,7 +34,7 @@ export default function Profile() {
         setUserEmail(decoded.email);
 
         axios
-          .get<UserProfile>("http://https://contract-ai-backend.onrender.com/auth/me", {
+          .get<UserProfile>("https://://contract-ai-backend.onrender.com/auth/me", {
             headers: { Authorization: `Bearer ${token}` },
           })
           .then((res) => {
@@ -51,7 +51,7 @@ export default function Profile() {
   const handlePasswordChange = async () => {
     setMessage("");
     try {
-      const res = await fetch("http://https://contract-ai-backend.onrender.com/auth/change-password", {
+      const res = await fetch("https://://contract-ai-backend.onrender.com/auth/change-password", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -78,7 +78,7 @@ export default function Profile() {
     const confirmDelete = confirm("Willst du deinen Account wirklich löschen? Alle Verträge gehen verloren!");
     if (!confirmDelete) return;
 
-    const res = await fetch("http://https://contract-ai-backend.onrender.com/auth/delete", {
+    const res = await fetch("https://://contract-ai-backend.onrender.com/auth/delete", {
       method: "DELETE",
       headers: {
         Authorization: localStorage.getItem("token") || "",
@@ -102,7 +102,7 @@ export default function Profile() {
       if (!token) throw new Error("Kein Token vorhanden");
 
       const res = await axios.post<CheckoutResponse>(
-        "http://https://contract-ai-backend.onrender.com/stripe/create-checkout-session",
+        "https://://contract-ai-backend.onrender.com/stripe/create-checkout-session",
         {},
         {
           headers: {

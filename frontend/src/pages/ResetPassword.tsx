@@ -24,7 +24,7 @@ export default function ResetPassword() {
     e.preventDefault();
 
     try {
-      const res = await fetch("http://https://contract-ai-backend.onrender.com/auth/reset-password", {
+      const res = await fetch("https://://contract-ai-backend.onrender.com/auth/reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token, newPassword }),

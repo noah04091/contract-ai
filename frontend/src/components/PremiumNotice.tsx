@@ -15,7 +15,7 @@ export default function PremiumNotice() {
       }
 
       try {
-        const res = await fetch("http://https://contract-ai-backend.onrender.com/auth/me", {
+        const res = await fetch("https://://contract-ai-backend.onrender.com/auth/me", {
           headers: { Authorization: `Bearer ${token}` }, // 🛡️ Sicherer Standard
         });
 
@@ -34,7 +34,7 @@ export default function PremiumNotice() {
 
   const handleUpgrade = async () => {
     try {
-      const res = await fetch("http://https://contract-ai-backend.onrender.com/stripe/create-checkout-session", {
+      const res = await fetch("https://://contract-ai-backend.onrender.com/stripe/create-checkout-session", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token") || ""}`,

@@ -15,7 +15,7 @@ export default function ForgotPassword() {
     setNotification(null);
 
     try {
-        const res = await fetch("http://https://contract-ai-backend.onrender.com/auth/forgot-password", {
+        const res = await fetch("https://://contract-ai-backend.onrender.com/auth/forgot-password", {
             method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
