@@ -1,9 +1,10 @@
+// 📁 src/pages/Login.tsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "../styles/Auth.module.css";
 import { Mail, Lock } from "lucide-react";
 import Notification from "../components/Notification";
-import API_BASE_URL from "../utils/api";
+import API_BASE_URL from "../utils/api"; // ✅ zentrale API-URL
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -28,15 +29,17 @@ export default function Login() {
       const data = await res.json();
       console.log("⬅️ Server-Antwort:", data);
 
-      if (res.ok) {
+      if (res.ok && data.token) {
+        // ✅ Token sicher speichern!
         localStorage.setItem("token", data.token);
+
         setNotification({ message: "✅ Login erfolgreich!", type: "success" });
 
         setTimeout(() => {
-          navigate("/dashboard");
+          navigate("/dashboard"); // ✅ oder zu einer geschützten Seite
         }, 1000);
       } else {
-        setNotification({ message: "❌ " + data.message, type: "error" });
+        setNotification({ message: "❌ " + (data.message || "Unbekannter Fehler"), type: "error" });
       }
     } catch (err) {
       console.error("❌ Fehler beim Login-Fetch:", err);
