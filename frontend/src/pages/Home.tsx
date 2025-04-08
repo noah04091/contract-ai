@@ -25,7 +25,7 @@ export default function Home() {
         const decoded = jwtDecode<DecodedToken>(token);
         setUserEmail(decoded.email);
 
-        fetch("http://localhost:5000/auth/me", {
+        fetch("http://https://contract-ai-backend.onrender.com/auth/me", {
           method: "GET",
           headers: {
             Authorization: token,

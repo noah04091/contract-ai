@@ -20,7 +20,7 @@ const BetterContracts: React.FC = () => {
     setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:5000/analyze-type", {
+      const res = await fetch("http://https://contract-ai-backend.onrender.com/analyze-type", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: contractText })
@@ -45,7 +45,7 @@ const BetterContracts: React.FC = () => {
     formData.append("file", file);
 
     try {
-      const res = await fetch("http://localhost:5000/extract-text", {
+      const res = await fetch("http://https://contract-ai-backend.onrender.com/extract-text", {
         method: "POST",
         body: formData
       });

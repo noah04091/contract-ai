@@ -6,7 +6,7 @@ export default function PremiumStatus() {
   useEffect(() => {
     const fetchStatus = async () => {
       try {
-        const res = await fetch("http://localhost:5000/auth/me", {
+        const res = await fetch("http://https://contract-ai-backend.onrender.com/auth/me", {
           headers: {
             Authorization: localStorage.getItem("token") || "",
           },
@@ -23,7 +23,7 @@ export default function PremiumStatus() {
 
   const handleUpgrade = async () => {
     try {
-      const res = await fetch("http://localhost:5000/stripe/create-checkout-session", {
+      const res = await fetch("http://https://contract-ai-backend.onrender.com/stripe/create-checkout-session", {
         method: "POST",
         headers: {
           Authorization: localStorage.getItem("token") || "",

@@ -17,7 +17,7 @@ export default function ReminderToggle({ contractId, initialValue }: ReminderTog
     try {
       const token = localStorage.getItem("token") || "";
       const res = await axios.put(
-        `http://localhost:5000/contracts/${contractId}/reminder`,
+        `http://https://contract-ai-backend.onrender.com/contracts/${contractId}/reminder`,
         { reminder: !enabled },
         {
           headers: { Authorization: token },

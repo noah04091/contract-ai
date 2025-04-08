@@ -32,7 +32,7 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
       const token = localStorage.getItem("token") || "";
 
       try {
-        const res = await fetch("http://localhost:5000/analyze", {
+        const res = await fetch("http://https://contract-ai-backend.onrender.com/analyze", {
           method: "POST",
           headers: { Authorization: token },
           body: formData,
@@ -112,7 +112,7 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
 
           {result.pdfPath && (
             <a
-              href={`http://localhost:5000${result.pdfPath}`}
+              href={`http://https://contract-ai-backend.onrender.com${result.pdfPath}`}
               download
               className={styles.downloadButton}
             >

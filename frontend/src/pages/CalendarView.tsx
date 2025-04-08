@@ -19,7 +19,7 @@ export default function CalendarView() {
       const token = localStorage.getItem("token");
       if (!token) return;
 
-      const res = await fetch("http://localhost:5000/contracts", {
+      const res = await fetch("http://https://contract-ai-backend.onrender.com/contracts", {
         headers: { Authorization: token },
       });
       const data = await res.json();

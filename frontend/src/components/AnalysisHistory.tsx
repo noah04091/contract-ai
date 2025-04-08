@@ -24,7 +24,7 @@ export default function AnalysisHistory() {
   const fetchAnalyses = async () => {
     try {
       const token = localStorage.getItem("token") || "";
-      const res = await axios.get<Analysis[]>("http://localhost:5000/analyses", {
+      const res = await axios.get<Analysis[]>("http://https://contract-ai-backend.onrender.com/analyses", {
         headers: { Authorization: token },
       });
       setAnalyses(res.data); // res.data ist jetzt sicher vom Typ Analysis[]
@@ -84,7 +84,7 @@ export default function AnalysisHistory() {
               <p><strong>📊 Score:</strong> {a.contractScore}/100</p>
               {a.pdfPath && (
                 <a
-                  href={`http://localhost:5000${a.pdfPath}`}
+                  href={`http://https://contract-ai-backend.onrender.com${a.pdfPath}`}
                   target="_blank"
                   rel="noreferrer"
                   className={styles.downloadBtn}

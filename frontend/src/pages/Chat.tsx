@@ -17,7 +17,7 @@ export default function Chat() {
       if (!token) return setIsPremium(false);
 
       try {
-        const res = await fetch("http://localhost:5000/auth/me", {
+        const res = await fetch("http://https://contract-ai-backend.onrender.com/auth/me", {
           headers: {
             Authorization: token,
           },
@@ -42,7 +42,7 @@ export default function Chat() {
     formData.append("file", file);
 
     try {
-      const res = await fetch("http://localhost:5000/chat/upload", {
+      const res = await fetch("http://https://contract-ai-backend.onrender.com/chat/upload", {
         method: "POST",
         headers: {
           Authorization: localStorage.getItem("token") || "",
@@ -72,7 +72,7 @@ export default function Chat() {
     setQuestion("");
 
     try {
-      const res = await fetch("http://localhost:5000/chat/ask", {
+      const res = await fetch("http://https://contract-ai-backend.onrender.com/chat/ask", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

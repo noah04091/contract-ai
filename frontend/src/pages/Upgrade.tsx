@@ -8,7 +8,7 @@ export default function Upgrade() {
   const handleUpgrade = async () => {
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:5000/stripe/create-checkout-session", {
+      const res = await fetch("http://https://contract-ai-backend.onrender.com/stripe/create-checkout-session", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
