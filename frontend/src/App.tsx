@@ -45,11 +45,12 @@ function AppWithLoader() {
   }, [location]);
 
   return (
-    <>
+    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
       {loading && <PageLoader />}
       <Navbar />
       <Sidebar />
-      <div style={{ paddingLeft: "0px", paddingTop: "60px" }}>
+
+      <div style={{ flex: 1, paddingTop: "60px" }}>
         <Routes>
           {/* Öffentliche Seiten */}
           <Route path="/" element={<Home />} />
@@ -77,9 +78,10 @@ function AppWithLoader() {
           <Route path="/upgrade" element={<RequireAuth><Upgrade /></RequireAuth>} />
           <Route path="/better-contracts" element={<RequireAuth><BetterContracts /></RequireAuth>} />
         </Routes>
-        <Footer />
       </div>
-    </>
+
+      <Footer />
+    </div>
   );
 }
 
