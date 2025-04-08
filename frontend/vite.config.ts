@@ -1,21 +1,9 @@
+// 📁 vite.config.ts
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react()],
-  preview: {
-    port: Number(process.env.PORT) || 4173,
-    host: true,
-    allowedHosts: ["contract-ai.de", "www.contract-ai.de"],
-    headers: {
-      "Cache-Control": "public, max-age=31536000",
-      "Content-Security-Policy": "default-src 'self'; script-src 'self'; object-src 'none';",
-      "X-Content-Type-Options": "nosniff",
-      "X-Frame-Options": "DENY",
-      "Referrer-Policy": "strict-origin-when-cross-origin",
-      "Permissions-Policy": "geolocation=(), camera=()"
-    }
-  },
   build: {
     outDir: "dist",
     sourcemap: false,
@@ -24,8 +12,22 @@ export default defineConfig({
   },
   server: {
     host: true,
+    port: 5173,
     fs: {
       strict: true,
     },
   },
+  preview: {
+    port: Number(process.env.PORT) || 4173,
+    host: true,
+    headers: {
+      "Cache-Control": "public, max-age=31536000",
+      // ⚠️ Angepasste CSP – erlaubt Inline-Styles & Skripte für Vite
+      "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; object-src 'none';",
+      "X-Content-Type-Options": "nosniff",
+      "X-Frame-Options": "DENY",
+      "Referrer-Policy": "strict-origin-when-cross-origin",
+      "Permissions-Policy": "geolocation=(), camera=()"
+    }
+  }
 });
