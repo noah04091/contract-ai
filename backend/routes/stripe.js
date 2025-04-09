@@ -30,8 +30,8 @@ router.post("/create-checkout-session", verifyToken, async (req, res) => {
           quantity: 1,
         },
       ],
-      success_url: "http://localhost:5173/dashboard?status=success",
-      cancel_url: "http://localhost:5173/dashboard?status=cancel",
+      success_url: "https://contract-ai.de/dashboard?status=success",
+      cancel_url: "https://contract-ai.de/dashboard?status=cancel",
     });
 
     console.log("✅ Stripe-Session erstellt:", session.id);

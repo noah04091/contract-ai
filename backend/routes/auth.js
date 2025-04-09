@@ -134,7 +134,7 @@ router.post("/forgot-password", async (req, res) => {
       { $set: { resetToken, resetTokenExpires: expires } }
     );
 
-    const resetLink = `http://localhost:5173/reset-password?token=${resetToken}`;
+    const resetLink = `https://contract-ai.de/reset-password?token=${resetToken}`;
     const html = `
       <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
         <h2 style="color: #0cf;">🔑 Passwort zurücksetzen</h2>
