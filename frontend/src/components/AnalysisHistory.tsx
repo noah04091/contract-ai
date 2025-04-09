@@ -1,8 +1,8 @@
-// 📁 src/components/AnalysisHistory.tsx
+// src/components/AnalysisHistory.tsx
 import { useEffect, useState } from "react";
 import styles from "./AnalysisHistory.module.css";
 import axios from "axios";
-import API_BASE_URL from "../utils/api"; // ✅ Zentrale API-URL eingebunden
+import API_BASE_URL from "../utils/api"; // ✅ zentrale API-URL
 
 interface Analysis {
   _id: string;
@@ -85,7 +85,7 @@ export default function AnalysisHistory() {
               <p><strong>📊 Score:</strong> {a.contractScore}/100</p>
               {a.pdfPath && (
                 <a
-                  href={`${API_BASE_URL}${a.pdfPath}`} // ✅ Dynamisch & korrekt
+                  href={`${API_BASE_URL}${a.pdfPath}`}
                   target="_blank"
                   rel="noreferrer"
                   className={styles.downloadBtn}

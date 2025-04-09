@@ -18,7 +18,7 @@ export default function CalendarPage() {
     const fetchContracts = async () => {
       try {
         const token = localStorage.getItem("token") || "";
-        const res = await axios.get("https://://contract-ai-backend.onrender.com/calendar-events", {
+        const res = await axios.get("https://contract-ai-backend.onrender.com/calendar-events", {
           headers: { Authorization: token },
         });
 

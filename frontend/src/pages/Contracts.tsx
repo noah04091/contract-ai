@@ -23,7 +23,7 @@ export default function Contracts() {
   const fetchContracts = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await axios.get<Contract[]>("https://://contract-ai-backend.onrender.com/contracts", {
+      const res = await axios.get<Contract[]>("https://contract-ai-backend.onrender.com/contracts", {
         headers: { Authorization: token || "" },
       });
       setContracts(res.data);

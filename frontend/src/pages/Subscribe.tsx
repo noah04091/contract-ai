@@ -8,7 +8,7 @@ export default function Subscribe() {
   const handleSubscribe = async () => {
     setLoading(true);
     try {
-      const res = await fetch("https://://contract-ai-backend.onrender.com/checkout", {
+      const res = await fetch("https://contract-ai-backend.onrender.com/checkout", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

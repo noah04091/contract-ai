@@ -21,7 +21,7 @@ export default function Optimizer() {
       if (!token) return setIsPremium(false);
 
       try {
-        const res = await fetch("https://://contract-ai-backend.onrender.com/auth/me", {
+        const res = await fetch("https://contract-ai-backend.onrender.com/auth/me", {
           headers: {
             Authorization: token,
           },
@@ -49,7 +49,7 @@ export default function Optimizer() {
     const token = localStorage.getItem("token") || "";
 
     try {
-      const res = await fetch("https://://contract-ai-backend.onrender.com/optimize", {
+      const res = await fetch("https://contract-ai-backend.onrender.com/optimize", {
         method: "POST",
         headers: { Authorization: token },
         body: formData,

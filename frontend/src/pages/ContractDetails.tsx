@@ -33,7 +33,7 @@ export default function ContractDetails() {
   const [notification, setNotification] = useState<{ message: string; type?: NotificationType } | null>(null);
 
   useEffect(() => {
-    fetch(`https://://contract-ai-backend.onrender.com/contracts/${id}`, {
+    fetch(`https://contract-ai-backend.onrender.com/contracts/${id}`, {
       headers: {
         Authorization: localStorage.getItem("token") || "",
       },
@@ -54,7 +54,7 @@ export default function ContractDetails() {
   };
 
   const handleSave = async () => {
-    const res = await fetch(`https://://contract-ai-backend.onrender.com/contracts/${id}`, {
+    const res = await fetch(`https://contract-ai-backend.onrender.com/contracts/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -78,7 +78,7 @@ export default function ContractDetails() {
     const confirmDelete = confirm("Bist du sicher, dass du diesen Vertrag löschen möchtest?");
     if (!confirmDelete) return;
 
-    const res = await fetch(`https://://contract-ai-backend.onrender.com/contracts/${id}`, {
+    const res = await fetch(`https://contract-ai-backend.onrender.com/contracts/${id}`, {
       method: "DELETE",
       headers: {
         Authorization: localStorage.getItem("token") || "",
@@ -107,7 +107,7 @@ export default function ContractDetails() {
 
   const toggleReminder = async () => {
     try {
-      const res = await fetch(`https://://contract-ai-backend.onrender.com/contracts/${contract?._id}/reminder`, {
+      const res = await fetch(`https://contract-ai-backend.onrender.com/contracts/${contract?._id}/reminder`, {
         method: "PATCH",
         headers: {
           Authorization: localStorage.getItem("token") || "",
@@ -192,7 +192,7 @@ export default function ContractDetails() {
         <div className={styles.detailBlock}>
           <label>📎 Datei:</label>
           <a
-            href={`https://://contract-ai-backend.onrender.com${contract.filePath}`}
+            href={`https://contract-ai-backend.onrender.com${contract.filePath}`}
             target="_blank"
             rel="noopener noreferrer"
             className={styles.downloadLink}

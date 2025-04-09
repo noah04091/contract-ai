@@ -23,7 +23,7 @@ export default function Generate() {
       if (!token) return setIsPremium(false);
 
       try {
-        const res = await fetch("https://://contract-ai-backend.onrender.com/auth/me", {
+        const res = await fetch("https://contract-ai-backend.onrender.com/auth/me", {
           headers: { Authorization: token },
         });
         const data = await res.json();
@@ -96,7 +96,7 @@ export default function Generate() {
     setFinished(false);
 
     try {
-      const res = await fetch("https://://contract-ai-backend.onrender.com/api/contracts/generate", {
+      const res = await fetch("https://contract-ai-backend.onrender.com/api/contracts/generate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -128,7 +128,7 @@ export default function Generate() {
 
   const handleSave = async () => {
     try {
-      const res = await fetch("https://://contract-ai-backend.onrender.com/contracts", {
+      const res = await fetch("https://contract-ai-backend.onrender.com/contracts", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

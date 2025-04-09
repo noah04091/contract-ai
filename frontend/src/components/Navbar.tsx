@@ -37,7 +37,7 @@ export default function Navbar() {
         setUser(null);
         navigate("/login");
       } else {
-        fetch("https://://contract-ai-backend.onrender.com/auth/me", {
+        fetch("https://contract-ai-backend.onrender.com/auth/me", {
           headers: { Authorization: token },
         })
           .then((res) => res.json())
