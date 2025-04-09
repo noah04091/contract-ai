@@ -1,7 +1,8 @@
-// src/components/AnalysisHistory.tsx
+// 📁 src/components/AnalysisHistory.tsx
 import { useEffect, useState } from "react";
 import styles from "./AnalysisHistory.module.css";
 import axios from "axios";
+import API_BASE_URL from "../utils/api"; // ✅ Zentrale API-URL eingebunden
 
 interface Analysis {
   _id: string;
@@ -24,10 +25,10 @@ export default function AnalysisHistory() {
   const fetchAnalyses = async () => {
     try {
       const token = localStorage.getItem("token") || "";
-      const res = await axios.get<Analysis[]>("https://://contract-ai-backend.onrender.com/analyses", {
+      const res = await axios.get<Analysis[]>(`${API_BASE_URL}/analyses`, {
         headers: { Authorization: token },
       });
-      setAnalyses(res.data); // res.data ist jetzt sicher vom Typ Analysis[]
+      setAnalyses(res.data);
     } catch (err) {
       console.error("❌ Fehler beim Laden der Analyse-Historie:", err);
     }
@@ -84,7 +85,7 @@ export default function AnalysisHistory() {
               <p><strong>📊 Score:</strong> {a.contractScore}/100</p>
               {a.pdfPath && (
                 <a
-                  href={`https://://contract-ai-backend.onrender.com${a.pdfPath}`}
+                  href={`${API_BASE_URL}${a.pdfPath}`} // ✅ Dynamisch & korrekt
                   target="_blank"
                   rel="noreferrer"
                   className={styles.downloadBtn}
