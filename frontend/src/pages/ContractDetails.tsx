@@ -35,7 +35,7 @@ export default function ContractDetails() {
   useEffect(() => {
     fetch(`https://contract-ai-backend.onrender.com/contracts/${id}`, {
       headers: {
-        Authorization: localStorage.getItem("token") || "",
+        Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
       },
     })
       .then((res) => res.json())
@@ -58,7 +58,7 @@ export default function ContractDetails() {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        Authorization: localStorage.getItem("token") || "",
+        Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
       },
       body: JSON.stringify(formData),
     });
@@ -81,7 +81,7 @@ export default function ContractDetails() {
     const res = await fetch(`https://contract-ai-backend.onrender.com/contracts/${id}`, {
       method: "DELETE",
       headers: {
-        Authorization: localStorage.getItem("token") || "",
+        Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
       },
     });
 
@@ -110,7 +110,7 @@ export default function ContractDetails() {
       const res = await fetch(`https://contract-ai-backend.onrender.com/contracts/${contract?._id}/reminder`, {
         method: "PATCH",
         headers: {
-          Authorization: localStorage.getItem("token") || "",
+          Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
         },
       });
 

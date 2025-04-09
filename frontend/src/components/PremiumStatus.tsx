@@ -8,7 +8,7 @@ export default function PremiumStatus() {
       try {
         const res = await fetch("https://contract-ai-backend.onrender.com/auth/me", {
           headers: {
-            Authorization: localStorage.getItem("token") || "",
+            Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
           },
         });
         const data = await res.json();
@@ -26,7 +26,7 @@ export default function PremiumStatus() {
       const res = await fetch("https://contract-ai-backend.onrender.com/stripe/create-checkout-session", {
         method: "POST",
         headers: {
-          Authorization: localStorage.getItem("token") || "",
+          Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
         },
       });
 

@@ -20,7 +20,7 @@ export default function EditContract() {
       try {
         const res = await fetch(`https://contract-ai-backend.onrender.com/contracts/${id}`, {
           headers: {
-            Authorization: localStorage.getItem("token") || "",
+            Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
           },
         });
         const data = await res.json();
@@ -46,7 +46,7 @@ export default function EditContract() {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        Authorization: localStorage.getItem("token") || "",
+        Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
       },
       body: JSON.stringify(contract),
     });

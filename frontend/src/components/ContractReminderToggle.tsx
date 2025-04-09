@@ -17,7 +17,7 @@ export default function ContractReminderToggle({ contractId, initiallyActive, on
       const res = await fetch(`https://contract-ai-backend.onrender.com/contracts/${contractId}/reminder`, {
         method: "PATCH",
         headers: {
-          Authorization: localStorage.getItem("token") || "",
+          Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
         },
       });
 

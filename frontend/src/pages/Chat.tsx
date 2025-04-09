@@ -45,7 +45,7 @@ export default function Chat() {
       const res = await fetch("https://contract-ai-backend.onrender.com/chat/upload", {
         method: "POST",
         headers: {
-          Authorization: localStorage.getItem("token") || "",
+          Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
         },
         body: formData,
       });
@@ -76,7 +76,7 @@ export default function Chat() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: localStorage.getItem("token") || "",
+          Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
         },
         body: JSON.stringify({ question }),
       });

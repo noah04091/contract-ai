@@ -55,7 +55,7 @@ export default function Profile() {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: localStorage.getItem("token") || "",
+          Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
         },
         body: JSON.stringify({ oldPassword, newPassword }),
       });
@@ -81,7 +81,7 @@ export default function Profile() {
     const res = await fetch("https://contract-ai-backend.onrender.com/auth/delete", {
       method: "DELETE",
       headers: {
-        Authorization: localStorage.getItem("token") || "",
+        Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
       },
     });
 
