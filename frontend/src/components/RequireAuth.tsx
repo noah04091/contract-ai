@@ -1,3 +1,4 @@
+// src/components/RequireAuth.tsx
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
@@ -11,42 +12,42 @@ interface DecodedToken {
 
 export default function RequireAuth({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
+  const [isValid, setIsValid] = useState<boolean | null>(null);
 
   useEffect(() => {
-    const checkToken = () => {
-      const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token");
 
-      if (!token) {
-        alert("⚠️ Bitte logge dich ein, um fortzufahren.");
-        navigate("/login");
+    if (!token) {
+      setIsValid(false);
+      return;
+    }
+
+    try {
+      const decoded = jwtDecode<DecodedToken>(token);
+      const now = Date.now() / 1000;
+
+      if (!decoded.exp || decoded.exp < now) {
+        localStorage.removeItem("token");
+        setIsValid(false);
         return;
       }
 
-      try {
-        const decoded = jwtDecode<DecodedToken>(token);
-        const now = Date.now() / 1000;
+      setIsValid(true); // ✅ Token ist gültig
+    } catch (err) {
+      console.error("❌ Fehler beim Token-Check:", err);
+      localStorage.removeItem("token");
+      setIsValid(false);
+    }
+  }, []);
 
-        if (!decoded?.exp || decoded.exp < now) {
-          localStorage.removeItem("token");
-          alert("🔒 Deine Sitzung ist abgelaufen. Bitte logge dich erneut ein.");
-          navigate("/login");
-          return;
-        }
+  useEffect(() => {
+    if (isValid === false) {
+      alert("🔐 Zugriff verweigert – bitte anmelden");
+      navigate("/login");
+    }
+  }, [isValid, navigate]);
 
-        // ✅ Alles gut – Zugriff erlaubt
-        setLoading(false);
-      } catch (err) {
-        console.error("❌ Fehler beim Token-Check:", err);
-        localStorage.removeItem("token");
-        navigate("/login");
-      }
-    };
-
-    checkToken();
-  }, [navigate]);
-
-  if (loading) return null; // oder: <div>Lade...</div>
+  if (isValid === null) return <div style={{ padding: "2rem" }}>⏳ Lade Auth...</div>;
 
   return <>{children}</>;
 }
