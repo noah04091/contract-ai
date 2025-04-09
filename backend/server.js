@@ -1,4 +1,4 @@
-// 📁 backend/server.js
+// 📁 backend/server.js 
 
 const express = require("express");
 const app = express();
@@ -48,8 +48,13 @@ let db, contractsCollection;
 // ⚠️ Stripe Webhook (vor express.json!)
 app.use("/stripe/webhook", stripeWebhookRoute);
 
+// 🌐 CORS sauber konfigurieren
+app.use(cors({
+  origin: "https://contract-ai.de", // 🔐 nur deine Frontend-Domain
+  credentials: true
+}));
+
 // 🌐 Middlewares
-app.use(cors());
 app.use(express.json());
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
