@@ -16,8 +16,10 @@ export default function RequireAuth({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     const token = localStorage.getItem("token");
+    console.log("📦 Loaded token:", token);
 
     if (!token) {
+      console.warn("⚠️ Kein Token gefunden – weiterleiten zur Anmeldung");
       setIsValid(false);
       return;
     }
@@ -27,14 +29,16 @@ export default function RequireAuth({ children }: { children: React.ReactNode })
       const now = Date.now() / 1000;
 
       if (!decoded.exp || decoded.exp < now) {
+        console.warn("⚠️ Token ist abgelaufen");
         localStorage.removeItem("token");
         setIsValid(false);
         return;
       }
 
-      setIsValid(true); // ✅ Token ist gültig
+      console.log("✅ Token ist gültig – Zugriff erlaubt");
+      setIsValid(true);
     } catch (err) {
-      console.error("❌ Fehler beim Token-Check:", err);
+      console.error("❌ Fehler beim Dekodieren des Tokens:", err);
       localStorage.removeItem("token");
       setIsValid(false);
     }
@@ -42,12 +46,13 @@ export default function RequireAuth({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     if (isValid === false) {
-      alert("🔐 Zugriff verweigert – bitte anmelden");
       navigate("/login");
     }
   }, [isValid, navigate]);
 
-  if (isValid === null) return <div style={{ padding: "2rem" }}>⏳ Lade Auth...</div>;
+  if (isValid === null) {
+    return <div style={{ padding: "2rem" }}>⏳ Authentifizierung wird überprüft...</div>;
+  }
 
   return <>{children}</>;
 }
