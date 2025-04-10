@@ -30,13 +30,14 @@ export default function Login() {
       console.log("⬅️ Server-Antwort:", data);
 
       if (res.ok && data.token) {
-        // ✅ Token sicher speichern!
-        localStorage.setItem("token", data.token);
+        // ✅ Token speichern und prüfen
+        localStorage.setItem("token", String(data.token));
+        console.log("📦 Token gespeichert:", localStorage.getItem("token"));
 
         setNotification({ message: "✅ Login erfolgreich!", type: "success" });
 
         setTimeout(() => {
-          navigate("/dashboard"); // ✅ oder zu einer geschützten Seite
+          navigate("/dashboard"); // ✅ oder eine andere geschützte Seite
         }, 1000);
       } else {
         setNotification({ message: "❌ " + (data.message || "Unbekannter Fehler"), type: "error" });
