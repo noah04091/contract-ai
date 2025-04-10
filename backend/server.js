@@ -154,7 +154,7 @@ app.post("/upload", verifyToken, checkSubscription, upload.single("file"), async
   }
 });
 
-// 🔄 Cronjob für Erinnerungen
+// 🔀 Cronjob für Erinnerungen
 cron.schedule("0 8 * * *", async () => {
   console.log("⏰ Reminder-Cronjob gestartet");
   await checkContractsAndSendReminders();
