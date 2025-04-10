@@ -11,7 +11,7 @@ export default function Chat() {
   const [contractLoaded, setContractLoaded] = useState(false);
   const [isPremium, setIsPremium] = useState<boolean | null>(null);
 
-  // ✅ Abostatus vom Server laden
+  // ✅ Abostatus prüfen
   useEffect(() => {
     const fetchStatus = async () => {
       const token = localStorage.getItem("token");
@@ -35,6 +35,7 @@ export default function Chat() {
     fetchStatus();
   }, []);
 
+  // ✅ Vertrag hochladen
   const handleUpload = async () => {
     if (!file) return alert("Bitte eine PDF-Datei auswählen.");
     setLoading(true);
@@ -43,7 +44,7 @@ export default function Chat() {
     formData.append("file", file);
 
     try {
-      const res = await fetch("https://contract-ai-backend.onrender.com/chat/upload", {
+      const res = await fetch(`${API_BASE_URL}/chat/upload`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
@@ -65,6 +66,7 @@ export default function Chat() {
     }
   };
 
+  // ✅ Frage stellen
   const handleAsk = async () => {
     if (!question) return;
     setLoading(true);
@@ -73,7 +75,7 @@ export default function Chat() {
     setQuestion("");
 
     try {
-      const res = await fetch("https://contract-ai-backend.onrender.com/chat/ask", {
+      const res = await fetch(`${API_BASE_URL}/chat/ask`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -94,6 +96,7 @@ export default function Chat() {
     }
   };
 
+  // ⏳ Ladeanzeige
   if (isPremium === null) return <p style={{ padding: "2rem" }}>⏳ Lade...</p>;
 
   return (
