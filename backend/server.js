@@ -50,7 +50,7 @@ app.use("/stripe/webhook", stripeWebhookRoute);
 
 // 🌐 CORS + Cookie-Parser
 app.use(cors({
-  origin: "https://www.contract-ai.de", // exakt deine Frontend-Domain!
+  origin: ["https://www.contract-ai.de", "https://contract-ai.de"],
   credentials: true                    // ⬅️ damit Cookies übertragen werden
 }));
 app.use(cookieParser()); // ✅ wichtig für req.cookies.token
