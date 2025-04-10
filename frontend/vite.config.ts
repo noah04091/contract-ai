@@ -11,7 +11,7 @@ export default defineConfig({
     headers: {
       "Cache-Control": "public, max-age=31536000",
       "Content-Security-Policy":
-        "default-src 'self'; script-src 'self' 'unsafe-inline'; connect-src 'self' https://api.contract-ai.de; font-src 'self' data:; style-src 'self' 'unsafe-inline'; object-src 'none';",
+        "default-src 'self'; script-src 'self' 'unsafe-inline'; connect-src 'self' https://api.contract-ai.de https://contract-ai-backend.onrender.com; font-src 'self' data:; style-src 'self' 'unsafe-inline'; object-src 'none';",
       "X-Content-Type-Options": "nosniff",
       "X-Frame-Options": "DENY",
       "Referrer-Policy": "strict-origin-when-cross-origin",
@@ -26,9 +26,12 @@ export default defineConfig({
   },
   server: {
     host: true,
-    cors: true, // ✅ wichtig für Cookie-/Subdomain-Kompatibilität
+    cors: {
+      origin: ["https://contract-ai.de", "https://www.contract-ai.de"],
+      credentials: true, // 🔑 wichtig für Cookies!
+    },
     proxy: {
-      // Optional – nur wenn du API-Requests lokal proxyn willst:
+      // Optional – für lokale Entwicklung
       "/api": {
         target: "https://api.contract-ai.de",
         changeOrigin: true,
