@@ -2,18 +2,16 @@
 const jwt = require("jsonwebtoken");
 
 module.exports = function (req, res, next) {
-  const authHeader = req.headers["authorization"];
+  const token = req.cookies.token; // ⬅️ Cookie lesen statt Authorization-Header
 
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({ message: "❌ Kein gültiger Authorization-Header" });
+  if (!token) {
+    return res.status(401).json({ message: "❌ Kein Token im Cookie gefunden" });
   }
-
-  const token = authHeader.split(" ")[1];
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // 🔍 Debug-Ausgabe – kannst du nach erfolgreichem Test wieder entfernen
+    // 🔍 Debug-Ausgabe – kannst du nach erfolgreichem Test entfernen
     console.log("🔐 Token dekodiert:", decoded);
 
     req.user = decoded;

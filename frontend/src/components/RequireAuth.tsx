@@ -1,58 +1,47 @@
-// src/components/RequireAuth.tsx
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { jwtDecode } from "jwt-decode";
-import React from "react";
+// 📁 src/components/RequireAuth.tsx
+import React, { useEffect, useState } from "react";
+import { Navigate } from "react-router-dom";
+import API_BASE_URL from "../utils/api";
 
-interface DecodedToken {
-  exp: number;
-  email: string;
-  iat: number;
+interface RequireAuthProps {
+  children: React.ReactElement; // ✅ statt React.ReactNode für Routing-Kompatibilität
 }
 
-export default function RequireAuth({ children }: { children: React.ReactNode }) {
-  const navigate = useNavigate();
-  const [isValid, setIsValid] = useState<boolean | null>(null);
+export default function RequireAuth({ children }: RequireAuthProps) {
+  const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    console.log("📦 Loaded token:", token);
+    const checkAuth = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/auth/me`, {
+          method: "GET",
+          credentials: "include", // ✅ Cookie wird mitgeschickt
+        });
 
-    if (!token) {
-      console.warn("⚠️ Kein Token gefunden – weiterleiten zur Anmeldung");
-      setIsValid(false);
-      return;
-    }
+        if (!res.ok) throw new Error("Nicht authentifiziert");
 
-    try {
-      const decoded = jwtDecode<DecodedToken>(token);
-      const now = Date.now() / 1000;
-
-      if (!decoded.exp || decoded.exp < now) {
-        console.warn("⚠️ Token ist abgelaufen");
-        localStorage.removeItem("token");
-        setIsValid(false);
-        return;
+        const data = await res.json();
+        console.log("✅ Eingeloggt als:", data.email);
+        setIsAuthenticated(true);
+      } catch (err) {
+        console.warn("❌ Nicht eingeloggt");
+        setIsAuthenticated(false);
+      } finally {
+        setLoading(false);
       }
+    };
 
-      console.log("✅ Token ist gültig – Zugriff erlaubt");
-      setIsValid(true);
-    } catch (err) {
-      console.error("❌ Fehler beim Dekodieren des Tokens:", err);
-      localStorage.removeItem("token");
-      setIsValid(false);
-    }
+    checkAuth();
   }, []);
 
-  useEffect(() => {
-    if (isValid === false) {
-      navigate("/login");
-    }
-  }, [isValid, navigate]);
-
-  if (isValid === null) {
-    return <div style={{ padding: "2rem" }}>⏳ Authentifizierung wird überprüft...</div>;
+  if (loading) {
+    return <div style={{ padding: "2rem" }}>⏳ Authentifizierung wird geprüft...</div>;
   }
 
-  return <>{children}</>;
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
 }

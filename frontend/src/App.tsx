@@ -1,11 +1,11 @@
-// 📁 src/App.tsx  
+// 📁 src/App.tsx
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
 import Footer from "./components/Footer";
 import RequireAuth from "./components/RequireAuth";
-import PageLoader from "./components/PageLoader"; // ✅ NEU
+import PageLoader from "./components/PageLoader"; // ✅ Ladeanimation
 
 // 🔓 Öffentliche Seiten
 import Home from "./pages/Home";
@@ -33,14 +33,14 @@ import Subscribe from "./pages/Subscribe";
 import Upgrade from "./pages/Upgrade";
 import BetterContracts from "./pages/BetterContracts";
 
-// ✅ Wrapper, damit `useLocation` funktioniert
+// ✅ Wrapper-Komponente, damit useLocation funktioniert
 function AppWithLoader() {
   const location = useLocation();
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     setLoading(true);
-    const timer = setTimeout(() => setLoading(false), 400); // kurze Verzögerung
+    const timer = setTimeout(() => setLoading(false), 300);
     return () => clearTimeout(timer);
   }, [location]);
 
@@ -50,9 +50,9 @@ function AppWithLoader() {
       <Navbar />
       <Sidebar />
 
-      <div style={{ flex: 1, paddingTop: "60px" }}>
+      <main style={{ flex: 1, paddingTop: "60px" }}>
         <Routes>
-          {/* Öffentliche Seiten */}
+          {/* 🔓 Öffentliche Seiten */}
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -63,7 +63,7 @@ function AppWithLoader() {
           <Route path="/datenschutz" element={<Datenschutz />} />
           <Route path="/agb" element={<AGB />} />
 
-          {/* Geschützte Seiten */}
+          {/* 🔒 Geschützte Seiten mit RequireAuth */}
           <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
           <Route path="/contracts" element={<RequireAuth><Contracts /></RequireAuth>} />
           <Route path="/contracts/:id" element={<RequireAuth><ContractDetails /></RequireAuth>} />
@@ -78,13 +78,14 @@ function AppWithLoader() {
           <Route path="/upgrade" element={<RequireAuth><Upgrade /></RequireAuth>} />
           <Route path="/better-contracts" element={<RequireAuth><BetterContracts /></RequireAuth>} />
         </Routes>
-      </div>
+      </main>
 
       <Footer />
     </div>
   );
 }
 
+// 🧠 Haupt-App mit Router
 export default function App() {
   return (
     <Router>

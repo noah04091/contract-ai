@@ -6,7 +6,7 @@ import { generateICS } from "../utils/icsGenerator";
 import StatusPieChart from "../components/StatusPieChart";
 import UploadBarChart from "../components/UploadBarChart";
 import Notification from "../components/Notification";
-import { Helmet } from "react-helmet-async"; // ✅ Meta-Tags
+import { Helmet } from "react-helmet-async";
 import API_BASE_URL from "../utils/api";
 
 interface Contract {
@@ -49,18 +49,15 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
     fetch(`${API_BASE_URL}/auth/me`, {
-      headers: { Authorization: `Bearer ${token}` },
+      credentials: "include", // 🧁 Cookie mitsenden
     })
       .then((res) => res.json())
       .then((data) => setUserEmail(data.email))
       .catch((err) => console.error("Fehler beim Abrufen des Benutzers:", err));
 
-    fetch("https://contract-ai-backend.onrender.com/contracts", {
-      headers: { Authorization: `Bearer ${token}` },
+    fetch(`${API_BASE_URL}/contracts`, {
+      credentials: "include", // 🧁 Cookie mitsenden
     })
       .then((res) => res.json())
       .then((data) => {
@@ -95,11 +92,9 @@ export default function Dashboard() {
     const formData = new FormData();
     formData.append("file", file);
 
-    const res = await fetch("https://contract-ai-backend.onrender.com/upload", {
+    const res = await fetch(`${API_BASE_URL}/upload`, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
-      },
+      credentials: "include", // 🧁 Cookie mitsenden
       body: formData,
     });
 
@@ -119,11 +114,9 @@ export default function Dashboard() {
     const confirmDelete = confirm("Bist du sicher, dass du diesen Vertrag löschen möchtest?");
     if (!confirmDelete) return;
 
-    const res = await fetch(`https://contract-ai-backend.onrender.com/contracts/${id}`, {
+    const res = await fetch(`${API_BASE_URL}/contracts/${id}`, {
       method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
-      },
+      credentials: "include", // 🧁 Cookie mitsenden
     });
 
     if (res.ok) {
@@ -137,11 +130,9 @@ export default function Dashboard() {
 
   const toggleReminder = async (id: string) => {
     try {
-      const res = await fetch(`https://contract-ai-backend.onrender.com/contracts/${id}/reminder`, {
+      const res = await fetch(`${API_BASE_URL}/contracts/${id}/reminder`, {
         method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
-        },
+        credentials: "include", // 🧁 Cookie mitsenden
       });
 
       if (!res.ok) throw new Error("Fehler beim Umschalten des Reminders");
@@ -328,4 +319,3 @@ export default function Dashboard() {
     </div>
   );
 }
-

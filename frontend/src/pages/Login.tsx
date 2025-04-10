@@ -15,7 +15,7 @@ export default function Login() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    console.log("➡️ Login senden:", { email, password });
+    console.log("➡️ Login senden:", { email });
 
     try {
       const res = await fetch(`${API_BASE_URL}/auth/login`, {
@@ -23,21 +23,17 @@ export default function Login() {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include", // ✅ wichtig für Cookie-Auth
         body: JSON.stringify({ email, password }),
       });
 
       const data = await res.json();
       console.log("⬅️ Server-Antwort:", data);
 
-      if (res.ok && data.token) {
-        // ✅ Token speichern und prüfen
-        localStorage.setItem("token", String(data.token));
-        console.log("📦 Token gespeichert:", localStorage.getItem("token"));
-
+      if (res.ok) {
         setNotification({ message: "✅ Login erfolgreich!", type: "success" });
-
         setTimeout(() => {
-          navigate("/dashboard"); // ✅ oder eine andere geschützte Seite
+          navigate("/dashboard");
         }, 1000);
       } else {
         setNotification({ message: "❌ " + (data.message || "Unbekannter Fehler"), type: "error" });

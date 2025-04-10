@@ -1,8 +1,8 @@
 // 📁 backend/server.js 
-
 const express = require("express");
 const app = express();
 const cors = require("cors");
+const cookieParser = require("cookie-parser"); // ✅ NEU
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
@@ -26,8 +26,8 @@ const compareRoute = require("./routes/compare");
 const chatRoute = require("./routes/chatWithContract");
 const authRoutes = require("./routes/auth");
 const generateRoute = require("./routes/generate");
-const analyzeTypeRoute = require("./routes/analyzeType"); // ✅ Vertragstyp-Erkennung
-const extractTextRoute = require("./routes/extractText"); // ✅ NEU: PDF → Text
+const analyzeTypeRoute = require("./routes/analyzeType");
+const extractTextRoute = require("./routes/extractText");
 const checkContractsAndSendReminders = require("./services/cron");
 
 // 🔌 MongoDB Verbindung
@@ -48,11 +48,12 @@ let db, contractsCollection;
 // ⚠️ Stripe Webhook (vor express.json!)
 app.use("/stripe/webhook", stripeWebhookRoute);
 
-// 🌐 CORS sauber konfigurieren
+// 🌐 CORS + Cookie-Parser
 app.use(cors({
-  origin: process.env.FRONTEND_ORIGIN,
+  origin: process.env.FRONTEND_ORIGIN, // z. B. https://contract-ai.de
   credentials: true
 }));
+app.use(cookieParser()); // ✅ wichtig für req.cookies.token
 
 // 🌐 Middlewares
 app.use(express.json());

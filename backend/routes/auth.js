@@ -41,24 +41,35 @@ router.post("/register", async (req, res) => {
   }
 });
 
-// 🔐 Login
+// 🔐 Login – mit JWT im httpOnly-Cookie
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
+
   try {
     const user = await usersCollection.findOne({ email });
-    if (!user) return res.status(400).json({ message: "E-Mail nicht gefunden." });
+    if (!user) {
+      return res.status(400).json({ message: "E-Mail nicht gefunden." });
+    }
 
     const match = await bcrypt.compare(password, user.password);
-    if (!match) return res.status(400).json({ message: "Falsches Passwort." });
+    if (!match) {
+      return res.status(400).json({ message: "Falsches Passwort." });
+    }
 
-    // ✅ E-Mail & ID in Token speichern
     const token = jwt.sign(
       { email: user.email, userId: user._id },
       process.env.JWT_SECRET,
       { expiresIn: "2h" }
     );
 
-    res.json({ token, isPremium: user.isPremium || false });
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: true, // nur über HTTPS
+      sameSite: "Strict",
+      maxAge: 1000 * 60 * 60 * 2, // 2 Stunden
+    });
+
+    res.json({ message: "✅ Login erfolgreich", isPremium: user.isPremium || false });
   } catch (err) {
     console.error("❌ Fehler beim Login:", err);
     res.status(500).json({ message: "Serverfehler" });
