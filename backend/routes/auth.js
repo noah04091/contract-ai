@@ -64,8 +64,8 @@ router.post("/login", async (req, res) => {
 
     res.cookie("token", token, {
       httpOnly: true,
-      secure: true, // nur über HTTPS
-      sameSite: "Strict",
+      secure: true,
+      sameSite: "None", // ← wichtig für Subdomain-Cookie-Sharing!
       maxAge: 1000 * 60 * 60 * 2, // 2 Stunden
     });
 

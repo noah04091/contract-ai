@@ -4,7 +4,7 @@ import { Navigate } from "react-router-dom";
 import API_BASE_URL from "../utils/api";
 
 interface RequireAuthProps {
-  children: React.ReactElement; // ✅ statt React.ReactNode für Routing-Kompatibilität
+  children: React.ReactNode; // ✅ Beste Kompatibilität mit Routing und JSX
 }
 
 export default function RequireAuth({ children }: RequireAuthProps) {
@@ -16,7 +16,7 @@ export default function RequireAuth({ children }: RequireAuthProps) {
       try {
         const res = await fetch(`${API_BASE_URL}/auth/me`, {
           method: "GET",
-          credentials: "include", // ✅ Cookie wird mitgeschickt
+          credentials: "include", // 🧁 Cookie wird mitgeschickt
         });
 
         if (!res.ok) throw new Error("Nicht authentifiziert");
@@ -43,5 +43,5 @@ export default function RequireAuth({ children }: RequireAuthProps) {
     return <Navigate to="/login" replace />;
   }
 
-  return children;
+  return <>{children}</>;
 }

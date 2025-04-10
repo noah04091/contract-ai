@@ -5,7 +5,7 @@ import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
 import Footer from "./components/Footer";
 import RequireAuth from "./components/RequireAuth";
-import PageLoader from "./components/PageLoader"; // ✅ Ladeanimation
+import PageLoader from "./components/PageLoader";
 
 // 🔓 Öffentliche Seiten
 import Home from "./pages/Home";
@@ -33,7 +33,7 @@ import Subscribe from "./pages/Subscribe";
 import Upgrade from "./pages/Upgrade";
 import BetterContracts from "./pages/BetterContracts";
 
-// ✅ Wrapper-Komponente, damit useLocation funktioniert
+// ✅ Wrapper-Komponente, um bei Seitenwechsel Ladeanimation zu zeigen
 function AppWithLoader() {
   const location = useLocation();
   const [loading, setLoading] = useState(false);
