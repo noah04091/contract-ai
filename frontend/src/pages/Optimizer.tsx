@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import styles from "../styles/Optimizer.module.css";
 import PremiumNotice from "../components/PremiumNotice";
+import API_BASE_URL from "../utils/api";
 
 interface Optimization {
   problem: string;
@@ -21,7 +22,7 @@ export default function Optimizer() {
       if (!token) return setIsPremium(false);
 
       try {
-        const res = await fetch("https://contract-ai-backend.onrender.com/auth/me", {
+        const res = await fetch(`${API_BASE_URL}/auth/me`, {
           headers: {
             Authorization: token,
           },

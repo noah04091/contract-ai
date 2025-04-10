@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import styles from "../styles/Chat.module.css";
 import PremiumNotice from "../components/PremiumNotice";
+import API_BASE_URL from "../utils/api";
 
 export default function Chat() {
   const [file, setFile] = useState<File | null>(null);
@@ -17,7 +18,7 @@ export default function Chat() {
       if (!token) return setIsPremium(false);
 
       try {
-        const res = await fetch("https://contract-ai-backend.onrender.com/auth/me", {
+        const res = await fetch(`${API_BASE_URL}/auth/me`, {
           headers: {
             Authorization: token,
           },

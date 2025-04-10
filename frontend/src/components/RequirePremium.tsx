@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PremiumNotice from "./PremiumNotice";
+import API_BASE_URL from "../utils/api";
 
 interface Props {
   children: React.ReactNode;
@@ -19,7 +20,7 @@ export default function RequirePremium({ children }: Props) {
 
     const fetchStatus = async () => {
       try {
-        const res = await fetch("https://contract-ai-backend.onrender.com/auth/me", {
+        const res = await fetch(`${API_BASE_URL}/auth/me`, {
           headers: { Authorization: token },
         });
 

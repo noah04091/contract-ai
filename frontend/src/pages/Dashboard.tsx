@@ -7,6 +7,7 @@ import StatusPieChart from "../components/StatusPieChart";
 import UploadBarChart from "../components/UploadBarChart";
 import Notification from "../components/Notification";
 import { Helmet } from "react-helmet-async"; // ✅ Meta-Tags
+import API_BASE_URL from "../utils/api";
 
 interface Contract {
   _id: string;
@@ -51,7 +52,7 @@ export default function Dashboard() {
     const token = localStorage.getItem("token");
     if (!token) return;
 
-    fetch("https://contract-ai-backend.onrender.com/auth/me", {
+    fetch(`${API_BASE_URL}/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())

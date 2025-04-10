@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import API_BASE_URL from "../utils/api";
 
 export default function PremiumStatus() {
   const [isPremium, setIsPremium] = useState<boolean | null>(null);
@@ -6,7 +7,7 @@ export default function PremiumStatus() {
   useEffect(() => {
     const fetchStatus = async () => {
       try {
-        const res = await fetch("https://contract-ai-backend.onrender.com/auth/me", {
+        const res = await fetch(`${API_BASE_URL}/auth/me`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
           },

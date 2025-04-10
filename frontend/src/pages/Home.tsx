@@ -4,6 +4,7 @@ import { jwtDecode } from "jwt-decode";
 import styles from "../styles/Home.module.css";
 import logo from "../assets/logo-contractai.png";
 import { Helmet } from "react-helmet-async";
+import API_BASE_URL from "../utils/api";
 
 interface DecodedToken {
   email: string;
@@ -25,7 +26,7 @@ export default function Home() {
         const decoded = jwtDecode<DecodedToken>(token);
         setUserEmail(decoded.email);
 
-        fetch("https://contract-ai-backend.onrender.com/auth/me", {
+        fetch(`${API_BASE_URL}/auth/me`, {
           method: "GET",
           headers: {
             Authorization: token,

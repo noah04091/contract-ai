@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "../styles/Auth.module.css";
 import Notification from "../components/Notification";
+import API_BASE_URL from "../utils/api";
 
 export default function ResetPassword() {
   const [newPassword, setNewPassword] = useState("");
@@ -24,7 +25,7 @@ export default function ResetPassword() {
     e.preventDefault();
 
     try {
-      const res = await fetch("https://contract-ai-backend.onrender.com/auth/reset-password", {
+      const res = await fetch(`${API_BASE_URL}/auth/reset-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token, newPassword }),

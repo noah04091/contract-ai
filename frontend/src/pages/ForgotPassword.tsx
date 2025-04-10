@@ -3,6 +3,7 @@ import { useState } from "react";
 import styles from "../styles/Auth.module.css";
 import { Mail } from "lucide-react";
 import Notification from "../components/Notification";
+import API_BASE_URL from "../utils/api";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
@@ -15,7 +16,7 @@ export default function ForgotPassword() {
     setNotification(null);
 
     try {
-        const res = await fetch("https://contract-ai-backend.onrender.com/auth/forgot-password", {
+      const res = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
             method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),

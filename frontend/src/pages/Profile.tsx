@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { jwtDecode } from "jwt-decode";
 import axios from "axios";
 import styles from "../styles/Profile.module.css";
+import API_BASE_URL from "../utils/api";
 
 interface DecodedToken {
   email: string;
@@ -51,7 +52,7 @@ export default function Profile() {
   const handlePasswordChange = async () => {
     setMessage("");
     try {
-      const res = await fetch("https://contract-ai-backend.onrender.com/auth/change-password", {
+      const res = await fetch(`${API_BASE_URL}/auth/change-password`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -78,7 +79,7 @@ export default function Profile() {
     const confirmDelete = confirm("Willst du deinen Account wirklich löschen? Alle Verträge gehen verloren!");
     if (!confirmDelete) return;
 
-    const res = await fetch("https://contract-ai-backend.onrender.com/auth/delete", {
+    const res = await fetch(`${API_BASE_URL}/auth/delete`, {
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${localStorage.getItem("token") || ""}`,

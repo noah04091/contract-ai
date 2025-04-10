@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import styles from "../styles/PremiumNotice.module.css";
+import API_BASE_URL from "../utils/api";
 
 export default function PremiumNotice() {
   const [isPremium, setIsPremium] = useState<boolean | null>(null);
@@ -15,7 +16,7 @@ export default function PremiumNotice() {
       }
 
       try {
-        const res = await fetch("https://contract-ai-backend.onrender.com/auth/me", {
+        const res = await fetch(`${API_BASE_URL}/auth/me`, {
           headers: { Authorization: `Bearer ${token}` }, // 🛡️ Sicherer Standard
         });
 

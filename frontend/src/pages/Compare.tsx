@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import styles from "../styles/Compare.module.css";
 import html2pdf from "html2pdf.js";
 import PremiumNotice from "../components/PremiumNotice";
+import API_BASE_URL from "../utils/api";
 
 interface ComparisonResult {
   differences: string;
@@ -23,7 +24,7 @@ export default function Compare() {
       if (!token) return setIsPremium(false);
 
       try {
-        const res = await fetch("https://contract-ai-backend.onrender.com/auth/me", {
+        const res = await fetch(`${API_BASE_URL}/auth/me`, {
           headers: { Authorization: token },
         });
         const data = await res.json();

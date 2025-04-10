@@ -3,6 +3,7 @@ import styles from "../styles/Generate.module.css";
 import PremiumNotice from "../components/PremiumNotice";
 import { CheckCircle, Clipboard, Save } from "lucide-react";
 import html2pdf from "html2pdf.js";
+import API_BASE_URL from "../utils/api";
 
 export default function Generate() {
   const [contractType, setContractType] = useState("freelancer");
@@ -23,7 +24,7 @@ export default function Generate() {
       if (!token) return setIsPremium(false);
 
       try {
-        const res = await fetch("https://contract-ai-backend.onrender.com/auth/me", {
+        const res = await fetch(`${API_BASE_URL}/auth/me`, {
           headers: { Authorization: token },
         });
         const data = await res.json();
