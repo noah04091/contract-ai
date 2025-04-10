@@ -50,7 +50,7 @@ app.use("/stripe/webhook", stripeWebhookRoute);
 
 // 🌐 CORS sauber konfigurieren
 app.use(cors({
-  origin: "https://contract-ai.de", // 🔐 nur deine Frontend-Domain
+  origin: process.env.FRONTEND_ORIGIN,
   credentials: true
 }));
 
