@@ -5,6 +5,7 @@ import styles from "../styles/Navbar.module.css";
 import Notification from "./Notification";
 import ThemeToggle from "./ThemeToggle";
 import logo from "../assets/logo.png";
+import API_BASE_URL from "../utils/api";
 
 interface DecodedToken {
   exp: number;
@@ -37,7 +38,7 @@ export default function Navbar() {
         setUser(null);
         navigate("/login");
       } else {
-        fetch("https://contract-ai-backend.onrender.com/auth/me", {
+        fetch(`${API_BASE_URL}/auth/me`, {
           headers: { Authorization: token },
         })
           .then((res) => res.json())
