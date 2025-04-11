@@ -47,14 +47,10 @@ router.post("/login", async (req, res) => {
 
   try {
     const user = await usersCollection.findOne({ email });
-    if (!user) {
-      return res.status(400).json({ message: "E-Mail nicht gefunden." });
-    }
+    if (!user) return res.status(400).json({ message: "E-Mail nicht gefunden." });
 
     const match = await bcrypt.compare(password, user.password);
-    if (!match) {
-      return res.status(400).json({ message: "Falsches Passwort." });
-    }
+    if (!match) return res.status(400).json({ message: "Falsches Passwort." });
 
     const token = jwt.sign(
       { email: user.email, userId: user._id },
@@ -62,11 +58,13 @@ router.post("/login", async (req, res) => {
       { expiresIn: "2h" }
     );
 
+    // ⬇️ Wichtig: Cookie korrekt für Subdomain setzen!
     res.cookie("token", token, {
       httpOnly: true,
       secure: true,
-      sameSite: "None", // ← wichtig für Subdomain-Cookie-Sharing!
+      sameSite: "None",
       maxAge: 1000 * 60 * 60 * 2, // 2 Stunden
+      domain: ".contract-ai.de", // ⬅️ wichtig: damit der Cookie auf allen Subdomains gilt!
     });
 
     res.json({ message: "✅ Login erfolgreich", isPremium: user.isPremium || false });
@@ -76,7 +74,7 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// 👤 Profil abrufen (auch zur Prüfung von isPremium!)
+// 👤 Profil abrufen
 router.get("/me", verifyToken, async (req, res) => {
   try {
     const user = await usersCollection.findOne(
@@ -129,7 +127,7 @@ router.delete("/delete", verifyToken, async (req, res) => {
   }
 });
 
-// 📩 Passwort vergessen – Link senden
+// 📩 Passwort vergessen
 router.post("/forgot-password", async (req, res) => {
   const { email } = req.body;
 
