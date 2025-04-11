@@ -2,7 +2,7 @@
 const express = require("express");
 const app = express();
 const cors = require("cors");
-const cookieParser = require("cookie-parser"); // ✅ NEU
+const cookieParser = require("cookie-parser");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
@@ -48,14 +48,22 @@ let db, contractsCollection;
 // ⚠️ Stripe Webhook (vor express.json!)
 app.use("/stripe/webhook", stripeWebhookRoute);
 
-// 🌐 CORS + Cookie-Parser
-const cors = require("cors");
-
+// ✅ CORS & Cookies richtig setzen
 app.use(cors({
   origin: ["https://contract-ai.de", "https://www.contract-ai.de"],
   credentials: true,
 }));
-app.use(cookieParser()); // ✅ wichtig für req.cookies.token
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+  next();
+});
+app.options("*", cors({
+  origin: ["https://contract-ai.de", "https://www.contract-ai.de"],
+  credentials: true,
+}));
+app.use(cookieParser());
 
 // 🌐 Middlewares
 app.use(express.json());
@@ -95,10 +103,7 @@ app.post("/upload", verifyToken, checkSubscription, upload.single("file"), async
       model: "gpt-4",
       messages: [
         { role: "system", content: "Du bist ein KI-Assistent, der Vertragsdaten extrahiert." },
-        {
-          role: "user",
-          content: `Extrahiere aus folgendem Vertrag Name, Laufzeit und Kündigungsfrist:\n\n${pdfText}`,
-        },
+        { role: "user", content: `Extrahiere aus folgendem Vertrag Name, Laufzeit und Kündigungsfrist:\n\n${pdfText}` },
       ],
       temperature: 0.3,
     });
@@ -157,7 +162,7 @@ app.post("/upload", verifyToken, checkSubscription, upload.single("file"), async
   }
 });
 
-// 🔀 Cronjob für Erinnerungen
+// ⏰ Cronjob
 cron.schedule("0 8 * * *", async () => {
   console.log("⏰ Reminder-Cronjob gestartet");
   await checkContractsAndSendReminders();
@@ -228,8 +233,8 @@ app.use("/generate", verifyToken, checkSubscription, generateRoute);
 app.use("/auth", authRoutes);
 app.use("/stripe", stripeRoutes);
 app.use("/stripe", subscribeRoutes);
-app.use("/analyze-type", analyzeTypeRoute);     // ✅ GPT Vertragstyp-Erkennung
-app.use("/extract-text", extractTextRoute);     // ✅ PDF → Text Extraktion
+app.use("/analyze-type", analyzeTypeRoute);
+app.use("/extract-text", extractTextRoute);
 
 // 🚀 Server starten
 const PORT = process.env.PORT || 5000;
