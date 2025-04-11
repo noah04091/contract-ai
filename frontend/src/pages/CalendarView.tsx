@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import styles from "../styles/CalendarView.module.css";
+import API_BASE_URL from "../utils/api";
 
 interface Contract {
   _id: string;
@@ -19,9 +20,10 @@ export default function CalendarView() {
       const token = localStorage.getItem("token");
       if (!token) return;
 
-      const res = await fetch("https://contract-ai-backend.onrender.com/contracts", {
+      const res = await fetch(`${API_BASE_URL}/contracts`, {
         headers: { Authorization: token },
       });
+
       const data = await res.json();
       setContracts(data.filter((c: Contract) => c.expiryDate));
     };

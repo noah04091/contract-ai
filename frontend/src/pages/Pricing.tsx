@@ -4,6 +4,7 @@ import { CheckCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { Helmet } from "react-helmet-async";
+import API_BASE_URL from "../utils/api";
 
 export default function Pricing() {
   const [loading, setLoading] = useState(false);
@@ -19,7 +20,7 @@ export default function Pricing() {
     setLoading(true);
 
     try {
-      const res = await fetch("https://contract-ai-backend.onrender.com/stripe/create-checkout-session", {
+      const res = await fetch(`${API_BASE_URL}/stripe/create-checkout-session`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

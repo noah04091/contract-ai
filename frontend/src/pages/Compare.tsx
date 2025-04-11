@@ -17,7 +17,6 @@ export default function Compare() {
   const [result, setResult] = useState<ComparisonResult | null>(null);
   const [isPremium, setIsPremium] = useState<boolean | null>(null);
 
-  // ✅ Serverseitig Premium-Status abrufen (statt localStorage)
   useEffect(() => {
     const fetchStatus = async () => {
       const token = localStorage.getItem("token");
@@ -49,7 +48,7 @@ export default function Compare() {
     const token = localStorage.getItem("token") || "";
 
     try {
-      const res = await fetch("https://contract-ai-backend.onrender.com/compare", {
+      const res = await fetch(`${API_BASE_URL}/compare`, {
         method: "POST",
         headers: { Authorization: token },
         body: formData,

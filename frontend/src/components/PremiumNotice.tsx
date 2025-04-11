@@ -1,3 +1,4 @@
+// 📁 PremiumNotice.tsx
 import { useEffect, useState } from "react";
 import styles from "../styles/PremiumNotice.module.css";
 import API_BASE_URL from "../utils/api";
@@ -17,11 +18,12 @@ export default function PremiumNotice() {
 
       try {
         const res = await fetch(`${API_BASE_URL}/auth/me`, {
-          headers: { Authorization: `Bearer ${token}` }, // 🛡️ Sicherer Standard
+          headers: { Authorization: `Bearer ${token}` },
+          credentials: "include", // 🧁 Cookies mitnehmen, falls relevant
         });
 
         const data = await res.json();
-        setIsPremium(data.isPremium || false); // ✅ Korrektes Feld
+        setIsPremium(data.isPremium || false);
       } catch (err) {
         console.error("❌ Fehler beim Laden des Abostatus:", err);
         setIsPremium(false);
@@ -35,11 +37,12 @@ export default function PremiumNotice() {
 
   const handleUpgrade = async () => {
     try {
-      const res = await fetch("https://contract-ai-backend.onrender.com/stripe/create-checkout-session", {
+      const res = await fetch(`${API_BASE_URL}/stripe/create-checkout-session`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
         },
+        credentials: "include",
       });
 
       const data = await res.json();
@@ -58,7 +61,9 @@ export default function PremiumNotice() {
 
   return (
     <div className={styles.notice}>
-      <p>🔒 Diese Funktion ist nur mit aktivem <strong>Premium-Abo</strong> verfügbar.</p>
+      <p>
+        🔒 Diese Funktion ist nur mit aktivem <strong>Premium-Abo</strong> verfügbar.
+      </p>
       <button onClick={handleUpgrade} className={styles.upgradeButton}>
         💎 Jetzt upgraden
       </button>

@@ -97,7 +97,7 @@ export default function Generate() {
     setFinished(false);
 
     try {
-      const res = await fetch("https://contract-ai-backend.onrender.com/api/contracts/generate", {
+      const res = await fetch(`${API_BASE_URL}/api/contracts/generate`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -129,7 +129,7 @@ export default function Generate() {
 
   const handleSave = async () => {
     try {
-      const res = await fetch("https://contract-ai-backend.onrender.com/contracts", {
+      const res = await fetch(`${API_BASE_URL}/contracts`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

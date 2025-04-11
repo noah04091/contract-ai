@@ -1,3 +1,4 @@
+// 📁 PremiumStatus.tsx
 import { useEffect, useState } from "react";
 import API_BASE_URL from "../utils/api";
 
@@ -11,6 +12,7 @@ export default function PremiumStatus() {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
           },
+          credentials: "include",
         });
         const data = await res.json();
         setIsPremium(data.isPremium);
@@ -24,11 +26,12 @@ export default function PremiumStatus() {
 
   const handleUpgrade = async () => {
     try {
-      const res = await fetch("https://contract-ai-backend.onrender.com/stripe/create-checkout-session", {
+      const res = await fetch(`${API_BASE_URL}/stripe/create-checkout-session`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
         },
+        credentials: "include",
       });
 
       const data = await res.json();

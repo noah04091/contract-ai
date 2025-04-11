@@ -1,7 +1,7 @@
 // 📁 src/pages/BetterContracts.tsx
-
 import React, { useState } from "react";
 import UniversalContractComparison from "../components/UniversalContractComparison";
+import API_BASE_URL from "../utils/api";
 
 const BetterContracts: React.FC = () => {
   const [contractText, setContractText] = useState("");
@@ -20,7 +20,7 @@ const BetterContracts: React.FC = () => {
     setLoading(true);
 
     try {
-      const res = await fetch("https://contract-ai-backend.onrender.com/analyze-type", {
+      const res = await fetch(`${API_BASE_URL}/analyze-type`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: contractText })
@@ -45,12 +45,12 @@ const BetterContracts: React.FC = () => {
     formData.append("file", file);
 
     try {
-      const res = await fetch("https://contract-ai-backend.onrender.com/extract-text", {
+      const res = await fetch(`${API_BASE_URL}/extract-text`, {
         method: "POST",
         body: formData
       });
       const data = await res.json();
-      setContractText(data.text); // automatisch in Textfeld setzen
+      setContractText(data.text);
     } catch (err) {
       console.error("Fehler beim Extrahieren:", err);
       setError("Fehler beim Datei-Upload.");

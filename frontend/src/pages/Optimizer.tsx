@@ -50,7 +50,7 @@ export default function Optimizer() {
     const token = localStorage.getItem("token") || "";
 
     try {
-      const res = await fetch("https://contract-ai-backend.onrender.com/optimize", {
+      const res = await fetch(`${API_BASE_URL}/optimize`, {
         method: "POST",
         headers: { Authorization: token },
         body: formData,

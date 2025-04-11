@@ -1,6 +1,7 @@
 // src/pages/Upgrade.tsx
 import { useState } from "react";
 import styles from "../styles/Upgrade.module.css";
+import API_BASE_URL from "../utils/api";
 
 export default function Upgrade() {
   const [loading, setLoading] = useState(false);
@@ -8,7 +9,7 @@ export default function Upgrade() {
   const handleUpgrade = async () => {
     setLoading(true);
     try {
-      const res = await fetch("https://contract-ai-backend.onrender.com/stripe/create-checkout-session", {
+      const res = await fetch(`${API_BASE_URL}/stripe/create-checkout-session`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -1,6 +1,7 @@
 // src/pages/Subscribe.tsx
 import { useState } from "react";
 import styles from "../styles/Subscribe.module.css";
+import API_BASE_URL from "../utils/api";
 
 export default function Subscribe() {
   const [loading, setLoading] = useState(false);
@@ -8,7 +9,7 @@ export default function Subscribe() {
   const handleSubscribe = async () => {
     setLoading(true);
     try {
-      const res = await fetch("https://contract-ai-backend.onrender.com/checkout", {
+      const res = await fetch(`${API_BASE_URL}/checkout`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
