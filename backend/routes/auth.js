@@ -1,4 +1,3 @@
-// 📄 routes/auth.js  
 const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcryptjs");
@@ -9,7 +8,6 @@ const verifyToken = require("../middleware/verifyToken");
 const sendEmail = require("../utils/sendEmail");
 require("dotenv").config();
 
-// 📦 MongoDB-Verbindung
 const client = new MongoClient(process.env.MONGO_URI);
 let db, usersCollection;
 
@@ -20,37 +18,37 @@ let db, usersCollection;
     usersCollection = db.collection("users");
     console.log("✅ Nutzer-Collection verbunden.");
   } catch (err) {
-    console.error("❌ Fehler bei MongoDB-User:", err);
+    console.error("❌ MongoDB-Fehler (User):", err);
   }
 })();
 
-// 🔐 Registrierung
+// 🧾 Registrierung
 router.post("/register", async (req, res) => {
   const { email, password } = req.body;
   try {
-    const exists = await usersCollection.findOne({ email });
-    if (exists) return res.status(400).json({ message: "E-Mail bereits registriert." });
+    const existing = await usersCollection.findOne({ email });
+    if (existing) return res.status(400).json({ message: "❌ E-Mail ist bereits registriert." });
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    await usersCollection.insertOne({ email, password: hashedPassword, isPremium: false });
+    const hashed = await bcrypt.hash(password, 10);
+    await usersCollection.insertOne({ email, password: hashed, isPremium: false });
 
     res.json({ message: "✅ Registrierung erfolgreich" });
   } catch (err) {
     console.error("❌ Fehler bei Registrierung:", err);
-    res.status(500).json({ message: "Serverfehler" });
+    res.status(500).json({ message: "Serverfehler bei Registrierung" });
   }
 });
 
-// 🔐 Login – mit JWT im httpOnly-Cookie
+// 🔐 Login mit Cookie-Auth
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
   try {
     const user = await usersCollection.findOne({ email });
-    if (!user) return res.status(400).json({ message: "E-Mail nicht gefunden." });
+    if (!user) return res.status(400).json({ message: "❌ E-Mail nicht gefunden" });
 
     const match = await bcrypt.compare(password, user.password);
-    if (!match) return res.status(400).json({ message: "Falsches Passwort." });
+    if (!match) return res.status(400).json({ message: "❌ Falsches Passwort" });
 
     const token = jwt.sign(
       { email: user.email, userId: user._id },
@@ -58,35 +56,34 @@ router.post("/login", async (req, res) => {
       { expiresIn: "2h" }
     );
 
-    // ⬇️ Wichtig: Cookie korrekt für Subdomain setzen!
     res.cookie("token", token, {
       httpOnly: true,
       secure: true,
       sameSite: "None",
+      domain: ".contract-ai.de", // wichtig für Subdomain-Zugriff!
       maxAge: 1000 * 60 * 60 * 2, // 2 Stunden
-      domain: ".contract-ai.de", // ⬅️ wichtig: damit der Cookie auf allen Subdomains gilt!
     });
 
     res.json({ message: "✅ Login erfolgreich", isPremium: user.isPremium || false });
   } catch (err) {
     console.error("❌ Fehler beim Login:", err);
-    res.status(500).json({ message: "Serverfehler" });
+    res.status(500).json({ message: "Serverfehler beim Login" });
   }
 });
 
-// 👤 Profil abrufen
+// 🔍 Eigene Profildaten
 router.get("/me", verifyToken, async (req, res) => {
   try {
     const user = await usersCollection.findOne(
       { _id: new ObjectId(req.user.userId) },
       { projection: { password: 0, resetToken: 0, resetTokenExpires: 0 } }
     );
-    if (!user) return res.status(404).json({ message: "Benutzer nicht gefunden" });
 
+    if (!user) return res.status(404).json({ message: "❌ Benutzer nicht gefunden" });
     res.json(user);
   } catch (err) {
-    console.error("❌ Fehler beim Abrufen des Benutzers:", err);
-    res.status(500).json({ message: "Serverfehler" });
+    console.error("❌ Fehler bei /me:", err);
+    res.status(500).json({ message: "Serverfehler bei /me" });
   }
 });
 
@@ -96,10 +93,10 @@ router.put("/change-password", verifyToken, async (req, res) => {
 
   try {
     const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
-    if (!user) return res.status(404).json({ message: "Benutzer nicht gefunden" });
+    if (!user) return res.status(404).json({ message: "❌ Benutzer nicht gefunden" });
 
     const match = await bcrypt.compare(oldPassword, user.password);
-    if (!match) return res.status(400).json({ message: "❌ Altes Passwort ist falsch" });
+    if (!match) return res.status(400).json({ message: "❌ Altes Passwort falsch" });
 
     const hashed = await bcrypt.hash(newPassword, 10);
     await usersCollection.updateOne(
@@ -107,22 +104,28 @@ router.put("/change-password", verifyToken, async (req, res) => {
       { $set: { password: hashed } }
     );
 
-    res.json({ message: "✅ Passwort wurde geändert" });
+    res.json({ message: "✅ Passwort erfolgreich geändert" });
   } catch (err) {
-    console.error("❌ Fehler beim Passwort ändern:", err);
-    res.status(500).json({ message: "Serverfehler" });
+    console.error("❌ Fehler bei Passwortänderung:", err);
+    res.status(500).json({ message: "Serverfehler bei Passwortänderung" });
   }
 });
 
-// 🗑️ Account löschen
+// ❌ Account löschen
 router.delete("/delete", verifyToken, async (req, res) => {
   try {
     await db.collection("contracts").deleteMany({ userId: req.user.userId });
     await db.collection("users").deleteOne({ _id: new ObjectId(req.user.userId) });
 
-    res.json({ message: "✅ Account erfolgreich gelöscht" });
+    res.clearCookie("token", {
+      domain: ".contract-ai.de",
+      secure: true,
+      sameSite: "None",
+    });
+
+    res.json({ message: "✅ Account & Daten gelöscht" });
   } catch (err) {
-    console.error("❌ Fehler beim Löschen des Accounts:", err);
+    console.error("❌ Fehler beim Löschen:", err);
     res.status(500).json({ message: "Fehler beim Löschen" });
   }
 });
@@ -133,7 +136,7 @@ router.post("/forgot-password", async (req, res) => {
 
   try {
     const user = await usersCollection.findOne({ email });
-    if (!user) return res.status(404).json({ message: "E-Mail nicht gefunden." });
+    if (!user) return res.status(404).json({ message: "❌ E-Mail nicht gefunden" });
 
     const resetToken = crypto.randomBytes(32).toString("hex");
     const expires = Date.now() + 1000 * 60 * 15;
@@ -145,23 +148,22 @@ router.post("/forgot-password", async (req, res) => {
 
     const resetLink = `https://contract-ai.de/reset-password?token=${resetToken}`;
     const html = `
-      <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
-        <h2 style="color: #0cf;">🔑 Passwort zurücksetzen</h2>
+      <div style="font-family: Arial, sans-serif; padding: 20px;">
+        <h2>🔐 Passwort zurücksetzen</h2>
         <p>Hallo 👋,</p>
-        <p>du hast angefragt, dein Passwort zurückzusetzen. Klicke auf den Button unten, um fortzufahren:</p>
-        <a href="${resetLink}" style="display: inline-block; padding: 10px 18px; background-color: #0cf; color: black; text-decoration: none; border-radius: 6px; font-weight: bold; margin-top: 20px;">🔁 Neues Passwort festlegen</a>
-        <p style="margin-top: 30px;">Falls du das nicht warst, kannst du diese E-Mail ignorieren.</p>
+        <p>Klicke auf den Button, um dein Passwort zurückzusetzen:</p>
+        <a href="${resetLink}" style="background: #0cf; padding: 10px 18px; text-decoration: none; color: black; border-radius: 6px;">🔁 Neues Passwort festlegen</a>
+        <p style="margin-top: 30px;">Wenn du das nicht warst, ignoriere diese E-Mail.</p>
         <hr />
         <p style="font-size: 0.8rem; color: #aaa;">Contract AI • Automatisierte Vertragsanalyse</p>
       </div>
     `;
 
     await sendEmail(email, "🔐 Passwort zurücksetzen", html);
-
-    res.json({ message: "✅ E-Mail mit Reset-Link versendet" });
+    res.json({ message: "✅ Reset-Link wurde gesendet" });
   } catch (err) {
-    console.error("❌ Fehler bei Passwort-Reset:", err);
-    res.status(500).json({ message: "Fehler beim Senden der Reset-E-Mail" });
+    console.error("❌ Fehler bei forgot-password:", err);
+    res.status(500).json({ message: "Serverfehler bei Passwort-Reset" });
   }
 });
 
@@ -172,7 +174,7 @@ router.post("/reset-password", async (req, res) => {
   try {
     const user = await usersCollection.findOne({ resetToken: token });
     if (!user || user.resetTokenExpires < Date.now()) {
-      return res.status(400).json({ message: "❌ Token ungültig oder abgelaufen" });
+      return res.status(400).json({ message: "❌ Ungültiger oder abgelaufener Reset-Token" });
     }
 
     const hashed = await bcrypt.hash(newPassword, 10);
@@ -186,7 +188,7 @@ router.post("/reset-password", async (req, res) => {
 
     res.json({ message: "✅ Passwort erfolgreich zurückgesetzt" });
   } catch (err) {
-    console.error("❌ Fehler beim Zurücksetzen:", err);
+    console.error("❌ Fehler bei reset-password:", err);
     res.status(500).json({ message: "Fehler beim Zurücksetzen" });
   }
 });
