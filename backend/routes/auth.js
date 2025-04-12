@@ -60,9 +60,8 @@ router.post("/login", async (req, res) => {
       httpOnly: true,
       secure: true,
       sameSite: "None",
-      maxAge: 1000 * 60 * 60 * 2, // 2 Stunden
-      // ❌ domain entfernt, weil Render → andere Subdomain (api. vs backend.onrender.com)
-    });
+      maxAge: 1000 * 60 * 60 * 2,
+    });    
 
     res.json({ message: "✅ Login erfolgreich", isPremium: user.isPremium || false });
   } catch (err) {
