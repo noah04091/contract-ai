@@ -47,15 +47,20 @@ let db, contractsCollection;
 })();
 
 // ✅ CORS & Cookies ganz oben korrekt konfigurieren
-app.use(cors({
-  origin: ["https://contract-ai.de", "https://www.contract-ai.de"],
+const corsOptions = {
+  origin: ["https://www.contract-ai.de"],
   credentials: true,
-}));
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
+
 app.use(cookieParser());
 app.use(express.json());
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// ⚠️ Stripe Webhook (vor allen anderen express.json-Aufrufen)
+// ⚠️ Stripe Webhook (vor express.json)
 app.use("/stripe/webhook", stripeWebhookRoute);
 
 // 🧠 OpenAI & 📩 Mailer Setup
