@@ -7,7 +7,7 @@ require("dotenv").config();
 
 const multer = require("multer");
 const path = require("path");
-const fs = require("fs");
+const fs = require("fs").promises; // Verwende die Promise-basierte API für async/await
 const pdfParse = require("pdf-parse");
 const { OpenAI } = require("openai");
 const nodemailer = require("nodemailer");
@@ -25,194 +25,240 @@ const analyzeRoute = require("./routes/analyze");
 const optimizeRoute = require("./routes/optimize");
 const compareRoute = require("./routes/compare");
 const chatRoute = require("./routes/chatWithContract");
-const authRoutes = require("./routes/auth");
+const authRoutes = require("./routes/auth")(db);
 const generateRoute = require("./routes/generate");
 const analyzeTypeRoute = require("./routes/analyzeType");
 const extractTextRoute = require("./routes/extractText");
 const checkContractsAndSendReminders = require("./services/cron");
 
-// 🔌 MongoDB
-const mongoUri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
-const client = new MongoClient(mongoUri);
-let db, contractsCollection;
-(async () => {
-  try {
-    await client.connect();
-    db = client.db("contract_ai");
-    contractsCollection = db.collection("contracts");
-    console.log("✅ Mit MongoDB verbunden!");
-  } catch (err) {
-    console.error("❌ MongoDB-Verbindungsfehler:", err);
-  }
-})();
+// ⚙️ Konfigurationen (bessere Gruppierung)
+const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
+const DB_NAME = "contract_ai";
+const USERS_COLLECTION = "users";
+const CONTRACTS_COLLECTION = "contracts";
+const OPENAI_MODEL = "gpt-4";
+const EXTRACT_PROMPT = "Extrahiere aus folgendem Vertrag Name, Laufzeit und Kündigungsfrist:\n\n";
+const EMAIL_CONFIG = {
+    host: process.env.EMAIL_HOST,
+    port: Number(process.env.EMAIL_PORT),
+    secure: false,
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+    },
+};
+const UPLOAD_PATH = "./uploads";
+
+// 🔌 MongoDB (als Top-Level-Variable für besseren Scope)
+let client;
+let db;
+let usersCollection;
+let contractsCollection;
+
+async function connectDB() {
+    try {
+        client = new MongoClient(MONGO_URI);
+        await client.connect();
+        db = client.db(DB_NAME);
+        usersCollection = db.collection(USERS_COLLECTION);
+        contractsCollection = db.collection(CONTRACTS_COLLECTION);
+        console.log("✅ MongoDB verbunden!");
+    } catch (err) {
+        console.error("❌ MongoDB-Verbindungsfehler:", err);
+        process.exit(1); // Beende den Prozess bei kritischem Fehler
+    }
+}
+
+connectDB(); // Sofort aufrufen
 
 // ✅ CORS-Konfiguration
 const corsOptions = {
-  origin: ["https://contract-ai.de", "https://www.contract-ai.de"], // ⬅️ beide Domains!
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+    origin: ["https://contract-ai.de", "https://www.contract-ai.de"],
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
 };
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions)); // Preflight
+app.options("*", cors(corsOptions));
 
 // ✅ Middleware
 app.use(cookieParser());
 app.use(express.json());
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use("/uploads", express.static(path.join(__dirname, UPLOAD_PATH)));
 
 // ⚠️ Stripe Webhook vor JSON!
 app.use("/stripe/webhook", stripeWebhookRoute);
 
-// 🧠 OpenAI & 📩 Mail
+// 🧠 OpenAI
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST,
-  port: Number(process.env.EMAIL_PORT),
-  secure: false,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+
+// 📧 Nodemailer
+const transporter = nodemailer.createTransport(EMAIL_CONFIG);
 
 // 📂 Datei-Upload
 const storage = multer.diskStorage({
-  destination: "./uploads",
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
-  },
+    destination: UPLOAD_PATH,
+    filename: (req, file, cb) => {
+        cb(null, Date.now() + path.extname(file.originalname));
+    },
 });
 const upload = multer({ storage });
 
-// 📤 Vertrag hochladen
-app.post("/upload", verifyToken, checkSubscription, upload.single("file"), async (req, res) => {
-  if (!req.file) return res.status(400).json({ message: "Keine Datei hochgeladen" });
+// 🛠️ Utility-Funktion für die Vertragsanalyse
+async function analyzeContract(pdfText) {
+    try {
+        const response = await openai.chat.completions.create({
+            model: OPENAI_MODEL,
+            messages: [
+                { role: "system", content: "Du bist ein KI-Assistent, der Vertragsdaten extrahiert." },
+                { role: "user", content: EXTRACT_PROMPT + pdfText },
+            ],
+            temperature: 0.3,
+        });
+        return response.choices[0].message.content;
+    } catch (error) {
+        console.error("❌ Fehler bei der Vertragsanalyse:", error);
+        throw new Error("Fehler bei der Vertragsanalyse");
+    }
+}
 
-  try {
-    const buffer = fs.readFileSync(`./uploads/${req.file.filename}`);
-    const pdfData = await pdfParse(buffer);
-    const pdfText = pdfData.text.substring(0, 5000);
-
-    const response = await openai.chat.completions.create({
-      model: "gpt-4",
-      messages: [
-        { role: "system", content: "Du bist ein KI-Assistent, der Vertragsdaten extrahiert." },
-        { role: "user", content: `Extrahiere aus folgendem Vertrag Name, Laufzeit und Kündigungsfrist:\n\n${pdfText}` },
-      ],
-      temperature: 0.3,
-    });
-
-    const result = response.choices[0].message.content;
-    const name = result.match(/Vertragsname:\s*(.*)/i)?.[1] || "Unbekannt";
-    const laufzeit = result.match(/Laufzeit:\s*(.*)/i)?.[1] || "Unbekannt";
-    const kuendigung = result.match(/Kündigungsfrist:\s*(.*)/i)?.[1] || "Unbekannt";
-
-    let expiryDate = "";
+// 🛠️ Utility-Funktion zur Extraktion des Ablaufdatums
+function extractExpiryDate(laufzeit) {
     const match = laufzeit.match(/(\d+)\s*(Jahre|Monate)/i);
     if (match) {
-      const value = parseInt(match[1]);
-      const unit = match[2].toLowerCase();
-      const expiry = new Date();
-      if (unit.includes("jahr")) expiry.setFullYear(expiry.getFullYear() + value);
-      else if (unit.includes("monat")) expiry.setMonth(expiry.getMonth() + value);
-      expiryDate = expiry.toISOString().split("T")[0];
+        const value = parseInt(match[1]);
+        const unit = match[2].toLowerCase();
+        const expiry = new Date();
+        if (unit.includes("jahr")) expiry.setFullYear(expiry.getFullYear() + value);
+        else if (unit.includes("monat")) expiry.setMonth(expiry.getMonth() + value);
+        return expiry.toISOString().split("T")[0];
     }
+    return "";
+}
 
-    let status = "Unbekannt";
-    if (expiryDate) {
-      const expiry = new Date(expiryDate);
-      const today = new Date();
-      const in30Days = new Date(today);
-      in30Days.setDate(today.getDate() + 30);
-      if (expiry < today) status = "Abgelaufen";
-      else if (expiry <= in30Days) status = "Bald ablaufend";
-      else status = "Aktiv";
+// 🛠️ Utility-Funktion zur Bestimmung des Vertragsstatus
+function determineContractStatus(expiryDate) {
+    if (!expiryDate) return "Unbekannt";
+    const expiry = new Date(expiryDate);
+    const today = new Date();
+    const in30Days = new Date(today);
+    in30Days.setDate(today.getDate() + 30);
+    if (expiry < today) return "Abgelaufen";
+    if (expiry <= in30Days) return "Bald ablaufend";
+    return "Aktiv";
+}
+
+// 📤 Vertrag hochladen
+app.post("/upload", verifyToken, checkSubscription, upload.single("file"), async (req, res) => {
+    if (!req.file) return res.status(400).json({ message: "Keine Datei hochgeladen" });
+
+    try {
+        const buffer = await fs.readFile(path.join(__dirname, UPLOAD_PATH, req.file.filename));
+        const pdfData = await pdfParse(buffer);
+        const pdfText = pdfData.text.substring(0, 5000);
+
+        const analysisResult = await analyzeContract(pdfText);
+
+        const name = analysisResult.match(/Vertragsname:\s*(.*)/i)?.[1]?.trim() || "Unbekannt";
+        const laufzeit = analysisResult.match(/Laufzeit:\s*(.*)/i)?.[1]?.trim() || "Unbekannt";
+        const kuendigung = analysisResult.match(/Kündigungsfrist:\s*(.*)/i)?.[1]?.trim() || "Unbekannt";
+
+        const expiryDate = extractExpiryDate(laufzeit);
+        const status = determineContractStatus(expiryDate);
+
+        const contract = {
+            userId: req.user.userId,
+            name,
+            laufzeit,
+            kuendigung,
+            expiryDate,
+            status,
+            uploadedAt: new Date(),
+            filePath: `/uploads/${req.file.filename}`,
+        };
+
+        const insertedContract = await contractsCollection.insertOne(contract);
+
+        await transporter.sendMail({
+            from: `"Contract AI" <${process.env.EMAIL_USER}>`,
+            to: process.env.EMAIL_USER,
+            subject: "📄 Neuer Vertrag hochgeladen",
+            text: `Name: ${name}\nLaufzeit: ${laufzeit}\nKündigungsfrist: ${kuendigung}\nStatus: ${status}\nAblaufdatum: ${expiryDate}`,
+        });
+
+        res.status(201).json({ message: "Vertrag gespeichert", contract: { ...contract, _id: insertedContract.insertedId } }); // Sende die generierte _id zurück
+    } catch (err) {
+        console.error("❌ Fehler beim Hochladen und Analysieren:", err);
+        res.status(500).json({ message: "Fehler beim Hochladen und Analysieren", error: err.message });
+        if (req.file && fs.existsSync(path.join(__dirname, UPLOAD_PATH, req.file.filename))) {
+            await fs.unlink(path.join(__dirname, UPLOAD_PATH, req.file.filename)); // Lösche die hochgeladene Datei bei Fehler
+        }
     }
-
-    const contract = {
-      userId: req.user.userId,
-      name,
-      laufzeit,
-      kuendigung,
-      expiryDate,
-      status,
-      uploadedAt: new Date(),
-      filePath: `/uploads/${req.file.filename}`,
-    };
-
-    await contractsCollection.insertOne(contract);
-
-    await transporter.sendMail({
-      from: `"Contract AI" <${process.env.EMAIL_USER}>`,
-      to: process.env.EMAIL_USER,
-      subject: "📄 Neuer Vertrag hochgeladen",
-      text: `Name: ${name}\nLaufzeit: ${laufzeit}\nKündigungsfrist: ${kuendigung}\nStatus: ${status}\nAblaufdatum: ${expiryDate}`,
-    });
-
-    res.json({ message: "Vertrag gespeichert", contract });
-  } catch (err) {
-    console.error("❌ Fehler bei Analyse:", err);
-    res.status(500).json({ message: "Fehler bei Analyse", error: err.message });
-  }
 });
 
 // 🕐 Cronjob
 cron.schedule("0 8 * * *", async () => {
-  console.log("⏰ Reminder-Cronjob gestartet");
-  await checkContractsAndSendReminders();
+    console.log("⏰ Reminder-Cronjob gestartet");
+    await checkContractsAndSendReminders();
 });
 
 // 📄 CRUD-Routen
 app.get("/contracts", verifyToken, async (req, res) => {
-  try {
-    const contracts = await contractsCollection.find({ userId: req.user.userId }).toArray();
-    res.json(contracts);
-  } catch (err) {
-    res.status(500).json({ message: "Fehler beim Abrufen" });
-  }
+    try {
+        const contracts = await contractsCollection.find({ userId: req.user.userId }).toArray();
+        res.json(contracts);
+    } catch (err) {
+        console.error("❌ Fehler beim Abrufen der Verträge:", err);
+        res.status(500).json({ message: "Fehler beim Abrufen der Verträge" });
+    }
 });
 
 app.get("/contracts/:id", verifyToken, async (req, res) => {
-  try {
-    const contract = await contractsCollection.findOne({
-      _id: new ObjectId(req.params.id),
-      userId: req.user.userId,
-    });
-    if (!contract) return res.status(404).json({ message: "Vertrag nicht gefunden" });
-    res.json(contract);
-  } catch (err) {
-    res.status(500).json({ message: "Fehler beim Abrufen" });
-  }
+    try {
+        const contract = await contractsCollection.findOne({
+            _id: new ObjectId(req.params.id),
+            userId: req.user.userId,
+        });
+        if (!contract) return res.status(404).json({ message: "Vertrag nicht gefunden" });
+        res.json(contract);
+    } catch (err) {
+        console.error("❌ Fehler beim Abrufen des Vertrags:", err);
+        res.status(500).json({ message: "Fehler beim Abrufen des Vertrags" });
+    }
 });
 
 app.put("/contracts/:id", verifyToken, async (req, res) => {
-  const { name, laufzeit, kuendigung } = req.body;
-  try {
-    const result = await contractsCollection.updateOne(
-      { _id: new ObjectId(req.params.id), userId: req.user.userId },
-      { $set: { name, laufzeit, kuendigung } }
-    );
-    if (result.matchedCount === 0)
-      return res.status(404).json({ message: "Vertrag nicht gefunden" });
-    res.json({ message: "Vertrag aktualisiert" });
-  } catch (err) {
-    res.status(500).json({ message: "Update fehlgeschlagen" });
-  }
+    const { name, laufzeit, kuendigung } = req.body;
+    try {
+        const result = await contractsCollection.updateOne(
+            { _id: new ObjectId(req.params.id), userId: req.user.userId },
+            { $set: { name, laufzeit, kuendigung } }
+        );
+        if (result.matchedCount === 0) {
+            return res.status(404).json({ message: "Vertrag nicht gefunden" });
+        }
+        const updatedContract = await contractsCollection.findOne({ _id: new ObjectId(req.params.id) });
+        res.json({ message: "Vertrag aktualisiert", contract: updatedContract }); // Sende den aktualisierten Vertrag zurück
+    } catch (err) {
+        console.error("❌ Fehler beim Aktualisieren des Vertrags:", err);
+        res.status(500).json({ message: "Update fehlgeschlagen" });
+    }
 });
 
 app.delete("/contracts/:id", verifyToken, async (req, res) => {
-  try {
-    const result = await contractsCollection.deleteOne({
-      _id: new ObjectId(req.params.id),
-      userId: req.user.userId,
-    });
-    if (result.deletedCount === 0)
-      return res.status(404).json({ message: "Vertrag nicht gefunden" });
-    res.json({ message: "Vertrag gelöscht" });
-  } catch (err) {
-    res.status(500).json({ message: "Fehler beim Löschen" });
-  }
+    try {
+        const result = await contractsCollection.deleteOne({
+            _id: new ObjectId(req.params.id),
+            userId: req.user.userId,
+        });
+        if (result.deletedCount === 0) {
+            return res.status(404).json({ message: "Vertrag nicht gefunden" });
+        }
+        res.json({ message: "Vertrag gelöscht", deletedCount: result.deletedCount }); // Sende die Anzahl der gelöschten Dokumente zurück
+    } catch (err) {
+        console.error("❌ Fehler beim Löschen des Vertrags:", err);
+        res.status(500).json({ message: "Fehler beim Löschen" });
+    }
 });
 
 // ✅ Premium-Features
@@ -228,11 +274,19 @@ app.use("/stripe", subscribeRoutes);
 app.use("/analyze-type", analyzeTypeRoute);
 app.use("/extract-text", extractTextRoute);
 
-// ⬇️ Ganz am Ende deiner server.js:
-
-const testAuthRoute = require("./testAuth"); // ⬅️ 1. Importieren
-app.use("/test", testAuthRoute);             // ⬅️ 2. Registrieren
+const testAuthRoute = require("./testAuth");
+app.use("/test", testAuthRoute);
 
 // 🚀 Server starten
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server läuft auf Port ${PORT}`));
+
+// 🧹 Aufräumen beim Herunterfahren (optional, aber gut für Ressourcen)
+process.on('SIGINT', async () => {
+    console.log('👋 Server wird heruntergefahren...');
+    if (client) {
+        await client.close();
+        console.log('🔌 MongoDB-Verbindung geschlossen.');
+    }
+    process.exit(0);
+});
