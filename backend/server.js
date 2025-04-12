@@ -1,13 +1,14 @@
-// 📁 backend/server.js 
+// 📁 backend/server.js
 const express = require("express");
 const app = express();
-const cors = require("cors");
 const cookieParser = require("cookie-parser");
+const cors = require("cors");
+require("dotenv").config();
+
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const pdfParse = require("pdf-parse");
-require("dotenv").config();
 const { OpenAI } = require("openai");
 const nodemailer = require("nodemailer");
 const { MongoClient, ObjectId } = require("mongodb");
@@ -45,29 +46,17 @@ let db, contractsCollection;
   }
 })();
 
-// ⚠️ Stripe Webhook (vor express.json!)
-app.use("/stripe/webhook", stripeWebhookRoute);
-
-// ✅ CORS & Cookies richtig setzen
+// ✅ CORS & Cookies ganz oben korrekt konfigurieren
 app.use(cors({
   origin: ["https://contract-ai.de", "https://www.contract-ai.de"],
   credentials: true,
 }));
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Credentials", "true");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
-  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
-  next();
-});
-app.options("*", cors({
-  origin: ["https://contract-ai.de", "https://www.contract-ai.de"],
-  credentials: true,
-}));
 app.use(cookieParser());
-
-// 🌐 Middlewares
 app.use(express.json());
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
+// ⚠️ Stripe Webhook (vor allen anderen express.json-Aufrufen)
+app.use("/stripe/webhook", stripeWebhookRoute);
 
 // 🧠 OpenAI & 📩 Mailer Setup
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -162,7 +151,7 @@ app.post("/upload", verifyToken, checkSubscription, upload.single("file"), async
   }
 });
 
-// ⏰ Cronjob
+// 🕐 Cronjob für Erinnerungen
 cron.schedule("0 8 * * *", async () => {
   console.log("⏰ Reminder-Cronjob gestartet");
   await checkContractsAndSendReminders();

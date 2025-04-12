@@ -9,13 +9,13 @@ import API_BASE_URL from "../utils/api"; // ✅ zentrale API-URL
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
   const [notification, setNotification] = useState<{ message: string; type?: "success" | "error" } | null>(null);
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    console.log("➡️ Login senden:", { email });
+    setLoading(true);
 
     try {
       const res = await fetch(`${API_BASE_URL}/auth/login`, {
@@ -23,7 +23,7 @@ export default function Login() {
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include", // ✅ wichtig für Cookie-Auth
+        credentials: "include", // ✅ GANZ WICHTIG für Cookie-Login!
         body: JSON.stringify({ email, password }),
       });
 
@@ -34,13 +34,15 @@ export default function Login() {
         setNotification({ message: "✅ Login erfolgreich!", type: "success" });
         setTimeout(() => {
           navigate("/dashboard");
-        }, 1000);
+        }, 800);
       } else {
         setNotification({ message: "❌ " + (data.message || "Unbekannter Fehler"), type: "error" });
       }
     } catch (err) {
-      console.error("❌ Fehler beim Login-Fetch:", err);
-      setNotification({ message: "❌ Fehler beim Login", type: "error" });
+      console.error("❌ Fehler beim Login:", err);
+      setNotification({ message: "❌ Server nicht erreichbar", type: "error" });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -58,6 +60,7 @@ export default function Login() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            autoComplete="email"
           />
         </div>
 
@@ -70,11 +73,12 @@ export default function Login() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            autoComplete="current-password"
           />
         </div>
 
-        <button type="submit" className={styles.authButton}>
-          ➡️ Einloggen
+        <button type="submit" className={styles.authButton} disabled={loading}>
+          {loading ? "⏳ Login läuft..." : "➡️ Einloggen"}
         </button>
       </form>
 
@@ -87,7 +91,7 @@ export default function Login() {
 
       <p>
         Passwort vergessen?{" "}
-        <span onClick={() => navigate("/forgot-password")} className={styles.linkText}>
+        <span className={styles.linkText} onClick={() => navigate("/forgot-password")}>
           Zurücksetzen
         </span>
       </p>
