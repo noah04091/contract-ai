@@ -11,10 +11,12 @@ export default defineConfig({
     headers: {
       "Cache-Control": "public, max-age=31536000",
       "Content-Security-Policy":
-        "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; script-src * 'unsafe-inline' 'unsafe-eval'; style-src * 'unsafe-inline'; connect-src * data: blob: https://api.contract-ai.de https://contract-ai-backend.onrender.com;",
-      "Access-Control-Allow-Origin": "*", // nur für Preview/debug hilfreich
-      "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
-      "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept",
+        "default-src 'self'; " +
+        "script-src 'self' 'unsafe-inline'; " +
+        "connect-src 'self' https://api.contract-ai.de https://contract-ai-backend.onrender.com; " +
+        "font-src 'self' data:; " +
+        "style-src 'self' 'unsafe-inline'; " +
+        "object-src 'none';",
       "X-Content-Type-Options": "nosniff",
       "X-Frame-Options": "DENY",
       "Referrer-Policy": "strict-origin-when-cross-origin",
@@ -31,7 +33,7 @@ export default defineConfig({
     host: true,
     cors: {
       origin: ["https://contract-ai.de", "https://www.contract-ai.de"],
-      credentials: true, // 🔑 wichtig für Cookies!
+      credentials: true, // 🔑 wichtig für Cookie-Auth!
     },
     proxy: {
       "/api": {
