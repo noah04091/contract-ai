@@ -39,7 +39,7 @@ router.post("/register", async (req, res) => {
   }
 });
 
-// 🔐 Login mit Cookie-Auth (ohne domain)
+// 🔐 Login mit Cookie-Auth (mit korrektem domain-Eintrag)
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
@@ -60,8 +60,9 @@ router.post("/login", async (req, res) => {
       httpOnly: true,
       secure: true,
       sameSite: "None",
+      domain: ".contract-ai.de", // 🔥 GANZ WICHTIG für Domain-übergreifenden Zugriff!
       maxAge: 1000 * 60 * 60 * 2,
-    });    
+    });
 
     res.json({ message: "✅ Login erfolgreich", isPremium: user.isPremium || false });
   } catch (err) {
@@ -70,7 +71,7 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// 👤 /me Profilroute
+// 👤 Profilroute
 router.get("/me", verifyToken, async (req, res) => {
   try {
     const user = await usersCollection.findOne(
@@ -117,9 +118,10 @@ router.delete("/delete", verifyToken, async (req, res) => {
     await db.collection("users").deleteOne({ _id: new ObjectId(req.user.userId) });
 
     res.clearCookie("token", {
+      httpOnly: true,
       secure: true,
       sameSite: "None",
-      // domain entfernt, da Render nicht unter contract-ai.de läuft
+      domain: ".contract-ai.de",
     });
 
     res.json({ message: "✅ Account & Verträge gelöscht" });
