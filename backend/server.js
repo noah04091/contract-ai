@@ -228,6 +228,11 @@ app.use("/stripe", subscribeRoutes);
 app.use("/analyze-type", analyzeTypeRoute);
 app.use("/extract-text", extractTextRoute);
 
+// ⬇️ Ganz am Ende deiner server.js:
+
+const testAuthRoute = require("./testAuth"); // ⬅️ 1. Importieren
+app.use("/test", testAuthRoute);             // ⬅️ 2. Registrieren
+
 // 🚀 Server starten
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server läuft auf Port ${PORT}`));
