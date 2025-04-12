@@ -8,9 +8,9 @@ const verifyToken = require("../middleware/verifyToken");
 const sendEmail = require("../utils/sendEmail");
 require("dotenv").config();
 
+// 🔌 MongoDB
 const client = new MongoClient(process.env.MONGO_URI);
 let db, usersCollection;
-
 (async () => {
   try {
     await client.connect();
@@ -18,7 +18,7 @@ let db, usersCollection;
     usersCollection = db.collection("users");
     console.log("✅ Nutzer-Collection verbunden.");
   } catch (err) {
-    console.error("❌ MongoDB-Fehler (User):", err);
+    console.error("❌ MongoDB-Fehler:", err);
   }
 })();
 
@@ -27,7 +27,7 @@ router.post("/register", async (req, res) => {
   const { email, password } = req.body;
   try {
     const existing = await usersCollection.findOne({ email });
-    if (existing) return res.status(400).json({ message: "❌ E-Mail ist bereits registriert." });
+    if (existing) return res.status(400).json({ message: "❌ E-Mail bereits registriert" });
 
     const hashed = await bcrypt.hash(password, 10);
     await usersCollection.insertOne({ email, password: hashed, isPremium: false });
@@ -39,7 +39,7 @@ router.post("/register", async (req, res) => {
   }
 });
 
-// 🔐 Login mit Cookie-Auth
+// 🔐 Login mit Cookie-Auth (ohne domain)
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
@@ -60,8 +60,8 @@ router.post("/login", async (req, res) => {
       httpOnly: true,
       secure: true,
       sameSite: "None",
-      domain: ".contract-ai.de", // wichtig für Subdomain-Zugriff!
       maxAge: 1000 * 60 * 60 * 2, // 2 Stunden
+      // ❌ domain entfernt, weil Render → andere Subdomain (api. vs backend.onrender.com)
     });
 
     res.json({ message: "✅ Login erfolgreich", isPremium: user.isPremium || false });
@@ -71,7 +71,7 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// 🔍 Eigene Profildaten
+// 👤 /me Profilroute
 router.get("/me", verifyToken, async (req, res) => {
   try {
     const user = await usersCollection.findOne(
@@ -104,29 +104,29 @@ router.put("/change-password", verifyToken, async (req, res) => {
       { $set: { password: hashed } }
     );
 
-    res.json({ message: "✅ Passwort erfolgreich geändert" });
+    res.json({ message: "✅ Passwort geändert" });
   } catch (err) {
     console.error("❌ Fehler bei Passwortänderung:", err);
     res.status(500).json({ message: "Serverfehler bei Passwortänderung" });
   }
 });
 
-// ❌ Account löschen
+// 🗑️ Account löschen
 router.delete("/delete", verifyToken, async (req, res) => {
   try {
     await db.collection("contracts").deleteMany({ userId: req.user.userId });
     await db.collection("users").deleteOne({ _id: new ObjectId(req.user.userId) });
 
     res.clearCookie("token", {
-      domain: ".contract-ai.de",
       secure: true,
       sameSite: "None",
+      // domain entfernt, da Render nicht unter contract-ai.de läuft
     });
 
-    res.json({ message: "✅ Account & Daten gelöscht" });
+    res.json({ message: "✅ Account & Verträge gelöscht" });
   } catch (err) {
     console.error("❌ Fehler beim Löschen:", err);
-    res.status(500).json({ message: "Fehler beim Löschen" });
+    res.status(500).json({ message: "Serverfehler beim Löschen" });
   }
 });
 
@@ -163,7 +163,7 @@ router.post("/forgot-password", async (req, res) => {
     res.json({ message: "✅ Reset-Link wurde gesendet" });
   } catch (err) {
     console.error("❌ Fehler bei forgot-password:", err);
-    res.status(500).json({ message: "Serverfehler bei Passwort-Reset" });
+    res.status(500).json({ message: "Serverfehler beim Passwort-Reset" });
   }
 });
 
@@ -174,7 +174,7 @@ router.post("/reset-password", async (req, res) => {
   try {
     const user = await usersCollection.findOne({ resetToken: token });
     if (!user || user.resetTokenExpires < Date.now()) {
-      return res.status(400).json({ message: "❌ Ungültiger oder abgelaufener Reset-Token" });
+      return res.status(400).json({ message: "❌ Reset-Link ungültig oder abgelaufen" });
     }
 
     const hashed = await bcrypt.hash(newPassword, 10);
@@ -186,7 +186,7 @@ router.post("/reset-password", async (req, res) => {
       }
     );
 
-    res.json({ message: "✅ Passwort erfolgreich zurückgesetzt" });
+    res.json({ message: "✅ Passwort zurückgesetzt" });
   } catch (err) {
     console.error("❌ Fehler bei reset-password:", err);
     res.status(500).json({ message: "Fehler beim Zurücksetzen" });

@@ -17,7 +17,7 @@ const checkSubscription = require("./middleware/checkSubscription");
 const cron = require("node-cron");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
-// 📦 Routen & Services
+// 📦 Routen
 const subscribeRoutes = require("./routes/subscribe");
 const stripeRoutes = require("./routes/stripe");
 const stripeWebhookRoute = require("./routes/stripeWebhook");
@@ -31,7 +31,7 @@ const analyzeTypeRoute = require("./routes/analyzeType");
 const extractTextRoute = require("./routes/extractText");
 const checkContractsAndSendReminders = require("./services/cron");
 
-// 🔌 MongoDB Verbindung
+// 🔌 MongoDB
 const mongoUri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
 const client = new MongoClient(mongoUri);
 let db, contractsCollection;
@@ -46,24 +46,25 @@ let db, contractsCollection;
   }
 })();
 
-// ✅ CORS & Cookies ganz oben korrekt konfigurieren
+// ✅ CORS-Konfiguration
 const corsOptions = {
-  origin: ["https://www.contract-ai.de"],
+  origin: ["https://contract-ai.de", "https://www.contract-ai.de"], // ⬅️ beide Domains!
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
 };
 app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
+app.options("*", cors(corsOptions)); // Preflight
 
+// ✅ Middleware
 app.use(cookieParser());
 app.use(express.json());
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// ⚠️ Stripe Webhook (vor express.json)
+// ⚠️ Stripe Webhook vor JSON!
 app.use("/stripe/webhook", stripeWebhookRoute);
 
-// 🧠 OpenAI & 📩 Mailer Setup
+// 🧠 OpenAI & 📩 Mail
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST,
@@ -75,7 +76,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// 📂 Upload Setup
+// 📂 Datei-Upload
 const storage = multer.diskStorage({
   destination: "./uploads",
   filename: (req, file, cb) => {
@@ -84,7 +85,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// 📤 Vertrag hochladen (Analyse + Speicherung)
+// 📤 Vertrag hochladen
 app.post("/upload", verifyToken, checkSubscription, upload.single("file"), async (req, res) => {
   if (!req.file) return res.status(400).json({ message: "Keine Datei hochgeladen" });
 
@@ -156,7 +157,7 @@ app.post("/upload", verifyToken, checkSubscription, upload.single("file"), async
   }
 });
 
-// 🕐 Cronjob für Erinnerungen
+// 🕐 Cronjob
 cron.schedule("0 8 * * *", async () => {
   console.log("⏰ Reminder-Cronjob gestartet");
   await checkContractsAndSendReminders();
@@ -173,25 +174,23 @@ app.get("/contracts", verifyToken, async (req, res) => {
 });
 
 app.get("/contracts/:id", verifyToken, async (req, res) => {
-  const { id } = req.params;
   try {
     const contract = await contractsCollection.findOne({
-      _id: new ObjectId(id),
+      _id: new ObjectId(req.params.id),
       userId: req.user.userId,
     });
     if (!contract) return res.status(404).json({ message: "Vertrag nicht gefunden" });
     res.json(contract);
   } catch (err) {
-    res.status(500).json({ message: "Serverfehler" });
+    res.status(500).json({ message: "Fehler beim Abrufen" });
   }
 });
 
 app.put("/contracts/:id", verifyToken, async (req, res) => {
-  const { id } = req.params;
   const { name, laufzeit, kuendigung } = req.body;
   try {
     const result = await contractsCollection.updateOne(
-      { _id: new ObjectId(id), userId: req.user.userId },
+      { _id: new ObjectId(req.params.id), userId: req.user.userId },
       { $set: { name, laufzeit, kuendigung } }
     );
     if (result.matchedCount === 0)
@@ -203,10 +202,9 @@ app.put("/contracts/:id", verifyToken, async (req, res) => {
 });
 
 app.delete("/contracts/:id", verifyToken, async (req, res) => {
-  const { id } = req.params;
   try {
     const result = await contractsCollection.deleteOne({
-      _id: new ObjectId(id),
+      _id: new ObjectId(req.params.id),
       userId: req.user.userId,
     });
     if (result.deletedCount === 0)
@@ -217,7 +215,7 @@ app.delete("/contracts/:id", verifyToken, async (req, res) => {
   }
 });
 
-// ✅ Geschützte Premium-Funktionen
+// ✅ Premium-Features
 app.use("/optimize", verifyToken, checkSubscription, optimizeRoute);
 app.use("/compare", verifyToken, checkSubscription, compareRoute);
 app.use("/chat", verifyToken, checkSubscription, chatRoute);
@@ -232,4 +230,4 @@ app.use("/extract-text", extractTextRoute);
 
 // 🚀 Server starten
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Server läuft auf http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Server läuft auf Port ${PORT}`));

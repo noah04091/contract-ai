@@ -1,10 +1,10 @@
 // 📁 src/pages/Login.tsx
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "../styles/Auth.module.css";
 import { Mail, Lock } from "lucide-react";
 import Notification from "../components/Notification";
-import API_BASE_URL from "../utils/api"; // ✅ zentrale API-URL
+import API_BASE_URL from "../utils/api";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -12,6 +12,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [notification, setNotification] = useState<{ message: string; type?: "success" | "error" } | null>(null);
   const navigate = useNavigate();
+  const redirectTimeout = useRef<NodeJS.Timeout | null>(null);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,7 +24,7 @@ export default function Login() {
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include", // ✅ GANZ WICHTIG für Cookie-Login!
+        credentials: "include",
         body: JSON.stringify({ email, password }),
       });
 
@@ -32,7 +33,7 @@ export default function Login() {
 
       if (res.ok) {
         setNotification({ message: "✅ Login erfolgreich!", type: "success" });
-        setTimeout(() => {
+        redirectTimeout.current = setTimeout(() => {
           navigate("/dashboard");
         }, 800);
       } else {
@@ -45,6 +46,12 @@ export default function Login() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    return () => {
+      if (redirectTimeout.current) clearTimeout(redirectTimeout.current);
+    };
+  }, []);
 
   return (
     <div className={styles.authContainer}>
