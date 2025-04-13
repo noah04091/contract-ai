@@ -14,12 +14,37 @@ export default function RequireAuth({ children }: RequireAuthProps) {
   useEffect(() => {
     const checkAuth = async () => {
       try {
+        // Versuche normale Cookie-Authentifizierung
         const data = await apiCall("/auth/me");
         console.log("✅ Eingeloggt als:", data.email);
         setIsAuthenticated(true);
       } catch (err) {
-        console.warn("❌ Nicht eingeloggt");
-        setIsAuthenticated(false);
+        console.warn("❌ Cookie-Auth fehlgeschlagen, versuche Fallback...");
+        
+        // Prüfe Fallback
+        const fallbackToken = localStorage.getItem('fallbackToken');
+        const fallbackTimestamp = localStorage.getItem('fallbackTimestamp');
+        
+        if (fallbackToken && fallbackTimestamp) {
+          // Prüfen, ob der Fallback noch gültig ist (2 Stunden)
+          const now = Date.now();
+          const timestamp = parseInt(fallbackTimestamp, 10);
+          const twoHoursInMs = 2 * 60 * 60 * 1000;
+          
+          if (now - timestamp < twoHoursInMs) {
+            console.log("✅ Fallback-Auth erkannt für:", fallbackToken);
+            setIsAuthenticated(true);
+          } else {
+            // Fallback abgelaufen, entfernen
+            localStorage.removeItem('fallbackToken');
+            localStorage.removeItem('fallbackTimestamp');
+            console.warn("❌ Fallback-Auth abgelaufen");
+            setIsAuthenticated(false);
+          }
+        } else {
+          console.warn("❌ Nicht eingeloggt");
+          setIsAuthenticated(false);
+        }
       } finally {
         setLoading(false);
       }

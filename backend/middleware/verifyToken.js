@@ -2,9 +2,14 @@
 const jwt = require("jsonwebtoken");
 
 module.exports = function (req, res, next) {
+  // Zusätzliche Debug-Ausgaben für Cookie-Probleme
+  console.log("🍪 Cookie-Header:", req.headers.cookie);
+  console.log("🍪 Alle Cookies:", req.cookies);
+  
   const token = req.cookies.token; // ⬅️ Cookie lesen statt Authorization-Header
 
   if (!token) {
+    console.log("❌ Kein Token im Cookie gefunden");
     return res.status(401).json({ message: "❌ Kein Token im Cookie gefunden" });
   }
 

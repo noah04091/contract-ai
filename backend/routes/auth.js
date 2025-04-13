@@ -16,9 +16,9 @@ const COOKIE_NAME = "token";
 const COOKIE_OPTIONS = {
     httpOnly: true,
     secure: true,
-    sameSite: "None",
-    domain: "contract-ai.de",  // Damit funktioniert das Cookie für alle Subdomains
-    path: "/",                 // Cookie ist für alle Pfade verfügbar
+    sameSite: "Lax",         // Geändert von "None" zu "Lax"
+    domain: "contract-ai.de", // Damit funktioniert das Cookie für alle Subdomains
+    path: "/",                // Cookie ist für alle Pfade verfügbar
     maxAge: 1000 * 60 * 60 * 2, // 2 Stunden (entspricht JWT_EXPIRES_IN)
 };
 

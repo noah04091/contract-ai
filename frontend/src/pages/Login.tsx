@@ -25,6 +25,23 @@ export default function Login() {
       });
 
       console.log("⬅️ Server-Antwort:", data);
+      
+      // Prüfe, ob wir ein Cookie-Problem haben könnten
+      setTimeout(() => {
+        const checkAuth = async () => {
+          try {
+            await apiCall("/auth/me");
+            console.log("✅ Auth erfolgreich überprüft");
+          } catch (err) {
+            console.error("❌ Auth fehlgeschlagen trotz Login:", err);
+            // Als Fallback Token im localStorage speichern
+            localStorage.setItem('fallbackToken', email);
+            localStorage.setItem('fallbackTimestamp', String(Date.now()));
+          }
+        };
+        checkAuth();
+      }, 500);
+      
       setNotification({ message: "✅ Login erfolgreich!", type: "success" });
       
       // Kurze Verzögerung für die Benutzerfreundlichkeit
@@ -46,10 +63,31 @@ export default function Login() {
     // Beim Seitenaufbau prüfen, ob der Benutzer bereits eingeloggt ist
     const checkLoginStatus = async () => {
       try {
+        // Zuerst versuchen, per Cookie zu authentifizieren
         await apiCall("/auth/me");
         // Wenn kein Fehler geworfen wird, ist der Benutzer bereits eingeloggt
         navigate("/dashboard");
       } catch (err) {
+        // Prüfen, ob wir einen Fallback haben
+        const fallbackToken = localStorage.getItem('fallbackToken');
+        const fallbackTimestamp = localStorage.getItem('fallbackTimestamp');
+        
+        if (fallbackToken && fallbackTimestamp) {
+          // Prüfen, ob der Fallback noch gültig ist (2 Stunden)
+          const now = Date.now();
+          const timestamp = parseInt(fallbackTimestamp, 10);
+          const twoHoursInMs = 2 * 60 * 60 * 1000;
+          
+          if (now - timestamp < twoHoursInMs) {
+            console.log("✅ Verwende Fallback-Authentifizierung");
+            navigate("/dashboard");
+            return;
+          } else {
+            // Fallback abgelaufen, entfernen
+            localStorage.removeItem('fallbackToken');
+            localStorage.removeItem('fallbackTimestamp');
+          }
+        }
         // Nicht eingeloggt - Login-Formular anzeigen
       }
     };

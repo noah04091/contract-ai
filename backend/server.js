@@ -81,7 +81,7 @@ const corsOptions = {
     origin: ["https://contract-ai.de", "https://www.contract-ai.de"],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: ["Content-Type", "Authorization", "Cookie"],  // Cookie als erlaubten Header hinzugefügt
 };
 app.use(cors(corsOptions));
 app.options("*", cors(corsOptions));
