@@ -1,7 +1,7 @@
 // 📁 src/components/RequireAuth.tsx
 import React, { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
-import API_BASE_URL from "../utils/api";
+import { apiCall } from "../utils/api";
 
 interface RequireAuthProps {
   children: React.ReactNode; // ✅ Beste Kompatibilität mit Routing und JSX
@@ -14,14 +14,7 @@ export default function RequireAuth({ children }: RequireAuthProps) {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/auth/me`, {
-          method: "GET",
-          credentials: "include", // 🧁 Cookie wird mitgeschickt
-        });
-
-        if (!res.ok) throw new Error("Nicht authentifiziert");
-
-        const data = await res.json();
+        const data = await apiCall("/auth/me");
         console.log("✅ Eingeloggt als:", data.email);
         setIsAuthenticated(true);
       } catch (err) {

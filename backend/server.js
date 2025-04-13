@@ -17,7 +17,7 @@ const checkSubscription = require("./middleware/checkSubscription");
 const cron = require("node-cron");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
-// 📦 Routen
+// 📦 Einige Routen können sofort geladen werden
 const subscribeRoutes = require("./routes/subscribe");
 const stripeRoutes = require("./routes/stripe");
 const stripeWebhookRoute = require("./routes/stripeWebhook");
@@ -25,7 +25,6 @@ const analyzeRoute = require("./routes/analyze");
 const optimizeRoute = require("./routes/optimize");
 const compareRoute = require("./routes/compare");
 const chatRoute = require("./routes/chatWithContract");
-const authRoutes = require("./routes/auth")(db);
 const generateRoute = require("./routes/generate");
 const analyzeTypeRoute = require("./routes/analyzeType");
 const extractTextRoute = require("./routes/extractText");
@@ -54,6 +53,7 @@ let client;
 let db;
 let usersCollection;
 let contractsCollection;
+let authRoutes; // Wir deklarieren authRoutes hier, initialisieren es aber erst nach der DB-Verbindung
 
 async function connectDB() {
     try {
@@ -62,6 +62,10 @@ async function connectDB() {
         db = client.db(DB_NAME);
         usersCollection = db.collection(USERS_COLLECTION);
         contractsCollection = db.collection(CONTRACTS_COLLECTION);
+        
+        // Jetzt können wir authRoutes initialisieren, nachdem die DB verbunden ist
+        authRoutes = require("./routes/auth")(db);
+        
         console.log("✅ MongoDB verbunden!");
     } catch (err) {
         console.error("❌ MongoDB-Verbindungsfehler:", err);
@@ -69,7 +73,8 @@ async function connectDB() {
     }
 }
 
-connectDB(); // Sofort aufrufen
+// Sofort die DB-Verbindung herstellen
+connectDB();
 
 // ✅ CORS-Konfiguration
 const corsOptions = {
@@ -186,12 +191,12 @@ app.post("/upload", verifyToken, checkSubscription, upload.single("file"), async
             text: `Name: ${name}\nLaufzeit: ${laufzeit}\nKündigungsfrist: ${kuendigung}\nStatus: ${status}\nAblaufdatum: ${expiryDate}`,
         });
 
-        res.status(201).json({ message: "Vertrag gespeichert", contract: { ...contract, _id: insertedContract.insertedId } }); // Sende die generierte _id zurück
+        res.status(201).json({ message: "Vertrag gespeichert", contract: { ...contract, _id: insertedContract.insertedId } });
     } catch (err) {
         console.error("❌ Fehler beim Hochladen und Analysieren:", err);
         res.status(500).json({ message: "Fehler beim Hochladen und Analysieren", error: err.message });
         if (req.file && fs.existsSync(path.join(__dirname, UPLOAD_PATH, req.file.filename))) {
-            await fs.unlink(path.join(__dirname, UPLOAD_PATH, req.file.filename)); // Lösche die hochgeladene Datei bei Fehler
+            await fs.unlink(path.join(__dirname, UPLOAD_PATH, req.file.filename));
         }
     }
 });
@@ -238,7 +243,7 @@ app.put("/contracts/:id", verifyToken, async (req, res) => {
             return res.status(404).json({ message: "Vertrag nicht gefunden" });
         }
         const updatedContract = await contractsCollection.findOne({ _id: new ObjectId(req.params.id) });
-        res.json({ message: "Vertrag aktualisiert", contract: updatedContract }); // Sende den aktualisierten Vertrag zurück
+        res.json({ message: "Vertrag aktualisiert", contract: updatedContract });
     } catch (err) {
         console.error("❌ Fehler beim Aktualisieren des Vertrags:", err);
         res.status(500).json({ message: "Update fehlgeschlagen" });
@@ -254,7 +259,7 @@ app.delete("/contracts/:id", verifyToken, async (req, res) => {
         if (result.deletedCount === 0) {
             return res.status(404).json({ message: "Vertrag nicht gefunden" });
         }
-        res.json({ message: "Vertrag gelöscht", deletedCount: result.deletedCount }); // Sende die Anzahl der gelöschten Dokumente zurück
+        res.json({ message: "Vertrag gelöscht", deletedCount: result.deletedCount });
     } catch (err) {
         console.error("❌ Fehler beim Löschen des Vertrags:", err);
         res.status(500).json({ message: "Fehler beim Löschen" });
@@ -268,7 +273,14 @@ app.use("/chat", verifyToken, checkSubscription, chatRoute);
 app.use("/generate", verifyToken, checkSubscription, generateRoute);
 
 // 🌍 Öffentliche Routen
-app.use("/auth", authRoutes);
+// Verwende authRoutes nur, wenn es initialisiert wurde
+app.use("/auth", (req, res, next) => {
+    if (authRoutes) {
+        return authRoutes(req, res, next);
+    }
+    res.status(503).json({ message: "Authentifizierungsdienst nicht verfügbar, bitte versuche es gleich nochmal" });
+});
+
 app.use("/stripe", stripeRoutes);
 app.use("/stripe", subscribeRoutes);
 app.use("/analyze-type", analyzeTypeRoute);

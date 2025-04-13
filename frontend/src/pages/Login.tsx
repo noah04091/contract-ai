@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import styles from "../styles/Auth.module.css";
 import { Mail, Lock } from "lucide-react";
 import Notification from "../components/Notification";
-import API_BASE_URL from "../utils/api";
+import { apiCall } from "../utils/api";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -19,39 +19,47 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/auth/login`, {
+      const data = await apiCall("/auth/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await res.json();
       console.log("⬅️ Server-Antwort:", data);
-
-      if (res.ok) {
-        setNotification({ message: "✅ Login erfolgreich!", type: "success" });
-        redirectTimeout.current = setTimeout(() => {
-          navigate("/dashboard");
-        }, 800);
-      } else {
-        setNotification({ message: "❌ " + (data.message || "Unbekannter Fehler"), type: "error" });
-      }
-    } catch (err) {
+      setNotification({ message: "✅ Login erfolgreich!", type: "success" });
+      
+      // Kurze Verzögerung für die Benutzerfreundlichkeit
+      redirectTimeout.current = setTimeout(() => {
+        navigate("/dashboard");
+      }, 800);
+    } catch (err: any) {
       console.error("❌ Fehler beim Login:", err);
-      setNotification({ message: "❌ Server nicht erreichbar", type: "error" });
+      setNotification({ 
+        message: "❌ " + (err.message || "Server nicht erreichbar"), 
+        type: "error" 
+      });
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
+    // Beim Seitenaufbau prüfen, ob der Benutzer bereits eingeloggt ist
+    const checkLoginStatus = async () => {
+      try {
+        await apiCall("/auth/me");
+        // Wenn kein Fehler geworfen wird, ist der Benutzer bereits eingeloggt
+        navigate("/dashboard");
+      } catch (err) {
+        // Nicht eingeloggt - Login-Formular anzeigen
+      }
+    };
+    
+    checkLoginStatus();
+    
     return () => {
       if (redirectTimeout.current) clearTimeout(redirectTimeout.current);
     };
-  }, []);
+  }, [navigate]);
 
   return (
     <div className={styles.authContainer}>

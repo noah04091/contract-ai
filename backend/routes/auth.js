@@ -17,6 +17,8 @@ const COOKIE_OPTIONS = {
     httpOnly: true,
     secure: true,
     sameSite: "None",
+    domain: "contract-ai.de",  // Damit funktioniert das Cookie für alle Subdomains
+    path: "/",                 // Cookie ist für alle Pfade verfügbar
     maxAge: 1000 * 60 * 60 * 2, // 2 Stunden (entspricht JWT_EXPIRES_IN)
 };
 
@@ -72,7 +74,7 @@ router.post("/login", async (req, res) => {
             { expiresIn: JWT_EXPIRES_IN }
         );
 
-        // **WICHTIG:** Entferne die domain-Option hier!
+        // Cookie mit aktualisierten Optionen setzen
         res.cookie(COOKIE_NAME, token, COOKIE_OPTIONS);
 
         res.json({ message: "✅ Login erfolgreich", isPremium: user.isPremium || false });
@@ -133,7 +135,7 @@ router.delete("/delete", verifyToken, async (req, res) => {
         await req.app.locals.db.collection("contracts").deleteMany({ userId: req.user.userId });
         await usersCollection.deleteOne({ _id: new ObjectId(req.user.userId) });
 
-        // **WICHTIG:** Entferne die domain-Option hier!
+        // Cookie mit aktualisierten Optionen löschen
         res.clearCookie(COOKIE_NAME, COOKIE_OPTIONS);
 
         res.json({ message: "✅ Account & Verträge gelöscht" });
@@ -205,7 +207,9 @@ router.post("/reset-password", async (req, res) => {
 
 // 🚪 Logout (Cookie löschen)
 router.post("/logout", (req, res) => {
-    // **WICHTIG:** Entferne die domain-Option hier!
+    // Cookie mit aktualisierten Optionen löschen
     res.clearCookie(COOKIE_NAME, COOKIE_OPTIONS);
     res.json({ message: "✅ Erfolgreich ausgeloggt" });
 });
+
+module.exports = router;
