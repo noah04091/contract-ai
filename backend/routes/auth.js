@@ -16,8 +16,8 @@ const COOKIE_NAME = "token";
 const COOKIE_OPTIONS = {
     httpOnly: true,
     secure: true,
-    sameSite: "Lax",         // Geändert von "None" zu "Lax"
-    // domain: "contract-ai.de", // Diese Zeile auskommentiert
+    sameSite: "None",        // Zurück zu "None" für Cross-Site Requests
+    // domain: "contract-ai.de", // Domain auskommentiert für bessere Kompatibilität
     path: "/",                // Cookie ist für alle Pfade verfügbar
     maxAge: 1000 * 60 * 60 * 2, // 2 Stunden (entspricht JWT_EXPIRES_IN)
 };
@@ -74,16 +74,20 @@ router.post("/login", async (req, res) => {
             { expiresIn: JWT_EXPIRES_IN }
         );
 
-        // Wichtig: Headers erst setzen BEVOR wir die Antwort senden
+        // Wichtig: Diese Header explizit setzen für CORS und Cookies
         res.setHeader('Access-Control-Allow-Credentials', 'true');
-        
+        res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
+
         // Cookie mit aktualisierten Optionen setzen
-        res.cookie(COOKIE_NAME, token, COOKIE_OPTIONS);
+        // Für maximale Kompatibilität senden wir ohne Domain-Einschränkung
+        const cookieOptions = { ...COOKIE_OPTIONS };
+        res.cookie(COOKIE_NAME, token, cookieOptions);
 
         // Zum Debuggen: Gib die Cookie-Optionen und andere Infos aus
         console.log("🔑 Login erfolgt für:", email);
         console.log("🍪 Cookie wird gesetzt:", COOKIE_NAME);
-        console.log("🍪 Cookie-Optionen:", JSON.stringify(COOKIE_OPTIONS));
+        console.log("🍪 Cookie-Optionen:", JSON.stringify(cookieOptions));
+        console.log("🍪 Request-Origin:", req.headers.origin);
         console.log("🔑 Token (für Fallback):", token.substring(0, 20) + "...");
 
         // Token auch in der Antwort zurückgeben für den Fallback-Mechanismus
@@ -221,8 +225,15 @@ router.post("/reset-password", async (req, res) => {
 
 // 🚪 Logout (Cookie löschen)
 router.post("/logout", (req, res) => {
+    // Wichtig: Auch hier Headers setzen
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
+    
     // Cookie mit aktualisierten Optionen löschen
-    res.clearCookie(COOKIE_NAME, COOKIE_OPTIONS);
+    const cookieOptions = { ...COOKIE_OPTIONS };
+    res.clearCookie(COOKIE_NAME, cookieOptions);
+    console.log("🍪 Cookie gelöscht:", COOKIE_NAME);
+    
     res.json({ message: "✅ Erfolgreich ausgeloggt" });
 });
 

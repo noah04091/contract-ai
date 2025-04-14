@@ -25,12 +25,17 @@ export default function Login() {
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include", // Cookies mitsenden/empfangen
+        credentials: "include", // Wichtig: Cookies mitsenden/empfangen
         body: JSON.stringify({ email, password }),
       });
 
       const data = await response.json();
       console.log("⬅️ Server-Antwort:", data);
+      
+      // Überprufe Set-Cookie Header im Response
+      console.log("🍪 Response-Headers:", 
+        [...(response.headers as any).entries()].reduce((obj, [key, val]) => ({...obj, [key]: val}), {})
+      );
 
       if (!response.ok) {
         throw new Error(data.message || "Login fehlgeschlagen");
@@ -46,28 +51,68 @@ export default function Login() {
 
       setNotification({ message: "✅ Login erfolgreich!", type: "success" });
       
-      // Nach dem Login prüfen, ob das Auth-Cookie funktioniert
+      // Nach dem Login detaillierte Diagnose durchführen
       setTimeout(async () => {
         try {
-          const authCheck = await fetch(`${API_BASE_URL}/auth/me`, {
+          console.log("🔍 Cookie-Diagnose nach Login:");
+          console.log("document.cookie:", document.cookie);
+          
+          // Test GET /auth/me mit Cookies
+          console.log("🔍 Test: /auth/me mit credentials");
+          const authCheckWithCookies = await fetch(`${API_BASE_URL}/auth/me`, {
             method: "GET",
-            credentials: "include", // Cookies mitsenden
+            credentials: "include",
           });
           
-          if (authCheck.ok) {
+          console.log("Status (mit Cookies):", authCheckWithCookies.status);
+          
+          if (authCheckWithCookies.ok) {
             console.log("✅ Cookie-Authentifizierung funktioniert");
           } else {
             console.warn("⚠️ Cookie-Authentifizierung fehlgeschlagen, Fallback wird verwendet");
+            
+            // Test GET /auth/me mit Authorization Header
+            if (data.token) {
+              console.log("🔍 Test: /auth/me mit Authorization Header");
+              const authCheckWithHeader = await fetch(`${API_BASE_URL}/auth/me`, {
+                method: "GET",
+                headers: {
+                  "Authorization": `Bearer ${data.token}`
+                }
+              });
+              
+              console.log("Status (mit Auth-Header):", authCheckWithHeader.status);
+              
+              if (authCheckWithHeader.ok) {
+                console.log("✅ Header-Authentifizierung funktioniert");
+              } else {
+                console.error("❌ Beide Authentifizierungsmethoden fehlgeschlagen");
+              }
+            }
+          }
+          
+          // Test Debug-Endpunkt
+          try {
+            console.log("🔍 Test: /debug Endpunkt");
+            const debugResponse = await fetch(`${API_BASE_URL}/debug`, {
+              method: "GET",
+              credentials: "include",
+            });
+            
+            const debugData = await debugResponse.json();
+            console.log("Debug-Endpunkt Response:", debugData);
+          } catch (debugErr) {
+            console.error("Debug-Endpunkt-Fehler:", debugErr);
           }
         } catch (err) {
-          console.error("❌ Authentifizierungsprüfung fehlgeschlagen:", err);
+          console.error("❌ Diagnose-Fehler:", err);
         }
       }, 500);
 
-      // Kurze Verzögerung für die Benutzerfreundlichkeit
+      // Kurze Verzögerung für die Benutzerfreundlichkeit und damit die Diagnose abgeschlossen werden kann
       redirectTimeout.current = setTimeout(() => {
         navigate("/dashboard");
-      }, 800);
+      }, 1500);
     } catch (err: any) {
       console.error("❌ Fehler beim Login:", err);
       setNotification({ 
@@ -134,6 +179,10 @@ export default function Login() {
             localStorage.removeItem('authTimestamp');
           }
         }
+        
+        // Versuche einen Cookie-Test
+        console.log("🔍 Cookie-Diagnose beim Laden:");
+        console.log("document.cookie:", document.cookie);
         
         // Nicht eingeloggt - Login-Formular anzeigen
         console.log("ℹ️ Nicht eingeloggt, Login-Formular wird angezeigt");

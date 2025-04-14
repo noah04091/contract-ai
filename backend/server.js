@@ -76,20 +76,48 @@ async function connectDB() {
 // Sofort die DB-Verbindung herstellen
 connectDB();
 
-// ✅ CORS-Konfiguration
-const corsOptions = {
-    origin: ["https://contract-ai.de", "https://www.contract-ai.de"],
+// ✅ Verbesserte CORS-Konfiguration
+const ALLOWED_ORIGINS = ["https://contract-ai.de", "https://www.contract-ai.de", "https://contract-ai-frontend.onrender.com"];
+
+app.use(cors({
+    origin: function(origin, callback) {
+        // Erlaube Requests ohne Origin (wie mobile Apps, curl, etc.)
+        if (!origin) return callback(null, true);
+        
+        if (ALLOWED_ORIGINS.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            console.warn(`⚠️ CORS-Anfrage von nicht erlaubtem Origin: ${origin}`);
+            callback(null, true); // Im Produktionsbetrieb: callback(new Error('Nicht erlaubter Origin'))
+        }
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "Cookie"],  // Cookie als erlaubten Header hinzugefügt
-};
-app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
+    allowedHeaders: ["Content-Type", "Authorization", "Cookie", "Accept"],
+    exposedHeaders: ["Set-Cookie"],
+}));
+
+// Pre-flight Anfragen für alle Routen
+app.options("*", cors());
 
 // ✅ Middleware
 app.use(cookieParser());
 app.use(express.json());
 app.use("/uploads", express.static(path.join(__dirname, UPLOAD_PATH)));
+
+// ✅ Globale Middleware für CORS-Header bei jeder Antwort
+app.use((req, res, next) => {
+    // Setze explizit die Access-Control-Headers für maximale Kompatibilität
+    res.header('Access-Control-Allow-Credentials', 'true');
+    
+    // Origin dynamisch setzen basierend auf dem Request
+    const origin = req.headers.origin;
+    if (origin && ALLOWED_ORIGINS.includes(origin)) {
+        res.header('Access-Control-Allow-Origin', origin);
+    }
+    
+    next();
+});
 
 // ⚠️ Stripe Webhook vor JSON!
 app.use("/stripe/webhook", stripeWebhookRoute);
@@ -288,6 +316,29 @@ app.use("/extract-text", extractTextRoute);
 
 const testAuthRoute = require("./testAuth");
 app.use("/test", testAuthRoute);
+
+// 🔍 Debug-Endpunkt für CORS- und Cookie-Tests
+app.get("/debug", (req, res) => {
+    console.log("🔍 Debug-Anfrage erhalten");
+    console.log("Origin:", req.headers.origin);
+    console.log("Cookies:", req.cookies);
+    
+    res.cookie("debug_cookie", "test-value", {
+        httpOnly: true,
+        secure: true,
+        sameSite: "None",
+        path: "/"
+    });
+    
+    res.json({ 
+        message: "Debug-Info", 
+        headers: {
+            origin: req.headers.origin,
+            cookie: req.headers.cookie
+        },
+        cookies: req.cookies
+    });
+});
 
 // 🚀 Server starten
 const PORT = process.env.PORT || 5000;
