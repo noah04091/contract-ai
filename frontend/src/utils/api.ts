@@ -11,6 +11,15 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
     }
   };
 
+  // Token aus localStorage als Fallback hinzufügen
+  const authToken = localStorage.getItem('authToken');
+  if (authToken) {
+    defaultOptions.headers = {
+      ...defaultOptions.headers,
+      "Authorization": `Bearer ${authToken}`
+    };
+  }
+
   // Optionen zusammenführen
   const fetchOptions: RequestInit = {
     ...defaultOptions,
@@ -25,15 +34,34 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, fetchOptions);
     
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || `Server antwortet mit Status ${response.status}`);
+      // Versuche, den Fehler als JSON zu lesen
+      try {
+        const error = await response.json();
+        throw new Error(error.message || `Server antwortet mit Status ${response.status}`);
+      } catch (jsonError) {
+        // Falls keine gültige JSON-Antwort
+        throw new Error(`Server antwortet mit Status ${response.status}`);
+      }
     }
     
-    return await response.json();
+    // Versuche, die Antwort als JSON zu parsen
+    try {
+      return await response.json();
+    } catch (jsonError) {
+      // Falls keine JSON-Antwort (z.B. bei leerer Antwort)
+      return {};
+    }
   } catch (error) {
     console.error(`API-Fehler (${endpoint}):`, error);
     throw error;
   }
+};
+
+// Funktion zum Löschen der Auth-Daten (nützlich beim Logout)
+export const clearAuthData = () => {
+  localStorage.removeItem('authToken');
+  localStorage.removeItem('authEmail');
+  localStorage.removeItem('authTimestamp');
 };
 
 export default API_BASE_URL;

@@ -4,7 +4,7 @@ import { Navigate } from "react-router-dom";
 import { apiCall } from "../utils/api";
 
 interface RequireAuthProps {
-  children: React.ReactNode; // ✅ Beste Kompatibilität mit Routing und JSX
+  children: React.ReactNode;
 }
 
 export default function RequireAuth({ children }: RequireAuthProps) {
@@ -14,37 +14,35 @@ export default function RequireAuth({ children }: RequireAuthProps) {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        // Versuche normale Cookie-Authentifizierung
+        // apiCall verwendet jetzt automatisch den Token aus localStorage
         const data = await apiCall("/auth/me");
-        console.log("✅ Eingeloggt als:", data.email);
+        console.log("✅ Authentifizierung erfolgreich:", data.email);
         setIsAuthenticated(true);
       } catch (err) {
-        console.warn("❌ Cookie-Auth fehlgeschlagen, versuche Fallback...");
+        console.warn("❌ Authentifizierung fehlgeschlagen:", err);
         
-        // Prüfe Fallback
-        const fallbackToken = localStorage.getItem('fallbackToken');
-        const fallbackTimestamp = localStorage.getItem('fallbackTimestamp');
-        
-        if (fallbackToken && fallbackTimestamp) {
-          // Prüfen, ob der Fallback noch gültig ist (2 Stunden)
-          const now = Date.now();
-          const timestamp = parseInt(fallbackTimestamp, 10);
-          const twoHoursInMs = 2 * 60 * 60 * 1000;
-          
-          if (now - timestamp < twoHoursInMs) {
-            console.log("✅ Fallback-Auth erkannt für:", fallbackToken);
-            setIsAuthenticated(true);
-          } else {
-            // Fallback abgelaufen, entfernen
-            localStorage.removeItem('fallbackToken');
-            localStorage.removeItem('fallbackTimestamp');
-            console.warn("❌ Fallback-Auth abgelaufen");
-            setIsAuthenticated(false);
+        // Prüfe zusätzlich den alten Token-Namen für Kompatibilität
+        const legacyToken = localStorage.getItem('token');
+        if (legacyToken) {
+          try {
+            // Manueller API-Aufruf mit dem alten Token
+            const response = await fetch(`https://api.contract-ai.de/auth/me`, {
+              headers: {
+                "Authorization": `Bearer ${legacyToken}`
+              }
+            });
+            
+            if (response.ok) {
+              console.log("✅ Legacy-Token-Authentifizierung erfolgreich");
+              setIsAuthenticated(true);
+              return;
+            }
+          } catch (legacyErr) {
+            console.warn("❌ Legacy-Token-Authentifizierung fehlgeschlagen");
           }
-        } else {
-          console.warn("❌ Nicht eingeloggt");
-          setIsAuthenticated(false);
         }
+        
+        setIsAuthenticated(false);
       } finally {
         setLoading(false);
       }

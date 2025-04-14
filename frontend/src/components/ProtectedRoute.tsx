@@ -1,3 +1,4 @@
+// 📁 src/components/ProtectedRoute.tsx
 import { Navigate } from "react-router-dom";
 
 interface Props {
@@ -5,7 +6,9 @@ interface Props {
 }
 
 export default function ProtectedRoute({ children }: Props) {
-  const token = localStorage.getItem("token");
+  // Prüfe verschiedene mögliche Token-Speicherorte für Kompatibilität
+  const token = localStorage.getItem("authToken") || 
+                localStorage.getItem("token");
 
   if (!token) {
     return <Navigate to="/login" replace />;

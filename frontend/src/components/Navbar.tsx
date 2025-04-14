@@ -1,3 +1,4 @@
+// 📁 src/components/Navbar.tsx
 import { useEffect, useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
@@ -5,7 +6,7 @@ import styles from "../styles/Navbar.module.css";
 import Notification from "./Notification";
 import ThemeToggle from "./ThemeToggle";
 import logo from "../assets/logo.png";
-import API_BASE_URL from "../utils/api";
+import API_BASE_URL, { clearAuthData } from "../utils/api";
 
 interface DecodedToken {
   exp: number;
@@ -27,31 +28,42 @@ export default function Navbar() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    // Prüfe verschiedene Token-Speicherorte
+    const token = localStorage.getItem("authToken") || localStorage.getItem("token");
     if (!token) return;
 
     try {
       const decoded = jwtDecode<DecodedToken>(token);
       const now = Date.now() / 1000;
       if (decoded.exp < now) {
-        localStorage.removeItem("token");
+        // Token abgelaufen - alle Auth-Daten löschen
+        clearAuthData();
         setUser(null);
         navigate("/login");
       } else {
+        // API-Anfrage mit korrekten Credentials
         fetch(`${API_BASE_URL}/auth/me`, {
-          headers: { Authorization: token },
+          method: "GET",
+          headers: { 
+            "Authorization": `Bearer ${token}` 
+          },
+          credentials: "include"  // Cookies mitsenden
         })
-          .then((res) => res.json())
+          .then((res) => {
+            if (!res.ok) throw new Error("Fehler beim Laden des Benutzerprofils");
+            return res.json();
+          })
           .then((data) =>
             setUser({ email: data.email, subscriptionActive: data.subscriptionActive })
           )
           .catch(() => {
             setUser(null);
-            localStorage.removeItem("token");
+            clearAuthData();
           });
       }
-    } catch {
-      localStorage.removeItem("token");
+    } catch (error) {
+      console.error("Token-Dekodierungsfehler:", error);
+      clearAuthData();
       setUser(null);
     }
   }, [navigate]);
@@ -66,8 +78,20 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
+  const handleLogout = async () => {
+    try {
+      // Server-Logout für Cookie-Clearing
+      await fetch(`${API_BASE_URL}/auth/logout`, {
+        method: "POST",
+        credentials: "include"
+      });
+    } catch (err) {
+      console.error("Logout-API-Fehler:", err);
+      // Fehler beim Server-Logout ignorieren, lokalen Logout trotzdem durchführen
+    }
+    
+    // Alle Auth-Daten entfernen
+    clearAuthData();
     setUser(null);
     setNotification({ message: "✅ Erfolgreich ausgeloggt", type: "success" });
     setTimeout(() => navigate("/login"), 1000);

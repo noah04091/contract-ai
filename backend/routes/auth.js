@@ -74,12 +74,19 @@ router.post("/login", async (req, res) => {
             { expiresIn: JWT_EXPIRES_IN }
         );
 
+        // Wichtig: Headers erst setzen BEVOR wir die Antwort senden
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
+        
         // Cookie mit aktualisierten Optionen setzen
         res.cookie(COOKIE_NAME, token, COOKIE_OPTIONS);
 
-        // Zum Debuggen: Gib die Cookie-Optionen aus
-        console.log("🍪 Cookie gesetzt mit Optionen:", COOKIE_OPTIONS);
+        // Zum Debuggen: Gib die Cookie-Optionen und andere Infos aus
+        console.log("🔑 Login erfolgt für:", email);
+        console.log("🍪 Cookie wird gesetzt:", COOKIE_NAME);
+        console.log("🍪 Cookie-Optionen:", JSON.stringify(COOKIE_OPTIONS));
+        console.log("🔑 Token (für Fallback):", token.substring(0, 20) + "...");
 
+        // Token auch in der Antwort zurückgeben für den Fallback-Mechanismus
         res.json({ 
             message: "✅ Login erfolgreich", 
             isPremium: user.isPremium || false,
