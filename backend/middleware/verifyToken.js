@@ -5,12 +5,29 @@ module.exports = function (req, res, next) {
   // Zusätzliche Debug-Ausgaben für Cookie-Probleme
   console.log("🍪 Cookie-Header:", req.headers.cookie);
   console.log("🍪 Alle Cookies:", req.cookies);
+  console.log("🔑 Authorization-Header:", req.headers.authorization);
   
-  const token = req.cookies.token; // ⬅️ Cookie lesen statt Authorization-Header
+  // 1. Versuche zuerst, den Token aus dem Cookie zu lesen
+  let token = req.cookies.token;
+  
+  // 2. Falls kein Cookie-Token, versuche es mit dem Authorization-Header
+  if (!token && req.headers.authorization) {
+    const authHeader = req.headers.authorization;
+    if (authHeader.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1];
+      console.log("🔄 Kein Cookie gefunden, verwende stattdessen Authorization-Header");
+    }
+  }
+  
+  // 3. Prüfe ob Fallback-Token im Query-Parameter vorhanden ist (optional)
+  if (!token && req.query.token) {
+    token = req.query.token;
+    console.log("🔄 Verwende Token aus Query-Parameter als letzten Fallback");
+  }
 
   if (!token) {
-    console.log("❌ Kein Token im Cookie gefunden");
-    return res.status(401).json({ message: "❌ Kein Token im Cookie gefunden" });
+    console.log("❌ Kein Token gefunden (weder in Cookie, Header noch Query)");
+    return res.status(401).json({ message: "❌ Kein Token gefunden. Bitte melde dich an." });
   }
 
   try {

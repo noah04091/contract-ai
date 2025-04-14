@@ -17,7 +17,7 @@ const COOKIE_OPTIONS = {
     httpOnly: true,
     secure: true,
     sameSite: "Lax",         // Geändert von "None" zu "Lax"
-    domain: "contract-ai.de", // Damit funktioniert das Cookie für alle Subdomains
+    // domain: "contract-ai.de", // Diese Zeile auskommentiert
     path: "/",                // Cookie ist für alle Pfade verfügbar
     maxAge: 1000 * 60 * 60 * 2, // 2 Stunden (entspricht JWT_EXPIRES_IN)
 };
@@ -77,7 +77,14 @@ router.post("/login", async (req, res) => {
         // Cookie mit aktualisierten Optionen setzen
         res.cookie(COOKIE_NAME, token, COOKIE_OPTIONS);
 
-        res.json({ message: "✅ Login erfolgreich", isPremium: user.isPremium || false });
+        // Zum Debuggen: Gib die Cookie-Optionen aus
+        console.log("🍪 Cookie gesetzt mit Optionen:", COOKIE_OPTIONS);
+
+        res.json({ 
+            message: "✅ Login erfolgreich", 
+            isPremium: user.isPremium || false,
+            token: token // Token auch in der Antwort mitschicken für Fallback
+        });
     } catch (err) {
         console.error("❌ Fehler beim Login:", err);
         res.status(500).json({ message: "Serverfehler beim Login" });
