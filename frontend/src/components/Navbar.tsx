@@ -1,4 +1,3 @@
-// 📁 src/components/Navbar.tsx
 import { useEffect, useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
@@ -6,7 +5,8 @@ import styles from "../styles/Navbar.module.css";
 import Notification from "./Notification";
 import ThemeToggle from "./ThemeToggle";
 import logo from "../assets/logo.png";
-import API_BASE_URL, { clearAuthData } from "../utils/api";
+import { clearAuthData } from "../utils/api";
+import API_BASE_URL from "../utils/api"; // ✅ Import ergänzt
 
 interface DecodedToken {
   exp: number;
@@ -28,7 +28,6 @@ export default function Navbar() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Prüfe verschiedene Token-Speicherorte
     const token = localStorage.getItem("authToken") || localStorage.getItem("token");
     if (!token) return;
 
@@ -36,31 +35,29 @@ export default function Navbar() {
       const decoded = jwtDecode<DecodedToken>(token);
       const now = Date.now() / 1000;
       if (decoded.exp < now) {
-        // Token abgelaufen - alle Auth-Daten löschen
         clearAuthData();
         setUser(null);
         navigate("/login");
-      } else {
-        // API-Anfrage mit korrekten Credentials
-        fetch(`${API_BASE_URL}/auth/me`, {
-          method: "GET",
-          headers: { 
-            "Authorization": `Bearer ${token}` 
-          },
-          credentials: "include"  // Cookies mitsenden
-        })
-          .then((res) => {
-            if (!res.ok) throw new Error("Fehler beim Laden des Benutzerprofils");
-            return res.json();
-          })
-          .then((data) =>
-            setUser({ email: data.email, subscriptionActive: data.subscriptionActive })
-          )
-          .catch(() => {
-            setUser(null);
-            clearAuthData();
-          });
+        return;
       }
+
+      // ✅ Auth-Check über Cookie + Proxy
+      fetch(`${API_BASE_URL}/auth/me`, {
+        method: "GET",
+        credentials: "include",
+      })
+        .then((res) => {
+          if (!res.ok) throw new Error("Fehler beim Laden des Benutzerprofils");
+          return res.json();
+        })
+        .then((data) =>
+          setUser({ email: data.email, subscriptionActive: data.subscriptionActive })
+        )
+        .catch(() => {
+          clearAuthData();
+          setUser(null);
+        });
+
     } catch (error) {
       console.error("Token-Dekodierungsfehler:", error);
       clearAuthData();
@@ -80,17 +77,14 @@ export default function Navbar() {
 
   const handleLogout = async () => {
     try {
-      // Server-Logout für Cookie-Clearing
       await fetch(`${API_BASE_URL}/auth/logout`, {
         method: "POST",
-        credentials: "include"
+        credentials: "include",
       });
     } catch (err) {
       console.error("Logout-API-Fehler:", err);
-      // Fehler beim Server-Logout ignorieren, lokalen Logout trotzdem durchführen
     }
-    
-    // Alle Auth-Daten entfernen
+
     clearAuthData();
     setUser(null);
     setNotification({ message: "✅ Erfolgreich ausgeloggt", type: "success" });
@@ -118,7 +112,6 @@ export default function Navbar() {
           <Link to="/compare" className={styles.navLink}>📊 Vergleich</Link>
           <Link to="/chat" className={styles.navLink}>💬 KI-Chat</Link>
 
-          {/* Nur für nicht-Premium-Nutzer sichtbar */}
           {user && !user.subscriptionActive && (
             <Link to="/pricing" className={styles.navLink}>💰 Preise</Link>
           )}

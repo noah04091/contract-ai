@@ -1,38 +1,47 @@
 import { useEffect, useState } from "react";
 import styles from "../styles/Chat.module.css";
 import PremiumNotice from "../components/PremiumNotice";
-import API_BASE_URL from "../utils/api";
+
+interface Message {
+  from: "user" | "ai" | "system";
+  text: string;
+}
 
 export default function Chat() {
   const [file, setFile] = useState<File | null>(null);
   const [question, setQuestion] = useState("");
-  const [messages, setMessages] = useState<{ from: string; text: string }[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
   const [contractLoaded, setContractLoaded] = useState(false);
   const [isPremium, setIsPremium] = useState<boolean | null>(null);
 
   // ✅ Abostatus prüfen
   useEffect(() => {
-    const fetchStatus = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) return setIsPremium(false);
+    let cancelled = false;
 
+    const fetchStatus = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/auth/me`, {
-          headers: {
-            Authorization: token,
-          },
+        const res = await fetch("/api/auth/me", {
+          credentials: "include",
         });
 
+        if (!res.ok) throw new Error("Nicht authentifiziert");
         const data = await res.json();
-        setIsPremium(data.subscriptionActive === true);
+
+        if (!cancelled) {
+          setIsPremium(data.subscriptionActive === true || data.isPremium === true);
+        }
       } catch (err) {
-        console.error("❌ Fehler beim Laden des Abostatus:", err);
-        setIsPremium(false);
+        console.error("❌ Fehler beim Abostatus:", err);
+        if (!cancelled) setIsPremium(false);
       }
     };
 
     fetchStatus();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // ✅ Vertrag hochladen
@@ -44,20 +53,16 @@ export default function Chat() {
     formData.append("file", file);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/chat/upload`, {
+      const res = await fetch("/api/chat/upload", {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
-        },
+        credentials: "include",
         body: formData,
       });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
 
-      setMessages([
-        { from: "system", text: "📄 Vertrag erfolgreich geladen. Stelle nun deine Fragen!" },
-      ]);
+      setMessages([{ from: "system", text: "📄 Vertrag erfolgreich geladen. Stelle nun deine Fragen!" }]);
       setContractLoaded(true);
     } catch (err: any) {
       alert("❌ Fehler beim Upload: " + err.message);
@@ -68,26 +73,25 @@ export default function Chat() {
 
   // ✅ Frage stellen
   const handleAsk = async () => {
-    if (!question) return;
+    if (!question.trim()) return;
     setLoading(true);
-    const userMessage = { from: "user", text: question };
+
+    const userMessage: Message = { from: "user", text: question };
     setMessages((prev) => [...prev, userMessage]);
     setQuestion("");
 
     try {
-      const res = await fetch(`${API_BASE_URL}/chat/ask`, {
+      const res = await fetch("/api/chat/ask", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
-        },
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question }),
       });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.message);
 
-      const aiMessage = { from: "ai", text: data.answer };
+      const aiMessage: Message = { from: "ai", text: data.answer };
       setMessages((prev) => [...prev, aiMessage]);
     } catch (err: any) {
       alert("❌ Fehler bei der Anfrage: " + err.message);
@@ -96,7 +100,7 @@ export default function Chat() {
     }
   };
 
-  // ⏳ Ladeanzeige
+  // ⏳ Ladeanzeige beim Status-Check
   if (isPremium === null) return <p style={{ padding: "2rem" }}>⏳ Lade...</p>;
 
   return (
@@ -157,7 +161,7 @@ export default function Chat() {
             />
             <button
               onClick={handleAsk}
-              disabled={loading || !question || !isPremium}
+              disabled={loading || !question.trim() || !isPremium}
             >
               Senden
             </button>

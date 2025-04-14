@@ -1,8 +1,8 @@
-// src/components/AnalysisHistory.tsx
+// 📁 src/components/AnalysisHistory.tsx
 import { useEffect, useState } from "react";
 import styles from "./AnalysisHistory.module.css";
 import axios from "axios";
-import API_BASE_URL from "../utils/api"; // ✅ zentrale API-URL
+import API_BASE_URL from "../utils/api";
 
 interface Analysis {
   _id: string;
@@ -26,7 +26,10 @@ export default function AnalysisHistory() {
     try {
       const token = localStorage.getItem("token") || "";
       const res = await axios.get<Analysis[]>(`${API_BASE_URL}/analyses`, {
-        headers: { Authorization: token },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        withCredentials: true, // 🧁 für Cookies, falls dein Backend Cookies verwendet
       });
       setAnalyses(res.data);
     } catch (err) {

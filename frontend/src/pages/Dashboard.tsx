@@ -49,16 +49,12 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/auth/me`, {
-      credentials: "include", // 🧁 Cookie mitsenden
-    })
+    fetch(`${API_BASE_URL}/auth/me`, { credentials: "include" })
       .then((res) => res.json())
       .then((data) => setUserEmail(data.email))
       .catch((err) => console.error("Fehler beim Abrufen des Benutzers:", err));
 
-    fetch(`${API_BASE_URL}/contracts`, {
-      credentials: "include", // 🧁 Cookie mitsenden
-    })
+    fetch(`${API_BASE_URL}/contracts`, { credentials: "include" })
       .then((res) => res.json())
       .then((data) => {
         setContracts(data);
@@ -70,8 +66,7 @@ export default function Dashboard() {
     const filtered = contracts.filter((contract) => {
       const combinedText = `${contract.name} ${contract.laufzeit} ${contract.kuendigung}`.toLowerCase();
       const matchesSearch = combinedText.includes(searchTerm.toLowerCase());
-      const matchesStatus =
-        selectedStatus === "all" || contract.status === selectedStatus;
+      const matchesStatus = selectedStatus === "all" || contract.status === selectedStatus;
       return matchesSearch && matchesStatus;
     });
     setFilteredContracts(filtered);
@@ -94,7 +89,7 @@ export default function Dashboard() {
 
     const res = await fetch(`${API_BASE_URL}/upload`, {
       method: "POST",
-      credentials: "include", // 🧁 Cookie mitsenden
+      credentials: "include",
       body: formData,
     });
 
@@ -116,7 +111,7 @@ export default function Dashboard() {
 
     const res = await fetch(`${API_BASE_URL}/contracts/${id}`, {
       method: "DELETE",
-      credentials: "include", // 🧁 Cookie mitsenden
+      credentials: "include",
     });
 
     if (res.ok) {
@@ -132,10 +127,16 @@ export default function Dashboard() {
     try {
       const res = await fetch(`${API_BASE_URL}/contracts/${id}/reminder`, {
         method: "PATCH",
-        credentials: "include", // 🧁 Cookie mitsenden
+        credentials: "include",
       });
 
       if (!res.ok) throw new Error("Fehler beim Umschalten des Reminders");
+
+      const updated = contracts.map((c) =>
+        c._id === id ? { ...c, reminder: !c.reminder } : c
+      );
+      setContracts(updated);
+      setFilteredContracts(updated);
       alert("🔔 Erinnerung wurde aktualisiert!");
     } catch (err) {
       console.error(err);
@@ -179,7 +180,7 @@ export default function Dashboard() {
     }
 
     soonExpiring.forEach((c) => {
-      generateICS({ name: c.name, expiryDate: c.expiryDate });
+      generateICS({ name: c.name, expiryDate: c.expiryDate! });
     });
 
     alert("📅 ICS-Dateien für bald ablaufende Verträge exportiert.");
@@ -210,13 +211,8 @@ export default function Dashboard() {
 
       <div className={styles.statsRow}>
         <p>📦 Verträge insgesamt: <strong>{contracts.length}</strong></p>
-        <p>⏰ Mit Erinnerung: <strong>{contracts.filter(c => c.reminder).length}</strong></p>
-        <p>🕓 Laufzeit: <strong>
-          {contracts.reduce((sum, c) => {
-            const match = c.laufzeit?.match(/(\d+)/);
-            return match ? sum + parseInt(match[1]) : sum;
-          }, 0)} Monate
-        </strong></p>
+        <p>⏰ Mit Erinnerung: <strong>{countWithReminder()}</strong></p>
+        <p>📈 Ø Laufzeit: <strong>{averageLaufzeit()} Monate</strong></p>
       </div>
 
       <ContractNotification contracts={contracts} />
@@ -225,12 +221,6 @@ export default function Dashboard() {
         <div className={styles.statusCard}>✅ Aktiv: <strong>{countStatus("Aktiv")}</strong></div>
         <div className={styles.statusCard}>⚠️ Bald ablaufend: <strong>{countStatus("Bald ablaufend")}</strong></div>
         <div className={styles.statusCard}>❌ Abgelaufen: <strong>{countStatus("Abgelaufen")}</strong></div>
-      </div>
-
-      <div className={styles.statsBox}>
-        <div>📦 Verträge insgesamt: <strong>{contracts.length}</strong></div>
-        <div>🔔 Mit Erinnerung: <strong>{countWithReminder()}</strong></div>
-        <div>📈 Ø Laufzeit: <strong>{averageLaufzeit()} Monate</strong></div>
       </div>
 
       <div className={styles.actionsRow}>
@@ -253,15 +243,9 @@ export default function Dashboard() {
           <option value="Abgelaufen">❌ Abgelaufen</option>
         </select>
 
-        <button onClick={() => setShowModal(true)} className={styles.uploadButton}>
-          📄 Vertrag hinzufügen
-        </button>
-        <button onClick={exportToCSV} className={styles.exportButton}>
-          📥 CSV Export
-        </button>
-        <button onClick={exportAllICS} className={styles.exportButton}>
-          📅 ICS Export (30 Tage)
-        </button>
+        <button onClick={() => setShowModal(true)} className={styles.uploadButton}>📄 Vertrag hinzufügen</button>
+        <button onClick={exportToCSV} className={styles.exportButton}>📥 CSV Export</button>
+        <button onClick={exportAllICS} className={styles.exportButton}>📅 ICS Export (30 Tage)</button>
       </div>
 
       <table className={styles.contractTable}>

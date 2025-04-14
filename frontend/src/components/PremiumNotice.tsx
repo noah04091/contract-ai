@@ -1,7 +1,6 @@
-// 📁 PremiumNotice.tsx
 import { useEffect, useState } from "react";
 import styles from "../styles/PremiumNotice.module.css";
-import API_BASE_URL from "../utils/api";
+import API_BASE_URL from "../utils/api"; // ✅ Import ergänzt
 
 export default function PremiumNotice() {
   const [isPremium, setIsPremium] = useState<boolean | null>(null);
@@ -9,21 +8,15 @@ export default function PremiumNotice() {
 
   useEffect(() => {
     const fetchStatus = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        setIsPremium(false);
-        setLoading(false);
-        return;
-      }
-
       try {
         const res = await fetch(`${API_BASE_URL}/auth/me`, {
-          headers: { Authorization: `Bearer ${token}` },
-          credentials: "include", // 🧁 Cookies mitnehmen, falls relevant
+          credentials: "include", // ✅ Cookie wird mitgeschickt
         });
 
+        if (!res.ok) throw new Error("Nicht authentifiziert");
+
         const data = await res.json();
-        setIsPremium(data.isPremium || false);
+        setIsPremium(data.subscriptionActive === true); // ✅ richtige Feldname
       } catch (err) {
         console.error("❌ Fehler beim Laden des Abostatus:", err);
         setIsPremium(false);
@@ -39,10 +32,7 @@ export default function PremiumNotice() {
     try {
       const res = await fetch(`${API_BASE_URL}/stripe/create-checkout-session`, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
-        },
-        credentials: "include",
+        credentials: "include", // ✅ Cookies wichtig für Stripe-Routing
       });
 
       const data = await res.json();
@@ -57,6 +47,7 @@ export default function PremiumNotice() {
     }
   };
 
+  // 🔕 Wenn Premium oder noch am Laden, nichts anzeigen
   if (loading || isPremium === null || isPremium === true) return null;
 
   return (

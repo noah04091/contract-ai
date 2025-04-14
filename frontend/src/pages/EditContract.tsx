@@ -1,7 +1,6 @@
-// src/pages/EditContract.tsx
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import styles from "./EditContract.module.css"; // ✅ Falls du’s lieber bei "pages" hast
+import styles from "./EditContract.module.css";
 
 export default function EditContract() {
   const { id } = useParams();
@@ -18,10 +17,8 @@ export default function EditContract() {
   useEffect(() => {
     const fetchContract = async () => {
       try {
-        const res = await fetch(`https://contract-ai-backend.onrender.com/contracts/${id}`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
-          },
+        const res = await fetch(`/api/contracts/${id}`, {
+          credentials: "include", // ✅ wichtig für Cookie-Auth
         });
         const data = await res.json();
         if (res.ok) {
@@ -42,11 +39,11 @@ export default function EditContract() {
   }, [id]);
 
   const handleUpdate = async () => {
-    const res = await fetch(`https://contract-ai-backend.onrender.com/contracts/${id}`, {
+    const res = await fetch(`/api/contracts/${id}`, {
       method: "PUT",
+      credentials: "include", // ✅ wichtig
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
       },
       body: JSON.stringify(contract),
     });

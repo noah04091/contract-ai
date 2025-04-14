@@ -1,7 +1,6 @@
 // 📁 src/pages/BetterContracts.tsx
 import React, { useState } from "react";
 import UniversalContractComparison from "../components/UniversalContractComparison";
-import API_BASE_URL from "../utils/api";
 
 const BetterContracts: React.FC = () => {
   const [contractText, setContractText] = useState("");
@@ -20,9 +19,10 @@ const BetterContracts: React.FC = () => {
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/analyze-type`, {
+      const res = await fetch("/api/analyze-type", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ text: contractText })
       });
 
@@ -45,10 +45,12 @@ const BetterContracts: React.FC = () => {
     formData.append("file", file);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/extract-text`, {
+      const res = await fetch("/api/extract-text", {
         method: "POST",
+        credentials: "include",
         body: formData
       });
+
       const data = await res.json();
       setContractText(data.text);
     } catch (err) {

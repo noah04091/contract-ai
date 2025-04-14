@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import styles from "../styles/Compare.module.css";
 import html2pdf from "html2pdf.js";
 import PremiumNotice from "../components/PremiumNotice";
-import API_BASE_URL from "../utils/api";
 
 interface ComparisonResult {
   differences: string;
@@ -17,26 +16,36 @@ export default function Compare() {
   const [result, setResult] = useState<ComparisonResult | null>(null);
   const [isPremium, setIsPremium] = useState<boolean | null>(null);
 
+  // ✅ Premium-Status prüfen
   useEffect(() => {
-    const fetchStatus = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) return setIsPremium(false);
+    let cancelled = false;
 
+    const fetchStatus = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/auth/me`, {
-          headers: { Authorization: token },
+        const res = await fetch("/api/auth/me", {
+          credentials: "include",
         });
+
+        if (!res.ok) throw new Error("Nicht authentifiziert");
+
         const data = await res.json();
-        setIsPremium(data.subscriptionActive === true);
+        if (!cancelled) {
+          setIsPremium(data.subscriptionActive === true || data.isPremium === true);
+        }
       } catch (err) {
         console.error("❌ Fehler beim Laden des Abostatus:", err);
-        setIsPremium(false);
+        if (!cancelled) setIsPremium(false);
       }
     };
 
     fetchStatus();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
+  // ✅ Vergleichs-Anfrage absenden
   const handleSubmit = async () => {
     if (!file1 || !file2) return alert("❌ Bitte wähle zwei Verträge aus.");
     setLoading(true);
@@ -45,12 +54,11 @@ export default function Compare() {
     const formData = new FormData();
     formData.append("file1", file1);
     formData.append("file2", file2);
-    const token = localStorage.getItem("token") || "";
 
     try {
-      const res = await fetch(`${API_BASE_URL}/compare`, {
+      const res = await fetch("/api/compare", {
         method: "POST",
-        headers: { Authorization: token },
+        credentials: "include",
         body: formData,
       });
 
@@ -58,18 +66,20 @@ export default function Compare() {
       if (!res.ok) throw new Error(data.message);
       setResult(data);
     } catch (err: any) {
-      alert("Fehler: " + err.message);
+      alert("❌ Fehler: " + err.message);
     } finally {
       setLoading(false);
     }
   };
 
+  // 🔄 Reset
   const handleReset = () => {
     setFile1(null);
     setFile2(null);
     setResult(null);
   };
 
+  // 📄 Export als PDF
   const exportToPDF = () => {
     if (!result) return;
     const element = document.createElement("div");
@@ -95,7 +105,8 @@ export default function Compare() {
       {!isPremium && <PremiumNotice />}
 
       <p>
-        Wähle zwei Verträge aus und erhalte eine KI-gestützte Analyse zu Unterschieden, Stärken & Schwächen.
+        Wähle zwei Verträge aus und erhalte eine KI-gestützte Analyse zu Unterschieden,
+        Stärken & Schwächen.
       </p>
 
       <div className={styles.uploadBox}>

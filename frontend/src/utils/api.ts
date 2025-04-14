@@ -1,6 +1,7 @@
 // C:\Users\liebo\Documents\contract-ai\frontend\src\utils\api.ts
 
-const API_BASE_URL = "https://api.contract-ai.de";
+// Wir verwenden einen relativen Pfad, der durch den Proxy geleitet wird
+const API_BASE_URL = "/api";
 
 export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
   // Standard-Optionen für alle API-Aufrufe
@@ -11,7 +12,7 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
     }
   };
 
-  // Token aus localStorage als Fallback hinzufügen
+  // Token aus localStorage als Fallback hinzufügen (für Abwärtskompatibilität)
   const authToken = localStorage.getItem('authToken');
   if (authToken) {
     defaultOptions.headers = {
@@ -31,7 +32,15 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
   };
 
   try {
+    // Anfrage über den Proxy senden
     const response = await fetch(`${API_BASE_URL}${endpoint}`, fetchOptions);
+    
+    // Für Debugging-Zwecke
+    console.log(`🔍 API-Aufruf: ${endpoint}`, {
+      status: response.status,
+      headers: [...(response.headers as any).entries()].reduce((obj, [key, val]) => ({...obj, [key]: val}), {}),
+      cookies: document.cookie
+    });
     
     if (!response.ok) {
       // Versuche, den Fehler als JSON zu lesen

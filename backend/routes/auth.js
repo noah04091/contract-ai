@@ -13,12 +13,12 @@ const JWT_EXPIRES_IN = "2h";
 const PASSWORD_SALT_ROUNDS = 10;
 const RESET_TOKEN_EXPIRES_IN_MS = 1000 * 60 * 15; // 15 Minuten
 const COOKIE_NAME = "token";
+// Vereinfachte Cookie-Optionen für Proxy-Ansatz
 const COOKIE_OPTIONS = {
     httpOnly: true,
     secure: true,
-    sameSite: "None",        // Zurück zu "None" für Cross-Site Requests
-    // domain: "contract-ai.de", // Domain auskommentiert für bessere Kompatibilität
-    path: "/",                // Cookie ist für alle Pfade verfügbar
+    sameSite: "Lax",        // Kann jetzt "Lax" sein (sicherer), da wir einen Proxy verwenden
+    path: "/",               // Cookie ist für alle Pfade verfügbar
     maxAge: 1000 * 60 * 60 * 2, // 2 Stunden (entspricht JWT_EXPIRES_IN)
 };
 
@@ -74,12 +74,8 @@ router.post("/login", async (req, res) => {
             { expiresIn: JWT_EXPIRES_IN }
         );
 
-        // Wichtig: Diese Header explizit setzen für CORS und Cookies
-        res.setHeader('Access-Control-Allow-Credentials', 'true');
-        res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
-
+        // Mit Proxy sind CORS-Header nicht mehr so kritisch
         // Cookie mit aktualisierten Optionen setzen
-        // Für maximale Kompatibilität senden wir ohne Domain-Einschränkung
         const cookieOptions = { ...COOKIE_OPTIONS };
         res.cookie(COOKIE_NAME, token, cookieOptions);
 
@@ -87,10 +83,9 @@ router.post("/login", async (req, res) => {
         console.log("🔑 Login erfolgt für:", email);
         console.log("🍪 Cookie wird gesetzt:", COOKIE_NAME);
         console.log("🍪 Cookie-Optionen:", JSON.stringify(cookieOptions));
-        console.log("🍪 Request-Origin:", req.headers.origin);
         console.log("🔑 Token (für Fallback):", token.substring(0, 20) + "...");
 
-        // Token auch in der Antwort zurückgeben für den Fallback-Mechanismus
+        // Token auch in der Antwort zurückgeben für den Fallback-Mechanismus (während der Übergangsphase)
         res.json({ 
             message: "✅ Login erfolgreich", 
             isPremium: user.isPremium || false,
@@ -225,15 +220,12 @@ router.post("/reset-password", async (req, res) => {
 
 // 🚪 Logout (Cookie löschen)
 router.post("/logout", (req, res) => {
-    // Wichtig: Auch hier Headers setzen
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Access-Control-Allow-Origin', req.headers.origin || '*');
-    
     // Cookie mit aktualisierten Optionen löschen
     const cookieOptions = { ...COOKIE_OPTIONS };
     res.clearCookie(COOKIE_NAME, cookieOptions);
     console.log("🍪 Cookie gelöscht:", COOKIE_NAME);
     
+    // Bei Proxy-Ansatz ist es weniger wichtig, zusätzliche CORS-Header zu setzen
     res.json({ message: "✅ Erfolgreich ausgeloggt" });
 });
 

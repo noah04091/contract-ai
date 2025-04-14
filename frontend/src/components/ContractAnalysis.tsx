@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import styles from "./ContractAnalysis.module.css";
 import ResultCard from "./ResultCard";
 import html2pdf from "html2pdf.js";
-import API_BASE_URL from "../utils/api";
 
 interface ContractAnalysisProps {
   file: File;
@@ -30,12 +29,10 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
       const formData = new FormData();
       formData.append("file", file);
 
-      const token = localStorage.getItem("token") || "";
-
       try {
-        const res = await fetch(`${API_BASE_URL}/analyze`, {
+        const res = await fetch("/api/analyze", {
           method: "POST",
-          headers: { Authorization: token },
+          credentials: "include", // 🧁 Cookies mitnehmen
           body: formData,
         });
 
@@ -113,7 +110,7 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
 
           {result.pdfPath && (
             <a
-              href={`${API_BASE_URL}${result.pdfPath}`}
+              href={`/api${result.pdfPath}`}
               download
               className={styles.downloadButton}
             >

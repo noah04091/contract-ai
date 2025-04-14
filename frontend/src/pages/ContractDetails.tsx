@@ -33,10 +33,8 @@ export default function ContractDetails() {
   const [notification, setNotification] = useState<{ message: string; type?: NotificationType } | null>(null);
 
   useEffect(() => {
-    fetch(`https://contract-ai-backend.onrender.com/contracts/${id}`, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
-      },
+    fetch(`/api/contracts/${id}`, {
+      credentials: "include",
     })
       .then((res) => res.json())
       .then((data) => {
@@ -54,11 +52,11 @@ export default function ContractDetails() {
   };
 
   const handleSave = async () => {
-    const res = await fetch(`https://contract-ai-backend.onrender.com/contracts/${id}`, {
+    const res = await fetch(`/api/contracts/${id}`, {
       method: "PUT",
+      credentials: "include",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
       },
       body: JSON.stringify(formData),
     });
@@ -78,11 +76,9 @@ export default function ContractDetails() {
     const confirmDelete = confirm("Bist du sicher, dass du diesen Vertrag löschen möchtest?");
     if (!confirmDelete) return;
 
-    const res = await fetch(`https://contract-ai-backend.onrender.com/contracts/${id}`, {
+    const res = await fetch(`/api/contracts/${id}`, {
       method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
-      },
+      credentials: "include",
     });
 
     if (res.ok) {
@@ -107,11 +103,9 @@ export default function ContractDetails() {
 
   const toggleReminder = async () => {
     try {
-      const res = await fetch(`https://contract-ai-backend.onrender.com/contracts/${contract?._id}/reminder`, {
+      const res = await fetch(`/api/contracts/${contract?._id}/reminder`, {
         method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
-        },
+        credentials: "include",
       });
 
       if (!res.ok) throw new Error("Fehler beim Umschalten");
@@ -192,7 +186,7 @@ export default function ContractDetails() {
         <div className={styles.detailBlock}>
           <label>📎 Datei:</label>
           <a
-            href={`https://contract-ai-backend.onrender.com${contract.filePath}`}
+            href={`/api${contract.filePath}`}
             target="_blank"
             rel="noopener noreferrer"
             className={styles.downloadLink}

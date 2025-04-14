@@ -1,23 +1,26 @@
-// 📁 PremiumStatus.tsx
 import { useEffect, useState } from "react";
-import API_BASE_URL from "../utils/api";
+import API_BASE_URL from "../utils/api"; // ✅ Richtiger Import
 
 export default function PremiumStatus() {
   const [isPremium, setIsPremium] = useState<boolean | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchStatus = async () => {
       try {
         const res = await fetch(`${API_BASE_URL}/auth/me`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
-          },
-          credentials: "include",
+          credentials: "include", // ✅ Cookie wird mitgeschickt
         });
+
+        if (!res.ok) throw new Error("Nicht authentifiziert");
+
         const data = await res.json();
-        setIsPremium(data.isPremium);
+        setIsPremium(data.subscriptionActive === true); // ✅ korrektes Feld
       } catch (err) {
         console.error("❌ Fehler beim Laden des Premium-Status:", err);
+        setIsPremium(false);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -28,10 +31,7 @@ export default function PremiumStatus() {
     try {
       const res = await fetch(`${API_BASE_URL}/stripe/create-checkout-session`, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
-        },
-        credentials: "include",
+        credentials: "include", // ✅ wichtig für Stripe + Cookies
       });
 
       const data = await res.json();
@@ -46,13 +46,17 @@ export default function PremiumStatus() {
     }
   };
 
-  if (isPremium === null) return <p>🔄 Lade Status...</p>;
+  if (loading || isPremium === null) {
+    return <p>🔄 Lade Premium-Status...</p>;
+  }
 
   return isPremium ? (
-    <p style={{ color: "green", fontWeight: "bold" }}>💎 Du hast ein aktives Premium-Abo!</p>
+    <p style={{ color: "green", fontWeight: "bold" }}>
+      💎 Du hast ein aktives Premium-Abo!
+    </p>
   ) : (
     <div>
-      <p style={{ color: "red" }}>⚠️ Kein aktives Abo</p>
+      <p style={{ color: "red", fontWeight: "bold" }}>⚠️ Kein aktives Abo</p>
       <button onClick={handleUpgrade}>💳 Jetzt auf Premium upgraden</button>
     </div>
   );

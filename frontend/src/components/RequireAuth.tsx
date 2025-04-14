@@ -1,7 +1,6 @@
-// 📁 src/components/RequireAuth.tsx
 import React, { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { apiCall } from "../utils/api";
+import API_BASE_URL from "../utils/api"; // ✅ Base URL importieren
 
 interface RequireAuthProps {
   children: React.ReactNode;
@@ -12,43 +11,33 @@ export default function RequireAuth({ children }: RequireAuthProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
+
     const checkAuth = async () => {
       try {
-        // apiCall verwendet jetzt automatisch den Token aus localStorage
-        const data = await apiCall("/auth/me");
-        console.log("✅ Authentifizierung erfolgreich:", data.email);
-        setIsAuthenticated(true);
+        const res = await fetch(`${API_BASE_URL}/auth/me`, {
+          credentials: "include", // ✅ Cookie wird mitgeschickt
+        });
+
+        if (!res.ok) throw new Error("Nicht authentifiziert");
+
+        const data = await res.json();
+        console.log("✅ Eingeloggt als:", data.email);
+
+        if (!cancelled) setIsAuthenticated(true);
       } catch (err) {
-        console.warn("❌ Authentifizierung fehlgeschlagen:", err);
-        
-        // Prüfe zusätzlich den alten Token-Namen für Kompatibilität
-        const legacyToken = localStorage.getItem('token');
-        if (legacyToken) {
-          try {
-            // Manueller API-Aufruf mit dem alten Token
-            const response = await fetch(`https://api.contract-ai.de/auth/me`, {
-              headers: {
-                "Authorization": `Bearer ${legacyToken}`
-              }
-            });
-            
-            if (response.ok) {
-              console.log("✅ Legacy-Token-Authentifizierung erfolgreich");
-              setIsAuthenticated(true);
-              return;
-            }
-          } catch (legacyErr) {
-            console.warn("❌ Legacy-Token-Authentifizierung fehlgeschlagen");
-          }
-        }
-        
-        setIsAuthenticated(false);
+        console.warn("❌ Nicht eingeloggt:", err);
+        if (!cancelled) setIsAuthenticated(false);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     checkAuth();
+
+    return () => {
+      cancelled = true; // 🛡️ Verhindert setState nach Unmount
+    };
   }, []);
 
   if (loading) {

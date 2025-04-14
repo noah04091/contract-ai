@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import styles from "../styles/CalendarView.module.css";
-import API_BASE_URL from "../utils/api";
 
 interface Contract {
   _id: string;
@@ -17,15 +16,18 @@ export default function CalendarView() {
 
   useEffect(() => {
     const fetchContracts = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) return;
+      try {
+        const res = await fetch("/api/contracts", {
+          credentials: "include", // ✅ Cookie wird mitgeschickt
+        });
 
-      const res = await fetch(`${API_BASE_URL}/contracts`, {
-        headers: { Authorization: token },
-      });
+        if (!res.ok) throw new Error("Verträge konnten nicht geladen werden");
 
-      const data = await res.json();
-      setContracts(data.filter((c: Contract) => c.expiryDate));
+        const data = await res.json();
+        setContracts(data.filter((c: Contract) => c.expiryDate));
+      } catch (err) {
+        console.error("❌ Fehler beim Laden der Verträge:", err);
+      }
     };
 
     fetchContracts();

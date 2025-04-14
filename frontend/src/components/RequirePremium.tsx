@@ -1,3 +1,4 @@
+// 📁 src/components/RequirePremium.tsx
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PremiumNotice from "./PremiumNotice";
@@ -9,34 +10,45 @@ interface Props {
 
 export default function RequirePremium({ children }: Props) {
   const [isPremium, setIsPremium] = useState<boolean | null>(null);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      navigate("/login");
-      return;
-    }
+    let cancelled = false;
 
     const fetchStatus = async () => {
       try {
         const res = await fetch(`${API_BASE_URL}/auth/me`, {
-          headers: { Authorization: token },
+          credentials: "include", // ✅ Cookie wird mitgeschickt
         });
 
+        if (!res.ok) {
+          console.warn("❌ Nicht eingeloggt");
+          if (!cancelled) navigate("/login");
+          return;
+        }
+
         const data = await res.json();
-        setIsPremium(data.subscriptionActive || false);
+        if (!cancelled) {
+          setIsPremium(data.isPremium || data.subscriptionActive || false);
+        }
       } catch (err) {
         console.error("❌ Fehler bei Premium-Check:", err);
-        setIsPremium(false);
+        if (!cancelled) setIsPremium(false);
+      } finally {
+        if (!cancelled) setLoading(false);
       }
     };
 
     fetchStatus();
+
+    return () => {
+      cancelled = true; // 🛡️ Cleanup gegen setState nach Unmount
+    };
   }, [navigate]);
 
-  if (isPremium === null) return null;
-  if (isPremium === false) return <PremiumNotice />;
+  if (loading || isPremium === null) return null; // 🔄 Alternativ Spinner möglich
+  if (!isPremium) return <PremiumNotice />;
 
   return <>{children}</>;
 }

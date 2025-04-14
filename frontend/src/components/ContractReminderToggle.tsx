@@ -1,4 +1,3 @@
-// src/components/ContractReminderToggle.tsx
 import { useState } from "react";
 
 interface Props {
@@ -14,19 +13,18 @@ export default function ContractReminderToggle({ contractId, initiallyActive, on
   const toggleReminder = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`https://contract-ai-backend.onrender.com/contracts/${contractId}/reminder`, {
+      const res = await fetch(`/api/contracts/${contractId}/reminder`, {
         method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
-        },
+        credentials: "include", // ✅ Cookie wird mitgeschickt
       });
 
       if (!res.ok) throw new Error("Fehler beim Umschalten des Reminders");
+
       const newState = !active;
       setActive(newState);
       onToggle?.(newState);
     } catch (err) {
-      alert("❌ Fehler beim Umschalten des Reminders");
+      alert("❌ Fehler beim Umschalten der Erinnerung");
     } finally {
       setLoading(false);
     }
@@ -36,13 +34,15 @@ export default function ContractReminderToggle({ contractId, initiallyActive, on
     <button
       onClick={toggleReminder}
       disabled={loading}
-      title={active ? "Erinnerung deaktivieren" : "Erinnerung aktivieren"}
+      title={active ? "🔕 Erinnerung deaktivieren" : "🔔 Erinnerung aktivieren"}
       style={{
         backgroundColor: active ? "#ffc107" : "#eee",
         border: "none",
         borderRadius: 4,
         padding: "0.4rem 0.6rem",
-        cursor: "pointer",
+        cursor: loading ? "not-allowed" : "pointer",
+        opacity: loading ? 0.6 : 1,
+        transition: "all 0.2s ease",
       }}
     >
       {loading ? "⏳" : active ? "🔕" : "🔔"}
