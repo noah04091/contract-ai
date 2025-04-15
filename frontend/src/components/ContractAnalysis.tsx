@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import styles from "./ContractAnalysis.module.css";
 import ResultCard from "./ResultCard";
+// @ts-ignore
 import html2pdf from "html2pdf.js";
 
 interface ContractAnalysisProps {
@@ -42,7 +43,7 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
         setResult(data);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unbekannter Fehler";
-        alert("Fehler: " + message);
+        alert("❌ Fehler: " + message);
         console.error("❌ Analysefehler:", message);
       } finally {
         setLoading(false);
@@ -80,6 +81,8 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
       <h3>🌐 Vergleichbare Verträge</h3><p>${result.comparison}</p>
       <h3>📊 Contract Score</h3><p>${result.contractScore}/100</p>
     `;
+
+    // @ts-ignore – html2pdf Typen existieren nicht offiziell
     html2pdf().from(element).save("Vertragsanalyse.pdf");
   };
 
@@ -102,7 +105,7 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
               <div
                 className={styles.scoreBarInner}
                 style={{ width: `${animatedScore}%` }}
-              ></div>
+              />
             </div>
             <div className={styles.scoreValue}>{animatedScore} / 100</div>
           </div>

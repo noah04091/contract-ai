@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import styles from "../styles/Generate.module.css";
 import PremiumNotice from "../components/PremiumNotice";
 import { CheckCircle, Clipboard, Save } from "lucide-react";
+// @ts-ignore – html2pdf hat keine TS-Typen
 import html2pdf from "html2pdf.js";
 
 interface FormDataType {
@@ -26,9 +27,7 @@ export default function Generate() {
   useEffect(() => {
     const fetchStatus = async () => {
       try {
-        const res = await fetch("/api/auth/me", {
-          credentials: "include",
-        });
+        const res = await fetch("/api/auth/me", { credentials: "include" });
         if (!res.ok) throw new Error("Nicht authentifiziert");
         const data = await res.json();
         setIsPremium(data.subscriptionActive === true);
@@ -48,18 +47,23 @@ export default function Generate() {
 
     let drawing = false;
 
+    const getPos = (e: MouseEvent | TouchEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      const x = "touches" in e ? e.touches[0].clientX : e.clientX;
+      const y = "touches" in e ? e.touches[0].clientY : e.clientY;
+      return { x: x - rect.left, y: y - rect.top };
+    };
+
     const start = (e: MouseEvent | TouchEvent) => {
       drawing = true;
       ctx.beginPath();
-      const x = ("touches" in e ? e.touches[0].clientX : e.clientX) - canvas.getBoundingClientRect().left;
-      const y = ("touches" in e ? e.touches[0].clientY : e.clientY) - canvas.getBoundingClientRect().top;
+      const { x, y } = getPos(e);
       ctx.moveTo(x, y);
     };
 
     const draw = (e: MouseEvent | TouchEvent) => {
       if (!drawing) return;
-      const x = ("touches" in e ? e.touches[0].clientX : e.clientX) - canvas.getBoundingClientRect().left;
-      const y = ("touches" in e ? e.touches[0].clientY : e.clientY) - canvas.getBoundingClientRect().top;
+      const { x, y } = getPos(e);
       ctx.lineTo(x, y);
       ctx.stroke();
     };
@@ -112,7 +116,8 @@ export default function Generate() {
       setGenerated(data.contractText);
       setFinished(true);
     } catch (err) {
-      if (err instanceof Error) alert("❌ Fehler: " + err.message);
+      const msg = err instanceof Error ? err.message : "Unbekannter Fehler";
+      alert("❌ Fehler: " + msg);
     } finally {
       setLoading(false);
     }
@@ -147,7 +152,8 @@ export default function Generate() {
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
-      if (err instanceof Error) alert("❌ Fehler beim Speichern: " + err.message);
+      const msg = err instanceof Error ? err.message : "Unbekannter Fehler";
+      alert("❌ Fehler beim Speichern: " + msg);
     }
   };
 
@@ -161,24 +167,23 @@ export default function Generate() {
 
   const clearCanvas = () => {
     const canvas = canvasRef.current;
-    if (canvas) {
-      const ctx = canvas.getContext("2d");
-      if (ctx) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        setSignatureURL(null);
-      }
+    const ctx = canvas?.getContext("2d");
+    if (ctx && canvas) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      setSignatureURL(null);
     }
   };
 
   const handleDownloadPDF = () => {
-    if (!contractRef.current) return;
+    const container = contractRef.current;
+    if (!container) return;
 
     const signatureImage = document.createElement("img");
     if (signatureURL) {
       signatureImage.src = signatureURL;
       signatureImage.style.maxWidth = "200px";
       signatureImage.style.marginTop = "20px";
-      contractRef.current.appendChild(signatureImage);
+      container.appendChild(signatureImage);
     }
 
     const opt = {
@@ -189,15 +194,12 @@ export default function Generate() {
       jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
     };
 
-    html2pdf()
-      .set(opt)
-      .from(contractRef.current)
-      .save()
-      .then(() => {
-        if (signatureImage && contractRef.current?.contains(signatureImage)) {
-          contractRef.current.removeChild(signatureImage);
-        }
-      });
+    // @ts-ignore – html2pdf fehlt Typisierung
+    html2pdf({ ...opt }).from(container).save().then(() => {
+      if (signatureImage && container.contains(signatureImage)) {
+        container.removeChild(signatureImage);
+      }
+    });
   };
 
   const renderAdditionalFields = () => {
@@ -225,8 +227,7 @@ export default function Generate() {
     <div className={styles.container}>
       <h2>📄 Vertrag generieren</h2>
       <p>
-        Erstelle individuelle Verträge mit KI. Wähle einen Typ, gib Titel & Beschreibung ein und unterschreibe direkt im
-        Browser.
+        Erstelle individuelle Verträge mit KI. Wähle einen Typ, gib Titel & Beschreibung ein und unterschreibe direkt im Browser.
       </p>
 
       {!isPremium && <PremiumNotice />}
@@ -277,7 +278,9 @@ export default function Generate() {
             <br />
             <strong>Digitale Unterschrift:</strong>
             <br />
-            {signatureURL && <img src={signatureURL} alt="Unterschrift" style={{ maxWidth: "200px", marginTop: "10px" }} />}
+            {signatureURL && (
+              <img src={signatureURL} alt="Unterschrift" style={{ maxWidth: "200px", marginTop: "10px" }} />
+            )}
           </div>
 
           <div style={{ marginTop: "20px" }}>

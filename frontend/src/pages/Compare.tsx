@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import styles from "../styles/Compare.module.css";
+// @ts-ignore – keine TS-Typen für html2pdf vorhanden
 import html2pdf from "html2pdf.js";
 import PremiumNotice from "../components/PremiumNotice";
 
@@ -16,7 +17,6 @@ export default function Compare() {
   const [result, setResult] = useState<ComparisonResult | null>(null);
   const [isPremium, setIsPremium] = useState<boolean | null>(null);
 
-  // ✅ Premium-Status prüfen
   useEffect(() => {
     let cancelled = false;
 
@@ -39,7 +39,6 @@ export default function Compare() {
     };
 
     fetchStatus();
-
     return () => {
       cancelled = true;
     };
@@ -63,13 +62,11 @@ export default function Compare() {
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Vergleich fehlgeschlagen");
+
       setResult(data);
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        alert("❌ Fehler: " + err.message);
-      } else {
-        alert("❌ Unbekannter Fehler beim Vergleich.");
-      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unbekannter Fehler beim Vergleich.";
+      alert("❌ Fehler: " + message);
     } finally {
       setLoading(false);
     }
@@ -95,6 +92,7 @@ export default function Compare() {
       <p>${result.summary}</p>
     `;
 
+    // @ts-ignore
     html2pdf().from(element).save("Vertragsvergleich.pdf");
   };
 
@@ -105,10 +103,12 @@ export default function Compare() {
   return (
     <div className={styles.container}>
       <h2>🔍 Vertragsvergleich</h2>
+
       {!isPremium && <PremiumNotice />}
+
       <p>
-        Wähle zwei Verträge aus und erhalte eine KI-gestützte Analyse zu
-        Unterschieden, Stärken & Schwächen.
+        Wähle zwei Verträge aus und erhalte eine KI-gestützte Analyse zu Unterschieden,
+        Stärken & Schwächen.
       </p>
 
       <div className={styles.uploadBox}>
@@ -122,6 +122,7 @@ export default function Compare() {
           />
           {file1 && <span className={styles.filename}>✅ {file1.name}</span>}
         </div>
+
         <div className={styles.fileInput}>
           <label>📄 Vertrag 2:</label>
           <input

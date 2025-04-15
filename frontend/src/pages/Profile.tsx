@@ -3,7 +3,7 @@ import styles from "../styles/Profile.module.css";
 
 export default function Profile() {
   const [userEmail, setUserEmail] = useState<string>("");
-  const [isPremium, setIsPremium] = useState<boolean>(false);
+  const [isPremium, setIsPremium] = useState(false);
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -22,7 +22,7 @@ export default function Profile() {
         setUserEmail(data.email);
         setIsPremium(data.subscriptionActive === true || data.isPremium === true);
       })
-      .catch((_err) => {
+      .catch(() => {
         console.error("❌ Fehler beim Laden des Profils");
       });
   }, []);
@@ -47,13 +47,15 @@ export default function Profile() {
       } else {
         setMessage("❌ " + data.message);
       }
-    } catch (_err) {
+    } catch {
       setMessage("❌ Fehler beim Passwortwechsel");
     }
   };
 
   const handleAccountDelete = async () => {
-    const confirmDelete = confirm("Willst du deinen Account wirklich löschen? Alle Verträge gehen verloren!");
+    const confirmDelete = confirm(
+      "Willst du deinen Account wirklich löschen? Alle Verträge gehen verloren!"
+    );
     if (!confirmDelete) return;
 
     try {
@@ -68,7 +70,7 @@ export default function Profile() {
       } else {
         alert("❌ Fehler beim Löschen des Accounts");
       }
-    } catch (_err) {
+    } catch {
       alert("❌ Fehler beim Löschen des Accounts");
     }
   };
@@ -89,7 +91,7 @@ export default function Profile() {
       } else {
         setUpgradeMessage("❌ Upgrade fehlgeschlagen");
       }
-    } catch (_err) {
+    } catch {
       setUpgradeMessage("❌ Upgrade fehlgeschlagen");
     }
   };

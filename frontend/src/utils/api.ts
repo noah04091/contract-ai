@@ -7,27 +7,21 @@ const API_BASE_URL = "/api"; // Proxy-Pfad für Vercel & devServer
  */
 export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
   const authToken = localStorage.getItem("authToken");
-
   const isFormData = options.body instanceof FormData;
 
-  // Basis-Optionen
-  const defaultOptions: RequestInit = {
-    credentials: "include",
-    headers: {
-      Accept: "application/json", // Erwartung an Backend
-      ...(isFormData ? {} : { "Content-Type": "application/json" }),
-      ...(authToken && !(options.headers && "Authorization" in options.headers)
-        ? { Authorization: `Bearer ${authToken}` }
-        : {}),
-    },
+  const defaultHeaders: Record<string, string> = {
+    Accept: "application/json",
+    ...(isFormData ? {} : { "Content-Type": "application/json" }),
+    ...(authToken && !(options.headers && "Authorization" in options.headers)
+      ? { Authorization: `Bearer ${authToken}` }
+      : {}),
   };
 
-  // Optionen zusammenführen
   const mergedOptions: RequestInit = {
-    ...defaultOptions,
+    credentials: "include",
     ...options,
     headers: {
-      ...(defaultOptions.headers as Record<string, string>),
+      ...defaultHeaders,
       ...(options.headers as Record<string, string> || {}),
     },
   };
@@ -50,7 +44,7 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
         const errorData = await response.json();
         if (errorData?.message) errorMessage = errorData.message;
       } catch {
-        // JSON-Fehler ignorieren, fallback auf Status
+        // Ignoriere JSON-Fehler
       }
       throw new Error(errorMessage);
     }
@@ -61,7 +55,7 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
       return {}; // Fallback bei leerem Body (z. B. 204 No Content)
     }
 
-  } catch (err) {
+  } catch (err: unknown) {
     console.error(`❌ API-Fehler bei [${endpoint}]:`, err);
     throw err;
   }
