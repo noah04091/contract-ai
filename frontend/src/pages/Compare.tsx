@@ -1,10 +1,6 @@
 import { useEffect, useState } from "react";
 import styles from "../styles/Compare.module.css";
 import PremiumNotice from "../components/PremiumNotice";
-
-// @ts-ignore – html2pdf hat keine Typen, wird trotzdem korrekt genutzt
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
 import html2pdf from "html2pdf.js";
 
 interface ComparisonResult {
@@ -21,27 +17,28 @@ export default function Compare() {
   const [isPremium, setIsPremium] = useState<boolean | null>(null);
 
   useEffect(() => {
-    let cancelled = false;
+    const controller = new AbortController();
 
     const fetchStatus = async () => {
       try {
-        const res = await fetch("/api/auth/me", { credentials: "include" });
+        const res = await fetch("/api/auth/me", {
+          credentials: "include",
+          signal: controller.signal,
+        });
+
         if (!res.ok) throw new Error("Nicht authentifiziert");
 
         const data = await res.json();
-        if (!cancelled) {
-          setIsPremium(data.subscriptionActive === true || data.isPremium === true);
-        }
+        setIsPremium(data.subscriptionActive === true || data.isPremium === true);
       } catch (err) {
-        console.error("❌ Fehler beim Laden des Abostatus:", err);
-        if (!cancelled) setIsPremium(false);
+        if (err instanceof DOMException && err.name === "AbortError") return;
+        console.error("❌ Fehler beim Abo-Check:", err);
+        setIsPremium(false);
       }
     };
 
     fetchStatus();
-    return () => {
-      cancelled = true;
-    };
+    return () => controller.abort();
   }, []);
 
   const handleSubmit = async () => {
@@ -88,15 +85,12 @@ export default function Compare() {
     const element = document.createElement("div");
     element.innerHTML = `
       <h2>🔍 Vertragsvergleich</h2>
-      <h3>📌 Unterschiede</h3>
-      <p>${result.differences}</p>
-      <h3>⚖️ Vorteile & Nachteile</h3>
-      <p>${result.prosAndCons}</p>
-      <h3>🧠 KI-Zusammenfassung</h3>
-      <p>${result.summary}</p>
+      <h3>📌 Unterschiede</h3><p>${result.differences}</p>
+      <h3>⚖️ Vorteile & Nachteile</h3><p>${result.prosAndCons}</p>
+      <h3>🧠 KI-Zusammenfassung</h3><p>${result.summary}</p>
     `;
 
-    // @ts-expect-error – html2pdf ist untypisiert, funktioniert aber zuverlässig
+    // @ts-expect-error: html2pdf ist untypisiert, funktioniert aber zuverlässig
     html2pdf().from(element).save("Vertragsvergleich.pdf");
   };
 
