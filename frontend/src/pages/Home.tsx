@@ -29,7 +29,7 @@ export default function Home() {
         const data: UserResponse = await res.json();
         setUserEmail(data.email);
         setIsPremium(data.subscriptionActive === true);
-      } catch (err) {
+      } catch {
         console.log("🔓 Kein Login – Startseite zeigt CTA");
       }
     };
@@ -46,7 +46,6 @@ export default function Home() {
 
   return (
     <div className={styles.container}>
-      {/* ✅ SEO + Social Tags */}
       <Helmet>
         <title>Contract AI – Verträge smarter managen</title>
         <meta
@@ -67,7 +66,6 @@ export default function Home() {
         <meta property="og:image" content="https://contract-ai.de/og-image.png" />
       </Helmet>
 
-      {/* HERO-Bereich */}
       <section className={styles.hero}>
         <img src={logo} alt="Contract AI Logo" className={styles.logo} />
 
@@ -112,7 +110,6 @@ export default function Home() {
         )}
       </section>
 
-      {/* FEATURES */}
       <section id="features" className={styles.features} ref={featureRef}>
         <Link to="/contracts" className={styles.featureCard}>
           <h3>🔍 Analyse</h3>

@@ -25,8 +25,9 @@ export default function Optimizer() {
 
         const data = await res.json();
         setIsPremium(data.subscriptionActive === true);
-      } catch (err) {
-        console.error("❌ Fehler beim Laden des Premium-Status:", err);
+      } catch (error) {
+        const err = error as Error;
+        console.error("❌ Fehler beim Laden des Premium-Status:", err.message);
         setIsPremium(false);
       }
     };
@@ -51,7 +52,7 @@ export default function Optimizer() {
         body: formData,
       });
 
-      const data = await res.json();
+      const data: { optimizations?: Optimization[]; message?: string } = await res.json();
       if (!res.ok) throw new Error(data.message || "Unbekannter Fehler");
 
       if (!data.optimizations?.length) {
@@ -59,7 +60,8 @@ export default function Optimizer() {
       } else {
         setOptimizations(data.optimizations);
       }
-    } catch (err: any) {
+    } catch (error) {
+      const err = error as Error;
       setError("❌ Fehler: " + err.message);
     } finally {
       setLoading(false);

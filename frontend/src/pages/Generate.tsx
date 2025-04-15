@@ -111,8 +111,8 @@ export default function Generate() {
       if (!res.ok) throw new Error(data.message || "Fehler bei der Generierung.");
       setGenerated(data.contractText);
       setFinished(true);
-    } catch (err: any) {
-      alert("❌ Fehler: " + err.message);
+    } catch (err) {
+      if (err instanceof Error) alert("❌ Fehler: " + err.message);
     } finally {
       setLoading(false);
     }
@@ -146,8 +146,8 @@ export default function Generate() {
       if (!res.ok) throw new Error("Speichern fehlgeschlagen.");
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
-    } catch (err: any) {
-      alert("❌ Fehler beim Speichern: " + err.message);
+    } catch (err) {
+      if (err instanceof Error) alert("❌ Fehler beim Speichern: " + err.message);
     }
   };
 

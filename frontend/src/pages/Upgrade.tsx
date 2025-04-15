@@ -33,7 +33,7 @@ export default function Upgrade() {
     <div className={styles.upgradeContainer}>
       <h1>🚀 Contract AI Premium</h1>
       <p>
-        Für nur <strong>9,90 € / Monat</strong> erhältst du unbegrenzten Zugang
+        Für nur <strong>9,90 € / Monat</strong> erhältst du unbegrenzten Zugang
         zu allen Funktionen.
       </p>
 

@@ -14,17 +14,18 @@ export default function Pricing() {
     try {
       const res = await fetch("/api/stripe/create-checkout-session", {
         method: "POST",
-        credentials: "include", // ✅ Cookies mitsenden für Auth
+        credentials: "include",
       });
 
-      const data = await res.json();
+      const data: { url?: string; message?: string } = await res.json();
 
       if (!res.ok || !data.url) {
         throw new Error(data.message || "Fehler beim Stripe-Checkout");
       }
 
       window.location.href = data.url;
-    } catch (err: any) {
+    } catch (error) {
+      const err = error as Error;
       alert("❌ Fehler beim Upgrade: " + err.message);
       navigate("/dashboard?status=error");
     } finally {
@@ -118,7 +119,14 @@ export default function Pricing() {
 
       <h2 style={{ textAlign: "center", marginTop: "4rem" }}>🔍 Vergleich der Funktionen</h2>
       <div style={{ overflowX: "auto", marginTop: "1rem" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", maxWidth: "900px", margin: "0 auto" }}>
+        <table
+          style={{
+            width: "100%",
+            borderCollapse: "collapse",
+            maxWidth: "900px",
+            margin: "0 auto",
+          }}
+        >
           <thead>
             <tr style={{ backgroundColor: "#f5f5f5" }}>
               <th style={{ padding: "1rem", textAlign: "left" }}>Funktion</th>

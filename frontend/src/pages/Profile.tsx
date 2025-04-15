@@ -10,7 +10,6 @@ export default function Profile() {
   const [upgradeMessage, setUpgradeMessage] = useState("");
 
   useEffect(() => {
-    // ✅ Authentifizierten Benutzer abrufen (über Cookie & Proxy)
     fetch("/api/auth/me", {
       method: "GET",
       credentials: "include",
@@ -23,8 +22,8 @@ export default function Profile() {
         setUserEmail(data.email);
         setIsPremium(data.subscriptionActive === true || data.isPremium === true);
       })
-      .catch((err) => {
-        console.error("❌ Fehler beim Laden des Profils:", err);
+      .catch((_err) => {
+        console.error("❌ Fehler beim Laden des Profils");
       });
   }, []);
 
@@ -48,7 +47,7 @@ export default function Profile() {
       } else {
         setMessage("❌ " + data.message);
       }
-    } catch (err) {
+    } catch (_err) {
       setMessage("❌ Fehler beim Passwortwechsel");
     }
   };
@@ -69,8 +68,7 @@ export default function Profile() {
       } else {
         alert("❌ Fehler beim Löschen des Accounts");
       }
-    } catch (err) {
-      console.error("❌ Fehler beim Löschen:", err);
+    } catch (_err) {
       alert("❌ Fehler beim Löschen des Accounts");
     }
   };
@@ -91,8 +89,7 @@ export default function Profile() {
       } else {
         setUpgradeMessage("❌ Upgrade fehlgeschlagen");
       }
-    } catch (err) {
-      console.error("❌ Upgrade-Fehler:", err);
+    } catch (_err) {
       setUpgradeMessage("❌ Upgrade fehlgeschlagen");
     }
   };

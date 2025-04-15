@@ -1,9 +1,14 @@
-// 📁 src/pages/Login.tsx
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "../styles/Auth.module.css";
 import { Mail, Lock } from "lucide-react";
 import Notification from "../components/Notification";
+
+interface AuthResponse {
+  token?: string;
+  message?: string;
+  email?: string;
+}
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -27,11 +32,11 @@ export default function Login() {
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await response.json();
+      const data: AuthResponse = await response.json();
       console.log("⬅️ Server-Antwort:", data);
 
       console.log("🍪 Response-Headers:",
-        [...(response.headers as any).entries()].reduce((obj, [key, val]) => ({ ...obj, [key]: val }), {})
+        Object.fromEntries(response.headers.entries())
       );
 
       if (!response.ok) {
@@ -59,51 +64,39 @@ export default function Login() {
 
           console.log("Status (mit Cookies):", authCheckWithCookies.status);
 
-          if (authCheckWithCookies.ok) {
-            console.log("✅ Cookie-Authentifizierung funktioniert");
-          } else {
-            console.warn("⚠️ Cookie-Authentifizierung fehlgeschlagen, Fallback wird verwendet");
+          if (!authCheckWithCookies.ok && data.token) {
+            console.warn("⚠️ Cookie-Auth fehlgeschlagen – teste Auth-Header");
 
-            if (data.token) {
-              console.log("🔍 Test: /auth/me mit Authorization Header");
-              const authCheckWithHeader = await fetch("/api/auth/me", {
-                method: "GET",
-                headers: {
-                  Authorization: `Bearer ${data.token}`,
-                },
-              });
+            const authCheckWithHeader = await fetch("/api/auth/me", {
+              method: "GET",
+              headers: {
+                Authorization: `Bearer ${data.token}`,
+              },
+            });
 
-              console.log("Status (mit Auth-Header):", authCheckWithHeader.status);
-
-              if (authCheckWithHeader.ok) {
-                console.log("✅ Header-Authentifizierung funktioniert");
-              } else {
-                console.error("❌ Beide Authentifizierungsmethoden fehlgeschlagen");
-              }
-            }
+            console.log("Status (mit Auth-Header):", authCheckWithHeader.status);
           }
 
           try {
-            console.log("🔍 Test: /debug Endpunkt");
             const debugResponse = await fetch("/api/debug", {
               method: "GET",
               credentials: "include",
             });
-
             const debugData = await debugResponse.json();
             console.log("Debug-Endpunkt Response:", debugData);
-          } catch (debugErr) {
-            console.error("Debug-Endpunkt-Fehler:", debugErr);
+          } catch (debugError) {
+            console.error("Debug-Endpunkt-Fehler:", debugError);
           }
-        } catch (err) {
-          console.error("❌ Diagnose-Fehler:", err);
+        } catch (diagnoseError) {
+          console.error("❌ Diagnose-Fehler:", diagnoseError);
         }
       }, 500);
 
       redirectTimeout.current = setTimeout(() => {
         navigate("/dashboard");
       }, 1500);
-    } catch (err: any) {
+    } catch (error) {
+      const err = error as Error;
       console.error("❌ Fehler beim Login:", err);
       setNotification({ message: "❌ " + (err.message || "Server nicht erreichbar"), type: "error" });
     } finally {
@@ -144,17 +137,15 @@ export default function Login() {
             });
 
             if (authResponse.ok) {
-              console.log("✅ Fallback-Authentifizierung erfolgreich");
+              console.log("✅ Fallback-Auth erfolgreich");
               navigate("/dashboard");
               return;
             } else {
-              console.warn("❌ Fallback-Token ungültig");
               localStorage.removeItem("authToken");
               localStorage.removeItem("authEmail");
               localStorage.removeItem("authTimestamp");
             }
           } else {
-            console.warn("❌ Fallback-Token abgelaufen");
             localStorage.removeItem("authToken");
             localStorage.removeItem("authEmail");
             localStorage.removeItem("authTimestamp");
@@ -163,9 +154,9 @@ export default function Login() {
 
         console.log("🔍 Cookie-Diagnose beim Laden:");
         console.log("document.cookie:", document.cookie);
-        console.log("ℹ️ Nicht eingeloggt, Login-Formular wird angezeigt");
-      } catch (err) {
-        console.error("❌ Fehler bei Authentifizierungsprüfung:", err);
+      } catch (error) {
+        const err = error as Error;
+        console.error("❌ Fehler bei Auth-Prüfung:", err.message);
       }
     };
 
