@@ -4,15 +4,21 @@ import PremiumNotice from "../components/PremiumNotice";
 import { CheckCircle, Clipboard, Save } from "lucide-react";
 import html2pdf from "html2pdf.js";
 
+interface FormDataType {
+  title?: string;
+  details?: string;
+  [key: string]: any;
+}
+
 export default function Generate() {
-  const [contractType, setContractType] = useState("freelancer");
-  const [formData, setFormData] = useState<any>({});
-  const [generated, setGenerated] = useState("");
-  const [copied, setCopied] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [finished, setFinished] = useState(false);
+  const [contractType, setContractType] = useState<string>("freelancer");
+  const [formData, setFormData] = useState<FormDataType>({});
+  const [generated, setGenerated] = useState<string>("");
+  const [copied, setCopied] = useState<boolean>(false);
+  const [saved, setSaved] = useState<boolean>(false);
+  const [finished, setFinished] = useState<boolean>(false);
   const [isPremium, setIsPremium] = useState<boolean | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<boolean>(false);
   const contractRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [signatureURL, setSignatureURL] = useState<string | null>(null);
@@ -42,21 +48,19 @@ export default function Generate() {
 
     let drawing = false;
 
-    const start = (e: any) => {
+    const start = (e: MouseEvent | TouchEvent) => {
       drawing = true;
       ctx.beginPath();
-      ctx.moveTo(
-        e.clientX || e.touches?.[0]?.clientX - canvas.getBoundingClientRect().left,
-        e.clientY || e.touches?.[0]?.clientY - canvas.getBoundingClientRect().top
-      );
+      const x = ("touches" in e ? e.touches[0].clientX : e.clientX) - canvas.getBoundingClientRect().left;
+      const y = ("touches" in e ? e.touches[0].clientY : e.clientY) - canvas.getBoundingClientRect().top;
+      ctx.moveTo(x, y);
     };
 
-    const draw = (e: any) => {
+    const draw = (e: MouseEvent | TouchEvent) => {
       if (!drawing) return;
-      ctx.lineTo(
-        e.clientX || e.touches?.[0]?.clientX - canvas.getBoundingClientRect().left,
-        e.clientY || e.touches?.[0]?.clientY - canvas.getBoundingClientRect().top
-      );
+      const x = ("touches" in e ? e.touches[0].clientX : e.clientX) - canvas.getBoundingClientRect().left;
+      const y = ("touches" in e ? e.touches[0].clientY : e.clientY) - canvas.getBoundingClientRect().top;
+      ctx.lineTo(x, y);
       ctx.stroke();
     };
 
@@ -185,11 +189,15 @@ export default function Generate() {
       jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
     };
 
-    html2pdf().set(opt).from(contractRef.current).save().then(() => {
-      if (signatureImage && contractRef.current?.contains(signatureImage)) {
-        contractRef.current.removeChild(signatureImage);
-      }
-    });
+    html2pdf()
+      .set(opt)
+      .from(contractRef.current)
+      .save()
+      .then(() => {
+        if (signatureImage && contractRef.current?.contains(signatureImage)) {
+          contractRef.current.removeChild(signatureImage);
+        }
+      });
   };
 
   const renderAdditionalFields = () => {
@@ -216,18 +224,17 @@ export default function Generate() {
   return (
     <div className={styles.container}>
       <h2>📄 Vertrag generieren</h2>
-      <p>Erstelle individuelle Verträge mit KI. Wähle einen Typ, gib Titel & Beschreibung ein und unterschreibe direkt im Browser.</p>
+      <p>
+        Erstelle individuelle Verträge mit KI. Wähle einen Typ, gib Titel & Beschreibung ein und unterschreibe direkt im
+        Browser.
+      </p>
 
       {!isPremium && <PremiumNotice />}
 
       <form onSubmit={handleSubmit} className={styles.form}>
         <label>
           Vertragstyp:
-          <select
-            value={contractType}
-            onChange={(e) => setContractType(e.target.value)}
-            disabled={!isPremium}
-          >
+          <select value={contractType} onChange={(e) => setContractType(e.target.value)} disabled={!isPremium}>
             <option value="freelancer">Freelancervertrag</option>
             <option value="mietvertrag">Mietvertrag</option>
             <option value="arbeitsvertrag">Arbeitsvertrag</option>
@@ -261,10 +268,15 @@ export default function Generate() {
       {generated && (
         <div className={styles.result}>
           <h3>📑 Generierter Vertrag</h3>
-          <div ref={contractRef} style={{ whiteSpace: "pre-wrap", background: "#f9f9f9", padding: "20px", borderRadius: "8px" }}>
+          <div
+            ref={contractRef}
+            style={{ whiteSpace: "pre-wrap", background: "#f9f9f9", padding: "20px", borderRadius: "8px" }}
+          >
             {generated}
-            <br /><br />
-            <strong>Digitale Unterschrift:</strong><br />
+            <br />
+            <br />
+            <strong>Digitale Unterschrift:</strong>
+            <br />
             {signatureURL && <img src={signatureURL} alt="Unterschrift" style={{ maxWidth: "200px", marginTop: "10px" }} />}
           </div>
 

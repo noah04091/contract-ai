@@ -8,17 +8,18 @@ interface ContractAnalysisProps {
   onReset: () => void;
 }
 
+interface AnalysisResult {
+  summary: string;
+  legalAssessment: string;
+  suggestions: string;
+  comparison: string;
+  contractScore: number;
+  pdfPath?: string;
+}
+
 export default function ContractAnalysis({ file, onReset }: ContractAnalysisProps) {
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<{
-    summary: string;
-    legalAssessment: string;
-    suggestions: string;
-    comparison: string;
-    contractScore: number;
-    pdfPath?: string;
-  } | null>(null);
-
+  const [result, setResult] = useState<AnalysisResult | null>(null);
   const [animatedScore, setAnimatedScore] = useState(0);
 
   useEffect(() => {
@@ -32,15 +33,17 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
       try {
         const res = await fetch("/api/analyze", {
           method: "POST",
-          credentials: "include", // 🧁 Cookies mitnehmen
+          credentials: "include",
           body: formData,
         });
 
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || "Fehler bei Analyse");
         setResult(data);
-      } catch (err: any) {
-        alert("Fehler: " + err.message);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unbekannter Fehler";
+        alert("Fehler: " + message);
+        console.error("❌ Analysefehler:", message);
       } finally {
         setLoading(false);
       }

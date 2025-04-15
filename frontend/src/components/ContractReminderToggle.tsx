@@ -6,7 +6,11 @@ interface Props {
   onToggle?: (newState: boolean) => void;
 }
 
-export default function ContractReminderToggle({ contractId, initiallyActive, onToggle }: Props) {
+export default function ContractReminderToggle({
+  contractId,
+  initiallyActive,
+  onToggle,
+}: Props) {
   const [active, setActive] = useState(initiallyActive);
   const [loading, setLoading] = useState(false);
 
@@ -15,7 +19,7 @@ export default function ContractReminderToggle({ contractId, initiallyActive, on
     try {
       const res = await fetch(`/api/contracts/${contractId}/reminder`, {
         method: "PATCH",
-        credentials: "include", // ✅ Cookie wird mitgeschickt
+        credentials: "include",
       });
 
       if (!res.ok) throw new Error("Fehler beim Umschalten des Reminders");
@@ -23,7 +27,9 @@ export default function ContractReminderToggle({ contractId, initiallyActive, on
       const newState = !active;
       setActive(newState);
       onToggle?.(newState);
-    } catch (err) {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unbekannter Fehler";
+      console.error("❌ Fehler beim Reminder-Toggle:", message);
       alert("❌ Fehler beim Umschalten der Erinnerung");
     } finally {
       setLoading(false);

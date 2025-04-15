@@ -1,12 +1,19 @@
+// 📁 src/pages/EditContract.tsx
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import styles from "./EditContract.module.css";
 
+interface Contract {
+  name: string;
+  laufzeit: string;
+  kuendigung: string;
+}
+
 export default function EditContract() {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const [contract, setContract] = useState({
+  const [contract, setContract] = useState<Contract>({
     name: "",
     laufzeit: "",
     kuendigung: "",
@@ -20,41 +27,49 @@ export default function EditContract() {
         const res = await fetch(`/api/contracts/${id}`, {
           credentials: "include", // ✅ wichtig für Cookie-Auth
         });
-        const data = await res.json();
-        if (res.ok) {
-          setContract({
-            name: data.name,
-            laufzeit: data.laufzeit,
-            kuendigung: data.kuendigung,
-          });
-        } else {
+
+        if (!res.ok) {
           setMessage("❌ Vertrag nicht gefunden");
+          return;
         }
+
+        const data = await res.json();
+        setContract({
+          name: data.name || "",
+          laufzeit: data.laufzeit || "",
+          kuendigung: data.kuendigung || "",
+        });
       } catch (err) {
+        console.error("❌ Fehler beim Abrufen:", err);
         setMessage("❌ Serverfehler beim Abrufen");
       }
     };
 
-    fetchContract();
+    if (id) fetchContract();
   }, [id]);
 
   const handleUpdate = async () => {
-    const res = await fetch(`/api/contracts/${id}`, {
-      method: "PUT",
-      credentials: "include", // ✅ wichtig
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(contract),
-    });
+    try {
+      const res = await fetch(`/api/contracts/${id}`, {
+        method: "PUT",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(contract),
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (res.ok) {
-      setMessage("✅ Vertrag erfolgreich aktualisiert");
-      setTimeout(() => navigate("/contracts"), 1500);
-    } else {
-      setMessage("❌ Fehler: " + data.message);
+      if (res.ok) {
+        setMessage("✅ Vertrag erfolgreich aktualisiert");
+        setTimeout(() => navigate("/contracts"), 1500);
+      } else {
+        setMessage("❌ Fehler: " + (data.message || "Unbekannter Fehler"));
+      }
+    } catch (err) {
+      console.error("❌ Fehler beim Speichern:", err);
+      setMessage("❌ Serverfehler beim Speichern");
     }
   };
 

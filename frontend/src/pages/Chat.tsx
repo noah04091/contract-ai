@@ -15,7 +15,6 @@ export default function Chat() {
   const [contractLoaded, setContractLoaded] = useState(false);
   const [isPremium, setIsPremium] = useState<boolean | null>(null);
 
-  // ✅ Abostatus prüfen
   useEffect(() => {
     let cancelled = false;
 
@@ -44,7 +43,6 @@ export default function Chat() {
     };
   }, []);
 
-  // ✅ Vertrag hochladen
   const handleUpload = async () => {
     if (!file) return alert("Bitte eine PDF-Datei auswählen.");
     setLoading(true);
@@ -60,18 +58,18 @@ export default function Chat() {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
+      if (!res.ok) throw new Error(data.message || "Upload fehlgeschlagen");
 
       setMessages([{ from: "system", text: "📄 Vertrag erfolgreich geladen. Stelle nun deine Fragen!" }]);
       setContractLoaded(true);
-    } catch (err: any) {
-      alert("❌ Fehler beim Upload: " + err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unbekannter Fehler beim Upload.";
+      alert("❌ Fehler beim Upload: " + message);
     } finally {
       setLoading(false);
     }
   };
 
-  // ✅ Frage stellen
   const handleAsk = async () => {
     if (!question.trim()) return;
     setLoading(true);
@@ -89,18 +87,18 @@ export default function Chat() {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
+      if (!res.ok) throw new Error(data.message || "Frage konnte nicht beantwortet werden");
 
       const aiMessage: Message = { from: "ai", text: data.answer };
       setMessages((prev) => [...prev, aiMessage]);
-    } catch (err: any) {
-      alert("❌ Fehler bei der Anfrage: " + err.message);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unbekannter Fehler bei der Anfrage.";
+      alert("❌ Fehler bei der Anfrage: " + message);
     } finally {
       setLoading(false);
     }
   };
 
-  // ⏳ Ladeanzeige beim Status-Check
   if (isPremium === null) return <p style={{ padding: "2rem" }}>⏳ Lade...</p>;
 
   return (

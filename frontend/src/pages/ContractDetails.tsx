@@ -1,3 +1,4 @@
+// 📁 src/pages/ContractDetails.tsx
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import styles from "../styles/ContractDetails.module.css";
@@ -20,8 +21,9 @@ interface Contract {
 type NotificationType = "success" | "error" | "info";
 
 export default function ContractDetails() {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+
   const [contract, setContract] = useState<Contract | null>(null);
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState({
@@ -29,22 +31,37 @@ export default function ContractDetails() {
     laufzeit: "",
     kuendigung: "",
   });
-
-  const [notification, setNotification] = useState<{ message: string; type?: NotificationType } | null>(null);
+  const [notification, setNotification] = useState<{
+    message: string;
+    type?: NotificationType;
+  } | null>(null);
 
   useEffect(() => {
-    fetch(`/api/contracts/${id}`, {
-      credentials: "include",
-    })
-      .then((res) => res.json())
-      .then((data) => {
+    const fetchContract = async () => {
+      try {
+        const res = await fetch(`/api/contracts/${id}`, {
+          credentials: "include",
+        });
+
+        if (!res.ok) {
+          setNotification({ message: "❌ Vertrag nicht gefunden", type: "error" });
+          return;
+        }
+
+        const data = await res.json();
         setContract(data);
         setFormData({
           name: data.name || "",
           laufzeit: data.laufzeit || "",
           kuendigung: data.kuendigung || "",
         });
-      });
+      } catch (error) {
+        console.error("❌ Fehler beim Laden:", error);
+        setNotification({ message: "❌ Fehler beim Laden des Vertrags", type: "error" });
+      }
+    };
+
+    if (id) fetchContract();
   }, [id]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -52,23 +69,28 @@ export default function ContractDetails() {
   };
 
   const handleSave = async () => {
-    const res = await fetch(`/api/contracts/${id}`, {
-      method: "PUT",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(formData),
-    });
+    try {
+      const res = await fetch(`/api/contracts/${id}`, {
+        method: "PUT",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (res.ok) {
-      setContract({ ...contract!, ...formData });
-      setEditing(false);
-      setNotification({ message: "✅ Vertrag erfolgreich aktualisiert", type: "success" });
-    } else {
-      setNotification({ message: "❌ Fehler beim Speichern: " + data.message, type: "error" });
+      if (res.ok && contract) {
+        setContract({ ...contract, ...formData });
+        setEditing(false);
+        setNotification({ message: "✅ Vertrag erfolgreich aktualisiert", type: "success" });
+      } else {
+        setNotification({ message: "❌ Fehler beim Speichern: " + (data.message || "Unbekannter Fehler"), type: "error" });
+      }
+    } catch (error) {
+      console.error("❌ Fehler beim Speichern:", error);
+      setNotification({ message: "❌ Serverfehler beim Speichern", type: "error" });
     }
   };
 
@@ -76,25 +98,27 @@ export default function ContractDetails() {
     const confirmDelete = confirm("Bist du sicher, dass du diesen Vertrag löschen möchtest?");
     if (!confirmDelete) return;
 
-    const res = await fetch(`/api/contracts/${id}`, {
-      method: "DELETE",
-      credentials: "include",
-    });
+    try {
+      const res = await fetch(`/api/contracts/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
 
-    if (res.ok) {
-      setNotification({ message: "🗑️ Vertrag gelöscht", type: "success" });
-      setTimeout(() => navigate("/dashboard"), 1000);
-    } else {
-      setNotification({ message: "❌ Fehler beim Löschen", type: "error" });
+      if (res.ok) {
+        setNotification({ message: "🗑️ Vertrag gelöscht", type: "success" });
+        setTimeout(() => navigate("/dashboard"), 1000);
+      } else {
+        setNotification({ message: "❌ Fehler beim Löschen", type: "error" });
+      }
+    } catch (error) {
+      console.error("❌ Fehler beim Löschen:", error);
+      setNotification({ message: "❌ Serverfehler beim Löschen", type: "error" });
     }
   };
 
   const handleCalendarExport = () => {
     if (contract?.expiryDate) {
-      generateICS({
-        name: contract.name,
-        expiryDate: contract.expiryDate,
-      });
+      generateICS({ name: contract.name, expiryDate: contract.expiryDate });
       setNotification({ message: "📅 Zum Kalender exportiert", type: "info" });
     } else {
       setNotification({ message: "⚠️ Kein Ablaufdatum vorhanden", type: "error" });
@@ -110,13 +134,16 @@ export default function ContractDetails() {
 
       if (!res.ok) throw new Error("Fehler beim Umschalten");
 
-      const updatedContract = { ...contract!, reminder: !contract?.reminder };
-      setContract(updatedContract);
+      setContract((prev) =>
+        prev ? { ...prev, reminder: !prev.reminder } : prev
+      );
+
       setNotification({
-        message: `🔔 Erinnerung ${updatedContract.reminder ? "aktiviert" : "deaktiviert"}`,
+        message: `🔔 Erinnerung ${!contract?.reminder ? "aktiviert" : "deaktiviert"}`,
         type: "success",
       });
-    } catch (err) {
+    } catch (error) {
+      console.error("❌ Fehler beim Umschalten:", error);
       setNotification({ message: "❌ Fehler beim Umschalten der Erinnerung", type: "error" });
     }
   };
@@ -128,16 +155,8 @@ export default function ContractDetails() {
       <h1>🔍 Vertragsdetails</h1>
 
       <div className={styles.statusRow}>
-        {contract.status && (
-          <div className={styles.statusBox}>
-            <strong>Status:</strong> {contract.status}
-          </div>
-        )}
-        {contract.expiryDate && (
-          <div className={styles.statusBox}>
-            <strong>Ablaufdatum:</strong> {contract.expiryDate}
-          </div>
-        )}
+        {contract.status && <div className={styles.statusBox}><strong>Status:</strong> {contract.status}</div>}
+        {contract.expiryDate && <div className={styles.statusBox}><strong>Ablaufdatum:</strong> {contract.expiryDate}</div>}
         {contract.reminderLastSentAt && (
           <div className={styles.statusBox}>
             <strong>Letzte Erinnerung:</strong>{" "}
@@ -177,7 +196,7 @@ export default function ContractDetails() {
         <label>🔔 Erinnerung aktivieren:</label>
         <input
           type="checkbox"
-          checked={contract.reminder || false}
+          checked={contract.reminder ?? false}
           onChange={toggleReminder}
         />
       </div>

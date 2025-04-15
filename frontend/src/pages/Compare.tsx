@@ -45,7 +45,6 @@ export default function Compare() {
     };
   }, []);
 
-  // ✅ Vergleichs-Anfrage absenden
   const handleSubmit = async () => {
     if (!file1 || !file2) return alert("❌ Bitte wähle zwei Verträge aus.");
     setLoading(true);
@@ -63,25 +62,28 @@ export default function Compare() {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
+      if (!res.ok) throw new Error(data.message || "Vergleich fehlgeschlagen");
       setResult(data);
-    } catch (err: any) {
-      alert("❌ Fehler: " + err.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        alert("❌ Fehler: " + err.message);
+      } else {
+        alert("❌ Unbekannter Fehler beim Vergleich.");
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  // 🔄 Reset
   const handleReset = () => {
     setFile1(null);
     setFile2(null);
     setResult(null);
   };
 
-  // 📄 Export als PDF
   const exportToPDF = () => {
     if (!result) return;
+
     const element = document.createElement("div");
     element.innerHTML = `
       <h2>🔍 Vertragsvergleich</h2>
@@ -92,6 +94,7 @@ export default function Compare() {
       <h3>🧠 KI-Zusammenfassung</h3>
       <p>${result.summary}</p>
     `;
+
     html2pdf().from(element).save("Vertragsvergleich.pdf");
   };
 
@@ -103,10 +106,9 @@ export default function Compare() {
     <div className={styles.container}>
       <h2>🔍 Vertragsvergleich</h2>
       {!isPremium && <PremiumNotice />}
-
       <p>
-        Wähle zwei Verträge aus und erhalte eine KI-gestützte Analyse zu Unterschieden,
-        Stärken & Schwächen.
+        Wähle zwei Verträge aus und erhalte eine KI-gestützte Analyse zu
+        Unterschieden, Stärken & Schwächen.
       </p>
 
       <div className={styles.uploadBox}>

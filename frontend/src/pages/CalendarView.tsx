@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import FullCalendar from "@fullcalendar/react";
+import { EventClickArg, EventInput } from "@fullcalendar/core";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import styles from "../styles/CalendarView.module.css";
 
@@ -18,7 +19,7 @@ export default function CalendarView() {
     const fetchContracts = async () => {
       try {
         const res = await fetch("/api/contracts", {
-          credentials: "include", // ✅ Cookie wird mitgeschickt
+          credentials: "include",
         });
 
         if (!res.ok) throw new Error("Verträge konnten nicht geladen werden");
@@ -26,20 +27,21 @@ export default function CalendarView() {
         const data = await res.json();
         setContracts(data.filter((c: Contract) => c.expiryDate));
       } catch (err) {
-        console.error("❌ Fehler beim Laden der Verträge:", err);
+        const message = err instanceof Error ? err.message : "Unbekannter Fehler beim Laden der Verträge.";
+        console.error("❌ Fehler beim Laden der Verträge:", message);
       }
     };
 
     fetchContracts();
   }, []);
 
-  const events = contracts.map((contract) => ({
+  const events: EventInput[] = contracts.map((contract) => ({
     title: contract.name,
     date: contract.expiryDate,
     id: contract._id,
   }));
 
-  const handleEventClick = (info: any) => {
+  const handleEventClick = (info: EventClickArg) => {
     navigate(`/contracts/${info.event.id}`);
   };
 
