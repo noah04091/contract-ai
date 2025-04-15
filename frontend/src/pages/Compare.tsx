@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import styles from "../styles/Compare.module.css";
-// @ts-ignore – keine TS-Typen für html2pdf vorhanden
 import html2pdf from "html2pdf.js";
 import PremiumNotice from "../components/PremiumNotice";
 
@@ -92,7 +91,7 @@ export default function Compare() {
       <p>${result.summary}</p>
     `;
 
-    // @ts-ignore
+    // @ts-expect-error
     html2pdf().from(element).save("Vertragsvergleich.pdf");
   };
 

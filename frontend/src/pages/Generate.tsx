@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import styles from "../styles/Generate.module.css";
 import PremiumNotice from "../components/PremiumNotice";
 import { CheckCircle, Clipboard, Save } from "lucide-react";
-// @ts-ignore – html2pdf hat keine TS-Typen
 import html2pdf from "html2pdf.js";
 
 interface FormDataType {
@@ -13,7 +12,7 @@ interface FormDataType {
 
 export default function Generate() {
   const [contractType, setContractType] = useState<string>("freelancer");
-  const [formData, setFormData] = useState<FormDataType>({});
+  const [formData, setFormData] = useState<FormDataType>({} as FormDataType);
   const [generated, setGenerated] = useState<string>("");
   const [copied, setCopied] = useState<boolean>(false);
   const [saved, setSaved] = useState<boolean>(false);
@@ -194,7 +193,7 @@ export default function Generate() {
       jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
     };
 
-    // @ts-ignore – html2pdf fehlt Typisierung
+    // @ts-expect-error – html2pdf fehlt Typisierung
     html2pdf({ ...opt }).from(container).save().then(() => {
       if (signatureImage && container.contains(signatureImage)) {
         container.removeChild(signatureImage);

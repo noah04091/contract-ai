@@ -5,7 +5,10 @@ const API_BASE_URL = "/api"; // Proxy-Pfad für Vercel & devServer
 /**
  * Universelle API-Fetch-Funktion mit Cookie- und optionalem Token-Support.
  */
-export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
+export const apiCall = async (
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<unknown> => {
   const authToken = localStorage.getItem("authToken");
   const isFormData = options.body instanceof FormData;
 
@@ -30,7 +33,7 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, mergedOptions);
 
     // 🔍 Optionales Debugging über Konsole aktivieren
-    if ((window as any).DEBUG_API) {
+    if ((window as { DEBUG_API?: boolean }).DEBUG_API) {
       console.log(`🔍 [apiCall] ${endpoint}`, {
         status: response.status,
         headers: Object.fromEntries(response.headers.entries()),
@@ -44,7 +47,7 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
         const errorData = await response.json();
         if (errorData?.message) errorMessage = errorData.message;
       } catch {
-        // Ignoriere JSON-Fehler
+        // JSON-Parsing ignorieren
       }
       throw new Error(errorMessage);
     }
@@ -52,10 +55,10 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
     try {
       return await response.json();
     } catch {
-      return {}; // Fallback bei leerem Body (z. B. 204 No Content)
+      return {}; // Fallback bei leerem Body
     }
 
-  } catch (err: unknown) {
+  } catch (err) {
     console.error(`❌ API-Fehler bei [${endpoint}]:`, err);
     throw err;
   }
@@ -64,7 +67,7 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
 /**
  * Löscht alle gespeicherten Authentifizierungsdaten (Token, Zeitstempel, E-Mail).
  */
-export const clearAuthData = () => {
+export const clearAuthData = (): void => {
   localStorage.removeItem("authToken");
   localStorage.removeItem("authEmail");
   localStorage.removeItem("authTimestamp");

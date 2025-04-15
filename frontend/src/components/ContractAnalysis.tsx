@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import styles from "./ContractAnalysis.module.css";
 import ResultCard from "./ResultCard";
-// @ts-ignore
 import html2pdf from "html2pdf.js";
 
 interface ContractAnalysisProps {
@@ -82,7 +81,7 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
       <h3>📊 Contract Score</h3><p>${result.contractScore}/100</p>
     `;
 
-    // @ts-ignore – html2pdf Typen existieren nicht offiziell
+    // @ts-expect-error – html2pdf Typen existieren nicht offiziell
     html2pdf().from(element).save("Vertragsanalyse.pdf");
   };
 
