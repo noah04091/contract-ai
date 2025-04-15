@@ -2,7 +2,6 @@
 import { useEffect, useState } from "react";
 import styles from "./AnalysisHistory.module.css";
 import axios from "axios";
-import API_BASE_URL from "../utils/api";
 
 interface Analysis {
   _id: string;
@@ -22,27 +21,23 @@ export default function AnalysisHistory() {
   const [searchTerm, setSearchTerm] = useState("");
   const [minScore, setMinScore] = useState(0);
 
-  const fetchAnalyses = async () => {
-    try {
-      const token = localStorage.getItem("token") || "";
-      const res = await axios.get<Analysis[]>(`${API_BASE_URL}/analyses`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        withCredentials: true, // 🧁 für Cookies, falls dein Backend Cookies verwendet
-      });
-      setAnalyses(res.data);
-    } catch (err) {
-      console.error("❌ Fehler beim Laden der Analyse-Historie:", err);
-    }
-  };
-
   useEffect(() => {
+    const fetchAnalyses = async () => {
+      try {
+        const res = await axios.get<Analysis[]>("/api/analyses", {
+          withCredentials: true, // Cookie-Auth
+        });
+        setAnalyses(res.data);
+      } catch (err) {
+        console.error("❌ Fehler beim Laden der Analyse-Historie:", err);
+      }
+    };
+
     fetchAnalyses();
   }, []);
 
   const toggleDetails = (id: string) => {
-    setExpandedId(expandedId === id ? null : id);
+    setExpandedId((prevId) => (prevId === id ? null : id));
   };
 
   const filteredAnalyses = analyses.filter(
@@ -72,6 +67,7 @@ export default function AnalysisHistory() {
       </div>
 
       {filteredAnalyses.length === 0 && <p>Keine passenden Analysen gefunden.</p>}
+
       {filteredAnalyses.map((a) => (
         <div key={a._id} className={styles.analysisItem}>
           <div className={styles.header} onClick={() => toggleDetails(a._id)}>
@@ -88,7 +84,7 @@ export default function AnalysisHistory() {
               <p><strong>📊 Score:</strong> {a.contractScore}/100</p>
               {a.pdfPath && (
                 <a
-                  href={`${API_BASE_URL}${a.pdfPath}`}
+                  href={`/api${a.pdfPath}`}
                   target="_blank"
                   rel="noreferrer"
                   className={styles.downloadBtn}

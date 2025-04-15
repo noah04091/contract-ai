@@ -3,7 +3,6 @@ import styles from "../styles/Generate.module.css";
 import PremiumNotice from "../components/PremiumNotice";
 import { CheckCircle, Clipboard, Save } from "lucide-react";
 import html2pdf from "html2pdf.js";
-import API_BASE_URL from "../utils/api";
 
 export default function Generate() {
   const [contractType, setContractType] = useState("freelancer");
@@ -20,17 +19,15 @@ export default function Generate() {
 
   useEffect(() => {
     const fetchStatus = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) return setIsPremium(false);
-
       try {
-        const res = await fetch(`${API_BASE_URL}/auth/me`, {
-          headers: { Authorization: token },
+        const res = await fetch("/api/auth/me", {
+          credentials: "include",
         });
+        if (!res.ok) throw new Error("Nicht authentifiziert");
         const data = await res.json();
         setIsPremium(data.subscriptionActive === true);
       } catch (err) {
-        console.error("❌ Fehler beim Laden des Abostatus:", err);
+        console.error("❌ Fehler beim Abo-Check:", err);
         setIsPremium(false);
       }
     };
@@ -63,7 +60,9 @@ export default function Generate() {
       ctx.stroke();
     };
 
-    const stop = () => { drawing = false; };
+    const stop = () => {
+      drawing = false;
+    };
 
     canvas.addEventListener("mousedown", start);
     canvas.addEventListener("mousemove", draw);
@@ -88,7 +87,7 @@ export default function Generate() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData || !formData.title || !formData.details || !isPremium) return;
+    if (!formData.title || !formData.details || !isPremium) return;
 
     setLoading(true);
     setGenerated("");
@@ -97,12 +96,10 @@ export default function Generate() {
     setFinished(false);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/contracts/generate`, {
+      const res = await fetch("/api/contracts/generate", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
-        },
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type: contractType, formData }),
       });
 
@@ -111,7 +108,7 @@ export default function Generate() {
       setGenerated(data.contractText);
       setFinished(true);
     } catch (err: any) {
-      alert("Fehler: " + err.message);
+      alert("❌ Fehler: " + err.message);
     } finally {
       setLoading(false);
     }
@@ -129,12 +126,10 @@ export default function Generate() {
 
   const handleSave = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/contracts`, {
+      const res = await fetch("/api/contracts", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
-        },
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: formData.title,
           laufzeit: "Generiert",
@@ -148,7 +143,7 @@ export default function Generate() {
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (err: any) {
-      alert("Fehler beim Speichern: " + err.message);
+      alert("❌ Fehler beim Speichern: " + err.message);
     }
   };
 
@@ -173,6 +168,7 @@ export default function Generate() {
 
   const handleDownloadPDF = () => {
     if (!contractRef.current) return;
+
     const signatureImage = document.createElement("img");
     if (signatureURL) {
       signatureImage.src = signatureURL;

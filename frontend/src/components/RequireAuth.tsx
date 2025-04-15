@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
-import API_BASE_URL from "../utils/api"; // ✅ Base URL importieren
 
 interface RequireAuthProps {
   children: React.ReactNode;
@@ -15,8 +14,8 @@ export default function RequireAuth({ children }: RequireAuthProps) {
 
     const checkAuth = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/auth/me`, {
-          credentials: "include", // ✅ Cookie wird mitgeschickt
+        const res = await fetch("/api/auth/me", {
+          credentials: "include", // ✅ Cookies nutzen
         });
 
         if (!res.ok) throw new Error("Nicht authentifiziert");
@@ -36,12 +35,12 @@ export default function RequireAuth({ children }: RequireAuthProps) {
     checkAuth();
 
     return () => {
-      cancelled = true; // 🛡️ Verhindert setState nach Unmount
+      cancelled = true;
     };
   }, []);
 
   if (loading) {
-    return <div style={{ padding: "2rem" }}>⏳ Authentifizierung wird geprüft...</div>;
+    return <div style={{ padding: "2rem", textAlign: "center" }}>🔐 Authentifizierung wird geprüft...</div>;
   }
 
   if (!isAuthenticated) {

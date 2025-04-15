@@ -1,23 +1,5 @@
-import { useEffect, useState } from "react"; 
-import { jwtDecode } from "jwt-decode";
-import axios from "axios";
+import { useEffect, useState } from "react";
 import styles from "../styles/Profile.module.css";
-import API_BASE_URL from "../utils/api";
-
-interface DecodedToken {
-  email: string;
-  exp: number;
-  iat: number;
-}
-
-interface CheckoutResponse {
-  url: string;
-}
-
-interface UserProfile {
-  email: string;
-  isPremium: boolean;
-}
 
 export default function Profile() {
   const [userEmail, setUserEmail] = useState<string>("");
@@ -28,36 +10,32 @@ export default function Profile() {
   const [upgradeMessage, setUpgradeMessage] = useState("");
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      try {
-        const decoded = jwtDecode<DecodedToken>(token);
-        setUserEmail(decoded.email);
-
-        axios
-          .get<UserProfile>("https://contract-ai-backend.onrender.com/auth/me", {
-            headers: { Authorization: `Bearer ${token}` },
-          })
-          .then((res) => {
-            setIsPremium(res.data.isPremium);
-            setUserEmail(res.data.email);
-          })
-          .catch((err) => console.error("❌ Fehler beim Laden des Profils:", err));
-      } catch (error) {
-        console.error("❌ Fehler beim Token-Decode:", error);
-      }
-    }
+    // ✅ Authentifizierten Benutzer abrufen (über Cookie & Proxy)
+    fetch("/api/auth/me", {
+      method: "GET",
+      credentials: "include",
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Nicht authentifiziert");
+        return res.json();
+      })
+      .then((data) => {
+        setUserEmail(data.email);
+        setIsPremium(data.subscriptionActive === true || data.isPremium === true);
+      })
+      .catch((err) => {
+        console.error("❌ Fehler beim Laden des Profils:", err);
+      });
   }, []);
 
   const handlePasswordChange = async () => {
     setMessage("");
+
     try {
-      const res = await fetch(`${API_BASE_URL}/auth/change-password`, {
+      const res = await fetch("/api/auth/change-password", {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
-        },
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ oldPassword, newPassword }),
       });
 
@@ -79,18 +57,20 @@ export default function Profile() {
     const confirmDelete = confirm("Willst du deinen Account wirklich löschen? Alle Verträge gehen verloren!");
     if (!confirmDelete) return;
 
-    const res = await fetch(`${API_BASE_URL}/auth/delete`, {
-      method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
-      },
-    });
+    try {
+      const res = await fetch("/api/auth/delete", {
+        method: "DELETE",
+        credentials: "include",
+      });
 
-    if (res.ok) {
-      alert("🗑️ Account gelöscht. Bis bald!");
-      localStorage.removeItem("token");
-      window.location.href = "/";
-    } else {
+      if (res.ok) {
+        alert("🗑️ Account gelöscht. Bis bald!");
+        window.location.href = "/";
+      } else {
+        alert("❌ Fehler beim Löschen des Accounts");
+      }
+    } catch (err) {
+      console.error("❌ Fehler beim Löschen:", err);
       alert("❌ Fehler beim Löschen des Accounts");
     }
   };
@@ -99,26 +79,20 @@ export default function Profile() {
     setUpgradeMessage("");
 
     try {
-      const token = localStorage.getItem("token");
-      if (!token) throw new Error("Kein Token vorhanden");
+      const res = await fetch("/api/stripe/create-checkout-session", {
+        method: "POST",
+        credentials: "include",
+      });
 
-      const res = await axios.post<CheckoutResponse>(
-        "https://contract-ai-backend.onrender.com/stripe/create-checkout-session",
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const data = await res.json();
 
-      if (res.data?.url) {
-        window.location.href = res.data.url;
+      if (res.ok && data.url) {
+        window.location.href = data.url;
       } else {
-        setUpgradeMessage("❌ Keine Stripe-URL empfangen");
+        setUpgradeMessage("❌ Upgrade fehlgeschlagen");
       }
     } catch (err) {
-      console.error("❌ Upgrade fehlgeschlagen:", err);
+      console.error("❌ Upgrade-Fehler:", err);
       setUpgradeMessage("❌ Upgrade fehlgeschlagen");
     }
   };

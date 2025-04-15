@@ -7,7 +7,6 @@ import StatusPieChart from "../components/StatusPieChart";
 import UploadBarChart from "../components/UploadBarChart";
 import Notification from "../components/Notification";
 import { Helmet } from "react-helmet-async";
-import API_BASE_URL from "../utils/api";
 
 interface Contract {
   _id: string;
@@ -44,17 +43,16 @@ export default function Dashboard() {
         return match[2].toLowerCase().startsWith("jahr") ? num * 12 : num;
       })
       .filter((val) => val > 0);
-    if (laufzeiten.length === 0) return 0;
-    return Math.round(laufzeiten.reduce((a, b) => a + b, 0) / laufzeiten.length);
+    return laufzeiten.length > 0 ? Math.round(laufzeiten.reduce((a, b) => a + b, 0) / laufzeiten.length) : 0;
   };
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/auth/me`, { credentials: "include" })
+    fetch("/api/auth/me", { credentials: "include" })
       .then((res) => res.json())
       .then((data) => setUserEmail(data.email))
-      .catch((err) => console.error("Fehler beim Abrufen des Benutzers:", err));
+      .catch((err) => console.error("Fehler beim Laden des Nutzers:", err));
 
-    fetch(`${API_BASE_URL}/contracts`, { credentials: "include" })
+    fetch("/api/contracts", { credentials: "include" })
       .then((res) => res.json())
       .then((data) => {
         setContracts(data);
@@ -87,7 +85,7 @@ export default function Dashboard() {
     const formData = new FormData();
     formData.append("file", file);
 
-    const res = await fetch(`${API_BASE_URL}/upload`, {
+    const res = await fetch("/api/upload", {
       method: "POST",
       credentials: "include",
       body: formData,
@@ -106,10 +104,9 @@ export default function Dashboard() {
   };
 
   const handleDelete = async (id: string) => {
-    const confirmDelete = confirm("Bist du sicher, dass du diesen Vertrag löschen möchtest?");
-    if (!confirmDelete) return;
+    if (!confirm("Bist du sicher, dass du diesen Vertrag löschen möchtest?")) return;
 
-    const res = await fetch(`${API_BASE_URL}/contracts/${id}`, {
+    const res = await fetch(`/api/contracts/${id}`, {
       method: "DELETE",
       credentials: "include",
     });
@@ -125,7 +122,7 @@ export default function Dashboard() {
 
   const toggleReminder = async (id: string) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/contracts/${id}/reminder`, {
+      const res = await fetch(`/api/contracts/${id}/reminder`, {
         method: "PATCH",
         credentials: "include",
       });
@@ -231,7 +228,6 @@ export default function Dashboard() {
           onChange={(e) => setSearchTerm(e.target.value)}
           className={styles.searchInput}
         />
-
         <select
           value={selectedStatus}
           onChange={(e) => setSelectedStatus(e.target.value)}
@@ -242,7 +238,6 @@ export default function Dashboard() {
           <option value="Bald ablaufend">⚠️ Bald ablaufend</option>
           <option value="Abgelaufen">❌ Abgelaufen</option>
         </select>
-
         <button onClick={() => setShowModal(true)} className={styles.uploadButton}>📄 Vertrag hinzufügen</button>
         <button onClick={exportToCSV} className={styles.exportButton}>📥 CSV Export</button>
         <button onClick={exportAllICS} className={styles.exportButton}>📅 ICS Export (30 Tage)</button>

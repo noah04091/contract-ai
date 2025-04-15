@@ -1,10 +1,8 @@
-// 📁 src/pages/Register.tsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "../styles/Auth.module.css";
 import Notification from "../components/Notification";
 import { FaEnvelope, FaLock } from "react-icons/fa";
-import API_BASE_URL from "../utils/api"; // ✅ zentrale API-URL
 
 export default function Register() {
   const [email, setEmail] = useState("");
@@ -21,11 +19,10 @@ export default function Register() {
     e.preventDefault();
     setLoading(true);
 
-    console.log("➡️ Registrierung absenden:", { email, password });
-
     try {
-      const res = await fetch(`${API_BASE_URL}/auth/register`, {
+      const res = await fetch("/api/auth/register", {
         method: "POST",
+        credentials: "include", // ✅ damit das Token-Cookie korrekt gesetzt wird
         headers: {
           "Content-Type": "application/json",
         },
@@ -33,7 +30,6 @@ export default function Register() {
       });
 
       const data = await res.json();
-      console.log("⬅️ Server-Antwort:", data);
 
       if (res.ok) {
         setNotification({ message: "✅ Registrierung erfolgreich!", type: "success" });

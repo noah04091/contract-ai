@@ -2,7 +2,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PremiumNotice from "./PremiumNotice";
-import API_BASE_URL from "../utils/api";
 
 interface Props {
   children: React.ReactNode;
@@ -18,8 +17,8 @@ export default function RequirePremium({ children }: Props) {
 
     const fetchStatus = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/auth/me`, {
-          credentials: "include", // ✅ Cookie wird mitgeschickt
+        const res = await fetch("/api/auth/me", {
+          credentials: "include", // ✅ Cookies senden
         });
 
         if (!res.ok) {
@@ -43,11 +42,11 @@ export default function RequirePremium({ children }: Props) {
     fetchStatus();
 
     return () => {
-      cancelled = true; // 🛡️ Cleanup gegen setState nach Unmount
+      cancelled = true;
     };
   }, [navigate]);
 
-  if (loading || isPremium === null) return null; // 🔄 Alternativ Spinner möglich
+  if (loading || isPremium === null) return null; // 🔄 Alternativ Spinner
   if (!isPremium) return <PremiumNotice />;
 
   return <>{children}</>;

@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import API_BASE_URL from "../utils/api"; // ✅ Richtiger Import
 
 export default function PremiumStatus() {
   const [isPremium, setIsPremium] = useState<boolean | null>(null);
@@ -8,14 +7,14 @@ export default function PremiumStatus() {
   useEffect(() => {
     const fetchStatus = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/auth/me`, {
-          credentials: "include", // ✅ Cookie wird mitgeschickt
+        const res = await fetch("/api/auth/me", {
+          credentials: "include",
         });
 
         if (!res.ok) throw new Error("Nicht authentifiziert");
 
         const data = await res.json();
-        setIsPremium(data.subscriptionActive === true); // ✅ korrektes Feld
+        setIsPremium(data.subscriptionActive === true);
       } catch (err) {
         console.error("❌ Fehler beim Laden des Premium-Status:", err);
         setIsPremium(false);
@@ -29,9 +28,9 @@ export default function PremiumStatus() {
 
   const handleUpgrade = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/stripe/create-checkout-session`, {
+      const res = await fetch("/api/stripe/create-checkout-session", {
         method: "POST",
-        credentials: "include", // ✅ wichtig für Stripe + Cookies
+        credentials: "include",
       });
 
       const data = await res.json();

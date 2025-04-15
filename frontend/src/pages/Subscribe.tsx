@@ -1,7 +1,5 @@
-// src/pages/Subscribe.tsx
 import { useState } from "react";
 import styles from "../styles/Subscribe.module.css";
-import API_BASE_URL from "../utils/api";
 
 export default function Subscribe() {
   const [loading, setLoading] = useState(false);
@@ -9,7 +7,7 @@ export default function Subscribe() {
   const handleSubscribe = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/checkout`, {
+      const res = await fetch("/api/checkout", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -21,7 +19,7 @@ export default function Subscribe() {
       if (data.url) {
         window.location.href = data.url; // Weiterleitung zu Stripe Checkout
       } else {
-        alert("Fehler beim Starten des Zahlungsprozesses.");
+        alert("❌ Fehler beim Starten des Zahlungsprozesses.");
       }
     } catch (err) {
       alert("❌ Fehler: " + err);
@@ -33,7 +31,10 @@ export default function Subscribe() {
   return (
     <div className={styles.container}>
       <h2>🚀 Upgrade auf Premium</h2>
-      <p>Für nur <strong>9,99 € / Monat</strong> erhältst du Zugriff auf alle Premium-Funktionen.</p>
+      <p>
+        Für nur <strong>9,99 € / Monat</strong> erhältst du Zugriff auf alle
+        Premium-Funktionen.
+      </p>
       <button onClick={handleSubscribe} disabled={loading}>
         {loading ? "⏳ Weiterleitung..." : "💳 Jetzt abonnieren"}
       </button>

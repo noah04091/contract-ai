@@ -1,15 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { jwtDecode } from "jwt-decode";
 import styles from "../styles/Home.module.css";
 import logo from "../assets/logo-contractai.png";
 import { Helmet } from "react-helmet-async";
-import API_BASE_URL from "../utils/api";
 
-interface DecodedToken {
+interface UserResponse {
   email: string;
-  exp: number;
-  iat: number;
+  subscriptionActive: boolean;
 }
 
 export default function Home() {
@@ -20,27 +17,24 @@ export default function Home() {
   const featureRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
+    const fetchUser = async () => {
       try {
-        const decoded = jwtDecode<DecodedToken>(token);
-        setUserEmail(decoded.email);
-
-        fetch(`${API_BASE_URL}/auth/me`, {
+        const res = await fetch("/api/auth/me", {
           method: "GET",
-          headers: {
-            Authorization: token,
-          },
-        })
-          .then((res) => res.json())
-          .then((data) => {
-            if (data?.isPremium) setIsPremium(true);
-          })
-          .catch((err) => console.error("❌ Fehler beim Laden des Profils:", err));
+          credentials: "include",
+        });
+
+        if (!res.ok) throw new Error("Nicht eingeloggt");
+
+        const data: UserResponse = await res.json();
+        setUserEmail(data.email);
+        setIsPremium(data.subscriptionActive === true);
       } catch (err) {
-        console.error("❌ Ungültiger Token", err);
+        console.log("🔓 Kein Login – Startseite zeigt CTA");
       }
-    }
+    };
+
+    fetchUser();
 
     const timer = setTimeout(() => setShowScrollButton(true), 2000);
     return () => clearTimeout(timer);

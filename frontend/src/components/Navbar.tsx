@@ -1,18 +1,10 @@
 import { useEffect, useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { jwtDecode } from "jwt-decode";
 import styles from "../styles/Navbar.module.css";
 import Notification from "./Notification";
 import ThemeToggle from "./ThemeToggle";
 import logo from "../assets/logo.png";
 import { clearAuthData } from "../utils/api";
-import API_BASE_URL from "../utils/api"; // ✅ Import ergänzt
-
-interface DecodedToken {
-  exp: number;
-  email: string;
-  iat: number;
-}
 
 interface UserData {
   email: string;
@@ -28,41 +20,21 @@ export default function Navbar() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = localStorage.getItem("authToken") || localStorage.getItem("token");
-    if (!token) return;
-
-    try {
-      const decoded = jwtDecode<DecodedToken>(token);
-      const now = Date.now() / 1000;
-      if (decoded.exp < now) {
+    // Cookie-basierter Auth-Check über Proxy
+    fetch("/api/auth/me", {
+      method: "GET",
+      credentials: "include",
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error("Fehler beim Laden des Benutzerprofils");
+        return res.json();
+      })
+      .then((data) => setUser({ email: data.email, subscriptionActive: data.subscriptionActive }))
+      .catch((err) => {
+        console.warn("❌ Auth fehlgeschlagen:", err);
         clearAuthData();
         setUser(null);
-        navigate("/login");
-        return;
-      }
-
-      // ✅ Auth-Check über Cookie + Proxy
-      fetch(`${API_BASE_URL}/auth/me`, {
-        method: "GET",
-        credentials: "include",
-      })
-        .then((res) => {
-          if (!res.ok) throw new Error("Fehler beim Laden des Benutzerprofils");
-          return res.json();
-        })
-        .then((data) =>
-          setUser({ email: data.email, subscriptionActive: data.subscriptionActive })
-        )
-        .catch(() => {
-          clearAuthData();
-          setUser(null);
-        });
-
-    } catch (error) {
-      console.error("Token-Dekodierungsfehler:", error);
-      clearAuthData();
-      setUser(null);
-    }
+      });
   }, [navigate]);
 
   useEffect(() => {
@@ -77,12 +49,12 @@ export default function Navbar() {
 
   const handleLogout = async () => {
     try {
-      await fetch(`${API_BASE_URL}/auth/logout`, {
+      await fetch("/api/auth/logout", {
         method: "POST",
         credentials: "include",
       });
     } catch (err) {
-      console.error("Logout-API-Fehler:", err);
+      console.error("Logout-Fehler:", err);
     }
 
     clearAuthData();

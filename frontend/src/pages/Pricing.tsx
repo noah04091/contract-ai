@@ -1,34 +1,27 @@
-// src/pages/Pricing.tsx
 import styles from "../styles/Pricing.module.css";
 import { CheckCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { Helmet } from "react-helmet-async";
-import API_BASE_URL from "../utils/api";
 
 export default function Pricing() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleUpgrade = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      alert("❌ Du bist nicht eingeloggt!");
-      return;
-    }
-
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/stripe/create-checkout-session`, {
+      const res = await fetch("/api/stripe/create-checkout-session", {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        credentials: "include", // ✅ Cookies mitsenden für Auth
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Fehler beim Stripe-Checkout");
+
+      if (!res.ok || !data.url) {
+        throw new Error(data.message || "Fehler beim Stripe-Checkout");
+      }
 
       window.location.href = data.url;
     } catch (err: any) {
@@ -123,7 +116,6 @@ export default function Pricing() {
         ))}
       </div>
 
-      {/* Vergleichstabelle */}
       <h2 style={{ textAlign: "center", marginTop: "4rem" }}>🔍 Vergleich der Funktionen</h2>
       <div style={{ overflowX: "auto", marginTop: "1rem" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", maxWidth: "900px", margin: "0 auto" }}>

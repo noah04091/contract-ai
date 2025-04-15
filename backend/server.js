@@ -50,6 +50,9 @@ const ALLOWED_ORIGINS = [
   "https://contract-ai.de",
   "https://www.contract-ai.de",
   "https://contract-ai-frontend.onrender.com",
+  "https://contract-ai.vercel.app",
+  "http://localhost:5173",
+  undefined // ⬅️ wichtig für Tools wie Postman oder curl
 ];
 
 // 🔌 MongoDB
@@ -91,9 +94,10 @@ app.use("/uploads", express.static(path.join(__dirname, UPLOAD_PATH)));
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   if (origin && ALLOWED_ORIGINS.includes(origin)) {
-    res.header("Access-Control-Allow-Origin", origin);
+    res.header('Access-Control-Allow-Origin', origin);
   }
-  res.header("Access-Control-Allow-Credentials", "true");
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
   next();
 });
 

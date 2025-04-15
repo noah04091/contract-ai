@@ -1,9 +1,7 @@
-// 📁 src/pages/ForgotPassword.tsx
 import { useState } from "react";
 import styles from "../styles/Auth.module.css";
 import { Mail } from "lucide-react";
 import Notification from "../components/Notification";
-import API_BASE_URL from "../utils/api";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
@@ -16,21 +14,23 @@ export default function ForgotPassword() {
     setNotification(null);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
-            method: "POST",
+      const res = await fetch("/api/auth/forgot-password", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
 
       const data = await res.json();
+
       if (res.ok) {
-        setNotification({ message: "✅ E-Mail zum Zurücksetzen wurde generiert!", type: "success" });
+        setNotification({ message: "✅ E-Mail zum Zurücksetzen wurde gesendet!", type: "success" });
         setEmail("");
       } else {
-        setNotification({ message: "❌ " + data.message, type: "error" });
+        setNotification({ message: "❌ " + (data.message || "Unbekannter Fehler"), type: "error" });
       }
     } catch (err) {
-      setNotification({ message: "❌ Fehler beim Senden der Reset-E-Mail", type: "error" });
+      console.error("Fehler beim E-Mail-Reset:", err);
+      setNotification({ message: "❌ Netzwerkfehler – bitte erneut versuchen", type: "error" });
     } finally {
       setLoading(false);
     }
@@ -49,6 +49,7 @@ export default function ForgotPassword() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            autoComplete="email"
           />
         </div>
         <button type="submit" className={styles.authButton} disabled={loading}>

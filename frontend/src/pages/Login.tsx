@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import styles from "../styles/Auth.module.css";
 import { Mail, Lock } from "lucide-react";
 import Notification from "../components/Notification";
-import API_BASE_URL from "../utils/api";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -19,70 +18,63 @@ export default function Login() {
     setLoading(true);
 
     try {
-      // Direkter fetch statt apiCall für maximale Kontrolle über die Anfrage
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+      const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include", // Wichtig: Cookies mitsenden/empfangen
+        credentials: "include",
         body: JSON.stringify({ email, password }),
       });
 
       const data = await response.json();
       console.log("⬅️ Server-Antwort:", data);
-      
-      // Überprufe Set-Cookie Header im Response
-      console.log("🍪 Response-Headers:", 
-        [...(response.headers as any).entries()].reduce((obj, [key, val]) => ({...obj, [key]: val}), {})
+
+      console.log("🍪 Response-Headers:",
+        [...(response.headers as any).entries()].reduce((obj, [key, val]) => ({ ...obj, [key]: val }), {})
       );
 
       if (!response.ok) {
         throw new Error(data.message || "Login fehlgeschlagen");
       }
 
-      // Token sichern, falls Cookie nicht funktioniert
       if (data.token) {
-        localStorage.setItem('authToken', data.token);
-        localStorage.setItem('authEmail', email);
-        localStorage.setItem('authTimestamp', String(Date.now()));
+        localStorage.setItem("authToken", data.token);
+        localStorage.setItem("authEmail", email);
+        localStorage.setItem("authTimestamp", String(Date.now()));
         console.log("🔑 Token im localStorage gespeichert");
       }
 
       setNotification({ message: "✅ Login erfolgreich!", type: "success" });
-      
-      // Nach dem Login detaillierte Diagnose durchführen
+
       setTimeout(async () => {
         try {
           console.log("🔍 Cookie-Diagnose nach Login:");
           console.log("document.cookie:", document.cookie);
-          
-          // Test GET /auth/me mit Cookies
-          console.log("🔍 Test: /auth/me mit credentials");
-          const authCheckWithCookies = await fetch(`${API_BASE_URL}/auth/me`, {
+
+          const authCheckWithCookies = await fetch("/api/auth/me", {
             method: "GET",
             credentials: "include",
           });
-          
+
           console.log("Status (mit Cookies):", authCheckWithCookies.status);
-          
+
           if (authCheckWithCookies.ok) {
             console.log("✅ Cookie-Authentifizierung funktioniert");
           } else {
             console.warn("⚠️ Cookie-Authentifizierung fehlgeschlagen, Fallback wird verwendet");
-            
-            // Test GET /auth/me mit Authorization Header
+
             if (data.token) {
               console.log("🔍 Test: /auth/me mit Authorization Header");
-              const authCheckWithHeader = await fetch(`${API_BASE_URL}/auth/me`, {
+              const authCheckWithHeader = await fetch("/api/auth/me", {
                 method: "GET",
                 headers: {
-                  "Authorization": `Bearer ${data.token}`
-                }
+                  Authorization: `Bearer ${data.token}`,
+                },
               });
-              
+
               console.log("Status (mit Auth-Header):", authCheckWithHeader.status);
-              
+
               if (authCheckWithHeader.ok) {
                 console.log("✅ Header-Authentifizierung funktioniert");
               } else {
@@ -90,15 +82,14 @@ export default function Login() {
               }
             }
           }
-          
-          // Test Debug-Endpunkt
+
           try {
             console.log("🔍 Test: /debug Endpunkt");
-            const debugResponse = await fetch(`${API_BASE_URL}/debug`, {
+            const debugResponse = await fetch("/api/debug", {
               method: "GET",
               credentials: "include",
             });
-            
+
             const debugData = await debugResponse.json();
             console.log("Debug-Endpunkt Response:", debugData);
           } catch (debugErr) {
@@ -109,91 +100,77 @@ export default function Login() {
         }
       }, 500);
 
-      // Kurze Verzögerung für die Benutzerfreundlichkeit und damit die Diagnose abgeschlossen werden kann
       redirectTimeout.current = setTimeout(() => {
         navigate("/dashboard");
       }, 1500);
     } catch (err: any) {
       console.error("❌ Fehler beim Login:", err);
-      setNotification({ 
-        message: "❌ " + (err.message || "Server nicht erreichbar"), 
-        type: "error" 
-      });
+      setNotification({ message: "❌ " + (err.message || "Server nicht erreichbar"), type: "error" });
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    // Beim Seitenaufbau prüfen, ob der Benutzer bereits eingeloggt ist
     const checkLoginStatus = async () => {
       try {
-        // Zuerst versuchen, per Cookie zu authentifizieren
-        const response = await fetch(`${API_BASE_URL}/auth/me`, {
+        const response = await fetch("/api/auth/me", {
           method: "GET",
           credentials: "include",
         });
-        
+
         if (response.ok) {
           console.log("✅ Bereits eingeloggt via Cookie");
           navigate("/dashboard");
           return;
         }
-        
-        // Falls Cookie-Auth fehlschlägt, Fallback prüfen
-        const authToken = localStorage.getItem('authToken');
-        const authTimestamp = localStorage.getItem('authTimestamp');
-        
+
+        const authToken = localStorage.getItem("authToken");
+        const authTimestamp = localStorage.getItem("authTimestamp");
+
         if (authToken && authTimestamp) {
           const now = Date.now();
           const timestamp = parseInt(authTimestamp, 10);
           const twoHoursInMs = 2 * 60 * 60 * 1000;
-          
+
           if (now - timestamp < twoHoursInMs) {
             console.log("✅ Verwende Fallback-Token");
-            
-            // Mit Token als Authorization-Header prüfen
-            const authResponse = await fetch(`${API_BASE_URL}/auth/me`, {
+
+            const authResponse = await fetch("/api/auth/me", {
               method: "GET",
               headers: {
-                "Authorization": `Bearer ${authToken}`
-              }
+                Authorization: `Bearer ${authToken}`,
+              },
             });
-            
+
             if (authResponse.ok) {
               console.log("✅ Fallback-Authentifizierung erfolgreich");
               navigate("/dashboard");
               return;
             } else {
               console.warn("❌ Fallback-Token ungültig");
-              // Token löschen, da er nicht mehr gültig ist
-              localStorage.removeItem('authToken');
-              localStorage.removeItem('authEmail');
-              localStorage.removeItem('authTimestamp');
+              localStorage.removeItem("authToken");
+              localStorage.removeItem("authEmail");
+              localStorage.removeItem("authTimestamp");
             }
           } else {
-            // Token abgelaufen
             console.warn("❌ Fallback-Token abgelaufen");
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('authEmail');
-            localStorage.removeItem('authTimestamp');
+            localStorage.removeItem("authToken");
+            localStorage.removeItem("authEmail");
+            localStorage.removeItem("authTimestamp");
           }
         }
-        
-        // Versuche einen Cookie-Test
+
         console.log("🔍 Cookie-Diagnose beim Laden:");
         console.log("document.cookie:", document.cookie);
-        
-        // Nicht eingeloggt - Login-Formular anzeigen
         console.log("ℹ️ Nicht eingeloggt, Login-Formular wird angezeigt");
       } catch (err) {
         console.error("❌ Fehler bei Authentifizierungsprüfung:", err);
-        // Bei Fehlern sicherheitshalber auf Login-Seite bleiben
       }
     };
-    
+
     checkLoginStatus();
-    
+
     return () => {
       if (redirectTimeout.current) clearTimeout(redirectTimeout.current);
     };
@@ -237,16 +214,12 @@ export default function Login() {
 
       <p>
         Noch kein Konto?{" "}
-        <span className={styles.linkText} onClick={() => navigate("/register")}>
-          Registrieren
-        </span>
+        <span className={styles.linkText} onClick={() => navigate("/register")}>Registrieren</span>
       </p>
 
       <p>
         Passwort vergessen?{" "}
-        <span className={styles.linkText} onClick={() => navigate("/forgot-password")}>
-          Zurücksetzen
-        </span>
+        <span className={styles.linkText} onClick={() => navigate("/forgot-password")}>Zurücksetzen</span>
       </p>
 
       {notification && (

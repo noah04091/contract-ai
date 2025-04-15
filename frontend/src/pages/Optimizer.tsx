@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import styles from "../styles/Optimizer.module.css";
 import PremiumNotice from "../components/PremiumNotice";
-import API_BASE_URL from "../utils/api";
 
 interface Optimization {
   problem: string;
@@ -15,51 +14,47 @@ export default function Optimizer() {
   const [error, setError] = useState<string | null>(null);
   const [isPremium, setIsPremium] = useState<boolean | null>(null);
 
-  // ✅ Abostatus abrufen (vom Server, nicht localStorage)
   useEffect(() => {
-    const fetchStatus = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) return setIsPremium(false);
-
+    const fetchPremiumStatus = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/auth/me`, {
-          headers: {
-            Authorization: token,
-          },
+        const res = await fetch("/api/auth/me", {
+          credentials: "include",
         });
+
+        if (!res.ok) throw new Error("Nicht authentifiziert");
 
         const data = await res.json();
         setIsPremium(data.subscriptionActive === true);
       } catch (err) {
-        console.error("❌ Fehler beim Laden des Abostatus:", err);
+        console.error("❌ Fehler beim Laden des Premium-Status:", err);
         setIsPremium(false);
       }
     };
 
-    fetchStatus();
+    fetchPremiumStatus();
   }, []);
 
   const handleUpload = async () => {
     if (!file || !isPremium) return;
+
     setLoading(true);
     setOptimizations(null);
     setError(null);
 
     const formData = new FormData();
     formData.append("file", file);
-    const token = localStorage.getItem("token") || "";
 
     try {
-      const res = await fetch(`${API_BASE_URL}/optimize`, {
+      const res = await fetch("/api/optimize", {
         method: "POST",
-        headers: { Authorization: token },
+        credentials: "include",
         body: formData,
       });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Unbekannter Fehler");
 
-      if (!data.optimizations || data.optimizations.length === 0) {
+      if (!data.optimizations?.length) {
         setError("Keine Optimierungsvorschläge gefunden.");
       } else {
         setOptimizations(data.optimizations);
@@ -82,6 +77,7 @@ export default function Optimizer() {
   return (
     <div className={styles.container}>
       <h2>🧠 KI-Vertragsoptimierung</h2>
+
       {!isPremium && <PremiumNotice />}
 
       <input
@@ -109,12 +105,8 @@ export default function Optimizer() {
           <h3>✅ Optimierungsvorschläge</h3>
           {optimizations.map((opt, index) => (
             <div key={index} className={styles.card}>
-              <p>
-                <strong>❌ Problem:</strong> {opt.problem}
-              </p>
-              <p>
-                <strong>✅ Vorschlag:</strong> {opt.suggestion}
-              </p>
+              <p><strong>❌ Problem:</strong> {opt.problem}</p>
+              <p><strong>✅ Vorschlag:</strong> {opt.suggestion}</p>
             </div>
           ))}
         </div>
