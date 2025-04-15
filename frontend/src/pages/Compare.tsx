@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
 import styles from "../styles/Compare.module.css";
-import html2pdf from "html2pdf.js";
 import PremiumNotice from "../components/PremiumNotice";
+
+// @ts-ignore – html2pdf hat keine Typen, wird trotzdem korrekt genutzt
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import html2pdf from "html2pdf.js";
 
 interface ComparisonResult {
   differences: string;
@@ -21,10 +25,7 @@ export default function Compare() {
 
     const fetchStatus = async () => {
       try {
-        const res = await fetch("/api/auth/me", {
-          credentials: "include",
-        });
-
+        const res = await fetch("/api/auth/me", { credentials: "include" });
         if (!res.ok) throw new Error("Nicht authentifiziert");
 
         const data = await res.json();
@@ -44,7 +45,11 @@ export default function Compare() {
   }, []);
 
   const handleSubmit = async () => {
-    if (!file1 || !file2) return alert("❌ Bitte wähle zwei Verträge aus.");
+    if (!file1 || !file2) {
+      alert("❌ Bitte wähle zwei Verträge aus.");
+      return;
+    }
+
     setLoading(true);
     setResult(null);
 
@@ -91,7 +96,7 @@ export default function Compare() {
       <p>${result.summary}</p>
     `;
 
-    // @ts-expect-error
+    // @ts-expect-error – html2pdf ist untypisiert, funktioniert aber zuverlässig
     html2pdf().from(element).save("Vertragsvergleich.pdf");
   };
 

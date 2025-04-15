@@ -7,12 +7,12 @@ import html2pdf from "html2pdf.js";
 interface FormDataType {
   title?: string;
   details?: string;
-  [key: string]: any;
+  [key: string]: string | undefined; // ✅ Fix für "Unexpected any"
 }
 
 export default function Generate() {
   const [contractType, setContractType] = useState<string>("freelancer");
-  const [formData, setFormData] = useState<FormDataType>({} as FormDataType);
+  const [formData, setFormData] = useState<FormDataType>({});
   const [generated, setGenerated] = useState<string>("");
   const [copied, setCopied] = useState<boolean>(false);
   const [saved, setSaved] = useState<boolean>(false);
@@ -193,8 +193,8 @@ export default function Generate() {
       jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
     };
 
-    // @ts-expect-error – html2pdf fehlt Typisierung
-    html2pdf({ ...opt }).from(container).save().then(() => {
+    // @ts-expect-error – html2pdf hat keine TS-Typen
+    html2pdf(opt).from(container).save().then(() => {
       if (signatureImage && container.contains(signatureImage)) {
         container.removeChild(signatureImage);
       }
@@ -270,7 +270,12 @@ export default function Generate() {
           <h3>📑 Generierter Vertrag</h3>
           <div
             ref={contractRef}
-            style={{ whiteSpace: "pre-wrap", background: "#f9f9f9", padding: "20px", borderRadius: "8px" }}
+            style={{
+              whiteSpace: "pre-wrap",
+              background: "#f9f9f9",
+              padding: "20px",
+              borderRadius: "8px",
+            }}
           >
             {generated}
             <br />
