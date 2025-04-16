@@ -12,7 +12,9 @@ const HomeRedesign = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [activeSection, setActiveSection] = useState('hero');
   const heroRef = useRef<HTMLDivElement>(null);
+  const sectionsRef = useRef<{ [key: string]: HTMLElement | null }>({});
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -45,17 +47,54 @@ const HomeRedesign = () => {
       
       // Parallax effect for hero section
       if (heroRef.current) {
-        const opacity = Math.max(1 - scrollPosition / 700, 0.2);
+        const opacity = Math.max(1 - scrollPosition / 900, 0.2);
+        const translateY = scrollPosition * 0.4;
         heroRef.current.style.opacity = opacity.toString();
+        const heroContent = heroRef.current.querySelector('.hero-content');
+        if (heroContent) {
+          heroContent.setAttribute('style', `transform: translateY(${translateY}px)`);
+        }
       }
+      
+      // Check which section is currently in viewport
+      const sectionIds = Object.keys(sectionsRef.current);
+      for (const id of sectionIds) {
+        const section = sectionsRef.current[id];
+        if (section) {
+          const rect = section.getBoundingClientRect();
+          if (rect.top <= window.innerHeight / 2 && rect.bottom >= window.innerHeight / 2) {
+            setActiveSection(id);
+            break;
+          }
+        }
+      }
+      
+      // Reveal animations based on scroll position
+      document.querySelectorAll('.reveal-card, .reveal-block').forEach((element) => {
+        const elementTop = element.getBoundingClientRect().top;
+        const elementVisible = 150;
+        
+        if (elementTop < window.innerHeight - elementVisible) {
+          element.classList.add('animated');
+        }
+      });
     };
     
     window.addEventListener('scroll', handleScroll);
+    handleScroll();
+    
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
+  };
+
+  // Register section refs
+  const registerSection = (id: string, element: HTMLElement | null) => {
+    if (element) {
+      sectionsRef.current[id] = element;
+    }
   };
 
   return (
@@ -69,28 +108,34 @@ const HomeRedesign = () => {
             </Link>
           </div>
           <ul className={`nav-links ${mobileMenuOpen ? 'mobile-open' : ''}`}>
-            <li>
+            <li className={activeSection === 'features' ? 'active' : ''}>
               <Link to="/contracts" className="nav-link">
                 <span className="nav-icon">📄</span>
                 Verträge
               </Link>
             </li>
-            <li>
+            <li className={activeSection === 'optimizer' ? 'active' : ''}>
               <Link to="/optimizer" className="nav-link">
                 <span className="nav-icon">✨</span>
                 Optimierer
               </Link>
             </li>
-            <li>
+            <li className={activeSection === 'deadlines' ? 'active' : ''}>
               <Link to="/calendar" className="nav-link">
                 <span className="nav-icon">⏰</span>
                 Fristen
               </Link>
             </li>
-            <li>
+            <li className={activeSection === 'compare' ? 'active' : ''}>
               <Link to="/compare" className="nav-link">
                 <span className="nav-icon">⚖️</span>
                 Vergleich
+              </Link>
+            </li>
+            <li className={activeSection === 'pricing' ? 'active' : ''}>
+              <Link to="/pricing" className="nav-link">
+                <span className="nav-icon">💰</span>
+                Preise
               </Link>
             </li>
             {isLoading ? (
@@ -131,6 +176,11 @@ const HomeRedesign = () => {
         </div>
       </nav>
 
+      {/* Floating Scroll Progress */}
+      <div className="scroll-progress">
+        <div className="scroll-progress-bar" style={{ width: `${(window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100}%` }}></div>
+      </div>
+
       {/* Hero Section */}
       <section className="hero" ref={heroRef}>
         <div className="hero-bg">
@@ -139,6 +189,9 @@ const HomeRedesign = () => {
             <div className="hero-shape shape-2"></div>
             <div className="hero-shape shape-3"></div>
           </div>
+        </div>
+        <div className="logo-hero">
+          <img src="/assets/logo-contractai.png" alt="Contract AI Logo" />
         </div>
         <div className="hero-content">
           <h1 className="reveal-text">KI-gestützte Vertragsanalyse</h1>
@@ -187,7 +240,7 @@ const HomeRedesign = () => {
       </section>
 
       {/* Features Section */}
-      <section className="features-section">
+      <section className="features-section" ref={(el) => registerSection('features', el)}>
         <div className="section-container">
           <div className="section-title">
             <h2 className="reveal-text">Unsere KI-Tools für Ihre Verträge</h2>
@@ -195,7 +248,7 @@ const HomeRedesign = () => {
           </div>
           
           <div className="features-grid">
-            <div className="feature-card reveal-card">
+            <div className="feature-card reveal-card" style={{"--animation-order": 0} as React.CSSProperties}>
               <div className="feature-icon-wrapper blue">
                 <div className="feature-icon">🔍</div>
               </div>
@@ -210,7 +263,7 @@ const HomeRedesign = () => {
               </Link>
             </div>
             
-            <div className="feature-card reveal-card">
+            <div className="feature-card reveal-card" style={{"--animation-order": 1} as React.CSSProperties}>
               <div className="feature-icon-wrapper pink">
                 <div className="feature-icon">🧠</div>
               </div>
@@ -225,7 +278,7 @@ const HomeRedesign = () => {
               </Link>
             </div>
             
-            <div className="feature-card reveal-card">
+            <div className="feature-card reveal-card" style={{"--animation-order": 2} as React.CSSProperties}>
               <div className="feature-icon-wrapper orange">
                 <div className="feature-icon">⏰</div>
               </div>
@@ -240,7 +293,7 @@ const HomeRedesign = () => {
               </Link>
             </div>
             
-            <div className="feature-card reveal-card">
+            <div className="feature-card reveal-card" style={{"--animation-order": 3} as React.CSSProperties}>
               <div className="feature-icon-wrapper purple">
                 <div className="feature-icon">📊</div>
               </div>
@@ -259,7 +312,7 @@ const HomeRedesign = () => {
       </section>
 
       {/* Showcase Section */}
-      <section className="showcase-section">
+      <section className="showcase-section" ref={(el) => registerSection('showcase', el)}>
         <div className="showcase-bg">
           <div className="showcase-shape shape-1"></div>
           <div className="showcase-shape shape-2"></div>
@@ -273,8 +326,14 @@ const HomeRedesign = () => {
           <div className="showcase-items">
             <div className="showcase-item reveal-block">
               <div className="showcase-content">
+                <div className="showcase-label">Fortschrittlich</div>
                 <h3>Vertragsanalyse mit Score</h3>
                 <p>Risiken, Chancen und Verständlichkeit per KI bewerten. Unsere intelligente Analyse identifiziert kritische Punkte in Ihren Verträgen und gibt Ihnen einen klaren Überblick über potenzielle Risiken.</p>
+                <ul className="feature-list">
+                  <li>Automatische Risikobewertung</li>
+                  <li>Verständlichkeitsindex</li>
+                  <li>Klauselanalyse</li>
+                </ul>
                 <Link to="/contracts" className="showcase-link">
                   Zur Vertragsanalyse
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -291,8 +350,14 @@ const HomeRedesign = () => {
             
             <div className="showcase-item reverse reveal-block">
               <div className="showcase-content">
+                <div className="showcase-label">Zeitsparend</div>
                 <h3>Fristen automatisch erkennen</h3>
                 <p>Kündigungsfristen erkennen, Mails senden. Nie wieder eine wichtige Vertragsfrist verpassen mit unserer automatischen Fristenerkennung und Erinnerungsfunktion.</p>
+                <ul className="feature-list">
+                  <li>Automatische Fristenerkennung</li>
+                  <li>Rechtzeitige E-Mail-Benachrichtigungen</li>
+                  <li>Kalenderintegration</li>
+                </ul>
                 <Link to="/calendar" className="showcase-link">
                   Zum Fristenkalender
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -310,8 +375,166 @@ const HomeRedesign = () => {
         </div>
       </section>
 
+      {/* Pricing Section */}
+      <section className="pricing-section" ref={(el) => registerSection('pricing', el)}>
+        <div className="pricing-bg">
+          <div className="pricing-shape shape-1"></div>
+          <div className="pricing-shape shape-2"></div>
+        </div>
+        <div className="section-container">
+          <div className="section-title">
+            <h2 className="reveal-text">Transparente Preisgestaltung</h2>
+            <p className="reveal-text">Wählen Sie den Plan, der Ihren Anforderungen entspricht.</p>
+          </div>
+          
+          <div className="pricing-plans">
+            <div className="pricing-plan standard reveal-card" style={{"--animation-order": 0} as React.CSSProperties}>
+              <div className="plan-header">
+                <div className="plan-name">Standard</div>
+                <div className="plan-price">
+                  <span className="amount">29</span>
+                  <span className="currency">€</span>
+                  <span className="period">/Monat</span>
+                </div>
+                <div className="plan-billing">Jährliche Abrechnung</div>
+              </div>
+              <ul className="plan-features">
+                <li>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                  Bis zu 50 Vertragsanalysen
+                </li>
+                <li>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                  Fristenerkennung
+                </li>
+                <li>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                  Basisoptimierung
+                </li>
+                <li className="unavailable">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                  Unbegrenzte Vertragsanalysen
+                </li>
+                <li className="unavailable">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                  Erweiterte Funktionen
+                </li>
+              </ul>
+              <Link to="/register?plan=standard" className="plan-cta">
+                Standard wählen
+              </Link>
+            </div>
+            
+            <div className="pricing-plan premium reveal-card" style={{"--animation-order": 1} as React.CSSProperties}>
+              <div className="plan-badge">Beliebt</div>
+              <div className="plan-header">
+                <div className="plan-name">Premium</div>
+                <div className="plan-price">
+                  <span className="amount">89</span>
+                  <span className="currency">€</span>
+                  <span className="period">/Monat</span>
+                </div>
+                <div className="plan-billing">Jährliche Abrechnung</div>
+              </div>
+              <ul className="plan-features">
+                <li>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                  Unbegrenzte Vertragsanalysen
+                </li>
+                <li>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                  Fristenerkennung & Benachrichtigungen
+                </li>
+                <li>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                  Erweiterte Optimierung
+                </li>
+                <li>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                  Vertragsvergleich
+                </li>
+                <li>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                  Prioritäts-Support
+                </li>
+              </ul>
+              <Link to="/register?plan=premium" className="plan-cta premium-cta">
+                Premium wählen
+              </Link>
+            </div>
+            
+            <div className="pricing-plan enterprise reveal-card" style={{"--animation-order": 2} as React.CSSProperties}>
+              <div className="plan-header">
+                <div className="plan-name">Enterprise</div>
+                <div className="plan-price">
+                  <span className="custom-price">Individuell</span>
+                </div>
+                <div className="plan-billing">Maßgeschneiderte Lösung</div>
+              </div>
+              <ul className="plan-features">
+                <li>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                  Alle Premium-Funktionen
+                </li>
+                <li>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                  API-Zugang
+                </li>
+                <li>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                  Maßgeschneiderte Integrationen
+                </li>
+                <li>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                  Dedizierter Account Manager
+                </li>
+                <li>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                  SLA-Garantie
+                </li>
+              </ul>
+              <Link to="/contact" className="plan-cta">
+                Kontakt aufnehmen
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
-      <section className="cta-section">
+      <section className="cta-section" ref={(el) => registerSection('cta', el)}>
         <div className="cta-bg">
           <div className="cta-shape shape-1"></div>
           <div className="cta-shape shape-2"></div>
@@ -344,11 +567,15 @@ const HomeRedesign = () => {
       </section>
 
       {/* Footer */}
-      <footer className="footer">
+      <footer className="footer" ref={(el) => registerSection('footer', el)}>
         <div className="footer-container">
           <div className="footer-top">
             <div className="footer-logo">
               <img src="/assets/logo-contractai.png" alt="Contract AI Logo" />
+              <p className="company-description">
+                Contract AI revolutioniert Ihr Vertragsmanagement mit neuester KI-Technologie.
+                Wir helfen Ihnen, Verträge zu analysieren, optimieren und verwalten.
+              </p>
             </div>
             <div className="footer-columns">
               <div className="footer-column">
@@ -394,6 +621,11 @@ const HomeRedesign = () => {
               <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" aria-label="Twitter" className="social-link">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path>
+                </svg>
+              </a>
+              <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="social-link">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
                 </svg>
               </a>
             </div>
