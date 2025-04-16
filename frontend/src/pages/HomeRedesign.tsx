@@ -1,235 +1,305 @@
-import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import "../styles/landing.css";
-import logo from "../assets/logo-contractai.png";
 
-interface UserResponse {
-  email: string;
-  subscriptionActive: boolean;
+interface User {
+  plan: 'standard' | 'premium';
+  isAuthenticated: boolean;
 }
 
-export default function HomeRedesign() {
-  const [userEmail, setUserEmail] = useState("");
-  const [isPremium, setIsPremium] = useState(false);
-  const [showScrollButton, setShowScrollButton] = useState(false);
-  const navigate = useNavigate();
-  const featureRef = useRef<HTMLElement>(null);
+const HomeRedesign = () => {
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchUser = async () => {
+    const checkAuth = async () => {
       try {
-        const res = await fetch("/api/auth/me", {
-          method: "GET",
-          credentials: "include",
+        const response = await fetch('/api/auth/me', {
+          method: 'GET',
+          credentials: 'include',
         });
-        if (!res.ok) throw new Error("Nicht eingeloggt");
-        const data: UserResponse = await res.json();
-        setUserEmail(data.email);
-        setIsPremium(data.subscriptionActive === true);
-      } catch {
-        console.log("🔓 Kein Login – Startseite zeigt CTA");
+        
+        if (response.ok) {
+          const userData = await response.json();
+          setUser(userData);
+        } else {
+          setUser(null);
+        }
+      } catch (error) {
+        console.error('Authentication error:', error);
+        setUser(null);
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    fetchUser();
-    const timer = setTimeout(() => setShowScrollButton(true), 2000);
-    return () => clearTimeout(timer);
+    checkAuth();
   }, []);
 
-  const scrollToFeatures = () => {
-    featureRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
   return (
-    <>
-      <Helmet>
-        <title>Contract AI – Verträge smarter managen</title>
-        <meta
-          name="description"
-          content="Verwalte, analysiere und optimiere Verträge mit Contract AI – deinem smarten Vertragsassistenten."
-        />
-      </Helmet>
-
+    <div className="landing-page">
       {/* Navigation */}
-      <nav className="landing-nav">
+      <nav className="navbar">
         <div className="nav-container">
+          <div className="logo">
+            <Link to="/">
+              <img src="/assets/logo-contractai.png" alt="Contract AI Logo" />
+            </Link>
+          </div>
           <ul className="nav-links">
-            <li className="logo"><Link to="/">Contract AI</Link></li>
-            <li><a href="#features">Funktionen</a></li>
-            <li><Link to="/dashboard">Dashboard</Link></li>
-            <li><Link to="/pricing">Preise</Link></li>
-            <li><a href="#contact">Kontakt</a></li>
-            <li><Link to="/login">Login</Link></li>
+            <li><Link to="/contracts">Analyse</Link></li>
+            <li><Link to="/optimizer">Optimierung</Link></li>
+            <li><Link to="/calendar">Fristen</Link></li>
+            <li><Link to="/compare">Vergleich</Link></li>
+            {isLoading ? (
+              <li className="loading-auth">Laden...</li>
+            ) : user?.isAuthenticated ? (
+              <li className="auth-buttons">
+                <Link to="/dashboard" className="primary-button">
+                  🚀 Zum Dashboard
+                </Link>
+              </li>
+            ) : (
+              <li className="auth-buttons">
+                <Link to="/login" className="login-button">
+                  🔐 Login
+                </Link>
+                <Link to="/register" className="primary-button">
+                  📝 Registrieren
+                </Link>
+              </li>
+            )}
           </ul>
+          <div className="mobile-menu-btn">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
         </div>
       </nav>
 
-      {/* Hero */}
+      {/* Hero Section */}
       <section className="hero">
-        <img src={logo} alt="Contract AI Logo" style={{ width: "120px", marginBottom: "20px" }} />
-        <h1>Dein smarter Vertragsassistent</h1>
-        <p className="subtitle">
-          Lade Verträge hoch, analysiere sie mit KI, optimiere Inhalte und bleibe durch smarte Erinnerungen stets informiert.
-        </p>
-
-        {userEmail ? (
-          <>
-            <button className="button primary-button" onClick={() => navigate("/dashboard")}>
-              🚀 Zum Dashboard
-            </button>
-            <div style={{ marginTop: "20px" }}>
-              {isPremium ? (
-                <span style={{ color: "#00f2fe", fontWeight: "bold" }}>💎 Premium aktiviert</span>
+        <div className="hero-content">
+          <h1>KI-gestützte Vertragsanalyse</h1>
+          <p className="subtitle">Verträge analysieren, optimieren & verwalten – einfach & sicher.</p>
+          
+          {!isLoading && (
+            <div className="hero-cta">
+              {user?.isAuthenticated ? (
+                <>
+                  <Link to="/dashboard" className="cta-button primary">
+                    🚀 Zum Dashboard
+                  </Link>
+                  <div className="user-plan">
+                    {user.plan === 'premium' ? (
+                      <span className="premium-badge">💎 Premium aktiviert</span>
+                    ) : (
+                      <Link to="/pricing" className="upgrade-link">
+                        🔓 Standard – Jetzt upgraden
+                      </Link>
+                    )}
+                  </div>
+                </>
               ) : (
-                <span style={{ color: "#ccc" }}>
-                  🔓 Standard – <Link to="/pricing" style={{ color: "#fff", textDecoration: "underline" }}>Jetzt upgraden</Link>
-                </span>
+                <div className="auth-cta">
+                  <Link to="/register" className="cta-button primary">
+                    📝 Registrieren
+                  </Link>
+                  <Link to="/login" className="cta-button secondary">
+                    🔐 Login
+                  </Link>
+                </div>
               )}
             </div>
-          </>
-        ) : (
-          <div className="cta-buttons" style={{ marginTop: "20px" }}>
-            <Link to="/login" className="button secondary-button">🔐 Login</Link>
-            <Link to="/register" className="button secondary-button">📝 Registrieren</Link>
-          </div>
-        )}
-
-        {showScrollButton && (
-          <button className="button" onClick={scrollToFeatures} style={{ marginTop: "40px", background: "transparent", border: "1px solid #fff", color: "#fff" }}>
-            ⬇️ Mehr entdecken
-          </button>
-        )}
+          )}
+        </div>
       </section>
 
-      {/* Features */}
-      <section className="section" id="features" ref={featureRef}>
+      {/* Features Section */}
+      <section className="features-section">
         <div className="section-container">
           <div className="section-title">
-            <h2>Was Contract AI für dich tun kann</h2>
-            <p>Erlebe den Unterschied mit smarter KI – von Analyse bis Optimierung.</p>
+            <h2>Unsere KI-Tools für Ihre Verträge</h2>
+            <p>Erleben Sie die Zukunft des Vertragsmanagements.</p>
           </div>
-
-          <div className="features">
-            <Link to="/contracts" className="feature">
+          
+          <div className="features-grid">
+            <div className="feature-card">
               <div className="feature-icon">🔍</div>
               <h3>Analyse</h3>
               <p>Verträge KI-gestützt auswerten & bewerten lassen.</p>
-            </Link>
-
-            <Link to="/optimizer" className="feature">
+              <Link to="/contracts" className="feature-link">
+                Mehr erfahren
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12h14"></path>
+                  <path d="m12 5 7 7-7 7"></path>
+                </svg>
+              </Link>
+            </div>
+            
+            <div className="feature-card">
               <div className="feature-icon">🧠</div>
               <h3>Optimierung</h3>
               <p>Unvorteilhafte Inhalte erkennen & direkt verbessern.</p>
-            </Link>
-
-            <Link to="/calendar" className="feature">
+              <Link to="/optimizer" className="feature-link">
+                Mehr erfahren
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12h14"></path>
+                  <path d="m12 5 7 7-7 7"></path>
+                </svg>
+              </Link>
+            </div>
+            
+            <div className="feature-card">
               <div className="feature-icon">⏰</div>
-              <h3>Erinnerungen</h3>
+              <h3>Fristen</h3>
               <p>Nie wieder Fristen verpassen dank automatischer Mails.</p>
-            </Link>
-
-            <Link to="/compare" className="feature">
+              <Link to="/calendar" className="feature-link">
+                Mehr erfahren
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12h14"></path>
+                  <path d="m12 5 7 7-7 7"></path>
+                </svg>
+              </Link>
+            </div>
+            
+            <div className="feature-card">
               <div className="feature-icon">📊</div>
               <h3>Vergleich</h3>
               <p>Zwei Verträge vergleichen & Unterschiede aufdecken.</p>
-            </Link>
+              <Link to="/compare" className="feature-link">
+                Mehr erfahren
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12h14"></path>
+                  <path d="m12 5 7 7-7 7"></path>
+                </svg>
+              </Link>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Showcase Section */}
-<section className="section dark-section" id="showcase">
-  <div className="section-container">
-    <div className="section-title">
-      <h2>Contract AI in Aktion</h2>
-      <p>So funktioniert dein smarter Vertragsassistent im Alltag – schnell, sicher und effizient.</p>
-    </div>
-
-    <div className="showcase">
-      <div className="showcase-item">
-        <div className="content">
-          <h3>Vertragsanalyse mit Score</h3>
-          <p>Unsere KI bewertet automatisch Risiken, Chancen und Verständlichkeit deines Vertrags – inklusive Contract Score zur Übersicht.</p>
-          <Link to="/contracts" className="learn-more">
-            Jetzt testen
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M5 12h14" />
-              <path d="m12 5 7 7-7 7" />
-            </svg>
-          </Link>
+      <section className="showcase-section">
+        <div className="section-container">
+          <div className="section-title">
+            <h2>Entdecken Sie unsere Funktionen</h2>
+            <p>Sehen Sie, wie unsere KI-Tools Ihren Vertragsworkflow revolutionieren.</p>
+          </div>
+          
+          <div className="showcase-items">
+            <div className="showcase-item">
+              <div className="showcase-content">
+                <h3>Vertragsanalyse mit Score</h3>
+                <p>Risiken, Chancen und Verständlichkeit per KI bewerten. Unsere intelligente Analyse identifiziert kritische Punkte in Ihren Verträgen und gibt Ihnen einen klaren Überblick über potenzielle Risiken.</p>
+                <Link to="/contracts" className="showcase-link">
+                  Zur Vertragsanalyse
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 12h14"></path>
+                    <path d="m12 5 7 7-7 7"></path>
+                  </svg>
+                </Link>
+              </div>
+              <div className="showcase-image">
+                <img src="/assets/showcase-analysis.png" alt="Vertragsanalyse Screenshot" />
+              </div>
+            </div>
+            
+            <div className="showcase-item reverse">
+              <div className="showcase-content">
+                <h3>Fristen automatisch erkennen</h3>
+                <p>Kündigungsfristen erkennen, Mails senden. Nie wieder eine wichtige Vertragsfrist verpassen mit unserer automatischen Fristenerkennung und Erinnerungsfunktion.</p>
+                <Link to="/calendar" className="showcase-link">
+                  Zum Fristenkalender
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 12h14"></path>
+                    <path d="m12 5 7 7-7 7"></path>
+                  </svg>
+                </Link>
+              </div>
+              <div className="showcase-image">
+                <img src="/assets/showcase-deadline.png" alt="Fristen-Feature Screenshot" />
+              </div>
+            </div>
+          </div>
         </div>
-        <div className="image">
-          <img src="/assets/showcase-analysis.png" alt="Vertragsanalyse Screenshot" />
+      </section>
+
+      {/* CTA Section */}
+      <section className="cta-section">
+        <div className="section-container">
+          <h2>Bereit, Ihre Verträge zu optimieren?</h2>
+          <p>Starten Sie jetzt mit Contract AI und erleben Sie die Zukunft des Vertragsmanagements.</p>
+          <div className="cta-buttons">
+            {!isLoading && (
+              user?.isAuthenticated ? (
+                <Link to="/dashboard" className="cta-button primary">Zum Dashboard</Link>
+              ) : (
+                <>
+                  <Link to="/register" className="cta-button primary">Jetzt registrieren</Link>
+                  <Link to="/login" className="cta-button secondary">Einloggen</Link>
+                </>
+              )
+            )}
+          </div>
         </div>
-      </div>
+      </section>
 
-      <div className="showcase-item">
-        <div className="content">
-          <h3>Fristen automatisch erkennen</h3>
-          <p>Alle Kündigungsfristen & Laufzeiten im Blick – du wirst automatisch erinnert, bevor es zu spät ist.</p>
-          <Link to="/calendar" className="learn-more">
-            Erinnerungen aktivieren
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M5 12h14" />
-              <path d="m12 5 7 7-7 7" />
-            </svg>
-          </Link>
+      {/* Footer */}
+      <footer className="footer">
+        <div className="footer-container">
+          <div className="footer-columns">
+            <div className="footer-column">
+              <h4>Funktionen</h4>
+              <ul>
+                <li><Link to="/contracts">Vertragsanalyse</Link></li>
+                <li><Link to="/optimizer">Optimierung</Link></li>
+                <li><Link to="/calendar">Fristen</Link></li>
+                <li><Link to="/compare">Vergleich</Link></li>
+              </ul>
+            </div>
+            
+            <div className="footer-column">
+              <h4>Unternehmen</h4>
+              <ul>
+                <li><a href="mailto:info@contract-ai.de">Kontakt</a></li>
+                <li><Link to="/about">Über uns</Link></li>
+                <li><Link to="/press">Presse</Link></li>
+              </ul>
+            </div>
+            
+            <div className="footer-column">
+              <h4>Rechtliches</h4>
+              <ul>
+                <li><Link to="/privacy">Datenschutz</Link></li>
+                <li><Link to="/terms">AGB</Link></li>
+                <li><Link to="/imprint">Impressum</Link></li>
+              </ul>
+            </div>
+          </div>
+          
+          <div className="footer-bottom">
+            <p className="copyright">© 2025 Contract AI. Alle Rechte vorbehalten.</p>
+            <div className="social-links">
+              <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+                  <rect x="2" y="9" width="4" height="12"></rect>
+                  <circle cx="4" cy="4" r="2"></circle>
+                </svg>
+              </a>
+              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" aria-label="Twitter">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path>
+                </svg>
+              </a>
+            </div>
+          </div>
         </div>
-        <div className="image">
-          <img src="/assets/showcase-deadline.png" alt="Fristenübersicht Screenshot" />
-        </div>
-      </div>
+      </footer>
     </div>
-  </div>
-</section>
-
-{/* Footer */}
-<footer id="contact">
-  <div className="footer-container">
-    <div className="footer-links">
-      <div className="footer-col">
-        <h4>Funktionen</h4>
-        <ul>
-          <li><Link to="/contracts">Vertragsanalyse</Link></li>
-          <li><Link to="/optimizer">Optimierung</Link></li>
-          <li><Link to="/calendar">Fristen</Link></li>
-          <li><Link to="/compare">Vergleich</Link></li>
-        </ul>
-      </div>
-
-      <div className="footer-col">
-        <h4>Unternehmen</h4>
-        <ul>
-          <li><a href="mailto:info@contract-ai.de">Kontakt</a></li>
-          <li><a href="#">Über uns</a></li>
-          <li><a href="#">Presse</a></li>
-        </ul>
-      </div>
-
-      <div className="footer-col">
-        <h4>Rechtliches</h4>
-        <ul>
-          <li><Link to="/privacy">Datenschutz</Link></li>
-          <li><Link to="/terms">AGB</Link></li>
-          <li><Link to="/imprint">Impressum</Link></li>
-        </ul>
-      </div>
-    </div>
-
-    <div className="footer-bottom">
-      <div className="copyright">
-        <p>© {new Date().getFullYear()} Contract AI. Alle Rechte vorbehalten.</p>
-      </div>
-      <div className="legal-links">
-        <Link to="/privacy">Datenschutz</Link>
-        <Link to="/terms">Nutzungsbedingungen</Link>
-        <Link to="/imprint">Impressum</Link>
-      </div>
-    </div>
-  </div>
-</footer>
-
-    </>
   );
-}
+};
+
+export default HomeRedesign;
