@@ -1,6 +1,9 @@
 import { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import "../styles/landing.css";
+import logo from "../assets/logo-contractai.png";
+import analysisImg from "../assets/screenshot-dashboard.png";
+import deadlineImg from "../assets/screenshot-deadline.png";
 
 interface User {
   plan: 'standard' | 'premium';
