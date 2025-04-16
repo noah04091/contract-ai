@@ -52,11 +52,11 @@ const ALLOWED_ORIGINS = [
   "https://contract-ai-frontend.onrender.com",
   "https://contract-ai.vercel.app",
   "http://localhost:5173",
-  undefined // ⬅️ wichtig für Tools wie Postman oder curl
+  undefined,
 ];
 
 // 🔌 MongoDB
-let client, db, usersCollection, contractsCollection, authRoutes;
+let client, db, usersCollection, contractsCollection;
 
 async function connectDB() {
   try {
@@ -65,7 +65,6 @@ async function connectDB() {
     db = client.db(DB_NAME);
     usersCollection = db.collection(USERS_COLLECTION);
     contractsCollection = db.collection(CONTRACTS_COLLECTION);
-    authRoutes = require("./routes/auth")(db);
     console.log("✅ MongoDB verbunden!");
   } catch (err) {
     console.error("❌ MongoDB-Verbindungsfehler:", err);
@@ -73,7 +72,12 @@ async function connectDB() {
   }
 }
 
-connectDB();
+connectDB().then(() => {
+  // Auth-Routes erst nach DB-Verbindung einbinden
+  const authRoutes = require("./routes/auth")(db);
+  app.use("/auth", authRoutes);
+});
+
 const checkSubscription = createCheckSubscription(usersCollection);
 
 // 🔧 Middleware
@@ -192,13 +196,11 @@ app.post("/upload", verifyToken, checkSubscription, upload.single("file"), async
   }
 });
 
-// 🔁 Cronjob für Erinnerungen
 cron.schedule("0 8 * * *", async () => {
   console.log("⏰ Reminder-Cronjob gestartet");
   await checkContractsAndSendReminders();
 });
 
-// 📄 CRUD
 app.get("/contracts", verifyToken, async (req, res) => {
   const contracts = await contractsCollection.find({ userId: req.user.userId }).toArray();
   res.json(contracts);
@@ -232,21 +234,17 @@ app.delete("/contracts/:id", verifyToken, async (req, res) => {
   res.json({ message: "Gelöscht", deletedCount: result.deletedCount });
 });
 
-// 🌟 Premium & Tools
 app.use("/optimize", verifyToken, checkSubscription, optimizeRoute);
 app.use("/compare", verifyToken, checkSubscription, compareRoute);
 app.use("/chat", verifyToken, checkSubscription, chatRoute);
 app.use("/generate", verifyToken, checkSubscription, generateRoute);
 
-// 🌍 Öffentliche APIs
-app.use("/auth", (req, res, next) => authRoutes ? authRoutes(req, res, next) : res.status(503).json({ message: "Service nicht verfügbar" }));
 app.use("/stripe", stripeRoutes);
 app.use("/stripe", subscribeRoutes);
 app.use("/analyze-type", analyzeTypeRoute);
 app.use("/extract-text", extractTextRoute);
 app.use("/test", require("./testAuth"));
 
-// 🧪 Debug
 app.get("/debug", (req, res) => {
   console.log("Cookies:", req.cookies);
   res.cookie("debug_cookie", "test-value", {
@@ -258,11 +256,9 @@ app.get("/debug", (req, res) => {
   res.json({ cookies: req.cookies });
 });
 
-// 🚀 Start
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server läuft auf Port ${PORT}`));
 
-// 🧹 Aufräumen
 process.on("SIGINT", async () => {
   console.log("👋 Shutdown...");
   if (client) await client.close();
