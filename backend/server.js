@@ -66,18 +66,17 @@ async function connectDB() {
     usersCollection = db.collection(USERS_COLLECTION);
     contractsCollection = db.collection(CONTRACTS_COLLECTION);
     console.log("✅ MongoDB verbunden!");
+
+    // Auth-Routen nach erfolgreicher Verbindung einbinden
+    const authRoutes = require("./routes/auth")(db);
+    app.use("/auth", authRoutes);
   } catch (err) {
     console.error("❌ MongoDB-Verbindungsfehler:", err);
     process.exit(1);
   }
 }
 
-connectDB().then(() => {
-  // Auth-Routes erst nach DB-Verbindung einbinden
-  const authRoutes = require("./routes/auth")(db);
-  app.use("/auth", authRoutes);
-});
-
+connectDB();
 const checkSubscription = createCheckSubscription(usersCollection);
 
 // 🔧 Middleware
