@@ -3,230 +3,198 @@ const router = express.Router();
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
-const { ObjectId } = require("mongodb"); // MongoClient wird im server.js verwaltet
+const { ObjectId } = require("mongodb");
 const verifyToken = require("../middleware/verifyToken");
 const sendEmail = require("../utils/sendEmail");
 require("dotenv").config();
 
-// ⚙️ Konfigurationen (bessere Gruppierung)
+// 🔐 Konfiguration
 const JWT_EXPIRES_IN = "2h";
 const PASSWORD_SALT_ROUNDS = 10;
-const RESET_TOKEN_EXPIRES_IN_MS = 1000 * 60 * 15; // 15 Minuten
+const RESET_TOKEN_EXPIRES_IN_MS = 1000 * 60 * 15; // 15 Min.
 const COOKIE_NAME = "token";
-// Vereinfachte Cookie-Optionen für Proxy-Ansatz
 const COOKIE_OPTIONS = {
-    httpOnly: true,
-    secure: true,
-    sameSite: "Lax",        // Kann jetzt "Lax" sein (sicherer), da wir einen Proxy verwenden
-    path: "/",               // Cookie ist für alle Pfade verfügbar
-    maxAge: 1000 * 60 * 60 * 2, // 2 Stunden (entspricht JWT_EXPIRES_IN)
+  httpOnly: true,
+  secure: true,
+  sameSite: "Lax",
+  path: "/",
+  maxAge: 1000 * 60 * 60 * 2,
 };
 
-// 🔗 MongoDB (Verbindung wird im server.js hergestellt)
+// 🔗 Collections (werden durch server.js übergeben)
 let usersCollection;
-let contractsCollection; // Zugriff auf contracts Collection falls benötigt
+let contractsCollection;
 
-// Middleware, um die Collections zu erhalten (wird im server.js injiziert)
 module.exports = (db) => {
-    usersCollection = db.collection("users");
-    contractsCollection = db.collection("contracts"); // Optional: falls in Auth-Routen benötigt
-    return router;
+  usersCollection = db.collection("users");
+  contractsCollection = db.collection("contracts");
+  return router;
 };
 
 // 🧾 Registrierung
 router.post("/register", async (req, res) => {
-    const { email, password } = req.body;
-    if (!email || !password) {
-        return res.status(400).json({ message: "❌ E-Mail und Passwort sind erforderlich" });
-    }
-    try {
-        const existing = await usersCollection.findOne({ email });
-        if (existing) {
-            return res.status(409).json({ message: "❌ E-Mail bereits registriert" }); // 409 Conflict
-        }
-        const hashed = await bcrypt.hash(password, PASSWORD_SALT_ROUNDS);
-        await usersCollection.insertOne({ email, password: hashed, isPremium: false });
-        res.status(201).json({ message: "✅ Registrierung erfolgreich" }); // 201 Created
-    } catch (err) {
-        console.error("❌ Fehler bei Registrierung:", err);
-        res.status(500).json({ message: "Serverfehler bei Registrierung" });
-    }
+  const { email, password } = req.body;
+  if (!email || !password)
+    return res.status(400).json({ message: "❌ E-Mail und Passwort erforderlich" });
+
+  try {
+    const existing = await usersCollection.findOne({ email });
+    if (existing) return res.status(409).json({ message: "❌ E-Mail bereits registriert" });
+
+    const hashed = await bcrypt.hash(password, PASSWORD_SALT_ROUNDS);
+    await usersCollection.insertOne({ email, password: hashed, isPremium: false });
+    res.status(201).json({ message: "✅ Registrierung erfolgreich" });
+  } catch (err) {
+    console.error("❌ Registrierung fehlgeschlagen:", err);
+    res.status(500).json({ message: "Serverfehler bei Registrierung" });
+  }
 });
 
-// 🔐 Login mit Cookie-Auth
+// 🔐 Login
 router.post("/login", async (req, res) => {
-    const { email, password } = req.body;
-    if (!email || !password) {
-        return res.status(400).json({ message: "❌ E-Mail und Passwort sind erforderlich" });
-    }
-    try {
-        const user = await usersCollection.findOne({ email });
-        if (!user) {
-            return res.status(401).json({ message: "❌ Ungültige Anmeldeinformationen" }); // 401 Unauthorized
-        }
-        const match = await bcrypt.compare(password, user.password);
-        if (!match) {
-            return res.status(401).json({ message: "❌ Ungültige Anmeldeinformationen" }); // 401 Unauthorized
-        }
-        const token = jwt.sign(
-            { email: user.email, userId: user._id },
-            process.env.JWT_SECRET,
-            { expiresIn: JWT_EXPIRES_IN }
-        );
+  const { email, password } = req.body;
+  if (!email || !password)
+    return res.status(400).json({ message: "❌ E-Mail und Passwort erforderlich" });
 
-        // Mit Proxy sind CORS-Header nicht mehr so kritisch
-        // Cookie mit aktualisierten Optionen setzen
-        const cookieOptions = { ...COOKIE_OPTIONS };
-        res.cookie(COOKIE_NAME, token, cookieOptions);
+  try {
+    const user = await usersCollection.findOne({ email });
+    if (!user) return res.status(401).json({ message: "❌ Ungültige Anmeldedaten" });
 
-        // Zum Debuggen: Gib die Cookie-Optionen und andere Infos aus
-        console.log("🔑 Login erfolgt für:", email);
-        console.log("🍪 Cookie wird gesetzt:", COOKIE_NAME);
-        console.log("🍪 Cookie-Optionen:", JSON.stringify(cookieOptions));
-        console.log("🔑 Token (für Fallback):", token.substring(0, 20) + "...");
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) return res.status(401).json({ message: "❌ Ungültige Anmeldedaten" });
 
-        // Token auch in der Antwort zurückgeben für den Fallback-Mechanismus (während der Übergangsphase)
-        res.json({ 
-            message: "✅ Login erfolgreich", 
-            isPremium: user.isPremium || false,
-            token: token // Token auch in der Antwort mitschicken für Fallback
-        });
-    } catch (err) {
-        console.error("❌ Fehler beim Login:", err);
-        res.status(500).json({ message: "Serverfehler beim Login" });
-    }
+    const token = jwt.sign(
+      { email: user.email, userId: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: JWT_EXPIRES_IN }
+    );
+
+    res.cookie(COOKIE_NAME, token, COOKIE_OPTIONS);
+    res.json({
+      message: "✅ Login erfolgreich",
+      isPremium: user.isPremium || false,
+      token,
+    });
+  } catch (err) {
+    console.error("❌ Login-Fehler:", err);
+    res.status(500).json({ message: "Serverfehler beim Login" });
+  }
 });
 
-// 👤 Profilroute
+// 👤 Profil
 router.get("/me", verifyToken, async (req, res) => {
-    try {
-        const user = await usersCollection.findOne(
-            { _id: new ObjectId(req.user.userId) },
-            { projection: { password: 0, resetToken: 0, resetTokenExpires: 0 } }
-        );
-        if (!user) {
-            return res.status(404).json({ message: "❌ Benutzer nicht gefunden" });
-        }
-        res.json(user);
-    } catch (err) {
-        console.error("❌ Fehler bei /me:", err);
-        res.status(500).json({ message: "Serverfehler bei /me" });
-    }
+  try {
+    const user = await usersCollection.findOne(
+      { _id: new ObjectId(req.user.userId) },
+      { projection: { password: 0, resetToken: 0, resetTokenExpires: 0 } }
+    );
+    if (!user) return res.status(404).json({ message: "❌ Benutzer nicht gefunden" });
+    res.json(user);
+  } catch (err) {
+    console.error("❌ Fehler bei /me:", err);
+    res.status(500).json({ message: "Serverfehler bei /me" });
+  }
 });
 
 // 🔑 Passwort ändern
 router.put("/change-password", verifyToken, async (req, res) => {
-    const { oldPassword, newPassword } = req.body;
-    if (!oldPassword || !newPassword) {
-        return res.status(400).json({ message: "❌ Altes und neues Passwort sind erforderlich" });
-    }
-    try {
-        const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
-        if (!user) {
-            return res.status(404).json({ message: "❌ Benutzer nicht gefunden" });
-        }
-        const match = await bcrypt.compare(oldPassword, user.password);
-        if (!match) {
-            return res.status(401).json({ message: "❌ Altes Passwort falsch" });
-        }
-        const hashed = await bcrypt.hash(newPassword, PASSWORD_SALT_ROUNDS);
-        await usersCollection.updateOne(
-            { _id: user._id },
-            { $set: { password: hashed } }
-        );
-        res.json({ message: "✅ Passwort geändert" });
-    } catch (err) {
-        console.error("❌ Fehler bei Passwortänderung:", err);
-        res.status(500).json({ message: "Serverfehler bei Passwortänderung" });
-    }
+  const { oldPassword, newPassword } = req.body;
+  if (!oldPassword || !newPassword)
+    return res.status(400).json({ message: "❌ Beide Passwörter erforderlich" });
+
+  try {
+    const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
+    if (!user) return res.status(404).json({ message: "❌ Benutzer nicht gefunden" });
+
+    const match = await bcrypt.compare(oldPassword, user.password);
+    if (!match) return res.status(401).json({ message: "❌ Altes Passwort ist falsch" });
+
+    const hashed = await bcrypt.hash(newPassword, PASSWORD_SALT_ROUNDS);
+    await usersCollection.updateOne(
+      { _id: user._id },
+      { $set: { password: hashed } }
+    );
+    res.json({ message: "✅ Passwort geändert" });
+  } catch (err) {
+    console.error("❌ Fehler beim Passwortwechsel:", err);
+    res.status(500).json({ message: "Serverfehler bei Passwortwechsel" });
+  }
 });
 
 // 🗑️ Account löschen
 router.delete("/delete", verifyToken, async (req, res) => {
-    try {
-        // **WICHTIG:** Hier greifen wir auf die im server.js erstellte db-Variable zu
-        await req.app.locals.db.collection("contracts").deleteMany({ userId: req.user.userId });
-        await usersCollection.deleteOne({ _id: new ObjectId(req.user.userId) });
-
-        // Cookie mit aktualisierten Optionen löschen
-        res.clearCookie(COOKIE_NAME, COOKIE_OPTIONS);
-
-        res.json({ message: "✅ Account & Verträge gelöscht" });
-    } catch (err) {
-        console.error("❌ Fehler beim Löschen:", err);
-        res.status(500).json({ message: "Serverfehler beim Löschen" });
-    }
+  try {
+    await contractsCollection.deleteMany({ userId: req.user.userId });
+    await usersCollection.deleteOne({ _id: new ObjectId(req.user.userId) });
+    res.clearCookie(COOKIE_NAME, COOKIE_OPTIONS);
+    res.json({ message: "✅ Account & Verträge gelöscht" });
+  } catch (err) {
+    console.error("❌ Fehler beim Löschen:", err);
+    res.status(500).json({ message: "Serverfehler beim Löschen" });
+  }
 });
 
 // 📩 Passwort vergessen
 router.post("/forgot-password", async (req, res) => {
-    const { email } = req.body;
-    if (!email) {
-        return res.status(400).json({ message: "❌ E-Mail ist erforderlich" });
-    }
-    try {
-        const user = await usersCollection.findOne({ email });
-        if (!user) {
-            return res.status(404).json({ message: "❌ E-Mail nicht gefunden" });
-        }
-        const resetToken = crypto.randomBytes(32).toString("hex");
-        const resetTokenExpires = Date.now() + RESET_TOKEN_EXPIRES_IN_MS;
-        await usersCollection.updateOne(
-            { email },
-            { $set: { resetToken, resetTokenExpires } }
-        );
-        const resetLink = `https://contract-ai.de/reset-password?token=${resetToken}`;
-        const html = `
-            <div style="font-family: Arial, sans-serif; padding: 20px;">
-                <h2>🔐 Passwort zurücksetzen</h2>
-                <p>Hallo 👋,</p>
-                <p>Klicke auf den Button, um dein Passwort zurückzusetzen:</p>
-                <a href="${resetLink}" style="background: #0cf; padding: 10px 18px; text-decoration: none; color: black; border-radius: 6px;">🔁 Neues Passwort festlegen</a>
-                <p style="margin-top: 30px;">Wenn du das nicht warst, ignoriere diese E-Mail.</p>
-                <hr />
-                <p style="font-size: 0.8rem; color: #aaa;">Contract AI • Automatisierte Vertragsanalyse</p>
-            </div>
-        `;
-        await sendEmail(email, "🔐 Passwort zurücksetzen", html);
-        res.json({ message: "✅ Reset-Link wurde gesendet" });
-    } catch (err) {
-        console.error("❌ Fehler bei forgot-password:", err);
-        res.status(500).json({ message: "Serverfehler beim Passwort-Reset" });
-    }
+  const { email } = req.body;
+  if (!email)
+    return res.status(400).json({ message: "❌ E-Mail ist erforderlich" });
+
+  try {
+    const user = await usersCollection.findOne({ email });
+    if (!user) return res.status(404).json({ message: "❌ E-Mail nicht gefunden" });
+
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    const resetTokenExpires = Date.now() + RESET_TOKEN_EXPIRES_IN_MS;
+
+    await usersCollection.updateOne({ email }, { $set: { resetToken, resetTokenExpires } });
+
+    const resetLink = `https://contract-ai.de/reset-password?token=${resetToken}`;
+    const html = `
+      <div style="font-family: Arial, sans-serif; padding: 20px;">
+        <h2>🔐 Passwort zurücksetzen</h2>
+        <p>Hallo 👋,</p>
+        <p>Klicke auf den Button, um dein Passwort zurückzusetzen:</p>
+        <a href="${resetLink}" style="background: #0cf; padding: 10px 18px; text-decoration: none; color: black; border-radius: 6px;">🔁 Neues Passwort festlegen</a>
+        <p style="margin-top: 30px;">Wenn du das nicht warst, ignoriere diese E-Mail.</p>
+        <hr />
+        <p style="font-size: 0.8rem; color: #aaa;">Contract AI • Automatisierte Vertragsanalyse</p>
+      </div>
+    `;
+    await sendEmail(email, "🔐 Passwort zurücksetzen", html);
+    res.json({ message: "✅ Reset-Link gesendet" });
+  } catch (err) {
+    console.error("❌ Fehler bei forgot-password:", err);
+    res.status(500).json({ message: "Serverfehler beim Passwort-Reset" });
+  }
 });
 
 // 🔄 Neues Passwort setzen
 router.post("/reset-password", async (req, res) => {
-    const { token, newPassword } = req.body;
-    if (!token || !newPassword) {
-        return res.status(400).json({ message: "❌ Token und neues Passwort sind erforderlich" });
-    }
-    try {
-        const user = await usersCollection.findOne({ resetToken: token });
-        if (!user || user.resetTokenExpires < Date.now()) {
-            return res.status(400).json({ message: "❌ Reset-Link ungültig oder abgelaufen" });
-        }
-        const hashed = await bcrypt.hash(newPassword, PASSWORD_SALT_ROUNDS);
-        await usersCollection.updateOne(
-            { _id: user._id },
-            { $set: { password: hashed }, $unset: { resetToken: "", resetTokenExpires: "" } }
-        );
-        res.json({ message: "✅ Passwort zurückgesetzt" });
-    } catch (err) {
-        console.error("❌ Fehler bei reset-password:", err);
-        res.status(500).json({ message: "Fehler beim Zurücksetzen" });
-    }
+  const { token, newPassword } = req.body;
+  if (!token || !newPassword)
+    return res.status(400).json({ message: "❌ Token und neues Passwort erforderlich" });
+
+  try {
+    const user = await usersCollection.findOne({ resetToken: token });
+    if (!user || user.resetTokenExpires < Date.now())
+      return res.status(400).json({ message: "❌ Token ungültig oder abgelaufen" });
+
+    const hashed = await bcrypt.hash(newPassword, PASSWORD_SALT_ROUNDS);
+    await usersCollection.updateOne(
+      { _id: user._id },
+      { $set: { password: hashed }, $unset: { resetToken: "", resetTokenExpires: "" } }
+    );
+    res.json({ message: "✅ Passwort zurückgesetzt" });
+  } catch (err) {
+    console.error("❌ Fehler bei reset-password:", err);
+    res.status(500).json({ message: "Fehler beim Zurücksetzen" });
+  }
 });
 
-// 🚪 Logout (Cookie löschen)
+// 🚪 Logout
 router.post("/logout", (req, res) => {
-    // Cookie mit aktualisierten Optionen löschen
-    const cookieOptions = { ...COOKIE_OPTIONS };
-    res.clearCookie(COOKIE_NAME, cookieOptions);
-    console.log("🍪 Cookie gelöscht:", COOKIE_NAME);
-    
-    // Bei Proxy-Ansatz ist es weniger wichtig, zusätzliche CORS-Header zu setzen
-    res.json({ message: "✅ Erfolgreich ausgeloggt" });
+  res.clearCookie(COOKIE_NAME, COOKIE_OPTIONS);
+  console.log("🍪 Logout erfolgreich – Cookie gelöscht");
+  res.json({ message: "✅ Erfolgreich ausgeloggt" });
 });
-
-module.exports = router;
