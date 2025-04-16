@@ -8,7 +8,7 @@ import RequireAuth from "./components/RequireAuth";
 import PageLoader from "./components/PageLoader";
 
 // 🔓 Öffentliche Seiten
-import Home from "./pages/Home";
+import HomeRedesign from "./pages/HomeRedesign";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Pricing from "./pages/Pricing";
@@ -53,7 +53,7 @@ function AppWithLoader() {
       <main style={{ flex: 1, paddingTop: "60px" }}>
         <Routes>
           {/* 🔓 Öffentliche Seiten */}
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<HomeRedesign />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/pricing" element={<Pricing />} />
