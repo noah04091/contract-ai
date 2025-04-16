@@ -15,7 +15,6 @@ const { MongoClient, ObjectId } = require("mongodb");
 const verifyToken = require("./middleware/verifyToken");
 const createCheckSubscription = require("./middleware/checkSubscription");
 const cron = require("node-cron");
-const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 // 📦 Routen
 const subscribeRoutes = require("./routes/subscribe");
@@ -29,6 +28,8 @@ const generateRoute = require("./routes/generate");
 const analyzeTypeRoute = require("./routes/analyzeType");
 const extractTextRoute = require("./routes/extractText");
 const checkContractsAndSendReminders = require("./services/cron");
+
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 // 📦 Konfiguration
 const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
@@ -55,30 +56,6 @@ const ALLOWED_ORIGINS = [
   undefined,
 ];
 
-// 🔌 MongoDB
-let client, db, usersCollection, contractsCollection;
-
-async function connectDB() {
-  try {
-    client = new MongoClient(MONGO_URI);
-    await client.connect();
-    db = client.db(DB_NAME);
-    usersCollection = db.collection(USERS_COLLECTION);
-    contractsCollection = db.collection(CONTRACTS_COLLECTION);
-    console.log("✅ MongoDB verbunden!");
-
-    // Auth-Routen nach erfolgreicher Verbindung einbinden
-    const authRoutes = require("./routes/auth")(db);
-    app.use("/auth", authRoutes);
-  } catch (err) {
-    console.error("❌ MongoDB-Verbindungsfehler:", err);
-    process.exit(1);
-  }
-}
-
-connectDB();
-const checkSubscription = createCheckSubscription(usersCollection);
-
 // 🔧 Middleware
 app.use(cors({
   origin: (origin, callback) => {
@@ -88,19 +65,17 @@ app.use(cors({
   },
   credentials: true,
 }));
-
 app.options("*", cors());
 app.use(cookieParser());
 app.use(express.json());
 app.use("/uploads", express.static(path.join(__dirname, UPLOAD_PATH)));
-
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   if (origin && ALLOWED_ORIGINS.includes(origin)) {
-    res.header('Access-Control-Allow-Origin', origin);
+    res.header("Access-Control-Allow-Origin", origin);
   }
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
   next();
 });
 
@@ -156,110 +131,140 @@ async function analyzeContract(pdfText) {
   }
 }
 
-app.post("/upload", verifyToken, checkSubscription, upload.single("file"), async (req, res) => {
-  if (!req.file) return res.status(400).json({ message: "Keine Datei hochgeladen" });
+// 🔌 MongoDB-Verbindung + Serverstart
+async function startServer() {
   try {
-    const buffer = await fs.readFile(path.join(__dirname, UPLOAD_PATH, req.file.filename));
-    const text = (await pdfParse(buffer)).text.substring(0, 5000);
-    const analysis = await analyzeContract(text);
-    const name = analysis.match(/Vertragsname:\s*(.*)/i)?.[1]?.trim() || "Unbekannt";
-    const laufzeit = analysis.match(/Laufzeit:\s*(.*)/i)?.[1]?.trim() || "Unbekannt";
-    const kuendigung = analysis.match(/Kündigungsfrist:\s*(.*)/i)?.[1]?.trim() || "Unbekannt";
-    const expiryDate = extractExpiryDate(laufzeit);
-    const status = determineContractStatus(expiryDate);
+    const client = new MongoClient(MONGO_URI);
+    await client.connect();
+    const db = client.db(DB_NAME);
+    const usersCollection = db.collection(USERS_COLLECTION);
+    const contractsCollection = db.collection(CONTRACTS_COLLECTION);
 
-    const contract = {
-      userId: req.user.userId,
-      name,
-      laufzeit,
-      kuendigung,
-      expiryDate,
-      status,
-      uploadedAt: new Date(),
-      filePath: `/uploads/${req.file.filename}`,
-    };
+    console.log("✅ MongoDB verbunden!");
 
-    const { insertedId } = await contractsCollection.insertOne(contract);
+    const checkSubscription = createCheckSubscription(usersCollection);
 
-    await transporter.sendMail({
-      from: `Contract AI <${process.env.EMAIL_USER}>`,
-      to: process.env.EMAIL_USER,
-      subject: "📄 Neuer Vertrag hochgeladen",
-      text: `Name: ${name}\nLaufzeit: ${laufzeit}\nKündigungsfrist: ${kuendigung}\nStatus: ${status}\nAblaufdatum: ${expiryDate}`,
+    const authRoutes = require("./routes/auth")(db);
+    app.use("/auth", authRoutes);
+
+    // 📄 Upload-Logik
+    app.post("/upload", verifyToken, checkSubscription, upload.single("file"), async (req, res) => {
+      if (!req.file) return res.status(400).json({ message: "Keine Datei hochgeladen" });
+      try {
+        const buffer = await fs.readFile(path.join(__dirname, UPLOAD_PATH, req.file.filename));
+        const text = (await pdfParse(buffer)).text.substring(0, 5000);
+        const analysis = await analyzeContract(text);
+        const name = analysis.match(/Vertragsname:\s*(.*)/i)?.[1]?.trim() || "Unbekannt";
+        const laufzeit = analysis.match(/Laufzeit:\s*(.*)/i)?.[1]?.trim() || "Unbekannt";
+        const kuendigung = analysis.match(/Kündigungsfrist:\s*(.*)/i)?.[1]?.trim() || "Unbekannt";
+        const expiryDate = extractExpiryDate(laufzeit);
+        const status = determineContractStatus(expiryDate);
+
+        const contract = {
+          userId: req.user.userId,
+          name,
+          laufzeit,
+          kuendigung,
+          expiryDate,
+          status,
+          uploadedAt: new Date(),
+          filePath: `/uploads/${req.file.filename}`,
+        };
+
+        const { insertedId } = await contractsCollection.insertOne(contract);
+
+        await transporter.sendMail({
+          from: `Contract AI <${process.env.EMAIL_USER}>`,
+          to: process.env.EMAIL_USER,
+          subject: "📄 Neuer Vertrag hochgeladen",
+          text: `Name: ${name}\nLaufzeit: ${laufzeit}\nKündigungsfrist: ${kuendigung}\nStatus: ${status}\nAblaufdatum: ${expiryDate}`,
+        });
+
+        res.status(201).json({ message: "Vertrag gespeichert", contract: { ...contract, _id: insertedId } });
+      } catch (err) {
+        console.error("❌ Fehler beim Upload:", err);
+        res.status(500).json({ message: "Upload fehlgeschlagen", error: err.message });
+      }
     });
 
-    res.status(201).json({ message: "Vertrag gespeichert", contract: { ...contract, _id: insertedId } });
+    // 🔁 Cron
+    cron.schedule("0 8 * * *", async () => {
+      console.log("⏰ Reminder-Cronjob gestartet");
+      await checkContractsAndSendReminders();
+    });
+
+    // 📄 CRUD
+    app.get("/contracts", verifyToken, async (req, res) => {
+      const contracts = await contractsCollection.find({ userId: req.user.userId }).toArray();
+      res.json(contracts);
+    });
+
+    app.get("/contracts/:id", verifyToken, async (req, res) => {
+      const contract = await contractsCollection.findOne({
+        _id: new ObjectId(req.params.id),
+        userId: req.user.userId,
+      });
+      if (!contract) return res.status(404).json({ message: "Nicht gefunden" });
+      res.json(contract);
+    });
+
+    app.put("/contracts/:id", verifyToken, async (req, res) => {
+      const { name, laufzeit, kuendigung } = req.body;
+      await contractsCollection.updateOne(
+        { _id: new ObjectId(req.params.id), userId: req.user.userId },
+        { $set: { name, laufzeit, kuendigung } }
+      );
+      const updated = await contractsCollection.findOne({ _id: new ObjectId(req.params.id) });
+      res.json({ message: "Aktualisiert", contract: updated });
+    });
+
+    app.delete("/contracts/:id", verifyToken, async (req, res) => {
+      const result = await contractsCollection.deleteOne({
+        _id: new ObjectId(req.params.id),
+        userId: req.user.userId,
+      });
+      if (!result.deletedCount) return res.status(404).json({ message: "Nicht gefunden" });
+      res.json({ message: "Gelöscht", deletedCount: result.deletedCount });
+    });
+
+    // 🌟 Features
+    app.use("/optimize", verifyToken, checkSubscription, optimizeRoute);
+    app.use("/compare", verifyToken, checkSubscription, compareRoute);
+    app.use("/chat", verifyToken, checkSubscription, chatRoute);
+    app.use("/generate", verifyToken, checkSubscription, generateRoute);
+
+    // 🔓 Öffentlich
+    app.use("/stripe", stripeRoutes);
+    app.use("/stripe", subscribeRoutes);
+    app.use("/analyze-type", analyzeTypeRoute);
+    app.use("/extract-text", extractTextRoute);
+    app.use("/test", require("./testAuth"));
+
+    // 🧪 Debug
+    app.get("/debug", (req, res) => {
+      console.log("Cookies:", req.cookies);
+      res.cookie("debug_cookie", "test-value", {
+        httpOnly: true,
+        secure: true,
+        sameSite: "None",
+        path: "/",
+      });
+      res.json({ cookies: req.cookies });
+    });
+
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => console.log(`🚀 Server läuft auf Port ${PORT}`));
+
+    process.on("SIGINT", async () => {
+      console.log("👋 Shutdown...");
+      await client.close();
+      process.exit(0);
+    });
+
   } catch (err) {
-    console.error("❌ Fehler beim Upload:", err);
-    res.status(500).json({ message: "Upload fehlgeschlagen", error: err.message });
+    console.error("❌ MongoDB-Verbindungsfehler:", err);
+    process.exit(1);
   }
-});
+}
 
-cron.schedule("0 8 * * *", async () => {
-  console.log("⏰ Reminder-Cronjob gestartet");
-  await checkContractsAndSendReminders();
-});
-
-app.get("/contracts", verifyToken, async (req, res) => {
-  const contracts = await contractsCollection.find({ userId: req.user.userId }).toArray();
-  res.json(contracts);
-});
-
-app.get("/contracts/:id", verifyToken, async (req, res) => {
-  const contract = await contractsCollection.findOne({
-    _id: new ObjectId(req.params.id),
-    userId: req.user.userId,
-  });
-  if (!contract) return res.status(404).json({ message: "Nicht gefunden" });
-  res.json(contract);
-});
-
-app.put("/contracts/:id", verifyToken, async (req, res) => {
-  const { name, laufzeit, kuendigung } = req.body;
-  await contractsCollection.updateOne(
-    { _id: new ObjectId(req.params.id), userId: req.user.userId },
-    { $set: { name, laufzeit, kuendigung } }
-  );
-  const updated = await contractsCollection.findOne({ _id: new ObjectId(req.params.id) });
-  res.json({ message: "Aktualisiert", contract: updated });
-});
-
-app.delete("/contracts/:id", verifyToken, async (req, res) => {
-  const result = await contractsCollection.deleteOne({
-    _id: new ObjectId(req.params.id),
-    userId: req.user.userId,
-  });
-  if (!result.deletedCount) return res.status(404).json({ message: "Nicht gefunden" });
-  res.json({ message: "Gelöscht", deletedCount: result.deletedCount });
-});
-
-app.use("/optimize", verifyToken, checkSubscription, optimizeRoute);
-app.use("/compare", verifyToken, checkSubscription, compareRoute);
-app.use("/chat", verifyToken, checkSubscription, chatRoute);
-app.use("/generate", verifyToken, checkSubscription, generateRoute);
-
-app.use("/stripe", stripeRoutes);
-app.use("/stripe", subscribeRoutes);
-app.use("/analyze-type", analyzeTypeRoute);
-app.use("/extract-text", extractTextRoute);
-app.use("/test", require("./testAuth"));
-
-app.get("/debug", (req, res) => {
-  console.log("Cookies:", req.cookies);
-  res.cookie("debug_cookie", "test-value", {
-    httpOnly: true,
-    secure: true,
-    sameSite: "None",
-    path: "/",
-  });
-  res.json({ cookies: req.cookies });
-});
-
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Server läuft auf Port ${PORT}`));
-
-process.on("SIGINT", async () => {
-  console.log("👋 Shutdown...");
-  if (client) await client.close();
-  process.exit(0);
-});
+startServer();
