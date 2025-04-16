@@ -20,7 +20,6 @@ export default function Navbar() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Cookie-basierter Auth-Check über Proxy
     fetch("/api/auth/me", {
       method: "GET",
       credentials: "include",
@@ -66,7 +65,7 @@ export default function Navbar() {
   return (
     <nav className={styles.navbar}>
       <div className={styles.navbarContent}>
-        <div className={styles.logoWrapper}>
+        <div className={styles.leftSection}>
           <button
             className={styles.hamburger}
             onClick={() => setMobileMenuOpen((prev) => !prev)}
@@ -83,7 +82,6 @@ export default function Navbar() {
           <Link to="/optimizer" className={styles.navLink}>🧠 Optimierer</Link>
           <Link to="/compare" className={styles.navLink}>📊 Vergleich</Link>
           <Link to="/chat" className={styles.navLink}>💬 KI-Chat</Link>
-
           {user && !user.subscriptionActive && (
             <Link to="/pricing" className={styles.navLink}>💰 Preise</Link>
           )}
@@ -91,7 +89,6 @@ export default function Navbar() {
 
         <div className={styles.navRight}>
           <ThemeToggle />
-
           {user && (
             <div className={styles.dropdownWrapper} ref={dropdownRef}>
               <button

@@ -155,7 +155,7 @@ router.post("/forgot-password", async (req, res) => {
         <h2>🔐 Passwort zurücksetzen</h2>
         <p>Hallo 👋,</p>
         <p>Klicke auf den Button, um dein Passwort zurückzusetzen:</p>
-        <a href="${resetLink}" style="background: #0cf; padding: 10px 18px; text-decoration: none; color: black; border-radius: 6px;">🔁 Neues Passwort festlegen</a>
+        <a href="${resetLink}" style="background: #36a3f5; padding: 10px 18px; text-decoration: none; color: black; border-radius: 6px;">🔁 Neues Passwort festlegen</a>
         <p style="margin-top: 30px;">Wenn du das nicht warst, ignoriere diese E-Mail.</p>
         <hr />
         <p style="font-size: 0.8rem; color: #aaa;">Contract AI • Automatisierte Vertragsanalyse</p>

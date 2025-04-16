@@ -48,7 +48,7 @@
   }
   
   button {
-    background-color: #0cf;
+    background-color: #36a3f5;
     color: #000;
     padding: 0.75rem;
     border: none;
@@ -59,7 +59,7 @@
   }
   
   button:hover {
-    background-color: #00bcd4;
+    background-color: #1c8ce3;
     transform: scale(1.02);
   }
   
@@ -67,7 +67,7 @@
     text-align: center;
     margin-top: 1rem;
     font-weight: bold;
-    color: #0cf;
+    color: #36a3f5;
     animation: blink 1s infinite;
   }
   
@@ -92,7 +92,7 @@
     position: absolute;
     top: 1rem;
     right: 1rem;
-    background: #0cf;
+    background: #36a3f5;
     color: #000;
     border: none;
     padding: 0.4rem 0.7rem;
@@ -104,7 +104,7 @@
   }
   
   .copyButton:hover {
-    background-color: #00bcd4;
+    background-color: #1c8ce3;
     transform: scale(1.02);
   }
   

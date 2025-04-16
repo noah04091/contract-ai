@@ -16,7 +16,7 @@ export default function ResultCard({
           background: "#1a1a1a",
         }}
       >
-        <h3 style={{ color: "#00bcd4" }}>{title}</h3>
+        <h3 style={{ color: "#1c8ce3" }}>{title}</h3>
         <p>{content}</p>
       </div>
     );

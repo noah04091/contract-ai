@@ -12,7 +12,7 @@
   
   h2 {
     font-size: 2rem;
-    color: #0cf;
+    color: #36a3f5;
     margin-bottom: 1rem;
   }
   
@@ -39,7 +39,7 @@
     display: block;
     font-weight: bold;
     margin-bottom: 0.5rem;
-    color: #0cf;
+    color: #36a3f5;
   }
   
   .filename {
@@ -56,7 +56,7 @@
   }
   
   button {
-    background-color: #0cf;
+    background-color: #36a3f5;
     color: #000;
     border: none;
     padding: 0.6rem 1.2rem;
@@ -90,7 +90,7 @@
   }
   
   .resultBox h3 {
-    color: #0cf;
+    color: #36a3f5;
     margin-top: 1rem;
     margin-bottom: 0.5rem;
   }

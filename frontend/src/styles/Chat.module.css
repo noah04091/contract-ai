@@ -27,7 +27,7 @@
   }
   
   button {
-    background-color: #0cf;
+    background-color: #36a3f5;
     color: #000;
     padding: 0.7rem 1.4rem;
     border: none;
@@ -39,7 +39,7 @@
   }
   
   button:hover {
-    background-color: #00bcd4;
+    background-color: #1c8ce3;
     transform: scale(1.02);
   }
   
@@ -66,7 +66,7 @@
   .user {
     background-color: #2a2a2a;
     align-self: flex-end;
-    border-left: 4px solid #0cf;
+    border-left: 4px solid #36a3f5;
   }
   
   .ai {

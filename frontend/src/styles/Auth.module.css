@@ -16,7 +16,7 @@
 .authContainer h2 {
   font-size: 2rem;
   margin-bottom: 2rem;
-  color: #0cf;
+  color: #36a3f5;
 }
 
 .authForm {
@@ -47,7 +47,7 @@
 
 .input:focus {
   outline: none;
-  box-shadow: 0 0 0 2px #0cf;
+  box-shadow: 0 0 0 2px #36a3f5;
 }
 
 .inputIcon {
@@ -55,7 +55,7 @@
   left: 1rem;
   top: 50%;
   transform: translateY(-50%);
-  color: #0cf;
+  color: #36a3f5;
   font-size: 1.1rem;
   pointer-events: none;
 }
@@ -87,7 +87,7 @@
 }
 
 .linkText {
-  color: #0cf;
+  color: #36a3f5;
   cursor: pointer;
   font-weight: bold;
 }

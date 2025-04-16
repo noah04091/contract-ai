@@ -25,12 +25,14 @@
   padding: 0 1.5rem;
 }
 
-/* === Logo === */
-.logoWrapper {
+/* === Linke Seite: Hamburger + Logo === */
+.leftSection {
   display: flex;
   align-items: center;
   gap: 0.8rem;
 }
+
+/* === Logo === */
 .logoImage {
   height: 42px;
   object-fit: contain;
@@ -49,14 +51,14 @@
   justify-content: center;
 }
 .navLink {
-  color: #0cf;
+  color: #36a3f5;
   text-decoration: none;
   font-weight: bold;
   font-size: 0.95rem;
   transition: color 0.2s ease;
 }
 .navLink:hover {
-  color: #00bcd4;
+  color: #1c8ce3;
 }
 
 /* === Rechte Seite (Theme, Profil) === */
@@ -69,7 +71,7 @@
 
 /* === Profilbutton === */
 .profileButton {
-  background-color: #0cf;
+  background-color: #36a3f5;
   color: #000;
   border: none;
   padding: 0.4rem 0.8rem;
@@ -80,7 +82,7 @@
   font-size: 0.9rem;
 }
 .profileButton:hover {
-  background-color: #00bcd4;
+  background-color: #1c8ce3;
 }
 
 /* === Dropdown-Menü === */
@@ -121,12 +123,11 @@
 .hamburger {
   display: none;
   font-size: 1.4rem;
-  background: #0cf;
+  background: #36a3f5;
   border: none;
   padding: 0.3rem 0.6rem;
   border-radius: 6px;
   cursor: pointer;
-  margin-right: 0.5rem;
 }
 
 /* === Responsive Styles === */
