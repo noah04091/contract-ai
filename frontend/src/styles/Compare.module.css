@@ -1,104 +1,423 @@
-/* src/styles/Compare.module.css */
+/* Compare.module.css - Apple Design Style */
 
+/* Base Variables */
+:root {
+  --apple-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --apple-blue: #0071e3;
+  --apple-blue-hover: #0077ed;
+  --apple-blue-active: #006edb;
+  --apple-blue-light: rgba(0, 113, 227, 0.1);
+  --apple-gray: #f5f5f7;
+  --apple-light-gray: #e8e8ed;
+  --apple-dark-gray: #86868b;
+  --apple-text: #1d1d1f;
+  --apple-text-secondary: #515154;
+  --apple-success: #32d74b;
+  --apple-glass-bg: rgba(255, 255, 255, 0.8);
+  --apple-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --apple-shadow-md: 0 8px 20px rgba(0, 0, 0, 0.08);
+  --apple-border-radius: 12px;
+  --apple-transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Main Container */
 .container {
-    padding: 2rem;
-    background-color: #1a1a1a;
-    color: white;
-    border-radius: 10px;
-    max-width: 800px;
-    margin: 2rem auto;
-    box-shadow: 0 0 10px rgba(0, 255, 255, 0.1);
+  font-family: var(--apple-font);
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 3rem 2rem;
+  color: var(--apple-text);
+  background-color: white;
+  min-height: 100vh;
+  opacity: 0;
+  animation: fadeIn 0.3s forwards;
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
+}
+
+/* Header */
+.header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.header h1 {
+  font-size: 2.5rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  letter-spacing: -0.02em;
+  background: linear-gradient(90deg, var(--apple-blue), #00b9ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.subtitle {
+  font-size: 1.1rem;
+  font-weight: 400;
+  color: var(--apple-text-secondary);
+  max-width: 650px;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+
+/* Upload Section */
+.uploadSection {
+  margin: 3rem auto;
+}
+
+.uploadContainer {
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.uploadCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2.5rem;
+  width: 280px;
+  height: 280px;
+  background: var(--apple-glass-bg);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border-radius: var(--apple-border-radius);
+  box-shadow: var(--apple-shadow-sm);
+  transition: var(--apple-transition);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.uploadCard:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--apple-shadow-md);
+}
+
+.uploadCard.fileSelected {
+  border: 1px solid rgba(0, 113, 227, 0.3);
+  background: rgba(0, 113, 227, 0.03);
+}
+
+.uploadIcon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 72px;
+  height: 72px;
+  background-color: rgba(0, 113, 227, 0.1);
+  border-radius: 50%;
+  margin-bottom: 1.5rem;
+  color: var(--apple-blue);
+}
+
+.uploadCard h3 {
+  font-size: 1.2rem;
+  font-weight: 500;
+  margin-bottom: 1.5rem;
+  color: var(--apple-text);
+}
+
+.fileInput {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.fileInputLabel {
+  padding: 0.7rem 1.5rem;
+  background-color: var(--apple-light-gray);
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--apple-text);
+  cursor: pointer;
+  transition: var(--apple-transition);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+  text-align: center;
+}
+
+.fileInputLabel:hover {
+  background-color: #e0e0e5;
+}
+
+.fileIndicator {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  width: 28px;
+  height: 28px;
+  background-color: var(--apple-success);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  animation: scaleIn 0.3s ease forwards;
+}
+
+@keyframes scaleIn {
+  0% {
+    transform: scale(0);
+  }
+  70% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Action Buttons */
+.actionButtons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin: 2rem 0 3rem;
+}
+
+.primaryButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.7rem 2rem;
+  min-width: 180px;
+  background-color: var(--apple-blue);
+  color: white;
+  border: none;
+  border-radius: 20px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--apple-transition);
+  box-shadow: 0 2px 8px rgba(0, 113, 227, 0.3);
+}
+
+.primaryButton:hover {
+  background-color: var(--apple-blue-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 113, 227, 0.4);
+}
+
+.primaryButton:active {
+  background-color: var(--apple-blue-active);
+  transform: translateY(0px);
+  box-shadow: 0 2px 6px rgba(0, 113, 227, 0.35);
+}
+
+.disabledButton {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.secondaryButton {
+  padding: 0.7rem 2rem;
+  min-width: 150px;
+  background-color: transparent;
+  color: var(--apple-text);
+  border: 1px solid var(--apple-light-gray);
+  border-radius: 20px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--apple-transition);
+}
+
+.secondaryButton:hover {
+  background-color: var(--apple-light-gray);
+}
+
+.secondaryButton:active {
+  background-color: #e0e0e5;
+}
+
+/* Result Container */
+.resultContainer {
+  background: var(--apple-glass-bg);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border-radius: var(--apple-border-radius);
+  box-shadow: var(--apple-shadow-md);
+  overflow: hidden;
+  margin-top: 2rem;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  opacity: 0;
+  transform: translateY(20px);
+  animation: slideUpFade 0.4s forwards;
+}
+
+@keyframes slideUpFade {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.resultHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid var(--apple-light-gray);
+}
+
+.resultHeader h2 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--apple-text);
+  margin: 0;
+}
+
+.exportButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.2rem;
+  background-color: transparent;
+  color: var(--apple-blue);
+  border: 1px solid var(--apple-light-gray);
+  border-radius: 16px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--apple-transition);
+}
+
+.exportButton:hover {
+  background-color: rgba(0, 113, 227, 0.05);
+  border-color: rgba(0, 113, 227, 0.2);
+}
+
+.resultSection {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid var(--apple-light-gray);
+}
+
+.resultSection:last-child {
+  border-bottom: none;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+.sectionIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background-color: rgba(0, 113, 227, 0.1);
+  border-radius: 50%;
+  color: var(--apple-blue);
+}
+
+.sectionHeader h3 {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--apple-text);
+  margin: 0;
+}
+
+.sectionContent {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--apple-text-secondary);
+  white-space: pre-line;
+}
+
+/* Loading Indicators */
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 70vh;
+  font-family: var(--apple-font);
+}
+
+.loadingSpinner,
+.buttonSpinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 0.8s linear infinite;
+  margin-right: 0.8rem;
+}
+
+.loadingSpinner {
+  width: 32px;
+  height: 32px;
+  border: 2px solid rgba(0, 113, 227, 0.3);
+  border-top-color: var(--apple-blue);
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .container {
+    padding: 2rem 1.5rem;
   }
   
-  h2 {
+  .header h1 {
     font-size: 2rem;
-    color: #36a3f5;
-    margin-bottom: 1rem;
   }
   
-  p {
-    opacity: 0.9;
-    margin-bottom: 1.2rem;
+  .uploadContainer {
+    flex-direction: column;
+    align-items: center;
   }
   
-  .uploadBox {
-    display: flex;
+  .uploadCard {
+    width: 100%;
+    max-width: 320px;
+    height: 250px;
+  }
+  
+  .actionButtons {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .primaryButton,
+  .secondaryButton {
+    width: 100%;
+    max-width: 300px;
+  }
+  
+  .resultHeader {
     flex-direction: column;
     gap: 1rem;
-    margin-bottom: 2rem;
+    align-items: flex-start;
   }
   
-  .fileInput {
-    background-color: #2a2a2a;
-    padding: 1rem;
-    border-radius: 8px;
-    border: 1px solid #444;
+  .exportButton {
+    align-self: flex-end;
   }
-  
-  .fileInput label {
-    display: block;
-    font-weight: bold;
-    margin-bottom: 0.5rem;
-    color: #36a3f5;
-  }
-  
-  .filename {
-    display: block;
-    margin-top: 0.3rem;
-    font-size: 0.9rem;
-    color: #0f0;
-  }
-  
-  .actions {
-    display: flex;
-    gap: 1rem;
-    margin-bottom: 2rem;
-  }
-  
-  button {
-    background-color: #36a3f5;
-    color: #000;
-    border: none;
-    padding: 0.6rem 1.2rem;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background 0.2s ease;
-    font-weight: bold;
-  }
-  
-  button:hover {
-    background-color: #09c;
-  }
-  
-  button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-  
-  .resetButton {
-    background-color: #444;
-    color: #fff;
-  }
-  
-  .resultBox {
-    background-color: #111;
-    padding: 1.5rem;
-    border-radius: 8px;
-    border: 1px solid #333;
-    box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
-    margin-top: 2rem;
-  }
-  
-  .resultBox h3 {
-    color: #36a3f5;
-    margin-top: 1rem;
-    margin-bottom: 0.5rem;
-  }
-  
-  .resultBox p {
-    line-height: 1.6;
-    margin-bottom: 1rem;
-    color: #ccc;
-    white-space: pre-wrap;
-  }
-  
+}
