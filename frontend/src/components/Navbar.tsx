@@ -2,7 +2,6 @@ import { useEffect, useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import styles from "../styles/Navbar.module.css";
 import Notification from "./Notification";
-import ThemeToggle from "./ThemeToggle";
 import logo from "../assets/logo.png";
 import { clearAuthData } from "../utils/api";
 
@@ -16,26 +15,33 @@ export default function Navbar() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notification, setNotification] = useState<{ message: string; type?: "success" | "error" } | null>(null);
+
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
+  // 🔐 Benutzerstatus laden
   useEffect(() => {
-    fetch("/api/auth/me", {
-      method: "GET",
-      credentials: "include",
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("Fehler beim Laden des Benutzerprofils");
-        return res.json();
-      })
-      .then((data) => setUser({ email: data.email, subscriptionActive: data.subscriptionActive }))
-      .catch((err) => {
+    const fetchUser = async () => {
+      try {
+        const res = await fetch("/api/auth/me", {
+          method: "GET",
+          credentials: "include",
+        });
+
+        if (!res.ok) throw new Error("Nicht eingeloggt");
+        const data = await res.json();
+        setUser({ email: data.email, subscriptionActive: data.subscriptionActive });
+      } catch (err) {
         console.warn("❌ Auth fehlgeschlagen:", err);
         clearAuthData();
         setUser(null);
-      });
-  }, [navigate]);
+      }
+    };
 
+    fetchUser();
+  }, []);
+
+  // 🧠 Klick außerhalb des Dropdowns
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -46,6 +52,7 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // 🚪 Logout-Handler
   const handleLogout = async () => {
     try {
       await fetch("/api/auth/logout", {
@@ -69,11 +76,12 @@ export default function Navbar() {
           <button
             className={styles.hamburger}
             onClick={() => setMobileMenuOpen((prev) => !prev)}
+            aria-label="Menü öffnen"
           >
             ☰
           </button>
-          <Link to="/">
-            <img src={logo} alt="Logo" className={styles.logoImage} />
+          <Link to="/" className={styles.logoLink}>
+            <img src={logo} alt="Contract AI Logo" className={styles.logoImage} />
           </Link>
         </div>
 
@@ -88,7 +96,6 @@ export default function Navbar() {
         </div>
 
         <div className={styles.navRight}>
-          <ThemeToggle />
           {user && (
             <div className={styles.dropdownWrapper} ref={dropdownRef}>
               <button
