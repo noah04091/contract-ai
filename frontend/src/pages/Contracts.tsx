@@ -20,7 +20,7 @@ export default function Contracts() {
   const [showDetails, setShowDetails] = useState(false);
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [errorMessage, setError] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
 
   const fetchContracts = async () => {
@@ -83,7 +83,6 @@ export default function Contracts() {
     setShowDetails(true);
   };
 
-  // Hilfsfunktion um Statusfarben zu bestimmen
   const getStatusColor = (status: string): string => {
     status = status.toLowerCase();
     if (status === "aktiv" || status === "gültig") {
@@ -180,7 +179,7 @@ export default function Contracts() {
             <div className={styles.loadingSpinner}></div>
             <p>Verträge werden geladen...</p>
           </div>
-        ) : error ? (
+        ) : errorMessage ? (
           <div className={styles.errorContainer}>
             <div className={styles.errorIcon}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -188,7 +187,7 @@ export default function Contracts() {
                   stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </div>
-            <p>{error}</p>
+            <p>{errorMessage}</p>
             <button className={styles.retryButton} onClick={fetchContracts}>
               Erneut versuchen
             </button>
