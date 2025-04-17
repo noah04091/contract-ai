@@ -112,7 +112,7 @@ export default function CalendarPage() {
   };
 
   // Wir können das onChange von react-calendar direkt verwenden
-  // @ts-ignore - Um den TypeScript-Fehler zu umgehen
+  // @ts-expect-error - Um den TypeScript-Fehler zu umgehen
   const handleDateClick = (value) => {
     if (value instanceof Date) {
       setSelectedDate(value);
