@@ -7,7 +7,7 @@ interface Message {
   timestamp: string;
 }
 
-export default function AppleChat() {
+export default function VertragChat() {
   const [file, setFile] = useState<File | null>(null);
   const [question, setQuestion] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
