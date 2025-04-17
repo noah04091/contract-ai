@@ -33,7 +33,7 @@ import Subscribe from "./pages/Subscribe";
 import Upgrade from "./pages/Upgrade";
 import BetterContracts from "./pages/BetterContracts";
 
-// ✅ Wrapper-Komponente, um bei Seitenwechsel Ladeanimation zu zeigen
+// ✅ Wrapper für Ladeanimation beim Routenwechsel
 function AppWithLoader() {
   const location = useLocation();
   const [loading, setLoading] = useState(false);
@@ -49,10 +49,9 @@ function AppWithLoader() {
       {loading && <PageLoader />}
       <Navbar />
       <Sidebar />
-
       <main style={{ flex: 1, paddingTop: "60px" }}>
         <Routes>
-          {/* 🔓 Öffentliche Seiten */}
+          {/* 🔓 Öffentlich */}
           <Route path="/" element={<HomeRedesign />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -63,7 +62,7 @@ function AppWithLoader() {
           <Route path="/datenschutz" element={<Datenschutz />} />
           <Route path="/agb" element={<AGB />} />
 
-          {/* 🔒 Geschützte Seiten mit RequireAuth */}
+          {/* 🔒 Geschützt */}
           <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
           <Route path="/contracts" element={<RequireAuth><Contracts /></RequireAuth>} />
           <Route path="/contracts/:id" element={<RequireAuth><ContractDetails /></RequireAuth>} />
@@ -79,13 +78,12 @@ function AppWithLoader() {
           <Route path="/better-contracts" element={<RequireAuth><BetterContracts /></RequireAuth>} />
         </Routes>
       </main>
-
       <Footer />
     </div>
   );
 }
 
-// 🧠 Haupt-App mit Router
+// 🧠 Root-Komponente mit Router
 export default function App() {
   return (
     <Router>
