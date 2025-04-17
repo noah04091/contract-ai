@@ -1,6 +1,9 @@
 import { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import "../styles/landing.css";
+import logo from "../assets/logo-contractai.png";
+import analysisImg from "../assets/screenshot-dashboard.png";
+import deadlineImg from "../assets/screenshot-deadline.png";
 
 interface User {
   plan: 'standard' | 'premium';
@@ -104,7 +107,7 @@ const HomeRedesign = () => {
         <div className="nav-container">
           <div className="logo">
             <Link to="/">
-              <img src="/assets/logo-contractai.png" alt="Contract AI Logo" />
+            <img src={logo} alt="Contract AI Logo" />
             </Link>
           </div>
           <ul className={`nav-links ${mobileMenuOpen ? 'mobile-open' : ''}`}>
@@ -191,7 +194,7 @@ const HomeRedesign = () => {
           </div>
         </div>
         <div className="logo-hero">
-          <img src="/assets/logo-contractai.png" alt="Contract AI Logo" />
+        <img src={logo} alt="Contract AI Logo" />
         </div>
         <div className="hero-content">
           <h1 className="reveal-text">KI-gestützte Vertragsanalyse</h1>
@@ -343,7 +346,7 @@ const HomeRedesign = () => {
                 </Link>
               </div>
               <div className="showcase-image">
-                <img src="/assets/showcase-analysis.png" alt="Vertragsanalyse Screenshot" />
+                <img src={analysisImg} alt="Vertragsanalyse Screenshot" />
                 <div className="image-shine"></div>
               </div>
             </div>
@@ -367,7 +370,7 @@ const HomeRedesign = () => {
                 </Link>
               </div>
               <div className="showcase-image">
-                <img src="/assets/showcase-deadline.png" alt="Fristen-Feature Screenshot" />
+                <img src={deadlineImg} alt="Fristen Screenshot" />
                 <div className="image-shine"></div>
               </div>
             </div>
@@ -571,7 +574,7 @@ const HomeRedesign = () => {
         <div className="footer-container">
           <div className="footer-top">
             <div className="footer-logo">
-              <img src="/assets/logo-contractai.png" alt="Contract AI Logo" />
+              <img src={logo} alt="Contract AI Logo" />
               <p className="company-description">
                 Contract AI revolutioniert Ihr Vertragsmanagement mit neuester KI-Technologie.
                 Wir helfen Ihnen, Verträge zu analysieren, optimieren und verwalten.
