@@ -107,7 +107,7 @@ export default function Contracts() {
         month: "2-digit",
         year: "numeric"
       });
-    } catch (_) {
+    } catch {
       return dateString;
     }
   };
