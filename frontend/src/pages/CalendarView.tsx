@@ -225,7 +225,7 @@ export default function CalendarView() {
                   eventClick={handleEventClick}
                   locale="de"
                   height="auto"
-                  datesSet={({ view }) => {
+                  datesSet={() => {
                     // Aktualisiere den Monat wenn sich das Datum ändert
                     updateCurrentMonth();
                   }}
