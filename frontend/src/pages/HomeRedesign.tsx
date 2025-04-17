@@ -1,6 +1,8 @@
 import { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import "../styles/landing.css";
+
+// Importiere Bilder
 import logo from "../assets/logo-contractai.png";
 import analysisImg from "../assets/screenshot-dashboard.png";
 import deadlineImg from "../assets/screenshot-deadline.png";
@@ -107,37 +109,69 @@ const HomeRedesign = () => {
         <div className="nav-container">
           <div className="logo">
             <Link to="/">
-            <img src={logo} alt="Contract AI Logo" />
+              <img src={logo} alt="Contract AI Logo" />
             </Link>
           </div>
           <ul className={`nav-links ${mobileMenuOpen ? 'mobile-open' : ''}`}>
             <li className={activeSection === 'features' ? 'active' : ''}>
               <Link to="/contracts" className="nav-link">
-                <span className="nav-icon">📄</span>
+                <span className="nav-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10 9 9 9 8 9"></polyline>
+                  </svg>
+                </span>
                 Verträge
               </Link>
             </li>
             <li className={activeSection === 'optimizer' ? 'active' : ''}>
               <Link to="/optimizer" className="nav-link">
-                <span className="nav-icon">✨</span>
+                <span className="nav-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 3v4M3 5h4M6 17v4M4 19h4M13 3l4 4L5 19l-4-4z"></path>
+                    <path d="M14 7l3 3M6 17l3 3M11 6l.463 1.39m3.684 11.04l.463 1.39M19 12h2M12 19v2M12 5V3M19 8l1.5-1.5M5 8L3.5 6.5"></path>
+                  </svg>
+                </span>
                 Optimierer
               </Link>
             </li>
             <li className={activeSection === 'deadlines' ? 'active' : ''}>
               <Link to="/calendar" className="nav-link">
-                <span className="nav-icon">⏰</span>
+                <span className="nav-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                </span>
                 Fristen
               </Link>
             </li>
             <li className={activeSection === 'compare' ? 'active' : ''}>
               <Link to="/compare" className="nav-link">
-                <span className="nav-icon">⚖️</span>
+                <span className="nav-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="20" x2="18" y2="10"></line>
+                    <line x1="12" y1="20" x2="12" y2="4"></line>
+                    <line x1="6" y1="20" x2="6" y2="14"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                    <line x1="3" y1="4" x2="21" y2="4"></line>
+                    <line x1="3" y1="14" x2="21" y2="14"></line>
+                  </svg>
+                </span>
                 Vergleich
               </Link>
             </li>
             <li className={activeSection === 'pricing' ? 'active' : ''}>
               <Link to="/pricing" className="nav-link">
-                <span className="nav-icon">💰</span>
+                <span className="nav-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="12" y1="1" x2="12" y2="23"></line>
+                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                  </svg>
+                </span>
                 Preise
               </Link>
             </li>
@@ -148,18 +182,38 @@ const HomeRedesign = () => {
             ) : user?.isAuthenticated ? (
               <li className="auth-buttons">
                 <Link to="/dashboard" className="primary-button">
-                  <span className="button-icon">🚀</span>
+                  <span className="button-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                      <line x1="8" y1="12" x2="16" y2="12"></line>
+                      <line x1="8" y1="16" x2="16" y2="16"></line>
+                      <line x1="8" y1="8" x2="10" y2="8"></line>
+                    </svg>
+                  </span>
                   Zum Dashboard
                 </Link>
               </li>
             ) : (
               <li className="auth-buttons">
                 <Link to="/login" className="login-button">
-                  <span className="button-icon">🔐</span>
+                  <span className="button-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                      <polyline points="10 17 15 12 10 7"></polyline>
+                      <line x1="15" y1="12" x2="3" y2="12"></line>
+                    </svg>
+                  </span>
                   Login
                 </Link>
                 <Link to="/register" className="primary-button">
-                  <span className="button-icon">📝</span>
+                  <span className="button-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="8.5" cy="7" r="4"></circle>
+                      <line x1="20" y1="8" x2="20" y2="14"></line>
+                      <line x1="23" y1="11" x2="17" y2="11"></line>
+                    </svg>
+                  </span>
                   Registrieren
                 </Link>
               </li>
@@ -172,8 +226,24 @@ const HomeRedesign = () => {
           </div>
           <div className="theme-toggle">
             <Link to="#" className="theme-button">
-              <span className="light-icon">🌞</span>
-              <span className="dark-icon">🌙</span>
+              <span className="light-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="5"></circle>
+                  <line x1="12" y1="1" x2="12" y2="3"></line>
+                  <line x1="12" y1="21" x2="12" y2="23"></line>
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                  <line x1="1" y1="12" x2="3" y2="12"></line>
+                  <line x1="21" y1="12" x2="23" y2="12"></line>
+                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                </svg>
+              </span>
+              <span className="dark-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+              </span>
             </Link>
           </div>
         </div>
@@ -191,10 +261,11 @@ const HomeRedesign = () => {
             <div className="hero-shape shape-1"></div>
             <div className="hero-shape shape-2"></div>
             <div className="hero-shape shape-3"></div>
+            <div className="hero-glow"></div>
           </div>
         </div>
         <div className="logo-hero">
-        <img src={logo} alt="Contract AI Logo" />
+          <img src={logo} alt="Contract AI Logo" className="pulse-logo" />
         </div>
         <div className="hero-content">
           <h1 className="reveal-text">KI-gestützte Vertragsanalyse</h1>
@@ -205,18 +276,34 @@ const HomeRedesign = () => {
               {user?.isAuthenticated ? (
                 <>
                   <Link to="/dashboard" className="cta-button primary">
-                    <span className="button-icon">🚀</span>
+                    <span className="button-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="8" y1="12" x2="16" y2="12"></line>
+                        <line x1="8" y1="16" x2="16" y2="16"></line>
+                        <line x1="8" y1="8" x2="10" y2="8"></line>
+                      </svg>
+                    </span>
                     Zum Dashboard
                   </Link>
                   <div className="user-plan">
                     {user.plan === 'premium' ? (
                       <span className="premium-badge">
-                        <span className="badge-icon">💎</span>
+                        <span className="badge-icon">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                          </svg>
+                        </span>
                         Premium aktiviert
                       </span>
                     ) : (
                       <Link to="/pricing" className="upgrade-link">
-                        <span className="badge-icon">🔓</span>
+                        <span className="badge-icon">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                          </svg>
+                        </span>
                         Standard – Jetzt upgraden
                       </Link>
                     )}
@@ -225,11 +312,24 @@ const HomeRedesign = () => {
               ) : (
                 <div className="auth-cta">
                   <Link to="/register" className="cta-button primary">
-                    <span className="button-icon">📝</span>
+                    <span className="button-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="8.5" cy="7" r="4"></circle>
+                        <line x1="20" y1="8" x2="20" y2="14"></line>
+                        <line x1="23" y1="11" x2="17" y2="11"></line>
+                      </svg>
+                    </span>
                     Registrieren
                   </Link>
                   <Link to="/login" className="cta-button secondary">
-                    <span className="button-icon">🔐</span>
+                    <span className="button-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                        <polyline points="10 17 15 12 10 7"></polyline>
+                        <line x1="15" y1="12" x2="3" y2="12"></line>
+                      </svg>
+                    </span>
                     Login
                   </Link>
                 </div>
@@ -246,6 +346,10 @@ const HomeRedesign = () => {
       <section className="features-section" ref={(el) => registerSection('features', el)}>
         <div className="section-container">
           <div className="section-title">
+            <div className="section-title-decoration">
+              <span></span>
+              <span></span>
+            </div>
             <h2 className="reveal-text">Unsere KI-Tools für Ihre Verträge</h2>
             <p className="reveal-text">Erleben Sie die Zukunft des Vertragsmanagements.</p>
           </div>
@@ -253,7 +357,14 @@ const HomeRedesign = () => {
           <div className="features-grid">
             <div className="feature-card reveal-card" style={{"--animation-order": 0} as React.CSSProperties}>
               <div className="feature-icon-wrapper blue">
-                <div className="feature-icon">🔍</div>
+                <div className="feature-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    <line x1="11" y1="8" x2="11" y2="14"></line>
+                    <line x1="8" y1="11" x2="14" y2="11"></line>
+                  </svg>
+                </div>
               </div>
               <h3>Analyse</h3>
               <p>Verträge KI-gestützt auswerten & bewerten lassen.</p>
@@ -268,7 +379,13 @@ const HomeRedesign = () => {
             
             <div className="feature-card reveal-card" style={{"--animation-order": 1} as React.CSSProperties}>
               <div className="feature-icon-wrapper pink">
-                <div className="feature-icon">🧠</div>
+                <div className="feature-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                    <path d="M2 17l10 5 10-5"></path>
+                    <path d="M2 12l10 5 10-5"></path>
+                  </svg>
+                </div>
               </div>
               <h3>Optimierung</h3>
               <p>Unvorteilhafte Inhalte erkennen & direkt verbessern.</p>
@@ -283,7 +400,12 @@ const HomeRedesign = () => {
             
             <div className="feature-card reveal-card" style={{"--animation-order": 2} as React.CSSProperties}>
               <div className="feature-icon-wrapper orange">
-                <div className="feature-icon">⏰</div>
+                <div className="feature-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                </div>
               </div>
               <h3>Fristen</h3>
               <p>Nie wieder Fristen verpassen dank automatischer Mails.</p>
@@ -298,7 +420,13 @@ const HomeRedesign = () => {
             
             <div className="feature-card reveal-card" style={{"--animation-order": 3} as React.CSSProperties}>
               <div className="feature-icon-wrapper purple">
-                <div className="feature-icon">📊</div>
+                <div className="feature-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 3H3v18h18V3z"></path>
+                    <path d="M9 3v18"></path>
+                    <path d="M3 9h18"></path>
+                  </svg>
+                </div>
               </div>
               <h3>Vergleich</h3>
               <p>Zwei Verträge vergleichen & Unterschiede aufdecken.</p>
@@ -322,6 +450,10 @@ const HomeRedesign = () => {
         </div>
         <div className="section-container">
           <div className="section-title">
+            <div className="section-title-decoration">
+              <span></span>
+              <span></span>
+            </div>
             <h2 className="reveal-text">Entdecken Sie unsere Funktionen</h2>
             <p className="reveal-text">Sehen Sie, wie unsere KI-Tools Ihren Vertragsworkflow revolutionieren.</p>
           </div>
@@ -329,7 +461,13 @@ const HomeRedesign = () => {
           <div className="showcase-items">
             <div className="showcase-item reveal-block">
               <div className="showcase-content">
-                <div className="showcase-label">Fortschrittlich</div>
+                <div className="showcase-label">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="9 11 12 14 22 4"></polyline>
+                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                  </svg>
+                  Fortschrittlich
+                </div>
                 <h3>Vertragsanalyse mit Score</h3>
                 <p>Risiken, Chancen und Verständlichkeit per KI bewerten. Unsere intelligente Analyse identifiziert kritische Punkte in Ihren Verträgen und gibt Ihnen einen klaren Überblick über potenzielle Risiken.</p>
                 <ul className="feature-list">
@@ -346,14 +484,30 @@ const HomeRedesign = () => {
                 </Link>
               </div>
               <div className="showcase-image">
-                <img src={analysisImg} alt="Vertragsanalyse Screenshot" />
-                <div className="image-shine"></div>
+                <div className="image-mac-frame">
+                  <div className="image-mac-topbar">
+                    <div className="image-mac-buttons">
+                      <span></span>
+                      <span></span>
+                      <span></span>
+                    </div>
+                  </div>
+                  <div className="image-container">
+                    <img src={analysisImg} alt="Vertragsanalyse Screenshot" />
+                    <div className="image-shine"></div>
+                  </div>
+                </div>
               </div>
             </div>
             
             <div className="showcase-item reverse reveal-block">
               <div className="showcase-content">
-                <div className="showcase-label">Zeitsparend</div>
+                <div className="showcase-label orange-label">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                  </svg>
+                  Zeitsparend
+                </div>
                 <h3>Fristen automatisch erkennen</h3>
                 <p>Kündigungsfristen erkennen, Mails senden. Nie wieder eine wichtige Vertragsfrist verpassen mit unserer automatischen Fristenerkennung und Erinnerungsfunktion.</p>
                 <ul className="feature-list">
@@ -370,8 +524,19 @@ const HomeRedesign = () => {
                 </Link>
               </div>
               <div className="showcase-image">
-                <img src={deadlineImg} alt="Fristen Screenshot" />
-                <div className="image-shine"></div>
+                <div className="image-mac-frame">
+                  <div className="image-mac-topbar">
+                    <div className="image-mac-buttons">
+                      <span></span>
+                      <span></span>
+                      <span></span>
+                    </div>
+                  </div>
+                  <div className="image-container">
+                    <img src={deadlineImg} alt="Fristen Screenshot" />
+                    <div className="image-shine"></div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -386,6 +551,10 @@ const HomeRedesign = () => {
         </div>
         <div className="section-container">
           <div className="section-title">
+            <div className="section-title-decoration">
+              <span></span>
+              <span></span>
+            </div>
             <h2 className="reveal-text">Transparente Preisgestaltung</h2>
             <p className="reveal-text">Wählen Sie den Plan, der Ihren Anforderungen entspricht.</p>
           </div>
@@ -395,8 +564,8 @@ const HomeRedesign = () => {
               <div className="plan-header">
                 <div className="plan-name">Standard</div>
                 <div className="plan-price">
-                  <span className="amount">29</span>
                   <span className="currency">€</span>
+                  <span className="amount">29</span>
                   <span className="period">/Monat</span>
                 </div>
                 <div className="plan-billing">Jährliche Abrechnung</div>
@@ -445,8 +614,8 @@ const HomeRedesign = () => {
               <div className="plan-header">
                 <div className="plan-name">Premium</div>
                 <div className="plan-price">
-                  <span className="amount">89</span>
                   <span className="currency">€</span>
+                  <span className="amount">89</span>
                   <span className="period">/Monat</span>
                 </div>
                 <div className="plan-billing">Jährliche Abrechnung</div>
@@ -528,7 +697,7 @@ const HomeRedesign = () => {
                   SLA-Garantie
                 </li>
               </ul>
-              <Link to="/contact" className="plan-cta">
+              <Link to="/contact" className="plan-cta enterprise-cta">
                 Kontakt aufnehmen
               </Link>
             </div>
@@ -549,17 +718,37 @@ const HomeRedesign = () => {
             {!isLoading && (
               user?.isAuthenticated ? (
                 <Link to="/dashboard" className="cta-button primary glow">
-                  <span className="button-icon">🚀</span>
+                  <span className="button-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                      <line x1="8" y1="12" x2="16" y2="12"></line>
+                      <line x1="8" y1="16" x2="16" y2="16"></line>
+                      <line x1="8" y1="8" x2="10" y2="8"></line>
+                    </svg>
+                  </span>
                   Zum Dashboard
                 </Link>
               ) : (
                 <>
                   <Link to="/register" className="cta-button primary glow">
-                    <span className="button-icon">📝</span>
+                    <span className="button-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="8.5" cy="7" r="4"></circle>
+                        <line x1="20" y1="8" x2="20" y2="14"></line>
+                        <line x1="23" y1="11" x2="17" y2="11"></line>
+                      </svg>
+                    </span>
                     Jetzt registrieren
                   </Link>
                   <Link to="/login" className="cta-button secondary">
-                    <span className="button-icon">🔐</span>
+                    <span className="button-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                        <polyline points="10 17 15 12 10 7"></polyline>
+                        <line x1="15" y1="12" x2="3" y2="12"></line>
+                      </svg>
+                    </span>
                     Einloggen
                   </Link>
                 </>

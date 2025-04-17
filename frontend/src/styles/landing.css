@@ -58,6 +58,26 @@
   .section-title {
     text-align: center;
     margin-bottom: 60px;
+    position: relative;
+  }
+  
+  .section-title-decoration {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  
+  .section-title-decoration span {
+    width: 25px;
+    height: 4px;
+    background-color: var(--primary-color);
+    border-radius: 2px;
+  }
+  
+  .section-title-decoration span:first-child {
+    width: 12px;
   }
   
   .section-title h2 {
@@ -168,6 +188,21 @@
     }
   }
   
+  @keyframes pulseLogo {
+    0% {
+      transform: scale(1);
+      filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.2));
+    }
+    50% {
+      transform: scale(1.05);
+      filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.4));
+    }
+    100% {
+      transform: scale(1);
+      filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.2));
+    }
+  }
+  
   .reveal-text {
     opacity: 0;
     animation: fadeInUp 0.8s forwards;
@@ -188,6 +223,10 @@
   .reveal-block.animated {
     opacity: 1;
     transform: translateY(0);
+  }
+  
+  .pulse-logo {
+    animation: pulseLogo 3s infinite ease-in-out;
   }
   
   /* === SCROLL PROGRESS === */
@@ -310,8 +349,15 @@
   }
   
   .nav-icon {
-    font-size: 18px;
-    margin-right: 5px;
+    line-height: 0;
+    color: var(--text-color);
+    opacity: 0.7;
+    transition: var(--transition);
+  }
+  
+  .nav-link:hover .nav-icon {
+    opacity: 1;
+    color: var(--primary-color);
   }
   
   .auth-buttons {
@@ -354,7 +400,7 @@
   }
   
   .button-icon {
-    font-size: 16px;
+    line-height: 0;
   }
   
   .mobile-menu-btn {
@@ -401,6 +447,7 @@
     border-radius: 50%;
     background-color: rgba(0, 0, 0, 0.05);
     transition: var(--transition);
+    line-height: 0;
   }
   
   .theme-button:hover {
@@ -494,15 +541,28 @@
     animation: floatAnimation 8s ease-in-out infinite;
   }
   
+  .hero-glow {
+    position: absolute;
+    width: 150px;
+    height: 150px;
+    background: rgba(255, 255, 255, 0.1);
+    filter: blur(80px);
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 0;
+    animation: pulseGlow 4s ease-in-out infinite;
+  }
+  
   .logo-hero {
     position: relative;
     z-index: 2;
     margin-bottom: 30px;
-    animation: floatAnimation 6s ease-in-out infinite;
   }
   
   .logo-hero img {
-    height: 80px;
+    height: 100px;
     filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.2));
   }
   
@@ -600,7 +660,7 @@
   }
   
   .badge-icon {
-    font-size: 18px;
+    line-height: 0;
   }
   
   .upgrade-link {
@@ -715,8 +775,8 @@
   }
   
   .feature-icon {
-    font-size: 36px;
     color: white;
+    line-height: 0;
   }
   
   .feature-card h3 {
@@ -731,6 +791,7 @@
     flex-grow: 1;
     font-size: 16px;
     line-height: 1.6;
+    text-align: left;
   }
   
   .feature-link {
@@ -741,6 +802,7 @@
     gap: 5px;
     transition: var(--transition);
     width: fit-content;
+    text-align: left;
   }
   
   .feature-link svg {
@@ -821,18 +883,25 @@
   }
   
   .showcase-label {
-    display: inline-block;
-    padding: 6px 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
     background-color: var(--primary-color);
     color: white;
     border-radius: 100px;
     font-size: 14px;
     font-weight: 500;
     margin-bottom: 16px;
+    width: fit-content;
   }
   
-  .showcase-item:nth-child(2) .showcase-label {
+  .showcase-label.orange-label {
     background-color: var(--orange-color);
+  }
+  
+  .showcase-content {
+    text-align: left;
   }
   
   .showcase-content h3 {
@@ -847,11 +916,13 @@
     margin-bottom: 24px;
     font-size: 17px;
     line-height: 1.7;
+    text-align: left;
   }
   
   .feature-list {
     list-style: none;
     margin-bottom: 30px;
+    text-align: left;
   }
   
   .feature-list li {
@@ -899,17 +970,60 @@
     perspective: 1000px;
   }
   
-  .showcase-image img {
-    width: 100%;
-    border-radius: var(--radius-lg);
+  .image-mac-frame {
+    background: white;
+    border-radius: 14px;
     box-shadow: var(--shadow-lg);
+    overflow: hidden;
     transform: rotateY(-5deg) rotateX(5deg);
     transition: var(--transition);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(0, 0, 0, 0.1);
   }
   
-  .showcase-image:hover img {
+  .showcase-image:hover .image-mac-frame {
     transform: rotateY(0) rotateX(0);
+  }
+  
+  .image-mac-topbar {
+    background: #f2f2f2;
+    height: 28px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+  }
+  
+  .image-mac-buttons {
+    display: flex;
+    gap: 6px;
+  }
+  
+  .image-mac-buttons span {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+  }
+  
+  .image-mac-buttons span:first-child {
+    background-color: #ff5f57;
+  }
+  
+  .image-mac-buttons span:nth-child(2) {
+    background-color: #fdbc2c;
+  }
+  
+  .image-mac-buttons span:last-child {
+    background-color: #28c941;
+  }
+  
+  .image-container {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .image-container img {
+    width: 100%;
+    display: block;
   }
   
   .image-shine {
@@ -1024,7 +1138,7 @@
   
   .plan-price {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: center;
     margin-bottom: 10px;
   }
@@ -1038,14 +1152,15 @@
   .currency {
     font-size: 24px;
     font-weight: 600;
-    margin-right: 4px;
+    align-self: flex-start;
+    margin-top: 10px;
   }
   
   .period {
     font-size: 16px;
     color: var(--text-light);
-    margin-top: 10px;
-    margin-left: 4px;
+    align-self: flex-end;
+    margin-bottom: 6px;
   }
   
   .custom-price {
@@ -1075,6 +1190,7 @@
     margin-bottom: 15px;
     color: var(--text-color);
     font-size: 15px;
+    text-align: left;
   }
   
   .plan-features li svg {
@@ -1115,11 +1231,11 @@
     animation: bgGlow 5s ease infinite;
   }
   
-  .enterprise .plan-cta {
+  .enterprise-cta {
     background-color: var(--bg-dark);
   }
   
-  .enterprise .plan-cta:hover {
+  .enterprise-cta:hover {
     background-color: #333;
     box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
   }
@@ -1358,7 +1474,7 @@
     }
     
     .logo-hero img {
-      height: 60px;
+      height: 80px;
     }
     
     .hero h1 {
@@ -1374,11 +1490,10 @@
       direction: ltr;
     }
     
-    .showcase-image img {
+    .showcase-image .image-mac-frame {
       transform: none;
       max-width: 80%;
       margin: 0 auto;
-      display: block;
     }
     
     .footer-top {
@@ -1502,7 +1617,7 @@
     }
     
     .logo-hero img {
-      height: 50px;
+      height: 60px;
     }
     
     .hero h1 {
