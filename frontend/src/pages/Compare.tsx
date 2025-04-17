@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import styles from "./Compare.module.css";
+import styles from "../styles/Compare.module.css";
 import PremiumNotice from "../components/PremiumNotice";
 // html2pdf wird global über ein Script-Tag eingebunden
 declare global {
