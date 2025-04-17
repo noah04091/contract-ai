@@ -1,8 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import styles from "../styles/Auth.module.css";
 import "../styles/AppleAuth.css";
-import Notification from "../components/Notification";
 
 export default function Register() {
   const [email, setEmail] = useState("");
