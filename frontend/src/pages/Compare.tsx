@@ -4,7 +4,15 @@ import PremiumNotice from "../components/PremiumNotice";
 // html2pdf wird global über ein Script-Tag eingebunden
 declare global {
   interface Window {
-    html2pdf: any;
+    html2pdf: {
+      (): {
+        from: (element: HTMLElement) => {
+          set: (options: Record<string, unknown>) => {
+            save: () => void;
+          };
+        };
+      };
+    };
   }
 }
 
