@@ -1,7 +1,7 @@
 // src/pages/Calendar.tsx
 import { useEffect, useState, useRef } from "react";
 import axios from "axios";
-import Calendar, { OnArgs } from "react-calendar";
+import Calendar from "react-calendar";
 import "../styles/AppleCalendar.css";
 
 interface Contract {
