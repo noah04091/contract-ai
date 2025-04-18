@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle, Clipboard, Save, FileText, Trash2, Check, Download } from "lucide-react";
 import html2pdf from "html2pdf.js";
-import styles from "./Generate.module.css";
+import styles from ".../styles/Generate.module.css";
 
 interface FormDataType {
   title?: string;
