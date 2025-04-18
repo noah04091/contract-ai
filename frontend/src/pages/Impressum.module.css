@@ -1,0 +1,131 @@
+/* Impressum.module.css */
+@import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600&display=swap');
+
+.container {
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+  color: #1d1d1f;
+}
+
+.header {
+  position: relative;
+  margin-bottom: 2.5rem;
+  padding-bottom: 1.5rem;
+}
+
+.headerContent {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.iconContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #0070e0, #42a4ff);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 113, 227, 0.2);
+}
+
+.icon {
+  color: white;
+}
+
+.header h1 {
+  font-size: 2.5rem;
+  font-weight: 600;
+  margin: 0;
+  letter-spacing: -0.02em;
+  color: #1d1d1f;
+}
+
+.headerBlur {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background-color: #d2d2d7;
+}
+
+.content {
+  margin-bottom: 3rem;
+}
+
+.card {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+}
+
+.section {
+  padding: 1.8rem 2rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.section:last-child {
+  border-bottom: none;
+}
+
+.section h2 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0 0 1.2rem;
+  color: #1d1d1f;
+}
+
+.sectionContent {
+  color: #424245;
+  line-height: 1.5;
+  font-size: 1rem;
+}
+
+.infoGroup {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  margin-bottom: 0.8rem;
+}
+
+.infoGroup:last-child {
+  margin-bottom: 0;
+}
+
+.infoIcon {
+  color: #0071e3;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.link {
+  color: #0071e3;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.link:hover {
+  color: #0058b3;
+  text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 1.5rem;
+  }
+  
+  .header h1 {
+    font-size: 2rem;
+  }
+  
+  .section {
+    padding: 1.5rem;
+  }
+}
