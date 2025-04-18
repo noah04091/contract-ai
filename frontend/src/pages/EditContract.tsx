@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import "./EditContract.css";
+import "./EditContract.module.css";
 
 interface Contract {
   name: string;
