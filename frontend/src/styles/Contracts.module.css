@@ -1,193 +1,107 @@
-/* Contracts.module.css - Apple Design Style */
+/* Contracts.module.css */
+@import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600&display=swap');
 
-/* Base Variables */
-:root {
-  --apple-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+.pageContainer {
   --apple-blue: #0071e3;
-  --apple-blue-hover: #0077ed;
-  --apple-blue-active: #006edb;
-  --apple-blue-light: rgba(0, 113, 227, 0.1);
-  --apple-gray: #f5f5f7;
-  --apple-light-gray: #e8e8ed;
-  --apple-dark-gray: #86868b;
-  --apple-text: #1d1d1f;
-  --apple-text-secondary: #515154;
-  --apple-success: #32d74b;
-  --apple-warning: #ff9f0a;
-  --apple-danger: #ff453a;
-  --apple-glass-bg: rgba(255, 255, 255, 0.8);
-  --apple-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
-  --apple-shadow-md: 0 8px 20px rgba(0, 0, 0, 0.08);
-  --apple-border-radius: 12px;
-  --apple-transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --apple-blue-dark: #0058b3;
+  --apple-gray-50: #f5f5f7;
+  --apple-gray-100: #e8e8ed;
+  --apple-gray-200: #d2d2d7;
+  --apple-gray-300: #a1a1a6;
+  --apple-gray-400: #6e6e73;
+  --apple-gray-500: #86868b;
+  --apple-gray-800: #1d1d1f;
+  --success-green: #34c759;
+  --warning-orange: #ff9500;
+  --error-red: #ff453a;
+
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: white;
+  min-height: 100vh;
+  color: var(--apple-gray-800);
 }
 
-/* Main Container */
 .container {
-  font-family: var(--apple-font);
   max-width: 1200px;
   margin: 0 auto;
   padding: 2rem;
-  color: var(--apple-text);
-  min-height: 100vh;
-  animation: fadeIn 0.3s ease forwards;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-/* Header */
+/* Header Styling */
 .header {
+  margin-bottom: 2.5rem;
   text-align: center;
-  margin-bottom: 3rem;
 }
 
-.header h1 {
-  font-size: 2.5rem;
+.title {
+  font-size: 2.2rem;
   font-weight: 600;
-  margin-bottom: 1rem;
+  margin: 0 0 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
   letter-spacing: -0.02em;
-  background: linear-gradient(90deg, var(--apple-blue), #00b9ff);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--apple-gray-800);
+}
+
+.titleIcon {
+  color: var(--apple-blue);
 }
 
 .subtitle {
   font-size: 1.1rem;
   font-weight: 400;
-  color: var(--apple-text-secondary);
-  max-width: 650px;
-  margin: 0 auto;
+  margin: 0;
+  color: var(--apple-gray-400);
   line-height: 1.5;
 }
 
-/* Upload Area */
-.uploadArea {
+/* Tabs Navigation */
+.tabsContainer {
   display: flex;
-  flex-direction: column;
-  align-items: center;
   justify-content: center;
-  padding: 3rem 2rem;
-  background: var(--apple-glass-bg);
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
-  border-radius: var(--apple-border-radius);
-  border: 2px dashed var(--apple-light-gray);
   margin-bottom: 2rem;
-  transition: var(--apple-transition);
-  position: relative;
+  border-radius: 12px;
+  background-color: var(--apple-gray-50);
+  padding: 0.3rem;
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
 }
 
-.uploadArea:hover {
-  border-color: rgba(0, 113, 227, 0.3);
-}
-
-.dragActive {
-  border-color: var(--apple-blue);
-  background-color: rgba(0, 113, 227, 0.05);
-}
-
-.uploadIcon {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 70px;
-  height: 70px;
-  border-radius: 50%;
-  background-color: var(--apple-blue-light);
-  color: var(--apple-blue);
-  margin-bottom: 1.5rem;
-}
-
-.uploadArea h3 {
-  font-size: 1.4rem;
-  font-weight: 500;
-  margin: 0 0 0.5rem;
-  color: var(--apple-text);
-}
-
-.uploadArea p {
-  font-size: 1rem;
-  color: var(--apple-text-secondary);
-  margin-bottom: 1.5rem;
-}
-
-.fileInput {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  top: 0;
-  left: 0;
-  opacity: 0;
-  cursor: pointer;
-  z-index: 1;
-}
-
-.uploadButton {
-  padding: 0.7rem 1.8rem;
-  background-color: var(--apple-blue);
-  color: white;
-  border-radius: 20px;
-  font-size: 0.95rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: var(--apple-transition);
-  box-shadow: 0 2px 8px rgba(0, 113, 227, 0.3);
-  z-index: 2;
-  position: relative;
-}
-
-.uploadButton:hover {
-  background-color: var(--apple-blue-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 113, 227, 0.4);
-}
-
-/* Success Message */
-.successMessage {
+.tabButton {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-top: 1rem;
-  padding: 0.7rem 1rem;
-  background-color: rgba(50, 215, 75, 0.1);
-  color: var(--apple-success);
-  border-radius: 8px;
-  font-size: 0.9rem;
-  animation: slideUp 0.3s ease forwards;
+  padding: 0.7rem 1.5rem;
+  border: none;
+  background: none;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--apple-gray-500);
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.activeTab {
+  background-color: white;
+  color: var(--apple-gray-800);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
-/* Analysis Container */
-.analysisContainer {
-  background: var(--apple-glass-bg);
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
-  border-radius: var(--apple-border-radius);
-  padding: 2rem;
-  margin-bottom: 2.5rem;
-  box-shadow: var(--apple-shadow-md);
-  border: 1px solid rgba(0, 0, 0, 0.04);
-  animation: fadeIn 0.4s ease forwards;
+.tabButton:hover:not(.activeTab) {
+  color: var(--apple-gray-800);
 }
 
 /* Section Styling */
-.contractsSection, 
-.historySection {
-  margin-bottom: 3rem;
+.section {
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  min-height: 300px;
 }
 
 .sectionHeader {
@@ -195,148 +109,345 @@
   align-items: center;
   justify-content: space-between;
   margin-bottom: 1.5rem;
-  padding-bottom: 0.8rem;
-  border-bottom: 1px solid var(--apple-light-gray);
 }
 
 .sectionHeader h2 {
-  font-size: 1.5rem;
-  font-weight: 500;
+  font-size: 1.3rem;
+  font-weight: 600;
   margin: 0;
-  color: var(--apple-text);
+  color: var(--apple-gray-800);
 }
 
+.sectionDescription {
+  color: var(--apple-gray-400);
+  margin: 0.5rem 0 0;
+  font-size: 0.95rem;
+}
+
+/* Upload Area */
+.uploadArea {
+  background: var(--apple-gray-50);
+  border: 2px dashed var(--apple-gray-200);
+  border-radius: 16px;
+  padding: 3rem 2rem;
+  margin-bottom: 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.uploadArea:hover {
+  border-color: var(--apple-blue);
+  background: rgba(0, 113, 227, 0.03);
+}
+
+.dragActive {
+  border-color: var(--apple-blue);
+  background: rgba(0, 113, 227, 0.05);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.fileInput {
+  display: none;
+}
+
+.uploadPrompt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.uploadIcon {
+  color: var(--apple-blue);
+  opacity: 0.8;
+  margin-bottom: 0.5rem;
+}
+
+.uploadPrompt h3 {
+  font-size: 1.1rem;
+  font-weight: 500;
+  margin: 0;
+  color: var(--apple-gray-800);
+}
+
+.uploadPrompt p {
+  margin: 0;
+  color: var(--apple-gray-500);
+}
+
+.uploadFormats {
+  margin-top: 1.5rem;
+  font-size: 0.85rem;
+  color: var(--apple-gray-400);
+}
+
+.filePreview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.fileIcon {
+  color: var(--apple-blue);
+}
+
+.fileInfo {
+  text-align: center;
+}
+
+.fileName {
+  font-size: 1.1rem;
+  font-weight: 500;
+  margin: 0 0 0.3rem;
+  color: var(--apple-gray-800);
+}
+
+.fileSize {
+  font-size: 0.9rem;
+  color: var(--apple-gray-400);
+  margin: 0;
+}
+
+.successMessage {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--success-green);
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-top: 1rem;
+}
+
+/* Actions Bar */
+.actionsBar {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.searchContainer {
+  flex: 1;
+  max-width: 400px;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 0.7rem 1rem;
+  border-radius: 10px;
+  border: 1px solid var(--apple-gray-200);
+  background-color: var(--apple-gray-50);
+  font-family: inherit;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.searchInput:focus {
+  border-color: var(--apple-blue);
+  box-shadow: 0 0 0 2px rgba(0, 113, 227, 0.1);
+  background-color: white;
+}
+
+.newContractButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.2rem;
+  border-radius: 10px;
+  background-color: var(--apple-blue);
+  color: white;
+  border: none;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.newContractButton:hover {
+  background-color: var(--apple-blue-dark);
+}
+
+/* Refresh Button */
 .refreshButton {
+  background: none;
+  border: none;
+  color: var(--apple-gray-400);
+  cursor: pointer;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background-color: var(--apple-light-gray);
-  border: none;
-  color: var(--apple-text-secondary);
-  cursor: pointer;
-  transition: var(--apple-transition);
+  transition: all 0.2s ease;
 }
 
 .refreshButton:hover {
-  background-color: var(--apple-gray);
-  color: var(--apple-text);
-  transform: rotate(15deg);
+  background-color: var(--apple-gray-100);
+  color: var(--apple-gray-800);
+}
+
+.refreshButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 /* Table Styling */
 .tableContainer {
-  overflow-x: auto;
-  border-radius: var(--apple-border-radius);
-  box-shadow: var(--apple-shadow-sm);
-  background: var(--apple-glass-bg);
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
-  border: 1px solid rgba(0, 0, 0, 0.04);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  background: var(--apple-gray-50);
+  border: 1px solid var(--apple-gray-100);
 }
 
 .contractsTable {
   width: 100%;
   border-collapse: collapse;
-  text-align: left;
-  font-size: 0.95rem;
+  overflow: hidden;
 }
 
 .contractsTable th {
-  padding: 1rem;
+  text-align: left;
+  padding: 1.2rem 1rem;
   font-weight: 500;
-  color: var(--apple-text-secondary);
-  background-color: rgba(245, 245, 247, 0.7);
-  border-bottom: 1px solid var(--apple-light-gray);
-}
-
-.contractsTable td {
-  padding: 1rem;
-  border-bottom: 1px solid var(--apple-light-gray);
-  color: var(--apple-text);
+  color: var(--apple-gray-500);
+  background-color: var(--apple-gray-50);
+  border-bottom: 1px solid var(--apple-gray-200);
+  font-size: 0.9rem;
 }
 
 .tableRow {
-  cursor: pointer;
-  transition: var(--apple-transition);
+  transition: all 0.2s ease;
+  background-color: white;
 }
 
 .tableRow:hover {
-  background-color: rgba(0, 113, 227, 0.04);
+  background-color: var(--apple-gray-50);
+}
+
+.tableRow td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--apple-gray-100);
+  font-size: 0.95rem;
 }
 
 .tableRow:last-child td {
   border-bottom: none;
 }
 
-/* Contract Name with Icon */
 .contractName {
   display: flex;
   align-items: center;
-  gap: 0.8rem;
+  gap: 0.7rem;
 }
 
 .contractIcon {
+  width: 28px;
+  height: 28px;
+  background-color: var(--apple-gray-50);
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  background-color: var(--apple-blue-light);
-  border-radius: 50%;
   color: var(--apple-blue);
 }
 
-/* Status Badge */
+.contractNameText {
+  font-weight: 500;
+}
+
+.contractDetail {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--apple-gray-500);
+}
+
+.detailIcon {
+  color: var(--apple-gray-400);
+}
+
 .statusBadge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   padding: 0.3rem 0.8rem;
   border-radius: 20px;
   font-size: 0.85rem;
   font-weight: 500;
-  white-space: nowrap;
 }
 
 .statusActive {
-  background-color: rgba(50, 215, 75, 0.1);
-  color: var(--apple-success);
+  background-color: rgba(52, 199, 89, 0.15);
+  color: var(--success-green);
 }
 
 .statusWarning {
-  background-color: rgba(255, 159, 10, 0.1);
-  color: var(--apple-warning);
+  background-color: rgba(255, 149, 0, 0.15);
+  color: var(--warning-orange);
 }
 
 .statusCancelled {
-  background-color: rgba(255, 69, 58, 0.1);
-  color: var(--apple-danger);
+  background-color: rgba(255, 69, 58, 0.15);
+  color: var(--error-red);
 }
 
 .statusNeutral {
-  background-color: var(--apple-light-gray);
-  color: var(--apple-dark-gray);
+  background-color: var(--apple-gray-100);
+  color: var(--apple-gray-500);
 }
 
-/* Loading States */
+.actionButtons {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.actionButton {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--apple-gray-400);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.actionButton:hover {
+  background-color: var(--apple-gray-100);
+  color: var(--apple-gray-800);
+}
+
+.deleteButton:hover {
+  background-color: rgba(255, 69, 58, 0.1);
+  color: var(--error-red);
+}
+
+/* Loading State */
 .loadingContainer {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 3rem 0;
-  text-align: center;
+  min-height: 200px;
+  gap: 1rem;
+  color: var(--apple-gray-400);
 }
 
 .loadingSpinner {
   width: 40px;
   height: 40px;
-  border: 2px solid rgba(0, 113, 227, 0.3);
-  border-radius: 50%;
+  border: 3px solid rgba(0, 113, 227, 0.1);
   border-top-color: var(--apple-blue);
-  animation: spin 0.8s linear infinite;
-  margin-bottom: 1.5rem;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
@@ -345,49 +456,46 @@
   }
 }
 
-/* Error States */
+/* Error State */
 .errorContainer {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
+  min-height: 200px;
   text-align: center;
-  padding: 2.5rem 0;
+  gap: 1rem;
+  padding: 2rem;
 }
 
 .errorIcon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background-color: rgba(255, 69, 58, 0.1);
-  color: var(--apple-danger);
-  margin-bottom: 1rem;
+  color: var(--error-red);
 }
 
-.errorContainer p {
-  font-size: 1rem;
-  color: var(--apple-text-secondary);
-  margin-bottom: 1.5rem;
+.errorMessage {
+  color: var(--apple-gray-500);
   max-width: 500px;
+  margin: 0;
 }
 
 .retryButton {
-  padding: 0.7rem 1.8rem;
-  background-color: var(--apple-blue);
-  color: white;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.2rem;
+  border-radius: 10px;
+  background-color: var(--apple-gray-100);
+  color: var(--apple-gray-800);
   border: none;
-  border-radius: 20px;
+  font-family: inherit;
   font-size: 0.95rem;
   font-weight: 500;
   cursor: pointer;
-  transition: var(--apple-transition);
+  transition: all 0.2s ease;
 }
 
 .retryButton:hover {
-  background-color: var(--apple-blue-hover);
-  transform: translateY(-2px);
+  background-color: var(--apple-gray-200);
 }
 
 /* Empty State */
@@ -395,60 +503,94 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
+  min-height: 300px;
   text-align: center;
-  padding: 3rem 0;
+  gap: 1rem;
+  padding: 3rem 2rem;
 }
 
 .emptyIcon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  background-color: rgba(0, 0, 0, 0.03);
-  color: var(--apple-dark-gray);
-  margin-bottom: 1.5rem;
+  color: var(--apple-gray-200);
+  margin-bottom: 1rem;
 }
 
 .emptyState h3 {
   font-size: 1.2rem;
-  font-weight: 500;
-  margin: 0 0 0.8rem;
-  color: var(--apple-text);
+  font-weight: 600;
+  margin: 0;
+  color: var(--apple-gray-800);
 }
 
 .emptyState p {
-  font-size: 1rem;
-  color: var(--apple-text-secondary);
-  max-width: 400px;
+  color: var(--apple-gray-500);
+  margin: 0 0 1.5rem;
 }
 
-/* Responsive Design */
+.uploadButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.2rem;
+  border-radius: 10px;
+  background-color: var(--apple-blue);
+  color: white;
+  border: none;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.uploadButton:hover {
+  background-color: var(--apple-blue-dark);
+}
+
+/* Analysis Container */
+.analysisContainer {
+  margin-top: 2rem;
+}
+
+/* Responsive Styles */
 @media (max-width: 768px) {
   .container {
     padding: 1.5rem;
   }
   
-  .header h1 {
-    font-size: 2rem;
+  .title {
+    font-size: 1.8rem;
+  }
+  
+  .tabsContainer {
+    width: 100%;
+  }
+  
+  .tabButton {
+    padding: 0.7rem 1rem;
+    font-size: 0.9rem;
   }
   
   .uploadArea {
     padding: 2rem 1rem;
   }
   
-  .contractsTable th,
-  .contractsTable td {
-    padding: 0.8rem;
+  .actionsBar {
+    flex-direction: column;
+    gap: 1rem;
   }
   
-  .contractsTable {
-    font-size: 0.85rem;
+  .searchContainer {
+    max-width: 100%;
   }
   
-  .statusBadge {
-    padding: 0.25rem 0.6rem;
-    font-size: 0.75rem;
+  .contractsTable th:nth-child(2),
+  .contractsTable td:nth-child(2) {
+    display: none;
+  }
+  
+  .actionButtons {
+    flex-direction: column;
+    gap: 0.3rem;
   }
 }
