@@ -1,13 +1,58 @@
-// 📁 src/pages/EditContract.tsx
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import styles from "./EditContract.module.css";
+import { motion, AnimatePresence } from "framer-motion";
+import "./EditContract.css";
 
 interface Contract {
   name: string;
   laufzeit: string;
   kuendigung: string;
 }
+
+interface ToastProps {
+  message: string;
+  type: 'success' | 'error';
+}
+
+const Toast: React.FC<ToastProps> = ({ message, type }) => {
+  return (
+    <motion.div 
+      className={`toast ${type}`}
+      initial={{ opacity: 0, y: 50 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ type: "spring", stiffness: 500, damping: 30 }}
+    >
+      <span className="toast-icon">{type === 'success' ? '✅' : '❌'}</span>
+      <span className="toast-message">{message}</span>
+    </motion.div>
+  );
+};
+
+const InputField: React.FC<{
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+}> = ({ label, value, onChange, placeholder }) => {
+  return (
+    <motion.div 
+      className="input-group"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      <label>{label}</label>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="input-field"
+      />
+    </motion.div>
+  );
+};
 
 export default function EditContract() {
   const { id } = useParams<{ id: string }>();
@@ -20,16 +65,21 @@ export default function EditContract() {
   });
 
   const [message, setMessage] = useState("");
+  const [toastType, setToastType] = useState<'success' | 'error'>('success');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     const fetchContract = async () => {
+      setIsLoading(true);
       try {
         const res = await fetch(`/api/contracts/${id}`, {
-          credentials: "include", // ✅ wichtig für Cookie-Auth
+          credentials: "include",
         });
 
         if (!res.ok) {
-          setMessage("❌ Vertrag nicht gefunden");
+          setMessage("Vertrag nicht gefunden");
+          setToastType('error');
           return;
         }
 
@@ -40,8 +90,11 @@ export default function EditContract() {
           kuendigung: data.kuendigung || "",
         });
       } catch (err) {
-        console.error("❌ Fehler beim Abrufen:", err);
-        setMessage("❌ Serverfehler beim Abrufen");
+        console.error("Fehler beim Abrufen:", err);
+        setMessage("Serverfehler beim Abrufen");
+        setToastType('error');
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -49,6 +102,7 @@ export default function EditContract() {
   }, [id]);
 
   const handleUpdate = async () => {
+    setIsSaving(true);
     try {
       const res = await fetch(`/api/contracts/${id}`, {
         method: "PUT",
@@ -62,50 +116,126 @@ export default function EditContract() {
       const data = await res.json();
 
       if (res.ok) {
-        setMessage("✅ Vertrag erfolgreich aktualisiert");
+        setMessage("Vertrag erfolgreich aktualisiert");
+        setToastType('success');
         setTimeout(() => navigate("/contracts"), 1500);
       } else {
-        setMessage("❌ Fehler: " + (data.message || "Unbekannter Fehler"));
+        setMessage("Fehler: " + (data.message || "Unbekannter Fehler"));
+        setToastType('error');
       }
     } catch (err) {
-      console.error("❌ Fehler beim Speichern:", err);
-      setMessage("❌ Serverfehler beim Speichern");
+      console.error("Fehler beim Speichern:", err);
+      setMessage("Serverfehler beim Speichern");
+      setToastType('error');
+    } finally {
+      setIsSaving(false);
     }
   };
 
+  const handleCancel = () => {
+    navigate("/contracts");
+  };
+
   return (
-    <div className={styles.editContainer}>
-      <h1>✏️ Vertrag bearbeiten</h1>
+    <motion.div 
+      className="edit-container"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
+      <div className="header-container">
+        <motion.h1 
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="edit-title"
+        >
+          <span className="title-icon">✏️</span> Vertrag bearbeiten
+        </motion.h1>
+        
+        <motion.div 
+          className="header-blur"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+        />
+      </div>
 
-      <label>Name:</label>
-      <input
-        type="text"
-        value={contract.name}
-        onChange={(e) => setContract({ ...contract, name: e.target.value })}
-        className={styles.input}
-      />
+      <motion.div 
+        className="edit-form"
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+      >
+        {isLoading ? (
+          <div className="loading-container">
+            <div className="loading-spinner"></div>
+            <p>Vertrag wird geladen...</p>
+          </div>
+        ) : (
+          <>
+            <InputField 
+              label="Name" 
+              value={contract.name} 
+              onChange={(value) => setContract({ ...contract, name: value })}
+              placeholder="Vertragsname eingeben"
+            />
+            
+            <InputField 
+              label="Laufzeit" 
+              value={contract.laufzeit} 
+              onChange={(value) => setContract({ ...contract, laufzeit: value })}
+              placeholder="z.B. 12 Monate"
+            />
+            
+            <InputField 
+              label="Kündigungsfrist" 
+              value={contract.kuendigung} 
+              onChange={(value) => setContract({ ...contract, kuendigung: value })}
+              placeholder="z.B. 3 Monate vor Ablauf"
+            />
 
-      <label>Laufzeit:</label>
-      <input
-        type="text"
-        value={contract.laufzeit}
-        onChange={(e) => setContract({ ...contract, laufzeit: e.target.value })}
-        className={styles.input}
-      />
+            <div className="button-group">
+              <motion.button 
+                className="cancel-button"
+                onClick={handleCancel}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ type: "spring", stiffness: 400, damping: 17 }}
+              >
+                Abbrechen
+              </motion.button>
+              
+              <motion.button 
+                className="save-button"
+                onClick={handleUpdate}
+                disabled={isSaving}
+                whileHover={{ scale: 1.02, boxShadow: "0 4px 8px rgba(0, 0, 0, 0.12)" }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ type: "spring", stiffness: 400, damping: 17 }}
+              >
+                {isSaving ? (
+                  <>
+                    <span className="button-spinner"></span>
+                    <span>Wird gespeichert...</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="save-icon">💾</span>
+                    <span>Speichern</span>
+                  </>
+                )}
+              </motion.button>
+            </div>
+          </>
+        )}
+      </motion.div>
 
-      <label>Kündigungsfrist:</label>
-      <input
-        type="text"
-        value={contract.kuendigung}
-        onChange={(e) => setContract({ ...contract, kuendigung: e.target.value })}
-        className={styles.input}
-      />
-
-      <button onClick={handleUpdate} className={styles.saveButton}>
-        💾 Speichern
-      </button>
-
-      {message && <p className={styles.message}>{message}</p>}
-    </div>
+      <AnimatePresence>
+        {message && (
+          <Toast message={message} type={toastType} />
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }
