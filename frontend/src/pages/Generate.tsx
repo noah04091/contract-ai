@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle, Clipboard, Save, FileText, Trash2, Check, Download } from "lucide-react";
 import html2pdf from "html2pdf.js";
-import styles from "../styles/Generate.module.css";
+import styles from "./Generate.module.css";
 
 interface FormDataType {
   title?: string;
@@ -265,18 +265,16 @@ export default function Generate() {
           animate={{ opacity: 1, height: "auto" }}
           transition={{ duration: 0.3 }}
         >
-          <label>
-            Beschreibung / Inhalte:
-            <textarea
-              name="details"
-              value={formData.details || ""}
-              onChange={handleChange}
-              rows={5}
-              placeholder="Was soll der Vertrag enthalten? Ziele, Vereinbarungen, Fristen..."
-              disabled={!isPremium}
-              className={styles.textarea}
-            />
-          </label>
+          <div className={styles.formLabel}>Beschreibung / Inhalte:</div>
+          <textarea
+            name="details"
+            value={formData.details || ""}
+            onChange={handleChange}
+            rows={5}
+            placeholder="Was soll der Vertrag enthalten? Ziele, Vereinbarungen, Fristen..."
+            disabled={!isPremium}
+            className={styles.textarea}
+          />
         </motion.div>
       );
     }
@@ -288,18 +286,16 @@ export default function Generate() {
         animate={{ opacity: 1, height: "auto" }}
         transition={{ duration: 0.3 }}
       >
-        <label>
-          Details:
-          <textarea
-            name="details"
-            value={formData.details || ""}
-            onChange={handleChange}
-            rows={5}
-            placeholder={getPlaceholderByType(contractType)}
-            disabled={!isPremium}
-            className={styles.textarea}
-          />
-        </label>
+        <div className={styles.formLabel}>Details:</div>
+        <textarea
+          name="details"
+          value={formData.details || ""}
+          onChange={handleChange}
+          rows={5}
+          placeholder={getPlaceholderByType(contractType)}
+          disabled={!isPremium}
+          className={styles.textarea}
+        />
       </motion.div>
     );
   };
@@ -391,23 +387,21 @@ export default function Generate() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1, duration: 0.3 }}
                 >
-                  <label>
-                    Vertragstyp:
-                    <select 
-                      value={contractType} 
-                      onChange={(e) => setContractType(e.target.value)} 
-                      disabled={!isPremium}
-                      className={styles.select}
-                      name="contractType"
-                    >
-                      <option value="freelancer">Freelancervertrag</option>
-                      <option value="mietvertrag">Mietvertrag</option>
-                      <option value="arbeitsvertrag">Arbeitsvertrag</option>
-                      <option value="kaufvertrag">Kaufvertrag</option>
-                      <option value="nda">Geheimhaltungsvertrag (NDA)</option>
-                      <option value="custom">Sonstiger Vertrag</option>
-                    </select>
-                  </label>
+                  <div className={styles.formLabel}>Vertragstyp:</div>
+                  <select 
+                    value={contractType} 
+                    onChange={(e) => setContractType(e.target.value)} 
+                    disabled={!isPremium}
+                    className={styles.select}
+                    name="contractType"
+                  >
+                    <option value="freelancer">Freelancervertrag</option>
+                    <option value="mietvertrag">Mietvertrag</option>
+                    <option value="arbeitsvertrag">Arbeitsvertrag</option>
+                    <option value="kaufvertrag">Kaufvertrag</option>
+                    <option value="nda">Geheimhaltungsvertrag (NDA)</option>
+                    <option value="custom">Sonstiger Vertrag</option>
+                  </select>
                 </motion.div>
 
                 <motion.div 
@@ -416,18 +410,16 @@ export default function Generate() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2, duration: 0.3 }}
                 >
-                  <label>
-                    Vertragstitel:
-                    <input
-                      type="text"
-                      name="title"
-                      value={formData.title || ""}
-                      onChange={handleChange}
-                      placeholder="z. B. Freelancer-Vertrag für Webentwicklung"
-                      disabled={!isPremium}
-                      className={styles.input}
-                    />
-                  </label>
+                  <div className={styles.formLabel}>Vertragstitel:</div>
+                  <input
+                    type="text"
+                    name="title"
+                    value={formData.title || ""}
+                    onChange={handleChange}
+                    placeholder="z. B. Freelancer-Vertrag für Webentwicklung"
+                    disabled={!isPremium}
+                    className={styles.input}
+                  />
                 </motion.div>
 
                 {renderAdditionalFields()}
