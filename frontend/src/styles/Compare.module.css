@@ -1,311 +1,40 @@
-/* Compare.module.css - Apple Design Style */
-
-/* Base Variables */
-:root {
-  --apple-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  --apple-blue: #0071e3;
-  --apple-blue-hover: #0077ed;
-  --apple-blue-active: #006edb;
-  --apple-blue-light: rgba(0, 113, 227, 0.1);
-  --apple-gray: #f5f5f7;
-  --apple-light-gray: #e8e8ed;
-  --apple-dark-gray: #86868b;
-  --apple-text: #1d1d1f;
-  --apple-text-secondary: #515154;
-  --apple-success: #32d74b;
-  --apple-glass-bg: rgba(255, 255, 255, 0.8);
-  --apple-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
-  --apple-shadow-md: 0 8px 20px rgba(0, 0, 0, 0.08);
-  --apple-border-radius: 12px;
-  --apple-transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-/* Main Container */
-.container {
-  font-family: var(--apple-font);
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 3rem 2rem;
-  color: var(--apple-text);
-  background-color: white;
-  min-height: 100vh;
-  opacity: 0;
-  animation: fadeIn 0.3s forwards;
-}
-
-@keyframes fadeIn {
-  to {
-    opacity: 1;
-  }
-}
-
-/* Header */
-.header {
-  text-align: center;
-  margin-bottom: 3rem;
-}
-
-.header h1 {
-  font-size: 2.5rem;
-  font-weight: 600;
-  margin-bottom: 1rem;
-  letter-spacing: -0.02em;
-  background: linear-gradient(90deg, var(--apple-blue), #00b9ff);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.subtitle {
-  font-size: 1.1rem;
-  font-weight: 400;
-  color: var(--apple-text-secondary);
-  max-width: 650px;
-  margin: 0 auto;
-  line-height: 1.5;
-}
-
-/* Upload Section */
-.uploadSection {
-  margin: 3rem auto;
-}
-
-.uploadContainer {
-  display: flex;
-  gap: 2rem;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-
-.uploadCard {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 2.5rem;
-  width: 280px;
-  height: 280px;
-  background: var(--apple-glass-bg);
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
-  border-radius: var(--apple-border-radius);
-  box-shadow: var(--apple-shadow-sm);
-  transition: var(--apple-transition);
-  position: relative;
-  overflow: hidden;
-  border: 1px solid rgba(0, 0, 0, 0.04);
-}
-
-.uploadCard:hover {
-  transform: translateY(-5px);
-  box-shadow: var(--apple-shadow-md);
-}
-
-.uploadCard.fileSelected {
-  border: 1px solid rgba(0, 113, 227, 0.3);
-  background: rgba(0, 113, 227, 0.03);
-}
-
-.uploadIcon {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 72px;
-  height: 72px;
-  background-color: rgba(0, 113, 227, 0.1);
-  border-radius: 50%;
-  margin-bottom: 1.5rem;
-  color: var(--apple-blue);
-}
-
-.uploadCard h3 {
-  font-size: 1.2rem;
-  font-weight: 500;
-  margin-bottom: 1.5rem;
-  color: var(--apple-text);
-}
-
-.fileInput {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  top: 0;
-  left: 0;
-  opacity: 0;
-  cursor: pointer;
-  z-index: 10;
-}
-
-.fileInputLabel {
-  padding: 0.7rem 1.5rem;
-  background-color: var(--apple-light-gray);
-  border-radius: 20px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  color: var(--apple-text);
-  cursor: pointer;
-  transition: var(--apple-transition);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 200px;
-  text-align: center;
-}
-
-.fileInputLabel:hover {
-  background-color: #e0e0e5;
-}
-
-.fileIndicator {
-  position: absolute;
-  bottom: 20px;
-  right: 20px;
-  width: 28px;
-  height: 28px;
-  background-color: var(--apple-success);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  animation: scaleIn 0.3s ease forwards;
-}
-
-@keyframes scaleIn {
-  0% {
-    transform: scale(0);
-  }
-  70% {
-    transform: scale(1.1);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
-/* Action Buttons */
-.actionButtons {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  margin: 2rem 0 3rem;
-}
-
-.primaryButton {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.7rem 2rem;
-  min-width: 180px;
-  background-color: var(--apple-blue);
-  color: white;
-  border: none;
-  border-radius: 20px;
-  font-size: 1rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: var(--apple-transition);
-  box-shadow: 0 2px 8px rgba(0, 113, 227, 0.3);
-}
-
-.primaryButton:hover {
-  background-color: var(--apple-blue-hover);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 113, 227, 0.4);
-}
-
-.primaryButton:active {
-  background-color: var(--apple-blue-active);
-  transform: translateY(0px);
-  box-shadow: 0 2px 6px rgba(0, 113, 227, 0.35);
-}
-
-.disabledButton {
-  opacity: 0.6;
-  cursor: not-allowed;
-  pointer-events: none;
-}
-
-.secondaryButton {
-  padding: 0.7rem 2rem;
-  min-width: 150px;
-  background-color: transparent;
-  color: var(--apple-text);
-  border: 1px solid var(--apple-light-gray);
-  border-radius: 20px;
-  font-size: 1rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: var(--apple-transition);
-}
-
-.secondaryButton:hover {
-  background-color: var(--apple-light-gray);
-}
-
-.secondaryButton:active {
-  background-color: #e0e0e5;
-}
-
-/* Result Container */
-.resultContainer {
-  background: var(--apple-glass-bg);
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
-  border-radius: var(--apple-border-radius);
-  box-shadow: var(--apple-shadow-md);
-  overflow: hidden;
-  margin-top: 2rem;
-  border: 1px solid rgba(0, 0, 0, 0.04);
-  opacity: 0;
-  transform: translateY(20px);
-  animation: slideUpFade 0.4s forwards;
-}
-
-@keyframes slideUpFade {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 .resultHeader {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   padding: 1.5rem 2rem;
-  border-bottom: 1px solid var(--apple-light-gray);
+  border-bottom: 1px solid var(--apple-gray-100);
 }
 
 .resultHeader h2 {
-  font-size: 1.4rem;
+  font-size: 1.3rem;
   font-weight: 600;
-  color: var(--apple-text);
   margin: 0;
+  color: var(--apple-gray-800);
 }
 
 .exportButton {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 1.2rem;
-  background-color: transparent;
-  color: var(--apple-blue);
-  border: 1px solid var(--apple-light-gray);
-  border-radius: 16px;
-  font-size: 0.9rem;
+  padding: 0.7rem 1.2rem;
+  border-radius: 10px;
+  background-color: var(--apple-gray-50);
+  color: var(--apple-gray-800);
+  border: none;
+  font-family: inherit;
+  font-size: 0.95rem;
   font-weight: 500;
   cursor: pointer;
-  transition: var(--apple-transition);
+  transition: all 0.2s ease;
 }
 
 .exportButton:hover {
-  background-color: rgba(0, 113, 227, 0.05);
-  border-color: rgba(0, 113, 227, 0.2);
+  background-color: var(--apple-gray-100);
 }
 
 .resultSection {
-  padding: 1.5rem 2rem;
-  border-bottom: 1px solid var(--apple-light-gray);
+  border-bottom: 1px solid var(--apple-gray-100);
 }
 
 .resultSection:last-child {
@@ -315,62 +44,512 @@
 .sectionHeader {
   display: flex;
   align-items: center;
-  gap: 0.8rem;
-  margin-bottom: 1rem;
+  justify-content: space-between;
+  padding: 1.2rem 2rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.sectionHeader:hover {
+  background-color: var(--apple-gray-50);
+}
+
+.sectionTitleContainer {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
 .sectionIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--apple-gray-50);
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  background-color: rgba(0, 113, 227, 0.1);
-  border-radius: 50%;
   color: var(--apple-blue);
 }
 
 .sectionHeader h3 {
   font-size: 1.1rem;
-  font-weight: 500;
-  color: var(--apple-text);
+  font-weight: 600;
   margin: 0;
+  color: var(--apple-gray-800);
+}
+
+.expandButton {
+  background: none;
+  border: none;
+  color: var(--apple-gray-400);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.expandButton:hover {
+  color: var(--apple-gray-800);
 }
 
 .sectionContent {
-  font-size: 1rem;
-  line-height: 1.6;
-  color: var(--apple-text-secondary);
-  white-space: pre-line;
+  padding: 0 2rem 1.5rem;
 }
 
-/* Loading Indicators */
+.sectionContent p {
+  margin: 0;
+  line-height: 1.6;
+  color: var(--apple-gray-500);
+}
+
+/* Notification */
+.notification {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  backdrop-filter: blur(10px);
+  z-index: 100;
+  min-width: 300px;
+  max-width: 90%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.success {
+  background: rgba(52, 199, 89, 0.15);
+  border: 1px solid rgba(52, 199, 89, 0.3);
+  color: var(--success-green);
+}
+
+.error {
+  background: rgba(255, 69, 58, 0.15);
+  border: 1px solid rgba(255, 69, 58, 0.3);
+  color: var(--error-red);
+}
+
+.notificationIcon {
+  flex-shrink: 0;
+}
+
+.notificationMessage {
+  font-weight: 500;
+  flex-grow: 1;
+}
+
+.notificationClose {
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+}
+
+.notificationClose:hover {
+  opacity: 1;
+}
+
+/* Loading Container */
 .loadingContainer {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 70vh;
-  font-family: var(--apple-font);
-}
-
-.loadingSpinner,
-.buttonSpinner {
-  width: 24px;
-  height: 24px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  border-top-color: white;
-  animation: spin 0.8s linear infinite;
-  margin-right: 0.8rem;
+  min-height: 300px;
+  gap: 1rem;
+  color: var(--apple-gray-400);
 }
 
 .loadingSpinner {
-  width: 32px;
-  height: 32px;
-  border: 2px solid rgba(0, 113, 227, 0.3);
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(0, 113, 227, 0.1);
   border-top-color: var(--apple-blue);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+  .container {
+    padding: 1.5rem;
+  }
+  
+  .title {
+    font-size: 1.8rem;
+  }
+  
+  .uploadContainer {
+    flex-direction: column;
+  }
+  
+  .uploadCard {
+    width: 100%;
+    max-width: 400px;
+  }
+  
+  .arrowContainer {
+    transform: rotate(90deg);
+    margin: 1rem 0;
+  }
+  
+  .actionButtons {
+    flex-direction: column;
+  }
+  
+  .primaryButton, .secondaryButton {
+    width: 100%;
+  }
+  
+  .premiumNotice {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1.5rem;
+  }
+  
+  .resultHeader, .sectionHeader {
+    padding: 1rem 1.5rem;
+  }
+  
+  .sectionContent {
+    padding: 0 1.5rem 1.5rem;
+  }
+  
+  .notification {
+    width: calc(100% - 3rem);
+    min-width: auto;
+  }
+}/* Compare.module.css */
+@import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600&display=swap');
+
+.pageContainer {
+  --apple-blue: #0071e3;
+  --apple-blue-dark: #0058b3;
+  --apple-gray-50: #f5f5f7;
+  --apple-gray-100: #e8e8ed;
+  --apple-gray-200: #d2d2d7;
+  --apple-gray-300: #a1a1a6;
+  --apple-gray-400: #6e6e73;
+  --apple-gray-500: #86868b;
+  --apple-gray-800: #1d1d1f;
+  --success-green: #34c759;
+  --error-red: #ff453a;
+
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: white;
+  min-height: 100vh;
+  color: var(--apple-gray-800);
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+/* Header Styling */
+.header {
+  margin-bottom: 2.5rem;
+  text-align: center;
+}
+
+.title {
+  font-size: 2.2rem;
+  font-weight: 600;
+  margin: 0 0 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  letter-spacing: -0.02em;
+  color: var(--apple-gray-800);
+}
+
+.titleIcon {
+  color: var(--apple-blue);
+}
+
+.subtitle {
+  font-size: 1.1rem;
+  font-weight: 400;
+  margin: 0;
+  color: var(--apple-gray-400);
+  line-height: 1.5;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Premium Notice */
+.premiumNotice {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  border-radius: 16px;
+  padding: 1.5rem 2rem;
+  margin-bottom: 2.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.premiumIcon {
+  font-size: 2.5rem;
+  color: #FFD700;
+}
+
+.premiumContent {
+  flex: 1;
+}
+
+.premiumContent h3 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin: 0 0 0.8rem;
+  color: var(--apple-gray-800);
+}
+
+.premiumContent p {
+  font-size: 1rem;
+  color: var(--apple-gray-400);
+  margin: 0 0 1.2rem;
+  line-height: 1.5;
+}
+
+.upgradeButton {
+  background-color: var(--apple-blue);
+  color: white;
+  border: none;
+  padding: 0.7rem 1.5rem;
+  border-radius: 20px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.upgradeButton:hover {
+  background-color: var(--apple-blue-dark);
+}
+
+/* Upload Section */
+.uploadSection {
+  margin-bottom: 3rem;
+}
+
+.uploadContainer {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  justify-content: center;
+}
+
+.uploadCard {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--apple-gray-100);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  padding: 2rem;
+  width: 320px;
+  height: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.uploadCard.disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.uploadCard:hover:not(.disabled) {
+  border-color: var(--apple-blue);
+}
+
+.fileSelected {
+  border-color: var(--apple-blue);
+  background-color: rgba(0, 113, 227, 0.03);
+}
+
+.uploadContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 100%;
+}
+
+.uploadIcon {
+  color: var(--apple-blue);
   margin-bottom: 1rem;
+}
+
+.uploadCard h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem;
+  color: var(--apple-gray-800);
+}
+
+.uploadCard p {
+  font-size: 0.95rem;
+  color: var(--apple-gray-500);
+  margin: 0;
+}
+
+.fileInput {
+  display: none;
+}
+
+.arrowContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background-color: var(--apple-gray-50);
+  border-radius: 50%;
+}
+
+.arrowIcon {
+  color: var(--apple-gray-400);
+}
+
+.filePreview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  position: relative;
+}
+
+.fileIcon {
+  color: var(--apple-blue);
+  margin-bottom: 1rem;
+}
+
+.fileInfo {
+  text-align: center;
+  width: 100%;
+}
+
+.fileName {
+  font-size: 1rem;
+  font-weight: 500;
+  margin: 0 0 0.3rem;
+  color: var(--apple-gray-800);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 90%;
+}
+
+.fileSize {
+  font-size: 0.85rem;
+  color: var(--apple-gray-400);
+  margin: 0;
+}
+
+.fileIndicator {
+  position: absolute;
+  top: 0;
+  right: 0;
+  color: var(--success-green);
+}
+
+.premiumBadge {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: linear-gradient(135deg, #facf0f, #fb8c00);
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+}
+
+/* Action Buttons */
+.actionButtons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.primaryButton {
+  background-color: var(--apple-blue);
+  color: white;
+  border: none;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 0.9rem 1.8rem;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  transition: all 0.2s ease;
+  min-width: 200px;
+}
+
+.primaryButton:hover:not(:disabled) {
+  background-color: var(--apple-blue-dark);
+}
+
+.primaryButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.secondaryButton {
+  background-color: var(--apple-gray-100);
+  color: var(--apple-gray-800);
+  border: none;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 0.9rem 1.8rem;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  transition: all 0.2s ease;
+}
+
+.secondaryButton:hover {
+  background-color: var(--apple-gray-200);
+}
+
+.buttonSpinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 0.3rem;
 }
 
 @keyframes spin {
@@ -379,45 +558,13 @@
   }
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-  .container {
-    padding: 2rem 1.5rem;
-  }
-  
-  .header h1 {
-    font-size: 2rem;
-  }
-  
-  .uploadContainer {
-    flex-direction: column;
-    align-items: center;
-  }
-  
-  .uploadCard {
-    width: 100%;
-    max-width: 320px;
-    height: 250px;
-  }
-  
-  .actionButtons {
-    flex-direction: column;
-    align-items: center;
-  }
-  
-  .primaryButton,
-  .secondaryButton {
-    width: 100%;
-    max-width: 300px;
-  }
-  
-  .resultHeader {
-    flex-direction: column;
-    gap: 1rem;
-    align-items: flex-start;
-  }
-  
-  .exportButton {
-    align-self: flex-end;
-  }
+/* Result Section */
+.resultContainer {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--apple-gray-100);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  margin-top: 2rem;
+  margin-bottom: 3rem;
 }
