@@ -1,121 +1,552 @@
-/* src/styles/Generate.module.css */
-.container {
-    max-width: 600px;
-    margin: 3rem auto;
-    background-color: #1a1a1a;
-    color: white;
+.loadingContent {
+    text-align: center;
+    max-width: 400px;
     padding: 2rem;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+  }
+  
+  .loadingSpinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(0, 113, 227, 0.1);
+    border-top-color: var(--apple-blue);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+  }
+  
+  .spinnerSmall {
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  
+  .loadingSubtext {
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--apple-gray-300);
+  }
+  
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  
+  /* Contract Preview Styling */
+  .previewContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+  
+  .contractPreview {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    border: 1px solid var(--apple-gray-100);
+  }
+  
+  .previewTitle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 1.2rem 1.5rem;
+    font-size: 1.1rem;
+    font-weight: 500;
+    border-bottom: 1px solid var(--apple-gray-100);
+    color: var(--apple-gray-800);
+  }
+  
+  .contractContent {
+    padding: 1.5rem;
+    max-height: 50vh;
+    overflow-y: auto;
+  }
+  
+  .contractText {
+    white-space: pre-wrap;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: var(--apple-gray-800);
+  }
+  
+  .signaturePreview {
+    margin-top: 2rem;
+    border-top: 1px solid var(--apple-gray-100);
+    padding-top: 1.5rem;
+  }
+  
+  .signaturePreview h4 {
+    font-size: 1rem;
+    font-weight: 500;
+    margin: 0 0 1rem;
+    color: var(--apple-gray-800);
+  }
+  
+  .signaturePreview img {
+    max-width: 200px;
+    height: auto;
+    display: block;
+  }
+  
+  /* Signature Section */
+  .signatureSection {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    border: 1px solid var(--apple-gray-100);
+    padding: 1.5rem;
+  }
+  
+  .signatureTitle {
+    font-size: 1.1rem;
+    font-weight: 500;
+    margin: 0 0 1.5rem;
+    color: var(--apple-gray-800);
+  }
+  
+  .canvasContainer {
+    position: relative;
+    background: var(--apple-gray-50);
     border-radius: 12px;
-    box-shadow: 0 0 12px rgba(0, 255, 255, 0.1);
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border: 1px dashed var(--apple-gray-200);
+    transition: all 0.2s ease;
   }
   
-  h2 {
+  .canvasContainer:hover {
+    border-color: var(--apple-gray-300);
+  }
+  
+  .signatureCanvas {
+    width: 100%;
+    height: 150px;
+    border-radius: 8px;
+    background: white;
+    touch-action: none;
+    cursor: crosshair;
+    transition: all 0.2s ease;
+  }
+  
+  .signatureCanvas.drawing {
+    box-shadow: 0 0 0 2px var(--apple-blue);
+  }
+  
+  .canvasInstructions {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    margin: 0;
+    color: var(--apple-gray-300);
+    font-size: 0.9rem;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    opacity: 0.7;
+  }
+  
+  .drawing + .canvasInstructions {
+    opacity: 0;
+  }
+  
+  .canvasControls {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  
+  .canvasButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1rem;
+    border-radius: 8px;
+    border: 1px solid var(--apple-gray-200);
+    background: white;
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--apple-gray-800);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .canvasButton:hover {
+    background: var(--apple-gray-50);
+    border-color: var(--apple-gray-300);
+  }
+  
+  .saveSignature {
+    background: var(--apple-blue);
+    color: white;
+    border-color: var(--apple-blue);
+  }
+  
+  .saveSignature:hover {
+    background: var(--apple-blue-dark);
+    border-color: var(--apple-blue-dark);
+  }
+  
+  /* Contract Actions */
+  .contractActions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  
+  .actionButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.8rem 1.2rem;
+    border-radius: 10px;
+    border: none;
+    background: white;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--apple-gray-800);
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--apple-gray-100);
+    transition: all 0.2s ease;
+    flex: 1;
+    min-width: 180px;
+  }
+  
+  .actionButton:hover {
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
+  }
+  
+  .actionSuccess {
+    background-color: var(--success-green);
+    color: white;
+  }
+  
+  .actionSuccess:hover {
+    background-color: #2aaa6e;
+  }
+  
+  /* Success Notification */
+  .successNotification {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(52, 199, 89, 0.15);
+    border: 1px solid rgba(52, 199, 89, 0.3);
+    color: var(--success-green);
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    z-index: 100;
+    width: auto;
+    max-width: 90%;
+  }
+  
+  .successIcon {
+    flex-shrink: 0;
+  }
+  
+  /* Responsive Styles */
+  @media (max-width: 768px) {
+    .container {
+      padding: 1.5rem;
+    }
+    
+    .title {
+      font-size: 1.8rem;
+    }
+    
+    .premiumNotice {
+      flex-direction: column;
+      align-items: flex-start;
+      text-align: center;
+    }
+    
+    .contractActions {
+      flex-direction: column;
+    }
+    
+    .actionButton {
+      width: 100%;
+    }
+    
+    .successNotification {
+      width: calc(100% - 3rem);
+    }
+  }/* Generate.module.css */
+  @import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600&display=swap');
+  
+  .pageContainer {
+    --apple-blue: #0071e3;
+    --apple-blue-dark: #0058b3;
+    --apple-gray-50: #f5f5f7;
+    --apple-gray-100: #e8e8ed;
+    --apple-gray-200: #d2d2d7;
+    --apple-gray-300: #a1a1a6;
+    --apple-gray-400: #6e6e73;
+    --apple-gray-800: #1d1d1f;
+    --success-green: #34c759;
+    --error-red: #ff453a;
+  
+    font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: var(--apple-gray-50);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+  }
+  
+  .container {
+    max-width: 1000px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 2rem;
+    color: var(--apple-gray-800);
+  }
+  
+  /* Header Styling */
+  .header {
+    margin-bottom: 2rem;
+  }
+  
+  .title {
+    font-size: 2.2rem;
+    font-weight: 500;
+    margin: 0 0 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    letter-spacing: -0.02em;
+    color: var(--apple-gray-800);
+  }
+  
+  .titleIcon {
+    color: var(--apple-blue);
+  }
+  
+  .subtitle {
+    font-size: 1.1rem;
+    font-weight: 400;
+    margin: 0;
+    color: var(--apple-gray-400);
+    max-width: 800px;
+  }
+  
+  /* Premium Notice */
+  .premiumNotice {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(20px);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+  }
+  
+  .premiumIcon {
     font-size: 2rem;
-    margin-bottom: 0.5rem;
-    text-align: center;
   }
   
-  p {
-    opacity: 0.85;
-    margin-bottom: 1.5rem;
-    text-align: center;
+  .premiumContent {
+    flex: 1;
   }
   
+  .premiumContent h3 {
+    font-size: 1.2rem;
+    font-weight: 500;
+    margin: 0 0 0.5rem;
+    color: var(--apple-gray-800);
+  }
+  
+  .premiumContent p {
+    font-size: 0.95rem;
+    color: var(--apple-gray-400);
+    margin: 0 0 1rem;
+  }
+  
+  .upgradeButton {
+    background-color: var(--apple-blue);
+    color: white;
+    border: none;
+    padding: 0.6rem 1.2rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .upgradeButton:hover {
+    background-color: var(--apple-blue-dark);
+  }
+  
+  /* Tabs */
+  .tabs {
+    display: flex;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid var(--apple-gray-200);
+  }
+  
+  .tab {
+    padding: 0.8rem 1.5rem;
+    background: transparent;
+    border: none;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--apple-gray-400);
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s ease;
+  }
+  
+  .tab:after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: var(--apple-blue);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+  }
+  
+  .activeTab {
+    color: var(--apple-gray-800);
+  }
+  
+  .activeTab:after {
+    transform: scaleX(1);
+  }
+  
+  /* Form Styling */
   .form {
     display: flex;
     flex-direction: column;
-    gap: 1.2rem;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
   }
   
-  label {
+  .formGroup {
     display: flex;
     flex-direction: column;
-    font-weight: bold;
+  }
+  
+  .formGroup label {
     font-size: 0.95rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    color: var(--apple-gray-800);
   }
   
-  input,
-  select,
-  textarea {
-    margin-top: 0.4rem;
-    padding: 0.65rem;
-    border-radius: 6px;
-    border: 1px solid #444;
-    background-color: #222;
-    color: white;
-    resize: vertical;
-    font-size: 1rem;
-  }
-  
-  button {
-    background-color: #36a3f5;
-    color: #000;
-    padding: 0.75rem;
-    border: none;
-    border-radius: 8px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: 0.2s ease;
-  }
-  
-  button:hover {
-    background-color: #1c8ce3;
-    transform: scale(1.02);
-  }
-  
-  .loading {
-    text-align: center;
-    margin-top: 1rem;
-    font-weight: bold;
-    color: #36a3f5;
-    animation: blink 1s infinite;
-  }
-  
-  @keyframes blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
-  }
-  
-  .result {
-    margin-top: 2rem;
-    padding: 1.5rem;
-    background-color: #111;
-    border: 1px solid #333;
+  .input, .select, .textarea {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--apple-gray-200);
     border-radius: 10px;
-    white-space: pre-wrap;
-    line-height: 1.6;
+    padding: 0.8rem 1rem;
+    font-family: inherit;
     font-size: 0.95rem;
-    position: relative;
+    transition: all 0.2s ease;
+    outline: none;
+    color: var(--apple-gray-800);
   }
   
-  .copyButton {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    background: #36a3f5;
-    color: #000;
+  .input:focus, .select:focus, .textarea:focus {
+    border-color: var(--apple-blue);
+    box-shadow: 0 0 0 2px rgba(0, 113, 227, 0.15);
+  }
+  
+  .input::placeholder, .textarea::placeholder {
+    color: var(--apple-gray-300);
+  }
+  
+  .input:disabled, .select:disabled, .textarea:disabled {
+    background-color: var(--apple-gray-100);
+    color: var(--apple-gray-400);
+    cursor: not-allowed;
+  }
+  
+  .textarea {
+    resize: vertical;
+    min-height: 100px;
+  }
+  
+  .submitButton {
+    background-color: var(--apple-blue);
+    color: white;
     border: none;
-    padding: 0.4rem 0.7rem;
-    border-radius: 6px;
+    font-family: inherit;
+    font-size: 1rem;
+    font-weight: 500;
+    padding: 0.9rem;
+    border-radius: 10px;
     cursor: pointer;
-    font-weight: bold;
-    font-size: 0.8rem;
-    transition: 0.2s ease;
-  }
-  
-  .copyButton:hover {
-    background-color: #1c8ce3;
-    transform: scale(1.02);
-  }
-  
-  .saveButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
     margin-top: 1rem;
-    width: 100%;
-    background-color: #0f0;
-    color: #000;
   }
   
-  .saveButton:hover {
-    background-color: #0c0;
+  .submitButton:hover:not(:disabled) {
+    background-color: var(--apple-blue-dark);
   }
   
+  .submitButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  
+  .buttonIcon {
+    font-size: 1.2rem;
+  }
+  
+  /* Loading States */
+  .loadingContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    gap: 1rem;
+    color: var(--apple-gray-400);
+  }
+  
+  .loadingOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+  }
