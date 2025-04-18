@@ -1,184 +1,366 @@
-/* 📁 src/styles/Pricing.module.css */
+/* Pricing.module.css */
+@import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600&display=swap');
 
 .container {
-  padding: 2rem;
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
   max-width: 1100px;
   margin: 0 auto;
+  padding: 2rem;
+  color: #1d1d1f;
+}
+
+/* Header Styling */
+.header {
   text-align: center;
-  color: #111;
+  margin-bottom: 3rem;
 }
 
 .title {
-  font-size: 2.5rem;
-  font-weight: bold;
-  margin-bottom: 0.5rem;
+  font-size: 2.8rem;
+  font-weight: 600;
+  margin: 0 0 1rem;
+  letter-spacing: -0.02em;
+  color: #1d1d1f;
 }
 
 .subtitle {
   font-size: 1.2rem;
-  color: #555;
-  margin-bottom: 2rem;
+  color: #6e6e73;
+  margin: 0 auto;
+  max-width: 600px;
+  line-height: 1.5;
+}
+
+/* View Toggle */
+.viewToggle {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2.5rem;
+  border-radius: 10px;
+  background-color: #f5f5f7;
+  padding: 0.3rem;
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.toggleButton {
+  padding: 0.7rem 1.5rem;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 500;
+  border: none;
+  background: none;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #6e6e73;
+  transition: all 0.2s ease;
+}
+
+.activeToggle {
+  background-color: white;
+  color: #1d1d1f;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+/* Plans Container */
+.plansContainer, .tableContainer {
+  max-width: 1000px;
+  margin: 0 auto;
 }
 
 .plans {
-  display: flex;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 2rem;
-  flex-wrap: wrap;
-  margin-top: 2rem;
+  margin-bottom: 2rem;
 }
 
+/* Card Styling */
 .card {
-  border: 1px solid #dddddd;
-  border-radius: 12px;
-  padding: 2rem;
-  width: 300px;
-  background: #f9f9f9;
-  color: #000;
-  transition: box-shadow 0.2s, transform 0.2s;
-}
-
-.card:hover {
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-  transform: scale(1.02);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid rgba(230, 230, 230, 0.7);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 
 .highlight {
-  border: 2px solid #4f46e5;
-  background: #eef2ff;
+  border: 1px solid rgba(0, 113, 227, 0.2);
+  box-shadow: 0 12px 30px rgba(0, 113, 227, 0.1);
+}
+
+.popularBadge {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: linear-gradient(135deg, #0071e3, #42a4ff);
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+}
+
+.cardHeader {
+  padding: 2rem 2rem 1.5rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .planTitle {
   font-size: 1.5rem;
-  margin-bottom: 0.5rem;
+  font-weight: 600;
+  margin: 0 0 1rem;
+  color: #1d1d1f;
 }
 
-.price {
-  font-size: 1.5rem;
-  margin: 1rem 0;
-  font-weight: bold;
-}
-
-.features {
-  list-style: none;
-  padding: 0;
-  margin: 1rem 0;
-  text-align: left;
-}
-
-.features li {
-  margin-bottom: 0.6rem;
+.priceContainer {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: 0.5rem;
 }
 
+.price {
+  font-size: 2.5rem;
+  font-weight: 500;
+  margin: 0;
+  color: #1d1d1f;
+}
+
+.period {
+  font-size: 1rem;
+  color: #6e6e73;
+}
+
+.cardContent {
+  padding: 1.5rem 2rem;
+  flex-grow: 1;
+}
+
+.features, .limitations {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1.5rem;
+}
+
+.features li, .limitations li {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 0.8rem;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.features li {
+  color: #1d1d1f;
+}
+
+.limitations li {
+  color: #86868b;
+}
+
+.featureIcon {
+  color: #34c759;
+  margin-right: 0.8rem;
+  flex-shrink: 0;
+  margin-top: 0.25rem;
+}
+
+.limitationIcon {
+  color: #ff3b30;
+  margin-right: 0.8rem;
+  flex-shrink: 0;
+  margin-top: 0.25rem;
+}
+
 .buttonBox {
-  margin-top: 1.5rem;
+  padding: 0 2rem 2rem;
+  display: flex;
+  justify-content: center;
+}
+
+/* Buttons */
+.btnOutline, .btnFilled {
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 0.9rem 1.8rem;
+  border-radius: 10px;
+  cursor: pointer;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
 }
 
 .btnOutline {
   background: transparent;
-  border: 2px solid #4f46e5;
-  color: #4f46e5;
-  padding: 0.6rem 1.2rem;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
+  border: 1px solid #0071e3;
+  color: #0071e3;
 }
 
 .btnOutline:hover {
-  background-color: #4f46e5;
-  color: white;
+  background-color: rgba(0, 113, 227, 0.05);
 }
 
 .btnFilled {
-  background-color: #4f46e5;
-  color: white;
-  padding: 0.6rem 1.2rem;
+  background-color: #0071e3;
   border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.2s;
+  color: white;
 }
 
-.btnFilled:hover {
-  background-color: #4338ca;
+.btnFilled:hover:not(:disabled) {
+  background-color: #0058b3;
 }
 
-/* ✅ Dark Mode Fix */
-@media (prefers-color-scheme: dark) {
-  .card {
-    background: #fff;
-    color: #000;
+.btnFilled:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.buttonIcon {
+  margin-left: 0.3rem;
+}
+
+.loadingSpinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 0.5rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
-
-  .table thead th {
-    background-color: #e0e0e0;
-    color: #111;
-  }
 }
 
-:global(body.dark) .card {
-  background: #fff;
-  color: #000;
+/* Table Styling */
+.tableWrapper {
+  overflow-x: auto;
+  border-radius: 20px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  margin-bottom: 2rem;
 }
 
-/* 🧾 Vergleichstabelle */
-table {
+.featureTable {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 2rem;
-  font-size: 1rem;
-  background-color: #fdfdfd;
-  color: #333;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  overflow: hidden;
+  border-spacing: 0;
 }
 
-th,
-td {
-  padding: 1rem;
-  border-bottom: 1px solid #e5e5e5;
-}
-
-th {
-  background-color: #f0f0f0;
-  color: #111;
+.featureTable th {
   font-weight: 600;
-  text-align: center;
-}
-
-td {
-  text-align: center;
-}
-
-td:first-child,
-th:first-child {
+  color: #1d1d1f;
   text-align: left;
+  padding: 1.2rem 1.5rem;
+  font-size: 1rem;
 }
 
-/* Zebra-Effekt */
-tbody tr:nth-child(even) {
-  background-color: #fafafa;
+.featureColumn {
+  width: 50%;
 }
 
-/* Hover-Effekt */
-tbody tr:hover {
-  background-color: #f0f4ff;
+.planColumn {
+  width: 25%;
 }
 
-/* 🔄 Responsive Tabelle */
+.premiumColumn {
+  background-color: rgba(0, 113, 227, 0.05);
+}
+
+.featureTable tr {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.featureTable tr:last-child {
+  border-bottom: none;
+}
+
+.featureCell, .freeCell, .premiumCell {
+  padding: 1.2rem 1.5rem;
+  font-size: 1rem;
+}
+
+.featureCell {
+  color: #1d1d1f;
+}
+
+.freeCell, .premiumCell {
+  text-align: center;
+}
+
+.premiumCell {
+  background-color: rgba(0, 113, 227, 0.03);
+}
+
+.checkIcon {
+  color: #34c759;
+}
+
+.dash {
+  color: #86868b;
+  font-size: 1.2rem;
+}
+
+.tableActions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 2rem;
+}
+
+.tableActions .btnFilled {
+  max-width: 250px;
+}
+
+/* Note */
+.cancellationNote {
+  text-align: center;
+  color: #6e6e73;
+  font-size: 0.95rem;
+  margin: 1.5rem 0 0;
+}
+
+/* Responsive Styles */
 @media (max-width: 768px) {
-  .plans {
-    flex-direction: column;
-    align-items: center;
+  .container {
+    padding: 1.5rem;
   }
-
-  table {
-    font-size: 0.9rem;
+  
+  .title {
+    font-size: 2.2rem;
+  }
+  
+  .plans {
+    grid-template-columns: 1fr;
+  }
+  
+  .cardHeader {
+    padding: 1.5rem 1.5rem 1rem;
+  }
+  
+  .cardContent {
+    padding: 1rem 1.5rem;
+  }
+  
+  .buttonBox {
+    padding: 0 1.5rem 1.5rem;
+  }
+  
+  .featureCell, .freeCell, .premiumCell {
+    padding: 1rem;
   }
 }
