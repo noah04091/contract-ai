@@ -113,68 +113,32 @@ const HomeRedesign = () => {
             </Link>
           </div>
           <ul className={`nav-links ${mobileMenuOpen ? 'mobile-open' : ''}`}>
+            <li className={activeSection === 'dashboard' ? 'active' : ''}>
+              <Link to="/" className="nav-link">
+                <span className="nav-icon">🏠</span>
+                Dashboard
+              </Link>
+            </li>
             <li className={activeSection === 'features' ? 'active' : ''}>
               <Link to="/contracts" className="nav-link">
-                <span className="nav-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                    <polyline points="14 2 14 8 20 8"></polyline>
-                    <line x1="16" y1="13" x2="8" y2="13"></line>
-                    <line x1="16" y1="17" x2="8" y2="17"></line>
-                    <polyline points="10 9 9 9 8 9"></polyline>
-                  </svg>
-                </span>
+                <span className="nav-icon">📁</span>
                 Verträge
               </Link>
             </li>
             <li className={activeSection === 'optimizer' ? 'active' : ''}>
               <Link to="/optimizer" className="nav-link">
-                <span className="nav-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M5 3v4M3 5h4M6 17v4M4 19h4M13 3l4 4L5 19l-4-4z"></path>
-                    <path d="M14 7l3 3M6 17l3 3M11 6l.463 1.39m3.684 11.04l.463 1.39M19 12h2M12 19v2M12 5V3M19 8l1.5-1.5M5 8L3.5 6.5"></path>
-                  </svg>
-                </span>
+                <span className="nav-icon">🧠</span>
                 Optimierer
               </Link>
             </li>
-            <li className={activeSection === 'deadlines' ? 'active' : ''}>
-              <Link to="/calendar" className="nav-link">
-                <span className="nav-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <polyline points="12 6 12 12 16 14"></polyline>
-                  </svg>
-                </span>
-                Fristen
-              </Link>
-            </li>
-            <li className={activeSection === 'compare' ? 'active' : ''}>
-              <Link to="/compare" className="nav-link">
-                <span className="nav-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="18" y1="20" x2="18" y2="10"></line>
-                    <line x1="12" y1="20" x2="12" y2="4"></line>
-                    <line x1="6" y1="20" x2="6" y2="14"></line>
-                    <line x1="3" y1="10" x2="21" y2="10"></line>
-                    <line x1="3" y1="4" x2="21" y2="4"></line>
-                    <line x1="3" y1="14" x2="21" y2="14"></line>
-                  </svg>
-                </span>
-                Vergleich
-              </Link>
-            </li>
-            <li className={activeSection === 'pricing' ? 'active' : ''}>
-              <Link to="/pricing" className="nav-link">
-                <span className="nav-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="12" y1="1" x2="12" y2="23"></line>
-                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-                  </svg>
-                </span>
-                Preise
-              </Link>
-            </li>
+            {!user?.isAuthenticated || (user && user.plan !== 'premium') ? (
+              <li className={activeSection === 'pricing' ? 'active' : ''}>
+                <Link to="/pricing" className="nav-link">
+                  <span className="nav-icon">💰</span>
+                  Preise
+                </Link>
+              </li>
+            ) : null}
             {isLoading ? (
               <li className="loading-auth">
                 <div className="loading-spinner"></div>
