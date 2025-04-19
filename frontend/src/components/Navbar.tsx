@@ -17,9 +17,16 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notification, setNotification] = useState<{ message: string; type?: "success" | "error" } | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [activeLink, setActiveLink] = useState("/");
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  
+  // Set active link based on current path
+  useEffect(() => {
+    const path = window.location.pathname;
+    setActiveLink(path);
+  }, []);
 
   // 🔐 Benutzerstatus laden
   useEffect(() => {
@@ -90,7 +97,7 @@ export default function Navbar() {
       className={`${styles.navbar} ${isScrolled ? styles.navbarScrolled : ""}`}
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, ease: "easeOut" }}
+      transition={{ duration: 0.5, ease: [0.19, 1.0, 0.22, 1.0] }}
     >
       <div className={styles.navbarContent}>
         <div className={styles.leftSection}>
@@ -99,6 +106,8 @@ export default function Navbar() {
             onClick={() => setMobileMenuOpen((prev) => !prev)}
             aria-label="Menü öffnen"
             whileTap={{ scale: 0.95 }}
+            initial={{ opacity: 0.8 }}
+            animate={{ opacity: 1 }}
           >
             {mobileMenuOpen ? "✕" : "☰"}
           </motion.button>
@@ -123,12 +132,23 @@ export default function Navbar() {
               transition={{ duration: 0.3, ease: "easeInOut" }}
             >
               <div className={styles.mobileMenuLinks}>
-                <Link to="/contracts" className={styles.mobileNavLink}>📁 Verträge</Link>
-                <Link to="/optimizer" className={styles.mobileNavLink}>🧠 Optimierer</Link>
-                <Link to="/compare" className={styles.mobileNavLink}>📊 Vergleich</Link>
-                <Link to="/chat" className={styles.mobileNavLink}>💬 KI-Chat</Link>
+                <Link to="/" className={styles.mobileNavLink}>
+                  <span className={styles.mobileNavIcon}>🏠</span>
+                  <span>Dashboard</span>
+                </Link>
+                <Link to="/contracts" className={styles.mobileNavLink}>
+                  <span className={styles.mobileNavIcon}>📁</span>
+                  <span>Verträge</span>
+                </Link>
+                <Link to="/optimizer" className={styles.mobileNavLink}>
+                  <span className={styles.mobileNavIcon}>🧠</span>
+                  <span>Optimierer</span>
+                </Link>
                 {user && !user.subscriptionActive && (
-                  <Link to="/pricing" className={styles.mobileNavLink}>💰 Preise</Link>
+                  <Link to="/pricing" className={styles.mobileNavLink}>
+                    <span className={styles.mobileNavIcon}>💰</span>
+                    <span>Preise</span>
+                  </Link>
                 )}
                 {user && (
                   <>
@@ -138,8 +158,14 @@ export default function Navbar() {
                         <span className={styles.premiumBadge}>Premium</span>
                       )}
                     </div>
-                    <Link to="/me" className={styles.mobileNavLink}>👤 Profil</Link>
-                    <button onClick={handleLogout} className={styles.mobileNavLink}>🚪 Logout</button>
+                    <Link to="/me" className={styles.mobileNavLink}>
+                      <span className={styles.mobileNavIcon}>👤</span>
+                      <span>Profil</span>
+                    </Link>
+                    <button onClick={handleLogout} className={styles.mobileNavLink}>
+                      <span className={styles.mobileNavIcon}>🚪</span>
+                      <span>Logout</span>
+                    </button>
                   </>
                 )}
               </div>
@@ -150,20 +176,29 @@ export default function Navbar() {
         <div className={styles.navLinks}>
           <motion.div className={styles.navLinksInner}>
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Link to="/contracts" className={styles.navLink}>📁 Verträge</Link>
+              <Link to="/" className={`${styles.navLink} ${activeLink === "/" ? styles.activeNavLink : ""}`}>
+                <span className={styles.navLinkIcon}>🏠</span>
+                <span className={styles.navLinkText}>Dashboard</span>
+              </Link>
             </motion.div>
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Link to="/optimizer" className={styles.navLink}>🧠 Optimierer</Link>
+              <Link to="/contracts" className={`${styles.navLink} ${activeLink === "/contracts" ? styles.activeNavLink : ""}`}>
+                <span className={styles.navLinkIcon}>📁</span>
+                <span className={styles.navLinkText}>Verträge</span>
+              </Link>
             </motion.div>
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Link to="/compare" className={styles.navLink}>📊 Vergleich</Link>
-            </motion.div>
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Link to="/chat" className={styles.navLink}>💬 KI-Chat</Link>
+              <Link to="/optimizer" className={`${styles.navLink} ${activeLink === "/optimizer" ? styles.activeNavLink : ""}`}>
+                <span className={styles.navLinkIcon}>🧠</span>
+                <span className={styles.navLinkText}>Optimierer</span>
+              </Link>
             </motion.div>
             {user && !user.subscriptionActive && (
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Link to="/pricing" className={styles.navLink}>💰 Preise</Link>
+                <Link to="/pricing" className={`${styles.navLink} ${activeLink === "/pricing" ? styles.activeNavLink : ""}`}>
+                  <span className={styles.navLinkIcon}>💰</span>
+                  <span className={styles.navLinkText}>Preise</span>
+                </Link>
               </motion.div>
             )}
           </motion.div>
@@ -178,7 +213,9 @@ export default function Navbar() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                👤 {user.subscriptionActive && <span className={styles.badge}>Premium</span>} Account 
+                <span className={styles.profileIcon}>👤</span>
+                {user.subscriptionActive && <span className={styles.badge}>Premium</span>} 
+                <span>Account</span>
                 <motion.span
                   animate={{ rotate: dropdownOpen ? 180 : 0 }}
                   transition={{ duration: 0.3 }}
@@ -207,10 +244,14 @@ export default function Navbar() {
           ) : (
             <div className={styles.authButtons}>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Link to="/login" className={styles.loginButton}>Anmelden</Link>
+                <Link to="/login" className={styles.loginButton}>
+                  <span>Anmelden</span>
+                </Link>
               </motion.div>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Link to="/register" className={styles.registerButton}>Registrieren</Link>
+                <Link to="/register" className={styles.registerButton}>
+                  <span>Registrieren</span>
+                </Link>
               </motion.div>
             </div>
           )}

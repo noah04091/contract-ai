@@ -1,20 +1,30 @@
-.navbar {
+.profileIcon {
+  font-size: 1rem;
+  margin-right: 0.4rem;
+  display: inline-block;
+  transition: transform 0.2s ease;
+}
+
+.profileButton:hover .profileIcon {
+  transform: scale(1.1);
+}.navbar {
   position: sticky;
   top: 0;
   width: 100%;
   background-color: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   z-index: 1000;
   transition: all 0.3s ease;
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.05);
   padding: 0.5rem 0;
   font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif;
+  letter-spacing: -0.01em;
 }
 
 .navbarScrolled {
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-  background-color: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  background-color: rgba(255, 255, 255, 0.98);
 }
 
 .navbarContent {
@@ -23,8 +33,9 @@
   justify-content: space-between;
   max-width: 1280px;
   margin: 0 auto;
-  padding: 0 1.5rem;
-  height: 3.5rem;
+  padding: 0 2rem;
+  height: 3.8rem;
+  position: relative;
 }
 
 .leftSection {
@@ -39,8 +50,9 @@
 }
 
 .logoImage {
-  height: 28px;
-  margin-right: 0.5rem;
+  height: 32px;
+  margin-right: 1rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.06));
 }
 
 .navLinks {
@@ -52,23 +64,74 @@
 
 .navLinksInner {
   display: flex;
-  gap: 2rem;
+  gap: 1.2rem;
+  position: relative;
+  padding: 0.3rem;
+  border-radius: 14px;
+  background-color: rgba(0, 0, 0, 0.02);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.03);
 }
 
 .navLink {
+  display: flex;
+  align-items: center;
   color: #333;
   text-decoration: none;
   font-size: 0.95rem;
   font-weight: 500;
-  padding: 0.4rem 0.8rem;
-  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  border-radius: 10px;
   transition: all 0.2s ease;
   white-space: nowrap;
+  gap: 0.4rem;
+}
+
+.navLinkIcon {
+  font-size: 1.1rem;
+  transition: transform 0.2s ease;
+}
+
+.navLinkText {
+  position: relative;
+}
+
+.navLinkText::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background-color: #0071e3;
+  transition: width 0.3s ease;
 }
 
 .navLink:hover {
   color: #0071e3;
   background-color: rgba(0, 113, 227, 0.05);
+  transform: translateY(-1px);
+}
+
+.navLink:hover .navLinkIcon {
+  transform: scale(1.1);
+}
+
+.navLink:hover .navLinkText::after {
+  width: 100%;
+}
+
+.activeNavLink {
+  color: #0071e3;
+  background-color: rgba(0, 113, 227, 0.08);
+  font-weight: 600;
+}
+
+.activeNavLink .navLinkIcon {
+  transform: scale(1.1);
+}
+
+.activeNavLink .navLinkText::after {
+  width: 100%;
 }
 
 .navRight {
@@ -79,39 +142,32 @@
 .authButtons {
   display: flex;
   gap: 0.75rem;
+  margin-left: 0.5rem;
 }
 
 .loginButton {
   color: #0071e3;
   background-color: transparent;
-  border: none;
-  padding: 0.45rem 1rem;
+  border: 1px solid rgba(0, 113, 227, 0.3);
+  padding: 0.45rem 1.2rem;
   font-size: 0.9rem;
   font-weight: 500;
-  border-radius: 8px;
+  border-radius: 20px;
   cursor: pointer;
   text-decoration: none;
   transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .loginButton:hover {
   background-color: rgba(0, 113, 227, 0.05);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 113, 227, 0.15);
 }
 
-.registerButton {
-  color: white;
-  background-color: #0071e3;
-  border: none;
-  padding: 0.45rem 1rem;
-  font-size: 0.9rem;
-  font-weight: 500;
-  border-radius: 8px;
-  cursor: pointer;
-  text-decoration: none;
-  transition: all 0.2s ease;
-}
-
-.registerButton:hover {
+Button:hover {
   background-color: #0077ed;
   box-shadow: 0 2px 8px rgba(0, 113, 227, 0.3);
 }
@@ -123,49 +179,62 @@
 .profileButton {
   display: flex;
   align-items: center;
-  padding: 0.4rem 0.8rem;
-  background-color: transparent;
-  border: none;
+  padding: 0.5rem 1rem;
+  background-color: rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(0, 0, 0, 0.06);
   color: #333;
   font-size: 0.95rem;
   font-weight: 500;
   cursor: pointer;
-  border-radius: 8px;
-  transition: all 0.2s ease;
+  border-radius: 10px;
+  transition: all 0.25s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
 .profileButton:hover {
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: rgba(0, 113, 227, 0.05);
+  border-color: rgba(0, 113, 227, 0.2);
+  color: #0071e3;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(0, 113, 227, 0.08);
 }
 
 .dropdownArrow {
   display: inline-block;
-  margin-left: 0.4rem;
+  margin-left: 0.5rem;
+  font-size: 0.8rem;
+  opacity: 0.7;
 }
 
 .badge {
   background-color: #0071e3;
   color: white;
   font-size: 0.7rem;
-  padding: 0.15rem 0.4rem;
-  border-radius: 6px;
-  margin-right: 0.4rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 20px;
+  margin-right: 0.6rem;
   font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: 0.01em;
+  box-shadow: 0 2px 8px rgba(0, 113, 227, 0.25);
 }
 
 .dropdownMenu {
   position: absolute;
-  top: calc(100% + 0.5rem);
+  top: calc(100% + 0.7rem);
   right: 0;
-  width: 240px;
+  width: 260px;
   background-color: rgba(255, 255, 255, 0.95);
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1), 
+              0 2px 10px rgba(0, 0, 0, 0.05);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
   overflow: hidden;
   z-index: 1000;
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.03);
 }
 
 .dropdownItem {
@@ -211,12 +280,16 @@
   top: 100%;
   left: 0;
   width: 100%;
-  background-color: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  background-color: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   z-index: 999;
+  border-bottom-left-radius: 16px;
+  border-bottom-right-radius: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.03);
+  border-top: none;
 }
 
 .mobileMenuLinks {
@@ -226,8 +299,9 @@
 }
 
 .mobileNavLink {
-  display: block;
-  padding: 0.9rem 1.5rem;
+  display: flex;
+  align-items: center;
+  padding: 1rem 1.5rem;
   color: #333;
   text-decoration: none;
   font-size: 1rem;
@@ -236,37 +310,67 @@
   border: none;
   width: 100%;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: all 0.25s ease;
   font-weight: 500;
+  gap: 0.75rem;
+  border-radius: 0;
+}
+
+.mobileNavIcon {
+  font-size: 1.2rem;
+  transition: transform 0.25s ease;
 }
 
 .mobileNavLink:hover {
-  background-color: rgba(0, 113, 227, 0.05);
+  background-color: rgba(0, 113, 227, 0.08);
   color: #0071e3;
+  padding-left: 1.8rem;
+}
+
+.mobileNavLink:hover .mobileNavIcon {
+  transform: scale(1.15);
 }
 
 .userInfo {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.9rem 1.5rem;
-  color: #666;
+  padding: 1rem 1.5rem;
+  color: #555;
   font-size: 0.9rem;
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   border-top: 1px solid rgba(0, 0, 0, 0.05);
-  margin-top: 0.5rem;
-  margin-bottom: 0.5rem;
+  margin-top: 0.7rem;
+  margin-bottom: 0.7rem;
   background-color: rgba(0, 0, 0, 0.02);
+  position: relative;
+  overflow: hidden;
+}
+
+.userInfo::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background-color: #0071e3;
+  opacity: 0.5;
 }
 
 .premiumBadge {
   background-color: #0071e3;
   color: white;
   font-size: 0.7rem;
-  padding: 0.15rem 0.4rem;
-  border-radius: 6px;
-  margin-left: 0.4rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 20px;
+  margin-left: 0.6rem;
   font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: 0.01em;
+  box-shadow: 0 2px 8px rgba(0, 113, 227, 0.25);
 }
 
 /* Responsive styles */
