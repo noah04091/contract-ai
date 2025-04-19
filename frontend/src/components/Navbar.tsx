@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import styles from "../styles/Navbar.module.css";
 import Notification from "./Notification";
 import logo from "../assets/logo.png";
@@ -15,6 +16,7 @@ export default function Navbar() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [notification, setNotification] = useState<{ message: string; type?: "success" | "error" } | null>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -52,6 +54,20 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Scroll handler to add glassmorphism effect when scrolled
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 20) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   // 🚪 Logout-Handler
   const handleLogout = async () => {
     try {
@@ -70,59 +86,153 @@ export default function Navbar() {
   };
 
   return (
-    <nav className={styles.navbar}>
+    <motion.nav 
+      className={`${styles.navbar} ${isScrolled ? styles.navbarScrolled : ""}`}
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+    >
       <div className={styles.navbarContent}>
         <div className={styles.leftSection}>
-          <button
+          <motion.button
             className={styles.hamburger}
             onClick={() => setMobileMenuOpen((prev) => !prev)}
             aria-label="Menü öffnen"
+            whileTap={{ scale: 0.95 }}
           >
-            ☰
-          </button>
+            {mobileMenuOpen ? "✕" : "☰"}
+          </motion.button>
           <Link to="/" className={styles.logoLink}>
-            <img src={logo} alt="Contract AI Logo" className={styles.logoImage} />
+            <motion.img 
+              src={logo} 
+              alt="Contract AI Logo" 
+              className={styles.logoImage}
+              whileHover={{ scale: 1.05 }}
+              transition={{ duration: 0.2 }}
+            />
           </Link>
         </div>
 
-        <div className={`${styles.navLinks} ${mobileMenuOpen ? styles.showMenu : ""}`}>
-          <Link to="/contracts" className={styles.navLink}>📁 Verträge</Link>
-          <Link to="/optimizer" className={styles.navLink}>🧠 Optimierer</Link>
-          <Link to="/compare" className={styles.navLink}>📊 Vergleich</Link>
-          <Link to="/chat" className={styles.navLink}>💬 KI-Chat</Link>
-          {user && !user.subscriptionActive && (
-            <Link to="/pricing" className={styles.navLink}>💰 Preise</Link>
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div 
+              className={`${styles.mobileMenu}`}
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+            >
+              <div className={styles.mobileMenuLinks}>
+                <Link to="/contracts" className={styles.mobileNavLink}>📁 Verträge</Link>
+                <Link to="/optimizer" className={styles.mobileNavLink}>🧠 Optimierer</Link>
+                <Link to="/compare" className={styles.mobileNavLink}>📊 Vergleich</Link>
+                <Link to="/chat" className={styles.mobileNavLink}>💬 KI-Chat</Link>
+                {user && !user.subscriptionActive && (
+                  <Link to="/pricing" className={styles.mobileNavLink}>💰 Preise</Link>
+                )}
+                {user && (
+                  <>
+                    <div className={styles.userInfo}>
+                      <span>✅ {user.email}</span>
+                      {user.subscriptionActive && (
+                        <span className={styles.premiumBadge}>Premium</span>
+                      )}
+                    </div>
+                    <Link to="/me" className={styles.mobileNavLink}>👤 Profil</Link>
+                    <button onClick={handleLogout} className={styles.mobileNavLink}>🚪 Logout</button>
+                  </>
+                )}
+              </div>
+            </motion.div>
           )}
+        </AnimatePresence>
+
+        <div className={styles.navLinks}>
+          <motion.div className={styles.navLinksInner}>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Link to="/contracts" className={styles.navLink}>📁 Verträge</Link>
+            </motion.div>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Link to="/optimizer" className={styles.navLink}>🧠 Optimierer</Link>
+            </motion.div>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Link to="/compare" className={styles.navLink}>📊 Vergleich</Link>
+            </motion.div>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Link to="/chat" className={styles.navLink}>💬 KI-Chat</Link>
+            </motion.div>
+            {user && !user.subscriptionActive && (
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Link to="/pricing" className={styles.navLink}>💰 Preise</Link>
+              </motion.div>
+            )}
+          </motion.div>
         </div>
 
         <div className={styles.navRight}>
-          {user && (
+          {user ? (
             <div className={styles.dropdownWrapper} ref={dropdownRef}>
-              <button
+              <motion.button
                 onClick={() => setDropdownOpen((prev) => !prev)}
                 className={styles.profileButton}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
-                👤 {user.subscriptionActive && <span className={styles.badge}>Premium</span>} Account ▾
-              </button>
-              {dropdownOpen && (
-                <div className={styles.dropdownMenu}>
-                  <span className={styles.dropdownItem}>✅ {user.email}</span>
-                  <Link to="/me" className={styles.dropdownItem}>👤 Profil</Link>
-                  <button onClick={handleLogout} className={styles.dropdownItem}>🚪 Logout</button>
-                </div>
-              )}
+                👤 {user.subscriptionActive && <span className={styles.badge}>Premium</span>} Account 
+                <motion.span
+                  animate={{ rotate: dropdownOpen ? 180 : 0 }}
+                  transition={{ duration: 0.3 }}
+                  className={styles.dropdownArrow}
+                >
+                  ▾
+                </motion.span>
+              </motion.button>
+              
+              <AnimatePresence>
+                {dropdownOpen && (
+                  <motion.div 
+                    className={styles.dropdownMenu}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <span className={styles.dropdownItem}>✅ {user.email}</span>
+                    <Link to="/me" className={styles.dropdownItem}>👤 Profil</Link>
+                    <button onClick={handleLogout} className={styles.dropdownItem}>🚪 Logout</button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          ) : (
+            <div className={styles.authButtons}>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Link to="/login" className={styles.loginButton}>Anmelden</Link>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Link to="/register" className={styles.registerButton}>Registrieren</Link>
+              </motion.div>
             </div>
           )}
         </div>
       </div>
 
-      {notification && (
-        <Notification
-          message={notification.message}
-          type={notification.type}
-          onClose={() => setNotification(null)}
-        />
-      )}
-    </nav>
+      <AnimatePresence>
+        {notification && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Notification
+              message={notification.message}
+              type={notification.type}
+              onClose={() => setNotification(null)}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.nav>
   );
 }
