@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from "react-route
 import { useEffect, useState } from "react";
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
-import Footer from "./components/Footer";
 import RequireAuth from "./components/RequireAuth";
 import PageLoader from "./components/PageLoader";
 
@@ -78,7 +77,6 @@ function AppWithLoader() {
           <Route path="/better-contracts" element={<RequireAuth><BetterContracts /></RequireAuth>} />
         </Routes>
       </main>
-      <Footer />
     </div>
   );
 }
