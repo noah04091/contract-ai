@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import "../styles/landing.css";
+import Sidebar from '../components/Sidebar'; // Importiere die Sidebar-Komponente
 
 // Importiere Bilder
 import logo from "../assets/logo-contractai.png";
@@ -18,8 +19,16 @@ const HomeRedesign = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState('hero');
+  const [sidebarOpen, setSidebarOpen] = useState(false); // State für Sidebar
   const heroRef = useRef<HTMLDivElement>(null);
   const sectionsRef = useRef<{ [key: string]: HTMLElement | null }>({});
+
+  // Register section refs
+  const registerSection = (id: string, element: HTMLElement | null) => {
+    if (element) {
+      sectionsRef.current[id] = element;
+    }
+  };
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -88,40 +97,157 @@ const HomeRedesign = () => {
     window.addEventListener('scroll', handleScroll);
     handleScroll();
     
-    return () => window.removeEventListener('scroll', handleScroll);
+    // Style-Tag für zusätzliche Styles
+    const styleTag = document.createElement('style');
+    styleTag.textContent = `
+      /* Hamburger-Menü */
+      .hamburger-menu {
+        display: flex;
+        align-items: center;
+      }
+      
+      .hamburger-button {
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 8px;
+        border-radius: 8px;
+        color: var(--text-color);
+        transition: background-color 0.3s ease;
+      }
+      
+      .hamburger-button:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+      }
+      
+      /* Auth-Aktionen */
+      .auth-actions {
+        display: flex;
+        align-items: center;
+        margin-left: auto;
+      }
+      
+      .user-menu {
+        display: flex;
+        align-items: center;
+      }
+      
+      .profile-button {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: 500;
+        font-size: 14px;
+        background-color: #f5f5f7;
+        color: var(--text-color);
+        transition: all 0.3s ease;
+        text-decoration: none;
+      }
+      
+      .profile-button:hover {
+        background-color: #e5e5e7;
+      }
+      
+      /* Navbar Struktur anpassen */
+      .nav-container {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: 20px;
+      }
+      
+      @media (max-width: 992px) {
+        .nav-links {
+          display: none;
+        }
+        
+        .nav-container {
+          grid-template-columns: auto 1fr auto;
+        }
+        
+        .mobile-open {
+          display: flex;
+          flex-direction: column;
+          position: absolute;
+          top: 100%;
+          left: 0;
+          width: 100%;
+          background: white;
+          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+          border-radius: 0 0 12px 12px;
+          overflow: hidden;
+          z-index: 1000;
+        }
+      }
+      
+      @media (min-width: 993px) {
+        .mobile-menu-btn {
+          display: none;
+        }
+      }
+    `;
+    document.head.appendChild(styleTag);
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      document.head.removeChild(styleTag);
+    };
   }, []);
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
   };
 
-  // Register section refs
-  const registerSection = (id: string, element: HTMLElement | null) => {
-    if (element) {
-      sectionsRef.current[id] = element;
-    }
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
   };
 
   return (
     <div className="landing-page">
+      {/* Sidebar Component */}
+      <Sidebar />
+
       {/* Navigation */}
       <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
         <div className="nav-container">
+          {/* Hamburger Menu (Left) */}
+          <div className="hamburger-menu">
+            <button 
+              className="hamburger-button" 
+              onClick={toggleSidebar}
+              aria-label="Toggle menu"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+
+          {/* Logo */}
           <div className="logo">
             <Link to="/">
               <img src={logo} alt="Contract AI Logo" />
             </Link>
           </div>
+
+          {/* Main Navigation (Center) */}
           <ul className={`nav-links ${mobileMenuOpen ? 'mobile-open' : ''}`}>
             <li className={activeSection === 'dashboard' ? 'active' : ''}>
-              <Link to="/" className="nav-link">
-                <span className="nav-icon">🏠</span>
+              <Link to="/dashboard" className="nav-link">
+                <span className="nav-icon">📊</span>
                 Dashboard
               </Link>
             </li>
             <li className={activeSection === 'features' ? 'active' : ''}>
               <Link to="/contracts" className="nav-link">
-                <span className="nav-icon">📁</span>
+                <span className="nav-icon">📄</span>
                 Verträge
               </Link>
             </li>
@@ -131,34 +257,36 @@ const HomeRedesign = () => {
                 Optimierer
               </Link>
             </li>
-            {!user?.isAuthenticated || (user && user.plan !== 'premium') ? (
+            {!user?.isAuthenticated && (
               <li className={activeSection === 'pricing' ? 'active' : ''}>
                 <Link to="/pricing" className="nav-link">
                   <span className="nav-icon">💰</span>
                   Preise
                 </Link>
               </li>
-            ) : null}
+            )}
+          </ul>
+
+          {/* Auth Buttons (Right) */}
+          <div className="auth-actions">
             {isLoading ? (
-              <li className="loading-auth">
+              <div className="loading-auth">
                 <div className="loading-spinner"></div>
-              </li>
+              </div>
             ) : user?.isAuthenticated ? (
-              <li className="auth-buttons">
-                <Link to="/dashboard" className="primary-button">
+              <div className="user-menu">
+                <Link to="/me" className="profile-button">
                   <span className="button-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                      <line x1="8" y1="12" x2="16" y2="12"></line>
-                      <line x1="8" y1="16" x2="16" y2="16"></line>
-                      <line x1="8" y1="8" x2="10" y2="8"></line>
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="12" cy="7" r="4"></circle>
                     </svg>
                   </span>
-                  Zum Dashboard
+                  Profil
                 </Link>
-              </li>
+              </div>
             ) : (
-              <li className="auth-buttons">
+              <div className="auth-buttons">
                 <Link to="/login" className="login-button">
                   <span className="button-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -180,9 +308,10 @@ const HomeRedesign = () => {
                   </span>
                   Registrieren
                 </Link>
-              </li>
+              </div>
             )}
-          </ul>
+          </div>
+
           <div className={`mobile-menu-btn ${mobileMenuOpen ? 'active' : ''}`} onClick={toggleMobileMenu}>
             <span></span>
             <span></span>
