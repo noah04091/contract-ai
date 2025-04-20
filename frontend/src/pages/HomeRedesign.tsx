@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import "../styles/landing.css";
+import Sidebar from '../components/Sidebar';
 
 // Importiere Bilder
 import logo from "../assets/logo-contractai.png";
@@ -21,13 +22,6 @@ const HomeRedesign = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
   const sectionsRef = useRef<{ [key: string]: HTMLElement | null }>({});
-
-  // Register section refs
-  const registerSection = (id: string, element: HTMLElement | null) => {
-    if (element) {
-      sectionsRef.current[id] = element;
-    }
-  };
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -107,40 +101,48 @@ const HomeRedesign = () => {
     setSidebarOpen(!sidebarOpen);
   };
 
+  // Register section refs
+  const registerSection = (id: string, element: HTMLElement | null) => {
+    if (element) {
+      sectionsRef.current[id] = element;
+    }
+  };
+
   return (
     <div className="landing-page">
+      {/* Sidebar Component */}
+      <div className={`sidebar-container ${sidebarOpen ? 'open' : ''}`}>
+        <Sidebar />
+      </div>
+
       {/* Navigation */}
       <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
         <div className="nav-container">
-          {/* Left: Hamburger Menu */}
-          <div className="nav-left">
-            <button 
-              className="hamburger-button" 
-              onClick={toggleSidebar}
-              aria-label="Menu"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="3" y1="12" x2="21" y2="12"></line>
-                <line x1="3" y1="6" x2="21" y2="6"></line>
-                <line x1="3" y1="18" x2="21" y2="18"></line>
-              </svg>
-            </button>
-            
-            {/* Logo */}
-            <Link to="/" className="logo">
+          {/* Hamburger Menu Button (Left) */}
+          <div className="hamburger-menu" onClick={toggleSidebar}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </div>
+          
+          {/* Logo */}
+          <div className="logo">
+            <Link to="/">
               <img src={logo} alt="Contract AI Logo" />
             </Link>
           </div>
           
-          {/* Center: Main Navigation */}
-          <ul className="nav-links">
+          {/* Navigation Links (Middle) */}
+          <ul className={`nav-links ${mobileMenuOpen ? 'mobile-open' : ''}`}>
             <li className={activeSection === 'dashboard' ? 'active' : ''}>
               <Link to="/dashboard" className="nav-link">
                 <span className="nav-icon">📊</span>
                 Dashboard
               </Link>
             </li>
-            <li className={activeSection === 'contracts' ? 'active' : ''}>
+            <li className={activeSection === 'features' ? 'active' : ''}>
               <Link to="/contracts" className="nav-link">
                 <span className="nav-icon">📄</span>
                 Verträge
@@ -152,18 +154,18 @@ const HomeRedesign = () => {
                 Optimierer
               </Link>
             </li>
-            {!user?.isAuthenticated && (
+            {!user?.isAuthenticated || (user && user.plan !== 'premium') ? (
               <li className={activeSection === 'pricing' ? 'active' : ''}>
                 <Link to="/pricing" className="nav-link">
                   <span className="nav-icon">💰</span>
                   Preise
                 </Link>
               </li>
-            )}
+            ) : null}
           </ul>
-
-          {/* Right: Auth Buttons */}
-          <div className="nav-right">
+          
+          {/* Auth Buttons (Right) */}
+          <div className="auth-area">
             {isLoading ? (
               <div className="loading-auth">
                 <div className="loading-spinner"></div>
@@ -178,6 +180,17 @@ const HomeRedesign = () => {
                     </svg>
                   </span>
                   Profil
+                </Link>
+                <Link to="/dashboard" className="primary-button">
+                  <span className="button-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                      <line x1="8" y1="12" x2="16" y2="12"></line>
+                      <line x1="8" y1="16" x2="16" y2="16"></line>
+                      <line x1="8" y1="8" x2="10" y2="8"></line>
+                    </svg>
+                  </span>
+                  Dashboard
                 </Link>
               </div>
             ) : (
@@ -205,83 +218,35 @@ const HomeRedesign = () => {
                 </Link>
               </div>
             )}
-            
-            {/* Mobile Menu Toggle Button */}
-            <button className={`mobile-menu-btn ${mobileMenuOpen ? 'active' : ''}`} onClick={toggleMobileMenu} aria-label="Mobile Menu">
-              <span></span>
-              <span></span>
-              <span></span>
-            </button>
+            <div className="theme-toggle">
+              <Link to="#" className="theme-button">
+                <span className="light-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="5"></circle>
+                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                  </svg>
+                </span>
+                <span className="dark-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                  </svg>
+                </span>
+              </Link>
+            </div>
           </div>
-        </div>
-        
-        {/* Mobile Menu */}
-        <div className={`mobile-menu ${mobileMenuOpen ? 'open' : ''}`}>
-          <ul className="mobile-nav-links">
-            <li>
-              <Link to="/dashboard" className="mobile-nav-link">
-                <span className="nav-icon">📊</span>
-                Dashboard
-              </Link>
-            </li>
-            <li>
-              <Link to="/contracts" className="mobile-nav-link">
-                <span className="nav-icon">📄</span>
-                Verträge
-              </Link>
-            </li>
-            <li>
-              <Link to="/optimizer" className="mobile-nav-link">
-                <span className="nav-icon">🧠</span>
-                Optimierer
-              </Link>
-            </li>
-            {!user?.isAuthenticated && (
-              <li>
-                <Link to="/pricing" className="mobile-nav-link">
-                  <span className="nav-icon">💰</span>
-                  Preise
-                </Link>
-              </li>
-            )}
-            <li className="mobile-auth">
-              {user?.isAuthenticated ? (
-                <Link to="/me" className="mobile-profile-button">
-                  <span className="button-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                      <circle cx="12" cy="7" r="4"></circle>
-                    </svg>
-                  </span>
-                  Profil
-                </Link>
-              ) : (
-                <>
-                  <Link to="/login" className="mobile-login-button">
-                    <span className="button-icon">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
-                        <polyline points="10 17 15 12 10 7"></polyline>
-                        <line x1="15" y1="12" x2="3" y2="12"></line>
-                      </svg>
-                    </span>
-                    Login
-                  </Link>
-                  <Link to="/register" className="mobile-register-button">
-                    <span className="button-icon">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="8.5" cy="7" r="4"></circle>
-                        <line x1="20" y1="8" x2="20" y2="14"></line>
-                        <line x1="23" y1="11" x2="17" y2="11"></line>
-                      </svg>
-                    </span>
-                    Registrieren
-                  </Link>
-                </>
-              )}
-            </li>
-          </ul>
+          
+          <div className={`mobile-menu-btn ${mobileMenuOpen ? 'active' : ''}`} onClick={toggleMobileMenu}>
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
         </div>
       </nav>
 
@@ -596,7 +561,7 @@ const HomeRedesign = () => {
           </div>
           
           <div className="pricing-plans">
-            <div className="pricing-plan standard reveal-card" style={{"--animation-order": 0} as React.CSSProperties}>
+            <div className="pricing-plan standard" style={{"--animation-order": 0} as React.CSSProperties}>
               <div className="plan-header">
                 <div className="plan-name">Standard</div>
                 <div className="plan-price">
