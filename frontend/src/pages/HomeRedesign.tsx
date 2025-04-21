@@ -15,7 +15,6 @@ interface User {
 
 const HomeRedesign = () => {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(false); // Auf false gesetzt, um sofortige Anzeige der Buttons zu ermöglichen
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState('hero');
