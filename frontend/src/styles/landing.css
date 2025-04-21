@@ -260,6 +260,7 @@ a {
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.05);
   transition: var(--transition);
   height: 64px;
+  /* Kein Bottom-Margin um schwarzen Balken zu entfernen */
 }
 
 .navbar.scrolled {
@@ -494,51 +495,25 @@ a {
   transform: translateY(-8px) rotate(-45deg);
 }
 
+/* Theme-Toggle ausblenden, wie gewünscht */
 .theme-toggle {
-  margin-left: 15px;
-}
-
-.theme-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background-color: rgba(0, 0, 0, 0.05);
-  transition: var(--transition);
-  line-height: 0;
-}
-
-.theme-button:hover {
-  background-color: rgba(0, 0, 0, 0.1);
-  transform: translateY(-2px);
-}
-
-.dark-icon {
   display: none;
 }
 
-.loading-spinner {
-  width: 20px;
-  height: 20px;
-  border: 2px solid rgba(61, 124, 243, 0.3);
-  border-radius: 50%;
-  border-top-color: var(--primary-color);
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+/* Loading-Spinner ausblenden für sofortige Button-Anzeige */
+.loading-auth {
+  display: none;
 }
 
 /* === HERO SECTION === */
 .hero {
   background: linear-gradient(135deg, #2c5dd1 0%, #5a42ef 100%);
   color: white;
-  padding: 140px 20px 80px;
+  /* Padding-top anpassen, um direkt an die Navbar anzuschließen */
+  padding-top: 64px;
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-bottom: 80px;
   text-align: center;
   position: relative;
   overflow: hidden;
@@ -548,6 +523,7 @@ a {
   justify-content: center;
   align-items: center;
   transition: var(--transition-long);
+  margin-top: 0; /* Kein Margin-top zwischen Navbar und Hero */
 }
 
 .hero-bg {
@@ -1031,6 +1007,62 @@ a {
   perspective: 1000px;
 }
 
+.image-mac-frame {
+  background: white;
+  border-radius: 14px;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  transform: rotateY(-5deg) rotateX(5deg);
+  transition: var(--transition);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.showcase-image:hover .image-mac-frame {
+  transform: rotateY(0) rotateX(0);
+}
+
+.image-mac-topbar {
+  background: #f2f2f2;
+  height: 28px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+}
+
+.image-mac-buttons {
+  display: flex;
+  gap: 6px;
+}
+
+.image-mac-buttons span {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.image-mac-buttons span:first-child {
+  background-color: #ff5f57;
+}
+
+.image-mac-buttons span:nth-child(2) {
+  background-color: #fdbc2c;
+}
+
+.image-mac-buttons span:last-child {
+  background-color: #28c941;
+}
+
+.image-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.image-container img {
+  width: 100%;
+  display: block;
+}
+
 .image-shine {
   position: absolute;
   top: 0;
@@ -1241,11 +1273,6 @@ a {
   background-color: var(--bg-dark);
 }
 
-.enterprise-cta:hover {
-  background-color: #333;
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
-}
-
 /* === CTA SECTION === */
 .cta-section {
   background: linear-gradient(135deg, #3d7cf3 0%, #5a42ef 100%);
@@ -1434,12 +1461,6 @@ a {
   background-color: rgba(255, 255, 255, 0.05);
 }
 
-.social-link:hover {
-  color: var(--text-white);
-  background-color: rgba(255, 255, 255, 0.1);
-  transform: translateY(-3px);
-}
-
 /* === RESPONSIVE STYLES === */
 @media (max-width: 1200px) {
   .features-grid {
@@ -1539,6 +1560,7 @@ a {
   
   .nav-links.mobile-open {
     right: 0;
+    z-index: 1050;
   }
   
   .nav-links li {
@@ -1572,16 +1594,14 @@ a {
     justify-content: center;
   }
   
+  /* Hamburger immer anzeigen auf mobilen Geräten */
   .hamburger-menu {
     display: flex;
   }
   
-  .auth-area {
-    display: none;
-  }
-  
-  .sidebar-container {
-    z-index: 1200;
+  /* Mobile Menu Button besser positionieren */
+  .mobile-menu-btn {
+    margin-left: 10px;
   }
   
   .hero h1 {
@@ -1671,67 +1691,15 @@ a {
   .showcase-items {
     gap: 80px;
   }
-}-mac-buttons {
-  display: flex;
-  gap: 6px;
 }
 
-.image-mac-buttons span {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-}
-
-.image-mac-buttons span:first-child {
-  background-color: #ff5f57;
-}
-
-.image-mac-buttons span:nth-child(2) {
-  background-color: #fdbc2c;
-}
-
-.image-mac-buttons span:last-child {
-  background-color: #28c941;
-}
-
-.image-container {
+/* Zusätzliche Klasse für die Vermeidung von weißem Raum zwischen Navbar und Hero-Sektion */
+.landing-page {
+  overflow-x: hidden;
   position: relative;
-  overflow: hidden;
 }
 
-.image-container img {
-  width: 100%;
-  display: block;
-}
-
-.image-mac-frame {
-  background: white;
-  border-radius: 14px;
-  box-shadow: var(--shadow-lg);
-  overflow: hidden;
-  transform: rotateY(-5deg) rotateX(5deg);
-  transition: var(--transition);
-  border: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-.showcase-image:hover .image-mac-frame {
-  transform: rotateY(0) rotateX(0);
-}
-
-.image-mac-topbar {
-  background: #f2f2f2;
-  height: 28px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-  display: flex;
-  align-items: center;
-  padding: 0 10px;
-}
-
-.image-mac-buttons {
-  display: flex;
-  gap: 6px;
-}
-
+/* Diese Klasse wird benötigt, um die .image CSS-Regel zu vervollständigen */
 .image {
   /* Beispiel-Regeln */
   width: 100%;
