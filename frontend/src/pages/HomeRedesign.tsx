@@ -136,13 +136,19 @@ const HomeRedesign = () => {
           
           {/* Navigation Links (Middle) */}
           <ul className={`nav-links ${mobileMenuOpen ? 'mobile-open' : ''}`}>
+            <li className={activeSection === 'home' ? 'active' : ''}>
+              <Link to="/" className="nav-link">
+                <span className="nav-icon">🏠</span>
+                Home
+              </Link>
+            </li>
             <li className={activeSection === 'dashboard' ? 'active' : ''}>
               <Link to="/dashboard" className="nav-link">
                 <span className="nav-icon">📊</span>
                 Dashboard
               </Link>
             </li>
-            <li className={activeSection === 'features' ? 'active' : ''}>
+            <li className={activeSection === 'contracts' ? 'active' : ''}>
               <Link to="/contracts" className="nav-link">
                 <span className="nav-icon">📄</span>
                 Verträge
@@ -261,6 +267,12 @@ const HomeRedesign = () => {
                   <h3 className="sidebar-title">Navigation</h3>
                   <ul className="sidebar-nav">
                     <li>
+                      <Link to="/" className="sidebar-link" onClick={() => setSidebarOpen(false)}>
+                        <span className="sidebar-icon">🏠</span>
+                        Home
+                      </Link>
+                    </li>
+                    <li>
                       <Link to="/dashboard" className="sidebar-link" onClick={() => setSidebarOpen(false)}>
                         <span className="sidebar-icon">📊</span>
                         Dashboard
@@ -273,21 +285,45 @@ const HomeRedesign = () => {
                       </Link>
                     </li>
                     <li>
+                      <Link to="/calendar" className="sidebar-link" onClick={() => setSidebarOpen(false)}>
+                        <span className="sidebar-icon">🗓️</span>
+                        Kalender
+                      </Link>
+                    </li>
+                    <li>
                       <Link to="/optimizer" className="sidebar-link" onClick={() => setSidebarOpen(false)}>
                         <span className="sidebar-icon">🧠</span>
                         Optimierer
                       </Link>
                     </li>
                     <li>
-                      <Link to="/calendar" className="sidebar-link" onClick={() => setSidebarOpen(false)}>
-                        <span className="sidebar-icon">📅</span>
-                        Fristen
+                      <Link to="/compare" className="sidebar-link" onClick={() => setSidebarOpen(false)}>
+                        <span className="sidebar-icon">🔍</span>
+                        Vergleich
                       </Link>
                     </li>
                     <li>
-                      <Link to="/compare" className="sidebar-link" onClick={() => setSidebarOpen(false)}>
+                      <Link to="/better-contracts" className="sidebar-link" onClick={() => setSidebarOpen(false)}>
+                        <span className="sidebar-icon">💡</span>
+                        Bessere Anbieter
+                      </Link>
+                    </li>
+                    <li>
+                      <Link to="/generator" className="sidebar-link" onClick={() => setSidebarOpen(false)}>
+                        <span className="sidebar-icon">⚙️</span>
+                        Generator
+                      </Link>
+                    </li>
+                    <li>
+                      <Link to="/chat" className="sidebar-link" onClick={() => setSidebarOpen(false)}>
+                        <span className="sidebar-icon">💬</span>
+                        Vertrags-Chat
+                      </Link>
+                    </li>
+                    <li>
+                      <Link to="/calendar-view" className="sidebar-link" onClick={() => setSidebarOpen(false)}>
                         <span className="sidebar-icon">⚖️</span>
-                        Vergleich
+                        Fristen
                       </Link>
                     </li>
                   </ul>
