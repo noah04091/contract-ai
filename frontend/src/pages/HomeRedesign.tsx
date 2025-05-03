@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion'; // Import framer-motion
 import "../styles/landing.css";
-import Sidebar from '../components/Sidebar';
 
 // Importiere Bilder
 import logo from "../assets/logo-contractai.png";
@@ -106,14 +106,16 @@ const HomeRedesign = () => {
     }
   };
 
+  // Close sidebar when clicking outside
+  const handleClickOutside = () => {
+    if (sidebarOpen) {
+      setSidebarOpen(false);
+    }
+  };
+
   return (
     <div className="landing-page">
-      {/* Sidebar Component */}
-      <div className={`sidebar-container ${sidebarOpen ? 'open' : ''}`}>
-        <Sidebar />
-      </div>
-
-      {/* Navigation */}
+      {/* Integrated Navbar with Sidebar */}
       <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
         <div className="nav-container">
           {/* Hamburger Menu Button (Left) */}
@@ -222,6 +224,145 @@ const HomeRedesign = () => {
           </div>
         </div>
       </nav>
+
+      {/* Integrated Sidebar with Framer Motion */}
+      <AnimatePresence>
+        {sidebarOpen && (
+          <>
+            {/* Backdrop overlay */}
+            <motion.div 
+              className="sidebar-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.5 }}
+              exit={{ opacity: 0 }}
+              onClick={handleClickOutside}
+            />
+            
+            {/* Sidebar content */}
+            <motion.div 
+              className="sidebar"
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            >
+              <div className="sidebar-header">
+                <img src={logo} alt="Contract AI Logo" className="sidebar-logo" />
+                <button className="sidebar-close" onClick={toggleSidebar}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              </div>
+              
+              <div className="sidebar-content">
+                <div className="sidebar-section">
+                  <h3 className="sidebar-title">Navigation</h3>
+                  <ul className="sidebar-nav">
+                    <li>
+                      <Link to="/dashboard" className="sidebar-link" onClick={() => setSidebarOpen(false)}>
+                        <span className="sidebar-icon">📊</span>
+                        Dashboard
+                      </Link>
+                    </li>
+                    <li>
+                      <Link to="/contracts" className="sidebar-link" onClick={() => setSidebarOpen(false)}>
+                        <span className="sidebar-icon">📄</span>
+                        Verträge
+                      </Link>
+                    </li>
+                    <li>
+                      <Link to="/optimizer" className="sidebar-link" onClick={() => setSidebarOpen(false)}>
+                        <span className="sidebar-icon">🧠</span>
+                        Optimierer
+                      </Link>
+                    </li>
+                    <li>
+                      <Link to="/calendar" className="sidebar-link" onClick={() => setSidebarOpen(false)}>
+                        <span className="sidebar-icon">📅</span>
+                        Fristen
+                      </Link>
+                    </li>
+                    <li>
+                      <Link to="/compare" className="sidebar-link" onClick={() => setSidebarOpen(false)}>
+                        <span className="sidebar-icon">⚖️</span>
+                        Vergleich
+                      </Link>
+                    </li>
+                  </ul>
+                </div>
+                
+                {!user?.isAuthenticated ? (
+                  <div className="sidebar-section">
+                    <h3 className="sidebar-title">Account</h3>
+                    <div className="sidebar-auth">
+                      <Link to="/login" className="sidebar-auth-btn" onClick={() => setSidebarOpen(false)}>
+                        Login
+                      </Link>
+                      <Link to="/register" className="sidebar-auth-btn primary" onClick={() => setSidebarOpen(false)}>
+                        Registrieren
+                      </Link>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="sidebar-section">
+                    <h3 className="sidebar-title">Account</h3>
+                    <div className="sidebar-user">
+                      <div className="sidebar-user-info">
+                        <div className="sidebar-user-avatar">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                          </svg>
+                        </div>
+                        <div className="sidebar-user-details">
+                          <span className="sidebar-user-plan">
+                            {user.plan === 'premium' ? (
+                              <span className="premium-badge">Premium</span>
+                            ) : (
+                              <span className="standard-badge">Standard</span>
+                            )}
+                          </span>
+                        </div>
+                      </div>
+                      <Link to="/me" className="sidebar-user-profile" onClick={() => setSidebarOpen(false)}>
+                        Profil bearbeiten
+                      </Link>
+                    </div>
+                  </div>
+                )}
+                
+                <div className="sidebar-section">
+                  <h3 className="sidebar-title">Weitere Links</h3>
+                  <ul className="sidebar-links">
+                    <li>
+                      <Link to="/about" className="sidebar-link secondary" onClick={() => setSidebarOpen(false)}>
+                        Über uns
+                      </Link>
+                    </li>
+                    <li>
+                      <Link to="/Datenschutz" className="sidebar-link secondary" onClick={() => setSidebarOpen(false)}>
+                        Datenschutz
+                      </Link>
+                    </li>
+                    <li>
+                      <Link to="/AGB" className="sidebar-link secondary" onClick={() => setSidebarOpen(false)}>
+                        AGB
+                      </Link>
+                    </li>
+                    <li>
+                      <Link to="/Impressum" className="sidebar-link secondary" onClick={() => setSidebarOpen(false)}>
+                        Impressum
+                      </Link>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Hero Section - Direkt an die Navbar angrenzend */}
       <section className="hero" ref={heroRef}>
