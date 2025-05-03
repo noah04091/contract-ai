@@ -755,8 +755,8 @@ a {
 .hero {
   background: linear-gradient(135deg, #2c5dd1 0%, #5a42ef 100%);
   color: white;
-  /* Fix für den nahtlosen Übergang zur Navbar */
-  padding-top: 64px !important;
+  /* Reduzierter Abstand zur Navbar - Von 64px auf 15px */
+  padding-top: 15px !important;
   padding-left: 20px;
   padding-right: 20px;
   padding-bottom: 80px;
@@ -769,7 +769,7 @@ a {
   justify-content: center;
   align-items: center;
   transition: var(--transition-long);
-  margin-top: 0 !important; /* Wichtig: Kein Margin oben */
+  margin-top: 64px !important; /* Margin-top entsprechend der Navbar-Höhe setzen */
   border-top: none !important;
   box-shadow: none !important;
 }
@@ -1752,7 +1752,11 @@ a {
 @media (max-width: 992px) {
   .hero {
     min-height: 80vh;
-    padding: 120px 20px 60px;
+    padding-top: 15px !important;
+    margin-top: 60px !important; /* Angepasst für geringere Navbar-Höhe auf kleineren Bildschirmen */
+    padding-bottom: 60px;
+    padding-left: 20px;
+    padding-right: 20px;
   }
   
   .logo-hero img {
@@ -1797,6 +1801,10 @@ a {
 @media (max-width: 768px) {
   .navbar {
     height: 60px;
+  }
+  
+  .hero {
+    margin-top: 60px !important; /* Angepasst für mobile Navbar-Höhe */
   }
   
   .mobile-menu-btn {
@@ -1918,7 +1926,11 @@ a {
 
 @media (max-width: 576px) {
   .hero {
-    padding: 100px 20px 60px;
+    padding-top: 15px !important;
+    padding-bottom: 60px;
+    padding-left: 20px;
+    padding-right: 20px;
+    margin-top: 60px !important; /* Angepasst für mobile Navbar-Höhe */
   }
   
   .logo-hero img {
@@ -2005,7 +2017,7 @@ html, body, #root, .landing-page > div {
 
 /* Direkter Übergang zwischen Navbar und Hero gewährleisten */
 nav + section.hero {
-  margin-top: 0 !important;
-  padding-top: 64px !important;
+  margin-top: 64px !important; 
+  padding-top: 15px !important;
   border-top: none !important;
 }
