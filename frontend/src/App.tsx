@@ -2,7 +2,6 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import Navbar from "./components/Navbar";
-import Sidebar from "./components/Sidebar";
 import RequireAuth from "./components/RequireAuth";
 import PageLoader from "./components/PageLoader";
 
@@ -47,7 +46,6 @@ function AppWithLoader() {
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
       {loading && <PageLoader />}
       <Navbar />
-      <Sidebar />
       <main style={{ flex: 1, paddingTop: "60px" }}>
         <Routes>
           {/* 🔓 Öffentlich */}
