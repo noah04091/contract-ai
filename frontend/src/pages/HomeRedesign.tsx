@@ -136,12 +136,6 @@ const HomeRedesign = () => {
           
           {/* Navigation Links (Middle) */}
           <ul className={`nav-links ${mobileMenuOpen ? 'mobile-open' : ''}`}>
-            <li className={activeSection === 'home' ? 'active' : ''}>
-              <Link to="/" className="nav-link">
-                <span className="nav-icon">🏠</span>
-                Home
-              </Link>
-            </li>
             <li className={activeSection === 'dashboard' ? 'active' : ''}>
               <Link to="/dashboard" className="nav-link">
                 <span className="nav-icon">📊</span>
