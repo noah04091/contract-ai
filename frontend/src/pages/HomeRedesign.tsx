@@ -45,19 +45,22 @@ const HomeRedesign = () => {
 
     checkAuth();
     
-    // Scroll event listener
+    // Scroll event listener mit modifiziertem Parallax-Effekt
     const handleScroll = () => {
       const scrollPosition = window.scrollY;
       setScrolled(scrollPosition > 10);
       
-      // Parallax effect for hero section
+      // WICHTIG: Deaktiviere den Parallax-Effekt vollständig, um den weißen Balken zu vermeiden
       if (heroRef.current) {
+        // Behalt die Opazität bei, aber entferne die Transformation
         const opacity = Math.max(1 - scrollPosition / 900, 0.2);
-        const translateY = scrollPosition * 0.4;
         heroRef.current.style.opacity = opacity.toString();
+        
+        // Finde den hero-content und setze die Transformation auf 0
         const heroContent = heroRef.current.querySelector('.hero-content');
         if (heroContent) {
-          heroContent.setAttribute('style', `transform: translateY(${translateY}px)`);
+          // Setze die Transformation auf 0, um keine Lücken zu verursachen
+          heroContent.setAttribute('style', 'transform: translateY(0)');
         }
       }
       
@@ -86,6 +89,7 @@ const HomeRedesign = () => {
     };
     
     window.addEventListener('scroll', handleScroll);
+    // Initial call to ensure no transformation is applied on page load
     handleScroll();
     
     return () => window.removeEventListener('scroll', handleScroll);

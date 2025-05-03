@@ -262,7 +262,7 @@ a {
   z-index: 1000;
   transition: var(--transition);
   height: 64px;
-  /* Wichtige Fixes für den schwarzen Balken */
+  /* Wichtige Fixes für den Übergang */
   box-shadow: none !important;
   border-bottom: none !important;
   margin-bottom: 0 !important;
@@ -755,30 +755,41 @@ a {
 .hero {
   background: linear-gradient(135deg, #2c5dd1 0%, #5a42ef 100%);
   color: white;
-  /* Nahtloser Übergang zur Navbar */
-  padding-top: 0 !important;
-  padding-left: 20px;
-  padding-right: 20px;
-  padding-bottom: 80px;
-  text-align: center;
   position: relative;
-  overflow: hidden;
+  padding: 0 20px 80px; /* Entfernt padding-top und behält nur die anderen Paddings */
+  margin: 0 !important;
+  text-align: center;
+  overflow: visible; /* Wichtig für das ::before Element */
   min-height: 90vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   transition: var(--transition-long);
-  margin-top: 64px !important; /* Exakt die Höhe der Navbar */
+  margin-top: 0 !important; /* Wichtig: Kein margin-top mehr */
+  /* Fixed Specs für den nahtlosen Übergang */
   border-top: none !important;
   box-shadow: none !important;
 }
 
-/* Hero Section pseudo-elements entfernen */
-.hero::before,
-.hero::after {
-  display: none !important;
-  content: none !important;
+/* Der Schlüssel für den nahtlosen Übergang: Pseudoelement, das hinter die Navbar reicht */
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -64px; /* Exakt die Höhe der Navbar (negativ) */
+  left: 0;
+  right: 0;
+  height: 64px; /* Exakt die Höhe der Navbar */
+  background: inherit; /* Übernimmt den Gradienten von hero */
+  z-index: -1;
+}
+
+.hero-content {
+  /* Stellt sicher, dass der Inhalt nicht von der Navbar überlappt wird */
+  padding-top: 64px;
+  position: relative;
+  z-index: 2;
+  transform: none !important; /* Verhindert, dass JS/Parallax-Effekte den Abstand manipulieren */
 }
 
 .hero-bg {
@@ -1750,13 +1761,17 @@ a {
 }
 
 @media (max-width: 992px) {
-  .hero {
-    min-height: 80vh;
-    padding-top: 0 !important;
-    margin-top: 60px !important;
-    padding-bottom: 60px;
-    padding-left: 20px;
-    padding-right: 20px;
+  .navbar {
+    height: 60px;
+  }
+  
+  .hero::before {
+    top: -60px; /* Angepasst für kleinere Navbar */
+    height: 60px;
+  }
+  
+  .hero-content {
+    padding-top: 60px; /* Angepasst für kleinere Navbar */
   }
   
   .logo-hero img {
@@ -1803,9 +1818,13 @@ a {
     height: 60px;
   }
   
-  .hero {
-    margin-top: 60px !important; /* Angepasst für mobile Navbar-Höhe */
-    padding-top: 0 !important;
+  .hero::before {
+    top: -60px; /* Angepasst für mobile Navbar-Höhe */
+    height: 60px;
+  }
+  
+  .hero-content {
+    padding-top: 60px; /* Angepasst für mobile Navbar-Höhe */
   }
   
   .mobile-menu-btn {
@@ -1926,12 +1945,13 @@ a {
 }
 
 @media (max-width: 576px) {
-  .hero {
-    padding-top: 0 !important;
-    padding-bottom: 60px;
-    padding-left: 20px;
-    padding-right: 20px;
-    margin-top: 60px !important; /* Angepasst für mobile Navbar-Höhe */
+  .hero::before {
+    top: -60px; /* Beibehalten für mobile Navbar-Höhe */
+    height: 60px;
+  }
+  
+  .hero-content {
+    padding-top: 60px; /* Beibehalten für mobile Navbar-Höhe */
   }
   
   .logo-hero img {
@@ -2014,11 +2034,31 @@ a {
 /* Sicherstellen, dass keine unerwünschten Hintergründe existieren */
 html, body, #root, .landing-page > div {
   background-color: transparent !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
-/* Direkter Übergang zwischen Navbar und Hero gewährleisten */
-nav + section.hero {
-  margin-top: 64px !important;
-  padding-top: 0 !important;
-  border-top: none !important;
+/* Entfernung aller unerwünschten Abstände in Elterncontainern */
+main, 
+#root, 
+.app-container, 
+.landing-page {
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: visible !important;
+}
+
+.page-wrapper,
+.content-wrapper,
+.main-content,
+.landing-page > div {
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: visible !important;
+}
+
+/* Fix für den Parallax-Effekt, der den weißen Balken verursacht */
+.hero-content {
+  transform: none !important; /* Verhindert, dass Parallax-Effekte Abstände erzeugen */
+  z-index: 2;
 }
