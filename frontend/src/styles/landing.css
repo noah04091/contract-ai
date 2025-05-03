@@ -755,8 +755,8 @@ a {
 .hero {
   background: linear-gradient(135deg, #2c5dd1 0%, #5a42ef 100%);
   color: white;
-  /* Reduzierter Abstand zur Navbar - Von 64px auf 15px */
-  padding-top: 15px !important;
+  /* Nahtloser Übergang zur Navbar */
+  padding-top: 0 !important;
   padding-left: 20px;
   padding-right: 20px;
   padding-bottom: 80px;
@@ -769,7 +769,7 @@ a {
   justify-content: center;
   align-items: center;
   transition: var(--transition-long);
-  margin-top: 64px !important; /* Margin-top entsprechend der Navbar-Höhe setzen */
+  margin-top: 64px !important; /* Exakt die Höhe der Navbar */
   border-top: none !important;
   box-shadow: none !important;
 }
@@ -1752,8 +1752,8 @@ a {
 @media (max-width: 992px) {
   .hero {
     min-height: 80vh;
-    padding-top: 15px !important;
-    margin-top: 60px !important; /* Angepasst für geringere Navbar-Höhe auf kleineren Bildschirmen */
+    padding-top: 0 !important;
+    margin-top: 60px !important;
     padding-bottom: 60px;
     padding-left: 20px;
     padding-right: 20px;
@@ -1805,6 +1805,7 @@ a {
   
   .hero {
     margin-top: 60px !important; /* Angepasst für mobile Navbar-Höhe */
+    padding-top: 0 !important;
   }
   
   .mobile-menu-btn {
@@ -1926,7 +1927,7 @@ a {
 
 @media (max-width: 576px) {
   .hero {
-    padding-top: 15px !important;
+    padding-top: 0 !important;
     padding-bottom: 60px;
     padding-left: 20px;
     padding-right: 20px;
@@ -2017,7 +2018,7 @@ html, body, #root, .landing-page > div {
 
 /* Direkter Übergang zwischen Navbar und Hero gewährleisten */
 nav + section.hero {
-  margin-top: 64px !important; 
-  padding-top: 15px !important;
+  margin-top: 64px !important;
+  padding-top: 0 !important;
   border-top: none !important;
 }
