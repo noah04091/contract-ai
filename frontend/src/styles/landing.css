@@ -40,6 +40,8 @@ body {
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 a {
@@ -255,18 +257,33 @@ a {
   -webkit-backdrop-filter: saturate(180%) blur(20px);
   position: fixed;
   top: 0;
+  left: 0;
   width: 100%;
   z-index: 1000;
   transition: var(--transition);
   height: 64px;
-  /* Kein Bottom-Margin und keine border-bottom um schwarzen Balken zu entfernen */
-  box-shadow: none;
+  /* Wichtige Fixes für den schwarzen Balken */
+  box-shadow: none !important;
+  border-bottom: none !important;
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+  border: none !important;
+  background-image: none !important;
 }
 
+/* Verhindere, dass scrolled einen Schatten hinzufügt */
 .navbar.scrolled {
-  box-shadow: var(--shadow-sm);
   background-color: rgba(255, 255, 255, 0.95);
   height: 60px;
+  box-shadow: none !important;
+  border-bottom: none !important;
+}
+
+/* Verhindere any pseudo-elements */
+.navbar::after,
+.navbar::before {
+  display: none !important;
+  content: none !important;
 }
 
 .nav-container {
@@ -277,6 +294,8 @@ a {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px;
+  background: transparent !important;
+  border: none !important;
 }
 
 /* Hamburger Menu */
@@ -736,8 +755,8 @@ a {
 .hero {
   background: linear-gradient(135deg, #2c5dd1 0%, #5a42ef 100%);
   color: white;
-  /* Padding-top anpassen, um direkt an die Navbar anzuschließen */
-  padding-top: 64px;
+  /* Fix für den nahtlosen Übergang zur Navbar */
+  padding-top: 64px !important;
   padding-left: 20px;
   padding-right: 20px;
   padding-bottom: 80px;
@@ -750,7 +769,16 @@ a {
   justify-content: center;
   align-items: center;
   transition: var(--transition-long);
-  margin-top: 0; /* Kein Margin-top zwischen Navbar und Hero */
+  margin-top: 0 !important; /* Wichtig: Kein Margin oben */
+  border-top: none !important;
+  box-shadow: none !important;
+}
+
+/* Hero Section pseudo-elements entfernen */
+.hero::before,
+.hero::after {
+  display: none !important;
+  content: none !important;
 }
 
 .hero-bg {
@@ -1953,11 +1981,31 @@ a {
 .landing-page {
   overflow-x: hidden;
   position: relative;
+  background: transparent !important;
+  margin: 0 !important;
+  padding: 0 !important;
 }
 
 /* Diese Klasse wird benötigt, um die .image CSS-Regel zu vervollständigen */
 .image {
-  /* Beispiel-Regeln */
   width: 100%;
   height: auto;
+}
+
+/* Catch-All für den schwarzen Balken - Sehr hohe Spezifität */
+.landing-page > *:not(.footer) {
+  border-top: none !important;
+  border-bottom: none !important;
+}
+
+/* Sicherstellen, dass keine unerwünschten Hintergründe existieren */
+html, body, #root, .landing-page > div {
+  background-color: transparent !important;
+}
+
+/* Direkter Übergang zwischen Navbar und Hero gewährleisten */
+nav + section.hero {
+  margin-top: 0 !important;
+  padding-top: 64px !important;
+  border-top: none !important;
 }
