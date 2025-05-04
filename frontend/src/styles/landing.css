@@ -512,39 +512,89 @@ a {
   -webkit-backdrop-filter: blur(2px);
 }
 
-/* Hauptstyling für die Sidebar - vollständig undurchsichtig */
+/* Hauptstyling für die Sidebar - garantiert 100% undurchsichtig */
 .sidebar {
   position: fixed;
   top: 0;
   left: 0;
   width: 280px;
   height: 100vh;
-  /* Vollständig undurchsichtig statt transparent */
-  background-color: #ffffff;
-  /* Glasmorphismus-Effekte entfernt */
-  /* backdrop-filter: blur(15px); */
-  /* -webkit-backdrop-filter: blur(15px); */
+  /* Komplett undurchsichtig mit reinem Weiß */
+  background-color: #ffffff !important;
+  /* Alle Filter entfernt */
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
   box-shadow: 5px 0 20px rgba(0, 0, 0, 0.1);
   z-index: 1002;
   display: flex;
   flex-direction: column;
+  /* Verbesserte Scrollbarkeit */
   overflow-y: auto;
   scrollbar-width: thin;
-  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+  scrollbar-color: rgba(0, 0, 0, 0.3) rgba(0, 0, 0, 0.05);
+  /* Sicherstellen, dass keine Transparenz vom Body durchkommt */
+  isolation: isolate;
 }
 
-/* Scrollbar der Sidebar anpassen */
+/* Scrollbar der Sidebar deutlicher sichtbar machen */
 .sidebar::-webkit-scrollbar {
-  width: 4px;
+  width: 8px; /* Größere Scrollbar für bessere Sichtbarkeit */
 }
 
 .sidebar::-webkit-scrollbar-track {
-  background: transparent;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
 }
 
 .sidebar::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.2);
-  border-radius: 2px;
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  border: 2px solid rgba(0, 0, 0, 0.05);
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+/* Sicherstellen, dass der Inhalt der Sidebar nicht abgeschnitten wird */
+.sidebar-content {
+  flex: 1;
+  padding: 1rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  /* Mindesthöhe hinzufügen, um Abschneiden zu verhindern */
+  min-height: min-content;
+  /* Unteren Abstand hinzufügen, um zu verhindern, dass Elemente abgeschnitten werden */
+  padding-bottom: 2rem;
+}
+
+/* Sidebar-Sections mit zusätzlichem Abstand unten */
+.sidebar-section {
+  padding: 0 1.25rem;
+  margin-bottom: 1rem;
+}
+
+/* Verbessert die Lesbarkeit von Text in der Sidebar */
+.sidebar-title, 
+.sidebar-link,
+.sidebar-link.secondary {
+  color: var(--text-color) !important;
+}
+
+.sidebar-title {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-light);
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+}
+
+/* Hervorhebung von Hover-Effekten auf solidem weißen Hintergrund */
+.sidebar-link:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: var(--primary-color) !important;
 }
 
 /* Sidebar Header mit Logo und Schließen-Button */
@@ -579,29 +629,8 @@ a {
   color: var(--primary-color);
 }
 
-/* Inhalt der Sidebar */
-.sidebar-content {
-  flex: 1;
-  padding: 1rem 0;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.sidebar-section {
-  padding: 0 1.25rem;
-}
-
-.sidebar-title {
-  font-size: 0.85rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--text-light);
-  margin-bottom: 0.75rem;
-  font-weight: 600;
-}
-
-.sidebar-nav {
+/* Stellen Sie sicher, dass alle Elemente im Viewport der Sidebar sichtbar sind */
+.sidebar-nav, .sidebar-links {
   list-style: none;
   padding: 0;
   margin: 0;
@@ -626,16 +655,6 @@ a {
   font-size: 1.1rem;
   width: 22px;
   text-align: center;
-}
-
-.sidebar-link:hover {
-  background-color: rgba(0, 0, 0, 0.05);
-  color: var(--primary-color);
-}
-
-.sidebar-link.secondary {
-  font-weight: 400;
-  color: var(--text-light);
 }
 
 /* Auth Bereich in der Sidebar */
@@ -705,15 +724,6 @@ a {
 .sidebar-user-plan {
   display: inline-block;
   font-size: 0.8rem;
-}
-
-.sidebar-links {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
 }
 
 .sidebar-user-profile {
@@ -792,6 +802,8 @@ a {
   position: relative;
   z-index: 2;
   transform: none !important; /* Verhindert, dass JS/Parallax-Effekte den Abstand manipulieren */
+  max-width: 800px;
+  margin: 0 auto;
 }
 
 .hero-bg {
@@ -868,13 +880,6 @@ a {
 .logo-hero img {
   height: 100px;
   filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.2));
-}
-
-.hero-content {
-  max-width: 800px;
-  margin: 0 auto;
-  position: relative;
-  z-index: 2;
 }
 
 .hero h1 {
@@ -1120,6 +1125,41 @@ a {
 
 .feature-link:hover svg {
   transform: translateX(5px);
+}
+
+/* === PREISGESTALTUNG - NEUE STYLES === */
+/* Verbesserung der Preisdarstellung */
+.amount, .currency, .period {
+  color: var(--text-color) !important; /* Dunkle Schrift statt weiß */
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5); /* Lesbarkeitsverbesserung */
+}
+
+/* Container für die Preispläne */
+.pricing-plans {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 30px;
+}
+
+/* Anpassung des CTA-Bereichs */
+.cta-buttons.login-register {
+  max-width: 400px !important; /* Maximale Breite begrenzen */
+  margin: 0 auto;
+  display: flex;
+  gap: 20px;
+}
+
+/* Login/Register Buttons optimieren */
+.cta-button.login, 
+.cta-button.register {
+  width: auto !important; /* Anstatt 100% */
+  min-width: 160px; /* Minimale Breite festlegen */
+  max-width: 200px; /* Maximale Breite festlegen */
+  margin: 0 auto;
+  justify-content: center;
+  padding: 12px 24px; /* Etwas kleineres Padding */
 }
 
 /* === SHOWCASE SECTION === */
@@ -1387,14 +1427,6 @@ a {
   bottom: -100px;
   left: -200px;
   animation: rotateBlob 30s linear infinite reverse;
-}
-
-.pricing-plans {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 30px;
-  position: relative;
-  z-index: 2;
 }
 
 .pricing-plan {
@@ -1975,6 +2007,7 @@ a {
   
   .cta-button {
     width: 100%;
+    justify-content: center;
   }
   
   .features-grid {
