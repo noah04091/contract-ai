@@ -249,6 +249,12 @@ const HomeRedesign = () => {
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              style={{ 
+                display: 'flex', 
+                flexDirection: 'column',
+                height: '100vh',
+                overflow: 'hidden' // Der Container selbst verhindert Overflow
+              }}
             >
               <div className="sidebar-header">
                 <img src={logo} alt="Contract AI Logo" className="sidebar-logo" />
@@ -260,7 +266,11 @@ const HomeRedesign = () => {
                 </button>
               </div>
               
-              <div className="sidebar-content">
+              <div className="sidebar-content" style={{ 
+                flex: '1 1 auto', 
+                overflowY: 'auto', 
+                paddingBottom: '150px' 
+              }}>
                 <div className="sidebar-section">
                   <h3 className="sidebar-title">Navigation</h3>
                   <ul className="sidebar-nav">
