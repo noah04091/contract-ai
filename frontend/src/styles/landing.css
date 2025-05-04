@@ -540,10 +540,11 @@ a {
   box-shadow: 5px 0 20px rgba(0, 0, 0, 0.15) !important;
   border-right: 1px solid rgba(0, 0, 0, 0.1) !important;
   
-  /* VERBESSERTE SCROLL-EIGENSCHAFTEN */
-  overflow-y: auto !important;
+  /* VERBESSERTE SCROLL-EIGENSCHAFTEN - NEU HINZUGEFÜGT */
+  overflow-y: scroll !important; /* Scrollbar immer anzeigen (wichtig für Sichtbarkeit) */
   overflow-x: hidden !important;
-  -webkit-overflow-scrolling: touch !important;
+  -webkit-overflow-scrolling: touch !important; /* Für iOS */
+  overscroll-behavior: contain !important; /* Verhindert Scroll-Überlauf */
   
   /* Scrollbar Styling */
   scrollbar-width: thin !important;
@@ -582,10 +583,11 @@ a {
   z-index: 1 !important;
 }
 
-/* Große, deutlich sichtbare Scrollbar */
+/* Große, deutlich sichtbare Scrollbar - NEU ANGEPASST */
 .sidebar::-webkit-scrollbar {
-  width: 8px !important;
+  width: 10px !important;
   background: #f5f5f5 !important;
+  display: block !important; /* Erzwinge Anzeige der Scrollbar */
 }
 
 .sidebar::-webkit-scrollbar-track {
@@ -594,16 +596,17 @@ a {
 }
 
 .sidebar::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.3) !important;
+  background-color: #888 !important; /* Dunklere Farbe für bessere Sichtbarkeit */
   border-radius: 10px !important;
   border: 2px solid #f5f5f5 !important;
+  min-height: 40px !important; /* Mindesthöhe für bessere Bedienbarkeit */
 }
 
 .sidebar::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(0, 0, 0, 0.5) !important;
+  background-color: #666 !important; /* Noch dunklere Farbe beim Hover */
 }
 
-/* Sicherstellen, dass der Inhalt der Sidebar nicht abgeschnitten wird */
+/* Sicherstellen, dass der Inhalt der Sidebar nicht abgeschnitten wird - PADDING ERHÖHT */
 .sidebar-content {
   flex: 1 !important;
   padding: 1rem 0 !important;
@@ -611,7 +614,7 @@ a {
   flex-direction: column !important;
   gap: 1.5rem !important;
   min-height: min-content !important;
-  padding-bottom: 120px !important; /* Extremes Padding am Ende */
+  padding-bottom: 150px !important; /* Extremes Padding am Ende, damit alle Elemente erreichbar sind */
   margin-bottom: 50px !important; /* Extra Margin am Ende */
   position: relative !important;
   z-index: 2 !important;
@@ -633,7 +636,7 @@ a {
   text-shadow: none !important;
 }
 
-/* Sidebar Header mit Logo und Schließen-Button */
+/* Sidebar Header mit Logo und Schließen-Button - STICKY POSITION */
 .sidebar-header {
   background: #FFFFFF !important;
   border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
@@ -644,6 +647,7 @@ a {
   position: sticky !important; /* Sticky Header beim Scrollen */
   top: 0 !important;
   z-index: 3 !important;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05) !important; /* Leichter Schatten für visuelle Trennung */
 }
 
 .sidebar-logo {
@@ -722,40 +726,6 @@ a {
   display: flex;
   gap: 0.5rem;
   margin-top: 0.5rem;
-}
-
-/* VERBESSERTE BUTTON-ZENTRIERUNG IN DER SIDEBAR */
-.sidebar button,
-.sidebar a.btn,
-.sidebar .login-button,
-.sidebar .register-button,
-.sidebar .sidebar-auth-btn,
-.sidebar input[type="button"],
-.sidebar input[type="submit"] {
-  width: auto !important;
-  max-width: 90% !important;
-  min-width: 120px !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
-  text-align: center !important;
-  justify-content: center !important;
-  display: flex !important;
-  align-items: center !important;
-}
-
-/* Buttoncontainer zentrieren */
-.sidebar .auth-buttons,
-.sidebar .button-container,
-.sidebar .login-container,
-.sidebar .register-container,
-.sidebar .sidebar-auth,
-.sidebar form {
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  justify-content: center !important;
-  width: 100% !important;
-  margin-bottom: 1rem !important;
 }
 
 .sidebar-auth-btn {
@@ -2271,186 +2241,41 @@ body:has(.sidebar) .sidebar {
   background-color: #FFFFFF !important;
   background-image: linear-gradient(to right, #FFFFFF, #FFFFFF) !important;
 }
-/* === GARANTIERTE SIDEBAR-SCROLL-LÖSUNG === */
-/* Diese Styles überstechen absolut alles andere */
 
-/* GRUND-SIDEBAR-FIXES */
-.sidebar {
-  /* GRUNDLEGENDE SCROLLBARKEIT */
-  overflow-y: scroll !important; /* ERZWUNGENES SCROLLEN - STÄRKER ALS 'AUTO' */
-  overflow-x: hidden !important;
-  -webkit-overflow-scrolling: touch !important;
-  overscroll-behavior: contain !important;
-  
-  /* GRÖSSE UND POSITION */
-  height: 100vh !important;
-  max-height: 100vh !important;
-  position: fixed !important;
-  left: 0 !important;
-  top: 0 !important;
-  
-  /* GARANTIERT UNDURCHSICHTIGER HINTERGRUND */
-  background-color: #FFFFFF !important;
-  background: #FFFFFF !important;
-  
-  /* KEINE TRANSPARENZ-EFFEKTE */
-  opacity: 1 !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  
-  /* SCROLLBAR-STYLING FÜR BESSERE SICHTBARKEIT */
-  scrollbar-width: thin !important;
-  scrollbar-color: rgba(0, 0, 0, 0.5) #f0f0f0 !important;
-
-  /* VERHINDERT ABSCHNEIDEN VON INHALTEN */
-  padding-bottom: 200px !important; /* EXTREMES PADDING AM ENDE */
-}
-
-/* WEBKIT SCROLLBAR STYLING */
-.sidebar::-webkit-scrollbar {
-  width: 12px !important; /* BREITERE SCROLLBAR */
-  height: 12px !important;
-  display: block !important;
-  background: #f0f0f0 !important;
-}
-
-.sidebar::-webkit-scrollbar-track {
-  background: #f0f0f0 !important;
-  border-radius: 0 !important;
-}
-
-.sidebar::-webkit-scrollbar-thumb {
-  background-color: #888 !important; /* DUNKLERE SCROLLBAR FÜR BESSERE SICHTBARKEIT */
-  border-radius: 6px !important;
-  border: 3px solid #f0f0f0 !important;
-  min-height: 40px !important;
-}
-
-.sidebar::-webkit-scrollbar-thumb:hover {
-  background-color: #666 !important;
-}
-
-/* STÄRKERER FIX FÜR SCROLLEN */
-.sidebar * {
-  max-height: none !important; /* KEIN MAX-HEIGHT LIMIT FÜR KINDER */
-}
-
-/* SICHERSTELLEN, DASS DER SIDEBAR-CONTENT SCROLLBAR IST */
-.sidebar-content,
-.sidebar > div,
-.sidebar > ul,
-.sidebar-nav,
-.sidebar-links,
-.sidebar-sections,
-.sidebar > form {
-  overflow: visible !important;
-  height: auto !important;
-  min-height: auto !important;
-  max-height: none !important;
-  width: 100% !important;
-}
-
-/* SIDEBAR-HEADER STICKY MACHEN, DAMIT ER BEIM SCROLLEN SICHTBAR BLEIBT */
-.sidebar-header {
-  position: sticky !important;
-  top: 0 !important;
-  z-index: 10 !important;
-  background: #FFFFFF !important;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1) !important;
-}
-
-/* EXTREM WICHTIGER FIX FÜR ABSCHNEIDEN AM UNTEREN RAND */
-.sidebar-section:last-child,
-.sidebar > div:last-child,
-.sidebar-content > *:last-child {
-  margin-bottom: 150px !important; /* ENORMER ABSTAND AM ENDE */
-}
-
-/* === GARANTIERTE BUTTON-ZENTRIERUNG === */
-/* ULTRA-STARKE BUTTON-ZENTRIERUNG - ABSOLUT MITTIG */
-
-/* ALLE BUTTONS IN DER SIDEBAR */
-.sidebar button,
-.sidebar a.btn,
-.sidebar .login-button,
-.sidebar .register-button,
-.sidebar input[type="button"],
-.sidebar input[type="submit"],
-.sidebar .sidebar-auth-btn,
-.sidebar [class*="button"],
-.sidebar [class*="btn"] {
-  /* GARANTIERTE MITTIGE AUSRICHTUNG */
-  display: block !important;
-  width: auto !important;
+/* === PRÄZISE ANPASSUNGEN FÜR LOGIN/REGISTER BUTTONS AM ENDE DER SEITE === */
+/* Speziell nur für die Buttons am Ende der Seite, NICHT in der Sidebar */
+section:last-of-type .login-button,
+section:last-of-type .register-button,
+section:last-of-type a[href*="login"],
+section:last-of-type a[href*="register"],
+section:last-of-type a[href*="einloggen"],
+section:last-of-type a[href*="registrieren"],
+footer .login-button,
+footer .register-button,
+footer a[href*="login"],
+footer a[href*="register"],
+footer a[href*="einloggen"],
+footer a[href*="registrieren"] {
+  display: inline-block !important;
+  width: auto !important; 
+  min-width: 120px !important;
   max-width: 200px !important;
-  min-width: 100px !important;
+  text-align: center !important;
   margin-left: auto !important;
   margin-right: auto !important;
-  
-  /* TEXT ZENTRIEREN */
-  text-align: center !important;
-  justify-content: center !important;
-  align-items: center !important;
-  
-  /* KORREKTES PADDING */
-  padding: 10px 20px !important;
-  
-  /* KEINE POSITIONSANPASSUNGEN */
-  position: relative !important;
-  left: 0 !important;
-  transform: none !important;
 }
 
-/* BUTTON CONTAINER */
-.sidebar .auth-buttons,
-.sidebar [class*="button-container"],
-.sidebar [class*="btn-container"],
-.sidebar-auth,
-.sidebar form,
-.sidebar .sidebar-user-profile,
-.sidebar .login-container,
-.sidebar .register-container,
-.sidebar div:has(> button),
-.sidebar div:has(> .btn),
-.sidebar div:has(> [class*="button"]) {
-  /* GARANTIERTE CONTAINER-ZENTRIERUNG */
+/* Container für diese Buttons */
+section:last-of-type .auth-buttons,
+section:last-of-type .btn-container,
+section:last-of-type div:has(> .login-button),
+section:last-of-type div:has(> .register-button),
+footer .auth-buttons,
+footer .btn-container {
   display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
   justify-content: center !important;
-  
-  /* VOLLE BREITE UND ZENTRIERUNG */
+  align-items: center !important;
   width: 100% !important;
+  gap: 15px !important;
   text-align: center !important;
-  
-  /* MARGIN-SICHERHEIT */
-  margin-left: 0 !important;
-  margin-right: 0 !important;
-  padding-left: 10px !important;
-  padding-right: 10px !important;
-}
-
-/* VERHINDERN, DASS ANDERE STYLES UNSERE ZENTRIERUNG ÜBERSCHREIBEN */
-.sidebar button *,
-.sidebar .btn *,
-.sidebar [class*="button"] *,
-.sidebar input[type="submit"] *,
-.sidebar input[type="button"] * {
-  text-align: center !important;
-  justify-content: center !important;
-  align-items: center !important;
-}
-
-/* FALLBACK FÜR EDGE-FÄLLE - ABSOLUTE POSITIONIERUNG, WENN NÖTIG */
-.sidebar .sidebar-auth .sidebar-auth-btn,
-.sidebar .sidebar-auth button,
-.sidebar form button,
-.sidebar .login-button,
-.sidebar .register-button {
-  display: inline-block !important;
-  position: relative !important;
-  left: 50% !important;
-  transform: translateX(-50%) !important;
-  width: auto !important;
-  max-width: 80% !important;
 }
