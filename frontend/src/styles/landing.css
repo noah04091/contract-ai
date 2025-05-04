@@ -534,7 +534,7 @@ a {
   
   /* ISOLATION UND STACKING CONTEXT FORCIEREN */
   isolation: isolate !important;
-  contain: layout paint style !important;
+  contain: none !important; /* 'contain: layout' kann Scrolling behindern */
   
   /* Box Eigenschaften */
   box-shadow: 5px 0 20px rgba(0, 0, 0, 0.15) !important;
@@ -545,10 +545,8 @@ a {
   overflow-x: hidden !important;
   -webkit-overflow-scrolling: touch !important;
   overscroll-behavior: contain !important;
-  
-  /* Scrollbar Styling */
-  scrollbar-width: thin !important;
-  scrollbar-color: rgba(0, 0, 0, 0.4) rgba(0, 0, 0, 0.05) !important;
+  transform: none !important; /* Manchmal behebt dies Scrolling-Probleme */
+  transform-style: flat !important;
   
   /* Layout Eigenschaften */
   display: flex !important;
@@ -583,11 +581,23 @@ a {
   z-index: 1 !important;
 }
 
+/* Alle möglichen Container in der Sidebar scrollbar machen */
+.sidebar > div,
+.sidebar-content,
+.sidebar > *:first-child:not(.sidebar-header) {
+  overflow-y: visible !important;
+  height: auto !important;
+  min-height: fit-content !important;
+  max-height: none !important;
+}
+
 /* Große, deutlich sichtbare Scrollbar */
 .sidebar::-webkit-scrollbar {
   width: 12px !important;
   background: #f5f5f5 !important;
   display: block !important;
+  position: absolute !important;
+  right: 0 !important;
 }
 
 .sidebar::-webkit-scrollbar-track {
@@ -597,9 +607,9 @@ a {
 
 .sidebar::-webkit-scrollbar-thumb {
   background-color: #888 !important;
-  border-radius: 10px !important;
+  border-radius: 8px !important;
   border: 2px solid #f5f5f5 !important;
-  min-height: 40px !important;
+  min-height: 50px !important;
 }
 
 .sidebar::-webkit-scrollbar-thumb:hover {
@@ -607,14 +617,15 @@ a {
 }
 
 /* Sicherstellen, dass der Inhalt der Sidebar nicht abgeschnitten wird */
-.sidebar-content {
+.sidebar-content,
+.sidebar > div:last-child {
   flex: 1 !important;
   padding: 1rem 0 !important;
   display: flex !important;
   flex-direction: column !important;
   gap: 1.5rem !important;
   min-height: min-content !important;
-  padding-bottom: 200px !important; /* Extremes Padding am Ende */
+  padding-bottom: 300px !important; /* Extremes Padding am Ende */
   margin-bottom: 100px !important; /* Extra Margin am Ende */
   position: relative !important;
   z-index: 2 !important;
@@ -637,7 +648,9 @@ a {
 }
 
 /* Sidebar Header mit Logo und Schließen-Button */
-.sidebar-header {
+.sidebar-header,
+.sidebar > div:first-child,
+header.sidebar-header {
   background: #FFFFFF !important;
   border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
   padding: 1.25rem !important;
@@ -646,7 +659,8 @@ a {
   justify-content: space-between !important;
   position: sticky !important; /* Sticky Header beim Scrollen */
   top: 0 !important;
-  z-index: 3 !important;
+  z-index: 99 !important;
+  background-color: #FFFFFF !important;
   box-shadow: 0 2px 10px rgba(0,0,0,0.05) !important;
 }
 
@@ -1205,96 +1219,6 @@ a {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 30px;
-}
-
-/* ==== BUTTON FIX IN FOOTER SECTION ==== */
-/* Login/Register Buttons in Footer und Bottom-Section optimieren */
-.cta-button,
-.login-button, 
-.register-button,
-a[href*="login"], 
-a[href*="register"],
-a[href*="einloggen"],
-a[href*="registrieren"],
-.btn-login,
-.btn-register,
-button[class*="login"],
-button[class*="register"],
-input[class*="login"],
-input[class*="register"] {
-  display: inline-block !important;
-  width: auto !important;
-  min-width: 120px !important;
-  max-width: 200px !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
-  text-align: center !important;
-  padding: 10px 20px !important;
-  border-radius: 100px !important;
-}
-
-/* Container für Buttons zentrieren */
-.cta-buttons,
-.auth-cta,
-.btn-container,
-.action-buttons,
-[class*="button-container"],
-[class*="btn-container"],
-div:has(> .cta-button),
-div:has(> [class*="login"]),
-div:has(> [class*="register"]) {
-  display: flex !important;
-  flex-wrap: wrap !important;
-  justify-content: center !important;
-  gap: 10px !important;
-  max-width: 450px !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
-}
-
-/* EXTREMER FIX FÜR ACCOUNT SECTION */
-.account,
-#account,
-[class*="account"],
-section:has([class*="login"]),
-section:has([class*="register"]),
-div:has(> [class*="einloggen"]),
-div:has(> [class*="registrieren"]) {
-  text-align: center !important;
-}
-
-/* Jegliche zusätzlichen Wrapper um Buttons finden und fixen */
-.account a,
-#account a,
-[class*="account"] a,
-[class*="account"] button,
-.footer-adjacent a,
-section:last-of-type a,
-section:last-of-type button {
-  display: inline-block !important;
-  width: auto !important;
-  min-width: 100px !important;
-  max-width: 180px !important;
-  margin: 0 5px !important;
-}
-
-/* Anpassung des CTA-Bereichs */
-.cta-buttons.login-register {
-  max-width: 400px !important; /* Maximale Breite begrenzen */
-  margin: 0 auto;
-  display: flex;
-  gap: 20px;
-}
-
-/* Login/Register Buttons optimieren */
-.cta-button.login, 
-.cta-button.register {
-  width: auto !important; /* Anstatt 100% */
-  min-width: 160px; /* Minimale Breite festlegen */
-  max-width: 200px; /* Maximale Breite festlegen */
-  margin: 0 auto;
-  justify-content: center;
-  padding: 12px 24px; /* Etwas kleineres Padding */
 }
 
 /* === SHOWCASE SECTION === */
@@ -2242,8 +2166,11 @@ body:has(.sidebar) .sidebar {
   background-image: linear-gradient(to right, #FFFFFF, #FFFFFF) !important;
 }
 
-/* === GLEICHGROSSE LOGIN/REGISTRIEREN BUTTONS AM ENDE DER SEITE === */
-/* Diese Buttons am Ende der Seite (nicht in der Sidebar) */
+/* === OPTIMIERTES BUTTON-STYLING === */
+/* VERSCHÖNERTE LOGIN/REGISTRIEREN BUTTONS AM ENDE DER SEITE UND LANDING PAGE */
+/* Diese Buttons bekommen ein verbessertes, professionelleres Design */
+
+/* Grund-Button-Styling für beide */
 section:last-of-type .login-button,
 section:last-of-type .register-button,
 section:last-of-type a[href*="login"],
@@ -2258,51 +2185,191 @@ footer a[href*="einloggen"],
 footer a[href*="registrieren"],
 .cta-buttons .login-button,
 .cta-buttons .register-button,
-.account .login-button,
-.account .register-button {
-  /* EXAKT GLEICHE GRÖSSE ERZWINGEN */
-  display: inline-block !important;
-  width: 160px !important; /* FESTE BREITE statt 'auto' */
-  min-width: 160px !important;
-  max-width: 160px !important;
-  text-align: center !important;
+.cta-section a[href*="login"],
+.cta-section a[href*="register"],
+.auth-cta a,
+.hero-cta a,
+a.cta-button[href*="login"],
+a.cta-button[href*="registrieren"] {
+  /* EXAKT GLEICHE GRÖSSE UND STYLING */
+  display: inline-flex !important;
+  align-items: center !important;
   justify-content: center !important;
-  margin-left: auto !important;
-  margin-right: auto !important;
-  padding: 10px 20px !important;
+  width: 180px !important; /* ERHÖHTE BREITE für bessere Optik */
+  min-width: 180px !important;
+  max-width: 180px !important;
+  height: 48px !important; /* FESTE HÖHE für Konsistenz */
+  text-align: center !important;
+  font-weight: 500 !important;
+  padding: 0 !important; /* Kein Padding, stattdessen feste Größe */
+  margin: 5px !important;
+  border-radius: 100px !important;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08) !important;
+  transition: all 0.3s ease !important;
+  text-decoration: none !important;
+  font-size: 16px !important;
+  border: none !important;
 }
 
-/* Bessere Zentrierung der Button-Container */
+/* Besseres Styling für den primären Button (meist Registrieren) */
+section:last-of-type a[href*="register"],
+section:last-of-type a[href*="registrieren"],
+footer a[href*="register"],
+footer a[href*="registrieren"],
+.cta-buttons a[href*="register"],
+.cta-section a[href*="register"],
+.auth-cta a[href*="register"],
+.hero-cta a[href*="register"],
+a.cta-button[href*="registrieren"],
+.account .register,
+button.register,
+.register-button {
+  background-color: #3d7cf3 !important;
+  color: white !important;
+  border: none !important;
+}
+
+/* Verbesserter Hover-Effekt für den primären Button */
+section:last-of-type a[href*="register"]:hover,
+section:last-of-type a[href*="registrieren"]:hover,
+footer a[href*="register"]:hover,
+footer a[href*="registrieren"]:hover,
+.cta-buttons a[href*="register"]:hover,
+.auth-cta a[href*="register"]:hover,
+.hero-cta a[href*="register"]:hover,
+a.cta-button[href*="registrieren"]:hover,
+.account .register:hover,
+button.register:hover,
+.register-button:hover {
+  background-color: #2e60c1 !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Besseres Styling für den sekundären Button (meist Login) */
+section:last-of-type a[href*="login"],
+section:last-of-type a[href*="einloggen"],
+footer a[href*="login"],
+footer a[href*="einloggen"],
+.cta-buttons a[href*="login"],
+.cta-section a[href*="login"],
+.auth-cta a[href*="login"],
+.hero-cta a[href*="login"],
+a.cta-button[href*="login"],
+.account .login,
+button.login,
+.login-button {
+  background-color: #ffffff !important;
+  color: #3d7cf3 !important;
+  border: 1px solid rgba(61, 124, 243, 0.3) !important;
+}
+
+/* Verbesserter Hover-Effekt für den sekundären Button */
+section:last-of-type a[href*="login"]:hover,
+section:last-of-type a[href*="einloggen"]:hover,
+footer a[href*="login"]:hover,
+footer a[href*="einloggen"]:hover,
+.cta-buttons a[href*="login"]:hover,
+.auth-cta a[href*="login"]:hover,
+.hero-cta a[href*="login"]:hover,
+a.cta-button[href*="login"]:hover,
+.account .login:hover,
+button.login:hover,
+.login-button:hover {
+  background-color: rgba(61, 124, 243, 0.05) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Optimierte Container für die Buttons */
 section:last-of-type .auth-buttons,
 section:last-of-type .btn-container,
 footer .auth-buttons,
 footer .btn-container,
+section:last-of-type div:has(> a[href*="login"]),
+section:last-of-type div:has(> a[href*="register"]),
 .cta-buttons,
-.account .buttons,
-.account > div:has(> a[href*="login"]),
-.account > div:has(> a[href*="register"]) {
+.auth-cta {
   display: flex !important;
   justify-content: center !important;
   align-items: center !important;
   flex-wrap: wrap !important;
   gap: 15px !important;
-  width: 100% !important;
-  text-align: center !important;
+  padding: 10px 0 !important;
+  margin: 20px auto !important;
+  max-width: 450px !important;
 }
 
-/* Spezifisch für die Buttons wie auf dem Screenshot */
-section:last-child .login,
-div:has(> a[href*="registrieren"]) a[href*="login"],
-div:has(> a[href*="login"]) a[href*="login"] {
-  width: 160px !important;
-  min-width: 160px !important;
-  max-width: 160px !important;
+/* === SUPERSPEZIFISCHE BUTTON-SELEKTOREN === */
+/* Basierend auf dem Screenshot für die Buttons in der Hero-Section */
+.hero-cta a[href*="registrieren"],
+.hero a[href*="registrieren"],
+.hero-section a[href*="registrieren"],
+.hero button[type="submit"],
+.hero .cta-button.primary {
+  background-color: white !important;
+  color: #3d7cf3 !important;
+  width: 180px !important;
+  height: 48px !important;
+  border: none !important;
+  border-radius: 100px !important;
+  font-weight: 500 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
 }
 
-section:last-child .register,
-div:has(> a[href*="login"]) a[href*="registrieren"],
-div:has(> a[href*="registrieren"]) a[href*="registrieren"] {
-  width: 160px !important;
-  min-width: 160px !important;
-  max-width: 160px !important;
+.hero-cta a[href*="einloggen"],
+.hero a[href*="einloggen"],
+.hero-section a[href*="einloggen"],
+.hero button[type="button"],
+.hero .cta-button.secondary {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  color: white !important;
+  width: 180px !important;
+  height: 48px !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  border-radius: 100px !important;
+  font-weight: 500 !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+}
+
+/* Für die Sidebar-Buttons aus dem zweiten Screenshot */
+.sidebar .login-button,
+.sidebar a[href*="login"],
+.sidebar a[href*="einloggen"],
+.sidebar div:has(> a[href*="login"]) a {
+  background-color: #f5f5f7 !important;
+  color: #3d7cf3 !important;
+  border-radius: 100px !important;
+  border: none !important;
+  width: 120px !important;
+  min-width: 120px !important;
+  max-width: 120px !important;
+  margin: 0 auto !important;
+}
+
+.sidebar .register-button,
+.sidebar a[href*="register"],
+.sidebar a[href*="registrieren"],
+.sidebar div:has(> a[href*="register"]) a {
+  background-color: #3d7cf3 !important;
+  color: white !important;
+  border-radius: 100px !important;
+  border: none !important;
+  width: 120px !important;
+  min-width: 120px !important;
+  max-width: 120px !important;
+  margin: 0 auto !important;
+}
+
+/* Container für die Sidebar-Buttons */
+.sidebar .auth-buttons,
+.sidebar .button-container,
+.sidebar .account,
+.sidebar > div:last-child:has(a) {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  padding: 10px 15px !important;
+  gap: 10px !important;
 }
