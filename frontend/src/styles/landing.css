@@ -262,7 +262,6 @@ a {
   z-index: 1000;
   transition: var(--transition);
   height: 64px;
-  /* Wichtige Fixes für den Übergang */
   box-shadow: none !important;
   border-bottom: none !important;
   margin-bottom: 0 !important;
@@ -271,7 +270,6 @@ a {
   background-image: none !important;
 }
 
-/* Verhindere, dass scrolled einen Schatten hinzufügt */
 .navbar.scrolled {
   background-color: rgba(255, 255, 255, 0.95);
   height: 60px;
@@ -279,7 +277,6 @@ a {
   border-bottom: none !important;
 }
 
-/* Verhindere any pseudo-elements */
 .navbar::after,
 .navbar::before {
   display: none !important;
@@ -298,7 +295,19 @@ a {
   border: none !important;
 }
 
-/* Hamburger Menu */
+/* Dreispalten-Layout für die Navbar */
+.nav-left, .nav-center, .nav-right {
+  display: flex;
+  align-items: center;
+}
+
+/* Linker Bereich */
+.nav-left {
+  flex: 1;
+  justify-content: flex-start;
+  min-width: 180px; /* Feste Mindestbreite für linken Bereich */
+}
+
 .hamburger-menu {
   display: flex;
   align-items: center;
@@ -308,7 +317,7 @@ a {
   cursor: pointer;
   border-radius: 50%;
   transition: var(--transition);
-  margin-right: 15px;
+  margin-right: 16px;
   color: var(--text-color);
 }
 
@@ -317,7 +326,6 @@ a {
   color: var(--primary-color);
 }
 
-/* Logo */
 .logo img {
   height: 36px;
   transition: var(--transition);
@@ -327,16 +335,26 @@ a {
   height: 32px;
 }
 
-/* Navigation Link Styles */
+/* Mittlerer Bereich - Hauptnavigation */
+.nav-center {
+  flex: 2;
+  justify-content: center;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
 .nav-links {
   display: flex;
   list-style: none;
   align-items: center;
   height: 100%;
+  margin: 0;
+  padding: 0;
 }
 
 .nav-links li {
-  margin-left: 30px;
+  margin: 0 20px;
   height: 100%;
   display: flex;
   align-items: center;
@@ -402,7 +420,13 @@ a {
   color: var(--primary-color);
 }
 
-/* Auth Area */
+/* Rechter Bereich - Authentication */
+.nav-right {
+  flex: 1;
+  justify-content: flex-end;
+  min-width: 180px; /* Feste Mindestbreite für rechten Bereich */
+}
+
 .auth-area {
   display: flex;
   align-items: center;
@@ -410,7 +434,7 @@ a {
 
 .auth-buttons {
   display: flex;
-  gap: 10px;
+  gap: 12px;
 }
 
 .login-button {
@@ -499,7 +523,6 @@ a {
 }
 
 /* === VERBESSERTE SIDEBAR-LÖSUNG === */
-/* Backdrop für die Sidebar */
 .sidebar-backdrop {
   position: fixed;
   top: 0;
@@ -512,7 +535,6 @@ a {
   -webkit-backdrop-filter: blur(2px);
 }
 
-/* Grundlegende Positionierung und Eigenschaften der Sidebar */
 .sidebar {
   position: fixed;
   top: 0;
@@ -523,16 +545,11 @@ a {
   background-color: #FFFFFF;
   box-shadow: 5px 0 20px rgba(0, 0, 0, 0.15);
   border-right: 1px solid rgba(0, 0, 0, 0.1);
-  
-  /* Flexbox-Layout für Sidebar-Struktur */
   display: flex;
   flex-direction: column;
-  
-  /* Der Container selbst verhindert Overflow */
   overflow: hidden;
 }
 
-/* Sidebar Header */
 .sidebar-header {
   background-color: #FFFFFF;
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
@@ -569,7 +586,6 @@ a {
   color: var(--primary-color);
 }
 
-/* Sidebar Content - dieser Bereich wird scrollbar */
 .sidebar-content {
   flex: 1 1 auto;
   overflow-y: auto;
@@ -578,12 +594,11 @@ a {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  padding-bottom: 150px; /* Extra Platz am Ende */
+  padding-bottom: 150px;
   background-color: #FFFFFF;
   -webkit-overflow-scrolling: touch;
 }
 
-/* Scrollbar-Styling für die Sidebar */
 .sidebar-content::-webkit-scrollbar {
   width: 12px;
   background: #f5f5f5;
@@ -652,7 +667,6 @@ a {
   color: var(--primary-color);
 }
 
-/* Auth Bereich in der Sidebar - FIXED */
 .sidebar-auth {
   display: flex;
   flex-direction: row;
@@ -700,7 +714,6 @@ a {
   background-color: var(--primary-dark);
 }
 
-/* Benutzer-Bereich in der Sidebar */
 .sidebar-user {
   padding: 1rem;
   background-color: rgba(0, 0, 0, 0.03);
@@ -777,40 +790,37 @@ a {
   background: linear-gradient(135deg, #2c5dd1 0%, #5a42ef 100%);
   color: white;
   position: relative;
-  padding: 0 20px 80px; /* Entfernt padding-top und behält nur die anderen Paddings */
+  padding: 0 20px 80px;
   margin: 0 !important;
   text-align: center;
-  overflow: visible; /* Wichtig für das ::before Element */
+  overflow: visible;
   min-height: 90vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   transition: var(--transition-long);
-  margin-top: 0 !important; /* Wichtig: Kein margin-top mehr */
-  /* Fixed Specs für den nahtlosen Übergang */
+  margin-top: 0 !important;
   border-top: none !important;
   box-shadow: none !important;
 }
 
-/* Der Schlüssel für den nahtlosen Übergang: Pseudoelement, das hinter die Navbar reicht */
 .hero::before {
   content: '';
   position: absolute;
-  top: -64px; /* Exakt die Höhe der Navbar (negativ) */
+  top: -64px;
   left: 0;
   right: 0;
-  height: 64px; /* Exakt die Höhe der Navbar */
-  background: inherit; /* Übernimmt den Gradienten von hero */
+  height: 64px;
+  background: inherit;
   z-index: -1;
 }
 
 .hero-content {
-  /* Stellt sicher, dass der Inhalt nicht von der Navbar überlappt wird */
   padding-top: 64px;
   position: relative;
   z-index: 2;
-  transform: none !important; /* Verhindert, dass JS/Parallax-Effekte den Abstand manipulieren */
+  transform: none !important;
   max-width: 800px;
   margin: 0 auto;
 }
@@ -1164,7 +1174,6 @@ a {
   line-height: 1.5;
 }
 
-/* Apple-style descriptor below header */
 .pricing-header::after {
   content: "";
   display: block;
@@ -1175,13 +1184,11 @@ a {
   border-radius: 3px;
 }
 
-/* Verbesserung der Preisdarstellung */
 .amount, .currency, .period {
-  color: var(--text-color) !important; /* Dunkle Schrift statt weiß */
-  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5); /* Lesbarkeitsverbesserung */
+  color: var(--text-color) !important;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
 }
 
-/* Container für die Preispläne */
 .pricing-plans {
   max-width: 1200px;
   margin: 0 auto;
@@ -1417,7 +1424,6 @@ a {
 }
 
 /* === PRICING SECTION === */
-/* Pricing section container */
 .pricing-section {
   background-color: white;
   padding: 120px 20px;
@@ -1431,7 +1437,6 @@ a {
   );
 }
 
-/* Background elements */
 .pricing-bg {
   position: absolute;
   top: 0;
@@ -1442,7 +1447,6 @@ a {
   opacity: 0.7;
 }
 
-/* Decorative shapes */
 .pricing-shape {
   position: absolute;
   border-radius: 50%;
@@ -1467,7 +1471,6 @@ a {
   animation: rotateBlob 30s linear infinite reverse;
 }
 
-/* Add subtle grid pattern for depth */
 .pricing-section::before {
   content: "";
   position: absolute;
@@ -1494,7 +1497,7 @@ a {
   flex-direction: column;
   height: 100%;
   min-height: 520px;
-  overflow: visible; /* CHANGED FROM 'hidden' TO 'visible' TO FIX THE BADGE CUTOFF */
+  overflow: visible;
 }
 
 .pricing-plan:hover {
@@ -1504,8 +1507,6 @@ a {
   z-index: 1;
 }
 
-/* === ENTERPRISE CARD STYLING === */
-/* Macht die Enterprise Karte konsistent mit den anderen */
 .enterprise-plan .plan-header {
   text-align: center;
   margin-bottom: 30px;
@@ -1513,7 +1514,6 @@ a {
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
-/* "Individuell" Styling als Preis-Äquivalent */
 .enterprise-plan .individuell,
 [class*="individuell"] {
   font-size: 50px;
@@ -1525,7 +1525,6 @@ a {
   text-align: center;
 }
 
-/* Maßgeschneiderte Lösung als Monats-Text Äquivalent */
 .enterprise-plan .custom-price,
 [class*="custom-price"],
 .enterprise-price-text,
@@ -1539,7 +1538,6 @@ a {
   display: block;
 }
 
-/* Konsistente Höhe für alle Karten */
 .pricing-plan {
   display: flex;
   flex-direction: column;
@@ -1556,7 +1554,6 @@ a {
   margin-bottom: 30px;
 }
 
-/* Änderung für den "Kontakt aufnehmen" Button */
 .enterprise-plan .plan-cta,
 [href*="kontakt"],
 a[href*="kontakt"],
@@ -1589,7 +1586,6 @@ a[href*="kontakt"]:hover,
   box-shadow: 0 6px 15px rgba(61, 124, 243, 0.3) !important;
 }
 
-/* Popular plan badge - Fix for cutoff issue */
 .plan-badge {
   position: absolute;
   top: -10px;
@@ -1601,7 +1597,7 @@ a[href*="kontakt"]:hover,
   font-size: 14px;
   font-weight: 500;
   box-shadow: 0 4px 10px rgba(238, 82, 83, 0.3);
-  z-index: 10; /* Ensure it's above other elements */
+  z-index: 10;
 }
 
 .plan-header {
@@ -1611,7 +1607,6 @@ a[href*="kontakt"]:hover,
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
-/* Plan name styling - Apple-like clean look */
 .plan-name {
   font-size: 22px;
   font-weight: 600;
@@ -1620,7 +1615,6 @@ a[href*="kontakt"]:hover,
   letter-spacing: -0.01em;
 }
 
-/* Premium plan name gets highlight color */
 .premium .plan-name {
   background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
   -webkit-background-clip: text;
@@ -1628,7 +1622,6 @@ a[href*="kontakt"]:hover,
   color: transparent;
 }
 
-/* Enterprise plan name gets matching highlight */
 .enterprise-plan .plan-name {
   background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
   -webkit-background-clip: text;
@@ -1636,23 +1629,20 @@ a[href*="kontakt"]:hover,
   color: transparent;
 }
 
-/* Price container - consistent across all plans */
 .plan-price {
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 10px;
-  height: 70px; /* Fixed height for consistency */
+  height: 70px;
 }
 
-/* Amount styling - large prominent pricing */
 .amount {
   font-size: 50px;
   font-weight: 700;
   line-height: 1;
 }
 
-/* Currency symbol positioning */
 .currency {
   font-size: 24px;
   font-weight: 600;
@@ -1660,7 +1650,6 @@ a[href*="kontakt"]:hover,
   margin-top: 10px;
 }
 
-/* Period text styling */
 .period {
   font-size: 16px;
   color: var(--text-light);
@@ -1668,19 +1657,17 @@ a[href*="kontakt"]:hover,
   margin-bottom: 6px;
 }
 
-/* Custom price text (fallback) */
 .custom-price {
   font-size: 24px;
   font-weight: 600;
 }
 
-/* Billing period text */
 .plan-billing {
   font-size: 14px;
   color: var(--text-light);
   text-align: center;
   margin-bottom: 10px;
-  height: 20px; /* Fixed height for consistency */
+  height: 20px;
 }
 
 .premium .plan-name {
@@ -1690,17 +1677,15 @@ a[href*="kontakt"]:hover,
   color: transparent;
 }
 
-/* Features list container */
 .plan-features {
   list-style: none;
   margin-bottom: 30px;
-  flex: 1; /* Take up available space */
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 15px; /* Consistent spacing */
+  gap: 15px;
 }
 
-/* Individual feature items */
 .plan-features li {
   display: flex;
   align-items: center;
@@ -1711,7 +1696,6 @@ a[href*="kontakt"]:hover,
   position: relative;
 }
 
-/* Checkmark icons */
 .plan-features li svg {
   margin-right: 12px;
   flex-shrink: 0;
@@ -1721,7 +1705,6 @@ a[href*="kontakt"]:hover,
   width: 20px;
 }
 
-/* Unavailable features */
 .plan-features li.unavailable {
   color: var(--text-light);
   text-decoration: line-through;
@@ -1733,7 +1716,6 @@ a[href*="kontakt"]:hover,
   opacity: 0.5;
 }
 
-/* Consistent spacing for enterprise plan features */
 .enterprise-plan .plan-features {
   gap: 15px;
 }
@@ -1742,13 +1724,11 @@ a[href*="kontakt"]:hover,
   padding: 4px 0;
 }
 
-/* Hover effect on feature items */
 .plan-features li:hover {
   transform: translateX(2px);
   transition: transform 0.2s ease;
 }
 
-/* Base button styles for all plan buttons */
 .plan-cta {
   display: block;
   text-align: center;
@@ -1761,34 +1741,30 @@ a[href*="kontakt"]:hover,
   letter-spacing: 0.01em;
   transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
   box-shadow: 0 4px 10px rgba(61, 124, 243, 0.2);
-  margin-top: auto; /* Push to bottom */
+  margin-top: auto;
   -webkit-font-smoothing: antialiased;
   outline: none;
   border: none;
   cursor: pointer;
 }
 
-/* Hover effect for all buttons */
 .plan-cta:hover {
   background-color: var(--primary-dark);
   transform: translateY(-3px);
   box-shadow: 0 6px 15px rgba(61, 124, 243, 0.3);
 }
 
-/* Active/click effect */
 .plan-cta:active {
   transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(61, 124, 243, 0.4);
 }
 
-/* Premium plan button gets special gradient */
 .premium-cta {
   background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
   background-size: 200% 200%;
   animation: bgGlow 5s ease infinite;
 }
 
-/* Enterprise button matches same style as others */
 .enterprise-cta {
   background-color: var(--primary-color);
 }
@@ -1990,6 +1966,21 @@ a[href*="kontakt"]:hover,
   .pricing-plans {
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   }
+  
+  .nav-center {
+    position: static;
+    transform: none;
+    flex: 1;
+  }
+  
+  .nav-left, .nav-right {
+    flex: none;
+    min-width: auto;
+  }
+  
+  .nav-links li {
+    margin: 0 10px;
+  }
 }
 
 @media (max-width: 1024px) {
@@ -2020,12 +2011,12 @@ a[href*="kontakt"]:hover,
   }
   
   .hero::before {
-    top: -60px; /* Angepasst für kleinere Navbar */
+    top: -60px;
     height: 60px;
   }
   
   .hero-content {
-    padding-top: 60px; /* Angepasst für kleinere Navbar */
+    padding-top: 60px;
   }
   
   .logo-hero img {
@@ -2060,7 +2051,6 @@ a[href*="kontakt"]:hover,
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   }
   
-  /* Responsive für die Sidebar */
   .sidebar {
     width: 85%;
     max-width: 320px;
@@ -2073,16 +2063,32 @@ a[href*="kontakt"]:hover,
   }
   
   .hero::before {
-    top: -60px; /* Angepasst für mobile Navbar-Höhe */
+    top: -60px;
     height: 60px;
   }
   
   .hero-content {
-    padding-top: 60px; /* Angepasst für mobile Navbar-Höhe */
+    padding-top: 60px;
   }
   
   .mobile-menu-btn {
     display: flex;
+  }
+  
+  .nav-center {
+    display: none;
+  }
+  
+  .nav-container {
+    justify-content: space-between;
+  }
+  
+  .nav-left, .nav-right {
+    flex: 1;
+  }
+  
+  .nav-right {
+    justify-content: flex-end;
   }
   
   .nav-links {
@@ -2137,12 +2143,10 @@ a[href*="kontakt"]:hover,
     justify-content: center;
   }
   
-  /* Hamburger immer anzeigen auf mobilen Geräten */
   .hamburger-menu {
     display: flex;
   }
   
-  /* Mobile Menu Button besser positionieren */
   .mobile-menu-btn {
     margin-left: 10px;
   }
@@ -2192,7 +2196,6 @@ a[href*="kontakt"]:hover,
     gap: 20px;
   }
   
-  /* Responsive für die Sidebar */
   .sidebar {
     width: 90%;
   }
@@ -2200,12 +2203,12 @@ a[href*="kontakt"]:hover,
 
 @media (max-width: 576px) {
   .hero::before {
-    top: -60px; /* Beibehalten für mobile Navbar-Höhe */
+    top: -60px;
     height: 60px;
   }
   
   .hero-content {
-    padding-top: 60px; /* Beibehalten für mobile Navbar-Höhe */
+    padding-top: 60px;
   }
   
   .logo-hero img {
@@ -2274,26 +2277,22 @@ a[href*="kontakt"]:hover,
   padding: 0 !important;
 }
 
-/* Diese Klasse wird benötigt, um die .image CSS-Regel zu vervollständigen */
 .image {
   width: 100%;
   height: auto;
 }
 
-/* Catch-All für den schwarzen Balken - Sehr hohe Spezifität */
 .landing-page > *:not(.footer) {
   border-top: none !important;
   border-bottom: none !important;
 }
 
-/* Sicherstellen, dass keine unerwünschten Hintergründe existieren */
 html, body, #root, .landing-page > div {
   background-color: transparent !important;
   margin: 0 !important;
   padding: 0 !important;
 }
 
-/* Entfernung aller unerwünschten Abstände in Elterncontainern */
 main, 
 #root, 
 .app-container, 
@@ -2312,14 +2311,12 @@ main,
   overflow: visible !important;
 }
 
-/* Fix für den Parallax-Effekt, der den weißen Balken verursacht */
 .hero-content {
-  transform: none !important; /* Verhindert, dass Parallax-Effekte Abstände erzeugen */
+  transform: none !important;
   z-index: 2;
 }
 
 /* === OPTIMIERTES BUTTON-STYLING === */
-/* VERSCHÖNERTE LOGIN/REGISTRIEREN BUTTONS AM ENDE DER SEITE UND LANDING PAGE */
 section:last-of-type .login-button,
 section:last-of-type a[href*="login"],
 section:last-of-type a[href*="einloggen"],
@@ -2382,7 +2379,6 @@ a.cta-button[href*="registrieren"] {
   border: none;
 }
 
-/* Verbesserter Hover-Effekt für die Buttons */
 section:last-of-type a[href*="login"]:hover,
 section:last-of-type a[href*="einloggen"]:hover,
 footer a[href*="login"]:hover,
@@ -2409,7 +2405,6 @@ a.cta-button[href*="registrieren"]:hover {
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
 }
 
-/* Optimierte Container für die Buttons */
 section:last-of-type .auth-buttons,
 section:last-of-type .btn-container,
 footer .auth-buttons,
@@ -2426,7 +2421,6 @@ footer .btn-container,
   max-width: 450px;
 }
 
-/* Hero-Buttons speziell anpassen */
 .hero .cta-button.primary {
   background-color: white;
   color: #3d7cf3;

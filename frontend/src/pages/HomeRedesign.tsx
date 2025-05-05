@@ -119,112 +119,117 @@ const HomeRedesign = () => {
 
   return (
     <div className="landing-page">
-      {/* Integrated Navbar with Sidebar */}
+      {/* Improved Navbar with Apple-style layout */}
       <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
         <div className="nav-container">
-          {/* Hamburger Menu Button (Left) */}
-          <div className="hamburger-menu" onClick={toggleSidebar}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="3" y1="12" x2="21" y2="12"></line>
-              <line x1="3" y1="6" x2="21" y2="6"></line>
-              <line x1="3" y1="18" x2="21" y2="18"></line>
-            </svg>
+          {/* Left section: Hamburger Menu and Logo */}
+          <div className="nav-left">
+            <div className="hamburger-menu" onClick={toggleSidebar}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+              </svg>
+            </div>
+            
+            <div className="logo">
+              <Link to="/">
+                <img src={logo} alt="Contract AI Logo" />
+              </Link>
+            </div>
           </div>
           
-          {/* Logo */}
-          <div className="logo">
-            <Link to="/">
-              <img src={logo} alt="Contract AI Logo" />
-            </Link>
-          </div>
-          
-          {/* Navigation Links (Middle) */}
-          <ul className={`nav-links ${mobileMenuOpen ? 'mobile-open' : ''}`}>
-            <li className={activeSection === 'dashboard' ? 'active' : ''}>
-              <Link to="/dashboard" className="nav-link">
-                <span className="nav-icon">📊</span>
-                Dashboard
-              </Link>
-            </li>
-            <li className={activeSection === 'contracts' ? 'active' : ''}>
-              <Link to="/contracts" className="nav-link">
-                <span className="nav-icon">📄</span>
-                Verträge
-              </Link>
-            </li>
-            <li className={activeSection === 'optimizer' ? 'active' : ''}>
-              <Link to="/optimizer" className="nav-link">
-                <span className="nav-icon">🧠</span>
-                Optimierer
-              </Link>
-            </li>
-            {!user?.isAuthenticated || (user && user.plan !== 'premium') ? (
-              <li className={activeSection === 'pricing' ? 'active' : ''}>
-                <Link to="/pricing" className="nav-link">
-                  <span className="nav-icon">💰</span>
-                  Preise
-                </Link>
-              </li>
-            ) : null}
-          </ul>
-          
-          {/* Auth Buttons (Right) - Sofort sichtbar ohne Ladezeit */}
-          <div className="auth-area">
-            {user?.isAuthenticated ? (
-              <div className="auth-buttons">
-                <Link to="/me" className="profile-button">
-                  <span className="button-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                      <circle cx="12" cy="7" r="4"></circle>
-                    </svg>
-                  </span>
-                  Profil
-                </Link>
-                <Link to="/dashboard" className="primary-button">
-                  <span className="button-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                      <line x1="8" y1="12" x2="16" y2="12"></line>
-                      <line x1="8" y1="16" x2="16" y2="16"></line>
-                      <line x1="8" y1="8" x2="10" y2="8"></line>
-                    </svg>
-                  </span>
+          {/* Center section: Main Navigation */}
+          <div className="nav-center">
+            <ul className={`nav-links ${mobileMenuOpen ? 'mobile-open' : ''}`}>
+              <li className={activeSection === 'dashboard' ? 'active' : ''}>
+                <Link to="/dashboard" className="nav-link">
+                  <span className="nav-icon">📊</span>
                   Dashboard
                 </Link>
-              </div>
-            ) : (
-              <div className="auth-buttons">
-                <Link to="/login" className="login-button">
-                  <span className="button-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
-                      <polyline points="10 17 15 12 10 7"></polyline>
-                      <line x1="15" y1="12" x2="3" y2="12"></line>
-                    </svg>
-                  </span>
-                  Login
+              </li>
+              <li className={activeSection === 'contracts' ? 'active' : ''}>
+                <Link to="/contracts" className="nav-link">
+                  <span className="nav-icon">📄</span>
+                  Verträge
                 </Link>
-                <Link to="/register" className="primary-button">
-                  <span className="button-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                      <circle cx="8.5" cy="7" r="4"></circle>
-                      <line x1="20" y1="8" x2="20" y2="14"></line>
-                      <line x1="23" y1="11" x2="17" y2="11"></line>
-                    </svg>
-                  </span>
-                  Registrieren
+              </li>
+              <li className={activeSection === 'optimizer' ? 'active' : ''}>
+                <Link to="/optimizer" className="nav-link">
+                  <span className="nav-icon">🧠</span>
+                  Optimierer
                 </Link>
-              </div>
-            )}
+              </li>
+              {!user?.isAuthenticated || (user && user.plan !== 'premium') ? (
+                <li className={activeSection === 'pricing' ? 'active' : ''}>
+                  <Link to="/pricing" className="nav-link">
+                    <span className="nav-icon">💰</span>
+                    Preise
+                  </Link>
+                </li>
+              ) : null}
+            </ul>
           </div>
           
-          {/* Mobile Menu Button */}
-          <div className={`mobile-menu-btn ${mobileMenuOpen ? 'active' : ''}`} onClick={toggleMobileMenu}>
-            <span></span>
-            <span></span>
-            <span></span>
+          {/* Right section: Authentication */}
+          <div className="nav-right">
+            <div className="auth-area">
+              {user?.isAuthenticated ? (
+                <div className="auth-buttons">
+                  <Link to="/me" className="profile-button">
+                    <span className="button-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                      </svg>
+                    </span>
+                    Profil
+                  </Link>
+                  <Link to="/dashboard" className="primary-button">
+                    <span className="button-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="8" y1="12" x2="16" y2="12"></line>
+                        <line x1="8" y1="16" x2="16" y2="16"></line>
+                        <line x1="8" y1="8" x2="10" y2="8"></line>
+                      </svg>
+                    </span>
+                    Dashboard
+                  </Link>
+                </div>
+              ) : (
+                <div className="auth-buttons">
+                  <Link to="/login" className="login-button">
+                    <span className="button-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                        <polyline points="10 17 15 12 10 7"></polyline>
+                        <line x1="15" y1="12" x2="3" y2="12"></line>
+                      </svg>
+                    </span>
+                    Login
+                  </Link>
+                  <Link to="/register" className="primary-button">
+                    <span className="button-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="8.5" cy="7" r="4"></circle>
+                        <line x1="20" y1="8" x2="20" y2="14"></line>
+                        <line x1="23" y1="11" x2="17" y2="11"></line>
+                      </svg>
+                    </span>
+                    Registrieren
+                  </Link>
+                </div>
+              )}
+            </div>
+            
+            {/* Mobile Menu Button - nur auf kleinen Bildschirmen sichtbar */}
+            <div className={`mobile-menu-btn ${mobileMenuOpen ? 'active' : ''}`} onClick={toggleMobileMenu}>
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
           </div>
         </div>
       </nav>
