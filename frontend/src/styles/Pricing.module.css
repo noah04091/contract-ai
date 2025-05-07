@@ -7,6 +7,11 @@
   margin: 0 auto;
   padding: 2rem;
   color: #1d1d1f;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: linear-gradient(120deg, rgba(250,250,255,1) 0%, rgba(240,245,255,1) 100%);
 }
 
 /* Header Styling */
@@ -37,11 +42,14 @@
   justify-content: center;
   margin-bottom: 2.5rem;
   border-radius: 10px;
-  background-color: #f5f5f7;
+  background-color: rgba(245, 245, 247, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   padding: 0.3rem;
   width: fit-content;
   margin-left: auto;
   margin-right: auto;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
 }
 
 .toggleButton {
@@ -67,19 +75,24 @@
 .plansContainer, .tableContainer {
   max-width: 1000px;
   margin: 0 auto;
+  width: 100%;
 }
 
 .plans {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 2rem;
+  display: flex;
+  gap: 1.5rem;
+  justify-content: center;
   margin-bottom: 2rem;
 }
 
 /* Card Styling */
 .card {
+  flex: 1;
+  min-width: 280px;
+  max-width: 350px;
   background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border-radius: 20px;
   overflow: hidden;
   border: 1px solid rgba(230, 230, 230, 0.7);
@@ -93,18 +106,30 @@
 .highlight {
   border: 1px solid rgba(0, 113, 227, 0.2);
   box-shadow: 0 12px 30px rgba(0, 113, 227, 0.1);
+  transform: translateY(-5px);
+}
+
+.card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.08);
+}
+
+.highlight:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 20px 45px rgba(0, 113, 227, 0.15);
 }
 
 .popularBadge {
   position: absolute;
-  top: 1rem;
-  right: 1rem;
+  top: 0;
+  right: 2rem;
   background: linear-gradient(135deg, #0071e3, #42a4ff);
   color: white;
   font-size: 0.8rem;
   font-weight: 500;
-  padding: 0.3rem 0.8rem;
-  border-radius: 20px;
+  padding: 0.5rem 1rem;
+  border-radius: 0 0 10px 10px;
+  box-shadow: 0 4px 12px rgba(0, 113, 227, 0.2);
 }
 
 .cardHeader {
@@ -112,17 +137,36 @@
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
+.planTitleGroup {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+.planIcon {
+  color: #0071e3;
+}
+
 .planTitle {
   font-size: 1.5rem;
   font-weight: 600;
-  margin: 0 0 1rem;
+  margin: 0;
   color: #1d1d1f;
+}
+
+.planDescription {
+  font-size: 0.95rem;
+  color: #6e6e73;
+  margin: 0.5rem 0 0;
+  line-height: 1.4;
 }
 
 .priceContainer {
   display: flex;
   align-items: baseline;
   gap: 0.5rem;
+  margin-top: 1rem;
 }
 
 .price {
@@ -185,7 +229,7 @@
 }
 
 /* Buttons */
-.btnOutline, .btnFilled {
+.btnOutline, .btnFilled, .btnGradient {
   font-family: inherit;
   font-size: 1rem;
   font-weight: 500;
@@ -218,9 +262,22 @@
 
 .btnFilled:hover:not(:disabled) {
   background-color: #0058b3;
+  box-shadow: 0 4px 12px rgba(0, 113, 227, 0.15);
 }
 
-.btnFilled:disabled {
+.btnGradient {
+  background: linear-gradient(90deg, #0062cc 0%, #0082ff 100%);
+  border: none;
+  color: white;
+  box-shadow: 0 4px 12px rgba(0, 113, 227, 0.15);
+}
+
+.btnGradient:hover:not(:disabled) {
+  box-shadow: 0 6px 16px rgba(0, 113, 227, 0.25);
+  transform: translateY(-1px);
+}
+
+.btnFilled:disabled, .btnGradient:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
@@ -252,6 +309,7 @@
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
   background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   margin-bottom: 2rem;
 }
 
@@ -270,11 +328,15 @@
 }
 
 .featureColumn {
-  width: 50%;
+  width: 40%;
 }
 
 .planColumn {
-  width: 25%;
+  width: 20%;
+}
+
+.businessColumn {
+  background-color: rgba(0, 113, 227, 0.03);
 }
 
 .premiumColumn {
@@ -289,7 +351,7 @@
   border-bottom: none;
 }
 
-.featureCell, .freeCell, .premiumCell {
+.featureCell, .freeCell, .businessCell, .premiumCell {
   padding: 1.2rem 1.5rem;
   font-size: 1rem;
 }
@@ -298,12 +360,16 @@
   color: #1d1d1f;
 }
 
-.freeCell, .premiumCell {
+.freeCell, .businessCell, .premiumCell {
   text-align: center;
 }
 
-.premiumCell {
+.businessCell {
   background-color: rgba(0, 113, 227, 0.03);
+}
+
+.premiumCell {
+  background-color: rgba(0, 113, 227, 0.05);
 }
 
 .checkIcon {
@@ -322,8 +388,15 @@
   margin-top: 2rem;
 }
 
-.tableActions .btnFilled {
-  max-width: 250px;
+.actionButtons {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  justify-content: center;
+}
+
+.actionButtons button {
+  max-width: 200px;
 }
 
 /* Note */
@@ -335,6 +408,29 @@
 }
 
 /* Responsive Styles */
+@media (max-width: 960px) {
+  .plans {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .card {
+    width: 100%;
+    max-width: 450px;
+  }
+  
+  .actionButtons {
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+  }
+  
+  .actionButtons button {
+    width: 100%;
+    max-width: 250px;
+  }
+}
+
 @media (max-width: 768px) {
   .container {
     padding: 1.5rem;
@@ -344,8 +440,8 @@
     font-size: 2.2rem;
   }
   
-  .plans {
-    grid-template-columns: 1fr;
+  .subtitle {
+    font-size: 1rem;
   }
   
   .cardHeader {
@@ -360,7 +456,34 @@
     padding: 0 1.5rem 1.5rem;
   }
   
-  .featureCell, .freeCell, .premiumCell {
+  .featureCell, .freeCell, .businessCell, .premiumCell {
     padding: 1rem;
+  }
+  
+  .featureTable {
+    min-width: 700px;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 1rem;
+  }
+  
+  .header {
+    margin-bottom: 2rem;
+  }
+  
+  .title {
+    font-size: 2rem;
+  }
+  
+  .viewToggle {
+    width: 100%;
+  }
+  
+  .toggleButton {
+    flex: 1;
+    padding: 0.7rem 1rem;
   }
 }

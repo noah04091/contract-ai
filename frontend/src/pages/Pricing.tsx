@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle, X, ExternalLink } from "lucide-react";
+import { CheckCircle, X, ExternalLink, Star, Zap, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import styles from "../styles/Pricing.module.css";
@@ -10,11 +10,11 @@ export default function Pricing() {
   const [activeTab, setActiveTab] = useState<'cards' | 'table'>('cards');
   const navigate = useNavigate();
 
-  const handleUpgrade = async () => {
+  const handleUpgrade = async (planId: string = 'premium') => {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/stripe/create-checkout-session", {
+      const res = await fetch(`/api/stripe/create-checkout-session?plan=${planId}`, {
         method: "POST",
         credentials: "include",
       });
@@ -37,9 +37,12 @@ export default function Pricing() {
 
   const plans = [
     {
+      id: "free",
       title: "Free",
       price: "0€",
       period: "für immer",
+      icon: <Users size={20} className={styles.planIcon} />,
+      description: "Perfekt zum Testen und für gelegentliche Nutzung",
       features: [
         "1 Vertragsanalyse pro Monat",
         "Basis-Upload & PDF-Anzeige",
@@ -55,7 +58,7 @@ export default function Pricing() {
         <motion.button 
           className={styles.btnOutline} 
           onClick={() => navigate("/register")}
-          whileHover={{ scale: 1.02 }}
+          whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.98 }}
           transition={{ type: "spring", stiffness: 400, damping: 17 }}
         >
@@ -64,24 +67,62 @@ export default function Pricing() {
       ),
     },
     {
+      id: "business",
+      title: "Business",
+      price: "4,90€",
+      period: "pro Monat",
+      icon: <Zap size={20} className={styles.planIcon} />,
+      description: "Für Freelancer und kleine Teams",
+      features: [
+        "5 Vertragsanalysen pro Monat",
+        "Vertragsvergleich & Optimierung",
+        "KI-Chat zum Vertrag",
+        "Erinnerungen per E-Mail",
+        "Standard Support",
+      ],
+      highlight: true,
+      popular: true,
+      button: (
+        <motion.button
+          onClick={() => handleUpgrade('business')}
+          disabled={loading}
+          className={styles.btnFilled}
+          whileHover={!loading ? { scale: 1.03 } : {}}
+          whileTap={!loading ? { scale: 0.98 } : {}}
+          transition={{ type: "spring", stiffness: 400, damping: 17 }}
+        >
+          {loading ? (
+            <>
+              <span className={styles.loadingSpinner}></span>
+              <span>Lade Stripe...</span>
+            </>
+          ) : (
+            "Business starten"
+          )}
+        </motion.button>
+      ),
+    },
+    {
+      id: "premium",
       title: "Premium",
       price: "9,90€",
       period: "pro Monat",
+      icon: <Star size={20} className={styles.planIcon} />,
+      description: "Unbegrenzte Features für Profis",
       features: [
         "Unbegrenzte Analysen",
         "Vertragsvergleich & Optimierung",
         "KI-Chat & Erinnerungen",
         "Vertragserstellung mit KI",
         "PDF-Export mit Branding",
-        "Exklusiver Support",
+        "Exklusiver Premium Support",
       ],
-      highlight: true,
       button: (
         <motion.button
-          onClick={handleUpgrade}
+          onClick={() => handleUpgrade('premium')}
           disabled={loading}
-          className={styles.btnFilled}
-          whileHover={!loading ? { scale: 1.02 } : {}}
+          className={`${styles.btnGradient}`}
+          whileHover={!loading ? { scale: 1.03 } : {}}
           whileTap={!loading ? { scale: 0.98 } : {}}
           transition={{ type: "spring", stiffness: 400, damping: 17 }}
         >
@@ -92,7 +133,7 @@ export default function Pricing() {
             </>
           ) : (
             <>
-              Upgrade starten
+              Premium aktivieren
               <ExternalLink size={16} className={styles.buttonIcon} />
             </>
           )}
@@ -102,18 +143,39 @@ export default function Pricing() {
   ];
 
   const featureMatrix = [
-    { feature: "Analysen pro Monat", free: "1", premium: "Unbegrenzt" },
-    { feature: "Vertragsvergleich & Optimierung", free: "–", premium: "✓" },
-    { feature: "KI-Zusammenfassung & Score", free: "✓", premium: "✓" },
-    { feature: "Erinnerungen per E-Mail", free: "–", premium: "✓" },
-    { feature: "Vertragserstellung per KI", free: "–", premium: "✓" },
-    { feature: "KI-Chat zum Vertrag", free: "–", premium: "✓" },
-    { feature: "PDF-Export mit Branding", free: "–", premium: "✓" },
-    { feature: "Exklusiver Support", free: "Community", premium: "✓" },
+    { feature: "Analysen pro Monat", free: "1", business: "5", premium: "Unbegrenzt" },
+    { feature: "Vertragsvergleich", free: "–", business: "✓", premium: "✓" },
+    { feature: "Vertragsoptimierung", free: "–", business: "✓", premium: "✓" },
+    { feature: "KI-Zusammenfassung & Score", free: "✓", business: "✓", premium: "✓" },
+    { feature: "Erinnerungen per E-Mail", free: "–", business: "✓", premium: "✓" },
+    { feature: "Vertragserstellung per KI", free: "–", business: "–", premium: "✓" },
+    { feature: "KI-Chat zum Vertrag", free: "–", business: "Basis", premium: "Erweitert" },
+    { feature: "PDF-Export mit Branding", free: "–", business: "–", premium: "✓" },
+    { feature: "Support", free: "Community", business: "Standard", premium: "Premium" },
   ];
 
+  // Subtle background animation
+  const backgroundVariants = {
+    animate: {
+      background: [
+        "linear-gradient(120deg, rgba(250,250,255,1) 0%, rgba(240,245,255,1) 100%)",
+        "linear-gradient(120deg, rgba(245,250,255,1) 0%, rgba(235,245,255,1) 100%)",
+        "linear-gradient(120deg, rgba(250,250,255,1) 0%, rgba(240,245,255,1) 100%)",
+      ],
+      transition: {
+        duration: 15,
+        repeat: Infinity,
+        repeatType: "reverse" as const,
+      },
+    },
+  };
+
   return (
-    <div className={styles.container}>
+    <motion.div 
+      className={styles.container}
+      variants={backgroundVariants}
+      animate="animate"
+    >
       <Helmet>
         <title>Preise | Contract AI</title>
         <meta
@@ -179,36 +241,52 @@ export default function Pricing() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 + 0.3, duration: 0.4 }}
-                  whileHover={{ y: -5, boxShadow: plan.highlight ? 
-                    "0 20px 40px rgba(0, 113, 227, 0.15)" : 
-                    "0 20px 40px rgba(0, 0, 0, 0.08)" 
+                  whileHover={{ 
+                    y: -8, 
+                    boxShadow: plan.highlight ? 
+                      "0 25px 50px rgba(0, 113, 227, 0.15)" : 
+                      "0 25px 50px rgba(0, 0, 0, 0.08)" 
                   }}
                 >
-                  {plan.highlight && <div className={styles.popularBadge}>Beliebt</div>}
+                  {plan.popular && <div className={styles.popularBadge}>Beliebt</div>}
                   
                   <div className={styles.cardHeader}>
-                    <h2 className={styles.planTitle}>{plan.title}</h2>
+                    <div className={styles.planTitleGroup}>
+                      {plan.icon}
+                      <h2 className={styles.planTitle}>{plan.title}</h2>
+                    </div>
                     <div className={styles.priceContainer}>
                       <p className={styles.price}>{plan.price}</p>
                       <span className={styles.period}>{plan.period}</span>
                     </div>
+                    <p className={styles.planDescription}>{plan.description}</p>
                   </div>
 
                   <div className={styles.cardContent}>
                     <ul className={styles.features}>
                       {plan.features.map((feature, i) => (
-                        <li key={i}>
+                        <motion.li 
+                          key={i}
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: i * 0.05 + 0.5 }}
+                        >
                           <CheckCircle size={16} className={styles.featureIcon} /> {feature}
-                        </li>
+                        </motion.li>
                       ))}
                     </ul>
 
                     {plan.limitations && (
                       <ul className={styles.limitations}>
                         {plan.limitations.map((limitation, i) => (
-                          <li key={i}>
+                          <motion.li 
+                            key={i}
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: i * 0.05 + 0.8 }}
+                          >
                             <X size={16} className={styles.limitationIcon} /> {limitation}
-                          </li>
+                          </motion.li>
                         ))}
                       </ul>
                     )}
@@ -245,6 +323,7 @@ export default function Pricing() {
                   <tr>
                     <th className={styles.featureColumn}>Funktion</th>
                     <th className={styles.planColumn}>Free</th>
+                    <th className={`${styles.planColumn} ${styles.businessColumn}`}>Business</th>
                     <th className={`${styles.planColumn} ${styles.premiumColumn}`}>Premium</th>
                   </tr>
                 </thead>
@@ -259,6 +338,15 @@ export default function Pricing() {
                           <span className={styles.dash}>–</span>
                         ) : (
                           item.free
+                        )}
+                      </td>
+                      <td className={`${styles.businessCell}`}>
+                        {item.business === "✓" ? (
+                          <CheckCircle size={18} className={styles.checkIcon} />
+                        ) : item.business === "–" ? (
+                          <span className={styles.dash}>–</span>
+                        ) : (
+                          item.business
                         )}
                       </td>
                       <td className={`${styles.premiumCell}`}>
@@ -277,23 +365,43 @@ export default function Pricing() {
             </div>
             
             <div className={styles.tableActions}>
-              <motion.button
-                onClick={handleUpgrade}
-                disabled={loading}
-                className={styles.btnFilled}
-                whileHover={!loading ? { scale: 1.02 } : {}}
-                whileTap={!loading ? { scale: 0.98 } : {}}
-                transition={{ type: "spring", stiffness: 400, damping: 17 }}
-              >
-                {loading ? (
-                  <>
-                    <span className={styles.loadingSpinner}></span>
-                    <span>Lade Stripe...</span>
-                  </>
-                ) : (
-                  "Premium aktivieren"
-                )}
-              </motion.button>
+              <div className={styles.actionButtons}>
+                <motion.button
+                  onClick={() => handleUpgrade('business')}
+                  disabled={loading}
+                  className={styles.btnFilled}
+                  whileHover={!loading ? { scale: 1.02 } : {}}
+                  whileTap={!loading ? { scale: 0.98 } : {}}
+                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                >
+                  {loading ? (
+                    <>
+                      <span className={styles.loadingSpinner}></span>
+                      <span>Lade Stripe...</span>
+                    </>
+                  ) : (
+                    "Business aktivieren"
+                  )}
+                </motion.button>
+
+                <motion.button
+                  onClick={() => handleUpgrade('premium')}
+                  disabled={loading}
+                  className={styles.btnGradient}
+                  whileHover={!loading ? { scale: 1.02 } : {}}
+                  whileTap={!loading ? { scale: 0.98 } : {}}
+                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                >
+                  {loading ? (
+                    <>
+                      <span className={styles.loadingSpinner}></span>
+                      <span>Lade Stripe...</span>
+                    </>
+                  ) : (
+                    "Premium aktivieren"
+                  )}
+                </motion.button>
+              </div>
               
               <motion.p 
                 className={styles.cancellationNote}
@@ -307,6 +415,6 @@ export default function Pricing() {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 }
