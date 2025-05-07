@@ -22,6 +22,7 @@ export default function Navbar() {
   const isHomePage = location.pathname === "/";
   
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
   // 🔐 Benutzerstatus laden
@@ -52,12 +53,22 @@ export default function Navbar() {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setDropdownOpen(false);
       }
+      if (
+        !isHomePage && 
+        mobileMenuOpen && 
+        mobileMenuRef.current && 
+        !mobileMenuRef.current.contains(e.target as Node) &&
+        !(e.target as Element).closest(`.${styles.hamburger}`)
+      ) {
+        setMobileMenuOpen(false);
+      }
     };
+    
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [mobileMenuOpen, isHomePage]);
 
-  // Scroll handler to add glassmorphism effect when scrolled
+  // Scroll handler für Glasmorphismus-Effekt
   useEffect(() => {
     const handleScroll = () => {
       if (window.scrollY > 20) {
@@ -68,7 +79,23 @@ export default function Navbar() {
     };
 
     window.addEventListener("scroll", handleScroll);
+    // Initiale Überprüfung beim Laden
+    handleScroll();
+    
     return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // ESC-Taste zum Schließen der Menüs
+  useEffect(() => {
+    const handleEscKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setDropdownOpen(false);
+        setMobileMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("keydown", handleEscKey);
+    return () => document.removeEventListener("keydown", handleEscKey);
   }, []);
 
   // 🚪 Logout-Handler
@@ -129,6 +156,14 @@ export default function Navbar() {
                 <Link to="/pricing" className={`${styles.navLink} ${location.pathname === "/pricing" ? styles.activeNavLink : ""}`}>
                   <span className={styles.navLinkIcon}>💰</span>
                   <span className={styles.navLinkText}>Preise</span>
+                </Link>
+              </motion.div>
+            )}
+            {user && user.subscriptionActive && (
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Link to="/premium" className={`${styles.navLink} ${location.pathname === "/premium" ? styles.activeNavLink : ""}`}>
+                  <span className={styles.navLinkIcon}>🔒</span>
+                  <span className={styles.navLinkText}>Premium</span>
                 </Link>
               </motion.div>
             )}
@@ -202,7 +237,11 @@ export default function Navbar() {
             aria-label="Menü öffnen"
             whileTap={{ scale: 0.95 }}
             initial={{ opacity: 0.8 }}
-            animate={{ opacity: 1 }}
+            animate={{ 
+              opacity: 1,
+              rotate: mobileMenuOpen ? 90 : 0
+            }}
+            transition={{ duration: 0.3 }}
           >
             {mobileMenuOpen ? "✕" : "☰"}
           </motion.button>
@@ -220,15 +259,27 @@ export default function Navbar() {
 
         <div className={styles.navRight}>
           {user ? (
-            <motion.button
-              onClick={handleLogout}
-              className={styles.logoutButton}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <span className={styles.logoutIcon}>🚪</span>
-              <span>Logout</span>
-            </motion.button>
+            <div className={styles.userActionWrapper}>
+              {user.subscriptionActive && (
+                <motion.div 
+                  className={styles.premiumIndicator}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <span className={styles.premiumIcon}>🔒</span>
+                  <span className={styles.premiumText}>Premium</span>
+                </motion.div>
+              )}
+              <motion.button
+                onClick={handleLogout}
+                className={styles.logoutButton}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <span className={styles.logoutIcon}>🚪</span>
+                <span>Logout</span>
+              </motion.button>
+            </div>
           ) : (
             <div className={styles.authButtons}>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
@@ -260,51 +311,68 @@ export default function Navbar() {
       </div>
 
       <AnimatePresence>
-        {mobileMenuOpen && (
+        {!isHomePage && mobileMenuOpen && (
           <motion.div 
-            className={`${styles.mobileMenu}`}
+            ref={mobileMenuRef}
+            className={styles.mobileMenu}
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
           >
-            <div className={styles.mobileMenuLinks}>
-              <Link to="/" className={styles.mobileNavLink}>
-                <span className={styles.mobileNavIcon}>🏠</span>
-                <span>Dashboard</span>
-              </Link>
-              <Link to="/contracts" className={styles.mobileNavLink}>
-                <span className={styles.mobileNavIcon}>📁</span>
-                <span>Verträge</span>
-              </Link>
-              <Link to="/optimizer" className={styles.mobileNavLink}>
-                <span className={styles.mobileNavIcon}>🧠</span>
-                <span>Optimierer</span>
-              </Link>
-              {user && !user.subscriptionActive && (
-                <Link to="/pricing" className={styles.mobileNavLink}>
-                  <span className={styles.mobileNavIcon}>💰</span>
-                  <span>Preise</span>
+            <div className={styles.mobileMenuInner}>
+              <div className={styles.mobileMenuLinks}>
+                <Link to="/" className={`${styles.mobileNavLink} ${location.pathname === "/" ? styles.activeMobileNavLink : ""}`}>
+                  <span className={styles.mobileNavIcon}>🏠</span>
+                  <span>Dashboard</span>
                 </Link>
-              )}
-              {user && (
-                <>
-                  <div className={styles.userInfo}>
-                    <span>✅ {user.email}</span>
-                    {user.subscriptionActive && (
-                      <span className={styles.premiumBadge}>Premium</span>
-                    )}
-                  </div>
-                  <Link to="/me" className={styles.mobileNavLink}>
-                    <span className={styles.mobileNavIcon}>👤</span>
-                    <span>Profil</span>
+                <Link to="/contracts" className={`${styles.mobileNavLink} ${location.pathname === "/contracts" ? styles.activeMobileNavLink : ""}`}>
+                  <span className={styles.mobileNavIcon}>📁</span>
+                  <span>Verträge</span>
+                </Link>
+                <Link to="/optimizer" className={`${styles.mobileNavLink} ${location.pathname === "/optimizer" ? styles.activeMobileNavLink : ""}`}>
+                  <span className={styles.mobileNavIcon}>🧠</span>
+                  <span>Optimierer</span>
+                </Link>
+                {user && !user.subscriptionActive && (
+                  <Link to="/pricing" className={`${styles.mobileNavLink} ${location.pathname === "/pricing" ? styles.activeMobileNavLink : ""}`}>
+                    <span className={styles.mobileNavIcon}>💰</span>
+                    <span>Preise</span>
                   </Link>
-                  <button onClick={handleLogout} className={styles.mobileNavLink}>
-                    <span className={styles.mobileNavIcon}>🚪</span>
-                    <span>Logout</span>
-                  </button>
-                </>
-              )}
+                )}
+                {user && user.subscriptionActive && (
+                  <Link to="/premium" className={`${styles.mobileNavLink} ${location.pathname === "/premium" ? styles.activeMobileNavLink : ""}`}>
+                    <span className={styles.mobileNavIcon}>🔒</span>
+                    <span>Premium</span>
+                  </Link>
+                )}
+                {user && (
+                  <>
+                    <div className={styles.userInfo}>
+                      <span className={styles.userEmail}>✅ {user.email}</span>
+                      {user.subscriptionActive && (
+                        <span className={styles.premiumBadge}>Premium</span>
+                      )}
+                    </div>
+                    <Link to="/me" className={`${styles.mobileNavLink} ${location.pathname === "/me" ? styles.activeMobileNavLink : ""}`}>
+                      <span className={styles.mobileNavIcon}>👤</span>
+                      <span>Profil</span>
+                    </Link>
+                    <button onClick={handleLogout} className={styles.mobileNavLink}>
+                      <span className={styles.mobileNavIcon}>🚪</span>
+                      <span>Logout</span>
+                    </button>
+                  </>
+                )}
+              </div>
+              <motion.button
+                className={styles.closeMobileMenu}
+                onClick={() => setMobileMenuOpen(false)}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+              >
+                Schließen
+              </motion.button>
             </div>
           </motion.div>
         )}
