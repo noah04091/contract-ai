@@ -16,7 +16,7 @@ import Impressum from "./pages/Impressum";
 import Datenschutz from "./pages/Datenschutz";
 import AGB from "./pages/AGB";
 import About from "./pages/About";
-import Success from "./pages/Success.tsx"; // ✅ NEU
+import Success from "./pages/Success"; // ✅ NEU
 
 // 🔒 Geschützte Seiten
 import Dashboard from "./pages/Dashboard";
