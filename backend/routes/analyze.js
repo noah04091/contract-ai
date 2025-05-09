@@ -1,4 +1,4 @@
-// routes/analyze.js
+// 📁 routes/analyze.js
 const express = require("express");
 const multer = require("multer");
 const pdfParse = require("pdf-parse");
@@ -13,7 +13,7 @@ const router = express.Router();
 const upload = multer({ dest: "uploads/" });
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-// MongoDB-Verbindung (aus Hauptprojekt übernehmen!)
+// MongoDB Setup
 const mongoUri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
 const client = new MongoClient(mongoUri);
 let analysisCollection;
@@ -33,10 +33,29 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
   if (!req.file) return res.status(400).json({ message: "❌ Keine Datei hochgeladen." });
 
   try {
+    // 📊 Nutzer auslesen + Limit prüfen
+    const usersCollection = client.db("contract_ai").collection("users");
+    const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
+
+    const plan = user.subscriptionPlan || "free";
+    const count = user.analysisCount ?? 0;
+
+    let limit = 10;
+    if (plan === "business") limit = 50;
+    if (plan === "premium") limit = Infinity;
+
+    if (count >= limit) {
+      return res.status(403).json({
+        message: "❌ Analyse-Limit erreicht. Bitte Paket upgraden.",
+      });
+    }
+
+    // 📥 PDF auslesen
     const buffer = fs.readFileSync(req.file.path);
     const parsed = await pdfParse(buffer);
     const contractText = parsed.text.slice(0, 4000);
 
+    // 📤 Prompt erstellen
     const prompt = `
 Du bist ein Vertragsanalyst. Analysiere den folgenden Vertrag:
 
@@ -58,6 +77,7 @@ Antwort im folgenden JSON-Format:
   "contractScore": 87
 }`;
 
+    // 💬 OpenAI-Aufruf
     const completion = await openai.chat.completions.create({
       model: "gpt-4",
       messages: [
@@ -73,6 +93,7 @@ Antwort im folgenden JSON-Format:
     const jsonString = aiMessage.slice(jsonStart, jsonEnd);
     const result = JSON.parse(jsonString);
 
+    // 📦 In DB speichern
     const analysis = {
       userId: req.user.userId,
       contractName: req.file.originalname,
@@ -82,6 +103,13 @@ Antwort im folgenden JSON-Format:
 
     const inserted = await analysisCollection.insertOne(analysis);
 
+    // ✅ Analyse-Zähler hochzählen
+    await usersCollection.updateOne(
+      { _id: user._id },
+      { $inc: { analysisCount: 1 } }
+    );
+
+    // 📄 PDF generieren
     const pdfHtml = `
       <h2>Vertragsanalyse</h2>
       <p><strong>Zusammenfassung:</strong> ${result.summary}</p>
@@ -114,7 +142,7 @@ Antwort im folgenden JSON-Format:
   }
 });
 
-// Neue Route: Analyseverlauf abrufen
+// 📚 Analyseverlauf abrufen
 router.get("/history", verifyToken, async (req, res) => {
   try {
     const history = await analysisCollection

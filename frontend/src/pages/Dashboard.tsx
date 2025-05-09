@@ -20,6 +20,13 @@ interface Contract {
   reminder?: boolean;
 }
 
+interface UserData {
+  email: string;
+  analysisCount?: number;
+  analysisLimit?: number;
+  subscriptionPlan?: string;
+}
+
 export default function Dashboard() {
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [filteredContracts, setFilteredContracts] = useState<Contract[]>([]);
@@ -28,10 +35,22 @@ export default function Dashboard() {
   const [showModal, setShowModal] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [userEmail, setUserEmail] = useState("");
+  const [userData, setUserData] = useState<UserData | null>(null);
   const [notification, setNotification] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Hilfsfunktion für die Farbbestimmung des Fortschrittsbalkens
+  const getProgressBarColor = () => {
+    if (!userData || !userData.analysisCount || !userData.analysisLimit) return "";
+    
+    const usagePercentage = (userData.analysisCount / userData.analysisLimit) * 100;
+    
+    if (usagePercentage >= 100) return styles.progressRed;
+    if (usagePercentage >= 80) return styles.progressOrange;
+    return styles.progressGreen;
+  };
 
   const countStatus = (status: string) => contracts.filter((c) => c.status === status).length;
   const countWithReminder = () => contracts.filter((c) => c.reminder).length;
@@ -56,10 +75,11 @@ export default function Dashboard() {
           fetch("/api/contracts", { credentials: "include" })
         ]);
         
-        const userData = await userResponse.json();
+        const userDataResponse = await userResponse.json();
         const contractsData = await contractsResponse.json();
         
-        setUserEmail(userData.email);
+        setUserEmail(userDataResponse.email);
+        setUserData(userDataResponse); // Speichern der kompletten Nutzerdaten
         setContracts(contractsData);
         setFilteredContracts(contractsData);
       } catch (err) {
@@ -269,6 +289,48 @@ export default function Dashboard() {
           type={notification.type}
           onClose={() => setNotification(null)}
         />
+      )}
+
+      {/* Analyse-Limit Warnung */}
+      {userData && 
+       userData.analysisCount !== undefined && 
+       userData.analysisLimit !== undefined && 
+       userData.analysisCount >= userData.analysisLimit && 
+       userData.subscriptionPlan !== "premium" && (
+        <div className={styles.analysisLimitWarning}>
+          <div className={styles.warningContent}>
+            <svg className={styles.warningIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M12 8V12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M12 16H12.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span>Du hast dein monatliches Analyse-Limit erreicht</span>
+          </div>
+          <button 
+            className={`${styles.actionButton} ${styles.upgradeButton}`}
+            onClick={() => navigate('/upgrade')}
+          >
+            Jetzt upgraden
+          </button>
+        </div>
+      )}
+
+      {/* Analyse-Fortschrittsbalken */}
+      {userData && 
+       userData.analysisCount !== undefined && 
+       userData.analysisLimit !== undefined && 
+       userData.analysisLimit > 0 && (
+        <div className={styles.analysisProgressContainer}>
+          <div className={styles.progressInfo}>
+            <span>{userData.analysisCount} / {userData.analysisLimit} Analysen genutzt</span>
+          </div>
+          <div className={styles.progressBarContainer}>
+            <div 
+              className={`${styles.progressBar} ${getProgressBarColor()}`}
+              style={{ width: `${Math.min((userData.analysisCount / userData.analysisLimit) * 100, 100)}%` }}
+            ></div>
+          </div>
+        </div>
       )}
 
       <div className={styles.dashboardContent}>

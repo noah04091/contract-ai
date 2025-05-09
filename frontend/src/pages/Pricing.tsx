@@ -29,7 +29,6 @@ interface Plan {
 
 export default function Pricing() {
   const [loading, setLoading] = useState(false);
-  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'cards' | 'table'>('cards');
   const [animateCards, setAnimateCards] = useState(false);
   const navigate = useNavigate();
@@ -42,34 +41,9 @@ export default function Pricing() {
     return () => clearTimeout(timer);
   }, []);
 
-  const handleUpgrade = async (planId: string = 'premium') => {
+  // Stripe Checkout Funktion
+  const startCheckout = async (plan: string) => {
     setLoading(true);
-
-    try {
-      const res = await fetch(`/api/stripe/create-checkout-session?plan=${planId}`, {
-        method: "POST",
-        credentials: "include",
-      });
-
-      const data: { url?: string; message?: string } = await res.json();
-
-      if (!res.ok || !data.url) {
-        throw new Error(data.message || "Fehler beim Stripe-Checkout");
-      }
-
-      window.location.href = data.url;
-    } catch (error) {
-      const err = error as Error;
-      alert("❌ Fehler beim Upgrade: " + err.message);
-      navigate("/dashboard?status=error");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Neue startCheckout Funktion nach den Anforderungen
-  const startCheckout = async (plan: "business" | "premium") => {
-    setCheckoutLoading(plan);
 
     try {
       const res = await fetch("/api/stripe/create-checkout-session", {
@@ -92,8 +66,9 @@ export default function Pricing() {
     } catch (error) {
       const err = error as Error;
       alert("❌ Fehler beim Checkout: " + err.message);
+      navigate("/dashboard?status=error");
     } finally {
-      setCheckoutLoading(null);
+      setLoading(false);
     }
   };
 
@@ -141,7 +116,7 @@ export default function Pricing() {
       popular: true,
       button: {
         text: "Business starten",
-        action: () => handleUpgrade('business'),
+        action: () => startCheckout('business'),
         variant: "filled" as const
       }
     },
@@ -163,7 +138,7 @@ export default function Pricing() {
       color: "#0062E0",
       button: {
         text: "Premium aktivieren",
-        action: () => handleUpgrade('premium'),
+        action: () => startCheckout('premium'),
         variant: "gradient" as const,
         icon: <ExternalLink size={16} />
       }
@@ -384,77 +359,7 @@ export default function Pricing() {
           </motion.p>
         </motion.div>
 
-        {/* Neue Checkout Buttons Sektion */}
-        <motion.div
-          className={styles.checkoutButtonsContainer}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 0.5 }}
-        >
-          <motion.div
-            className={styles.checkoutButtonWrapper}
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.5, duration: 0.5 }}
-          >
-            <motion.button
-              className={styles.checkoutButton}
-              onClick={() => startCheckout("business")}
-              disabled={checkoutLoading !== null}
-              initial={{ scale: 1 }}
-              whileHover={{ scale: 1.03, boxShadow: "0 10px 25px rgba(45, 127, 249, 0.2)" }}
-              whileTap={{ scale: 0.97 }}
-              style={{
-                background: "#2D7FF9",
-                boxShadow: "0 6px 16px rgba(45, 127, 249, 0.15)"
-              }}
-            >
-              {checkoutLoading === "business" ? (
-                <>
-                  <span className={styles.loadingSpinner}></span>
-                  <span>Lade Stripe...</span>
-                </>
-              ) : (
-                <>
-                  <Zap size={18} className={styles.buttonIcon} />
-                  <span>Business Plan – 4,90€/Monat</span>
-                </>
-              )}
-            </motion.button>
-          </motion.div>
-          
-          <motion.div
-            className={styles.checkoutButtonWrapper}
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.6, duration: 0.5 }}
-          >
-            <motion.button
-              className={styles.checkoutButton}
-              onClick={() => startCheckout("premium")}
-              disabled={checkoutLoading !== null}
-              initial={{ scale: 1 }}
-              whileHover={{ scale: 1.03, boxShadow: "0 10px 25px rgba(0, 98, 224, 0.25)" }}
-              whileTap={{ scale: 0.97 }}
-              style={{
-                background: "linear-gradient(135deg, #0062E0 0%, #0077FF 100%)",
-                boxShadow: "0 6px 16px rgba(0, 98, 224, 0.2)"
-              }}
-            >
-              {checkoutLoading === "premium" ? (
-                <>
-                  <span className={styles.loadingSpinner}></span>
-                  <span>Lade Stripe...</span>
-                </>
-              ) : (
-                <>
-                  <Star size={18} className={styles.buttonIcon} />
-                  <span>Premium Plan – 9,90€/Monat</span>
-                </>
-              )}
-            </motion.button>
-          </motion.div>
-        </motion.div>
+
 
         <motion.div 
           className={styles.viewToggle}
@@ -688,7 +593,7 @@ export default function Pricing() {
               <div className={styles.tableActions}>
                 <div className={styles.actionButtons}>
                   <motion.button
-                    onClick={() => handleUpgrade('business')}
+                    onClick={() => startCheckout('business')}
                     disabled={loading}
                     className={styles.btnFilled}
                     variants={buttonHoverVariants}
@@ -711,7 +616,7 @@ export default function Pricing() {
                   </motion.button>
 
                   <motion.button
-                    onClick={() => handleUpgrade('premium')}
+                    onClick={() => startCheckout('premium')}
                     disabled={loading}
                     className={styles.btnGradient}
                     variants={buttonHoverVariants}

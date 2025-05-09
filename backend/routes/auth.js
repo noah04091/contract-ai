@@ -81,15 +81,37 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// 👤 Profil
+// 👤 Profil erweitert mit Abo-Daten & Limits
 router.get("/me", verifyToken, async (req, res) => {
   try {
     const user = await usersCollection.findOne(
       { _id: new ObjectId(req.user.userId) },
       { projection: { password: 0, resetToken: 0, resetTokenExpires: 0 } }
     );
-    if (!user) return res.status(404).json({ message: "❌ Benutzer nicht gefunden" });
-    res.json(user);
+
+    if (!user) {
+      return res.status(404).json({ message: "❌ Benutzer nicht gefunden" });
+    }
+
+    // ⛑️ Fallback-Werte setzen, falls nicht vorhanden
+    const plan = user.subscriptionPlan || "free";
+    const status = user.subscriptionStatus || "active";
+    const analysisCount = user.analysisCount ?? 0;
+
+    let analysisLimit = 10; // default für free
+    if (plan === "business") analysisLimit = 50;
+    if (plan === "premium") analysisLimit = Infinity;
+
+    res.json({
+      email: user.email,
+      subscriptionPlan: plan,
+      subscriptionStatus: status,
+      isPremium: plan === "premium",
+      isBusiness: plan === "business",
+      isFree: plan === "free",
+      analysisCount,
+      analysisLimit,
+    });
   } catch (err) {
     console.error("❌ Fehler bei /me:", err);
     res.status(500).json({ message: "Serverfehler bei /me" });

@@ -6,6 +6,7 @@ const pdfParse = require("pdf-parse");
 const multer = require("multer");
 const fs = require("fs");
 const path = require("path");
+const { MongoClient, ObjectId } = require("mongodb");
 
 const router = express.Router();
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -18,8 +19,24 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-const chatMemory = new Map(); // 🧠 Einfache Chat-Verlauf-Speicherung im RAM (für Demo)
+const chatMemory = new Map(); // 🧠 RAM-Speicher für Chat-Verlauf
 
+// 🔗 MongoDB verbinden
+const mongoUri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
+const client = new MongoClient(mongoUri);
+
+let usersCollection;
+(async () => {
+  try {
+    await client.connect();
+    usersCollection = client.db("contract_ai").collection("users");
+    console.log("🧠 Verbunden mit users (chatWithContract)");
+  } catch (err) {
+    console.error("❌ MongoDB-Fehler:", err);
+  }
+})();
+
+// 📥 Vertrag hochladen
 router.post("/upload", verifyToken, upload.single("file"), async (req, res) => {
   if (!req.file) return res.status(400).json({ message: "Keine Datei hochgeladen" });
 
@@ -28,7 +45,6 @@ router.post("/upload", verifyToken, upload.single("file"), async (req, res) => {
     const pdfData = await pdfParse(buffer);
     const text = pdfData.text.substring(0, 10000); // Max 10k Zeichen zur Sicherheit
 
-    // 🧠 Chat-Kontext speichern
     chatMemory.set(req.user.userId, {
       contractText: text,
       messages: [],
@@ -41,6 +57,7 @@ router.post("/upload", verifyToken, upload.single("file"), async (req, res) => {
   }
 });
 
+// 💬 Frage stellen
 router.post("/ask", verifyToken, async (req, res) => {
   const { question } = req.body;
   const chatContext = chatMemory.get(req.user.userId);
@@ -50,6 +67,22 @@ router.post("/ask", verifyToken, async (req, res) => {
   }
 
   try {
+    // 📊 Nutzer & Limits prüfen
+    const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
+
+    const plan = user.subscriptionPlan || "free";
+    const count = user.analysisCount ?? 0;
+
+    let limit = 10;
+    if (plan === "business") limit = 50;
+    if (plan === "premium") limit = Infinity;
+
+    if (count >= limit) {
+      return res.status(403).json({
+        message: "❌ Analyse-Limit erreicht. Bitte Paket upgraden.",
+      });
+    }
+
     const messages = [
       { role: "system", content: `Hier ist ein Vertrag. Beantworte Fragen dazu kurz und präzise.\n\n${chatContext.contractText}` },
       ...chatContext.messages,
@@ -64,9 +97,14 @@ router.post("/ask", verifyToken, async (req, res) => {
 
     const answer = completion.choices[0].message.content;
 
-    // 🔁 Verlauf speichern
     chatContext.messages.push({ role: "user", content: question });
     chatContext.messages.push({ role: "assistant", content: answer });
+
+    // ✅ Count erhöhen
+    await usersCollection.updateOne(
+      { _id: user._id },
+      { $inc: { analysisCount: 1 } }
+    );
 
     res.json({ answer });
   } catch (err) {

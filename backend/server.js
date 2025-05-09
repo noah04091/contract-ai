@@ -236,3 +236,5 @@ async function analyzeContract(pdfText) {
     process.exit(1);
   }
 })();
+// 🕐 Cronjob für Monatsreset laden
+require("./cron/resetBusinessLimits");
