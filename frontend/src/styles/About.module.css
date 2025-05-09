@@ -1,0 +1,192 @@
+/* About.module.css */
+
+/* Container */
+.aboutContainer {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 120px 24px;
+    color: #333; /* Dunkles Grau für Text */
+  }
+  
+  /* Hero Section */
+  .heroSection {
+    text-align: center;
+    margin-bottom: 120px;
+    position: relative;
+    padding: 80px 0;
+  }
+  
+  .heroSection::after {
+    content: '';
+    display: block;
+    width: 48px;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(0,122,255,0), rgba(0,122,255,1), rgba(0,122,255,0));
+    margin: 60px auto 0;
+  }
+  
+  .heroTitle {
+    font-size: 56px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    line-height: 1.1;
+    max-width: 800px;
+    margin: 0 auto;
+    color: #1d1d1f; /* Fast-Schwarz, wie Apple es verwendet */
+  }
+  
+  .heroTitleHighlight {
+    background: linear-gradient(90deg, rgba(0,122,255,1) 0%, rgba(64,156,255,1) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
+  }
+  
+  /* Philosophy Section */
+  .philosophySection {
+    margin-bottom: 120px;
+  }
+  
+  .contentContainer {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  
+  .leadParagraph {
+    font-size: 24px;
+    line-height: 1.4;
+    font-weight: 500;
+    color: #1d1d1f;
+    margin-bottom: 40px;
+  }
+  
+  .bodyParagraph {
+    font-size: 19px;
+    line-height: 1.5;
+    font-weight: 400;
+    color: #333;
+    margin-bottom: 24px;
+  }
+  
+  /* Team Section */
+  .teamSection {
+    text-align: center;
+    padding-bottom: 80px;
+  }
+  
+  .sectionTitle {
+    font-size: 40px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+    margin-bottom: 64px;
+    color: #1d1d1f;
+    position: relative;
+    display: inline-block;
+  }
+  
+  .sectionTitle::after {
+    content: '';
+    display: block;
+    width: 30px;
+    height: 1px;
+    background: linear-gradient(90deg, rgba(0,122,255,0), rgba(0,122,255,1), rgba(0,122,255,0));
+    margin: 16px auto 0;
+  }
+  
+  .teamGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 48px;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+  
+  .teamMember {
+    text-align: center;
+  }
+  
+  .memberImagePlaceholder {
+    width: 200px;
+    height: 200px;
+    background: linear-gradient(145deg, #f5f5f7 0%, #e9e9ef 100%);
+    border-radius: 50%;
+    margin: 0 auto 24px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .memberImagePlaceholder:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+  }
+  
+  .memberName {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #1d1d1f;
+  }
+  
+  .memberRole {
+    font-size: 16px;
+    color: #666;
+  }
+  
+  /* Globale Animations-Klassen (falls nicht bereits global definiert) */
+  :global(.fadeInUp) {
+    opacity: 0;
+    transform: translateY(30px);
+    animation: fadeInUp 0.8s ease forwards;
+  }
+  
+  :global(.scaleIn) {
+    opacity: 0;
+    transform: scale(0.95);
+    animation: scaleIn 0.8s ease forwards;
+  }
+  
+  @keyframes fadeInUp {
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @keyframes scaleIn {
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+  
+  /* Responsive Anpassungen */
+  @media (max-width: 768px) {
+    .aboutContainer {
+      padding: 80px 24px;
+    }
+    
+    .heroSection {
+      padding: 60px 0;
+    }
+    
+    .heroTitle {
+      font-size: 42px;
+    }
+    
+    .leadParagraph {
+      font-size: 20px;
+    }
+    
+    .bodyParagraph {
+      font-size: 17px;
+    }
+    
+    .sectionTitle {
+      font-size: 32px;
+    }
+    
+    .teamGrid {
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 32px;
+    }
+  }

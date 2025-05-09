@@ -9,7 +9,7 @@ import analysisImg from "../assets/screenshot-dashboard.png";
 import deadlineImg from "../assets/screenshot-deadline.png";
 
 interface User {
-  plan: 'standard' | 'premium';
+  plan: 'free' | 'business' | 'premium';
   isAuthenticated: boolean;
 }
 
@@ -369,8 +369,10 @@ const HomeRedesign = () => {
                           <span className="sidebar-user-plan">
                             {user.plan === 'premium' ? (
                               <span className="premium-badge">Premium</span>
+                            ) : user.plan === 'business' ? (
+                              <span className="business-badge">Business</span>
                             ) : (
-                              <span className="standard-badge">Standard</span>
+                              <span className="free-badge">Free</span>
                             )}
                           </span>
                         </div>
@@ -454,6 +456,16 @@ const HomeRedesign = () => {
                       </span>
                       Premium aktiviert
                     </span>
+                  ) : user.plan === 'business' ? (
+                    <Link to="/pricing" className="upgrade-link">
+                      <span className="badge-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="12" cy="12" r="10"></circle>
+                          <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                      </span>
+                      Business – Jetzt upgraden
+                    </Link>
                   ) : (
                     <Link to="/pricing" className="upgrade-link">
                       <span className="badge-icon">
@@ -462,7 +474,7 @@ const HomeRedesign = () => {
                           <polyline points="12 6 12 12 16 14"></polyline>
                         </svg>
                       </span>
-                      Standard – Jetzt upgraden
+                      Free – Jetzt upgraden
                     </Link>
                   )}
                 </div>
@@ -719,13 +731,63 @@ const HomeRedesign = () => {
           <div className="pricing-plans">
             <div className="pricing-plan standard reveal-card" style={{"--animation-order": 0} as React.CSSProperties}>
               <div className="plan-header">
-                <div className="plan-name">Standard</div>
+                <div className="plan-name">Free</div>
                 <div className="plan-price">
                   <span className="currency">€</span>
-                  <span className="amount">29</span>
+                  <span className="amount">0</span>
+                  <span className="period"></span>
+                </div>
+                <div className="plan-billing">für immer</div>
+              </div>
+              <ul className="plan-features">
+                <li>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                  Perfekt zum Testen
+                </li>
+                <li>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                  Für gelegentliche Nutzung
+                </li>
+                <li>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                  Grundfunktionen
+                </li>
+                <li className="unavailable">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                  Erweiterte Funktionen
+                </li>
+                <li className="unavailable">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                  Unbegrenzte Analysen
+                </li>
+              </ul>
+              <Link to="/register?plan=free" className="plan-cta">
+                Free wählen
+              </Link>
+            </div>
+            
+            <div className="pricing-plan premium reveal-card" style={{"--animation-order": 1} as React.CSSProperties}>
+              <div className="plan-badge">Beliebt</div>
+              <div className="plan-header">
+                <div className="plan-name">Business</div>
+                <div className="plan-price">
+                  <span className="currency">€</span>
+                  <span className="amount">4,90</span>
                   <span className="period">/Monat</span>
                 </div>
-                <div className="plan-billing">Jährliche Abrechnung</div>
+                <div className="plan-billing">Für Freelancer und kleine Teams</div>
               </div>
               <ul className="plan-features">
                 <li>
@@ -738,7 +800,7 @@ const HomeRedesign = () => {
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <polyline points="20 6 9 17 4 12"></polyline>
                   </svg>
-                  Fristenerkennung
+                  Fristenerkennung & Benachrichtigungen
                 </li>
                 <li>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -746,36 +808,34 @@ const HomeRedesign = () => {
                   </svg>
                   Basisoptimierung
                 </li>
-                <li className="unavailable">
+                <li>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                    <polyline points="20 6 9 17 4 12"></polyline>
                   </svg>
-                  Unbegrenzte Vertragsanalysen
+                  Vertragsvergleich
                 </li>
                 <li className="unavailable">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
                     <line x1="6" y1="6" x2="18" y2="18"></line>
                   </svg>
-                  Erweiterte Funktionen
+                  Unbegrenzte Analysen
                 </li>
               </ul>
-              <Link to="/register?plan=standard" className="plan-cta">
-                Standard wählen
+              <Link to="/register?plan=business" className="plan-cta premium-cta">
+                Business wählen
               </Link>
             </div>
             
-            <div className="pricing-plan premium reveal-card" style={{"--animation-order": 1} as React.CSSProperties}>
-              <div className="plan-badge">Beliebt</div>
+            <div className="pricing-plan enterprise reveal-card" style={{"--animation-order": 2} as React.CSSProperties}>
               <div className="plan-header">
                 <div className="plan-name">Premium</div>
                 <div className="plan-price">
                   <span className="currency">€</span>
-                  <span className="amount">89</span>
+                  <span className="amount">9,90</span>
                   <span className="period">/Monat</span>
                 </div>
-                <div className="plan-billing">Jährliche Abrechnung</div>
+                <div className="plan-billing">Unbegrenzte Features für Profis</div>
               </div>
               <ul className="plan-features">
                 <li>
@@ -788,7 +848,7 @@ const HomeRedesign = () => {
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <polyline points="20 6 9 17 4 12"></polyline>
                   </svg>
-                  Fristenerkennung & Benachrichtigungen
+                  Erweiterte Fristenverwaltung
                 </li>
                 <li>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -800,7 +860,7 @@ const HomeRedesign = () => {
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <polyline points="20 6 9 17 4 12"></polyline>
                   </svg>
-                  Vertragsvergleich
+                  Vertragsvergleich & -generator
                 </li>
                 <li>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -809,53 +869,8 @@ const HomeRedesign = () => {
                   Prioritäts-Support
                 </li>
               </ul>
-              <Link to="/register?plan=premium" className="plan-cta premium-cta">
+              <Link to="/register?plan=premium" className="plan-cta enterprise-cta">
                 Premium wählen
-              </Link>
-            </div>
-            
-            <div className="pricing-plan enterprise reveal-card" style={{"--animation-order": 2} as React.CSSProperties}>
-              <div className="plan-header">
-                <div className="plan-name">Enterprise</div>
-                <div className="plan-price">
-                  <span className="custom-price">Individuell</span>
-                </div>
-                <div className="plan-billing">Maßgeschneiderte Lösung</div>
-              </div>
-              <ul className="plan-features">
-                <li>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                  </svg>
-                  Alle Premium-Funktionen
-                </li>
-                <li>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                  </svg>
-                  API-Zugang
-                </li>
-                <li>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                  </svg>
-                  Maßgeschneiderte Integrationen
-                </li>
-                <li>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                  </svg>
-                  Dedizierter Account Manager
-                </li>
-                <li>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                  </svg>
-                  SLA-Garantie
-                </li>
-              </ul>
-              <Link to="/contact" className="plan-cta enterprise-cta">
-                Kontakt aufnehmen
               </Link>
             </div>
           </div>

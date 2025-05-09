@@ -15,6 +15,7 @@ import ResetPassword from "./pages/ResetPassword";
 import Impressum from "./pages/Impressum";
 import Datenschutz from "./pages/Datenschutz";
 import AGB from "./pages/AGB";
+import About from "./pages/About"; // ✅ NEU
 
 // 🔒 Geschützte Seiten
 import Dashboard from "./pages/Dashboard";
@@ -53,6 +54,7 @@ function AppWithLoader() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/pricing" element={<Pricing />} />
+          <Route path="/about" element={<About />} /> {/* ✅ NEU */}
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/impressum" element={<Impressum />} />
