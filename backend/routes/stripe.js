@@ -12,6 +12,20 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 router.post("/create-checkout-session", verifyToken, async (req, res) => {
   console.log("🧪 Token beim Checkout:", req.user);
 
+  const { plan } = req.body;
+
+  const priceIdMap = {
+    business: "price_1RMpeRE21h94C5yQNgoza8cX",
+    premium: "price_1RMpexE21h94C5yQnMRTS0q5",
+  };
+
+  const selectedPriceId = priceIdMap[plan];
+
+  if (!selectedPriceId) {
+    console.warn("⚠️ Ungültiger Plan:", plan);
+    return res.status(400).json({ message: "Ungültiger Plan angegeben." });
+  }
+
   try {
     const tokenEmail = req.user.email;
     if (!tokenEmail) {
@@ -22,16 +36,16 @@ router.post("/create-checkout-session", verifyToken, async (req, res) => {
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       payment_method_types: ["card"],
-      customer_email: tokenEmail, // ✅ entscheidend für Webhook-Erkennung!
+      customer_email: tokenEmail,
       allow_promotion_codes: true,
       line_items: [
         {
-          price: process.env.STRIPE_PREMIUM_PRICE_ID,
+          price: selectedPriceId,
           quantity: 1,
         },
       ],
-      success_url: "https://contract-ai.de/dashboard?status=success",
-      cancel_url: "https://contract-ai.de/dashboard?status=cancel",
+      success_url: "https://contract-ai.de/success",
+      cancel_url: "https://contract-ai.de/pricing?canceled=true",
     });
 
     console.log("✅ Stripe-Session erstellt:", session.id);

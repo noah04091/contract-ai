@@ -29,6 +29,7 @@ interface Plan {
 
 export default function Pricing() {
   const [loading, setLoading] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'cards' | 'table'>('cards');
   const [animateCards, setAnimateCards] = useState(false);
   const navigate = useNavigate();
@@ -63,6 +64,36 @@ export default function Pricing() {
       navigate("/dashboard?status=error");
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Neue startCheckout Funktion nach den Anforderungen
+  const startCheckout = async (plan: "business" | "premium") => {
+    setCheckoutLoading(plan);
+
+    try {
+      const res = await fetch("/api/stripe/create-checkout-session", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ plan })
+      });
+
+      const data: { url?: string; message?: string } = await res.json();
+
+      if (!res.ok || !data.url) {
+        throw new Error(data.message || "Fehler beim Stripe-Checkout");
+      }
+
+      // Weiterleitung zur Stripe Checkout URL
+      window.location.href = data.url;
+    } catch (error) {
+      const err = error as Error;
+      alert("❌ Fehler beim Checkout: " + err.message);
+    } finally {
+      setCheckoutLoading(null);
     }
   };
 
@@ -353,11 +384,83 @@ export default function Pricing() {
           </motion.p>
         </motion.div>
 
+        {/* Neue Checkout Buttons Sektion */}
+        <motion.div
+          className={styles.checkoutButtonsContainer}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4, duration: 0.5 }}
+        >
+          <motion.div
+            className={styles.checkoutButtonWrapper}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.5, duration: 0.5 }}
+          >
+            <motion.button
+              className={styles.checkoutButton}
+              onClick={() => startCheckout("business")}
+              disabled={checkoutLoading !== null}
+              initial={{ scale: 1 }}
+              whileHover={{ scale: 1.03, boxShadow: "0 10px 25px rgba(45, 127, 249, 0.2)" }}
+              whileTap={{ scale: 0.97 }}
+              style={{
+                background: "#2D7FF9",
+                boxShadow: "0 6px 16px rgba(45, 127, 249, 0.15)"
+              }}
+            >
+              {checkoutLoading === "business" ? (
+                <>
+                  <span className={styles.loadingSpinner}></span>
+                  <span>Lade Stripe...</span>
+                </>
+              ) : (
+                <>
+                  <Zap size={18} className={styles.buttonIcon} />
+                  <span>Business Plan – 4,90€/Monat</span>
+                </>
+              )}
+            </motion.button>
+          </motion.div>
+          
+          <motion.div
+            className={styles.checkoutButtonWrapper}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.6, duration: 0.5 }}
+          >
+            <motion.button
+              className={styles.checkoutButton}
+              onClick={() => startCheckout("premium")}
+              disabled={checkoutLoading !== null}
+              initial={{ scale: 1 }}
+              whileHover={{ scale: 1.03, boxShadow: "0 10px 25px rgba(0, 98, 224, 0.25)" }}
+              whileTap={{ scale: 0.97 }}
+              style={{
+                background: "linear-gradient(135deg, #0062E0 0%, #0077FF 100%)",
+                boxShadow: "0 6px 16px rgba(0, 98, 224, 0.2)"
+              }}
+            >
+              {checkoutLoading === "premium" ? (
+                <>
+                  <span className={styles.loadingSpinner}></span>
+                  <span>Lade Stripe...</span>
+                </>
+              ) : (
+                <>
+                  <Star size={18} className={styles.buttonIcon} />
+                  <span>Premium Plan – 9,90€/Monat</span>
+                </>
+              )}
+            </motion.button>
+          </motion.div>
+        </motion.div>
+
         <motion.div 
           className={styles.viewToggle}
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.4, duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
+          transition={{ delay: 0.7, duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
         >
           <button 
             className={`${styles.toggleButton} ${activeTab === 'cards' ? styles.activeToggle : ''}`}

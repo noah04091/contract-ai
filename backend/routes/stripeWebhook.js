@@ -39,11 +39,9 @@ router.post("/", express.raw({ type: "application/json" }), async (req, res) => 
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  // 🎯 Nur bei erfolgreichem Checkout handeln
   if (event.type === "checkout.session.completed") {
     const session = event.data.object;
 
-    // 🧠 Sicherste Methode: E-Mail über beide Wege prüfen
     const email =
       session.customer_email ||
       session.customer_details?.email ||
@@ -52,11 +50,19 @@ router.post("/", express.raw({ type: "application/json" }), async (req, res) => 
     const stripeCustomerId = session.customer;
     const stripeSubscriptionId = session.subscription;
 
+    // 🧠 Preis-ID aus Checkout ermitteln
+    const priceId = session?.display_items?.[0]?.price?.id || session?.line_items?.[0]?.price?.id;
+    const priceMap = {
+      "price_1RMpeRE21h94C5yQNgoza8cX": "business",
+      "price_1RMpexE21h94C5yQnMRTS0q5": "premium",
+    };
+    const plan = priceMap[priceId] || "unknown";
+
     console.log("📦 Webhook-Session empfangen:", {
-      id: session.id,
       email,
       stripeCustomerId,
       stripeSubscriptionId,
+      plan,
     });
 
     if (!email) {
@@ -69,21 +75,25 @@ router.post("/", express.raw({ type: "application/json" }), async (req, res) => 
         { email },
         {
           $set: {
-            isPremium: true,
+            isPremium: plan === "premium",
+            isBusiness: plan === "business",
+            subscriptionPlan: plan,
             stripeCustomerId,
             stripeSubscriptionId,
+            subscriptionStatus: "active",
             premiumSince: new Date(),
           },
-        }
+        },
+        { upsert: true } // Optional: Nutzer anlegen, falls nicht vorhanden
       );
 
-      if (result.modifiedCount === 1) {
-        console.log(`✅ Nutzer ${email} erfolgreich auf Premium aktualisiert.`);
+      if (result.modifiedCount === 1 || result.upsertedCount === 1) {
+        console.log(`✅ Nutzer ${email} erfolgreich aktualisiert (${plan})`);
       } else {
-        console.warn(`⚠️ Kein Nutzer mit der E-Mail ${email} gefunden.`);
+        console.warn(`⚠️ Nutzer ${email} nicht geändert.`);
       }
     } catch (err) {
-      console.error("❌ Fehler beim Update:", err);
+      console.error("❌ Fehler beim DB-Update:", err);
       return res.status(500).send("Fehler beim Updaten");
     }
   }
