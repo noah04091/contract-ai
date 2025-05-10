@@ -27,6 +27,7 @@ const chatRoute = require("./routes/chatWithContract");
 const generateRoute = require("./routes/generate");
 const analyzeTypeRoute = require("./routes/analyzeType");
 const extractTextRoute = require("./routes/extractText");
+const stripePortalRoute = require("./routes/stripePortal"); // ✅ so ist’s korrekt
 const checkContractsAndSendReminders = require("./services/cron");
 
 const app = express();
@@ -132,10 +133,9 @@ async function analyzeContract(pdfText) {
 
     const checkSubscription = createCheckSubscription(usersCollection);
     const authRoutes = require("./routes/auth")(db);
-    const stripePortalRoute = require("./routes/stripePortal")(usersCollection); // 🆕 eingebaut
 
     app.use("/auth", authRoutes);
-    app.use("/stripe/portal", stripePortalRoute); // 🆕 eingebaut
+    app.use("/stripe/portal", stripePortalRoute); // ✅ jetzt korrekt eingebunden
 
     app.post("/upload", verifyToken, checkSubscription, upload.single("file"), async (req, res) => {
       if (!req.file) return res.status(400).json({ message: "Keine Datei hochgeladen" });
