@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import "../styles/AppleAuth.css";
 
 interface AuthResponse {
@@ -18,6 +19,7 @@ export default function Login() {
   const [emailFocused, setEmailFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const { setUser } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,6 +54,9 @@ export default function Login() {
       }
 
       setNotification({ message: "Login erfolgreich", type: "success" });
+      
+      // Wichtig: Aktualisiere den globalen Auth-Zustand
+      setUser({ email: data.email || email, subscriptionActive: !!data.token });
 
       setTimeout(async () => {
         try {
@@ -115,6 +120,9 @@ export default function Login() {
 
         if (response.ok) {
           console.log("✅ Bereits eingeloggt via Cookie");
+          // Hole die Benutzerdaten und aktualisiere den Auth-Kontext
+          const userData = await response.json();
+          setUser(userData);
           navigate("/dashboard");
           return;
         }
@@ -139,6 +147,9 @@ export default function Login() {
 
             if (authResponse.ok) {
               console.log("✅ Fallback-Auth erfolgreich");
+              // Hole die Benutzerdaten und aktualisiere den Auth-Kontext
+              const userData = await authResponse.json();
+              setUser(userData);
               navigate("/dashboard");
               return;
             } else {
@@ -200,7 +211,7 @@ export default function Login() {
       if (redirectTimeout.current) clearTimeout(redirectTimeout.current);
       document.removeEventListener('mousemove', handleMouseMove);
     };
-  }, [navigate]);
+  }, [navigate, setUser]);
 
   return (
     <div className="apple-auth-container" ref={containerRef}>

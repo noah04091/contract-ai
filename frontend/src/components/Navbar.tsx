@@ -5,6 +5,7 @@ import styles from "../styles/Navbar.module.css";
 import Notification from "./Notification";
 import logo from "../assets/logo.png";
 import { clearAuthData } from "../utils/api";
+import { useAuth } from "../context/AuthContext";
 
 interface UserData {
   email: string;
@@ -12,8 +13,7 @@ interface UserData {
 }
 
 export default function Navbar() {
-  const [user, setUser] = useState<UserData | null>(null);
-  const [isLoadingUser, setIsLoadingUser] = useState(true); // Neuer Ladezustand hinzugefügt
+  const { user, setUser, isLoading } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -27,29 +27,7 @@ export default function Navbar() {
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
-  // 🔐 Benutzerstatus laden
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await fetch("/api/auth/me", {
-          method: "GET",
-          credentials: "include",
-        });
-
-        if (!res.ok) throw new Error("Nicht eingeloggt");
-        const data = await res.json();
-        setUser({ email: data.email, subscriptionActive: data.subscriptionActive });
-      } catch (err) {
-        console.warn("❌ Auth fehlgeschlagen:", err);
-        clearAuthData();
-        setUser(null);
-      } finally {
-        setIsLoadingUser(false); // Loading-Zustand auf false setzen, unabhängig vom Ergebnis
-      }
-    };
-
-    fetchUser();
-  }, []);
+  // Auth-Status wird jetzt über useAuth() verwaltet
 
   // 🧠 Klick außerhalb des Dropdowns/Mobilmenüs/Sidebar
   useEffect(() => {
@@ -191,7 +169,7 @@ export default function Navbar() {
         </div>
 
         <div className={styles.navRight}>
-          {isLoadingUser ? null : user ? (
+          {isLoading ? null : user ? (
             <div className={styles.dropdownWrapper} ref={dropdownRef}>
               <motion.button
                 onClick={() => setDropdownOpen((prev) => !prev)}
@@ -278,7 +256,7 @@ export default function Navbar() {
         </Link>
 
         <div className={styles.navRight}>
-          {isLoadingUser ? null : user ? (
+          {isLoading ? null : user ? (
             <div className={styles.userActionWrapper}>
               {user.subscriptionActive && (
                 <motion.div 
@@ -367,7 +345,7 @@ export default function Navbar() {
                       <span>Premium</span>
                     </Link>
                   )}
-                  {isLoadingUser ? null : user && (
+                  {isLoading ? null : user && (
                     <>
                       <div className={styles.userInfo}>
                         <span className={styles.userEmail}>✅ {user.email}</span>
@@ -515,7 +493,7 @@ export default function Navbar() {
                   </ul>
                 </div>
                 
-                {isLoadingUser ? null : !user ? (
+                {isLoading ? null : !user ? (
                   <div className={styles.sidebarSection}>
                     <h3 className={styles.sidebarTitle}>Account</h3>
                     <div className={styles.sidebarAuth}>

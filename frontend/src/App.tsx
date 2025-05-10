@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Navbar from "./components/Navbar";
 import RequireAuth from "./components/RequireAuth";
 import PageLoader from "./components/PageLoader";
+import { AuthProvider } from "./context/AuthContext"; // 🧠 NEU
 
 // 🔓 Öffentliche Seiten
 import HomeRedesign from "./pages/HomeRedesign";
@@ -16,7 +17,7 @@ import Impressum from "./pages/Impressum";
 import Datenschutz from "./pages/Datenschutz";
 import AGB from "./pages/AGB";
 import About from "./pages/About";
-import Success from "./pages/Success"; // ✅ NEU
+import Success from "./pages/Success";
 
 // 🔒 Geschützte Seiten
 import Dashboard from "./pages/Dashboard";
@@ -56,7 +57,7 @@ function AppWithLoader() {
           <Route path="/register" element={<Register />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/about" element={<About />} />
-          <Route path="/success" element={<Success />} /> {/* ✅ NEU */}
+          <Route path="/success" element={<Success />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/impressum" element={<Impressum />} />
@@ -83,11 +84,13 @@ function AppWithLoader() {
   );
 }
 
-// 🧠 Root-Komponente mit Router
+// 🧠 Root-Komponente mit Router und AuthProvider
 export default function App() {
   return (
     <Router>
-      <AppWithLoader />
+      <AuthProvider>
+        <AppWithLoader />
+      </AuthProvider>
     </Router>
   );
 }
