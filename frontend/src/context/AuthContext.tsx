@@ -1,5 +1,5 @@
-// src/context/AuthContext.tsx
 import { createContext, useContext, useState, useEffect } from "react";
+import { fetchUserData } from "./authUtils";
 
 interface UserData {
   email: string;
@@ -23,14 +23,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchUser = async () => {
+    const loadUser = async () => {
       try {
-        const res = await fetch("/api/auth/me", {
-          credentials: "include",
-        });
-        if (!res.ok) throw new Error();
-        const data = await res.json();
-        setUser(data);
+        const userData = await fetchUserData();
+        setUser(userData);
       } catch {
         setUser(null);
       } finally {
@@ -38,7 +34,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     };
 
-    fetchUser();
+    loadUser();
   }, []);
 
   return (

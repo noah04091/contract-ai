@@ -371,7 +371,7 @@ export default function Profile() {
                       if (res.ok && data.url) {
                         window.location.href = data.url;
                       }
-                    } catch (err) {
+                    } catch {
                       alert("Fehler beim Öffnen des Kundenportals");
                       setIsPortalOpening(false);
                     }
