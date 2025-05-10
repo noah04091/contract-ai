@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { User, Key, CreditCard, Trash2, AlertCircle, CheckCircle, LogOut } from "lucide-react";
 import styles from "../styles/Profile.module.css";
+import { useAuth } from "../context/AuthContext";
 
 interface NotificationProps {
   message: string;
@@ -32,35 +33,13 @@ const Notification: React.FC<NotificationProps> = ({ message, type, onClose }) =
 };
 
 export default function Profile() {
-  const [userEmail, setUserEmail] = useState<string>("");
-  const [isPremium, setIsPremium] = useState(false);
+  const { user, isLoading } = useAuth();
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [notification, setNotification] = useState<{ message: string; type: "success" | "error" } | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [isPasswordChanging, setIsPasswordChanging] = useState(false);
   const [isUpgrading, setIsUpgrading] = useState(false);
-
-  useEffect(() => {
-    fetch("/api/auth/me", {
-      method: "GET",
-      credentials: "include",
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("Nicht authentifiziert");
-        return res.json();
-      })
-      .then((data) => {
-        setUserEmail(data.email);
-        setIsPremium(data.subscriptionActive === true || data.isPremium === true);
-        setIsLoading(false);
-      })
-      .catch(() => {
-        console.error("❌ Fehler beim Laden des Profils");
-        setIsLoading(false);
-      });
-  }, []);
 
   const handlePasswordChange = async () => {
     if (newPassword !== confirmPassword) {
@@ -201,7 +180,7 @@ export default function Profile() {
           </motion.h1>
         </div>
 
-        {userEmail ? (
+        {user ? (
           <motion.div 
             className={styles.content}
             initial={{ opacity: 0 }}
@@ -211,15 +190,19 @@ export default function Profile() {
             <div className={styles.userInfo}>
               <div className={styles.emailContainer}>
                 <div className={styles.label}>E-Mail-Adresse</div>
-                <div className={styles.email}>{userEmail}</div>
+                <div className={styles.email}>{user.email}</div>
               </div>
 
               <div className={styles.subscriptionContainer}>
                 <div className={styles.label}>Abo-Status</div>
-                {isPremium ? (
+                {isLoading ? (
+                  <span>Lade Abo-Status...</span>
+                ) : !user ? (
+                  <span>❌ Nicht eingeloggt</span>
+                ) : user.subscriptionActive ? (
                   <div className={styles.premium}>
                     <span className={styles.premiumIcon}>💎</span>
-                    Premium-Abo aktiv
+                    🔒 Premium – aktiv
                   </div>
                 ) : (
                   <div className={styles.standard}>
@@ -230,7 +213,7 @@ export default function Profile() {
               </div>
             </div>
 
-            {!isPremium && (
+            {!user.subscriptionActive && (
               <motion.div 
                 className={styles.upgradeSection}
                 initial={{ opacity: 0, y: 20 }}
