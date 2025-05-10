@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import { fetchUserData, UserData } from "./authUtils";
+import { fetchUserData } from "../utils/fetchUserData";
+import type { UserData } from "./authUtils";
 
 interface AuthContextType {
   user: UserData | null;
