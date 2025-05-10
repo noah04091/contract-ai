@@ -13,6 +13,7 @@ interface UserData {
 
 export default function Navbar() {
   const [user, setUser] = useState<UserData | null>(null);
+  const [isLoadingUser, setIsLoadingUser] = useState(true); // Neuer Ladezustand hinzugefügt
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -42,6 +43,8 @@ export default function Navbar() {
         console.warn("❌ Auth fehlgeschlagen:", err);
         clearAuthData();
         setUser(null);
+      } finally {
+        setIsLoadingUser(false); // Loading-Zustand auf false setzen, unabhängig vom Ergebnis
       }
     };
 
@@ -188,7 +191,7 @@ export default function Navbar() {
         </div>
 
         <div className={styles.navRight}>
-          {user ? (
+          {isLoadingUser ? null : user ? (
             <div className={styles.dropdownWrapper} ref={dropdownRef}>
               <motion.button
                 onClick={() => setDropdownOpen((prev) => !prev)}
@@ -275,7 +278,7 @@ export default function Navbar() {
         </Link>
 
         <div className={styles.navRight}>
-          {user ? (
+          {isLoadingUser ? null : user ? (
             <div className={styles.userActionWrapper}>
               {user.subscriptionActive && (
                 <motion.div 
@@ -364,7 +367,7 @@ export default function Navbar() {
                       <span>Premium</span>
                     </Link>
                   )}
-                  {user && (
+                  {isLoadingUser ? null : user && (
                     <>
                       <div className={styles.userInfo}>
                         <span className={styles.userEmail}>✅ {user.email}</span>
@@ -512,7 +515,7 @@ export default function Navbar() {
                   </ul>
                 </div>
                 
-                {!user ? (
+                {isLoadingUser ? null : !user ? (
                   <div className={styles.sidebarSection}>
                     <h3 className={styles.sidebarTitle}>Account</h3>
                     <div className={styles.sidebarAuth}>
