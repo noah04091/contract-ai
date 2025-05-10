@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion'; // Import framer-motion
+import { useAuth } from "../context/AuthContext";
 import "../styles/landing.css";
 
 // Importiere Bilder
@@ -8,13 +9,8 @@ import logo from "../assets/logo-contractai.png";
 import analysisImg from "../assets/screenshot-dashboard.png";
 import deadlineImg from "../assets/screenshot-deadline.png";
 
-interface User {
-  plan: 'free' | 'business' | 'premium';
-  isAuthenticated: boolean;
-}
-
 const HomeRedesign = () => {
-  const [user, setUser] = useState<User | null>(null);
+  const { user, isLoading } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState('hero');
@@ -23,28 +19,6 @@ const HomeRedesign = () => {
   const sectionsRef = useRef<{ [key: string]: HTMLElement | null }>({});
 
   useEffect(() => {
-    // Authentifizierungsstatus im Hintergrund prüfen, ohne Ladezeit für UI
-    const checkAuth = async () => {
-      try {
-        const response = await fetch('/api/auth/me', {
-          method: 'GET',
-          credentials: 'include',
-        });
-        
-        if (response.ok) {
-          const userData = await response.json();
-          setUser(userData);
-        } else {
-          setUser(null);
-        }
-      } catch (error) {
-        console.error('Authentication error:', error);
-        setUser(null);
-      }
-    };
-
-    checkAuth();
-    
     // Scroll event listener mit modifiziertem Parallax-Effekt
     const handleScroll = () => {
       const scrollPosition = window.scrollY;
@@ -160,7 +134,7 @@ const HomeRedesign = () => {
                   Optimierer
                 </Link>
               </li>
-              {!user?.isAuthenticated || (user && user.plan !== 'premium') ? (
+              {!user || !user.subscriptionActive ? (
                 <li className={activeSection === 'pricing' ? 'active' : ''}>
                   <Link to="/pricing" className="nav-link">
                     <span className="nav-icon">💰</span>
@@ -174,7 +148,7 @@ const HomeRedesign = () => {
           {/* Right section: Authentication */}
           <div className="nav-right">
             <div className="auth-area">
-              {user?.isAuthenticated ? (
+              {isLoading ? null : user ? (
                 <div className="auth-buttons">
                   <Link to="/me" className="profile-button">
                     <span className="button-icon">
@@ -342,7 +316,7 @@ const HomeRedesign = () => {
                   </ul>
                 </div>
                 
-                {!user?.isAuthenticated ? (
+                {isLoading ? null : !user ? (
                   <div className="sidebar-section">
                     <h3 className="sidebar-title">Account</h3>
                     <div className="sidebar-auth">
@@ -367,10 +341,8 @@ const HomeRedesign = () => {
                         </div>
                         <div className="sidebar-user-details">
                           <span className="sidebar-user-plan">
-                            {user.plan === 'premium' ? (
+                            {user.subscriptionActive ? (
                               <span className="premium-badge">Premium</span>
-                            ) : user.plan === 'business' ? (
-                              <span className="business-badge">Business</span>
                             ) : (
                               <span className="free-badge">Free</span>
                             )}
@@ -433,7 +405,7 @@ const HomeRedesign = () => {
           <p className="subtitle reveal-text">Verträge analysieren, optimieren & verwalten – einfach & sicher.</p>
           
           <div className="hero-cta reveal-text">
-            {user?.isAuthenticated ? (
+            {isLoading ? null : user ? (
               <>
                 <Link to="/dashboard" className="cta-button primary">
                   <span className="button-icon">
@@ -447,7 +419,7 @@ const HomeRedesign = () => {
                   Zum Dashboard
                 </Link>
                 <div className="user-plan">
-                  {user.plan === 'premium' ? (
+                  {user.subscriptionActive ? (
                     <span className="premium-badge">
                       <span className="badge-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -456,16 +428,6 @@ const HomeRedesign = () => {
                       </span>
                       Premium aktiviert
                     </span>
-                  ) : user.plan === 'business' ? (
-                    <Link to="/pricing" className="upgrade-link">
-                      <span className="badge-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <circle cx="12" cy="12" r="10"></circle>
-                          <polyline points="12 6 12 12 16 14"></polyline>
-                        </svg>
-                      </span>
-                      Business – Jetzt upgraden
-                    </Link>
                   ) : (
                     <Link to="/pricing" className="upgrade-link">
                       <span className="badge-icon">
@@ -887,7 +849,7 @@ const HomeRedesign = () => {
           <h2 className="reveal-text">Bereit, Ihre Verträge zu optimieren?</h2>
           <p className="reveal-text">Starten Sie jetzt mit Contract AI und erleben Sie die Zukunft des Vertragsmanagements.</p>
           <div className="cta-buttons reveal-text">
-            {user?.isAuthenticated ? (
+            {isLoading ? null : user ? (
               <Link to="/dashboard" className="cta-button primary glow">
                 <span className="button-icon">
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
