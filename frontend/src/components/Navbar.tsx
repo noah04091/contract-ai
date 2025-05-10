@@ -263,15 +263,7 @@ export default function Navbar() {
                   <span className={styles.premiumText}>Premium</span>
                 </motion.div>
               )}
-              <motion.button
-                onClick={handleLogout}
-                className={styles.logoutButton}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <span className={styles.logoutIcon}>🚪</span>
-                <span>Logout</span>
-              </motion.button>
+              {/* Logout-Button wurde hier entfernt */}
             </div>
           ) : (
             <div className={styles.authButtons}>
