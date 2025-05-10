@@ -16,10 +16,15 @@ require("dotenv").config();
 
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
-// Routen
+const app = express();
+
+// ⚠️ Stripe Webhook zuerst einbinden (Raw Body!)
+const stripeWebhookRoute = require("./routes/stripeWebhook");
+app.use("/stripe/webhook", stripeWebhookRoute); // muss VOR express.json()
+
+// 📁 Routen
 const subscribeRoutes = require("./routes/subscribe");
 const stripeRoutes = require("./routes/stripe");
-const stripeWebhookRoute = require("./routes/stripeWebhook");
 const analyzeRoute = require("./routes/analyze");
 const optimizeRoute = require("./routes/optimize");
 const compareRoute = require("./routes/compare");
@@ -27,10 +32,10 @@ const chatRoute = require("./routes/chatWithContract");
 const generateRoute = require("./routes/generate");
 const analyzeTypeRoute = require("./routes/analyzeType");
 const extractTextRoute = require("./routes/extractText");
-const stripePortalRoute = require("./routes/stripePortal"); // ✅ so ist’s korrekt
+const stripePortalRoute = require("./routes/stripePortal");
 const checkContractsAndSendReminders = require("./services/cron");
 
-const app = express();
+// 📁 Setup
 const UPLOAD_PATH = "./uploads";
 const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
 const EMAIL_CONFIG = {
@@ -60,7 +65,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// Middleware
+// 🌍 Middleware
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin || ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
@@ -71,7 +76,7 @@ app.use(cors({
 }));
 app.options("*", cors());
 app.use(cookieParser());
-app.use(express.json());
+app.use(express.json()); // ⛔️ Muss nach Webhook-Route kommen!
 app.use("/uploads", express.static(path.join(__dirname, UPLOAD_PATH)));
 
 app.use((req, res, next) => {
@@ -83,9 +88,6 @@ app.use((req, res, next) => {
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
   next();
 });
-
-// Stripe Webhook vor allen anderen Routen
-app.use("/stripe/webhook", stripeWebhookRoute);
 
 function extractExpiryDate(laufzeit) {
   const match = laufzeit.match(/(\d+)\s*(Jahre|Monate)/i);
@@ -121,7 +123,7 @@ async function analyzeContract(pdfText) {
   return res.choices[0].message.content;
 }
 
-// MongoDB & Routen laden
+// 📦 MongoDB & Start
 (async () => {
   try {
     const client = new MongoClient(MONGO_URI);
@@ -135,7 +137,7 @@ async function analyzeContract(pdfText) {
     const authRoutes = require("./routes/auth")(db);
 
     app.use("/auth", authRoutes);
-    app.use("/stripe/portal", stripePortalRoute); // ✅ jetzt korrekt eingebunden
+    app.use("/stripe/portal", stripePortalRoute);
 
     app.post("/upload", verifyToken, checkSubscription, upload.single("file"), async (req, res) => {
       if (!req.file) return res.status(400).json({ message: "Keine Datei hochgeladen" });
@@ -171,7 +173,6 @@ async function analyzeContract(pdfText) {
       res.status(201).json({ message: "Vertrag gespeichert", contract: { ...contract, _id: insertedId } });
     });
 
-    // CRUD
     app.get("/contracts", verifyToken, async (req, res) => {
       const contracts = await contractsCollection.find({ userId: req.user.userId }).toArray();
       res.json(contracts);
@@ -205,7 +206,6 @@ async function analyzeContract(pdfText) {
       res.json({ message: "Gelöscht", deletedCount: result.deletedCount });
     });
 
-    // Weitere Routen
     app.use("/optimize", verifyToken, checkSubscription, optimizeRoute);
     app.use("/compare", verifyToken, checkSubscription, compareRoute);
     app.use("/chat", verifyToken, checkSubscription, chatRoute);

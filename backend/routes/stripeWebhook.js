@@ -1,25 +1,25 @@
 // 📁 backend/routes/stripeWebhook.js
 const express = require("express");
 const router = express.Router();
-const Stripe = require("stripe");
-const { MongoClient } = require("mongodb");
+const { MongoClient, ObjectId } = require("mongodb");
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 require("dotenv").config();
 
-// 🧠 Stripe & MongoDB Setup
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-const client = new MongoClient(process.env.MONGO_URI);
-
-let db, usersCollection;
+const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
 
 // 🔌 MongoDB einmalig verbinden
+const client = new MongoClient(MONGO_URI);
+let db, users;
+
 (async () => {
   try {
     await client.connect();
     db = client.db("contract_ai");
-    usersCollection = db.collection("users");
+    users = db.collection("users");
     console.log("✅ StripeWebhook: MongoDB verbunden");
   } catch (err) {
-    console.error("❌ Fehler bei MongoDB-Verbindung (StripeWebhook):", err);
+    console.error("❌ MongoDB-Verbindung fehlgeschlagen:", err);
   }
 })();
 
@@ -29,11 +29,7 @@ router.post("/", express.raw({ type: "application/json" }), async (req, res) => 
   let event;
 
   try {
-    event = stripe.webhooks.constructEvent(
-      req.body,
-      sig,
-      process.env.STRIPE_WEBHOOK_SECRET
-    );
+    event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
   } catch (err) {
     console.error("❌ Webhook-Verifikation fehlgeschlagen:", err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
@@ -41,64 +37,63 @@ router.post("/", express.raw({ type: "application/json" }), async (req, res) => 
 
   if (event.type === "checkout.session.completed") {
     const session = event.data.object;
-
-    const email =
-      session.customer_email ||
-      session.customer_details?.email ||
-      null;
-
     const stripeCustomerId = session.customer;
     const stripeSubscriptionId = session.subscription;
 
-    // 🧠 Preis-ID aus Checkout ermitteln
-    const priceId = session?.display_items?.[0]?.price?.id || session?.line_items?.[0]?.price?.id;
-    const priceMap = {
-      "price_1RMpeRE21h94C5yQNgoza8cX": "business",
-      "price_1RMpexE21h94C5yQnMRTS0q5": "premium",
-    };
-    const plan = priceMap[priceId] || "unknown";
+    const email = session.customer_email || session.customer_details?.email || null;
 
-    console.log("📦 Webhook-Session empfangen:", {
-      email,
-      stripeCustomerId,
-      stripeSubscriptionId,
-      plan,
-    });
+    // 📥 Subscription-Daten holen
+    let plan = "unknown";
+    try {
+      const subscription = await stripe.subscriptions.retrieve(stripeSubscriptionId);
+      const priceId = subscription.items.data[0].price.id;
 
-    if (!email) {
-      console.warn("⚠️ Keine E-Mail im Session-Objekt vorhanden");
-      return res.status(400).send("Fehlende E-Mail");
+      const priceMap = {
+        "price_1RMpeRE21h94C5yQNgoza8cX": "business",
+        "price_1RMpexE21h94C5yQnMRTS0q5": "premium",
+      };
+
+      plan = priceMap[priceId] || "unknown";
+    } catch (err) {
+      console.error("❌ Fehler beim Abrufen der Subscription:", err.message);
+      return res.status(500).send("Fehler beim Lesen der Subscription");
     }
 
+    console.log("📦 Webhook empfangen:", { email, stripeCustomerId, plan });
+
     try {
-      const result = await usersCollection.updateOne(
-        { email },
+      const query = stripeCustomerId ? { stripeCustomerId } : { email };
+      const user = await users.findOne(query);
+
+      if (!user) {
+        console.warn("⚠️ Kein Nutzer mit passender E-Mail oder Stripe-ID gefunden.");
+        return res.sendStatus(200); // Vermeidet Wiederholungen von Stripe
+      }
+
+      await users.updateOne(
+        { _id: new ObjectId(user._id) },
         {
           $set: {
+            subscriptionActive: true,
             isPremium: plan === "premium",
             isBusiness: plan === "business",
             subscriptionPlan: plan,
             stripeCustomerId,
             stripeSubscriptionId,
-            subscriptionStatus: "active",
             premiumSince: new Date(),
+            subscriptionStatus: "active",
           },
-        },
-        { upsert: true } // Optional: Nutzer anlegen, falls nicht vorhanden
+        }
       );
 
-      if (result.modifiedCount === 1 || result.upsertedCount === 1) {
-        console.log(`✅ Nutzer ${email} erfolgreich aktualisiert (${plan})`);
-      } else {
-        console.warn(`⚠️ Nutzer ${email} nicht geändert.`);
-      }
+      console.log(`✅ Abo bei ${email || user.email} erfolgreich aktiviert (${plan})`);
     } catch (err) {
-      console.error("❌ Fehler beim DB-Update:", err);
-      return res.status(500).send("Fehler beim Updaten");
+      console.error("❌ Fehler beim Update:", err.message);
+      return res.status(500).send("Fehler beim DB-Update");
     }
   }
 
-  res.status(200).send("✅ Webhook empfangen");
+  res.status(200).send("✅ Webhook verarbeitet");
 });
 
 module.exports = router;
