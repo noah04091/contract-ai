@@ -35,29 +35,23 @@ router.post("/", express.raw({ type: "application/json" }), async (req, res) => 
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
+  const session = event.data.object;
+
   if (event.type === "checkout.session.completed") {
-    const session = event.data.object;
     const stripeCustomerId = session.customer;
     const stripeSubscriptionId = session.subscription;
-
     const email = session.customer_email || session.customer_details?.email || null;
 
-    // 📥 Subscription-Daten holen
-    let plan = "unknown";
-    try {
-      const subscription = await stripe.subscriptions.retrieve(stripeSubscriptionId);
-      const priceId = subscription.items.data[0].price.id;
+    // ✅ Jetzt aus subscription.items auslesen
+    const subscription = await stripe.subscriptions.retrieve(stripeSubscriptionId);
+    const priceId = subscription.items.data[0]?.price?.id;
 
-      const priceMap = {
-        "price_1RMpeRE21h94C5yQNgoza8cX": "business",
-        "price_1RMpexE21h94C5yQnMRTS0q5": "premium",
-      };
+    const priceMap = {
+      "price_1RMpeRE21h94C5yQNgoza8cX": "business",
+      "price_1RMpexE21h94C5yQnMRTS0q5": "premium",
+    };
 
-      plan = priceMap[priceId] || "unknown";
-    } catch (err) {
-      console.error("❌ Fehler beim Abrufen der Subscription:", err.message);
-      return res.status(500).send("Fehler beim Lesen der Subscription");
-    }
+    const plan = priceMap[priceId] || "unknown";
 
     console.log("📦 Webhook empfangen:", { email, stripeCustomerId, plan });
 
@@ -67,7 +61,7 @@ router.post("/", express.raw({ type: "application/json" }), async (req, res) => 
 
       if (!user) {
         console.warn("⚠️ Kein Nutzer mit passender E-Mail oder Stripe-ID gefunden.");
-        return res.sendStatus(200); // Vermeidet Wiederholungen von Stripe
+        return res.sendStatus(200);
       }
 
       await users.updateOne(
@@ -90,6 +84,37 @@ router.post("/", express.raw({ type: "application/json" }), async (req, res) => 
     } catch (err) {
       console.error("❌ Fehler beim Update:", err.message);
       return res.status(500).send("Fehler beim DB-Update");
+    }
+  }
+
+  if (event.type === "customer.subscription.deleted") {
+    const subscription = event.data.object;
+    const stripeCustomerId = subscription.customer;
+
+    try {
+      const user = await users.findOne({ stripeCustomerId });
+      if (!user) {
+        console.warn("⚠️ Kein Nutzer mit passender Stripe-ID für Kündigung gefunden.");
+        return res.sendStatus(200);
+      }
+
+      await users.updateOne(
+        { _id: new ObjectId(user._id) },
+        {
+          $set: {
+            subscriptionActive: false,
+            isPremium: false,
+            isBusiness: false,
+            subscriptionPlan: null,
+            subscriptionStatus: "cancelled",
+          },
+        }
+      );
+
+      console.log(`❌ Abo bei ${user.email} gekündigt.`);
+    } catch (err) {
+      console.error("❌ Fehler beim Kündigungs-Update:", err.message);
+      return res.status(500).send("Fehler beim Kündigungs-Update");
     }
   }
 

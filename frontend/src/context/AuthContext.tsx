@@ -1,10 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import { fetchUserData } from "./authUtils";
-
-interface UserData {
-  email: string;
-  subscriptionActive: boolean;
-}
+import { fetchUserData, UserData } from "./authUtils";
 
 interface AuthContextType {
   user: UserData | null;

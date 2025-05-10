@@ -200,10 +200,15 @@ export default function Profile() {
                   <span>Lade Abo-Status...</span>
                 ) : !user ? (
                   <span>❌ Nicht eingeloggt</span>
-                ) : user.subscriptionActive ? (
+                ) : user.subscriptionPlan === "business" ? (
+                  <div className={styles.premium}>
+                    <span className={styles.premiumIcon}>🏢</span>
+                    Business – aktiv
+                  </div>
+                ) : user.subscriptionPlan === "premium" ? (
                   <div className={styles.premium}>
                     <span className={styles.premiumIcon}>💎</span>
-                    🔒 Premium – aktiv
+                    Premium – aktiv
                   </div>
                 ) : (
                   <div className={styles.standard}>
@@ -371,7 +376,7 @@ export default function Profile() {
                       if (res.ok && data.url) {
                         window.location.href = data.url;
                       }
-                    } catch {
+                    } catch (err) {
                       alert("Fehler beim Öffnen des Kundenportals");
                       setIsPortalOpening(false);
                     }

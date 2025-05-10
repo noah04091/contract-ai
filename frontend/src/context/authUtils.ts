@@ -9,19 +9,25 @@ export const AUTH_ENDPOINTS = {
   DELETE: `${API_BASE_URL}/auth/delete`,
 };
 
-// Typ für Nutzerdaten
 export interface UserData {
-  email: string;
-  subscriptionActive: boolean;
-}
+    email: string;
+    subscriptionPlan: "free" | "premium" | "business";
+    subscriptionStatus: "active" | "canceled" | "incomplete" | string;
+    isPremium: boolean;
+    isBusiness: boolean;
+    isFree: boolean;
+    subscriptionActive: boolean; // 🔧 wichtig
+    analysisCount: number;
+    analysisLimit: number;
+  }   
 
 /**
  * Holt das JWT Token aus dem Cookie storage (falls vorhanden)
  */
 export const getToken = (): string | null => {
-  const cookies = document.cookie.split(';');
-  const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('token='));
-  return tokenCookie ? tokenCookie.split('=')[1] : null;
+  const cookies = document.cookie.split(";");
+  const tokenCookie = cookies.find((cookie) => cookie.trim().startsWith("token="));
+  return tokenCookie ? tokenCookie.split("=")[1] : null;
 };
 
 /**
@@ -29,17 +35,17 @@ export const getToken = (): string | null => {
  */
 export const fetchWithAuth = async (url: string, options: RequestInit = {}) => {
   const token = getToken();
-  
+
   const headers = {
     ...options.headers,
-    'Content-Type': 'application/json',
-    ...(token && { 'Authorization': `Bearer ${token}` })
+    "Content-Type": "application/json",
+    ...(token && { Authorization: `Bearer ${token}` }),
   };
 
   return fetch(url, {
     ...options,
     headers,
-    credentials: 'include'
+    credentials: "include",
   });
 };
 
@@ -50,9 +56,9 @@ export const fetchUserData = async (): Promise<UserData> => {
   const res = await fetch(AUTH_ENDPOINTS.ME, {
     credentials: "include",
   });
-  
+
   if (!res.ok) throw new Error("Failed to fetch user data");
-  
+
   const data = await res.json();
   return data;
 };
@@ -67,12 +73,12 @@ export const login = async (email: string, password: string) => {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
   });
-  
+
   if (!res.ok) {
     const data = await res.json();
     throw new Error(data.message || "Login fehlgeschlagen");
   }
-  
+
   return await res.json();
 };
 

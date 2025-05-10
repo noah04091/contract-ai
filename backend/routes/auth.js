@@ -93,12 +93,12 @@ router.get("/me", verifyToken, async (req, res) => {
       return res.status(404).json({ message: "❌ Benutzer nicht gefunden" });
     }
 
-    // ⛑️ Fallback-Werte setzen, falls nicht vorhanden
     const plan = user.subscriptionPlan || "free";
-    const status = user.subscriptionStatus || "active";
+    const status = user.subscriptionStatus || "inactive";
     const analysisCount = user.analysisCount ?? 0;
+    const subscriptionActive = user.subscriptionActive ?? false;
 
-    let analysisLimit = 10; // default für free
+    let analysisLimit = 10;
     if (plan === "business") analysisLimit = 50;
     if (plan === "premium") analysisLimit = Infinity;
 
@@ -106,6 +106,7 @@ router.get("/me", verifyToken, async (req, res) => {
       email: user.email,
       subscriptionPlan: plan,
       subscriptionStatus: status,
+      subscriptionActive,
       isPremium: plan === "premium",
       isBusiness: plan === "business",
       isFree: plan === "free",
