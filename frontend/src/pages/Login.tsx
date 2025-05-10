@@ -21,6 +21,20 @@ export default function Login() {
   const containerRef = useRef<HTMLDivElement>(null);
   const { setUser } = useAuth();
 
+  // Funktion, um Benutzerdaten vom Server zu holen
+  const fetchUserData = async () => {
+    const response = await fetch("/api/auth/me", {
+      method: "GET",
+      credentials: "include",
+    });
+    
+    if (!response.ok) {
+      throw new Error("Fehler beim Abrufen der Benutzerdaten");
+    }
+    
+    return await response.json();
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -55,8 +69,9 @@ export default function Login() {
 
       setNotification({ message: "Login erfolgreich", type: "success" });
       
-      // Wichtig: Aktualisiere den globalen Auth-Zustand
-      setUser({ email: data.email || email, subscriptionActive: !!data.token });
+      // ✅ Vollständige Benutzerdaten vom Server holen
+      const userData = await fetchUserData();
+      setUser(userData);
 
       setTimeout(async () => {
         try {
