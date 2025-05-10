@@ -7,11 +7,6 @@ import logo from "../assets/logo.png";
 import { clearAuthData } from "../utils/api";
 import { useAuth } from "../context/AuthContext";
 
-interface UserData {
-  email: string;
-  subscriptionActive: boolean;
-}
-
 export default function Navbar() {
   const { user, setUser, isLoading } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
