@@ -40,6 +40,7 @@ export default function Profile() {
   const [notification, setNotification] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const [isPasswordChanging, setIsPasswordChanging] = useState(false);
   const [isUpgrading, setIsUpgrading] = useState(false);
+  const [isPortalOpening, setIsPortalOpening] = useState(false);
 
   const handlePasswordChange = async () => {
     if (newPassword !== confirmPassword) {
@@ -349,6 +350,44 @@ export default function Profile() {
                 <span>Account löschen</span>
               </motion.button>
             </motion.div>
+
+            {user?.subscriptionActive && (
+              <p style={{ fontSize: "0.85rem", marginTop: "2rem", textAlign: "center" }}>
+                💳{" "}
+                <span
+                  style={{
+                    textDecoration: "underline",
+                    cursor: "pointer",
+                    color: "#666"
+                  }}
+                  onClick={async () => {
+                    setIsPortalOpening(true);
+                    try {
+                      const res = await fetch("/api/stripe/portal", {
+                        method: "POST",
+                        credentials: "include",
+                      });
+                      const data = await res.json();
+                      if (res.ok && data.url) {
+                        window.location.href = data.url;
+                      }
+                    } catch (err) {
+                      alert("Fehler beim Öffnen des Kundenportals");
+                      setIsPortalOpening(false);
+                    }
+                  }}
+                >
+                  {isPortalOpening ? (
+                    <>
+                      <span className={styles.buttonSpinner}></span>
+                      <span>Wird geöffnet...</span>
+                    </>
+                  ) : (
+                    "Abo kündigen"
+                  )}
+                </span>
+              </p>
+            )}
           </motion.div>
         ) : (
           <div className={styles.errorContainer}>

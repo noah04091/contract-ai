@@ -120,7 +120,7 @@ async function analyzeContract(pdfText) {
   return res.choices[0].message.content;
 }
 
-// MongoDB & Routes laden
+// MongoDB & Routen laden
 (async () => {
   try {
     const client = new MongoClient(MONGO_URI);
@@ -132,8 +132,11 @@ async function analyzeContract(pdfText) {
 
     const checkSubscription = createCheckSubscription(usersCollection);
     const authRoutes = require("./routes/auth")(db);
+    const stripePortalRoute = require("./routes/stripePortal")(usersCollection); // 🆕 eingebaut
 
     app.use("/auth", authRoutes);
+    app.use("/stripe/portal", stripePortalRoute); // 🆕 eingebaut
+
     app.post("/upload", verifyToken, checkSubscription, upload.single("file"), async (req, res) => {
       if (!req.file) return res.status(400).json({ message: "Keine Datei hochgeladen" });
       const buffer = await fs.readFile(path.join(__dirname, UPLOAD_PATH, req.file.filename));
@@ -236,5 +239,6 @@ async function analyzeContract(pdfText) {
     process.exit(1);
   }
 })();
+
 // 🕐 Cronjob für Monatsreset laden
 require("./cron/resetBusinessLimits");
