@@ -1,12 +1,15 @@
 // 📁 backend/server.js
 const express = require("express");
 const app = express();
-
-// ⚠️ Stripe Webhook zuerst einbinden (raw body!)
-const stripeWebhookRoute = require("./routes/stripeWebhook");
-app.use("/stripe/webhook", stripeWebhookRoute); // Muss GANZ OBEN stehen!
-
 require("dotenv").config();
+
+// ⚠️ Stripe Webhook zuerst mit raw body einbinden!
+const bodyParser = require("body-parser");
+app.use("/stripe/webhook", bodyParser.raw({ type: "application/json" }));
+const stripeWebhookRoute = require("./routes/stripeWebhook");
+app.use("/stripe/webhook", stripeWebhookRoute);
+
+// 📦 Abhängigkeiten
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const multer = require("multer");
@@ -20,7 +23,6 @@ const cron = require("node-cron");
 
 const verifyToken = require("./middleware/verifyToken");
 const createCheckSubscription = require("./middleware/checkSubscription");
-
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 // 📁 Setup
@@ -46,7 +48,6 @@ const ALLOWED_ORIGINS = [
 
 const transporter = nodemailer.createTransport(EMAIL_CONFIG);
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
 const storage = multer.diskStorage({
   destination: UPLOAD_PATH,
   filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname)),
@@ -64,7 +65,7 @@ app.use(cors({
 }));
 app.options("*", cors());
 app.use(cookieParser());
-app.use(express.json()); // ⛔️ Muss nach Webhook kommen!
+app.use(express.json()); // ⛔️ Muss nach dem Webhook kommen!
 app.use("/uploads", express.static(path.join(__dirname, UPLOAD_PATH)));
 
 app.use((req, res, next) => {
@@ -145,7 +146,7 @@ async function analyzeContract(pdfText) {
 
       const name = analysis.match(/Vertragsname:\s*(.*)/i)?.[1]?.trim() || "Unbekannt";
       const laufzeit = analysis.match(/Laufzeit:\s*(.*)/i)?.[1]?.trim() || "Unbekannt";
-      const kuendigung = analysis.match(/Kündigungsfrist:\s*(.*)/i)?.[1]?.trim() || "Unbekannt";
+      const kuendigung = analysis.match(/K\u00fcndigungsfrist:\s*(.*)/i)?.[1]?.trim() || "Unbekannt";
       const expiryDate = extractExpiryDate(laufzeit);
       const status = determineContractStatus(expiryDate);
 
@@ -166,7 +167,7 @@ async function analyzeContract(pdfText) {
         from: `Contract AI <${process.env.EMAIL_USER}>`,
         to: process.env.EMAIL_USER,
         subject: "📄 Neuer Vertrag hochgeladen",
-        text: `Name: ${name}\nLaufzeit: ${laufzeit}\nKündigungsfrist: ${kuendigung}\nStatus: ${status}\nAblaufdatum: ${expiryDate}`,
+        text: `Name: ${name}\nLaufzeit: ${laufzeit}\nK\u00fcndigungsfrist: ${kuendigung}\nStatus: ${status}\nAblaufdatum: ${expiryDate}`,
       });
 
       res.status(201).json({ message: "Vertrag gespeichert", contract: { ...contract, _id: insertedId } });

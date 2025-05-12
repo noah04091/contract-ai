@@ -1,4 +1,3 @@
-// 📁 backend/routes/stripeWebhook.js
 const express = require("express");
 const router = express.Router();
 const { MongoClient, ObjectId } = require("mongodb");
@@ -8,7 +7,7 @@ require("dotenv").config();
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
 
-// 🔌 MongoDB einmalig verbinden
+// MongoDB Verbindung
 const client = new MongoClient(MONGO_URI);
 let db, users;
 
@@ -23,7 +22,7 @@ let db, users;
   }
 })();
 
-// 📩 Webhook-Route (⚠️ raw body notwendig!)
+// Webhook-Route (⚠️ raw body notwendig!)
 router.post("/", express.raw({ type: "application/json" }), async (req, res) => {
   const sig = req.headers["stripe-signature"];
   let event;
@@ -44,7 +43,6 @@ router.post("/", express.raw({ type: "application/json" }), async (req, res) => 
       const stripeSubscriptionId = session.subscription;
       const email = session.customer_email || session.customer_details?.email || null;
 
-      // 🎯 Hole Preis-ID direkt über die Subscription
       const subscription = await stripe.subscriptions.retrieve(stripeSubscriptionId);
       const priceId = subscription.items.data[0]?.price?.id;
 
@@ -82,7 +80,7 @@ router.post("/", express.raw({ type: "application/json" }), async (req, res) => 
     }
 
     if (eventType === "customer.subscription.deleted") {
-      const subscription = session; // bei subscription.deleted ist das session = subscription
+      const subscription = session;
       const stripeCustomerId = subscription.customer;
 
       const user = await users.findOne({ stripeCustomerId });
