@@ -51,7 +51,7 @@ router.post("/", express.raw({ type: "application/json" }), async (req, res) => 
       const priceMap = {
         [process.env.STRIPE_BUSINESS_PRICE_ID]: "business",
         [process.env.STRIPE_PREMIUM_PRICE_ID]: "premium",
-      };      
+      };
 
       const plan = priceMap[priceId] || "unknown";
       console.log("📦 Webhook: Abo abgeschlossen:", { email, stripeCustomerId, plan });

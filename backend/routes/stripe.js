@@ -13,6 +13,7 @@ let usersCollection;
 client.connect().then(() => {
   const db = client.db("contract_ai");
   usersCollection = db.collection("users");
+  console.log("✅ Stripe-Route: MongoDB verbunden");
 });
 
 // 💳 Stripe Checkout-Session erstellen
@@ -21,20 +22,22 @@ router.post("/create-checkout-session", verifyToken, async (req, res) => {
   const email = req.user.email;
 
   const priceIdMap = {
-    business: "price_1RMpeRE21h94C5yQNgoza8cX",
-    premium: "price_1RMpexE21h94C5yQnMRTS0q5",
+    business: process.env.STRIPE_BUSINESS_PRICE_ID,
+    premium: process.env.STRIPE_PREMIUM_PRICE_ID,
   };
-  const selectedPriceId = priceIdMap[plan];
 
+  const selectedPriceId = priceIdMap[plan];
   if (!selectedPriceId) {
     return res.status(400).json({ message: "Ungültiger Plan angegeben." });
   }
 
   try {
     const user = await usersCollection.findOne({ email });
-    let customerId = user?.stripeCustomerId;
+    if (!user) return res.status(404).json({ message: "Benutzer nicht gefunden." });
 
-    // Falls noch kein Stripe-Kunde existiert → erstellen & speichern
+    let customerId = user.stripeCustomerId;
+
+    // ➕ Stripe-Kunde anlegen (nur falls noch nicht vorhanden)
     if (!customerId) {
       const customer = await stripe.customers.create({
         email,
