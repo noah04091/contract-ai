@@ -2,7 +2,6 @@ const express = require("express");
 const router = express.Router();
 const { MongoClient, ObjectId } = require("mongodb");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
-const bodyParser = require("body-parser");
 require("dotenv").config();
 
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -22,8 +21,8 @@ let db, users;
   }
 })();
 
-// ⚠️ Nur diese Route nutzt raw-body!
-router.post("/", bodyParser.raw({ type: "application/json" }), async (req, res) => {
+// ✅ KEIN bodyParser hier!
+router.post("/", async (req, res) => {
   const sig = req.headers["stripe-signature"];
   let event;
 
