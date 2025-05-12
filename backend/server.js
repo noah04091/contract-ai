@@ -1,5 +1,12 @@
 // 📁 backend/server.js
 const express = require("express");
+const app = express();
+
+// ⚠️ Stripe Webhook zuerst einbinden (raw body!)
+const stripeWebhookRoute = require("./routes/stripeWebhook");
+app.use("/stripe/webhook", stripeWebhookRoute); // Muss GANZ OBEN stehen!
+
+require("dotenv").config();
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const multer = require("multer");
@@ -10,17 +17,11 @@ const { OpenAI } = require("openai");
 const nodemailer = require("nodemailer");
 const { MongoClient, ObjectId } = require("mongodb");
 const cron = require("node-cron");
+
 const verifyToken = require("./middleware/verifyToken");
 const createCheckSubscription = require("./middleware/checkSubscription");
-require("dotenv").config();
 
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
-
-const app = express();
-
-// ⚠️ Stripe Webhook zuerst einbinden (Raw Body! — wichtig!)
-const stripeWebhookRoute = require("./routes/stripeWebhook");
-app.use("/stripe/webhook", stripeWebhookRoute); // muss vor express.json() kommen!
 
 // 📁 Setup
 const UPLOAD_PATH = "./uploads";
@@ -56,14 +57,14 @@ const upload = multer({ storage });
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin || ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
-    console.warn(`CORS blockiert: ${origin}`);
+    console.warn(`🚫 CORS blockiert: ${origin}`);
     callback(null, false);
   },
   credentials: true,
 }));
 app.options("*", cors());
 app.use(cookieParser());
-app.use(express.json()); // ⛔️ Muss nach Webhook-Route kommen!
+app.use(express.json()); // ⛔️ Muss nach Webhook kommen!
 app.use("/uploads", express.static(path.join(__dirname, UPLOAD_PATH)));
 
 app.use((req, res, next) => {
@@ -123,20 +124,18 @@ async function analyzeContract(pdfText) {
     const checkSubscription = createCheckSubscription(usersCollection);
     const authRoutes = require("./routes/auth")(db);
 
-    // 📁 Routen einbinden
-    const subscribeRoutes = require("./routes/subscribe");
-    const stripeRoutes = require("./routes/stripe");
-    const analyzeRoute = require("./routes/analyze");
-    const optimizeRoute = require("./routes/optimize");
-    const compareRoute = require("./routes/compare");
-    const chatRoute = require("./routes/chatWithContract");
-    const generateRoute = require("./routes/generate");
-    const analyzeTypeRoute = require("./routes/analyzeType");
-    const extractTextRoute = require("./routes/extractText");
-    const stripePortalRoute = require("./routes/stripePortal");
-
+    // 📁 Routen
     app.use("/auth", authRoutes);
-    app.use("/stripe/portal", stripePortalRoute);
+    app.use("/stripe/portal", require("./routes/stripePortal"));
+    app.use("/stripe", require("./routes/stripe"));
+    app.use("/stripe", require("./routes/subscribe"));
+    app.use("/optimize", verifyToken, checkSubscription, require("./routes/optimize"));
+    app.use("/compare", verifyToken, checkSubscription, require("./routes/compare"));
+    app.use("/chat", verifyToken, checkSubscription, require("./routes/chatWithContract"));
+    app.use("/generate", verifyToken, checkSubscription, require("./routes/generate"));
+    app.use("/analyze-type", require("./routes/analyzeType"));
+    app.use("/extract-text", require("./routes/extractText"));
+    app.use("/test", require("./testAuth"));
 
     app.post("/upload", verifyToken, checkSubscription, upload.single("file"), async (req, res) => {
       if (!req.file) return res.status(400).json({ message: "Keine Datei hochgeladen" });
@@ -162,6 +161,7 @@ async function analyzeContract(pdfText) {
       };
 
       const { insertedId } = await contractsCollection.insertOne(contract);
+
       await transporter.sendMail({
         from: `Contract AI <${process.env.EMAIL_USER}>`,
         to: process.env.EMAIL_USER,
@@ -205,16 +205,6 @@ async function analyzeContract(pdfText) {
       res.json({ message: "Gelöscht", deletedCount: result.deletedCount });
     });
 
-    app.use("/optimize", verifyToken, checkSubscription, optimizeRoute);
-    app.use("/compare", verifyToken, checkSubscription, compareRoute);
-    app.use("/chat", verifyToken, checkSubscription, chatRoute);
-    app.use("/generate", verifyToken, checkSubscription, generateRoute);
-    app.use("/stripe", stripeRoutes);
-    app.use("/stripe", subscribeRoutes);
-    app.use("/analyze-type", analyzeTypeRoute);
-    app.use("/extract-text", extractTextRoute);
-    app.use("/test", require("./testAuth"));
-
     app.get("/debug", (req, res) => {
       console.log("Cookies:", req.cookies);
       res.cookie("debug_cookie", "test-value", {
@@ -228,6 +218,7 @@ async function analyzeContract(pdfText) {
 
     cron.schedule("0 8 * * *", async () => {
       console.log("⏰ Reminder-Cronjob gestartet");
+      const checkContractsAndSendReminders = require("./services/cron");
       await checkContractsAndSendReminders();
     });
 
@@ -239,5 +230,5 @@ async function analyzeContract(pdfText) {
   }
 })();
 
-// 🕐 Cronjob für Monatsreset laden
+// 🕐 Monatslimit-Reset-Cronjob
 require("./cron/resetBusinessLimits");
