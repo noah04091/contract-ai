@@ -2,12 +2,12 @@ const express = require("express");
 const router = express.Router();
 const { MongoClient, ObjectId } = require("mongodb");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+const bodyParser = require("body-parser");
 require("dotenv").config();
 
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
 
-// MongoDB Verbindung
 const client = new MongoClient(MONGO_URI);
 let db, users;
 
@@ -22,8 +22,8 @@ let db, users;
   }
 })();
 
-// Webhook-Route (⚠️ raw body notwendig!)
-router.post("/", express.raw({ type: "application/json" }), async (req, res) => {
+// ⚠️ Nur diese Route nutzt raw-body!
+router.post("/", bodyParser.raw({ type: "application/json" }), async (req, res) => {
   const sig = req.headers["stripe-signature"];
   let event;
 
@@ -80,8 +80,7 @@ router.post("/", express.raw({ type: "application/json" }), async (req, res) => 
     }
 
     if (eventType === "customer.subscription.deleted") {
-      const subscription = session;
-      const stripeCustomerId = subscription.customer;
+      const stripeCustomerId = session.customer;
 
       const user = await users.findOne({ stripeCustomerId });
       if (!user) {

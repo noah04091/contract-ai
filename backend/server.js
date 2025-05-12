@@ -5,9 +5,8 @@ require("dotenv").config();
 
 // ⚠️ Stripe Webhook zuerst mit raw body einbinden!
 const bodyParser = require("body-parser");
-app.use("/stripe/webhook", bodyParser.raw({ type: "application/json" }));
 const stripeWebhookRoute = require("./routes/stripeWebhook");
-app.use("/stripe/webhook", stripeWebhookRoute);
+app.post("/stripe/webhook", bodyParser.raw({ type: "application/json" }), stripeWebhookRoute);
 
 // 📦 Abhängigkeiten
 const cookieParser = require("cookie-parser");
@@ -125,7 +124,6 @@ async function analyzeContract(pdfText) {
     const checkSubscription = createCheckSubscription(usersCollection);
     const authRoutes = require("./routes/auth")(db);
 
-    // 📁 Routen
     app.use("/auth", authRoutes);
     app.use("/stripe/portal", require("./routes/stripePortal"));
     app.use("/stripe", require("./routes/stripe"));
@@ -146,7 +144,7 @@ async function analyzeContract(pdfText) {
 
       const name = analysis.match(/Vertragsname:\s*(.*)/i)?.[1]?.trim() || "Unbekannt";
       const laufzeit = analysis.match(/Laufzeit:\s*(.*)/i)?.[1]?.trim() || "Unbekannt";
-      const kuendigung = analysis.match(/K\u00fcndigungsfrist:\s*(.*)/i)?.[1]?.trim() || "Unbekannt";
+      const kuendigung = analysis.match(/Kündigungsfrist:\s*(.*)/i)?.[1]?.trim() || "Unbekannt";
       const expiryDate = extractExpiryDate(laufzeit);
       const status = determineContractStatus(expiryDate);
 
@@ -167,7 +165,7 @@ async function analyzeContract(pdfText) {
         from: `Contract AI <${process.env.EMAIL_USER}>`,
         to: process.env.EMAIL_USER,
         subject: "📄 Neuer Vertrag hochgeladen",
-        text: `Name: ${name}\nLaufzeit: ${laufzeit}\nK\u00fcndigungsfrist: ${kuendigung}\nStatus: ${status}\nAblaufdatum: ${expiryDate}`,
+        text: `Name: ${name}\nLaufzeit: ${laufzeit}\nKündigungsfrist: ${kuendigung}\nStatus: ${status}\nAblaufdatum: ${expiryDate}`,
       });
 
       res.status(201).json({ message: "Vertrag gespeichert", contract: { ...contract, _id: insertedId } });
