@@ -18,9 +18,9 @@ const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 const app = express();
 
-// ⚠️ Stripe Webhook zuerst einbinden (Raw Body!)
+// ⚠️ Stripe Webhook zuerst einbinden (Raw Body! — wichtig!)
 const stripeWebhookRoute = require("./routes/stripeWebhook");
-app.use("/stripe/webhook", stripeWebhookRoute); // muss VOR express.json()
+app.use("/stripe/webhook", stripeWebhookRoute); // muss vor express.json() kommen!
 
 // 📁 Routen
 const subscribeRoutes = require("./routes/subscribe");
@@ -116,7 +116,7 @@ async function analyzeContract(pdfText) {
     model: "gpt-4",
     messages: [
       { role: "system", content: "Du bist ein KI-Assistent, der Vertragsdaten extrahiert." },
-      { role: "user", content: "Extrahiere aus folgendem Vertrag Name, Laufzeit und Kündigungsfrist:\n\n" + pdfText },
+      { role: "user", content: "Extrahiere aus folgendem Vertrag Name, Laufzeit und K\u00fcndigungsfrist:\n\n" + pdfText },
     ],
     temperature: 0.3,
   });
@@ -147,7 +147,7 @@ async function analyzeContract(pdfText) {
 
       const name = analysis.match(/Vertragsname:\s*(.*)/i)?.[1]?.trim() || "Unbekannt";
       const laufzeit = analysis.match(/Laufzeit:\s*(.*)/i)?.[1]?.trim() || "Unbekannt";
-      const kuendigung = analysis.match(/Kündigungsfrist:\s*(.*)/i)?.[1]?.trim() || "Unbekannt";
+      const kuendigung = analysis.match(/K\u00fcndigungsfrist:\s*(.*)/i)?.[1]?.trim() || "Unbekannt";
       const expiryDate = extractExpiryDate(laufzeit);
       const status = determineContractStatus(expiryDate);
 
@@ -167,7 +167,7 @@ async function analyzeContract(pdfText) {
         from: `Contract AI <${process.env.EMAIL_USER}>`,
         to: process.env.EMAIL_USER,
         subject: "📄 Neuer Vertrag hochgeladen",
-        text: `Name: ${name}\nLaufzeit: ${laufzeit}\nKündigungsfrist: ${kuendigung}\nStatus: ${status}\nAblaufdatum: ${expiryDate}`,
+        text: `Name: ${name}\nLaufzeit: ${laufzeit}\nK\u00fcndigungsfrist: ${kuendigung}\nStatus: ${status}\nAblaufdatum: ${expiryDate}`,
       });
 
       res.status(201).json({ message: "Vertrag gespeichert", contract: { ...contract, _id: insertedId } });
@@ -203,7 +203,7 @@ async function analyzeContract(pdfText) {
         userId: req.user.userId,
       });
       if (!result.deletedCount) return res.status(404).json({ message: "Nicht gefunden" });
-      res.json({ message: "Gelöscht", deletedCount: result.deletedCount });
+      res.json({ message: "Gel\u00f6scht", deletedCount: result.deletedCount });
     });
 
     app.use("/optimize", verifyToken, checkSubscription, optimizeRoute);
@@ -233,12 +233,12 @@ async function analyzeContract(pdfText) {
     });
 
     const PORT = process.env.PORT || 5000;
-    app.listen(PORT, () => console.log(`🚀 Server läuft auf Port ${PORT}`));
+    app.listen(PORT, () => console.log(`🚀 Server l\u00e4uft auf Port ${PORT}`));
   } catch (err) {
     console.error("❌ Fehler beim Serverstart:", err);
     process.exit(1);
   }
 })();
 
-// 🕐 Cronjob für Monatsreset laden
+// 🕐 Cronjob f\u00fcr Monatsreset laden
 require("./cron/resetBusinessLimits");

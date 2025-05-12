@@ -35,32 +35,30 @@ router.post("/", express.raw({ type: "application/json" }), async (req, res) => 
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
+  const eventType = event.type;
   const session = event.data.object;
 
-  if (event.type === "checkout.session.completed") {
-    const stripeCustomerId = session.customer;
-    const stripeSubscriptionId = session.subscription;
-    const email = session.customer_email || session.customer_details?.email || null;
+  try {
+    if (eventType === "checkout.session.completed") {
+      const stripeCustomerId = session.customer;
+      const stripeSubscriptionId = session.subscription;
+      const email = session.customer_email || session.customer_details?.email || null;
 
-    // ✅ Jetzt aus subscription.items auslesen
-    const subscription = await stripe.subscriptions.retrieve(stripeSubscriptionId);
-    const priceId = subscription.items.data[0]?.price?.id;
+      // 🎯 Hole Preis-ID direkt über die Subscription
+      const subscription = await stripe.subscriptions.retrieve(stripeSubscriptionId);
+      const priceId = subscription.items.data[0]?.price?.id;
 
-    const priceMap = {
-      "price_1RMpeRE21h94C5yQNgoza8cX": "business",
-      "price_1RMpexE21h94C5yQnMRTS0q5": "premium",
-    };
+      const priceMap = {
+        "price_1RMpeRE21h94C5yQNgoza8cX": "business",
+        "price_1RMpexE21h94C5yQnMRTS0q5": "premium",
+      };
 
-    const plan = priceMap[priceId] || "unknown";
+      const plan = priceMap[priceId] || "unknown";
+      console.log("📦 Webhook: Abo abgeschlossen:", { email, stripeCustomerId, plan });
 
-    console.log("📦 Webhook empfangen:", { email, stripeCustomerId, plan });
-
-    try {
-      const query = stripeCustomerId ? { stripeCustomerId } : { email };
-      const user = await users.findOne(query);
-
+      const user = await users.findOne(stripeCustomerId ? { stripeCustomerId } : { email });
       if (!user) {
-        console.warn("⚠️ Kein Nutzer mit passender E-Mail oder Stripe-ID gefunden.");
+        console.warn("⚠️ Kein Nutzer mit passender Stripe-ID oder E-Mail gefunden.");
         return res.sendStatus(200);
       }
 
@@ -80,21 +78,16 @@ router.post("/", express.raw({ type: "application/json" }), async (req, res) => 
         }
       );
 
-      console.log(`✅ Abo bei ${email || user.email} erfolgreich aktiviert (${plan})`);
-    } catch (err) {
-      console.error("❌ Fehler beim Update:", err.message);
-      return res.status(500).send("Fehler beim DB-Update");
+      console.log(`✅ Nutzer ${email || user.email} auf ${plan}-Plan aktualisiert`);
     }
-  }
 
-  if (event.type === "customer.subscription.deleted") {
-    const subscription = event.data.object;
-    const stripeCustomerId = subscription.customer;
+    if (eventType === "customer.subscription.deleted") {
+      const subscription = session; // bei subscription.deleted ist das session = subscription
+      const stripeCustomerId = subscription.customer;
 
-    try {
       const user = await users.findOne({ stripeCustomerId });
       if (!user) {
-        console.warn("⚠️ Kein Nutzer mit passender Stripe-ID für Kündigung gefunden.");
+        console.warn("⚠️ Kein Nutzer zur Kündigung gefunden.");
         return res.sendStatus(200);
       }
 
@@ -111,14 +104,14 @@ router.post("/", express.raw({ type: "application/json" }), async (req, res) => 
         }
       );
 
-      console.log(`❌ Abo bei ${user.email} gekündigt.`);
-    } catch (err) {
-      console.error("❌ Fehler beim Kündigungs-Update:", err.message);
-      return res.status(500).send("Fehler beim Kündigungs-Update");
+      console.log(`❌ Abo von ${user.email} wurde gekündigt.`);
     }
-  }
 
-  res.status(200).send("✅ Webhook verarbeitet");
+    res.status(200).send("✅ Webhook verarbeitet");
+  } catch (err) {
+    console.error("❌ Fehler in der Webhook-Logik:", err.message);
+    res.status(500).send("Interner Fehler bei der Verarbeitung des Webhooks");
+  }
 });
 
 module.exports = router;
