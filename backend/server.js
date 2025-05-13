@@ -3,11 +3,145 @@ const express = require("express");
 const app = express();
 require("dotenv").config();
 
-// ⚠️ Stripe Webhook zuerst mit raw body einbinden!
+// ⚠️ Wichtig: Nur für den Webhook-Endpunkt bodyParser.raw verwenden,
+// und vor jeder anderen Middleware, die den Body verändert!
 const bodyParser = require("body-parser");
-// FIX: Korrekte Einbindung des Stripe Webhooks mit app.use() statt app.post()
-app.use("/stripe/webhook", bodyParser.raw({ type: "application/json" }));
-app.use("/stripe/webhook", require("./routes/stripeWebhook"));
+
+// Direkte Implementierung des Webhook-Handlers in server.js
+// Kein Router verwenden für diesen speziellen Endpunkt
+app.post("/stripe/webhook", 
+  bodyParser.raw({ type: "application/json" }), 
+  async (req, res) => {
+    const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+    const sig = req.headers["stripe-signature"];
+    const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    
+    // Debug-Logging
+    console.log("⚡ Webhook-Anfrage empfangen", {
+      signatureHeader: sig ? "vorhanden" : "fehlt",
+      bodyType: typeof req.body,
+      bodyLength: req.body ? req.body.length : 0
+    });
+
+    let event;
+    try {
+      event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
+    } catch (err) {
+      console.error(`❌ Webhook-Fehler: ${err.message}`);
+      return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+
+    // Event verarbeiten
+    const eventType = event.type;
+    const session = event.data.object;
+    
+    console.log(`✅ Webhook-Event empfangen: ${eventType}`);
+
+    try {
+      // DB wird erst später in deinem Code initialisiert, daher wird diese Variable hier definiert
+      // und später im Code gefüllt
+      let db;
+      let { MongoClient, ObjectId } = require("mongodb");
+
+      // Rest der Webhook-Logik
+      if (eventType === "checkout.session.completed") {
+        const stripeCustomerId = session.customer;
+        const stripeSubscriptionId = session.subscription;
+        const email = session.customer_email || session.customer_details?.email || null;
+
+        console.log(`📦 Checkout abgeschlossen für ${email || stripeCustomerId}`);
+
+        // Wir speichern eine Aufgabe, die später ausgeführt wird, wenn die DB initialisiert ist
+        app.locals.pendingWebhookTasks = app.locals.pendingWebhookTasks || [];
+        app.locals.pendingWebhookTasks.push(async (db) => {
+          try {
+            const subscription = await stripe.subscriptions.retrieve(stripeSubscriptionId);
+            const priceId = subscription.items.data[0]?.price?.id;
+
+            const priceMap = {
+              [process.env.STRIPE_BUSINESS_PRICE_ID]: "business",
+              [process.env.STRIPE_PREMIUM_PRICE_ID]: "premium",
+            };
+
+            const plan = priceMap[priceId] || "unknown";
+            console.log("📦 Webhook: Abo abgeschlossen:", { email, stripeCustomerId, plan });
+
+            const usersCollection = db.collection("users");
+            const user = await usersCollection.findOne(
+              stripeCustomerId ? { stripeCustomerId } : { email }
+            );
+            
+            if (!user) {
+              console.warn("⚠️ Kein Nutzer mit passender Stripe-ID oder E-Mail gefunden.");
+              return;
+            }
+
+            await usersCollection.updateOne(
+              { _id: new ObjectId(user._id) },
+              {
+                $set: {
+                  subscriptionActive: true,
+                  isPremium: plan === "premium",
+                  isBusiness: plan === "business",
+                  subscriptionPlan: plan,
+                  stripeCustomerId,
+                  stripeSubscriptionId,
+                  premiumSince: new Date(),
+                  subscriptionStatus: "active",
+                },
+              }
+            );
+
+            console.log(`✅ Nutzer ${email || user.email} auf ${plan}-Plan aktualisiert`);
+          } catch (err) {
+            console.error("Fehler bei der Webhook-Aufgabenverarbeitung:", err);
+          }
+        });
+      }
+
+      if (eventType === "customer.subscription.deleted") {
+        const stripeCustomerId = session.customer;
+
+        // Aufgabe für später speichern
+        app.locals.pendingWebhookTasks = app.locals.pendingWebhookTasks || [];
+        app.locals.pendingWebhookTasks.push(async (db) => {
+          try {
+            const usersCollection = db.collection("users");
+            const user = await usersCollection.findOne({ stripeCustomerId });
+            
+            if (!user) {
+              console.warn("⚠️ Kein Nutzer zur Kündigung gefunden.");
+              return;
+            }
+
+            await usersCollection.updateOne(
+              { _id: new ObjectId(user._id) },
+              {
+                $set: {
+                  subscriptionActive: false,
+                  isPremium: false,
+                  isBusiness: false,
+                  subscriptionPlan: null,
+                  subscriptionStatus: "cancelled",
+                },
+              }
+            );
+
+            console.log(`❌ Abo von ${user.email} wurde gekündigt.`);
+          } catch (err) {
+            console.error("Fehler bei der Webhook-Aufgabenverarbeitung:", err);
+          }
+        });
+      }
+
+      // Sofort erfolgreich antworten, die tatsächliche Datenbankaktualisierung erfolgt später
+      return res.status(200).send("✅ Webhook verarbeitet");
+    } catch (err) {
+      console.error("❌ Fehler in der Webhook-Logik:", err);
+      return res.status(500).send("Interner Fehler bei der Verarbeitung des Webhooks");
+    }
+  }
+);
 
 // 📦 Abhängigkeiten
 const cookieParser = require("cookie-parser");
@@ -121,6 +255,15 @@ async function analyzeContract(pdfText) {
     const usersCollection = db.collection("users");
     const contractsCollection = db.collection("contracts");
     console.log("✅ MongoDB verbunden!");
+
+    // Alle ausstehenden Webhook-Aufgaben verarbeiten
+    if (app.locals.pendingWebhookTasks && app.locals.pendingWebhookTasks.length > 0) {
+      console.log(`⚡ Verarbeite ${app.locals.pendingWebhookTasks.length} ausstehende Webhook-Aufgaben...`);
+      for (const task of app.locals.pendingWebhookTasks) {
+        await task(db);
+      }
+      app.locals.pendingWebhookTasks = [];
+    }
 
     const checkSubscription = createCheckSubscription(usersCollection);
     const authRoutes = require("./routes/auth")(db);
