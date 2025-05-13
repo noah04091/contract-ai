@@ -5,7 +5,9 @@ require("dotenv").config();
 
 // ⚠️ Stripe Webhook zuerst mit raw body einbinden!
 const bodyParser = require("body-parser");
-app.post("/stripe/webhook", bodyParser.raw({ type: "application/json" }), require("./routes/stripeWebhook"));
+// FIX: Korrekte Einbindung des Stripe Webhooks mit app.use() statt app.post()
+app.use("/stripe/webhook", bodyParser.raw({ type: "application/json" }));
+app.use("/stripe/webhook", require("./routes/stripeWebhook"));
 
 // 📦 Abhängigkeiten
 const cookieParser = require("cookie-parser");

@@ -1,27 +1,23 @@
 const express = require("express");
 const router = express.Router();
-const { MongoClient, ObjectId } = require("mongodb");
+const { ObjectId } = require("mongodb");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 require("dotenv").config();
 
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
-const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
 
-const client = new MongoClient(MONGO_URI);
-let db, users;
+// Verbindung zur Datenbank wird von server.js übernommen
+let users;
 
-(async () => {
-  try {
-    await client.connect();
-    db = client.db("contract_ai");
-    users = db.collection("users");
-    console.log("✅ StripeWebhook: MongoDB verbunden");
-  } catch (err) {
-    console.error("❌ MongoDB-Verbindung fehlgeschlagen:", err);
-  }
-})();
+// Diese Funktion ermöglicht es uns, die Datenbank-Verbindung 
+// aus der server.js zu verwenden statt eine neue zu erstellen
+const init = (db) => {
+  users = db.collection("users");
+  console.log("✅ StripeWebhook: MongoDB-Verbindung übernommen");
+  return router;
+};
 
-// ✅ KEIN bodyParser hier!
+// ✅ KEIN bodyParser hier - wird in server.js angewendet
 router.post("/", async (req, res) => {
   const sig = req.headers["stripe-signature"];
   let event;
@@ -110,4 +106,6 @@ router.post("/", async (req, res) => {
   }
 });
 
+// Anstatt einer direkten MongoDB-Verbindung hier
+// exportieren wir die init-Funktion, die die Verbindung übernimmt
 module.exports = router;
