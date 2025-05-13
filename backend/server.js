@@ -1,32 +1,50 @@
 // 📁 backend/server.js
+// ⚠️ WICHTIG: KEINE MIDDLEWARE VOR DER WEBHOOK-ROUTE DEFINIEREN!
 const express = require("express");
 const app = express();
 require("dotenv").config();
 
-// ⚠️ WICHTIG: Verwende ein ALLGEMEINES Raw-Body-Parsing für die Stripe-Route
-// ohne Content-Type-Beschränkung, vor allen anderen Middleware-Funktionen
-const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
-const stripeWebhookMiddleware = express.raw({type: '*/*'});
+// ======== STRIPE WEBHOOK HANDLER (VOR ALLEN ANDEREN MIDDLEWARE) ========
+// Diese Funktion prüft, ob die Anfrage an den Webhook-Endpunkt geht
+function isStripeWebhook(req) {
+  return req.path === '/stripe/webhook' && req.method === 'POST';
+}
 
-// Eine Aufgabenwarteschlange für Stripe-Events
+// Middleware, die den Body nur für Nicht-Webhook-Routen parst
+app.use((req, res, next) => {
+  if (isStripeWebhook(req)) {
+    // Für Webhook-Anfragen: Rohes Buffer-Format beibehalten
+    express.raw({ type: '*/*' })(req, res, next);
+  } else {
+    // Für alle anderen Anfragen: JSON parsen
+    express.json()(req, res, next);
+  }
+});
+
+// Stripe-Webhook-Route DIREKT nach dem Custom-Middleware
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const pendingStripeEvents = [];
 
-// Definiere den Webhook-Handler zuerst, vor jeder anderen Middleware
-app.post("/stripe/webhook", stripeWebhookMiddleware, async (req, res) => {
-  const sig = req.headers["stripe-signature"];
+app.post("/stripe/webhook", async (req, res) => {
   const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
-  
-  // Debug-Logging für den Raw-Body
+  const sig = req.headers["stripe-signature"];
+
+  // Ausführliche Debug-Informationen
   console.log("⚡ Webhook-Anfrage empfangen", {
     signatureHeader: sig ? "vorhanden" : "fehlt",
     bodyType: typeof req.body,
     bodyIsBuffer: Buffer.isBuffer(req.body),
-    bodyLength: req.body ? req.body.length : 0
+    bodyLength: req.body ? req.body.length : 0,
+    headers: Object.keys(req.headers).join(", ")
   });
+
+  if (!Buffer.isBuffer(req.body)) {
+    console.error("❌ KRITISCHER FEHLER: req.body ist kein Buffer!");
+    return res.status(400).send("Webhook Error: Request body ist kein Buffer. Bitte kontaktiere den Administrator.");
+  }
 
   let event;
   try {
-    // Wenn wir einen Buffer bekommen, ist alles gut
     event = stripe.webhooks.constructEvent(req.body, sig, endpointSecret);
   } catch (err) {
     console.error(`❌ Webhook-Fehler: ${err.message}`);
@@ -39,36 +57,21 @@ app.post("/stripe/webhook", stripeWebhookMiddleware, async (req, res) => {
   
   console.log(`✅ Webhook-Event verifiziert: ${eventType}`);
 
-  // Sofort erfolgreich antworten, Details können später verarbeitet werden
+  // Sofort erfolgreich antworten
   res.status(200).send("✅ Webhook verifiziert");
   
-  // Die eigentliche Verarbeitung des Events
+  // Event für spätere Verarbeitung speichern
   try {
-    if (eventType === "checkout.session.completed") {
-      const stripeCustomerId = session.customer;
-      const stripeSubscriptionId = session.subscription;
-      const email = session.customer_email || session.customer_details?.email || null;
-      
-      console.log(`📢 Checkout abgeschlossen für: ${email || stripeCustomerId}`);
-      console.log(`💳 SubscriptionId: ${stripeSubscriptionId}`);
-      
-      // Diese Aufgabe kann später ausgeführt werden, wenn die DB bereit ist
-      pendingStripeEvents.push({ eventType, session });
-    }
-    
-    if (eventType === "customer.subscription.deleted") {
-      const stripeCustomerId = session.customer;
-      console.log(`📢 Abo gekündigt für Customer: ${stripeCustomerId}`);
-      
-      // Diese Aufgabe kann später ausgeführt werden, wenn die DB bereit ist
+    if (eventType === "checkout.session.completed" || eventType === "invoice.paid" || eventType === "customer.subscription.deleted") {
+      console.log(`📝 Event vom Typ ${eventType} für spätere Verarbeitung gespeichert`);
       pendingStripeEvents.push({ eventType, session });
     }
   } catch (err) {
-    console.error("❌ Fehler bei Event-Verarbeitung:", err);
+    console.error("❌ Fehler beim Speichern des Events:", err);
   }
 });
 
-// 📦 Abhängigkeiten
+// ======== WEITERE APP-KONFIGURATION UND MIDDLEWARE ========
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
@@ -124,7 +127,6 @@ app.use(cors({
 }));
 app.options("*", cors());
 app.use(cookieParser());
-app.use(express.json()); // ⛔️ Muss nach dem Webhook kommen!
 app.use("/uploads", express.static(path.join(__dirname, UPLOAD_PATH)));
 
 app.use((req, res, next) => {
@@ -169,6 +171,90 @@ async function analyzeContract(pdfText) {
     temperature: 0.3,
   });
   return res.choices[0].message.content;
+}
+
+// Die Funktion zum Verarbeiten von Stripe-Events mit DB-Zugriff
+async function processStripeEvent(eventType, session, usersCollection) {
+  try {
+    if (eventType === "checkout.session.completed" || eventType === "invoice.paid") {
+      const stripeCustomerId = session.customer;
+      const stripeSubscriptionId = session.subscription;
+      const email = session.customer_email || session.customer_details?.email || null;
+
+      // Bei invoice.paid-Events zusätzliche Informationen ausgeben
+      if (eventType === "invoice.paid") {
+        console.log(`💰 Rechnung bezahlt: ${session.id} für Kunde ${stripeCustomerId}`);
+      }
+
+      // Abo-Informationen abrufen
+      const subscription = await stripe.subscriptions.retrieve(stripeSubscriptionId);
+      const priceId = subscription.items.data[0]?.price?.id;
+
+      const priceMap = {
+        [process.env.STRIPE_BUSINESS_PRICE_ID]: "business",
+        [process.env.STRIPE_PREMIUM_PRICE_ID]: "premium",
+      };
+
+      const plan = priceMap[priceId] || "unknown";
+      console.log("📦 Verarbeite Zahlungseingang:", { email, stripeCustomerId, plan });
+
+      // Benutzer finden
+      const user = await usersCollection.findOne(
+        stripeCustomerId ? { stripeCustomerId } : { email }
+      );
+      
+      if (!user) {
+        console.warn("⚠️ Kein Nutzer mit passender Stripe-ID oder E-Mail gefunden:", { stripeCustomerId, email });
+        return;
+      }
+
+      // Benutzer aktualisieren
+      await usersCollection.updateOne(
+        { _id: new ObjectId(user._id) },
+        {
+          $set: {
+            subscriptionActive: true,
+            isPremium: plan === "premium",
+            isBusiness: plan === "business",
+            subscriptionPlan: plan,
+            stripeCustomerId,
+            stripeSubscriptionId,
+            premiumSince: new Date(),
+            subscriptionStatus: "active",
+          },
+        }
+      );
+
+      console.log(`✅ Nutzer ${email || user.email} auf ${plan}-Plan aktualisiert`);
+    }
+
+    if (eventType === "customer.subscription.deleted") {
+      const stripeCustomerId = session.customer;
+
+      const user = await usersCollection.findOne({ stripeCustomerId });
+      if (!user) {
+        console.warn("⚠️ Kein Nutzer zur Kündigung gefunden:", { stripeCustomerId });
+        return;
+      }
+
+      await usersCollection.updateOne(
+        { _id: new ObjectId(user._id) },
+        {
+          $set: {
+            subscriptionActive: false,
+            isPremium: false,
+            isBusiness: false,
+            subscriptionPlan: null,
+            subscriptionStatus: "cancelled",
+          },
+        }
+      );
+
+      console.log(`❌ Abo von ${user.email} wurde gekündigt.`);
+    }
+  } catch (err) {
+    console.error("❌ Fehler bei DB-Verarbeitung:", err);
+  }
 }
 
 // 📦 MongoDB & Start
@@ -297,82 +383,6 @@ async function analyzeContract(pdfText) {
     process.exit(1);
   }
 })();
-
-// Die Funktion zum Verarbeiten von Stripe-Events mit DB-Zugriff
-async function processStripeEvent(eventType, session, usersCollection) {
-  try {
-    if (eventType === "checkout.session.completed") {
-      const stripeCustomerId = session.customer;
-      const stripeSubscriptionId = session.subscription;
-      const email = session.customer_email || session.customer_details?.email || null;
-
-      const subscription = await stripe.subscriptions.retrieve(stripeSubscriptionId);
-      const priceId = subscription.items.data[0]?.price?.id;
-
-      const priceMap = {
-        [process.env.STRIPE_BUSINESS_PRICE_ID]: "business",
-        [process.env.STRIPE_PREMIUM_PRICE_ID]: "premium",
-      };
-
-      const plan = priceMap[priceId] || "unknown";
-      console.log("📦 Verarbeite Abo-Abschluss:", { email, stripeCustomerId, plan });
-
-      const user = await usersCollection.findOne(
-        stripeCustomerId ? { stripeCustomerId } : { email }
-      );
-      
-      if (!user) {
-        console.warn("⚠️ Kein Nutzer mit passender Stripe-ID oder E-Mail gefunden.");
-        return;
-      }
-
-      await usersCollection.updateOne(
-        { _id: new ObjectId(user._id) },
-        {
-          $set: {
-            subscriptionActive: true,
-            isPremium: plan === "premium",
-            isBusiness: plan === "business",
-            subscriptionPlan: plan,
-            stripeCustomerId,
-            stripeSubscriptionId,
-            premiumSince: new Date(),
-            subscriptionStatus: "active",
-          },
-        }
-      );
-
-      console.log(`✅ Nutzer ${email || user.email} auf ${plan}-Plan aktualisiert`);
-    }
-
-    if (eventType === "customer.subscription.deleted") {
-      const stripeCustomerId = session.customer;
-
-      const user = await usersCollection.findOne({ stripeCustomerId });
-      if (!user) {
-        console.warn("⚠️ Kein Nutzer zur Kündigung gefunden.");
-        return;
-      }
-
-      await usersCollection.updateOne(
-        { _id: new ObjectId(user._id) },
-        {
-          $set: {
-            subscriptionActive: false,
-            isPremium: false,
-            isBusiness: false,
-            subscriptionPlan: null,
-            subscriptionStatus: "cancelled",
-          },
-        }
-      );
-
-      console.log(`❌ Abo von ${user.email} wurde gekündigt.`);
-    }
-  } catch (err) {
-    console.error("❌ Fehler bei DB-Verarbeitung:", err);
-  }
-}
 
 // 🕐 Monatslimit-Reset-Cronjob
 require("./cron/resetBusinessLimits");
