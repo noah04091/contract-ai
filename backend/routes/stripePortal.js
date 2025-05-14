@@ -25,12 +25,8 @@ client.connect()
 // 📬 Stripe Customer Portal öffnen
 router.post("/", verifyToken, async (req, res) => {
   try {
-    console.log("📥 Anfrage /stripe/portal erhalten");
-    console.log("🍪 Cookies:", req.cookies);
-    console.log("👤 Benutzer:", req.user);
-
     if (!req.user?.userId) {
-      return res.status(401).json({ message: "Nicht autorisiert (kein Token)." });
+      return res.status(401).json({ message: "Nicht autorisiert – kein gültiger Benutzer-Token." });
     }
 
     const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
@@ -40,7 +36,7 @@ router.post("/", verifyToken, async (req, res) => {
     }
 
     if (!user.stripeCustomerId) {
-      return res.status(400).json({ message: "Stripe-Kunde nicht vorhanden." });
+      return res.status(400).json({ message: "Stripe-Kundendaten fehlen." });
     }
 
     const portalSession = await stripe.billingPortal.sessions.create({
@@ -48,12 +44,14 @@ router.post("/", verifyToken, async (req, res) => {
       return_url: process.env.FRONTEND_URL || "https://contract-ai.de/profile",
     });
 
-    console.log("🔗 Weiterleitung zum Stripe Kundenportal...");
-    res.json({ url: portalSession.url });
+    if (process.env.NODE_ENV !== "production") {
+      console.log("🔗 Stripe Portal URL erstellt:", portalSession.url);
+    }
 
+    res.json({ url: portalSession.url });
   } catch (err) {
-    console.error("❌ Fehler beim Öffnen des Stripe Portals:", err);
-    res.status(500).json({ message: "Fehler beim Öffnen des Kundenportals." });
+    console.error("❌ Fehler beim Erstellen der Stripe-Portal-Sitzung:", err.message);
+    res.status(500).json({ message: "Interner Fehler beim Öffnen des Kundenportals." });
   }
 });
 

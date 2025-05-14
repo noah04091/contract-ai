@@ -4,7 +4,6 @@ const app = express();
 require("dotenv").config();
 
 // 📦 Abhängigkeiten
-const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const multer = require("multer");
@@ -35,10 +34,6 @@ const EMAIL_CONFIG = {
 const ALLOWED_ORIGINS = [
   "https://contract-ai.de",
   "https://www.contract-ai.de",
-  "https://contract-ai-frontend.onrender.com",
-  "https://contract-ai.vercel.app",
-  "http://localhost:5173",
-  undefined,
 ];
 
 const transporter = nodemailer.createTransport(EMAIL_CONFIG);
@@ -50,7 +45,6 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 // 🌍 Middleware
-app.use(express.json()); // Jetzt ist es sicher, express.json früh zu verwenden
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin || ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
@@ -59,8 +53,8 @@ app.use(cors({
   },
   credentials: true,
 }));
-app.options("*", cors());
 app.use(cookieParser());
+app.use(express.json());
 app.use("/uploads", express.static(path.join(__dirname, UPLOAD_PATH)));
 
 app.use((req, res, next) => {

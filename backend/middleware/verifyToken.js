@@ -2,53 +2,49 @@
 const jwt = require("jsonwebtoken");
 
 module.exports = function (req, res, next) {
-  // Diagnose-Ausgaben
-  console.log("🔍 Authentifizierungsanfrage für:", req.originalUrl);
-  console.log("🍪 Cookie-Header:", req.headers.cookie);
-  console.log("🍪 Alle Cookies:", req.cookies);
-  console.log("🔑 Authorization-Header:", req.headers.authorization);
-  
-  // 1. Versuche zuerst, den Token aus dem Cookie zu lesen
-  let token = req.cookies.token;
-  let tokenSource = "cookie";
-  
-  // 2. Falls kein Cookie-Token, versuche es mit dem Authorization-Header
-  if (!token && req.headers.authorization) {
-    const authHeader = req.headers.authorization;
-    if (authHeader.startsWith('Bearer ')) {
-      token = authHeader.split(' ')[1];
-      tokenSource = "header";
-      console.log("🔄 Kein Cookie gefunden, verwende stattdessen Authorization-Header");
-    }
+  const isDev = process.env.NODE_ENV !== "production";
+  if (isDev) {
+    console.log("🔍 Auth-Check:", req.originalUrl);
+    console.log("🍪 Cookies:", req.cookies);
+    console.log("🔐 Header:", req.headers.authorization);
   }
-  
-  // 3. Prüfe ob Fallback-Token im Query-Parameter vorhanden ist (optional)
-  if (!token && req.query.token) {
+
+  let token = null;
+  let source = null;
+
+  // ✅ 1. Aus Cookie
+  if (req.cookies?.token) {
+    token = req.cookies.token;
+    source = "cookie";
+  }
+
+  // ✅ 2. Aus Authorization Header (Bearer ...)
+  else if (req.headers.authorization?.startsWith("Bearer ")) {
+    token = req.headers.authorization.split(" ")[1];
+    source = "header";
+  }
+
+  // ✅ 3. Fallback: Aus Query-Parameter (optional)
+  else if (req.query?.token) {
     token = req.query.token;
-    tokenSource = "query";
-    console.log("🔄 Verwende Token aus Query-Parameter als letzten Fallback");
+    source = "query";
   }
 
+  // ❌ Kein Token gefunden
   if (!token) {
-    console.log("❌ Kein Token gefunden (weder in Cookie, Header noch Query)");
-    return res.status(401).json({ message: "❌ Bitte logge dich ein, um fortzufahren." });
+    if (isDev) console.warn("❌ Kein Auth-Token gefunden (Cookie, Header, Query)");
+    return res.status(401).json({ message: "Nicht autorisiert – bitte einloggen." });
   }
 
+  // ✅ Token prüfen
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    // Erfolg! Zeige an, welche Methode verwendet wurde
-    console.log(`✅ Authentifizierung erfolgreich via ${tokenSource} für ${decoded.email}`);
-    
-    // Token in Request-Objekt speichern
     req.user = decoded;
-    req.tokenSource = tokenSource;
-    
+    req.tokenSource = source;
+    if (isDev) console.log(`✅ Authentifiziert via ${source} – ${decoded.email}`);
     next();
   } catch (err) {
-    console.error("❌ JWT-Verifizierung fehlgeschlagen:", err.message);
-    return res.status(403).json({ 
-      message: "❌ Deine Sitzung ist abgelaufen. Bitte logge dich erneut ein."
-    });
+    console.error("❌ Ungültiger JWT:", err.message);
+    return res.status(403).json({ message: "Sitzung abgelaufen oder ungültig. Bitte erneut einloggen." });
   }
 };
