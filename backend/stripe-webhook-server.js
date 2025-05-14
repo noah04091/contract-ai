@@ -180,7 +180,7 @@ async function processStripeEvent(event, usersCollection) {
 }
 
 // Server auf dem Port 3333 starten (WICHTIG: Anderer Port als die Hauptapp)
-const WEBHOOK_PORT = process.env.WEBHOOK_PORT || 3333;
-server.listen(WEBHOOK_PORT, () => {
-  console.log(`🚀 Stripe Webhook-Server läuft auf Port ${WEBHOOK_PORT}`);
+const PORT = process.env.PORT || 3333; // Render gibt PORT automatisch vor
+server.listen(PORT, () => {
+  console.log(`🚀 Stripe Webhook-Server läuft auf Port ${PORT}`);
 });
