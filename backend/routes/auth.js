@@ -11,17 +11,18 @@ require("dotenv").config();
 // 🔐 Konfiguration
 const JWT_EXPIRES_IN = "2h";
 const PASSWORD_SALT_ROUNDS = 10;
-const RESET_TOKEN_EXPIRES_IN_MS = 1000 * 60 * 15; // 15 Min.
+const RESET_TOKEN_EXPIRES_IN_MS = 1000 * 60 * 15;
 const COOKIE_NAME = "token";
 const COOKIE_OPTIONS = {
   httpOnly: true,
   secure: true,
-  sameSite: "Lax",
+  sameSite: "None",
   path: "/",
   maxAge: 1000 * 60 * 60 * 2,
+  domain: ".contract-ai.de",
 };
 
-// 🔗 Collections (werden durch server.js übergeben)
+// 🔗 Collections
 let usersCollection;
 let contractsCollection;
 
@@ -81,7 +82,7 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// 👤 Profil erweitert mit Abo-Daten & Limits
+// 👤 Profil abrufen
 router.get("/me", verifyToken, async (req, res) => {
   try {
     const user = await usersCollection.findOne(
@@ -89,9 +90,8 @@ router.get("/me", verifyToken, async (req, res) => {
       { projection: { password: 0, resetToken: 0, resetTokenExpires: 0 } }
     );
 
-    if (!user) {
+    if (!user)
       return res.status(404).json({ message: "❌ Benutzer nicht gefunden" });
-    }
 
     const plan = user.subscriptionPlan || "free";
     const status = user.subscriptionStatus || "inactive";
@@ -176,7 +176,6 @@ router.post("/forgot-password", async (req, res) => {
     const html = `
       <div style="font-family: Arial, sans-serif; padding: 20px;">
         <h2>🔐 Passwort zurücksetzen</h2>
-        <p>Hallo 👋,</p>
         <p>Klicke auf den Button, um dein Passwort zurückzusetzen:</p>
         <a href="${resetLink}" style="background: #36a3f5; padding: 10px 18px; text-decoration: none; color: black; border-radius: 6px;">🔁 Neues Passwort festlegen</a>
         <p style="margin-top: 30px;">Wenn du das nicht warst, ignoriere diese E-Mail.</p>
