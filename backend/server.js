@@ -112,12 +112,17 @@ async function analyzeContract(pdfText) {
     console.log("✅ MongoDB verbunden!");
 
     const checkSubscription = createCheckSubscription(usersCollection);
-    const authRoutes = require("./routes/auth")(db);
 
+    // 🔐 Authentifizierung
+    const authRoutes = require("./routes/auth")(db);
     app.use("/auth", authRoutes);
+
+    // 💳 Stripe
     app.use("/stripe/portal", require("./routes/stripePortal"));
     app.use("/stripe", require("./routes/stripe"));
     app.use("/stripe", require("./routes/subscribe"));
+
+    // 📦 Contract-Routen
     app.use("/optimize", verifyToken, checkSubscription, require("./routes/optimize"));
     app.use("/compare", verifyToken, checkSubscription, require("./routes/compare"));
     app.use("/chat", verifyToken, checkSubscription, require("./routes/chatWithContract"));
@@ -126,6 +131,7 @@ async function analyzeContract(pdfText) {
     app.use("/extract-text", require("./routes/extractText"));
     app.use("/test", require("./testAuth"));
 
+    // 📤 Upload
     app.post("/upload", verifyToken, checkSubscription, upload.single("file"), async (req, res) => {
       if (!req.file) return res.status(400).json({ message: "Keine Datei hochgeladen" });
       const buffer = await fs.readFile(path.join(__dirname, UPLOAD_PATH, req.file.filename));
@@ -161,6 +167,7 @@ async function analyzeContract(pdfText) {
       res.status(201).json({ message: "Vertrag gespeichert", contract: { ...contract, _id: insertedId } });
     });
 
+    // 📄 Contract-CRUD
     app.get("/contracts", verifyToken, async (req, res) => {
       const contracts = await contractsCollection.find({ userId: req.user.userId }).toArray();
       res.json(contracts);
@@ -194,6 +201,7 @@ async function analyzeContract(pdfText) {
       res.json({ message: "Gelöscht", deletedCount: result.deletedCount });
     });
 
+    // 🧪 Debug-Cookies
     app.get("/debug", (req, res) => {
       console.log("Cookies:", req.cookies);
       res.cookie("debug_cookie", "test-value", {
@@ -205,6 +213,7 @@ async function analyzeContract(pdfText) {
       res.json({ cookies: req.cookies });
     });
 
+    // 🕒 Täglicher Cronjob für Frist-Reminder
     cron.schedule("0 8 * * *", async () => {
       console.log("⏰ Reminder-Cronjob gestartet");
       const checkContractsAndSendReminders = require("./services/cron");
@@ -219,5 +228,5 @@ async function analyzeContract(pdfText) {
   }
 })();
 
-// 🕐 Monatslimit-Reset-Cronjob
+// 🔄 Monatslimits zurücksetzen
 require("./cron/resetBusinessLimits");

@@ -1,3 +1,4 @@
+// 📁 backend/routes/auth.js
 const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcryptjs");
@@ -11,7 +12,7 @@ require("dotenv").config();
 // 🔐 Konfiguration
 const JWT_EXPIRES_IN = "2h";
 const PASSWORD_SALT_ROUNDS = 10;
-const RESET_TOKEN_EXPIRES_IN_MS = 1000 * 60 * 15; // 15 Min.
+const RESET_TOKEN_EXPIRES_IN_MS = 1000 * 60 * 15;
 const COOKIE_NAME = "token";
 const COOKIE_OPTIONS = {
   httpOnly: true,
@@ -21,7 +22,7 @@ const COOKIE_OPTIONS = {
   maxAge: 1000 * 60 * 60 * 2,
 };
 
-// 🔗 Collections (werden durch server.js übergeben)
+// 🔗 Collections werden dynamisch übergeben
 let usersCollection;
 let contractsCollection;
 
@@ -31,7 +32,7 @@ module.exports = (db) => {
   return router;
 };
 
-// 🧾 Registrierung
+// ✅ Registrierung
 router.post("/register", async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password)
@@ -50,7 +51,7 @@ router.post("/register", async (req, res) => {
   }
 });
 
-// 🔐 Login
+// ✅ Login
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password)
@@ -81,7 +82,7 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// 👤 Profil erweitert mit Abo-Daten & Limits
+// ✅ Aktuellen Nutzer abrufen
 router.get("/me", verifyToken, async (req, res) => {
   try {
     const user = await usersCollection.findOne(
@@ -119,7 +120,7 @@ router.get("/me", verifyToken, async (req, res) => {
   }
 });
 
-// 🔑 Passwort ändern
+// 🔄 Passwort ändern
 router.put("/change-password", verifyToken, async (req, res) => {
   const { oldPassword, newPassword } = req.body;
   if (!oldPassword || !newPassword)
@@ -192,7 +193,7 @@ router.post("/forgot-password", async (req, res) => {
   }
 });
 
-// 🔄 Neues Passwort setzen
+// 🔁 Passwort zurücksetzen
 router.post("/reset-password", async (req, res) => {
   const { token, newPassword } = req.body;
   if (!token || !newPassword)
