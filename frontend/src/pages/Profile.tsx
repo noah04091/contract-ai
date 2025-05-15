@@ -69,6 +69,7 @@ export default function Profile() {
             });
           }
         } catch (error) {
+          console.error("Fehler beim Laden der Rechnungen:", error); // <--- das ist neu
           setNotification({
             message: "Fehler beim Laden der Rechnungen",
             type: "error"
