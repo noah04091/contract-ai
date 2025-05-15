@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { User, Key, CreditCard, Trash2, AlertCircle, CheckCircle, LogOut } from "lucide-react";
+import { User, Key, CreditCard, Trash2, AlertCircle, CheckCircle, LogOut, FileText, Download } from "lucide-react";
 import styles from "../styles/Profile.module.css";
 import { useAuth } from "../context/AuthContext";
 
@@ -8,6 +8,13 @@ interface NotificationProps {
   message: string;
   type: "success" | "error";
   onClose: () => void;
+}
+
+interface Invoice {
+  invoiceNumber: string;
+  plan: string;
+  amount: number;
+  date: string;
 }
 
 const Notification: React.FC<NotificationProps> = ({ message, type, onClose }) => {
@@ -41,6 +48,81 @@ export default function Profile() {
   const [isPasswordChanging, setIsPasswordChanging] = useState(false);
   const [isUpgrading, setIsUpgrading] = useState(false);
   const [isPortalOpening, setIsPortalOpening] = useState(false);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [isLoadingInvoices, setIsLoadingInvoices] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      const fetchInvoices = async () => {
+        setIsLoadingInvoices(true);
+        try {
+          const res = await fetch('/api/invoices/me', {
+            credentials: 'include',
+          });
+          if (res.ok) {
+            const data = await res.json();
+            setInvoices(data);
+          } else {
+            setNotification({
+              message: "Fehler beim Laden der Rechnungen",
+              type: "error"
+            });
+          }
+        } catch (error) {
+          setNotification({
+            message: "Fehler beim Laden der Rechnungen",
+            type: "error"
+          });
+        } finally {
+          setIsLoadingInvoices(false);
+        }
+      };
+      
+      fetchInvoices();
+    }
+  }, [user]);
+
+  const formatDate = (dateString: string): string => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('de-DE');
+  };
+
+  const formatAmount = (amount: number): string => {
+    return (amount / 100).toLocaleString('de-DE', {
+      style: 'currency',
+      currency: 'EUR'
+    });
+  };
+
+  const handleDownload = async (invoiceNumber: string) => {
+    try {
+      const res = await fetch(`/api/invoices/download/${invoiceNumber}`, {
+        credentials: 'include',
+      });
+      
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Rechnung-${invoiceNumber}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        a.remove();
+      } else {
+        setNotification({
+          message: "Fehler beim Herunterladen der Rechnung",
+          type: "error"
+        });
+      }
+    } catch {
+      setNotification({
+        message: "Fehler beim Herunterladen der Rechnung",
+        type: "error"
+      });
+    }
+  };
 
   const handlePasswordChange = async () => {
     if (newPassword !== confirmPassword) {
@@ -354,6 +436,133 @@ export default function Profile() {
                 <Trash2 size={16} />
                 <span>Account löschen</span>
               </motion.button>
+            </motion.div>
+
+            {/* Neue Rechnungssektion */}
+            <motion.div 
+              className={styles.section}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.8 }}
+            >
+              <div className={styles.sectionHeader}>
+                <FileText size={18} className={styles.sectionIcon} />
+                <h2 className={styles.sectionTitle}>📄 Rechnungen</h2>
+              </div>
+              
+              {isLoadingInvoices ? (
+                <div className={styles.loadingContainer}>
+                  <div className={styles.loadingSpinner}></div>
+                  <p>Lade Rechnungsdaten...</p>
+                </div>
+              ) : invoices.length === 0 ? (
+                <p className={styles.noInvoices}>
+                  Keine Rechnungen gefunden.
+                </p>
+              ) : (
+                <div className={styles.invoicesContainer}>
+                  <div className={styles.invoiceTable}>
+                    <div className={styles.invoiceTableHeader}>
+                      <div className={styles.invoiceDate}>Datum</div>
+                      <div className={styles.invoicePlan}>Abo-Typ</div>
+                      <div className={styles.invoiceAmount}>Betrag</div>
+                      <div className={styles.invoiceAction}></div>
+                    </div>
+                    
+                    {invoices.map((invoice) => (
+                      <motion.div 
+                        key={invoice.invoiceNumber}
+                        className={styles.invoiceRow}
+                        whileHover={{ backgroundColor: "rgba(0,0,0,0.02)" }}
+                      >
+                        <div className={styles.invoiceDate}>{formatDate(invoice.date)}</div>
+                        <div className={styles.invoicePlan}>
+                          {invoice.plan === 'premium' ? (
+                            <span className={styles.premiumPlan}>
+                              <span className={styles.premiumIcon}>💎</span>
+                              Premium
+                            </span>
+                          ) : invoice.plan === 'business' ? (
+                            <span className={styles.businessPlan}>
+                              <span className={styles.businessIcon}>🏢</span>
+                              Business
+                            </span>
+                          ) : (
+                            <span className={styles.standardPlan}>
+                              <span className={styles.standardIcon}>🔓</span>
+                              Standard
+                            </span>
+                          )}
+                        </div>
+                        <div className={styles.invoiceAmount}>{formatAmount(invoice.amount)}</div>
+                        <div className={styles.invoiceAction}>
+                          <motion.button 
+                            className={styles.downloadButton}
+                            onClick={() => handleDownload(invoice.invoiceNumber)}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                            aria-label="Download Rechnung"
+                          >
+                            <Download size={16} />
+                            <span>PDF</span>
+                          </motion.button>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                  
+                  {/* Responsive Card View für mobile Geräte */}
+                  <div className={styles.invoiceCards}>
+                    {invoices.map((invoice) => (
+                      <motion.div 
+                        key={invoice.invoiceNumber}
+                        className={styles.invoiceCard}
+                        whileHover={{ scale: 1.02 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                      >
+                        <div className={styles.invoiceCardHeader}>
+                          <div className={styles.invoiceDate}>{formatDate(invoice.date)}</div>
+                          <div className={styles.invoiceAmount}>{formatAmount(invoice.amount)}</div>
+                        </div>
+                        <div className={styles.invoiceCardContent}>
+                          <div className={styles.invoicePlanLabel}>Abo-Typ:</div>
+                          <div className={styles.invoicePlan}>
+                            {invoice.plan === 'premium' ? (
+                              <span className={styles.premiumPlan}>
+                                <span className={styles.premiumIcon}>💎</span>
+                                Premium
+                              </span>
+                            ) : invoice.plan === 'business' ? (
+                              <span className={styles.businessPlan}>
+                                <span className={styles.businessIcon}>🏢</span>
+                                Business
+                              </span>
+                            ) : (
+                              <span className={styles.standardPlan}>
+                                <span className={styles.standardIcon}>🔓</span>
+                                Standard
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className={styles.invoiceCardFooter}>
+                          <motion.button 
+                            className={styles.downloadButton}
+                            onClick={() => handleDownload(invoice.invoiceNumber)}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                          >
+                            <Download size={16} />
+                            <span>Rechnung herunterladen</span>
+                          </motion.button>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </motion.div>
 
             {user?.subscriptionActive && (
