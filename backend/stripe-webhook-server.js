@@ -1,32 +1,28 @@
 // 📁 backend/stripe-webhook-server.js
 
-require('dotenv').config(); // ⬅️ MUSS als erstes kommen, damit STRIPE_SECRET_KEY geladen wird
+require('dotenv').config();
 
 const http = require('http');
 const { Buffer } = require('buffer');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY); // ⬅️ Jetzt ist der Key verfügbar
-
-// MongoDB-Setup
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { MongoClient, ObjectId } = require('mongodb');
-const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
+const sendEmail = require('./utils/sendEmail');
+const generateEmailTemplate = require('./utils/emailTemplate');
+const generateInvoicePdf = require('./utils/generateInvoicePdf');
 
-// Stripe-Events zur späteren Verarbeitung
+const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
 let pendingEvents = [];
 
-// Einfacher HTTP-Server nur für Stripe Webhooks
 const server = http.createServer((req, res) => {
   if (req.method === 'POST' && req.url === '/stripe/webhook') {
     let body = [];
-    
-    req.on('data', (chunk) => {
-      body.push(chunk);
-    });
-    
+
+    req.on('data', (chunk) => body.push(chunk));
+
     req.on('end', async () => {
       try {
-        // Der komplette Rohbody als Buffer
         const rawBody = Buffer.concat(body);
-        
+
         console.log("⚡ Webhook empfangen:", {
           url: req.url,
           method: req.method,
@@ -34,13 +30,12 @@ const server = http.createServer((req, res) => {
           bodyLength: rawBody.length,
           signature: req.headers['stripe-signature'] ? 'vorhanden' : 'fehlt'
         });
-        
-        // Stripe Event konstruieren
+
         let event;
         try {
           event = stripe.webhooks.constructEvent(
-            rawBody, 
-            req.headers['stripe-signature'], 
+            rawBody,
+            req.headers['stripe-signature'],
             process.env.STRIPE_WEBHOOK_SECRET
           );
         } catch (err) {
@@ -49,16 +44,14 @@ const server = http.createServer((req, res) => {
           res.end(`Webhook Error: ${err.message}`);
           return;
         }
-        
-        // Erfolg melden
+
         console.log(`✅ Webhook validiert: ${event.type}`);
         res.statusCode = 200;
         res.end('Webhook Received');
-        
-        // Event für spätere Verarbeitung speichern
+
         pendingEvents.push(event);
         processEvents().catch(err => console.error("Fehler bei Ereignisverarbeitung:", err));
-        
+
       } catch (err) {
         console.error('❌ Allgemeiner Fehler:', err);
         res.statusCode = 500;
@@ -66,53 +59,49 @@ const server = http.createServer((req, res) => {
       }
     });
   } else {
-    // Nur POST auf /stripe/webhook erlauben
     res.statusCode = 404;
     res.end('Not Found');
   }
 });
 
-// Verarbeitung der Events
 async function processEvents() {
   if (pendingEvents.length === 0) return;
-  
+
   try {
     const client = new MongoClient(MONGO_URI);
     await client.connect();
     const db = client.db("contract_ai");
     const usersCollection = db.collection("users");
-    
+    const invoicesCollection = db.collection("invoices");
+
     console.log(`⚙️ Verarbeite ${pendingEvents.length} Stripe-Events...`);
-    
+
     for (const event of [...pendingEvents]) {
       try {
-        await processStripeEvent(event, usersCollection);
-        // Erfolgreiche Events entfernen
+        await processStripeEvent(event, usersCollection, invoicesCollection);
         pendingEvents = pendingEvents.filter(e => e.id !== event.id);
       } catch (err) {
         console.error(`❌ Fehler bei Verarbeitung von Event ${event.type}:`, err);
       }
     }
-    
+
     await client.close();
   } catch (err) {
     console.error("❌ MongoDB-Verbindungsfehler:", err);
   }
 }
 
-// Implementierung der Stripe Event Verarbeitung
-async function processStripeEvent(event, usersCollection) {
+async function processStripeEvent(event, usersCollection, invoicesCollection) {
   const eventType = event.type;
   const session = event.data.object;
-  
+
   console.log(`🔄 Verarbeite Event: ${eventType}`);
-  
+
   if (eventType === "checkout.session.completed" || eventType === "invoice.paid") {
     const stripeCustomerId = session.customer;
     const stripeSubscriptionId = session.subscription;
     const email = session.customer_email || session.customer_details?.email || null;
 
-    // Abo-Details holen
     const subscription = await stripe.subscriptions.retrieve(stripeSubscriptionId);
     const priceId = subscription.items.data[0]?.price?.id;
 
@@ -124,11 +113,10 @@ async function processStripeEvent(event, usersCollection) {
     const plan = priceMap[priceId] || "unknown";
     console.log(`📊 Abo-Daten:`, { plan, email, customerId: stripeCustomerId });
 
-    // User finden und aktualisieren
     const user = await usersCollection.findOne(
       stripeCustomerId ? { stripeCustomerId } : { email }
     );
-    
+
     if (!user) {
       console.warn(`⚠️ Kein User gefunden für:`, { stripeCustomerId, email });
       return;
@@ -151,11 +139,65 @@ async function processStripeEvent(event, usersCollection) {
     );
 
     console.log(`✅ User ${email || user.email} auf ${plan} aktualisiert`);
+
+    // Neue Rechnungsnummer holen
+    const latestInvoice = await invoicesCollection
+      .find({})
+      .sort({ invoiceNumber: -1 })
+      .limit(1)
+      .toArray();
+
+    const nextInvoiceNumber = latestInvoice[0]?.invoiceNumber + 1 || 10000;
+
+    const amount = session.amount_total ? session.amount_total / 100 : 0;
+    const invoiceDate = new Date().toLocaleDateString("de-DE");
+    const invoiceNumber = nextInvoiceNumber;
+    const customerName = user?.name || email;
+
+    const pdfBuffer = await generateInvoicePdf({
+      customerName,
+      email,
+      plan,
+      amount,
+      invoiceDate,
+      invoiceNumber
+    });
+
+    await sendEmail({
+      to: email,
+      subject: "✅ Deine Abo-Rechnung bei Contract AI",
+      html: generateEmailTemplate({
+        title: "Deine Rechnung",
+        body: `
+          <p>Vielen Dank für deinen Kauf!</p>
+          <p>Im Anhang findest du die Rechnung zu deinem ${plan}-Abo.</p>
+        `,
+        preheader: "Hier ist deine aktuelle Rechnung von Contract AI."
+      }),
+      attachments: [
+        {
+          filename: `Rechnung-${plan}-${invoiceDate}.pdf`,
+          content: pdfBuffer,
+        }
+      ]
+    });
+
+    await invoicesCollection.insertOne({
+      invoiceNumber,
+      customerEmail: email,
+      customerName,
+      plan,
+      amount,
+      date: invoiceDate,
+      file: pdfBuffer,
+      createdAt: new Date()
+    });
   }
 
+  // Kündigung und Fehlzahlung bleiben unverändert
   if (eventType === "customer.subscription.deleted") {
     const stripeCustomerId = session.customer;
-    
+
     const user = await usersCollection.findOne({ stripeCustomerId });
     if (!user) {
       console.warn(`⚠️ Kein User zur Kündigung gefunden:`, { stripeCustomerId });
@@ -176,11 +218,50 @@ async function processStripeEvent(event, usersCollection) {
     );
 
     console.log(`❌ Abo von ${user.email} gekündigt`);
+
+    await sendEmail({
+      to: user.email,
+      subject: "❌ Dein Abo wurde gekündigt",
+      html: generateEmailTemplate({
+        title: "Abo gekündigt",
+        body: `
+          <p>Dein Abo wurde erfolgreich beendet.</p>
+          <p>Du kannst die Funktionen noch bis zum Ende der Laufzeit nutzen.</p>
+        `,
+        preheader: "Dein Abo bei Contract AI wurde beendet."
+      })
+    });
+  }
+
+  if (eventType === "invoice.payment_failed") {
+    const customerId = session.customer;
+    const customer = await stripe.customers.retrieve(customerId);
+    const email = customer.email;
+
+    const user = await usersCollection.findOne({ stripeCustomerId: customerId });
+    if (!user) {
+      console.warn(`⚠️ Kein User zur Fehlzahlung gefunden:`, { customerId });
+      return;
+    }
+
+    console.log(`⚠️ Zahlung fehlgeschlagen für ${email}`);
+
+    await sendEmail({
+      to: email,
+      subject: "⚠️ Zahlung fehlgeschlagen",
+      html: generateEmailTemplate({
+        title: "Zahlung fehlgeschlagen",
+        body: `
+          <p>Deine letzte Abo-Zahlung konnte nicht verarbeitet werden.</p>
+          <p>Bitte aktualisiere deine Zahlungsmethode in deinem Account.</p>
+        `,
+        preheader: "Deine letzte Zahlung bei Contract AI ist fehlgeschlagen."
+      })
+    });
   }
 }
 
-// Server auf dem Port 3333 starten (WICHTIG: Anderer Port als die Hauptapp)
-const PORT = process.env.PORT || 3333; // Render gibt PORT automatisch vor
+const PORT = process.env.PORT || 3333;
 server.listen(PORT, () => {
   console.log(`🚀 Stripe Webhook-Server läuft auf Port ${PORT}`);
 });
