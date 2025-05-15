@@ -1,5 +1,4 @@
 const PDFDocument = require("pdfkit");
-const fs = require("fs");
 const path = require("path");
 
 function generateInvoicePdf({ customerName, email, plan, amount, invoiceDate, invoiceNumber }) {
@@ -13,8 +12,14 @@ function generateInvoicePdf({ customerName, email, plan, amount, invoiceDate, in
       resolve(pdfData);
     });
 
-    // Logo oben (optional):
-    doc.image("https://contract-ai.de/logo.png", 50, 45, { width: 120 });
+    // 🔽 Lokales Logo einfügen
+    try {
+      const logoPath = path.join(__dirname, "../assets/logo-contractai.png");
+      doc.image(logoPath, 50, 45, { width: 120 });
+    } catch (err) {
+      console.warn("⚠️ Logo konnte nicht geladen werden:", err.message);
+    }
+
     doc.moveDown(2);
 
     // Absenderinformationen
@@ -50,6 +55,7 @@ function generateInvoicePdf({ customerName, email, plan, amount, invoiceDate, in
 
     doc
       .fontSize(12)
+      .fillColor("black")
       .text(`Tarif: ${plan}-Abo`, { continued: true })
       .text(`   Betrag: ${amount.toFixed(2)} € (inkl. 19% USt.)`)
       .moveDown();
@@ -64,7 +70,7 @@ function generateInvoicePdf({ customerName, email, plan, amount, invoiceDate, in
       .text(`Gesamtbetrag: ${amount.toFixed(2)} €`)
       .moveDown();
 
-    // Footer mit rechtlichem Hinweis
+    // Footer
     doc
       .fontSize(10)
       .fillColor("gray")
