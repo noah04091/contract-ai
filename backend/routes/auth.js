@@ -17,9 +17,10 @@ const COOKIE_NAME = "token";
 const COOKIE_OPTIONS = {
   httpOnly: true,
   secure: true,
-  sameSite: "Lax",
+  sameSite: "None",
   path: "/",
   maxAge: 1000 * 60 * 60 * 2,
+  domain: ".contract-ai.de",
 };
 
 // 🔗 Collections werden dynamisch übergeben
@@ -90,9 +91,8 @@ router.get("/me", verifyToken, async (req, res) => {
       { projection: { password: 0, resetToken: 0, resetTokenExpires: 0 } }
     );
 
-    if (!user) {
+    if (!user)
       return res.status(404).json({ message: "❌ Benutzer nicht gefunden" });
-    }
 
     const plan = user.subscriptionPlan || "free";
     const status = user.subscriptionStatus || "inactive";
@@ -177,7 +177,6 @@ router.post("/forgot-password", async (req, res) => {
     const html = `
       <div style="font-family: Arial, sans-serif; padding: 20px;">
         <h2>🔐 Passwort zurücksetzen</h2>
-        <p>Hallo 👋,</p>
         <p>Klicke auf den Button, um dein Passwort zurückzusetzen:</p>
         <a href="${resetLink}" style="background: #36a3f5; padding: 10px 18px; text-decoration: none; color: black; border-radius: 6px;">🔁 Neues Passwort festlegen</a>
         <p style="margin-top: 30px;">Wenn du das nicht warst, ignoriere diese E-Mail.</p>

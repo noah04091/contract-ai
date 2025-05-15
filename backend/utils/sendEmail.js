@@ -1,7 +1,7 @@
 // 📁 backend/utils/sendEmail.js
 const nodemailer = require("nodemailer");
 
-const sendEmail = async (to, subject, html) => {
+const sendEmail = async ({ to, subject, html }) => {
   const transporter = nodemailer.createTransport({
     host: process.env.EMAIL_HOST,
     port: parseInt(process.env.EMAIL_PORT),
