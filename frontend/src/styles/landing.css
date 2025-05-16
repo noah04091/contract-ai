@@ -2249,22 +2249,51 @@ a[href*="kontakt"]:hover,
     gap: 80px;
   }
   
-  .auth-buttons .login-button span:not(.button-icon),
-  .auth-buttons .profile-button span:not(.button-icon) {
-    display: none;
-  }
-  
-  .auth-buttons .login-button,
-  .auth-buttons .profile-button {
-    padding: 0.5rem;
-  }
-  
-  .auth-buttons .button-icon {
-    margin-right: 0;
-  }
-  
   .nav-container {
     padding: 0 1rem;
+  }
+  
+  /* NEUE MOBILE-OPTIMIERUNGEN FÜR AUTH-BUTTONS */
+  .auth-area {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+  }
+  
+  .auth-buttons {
+    display: flex;
+    flex-direction: row;
+    gap: 6px;
+  }
+  
+  /* Optimierter Login-Button für Mobile */
+  .login-button {
+    min-width: 32px;
+    width: auto;
+    height: 32px;
+    padding: 0 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0;
+    background-color: rgba(61, 124, 243, 0.1);
+    border-radius: 100px;
+  }
+  
+  .login-button .button-icon {
+    margin: 0;
+  }
+  
+  /* Optimierter Registrieren-Button für Mobile */
+  .primary-button {
+    font-size: 13px;
+    height: 32px;
+    padding: 0 10px;
+    white-space: nowrap;
+  }
+  
+  .primary-button .button-icon {
+    display: none;
   }
 }
 
