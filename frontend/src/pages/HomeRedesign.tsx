@@ -10,8 +10,7 @@ import analysisImg from "../assets/screenshot-dashboard.png";
 import deadlineImg from "../assets/screenshot-deadline.png";
 
 const HomeRedesign = () => {
-  const { user, isLoading } = useAuth();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { user } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState('hero');
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -69,10 +68,6 @@ const HomeRedesign = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const toggleMobileMenu = () => {
-    setMobileMenuOpen(!mobileMenuOpen);
-  };
-
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
@@ -115,7 +110,7 @@ const HomeRedesign = () => {
           
           {/* Center section: Main Navigation */}
           <div className="nav-center">
-            <ul className={`nav-links ${mobileMenuOpen ? 'mobile-open' : ''}`}>
+            <ul className="nav-links">
               <li className={activeSection === 'dashboard' ? 'active' : ''}>
                 <Link to="/dashboard" className="nav-link">
                   <span className="nav-icon">📊</span>
