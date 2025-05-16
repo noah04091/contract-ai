@@ -1,5 +1,8 @@
 // 📁 backend/utils/emailTemplate.js
 
+const fs = require('fs');
+const path = require('path');
+
 function generateEmailTemplate({ 
   title, 
   body, 
@@ -7,6 +10,21 @@ function generateEmailTemplate({
   cta = null, 
   unsubscribeUrl = 'https://contract-ai.de/abmelden' 
 }) {
+  // Logo mit relativem Pfad laden
+  let logoSrc = 'https://contract-ai.de/logo.png'; // Fallback
+  
+  // Relativer Pfad zum Logo, ausgehend vom aktuellen Verzeichnis
+  const logoPath = path.join(__dirname, '../assets/logo-contractai.png');
+  
+  try {
+    // Logo einlesen und als Base64 kodieren
+    const logoBuffer = fs.readFileSync(logoPath);
+    logoSrc = `data:image/png;base64,${logoBuffer.toString('base64')}`;
+  } catch (error) {
+    console.error('Fehler beim Laden des Logos:', error);
+    // Bei Fehler wird der Fallback verwendet
+  }
+
   // CTA-Button-HTML nur generieren, wenn CTA-Daten übergeben wurden
   const ctaHtml = cta ? `
     <table border="0" cellpadding="0" cellspacing="0" style="margin-top: 30px; margin-bottom: 10px;">
@@ -61,7 +79,7 @@ function generateEmailTemplate({
           <!-- Header -->
           <tr>
             <td align="center" valign="top" style="background-color: #0f172a; padding: 30px 0;" class="mobile-padding">
-              <img src="https://contract-ai.de/logo.png" alt="Contract AI" width="180" class="logo" style="display: block; max-width: 180px; height: auto;" />
+              <img src="${logoSrc}" alt="Contract AI" width="180" class="logo" style="display: block; max-width: 180px; height: auto;" />
             </td>
           </tr>
           

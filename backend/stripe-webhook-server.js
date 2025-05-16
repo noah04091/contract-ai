@@ -9,6 +9,8 @@ const { MongoClient, ObjectId } = require('mongodb');
 const sendEmail = require('./utils/sendEmail');
 const generateEmailTemplate = require('./utils/emailTemplate');
 const generateInvoicePdf = require('./utils/generateInvoicePdf');
+// Importiere die neue Funktion
+const generateInvoiceNumber = require('./utils/generateInvoiceNumber');
 
 const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
 let pendingEvents = [];
@@ -140,18 +142,41 @@ async function processStripeEvent(event, usersCollection, invoicesCollection) {
 
     console.log(`✅ User ${email || user.email} auf ${plan} aktualisiert`);
 
-    // Neue Rechnungsnummer holen
+    // Willkommensmail nur beim checkout.session.completed Event senden
+    if (eventType === "checkout.session.completed") {
+      await sendEmail({
+        to: email,
+        subject: "✅ Dein Abo ist aktiv – Willkommen bei Contract AI!",
+        html: generateEmailTemplate({
+          title: "Willkommen bei Contract AI!",
+          body: `
+            <p>Dein ${plan}-Abo wurde erfolgreich aktiviert.</p>
+            <p>Du kannst ab sofort alle Premium-Funktionen nutzen.</p>
+          `,
+          preheader: "Dein Contract AI-Abo ist jetzt aktiv.",
+          cta: {
+            text: "Zum Dashboard",
+            url: "https://contract-ai.de/dashboard"
+          }
+        })
+      });
+    }
+
+    // Letzte gespeicherte Rechnungsnummer aus der DB holen
     const latestInvoice = await invoicesCollection
       .find({})
-      .sort({ invoiceNumber: -1 })
+      .sort({ createdAt: -1 })
       .limit(1)
       .toArray();
-
-    const nextInvoiceNumber = latestInvoice[0]?.invoiceNumber + 1 || 10000;
+    
+    // Extrahiere die Nummer aus der letzten Rechnungsnummer oder starte bei 0
+    const latestNumber = latestInvoice.length ? parseInt(latestInvoice[0].invoiceNumber?.split("-")[2]) || 0 : 0;
+    
+    // Generiere neue strukturierte Rechnungsnummer
+    const invoiceNumber = generateInvoiceNumber(latestNumber);
 
     const amount = session.amount_total ? session.amount_total / 100 : 0;
     const invoiceDate = new Date().toLocaleDateString("de-DE");
-    const invoiceNumber = nextInvoiceNumber;
     const customerName = user?.name || email;
 
     const pdfBuffer = await generateInvoicePdf({
@@ -176,7 +201,7 @@ async function processStripeEvent(event, usersCollection, invoicesCollection) {
       }),
       attachments: [
         {
-          filename: `Rechnung-${plan}-${invoiceDate}.pdf`,
+          filename: `Rechnung-${invoiceNumber}.pdf`,
           content: pdfBuffer,
         }
       ]
