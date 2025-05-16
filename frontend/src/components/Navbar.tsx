@@ -17,6 +17,7 @@ export default function Navbar() {
   
   const location = useLocation();
   const isHomePage = location.pathname === "/";
+  const isAuthPage = location.pathname === "/login" || location.pathname === "/register";
   
   const dropdownRef = useRef<HTMLDivElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
@@ -219,6 +220,38 @@ export default function Navbar() {
     );
   };
 
+  // Render Auth Pages Navbar (Login/Register)
+  const renderAuthPagesNavbar = () => {
+    return (
+      <>
+        <div className={styles.authPageNavContent}>
+          <Link to="/" className={styles.logoCenterWrapper}>
+            <motion.img 
+              src={logo} 
+              alt="Contract AI Logo" 
+              className={styles.logoCenterImage}
+              whileHover={{ scale: 1.05 }}
+              transition={{ duration: 0.2 }}
+            />
+          </Link>
+
+          <div className={styles.authPageButtons}>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Link to="/login" className={styles.loginButton}>
+                <span>Anmelden</span>
+              </Link>
+            </motion.div>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Link to="/register" className={styles.registerButton}>
+                <span>Registrieren</span>
+              </Link>
+            </motion.div>
+          </div>
+        </div>
+      </>
+    );
+  };
+
   // Render Inner Pages Navbar
   const renderInnerPagesNavbar = () => {
     return (
@@ -287,13 +320,17 @@ export default function Navbar() {
   return (
     <>
       <motion.nav 
-        className={`${styles.navbar} ${isScrolled ? styles.navbarScrolled : ""} ${!isHomePage ? styles.innerPageNavbar : ""}`}
+        className={`${styles.navbar} ${isScrolled ? styles.navbarScrolled : ""} ${!isHomePage ? styles.innerPageNavbar : ""} ${isAuthPage ? styles.authPageNavbar : ""}`}
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: [0.19, 1.0, 0.22, 1.0] }}
       >
         <div className={styles.navbarContent}>
-          {isHomePage ? renderHomePageNavbar() : renderInnerPagesNavbar()}
+          {isHomePage 
+            ? renderHomePageNavbar() 
+            : isAuthPage
+              ? renderAuthPagesNavbar() 
+              : renderInnerPagesNavbar()}
         </div>
 
         <AnimatePresence>
