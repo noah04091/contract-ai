@@ -12,16 +12,18 @@ const fs = require("fs").promises;
 const pdfParse = require("pdf-parse");
 const { OpenAI } = require("openai");
 const nodemailer = require("nodemailer");
-const { MongoClient, ObjectId } = require("mongodb");
+const { ObjectId } = require("mongodb");
 const cron = require("node-cron");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+
+// 🏗️ Import Professional Database
+const database = require("./config/database");
 
 const verifyToken = require("./middleware/verifyToken");
 const createCheckSubscription = require("./middleware/checkSubscription");
 
 // 📁 Setup
 const UPLOAD_PATH = "./uploads";
-const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
 const EMAIL_CONFIG = {
   host: process.env.EMAIL_HOST,
   port: Number(process.env.EMAIL_PORT),
@@ -103,20 +105,18 @@ async function analyzeContract(pdfText) {
   return res.choices[0].message.content;
 }
 
-// 📦 MongoDB & Serverstart
+// 📦 Database Connection & Serverstart
 (async () => {
   try {
-    const client = new MongoClient(MONGO_URI);
-    await client.connect();
-    const db = client.db("contract_ai");
-    const usersCollection = db.collection("users");
-    const contractsCollection = db.collection("contracts");
-    console.log("✅ MongoDB verbunden!");
+    // 🏗️ Initialize Professional Database Connection
+    await database.connect();
+    console.log("✅ Professional Database connected!");
 
-    const checkSubscription = createCheckSubscription(usersCollection);
+    // 🔐 Helper function to create checkSubscription middleware
+    const checkSubscription = createCheckSubscription(await database.getCollection('users'));
 
-    // 🔐 Authentifizierung
-    const authRoutes = require("./routes/auth")(db);
+    // 🔐 Authentifizierung - Pass database instance
+    const authRoutes = require("./routes/auth")(database);
     app.use("/auth", authRoutes);
 
     // 💳 Stripe-Routen
@@ -124,8 +124,8 @@ async function analyzeContract(pdfText) {
     app.use("/stripe", require("./routes/stripe"));
     app.use("/stripe", require("./routes/subscribe"));
 
-    // 📦 Vertragsrouten
-    app.use("/optimize", verifyToken, checkSubscription, require("./routes/optimize")(db));
+    // 📦 Vertragsrouten - Pass database instance where needed
+    app.use("/optimize", verifyToken, checkSubscription, require("./routes/optimize")(database));
     app.use("/compare", verifyToken, checkSubscription, require("./routes/compare"));
     app.use("/chat", verifyToken, checkSubscription, require("./routes/chatWithContract"));
     app.use("/generate", verifyToken, checkSubscription, require("./routes/generate"));
@@ -134,73 +134,129 @@ async function analyzeContract(pdfText) {
     app.use("/contracts", verifyToken, require("./routes/contracts"));
     app.use("/test", require("./testAuth"));
 
-    // 📤 Upload-Logik mit Analyse
+    // 📤 Upload-Logik mit Analyse (Updated to use database service)
     app.post("/upload", verifyToken, checkSubscription, upload.single("file"), async (req, res) => {
       if (!req.file) return res.status(400).json({ message: "Keine Datei hochgeladen" });
 
-      const buffer = await fs.readFile(path.join(__dirname, UPLOAD_PATH, req.file.filename));
-      const text = (await pdfParse(buffer)).text.substring(0, 5000);
-      const analysis = await analyzeContract(text);
+      try {
+        const buffer = await fs.readFile(path.join(__dirname, UPLOAD_PATH, req.file.filename));
+        const text = (await pdfParse(buffer)).text.substring(0, 5000);
+        const analysis = await analyzeContract(text);
 
-      const name = analysis.match(/Vertragsname:\s*(.*)/i)?.[1]?.trim() || "Unbekannt";
-      const laufzeit = analysis.match(/Laufzeit:\s*(.*)/i)?.[1]?.trim() || "Unbekannt";
-      const kuendigung = analysis.match(/Kündigungsfrist:\s*(.*)/i)?.[1]?.trim() || "Unbekannt";
-      const expiryDate = extractExpiryDate(laufzeit);
-      const status = determineContractStatus(expiryDate);
+        const name = analysis.match(/Vertragsname:\s*(.*)/i)?.[1]?.trim() || "Unbekannt";
+        const laufzeit = analysis.match(/Laufzeit:\s*(.*)/i)?.[1]?.trim() || "Unbekannt";
+        const kuendigung = analysis.match(/Kündigungsfrist:\s*(.*)/i)?.[1]?.trim() || "Unbekannt";
+        const expiryDate = extractExpiryDate(laufzeit);
+        const status = determineContractStatus(expiryDate);
 
-      const contract = {
-        userId: req.user.userId,
-        name,
-        laufzeit,
-        kuendigung,
-        expiryDate,
-        status,
-        uploadedAt: new Date(),
-        filePath: `/uploads/${req.file.filename}`,
-      };
+        const contract = {
+          userId: req.user.userId,
+          name,
+          laufzeit,
+          kuendigung,
+          expiryDate,
+          status,
+          uploadedAt: new Date(),
+          filePath: `/uploads/${req.file.filename}`,
+          // 🧠 Add Legal Pulse placeholder for new contracts
+          legalPulse: {
+            riskScore: null,
+            riskSummary: '',
+            lastChecked: null,
+            lawInsights: [],
+            marketSuggestions: [],
+            riskFactors: [],
+            legalRisks: [],
+            recommendations: [],
+            analysisDate: null
+          }
+        };
 
-      const { insertedId } = await contractsCollection.insertOne(contract);
+        // 🏗️ Use database service instead of direct collection
+        const result = await database.insertOne('contracts', contract);
 
-      await transporter.sendMail({
-        from: `Contract AI <${process.env.EMAIL_USER}>`,
-        to: process.env.EMAIL_USER,
-        subject: "📄 Neuer Vertrag hochgeladen",
-        text: `Name: ${name}\nLaufzeit: ${laufzeit}\nKündigungsfrist: ${kuendigung}\nStatus: ${status}\nAblaufdatum: ${expiryDate}`,
-      });
+        await transporter.sendMail({
+          from: `Contract AI <${process.env.EMAIL_USER}>`,
+          to: process.env.EMAIL_USER,
+          subject: "📄 Neuer Vertrag hochgeladen",
+          text: `Name: ${name}\nLaufzeit: ${laufzeit}\nKündigungsfrist: ${kuendigung}\nStatus: ${status}\nAblaufdatum: ${expiryDate}`,
+        });
 
-      res.status(201).json({ message: "Vertrag gespeichert", contract: { ...contract, _id: insertedId } });
+        res.status(201).json({ 
+          message: "Vertrag gespeichert", 
+          contract: { ...contract, _id: result.insertedId } 
+        });
+      } catch (error) {
+        console.error("❌ Upload error:", error);
+        res.status(500).json({ message: "Fehler beim Upload: " + error.message });
+      }
     });
 
-    // 📔 CRUD für einzelne Verträge
+    // 📔 CRUD für einzelne Verträge (Updated to use database service)
     app.get("/contracts/:id", verifyToken, async (req, res) => {
-      const contract = await contractsCollection.findOne({
-        _id: new ObjectId(req.params.id),
-        userId: req.user.userId,
-      });
-      if (!contract) return res.status(404).json({ message: "Nicht gefunden" });
-      res.json(contract);
+      try {
+        const contract = await database.findOne('contracts', {
+          _id: new ObjectId(req.params.id),
+          userId: req.user.userId,
+        });
+        if (!contract) return res.status(404).json({ message: "Nicht gefunden" });
+        res.json(contract);
+      } catch (error) {
+        console.error("❌ Get contract error:", error);
+        res.status(500).json({ message: "Fehler beim Laden: " + error.message });
+      }
     });
 
     app.put("/contracts/:id", verifyToken, async (req, res) => {
-      const { name, laufzeit, kuendigung } = req.body;
-      await contractsCollection.updateOne(
-        { _id: new ObjectId(req.params.id), userId: req.user.userId },
-        { $set: { name, laufzeit, kuendigung } }
-      );
-      const updated = await contractsCollection.findOne({ _id: new ObjectId(req.params.id) });
-      res.json({ message: "Aktualisiert", contract: updated });
+      try {
+        const { name, laufzeit, kuendigung } = req.body;
+        await database.updateOne(
+          'contracts',
+          { _id: new ObjectId(req.params.id), userId: req.user.userId },
+          { $set: { name, laufzeit, kuendigung } }
+        );
+        const updated = await database.findOne('contracts', { _id: new ObjectId(req.params.id) });
+        res.json({ message: "Aktualisiert", contract: updated });
+      } catch (error) {
+        console.error("❌ Update contract error:", error);
+        res.status(500).json({ message: "Fehler beim Update: " + error.message });
+      }
     });
 
     app.delete("/contracts/:id", verifyToken, async (req, res) => {
-      const result = await contractsCollection.deleteOne({
-        _id: new ObjectId(req.params.id),
-        userId: req.user.userId,
-      });
-      if (!result.deletedCount) return res.status(404).json({ message: "Nicht gefunden" });
-      res.json({ message: "Gelöscht", deletedCount: result.deletedCount });
+      try {
+        const result = await database.deleteOne('contracts', {
+          _id: new ObjectId(req.params.id),
+          userId: req.user.userId,
+        });
+        if (!result.deletedCount) return res.status(404).json({ message: "Nicht gefunden" });
+        res.json({ message: "Gelöscht", deletedCount: result.deletedCount });
+      } catch (error) {
+        console.error("❌ Delete contract error:", error);
+        res.status(500).json({ message: "Fehler beim Löschen: " + error.message });
+      }
     });
 
-    // 🧪 Debug-Cookies testen
+    // 🏥 Database Health Check Endpoint
+    app.get("/health/db", async (req, res) => {
+      try {
+        const isHealthy = await database.ping();
+        res.json({ 
+          status: isHealthy ? 'healthy' : 'unhealthy',
+          timestamp: new Date().toISOString(),
+          ...database.getStatus()
+        });
+      } catch (error) {
+        res.status(503).json({ 
+          status: 'error', 
+          error: error.message,
+          timestamp: new Date().toISOString(),
+          ...database.getStatus()
+        });
+      }
+    });
+
+    // 🧪 Debug-Cookies testen (Enhanced with database status)
     app.get("/debug", (req, res) => {
       console.log("Cookies:", req.cookies);
       res.cookie("debug_cookie", "test-value", {
@@ -209,27 +265,45 @@ async function analyzeContract(pdfText) {
         sameSite: "None",
         path: "/",
       });
-      res.json({ cookies: req.cookies });
+      res.json({ 
+        cookies: req.cookies,
+        database: database.getStatus(),
+        timestamp: new Date().toISOString()
+      });
     });
 
     // ⏰ Reminder-Cronjob – täglich um 08:00 Uhr
     cron.schedule("0 8 * * *", async () => {
       console.log("⏰ Reminder-Cronjob gestartet");
-      const checkContractsAndSendReminders = require("./services/cron");
-      await checkContractsAndSendReminders();
+      try {
+        const checkContractsAndSendReminders = require("./services/cron");
+        await checkContractsAndSendReminders();
+      } catch (error) {
+        console.error("❌ Reminder Cron Error:", error);
+      }
     });
 
     // 🧠 Legal Pulse Scan – täglich um 06:00 Uhr
     cron.schedule("0 6 * * *", async () => {
       console.log("🧠 Starte täglichen Legal Pulse Scan...");
-      const runLegalPulseScan = require("./services/legalPulseScan");
-      await runLegalPulseScan();
+      try {
+        const runLegalPulseScan = require("./services/legalPulseScan");
+        await runLegalPulseScan();
+      } catch (error) {
+        console.error("❌ Legal Pulse Scan Error:", error);
+      }
     });
 
     const PORT = process.env.PORT || 5000;
-    app.listen(PORT, () => console.log(`🚀 Server läuft auf Port ${PORT}`));
+    app.listen(PORT, () => {
+      console.log(`🚀 Server läuft auf Port ${PORT}`);
+      console.log(`📊 Database Status:`, database.getStatus());
+      console.log(`🏥 Health Check verfügbar unter: http://localhost:${PORT}/health/db`);
+    });
+
   } catch (err) {
     console.error("❌ Fehler beim Serverstart:", err);
+    console.error("📊 Database Status:", database.getStatus());
     process.exit(1);
   }
 })();
