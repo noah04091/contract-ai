@@ -1,4 +1,4 @@
-// 📁 backend/server.js
+// 📁 backend/server.js (Rollback + Legal Pulse)
 const express = require("express");
 const app = express();
 require("dotenv").config();
@@ -12,18 +12,16 @@ const fs = require("fs").promises;
 const pdfParse = require("pdf-parse");
 const { OpenAI } = require("openai");
 const nodemailer = require("nodemailer");
-const { ObjectId } = require("mongodb");
+const { MongoClient, ObjectId } = require("mongodb");
 const cron = require("node-cron");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
-
-// 🏗️ Import Professional Database with Compatibility Wrapper
-const dbWrapper = require("./config/dbWrapper");
 
 const verifyToken = require("./middleware/verifyToken");
 const createCheckSubscription = require("./middleware/checkSubscription");
 
 // 📁 Setup
 const UPLOAD_PATH = "./uploads";
+const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
 const EMAIL_CONFIG = {
   host: process.env.EMAIL_HOST,
   port: Number(process.env.EMAIL_PORT),
@@ -38,7 +36,7 @@ const ALLOWED_ORIGINS = [
   "https://www.contract-ai.de",
 ];
 
-const transporter = nodemailer.createTransport(EMAIL_CONFIG);
+const transporter = nodemailer.createTransporter(EMAIL_CONFIG);
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const storage = multer.diskStorage({
   destination: UPLOAD_PATH,
@@ -105,19 +103,20 @@ async function analyzeContract(pdfText) {
   return res.choices[0].message.content;
 }
 
-// 📦 Database Connection & Serverstart
+// 📦 MongoDB & Serverstart
 (async () => {
   try {
-    // 🏗️ Initialize Professional Database Connection with Wrapper
-    await dbWrapper.connect();
-    const database = dbWrapper.getDatabase(); // For new API calls
-    console.log("✅ Professional Database connected!");
+    const client = new MongoClient(MONGO_URI);
+    await client.connect();
+    const db = client.db("contract_ai");
+    const usersCollection = db.collection("users");
+    const contractsCollection = db.collection("contracts");
+    console.log("✅ MongoDB verbunden!");
 
-    // 🔐 Helper function to create checkSubscription middleware  
-    const checkSubscription = createCheckSubscription(await dbWrapper.getDatabase().collection('users'));
+    const checkSubscription = createCheckSubscription(usersCollection);
 
-    // 🔐 Authentifizierung - Pass wrapper (has .collection() method)
-    const authRoutes = require("./routes/auth")(dbWrapper);
+    // 🔐 Authentifizierung
+    const authRoutes = require("./routes/auth")(db);
     app.use("/auth", authRoutes);
 
     // 💳 Stripe-Routen
@@ -125,8 +124,8 @@ async function analyzeContract(pdfText) {
     app.use("/stripe", require("./routes/stripe"));
     app.use("/stripe", require("./routes/subscribe"));
 
-    // 📦 Vertragsrouten - Pass wrapper for compatibility
-    app.use("/optimize", verifyToken, checkSubscription, require("./routes/optimize")(dbWrapper));
+    // 📦 Vertragsrouten
+    app.use("/optimize", verifyToken, checkSubscription, require("./routes/optimize")(db));
     app.use("/compare", verifyToken, checkSubscription, require("./routes/compare"));
     app.use("/chat", verifyToken, checkSubscription, require("./routes/chatWithContract"));
     app.use("/generate", verifyToken, checkSubscription, require("./routes/generate"));
@@ -135,7 +134,7 @@ async function analyzeContract(pdfText) {
     app.use("/contracts", verifyToken, require("./routes/contracts"));
     app.use("/test", require("./testAuth"));
 
-    // 📤 Upload-Logik mit Analyse (Updated to use database service)
+    // 📤 Upload-Logik mit Analyse (Enhanced with Legal Pulse placeholder)
     app.post("/upload", verifyToken, checkSubscription, upload.single("file"), async (req, res) => {
       if (!req.file) return res.status(400).json({ message: "Keine Datei hochgeladen" });
 
@@ -159,10 +158,10 @@ async function analyzeContract(pdfText) {
           status,
           uploadedAt: new Date(),
           filePath: `/uploads/${req.file.filename}`,
-          // 🧠 Add Legal Pulse placeholder for new contracts
+          // 🧠 Legal Pulse Integration - placeholder for new contracts
           legalPulse: {
             riskScore: null,
-            riskSummary: '',
+            summary: '',
             lastChecked: null,
             lawInsights: [],
             marketSuggestions: [],
@@ -173,8 +172,7 @@ async function analyzeContract(pdfText) {
           }
         };
 
-        // 🏗️ Use database service instead of direct collection
-        const result = await database.insertOne('contracts', contract);
+        const { insertedId } = await contractsCollection.insertOne(contract);
 
         await transporter.sendMail({
           from: `Contract AI <${process.env.EMAIL_USER}>`,
@@ -183,20 +181,17 @@ async function analyzeContract(pdfText) {
           text: `Name: ${name}\nLaufzeit: ${laufzeit}\nKündigungsfrist: ${kuendigung}\nStatus: ${status}\nAblaufdatum: ${expiryDate}`,
         });
 
-        res.status(201).json({ 
-          message: "Vertrag gespeichert", 
-          contract: { ...contract, _id: result.insertedId } 
-        });
+        res.status(201).json({ message: "Vertrag gespeichert", contract: { ...contract, _id: insertedId } });
       } catch (error) {
         console.error("❌ Upload error:", error);
         res.status(500).json({ message: "Fehler beim Upload: " + error.message });
       }
     });
 
-    // 📔 CRUD für einzelne Verträge (Updated to use database service)
+    // 📔 CRUD für einzelne Verträge
     app.get("/contracts/:id", verifyToken, async (req, res) => {
       try {
-        const contract = await database.findOne('contracts', {
+        const contract = await contractsCollection.findOne({
           _id: new ObjectId(req.params.id),
           userId: req.user.userId,
         });
@@ -211,12 +206,11 @@ async function analyzeContract(pdfText) {
     app.put("/contracts/:id", verifyToken, async (req, res) => {
       try {
         const { name, laufzeit, kuendigung } = req.body;
-        await database.updateOne(
-          'contracts',
+        await contractsCollection.updateOne(
           { _id: new ObjectId(req.params.id), userId: req.user.userId },
           { $set: { name, laufzeit, kuendigung } }
         );
-        const updated = await database.findOne('contracts', { _id: new ObjectId(req.params.id) });
+        const updated = await contractsCollection.findOne({ _id: new ObjectId(req.params.id) });
         res.json({ message: "Aktualisiert", contract: updated });
       } catch (error) {
         console.error("❌ Update contract error:", error);
@@ -226,7 +220,7 @@ async function analyzeContract(pdfText) {
 
     app.delete("/contracts/:id", verifyToken, async (req, res) => {
       try {
-        const result = await database.deleteOne('contracts', {
+        const result = await contractsCollection.deleteOne({
           _id: new ObjectId(req.params.id),
           userId: req.user.userId,
         });
@@ -238,26 +232,7 @@ async function analyzeContract(pdfText) {
       }
     });
 
-    // 🏥 Database Health Check Endpoint
-    app.get("/health/db", async (req, res) => {
-      try {
-        const isHealthy = await dbWrapper.ping();
-        res.json({ 
-          status: isHealthy ? 'healthy' : 'unhealthy',
-          timestamp: new Date().toISOString(),
-          ...dbWrapper.getStatus()
-        });
-      } catch (error) {
-        res.status(503).json({ 
-          status: 'error', 
-          error: error.message,
-          timestamp: new Date().toISOString(),
-          ...dbWrapper.getStatus()
-        });
-      }
-    });
-
-    // 🧪 Debug-Cookies testen (Enhanced with database status)
+    // 🧪 Debug-Cookies testen
     app.get("/debug", (req, res) => {
       console.log("Cookies:", req.cookies);
       res.cookie("debug_cookie", "test-value", {
@@ -268,8 +243,8 @@ async function analyzeContract(pdfText) {
       });
       res.json({ 
         cookies: req.cookies,
-        database: dbWrapper.getStatus(),
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        status: "working"
       });
     });
 
@@ -298,13 +273,12 @@ async function analyzeContract(pdfText) {
     const PORT = process.env.PORT || 5000;
     app.listen(PORT, () => {
       console.log(`🚀 Server läuft auf Port ${PORT}`);
-      console.log(`📊 Database Status:`, dbWrapper.getStatus());
-      console.log(`🏥 Health Check verfügbar unter: http://localhost:${PORT}/health/db`);
+      console.log(`🧠 Legal Pulse Integration: ACTIVE`);
+      console.log(`✅ Deployment successful!`);
     });
 
   } catch (err) {
     console.error("❌ Fehler beim Serverstart:", err);
-    console.error("📊 Database Status:", dbWrapper.getStatus());
     process.exit(1);
   }
 })();
