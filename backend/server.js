@@ -16,8 +16,8 @@ const { ObjectId } = require("mongodb");
 const cron = require("node-cron");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
-// 🏗️ Import Professional Database
-const database = require("./config/database");
+// 🏗️ Import Professional Database with Compatibility Wrapper
+const dbWrapper = require("./config/dbWrapper");
 
 const verifyToken = require("./middleware/verifyToken");
 const createCheckSubscription = require("./middleware/checkSubscription");
@@ -108,15 +108,16 @@ async function analyzeContract(pdfText) {
 // 📦 Database Connection & Serverstart
 (async () => {
   try {
-    // 🏗️ Initialize Professional Database Connection
-    await database.connect();
+    // 🏗️ Initialize Professional Database Connection with Wrapper
+    await dbWrapper.connect();
+    const database = dbWrapper.getDatabase(); // For new API calls
     console.log("✅ Professional Database connected!");
 
-    // 🔐 Helper function to create checkSubscription middleware
-    const checkSubscription = createCheckSubscription(await database.getCollection('users'));
+    // 🔐 Helper function to create checkSubscription middleware  
+    const checkSubscription = createCheckSubscription(await dbWrapper.getDatabase().collection('users'));
 
-    // 🔐 Authentifizierung - Pass original DB object for compatibility
-    const authRoutes = require("./routes/auth")(await database.connect());
+    // 🔐 Authentifizierung - Pass wrapper (has .collection() method)
+    const authRoutes = require("./routes/auth")(dbWrapper);
     app.use("/auth", authRoutes);
 
     // 💳 Stripe-Routen
@@ -124,8 +125,8 @@ async function analyzeContract(pdfText) {
     app.use("/stripe", require("./routes/stripe"));
     app.use("/stripe", require("./routes/subscribe"));
 
-    // 📦 Vertragsrouten - Pass database instance where needed
-    app.use("/optimize", verifyToken, checkSubscription, require("./routes/optimize")(database));
+    // 📦 Vertragsrouten - Pass wrapper for compatibility
+    app.use("/optimize", verifyToken, checkSubscription, require("./routes/optimize")(dbWrapper));
     app.use("/compare", verifyToken, checkSubscription, require("./routes/compare"));
     app.use("/chat", verifyToken, checkSubscription, require("./routes/chatWithContract"));
     app.use("/generate", verifyToken, checkSubscription, require("./routes/generate"));
@@ -240,18 +241,18 @@ async function analyzeContract(pdfText) {
     // 🏥 Database Health Check Endpoint
     app.get("/health/db", async (req, res) => {
       try {
-        const isHealthy = await database.ping();
+        const isHealthy = await dbWrapper.ping();
         res.json({ 
           status: isHealthy ? 'healthy' : 'unhealthy',
           timestamp: new Date().toISOString(),
-          ...database.getStatus()
+          ...dbWrapper.getStatus()
         });
       } catch (error) {
         res.status(503).json({ 
           status: 'error', 
           error: error.message,
           timestamp: new Date().toISOString(),
-          ...database.getStatus()
+          ...dbWrapper.getStatus()
         });
       }
     });
@@ -267,7 +268,7 @@ async function analyzeContract(pdfText) {
       });
       res.json({ 
         cookies: req.cookies,
-        database: database.getStatus(),
+        database: dbWrapper.getStatus(),
         timestamp: new Date().toISOString()
       });
     });
@@ -297,13 +298,13 @@ async function analyzeContract(pdfText) {
     const PORT = process.env.PORT || 5000;
     app.listen(PORT, () => {
       console.log(`🚀 Server läuft auf Port ${PORT}`);
-      console.log(`📊 Database Status:`, database.getStatus());
+      console.log(`📊 Database Status:`, dbWrapper.getStatus());
       console.log(`🏥 Health Check verfügbar unter: http://localhost:${PORT}/health/db`);
     });
 
   } catch (err) {
     console.error("❌ Fehler beim Serverstart:", err);
-    console.error("📊 Database Status:", database.getStatus());
+    console.error("📊 Database Status:", dbWrapper.getStatus());
     process.exit(1);
   }
 })();
