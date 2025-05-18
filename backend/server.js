@@ -57,6 +57,7 @@ app.use(cookieParser());
 app.use(express.json());
 app.use("/uploads", express.static(path.join(__dirname, UPLOAD_PATH)));
 
+// CORS Header ergänzen
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   if (origin && ALLOWED_ORIGINS.includes(origin)) {
@@ -67,6 +68,7 @@ app.use((req, res, next) => {
   next();
 });
 
+// Hilfsfunktionen zur Vertragsbewertung
 function extractExpiryDate(laufzeit) {
   const match = laufzeit.match(/(\d+)\s*(Jahre|Monate)/i);
   if (!match) return "";
@@ -101,7 +103,7 @@ async function analyzeContract(pdfText) {
   return res.choices[0].message.content;
 }
 
-// 📦 MongoDB & Start
+// 📦 MongoDB & Serverstart
 (async () => {
   try {
     const client = new MongoClient(MONGO_URI);
@@ -117,23 +119,25 @@ async function analyzeContract(pdfText) {
     const authRoutes = require("./routes/auth")(db);
     app.use("/auth", authRoutes);
 
-    // 💳 Stripe
+    // 💳 Stripe-Routen
     app.use("/stripe/portal", require("./routes/stripePortal"));
     app.use("/stripe", require("./routes/stripe"));
     app.use("/stripe", require("./routes/subscribe"));
 
-    // 📦 Contract-Routen
+    // 📦 Vertragsrouten
     app.use("/optimize", verifyToken, checkSubscription, require("./routes/optimize"));
     app.use("/compare", verifyToken, checkSubscription, require("./routes/compare"));
     app.use("/chat", verifyToken, checkSubscription, require("./routes/chatWithContract"));
     app.use("/generate", verifyToken, checkSubscription, require("./routes/generate"));
     app.use("/analyze-type", require("./routes/analyzeType"));
     app.use("/extract-text", require("./routes/extractText"));
+    app.use("/contracts", verifyToken, require("./routes/contracts"));
     app.use("/test", require("./testAuth"));
 
-    // 📤 Upload
+    // 📤 Upload-Logik mit Analyse
     app.post("/upload", verifyToken, checkSubscription, upload.single("file"), async (req, res) => {
       if (!req.file) return res.status(400).json({ message: "Keine Datei hochgeladen" });
+
       const buffer = await fs.readFile(path.join(__dirname, UPLOAD_PATH, req.file.filename));
       const text = (await pdfParse(buffer)).text.substring(0, 5000);
       const analysis = await analyzeContract(text);
@@ -167,12 +171,7 @@ async function analyzeContract(pdfText) {
       res.status(201).json({ message: "Vertrag gespeichert", contract: { ...contract, _id: insertedId } });
     });
 
-    // 📄 Contract-CRUD
-    app.get("/contracts", verifyToken, async (req, res) => {
-      const contracts = await contractsCollection.find({ userId: req.user.userId }).toArray();
-      res.json(contracts);
-    });
-
+    // 📔 CRUD für einzelne Verträge
     app.get("/contracts/:id", verifyToken, async (req, res) => {
       const contract = await contractsCollection.findOne({
         _id: new ObjectId(req.params.id),
@@ -201,7 +200,7 @@ async function analyzeContract(pdfText) {
       res.json({ message: "Gelöscht", deletedCount: result.deletedCount });
     });
 
-    // 🧪 Debug-Cookies
+    // 🧪 Debug-Cookies testen
     app.get("/debug", (req, res) => {
       console.log("Cookies:", req.cookies);
       res.cookie("debug_cookie", "test-value", {
@@ -213,11 +212,18 @@ async function analyzeContract(pdfText) {
       res.json({ cookies: req.cookies });
     });
 
-    // 🕒 Täglicher Cronjob für Frist-Reminder
+    // ⏰ Reminder-Cronjob – täglich um 08:00 Uhr
     cron.schedule("0 8 * * *", async () => {
       console.log("⏰ Reminder-Cronjob gestartet");
       const checkContractsAndSendReminders = require("./services/cron");
       await checkContractsAndSendReminders();
+    });
+
+    // 🧠 Legal Pulse Scan – täglich um 06:00 Uhr
+    cron.schedule("0 6 * * *", async () => {
+      console.log("🧠 Starte täglichen Legal Pulse Scan...");
+      const runLegalPulseScan = require("./services/legalPulseScan");
+      await runLegalPulseScan();
     });
 
     const PORT = process.env.PORT || 5000;

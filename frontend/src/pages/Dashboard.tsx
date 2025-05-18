@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import styles from "./Dashboard.module.css";
 import ContractNotification from "../components/ContractNotification";
+import LegalPulseOverview from "../components/LegalPulseOverview";
 import { generateICS } from "../utils/icsGenerator";
 import StatusPieChart from "../components/StatusPieChart";
 import UploadBarChart from "../components/UploadBarChart";
@@ -18,6 +19,9 @@ interface Contract {
   uploadedAt?: string;
   filePath?: string;
   reminder?: boolean;
+  legalPulse?: {
+    riskScore: number | null;
+  };
 }
 
 interface UserData {
@@ -358,6 +362,9 @@ export default function Dashboard() {
         </div>
 
         <ContractNotification contracts={contracts} />
+
+        {/* Legal Pulse Overview - Neue Komponente */}
+        <LegalPulseOverview contracts={contracts} />
 
         <div className={styles.actionsContainer}>
           <div className={styles.searchContainer}>

@@ -8,6 +8,7 @@ const verifyToken = require("../middleware/verifyToken");
 const { MongoClient, ObjectId } = require("mongodb");
 const path = require("path");
 const htmlPdf = require("html-pdf-node");
+const saveContract = require("../services/saveContract");
 
 const router = express.Router();
 const upload = multer({ dest: "uploads/" });
@@ -102,6 +103,21 @@ Antwort im folgenden JSON-Format:
     };
 
     const inserted = await analysisCollection.insertOne(analysis);
+
+    await saveContract({
+  userId: req.user.userId,
+  fileName: req.file.originalname,
+  toolUsed: "analyze",
+  filePath: `/uploads/${req.file.filename}`,
+  extraRefs: { analysisId: inserted.insertedId },
+  legalPulse: {
+    riskScore: result.contractScore || null,
+    riskSummary: '',
+    lastChecked: null,
+    lawInsights: [],
+    marketSuggestions: []
+  }
+});
 
     // ✅ Analyse-Zähler hochzählen
     await usersCollection.updateOne(

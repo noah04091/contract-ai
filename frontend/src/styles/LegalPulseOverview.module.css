@@ -1,0 +1,203 @@
+/* ====================================== */
+/* LegalPulseOverview.module.css */
+/* ====================================== */
+
+.container {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 24px;
+  margin-bottom: 24px;
+  border: 1px solid #e9ecef;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #f8f9fa;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #2c3e50;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.count {
+  background: #f8f9fa;
+  color: #6c757d;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.contractList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.contractItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid transparent;
+  transition: all 0.3s ease;
+  animation: slideIn 0.4s ease-out forwards;
+  opacity: 0;
+  transform: translateY(10px);
+  cursor: pointer;
+}
+
+@keyframes slideIn {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.contractItem:hover {
+  background: #e9ecef;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.contractName {
+  font-weight: 500;
+  color: #2c3e50;
+  flex: 1;
+  margin-right: 16px;
+  word-break: break-word;
+}
+
+.riskBadgeContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.riskBadge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: all 0.3s ease;
+}
+
+.riskScore {
+  font-size: 0.75rem;
+  color: #6c757d;
+  background: #ffffff;
+  padding: 4px 8px;
+  border-radius: 12px;
+  border: 1px solid #dee2e6;
+}
+
+/* Risk Level Colors */
+.high {
+  background: #dc3545;
+  color: white;
+  box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+}
+
+.medium {
+  background: #fd7e14;
+  color: white;
+  box-shadow: 0 2px 4px rgba(253, 126, 20, 0.3);
+}
+
+.low {
+  background: #28a745;
+  color: white;
+  box-shadow: 0 2px 4px rgba(40, 167, 69, 0.3);
+}
+
+.unrated {
+  background: #6c757d;
+  color: white;
+  box-shadow: 0 2px 4px rgba(108, 117, 125, 0.3);
+}
+
+/* Border indicators for contract items */
+.contractItem:has(.high) {
+  border-left-color: #dc3545;
+}
+
+.contractItem:has(.medium) {
+  border-left-color: #fd7e14;
+}
+
+.contractItem:has(.low) {
+  border-left-color: #28a745;
+}
+
+.contractItem:has(.unrated) {
+  border-left-color: #6c757d;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 40px 20px;
+  color: #6c757d;
+  font-style: italic;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .container {
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .title {
+    font-size: 1.25rem;
+  }
+  
+  .contractItem {
+    padding: 12px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .contractName {
+    margin-right: 0;
+    margin-bottom: 8px;
+  }
+  
+  .riskBadgeContainer {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 480px) {
+  .riskBadge {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+  }
+  
+  .riskScore {
+    font-size: 0.7rem;
+    padding: 2px 6px;
+  }
+}

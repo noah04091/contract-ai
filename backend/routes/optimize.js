@@ -6,6 +6,7 @@ const fs = require("fs");
 const { OpenAI } = require("openai");
 const verifyToken = require("../middleware/verifyToken");
 const { MongoClient, ObjectId } = require("mongodb");
+const saveContract = require("../services/saveContract"); // 🆕 Import
 
 const router = express.Router();
 const upload = multer({ dest: "uploads/" });
@@ -62,8 +63,7 @@ Antwort im folgenden JSON-Format:
   {
     "problem": "Was ist schlecht/unvorteilhaft?",
     "suggestion": "Was wäre eine bessere Formulierung oder Alternative?"
-  },
-  ...
+  }
 ]
 `;
 
@@ -81,6 +81,15 @@ Antwort im folgenden JSON-Format:
     const jsonEnd = aiText.lastIndexOf("]") + 1;
     const jsonString = aiText.slice(jsonStart, jsonEnd);
     const optimizations = JSON.parse(jsonString);
+
+    // 🧠 Vertrag zentral speichern
+    await saveContract({
+      userId: req.user.userId,
+      fileName: req.file.originalname,
+      toolUsed: "optimize",
+      filePath: `/uploads/${req.file.filename}`,
+      extraRefs: { optimizations }
+    });
 
     // ✅ Count erhöhen
     await usersCollection.updateOne(

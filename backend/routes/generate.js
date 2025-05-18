@@ -3,6 +3,7 @@ const express = require("express");
 const { OpenAI } = require("openai");
 const verifyToken = require("../middleware/verifyToken");
 const { MongoClient, ObjectId } = require("mongodb");
+const saveContract = require("../services/saveContract"); // 🆕 Import
 
 module.exports = function (contractsCollection) {
   const router = express.Router();
@@ -30,8 +31,8 @@ module.exports = function (contractsCollection) {
       return res.status(400).json({ message: "❌ Fehlende Felder für Vertragserstellung." });
     }
 
-    // 📊 Nutzer & Plan & Limit prüfen
     try {
+      // 📊 Nutzer & Limit prüfen
       const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
 
       const plan = user.subscriptionPlan || "free";
@@ -47,6 +48,7 @@ module.exports = function (contractsCollection) {
         });
       }
 
+      // 📤 Prompt erstellen
       let prompt = "";
 
       switch (type) {
@@ -114,27 +116,23 @@ Strukturiere den Vertrag professionell mit Einleitung, Paragraphen und Abschluss
 
       const content = completion.choices[0].message.content;
 
-      // ✅ Count erhöhen
+      // ✅ Analyse-Zähler hochzählen
       await usersCollection.updateOne(
         { _id: user._id },
         { $inc: { analysisCount: 1 } }
       );
 
-      // 📦 In DB speichern
-      const contract = {
+      // 🧾 Vertrag zentral speichern
+      const result = await saveContract({
         userId: req.user.userId,
-        name: formData.title,
-        laufzeit: "Generiert",
-        kuendigung: "Generiert",
-        expiryDate: "",
-        status: "Generiert",
-        uploadedAt: new Date(),
-        filePath: "",
-        content,
-        isGenerated: true,
-      };
-
-      const result = await contractsCollection.insertOne(contract);
+        fileName: formData.title,
+        toolUsed: "generate",
+        filePath: "", // später bei PDF-Export ergänzen
+        extraRefs: {
+          content,
+          isGenerated: true
+        }
+      });
 
       res.json({
         message: "✅ Vertrag erfolgreich generiert & gespeichert.",

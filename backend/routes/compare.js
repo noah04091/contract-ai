@@ -6,6 +6,7 @@ const pdfParse = require("pdf-parse");
 const { OpenAI } = require("openai");
 const verifyToken = require("../middleware/verifyToken");
 const { MongoClient, ObjectId } = require("mongodb");
+const saveContract = require("../services/saveContract"); // 🆕 Import
 
 const router = express.Router();
 const upload = multer({ dest: "uploads/" });
@@ -86,6 +87,21 @@ Antwort im Format:
     const jsonEnd = response.lastIndexOf("}") + 1;
     const jsonText = response.slice(jsonStart, jsonEnd);
     const result = JSON.parse(jsonText);
+
+    // 🧠 Vertragskopien in zentrale Collection speichern
+    await saveContract({
+      userId: req.user.userId,
+      fileName: req.files.file1[0].originalname,
+      toolUsed: "compare",
+      filePath: `/uploads/${req.files.file1[0].filename}`
+    });
+
+    await saveContract({
+      userId: req.user.userId,
+      fileName: req.files.file2[0].originalname,
+      toolUsed: "compare",
+      filePath: `/uploads/${req.files.file2[0].filename}`
+    });
 
     // ✅ Count erhöhen
     await usersCollection.updateOne(

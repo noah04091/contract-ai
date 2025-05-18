@@ -15,6 +15,14 @@ interface Contract {
   filePath?: string;
   reminder?: boolean;
   reminderLastSentAt?: string;
+  legalPulse?: {
+    riskScore: number | null;
+    summary?: string;
+    riskFactors?: string[];
+    legalRisks?: string[];
+    recommendations?: string[];
+    analysisDate?: string;
+  };
 }
 
 type NotificationType = "success" | "error" | "info";
@@ -99,8 +107,6 @@ export default function ContractDetails() {
   };
 
   const handleDelete = async () => {
-    // Apple-style Modal anstatt Browser-Confirm-Dialog
-    // In einer vollständigen Implementierung würde hier ein eigenes Modal verwendet
     const confirmDelete = window.confirm("Bist du sicher, dass du diesen Vertrag löschen möchtest?");
     if (!confirmDelete) return;
 
@@ -181,6 +187,32 @@ export default function ContractDetails() {
     });
   };
 
+  // Legal Pulse Helper Functions
+  const getRiskLevel = (riskScore: number | null | undefined): 'high' | 'medium' | 'low' | 'unrated' => {
+    if (riskScore === null || riskScore === undefined) return 'unrated';
+    if (riskScore >= 70) return 'low';
+    if (riskScore >= 40) return 'medium';
+    return 'high';
+  };
+
+  const getRiskLabel = (riskLevel: 'high' | 'medium' | 'low' | 'unrated'): string => {
+    switch (riskLevel) {
+      case 'high': return 'Hohes Risiko';
+      case 'medium': return 'Mittleres Risiko';
+      case 'low': return 'Geringes Risiko';
+      case 'unrated': return 'Nicht bewertet';
+    }
+  };
+
+  const getRiskColor = (riskLevel: 'high' | 'medium' | 'low' | 'unrated'): string => {
+    switch (riskLevel) {
+      case 'high': return styles.riskHigh;
+      case 'medium': return styles.riskMedium;
+      case 'low': return styles.riskLow;
+      case 'unrated': return styles.riskUnrated;
+    }
+  };
+
   if (loading) {
     return (
       <div className={styles.loadingContainer}>
@@ -207,6 +239,9 @@ export default function ContractDetails() {
       </div>
     );
   }
+
+  const riskLevel = getRiskLevel(contract.legalPulse?.riskScore);
+  const riskLabel = getRiskLabel(riskLevel);
 
   return (
     <div className={styles.container}>
@@ -286,6 +321,77 @@ export default function ContractDetails() {
             </div>
           </div>
         </div>
+
+        {/* Legal Pulse Analysis Section */}
+        {contract.legalPulse && (
+          <div className={styles.legalPulseSection}>
+            <div className={styles.legalPulseHeader}>
+              <div className={styles.sectionIcon}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386L9.663 17z" 
+                    stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <h3>🧠 Legal Pulse Analyse</h3>
+              <div className={`${styles.riskBadge} ${getRiskColor(riskLevel)}`}>
+                {riskLabel}
+                {contract.legalPulse.riskScore !== null && contract.legalPulse.riskScore !== undefined && (
+                  <span className={styles.riskScoreText}>({contract.legalPulse.riskScore})</span>
+                )}
+              </div>
+            </div>
+
+            <div className={styles.legalPulseContent}>
+              {contract.legalPulse.summary && (
+                <div className={styles.pulseItem}>
+                  <h4>📋 Zusammenfassung</h4>
+                  <p className={styles.pulseSummary}>{contract.legalPulse.summary}</p>
+                </div>
+              )}
+
+              {contract.legalPulse.riskFactors && contract.legalPulse.riskFactors.length > 0 && (
+                <div className={styles.pulseItem}>
+                  <h4>⚠️ Identifizierte Risiken</h4>
+                  <ul className={styles.pulseList}>
+                    {contract.legalPulse.riskFactors.map((risk, index) => (
+                      <li key={index} className={styles.riskItem}>{risk}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {contract.legalPulse.legalRisks && contract.legalPulse.legalRisks.length > 0 && (
+                <div className={styles.pulseItem}>
+                  <h4>⚖️ Rechtliche Hinweise</h4>
+                  <ul className={styles.pulseList}>
+                    {contract.legalPulse.legalRisks.map((legal, index) => (
+                      <li key={index} className={styles.legalItem}>{legal}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {contract.legalPulse.recommendations && contract.legalPulse.recommendations.length > 0 && (
+                <div className={styles.pulseItem}>
+                  <h4>💡 Empfehlungen</h4>
+                  <ul className={styles.pulseList}>
+                    {contract.legalPulse.recommendations.map((rec, index) => (
+                      <li key={index} className={styles.recommendationItem}>{rec}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {contract.legalPulse.analysisDate && (
+                <div className={styles.pulseFooter}>
+                  <span className={styles.analysisDate}>
+                    Analyse durchgeführt: {formatDate(contract.legalPulse.analysisDate)}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         <div className={styles.reminderSection}>
           <div className={styles.reminderTitle}>
@@ -374,7 +480,7 @@ export default function ContractDetails() {
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M11 5H6C4.89543 5 4 5.89543 4 7V18C4 19.1046 4.89543 20 6 20H17C18.1046 20 19 19.1046 19 18V13M17.5858 3.58579C18.3668 2.80474 19.6332 2.80474 20.4142 3.58579C21.1953 4.36683 21.1953 5.63316 20.4142 6.41421L11.8284 15H9L9 12.1716L17.5858 3.58579Z" 
-                  stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
               Bearbeiten
             </button>

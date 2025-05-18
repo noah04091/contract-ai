@@ -4,6 +4,7 @@ const router = express.Router();
 const { OpenAI } = require("openai");
 const verifyToken = require("../middleware/verifyToken");
 const { MongoClient, ObjectId } = require("mongodb");
+const saveContract = require("../services/saveContract"); // 🆕 Import
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
@@ -64,6 +65,18 @@ router.post("/", verifyToken, async (req, res) => {
     });
 
     const contractType = completion.choices[0].message.content.toLowerCase().trim();
+
+    // 🧾 Zentral speichern
+    await saveContract({
+      userId: req.user.userId,
+      fileName: `Erkannt: ${contractType}`,
+      toolUsed: "analyzeType",
+      filePath: "", // kein physischer Upload
+      extraRefs: {
+        content: text,
+        contractType
+      }
+    });
 
     // ✅ Count erhöhen
     await usersCollection.updateOne(

@@ -7,6 +7,7 @@ const multer = require("multer");
 const fs = require("fs");
 const path = require("path");
 const { MongoClient, ObjectId } = require("mongodb");
+const saveContract = require("../services/saveContract"); // 🆕 Import
 
 const router = express.Router();
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -45,9 +46,21 @@ router.post("/upload", verifyToken, upload.single("file"), async (req, res) => {
     const pdfData = await pdfParse(buffer);
     const text = pdfData.text.substring(0, 10000); // Max 10k Zeichen zur Sicherheit
 
+    // 🧠 RAM-Speicher vorbereiten
     chatMemory.set(req.user.userId, {
       contractText: text,
       messages: [],
+    });
+
+    // 🗃️ In contracts speichern
+    await saveContract({
+      userId: req.user.userId,
+      fileName: req.file.originalname,
+      toolUsed: "chat",
+      filePath: `/uploads/${req.file.filename}`,
+      extraRefs: {
+        chatEnabled: true
+      }
     });
 
     res.json({ message: "Vertrag geladen. Du kannst jetzt Fragen stellen." });
