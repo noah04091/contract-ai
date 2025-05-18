@@ -125,7 +125,7 @@ async function analyzeContract(pdfText) {
     app.use("/stripe", require("./routes/subscribe"));
 
     // 📦 Vertragsrouten
-    app.use("/optimize", verifyToken, checkSubscription, require("./routes/optimize"));
+    app.use("/optimize", verifyToken, checkSubscription, require("./routes/optimize")(db));
     app.use("/compare", verifyToken, checkSubscription, require("./routes/compare"));
     app.use("/chat", verifyToken, checkSubscription, require("./routes/chatWithContract"));
     app.use("/generate", verifyToken, checkSubscription, require("./routes/generate"));

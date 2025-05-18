@@ -1,6 +1,7 @@
 // 📁 backend/services/saveContract.js
-const { ObjectId } = require("mongodb");
-const client = require("../db"); // falls du client zentral exportierst
+const { MongoClient, ObjectId } = require("mongodb");
+
+const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
 
 async function saveContract({
   userId,
@@ -10,7 +11,11 @@ async function saveContract({
   extraRefs = {},
   legalPulse = null
 }) {
+  let client;
   try {
+    // Eigene MongoDB-Verbindung aufbauen
+    client = new MongoClient(MONGO_URI);
+    await client.connect();
     const contractsCollection = client.db("contract_ai").collection("contracts");
 
     const contractDoc = {
@@ -29,7 +34,7 @@ async function saveContract({
         lawInsights: [],
         marketSuggestions: []
       },
-      // ⬇️ Extra-Felder direkt anhängen (z. B. content, isGenerated)
+      // ⬇️ Extra-Felder direkt anhängen (z. B. content, isGenerated)
       ...extraRefs
     };
 
@@ -39,6 +44,11 @@ async function saveContract({
   } catch (err) {
     console.error("❌ Fehler beim Speichern des Vertrags:", err.message);
     throw err;
+  } finally {
+    // Verbindung schließen
+    if (client) {
+      await client.close();
+    }
   }
 }
 
