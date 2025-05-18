@@ -115,8 +115,8 @@ async function analyzeContract(pdfText) {
     // 🔐 Helper function to create checkSubscription middleware
     const checkSubscription = createCheckSubscription(await database.getCollection('users'));
 
-    // 🔐 Authentifizierung - Pass database instance
-    const authRoutes = require("./routes/auth")(database);
+    // 🔐 Authentifizierung - Pass original DB object for compatibility
+    const authRoutes = require("./routes/auth")(await database.connect());
     app.use("/auth", authRoutes);
 
     // 💳 Stripe-Routen
