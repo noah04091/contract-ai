@@ -1,4 +1,4 @@
-// 📁 backend/server.js (Rollback + Legal Pulse)
+// 📁 backend/server.js (Updated with Legal Pulse API Routes)
 const express = require("express");
 const app = express();
 require("dotenv").config();
@@ -134,6 +134,9 @@ async function analyzeContract(pdfText) {
     app.use("/contracts", verifyToken, require("./routes/contracts"));
     app.use("/test", require("./testAuth"));
 
+    // 🧠 Legal Pulse API Routes (NEW!)
+    app.use("/api/legal-pulse", verifyToken, require("./routes/legalPulse"));
+
     // 📤 Upload-Logik mit Analyse (Enhanced with Legal Pulse placeholder)
     app.post("/upload", verifyToken, checkSubscription, upload.single("file"), async (req, res) => {
       if (!req.file) return res.status(400).json({ message: "Keine Datei hochgeladen" });
@@ -244,7 +247,8 @@ async function analyzeContract(pdfText) {
       res.json({ 
         cookies: req.cookies,
         timestamp: new Date().toISOString(),
-        status: "working"
+        status: "working",
+        legalPulseApi: "enabled" // NEW DEBUG INFO
       });
     });
 
@@ -259,9 +263,9 @@ async function analyzeContract(pdfText) {
       }
     });
 
-    // 🧠 Legal Pulse Scan – täglich um 06:00 Uhr
+    // 🧠 Legal Pulse Scan – täglich um 06:00 Uhr (Now using AI!)
     cron.schedule("0 6 * * *", async () => {
-      console.log("🧠 Starte täglichen Legal Pulse Scan...");
+      console.log("🧠 Starte täglichen AI-powered Legal Pulse Scan...");
       try {
         const runLegalPulseScan = require("./services/legalPulseScan");
         await runLegalPulseScan();
@@ -274,6 +278,11 @@ async function analyzeContract(pdfText) {
     app.listen(PORT, () => {
       console.log(`🚀 Server läuft auf Port ${PORT}`);
       console.log(`🧠 Legal Pulse Integration: ACTIVE`);
+      console.log(`🤖 AI Legal Pulse API: ENABLED`);
+      console.log(`📡 API Endpoints:`);
+      console.log(`   - POST /api/legal-pulse/analyze/:contractId`);
+      console.log(`   - POST /api/legal-pulse/scan-all`);
+      console.log(`   - GET  /api/legal-pulse/stats`);
       console.log(`✅ Deployment successful!`);
     });
 

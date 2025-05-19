@@ -1,169 +1,153 @@
-// 📁 backend/services/legalPulseScan.js
-const database = require("../config/database");
-const { ObjectId } = require("mongodb");
+// 📁 backend/services/legalPulseScan.js (Updated with Real AI)
+const { MongoClient, ObjectId } = require("mongodb");
+const AILegalPulse = require("./aiLegalPulse");
 
 async function runLegalPulseScan() {
-  console.log("🧠 Starte Legal Pulse Scan...");
+  console.log("🧠 Starte AI-powered Legal Pulse Scan...");
   
+  let client;
   try {
-    // Finde alle Verträge ohne aktuelle Legal Pulse Analyse
-    const contracts = await database.find('contracts', {
+    // MongoDB-Verbindung
+    const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
+    client = new MongoClient(MONGO_URI);
+    await client.connect();
+    const contractsCollection = client.db("contract_ai").collection("contracts");
+    
+    // AI Legal Pulse Engine initialisieren
+    const aiLegalPulse = new AILegalPulse();
+    
+    // Finde Verträge für Analyse
+    const contracts = await contractsCollection.find({
       $or: [
+        // Noch nie analysiert
         { 'legalPulse.lastChecked': null },
         { 'legalPulse.lastChecked': { $exists: false } },
+        { 'legalPulse.aiGenerated': { $ne: true } }, // Nicht AI-generiert
+        // Älter als 7 Tage
         { 
           'legalPulse.lastChecked': { 
-            $lt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // Älter als 7 Tage
+            $lt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) 
           }
         }
       ]
-    });
+    }).toArray();
 
-    console.log(`🔍 Gefunden: ${contracts.length} Verträge für Legal Pulse Scan`);
+    console.log(`🔍 Gefunden: ${contracts.length} Verträge für AI Legal Pulse Scan`);
 
-    for (const contract of contracts) {
+    if (contracts.length === 0) {
+      console.log("✅ Alle Verträge sind bereits aktuell analysiert!");
+      return;
+    }
+
+    // Batch-Analyse durchführen (max 3 gleichzeitig wegen OpenAI Rate Limits)
+    const aiResults = await aiLegalPulse.analyzeBatch(contracts, 3);
+    
+    // Ergebnisse in Datenbank speichern
+    let successCount = 0;
+    let errorCount = 0;
+    
+    for (let i = 0; i < contracts.length; i++) {
       try {
-        // Simuliere Legal Pulse Analyse (später mit echter AI)
-        const legalPulseResult = await performLegalPulseAnalysis(contract);
+        const contract = contracts[i];
+        const aiResult = aiResults[i];
         
-        // Update Contract mit Legal Pulse Daten
-        await database.updateOne(
-          'contracts',
+        // Update Contract in Database
+        await contractsCollection.updateOne(
           { _id: contract._id },
           {
             $set: {
-              'legalPulse.riskScore': legalPulseResult.riskScore,
-              'legalPulse.riskSummary': legalPulseResult.summary,
-              'legalPulse.lastChecked': new Date(),
-              'legalPulse.lawInsights': legalPulseResult.lawInsights,
-              'legalPulse.marketSuggestions': legalPulseResult.marketSuggestions,
-              'legalPulse.riskFactors': legalPulseResult.riskFactors,
-              'legalPulse.legalRisks': legalPulseResult.legalRisks,
-              'legalPulse.recommendations': legalPulseResult.recommendations,
-              'legalPulse.analysisDate': new Date()
+              'legalPulse': aiResult
             }
           }
         );
-
-        console.log(`✅ Legal Pulse für Vertrag ${contract.name} aktualisiert (Score: ${legalPulseResult.riskScore})`);
+        
+        successCount++;
+        console.log(`✅ AI Legal Pulse für "${contract.name}" aktualisiert (Score: ${aiResult.riskScore})`);
+        
+        // Rate Limiting zwischen Updates
+        if (i < contracts.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        
       } catch (error) {
-        console.error(`❌ Fehler bei Legal Pulse für Vertrag ${contract._id}:`, error);
+        errorCount++;
+        console.error(`❌ Fehler beim Speichern für "${contracts[i].name}":`, error);
       }
     }
-
-    console.log("🎉 Legal Pulse Scan abgeschlossen!");
+    
+    // Statistiken loggen
+    console.log(`\n🎉 AI Legal Pulse Scan abgeschlossen!`);
+    console.log(`✅ Erfolgreich: ${successCount} Verträge`);
+    console.log(`❌ Fehler: ${errorCount} Verträge`);
+    console.log(`🧠 AI-Engine: Eingesetzt`);
+    
+    // Scan-Statistiken in separater Collection speichern
+    try {
+      const scanStatsCollection = client.db("contract_ai").collection("scan_stats");
+      await scanStatsCollection.insertOne({
+        scanType: 'legal_pulse_ai',
+        timestamp: new Date(),
+        contractsProcessed: contracts.length,
+        successCount,
+        errorCount,
+        aiPowered: true,
+        engine: 'OpenAI GPT-4'
+      });
+    } catch (statsError) {
+      console.error('❌ Fehler beim Speichern der Scan-Statistiken:', statsError);
+    }
+    
   } catch (error) {
-    console.error("❌ Fehler beim Legal Pulse Scan:", error);
+    console.error("❌ Kritischer Fehler beim AI Legal Pulse Scan:", error);
+    throw error;
+  } finally {
+    // Verbindung schließen
+    if (client) {
+      await client.close();
+    }
   }
 }
 
-// Simulierte Legal Pulse Analyse (später durch echte AI ersetzen)
-async function performLegalPulseAnalysis(contract) {
-  // Simuliere Verarbeitungszeit
-  await new Promise(resolve => setTimeout(resolve, 1000));
-
-  // Basis-Risk-Score basierend auf Vertragsattributen
-  let riskScore = Math.floor(Math.random() * 100);
-  
-  // Anpassungen basierend auf Vertragsdaten
-  if (contract.status === 'Abgelaufen') riskScore = Math.min(riskScore + 30, 100);
-  if (contract.status === 'Bald ablaufend') riskScore = Math.min(riskScore + 15, 100);
-  
-  const riskLevel = riskScore >= 70 ? 'low' : riskScore >= 40 ? 'medium' : 'high';
-
-  return {
-    riskScore,
-    summary: generateRiskSummary(riskLevel, contract),
-    lawInsights: generateLawInsights(riskLevel),
-    marketSuggestions: generateMarketSuggestions(riskLevel),
-    riskFactors: generateRiskFactors(riskLevel, contract),
-    legalRisks: generateLegalRisks(riskLevel),
-    recommendations: generateRecommendations(riskLevel, contract)
-  };
-}
-
-function generateRiskSummary(riskLevel, contract) {
-  const summaries = {
-    low: `Der Vertrag "${contract.name}" zeigt geringe Risiken. Die Vertragskonditionen sind größtenteils vorteilhaft und rechtlich solide.`,
-    medium: `Der Vertrag "${contract.name}" weist mittlere Risiken auf. Einige Klauseln sollten überprüft und möglicherweise nachverhandelt werden.`,
-    high: `Der Vertrag "${contract.name}" birgt erhöhte Risiken. Dringende Überprüfung und Nachbesserung der Vertragskonditionen empfohlen.`
-  };
-  return summaries[riskLevel];
-}
-
-function generateRiskFactors(riskLevel, contract) {
-  const allFactors = [
-    'Unklare Kündigungsklauseln',
-    'Hohe Vertragsstrafen',
-    'Fehlende Haftungsbegrenzung',
-    'Automatische Verlängerungsklauseln',
-    'Unausgewogene Leistungspflichten',
-    'Fehlende Datenschutzbestimmungen',
-    'Ungünstige Zahlungskonditionen'
-  ];
-  
-  const factorCount = riskLevel === 'high' ? 4 : riskLevel === 'medium' ? 2 : 1;
-  return allFactors.slice(0, factorCount);
-}
-
-function generateLegalRisks(riskLevel) {
-  const allRisks = [
-    'Mögliche Verstöße gegen DSGVO-Bestimmungen',
-    'Unklare Gerichtsstandsvereinbarungen',
-    'Risiko von Vertragsstrafen bei vorzeitiger Kündigung',
-    'Fehlende Compliance mit aktuellen Gesetzen',
-    'Unzureichende Gewährleistungsklauseln'
-  ];
-  
-  const riskCount = riskLevel === 'high' ? 3 : riskLevel === 'medium' ? 2 : 1;
-  return allRisks.slice(0, riskCount);
-}
-
-function generateLawInsights(riskLevel) {
-  const allInsights = [
-    'BGB §§ 305-310: AGB-Kontrolle erforderlich',
-    'DSGVO Art. 28: Auftragsverarbeitungsvertrag prüfen',
-    'HGB § 377: Untersuchungs- und Rügepflicht beachten',
-    'BGB § 314: Kündigungsrecht bei wichtigem Grund',
-    'UWG § 7: Irreführende Werbung vermeiden'
-  ];
-  
-  const insightCount = riskLevel === 'high' ? 3 : 2;
-  return allInsights.slice(0, insightCount);
-}
-
-function generateMarketSuggestions(riskLevel) {
-  const allSuggestions = [
-    'Marktübliche Zahlungsziele von 30 Tagen vereinbaren',
-    'Branchenstandard-Haftungsobergrenzen einführen',
-    'Flexible Kündigungsfristen entsprechend Branchennorm',
-    'Preisanpassungsklauseln für längere Vertragslaufzeiten',
-    'Service Level Agreements nach Industriestandard'
-  ];
-  
-  const suggestionCount = riskLevel === 'high' ? 3 : 2;
-  return allSuggestions.slice(0, suggestionCount);
-}
-
-function generateRecommendations(riskLevel, contract) {
-  const baseRecommendations = [
-    'Regelmäßige Vertragsüberprüfung alle 12 Monate',
-    'Rechtliche Beratung bei Vertragsänderungen',
-    'Dokumentation aller Vertragsmodifikationen'
-  ];
-  
-  if (riskLevel === 'high') {
-    baseRecommendations.unshift(
-      'Sofortige rechtliche Prüfung empfohlen',
-      'Nachverhandlung problematischer Klauseln'
-    );
-  } else if (riskLevel === 'medium') {
-    baseRecommendations.unshift(
-      'Überprüfung von Risikoklauseln binnen 3 Monaten'
-    );
-  }
-  
-  return baseRecommendations.slice(0, 3);
-}
-
+// Export für Cron-Job
 module.exports = runLegalPulseScan;
+
+// Optional: Manueller Scan für einzelnen Vertrag
+async function scanSingleContract(contractId) {
+  let client;
+  try {
+    const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
+    client = new MongoClient(MONGO_URI);
+    await client.connect();
+    const contractsCollection = client.db("contract_ai").collection("contracts");
+    
+    // Vertrag laden
+    const contract = await contractsCollection.findOne({ _id: new ObjectId(contractId) });
+    if (!contract) {
+      throw new Error(`Vertrag ${contractId} nicht gefunden`);
+    }
+    
+    // AI-Analyse durchführen
+    const aiLegalPulse = new AILegalPulse();
+    const aiResult = await aiLegalPulse.analyzeContract(contract);
+    
+    // In DB speichern
+    await contractsCollection.updateOne(
+      { _id: contract._id },
+      { $set: { 'legalPulse': aiResult } }
+    );
+    
+    console.log(`✅ Einzelanalyse für "${contract.name}" abgeschlossen (Score: ${aiResult.riskScore})`);
+    return aiResult;
+    
+  } catch (error) {
+    console.error(`❌ Fehler bei Einzelanalyse für ${contractId}:`, error);
+    throw error;
+  } finally {
+    if (client) {
+      await client.close();
+    }
+  }
+}
+
+// Export der Einzelanalyse-Funktion
+runLegalPulseScan.scanSingle = scanSingleContract;
