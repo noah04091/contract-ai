@@ -1,576 +1,788 @@
-.loadingContent {
+/* =================================
+   📱 APPLE-STYLE CONTRACT GENERATOR
+   ================================= */
+
+/* Base Styles */
+.contractGenerator {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+  color: #1e293b;
+  line-height: 1.6;
+}
+
+/* Header Section */
+.generatorHeader {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.5);
+  padding: 2rem 0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.1);
+}
+
+.headerContent {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.headerText {
   text-align: center;
-  max-width: 400px;
-  padding: 2rem;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  margin-bottom: 2rem;
 }
 
-.loadingSpinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid rgba(0, 113, 227, 0.1);
-  border-top-color: var(--apple-blue);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 1rem;
-}
-
-.spinnerSmall {
-  width: 18px;
-  height: 18px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: white;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-.loadingSubtext {
-  margin-top: 0.5rem;
-  font-size: 0.85rem;
-  color: var(--apple-gray-300);
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* Contract Preview Styling */
-.previewContainer {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-}
-
-.contractPreview {
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-  overflow: hidden;
-  border: 1px solid var(--apple-gray-100);
-}
-
-.previewTitle {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 0;
-  padding: 1.2rem 1.5rem;
-  font-size: 1.1rem;
-  font-weight: 500;
-  border-bottom: 1px solid var(--apple-gray-100);
-  color: var(--apple-gray-800);
-}
-
-.contractContent {
-  padding: 1.5rem;
-  max-height: 50vh;
-  overflow-y: auto;
-}
-
-.contractText {
-  white-space: pre-wrap;
-  font-size: 0.95rem;
-  line-height: 1.5;
-  color: var(--apple-gray-800);
-}
-
-.signaturePreview {
-  margin-top: 2rem;
-  border-top: 1px solid var(--apple-gray-100);
-  padding-top: 1.5rem;
-}
-
-.signaturePreview h4 {
-  font-size: 1rem;
-  font-weight: 500;
-  margin: 0 0 1rem;
-  color: var(--apple-gray-800);
-}
-
-.signaturePreview img {
-  max-width: 200px;
-  height: auto;
-  display: block;
-}
-
-/* Signature Section */
-.signatureSection {
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-  overflow: hidden;
-  border: 1px solid var(--apple-gray-100);
-  padding: 1.5rem;
-}
-
-.signatureTitle {
-  font-size: 1.1rem;
-  font-weight: 500;
-  margin: 0 0 1.5rem;
-  color: var(--apple-gray-800);
-}
-
-.canvasContainer {
-  position: relative;
-  background: var(--apple-gray-50);
-  border-radius: 12px;
-  padding: 1rem;
-  margin-bottom: 1rem;
-  border: 1px dashed var(--apple-gray-200);
-  transition: all 0.2s ease;
-}
-
-.canvasContainer:hover {
-  border-color: var(--apple-gray-300);
-}
-
-.signatureCanvas {
-  width: 100%;
-  height: 150px;
-  border-radius: 8px;
-  background: white;
-  touch-action: none;
-  cursor: crosshair;
-  transition: all 0.2s ease;
-}
-
-.signatureCanvas.drawing {
-  box-shadow: 0 0 0 2px var(--apple-blue);
-}
-
-.canvasInstructions {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  margin: 0;
-  color: var(--apple-gray-300);
-  font-size: 0.9rem;
-  pointer-events: none;
-  transition: opacity 0.2s ease;
-  opacity: 0.7;
-}
-
-.drawing + .canvasInstructions {
-  opacity: 0;
-}
-
-.canvasControls {
-  display: flex;
-  gap: 1rem;
-  margin-top: 1rem;
-}
-
-.canvasButton {
+.headerText h1 {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.6rem 1rem;
-  border-radius: 8px;
-  border: 1px solid var(--apple-gray-200);
-  background: white;
-  font-family: inherit;
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 0;
+  background: linear-gradient(135deg, #1e293b, #3b82f6);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.025em;
+}
+
+.headerText p {
+  font-size: 1.125rem;
+  color: #64748b;
+  margin: 0.5rem 0 0 0;
+  font-weight: 400;
+}
+
+/* Progress Steps */
+.progressSteps {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 50px;
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(226, 232, 240, 0.5);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-weight: 500;
+  color: #64748b;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.step.active {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.3);
+  color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.step.completed {
+  background: rgba(34, 197, 94, 0.1);
+  border-color: rgba(34, 197, 94, 0.3);
+  color: #22c55e;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+}
+
+.stepIndicator {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #e2e8f0;
+  color: #64748b;
+  transition: all 0.3s ease;
+}
+
+.step.active .stepIndicator {
+  background: #3b82f6;
+  color: white;
+  transform: scale(1.1);
+}
+
+.step.completed .stepIndicator {
+  background: #22c55e;
+  color: white;
+  transform: scale(1.1);
+}
+
+/* Main Content */
+.generatorContent {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+/* Premium Notice */
+.premiumNotice {
+  background: linear-gradient(135deg, #fef3c7, #fed7aa);
+  border: 1px solid #f59e0b;
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.premiumContent {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.premiumIcon {
+  color: #f59e0b;
+  flex-shrink: 0;
+}
+
+.premiumText {
+  flex: 1;
+}
+
+.premiumText h3 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #92400e;
+}
+
+.premiumText p {
+  margin: 0;
+  color: #b45309;
+  font-size: 0.9rem;
+}
+
+.upgradeButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.upgradeButton:hover {
+  background: linear-gradient(135deg, #d97706, #b45309);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+}
+
+/* Content Grid */
+.contentGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  transition: all 0.3s ease;
+}
+
+.contentGrid.withPreview {
+  grid-template-columns: 1fr 1fr;
+}
+
+/* Form Panel */
+.formPanel {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(226, 232, 240, 0.5);
+  border-radius: 24px;
+  padding: 2rem;
+  box-shadow: 
+    0 10px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.stepContent {
+  min-height: 400px;
+}
+
+.stepHeader {
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.stepHeader h2 {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 0.5rem 0;
+  letter-spacing: -0.025em;
+}
+
+.stepHeader p {
+  color: #64748b;
+  margin: 0;
+  font-size: 1rem;
+}
+
+.backButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: none;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 1rem;
   font-size: 0.9rem;
   font-weight: 500;
-  color: var(--apple-gray-800);
+}
+
+.backButton:hover {
+  background: #f8fafc;
+  color: #3b82f6;
+  border-color: #3b82f6;
+  transform: translateX(-2px);
+}
+
+/* Contract Type Grid */
+.contractTypesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.contractTypeCard {
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(226, 232, 240, 0.5);
+  border-radius: 20px;
+  padding: 2rem;
+  text-align: center;
   cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.contractTypeCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0), rgba(59, 130, 246, 0.05));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.contractTypeCard:not(:disabled):hover {
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  border-color: #3b82f6;
+  transform: translateY(-4px);
+}
+
+.contractTypeCard:not(:disabled):hover::before {
+  opacity: 1;
+}
+
+.contractTypeCard:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.contractTypeCard.selected {
+  background: rgba(59, 130, 246, 0.05);
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.cardIcon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  display: block;
+}
+
+.contractTypeCard h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 0.5rem 0;
+}
+
+.contractTypeCard p {
+  color: #64748b;
+  margin: 0 0 1rem 0;
+  line-height: 1.5;
+  font-size: 0.9rem;
+}
+
+.cardArrow {
+  color: #3b82f6;
+  opacity: 0;
   transition: all 0.2s ease;
 }
 
-.canvasButton:hover {
-  background: var(--apple-gray-50);
-  border-color: var(--apple-gray-300);
+.contractTypeCard:hover .cardArrow {
+  opacity: 1;
+  transform: translateX(4px);
 }
 
-.saveSignature {
-  background: var(--apple-blue);
-  color: white;
-  border-color: var(--apple-blue);
+/* Form Styles */
+.contractForm {
+  max-width: 800px;
+  margin: 0 auto;
 }
 
-.saveSignature:hover {
-  background: var(--apple-blue-dark);
-  border-color: var(--apple-blue-dark);
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
 }
 
-/* Contract Actions */
-.contractActions {
+.formGroup {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.formGroup.spanning {
+  grid-column: 1 / -1;
+}
+
+.formGroup label {
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.formGroup input,
+.formGroup textarea {
+  padding: 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  font-size: 1rem;
+  background: rgba(255, 255, 255, 0.8);
+  transition: all 0.2s ease;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.formGroup input:focus,
+.formGroup textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.formGroup input:disabled,
+.formGroup textarea:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f9fafb;
+}
+
+.formGroup textarea {
+  min-height: 120px;
+  line-height: 1.6;
+}
+
+/* Generate Button */
+.generateButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 1.25rem 2rem;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: white;
+  border: none;
+  border-radius: 16px;
+  font-size: 1.125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 
+    0 10px 15px -3px rgba(59, 130, 246, 0.3),
+    0 4px 6px -2px rgba(59, 130, 246, 0.05);
+  position: relative;
+  overflow: hidden;
+}
+
+.generateButton::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s ease;
+}
+
+.generateButton:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 15px 25px -5px rgba(59, 130, 246, 0.4),
+    0 10px 10px -5px rgba(59, 130, 246, 0.05);
+}
+
+.generateButton:hover:not(:disabled)::before {
+  left: 100%;
+}
+
+.generateButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Action Buttons */
+.actionButtons {
+  display: flex;
   gap: 1rem;
-  margin-top: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
 }
 
 .actionButton {
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 0.5rem;
-  padding: 0.8rem 1.2rem;
-  border-radius: 10px;
-  border: none;
-  background: white;
-  font-family: inherit;
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: var(--apple-gray-800);
+  padding: 0.75rem 1.5rem;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
   cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-  border: 1px solid var(--apple-gray-100);
   transition: all 0.2s ease;
-  flex: 1;
-  min-width: 180px;
+  font-weight: 500;
+  color: #374151;
+  font-size: 0.9rem;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .actionButton:hover {
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  background: #f8fafc;
+  border-color: #3b82f6;
+  color: #3b82f6;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+.actionButton.primary {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: white;
+  border-color: transparent;
+}
+
+.actionButton.primary:hover {
+  background: linear-gradient(135deg, #1d4ed8, #1e40af);
+  color: white;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.actionButton.success {
+  background: rgba(34, 197, 94, 0.1);
+  border-color: #22c55e;
+  color: #22c55e;
+}
+
+.actionButton.success:hover {
+  background: rgba(34, 197, 94, 0.15);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.15);
+}
+
+/* Signature Section */
+.signatureSection {
+  background: rgba(248, 250, 252, 0.5);
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin: 2rem 0;
+  border: 1px solid rgba(226, 232, 240, 0.3);
+}
+
+.signatureSection h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 1rem 0;
+  color: #374151;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.signatureCanvasContainer {
+  position: relative;
+  background: white;
+  border: 2px dashed #d1d5db;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: border-color 0.3s ease;
+}
+
+.signatureCanvasContainer:hover {
+  border-color: #9ca3af;
+}
+
+.signatureCanvas {
+  display: block;
+  width: 100%;
+  height: 200px;
+  cursor: crosshair;
+  transition: all 0.2s ease;
+}
+
+.signatureCanvas.drawing {
+  border-color: #3b82f6;
+}
+
+.canvasOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  background: rgba(248, 250, 252, 0.5);
+  transition: opacity 0.3s ease;
+}
+
+.canvasPlaceholder {
+  color: #9ca3af;
+  font-style: italic;
+  font-size: 1.1rem;
+  user-select: none;
+}
+
+.signaturePreview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.signaturePreview img {
+  max-width: 200px;
+  max-height: 100px;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.signatureControls {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.signatureButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.signatureButton.secondary {
+  color: #6b7280;
+}
+
+.signatureButton.secondary:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+  color: #374151;
+}
+
+.signatureButton.primary {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  border-color: #3b82f6;
+  color: white;
+}
+
+.signatureButton.primary:hover {
+  background: linear-gradient(135deg, #1d4ed8, #1e40af);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.signatureButton:hover {
   transform: translateY(-1px);
 }
 
-.actionSuccess {
-  background-color: var(--success-green);
-  color: white;
-}
-
-.actionSuccess:hover {
-  background-color: #2aaa6e;
-}
-
-/* Success Notification */
-.successNotification {
-  position: fixed;
-  bottom: 2rem;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(52, 199, 89, 0.15);
-  border: 1px solid rgba(52, 199, 89, 0.3);
-  color: var(--success-green);
-  padding: 1rem 1.5rem;
+.backToStartButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 2rem;
+  background: none;
+  border: 1px solid #e2e8f0;
   border-radius: 12px;
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-  backdrop-filter: blur(10px);
-  z-index: 100;
-  width: auto;
-  max-width: 90%;
-}
-
-.successIcon {
-  flex-shrink: 0;
-}
-
-/* Responsive Styles */
-@media (max-width: 768px) {
-  .container {
-    padding: 1.5rem;
-  }
-  
-  .title {
-    font-size: 1.8rem;
-  }
-  
-  .premiumNotice {
-    flex-direction: column;
-    align-items: flex-start;
-    text-align: center;
-  }
-  
-  .formGroup {
-    grid-template-columns: 1fr;
-    gap: 0.5rem;
-  }
-  
-  .formLabel {
-    text-align: left;
-    padding-top: 0;
-  }
-  
-  .contractActions {
-    flex-direction: column;
-  }
-  
-  .actionButton {
-    width: 100%;
-  }
-  
-  .submitButton {
-    margin-left: 0;
-    max-width: 100%;
-  }
-  
-  .successNotification {
-    width: calc(100% - 3rem);
-  }
-}/* Generate.module.css */
-@import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600&display=swap');
-
-.pageContainer {
-  --apple-blue: #0071e3;
-  --apple-blue-dark: #0058b3;
-  --apple-gray-50: #f5f5f7;
-  --apple-gray-100: #e8e8ed;
-  --apple-gray-200: #d2d2d7;
-  --apple-gray-300: #a1a1a6;
-  --apple-gray-400: #6e6e73;
-  --apple-gray-800: #1d1d1f;
-  --success-green: #34c759;
-  --error-red: #ff453a;
-
-  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
-  background-color: var(--apple-gray-50);
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-}
-
-.container {
-  max-width: 1000px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 2rem;
+  color: #64748b;
+  font-weight: 500;
   width: 100%;
-  margin: 0 auto;
-  padding: 2rem;
-  color: var(--apple-gray-800);
-}
-
-/* Header Styling */
-.header {
-  margin-bottom: 2.5rem;
-  max-width: 800px;
-  margin-left: auto;
-  margin-right: auto;
-  text-align: center;
-}
-
-.title {
-  font-size: 2.2rem;
-  font-weight: 500;
-  margin: 0 0 0.8rem;
-  display: flex;
-  align-items: center;
   justify-content: center;
-  gap: 0.8rem;
-  letter-spacing: -0.02em;
-  color: var(--apple-gray-800);
 }
 
-.titleIcon {
-  color: var(--apple-blue);
+.backToStartButton:hover {
+  background: #f8fafc;
+  border-color: #3b82f6;
+  color: #3b82f6;
+  transform: translateX(-2px);
 }
 
-.subtitle {
-  font-size: 1.1rem;
-  font-weight: 400;
-  margin: 0;
-  color: var(--apple-gray-400);
-  max-width: 700px;
-  margin-left: auto;
-  margin-right: auto;
-  line-height: 1.5;
-}
-
-/* Premium Notice */
-.premiumNotice {
-  background: rgba(255, 255, 255, 0.8);
+/* Preview Panel */
+.previewPanel {
+  background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(20px);
-  border-radius: 16px;
-  padding: 1.5rem 2rem;
-  margin-bottom: 2.5rem;
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
-  max-width: 800px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.premiumIcon {
-  font-size: 2.5rem;
-  color: #FFD700;
-}
-
-.premiumContent {
-  flex: 1;
-}
-
-.premiumContent h3 {
-  font-size: 1.3rem;
-  font-weight: 600;
-  margin: 0 0 0.8rem;
-  color: var(--apple-gray-800);
-}
-
-.premiumContent p {
-  font-size: 1rem;
-  color: var(--apple-gray-400);
-  margin: 0 0 1.2rem;
-  line-height: 1.5;
-}
-
-.upgradeButton {
-  background-color: var(--apple-blue);
-  color: white;
-  border: none;
-  padding: 0.7rem 1.5rem;
-  border-radius: 20px;
-  font-size: 0.95rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.upgradeButton:hover {
-  background-color: var(--apple-blue-dark);
-}
-
-/* Tabs */
-.tabs {
-  display: flex;
-  margin-bottom: 2rem;
-  border-bottom: 1px solid var(--apple-gray-200);
-}
-
-.tab {
-  padding: 0.8rem 1.5rem;
-  background: transparent;
-  border: none;
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: var(--apple-gray-400);
-  cursor: pointer;
-  position: relative;
-  transition: all 0.2s ease;
-}
-
-.tab:after {
-  content: '';
-  position: absolute;
-  bottom: -1px;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background-color: var(--apple-blue);
-  transform: scaleX(0);
-  transition: transform 0.3s ease;
-}
-
-.activeTab {
-  color: var(--apple-gray-800);
-}
-
-.activeTab:after {
-  transform: scaleX(1);
-}
-
-/* Form Styling */
-.form {
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(226, 232, 240, 0.5);
+  border-radius: 24px;
+  padding: 0;
+  box-shadow: 
+    0 10px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  max-height: calc(100vh - 200px);
   display: flex;
   flex-direction: column;
-  gap: 2rem;
-  margin-bottom: 2rem;
-  max-width: 800px;
-  margin: 0 auto;
 }
 
-.formGroup {
-  display: grid;
-  grid-template-columns: 180px 1fr;
-  gap: 1.5rem;
-  align-items: flex-start;
+.previewHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.5);
+  background: rgba(248, 250, 252, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
-.formLabel {
-  font-size: 1rem;
-  font-weight: 500;
-  color: var(--apple-gray-800);
-  padding-top: 0.8rem;
-  text-align: right;
+.previewHeader h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  color: #374151;
+  font-weight: 600;
+  font-size: 1.1rem;
 }
 
-.input, .select, .textarea {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(8px);
-  border: 1px solid var(--apple-gray-200);
-  border-radius: 10px;
-  padding: 0.9rem 1rem;
-  font-family: inherit;
-  font-size: 1rem;
-  transition: all 0.2s ease;
-  outline: none;
-  color: var(--apple-gray-800);
-  width: 100%;
-}
-
-.input:focus, .select:focus, .textarea:focus {
-  border-color: var(--apple-blue);
-  box-shadow: 0 0 0 2px rgba(0, 113, 227, 0.15);
-}
-
-.input::placeholder, .textarea::placeholder {
-  color: var(--apple-gray-300);
-}
-
-.input:disabled, .select:disabled, .textarea:disabled {
-  background-color: var(--apple-gray-100);
-  color: var(--apple-gray-400);
-  cursor: not-allowed;
-}
-
-.textarea {
-  resize: vertical;
-  min-height: 120px;
-}
-
-.submitButton {
-  background-color: var(--apple-blue);
-  color: white;
+.closePreview {
+  background: none;
   border: none;
-  font-family: inherit;
-  font-size: 1rem;
-  font-weight: 500;
-  padding: 1rem;
-  border-radius: 10px;
+  font-size: 1.5rem;
+  color: #6b7280;
   cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  transition: all 0.2s ease;
-  margin-top: 1.5rem;
-  max-width: 300px;
-  margin-left: auto;
 }
 
-.submitButton:hover:not(:disabled) {
-  background-color: var(--apple-blue-dark);
+.closePreview:hover {
+  background: rgba(107, 114, 128, 0.1);
+  color: #374151;
+  transform: scale(1.1);
 }
 
-.submitButton:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+.previewContainer {
+  flex: 1;
+  overflow-y: auto;
+  padding: 2rem;
 }
 
-.buttonIcon {
-  font-size: 1.2rem;
+.contractContent {
+  color: #374151;
+  line-height: 1.8;
+  font-family: 'Times New Roman', 'Georgia', serif;
+  font-size: 1rem;
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(226, 232, 240, 0.5);
+}
+
+.signatureInPreview {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.signatureLabel {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #374151;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.signatureInPreview img {
+  max-width: 200px;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.signatureDate {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-top: 0.5rem;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 /* Loading States */
 .loadingContainer {
+  min-height: 60vh;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 300px;
-  gap: 1rem;
-  color: var(--apple-gray-400);
+}
+
+.loadingContent {
+  text-align: center;
+  color: #64748b;
 }
 
 .loadingOverlay {
@@ -579,10 +791,275 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(15, 23, 42, 0.8);
   backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 100;
+  z-index: 50;
+}
+
+.loadingOverlay .loadingContent {
+  background: white;
+  padding: 3rem;
+  border-radius: 20px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  max-width: 400px;
+  width: 90%;
+  color: #1e293b;
+}
+
+.loadingOverlay h3 {
+  margin: 1rem 0 0.5rem 0;
+  color: #1e293b;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.loadingOverlay p {
+  margin: 0 0 1.5rem 0;
+  color: #64748b;
+}
+
+.loadingProgress {
+  height: 4px;
+  background: #e2e8f0;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.loadingBar {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+  animation: loading-progress 2s ease-in-out infinite;
+  border-radius: 2px;
+}
+
+@keyframes loading-progress {
+  0% { width: 0%; }
+  50% { width: 70%; }
+  100% { width: 100%; }
+}
+
+/* Loading Spinner */
+.loadingSpinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e2e8f0;
+  border-top: 4px solid #3b82f6;
+  border-radius: 50%;
+  animation: loading-spin 1s linear infinite;
+  margin: 0 auto;
+}
+
+.loadingSpinner.small {
+  width: 20px;
+  height: 20px;
+  border-width: 2px;
+}
+
+.loadingSpinner.large {
+  width: 60px;
+  height: 60px;
+  border-width: 6px;
+}
+
+@keyframes loading-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .contentGrid.withPreview {
+    grid-template-columns: 1fr;
+  }
+
+  .generatorContent {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .headerContent {
+    padding: 0 1rem;
+  }
+
+  .generatorContent {
+    padding: 1rem;
+  }
+
+  .contractTypesGrid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .formGrid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .progressSteps {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: stretch;
+  }
+
+  .step {
+    justify-content: flex-start;
+    padding: 1rem 1.5rem;
+  }
+
+  .actionButtons {
+    flex-direction: column;
+  }
+
+  .signatureControls {
+    flex-direction: column;
+  }
+
+  .headerText h1 {
+    font-size: 2rem;
+  }
+
+  .headerText p {
+    font-size: 1rem;
+  }
+
+  .premiumContent {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+
+  .upgradeButton {
+    align-self: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .formPanel,
+  .previewPanel {
+    padding: 1rem;
+    border-radius: 16px;
+  }
+
+  .contractTypeCard {
+    padding: 1.5rem;
+  }
+
+  .signatureSection {
+    padding: 1rem;
+  }
+
+  .signatureCanvas {
+    height: 150px;
+  }
+
+  .headerText h1 {
+    font-size: 1.75rem;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+}
+
+/* High DPI Displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .contractContent {
+    font-size: 1.1rem;
+  }
+}
+
+/* Dark mode support (optional) */
+@media (prefers-color-scheme: dark) {
+  .contractGenerator {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: #f1f5f9;
+  }
+
+  .generatorHeader {
+    background: rgba(15, 23, 42, 0.8);
+    border-bottom-color: rgba(71, 85, 105, 0.5);
+  }
+
+  .headerText h1 {
+    background: linear-gradient(135deg, #f1f5f9, #60a5fa);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .formPanel,
+  .previewPanel {
+    background: rgba(15, 23, 42, 0.7);
+    border-color: rgba(71, 85, 105, 0.5);
+  }
+
+  .contractContent {
+    background: #0f172a;
+    color: #f1f5f9;
+    border-color: rgba(71, 85, 105, 0.5);
+  }
+}
+
+/* Print Styles */
+@media print {
+  .contractGenerator {
+    background: white;
+  }
+
+  .generatorHeader,
+  .actionButtons,
+  .signatureSection,
+  .backToStartButton,
+  .previewHeader {
+    display: none;
+  }
+
+  .contractContent {
+    box-shadow: none;
+    border: none;
+    padding: 0;
+    font-size: 12pt;
+    line-height: 1.4;
+  }
+}
+
+/* Accessibility Improvements */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Focus styles for accessibility */
+.contractTypeCard:focus-visible,
+.actionButton:focus-visible,
+.generateButton:focus-visible,
+.signatureButton:focus-visible,
+.backButton:focus-visible,
+.backToStartButton:focus-visible,
+.upgradeButton:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .contractTypeCard,
+  .formPanel,
+  .previewPanel {
+    border-width: 2px;
+  }
+
+  .actionButton,
+  .signatureButton,
+  .generateButton {
+    border-width: 2px;
+  }
 }

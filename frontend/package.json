@@ -29,6 +29,7 @@
   "devDependencies": {
     "@eslint/js": "^9.21.0",
     "@types/axios": "^0.9.36",
+    "@types/html2pdf.js": "^0.1.6",
     "@types/jwt-decode": "^2.2.1",
     "@types/node": "^22.14.0",
     "@types/react": "^19.0.12",
