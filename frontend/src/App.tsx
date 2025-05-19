@@ -73,7 +73,7 @@ function AppWithLoader() {
           <Route path="/optimizer" element={<RequireAuth><Optimizer /></RequireAuth>} />
           <Route path="/compare" element={<RequireAuth><Compare /></RequireAuth>} />
           <Route path="/chat" element={<RequireAuth><Chat /></RequireAuth>} />
-          <Route path="/generate" element={<RequireAuth><Generate /></RequireAuth>} />
+          <Route path="/generator" element={<RequireAuth><Generate /></RequireAuth>} />
           <Route path="/subscribe" element={<RequireAuth><Subscribe /></RequireAuth>} />
           <Route path="/upgrade" element={<RequireAuth><Upgrade /></RequireAuth>} />
           <Route path="/better-contracts" element={<RequireAuth><BetterContracts /></RequireAuth>} />
