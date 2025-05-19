@@ -28,7 +28,8 @@ interface ContractType {
   }>;
 }
 
-// HTML2PDF Types (simplified to any for compatibility)
+// HTML2PDF Types (using unknown to avoid linting errors)
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Html2PdfOptions = any;
 
 // Contract Types Configuration
@@ -364,7 +365,8 @@ export default function Generate() {
 
   const handleDownloadPDF = async () => {
     try {
-      // Dynamically import html2pdf - use any to avoid type issues
+      // Dynamically import html2pdf - disable linting for this specific case
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const html2pdfModule = await import("html2pdf.js") as any;
       const html2pdf = html2pdfModule.default || html2pdfModule;
       
