@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Navbar from "./components/Navbar";
 import RequireAuth from "./components/RequireAuth";
 import PageLoader from "./components/PageLoader";
-import { AuthProvider } from "./context/AuthContext"; // 🧠 NEU
+import { AuthProvider } from "./context/AuthContext";
 
 // 🔓 Öffentliche Seiten
 import HomeRedesign from "./pages/HomeRedesign";
@@ -29,12 +29,11 @@ import CalendarView from "./pages/CalendarView";
 import Optimizer from "./pages/Optimizer";
 import Compare from "./pages/Compare";
 import Chat from "./pages/Chat";
-import Generate from "./pages/Generate";
+import Generate from "./pages/Generate"; // ✅ DAS ist deine echte Komponente!
 import Subscribe from "./pages/Subscribe";
 import Upgrade from "./pages/Upgrade";
 import BetterContracts from "./pages/BetterContracts";
 
-// ✅ Wrapper für Ladeanimation beim Routenwechsel
 function AppWithLoader() {
   const location = useLocation();
   const [loading, setLoading] = useState(false);
@@ -84,7 +83,6 @@ function AppWithLoader() {
   );
 }
 
-// 🧠 Root-Komponente mit Router und AuthProvider
 export default function App() {
   return (
     <Router>
