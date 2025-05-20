@@ -1,13 +1,21 @@
 import { useEffect, useState, useRef } from "react";
-import styles from "../styles/AppleChat.module.css";
+import styles from "../styles/ContractChat.module.css";
 
+// Definiere die Interface-Typen
 interface Message {
+  id: string;
   from: "user" | "ai" | "system";
   text: string;
   timestamp: string;
 }
 
-export default function VertragChat() {
+interface SuggestedQuestion {
+  text: string;
+  category: "general" | "clause" | "legal";
+}
+
+export default function Chat() {
+  // State-Definitionen
   const [file, setFile] = useState<File | null>(null);
   const [question, setQuestion] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
@@ -16,15 +24,34 @@ export default function VertragChat() {
   const [isPremium, setIsPremium] = useState<boolean | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [showSuggestions, setShowSuggestions] = useState(true);
+  
+  // Refs
   const chatEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  // Format current time for message timestamps
+  // Vorgeschlagene Fragen - komplett neu geschrieben
+  const suggestedQuestions: SuggestedQuestion[] = [
+    { text: "Was bedeutet Kündigungsfrist 3 Monate zum Quartalsende?", category: "clause" },
+    { text: "Muss ein Mietvertrag schriftlich sein?", category: "legal" },
+    { text: "Welche Klauseln sind bei einem Freelancervertrag wichtig?", category: "general" },
+    { text: "Was ist eine Vertragsstrafe und wann greift sie?", category: "legal" },
+    { text: "Erkläre den Unterschied zwischen AGB und individuellen Vertragsklauseln", category: "general" }
+  ];
+
+  // Zeit-Formatierung für Nachrichten
   const getCurrentTime = (): string => {
     const now = new Date();
     return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
   };
 
+  // Generiere eindeutige IDs für Nachrichten
+  const generateId = (): string => {
+    return Date.now().toString(36) + Math.random().toString(36).substring(2);
+  };
+
+  // Premium-Status abrufen und Willkommensnachricht setzen
   useEffect(() => {
     let cancelled = false;
 
@@ -47,18 +74,26 @@ export default function VertragChat() {
     };
 
     fetchStatus();
+    
+    // Willkommensnachricht hinzufügen
+    setMessages([{
+      id: generateId(),
+      from: "system",
+      text: "👋 Willkommen beim Contract AI-Assistenten! Lade einen Vertrag hoch oder stelle allgemeine Fragen zu rechtlichen Themen.",
+      timestamp: getCurrentTime()
+    }]);
 
     return () => {
       cancelled = true;
     };
   }, []);
 
-  // Scroll to bottom whenever messages change
+  // Zum Ende des Chats scrollen, wenn neue Nachrichten hinzukommen
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Simulate upload progress
+  // Upload-Fortschritt simulieren
   useEffect(() => {
     if (loading && uploadProgress < 100 && !contractLoaded) {
       const timer = setTimeout(() => {
@@ -68,6 +103,7 @@ export default function VertragChat() {
     }
   }, [loading, uploadProgress, contractLoaded]);
 
+  // Event-Handler für Datei-Upload
   const handleUpload = async () => {
     if (!file) return;
     setLoading(true);
@@ -88,16 +124,19 @@ export default function VertragChat() {
 
       setUploadProgress(100);
       setTimeout(() => {
-        setMessages([{ 
+        setMessages(prev => [...prev, { 
+          id: generateId(),
           from: "system", 
-          text: "Vertrag erfolgreich geladen. Stelle nun deine Fragen!", 
+          text: `Vertrag "${file.name}" erfolgreich geladen. Stelle nun deine spezifischen Fragen zu diesem Vertrag.`, 
           timestamp: getCurrentTime() 
         }]);
         setContractLoaded(true);
+        setShowSuggestions(true);
       }, 500);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Unbekannter Fehler beim Upload.";
-      setMessages([{ 
+      setMessages(prev => [...prev, { 
+        id: generateId(),
         from: "system", 
         text: `Fehler beim Upload: ${message}`, 
         timestamp: getCurrentTime() 
@@ -109,13 +148,16 @@ export default function VertragChat() {
     }
   };
 
-  const handleAsk = async () => {
-    if (!question.trim()) return;
+  // Frage stellen und Antwort erhalten
+  const handleAsk = async (questionText: string = question) => {
+    if (!questionText.trim()) return;
     setLoading(true);
+    setShowSuggestions(false);
 
     const userMessage: Message = { 
+      id: generateId(),
       from: "user", 
-      text: question, 
+      text: questionText, 
       timestamp: getCurrentTime() 
     };
     setMessages((prev) => [...prev, userMessage]);
@@ -126,25 +168,30 @@ export default function VertragChat() {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question }),
+        body: JSON.stringify({ 
+          question: questionText,
+          hasContract: contractLoaded 
+        }),
       });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Frage konnte nicht beantwortet werden");
 
-      // Simulate AI typing with a slight delay
+      // KI-Tippanimation mit leichter Verzögerung
       setTimeout(() => {
         const aiMessage: Message = { 
+          id: generateId(),
           from: "ai", 
           text: data.answer, 
           timestamp: getCurrentTime() 
         };
         setMessages((prev) => [...prev, aiMessage]);
         setLoading(false);
-      }, 500);
+      }, 800);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Unbekannter Fehler bei der Anfrage.";
       const errorMessage: Message = { 
+        id: generateId(),
         from: "system", 
         text: `Fehler bei der Anfrage: ${message}`, 
         timestamp: getCurrentTime() 
@@ -154,7 +201,7 @@ export default function VertragChat() {
     }
   };
 
-  // Handle file drag events
+  // Drag & Drop Handler
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -166,6 +213,7 @@ export default function VertragChat() {
     }
   };
 
+  // Drop-Handler für Dateien
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -176,7 +224,8 @@ export default function VertragChat() {
       if (droppedFile.type === "application/pdf") {
         setFile(droppedFile);
       } else {
-        setMessages([{ 
+        setMessages(prev => [...prev, { 
+          id: generateId(),
           from: "system", 
           text: "Bitte nur PDF-Dateien hochladen.", 
           timestamp: getCurrentTime() 
@@ -185,11 +234,29 @@ export default function VertragChat() {
     }
   };
 
-  // Trigger file input click
+  // Datei-Auswahl-Dialog öffnen
   const handleFileButtonClick = () => {
     fileInputRef.current?.click();
   };
+  
+  // Chat-Verlauf löschen
+  const handleClearChat = () => {
+    setMessages([{
+      id: generateId(),
+      from: "system",
+      text: "Chat-Verlauf wurde gelöscht. Du kannst eine neue Unterhaltung beginnen.",
+      timestamp: getCurrentTime()
+    }]);
+    setShowSuggestions(true);
+  };
 
+  // Bei Klick auf Vorschlagsfrage
+  const handleSuggestionClick = (question: string) => {
+    handleAsk(question);
+    inputRef.current?.focus();
+  };
+
+  // Lade-Zustand anzeigen
   if (isPremium === null) {
     return (
       <div className={styles.loadingContainer}>
@@ -201,15 +268,28 @@ export default function VertragChat() {
     );
   }
 
+  // Hauptkomponente rendern
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h2>Vertrag-Chat</h2>
+        <h2>🧠 Vertrags-Chat – Frag die KI</h2>
         {!isPremium && (
           <div className={styles.premiumBadge}>
             <span className={styles.premiumIcon}>✦</span>
             <span>Premium erforderlich</span>
           </div>
+        )}
+        {messages.length > 1 && isPremium && (
+          <button 
+            className={styles.clearChatButton} 
+            onClick={handleClearChat}
+            aria-label="Chat löschen"
+          >
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3 6H5H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
         )}
       </div>
 
@@ -228,142 +308,24 @@ export default function VertragChat() {
         </div>
       )}
 
-      {!contractLoaded ? (
-        <div 
-          className={`${styles.uploadArea} ${dragActive ? styles.dragActive : ''}`}
-          onDragEnter={handleDrag}
-          onDragLeave={handleDrag}
-          onDragOver={handleDrag}
-          onDrop={handleDrop}
-        >
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="application/pdf"
-            disabled={!isPremium || loading}
-            className={styles.fileInput}
-            onChange={(e) => setFile(e.target.files?.[0] || null)}
-          />
-          
-          {file ? (
-            <div className={styles.filePreview}>
-              <div className={styles.fileIcon}>
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M14 2H6C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8L14 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M14 2V8H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M16 13H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M16 17H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M10 9H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </div>
-              <div className={styles.fileInfo}>
-                <span className={styles.fileName}>{file.name}</span>
-                <span className={styles.fileSize}>{(file.size / 1024 / 1024).toFixed(2)} MB</span>
-              </div>
-              {!loading && (
-                <button 
-                  className={styles.uploadButton} 
-                  onClick={handleUpload} 
-                  disabled={!isPremium}
-                >
-                  Hochladen
-                </button>
-              )}
-            </div>
-          ) : (
-            <div className={styles.uploadPrompt} onClick={handleFileButtonClick}>
-              <div className={styles.uploadIcon}>
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M17 8L12 3L7 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M12 3V15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </div>
-              <p>PDF-Datei auswählen oder hierhin ziehen</p>
-              {isPremium ? (
-                <button 
-                  className={styles.selectFileButton}
-                  disabled={loading}
-                >
-                  Datei auswählen
-                </button>
-              ) : (
-                <div className={styles.premiumRequired}>
-                  Premium erforderlich
-                </div>
-              )}
-            </div>
-          )}
-          
-          {loading && (
-            <div className={styles.progressContainer}>
-              <div className={styles.progressBar}>
-                <div 
-                  className={styles.progressFill} 
-                  style={{ width: `${uploadProgress}%` }}
-                ></div>
-              </div>
-              <span>{uploadProgress}%</span>
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className={styles.chatContainer}>
-          <div className={styles.chatMessages}>
-            {messages.map((msg, index) => (
-              <div
-                key={index}
-                className={`${styles.message} ${styles[msg.from]}Message`}
-              >
-                <div className={styles.messageContent}>
-                  {msg.from === "system" && (
-                    <div className={styles.systemIcon}>
-                      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
-                        <path d="M12 8V12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                        <circle cx="12" cy="16" r="1" fill="currentColor"/>
-                      </svg>
-                    </div>
-                  )}
-                  {msg.from === "ai" && (
-                    <div className={styles.aiIcon}>
-                      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <rect x="2" y="2" width="20" height="20" rx="5" stroke="currentColor" strokeWidth="2"/>
-                        <circle cx="9" cy="9" r="2" fill="currentColor"/>
-                        <circle cx="15" cy="9" r="2" fill="currentColor"/>
-                        <path d="M7 15C7 15 9 17 12 17C15 17 17 15 17 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                      </svg>
-                    </div>
-                  )}
-                  {msg.from === "user" && (
-                    <div className={styles.userIcon}>
-                      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="12" cy="8" r="5" stroke="currentColor" strokeWidth="2"/>
-                        <path d="M20 21C20 16.5817 16.4183 13 12 13C7.58172 13 4 16.5817 4 21" stroke="currentColor" strokeWidth="2"/>
-                      </svg>
-                    </div>
-                  )}
-                  <div className={styles.messageBody}>
-                    <div className={styles.messageHeader}>
-                      <span className={styles.messageSender}>
-                        {msg.from === "user" 
-                          ? "Du" 
-                          : msg.from === "ai" 
-                            ? "KI-Assistent" 
-                            : "System"}
-                      </span>
-                      <span className={styles.messageTime}>{msg.timestamp}</span>
-                    </div>
-                    <p>{msg.text}</p>
+      <div className={styles.chatContainer}>
+        <div className={styles.chatMessages}>
+          {messages.map((msg) => (
+            <div
+              key={msg.id}
+              className={`${styles.message} ${styles[msg.from]}Message`}
+            >
+              <div className={styles.messageContent}>
+                {msg.from === "system" && (
+                  <div className={styles.systemIcon}>
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
+                      <path d="M12 8V12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                      <circle cx="12" cy="16" r="1" fill="currentColor"/>
+                    </svg>
                   </div>
-                </div>
-              </div>
-            ))}
-            <div ref={chatEndRef} />
-            
-            {loading && messages[messages.length - 1]?.from === "user" && (
-              <div className={`${styles.message} ${styles.aiMessage} ${styles.typing}`}>
-                <div className={styles.messageContent}>
+                )}
+                {msg.from === "ai" && (
                   <div className={styles.aiIcon}>
                     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <rect x="2" y="2" width="20" height="20" rx="5" stroke="currentColor" strokeWidth="2"/>
@@ -372,32 +334,164 @@ export default function VertragChat() {
                       <path d="M7 15C7 15 9 17 12 17C15 17 17 15 17 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
                     </svg>
                   </div>
-                  <div className={styles.messageBody}>
-                    <div className={styles.messageHeader}>
-                      <span className={styles.messageSender}>KI-Assistent</span>
-                      <span className={styles.messageTime}>{getCurrentTime()}</span>
-                    </div>
-                    <div className={styles.typingIndicator}>
-                      <span></span><span></span><span></span>
-                    </div>
+                )}
+                {msg.from === "user" && (
+                  <div className={styles.userIcon}>
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="12" cy="8" r="5" stroke="currentColor" strokeWidth="2"/>
+                      <path d="M20 21C20 16.5817 16.4183 13 12 13C7.58172 13 4 16.5817 4 21" stroke="currentColor" strokeWidth="2"/>
+                    </svg>
+                  </div>
+                )}
+                <div className={styles.messageBody}>
+                  <div className={styles.messageHeader}>
+                    <span className={styles.messageSender}>
+                      {msg.from === "user" 
+                        ? "Du" 
+                        : msg.from === "ai" 
+                          ? "KI-Assistent" 
+                          : "System"}
+                    </span>
+                    <span className={styles.messageTime}>{msg.timestamp}</span>
+                  </div>
+                  <p dangerouslySetInnerHTML={{ __html: msg.text.replace(/\n/g, '<br>') }} />
+                </div>
+              </div>
+            </div>
+          ))}
+
+          {loading && messages[messages.length - 1]?.from === "user" && (
+            <div className={`${styles.message} ${styles.aiMessage} ${styles.typing}`}>
+              <div className={styles.messageContent}>
+                <div className={styles.aiIcon}>
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="2" y="2" width="20" height="20" rx="5" stroke="currentColor" strokeWidth="2"/>
+                    <circle cx="9" cy="9" r="2" fill="currentColor"/>
+                    <circle cx="15" cy="9" r="2" fill="currentColor"/>
+                    <path d="M7 15C7 15 9 17 12 17C15 17 17 15 17 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                </div>
+                <div className={styles.messageBody}>
+                  <div className={styles.messageHeader}>
+                    <span className={styles.messageSender}>KI-Assistent</span>
+                    <span className={styles.messageTime}>{getCurrentTime()}</span>
+                  </div>
+                  <div className={styles.typingIndicator}>
+                    <span></span><span></span><span></span>
                   </div>
                 </div>
               </div>
+            </div>
+          )}
+          
+          <div ref={chatEndRef} />
+        </div>
+        
+        {!contractLoaded && isPremium && (
+          <div 
+            className={`${styles.uploadArea} ${dragActive ? styles.dragActive : ''}`}
+            onDragEnter={handleDrag}
+            onDragLeave={handleDrag}
+            onDragOver={handleDrag}
+            onDrop={handleDrop}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="application/pdf"
+              disabled={loading}
+              className={styles.fileInput}
+              onChange={(e) => setFile(e.target.files?.[0] || null)}
+            />
+            
+            {file ? (
+              <div className={styles.filePreview}>
+                <div className={styles.fileIcon}>
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M14 2H6C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8L14 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M14 2V8H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M16 13H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M16 17H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M10 9H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                <div className={styles.fileInfo}>
+                  <span className={styles.fileName}>{file.name}</span>
+                  <span className={styles.fileSize}>{(file.size / 1024 / 1024).toFixed(2)} MB</span>
+                </div>
+                {!loading && (
+                  <button 
+                    className={styles.uploadButton} 
+                    onClick={handleUpload}
+                  >
+                    Hochladen
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className={styles.uploadPrompt} onClick={handleFileButtonClick}>
+                <div className={styles.uploadIcon}>
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M17 8L12 3L7 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M12 3V15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                <p>PDF-Vertrag auswählen oder hierhin ziehen</p>
+                <button 
+                  className={styles.selectFileButton}
+                  disabled={loading}
+                >
+                  Datei auswählen
+                </button>
+              </div>
+            )}
+            
+            {loading && (
+              <div className={styles.progressContainer}>
+                <div className={styles.progressBar}>
+                  <div 
+                    className={styles.progressFill} 
+                    style={{ width: `${uploadProgress}%` }}
+                  ></div>
+                </div>
+                <span>{uploadProgress}%</span>
+              </div>
             )}
           </div>
+        )}
 
+        {showSuggestions && isPremium && messages.length < 3 && (
+          <div className={styles.suggestedQuestions}>
+            <p className={styles.suggestionsTitle}>Vorschläge für Fragen:</p>
+            <div className={styles.suggestionsGrid}>
+              {suggestedQuestions.map((sq, index) => (
+                <button 
+                  key={index} 
+                  className={styles.suggestionButton}
+                  onClick={() => handleSuggestionClick(sq.text)}
+                >
+                  {sq.text}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className={styles.chatInputContainer}>
           <div className={styles.chatInput}>
             <input
+              ref={inputRef}
               type="text"
               value={question}
-              placeholder="Frage zum Vertrag stellen..."
+              placeholder={contractLoaded ? "Frage zum Vertrag stellen..." : "Frage zum Vertragsrecht stellen..."}
               disabled={loading || !isPremium}
               onChange={(e) => setQuestion(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && !loading && question.trim() && handleAsk()}
             />
             <button
               className={styles.sendButton}
-              onClick={handleAsk}
+              onClick={() => handleAsk()}
               disabled={loading || !question.trim() || !isPremium}
             >
               <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -406,8 +500,9 @@ export default function VertragChat() {
               </svg>
             </button>
           </div>
+          <p className={styles.disclaimer}>Hinweis: Die KI gibt keine rechtsverbindliche Beratung. Bei konkreten Rechtsfragen wende dich an einen Anwalt.</p>
         </div>
-      )}
+      </div>
     </div>
   );
 }
