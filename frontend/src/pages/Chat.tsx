@@ -377,6 +377,7 @@ export default function Chat() {
                     </span>
                     <span className={styles.messageTime}>{msg.timestamp}</span>
                   </div>
+                  {/* Nachrichtentext mit korrekter Textfarbe */}
                   <p dangerouslySetInnerHTML={{ __html: msg.text.replace(/\n/g, '<br>') }} />
                 </div>
               </div>

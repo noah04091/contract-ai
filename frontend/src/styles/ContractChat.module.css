@@ -172,19 +172,16 @@
 .userMessage .messageBody {
   /* VERBESSERT: Dunkleres Blau für besseren Kontrast mit weißem Text */
   background-color: #0057b8;
-  color: white; 
   border-top-right-radius: 4px;
 }
 
 .aiMessage .messageBody {
   background-color: #f2f2f7;
-  color: #1c1c1e;
   border-top-left-radius: 4px;
 }
 
 .systemMessage .messageBody {
   background-color: #FFF8E6;
-  color: #1c1c1e;
   border: 1px solid rgba(255, 149, 0, 0.2);
 }
 
@@ -205,16 +202,41 @@
   color: rgba(255, 255, 255, 1);
 }
 
+.aiMessage .messageHeader {
+  color: #555555;
+}
+
+.systemMessage .messageHeader {
+  color: #555555;
+}
+
 .messageTime {
-  opacity: 0.7;
+  opacity: 0.8;
   font-size: 11px;
 }
 
+/* VERBESSERT: Textfarben für verschiedene Nachrichtentypen */
 .messageBody p {
   margin: 0;
   line-height: 1.5;
   font-size: 14px;
   white-space: pre-wrap;
+  color: #333333; /* Dunkle Standardfarbe für alle Nachrichtentexte */
+}
+
+/* Für User-Nachrichten (blauer Hintergrund) */
+.userMessage .messageBody p {
+  color: white; /* Weißer Text nur für Benutzernachrichten */
+}
+
+/* Für AI-Nachrichten (grauer Hintergrund) */
+.aiMessage .messageBody p {
+  color: #333333; /* Dunkler Text für KI-Nachrichten */ 
+}
+
+/* Für System-Nachrichten (gelber Hintergrund) */
+.systemMessage .messageBody p {
+  color: #333333; /* Dunkler Text für Systemnachrichten */
 }
 
 .typing .typingIndicator {
