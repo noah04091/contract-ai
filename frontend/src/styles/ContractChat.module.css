@@ -215,28 +215,28 @@
   font-size: 11px;
 }
 
-/* VERBESSERT: Textfarben für verschiedene Nachrichtentypen */
+/* KRITISCHE VERBESSERUNG: Textfarben für verschiedene Nachrichtentypen mit !important */
 .messageBody p {
   margin: 0;
   line-height: 1.5;
   font-size: 14px;
   white-space: pre-wrap;
-  color: #333333; /* Dunkle Standardfarbe für alle Nachrichtentexte */
+  color: #333333 !important; /* Dunkler Standardtext */
 }
 
 /* Für User-Nachrichten (blauer Hintergrund) */
 .userMessage .messageBody p {
-  color: white; /* Weißer Text nur für Benutzernachrichten */
-}
-
-/* Für AI-Nachrichten (grauer Hintergrund) */
-.aiMessage .messageBody p {
-  color: #333333; /* Dunkler Text für KI-Nachrichten */ 
+  color: white !important; /* Weißer Text nur für Benutzernachrichten */
 }
 
 /* Für System-Nachrichten (gelber Hintergrund) */
-.systemMessage .messageBody p {
-  color: #333333; /* Dunkler Text für Systemnachrichten */
+.message.systemMessage .messageBody p {
+  color: #333333 !important; /* Dunkler Text für System-Nachrichten mit höherer Spezifität */
+}
+
+/* Für AI-Nachrichten (grauer Hintergrund) */
+.message.aiMessage .messageBody p {
+  color: #333333 !important; /* Dunkler Text für KI-Nachrichten */
 }
 
 .typing .typingIndicator {
