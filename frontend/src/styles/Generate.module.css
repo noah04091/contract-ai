@@ -1,31 +1,35 @@
 /* =================================
-   📱 APPLE-STYLE CONTRACT GENERATOR
+   📱 APPLE-STYLE CONTRACT GENERATOR - UPDATED
    ================================= */
 
 /* Base Styles */
 .contractGenerator {
   min-height: 100vh;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
-  color: #1e293b;
-  line-height: 1.6;
+  background: linear-gradient(145deg, #f5f7fa 0%, #f1f3f5 100%);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
+  color: #1d1d1f;
+  line-height: 1.47059;
+  letter-spacing: -0.022em;
+  font-size: 17px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Header Section */
 .generatorHeader {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(226, 232, 240, 0.5);
-  padding: 2rem 0;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.05);
+  padding: 1.5rem 0;
   position: sticky;
   top: 0;
   z-index: 10;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.1);
+  margin-bottom: 1rem;
 }
 
 .headerContent {
-  max-width: 1200px;
+  max-width: 980px;
   margin: 0 auto;
   padding: 0 2rem;
 }
@@ -39,11 +43,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: 0.75rem;
   font-size: 2.5rem;
-  font-weight: 700;
+  font-weight: 600;
   margin: 0;
-  background: linear-gradient(135deg, #1e293b, #3b82f6);
+  background: linear-gradient(135deg, #07c 0%, #0a84ff 100%);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -51,8 +55,8 @@
 }
 
 .headerText p {
-  font-size: 1.125rem;
-  color: #64748b;
+  font-size: 19px;
+  color: #86868b;
   margin: 0.5rem 0 0 0;
   font-weight: 400;
 }
@@ -61,78 +65,77 @@
 .progressSteps {
   display: flex;
   justify-content: center;
-  gap: 2rem;
+  gap: 1.5rem;
   flex-wrap: wrap;
+  padding: 0.5rem 0;
 }
 
 .step {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  border-radius: 50px;
-  background: rgba(255, 255, 255, 0.5);
-  border: 1px solid rgba(226, 232, 240, 0.5);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 0.5rem 1rem;
+  border-radius: 980px;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  transition: all 0.35s cubic-bezier(0.28, 0.44, 0.49, 1);
   font-weight: 500;
-  color: #64748b;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  color: #86868b;
+  font-size: 14px;
 }
 
 .step.active {
-  background: rgba(59, 130, 246, 0.1);
-  border-color: rgba(59, 130, 246, 0.3);
-  color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  background: rgba(10, 132, 255, 0.1);
+  border-color: rgba(10, 132, 255, 0.25);
+  color: #0a84ff;
 }
 
 .step.completed {
-  background: rgba(34, 197, 94, 0.1);
-  border-color: rgba(34, 197, 94, 0.3);
-  color: #22c55e;
-  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+  background: rgba(48, 209, 88, 0.1);
+  border-color: rgba(48, 209, 88, 0.25);
+  color: #30d158;
 }
 
 .stepIndicator {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: #e2e8f0;
-  color: #64748b;
-  transition: all 0.3s ease;
+  background: #f5f5f7;
+  color: #86868b;
+  transition: all 0.35s cubic-bezier(0.28, 0.44, 0.49, 1);
+  font-size: 12px;
 }
 
 .step.active .stepIndicator {
-  background: #3b82f6;
+  background: #0a84ff;
   color: white;
-  transform: scale(1.1);
+  transform: scale(1.05);
 }
 
 .step.completed .stepIndicator {
-  background: #22c55e;
+  background: #30d158;
   color: white;
-  transform: scale(1.1);
+  transform: scale(1.05);
 }
 
 /* Main Content */
 .generatorContent {
-  max-width: 1400px;
+  max-width: 980px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 1rem 2rem 3rem;
 }
 
 /* Premium Notice */
 .premiumNotice {
-  background: linear-gradient(135deg, #fef3c7, #fed7aa);
-  border: 1px solid #f59e0b;
-  border-radius: 16px;
-  padding: 1.5rem;
+  background: linear-gradient(145deg, #fff7ec 0%, #fff3e0 100%);
+  border: 1px solid rgba(255, 159, 10, 0.2);
+  border-radius: 14px;
+  padding: 1.25rem;
   margin-bottom: 2rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.03);
 }
 
 .premiumContent {
@@ -142,7 +145,7 @@
 }
 
 .premiumIcon {
-  color: #f59e0b;
+  color: #ff9f0a;
   flex-shrink: 0;
 }
 
@@ -152,37 +155,36 @@
 
 .premiumText h3 {
   margin: 0 0 0.25rem 0;
-  font-size: 1.125rem;
+  font-size: 17px;
   font-weight: 600;
-  color: #92400e;
+  color: #1d1d1f;
 }
 
 .premiumText p {
   margin: 0;
-  color: #b45309;
-  font-size: 0.9rem;
+  color: #86868b;
+  font-size: 14px;
 }
 
 .upgradeButton {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, #f59e0b, #d97706);
+  padding: 0.5rem 1rem;
+  background: #ff9f0a;
   color: white;
   border: none;
-  border-radius: 12px;
+  border-radius: 980px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 0.9rem;
+  transition: all 0.3s cubic-bezier(0.28, 0.44, 0.49, 1);
+  font-size: 14px;
   flex-shrink: 0;
 }
 
 .upgradeButton:hover {
-  background: linear-gradient(135deg, #d97706, #b45309);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+  background: #f08a00;
+  transform: scale(1.02);
 }
 
 /* Content Grid */
@@ -190,7 +192,7 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: 2rem;
-  transition: all 0.3s ease;
+  transition: all 0.35s cubic-bezier(0.28, 0.44, 0.49, 1);
 }
 
 .contentGrid.withPreview {
@@ -199,15 +201,13 @@
 
 /* Form Panel */
 .formPanel {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(226, 232, 240, 0.5);
-  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 14px;
   padding: 2rem;
-  box-shadow: 
-    0 10px 25px -5px rgba(0, 0, 0, 0.1),
-    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.04);
 }
 
 .stepContent {
@@ -220,17 +220,17 @@
 }
 
 .stepHeader h2 {
-  font-size: 1.875rem;
-  font-weight: 700;
-  color: #1e293b;
+  font-size: 28px;
+  font-weight: 600;
+  color: #1d1d1f;
   margin: 0 0 0.5rem 0;
   letter-spacing: -0.025em;
 }
 
 .stepHeader p {
-  color: #64748b;
+  color: #86868b;
   margin: 0;
-  font-size: 1rem;
+  font-size: 17px;
 }
 
 .backButton {
@@ -238,21 +238,21 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
-  background: none;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  color: #64748b;
+  background: rgba(250, 250, 250, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 980px;
+  color: #86868b;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.28, 0.44, 0.49, 1);
   margin-bottom: 1rem;
-  font-size: 0.9rem;
+  font-size: 14px;
   font-weight: 500;
 }
 
 .backButton:hover {
-  background: #f8fafc;
-  color: #3b82f6;
-  border-color: #3b82f6;
+  background: #f5f5f7;
+  color: #0a84ff;
+  border-color: rgba(10, 132, 255, 0.2);
   transform: translateX(-2px);
 }
 
@@ -260,23 +260,23 @@
 .contractTypesGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.5rem;
+  gap: 1.25rem;
   max-width: 900px;
   margin: 0 auto;
 }
 
 .contractTypeCard {
-  background: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(226, 232, 240, 0.5);
-  border-radius: 20px;
-  padding: 2rem;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 14px;
+  padding: 1.75rem;
   text-align: center;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.35s cubic-bezier(0.28, 0.44, 0.49, 1);
   position: relative;
   overflow: hidden;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
 }
 
 .contractTypeCard::before {
@@ -286,17 +286,15 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0), rgba(59, 130, 246, 0.05));
+  background: linear-gradient(145deg, rgba(10, 132, 255, 0), rgba(10, 132, 255, 0.05));
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.35s cubic-bezier(0.28, 0.44, 0.49, 1);
 }
 
 .contractTypeCard:not(:disabled):hover {
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: 
-    0 20px 25px -5px rgba(0, 0, 0, 0.1),
-    0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  border-color: #3b82f6;
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+  border-color: rgba(10, 132, 255, 0.15);
   transform: translateY(-4px);
 }
 
@@ -310,9 +308,9 @@
 }
 
 .contractTypeCard.selected {
-  background: rgba(59, 130, 246, 0.05);
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  background: rgba(10, 132, 255, 0.05);
+  border-color: rgba(10, 132, 255, 0.2);
+  box-shadow: 0 0 0 1px rgba(10, 132, 255, 0.2);
 }
 
 .cardIcon {
@@ -322,23 +320,23 @@
 }
 
 .contractTypeCard h3 {
-  font-size: 1.25rem;
+  font-size: 20px;
   font-weight: 600;
-  color: #1e293b;
+  color: #1d1d1f;
   margin: 0 0 0.5rem 0;
 }
 
 .contractTypeCard p {
-  color: #64748b;
+  color: #86868b;
   margin: 0 0 1rem 0;
-  line-height: 1.5;
-  font-size: 0.9rem;
+  line-height: 1.4;
+  font-size: 14px;
 }
 
 .cardArrow {
-  color: #3b82f6;
+  color: #0a84ff;
   opacity: 0;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.28, 0.44, 0.49, 1);
 }
 
 .contractTypeCard:hover .cardArrow {
@@ -355,7 +353,7 @@
 .formGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1.5rem;
+  gap: 1.25rem;
   margin-bottom: 2rem;
 }
 
@@ -371,20 +369,18 @@
 
 .formGroup label {
   font-weight: 600;
-  color: #374151;
-  font-size: 0.875rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  color: #1d1d1f;
+  font-size: 14px;
 }
 
 .formGroup input,
 .formGroup textarea {
-  padding: 1rem;
-  border: 1px solid #d1d5db;
-  border-radius: 12px;
-  font-size: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  font-size: 17px;
   background: rgba(255, 255, 255, 0.8);
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.28, 0.44, 0.49, 1);
   font-family: inherit;
   resize: vertical;
 }
@@ -392,8 +388,8 @@
 .formGroup input:focus,
 .formGroup textarea:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: #0a84ff;
+  box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.15);
   background: rgba(255, 255, 255, 0.95);
 }
 
@@ -401,12 +397,12 @@
 .formGroup textarea:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-  background: #f9fafb;
+  background: #f5f5f7;
 }
 
 .formGroup textarea {
   min-height: 120px;
-  line-height: 1.6;
+  line-height: 1.47059;
 }
 
 /* Generate Button */
@@ -416,20 +412,19 @@
   justify-content: center;
   gap: 0.75rem;
   width: 100%;
-  padding: 1.25rem 2rem;
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  padding: 0.875rem 1.5rem;
+  background: linear-gradient(145deg, #0a84ff 0%, #0071e3 100%);
   color: white;
   border: none;
-  border-radius: 16px;
-  font-size: 1.125rem;
+  border-radius: 980px;
+  font-size: 17px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 
-    0 10px 15px -3px rgba(59, 130, 246, 0.3),
-    0 4px 6px -2px rgba(59, 130, 246, 0.05);
-  position: relative;
+  transition: all 0.3s cubic-bezier(0.28, 0.44, 0.49, 1);
+  box-shadow: 0 2px 8px rgba(0, 113, 227, 0.2);
   overflow: hidden;
+  position: relative;
+  letter-spacing: -0.01em;
 }
 
 .generateButton::before {
@@ -440,14 +435,13 @@
   width: 100%;
   height: 100%;
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left 0.5s ease;
+  transition: left 0.75s cubic-bezier(0.28, 0.44, 0.49, 1);
 }
 
 .generateButton:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 
-    0 15px 25px -5px rgba(59, 130, 246, 0.4),
-    0 10px 10px -5px rgba(59, 130, 246, 0.05);
+  transform: scale(1.02);
+  box-shadow: 0 5px 15px rgba(0, 113, 227, 0.3);
+  background: linear-gradient(145deg, #0071e3 0%, #0062c3 100%);
 }
 
 .generateButton:hover:not(:disabled)::before {
@@ -473,57 +467,57 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  background: rgba(255, 255, 255, 0.8);
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  padding: 0.75rem 1.25rem;
+  background: rgba(250, 250, 250, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 980px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.28, 0.44, 0.49, 1);
   font-weight: 500;
-  color: #374151;
-  font-size: 0.9rem;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  color: #1d1d1f;
+  font-size: 14px;
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
 }
 
 .actionButton:hover {
-  background: #f8fafc;
-  border-color: #3b82f6;
-  color: #3b82f6;
+  background: #f5f5f7;
+  border-color: rgba(10, 132, 255, 0.2);
+  color: #0a84ff;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .actionButton.primary {
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  background: linear-gradient(145deg, #0a84ff 0%, #0071e3 100%);
   color: white;
   border-color: transparent;
 }
 
 .actionButton.primary:hover {
-  background: linear-gradient(135deg, #1d4ed8, #1e40af);
+  background: linear-gradient(145deg, #0071e3 0%, #0062c3 100%);
   color: white;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 113, 227, 0.3);
 }
 
 .actionButton.success {
-  background: rgba(34, 197, 94, 0.1);
-  border-color: #22c55e;
-  color: #22c55e;
+  background: rgba(48, 209, 88, 0.1);
+  border-color: rgba(48, 209, 88, 0.2);
+  color: #30d158;
 }
 
 .actionButton.success:hover {
-  background: rgba(34, 197, 94, 0.15);
-  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.15);
+  background: rgba(48, 209, 88, 0.15);
+  box-shadow: 0 2px 8px rgba(48, 209, 88, 0.15);
 }
 
 /* Signature Section */
 .signatureSection {
-  background: rgba(248, 250, 252, 0.5);
-  border-radius: 16px;
+  background: rgba(245, 245, 247, 0.5);
+  border-radius: 14px;
   padding: 1.5rem;
-  margin: 2rem 0;
-  border: 1px solid rgba(226, 232, 240, 0.3);
+  margin: 1.5rem 0;
+  border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .signatureSection h3 {
@@ -531,34 +525,34 @@
   align-items: center;
   gap: 0.5rem;
   margin: 0 0 1rem 0;
-  color: #374151;
+  color: #1d1d1f;
   font-weight: 600;
-  font-size: 1.1rem;
+  font-size: 17px;
 }
 
 .signatureCanvasContainer {
   position: relative;
   background: white;
-  border: 2px dashed #d1d5db;
-  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
   overflow: hidden;
-  transition: border-color 0.3s ease;
+  transition: border-color 0.3s cubic-bezier(0.28, 0.44, 0.49, 1);
 }
 
 .signatureCanvasContainer:hover {
-  border-color: #9ca3af;
+  border-color: rgba(0, 0, 0, 0.15);
 }
 
 .signatureCanvas {
   display: block;
   width: 100%;
-  height: 200px;
+  height: 180px;
   cursor: crosshair;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.28, 0.44, 0.49, 1);
 }
 
 .signatureCanvas.drawing {
-  border-color: #3b82f6;
+  border-color: #0a84ff;
 }
 
 .canvasOverlay {
@@ -571,14 +565,14 @@
   align-items: center;
   justify-content: center;
   pointer-events: none;
-  background: rgba(248, 250, 252, 0.5);
-  transition: opacity 0.3s ease;
+  background: rgba(255, 255, 255, 0.5);
+  transition: opacity 0.3s cubic-bezier(0.28, 0.44, 0.49, 1);
 }
 
 .canvasPlaceholder {
-  color: #9ca3af;
+  color: #86868b;
   font-style: italic;
-  font-size: 1.1rem;
+  font-size: 17px;
   user-select: none;
 }
 
@@ -591,50 +585,51 @@
 .signaturePreview img {
   max-width: 200px;
   max-height: 100px;
-  border: 1px solid #e5e7eb;
-  border-radius: 4px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .signatureControls {
   display: flex;
   gap: 1rem;
   margin-top: 1rem;
+  flex-wrap: wrap;
 }
 
 .signatureButton {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  border: 1px solid #d1d5db;
-  border-radius: 12px;
-  background: white;
+  padding: 0.75rem 1.25rem;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 980px;
+  background: rgba(250, 250, 250, 0.8);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.28, 0.44, 0.49, 1);
   font-weight: 500;
-  font-size: 0.9rem;
+  font-size: 14px;
 }
 
 .signatureButton.secondary {
-  color: #6b7280;
+  color: #86868b;
 }
 
 .signatureButton.secondary:hover {
-  background: #f9fafb;
-  border-color: #9ca3af;
-  color: #374151;
+  background: #f5f5f7;
+  border-color: rgba(0, 0, 0, 0.1);
+  color: #1d1d1f;
 }
 
 .signatureButton.primary {
-  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-  border-color: #3b82f6;
+  background: linear-gradient(145deg, #0a84ff 0%, #0071e3 100%);
+  border-color: transparent;
   color: white;
 }
 
 .signatureButton.primary:hover {
-  background: linear-gradient(135deg, #1d4ed8, #1e40af);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  background: linear-gradient(145deg, #0071e3 0%, #0062c3 100%);
+  box-shadow: 0 2px 8px rgba(0, 113, 227, 0.3);
 }
 
 .signatureButton:hover {
@@ -645,37 +640,36 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 1rem 2rem;
-  background: none;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  padding: 0.75rem 1.5rem;
+  background: rgba(250, 250, 250, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 980px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.28, 0.44, 0.49, 1);
   margin-top: 2rem;
-  color: #64748b;
+  color: #86868b;
   font-weight: 500;
   width: 100%;
   justify-content: center;
+  font-size: 15px;
 }
 
 .backToStartButton:hover {
-  background: #f8fafc;
-  border-color: #3b82f6;
-  color: #3b82f6;
+  background: #f5f5f7;
+  border-color: rgba(10, 132, 255, 0.2);
+  color: #0a84ff;
   transform: translateX(-2px);
 }
 
 /* Preview Panel */
 .previewPanel {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(226, 232, 240, 0.5);
-  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 14px;
   padding: 0;
-  box-shadow: 
-    0 10px 25px -5px rgba(0, 0, 0, 0.1),
-    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.04);
   overflow: hidden;
   max-height: calc(100vh - 200px);
   display: flex;
@@ -686,11 +680,11 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.5rem 2rem;
-  border-bottom: 1px solid rgba(226, 232, 240, 0.5);
-  background: rgba(248, 250, 252, 0.5);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  background: rgba(245, 245, 247, 0.5);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
 }
 
 .previewHeader h3 {
@@ -698,78 +692,78 @@
   align-items: center;
   gap: 0.5rem;
   margin: 0;
-  color: #374151;
+  color: #1d1d1f;
   font-weight: 600;
-  font-size: 1.1rem;
+  font-size: 17px;
 }
 
 .closePreview {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  color: #6b7280;
+  background: rgba(250, 250, 250, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  font-size: 20px;
+  color: #86868b;
   cursor: pointer;
-  padding: 0.25rem 0.5rem;
-  border-radius: 6px;
-  transition: all 0.2s ease;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.3s cubic-bezier(0.28, 0.44, 0.49, 1);
+  padding: 0;
+  line-height: 1;
 }
 
 .closePreview:hover {
-  background: rgba(107, 114, 128, 0.1);
-  color: #374151;
+  background: #f5f5f7;
+  color: #1d1d1f;
   transform: scale(1.1);
 }
 
 .previewContainer {
   flex: 1;
   overflow-y: auto;
-  padding: 2rem;
+  padding: 1.5rem;
 }
 
 .contractContent {
-  color: #374151;
-  line-height: 1.8;
-  font-family: 'Times New Roman', 'Georgia', serif;
-  font-size: 1rem;
+  color: #1d1d1f;
+  line-height: 1.6;
+  font-family: 'SF Serif Display', 'New York', 'Times New Roman', 'Georgia', serif;
+  font-size: 15px;
   background: white;
   padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 
-    0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  border: 1px solid rgba(226, 232, 240, 0.5);
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .signatureInPreview {
   margin-top: 2rem;
-  padding-top: 2rem;
-  border-top: 1px solid #e5e7eb;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .signatureLabel {
   font-weight: 600;
   margin-bottom: 0.5rem;
-  color: #374151;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: #1d1d1f;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+  font-size: 14px;
 }
 
 .signatureInPreview img {
   max-width: 200px;
-  border: 1px solid #e5e7eb;
-  border-radius: 4px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .signatureDate {
-  font-size: 0.875rem;
-  color: #6b7280;
+  font-size: 12px;
+  color: #86868b;
   margin-top: 0.5rem;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
 }
 
 /* Loading States */
@@ -782,7 +776,7 @@
 
 .loadingContent {
   text-align: center;
-  color: #64748b;
+  color: #86868b;
 }
 
 .loadingOverlay {
@@ -791,9 +785,9 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(15, 23, 42, 0.8);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -802,37 +796,37 @@
 
 .loadingOverlay .loadingContent {
   background: white;
-  padding: 3rem;
-  border-radius: 20px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  max-width: 400px;
+  padding: 2.5rem;
+  border-radius: 14px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  max-width: 320px;
   width: 90%;
-  color: #1e293b;
+  color: #1d1d1f;
 }
 
 .loadingOverlay h3 {
   margin: 1rem 0 0.5rem 0;
-  color: #1e293b;
-  font-size: 1.5rem;
-  font-weight: 700;
+  color: #1d1d1f;
+  font-size: 20px;
+  font-weight: 600;
 }
 
 .loadingOverlay p {
   margin: 0 0 1.5rem 0;
-  color: #64748b;
+  color: #86868b;
 }
 
 .loadingProgress {
   height: 4px;
-  background: #e2e8f0;
+  background: #f5f5f7;
   border-radius: 2px;
   overflow: hidden;
 }
 
 .loadingBar {
   height: 100%;
-  background: linear-gradient(90deg, #3b82f6, #1d4ed8);
-  animation: loading-progress 2s ease-in-out infinite;
+  background: linear-gradient(90deg, #0a84ff, #0071e3);
+  animation: loading-progress 2s cubic-bezier(0.28, 0.44, 0.49, 1) infinite;
   border-radius: 2px;
 }
 
@@ -844,25 +838,25 @@
 
 /* Loading Spinner */
 .loadingSpinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid #e2e8f0;
-  border-top: 4px solid #3b82f6;
+  width: 36px;
+  height: 36px;
+  border: 3px solid #f5f5f7;
+  border-top: 3px solid #0a84ff;
   border-radius: 50%;
   animation: loading-spin 1s linear infinite;
   margin: 0 auto;
 }
 
 .loadingSpinner.small {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   border-width: 2px;
 }
 
 .loadingSpinner.large {
-  width: 60px;
-  height: 60px;
-  border-width: 6px;
+  width: 48px;
+  height: 48px;
+  border-width: 4px;
 }
 
 @keyframes loading-spin {
@@ -877,7 +871,7 @@
   }
 
   .generatorContent {
-    padding: 1.5rem;
+    padding: 1rem 1.5rem 2rem;
   }
 }
 
@@ -887,7 +881,7 @@
   }
 
   .generatorContent {
-    padding: 1rem;
+    padding: 0 1rem 2rem;
   }
 
   .contractTypesGrid {
@@ -901,14 +895,25 @@
   }
 
   .progressSteps {
-    flex-direction: column;
-    gap: 0.5rem;
-    align-items: stretch;
+    gap: 0.75rem;
+    overflow-x: auto;
+    justify-content: flex-start;
+    padding: 0.5rem;
+    margin: 0 -1rem;
+    width: calc(100% + 2rem);
+  }
+
+  .progressSteps::-webkit-scrollbar {
+    display: none;
   }
 
   .step {
-    justify-content: flex-start;
-    padding: 1rem 1.5rem;
+    flex-shrink: 0;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .stepHeader h2 {
+    font-size: 24px;
   }
 
   .actionButtons {
@@ -920,11 +925,11 @@
   }
 
   .headerText h1 {
-    font-size: 2rem;
+    font-size: 28px;
   }
 
   .headerText p {
-    font-size: 1rem;
+    font-size: 16px;
   }
 
   .premiumContent {
@@ -934,7 +939,7 @@
   }
 
   .upgradeButton {
-    align-self: center;
+    align-self: stretch;
   }
 }
 
@@ -942,11 +947,11 @@
   .formPanel,
   .previewPanel {
     padding: 1rem;
-    border-radius: 16px;
+    border-radius: 14px;
   }
 
   .contractTypeCard {
-    padding: 1.5rem;
+    padding: 1.25rem;
   }
 
   .signatureSection {
@@ -958,48 +963,241 @@
   }
 
   .headerText h1 {
-    font-size: 1.75rem;
+    font-size: 24px;
     flex-direction: column;
     gap: 0.25rem;
+  }
+
+  .generateButton,
+  .backToStartButton {
+    padding: 0.75rem 1rem;
+  }
+
+  /* Fix for notch phones and safe areas */
+  .contractGenerator {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
   }
 }
 
 /* High DPI Displays */
 @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
   .contractContent {
-    font-size: 1.1rem;
+    font-size: 16px;
   }
 }
 
-/* Dark mode support (optional) */
+/* Dark mode support */
 @media (prefers-color-scheme: dark) {
   .contractGenerator {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    color: #f1f5f9;
+    background: linear-gradient(145deg, #1c1c1e 0%, #111113 100%);
+    color: #f5f5f7;
   }
 
   .generatorHeader {
-    background: rgba(15, 23, 42, 0.8);
-    border-bottom-color: rgba(71, 85, 105, 0.5);
+    background: rgba(28, 28, 30, 0.85);
+    border-bottom-color: rgba(66, 66, 70, 0.5);
   }
 
   .headerText h1 {
-    background: linear-gradient(135deg, #f1f5f9, #60a5fa);
+    background: linear-gradient(135deg, #0a84ff 0%, #64d2ff 100%);
     background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
   }
 
-  .formPanel,
-  .previewPanel {
-    background: rgba(15, 23, 42, 0.7);
-    border-color: rgba(71, 85, 105, 0.5);
+  .headerText p {
+    color: #98989d;
   }
 
+  .step {
+    background: rgba(44, 44, 46, 0.8);
+    border-color: rgba(66, 66, 70, 0.8);
+    color: #98989d;
+  }
+
+  .stepIndicator {
+    background: #3a3a3c;
+    color: #98989d;
+  }
+
+  .formPanel,
+  .previewPanel {
+    background: rgba(28, 28, 30, 0.8);
+    border-color: rgba(66, 66, 70, 0.5);
+  }
+  
+  .stepHeader h2 {
+    color: #f5f5f7;
+  }
+  
+  .stepHeader p {
+    color: #98989d;
+  }
+  
+  .contractTypeCard {
+    background: rgba(44, 44, 46, 0.8);
+    border-color: rgba(66, 66, 70, 0.8);
+  }
+  
+  .contractTypeCard h3 {
+    color: #f5f5f7;
+  }
+  
+  .contractTypeCard p {
+    color: #98989d;
+  }
+  
+  .contractTypeCard:not(:disabled):hover {
+    background: rgba(44, 44, 46, 0.9);
+    border-color: rgba(10, 132, 255, 0.3);
+  }
+  
+  .formGroup label {
+    color: #f5f5f7;
+  }
+  
+  .formGroup input,
+  .formGroup textarea {
+    background: rgba(44, 44, 46, 0.8);
+    border-color: rgba(66, 66, 70, 0.8);
+    color: #f5f5f7;
+  }
+  
+  .formGroup input:focus,
+  .formGroup textarea:focus {
+    background: rgba(44, 44, 46, 0.9);
+  }
+  
+  .formGroup input:disabled,
+  .formGroup textarea:disabled {
+    background: #3a3a3c;
+  }
+  
+  .backButton,
+  .actionButton {
+    background: rgba(44, 44, 46, 0.8);
+    border-color: rgba(66, 66, 70, 0.8);
+    color: #98989d;
+  }
+  
+  .backButton:hover,
+  .actionButton:hover {
+    background: #3a3a3c;
+    color: #0a84ff;
+  }
+  
+  .signatureSection {
+    background: rgba(44, 44, 46, 0.5);
+    border-color: rgba(66, 66, 70, 0.5);
+  }
+  
+  .signatureSection h3 {
+    color: #f5f5f7;
+  }
+  
+  .signatureCanvasContainer {
+    background: #2c2c2e;
+    border-color: rgba(66, 66, 70, 0.8);
+  }
+  
+  .canvasOverlay {
+    background: rgba(44, 44, 46, 0.5);
+  }
+  
+  .canvasPlaceholder {
+    color: #98989d;
+  }
+  
+  .signatureButton {
+    background: rgba(44, 44, 46, 0.8);
+    border-color: rgba(66, 66, 70, 0.8);
+  }
+  
+  .signatureButton.secondary {
+    color: #98989d;
+  }
+  
+  .signatureButton.secondary:hover {
+    background: #3a3a3c;
+    color: #f5f5f7;
+  }
+  
+  .backToStartButton {
+    background: rgba(44, 44, 46, 0.8);
+    border-color: rgba(66, 66, 70, 0.8);
+    color: #98989d;
+  }
+  
+  .backToStartButton:hover {
+    background: #3a3a3c;
+    color: #0a84ff;
+  }
+  
+  .previewHeader {
+    background: rgba(44, 44, 46, 0.8);
+    border-color: rgba(66, 66, 70, 0.8);
+  }
+  
+  .previewHeader h3 {
+    color: #f5f5f7;
+  }
+  
+  .closePreview {
+    background: rgba(58, 58, 60, 0.8);
+    border-color: rgba(66, 66, 70, 0.8);
+    color: #98989d;
+  }
+  
+  .closePreview:hover {
+    background: #3a3a3c;
+    color: #f5f5f7;
+  }
+  
   .contractContent {
-    background: #0f172a;
-    color: #f1f5f9;
-    border-color: rgba(71, 85, 105, 0.5);
+    background: #2c2c2e;
+    color: #f5f5f7;
+    border-color: rgba(66, 66, 70, 0.8);
+  }
+  
+  .signatureInPreview {
+    border-color: rgba(66, 66, 70, 0.8);
+  }
+  
+  .signatureLabel {
+    color: #f5f5f7;
+  }
+  
+  .signatureDate {
+    color: #98989d;
+  }
+  
+  .loadingSpinner {
+    border-color: #3a3a3c;
+    border-top-color: #0a84ff;
+  }
+  
+  .loadingOverlay {
+    background: rgba(28, 28, 30, 0.85);
+  }
+  
+  .loadingOverlay .loadingContent {
+    background: #2c2c2e;
+    color: #f5f5f7;
+  }
+  
+  .loadingOverlay h3 {
+    color: #f5f5f7;
+  }
+  
+  .loadingOverlay p {
+    color: #98989d;
+  }
+  
+  .loadingProgress {
+    background: #3a3a3c;
   }
 }
 
@@ -1045,21 +1243,6 @@
 .backButton:focus-visible,
 .backToStartButton:focus-visible,
 .upgradeButton:focus-visible {
-  outline: 2px solid #3b82f6;
+  outline: 2px solid #0a84ff;
   outline-offset: 2px;
-}
-
-/* High contrast mode support */
-@media (prefers-contrast: high) {
-  .contractTypeCard,
-  .formPanel,
-  .previewPanel {
-    border-width: 2px;
-  }
-
-  .actionButton,
-  .signatureButton,
-  .generateButton {
-    border-width: 2px;
-  }
 }
