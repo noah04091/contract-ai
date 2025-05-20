@@ -1,13 +1,13 @@
 /* =================================
-   📱 APPLE-STYLE CONTRACT GENERATOR - DARK THEME
+   📱 APPLE-STYLE CONTRACT GENERATOR - LIGHT THEME
    ================================= */
 
 /* Base Styles */
 .contractGenerator {
   min-height: 100vh;
-  background: linear-gradient(145deg, #1a1a1c 0%, #0f0f11 100%);
+  background: linear-gradient(145deg, #f5f7fa 0%, #f1f5f7 100%);
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
-  color: #f5f5f7;
+  color: #1d1d1f;
   line-height: 1.47059;
   letter-spacing: -0.022em;
   font-size: 17px;
@@ -17,11 +17,11 @@
 
 /* Header Section */
 .generatorHeader {
-  background: rgba(25, 25, 27, 0.85);
+  background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(25px);
   -webkit-backdrop-filter: blur(25px);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05);
-  padding: 1.5rem 0;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.05);
+  padding: 1.25rem 0;
   position: sticky;
   top: 0;
   z-index: 10;
@@ -31,12 +31,12 @@
 .headerContent {
   max-width: 980px;
   margin: 0 auto;
-  padding: 0 2rem;
+  padding: 0 1.5rem;
 }
 
 .headerText {
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
 
 .headerText h1 {
@@ -44,10 +44,10 @@
   align-items: center;
   justify-content: center;
   gap: 0.75rem;
-  font-size: 2.5rem;
+  font-size: 2.25rem;
   font-weight: 600;
   margin: 0;
-  background: linear-gradient(135deg, #0a84ff 0%, #64d2ff 100%);
+  background: linear-gradient(135deg, #07c 0%, #0a84ff 100%);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -55,8 +55,8 @@
 }
 
 .headerText p {
-  font-size: 19px;
-  color: #98989d;
+  font-size: 1.125rem;
+  color: #86868b;
   margin: 0.5rem 0 0 0;
   font-weight: 400;
 }
@@ -65,7 +65,7 @@
 .progressSteps {
   display: flex;
   justify-content: center;
-  gap: 1.5rem;
+  gap: 1rem;
   flex-wrap: wrap;
   padding: 0.5rem 0;
 }
@@ -74,39 +74,39 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.5rem 1rem;
+  padding: 0.5rem 0.75rem;
   border-radius: 980px;
-  background: rgba(40, 40, 45, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(0, 0, 0, 0.05);
   transition: all 0.35s cubic-bezier(0.28, 0.44, 0.49, 1);
   font-weight: 500;
-  color: #98989d;
-  font-size: 14px;
+  color: #86868b;
+  font-size: 13px;
 }
 
 .step.active {
-  background: rgba(10, 132, 255, 0.2);
-  border-color: rgba(10, 132, 255, 0.4);
+  background: rgba(10, 132, 255, 0.1);
+  border-color: rgba(10, 132, 255, 0.25);
   color: #0a84ff;
 }
 
 .step.completed {
-  background: rgba(48, 209, 88, 0.2);
-  border-color: rgba(48, 209, 88, 0.4);
+  background: rgba(48, 209, 88, 0.1);
+  border-color: rgba(48, 209, 88, 0.25);
   color: #30d158;
 }
 
 .stepIndicator {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: rgba(60, 60, 65, 0.8);
-  color: #98989d;
+  background: #f5f5f7;
+  color: #86868b;
   transition: all 0.35s cubic-bezier(0.28, 0.44, 0.49, 1);
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .step.active .stepIndicator {
@@ -125,7 +125,7 @@
 .generatorContent {
   max-width: 980px;
   margin: 0 auto;
-  padding: 1rem 2rem 3rem;
+  padding: 1rem 1.5rem 3rem;
 }
 
 /* Premium Notice */
@@ -135,7 +135,7 @@
   border-radius: 14px;
   padding: 1.25rem;
   margin-bottom: 2rem;
-  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.03);
 }
 
 .premiumContent {
@@ -201,36 +201,38 @@
 
 /* Form Panel */
 .formPanel {
-  background: rgba(25, 25, 27, 0.7);
+  background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.05);
   border-radius: 14px;
-  padding: 2rem;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  padding: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
 }
 
 .stepContent {
   min-height: 400px;
+  margin-top: 24px; /* Added spacing to prevent overlap */
+  padding-bottom: 24px; /* Added bottom spacing */
 }
 
 .stepHeader {
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
   text-align: center;
 }
 
 .stepHeader h2 {
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 600;
-  color: #f5f5f7;
+  color: #1d1d1f;
   margin: 0 0 0.5rem 0;
   letter-spacing: -0.025em;
 }
 
 .stepHeader p {
-  color: #98989d;
+  color: #86868b;
   margin: 0;
-  font-size: 17px;
+  font-size: 16px;
 }
 
 .backButton {
@@ -238,10 +240,10 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
-  background: rgba(60, 60, 65, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(250, 250, 250, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.05);
   border-radius: 980px;
-  color: #98989d;
+  color: #86868b;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.28, 0.44, 0.49, 1);
   margin-bottom: 1rem;
@@ -250,9 +252,9 @@
 }
 
 .backButton:hover {
-  background: rgba(60, 60, 65, 0.8);
+  background: #f5f5f7;
   color: #0a84ff;
-  border-color: rgba(10, 132, 255, 0.4);
+  border-color: rgba(10, 132, 255, 0.2);
   transform: translateX(-2px);
 }
 
@@ -266,10 +268,10 @@
 }
 
 .contractTypeCard {
-  background: rgba(32, 32, 35, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(0, 0, 0, 0.05);
   border-radius: 14px;
-  padding: 1.75rem;
+  padding: 1.5rem;
   text-align: center;
   cursor: pointer;
   transition: all 0.35s cubic-bezier(0.28, 0.44, 0.49, 1);
@@ -286,15 +288,15 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(145deg, rgba(10, 132, 255, 0), rgba(10, 132, 255, 0.08));
+  background: linear-gradient(145deg, rgba(10, 132, 255, 0), rgba(10, 132, 255, 0.05));
   opacity: 0;
   transition: opacity 0.35s cubic-bezier(0.28, 0.44, 0.49, 1);
 }
 
 .contractTypeCard:not(:disabled):hover {
-  background: rgba(38, 38, 42, 0.8);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
-  border-color: rgba(10, 132, 255, 0.4);
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+  border-color: rgba(10, 132, 255, 0.15);
   transform: translateY(-4px);
 }
 
@@ -308,9 +310,9 @@
 }
 
 .contractTypeCard.selected {
-  background: rgba(10, 132, 255, 0.15);
-  border-color: rgba(10, 132, 255, 0.5);
-  box-shadow: 0 0 0 1px rgba(10, 132, 255, 0.3);
+  background: rgba(10, 132, 255, 0.05);
+  border-color: rgba(10, 132, 255, 0.2);
+  box-shadow: 0 0 0 1px rgba(10, 132, 255, 0.2);
 }
 
 .cardIcon {
@@ -320,14 +322,14 @@
 }
 
 .contractTypeCard h3 {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 600;
-  color: #f5f5f7;
+  color: #1d1d1f;
   margin: 0 0 0.5rem 0;
 }
 
 .contractTypeCard p {
-  color: #98989d;
+  color: #86868b;
   margin: 0 0 1rem 0;
   line-height: 1.4;
   font-size: 14px;
@@ -369,36 +371,36 @@
 
 .formGroup label {
   font-weight: 600;
-  color: #f5f5f7;
+  color: #1d1d1f;
   font-size: 14px;
 }
 
 .formGroup input,
 .formGroup textarea {
   padding: 0.75rem 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 10px;
-  font-size: 17px;
-  background: rgba(40, 40, 45, 0.8);
-  color: #f5f5f7;
+  font-size: 16px;
+  background: rgba(255, 255, 255, 0.8);
   transition: all 0.3s cubic-bezier(0.28, 0.44, 0.49, 1);
   font-family: inherit;
   resize: vertical;
+  color: #1d1d1f;
 }
 
 .formGroup input:focus,
 .formGroup textarea:focus {
   outline: none;
   border-color: #0a84ff;
-  box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.25);
-  background: rgba(50, 50, 55, 0.9);
+  box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.15);
+  background: rgba(255, 255, 255, 0.95);
 }
 
 .formGroup input:disabled,
 .formGroup textarea:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-  background: rgba(35, 35, 40, 0.5);
+  background: #f5f5f7;
 }
 
 .formGroup textarea {
@@ -418,11 +420,11 @@
   color: white;
   border: none;
   border-radius: 980px;
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.28, 0.44, 0.49, 1);
-  box-shadow: 0 4px 12px rgba(10, 132, 255, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 113, 227, 0.2);
   overflow: hidden;
   position: relative;
   letter-spacing: -0.01em;
@@ -441,7 +443,7 @@
 
 .generateButton:hover:not(:disabled) {
   transform: scale(1.02);
-  box-shadow: 0 8px 20px rgba(10, 132, 255, 0.4);
+  box-shadow: 0 5px 15px rgba(0, 113, 227, 0.3);
   background: linear-gradient(145deg, #0071e3 0%, #0062c3 100%);
 }
 
@@ -469,24 +471,24 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1.25rem;
-  background: rgba(60, 60, 65, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(250, 250, 250, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.05);
   border-radius: 980px;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.28, 0.44, 0.49, 1);
   font-weight: 500;
-  color: #f5f5f7;
+  color: #1d1d1f;
   font-size: 14px;
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
 }
 
 .actionButton:hover {
-  background: rgba(60, 60, 65, 0.8);
-  border-color: rgba(10, 132, 255, 0.4);
+  background: #f5f5f7;
+  border-color: rgba(10, 132, 255, 0.2);
   color: #0a84ff;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .actionButton.primary {
@@ -498,27 +500,27 @@
 .actionButton.primary:hover {
   background: linear-gradient(145deg, #0071e3 0%, #0062c3 100%);
   color: white;
-  box-shadow: 0 4px 12px rgba(10, 132, 255, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 113, 227, 0.3);
 }
 
 .actionButton.success {
-  background: rgba(48, 209, 88, 0.2);
-  border-color: rgba(48, 209, 88, 0.4);
+  background: rgba(48, 209, 88, 0.1);
+  border-color: rgba(48, 209, 88, 0.2);
   color: #30d158;
 }
 
 .actionButton.success:hover {
-  background: rgba(48, 209, 88, 0.25);
-  box-shadow: 0 4px 12px rgba(48, 209, 88, 0.2);
+  background: rgba(48, 209, 88, 0.15);
+  box-shadow: 0 2px 8px rgba(48, 209, 88, 0.15);
 }
 
 /* Signature Section */
 .signatureSection {
-  background: rgba(32, 32, 35, 0.5);
+  background: rgba(248, 250, 252, 0.5);
   border-radius: 14px;
   padding: 1.5rem;
   margin: 1.5rem 0;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .signatureSection h3 {
@@ -526,22 +528,22 @@
   align-items: center;
   gap: 0.5rem;
   margin: 0 0 1rem 0;
-  color: #f5f5f7;
+  color: #1d1d1f;
   font-weight: 600;
   font-size: 17px;
 }
 
 .signatureCanvasContainer {
   position: relative;
-  background: rgba(45, 45, 50, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 10px;
   overflow: hidden;
   transition: border-color 0.3s cubic-bezier(0.28, 0.44, 0.49, 1);
 }
 
 .signatureCanvasContainer:hover {
-  border-color: rgba(255, 255, 255, 0.15);
+  border-color: rgba(0, 0, 0, 0.15);
 }
 
 .signatureCanvas {
@@ -566,12 +568,12 @@
   align-items: center;
   justify-content: center;
   pointer-events: none;
-  background: rgba(45, 45, 50, 0.4);
+  background: rgba(255, 255, 255, 0.5);
   transition: opacity 0.3s cubic-bezier(0.28, 0.44, 0.49, 1);
 }
 
 .canvasPlaceholder {
-  color: #98989d;
+  color: #86868b;
   font-style: italic;
   font-size: 17px;
   user-select: none;
@@ -586,9 +588,9 @@
 .signaturePreview img {
   max-width: 200px;
   max-height: 100px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.05);
   border-radius: 6px;
-  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .signatureControls {
@@ -603,9 +605,9 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1.25rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.05);
   border-radius: 980px;
-  background: rgba(60, 60, 65, 0.5);
+  background: rgba(250, 250, 250, 0.8);
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.28, 0.44, 0.49, 1);
   font-weight: 500;
@@ -613,13 +615,13 @@
 }
 
 .signatureButton.secondary {
-  color: #98989d;
+  color: #86868b;
 }
 
 .signatureButton.secondary:hover {
-  background: rgba(60, 60, 65, 0.8);
-  border-color: rgba(255, 255, 255, 0.12);
-  color: #f5f5f7;
+  background: #f5f5f7;
+  border-color: rgba(0, 0, 0, 0.1);
+  color: #1d1d1f;
 }
 
 .signatureButton.primary {
@@ -630,7 +632,7 @@
 
 .signatureButton.primary:hover {
   background: linear-gradient(145deg, #0071e3 0%, #0062c3 100%);
-  box-shadow: 0 4px 12px rgba(10, 132, 255, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 113, 227, 0.3);
 }
 
 .signatureButton:hover {
@@ -642,13 +644,13 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1.5rem;
-  background: rgba(60, 60, 65, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(250, 250, 250, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.05);
   border-radius: 980px;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.28, 0.44, 0.49, 1);
   margin-top: 2rem;
-  color: #98989d;
+  color: #86868b;
   font-weight: 500;
   width: 100%;
   justify-content: center;
@@ -656,21 +658,21 @@
 }
 
 .backToStartButton:hover {
-  background: rgba(60, 60, 65, 0.8);
-  border-color: rgba(10, 132, 255, 0.4);
+  background: #f5f5f7;
+  border-color: rgba(10, 132, 255, 0.2);
   color: #0a84ff;
   transform: translateX(-2px);
 }
 
 /* Preview Panel */
 .previewPanel {
-  background: rgba(25, 25, 27, 0.7);
+  background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.05);
   border-radius: 14px;
   padding: 0;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
   overflow: hidden;
   max-height: calc(100vh - 200px);
   display: flex;
@@ -682,8 +684,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 1rem 1.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(32, 32, 35, 0.6);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  background: rgba(245, 245, 247, 0.5);
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
 }
@@ -693,16 +695,16 @@
   align-items: center;
   gap: 0.5rem;
   margin: 0;
-  color: #f5f5f7;
+  color: #1d1d1f;
   font-weight: 600;
   font-size: 17px;
 }
 
 .closePreview {
-  background: rgba(60, 60, 65, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(250, 250, 250, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.05);
   font-size: 20px;
-  color: #98989d;
+  color: #86868b;
   cursor: pointer;
   width: 28px;
   height: 28px;
@@ -716,8 +718,8 @@
 }
 
 .closePreview:hover {
-  background: rgba(60, 60, 65, 0.8);
-  color: #f5f5f7;
+  background: #f5f5f7;
+  color: #1d1d1f;
   transform: scale(1.1);
 }
 
@@ -728,41 +730,41 @@
 }
 
 .contractContent {
-  color: #f5f5f7;
+  color: #1d1d1f;
   line-height: 1.6;
-  font-family: 'SF Serif', 'New York', 'Times New Roman', 'Georgia', serif;
+  font-family: 'SF Serif Display', 'New York', 'Times New Roman', 'Georgia', serif;
   font-size: 15px;
-  background: rgba(32, 32, 35, 0.8);
+  background: white;
   padding: 2rem;
   border-radius: 14px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .signatureInPreview {
   margin-top: 2rem;
   padding-top: 1.5rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .signatureLabel {
   font-weight: 600;
   margin-bottom: 0.5rem;
-  color: #f5f5f7;
+  color: #1d1d1f;
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
   font-size: 14px;
 }
 
 .signatureInPreview img {
   max-width: 200px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.05);
   border-radius: 6px;
-  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .signatureDate {
   font-size: 12px;
-  color: #98989d;
+  color: #86868b;
   margin-top: 0.5rem;
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
 }
@@ -897,10 +899,10 @@
   }
 
   .progressSteps {
-    gap: 0.75rem;
+    gap: 0.5rem;
     overflow-x: auto;
     justify-content: flex-start;
-    padding: 0.5rem;
+    padding: 0.75rem 0.5rem;
     margin: 0 -1rem;
     width: calc(100% + 2rem);
   }
@@ -911,11 +913,11 @@
 
   .step {
     flex-shrink: 0;
-    padding: 0.5rem 0.75rem;
+    padding: 0.4rem 0.65rem;
   }
 
   .stepHeader h2 {
-    font-size: 24px;
+    font-size: 22px;
   }
 
   .actionButtons {
@@ -927,7 +929,7 @@
   }
 
   .headerText h1 {
-    font-size: 28px;
+    font-size: 24px;
   }
 
   .headerText p {
@@ -943,6 +945,13 @@
   .upgradeButton {
     align-self: stretch;
   }
+  
+  .contractTypeCard {
+    width: 90%;
+    margin: 0 auto 16px auto;
+    padding: 16px 20px; 
+    border-radius: 12px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -953,7 +962,8 @@
   }
 
   .contractTypeCard {
-    padding: 1.25rem;
+    width: 100%;
+    margin-bottom: 12px;
   }
 
   .signatureSection {
@@ -965,7 +975,7 @@
   }
 
   .headerText h1 {
-    font-size: 24px;
+    font-size: 22px;
     flex-direction: column;
     gap: 0.25rem;
   }
@@ -981,6 +991,10 @@
     padding-bottom: env(safe-area-inset-bottom);
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
+  }
+  
+  .stepContent {
+    margin-top: 28px; /* Extra space on very small screens */
   }
 }
 
