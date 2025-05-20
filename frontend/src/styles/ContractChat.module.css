@@ -162,59 +162,80 @@
   height: 20px;
 }
 
-/* NEUE HINTERGRUNDFARBEN FÜR NACHRICHTEN */
+/* VERBESSERT: Alle Nachrichtentexte auf Dunkelgrau */
+.messageBody p {
+  margin: 0;
+  line-height: 1.5;
+  font-size: 14px;
+  white-space: pre-wrap;
+  color: #333333 !important; /* Dunkelgrauer Text für alle Nachrichten */
+  font-weight: 500; /* Etwas fetter für bessere Lesbarkeit */
+}
+
+/* Helle Hintergrundfarben für verschiedene Nachrichtentypen */
 .messageBody {
   padding: 12px 16px;
   border-radius: 16px;
   max-width: 100%;
+  background-color: #f2f2f7; /* Hellgrauer Standardhintergrund */
 }
 
 .userMessage .messageBody {
-  background-color: #0057b8; /* Dunkleres Blau */
+  background-color: #e1efff; /* Helles Blau */
   border-top-right-radius: 4px;
 }
 
 .aiMessage .messageBody {
-  background-color: #4854e0; /* Dunkles Violett/Blau */
+  background-color: #f2f2f7; /* Hellgrau */
   border-top-left-radius: 4px;
 }
 
 .systemMessage .messageBody {
-  background-color: #d48c10; /* Dunkleres Gelb/Orange */
-  border: none;
+  background-color: #fff8e6; /* Helles Gelb */
+  border: 1px solid rgba(255, 149, 0, 0.2);
 }
 
-/* HEADER-FARBEN FÜR ALLE NACHRICHTEN AUF WEISS */
+/* Header in Dunkelgrau */
 .messageHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 6px;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.9) !important;
+  color: #555555 !important;
 }
 
 .messageSender {
   font-weight: 600;
-  color: white !important;
+  color: #555555 !important;
 }
 
 .messageTime {
-  opacity: 0.9;
+  opacity: 0.8;
   font-size: 11px;
-  color: white !important;
+  color: #555555 !important;
 }
 
-/* TEXT IN ALLEN NACHRICHTENTYPEN AUF WEISS SETZEN */
-.messageBody p {
-  margin: 0;
-  line-height: 1.5;
-  font-size: 14px;
-  white-space: pre-wrap;
-  color: white !important;
-  font-weight: 500; /* Etwas fetter für bessere Lesbarkeit */
+/* Spezifische Regeln für alle Nachrichtentypen */
+.userMessage .messageHeader,
+.aiMessage .messageHeader,
+.systemMessage .messageHeader,
+.userMessage .messageSender,
+.aiMessage .messageSender,
+.systemMessage .messageSender,
+.userMessage .messageTime,
+.aiMessage .messageTime,
+.systemMessage .messageTime {
+  color: #555555 !important;
 }
 
+.userMessage .messageBody p,
+.aiMessage .messageBody p,
+.systemMessage .messageBody p {
+  color: #333333 !important;
+}
+
+/* Restlicher CSS-Code unverändert */
 .typing .typingIndicator {
   display: flex;
   align-items: center;
@@ -223,11 +244,11 @@
 .typing .typingIndicator span {
   width: 8px;
   height: 8px;
-  background-color: #ffffff;
+  background-color: #8e8e93;
   border-radius: 50%;
   margin-right: 4px;
   animation: typingAnimation 1.4s infinite ease-in-out;
-  opacity: 0.8;
+  opacity: 0.6;
 }
 
 .typing .typingIndicator span:nth-child(1) {
