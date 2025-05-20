@@ -1,7 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import styles from "../styles/ContractChat.module.css";
 
-// Definiere die Interface-Typen
 interface Message {
   id: string;
   from: "user" | "ai" | "system";
@@ -15,7 +14,6 @@ interface SuggestedQuestion {
 }
 
 export default function Chat() {
-  // State-Definitionen
   const [file, setFile] = useState<File | null>(null);
   const [question, setQuestion] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
@@ -25,13 +23,15 @@ export default function Chat() {
   const [dragActive, setDragActive] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [showSuggestions, setShowSuggestions] = useState(true);
+  const [suggestionsExpanded, setSuggestionsExpanded] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   
-  // Refs
   const chatEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const chatMessagesRef = useRef<HTMLDivElement>(null);
 
-  // Vorgeschlagene Fragen - komplett neu geschrieben
+  // Vorgeschlagene Fragen
   const suggestedQuestions: SuggestedQuestion[] = [
     { text: "Was bedeutet Kündigungsfrist 3 Monate zum Quartalsende?", category: "clause" },
     { text: "Muss ein Mietvertrag schriftlich sein?", category: "legal" },
@@ -39,6 +39,20 @@ export default function Chat() {
     { text: "Was ist eine Vertragsstrafe und wann greift sie?", category: "legal" },
     { text: "Erkläre den Unterschied zwischen AGB und individuellen Vertragsklauseln", category: "general" }
   ];
+
+  // Prüfen, ob wir auf einem Mobilgerät sind
+  useEffect(() => {
+    const checkIfMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkIfMobile();
+    window.addEventListener('resize', checkIfMobile);
+
+    return () => {
+      window.removeEventListener('resize', checkIfMobile);
+    };
+  }, []);
 
   // Zeit-Formatierung für Nachrichten
   const getCurrentTime = (): string => {
@@ -254,6 +268,15 @@ export default function Chat() {
   const handleSuggestionClick = (question: string) => {
     handleAsk(question);
     inputRef.current?.focus();
+    // Auf Mobilgeräten die Vorschläge ausblenden nach Klick
+    if (isMobile) {
+      setSuggestionsExpanded(false);
+    }
+  };
+
+  // Toggle für die Vorschläge auf Mobilgeräten
+  const toggleSuggestions = () => {
+    setSuggestionsExpanded(!suggestionsExpanded);
   };
 
   // Lade-Zustand anzeigen
@@ -309,7 +332,7 @@ export default function Chat() {
       )}
 
       <div className={styles.chatContainer}>
-        <div className={styles.chatMessages}>
+        <div className={styles.chatMessages} ref={chatMessagesRef}>
           {messages.map((msg) => (
             <div
               key={msg.id}
@@ -461,14 +484,49 @@ export default function Chat() {
           </div>
         )}
 
-        {showSuggestions && isPremium && messages.length < 3 && (
-          <div className={styles.suggestedQuestions}>
+        {/* Auf Mobilgeräten: Vorschläge als ausklappbare Komponente */}
+        {showSuggestions && isPremium && messages.length < 3 && isMobile && (
+          <div className={`${styles.suggestedQuestionsCollapsible} ${suggestionsExpanded ? styles.expanded : ''}`}>
+            <div 
+              className={styles.suggestionsToggle}
+              onClick={toggleSuggestions}
+            >
+              <span>Vorschläge für Fragen</span>
+              <svg 
+                className={suggestionsExpanded ? styles.rotated : ''}
+                viewBox="0 0 24 24" 
+                fill="none" 
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            
+            {suggestionsExpanded && (
+              <div className={styles.suggestionsGrid}>
+                {suggestedQuestions.map((sq, index) => (
+                  <button 
+                    key={index} 
+                    className={styles.suggestionButton}
+                    onClick={() => handleSuggestionClick(sq.text)}
+                  >
+                    {sq.text}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+        
+        {/* Auf Desktop: Vorschläge als horizontale Scrollleiste */}
+        {showSuggestions && isPremium && messages.length < 3 && !isMobile && (
+          <div className={styles.suggestedQuestionsHorizontal}>
             <p className={styles.suggestionsTitle}>Vorschläge für Fragen:</p>
-            <div className={styles.suggestionsGrid}>
+            <div className={styles.suggestionsScroll}>
               {suggestedQuestions.map((sq, index) => (
                 <button 
                   key={index} 
-                  className={styles.suggestionButton}
+                  className={styles.suggestionChip}
                   onClick={() => handleSuggestionClick(sq.text)}
                 >
                   {sq.text}

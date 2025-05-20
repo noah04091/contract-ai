@@ -1,4 +1,4 @@
-/* Apple-inspired CSS Module for ContractChat */
+/* Verbesserte CSS-Datei mit Fokus auf Mobile-Optimierung und Kontrast */
 .container {
   display: flex;
   flex-direction: column;
@@ -170,8 +170,9 @@
 }
 
 .userMessage .messageBody {
-  background-color: #007AFF;
-  color: white;
+  /* VERBESSERT: Dunkleres Blau für besseren Kontrast mit weißem Text */
+  background-color: #0057b8;
+  color: white; 
   border-top-right-radius: 4px;
 }
 
@@ -200,7 +201,8 @@
 }
 
 .userMessage .messageHeader {
-  color: rgba(255, 255, 255, 0.9);
+  /* VERBESSERT: Helleres Weiß für besseren Kontrast */
+  color: rgba(255, 255, 255, 1);
 }
 
 .messageTime {
@@ -510,8 +512,11 @@
   color: #8e8e93;
 }
 
-.suggestedQuestions {
-  padding: 0 24px 12px;
+/* VERBESSERT: Neues Design für die Vorschläge */
+/* Desktop-Version: Horizontale Scrollleiste */
+.suggestedQuestionsHorizontal {
+  padding: 0 16px 12px;
+  margin-bottom: 8px;
 }
 
 .suggestionsTitle {
@@ -520,14 +525,88 @@
   margin: 0 0 8px;
 }
 
+.suggestionsScroll {
+  display: flex;
+  overflow-x: auto;
+  padding-bottom: 10px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.suggestionsScroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+.suggestionsScroll::-webkit-scrollbar-track {
+  background-color: #f2f2f7;
+  border-radius: 3px;
+}
+
+.suggestionsScroll::-webkit-scrollbar-thumb {
+  background-color: #c7c7cc;
+  border-radius: 3px;
+}
+
+.suggestionChip {
+  flex-shrink: 0;
+  background-color: #f2f2f7;
+  border: 1px solid #e5e5ea;
+  border-radius: 20px;
+  padding: 8px 16px;
+  margin-right: 8px;
+  font-size: 13px;
+  color: #007AFF;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.suggestionChip:hover {
+  background-color: #e5e5ea;
+}
+
+/* Mobile-Version: Ausklappbare Vorschläge */
+.suggestedQuestionsCollapsible {
+  border-top: 1px solid #e5e5ea;
+  margin-top: auto;
+}
+
+.suggestionsToggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  cursor: pointer;
+  color: #007AFF;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.suggestionsToggle svg {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.2s;
+}
+
+.suggestionsToggle svg.rotated {
+  transform: rotate(180deg);
+}
+
+.suggestedQuestionsCollapsible.expanded {
+  border-top: 1px solid #e5e5ea;
+  border-bottom: 1px solid #e5e5ea;
+  background-color: #f9f9fb;
+}
+
 .suggestionsGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  display: flex;
+  flex-direction: column;
+  padding: 0 16px 16px;
   gap: 8px;
 }
 
 .suggestionButton {
-  background-color: #f2f2f7;
+  background-color: #fff;
   border: 1px solid #e5e5ea;
   border-radius: 10px;
   padding: 10px 16px;
@@ -536,12 +615,10 @@
   color: #007AFF;
   cursor: pointer;
   transition: all 0.2s;
-  white-space: normal;
-  word-break: break-word;
 }
 
-.suggestionButton:hover {
-  background-color: #e5e5ea;
+.suggestionButton:hover, .suggestionButton:active {
+  background-color: #f2f2f7;
 }
 
 .clearChatButton {
@@ -574,7 +651,7 @@
   margin: 8px 0 0;
 }
 
-/* Responsive Design */
+/* VERBESSERT: Responsive Design für mobile Geräte */
 @media (max-width: 768px) {
   .container {
     height: calc(100vh - 100px);
@@ -585,10 +662,6 @@
     max-width: 95%;
   }
   
-  .suggestionsGrid {
-    grid-template-columns: 1fr;
-  }
-  
   .uploadArea {
     margin: 16px;
     padding: 16px;
@@ -596,6 +669,19 @@
   
   .chatInput input {
     padding: 10px 12px;
+  }
+  
+  .header h2 {
+    font-size: 16px;
+  }
+  
+  .fileName {
+    max-width: 180px;
+  }
+  
+  .suggestedQuestionsCollapsible {
+    max-height: 300px;
+    overflow-y: auto;
   }
 }
 
@@ -616,6 +702,10 @@
   }
   
   .fileName {
-    max-width: 180px;
+    max-width: 150px;
+  }
+  
+  .chatInputContainer {
+    padding: 12px 16px 16px;
   }
 }
