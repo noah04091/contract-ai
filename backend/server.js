@@ -128,7 +128,7 @@ async function analyzeContract(pdfText) {
     app.use("/optimize", verifyToken, checkSubscription, require("./routes/optimize")(db));
     app.use("/compare", verifyToken, checkSubscription, require("./routes/compare"));
     app.use("/chat", verifyToken, checkSubscription, require("./routes/chatWithContract"));
-    app.use("/api/contracts/generate", verifyToken, checkSubscription, require("./routes/generate"));
+    app.use("/api/contracts/generate", verifyToken, checkSubscription, require("./routes/generate")(contractsCollection));
     app.use("/analyze-type", require("./routes/analyzeType"));
     app.use("/extract-text", require("./routes/extractText"));
     app.use("/contracts", verifyToken, require("./routes/contracts"));
