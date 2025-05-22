@@ -175,7 +175,7 @@ export default function Generate() {
     fetchStatus();
   }, []);
 
-  // Canvas Setup for Signature
+  // 🖊️ FUNKTIONIERENDE CANVAS-UNTERSCHRIFT - KOMPLETT NEU
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -183,75 +183,114 @@ export default function Generate() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // High DPI Support
-    const rect = canvas.getBoundingClientRect();
-    const ratio = window.devicePixelRatio || 1;
-    canvas.width = rect.width * ratio;
-    canvas.height = rect.height * ratio;
-    ctx.scale(ratio, ratio);
-    canvas.style.width = rect.width + 'px';
-    canvas.style.height = rect.height + 'px';
+    // Canvas-Setup ohne High-DPI Komplikationen
+    canvas.width = 800;
+    canvas.height = 200;
+    canvas.style.width = "100%";
+    canvas.style.height = "200px";
 
-    // Canvas styling
+    // Canvas-Styling
     ctx.lineWidth = 3;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
     ctx.strokeStyle = "#1d4ed8";
 
-    let drawing = false;
+    let isDrawing = false;
 
-    const getPos = (e: MouseEvent | TouchEvent) => {
+    // Koordinaten-Hilfsfunktion (vereinfacht)
+    const getCoordinates = (event: MouseEvent | TouchEvent) => {
       const rect = canvas.getBoundingClientRect();
-      const x = "touches" in e ? e.touches[0].clientX : e.clientX;
-      const y = "touches" in e ? e.touches[0].clientY : e.clientY;
-      return { 
-        x: (x - rect.left) * (canvas.width / rect.width) / (window.devicePixelRatio || 1),
-        y: (y - rect.top) * (canvas.height / rect.height) / (window.devicePixelRatio || 1)
-      };
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+
+      if ('touches' in event && event.touches[0]) {
+        // Touch Event
+        return {
+          x: (event.touches[0].clientX - rect.left) * scaleX,
+          y: (event.touches[0].clientY - rect.top) * scaleY
+        };
+      } else {
+        // Mouse Event
+        const mouseEvent = event as MouseEvent;
+        return {
+          x: (mouseEvent.clientX - rect.left) * scaleX,
+          y: (mouseEvent.clientY - rect.top) * scaleY
+        };
+      }
     };
 
-    const start = (e: MouseEvent | TouchEvent) => {
-      drawing = true;
+    // Zeichnen starten
+    const startDrawing = (event: MouseEvent | TouchEvent) => {
+      event.preventDefault();
+      isDrawing = true;
       setIsDrawing(true);
-      const { x, y } = getPos(e);
+      
+      const coords = getCoordinates(event);
       ctx.beginPath();
-      ctx.moveTo(x, y);
-      if ("touches" in e) e.preventDefault();
+      ctx.moveTo(coords.x, coords.y);
+      
+      console.log("🖊️ Zeichnen gestartet:", coords); // Debug-Log
     };
 
-    const draw = (e: MouseEvent | TouchEvent) => {
-      if (!drawing) return;
-      if ("touches" in e) e.preventDefault();
+    // Zeichnen
+    const draw = (event: MouseEvent | TouchEvent) => {
+      if (!isDrawing) return;
+      event.preventDefault();
       
-      const { x, y } = getPos(e);
-      ctx.lineTo(x, y);
+      const coords = getCoordinates(event);
+      ctx.lineTo(coords.x, coords.y);
       ctx.stroke();
       ctx.beginPath();
-      ctx.moveTo(x, y);
+      ctx.moveTo(coords.x, coords.y);
     };
 
-    const stop = () => {
-      drawing = false;
+    // Zeichnen beenden
+    const stopDrawing = (event: MouseEvent | TouchEvent) => {
+      if (!isDrawing) return;
+      event.preventDefault();
+      
+      isDrawing = false;
       setIsDrawing(false);
+      ctx.beginPath();
+      
+      console.log("🖊️ Zeichnen beendet"); // Debug-Log
     };
 
-    // Event Listeners
-    canvas.addEventListener("mousedown", start);
-    canvas.addEventListener("mousemove", draw);
-    canvas.addEventListener("mouseup", stop);
-    canvas.addEventListener("mouseleave", stop);
-    canvas.addEventListener("touchstart", start, { passive: false });
+    // Event-Listener hinzufügen
+    console.log("🖊️ Canvas Event-Listener werden hinzugefügt"); // Debug-Log
+    
+    // Mouse Events
+    canvas.addEventListener("mousedown", startDrawing, { passive: false });
+    canvas.addEventListener("mousemove", draw, { passive: false });
+    canvas.addEventListener("mouseup", stopDrawing, { passive: false });
+    canvas.addEventListener("mouseleave", stopDrawing, { passive: false });
+    
+    // Touch Events
+    canvas.addEventListener("touchstart", startDrawing, { passive: false });
     canvas.addEventListener("touchmove", draw, { passive: false });
-    canvas.addEventListener("touchend", stop);
+    canvas.addEventListener("touchend", stopDrawing, { passive: false });
+    canvas.addEventListener("touchcancel", stopDrawing, { passive: false });
 
+    // Test ob Canvas anklickbar ist
+    const testClick = (event: MouseEvent) => {
+      console.log("🖊️ Canvas wurde geklickt! Event:", event.type);
+      console.log("🖊️ Koordinaten:", getCoordinates(event));
+    };
+    
+    canvas.addEventListener("click", testClick);
+
+    // Cleanup-Funktion
     return () => {
-      canvas.removeEventListener("mousedown", start);
+      console.log("🖊️ Canvas Event-Listener werden entfernt");
+      canvas.removeEventListener("mousedown", startDrawing);
       canvas.removeEventListener("mousemove", draw);
-      canvas.removeEventListener("mouseup", stop);
-      canvas.removeEventListener("mouseleave", stop);
-      canvas.removeEventListener("touchstart", start);
+      canvas.removeEventListener("mouseup", stopDrawing);
+      canvas.removeEventListener("mouseleave", stopDrawing);
+      canvas.removeEventListener("touchstart", startDrawing);
       canvas.removeEventListener("touchmove", draw);
-      canvas.removeEventListener("touchend", stop);
+      canvas.removeEventListener("touchend", stopDrawing);
+      canvas.removeEventListener("touchcancel", stopDrawing);
+      canvas.removeEventListener("click", testClick);
     };
   }, [currentStep]);
 
@@ -346,20 +385,36 @@ export default function Generate() {
     }
   };
 
+  // 💾 VERBESSERTE SAVE-FUNKTION
   const saveSignature = () => {
     const canvas = canvasRef.current;
     if (canvas) {
+      // Prüfen ob überhaupt etwas gezeichnet wurde
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const hasSignature = imageData.data.some((channel, index) => index % 4 !== 3 && channel !== 0);
+        
+        if (!hasSignature) {
+          alert("Bitte zeichnen Sie zuerst eine Unterschrift!");
+          return;
+        }
+      }
+      
       const dataURL = canvas.toDataURL("image/png");
       setSignatureURL(dataURL);
+      console.log("🖊️ Unterschrift gespeichert");
     }
   };
 
+  // 🧹 VERBESSERTE CLEAR-FUNKTION
   const clearSignature = () => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
     if (ctx && canvas) {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       setSignatureURL(null);
+      console.log("🖊️ Canvas wurde geleert");
     }
   };
 
