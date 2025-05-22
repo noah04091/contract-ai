@@ -162,16 +162,16 @@ async function analyzeContract(pdfText) {
       console.error("❌ Fehler bei Chat-Route:", err);
     }
 
-    // 🚀 GENERATE-ROUTE - Das war unser ursprüngliches Problem
+    // 🚀 GENERATE-ROUTE - KORRIGIERT: Ohne /api/ da Proxy das entfernt
     try {
       console.log("🔧 Lade Generate-Route...");
       const generateRouter = require("./routes/generate");
-      app.use("/api/contracts/generate", verifyToken, checkSubscription, generateRouter);
-      console.log("✅ Generate-Route erfolgreich geladen!");
+      app.use("/contracts/generate", verifyToken, checkSubscription, generateRouter);
+      console.log("✅ Generate-Route erfolgreich geladen auf /contracts/generate!");
     } catch (err) {
       console.error("❌ Fehler beim Laden der Generate-Route:", err);
       // Fallback-Route für Generate
-      app.post("/api/contracts/generate", verifyToken, checkSubscription, (req, res) => {
+      app.post("/contracts/generate", verifyToken, checkSubscription, (req, res) => {
         console.log("🆘 Fallback Generate-Route aufgerufen");
         res.json({
           success: true,
@@ -342,7 +342,7 @@ async function analyzeContract(pdfText) {
     app.listen(PORT, () => {
       console.log(`🚀 Server läuft auf Port ${PORT}`);
       console.log(`📡 Alle wichtigen Routen sollten geladen sein`);
-      console.log(`🔧 Generate-Route: POST /api/contracts/generate`);
+      console.log(`🔧 Generate-Route: POST /contracts/generate (Proxy entfernt /api/)`);
       console.log(`🔐 Auth-Routen: /auth/*`);
       console.log(`✅ Server deployment complete!`);
     });
