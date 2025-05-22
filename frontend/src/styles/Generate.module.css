@@ -514,7 +514,7 @@
   box-shadow: 0 2px 8px rgba(48, 209, 88, 0.15);
 }
 
-/* Signature Section */
+/* Signature Section - ENHANCED FOR BETTER CANVAS FUNCTIONALITY */
 .signatureSection {
   background: rgba(248, 250, 252, 0.5);
   border-radius: 14px;
@@ -536,26 +536,45 @@
 .signatureCanvasContainer {
   position: relative;
   background: white;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 10px;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
   overflow: hidden;
-  transition: border-color 0.3s cubic-bezier(0.28, 0.44, 0.49, 1);
+  transition: all 0.3s cubic-bezier(0.28, 0.44, 0.49, 1);
+  margin: 1rem 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .signatureCanvasContainer:hover {
-  border-color: rgba(0, 0, 0, 0.15);
+  border-color: rgba(10, 132, 255, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .signatureCanvas {
   display: block;
   width: 100%;
-  height: 180px;
-  cursor: crosshair;
+  height: 200px;
+  cursor: crosshair !important;
   transition: all 0.3s cubic-bezier(0.28, 0.44, 0.49, 1);
+  background: white;
+  /* WICHTIG für Touch-Geräte */
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  /* Verhindert Kontext-Menüs */
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.signatureCanvas:hover {
+  background: rgba(248, 250, 252, 0.5);
 }
 
 .signatureCanvas.drawing {
   border-color: #0a84ff;
+  background: white;
+  cursor: crosshair !important;
 }
 
 .canvasOverlay {
@@ -568,8 +587,9 @@
   align-items: center;
   justify-content: center;
   pointer-events: none;
-  background: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.0);
   transition: opacity 0.3s cubic-bezier(0.28, 0.44, 0.49, 1);
+  z-index: 1;
 }
 
 .canvasPlaceholder {
@@ -577,17 +597,24 @@
   font-style: italic;
   font-size: 17px;
   user-select: none;
+  pointer-events: none;
+  font-weight: 400;
+  text-align: center;
+  padding: 0 1rem;
 }
 
 .signaturePreview {
   display: flex;
   align-items: center;
   justify-content: center;
+  background: white;
+  border-radius: 8px;
+  padding: 0.5rem;
 }
 
 .signaturePreview img {
-  max-width: 200px;
-  max-height: 100px;
+  max-width: 250px;
+  max-height: 120px;
   border: 1px solid rgba(0, 0, 0, 0.05);
   border-radius: 6px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -598,6 +625,7 @@
   gap: 1rem;
   margin-top: 1rem;
   flex-wrap: wrap;
+  justify-content: center;
 }
 
 .signatureButton {
@@ -612,6 +640,8 @@
   transition: all 0.3s cubic-bezier(0.28, 0.44, 0.49, 1);
   font-weight: 500;
   font-size: 14px;
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
 }
 
 .signatureButton.secondary {
@@ -952,6 +982,16 @@
     padding: 16px 20px; 
     border-radius: 12px;
   }
+
+  /* Mobile Canvas Optimizations */
+  .signatureCanvas {
+    height: 180px;
+    touch-action: none !important;
+  }
+
+  .signatureCanvasContainer {
+    border-width: 2px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -971,7 +1011,8 @@
   }
 
   .signatureCanvas {
-    height: 150px;
+    height: 160px;
+    touch-action: none !important;
   }
 
   .headerText h1 {
@@ -995,6 +1036,17 @@
   
   .stepContent {
     margin-top: 28px; /* Extra space on very small screens */
+  }
+
+  /* Enhanced mobile touch support */
+  .signatureCanvasContainer {
+    margin: 1rem 0;
+    border-radius: 16px;
+  }
+
+  .canvasPlaceholder {
+    font-size: 16px;
+    padding: 1rem;
   }
 }
 
@@ -1049,6 +1101,12 @@
 .backButton:focus-visible,
 .backToStartButton:focus-visible,
 .upgradeButton:focus-visible {
+  outline: 2px solid #0a84ff;
+  outline-offset: 2px;
+}
+
+/* Enhanced Canvas Focus */
+.signatureCanvas:focus {
   outline: 2px solid #0a84ff;
   outline-offset: 2px;
 }
