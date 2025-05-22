@@ -175,124 +175,118 @@ export default function Generate() {
     fetchStatus();
   }, []);
 
-  // 🖊️ FUNKTIONIERENDE CANVAS-UNTERSCHRIFT - KOMPLETT NEU
-  useEffect(() => {
+  // 🖊️ DIREKTE CANVAS-FUNKTIONEN (NEUE LÖSUNG)
+  const handleCanvasMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Canvas-Setup ohne High-DPI Komplikationen
-    canvas.width = 800;
-    canvas.height = 200;
-    canvas.style.width = "100%";
-    canvas.style.height = "200px";
+    // Canvas-Setup falls noch nicht geschehen
+    if (canvas.width !== 800) {
+      canvas.width = 800;
+      canvas.height = 200;
+      ctx.lineWidth = 3;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.strokeStyle = "#1d4ed8";
+    }
 
-    // Canvas-Styling
-    ctx.lineWidth = 3;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    ctx.strokeStyle = "#1d4ed8";
-
-    let isDrawing = false;
-
-    // Koordinaten-Hilfsfunktion (vereinfacht)
-    const getCoordinates = (event: MouseEvent | TouchEvent) => {
-      const rect = canvas.getBoundingClientRect();
-      const scaleX = canvas.width / rect.width;
-      const scaleY = canvas.height / rect.height;
-
-      if ('touches' in event && event.touches[0]) {
-        // Touch Event
-        return {
-          x: (event.touches[0].clientX - rect.left) * scaleX,
-          y: (event.touches[0].clientY - rect.top) * scaleY
-        };
-      } else {
-        // Mouse Event
-        const mouseEvent = event as MouseEvent;
-        return {
-          x: (mouseEvent.clientX - rect.left) * scaleX,
-          y: (mouseEvent.clientY - rect.top) * scaleY
-        };
-      }
-    };
-
-    // Zeichnen starten
-    const startDrawing = (event: MouseEvent | TouchEvent) => {
-      event.preventDefault();
-      isDrawing = true;
-      setIsDrawing(true);
-      
-      const coords = getCoordinates(event);
-      ctx.beginPath();
-      ctx.moveTo(coords.x, coords.y);
-      
-      console.log("🖊️ Zeichnen gestartet:", coords); // Debug-Log
-    };
-
-    // Zeichnen
-    const draw = (event: MouseEvent | TouchEvent) => {
-      if (!isDrawing) return;
-      event.preventDefault();
-      
-      const coords = getCoordinates(event);
-      ctx.lineTo(coords.x, coords.y);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(coords.x, coords.y);
-    };
-
-    // Zeichnen beenden
-    const stopDrawing = (event: MouseEvent | TouchEvent) => {
-      if (!isDrawing) return;
-      event.preventDefault();
-      
-      isDrawing = false;
-      setIsDrawing(false);
-      ctx.beginPath();
-      
-      console.log("🖊️ Zeichnen beendet"); // Debug-Log
-    };
-
-    // Event-Listener hinzufügen
-    console.log("🖊️ Canvas Event-Listener werden hinzugefügt"); // Debug-Log
+    setIsDrawing(true);
     
-    // Mouse Events
-    canvas.addEventListener("mousedown", startDrawing, { passive: false });
-    canvas.addEventListener("mousemove", draw, { passive: false });
-    canvas.addEventListener("mouseup", stopDrawing, { passive: false });
-    canvas.addEventListener("mouseleave", stopDrawing, { passive: false });
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+    const y = (e.clientY - rect.top) * (canvas.height / rect.height);
     
-    // Touch Events
-    canvas.addEventListener("touchstart", startDrawing, { passive: false });
-    canvas.addEventListener("touchmove", draw, { passive: false });
-    canvas.addEventListener("touchend", stopDrawing, { passive: false });
-    canvas.addEventListener("touchcancel", stopDrawing, { passive: false });
-
-    // Test ob Canvas anklickbar ist
-    const testClick = (event: MouseEvent) => {
-      console.log("🖊️ Canvas wurde geklickt! Event:", event.type);
-      console.log("🖊️ Koordinaten:", getCoordinates(event));
-    };
+    ctx.beginPath();
+    ctx.moveTo(x, y);
     
-    canvas.addEventListener("click", testClick);
+    console.log("🖊️ Maus gedrückt - Zeichnen startet:", { x, y });
+  };
 
-    // Cleanup-Funktion
-    return () => {
-      console.log("🖊️ Canvas Event-Listener werden entfernt");
-      canvas.removeEventListener("mousedown", startDrawing);
-      canvas.removeEventListener("mousemove", draw);
-      canvas.removeEventListener("mouseup", stopDrawing);
-      canvas.removeEventListener("mouseleave", stopDrawing);
-      canvas.removeEventListener("touchstart", startDrawing);
-      canvas.removeEventListener("touchmove", draw);
-      canvas.removeEventListener("touchend", stopDrawing);
-      canvas.removeEventListener("touchcancel", stopDrawing);
-      canvas.removeEventListener("click", testClick);
-    };
-  }, [currentStep]);
+  const handleCanvasMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!isDrawing) return;
+    
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext("2d");
+    if (!canvas || !ctx) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = (e.clientX - rect.left) * (canvas.width / rect.width);
+    const y = (e.clientY - rect.top) * (canvas.height / rect.height);
+    
+    ctx.lineTo(x, y);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+  };
+
+  const handleCanvasMouseUp = () => {
+    setIsDrawing(false);
+    console.log("🖊️ Maus losgelassen - Zeichnen beendet");
+  };
+
+  const handleCanvasClick = () => {
+    console.log("🖊️ Canvas wurde geklickt! Canvas ist funktionsfähig.");
+  };
+
+  // Touch-Events für Mobile
+  const handleCanvasTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    // Canvas-Setup falls noch nicht geschehen
+    if (canvas.width !== 800) {
+      canvas.width = 800;
+      canvas.height = 200;
+      ctx.lineWidth = 3;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.strokeStyle = "#1d4ed8";
+    }
+
+    setIsDrawing(true);
+    
+    const rect = canvas.getBoundingClientRect();
+    const touch = e.touches[0];
+    const x = (touch.clientX - rect.left) * (canvas.width / rect.width);
+    const y = (touch.clientY - rect.top) * (canvas.height / rect.height);
+    
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    
+    console.log("🖊️ Touch gestartet:", { x, y });
+  };
+
+  const handleCanvasTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    if (!isDrawing) return;
+    e.preventDefault();
+    
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext("2d");
+    if (!canvas || !ctx) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const touch = e.touches[0];
+    const x = (touch.clientX - rect.left) * (canvas.width / rect.width);
+    const y = (touch.clientY - rect.top) * (canvas.height / rect.height);
+    
+    ctx.lineTo(x, y);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+  };
+
+  const handleCanvasTouchEnd = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    setIsDrawing(false);
+    console.log("🖊️ Touch beendet");
+  };
 
   // Form Handling
   const handleInputChange = (name: string, value: string) => {
@@ -385,7 +379,6 @@ export default function Generate() {
     }
   };
 
-  // 💾 VERBESSERTE SAVE-FUNKTION
   const saveSignature = () => {
     const canvas = canvasRef.current;
     if (canvas) {
@@ -407,7 +400,6 @@ export default function Generate() {
     }
   };
 
-  // 🧹 VERBESSERTE CLEAR-FUNKTION
   const clearSignature = () => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
@@ -723,6 +715,22 @@ export default function Generate() {
                         className={`${styles.signatureCanvas} ${isDrawing ? styles.drawing : ''}`}
                         width={800}
                         height={200}
+                        onClick={handleCanvasClick}
+                        onMouseDown={handleCanvasMouseDown}
+                        onMouseMove={handleCanvasMouseMove}
+                        onMouseUp={handleCanvasMouseUp}
+                        onMouseLeave={handleCanvasMouseUp}
+                        onTouchStart={handleCanvasTouchStart}
+                        onTouchMove={handleCanvasTouchMove}
+                        onTouchEnd={handleCanvasTouchEnd}
+                        style={{
+                          cursor: 'crosshair',
+                          touchAction: 'none',
+                          userSelect: 'none',
+                          display: 'block',
+                          width: '100%',
+                          height: '200px'
+                        }}
                       />
                       <div className={styles.canvasOverlay}>
                         {!signatureURL && (
