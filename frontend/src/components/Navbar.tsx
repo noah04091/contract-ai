@@ -497,7 +497,7 @@ export default function Navbar() {
                       </Link>
                     </li>
                     <li>
-                      <Link to="/generator" className={styles.sidebarLink} onClick={() => setSidebarOpen(false)}>
+                      <Link to="/Generate" className={styles.sidebarLink} onClick={() => setSidebarOpen(false)}>
                         <span className={styles.sidebarIcon}>⚙️</span>
                         Generator
                       </Link>

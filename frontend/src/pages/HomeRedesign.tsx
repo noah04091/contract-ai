@@ -274,7 +274,7 @@ const HomeRedesign = () => {
                       </Link>
                     </li>
                     <li>
-                      <Link to="/generator" className="sidebar-link" onClick={() => setSidebarOpen(false)}>
+                      <Link to="/Generate" className="sidebar-link" onClick={() => setSidebarOpen(false)}>
                         <span className="sidebar-icon">⚙️</span>
                         Generator
                       </Link>
