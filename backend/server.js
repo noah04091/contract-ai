@@ -36,7 +36,7 @@ const ALLOWED_ORIGINS = [
   "https://www.contract-ai.de",
 ];
 
-const transporter = nodemailer.createTransport(EMAIL_CONFIG);
+const transporter = nodemailer.createTransporter(EMAIL_CONFIG);
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const storage = multer.diskStorage({
   destination: UPLOAD_PATH,
@@ -128,7 +128,10 @@ async function analyzeContract(pdfText) {
     app.use("/optimize", verifyToken, checkSubscription, require("./routes/optimize")(db));
     app.use("/compare", verifyToken, checkSubscription, require("./routes/compare"));
     app.use("/chat", verifyToken, checkSubscription, require("./routes/chatWithContract"));
-    app.use("/api/contracts", verifyToken, checkSubscription, require("./routes/generate")(contractsCollection));
+    
+    // 🚀 KORRIGIERTE GENERATE-ROUTE - Das war das Problem!
+    app.use("/api/contracts/generate", verifyToken, checkSubscription, require("./routes/generate"));
+    
     app.use("/analyze-type", require("./routes/analyzeType"));
     app.use("/extract-text", require("./routes/extractText"));
     app.use("/contracts", verifyToken, require("./routes/contracts"));
@@ -235,6 +238,11 @@ async function analyzeContract(pdfText) {
       }
     });
 
+    // 🧪 Debug-Route zum Testen
+    app.post("/debug-test", (req, res) => {
+      res.json({ success: true, message: "Debug-Route funktioniert!", timestamp: new Date().toISOString() });
+    });
+
     // 🧪 Debug-Cookies testen
     app.get("/debug", (req, res) => {
       console.log("Cookies:", req.cookies);
@@ -280,6 +288,7 @@ async function analyzeContract(pdfText) {
       console.log(`🧠 Legal Pulse Integration: ACTIVE`);
       console.log(`🤖 AI Legal Pulse API: ENABLED`);
       console.log(`📡 API Endpoints:`);
+      console.log(`   - POST /api/contracts/generate`);
       console.log(`   - POST /api/legal-pulse/analyze/:contractId`);
       console.log(`   - POST /api/legal-pulse/scan-all`);
       console.log(`   - GET  /api/legal-pulse/stats`);
