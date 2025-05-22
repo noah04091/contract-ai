@@ -24,7 +24,7 @@ module.exports = function (contractsCollection) {
     }
   })();
 
-  router.post("/", verifyToken, async (req, res) => {
+  router.post("/generate", verifyToken, async (req, res) => {
     const { type, formData } = req.body;
 
     if (!type || !formData || !formData.title) {
