@@ -382,13 +382,19 @@ export default function Generate() {
   const saveSignature = () => {
     const canvas = canvasRef.current;
     if (canvas) {
-      // Prüfen ob überhaupt etwas gezeichnet wurde
+      // VEREINFACHTE Überprüfung - vergleicht mit leerem Canvas
       const ctx = canvas.getContext("2d");
       if (ctx) {
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const hasSignature = imageData.data.some((channel, index) => index % 4 !== 3 && channel !== 0);
+        // Erstelle ein leeres Referenz-Canvas zum Vergleich
+        const blankCanvas = document.createElement('canvas');
+        blankCanvas.width = canvas.width;
+        blankCanvas.height = canvas.height;
         
-        if (!hasSignature) {
+        // Vergleiche die Canvas-Inhalte
+        const canvasData = canvas.toDataURL();
+        const blankData = blankCanvas.toDataURL();
+        
+        if (canvasData === blankData) {
           alert("Bitte zeichnen Sie zuerst eine Unterschrift!");
           return;
         }
@@ -396,7 +402,8 @@ export default function Generate() {
       
       const dataURL = canvas.toDataURL("image/png");
       setSignatureURL(dataURL);
-      console.log("🖊️ Unterschrift gespeichert");
+      console.log("🖊️ Unterschrift erfolgreich gespeichert!");
+      alert("✅ Unterschrift wurde erfolgreich gespeichert!");
     }
   };
 
