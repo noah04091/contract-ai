@@ -252,6 +252,72 @@ async function analyzeContract(pdfText) {
       }
     });
 
+    // 💾 POST-ROUTE für neue Verträge speichern (NEU HINZUGEFÜGT!)
+    app.post("/contracts", verifyToken, async (req, res) => {
+      try {
+        console.log("📄 Neuen Vertrag speichern - Request body:", req.body);
+        
+        const { name, laufzeit, kuendigung, expiryDate, status, content, signature, isGenerated } = req.body;
+        
+        // Validierung der erforderlichen Felder
+        if (!name && !content) {
+          return res.status(400).json({ 
+            message: "❌ Name oder Inhalt des Vertrags ist erforderlich" 
+          });
+        }
+        
+        const contract = {
+          userId: req.user.userId,
+          name: name || "Unbenannter Vertrag",
+          laufzeit: laufzeit || "Unbekannt",
+          kuendigung: kuendigung || "Unbekannt", 
+          expiryDate: expiryDate || "",
+          status: status || "Aktiv",
+          content: content || "",
+          signature: signature || null,
+          isGenerated: isGenerated || false,
+          uploadedAt: new Date(),
+          filePath: "",
+          // Legal Pulse Integration
+          legalPulse: {
+            riskScore: null,
+            summary: '',
+            lastChecked: null,
+            lawInsights: [],
+            marketSuggestions: [],
+            riskFactors: [],
+            legalRisks: [],
+            recommendations: [],
+            analysisDate: null
+          }
+        };
+
+        console.log("📄 Vertrag wird gespeichert:", {
+          userId: contract.userId,
+          name: contract.name,
+          hasContent: !!contract.content,
+          hasSignature: !!contract.signature
+        });
+
+        const { insertedId } = await contractsCollection.insertOne(contract);
+        
+        console.log("✅ Vertrag erfolgreich gespeichert mit ID:", insertedId);
+        
+        res.status(201).json({ 
+          message: "✅ Vertrag erfolgreich gespeichert", 
+          contractId: insertedId,
+          contract: { ...contract, _id: insertedId }
+        });
+        
+      } catch (error) {
+        console.error("❌ Contract save error:", error);
+        res.status(500).json({ 
+          message: "❌ Fehler beim Speichern des Vertrags",
+          error: error.message 
+        });
+      }
+    });
+
     // 📔 CRUD für einzelne Verträge
     app.get("/contracts/:id", verifyToken, async (req, res) => {
       try {
@@ -309,7 +375,8 @@ async function analyzeContract(pdfText) {
         cookies: req.cookies,
         timestamp: new Date().toISOString(),
         status: "working",
-        loadedRoutes: "all routes loaded with error handling"
+        loadedRoutes: "all routes loaded with error handling",
+        newFeature: "Contract save route enabled"
       });
     });
 
@@ -343,6 +410,7 @@ async function analyzeContract(pdfText) {
       console.log(`🚀 Server läuft auf Port ${PORT}`);
       console.log(`📡 Alle wichtigen Routen sollten geladen sein`);
       console.log(`🔧 Generate-Route: POST /contracts/generate (Proxy entfernt /api/)`);
+      console.log(`💾 Save-Route: POST /contracts (NEU)`);
       console.log(`🔐 Auth-Routen: /auth/*`);
       console.log(`✅ Server deployment complete!`);
     });

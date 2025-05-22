@@ -357,23 +357,37 @@ export default function Generate() {
 
   const handleSave = async () => {
     try {
-      const res = await fetch("/api/contracts", {
+      // KORRIGIERTE Route - ohne /api/ da Proxy das entfernt
+      const res = await fetch("/contracts", {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: formData.title,
+          name: formData.title || "Generierter Vertrag",
           laufzeit: "Generiert",
           kuendigung: "Generiert",
           expiryDate: "",
           status: "Aktiv",
           content: generated,
+          signature: signatureURL, // Unterschrift mitspeichern
+          isGenerated: true
         }),
       });
-      if (!res.ok) throw new Error("Speichern fehlgeschlagen.");
+      
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Speichern fehlgeschlagen.");
+      }
+      
+      const result = await res.json();
+      console.log("✅ Vertrag gespeichert:", result);
+      
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
+      alert("✅ Vertrag wurde erfolgreich gespeichert!");
+      
     } catch (err) {
+      console.error("❌ Save error:", err);
       const msg = err instanceof Error ? err.message : "Unbekannter Fehler";
       alert("❌ Fehler beim Speichern: " + msg);
     }
