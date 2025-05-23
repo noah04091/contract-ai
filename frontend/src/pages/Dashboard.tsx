@@ -865,7 +865,7 @@ export default function Dashboard() {
         {/* 📊 ENTERPRISE ANALYTICS GRID */}
         <div className={styles.analyticsGrid}>
           {/* Contract Status Distribution */}
-          <div className={styles.analyticsCard}>
+          <div className={`${styles.analyticsCard} ${styles.statusChart}`}>
             <div className={styles.analyticsHeader}>
               <h3>📊 Statusverteilung</h3>
               <p>Übersicht aller Vertragsstatus</p>
@@ -907,7 +907,7 @@ export default function Dashboard() {
           </div>
 
           {/* Monthly Upload Trend */}
-          <div className={styles.analyticsCard}>
+          <div className={`${styles.analyticsCard} ${styles.uploadsChart}`}>
             <div className={styles.analyticsHeader}>
               <h3>📈 Upload-Trends</h3>
               <p>Monatliche Vertragsaktivitäten</p>
@@ -935,7 +935,7 @@ export default function Dashboard() {
           </div>
 
           {/* Risk Score Distribution */}
-          <div className={styles.analyticsCard}>
+          <div className={`${styles.analyticsCard} ${styles.riskChart}`}>
             <div className={styles.analyticsHeader}>
               <h3>⚠️ Risiko-Analyse</h3>
               <p>Legal Pulse Bewertungen</p>
@@ -961,7 +961,7 @@ export default function Dashboard() {
           </div>
 
           {/* 30-Day Contract Trend */}
-          <div className={styles.analyticsCard}>
+          <div className={`${styles.analyticsCard} ${styles.trendChart}`}>
             <div className={styles.analyticsHeader}>
               <h3>📅 30-Tage Trend</h3>
               <p>Tägliche Vertragsaktivitäten</p>
