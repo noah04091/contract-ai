@@ -36,9 +36,7 @@ interface UserData {
 
 export default function Dashboard() {
   const [contracts, setContracts] = useState<Contract[]>([]);
-  const [filteredContracts, setFilteredContracts] = useState<Contract[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState("all");
+  const [priorityContracts, setPriorityContracts] = useState<Contract[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [userEmail, setUserEmail] = useState("");
@@ -47,6 +45,56 @@ export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
+
+  // 🎯 NEUE SMART PRIORITY LOGIK
+  const calculatePriorityContracts = (allContracts: Contract[]) => {
+    if (!allContracts || allContracts.length === 0) return [];
+    
+    const now = new Date().getTime();
+    const thirtyDaysFromNow = now + (30 * 24 * 60 * 60 * 1000);
+    
+    // 1. KRITISCH: Bald ablaufende Verträge (< 30 Tage)
+    const soonExpiring = allContracts.filter(contract => {
+      if (!contract || !contract.expiryDate) return false;
+      const expiryTime = new Date(contract.expiryDate).getTime();
+      return expiryTime > now && expiryTime <= thirtyDaysFromNow;
+    }).sort((a, b) => {
+      const dateA = new Date(a.expiryDate!).getTime();
+      const dateB = new Date(b.expiryDate!).getTime();
+      return dateA - dateB; // Früchste zuerst
+    });
+
+    // 2. WICHTIG: Verträge mit aktivierter Erinnerung (aber nicht schon in soonExpiring)
+    const withReminder = allContracts.filter(contract => {
+      if (!contract || !contract.reminder) return false;
+      return !soonExpiring.find(c => c._id === contract._id);
+    }).sort((a, b) => {
+      const dateA = new Date(a.expiryDate || a.uploadedAt || a.createdAt || 0).getTime();
+      const dateB = new Date(b.expiryDate || b.uploadedAt || b.createdAt || 0).getTime();
+      return dateB - dateA; // Neueste zuerst
+    });
+
+    // 3. AKTUELL: Neueste Verträge (aber nicht schon in den oberen Kategorien)
+    const recentContracts = allContracts.filter(contract => {
+      if (!contract) return false;
+      const isAlreadyIncluded = soonExpiring.find(c => c._id === contract._id) || 
+                               withReminder.find(c => c._id === contract._id);
+      return !isAlreadyIncluded;
+    }).sort((a, b) => {
+      const dateA = new Date(a.uploadedAt || a.createdAt || 0).getTime();
+      const dateB = new Date(b.uploadedAt || b.createdAt || 0).getTime();
+      return dateB - dateA; // Neueste zuerst
+    }).slice(0, 3);
+
+    // Kombiniere alle mit Maximum von 8 Verträgen
+    const priorityList = [
+      ...soonExpiring,
+      ...withReminder.slice(0, Math.max(0, 8 - soonExpiring.length)),
+      ...recentContracts.slice(0, Math.max(0, 8 - soonExpiring.length - withReminder.length))
+    ].slice(0, 8);
+
+    return priorityList;
+  };
 
   // Hilfsfunktion für die Farbbestimmung des Fortschrittsbalkens
   const getProgressBarColor = () => {
@@ -81,6 +129,51 @@ export default function Dashboard() {
     return laufzeiten.length > 0 ? Math.round(laufzeiten.reduce((a, b) => a + b, 0) / laufzeiten.length) : 0;
   };
 
+  // 🎯 Hilfsfunktion: Vertragskategorie bestimmen
+  const getContractCategory = (contract: Contract) => {
+    if (!contract) return 'recent';
+    
+    const now = new Date().getTime();
+    const thirtyDaysFromNow = now + (30 * 24 * 60 * 60 * 1000);
+    
+    if (contract.expiryDate) {
+      const expiryTime = new Date(contract.expiryDate).getTime();
+      if (expiryTime > now && expiryTime <= thirtyDaysFromNow) {
+        return 'critical';
+      }
+    }
+    
+    if (contract.reminder) {
+      return 'important';
+    }
+    
+    return 'recent';
+  };
+
+  // 🎯 Kategorie-spezifische Icons und Labels
+  const getCategoryInfo = (category: string) => {
+    switch (category) {
+      case 'critical':
+        return {
+          icon: '🔥',
+          label: 'Erfordert Aufmerksamkeit',
+          color: '#dc2626'
+        };
+      case 'important':
+        return {
+          icon: '⚡',
+          label: 'Mit Erinnerung',
+          color: '#f59e0b'
+        };
+      default:
+        return {
+          icon: '📅',
+          label: 'Kürzlich hinzugefügt',
+          color: '#6b7280'
+        };
+    }
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
@@ -94,9 +187,13 @@ export default function Dashboard() {
         const contractsData = await contractsResponse.json();
         
         setUserEmail(userDataResponse.email);
-        setUserData(userDataResponse); // Speichern der kompletten Nutzerdaten
+        setUserData(userDataResponse);
         setContracts(contractsData);
-        setFilteredContracts(contractsData);
+        
+        // 🚀 Berechne Priority Contracts
+        const priorityList = calculatePriorityContracts(contractsData);
+        setPriorityContracts(priorityList);
+        
       } catch (err) {
         console.error("Error loading data:", err);
       } finally {
@@ -107,22 +204,11 @@ export default function Dashboard() {
     fetchData();
   }, []);
 
+  // 🚀 Update Priority Contracts wenn sich contracts ändern
   useEffect(() => {
-    const filtered = contracts.filter((contract) => {
-      // ✅ Null-Checks für contract properties hinzufügen
-      if (!contract) return false;
-      
-      const name = contract.name || '';
-      const laufzeit = contract.laufzeit || '';
-      const kuendigung = contract.kuendigung || '';
-      
-      const combinedText = `${name} ${laufzeit} ${kuendigung}`.toLowerCase();
-      const matchesSearch = combinedText.includes(searchTerm.toLowerCase());
-      const matchesStatus = selectedStatus === "all" || contract.status === selectedStatus;
-      return matchesSearch && matchesStatus;
-    });
-    setFilteredContracts(filtered);
-  }, [searchTerm, selectedStatus, contracts]);
+    const priorityList = calculatePriorityContracts(contracts);
+    setPriorityContracts(priorityList);
+  }, [contracts]);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -152,7 +238,6 @@ export default function Dashboard() {
       if (res.ok) {
         const updatedContracts = [...contracts, data.contract];
         setContracts(updatedContracts);
-        setFilteredContracts(updatedContracts);
         setShowModal(false);
         setFile(null);
         setNotification({ message: "Vertrag erfolgreich hochgeladen", type: "success" });
@@ -182,7 +267,6 @@ export default function Dashboard() {
       if (res.ok) {
         const updated = contracts.filter((c) => c._id !== id);
         setContracts(updated);
-        setFilteredContracts(updated);
         setNotification({ message: "Vertrag erfolgreich gelöscht", type: "success" });
       } else {
         setNotification({ message: "Fehler beim Löschen", type: "error" });
@@ -211,7 +295,6 @@ export default function Dashboard() {
         c._id === id ? { ...c, reminder: !c.reminder } : c
       );
       setContracts(updated);
-      setFilteredContracts(updated);
       setNotification({ message: "Erinnerung wurde aktualisiert", type: "success" });
     } catch (err) {
       console.error(err);
@@ -392,37 +475,162 @@ export default function Dashboard() {
 
         <ContractNotification contracts={contracts} />
 
-        {/* Legal Pulse Overview - Neue Komponente */}
+        {/* Legal Pulse Overview */}
         <LegalPulseOverview contracts={contracts} />
 
-        <div className={styles.actionsContainer}>
-          <div className={styles.searchContainer}>
-            <svg className={styles.searchIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M11 19C15.4183 19 19 15.4183 19 11C19 6.58172 15.4183 3 11 3C6.58172 3 3 6.58172 3 11C3 15.4183 6.58172 19 11 19Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              <path d="M21 21L16.65 16.65" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            <input
-              type="text"
-              placeholder="Vertrag suchen..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className={styles.searchInput}
-            />
-          </div>
-
-          <div className={styles.filterContainer}>
-            <select
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              className={styles.filterSelect}
+        {/* 🚀 NEUE PRIORITY VERTRÄGE SEKTION */}
+        <div className={styles.priorityContractsSection}>
+          <div className={styles.sectionHeader}>
+            <div className={styles.headerContent}>
+              <h2>📊 Wichtige Verträge</h2>
+              <p>Verträge die Ihre Aufmerksamkeit erfordern und aktuelle Aktivitäten</p>
+            </div>
+            <button 
+              className={`${styles.actionButton} ${styles.primaryButton}`}
+              onClick={() => navigate('/contracts')}
             >
-              <option value="all">Alle Status</option>
-              <option value="Aktiv">Aktiv</option>
-              <option value="Bald ablaufend">Bald ablaufend</option>
-              <option value="Abgelaufen">Abgelaufen</option>
-            </select>
+              <svg className={styles.buttonIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M14 2V8H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Alle {contracts.length} Verträge anzeigen
+            </button>
           </div>
 
+          <div className={styles.tableContainer}>
+            {isLoading ? (
+              <div className={styles.loadingContainer}>
+                <div className={styles.loadingSpinner}></div>
+                <p>Daten werden geladen...</p>
+              </div>
+            ) : priorityContracts.length > 0 ? (
+              <div className={styles.tableWrapper}>
+                <table className={styles.contractTable}>
+                  <thead>
+                    <tr>
+                      <th>Kategorie</th>
+                      <th>Name</th>
+                      <th>Laufzeit</th>
+                      <th>Kündigungsfrist</th>
+                      <th>Ablaufdatum</th>
+                      <th>Status</th>
+                      <th>Aktionen</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {priorityContracts.map((contract) => {
+                      const category = getContractCategory(contract);
+                      const categoryInfo = getCategoryInfo(category);
+                      
+                      return (
+                        <tr 
+                          key={contract._id} 
+                          className={styles.contractRow}
+                          onClick={() => navigate(`/contracts/${contract._id}`)}
+                        >
+                          <td>
+                            <div className={styles.categoryCell}>
+                              <span 
+                                className={styles.categoryIcon}
+                                style={{ color: categoryInfo.color }}
+                              >
+                                {categoryInfo.icon}
+                              </span>
+                              <span 
+                                className={styles.categoryLabel}
+                                style={{ color: categoryInfo.color }}
+                              >
+                                {categoryInfo.label}
+                              </span>
+                            </div>
+                          </td>
+                          <td className={styles.nameCell}>{contract.name || "—"}</td>
+                          <td>{contract.laufzeit || "—"}</td>
+                          <td>{contract.kuendigung || "—"}</td>
+                          <td>{contract.expiryDate || "—"}</td>
+                          <td>
+                            <div className={styles.statusCell}>
+                              {getStatusIcon(contract.status)}
+                              <span>{contract.status || "Unbekannt"}</span>
+                            </div>
+                          </td>
+                          <td>
+                            <div className={styles.actionButtons}>
+                              <button 
+                                className={`${styles.iconButton} ${styles.reminderButton} ${contract.reminder ? styles.active : ''}`} 
+                                onClick={(e) => toggleReminder(contract._id, e)} 
+                                title={contract.reminder ? "Erinnerung deaktivieren" : "Erinnerung aktivieren"}
+                              >
+                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                  <path d="M18 8C18 6.4087 17.3679 4.88258 16.2426 3.75736C15.1174 2.63214 13.5913 2 12 2C10.4087 2 8.88258 2.63214 7.75736 3.75736C6.63214 4.88258 6 6.4087 6 8C6 15 3 17 3 17H21C21 17 18 15 18 8Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                  <path d="M13.73 21C13.5542 21.3031 13.3019 21.5547 12.9982 21.7295C12.6946 21.9044 12.3504 21.9965 12 21.9965C11.6496 21.9965 11.3054 21.9044 11.0018 21.7295C10.6982 21.5547 10.4458 21.3031 10.27 21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                              </button>
+                              <button 
+                                className={`${styles.iconButton} ${styles.calendarButton}`} 
+                                onClick={(e) => handleExportICS(contract, e)} 
+                                title="Zum Kalender hinzufügen"
+                              >
+                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                  <path d="M19 4H5C3.89543 4 3 4.89543 3 6V20C3 21.1046 3.89543 22 5 22H19C20.1046 22 21 21.1046 21 20V6C21 4.89543 20.1046 4 19 4Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                  <path d="M16 2V6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                  <path d="M8 2V6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                  <path d="M3 10H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                              </button>
+                              <button 
+                                className={`${styles.iconButton} ${styles.deleteButton}`} 
+                                onClick={(e) => handleDelete(contract._id, e)} 
+                                title="Vertrag löschen"
+                              >
+                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                  <path d="M3 6H5H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                  <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className={styles.emptyState}>
+                <svg className={styles.emptyStateIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M13 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V9L13 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M13 2V9H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <line x1="8" y1="13" x2="16" y2="13" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  <line x1="8" y1="17" x2="16" y2="17" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+                <h3>🎉 Alles im grünen Bereich!</h3>
+                <p>Derzeit sind keine kritischen Verträge vorhanden. Alle Ihre Verträge sind gut verwaltet.</p>
+                <div className={styles.emptyStateActions}>
+                  <button 
+                    className={`${styles.actionButton} ${styles.primaryButton}`}
+                    onClick={() => setShowModal(true)}
+                  >
+                    <svg className={styles.buttonIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 5V19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    Vertrag hinzufügen
+                  </button>
+                  <button 
+                    className={`${styles.actionButton}`}
+                    onClick={() => navigate('/contracts')}
+                  >
+                    Alle Verträge anzeigen
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Action Buttons - Jetzt kompakter */}
+        <div className={styles.actionsContainer}>
           <div className={styles.buttonGroup}>
             <button 
               className={`${styles.actionButton} ${styles.primaryButton}`}
@@ -460,103 +668,6 @@ export default function Dashboard() {
               ICS Export
             </button>
           </div>
-        </div>
-
-        <div className={styles.tableContainer}>
-          {isLoading ? (
-            <div className={styles.loadingContainer}>
-              <div className={styles.loadingSpinner}></div>
-              <p>Daten werden geladen...</p>
-            </div>
-          ) : filteredContracts.length > 0 ? (
-            <div className={styles.tableWrapper}>
-              <table className={styles.contractTable}>
-                <thead>
-                  <tr>
-                    <th>Name</th>
-                    <th>Laufzeit</th>
-                    <th>Kündigungsfrist</th>
-                    <th>Ablaufdatum</th>
-                    <th>Status</th>
-                    <th>Aktionen</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredContracts.map((contract) => (
-                    <tr 
-                      key={contract._id} 
-                      className={styles.contractRow}
-                      onClick={() => navigate(`/contracts/${contract._id}`)}
-                    >
-                      <td className={styles.nameCell}>{contract.name || "—"}</td>
-                      <td>{contract.laufzeit || "—"}</td>
-                      <td>{contract.kuendigung || "—"}</td>
-                      <td>{contract.expiryDate || "—"}</td>
-                      <td>
-                        <div className={styles.statusCell}>
-                          {getStatusIcon(contract.status)}
-                          <span>{contract.status || "Unbekannt"}</span>
-                        </div>
-                      </td>
-                      <td>
-                        <div className={styles.actionButtons}>
-                          <button 
-                            className={`${styles.iconButton} ${styles.reminderButton} ${contract.reminder ? styles.active : ''}`} 
-                            onClick={(e) => toggleReminder(contract._id, e)} 
-                            title={contract.reminder ? "Erinnerung deaktivieren" : "Erinnerung aktivieren"}
-                          >
-                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M18 8C18 6.4087 17.3679 4.88258 16.2426 3.75736C15.1174 2.63214 13.5913 2 12 2C10.4087 2 8.88258 2.63214 7.75736 3.75736C6.63214 4.88258 6 6.4087 6 8C6 15 3 17 3 17H21C21 17 18 15 18 8Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                              <path d="M13.73 21C13.5542 21.3031 13.3019 21.5547 12.9982 21.7295C12.6946 21.9044 12.3504 21.9965 12 21.9965C11.6496 21.9965 11.3054 21.9044 11.0018 21.7295C10.6982 21.5547 10.4458 21.3031 10.27 21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                          </button>
-                          <button 
-                            className={`${styles.iconButton} ${styles.calendarButton}`} 
-                            onClick={(e) => handleExportICS(contract, e)} 
-                            title="Zum Kalender hinzufügen"
-                          >
-                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M19 4H5C3.89543 4 3 4.89543 3 6V20C3 21.1046 3.89543 22 5 22H19C20.1046 22 21 21.1046 21 20V6C21 4.89543 20.1046 4 19 4Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                              <path d="M16 2V6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                              <path d="M8 2V6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                              <path d="M3 10H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                          </button>
-                          <button 
-                            className={`${styles.iconButton} ${styles.deleteButton}`} 
-                            onClick={(e) => handleDelete(contract._id, e)} 
-                            title="Vertrag löschen"
-                          >
-                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M3 6H5H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                              <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className={styles.emptyState}>
-              <svg className={styles.emptyStateIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M13 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V9L13 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M13 2V9H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <line x1="8" y1="13" x2="16" y2="13" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                <line x1="8" y1="17" x2="16" y2="17" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-              </svg>
-              <h3>Keine Verträge gefunden</h3>
-              <p>Füge einen neuen Vertrag hinzu oder ändere deine Filtereinstellungen.</p>
-              <button 
-                className={`${styles.actionButton} ${styles.primaryButton}`}
-                onClick={() => setShowModal(true)}
-              >
-                Vertrag hinzufügen
-              </button>
-            </div>
-          )}
         </div>
 
         <div className={styles.chartGrid}>
@@ -609,7 +720,7 @@ export default function Dashboard() {
                       >
                         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                           <path d="M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                          <path d="M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"/>
                         </svg>
                       </button>
                     </div>

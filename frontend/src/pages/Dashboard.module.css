@@ -803,3 +803,218 @@
     width: 100%;
   }
 }
+/* 🚀 NEUE CSS-KLASSEN FÜR OPTIMIERTES DASHBOARD */
+/* Diese Styles zu deiner bestehenden Dashboard.module.css hinzufügen */
+
+/* Priority Contracts Section */
+.priorityContractsSection {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 32px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.headerContent h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 4px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.headerContent p {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Category Styling */
+.categoryCell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 140px;
+}
+
+.categoryIcon {
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.categoryLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Enhanced Empty State */
+.emptyStateActions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+.emptyState h3 {
+  color: #1e293b;
+  margin: 16px 0 8px 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.emptyState p {
+  color: #64748b;
+  margin: 0 0 20px 0;
+  line-height: 1.6;
+  max-width: 400px;
+}
+
+/* Table Enhancements */
+.contractTable th:first-child {
+  width: 180px;
+  min-width: 180px;
+}
+
+.contractRow:hover .categoryLabel {
+  font-weight: 700;
+  transform: translateX(2px);
+  transition: all 0.2s ease;
+}
+
+/* Priority Contract Card Hover Effects */
+.contractRow {
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.contractRow:hover {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Action Button Enhancements */
+.actionButton.primaryButton {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border: none;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+}
+
+.actionButton.primaryButton:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.actionButton {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.actionButton:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #475569;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.buttonIcon {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
+}
+
+/* Responsive Design für Priority Section */
+@media (max-width: 768px) {
+  .priorityContractsSection {
+    padding: 16px;
+    margin-bottom: 24px;
+  }
+  
+  .sectionHeader {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  
+  .headerContent {
+    text-align: center;
+  }
+  
+  .categoryCell {
+    min-width: auto;
+    justify-content: center;
+  }
+  
+  .categoryLabel {
+    display: none;
+  }
+  
+  .emptyStateActions {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .actionButton {
+    width: 100%;
+    justify-content: center;
+    max-width: 280px;
+  }
+}
+
+@media (max-width: 480px) {
+  .contractTable th:first-child {
+    width: 60px;
+    min-width: 60px;
+  }
+  
+  .categoryIcon {
+    font-size: 1.2rem;
+  }
+  
+  .headerContent h2 {
+    font-size: 1.25rem;
+  }
+  
+  .headerContent p {
+    font-size: 0.8rem;
+  }
+}
