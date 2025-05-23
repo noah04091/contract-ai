@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import styles from "../styles/ContractDetails.module.css";
 import { generateICS } from "../utils/icsGenerator";
 import Notification from "../components/Notification";
+import ContractContentViewer from "../components/ContractContentViewer";
 
 interface Contract {
   _id: string;
@@ -15,6 +16,10 @@ interface Contract {
   filePath?: string;
   reminder?: boolean;
   reminderLastSentAt?: string;
+  content?: string;           // ✅ NEU: Für generierten Vertragsinhalt
+  signature?: string;         // ✅ NEU: Für digitale Unterschrift
+  isGenerated?: boolean;      // ✅ NEU: Kennzeichnung als generierter Vertrag
+  createdAt?: string;         // ✅ NEU: Erstellungsdatum
   legalPulse?: {
     riskScore: number | null;
     summary?: string;
@@ -262,7 +267,24 @@ export default function ContractDetails() {
 
       <div className={styles.contractCard}>
         <div className={styles.contractHeader}>
-          <h2>{contract.name}</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <h2>{contract.name}</h2>
+            {contract.isGenerated && (
+              <span style={{
+                background: 'linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%)',
+                color: 'white',
+                padding: '4px 8px',
+                borderRadius: '6px',
+                fontSize: '12px',
+                fontWeight: '600',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}>
+                ✨ KI-Generiert
+              </span>
+            )}
+          </div>
           <div className={`${styles.statusBadge} ${getStatusColor(contract.status)}`}>
             {contract.status || "Status unbekannt"}
           </div>
@@ -316,11 +338,21 @@ export default function ContractDetails() {
               </svg>
             </div>
             <div className={styles.infoContent}>
-              <span className={styles.infoLabel}>Hochgeladen</span>
-              <span className={styles.infoValue}>{contract.uploadedAt ? formatDate(contract.uploadedAt) : "Nicht angegeben"}</span>
+              <span className={styles.infoLabel}>
+                {contract.isGenerated ? 'Erstellt' : 'Hochgeladen'}
+              </span>
+              <span className={styles.infoValue}>
+                {contract.isGenerated 
+                  ? (contract.createdAt ? formatDate(contract.createdAt) : "Nicht angegeben")
+                  : (contract.uploadedAt ? formatDate(contract.uploadedAt) : "Nicht angegeben")
+                }
+              </span>
             </div>
           </div>
         </div>
+
+        {/* ✅ NEU: Contract Content Viewer - Zeigt den vollständigen Vertragsinhalt */}
+        <ContractContentViewer contract={contract} />
 
         {/* Legal Pulse Analysis Section */}
         {contract.legalPulse && (
@@ -496,7 +528,8 @@ export default function ContractDetails() {
               Kalender
             </button>
             
-            {contract.filePath && (
+            {/* Zeige PDF-Button nur für hochgeladene Verträge mit filePath */}
+            {contract.filePath && !contract.isGenerated && (
               <a
                 href={`/api${contract.filePath}`}
                 target="_blank"
@@ -507,7 +540,7 @@ export default function ContractDetails() {
                   <path d="M12 10V16M12 16L9 13M12 16L15 13M17 21H7C5.89543 21 5 20.1046 5 19V5C5 3.89543 5.89543 3 7 3H12.5858C12.851 3 13.1054 3.10536 13.2929 3.29289L18.7071 8.70711C18.8946 8.89464 19 9.149 19 9.41421V19C19 20.1046 18.1046 21 17 21Z" 
                     stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-                PDF öffnen
+                Original PDF öffnen
               </a>
             )}
             

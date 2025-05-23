@@ -1,11 +1,36 @@
-declare module "html2pdf.js" {
-  const html2pdf: {
-    (): {
-      from: (el: HTMLElement) => {
-        set: (options: Record<string, unknown>) => unknown;
-        save: () => Promise<void>;
-      };
+// src/types/html2pdf.d.ts
+declare module 'html2pdf.js' {
+  interface Html2PdfOptions {
+    margin?: number | number[];
+    filename?: string;
+    image?: {
+      type?: string;
+      quality?: number;
     };
-  };
+    html2canvas?: {
+      scale?: number;
+      useCORS?: boolean;
+      letterRendering?: boolean;
+      width?: number;
+      height?: number;
+    };
+    jsPDF?: {
+      unit?: string;
+      format?: string | number[];
+      orientation?: 'portrait' | 'landscape';
+      putOnlyUsedFonts?: boolean;
+    };
+  }
+
+  interface Html2Pdf {
+    from(element: HTMLElement): Html2Pdf;
+    set(options: Html2PdfOptions): Html2Pdf;
+    save(): Promise<void>;
+    output(type?: string): any;
+    then(callback: Function): Html2Pdf;
+  }
+
+  function html2pdf(): Html2Pdf;
+  
   export default html2pdf;
 }
