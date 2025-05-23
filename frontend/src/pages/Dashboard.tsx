@@ -887,7 +887,7 @@ export default function Dashboard() {
                     ))}
                   </Pie>
                   <Tooltip 
-                    formatter={(value: any, name: any) => [`${value} Verträge (${pieData.find(d => d.name === name)?.percentage}%)`, name]}
+                    formatter={(value: number, name: string) => [`${value} Verträge (${pieData.find(d => d.name === name)?.percentage}%)`, name]}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -925,6 +925,7 @@ export default function Dashboard() {
                       borderRadius: '8px',
                       boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                     }}
+                    formatter={(value: number, name: string) => [value, name]}
                   />
                   <Bar dataKey="uploaded" fill="#3b82f6" name="Hochgeladen" radius={[4, 4, 0, 0]} />
                   <Bar dataKey="generated" fill="#10b981" name="KI-Generiert" radius={[4, 4, 0, 0]} />
@@ -946,7 +947,7 @@ export default function Dashboard() {
                   <XAxis type="number" stroke="#64748b" fontSize={12} />
                   <YAxis type="category" dataKey="category" stroke="#64748b" fontSize={11} width={100} />
                   <Tooltip 
-                    formatter={(value: any) => [`${value} Verträge`, 'Anzahl']}
+                    formatter={(value: number) => [`${value} Verträge`, 'Anzahl']}
                     contentStyle={{
                       backgroundColor: '#ffffff',
                       border: '1px solid #e2e8f0',
@@ -977,6 +978,7 @@ export default function Dashboard() {
                       border: '1px solid #e2e8f0',
                       borderRadius: '8px'
                     }}
+                    formatter={(value: number, name: string) => [value, name]}
                   />
                   <Area 
                     type="monotone" 
