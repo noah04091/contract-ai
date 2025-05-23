@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import styles from "./Dashboard.module.css";
 import GeneratedContractsSection from "../components/GeneratedContractsSection";
+import LegalPulseOverview from "../components/LegalPulseOverview";
 import { generateICS } from "../utils/icsGenerator";
 import Notification from "../components/Notification";
 import { Helmet } from "react-helmet-async";
@@ -633,6 +634,9 @@ export default function Dashboard() {
 
         {/* Generierte Verträge Sektion */}
         <GeneratedContractsSection contracts={contracts} />
+
+        {/* Legal Pulse Overview */}
+        <LegalPulseOverview contracts={contracts} />
 
         {/* Priority Verträge Sektion */}
         <div className={styles.priorityContractsSection}>
