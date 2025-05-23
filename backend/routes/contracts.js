@@ -34,7 +34,39 @@ router.get("/", verifyToken, async (req, res) => {
   }
 });
 
-// ✅ NEU: POST /contracts – Neuen Vertrag speichern (generiert oder hochgeladen)
+// ✅ NEU: GET /contracts/:id – Einzelnen Vertrag abrufen
+router.get("/:id", verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    console.log("🔍 Suche Vertrag mit ID:", id); // Debug-Log
+
+    const contract = await contractsCollection.findOne({
+      _id: new ObjectId(id),
+      userId: new ObjectId(req.user.userId)
+    });
+
+    if (!contract) {
+      console.log("❌ Vertrag nicht gefunden für ID:", id);
+      return res.status(404).json({ 
+        message: "Vertrag nicht gefunden",
+        error: "Contract not found" 
+      });
+    }
+
+    console.log("✅ Vertrag gefunden:", contract.name);
+    res.json(contract);
+
+  } catch (err) {
+    console.error("❌ Fehler beim Laden des Vertrags:", err.message);
+    res.status(500).json({ 
+      message: "Fehler beim Abrufen des Vertrags",
+      error: err.message 
+    });
+  }
+});
+
+// POST /contracts – Neuen Vertrag speichern (generiert oder hochgeladen)
 router.post("/", verifyToken, async (req, res) => {
   try {
     const {
