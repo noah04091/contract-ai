@@ -1710,3 +1710,138 @@
     border: 1px solid #f3f4f6 !important;
   }
 }
+/* ====================================== */
+/* InfoTooltip Header Layout Ergänzungen */
+/* ====================================== */
+
+/* Metric Card Header mit InfoTooltip */
+.metricHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Section Header Layout */
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #f8f9fa;
+}
+
+.sectionHeader h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #2c3e50;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Header Content für komplexere Layouts */
+.headerContent {
+  flex: 1;
+}
+
+.headerContent h2 {
+  margin: 0 0 4px 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.headerContent p {
+  margin: 0;
+  color: #6c757d;
+  font-size: 0.875rem;
+}
+
+/* Header Actions Container */
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Analytics Header mit InfoTooltip */
+.analyticsHeader {
+  position: relative;
+  padding: 20px 20px 16px 20px;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.analyticsHeader h3 {
+  margin: 0 0 4px 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.analyticsHeader p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+/* Quick Actions Header */
+.quickActionsSection .sectionHeader {
+  margin-bottom: 16px;
+}
+
+.quickActionsSection .sectionHeader h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #2c3e50;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Responsive Design für Header-Layouts */
+@media (max-width: 768px) {
+  .sectionHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .headerActions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .analyticsHeader {
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+  }
+
+  .metricHeaderActions {
+    gap: 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  .sectionHeader h2 {
+    font-size: 1.25rem;
+  }
+
+  .headerContent h2 {
+    font-size: 1.25rem;
+  }
+
+  .analyticsHeader h3 {
+    font-size: 1rem;
+  }
+
+  .quickActionsSection .sectionHeader h3 {
+    font-size: 1.125rem;
+  }
+}

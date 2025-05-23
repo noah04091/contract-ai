@@ -3,6 +3,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import styles from "./Dashboard.module.css";
 import GeneratedContractsSection from "../components/GeneratedContractsSection";
 import LegalPulseOverview from "../components/LegalPulseOverview";
+import InfoTooltip from "../components/InfoTooltip";
+import { tooltipTexts } from "../utils/tooltipTexts";
 import { generateICS } from "../utils/icsGenerator";
 import Notification from "../components/Notification";
 import { Helmet } from "react-helmet-async";
@@ -541,7 +543,10 @@ export default function Dashboard() {
                   <path d="M14 2V8H20" stroke="currentColor" strokeWidth="2"/>
                 </svg>
               </div>
-              <span className={styles.metricTrend}>+{contracts.filter(c => c.isGenerated).length}</span>
+              <div className={styles.metricHeaderActions}>
+                <span className={styles.metricTrend}>+{contracts.filter(c => c.isGenerated).length}</span>
+                <InfoTooltip {...tooltipTexts.metricsTotal} />
+              </div>
             </div>
             <div className={styles.metricValue}>{contracts.length}</div>
             <div className={styles.metricLabel}>Verträge insgesamt</div>
@@ -557,9 +562,12 @@ export default function Dashboard() {
                   <path d="M18 8C18 6.4087 17.3679 4.88258 16.2426 3.75736C15.1174 2.63214 13.5913 2 12 2C10.4087 2 8.88258 2.63214 7.75736 3.75736C6.63214 4.88258 6 6.4087 6 8C6 15 3 17 3 17H21C21 17 18 15 18 8Z" stroke="currentColor" strokeWidth="2"/>
                 </svg>
               </div>
-              <span className={styles.metricTrend}>
-                {countWithReminder() > 0 ? `+${countWithReminder()}` : '—'}
-              </span>
+              <div className={styles.metricHeaderActions}>
+                <span className={styles.metricTrend}>
+                  {countWithReminder() > 0 ? `+${countWithReminder()}` : '—'}
+                </span>
+                <InfoTooltip {...tooltipTexts.metricsReminders} />
+              </div>
             </div>
             <div className={styles.metricValue}>
               {isLoading ? "..." : countWithReminder()}
@@ -578,7 +586,9 @@ export default function Dashboard() {
                   <path d="M12 6V12L16 14" stroke="currentColor" strokeWidth="2"/>
                 </svg>
               </div>
-              <span className={styles.metricTrend}>Ø</span>
+              <div className={styles.metricHeaderActions}>
+                <span className={styles.metricTrend}>Ø</span>
+              </div>
             </div>
             <div className={styles.metricValue}>
               {isLoading ? "..." : averageLaufzeit()}
@@ -597,9 +607,12 @@ export default function Dashboard() {
                   <path d="M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" strokeWidth="2"/>
                 </svg>
               </div>
-              <span className={styles.metricTrend}>
-                {countStatus("Aktiv") > 0 ? `${Math.round((countStatus("Aktiv") / contracts.length) * 100)}%` : '—'}
-              </span>
+              <div className={styles.metricHeaderActions}>
+                <span className={styles.metricTrend}>
+                  {countStatus("Aktiv") > 0 ? `${Math.round((countStatus("Aktiv") / contracts.length) * 100)}%` : '—'}
+                </span>
+                <InfoTooltip {...tooltipTexts.metricsActive} />
+              </div>
             </div>
             <div className={styles.metricValue}>
               {isLoading ? "..." : countStatus("Aktiv")}
@@ -618,9 +631,12 @@ export default function Dashboard() {
                   <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" strokeWidth="2"/>
                 </svg>
               </div>
-              <span className={styles.metricTrend}>
-                {countStatus("Bald ablaufend") > 0 ? '⚠️' : '✅'}
-              </span>
+              <div className={styles.metricHeaderActions}>
+                <span className={styles.metricTrend}>
+                  {countStatus("Bald ablaufend") > 0 ? '⚠️' : '✅'}
+                </span>
+                <InfoTooltip {...tooltipTexts.metricsExpiring} />
+              </div>
             </div>
             <div className={styles.metricValue}>
               {isLoading ? "..." : countStatus("Bald ablaufend")}
@@ -632,10 +648,16 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Generierte Verträge Sektion */}
-        <GeneratedContractsSection contracts={contracts} />
+        {/* Generierte Verträge Sektion mit InfoTooltip */}
+        <div className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <h2>✨ KI-Generierte Verträge</h2>
+            <InfoTooltip {...tooltipTexts.generatedContracts} />
+          </div>
+          <GeneratedContractsSection contracts={contracts} />
+        </div>
 
-        {/* Legal Pulse Overview */}
+        {/* Legal Pulse Overview (hat bereits InfoTooltip in der Komponente) */}
         <LegalPulseOverview contracts={contracts} />
 
         {/* Priority Verträge Sektion */}
@@ -645,16 +667,19 @@ export default function Dashboard() {
               <h2>📊 Wichtige Verträge</h2>
               <p>Verträge die Ihre Aufmerksamkeit erfordern und aktuelle Aktivitäten</p>
             </div>
-            <button 
-              className={`${styles.actionButton} ${styles.primaryButton}`}
-              onClick={() => navigate('/contracts')}
-            >
-              <svg className={styles.buttonIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" strokeWidth="2"/>
-                <path d="M14 2V8H20" stroke="currentColor" strokeWidth="2"/>
-              </svg>
-              Alle {contracts.length} Verträge anzeigen
-            </button>
+            <div className={styles.headerActions}>
+              <InfoTooltip {...tooltipTexts.priorityContracts} />
+              <button 
+                className={`${styles.actionButton} ${styles.primaryButton}`}
+                onClick={() => navigate('/contracts')}
+              >
+                <svg className={styles.buttonIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M14 2V8H20" stroke="currentColor" strokeWidth="2"/>
+                </svg>
+                Alle {contracts.length} Verträge anzeigen
+              </button>
+            </div>
           </div>
 
           <div className={styles.tableContainer}>
@@ -797,7 +822,10 @@ export default function Dashboard() {
 
         {/* Quick Actions */}
         <div className={styles.quickActionsSection}>
-          <h3>⚡ Schnellaktionen</h3>
+          <div className={styles.sectionHeader}>
+            <h3>⚡ Schnellaktionen</h3>
+            <InfoTooltip {...tooltipTexts.quickActions} />
+          </div>
           <div className={styles.quickActionsGrid}>
             <button 
               className={`${styles.quickActionCard} ${styles.primaryAction}`}
@@ -873,6 +901,7 @@ export default function Dashboard() {
             <div className={styles.analyticsHeader}>
               <h3>📊 Statusverteilung</h3>
               <p>Übersicht aller Vertragsstatus</p>
+              <InfoTooltip {...tooltipTexts.analyticsStatus} />
             </div>
             <div className={styles.chartContainer}>
               <ResponsiveContainer width="100%" height={300}>
@@ -915,6 +944,7 @@ export default function Dashboard() {
             <div className={styles.analyticsHeader}>
               <h3>📈 Upload-Trends</h3>
               <p>Monatliche Vertragsaktivitäten</p>
+              <InfoTooltip {...tooltipTexts.analyticsUploads} />
             </div>
             <div className={styles.chartContainer}>
               <ResponsiveContainer width="100%" height={300}>
@@ -943,6 +973,7 @@ export default function Dashboard() {
             <div className={styles.analyticsHeader}>
               <h3>⚠️ Risiko-Analyse</h3>
               <p>Legal Pulse Bewertungen</p>
+              <InfoTooltip {...tooltipTexts.analyticsRisk} />
             </div>
             <div className={styles.chartContainer}>
               <ResponsiveContainer width="100%" height={300}>
@@ -969,6 +1000,7 @@ export default function Dashboard() {
             <div className={styles.analyticsHeader}>
               <h3>📅 30-Tage Trend</h3>
               <p>Tägliche Vertragsaktivitäten</p>
+              <InfoTooltip {...tooltipTexts.analyticsTrend} />
             </div>
             <div className={styles.chartContainer}>
               <ResponsiveContainer width="100%" height={300}>

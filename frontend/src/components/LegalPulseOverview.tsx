@@ -1,5 +1,6 @@
 // LegalPulseOverview.tsx
 import React from 'react';
+import InfoTooltip from '../components/InfoTooltip';
 import styles from "../styles/LegalPulseOverview.module.css";
 
 interface Contract {
@@ -41,7 +42,15 @@ const LegalPulseOverview: React.FC<LegalPulseOverviewProps> = ({ contracts }) =>
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h3 className={styles.title}>🧠 Legal Pulse Analyse</h3>
+        <div className={styles.titleRow}>
+          <h3 className={styles.title}>🧠 Legal Pulse Analyse</h3>
+          <InfoTooltip
+            title="Was ist Legal Pulse?"
+            content="Legal Pulse analysiert Ihre Verträge automatisch auf rechtliche Risiken, Compliance-Probleme und Optimierungsmöglichkeiten. Der KI-Score (0-100) zeigt potenzielle Schwachstellen und hilft bei der Prioritisierung von Vertragsüberprüfungen."
+            position="bottom"
+            size="lg"
+          />
+        </div>
         <span className={styles.count}>
           {contracts.length} {contracts.length === 1 ? 'Vertrag' : 'Verträge'}
         </span>
