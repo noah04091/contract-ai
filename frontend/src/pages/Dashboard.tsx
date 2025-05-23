@@ -56,10 +56,18 @@ export default function Dashboard() {
     return styles.progressGreen;
   };
 
-  const countStatus = (status: string) => contracts.filter((c) => c.status === status).length;
-  const countWithReminder = () => contracts.filter((c) => c.reminder).length;
+  // ✅ Korrigierte Funktionen mit Null-Checks
+  const countStatus = (status: string) => {
+    return contracts.filter((c) => c && c.status === status).length;
+  };
+
+  const countWithReminder = () => {
+    return contracts.filter((c) => c && c.reminder).length;
+  };
+
   const averageLaufzeit = () => {
     const laufzeiten = contracts
+      .filter((c) => c && c.laufzeit && typeof c.laufzeit === 'string') // ✅ Null-Checks hinzugefügt
       .map((c) => {
         const match = c.laufzeit.match(/(\d+)\s*(Jahr|Monat)/i);
         if (!match) return 0;
@@ -98,7 +106,14 @@ export default function Dashboard() {
 
   useEffect(() => {
     const filtered = contracts.filter((contract) => {
-      const combinedText = `${contract.name} ${contract.laufzeit} ${contract.kuendigung}`.toLowerCase();
+      // ✅ Null-Checks für contract properties hinzufügen
+      if (!contract) return false;
+      
+      const name = contract.name || '';
+      const laufzeit = contract.laufzeit || '';
+      const kuendigung = contract.kuendigung || '';
+      
+      const combinedText = `${name} ${laufzeit} ${kuendigung}`.toLowerCase();
       const matchesSearch = combinedText.includes(searchTerm.toLowerCase());
       const matchesStatus = selectedStatus === "all" || contract.status === selectedStatus;
       return matchesSearch && matchesStatus;
@@ -216,9 +231,9 @@ export default function Dashboard() {
   const exportToCSV = () => {
     const headers = ["Name", "Laufzeit", "Kündigungsfrist", "Ablaufdatum", "Status"];
     const rows = contracts.map((c) => [
-      `"${c.name}"`,
-      `"${c.laufzeit}"`,
-      `"${c.kuendigung}"`,
+      `"${c.name || ""}"`,
+      `"${c.laufzeit || ""}"`,
+      `"${c.kuendigung || ""}"`,
       `"${c.expiryDate || ""}"`,
       `"${c.status || ""}"`,
     ]);
@@ -240,7 +255,7 @@ export default function Dashboard() {
 
   const exportAllICS = () => {
     const soonExpiring = contracts.filter((c) => {
-      if (!c.expiryDate) return false;
+      if (!c || !c.expiryDate) return false;
       const daysLeft = (new Date(c.expiryDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24);
       return daysLeft <= 30 && daysLeft > 0;
     });
@@ -344,19 +359,27 @@ export default function Dashboard() {
             <div className={styles.metricLabel}>Verträge insgesamt</div>
           </div>
           <div className={styles.metricCard}>
-            <div className={styles.metricValue}>{countWithReminder()}</div>
+            <div className={styles.metricValue}>
+              {isLoading ? "..." : countWithReminder()}
+            </div>
             <div className={styles.metricLabel}>Mit Erinnerung</div>
           </div>
           <div className={styles.metricCard}>
-            <div className={styles.metricValue}>{averageLaufzeit()}</div>
+            <div className={styles.metricValue}>
+              {isLoading ? "..." : averageLaufzeit()}
+            </div>
             <div className={styles.metricLabel}>Ø Laufzeit (Monate)</div>
           </div>
           <div className={styles.metricCard}>
-            <div className={styles.metricValue}>{countStatus("Aktiv")}</div>
+            <div className={styles.metricValue}>
+              {isLoading ? "..." : countStatus("Aktiv")}
+            </div>
             <div className={styles.metricLabel}>Aktive Verträge</div>
           </div>
           <div className={styles.metricCard}>
-            <div className={styles.metricValue}>{countStatus("Bald ablaufend")}</div>
+            <div className={styles.metricValue}>
+              {isLoading ? "..." : countStatus("Bald ablaufend")}
+            </div>
             <div className={styles.metricLabel}>Bald ablaufend</div>
           </div>
         </div>
@@ -459,9 +482,9 @@ export default function Dashboard() {
                       className={styles.contractRow}
                       onClick={() => navigate(`/contracts/${contract._id}`)}
                     >
-                      <td className={styles.nameCell}>{contract.name}</td>
-                      <td>{contract.laufzeit}</td>
-                      <td>{contract.kuendigung}</td>
+                      <td className={styles.nameCell}>{contract.name || "—"}</td>
+                      <td>{contract.laufzeit || "—"}</td>
+                      <td>{contract.kuendigung || "—"}</td>
                       <td>{contract.expiryDate || "—"}</td>
                       <td>
                         <div className={styles.statusCell}>
