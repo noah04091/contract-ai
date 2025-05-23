@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import styles from "./Dashboard.module.css";
 import ContractNotification from "../components/ContractNotification";
 import LegalPulseOverview from "../components/LegalPulseOverview";
+import GeneratedContractsSection from "../components/GeneratedContractsSection";
 import { generateICS } from "../utils/icsGenerator";
 import StatusPieChart from "../components/StatusPieChart";
 import UploadBarChart from "../components/UploadBarChart";
@@ -19,6 +20,8 @@ interface Contract {
   uploadedAt?: string;
   filePath?: string;
   reminder?: boolean;
+  isGenerated?: boolean;
+  createdAt?: string;
   legalPulse?: {
     riskScore: number | null;
   };
@@ -383,6 +386,9 @@ export default function Dashboard() {
             <div className={styles.metricLabel}>Bald ablaufend</div>
           </div>
         </div>
+
+        {/* Generierte Verträge Sektion */}
+        <GeneratedContractsSection contracts={contracts} />
 
         <ContractNotification contracts={contracts} />
 

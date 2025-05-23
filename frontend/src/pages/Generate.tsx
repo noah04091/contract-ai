@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import { 
   CheckCircle, Clipboard, Save, FileText, Check, Download,
   ArrowRight, ArrowLeft, Sparkles, Edit3,
@@ -65,7 +66,7 @@ const CONTRACT_TYPES: ContractType[] = [
     ]
   },
   {
-    id: 'arbeitsvertrag',
+    id: 'arbeitsvertrag',  
     name: 'Arbeitsvertrag',
     description: 'Für Festanstellungen',
     icon: '👔',
@@ -114,7 +115,7 @@ const CONTRACT_TYPES: ContractType[] = [
   }
 ];
 
-const PremiumNotice: React.FC = () => (
+const PremiumNotice: React.FC<{ onUpgradeClick: () => void }> = ({ onUpgradeClick }) => (
   <motion.div 
     className={styles.premiumNotice}
     initial={{ opacity: 0, scale: 0.9 }}
@@ -131,6 +132,7 @@ const PremiumNotice: React.FC = () => (
       </div>
       <motion.button 
         className={styles.upgradeButton}
+        onClick={onUpgradeClick}
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
       >
@@ -142,6 +144,9 @@ const PremiumNotice: React.FC = () => (
 );
 
 export default function Generate() {
+  // Navigation
+  const navigate = useNavigate();
+
   // State Management
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedType, setSelectedType] = useState<ContractType | null>(null);
@@ -175,7 +180,7 @@ export default function Generate() {
     fetchStatus();
   }, []);
 
-  // 🖊️ DIREKTE CANVAS-FUNKTIONEN (NEUE LÖSUNG)
+  // 🖊️ DIREKTE CANVAS-FUNKTIONEN (BESTEHENDE LÖSUNG)
   const handleCanvasMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -355,10 +360,10 @@ export default function Generate() {
     }
   };
 
+  // ✅ AKTUALISIERTE SAVE-FUNKTION mit Dashboard-Weiterleitung
   const handleSave = async () => {
     try {
-      // KORRIGIERTE Route - ohne /api/ da Proxy das entfernt
-      const res = await fetch("/contracts", {
+      const res = await fetch("/api/contracts", {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -369,8 +374,8 @@ export default function Generate() {
           expiryDate: "",
           status: "Aktiv",
           content: generated,
-          signature: signatureURL, // Unterschrift mitspeichern
-          isGenerated: true
+          signature: signatureURL,
+          isGenerated: true // ✅ Wichtig für Dashboard-Filter
         }),
       });
       
@@ -383,8 +388,14 @@ export default function Generate() {
       console.log("✅ Vertrag gespeichert:", result);
       
       setSaved(true);
-      setTimeout(() => setSaved(false), 3000);
-      alert("✅ Vertrag wurde erfolgreich gespeichert!");
+      
+      // ✅ NEU: Erfolgreiche Benachrichtigung mit automatischer Weiterleitung
+      alert("✅ Vertrag wurde erfolgreich gespeichert! Sie werden zum Dashboard weitergeleitet.");
+      
+      // ✅ NEU: Automatische Weiterleitung zum Dashboard nach 1 Sekunde
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 1000);
       
     } catch (err) {
       console.error("❌ Save error:", err);
@@ -485,6 +496,11 @@ export default function Generate() {
     }
   };
 
+  // ✅ NEU: Upgrade Button Handler
+  const handleUpgradeClick = () => {
+    navigate('/upgrade');
+  };
+
   // Loading State
   if (isPremium === null) {
     return (
@@ -539,7 +555,7 @@ export default function Generate() {
 
       <div className={styles.generatorContent}>
         {/* Premium Notice */}
-        {!isPremium && <PremiumNotice />}
+        {!isPremium && <PremiumNotice onUpgradeClick={handleUpgradeClick} />}
 
         {/* Main Content */}
         <div className={`${styles.contentGrid} ${showPreview ? styles.withPreview : ''}`}>
@@ -709,7 +725,7 @@ export default function Generate() {
                       whileTap={{ scale: 0.98 }}
                     >
                       {saved ? <CheckCircle size={16} /> : <Save size={16} />}
-                      <span>{saved ? "Gespeichert!" : "Speichern"}</span>
+                      <span>{saved ? "Gespeichert!" : "Speichern & zum Dashboard"}</span>
                     </motion.button>
 
                     <motion.button
