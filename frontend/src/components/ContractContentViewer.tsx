@@ -1,16 +1,7 @@
 // ContractContentViewer.tsx - Neue Komponente für Vertragsinhalt
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  FileText, 
-  Download, 
-  Maximize2, 
-  X, 
-  Eye,
-  Copy,
-  CheckCircle,
-  Printer
-} from 'lucide-react';
+import { FileText, Download, Maximize2, X, Eye, Copy, CheckCircle, Printer } from 'lucide-react';
 
 interface ContractContentViewerProps {
   contract: {
@@ -20,104 +11,85 @@ interface ContractContentViewerProps {
     signature?: string;
     isGenerated?: boolean;
     createdAt?: string;
+    uploadedAt?: string;
   };
 }
 
 const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract }) => {
-  const [showFullPreview, setShowFullPreview] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [copySuccess, setCopySuccess] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  // Prüfen ob Vertrag Inhalt hat
-  if (!contract.content) {
-    return (
-      <div style={{ 
-        padding: '24px', 
-        background: '#f8fafc', 
-        borderRadius: '12px',
-        border: '1px solid #e2e8f0',
-        textAlign: 'center',
-        color: '#64748b'
-      }}>
-        <FileText size={48} style={{ margin: '0 auto 16px', opacity: 0.5 }} />
-        <h3 style={{ margin: '0 0 8px 0', color: '#475569' }}>Kein Vertragsinhalt verfügbar</h3>
-        <p style={{ margin: 0 }}>
-          {contract.isGenerated 
-            ? 'Dieser generierte Vertrag hat keinen gespeicherten Inhalt.' 
-            : 'Dieser hochgeladene Vertrag enthält nur Metadaten.'}
-        </p>
-      </div>
-    );
-  }
-
-  const handleCopyContent = async () => {
-    try {
-      await navigator.clipboard.writeText(contract.content || '');
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (error) {
-      console.error('Kopieren fehlgeschlagen:', error);
-    }
-  };
+  // Fallback-Content für Verträge ohne Inhalt
+  const displayContent = contract.content || 
+    `Vertrag: ${contract.name}\n\nDieser Vertrag wurde ${contract.isGenerated ? 'generiert' : 'hochgeladen'} am ${
+      contract.isGenerated ? 
+        new Date(contract.createdAt || '').toLocaleDateString('de-DE') : 
+        new Date(contract.uploadedAt || '').toLocaleDateString('de-DE')
+    }.\n\nDetaillierte Vertragsinhalte können durch Analyse oder manuellen Upload bereitgestellt werden.`;
 
   const handleDownloadPDF = async () => {
     try {
-      // Dynamically import html2pdf with proper typing
-      const html2pdfModule = await import('html2pdf.js') as any;
-      const html2pdf = html2pdfModule.default || html2pdfModule;
+      // Dynamischer Import mit korrekten TypeScript-Typen
+      const html2pdfModule = await import('html2pdf.js');
+      const html2pdf = (html2pdfModule.default || html2pdfModule) as typeof import('html2pdf.js').default;
       
-      const container = contentRef.current;
-      if (!container) return;
+      if (contentRef.current) {
+        const opt = {
+          margin: [15, 15, 15, 15],
+          filename: `${contract.name}.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { 
+            scale: 2, 
+            useCORS: true,
+            letterRendering: true 
+          },
+          jsPDF: { 
+            unit: 'mm', 
+            format: 'a4', 
+            orientation: 'portrait' 
+          }
+        };
 
-      // Create a temporary container with better styling for PDF
-      const pdfContainer = document.createElement('div');
-      pdfContainer.innerHTML = `
-        <div style="font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.6; color: #000; max-width: 100%; padding: 40px;">
-          <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 20px;">
-            <h1 style="margin: 0; font-size: 18pt; font-weight: bold;">${contract.name}</h1>
-            <p style="margin: 10px 0 0 0; color: #666; font-size: 10pt;">
-              ${contract.isGenerated ? 'KI-Generierter Vertrag' : 'Hochgeladener Vertrag'} • 
-              Erstellt am ${new Date(contract.createdAt || '').toLocaleDateString('de-DE')}
-            </p>
-          </div>
-          <div style="white-space: pre-wrap; text-align: justify;">
-            ${contract.content?.replace(/\n/g, '<br>')}
-          </div>
-          ${contract.signature ? `
-            <div style="margin-top: 40px; border-top: 1px solid #ddd; padding-top: 20px;">
-              <p style="margin-bottom: 10px; font-weight: bold;">Digitale Unterschrift:</p>
-              <img src="${contract.signature}" style="max-width: 200px; border: 1px solid #ddd; border-radius: 4px;" />
-              <p style="margin-top: 10px; font-size: 10pt; color: #666;">
-                Unterschrieben am ${new Date().toLocaleString('de-DE')}
+        // Erstelle temporäres Element für PDF-Generierung
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = `
+          <div style="font-family: 'Times New Roman', serif; padding: 40px; line-height: 1.6;">
+            <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 20px;">
+              <h1 style="margin: 0; color: #333; font-size: 24px;">${contract.name}</h1>
+              ${contract.isGenerated ? 
+                '<p style="margin: 10px 0 0 0; color: #666; font-size: 12px;">✨ KI-Generierter Vertrag</p>' : 
+                '<p style="margin: 10px 0 0 0; color: #666; font-size: 12px;">📄 Hochgeladener Vertrag</p>'
+              }
+              <p style="margin: 5px 0 0 0; color: #666; font-size: 12px;">
+                ${contract.isGenerated ? 'Erstellt' : 'Hochgeladen'} am: ${
+                  contract.isGenerated ? 
+                    new Date(contract.createdAt || '').toLocaleDateString('de-DE') : 
+                    new Date(contract.uploadedAt || '').toLocaleDateString('de-DE')
+                }
               </p>
             </div>
-          ` : ''}
-        </div>
-      `;
-
-      const opt = {
-        margin: [15, 15, 15, 15],
-        filename: `${contract.name}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { 
-          scale: 2,
-          useCORS: true,
-          letterRendering: true,
-          width: 794,
-          height: 1123
-        },
-        jsPDF: { 
-          unit: 'pt', 
-          format: 'a4', 
-          orientation: 'portrait'
-        },
-      };
-
-      await html2pdf().from(pdfContainer).set(opt).save();
-      
+            <div style="white-space: pre-wrap; font-size: 14px; color: #333; text-align: justify;">
+              ${displayContent}
+            </div>
+            ${contract.signature ? `
+              <div style="margin-top: 50px; border-top: 1px solid #ccc; padding-top: 20px;">
+                <p style="margin-bottom: 10px; color: #666; font-size: 12px;">Digitale Unterschrift:</p>
+                <img src="${contract.signature}" alt="Unterschrift" style="max-width: 200px; height: auto;" />
+              </div>
+            ` : ''}
+          </div>
+        `;
+        
+        document.body.appendChild(tempDiv);
+        
+        await html2pdf().set(opt).from(tempDiv).save();
+        
+        document.body.removeChild(tempDiv);
+      }
     } catch (error) {
       console.error('PDF-Export fehlgeschlagen:', error);
-      alert('❌ Fehler beim PDF-Export');
+      alert('PDF-Export fehlgeschlagen. Bitte versuchen Sie es erneut.');
     }
   };
 
@@ -129,96 +101,119 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
           <head>
             <title>${contract.name}</title>
             <style>
-              body { font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.6; margin: 40px; }
-              .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 20px; }
-              .title { font-size: 18pt; font-weight: bold; margin: 0; }
-              .subtitle { color: #666; font-size: 10pt; margin: 10px 0 0 0; }
-              .content { white-space: pre-wrap; text-align: justify; }
-              .signature { margin-top: 40px; border-top: 1px solid #ddd; padding-top: 20px; }
-              .signature img { max-width: 200px; border: 1px solid #ddd; border-radius: 4px; }
-              @media print { body { margin: 0; } }
+              body { 
+                font-family: 'Times New Roman', serif; 
+                padding: 40px; 
+                line-height: 1.6; 
+                color: #333;
+              }
+              .header { 
+                text-align: center; 
+                margin-bottom: 30px; 
+                border-bottom: 2px solid #333; 
+                padding-bottom: 20px; 
+              }
+              .content { 
+                white-space: pre-wrap; 
+                font-size: 14px; 
+                text-align: justify; 
+              }
+              .signature { 
+                margin-top: 50px; 
+                border-top: 1px solid #ccc; 
+                padding-top: 20px; 
+              }
             </style>
           </head>
           <body>
             <div class="header">
-              <h1 class="title">${contract.name}</h1>
-              <p class="subtitle">
-                ${contract.isGenerated ? 'KI-Generierter Vertrag' : 'Hochgeladener Vertrag'} • 
-                Erstellt am ${new Date(contract.createdAt || '').toLocaleDateString('de-DE')}
-              </p>
+              <h1>${contract.name}</h1>
+              ${contract.isGenerated ? '<p>✨ KI-Generierter Vertrag</p>' : '<p>📄 Hochgeladener Vertrag</p>'}
+              <p>${contract.isGenerated ? 'Erstellt' : 'Hochgeladen'} am: ${
+                contract.isGenerated ? 
+                  new Date(contract.createdAt || '').toLocaleDateString('de-DE') : 
+                  new Date(contract.uploadedAt || '').toLocaleDateString('de-DE')
+              }</p>
             </div>
-            <div class="content">${contract.content?.replace(/\n/g, '<br>')}</div>
+            <div class="content">${displayContent}</div>
             ${contract.signature ? `
               <div class="signature">
-                <p><strong>Digitale Unterschrift:</strong></p>
-                <img src="${contract.signature}" alt="Unterschrift" />
-                <p style="font-size: 10pt; color: #666; margin-top: 10px;">
-                  Unterschrieben am ${new Date().toLocaleString('de-DE')}
-                </p>
+                <p>Digitale Unterschrift:</p>
+                <img src="${contract.signature}" alt="Unterschrift" style="max-width: 200px; height: auto;" />
               </div>
             ` : ''}
           </body>
         </html>
       `);
       printWindow.document.close();
-      printWindow.focus();
       printWindow.print();
     }
   };
 
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(displayContent);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    } catch (error) {
+      console.error('Kopieren fehlgeschlagen:', error);
+    }
+  };
+
   return (
-    <div style={{ marginTop: '32px' }}>
+    <div style={{ marginBottom: '32px' }}>
       {/* Header */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
+      <div style={{
+        display: 'flex',
         alignItems: 'center',
-        marginBottom: '20px'
+        justifyContent: 'space-between',
+        marginBottom: '16px',
+        flexWrap: 'wrap',
+        gap: '12px'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{
-            width: '40px',
-            height: '40px',
-            background: contract.isGenerated ? 'linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%)' : 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
-            borderRadius: '10px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'white'
-          }}>
-            <FileText size={20} />
-          </div>
-          <div>
-            <h2 style={{ margin: '0 0 4px 0', fontSize: '18px', fontWeight: '600' }}>
-              {contract.isGenerated ? '✨ KI-Generierter Vertragsinhalt' : '📄 Vertragsinhalt'}
-            </h2>
-            <p style={{ margin: 0, fontSize: '14px', color: '#64748b' }}>
-              Vollständige Ansicht und Export-Optionen
-            </p>
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <FileText size={20} style={{ color: '#64748b' }} />
+          <h3 style={{ margin: 0, color: '#1e293b', fontSize: '18px', fontWeight: '600' }}>
+            Vertragsinhalt
+          </h3>
+          {contract.isGenerated && (
+            <span style={{
+              background: 'linear-gradient(135deg, #fbbf24, #f59e0b)',
+              color: 'white',
+              padding: '4px 8px',
+              borderRadius: '12px',
+              fontSize: '11px',
+              fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}>
+              ✨ KI-Generiert
+            </span>
+          )}
         </div>
 
         {/* Action Buttons */}
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
           <button
-            onClick={handleCopyContent}
+            onClick={handleDownloadPDF}
             style={{
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              padding: '8px 16px',
-              background: copied ? '#10b981' : '#f8fafc',
-              border: `1px solid ${copied ? '#10b981' : '#e2e8f0'}`,
+              padding: '8px 12px',
+              backgroundColor: '#3b82f6',
+              color: 'white',
+              border: 'none',
               borderRadius: '8px',
-              fontSize: '14px',
+              fontSize: '13px',
               fontWeight: '500',
-              color: copied ? 'white' : '#475569',
               cursor: 'pointer',
-              transition: 'all 0.2s ease'
+              transition: 'all 0.2s'
             }}
           >
-            {copied ? <CheckCircle size={16} /> : <Copy size={16} />}
-            {copied ? 'Kopiert!' : 'Kopieren'}
+            <Download size={14} />
+            PDF
           </button>
 
           <button
@@ -227,136 +222,117 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              padding: '8px 16px',
-              background: '#f8fafc',
-              border: '1px solid #e2e8f0',
+              padding: '8px 12px',
+              backgroundColor: '#6b7280',
+              color: 'white',
+              border: 'none',
               borderRadius: '8px',
-              fontSize: '14px',
+              fontSize: '13px',
               fontWeight: '500',
-              color: '#475569',
               cursor: 'pointer',
-              transition: 'all 0.2s ease'
+              transition: 'all 0.2s'
             }}
           >
-            <Printer size={16} />
+            <Printer size={14} />
             Drucken
           </button>
 
           <button
-            onClick={handleDownloadPDF}
+            onClick={handleCopy}
             style={{
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              padding: '8px 16px',
-              background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+              padding: '8px 12px',
+              backgroundColor: copySuccess ? '#10b981' : '#8b5cf6',
+              color: 'white',
               border: 'none',
               borderRadius: '8px',
-              fontSize: '14px',
-              fontWeight: '600',
-              color: 'white',
+              fontSize: '13px',
+              fontWeight: '500',
               cursor: 'pointer',
-              transition: 'all 0.2s ease'
+              transition: 'all 0.2s'
             }}
           >
-            <Download size={16} />
-            PDF Export
+            {copySuccess ? <CheckCircle size={14} /> : <Copy size={14} />}
+            {copySuccess ? 'Kopiert!' : 'Kopieren'}
           </button>
 
           <button
-            onClick={() => setShowFullPreview(true)}
+            onClick={() => setIsFullscreen(true)}
             style={{
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              padding: '8px 16px',
-              background: 'linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%)',
+              padding: '8px 12px',
+              backgroundColor: '#10b981',
+              color: 'white',
               border: 'none',
               borderRadius: '8px',
-              fontSize: '14px',
-              fontWeight: '600',
-              color: 'white',
+              fontSize: '13px',
+              fontWeight: '500',
               cursor: 'pointer',
-              transition: 'all 0.2s ease'
+              transition: 'all 0.2s'
             }}
           >
-            <Maximize2 size={16} />
+            <Maximize2 size={14} />
             Vollansicht
           </button>
         </div>
       </div>
 
       {/* Content Preview */}
-      <div style={{
-        background: 'white',
-        border: '1px solid #e2e8f0',
-        borderRadius: '12px',
-        overflow: 'hidden'
-      }}>
-        <div 
-          ref={contentRef}
-          className="contract-content-scroll"
-          style={{
-            padding: '24px',
-            maxHeight: '400px',
-            overflowY: 'auto',
-            fontFamily: '"Times New Roman", serif',
-            fontSize: '14px',
-            lineHeight: '1.6',
-            whiteSpace: 'pre-wrap',
-            color: '#1e293b'
-          }}
-        >
-          {contract.content}
-        </div>
-        
-        {contract.signature && (
-          <div style={{
-            borderTop: '1px solid #f1f5f9',
-            padding: '20px 24px',
-            background: '#f8fafc'
-          }}>
-            <p style={{ margin: '0 0 12px 0', fontWeight: '600', fontSize: '14px' }}>
-              Digitale Unterschrift:
-            </p>
-            <img 
-              src={contract.signature} 
-              alt="Unterschrift" 
-              style={{ 
-                maxWidth: '200px', 
-                border: '1px solid #e2e8f0', 
-                borderRadius: '6px',
-                background: 'white'
-              }} 
-            />
-            <p style={{ 
-              margin: '8px 0 0 0', 
-              fontSize: '12px', 
-              color: '#64748b' 
-            }}>
-              Unterschrieben am {new Date().toLocaleString('de-DE')}
-            </p>
-          </div>
-        )}
-
-        <div style={{
-          borderTop: '1px solid #f1f5f9',
-          padding: '16px 24px',
-          background: '#f8fafc',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-          fontSize: '12px',
-          color: '#64748b'
-        }}>
-          <Eye size={16} />
-          Zum Lesen scrollen • Verwenden Sie die Buttons oben für Export und Vollansicht
-        </div>
+      <div
+        ref={contentRef}
+        className="contract-content-scroll"
+        style={{
+          border: '1px solid #e2e8f0',
+          borderRadius: '12px',
+          backgroundColor: '#ffffff',
+          padding: '24px',
+          maxHeight: '400px',
+          overflowY: 'auto',
+          fontFamily: '"Times New Roman", serif',
+          fontSize: '14px',
+          lineHeight: '1.6',
+          whiteSpace: 'pre-wrap',
+          color: '#1e293b',
+          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+        }}
+      >
+        {displayContent}
       </div>
 
-      {/* Full Preview Modal */}
+      {/* Signature */}
+      {contract.signature && (
+        <div style={{
+          marginTop: '16px',
+          padding: '16px',
+          border: '1px solid #e2e8f0',
+          borderRadius: '8px',
+          backgroundColor: '#f8fafc'
+        }}>
+          <p style={{ margin: '0 0 8px 0', fontSize: '13px', color: '#64748b', fontWeight: '500' }}>
+            Digitale Unterschrift:
+          </p>
+          <img 
+            src={contract.signature} 
+            alt="Unterschrift" 
+            style={{ 
+              maxWidth: '200px', 
+              height: 'auto',
+              border: '1px solid #e2e8f0',
+              borderRadius: '4px',
+              backgroundColor: 'white',
+              padding: '8px'
+            }} 
+          />
+        </div>
+      )}
+
+      {/* Fullscreen Modal */}
       <AnimatePresence>
-        {showFullPreview && (
+        {isFullscreen && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -367,51 +343,71 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
               left: 0,
               right: 0,
               bottom: 0,
-              background: 'rgba(0, 0, 0, 0.8)',
-              zIndex: 1000,
+              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              zIndex: 9999,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              padding: '20px'
+              padding: '20px',
+              backdropFilter: 'blur(4px)'
             }}
-            onClick={() => setShowFullPreview(false)}
+            onClick={() => setIsFullscreen(false)}
           >
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
               style={{
-                background: 'white',
-                borderRadius: '12px',
+                backgroundColor: 'white',
+                borderRadius: '16px',
                 width: '90%',
                 maxWidth: '800px',
                 maxHeight: '90%',
                 display: 'flex',
                 flexDirection: 'column',
-                overflow: 'hidden'
+                boxShadow: '0 25px 50px rgba(0, 0, 0, 0.25)'
               }}
-              onClick={(e) => e.stopPropagation()}
             >
               {/* Modal Header */}
               <div style={{
-                padding: '20px 24px',
-                borderBottom: '1px solid #e2e8f0',
                 display: 'flex',
+                alignItems: 'center',
                 justifyContent: 'space-between',
-                alignItems: 'center'
+                padding: '20px',
+                borderBottom: '1px solid #e2e8f0'
               }}>
-                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>
-                  {contract.name}
-                </h3>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Eye size={20} style={{ color: '#64748b' }} />
+                  <h3 style={{ margin: 0, color: '#1e293b', fontSize: '18px', fontWeight: '600' }}>
+                    {contract.name}
+                  </h3>
+                  {contract.isGenerated && (
+                    <span style={{
+                      background: 'linear-gradient(135deg, #fbbf24, #f59e0b)',
+                      color: 'white',
+                      padding: '4px 8px',
+                      borderRadius: '12px',
+                      fontSize: '11px',
+                      fontWeight: '600'
+                    }}>
+                      ✨ KI-Generiert
+                    </span>
+                  )}
+                </div>
                 <button
-                  onClick={() => setShowFullPreview(false)}
+                  onClick={() => setIsFullscreen(false)}
                   style={{
                     background: 'none',
                     border: 'none',
-                    padding: '8px',
-                    borderRadius: '6px',
                     cursor: 'pointer',
-                    color: '#64748b'
+                    padding: '8px',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#64748b',
+                    transition: 'all 0.2s'
                   }}
                 >
                   <X size={20} />
@@ -419,38 +415,46 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
               </div>
 
               {/* Modal Content */}
-              <div 
+              <div
                 className="contract-modal-scroll"
                 style={{
                   flex: 1,
-                  padding: '24px',
+                  padding: '20px',
                   overflowY: 'auto',
                   fontFamily: '"Times New Roman", serif',
-                  fontSize: '14px',
+                  fontSize: '16px',
                   lineHeight: '1.6',
                   whiteSpace: 'pre-wrap',
                   color: '#1e293b'
                 }}
               >
-                {contract.content}
-                
-                {contract.signature && (
-                  <div style={{ marginTop: '40px', paddingTop: '20px', borderTop: '1px solid #e2e8f0' }}>
-                    <p style={{ margin: '0 0 12px 0', fontWeight: '600' }}>
-                      Digitale Unterschrift:
-                    </p>
-                    <img 
-                      src={contract.signature} 
-                      alt="Unterschrift" 
-                      style={{ 
-                        maxWidth: '200px', 
-                        border: '1px solid #e2e8f0', 
-                        borderRadius: '6px' 
-                      }} 
-                    />
-                  </div>
-                )}
+                {displayContent}
               </div>
+
+              {/* Modal Signature */}
+              {contract.signature && (
+                <div style={{
+                  padding: '20px',
+                  borderTop: '1px solid #e2e8f0',
+                  backgroundColor: '#f8fafc'
+                }}>
+                  <p style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#64748b', fontWeight: '500' }}>
+                    Digitale Unterschrift:
+                  </p>
+                  <img 
+                    src={contract.signature} 
+                    alt="Unterschrift" 
+                    style={{ 
+                      maxWidth: '250px', 
+                      height: 'auto',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '4px',
+                      backgroundColor: 'white',
+                      padding: '12px'
+                    }} 
+                  />
+                </div>
+              )}
             </motion.div>
           </motion.div>
         )}

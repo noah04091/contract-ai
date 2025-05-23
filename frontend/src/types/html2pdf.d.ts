@@ -3,34 +3,31 @@ declare module 'html2pdf.js' {
   interface Html2PdfOptions {
     margin?: number | number[];
     filename?: string;
-    image?: {
-      type?: string;
-      quality?: number;
+    image?: { 
+      type?: string; 
+      quality?: number 
     };
     html2canvas?: {
       scale?: number;
       useCORS?: boolean;
       letterRendering?: boolean;
-      width?: number;
-      height?: number;
     };
     jsPDF?: {
       unit?: string;
-      format?: string | number[];
-      orientation?: 'portrait' | 'landscape';
-      putOnlyUsedFonts?: boolean;
+      format?: string;
+      orientation?: string;
     };
   }
 
   interface Html2Pdf {
-    from(element: HTMLElement): Html2Pdf;
     set(options: Html2PdfOptions): Html2Pdf;
+    from(element: HTMLElement | string): Html2Pdf;
     save(): Promise<void>;
-    output(type?: string): any;
-    then(callback: Function): Html2Pdf;
+    outputPdf(): Promise<Blob>;
   }
 
   function html2pdf(): Html2Pdf;
-  
+  function html2pdf(element: HTMLElement | string, options?: Html2PdfOptions): Html2Pdf;
+
   export default html2pdf;
 }
