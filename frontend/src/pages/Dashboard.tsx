@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import styles from "./Dashboard.module.css";
-import ContractNotification from "../components/ContractNotification";
-import LegalPulseOverview from "../components/LegalPulseOverview";
 import GeneratedContractsSection from "../components/GeneratedContractsSection";
 import { generateICS } from "../utils/icsGenerator";
-import StatusPieChart from "../components/StatusPieChart";
-import UploadBarChart from "../components/UploadBarChart";
 import Notification from "../components/Notification";
 import { Helmet } from "react-helmet-async";
+import { 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Line, Area, AreaChart 
+} from 'recharts';
 
 interface Contract {
   _id: string;
@@ -46,7 +46,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // 🎯 NEUE SMART PRIORITY LOGIK
+  // 🎯 SMART PRIORITY LOGIK
   const calculatePriorityContracts = (allContracts: Contract[]) => {
     if (!allContracts || allContracts.length === 0) return [];
     
@@ -61,20 +61,20 @@ export default function Dashboard() {
     }).sort((a, b) => {
       const dateA = new Date(a.expiryDate!).getTime();
       const dateB = new Date(b.expiryDate!).getTime();
-      return dateA - dateB; // Früchste zuerst
+      return dateA - dateB;
     });
 
-    // 2. WICHTIG: Verträge mit aktivierter Erinnerung (aber nicht schon in soonExpiring)
+    // 2. WICHTIG: Verträge mit aktivierter Erinnerung
     const withReminder = allContracts.filter(contract => {
       if (!contract || !contract.reminder) return false;
       return !soonExpiring.find(c => c._id === contract._id);
     }).sort((a, b) => {
       const dateA = new Date(a.expiryDate || a.uploadedAt || a.createdAt || 0).getTime();
       const dateB = new Date(b.expiryDate || b.uploadedAt || b.createdAt || 0).getTime();
-      return dateB - dateA; // Neueste zuerst
+      return dateB - dateA;
     });
 
-    // 3. AKTUELL: Neueste Verträge (aber nicht schon in den oberen Kategorien)
+    // 3. AKTUELL: Neueste Verträge
     const recentContracts = allContracts.filter(contract => {
       if (!contract) return false;
       const isAlreadyIncluded = soonExpiring.find(c => c._id === contract._id) || 
@@ -83,7 +83,7 @@ export default function Dashboard() {
     }).sort((a, b) => {
       const dateA = new Date(a.uploadedAt || a.createdAt || 0).getTime();
       const dateB = new Date(b.uploadedAt || b.createdAt || 0).getTime();
-      return dateB - dateA; // Neueste zuerst
+      return dateB - dateA;
     }).slice(0, 3);
 
     // Kombiniere alle mit Maximum von 8 Verträgen
@@ -96,18 +96,116 @@ export default function Dashboard() {
     return priorityList;
   };
 
-  // Hilfsfunktion für die Farbbestimmung des Fortschrittsbalkens
+  // 📊 ANALYTICS DATA PREPARATION
+  const getAnalyticsData = (): {
+    pieData: Array<{name: string, value: number, percentage: number}>,
+    monthlyData: Array<{month: string, uploads: number, generated: number, uploaded: number}>,
+    riskData: Array<{category: string, count: number, percentage: number}>,
+    trendData: Array<{date: string, activeContracts: number, newContracts: number, expiringContracts: number}>
+  } => {
+    // Status Distribution für Pie Chart
+    const statusCounts = {
+      'Aktiv': contracts.filter(c => c.status === 'Aktiv').length,
+      'Bald ablaufend': contracts.filter(c => c.status === 'Bald ablaufend').length,
+      'Abgelaufen': contracts.filter(c => c.status === 'Abgelaufen').length,
+      'Unbekannt': contracts.filter(c => !c.status || c.status === 'Unbekannt').length
+    };
+
+    const pieData = Object.entries(statusCounts)
+      .filter(([_, count]) => count > 0)
+      .map(([status, count]) => ({
+        name: status,
+        value: count,
+        percentage: Math.round((count / contracts.length) * 100)
+      }));
+
+    // Monthly Uploads für Bar Chart
+    const monthlyData = getMonthlyUploadData();
+
+    // Risk Score Distribution
+    const riskData = getRiskDistributionData();
+
+    // Contract Value Trend (Mock data - würde normalerweise aus Backend kommen)
+    const trendData = getTrendData();
+
+    return { pieData, monthlyData, riskData, trendData };
+  };
+
+  const getMonthlyUploadData = (): Array<{month: string, uploads: number, generated: number, uploaded: number}> => {
+    const months = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
+    const currentYear = new Date().getFullYear();
+    
+    const monthlyData = months.map((month, index) => {
+      const monthContracts = contracts.filter(contract => {
+        const date = new Date(contract.uploadedAt || contract.createdAt || 0);
+        return date.getFullYear() === currentYear && date.getMonth() === index;
+      });
+
+      return {
+        month,
+        uploads: monthContracts.length,
+        generated: monthContracts.filter(c => c.isGenerated).length,
+        uploaded: monthContracts.filter(c => !c.isGenerated).length
+      };
+    });
+
+    return monthlyData.slice(0, new Date().getMonth() + 1); // Nur bis aktueller Monat
+  };
+
+  const getRiskDistributionData = (): Array<{category: string, count: number, percentage: number}> => {
+    const riskBuckets = {
+      'Niedrig (0-30)': 0,
+      'Mittel (31-60)': 0,
+      'Hoch (61-100)': 0,
+      'Nicht bewertet': 0
+    };
+
+    contracts.forEach(contract => {
+      const risk = contract.legalPulse?.riskScore;
+      if (risk === null || risk === undefined) {
+        riskBuckets['Nicht bewertet']++;
+      } else if (risk <= 30) {
+        riskBuckets['Niedrig (0-30)']++;
+      } else if (risk <= 60) {
+        riskBuckets['Mittel (31-60)']++;
+      } else {
+        riskBuckets['Hoch (61-100)']++;
+      }
+    });
+
+    return Object.entries(riskBuckets).map(([category, count]) => ({
+      category,
+      count,
+      percentage: contracts.length > 0 ? Math.round((count / contracts.length) * 100) : 0
+    }));
+  };
+
+  const getTrendData = (): Array<{date: string, activeContracts: number, newContracts: number, expiringContracts: number}> => {
+    // Mock trend data - in real app würde das aus Backend/Analytics kommen
+    const last30Days = [];
+    for (let i = 29; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      
+      last30Days.push({
+        date: date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' }),
+        activeContracts: Math.max(contracts.length - Math.floor(Math.random() * 3), 0),
+        newContracts: Math.floor(Math.random() * 3),
+        expiringContracts: Math.floor(Math.random() * 2)
+      });
+    }
+    return last30Days;
+  };
+
+  // Hilfsfunktionen
   const getProgressBarColor = () => {
     if (!userData || !userData.analysisCount || !userData.analysisLimit) return "";
-    
     const usagePercentage = (userData.analysisCount / userData.analysisLimit) * 100;
-    
     if (usagePercentage >= 100) return styles.progressRed;
     if (usagePercentage >= 80) return styles.progressOrange;
     return styles.progressGreen;
   };
 
-  // ✅ Korrigierte Funktionen mit Null-Checks
   const countStatus = (status: string) => {
     return contracts.filter((c) => c && c.status === status).length;
   };
@@ -118,7 +216,7 @@ export default function Dashboard() {
 
   const averageLaufzeit = () => {
     const laufzeiten = contracts
-      .filter((c) => c && c.laufzeit && typeof c.laufzeit === 'string') // ✅ Null-Checks hinzugefügt
+      .filter((c) => c && c.laufzeit && typeof c.laufzeit === 'string')
       .map((c) => {
         const match = c.laufzeit.match(/(\d+)\s*(Jahr|Monat)/i);
         if (!match) return 0;
@@ -129,7 +227,6 @@ export default function Dashboard() {
     return laufzeiten.length > 0 ? Math.round(laufzeiten.reduce((a, b) => a + b, 0) / laufzeiten.length) : 0;
   };
 
-  // 🎯 Hilfsfunktion: Vertragskategorie bestimmen
   const getContractCategory = (contract: Contract) => {
     if (!contract) return 'recent';
     
@@ -150,7 +247,6 @@ export default function Dashboard() {
     return 'recent';
   };
 
-  // 🎯 Kategorie-spezifische Icons und Labels
   const getCategoryInfo = (category: string) => {
     switch (category) {
       case 'critical':
@@ -190,7 +286,6 @@ export default function Dashboard() {
         setUserData(userDataResponse);
         setContracts(contractsData);
         
-        // 🚀 Berechne Priority Contracts
         const priorityList = calculatePriorityContracts(contractsData);
         setPriorityContracts(priorityList);
         
@@ -204,7 +299,6 @@ export default function Dashboard() {
     fetchData();
   }, []);
 
-  // 🚀 Update Priority Contracts wenn sich contracts ändern
   useEffect(() => {
     const priorityList = calculatePriorityContracts(contracts);
     setPriorityContracts(priorityList);
@@ -220,6 +314,7 @@ export default function Dashboard() {
     }
   }, [location.search]);
 
+  // Event Handlers
   const handleFileUpload = async () => {
     if (!file) return;
     
@@ -358,14 +453,10 @@ export default function Dashboard() {
     setNotification({ message: `${soonExpiring.length} Kalendereinträge exportiert`, type: "success" });
   };
 
-  const getStatusIcon = (status?: string) => {
-    switch (status) {
-      case "Aktiv": return <span className={styles.statusIconActive}>●</span>;
-      case "Bald ablaufend": return <span className={styles.statusIconWarning}>●</span>;
-      case "Abgelaufen": return <span className={styles.statusIconExpired}>●</span>;
-      default: return <span className={styles.statusIconUnknown}>●</span>;
-    }
-  };
+  // Chart Colors
+  const COLORS = ['#10b981', '#f59e0b', '#ef4444', '#6b7280'];
+
+  const { pieData, monthlyData, riskData, trendData } = getAnalyticsData();
 
   return (
     <div className={styles.dashboardContainer}>
@@ -439,46 +530,111 @@ export default function Dashboard() {
       )}
 
       <div className={styles.dashboardContent}>
-        <div className={styles.metricCards}>
+        {/* Metrics Cards Grid */}
+        <div className={styles.metricsGrid}>
           <div className={styles.metricCard}>
+            <div className={styles.metricHeader}>
+              <div className={styles.metricIcon}>
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M14 2V8H20" stroke="currentColor" strokeWidth="2"/>
+                </svg>
+              </div>
+              <span className={styles.metricTrend}>+{contracts.filter(c => c.isGenerated).length}</span>
+            </div>
             <div className={styles.metricValue}>{contracts.length}</div>
             <div className={styles.metricLabel}>Verträge insgesamt</div>
+            <div className={styles.metricSubtext}>
+              {contracts.filter(c => c.isGenerated).length} KI-generiert
+            </div>
           </div>
+
           <div className={styles.metricCard}>
+            <div className={styles.metricHeader}>
+              <div className={styles.metricIcon}>
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M18 8C18 6.4087 17.3679 4.88258 16.2426 3.75736C15.1174 2.63214 13.5913 2 12 2C10.4087 2 8.88258 2.63214 7.75736 3.75736C6.63214 4.88258 6 6.4087 6 8C6 15 3 17 3 17H21C21 17 18 15 18 8Z" stroke="currentColor" strokeWidth="2"/>
+                </svg>
+              </div>
+              <span className={styles.metricTrend}>
+                {countWithReminder() > 0 ? `+${countWithReminder()}` : '—'}
+              </span>
+            </div>
             <div className={styles.metricValue}>
               {isLoading ? "..." : countWithReminder()}
             </div>
             <div className={styles.metricLabel}>Mit Erinnerung</div>
+            <div className={styles.metricSubtext}>
+              Aktive Benachrichtigungen
+            </div>
           </div>
+
           <div className={styles.metricCard}>
+            <div className={styles.metricHeader}>
+              <div className={styles.metricIcon}>
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M12 6V12L16 14" stroke="currentColor" strokeWidth="2"/>
+                </svg>
+              </div>
+              <span className={styles.metricTrend}>Ø</span>
+            </div>
             <div className={styles.metricValue}>
               {isLoading ? "..." : averageLaufzeit()}
             </div>
-            <div className={styles.metricLabel}>Ø Laufzeit (Monate)</div>
+            <div className={styles.metricLabel}>Monate Laufzeit</div>
+            <div className={styles.metricSubtext}>
+              Durchschnittlich
+            </div>
           </div>
+
           <div className={styles.metricCard}>
+            <div className={styles.metricHeader}>
+              <div className={styles.metricIcon}>
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M9 12L11 14L15 10" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" strokeWidth="2"/>
+                </svg>
+              </div>
+              <span className={styles.metricTrend}>
+                {countStatus("Aktiv") > 0 ? `${Math.round((countStatus("Aktiv") / contracts.length) * 100)}%` : '—'}
+              </span>
+            </div>
             <div className={styles.metricValue}>
               {isLoading ? "..." : countStatus("Aktiv")}
             </div>
             <div className={styles.metricLabel}>Aktive Verträge</div>
+            <div className={styles.metricSubtext}>
+              Derzeit gültig
+            </div>
           </div>
+
           <div className={styles.metricCard}>
+            <div className={styles.metricHeader}>
+              <div className={styles.metricIcon}>
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 9V13L15 15" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" strokeWidth="2"/>
+                </svg>
+              </div>
+              <span className={styles.metricTrend}>
+                {countStatus("Bald ablaufend") > 0 ? '⚠️' : '✅'}
+              </span>
+            </div>
             <div className={styles.metricValue}>
               {isLoading ? "..." : countStatus("Bald ablaufend")}
             </div>
             <div className={styles.metricLabel}>Bald ablaufend</div>
+            <div className={styles.metricSubtext}>
+              Nächste 30 Tage
+            </div>
           </div>
         </div>
 
         {/* Generierte Verträge Sektion */}
         <GeneratedContractsSection contracts={contracts} />
 
-        <ContractNotification contracts={contracts} />
-
-        {/* Legal Pulse Overview */}
-        <LegalPulseOverview contracts={contracts} />
-
-        {/* 🚀 NEUE PRIORITY VERTRÄGE SEKTION */}
+        {/* Priority Verträge Sektion */}
         <div className={styles.priorityContractsSection}>
           <div className={styles.sectionHeader}>
             <div className={styles.headerContent}>
@@ -490,8 +646,8 @@ export default function Dashboard() {
               onClick={() => navigate('/contracts')}
             >
               <svg className={styles.buttonIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M14 2V8H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" strokeWidth="2"/>
+                <path d="M14 2V8H20" stroke="currentColor" strokeWidth="2"/>
               </svg>
               Alle {contracts.length} Verträge anzeigen
             </button>
@@ -511,7 +667,6 @@ export default function Dashboard() {
                       <th>Kategorie</th>
                       <th>Name</th>
                       <th>Laufzeit</th>
-                      <th>Kündigungsfrist</th>
                       <th>Ablaufdatum</th>
                       <th>Status</th>
                       <th>Aktionen</th>
@@ -544,49 +699,58 @@ export default function Dashboard() {
                               </span>
                             </div>
                           </td>
-                          <td className={styles.nameCell}>{contract.name || "—"}</td>
+                          <td className={styles.nameCell}>
+                            <div className={styles.contractNameCell}>
+                              <span className={styles.contractName}>{contract.name || "—"}</span>
+                              {contract.isGenerated && (
+                                <span className={styles.generatedBadge}>✨ KI</span>
+                              )}
+                            </div>
+                          </td>
                           <td>{contract.laufzeit || "—"}</td>
-                          <td>{contract.kuendigung || "—"}</td>
                           <td>{contract.expiryDate || "—"}</td>
                           <td>
                             <div className={styles.statusCell}>
-                              {getStatusIcon(contract.status)}
-                              <span>{contract.status || "Unbekannt"}</span>
+                              <span className={`${styles.statusBadge} ${styles[contract.status?.toLowerCase().replace(' ', '') || 'unknown']}`}>
+                                {contract.status || "Unbekannt"}
+                              </span>
                             </div>
                           </td>
                           <td>
-                            <div className={styles.actionButtons}>
+                            <div className={styles.actionButtonsNew}>
                               <button 
-                                className={`${styles.iconButton} ${styles.reminderButton} ${contract.reminder ? styles.active : ''}`} 
+                                className={`${styles.actionBtn} ${styles.reminderBtn} ${contract.reminder ? styles.active : ''}`} 
                                 onClick={(e) => toggleReminder(contract._id, e)} 
                                 title={contract.reminder ? "Erinnerung deaktivieren" : "Erinnerung aktivieren"}
                               >
                                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                  <path d="M18 8C18 6.4087 17.3679 4.88258 16.2426 3.75736C15.1174 2.63214 13.5913 2 12 2C10.4087 2 8.88258 2.63214 7.75736 3.75736C6.63214 4.88258 6 6.4087 6 8C6 15 3 17 3 17H21C21 17 18 15 18 8Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                  <path d="M13.73 21C13.5542 21.3031 13.3019 21.5547 12.9982 21.7295C12.6946 21.9044 12.3504 21.9965 12 21.9965C11.6496 21.9965 11.3054 21.9044 11.0018 21.7295C10.6982 21.5547 10.4458 21.3031 10.27 21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                  <path d="M18 8C18 6.4087 17.3679 4.88258 16.2426 3.75736C15.1174 2.63214 13.5913 2 12 2C10.4087 2 8.88258 2.63214 7.75736 3.75736C6.63214 4.88258 6 6.4087 6 8C6 15 3 17 3 17H21C21 17 18 15 18 8Z" stroke="currentColor" strokeWidth="1.5"/>
                                 </svg>
+                                <span>Reminder</span>
                               </button>
                               <button 
-                                className={`${styles.iconButton} ${styles.calendarButton}`} 
+                                className={`${styles.actionBtn} ${styles.calendarBtn}`} 
                                 onClick={(e) => handleExportICS(contract, e)} 
                                 title="Zum Kalender hinzufügen"
                               >
                                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                  <path d="M19 4H5C3.89543 4 3 4.89543 3 6V20C3 21.1046 3.89543 22 5 22H19C20.1046 22 21 21.1046 21 20V6C21 4.89543 20.1046 4 19 4Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                  <path d="M16 2V6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                  <path d="M8 2V6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                  <path d="M3 10H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                  <path d="M19 4H5C3.89543 4 3 4.89543 3 6V20C3 21.1046 3.89543 22 5 22H19C20.1046 22 21 21.1046 21 20V6C21 4.89543 20.1046 4 19 4Z" stroke="currentColor" strokeWidth="1.5"/>
+                                  <path d="M16 2V6" stroke="currentColor" strokeWidth="1.5"/>
+                                  <path d="M8 2V6" stroke="currentColor" strokeWidth="1.5"/>
+                                  <path d="M3 10H21" stroke="currentColor" strokeWidth="1.5"/>
                                 </svg>
+                                <span>Kalender</span>
                               </button>
                               <button 
-                                className={`${styles.iconButton} ${styles.deleteButton}`} 
+                                className={`${styles.actionBtn} ${styles.deleteBtn}`} 
                                 onClick={(e) => handleDelete(contract._id, e)} 
                                 title="Vertrag löschen"
                               >
                                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                  <path d="M3 6H5H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                  <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                  <path d="M3 6H5H21" stroke="currentColor" strokeWidth="1.5"/>
+                                  <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="currentColor" strokeWidth="1.5"/>
                                 </svg>
+                                <span>Löschen</span>
                               </button>
                             </div>
                           </td>
@@ -599,10 +763,8 @@ export default function Dashboard() {
             ) : (
               <div className={styles.emptyState}>
                 <svg className={styles.emptyStateIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M13 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V9L13 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M13 2V9H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <line x1="8" y1="13" x2="16" y2="13" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                  <line x1="8" y1="17" x2="16" y2="17" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  <path d="M9 12L11 14L15 10" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" strokeWidth="2"/>
                 </svg>
                 <h3>🎉 Alles im grünen Bereich!</h3>
                 <p>Derzeit sind keine kritischen Verträge vorhanden. Alle Ihre Verträge sind gut verwaltet.</p>
@@ -612,8 +774,8 @@ export default function Dashboard() {
                     onClick={() => setShowModal(true)}
                   >
                     <svg className={styles.buttonIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M12 5V19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M12 5V19" stroke="currentColor" strokeWidth="2"/>
+                      <path d="M5 12H19" stroke="currentColor" strokeWidth="2"/>
                     </svg>
                     Vertrag hinzufügen
                   </button>
@@ -629,63 +791,215 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Action Buttons - Jetzt kompakter */}
-        <div className={styles.actionsContainer}>
-          <div className={styles.buttonGroup}>
+        {/* Quick Actions */}
+        <div className={styles.quickActionsSection}>
+          <h3>⚡ Schnellaktionen</h3>
+          <div className={styles.quickActionsGrid}>
             <button 
-              className={`${styles.actionButton} ${styles.primaryButton}`}
+              className={`${styles.quickActionCard} ${styles.primaryAction}`}
               onClick={() => setShowModal(true)}
             >
-              <svg className={styles.buttonIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 5V19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              Vertrag hinzufügen
+              <div className={styles.quickActionIcon}>
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 5V19" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M5 12H19" stroke="currentColor" strokeWidth="2"/>
+                </svg>
+              </div>
+              <div className={styles.quickActionContent}>
+                <h4>Vertrag hinzufügen</h4>
+                <p>PDF hochladen und analysieren</p>
+              </div>
             </button>
-            
+
             <button 
-              className={styles.actionButton}
+              className={styles.quickActionCard}
+              onClick={() => navigate('/generate')}
+            >
+              <div className={styles.quickActionIcon}>
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 2L15.09 8.26L22 9L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9L8.91 8.26L12 2Z" stroke="currentColor" strokeWidth="2"/>
+                </svg>
+              </div>
+              <div className={styles.quickActionContent}>
+                <h4>KI-Generator</h4>
+                <p>Vertrag mit KI erstellen</p>
+              </div>
+            </button>
+
+            <button 
+              className={styles.quickActionCard}
               onClick={exportToCSV}
             >
-              <svg className={styles.buttonIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M7 10L12 15L17 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M12 15V3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              CSV Export
+              <div className={styles.quickActionIcon}>
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M7 10L12 15L17 10" stroke="currentColor" strokeWidth="2"/>
+                </svg>
+              </div>
+              <div className={styles.quickActionContent}>
+                <h4>CSV Export</h4>
+                <p>Daten exportieren</p>
+              </div>
             </button>
-            
+
             <button 
-              className={styles.actionButton}
+              className={styles.quickActionCard}
               onClick={exportAllICS}
             >
-              <svg className={styles.buttonIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M19 4H5C3.89543 4 3 4.89543 3 6V20C3 21.1046 3.89543 22 5 22H19C20.1046 22 21 21.1046 21 20V6C21 4.89543 20.1046 4 19 4Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M16 2V6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M8 2V6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M3 10H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              ICS Export
+              <div className={styles.quickActionIcon}>
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M19 4H5C3.89543 4 3 4.89543 3 6V20C3 21.1046 3.89543 22 5 22H19C20.1046 22 21 21.1046 21 20V6C21 4.89543 20.1046 4 19 4Z" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M16 2V6" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M8 2V6" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M3 10H21" stroke="currentColor" strokeWidth="2"/>
+                </svg>
+              </div>
+              <div className={styles.quickActionContent}>
+                <h4>Kalender Export</h4>
+                <p>Termine exportieren</p>
+              </div>
             </button>
           </div>
         </div>
 
-        <div className={styles.chartGrid}>
-          <div className={styles.chartCard}>
-            <h3>Statusverteilung</h3>
-            <div className={styles.chartWrapper}>
-              <StatusPieChart contracts={contracts} />
+        {/* 📊 ENTERPRISE ANALYTICS GRID */}
+        <div className={styles.analyticsGrid}>
+          {/* Contract Status Distribution */}
+          <div className={styles.analyticsCard}>
+            <div className={styles.analyticsHeader}>
+              <h3>📊 Statusverteilung</h3>
+              <p>Übersicht aller Vertragsstatus</p>
+            </div>
+            <div className={styles.chartContainer}>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={100}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {pieData.map((_, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    formatter={(value: any, name: any) => [`${value} Verträge (${pieData.find(d => d.name === name)?.percentage}%)`, name]}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className={styles.chartLegend}>
+                {pieData.map((entry, index) => (
+                  <div key={entry.name} className={styles.legendItem}>
+                    <span 
+                      className={styles.legendColor} 
+                      style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                    ></span>
+                    <span className={styles.legendLabel}>{entry.name}</span>
+                    <span className={styles.legendValue}>{entry.value}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-          <div className={styles.chartCard}>
-            <h3>Uploads pro Monat</h3>
-            <div className={styles.chartWrapper}>
-              <UploadBarChart contracts={contracts} />
+
+          {/* Monthly Upload Trend */}
+          <div className={styles.analyticsCard}>
+            <div className={styles.analyticsHeader}>
+              <h3>📈 Upload-Trends</h3>
+              <p>Monatliche Vertragsaktivitäten</p>
+            </div>
+            <div className={styles.chartContainer}>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={monthlyData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis dataKey="month" stroke="#64748b" fontSize={12} />
+                  <YAxis stroke="#64748b" fontSize={12} />
+                  <Tooltip 
+                    contentStyle={{
+                      backgroundColor: '#ffffff',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                    }}
+                  />
+                  <Bar dataKey="uploaded" fill="#3b82f6" name="Hochgeladen" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="generated" fill="#10b981" name="KI-Generiert" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Risk Score Distribution */}
+          <div className={styles.analyticsCard}>
+            <div className={styles.analyticsHeader}>
+              <h3>⚠️ Risiko-Analyse</h3>
+              <p>Legal Pulse Bewertungen</p>
+            </div>
+            <div className={styles.chartContainer}>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={riskData} layout="horizontal">
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis type="number" stroke="#64748b" fontSize={12} />
+                  <YAxis type="category" dataKey="category" stroke="#64748b" fontSize={11} width={100} />
+                  <Tooltip 
+                    formatter={(value: any) => [`${value} Verträge`, 'Anzahl']}
+                    contentStyle={{
+                      backgroundColor: '#ffffff',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '8px'
+                    }}
+                  />
+                  <Bar dataKey="count" fill="#f59e0b" radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* 30-Day Contract Trend */}
+          <div className={styles.analyticsCard}>
+            <div className={styles.analyticsHeader}>
+              <h3>📅 30-Tage Trend</h3>
+              <p>Tägliche Vertragsaktivitäten</p>
+            </div>
+            <div className={styles.chartContainer}>
+              <ResponsiveContainer width="100%" height={300}>
+                <AreaChart data={trendData.slice(-14)}> {/* Nur letzte 14 Tage für bessere Lesbarkeit */}
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis dataKey="date" stroke="#64748b" fontSize={10} />
+                  <YAxis stroke="#64748b" fontSize={12} />
+                  <Tooltip 
+                    contentStyle={{
+                      backgroundColor: '#ffffff',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '8px'
+                    }}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="activeContracts" 
+                    stroke="#3b82f6" 
+                    fill="rgba(59, 130, 246, 0.1)"
+                    name="Aktive Verträge"
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="newContracts" 
+                    stroke="#10b981" 
+                    strokeWidth={2}
+                    name="Neue Verträge"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
           </div>
         </div>
       </div>
 
+      {/* Modal bleibt gleich */}
       {showModal && (
         <div className={styles.modalOverlay}>
           <div className={styles.modalContent}>
@@ -696,8 +1010,8 @@ export default function Dashboard() {
                 onClick={() => setShowModal(false)}
               >
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M18 6L6 18" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M6 6L18 18" stroke="currentColor" strokeWidth="2"/>
                 </svg>
               </button>
             </div>
@@ -707,11 +1021,8 @@ export default function Dashboard() {
                   {file ? (
                     <div className={styles.fileSelected}>
                       <svg className={styles.fileIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        <path d="M14 2V8H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        <path d="M16 13H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        <path d="M16 17H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        <path d="M10 9H9H8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" strokeWidth="2"/>
+                        <path d="M14 2V8H20" stroke="currentColor" strokeWidth="2"/>
                       </svg>
                       <span className={styles.fileName}>{file.name}</span>
                       <button 
@@ -719,17 +1030,17 @@ export default function Dashboard() {
                         onClick={() => setFile(null)}
                       >
                         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                          <path d="M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinejoin="round"/>
+                          <path d="M18 6L6 18" stroke="currentColor" strokeWidth="2"/>
+                          <path d="M6 6L18 18" stroke="currentColor" strokeWidth="2"/>
                         </svg>
                       </button>
                     </div>
                   ) : (
                     <>
                       <svg className={styles.uploadIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        <path d="M17 8L12 3L7 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        <path d="M12 3V15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15" stroke="currentColor" strokeWidth="2"/>
+                        <path d="M17 8L12 3L7 8" stroke="currentColor" strokeWidth="2"/>
+                        <path d="M12 3V15" stroke="currentColor" strokeWidth="2"/>
                       </svg>
                       <h3>Datei hierher ziehen</h3>
                       <p>oder</p>
@@ -768,9 +1079,9 @@ export default function Dashboard() {
                 ) : (
                   <>
                     <svg className={styles.buttonIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M17 8L12 3L7 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      <path d="M12 3V15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15" stroke="currentColor" strokeWidth="2"/>
+                      <path d="M17 8L12 3L7 8" stroke="currentColor" strokeWidth="2"/>
+                      <path d="M12 3V15" stroke="currentColor" strokeWidth="2"/>
                     </svg>
                     <span>Hochladen</span>
                   </>
