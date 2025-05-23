@@ -112,7 +112,7 @@ export default function Dashboard() {
     };
 
     const pieData = Object.entries(statusCounts)
-      .filter(([_, count]) => count > 0)
+      .filter(([, count]) => count > 0)
       .map(([status, count]) => ({
         name: status,
         value: count,
