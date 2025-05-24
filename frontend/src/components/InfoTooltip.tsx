@@ -47,7 +47,7 @@ const InfoTooltip: React.FC<InfoTooltipProps> = ({
   }, []);
 
   // Calculate absolute position for portal
-  const calculateTooltipPosition = () => {
+  const calculateTooltipPosition = (): React.CSSProperties => {
     if (!triggerRef.current || isMobile) return {};
 
     const triggerRect = triggerRef.current.getBoundingClientRect();
@@ -56,11 +56,6 @@ const InfoTooltip: React.FC<InfoTooltipProps> = ({
     const tooltipWidth = size === 'lg' ? 350 : size === 'md' ? 280 : 220;
     const tooltipHeight = 100;
     const offset = 12;
-
-    let style: React.CSSProperties = {
-      position: 'fixed',
-      zIndex: 10000,
-    };
 
     // Calculate best position based on viewport space
     const viewportWidth = window.innerWidth;
@@ -93,39 +88,52 @@ const InfoTooltip: React.FC<InfoTooltipProps> = ({
 
     setActualPosition(bestPosition);
 
-    // Position tooltip based on calculated best position
+    // Build style object based on calculated best position
+    const baseStyle: React.CSSProperties = {
+      position: 'fixed',
+      zIndex: 10000,
+    };
+
     switch (bestPosition) {
       case 'top':
-        style.left = Math.max(10, Math.min(
-          triggerRect.left + triggerRect.width / 2 - tooltipWidth / 2,
-          viewportWidth - tooltipWidth - 10
-        ));
-        style.top = triggerRect.top - tooltipHeight - offset;
-        break;
+        return {
+          ...baseStyle,
+          left: Math.max(10, Math.min(
+            triggerRect.left + triggerRect.width / 2 - tooltipWidth / 2,
+            viewportWidth - tooltipWidth - 10
+          )),
+          top: triggerRect.top - tooltipHeight - offset,
+        };
       case 'bottom':
-        style.left = Math.max(10, Math.min(
-          triggerRect.left + triggerRect.width / 2 - tooltipWidth / 2,
-          viewportWidth - tooltipWidth - 10
-        ));
-        style.top = triggerRect.bottom + offset;
-        break;
+        return {
+          ...baseStyle,
+          left: Math.max(10, Math.min(
+            triggerRect.left + triggerRect.width / 2 - tooltipWidth / 2,
+            viewportWidth - tooltipWidth - 10
+          )),
+          top: triggerRect.bottom + offset,
+        };
       case 'left':
-        style.left = triggerRect.left - tooltipWidth - offset;
-        style.top = Math.max(10, Math.min(
-          triggerRect.top + triggerRect.height / 2 - tooltipHeight / 2,
-          viewportHeight - tooltipHeight - 10
-        ));
-        break;
+        return {
+          ...baseStyle,
+          left: triggerRect.left - tooltipWidth - offset,
+          top: Math.max(10, Math.min(
+            triggerRect.top + triggerRect.height / 2 - tooltipHeight / 2,
+            viewportHeight - tooltipHeight - 10
+          )),
+        };
       case 'right':
-        style.left = triggerRect.right + offset;
-        style.top = Math.max(10, Math.min(
-          triggerRect.top + triggerRect.height / 2 - tooltipHeight / 2,
-          viewportHeight - tooltipHeight - 10
-        ));
-        break;
+        return {
+          ...baseStyle,
+          left: triggerRect.right + offset,
+          top: Math.max(10, Math.min(
+            triggerRect.top + triggerRect.height / 2 - tooltipHeight / 2,
+            viewportHeight - tooltipHeight - 10
+          )),
+        };
+      default:
+        return baseStyle;
     }
-
-    return style;
   };
 
   useEffect(() => {
