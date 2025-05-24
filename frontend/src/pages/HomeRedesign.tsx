@@ -291,6 +291,18 @@ const HomeRedesign = () => {
                         Fristen
                       </Link>
                     </li>
+                    <li>
+                      <Link to="/hilfe" className="sidebar-link" onClick={() => setSidebarOpen(false)}>
+                        <span className="sidebar-icon">🆘</span>
+                        Hilfe
+                      </Link>
+                    </li>
+                    <li>
+                      <Link to="/blog" className="sidebar-link" onClick={() => setSidebarOpen(false)}>
+                        <span className="sidebar-icon">📰</span>
+                        Blog
+                      </Link>
+                    </li>
                   </ul>
                 </div>
                 
@@ -895,6 +907,8 @@ const HomeRedesign = () => {
                 <ul>
                   <li><a href="mailto:info@contract-ai.de">Kontakt</a></li>
                   <li><Link to="/about">Über uns</Link></li>
+                  <li><Link to="/hilfe">Hilfe</Link></li>
+                  <li><Link to="/blog">Blog</Link></li>
                   <li><Link to="/press">Presse</Link></li>
                 </ul>
               </div>

@@ -1,0 +1,408 @@
+/* HelpCenter.module.css */
+
+.helpCenter {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  line-height: 1.6;
+  color: #1a1a1a;
+  background: #fafafa;
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* Hero Section */
+.hero {
+  text-align: center;
+  padding: 80px 0 60px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.heroTitle {
+  font-size: 48px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  letter-spacing: -0.02em;
+}
+
+.heroSubtitle {
+  font-size: 20px;
+  opacity: 0.9;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* Search Section */
+.searchSection {
+  background: white;
+  padding: 40px 0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+}
+
+.searchBar {
+  position: relative;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 16px 20px 16px 50px;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  font-size: 16px;
+  background: #fafafa;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: #2563eb;
+  background: white;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+}
+
+.searchIcon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+/* Tab Navigation */
+.tabNav {
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 0;
+}
+
+.tabButtons {
+  display: flex;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.tabButton {
+  padding: 20px 24px;
+  background: none;
+  border: none;
+  font-size: 16px;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s ease;
+  position: relative;
+  font-family: inherit;
+}
+
+.tabButton.active {
+  color: #2563eb;
+  border-bottom-color: #2563eb;
+}
+
+.tabButton:hover:not(.active) {
+  color: #374151;
+  background: #f9fafb;
+}
+
+/* Content Sections */
+.contentSection {
+  padding: 60px 0;
+  min-height: 600px;
+}
+
+.tabContent {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { 
+    opacity: 0; 
+    transform: translateY(10px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+.sectionTitle {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 32px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.sectionSubtitle {
+  text-align: center;
+  color: #64748b;
+  margin-bottom: 40px;
+  font-size: 18px;
+}
+
+/* Guide Grid */
+.guideGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 24px;
+  margin-top: 40px;
+}
+
+.guideCard {
+  background: white;
+  padding: 32px;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border: 1px solid #f1f5f9;
+  transition: all 0.2s ease;
+}
+
+.guideCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.guideIcon {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  color: white;
+}
+
+.guideTitle {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: #1a1a1a;
+}
+
+.guideDescription {
+  color: #64748b;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* FAQ Section */
+.faqList {
+  max-width: 800px;
+  margin: 40px auto 0;
+}
+
+.faqItem {
+  background: white;
+  margin-bottom: 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid #f1f5f9;
+  overflow: hidden;
+}
+
+.faqQuestion {
+  width: 100%;
+  padding: 24px;
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: 16px;
+  font-weight: 500;
+  color: #1a1a1a;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background 0.2s ease;
+  font-family: inherit;
+}
+
+.faqQuestion:hover {
+  background: #f8fafc;
+}
+
+.faqAnswer {
+  padding: 0 24px 24px;
+  color: #64748b;
+  animation: slideDown 0.3s ease;
+}
+
+.faqAnswer p {
+  margin: 0;
+}
+
+.faqToggle {
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.faqToggle.rotated {
+  transform: rotate(180deg);
+}
+
+@keyframes slideDown {
+  from { 
+    opacity: 0;
+    max-height: 0;
+  }
+  to { 
+    opacity: 1;
+    max-height: 200px;
+  }
+}
+
+/* Best Practices */
+.practicesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+  margin-top: 40px;
+}
+
+.practiceCard {
+  background: white;
+  padding: 28px;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border: 1px solid #f1f5f9;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.practiceCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.practiceCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, #667eea, #764ba2);
+}
+
+.practiceTitle {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: #1a1a1a;
+}
+
+.practiceDescription {
+  color: #64748b;
+  margin-bottom: 16px;
+  line-height: 1.6;
+}
+
+.readMore {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: gap 0.2s ease;
+}
+
+.readMore:hover {
+  gap: 8px;
+  text-decoration: underline;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .heroTitle {
+    font-size: 36px;
+  }
+
+  .heroSubtitle {
+    font-size: 18px;
+  }
+
+  .tabButtons {
+    flex-direction: column;
+    padding: 0;
+  }
+
+  .tabButton {
+    border-bottom: none;
+    border-right: 3px solid transparent;
+    text-align: left;
+  }
+
+  .tabButton.active {
+    border-right-color: #2563eb;
+    border-bottom-color: transparent;
+    background: #f8fafc;
+  }
+
+  .guideGrid,
+  .practicesGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .container {
+    padding: 0 16px;
+  }
+
+  .hero {
+    padding: 60px 0 40px;
+  }
+
+  .searchSection {
+    padding: 30px 0;
+  }
+
+  .contentSection {
+    padding: 40px 0;
+  }
+
+  .sectionTitle {
+    font-size: 28px;
+  }
+
+  .sectionSubtitle {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .heroTitle {
+    font-size: 28px;
+  }
+
+  .heroSubtitle {
+    font-size: 16px;
+  }
+
+  .guideCard,
+  .practiceCard {
+    padding: 24px;
+  }
+
+  .faqQuestion {
+    padding: 20px;
+    font-size: 15px;
+  }
+
+  .faqAnswer {
+    padding: 0 20px 20px;
+  }
+}

@@ -18,6 +18,9 @@ import Datenschutz from "./pages/Datenschutz";
 import AGB from "./pages/AGB";
 import About from "./pages/About";
 import Success from "./pages/Success";
+import HelpCenter from "./pages/HelpCenter";
+import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
 
 // 🔒 Geschützte Seiten
 import Dashboard from "./pages/Dashboard";
@@ -62,6 +65,9 @@ function AppWithLoader() {
           <Route path="/impressum" element={<Impressum />} />
           <Route path="/datenschutz" element={<Datenschutz />} />
           <Route path="/agb" element={<AGB />} />
+          <Route path="/hilfe" element={<HelpCenter />} />
+          <Route path="/blog" element={<Blog />} />
+          <Route path="/blog/:slug" element={<BlogPost />} />
 
           {/* 🔒 Geschützt */}
           <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
