@@ -16,30 +16,29 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
-  border: 2px solid #3b82f6;
+  width: 18px;
+  height: 18px;
+  border: none;
   border-radius: 50%;
-  background: #ffffff;
-  color: #3b82f6;
+  background: #3b82f6;
+  color: #ffffff;
   cursor: pointer;
   transition: all 0.2s ease;
   position: relative;
   flex-shrink: 0;
   padding: 0;
   outline: none;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.25);
 }
 
 .tooltipTrigger:hover {
-  background: #3b82f6;
-  color: #ffffff;
+  background: #2563eb;
   transform: scale(1.1);
-  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.2);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
 }
 
 .tooltipTrigger:focus {
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
 }
 
 .tooltipTrigger:active {
@@ -82,35 +81,55 @@
 }
 
 /* ====================================== */
-/* TOOLTIP POSITIONING */
+/* TOOLTIP POSITIONING - SMART & SAFE */
 /* ====================================== */
 
 .tooltipContent.top {
   bottom: 100%;
   left: 50%;
   transform: translateX(-50%);
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .tooltipContent.bottom {
   top: 100%;
   left: 50%;
   transform: translateX(-50%);
-  margin-top: 8px;
+  margin-top: 10px;
 }
 
 .tooltipContent.left {
   right: 100%;
   top: 50%;
   transform: translateY(-50%);
-  margin-right: 8px;
+  margin-right: 10px;
 }
 
 .tooltipContent.right {
   left: 100%;
   top: 50%;
   transform: translateY(-50%);
-  margin-left: 8px;
+  margin-left: 10px;
+}
+
+/* Prevent tooltips from going outside viewport */
+.tooltipContent.top,
+.tooltipContent.bottom {
+  max-width: min(300px, 90vw);
+  left: max(10px, min(50%, calc(100vw - 150px)));
+  transform: translateX(-50%);
+}
+
+.tooltipContent.left {
+  max-width: min(300px, 80vw);
+  right: 100%;
+  margin-right: max(10px, 5vw);
+}
+
+.tooltipContent.right {
+  max-width: min(300px, 80vw);
+  left: 100%;
+  margin-left: max(10px, 5vw);
 }
 
 /* ====================================== */

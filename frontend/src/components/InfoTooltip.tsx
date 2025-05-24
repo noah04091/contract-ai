@@ -17,8 +17,53 @@ const InfoTooltip: React.FC<InfoTooltipProps> = ({
 }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [actualPosition, setActualPosition] = useState(position);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+
+  // Smart positioning to prevent cutoff
+  const calculateBestPosition = () => {
+    if (!triggerRef.current || isMobile) return position;
+
+    const triggerRect = triggerRef.current.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    
+    const spaceTop = triggerRect.top;
+    const spaceBottom = viewportHeight - triggerRect.bottom;
+    const spaceLeft = triggerRect.left;
+    const spaceRight = viewportWidth - triggerRect.right;
+
+    // Tooltip dimensions (approximate)
+    const tooltipWidth = size === 'lg' ? 400 : size === 'md' ? 300 : 250;
+    const tooltipHeight = 120; // Approximate height
+
+    // Check if preferred position has enough space
+    switch (position) {
+      case 'top':
+        if (spaceTop >= tooltipHeight) return 'top';
+        if (spaceBottom >= tooltipHeight) return 'bottom';
+        break;
+      case 'bottom':
+        if (spaceBottom >= tooltipHeight) return 'bottom';
+        if (spaceTop >= tooltipHeight) return 'top';
+        break;
+      case 'left':
+        if (spaceLeft >= tooltipWidth) return 'left';
+        if (spaceRight >= tooltipWidth) return 'right';
+        break;
+      case 'right':
+        if (spaceRight >= tooltipWidth) return 'right';
+        if (spaceLeft >= tooltipWidth) return 'left';
+        break;
+    }
+
+    // Fallback: Choose position with most space
+    if (spaceBottom > spaceTop && spaceBottom > 100) return 'bottom';
+    if (spaceTop > 100) return 'top';
+    if (spaceRight > spaceLeft && spaceRight > tooltipWidth/2) return 'right';
+    return 'left';
+  };
 
   useEffect(() => {
     const checkMobile = () => {
@@ -47,7 +92,10 @@ const InfoTooltip: React.FC<InfoTooltipProps> = ({
   }, [isVisible, isMobile]);
 
   const handleMouseEnter = () => {
-    if (!isMobile) setIsVisible(true);
+    if (!isMobile) {
+      setActualPosition(calculateBestPosition());
+      setIsVisible(true);
+    }
   };
 
   const handleMouseLeave = () => {
@@ -58,6 +106,9 @@ const InfoTooltip: React.FC<InfoTooltipProps> = ({
     e.preventDefault();
     e.stopPropagation();
     if (isMobile) {
+      setIsVisible(!isVisible);
+    } else {
+      setActualPosition(calculateBestPosition());
       setIsVisible(!isVisible);
     }
   };
@@ -85,7 +136,7 @@ const InfoTooltip: React.FC<InfoTooltipProps> = ({
         aria-expanded={isVisible}
         type="button"
       >
-        {/* Professional Question Mark Icon */}
+        {/* Professional Info Icon - Clear "i" Symbol */}
         <svg 
           width="16" 
           height="16" 
@@ -94,26 +145,28 @@ const InfoTooltip: React.FC<InfoTooltipProps> = ({
           xmlns="http://www.w3.org/2000/svg"
           className={styles.infoIcon}
         >
+          {/* Circle background */}
           <circle 
             cx="12" 
             cy="12" 
             r="10" 
-            stroke="currentColor" 
-            strokeWidth="2"
-            fill="none"
+            fill="currentColor"
+            stroke="none"
           />
-          <path 
-            d="M9.09 9C9.3251 8.33167 9.78915 7.76811 10.4 7.40913C11.0108 7.05016 11.7289 6.91894 12.4272 7.03871C13.1255 7.15849 13.7588 7.52152 14.2151 8.06353C14.6713 8.60553 14.9211 9.29152 14.92 10C14.92 12 11.92 13 11.92 13" 
-            stroke="currentColor" 
-            strokeWidth="2" 
-            strokeLinecap="round" 
-            strokeLinejoin="round"
-          />
+          {/* Info "i" symbol */}
           <circle 
             cx="12" 
-            cy="17" 
-            r="1" 
-            fill="currentColor"
+            cy="8" 
+            r="1.5" 
+            fill="white"
+          />
+          <rect 
+            x="11" 
+            y="11" 
+            width="2" 
+            height="8" 
+            rx="1"
+            fill="white"
           />
         </svg>
       </button>
@@ -125,7 +178,7 @@ const InfoTooltip: React.FC<InfoTooltipProps> = ({
             ref={tooltipRef}
             className={`
               ${styles.tooltipContent} 
-              ${styles[position]} 
+              ${styles[actualPosition]} 
               ${styles[size]}
               ${isMobile ? styles.mobile : styles.desktop}
             `}
