@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Calendar, Clock, User } from 'lucide-react';
 import styles from '../styles/BlogPost.module.css';
 
@@ -17,6 +18,8 @@ interface BlogPostProps {
 }
 
 const BlogPost: React.FC<BlogPostProps> = ({ article }) => {
+  const navigate = useNavigate();
+  
   // Example article data - in real app, this would come from props/API
   const defaultArticle = {
     title: '5 Warnsignale: So erkennen Sie schlechte Verträge sofort',
@@ -110,16 +113,15 @@ const BlogPost: React.FC<BlogPostProps> = ({ article }) => {
   const currentArticle = article || defaultArticle;
 
   const handleBackClick = () => {
-    // Navigate back to blog - you would use your router here
-    console.log('Navigate back to blog');
-    // For Next.js: router.push('/blog')
-    // For React Router: navigate('/blog')
+    navigate('/blog');
   };
 
   const handleCTAClick = () => {
-    // Navigate to dashboard - you would use your router here
-    console.log('Navigate to dashboard');
-    // For Next.js: router.push('/dashboard')
+    navigate('/dashboard');
+  };
+
+  const handleRelatedArticleClick = (slug: string) => {
+    navigate(`/blog/${slug}`);
   };
 
   return (
@@ -173,17 +175,26 @@ const BlogPost: React.FC<BlogPostProps> = ({ article }) => {
         <div className={styles.container}>
           <h2 className={styles.relatedTitle}>Ähnliche Artikel</h2>
           <div className={styles.relatedGrid}>
-            <article className={styles.relatedCard}>
+            <article 
+              className={styles.relatedCard}
+              onClick={() => handleRelatedArticleClick('mietvertrag-unwirksame-klauseln')}
+            >
               <h3>Mietvertrag-Check: Diese Klauseln sind unwirksam</h3>
               <p>Schönheitsreparaturen, Haustierhaltung, Kautionshöhe – welche Klauseln rechtlich problematisch sind.</p>
               <span className={styles.relatedLink}>Artikel lesen →</span>
             </article>
-            <article className={styles.relatedCard}>
+            <article 
+              className={styles.relatedCard}
+              onClick={() => handleRelatedArticleClick('arbeitsvertrag-rechte-verstehen')}
+            >
               <h3>Arbeitsvertrag verstehen: Überstunden, Urlaub & Kündigung</h3>
               <p>Was steht wirklich in Ihrem Arbeitsvertrag? Die wichtigsten Klauseln erklärt.</p>
               <span className={styles.relatedLink}>Artikel lesen →</span>
             </article>
-            <article className={styles.relatedCard}>
+            <article 
+              className={styles.relatedCard}
+              onClick={() => handleRelatedArticleClick('vertragsverhandlung-strategien')}
+            >
               <h3>Vertragsverhandlung: So erreichen Sie bessere Bedingungen</h3>
               <p>Auch als Privatperson können Sie Verträge nachverhandeln. Die besten Strategien.</p>
               <span className={styles.relatedLink}>Artikel lesen →</span>

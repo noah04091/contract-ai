@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Search, Calendar, Clock, ArrowRight } from 'lucide-react';
 import styles from '../styles/Blog.module.css';
 
@@ -19,6 +20,7 @@ interface CategoryFilter {
 }
 
 const Blog: React.FC = () => {
+  const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState<string>('alle');
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -142,10 +144,11 @@ const Blog: React.FC = () => {
   };
 
   const handleArticleClick = (slug: string) => {
-    // Navigate to article - you would use your router here
-    console.log('Navigate to:', `/blog/${slug}`);
-    // For Next.js: router.push(`/blog/${slug}`)
-    // For React Router: navigate(`/blog/${slug}`)
+    navigate(`/blog/${slug}`);
+  };
+
+  const handleCTAClick = () => {
+    navigate('/dashboard');
   };
 
   const getCategoryDisplayName = (categoryKey: string): string => {
@@ -254,7 +257,7 @@ const Blog: React.FC = () => {
           <p className={styles.ctaSubtitle}>
             Contract AI analysiert Ihre Verträge in Sekunden und warnt vor problematischen Klauseln
           </p>
-          <button className={styles.ctaButton}>
+          <button className={styles.ctaButton} onClick={handleCTAClick}>
             Jetzt kostenlos Vertrag prüfen
           </button>
         </div>
