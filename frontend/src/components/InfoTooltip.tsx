@@ -1,5 +1,6 @@
-// InfoTooltip.tsx - Professionelle Info-Tooltip Komponente
+// InfoTooltip.tsx - Mit Portal für Card-Container
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import styles from './InfoTooltip.module.css';
 
 interface InfoTooltipProps {
@@ -18,61 +19,113 @@ const InfoTooltip: React.FC<InfoTooltipProps> = ({
   const [isVisible, setIsVisible] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [actualPosition, setActualPosition] = useState(position);
+  const [tooltipStyle, setTooltipStyle] = useState<React.CSSProperties>({});
   const tooltipRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
-  // Smart positioning to prevent cutoff
-  const calculateBestPosition = () => {
-    if (!triggerRef.current || isMobile) return position;
+  // Portal container
+  const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    // Create or get portal container
+    let container = document.getElementById('tooltip-portal');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'tooltip-portal';
+      container.style.position = 'relative';
+      container.style.zIndex = '10000';
+      document.body.appendChild(container);
+    }
+    setPortalContainer(container);
+
+    return () => {
+      // Cleanup on unmount
+      if (container && container.children.length === 0) {
+        document.body.removeChild(container);
+      }
+    };
+  }, []);
+
+  // Calculate absolute position for portal
+  const calculateTooltipPosition = () => {
+    if (!triggerRef.current || isMobile) return {};
 
     const triggerRect = triggerRef.current.getBoundingClientRect();
+    
+    // Tooltip dimensions based on size
+    const tooltipWidth = size === 'lg' ? 350 : size === 'md' ? 280 : 220;
+    const tooltipHeight = 100;
+    const offset = 12;
+
+    let style: React.CSSProperties = {
+      position: 'fixed',
+      zIndex: 10000,
+    };
+
+    // Calculate best position based on viewport space
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
     
-    // Calculate available space in each direction
     const spaceTop = triggerRect.top;
     const spaceBottom = viewportHeight - triggerRect.bottom;
     const spaceLeft = triggerRect.left;
     const spaceRight = viewportWidth - triggerRect.right;
 
-    // Tooltip dimensions based on size
-    const tooltipWidth = size === 'lg' ? 350 : size === 'md' ? 280 : 220;
-    const tooltipHeight = 100;
+    let bestPosition = position;
 
-    // FORCE safe positioning - prefer positions with most space
-    
-    // If trigger is in right half of screen, prefer left positioning
-    if (triggerRect.left > viewportWidth * 0.6) {
-      if (spaceLeft >= tooltipWidth + 20) return 'left';
-    }
-    
-    // If trigger is in left half of screen, prefer right positioning  
-    if (triggerRect.left < viewportWidth * 0.4) {
-      if (spaceRight >= tooltipWidth + 20) return 'right';
-    }
-
-    // Vertical positioning preferences
-    if (triggerRect.top > viewportHeight * 0.6) {
-      if (spaceTop >= tooltipHeight + 20) return 'top';
-    }
-    
-    if (triggerRect.top < viewportHeight * 0.4) {
-      if (spaceBottom >= tooltipHeight + 20) return 'bottom';
+    // Smart position selection
+    if (triggerRect.left > viewportWidth * 0.7 && spaceLeft >= tooltipWidth + offset) {
+      bestPosition = 'left';
+    } else if (triggerRect.left < viewportWidth * 0.3 && spaceRight >= tooltipWidth + offset) {
+      bestPosition = 'right';
+    } else if (triggerRect.top > viewportHeight * 0.6 && spaceTop >= tooltipHeight + offset) {
+      bestPosition = 'top';
+    } else if (spaceBottom >= tooltipHeight + offset) {
+      bestPosition = 'bottom';
+    } else {
+      // Fallback to position with most space
+      const maxSpace = Math.max(spaceTop, spaceBottom, spaceLeft, spaceRight);
+      if (maxSpace === spaceTop) bestPosition = 'top';
+      else if (maxSpace === spaceBottom) bestPosition = 'bottom';
+      else if (maxSpace === spaceLeft) bestPosition = 'left';
+      else bestPosition = 'right';
     }
 
-    // Fallback: Choose the position with the most available space
-    const spaces = {
-      top: spaceTop,
-      bottom: spaceBottom,
-      left: spaceLeft,
-      right: spaceRight
-    };
+    setActualPosition(bestPosition);
 
-    const bestPosition = Object.entries(spaces).reduce((a, b) => 
-      spaces[a[0] as keyof typeof spaces] > spaces[b[0] as keyof typeof spaces] ? a : b
-    )[0];
+    // Position tooltip based on calculated best position
+    switch (bestPosition) {
+      case 'top':
+        style.left = Math.max(10, Math.min(
+          triggerRect.left + triggerRect.width / 2 - tooltipWidth / 2,
+          viewportWidth - tooltipWidth - 10
+        ));
+        style.top = triggerRect.top - tooltipHeight - offset;
+        break;
+      case 'bottom':
+        style.left = Math.max(10, Math.min(
+          triggerRect.left + triggerRect.width / 2 - tooltipWidth / 2,
+          viewportWidth - tooltipWidth - 10
+        ));
+        style.top = triggerRect.bottom + offset;
+        break;
+      case 'left':
+        style.left = triggerRect.left - tooltipWidth - offset;
+        style.top = Math.max(10, Math.min(
+          triggerRect.top + triggerRect.height / 2 - tooltipHeight / 2,
+          viewportHeight - tooltipHeight - 10
+        ));
+        break;
+      case 'right':
+        style.left = triggerRect.right + offset;
+        style.top = Math.max(10, Math.min(
+          triggerRect.top + triggerRect.height / 2 - tooltipHeight / 2,
+          viewportHeight - tooltipHeight - 10
+        ));
+        break;
+    }
 
-    return bestPosition as typeof position;
+    return style;
   };
 
   useEffect(() => {
@@ -103,7 +156,8 @@ const InfoTooltip: React.FC<InfoTooltipProps> = ({
 
   const handleMouseEnter = () => {
     if (!isMobile) {
-      setActualPosition(calculateBestPosition());
+      const style = calculateTooltipPosition();
+      setTooltipStyle(style);
       setIsVisible(true);
     }
   };
@@ -118,7 +172,8 @@ const InfoTooltip: React.FC<InfoTooltipProps> = ({
     if (isMobile) {
       setIsVisible(!isVisible);
     } else {
-      setActualPosition(calculateBestPosition());
+      const style = calculateTooltipPosition();
+      setTooltipStyle(style);
       setIsVisible(!isVisible);
     }
   };
@@ -126,12 +181,61 @@ const InfoTooltip: React.FC<InfoTooltipProps> = ({
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
+      const style = calculateTooltipPosition();
+      setTooltipStyle(style);
       setIsVisible(!isVisible);
     }
     if (e.key === 'Escape') {
       setIsVisible(false);
     }
   };
+
+  // Tooltip content
+  const tooltipContent = (
+    <>
+      {isMobile && <div className={styles.mobileOverlay} />}
+      <div
+        ref={tooltipRef}
+        className={`
+          ${styles.tooltipContent} 
+          ${styles[actualPosition]} 
+          ${styles[size]}
+          ${isMobile ? styles.mobile : styles.desktop}
+        `}
+        style={isMobile ? {} : tooltipStyle}
+        role="tooltip"
+        aria-live="polite"
+      >
+        {isMobile && (
+          <button
+            className={styles.closeButton}
+            onClick={() => setIsVisible(false)}
+            aria-label="Schließen"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path 
+                d="M18 6L6 18M6 6L18 18" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+        )}
+        
+        <div className={styles.tooltipHeader}>
+          <h4 className={styles.tooltipTitle}>{title}</h4>
+        </div>
+        
+        <div className={styles.tooltipBody}>
+          <p className={styles.tooltipText}>{content}</p>
+        </div>
+
+        {!isMobile && <div className={styles.tooltipArrow} />}
+      </div>
+    </>
+  );
 
   return (
     <div className={styles.tooltipContainer}>
@@ -183,49 +287,11 @@ const InfoTooltip: React.FC<InfoTooltipProps> = ({
         </svg>
       </button>
 
-      {isVisible && (
-        <>
-          {isMobile && <div className={styles.mobileOverlay} />}
-          <div
-            ref={tooltipRef}
-            className={`
-              ${styles.tooltipContent} 
-              ${styles[actualPosition]} 
-              ${styles[size]}
-              ${isMobile ? styles.mobile : styles.desktop}
-            `}
-            role="tooltip"
-            aria-live="polite"
-          >
-            {isMobile && (
-              <button
-                className={styles.closeButton}
-                onClick={() => setIsVisible(false)}
-                aria-label="Schließen"
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                  <path 
-                    d="M18 6L6 18M6 6L18 18" 
-                    stroke="currentColor" 
-                    strokeWidth="2" 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </button>
-            )}
-            
-            <div className={styles.tooltipHeader}>
-              <h4 className={styles.tooltipTitle}>{title}</h4>
-            </div>
-            
-            <div className={styles.tooltipBody}>
-              <p className={styles.tooltipText}>{content}</p>
-            </div>
-
-            {!isMobile && <div className={styles.tooltipArrow} />}
-          </div>
-        </>
+      {/* Render tooltip via portal to avoid container overflow issues */}
+      {isVisible && portalContainer && (
+        isMobile ? 
+          createPortal(tooltipContent, portalContainer) :
+          createPortal(tooltipContent, portalContainer)
       )}
     </div>
   );
