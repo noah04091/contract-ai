@@ -29,40 +29,50 @@ const InfoTooltip: React.FC<InfoTooltipProps> = ({
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
     
+    // Calculate available space in each direction
     const spaceTop = triggerRect.top;
     const spaceBottom = viewportHeight - triggerRect.bottom;
     const spaceLeft = triggerRect.left;
     const spaceRight = viewportWidth - triggerRect.right;
 
-    // Tooltip dimensions (approximate)
-    const tooltipWidth = size === 'lg' ? 400 : size === 'md' ? 300 : 250;
-    const tooltipHeight = 120; // Approximate height
+    // Tooltip dimensions based on size
+    const tooltipWidth = size === 'lg' ? 350 : size === 'md' ? 280 : 220;
+    const tooltipHeight = 100;
 
-    // Check if preferred position has enough space
-    switch (position) {
-      case 'top':
-        if (spaceTop >= tooltipHeight) return 'top';
-        if (spaceBottom >= tooltipHeight) return 'bottom';
-        break;
-      case 'bottom':
-        if (spaceBottom >= tooltipHeight) return 'bottom';
-        if (spaceTop >= tooltipHeight) return 'top';
-        break;
-      case 'left':
-        if (spaceLeft >= tooltipWidth) return 'left';
-        if (spaceRight >= tooltipWidth) return 'right';
-        break;
-      case 'right':
-        if (spaceRight >= tooltipWidth) return 'right';
-        if (spaceLeft >= tooltipWidth) return 'left';
-        break;
+    // FORCE safe positioning - prefer positions with most space
+    
+    // If trigger is in right half of screen, prefer left positioning
+    if (triggerRect.left > viewportWidth * 0.6) {
+      if (spaceLeft >= tooltipWidth + 20) return 'left';
+    }
+    
+    // If trigger is in left half of screen, prefer right positioning  
+    if (triggerRect.left < viewportWidth * 0.4) {
+      if (spaceRight >= tooltipWidth + 20) return 'right';
     }
 
-    // Fallback: Choose position with most space
-    if (spaceBottom > spaceTop && spaceBottom > 100) return 'bottom';
-    if (spaceTop > 100) return 'top';
-    if (spaceRight > spaceLeft && spaceRight > tooltipWidth/2) return 'right';
-    return 'left';
+    // Vertical positioning preferences
+    if (triggerRect.top > viewportHeight * 0.6) {
+      if (spaceTop >= tooltipHeight + 20) return 'top';
+    }
+    
+    if (triggerRect.top < viewportHeight * 0.4) {
+      if (spaceBottom >= tooltipHeight + 20) return 'bottom';
+    }
+
+    // Fallback: Choose the position with the most available space
+    const spaces = {
+      top: spaceTop,
+      bottom: spaceBottom,
+      left: spaceLeft,
+      right: spaceRight
+    };
+
+    const bestPosition = Object.entries(spaces).reduce((a, b) => 
+      spaces[a[0] as keyof typeof spaces] > spaces[b[0] as keyof typeof spaces] ? a : b
+    )[0];
+
+    return bestPosition as typeof position;
   };
 
   useEffect(() => {
@@ -136,37 +146,39 @@ const InfoTooltip: React.FC<InfoTooltipProps> = ({
         aria-expanded={isVisible}
         type="button"
       >
-        {/* Professional Info Icon - Clear "i" Symbol */}
+        {/* CLEAR INFO ICON - Simple and recognizable */}
         <svg 
-          width="16" 
-          height="16" 
-          viewBox="0 0 24 24" 
+          width="14" 
+          height="14" 
+          viewBox="0 0 20 20" 
           fill="none" 
           xmlns="http://www.w3.org/2000/svg"
           className={styles.infoIcon}
         >
-          {/* Circle background */}
+          {/* Simple "i" in circle - VERY clear */}
           <circle 
-            cx="12" 
-            cy="12" 
-            r="10" 
-            fill="currentColor"
-            stroke="none"
+            cx="10" 
+            cy="10" 
+            r="9" 
+            fill="white"
+            stroke="#3b82f6" 
+            strokeWidth="2"
           />
-          {/* Info "i" symbol */}
+          {/* Top dot of "i" */}
           <circle 
-            cx="12" 
-            cy="8" 
+            cx="10" 
+            cy="6" 
             r="1.5" 
-            fill="white"
+            fill="#3b82f6"
           />
+          {/* Bottom line of "i" */}
           <rect 
-            x="11" 
-            y="11" 
+            x="9" 
+            y="9" 
             width="2" 
-            height="8" 
+            height="6" 
             rx="1"
-            fill="white"
+            fill="#3b82f6"
           />
         </svg>
       </button>

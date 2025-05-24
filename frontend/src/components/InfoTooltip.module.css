@@ -16,29 +16,26 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   border: none;
   border-radius: 50%;
-  background: #3b82f6;
-  color: #ffffff;
+  background: transparent;
   cursor: pointer;
   transition: all 0.2s ease;
   position: relative;
   flex-shrink: 0;
   padding: 0;
   outline: none;
-  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.25);
 }
 
 .tooltipTrigger:hover {
-  background: #2563eb;
   transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
 }
 
 .tooltipTrigger:focus {
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+  border-radius: 50%;
 }
 
 .tooltipTrigger:active {
@@ -46,9 +43,14 @@
 }
 
 .infoIcon {
-  width: 12px;
-  height: 12px;
+  width: 16px;
+  height: 16px;
   transition: inherit;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+}
+
+.tooltipTrigger:hover .infoIcon {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
 }
 
 /* ====================================== */
@@ -81,55 +83,78 @@
 }
 
 /* ====================================== */
-/* TOOLTIP POSITIONING - SMART & SAFE */
+/* TOOLTIP POSITIONING - NEVER CUTOFF */
 /* ====================================== */
 
 .tooltipContent.top {
   bottom: 100%;
   left: 50%;
+  margin-bottom: 12px;
   transform: translateX(-50%);
-  margin-bottom: 10px;
 }
 
 .tooltipContent.bottom {
   top: 100%;
   left: 50%;
+  margin-top: 12px;
   transform: translateX(-50%);
-  margin-top: 10px;
 }
 
 .tooltipContent.left {
   right: 100%;
   top: 50%;
+  margin-right: 12px;
   transform: translateY(-50%);
-  margin-right: 10px;
 }
 
 .tooltipContent.right {
   left: 100%;
   top: 50%;
+  margin-left: 12px;
   transform: translateY(-50%);
-  margin-left: 10px;
 }
 
-/* Prevent tooltips from going outside viewport */
+/* FORCE SAFE POSITIONING - NEVER GO OUTSIDE VIEWPORT */
+
+/* For top/bottom tooltips */
 .tooltipContent.top,
 .tooltipContent.bottom {
-  max-width: min(300px, 90vw);
-  left: max(10px, min(50%, calc(100vw - 150px)));
-  transform: translateX(-50%);
+  /* Force tooltip to stay within viewport horizontally */
+  left: max(10px, min(calc(50%), calc(100vw - var(--tooltip-width, 280px) - 10px)));
+  max-width: min(350px, calc(100vw - 20px));
 }
 
+/* For left tooltips - ensure they don't go off left edge */
 .tooltipContent.left {
-  max-width: min(300px, 80vw);
   right: 100%;
-  margin-right: max(10px, 5vw);
+  margin-right: max(12px, calc(var(--tooltip-width, 280px) + 10px - 100vw + var(--trigger-x, 0px)));
+  max-width: min(350px, calc(100vw - 30px));
 }
 
+/* For right tooltips - ensure they don't go off right edge */
 .tooltipContent.right {
-  max-width: min(300px, 80vw);
   left: 100%;
-  margin-left: max(10px, 5vw);
+  margin-left: 12px;
+  max-width: min(350px, calc(100vw - var(--trigger-x, 0px) - 50px));
+}
+
+/* Additional safety for all tooltips */
+.tooltipContent {
+  position: absolute;
+  z-index: 1000;
+  min-width: 200px;
+  max-width: min(350px, calc(100vw - 20px));
+  background: #1f2937;
+  border: 1px solid #374151;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25), 0 4px 12px rgba(0, 0, 0, 0.15);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  opacity: 0;
+  animation: tooltipFadeIn 0.2s ease forwards;
+  
+  /* Force tooltip to never exceed viewport */
+  max-height: 80vh;
+  overflow-y: auto;
 }
 
 /* ====================================== */
