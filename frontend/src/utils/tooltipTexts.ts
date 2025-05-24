@@ -2,32 +2,32 @@
 export const tooltipTexts = {
   // Legal Pulse Analyse
   legalPulse: {
-    title: "Was ist Legal Pulse?",
-    content: "Legal Pulse analysiert Ihre Verträge automatisch auf rechtliche Risiken, Compliance-Probleme und Optimierungsmöglichkeiten. Der KI-Score zeigt potenzielle Schwachstellen und hilft bei der Prioritisierung von Vertragsüberprüfungen.",
+    title: "Legal Pulse Analyse",
+    content: "Automatische KI-Analyse Ihrer Verträge auf rechtliche Risiken und Compliance-Probleme. Scores von 0-100 zeigen Optimierungspotential.",
     position: "bottom" as const,
     size: "lg" as const
   },
 
   // KI-Generierte Verträge
   generatedContracts: {
-    title: "KI-Generierte Verträge",
-    content: "Hier sehen Sie die neuesten Verträge, die mit unserem KI-Generator erstellt wurden. Diese Verträge wurden basierend auf Ihren Angaben automatisch generiert und können direkt verwendet oder weiter angepasst werden.",
+    title: "KI-Vertragsgenerator",
+    content: "Automatisch erstellte Verträge durch künstliche Intelligenz. Basierend auf Ihren Angaben und bewährten Vertragsmustern.",
     position: "bottom" as const,
     size: "md" as const
   },
 
   // Wichtige Verträge (Priority Contracts)
   priorityContracts: {
-    title: "Wichtige Verträge",
-    content: "Diese Sektion zeigt die wichtigsten Verträge basierend auf intelligenter Priorisierung: bald ablaufende Verträge (< 30 Tage), Verträge mit Erinnerungen und die neuesten Uploads. So verpassen Sie keine kritischen Deadlines.",
+    title: "Smart Priorisierung",
+    content: "Intelligente Auswahl wichtiger Verträge: Bald ablaufende (< 30 Tage), Verträge mit Erinnerungen und neueste Aktivitäten.",
     position: "bottom" as const,
     size: "lg" as const
   },
 
   // Quick Actions
   quickActions: {
-    title: "Schnellaktionen",
-    content: "Führen Sie die häufigsten Aktionen direkt vom Dashboard aus: Neue Verträge hochladen, KI-Generator nutzen, Daten exportieren oder Kalender-Integration aktivieren. Sparen Sie Zeit mit Ein-Klick-Aktionen.",
+    title: "Schnellzugriff",
+    content: "Die wichtigsten Aktionen direkt verfügbar: Upload, KI-Generator, Datenexport und Kalender-Integration.",
     position: "top" as const,
     size: "md" as const
   },
@@ -35,7 +35,7 @@ export const tooltipTexts = {
   // Analytics Status (Statusverteilung)
   analyticsStatus: {
     title: "Statusverteilung",
-    content: "Zeigt die Verteilung Ihrer Verträge nach Status (Aktiv, Abgelaufen, Bald ablaufend). Diese Übersicht hilft bei der Verwaltung und rechtzeitigen Verlängerung wichtiger Verträge.",
+    content: "Übersicht Ihrer Verträge nach Status: Aktiv, Abgelaufen und bald ablaufende Dokumente.",
     position: "top" as const,
     size: "md" as const
   },
@@ -43,7 +43,7 @@ export const tooltipTexts = {
   // Analytics Uploads (Upload-Trends)
   analyticsUploads: {
     title: "Upload-Trends", 
-    content: "Verfolgen Sie Ihre monatlichen Upload-Aktivitäten. Unterscheidung zwischen manuell hochgeladenen und KI-generierten Verträgen zeigt Ihre Nutzungsmuster und Produktivität.",
+    content: "Monatliche Upload-Aktivitäten mit Unterscheidung zwischen manuellen und KI-generierten Verträgen.",
     position: "top" as const,
     size: "md" as const
   },
@@ -51,15 +51,15 @@ export const tooltipTexts = {
   // Analytics Risk (Risiko-Analyse)
   analyticsRisk: {
     title: "Risiko-Analyse",
-    content: "Übersicht über die Legal Pulse Bewertungen Ihrer Verträge. Hohe Risiko-Scores zeigen Verträge an, die eine rechtliche Überprüfung benötigen könnten.",
+    content: "Verteilung der Legal Pulse Scores. Hohe Werte zeigen Verträge mit Überprüfungsbedarf.",
     position: "top" as const,
     size: "md" as const
   },
 
   // Analytics Trend (30-Tage Aktivität)
   analyticsTrend: {
-    title: "Aktivitäts-Trend",
-    content: "Zeigt Ihre Vertragsaktivitäten der letzten 30 Tage. Verfolgen Sie Uploads, Analysen und andere Aktionen, um Ihre Produktivität zu verstehen.",
+    title: "Aktivitäts-Verlauf",
+    content: "14-Tage Übersicht Ihrer Vertragsaktivitäten: Uploads, Analysen und Verwaltungsaufgaben.",
     position: "top" as const,
     size: "md" as const
   },
@@ -67,28 +67,28 @@ export const tooltipTexts = {
   // Metriken
   metricsTotal: {
     title: "Gesamte Verträge",
-    content: "Die Gesamtanzahl aller Verträge in Ihrem System - sowohl hochgeladene als auch KI-generierte Dokumente.",
+    content: "Alle Verträge in Ihrem System - hochgeladene und KI-generierte Dokumente.",
     position: "bottom" as const,
     size: "sm" as const
   },
 
   metricsActive: {
     title: "Aktive Verträge", 
-    content: "Anzahl der Verträge, die aktuell gültig sind und deren Laufzeit noch nicht abgelaufen ist.",
+    content: "Verträge die aktuell gültig sind und deren Laufzeit noch nicht abgelaufen ist.",
     position: "bottom" as const,
     size: "sm" as const
   },
 
   metricsExpiring: {
     title: "Bald ablaufend",
-    content: "Verträge, die in den nächsten 30 Tagen ablaufen und Ihre Aufmerksamkeit benötigen. Rechtzeitige Verlängerung verhindert Geschäftsunterbrechungen.",
+    content: "Verträge die in den nächsten 30 Tagen ablaufen und Aufmerksamkeit benötigen.",
     position: "bottom" as const,
     size: "md" as const
   },
 
   metricsReminders: {
-    title: "Erinnerungen aktiv",
-    content: "Anzahl der Verträge mit aktivierten Erinnerungen. Diese Verträge werden Sie automatisch vor wichtigen Terminen benachrichtigen.",
+    title: "Aktive Erinnerungen",
+    content: "Verträge mit aktivierten Benachrichtigungen für wichtige Termine und Deadlines.",
     position: "bottom" as const,
     size: "md" as const
   }

@@ -1,7 +1,5 @@
-// src/components/InfoTooltip.tsx
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Info, X } from 'lucide-react';
+// InfoTooltip.tsx - Professionelle Info-Tooltip Komponente
+import React, { useState, useRef, useEffect } from 'react';
 import styles from './InfoTooltip.module.css';
 
 interface InfoTooltipProps {
@@ -17,12 +15,14 @@ const InfoTooltip: React.FC<InfoTooltipProps> = ({
   position = 'bottom',
   size = 'md'
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const tooltipRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
+      setIsMobile(window.innerWidth <= 768);
     };
     
     checkMobile();
@@ -30,91 +30,138 @@ const InfoTooltip: React.FC<InfoTooltipProps> = ({
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  const toggleTooltip = (e: React.MouseEvent) => {
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (tooltipRef.current && triggerRef.current) {
+        if (!tooltipRef.current.contains(event.target as Node) && 
+            !triggerRef.current.contains(event.target as Node)) {
+          setIsVisible(false);
+        }
+      }
+    };
+
+    if (isVisible && isMobile) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isVisible, isMobile]);
+
+  const handleMouseEnter = () => {
+    if (!isMobile) setIsVisible(true);
+  };
+
+  const handleMouseLeave = () => {
+    if (!isMobile) setIsVisible(false);
+  };
+
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
-    setIsOpen(!isOpen);
+    if (isMobile) {
+      setIsVisible(!isVisible);
+    }
   };
 
-  const closeTooltip = () => {
-    setIsOpen(false);
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      setIsVisible(!isVisible);
+    }
+    if (e.key === 'Escape') {
+      setIsVisible(false);
+    }
   };
 
-  // Mobile: Modal, Desktop: Tooltip
-  if (isMobile) {
-    return (
-      <>
-        <button 
-          className={styles.infoButton}
-          onClick={toggleTooltip}
-          aria-label="Weitere Informationen"
-        >
-          <Info size={16} />
-        </button>
-
-        <AnimatePresence>
-          {isOpen && (
-            <>
-              <motion.div
-                className={styles.mobileOverlay}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={closeTooltip}
-              />
-              <motion.div
-                className={styles.mobileModal}
-                initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                transition={{ type: "spring", damping: 25, stiffness: 500 }}
-              >
-                <div className={styles.mobileHeader}>
-                  <h4>{title}</h4>
-                  <button onClick={closeTooltip} className={styles.closeButton}>
-                    <X size={18} />
-                  </button>
-                </div>
-                <div className={styles.mobileContent}>
-                  <p>{content}</p>
-                </div>
-              </motion.div>
-            </>
-          )}
-        </AnimatePresence>
-      </>
-    );
-  }
-
-  // Desktop: Hover Tooltip
   return (
     <div className={styles.tooltipContainer}>
-      <button 
-        className={styles.infoButton}
-        onMouseEnter={() => setIsOpen(true)}
-        onMouseLeave={() => setIsOpen(false)}
-        onClick={toggleTooltip}
-        aria-label="Weitere Informationen"
+      <button
+        ref={triggerRef}
+        className={styles.tooltipTrigger}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onClick={handleClick}
+        onKeyDown={handleKeyDown}
+        aria-label={`Information: ${title}`}
+        aria-expanded={isVisible}
+        type="button"
       >
-        <Info size={16} />
+        {/* Professional Question Mark Icon */}
+        <svg 
+          width="16" 
+          height="16" 
+          viewBox="0 0 24 24" 
+          fill="none" 
+          xmlns="http://www.w3.org/2000/svg"
+          className={styles.infoIcon}
+        >
+          <circle 
+            cx="12" 
+            cy="12" 
+            r="10" 
+            stroke="currentColor" 
+            strokeWidth="2"
+            fill="none"
+          />
+          <path 
+            d="M9.09 9C9.3251 8.33167 9.78915 7.76811 10.4 7.40913C11.0108 7.05016 11.7289 6.91894 12.4272 7.03871C13.1255 7.15849 13.7588 7.52152 14.2151 8.06353C14.6713 8.60553 14.9211 9.29152 14.92 10C14.92 12 11.92 13 11.92 13" 
+            stroke="currentColor" 
+            strokeWidth="2" 
+            strokeLinecap="round" 
+            strokeLinejoin="round"
+          />
+          <circle 
+            cx="12" 
+            cy="17" 
+            r="1" 
+            fill="currentColor"
+          />
+        </svg>
       </button>
 
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            className={`${styles.tooltip} ${styles[position]} ${styles[size]}`}
-            initial={{ opacity: 0, scale: 0.8, y: 10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.8, y: 10 }}
-            transition={{ duration: 0.2 }}
+      {isVisible && (
+        <>
+          {isMobile && <div className={styles.mobileOverlay} />}
+          <div
+            ref={tooltipRef}
+            className={`
+              ${styles.tooltipContent} 
+              ${styles[position]} 
+              ${styles[size]}
+              ${isMobile ? styles.mobile : styles.desktop}
+            `}
+            role="tooltip"
+            aria-live="polite"
           >
-            <div className={styles.tooltipArrow} />
-            <div className={styles.tooltipContent}>
+            {isMobile && (
+              <button
+                className={styles.closeButton}
+                onClick={() => setIsVisible(false)}
+                aria-label="Schließen"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path 
+                    d="M18 6L6 18M6 6L18 18" 
+                    stroke="currentColor" 
+                    strokeWidth="2" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+            )}
+            
+            <div className={styles.tooltipHeader}>
               <h4 className={styles.tooltipTitle}>{title}</h4>
+            </div>
+            
+            <div className={styles.tooltipBody}>
               <p className={styles.tooltipText}>{content}</p>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+
+            {!isMobile && <div className={styles.tooltipArrow} />}
+          </div>
+        </>
+      )}
     </div>
   );
 };
