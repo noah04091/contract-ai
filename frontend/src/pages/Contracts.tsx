@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   FileText, RefreshCw, Upload, CheckCircle, AlertCircle, 
-  Plus, Calendar, Clock, FileSearch, Trash2, Eye, Edit
+  Plus, Calendar, Clock, FileSearch, Trash2, Eye, Edit, Filter, X
 } from "lucide-react";
 import styles from "../styles/Contracts.module.css";
 import ContractAnalysis from "../components/ContractAnalysis";
@@ -21,6 +21,10 @@ interface Contract {
   isGenerated?: boolean;
 }
 
+// ✅ NEU: Filter-Typen
+type StatusFilter = 'alle' | 'aktiv' | 'bald_ablaufend' | 'abgelaufen' | 'gekündigt';
+type DateFilter = 'alle' | 'letzte_7_tage' | 'letzte_30_tage' | 'letztes_jahr';
+
 export default function Contracts() {
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [filteredContracts, setFilteredContracts] = useState<Contract[]>([]);
@@ -34,6 +38,12 @@ export default function Contracts() {
   const [activeSection, setActiveSection] = useState<'upload' | 'contracts' | 'analysis'>('contracts');
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  
+  // ✅ NEU: Filter States
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('alle');
+  const [dateFilter, setDateFilter] = useState<DateFilter>('alle');
+  const [showFilters, setShowFilters] = useState(false);
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // ✅ Verbesserte fetchContracts mit apiCall
@@ -59,33 +69,84 @@ export default function Contracts() {
     }
   };
 
+  // ✅ NEU: Erweiterte Filterfunktion
+  const applyFilters = () => {
+    let filtered = [...contracts];
+
+    // Text-Suche
+    if (searchQuery.trim()) {
+      filtered = filtered.filter(contract => 
+        contract.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        contract.status.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (contract.kuendigung && contract.kuendigung.toLowerCase().includes(searchQuery.toLowerCase()))
+      );
+    }
+
+    // Status-Filter
+    if (statusFilter !== 'alle') {
+      filtered = filtered.filter(contract => {
+        const status = contract.status.toLowerCase();
+        switch (statusFilter) {
+          case 'aktiv':
+            return status === 'aktiv' || status === 'gültig';
+          case 'bald_ablaufend':
+            return status === 'läuft ab' || status === 'bald fällig';
+          case 'abgelaufen':
+            return status === 'abgelaufen' || status === 'beendet';
+          case 'gekündigt':
+            return status === 'gekündigt';
+          default:
+            return true;
+        }
+      });
+    }
+
+    // Datums-Filter
+    if (dateFilter !== 'alle') {
+      const now = new Date();
+      filtered = filtered.filter(contract => {
+        const createdDate = new Date(contract.createdAt);
+        const diffTime = now.getTime() - createdDate.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        switch (dateFilter) {
+          case 'letzte_7_tage':
+            return diffDays <= 7;
+          case 'letzte_30_tage':
+            return diffDays <= 30;
+          case 'letztes_jahr':
+            return diffDays <= 365;
+          default:
+            return true;
+        }
+      });
+    }
+
+    setFilteredContracts(filtered);
+  };
+
   // ✅ Suchfunktion implementiert
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    
-    if (!query.trim()) {
-      setFilteredContracts(contracts);
-      return;
-    }
-
-    const filtered = contracts.filter(contract => 
-      contract.name.toLowerCase().includes(query.toLowerCase()) ||
-      contract.status.toLowerCase().includes(query.toLowerCase()) ||
-      (contract.kuendigung && contract.kuendigung.toLowerCase().includes(query.toLowerCase()))
-    );
-    
-    setFilteredContracts(filtered);
   };
+
+  // ✅ NEU: Filter zurücksetzen
+  const clearFilters = () => {
+    setSearchQuery("");
+    setStatusFilter('alle');
+    setDateFilter('alle');
+    setShowFilters(false);
+  };
+
+  // ✅ Filter anwenden wenn sich etwas ändert
+  useEffect(() => {
+    applyFilters();
+  }, [contracts, searchQuery, statusFilter, dateFilter]);
 
   // ✅ Verträge beim Laden abrufen
   useEffect(() => {
     fetchContracts();
   }, []);
-
-  // ✅ Suchfilter aktualisieren, wenn sich Verträge ändern
-  useEffect(() => {
-    handleSearch(searchQuery);
-  }, [contracts, searchQuery]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -182,6 +243,15 @@ export default function Contracts() {
 
   const activateFileInput = () => {
     fileInputRef.current?.click();
+  };
+
+  // ✅ NEU: Aktive Filter zählen
+  const activeFiltersCount = () => {
+    let count = 0;
+    if (statusFilter !== 'alle') count++;
+    if (dateFilter !== 'alle') count++;
+    if (searchQuery.trim()) count++;
+    return count;
   };
 
   return (
@@ -343,6 +413,21 @@ export default function Contracts() {
                     onChange={(e) => handleSearch(e.target.value)}
                   />
                 </div>
+                
+                {/* ✅ NEU: Filter Button */}
+                <div className={styles.filterControls}>
+                  <button 
+                    className={`${styles.filterButton} ${showFilters ? styles.filterActive : ''}`}
+                    onClick={() => setShowFilters(!showFilters)}
+                  >
+                    <Filter size={16} />
+                    <span>Filter</span>
+                    {activeFiltersCount() > 0 && (
+                      <span className={styles.filterBadge}>{activeFiltersCount()}</span>
+                    )}
+                  </button>
+                </div>
+
                 <motion.button 
                   className={styles.newContractButton}
                   onClick={() => setActiveSection('upload')}
@@ -354,10 +439,62 @@ export default function Contracts() {
                 </motion.button>
               </div>
 
+              {/* ✅ NEU: Erweiterte Filter */}
+              {showFilters && (
+                <motion.div 
+                  className={styles.filterPanel}
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <div className={styles.filterSection}>
+                    <label>Status:</label>
+                    <select 
+                      value={statusFilter} 
+                      onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+                      className={styles.filterSelect}
+                    >
+                      <option value="alle">Alle Status</option>
+                      <option value="aktiv">Aktiv/Gültig</option>
+                      <option value="bald_ablaufend">Bald ablaufend</option>
+                      <option value="abgelaufen">Abgelaufen</option>
+                      <option value="gekündigt">Gekündigt</option>
+                    </select>
+                  </div>
+
+                  <div className={styles.filterSection}>
+                    <label>Zeitraum:</label>
+                    <select 
+                      value={dateFilter} 
+                      onChange={(e) => setDateFilter(e.target.value as DateFilter)}
+                      className={styles.filterSelect}
+                    >
+                      <option value="alle">Alle Zeiträume</option>
+                      <option value="letzte_7_tage">Letzte 7 Tage</option>
+                      <option value="letzte_30_tage">Letzte 30 Tage</option>
+                      <option value="letztes_jahr">Letztes Jahr</option>
+                    </select>
+                  </div>
+
+                  <button 
+                    className={styles.clearFiltersButton}
+                    onClick={clearFilters}
+                  >
+                    <X size={14} />
+                    <span>Filter zurücksetzen</span>
+                  </button>
+                </motion.div>
+              )}
+
               {/* ✅ Suchergebnisse-Anzeige */}
-              {searchQuery && (
+              {(searchQuery || statusFilter !== 'alle' || dateFilter !== 'alle') && (
                 <div className={styles.searchResults}>
-                  <p>{filteredContracts.length} Ergebnis{filteredContracts.length !== 1 ? 'se' : ''} für "{searchQuery}"</p>
+                  <p>
+                    {filteredContracts.length} Ergebnis{filteredContracts.length !== 1 ? 'se' : ''} 
+                    {searchQuery && ` für "${searchQuery}"`}
+                    {activeFiltersCount() > 1 && ` (${activeFiltersCount()} Filter aktiv)`}
+                  </p>
                 </div>
               )}
 
@@ -383,14 +520,16 @@ export default function Contracts() {
               ) : filteredContracts.length === 0 ? (
                 <div className={styles.emptyState}>
                   <FileText size={64} className={styles.emptyIcon} />
-                  <h3>{searchQuery ? "Keine Ergebnisse gefunden" : "Keine Verträge vorhanden"}</h3>
+                  <h3>
+                    {activeFiltersCount() > 0 ? "Keine Ergebnisse gefunden" : "Keine Verträge vorhanden"}
+                  </h3>
                   <p>
-                    {searchQuery 
-                      ? `Für "${searchQuery}" wurden keine Verträge gefunden.`
+                    {activeFiltersCount() > 0 
+                      ? "Probiere andere Filtereinstellungen oder lade neue Verträge hoch."
                       : "Lade deinen ersten Vertrag hoch, um ihn hier zu sehen."
                     }
                   </p>
-                  {!searchQuery && (
+                  {activeFiltersCount() === 0 && (
                     <motion.button 
                       className={styles.uploadButton}
                       onClick={() => setActiveSection('upload')}
@@ -423,6 +562,8 @@ export default function Contracts() {
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.3 }}
+                          onClick={() => handleRowClick(contract)}
+                          style={{ cursor: 'pointer' }}
                         >
                           <td>
                             <div className={styles.contractName}>
@@ -463,7 +604,10 @@ export default function Contracts() {
                             <div className={styles.actionButtons}>
                               <button 
                                 className={styles.actionButton}
-                                onClick={() => handleRowClick(contract)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRowClick(contract);
+                                }}
                                 title="Details anzeigen"
                               >
                                 <Eye size={16} />
@@ -472,7 +616,6 @@ export default function Contracts() {
                                 className={styles.actionButton}
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  // Handle edit action - could navigate to edit page
                                   console.log("Edit contract:", contract._id);
                                 }}
                                 title="Bearbeiten"

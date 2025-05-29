@@ -220,11 +220,13 @@
   margin-top: 1rem;
 }
 
-/* Actions Bar */
+/* ✅ ERWEITERTE Actions Bar mit Filter-Support */
 .actionsBar {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   margin-bottom: 1.5rem;
+  gap: 1rem;
 }
 
 .searchContainer {
@@ -250,14 +252,145 @@
   background-color: white;
 }
 
-/* ✅ NEU: Suchergebnisse */
+/* ✅ NEU: Filter Controls */
+.filterControls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filterButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1rem;
+  border-radius: 10px;
+  background-color: var(--apple-gray-100);
+  color: var(--apple-gray-800);
+  border: none;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.filterButton:hover {
+  background-color: var(--apple-gray-200);
+}
+
+.filterActive {
+  background-color: var(--apple-blue);
+  color: white;
+}
+
+.filterActive:hover {
+  background-color: var(--apple-blue-dark);
+}
+
+.filterBadge {
+  background-color: var(--error-red);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 50%;
+  min-width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 0.25rem;
+}
+
+.filterActive .filterBadge {
+  background-color: rgba(255, 255, 255, 0.3);
+  color: white;
+}
+
+/* ✅ NEU: Filter Panel */
+.filterPanel {
+  background: var(--apple-gray-50);
+  border: 1px solid var(--apple-gray-200);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.filterSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 160px;
+}
+
+.filterSection label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--apple-gray-800);
+}
+
+.filterSelect {
+  padding: 0.6rem 0.8rem;
+  border-radius: 8px;
+  border: 1px solid var(--apple-gray-200);
+  background-color: white;
+  font-family: inherit;
+  font-size: 0.9rem;
+  color: var(--apple-gray-800);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.filterSelect:focus {
+  border-color: var(--apple-blue);
+  box-shadow: 0 0 0 2px rgba(0, 113, 227, 0.1);
+}
+
+.clearFiltersButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  background-color: var(--apple-gray-200);
+  color: var(--apple-gray-600);
+  border: none;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-left: auto;
+}
+
+.clearFiltersButton:hover {
+  background-color: var(--apple-gray-300);
+  color: var(--apple-gray-800);
+}
+
+/* ✅ ERWEITERTE Suchergebnisse */
 .searchResults {
   margin-bottom: 1rem;
-  padding: 0.5rem 1rem;
-  background: var(--apple-gray-50);
+  padding: 0.7rem 1rem;
+  background: linear-gradient(135deg, var(--apple-blue), var(--apple-blue-dark));
+  color: white;
   border-radius: 8px;
   font-size: 0.9rem;
-  color: var(--apple-gray-500);
+  font-weight: 500;
+}
+
+.searchResults p {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .newContractButton {
@@ -330,13 +463,17 @@
   font-size: 0.9rem;
 }
 
+/* ✅ ERWEITERTE Table Row - klickbar mit besserem Hover */
 .tableRow {
   transition: all 0.2s ease;
   background-color: white;
+  cursor: pointer;
 }
 
 .tableRow:hover {
   background-color: var(--apple-gray-50);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .tableRow td {
@@ -437,13 +574,15 @@
   color: var(--apple-gray-500);
 }
 
+/* ✅ ERWEITERTE Action Buttons mit Event-Bubbling-Schutz */
 .actionButtons {
   display: flex;
   gap: 0.5rem;
   justify-content: flex-end;
+  z-index: 10;
+  position: relative;
 }
 
-/* ✅ ERWEITERTE Action Button Styles */
 .actionButton {
   width: 32px;
   height: 32px;
@@ -456,11 +595,13 @@
   color: var(--apple-gray-400);
   cursor: pointer;
   transition: all 0.2s ease;
+  z-index: 11;
 }
 
 .actionButton:hover {
   background-color: var(--apple-gray-100);
   color: var(--apple-gray-800);
+  transform: scale(1.1);
 }
 
 .actionButton:disabled {
@@ -541,7 +682,7 @@
   background-color: var(--apple-gray-200);
 }
 
-/* Empty State */
+/* ✅ ERWEITERTE Empty State für Filter */
 .emptyState {
   display: flex;
   flex-direction: column;
@@ -551,6 +692,9 @@
   text-align: center;
   gap: 1rem;
   padding: 3rem 2rem;
+  background: var(--apple-gray-50);
+  border-radius: 12px;
+  border: 1px solid var(--apple-gray-100);
 }
 
 .emptyIcon {
@@ -595,7 +739,7 @@
   margin-top: 2rem;
 }
 
-/* Responsive Styles */
+/* ✅ ERWEITERTE Responsive Styles mit Filter-Support */
 @media (max-width: 768px) {
   .container {
     padding: 1.5rem;
@@ -621,10 +765,30 @@
   .actionsBar {
     flex-direction: column;
     gap: 1rem;
+    align-items: stretch;
   }
   
   .searchContainer {
     max-width: 100%;
+  }
+  
+  .filterControls {
+    justify-content: center;
+  }
+  
+  .filterPanel {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+  
+  .filterSection {
+    min-width: auto;
+  }
+  
+  .clearFiltersButton {
+    margin-left: 0;
+    align-self: center;
   }
   
   .contractsTable {
