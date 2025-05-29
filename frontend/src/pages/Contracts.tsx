@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import axios from "axios";
 import { 
   FileText, RefreshCw, Upload, CheckCircle, AlertCircle, 
   Plus, Calendar, Clock, FileSearch, Trash2, Eye, Edit
@@ -9,6 +8,7 @@ import styles from "../styles/Contracts.module.css";
 import ContractAnalysis from "../components/ContractAnalysis";
 import AnalysisHistory from "../components/AnalysisHistory";
 import ContractDetailsModal from "../components/ContractDetailsModal";
+import { apiCall } from "../utils/api";
 
 interface Contract {
   _id: string;
@@ -16,10 +16,14 @@ interface Contract {
   kuendigung: string;
   expiryDate: string;
   status: string;
+  createdAt: string;
+  content?: string;
+  isGenerated?: boolean;
 }
 
 export default function Contracts() {
   const [contracts, setContracts] = useState<Contract[]>([]);
+  const [filteredContracts, setFilteredContracts] = useState<Contract[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
@@ -29,30 +33,59 @@ export default function Contracts() {
   const [dragActive, setDragActive] = useState(false);
   const [activeSection, setActiveSection] = useState<'upload' | 'contracts' | 'analysis'>('contracts');
   const [refreshing, setRefreshing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // ✅ Verbesserte fetchContracts mit apiCall
   const fetchContracts = async () => {
     try {
       setLoading(true);
       setRefreshing(true);
-      const token = localStorage.getItem("token");
-      const res = await axios.get<Contract[]>("https://contract-ai-backend.onrender.com/contracts", {
-        headers: { Authorization: token || "" },
-      });
-      setContracts(res.data);
+      
+      const data = await apiCall("/contracts") as Contract[];
+      setContracts(data);
+      setFilteredContracts(data);
       setError(null);
+      
+      console.log("✅ Verträge erfolgreich geladen:", data.length);
     } catch (err) {
-      console.error("Fehler beim Laden der Verträge:", err);
+      console.error("❌ Fehler beim Laden der Verträge:", err);
       setError("Die Verträge konnten nicht geladen werden. Bitte versuche es später erneut.");
+      setContracts([]);
+      setFilteredContracts([]);
     } finally {
       setLoading(false);
-      setTimeout(() => setRefreshing(false), 600); // Add delay for animation
+      setTimeout(() => setRefreshing(false), 600);
     }
   };
 
+  // ✅ Suchfunktion implementiert
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    
+    if (!query.trim()) {
+      setFilteredContracts(contracts);
+      return;
+    }
+
+    const filtered = contracts.filter(contract => 
+      contract.name.toLowerCase().includes(query.toLowerCase()) ||
+      contract.status.toLowerCase().includes(query.toLowerCase()) ||
+      (contract.kuendigung && contract.kuendigung.toLowerCase().includes(query.toLowerCase()))
+    );
+    
+    setFilteredContracts(filtered);
+  };
+
+  // ✅ Verträge beim Laden abrufen
   useEffect(() => {
     fetchContracts();
   }, []);
+
+  // ✅ Suchfilter aktualisieren, wenn sich Verträge ändern
+  useEffect(() => {
+    handleSearch(searchQuery);
+  }, [contracts, searchQuery]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -89,11 +122,33 @@ export default function Contracts() {
   const handleReset = () => {
     setSelectedFile(null);
     setActiveSection('contracts');
+    // ✅ Nach Upload wieder Verträge laden
+    fetchContracts();
   };
 
   const handleRowClick = (contract: Contract) => {
     setSelectedContract(contract);
     setShowDetails(true);
+  };
+
+  // ✅ Verbesserte Löschfunktion
+  const handleDeleteContract = async (contractId: string, contractName: string) => {
+    if (!confirm(`Möchtest du den Vertrag "${contractName}" wirklich löschen?`)) {
+      return;
+    }
+
+    try {
+      await apiCall(`/contracts/${contractId}`, {
+        method: 'DELETE'
+      });
+      
+      console.log("✅ Vertrag gelöscht:", contractName);
+      // Verträge neu laden
+      fetchContracts();
+    } catch (err) {
+      console.error("❌ Fehler beim Löschen:", err);
+      alert("Fehler beim Löschen des Vertrags. Bitte versuche es erneut.");
+    }
   };
 
   const getStatusColor = (status: string): string => {
@@ -284,6 +339,8 @@ export default function Contracts() {
                     type="text" 
                     placeholder="Verträge durchsuchen..." 
                     className={styles.searchInput}
+                    value={searchQuery}
+                    onChange={(e) => handleSearch(e.target.value)}
                   />
                 </div>
                 <motion.button 
@@ -296,6 +353,13 @@ export default function Contracts() {
                   <span>Neuer Vertrag</span>
                 </motion.button>
               </div>
+
+              {/* ✅ Suchergebnisse-Anzeige */}
+              {searchQuery && (
+                <div className={styles.searchResults}>
+                  <p>{filteredContracts.length} Ergebnis{filteredContracts.length !== 1 ? 'se' : ''} für "{searchQuery}"</p>
+                </div>
+              )}
 
               {loading && !refreshing ? (
                 <div className={styles.loadingContainer}>
@@ -316,20 +380,27 @@ export default function Contracts() {
                     <span>Erneut versuchen</span>
                   </motion.button>
                 </div>
-              ) : contracts.length === 0 ? (
+              ) : filteredContracts.length === 0 ? (
                 <div className={styles.emptyState}>
                   <FileText size={64} className={styles.emptyIcon} />
-                  <h3>Keine Verträge vorhanden</h3>
-                  <p>Lade deinen ersten Vertrag hoch, um ihn hier zu sehen.</p>
-                  <motion.button 
-                    className={styles.uploadButton}
-                    onClick={() => setActiveSection('upload')}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <Upload size={16} />
-                    <span>Vertrag hochladen</span>
-                  </motion.button>
+                  <h3>{searchQuery ? "Keine Ergebnisse gefunden" : "Keine Verträge vorhanden"}</h3>
+                  <p>
+                    {searchQuery 
+                      ? `Für "${searchQuery}" wurden keine Verträge gefunden.`
+                      : "Lade deinen ersten Vertrag hoch, um ihn hier zu sehen."
+                    }
+                  </p>
+                  {!searchQuery && (
+                    <motion.button 
+                      className={styles.uploadButton}
+                      onClick={() => setActiveSection('upload')}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <Upload size={16} />
+                      <span>Vertrag hochladen</span>
+                    </motion.button>
+                  )}
                 </div>
               ) : (
                 <div className={styles.tableContainer}>
@@ -340,11 +411,12 @@ export default function Contracts() {
                         <th>Kündigungsfrist</th>
                         <th>Ablaufdatum</th>
                         <th>Status</th>
+                        <th>Upload-Datum</th>
                         <th>Aktionen</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {contracts.map((contract) => (
+                      {filteredContracts.map((contract) => (
                         <motion.tr 
                           key={contract._id} 
                           className={styles.tableRow}
@@ -357,7 +429,12 @@ export default function Contracts() {
                               <div className={styles.contractIcon}>
                                 <FileText size={16} />
                               </div>
-                              <span className={styles.contractNameText}>{contract.name}</span>
+                              <div>
+                                <span className={styles.contractNameText}>{contract.name}</span>
+                                {contract.isGenerated && (
+                                  <span className={styles.generatedBadge}>Generiert</span>
+                                )}
+                              </div>
                             </div>
                           </td>
                           <td>
@@ -378,6 +455,11 @@ export default function Contracts() {
                             </span>
                           </td>
                           <td>
+                            <span className={styles.uploadDate}>
+                              {formatDate(contract.createdAt)}
+                            </span>
+                          </td>
+                          <td>
                             <div className={styles.actionButtons}>
                               <button 
                                 className={styles.actionButton}
@@ -390,7 +472,8 @@ export default function Contracts() {
                                 className={styles.actionButton}
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  // Handle edit action
+                                  // Handle edit action - could navigate to edit page
+                                  console.log("Edit contract:", contract._id);
                                 }}
                                 title="Bearbeiten"
                               >
@@ -400,7 +483,7 @@ export default function Contracts() {
                                 className={`${styles.actionButton} ${styles.deleteButton}`}
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  // Handle delete action
+                                  handleDeleteContract(contract._id, contract.name);
                                 }}
                                 title="Löschen"
                               >
@@ -447,4 +530,4 @@ export default function Contracts() {
       </motion.div>
     </div>
   );
-} 
+}

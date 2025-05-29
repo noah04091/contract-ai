@@ -250,6 +250,16 @@
   background-color: white;
 }
 
+/* ✅ NEU: Suchergebnisse */
+.searchResults {
+  margin-bottom: 1rem;
+  padding: 0.5rem 1rem;
+  background: var(--apple-gray-50);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: var(--apple-gray-500);
+}
+
 .newContractButton {
   display: flex;
   align-items: center;
@@ -339,10 +349,17 @@
   border-bottom: none;
 }
 
+/* ✅ ERWEITERTE Contract Name Styles */
 .contractName {
   display: flex;
   align-items: center;
   gap: 0.7rem;
+}
+
+.contractName > div {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .contractIcon {
@@ -354,9 +371,23 @@
   align-items: center;
   justify-content: center;
   color: var(--apple-blue);
+  flex-shrink: 0;
 }
 
 .contractNameText {
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+/* ✅ NEU: Generiert Badge */
+.generatedBadge {
+  display: inline-block;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-size: 0.75rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 8px;
   font-weight: 500;
 }
 
@@ -369,6 +400,12 @@
 
 .detailIcon {
   color: var(--apple-gray-400);
+}
+
+/* ✅ NEU: Upload Date */
+.uploadDate {
+  color: var(--apple-gray-500);
+  font-size: 0.9rem;
 }
 
 .statusBadge {
@@ -406,6 +443,7 @@
   justify-content: flex-end;
 }
 
+/* ✅ ERWEITERTE Action Button Styles */
 .actionButton {
   width: 32px;
   height: 32px;
@@ -423,6 +461,11 @@
 .actionButton:hover {
   background-color: var(--apple-gray-100);
   color: var(--apple-gray-800);
+}
+
+.actionButton:disabled {
+  opacity: 0.5;
+  pointer-events: none;
 }
 
 .deleteButton:hover {
@@ -584,13 +627,29 @@
     max-width: 100%;
   }
   
+  .contractsTable {
+    font-size: 0.85rem;
+  }
+  
   .contractsTable th:nth-child(2),
   .contractsTable td:nth-child(2) {
+    display: none;
+  }
+  
+  /* ✅ NEU: Upload-Datum auf mobil verstecken */
+  .contractsTable th:nth-child(5),
+  .contractsTable td:nth-child(5) {
     display: none;
   }
   
   .actionButtons {
     flex-direction: column;
     gap: 0.3rem;
+  }
+  
+  /* ✅ NEU: Kleinerer Badge auf mobil */
+  .generatedBadge {
+    font-size: 0.7rem;
+    padding: 1px 4px;
   }
 }
