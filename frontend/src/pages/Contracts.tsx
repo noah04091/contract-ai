@@ -2,12 +2,13 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   FileText, RefreshCw, Upload, CheckCircle, AlertCircle, 
-  Plus, Calendar, Clock, FileSearch, Trash2, Eye, Edit, Filter, X
+  Plus, Calendar, Clock, FileSearch, Trash2, Eye, Edit,
+  Search, X
 } from "lucide-react";
 import styles from "../styles/Contracts.module.css";
 import ContractAnalysis from "../components/ContractAnalysis";
 import AnalysisHistory from "../components/AnalysisHistory";
-import ContractDetailsModal from "../components/ContractDetailsModal";
+import ContractDetailsView from "../components/ContractDetailsView";
 import { apiCall } from "../utils/api";
 
 interface Contract {
@@ -21,9 +22,10 @@ interface Contract {
   isGenerated?: boolean;
 }
 
-// ✅ NEU: Filter-Typen
+// ✅ Erweiterte Filter-Typen
 type StatusFilter = 'alle' | 'aktiv' | 'bald_ablaufend' | 'abgelaufen' | 'gekündigt';
 type DateFilter = 'alle' | 'letzte_7_tage' | 'letzte_30_tage' | 'letztes_jahr';
+type SortOrder = 'neueste' | 'älteste' | 'name_az' | 'name_za';
 
 export default function Contracts() {
   const [contracts, setContracts] = useState<Contract[]>([]);
@@ -37,12 +39,12 @@ export default function Contracts() {
   const [dragActive, setDragActive] = useState(false);
   const [activeSection, setActiveSection] = useState<'upload' | 'contracts' | 'analysis'>('contracts');
   const [refreshing, setRefreshing] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   
-  // ✅ NEU: Filter States
+  // ✅ Erweiterte Filter & Search States
+  const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('alle');
   const [dateFilter, setDateFilter] = useState<DateFilter>('alle');
-  const [showFilters, setShowFilters] = useState(false);
+  const [sortOrder, setSortOrder] = useState<SortOrder>('neueste');
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -69,7 +71,7 @@ export default function Contracts() {
     }
   };
 
-  // ✅ NEU: Erweiterte Filterfunktion
+  // ✅ Erweiterte Filterfunktion mit Sortierung
   const applyFilters = () => {
     let filtered = [...contracts];
 
@@ -122,31 +124,50 @@ export default function Contracts() {
       });
     }
 
+    // Sortierung
+    filtered.sort((a, b) => {
+      switch (sortOrder) {
+        case 'neueste':
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        case 'älteste':
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        case 'name_az':
+          return a.name.localeCompare(b.name);
+        case 'name_za':
+          return b.name.localeCompare(a.name);
+        default:
+          return 0;
+      }
+    });
+
     setFilteredContracts(filtered);
-  };
-
-  // ✅ Suchfunktion implementiert
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-  };
-
-  // ✅ NEU: Filter zurücksetzen
-  const clearFilters = () => {
-    setSearchQuery("");
-    setStatusFilter('alle');
-    setDateFilter('alle');
-    setShowFilters(false);
   };
 
   // ✅ Filter anwenden wenn sich etwas ändert
   useEffect(() => {
     applyFilters();
-  }, [contracts, searchQuery, statusFilter, dateFilter]);
+  }, [contracts, searchQuery, statusFilter, dateFilter, sortOrder]);
 
   // ✅ Verträge beim Laden abrufen
   useEffect(() => {
     fetchContracts();
   }, []);
+
+  // ✅ Aktive Filter zählen
+  const activeFiltersCount = () => {
+    let count = 0;
+    if (statusFilter !== 'alle') count++;
+    if (dateFilter !== 'alle') count++;
+    return count;
+  };
+
+  // ✅ Alle Filter zurücksetzen
+  const clearAllFilters = () => {
+    setSearchQuery("");
+    setStatusFilter('alle');
+    setDateFilter('alle');
+    setSortOrder('neueste');
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -183,7 +204,6 @@ export default function Contracts() {
   const handleReset = () => {
     setSelectedFile(null);
     setActiveSection('contracts');
-    // ✅ Nach Upload wieder Verträge laden
     fetchContracts();
   };
 
@@ -204,8 +224,8 @@ export default function Contracts() {
       });
       
       console.log("✅ Vertrag gelöscht:", contractName);
-      // Verträge neu laden
       fetchContracts();
+      setShowDetails(false); // Modal schließen nach Löschung
     } catch (err) {
       console.error("❌ Fehler beim Löschen:", err);
       alert("Fehler beim Löschen des Vertrags. Bitte versuche es erneut.");
@@ -225,7 +245,6 @@ export default function Contracts() {
     }
   };
 
-  // Format date helper function
   const formatDate = (dateString: string): string => {
     if (!dateString) return "—";
     
@@ -243,15 +262,6 @@ export default function Contracts() {
 
   const activateFileInput = () => {
     fileInputRef.current?.click();
-  };
-
-  // ✅ NEU: Aktive Filter zählen
-  const activeFiltersCount = () => {
-    let count = 0;
-    if (statusFilter !== 'alle') count++;
-    if (dateFilter !== 'alle') count++;
-    if (searchQuery.trim()) count++;
-    return count;
   };
 
   return (
@@ -289,6 +299,9 @@ export default function Contracts() {
           >
             <FileText size={18} />
             <span>Verträge</span>
+            {contracts.length > 0 && (
+              <span className={styles.tabBadge}>{contracts.length}</span>
+            )}
           </button>
           <button 
             className={`${styles.tabButton} ${activeSection === 'upload' ? styles.activeTab : ''}`}
@@ -390,111 +403,127 @@ export default function Contracts() {
               transition={{ duration: 0.3 }}
             >
               <div className={styles.sectionHeader}>
-                <h2>Deine Verträge</h2>
-                <motion.button 
-                  className={styles.refreshButton} 
-                  onClick={fetchContracts} 
-                  aria-label="Aktualisieren"
-                  disabled={refreshing}
-                  animate={{ rotate: refreshing ? 360 : 0 }}
-                  transition={{ duration: 1, ease: "linear", repeat: refreshing ? Infinity : 0 }}
-                >
-                  <RefreshCw size={16} />
-                </motion.button>
-              </div>
-
-              <div className={styles.actionsBar}>
-                <div className={styles.searchContainer}>
-                  <input 
-                    type="text" 
-                    placeholder="Verträge durchsuchen..." 
-                    className={styles.searchInput}
-                    value={searchQuery}
-                    onChange={(e) => handleSearch(e.target.value)}
-                  />
+                <div>
+                  <h2>Deine Verträge</h2>
+                  <p className={styles.contractsCount}>
+                    {loading ? "Lade..." : `${filteredContracts.length} von ${contracts.length} Verträgen`}
+                  </p>
                 </div>
-                
-                {/* ✅ NEU: Filter Button */}
-                <div className={styles.filterControls}>
-                  <button 
-                    className={`${styles.filterButton} ${showFilters ? styles.filterActive : ''}`}
-                    onClick={() => setShowFilters(!showFilters)}
+                <div className={styles.sectionActions}>
+                  <motion.button 
+                    className={styles.refreshButton} 
+                    onClick={fetchContracts} 
+                    aria-label="Aktualisieren"
+                    disabled={refreshing}
+                    animate={{ rotate: refreshing ? 360 : 0 }}
+                    transition={{ duration: 1, ease: "linear", repeat: refreshing ? Infinity : 0 }}
                   >
-                    <Filter size={16} />
-                    <span>Filter</span>
-                    {activeFiltersCount() > 0 && (
-                      <span className={styles.filterBadge}>{activeFiltersCount()}</span>
-                    )}
-                  </button>
+                    <RefreshCw size={16} />
+                  </motion.button>
+                  <motion.button 
+                    className={styles.newContractButton}
+                    onClick={() => setActiveSection('upload')}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <Plus size={16} />
+                    <span>Neuer Vertrag</span>
+                  </motion.button>
                 </div>
-
-                <motion.button 
-                  className={styles.newContractButton}
-                  onClick={() => setActiveSection('upload')}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <Plus size={16} />
-                  <span>Neuer Vertrag</span>
-                </motion.button>
               </div>
 
-              {/* ✅ NEU: Erweiterte Filter */}
-              {showFilters && (
-                <motion.div 
-                  className={styles.filterPanel}
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <div className={styles.filterSection}>
-                    <label>Status:</label>
+              {/* ✅ NEU: Immer sichtbare Filter-Leiste */}
+              <div className={styles.filtersToolbar}>
+                <div className={styles.searchSection}>
+                  <div className={styles.searchInputWrapper}>
+                    <Search size={18} className={styles.searchIcon} />
+                    <input 
+                      type="text" 
+                      placeholder="Verträge durchsuchen..." 
+                      className={styles.searchInput}
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                    {searchQuery && (
+                      <button 
+                        className={styles.clearSearchButton}
+                        onClick={() => setSearchQuery("")}
+                      >
+                        <X size={16} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div className={styles.filtersSection}>
+                  <div className={styles.quickFilters}>
                     <select 
                       value={statusFilter} 
                       onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-                      className={styles.filterSelect}
+                      className={styles.quickFilter}
                     >
                       <option value="alle">Alle Status</option>
-                      <option value="aktiv">Aktiv/Gültig</option>
-                      <option value="bald_ablaufend">Bald ablaufend</option>
-                      <option value="abgelaufen">Abgelaufen</option>
-                      <option value="gekündigt">Gekündigt</option>
+                      <option value="aktiv">✅ Aktiv</option>
+                      <option value="bald_ablaufend">⚠️ Bald ablaufend</option>
+                      <option value="abgelaufen">❌ Abgelaufen</option>
+                      <option value="gekündigt">🚫 Gekündigt</option>
                     </select>
-                  </div>
 
-                  <div className={styles.filterSection}>
-                    <label>Zeitraum:</label>
                     <select 
                       value={dateFilter} 
                       onChange={(e) => setDateFilter(e.target.value as DateFilter)}
-                      className={styles.filterSelect}
+                      className={styles.quickFilter}
                     >
                       <option value="alle">Alle Zeiträume</option>
-                      <option value="letzte_7_tage">Letzte 7 Tage</option>
-                      <option value="letzte_30_tage">Letzte 30 Tage</option>
-                      <option value="letztes_jahr">Letztes Jahr</option>
+                      <option value="letzte_7_tage">📅 Letzte 7 Tage</option>
+                      <option value="letzte_30_tage">📅 Letzte 30 Tage</option>
+                      <option value="letztes_jahr">📅 Letztes Jahr</option>
+                    </select>
+
+                    <select 
+                      value={sortOrder} 
+                      onChange={(e) => setSortOrder(e.target.value as SortOrder)}
+                      className={styles.quickFilter}
+                    >
+                      <option value="neueste">🕐 Neueste zuerst</option>
+                      <option value="älteste">🕐 Älteste zuerst</option>
+                      <option value="name_az">🔤 Name A-Z</option>
+                      <option value="name_za">🔤 Name Z-A</option>
                     </select>
                   </div>
 
-                  <button 
-                    className={styles.clearFiltersButton}
-                    onClick={clearFilters}
-                  >
-                    <X size={14} />
-                    <span>Filter zurücksetzen</span>
-                  </button>
-                </motion.div>
-              )}
+                  {activeFiltersCount() > 0 && (
+                    <button 
+                      className={styles.clearAllFilters}
+                      onClick={clearAllFilters}
+                    >
+                      <X size={14} />
+                      <span>Zurücksetzen</span>
+                    </button>
+                  )}
+                </div>
+              </div>
 
-              {/* ✅ Suchergebnisse-Anzeige */}
-              {(searchQuery || statusFilter !== 'alle' || dateFilter !== 'alle') && (
-                <div className={styles.searchResults}>
-                  <p>
-                    {filteredContracts.length} Ergebnis{filteredContracts.length !== 1 ? 'se' : ''} 
-                    {searchQuery && ` für "${searchQuery}"`}
-                    {activeFiltersCount() > 1 && ` (${activeFiltersCount()} Filter aktiv)`}
-                  </p>
+              {/* ✅ Verbesserte Ergebnisanzeige */}
+              {(searchQuery || activeFiltersCount() > 0) && (
+                <div className={styles.resultsInfo}>
+                  <div className={styles.resultsText}>
+                    <strong>{filteredContracts.length}</strong> Ergebnis
+                    {filteredContracts.length !== 1 ? 'se' : ''}
+                    {searchQuery && (
+                      <span> für <em>"{searchQuery}"</em></span>
+                    )}
+                  </div>
+                  {activeFiltersCount() > 0 && (
+                    <div className={styles.activeFilters}>
+                      {statusFilter !== 'alle' && (
+                        <span className={styles.activeFilter}>Status: {statusFilter}</span>
+                      )}
+                      {dateFilter !== 'alle' && (
+                        <span className={styles.activeFilter}>Zeitraum: {dateFilter.replace('_', ' ')}</span>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -521,15 +550,15 @@ export default function Contracts() {
                 <div className={styles.emptyState}>
                   <FileText size={64} className={styles.emptyIcon} />
                   <h3>
-                    {activeFiltersCount() > 0 ? "Keine Ergebnisse gefunden" : "Keine Verträge vorhanden"}
+                    {activeFiltersCount() > 0 || searchQuery ? "Keine Ergebnisse gefunden" : "Keine Verträge vorhanden"}
                   </h3>
                   <p>
-                    {activeFiltersCount() > 0 
-                      ? "Probiere andere Filtereinstellungen oder lade neue Verträge hoch."
+                    {activeFiltersCount() > 0 || searchQuery
+                      ? "Probiere andere Suchbegriffe oder Filter-Einstellungen."
                       : "Lade deinen ersten Vertrag hoch, um ihn hier zu sehen."
                     }
                   </p>
-                  {activeFiltersCount() === 0 && (
+                  {(!activeFiltersCount() && !searchQuery) && (
                     <motion.button 
                       className={styles.uploadButton}
                       onClick={() => setActiveSection('upload')}
@@ -563,7 +592,6 @@ export default function Contracts() {
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.3 }}
                           onClick={() => handleRowClick(contract)}
-                          style={{ cursor: 'pointer' }}
                         >
                           <td>
                             <div className={styles.contractName}>
@@ -663,11 +691,17 @@ export default function Contracts() {
           )}
         </AnimatePresence>
 
+        {/* ✅ NEU: Moderne ContractDetailsView statt Modal */}
         {selectedContract && (
-          <ContractDetailsModal
+          <ContractDetailsView
             contract={selectedContract}
             onClose={() => setShowDetails(false)}
             show={showDetails}
+            onEdit={(contractId) => {
+              console.log("Edit contract:", contractId);
+              // Hier könnte Weiterleitung zur Edit-Seite erfolgen
+            }}
+            onDelete={handleDeleteContract}
           />
         )}
       </motion.div>
