@@ -1,4 +1,4 @@
-// 📁 backend/server.js (Complete fixed version with ANALYZE route)
+// 📁 backend/server.js (Complete fixed version with ANALYZE route + OPTIMIZE route)
 const express = require("express");
 const app = express();
 require("dotenv").config();
@@ -36,7 +36,7 @@ const ALLOWED_ORIGINS = [
   "https://www.contract-ai.de",
 ];
 
-const transporter = nodemailer.createTransport(EMAIL_CONFIG);
+const transporter = nodemailer.createTransporter(EMAIL_CONFIG);
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const storage = multer.diskStorage({
   destination: UPLOAD_PATH,
@@ -140,14 +140,26 @@ async function analyzeContract(pdfText) {
       console.error("❌ Fehler beim Laden der Stripe-Routen:", err);
     }
 
-    // 📦 Vertragsrouten
+    // 🔧 OPTIMIZE-ROUTE - KORREKT IMPLEMENTIERT (NEU/ERSETZT)
     try {
-      app.use("/optimize", verifyToken, checkSubscription, require("./routes/optimize")(db));
-      console.log("✅ Optimize-Route geladen");
+      console.log("🔧 Lade Optimize-Route...");
+      // ✅ NEUE: Optimize-Route ohne (db) Parameter da sie eigene Verbindung aufbaut
+      app.use("/optimize", verifyToken, checkSubscription, require("./routes/optimize"));
+      console.log("✅ Optimize-Route erfolgreich geladen auf /optimize!");
     } catch (err) {
       console.error("❌ Fehler bei Optimize-Route:", err);
+      // Fallback-Route für Optimize
+      app.post("/optimize", verifyToken, checkSubscription, (req, res) => {
+        console.log("🆘 Fallback Optimize-Route aufgerufen");
+        res.status(503).json({
+          success: false,
+          message: "Optimierung-Service vorübergehend nicht verfügbar",
+          error: "Route konnte nicht geladen werden"
+        });
+      });
     }
 
+    // 📦 Weitere Vertragsrouten
     try {
       app.use("/compare", verifyToken, checkSubscription, require("./routes/compare"));
       console.log("✅ Compare-Route geladen");
@@ -199,6 +211,7 @@ async function analyzeContract(pdfText) {
       });
     }
 
+    // 📋 Weitere Standard-Routen
     try {
       app.use("/analyze-type", require("./routes/analyzeType"));
       app.use("/extract-text", require("./routes/extractText"));
@@ -296,6 +309,8 @@ async function analyzeContract(pdfText) {
           isGenerated: isGenerated || false,
           uploadedAt: new Date(),
           filePath: "",
+          // ✅ WICHTIG: optimizationCount für neue User hinzufügen
+          optimizationCount: 0,
           // Legal Pulse Integration
           legalPulse: {
             riskScore: null,
@@ -395,7 +410,8 @@ async function analyzeContract(pdfText) {
         status: "working",
         loadedRoutes: "all routes loaded with error handling",
         newFeature: "Contract save route enabled",
-        analyzeRoute: "ANALYZE ROUTE NOW ACTIVE!" // ✅ NEU
+        analyzeRoute: "ANALYZE ROUTE NOW ACTIVE!",
+        optimizeRoute: "OPTIMIZE ROUTE NOW ACTIVE!" // ✅ NEU
       });
     });
 
@@ -430,7 +446,8 @@ async function analyzeContract(pdfText) {
       console.log(`📡 Alle wichtigen Routen sollten geladen sein`);
       console.log(`🔧 Generate-Route: POST /contracts/generate (Proxy entfernt /api/)`);
       console.log(`💾 Save-Route: POST /contracts (NEU)`);
-      console.log(`📊 Analyze-Route: POST /analyze (NEU HINZUGEFÜGT!)`) // ✅ NEU
+      console.log(`📊 Analyze-Route: POST /analyze (NEU HINZUGEFÜGT!)`);
+      console.log(`🔧 Optimize-Route: POST /optimize (NEU HINZUGEFÜGT!)`) // ✅ NEU
       console.log(`🔐 Auth-Routen: /auth/*`);
       console.log(`✅ Server deployment complete!`);
     });

@@ -1,4 +1,4 @@
-// 📁 src/utils/api.ts - IMPROVED ERROR HANDLING & RETRY LOGIC
+// 📁 src/utils/api.ts - IMPROVED ERROR HANDLING & RETRY LOGIC + OPTIMIZE FUNCTIONS
 const API_BASE_URL = "/api"; // Proxy-Pfad für Vercel & devServer
 
 /**
@@ -218,6 +218,82 @@ export const uploadAndAnalyze = async (
 };
 
 /**
+ * ⭐ NEU: Spezielle Funktion für File-Upload mit Optimierung - MIT RETRY & PROGRESS
+ */
+export const uploadAndOptimize = async (
+  file: File, 
+  contractType?: string,
+  onProgress?: (progress: number) => void
+): Promise<unknown> => {
+  const formData = new FormData();
+  formData.append('file', file);
+  if (contractType) {
+    formData.append('contractType', contractType);
+  }
+
+  console.log(`🔧 Upload & Optimize: ${file.name} (${file.size} bytes)`);
+
+  // ✅ Progress-Simulation für Optimierung (dauert länger)
+  if (onProgress) {
+    onProgress(5); // Start
+  }
+
+  try {
+    if (onProgress) onProgress(20); // PDF wird gelesen
+    
+    // ✅ Optimierung dauert länger als Analyse
+    const progressInterval = setInterval(() => {
+      if (onProgress) {
+        const currentProgress = Math.min(85, Math.random() * 20 + 40);
+        onProgress(currentProgress);
+      }
+    }, 2000);
+
+    const result = await apiCall('/optimize', {
+      method: 'POST',
+      body: formData,
+    });
+    
+    clearInterval(progressInterval);
+    if (onProgress) onProgress(100); // Fertig
+    
+    console.log("✅ Optimierung erfolgreich:", result);
+    return result;
+    
+  } catch (error) {
+    if (onProgress) onProgress(0); // Reset bei Fehler
+    
+    console.error("❌ Upload & Optimize Fehler:", error);
+    
+    // ✅ FIXED: TypeScript-sichere Fehlerbehandlung
+    const errorMessage = getErrorMessage(error);
+    
+    // ✅ Benutzerfreundliche Fehlermeldungen für Optimierung
+    if (errorMessage.includes('nicht gefunden') || errorMessage.includes('404')) {
+      throw new Error("❌ Optimierung-Service ist derzeit nicht verfügbar. Bitte kontaktiere den Support.");
+    }
+    
+    if (errorMessage.includes('Server-Fehler') || errorMessage.includes('500')) {
+      throw new Error("❌ Fehler bei der Vertragsoptimierung. Bitte versuche es später erneut.");
+    }
+    
+    if (errorMessage.includes('Limit erreicht')) {
+      throw new Error("🔧 Optimierung-Limit erreicht. Bitte upgrade dein Paket für weitere Optimierungen.");
+    }
+    
+    if (errorMessage.includes('Timeout')) {
+      throw new Error("⏱️ Optimierung-Timeout. Bitte versuche es mit einer kleineren PDF-Datei.");
+    }
+    
+    if (errorMessage.includes('PDF') || errorMessage.includes('Datei')) {
+      throw new Error("📄 PDF-Datei konnte nicht verarbeitet werden. Bitte prüfe das Dateiformat.");
+    }
+    
+    throw error;
+  }
+};
+
+/**
  * Health Check für Analyse-Service
  */
 interface HealthCheckResponse {
@@ -232,6 +308,116 @@ export const checkAnalyzeHealth = async (): Promise<boolean> => {
     return !!result?.success;
   } catch {
     return false;
+  }
+};
+
+/**
+ * ⭐ NEU: Health Check für Optimierung-Service
+ */
+export const checkOptimizeHealth = async (): Promise<boolean> => {
+  try {
+    const result = await apiCall('/optimize/health') as HealthCheckResponse;
+    return !!result?.success;
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * ⭐ NEU: Optimierung-Historie abrufen
+ */
+export const getOptimizationHistory = async (): Promise<unknown> => {
+  try {
+    return await apiCall('/optimize/history');
+  } catch (error) {
+    console.error("❌ Fehler beim Abrufen der Optimierung-Historie:", error);
+    throw error;
+  }
+};
+
+/**
+ * ⭐ NEU: Analyse-Historie abrufen
+ */
+export const getAnalysisHistory = async (): Promise<unknown> => {
+  try {
+    return await apiCall('/analyze/history');
+  } catch (error) {
+    console.error("❌ Fehler beim Abrufen der Analyse-Historie:", error);
+    throw error;
+  }
+};
+
+/**
+ * ⭐ NEU: User-Limits abrufen
+ */
+export const getUserLimits = async (): Promise<unknown> => {
+  try {
+    return await apiCall('/auth/me');
+  } catch (error) {
+    console.error("❌ Fehler beim Abrufen der User-Limits:", error);
+    throw error;
+  }
+};
+
+/**
+ * ⭐ NEU: Vertrag speichern (nach Generierung oder Optimierung)
+ */
+export const saveContract = async (contractData: {
+  name: string;
+  content: string;
+  laufzeit?: string;
+  kuendigung?: string;
+  expiryDate?: string;
+  status?: string;
+  isGenerated?: boolean;
+  signature?: string;
+}): Promise<unknown> => {
+  try {
+    return await apiCall('/contracts', {
+      method: 'POST',
+      body: JSON.stringify(contractData),
+    });
+  } catch (error) {
+    console.error("❌ Fehler beim Speichern des Vertrags:", error);
+    throw error;
+  }
+};
+
+/**
+ * ⭐ VERBESSERT: Contracts abrufen mit Fehlerbehandlung
+ */
+export const getContracts = async (): Promise<unknown> => {
+  try {
+    return await apiCall('/contracts');
+  } catch (error) {
+    console.error("❌ Fehler beim Abrufen der Verträge:", error);
+    throw error;
+  }
+};
+
+/**
+ * ⭐ NEU: Einzelnen Vertrag abrufen
+ */
+export const getContract = async (contractId: string): Promise<unknown> => {
+  try {
+    return await apiCall(`/contracts/${contractId}`);
+  } catch (error) {
+    console.error("❌ Fehler beim Abrufen des Vertrags:", error);
+    throw error;
+  }
+};
+
+/**
+ * ⭐ NEU: Vertrag löschen
+ */
+export const deleteContract = async (contractId: string): Promise<unknown> => {
+  try {
+    return await apiCall(`/contracts/${contractId}`, {
+      method: 'DELETE',
+    });
+  } catch (error) {
+    console.error("❌ Fehler beim Löschen des Vertrags:", error);
+    throw error;
   }
 };
 

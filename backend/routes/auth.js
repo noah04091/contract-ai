@@ -33,7 +33,7 @@ module.exports = (db) => {
   return router;
 };
 
-// ✅ Registrierung
+// ✅ Registrierung - ERWEITERT mit optimizationCount
 router.post("/register", async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password)
@@ -44,7 +44,36 @@ router.post("/register", async (req, res) => {
     if (existing) return res.status(409).json({ message: "❌ E-Mail bereits registriert" });
 
     const hashed = await bcrypt.hash(password, PASSWORD_SALT_ROUNDS);
-    await usersCollection.insertOne({ email, password: hashed, isPremium: false });
+    
+    // ✅ ERWEITERTE User-Erstellung mit allen notwendigen Feldern
+    const newUser = {
+      email,
+      password: hashed,
+      isPremium: false,
+      // ⭐ ANALYSE & OPTIMIERUNG LIMITS
+      analysisCount: 0,
+      optimizationCount: 0, // ⭐ NEU HINZUGEFÜGT
+      // 📋 SUBSCRIPTION INFO
+      subscriptionPlan: "free",
+      subscriptionStatus: "inactive",
+      subscriptionActive: false,
+      // 📅 TIMESTAMPS
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      // 🔔 NOTIFICATION SETTINGS
+      emailNotifications: true,
+      contractReminders: true
+    };
+
+    await usersCollection.insertOne(newUser);
+    
+    console.log("✅ Neuer User registriert:", {
+      email: newUser.email,
+      plan: newUser.subscriptionPlan,
+      analysisCount: newUser.analysisCount,
+      optimizationCount: newUser.optimizationCount
+    });
+    
     res.status(201).json({ message: "✅ Registrierung erfolgreich" });
   } catch (err) {
     console.error("❌ Registrierung fehlgeschlagen:", err);
@@ -83,7 +112,7 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// ✅ Aktuellen Nutzer abrufen
+// ✅ Aktuellen Nutzer abrufen - ERWEITERT mit optimizationCount
 router.get("/me", verifyToken, async (req, res) => {
   try {
     const user = await usersCollection.findOne(
@@ -97,11 +126,18 @@ router.get("/me", verifyToken, async (req, res) => {
     const plan = user.subscriptionPlan || "free";
     const status = user.subscriptionStatus || "inactive";
     const analysisCount = user.analysisCount ?? 0;
+    const optimizationCount = user.optimizationCount ?? 0; // ⭐ NEU HINZUGEFÜGT
     const subscriptionActive = user.subscriptionActive ?? false;
 
+    // 📊 ANALYSE LIMITS
     let analysisLimit = 10;
     if (plan === "business") analysisLimit = 50;
     if (plan === "premium") analysisLimit = Infinity;
+
+    // 🔧 OPTIMIERUNG LIMITS (NEU)
+    let optimizationLimit = 5; // Free: 5 Optimierungen
+    if (plan === "business") optimizationLimit = 25;
+    if (plan === "premium") optimizationLimit = Infinity;
 
     res.json({
       email: user.email,
@@ -111,8 +147,16 @@ router.get("/me", verifyToken, async (req, res) => {
       isPremium: plan === "premium",
       isBusiness: plan === "business",
       isFree: plan === "free",
+      // ⭐ ANALYSE INFO
       analysisCount,
       analysisLimit,
+      // ⭐ OPTIMIERUNG INFO (NEU)
+      optimizationCount,
+      optimizationLimit,
+      // 📅 ACCOUNT INFO
+      createdAt: user.createdAt,
+      emailNotifications: user.emailNotifications ?? true,
+      contractReminders: user.contractReminders ?? true
     });
   } catch (err) {
     console.error("❌ Fehler bei /me:", err);
@@ -136,7 +180,12 @@ router.put("/change-password", verifyToken, async (req, res) => {
     const hashed = await bcrypt.hash(newPassword, PASSWORD_SALT_ROUNDS);
     await usersCollection.updateOne(
       { _id: user._id },
-      { $set: { password: hashed } }
+      { 
+        $set: { 
+          password: hashed,
+          updatedAt: new Date() // ⭐ Timestamp aktualisieren
+        } 
+      }
     );
     res.json({ message: "✅ Passwort geändert" });
   } catch (err) {
@@ -206,7 +255,13 @@ router.post("/reset-password", async (req, res) => {
     const hashed = await bcrypt.hash(newPassword, PASSWORD_SALT_ROUNDS);
     await usersCollection.updateOne(
       { _id: user._id },
-      { $set: { password: hashed }, $unset: { resetToken: "", resetTokenExpires: "" } }
+      { 
+        $set: { 
+          password: hashed,
+          updatedAt: new Date() // ⭐ Timestamp aktualisieren
+        }, 
+        $unset: { resetToken: "", resetTokenExpires: "" } 
+      }
     );
     res.json({ message: "✅ Passwort zurückgesetzt" });
   } catch (err) {
@@ -220,4 +275,36 @@ router.post("/logout", (req, res) => {
   res.clearCookie(COOKIE_NAME, COOKIE_OPTIONS);
   console.log("🍪 Logout erfolgreich – Cookie gelöscht");
   res.json({ message: "✅ Erfolgreich ausgeloggt" });
+
+});
+
+// ✅ NEUE ROUTE: Bestehende User upgraden (OPTIONAL - für Migration)
+router.post("/migrate-users", async (req, res) => {
+  try {
+    // Diese Route kann einmalig aufgerufen werden, um bestehende User zu updaten
+    const result = await usersCollection.updateMany(
+      { optimizationCount: { $exists: false } }, // User ohne optimizationCount
+      { 
+        $set: { 
+          optimizationCount: 0,
+          analysisCount: { $ifNull: ["$analysisCount", 0] },
+          subscriptionPlan: { $ifNull: ["$subscriptionPlan", "free"] },
+          subscriptionStatus: { $ifNull: ["$subscriptionStatus", "inactive"] },
+          subscriptionActive: { $ifNull: ["$subscriptionActive", false] },
+          emailNotifications: { $ifNull: ["$emailNotifications", true] },
+          contractReminders: { $ifNull: ["$contractReminders", true] },
+          updatedAt: new Date()
+        }
+      }
+    );
+    
+    console.log(`✅ ${result.modifiedCount} User erfolgreich migriert`);
+    res.json({ 
+      message: `✅ ${result.modifiedCount} User erfolgreich migriert`,
+      modifiedCount: result.modifiedCount
+    });
+  } catch (err) {
+    console.error("❌ Fehler bei User-Migration:", err);
+    res.status(500).json({ message: "Fehler bei User-Migration" });
+  }
 });
