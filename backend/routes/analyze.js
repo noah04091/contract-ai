@@ -1,9 +1,10 @@
-// 📁 backend/routes/analyze.js - RACE CONDITION & PDF-PARSING FIXES
+// 📁 backend/routes/analyze.js - RACE CONDITION & PDF-PARSING FIXES + DUBLETTENERKENNUNG
 const express = require("express");
 const multer = require("multer");
 const pdfParse = require("pdf-parse");
-const fs = require("fs").promises; // ✅ ASYNC fs verwenden
-const fsSync = require("fs"); // Fallback für existsSync
+const fs = require("fs").promises;
+const fsSync = require("fs");
+const crypto = require("crypto"); // ✅ NEU: Für Hash-Berechnung
 const { OpenAI } = require("openai");
 const verifyToken = require("../middleware/verifyToken");
 const { MongoClient, ObjectId } = require("mongodb");
@@ -23,8 +24,8 @@ const getOpenAI = () => {
     }
     openaiInstance = new OpenAI({ 
       apiKey: process.env.OPENAI_API_KEY,
-      timeout: 30000, // 30s timeout
-      maxRetries: 2   // Retry bei Fehlern
+      timeout: 30000,
+      maxRetries: 2
     });
     console.log("🤖 OpenAI-Instance initialisiert");
   }
@@ -36,6 +37,7 @@ const mongoUri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
 let mongoClient = null;
 let analysisCollection = null;
 let usersCollection = null;
+let contractsCollection = null; // ✅ NEU: Für Dubletten-Check
 
 const getMongoCollections = async () => {
   if (!mongoClient) {
@@ -48,22 +50,43 @@ const getMongoCollections = async () => {
     const db = mongoClient.db("contract_ai");
     analysisCollection = db.collection("analyses");
     usersCollection = db.collection("users");
+    contractsCollection = db.collection("contracts"); // ✅ NEU
     console.log("📊 MongoDB-Collections initialisiert");
   }
-  return { analysisCollection, usersCollection };
+  return { analysisCollection, usersCollection, contractsCollection };
 };
 
 // Initialize on startup
 (async () => {
   try {
     await getMongoCollections();
-    console.log("📊 Verbunden mit der Analyse-Collection");
+    console.log("📊 Verbunden mit allen Collections");
   } catch (err) {
     console.error("❌ MongoDB-Fehler (analyze.js):", err);
   }
 })();
 
-// ✅ HAUPTROUTE: POST /analyze mit Race Condition Fixes
+// ✅ NEU: Hash-Berechnung für Datei-Dublettenerkennung
+const calculateFileHash = (buffer) => {
+  return crypto.createHash("sha256").update(buffer).digest("hex");
+};
+
+// ✅ NEU: Dubletten-Check Funktion
+const checkForDuplicate = async (fileHash, userId) => {
+  try {
+    const { contractsCollection } = await getMongoCollections();
+    const existingContract = await contractsCollection.findOne({
+      fileHash: fileHash,
+      userId: new ObjectId(userId)
+    });
+    return existingContract;
+  } catch (error) {
+    console.warn("⚠️ Dubletten-Check fehlgeschlagen:", error.message);
+    return null; // Bei Fehler weiter normal verarbeiten
+  }
+};
+
+// ✅ HAUPTROUTE: POST /analyze mit Dublettenerkennung
 router.post("/", verifyToken, upload.single("file"), async (req, res) => {
   const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   console.log(`📊 [${requestId}] Analyse-Request erhalten:`, {
@@ -90,7 +113,7 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
     console.log(`📁 [${requestId}] Temp-Datei erstellt: ${tempFilePath}`);
 
     // ✅ MongoDB-Collections sicher abrufen
-    const { analysisCollection, usersCollection: users } = await getMongoCollections();
+    const { analysisCollection, usersCollection: users, contractsCollection } = await getMongoCollections();
     
     console.log(`🔍 [${requestId}] Prüfe User-Limits...`);
     
@@ -127,10 +150,9 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
       });
     }
 
-    // ✅ PDF auslesen - IMPROVED mit besserer Fehlerbehandlung
+    // ✅ PDF auslesen für Hash-Berechnung und Dubletten-Check
     console.log(`📄 [${requestId}] PDF wird gelesen...`);
     
-    // Prüfe ob Datei existiert
     if (!fsSync.existsSync(tempFilePath)) {
       throw new Error(`Temporäre Datei nicht gefunden: ${tempFilePath}`);
     }
@@ -138,11 +160,46 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
     const buffer = await fs.readFile(tempFilePath);
     console.log(`📄 [${requestId}] Buffer gelesen: ${buffer.length} bytes`);
     
+    // ✅ NEU: Hash berechnen für Dubletten-Check
+    const fileHash = calculateFileHash(buffer);
+    console.log(`🔍 [${requestId}] Datei-Hash berechnet: ${fileHash.substring(0, 12)}...`);
+
+    // ✅ NEU: Prüfe auf Duplikate BEVOR die teure OpenAI-Analyse läuft
+    const existingContract = await checkForDuplicate(fileHash, req.user.userId);
+    
+    if (existingContract) {
+      console.log(`🔄 [${requestId}] Duplikat gefunden: ${existingContract._id}`);
+      
+      // Parameter aus Request extrahieren für bessere UX
+      const forceReanalyze = req.body.forceReanalyze === 'true';
+      
+      if (!forceReanalyze) {
+        // Erste Erkennung - Frontend informieren
+        return res.status(409).json({
+          success: false,
+          duplicate: true,
+          message: "📄 Dieser Vertrag wurde bereits hochgeladen.",
+          error: "DUPLICATE_CONTRACT",
+          contractId: existingContract._id,
+          contractName: existingContract.name,
+          uploadedAt: existingContract.createdAt,
+          requestId,
+          actions: {
+            reanalyze: `Erneut analysieren und bestehende Analyse überschreiben`,
+            viewExisting: `Bestehenden Vertrag öffnen`
+          }
+        });
+      } else {
+        // User will explizit re-analysieren
+        console.log(`🔄 [${requestId}] Nutzer wählt Re-Analyse für Duplikat`);
+      }
+    }
+
+    // ✅ PDF-Text extrahieren (weiter wie gehabt)
     let parsed;
     try {
-      // ✅ IMPROVED: Bessere PDF-Parse-Optionen
       parsed = await pdfParse(buffer, {
-        max: 50000,        // Max characters to parse
+        max: 50000,
         normalizeWhitespace: true,
         disableCombineTextItems: false
       });
@@ -154,9 +211,7 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
     const contractText = parsed.text?.slice(0, 4000) || '';
     
     console.log(`📄 [${requestId}] PDF-Text extrahiert: ${contractText.length} Zeichen`);
-    console.log(`📄 [${requestId}] Text-Preview: "${contractText.substring(0, 100)}..."`);
 
-    // ✅ IMPROVED: Bessere Validierung mit Details
     if (!contractText.trim()) {
       const errorDetails = {
         fileSize: buffer.length,
@@ -166,8 +221,6 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
       };
       
       console.error(`❌ [${requestId}] PDF-Analyse-Details:`, errorDetails);
-      
-      // Bessere Fehlermeldung für User
       throw new Error(
         `PDF enthält keinen lesbaren Text. Mögliche Ursachen: ` +
         `PDF ist passwortgeschützt, enthält nur Bilder, oder ist beschädigt. ` +
@@ -177,12 +230,11 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
 
     console.log(`📄 [${requestId}] PDF erfolgreich gelesen: ${contractText.length} Zeichen`);
 
-    // ✅ OpenAI-Aufruf mit Singleton-Instance
+    // ✅ OpenAI-Aufruf (unverändert)
     console.log(`🤖 [${requestId}] OpenAI-Anfrage wird gesendet...`);
     
     const openai = getOpenAI();
 
-    // 📤 Prompt erstellen
     const prompt = `
 Du bist ein Vertragsanalyst. Analysiere den folgenden Vertrag:
 
@@ -204,7 +256,6 @@ Antwort im folgenden JSON-Format:
   "contractScore": 87
 }`;
 
-    // 💬 OpenAI-Aufruf mit robustem Error-Handling
     let completion;
     try {
       completion = await Promise.race([
@@ -246,7 +297,6 @@ Antwort im folgenden JSON-Format:
       throw new Error("Fehler beim Parsen der AI-Antwort");
     }
 
-    // ✅ Validierung der AI-Response
     if (!result.summary || !result.contractScore) {
       console.error(`❌ [${requestId}] Unvollständige AI-Response:`, result);
       throw new Error("Unvollständige Analyse-Antwort von OpenAI");
@@ -254,7 +304,7 @@ Antwort im folgenden JSON-Format:
 
     console.log(`📊 [${requestId}] Analyse erfolgreich, speichere in DB...`);
 
-    // 📦 In DB speichern - mit Retry-Logik
+    // 📦 In DB speichern - ✅ ERWEITERT: Mit Hash und Duplikat-Handling
     const analysisData = {
       userId: req.user.userId,
       contractName: req.file.originalname,
@@ -271,13 +321,14 @@ Antwort im folgenden JSON-Format:
       throw new Error(`Datenbank-Fehler beim Speichern: ${dbError.message}`);
     }
 
-    // 💾 Vertrag speichern
+    // 💾 Vertrag speichern - ✅ ERWEITERT: Mit Hash für Dublettenerkennung
     try {
-      await saveContract({
+      const contractSaveData = {
         userId: req.user.userId,
         fileName: req.file.originalname,
         toolUsed: "analyze",
         filePath: `/uploads/${req.file.filename}`,
+        fileHash: fileHash, // ✅ NEU: Hash hinzufügen
         extraRefs: { analysisId: inserted.insertedId },
         legalPulse: {
           riskScore: result.contractScore || null,
@@ -286,13 +337,39 @@ Antwort im folgenden JSON-Format:
           lawInsights: [],
           marketSuggestions: []
         }
-      });
+      };
+
+      // Bei Duplikat: Bestehenden Vertrag aktualisieren statt neu anlegen
+      if (existingContract && req.body.forceReanalyze === 'true') {
+        console.log(`🔄 [${requestId}] Aktualisiere bestehenden Vertrag: ${existingContract._id}`);
+        
+        await contractsCollection.updateOne(
+          { _id: existingContract._id },
+          { 
+            $set: {
+              lastAnalyzed: new Date(),
+              analysisId: inserted.insertedId,
+              legalPulse: contractSaveData.legalPulse,
+              // Optional: Analyse-Counter erhöhen
+              analyzeCount: (existingContract.analyzeCount || 0) + 1
+            }
+          }
+        );
+        
+        // Response mit Referenz auf bestehenden Vertrag
+        contractSaveData.contractId = existingContract._id;
+        contractSaveData.isUpdate = true;
+      } else {
+        // Normales Speichern bei neuem Vertrag
+        await saveContract(contractSaveData);
+      }
+      
     } catch (saveError) {
       console.warn(`⚠️ [${requestId}] Vertrag-Speicher-Fehler:`, saveError.message);
       // Nicht kritisch, Analyse trotzdem weiterführen
     }
 
-    // ✅ Analyse-Zähler hochzählen
+    // ✅ Analyse-Zähler hochzählen (nur bei neuer Analyse)
     try {
       await users.updateOne(
         { _id: user._id },
@@ -300,13 +377,12 @@ Antwort im folgenden JSON-Format:
       );
     } catch (updateError) {
       console.warn(`⚠️ [${requestId}] Counter-Update-Fehler:`, updateError.message);
-      // Nicht kritisch
     }
 
     console.log(`✅ [${requestId}] Analyse komplett erfolgreich`);
 
-    // 📤 Erfolgreiche Response
-    res.json({ 
+    // 📤 Erfolgreiche Response - ✅ ERWEITERT: Mit Duplikat-Info
+    const responseData = { 
       success: true,
       message: "Analyse erfolgreich abgeschlossen",
       requestId,
@@ -317,7 +393,16 @@ Antwort im folgenden JSON-Format:
         limit: limit,
         plan: plan
       }
-    });
+    };
+
+    // Bei Re-Analyse Hinweis hinzufügen
+    if (existingContract && req.body.forceReanalyze === 'true') {
+      responseData.isReanalysis = true;
+      responseData.originalContractId = existingContract._id;
+      responseData.message = "Analyse erfolgreich aktualisiert";
+    }
+
+    res.json(responseData);
 
   } catch (error) {
     console.error(`❌ [${requestId}] Fehler bei Analyse:`, {
@@ -327,7 +412,7 @@ Antwort im folgenden JSON-Format:
       filename: req.file?.originalname
     });
     
-    // ✅ Spezifische Fehlermeldungen für verschiedene Fehlertypen
+    // ✅ Spezifische Fehlermeldungen (unverändert)
     let errorMessage = "Fehler bei der Analyse.";
     let errorCode = "ANALYSIS_ERROR";
     
@@ -341,7 +426,7 @@ Antwort im folgenden JSON-Format:
       errorMessage = "Fehler bei der Analyse-Verarbeitung.";
       errorCode = "PARSE_ERROR";
     } else if (error.message.includes("PDF") || error.message.includes("Datei") || error.message.includes("passwortgeschützt") || error.message.includes("enthält nur Bilder")) {
-      errorMessage = error.message; // ✅ IMPROVED: Use detailed PDF error message
+      errorMessage = error.message;
       errorCode = "PDF_ERROR";
     } else if (error.message.includes("Datenbank") || error.message.includes("MongoDB")) {
       errorMessage = "Datenbank-Fehler. Bitte versuche es erneut.";
@@ -360,27 +445,21 @@ Antwort im folgenden JSON-Format:
     });
 
   } finally {
-    // 🧹 ROBUSTES Cleanup: Hochgeladene Datei löschen
+    // 🧹 ROBUSTES Cleanup (unverändert)
     if (tempFilePath) {
       try {
         if (fsSync.existsSync(tempFilePath)) {
           await fs.unlink(tempFilePath);
           console.log(`🧹 [${requestId}] Temp-Datei gelöscht: ${tempFilePath}`);
-        } else {
-          console.log(`🧹 [${requestId}] Temp-Datei bereits gelöscht: ${tempFilePath}`);
         }
       } catch (cleanupErr) {
-        console.error(`⚠️ [${requestId}] Fehler beim Löschen der Temp-Datei:`, {
-          path: tempFilePath,
-          error: cleanupErr.message
-        });
-        // Nicht kritisch, aber loggen für Debugging
+        console.error(`⚠️ [${requestId}] Fehler beim Löschen der Temp-Datei:`, cleanupErr.message);
       }
     }
   }
 });
 
-// 📚 Analyseverlauf abrufen - Auch mit Request-ID
+// 📚 Analyseverlauf abrufen (unverändert)
 router.get("/history", verifyToken, async (req, res) => {
   const requestId = `hist_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   
@@ -415,7 +494,7 @@ router.get("/history", verifyToken, async (req, res) => {
   }
 });
 
-// ✅ Health Check Route - Erweitert
+// ✅ Health Check Route (erweitert mit Duplikat-Check)
 router.get("/health", async (req, res) => {
   const checks = {
     service: "Contract Analysis",
@@ -423,7 +502,8 @@ router.get("/health", async (req, res) => {
     timestamp: new Date().toISOString(),
     openaiConfigured: !!process.env.OPENAI_API_KEY,
     mongoConnected: false,
-    uploadsPath: fsSync.existsSync("./uploads")
+    uploadsPath: fsSync.existsSync("./uploads"),
+    deduplicationEnabled: true // ✅ NEU
   };
 
   try {
@@ -442,7 +522,7 @@ router.get("/health", async (req, res) => {
   });
 });
 
-// ✅ Graceful Shutdown
+// ✅ Graceful Shutdown (unverändert)
 process.on('SIGTERM', async () => {
   console.log('📊 Analyze service shutting down...');
   if (mongoClient) {

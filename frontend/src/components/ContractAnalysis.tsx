@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { 
   FileText, AlertCircle, CheckCircle, Loader, 
   Download, BarChart3, RefreshCw, WifiOff, Clock,
   Shield, TrendingUp, Lightbulb, FileSearch,
   Wrench, ArrowRight, AlertTriangle,
-  Award, Target, Zap, ChevronDown, ChevronUp
+  Award, Target, Zap, ChevronDown, ChevronUp,
+  Copy, Eye, X // ✅ NEU: Icons für Duplikat-Modal
 } from "lucide-react";
 import styles from "./ContractAnalysis.module.css";
 import { uploadAndAnalyze, checkAnalyzeHealth, uploadAndOptimize } from "../utils/api";
@@ -13,6 +14,7 @@ import { uploadAndAnalyze, checkAnalyzeHealth, uploadAndOptimize } from "../util
 interface ContractAnalysisProps {
   file: File;
   onReset: () => void;
+  onNavigateToContract?: (contractId: string) => void; // ✅ NEU: Navigation zu bestehendem Vertrag
 }
 
 interface AnalysisResult {
@@ -25,12 +27,30 @@ interface AnalysisResult {
   contractScore?: number;
   analysisId?: string;
   requestId?: string;
+  isReanalysis?: boolean; // ✅ NEU
+  originalContractId?: string; // ✅ NEU
   usage?: {
     count: number;
     limit: number;
     plan: string;
   };
   error?: string;
+}
+
+// ✅ NEU: Interface für Duplikat-Response
+interface DuplicateResponse {
+  success: false;
+  duplicate: true;
+  message: string;
+  error: "DUPLICATE_CONTRACT";
+  contractId: string;
+  contractName: string;
+  uploadedAt: string;
+  requestId: string;
+  actions: {
+    reanalyze: string;
+    viewExisting: string;
+  };
 }
 
 interface OptimizationResult {
@@ -47,7 +67,7 @@ interface OptimizationResult {
   error?: string;
 }
 
-export default function ContractAnalysis({ file, onReset }: ContractAnalysisProps) {
+export default function ContractAnalysis({ file, onReset, onNavigateToContract }: ContractAnalysisProps) {
   const [analyzing, setAnalyzing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [result, setResult] = useState<AnalysisResult | null>(null);
@@ -59,31 +79,50 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
   const [isOptimizationExpanded, setIsOptimizationExpanded] = useState(true);
   const [generatingPdf, setGeneratingPdf] = useState(false);
   
+  // ✅ NEU: States für Duplikat-Handling
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+  const [duplicateInfo, setDuplicateInfo] = useState<DuplicateResponse | null>(null);
+  
   const analysisResultRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     checkAnalyzeHealth().then(setServiceHealth);
   }, []);
 
-  const handleAnalyze = async () => {
+  // ✅ ERWEITERT: handleAnalyze mit Duplikat-Handling
+  const handleAnalyze = async (forceReanalyze = false) => {
     setAnalyzing(true);
     setError(null);
     setResult(null);
     setProgress(0);
+    setShowDuplicateModal(false); // Modal schließen falls offen
 
     try {
-      console.log("🔄 Starte Analyse für:", file.name);
+      console.log("🔄 Starte Analyse für:", file.name, forceReanalyze ? "(Re-Analyse)" : "");
       
       const response = await uploadAndAnalyze(file, (progress) => {
         setProgress(progress);
-      }) as AnalysisResult;
+      }, forceReanalyze) as AnalysisResult | DuplicateResponse;
       
       console.log("✅ Analyse-Response:", response);
 
+      // ✅ NEU: Duplikat-Handling
+      if (!response.success && 'duplicate' in response && response.duplicate) {
+        console.log("🔄 Duplikat erkannt:", response.contractName);
+        setDuplicateInfo(response);
+        setShowDuplicateModal(true);
+        return; // Stoppe hier, warte auf User-Entscheidung
+      }
+
       if (response.success) {
-        setResult(response);
+        setResult(response as AnalysisResult);
         setRetryCount(0);
         console.log("🎉 Analyse erfolgreich abgeschlossen");
+        
+        // ✅ NEU: Info bei Re-Analyse
+        if ((response as AnalysisResult).isReanalysis) {
+          console.log("🔄 Re-Analyse erfolgreich für Vertrag:", (response as AnalysisResult).originalContractId);
+        }
       } else {
         throw new Error(response.message || "Analyse fehlgeschlagen");
       }
@@ -126,6 +165,22 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
     }
   };
 
+  // ✅ NEU: Duplikat-Modal-Handler
+  const handleDuplicateReanalyze = () => {
+    setShowDuplicateModal(false);
+    handleAnalyze(true); // Force re-analyze
+  };
+
+  const handleDuplicateViewExisting = () => {
+    if (duplicateInfo && onNavigateToContract) {
+      onNavigateToContract(duplicateInfo.contractId);
+    } else {
+      // Fallback: Modal schließen und User informieren
+      setShowDuplicateModal(false);
+      setError("Navigation zum bestehenden Vertrag nicht möglich. Bitte öffne das Dashboard.");
+    }
+  };
+
   const handleOptimize = async () => {
     if (!result) return;
     
@@ -163,19 +218,16 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
     setGeneratingPdf(true);
     
     try {
-      // Dynamically import html2canvas and jsPDF to avoid SSR issues
       const html2canvas = (await import('html2canvas')).default;
       const jsPDF = (await import('jspdf')).jsPDF;
       
       const element = analysisResultRef.current;
       
-      // Temporarily expand all collapsed sections for PDF
       const collapsedElements = element.querySelectorAll('[data-collapsed="true"]');
       collapsedElements.forEach((el) => {
         (el as HTMLElement).style.display = 'block';
       });
       
-      // Generate canvas from the analysis result
       const canvas = await html2canvas(element, {
         scale: 2,
         useCORS: true,
@@ -185,7 +237,6 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
         width: element.scrollWidth,
       });
       
-      // Restore collapsed state
       collapsedElements.forEach((el) => {
         (el as HTMLElement).style.display = '';
       });
@@ -200,11 +251,9 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
       
       let position = 0;
       
-      // Add first page
       pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
       heightLeft -= pageHeight;
       
-      // Add additional pages if needed
       while (heightLeft >= 0) {
         position = heightLeft - imgHeight;
         pdf.addPage();
@@ -212,7 +261,6 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
         heightLeft -= pageHeight;
       }
       
-      // Download the PDF
       pdf.save(`Vertragsanalyse_${file.name.replace('.pdf', '')}_${new Date().toISOString().split('T')[0]}.pdf`);
       
     } catch (error) {
@@ -224,10 +272,10 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
   };
 
   const getScoreColor = (score: number): string => {
-    if (score >= 80) return "#34C759"; // Grün
-    if (score >= 60) return "#FF9500"; // Orange
-    if (score >= 40) return "#FF6B35"; // Orange-Rot
-    return "#FF3B30"; // Rot
+    if (score >= 80) return "#34C759";
+    if (score >= 60) return "#FF9500";
+    if (score >= 40) return "#FF6B35";
+    return "#FF3B30";
   };
 
   const getScoreLabel = (score: number): string => {
@@ -244,25 +292,21 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
     return <AlertCircle size={24} className={styles.iconRed} />;
   };
 
-  // ✅ IMPROVED: Better text formatting with cleaner structure
   const formatTextToPoints = (text: string): string[] => {
     if (!text) return ['Keine Details verfügbar'];
     
-    // Split by common delimiters and clean up
     const sentences = text
       .split(/[.!?]+|[-•]\s*/)
       .map(s => s.trim())
       .filter(s => s.length > 15 && s.length < 200)
-      .slice(0, 4); // Limit to 4 points max
+      .slice(0, 4);
     
     return sentences.length > 0 ? sentences : [text.substring(0, 180) + '...'];
   };
 
-  // ✅ NEW: Format optimization text with better structure
   const formatOptimizationText = (text: string) => {
     if (!text) return null;
     
-    // Split into sections based on numbered points or headers
     const sections = text.split(/(?=\d+\.\s*[A-ZÄÖÜ])/g).filter(s => s.trim());
     
     return sections.map((section, index) => {
@@ -279,7 +323,6 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
 
   const canRetryAnalysis = error && retryCount < 3 && !error.includes('Limit erreicht');
 
-  // ✅ IMPROVED: Score Circle Component with perfect centering
   const ScoreCircle = ({ score }: { score: number }) => {
     const circumference = 2 * Math.PI * 45;
     const strokeDasharray = circumference;
@@ -321,6 +364,84 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
 
   return (
     <div className={styles.analysisContainer}>
+      {/* ✅ NEU: Duplikat-Modal */}
+      <AnimatePresence>
+        {showDuplicateModal && duplicateInfo && (
+          <motion.div 
+            className={styles.modalOverlay}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div 
+              className={styles.duplicateModal}
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+            >
+              <div className={styles.modalHeader}>
+                <div className={styles.modalIcon}>
+                  <Copy size={24} />
+                </div>
+                <h3>Vertrag bereits vorhanden</h3>
+                <button 
+                  className={styles.modalCloseBtn}
+                  onClick={() => setShowDuplicateModal(false)}
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              
+              <div className={styles.modalContent}>
+                <p className={styles.duplicateMessage}>
+                  <strong>"{duplicateInfo.contractName}"</strong> wurde bereits am{' '}
+                  <strong>{new Date(duplicateInfo.uploadedAt).toLocaleDateString('de-DE')}</strong> hochgeladen.
+                </p>
+                
+                <div className={styles.duplicateOptions}>
+                  <div className={styles.optionCard}>
+                    <div className={styles.optionIcon}>
+                      <RefreshCw size={20} />
+                    </div>
+                    <div className={styles.optionContent}>
+                      <h4>Erneut analysieren</h4>
+                      <p>Führe eine neue Analyse durch und überschreibe die bestehenden Ergebnisse</p>
+                    </div>
+                  </div>
+                  
+                  <div className={styles.optionCard}>
+                    <div className={styles.optionIcon}>
+                      <Eye size={20} />
+                    </div>
+                    <div className={styles.optionContent}>
+                      <h4>Bestehenden Vertrag öffnen</h4>
+                      <p>Gehe zur Detailansicht des bereits analysierten Vertrags</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className={styles.modalActions}>
+                <button 
+                  className={styles.secondaryModalBtn}
+                  onClick={handleDuplicateViewExisting}
+                >
+                  <Eye size={16} />
+                  <span>Bestehenden öffnen</span>
+                </button>
+                <button 
+                  className={styles.primaryModalBtn}
+                  onClick={handleDuplicateReanalyze}
+                >
+                  <RefreshCw size={16} />
+                  <span>Erneut analysieren</span>
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Header */}
       <div className={styles.header}>
         <div className={styles.headerContent}>
@@ -338,6 +459,13 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
                     Service nicht verfügbar
                   </span>
                 )}
+                {/* ✅ NEU: Re-Analyse-Badge */}
+                {result?.isReanalysis && (
+                  <span className={styles.reanalysisBadge}>
+                    <RefreshCw size={12} />
+                    Aktualisiert
+                  </span>
+                )}
               </p>
             </div>
           </div>
@@ -346,7 +474,7 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
             {!result && !analyzing && (
               <motion.button 
                 className={styles.analyzeButton}
-                onClick={handleAnalyze}
+                onClick={() => handleAnalyze(false)}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 disabled={analyzing || serviceHealth === false}
@@ -445,7 +573,7 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
                 <div className={styles.retrySection}>
                   <button 
                     className={styles.retryButton}
-                    onClick={handleAnalyze}
+                    onClick={() => handleAnalyze(false)}
                     disabled={analyzing}
                   >
                     <RefreshCw size={16} />
@@ -488,8 +616,15 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
             <div className={styles.successInfo}>
               <CheckCircle size={28} className={styles.successIcon} />
               <div className={styles.successDetails}>
-                <h4>Analyse abgeschlossen</h4>
-                <p>Rechtssichere Vertragseinschätzung in Sekunden</p>
+                <h4>
+                  {result.isReanalysis ? 'Analyse aktualisiert' : 'Analyse abgeschlossen'}
+                </h4>
+                <p>
+                  {result.isReanalysis 
+                    ? 'Bestehende Vertragsanalyse wurde erfolgreich überschrieben'
+                    : 'Rechtssichere Vertragseinschätzung in Sekunden'
+                  }
+                </p>
               </div>
             </div>
             {result.requestId && (
@@ -499,7 +634,7 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
             )}
           </div>
 
-          {/* Contract Score - ✅ IMPROVED: Perfect centering */}
+          {/* Contract Score */}
           {result.contractScore && (
             <div className={styles.scoreSection}>
               <h5 className={styles.scoreSectionTitle}>Contract Score</h5>
@@ -524,7 +659,7 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
             </div>
           )}
 
-          {/* Analysis Details - ✅ IMPROVED: Better formatting */}
+          {/* Analysis Details */}
           <div className={styles.detailsGrid}>
             {/* Zusammenfassung */}
             {result.summary && (
@@ -696,7 +831,7 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
             </div>
           </div>
 
-          {/* ✅ IMPROVED: Optimization Result with better structure */}
+          {/* Optimization Result */}
           {optimizationResult && (
             <motion.div 
               className={styles.optimizationResult}

@@ -1,4 +1,4 @@
-/* ContractAnalysis.module.css - IMPROVED VERSION */
+/* ContractAnalysis.module.css - IMPROVED VERSION + DUPLIKAT-MODAL */
 
 /* Base Container */
 .analysisContainer {
@@ -86,6 +86,20 @@
   font-weight: 500;
 }
 
+/* ✅ NEU: Re-analysis Badge */
+.reanalysisBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  margin-left: 8px;
+}
+
 /* Action Buttons */
 .actions {
   display: flex;
@@ -157,6 +171,200 @@
 .resetButton:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* ✅ NEU: Duplikat-Modal Styles */
+/* Modal Overlay */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+/* Duplikat Modal */
+.duplicateModal {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+  max-width: 540px;
+  width: 100%;
+  max-height: 90vh;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Modal Header */
+.modalHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 24px 16px 24px;
+  border-bottom: 1px solid #f1f5f9;
+  position: relative;
+}
+
+.modalIcon {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: white;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.modalHeader h3 {
+  margin: 0;
+  color: #1e293b;
+  font-size: 20px;
+  font-weight: 600;
+  flex: 1;
+}
+
+.modalCloseBtn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #64748b;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modalCloseBtn:hover {
+  background: #f1f5f9;
+  color: #1e293b;
+}
+
+/* Modal Content */
+.modalContent {
+  padding: 24px;
+}
+
+.duplicateMessage {
+  margin: 0 0 24px 0;
+  color: #475569;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.duplicateMessage strong {
+  color: #1e293b;
+  font-weight: 600;
+}
+
+/* Option Cards */
+.duplicateOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.optionCard {
+  display: flex;
+  gap: 16px;
+  padding: 20px;
+  border: 2px solid #f1f5f9;
+  border-radius: 12px;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.optionCard:hover {
+  border-color: #e2e8f0;
+  background: #f8fafc;
+  transform: translateY(-1px);
+}
+
+.optionIcon {
+  background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+  color: #64748b;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.optionContent h4 {
+  margin: 0 0 6px 0;
+  color: #1e293b;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.optionContent p {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Modal Actions */
+.modalActions {
+  display: flex;
+  gap: 12px;
+  padding: 16px 24px 24px 24px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.primaryModalBtn,
+.secondaryModalBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  flex: 1;
+  justify-content: center;
+}
+
+.primaryModalBtn {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: white;
+}
+
+.primaryModalBtn:hover {
+  background: linear-gradient(135deg, #2563eb, #1e40af);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+}
+
+.secondaryModalBtn {
+  background: #f8fafc;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+.secondaryModalBtn:hover {
+  background: #f1f5f9;
+  color: #475569;
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
 }
 
 /* Progress Section */
@@ -877,6 +1085,36 @@
   .expandToggle {
     align-self: flex-end;
   }
+
+  /* ✅ Modal Responsive */
+  .modalOverlay {
+    padding: 16px;
+  }
+  
+  .duplicateModal {
+    max-width: 100%;
+  }
+  
+  .modalHeader {
+    padding: 20px 20px 16px 20px;
+  }
+  
+  .modalContent {
+    padding: 20px;
+  }
+  
+  .modalActions {
+    padding: 16px 20px 20px 20px;
+    flex-direction: column;
+  }
+  
+  .duplicateOptions {
+    gap: 16px;
+  }
+  
+  .optionCard {
+    padding: 16px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -932,7 +1170,9 @@
 .analyzeButton:focus,
 .resetButton:focus,
 .primaryActionButton:focus,
-.secondaryButton:focus {
+.secondaryButton:focus,
+.primaryModalBtn:focus,
+.secondaryModalBtn:focus {
   outline: 2px solid #3b82f6;
   outline-offset: 2px;
 }
@@ -945,7 +1185,8 @@
   }
   
   .actions,
-  .expandToggle {
+  .expandToggle,
+  .modalOverlay {
     display: none;
   }
   

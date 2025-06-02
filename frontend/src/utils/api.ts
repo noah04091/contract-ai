@@ -1,4 +1,4 @@
-// 📁 src/utils/api.ts - IMPROVED ERROR HANDLING & RETRY LOGIC + OPTIMIZE FUNCTIONS
+// 📁 src/utils/api.ts - IMPROVED ERROR HANDLING & RETRY LOGIC + OPTIMIZE FUNCTIONS + DUBLIKAT-HANDLING (TYPESCRIPT FIXED)
 const API_BASE_URL = "/api"; // Proxy-Pfad für Vercel & devServer
 
 /**
@@ -16,6 +16,27 @@ function getErrorMessage(error: unknown): string {
     return error.message;
   }
   return String(error);
+}
+
+// ✅ NEU: Interface für Duplikat-Error-Response
+interface DuplicateError {
+  status: 409;
+  duplicate: true;
+  data: any;
+}
+
+/**
+ * ✅ NEU: Type Guard für Duplikat-Error
+ */
+function isDuplicateError(error: unknown): error is DuplicateError {
+  return (
+    error !== null &&
+    typeof error === 'object' &&
+    'status' in error &&
+    'duplicate' in error &&
+    (error as any).status === 409 &&
+    (error as any).duplicate === true
+  );
 }
 
 /**
@@ -80,11 +101,32 @@ export const apiCall = async (
             errorMessage = errorData.message;
           }
           
+          // ✅ NEU: Für 409 (Conflict/Duplikat) nicht retyen - das ist ein erwarteter Zustand
+          if (response.status === 409) {
+            // Bei Duplikaten die komplette Response zurückgeben für Frontend-Handling
+            const duplicateError: DuplicateError = { 
+              status: 409, 
+              duplicate: true, 
+              data: errorData 
+            };
+            throw duplicateError;
+          }
+          
           // Prüfe ob Retry sinnvoll ist
           if (response.status >= 500 && response.status < 600) {
             shouldRetry = true;
           }
         } catch (parseError) {
+          // ✅ NEU: Spezial-Handling für Duplikat-Response
+          if (response.status === 409) {
+            const duplicateError: DuplicateError = { 
+              status: 409, 
+              duplicate: true, 
+              data: null 
+            };
+            throw duplicateError;
+          }
+          
           console.warn("⚠️ Konnte JSON-Error nicht parsen:", parseError);
           shouldRetry = response.status >= 500;
         }
@@ -130,6 +172,11 @@ export const apiCall = async (
   } catch (err) {
     console.error(`❌ API-Fehler bei [${endpoint}] (Attempt ${retryCount + 1}):`, err);
     
+    // ✅ NEU: TypeScript-sicheres Spezial-Handling für Duplikat-Response
+    if (isDuplicateError(err)) {
+      throw err; // Duplikat-Error direkt weiterleiten
+    }
+    
     // ✅ FIXED: TypeScript-sichere Fehlerbehandlung
     const errorMessage = getErrorMessage(err);
     
@@ -155,16 +202,23 @@ export const apiCall = async (
 };
 
 /**
- * Spezielle Funktion für File-Upload mit Analyse - MIT RETRY & PROGRESS
+ * ✅ ERWEITERT: Spezielle Funktion für File-Upload mit Analyse - MIT RETRY, PROGRESS & DUPLIKAT-HANDLING
  */
 export const uploadAndAnalyze = async (
   file: File, 
-  onProgress?: (progress: number) => void
+  onProgress?: (progress: number) => void,
+  forceReanalyze: boolean = false // ✅ NEU: Parameter für Re-Analyse
 ): Promise<unknown> => {
   const formData = new FormData();
   formData.append('file', file);
-
-  console.log(`📤 Upload & Analyze: ${file.name} (${file.size} bytes)`);
+  
+  // ✅ NEU: forceReanalyze Parameter hinzufügen
+  if (forceReanalyze) {
+    formData.append('forceReanalyze', 'true');
+    console.log(`🔄 Upload & Analyze mit Force-Reanalyze: ${file.name}`);
+  } else {
+    console.log(`📤 Upload & Analyze: ${file.name} (${file.size} bytes)`);
+  }
 
   // ✅ Progress-Simulation (da FormData keinen echten Progress hat)
   if (onProgress) {
@@ -186,6 +240,12 @@ export const uploadAndAnalyze = async (
     
   } catch (error) {
     if (onProgress) onProgress(0); // Reset bei Fehler
+    
+    // ✅ NEU: TypeScript-sicheres Spezial-Handling für Duplikat-Response
+    if (isDuplicateError(error)) {
+      console.log("🔄 Duplikat erkannt - Frontend-Handling erforderlich");
+      return error.data; // ✅ FIXED: TypeScript weiß jetzt, dass 'data' existiert
+    }
     
     console.error("❌ Upload & Analyze Fehler:", error);
     
@@ -408,6 +468,30 @@ export const getContract = async (contractId: string): Promise<unknown> => {
 };
 
 /**
+ * ⭐ NEU: Einzelnen Vertrag nach Details abrufen (für Duplikat-Navigation)
+ */
+export const getContractDetails = async (contractId: string): Promise<unknown> => {
+  try {
+    return await apiCall(`/contracts/${contractId}`);
+  } catch (error) {
+    console.error("❌ Fehler beim Abrufen der Vertrag-Details:", error);
+    throw error;
+  }
+};
+
+/**
+ * ⭐ NEU: Alle Verträge eines Users abrufen (für Duplikat-Check im Frontend)
+ */
+export const getUserContracts = async (): Promise<unknown> => {
+  try {
+    return await apiCall('/contracts');
+  } catch (error) {
+    console.error("❌ Fehler beim Abrufen der User-Verträge:", error);
+    throw error;
+  }
+};
+
+/**
  * ⭐ NEU: Vertrag löschen
  */
 export const deleteContract = async (contractId: string): Promise<unknown> => {
@@ -417,6 +501,80 @@ export const deleteContract = async (contractId: string): Promise<unknown> => {
     });
   } catch (error) {
     console.error("❌ Fehler beim Löschen des Vertrags:", error);
+    throw error;
+  }
+};
+
+/**
+ * ⭐ NEU: Reminder für Vertrag togglen
+ */
+export const toggleContractReminder = async (contractId: string, enabled: boolean): Promise<unknown> => {
+  try {
+    return await apiCall(`/contracts/${contractId}/reminder`, {
+      method: 'PATCH',
+      body: JSON.stringify({ reminder: enabled }),
+    });
+  } catch (error) {
+    console.error("❌ Fehler beim Togglen des Vertrags-Reminders:", error);
+    throw error;
+  }
+};
+
+/**
+ * ⭐ NEU: Vertrag-Status aktualisieren
+ */
+export const updateContractStatus = async (contractId: string, status: string): Promise<unknown> => {
+  try {
+    return await apiCall(`/contracts/${contractId}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    });
+  } catch (error) {
+    console.error("❌ Fehler beim Aktualisieren des Vertrag-Status:", error);
+    throw error;
+  }
+};
+
+/**
+ * ⭐ NEU: Batch-Operationen für mehrere Verträge
+ */
+export const batchUpdateContracts = async (contractIds: string[], updates: Record<string, unknown>): Promise<unknown> => {
+  try {
+    return await apiCall('/contracts/batch', {
+      method: 'PATCH',
+      body: JSON.stringify({ contractIds, updates }),
+    });
+  } catch (error) {
+    console.error("❌ Fehler beim Batch-Update der Verträge:", error);
+    throw error;
+  }
+};
+
+/**
+ * ⭐ NEU: Suche in Verträgen
+ */
+export const searchContracts = async (query: string, filters?: Record<string, unknown>): Promise<unknown> => {
+  try {
+    const searchParams = new URLSearchParams({
+      q: query,
+      ...(filters && { filters: JSON.stringify(filters) })
+    });
+    
+    return await apiCall(`/contracts/search?${searchParams.toString()}`);
+  } catch (error) {
+    console.error("❌ Fehler bei der Vertrags-Suche:", error);
+    throw error;
+  }
+};
+
+/**
+ * ⭐ NEU: Statistiken für Dashboard abrufen
+ */
+export const getDashboardStats = async (): Promise<unknown> => {
+  try {
+    return await apiCall('/dashboard/stats');
+  } catch (error) {
+    console.error("❌ Fehler beim Abrufen der Dashboard-Statistiken:", error);
     throw error;
   }
 };
