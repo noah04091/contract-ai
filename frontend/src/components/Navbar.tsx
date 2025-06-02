@@ -5,7 +5,7 @@ import styles from "../styles/Navbar.module.css";
 import Notification from "./Notification";
 import logo from "../assets/logo.png";
 import { clearAuthData } from "../utils/api";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../hooks/useAuth";;
 
 export default function Navbar() {
   const { user, setUser, isLoading } = useAuth();

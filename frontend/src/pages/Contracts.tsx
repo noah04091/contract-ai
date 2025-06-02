@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from "react";
+// 📁 src/pages/Contracts.tsx - FIXED useEffect dependency
+import { useState, useEffect, useRef, useCallback } from "react"; // ✅ Added useCallback
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   FileText, RefreshCw, Upload, CheckCircle, AlertCircle, 
@@ -71,8 +72,8 @@ export default function Contracts() {
     }
   };
 
-  // ✅ Erweiterte Filterfunktion mit Sortierung
-  const applyFilters = () => {
+  // ✅ FIXED: applyFilters mit useCallback für stabile Referenz
+  const applyFilters = useCallback(() => {
     let filtered = [...contracts];
 
     // Text-Suche
@@ -141,12 +142,12 @@ export default function Contracts() {
     });
 
     setFilteredContracts(filtered);
-  };
+  }, [contracts, searchQuery, statusFilter, dateFilter, sortOrder]); // ✅ Alle Dependencies aufgelistet
 
-  // ✅ Filter anwenden wenn sich etwas ändert
+  // ✅ FIXED: Filter anwenden mit stabiler applyFilters-Referenz
   useEffect(() => {
     applyFilters();
-  }, [contracts, searchQuery, statusFilter, dateFilter, sortOrder]);
+  }, [applyFilters]); // ✅ Jetzt nur applyFilters als Dependency
 
   // ✅ Verträge beim Laden abrufen
   useEffect(() => {
@@ -169,6 +170,7 @@ export default function Contracts() {
     setSortOrder('neueste');
   };
 
+  // ... Rest der Komponente bleibt unverändert ...
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setSelectedFile(e.target.files[0]);
@@ -266,12 +268,14 @@ export default function Contracts() {
 
   return (
     <div className={styles.pageContainer}>
+      {/* Rest of the JSX remains exactly the same... */}
       <motion.div 
         className={styles.container}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
+        {/* Header */}
         <div className={styles.header}>
           <motion.h1 
             className={styles.title}
@@ -292,6 +296,7 @@ export default function Contracts() {
           </motion.p>
         </div>
 
+        {/* Tabs */}
         <div className={styles.tabsContainer}>
           <button 
             className={`${styles.tabButton} ${activeSection === 'contracts' ? styles.activeTab : ''}`}
@@ -319,6 +324,7 @@ export default function Contracts() {
           </button>
         </div>
 
+        {/* Rest of JSX exactly as provided... */}
         <AnimatePresence mode="wait">
           {activeSection === 'upload' && (
             <motion.div 
@@ -393,6 +399,7 @@ export default function Contracts() {
             </motion.div>
           )}
 
+          {/* Contracts Section - Full implementation as provided */}
           {activeSection === 'contracts' && (
             <motion.div 
               key="contracts-section"
@@ -432,7 +439,7 @@ export default function Contracts() {
                 </div>
               </div>
 
-              {/* ✅ NEU: Immer sichtbare Filter-Leiste */}
+              {/* Filters */}
               <div className={styles.filtersToolbar}>
                 <div className={styles.searchSection}>
                   <div className={styles.searchInputWrapper}>
@@ -504,7 +511,7 @@ export default function Contracts() {
                 </div>
               </div>
 
-              {/* ✅ Verbesserte Ergebnisanzeige */}
+              {/* Results Info */}
               {(searchQuery || activeFiltersCount() > 0) && (
                 <div className={styles.resultsInfo}>
                   <div className={styles.resultsText}>
@@ -527,6 +534,7 @@ export default function Contracts() {
                 </div>
               )}
 
+              {/* Contracts Table */}
               {loading && !refreshing ? (
                 <div className={styles.loadingContainer}>
                   <div className={styles.loadingSpinner}></div>
@@ -671,6 +679,7 @@ export default function Contracts() {
             </motion.div>
           )}
 
+          {/* Analysis Section */}
           {activeSection === 'analysis' && (
             <motion.div 
               key="analysis-section"
@@ -691,7 +700,7 @@ export default function Contracts() {
           )}
         </AnimatePresence>
 
-        {/* ✅ NEU: Moderne ContractDetailsView statt Modal */}
+        {/* Contract Details Modal */}
         {selectedContract && (
           <ContractDetailsView
             contract={selectedContract}
@@ -699,7 +708,6 @@ export default function Contracts() {
             show={showDetails}
             onEdit={(contractId) => {
               console.log("Edit contract:", contractId);
-              // Hier könnte Weiterleitung zur Edit-Seite erfolgen
             }}
             onDelete={handleDeleteContract}
           />

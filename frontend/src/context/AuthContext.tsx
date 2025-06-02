@@ -1,6 +1,7 @@
-import { createContext, useContext, useState, useEffect } from "react";
+// 📁 src/context/AuthContext.tsx - FIXED: Only exports components
+import { createContext, useState, useEffect } from "react";
 import { fetchUserData } from "../utils/fetchUserData";
-import type { UserData } from "./authUtils";
+import type { UserData } from "../utils/authUtils";
 
 interface AuthContextType {
   user: UserData | null;
@@ -8,12 +9,14 @@ interface AuthContextType {
   isLoading: boolean;
 }
 
-const AuthContext = createContext<AuthContextType>({
+// ✅ Export the context for useAuth hook
+export const AuthContext = createContext<AuthContextType>({
   user: null,
   setUser: () => {},
   isLoading: true,
 });
 
+// ✅ AuthProvider component - only component export
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -40,4 +43,4 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export default AuthProvider;

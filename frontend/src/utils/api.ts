@@ -220,10 +220,16 @@ export const uploadAndAnalyze = async (
 /**
  * Health Check für Analyse-Service
  */
+interface HealthCheckResponse {
+  success: boolean;
+  status?: string;
+  timestamp?: string;
+}
+
 export const checkAnalyzeHealth = async (): Promise<boolean> => {
   try {
-    const result = await apiCall('/analyze/health');
-    return !!(result as any)?.success;
+    const result = await apiCall('/analyze/health') as HealthCheckResponse;
+    return !!result?.success;
   } catch {
     return false;
   }

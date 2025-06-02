@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { User, Key, CreditCard, Trash2, AlertCircle, CheckCircle, LogOut, FileText, Download } from "lucide-react";
 import styles from "../styles/Profile.module.css";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../hooks/useAuth";;
 
 interface NotificationProps {
   message: string;
