@@ -1,4 +1,4 @@
-// 📁 routes/analyze.js
+// 📁 backend/routes/analyze.js - VERBESSERTE ERROR HANDLING
 const express = require("express");
 const multer = require("multer");
 const pdfParse = require("pdf-parse");
@@ -30,13 +30,37 @@ let analysisCollection;
   }
 })();
 
+// ✅ HAUPTROUTE: POST /analyze mit verbesserter Fehlerbehandlung
 router.post("/", verifyToken, upload.single("file"), async (req, res) => {
-  if (!req.file) return res.status(400).json({ message: "❌ Keine Datei hochgeladen." });
+  console.log("📊 Analyse-Request erhalten:", {
+    hasFile: !!req.file,
+    userId: req.user?.userId,
+    filename: req.file?.originalname
+  });
+
+  // ❌ Keine Datei hochgeladen
+  if (!req.file) {
+    console.warn("⚠️ Keine Datei in Request gefunden");
+    return res.status(400).json({ 
+      success: false,
+      message: "❌ Keine Datei hochgeladen.",
+      error: "FILE_MISSING"
+    });
+  }
 
   try {
     // 📊 Nutzer auslesen + Limit prüfen
     const usersCollection = client.db("contract_ai").collection("users");
     const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
+
+    if (!user) {
+      console.error("❌ User nicht gefunden:", req.user.userId);
+      return res.status(404).json({
+        success: false,
+        message: "❌ Benutzer nicht gefunden.",
+        error: "USER_NOT_FOUND"
+      });
+    }
 
     const plan = user.subscriptionPlan || "free";
     const count = user.analysisCount ?? 0;
@@ -45,16 +69,36 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
     if (plan === "business") limit = 50;
     if (plan === "premium") limit = Infinity;
 
+    console.log(`📊 User-Limits: ${count}/${limit} (Plan: ${plan})`);
+
     if (count >= limit) {
+      console.warn(`⚠️ Analyse-Limit erreicht für User ${req.user.userId}`);
       return res.status(403).json({
+        success: false,
         message: "❌ Analyse-Limit erreicht. Bitte Paket upgraden.",
+        error: "LIMIT_EXCEEDED",
+        currentCount: count,
+        limit: limit,
+        plan: plan
       });
     }
 
     // 📥 PDF auslesen
+    console.log("📄 PDF wird gelesen...");
     const buffer = fs.readFileSync(req.file.path);
     const parsed = await pdfParse(buffer);
     const contractText = parsed.text.slice(0, 4000);
+
+    if (!contractText.trim()) {
+      throw new Error("PDF-Inhalt ist leer oder konnte nicht gelesen werden");
+    }
+
+    console.log(`📄 PDF erfolgreich gelesen: ${contractText.length} Zeichen`);
+
+    // ✅ OpenAI API Key prüfen
+    if (!process.env.OPENAI_API_KEY) {
+      throw new Error("OpenAI API Key fehlt in Umgebungsvariablen");
+    }
 
     // 📤 Prompt erstellen
     const prompt = `
@@ -78,21 +122,42 @@ Antwort im folgenden JSON-Format:
   "contractScore": 87
 }`;
 
-    // 💬 OpenAI-Aufruf
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4",
-      messages: [
-        { role: "system", content: "Du bist ein erfahrener Vertragsanalyst." },
-        { role: "user", content: prompt },
-      ],
-      temperature: 0.3,
-    });
+    console.log("🤖 OpenAI-Anfrage wird gesendet...");
+
+    // 💬 OpenAI-Aufruf mit Timeout
+    const completion = await Promise.race([
+      openai.chat.completions.create({
+        model: "gpt-4",
+        messages: [
+          { role: "system", content: "Du bist ein erfahrener Vertragsanalyst." },
+          { role: "user", content: prompt },
+        ],
+        temperature: 0.3,
+      }),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("OpenAI API Timeout")), 30000)
+      )
+    ]);
+
+    console.log("✅ OpenAI-Response erhalten");
 
     const aiMessage = completion.choices[0].message.content || "";
     const jsonStart = aiMessage.indexOf("{");
     const jsonEnd = aiMessage.lastIndexOf("}") + 1;
+    
+    if (jsonStart === -1 || jsonEnd <= jsonStart) {
+      throw new Error("Keine gültige JSON-Antwort von OpenAI erhalten");
+    }
+
     const jsonString = aiMessage.slice(jsonStart, jsonEnd);
     const result = JSON.parse(jsonString);
+
+    // ✅ Validierung der AI-Response
+    if (!result.summary || !result.contractScore) {
+      throw new Error("Unvollständige Analyse-Antwort von OpenAI");
+    }
+
+    console.log("📊 Analyse erfolgreich, speichere in DB...");
 
     // 📦 In DB speichern
     const analysis = {
@@ -104,20 +169,21 @@ Antwort im folgenden JSON-Format:
 
     const inserted = await analysisCollection.insertOne(analysis);
 
+    // 💾 Vertrag speichern
     await saveContract({
-  userId: req.user.userId,
-  fileName: req.file.originalname,
-  toolUsed: "analyze",
-  filePath: `/uploads/${req.file.filename}`,
-  extraRefs: { analysisId: inserted.insertedId },
-  legalPulse: {
-    riskScore: result.contractScore || null,
-    riskSummary: '',
-    lastChecked: null,
-    lawInsights: [],
-    marketSuggestions: []
-  }
-});
+      userId: req.user.userId,
+      fileName: req.file.originalname,
+      toolUsed: "analyze",
+      filePath: `/uploads/${req.file.filename}`,
+      extraRefs: { analysisId: inserted.insertedId },
+      legalPulse: {
+        riskScore: result.contractScore || null,
+        riskSummary: result.summary || '',
+        lastChecked: new Date(),
+        lawInsights: [],
+        marketSuggestions: []
+      }
+    });
 
     // ✅ Analyse-Zähler hochzählen
     await usersCollection.updateOne(
@@ -125,35 +191,58 @@ Antwort im folgenden JSON-Format:
       { $inc: { analysisCount: 1 } }
     );
 
-    // 📄 PDF generieren
-    const pdfHtml = `
-      <h2>Vertragsanalyse</h2>
-      <p><strong>Zusammenfassung:</strong> ${result.summary}</p>
-      <p><strong>Rechtssicherheit:</strong> ${result.legalAssessment}</p>
-      <p><strong>Optimierung:</strong> ${result.suggestions}</p>
-      <p><strong>Vergleich:</strong> ${result.comparison}</p>
-      <p><strong>Contract Score:</strong> ${result.contractScore}/100</p>
-    `;
+    console.log("✅ Analyse komplett erfolgreich");
 
-    const filePath = `./downloads/contract-analysis-${req.user.userId}-${Date.now()}.pdf`;
-    const file = { content: pdfHtml };
+    // 📤 Erfolgreiche Response
+    res.json({ 
+      success: true,
+      message: "Analyse erfolgreich abgeschlossen",
+      ...result, 
+      analysisId: inserted.insertedId,
+      usage: {
+        count: count + 1,
+        limit: limit,
+        plan: plan
+      }
+    });
 
-    await htmlPdf.generatePdf(file, { format: "A4", path: filePath });
-
-    await analysisCollection.updateOne(
-      { _id: inserted.insertedId },
-      { $set: { pdfPath: filePath.replace("./", "/") } }
-    );
-
-    res.json({ ...result, analysisId: inserted.insertedId, pdfPath: filePath.replace("./", "/") });
   } catch (error) {
-    console.error("❌ Fehler bei Analyse:", error.message);
-    res.status(500).json({ message: "Fehler bei der Analyse." });
+    console.error("❌ Fehler bei Analyse:", error);
+    
+    // ✅ Spezifische Fehlermeldungen für verschiedene Fehlertypen
+    let errorMessage = "Fehler bei der Analyse.";
+    let errorCode = "ANALYSIS_ERROR";
+    
+    if (error.message.includes("API Key")) {
+      errorMessage = "KI-Service vorübergehend nicht verfügbar.";
+      errorCode = "AI_SERVICE_ERROR";
+    } else if (error.message.includes("Timeout")) {
+      errorMessage = "Analyse-Timeout. Bitte versuche es mit einer kleineren Datei.";
+      errorCode = "TIMEOUT_ERROR";
+    } else if (error.message.includes("JSON")) {
+      errorMessage = "Fehler bei der Analyse-Verarbeitung.";
+      errorCode = "PARSE_ERROR";
+    } else if (error.message.includes("PDF")) {
+      errorMessage = "PDF konnte nicht gelesen werden. Bitte prüfe das Dateiformat.";
+      errorCode = "PDF_ERROR";
+    }
+
+    res.status(500).json({ 
+      success: false,
+      message: errorMessage,
+      error: errorCode,
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+
   } finally {
+    // 🧹 Cleanup: Hochgeladene Datei löschen
     try {
-      if (req.file) fs.unlinkSync(req.file.path);
+      if (req.file && fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+        console.log("🧹 Temp-Datei gelöscht:", req.file.path);
+      }
     } catch (cleanupErr) {
-      console.warn("⚠️ Fehler beim Löschen der Datei:", cleanupErr.message);
+      console.warn("⚠️ Fehler beim Löschen der Temp-Datei:", cleanupErr.message);
     }
   }
 });
@@ -161,17 +250,41 @@ Antwort im folgenden JSON-Format:
 // 📚 Analyseverlauf abrufen
 router.get("/history", verifyToken, async (req, res) => {
   try {
+    console.log("📚 Analyse-Historie angefordert für User:", req.user.userId);
+    
     const history = await analysisCollection
       .find({ userId: req.user.userId })
       .sort({ createdAt: -1 })
       .limit(20)
       .toArray();
 
-    res.json(history);
+    console.log(`📚 ${history.length} Analyse-Einträge gefunden`);
+
+    res.json({
+      success: true,
+      history: history,
+      count: history.length
+    });
+
   } catch (err) {
-    console.error("❌ Fehler beim Abrufen der Analyse-Historie:", err.message);
-    res.status(500).json({ message: "Fehler beim Abrufen der Historie." });
+    console.error("❌ Fehler beim Abrufen der Analyse-Historie:", err);
+    res.status(500).json({ 
+      success: false,
+      message: "Fehler beim Abrufen der Historie.",
+      error: "HISTORY_ERROR"
+    });
   }
+});
+
+// ✅ Health Check Route
+router.get("/health", (req, res) => {
+  res.json({
+    success: true,
+    service: "Contract Analysis",
+    status: "online",
+    timestamp: new Date().toISOString(),
+    openaiConfigured: !!process.env.OPENAI_API_KEY
+  });
 });
 
 module.exports = router;

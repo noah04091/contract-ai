@@ -1,4 +1,4 @@
-// 📁 backend/server.js (Complete fixed version)
+// 📁 backend/server.js (Complete fixed version with ANALYZE route)
 const express = require("express");
 const app = express();
 require("dotenv").config();
@@ -36,7 +36,7 @@ const ALLOWED_ORIGINS = [
   "https://www.contract-ai.de",
 ];
 
-const transporter = nodemailer.createTransport(EMAIL_CONFIG);
+const transporter = nodemailer.createTransporter(EMAIL_CONFIG);
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const storage = multer.diskStorage({
   destination: UPLOAD_PATH,
@@ -160,6 +160,24 @@ async function analyzeContract(pdfText) {
       console.log("✅ Chat-Route geladen");
     } catch (err) {
       console.error("❌ Fehler bei Chat-Route:", err);
+    }
+
+    // ✅ ANALYZE-ROUTE - FEHLTE KOMPLETT! (NEU HINZUGEFÜGT)
+    try {
+      console.log("🔧 Lade Analyze-Route...");
+      app.use("/analyze", verifyToken, checkSubscription, require("./routes/analyze"));
+      console.log("✅ Analyze-Route erfolgreich geladen auf /analyze!");
+    } catch (err) {
+      console.error("❌ Fehler beim Laden der Analyze-Route:", err);
+      // Fallback-Route für Analyze  
+      app.post("/analyze", verifyToken, checkSubscription, (req, res) => {
+        console.log("🆘 Fallback Analyze-Route aufgerufen");
+        res.status(503).json({
+          success: false,
+          message: "Analyse-Service vorübergehend nicht verfügbar",
+          error: "Route konnte nicht geladen werden"
+        });
+      });
     }
 
     // 🚀 GENERATE-ROUTE - KORRIGIERT: Ohne /api/ da Proxy das entfernt
@@ -376,7 +394,8 @@ async function analyzeContract(pdfText) {
         timestamp: new Date().toISOString(),
         status: "working",
         loadedRoutes: "all routes loaded with error handling",
-        newFeature: "Contract save route enabled"
+        newFeature: "Contract save route enabled",
+        analyzeRoute: "ANALYZE ROUTE NOW ACTIVE!" // ✅ NEU
       });
     });
 
@@ -411,6 +430,7 @@ async function analyzeContract(pdfText) {
       console.log(`📡 Alle wichtigen Routen sollten geladen sein`);
       console.log(`🔧 Generate-Route: POST /contracts/generate (Proxy entfernt /api/)`);
       console.log(`💾 Save-Route: POST /contracts (NEU)`);
+      console.log(`📊 Analyze-Route: POST /analyze (NEU HINZUGEFÜGT!)`) // ✅ NEU
       console.log(`🔐 Auth-Routen: /auth/*`);
       console.log(`✅ Server deployment complete!`);
     });

@@ -1,87 +1,384 @@
-.container {
-    margin-top: 2rem;
-    padding: 1rem;
-    background-color: #1a1a1a;
-    border-radius: 8px;
-    color: white;
+/* ContractAnalysis.module.css */
+.analysisContainer {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #e5e5e7;
+  padding: 1.5rem;
+  margin-top: 1rem;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.fileInfo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.fileIcon {
+  color: #007AFF;
+}
+
+.fileName {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem;
+  color: #1d1d1f;
+}
+
+.fileSize {
+  font-size: 0.9rem;
+  color: #6e6e73;
+  margin: 0;
+}
+
+.actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.analyzeButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background: linear-gradient(135deg, #007AFF, #5856D6);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.analyzeButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+}
+
+.analyzeButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.loadingButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background: #f5f5f7;
+  color: #6e6e73;
+  border: none;
+  border-radius: 10px;
+  font-weight: 500;
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.resetButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: #f5f5f7;
+  color: #6e6e73;
+  border: none;
+  border-radius: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.resetButton:hover {
+  background: #e8e8ed;
+}
+
+/* Progress */
+.progressContainer {
+  background: #f5f5f7;
+  border-radius: 12px;
+  padding: 1.5rem;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.progressBar {
+  width: 100%;
+  height: 4px;
+  background: #e8e8ed;
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #007AFF, #5856D6);
+  border-radius: 2px;
+  animation: progress 3s ease-in-out infinite;
+}
+
+@keyframes progress {
+  0% { width: 0%; }
+  50% { width: 60%; }
+  100% { width: 100%; }
+}
+
+.progressText {
+  font-size: 1rem;
+  color: #1d1d1f;
+  margin: 0 0 1rem;
+}
+
+.progressSteps {
+  display: flex;
+  justify-content: space-around;
+  gap: 1rem;
+}
+
+.step {
+  font-size: 0.85rem;
+  color: #6e6e73;
+  opacity: 0.8;
+}
+
+/* Error */
+.errorContainer {
+  background: rgba(255, 69, 58, 0.05);
+  border: 1px solid rgba(255, 69, 58, 0.2);
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  gap: 1rem;
+}
+
+.errorIcon {
+  color: #ff453a;
+  flex-shrink: 0;
+}
+
+.errorContent h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin: 0 0 0.5rem;
+}
+
+.errorContent p {
+  color: #6e6e73;
+  margin: 0 0 1rem;
+}
+
+.retryButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  background: #ff453a;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.retryButton:hover {
+  background: #d93d35;
+}
+
+/* Results */
+.resultsContainer {
+  background: rgba(52, 199, 89, 0.05);
+  border: 1px solid rgba(52, 199, 89, 0.2);
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.successHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.successIcon {
+  color: #34c759;
+}
+
+.successHeader h4 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin: 0;
+}
+
+.scoreSection {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.scoreDisplay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+.scoreNumber {
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.scoreInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.scoreLabel {
+  font-size: 0.9rem;
+  color: #6e6e73;
+  font-weight: 500;
+}
+
+.scoreRating {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.detailsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.detailCard {
+  background: white;
+  border-radius: 10px;
+  padding: 1.25rem;
+}
+
+.detailCard h5 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin: 0 0 0.75rem;
+}
+
+.detailCard p {
+  color: #6e6e73;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.usageInfo {
+  background: #f5f5f7;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.usageInfo p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #6e6e73;
+}
+
+.planBadge {
+  background: #007AFF;
+  color: white;
+  font-size: 0.75rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 0.5rem;
+  font-weight: 500;
+}
+
+.actionButtons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.downloadButton,
+.newAnalysisButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  border: none;
+  border-radius: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.downloadButton {
+  background: #007AFF;
+  color: white;
+}
+
+.downloadButton:hover {
+  background: #0056b3;
+  transform: translateY(-1px);
+}
+
+.newAnalysisButton {
+  background: #f5f5f7;
+  color: #6e6e73;
+}
+
+.newAnalysisButton:hover {
+  background: #e8e8ed;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
   }
-  
-  input {
-    margin-top: 1rem;
-    margin-bottom: 0.5rem;
+
+  .actions {
+    justify-content: space-between;
   }
-  
-  button {
-    background-color: #1c8ce3;
-    color: black;
-    border: none;
-    padding: 0.5rem 1rem;
-    cursor: pointer;
-    border-radius: 4px;
+
+  .scoreDisplay {
+    flex-direction: column;
+    gap: 1rem;
   }
-  
-  .resultBox {
-    margin-top: 2rem;
-    background-color: #111;
-    padding: 1rem;
-    border-radius: 8px;
-  }
-  
-  h3 {
-    margin-top: 1rem;
-    color: #1c8ce3;
-  }
-  
-  /* 🎯 Neuer Score-Balken – hübsch, zentriert, responsive */
-  .scoreBox {
-    margin-top: 2rem;
+
+  .scoreInfo {
+    align-items: center;
     text-align: center;
   }
-  
-  .scoreBox h3 {
-    margin-bottom: 0.5rem;
-    color: #00ffcc;
+
+  .detailsGrid {
+    grid-template-columns: 1fr;
   }
-  
-  .progressBar {
-    width: 300px;
-    max-width: 80%;
-    height: 12px;
-    background-color: #222;
-    border-radius: 10px;
-    margin: 0 auto;
-    overflow: hidden;
-    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.4);
+
+  .actionButtons {
+    flex-direction: column;
   }
-  
-  .progress {
-    height: 100%;
-    background-color: #00dd66;
-    border-radius: 10px 0 0 10px;
-    transition: width 0.4s ease;
-  }
-  
-  /* 🔽 PDF-Button und Download-Link */
-  .linkBox {
-    margin-top: 1rem;
-    display: flex;
-    gap: 1rem;
-    flex-wrap: wrap;
-  }
-  
-  .downloadButton,
-  .previewButton {
-    padding: 0.5rem 1rem;
-    background-color: #36a3f5;
-    color: #000;
-    border-radius: 6px;
-    text-decoration: none;
-    font-weight: bold;
-    transition: background-color 0.3s ease;
-  }
-  
-  .downloadButton:hover,
-  .previewButton:hover {
-    background-color: #09c;
-  }
-  
+}
