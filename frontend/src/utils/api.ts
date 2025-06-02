@@ -1,4 +1,4 @@
-// 📁 src/utils/api.ts - IMPROVED ERROR HANDLING & RETRY LOGIC + OPTIMIZE FUNCTIONS + DUBLIKAT-HANDLING (TYPESCRIPT FIXED)
+// 📁 src/utils/api.ts - IMPROVED ERROR HANDLING & RETRY LOGIC + OPTIMIZE FUNCTIONS + DUBLIKAT-HANDLING (ESLINT FIXED)
 const API_BASE_URL = "/api"; // Proxy-Pfad für Vercel & devServer
 
 /**
@@ -18,24 +18,35 @@ function getErrorMessage(error: unknown): string {
   return String(error);
 }
 
-// ✅ NEU: Interface für Duplikat-Error-Response
+// ✅ NEU: Interface für Duplikat-Error-Response (ohne 'any')
 interface DuplicateError {
   status: 409;
   duplicate: true;
-  data: any;
+  data: unknown; // ✅ FIXED: 'unknown' statt 'any'
+}
+
+// ✅ NEU: Interface für Error-Objects mit Status
+interface ErrorWithStatus {
+  status: number;
+  duplicate?: boolean;
+  [key: string]: unknown;
 }
 
 /**
- * ✅ NEU: Type Guard für Duplikat-Error
+ * ✅ NEU: Type Guard für Duplikat-Error (ohne 'any')
  */
 function isDuplicateError(error: unknown): error is DuplicateError {
+  if (!error || typeof error !== 'object') {
+    return false;
+  }
+  
+  const errorObj = error as ErrorWithStatus;
+  
   return (
-    error !== null &&
-    typeof error === 'object' &&
-    'status' in error &&
-    'duplicate' in error &&
-    (error as any).status === 409 &&
-    (error as any).duplicate === true
+    'status' in errorObj &&
+    'duplicate' in errorObj &&
+    errorObj.status === 409 &&
+    errorObj.duplicate === true
   );
 }
 
@@ -96,8 +107,8 @@ export const apiCall = async (
       
       if (isJsonResponse) {
         try {
-          const errorData = await response.json();
-          if (errorData?.message) {
+          const errorData: Record<string, unknown> = await response.json();
+          if (errorData?.message && typeof errorData.message === 'string') {
             errorMessage = errorData.message;
           }
           
@@ -244,7 +255,7 @@ export const uploadAndAnalyze = async (
     // ✅ NEU: TypeScript-sicheres Spezial-Handling für Duplikat-Response
     if (isDuplicateError(error)) {
       console.log("🔄 Duplikat erkannt - Frontend-Handling erforderlich");
-      return error.data; // ✅ FIXED: TypeScript weiß jetzt, dass 'data' existiert
+      return error.data; // ✅ FIXED: TypeScript-sicher, kein 'any'
     }
     
     console.error("❌ Upload & Analyze Fehler:", error);
