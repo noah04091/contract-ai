@@ -36,7 +36,7 @@ const ALLOWED_ORIGINS = [
   "https://www.contract-ai.de",
 ];
 
-const transporter = nodemailer.createTransporter(EMAIL_CONFIG);
+const transporter = nodemailer.createTransport(EMAIL_CONFIG);
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const storage = multer.diskStorage({
   destination: UPLOAD_PATH,
