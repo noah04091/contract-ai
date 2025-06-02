@@ -1,6 +1,6 @@
 // 📁 src/utils/authUtils.ts - Separate utilities file for auth types and helpers
 
-// ✅ User data interface
+// ✅ User data interface - ERWEITERT um fehlende Properties
 export interface UserData {
   _id: string;
   email: string;
@@ -8,6 +8,7 @@ export interface UserData {
   lastName?: string;
   subscriptionPlan?: string;
   subscriptionStatus?: string;
+  subscriptionActive?: boolean; // ✅ HINZUGEFÜGT - War im bestehenden Code verwendet
   analysisCount?: number;
   createdAt?: string;
   updatedAt?: string;
@@ -39,4 +40,9 @@ export const getSubscriptionDisplayName = (plan?: string): string => {
 
 export const isSubscribed = (user: UserData): boolean => {
   return user.subscriptionPlan === 'premium' || user.subscriptionPlan === 'business';
+};
+
+// ✅ NEU: Helper für subscriptionActive Check
+export const isSubscriptionActive = (user: UserData): boolean => {
+  return user.subscriptionActive === true;
 };
