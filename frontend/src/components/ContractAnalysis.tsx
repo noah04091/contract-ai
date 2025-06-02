@@ -7,6 +7,8 @@ import {
   Wrench, ArrowRight, AlertTriangle,
   Award, Target, Zap
 } from "lucide-react";
+// ✅ CSS MODULES IMPORT HINZUGEFÜGT
+import styles from "./ContractAnalysis.module.css";
 // ✅ KORRIGIERTER IMPORT - uploadAndOptimize hinzugefügt
 import { uploadAndAnalyze, checkAnalyzeHealth, uploadAndOptimize } from "../utils/api";
 
@@ -132,7 +134,6 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
       console.log("🔧 Starte Optimierung für:", file.name);
       
       const optimizeResponse = await uploadAndOptimize(file, 'Standardvertrag', (progress) => {
-        // Optional: Progress anzeigen
         console.log(`🔧 Optimierung Progress: ${progress}%`);
       }) as OptimizationResult;
       
@@ -143,21 +144,14 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
         setOptimizationResult(optimizeResponse.optimizationResult);
         console.log("🎉 Optimierung erfolgreich abgeschlossen");
       } else if (optimizeResponse && optimizeResponse.message) {
-        // Fallback: Verwende message wenn optimizationResult nicht verfügbar
         setOptimizationResult(optimizeResponse.message);
       } else {
-        // Fallback für unerwartete Response-Struktur
         setOptimizationResult("Optimierung wurde durchgeführt, aber Details sind nicht verfügbar.");
       }
     } catch (err) {
       console.error("❌ Optimierung fehlgeschlagen:", err);
       const errorMessage = err instanceof Error ? err.message : "Unbekannter Fehler";
-      
-      // Benutzerfreundliche Fehlermeldung statt alert
       setError(`🔧 Optimierung fehlgeschlagen: ${errorMessage}`);
-      
-      // Optional: Optimierung-Error als separaten State
-      // alert(`Optimierung fehlgeschlagen: ${errorMessage}`);
     } finally {
       setOptimizing(false);
     }
@@ -178,28 +172,25 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
   };
 
   const getScoreIcon = (score: number) => {
-    if (score >= 80) return <Award size={24} className="text-green-500" />;
-    if (score >= 60) return <Target size={24} className="text-orange-500" />;
-    if (score >= 40) return <AlertTriangle size={24} className="text-orange-600" />;
-    return <AlertCircle size={24} className="text-red-500" />;
+    if (score >= 80) return <Award size={24} className={styles.iconGreen} />;
+    if (score >= 60) return <Target size={24} className={styles.iconOrange} />;
+    if (score >= 40) return <AlertTriangle size={24} className={styles.iconOrangeRed} />;
+    return <AlertCircle size={24} className={styles.iconRed} />;
   };
 
   const formatTextToPoints = (text: string): string[] => {
     if (!text) return ['Keine Details verfügbar'];
     
-    // Versuche, den Text in sinnvolle Punkte aufzuteilen
     const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 10);
     if (sentences.length > 1) {
       return sentences.slice(0, 3).map(s => s.trim());
     }
     
-    // Falls keine Sätze, versuche Absätze
     const paragraphs = text.split('\n').filter(p => p.trim().length > 10);
     if (paragraphs.length > 1) {
       return paragraphs.slice(0, 3).map(p => p.trim());
     }
     
-    // Andernfalls den Text aufteilen nach ca. 150 Zeichen
     const words = text.split(' ');
     const points = [];
     let currentPoint = '';
@@ -231,8 +222,8 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
     const strokeDashoffset = circumference - (score / 100) * circumference;
     
     return (
-      <div className="relative w-32 h-32 mx-auto">
-        <svg className="transform -rotate-90 w-32 h-32">
+      <div className={styles.scoreCircleContainer}>
+        <svg className={styles.scoreCircle}>
           <circle
             cx="64"
             cy="64"
@@ -256,29 +247,29 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
             transition={{ duration: 1, ease: "easeInOut" }}
           />
         </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <div className="text-3xl font-bold text-gray-900">{score}</div>
-          <div className="text-xs text-gray-500 font-medium">von 100</div>
+        <div className={styles.scoreContent}>
+          <div className={styles.scoreNumber}>{score}</div>
+          <div className={styles.scoreUnit}>von 100</div>
         </div>
       </div>
     );
   };
 
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden">
+    <div className={styles.analysisContainer}>
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 border-b border-gray-100">
-        <div className="flex justify-between items-start">
-          <div className="flex items-center gap-4">
-            <div className="p-3 bg-blue-100 rounded-xl">
-              <FileText size={24} className="text-blue-600" />
+      <div className={styles.header}>
+        <div className={styles.headerContent}>
+          <div className={styles.fileInfo}>
+            <div className={styles.fileIconContainer}>
+              <FileText size={24} className={styles.fileIcon} />
             </div>
-            <div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-1">{file.name}</h3>
-              <p className="text-sm text-gray-600">
+            <div className={styles.fileDetails}>
+              <h3 className={styles.fileName}>{file.name}</h3>
+              <p className={styles.fileSize}>
                 {(file.size / 1024 / 1024).toFixed(2)} MB
                 {serviceHealth === false && (
-                  <span className="ml-2 inline-flex items-center gap-1 text-red-500">
+                  <span className={styles.serviceWarning}>
                     <WifiOff size={12} />
                     Service nicht verfügbar
                   </span>
@@ -287,10 +278,10 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
             </div>
           </div>
           
-          <div className="flex gap-3">
+          <div className={styles.actions}>
             {!result && !analyzing && (
               <motion.button 
-                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-medium shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50"
+                className={styles.analyzeButton}
                 onClick={handleAnalyze}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
@@ -304,14 +295,14 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
             )}
             
             {analyzing && (
-              <div className="flex items-center gap-2 px-6 py-3 bg-gray-100 text-gray-600 rounded-xl">
-                <Loader size={18} className="animate-spin" />
+              <div className={styles.loadingButton}>
+                <Loader size={18} className={styles.spinner} />
                 <span>Analysiere... {progress}%</span>
               </div>
             )}
             
             <button 
-              className="flex items-center gap-2 px-4 py-3 bg-gray-100 text-gray-600 rounded-xl hover:bg-gray-200 transition-colors disabled:opacity-50"
+              className={styles.resetButton}
               onClick={onReset}
               disabled={analyzing}
             >
@@ -325,23 +316,21 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
       {/* Progress */}
       {analyzing && (
         <motion.div 
-          className="p-6 bg-gray-50 border-b border-gray-100"
+          className={styles.progressContainer}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <div className="mb-4">
-            <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-              <motion.div 
-                className="h-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full"
-                initial={{ width: 0 }}
-                animate={{ width: `${progress}%` }}
-                transition={{ duration: 0.5 }}
-              />
-            </div>
+          <div className={styles.progressBar}>
+            <motion.div 
+              className={styles.progressFill}
+              initial={{ width: 0 }}
+              animate={{ width: `${progress}%` }}
+              transition={{ duration: 0.5 }}
+            />
           </div>
           
-          <div className="text-center mb-4">
-            <p className="text-gray-700 font-medium">
+          <div className={styles.progressTextContainer}>
+            <p className={styles.progressText}>
               {progress < 30 && "📄 PDF wird verarbeitet..."}
               {progress >= 30 && progress < 70 && "🤖 KI-Analyse läuft..."}
               {progress >= 70 && progress < 100 && "📊 Bewertung wird erstellt..."}
@@ -349,13 +338,13 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
             </p>
           </div>
           
-          <div className="flex justify-center gap-8">
+          <div className={styles.progressSteps}>
             {[
               { icon: "🔍", text: "Text extrahieren", threshold: 10 },
               { icon: "🤖", text: "KI-Analyse", threshold: 30 },
               { icon: "📊", text: "Bewertung erstellen", threshold: 70 }
             ].map((step, index) => (
-              <div key={index} className={`flex items-center gap-2 text-sm ${progress >= step.threshold ? 'text-blue-600' : 'text-gray-400'}`}>
+              <div key={index} className={`${styles.progressStep} ${progress >= step.threshold ? styles.active : ''}`}>
                 <span>{step.icon}</span>
                 <span>{step.text}</span>
               </div>
@@ -367,33 +356,33 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
       {/* Error */}
       {error && (
         <motion.div 
-          className="p-6 bg-red-50 border-b border-red-100"
+          className={styles.errorContainer}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <div className="flex gap-4">
-            <div className="flex-shrink-0">
-              {error.includes('Verbindung') ? <WifiOff size={24} className="text-red-500" /> : 
-               error.includes('Timeout') ? <Clock size={24} className="text-red-500" /> : 
-               <AlertCircle size={24} className="text-red-500" />}
+          <div className={styles.errorContent}>
+            <div className={styles.errorIcon}>
+              {error.includes('Verbindung') ? <WifiOff size={24} /> : 
+               error.includes('Timeout') ? <Clock size={24} /> : 
+               <AlertCircle size={24} />}
             </div>
-            <div className="flex-1">
-              <h4 className="text-lg font-semibold text-red-900 mb-2">
+            <div className={styles.errorDetails}>
+              <h4 className={styles.errorTitle}>
                 {error.includes('🔧 Optimierung') ? 'Optimierung fehlgeschlagen' : 'Analyse fehlgeschlagen'}
               </h4>
-              <p className="text-red-700 mb-4">{error}</p>
+              <p className={styles.errorMessage}>{error}</p>
               
               {canRetryAnalysis && !error.includes('🔧 Optimierung') && (
-                <div className="space-y-3">
+                <div className={styles.retrySection}>
                   <button 
-                    className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+                    className={styles.retryButton}
                     onClick={handleAnalyze}
                     disabled={analyzing}
                   >
                     <RefreshCw size={16} />
                     <span>Erneut versuchen ({3 - retryCount} Versuche übrig)</span>
                   </button>
-                  <p className="text-sm text-red-600">
+                  <p className={styles.retryHint}>
                     {error.includes('Verbindung') && "Prüfe deine Internetverbindung"}
                     {error.includes('überlastet') && "Der Server ist überlastet - versuche es in wenigen Sekunden erneut"}
                     {error.includes('Timeout') && "Versuche es mit einer kleineren PDF-Datei"}
@@ -402,10 +391,10 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
               )}
 
               {!canRetryAnalysis && retryCount >= 3 && (
-                <div className="space-y-2">
-                  <p className="text-red-800 font-medium">❌ Maximale Anzahl Versuche erreicht.</p>
+                <div className={styles.exhaustedRetries}>
+                  <p>❌ Maximale Anzahl Versuche erreicht.</p>
                   <button 
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    className={styles.contactSupportButton}
                     onClick={() => window.open('mailto:support@contract-ai.de')}
                   >
                     📧 Support kontaktieren
@@ -420,21 +409,21 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
       {/* Results */}
       {result && result.success && (
         <motion.div 
-          className="p-6"
+          className={styles.resultsContainer}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
           {/* Success Header */}
-          <div className="flex items-center justify-between mb-6 pb-6 border-b border-gray-100">
-            <div className="flex items-center gap-3">
-              <CheckCircle size={28} className="text-green-500" />
-              <div>
-                <h4 className="text-2xl font-bold text-gray-900">Analyse abgeschlossen</h4>
-                <p className="text-gray-600">Rechtssichere Vertragseinschätzung in Sekunden</p>
+          <div className={styles.successHeader}>
+            <div className={styles.successInfo}>
+              <CheckCircle size={28} className={styles.successIcon} />
+              <div className={styles.successDetails}>
+                <h4>Analyse abgeschlossen</h4>
+                <p>Rechtssichere Vertragseinschätzung in Sekunden</p>
               </div>
             </div>
             {result.requestId && (
-              <span className="text-xs text-gray-400 font-mono bg-gray-50 px-2 py-1 rounded">
+              <span className={styles.requestId}>
                 ID: {result.requestId}
               </span>
             )}
@@ -442,20 +431,20 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
 
           {/* Contract Score */}
           {result.contractScore && (
-            <div className="bg-gradient-to-br from-gray-50 to-blue-50 rounded-2xl p-8 mb-8 text-center">
-              <div className="mb-4">
-                <h5 className="text-lg font-semibold text-gray-700 mb-2">Contract Score</h5>
+            <div className={styles.scoreSection}>
+              <div className={styles.scoreSectionContent}>
+                <h5>Contract Score</h5>
                 <ScoreCircle score={result.contractScore} />
               </div>
               
-              <div className="flex items-center justify-center gap-2 mb-3">
+              <div className={styles.scoreInfoContainer}>
                 {getScoreIcon(result.contractScore)}
-                <span className={`text-xl font-bold`} style={{ color: getScoreColor(result.contractScore) }}>
+                <span className={styles.scoreLabel} style={{ color: getScoreColor(result.contractScore) }}>
                   {getScoreLabel(result.contractScore)}
                 </span>
               </div>
               
-              <p className="text-sm text-gray-600 max-w-md mx-auto">
+              <p className={styles.scoreDescription}>
                 {result.contractScore >= 80 && "Dieser Vertrag bietet eine sehr gute Rechtssicherheit und faire Konditionen."}
                 {result.contractScore >= 60 && result.contractScore < 80 && "Dieser Vertrag ist grundsätzlich in Ordnung, hat aber Verbesserungspotential."}
                 {result.contractScore >= 40 && result.contractScore < 60 && "Dieser Vertrag weist einige Schwächen auf und sollte überprüft werden."}
@@ -465,98 +454,100 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
           )}
 
           {/* Analysis Details */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <div className={styles.detailsGrid}>
             {/* Zusammenfassung */}
             {result.summary && (
-              <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <FileSearch size={20} className="text-blue-600" />
+              <div className={styles.detailCard}>
+                <div className={styles.detailHeader}>
+                  <div className={`${styles.detailIconContainer} ${styles.blueIcon}`}>
+                    <FileSearch size={20} />
                   </div>
-                  <h5 className="text-lg font-semibold text-gray-900">Zusammenfassung</h5>
+                  <h5>Zusammenfassung</h5>
                 </div>
-                <div className="space-y-2">
+                <ul className={styles.pointsList}>
                   {formatTextToPoints(result.summary).map((point, index) => (
-                    <div key={index} className="flex items-start gap-2">
-                      <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-                      <p className="text-gray-700 text-sm leading-relaxed">{point}</p>
-                    </div>
+                    <li key={index} className={styles.pointItem}>
+                      <div className={`${styles.pointBullet} ${styles.blueBullet}`}></div>
+                      <p className={styles.pointText}>{point}</p>
+                    </li>
                   ))}
-                </div>
+                </ul>
               </div>
             )}
 
             {/* Rechtssicherheit */}
             {result.legalAssessment && (
-              <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2 bg-green-100 rounded-lg">
-                    <Shield size={20} className="text-green-600" />
+              <div className={styles.detailCard}>
+                <div className={styles.detailHeader}>
+                  <div className={`${styles.detailIconContainer} ${styles.greenIcon}`}>
+                    <Shield size={20} />
                   </div>
-                  <h5 className="text-lg font-semibold text-gray-900">Rechtssicherheit</h5>
+                  <h5>Rechtssicherheit</h5>
                 </div>
-                <div className="space-y-2">
+                <ul className={styles.pointsList}>
                   {formatTextToPoints(result.legalAssessment).map((point, index) => (
-                    <div key={index} className="flex items-start gap-2">
-                      <div className="w-1.5 h-1.5 bg-green-500 rounded-full mt-2 flex-shrink-0"></div>
-                      <p className="text-gray-700 text-sm leading-relaxed">{point}</p>
-                    </div>
+                    <li key={index} className={styles.pointItem}>
+                      <div className={`${styles.pointBullet} ${styles.greenBullet}`}></div>
+                      <p className={styles.pointText}>{point}</p>
+                    </li>
                   ))}
-                </div>
+                </ul>
               </div>
             )}
 
             {/* Optimierungsvorschläge */}
             {result.suggestions && (
-              <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2 bg-yellow-100 rounded-lg">
-                    <Lightbulb size={20} className="text-yellow-600" />
+              <div className={styles.detailCard}>
+                <div className={styles.detailHeader}>
+                  <div className={`${styles.detailIconContainer} ${styles.yellowIcon}`}>
+                    <Lightbulb size={20} />
                   </div>
-                  <h5 className="text-lg font-semibold text-gray-900">Optimierungsvorschläge</h5>
+                  <h5>Optimierungsvorschläge</h5>
                 </div>
-                <div className="space-y-2">
+                <ul className={styles.pointsList}>
                   {formatTextToPoints(result.suggestions).map((point, index) => (
-                    <div key={index} className="flex items-start gap-2">
-                      <div className="w-1.5 h-1.5 bg-yellow-500 rounded-full mt-2 flex-shrink-0"></div>
-                      <p className="text-gray-700 text-sm leading-relaxed">{point}</p>
-                    </div>
+                    <li key={index} className={styles.pointItem}>
+                      <div className={`${styles.pointBullet} ${styles.yellowBullet}`}></div>
+                      <p className={styles.pointText}>{point}</p>
+                    </li>
                   ))}
-                </div>
+                </ul>
               </div>
             )}
 
             {/* Marktvergleich */}
-            <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-2 bg-purple-100 rounded-lg">
-                  <TrendingUp size={20} className="text-purple-600" />
+            <div className={styles.detailCard}>
+              <div className={styles.detailHeader}>
+                <div className={`${styles.detailIconContainer} ${styles.purpleIcon}`}>
+                  <TrendingUp size={20} />
                 </div>
-                <h5 className="text-lg font-semibold text-gray-900">Marktvergleich</h5>
+                <h5>Marktvergleich</h5>
               </div>
-              <div className="space-y-2">
-                {result.comparison ? formatTextToPoints(result.comparison).map((point, index) => (
-                  <div key={index} className="flex items-start gap-2">
-                    <div className="w-1.5 h-1.5 bg-purple-500 rounded-full mt-2 flex-shrink-0"></div>
-                    <p className="text-gray-700 text-sm leading-relaxed">{point}</p>
-                  </div>
-                )) : (
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <p className="text-gray-600 text-sm">
-                      Es wurden keine konkreten Alternativangebote erkannt. Für genauere Vergleiche können Sie den Vertragstyp spezifizieren oder unsere Optimierungsfunktion nutzen.
-                    </p>
-                  </div>
-                )}
-              </div>
+              {result.comparison ? (
+                <ul className={styles.pointsList}>
+                  {formatTextToPoints(result.comparison).map((point, index) => (
+                    <li key={index} className={styles.pointItem}>
+                      <div className={`${styles.pointBullet} ${styles.purpleBullet}`}></div>
+                      <p className={styles.pointText}>{point}</p>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className={styles.fallbackMessage}>
+                  <p>
+                    Es wurden keine konkreten Alternativangebote erkannt. Für genauere Vergleiche können Sie den Vertragstyp spezifizieren oder unsere Optimierungsfunktion nutzen.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
           {/* Usage Info */}
           {result.usage && (
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6 text-center">
-              <p className="text-blue-800 text-sm">
+            <div className={styles.usageInfo}>
+              <p>
                 📊 Analyse <strong>{result.usage.count}</strong> von <strong>{result.usage.limit === Infinity ? '∞' : result.usage.limit}</strong>
-                <span className="inline-block ml-2 px-2 py-1 bg-blue-600 text-white text-xs rounded-full font-medium">
+                <span className={styles.planBadge}>
                   {result.usage.plan}
                 </span>
               </p>
@@ -564,10 +555,10 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
           )}
 
           {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+          <div className={styles.actionButtonsContainer}>
             {/* Optimize Button - Prominently placed */}
             <motion.button 
-              className="flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50"
+              className={styles.primaryActionButton}
               onClick={handleOptimize}
               disabled={optimizing}
               whileHover={{ scale: 1.02 }}
@@ -575,7 +566,7 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
             >
               {optimizing ? (
                 <>
-                  <Loader size={20} className="animate-spin" />
+                  <Loader size={20} className={styles.spinner} />
                   <span>Optimiere Vertrag...</span>
                 </>
               ) : (
@@ -588,13 +579,13 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
             </motion.button>
 
             {/* Secondary Actions */}
-            <div className="flex gap-3">
-              <button className="flex items-center gap-2 px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors">
+            <div className={styles.secondaryActions}>
+              <button className={`${styles.secondaryButton} ${styles.downloadButton}`}>
                 <Download size={18} />
                 <span>PDF herunterladen</span>
               </button>
               <button 
-                className="flex items-center gap-2 px-6 py-3 bg-white border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors"
+                className={`${styles.secondaryButton} ${styles.newAnalysisButton}`}
                 onClick={onReset}
               >
                 <FileText size={18} />
@@ -606,15 +597,15 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
           {/* Optimization Result */}
           {optimizationResult && (
             <motion.div 
-              className="mt-8 p-6 bg-green-50 border border-green-200 rounded-xl"
+              className={styles.optimizationResult}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
             >
-              <div className="flex items-center gap-3 mb-4">
-                <Zap size={24} className="text-green-600" />
-                <h5 className="text-lg font-semibold text-green-900">Optimierungsvorschlag</h5>
+              <div className={styles.optimizationHeader}>
+                <Zap size={24} />
+                <h5>Optimierungsvorschlag</h5>
               </div>
-              <div className="prose max-w-none text-gray-700">
+              <div className={styles.optimizationContent}>
                 {optimizationResult}
               </div>
             </motion.div>
