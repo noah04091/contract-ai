@@ -1,15 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { 
   FileText, AlertCircle, CheckCircle, Loader, 
   Download, BarChart3, RefreshCw, WifiOff, Clock,
   Shield, TrendingUp, Lightbulb, FileSearch,
   Wrench, ArrowRight, AlertTriangle,
-  Award, Target, Zap
+  Award, Target, Zap, ChevronDown, ChevronUp
 } from "lucide-react";
-// ✅ CSS MODULES IMPORT HINZUGEFÜGT
 import styles from "./ContractAnalysis.module.css";
-// ✅ KORRIGIERTER IMPORT - uploadAndOptimize hinzugefügt
 import { uploadAndAnalyze, checkAnalyzeHealth, uploadAndOptimize } from "../utils/api";
 
 interface ContractAnalysisProps {
@@ -35,7 +33,6 @@ interface AnalysisResult {
   error?: string;
 }
 
-// ✅ NEU: Interface für Optimierung-Response
 interface OptimizationResult {
   success: boolean;
   message?: string;
@@ -59,6 +56,10 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
   const [serviceHealth, setServiceHealth] = useState<boolean | null>(null);
   const [optimizing, setOptimizing] = useState(false);
   const [optimizationResult, setOptimizationResult] = useState<string | null>(null);
+  const [isOptimizationExpanded, setIsOptimizationExpanded] = useState(true);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
+  
+  const analysisResultRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     checkAnalyzeHealth().then(setServiceHealth);
@@ -125,7 +126,6 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
     }
   };
 
-  // ✅ KORRIGIERTE handleOptimize FUNKTION
   const handleOptimize = async () => {
     if (!result) return;
     
@@ -139,9 +139,9 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
       
       console.log("✅ Optimierung-Response:", optimizeResponse);
       
-      // ✅ Type-sichere Behandlung der Response ohne 'any'
       if (optimizeResponse && optimizeResponse.optimizationResult) {
         setOptimizationResult(optimizeResponse.optimizationResult);
+        setIsOptimizationExpanded(true);
         console.log("🎉 Optimierung erfolgreich abgeschlossen");
       } else if (optimizeResponse && optimizeResponse.message) {
         setOptimizationResult(optimizeResponse.message);
@@ -154,6 +154,72 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
       setError(`🔧 Optimierung fehlgeschlagen: ${errorMessage}`);
     } finally {
       setOptimizing(false);
+    }
+  };
+
+  const handleDownloadPdf = async () => {
+    if (!result || !analysisResultRef.current) return;
+    
+    setGeneratingPdf(true);
+    
+    try {
+      // Dynamically import html2canvas and jsPDF to avoid SSR issues
+      const html2canvas = (await import('html2canvas')).default;
+      const jsPDF = (await import('jspdf')).jsPDF;
+      
+      const element = analysisResultRef.current;
+      
+      // Temporarily expand all collapsed sections for PDF
+      const collapsedElements = element.querySelectorAll('[data-collapsed="true"]');
+      collapsedElements.forEach((el) => {
+        (el as HTMLElement).style.display = 'block';
+      });
+      
+      // Generate canvas from the analysis result
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        height: element.scrollHeight,
+        width: element.scrollWidth,
+      });
+      
+      // Restore collapsed state
+      collapsedElements.forEach((el) => {
+        (el as HTMLElement).style.display = '';
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      
+      const imgWidth = 210;
+      const pageHeight = 295;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      
+      let position = 0;
+      
+      // Add first page
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+      
+      // Add additional pages if needed
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+      
+      // Download the PDF
+      pdf.save(`Vertragsanalyse_${file.name.replace('.pdf', '')}_${new Date().toISOString().split('T')[0]}.pdf`);
+      
+    } catch (error) {
+      console.error('❌ PDF-Generierung fehlgeschlagen:', error);
+      alert('PDF-Generierung fehlgeschlagen. Bitte versuche es erneut.');
+    } finally {
+      setGeneratingPdf(false);
     }
   };
 
@@ -178,52 +244,50 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
     return <AlertCircle size={24} className={styles.iconRed} />;
   };
 
+  // ✅ IMPROVED: Better text formatting with cleaner structure
   const formatTextToPoints = (text: string): string[] => {
     if (!text) return ['Keine Details verfügbar'];
     
-    const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 10);
-    if (sentences.length > 1) {
-      return sentences.slice(0, 3).map(s => s.trim());
-    }
+    // Split by common delimiters and clean up
+    const sentences = text
+      .split(/[.!?]+|[-•]\s*/)
+      .map(s => s.trim())
+      .filter(s => s.length > 15 && s.length < 200)
+      .slice(0, 4); // Limit to 4 points max
     
-    const paragraphs = text.split('\n').filter(p => p.trim().length > 10);
-    if (paragraphs.length > 1) {
-      return paragraphs.slice(0, 3).map(p => p.trim());
-    }
+    return sentences.length > 0 ? sentences : [text.substring(0, 180) + '...'];
+  };
+
+  // ✅ NEW: Format optimization text with better structure
+  const formatOptimizationText = (text: string) => {
+    if (!text) return null;
     
-    const words = text.split(' ');
-    const points = [];
-    let currentPoint = '';
+    // Split into sections based on numbered points or headers
+    const sections = text.split(/(?=\d+\.\s*[A-ZÄÖÜ])/g).filter(s => s.trim());
     
-    for (const word of words) {
-      if (currentPoint.length + word.length > 150 && currentPoint.length > 50) {
-        points.push(currentPoint.trim());
-        currentPoint = word;
-      } else {
-        currentPoint += (currentPoint ? ' ' : '') + word;
-      }
+    return sections.map((section, index) => {
+      const lines = section.split('\n').filter(line => line.trim());
+      const title = lines[0]?.replace(/^\d+\.\s*/, '') || `Punkt ${index + 1}`;
+      const content = lines.slice(1).join('\n').trim();
       
-      if (points.length >= 3) break;
-    }
-    
-    if (currentPoint && points.length < 3) {
-      points.push(currentPoint.trim());
-    }
-    
-    return points.length > 0 ? points : [text.substring(0, 200) + '...'];
+      return {
+        title: title.substring(0, 80),
+        content: content || section.substring(0, 300)
+      };
+    });
   };
 
   const canRetryAnalysis = error && retryCount < 3 && !error.includes('Limit erreicht');
 
-  // Score Circle Component
+  // ✅ IMPROVED: Score Circle Component with perfect centering
   const ScoreCircle = ({ score }: { score: number }) => {
     const circumference = 2 * Math.PI * 45;
     const strokeDasharray = circumference;
     const strokeDashoffset = circumference - (score / 100) * circumference;
     
     return (
-      <div className={styles.scoreCircleContainer}>
-        <svg className={styles.scoreCircle}>
+      <div className={styles.scoreCircleWrapper}>
+        <svg className={styles.scoreCircle} viewBox="0 0 128 128">
           <circle
             cx="64"
             cy="64"
@@ -244,7 +308,7 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
             strokeLinecap="round"
             initial={{ strokeDashoffset: circumference }}
             animate={{ strokeDashoffset }}
-            transition={{ duration: 1, ease: "easeInOut" }}
+            transition={{ duration: 1.5, ease: "easeInOut" }}
           />
         </svg>
         <div className={styles.scoreContent}>
@@ -296,7 +360,12 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
             
             {analyzing && (
               <div className={styles.loadingButton}>
-                <Loader size={18} className={styles.spinner} />
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                >
+                  <Loader size={18} />
+                </motion.div>
                 <span>Analysiere... {progress}%</span>
               </div>
             )}
@@ -410,6 +479,7 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
       {result && result.success && (
         <motion.div 
           className={styles.resultsContainer}
+          ref={analysisResultRef}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
@@ -429,11 +499,12 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
             )}
           </div>
 
-          {/* Contract Score */}
+          {/* Contract Score - ✅ IMPROVED: Perfect centering */}
           {result.contractScore && (
             <div className={styles.scoreSection}>
+              <h5 className={styles.scoreSectionTitle}>Contract Score</h5>
+              
               <div className={styles.scoreSectionContent}>
-                <h5>Contract Score</h5>
                 <ScoreCircle score={result.contractScore} />
               </div>
               
@@ -453,7 +524,7 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
             </div>
           )}
 
-          {/* Analysis Details */}
+          {/* Analysis Details - ✅ IMPROVED: Better formatting */}
           <div className={styles.detailsGrid}>
             {/* Zusammenfassung */}
             {result.summary && (
@@ -464,14 +535,16 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
                   </div>
                   <h5>Zusammenfassung</h5>
                 </div>
-                <ul className={styles.pointsList}>
-                  {formatTextToPoints(result.summary).map((point, index) => (
-                    <li key={index} className={styles.pointItem}>
-                      <div className={`${styles.pointBullet} ${styles.blueBullet}`}></div>
-                      <p className={styles.pointText}>{point}</p>
-                    </li>
-                  ))}
-                </ul>
+                <div className={styles.cardContent}>
+                  <ul className={styles.pointsList}>
+                    {formatTextToPoints(result.summary).map((point, index) => (
+                      <li key={index} className={styles.pointItem}>
+                        <div className={`${styles.pointBullet} ${styles.blueBullet}`}></div>
+                        <p className={styles.pointText}>{point}</p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
             )}
 
@@ -484,14 +557,16 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
                   </div>
                   <h5>Rechtssicherheit</h5>
                 </div>
-                <ul className={styles.pointsList}>
-                  {formatTextToPoints(result.legalAssessment).map((point, index) => (
-                    <li key={index} className={styles.pointItem}>
-                      <div className={`${styles.pointBullet} ${styles.greenBullet}`}></div>
-                      <p className={styles.pointText}>{point}</p>
-                    </li>
-                  ))}
-                </ul>
+                <div className={styles.cardContent}>
+                  <ul className={styles.pointsList}>
+                    {formatTextToPoints(result.legalAssessment).map((point, index) => (
+                      <li key={index} className={styles.pointItem}>
+                        <div className={`${styles.pointBullet} ${styles.greenBullet}`}></div>
+                        <p className={styles.pointText}>{point}</p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
             )}
 
@@ -504,14 +579,16 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
                   </div>
                   <h5>Optimierungsvorschläge</h5>
                 </div>
-                <ul className={styles.pointsList}>
-                  {formatTextToPoints(result.suggestions).map((point, index) => (
-                    <li key={index} className={styles.pointItem}>
-                      <div className={`${styles.pointBullet} ${styles.yellowBullet}`}></div>
-                      <p className={styles.pointText}>{point}</p>
-                    </li>
-                  ))}
-                </ul>
+                <div className={styles.cardContent}>
+                  <ul className={styles.pointsList}>
+                    {formatTextToPoints(result.suggestions).map((point, index) => (
+                      <li key={index} className={styles.pointItem}>
+                        <div className={`${styles.pointBullet} ${styles.yellowBullet}`}></div>
+                        <p className={styles.pointText}>{point}</p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
             )}
 
@@ -523,22 +600,24 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
                 </div>
                 <h5>Marktvergleich</h5>
               </div>
-              {result.comparison ? (
-                <ul className={styles.pointsList}>
-                  {formatTextToPoints(result.comparison).map((point, index) => (
-                    <li key={index} className={styles.pointItem}>
-                      <div className={`${styles.pointBullet} ${styles.purpleBullet}`}></div>
-                      <p className={styles.pointText}>{point}</p>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <div className={styles.fallbackMessage}>
-                  <p>
-                    Es wurden keine konkreten Alternativangebote erkannt. Für genauere Vergleiche können Sie den Vertragstyp spezifizieren oder unsere Optimierungsfunktion nutzen.
-                  </p>
-                </div>
-              )}
+              <div className={styles.cardContent}>
+                {result.comparison ? (
+                  <ul className={styles.pointsList}>
+                    {formatTextToPoints(result.comparison).map((point, index) => (
+                      <li key={index} className={styles.pointItem}>
+                        <div className={`${styles.pointBullet} ${styles.purpleBullet}`}></div>
+                        <p className={styles.pointText}>{point}</p>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className={styles.fallbackMessage}>
+                    <p>
+                      Es wurden keine konkreten Alternativangebote erkannt. Für genauere Vergleiche können Sie den Vertragstyp spezifizieren oder unsere Optimierungsfunktion nutzen.
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -556,7 +635,7 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
 
           {/* Action Buttons */}
           <div className={styles.actionButtonsContainer}>
-            {/* Optimize Button - Prominently placed */}
+            {/* Optimize Button */}
             <motion.button 
               className={styles.primaryActionButton}
               onClick={handleOptimize}
@@ -566,7 +645,12 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
             >
               {optimizing ? (
                 <>
-                  <Loader size={20} className={styles.spinner} />
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  >
+                    <Loader size={20} />
+                  </motion.div>
                   <span>Optimiere Vertrag...</span>
                 </>
               ) : (
@@ -580,9 +664,27 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
 
             {/* Secondary Actions */}
             <div className={styles.secondaryActions}>
-              <button className={`${styles.secondaryButton} ${styles.downloadButton}`}>
-                <Download size={18} />
-                <span>PDF herunterladen</span>
+              <button 
+                className={`${styles.secondaryButton} ${styles.downloadButton}`}
+                onClick={handleDownloadPdf}
+                disabled={generatingPdf}
+              >
+                {generatingPdf ? (
+                  <>
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    >
+                      <Loader size={18} />
+                    </motion.div>
+                    <span>Erstelle PDF...</span>
+                  </>
+                ) : (
+                  <>
+                    <Download size={18} />
+                    <span>PDF herunterladen</span>
+                  </>
+                )}
               </button>
               <button 
                 className={`${styles.secondaryButton} ${styles.newAnalysisButton}`}
@@ -594,7 +696,7 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
             </div>
           </div>
 
-          {/* Optimization Result */}
+          {/* ✅ IMPROVED: Optimization Result with better structure */}
           {optimizationResult && (
             <motion.div 
               className={styles.optimizationResult}
@@ -602,12 +704,47 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
               animate={{ opacity: 1, y: 0 }}
             >
               <div className={styles.optimizationHeader}>
-                <Zap size={24} />
-                <h5>Optimierungsvorschlag</h5>
+                <div className={styles.optimizationTitleSection}>
+                  <Zap size={24} />
+                  <h5>Optimierungsvorschlag</h5>
+                </div>
+                <button
+                  className={styles.expandToggle}
+                  onClick={() => setIsOptimizationExpanded(!isOptimizationExpanded)}
+                >
+                  {isOptimizationExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                  <span>{isOptimizationExpanded ? 'Weniger anzeigen' : 'Mehr anzeigen'}</span>
+                </button>
               </div>
-              <div className={styles.optimizationContent}>
-                {optimizationResult}
-              </div>
+              
+              <motion.div 
+                className={styles.optimizationContent}
+                initial={false}
+                animate={{ 
+                  height: isOptimizationExpanded ? 'auto' : '120px',
+                  overflow: isOptimizationExpanded ? 'visible' : 'hidden'
+                }}
+                transition={{ duration: 0.3 }}
+              >
+                {formatOptimizationText(optimizationResult) ? (
+                  <div className={styles.optimizationSections}>
+                    {formatOptimizationText(optimizationResult)?.map((section, index) => (
+                      <div key={index} className={styles.optimizationSection}>
+                        <h6 className={styles.optimizationSectionTitle}>
+                          {section.title}
+                        </h6>
+                        <p className={styles.optimizationSectionContent}>
+                          {section.content}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className={styles.optimizationPlainText}>
+                    {optimizationResult}
+                  </div>
+                )}
+              </motion.div>
             </motion.div>
           )}
         </motion.div>
