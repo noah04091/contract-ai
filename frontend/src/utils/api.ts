@@ -1,4 +1,4 @@
-// 📁 src/utils/api.ts - TYPESCRIPT ERRORS FIXED
+// 📁 src/utils/api.ts - IMPROVED ERROR HANDLING & RETRY LOGIC
 const API_BASE_URL = "/api"; // Proxy-Pfad für Vercel & devServer
 
 /**
@@ -19,14 +19,21 @@ function getErrorMessage(error: unknown): string {
 }
 
 /**
- * Universelle API-Fetch-Funktion mit verbesserter Fehlerbehandlung
+ * Sleep-Funktion für Retry-Logic
+ */
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+/**
+ * Universelle API-Fetch-Funktion mit verbesserter Fehlerbehandlung & Retry
  */
 export const apiCall = async (
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  retryCount: number = 0
 ): Promise<unknown> => {
   const authToken = localStorage.getItem("authToken");
   const isFormData = options.body instanceof FormData;
+  const maxRetries = 2;
 
   const defaultHeaders: Record<string, string> = {
     Accept: "application/json",
@@ -46,12 +53,13 @@ export const apiCall = async (
   };
 
   try {
-    console.log(`🔄 API-Request: ${options.method || 'GET'} ${API_BASE_URL}${endpoint}`);
+    const retryInfo = retryCount > 0 ? ` (Retry ${retryCount}/${maxRetries})` : '';
+    console.log(`🔄 API-Request: ${options.method || 'GET'} ${API_BASE_URL}${endpoint}${retryInfo}`);
     
     const response = await fetch(`${API_BASE_URL}${endpoint}`, mergedOptions);
 
     // 🔍 Enhanced Debugging
-    console.log(`📡 API-Response: ${response.status} ${response.statusText}`, {
+    console.log(`📡 API-Response: ${response.status} ${response.statusText}${retryInfo}`, {
       url: `${API_BASE_URL}${endpoint}`,
       headers: Object.fromEntries(response.headers.entries()),
       ok: response.ok
@@ -63,6 +71,7 @@ export const apiCall = async (
     
     if (!response.ok) {
       let errorMessage = `❌ HTTP ${response.status} ${response.statusText}`;
+      let shouldRetry = false;
       
       if (isJsonResponse) {
         try {
@@ -70,8 +79,14 @@ export const apiCall = async (
           if (errorData?.message) {
             errorMessage = errorData.message;
           }
+          
+          // Prüfe ob Retry sinnvoll ist
+          if (response.status >= 500 && response.status < 600) {
+            shouldRetry = true;
+          }
         } catch (parseError) {
           console.warn("⚠️ Konnte JSON-Error nicht parsen:", parseError);
+          shouldRetry = response.status >= 500;
         }
       } else {
         // HTML oder andere Responses
@@ -80,11 +95,20 @@ export const apiCall = async (
         
         if (response.status === 404) {
           errorMessage = `❌ API-Endpoint nicht gefunden: ${endpoint}`;
-        } else if (response.status === 500) {
+        } else if (response.status >= 500) {
           errorMessage = `❌ Server-Fehler bei ${endpoint}`;
+          shouldRetry = true;
         } else {
           errorMessage = `❌ Unerwarteter Fehler (${response.status}) bei ${endpoint}`;
         }
+      }
+      
+      // ✅ RETRY-LOGIC für 500er-Fehler
+      if (shouldRetry && retryCount < maxRetries) {
+        const delay = Math.pow(2, retryCount) * 1000; // Exponential backoff: 1s, 2s, 4s
+        console.log(`🔄 Retrying in ${delay}ms due to server error...`);
+        await sleep(delay);
+        return apiCall(endpoint, options, retryCount + 1);
       }
       
       throw new Error(errorMessage);
@@ -104,16 +128,24 @@ export const apiCall = async (
     }
 
   } catch (err) {
-    console.error(`❌ API-Fehler bei [${endpoint}]:`, err);
+    console.error(`❌ API-Fehler bei [${endpoint}] (Attempt ${retryCount + 1}):`, err);
     
     // ✅ FIXED: TypeScript-sichere Fehlerbehandlung
     const errorMessage = getErrorMessage(err);
     
-    // ✅ Spezifische Fehlermeldungen für verschiedene Szenarien
+    // ✅ Network-Fehler Retry-Logic
     if (isError(err) && err instanceof TypeError && errorMessage.includes('Failed to fetch')) {
-      throw new Error("❌ Netzwerk-Fehler: Server nicht erreichbar");
+      if (retryCount < maxRetries) {
+        const delay = Math.pow(2, retryCount) * 1000;
+        console.log(`🔄 Network error - retrying in ${delay}ms...`);
+        await sleep(delay);
+        return apiCall(endpoint, options, retryCount + 1);
+      } else {
+        throw new Error("❌ Netzwerk-Fehler: Server nicht erreichbar (nach mehreren Versuchen)");
+      }
     }
     
+    // ✅ Spezifische Fehlermeldungen für verschiedene Szenarien
     if (errorMessage.includes('Unexpected token')) {
       throw new Error("❌ Server-Fehler: Unerwartete Antwort (möglicherweise ist die API offline)");
     }
@@ -123,38 +155,77 @@ export const apiCall = async (
 };
 
 /**
- * Spezielle Funktion für File-Upload mit Analyse
+ * Spezielle Funktion für File-Upload mit Analyse - MIT RETRY & PROGRESS
  */
-export const uploadAndAnalyze = async (file: File): Promise<unknown> => {
+export const uploadAndAnalyze = async (
+  file: File, 
+  onProgress?: (progress: number) => void
+): Promise<unknown> => {
   const formData = new FormData();
   formData.append('file', file);
 
   console.log(`📤 Upload & Analyze: ${file.name} (${file.size} bytes)`);
 
+  // ✅ Progress-Simulation (da FormData keinen echten Progress hat)
+  if (onProgress) {
+    onProgress(10); // Start
+  }
+
   try {
+    if (onProgress) onProgress(30); // PDF wird gelesen
+    
     const result = await apiCall('/analyze', {
       method: 'POST',
       body: formData,
     });
     
+    if (onProgress) onProgress(100); // Fertig
+    
     console.log("✅ Analyse erfolgreich:", result);
     return result;
+    
   } catch (error) {
+    if (onProgress) onProgress(0); // Reset bei Fehler
+    
     console.error("❌ Upload & Analyze Fehler:", error);
     
     // ✅ FIXED: TypeScript-sichere Fehlerbehandlung
     const errorMessage = getErrorMessage(error);
     
     // ✅ Benutzerfreundliche Fehlermeldungen
-    if (errorMessage.includes('nicht gefunden')) {
+    if (errorMessage.includes('nicht gefunden') || errorMessage.includes('404')) {
       throw new Error("❌ Analyse-Service ist derzeit nicht verfügbar. Bitte kontaktiere den Support.");
     }
     
-    if (errorMessage.includes('Server-Fehler')) {
+    if (errorMessage.includes('Server-Fehler') || errorMessage.includes('500')) {
       throw new Error("❌ Fehler bei der Vertragsanalyse. Bitte versuche es später erneut.");
     }
     
+    if (errorMessage.includes('Limit erreicht')) {
+      throw new Error("📊 Analyse-Limit erreicht. Bitte upgrade dein Paket für weitere Analysen.");
+    }
+    
+    if (errorMessage.includes('Timeout')) {
+      throw new Error("⏱️ Analyse-Timeout. Bitte versuche es mit einer kleineren PDF-Datei.");
+    }
+    
+    if (errorMessage.includes('PDF') || errorMessage.includes('Datei')) {
+      throw new Error("📄 PDF-Datei konnte nicht verarbeitet werden. Bitte prüfe das Dateiformat.");
+    }
+    
     throw error;
+  }
+};
+
+/**
+ * Health Check für Analyse-Service
+ */
+export const checkAnalyzeHealth = async (): Promise<boolean> => {
+  try {
+    const result = await apiCall('/analyze/health');
+    return !!(result as any)?.success;
+  } catch {
+    return false;
   }
 };
 

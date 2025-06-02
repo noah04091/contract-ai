@@ -1,11 +1,11 @@
-// 📁 src/components/ContractAnalysis.tsx - FIXED VERSION
-import { useState } from "react";
+// 📁 src/components/ContractAnalysis.tsx - IMPROVED VERSION WITH RETRY & PROGRESS
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { 
   FileText, AlertCircle, CheckCircle, Loader, 
-  Download, BarChart3, RefreshCw 
+  Download, BarChart3, RefreshCw, WifiOff, Clock
 } from "lucide-react";
-import { uploadAndAnalyze } from "../utils/api";
+import { uploadAndAnalyze, checkAnalyzeHealth } from "../utils/api";
 import styles from "./ContractAnalysis.module.css";
 
 interface ContractAnalysisProps {
@@ -22,6 +22,7 @@ interface AnalysisResult {
   comparison?: string;
   contractScore?: number;
   analysisId?: string;
+  requestId?: string;
   usage?: {
     count: number;
     limit: number;
@@ -32,24 +33,36 @@ interface AnalysisResult {
 
 export default function ContractAnalysis({ file, onReset }: ContractAnalysisProps) {
   const [analyzing, setAnalyzing] = useState(false);
+  const [progress, setProgress] = useState(0);
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const [serviceHealth, setServiceHealth] = useState<boolean | null>(null);
+
+  // ✅ Service Health Check beim Mount
+  useEffect(() => {
+    checkAnalyzeHealth().then(setServiceHealth);
+  }, []);
 
   const handleAnalyze = async () => {
     setAnalyzing(true);
     setError(null);
     setResult(null);
+    setProgress(0);
 
     try {
       console.log("🔄 Starte Analyse für:", file.name);
       
-      // ✅ Verwende die neue uploadAndAnalyze-Funktion
-      const response = await uploadAndAnalyze(file) as AnalysisResult;
+      // ✅ Verwende die verbesserte uploadAndAnalyze-Funktion mit Progress
+      const response = await uploadAndAnalyze(file, (progress) => {
+        setProgress(progress);
+      }) as AnalysisResult;
       
       console.log("✅ Analyse-Response:", response);
 
       if (response.success) {
         setResult(response);
+        setRetryCount(0); // Reset retry count on success
         console.log("🎉 Analyse erfolgreich abgeschlossen");
       } else {
         throw new Error(response.message || "Analyse fehlgeschlagen");
@@ -60,26 +73,37 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
       
       // ✅ Benutzerfreundliche Fehlermeldungen
       let errorMessage = "Ein unbekannter Fehler ist aufgetreten.";
+      let canRetry = false;
       
       if (err instanceof Error) {
-        if (err.message.includes('nicht erreichbar')) {
-          errorMessage = "🌐 Verbindungsfehler: Bitte prüfe deine Internetverbindung.";
-        } else if (err.message.includes('Limit erreicht')) {
+        const errMsg = err.message;
+        
+        if (errMsg.includes('nicht erreichbar') || errMsg.includes('Failed to fetch')) {
+          errorMessage = "🌐 Verbindungsfehler: Server ist momentan nicht erreichbar.";
+          canRetry = true;
+        } else if (errMsg.includes('Limit erreicht')) {
           errorMessage = "📊 Analyse-Limit erreicht. Bitte upgrade dein Paket.";
-        } else if (err.message.includes('nicht verfügbar')) {
-          errorMessage = "🔧 Analyse-Service ist vorübergehend nicht verfügbar.";
-        } else if (err.message.includes('Timeout')) {
-          errorMessage = "⏱️ Analyse-Timeout. Bitte versuche es mit einer kleineren Datei.";
-        } else if (err.message.includes('PDF')) {
-          errorMessage = "📄 PDF konnte nicht gelesen werden. Bitte prüfe das Dateiformat.";
+          canRetry = false;
+        } else if (errMsg.includes('nicht verfügbar') || errMsg.includes('500')) {
+          errorMessage = "🔧 Analyse-Service ist vorübergehend überlastet.";
+          canRetry = true;
+        } else if (errMsg.includes('Timeout')) {
+          errorMessage = "⏱️ Analyse-Timeout. Die PDF-Datei ist möglicherweise zu groß.";
+          canRetry = true;
+        } else if (errMsg.includes('PDF') || errMsg.includes('Datei')) {
+          errorMessage = "📄 PDF konnte nicht verarbeitet werden. Bitte prüfe das Dateiformat.";
+          canRetry = false;
         } else {
-          errorMessage = err.message;
+          errorMessage = errMsg;
+          canRetry = errMsg.includes('Server-Fehler') || errMsg.includes('HTTP 5');
         }
       }
       
       setError(errorMessage);
+      setRetryCount(prev => canRetry ? prev + 1 : prev);
     } finally {
       setAnalyzing(false);
+      if (progress === 0) setProgress(0); // Reset nur wenn nicht erfolgreich
     }
   };
 
@@ -95,6 +119,8 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
     return "Verbesserungsbedürftig";
   };
 
+  const canRetryAnalysis = error && retryCount < 3 && !error.includes('Limit erreicht');
+
   return (
     <div className={styles.analysisContainer}>
       <div className={styles.header}>
@@ -104,6 +130,12 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
             <h3 className={styles.fileName}>{file.name}</h3>
             <p className={styles.fileSize}>
               {(file.size / 1024 / 1024).toFixed(2)} MB
+              {serviceHealth === false && (
+                <span className={styles.serviceWarning}>
+                  <WifiOff size={12} />
+                  Service nicht verfügbar
+                </span>
+              )}
             </p>
           </div>
         </div>
@@ -115,17 +147,19 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
               onClick={handleAnalyze}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              disabled={analyzing}
+              disabled={analyzing || serviceHealth === false}
             >
               <BarChart3 size={16} />
-              <span>Analyse starten</span>
+              <span>
+                {retryCount > 0 ? `Erneut versuchen (${retryCount})` : 'Analyse starten'}
+              </span>
             </motion.button>
           )}
           
           {analyzing && (
             <div className={styles.loadingButton}>
               <Loader size={16} className={styles.spinner} />
-              <span>Analysiere...</span>
+              <span>Analysiere... {progress}%</span>
             </div>
           )}
           
@@ -148,37 +182,76 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
           animate={{ opacity: 1, y: 0 }}
         >
           <div className={styles.progressBar}>
-            <div className={styles.progressFill} />
+            <div 
+              className={styles.progressFill} 
+              style={{ width: `${progress}%` }}
+            />
           </div>
           <p className={styles.progressText}>
-            📄 PDF wird gelesen und analysiert...
+            {progress < 30 && "📄 PDF wird verarbeitet..."}
+            {progress >= 30 && progress < 70 && "🤖 KI-Analyse läuft..."}
+            {progress >= 70 && progress < 100 && "📊 Bewertung wird erstellt..."}
+            {progress === 100 && "✅ Analyse abgeschlossen!"}
           </p>
           <div className={styles.progressSteps}>
-            <div className={styles.step}>🔍 Text extrahieren</div>
-            <div className={styles.step}>🤖 KI-Analyse</div>
-            <div className={styles.step}>📊 Bewertung erstellen</div>
+            <div className={`${styles.step} ${progress >= 10 ? styles.active : ''}`}>
+              🔍 Text extrahieren
+            </div>
+            <div className={`${styles.step} ${progress >= 30 ? styles.active : ''}`}>
+              🤖 KI-Analyse
+            </div>
+            <div className={`${styles.step} ${progress >= 70 ? styles.active : ''}`}>
+              📊 Bewertung erstellen
+            </div>
           </div>
         </motion.div>
       )}
 
-      {/* ❌ Fehleranzeige */}
+      {/* ❌ Fehleranzeige mit Smart Retry */}
       {error && (
         <motion.div 
           className={styles.errorContainer}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <AlertCircle size={24} className={styles.errorIcon} />
+          <div className={styles.errorIcon}>
+            {error.includes('Verbindung') ? <WifiOff size={24} /> : 
+             error.includes('Timeout') ? <Clock size={24} /> : 
+             <AlertCircle size={24} />}
+          </div>
           <div className={styles.errorContent}>
             <h4>Analyse fehlgeschlagen</h4>
             <p>{error}</p>
-            <button 
-              className={styles.retryButton}
-              onClick={handleAnalyze}
-            >
-              <RefreshCw size={16} />
-              <span>Erneut versuchen</span>
-            </button>
+            
+            {canRetryAnalysis && (
+              <div className={styles.retrySection}>
+                <button 
+                  className={styles.retryButton}
+                  onClick={handleAnalyze}
+                  disabled={analyzing}
+                >
+                  <RefreshCw size={16} />
+                  <span>Erneut versuchen ({3 - retryCount} Versuche übrig)</span>
+                </button>
+                <p className={styles.retryHint}>
+                  {error.includes('Verbindung') && "Prüfe deine Internetverbindung"}
+                  {error.includes('überlastet') && "Der Server ist überlastet - versuche es in wenigen Sekunden erneut"}
+                  {error.includes('Timeout') && "Versuche es mit einer kleineren PDF-Datei"}
+                </p>
+              </div>
+            )}
+
+            {!canRetryAnalysis && retryCount >= 3 && (
+              <div className={styles.exhaustedRetries}>
+                <p>❌ Maximale Anzahl Versuche erreicht.</p>
+                <button 
+                  className={styles.contactSupportButton}
+                  onClick={() => window.open('mailto:support@contract-ai.de')}
+                >
+                  📧 Support kontaktieren
+                </button>
+              </div>
+            )}
           </div>
         </motion.div>
       )}
@@ -193,6 +266,9 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
           <div className={styles.successHeader}>
             <CheckCircle size={24} className={styles.successIcon} />
             <h4>Analyse abgeschlossen</h4>
+            {result.requestId && (
+              <span className={styles.requestId}>ID: {result.requestId}</span>
+            )}
           </div>
 
           {/* Contract Score */}

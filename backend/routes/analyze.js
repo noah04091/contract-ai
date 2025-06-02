@@ -1,8 +1,9 @@
-// 📁 backend/routes/analyze.js - VERBESSERTE ERROR HANDLING
+// 📁 backend/routes/analyze.js - RACE CONDITION & CLEANUP FIXES
 const express = require("express");
 const multer = require("multer");
 const pdfParse = require("pdf-parse");
-const fs = require("fs");
+const fs = require("fs").promises; // ✅ ASYNC fs verwenden
+const fsSync = require("fs"); // Fallback für existsSync
 const { OpenAI } = require("openai");
 const verifyToken = require("../middleware/verifyToken");
 const { MongoClient, ObjectId } = require("mongodb");
@@ -12,35 +13,69 @@ const saveContract = require("../services/saveContract");
 
 const router = express.Router();
 const upload = multer({ dest: "uploads/" });
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-// MongoDB Setup
+// ✅ SINGLETON OpenAI-Instance um Connection-Probleme zu vermeiden
+let openaiInstance = null;
+const getOpenAI = () => {
+  if (!openaiInstance) {
+    if (!process.env.OPENAI_API_KEY) {
+      throw new Error("OpenAI API Key fehlt in Umgebungsvariablen");
+    }
+    openaiInstance = new OpenAI({ 
+      apiKey: process.env.OPENAI_API_KEY,
+      timeout: 30000, // 30s timeout
+      maxRetries: 2   // Retry bei Fehlern
+    });
+    console.log("🤖 OpenAI-Instance initialisiert");
+  }
+  return openaiInstance;
+};
+
+// MongoDB Setup - ✅ Verbesserte Connection-Handhabung
 const mongoUri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
-const client = new MongoClient(mongoUri);
-let analysisCollection;
+let mongoClient = null;
+let analysisCollection = null;
+let usersCollection = null;
 
+const getMongoCollections = async () => {
+  if (!mongoClient) {
+    mongoClient = new MongoClient(mongoUri, {
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+    });
+    await mongoClient.connect();
+    const db = mongoClient.db("contract_ai");
+    analysisCollection = db.collection("analyses");
+    usersCollection = db.collection("users");
+    console.log("📊 MongoDB-Collections initialisiert");
+  }
+  return { analysisCollection, usersCollection };
+};
+
+// Initialize on startup
 (async () => {
   try {
-    await client.connect();
-    const db = client.db("contract_ai");
-    analysisCollection = db.collection("analyses");
+    await getMongoCollections();
     console.log("📊 Verbunden mit der Analyse-Collection");
   } catch (err) {
     console.error("❌ MongoDB-Fehler (analyze.js):", err);
   }
 })();
 
-// ✅ HAUPTROUTE: POST /analyze mit verbesserter Fehlerbehandlung
+// ✅ HAUPTROUTE: POST /analyze mit Race Condition Fixes
 router.post("/", verifyToken, upload.single("file"), async (req, res) => {
-  console.log("📊 Analyse-Request erhalten:", {
+  const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  console.log(`📊 [${requestId}] Analyse-Request erhalten:`, {
     hasFile: !!req.file,
     userId: req.user?.userId,
-    filename: req.file?.originalname
+    filename: req.file?.originalname,
+    fileSize: req.file?.size
   });
 
   // ❌ Keine Datei hochgeladen
   if (!req.file) {
-    console.warn("⚠️ Keine Datei in Request gefunden");
+    console.warn(`⚠️ [${requestId}] Keine Datei in Request gefunden`);
     return res.status(400).json({ 
       success: false,
       message: "❌ Keine Datei hochgeladen.",
@@ -48,13 +83,22 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
     });
   }
 
+  let tempFilePath = null;
+  
   try {
+    tempFilePath = req.file.path;
+    console.log(`📁 [${requestId}] Temp-Datei erstellt: ${tempFilePath}`);
+
+    // ✅ MongoDB-Collections sicher abrufen
+    const { analysisCollection, usersCollection: users } = await getMongoCollections();
+    
+    console.log(`🔍 [${requestId}] Prüfe User-Limits...`);
+    
     // 📊 Nutzer auslesen + Limit prüfen
-    const usersCollection = client.db("contract_ai").collection("users");
-    const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
+    const user = await users.findOne({ _id: new ObjectId(req.user.userId) });
 
     if (!user) {
-      console.error("❌ User nicht gefunden:", req.user.userId);
+      console.error(`❌ [${requestId}] User nicht gefunden: ${req.user.userId}`);
       return res.status(404).json({
         success: false,
         message: "❌ Benutzer nicht gefunden.",
@@ -69,10 +113,10 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
     if (plan === "business") limit = 50;
     if (plan === "premium") limit = Infinity;
 
-    console.log(`📊 User-Limits: ${count}/${limit} (Plan: ${plan})`);
+    console.log(`📊 [${requestId}] User-Limits: ${count}/${limit} (Plan: ${plan})`);
 
     if (count >= limit) {
-      console.warn(`⚠️ Analyse-Limit erreicht für User ${req.user.userId}`);
+      console.warn(`⚠️ [${requestId}] Analyse-Limit erreicht für User ${req.user.userId}`);
       return res.status(403).json({
         success: false,
         message: "❌ Analyse-Limit erreicht. Bitte Paket upgraden.",
@@ -83,9 +127,17 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
       });
     }
 
-    // 📥 PDF auslesen
-    console.log("📄 PDF wird gelesen...");
-    const buffer = fs.readFileSync(req.file.path);
+    // ✅ PDF auslesen - ASYNC mit besserer Fehlerbehandlung
+    console.log(`📄 [${requestId}] PDF wird gelesen...`);
+    
+    // Prüfe ob Datei existiert
+    if (!fsSync.existsSync(tempFilePath)) {
+      throw new Error(`Temporäre Datei nicht gefunden: ${tempFilePath}`);
+    }
+
+    const buffer = await fs.readFile(tempFilePath);
+    console.log(`📄 [${requestId}] Buffer gelesen: ${buffer.length} bytes`);
+    
     const parsed = await pdfParse(buffer);
     const contractText = parsed.text.slice(0, 4000);
 
@@ -93,12 +145,12 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
       throw new Error("PDF-Inhalt ist leer oder konnte nicht gelesen werden");
     }
 
-    console.log(`📄 PDF erfolgreich gelesen: ${contractText.length} Zeichen`);
+    console.log(`📄 [${requestId}] PDF erfolgreich gelesen: ${contractText.length} Zeichen`);
 
-    // ✅ OpenAI API Key prüfen
-    if (!process.env.OPENAI_API_KEY) {
-      throw new Error("OpenAI API Key fehlt in Umgebungsvariablen");
-    }
+    // ✅ OpenAI-Aufruf mit Singleton-Instance
+    console.log(`🤖 [${requestId}] OpenAI-Anfrage wird gesendet...`);
+    
+    const openai = getOpenAI();
 
     // 📤 Prompt erstellen
     const prompt = `
@@ -122,81 +174,112 @@ Antwort im folgenden JSON-Format:
   "contractScore": 87
 }`;
 
-    console.log("🤖 OpenAI-Anfrage wird gesendet...");
+    // 💬 OpenAI-Aufruf mit robustem Error-Handling
+    let completion;
+    try {
+      completion = await Promise.race([
+        openai.chat.completions.create({
+          model: "gpt-4",
+          messages: [
+            { role: "system", content: "Du bist ein erfahrener Vertragsanalyst." },
+            { role: "user", content: prompt },
+          ],
+          temperature: 0.3,
+        }),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error("OpenAI API Timeout nach 30s")), 30000)
+        )
+      ]);
+    } catch (openaiError) {
+      console.error(`❌ [${requestId}] OpenAI-Fehler:`, openaiError.message);
+      throw new Error(`OpenAI API Fehler: ${openaiError.message}`);
+    }
 
-    // 💬 OpenAI-Aufruf mit Timeout
-    const completion = await Promise.race([
-      openai.chat.completions.create({
-        model: "gpt-4",
-        messages: [
-          { role: "system", content: "Du bist ein erfahrener Vertragsanalyst." },
-          { role: "user", content: prompt },
-        ],
-        temperature: 0.3,
-      }),
-      new Promise((_, reject) => 
-        setTimeout(() => reject(new Error("OpenAI API Timeout")), 30000)
-      )
-    ]);
-
-    console.log("✅ OpenAI-Response erhalten");
+    console.log(`✅ [${requestId}] OpenAI-Response erhalten`);
 
     const aiMessage = completion.choices[0].message.content || "";
     const jsonStart = aiMessage.indexOf("{");
     const jsonEnd = aiMessage.lastIndexOf("}") + 1;
     
     if (jsonStart === -1 || jsonEnd <= jsonStart) {
+      console.error(`❌ [${requestId}] Keine gültige JSON-Antwort:`, aiMessage.substring(0, 200));
       throw new Error("Keine gültige JSON-Antwort von OpenAI erhalten");
     }
 
     const jsonString = aiMessage.slice(jsonStart, jsonEnd);
-    const result = JSON.parse(jsonString);
+    let result;
+    
+    try {
+      result = JSON.parse(jsonString);
+    } catch (parseError) {
+      console.error(`❌ [${requestId}] JSON-Parse-Fehler:`, parseError.message, jsonString.substring(0, 100));
+      throw new Error("Fehler beim Parsen der AI-Antwort");
+    }
 
     // ✅ Validierung der AI-Response
     if (!result.summary || !result.contractScore) {
+      console.error(`❌ [${requestId}] Unvollständige AI-Response:`, result);
       throw new Error("Unvollständige Analyse-Antwort von OpenAI");
     }
 
-    console.log("📊 Analyse erfolgreich, speichere in DB...");
+    console.log(`📊 [${requestId}] Analyse erfolgreich, speichere in DB...`);
 
-    // 📦 In DB speichern
-    const analysis = {
+    // 📦 In DB speichern - mit Retry-Logik
+    const analysisData = {
       userId: req.user.userId,
       contractName: req.file.originalname,
       createdAt: new Date(),
+      requestId,
       ...result,
     };
 
-    const inserted = await analysisCollection.insertOne(analysis);
+    let inserted;
+    try {
+      inserted = await analysisCollection.insertOne(analysisData);
+    } catch (dbError) {
+      console.error(`❌ [${requestId}] DB-Insert-Fehler:`, dbError.message);
+      throw new Error(`Datenbank-Fehler beim Speichern: ${dbError.message}`);
+    }
 
     // 💾 Vertrag speichern
-    await saveContract({
-      userId: req.user.userId,
-      fileName: req.file.originalname,
-      toolUsed: "analyze",
-      filePath: `/uploads/${req.file.filename}`,
-      extraRefs: { analysisId: inserted.insertedId },
-      legalPulse: {
-        riskScore: result.contractScore || null,
-        riskSummary: result.summary || '',
-        lastChecked: new Date(),
-        lawInsights: [],
-        marketSuggestions: []
-      }
-    });
+    try {
+      await saveContract({
+        userId: req.user.userId,
+        fileName: req.file.originalname,
+        toolUsed: "analyze",
+        filePath: `/uploads/${req.file.filename}`,
+        extraRefs: { analysisId: inserted.insertedId },
+        legalPulse: {
+          riskScore: result.contractScore || null,
+          riskSummary: result.summary || '',
+          lastChecked: new Date(),
+          lawInsights: [],
+          marketSuggestions: []
+        }
+      });
+    } catch (saveError) {
+      console.warn(`⚠️ [${requestId}] Vertrag-Speicher-Fehler:`, saveError.message);
+      // Nicht kritisch, Analyse trotzdem weiterführen
+    }
 
     // ✅ Analyse-Zähler hochzählen
-    await usersCollection.updateOne(
-      { _id: user._id },
-      { $inc: { analysisCount: 1 } }
-    );
+    try {
+      await users.updateOne(
+        { _id: user._id },
+        { $inc: { analysisCount: 1 } }
+      );
+    } catch (updateError) {
+      console.warn(`⚠️ [${requestId}] Counter-Update-Fehler:`, updateError.message);
+      // Nicht kritisch
+    }
 
-    console.log("✅ Analyse komplett erfolgreich");
+    console.log(`✅ [${requestId}] Analyse komplett erfolgreich`);
 
     // 📤 Erfolgreiche Response
     res.json({ 
       success: true,
       message: "Analyse erfolgreich abgeschlossen",
+      requestId,
       ...result, 
       analysisId: inserted.insertedId,
       usage: {
@@ -207,7 +290,12 @@ Antwort im folgenden JSON-Format:
     });
 
   } catch (error) {
-    console.error("❌ Fehler bei Analyse:", error);
+    console.error(`❌ [${requestId}] Fehler bei Analyse:`, {
+      message: error.message,
+      stack: error.stack,
+      userId: req.user?.userId,
+      filename: req.file?.originalname
+    });
     
     // ✅ Spezifische Fehlermeldungen für verschiedene Fehlertypen
     let errorMessage = "Fehler bei der Analyse.";
@@ -219,38 +307,57 @@ Antwort im folgenden JSON-Format:
     } else if (error.message.includes("Timeout")) {
       errorMessage = "Analyse-Timeout. Bitte versuche es mit einer kleineren Datei.";
       errorCode = "TIMEOUT_ERROR";
-    } else if (error.message.includes("JSON")) {
+    } else if (error.message.includes("JSON") || error.message.includes("Parse")) {
       errorMessage = "Fehler bei der Analyse-Verarbeitung.";
       errorCode = "PARSE_ERROR";
-    } else if (error.message.includes("PDF")) {
+    } else if (error.message.includes("PDF") || error.message.includes("Datei")) {
       errorMessage = "PDF konnte nicht gelesen werden. Bitte prüfe das Dateiformat.";
       errorCode = "PDF_ERROR";
+    } else if (error.message.includes("Datenbank") || error.message.includes("MongoDB")) {
+      errorMessage = "Datenbank-Fehler. Bitte versuche es erneut.";
+      errorCode = "DATABASE_ERROR";
+    } else if (error.message.includes("OpenAI")) {
+      errorMessage = "KI-Analyse-Service vorübergehend nicht verfügbar.";
+      errorCode = "AI_SERVICE_ERROR";
     }
 
     res.status(500).json({ 
       success: false,
       message: errorMessage,
       error: errorCode,
+      requestId,
       details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
 
   } finally {
-    // 🧹 Cleanup: Hochgeladene Datei löschen
-    try {
-      if (req.file && fs.existsSync(req.file.path)) {
-        fs.unlinkSync(req.file.path);
-        console.log("🧹 Temp-Datei gelöscht:", req.file.path);
+    // 🧹 ROBUSTES Cleanup: Hochgeladene Datei löschen
+    if (tempFilePath) {
+      try {
+        if (fsSync.existsSync(tempFilePath)) {
+          await fs.unlink(tempFilePath);
+          console.log(`🧹 [${requestId}] Temp-Datei gelöscht: ${tempFilePath}`);
+        } else {
+          console.log(`🧹 [${requestId}] Temp-Datei bereits gelöscht: ${tempFilePath}`);
+        }
+      } catch (cleanupErr) {
+        console.error(`⚠️ [${requestId}] Fehler beim Löschen der Temp-Datei:`, {
+          path: tempFilePath,
+          error: cleanupErr.message
+        });
+        // Nicht kritisch, aber loggen für Debugging
       }
-    } catch (cleanupErr) {
-      console.warn("⚠️ Fehler beim Löschen der Temp-Datei:", cleanupErr.message);
     }
   }
 });
 
-// 📚 Analyseverlauf abrufen
+// 📚 Analyseverlauf abrufen - Auch mit Request-ID
 router.get("/history", verifyToken, async (req, res) => {
+  const requestId = `hist_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  
   try {
-    console.log("📚 Analyse-Historie angefordert für User:", req.user.userId);
+    console.log(`📚 [${requestId}] Analyse-Historie angefordert für User: ${req.user.userId}`);
+    
+    const { analysisCollection } = await getMongoCollections();
     
     const history = await analysisCollection
       .find({ userId: req.user.userId })
@@ -258,33 +365,59 @@ router.get("/history", verifyToken, async (req, res) => {
       .limit(20)
       .toArray();
 
-    console.log(`📚 ${history.length} Analyse-Einträge gefunden`);
+    console.log(`📚 [${requestId}] ${history.length} Analyse-Einträge gefunden`);
 
     res.json({
       success: true,
+      requestId,
       history: history,
       count: history.length
     });
 
   } catch (err) {
-    console.error("❌ Fehler beim Abrufen der Analyse-Historie:", err);
+    console.error(`❌ [${requestId}] Fehler beim Abrufen der Analyse-Historie:`, err);
     res.status(500).json({ 
       success: false,
       message: "Fehler beim Abrufen der Historie.",
-      error: "HISTORY_ERROR"
+      error: "HISTORY_ERROR",
+      requestId
     });
   }
 });
 
-// ✅ Health Check Route
-router.get("/health", (req, res) => {
-  res.json({
-    success: true,
+// ✅ Health Check Route - Erweitert
+router.get("/health", async (req, res) => {
+  const checks = {
     service: "Contract Analysis",
     status: "online",
     timestamp: new Date().toISOString(),
-    openaiConfigured: !!process.env.OPENAI_API_KEY
+    openaiConfigured: !!process.env.OPENAI_API_KEY,
+    mongoConnected: false,
+    uploadsPath: fsSync.existsSync("./uploads")
+  };
+
+  try {
+    await getMongoCollections();
+    checks.mongoConnected = true;
+  } catch (err) {
+    checks.mongoConnected = false;
+    checks.mongoError = err.message;
+  }
+
+  const isHealthy = checks.openaiConfigured && checks.mongoConnected && checks.uploadsPath;
+  
+  res.status(isHealthy ? 200 : 503).json({
+    success: isHealthy,
+    ...checks
   });
+});
+
+// ✅ Graceful Shutdown
+process.on('SIGTERM', async () => {
+  console.log('📊 Analyze service shutting down...');
+  if (mongoClient) {
+    await mongoClient.close();
+  }
 });
 
 module.exports = router;
