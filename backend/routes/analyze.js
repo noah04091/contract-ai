@@ -1,4 +1,4 @@
-// 📁 backend/routes/analyze.js - RACE CONDITION & PDF-PARSING FIXES + DUBLETTENERKENNUNG
+// 📁 backend/routes/analyze.js - RACE CONDITION & PDF-PARSING FIXES + DUBLETTENERKENNUNG (SAVE-BUG FIXED)
 const express = require("express");
 const multer = require("multer");
 const pdfParse = require("pdf-parse");
@@ -321,23 +321,9 @@ Antwort im folgenden JSON-Format:
       throw new Error(`Datenbank-Fehler beim Speichern: ${dbError.message}`);
     }
 
-    // 💾 Vertrag speichern - ✅ ERWEITERT: Mit Hash für Dublettenerkennung
+    // 💾 Vertrag speichern - ✅ FIXED: Korrekte Funktion-Parameter-Struktur
     try {
-      const contractSaveData = {
-        userId: req.user.userId,
-        fileName: req.file.originalname,
-        toolUsed: "analyze",
-        filePath: `/uploads/${req.file.filename}`,
-        fileHash: fileHash, // ✅ NEU: Hash hinzufügen
-        extraRefs: { analysisId: inserted.insertedId },
-        legalPulse: {
-          riskScore: result.contractScore || null,
-          riskSummary: result.summary || '',
-          lastChecked: new Date(),
-          lawInsights: [],
-          marketSuggestions: []
-        }
-      };
+      console.log(`💾 [${requestId}] Speichere Vertrag...`);
 
       // Bei Duplikat: Bestehenden Vertrag aktualisieren statt neu anlegen
       if (existingContract && req.body.forceReanalyze === 'true') {
@@ -349,27 +335,52 @@ Antwort im folgenden JSON-Format:
             $set: {
               lastAnalyzed: new Date(),
               analysisId: inserted.insertedId,
-              legalPulse: contractSaveData.legalPulse,
+              legalPulse: {
+                riskScore: result.contractScore || null,
+                riskSummary: result.summary || '',
+                lastChecked: new Date(),
+                lawInsights: [],
+                marketSuggestions: []
+              },
               // Optional: Analyse-Counter erhöhen
               analyzeCount: (existingContract.analyzeCount || 0) + 1
             }
           }
         );
         
-        // Response mit Referenz auf bestehenden Vertrag
-        contractSaveData.contractId = existingContract._id;
-        contractSaveData.isUpdate = true;
+        console.log(`✅ [${requestId}] Bestehender Vertrag aktualisiert`);
       } else {
-        // Normales Speichern bei neuem Vertrag
-        await saveContract(contractSaveData);
+        // ✅ FIXED: Korrekte saveContract-Aufrufsyntax für NEUE Verträge
+        const saveResult = await saveContract({
+          userId: req.user.userId,
+          fileName: req.file.originalname,
+          toolUsed: "analyze",
+          filePath: `/uploads/${req.file.filename}`,
+          fileHash: fileHash, // ✅ Hash hinzufügen
+          extraRefs: { 
+            analysisId: inserted.insertedId,
+            fileSize: buffer.length,
+            uploadedAt: new Date()
+          },
+          legalPulse: {
+            riskScore: result.contractScore || null,
+            riskSummary: result.summary || '',
+            lastChecked: new Date(),
+            lawInsights: [],
+            marketSuggestions: []
+          }
+        });
+        
+        console.log(`✅ [${requestId}] Neuer Vertrag gespeichert: ${saveResult.insertedId}`);
       }
       
     } catch (saveError) {
-      console.warn(`⚠️ [${requestId}] Vertrag-Speicher-Fehler:`, saveError.message);
-      // Nicht kritisch, Analyse trotzdem weiterführen
+      console.error(`❌ [${requestId}] Vertrag-Speicher-Fehler:`, saveError.message);
+      // ✅ WICHTIG: Nicht mehr als Warning behandeln, sondern als Fehler!
+      throw new Error(`Fehler beim Speichern des Vertrags: ${saveError.message}`);
     }
 
-    // ✅ Analyse-Zähler hochzählen (nur bei neuer Analyse)
+    // ✅ Analyse-Zähler hochzählen (nur bei erfolgreicher Analyse)
     try {
       await users.updateOne(
         { _id: user._id },
@@ -434,6 +445,9 @@ Antwort im folgenden JSON-Format:
     } else if (error.message.includes("OpenAI")) {
       errorMessage = "KI-Analyse-Service vorübergehend nicht verfügbar.";
       errorCode = "AI_SERVICE_ERROR";
+    } else if (error.message.includes("Vertrag")) {
+      errorMessage = "Fehler beim Speichern des Vertrags.";
+      errorCode = "CONTRACT_SAVE_ERROR";
     }
 
     res.status(500).json({ 
