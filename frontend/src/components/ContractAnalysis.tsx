@@ -33,6 +33,21 @@ interface AnalysisResult {
   error?: string;
 }
 
+// ✅ NEU: Interface für Optimierung-Response
+interface OptimizationResult {
+  success: boolean;
+  message?: string;
+  optimizationResult?: string;
+  optimizationId?: string;
+  requestId?: string;
+  usage?: {
+    count: number;
+    limit: number;
+    plan: string;
+  };
+  error?: string;
+}
+
 export default function ContractAnalysis({ file, onReset }: ContractAnalysisProps) {
   const [analyzing, setAnalyzing] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -119,17 +134,20 @@ export default function ContractAnalysis({ file, onReset }: ContractAnalysisProp
       const optimizeResponse = await uploadAndOptimize(file, 'Standardvertrag', (progress) => {
         // Optional: Progress anzeigen
         console.log(`🔧 Optimierung Progress: ${progress}%`);
-      });
+      }) as OptimizationResult;
       
       console.log("✅ Optimierung-Response:", optimizeResponse);
       
-      // Type-sichere Behandlung der Response
-      if (optimizeResponse && typeof optimizeResponse === 'object' && 'optimizationResult' in optimizeResponse) {
-        setOptimizationResult((optimizeResponse as any).optimizationResult);
+      // ✅ Type-sichere Behandlung der Response ohne 'any'
+      if (optimizeResponse && optimizeResponse.optimizationResult) {
+        setOptimizationResult(optimizeResponse.optimizationResult);
         console.log("🎉 Optimierung erfolgreich abgeschlossen");
+      } else if (optimizeResponse && optimizeResponse.message) {
+        // Fallback: Verwende message wenn optimizationResult nicht verfügbar
+        setOptimizationResult(optimizeResponse.message);
       } else {
-        // Fallback für String-Response
-        setOptimizationResult(String(optimizeResponse));
+        // Fallback für unerwartete Response-Struktur
+        setOptimizationResult("Optimierung wurde durchgeführt, aber Details sind nicht verfügbar.");
       }
     } catch (err) {
       console.error("❌ Optimierung fehlgeschlagen:", err);

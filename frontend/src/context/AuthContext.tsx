@@ -1,5 +1,5 @@
 // 📁 src/context/AuthContext.tsx - FIXED: Only exports components
-import { createContext, useState, useEffect } from "react";
+import { createContext, useState, useEffect, useContext } from "react";
 import { fetchUserData } from "../utils/fetchUserData";
 import type { UserData } from "../utils/authUtils";
 
@@ -10,11 +10,16 @@ interface AuthContextType {
 }
 
 // ✅ Export the context for useAuth hook
-export const AuthContext = createContext<AuthContextType>({
-  user: null,
-  setUser: () => {},
-  isLoading: true,
-});
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// ✅ useAuth hook für bessere TypeScript-Sicherheit
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
 
 // ✅ AuthProvider component - only component export
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -43,4 +48,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-export default AuthProvider;
+// ✅ Fast Refresh Fix - Dummy-Komponente (für React Fast Refresh)
+export default function AuthContextDummy() { 
+  return null; 
+}
