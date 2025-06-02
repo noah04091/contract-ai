@@ -1,4 +1,4 @@
-// 📁 backend/routes/analyze.js - RACE CONDITION & CLEANUP FIXES
+// 📁 backend/routes/analyze.js - RACE CONDITION & PDF-PARSING FIXES
 const express = require("express");
 const multer = require("multer");
 const pdfParse = require("pdf-parse");
@@ -127,7 +127,7 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
       });
     }
 
-    // ✅ PDF auslesen - ASYNC mit besserer Fehlerbehandlung
+    // ✅ PDF auslesen - IMPROVED mit besserer Fehlerbehandlung
     console.log(`📄 [${requestId}] PDF wird gelesen...`);
     
     // Prüfe ob Datei existiert
@@ -138,11 +138,41 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
     const buffer = await fs.readFile(tempFilePath);
     console.log(`📄 [${requestId}] Buffer gelesen: ${buffer.length} bytes`);
     
-    const parsed = await pdfParse(buffer);
-    const contractText = parsed.text.slice(0, 4000);
+    let parsed;
+    try {
+      // ✅ IMPROVED: Bessere PDF-Parse-Optionen
+      parsed = await pdfParse(buffer, {
+        max: 50000,        // Max characters to parse
+        normalizeWhitespace: true,
+        disableCombineTextItems: false
+      });
+    } catch (pdfError) {
+      console.error(`❌ [${requestId}] PDF-Parse-Fehler:`, pdfError.message);
+      throw new Error(`PDF-Datei ist beschädigt oder passwortgeschützt: ${pdfError.message}`);
+    }
+    
+    const contractText = parsed.text?.slice(0, 4000) || '';
+    
+    console.log(`📄 [${requestId}] PDF-Text extrahiert: ${contractText.length} Zeichen`);
+    console.log(`📄 [${requestId}] Text-Preview: "${contractText.substring(0, 100)}..."`);
 
+    // ✅ IMPROVED: Bessere Validierung mit Details
     if (!contractText.trim()) {
-      throw new Error("PDF-Inhalt ist leer oder konnte nicht gelesen werden");
+      const errorDetails = {
+        fileSize: buffer.length,
+        pdfInfo: parsed.info || 'Unknown',
+        pdfMeta: parsed.metadata || 'Unknown',
+        textLength: contractText.length
+      };
+      
+      console.error(`❌ [${requestId}] PDF-Analyse-Details:`, errorDetails);
+      
+      // Bessere Fehlermeldung für User
+      throw new Error(
+        `PDF enthält keinen lesbaren Text. Mögliche Ursachen: ` +
+        `PDF ist passwortgeschützt, enthält nur Bilder, oder ist beschädigt. ` +
+        `Bitte versuche eine andere PDF-Datei.`
+      );
     }
 
     console.log(`📄 [${requestId}] PDF erfolgreich gelesen: ${contractText.length} Zeichen`);
@@ -310,8 +340,8 @@ Antwort im folgenden JSON-Format:
     } else if (error.message.includes("JSON") || error.message.includes("Parse")) {
       errorMessage = "Fehler bei der Analyse-Verarbeitung.";
       errorCode = "PARSE_ERROR";
-    } else if (error.message.includes("PDF") || error.message.includes("Datei")) {
-      errorMessage = "PDF konnte nicht gelesen werden. Bitte prüfe das Dateiformat.";
+    } else if (error.message.includes("PDF") || error.message.includes("Datei") || error.message.includes("passwortgeschützt") || error.message.includes("enthält nur Bilder")) {
+      errorMessage = error.message; // ✅ IMPROVED: Use detailed PDF error message
       errorCode = "PDF_ERROR";
     } else if (error.message.includes("Datenbank") || error.message.includes("MongoDB")) {
       errorMessage = "Datenbank-Fehler. Bitte versuche es erneut.";
