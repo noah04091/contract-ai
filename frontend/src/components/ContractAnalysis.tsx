@@ -84,9 +84,10 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract }
   const [isOptimizationExpanded, setIsOptimizationExpanded] = useState(true);
   const [generatingPdf, setGeneratingPdf] = useState(false);
   
-  // ✅ NEU: States für Duplikat-Handling
+  // ✅ NEU: States für bessere UX-Behandlung
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
   const [duplicateInfo, setDuplicateInfo] = useState<DuplicateResponse | null>(null);
+  const [showNavigationMessage, setShowNavigationMessage] = useState(false); // ✅ NEU: Für schöne Navigation-Message
   
   const analysisResultRef = useRef<HTMLDivElement>(null);
 
@@ -108,6 +109,7 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract }
     setGeneratingPdf(false);
     setShowDuplicateModal(false);
     setDuplicateInfo(null);
+    setShowNavigationMessage(false); // ✅ NEU: Reset auch Navigation-Message
   };
 
   // ✅ FIXED: Robustes handleAnalyze mit besserem TypeScript-Handling
@@ -237,10 +239,9 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract }
     if (duplicateInfo && onNavigateToContract) {
       onNavigateToContract(duplicateInfo.contractId);
     } else {
-      // ✅ FIXED: Type-sichere Fallback-Message
-      const contractName = duplicateInfo?.contractName || file.name || "diesem Vertrag";
+      // ✅ FIXED: Schöne Navigation-Message statt Error
       setShowDuplicateModal(false);
-      setError(`📄 Dieser Vertrag ist bereits in deiner Vertragsliste verfügbar. Bitte öffne das Dashboard und suche nach '${contractName}'.`);
+      setShowNavigationMessage(true);
     }
   };
 
@@ -622,6 +623,53 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract }
                 <span>{step.text}</span>
               </div>
             ))}
+          </div>
+        </motion.div>
+      )}
+
+      {/* ✅ NEU: Schöne Navigation-Message für Duplikat-Verweis */}
+      {showNavigationMessage && duplicateInfo && (
+        <motion.div 
+          className={styles.navigationContainer}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <div className={styles.navigationContent}>
+            <div className={styles.navigationIcon}>
+              <CheckCircle size={24} style={{ color: '#10b981' }} />
+            </div>
+            <div className={styles.navigationDetails}>
+              <h4 className={styles.navigationTitle}>
+                Vertrag gefunden!
+              </h4>
+              <p className={styles.navigationMessage}>
+                <strong>"{duplicateInfo.contractName}"</strong> ist bereits in deinen Verträgen verfügbar. 
+                Du findest ihn in der Vertragsübersicht.
+              </p>
+              
+              <div className={styles.navigationActions}>
+                <button 
+                  className={styles.goToContractsButton}
+                  onClick={() => {
+                    // Navigation zu Verträgen (je nach Router-Setup anpassen)
+                    window.location.href = '/contracts';
+                  }}
+                >
+                  <FileText size={16} />
+                  <span>Jetzt zu Verträgen gehen</span>
+                  <ArrowRight size={14} />
+                </button>
+                <button 
+                  className={styles.continueButton}
+                  onClick={() => {
+                    setShowNavigationMessage(false);
+                    setDuplicateInfo(null);
+                  }}
+                >
+                  <span>Hier weitermachen</span>
+                </button>
+              </div>
+            </div>
           </div>
         </motion.div>
       )}
