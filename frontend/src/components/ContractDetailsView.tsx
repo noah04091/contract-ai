@@ -23,6 +23,8 @@ interface Contract {
   // ✅ Erweiterte Felder für Analyse-Daten
   fullText?: string;
   extractedText?: string; // ✅ NEU: Extrahierter Text als Fallback
+  fileUrl?: string; // ✅ NEU: URL zur Original-Vertragsdatei
+  filePath?: string; // ✅ NEU: Pfad zur Original-Vertragsdatei (Fallback)
   analysis?: {
     summary?: string;
     legalAssessment?: string;
@@ -338,6 +340,20 @@ ${analysis.comparison || 'Nicht verfügbar'}
                       <span>{formatDate(contract.createdAt)}</span>
                     </div>
                   </div>
+                  
+                  {/* ✅ NEU: Button für Original-Vertragsdatei */}
+                  {(contract.fileUrl || contract.filePath) && (
+                    <div className={styles.viewContractSection}>
+                      <a 
+                        href={contract.fileUrl || contract.filePath} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className={styles.viewContractButton}
+                      >
+                        📄 Vertrag anzeigen
+                      </a>
+                    </div>
+                  )}
                 </div>
 
                 <div className={styles.section}>

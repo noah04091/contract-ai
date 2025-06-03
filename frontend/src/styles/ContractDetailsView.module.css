@@ -1,5 +1,6 @@
 /* ContractDetailsView.module.css - Premium Apple-Style Modal + Enhanced Content & Analysis */
 @import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 .overlay {
   position: fixed;
@@ -338,6 +339,43 @@
   line-height: 1.5;
 }
 
+/* ✅ NEU: View Contract Button Section */
+.viewContractSection {
+  padding: 0 1.5rem 1.5rem;
+  border-top: 1px solid #f5f5f7;
+  margin-top: 1rem;
+  padding-top: 1rem;
+}
+
+.viewContractButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background: #2563eb;
+  color: white;
+  border-radius: 10px;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.viewContractButton:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  color: white;
+  text-decoration: none;
+}
+
+.viewContractButton:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3);
+}
+
 /* ✅ Content Tab Styles */
 .contentTab {
   height: 100%;
@@ -385,19 +423,66 @@
   transform: translateY(-1px);
 }
 
+/* ✅ VERBESSERT: Content Text - Moderne, lesbare Darstellung */
 .contentText {
   flex: 1;
-  background: #f5f5f7;
+  background: #f9f9f9;
+  border: 1px solid #e5e5e7;
   border-radius: 12px;
   padding: 1.5rem;
-  font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
-  font-size: 0.9rem;
-  line-height: 1.6;
-  white-space: pre-wrap;
+  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+  color: #2a2a2a;
+  white-space: pre-line;
+  word-break: break-word;
   overflow-y: auto;
-  color: #1d1d1f;
   margin-bottom: 1rem;
-  max-height: 400px;
+  max-height: 65vh;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+  scrollbar-width: thin;
+  scrollbar-color: #d1d5db #f9f9f9;
+}
+
+.contentText::-webkit-scrollbar {
+  width: 8px;
+}
+
+.contentText::-webkit-scrollbar-track {
+  background: #f9f9f9;
+  border-radius: 4px;
+}
+
+.contentText::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 4px;
+  border: 2px solid #f9f9f9;
+}
+
+.contentText::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* Bessere Lesbarkeit für verschiedene Text-Elemente */
+.contentText h1,
+.contentText h2,
+.contentText h3,
+.contentText h4,
+.contentText h5,
+.contentText h6 {
+  font-weight: 600;
+  margin: 1.5em 0 0.5em 0;
+  color: #1f2937;
+}
+
+.contentText p {
+  margin: 0.75em 0;
+}
+
+.contentText strong,
+.contentText b {
+  font-weight: 600;
+  color: #1f2937;
 }
 
 /* ✅ NEU: Content Source Info */
@@ -827,6 +912,15 @@
   }
 
   /* ✅ Mobile Responsive für neue Elemente */
+  .viewContractSection {
+    padding: 0 1rem 1rem;
+  }
+  
+  .contentText {
+    max-height: 55vh;
+    font-size: 13px;
+  }
+  
   .contentStats {
     flex-direction: column;
     gap: 1rem;
@@ -873,26 +967,22 @@
 
 /* Scrollbar Styling */
 .content::-webkit-scrollbar,
-.contentText::-webkit-scrollbar,
 .analysisContent::-webkit-scrollbar {
   width: 6px;
 }
 
 .content::-webkit-scrollbar-track,
-.contentText::-webkit-scrollbar-track,
 .analysisContent::-webkit-scrollbar-track {
   background: transparent;
 }
 
 .content::-webkit-scrollbar-thumb,
-.contentText::-webkit-scrollbar-thumb,
 .analysisContent::-webkit-scrollbar-thumb {
   background: #d2d2d7;
   border-radius: 3px;
 }
 
 .content::-webkit-scrollbar-thumb:hover,
-.contentText::-webkit-scrollbar-thumb:hover,
 .analysisContent::-webkit-scrollbar-thumb:hover {
   background: #a1a1a6;
 }
