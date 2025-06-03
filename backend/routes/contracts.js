@@ -21,7 +21,7 @@ let analysisCollection; // ✅ NEU: Auch Analyse-Collection
   }
 })();
 
-// ✅ HELPER: Analyse-Daten zu Contract hinzufügen
+// ✅ ERWEITERTE HELPER: Analyse-Daten UND fullText zu Contract hinzufügen
 async function enrichContractWithAnalysis(contract) {
   try {
     // Suche nach Analyse-Daten über analysisId oder analysisRef
@@ -34,15 +34,23 @@ async function enrichContractWithAnalysis(contract) {
     }
     
     // Fallback: Suche über contractName und userId
-    if (!analysis) {
+    if (!analysis && contract.name) {
       analysis = await analysisCollection.findOne({
         userId: contract.userId.toString(),
         contractName: contract.name
       });
     }
     
+    // ✅ ERWEITERT: Auch nach originalFileName suchen
+    if (!analysis && contract.name) {
+      analysis = await analysisCollection.findOne({
+        userId: contract.userId.toString(),
+        originalFileName: contract.name
+      });
+    }
+    
     if (analysis) {
-      console.log(`✅ Analyse gefunden für Vertrag: ${contract.name}`);
+      console.log(`✅ Analyse gefunden für Vertrag: ${contract.name} (fullText: ${analysis.fullText ? analysis.fullText.length : 0} Zeichen)`);
       
       // Analyse-Daten in korrektem Format hinzufügen
       contract.analysis = {
@@ -55,14 +63,32 @@ async function enrichContractWithAnalysis(contract) {
         lastAnalyzed: analysis.createdAt
       };
       
-      // ✅ BONUS: fullText für Content-Tab (falls gespeichert)
-      if (analysis.extractedText || analysis.fullText) {
-        contract.fullText = analysis.extractedText || analysis.fullText;
+      // ✅ KRITISCH: fullText für Content-Tab (mehrere Quellen prüfen)
+      if (analysis.fullText) {
+        contract.fullText = analysis.fullText;
+        console.log(`✅ fullText aus Analyse geladen: ${analysis.fullText.length} Zeichen`);
+      } else if (analysis.extractedText) {
+        contract.fullText = analysis.extractedText;
+        console.log(`✅ fullText aus extractedText geladen: ${analysis.extractedText.length} Zeichen`);
       }
       
     } else {
       console.log(`⚠️ Keine Analyse gefunden für Vertrag: ${contract.name}`);
     }
+    
+    // ✅ FALLBACK: fullText direkt aus Contract-Feldern laden (falls vorhanden)
+    if (!contract.fullText) {
+      if (contract.content) {
+        contract.fullText = contract.content;
+        console.log(`✅ fullText aus contract.content geladen: ${contract.content.length} Zeichen`);
+      } else if (contract.extractedText) {
+        contract.fullText = contract.extractedText;
+        console.log(`✅ fullText aus contract.extractedText geladen`);
+      }
+    }
+    
+    // ✅ DEBUG: Log final status
+    console.log(`🔍 Contract "${contract.name}": hasAnalysis=${!!contract.analysis}, hasFullText=${!!contract.fullText}, fullTextLength=${contract.fullText ? contract.fullText.length : 0}`);
     
     return contract;
   } catch (err) {

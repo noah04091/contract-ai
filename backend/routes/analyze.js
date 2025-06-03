@@ -272,7 +272,7 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
     let parsed;
     try {
       parsed = await pdfParse(buffer, {
-        max: 50000,
+        max: 100000, // ✅ ERHÖHT: Mehr Text für Content-Tab (war 50000)
         normalizeWhitespace: true,
         disableCombineTextItems: false
       });
@@ -281,12 +281,13 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
       throw new Error(`PDF-Datei ist beschädigt oder passwortgeschützt: ${pdfError.message}`);
     }
     
-    // ✅ NEU: Volltext für Content-Tab UND verkürzter Text für OpenAI
-    const fullTextContent = parsed.text || ''; // ✅ VOLLSTÄNDIGER Text für Content-Tab
+    // ✅ KRITISCH: Volltext für Content-Tab UND verkürzter Text für OpenAI
+    const fullTextContent = parsed.text || ''; // ✅ VOLLSTÄNDIGER Text für Content-Tab  
     const contractText = parsed.text?.slice(0, 4000) || ''; // Verkürzter Text für OpenAI-Analyse
     
     console.log(`📄 [${requestId}] PDF-Text extrahiert: ${fullTextContent.length} Zeichen (vollständig), ${contractText.length} für Analyse`);
 
+    // ✅ Validierung dass Text vorhanden ist
     if (!contractText.trim()) {
       console.error(`❌ [${requestId}] PDF enthält keinen Text`);
       throw new Error(
@@ -369,14 +370,16 @@ Antwort im folgenden JSON-Format:
 
     console.log(`📊 [${requestId}] Analyse erfolgreich, speichere in DB...`);
 
-    // ✅ ERWEITERT: Analyse in DB speichern MIT fullText für Content-Tab
+    // ✅ KRITISCH: Analyse in DB speichern MIT fullText für Content-Tab
     const analysisData = {
       userId: req.user.userId,
       contractName: req.file.originalname,
       createdAt: new Date(),
       requestId,
-      fullText: fullTextContent, // ✅ NEU: Vollständiger Text für Content-Tab
+      fullText: fullTextContent, // ✅ KRITISCH: Vollständiger Text für Content-Tab
       extractedText: fullTextContent, // ✅ Alternative Benennung als Fallback
+      originalFileName: req.file.originalname, // ✅ Zusätzliche Info
+      fileSize: buffer.length, // ✅ Dateigröße für Debug
       // OpenAI Analyse-Ergebnisse:
       ...result,
     };
@@ -403,8 +406,9 @@ Antwort im folgenden JSON-Format:
           { 
             $set: {
               lastAnalyzed: new Date(),
-              analysisId: inserted.insertedId, // ✅ WICHTIG: Reference zur Analyse
-              fullText: fullTextContent, // ✅ NEU: Text direkt im Contract als Backup
+              analysisId: inserted.insertedId, // ✅ KRITISCH: Reference zur Analyse
+              fullText: fullTextContent, // ✅ KRITISCH: Text direkt im Contract als Backup
+              content: fullTextContent, // ✅ ZUSÄTZLICH: Alternative Feldname für Kompatibilität
               legalPulse: {
                 riskScore: result.contractScore || null,
                 riskSummary: result.summary || '',
@@ -417,7 +421,7 @@ Antwort im folgenden JSON-Format:
           }
         );
         
-        console.log(`✅ [${requestId}] Bestehender Vertrag aktualisiert mit fullText`);
+        console.log(`✅ [${requestId}] Bestehender Vertrag aktualisiert mit fullText (${fullTextContent.length} Zeichen)`);
       } else {
         // Neuen Vertrag speichern
         const contractData = {
@@ -427,10 +431,12 @@ Antwort im folgenden JSON-Format:
           filePath: `/uploads/${req.file.filename}`,
           fileHash: fileHash,
           extraRefs: { 
-            analysisId: inserted.insertedId, // ✅ WICHTIG: Reference zur Analyse
-            fullText: fullTextContent, // ✅ NEU: Text direkt im Contract speichern
+            analysisId: inserted.insertedId, // ✅ KRITISCH: Reference zur Analyse
+            fullText: fullTextContent, // ✅ KRITISCH: Text direkt im Contract speichern
+            content: fullTextContent, // ✅ ZUSÄTZLICH: Alternative Feldname für Kompatibilität
             fileSize: buffer.length,
-            uploadedAt: new Date()
+            uploadedAt: new Date(),
+            originalFileName: req.file.originalname // ✅ Debug-Info
           },
           legalPulse: {
             riskScore: result.contractScore || null,
@@ -447,7 +453,7 @@ Antwort im folgenden JSON-Format:
         if (saveContract) {
           try {
             saveResult = await saveContract(contractData);
-            console.log(`✅ [${requestId}] Vertrag gespeichert (Service): ${saveResult.insertedId}`);
+            console.log(`✅ [${requestId}] Vertrag gespeichert (Service): ${saveResult.insertedId} mit fullText (${fullTextContent.length} Zeichen)`);
           } catch (serviceError) {
             console.warn(`⚠️ [${requestId}] SaveContract-Service fehlgeschlagen:`, serviceError.message);
             // Fallback verwenden

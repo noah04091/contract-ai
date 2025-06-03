@@ -22,6 +22,7 @@ interface Contract {
   isGenerated?: boolean;
   // ✅ Erweiterte Felder für Analyse-Daten
   fullText?: string;
+  extractedText?: string; // ✅ NEU: Extrahierter Text als Fallback
   analysis?: {
     summary?: string;
     legalAssessment?: string;
@@ -366,7 +367,7 @@ ${analysis.comparison || 'Nicht verfügbar'}
               </motion.div>
             )}
 
-            {/* ✅ ÜBERARBEITET: Content Tab - Jetzt funktional */}
+            {/* ✅ ERWEITERT: Content Tab - Mit Debug & mehreren Fallbacks */}
             {activeTab === 'content' && (
               <motion.div 
                 className={styles.contentTab}
@@ -374,57 +375,115 @@ ${analysis.comparison || 'Nicht verfügbar'}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
               >
-                {(contract.fullText || contract.content) ? (
-                  <div className={styles.contentViewer}>
-                    <div className={styles.contentHeader}>
-                      <h3>Vertragsinhalt</h3>
-                      <button 
-                        className={styles.downloadBtn}
-                        onClick={handleDownloadContent}
-                      >
-                        <Download size={16} />
-                        <span>Als TXT herunterladen</span>
-                      </button>
-                    </div>
-                    <div className={styles.contentText}>
-                      {contract.fullText || contract.content}
-                    </div>
-                    
-                    <div className={styles.contentStats}>
-                      <div className={styles.contentStat}>
-                        <span className={styles.statLabel}>Zeichen:</span>
-                        <span className={styles.statValue}>
-                          {(contract.fullText || contract.content || '').length.toLocaleString()}
-                        </span>
+                {/* ✅ DEBUG: Console-Ausgabe für Troubleshooting */}
+                {(() => {
+                  console.log('🔍 Content Tab Debug:', {
+                    contractName: contract.name,
+                    hasFullText: !!contract.fullText,
+                    hasContent: !!contract.content,
+                    fullTextLength: contract.fullText ? contract.fullText.length : 0,
+                    contentLength: contract.content ? contract.content.length : 0,
+                    contractKeys: Object.keys(contract)
+                  });
+                  return null;
+                })()}
+                
+                {/* ✅ ERWEITERTE Fallback-Prüfung für verschiedene Text-Felder */}
+                {(() => {
+                  const textContent = contract.fullText || contract.content || contract.extractedText || '';
+                  
+                  if (textContent && textContent.trim().length > 0) {
+                    return (
+                      <div className={styles.contentViewer}>
+                        <div className={styles.contentHeader}>
+                          <h3>Vertragsinhalt</h3>
+                          <div className={styles.contentSourceInfo}>
+                            <span className={styles.sourceLabel}>
+                              Quelle: {contract.fullText ? 'Volltext-Analyse' : 
+                                      contract.content ? 'Contract Content' : 
+                                      contract.extractedText ? 'Extrahierter Text' : 'Unbekannt'}
+                            </span>
+                          </div>
+                          <button 
+                            className={styles.downloadBtn}
+                            onClick={handleDownloadContent}
+                          >
+                            <Download size={16} />
+                            <span>Als TXT herunterladen</span>
+                          </button>
+                        </div>
+                        
+                        <div className={styles.contentText}>
+                          {textContent}
+                        </div>
+                        
+                        <div className={styles.contentStats}>
+                          <div className={styles.contentStat}>
+                            <span className={styles.statLabel}>Zeichen:</span>
+                            <span className={styles.statValue}>
+                              {textContent.length.toLocaleString()}
+                            </span>
+                          </div>
+                          <div className={styles.contentStat}>
+                            <span className={styles.statLabel}>Wörter:</span>
+                            <span className={styles.statValue}>
+                              {textContent.split(/\s+/).filter((w: string) => w.length > 0).length.toLocaleString()}
+                            </span>
+                          </div>
+                          <div className={styles.contentStat}>
+                            <span className={styles.statLabel}>Absätze:</span>
+                            <span className={styles.statValue}>
+                              {textContent.split(/\n\s*\n/).filter((p: string) => p.trim().length > 0).length.toLocaleString()}
+                            </span>
+                          </div>
+                        </div>
                       </div>
-                      <div className={styles.contentStat}>
-                        <span className={styles.statLabel}>Wörter:</span>
-                        <span className={styles.statValue}>
-                          {(contract.fullText || contract.content || '').split(/\s+/).filter(w => w.length > 0).length.toLocaleString()}
-                        </span>
+                    );
+                  } else {
+                    return (
+                      <div className={styles.noContent}>
+                        <FileText size={48} />
+                        <h3>Kein Textinhalt verfügbar</h3>
+                        <p>Der Vertragstext konnte nicht extrahiert werden oder ist nicht verfügbar. Möglicherweise handelt es sich um eine bildbasierte PDF oder ein anderes Format.</p>
+                        
+                        {/* ✅ DEBUG: Zusätzliche Info für Troubleshooting */}
+                        <div className={styles.debugInfo}>
+                          <details>
+                            <summary>Debug-Informationen</summary>
+                            <pre style={{ fontSize: '0.8rem', textAlign: 'left', background: '#f5f5f5', padding: '1rem', borderRadius: '8px', marginTop: '1rem' }}>
+                              {JSON.stringify({
+                                contractId: contract._id,
+                                contractName: contract.name,
+                                hasFullText: !!contract.fullText,
+                                hasContent: !!contract.content,
+                                hasExtractedText: !!contract.extractedText,
+                                hasAnalysis: !!contract.analysis,
+                                availableKeys: Object.keys(contract).filter(key => key.includes('text') || key.includes('content') || key === 'analysis')
+                              }, null, 2)}
+                            </pre>
+                          </details>
+                        </div>
+                        
+                        <div className={styles.noContentActions}>
+                          <button 
+                            className={styles.retryBtn}
+                            onClick={() => {
+                              console.log('🔄 Retry text extraction for contract:', {
+                                id: contract._id,
+                                name: contract.name,
+                                availableFields: Object.keys(contract)
+                              });
+                              alert('Text-Extraktion wird erneut versucht...');
+                            }}
+                          >
+                            <ExternalLink size={16} />
+                            <span>Textextraktion wiederholen</span>
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className={styles.noContent}>
-                    <FileText size={48} />
-                    <h3>Kein Textinhalt verfügbar</h3>
-                    <p>Der Vertragstext konnte nicht extrahiert werden oder ist nicht verfügbar. Möglicherweise handelt es sich um eine bildbasierte PDF oder ein anderes Format.</p>
-                    
-                    <div className={styles.noContentActions}>
-                      <button 
-                        className={styles.retryBtn}
-                        onClick={() => {
-                          // Hier könnte eine Funktion zum erneuten Versuchen der Textextraktion aufgerufen werden
-                          console.log('Retry text extraction for:', contract._id);
-                        }}
-                      >
-                        <ExternalLink size={16} />
-                        <span>Textextraktion wiederholen</span>
-                      </button>
-                    </div>
-                  </div>
-                )}
+                    );
+                  }
+                })()}
               </motion.div>
             )}
 
