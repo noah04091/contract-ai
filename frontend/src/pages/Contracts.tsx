@@ -3,12 +3,11 @@ import { useState, useEffect, useRef, useCallback } from "react"; // ✅ Added u
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   FileText, RefreshCw, Upload, CheckCircle, AlertCircle, 
-  Plus, Calendar, Clock, FileSearch, Trash2, Eye, Edit,
+  Plus, Calendar, Clock, Trash2, Eye, Edit,
   Search, X
 } from "lucide-react";
 import styles from "../styles/Contracts.module.css";
 import ContractAnalysis from "../components/ContractAnalysis";
-import AnalysisHistory from "../components/AnalysisHistory";
 import ContractDetailsView from "../components/ContractDetailsView";
 import { apiCall } from "../utils/api";
 
@@ -38,7 +37,7 @@ export default function Contracts() {
   const [loading, setLoading] = useState(true);
   const [errorMessage, setError] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
-  const [activeSection, setActiveSection] = useState<'upload' | 'contracts' | 'analysis'>('contracts');
+  const [activeSection, setActiveSection] = useState<'upload' | 'contracts'>('contracts');
   const [refreshing, setRefreshing] = useState(false);
   
   // ✅ Erweiterte Filter & Search States
@@ -268,7 +267,6 @@ export default function Contracts() {
 
   return (
     <div className={styles.pageContainer}>
-      {/* Rest of the JSX remains exactly the same... */}
       <motion.div 
         className={styles.container}
         initial={{ opacity: 0, y: 20 }}
@@ -315,16 +313,8 @@ export default function Contracts() {
             <Upload size={18} />
             <span>Hochladen</span>
           </button>
-          <button 
-            className={`${styles.tabButton} ${activeSection === 'analysis' ? styles.activeTab : ''}`}
-            onClick={() => setActiveSection('analysis')}
-          >
-            <FileSearch size={18} />
-            <span>Analyse-Historie</span>
-          </button>
         </div>
 
-        {/* Rest of JSX exactly as provided... */}
         <AnimatePresence mode="wait">
           {activeSection === 'upload' && (
             <motion.div 
@@ -676,26 +666,6 @@ export default function Contracts() {
                   </table>
                 </div>
               )}
-            </motion.div>
-          )}
-
-          {/* Analysis Section */}
-          {activeSection === 'analysis' && (
-            <motion.div 
-              key="analysis-section"
-              className={styles.section}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3 }}
-            >
-              <div className={styles.sectionHeader}>
-                <h2>Analyse-Historie</h2>
-                <p className={styles.sectionDescription}>
-                  Übersicht deiner durchgeführten Vertragsanalysen
-                </p>
-              </div>
-              <AnalysisHistory />
             </motion.div>
           )}
         </AnimatePresence>
