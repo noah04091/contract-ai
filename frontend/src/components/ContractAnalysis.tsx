@@ -37,7 +37,12 @@ interface AnalysisResult {
   error?: string;
 }
 
-// ✅ NEU: Interface für Duplikat-Response
+// ✅ FIXED: Erweiterte Response-Type für bessere TypeScript-Sicherheit
+interface AnalysisResponse extends AnalysisResult {
+  [key: string]: unknown; // Erlaubt zusätzliche Properties
+}
+
+// ✅ NEU: Interface für Duplikat-Response (korrigiert)
 interface DuplicateResponse {
   success: false;
   duplicate: true;
@@ -89,43 +94,91 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract }
     checkAnalyzeHealth().then(setServiceHealth);
   }, []);
 
-  // ✅ ERWEITERT: handleAnalyze mit Duplikat-Handling
+  // ✅ FIXED: Robustes State-Reset
+  const resetAllStates = () => {
+    console.log("🔄 Resetting all states...");
+    setAnalyzing(false);
+    setProgress(0);
+    setResult(null);
+    setError(null);
+    setRetryCount(0);
+    setOptimizing(false);
+    setOptimizationResult(null);
+    setIsOptimizationExpanded(true);
+    setGeneratingPdf(false);
+    setShowDuplicateModal(false);
+    setDuplicateInfo(null);
+  };
+
+  // ✅ FIXED: Robustes handleAnalyze mit besserem TypeScript-Handling
   const handleAnalyze = async (forceReanalyze = false) => {
+    console.log("🔄 Starte Analyse für:", file.name, forceReanalyze ? "(Re-Analyse)" : "");
+    
+    // ✅ WICHTIG: States zurücksetzen VOR der Analyse
     setAnalyzing(true);
     setError(null);
     setResult(null);
     setProgress(0);
-    setShowDuplicateModal(false); // Modal schließen falls offen
+    setShowDuplicateModal(false);
+    setDuplicateInfo(null);
 
     try {
-      console.log("🔄 Starte Analyse für:", file.name, forceReanalyze ? "(Re-Analyse)" : "");
-      
       const response = await uploadAndAnalyze(file, (progress) => {
         setProgress(progress);
-      }, forceReanalyze) as AnalysisResult | DuplicateResponse;
+      }, forceReanalyze);
       
       console.log("✅ Analyse-Response:", response);
 
-      // ✅ NEU: Duplikat-Handling
-      if (!response.success && 'duplicate' in response && response.duplicate) {
-        console.log("🔄 Duplikat erkannt:", response.contractName);
-        setDuplicateInfo(response);
-        setShowDuplicateModal(true);
-        return; // Stoppe hier, warte auf User-Entscheidung
+      // ✅ FIXED: Null-Check für Response
+      if (!response) {
+        console.error("❌ Response ist null oder undefined");
+        throw new Error("Keine Antwort vom Server erhalten");
       }
 
-      if (response.success) {
-        setResult(response as AnalysisResult);
-        setRetryCount(0);
-        console.log("🎉 Analyse erfolgreich abgeschlossen");
+      // ✅ FIXED: Type-sichere Duplikat-Handling
+      if (typeof response === 'object' && response !== null) {
+        const responseObj = response as Record<string, unknown>;
         
-        // ✅ NEU: Info bei Re-Analyse
-        if ((response as AnalysisResult).isReanalysis) {
-          console.log("🔄 Re-Analyse erfolgreich für Vertrag:", (response as AnalysisResult).originalContractId);
+        // Prüfe auf Duplikat-Response
+        if ('duplicate' in responseObj && responseObj.duplicate === true) {
+          console.log("🔄 Duplikat erkannt:", response);
+          
+          // Validiere Duplikat-Response Struktur
+          if ('contractId' in responseObj && 'contractName' in responseObj && 'actions' in responseObj) {
+            setDuplicateInfo(response as DuplicateResponse);
+            setShowDuplicateModal(true);
+            return; // Stoppe hier, warte auf User-Entscheidung
+          } else {
+            console.error("❌ Unvollständige Duplikat-Response:", response);
+            throw new Error("📄 Dieser Vertrag wurde bereits hochgeladen. Bitte prüfe deine Vertragsliste.");
+          }
         }
-      } else {
-        throw new Error(response.message || "Analyse fehlgeschlagen");
+
+        // Prüfe auf erfolgreiche Analyse
+        if ('success' in responseObj && responseObj.success === true) {
+          // ✅ FIXED: Type-sicheres Casting für AnalysisResult
+          const analysisResult = response as AnalysisResponse;
+          setResult(analysisResult);
+          setRetryCount(0);
+          console.log("🎉 Analyse erfolgreich abgeschlossen");
+          
+          // ✅ FIXED: Type-sichere Prüfung auf Re-Analyse
+          if (analysisResult.isReanalysis && analysisResult.originalContractId) {
+            console.log("🔄 Re-Analyse erfolgreich für Vertrag:", analysisResult.originalContractId);
+          }
+          return;
+        }
+
+        // Prüfe auf Fehler-Response
+        if ('success' in responseObj && responseObj.success === false && 'message' in responseObj) {
+          const errorMessage = typeof responseObj.message === 'string' ? responseObj.message : "Analyse fehlgeschlagen";
+          throw new Error(errorMessage);
+        }
       }
+
+      // Fallback für unerwartete Response-Struktur
+      console.error("❌ Unerwartete Response-Struktur:", response);
+      throw new Error("Unerwartete Antwort vom Server");
 
     } catch (err) {
       console.error("❌ Analyse-Fehler:", err);
@@ -151,6 +204,9 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract }
         } else if (errMsg.includes('PDF') || errMsg.includes('Datei')) {
           errorMessage = "📄 PDF konnte nicht verarbeitet werden. Bitte prüfe das Dateiformat.";
           canRetry = false;
+        } else if (errMsg.includes('bereits hochgeladen')) {
+          errorMessage = errMsg; // Duplikat-Fallback-Message
+          canRetry = false;
         } else {
           errorMessage = errMsg;
           canRetry = errMsg.includes('Server-Fehler') || errMsg.includes('HTTP 5');
@@ -165,20 +221,40 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract }
     }
   };
 
-  // ✅ NEU: Duplikat-Modal-Handler
+  // ✅ FIXED: Duplikat-Modal-Handler mit State-Reset
   const handleDuplicateReanalyze = () => {
+    console.log("🔄 User wählt: Erneut analysieren");
     setShowDuplicateModal(false);
-    handleAnalyze(true); // Force re-analyze
+    setDuplicateInfo(null);
+    // Kurze Verzögerung für bessere UX
+    setTimeout(() => {
+      handleAnalyze(true); // Force re-analyze
+    }, 100);
   };
 
   const handleDuplicateViewExisting = () => {
+    console.log("👁️ User wählt: Bestehenden Vertrag anzeigen");
     if (duplicateInfo && onNavigateToContract) {
       onNavigateToContract(duplicateInfo.contractId);
     } else {
-      // Fallback: Modal schließen und User informieren
+      // ✅ FIXED: Type-sichere Fallback-Message
+      const contractName = duplicateInfo?.contractName || file.name || "diesem Vertrag";
       setShowDuplicateModal(false);
-      setError("Navigation zum bestehenden Vertrag nicht möglich. Bitte öffne das Dashboard.");
+      setError(`📄 Dieser Vertrag ist bereits in deiner Vertragsliste verfügbar. Bitte öffne das Dashboard und suche nach '${contractName}'.`);
     }
+  };
+
+  const handleDuplicateClose = () => {
+    console.log("❌ User schließt Duplikat-Modal");
+    setShowDuplicateModal(false);
+    setDuplicateInfo(null);
+  };
+
+  // ✅ FIXED: Reset-Handler mit vollständigem State-Reset
+  const handleReset = () => {
+    console.log("🔄 User klickt Reset");
+    resetAllStates();
+    onReset(); // Rufe Parent-Reset auf
   };
 
   const handleOptimize = async () => {
@@ -364,7 +440,7 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract }
 
   return (
     <div className={styles.analysisContainer}>
-      {/* ✅ NEU: Duplikat-Modal */}
+      {/* ✅ FIXED: Verbessertes Duplikat-Modal */}
       <AnimatePresence>
         {showDuplicateModal && duplicateInfo && (
           <motion.div 
@@ -386,7 +462,7 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract }
                 <h3>Vertrag bereits vorhanden</h3>
                 <button 
                   className={styles.modalCloseBtn}
-                  onClick={() => setShowDuplicateModal(false)}
+                  onClick={handleDuplicateClose}
                 >
                   <X size={20} />
                 </button>
@@ -399,7 +475,7 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract }
                 </p>
                 
                 <div className={styles.duplicateOptions}>
-                  <div className={styles.optionCard}>
+                  <div className={styles.optionCard} onClick={handleDuplicateReanalyze}>
                     <div className={styles.optionIcon}>
                       <RefreshCw size={20} />
                     </div>
@@ -409,7 +485,7 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract }
                     </div>
                   </div>
                   
-                  <div className={styles.optionCard}>
+                  <div className={styles.optionCard} onClick={handleDuplicateViewExisting}>
                     <div className={styles.optionIcon}>
                       <Eye size={20} />
                     </div>
@@ -459,7 +535,7 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract }
                     Service nicht verfügbar
                   </span>
                 )}
-                {/* ✅ NEU: Re-Analyse-Badge */}
+                {/* ✅ Re-Analyse-Badge */}
                 {result?.isReanalysis && (
                   <span className={styles.reanalysisBadge}>
                     <RefreshCw size={12} />
@@ -500,7 +576,7 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract }
             
             <button 
               className={styles.resetButton}
-              onClick={onReset}
+              onClick={handleReset}
               disabled={analyzing}
             >
               <RefreshCw size={18} />
@@ -561,15 +637,18 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract }
             <div className={styles.errorIcon}>
               {error.includes('Verbindung') ? <WifiOff size={24} /> : 
                error.includes('Timeout') ? <Clock size={24} /> : 
+               error.includes('bereits hochgeladen') ? <Copy size={24} /> :
                <AlertCircle size={24} />}
             </div>
             <div className={styles.errorDetails}>
               <h4 className={styles.errorTitle}>
-                {error.includes('🔧 Optimierung') ? 'Optimierung fehlgeschlagen' : 'Analyse fehlgeschlagen'}
+                {error.includes('bereits hochgeladen') ? 'Vertrag bereits vorhanden' :
+                 error.includes('🔧 Optimierung') ? 'Optimierung fehlgeschlagen' : 
+                 'Analyse fehlgeschlagen'}
               </h4>
               <p className={styles.errorMessage}>{error}</p>
               
-              {canRetryAnalysis && !error.includes('🔧 Optimierung') && (
+              {canRetryAnalysis && !error.includes('🔧 Optimierung') && !error.includes('bereits hochgeladen') && (
                 <div className={styles.retrySection}>
                   <button 
                     className={styles.retryButton}
@@ -823,7 +902,7 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract }
               </button>
               <button 
                 className={`${styles.secondaryButton} ${styles.newAnalysisButton}`}
-                onClick={onReset}
+                onClick={handleReset}
               >
                 <FileText size={18} />
                 <span>Neue Analyse</span>

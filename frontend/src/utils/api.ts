@@ -1,4 +1,4 @@
-// 📁 src/utils/api.ts - IMPROVED ERROR HANDLING & RETRY LOGIC + OPTIMIZE FUNCTIONS + DUBLIKAT-HANDLING (ESLINT FIXED)
+// 📁 src/utils/api.ts - IMPROVED ERROR HANDLING & RETRY LOGIC + OPTIMIZE FUNCTIONS + DUBLIKAT-HANDLING (ROBUST FIXED)
 const API_BASE_URL = "/api"; // Proxy-Pfad für Vercel & devServer
 
 /**
@@ -18,22 +18,23 @@ function getErrorMessage(error: unknown): string {
   return String(error);
 }
 
-// ✅ NEU: Interface für Duplikat-Error-Response (ohne 'any')
+// ✅ FIXED: Interface für Duplikat-Error-Response (robust)
 interface DuplicateError {
   status: 409;
   duplicate: true;
-  data: unknown; // ✅ FIXED: 'unknown' statt 'any'
+  data: Record<string, unknown> | null;
 }
 
-// ✅ NEU: Interface für Error-Objects mit Status
+// ✅ FIXED: Interface für Error-Objects mit Status
 interface ErrorWithStatus {
   status: number;
   duplicate?: boolean;
+  data?: unknown;
   [key: string]: unknown;
 }
 
 /**
- * ✅ NEU: Type Guard für Duplikat-Error (ohne 'any')
+ * ✅ FIXED: Type Guard für Duplikat-Error (robust)
  */
 function isDuplicateError(error: unknown): error is DuplicateError {
   if (!error || typeof error !== 'object') {
@@ -44,9 +45,8 @@ function isDuplicateError(error: unknown): error is DuplicateError {
   
   return (
     'status' in errorObj &&
-    'duplicate' in errorObj &&
     errorObj.status === 409 &&
-    errorObj.duplicate === true
+    ('duplicate' in errorObj ? errorObj.duplicate === true : true)
   );
 }
 
@@ -112,9 +112,11 @@ export const apiCall = async (
             errorMessage = errorData.message;
           }
           
-          // ✅ NEU: Für 409 (Conflict/Duplikat) nicht retyen - das ist ein erwarteter Zustand
+          // ✅ FIXED: Für 409 (Conflict/Duplikat) spezielle Behandlung
           if (response.status === 409) {
-            // Bei Duplikaten die komplette Response zurückgeben für Frontend-Handling
+            console.log("🔄 409 Conflict erkannt - Duplikat-Daten:", errorData);
+            
+            // ✅ FIXED: Korrekte Duplikat-Error-Struktur
             const duplicateError: DuplicateError = { 
               status: 409, 
               duplicate: true, 
@@ -128,8 +130,9 @@ export const apiCall = async (
             shouldRetry = true;
           }
         } catch (parseError) {
-          // ✅ NEU: Spezial-Handling für Duplikat-Response
+          // ✅ FIXED: Auch bei Parse-Fehlern 409 korrekt behandeln
           if (response.status === 409) {
+            console.log("🔄 409 Conflict ohne JSON - Fallback Duplikat-Error");
             const duplicateError: DuplicateError = { 
               status: 409, 
               duplicate: true, 
@@ -145,6 +148,17 @@ export const apiCall = async (
         // HTML oder andere Responses
         const textResponse = await response.text();
         console.error("❌ Nicht-JSON Response erhalten:", textResponse.substring(0, 200));
+        
+        // ✅ FIXED: Auch Text-Responses auf 409 prüfen
+        if (response.status === 409) {
+          console.log("🔄 409 Conflict (Text-Response) - Fallback Duplikat-Error");
+          const duplicateError: DuplicateError = { 
+            status: 409, 
+            duplicate: true, 
+            data: { message: "Duplikat erkannt" }
+          };
+          throw duplicateError;
+        }
         
         if (response.status === 404) {
           errorMessage = `❌ API-Endpoint nicht gefunden: ${endpoint}`;
@@ -183,8 +197,9 @@ export const apiCall = async (
   } catch (err) {
     console.error(`❌ API-Fehler bei [${endpoint}] (Attempt ${retryCount + 1}):`, err);
     
-    // ✅ NEU: TypeScript-sicheres Spezial-Handling für Duplikat-Response
+    // ✅ FIXED: TypeScript-sicheres Spezial-Handling für Duplikat-Response
     if (isDuplicateError(err)) {
+      console.log("🔄 Duplikat-Error erkannt in apiCall");
       throw err; // Duplikat-Error direkt weiterleiten
     }
     
@@ -213,7 +228,7 @@ export const apiCall = async (
 };
 
 /**
- * ✅ ERWEITERT: Spezielle Funktion für File-Upload mit Analyse - MIT RETRY, PROGRESS & DUPLIKAT-HANDLING
+ * ✅ FIXED: Spezielle Funktion für File-Upload mit Analyse - ROBUSTE DUPLIKAT-BEHANDLUNG
  */
 export const uploadAndAnalyze = async (
   file: File, 
@@ -252,10 +267,31 @@ export const uploadAndAnalyze = async (
   } catch (error) {
     if (onProgress) onProgress(0); // Reset bei Fehler
     
-    // ✅ NEU: TypeScript-sicheres Spezial-Handling für Duplikat-Response
+    // ✅ FIXED: Robustes Spezial-Handling für Duplikat-Response
     if (isDuplicateError(error)) {
-      console.log("🔄 Duplikat erkannt - Frontend-Handling erforderlich");
-      return error.data; // ✅ FIXED: TypeScript-sicher, kein 'any'
+      console.log("🔄 Duplikat erkannt in uploadAndAnalyze - gebe Daten weiter");
+      
+      // ✅ FIXED: Korrekte Daten-Weiterleitung
+      if (error.data && typeof error.data === 'object') {
+        console.log("✅ Duplikat-Daten gefunden:", error.data);
+        return error.data; // Korrekte Duplikat-Daten zurückgeben
+      } else {
+        console.warn("⚠️ Duplikat-Error ohne Daten - erstelle Fallback");
+        // Fallback für Duplikat ohne vollständige Daten
+        return {
+          success: false,
+          duplicate: true,
+          message: "📄 Dieser Vertrag wurde bereits hochgeladen.",
+          error: "DUPLICATE_CONTRACT",
+          contractId: "unknown",
+          contractName: file.name,
+          uploadedAt: new Date().toISOString(),
+          actions: {
+            reanalyze: "Erneut analysieren",
+            viewExisting: "Bestehenden Vertrag öffnen"
+          }
+        };
+      }
     }
     
     console.error("❌ Upload & Analyze Fehler:", error);
