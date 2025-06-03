@@ -1,4 +1,4 @@
-// 📁 backend/routes/analyze.js - ROBUSTE VERSION MIT DEBUG & FALLBACKS
+// 📁 backend/routes/analyze.js - ROBUSTE VERSION MIT DEBUG & FALLBACKS + FULLTEXT FÜR CONTENT-TAB
 const express = require("express");
 const multer = require("multer");
 const pdfParse = require("pdf-parse");
@@ -151,7 +151,7 @@ const saveContractSimple = async (contractData) => {
   }
 };
 
-// ✅ HAUPTROUTE: POST /analyze mit robusten Fallbacks
+// ✅ HAUPTROUTE: POST /analyze mit robusten Fallbacks + FULLTEXT-SPEICHERUNG
 router.post("/", verifyToken, upload.single("file"), async (req, res) => {
   const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   console.log(`📊 [${requestId}] Analyse-Request erhalten:`, {
@@ -268,7 +268,7 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
       console.log(`⚠️ [${requestId}] Dubletten-Check übersprungen (nicht verfügbar)`);
     }
 
-    // ✅ PDF-Text extrahieren
+    // ✅ PDF-Text extrahieren - ERWEITERT für Content-Tab
     let parsed;
     try {
       parsed = await pdfParse(buffer, {
@@ -281,9 +281,11 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
       throw new Error(`PDF-Datei ist beschädigt oder passwortgeschützt: ${pdfError.message}`);
     }
     
-    const contractText = parsed.text?.slice(0, 4000) || '';
+    // ✅ NEU: Volltext für Content-Tab UND verkürzter Text für OpenAI
+    const fullTextContent = parsed.text || ''; // ✅ VOLLSTÄNDIGER Text für Content-Tab
+    const contractText = parsed.text?.slice(0, 4000) || ''; // Verkürzter Text für OpenAI-Analyse
     
-    console.log(`📄 [${requestId}] PDF-Text extrahiert: ${contractText.length} Zeichen`);
+    console.log(`📄 [${requestId}] PDF-Text extrahiert: ${fullTextContent.length} Zeichen (vollständig), ${contractText.length} für Analyse`);
 
     if (!contractText.trim()) {
       console.error(`❌ [${requestId}] PDF enthält keinen Text`);
@@ -367,25 +369,28 @@ Antwort im folgenden JSON-Format:
 
     console.log(`📊 [${requestId}] Analyse erfolgreich, speichere in DB...`);
 
-    // 📦 Analyse in DB speichern
+    // ✅ ERWEITERT: Analyse in DB speichern MIT fullText für Content-Tab
     const analysisData = {
       userId: req.user.userId,
       contractName: req.file.originalname,
       createdAt: new Date(),
       requestId,
+      fullText: fullTextContent, // ✅ NEU: Vollständiger Text für Content-Tab
+      extractedText: fullTextContent, // ✅ Alternative Benennung als Fallback
+      // OpenAI Analyse-Ergebnisse:
       ...result,
     };
 
     let inserted;
     try {
       inserted = await analysisCollection.insertOne(analysisData);
-      console.log(`✅ [${requestId}] Analyse gespeichert: ${inserted.insertedId}`);
+      console.log(`✅ [${requestId}] Analyse gespeichert: ${inserted.insertedId} (mit fullText: ${fullTextContent.length} Zeichen)`);
     } catch (dbError) {
       console.error(`❌ [${requestId}] DB-Insert-Fehler:`, dbError.message);
       throw new Error(`Datenbank-Fehler beim Speichern: ${dbError.message}`);
     }
 
-    // 💾 Vertrag speichern (mit Fallbacks)
+    // 💾 Vertrag speichern (mit Fallbacks) - ERWEITERT
     try {
       console.log(`💾 [${requestId}] Speichere Vertrag...`);
 
@@ -398,7 +403,8 @@ Antwort im folgenden JSON-Format:
           { 
             $set: {
               lastAnalyzed: new Date(),
-              analysisId: inserted.insertedId,
+              analysisId: inserted.insertedId, // ✅ WICHTIG: Reference zur Analyse
+              fullText: fullTextContent, // ✅ NEU: Text direkt im Contract als Backup
               legalPulse: {
                 riskScore: result.contractScore || null,
                 riskSummary: result.summary || '',
@@ -411,7 +417,7 @@ Antwort im folgenden JSON-Format:
           }
         );
         
-        console.log(`✅ [${requestId}] Bestehender Vertrag aktualisiert`);
+        console.log(`✅ [${requestId}] Bestehender Vertrag aktualisiert mit fullText`);
       } else {
         // Neuen Vertrag speichern
         const contractData = {
@@ -421,7 +427,8 @@ Antwort im folgenden JSON-Format:
           filePath: `/uploads/${req.file.filename}`,
           fileHash: fileHash,
           extraRefs: { 
-            analysisId: inserted.insertedId,
+            analysisId: inserted.insertedId, // ✅ WICHTIG: Reference zur Analyse
+            fullText: fullTextContent, // ✅ NEU: Text direkt im Contract speichern
             fileSize: buffer.length,
             uploadedAt: new Date()
           },

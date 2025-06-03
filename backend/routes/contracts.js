@@ -1,4 +1,4 @@
-// 📁 backend/routes/contracts.js
+// 📁 backend/routes/contracts.js - FIXED: Mit Analyse-Daten laden
 const express = require("express");
 const { MongoClient, ObjectId } = require("mongodb");
 const verifyToken = require("../middleware/verifyToken");
@@ -7,19 +7,71 @@ const router = express.Router();
 const mongoUri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
 const client = new MongoClient(mongoUri);
 let contractsCollection;
+let analysisCollection; // ✅ NEU: Auch Analyse-Collection
 
 (async () => {
   try {
     await client.connect();
     const db = client.db("contract_ai");
     contractsCollection = db.collection("contracts");
-    console.log("📦 Verbunden mit contracts (GET /contracts)");
+    analysisCollection = db.collection("analyses"); // ✅ NEU
+    console.log("📦 Verbunden mit contracts UND analyses (GET /contracts)");
   } catch (err) {
     console.error("❌ MongoDB-Fehler (contracts.js):", err);
   }
 })();
 
-// GET /contracts – alle Verträge des Nutzers abrufen
+// ✅ HELPER: Analyse-Daten zu Contract hinzufügen
+async function enrichContractWithAnalysis(contract) {
+  try {
+    // Suche nach Analyse-Daten über analysisId oder analysisRef
+    let analysis = null;
+    
+    if (contract.analysisId) {
+      analysis = await analysisCollection.findOne({ 
+        _id: new ObjectId(contract.analysisId) 
+      });
+    }
+    
+    // Fallback: Suche über contractName und userId
+    if (!analysis) {
+      analysis = await analysisCollection.findOne({
+        userId: contract.userId.toString(),
+        contractName: contract.name
+      });
+    }
+    
+    if (analysis) {
+      console.log(`✅ Analyse gefunden für Vertrag: ${contract.name}`);
+      
+      // Analyse-Daten in korrektem Format hinzufügen
+      contract.analysis = {
+        summary: analysis.summary,
+        legalAssessment: analysis.legalAssessment,
+        suggestions: analysis.suggestions,
+        comparison: analysis.comparison,
+        contractScore: analysis.contractScore,
+        analysisId: analysis._id,
+        lastAnalyzed: analysis.createdAt
+      };
+      
+      // ✅ BONUS: fullText für Content-Tab (falls gespeichert)
+      if (analysis.extractedText || analysis.fullText) {
+        contract.fullText = analysis.extractedText || analysis.fullText;
+      }
+      
+    } else {
+      console.log(`⚠️ Keine Analyse gefunden für Vertrag: ${contract.name}`);
+    }
+    
+    return contract;
+  } catch (err) {
+    console.error("❌ Fehler beim Laden der Analyse:", err.message);
+    return contract; // Contract ohne Analyse zurückgeben
+  }
+}
+
+// GET /contracts – alle Verträge des Nutzers abrufen (mit Analyse-Daten)
 router.get("/", verifyToken, async (req, res) => {
   try {
     const contracts = await contractsCollection
@@ -27,19 +79,25 @@ router.get("/", verifyToken, async (req, res) => {
       .sort({ createdAt: -1 })
       .toArray();
 
-    res.json(contracts);
+    // ✅ NEU: Alle Verträge mit Analyse-Daten anreichern
+    const enrichedContracts = await Promise.all(
+      contracts.map(contract => enrichContractWithAnalysis(contract))
+    );
+
+    console.log(`📦 ${enrichedContracts.length} Verträge geladen (mit Analyse-Check)`);
+    res.json(enrichedContracts);
   } catch (err) {
     console.error("❌ Fehler beim Laden der Verträge:", err.message);
     res.status(500).json({ message: "Fehler beim Abrufen der Verträge." });
   }
 });
 
-// ✅ NEU: GET /contracts/:id – Einzelnen Vertrag abrufen
+// ✅ ERWEITERT: GET /contracts/:id – Einzelnen Vertrag abrufen (mit Analyse-Daten)
 router.get("/:id", verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
     
-    console.log("🔍 Suche Vertrag mit ID:", id); // Debug-Log
+    console.log("🔍 Suche Vertrag mit ID:", id);
 
     const contract = await contractsCollection.findOne({
       _id: new ObjectId(id),
@@ -54,8 +112,11 @@ router.get("/:id", verifyToken, async (req, res) => {
       });
     }
 
-    console.log("✅ Vertrag gefunden:", contract.name);
-    res.json(contract);
+    // ✅ NEU: Contract mit Analyse-Daten anreichern
+    const enrichedContract = await enrichContractWithAnalysis(contract);
+
+    console.log("✅ Vertrag gefunden:", enrichedContract.name, "| Analyse:", !!enrichedContract.analysis);
+    res.json(enrichedContract);
 
   } catch (err) {
     console.error("❌ Fehler beim Laden des Vertrags:", err.message);
@@ -80,7 +141,7 @@ router.post("/", verifyToken, async (req, res) => {
       isGenerated  // ✅ Wichtig: isGenerated aus Request Body lesen
     } = req.body;
 
-    console.log("📝 Speichere Vertrag:", { name, isGenerated }); // Debug-Log
+    console.log("📝 Speichere Vertrag:", { name, isGenerated });
 
     // Neuen Vertrag erstellen
     const contractDoc = {
