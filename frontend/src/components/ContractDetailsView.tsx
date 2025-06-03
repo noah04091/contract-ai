@@ -2,7 +2,9 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   X, FileText, Calendar, Clock, AlertCircle, CheckCircle, 
-  Info, Eye, Download, Share2, Edit, Trash2, Star
+  Info, Eye, Download, Share2, Edit, Trash2, Star,
+  BarChart3, Shield, Lightbulb, TrendingUp,
+  Copy, ExternalLink
 } from "lucide-react";
 import styles from "../styles/ContractDetailsView.module.css";
 import ReminderToggle from "./ReminderToggle";
@@ -18,6 +20,17 @@ interface Contract {
   createdAt: string;
   content?: string;
   isGenerated?: boolean;
+  // ✅ Erweiterte Felder für Analyse-Daten
+  fullText?: string;
+  analysis?: {
+    summary?: string;
+    legalAssessment?: string;
+    suggestions?: string;
+    comparison?: string;
+    contractScore?: number;
+    analysisId?: string;
+    lastAnalyzed?: string;
+  };
 }
 
 interface ContractDetailsViewProps {
@@ -77,12 +90,81 @@ export default function ContractDetailsView({
     }
   };
 
+  // ✅ NEU: Score-Farbe bestimmen
+  const getScoreColor = (score: number): string => {
+    if (score >= 80) return "#34c759";
+    if (score >= 60) return "#ff9500";
+    if (score >= 40) return "#ff6b35";
+    return "#ff3b30";
+  };
+
+  const getScoreLabel = (score: number): string => {
+    if (score >= 80) return "Ausgezeichnet";
+    if (score >= 60) return "Gut";
+    if (score >= 40) return "Akzeptabel";
+    return "Kritisch";
+  };
+
+  // ✅ NEU: Text in Stichpunkte aufteilen
+  const formatTextToPoints = (text: string): string[] => {
+    if (!text) return ['Keine Details verfügbar'];
+    
+    const sentences = text
+      .split(/[.!?]+|[-•]\s*/)
+      .map(s => s.trim())
+      .filter(s => s.length > 15 && s.length < 200)
+      .slice(0, 4);
+    
+    return sentences.length > 0 ? sentences : [text.substring(0, 180) + '...'];
+  };
+
   const handleEdit = () => {
     if (onEdit) onEdit(contract._id);
   };
 
   const handleDelete = () => {
     if (onDelete) onDelete(contract._id, contract.name);
+  };
+
+  // ✅ NEU: Content Download (falls verfügbar)
+  const handleDownloadContent = () => {
+    const content = contract.fullText || contract.content || '';
+    if (!content) return;
+    
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${contract.name.replace(/\.[^/.]+$/, "")}_content.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  };
+
+  // ✅ NEU: Analyse-Daten kopieren
+  const handleCopyAnalysis = () => {
+    const analysis = contract.analysis;
+    if (!analysis) return;
+    
+    const analysisText = `
+Vertragsanalyse: ${contract.name}
+Score: ${analysis.contractScore || 'N/A'}/100
+
+Zusammenfassung:
+${analysis.summary || 'Nicht verfügbar'}
+
+Rechtssicherheit:
+${analysis.legalAssessment || 'Nicht verfügbar'}
+
+Optimierungsvorschläge:
+${analysis.suggestions || 'Nicht verfügbar'}
+
+Marktvergleich:
+${analysis.comparison || 'Nicht verfügbar'}
+    `.trim();
+    
+    navigator.clipboard.writeText(analysisText);
   };
 
   if (!show) return null;
@@ -194,20 +276,16 @@ export default function ContractDetailsView({
               <button 
                 className={`${styles.tab} ${activeTab === 'content' ? styles.activeTab : ''}`}
                 onClick={() => setActiveTab('content')}
-                disabled={!contract.content}
               >
                 <Eye size={16} />
                 <span>Inhalt</span>
-                {!contract.content && <span className={styles.comingSoon}>Bald</span>}
               </button>
               <button 
                 className={`${styles.tab} ${activeTab === 'analysis' ? styles.activeTab : ''}`}
                 onClick={() => setActiveTab('analysis')}
-                disabled
               >
-                <FileText size={16} />
+                <BarChart3 size={16} />
                 <span>Analyse</span>
-                <span className={styles.comingSoon}>Bald</span>
               </button>
             </div>
           </div>
@@ -288,6 +366,7 @@ export default function ContractDetailsView({
               </motion.div>
             )}
 
+            {/* ✅ ÜBERARBEITET: Content Tab - Jetzt funktional */}
             {activeTab === 'content' && (
               <motion.div 
                 className={styles.contentTab}
@@ -295,29 +374,61 @@ export default function ContractDetailsView({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
               >
-                {contract.content ? (
+                {(contract.fullText || contract.content) ? (
                   <div className={styles.contentViewer}>
                     <div className={styles.contentHeader}>
                       <h3>Vertragsinhalt</h3>
-                      <button className={styles.downloadBtn}>
+                      <button 
+                        className={styles.downloadBtn}
+                        onClick={handleDownloadContent}
+                      >
                         <Download size={16} />
-                        <span>Herunterladen</span>
+                        <span>Als TXT herunterladen</span>
                       </button>
                     </div>
                     <div className={styles.contentText}>
-                      {contract.content}
+                      {contract.fullText || contract.content}
+                    </div>
+                    
+                    <div className={styles.contentStats}>
+                      <div className={styles.contentStat}>
+                        <span className={styles.statLabel}>Zeichen:</span>
+                        <span className={styles.statValue}>
+                          {(contract.fullText || contract.content || '').length.toLocaleString()}
+                        </span>
+                      </div>
+                      <div className={styles.contentStat}>
+                        <span className={styles.statLabel}>Wörter:</span>
+                        <span className={styles.statValue}>
+                          {(contract.fullText || contract.content || '').split(/\s+/).filter(w => w.length > 0).length.toLocaleString()}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 ) : (
                   <div className={styles.noContent}>
                     <FileText size={48} />
-                    <h3>Kein Inhalt verfügbar</h3>
-                    <p>Der Vertragsinhalt konnte nicht geladen werden oder ist nicht verfügbar.</p>
+                    <h3>Kein Textinhalt verfügbar</h3>
+                    <p>Der Vertragstext konnte nicht extrahiert werden oder ist nicht verfügbar. Möglicherweise handelt es sich um eine bildbasierte PDF oder ein anderes Format.</p>
+                    
+                    <div className={styles.noContentActions}>
+                      <button 
+                        className={styles.retryBtn}
+                        onClick={() => {
+                          // Hier könnte eine Funktion zum erneuten Versuchen der Textextraktion aufgerufen werden
+                          console.log('Retry text extraction for:', contract._id);
+                        }}
+                      >
+                        <ExternalLink size={16} />
+                        <span>Textextraktion wiederholen</span>
+                      </button>
+                    </div>
                   </div>
                 )}
               </motion.div>
             )}
 
+            {/* ✅ NEU: Analysis Tab - Vollständig funktional */}
             {activeTab === 'analysis' && (
               <motion.div 
                 className={styles.analysisTab}
@@ -325,11 +436,166 @@ export default function ContractDetailsView({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
               >
-                <div className={styles.comingSoonContent}>
-                  <FileText size={48} />
-                  <h3>KI-Analyse</h3>
-                  <p>Die intelligente Vertragsanalyse ist bald verfügbar und wird dir wichtige Insights zu diesem Vertrag liefern.</p>
-                </div>
+                {contract.analysis ? (
+                  <div className={styles.analysisViewer}>
+                    <div className={styles.analysisHeader}>
+                      <h3>KI-Vertragsanalyse</h3>
+                      <div className={styles.analysisActions}>
+                        <button 
+                          className={styles.copyBtn}
+                          onClick={handleCopyAnalysis}
+                          title="Analyse kopieren"
+                        >
+                          <Copy size={16} />
+                          <span>Kopieren</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Score Display */}
+                    {contract.analysis.contractScore && (
+                      <div className={styles.scoreSection}>
+                        <div className={styles.scoreDisplay}>
+                          <div 
+                            className={styles.scoreCircle}
+                            style={{ '--score-color': getScoreColor(contract.analysis.contractScore) } as React.CSSProperties}
+                          >
+                            <span className={styles.scoreNumber}>{contract.analysis.contractScore}</span>
+                            <span className={styles.scoreMax}>/100</span>
+                          </div>
+                          <div className={styles.scoreInfo}>
+                            <h4 style={{ color: getScoreColor(contract.analysis.contractScore) }}>
+                              {getScoreLabel(contract.analysis.contractScore)}
+                            </h4>
+                            <p>Contract Score</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Analysis Sections */}
+                    <div className={styles.analysisContent}>
+                      {contract.analysis.summary && (
+                        <div className={styles.analysisSection}>
+                          <div className={styles.analysisSectionHeader}>
+                            <div className={styles.sectionIcon}>
+                              <FileText size={20} />
+                            </div>
+                            <h4>Zusammenfassung</h4>
+                          </div>
+                          <div className={styles.analysisSectionContent}>
+                            <ul className={styles.analysisList}>
+                              {formatTextToPoints(contract.analysis.summary).map((point, index) => (
+                                <li key={index} className={styles.analysisPoint}>
+                                  <div className={styles.pointBullet}></div>
+                                  <span>{point}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      )}
+
+                      {contract.analysis.legalAssessment && (
+                        <div className={styles.analysisSection}>
+                          <div className={styles.analysisSectionHeader}>
+                            <div className={styles.sectionIcon} style={{ background: 'rgba(52, 199, 89, 0.1)' }}>
+                              <Shield size={20} style={{ color: '#34c759' }} />
+                            </div>
+                            <h4>Rechtssicherheit</h4>
+                          </div>
+                          <div className={styles.analysisSectionContent}>
+                            <ul className={styles.analysisList}>
+                              {formatTextToPoints(contract.analysis.legalAssessment).map((point, index) => (
+                                <li key={index} className={styles.analysisPoint}>
+                                  <div className={styles.pointBullet} style={{ background: '#34c759' }}></div>
+                                  <span>{point}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      )}
+
+                      {contract.analysis.suggestions && (
+                        <div className={styles.analysisSection}>
+                          <div className={styles.analysisSectionHeader}>
+                            <div className={styles.sectionIcon} style={{ background: 'rgba(255, 149, 0, 0.1)' }}>
+                              <Lightbulb size={20} style={{ color: '#ff9500' }} />
+                            </div>
+                            <h4>Optimierungsvorschläge</h4>
+                          </div>
+                          <div className={styles.analysisSectionContent}>
+                            <ul className={styles.analysisList}>
+                              {formatTextToPoints(contract.analysis.suggestions).map((point, index) => (
+                                <li key={index} className={styles.analysisPoint}>
+                                  <div className={styles.pointBullet} style={{ background: '#ff9500' }}></div>
+                                  <span>{point}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      )}
+
+                      {contract.analysis.comparison && (
+                        <div className={styles.analysisSection}>
+                          <div className={styles.analysisSectionHeader}>
+                            <div className={styles.sectionIcon} style={{ background: 'rgba(139, 92, 246, 0.1)' }}>
+                              <TrendingUp size={20} style={{ color: '#8b5cf6' }} />
+                            </div>
+                            <h4>Marktvergleich</h4>
+                          </div>
+                          <div className={styles.analysisSectionContent}>
+                            <ul className={styles.analysisList}>
+                              {formatTextToPoints(contract.analysis.comparison).map((point, index) => (
+                                <li key={index} className={styles.analysisPoint}>
+                                  <div className={styles.pointBullet} style={{ background: '#8b5cf6' }}></div>
+                                  <span>{point}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Analysis Meta */}
+                    {contract.analysis.lastAnalyzed && (
+                      <div className={styles.analysisMeta}>
+                        <p>
+                          <Clock size={14} />
+                          Letzte Analyse: {formatDate(contract.analysis.lastAnalyzed)}
+                        </p>
+                        {contract.analysis.analysisId && (
+                          <p>
+                            <FileText size={14} />
+                            ID: {contract.analysis.analysisId}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className={styles.noAnalysis}>
+                    <BarChart3 size={48} />
+                    <h3>Keine Analyse verfügbar</h3>
+                    <p>Für diesen Vertrag wurde noch keine KI-Analyse durchgeführt oder die Analyse-Daten sind nicht verfügbar.</p>
+                    
+                    <div className={styles.noAnalysisActions}>
+                      <button 
+                        className={styles.analyzeBtn}
+                        onClick={() => {
+                          // Hier könnte eine Funktion zur Analyse aufgerufen werden
+                          console.log('Start analysis for:', contract._id);
+                        }}
+                      >
+                        <BarChart3 size={16} />
+                        <span>Jetzt analysieren</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
               </motion.div>
             )}
           </div>
