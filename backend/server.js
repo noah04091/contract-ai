@@ -1,4 +1,4 @@
-// 📁 backend/server.js (Complete fixed version with ANALYZE route + OPTIMIZE route)
+// 📁 backend/server.js (Complete fixed version with ANALYZE route + OPTIMIZE route + IMPROVED FILE SERVING)
 const express = require("express");
 const app = express();
 require("dotenv").config();
@@ -34,9 +34,17 @@ const EMAIL_CONFIG = {
 const ALLOWED_ORIGINS = [
   "https://contract-ai.de",
   "https://www.contract-ai.de",
+  "http://localhost:3000", // ✅ Für lokale Entwicklung
 ];
 
-const transporter = nodemailer.createTransport(EMAIL_CONFIG);
+// ✅ NEU: Backend URL für File-URLs
+const API_BASE_URL = process.env.API_BASE_URL || (
+  process.env.NODE_ENV === 'production' 
+    ? 'https://api.contract-ai.de'
+    : `http://localhost:${process.env.PORT || 5000}`
+);
+
+const transporter = nodemailer.createTransporter(EMAIL_CONFIG);
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const storage = multer.diskStorage({
   destination: UPLOAD_PATH,
@@ -55,7 +63,48 @@ app.use(cors({
 }));
 app.use(cookieParser());
 app.use(express.json());
-app.use("/uploads", express.static(path.join(__dirname, UPLOAD_PATH)));
+
+// ✅ VERBESSERT: Static File Serving mit korrekten Headers VOR anderen Routen
+app.use('/uploads', express.static(path.join(__dirname, UPLOAD_PATH), {
+  // ✅ Korrekte MIME-Types und Headers für verschiedene Dateitypen
+  setHeaders: (res, filePath) => {
+    const ext = path.extname(filePath).toLowerCase();
+    
+    console.log(`📁 Serving file: ${path.basename(filePath)} (${ext})`);
+    
+    // PDF direkt im Browser anzeigen
+    if (ext === '.pdf') {
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'inline');
+    }
+    // Word-Dokumente zum Download
+    else if (ext === '.docx') {
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+      res.setHeader('Content-Disposition', 'attachment');
+    }
+    else if (ext === '.doc') {
+      res.setHeader('Content-Type', 'application/msword');
+      res.setHeader('Content-Disposition', 'attachment');
+    }
+    // Excel-Dateien
+    else if (ext === '.xlsx') {
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', 'attachment');
+    }
+    // Bilder
+    else if (['.jpg', '.jpeg', '.png', '.gif'].includes(ext)) {
+      res.setHeader('Content-Disposition', 'inline');
+    }
+    // Andere Dateien als Download
+    else {
+      res.setHeader('Content-Disposition', 'attachment');
+    }
+    
+    // Cache-Header für bessere Performance
+    res.setHeader('Cache-Control', 'public, max-age=31536000'); // 1 Jahr
+    res.setHeader('Access-Control-Allow-Origin', '*'); // ✅ Für File-Downloads
+  }
+}));
 
 // CORS Header ergänzen
 app.use((req, res, next) => {
@@ -73,6 +122,11 @@ app.use((req, res, next) => {
   console.log(`📡 ${req.method} ${req.path} - ${new Date().toISOString()}`);
   next();
 });
+
+// ✅ NEU: File URL Helper für Backend
+function generateFileUrl(filename) {
+  return `${API_BASE_URL}/uploads/${filename}`;
+}
 
 // Hilfsfunktionen zur Vertragsbewertung
 function extractExpiryDate(laufzeit) {
@@ -143,12 +197,10 @@ async function analyzeContract(pdfText) {
     // 🔧 OPTIMIZE-ROUTE - KORREKT IMPLEMENTIERT (NEU/ERSETZT)
     try {
       console.log("🔧 Lade Optimize-Route...");
-      // ✅ NEUE: Optimize-Route ohne (db) Parameter da sie eigene Verbindung aufbaut
       app.use("/optimize", verifyToken, checkSubscription, require("./routes/optimize"));
       console.log("✅ Optimize-Route erfolgreich geladen auf /optimize!");
     } catch (err) {
       console.error("❌ Fehler bei Optimize-Route:", err);
-      // Fallback-Route für Optimize
       app.post("/optimize", verifyToken, checkSubscription, (req, res) => {
         console.log("🆘 Fallback Optimize-Route aufgerufen");
         res.status(503).json({
@@ -181,7 +233,6 @@ async function analyzeContract(pdfText) {
       console.log("✅ Analyze-Route erfolgreich geladen auf /analyze!");
     } catch (err) {
       console.error("❌ Fehler beim Laden der Analyze-Route:", err);
-      // Fallback-Route für Analyze  
       app.post("/analyze", verifyToken, checkSubscription, (req, res) => {
         console.log("🆘 Fallback Analyze-Route aufgerufen");
         res.status(503).json({
@@ -200,7 +251,6 @@ async function analyzeContract(pdfText) {
       console.log("✅ Generate-Route erfolgreich geladen auf /contracts/generate!");
     } catch (err) {
       console.error("❌ Fehler beim Laden der Generate-Route:", err);
-      // Fallback-Route für Generate
       app.post("/contracts/generate", verifyToken, checkSubscription, (req, res) => {
         console.log("🆘 Fallback Generate-Route aufgerufen");
         res.json({
@@ -230,7 +280,7 @@ async function analyzeContract(pdfText) {
       console.error("❌ Fehler bei Legal Pulse Routen:", err);
     }
 
-    // 📤 Upload-Logik mit Analyse
+    // 📤 Upload-Logik mit Analyse (ERWEITERT mit File-URLs)
     app.post("/upload", verifyToken, checkSubscription, upload.single("file"), async (req, res) => {
       if (!req.file) return res.status(400).json({ message: "Keine Datei hochgeladen" });
 
@@ -253,7 +303,13 @@ async function analyzeContract(pdfText) {
           expiryDate,
           status,
           uploadedAt: new Date(),
+          // ✅ ERWEITERT: File-URL Informationen hinzufügen
           filePath: `/uploads/${req.file.filename}`,
+          fileUrl: generateFileUrl(req.file.filename), // ✅ NEU: Absolute URL
+          filename: req.file.filename, // ✅ NEU: Multer filename
+          originalname: req.file.originalname, // ✅ NEU: Original filename
+          mimetype: req.file.mimetype, // ✅ NEU: MIME type
+          size: req.file.size, // ✅ NEU: File size
           legalPulse: {
             riskScore: null,
             summary: '',
@@ -269,6 +325,8 @@ async function analyzeContract(pdfText) {
 
         const { insertedId } = await contractsCollection.insertOne(contract);
 
+        console.log(`✅ Contract saved with file URL: ${contract.fileUrl}`);
+
         await transporter.sendMail({
           from: `Contract AI <${process.env.EMAIL_USER}>`,
           to: process.env.EMAIL_USER,
@@ -283,14 +341,16 @@ async function analyzeContract(pdfText) {
       }
     });
 
-    // 💾 POST-ROUTE für neue Verträge speichern (NEU HINZUGEFÜGT!)
+    // 💾 POST-ROUTE für neue Verträge speichern (ERWEITERT)
     app.post("/contracts", verifyToken, async (req, res) => {
       try {
         console.log("📄 Neuen Vertrag speichern - Request body:", req.body);
         
-        const { name, laufzeit, kuendigung, expiryDate, status, content, signature, isGenerated } = req.body;
+        const { 
+          name, laufzeit, kuendigung, expiryDate, status, content, signature, isGenerated,
+          filename, originalname, fileUrl, filePath, mimetype, size // ✅ NEU: File-Informationen
+        } = req.body;
         
-        // Validierung der erforderlichen Felder
         if (!name && !content) {
           return res.status(400).json({ 
             message: "❌ Name oder Inhalt des Vertrags ist erforderlich" 
@@ -308,10 +368,14 @@ async function analyzeContract(pdfText) {
           signature: signature || null,
           isGenerated: isGenerated || false,
           uploadedAt: new Date(),
-          filePath: "",
-          // ✅ WICHTIG: optimizationCount für neue User hinzufügen
+          // ✅ ERWEITERT: File-Informationen
+          filePath: filePath || "",
+          fileUrl: fileUrl || (filename ? generateFileUrl(filename) : null),
+          filename: filename || null,
+          originalname: originalname || null,
+          mimetype: mimetype || null,
+          size: size || null,
           optimizationCount: 0,
-          // Legal Pulse Integration
           legalPulse: {
             riskScore: null,
             summary: '',
@@ -329,7 +393,8 @@ async function analyzeContract(pdfText) {
           userId: contract.userId,
           name: contract.name,
           hasContent: !!contract.content,
-          hasSignature: !!contract.signature
+          hasSignature: !!contract.signature,
+          hasFileUrl: !!contract.fileUrl // ✅ NEU: File-URL Debug
         });
 
         const { insertedId } = await contractsCollection.insertOne(contract);
@@ -351,7 +416,7 @@ async function analyzeContract(pdfText) {
       }
     });
 
-    // 📔 CRUD für einzelne Verträge
+    // 📔 CRUD für einzelne Verträge (unverändert)
     app.get("/contracts/:id", verifyToken, async (req, res) => {
       try {
         const contract = await contractsCollection.findOne({
@@ -395,7 +460,7 @@ async function analyzeContract(pdfText) {
       }
     });
 
-    // 🧪 Debug-Route
+    // 🧪 Debug-Route (ERWEITERT)
     app.get("/debug", (req, res) => {
       console.log("Cookies:", req.cookies);
       res.cookie("debug_cookie", "test-value", {
@@ -411,11 +476,15 @@ async function analyzeContract(pdfText) {
         loadedRoutes: "all routes loaded with error handling",
         newFeature: "Contract save route enabled",
         analyzeRoute: "ANALYZE ROUTE NOW ACTIVE!",
-        optimizeRoute: "OPTIMIZE ROUTE NOW ACTIVE!" // ✅ NEU
+        optimizeRoute: "OPTIMIZE ROUTE NOW ACTIVE!",
+        fileServing: "IMPROVED FILE SERVING ACTIVE!", // ✅ NEU
+        apiBaseUrl: API_BASE_URL, // ✅ NEU: Zeige API Base URL
+        uploadPath: UPLOAD_PATH,
+        nodeEnv: process.env.NODE_ENV
       });
     });
 
-    // ⏰ Cron Jobs (vereinfacht)
+    // ⏰ Cron Jobs (unverändert)
     try {
       cron.schedule("0 8 * * *", async () => {
         console.log("⏰ Reminder-Cronjob gestartet");
@@ -443,11 +512,12 @@ async function analyzeContract(pdfText) {
     const PORT = process.env.PORT || 5000;
     app.listen(PORT, () => {
       console.log(`🚀 Server läuft auf Port ${PORT}`);
+      console.log(`📁 Static files serviert unter: ${API_BASE_URL}/uploads`); // ✅ NEU
       console.log(`📡 Alle wichtigen Routen sollten geladen sein`);
       console.log(`🔧 Generate-Route: POST /contracts/generate (Proxy entfernt /api/)`);
       console.log(`💾 Save-Route: POST /contracts (NEU)`);
       console.log(`📊 Analyze-Route: POST /analyze (NEU HINZUGEFÜGT!)`);
-      console.log(`🔧 Optimize-Route: POST /optimize (NEU HINZUGEFÜGT!)`) // ✅ NEU
+      console.log(`🔧 Optimize-Route: POST /optimize (NEU HINZUGEFÜGT!)`);
       console.log(`🔐 Auth-Routen: /auth/*`);
       console.log(`✅ Server deployment complete!`);
     });

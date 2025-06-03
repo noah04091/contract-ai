@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import styles from "../styles/ContractDetailsView.module.css";
 import ReminderToggle from "./ReminderToggle";
+import { getContractFileUrl } from "../utils/api"; // ✅ NEU: Import der File-URL-Funktion
 
 interface Contract {
   _id: string;
@@ -25,6 +26,8 @@ interface Contract {
   extractedText?: string; // ✅ NEU: Extrahierter Text als Fallback
   fileUrl?: string; // ✅ NEU: URL zur Original-Vertragsdatei
   filePath?: string; // ✅ NEU: Pfad zur Original-Vertragsdatei (Fallback)
+  filename?: string; // ✅ NEU: Original-Dateiname für Backend-URL
+  originalname?: string; // ✅ NEU: Fallback für Dateiname
   analysis?: {
     summary?: string;
     legalAssessment?: string;
@@ -341,19 +344,49 @@ ${analysis.comparison || 'Nicht verfügbar'}
                     </div>
                   </div>
                   
-                  {/* ✅ NEU: Button für Original-Vertragsdatei */}
-                  {(contract.fileUrl || contract.filePath) && (
-                    <div className={styles.viewContractSection}>
-                      <a 
-                        href={contract.fileUrl || contract.filePath} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className={styles.viewContractButton}
-                      >
-                        📄 Vertrag anzeigen
-                      </a>
-                    </div>
-                  )}
+                  {/* ✅ VERBESSERT: Button für Original-Vertragsdatei mit korrekter URL */}
+                  {(() => {
+                    const fileUrl = getContractFileUrl(contract); // ✅ Verwendet importierte Funktion
+                    
+                    if (fileUrl) {
+                      return (
+                        <div className={styles.viewContractSection}>
+                          <a 
+                            href={fileUrl}
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className={styles.viewContractButton}
+                            onClick={() => {
+                              // Debug-Ausgabe für Troubleshooting
+                              console.log('🔍 Opening file:', {
+                                contractName: contract.name,
+                                fileUrl: fileUrl,
+                                filename: contract.filename,
+                                originalname: contract.originalname,
+                                filePath: contract.filePath,
+                                usingFunction: 'getContractFileUrl'
+                              });
+                            }}
+                          >
+                            📄 Vertrag anzeigen
+                          </a>
+                        </div>
+                      );
+                    } else {
+                      return (
+                        <div className={styles.viewContractSection}>
+                          <button 
+                            className={styles.viewContractButton}
+                            style={{ opacity: 0.5, cursor: 'not-allowed' }}
+                            disabled
+                            title="Keine Datei verfügbar"
+                          >
+                            📄 Datei nicht verfügbar
+                          </button>
+                        </div>
+                      );
+                    }
+                  })()}
                 </div>
 
                 <div className={styles.section}>

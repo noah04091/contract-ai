@@ -1,5 +1,10 @@
-// 📁 src/utils/api.ts - IMPROVED ERROR HANDLING & RETRY LOGIC + OPTIMIZE FUNCTIONS + DUBLIKAT-HANDLING (ROBUST FIXED)
-const API_BASE_URL = "/api"; // Proxy-Pfad für Vercel & devServer
+// 📁 src/utils/api.ts - IMPROVED ERROR HANDLING & RETRY LOGIC + FILE URL SUPPORT
+const API_BASE_URL = "/api"; // Proxy-Pfad für Vercel & devServer (für API-Calls)
+
+// ✅ NEU: Separate Backend-URL für File-Downloads (absolute URLs)
+const BACKEND_API_URL = process.env.NODE_ENV === 'production' 
+  ? 'https://api.contract-ai.de'  // ✅ ANPASSEN: Deine Backend-Domain
+  : 'http://localhost:5000';      // ✅ ANPASSEN: Dein Backend-Port
 
 /**
  * Type Guard um zu prüfen ob etwas ein Error ist
@@ -17,6 +22,75 @@ function getErrorMessage(error: unknown): string {
   }
   return String(error);
 }
+
+// ✅ Interface für Contract mit File-Informationen
+interface ContractFile {
+  filename?: string;
+  originalname?: string;
+  fileUrl?: string;
+  filePath?: string;
+}
+
+/**
+ * ✅ NEU: Generiert absolute File-URLs für Contract-Dateien
+ * Vermeidet React-Router-Interferenz durch absolute Backend-URLs
+ */
+export const getContractFileUrl = (contract: ContractFile): string | null => {
+  console.log('🔍 Contract File URL Debug:', {
+    contractData: contract,
+    hasFileUrl: !!contract.fileUrl,
+    hasFilename: !!contract.filename,
+    hasOriginalname: !!contract.originalname,
+    hasFilePath: !!contract.filePath,
+    backendUrl: BACKEND_API_URL
+  });
+
+  // Priorität: fileUrl > filename > originalname > filePath
+  if (contract.fileUrl && contract.fileUrl.startsWith('http')) {
+    console.log('✅ Using existing fileUrl:', contract.fileUrl);
+    return contract.fileUrl;
+  }
+  
+  // Dateiname aus verschiedenen Quellen
+  const filename = contract.filename || contract.originalname;
+  if (filename) {
+    const fileUrl = `${BACKEND_API_URL}/uploads/${filename}`;
+    console.log('✅ Generated file URL from filename:', fileUrl);
+    return fileUrl;
+  }
+  
+  // Fallback: filePath verwenden (falls absolute URL)
+  if (contract.filePath) {
+    if (contract.filePath.startsWith('http')) {
+      console.log('✅ Using absolute filePath:', contract.filePath);
+      return contract.filePath;
+    }
+    // Relative filePath in absolute URL umwandeln
+    if (contract.filePath.startsWith('/uploads/')) {
+      const fileUrl = `${BACKEND_API_URL}${contract.filePath}`;
+      console.log('✅ Generated file URL from filePath:', fileUrl);
+      return fileUrl;
+    }
+  }
+  
+  console.warn('⚠️ No valid file URL found for contract');
+  return null;
+};
+
+/**
+ * ✅ NEU: Test-Funktion für File-URL-Verfügbarkeit
+ */
+export const checkFileAvailability = async (fileUrl: string): Promise<boolean> => {
+  try {
+    const response = await fetch(fileUrl, { method: 'HEAD' });
+    const available = response.ok;
+    console.log(`📁 File availability check: ${fileUrl} - ${available ? 'Available' : 'Not available'}`);
+    return available;
+  } catch (error) {
+    console.error('❌ File availability check failed:', error);
+    return false;
+  }
+};
 
 // ✅ FIXED: Interface für Duplikat-Error-Response (robust)
 interface DuplicateError {
@@ -57,6 +131,7 @@ const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 /**
  * Universelle API-Fetch-Funktion mit verbesserter Fehlerbehandlung & Retry
+ * ✅ WICHTIG: Verwendet relativen API_BASE_URL für API-Calls (nicht für Files!)
  */
 export const apiCall = async (
   endpoint: string,
