@@ -112,40 +112,44 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// ✅ Aktuellen Nutzer abrufen - ERWEITERT mit optimizationCount
+// ✅ KORRIGIERT: Aktuellen Nutzer abrufen - Frontend-kompatible Response-Struktur
 router.get("/me", verifyToken, async (req, res) => {
   try {
+    console.log("🔍 /auth/me aufgerufen für User:", req.user.userId);
+    
     const user = await usersCollection.findOne(
       { _id: new ObjectId(req.user.userId) },
       { projection: { password: 0, resetToken: 0, resetTokenExpires: 0 } }
     );
 
-    if (!user)
+    if (!user) {
+      console.error("❌ User nicht gefunden:", req.user.userId);
       return res.status(404).json({ message: "❌ Benutzer nicht gefunden" });
+    }
 
     const plan = user.subscriptionPlan || "free";
     const status = user.subscriptionStatus || "inactive";
     const analysisCount = user.analysisCount ?? 0;
-    const optimizationCount = user.optimizationCount ?? 0; // ⭐ NEU HINZUGEFÜGT
+    const optimizationCount = user.optimizationCount ?? 0;
     const subscriptionActive = user.subscriptionActive ?? false;
 
-    // 📊 ANALYSE LIMITS
-    let analysisLimit = 10;
-    if (plan === "business") analysisLimit = 50;
-    if (plan === "premium") analysisLimit = Infinity;
+    // 📊 ANALYSE LIMITS - KORRIGIERT für 3-Stufen-Modell
+    let analysisLimit = 0;  // ✅ Free: 0 Analysen (statt 10!)
+    if (plan === "business") analysisLimit = 50;  // 📊 Business: 50 pro Monat
+    if (plan === "premium") analysisLimit = Infinity; // ♾️ Premium: Unbegrenzt
 
     // 🔧 OPTIMIERUNG LIMITS (NEU)
-    let optimizationLimit = 5; // Free: 5 Optimierungen
+    let optimizationLimit = 0; // ✅ Free: 0 Optimierungen (statt 5!)
     if (plan === "business") optimizationLimit = 25;
     if (plan === "premium") optimizationLimit = Infinity;
 
-    res.json({
+    const userData = {
       email: user.email,
       subscriptionPlan: plan,
       subscriptionStatus: status,
       subscriptionActive,
       isPremium: plan === "premium",
-      isBusiness: plan === "business",
+      isBusiness: plan === "business", 
       isFree: plan === "free",
       // ⭐ ANALYSE INFO
       analysisCount,
@@ -157,9 +161,33 @@ router.get("/me", verifyToken, async (req, res) => {
       createdAt: user.createdAt,
       emailNotifications: user.emailNotifications ?? true,
       contractReminders: user.contractReminders ?? true
+    };
+
+    console.log("✅ User-Info erfolgreich geladen:", {
+      email: userData.email,
+      plan: userData.subscriptionPlan,
+      isPremium: userData.isPremium,
+      analysisCount: userData.analysisCount,
+      analysisLimit: userData.analysisLimit
     });
+
+    // ✅ KRITISCH: Frontend erwartet "user" Wrapper!
+    res.json({
+      user: userData  // ← Das war das Problem! Frontend erwartet { user: {...} }
+    });
+
   } catch (err) {
     console.error("❌ Fehler bei /me:", err);
+    
+    // ✅ VERBESSERTE Fehlerbehandlung - könnte MongoDB-Ausfall sein
+    if (err.message?.includes('connection') || err.message?.includes('timeout')) {
+      console.error("🔥 MongoDB-Verbindungsfehler erkannt!");
+      return res.status(503).json({ 
+        message: "❌ Datenbankverbindung fehlgeschlagen. Bitte versuche es später erneut.",
+        error: "DATABASE_CONNECTION_ERROR"
+      });
+    }
+    
     res.status(500).json({ message: "Serverfehler bei /me" });
   }
 });
@@ -275,7 +303,6 @@ router.post("/logout", (req, res) => {
   res.clearCookie(COOKIE_NAME, COOKIE_OPTIONS);
   console.log("🍪 Logout erfolgreich – Cookie gelöscht");
   res.json({ message: "✅ Erfolgreich ausgeloggt" });
-
 });
 
 // ✅ NEUE ROUTE: Bestehende User upgraden (OPTIONAL - für Migration)
