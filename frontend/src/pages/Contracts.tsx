@@ -24,14 +24,30 @@ interface Contract {
 }
 
 // ✅ KORRIGIERT: Interface für Mehrfach-Upload
+// ✅ KORRIGIERT: Spezifische Types statt any
+interface AnalysisResult {
+  success: boolean;
+  contractId?: string;
+  message?: string;
+  duplicate?: boolean;
+  analysisData?: {
+    kuendigung?: string;
+    laufzeit?: string;
+    expiryDate?: string;
+    status?: string;
+    risiken?: string[];
+    optimierungen?: string[];
+  };
+}
+
 interface UploadFileItem {
   id: string;
   file: File;
   status: 'pending' | 'analyzing' | 'completed' | 'error' | 'duplicate';
   progress: number;
-  result?: any;
+  result?: AnalysisResult;
   error?: string;
-  duplicateInfo?: any;
+  duplicateInfo?: AnalysisResult;
 }
 
 // ✅ User Info Interface
@@ -319,7 +335,7 @@ export default function Contracts() {
                 : item
             ));
           }
-        ) as any;
+        ) as AnalysisResult;
 
         // ✅ Erfolgreich
         if (result?.success) {
@@ -405,7 +421,7 @@ export default function Contracts() {
               : item
           ));
         }
-      ) as any;
+      ) as AnalysisResult;
 
       if (result?.success) {
         setUploadFiles(prev => prev.map(item => 

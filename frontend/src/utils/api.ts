@@ -41,6 +41,23 @@ interface ContractFile {
   };
 }
 
+// ✅ NEU: Interface für Analyse-Ergebnisse (TypeScript-Lint-Fix)
+interface AnalysisResult {
+  success: boolean;
+  contractId?: string;
+  message?: string;
+  duplicate?: boolean;
+  error?: string;
+  analysisData?: {
+    kuendigung?: string;
+    laufzeit?: string;
+    expiryDate?: string;
+    status?: string;
+    risiken?: string[];
+    optimierungen?: string[];
+  };
+}
+
 /**
  * ✅ ENHANCED: Generiert absolute File-URLs für Contract-Dateien mit LOCAL vs S3 Support
  * Vermeidet React-Router-Interferenz durch absolute Backend-URLs
@@ -826,19 +843,19 @@ export const clearAuthData = (): void => {
 };
 
 /**
- * ⭐ NEU: Batch-Upload-Funktion für mehrere Dateien (Premium-Feature)
+ * ⭐ KORRIGIERT: Batch-Upload-Funktion für mehrere Dateien (Premium-Feature) - TypeScript-Lint-Fix
  * Führt mehrere Upload-Analysen parallel oder sequenziell durch
  */
 export const batchUploadAndAnalyze = async (
   files: File[],
   onFileProgress?: (fileIndex: number, progress: number) => void,
-  onFileComplete?: (fileIndex: number, result: any) => void,
+  onFileComplete?: (fileIndex: number, result: AnalysisResult) => void,
   onFileError?: (fileIndex: number, error: string) => void,
   sequential: boolean = true // Sequential für bessere Server-Performance
-): Promise<any[]> => {
+): Promise<AnalysisResult[]> => {
   console.log(`🚀 Batch-Upload gestartet: ${files.length} Dateien (${sequential ? 'sequenziell' : 'parallel'})`);
   
-  const results: any[] = [];
+  const results: AnalysisResult[] = [];
   
   if (sequential) {
     // ✅ Sequenzielle Verarbeitung (empfohlen für Server-Stabilität)
@@ -852,7 +869,7 @@ export const batchUploadAndAnalyze = async (
           (progress) => {
             if (onFileProgress) onFileProgress(i, progress);
           }
-        );
+        ) as AnalysisResult;
         
         results[i] = result;
         if (onFileComplete) onFileComplete(i, result);
@@ -866,7 +883,8 @@ export const batchUploadAndAnalyze = async (
         
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unbekannter Fehler';
-        results[i] = { success: false, error: errorMessage };
+        const errorResult: AnalysisResult = { success: false, error: errorMessage };
+        results[i] = errorResult;
         if (onFileError) onFileError(i, errorMessage);
         
         console.error(`❌ Fehler bei Datei ${i + 1}: ${file.name}`, error);
@@ -881,15 +899,16 @@ export const batchUploadAndAnalyze = async (
           (progress) => {
             if (onFileProgress) onFileProgress(index, progress);
           }
-        );
+        ) as AnalysisResult;
         
         if (onFileComplete) onFileComplete(index, result);
         return result;
         
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unbekannter Fehler';
+        const errorResult: AnalysisResult = { success: false, error: errorMessage };
         if (onFileError) onFileError(index, errorMessage);
-        return { success: false, error: errorMessage };
+        return errorResult;
       }
     });
     
@@ -898,7 +917,11 @@ export const batchUploadAndAnalyze = async (
       if (result.status === 'fulfilled') {
         results[index] = result.value;
       } else {
-        results[index] = { success: false, error: result.reason?.message || 'Promise rejected' };
+        const errorResult: AnalysisResult = { 
+          success: false, 
+          error: result.reason?.message || 'Promise rejected' 
+        };
+        results[index] = errorResult;
       }
     });
   }
@@ -1068,7 +1091,7 @@ export const validateBatchUpload = (
 };
 
 /**
- * ⭐ VERBESSERT: Erweiterte uploadAndAnalyze mit besserer Fehlerbehandlung für Batch
+ * ⭐ KORRIGIERT: Erweiterte uploadAndAnalyze mit besserer Fehlerbehandlung für Batch - TypeScript-Lint-Fix
  */
 export const uploadAndAnalyzeBatch = async (
   file: File, 
@@ -1076,11 +1099,11 @@ export const uploadAndAnalyzeBatch = async (
   forceReanalyze: boolean = false,
   retryCount: number = 0,
   maxRetries: number = 2
-): Promise<unknown> => {
+): Promise<AnalysisResult> => {
   console.log(`📤 Upload & Analyze (Batch): ${file.name} (Versuch ${retryCount + 1}/${maxRetries + 1})`);
 
   try {
-    return await uploadAndAnalyze(file, onProgress, forceReanalyze);
+    return await uploadAndAnalyze(file, onProgress, forceReanalyze) as AnalysisResult;
   } catch (error) {
     console.error(`❌ Batch-Upload-Fehler (Versuch ${retryCount + 1}):`, error);
     
