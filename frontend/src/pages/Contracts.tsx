@@ -682,6 +682,39 @@ export default function Contracts() {
             }
           </motion.p>
 
+          {/* ✅ DEBUG: Temporärer Premium-Status-Check Button */}
+          {process.env.NODE_ENV === 'development' && (
+            <div style={{ 
+              position: 'fixed', 
+              top: '10px', 
+              right: '10px', 
+              background: '#333', 
+              color: 'white', 
+              padding: '10px', 
+              borderRadius: '8px',
+              fontSize: '12px',
+              zIndex: 9999
+            }}>
+              <div>Plan: {userInfo.subscriptionPlan}</div>
+              <div>Premium: {userInfo.isPremium ? 'Ja' : 'Nein'}</div>
+              <div>Analysen: {userInfo.analysisCount}/{userInfo.analysisLimit}</div>
+              <button 
+                style={{ 
+                  marginTop: '5px', 
+                  padding: '4px 8px', 
+                  fontSize: '11px',
+                  cursor: 'pointer'
+                }}
+                onClick={() => {
+                  console.log("🔄 Lade User-Info neu...");
+                  fetchUserInfo();
+                }}
+              >
+                🔄 User-Info neu laden
+              </button>
+            </div>
+          )}
+
           {/* ✅ KORRIGIERT: Analysis-Limit-Anzeige für Business */}
           {userInfo.subscriptionPlan === 'business' && (
             <div className={styles.limitProgress}>
