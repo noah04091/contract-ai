@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   X, FileText, Calendar, Clock, AlertCircle, CheckCircle, 
@@ -8,7 +8,9 @@ import {
 } from "lucide-react";
 import styles from "../styles/ContractDetailsView.module.css";
 import ReminderToggle from "./ReminderToggle";
-import { getContractFileUrl } from "../utils/api"; // ✅ NEU: Import der File-URL-Funktion
+import ContractShareModal from "./ContractShareModal"; // ✅ NEU: Import Share Modal
+import ContractEditModal from "./ContractEditModal"; // ✅ NEU: Import Edit Modal
+import { getContractFileUrl } from "../utils/api";
 
 interface Contract {
   _id: string;
@@ -21,16 +23,17 @@ interface Contract {
   createdAt: string;
   content?: string;
   isGenerated?: boolean;
-  // ✅ Erweiterte Felder für Analyse-Daten
+  notes?: string; // ✅ NEU: Für eigene Notizen
+  // Erweiterte Felder für Analyse-Daten
   fullText?: string;
-  extractedText?: string; // ✅ NEU: Extrahierter Text als Fallback
-  fileUrl?: string; // ✅ NEU: URL zur Original-Vertragsdatei
-  filePath?: string; // ✅ NEU: Pfad zur Original-Vertragsdatei (Fallback)
-  filename?: string; // ✅ NEU: Original-Dateiname für Backend-URL
-  originalname?: string; // ✅ NEU: Fallback für Dateiname
-  s3Key?: string; // ✅ NEU: S3-Key für AWS S3
-  s3Bucket?: string; // ✅ NEU: S3-Bucket
-  s3Location?: string; // ✅ NEU: S3-Location
+  extractedText?: string;
+  fileUrl?: string;
+  filePath?: string;
+  filename?: string;
+  originalname?: string;
+  s3Key?: string;
+  s3Bucket?: string;
+  s3Location?: string;
   analysis?: {
     summary?: string;
     legalAssessment?: string;
@@ -51,13 +54,23 @@ interface ContractDetailsViewProps {
 }
 
 export default function ContractDetailsView({ 
-  contract, 
+  contract: initialContract, 
   onClose, 
   show, 
   onEdit, 
   onDelete 
 }: ContractDetailsViewProps) {
   const [activeTab, setActiveTab] = useState<'overview' | 'content' | 'analysis'>('overview');
+  
+  // ✅ NEU: State für die beiden Modals
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [contract, setContract] = useState<Contract>(initialContract); // ✅ NEU: Lokaler Contract State für Updates
+
+  // ✅ NEU: Update contract wenn sich initialContract ändert
+  useEffect(() => {
+    setContract(initialContract);
+  }, [initialContract]);
 
   const formatDate = (dateString: string): string => {
     if (!dateString) return "Unbekannt";
@@ -99,7 +112,6 @@ export default function ContractDetailsView({
     }
   };
 
-  // ✅ NEU: Score-Farbe bestimmen
   const getScoreColor = (score: number): string => {
     if (score >= 80) return "#34c759";
     if (score >= 60) return "#ff9500";
@@ -114,7 +126,6 @@ export default function ContractDetailsView({
     return "Kritisch";
   };
 
-  // ✅ NEU: Text in Stichpunkte aufteilen
   const formatTextToPoints = (text: string): string[] => {
     if (!text) return ['Keine Details verfügbar'];
     
@@ -127,7 +138,6 @@ export default function ContractDetailsView({
     return sentences.length > 0 ? sentences : [text.substring(0, 180) + '...'];
   };
 
-  // ✅ IMPROVED: Robuster File-Viewer Handler
   const handleViewContract = async () => {
     const fileUrl = getContractFileUrl(contract);
     
@@ -146,23 +156,19 @@ export default function ContractDetailsView({
       usingFunction: 'getContractFileUrl'
     });
     
-    // ✅ ROBUST: Handle sowohl S3-View Route als auch direkte URLs
     if (fileUrl.includes('/api/s3/view')) {
       try {
         console.log('🔗 S3 View Route detected, checking response type...');
         
-        // Versuche zuerst einen HEAD-Request um zu prüfen ob Redirect oder JSON
         const headResponse = await fetch(fileUrl, { 
           method: 'HEAD',
           credentials: 'include'
         });
         
         if (headResponse.redirected) {
-          // ✅ Backend macht Redirect - öffne die finale URL
           console.log('✅ Backend redirected to:', headResponse.url);
           window.open(headResponse.url, '_blank', 'noopener,noreferrer');
         } else {
-          // Backend gibt JSON zurück - hole die echte S3-URL
           console.log('📋 Backend returns JSON, fetching S3 URL...');
           const response = await fetch(fileUrl, {
             headers: { 'Accept': 'application/json' },
@@ -181,27 +187,42 @@ export default function ContractDetailsView({
         }
       } catch (error) {
         console.error('❌ Error handling S3 URL:', error);
-        
-        // ✅ FALLBACK: Versuche direkt zu öffnen (falls Route doch redirected)
         console.log('🔄 Fallback: Opening URL directly...');
         window.open(fileUrl, '_blank', 'noopener,noreferrer');
       }
     } else {
-      // ✅ Direkte URL (Legacy oder absolute URLs) - direkt öffnen
       console.log('✅ Opening direct URL:', fileUrl);
       window.open(fileUrl, '_blank', 'noopener,noreferrer');
     }
   };
 
+  // ✅ NEU: Share-Handler
+  const handleShare = () => {
+    console.log('🔗 Opening share modal for contract:', contract._id);
+    setShowShareModal(true);
+  };
+
+  // ✅ NEU: Edit-Handler
   const handleEdit = () => {
-    if (onEdit) onEdit(contract._id);
+    console.log('✏️ Opening edit modal for contract:', contract._id);
+    setShowEditModal(true);
+  };
+
+  // ✅ NEU: Update-Handler für Edit-Modal
+  const handleContractUpdate = (updatedContract: Contract) => {
+    console.log('✅ Contract updated:', updatedContract);
+    setContract(updatedContract);
+    
+    // Optional: Auch Parent Component über Update informieren
+    if (onEdit) {
+      onEdit(updatedContract._id);
+    }
   };
 
   const handleDelete = () => {
     if (onDelete) onDelete(contract._id, contract.name);
   };
 
-  // ✅ NEU: Content Download (falls verfügbar)
   const handleDownloadContent = () => {
     const content = contract.fullText || contract.content || '';
     if (!content) return;
@@ -217,7 +238,6 @@ export default function ContractDetailsView({
     window.URL.revokeObjectURL(url);
   };
 
-  // ✅ NEU: Analyse-Daten kopieren
   const handleCopyAnalysis = () => {
     const analysis = contract.analysis;
     if (!analysis) return;
@@ -285,13 +305,16 @@ ${analysis.comparison || 'Nicht verfügbar'}
               </div>
 
               <div className={styles.headerActions}>
+                {/* ✅ UPDATED: Share Button mit Funktionalität */}
                 <button 
                   className={styles.actionBtn}
-                  onClick={() => {/* Share functionality */}}
+                  onClick={handleShare}
                   title="Teilen"
                 >
                   <Share2 size={18} />
                 </button>
+                
+                {/* ✅ UPDATED: Edit Button mit Funktionalität */}
                 <button 
                   className={styles.actionBtn}
                   onClick={handleEdit}
@@ -299,6 +322,7 @@ ${analysis.comparison || 'Nicht verfügbar'}
                 >
                   <Edit size={18} />
                 </button>
+                
                 <button 
                   className={`${styles.actionBtn} ${styles.deleteBtn}`}
                   onClick={handleDelete}
@@ -411,9 +435,16 @@ ${analysis.comparison || 'Nicht verfügbar'}
                       <label>Hochgeladen am</label>
                       <span>{formatDate(contract.createdAt)}</span>
                     </div>
+                    
+                    {/* ✅ NEU: Eigene Notizen anzeigen falls vorhanden */}
+                    {contract.notes && (
+                      <div className={styles.detailItem}>
+                        <label>Eigene Notizen</label>
+                        <span>{contract.notes}</span>
+                      </div>
+                    )}
                   </div>
                   
-                  {/* ✅ VERBESSERT: Button für Original-Vertragsdatei mit robustem Handler */}
                   {(() => {
                     const fileUrl = getContractFileUrl(contract);
                     
@@ -473,7 +504,7 @@ ${analysis.comparison || 'Nicht verfügbar'}
               </motion.div>
             )}
 
-            {/* ✅ ERWEITERT: Content Tab - Mit Debug & mehreren Fallbacks */}
+            {/* Content Tab - unverändert */}
             {activeTab === 'content' && (
               <motion.div 
                 className={styles.contentTab}
@@ -481,7 +512,6 @@ ${analysis.comparison || 'Nicht verfügbar'}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
               >
-                {/* ✅ DEBUG: Console-Ausgabe für Troubleshooting */}
                 {(() => {
                   console.log('🔍 Content Tab Debug:', {
                     contractName: contract.name,
@@ -494,7 +524,6 @@ ${analysis.comparison || 'Nicht verfügbar'}
                   return null;
                 })()}
                 
-                {/* ✅ ERWEITERTE Fallback-Prüfung für verschiedene Text-Felder */}
                 {(() => {
                   const textContent = contract.fullText || contract.content || contract.extractedText || '';
                   
@@ -552,7 +581,6 @@ ${analysis.comparison || 'Nicht verfügbar'}
                         <h3>Kein Textinhalt verfügbar</h3>
                         <p>Der Vertragstext konnte nicht extrahiert werden oder ist nicht verfügbar. Möglicherweise handelt es sich um eine bildbasierte PDF oder ein anderes Format.</p>
                         
-                        {/* ✅ DEBUG: Zusätzliche Info für Troubleshooting */}
                         <div className={styles.debugInfo}>
                           <details>
                             <summary>Debug-Informationen</summary>
@@ -593,7 +621,7 @@ ${analysis.comparison || 'Nicht verfügbar'}
               </motion.div>
             )}
 
-            {/* ✅ NEU: Analysis Tab - Vollständig funktional */}
+            {/* Analysis Tab - unverändert */}
             {activeTab === 'analysis' && (
               <motion.div 
                 className={styles.analysisTab}
@@ -617,7 +645,6 @@ ${analysis.comparison || 'Nicht verfügbar'}
                       </div>
                     </div>
 
-                    {/* Score Display */}
                     {contract.analysis.contractScore && (
                       <div className={styles.scoreSection}>
                         <div className={styles.scoreDisplay}>
@@ -638,7 +665,6 @@ ${analysis.comparison || 'Nicht verfügbar'}
                       </div>
                     )}
 
-                    {/* Analysis Sections */}
                     <div className={styles.analysisContent}>
                       {contract.analysis.summary && (
                         <div className={styles.analysisSection}>
@@ -725,7 +751,6 @@ ${analysis.comparison || 'Nicht verfügbar'}
                       )}
                     </div>
 
-                    {/* Analysis Meta */}
                     {contract.analysis.lastAnalyzed && (
                       <div className={styles.analysisMeta}>
                         <p>
@@ -751,7 +776,6 @@ ${analysis.comparison || 'Nicht verfügbar'}
                       <button 
                         className={styles.analyzeBtn}
                         onClick={() => {
-                          // Hier könnte eine Funktion zur Analyse aufgerufen werden
                           console.log('Start analysis for:', contract._id);
                         }}
                       >
@@ -765,6 +789,21 @@ ${analysis.comparison || 'Nicht verfügbar'}
             )}
           </div>
         </motion.div>
+
+        {/* ✅ NEU: Share Modal */}
+        <ContractShareModal
+          contract={{ _id: contract._id, name: contract.name }}
+          show={showShareModal}
+          onClose={() => setShowShareModal(false)}
+        />
+
+        {/* ✅ NEU: Edit Modal */}
+        <ContractEditModal
+          contract={contract}
+          show={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          onUpdate={handleContractUpdate}
+        />
       </motion.div>
     </AnimatePresence>
   );
