@@ -28,6 +28,9 @@ interface Contract {
   filePath?: string; // ✅ NEU: Pfad zur Original-Vertragsdatei (Fallback)
   filename?: string; // ✅ NEU: Original-Dateiname für Backend-URL
   originalname?: string; // ✅ NEU: Fallback für Dateiname
+  s3Key?: string; // ✅ NEU: S3-Key für AWS S3
+  s3Bucket?: string; // ✅ NEU: S3-Bucket
+  s3Location?: string; // ✅ NEU: S3-Location
   analysis?: {
     summary?: string;
     legalAssessment?: string;
@@ -122,6 +125,72 @@ export default function ContractDetailsView({
       .slice(0, 4);
     
     return sentences.length > 0 ? sentences : [text.substring(0, 180) + '...'];
+  };
+
+  // ✅ IMPROVED: Robuster File-Viewer Handler
+  const handleViewContract = async () => {
+    const fileUrl = getContractFileUrl(contract);
+    
+    if (!fileUrl) {
+      console.warn('⚠️ No file URL available');
+      return;
+    }
+    
+    console.log('🔍 Opening file:', {
+      contractName: contract.name,
+      fileUrl: fileUrl,
+      filename: contract.filename,
+      originalname: contract.originalname,
+      filePath: contract.filePath,
+      s3Key: contract.s3Key,
+      usingFunction: 'getContractFileUrl'
+    });
+    
+    // ✅ ROBUST: Handle sowohl S3-View Route als auch direkte URLs
+    if (fileUrl.includes('/api/s3/view')) {
+      try {
+        console.log('🔗 S3 View Route detected, checking response type...');
+        
+        // Versuche zuerst einen HEAD-Request um zu prüfen ob Redirect oder JSON
+        const headResponse = await fetch(fileUrl, { 
+          method: 'HEAD',
+          credentials: 'include'
+        });
+        
+        if (headResponse.redirected) {
+          // ✅ Backend macht Redirect - öffne die finale URL
+          console.log('✅ Backend redirected to:', headResponse.url);
+          window.open(headResponse.url, '_blank', 'noopener,noreferrer');
+        } else {
+          // Backend gibt JSON zurück - hole die echte S3-URL
+          console.log('📋 Backend returns JSON, fetching S3 URL...');
+          const response = await fetch(fileUrl, {
+            headers: { 'Accept': 'application/json' },
+            credentials: 'include'
+          });
+          
+          const data = await response.json();
+          
+          if (data.fileUrl) {
+            console.log('✅ Opening S3 file directly:', data.fileUrl);
+            window.open(data.fileUrl, '_blank', 'noopener,noreferrer');
+          } else {
+            console.error('❌ No fileUrl in response:', data);
+            alert('Fehler: Datei-URL konnte nicht generiert werden.');
+          }
+        }
+      } catch (error) {
+        console.error('❌ Error handling S3 URL:', error);
+        
+        // ✅ FALLBACK: Versuche direkt zu öffnen (falls Route doch redirected)
+        console.log('🔄 Fallback: Opening URL directly...');
+        window.open(fileUrl, '_blank', 'noopener,noreferrer');
+      }
+    } else {
+      // ✅ Direkte URL (Legacy oder absolute URLs) - direkt öffnen
+      console.log('✅ Opening direct URL:', fileUrl);
+      window.open(fileUrl, '_blank', 'noopener,noreferrer');
+    }
   };
 
   const handleEdit = () => {
@@ -344,32 +413,20 @@ ${analysis.comparison || 'Nicht verfügbar'}
                     </div>
                   </div>
                   
-                  {/* ✅ VERBESSERT: Button für Original-Vertragsdatei mit korrekter URL */}
+                  {/* ✅ VERBESSERT: Button für Original-Vertragsdatei mit robustem Handler */}
                   {(() => {
-                    const fileUrl = getContractFileUrl(contract); // ✅ Verwendet importierte Funktion
+                    const fileUrl = getContractFileUrl(contract);
                     
                     if (fileUrl) {
                       return (
                         <div className={styles.viewContractSection}>
-                          <a 
-                            href={fileUrl}
-                            target="_blank" 
-                            rel="noopener noreferrer" 
+                          <button 
+                            onClick={handleViewContract}
                             className={styles.viewContractButton}
-                            onClick={() => {
-                              // Debug-Ausgabe für Troubleshooting
-                              console.log('🔍 Opening file:', {
-                                contractName: contract.name,
-                                fileUrl: fileUrl,
-                                filename: contract.filename,
-                                originalname: contract.originalname,
-                                filePath: contract.filePath,
-                                usingFunction: 'getContractFileUrl'
-                              });
-                            }}
+                            title="Original-Vertragsdatei anzeigen"
                           >
                             📄 Vertrag anzeigen
-                          </a>
+                          </button>
                         </div>
                       );
                     } else {

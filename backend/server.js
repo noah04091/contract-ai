@@ -1,4 +1,4 @@
-// 📁 backend/server.js (Complete fixed version with ANALYZE route + OPTIMIZE route + IMPROVED FILE SERVING + S3 INTEGRATION)
+// 📁 backend/server.js (Complete fixed version with ANALYZE route + OPTIMIZE route + IMPROVED FILE SERVING + S3 INTEGRATION + REDIRECT FIX)
 const express = require("express");
 const app = express();
 require("dotenv").config();
@@ -283,7 +283,7 @@ async function analyzeContract(pdfText) {
       console.error("❌ Fehler bei Legal Pulse Routen:", err);
     }
 
-    // ✅ NEU: S3 Signed URL Route
+    // ✅ FIXED: S3 Signed URL Route - REDIRECT statt JSON für Browser
     app.get("/s3/view", verifyToken, (req, res) => {
       try {
         const { file } = req.query;
@@ -295,15 +295,58 @@ async function analyzeContract(pdfText) {
         console.log(`🔗 Generating signed URL for: ${file}`);
         const signedUrl = generateSignedUrl(file);
         
+        // ✅ Check ob Request für JSON oder Redirect
+        const acceptHeader = req.headers.accept || '';
+        const userAgent = req.headers['user-agent'] || '';
+        const wantsJson = acceptHeader.includes('application/json') || 
+                         acceptHeader.includes('*/*') && userAgent.includes('fetch');
+        
+        // ✅ DEBUG: Log welcher Typ von Request es ist
+        console.log(`🔍 S3 View Request Type:`, {
+          file: file,
+          acceptHeader: acceptHeader,
+          userAgent: userAgent.substring(0, 100),
+          wantsJson: wantsJson,
+          action: wantsJson ? 'JSON Response' : 'Redirect to S3'
+        });
+        
+        if (wantsJson) {
+          // JSON Response für API-Calls (fetch requests)
+          console.log(`📋 Returning JSON response for: ${file}`);
+          res.json({ 
+            fileUrl: signedUrl,
+            expiresIn: 3600,
+            s3Key: file
+          });
+        } else {
+          // ✅ REDIRECT für Browser-Navigation (Button clicks)
+          console.log(`🔄 Redirecting to S3 file: ${signedUrl}`);
+          res.redirect(302, signedUrl);
+        }
+        
+      } catch (error) {
+        console.error("❌ S3 signed URL error:", error);
+        res.status(500).json({ message: "Error generating file URL: " + error.message });
+      }
+    });
+
+    // ✅ NEU: Separate JSON-Route für explizite API-Calls
+    app.get("/s3/json", verifyToken, (req, res) => {
+      try {
+        const { file } = req.query;
+        if (!file) return res.status(400).json({ message: "File parameter required" });
+        
+        console.log(`📋 JSON-only request for: ${file}`);
+        const signedUrl = generateSignedUrl(file);
+        
         res.json({ 
           fileUrl: signedUrl,
           expiresIn: 3600,
           s3Key: file
         });
-        
       } catch (error) {
-        console.error("❌ S3 signed URL error:", error);
-        res.status(500).json({ message: "Error generating file URL: " + error.message });
+        console.error("❌ S3 JSON error:", error);
+        res.status(500).json({ message: "Error: " + error.message });
       }
     });
 
@@ -575,7 +618,7 @@ async function analyzeContract(pdfText) {
         analyzeRoute: "ANALYZE ROUTE NOW ACTIVE!",
         optimizeRoute: "OPTIMIZE ROUTE NOW ACTIVE!",
         fileServing: "IMPROVED FILE SERVING ACTIVE!", // ✅ NEU
-        s3Integration: "S3 UPLOAD & SIGNED URLS ACTIVE!", // ✅ NEU
+        s3Integration: "S3 UPLOAD & SIGNED URLS + REDIRECT ACTIVE!", // ✅ UPDATED
         apiBaseUrl: API_BASE_URL, // ✅ NEU: Zeige API Base URL
         uploadPath: UPLOAD_PATH,
         nodeEnv: process.env.NODE_ENV,
@@ -618,6 +661,7 @@ async function analyzeContract(pdfText) {
       console.log(`📊 Analyze-Route: POST /analyze (NEU HINZUGEFÜGT!)`);
       console.log(`🔧 Optimize-Route: POST /optimize (NEU HINZUGEFÜGT!)`);
       console.log(`🔐 Auth-Routen: /auth/*`);
+      console.log(`🔗 S3-Routes: GET /s3/view (Redirect), GET /s3/json (JSON)`); // ✅ NEU
       console.log(`✅ Server deployment complete!`);
     });
 
