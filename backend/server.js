@@ -763,7 +763,7 @@ async function analyzeContract(pdfText) {
       console.log(`📊 Analyze-Route: POST /analyze (NEU HINZUGEFÜGT!)`);
       console.log(`🔧 Optimize-Route: POST /optimize (NEU HINZUGEFÜGT!)`);
       console.log(`🔐 Auth-Routen: /auth/*`);
-      if (s3Status.servicesLoaded) {
+      if (s3Upload && generateSignedUrl) {
         console.log(`🔗 S3-Routes: GET /s3/view (Redirect), GET /s3/json (JSON)`); // ✅ NEU
       }
       console.log(`✅ Server deployment complete!`);
