@@ -1,4 +1,4 @@
-// 📁 backend/server.js (Complete fixed version with ANALYZE route + OPTIMIZE route + IMPROVED FILE SERVING)
+// 📁 backend/server.js (Complete fixed version with ANALYZE route + OPTIMIZE route + IMPROVED FILE SERVING + S3 INTEGRATION)
 const express = require("express");
 const app = express();
 require("dotenv").config();
@@ -18,6 +18,9 @@ const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 const verifyToken = require("./middleware/verifyToken");
 const createCheckSubscription = require("./middleware/checkSubscription");
+
+// ✅ NEU: S3 File Storage Import
+const { upload: s3Upload, generateSignedUrl } = require("./services/fileStorage");
 
 // 📁 Setup
 const UPLOAD_PATH = "./uploads";
@@ -280,18 +283,79 @@ async function analyzeContract(pdfText) {
       console.error("❌ Fehler bei Legal Pulse Routen:", err);
     }
 
-    // 📤 Upload-Logik mit Analyse (ERWEITERT mit File-URLs)
-    app.post("/upload", verifyToken, checkSubscription, upload.single("file"), async (req, res) => {
+    // ✅ NEU: S3 Signed URL Route
+    app.get("/s3/view", verifyToken, (req, res) => {
+      try {
+        const { file } = req.query;
+        
+        if (!file) {
+          return res.status(400).json({ message: "File parameter required" });
+        }
+        
+        console.log(`🔗 Generating signed URL for: ${file}`);
+        const signedUrl = generateSignedUrl(file);
+        
+        res.json({ 
+          fileUrl: signedUrl,
+          expiresIn: 3600,
+          s3Key: file
+        });
+        
+      } catch (error) {
+        console.error("❌ S3 signed URL error:", error);
+        res.status(500).json({ message: "Error generating file URL: " + error.message });
+      }
+    });
+
+    // 📤 Upload-Logik mit S3 Analyse (ERWEITERT mit S3-URLs)
+    app.post("/upload", verifyToken, checkSubscription, s3Upload.single("file"), async (req, res) => {
       if (!req.file) return res.status(400).json({ message: "Keine Datei hochgeladen" });
 
       try {
-        const buffer = await fs.readFile(path.join(__dirname, UPLOAD_PATH, req.file.filename));
-        const text = (await pdfParse(buffer)).text.substring(0, 5000);
-        const analysis = await analyzeContract(text);
+        console.log(`📁 S3 Upload successful:`, {
+          key: req.file.key,
+          bucket: req.file.bucket,
+          location: req.file.location
+        });
 
-        const name = analysis.match(/Vertragsname:\s*(.*)/i)?.[1]?.trim() || "Unbekannt";
-        const laufzeit = analysis.match(/Laufzeit:\s*(.*)/i)?.[1]?.trim() || "Unbekannt";
-        const kuendigung = analysis.match(/Kündigungsfrist:\s*(.*)/i)?.[1]?.trim() || "Unbekannt";
+        // ✅ PDF-Text-Extraktion von S3-Datei
+        let analysisText = '';
+        try {
+          // Datei von S3 herunterladen für Text-Extraktion
+          const AWS = require('aws-sdk');
+          const s3 = new AWS.S3({
+            accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+            region: process.env.AWS_REGION,
+          });
+          
+          const s3Object = await s3.getObject({
+            Bucket: req.file.bucket,
+            Key: req.file.key
+          }).promise();
+          
+          const pdfData = await pdfParse(s3Object.Body);
+          analysisText = pdfData.text.substring(0, 5000);
+        } catch (extractError) {
+          console.warn("⚠️ Text-Extraktion von S3 fehlgeschlagen:", extractError.message);
+        }
+
+        // KI-Analyse (falls Text verfügbar)
+        let name = "Unbekannt", laufzeit = "Unbekannt", kuendigung = "Unbekannt";
+        if (analysisText) {
+          try {
+            const analysis = await analyzeContract(analysisText);
+            name = analysis.match(/Vertragsname:\s*(.*)/i)?.[1]?.trim() || req.file.originalname || "Unbekannt";
+            laufzeit = analysis.match(/Laufzeit:\s*(.*)/i)?.[1]?.trim() || "Unbekannt";
+            kuendigung = analysis.match(/Kündigungsfrist:\s*(.*)/i)?.[1]?.trim() || "Unbekannt";
+          } catch (aiError) {
+            console.warn("⚠️ KI-Analyse fehlgeschlagen:", aiError.message);
+            name = req.file.originalname || "Unbekannt";
+          }
+        } else {
+          name = req.file.originalname || "Unbekannt";
+        }
+
         const expiryDate = extractExpiryDate(laufzeit);
         const status = determineContractStatus(expiryDate);
 
@@ -303,13 +367,20 @@ async function analyzeContract(pdfText) {
           expiryDate,
           status,
           uploadedAt: new Date(),
-          // ✅ ERWEITERT: File-URL Informationen hinzufügen
-          filePath: `/uploads/${req.file.filename}`,
-          fileUrl: generateFileUrl(req.file.filename), // ✅ NEU: Absolute URL
-          filename: req.file.filename, // ✅ NEU: Multer filename
-          originalname: req.file.originalname, // ✅ NEU: Original filename
-          mimetype: req.file.mimetype, // ✅ NEU: MIME type
-          size: req.file.size, // ✅ NEU: File size
+          
+          // ✅ S3-spezifische Felder
+          s3Key: req.file.key,                        // S3-Pfad für interne Verwendung
+          s3Bucket: req.file.bucket,                  // S3-Bucket Name
+          s3Location: req.file.location,              // S3-URL (falls public)
+          filename: req.file.key,                     // S3-Key als filename
+          originalname: req.file.originalname,        // Original-Dateiname
+          mimetype: req.file.mimetype,                // MIME-Type
+          size: req.file.size,                        // Dateigröße
+          
+          // ✅ Legacy-Felder für Frontend-Kompatibilität
+          filePath: `/s3/${req.file.key}`,           // Legacy path
+          fileUrl: null,                              // Wird über /s3/view generiert
+          
           legalPulse: {
             riskScore: null,
             summary: '',
@@ -325,19 +396,33 @@ async function analyzeContract(pdfText) {
 
         const { insertedId } = await contractsCollection.insertOne(contract);
 
-        console.log(`✅ Contract saved with file URL: ${contract.fileUrl}`);
+        console.log(`✅ Contract saved with S3 key: ${req.file.key}`);
 
-        await transporter.sendMail({
-          from: `Contract AI <${process.env.EMAIL_USER}>`,
-          to: process.env.EMAIL_USER,
-          subject: "📄 Neuer Vertrag hochgeladen",
-          text: `Name: ${name}\nLaufzeit: ${laufzeit}\nKündigungsfrist: ${kuendigung}\nStatus: ${status}\nAblaufdatum: ${expiryDate}`,
+        // E-Mail-Benachrichtigung (optional)
+        try {
+          await transporter.sendMail({
+            from: `Contract AI <${process.env.EMAIL_USER}>`,
+            to: process.env.EMAIL_USER,
+            subject: "📄 Neuer Vertrag hochgeladen (S3)",
+            text: `Name: ${name}\nLaufzeit: ${laufzeit}\nKündigungsfrist: ${kuendigung}\nStatus: ${status}\nS3-Key: ${req.file.key}`,
+          });
+        } catch (emailError) {
+          console.warn("⚠️ E-Mail-Versand fehlgeschlagen:", emailError.message);
+        }
+
+        res.status(201).json({ 
+          message: "Vertrag gespeichert", 
+          contract: { ...contract, _id: insertedId },
+          s3Info: {
+            bucket: req.file.bucket,
+            key: req.file.key,
+            location: req.file.location
+          }
         });
-
-        res.status(201).json({ message: "Vertrag gespeichert", contract: { ...contract, _id: insertedId } });
+        
       } catch (error) {
-        console.error("❌ Upload error:", error);
-        res.status(500).json({ message: "Fehler beim Upload: " + error.message });
+        console.error("❌ S3 Upload error:", error);
+        res.status(500).json({ message: "Fehler beim S3 Upload: " + error.message });
       }
     });
 
@@ -368,13 +453,17 @@ async function analyzeContract(pdfText) {
           signature: signature || null,
           isGenerated: isGenerated || false,
           uploadedAt: new Date(),
-          // ✅ ERWEITERT: File-Informationen
+          // ✅ ERWEITERT: File-Informationen (S3 + Legacy Support)
           filePath: filePath || "",
           fileUrl: fileUrl || (filename ? generateFileUrl(filename) : null),
           filename: filename || null,
           originalname: originalname || null,
           mimetype: mimetype || null,
           size: size || null,
+          // ✅ S3-Felder falls vorhanden
+          s3Key: req.body.s3Key || null,
+          s3Bucket: req.body.s3Bucket || null,
+          s3Location: req.body.s3Location || null,
           optimizationCount: 0,
           legalPulse: {
             riskScore: null,
@@ -460,7 +549,7 @@ async function analyzeContract(pdfText) {
       }
     });
 
-    // 🧪 Debug-Route (ERWEITERT)
+    // 🧪 Debug-Route (ERWEITERT mit S3-Status)
     app.get("/debug", (req, res) => {
       console.log("Cookies:", req.cookies);
       res.cookie("debug_cookie", "test-value", {
@@ -469,6 +558,14 @@ async function analyzeContract(pdfText) {
         sameSite: "None",
         path: "/",
       });
+      
+      // ✅ S3-Status prüfen
+      const s3Status = {
+        configured: !!(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY),
+        bucket: process.env.AWS_S3_BUCKET || 'Not set',
+        region: process.env.AWS_REGION || 'Not set'
+      };
+      
       res.json({ 
         cookies: req.cookies,
         timestamp: new Date().toISOString(),
@@ -478,9 +575,11 @@ async function analyzeContract(pdfText) {
         analyzeRoute: "ANALYZE ROUTE NOW ACTIVE!",
         optimizeRoute: "OPTIMIZE ROUTE NOW ACTIVE!",
         fileServing: "IMPROVED FILE SERVING ACTIVE!", // ✅ NEU
+        s3Integration: "S3 UPLOAD & SIGNED URLS ACTIVE!", // ✅ NEU
         apiBaseUrl: API_BASE_URL, // ✅ NEU: Zeige API Base URL
         uploadPath: UPLOAD_PATH,
-        nodeEnv: process.env.NODE_ENV
+        nodeEnv: process.env.NODE_ENV,
+        s3Status: s3Status // ✅ NEU: S3-Konfigurationsstatus
       });
     });
 

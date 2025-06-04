@@ -23,43 +23,54 @@ function getErrorMessage(error: unknown): string {
   return String(error);
 }
 
-// ✅ Interface für Contract mit File-Informationen
+// ✅ Interface für Contract mit S3-Informationen
 interface ContractFile {
   filename?: string;
   originalname?: string;
   fileUrl?: string;
   filePath?: string;
+  s3Key?: string;      // ✅ NEU: S3-Key
+  s3Bucket?: string;   // ✅ NEU: S3-Bucket
+  s3Location?: string; // ✅ NEU: S3-Location
 }
 
 /**
- * ✅ NEU: Generiert absolute File-URLs für Contract-Dateien
+ * ✅ ERWEITERT: Generiert absolute File-URLs für Contract-Dateien mit S3-Support
  * Vermeidet React-Router-Interferenz durch absolute Backend-URLs
  */
 export const getContractFileUrl = (contract: ContractFile): string | null => {
-  console.log('🔍 Contract File URL Debug:', {
+  console.log('🔍 Contract File URL Debug (S3-Enhanced):', {
     contractData: contract,
     hasFileUrl: !!contract.fileUrl,
+    hasS3Key: !!contract.s3Key,
     hasFilename: !!contract.filename,
     hasOriginalname: !!contract.originalname,
     hasFilePath: !!contract.filePath,
     backendUrl: BACKEND_API_URL
   });
 
-  // Priorität: fileUrl > filename > originalname > filePath
+  // ✅ Priorität 1: S3-Key → Signed URL über Backend
+  if (contract.s3Key) {
+    const s3ViewUrl = `${API_BASE_URL}/s3/view?file=${contract.s3Key}`;
+    console.log('✅ Using S3 signed URL endpoint:', s3ViewUrl);
+    return s3ViewUrl;
+  }
+
+  // ✅ Priorität 2: Bestehende fileUrl (falls absolute URL)
   if (contract.fileUrl && contract.fileUrl.startsWith('http')) {
     console.log('✅ Using existing fileUrl:', contract.fileUrl);
     return contract.fileUrl;
   }
   
-  // Dateiname aus verschiedenen Quellen
+  // ✅ Priorität 3: Legacy - Dateiname aus verschiedenen Quellen
   const filename = contract.filename || contract.originalname;
   if (filename) {
     const fileUrl = `${BACKEND_API_URL}/uploads/${filename}`;
-    console.log('✅ Generated file URL from filename:', fileUrl);
+    console.log('✅ Generated legacy file URL from filename:', fileUrl);
     return fileUrl;
   }
   
-  // Fallback: filePath verwenden (falls absolute URL)
+  // ✅ Priorität 4: Legacy - filePath verwenden
   if (contract.filePath) {
     if (contract.filePath.startsWith('http')) {
       console.log('✅ Using absolute filePath:', contract.filePath);
@@ -75,6 +86,22 @@ export const getContractFileUrl = (contract: ContractFile): string | null => {
   
   console.warn('⚠️ No valid file URL found for contract');
   return null;
+};
+
+/**
+ * ✅ NEU: Direkte S3 Signed URL abrufen (für Contract mit S3Key)
+ */
+export const getS3SignedUrl = async (s3Key: string): Promise<string | null> => {
+  try {
+    const response = await apiCall(`/s3/view?file=${s3Key}`);
+    const data = response as { fileUrl: string; expiresIn: number; s3Key: string };
+    
+    console.log(`✅ S3 signed URL retrieved: expires in ${data.expiresIn}s`);
+    return data.fileUrl;
+  } catch (error) {
+    console.error('❌ Failed to get S3 signed URL:', error);
+    return null;
+  }
 };
 
 /**
