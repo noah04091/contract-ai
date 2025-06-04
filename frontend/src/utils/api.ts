@@ -23,7 +23,7 @@ function getErrorMessage(error: unknown): string {
   return String(error);
 }
 
-// ✅ Interface für Contract mit S3-Informationen
+// ✅ ERWEITERT: Interface für Contract mit S3-Informationen + Upload-Type
 interface ContractFile {
   filename?: string;
   originalname?: string;
@@ -32,15 +32,20 @@ interface ContractFile {
   s3Key?: string;      // ✅ NEU: S3-Key
   s3Bucket?: string;   // ✅ NEU: S3-Bucket
   s3Location?: string; // ✅ NEU: S3-Location
+  uploadType?: string; // ✅ NEU: Upload-Type (LOCAL_UPLOAD, S3_UPLOAD)
+  extraRefs?: {        // ✅ NEU: Extra-Referenzen
+    uploadType?: string;
+    [key: string]: unknown;
+  };
 }
 
 /**
- * ✅ ERWEITERT: Generiert absolute File-URLs für Contract-Dateien mit S3-Support + LEGACY-FIX
+ * ✅ FIXED: Generiert absolute File-URLs für Contract-Dateien mit LOCAL vs S3 Support
  * Vermeidet React-Router-Interferenz durch absolute Backend-URLs
- * 🔧 LEGACY-FIX: Behandelt Contracts die vor S3-Integration hochgeladen wurden
+ * 🔧 INTELLIGENT: Unterscheidet zwischen lokalen und S3 Uploads basierend auf uploadType
  */
 export const getContractFileUrl = (contract: ContractFile): string | null => {
-  console.log('🔍 Contract File URL Debug (S3-Enhanced + Legacy-Fix):', {
+  console.log('🔍 Contract File URL Debug (Local vs S3 Enhanced):', {
     contractData: contract,
     hasFileUrl: !!contract.fileUrl,
     hasS3Key: !!contract.s3Key,
@@ -48,13 +53,14 @@ export const getContractFileUrl = (contract: ContractFile): string | null => {
     hasOriginalname: !!contract.originalname,
     hasFilePath: !!contract.filePath,
     filePath: contract.filePath,
+    uploadType: contract.uploadType || contract.extraRefs?.uploadType || 'unknown',
     backendUrl: BACKEND_API_URL
   });
 
-  // ✅ Priorität 1: S3-Key → Signed URL über Backend
+  // ✅ Priorität 1: Explizite S3-Key → S3 Signed URL
   if (contract.s3Key) {
     const s3ViewUrl = `${API_BASE_URL}/s3/view?file=${contract.s3Key}`;
-    console.log('✅ Using S3 signed URL endpoint:', s3ViewUrl);
+    console.log('✅ Using S3 signed URL endpoint (explicit s3Key):', s3ViewUrl);
     return s3ViewUrl;
   }
 
@@ -64,41 +70,64 @@ export const getContractFileUrl = (contract: ContractFile): string | null => {
     return contract.fileUrl;
   }
   
-  // 🔧 QUICK-FIX: Legacy Contract mit filePath aber ohne s3Key
+  // 🔧 PRIORITÄT 3: INTELLIGENTE UPLOAD-TYPE ERKENNUNG
   if (contract.filePath && contract.filePath.startsWith('/uploads/')) {
-    // Extrahiere S3-Key aus filePath
-    const s3KeyFromPath = contract.filePath.replace('/uploads/', '');
+    // Extrahiere Dateiname aus filePath
+    const fileKey = contract.filePath.replace('/uploads/', '');
     
-    // Prüfe ob es ein S3-Key sein könnte (32+ Zeichen, keine Dateiendung)
-    if (s3KeyFromPath.length >= 30 && !s3KeyFromPath.includes('.')) {
-      const s3ViewUrl = `${API_BASE_URL}/s3/view?file=${s3KeyFromPath}`;
-      console.log('🔧 LEGACY-FIX: Using extracted S3-Key from filePath:', s3ViewUrl);
-      return s3ViewUrl;
+    // ✅ NEUE LOGIC: Prüfe Upload-Type zuerst!
+    const uploadType = contract.uploadType || contract.extraRefs?.uploadType;
+    
+    if (uploadType === 'LOCAL_UPLOAD') {
+      // Lokaler Upload → Backend uploads URL
+      const localUrl = `${BACKEND_API_URL}/uploads/${fileKey}`;
+      console.log('🔧 LOCAL UPLOAD: Using backend uploads URL:', localUrl);
+      return localUrl;
     }
     
-    // Fallback auf Backend uploads/ (falls lokale Datei)
-    const legacyUrl = `${BACKEND_API_URL}${contract.filePath}`;
-    console.log('🔧 LEGACY-FIX: Using backend uploads URL:', legacyUrl);
-    return legacyUrl;
+    // ✅ LEGACY S3: Nur wenn kein uploadType oder explizit S3
+    // UND es sieht aus wie ein S3-Key (30+ Zeichen, keine Dateiendung)
+    if (!uploadType || uploadType === 'S3_UPLOAD') {
+      if (fileKey.length >= 30 && !fileKey.includes('.')) {
+        const s3ViewUrl = `${API_BASE_URL}/s3/view?file=${fileKey}`;
+        console.log('🔧 LEGACY S3: Using extracted S3-Key from filePath:', s3ViewUrl);
+        return s3ViewUrl;
+      }
+    }
+    
+    // ✅ FALLBACK: Normale lokale Datei (mit Dateiendung oder unbekannter Type)
+    const localUrl = `${BACKEND_API_URL}/uploads/${fileKey}`;
+    console.log('🔧 LOCAL FALLBACK: Using backend uploads URL:', localUrl);
+    return localUrl;
   }
   
-  // ✅ Priorität 3: Legacy - Dateiname aus verschiedenen Quellen
+  // ✅ Priorität 4: Legacy - filename aus verschiedenen Quellen
   const filename = contract.filename || contract.originalname;
   if (filename) {
-    // Prüfe ob filename ein S3-Key ist
-    if (filename.length >= 30 && !filename.includes('.')) {
+    // ✅ NEUE LOGIC: Prüfe Upload-Type auch hier!
+    const uploadType = contract.uploadType || contract.extraRefs?.uploadType;
+    
+    if (uploadType === 'LOCAL_UPLOAD') {
+      // Lokaler Upload → Backend uploads URL
+      const localUrl = `${BACKEND_API_URL}/uploads/${filename}`;
+      console.log('✅ LOCAL UPLOAD filename: Using backend uploads URL:', localUrl);
+      return localUrl;
+    }
+    
+    // ✅ LEGACY: Prüfe ob filename ein S3-Key ist (nur bei unbekanntem Type)
+    if (!uploadType && filename.length >= 30 && !filename.includes('.')) {
       const s3ViewUrl = `${API_BASE_URL}/s3/view?file=${filename}`;
-      console.log('✅ Generated S3 signed URL from filename:', s3ViewUrl);
+      console.log('✅ LEGACY S3 filename: Generated S3 signed URL:', s3ViewUrl);
       return s3ViewUrl;
     }
     
-    // Legacy filename (mit Dateiendung)
+    // ✅ FALLBACK: Legacy filename (mit Dateiendung oder kurzer Name)
     const fileUrl = `${BACKEND_API_URL}/uploads/${filename}`;
-    console.log('✅ Generated legacy file URL from filename:', fileUrl);
+    console.log('✅ LEGACY LOCAL filename: Generated file URL:', fileUrl);
     return fileUrl;
   }
   
-  // ✅ Priorität 4: Legacy - filePath verwenden (andere Fälle)
+  // ✅ Priorität 5: Legacy - filePath verwenden (andere Fälle)
   if (contract.filePath) {
     if (contract.filePath.startsWith('http')) {
       console.log('✅ Using absolute filePath:', contract.filePath);
@@ -106,7 +135,7 @@ export const getContractFileUrl = (contract: ContractFile): string | null => {
     }
     // Relative filePath in absolute URL umwandeln
     const fileUrl = `${BACKEND_API_URL}${contract.filePath}`;
-    console.log('✅ Generated file URL from filePath:', fileUrl);
+    console.log('✅ Generated file URL from relative filePath:', fileUrl);
     return fileUrl;
   }
   
