@@ -1,4 +1,4 @@
-// 📁 backend/routes/analyze.js - FALLBACK AUF LOKALEN UPLOAD (funktioniert sofort!)
+// 📁 backend/routes/analyze.js - FIXED: Konsistente Upload-Pfade mit server.js
 const express = require("express");
 const multer = require("multer");
 const pdfParse = require("pdf-parse");
@@ -9,11 +9,38 @@ const verifyToken = require("../middleware/verifyToken");
 const { MongoClient, ObjectId } = require("mongodb");
 const path = require("path");
 
-// 🔄 FALLBACK: Lokaler Upload (funktioniert garantiert!)
-const upload = multer({ dest: "uploads/" });
+const router = express.Router();
 
-// ❌ TEMPORÄR DEAKTIVIERT: S3-Upload (wegen AWS SDK Konflikt)
-// const { upload: s3Upload } = require("../services/fileStorage");
+// ✅ CRITICAL FIX: Exact same UPLOAD_PATH as server.js
+const UPLOAD_PATH = path.join(__dirname, "..", "uploads"); // ✅ ABSOLUTE PATH to backend/uploads
+
+// ✅ CRITICAL FIX: Ensure uploads directory exists (same as server.js)
+try {
+  if (!fsSync.existsSync(UPLOAD_PATH)) {
+    fsSync.mkdirSync(UPLOAD_PATH, { recursive: true });
+    console.log(`📁 [ANALYZE] Upload-Ordner erstellt: ${UPLOAD_PATH}`);
+  } else {
+    console.log(`📁 [ANALYZE] Upload-Ordner existiert: ${UPLOAD_PATH}`);
+  }
+} catch (err) {
+  console.error(`❌ [ANALYZE] Fehler beim Upload-Ordner:`, err);
+}
+
+// ✅ CRITICAL FIX: Exact same multer storage configuration as server.js
+const storage = multer.diskStorage({
+  destination: UPLOAD_PATH, // ✅ SAME ABSOLUTE PATH AS SERVER.JS
+  filename: (req, file, cb) => {
+    // ✅ SAME NAMING PATTERN AS SERVER.JS
+    const filename = Date.now() + path.extname(file.originalname);
+    console.log(`📁 [ANALYZE] Generiere Dateiname: ${filename}`);
+    cb(null, filename);
+  },
+});
+
+const upload = multer({ 
+  storage, // ✅ USE STORAGE CONFIG INSTEAD OF DEST
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit
+});
 
 // ✅ FALLBACK: crypto nur importieren wenn verfügbar
 let crypto;
@@ -35,7 +62,31 @@ try {
   saveContract = null;
 }
 
-const router = express.Router();
+// ✅ Debug function to check file existence - ENHANCED
+function checkFileExists(filename) {
+  const fullPath = path.join(UPLOAD_PATH, filename);
+  const exists = fsSync.existsSync(fullPath);
+  
+  console.log(`🔍 [ANALYZE] File check:`, {
+    filename: filename,
+    fullPath: fullPath,
+    exists: exists,
+    uploadPath: UPLOAD_PATH,
+    dirname: __dirname
+  });
+  
+  if (!exists) {
+    // List all files in uploads directory for debugging
+    try {
+      const files = fsSync.readdirSync(UPLOAD_PATH);
+      console.log(`📂 [ANALYZE] Available files in uploads:`, files);
+    } catch (err) {
+      console.error(`❌ [ANALYZE] Could not read uploads directory:`, err);
+    }
+  }
+  
+  return exists;
+}
 
 // ✅ SINGLETON OpenAI-Instance um Connection-Probleme zu vermeiden
 let openaiInstance = null;
@@ -122,67 +173,119 @@ const checkForDuplicate = async (fileHash, userId) => {
   }
 };
 
-// ✅ EINFACHE Vertrag-Speicher-Funktion als Fallback
-const saveContractSimple = async (contractData) => {
+// ✅ Contract save function with all required fields for server.js compatibility - ENHANCED
+async function saveContractWithLocalUpload(userId, analysisData, fileInfo, pdfText) {
   try {
-    const { contractsCollection } = await getMongoCollections();
-    
-    const contractDoc = {
-      userId: new ObjectId(contractData.userId),
-      name: contractData.fileName,
-      toolUsed: contractData.toolUsed || "analyze",
-      filePath: contractData.filePath,
-      fileHash: contractData.fileHash || null,
-      createdAt: new Date(),
+    const contract = {
+      userId: new ObjectId(userId),
+      name: analysisData.name || fileInfo.originalname || "Unbekannt",
+      laufzeit: analysisData.laufzeit || "Unbekannt",
+      kuendigung: analysisData.kuendigung || "Unbekannt",
+      expiryDate: analysisData.expiryDate || "",
+      status: analysisData.status || "Aktiv",
       uploadedAt: new Date(),
-      status: "aktiv",
-      expiryDate: null,
-      legalPulse: contractData.legalPulse || {
+      createdAt: new Date(), // ✅ ADDED: For compatibility
+      
+      // ✅ CRITICAL: File information (compatible with server.js static serving)
+      filename: fileInfo.filename,           // multer filename (from storage config)
+      originalname: fileInfo.originalname,   // original filename
+      filePath: `/uploads/${fileInfo.filename}`, // ✅ CRITICAL: Server URL path
+      mimetype: fileInfo.mimetype,           // file type
+      size: fileInfo.size,                   // file size
+      
+      // ✅ CRITICAL: Upload type marker for frontend api.ts
+      uploadType: "LOCAL_UPLOAD",           // ✅ Important for api.ts logic
+      extraRefs: {
+        uploadType: "LOCAL_UPLOAD",         // ✅ Backup field
+        uploadPath: UPLOAD_PATH,            // ✅ Debug info
+        serverPath: `/uploads/${fileInfo.filename}`, // ✅ Server URL path
+        analysisId: null // Will be set later
+      },
+      
+      // ✅ CRITICAL: Content and analysis for ContractDetailsView
+      fullText: pdfText.substring(0, 100000), // ✅ Store extracted text for Content tab
+      content: pdfText.substring(0, 100000),  // ✅ Alternative field name
+      analysisDate: new Date(),
+      
+      // ✅ Legal Pulse placeholder
+      legalPulse: {
         riskScore: null,
-        riskSummary: '',
+        summary: '',
         lastChecked: null,
         lawInsights: [],
-        marketSuggestions: []
-      },
-      ...(contractData.extraRefs || {})
+        marketSuggestions: [],
+        riskFactors: [],
+        legalRisks: [],
+        recommendations: [],
+        analysisDate: null
+      }
     };
 
-    const result = await contractsCollection.insertOne(contractDoc);
-    console.log("📁 Vertrag gespeichert (Simple):", result.insertedId);
-    return result;
-  } catch (err) {
-    console.error("❌ Fehler beim Speichern des Vertrags (Simple):", err.message);
-    throw err;
-  }
-};
+    console.log(`💾 [ANALYZE] Saving contract:`, {
+      userId: contract.userId,
+      name: contract.name,
+      filename: contract.filename,
+      uploadType: contract.uploadType,
+      filePath: contract.filePath,
+      textLength: contract.fullText.length,
+      uploadPath: UPLOAD_PATH
+    });
 
-// ✅ HAUPTROUTE: POST /analyze mit LOKALEM UPLOAD (funktioniert sofort!)
+    const { insertedId } = await contractsCollection.insertOne(contract);
+    console.log(`✅ [ANALYZE] Contract saved with ID: ${insertedId}`);
+    
+    return { ...contract, _id: insertedId };
+  } catch (error) {
+    console.error("❌ [ANALYZE] Save error:", error);
+    throw error;
+  }
+}
+
+// ✅ MAIN ANALYZE ROUTE with enhanced debugging and FIXED paths
 router.post("/", verifyToken, upload.single("file"), async (req, res) => {
-  const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const requestId = Date.now().toString();
+  
   console.log(`📊 [${requestId}] LOKALER Analyse-Request erhalten:`, {
+    uploadType: "LOCAL_UPLOAD",
     hasFile: !!req.file,
     userId: req.user?.userId,
-    filename: req.file?.originalname,
-    fileSize: req.file?.size,
-    tempPath: req.file?.path,
-    uploadType: "LOCAL_UPLOAD" // ✅ Debug-Info
+    uploadPath: UPLOAD_PATH,
+    dirname: __dirname
   });
 
-  // ❌ Keine Datei hochgeladen
   if (!req.file) {
-    console.warn(`⚠️ [${requestId}] Keine Datei in Request gefunden`);
+    console.error(`❌ [${requestId}] Keine Datei hochgeladen`);
     return res.status(400).json({ 
-      success: false,
-      message: "❌ Keine Datei hochgeladen.",
-      error: "FILE_MISSING"
+      success: false, 
+      message: "Keine Datei hochgeladen" 
     });
   }
 
-  let tempFilePath = null;
-  
   try {
-    tempFilePath = req.file.path;
-    console.log(`📁 [${requestId}] Lokale Temp-Datei erstellt: ${tempFilePath}`);
+    // ✅ CRITICAL: File validation and existence check
+    console.log(`📄 [${requestId}] File info:`, {
+      filename: req.file.filename,
+      originalname: req.file.originalname,
+      mimetype: req.file.mimetype,
+      size: req.file.size,
+      path: req.file.path,
+      destination: req.file.destination,
+      uploadPath: UPLOAD_PATH
+    });
+
+    const fileExists = checkFileExists(req.file.filename);
+    if (!fileExists) {
+      console.error(`❌ [${requestId}] Datei wurde nicht korrekt gespeichert:`, req.file.filename);
+      return res.status(500).json({
+        success: false,
+        message: "Datei wurde nicht korrekt hochgeladen",
+        debug: {
+          expectedPath: path.join(UPLOAD_PATH, req.file.filename),
+          uploadPath: UPLOAD_PATH,
+          filename: req.file.filename
+        }
+      });
+    }
 
     // ✅ MongoDB-Collections sicher abrufen
     const { analysisCollection, usersCollection: users, contractsCollection } = await getMongoCollections();
@@ -221,14 +324,15 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
       });
     }
 
-    // ✅ PDF auslesen (lokal)
+    // ✅ PDF auslesen (lokal) - FIXED path
     console.log(`📄 [${requestId}] PDF wird lokal gelesen...`);
     
-    if (!fsSync.existsSync(tempFilePath)) {
-      throw new Error(`Temporäre Datei nicht gefunden: ${tempFilePath}`);
+    const filePath = path.join(UPLOAD_PATH, req.file.filename);
+    if (!fsSync.existsSync(filePath)) {
+      throw new Error(`Datei nicht gefunden: ${filePath}`);
     }
 
-    const buffer = await fs.readFile(tempFilePath);
+    const buffer = await fs.readFile(filePath);
     console.log(`📄 [${requestId}] Buffer gelesen: ${buffer.length} bytes`);
     
     // ✅ Hash berechnen (mit Fallback)
@@ -277,7 +381,7 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
     let parsed;
     try {
       parsed = await pdfParse(buffer, {
-        max: 100000, // ✅ ERHÖHT: Mehr Text für Content-Tab (war 50000)
+        max: 100000, // ✅ ERHÖHT: Mehr Text für Content-Tab
         normalizeWhitespace: true,
         disableCombineTextItems: false
       });
@@ -399,7 +503,7 @@ Antwort im folgenden JSON-Format:
       throw new Error(`Datenbank-Fehler beim Speichern: ${dbError.message}`);
     }
 
-    // 💾 Vertrag speichern (mit Fallbacks) - ERWEITERT
+    // 💾 Vertrag speichern (mit Fallbacks) - ERWEITERT und FIXED
     try {
       console.log(`💾 [${requestId}] Speichere Vertrag (lokal)...`);
 
@@ -415,7 +519,15 @@ Antwort im folgenden JSON-Format:
               analysisId: inserted.insertedId, // ✅ KRITISCH: Reference zur Analyse
               fullText: fullTextContent, // ✅ KRITISCH: Text direkt im Contract als Backup
               content: fullTextContent, // ✅ ZUSÄTZLICH: Alternative Feldname für Kompatibilität
-              filePath: `/uploads/${req.file.filename}`, // ✅ Lokaler Pfad
+              filePath: `/uploads/${req.file.filename}`, // ✅ FIXED: Korrekter lokaler Pfad
+              filename: req.file.filename, // ✅ ADDED: Für File Serving
+              uploadType: "LOCAL_UPLOAD", // ✅ CRITICAL: For frontend logic
+              extraRefs: {
+                uploadType: "LOCAL_UPLOAD",
+                analysisId: inserted.insertedId,
+                uploadPath: UPLOAD_PATH,
+                serverPath: `/uploads/${req.file.filename}`
+              },
               legalPulse: {
                 riskScore: result.contractScore || null,
                 riskSummary: result.summary || '',
@@ -430,49 +542,34 @@ Antwort im folgenden JSON-Format:
         
         console.log(`✅ [${requestId}] Bestehender Vertrag aktualisiert mit fullText (${fullTextContent.length} Zeichen)`);
       } else {
-        // Neuen Vertrag speichern (lokal)
-        const contractData = {
-          userId: req.user.userId,
-          fileName: req.file.originalname,
-          toolUsed: "analyze",
-          filePath: `/uploads/${req.file.filename}`, // ✅ Lokaler Pfad
-          fileHash: fileHash,
-          extraRefs: { 
-            analysisId: inserted.insertedId, // ✅ KRITISCH: Reference zur Analyse
-            fullText: fullTextContent, // ✅ KRITISCH: Text direkt im Contract speichern
-            content: fullTextContent, // ✅ ZUSÄTZLICH: Alternative Feldname für Kompatibilität
-            fileSize: buffer.length,
-            uploadedAt: new Date(),
-            originalFileName: req.file.originalname, // ✅ Debug-Info
-            uploadType: "LOCAL_UPLOAD" // ✅ Debug-Info
-          },
-          legalPulse: {
-            riskScore: result.contractScore || null,
-            riskSummary: result.summary || '',
-            lastChecked: new Date(),
-            lawInsights: [],
-            marketSuggestions: []
-          }
+        // Neuen Vertrag speichern (lokal) - ENHANCED
+        const contractAnalysisData = {
+          name: result.summary ? req.file.originalname : req.file.originalname,
+          laufzeit: "Unbekannt", // TODO: Extract from AI response
+          kuendigung: "Unbekannt", // TODO: Extract from AI response  
+          expiryDate: "",
+          status: "Aktiv"
         };
 
-        let saveResult;
-        
-        // ✅ Versuche zuerst den normalen saveContract-Service
-        if (saveContract) {
-          try {
-            saveResult = await saveContract(contractData);
-            console.log(`✅ [${requestId}] Vertrag gespeichert (Service): ${saveResult.insertedId} mit fullText (${fullTextContent.length} Zeichen)`);
-          } catch (serviceError) {
-            console.warn(`⚠️ [${requestId}] SaveContract-Service fehlgeschlagen:`, serviceError.message);
-            // Fallback verwenden
-            saveResult = await saveContractSimple(contractData);
-            console.log(`✅ [${requestId}] Vertrag gespeichert (Fallback): ${saveResult.insertedId}`);
+        const savedContract = await saveContractWithLocalUpload(
+          req.user.userId,
+          contractAnalysisData,
+          req.file,
+          fullTextContent
+        );
+
+        // ✅ Update contract with analysis reference
+        await contractsCollection.updateOne(
+          { _id: savedContract._id },
+          { 
+            $set: {
+              analysisId: inserted.insertedId,
+              'extraRefs.analysisId': inserted.insertedId
+            }
           }
-        } else {
-          // Direkt Fallback verwenden
-          saveResult = await saveContractSimple(contractData);
-          console.log(`✅ [${requestId}] Vertrag gespeichert (Fallback): ${saveResult.insertedId}`);
-        }
+        );
+
+        console.log(`✅ [${requestId}] Neuer Vertrag gespeichert: ${savedContract._id} mit analysisId: ${inserted.insertedId}`);
       }
       
     } catch (saveError) {
@@ -500,6 +597,7 @@ Antwort im folgenden JSON-Format:
       message: "Lokale Analyse erfolgreich abgeschlossen",
       requestId,
       uploadType: "LOCAL_UPLOAD", // ✅ Info für Frontend
+      fileUrl: `/uploads/${req.file.filename}`, // ✅ CRITICAL: For frontend file access
       ...result, 
       analysisId: inserted.insertedId,
       usage: {
@@ -557,19 +655,6 @@ Antwort im folgenden JSON-Format:
       requestId,
       details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
-
-  } finally {
-    // 🧹 Cleanup
-    if (tempFilePath) {
-      try {
-        if (fsSync.existsSync(tempFilePath)) {
-          await fs.unlink(tempFilePath);
-          console.log(`🧹 [${requestId}] Temp-Datei gelöscht: ${tempFilePath}`);
-        }
-      } catch (cleanupErr) {
-        console.error(`⚠️ [${requestId}] Fehler beim Löschen der Temp-Datei:`, cleanupErr.message);
-      }
-    }
   }
 });
 
@@ -616,7 +701,8 @@ router.get("/health", async (req, res) => {
     timestamp: new Date().toISOString(),
     openaiConfigured: !!process.env.OPENAI_API_KEY,
     mongoConnected: false,
-    uploadsPath: fsSync.existsSync("./uploads"),
+    uploadsPath: fsSync.existsSync(UPLOAD_PATH),
+    uploadPath: UPLOAD_PATH,
     uploadType: "LOCAL_UPLOAD", // ✅ Info
     s3Integration: "DISABLED (AWS SDK Conflict)", // ✅ Info
     cryptoAvailable: !!crypto,

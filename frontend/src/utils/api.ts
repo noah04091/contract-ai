@@ -1,4 +1,4 @@
-// 📁 src/utils/api.ts - IMPROVED ERROR HANDLING & RETRY LOGIC + FILE URL SUPPORT
+// 📁 src/utils/api.ts - ENHANCED LOCAL_UPLOAD Support & File URL Generation
 const API_BASE_URL = "/api"; // Proxy-Pfad für Vercel & devServer (für API-Calls)
 
 // ✅ NEU: Separate Backend-URL für File-Downloads (absolute URLs)
@@ -23,29 +23,31 @@ function getErrorMessage(error: unknown): string {
   return String(error);
 }
 
-// ✅ ERWEITERT: Interface für Contract mit S3-Informationen + Upload-Type
+// ✅ ENHANCED: Interface für Contract mit S3-Informationen + Upload-Type
 interface ContractFile {
   filename?: string;
   originalname?: string;
   fileUrl?: string;
   filePath?: string;
-  s3Key?: string;      // ✅ NEU: S3-Key
-  s3Bucket?: string;   // ✅ NEU: S3-Bucket
-  s3Location?: string; // ✅ NEU: S3-Location
-  uploadType?: string; // ✅ NEU: Upload-Type (LOCAL_UPLOAD, S3_UPLOAD)
-  extraRefs?: {        // ✅ NEU: Extra-Referenzen
+  s3Key?: string;      // ✅ S3-Key
+  s3Bucket?: string;   // ✅ S3-Bucket
+  s3Location?: string; // ✅ S3-Location
+  uploadType?: string; // ✅ CRITICAL: Upload-Type (LOCAL_UPLOAD, S3_UPLOAD)
+  extraRefs?: {        // ✅ Extra-Referenzen
     uploadType?: string;
+    analysisId?: string;
+    serverPath?: string;
     [key: string]: unknown;
   };
 }
 
 /**
- * ✅ FIXED: Generiert absolute File-URLs für Contract-Dateien mit LOCAL vs S3 Support
+ * ✅ ENHANCED: Generiert absolute File-URLs für Contract-Dateien mit LOCAL vs S3 Support
  * Vermeidet React-Router-Interferenz durch absolute Backend-URLs
  * 🔧 INTELLIGENT: Unterscheidet zwischen lokalen und S3 Uploads basierend auf uploadType
  */
 export const getContractFileUrl = (contract: ContractFile): string | null => {
-  console.log('🔍 Contract File URL Debug (Local vs S3 Enhanced):', {
+  console.log('🔍 Contract File URL Debug (Enhanced Local vs S3):', {
     contractData: contract,
     hasFileUrl: !!contract.fileUrl,
     hasS3Key: !!contract.s3Key,
@@ -57,86 +59,117 @@ export const getContractFileUrl = (contract: ContractFile): string | null => {
     backendUrl: BACKEND_API_URL
   });
 
-  // ✅ Priorität 1: Explizite S3-Key → S3 Signed URL
+  // ✅ PRIORITÄT 1: UPLOAD-TYPE basierte Entscheidung (MOST RELIABLE)
+  const uploadType = contract.uploadType || contract.extraRefs?.uploadType;
+  
+  if (uploadType === 'LOCAL_UPLOAD') {
+    console.log('🔧 LOCAL_UPLOAD detected - using backend URL');
+    
+    // Für lokale Uploads: Verwende filename aus verschiedenen Quellen
+    let filename = contract.filename;
+    if (!filename && contract.filePath) {
+      // Extrahiere filename aus filePath wenn nötig
+      filename = contract.filePath.replace('/uploads/', '');
+    }
+    if (!filename) {
+      filename = contract.originalname;
+    }
+    
+    if (filename) {
+      const localUrl = `${BACKEND_API_URL}/uploads/${filename}`;
+      console.log('✅ LOCAL_UPLOAD: Generated backend URL:', localUrl);
+      return localUrl;
+    }
+  }
+  
+  if (uploadType === 'S3_UPLOAD' || contract.s3Key) {
+    console.log('🔧 S3_UPLOAD detected - using S3 signed URL');
+    
+    const s3Key = contract.s3Key || (contract.filePath ? contract.filePath.replace('/s3/', '') : null);
+    if (s3Key) {
+      const s3ViewUrl = `${API_BASE_URL}/s3/view?file=${s3Key}`;
+      console.log('✅ S3_UPLOAD: Generated S3 URL:', s3ViewUrl);
+      return s3ViewUrl;
+    }
+  }
+
+  // ✅ PRIORITÄT 2: Expliziter S3-Key → S3 Signed URL
   if (contract.s3Key) {
     const s3ViewUrl = `${API_BASE_URL}/s3/view?file=${contract.s3Key}`;
     console.log('✅ Using S3 signed URL endpoint (explicit s3Key):', s3ViewUrl);
     return s3ViewUrl;
   }
 
-  // ✅ Priorität 2: Bestehende fileUrl (falls absolute URL)
+  // ✅ PRIORITÄT 3: Bestehende fileUrl (falls absolute URL)
   if (contract.fileUrl && contract.fileUrl.startsWith('http')) {
-    console.log('✅ Using existing fileUrl:', contract.fileUrl);
+    console.log('✅ Using existing absolute fileUrl:', contract.fileUrl);
     return contract.fileUrl;
   }
   
-  // 🔧 PRIORITÄT 3: INTELLIGENTE UPLOAD-TYPE ERKENNUNG
-  if (contract.filePath && contract.filePath.startsWith('/uploads/')) {
-    // Extrahiere Dateiname aus filePath
-    const fileKey = contract.filePath.replace('/uploads/', '');
-    
-    // ✅ NEUE LOGIC: Prüfe Upload-Type zuerst!
-    const uploadType = contract.uploadType || contract.extraRefs?.uploadType;
-    
-    if (uploadType === 'LOCAL_UPLOAD') {
-      // Lokaler Upload → Backend uploads URL
-      const localUrl = `${BACKEND_API_URL}/uploads/${fileKey}`;
-      console.log('🔧 LOCAL UPLOAD: Using backend uploads URL:', localUrl);
-      return localUrl;
-    }
-    
-    // ✅ LEGACY S3: Nur wenn kein uploadType oder explizit S3
-    // UND es sieht aus wie ein S3-Key (30+ Zeichen, keine Dateiendung)
-    if (!uploadType || uploadType === 'S3_UPLOAD') {
-      if (fileKey.length >= 30 && !fileKey.includes('.')) {
+  // ✅ PRIORITÄT 4: filePath Analysis für Legacy-Support
+  if (contract.filePath) {
+    if (contract.filePath.startsWith('/uploads/')) {
+      // Lokaler Upload-Pfad erkannt
+      const fileKey = contract.filePath.replace('/uploads/', '');
+      
+      // ENHANCED LOGIC: Bessere Heuristik für Local vs S3
+      const isLikelyLocalFile = (
+        fileKey.includes('.') ||                    // Hat Dateiendung
+        fileKey.length < 30 ||                      // Kurzer Name
+        /^\d+/.test(fileKey)                        // Beginnt mit Timestamp
+      );
+      
+      if (isLikelyLocalFile) {
+        const localUrl = `${BACKEND_API_URL}/uploads/${fileKey}`;
+        console.log('🔧 LOCAL FILE detected from filePath:', localUrl);
+        return localUrl;
+      } else {
+        // Wahrscheinlich S3-Key
         const s3ViewUrl = `${API_BASE_URL}/s3/view?file=${fileKey}`;
-        console.log('🔧 LEGACY S3: Using extracted S3-Key from filePath:', s3ViewUrl);
+        console.log('🔧 S3 KEY detected from filePath:', s3ViewUrl);
         return s3ViewUrl;
       }
     }
     
-    // ✅ FALLBACK: Normale lokale Datei (mit Dateiendung oder unbekannter Type)
-    const localUrl = `${BACKEND_API_URL}/uploads/${fileKey}`;
-    console.log('🔧 LOCAL FALLBACK: Using backend uploads URL:', localUrl);
-    return localUrl;
-  }
-  
-  // ✅ Priorität 4: Legacy - filename aus verschiedenen Quellen
-  const filename = contract.filename || contract.originalname;
-  if (filename) {
-    // ✅ NEUE LOGIC: Prüfe Upload-Type auch hier!
-    const uploadType = contract.uploadType || contract.extraRefs?.uploadType;
-    
-    if (uploadType === 'LOCAL_UPLOAD') {
-      // Lokaler Upload → Backend uploads URL
-      const localUrl = `${BACKEND_API_URL}/uploads/${filename}`;
-      console.log('✅ LOCAL UPLOAD filename: Using backend uploads URL:', localUrl);
-      return localUrl;
-    }
-    
-    // ✅ LEGACY: Prüfe ob filename ein S3-Key ist (nur bei unbekanntem Type)
-    if (!uploadType && filename.length >= 30 && !filename.includes('.')) {
-      const s3ViewUrl = `${API_BASE_URL}/s3/view?file=${filename}`;
-      console.log('✅ LEGACY S3 filename: Generated S3 signed URL:', s3ViewUrl);
+    if (contract.filePath.startsWith('/s3/')) {
+      // S3-Pfad erkannt
+      const s3Key = contract.filePath.replace('/s3/', '');
+      const s3ViewUrl = `${API_BASE_URL}/s3/view?file=${s3Key}`;
+      console.log('✅ S3 path detected:', s3ViewUrl);
       return s3ViewUrl;
     }
-    
-    // ✅ FALLBACK: Legacy filename (mit Dateiendung oder kurzer Name)
-    const fileUrl = `${BACKEND_API_URL}/uploads/${filename}`;
-    console.log('✅ LEGACY LOCAL filename: Generated file URL:', fileUrl);
-    return fileUrl;
-  }
-  
-  // ✅ Priorität 5: Legacy - filePath verwenden (andere Fälle)
-  if (contract.filePath) {
+
     if (contract.filePath.startsWith('http')) {
       console.log('✅ Using absolute filePath:', contract.filePath);
       return contract.filePath;
     }
+    
     // Relative filePath in absolute URL umwandeln
     const fileUrl = `${BACKEND_API_URL}${contract.filePath}`;
     console.log('✅ Generated file URL from relative filePath:', fileUrl);
     return fileUrl;
+  }
+  
+  // ✅ PRIORITÄT 5: filename aus verschiedenen Quellen (Legacy Support)
+  const filename = contract.filename || contract.originalname;
+  if (filename) {
+    // ENHANCED LOGIC: Bessere Heuristik für filename
+    const isLikelyLocalFile = (
+      filename.includes('.') ||                     // Hat Dateiendung
+      filename.length < 30 ||                       // Kurzer Name
+      /^\d+/.test(filename)                         // Beginnt mit Timestamp
+    );
+    
+    if (isLikelyLocalFile) {
+      const localUrl = `${BACKEND_API_URL}/uploads/${filename}`;
+      console.log('✅ LOCAL filename detected:', localUrl);
+      return localUrl;
+    } else {
+      // Wahrscheinlich S3-Key
+      const s3ViewUrl = `${API_BASE_URL}/s3/view?file=${filename}`;
+      console.log('✅ S3 filename detected:', s3ViewUrl);
+      return s3ViewUrl;
+    }
   }
   
   console.warn('⚠️ No valid file URL found for contract');
@@ -385,7 +418,7 @@ export const apiCall = async (
 };
 
 /**
- * ✅ FIXED: Spezielle Funktion für File-Upload mit Analyse - ROBUSTE DUPLIKAT-BEHANDLUNG
+ * ✅ ENHANCED: Spezielle Funktion für File-Upload mit Analyse - ROBUSTE DUPLIKAT-BEHANDLUNG
  */
 export const uploadAndAnalyze = async (
   file: File, 

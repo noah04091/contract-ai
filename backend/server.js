@@ -20,8 +20,18 @@ const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const verifyToken = require("./middleware/verifyToken");
 const createCheckSubscription = require("./middleware/checkSubscription");
 
-// ✅ NEU: S3 File Storage Import
-const { upload: s3Upload, generateSignedUrl } = require("./services/fileStorage");
+// ✅ NEU: S3 File Storage Import (mit Error Handling)
+let s3Upload, generateSignedUrl;
+try {
+  const fileStorage = require("./services/fileStorage");
+  s3Upload = fileStorage.upload;
+  generateSignedUrl = fileStorage.generateSignedUrl;
+  console.log("✅ S3 File Storage Services geladen");
+} catch (err) {
+  console.warn("⚠️ S3 File Storage Services nicht verfügbar:", err.message);
+  s3Upload = null;
+  generateSignedUrl = null;
+}
 
 // 📁 Setup - FIXED: Konsistente Upload-Pfade
 const UPLOAD_PATH = path.join(__dirname, "uploads"); // ✅ ABSOLUTE PATH
@@ -60,11 +70,18 @@ try {
   console.error(`❌ Fehler beim Erstellen des Upload-Ordners:`, err);
 }
 
-const transporter = nodemailer.createTransport(EMAIL_CONFIG);
+const transporter = nodemailer.createTransporter(EMAIL_CONFIG);
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+// ✅ CRITICAL: Same multer storage config as analyze.js
 const storage = multer.diskStorage({
   destination: UPLOAD_PATH,
-  filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname)),
+  filename: (req, file, cb) => {
+    // ✅ SAME pattern as analyze.js
+    const filename = Date.now() + path.extname(file.originalname);
+    console.log(`📁 [SERVER] Generiere Dateiname: ${filename}`);
+    cb(null, filename);
+  },
 });
 const upload = multer({ storage });
 
@@ -276,7 +293,7 @@ async function analyzeContract(pdfText) {
       console.error("❌ Fehler bei Chat-Route:", err);
     }
 
-    // ✅ ANALYZE-ROUTE - FEHLTE KOMPLETT! (NEU HINZUGEFÜGT)
+    // ✅ ANALYZE-ROUTE - CRITICAL: Now properly loaded!
     try {
       console.log("🔧 Lade Analyze-Route...");
       app.use("/analyze", verifyToken, checkSubscription, require("./routes/analyze"));
@@ -330,191 +347,210 @@ async function analyzeContract(pdfText) {
       console.error("❌ Fehler bei Legal Pulse Routen:", err);
     }
 
-    // ✅ FIXED: S3 Signed URL Route - REDIRECT statt JSON für Browser
-    app.get("/s3/view", verifyToken, (req, res) => {
-      try {
-        const { file } = req.query;
-        
-        if (!file) {
-          return res.status(400).json({ message: "File parameter required" });
+    // ✅ S3 ROUTES - Only if S3 services are available
+    if (generateSignedUrl) {
+      // ✅ S3 Signed URL Route - REDIRECT statt JSON für Browser
+      app.get("/s3/view", verifyToken, (req, res) => {
+        try {
+          const { file } = req.query;
+          
+          if (!file) {
+            return res.status(400).json({ message: "File parameter required" });
+          }
+          
+          console.log(`🔗 Generating signed URL for: ${file}`);
+          const signedUrl = generateSignedUrl(file);
+          
+          // ✅ Check ob Request für JSON oder Redirect
+          const acceptHeader = req.headers.accept || '';
+          const userAgent = req.headers['user-agent'] || '';
+          const wantsJson = acceptHeader.includes('application/json') || 
+                           acceptHeader.includes('*/*') && userAgent.includes('fetch');
+          
+          // ✅ DEBUG: Log welcher Typ von Request es ist
+          console.log(`🔍 S3 View Request Type:`, {
+            file: file,
+            acceptHeader: acceptHeader,
+            userAgent: userAgent.substring(0, 100),
+            wantsJson: wantsJson,
+            action: wantsJson ? 'JSON Response' : 'Redirect to S3'
+          });
+          
+          if (wantsJson) {
+            // JSON Response für API-Calls (fetch requests)
+            console.log(`📋 Returning JSON response for: ${file}`);
+            res.json({ 
+              fileUrl: signedUrl,
+              expiresIn: 3600,
+              s3Key: file
+            });
+          } else {
+            // ✅ REDIRECT für Browser-Navigation (Button clicks)
+            console.log(`🔄 Redirecting to S3 file: ${signedUrl}`);
+            res.redirect(302, signedUrl);
+          }
+          
+        } catch (error) {
+          console.error("❌ S3 signed URL error:", error);
+          res.status(500).json({ message: "Error generating file URL: " + error.message });
         }
-        
-        console.log(`🔗 Generating signed URL for: ${file}`);
-        const signedUrl = generateSignedUrl(file);
-        
-        // ✅ Check ob Request für JSON oder Redirect
-        const acceptHeader = req.headers.accept || '';
-        const userAgent = req.headers['user-agent'] || '';
-        const wantsJson = acceptHeader.includes('application/json') || 
-                         acceptHeader.includes('*/*') && userAgent.includes('fetch');
-        
-        // ✅ DEBUG: Log welcher Typ von Request es ist
-        console.log(`🔍 S3 View Request Type:`, {
-          file: file,
-          acceptHeader: acceptHeader,
-          userAgent: userAgent.substring(0, 100),
-          wantsJson: wantsJson,
-          action: wantsJson ? 'JSON Response' : 'Redirect to S3'
-        });
-        
-        if (wantsJson) {
-          // JSON Response für API-Calls (fetch requests)
-          console.log(`📋 Returning JSON response for: ${file}`);
+      });
+
+      // ✅ NEU: Separate JSON-Route für explizite API-Calls
+      app.get("/s3/json", verifyToken, (req, res) => {
+        try {
+          const { file } = req.query;
+          if (!file) return res.status(400).json({ message: "File parameter required" });
+          
+          console.log(`📋 JSON-only request for: ${file}`);
+          const signedUrl = generateSignedUrl(file);
+          
           res.json({ 
             fileUrl: signedUrl,
             expiresIn: 3600,
             s3Key: file
           });
-        } else {
-          // ✅ REDIRECT für Browser-Navigation (Button clicks)
-          console.log(`🔄 Redirecting to S3 file: ${signedUrl}`);
-          res.redirect(302, signedUrl);
+        } catch (error) {
+          console.error("❌ S3 JSON error:", error);
+          res.status(500).json({ message: "Error: " + error.message });
         }
-        
-      } catch (error) {
-        console.error("❌ S3 signed URL error:", error);
-        res.status(500).json({ message: "Error generating file URL: " + error.message });
-      }
-    });
+      });
 
-    // ✅ NEU: Separate JSON-Route für explizite API-Calls
-    app.get("/s3/json", verifyToken, (req, res) => {
-      try {
-        const { file } = req.query;
-        if (!file) return res.status(400).json({ message: "File parameter required" });
-        
-        console.log(`📋 JSON-only request for: ${file}`);
-        const signedUrl = generateSignedUrl(file);
-        
-        res.json({ 
-          fileUrl: signedUrl,
-          expiresIn: 3600,
-          s3Key: file
+      console.log("✅ S3-Routen geladen (S3 verfügbar)");
+    } else {
+      console.log("⚠️ S3-Routen übersprungen (S3 nicht verfügbar)");
+      
+      // Fallback für S3-Routen wenn S3 nicht verfügbar
+      app.get("/s3/view", verifyToken, (req, res) => {
+        res.status(503).json({ 
+          message: "S3 Service nicht verfügbar",
+          error: "S3_SERVICE_UNAVAILABLE"
         });
-      } catch (error) {
-        console.error("❌ S3 JSON error:", error);
-        res.status(500).json({ message: "Error: " + error.message });
-      }
-    });
+      });
+    }
 
-    // 📤 Upload-Logik mit S3 Analyse (ERWEITERT mit S3-URLs)
-    app.post("/upload", verifyToken, checkSubscription, s3Upload.single("file"), async (req, res) => {
-      if (!req.file) return res.status(400).json({ message: "Keine Datei hochgeladen" });
+    // 📤 Upload-Logik mit S3 Analyse (nur wenn S3 verfügbar)
+    if (s3Upload) {
+      app.post("/upload", verifyToken, checkSubscription, s3Upload.single("file"), async (req, res) => {
+        if (!req.file) return res.status(400).json({ message: "Keine Datei hochgeladen" });
 
-      try {
-        console.log(`📁 S3 Upload successful:`, {
-          key: req.file.key,
-          bucket: req.file.bucket,
-          location: req.file.location
-        });
-
-        // ✅ PDF-Text-Extraktion von S3-Datei
-        let analysisText = '';
         try {
-          // Datei von S3 herunterladen für Text-Extraktion
-          const AWS = require('aws-sdk');
-          const s3 = new AWS.S3({
-            accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-            region: process.env.AWS_REGION,
+          console.log(`📁 S3 Upload successful:`, {
+            key: req.file.key,
+            bucket: req.file.bucket,
+            location: req.file.location
           });
-          
-          const s3Object = await s3.getObject({
-            Bucket: req.file.bucket,
-            Key: req.file.key
-          }).promise();
-          
-          const pdfData = await pdfParse(s3Object.Body);
-          analysisText = pdfData.text.substring(0, 5000);
-        } catch (extractError) {
-          console.warn("⚠️ Text-Extraktion von S3 fehlgeschlagen:", extractError.message);
-        }
 
-        // KI-Analyse (falls Text verfügbar)
-        let name = "Unbekannt", laufzeit = "Unbekannt", kuendigung = "Unbekannt";
-        if (analysisText) {
+          // ✅ PDF-Text-Extraktion von S3-Datei
+          let analysisText = '';
           try {
-            const analysis = await analyzeContract(analysisText);
-            name = analysis.match(/Vertragsname:\s*(.*)/i)?.[1]?.trim() || req.file.originalname || "Unbekannt";
-            laufzeit = analysis.match(/Laufzeit:\s*(.*)/i)?.[1]?.trim() || "Unbekannt";
-            kuendigung = analysis.match(/Kündigungsfrist:\s*(.*)/i)?.[1]?.trim() || "Unbekannt";
-          } catch (aiError) {
-            console.warn("⚠️ KI-Analyse fehlgeschlagen:", aiError.message);
+            // Datei von S3 herunterladen für Text-Extraktion
+            const AWS = require('aws-sdk');
+            const s3 = new AWS.S3({
+              accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+              secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+              region: process.env.AWS_REGION,
+            });
+            
+            const s3Object = await s3.getObject({
+              Bucket: req.file.bucket,
+              Key: req.file.key
+            }).promise();
+            
+            const pdfData = await pdfParse(s3Object.Body);
+            analysisText = pdfData.text.substring(0, 5000);
+          } catch (extractError) {
+            console.warn("⚠️ Text-Extraktion von S3 fehlgeschlagen:", extractError.message);
+          }
+
+          // KI-Analyse (falls Text verfügbar)
+          let name = "Unbekannt", laufzeit = "Unbekannt", kuendigung = "Unbekannt";
+          if (analysisText) {
+            try {
+              const analysis = await analyzeContract(analysisText);
+              name = analysis.match(/Vertragsname:\s*(.*)/i)?.[1]?.trim() || req.file.originalname || "Unbekannt";
+              laufzeit = analysis.match(/Laufzeit:\s*(.*)/i)?.[1]?.trim() || "Unbekannt";
+              kuendigung = analysis.match(/Kündigungsfrist:\s*(.*)/i)?.[1]?.trim() || "Unbekannt";
+            } catch (aiError) {
+              console.warn("⚠️ KI-Analyse fehlgeschlagen:", aiError.message);
+              name = req.file.originalname || "Unbekannt";
+            }
+          } else {
             name = req.file.originalname || "Unbekannt";
           }
-        } else {
-          name = req.file.originalname || "Unbekannt";
-        }
 
-        const expiryDate = extractExpiryDate(laufzeit);
-        const status = determineContractStatus(expiryDate);
+          const expiryDate = extractExpiryDate(laufzeit);
+          const status = determineContractStatus(expiryDate);
 
-        const contract = {
-          userId: req.user.userId,
-          name,
-          laufzeit,
-          kuendigung,
-          expiryDate,
-          status,
-          uploadedAt: new Date(),
-          
-          // ✅ S3-spezifische Felder
-          s3Key: req.file.key,                        // S3-Pfad für interne Verwendung
-          s3Bucket: req.file.bucket,                  // S3-Bucket Name
-          s3Location: req.file.location,              // S3-URL (falls public)
-          filename: req.file.key,                     // S3-Key als filename
-          originalname: req.file.originalname,        // Original-Dateiname
-          mimetype: req.file.mimetype,                // MIME-Type
-          size: req.file.size,                        // Dateigröße
-          
-          // ✅ Legacy-Felder für Frontend-Kompatibilität
-          filePath: `/s3/${req.file.key}`,           // Legacy path
-          fileUrl: null,                              // Wird über /s3/view generiert
-          
-          legalPulse: {
-            riskScore: null,
-            summary: '',
-            lastChecked: null,
-            lawInsights: [],
-            marketSuggestions: [],
-            riskFactors: [],
-            legalRisks: [],
-            recommendations: [],
-            analysisDate: null
+          const contract = {
+            userId: req.user.userId,
+            name,
+            laufzeit,
+            kuendigung,
+            expiryDate,
+            status,
+            uploadedAt: new Date(),
+            
+            // ✅ S3-spezifische Felder
+            s3Key: req.file.key,                        // S3-Pfad für interne Verwendung
+            s3Bucket: req.file.bucket,                  // S3-Bucket Name
+            s3Location: req.file.location,              // S3-URL (falls public)
+            filename: req.file.key,                     // S3-Key als filename
+            originalname: req.file.originalname,        // Original-Dateiname
+            mimetype: req.file.mimetype,                // MIME-Type
+            size: req.file.size,                        // Dateigröße
+            
+            // ✅ Legacy-Felder für Frontend-Kompatibilität
+            filePath: `/s3/${req.file.key}`,           // Legacy path
+            fileUrl: null,                              // Wird über /s3/view generiert
+            
+            legalPulse: {
+              riskScore: null,
+              summary: '',
+              lastChecked: null,
+              lawInsights: [],
+              marketSuggestions: [],
+              riskFactors: [],
+              legalRisks: [],
+              recommendations: [],
+              analysisDate: null
+            }
+          };
+
+          const { insertedId } = await contractsCollection.insertOne(contract);
+
+          console.log(`✅ Contract saved with S3 key: ${req.file.key}`);
+
+          // E-Mail-Benachrichtigung (optional)
+          try {
+            await transporter.sendMail({
+              from: `Contract AI <${process.env.EMAIL_USER}>`,
+              to: process.env.EMAIL_USER,
+              subject: "📄 Neuer Vertrag hochgeladen (S3)",
+              text: `Name: ${name}\nLaufzeit: ${laufzeit}\nKündigungsfrist: ${kuendigung}\nStatus: ${status}\nS3-Key: ${req.file.key}`,
+            });
+          } catch (emailError) {
+            console.warn("⚠️ E-Mail-Versand fehlgeschlagen:", emailError.message);
           }
-        };
 
-        const { insertedId } = await contractsCollection.insertOne(contract);
-
-        console.log(`✅ Contract saved with S3 key: ${req.file.key}`);
-
-        // E-Mail-Benachrichtigung (optional)
-        try {
-          await transporter.sendMail({
-            from: `Contract AI <${process.env.EMAIL_USER}>`,
-            to: process.env.EMAIL_USER,
-            subject: "📄 Neuer Vertrag hochgeladen (S3)",
-            text: `Name: ${name}\nLaufzeit: ${laufzeit}\nKündigungsfrist: ${kuendigung}\nStatus: ${status}\nS3-Key: ${req.file.key}`,
+          res.status(201).json({ 
+            message: "Vertrag gespeichert", 
+            contract: { ...contract, _id: insertedId },
+            s3Info: {
+              bucket: req.file.bucket,
+              key: req.file.key,
+              location: req.file.location
+            }
           });
-        } catch (emailError) {
-          console.warn("⚠️ E-Mail-Versand fehlgeschlagen:", emailError.message);
+          
+        } catch (error) {
+          console.error("❌ S3 Upload error:", error);
+          res.status(500).json({ message: "Fehler beim S3 Upload: " + error.message });
         }
-
-        res.status(201).json({ 
-          message: "Vertrag gespeichert", 
-          contract: { ...contract, _id: insertedId },
-          s3Info: {
-            bucket: req.file.bucket,
-            key: req.file.key,
-            location: req.file.location
-          }
-        });
-        
-      } catch (error) {
-        console.error("❌ S3 Upload error:", error);
-        res.status(500).json({ message: "Fehler beim S3 Upload: " + error.message });
-      }
-    });
+      });
+    } else {
+      console.log("⚠️ S3 Upload-Route übersprungen (S3 nicht verfügbar)");
+    }
 
     // 💾 POST-ROUTE für neue Verträge speichern (ERWEITERT)
     app.post("/contracts", verifyToken, async (req, res) => {
@@ -543,6 +579,7 @@ async function analyzeContract(pdfText) {
           signature: signature || null,
           isGenerated: isGenerated || false,
           uploadedAt: new Date(),
+          createdAt: new Date(), // ✅ ADDED for compatibility
           // ✅ ERWEITERT: File-Informationen (S3 + Legacy Support)
           filePath: filePath || "",
           fileUrl: fileUrl || (filename ? generateFileUrl(filename) : null),
@@ -595,7 +632,7 @@ async function analyzeContract(pdfText) {
       }
     });
 
-    // 📔 CRUD für einzelne Verträge (unverändert)
+    // 📔 CRUD für einzelne Verträge
     app.get("/contracts/:id", verifyToken, async (req, res) => {
       try {
         const contract = await contractsCollection.findOne({
@@ -653,7 +690,8 @@ async function analyzeContract(pdfText) {
       const s3Status = {
         configured: !!(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY),
         bucket: process.env.AWS_S3_BUCKET || 'Not set',
-        region: process.env.AWS_REGION || 'Not set'
+        region: process.env.AWS_REGION || 'Not set',
+        servicesLoaded: !!(s3Upload && generateSignedUrl)
       };
       
       // ✅ Upload-Path Debug
@@ -681,7 +719,7 @@ async function analyzeContract(pdfText) {
         analyzeRoute: "ANALYZE ROUTE NOW ACTIVE!",
         optimizeRoute: "OPTIMIZE ROUTE NOW ACTIVE!",
         fileServing: "IMPROVED FILE SERVING ACTIVE!", // ✅ NEU
-        s3Integration: "S3 UPLOAD & SIGNED URLS + REDIRECT ACTIVE!", // ✅ UPDATED
+        s3Integration: s3Status.servicesLoaded ? "S3 UPLOAD & SIGNED URLS + REDIRECT ACTIVE!" : "S3 Services not available", // ✅ UPDATED
         apiBaseUrl: API_BASE_URL, // ✅ NEU: Zeige API Base URL
         uploadDebug: uploadDebug, // ✅ NEU: Upload-Path Debug
         nodeEnv: process.env.NODE_ENV,
@@ -725,7 +763,9 @@ async function analyzeContract(pdfText) {
       console.log(`📊 Analyze-Route: POST /analyze (NEU HINZUGEFÜGT!)`);
       console.log(`🔧 Optimize-Route: POST /optimize (NEU HINZUGEFÜGT!)`);
       console.log(`🔐 Auth-Routen: /auth/*`);
-      console.log(`🔗 S3-Routes: GET /s3/view (Redirect), GET /s3/json (JSON)`); // ✅ NEU
+      if (s3Status.servicesLoaded) {
+        console.log(`🔗 S3-Routes: GET /s3/view (Redirect), GET /s3/json (JSON)`); // ✅ NEU
+      }
       console.log(`✅ Server deployment complete!`);
     });
 
