@@ -35,17 +35,19 @@ interface ContractFile {
 }
 
 /**
- * ✅ ERWEITERT: Generiert absolute File-URLs für Contract-Dateien mit S3-Support
+ * ✅ ERWEITERT: Generiert absolute File-URLs für Contract-Dateien mit S3-Support + LEGACY-FIX
  * Vermeidet React-Router-Interferenz durch absolute Backend-URLs
+ * 🔧 LEGACY-FIX: Behandelt Contracts die vor S3-Integration hochgeladen wurden
  */
 export const getContractFileUrl = (contract: ContractFile): string | null => {
-  console.log('🔍 Contract File URL Debug (S3-Enhanced):', {
+  console.log('🔍 Contract File URL Debug (S3-Enhanced + Legacy-Fix):', {
     contractData: contract,
     hasFileUrl: !!contract.fileUrl,
     hasS3Key: !!contract.s3Key,
     hasFilename: !!contract.filename,
     hasOriginalname: !!contract.originalname,
     hasFilePath: !!contract.filePath,
+    filePath: contract.filePath,
     backendUrl: BACKEND_API_URL
   });
 
@@ -62,26 +64,50 @@ export const getContractFileUrl = (contract: ContractFile): string | null => {
     return contract.fileUrl;
   }
   
+  // 🔧 QUICK-FIX: Legacy Contract mit filePath aber ohne s3Key
+  if (contract.filePath && contract.filePath.startsWith('/uploads/')) {
+    // Extrahiere S3-Key aus filePath
+    const s3KeyFromPath = contract.filePath.replace('/uploads/', '');
+    
+    // Prüfe ob es ein S3-Key sein könnte (32+ Zeichen, keine Dateiendung)
+    if (s3KeyFromPath.length >= 30 && !s3KeyFromPath.includes('.')) {
+      const s3ViewUrl = `${API_BASE_URL}/s3/view?file=${s3KeyFromPath}`;
+      console.log('🔧 LEGACY-FIX: Using extracted S3-Key from filePath:', s3ViewUrl);
+      return s3ViewUrl;
+    }
+    
+    // Fallback auf Backend uploads/ (falls lokale Datei)
+    const legacyUrl = `${BACKEND_API_URL}${contract.filePath}`;
+    console.log('🔧 LEGACY-FIX: Using backend uploads URL:', legacyUrl);
+    return legacyUrl;
+  }
+  
   // ✅ Priorität 3: Legacy - Dateiname aus verschiedenen Quellen
   const filename = contract.filename || contract.originalname;
   if (filename) {
+    // Prüfe ob filename ein S3-Key ist
+    if (filename.length >= 30 && !filename.includes('.')) {
+      const s3ViewUrl = `${API_BASE_URL}/s3/view?file=${filename}`;
+      console.log('✅ Generated S3 signed URL from filename:', s3ViewUrl);
+      return s3ViewUrl;
+    }
+    
+    // Legacy filename (mit Dateiendung)
     const fileUrl = `${BACKEND_API_URL}/uploads/${filename}`;
     console.log('✅ Generated legacy file URL from filename:', fileUrl);
     return fileUrl;
   }
   
-  // ✅ Priorität 4: Legacy - filePath verwenden
+  // ✅ Priorität 4: Legacy - filePath verwenden (andere Fälle)
   if (contract.filePath) {
     if (contract.filePath.startsWith('http')) {
       console.log('✅ Using absolute filePath:', contract.filePath);
       return contract.filePath;
     }
     // Relative filePath in absolute URL umwandeln
-    if (contract.filePath.startsWith('/uploads/')) {
-      const fileUrl = `${BACKEND_API_URL}${contract.filePath}`;
-      console.log('✅ Generated file URL from filePath:', fileUrl);
-      return fileUrl;
-    }
+    const fileUrl = `${BACKEND_API_URL}${contract.filePath}`;
+    console.log('✅ Generated file URL from filePath:', fileUrl);
+    return fileUrl;
   }
   
   console.warn('⚠️ No valid file URL found for contract');
