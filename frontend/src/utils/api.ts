@@ -825,4 +825,295 @@ export const clearAuthData = (): void => {
   localStorage.removeItem("authTimestamp");
 };
 
+/**
+ * ⭐ NEU: Batch-Upload-Funktion für mehrere Dateien (Premium-Feature)
+ * Führt mehrere Upload-Analysen parallel oder sequenziell durch
+ */
+export const batchUploadAndAnalyze = async (
+  files: File[],
+  onFileProgress?: (fileIndex: number, progress: number) => void,
+  onFileComplete?: (fileIndex: number, result: any) => void,
+  onFileError?: (fileIndex: number, error: string) => void,
+  sequential: boolean = true // Sequential für bessere Server-Performance
+): Promise<any[]> => {
+  console.log(`🚀 Batch-Upload gestartet: ${files.length} Dateien (${sequential ? 'sequenziell' : 'parallel'})`);
+  
+  const results: any[] = [];
+  
+  if (sequential) {
+    // ✅ Sequenzielle Verarbeitung (empfohlen für Server-Stabilität)
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      console.log(`📊 Verarbeite Datei ${i + 1}/${files.length}: ${file.name}`);
+      
+      try {
+        const result = await uploadAndAnalyze(
+          file,
+          (progress) => {
+            if (onFileProgress) onFileProgress(i, progress);
+          }
+        );
+        
+        results[i] = result;
+        if (onFileComplete) onFileComplete(i, result);
+        
+        console.log(`✅ Datei ${i + 1} erfolgreich: ${file.name}`);
+        
+        // Kurze Pause zwischen Anfragen für Server-Entlastung
+        if (i < files.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unbekannter Fehler';
+        results[i] = { success: false, error: errorMessage };
+        if (onFileError) onFileError(i, errorMessage);
+        
+        console.error(`❌ Fehler bei Datei ${i + 1}: ${file.name}`, error);
+      }
+    }
+  } else {
+    // ✅ Parallele Verarbeitung (nur für kleine Dateimengen empfohlen)
+    const promises = files.map(async (file, index) => {
+      try {
+        const result = await uploadAndAnalyze(
+          file,
+          (progress) => {
+            if (onFileProgress) onFileProgress(index, progress);
+          }
+        );
+        
+        if (onFileComplete) onFileComplete(index, result);
+        return result;
+        
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unbekannter Fehler';
+        if (onFileError) onFileError(index, errorMessage);
+        return { success: false, error: errorMessage };
+      }
+    });
+    
+    const parallelResults = await Promise.allSettled(promises);
+    parallelResults.forEach((result, index) => {
+      if (result.status === 'fulfilled') {
+        results[index] = result.value;
+      } else {
+        results[index] = { success: false, error: result.reason?.message || 'Promise rejected' };
+      }
+    });
+  }
+  
+  console.log(`🎉 Batch-Upload abgeschlossen: ${results.filter(r => r.success).length}/${files.length} erfolgreich`);
+  return results;
+};
+
+/**
+ * ⭐ KORRIGIERT: Premium-Status für 3-Stufen-Modell prüfen
+ */
+export const checkPremiumStatus = async (): Promise<{ 
+  subscriptionPlan: 'free' | 'business' | 'premium'; 
+  isPremium: boolean; 
+  analysisCount: number;
+  analysisLimit: number;
+}> => {
+  try {
+    const userInfo = await apiCall("/auth/me") as { 
+      user: { 
+        subscriptionPlan: string; 
+        isPremium: boolean;
+        analysisCount: number;
+      } 
+    };
+    
+    const plan = userInfo.user?.subscriptionPlan as 'free' | 'business' | 'premium' || 'free';
+    const isPremium = userInfo.user?.isPremium || plan === 'premium';
+    const analysisCount = userInfo.user?.analysisCount || 0;
+    
+    // ✅ KORRIGIERT: Limits nach 3-Stufen-Modell
+    let analysisLimit = 0;
+    if (plan === 'free') analysisLimit = 0;           // ❌ Keine Analysen
+    else if (plan === 'business') analysisLimit = 50; // 📊 50 pro Monat
+    else if (plan === 'premium') analysisLimit = Infinity; // ♾️ Unbegrenzt
+    
+    return { subscriptionPlan: plan, isPremium, analysisCount, analysisLimit };
+  } catch (error) {
+    console.warn("⚠️ Premium-Status konnte nicht geprüft werden:", error);
+    return { 
+      subscriptionPlan: 'free', 
+      isPremium: false, 
+      analysisCount: 0,
+      analysisLimit: 0
+    };
+  }
+};
+
+/**
+ * ⭐ KORRIGIERT: Upload-Limits für 3-Stufen-Modell abrufen
+ */
+export const getUploadLimits = async (): Promise<{
+  maxConcurrentUploads: number;
+  maxFileSize: number;
+  allowedFormats: string[];
+  canUpload: boolean;
+  canMultiUpload: boolean;
+  subscriptionPlan: string;
+}> => {
+  try {
+    const { subscriptionPlan, isPremium } = await checkPremiumStatus();
+    
+    return {
+      maxConcurrentUploads: subscriptionPlan === 'premium' ? 10 : 1,
+      maxFileSize: isPremium ? 100 * 1024 * 1024 : 50 * 1024 * 1024, // 100MB vs 50MB
+      allowedFormats: ['.pdf', '.doc', '.docx'],
+      canUpload: subscriptionPlan !== 'free', // ✅ KORRIGIERT: Free kann nicht uploaden
+      canMultiUpload: subscriptionPlan === 'premium', // ✅ KORRIGIERT: Nur Premium kann multi-upload
+      subscriptionPlan
+    };
+  } catch (error) {
+    console.warn("⚠️ Upload-Limits konnten nicht geladen werden:", error);
+    return {
+      maxConcurrentUploads: 1,
+      maxFileSize: 50 * 1024 * 1024,
+      allowedFormats: ['.pdf'],
+      canUpload: false,
+      canMultiUpload: false,
+      subscriptionPlan: 'free'
+    };
+  }
+};
+
+/**
+ * ⭐ NEU: Datei-Validierung für Upload
+ */
+export const validateUploadFile = (
+  file: File, 
+  limits: { maxFileSize: number; allowedFormats: string[] }
+): { valid: boolean; error?: string } => {
+  // Dateigröße prüfen
+  if (file.size > limits.maxFileSize) {
+    const maxSizeMB = (limits.maxFileSize / 1024 / 1024).toFixed(0);
+    return {
+      valid: false,
+      error: `Datei zu groß. Maximum: ${maxSizeMB}MB (aktuell: ${(file.size / 1024 / 1024).toFixed(1)}MB)`
+    };
+  }
+  
+  // Dateiformat prüfen
+  const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
+  if (!limits.allowedFormats.includes(fileExtension)) {
+    return {
+      valid: false,
+      error: `Dateiformat nicht unterstützt. Erlaubt: ${limits.allowedFormats.join(', ')}`
+    };
+  }
+  
+  // Dateiname prüfen
+  if (file.name.length > 255) {
+    return {
+      valid: false,
+      error: 'Dateiname zu lang (max. 255 Zeichen)'
+    };
+  }
+  
+  return { valid: true };
+};
+
+/**
+ * ⭐ KORRIGIERT: Batch-Datei-Validierung für 3-Stufen-Modell
+ */
+export const validateBatchUpload = (
+  files: File[],
+  subscriptionPlan: 'free' | 'business' | 'premium'
+): { valid: boolean; errors: string[]; warnings: string[] } => {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+  
+  // ✅ KORRIGIERT: Free-User Check
+  if (subscriptionPlan === 'free') {
+    errors.push('Vertragsanalyse ist nur für Business- und Premium-Nutzer verfügbar.');
+    return { valid: false, errors, warnings };
+  }
+  
+  // ✅ KORRIGIERT: Business vs Premium Check für Mehrfach-Upload
+  if (subscriptionPlan === 'business' && files.length > 1) {
+    errors.push('Mehrere Dateien gleichzeitig analysieren ist nur für Premium-Nutzer verfügbar.');
+    return { valid: false, errors, warnings };
+  }
+  
+  // Anzahl-Limits
+  const maxFiles = subscriptionPlan === 'premium' ? 10 : 1;
+  if (files.length > maxFiles) {
+    errors.push(`Zu viele Dateien. Maximum: ${maxFiles} (aktuell: ${files.length})`);
+  }
+  
+  // Gesamtgröße prüfen
+  const totalSize = files.reduce((sum, file) => sum + file.size, 0);
+  const maxTotalSize = subscriptionPlan === 'premium' ? 500 * 1024 * 1024 : 100 * 1024 * 1024; // 500MB vs 100MB
+  if (totalSize > maxTotalSize) {
+    errors.push(`Gesamtgröße zu groß. Maximum: ${(maxTotalSize / 1024 / 1024).toFixed(0)}MB`);
+  }
+  
+  // Duplikat-Namen prüfen
+  const fileNames = files.map(f => f.name.toLowerCase());
+  const duplicateNames = fileNames.filter((name, index) => fileNames.indexOf(name) !== index);
+  if (duplicateNames.length > 0) {
+    warnings.push(`Doppelte Dateinamen gefunden: ${duplicateNames.join(', ')}`);
+  }
+  
+  return {
+    valid: errors.length === 0,
+    errors,
+    warnings
+  };
+};
+
+/**
+ * ⭐ VERBESSERT: Erweiterte uploadAndAnalyze mit besserer Fehlerbehandlung für Batch
+ */
+export const uploadAndAnalyzeBatch = async (
+  file: File, 
+  onProgress?: (progress: number) => void,
+  forceReanalyze: boolean = false,
+  retryCount: number = 0,
+  maxRetries: number = 2
+): Promise<unknown> => {
+  console.log(`📤 Upload & Analyze (Batch): ${file.name} (Versuch ${retryCount + 1}/${maxRetries + 1})`);
+
+  try {
+    return await uploadAndAnalyze(file, onProgress, forceReanalyze);
+  } catch (error) {
+    console.error(`❌ Batch-Upload-Fehler (Versuch ${retryCount + 1}):`, error);
+    
+    // ✅ Retry-Logic für temporäre Fehler
+    if (retryCount < maxRetries) {
+      const errorMessage = error instanceof Error ? error.message : '';
+      
+      // Prüfe ob Retry sinnvoll ist
+      const retryableErrors = [
+        'nicht erreichbar',
+        'Failed to fetch',
+        'Timeout',
+        'Server-Fehler',
+        'HTTP 5',
+        'überlastet'
+      ];
+      
+      const shouldRetry = retryableErrors.some(retryError => 
+        errorMessage.includes(retryError)
+      );
+      
+      if (shouldRetry) {
+        const delay = Math.pow(2, retryCount) * 1000; // Exponential backoff
+        console.log(`🔄 Retry in ${delay}ms für: ${file.name}`);
+        
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return uploadAndAnalyzeBatch(file, onProgress, forceReanalyze, retryCount + 1, maxRetries);
+      }
+    }
+    
+    // ✅ Fehler nicht retry-bar oder max retries erreicht
+    throw error;
+  }
+};
+
 export default API_BASE_URL;

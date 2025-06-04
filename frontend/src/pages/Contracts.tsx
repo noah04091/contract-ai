@@ -1,15 +1,16 @@
-// 📁 src/pages/Contracts.tsx - FIXED useEffect dependency
-import { useState, useEffect, useRef, useCallback } from "react"; // ✅ Added useCallback
+// 📁 src/pages/Contracts.tsx - KORRIGIERT: 3-Stufen-Preismodell (Free/Business/Premium)
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   FileText, RefreshCw, Upload, CheckCircle, AlertCircle, 
   Plus, Calendar, Clock, Trash2, Eye, Edit,
-  Search, X
+  Search, X, Crown, Users, Loader, PlayCircle,
+  Lock, Zap, BarChart3
 } from "lucide-react";
 import styles from "../styles/Contracts.module.css";
 import ContractAnalysis from "../components/ContractAnalysis";
 import ContractDetailsView from "../components/ContractDetailsView";
-import { apiCall } from "../utils/api";
+import { apiCall, uploadAndAnalyze } from "../utils/api";
 
 interface Contract {
   _id: string;
@@ -22,6 +23,25 @@ interface Contract {
   isGenerated?: boolean;
 }
 
+// ✅ KORRIGIERT: Interface für Mehrfach-Upload
+interface UploadFileItem {
+  id: string;
+  file: File;
+  status: 'pending' | 'analyzing' | 'completed' | 'error' | 'duplicate';
+  progress: number;
+  result?: any;
+  error?: string;
+  duplicateInfo?: any;
+}
+
+// ✅ User Info Interface
+interface UserInfo {
+  subscriptionPlan: 'free' | 'business' | 'premium';
+  isPremium: boolean;
+  analysisCount: number;
+  analysisLimit: number;
+}
+
 // ✅ Erweiterte Filter-Typen
 type StatusFilter = 'alle' | 'aktiv' | 'bald_ablaufend' | 'abgelaufen' | 'gekündigt';
 type DateFilter = 'alle' | 'letzte_7_tage' | 'letzte_30_tage' | 'letztes_jahr';
@@ -31,7 +51,6 @@ export default function Contracts() {
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [filteredContracts, setFilteredContracts] = useState<Contract[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [showSuccess, setShowSuccess] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
   const [loading, setLoading] = useState(true);
@@ -40,6 +59,16 @@ export default function Contracts() {
   const [activeSection, setActiveSection] = useState<'upload' | 'contracts'>('contracts');
   const [refreshing, setRefreshing] = useState(false);
   
+  // ✅ KORRIGIERT: User-Plan States
+  const [userInfo, setUserInfo] = useState<UserInfo>({
+    subscriptionPlan: 'free',
+    isPremium: false,
+    analysisCount: 0,
+    analysisLimit: 0
+  });
+  const [uploadFiles, setUploadFiles] = useState<UploadFileItem[]>([]);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  
   // ✅ Erweiterte Filter & Search States
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('alle');
@@ -47,6 +76,48 @@ export default function Contracts() {
   const [sortOrder, setSortOrder] = useState<SortOrder>('neueste');
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // ✅ KORRIGIERT: User-Info laden mit 3-Stufen-Preismodell
+  const fetchUserInfo = async () => {
+    try {
+      const response = await apiCall("/auth/me") as { 
+        user: { 
+          subscriptionPlan: string; 
+          isPremium: boolean;
+          analysisCount: number;
+        } 
+      };
+      
+      const plan = response.user?.subscriptionPlan as 'free' | 'business' | 'premium' || 'free';
+      const isPremium = response.user?.isPremium || plan === 'premium';
+      const analysisCount = response.user?.analysisCount || 0;
+      
+      // ✅ KORRIGIERT: Limits nach 3-Stufen-Modell
+      let analysisLimit = 0;
+      if (plan === 'free') analysisLimit = 0;        // ❌ Keine Analysen
+      else if (plan === 'business') analysisLimit = 50;  // 📊 50 pro Monat
+      else if (plan === 'premium') analysisLimit = Infinity; // ♾️ Unbegrenzt
+      
+      const newUserInfo: UserInfo = {
+        subscriptionPlan: plan,
+        isPremium,
+        analysisCount,
+        analysisLimit
+      };
+      
+      setUserInfo(newUserInfo);
+      
+      console.log("✅ User-Info geladen:", newUserInfo);
+    } catch (err) {
+      console.warn("⚠️ User-Info konnte nicht geladen werden:", err);
+      setUserInfo({
+        subscriptionPlan: 'free',
+        isPremium: false,
+        analysisCount: 0,
+        analysisLimit: 0
+      });
+    }
+  };
 
   // ✅ Verbesserte fetchContracts mit apiCall
   const fetchContracts = async () => {
@@ -141,44 +212,229 @@ export default function Contracts() {
     });
 
     setFilteredContracts(filtered);
-  }, [contracts, searchQuery, statusFilter, dateFilter, sortOrder]); // ✅ Alle Dependencies aufgelistet
+  }, [contracts, searchQuery, statusFilter, dateFilter, sortOrder]);
 
   // ✅ FIXED: Filter anwenden mit stabiler applyFilters-Referenz
   useEffect(() => {
     applyFilters();
-  }, [applyFilters]); // ✅ Jetzt nur applyFilters als Dependency
+  }, [applyFilters]);
 
-  // ✅ Verträge beim Laden abrufen
+  // ✅ Initial Load
   useEffect(() => {
+    fetchUserInfo();
     fetchContracts();
   }, []);
 
-  // ✅ Aktive Filter zählen
-  const activeFiltersCount = () => {
-    let count = 0;
-    if (statusFilter !== 'alle') count++;
-    if (dateFilter !== 'alle') count++;
-    return count;
+  // ✅ KORRIGIERT: Mehrfach-Upload Handler mit Plan-Validierung
+  const handleMultipleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    // ✅ KORRIGIERT: Free-User Check
+    if (userInfo.subscriptionPlan === 'free') {
+      alert("❌ Vertragsanalyse ist nur für Business- und Premium-Nutzer verfügbar.\n\n🚀 Jetzt upgraden für Zugriff auf KI-Vertragsanalyse!");
+      return;
+    }
+
+    // ✅ KORRIGIERT: Business vs Premium Check
+    if (userInfo.subscriptionPlan === 'business' && files.length > 1) {
+      alert("📊 Mehrere Verträge gleichzeitig analysieren ist nur für Premium-Nutzer verfügbar.\n\n👑 Upgrade auf Premium für Batch-Analyse!");
+      return;
+    }
+
+    // ✅ KORRIGIERT: Analyse-Limit Check
+    if (userInfo.analysisCount >= userInfo.analysisLimit && userInfo.analysisLimit !== Infinity) {
+      alert(`📊 Analyse-Limit erreicht (${userInfo.analysisCount}/${userInfo.analysisLimit}).\n\n🚀 Upgrade dein Paket für mehr Analysen!`);
+      return;
+    }
+
+    // ✅ Dateien zu Upload-Liste hinzufügen
+    const newUploadFiles: UploadFileItem[] = Array.from(files).map((file, index) => ({
+      id: `${Date.now()}_${index}`,
+      file,
+      status: 'pending',
+      progress: 0
+    }));
+
+    setUploadFiles(newUploadFiles);
+    setActiveSection('upload');
+
+    console.log(`✅ ${files.length} Dateien für Upload vorbereitet (${userInfo.subscriptionPlan})`);
   };
 
-  // ✅ Alle Filter zurücksetzen
-  const clearAllFilters = () => {
-    setSearchQuery("");
-    setStatusFilter('alle');
-    setDateFilter('alle');
-    setSortOrder('neueste');
+  // ✅ NEU: Einzelne Datei aus Upload-Liste entfernen
+  const removeUploadFile = (fileId: string) => {
+    setUploadFiles(prev => prev.filter(item => item.id !== fileId));
   };
 
-  // ... Rest der Komponente bleibt unverändert ...
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setSelectedFile(e.target.files[0]);
-      setShowSuccess(true);
-      setActiveSection('upload');
-      setTimeout(() => setShowSuccess(false), 3000);
+  // ✅ NEU: Alle Upload-Dateien zurücksetzen
+  const clearAllUploadFiles = () => {
+    setUploadFiles([]);
+    setIsAnalyzing(false);
+  };
+
+  // ✅ KORRIGIERT: Batch-Analyse mit Limit-Check
+  const startBatchAnalysis = async () => {
+    if (uploadFiles.length === 0) return;
+
+    // ✅ KORRIGIERT: Nochmal Limit prüfen vor Analyse
+    const remainingAnalyses = userInfo.analysisLimit === Infinity 
+      ? Infinity 
+      : userInfo.analysisLimit - userInfo.analysisCount;
+    
+    if (remainingAnalyses === 0) {
+      alert(`📊 Analyse-Limit erreicht (${userInfo.analysisCount}/${userInfo.analysisLimit}).\n\n🚀 Upgrade dein Paket für mehr Analysen!`);
+      return;
+    }
+
+    if (uploadFiles.length > remainingAnalyses && remainingAnalyses !== Infinity) {
+      alert(`⚠️ Nur noch ${remainingAnalyses} Analyse${remainingAnalyses === 1 ? '' : 'n'} verfügbar.\n\nBitte reduziere die Anzahl der Dateien oder upgrade dein Paket.`);
+      return;
+    }
+
+    setIsAnalyzing(true);
+    const pendingFiles = uploadFiles.filter(item => item.status === 'pending');
+
+    console.log(`🚀 Starte Batch-Analyse für ${pendingFiles.length} Dateien (${userInfo.subscriptionPlan})`);
+
+    // ✅ Analysiere jede Datei einzeln
+    for (const fileItem of pendingFiles) {
+      try {
+        // Status auf "analyzing" setzen
+        setUploadFiles(prev => prev.map(item => 
+          item.id === fileItem.id 
+            ? { ...item, status: 'analyzing', progress: 10 }
+            : item
+        ));
+
+        console.log(`📊 Analysiere: ${fileItem.file.name}`);
+
+        // ✅ Einzelne Analyse durchführen
+        const result = await uploadAndAnalyze(
+          fileItem.file,
+          (progress) => {
+            setUploadFiles(prev => prev.map(item => 
+              item.id === fileItem.id 
+                ? { ...item, progress }
+                : item
+            ));
+          }
+        ) as any;
+
+        // ✅ Erfolgreich
+        if (result?.success) {
+          setUploadFiles(prev => prev.map(item => 
+            item.id === fileItem.id 
+              ? { ...item, status: 'completed', progress: 100, result }
+              : item
+          ));
+          console.log(`✅ Analyse erfolgreich: ${fileItem.file.name}`);
+        } 
+        // ✅ Duplikat erkannt
+        else if (result?.duplicate) {
+          setUploadFiles(prev => prev.map(item => 
+            item.id === fileItem.id 
+              ? { ...item, status: 'duplicate', progress: 100, duplicateInfo: result }
+              : item
+          ));
+          console.log(`🔄 Duplikat erkannt: ${fileItem.file.name}`);
+        }
+        // ✅ Unbekannter Erfolgsfall
+        else {
+          setUploadFiles(prev => prev.map(item => 
+            item.id === fileItem.id 
+              ? { ...item, status: 'completed', progress: 100, result }
+              : item
+          ));
+        }
+
+      } catch (error) {
+        // ✅ Fehler
+        const errorMessage = error instanceof Error ? error.message : 'Unbekannter Fehler';
+        setUploadFiles(prev => prev.map(item => 
+          item.id === fileItem.id 
+            ? { ...item, status: 'error', progress: 0, error: errorMessage }
+            : item
+        ));
+        console.error(`❌ Analyse-Fehler für ${fileItem.file.name}:`, error);
+      }
+
+      // ✅ Kurze Pause zwischen Analysen
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+
+    setIsAnalyzing(false);
+    
+    // ✅ User-Info und Verträge neu laden
+    setTimeout(() => {
+      fetchUserInfo();
+      fetchContracts();
+    }, 1000);
+
+    console.log("🎉 Batch-Analyse abgeschlossen");
+  };
+
+  // ✅ NEU: Einzelne Datei retry
+  const retryFileAnalysis = async (fileId: string) => {
+    const fileItem = uploadFiles.find(item => item.id === fileId);
+    if (!fileItem) return;
+
+    // ✅ KORRIGIERT: Limit-Check vor Retry
+    const remainingAnalyses = userInfo.analysisLimit === Infinity 
+      ? Infinity 
+      : userInfo.analysisLimit - userInfo.analysisCount;
+    
+    if (remainingAnalyses === 0) {
+      alert(`📊 Analyse-Limit erreicht (${userInfo.analysisCount}/${userInfo.analysisLimit}).\n\n🚀 Upgrade dein Paket für mehr Analysen!`);
+      return;
+    }
+
+    try {
+      setUploadFiles(prev => prev.map(item => 
+        item.id === fileId 
+          ? { ...item, status: 'analyzing', progress: 10, error: undefined }
+          : item
+      ));
+
+      const result = await uploadAndAnalyze(
+        fileItem.file,
+        (progress) => {
+          setUploadFiles(prev => prev.map(item => 
+            item.id === fileId 
+              ? { ...item, progress }
+              : item
+          ));
+        }
+      ) as any;
+
+      if (result?.success) {
+        setUploadFiles(prev => prev.map(item => 
+          item.id === fileId 
+            ? { ...item, status: 'completed', progress: 100, result }
+            : item
+        ));
+      } else if (result?.duplicate) {
+        setUploadFiles(prev => prev.map(item => 
+          item.id === fileId 
+            ? { ...item, status: 'duplicate', progress: 100, duplicateInfo: result }
+            : item
+        ));
+      }
+
+      // ✅ User-Info aktualisieren
+      fetchUserInfo();
+
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unbekannter Fehler';
+      setUploadFiles(prev => prev.map(item => 
+        item.id === fileId 
+          ? { ...item, status: 'error', progress: 0, error: errorMessage }
+          : item
+      ));
     }
   };
 
+  // ✅ KORRIGIERT: Drag & Drop Handler mit Plan-Validierung
   const handleDrag = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
@@ -195,15 +451,35 @@ export default function Contracts() {
     setDragActive(false);
     
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      setSelectedFile(e.dataTransfer.files[0]);
-      setShowSuccess(true);
+      const files = e.dataTransfer.files;
+      
+      // ✅ KORRIGIERT: Free-User Check
+      if (userInfo.subscriptionPlan === 'free') {
+        alert("❌ Vertragsanalyse ist nur für Business- und Premium-Nutzer verfügbar.\n\n🚀 Jetzt upgraden für Zugriff auf KI-Vertragsanalyse!");
+        return;
+      }
+
+      // ✅ KORRIGIERT: Business vs Premium Check
+      if (userInfo.subscriptionPlan === 'business' && files.length > 1) {
+        alert("📊 Mehrere Verträge gleichzeitig analysieren ist nur für Premium-Nutzer verfügbar.\n\n👑 Upgrade auf Premium für Batch-Analyse!");
+        return;
+      }
+
+      const newUploadFiles: UploadFileItem[] = Array.from(files).map((file, index) => ({
+        id: `${Date.now()}_${index}`,
+        file,
+        status: 'pending',
+        progress: 0
+      }));
+
+      setUploadFiles(newUploadFiles);
       setActiveSection('upload');
-      setTimeout(() => setShowSuccess(false), 3000);
     }
   };
 
   const handleReset = () => {
     setSelectedFile(null);
+    clearAllUploadFiles();
     setActiveSection('contracts');
     fetchContracts();
   };
@@ -226,11 +502,27 @@ export default function Contracts() {
       
       console.log("✅ Vertrag gelöscht:", contractName);
       fetchContracts();
-      setShowDetails(false); // Modal schließen nach Löschung
+      setShowDetails(false);
     } catch (err) {
       console.error("❌ Fehler beim Löschen:", err);
       alert("Fehler beim Löschen des Vertrags. Bitte versuche es erneut.");
     }
+  };
+
+  // ✅ Aktive Filter zählen
+  const activeFiltersCount = () => {
+    let count = 0;
+    if (statusFilter !== 'alle') count++;
+    if (dateFilter !== 'alle') count++;
+    return count;
+  };
+
+  // ✅ Alle Filter zurücksetzen
+  const clearAllFilters = () => {
+    setSearchQuery("");
+    setStatusFilter('alle');
+    setDateFilter('alle');
+    setSortOrder('neueste');
   };
 
   const getStatusColor = (status: string): string => {
@@ -265,6 +557,78 @@ export default function Contracts() {
     fileInputRef.current?.click();
   };
 
+  // ✅ NEU: Upload-Status Icons
+  const getUploadStatusIcon = (status: UploadFileItem['status']) => {
+    switch (status) {
+      case 'pending':
+        return <Clock size={16} className={styles.statusPending} />;
+      case 'analyzing':
+        return <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}>
+          <Loader size={16} className={styles.statusAnalyzing} />
+        </motion.div>;
+      case 'completed':
+        return <CheckCircle size={16} className={styles.statusCompleted} />;
+      case 'duplicate':
+        return <Users size={16} className={styles.statusDuplicate} />;
+      case 'error':
+        return <AlertCircle size={16} className={styles.statusError} />;
+      default:
+        return <Clock size={16} />;
+    }
+  };
+
+  // ✅ NEU: Upload-Status Text
+  const getUploadStatusText = (item: UploadFileItem) => {
+    switch (item.status) {
+      case 'pending':
+        return 'Wartet auf Analyse...';
+      case 'analyzing':
+        return `Wird analysiert... ${item.progress}%`;
+      case 'completed':
+        return 'Analyse abgeschlossen';
+      case 'duplicate':
+        return 'Bereits vorhanden';
+      case 'error':
+        return `Fehler: ${item.error}`;
+      default:
+        return 'Unbekannt';
+    }
+  };
+
+  // ✅ KORRIGIERT: Plan-Badge Helper
+  const getPlanBadge = () => {
+    switch (userInfo.subscriptionPlan) {
+      case 'free':
+        return (
+          <span className={styles.freeBadge}>
+            <Lock size={16} />
+            Free
+          </span>
+        );
+      case 'business':
+        return (
+          <span className={styles.businessBadge}>
+            <BarChart3 size={16} />
+            Business
+          </span>
+        );
+      case 'premium':
+        return (
+          <span className={styles.premiumBadge}>
+            <Crown size={16} />
+            Premium
+          </span>
+        );
+      default:
+        return null;
+    }
+  };
+
+  // ✅ KORRIGIERT: Upload-Berechtigung prüfen
+  const canUpload = userInfo.subscriptionPlan !== 'free';
+  const canMultiUpload = userInfo.subscriptionPlan === 'premium';
+  const hasAnalysesLeft = userInfo.analysisLimit === Infinity || userInfo.analysisCount < userInfo.analysisLimit;
+
   return (
     <div className={styles.pageContainer}>
       <motion.div 
@@ -283,6 +647,7 @@ export default function Contracts() {
           >
             <FileText size={28} className={styles.titleIcon} />
             Vertragsanalyse & Verwaltung
+            {getPlanBadge()}
           </motion.h1>
           <motion.p 
             className={styles.subtitle}
@@ -290,8 +655,31 @@ export default function Contracts() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2, duration: 0.5 }}
           >
-            Verträge hochladen, analysieren und verwalten
+            {userInfo.subscriptionPlan === 'free' && 
+              "Upgrade auf Business oder Premium für KI-Vertragsanalyse"
+            }
+            {userInfo.subscriptionPlan === 'business' && 
+              `Verträge analysieren und verwalten (${userInfo.analysisCount}/${userInfo.analysisLimit} Analysen)`
+            }
+            {userInfo.subscriptionPlan === 'premium' && 
+              "Verträge einzeln oder gleichzeitig analysieren und verwalten"
+            }
           </motion.p>
+
+          {/* ✅ KORRIGIERT: Analysis-Limit-Anzeige für Business */}
+          {userInfo.subscriptionPlan === 'business' && (
+            <div className={styles.limitProgress}>
+              <div className={styles.limitText}>
+                {userInfo.analysisCount} von {userInfo.analysisLimit} Analysen verwendet
+              </div>
+              <div className={styles.limitBar}>
+                <div 
+                  className={styles.limitBarFill}
+                  style={{ width: `${Math.min((userInfo.analysisCount / userInfo.analysisLimit) * 100, 100)}%` }}
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Tabs */}
@@ -307,11 +695,23 @@ export default function Contracts() {
             )}
           </button>
           <button 
-            className={`${styles.tabButton} ${activeSection === 'upload' ? styles.activeTab : ''}`}
-            onClick={() => setActiveSection('upload')}
+            className={`${styles.tabButton} ${activeSection === 'upload' ? styles.activeTab : ''} ${!canUpload ? styles.disabledTab : ''}`}
+            onClick={() => canUpload && setActiveSection('upload')}
+            disabled={!canUpload}
           >
             <Upload size={18} />
-            <span>Hochladen</span>
+            <span>
+              {userInfo.subscriptionPlan === 'free' ? 'Upgrade erforderlich' : 'Hochladen'}
+            </span>
+            {canMultiUpload && (
+              <span className={styles.premiumTabBadge}>
+                <Crown size={12} />
+                Multi
+              </span>
+            )}
+            {!canUpload && (
+              <Lock size={14} className={styles.lockIcon} />
+            )}
           </button>
         </div>
 
@@ -325,71 +725,268 @@ export default function Contracts() {
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.3 }}
             >
-              <div className={styles.sectionHeader}>
-                <h2>Vertrag hochladen</h2>
-                <p className={styles.sectionDescription}>
-                  Lade einen Vertrag hoch, um ihn zu analysieren und zu verwalten
-                </p>
-              </div>
-              
-              <div 
-                className={`${styles.uploadArea} ${dragActive ? styles.dragActive : ''}`} 
-                onDragEnter={handleDrag}
-                onDragLeave={handleDrag}
-                onDragOver={handleDrag}
-                onDrop={handleDrop}
-                onClick={activateFileInput}
-              >
-                <input 
-                  type="file" 
-                  onChange={handleFileChange} 
-                  className={styles.fileInput}
-                  accept=".pdf,.doc,.docx"
-                  id="contractFile"
-                  ref={fileInputRef}
-                />
-                
-                {selectedFile ? (
-                  <div className={styles.filePreview}>
-                    <div className={styles.fileIcon}>
-                      <FileText size={40} />
+              {/* ✅ KORRIGIERT: Free-User Upgrade-Bereich */}
+              {!canUpload ? (
+                <div className={styles.upgradeSection}>
+                  <div className={styles.upgradeIcon}>
+                    <Zap size={48} />
+                  </div>
+                  <h2>Upgrade für Vertragsanalyse</h2>
+                  <p className={styles.upgradeDescription}>
+                    Schalte die KI-gestützte Vertragsanalyse frei und erhalte detaillierte Einblicke in deine Verträge.
+                  </p>
+                  
+                  <div className={styles.upgradePlans}>
+                    <div className={styles.upgradePlan}>
+                      <div className={styles.upgradePlanHeader}>
+                        <BarChart3 size={20} />
+                        <h3>Business</h3>
+                      </div>
+                      <ul>
+                        <li>✅ 50 Analysen pro Monat</li>
+                        <li>✅ KI-Vertragsanalyse</li>
+                        <li>✅ Rechtssicherheits-Check</li>
+                        <li>✅ Optimierungsvorschläge</li>
+                      </ul>
                     </div>
-                    <div className={styles.fileInfo}>
-                      <h3 className={styles.fileName}>{selectedFile.name}</h3>
-                      <p className={styles.fileSize}>
-                        {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-                      </p>
+                    
+                    <div className={`${styles.upgradePlan} ${styles.recommendedPlan}`}>
+                      <div className={styles.upgradePlanHeader}>
+                        <Crown size={20} />
+                        <h3>Premium</h3>
+                        <span className={styles.recommendedBadge}>Empfohlen</span>
+                      </div>
+                      <ul>
+                        <li>✅ Unbegrenzte Analysen</li>
+                        <li>✅ Mehrfach-Upload</li>
+                        <li>✅ Batch-Analyse</li>
+                        <li>✅ Alle Business-Features</li>
+                      </ul>
                     </div>
-                    {showSuccess && (
-                      <div className={styles.successMessage}>
-                        <CheckCircle size={16} />
-                        <span>Datei erfolgreich ausgewählt</span>
+                  </div>
+                  
+                  <div className={styles.upgradeActions}>
+                    <button 
+                      className={styles.upgradeButton}
+                      onClick={() => window.location.href = '/pricing'}
+                    >
+                      <Crown size={16} />
+                      Jetzt upgraden
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {/* ✅ KORRIGIERT: Upload-Bereich für Business/Premium */}
+                  <div className={styles.sectionHeader}>
+                    <h2>
+                      {canMultiUpload ? "Verträge hochladen" : "Vertrag hochladen"}
+                    </h2>
+                    <p className={styles.sectionDescription}>
+                      {canMultiUpload 
+                        ? "Lade einen oder mehrere Verträge gleichzeitig hoch, um sie zu analysieren und zu verwalten"
+                        : "Lade einen Vertrag hoch, um ihn zu analysieren und zu verwalten"
+                      }
+                    </p>
+                    
+                    {/* ✅ KORRIGIERT: Limit-Warnung für Business */}
+                    {userInfo.subscriptionPlan === 'business' && !hasAnalysesLeft && (
+                      <div className={styles.limitWarning}>
+                        <AlertCircle size={16} />
+                        <span>
+                          Analyse-Limit erreicht ({userInfo.analysisCount}/{userInfo.analysisLimit}). 
+                          <button onClick={() => window.location.href = '/pricing'}>
+                            Upgrade auf Premium
+                          </button>
+                        </span>
+                      </div>
+                    )}
+                    
+                    {/* ✅ NEU: Premium-Upgrade-Hinweis für Business */}
+                    {userInfo.subscriptionPlan === 'business' && hasAnalysesLeft && (
+                      <div className={styles.premiumHint}>
+                        <Crown size={16} />
+                        <span>
+                          Mehrere Verträge gleichzeitig analysieren? 
+                          <button onClick={() => window.location.href = '/pricing'}>
+                            Upgrade auf Premium
+                          </button>
+                        </span>
                       </div>
                     )}
                   </div>
-                ) : (
-                  <div className={styles.uploadPrompt}>
-                    <div className={styles.uploadIcon}>
-                      <Upload size={40} />
-                    </div>
-                    <h3>Datei hierher ziehen</h3>
-                    <p>oder klicke, um eine Datei auszuwählen</p>
-                    <div className={styles.uploadFormats}>
-                      Unterstützte Formate: PDF, DOC, DOCX
-                    </div>
-                  </div>
-                )}
-              </div>
+                  
+                  <div 
+                    className={`${styles.uploadArea} ${dragActive ? styles.dragActive : ''} ${!hasAnalysesLeft ? styles.disabledUpload : ''}`} 
+                    onDragEnter={handleDrag}
+                    onDragLeave={handleDrag}
+                    onDragOver={handleDrag}
+                    onDrop={handleDrop}
+                    onClick={hasAnalysesLeft ? activateFileInput : undefined}
+                  >
+                    <input 
+                      type="file" 
+                      onChange={handleMultipleFileChange}
+                      className={styles.fileInput}
+                      accept=".pdf,.doc,.docx"
+                      multiple={canMultiUpload}
+                      id="contractFile"
+                      ref={fileInputRef}
+                      disabled={!hasAnalysesLeft}
+                    />
+                    
+                    {uploadFiles.length > 0 ? (
+                      <div className={styles.multiFilePreview}>
+                        <div className={styles.multiFileHeader}>
+                          <div className={styles.multiFileInfo}>
+                            <FileText size={24} />
+                            <div>
+                              <h3>{uploadFiles.length} Datei{uploadFiles.length > 1 ? 'en' : ''} ausgewählt</h3>
+                              <p>
+                                {uploadFiles.filter(f => f.status === 'completed').length} abgeschlossen, {' '}
+                                {uploadFiles.filter(f => f.status === 'error').length} Fehler, {' '}
+                                {uploadFiles.filter(f => f.status === 'pending').length} wartend
+                              </p>
+                            </div>
+                          </div>
+                          <div className={styles.multiFileActions}>
+                            {!isAnalyzing && uploadFiles.some(f => f.status === 'pending') && hasAnalysesLeft && (
+                              <button 
+                                className={styles.startAnalysisButton}
+                                onClick={startBatchAnalysis}
+                              >
+                                <PlayCircle size={16} />
+                                Analyse starten
+                              </button>
+                            )}
+                            <button 
+                              className={styles.clearFilesButton}
+                              onClick={clearAllUploadFiles}
+                              disabled={isAnalyzing}
+                            >
+                              <X size={16} />
+                              Alle entfernen
+                            </button>
+                          </div>
+                        </div>
 
-              {selectedFile && (
-                <div className={styles.analysisContainer}>
-                  <ContractAnalysis file={selectedFile} onReset={handleReset} />
-                </div>
+                        {/* ✅ NEU: Datei-Liste */}
+                        <div className={styles.filesList}>
+                          {uploadFiles.map((fileItem) => (
+                            <motion.div 
+                              key={fileItem.id}
+                              className={styles.fileItem}
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              layout
+                            >
+                              <div className={styles.fileItemLeft}>
+                                <div className={styles.fileItemIcon}>
+                                  {getUploadStatusIcon(fileItem.status)}
+                                </div>
+                                <div className={styles.fileItemInfo}>
+                                  <div className={styles.fileItemName}>
+                                    {fileItem.file.name}
+                                  </div>
+                                  <div className={styles.fileItemSize}>
+                                    {(fileItem.file.size / 1024 / 1024).toFixed(2)} MB
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              <div className={styles.fileItemRight}>
+                                <div className={styles.fileItemStatus}>
+                                  {getUploadStatusText(fileItem)}
+                                </div>
+                                <div className={styles.fileItemActions}>
+                                  {fileItem.status === 'error' && hasAnalysesLeft && (
+                                    <button 
+                                      className={styles.retryButton}
+                                      onClick={() => retryFileAnalysis(fileItem.id)}
+                                      disabled={isAnalyzing}
+                                    >
+                                      <RefreshCw size={14} />
+                                    </button>
+                                  )}
+                                  {!isAnalyzing && fileItem.status === 'pending' && (
+                                    <button 
+                                      className={styles.removeFileButton}
+                                      onClick={() => removeUploadFile(fileItem.id)}
+                                    >
+                                      <X size={14} />
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* ✅ Progress Bar für analyzing */}
+                              {fileItem.status === 'analyzing' && (
+                                <div className={styles.fileItemProgress}>
+                                  <div 
+                                    className={styles.fileItemProgressBar}
+                                    style={{ width: `${fileItem.progress}%` }}
+                                  />
+                                </div>
+                              )}
+                            </motion.div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className={styles.uploadPrompt}>
+                        <div className={styles.uploadIcon}>
+                          <Upload size={40} />
+                        </div>
+                        <h3>
+                          {!hasAnalysesLeft 
+                            ? "Analyse-Limit erreicht"
+                            : canMultiUpload 
+                              ? "Dateien hierher ziehen" 
+                              : "Datei hierher ziehen"
+                          }
+                        </h3>
+                        <p>
+                          {!hasAnalysesLeft 
+                            ? `Du hast ${userInfo.analysisCount} von ${userInfo.analysisLimit} Analysen verwendet`
+                            : canMultiUpload 
+                              ? "oder klicke, um eine oder mehrere Dateien auszuwählen"
+                              : "oder klicke, um eine Datei auszuwählen"
+                          }
+                        </p>
+                        <div className={styles.uploadFormats}>
+                          Unterstützte Formate: PDF, DOC, DOCX
+                        </div>
+                        {canMultiUpload && hasAnalysesLeft && (
+                          <div className={styles.premiumFeature}>
+                            <Crown size={16} />
+                            <span>Mehrfach-Upload verfügbar</span>
+                          </div>
+                        )}
+                        {!hasAnalysesLeft && (
+                          <button 
+                            className={styles.upgradeButton}
+                            onClick={() => window.location.href = '/pricing'}
+                          >
+                            <Crown size={16} />
+                            Jetzt upgraden
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* ✅ LEGACY: Einzeldatei-Analyse für Kompatibilität */}
+                  {selectedFile && uploadFiles.length === 1 && (
+                    <div className={styles.analysisContainer}>
+                      <ContractAnalysis file={selectedFile} onReset={handleReset} />
+                    </div>
+                  )}
+                </>
               )}
             </motion.div>
           )}
 
-          {/* Contracts Section - Full implementation as provided */}
+          {/* Contracts Section - Unverändert */}
           {activeSection === 'contracts' && (
             <motion.div 
               key="contracts-section"
@@ -418,18 +1015,20 @@ export default function Contracts() {
                     <RefreshCw size={16} />
                   </motion.button>
                   <motion.button 
-                    className={styles.newContractButton}
-                    onClick={() => setActiveSection('upload')}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
+                    className={`${styles.newContractButton} ${!canUpload ? styles.disabledButton : ''}`}
+                    onClick={() => canUpload && setActiveSection('upload')}
+                    whileHover={canUpload ? { scale: 1.02 } : {}}
+                    whileTap={canUpload ? { scale: 0.98 } : {}}
+                    disabled={!canUpload}
                   >
                     <Plus size={16} />
-                    <span>Neuer Vertrag</span>
+                    <span>{canUpload ? 'Neuer Vertrag' : 'Upgrade erforderlich'}</span>
+                    {!canUpload && <Lock size={14} />}
                   </motion.button>
                 </div>
               </div>
 
-              {/* Filters */}
+              {/* Filters - Unverändert */}
               <div className={styles.filtersToolbar}>
                 <div className={styles.searchSection}>
                   <div className={styles.searchInputWrapper}>
@@ -553,18 +1152,20 @@ export default function Contracts() {
                   <p>
                     {activeFiltersCount() > 0 || searchQuery
                       ? "Probiere andere Suchbegriffe oder Filter-Einstellungen."
-                      : "Lade deinen ersten Vertrag hoch, um ihn hier zu sehen."
+                      : canUpload 
+                        ? "Lade deinen ersten Vertrag hoch, um ihn hier zu sehen."
+                        : "Upgrade auf Business oder Premium für Vertragsanalyse."
                     }
                   </p>
                   {(!activeFiltersCount() && !searchQuery) && (
                     <motion.button 
-                      className={styles.uploadButton}
-                      onClick={() => setActiveSection('upload')}
+                      className={`${styles.uploadButton} ${!canUpload ? styles.upgradeButton : ''}`}
+                      onClick={() => canUpload ? setActiveSection('upload') : window.location.href = '/pricing'}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                     >
-                      <Upload size={16} />
-                      <span>Vertrag hochladen</span>
+                      {canUpload ? <Upload size={16} /> : <Crown size={16} />}
+                      <span>{canUpload ? 'Vertrag hochladen' : 'Jetzt upgraden'}</span>
                     </motion.button>
                   )}
                 </div>
