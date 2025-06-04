@@ -1,4 +1,4 @@
-// 📁 backend/routes/analyze.js - ROBUSTE VERSION MIT DEBUG & FALLBACKS + FULLTEXT FÜR CONTENT-TAB
+// 📁 backend/routes/analyze.js - ROBUSTE VERSION MIT S3-UPLOAD + DEBUG & FALLBACKS + FULLTEXT FÜR CONTENT-TAB
 const express = require("express");
 const multer = require("multer");
 const pdfParse = require("pdf-parse");
@@ -8,6 +8,9 @@ const { OpenAI } = require("openai");
 const verifyToken = require("../middleware/verifyToken");
 const { MongoClient, ObjectId } = require("mongodb");
 const path = require("path");
+
+// ✅ CRITICAL FIX: S3-Upload statt lokaler Upload!
+const { upload: s3Upload } = require("../services/fileStorage");
 
 // ✅ FALLBACK: crypto nur importieren wenn verfügbar
 let crypto;
@@ -30,7 +33,9 @@ try {
 }
 
 const router = express.Router();
-const upload = multer({ dest: "uploads/" });
+
+// ❌ ENTFERNT: Lokaler Upload nicht mehr nötig
+// const upload = multer({ dest: "uploads/" });
 
 // ✅ SINGLETON OpenAI-Instance um Connection-Probleme zu vermeiden
 let openaiInstance = null;
@@ -117,8 +122,8 @@ const checkForDuplicate = async (fileHash, userId) => {
   }
 };
 
-// ✅ EINFACHE Vertrag-Speicher-Funktion als Fallback
-const saveContractSimple = async (contractData) => {
+// ✅ ERWEITERTE Vertrag-Speicher-Funktion für S3
+const saveContractWithS3 = async (contractData, s3Data) => {
   try {
     const { contractsCollection } = await getMongoCollections();
     
@@ -126,7 +131,20 @@ const saveContractSimple = async (contractData) => {
       userId: new ObjectId(contractData.userId),
       name: contractData.fileName,
       toolUsed: contractData.toolUsed || "analyze",
-      filePath: contractData.filePath,
+      
+      // ✅ S3-Felder (KRITISCH für File-URLs)
+      s3Key: s3Data.key,                        // S3-Pfad für interne Verwendung
+      s3Bucket: s3Data.bucket,                  // S3-Bucket Name
+      s3Location: s3Data.location,              // S3-URL (falls public)
+      filename: s3Data.key,                     // S3-Key als filename
+      originalname: s3Data.originalname,        // Original-Dateiname
+      mimetype: s3Data.mimetype,
+      size: s3Data.size,
+      
+      // ✅ Legacy-Felder für Frontend-Kompatibilität
+      filePath: `/s3/${s3Data.key}`,           // Legacy path für URL-Generierung
+      fileUrl: null,                            // Wird über /s3/view generiert
+      
       fileHash: contractData.fileHash || null,
       createdAt: new Date(),
       uploadedAt: new Date(),
@@ -143,22 +161,25 @@ const saveContractSimple = async (contractData) => {
     };
 
     const result = await contractsCollection.insertOne(contractDoc);
-    console.log("📁 Vertrag gespeichert (Simple):", result.insertedId);
+    console.log("📁 Vertrag mit S3-Daten gespeichert:", result.insertedId);
     return result;
   } catch (err) {
-    console.error("❌ Fehler beim Speichern des Vertrags (Simple):", err.message);
+    console.error("❌ Fehler beim Speichern des Vertrags mit S3:", err.message);
     throw err;
   }
 };
 
-// ✅ HAUPTROUTE: POST /analyze mit robusten Fallbacks + FULLTEXT-SPEICHERUNG
-router.post("/", verifyToken, upload.single("file"), async (req, res) => {
+// ✅ HAUPTROUTE: POST /analyze mit S3-UPLOAD + robusten Fallbacks + FULLTEXT-SPEICHERUNG
+router.post("/", verifyToken, s3Upload.single("file"), async (req, res) => {
   const requestId = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  console.log(`📊 [${requestId}] Analyse-Request erhalten:`, {
+  console.log(`📊 [${requestId}] S3-Analyse-Request erhalten:`, {
     hasFile: !!req.file,
     userId: req.user?.userId,
     filename: req.file?.originalname,
     fileSize: req.file?.size,
+    s3Key: req.file?.key,
+    s3Bucket: req.file?.bucket,
+    s3Location: req.file?.location,
     cryptoAvailable: !!crypto,
     saveContractAvailable: !!saveContract
   });
@@ -173,12 +194,24 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
     });
   }
 
-  let tempFilePath = null;
-  
-  try {
-    tempFilePath = req.file.path;
-    console.log(`📁 [${requestId}] Temp-Datei erstellt: ${tempFilePath}`);
+  // ✅ S3-Upload Validation
+  if (!req.file.key || !req.file.bucket) {
+    console.error(`❌ [${requestId}] S3-Upload-Daten fehlen:`, req.file);
+    return res.status(500).json({
+      success: false,
+      message: "❌ S3-Upload fehlgeschlagen.",
+      error: "S3_UPLOAD_ERROR"
+    });
+  }
 
+  console.log(`📁 [${requestId}] S3-Upload erfolgreich:`, {
+    key: req.file.key,
+    bucket: req.file.bucket,
+    location: req.file.location,
+    size: req.file.size
+  });
+
+  try {
     // ✅ MongoDB-Collections sicher abrufen
     const { analysisCollection, usersCollection: users, contractsCollection } = await getMongoCollections();
     console.log(`📊 [${requestId}] MongoDB-Collections verfügbar`);
@@ -216,15 +249,25 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
       });
     }
 
-    // ✅ PDF auslesen
-    console.log(`📄 [${requestId}] PDF wird gelesen...`);
+    // ✅ PDF von S3 herunterladen für Analyse
+    console.log(`📄 [${requestId}] PDF wird von S3 heruntergeladen...`);
     
-    if (!fsSync.existsSync(tempFilePath)) {
-      throw new Error(`Temporäre Datei nicht gefunden: ${tempFilePath}`);
-    }
+    const AWS = require('aws-sdk');
+    const s3 = new AWS.S3({
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      region: process.env.AWS_REGION,
+    });
 
-    const buffer = await fs.readFile(tempFilePath);
-    console.log(`📄 [${requestId}] Buffer gelesen: ${buffer.length} bytes`);
+    const s3Params = {
+      Bucket: req.file.bucket,
+      Key: req.file.key
+    };
+
+    const s3Object = await s3.getObject(s3Params).promise();
+    const buffer = s3Object.Body;
+    
+    console.log(`📄 [${requestId}] S3-Buffer gelesen: ${buffer.length} bytes`);
     
     // ✅ Hash berechnen (mit Fallback)
     const fileHash = calculateFileHash(buffer);
@@ -380,6 +423,8 @@ Antwort im folgenden JSON-Format:
       extractedText: fullTextContent, // ✅ Alternative Benennung als Fallback
       originalFileName: req.file.originalname, // ✅ Zusätzliche Info
       fileSize: buffer.length, // ✅ Dateigröße für Debug
+      s3Key: req.file.key, // ✅ S3-Reference
+      s3Bucket: req.file.bucket, // ✅ S3-Reference
       // OpenAI Analyse-Ergebnisse:
       ...result,
     };
@@ -387,15 +432,15 @@ Antwort im folgenden JSON-Format:
     let inserted;
     try {
       inserted = await analysisCollection.insertOne(analysisData);
-      console.log(`✅ [${requestId}] Analyse gespeichert: ${inserted.insertedId} (mit fullText: ${fullTextContent.length} Zeichen)`);
+      console.log(`✅ [${requestId}] S3-Analyse gespeichert: ${inserted.insertedId} (mit fullText: ${fullTextContent.length} Zeichen)`);
     } catch (dbError) {
       console.error(`❌ [${requestId}] DB-Insert-Fehler:`, dbError.message);
       throw new Error(`Datenbank-Fehler beim Speichern: ${dbError.message}`);
     }
 
-    // 💾 Vertrag speichern (mit Fallbacks) - ERWEITERT
+    // 💾 Vertrag mit S3-Daten speichern (ERWEITERT)
     try {
-      console.log(`💾 [${requestId}] Speichere Vertrag...`);
+      console.log(`💾 [${requestId}] Speichere Vertrag mit S3-Daten...`);
 
       // Bei Duplikat: Bestehenden Vertrag aktualisieren
       if (existingContract && req.body.forceReanalyze === 'true') {
@@ -409,6 +454,10 @@ Antwort im folgenden JSON-Format:
               analysisId: inserted.insertedId, // ✅ KRITISCH: Reference zur Analyse
               fullText: fullTextContent, // ✅ KRITISCH: Text direkt im Contract als Backup
               content: fullTextContent, // ✅ ZUSÄTZLICH: Alternative Feldname für Kompatibilität
+              s3Key: req.file.key, // ✅ S3-Update
+              s3Bucket: req.file.bucket,
+              s3Location: req.file.location,
+              filename: req.file.key,
               legalPulse: {
                 riskScore: result.contractScore || null,
                 riskSummary: result.summary || '',
@@ -421,14 +470,13 @@ Antwort im folgenden JSON-Format:
           }
         );
         
-        console.log(`✅ [${requestId}] Bestehender Vertrag aktualisiert mit fullText (${fullTextContent.length} Zeichen)`);
+        console.log(`✅ [${requestId}] Bestehender Vertrag mit S3-Daten aktualisiert`);
       } else {
-        // Neuen Vertrag speichern
+        // Neuen Vertrag mit S3-Daten speichern
         const contractData = {
           userId: req.user.userId,
           fileName: req.file.originalname,
           toolUsed: "analyze",
-          filePath: `/uploads/${req.file.filename}`,
           fileHash: fileHash,
           extraRefs: { 
             analysisId: inserted.insertedId, // ✅ KRITISCH: Reference zur Analyse
@@ -447,30 +495,24 @@ Antwort im folgenden JSON-Format:
           }
         };
 
-        let saveResult;
-        
-        // ✅ Versuche zuerst den normalen saveContract-Service
-        if (saveContract) {
-          try {
-            saveResult = await saveContract(contractData);
-            console.log(`✅ [${requestId}] Vertrag gespeichert (Service): ${saveResult.insertedId} mit fullText (${fullTextContent.length} Zeichen)`);
-          } catch (serviceError) {
-            console.warn(`⚠️ [${requestId}] SaveContract-Service fehlgeschlagen:`, serviceError.message);
-            // Fallback verwenden
-            saveResult = await saveContractSimple(contractData);
-            console.log(`✅ [${requestId}] Vertrag gespeichert (Fallback): ${saveResult.insertedId}`);
-          }
-        } else {
-          // Direkt Fallback verwenden
-          saveResult = await saveContractSimple(contractData);
-          console.log(`✅ [${requestId}] Vertrag gespeichert (Fallback): ${saveResult.insertedId}`);
-        }
+        // ✅ S3-Daten für Contract-Speicherung
+        const s3Data = {
+          key: req.file.key,
+          bucket: req.file.bucket,
+          location: req.file.location,
+          originalname: req.file.originalname,
+          mimetype: req.file.mimetype,
+          size: req.file.size
+        };
+
+        let saveResult = await saveContractWithS3(contractData, s3Data);
+        console.log(`✅ [${requestId}] Vertrag mit S3-Daten gespeichert: ${saveResult.insertedId} mit fullText (${fullTextContent.length} Zeichen)`);
       }
       
     } catch (saveError) {
-      console.error(`❌ [${requestId}] Vertrag-Speicher-Fehler:`, saveError.message);
+      console.error(`❌ [${requestId}] S3-Vertrag-Speicher-Fehler:`, saveError.message);
       // ✅ Vertrag-Speicher-Fehler soll Analyse nicht blockieren!
-      console.warn(`⚠️ [${requestId}] Analyse war erfolgreich, aber Vertrag-Speicherung fehlgeschlagen`);
+      console.warn(`⚠️ [${requestId}] Analyse war erfolgreich, aber S3-Vertrag-Speicherung fehlgeschlagen`);
     }
 
     // ✅ Analyse-Zähler hochzählen
@@ -484,13 +526,15 @@ Antwort im folgenden JSON-Format:
       console.warn(`⚠️ [${requestId}] Counter-Update-Fehler:`, updateError.message);
     }
 
-    console.log(`✅ [${requestId}] Analyse komplett erfolgreich`);
+    console.log(`✅ [${requestId}] S3-Analyse komplett erfolgreich`);
 
     // 📤 Erfolgreiche Response
     const responseData = { 
       success: true,
-      message: "Analyse erfolgreich abgeschlossen",
+      message: "S3-Analyse erfolgreich abgeschlossen",
       requestId,
+      s3Key: req.file.key, // ✅ S3-Info für Frontend
+      s3Bucket: req.file.bucket,
       ...result, 
       analysisId: inserted.insertedId,
       usage: {
@@ -504,22 +548,23 @@ Antwort im folgenden JSON-Format:
     if (existingContract && req.body.forceReanalyze === 'true') {
       responseData.isReanalysis = true;
       responseData.originalContractId = existingContract._id;
-      responseData.message = "Analyse erfolgreich aktualisiert";
+      responseData.message = "S3-Analyse erfolgreich aktualisiert";
     }
 
     res.json(responseData);
 
   } catch (error) {
-    console.error(`❌ [${requestId}] Fehler bei Analyse:`, {
+    console.error(`❌ [${requestId}] Fehler bei S3-Analyse:`, {
       message: error.message,
       stack: error.stack?.substring(0, 500), // Shortened stack trace
       userId: req.user?.userId,
-      filename: req.file?.originalname
+      filename: req.file?.originalname,
+      s3Key: req.file?.key
     });
     
     // ✅ Spezifische Fehlermeldungen
-    let errorMessage = "Fehler bei der Analyse.";
-    let errorCode = "ANALYSIS_ERROR";
+    let errorMessage = "Fehler bei der S3-Analyse.";
+    let errorCode = "S3_ANALYSIS_ERROR";
     
     if (error.message.includes("API Key")) {
       errorMessage = "KI-Service vorübergehend nicht verfügbar.";
@@ -539,6 +584,9 @@ Antwort im folgenden JSON-Format:
     } else if (error.message.includes("OpenAI")) {
       errorMessage = "KI-Analyse-Service vorübergehend nicht verfügbar.";
       errorCode = "AI_SERVICE_ERROR";
+    } else if (error.message.includes("S3")) {
+      errorMessage = "S3-Upload-Fehler. Bitte versuche es erneut.";
+      errorCode = "S3_ERROR";
     }
 
     res.status(500).json({ 
@@ -548,19 +596,6 @@ Antwort im folgenden JSON-Format:
       requestId,
       details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
-
-  } finally {
-    // 🧹 Cleanup
-    if (tempFilePath) {
-      try {
-        if (fsSync.existsSync(tempFilePath)) {
-          await fs.unlink(tempFilePath);
-          console.log(`🧹 [${requestId}] Temp-Datei gelöscht: ${tempFilePath}`);
-        }
-      } catch (cleanupErr) {
-        console.error(`⚠️ [${requestId}] Fehler beim Löschen der Temp-Datei:`, cleanupErr.message);
-      }
-    }
   }
 });
 
@@ -599,15 +634,16 @@ router.get("/history", verifyToken, async (req, res) => {
   }
 });
 
-// ✅ Health Check Route
+// ✅ Health Check Route - ERWEITERT für S3
 router.get("/health", async (req, res) => {
   const checks = {
-    service: "Contract Analysis",
+    service: "Contract Analysis with S3",
     status: "online",
     timestamp: new Date().toISOString(),
     openaiConfigured: !!process.env.OPENAI_API_KEY,
     mongoConnected: false,
-    uploadsPath: fsSync.existsSync("./uploads"),
+    s3Configured: !!(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY && process.env.AWS_S3_BUCKET),
+    s3Upload: "ACTIVE", // ✅ S3-Upload ist jetzt aktiv
     cryptoAvailable: !!crypto,
     saveContractAvailable: !!saveContract
   };
@@ -620,7 +656,7 @@ router.get("/health", async (req, res) => {
     checks.mongoError = err.message;
   }
 
-  const isHealthy = checks.openaiConfigured && checks.mongoConnected && checks.uploadsPath;
+  const isHealthy = checks.openaiConfigured && checks.mongoConnected && checks.s3Configured;
   
   res.status(isHealthy ? 200 : 503).json({
     success: isHealthy,
@@ -630,7 +666,7 @@ router.get("/health", async (req, res) => {
 
 // ✅ Graceful Shutdown
 process.on('SIGTERM', async () => {
-  console.log('📊 Analyze service shutting down...');
+  console.log('📊 S3-Analyze service shutting down...');
   if (mongoClient) {
     await mongoClient.close();
   }
