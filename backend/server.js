@@ -1,4 +1,4 @@
-// 📁 backend/server.js (Complete fixed version with ANALYZE route + OPTIMIZE route + IMPROVED FILE SERVING + S3 INTEGRATION + REDIRECT FIX)
+// 📁 backend/server.js (Complete fixed version with ANALYZE route + OPTIMIZE route + IMPROVED FILE SERVING + S3 INTEGRATION + REDIRECT FIX + UPLOAD PATH FIX)
 const express = require("express");
 const app = express();
 require("dotenv").config();
@@ -9,6 +9,7 @@ const cors = require("cors");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs").promises;
+const fsSync = require("fs"); // ✅ SYNC FS für Directory Check
 const pdfParse = require("pdf-parse");
 const { OpenAI } = require("openai");
 const nodemailer = require("nodemailer");
@@ -22,8 +23,8 @@ const createCheckSubscription = require("./middleware/checkSubscription");
 // ✅ NEU: S3 File Storage Import
 const { upload: s3Upload, generateSignedUrl } = require("./services/fileStorage");
 
-// 📁 Setup
-const UPLOAD_PATH = "./uploads";
+// 📁 Setup - FIXED: Konsistente Upload-Pfade
+const UPLOAD_PATH = path.join(__dirname, "uploads"); // ✅ ABSOLUTE PATH
 const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
 const EMAIL_CONFIG = {
   host: process.env.EMAIL_HOST,
@@ -47,6 +48,18 @@ const API_BASE_URL = process.env.API_BASE_URL || (
     : `http://localhost:${process.env.PORT || 5000}`
 );
 
+// ✅ CRITICAL FIX: Uploads-Ordner automatisch erstellen
+try {
+  if (!fsSync.existsSync(UPLOAD_PATH)) {
+    fsSync.mkdirSync(UPLOAD_PATH, { recursive: true });
+    console.log(`📁 Upload-Ordner erstellt: ${UPLOAD_PATH}`);
+  } else {
+    console.log(`📁 Upload-Ordner existiert: ${UPLOAD_PATH}`);
+  }
+} catch (err) {
+  console.error(`❌ Fehler beim Erstellen des Upload-Ordners:`, err);
+}
+
 const transporter = nodemailer.createTransport(EMAIL_CONFIG);
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const storage = multer.diskStorage({
@@ -67,8 +80,42 @@ app.use(cors({
 app.use(cookieParser());
 app.use(express.json());
 
-// ✅ VERBESSERT: Static File Serving mit korrekten Headers VOR anderen Routen
-app.use('/uploads', express.static(path.join(__dirname, UPLOAD_PATH), {
+// ✅ ENHANCED: Static File Serving mit erweiterten Debug-Logs
+app.use('/uploads', (req, res, next) => {
+  const requestedFile = req.path.substring(1); // Remove leading slash
+  const fullPath = path.join(UPLOAD_PATH, requestedFile);
+  
+  console.log(`📁 Static file request:`, {
+    requestPath: req.path,
+    requestedFile: requestedFile,
+    fullPath: fullPath,
+    exists: fsSync.existsSync(fullPath),
+    uploadPath: UPLOAD_PATH
+  });
+  
+  // Check if file exists
+  if (!fsSync.existsSync(fullPath)) {
+    console.error(`❌ File not found: ${fullPath}`);
+    
+    // List all files in uploads directory for debugging
+    try {
+      const files = fsSync.readdirSync(UPLOAD_PATH);
+      console.log(`📂 Available files in uploads:`, files);
+    } catch (err) {
+      console.error(`❌ Could not read uploads directory:`, err);
+    }
+    
+    return res.status(404).json({ 
+      error: "File not found",
+      requestedFile: requestedFile,
+      uploadPath: UPLOAD_PATH 
+    });
+  }
+  
+  next();
+});
+
+app.use('/uploads', express.static(UPLOAD_PATH, {
   // ✅ Korrekte MIME-Types und Headers für verschiedene Dateitypen
   setHeaders: (res, filePath) => {
     const ext = path.extname(filePath).toLowerCase();
@@ -592,7 +639,7 @@ async function analyzeContract(pdfText) {
       }
     });
 
-    // 🧪 Debug-Route (ERWEITERT mit S3-Status)
+    // 🧪 Debug-Route (ERWEITERT mit S3-Status + Upload-Path Debug)
     app.get("/debug", (req, res) => {
       console.log("Cookies:", req.cookies);
       res.cookie("debug_cookie", "test-value", {
@@ -609,6 +656,22 @@ async function analyzeContract(pdfText) {
         region: process.env.AWS_REGION || 'Not set'
       };
       
+      // ✅ Upload-Path Debug
+      const uploadDebug = {
+        UPLOAD_PATH: UPLOAD_PATH,
+        exists: fsSync.existsSync(UPLOAD_PATH),
+        absolutePath: path.resolve(UPLOAD_PATH),
+        files: []
+      };
+      
+      try {
+        if (fsSync.existsSync(UPLOAD_PATH)) {
+          uploadDebug.files = fsSync.readdirSync(UPLOAD_PATH);
+        }
+      } catch (err) {
+        uploadDebug.error = err.message;
+      }
+      
       res.json({ 
         cookies: req.cookies,
         timestamp: new Date().toISOString(),
@@ -620,7 +683,7 @@ async function analyzeContract(pdfText) {
         fileServing: "IMPROVED FILE SERVING ACTIVE!", // ✅ NEU
         s3Integration: "S3 UPLOAD & SIGNED URLS + REDIRECT ACTIVE!", // ✅ UPDATED
         apiBaseUrl: API_BASE_URL, // ✅ NEU: Zeige API Base URL
-        uploadPath: UPLOAD_PATH,
+        uploadDebug: uploadDebug, // ✅ NEU: Upload-Path Debug
         nodeEnv: process.env.NODE_ENV,
         s3Status: s3Status // ✅ NEU: S3-Konfigurationsstatus
       });
@@ -655,6 +718,7 @@ async function analyzeContract(pdfText) {
     app.listen(PORT, () => {
       console.log(`🚀 Server läuft auf Port ${PORT}`);
       console.log(`📁 Static files serviert unter: ${API_BASE_URL}/uploads`); // ✅ NEU
+      console.log(`📁 Upload-Ordner: ${UPLOAD_PATH}`); // ✅ NEU: Upload-Path Debug
       console.log(`📡 Alle wichtigen Routen sollten geladen sein`);
       console.log(`🔧 Generate-Route: POST /contracts/generate (Proxy entfernt /api/)`);
       console.log(`💾 Save-Route: POST /contracts (NEU)`);
@@ -677,3 +741,14 @@ try {
 } catch (err) {
   console.error("❌ Reset Business Limits konnte nicht geladen werden:", err);
 }
+
+// ✅ Graceful Shutdown Handler
+process.on('SIGTERM', () => {
+  console.log('🛑 Received SIGTERM, closing database connection...');
+  // Hier könnten wir MongoDB-Verbindungen schließen
+});
+
+process.on('SIGINT', () => {
+  console.log('🛑 Received SIGINT, closing server...');
+  process.exit(0);
+});
