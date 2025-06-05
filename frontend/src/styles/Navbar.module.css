@@ -146,11 +146,11 @@
 
 .navLinksInner {
   display: flex;
-  gap: 8px;
-  padding: 6px;
-  border-radius: 12px;
-  background: rgba(248, 248, 248, 0.6);
-  border: 1px solid var(--apple-border-light);
+  gap: 24px;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  border: none;
 }
 
 .navLink {
@@ -160,13 +160,14 @@
   text-decoration: none;
   font-size: 15px;
   font-weight: 400;
-  padding: 8px 14px;
-  border-radius: 8px;
+  padding: 8px 0;
+  border-radius: 0;
   transition: all 0.2s ease;
   white-space: nowrap;
   gap: 6px;
   position: relative;
   letter-spacing: -0.01em;
+  border-bottom: 2px solid transparent;
 }
 
 .navLinkIcon {
@@ -182,7 +183,7 @@
 
 .navLink:hover {
   color: var(--apple-blue);
-  background: var(--apple-white);
+  border-bottom-color: rgba(0, 122, 255, 0.3);
 }
 
 .navLink:hover .navLinkIcon {
@@ -191,9 +192,8 @@
 
 .activeNavLink {
   color: var(--apple-blue);
-  background: var(--apple-white);
   font-weight: 500;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  border-bottom-color: var(--apple-blue);
 }
 
 .activeNavLink .navLinkIcon {

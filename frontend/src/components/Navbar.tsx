@@ -145,7 +145,7 @@ export default function Navbar() {
                 <span className={styles.navLinkText}>Optimierer</span>
               </Link>
             </motion.div>
-            {user && !user.subscriptionActive && (
+            {(!user || !user.subscriptionActive) && (
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Link to="/pricing" className={`${styles.navLink} ${location.pathname === "/pricing" ? styles.activeNavLink : ""}`}>
                   <span className={styles.navLinkIcon}>💰</span>
