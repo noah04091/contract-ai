@@ -967,3 +967,42 @@
     font-size: 13px;
   }
 }
+
+/* Ultra-kompakte Ansicht für sehr kleine Geräte */
+@media (max-width: 375px) {
+  .navbarContent {
+    padding: 0.6rem 0.75rem;
+    min-height: 48px;
+  }
+  
+  .logoImage, .logoCenterImage {
+    height: 22px;
+    max-width: 90px;
+  }
+  
+  .authButtons {
+    gap: 3px;
+  }
+  
+  .loginButton, .registerButton {
+    padding: 4px 8px;
+    font-size: 12px;
+    border-radius: 14px;
+    min-width: auto;
+  }
+  
+  .loginButton span, .registerButton span {
+    font-size: 12px;
+  }
+  
+  .profileButton {
+    padding: 4px 6px;
+    font-size: 13px;
+  }
+  
+  .authPageButtons .loginButton,
+  .authPageButtons .registerButton {
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+}
