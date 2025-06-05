@@ -520,6 +520,18 @@ export default function Navbar() {
                         Fristen
                       </Link>
                     </li>
+                    <li>
+                      <Link to="/help" className={styles.sidebarLink} onClick={() => setSidebarOpen(false)}>
+                        <span className={styles.sidebarIcon}>❓</span>
+                        Hilfe
+                      </Link>
+                    </li>
+                    <li>
+                      <Link to="/blog" className={styles.sidebarLink} onClick={() => setSidebarOpen(false)}>
+                        <span className={styles.sidebarIcon}>📰</span>
+                        Blog
+                      </Link>
+                    </li>
                   </ul>
                 </div>
                 
