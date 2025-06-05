@@ -362,8 +362,8 @@ export default function Navbar() {
             >
               <div className={styles.mobileMenuInner}>
                 <div className={styles.mobileMenuLinks}>
-                  <Link to="/" className={`${styles.mobileNavLink} ${location.pathname === "/" ? styles.activeMobileNavLink : ""}`}>
-                    <span className={styles.mobileNavIcon}>🏠</span>
+                  <Link to="/dashboard" className={`${styles.mobileNavLink} ${location.pathname === "/" ? styles.activeMobileNavLink : ""}`}>
+                    <span className={styles.mobileNavIcon}>📊</span>
                     <span>Dashboard</span>
                   </Link>
                   <Link to="/contracts" className={`${styles.mobileNavLink} ${location.pathname === "/contracts" ? styles.activeMobileNavLink : ""}`}>
