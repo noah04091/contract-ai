@@ -1,4 +1,4 @@
-/* Apple-Inspired Navbar Design */
+/* Apple-Inspired Minimalist Navbar Design */
 :root {
   --apple-blue: #007AFF;
   --apple-blue-hover: #0056CC;
@@ -10,12 +10,8 @@
   --apple-gray-6: #c7c7cc;
   --apple-bg: #f2f2f7;
   --apple-white: #ffffff;
-  --apple-card: rgba(255, 255, 255, 0.8);
-  --apple-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  --apple-shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
-  --apple-border: rgba(0, 0, 0, 0.04);
-  --apple-radius: 16px;
-  --apple-radius-sm: 12px;
+  --apple-border: rgba(0, 0, 0, 0.08);
+  --apple-border-light: rgba(0, 0, 0, 0.04);
   --sf-font: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
@@ -23,34 +19,55 @@
   position: sticky;
   top: 0;
   width: 100%;
-  background: rgba(248, 248, 248, 0.8);
-  backdrop-filter: saturate(180%) blur(20px);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   z-index: 1000;
-  transition: all 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
-  border-bottom: 0.5px solid var(--apple-border);
+  transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+  border-bottom: 1px solid var(--apple-border-light);
   font-family: var(--sf-font);
   letter-spacing: -0.022em;
   font-feature-settings: 'kern' 1;
 }
 
 .navbarScrolled {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: saturate(180%) blur(20px);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
-  box-shadow: 0 1px 0 var(--apple-border), var(--apple-shadow);
+  background: rgba(255, 255, 255, 0.95);
+  border-bottom: 1px solid var(--apple-border);
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.navbarScrolled .navbarContent {
+  height: 52px;
+}
+
+.navbarScrolled .logoImage,
+.navbarScrolled .logoCenterImage {
+  height: 24px;
+}
+
+.navbarScrolled .navLink {
+  padding: 6px 12px;
+  font-size: 14px;
+}
+
+.navbarScrolled .profileButton {
+  padding: 6px 10px;
+  font-size: 14px;
+}
+
+.navbarScrolled .loginButton,
+.navbarScrolled .registerButton {
+  padding: 6px 12px;
+  font-size: 14px;
 }
 
 .innerPageNavbar {
   background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: saturate(180%) blur(20px);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
 }
 
 .authPageNavbar {
   background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: saturate(180%) blur(20px);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
 }
 
 .authPageNavContent {
@@ -75,6 +92,7 @@
   padding: 0 32px;
   height: 64px;
   position: relative;
+  transition: height 0.3s ease;
 }
 
 .leftSection {
@@ -87,18 +105,17 @@
   display: flex;
   align-items: center;
   text-decoration: none;
-  transition: all 0.2s ease;
+  transition: opacity 0.2s ease;
 }
 
 .logoLink:hover {
-  transform: translateY(-0.5px);
+  opacity: 0.8;
 }
 
 .logoImage {
   height: 28px;
   margin-right: 24px;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.04));
-  transition: all 0.2s ease;
+  transition: height 0.3s ease;
 }
 
 .logoCenterWrapper {
@@ -109,16 +126,16 @@
   align-items: center;
   justify-content: center;
   text-decoration: none;
-  transition: all 0.2s ease;
+  transition: opacity 0.2s ease;
 }
 
 .logoCenterWrapper:hover {
-  transform: translateX(-50%) translateY(-0.5px);
+  opacity: 0.8;
 }
 
 .logoCenterImage {
   height: 28px;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.04));
+  transition: height 0.3s ease;
 }
 
 .navLinks {
@@ -129,13 +146,11 @@
 
 .navLinksInner {
   display: flex;
-  gap: 4px;
-  padding: 4px;
-  border-radius: var(--apple-radius-sm);
-  background: rgba(142, 142, 147, 0.12);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 0.5px solid rgba(255, 255, 255, 0.18);
+  gap: 8px;
+  padding: 6px;
+  border-radius: 12px;
+  background: rgba(248, 248, 248, 0.6);
+  border: 1px solid var(--apple-border-light);
 }
 
 .navLink {
@@ -144,10 +159,10 @@
   color: var(--apple-gray-1);
   text-decoration: none;
   font-size: 15px;
-  font-weight: 590;
-  padding: 8px 16px;
-  border-radius: 10px;
-  transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+  font-weight: 400;
+  padding: 8px 14px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
   white-space: nowrap;
   gap: 6px;
   position: relative;
@@ -155,9 +170,9 @@
 }
 
 .navLinkIcon {
-  font-size: 16px;
-  opacity: 0.7;
-  transition: all 0.2s ease;
+  font-size: 14px;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
 }
 
 .navLinkText {
@@ -167,25 +182,22 @@
 
 .navLink:hover {
   color: var(--apple-blue);
-  background: rgba(255, 255, 255, 0.8);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.15);
+  background: var(--apple-white);
 }
 
 .navLink:hover .navLinkIcon {
-  opacity: 1;
-  transform: scale(1.05);
+  opacity: 0.8;
 }
 
 .activeNavLink {
   color: var(--apple-blue);
   background: var(--apple-white);
-  font-weight: 600;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  font-weight: 500;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
 .activeNavLink .navLinkIcon {
-  opacity: 1;
+  opacity: 0.8;
 }
 
 .navRight {
@@ -204,30 +216,29 @@
 .premiumIndicator {
   display: flex;
   align-items: center;
-  padding: 6px 12px;
-  background: linear-gradient(135deg, rgba(0, 122, 255, 0.1), rgba(0, 122, 255, 0.05));
-  border: 0.5px solid rgba(0, 122, 255, 0.2);
-  border-radius: 20px;
-  font-weight: 600;
-  font-size: 13px;
+  padding: 4px 8px;
+  background: rgba(0, 122, 255, 0.08);
+  border: 1px solid rgba(0, 122, 255, 0.15);
+  border-radius: 16px;
+  font-weight: 500;
+  font-size: 12px;
   color: var(--apple-blue);
   cursor: default;
   transition: all 0.2s ease;
 }
 
 .premiumIndicator:hover {
-  background: linear-gradient(135deg, rgba(0, 122, 255, 0.15), rgba(0, 122, 255, 0.08));
-  transform: translateY(-0.5px);
+  background: rgba(0, 122, 255, 0.12);
 }
 
 .premiumIcon {
   margin-right: 4px;
-  font-size: 12px;
+  font-size: 10px;
 }
 
 .premiumText {
-  font-weight: 600;
-  letter-spacing: -0.01em;
+  font-weight: 500;
+  letter-spacing: 0;
 }
 
 .authButtons {
@@ -236,16 +247,16 @@
 }
 
 .loginButton {
-  color: var(--apple-blue);
+  color: var(--apple-gray-1);
   background: transparent;
-  border: 0.5px solid rgba(0, 122, 255, 0.3);
+  border: 1px solid var(--apple-border);
   padding: 8px 16px;
   font-size: 15px;
-  font-weight: 590;
+  font-weight: 400;
   border-radius: 20px;
   cursor: pointer;
   text-decoration: none;
-  transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+  transition: all 0.2s ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -254,10 +265,9 @@
 }
 
 .loginButton:hover {
-  background: rgba(0, 122, 255, 0.08);
-  border-color: var(--apple-blue);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.2);
+  background: rgba(248, 248, 248, 0.8);
+  border-color: var(--apple-border);
+  color: var(--apple-blue);
 }
 
 .registerButton {
@@ -266,12 +276,11 @@
   border: none;
   padding: 8px 16px;
   font-size: 15px;
-  font-weight: 590;
+  font-weight: 400;
   border-radius: 20px;
   cursor: pointer;
   text-decoration: none;
-  transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
-  box-shadow: 0 1px 3px rgba(0, 122, 255, 0.4);
+  transition: all 0.2s ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -281,8 +290,6 @@
 
 .registerButton:hover {
   background: var(--apple-blue-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.4);
 }
 
 .dropdownWrapper {
@@ -293,61 +300,55 @@
   display: flex;
   align-items: center;
   padding: 8px 12px;
-  background: rgba(142, 142, 147, 0.12);
-  border: 0.5px solid rgba(255, 255, 255, 0.18);
+  background: rgba(248, 248, 248, 0.6);
+  border: 1px solid var(--apple-border-light);
   color: var(--apple-gray-1);
   font-size: 15px;
-  font-weight: 590;
+  font-weight: 400;
   cursor: pointer;
-  border-radius: var(--apple-radius-sm);
-  transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  border-radius: 12px;
+  transition: all 0.2s ease;
   font-family: var(--sf-font);
   letter-spacing: -0.01em;
 }
 
 .profileButton:hover {
-  background: rgba(255, 255, 255, 0.8);
-  border-color: rgba(0, 122, 255, 0.3);
+  background: rgba(248, 248, 248, 0.8);
+  border-color: var(--apple-border);
   color: var(--apple-blue);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .profileIcon {
-  font-size: 16px;
+  font-size: 14px;
   margin-right: 6px;
-  opacity: 0.8;
-  transition: all 0.2s ease;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
 }
 
 .profileButton:hover .profileIcon {
-  opacity: 1;
-  transform: scale(1.05);
+  opacity: 0.8;
 }
 
 .dropdownArrow {
   display: inline-block;
   margin-left: 8px;
-  font-size: 12px;
-  opacity: 0.6;
-  transition: all 0.3s ease;
+  font-size: 10px;
+  opacity: 0.4;
+  transition: all 0.2s ease;
 }
 
 .badge {
-  background: linear-gradient(135deg, var(--apple-blue), #5856D6);
+  background: var(--apple-blue);
   color: var(--apple-white);
-  font-size: 11px;
-  padding: 2px 8px;
-  border-radius: 12px;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
   margin-right: 8px;
-  font-weight: 600;
+  font-weight: 500;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  letter-spacing: 0.01em;
-  box-shadow: 0 1px 3px rgba(0, 122, 255, 0.3);
+  letter-spacing: 0;
 }
 
 .dropdownMenu {
@@ -355,14 +356,12 @@
   top: calc(100% + 8px);
   right: 0;
   width: 280px;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: var(--apple-radius);
-  box-shadow: var(--apple-shadow-lg);
-  backdrop-filter: saturate(180%) blur(20px);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  background: var(--apple-white);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   z-index: 1000;
-  border: 0.5px solid var(--apple-border);
+  border: 1px solid var(--apple-border-light);
 }
 
 .dropdownItem {
@@ -377,8 +376,8 @@
   border: none;
   width: 100%;
   cursor: pointer;
-  transition: all 0.2s ease;
-  border-bottom: 0.5px solid var(--apple-border);
+  transition: background-color 0.2s ease;
+  border-bottom: 1px solid var(--apple-border-light);
   font-family: var(--sf-font);
   letter-spacing: -0.01em;
 }
@@ -388,33 +387,28 @@
 }
 
 .dropdownItem:hover {
-  background: rgba(0, 122, 255, 0.06);
-  color: var(--apple-blue);
+  background: rgba(248, 248, 248, 0.8);
 }
 
 .hamburger {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(142, 142, 147, 0.12);
-  border: 0.5px solid rgba(255, 255, 255, 0.18);
-  font-size: 18px;
+  background: rgba(248, 248, 248, 0.6);
+  border: 1px solid var(--apple-border-light);
+  font-size: 16px;
   cursor: pointer;
   color: var(--apple-gray-1);
   width: 36px;
   height: 36px;
-  border-radius: 10px;
-  transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  border-radius: 8px;
+  transition: all 0.2s ease;
   margin-right: 16px;
 }
 
 .hamburger:hover {
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(248, 248, 248, 0.8);
   color: var(--apple-blue);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .mobileMenu {
@@ -422,13 +416,11 @@
   top: 64px;
   left: 0;
   width: 100%;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: saturate(180%) blur(20px);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
-  box-shadow: var(--apple-shadow-lg);
+  background: var(--apple-white);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
   overflow: hidden;
   z-index: 999;
-  border-bottom: 0.5px solid var(--apple-border);
+  border-bottom: 1px solid var(--apple-border-light);
   max-height: calc(100vh - 64px);
   overflow-y: auto;
 }
@@ -449,114 +441,97 @@
 .mobileNavLink {
   display: flex;
   align-items: center;
-  padding: 16px 20px;
+  padding: 14px 16px;
   color: var(--apple-gray-1);
   text-decoration: none;
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 400;
   text-align: left;
   background: none;
   border: none;
   width: 100%;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+  transition: all 0.2s ease;
   gap: 12px;
-  border-radius: var(--apple-radius-sm);
+  border-radius: 8px;
   font-family: var(--sf-font);
   letter-spacing: -0.022em;
 }
 
 .mobileNavIcon {
-  font-size: 20px;
-  opacity: 0.8;
-  transition: all 0.2s ease;
-  width: 24px;
+  font-size: 16px;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+  width: 20px;
   text-align: center;
 }
 
 .mobileNavLink:hover {
-  background: rgba(0, 122, 255, 0.06);
+  background: rgba(248, 248, 248, 0.8);
   color: var(--apple-blue);
-  transform: translateX(4px);
 }
 
 .mobileNavLink:hover .mobileNavIcon {
-  opacity: 1;
-  transform: scale(1.1);
+  opacity: 0.8;
 }
 
 .activeMobileNavLink {
-  background: rgba(0, 122, 255, 0.1);
+  background: rgba(0, 122, 255, 0.08);
   color: var(--apple-blue);
-  font-weight: 590;
+  font-weight: 500;
 }
 
 .userInfo {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 20px;
+  padding: 16px;
   color: var(--apple-gray-2);
   font-size: 15px;
-  border: 0.5px solid var(--apple-border);
-  border-radius: var(--apple-radius);
-  margin: 24px 0;
-  background: rgba(0, 122, 255, 0.03);
-  position: relative;
-  overflow: hidden;
-}
-
-.userInfo::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 3px;
-  height: 100%;
-  background: var(--apple-blue);
-  border-radius: 0 3px 3px 0;
+  border: 1px solid var(--apple-border-light);
+  border-radius: 12px;
+  margin: 20px 0;
+  background: rgba(248, 248, 248, 0.5);
 }
 
 .userEmail {
-  font-weight: 590;
+  font-weight: 500;
   color: var(--apple-gray-1);
   letter-spacing: -0.01em;
 }
 
 .premiumBadge {
-  background: linear-gradient(135deg, var(--apple-blue), #5856D6);
+  background: var(--apple-blue);
   color: var(--apple-white);
-  font-size: 12px;
-  padding: 4px 10px;
-  border-radius: 12px;
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 10px;
   width: fit-content;
-  font-weight: 600;
+  font-weight: 500;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  letter-spacing: 0.01em;
-  box-shadow: 0 1px 3px rgba(0, 122, 255, 0.3);
+  letter-spacing: 0;
 }
 
 .closeMobileMenu {
   width: 100%;
-  padding: 16px;
+  padding: 14px;
   margin-top: 20px;
-  background: rgba(142, 142, 147, 0.12);
+  background: rgba(248, 248, 248, 0.6);
   color: var(--apple-gray-1);
-  border: none;
-  border-radius: var(--apple-radius-sm);
-  font-weight: 590;
-  font-size: 17px;
+  border: 1px solid var(--apple-border-light);
+  border-radius: 8px;
+  font-weight: 400;
+  font-size: 16px;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+  transition: all 0.2s ease;
   font-family: var(--sf-font);
   letter-spacing: -0.022em;
 }
 
 .closeMobileMenu:hover {
-  background: rgba(142, 142, 147, 0.18);
-  transform: translateY(-1px);
+  background: rgba(248, 248, 248, 0.8);
 }
 
 /* Enhanced Sidebar Styles */
@@ -566,10 +541,10 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.3);
   z-index: 1001;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
 .sidebar {
@@ -578,15 +553,13 @@
   left: 0;
   width: 340px;
   height: 100vh;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: saturate(180%) blur(20px);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  background: var(--apple-white);
   z-index: 1002;
-  box-shadow: var(--apple-shadow-lg);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border-right: 0.5px solid var(--apple-border);
+  border-right: 1px solid var(--apple-border-light);
 }
 
 .sidebarHeader {
@@ -594,35 +567,31 @@
   align-items: center;
   justify-content: space-between;
   padding: 20px 24px;
-  border-bottom: 0.5px solid var(--apple-border);
-  background: rgba(255, 255, 255, 0.8);
+  border-bottom: 1px solid var(--apple-border-light);
+  background: rgba(248, 248, 248, 0.5);
 }
 
 .sidebarLogo {
   height: 28px;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.04));
 }
 
 .sidebarClose {
-  background: rgba(142, 142, 147, 0.12);
-  border: 0.5px solid rgba(255, 255, 255, 0.18);
+  background: rgba(248, 248, 248, 0.6);
+  border: 1px solid var(--apple-border-light);
   width: 32px;
   height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
+  border-radius: 6px;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+  transition: all 0.2s ease;
   color: var(--apple-gray-3);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
 }
 
 .sidebarClose:hover {
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(248, 248, 248, 0.8);
   color: var(--apple-blue);
-  transform: scale(1.05);
 }
 
 .sidebarContent {
@@ -633,7 +602,7 @@
 }
 
 .sidebarContent::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 .sidebarContent::-webkit-scrollbar-track {
@@ -641,15 +610,12 @@
 }
 
 .sidebarContent::-webkit-scrollbar-thumb {
-  background: rgba(142, 142, 147, 0.3);
-  border-radius: 4px;
-  border: 2px solid transparent;
-  background-clip: content-box;
+  background: rgba(142, 142, 147, 0.2);
+  border-radius: 3px;
 }
 
 .sidebarContent::-webkit-scrollbar-thumb:hover {
-  background: rgba(142, 142, 147, 0.5);
-  background-clip: content-box;
+  background: rgba(142, 142, 147, 0.3);
 }
 
 .sidebarSection {
@@ -658,12 +624,12 @@
 }
 
 .sidebarTitle {
-  font-size: 13px;
+  font-size: 12px;
   text-transform: uppercase;
   color: var(--apple-gray-4);
   margin-bottom: 12px;
   letter-spacing: 0.6px;
-  font-weight: 600;
+  font-weight: 500;
   font-family: var(--sf-font);
 }
 
@@ -682,32 +648,30 @@
   padding: 12px 16px;
   color: var(--apple-gray-1);
   text-decoration: none;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 400;
-  border-radius: 10px;
-  transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+  border-radius: 8px;
+  transition: all 0.2s ease;
   font-family: var(--sf-font);
   letter-spacing: -0.022em;
 }
 
 .sidebarLink:hover {
-  background: rgba(0, 122, 255, 0.06);
+  background: rgba(248, 248, 248, 0.8);
   color: var(--apple-blue);
-  transform: translateX(4px);
 }
 
 .sidebarIcon {
   margin-right: 12px;
-  font-size: 18px;
-  opacity: 0.8;
-  transition: all 0.2s ease;
-  width: 20px;
+  font-size: 16px;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+  width: 18px;
   text-align: center;
 }
 
 .sidebarLink:hover .sidebarIcon {
-  opacity: 1;
-  transform: scale(1.1);
+  opacity: 0.8;
 }
 
 .sidebarAuth {
@@ -720,39 +684,36 @@
   flex: 1;
   padding: 12px 16px;
   text-align: center;
-  border-radius: 10px;
-  font-weight: 590;
+  border-radius: 8px;
+  font-weight: 400;
   text-decoration: none;
-  transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+  transition: all 0.2s ease;
   font-size: 15px;
-  border: 0.5px solid var(--apple-border);
+  border: 1px solid var(--apple-border);
   color: var(--apple-gray-1);
   font-family: var(--sf-font);
   letter-spacing: -0.01em;
 }
 
 .sidebarAuthBtn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: rgba(248, 248, 248, 0.8);
 }
 
 .sidebarAuthBtn.primary {
   background: var(--apple-blue);
   color: var(--apple-white);
   border: none;
-  box-shadow: 0 1px 3px rgba(0, 122, 255, 0.4);
 }
 
 .sidebarAuthBtn.primary:hover {
   background: var(--apple-blue-hover);
-  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.4);
 }
 
 .sidebarUser {
-  background: rgba(0, 122, 255, 0.03);
-  border-radius: var(--apple-radius-sm);
+  background: rgba(248, 248, 248, 0.5);
+  border-radius: 12px;
   padding: 20px;
-  border: 0.5px solid rgba(0, 122, 255, 0.1);
+  border: 1px solid var(--apple-border-light);
   margin-top: 16px;
 }
 
@@ -763,16 +724,16 @@
 }
 
 .sidebarUserAvatar {
-  width: 40px;
-  height: 40px;
-  background: linear-gradient(135deg, rgba(0, 122, 255, 0.1), rgba(0, 122, 255, 0.05));
-  border-radius: 12px;
+  width: 36px;
+  height: 36px;
+  background: rgba(0, 122, 255, 0.1);
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-right: 12px;
   color: var(--apple-blue);
-  border: 0.5px solid rgba(0, 122, 255, 0.2);
+  border: 1px solid rgba(0, 122, 255, 0.15);
 }
 
 .sidebarUserDetails {
@@ -783,61 +744,59 @@
 }
 
 .sidebarUserEmail {
-  font-weight: 590;
-  font-size: 15px;
+  font-weight: 500;
+  font-size: 14px;
   color: var(--apple-gray-1);
   letter-spacing: -0.01em;
 }
 
 .premiumBadgeSidebar {
-  background: linear-gradient(135deg, var(--apple-blue), #5856D6);
+  background: var(--apple-blue);
   color: var(--apple-white);
-  font-size: 11px;
-  padding: 2px 8px;
-  border-radius: 8px;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 6px;
   width: fit-content;
-  font-weight: 600;
+  font-weight: 500;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  letter-spacing: 0.01em;
-  box-shadow: 0 1px 3px rgba(0, 122, 255, 0.3);
+  letter-spacing: 0;
 }
 
 .standardBadge {
-  background: rgba(142, 142, 147, 0.12);
+  background: rgba(142, 142, 147, 0.15);
   color: var(--apple-gray-4);
-  font-size: 11px;
-  padding: 2px 8px;
-  border-radius: 8px;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 6px;
   width: fit-content;
-  font-weight: 600;
+  font-weight: 500;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  letter-spacing: 0.01em;
-  border: 0.5px solid rgba(142, 142, 147, 0.2);
+  letter-spacing: 0;
+  border: 1px solid rgba(142, 142, 147, 0.2);
 }
 
 .sidebarUserProfile {
   display: block;
-  padding: 12px;
+  padding: 10px;
   text-align: center;
-  background: rgba(142, 142, 147, 0.12);
-  border-radius: 10px;
+  background: rgba(248, 248, 248, 0.6);
+  border-radius: 8px;
   color: var(--apple-gray-1);
   text-decoration: none;
-  font-weight: 590;
-  font-size: 15px;
-  transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+  font-weight: 400;
+  font-size: 14px;
+  transition: all 0.2s ease;
   margin-bottom: 8px;
   font-family: var(--sf-font);
   letter-spacing: -0.01em;
 }
 
 .sidebarUserProfile:hover {
-  background: rgba(142, 142, 147, 0.18);
-  transform: translateY(-1px);
+  background: rgba(248, 248, 248, 0.8);
 }
 
 .sidebarLogoutBtn {
@@ -846,34 +805,33 @@
   justify-content: center;
   gap: 8px;
   width: 100%;
-  padding: 12px;
+  padding: 10px;
   background: transparent;
-  border: 0.5px solid rgba(142, 142, 147, 0.2);
-  border-radius: 10px;
+  border: 1px solid var(--apple-border);
+  border-radius: 8px;
   color: var(--apple-gray-1);
-  font-weight: 590;
-  font-size: 15px;
+  font-weight: 400;
+  font-size: 14px;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+  transition: all 0.2s ease;
   font-family: var(--sf-font);
   letter-spacing: -0.01em;
 }
 
 .sidebarLogoutBtn:hover {
-  background: rgba(142, 142, 147, 0.08);
-  transform: translateY(-1px);
+  background: rgba(248, 248, 248, 0.8);
   color: var(--apple-blue);
 }
 
 .sidebarLogoutIcon {
-  font-size: 16px;
-  opacity: 0.8;
+  font-size: 14px;
+  opacity: 0.6;
 }
 
 .sidebarLink.secondary {
   color: var(--apple-gray-3);
   font-weight: 400;
-  font-size: 15px;
+  font-size: 14px;
   padding: 10px 16px;
 }
 
@@ -961,7 +919,7 @@
   .hamburger {
     width: 32px;
     height: 32px;
-    font-size: 16px;
+    font-size: 14px;
     margin-right: 12px;
   }
 
