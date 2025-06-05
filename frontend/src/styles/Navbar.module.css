@@ -82,6 +82,25 @@
   padding: 0 32px;
 }
 
+/* Mobile logo only style */
+.mobileLogoOnly .leftSection,
+.mobileLogoOnly .rightSection {
+  visibility: hidden;
+}
+
+@media (max-width: 768px) {
+  .mobileLogoOnly .leftSection,
+  .mobileLogoOnly .rightSection {
+    display: none;
+  }
+  
+  .mobileLogoOnly .centerSection {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+  }
+}
+
 /* Mobile auth pages: center logo when only logo is shown */
 @media (max-width: 768px) {
   .authPageNavContent {
@@ -120,6 +139,20 @@
   display: flex;
   align-items: center;
   min-width: 120px;
+}
+
+.centerSection {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+}
+
+.rightSection {
+  display: flex;
+  align-items: center;
+  min-width: 120px;
+  justify-content: flex-end;
 }
 
 .logoLink {
@@ -265,6 +298,98 @@
 .authButtons {
   display: flex;
   gap: 8px;
+}
+
+/* Mobile Auth Buttons for Homepage */
+.authButtonsMobile {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.loginButtonMobile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: transparent;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 18px;
+  color: #2c2c2c;
+  text-decoration: none;
+  font-size: 16px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.loginButtonMobile:hover {
+  background: rgba(248, 248, 248, 0.8);
+  border-color: rgba(0, 0, 0, 0.12);
+  color: var(--apple-blue);
+}
+
+.registerButtonMobile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: var(--apple-blue);
+  border: none;
+  border-radius: 18px;
+  color: var(--apple-white);
+  text-decoration: none;
+  font-size: 16px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 122, 255, 0.2);
+}
+
+.registerButtonMobile:hover {
+  background: var(--apple-blue-hover);
+  box-shadow: 0 2px 6px rgba(0, 122, 255, 0.25);
+  transform: translateY(-0.5px);
+}
+
+.profileButtonMobile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 36px;
+  height: 36px;
+  background: transparent;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 18px;
+  color: #2c2c2c;
+  font-size: 16px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.profileButtonMobile:hover {
+  background: rgba(248, 248, 248, 0.8);
+  border-color: rgba(0, 0, 0, 0.12);
+  color: var(--apple-blue);
+}
+
+.badgeMobile {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background: var(--apple-blue);
+  color: var(--apple-white);
+  font-size: 8px;
+  padding: 1px 4px;
+  border-radius: 6px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: 0;
+  min-width: 16px;
+  height: 14px;
 }
 
 .loginButton {
@@ -924,6 +1049,11 @@
     padding: 6px 12px;
     font-size: 14px;
   }
+
+  /* Hide left margin on mobile for logo centering */
+  .logoImage {
+    margin-right: 0;
+  }
 }
 
 @media (max-width: 480px) {
@@ -966,6 +1096,19 @@
     padding: 5px 10px;
     font-size: 13px;
   }
+
+  /* Mobile auth buttons sizing */
+  .loginButtonMobile,
+  .registerButtonMobile,
+  .profileButtonMobile {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+
+  .authButtonsMobile {
+    gap: 6px;
+  }
 }
 
 /* Ultra-kompakte Ansicht für sehr kleine Geräte */
@@ -1004,6 +1147,26 @@
   .authPageButtons .registerButton {
     padding: 4px 8px;
     font-size: 12px;
+  }
+
+  /* Mobile auth buttons ultra-compact */
+  .loginButtonMobile,
+  .registerButtonMobile,
+  .profileButtonMobile {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+
+  .authButtonsMobile {
+    gap: 4px;
+  }
+
+  .badgeMobile {
+    font-size: 7px;
+    padding: 1px 3px;
+    min-width: 14px;
+    height: 12px;
   }
 }
 

@@ -20,6 +20,14 @@ export default function Navbar() {
   const isHomePage = location.pathname === "/";
   const isAuthPage = location.pathname === "/login" || location.pathname === "/register";
   
+  // Definiere geschützte Seiten
+  const protectedRoutes = ["/dashboard", "/contracts", "/optimizer", "/premium", "/me", "/calendar", "/compare", "/better-contracts", "/Generate", "/chat", "/calendar-view"];
+  const isProtectedPage = protectedRoutes.includes(location.pathname);
+  
+  // Definiere nicht-geschützte Seiten (außer Homepage und Auth-Seiten)
+  const publicRoutes = ["/about", "/blog", "/pricing", "/help", "/Datenschutz", "/AGB", "/Impressum"];
+  const isPublicPage = publicRoutes.includes(location.pathname);
+  
   const dropdownRef = useRef<HTMLDivElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -125,59 +133,146 @@ export default function Navbar() {
   const renderHomePageNavbar = () => {
     return (
       <>
+        {/* Left Section - Desktop: Logo, Mobile: leer oder Hamburger wenn eingeloggt */}
         <div className={styles.leftSection}>
-          <Link to="/" className={styles.logoLink}>
-            <motion.img 
-              src={logo} 
-              alt="Contract AI Logo" 
-              className={styles.logoImage}
-              whileHover={{ scale: 1.05 }}
-              transition={{ duration: 0.2 }}
-            />
-          </Link>
+          {/* Desktop: Logo hier */}
+          {!isMobile && (
+            <Link to="/" className={styles.logoLink}>
+              <motion.img 
+                src={logo} 
+                alt="Contract AI Logo" 
+                className={styles.logoImage}
+                whileHover={{ scale: 1.05 }}
+                transition={{ duration: 0.2 }}
+              />
+            </Link>
+          )}
         </div>
 
-        <div className={styles.navLinks}>
-          <motion.div className={styles.navLinksInner}>
-            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-              <Link to="/dashboard" className={`${styles.navLink} ${location.pathname === "/dashboard" ? styles.activeNavLink : ""}`}>
-                <span className={styles.navLinkIcon}>📊</span>
-                <span className={styles.navLinkText}>Dashboard</span>
-              </Link>
-            </motion.div>
-            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-              <Link to="/contracts" className={`${styles.navLink} ${location.pathname === "/contracts" ? styles.activeNavLink : ""}`}>
-                <span className={styles.navLinkIcon}>📁</span>
-                <span className={styles.navLinkText}>Verträge</span>
-              </Link>
-            </motion.div>
-            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-              <Link to="/optimizer" className={`${styles.navLink} ${location.pathname === "/optimizer" ? styles.activeNavLink : ""}`}>
-                <span className={styles.navLinkIcon}>🧠</span>
-                <span className={styles.navLinkText}>Optimierer</span>
-              </Link>
-            </motion.div>
-            {(!user || !user.subscriptionActive) && (
-              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                <Link to="/pricing" className={`${styles.navLink} ${location.pathname === "/pricing" ? styles.activeNavLink : ""}`}>
-                  <span className={styles.navLinkIcon}>💰</span>
-                  <span className={styles.navLinkText}>Preise</span>
-                </Link>
+        {/* Center Section - Desktop: Navigation, Mobile: Logo */}
+        <div className={styles.centerSection}>
+          {/* Mobile: Logo zentriert */}
+          {isMobile && (
+            <Link to="/" className={styles.logoLink}>
+              <motion.img 
+                src={logo} 
+                alt="Contract AI Logo" 
+                className={styles.logoImage}
+                whileHover={{ scale: 1.05 }}
+                transition={{ duration: 0.2 }}
+              />
+            </Link>
+          )}
+          
+          {/* Desktop: Navigation */}
+          {!isMobile && (
+            <div className={styles.navLinks}>
+              <motion.div className={styles.navLinksInner}>
+                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                  <Link to="/dashboard" className={`${styles.navLink} ${location.pathname === "/dashboard" ? styles.activeNavLink : ""}`}>
+                    <span className={styles.navLinkIcon}>📊</span>
+                    <span className={styles.navLinkText}>Dashboard</span>
+                  </Link>
+                </motion.div>
+                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                  <Link to="/contracts" className={`${styles.navLink} ${location.pathname === "/contracts" ? styles.activeNavLink : ""}`}>
+                    <span className={styles.navLinkIcon}>📁</span>
+                    <span className={styles.navLinkText}>Verträge</span>
+                  </Link>
+                </motion.div>
+                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                  <Link to="/optimizer" className={`${styles.navLink} ${location.pathname === "/optimizer" ? styles.activeNavLink : ""}`}>
+                    <span className={styles.navLinkIcon}>🧠</span>
+                    <span className={styles.navLinkText}>Optimierer</span>
+                  </Link>
+                </motion.div>
+                {(!user || !user.subscriptionActive) && (
+                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                    <Link to="/pricing" className={`${styles.navLink} ${location.pathname === "/pricing" ? styles.activeNavLink : ""}`}>
+                      <span className={styles.navLinkIcon}>💰</span>
+                      <span className={styles.navLinkText}>Preise</span>
+                    </Link>
+                  </motion.div>
+                )}
+                {user && user.subscriptionActive && (
+                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                    <Link to="/premium" className={`${styles.navLink} ${location.pathname === "/premium" ? styles.activeNavLink : ""}`}>
+                      <span className={styles.navLinkIcon}>🔒</span>
+                      <span className={styles.navLinkText}>Premium</span>
+                    </Link>
+                  </motion.div>
+                )}
               </motion.div>
-            )}
-            {user && user.subscriptionActive && (
-              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                <Link to="/premium" className={`${styles.navLink} ${location.pathname === "/premium" ? styles.activeNavLink : ""}`}>
-                  <span className={styles.navLinkIcon}>🔒</span>
-                  <span className={styles.navLinkText}>Premium</span>
-                </Link>
-              </motion.div>
-            )}
-          </motion.div>
+            </div>
+          )}
         </div>
 
-        <div className={styles.navRight}>
-          {isLoading ? null : user ? (
+        {/* Right Section */}
+        <div className={styles.rightSection}>
+          {/* Mobile: Auth Buttons oder User Dropdown */}
+          {isMobile && !user && !isLoading && (
+            <div className={styles.authButtonsMobile}>
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <Link to="/login" className={styles.loginButtonMobile}>
+                  👤
+                </Link>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <Link to="/register" className={styles.registerButtonMobile}>
+                  ➕
+                </Link>
+              </motion.div>
+            </div>
+          )}
+
+          {isMobile && user && !isLoading && (
+            <div className={styles.dropdownWrapper} ref={dropdownRef}>
+              <motion.button
+                onClick={() => setDropdownOpen((prev) => !prev)}
+                className={styles.profileButtonMobile}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                👤
+                {user.subscriptionActive && <span className={styles.badgeMobile}>Premium</span>}
+              </motion.button>
+              
+              <AnimatePresence>
+                {dropdownOpen && (
+                  <motion.div 
+                    className={styles.dropdownMenu}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <span className={styles.dropdownItem}>✅ {user.email}</span>
+                    <Link to="/me" className={styles.dropdownItem}>👤 Profil</Link>
+                    <button onClick={handleLogout} className={styles.dropdownItem}>🚪 Logout</button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
+
+          {/* Desktop: Auth Buttons wenn nicht eingeloggt */}
+          {!isMobile && !user && !isLoading && (
+            <div className={styles.authButtons}>
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <Link to="/login" className={styles.loginButton}>
+                  <span>Anmelden</span>
+                </Link>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <Link to="/register" className={styles.registerButton}>
+                  <span>Registrieren</span>
+                </Link>
+              </motion.div>
+            </div>
+          )}
+
+          {/* Desktop: User Dropdown wenn eingeloggt */}
+          {!isMobile && user && !isLoading && (
             <div className={styles.dropdownWrapper} ref={dropdownRef}>
               <motion.button
                 onClick={() => setDropdownOpen((prev) => !prev)}
@@ -213,44 +308,52 @@ export default function Navbar() {
                 )}
               </AnimatePresence>
             </div>
-          ) : (
-            <div className={styles.authButtons}>
-              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                <Link to="/login" className={styles.loginButton}>
-                  <span>Anmelden</span>
-                </Link>
-              </motion.div>
-              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                <Link to="/register" className={styles.registerButton}>
-                  <span>Registrieren</span>
-                </Link>
-              </motion.div>
-            </div>
           )}
         </div>
       </>
     );
   };
 
-  // Render Auth Pages Navbar (Login/Register)
+  // Render Auth Pages Navbar (unverändert lassen)
   const renderAuthPagesNavbar = () => {
-    const showOnlyLogo = !user && isMobile;
-    
     return (
       <>
-        <div className={`${styles.authPageNavContent} ${showOnlyLogo ? styles.logoOnly : ''}`}>
-          <Link to="/" className={styles.logoCenterWrapper}>
+        {/* Left Section */}
+        <div className={styles.leftSection}>
+          {/* Desktop: Immer Hamburger, Mobile: Nur wenn eingeloggt */}
+          {(!isMobile || user) && (
+            <motion.button
+              className={styles.hamburger}
+              onClick={toggleSidebar}
+              aria-label="Menü öffnen"
+              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.05 }}
+              animate={{ rotate: sidebarOpen ? 90 : 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              {sidebarOpen ? "✕" : "☰"}
+            </motion.button>
+          )}
+        </div>
+
+        {/* Center Section - Logo always centered */}
+        <div className={styles.centerSection}>
+          <Link to="/" className={styles.logoLink}>
             <motion.img 
               src={logo} 
               alt="Contract AI Logo" 
-              className={styles.logoCenterImage}
+              className={styles.logoImage}
               whileHover={{ scale: 1.05 }}
               transition={{ duration: 0.2 }}
             />
           </Link>
+        </div>
 
-          {!showOnlyLogo && (
-            <div className={styles.authPageButtons}>
+        {/* Right Section */}
+        <div className={styles.rightSection}>
+          {/* Desktop: Auth Buttons wenn nicht eingeloggt */}
+          {!isMobile && !user && !isLoading && (
+            <div className={styles.authButtons}>
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Link to="/login" className={styles.loginButton}>
                   <span>Anmelden</span>
@@ -263,92 +366,199 @@ export default function Navbar() {
               </motion.div>
             </div>
           )}
+
+          {/* Desktop: User Dropdown wenn eingeloggt */}
+          {!isMobile && user && !isLoading && (
+            <div className={styles.dropdownWrapper} ref={dropdownRef}>
+              <motion.button
+                onClick={() => setDropdownOpen((prev) => !prev)}
+                className={styles.profileButton}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <span className={styles.profileIcon}>👤</span>
+                {user.subscriptionActive && <span className={styles.badge}>Premium</span>} 
+                <span>Account</span>
+                <motion.span
+                  animate={{ rotate: dropdownOpen ? 180 : 0 }}
+                  transition={{ duration: 0.3 }}
+                  className={styles.dropdownArrow}
+                >
+                  ▾
+                </motion.span>
+              </motion.button>
+              
+              <AnimatePresence>
+                {dropdownOpen && (
+                  <motion.div 
+                    className={styles.dropdownMenu}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <span className={styles.dropdownItem}>✅ {user.email}</span>
+                    <Link to="/me" className={styles.dropdownItem}>👤 Profil</Link>
+                    <button onClick={handleLogout} className={styles.dropdownItem}>🚪 Logout</button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
         </div>
       </>
     );
   };
 
-  // Render Inner Pages Navbar
-  const renderInnerPagesNavbar = () => {
-    // Für mobile nicht-eingeloggte User: Vereinfachte Darstellung
-    if (!user && isMobile && window.innerWidth < 390) {
-      return (
-        <>
-          <Link to="/" className={styles.logoCenterWrapper}>
+  // Render Protected Pages Navbar
+  const renderProtectedPagesNavbar = () => {
+    return (
+      <>
+        {/* Left Section - Hamburger wenn eingeloggt */}
+        <div className={styles.leftSection}>
+          {user && (
+            <motion.button
+              className={styles.hamburger}
+              onClick={toggleSidebar}
+              aria-label="Menü öffnen"
+              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.05 }}
+              animate={{ rotate: sidebarOpen ? 90 : 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              {sidebarOpen ? "✕" : "☰"}
+            </motion.button>
+          )}
+        </div>
+
+        {/* Center Section - Logo always centered */}
+        <div className={styles.centerSection}>
+          <Link to="/" className={styles.logoLink}>
             <motion.img 
               src={logo} 
               alt="Contract AI Logo" 
-              className={styles.logoCenterImage}
+              className={styles.logoImage}
               whileHover={{ scale: 1.05 }}
               transition={{ duration: 0.2 }}
             />
           </Link>
-          
-          <div className={styles.navRight}>
-            <div className={styles.authButtons}>
-              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                <Link to="/login" className={`${styles.loginButton} ${styles.mobileCompact}`}>
-                  <span>👤</span>
-                </Link>
-              </motion.div>
-              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                <Link to="/register" className={`${styles.registerButton} ${styles.mobileCompact}`}>
-                  <span>➕</span>
-                </Link>
-              </motion.div>
-            </div>
-          </div>
-        </>
-      );
-    }
-
-    // Standard Inner Pages Layout
-    return (
-      <>
-        <div className={styles.leftSection}>
-          <motion.button
-            className={styles.hamburger}
-            onClick={toggleSidebar}
-            aria-label="Menü öffnen"
-            whileTap={{ scale: 0.95 }}
-            whileHover={{ scale: 1.05 }}
-            initial={{ opacity: 0.8 }}
-            animate={{ 
-              opacity: 1,
-              rotate: sidebarOpen ? 90 : 0 
-            }}
-            transition={{ duration: 0.3 }}
-          >
-            {sidebarOpen ? "✕" : "☰"}
-          </motion.button>
         </div>
 
-        <Link to="/" className={styles.logoCenterWrapper}>
-          <motion.img 
-            src={logo} 
-            alt="Contract AI Logo" 
-            className={styles.logoCenterImage}
-            whileHover={{ scale: 1.05 }}
-            transition={{ duration: 0.2 }}
-          />
-        </Link>
-
-        <div className={styles.navRight}>
-          {isLoading ? null : user ? (
-            <div className={styles.userActionWrapper}>
-              {user.subscriptionActive && (
-                <motion.div 
-                  className={styles.premiumIndicator}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+        {/* Right Section */}
+        <div className={styles.rightSection}>
+          {/* Desktop: User Dropdown wenn eingeloggt */}
+          {!isMobile && user && !isLoading && (
+            <div className={styles.dropdownWrapper} ref={dropdownRef}>
+              <motion.button
+                onClick={() => setDropdownOpen((prev) => !prev)}
+                className={styles.profileButton}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <span className={styles.profileIcon}>👤</span>
+                {user.subscriptionActive && <span className={styles.badge}>Premium</span>} 
+                <span>Account</span>
+                <motion.span
+                  animate={{ rotate: dropdownOpen ? 180 : 0 }}
+                  transition={{ duration: 0.3 }}
+                  className={styles.dropdownArrow}
                 >
-                  <span className={styles.premiumIcon}>🔒</span>
-                  <span className={styles.premiumText}>Premium</span>
-                </motion.div>
-              )}
-              {/* Logout-Button wurde hier entfernt */}
+                  ▾
+                </motion.span>
+              </motion.button>
+              
+              <AnimatePresence>
+                {dropdownOpen && (
+                  <motion.div 
+                    className={styles.dropdownMenu}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <span className={styles.dropdownItem}>✅ {user.email}</span>
+                    <Link to="/me" className={styles.dropdownItem}>👤 Profil</Link>
+                    <button onClick={handleLogout} className={styles.dropdownItem}>🚪 Logout</button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
-          ) : (
+          )}
+
+          {/* Mobile: User Dropdown wenn eingeloggt */}
+          {isMobile && user && !isLoading && (
+            <div className={styles.dropdownWrapper} ref={dropdownRef}>
+              <motion.button
+                onClick={() => setDropdownOpen((prev) => !prev)}
+                className={styles.profileButtonMobile}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                👤
+                {user.subscriptionActive && <span className={styles.badgeMobile}>Premium</span>}
+              </motion.button>
+              
+              <AnimatePresence>
+                {dropdownOpen && (
+                  <motion.div 
+                    className={styles.dropdownMenu}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <span className={styles.dropdownItem}>✅ {user.email}</span>
+                    <Link to="/me" className={styles.dropdownItem}>👤 Profil</Link>
+                    <button onClick={handleLogout} className={styles.dropdownItem}>🚪 Logout</button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
+        </div>
+      </>
+    );
+  };
+
+  // Render Public Pages Navbar (nur Logo zentriert auf Mobile)
+  const renderPublicPagesNavbar = () => {
+    return (
+      <>
+        {/* Left Section */}
+        <div className={styles.leftSection}>
+          {/* Desktop: Hamburger */}
+          {!isMobile && (
+            <motion.button
+              className={styles.hamburger}
+              onClick={toggleSidebar}
+              aria-label="Menü öffnen"
+              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.05 }}
+              animate={{ rotate: sidebarOpen ? 90 : 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              {sidebarOpen ? "✕" : "☰"}
+            </motion.button>
+          )}
+        </div>
+
+        {/* Center Section - Logo always centered */}
+        <div className={styles.centerSection}>
+          <Link to="/" className={styles.logoLink}>
+            <motion.img 
+              src={logo} 
+              alt="Contract AI Logo" 
+              className={styles.logoImage}
+              whileHover={{ scale: 1.05 }}
+              transition={{ duration: 0.2 }}
+            />
+          </Link>
+        </div>
+
+        {/* Right Section */}
+        <div className={styles.rightSection}>
+          {/* Desktop: Auth Buttons oder User Dropdown */}
+          {!isMobile && !user && !isLoading && (
             <div className={styles.authButtons}>
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Link to="/login" className={styles.loginButton}>
@@ -360,6 +570,44 @@ export default function Navbar() {
                   <span>Registrieren</span>
                 </Link>
               </motion.div>
+            </div>
+          )}
+
+          {!isMobile && user && !isLoading && (
+            <div className={styles.dropdownWrapper} ref={dropdownRef}>
+              <motion.button
+                onClick={() => setDropdownOpen((prev) => !prev)}
+                className={styles.profileButton}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <span className={styles.profileIcon}>👤</span>
+                {user.subscriptionActive && <span className={styles.badge}>Premium</span>} 
+                <span>Account</span>
+                <motion.span
+                  animate={{ rotate: dropdownOpen ? 180 : 0 }}
+                  transition={{ duration: 0.3 }}
+                  className={styles.dropdownArrow}
+                >
+                  ▾
+                </motion.span>
+              </motion.button>
+              
+              <AnimatePresence>
+                {dropdownOpen && (
+                  <motion.div 
+                    className={styles.dropdownMenu}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <span className={styles.dropdownItem}>✅ {user.email}</span>
+                    <Link to="/me" className={styles.dropdownItem}>👤 Profil</Link>
+                    <button onClick={handleLogout} className={styles.dropdownItem}>🚪 Logout</button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           )}
         </div>
@@ -370,7 +618,7 @@ export default function Navbar() {
   return (
     <>
       <motion.nav 
-        className={`${styles.navbar} ${isScrolled ? styles.navbarScrolled : ""} ${!isHomePage ? styles.innerPageNavbar : ""} ${isAuthPage ? styles.authPageNavbar : ""}`}
+        className={`${styles.navbar} ${isScrolled ? styles.navbarScrolled : ""} ${!isHomePage ? styles.innerPageNavbar : ""} ${isAuthPage ? styles.authPageNavbar : ""} ${isMobile && isPublicPage ? styles.mobileLogoOnly : ""}`}
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: [0.19, 1.0, 0.22, 1.0] }}
@@ -379,8 +627,10 @@ export default function Navbar() {
           {isHomePage 
             ? renderHomePageNavbar() 
             : isAuthPage
-              ? renderAuthPagesNavbar() 
-              : renderInnerPagesNavbar()}
+              ? renderAuthPagesNavbar()
+              : isProtectedPage
+                ? renderProtectedPagesNavbar()
+                : renderPublicPagesNavbar()}
         </div>
 
         <AnimatePresence>
