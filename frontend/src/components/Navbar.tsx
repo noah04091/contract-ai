@@ -127,26 +127,26 @@ export default function Navbar() {
 
         <div className={styles.navLinks}>
           <motion.div className={styles.navLinksInner}>
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
               <Link to="/" className={`${styles.navLink} ${location.pathname === "/" ? styles.activeNavLink : ""}`}>
                 <span className={styles.navLinkIcon}>🏠</span>
                 <span className={styles.navLinkText}>Dashboard</span>
               </Link>
             </motion.div>
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
               <Link to="/contracts" className={`${styles.navLink} ${location.pathname === "/contracts" ? styles.activeNavLink : ""}`}>
                 <span className={styles.navLinkIcon}>📁</span>
                 <span className={styles.navLinkText}>Verträge</span>
               </Link>
             </motion.div>
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
               <Link to="/optimizer" className={`${styles.navLink} ${location.pathname === "/optimizer" ? styles.activeNavLink : ""}`}>
                 <span className={styles.navLinkIcon}>🧠</span>
                 <span className={styles.navLinkText}>Optimierer</span>
               </Link>
             </motion.div>
             {user && !user.subscriptionActive && (
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Link to="/pricing" className={`${styles.navLink} ${location.pathname === "/pricing" ? styles.activeNavLink : ""}`}>
                   <span className={styles.navLinkIcon}>💰</span>
                   <span className={styles.navLinkText}>Preise</span>
@@ -154,7 +154,7 @@ export default function Navbar() {
               </motion.div>
             )}
             {user && user.subscriptionActive && (
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Link to="/premium" className={`${styles.navLink} ${location.pathname === "/premium" ? styles.activeNavLink : ""}`}>
                   <span className={styles.navLinkIcon}>🔒</span>
                   <span className={styles.navLinkText}>Premium</span>
@@ -170,8 +170,8 @@ export default function Navbar() {
               <motion.button
                 onClick={() => setDropdownOpen((prev) => !prev)}
                 className={styles.profileButton}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
               >
                 <span className={styles.profileIcon}>👤</span>
                 {user.subscriptionActive && <span className={styles.badge}>Premium</span>} 
@@ -203,12 +203,12 @@ export default function Navbar() {
             </div>
           ) : (
             <div className={styles.authButtons}>
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Link to="/login" className={styles.loginButton}>
                   <span>Anmelden</span>
                 </Link>
               </motion.div>
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Link to="/register" className={styles.registerButton}>
                   <span>Registrieren</span>
                 </Link>
@@ -236,12 +236,12 @@ export default function Navbar() {
           </Link>
 
           <div className={styles.authPageButtons}>
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
               <Link to="/login" className={styles.loginButton}>
                 <span>Anmelden</span>
               </Link>
             </motion.div>
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
               <Link to="/register" className={styles.registerButton}>
                 <span>Registrieren</span>
               </Link>
@@ -262,6 +262,7 @@ export default function Navbar() {
             onClick={toggleSidebar}
             aria-label="Menü öffnen"
             whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.05 }}
             initial={{ opacity: 0.8 }}
             animate={{ 
               opacity: 1,
@@ -289,8 +290,8 @@ export default function Navbar() {
               {user.subscriptionActive && (
                 <motion.div 
                   className={styles.premiumIndicator}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                 >
                   <span className={styles.premiumIcon}>🔒</span>
                   <span className={styles.premiumText}>Premium</span>
@@ -300,12 +301,12 @@ export default function Navbar() {
             </div>
           ) : (
             <div className={styles.authButtons}>
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Link to="/login" className={styles.loginButton}>
                   <span>Anmelden</span>
                 </Link>
               </motion.div>
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Link to="/register" className={styles.registerButton}>
                   <span>Registrieren</span>
                 </Link>
@@ -391,8 +392,8 @@ export default function Navbar() {
                 <motion.button
                   className={styles.closeMobileMenu}
                   onClick={() => setMobileMenuOpen(false)}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                 >
                   Schließen
                 </motion.button>
@@ -419,7 +420,7 @@ export default function Navbar() {
         </AnimatePresence>
       </motion.nav>
 
-      {/* Sidebar Implementation von der Home-Seite */}
+      {/* Sidebar Implementation - Enhanced Apple Design */}
       <AnimatePresence>
         {sidebarOpen && (
           <>
@@ -427,7 +428,7 @@ export default function Navbar() {
             <motion.div 
               className={styles.sidebarBackdrop}
               initial={{ opacity: 0 }}
-              animate={{ opacity: 0.5 }}
+              animate={{ opacity: 0.4 }}
               exit={{ opacity: 0 }}
               onClick={() => setSidebarOpen(false)}
             />
@@ -438,16 +439,21 @@ export default function Navbar() {
               initial={{ x: '-100%' }}
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              transition={{ type: 'spring', damping: 30, stiffness: 400 }}
             >
               <div className={styles.sidebarHeader}>
                 <img src={logo} alt="Contract AI Logo" className={styles.sidebarLogo} />
-                <button className={styles.sidebarClose} onClick={() => setSidebarOpen(false)}>
+                <motion.button 
+                  className={styles.sidebarClose} 
+                  onClick={() => setSidebarOpen(false)}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                >
                   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
                     <line x1="6" y1="6" x2="18" y2="18"></line>
                   </svg>
-                </button>
+                </motion.button>
               </div>
               
               <div className={styles.sidebarContent}>
@@ -554,16 +560,18 @@ export default function Navbar() {
                       <Link to="/me" className={styles.sidebarUserProfile} onClick={() => setSidebarOpen(false)}>
                         Profil bearbeiten
                       </Link>
-                      <button 
+                      <motion.button 
                         className={styles.sidebarLogoutBtn} 
                         onClick={() => {
                           setSidebarOpen(false);
                           handleLogout();
                         }}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
                       >
                         <span className={styles.sidebarLogoutIcon}>🚪</span>
                         Logout
-                      </button>
+                      </motion.button>
                     </div>
                   </div>
                 )}
