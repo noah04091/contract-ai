@@ -521,7 +521,7 @@ export default function Navbar() {
                       </Link>
                     </li>
                     <li>
-                      <Link to="/help" className={styles.sidebarLink} onClick={() => setSidebarOpen(false)}>
+                      <Link to="/hilfe" className={styles.sidebarLink} onClick={() => setSidebarOpen(false)}>
                         <span className={styles.sidebarIcon}>❓</span>
                         Hilfe
                       </Link>
