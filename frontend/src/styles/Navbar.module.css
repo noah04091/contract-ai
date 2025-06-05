@@ -1006,3 +1006,38 @@
     font-size: 12px;
   }
 }
+
+/* Spezielle Behandlung für Inner Pages auf sehr kleinen Geräten */
+@media (max-width: 390px) {
+  .innerPageNavbar .logoCenterWrapper {
+    left: 45%;
+  }
+  
+  .innerPageNavbar .authButtons {
+    gap: 2px;
+  }
+  
+  .innerPageNavbar .loginButton, 
+  .innerPageNavbar .registerButton {
+    padding: 3px 6px;
+    font-size: 11px;
+    border-radius: 12px;
+    min-width: auto;
+  }
+  
+  .innerPageNavbar .loginButton span, 
+  .innerPageNavbar .registerButton span {
+    font-size: 11px;
+    font-weight: 500;
+  }
+  
+  .innerPageNavbar .hamburger {
+    width: 28px;
+    height: 28px;
+    margin-right: 8px;
+  }
+  
+  .innerPageNavbar .navbarContent {
+    padding: 0.5rem 0.6rem;
+  }
+}
