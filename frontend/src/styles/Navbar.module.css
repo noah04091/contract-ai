@@ -167,7 +167,7 @@
 
 .navLinksInner {
   display: flex;
-  gap: 24px;
+  gap: 2.5rem;
   padding: 0;
   border-radius: 0;
   background: transparent;
@@ -346,12 +346,14 @@
 .profileIcon {
   font-size: 14px;
   margin-right: 2px;
-  opacity: 0.7;
+  opacity: 0.6;
   transition: opacity 0.2s ease;
+  color: #6b7280;
 }
 
 .profileButton:hover .profileIcon {
-  opacity: 0.9;
+  opacity: 0.8;
+  color: #374151;
 }
 
 .dropdownArrow {
