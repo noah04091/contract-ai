@@ -270,6 +270,39 @@ export default function Navbar() {
 
   // Render Inner Pages Navbar
   const renderInnerPagesNavbar = () => {
+    // Für mobile nicht-eingeloggte User: Vereinfachte Darstellung
+    if (!user && isMobile && window.innerWidth < 390) {
+      return (
+        <>
+          <Link to="/" className={styles.logoCenterWrapper}>
+            <motion.img 
+              src={logo} 
+              alt="Contract AI Logo" 
+              className={styles.logoCenterImage}
+              whileHover={{ scale: 1.05 }}
+              transition={{ duration: 0.2 }}
+            />
+          </Link>
+          
+          <div className={styles.navRight}>
+            <div className={styles.authButtons}>
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <Link to="/login" className={`${styles.loginButton} ${styles.mobileCompact}`}>
+                  <span>👤</span>
+                </Link>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <Link to="/register" className={`${styles.registerButton} ${styles.mobileCompact}`}>
+                  <span>➕</span>
+                </Link>
+              </motion.div>
+            </div>
+          </div>
+        </>
+      );
+    }
+
+    // Standard Inner Pages Layout
     return (
       <>
         <div className={styles.leftSection}>

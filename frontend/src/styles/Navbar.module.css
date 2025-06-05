@@ -1007,6 +1007,22 @@
   }
 }
 
+/* Mobile kompakte Icon-Buttons für Inner Pages */
+.mobileCompact {
+  padding: 6px 8px !important;
+  font-size: 16px !important;
+  min-width: 36px !important;
+  border-radius: 18px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.mobileCompact span {
+  font-size: 14px !important;
+  margin: 0 !important;
+}
+
 /* Spezielle Behandlung für Inner Pages auf sehr kleinen Geräten */
 @media (max-width: 390px) {
   .innerPageNavbar .logoCenterWrapper {
