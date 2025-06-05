@@ -140,8 +140,8 @@ export default function Navbar() {
         <div className={styles.navLinks}>
           <motion.div className={styles.navLinksInner}>
             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-              <Link to="/" className={`${styles.navLink} ${location.pathname === "/" ? styles.activeNavLink : ""}`}>
-                <span className={styles.navLinkIcon}>🏠</span>
+              <Link to="/dashboard" className={`${styles.navLink} ${location.pathname === "/dashboard" ? styles.activeNavLink : ""}`}>
+                <span className={styles.navLinkIcon}>📊</span>
                 <span className={styles.navLinkText}>Dashboard</span>
               </Link>
             </motion.div>
@@ -362,7 +362,7 @@ export default function Navbar() {
             >
               <div className={styles.mobileMenuInner}>
                 <div className={styles.mobileMenuLinks}>
-                  <Link to="/dashboard" className={`${styles.mobileNavLink} ${location.pathname === "/" ? styles.activeMobileNavLink : ""}`}>
+                  <Link to="/dashboard" className={`${styles.mobileNavLink} ${location.pathname === "/dashboard" ? styles.activeMobileNavLink : ""}`}>
                     <span className={styles.mobileNavIcon}>📊</span>
                     <span>Dashboard</span>
                   </Link>
