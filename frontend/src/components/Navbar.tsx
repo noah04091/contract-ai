@@ -419,7 +419,7 @@ export default function Navbar() {
         </AnimatePresence>
       </motion.nav>
 
-      {/* Sidebar Implementation - Erweitert um Hilfe und Blog Links */}
+      {/* Sidebar Implementation von der Home-Seite */}
       <AnimatePresence>
         {sidebarOpen && (
           <>
@@ -512,19 +512,6 @@ export default function Navbar() {
                       <Link to="/calendar-view" className={styles.sidebarLink} onClick={() => setSidebarOpen(false)}>
                         <span className={styles.sidebarIcon}>⚖️</span>
                         Fristen
-                      </Link>
-                    </li>
-                    {/* ✅ NEU: Hilfe und Blog Links hinzugefügt */}
-                    <li>
-                      <Link to="/hilfe" className={styles.sidebarLink} onClick={() => setSidebarOpen(false)}>
-                        <span className={styles.sidebarIcon}>🆘</span>
-                        Hilfe
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/blog" className={styles.sidebarLink} onClick={() => setSidebarOpen(false)}>
-                        <span className={styles.sidebarIcon}>📰</span>
-                        Blog
                       </Link>
                     </li>
                   </ul>
