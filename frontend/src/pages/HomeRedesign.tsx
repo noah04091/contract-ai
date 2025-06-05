@@ -1,6 +1,5 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion'; // Import framer-motion
 import { useAuth } from "../hooks/useAuth";;
 import "../styles/landing.css";
 
@@ -11,9 +10,6 @@ import deadlineImg from "../assets/screenshot-deadline.png";
 
 const HomeRedesign = () => {
   const { user } = useAuth();
-  const [scrolled, setScrolled] = useState(false);
-  const [activeSection, setActiveSection] = useState('hero');
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
   const sectionsRef = useRef<{ [key: string]: HTMLElement | null }>({});
 
@@ -21,7 +17,6 @@ const HomeRedesign = () => {
     // Scroll event listener mit modifiziertem Parallax-Effekt
     const handleScroll = () => {
       const scrollPosition = window.scrollY;
-      setScrolled(scrollPosition > 10);
       
       // WICHTIG: Deaktiviere den Parallax-Effekt vollständig, um den weißen Balken zu vermeiden
       if (heroRef.current) {
@@ -34,19 +29,6 @@ const HomeRedesign = () => {
         if (heroContent) {
           // Setze die Transformation auf 0, um keine Lücken zu verursachen
           heroContent.setAttribute('style', 'transform: translateY(0)');
-        }
-      }
-      
-      // Check which section is currently in viewport
-      const sectionIds = Object.keys(sectionsRef.current);
-      for (const id of sectionIds) {
-        const section = sectionsRef.current[id];
-        if (section) {
-          const rect = section.getBoundingClientRect();
-          if (rect.top <= window.innerHeight / 2 && rect.bottom >= window.innerHeight / 2) {
-            setActiveSection(id);
-            break;
-          }
         }
       }
       
@@ -68,10 +50,6 @@ const HomeRedesign = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
-
   // Register section refs
   const registerSection = (id: string, element: HTMLElement | null) => {
     if (element) {
@@ -79,305 +57,8 @@ const HomeRedesign = () => {
     }
   };
 
-  // Close sidebar when clicking outside
-  const handleClickOutside = () => {
-    if (sidebarOpen) {
-      setSidebarOpen(false);
-    }
-  };
-
   return (
     <div className="landing-page">
-      {/* Improved Navbar with Apple-style layout */}
-      <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
-        <div className="nav-container">
-          {/* Left section: Hamburger Menu and Logo */}
-          <div className="nav-left">
-            <div className="hamburger-menu" onClick={toggleSidebar}>
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="3" y1="12" x2="21" y2="12"></line>
-                <line x1="3" y1="6" x2="21" y2="6"></line>
-                <line x1="3" y1="18" x2="21" y2="18"></line>
-              </svg>
-            </div>
-            
-            <div className="logo">
-              <Link to="/">
-                <img src={logo} alt="Contract AI Logo" />
-              </Link>
-            </div>
-          </div>
-          
-          {/* Center section: Main Navigation */}
-          <div className="nav-center">
-            <ul className="nav-links">
-              <li className={activeSection === 'dashboard' ? 'active' : ''}>
-                <Link to="/dashboard" className="nav-link">
-                  <span className="nav-icon">📊</span>
-                  Dashboard
-                </Link>
-              </li>
-              <li className={activeSection === 'contracts' ? 'active' : ''}>
-                <Link to="/contracts" className="nav-link">
-                  <span className="nav-icon">📄</span>
-                  Verträge
-                </Link>
-              </li>
-              <li className={activeSection === 'optimizer' ? 'active' : ''}>
-                <Link to="/optimizer" className="nav-link">
-                  <span className="nav-icon">🧠</span>
-                  Optimierer
-                </Link>
-              </li>
-              {!user || !user.subscriptionActive ? (
-                <li className={activeSection === 'pricing' ? 'active' : ''}>
-                  <Link to="/pricing" className="nav-link">
-                    <span className="nav-icon">💰</span>
-                    Preise
-                  </Link>
-                </li>
-              ) : null}
-            </ul>
-          </div>
-          
-          {/* Right section: Authentication */}
-          <div className="nav-right">
-            <div className="auth-area">
-              {/* ÄNDERUNG 1: isLoading-Prüfung entfernt */}
-              {user ? (
-                <Link to="/me" className="profile-button">
-                  <span className="button-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                      <circle cx="12" cy="7" r="4"></circle>
-                    </svg>
-                  </span>
-                  Profil
-                </Link>
-              ) : (
-                <div className="auth-buttons">
-                  <Link to="/login" className="login-button">
-                    <span className="button-icon">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
-                        <polyline points="10 17 15 12 10 7"></polyline>
-                        <line x1="15" y1="12" x2="3" y2="12"></line>
-                      </svg>
-                    </span>
-                    Login
-                  </Link>
-                  <Link to="/register" className="primary-button">
-                    <span className="button-icon">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="8.5" cy="7" r="4"></circle>
-                        <line x1="20" y1="8" x2="20" y2="14"></line>
-                        <line x1="23" y1="11" x2="17" y2="11"></line>
-                      </svg>
-                    </span>
-                    Registrieren
-                  </Link>
-                </div>
-              )}
-            </div>
-            
-            {/* ÄNDERUNG 2: Das rechte Hamburger-Menü entfernt */}
-          </div>
-        </div>
-      </nav>
-
-      {/* Integrated Sidebar with Framer Motion */}
-      <AnimatePresence>
-        {sidebarOpen && (
-          <>
-            {/* Backdrop overlay */}
-            <motion.div 
-              className="sidebar-backdrop"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.5 }}
-              exit={{ opacity: 0 }}
-              onClick={handleClickOutside}
-            />
-            
-            {/* Sidebar content */}
-            <motion.div 
-              className="sidebar"
-              initial={{ x: '-100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '-100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-              style={{ 
-                display: 'flex', 
-                flexDirection: 'column',
-                height: '100vh',
-                overflow: 'hidden' // Der Container selbst verhindert Overflow
-              }}
-            >
-              <div className="sidebar-header">
-                <img src={logo} alt="Contract AI Logo" className="sidebar-logo" />
-                <button className="sidebar-close" onClick={toggleSidebar}>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                  </svg>
-                </button>
-              </div>
-              
-              <div className="sidebar-content" style={{ 
-                flex: '1 1 auto', 
-                overflowY: 'auto', 
-                paddingBottom: '150px' 
-              }}>
-                <div className="sidebar-section">
-                  <h3 className="sidebar-title">Navigation</h3>
-                  <ul className="sidebar-nav">
-                    <li>
-                      <Link to="/" className="sidebar-link" onClick={() => setSidebarOpen(false)}>
-                        <span className="sidebar-icon">🏠</span>
-                        Home
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/dashboard" className="sidebar-link" onClick={() => setSidebarOpen(false)}>
-                        <span className="sidebar-icon">📊</span>
-                        Dashboard
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/contracts" className="sidebar-link" onClick={() => setSidebarOpen(false)}>
-                        <span className="sidebar-icon">📄</span>
-                        Verträge
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/calendar" className="sidebar-link" onClick={() => setSidebarOpen(false)}>
-                        <span className="sidebar-icon">🗓️</span>
-                        Kalender
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/optimizer" className="sidebar-link" onClick={() => setSidebarOpen(false)}>
-                        <span className="sidebar-icon">🧠</span>
-                        Optimierer
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/compare" className="sidebar-link" onClick={() => setSidebarOpen(false)}>
-                        <span className="sidebar-icon">🔍</span>
-                        Vergleich
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/better-contracts" className="sidebar-link" onClick={() => setSidebarOpen(false)}>
-                        <span className="sidebar-icon">💡</span>
-                        Bessere Anbieter
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/Generate" className="sidebar-link" onClick={() => setSidebarOpen(false)}>
-                        <span className="sidebar-icon">⚙️</span>
-                        Generator
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/chat" className="sidebar-link" onClick={() => setSidebarOpen(false)}>
-                        <span className="sidebar-icon">💬</span>
-                        Vertrags-Chat
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/calendar-view" className="sidebar-link" onClick={() => setSidebarOpen(false)}>
-                        <span className="sidebar-icon">⚖️</span>
-                        Fristen
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/hilfe" className="sidebar-link" onClick={() => setSidebarOpen(false)}>
-                        <span className="sidebar-icon">🆘</span>
-                        Hilfe
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/blog" className="sidebar-link" onClick={() => setSidebarOpen(false)}>
-                        <span className="sidebar-icon">📰</span>
-                        Blog
-                      </Link>
-                    </li>
-                  </ul>
-                </div>
-                
-                {/* ÄNDERUNG 1: isLoading-Prüfung entfernt */}
-                {!user ? (
-                  <div className="sidebar-section">
-                    <h3 className="sidebar-title">Account</h3>
-                    <div className="sidebar-auth">
-                      <Link to="/login" className="sidebar-auth-btn" onClick={() => setSidebarOpen(false)}>
-                        Login
-                      </Link>
-                      <Link to="/register" className="sidebar-auth-btn primary" onClick={() => setSidebarOpen(false)}>
-                        Registrieren
-                      </Link>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="sidebar-section">
-                    <h3 className="sidebar-title">Account</h3>
-                    <div className="sidebar-user">
-                      <div className="sidebar-user-info">
-                        <div className="sidebar-user-avatar">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="12" cy="7" r="4"></circle>
-                          </svg>
-                        </div>
-                        <div className="sidebar-user-details">
-                          <span className="sidebar-user-plan">
-                            {user.subscriptionActive ? (
-                              <span className="premium-badge">Premium</span>
-                            ) : (
-                              <span className="free-badge">Free</span>
-                            )}
-                          </span>
-                        </div>
-                      </div>
-                      <Link to="/me" className="sidebar-user-profile" onClick={() => setSidebarOpen(false)}>
-                        Profil bearbeiten
-                      </Link>
-                    </div>
-                  </div>
-                )}
-                
-                <div className="sidebar-section">
-                  <h3 className="sidebar-title">Weitere Links</h3>
-                  <ul className="sidebar-links">
-                    <li>
-                      <Link to="/about" className="sidebar-link secondary" onClick={() => setSidebarOpen(false)}>
-                        Über uns
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/Datenschutz" className="sidebar-link secondary" onClick={() => setSidebarOpen(false)}>
-                        Datenschutz
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/AGB" className="sidebar-link secondary" onClick={() => setSidebarOpen(false)}>
-                        AGB
-                      </Link>
-                    </li>
-                    <li>
-                      <Link to="/Impressum" className="sidebar-link secondary" onClick={() => setSidebarOpen(false)}>
-                        Impressum
-                      </Link>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-
       {/* Hero Section - Direkt an die Navbar angrenzend */}
       <section className="hero" ref={heroRef}>
         <div className="hero-bg">
