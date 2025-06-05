@@ -19,22 +19,22 @@
   position: sticky;
   top: 0;
   width: 100%;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   z-index: 1000;
   transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
-  border-bottom: 1px solid var(--apple-border-light);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
-  font-family: var(--sf-font);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   letter-spacing: -0.022em;
   font-feature-settings: 'kern' 1;
 }
 
 .navbarScrolled {
-  background: rgba(255, 255, 255, 0.92);
-  border-bottom: 1px solid var(--apple-border);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  background: rgba(255, 255, 255, 0.97);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
   padding-top: 8px;
   padding-bottom: 8px;
 }
@@ -65,13 +65,13 @@
 }
 
 .innerPageNavbar {
-  background: rgba(255, 255, 255, 0.88);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  background: rgba(255, 255, 255, 0.93);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .authPageNavbar {
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
 .authPageNavContent {
@@ -80,6 +80,23 @@
   align-items: center;
   width: 100%;
   padding: 0 32px;
+}
+
+/* Mobile auth pages: center logo when only logo is shown */
+@media (max-width: 768px) {
+  .authPageNavContent {
+    justify-content: center;
+    padding: 0 16px;
+  }
+  
+  .authPageNavContent .logoCenterWrapper {
+    position: static;
+    transform: none;
+  }
+  
+  .authPageButtons {
+    display: none;
+  }
 }
 
 .authPageButtons {
@@ -160,10 +177,10 @@
 .navLink {
   display: flex;
   align-items: center;
-  color: var(--apple-gray-1);
+  color: #2c2c2c;
   text-decoration: none;
   font-size: 15px;
-  font-weight: 400;
+  font-weight: 500;
   padding: 8px 0;
   border-radius: 0;
   transition: all 0.2s ease;
@@ -176,7 +193,7 @@
 
 .navLinkIcon {
   font-size: 14px;
-  opacity: 0.6;
+  opacity: 0.7;
   transition: opacity 0.2s ease;
 }
 
@@ -191,17 +208,17 @@
 }
 
 .navLink:hover .navLinkIcon {
-  opacity: 0.8;
+  opacity: 0.9;
 }
 
 .activeNavLink {
   color: var(--apple-blue);
-  font-weight: 500;
+  font-weight: 600;
   border-bottom-color: var(--apple-blue);
 }
 
 .activeNavLink .navLinkIcon {
-  opacity: 0.8;
+  opacity: 0.9;
 }
 
 .navRight {
@@ -251,12 +268,12 @@
 }
 
 .loginButton {
-  color: var(--apple-gray-1);
+  color: #2c2c2c;
   background: transparent;
-  border: 1px solid var(--apple-border-light);
-  padding: 7px 14px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  padding: 8px 16px;
   font-size: 15px;
-  font-weight: 400;
+  font-weight: 500;
   border-radius: 18px;
   cursor: pointer;
   text-decoration: none;
@@ -264,13 +281,13 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--sf-font);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   letter-spacing: -0.01em;
 }
 
 .loginButton:hover {
   background: rgba(248, 248, 248, 0.8);
-  border-color: var(--apple-border);
+  border-color: rgba(0, 0, 0, 0.12);
   color: var(--apple-blue);
 }
 
@@ -278,9 +295,9 @@
   color: var(--apple-white);
   background: var(--apple-blue);
   border: none;
-  padding: 7px 14px;
+  padding: 8px 16px;
   font-size: 15px;
-  font-weight: 400;
+  font-weight: 500;
   border-radius: 18px;
   cursor: pointer;
   text-decoration: none;
@@ -288,7 +305,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--sf-font);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   letter-spacing: -0.01em;
   box-shadow: 0 1px 3px rgba(0, 122, 255, 0.2);
 }
@@ -309,32 +326,32 @@
   padding: 8px 12px;
   background: transparent;
   border: 1px solid transparent;
-  color: var(--apple-gray-1);
+  color: #2c2c2c;
   font-size: 15px;
-  font-weight: 400;
+  font-weight: 500;
   cursor: pointer;
   border-radius: 8px;
   transition: all 0.2s ease;
-  font-family: var(--sf-font);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   letter-spacing: -0.01em;
   gap: 6px;
 }
 
 .profileButton:hover {
   background: rgba(248, 248, 248, 0.7);
-  border-color: var(--apple-border-light);
+  border-color: rgba(0, 0, 0, 0.06);
   color: var(--apple-blue);
 }
 
 .profileIcon {
   font-size: 14px;
-  margin-right: 6px;
-  opacity: 0.6;
+  margin-right: 2px;
+  opacity: 0.7;
   transition: opacity 0.2s ease;
 }
 
 .profileButton:hover .profileIcon {
-  opacity: 0.8;
+  opacity: 0.9;
 }
 
 .dropdownArrow {
@@ -861,8 +878,13 @@
 
 @media (max-width: 768px) {
   .navbarContent {
-    padding: 0 20px;
-    height: 56px;
+    padding: 1rem 1.25rem;
+    min-height: 56px;
+  }
+  
+  .navbarScrolled .navbarContent {
+    padding: 0.8rem 1.25rem;
+    min-height: 48px;
   }
   
   .navbar {
@@ -888,7 +910,7 @@
   }
 
   .authPageNavContent {
-    padding: 0 16px;
+    padding: 0 1.25rem;
   }
 
   .authPageButtons {
@@ -904,8 +926,13 @@
 
 @media (max-width: 480px) {
   .navbarContent {
-    height: 52px;
-    padding: 0 16px;
+    padding: 0.8rem 1rem;
+    min-height: 52px;
+  }
+  
+  .navbarScrolled .navbarContent {
+    padding: 0.6rem 1rem;
+    min-height: 44px;
   }
   
   .logoImage, .logoCenterImage {
