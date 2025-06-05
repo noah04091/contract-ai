@@ -14,6 +14,7 @@ export default function Navbar() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notification, setNotification] = useState<{ message: string; type?: "success" | "error" } | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   
   const location = useLocation();
   const isHomePage = location.pathname === "/";
@@ -22,6 +23,17 @@ export default function Navbar() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+
+  // Check for mobile viewport
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Auth-Status wird jetzt über useAuth() verwaltet
 
@@ -222,9 +234,11 @@ export default function Navbar() {
 
   // Render Auth Pages Navbar (Login/Register)
   const renderAuthPagesNavbar = () => {
+    const showOnlyLogo = !user && isMobile;
+    
     return (
       <>
-        <div className={styles.authPageNavContent}>
+        <div className={`${styles.authPageNavContent} ${showOnlyLogo ? styles.logoOnly : ''}`}>
           <Link to="/" className={styles.logoCenterWrapper}>
             <motion.img 
               src={logo} 
@@ -235,18 +249,20 @@ export default function Navbar() {
             />
           </Link>
 
-          <div className={styles.authPageButtons}>
-            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-              <Link to="/login" className={styles.loginButton}>
-                <span>Anmelden</span>
-              </Link>
-            </motion.div>
-            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-              <Link to="/register" className={styles.registerButton}>
-                <span>Registrieren</span>
-              </Link>
-            </motion.div>
-          </div>
+          {!showOnlyLogo && (
+            <div className={styles.authPageButtons}>
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <Link to="/login" className={styles.loginButton}>
+                  <span>Anmelden</span>
+                </Link>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <Link to="/register" className={styles.registerButton}>
+                  <span>Registrieren</span>
+                </Link>
+              </motion.div>
+            </div>
+          )}
         </div>
       </>
     );
@@ -521,7 +537,7 @@ export default function Navbar() {
                       </Link>
                     </li>
                     <li>
-                      <Link to="/hilfe" className={styles.sidebarLink} onClick={() => setSidebarOpen(false)}>
+                      <Link to="/help" className={styles.sidebarLink} onClick={() => setSidebarOpen(false)}>
                         <span className={styles.sidebarIcon}>❓</span>
                         Hilfe
                       </Link>
