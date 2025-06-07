@@ -519,25 +519,29 @@
   overflow: hidden;
   z-index: 1000;
   border: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 6px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .dropdownItem {
   display: flex;
   align-items: center;
+  justify-content: center;
   padding: 10px 14px;
   color: var(--apple-gray-1);
   text-decoration: none;
   font-size: 14px;
   font-weight: 500;
-  text-align: left;
+  text-align: center;
   background: none;
   border: none;
   width: 100%;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
   border-radius: 8px;
-  margin-bottom: 1px;
+  margin-bottom: 2px;
   font-family: var(--sf-font);
   letter-spacing: -0.022em;
 }
@@ -562,6 +566,9 @@
   font-weight: 400;
   cursor: default;
   font-size: 13px;
+  margin-bottom: 4px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .dropdownItem:first-child:hover {
