@@ -311,16 +311,18 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  padding: 6px 12px;
   background: transparent;
   border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 18px;
+  border-radius: 16px;
   color: #2c2c2c;
   text-decoration: none;
-  font-size: 16px;
+  font-size: 13px;
+  font-weight: 500;
   transition: all 0.2s ease;
   cursor: pointer;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  letter-spacing: -0.01em;
 }
 
 .loginButtonMobile:hover {
@@ -333,17 +335,19 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  padding: 6px 12px;
   background: var(--apple-blue);
   border: none;
-  border-radius: 18px;
+  border-radius: 16px;
   color: var(--apple-white);
   text-decoration: none;
-  font-size: 16px;
+  font-size: 13px;
+  font-weight: 500;
   transition: all 0.2s ease;
   cursor: pointer;
   box-shadow: 0 1px 3px rgba(0, 122, 255, 0.2);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  letter-spacing: -0.01em;
 }
 
 .registerButtonMobile:hover {
@@ -357,15 +361,18 @@
   align-items: center;
   justify-content: center;
   position: relative;
-  width: 36px;
-  height: 36px;
+  padding: 6px 12px;
   background: transparent;
   border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 18px;
+  border-radius: 16px;
   color: #2c2c2c;
-  font-size: 16px;
+  font-size: 13px;
+  font-weight: 500;
   transition: all 0.2s ease;
   cursor: pointer;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  letter-spacing: -0.01em;
+  gap: 6px;
 }
 
 .profileButtonMobile:hover {
@@ -375,9 +382,6 @@
 }
 
 .badgeMobile {
-  position: absolute;
-  top: -2px;
-  right: -2px;
   background: var(--apple-blue);
   color: var(--apple-white);
   font-size: 8px;
@@ -388,8 +392,7 @@
   align-items: center;
   justify-content: center;
   letter-spacing: 0;
-  min-width: 16px;
-  height: 14px;
+  margin-left: 4px;
 }
 
 .loginButton {
@@ -1101,9 +1104,8 @@
   .loginButtonMobile,
   .registerButtonMobile,
   .profileButtonMobile {
-    width: 32px;
-    height: 32px;
-    font-size: 14px;
+    padding: 5px 10px;
+    font-size: 12px;
   }
 
   .authButtonsMobile {
@@ -1153,9 +1155,8 @@
   .loginButtonMobile,
   .registerButtonMobile,
   .profileButtonMobile {
-    width: 28px;
-    height: 28px;
-    font-size: 12px;
+    padding: 4px 8px;
+    font-size: 11px;
   }
 
   .authButtonsMobile {
@@ -1165,8 +1166,6 @@
   .badgeMobile {
     font-size: 7px;
     padding: 1px 3px;
-    min-width: 14px;
-    height: 12px;
   }
 }
 

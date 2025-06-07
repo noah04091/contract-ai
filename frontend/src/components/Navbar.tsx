@@ -210,22 +210,22 @@ export default function Navbar() {
         {/* Right Section */}
         <div className={styles.rightSection}>
           {/* Mobile: Auth Buttons oder User Dropdown */}
-          {isMobile && !user && !isLoading && (
+          {isMobile && !user && (
             <div className={styles.authButtonsMobile}>
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Link to="/login" className={styles.loginButtonMobile}>
-                  👤
+                  Login
                 </Link>
               </motion.div>
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Link to="/register" className={styles.registerButtonMobile}>
-                  ➕
+                  Register
                 </Link>
               </motion.div>
             </div>
           )}
 
-          {isMobile && user && !isLoading && (
+          {isMobile && user && (
             <div className={styles.dropdownWrapper} ref={dropdownRef}>
               <motion.button
                 onClick={() => setDropdownOpen((prev) => !prev)}
@@ -233,7 +233,7 @@ export default function Navbar() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                👤
+                Account
                 {user.subscriptionActive && <span className={styles.badgeMobile}>Premium</span>}
               </motion.button>
               
@@ -256,7 +256,7 @@ export default function Navbar() {
           )}
 
           {/* Desktop: Auth Buttons wenn nicht eingeloggt */}
-          {!isMobile && !user && !isLoading && (
+          {!isMobile && !user && (
             <div className={styles.authButtons}>
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Link to="/login" className={styles.loginButton}>
@@ -272,7 +272,7 @@ export default function Navbar() {
           )}
 
           {/* Desktop: User Dropdown wenn eingeloggt */}
-          {!isMobile && user && !isLoading && (
+          {!isMobile && user && (
             <div className={styles.dropdownWrapper} ref={dropdownRef}>
               <motion.button
                 onClick={() => setDropdownOpen((prev) => !prev)}
@@ -280,7 +280,6 @@ export default function Navbar() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                <span className={styles.profileIcon}>👤</span>
                 {user.subscriptionActive && <span className={styles.badge}>Premium</span>} 
                 <span>Account</span>
                 <motion.span
@@ -352,7 +351,7 @@ export default function Navbar() {
         {/* Right Section */}
         <div className={styles.rightSection}>
           {/* Desktop: Auth Buttons wenn nicht eingeloggt */}
-          {!isMobile && !user && !isLoading && (
+          {!isMobile && !user && (
             <div className={styles.authButtons}>
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Link to="/login" className={styles.loginButton}>
@@ -368,7 +367,7 @@ export default function Navbar() {
           )}
 
           {/* Desktop: User Dropdown wenn eingeloggt */}
-          {!isMobile && user && !isLoading && (
+          {!isMobile && user && (
             <div className={styles.dropdownWrapper} ref={dropdownRef}>
               <motion.button
                 onClick={() => setDropdownOpen((prev) => !prev)}
@@ -376,7 +375,6 @@ export default function Navbar() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                <span className={styles.profileIcon}>👤</span>
                 {user.subscriptionActive && <span className={styles.badge}>Premium</span>} 
                 <span>Account</span>
                 <motion.span
@@ -447,7 +445,7 @@ export default function Navbar() {
         {/* Right Section */}
         <div className={styles.rightSection}>
           {/* Desktop: User Dropdown wenn eingeloggt */}
-          {!isMobile && user && !isLoading && (
+          {!isMobile && user && (
             <div className={styles.dropdownWrapper} ref={dropdownRef}>
               <motion.button
                 onClick={() => setDropdownOpen((prev) => !prev)}
@@ -455,7 +453,6 @@ export default function Navbar() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                <span className={styles.profileIcon}>👤</span>
                 {user.subscriptionActive && <span className={styles.badge}>Premium</span>} 
                 <span>Account</span>
                 <motion.span
@@ -486,7 +483,7 @@ export default function Navbar() {
           )}
 
           {/* Mobile: User Dropdown wenn eingeloggt */}
-          {isMobile && user && !isLoading && (
+          {isMobile && user && (
             <div className={styles.dropdownWrapper} ref={dropdownRef}>
               <motion.button
                 onClick={() => setDropdownOpen((prev) => !prev)}
@@ -494,7 +491,7 @@ export default function Navbar() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                👤
+                Account
                 {user.subscriptionActive && <span className={styles.badgeMobile}>Premium</span>}
               </motion.button>
               
@@ -558,7 +555,7 @@ export default function Navbar() {
         {/* Right Section */}
         <div className={styles.rightSection}>
           {/* Desktop: Auth Buttons oder User Dropdown */}
-          {!isMobile && !user && !isLoading && (
+          {!isMobile && !user && (
             <div className={styles.authButtons}>
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Link to="/login" className={styles.loginButton}>
@@ -573,7 +570,7 @@ export default function Navbar() {
             </div>
           )}
 
-          {!isMobile && user && !isLoading && (
+          {!isMobile && user && (
             <div className={styles.dropdownWrapper} ref={dropdownRef}>
               <motion.button
                 onClick={() => setDropdownOpen((prev) => !prev)}
@@ -581,7 +578,6 @@ export default function Navbar() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                <span className={styles.profileIcon}>👤</span>
                 {user.subscriptionActive && <span className={styles.badge}>Premium</span>} 
                 <span>Account</span>
                 <motion.span
