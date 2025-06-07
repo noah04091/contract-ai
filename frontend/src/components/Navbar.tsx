@@ -246,9 +246,9 @@ export default function Navbar() {
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <span className={styles.dropdownItem}>✅ {user.email}</span>
-                    <Link to="/me" className={styles.dropdownItem}>👤 Profil</Link>
-                    <button onClick={handleLogout} className={styles.dropdownItem}>🚪 Logout</button>
+                    <span className={styles.dropdownItem}>{user.email}</span>
+                    <Link to="/me" className={styles.dropdownItem}>Profil</Link>
+                    <button onClick={handleLogout} className={styles.dropdownItem}>Logout</button>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -300,9 +300,9 @@ export default function Navbar() {
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <span className={styles.dropdownItem}>✅ {user.email}</span>
-                    <Link to="/me" className={styles.dropdownItem}>👤 Profil</Link>
-                    <button onClick={handleLogout} className={styles.dropdownItem}>🚪 Logout</button>
+                    <span className={styles.dropdownItem}>{user.email}</span>
+                    <Link to="/me" className={styles.dropdownItem}>Profil</Link>
+                    <button onClick={handleLogout} className={styles.dropdownItem}>Logout</button>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -395,9 +395,9 @@ export default function Navbar() {
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <span className={styles.dropdownItem}>✅ {user.email}</span>
-                    <Link to="/me" className={styles.dropdownItem}>👤 Profil</Link>
-                    <button onClick={handleLogout} className={styles.dropdownItem}>🚪 Logout</button>
+                    <span className={styles.dropdownItem}>{user.email}</span>
+                    <Link to="/me" className={styles.dropdownItem}>Profil</Link>
+                    <button onClick={handleLogout} className={styles.dropdownItem}>Logout</button>
                   </motion.div>
                 )}
               </AnimatePresence>
