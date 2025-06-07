@@ -668,7 +668,7 @@ export default function Navbar() {
                   {isLoading ? null : user && (
                     <>
                       <div className={styles.userInfo}>
-                        <span className={styles.userEmail}>✅ {user.email}</span>
+                        <span className={styles.userEmail}>{user.email}</span>
                         {user.subscriptionActive && (
                           <span className={styles.premiumBadge}>Premium</span>
                         )}
