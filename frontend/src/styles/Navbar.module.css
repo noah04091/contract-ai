@@ -562,18 +562,16 @@
 }
 
 .dropdownItem:first-child {
-  color: var(--apple-gray-3);
+  color: var(--apple-gray-2);
   font-weight: 400;
   cursor: default;
   font-size: 13px;
-  margin-bottom: 4px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  margin-bottom: 2px;
 }
 
 .dropdownItem:first-child:hover {
   background: transparent;
-  color: var(--apple-gray-3);
+  color: var(--apple-gray-2);
   transform: none;
 }
 
