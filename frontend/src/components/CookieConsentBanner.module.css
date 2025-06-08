@@ -1,5 +1,6 @@
-/* Apple-inspiriertes Cookie-Consent-Banner Design */
-/* Overlay für Modal-Effekt */
+/* Premium Cookie-Consent-Banner - Apple/Stripe Inspired */
+
+/* Overlay für Modal-Effekt - KEIN BLUR */
 .overlay {
   position: fixed;
   top: 0;
@@ -7,30 +8,29 @@
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(8px);
   z-index: 9998;
-  animation: fadeIn 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  animation: fadeIn 0.3s ease-out;
 }
 
-/* Haupt-Banner */
+/* Haupt-Banner - Premium White Card */
 .banner {
   position: fixed;
   bottom: 24px;
   left: 50%;
   transform: translateX(-50%);
   width: calc(100% - 48px);
-  max-width: 440px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  border-radius: 20px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15), 
-              0 4px 12px rgba(0, 0, 0, 0.1),
-              inset 0 1px 0 rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  max-width: 460px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.12),
+    0 8px 20px rgba(0, 0, 0, 0.08),
+    0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.06);
   z-index: 9999;
   max-height: calc(100vh - 48px);
   overflow: hidden;
-  animation: slideUpBounce 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  animation: slideUpSmooth 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 /* Content Container */
@@ -40,9 +40,9 @@
   max-height: calc(100vh - 104px);
 }
 
-/* Custom Scrollbar */
+/* Saubere Scrollbar */
 .content::-webkit-scrollbar {
-  width: 6px;
+  width: 4px;
 }
 
 .content::-webkit-scrollbar-track {
@@ -51,47 +51,47 @@
 
 .content::-webkit-scrollbar-thumb {
   background: rgba(0, 0, 0, 0.1);
-  border-radius: 3px;
+  border-radius: 2px;
 }
 
 .content::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(0, 0, 0, 0.15);
 }
 
-/* Titel */
+/* Titel - Premium Typografie */
 .title {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', system-ui, sans-serif;
-  font-size: 22px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 24px;
   font-weight: 700;
-  color: #1d1d1f;
-  margin: 0 0 12px 0;
-  line-height: 1.25;
-  letter-spacing: -0.022em;
+  color: #1a1a1a;
+  margin: 0 0 16px 0;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
 }
 
-/* Beschreibung */
+/* Beschreibung - Optimale Lesbarkeit */
 .description {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', system-ui, sans-serif;
-  font-size: 15px;
-  color: #86868b;
-  line-height: 1.47;
-  margin: 0 0 28px 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 16px;
+  color: #6b7280;
+  line-height: 1.5;
+  margin: 0 0 32px 0;
   font-weight: 400;
-  letter-spacing: -0.008em;
+  letter-spacing: -0.01em;
 }
 
 /* Einstellungen-Container */
 .settings {
-  margin: 20px 0 28px 0;
-  padding: 20px;
-  background: rgba(248, 248, 248, 0.8);
-  border-radius: 16px;
-  border: 1px solid rgba(0, 0, 0, 0.04);
+  margin: 24px 0 32px 0;
+  padding: 24px;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
 }
 
 /* Cookie-Kategorie */
 .cookieCategory {
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .cookieCategory:last-child {
@@ -107,14 +107,14 @@
   display: flex;
   align-items: center;
   cursor: pointer;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', system-ui, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   font-weight: 600;
-  color: #1d1d1f;
+  color: #1a1a1a;
   transition: color 0.2s ease;
 }
 
 .categoryLabel:hover {
-  color: #007aff;
+  color: #2563eb;
 }
 
 .categoryName {
@@ -123,11 +123,11 @@
   letter-spacing: -0.01em;
 }
 
-/* Checkbox */
+/* Premium Checkbox */
 .checkbox {
-  width: 18px;
-  height: 18px;
-  accent-color: #007aff;
+  width: 20px;
+  height: 20px;
+  accent-color: #2563eb;
   cursor: pointer;
   border-radius: 4px;
   transition: all 0.2s ease;
@@ -135,205 +135,210 @@
 
 .checkbox:disabled {
   cursor: not-allowed;
-  opacity: 0.6;
+  opacity: 0.5;
 }
 
 .checkbox:focus {
-  outline: 2px solid #007aff;
+  outline: 2px solid #2563eb;
   outline-offset: 2px;
 }
 
 /* Kategorie-Beschreibung */
 .categoryDescription {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', system-ui, sans-serif;
-  font-size: 13px;
-  color: #86868b;
-  line-height: 1.46;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 14px;
+  color: #6b7280;
+  line-height: 1.5;
   margin: 0;
-  padding-left: 30px;
+  padding-left: 32px;
   font-weight: 400;
   letter-spacing: -0.005em;
 }
 
-/* Button-Container */
+/* Button-Container - Perfekt strukturiert */
 .buttons {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  margin-top: 24px;
+  margin-top: 32px;
 }
 
-/* Standard Button */
+/* Standard Button - Premium Design */
 .button {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', system-ui, sans-serif;
-  padding: 14px 20px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  padding: 16px 24px;
+  border: 1.5px solid #e2e8f0;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.8);
-  color: #1d1d1f;
+  background: #ffffff;
+  color: #374151;
   font-size: 16px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   text-align: center;
-  min-height: 48px;
+  min-height: 52px;
   display: flex;
   align-items: center;
   justify-content: center;
   letter-spacing: -0.01em;
+  line-height: 1.2;
   position: relative;
-  overflow: hidden;
-}
-
-.button::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0));
-  opacity: 0;
-  transition: opacity 0.25s ease;
-}
-
-.button:hover::before {
-  opacity: 1;
+  outline: none;
 }
 
 .button:hover {
-  border-color: rgba(0, 0, 0, 0.15);
-  background: rgba(255, 255, 255, 0.95);
+  border-color: #cbd5e1;
+  background: #f8fafc;
   transform: translateY(-1px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .button:active {
   transform: translateY(0);
-  transition: transform 0.1s ease;
+  transition-duration: 0.1s;
 }
 
-/* Primary Button */
+.button:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+/* Primary Button - Apple Blue */
 .buttonPrimary {
-  background: linear-gradient(135deg, #007aff 0%, #0051d5 100%);
-  border-color: #007aff;
-  color: white;
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #ffffff;
   font-weight: 600;
-  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.25);
-}
-
-.buttonPrimary::before {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0));
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
 }
 
 .buttonPrimary:hover {
-  background: linear-gradient(135deg, #0066cc 0%, #0040aa 100%);
-  border-color: #0066cc;
-  transform: translateY(-2px);
-  box-shadow: 0 12px 24px rgba(0, 122, 255, 0.35);
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3);
 }
 
-/* Link Button */
+.buttonPrimary:active {
+  background: #1e40af;
+  border-color: #1e40af;
+}
+
+/* Link Button - Sauberer Text-Link */
 .buttonLink {
   background: none;
   border: none;
-  color: #007aff;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', system-ui, sans-serif;
-  font-size: 15px;
+  color: #2563eb;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 16px;
   font-weight: 500;
   cursor: pointer;
-  padding: 12px 8px;
+  padding: 12px 16px;
   text-decoration: none;
   transition: all 0.2s ease;
   border-radius: 8px;
-  letter-spacing: -0.008em;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  min-height: auto;
 }
 
 .buttonLink:hover {
-  color: #0051d5;
-  background: rgba(0, 122, 255, 0.08);
+  color: #1d4ed8;
+  background: rgba(37, 99, 235, 0.06);
 }
 
 .buttonLink:active {
-  background: rgba(0, 122, 255, 0.12);
+  background: rgba(37, 99, 235, 0.1);
 }
 
-/* Settings Icon (unten links) */
+.buttonLink:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+/* Settings Icon - Perfektes Floating Icon */
 .settingsIcon {
   position: fixed;
   bottom: 24px;
   left: 24px;
-  width: 52px;
-  height: 52px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  font-size: 20px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  font-size: 22px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12),
-              0 2px 6px rgba(0, 0, 0, 0.08);
-  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  box-shadow: 
+    0 8px 24px rgba(0, 0, 0, 0.12),
+    0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 1000;
-  color: #1d1d1f;
+  color: #374151;
+  outline: none;
 }
 
 .settingsIcon:hover {
-  transform: scale(1.05) translateY(-2px);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18),
-              0 4px 8px rgba(0, 0, 0, 0.12);
-  border-color: rgba(0, 122, 255, 0.2);
-  background: rgba(255, 255, 255, 1);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 
+    0 12px 32px rgba(0, 0, 0, 0.16),
+    0 4px 12px rgba(0, 0, 0, 0.12);
+  border-color: #cbd5e1;
+  background: #ffffff;
 }
 
 .settingsIcon:active {
-  transform: scale(0.98);
-  transition: transform 0.1s ease;
+  transform: translateY(-1px) scale(0.98);
+  transition-duration: 0.1s;
+}
+
+.settingsIcon:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
 }
 
 /* Tooltip für Settings Icon */
 .settingsIcon::after {
   content: 'Cookie-Einstellungen';
   position: absolute;
-  bottom: 100%;
+  bottom: calc(100% + 12px);
   left: 50%;
-  transform: translateX(-50%) translateY(-8px);
-  background: rgba(0, 0, 0, 0.8);
-  color: white;
-  padding: 6px 10px;
-  border-radius: 6px;
-  font-size: 12px;
+  transform: translateX(-50%);
+  background: #1a1a1a;
+  color: #ffffff;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 13px;
   font-weight: 500;
   white-space: nowrap;
   opacity: 0;
   pointer-events: none;
-  transition: all 0.25s ease;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', system-ui, sans-serif;
+  transition: all 0.2s ease;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .settingsIcon::before {
   content: '';
   position: absolute;
-  bottom: 100%;
+  bottom: calc(100% + 4px);
   left: 50%;
-  transform: translateX(-50%) translateY(-2px);
+  transform: translateX(-50%);
   border: 4px solid transparent;
-  border-top-color: rgba(0, 0, 0, 0.8);
+  border-top-color: #1a1a1a;
   opacity: 0;
   pointer-events: none;
-  transition: all 0.25s ease;
+  transition: all 0.2s ease;
 }
 
 .settingsIcon:hover::after,
 .settingsIcon:hover::before {
   opacity: 1;
-  transform: translateX(-50%) translateY(-12px);
 }
 
-/* Animationen */
+/* Animationen - Smooth & Professional */
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -343,33 +348,18 @@
   }
 }
 
-@keyframes slideUpBounce {
-  0% {
+@keyframes slideUpSmooth {
+  from {
     transform: translateX(-50%) translateY(100%);
     opacity: 0;
   }
-  60% {
-    transform: translateX(-50%) translateY(-8px);
-    opacity: 1;
-  }
-  80% {
-    transform: translateX(-50%) translateY(4px);
-  }
-  100% {
+  to {
     transform: translateX(-50%) translateY(0);
     opacity: 1;
   }
 }
 
-/* Focus States für Accessibility */
-.button:focus-visible,
-.buttonLink:focus-visible,
-.settingsIcon:focus-visible {
-  outline: 2px solid #007aff;
-  outline-offset: 2px;
-}
-
-/* Responsive Design */
+/* Responsive Design - Mobile First */
 @media (max-width: 640px) {
   .banner {
     bottom: 16px;
@@ -379,47 +369,55 @@
   }
   
   .content {
-    padding: 24px 20px 20px;
+    padding: 28px 24px 24px;
   }
   
   .title {
-    font-size: 20px;
-    margin-bottom: 10px;
+    font-size: 22px;
+    margin-bottom: 14px;
   }
   
   .description {
-    font-size: 14px;
-    margin-bottom: 24px;
+    font-size: 15px;
+    margin-bottom: 28px;
+  }
+  
+  .settings {
+    padding: 20px;
+    margin: 20px 0 28px 0;
   }
   
   .buttons {
-    gap: 10px;
+    gap: 12px;
+    margin-top: 28px;
   }
   
   .button {
+    padding: 14px 20px;
+    font-size: 16px;
+    min-height: 48px;
+  }
+  
+  .buttonLink {
     padding: 12px 16px;
     font-size: 15px;
-    min-height: 44px;
   }
   
   .settingsIcon {
     bottom: 16px;
     left: 16px;
-    width: 48px;
-    height: 48px;
-    font-size: 18px;
-  }
-  
-  .settings {
-    padding: 16px;
-    margin: 16px 0 24px 0;
+    width: 52px;
+    height: 52px;
+    font-size: 20px;
   }
 }
 
+/* Tablet & Desktop */
 @media (min-width: 768px) {
   .buttons {
     flex-direction: row;
     gap: 12px;
+    align-items: center;
   }
   
   .button {
@@ -428,20 +426,19 @@
   
   .buttonLink {
     flex: none;
-    min-width: auto;
-    margin-top: 8px;
+    margin-top: 12px;
     align-self: center;
   }
 }
 
-/* Für sehr große Bildschirme */
+/* Large Desktop - Side Position */
 @media (min-width: 1200px) {
   .banner {
     bottom: 32px;
     left: 32px;
     right: auto;
     transform: none;
-    max-width: 420px;
+    max-width: 440px;
   }
   
   .settingsIcon {
@@ -450,48 +447,37 @@
   }
 }
 
-/* Dark Mode Support (falls gewünscht) */
-@media (prefers-color-scheme: dark) {
+/* High DPI Displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 2dppx) {
   .banner {
-    background: rgba(28, 28, 30, 0.95);
-    border-color: rgba(255, 255, 255, 0.1);
-  }
-  
-  .title {
-    color: #f2f2f7;
-  }
-  
-  .description {
-    color: #8e8e93;
-  }
-  
-  .settings {
-    background: rgba(44, 44, 46, 0.8);
-    border-color: rgba(255, 255, 255, 0.06);
-  }
-  
-  .categoryLabel {
-    color: #f2f2f7;
-  }
-  
-  .categoryDescription {
-    color: #8e8e93;
+    border-width: 0.5px;
   }
   
   .button {
-    background: rgba(44, 44, 46, 0.8);
-    border-color: rgba(255, 255, 255, 0.1);
-    color: #f2f2f7;
-  }
-  
-  .button:hover {
-    background: rgba(58, 58, 60, 0.9);
-    border-color: rgba(255, 255, 255, 0.15);
+    border-width: 0.75px;
   }
   
   .settingsIcon {
-    background: rgba(28, 28, 30, 0.95);
-    border-color: rgba(255, 255, 255, 0.1);
-    color: #f2f2f7;
+    border-width: 0.5px;
+  }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  .overlay,
+  .banner,
+  .button,
+  .buttonLink,
+  .settingsIcon {
+    animation: none;
+    transition: none;
+  }
+  
+  .settingsIcon:hover {
+    transform: none;
+  }
+  
+  .button:hover {
+    transform: none;
   }
 }
