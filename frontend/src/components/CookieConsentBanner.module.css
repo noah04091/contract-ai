@@ -1,61 +1,92 @@
+/* Apple-inspiriertes Cookie-Consent-Banner Design */
 /* Overlay für Modal-Effekt */
 .overlay {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
   z-index: 9998;
-  animation: fadeIn 0.3s ease-out;
+  animation: fadeIn 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 /* Haupt-Banner */
 .banner {
   position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: white;
-  border-radius: 16px 16px 0 0;
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 48px);
+  max-width: 440px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15), 
+              0 4px 12px rgba(0, 0, 0, 0.1),
+              inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   z-index: 9999;
-  max-height: 90vh;
-  overflow-y: auto;
-  animation: slideUp 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  max-height: calc(100vh - 48px);
+  overflow: hidden;
+  animation: slideUpBounce 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 /* Content Container */
 .content {
-  padding: 32px 24px 24px;
-  max-width: 600px;
-  margin: 0 auto;
+  padding: 32px 28px 28px;
+  overflow-y: auto;
+  max-height: calc(100vh - 104px);
+}
+
+/* Custom Scrollbar */
+.content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.content::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 3px;
+}
+
+.content::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.2);
 }
 
 /* Titel */
 .title {
-  font-size: 24px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', system-ui, sans-serif;
+  font-size: 22px;
   font-weight: 700;
-  color: #1a1a1a;
-  margin: 0 0 16px 0;
-  line-height: 1.3;
+  color: #1d1d1f;
+  margin: 0 0 12px 0;
+  line-height: 1.25;
+  letter-spacing: -0.022em;
 }
 
 /* Beschreibung */
 .description {
-  font-size: 16px;
-  color: #666;
-  line-height: 1.6;
-  margin: 0 0 24px 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', system-ui, sans-serif;
+  font-size: 15px;
+  color: #86868b;
+  line-height: 1.47;
+  margin: 0 0 28px 0;
+  font-weight: 400;
+  letter-spacing: -0.008em;
 }
 
 /* Einstellungen-Container */
 .settings {
-  margin: 24px 0;
+  margin: 20px 0 28px 0;
   padding: 20px;
-  background: #f8f9fa;
-  border-radius: 12px;
-  border: 1px solid #e9ecef;
+  background: rgba(248, 248, 248, 0.8);
+  border-radius: 16px;
+  border: 1px solid rgba(0, 0, 0, 0.04);
 }
 
 /* Cookie-Kategorie */
@@ -76,35 +107,52 @@
   display: flex;
   align-items: center;
   cursor: pointer;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', system-ui, sans-serif;
   font-weight: 600;
-  color: #1a1a1a;
+  color: #1d1d1f;
+  transition: color 0.2s ease;
+}
+
+.categoryLabel:hover {
+  color: #007aff;
 }
 
 .categoryName {
   font-size: 16px;
   margin-left: 12px;
+  letter-spacing: -0.01em;
 }
 
 /* Checkbox */
 .checkbox {
-  width: 20px;
-  height: 20px;
-  accent-color: #007bff;
+  width: 18px;
+  height: 18px;
+  accent-color: #007aff;
   cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s ease;
 }
 
 .checkbox:disabled {
   cursor: not-allowed;
-  opacity: 0.7;
+  opacity: 0.6;
+}
+
+.checkbox:focus {
+  outline: 2px solid #007aff;
+  outline-offset: 2px;
 }
 
 /* Kategorie-Beschreibung */
 .categoryDescription {
-  font-size: 14px;
-  color: #6c757d;
-  line-height: 1.5;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', system-ui, sans-serif;
+  font-size: 13px;
+  color: #86868b;
+  line-height: 1.46;
   margin: 0;
-  padding-left: 32px;
+  padding-left: 30px;
+  font-weight: 400;
+  letter-spacing: -0.005em;
 }
 
 /* Button-Container */
@@ -117,55 +165,97 @@
 
 /* Standard Button */
 .button {
-  padding: 14px 24px;
-  border: 2px solid #dee2e6;
-  border-radius: 8px;
-  background: white;
-  color: #495057;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', system-ui, sans-serif;
+  padding: 14px 20px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.8);
+  color: #1d1d1f;
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
   text-align: center;
   min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: -0.01em;
+  position: relative;
+  overflow: hidden;
+}
+
+.button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0));
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.button:hover::before {
+  opacity: 1;
 }
 
 .button:hover {
-  border-color: #adb5bd;
-  background: #f8f9fa;
+  border-color: rgba(0, 0, 0, 0.15);
+  background: rgba(255, 255, 255, 0.95);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
 }
 
 .button:active {
-  transform: translateY(1px);
+  transform: translateY(0);
+  transition: transform 0.1s ease;
 }
 
 /* Primary Button */
 .buttonPrimary {
-  background: #007bff;
-  border-color: #007bff;
+  background: linear-gradient(135deg, #007aff 0%, #0051d5 100%);
+  border-color: #007aff;
   color: white;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.25);
+}
+
+.buttonPrimary::before {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0));
 }
 
 .buttonPrimary:hover {
-  background: #0056b3;
-  border-color: #0056b3;
+  background: linear-gradient(135deg, #0066cc 0%, #0040aa 100%);
+  border-color: #0066cc;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(0, 122, 255, 0.35);
 }
 
 /* Link Button */
 .buttonLink {
   background: none;
   border: none;
-  color: #007bff;
-  font-size: 16px;
+  color: #007aff;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', system-ui, sans-serif;
+  font-size: 15px;
   font-weight: 500;
   cursor: pointer;
-  padding: 12px;
-  text-decoration: underline;
-  transition: color 0.2s ease;
+  padding: 12px 8px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  border-radius: 8px;
+  letter-spacing: -0.008em;
 }
 
 .buttonLink:hover {
-  color: #0056b3;
+  color: #0051d5;
+  background: rgba(0, 122, 255, 0.08);
+}
+
+.buttonLink:active {
+  background: rgba(0, 122, 255, 0.12);
 }
 
 /* Settings Icon (unten links) */
@@ -173,25 +263,74 @@
   position: fixed;
   bottom: 24px;
   left: 24px;
-  width: 56px;
-  height: 56px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
-  background: white;
-  border: 2px solid #dee2e6;
-  font-size: 24px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  font-size: 20px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transition: all 0.3s ease;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12),
+              0 2px 6px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   z-index: 1000;
+  color: #1d1d1f;
 }
 
 .settingsIcon:hover {
-  transform: scale(1.1);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
-  border-color: #007bff;
+  transform: scale(1.05) translateY(-2px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18),
+              0 4px 8px rgba(0, 0, 0, 0.12);
+  border-color: rgba(0, 122, 255, 0.2);
+  background: rgba(255, 255, 255, 1);
+}
+
+.settingsIcon:active {
+  transform: scale(0.98);
+  transition: transform 0.1s ease;
+}
+
+/* Tooltip für Settings Icon */
+.settingsIcon::after {
+  content: 'Cookie-Einstellungen';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-8px);
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.25s ease;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', system-ui, sans-serif;
+}
+
+.settingsIcon::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-2px);
+  border: 4px solid transparent;
+  border-top-color: rgba(0, 0, 0, 0.8);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.25s ease;
+}
+
+.settingsIcon:hover::after,
+.settingsIcon:hover::before {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-12px);
 }
 
 /* Animationen */
@@ -204,31 +343,83 @@
   }
 }
 
-@keyframes slideUp {
-  from {
-    transform: translateY(100%);
+@keyframes slideUpBounce {
+  0% {
+    transform: translateX(-50%) translateY(100%);
     opacity: 0;
   }
-  to {
-    transform: translateY(0);
+  60% {
+    transform: translateX(-50%) translateY(-8px);
+    opacity: 1;
+  }
+  80% {
+    transform: translateX(-50%) translateY(4px);
+  }
+  100% {
+    transform: translateX(-50%) translateY(0);
     opacity: 1;
   }
 }
 
+/* Focus States für Accessibility */
+.button:focus-visible,
+.buttonLink:focus-visible,
+.settingsIcon:focus-visible {
+  outline: 2px solid #007aff;
+  outline-offset: 2px;
+}
+
 /* Responsive Design */
-@media (min-width: 768px) {
+@media (max-width: 640px) {
   .banner {
-    bottom: 24px;
-    left: 24px;
-    right: 24px;
+    bottom: 16px;
+    width: calc(100% - 32px);
+    max-width: none;
     border-radius: 16px;
-    max-width: 480px;
-    margin: 0 auto;
+  }
+  
+  .content {
+    padding: 24px 20px 20px;
+  }
+  
+  .title {
+    font-size: 20px;
+    margin-bottom: 10px;
+  }
+  
+  .description {
+    font-size: 14px;
+    margin-bottom: 24px;
   }
   
   .buttons {
+    gap: 10px;
+  }
+  
+  .button {
+    padding: 12px 16px;
+    font-size: 15px;
+    min-height: 44px;
+  }
+  
+  .settingsIcon {
+    bottom: 16px;
+    left: 16px;
+    width: 48px;
+    height: 48px;
+    font-size: 18px;
+  }
+  
+  .settings {
+    padding: 16px;
+    margin: 16px 0 24px 0;
+  }
+}
+
+@media (min-width: 768px) {
+  .buttons {
     flex-direction: row;
-    gap: 16px;
+    gap: 12px;
   }
   
   .button {
@@ -238,20 +429,69 @@
   .buttonLink {
     flex: none;
     min-width: auto;
+    margin-top: 8px;
+    align-self: center;
   }
 }
 
-@media (min-width: 1024px) {
+/* Für sehr große Bildschirme */
+@media (min-width: 1200px) {
   .banner {
     bottom: 32px;
     left: 32px;
     right: auto;
+    transform: none;
     max-width: 420px;
-    margin: 0;
   }
   
   .settingsIcon {
     bottom: 32px;
     left: 32px;
+  }
+}
+
+/* Dark Mode Support (falls gewünscht) */
+@media (prefers-color-scheme: dark) {
+  .banner {
+    background: rgba(28, 28, 30, 0.95);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .title {
+    color: #f2f2f7;
+  }
+  
+  .description {
+    color: #8e8e93;
+  }
+  
+  .settings {
+    background: rgba(44, 44, 46, 0.8);
+    border-color: rgba(255, 255, 255, 0.06);
+  }
+  
+  .categoryLabel {
+    color: #f2f2f7;
+  }
+  
+  .categoryDescription {
+    color: #8e8e93;
+  }
+  
+  .button {
+    background: rgba(44, 44, 46, 0.8);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #f2f2f7;
+  }
+  
+  .button:hover {
+    background: rgba(58, 58, 60, 0.9);
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+  
+  .settingsIcon {
+    background: rgba(28, 28, 30, 0.95);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #f2f2f7;
   }
 }

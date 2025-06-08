@@ -97,7 +97,6 @@ const CookieConsentBanner: React.FC = () => {
         className={styles.settingsIcon}
         onClick={handleSettingsClick}
         aria-label="Cookie-Einstellungen öffnen"
-        title="Cookie-Einstellungen"
       >
         ⚙️
       </button>
