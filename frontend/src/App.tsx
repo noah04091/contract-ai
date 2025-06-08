@@ -5,6 +5,7 @@ import Navbar from "./components/Navbar";
 import RequireAuth from "./components/RequireAuth";
 import PageLoader from "./components/PageLoader";
 import { AuthProvider } from "./context/AuthContext";
+import CookieConsentBanner from "./components/CookieConsentBanner";
 
 // 🔓 Öffentliche Seiten
 import HomeRedesign from "./pages/HomeRedesign";
@@ -85,6 +86,7 @@ function AppWithLoader() {
           <Route path="/better-contracts" element={<RequireAuth><BetterContracts /></RequireAuth>} />
         </Routes>
       </main>
+      <CookieConsentBanner />
     </div>
   );
 }
