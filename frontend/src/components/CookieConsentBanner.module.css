@@ -1,6 +1,13 @@
-/* Premium Cookie-Consent-Banner - Apple/Stripe Inspired */
+/* Premium Cookie-Consent-Banner - Scroll-Free & Stable */
 
-/* Overlay für Modal-Effekt - KEIN BLUR */
+/* Globale Box-Sizing für alle Elemente */
+.banner *,
+.banner *::before,
+.banner *::after {
+  box-sizing: border-box;
+}
+
+/* Overlay für Modal-Effekt - KEIN SCROLL */
 .overlay {
   position: fixed;
   top: 0;
@@ -9,17 +16,18 @@
   bottom: 0;
   background: rgba(0, 0, 0, 0.4);
   z-index: 9998;
+  overflow: hidden;
   animation: fadeIn 0.3s ease-out;
 }
 
-/* Haupt-Banner - Premium White Card */
+/* Haupt-Banner - Absolut stabil, kein Scroll */
 .banner {
   position: fixed;
   bottom: 24px;
   left: 50%;
   transform: translateX(-50%);
-  width: calc(100% - 48px);
-  max-width: 460px;
+  width: calc(100vw - 48px);
+  max-width: 440px;
   background: #ffffff;
   border-radius: 16px;
   box-shadow: 
@@ -30,19 +38,24 @@
   z-index: 9999;
   max-height: calc(100vh - 48px);
   overflow: hidden;
+  overflow-x: hidden;
   animation: slideUpSmooth 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  box-sizing: border-box;
 }
 
-/* Content Container */
+/* Content Container - Stabile Scrollbereich */
 .content {
-  padding: 32px 28px 28px;
+  padding: 28px 24px 24px;
   overflow-y: auto;
-  max-height: calc(100vh - 104px);
+  overflow-x: hidden;
+  max-height: calc(100vh - 96px);
+  width: 100%;
+  box-sizing: border-box;
 }
 
-/* Saubere Scrollbar */
+/* Saubere Scrollbar nur vertikal */
 .content::-webkit-scrollbar {
-  width: 4px;
+  width: 3px;
 }
 
 .content::-webkit-scrollbar-track {
@@ -58,40 +71,52 @@
   background: rgba(0, 0, 0, 0.15);
 }
 
-/* Titel - Premium Typografie */
+/* Titel - Optimierte Typografie */
 .title {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  font-size: 24px;
-  font-weight: 700;
+  font-size: 22px;
+  font-weight: 600;
   color: #1a1a1a;
-  margin: 0 0 16px 0;
+  margin: 0 0 14px 0;
   line-height: 1.3;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
+  text-align: left;
+  width: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Beschreibung - Optimale Lesbarkeit */
+/* Beschreibung - Perfekte Lesbarkeit */
 .description {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  font-size: 16px;
+  font-size: 15px;
   color: #6b7280;
   line-height: 1.5;
-  margin: 0 0 32px 0;
+  margin: 0 0 28px 0;
   font-weight: 400;
-  letter-spacing: -0.01em;
+  letter-spacing: 0.1px;
+  text-align: left;
+  width: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Einstellungen-Container */
 .settings {
-  margin: 24px 0 32px 0;
-  padding: 24px;
+  margin: 20px 0 28px 0;
+  padding: 20px;
   background: #f8fafc;
   border-radius: 12px;
   border: 1px solid #e2e8f0;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 /* Cookie-Kategorie */
 .cookieCategory {
-  margin-bottom: 24px;
+  margin-bottom: 20px;
+  width: 100%;
 }
 
 .cookieCategory:last-child {
@@ -101,6 +126,7 @@
 /* Kategorie-Header */
 .categoryHeader {
   margin-bottom: 8px;
+  width: 100%;
 }
 
 .categoryLabel {
@@ -108,9 +134,12 @@
   align-items: center;
   cursor: pointer;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  font-weight: 600;
+  font-weight: 500;
   color: #1a1a1a;
   transition: color 0.2s ease;
+  width: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .categoryLabel:hover {
@@ -118,19 +147,21 @@
 }
 
 .categoryName {
-  font-size: 16px;
+  font-size: 15px;
   margin-left: 12px;
-  letter-spacing: -0.01em;
+  letter-spacing: 0.1px;
+  flex: 1;
 }
 
 /* Premium Checkbox */
 .checkbox {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   accent-color: #2563eb;
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: 3px;
   transition: all 0.2s ease;
+  flex-shrink: 0;
 }
 
 .checkbox:disabled {
@@ -146,44 +177,58 @@
 /* Kategorie-Beschreibung */
 .categoryDescription {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  font-size: 14px;
+  font-size: 13px;
   color: #6b7280;
-  line-height: 1.5;
+  line-height: 1.4;
   margin: 0;
-  padding-left: 32px;
+  padding-left: 30px;
   font-weight: 400;
-  letter-spacing: -0.005em;
+  letter-spacing: 0.1px;
+  text-align: left;
+  width: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Button-Container - Perfekt strukturiert */
+/* Button-Container - Stabil und zentriert */
 .buttons {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  margin-top: 32px;
+  margin-top: 28px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
-/* Standard Button - Premium Design */
+/* Standard Button - Stabil ohne Overflow */
 .button {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  padding: 16px 24px;
+  padding: 14px 20px;
   border: 1.5px solid #e2e8f0;
-  border-radius: 12px;
+  border-radius: 10px;
   background: #ffffff;
   color: #374151;
-  font-size: 16px;
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   text-align: center;
-  min-height: 52px;
+  min-height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
-  letter-spacing: -0.01em;
+  letter-spacing: 0.1px;
   line-height: 1.2;
   position: relative;
   outline: none;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  white-space: nowrap;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .button:hover {
@@ -208,7 +253,7 @@
   background: #2563eb;
   border-color: #2563eb;
   color: #ffffff;
-  font-weight: 600;
+  font-weight: 500;
   box-shadow: 0 2px 8px rgba(37, 99, 235, 0.2);
 }
 
@@ -230,16 +275,22 @@
   border: none;
   color: #2563eb;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 500;
   cursor: pointer;
-  padding: 12px 16px;
+  padding: 10px 16px;
   text-decoration: none;
   transition: all 0.2s ease;
   border-radius: 8px;
-  letter-spacing: -0.01em;
+  letter-spacing: 0.1px;
   line-height: 1.2;
   min-height: auto;
+  width: auto;
+  align-self: center;
+  margin-top: 8px;
+  white-space: nowrap;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .buttonLink:hover {
@@ -261,12 +312,12 @@
   position: fixed;
   bottom: 24px;
   left: 24px;
-  width: 56px;
-  height: 56px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  font-size: 22px;
+  font-size: 20px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -278,6 +329,7 @@
   z-index: 1000;
   color: #374151;
   outline: none;
+  box-sizing: border-box;
 }
 
 .settingsIcon:hover {
@@ -308,9 +360,9 @@
   transform: translateX(-50%);
   background: #1a1a1a;
   color: #ffffff;
-  padding: 8px 12px;
-  border-radius: 8px;
-  font-size: 13px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
   font-weight: 500;
   white-space: nowrap;
   opacity: 0;
@@ -318,6 +370,8 @@
   transition: all 0.2s ease;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 .settingsIcon::before {
@@ -363,52 +417,53 @@
 @media (max-width: 640px) {
   .banner {
     bottom: 16px;
-    width: calc(100% - 32px);
+    width: calc(100vw - 32px);
     max-width: none;
     border-radius: 16px;
   }
   
   .content {
-    padding: 28px 24px 24px;
+    padding: 24px 20px 20px;
   }
   
   .title {
-    font-size: 22px;
-    margin-bottom: 14px;
+    font-size: 20px;
+    margin-bottom: 12px;
   }
   
   .description {
-    font-size: 15px;
-    margin-bottom: 28px;
+    font-size: 14px;
+    margin-bottom: 24px;
   }
   
   .settings {
-    padding: 20px;
-    margin: 20px 0 28px 0;
+    padding: 16px;
+    margin: 16px 0 24px 0;
   }
   
   .buttons {
-    gap: 12px;
-    margin-top: 28px;
+    gap: 10px;
+    margin-top: 24px;
   }
   
   .button {
-    padding: 14px 20px;
-    font-size: 16px;
-    min-height: 48px;
+    padding: 12px 16px;
+    font-size: 14px;
+    min-height: 44px;
   }
   
   .buttonLink {
-    padding: 12px 16px;
-    font-size: 15px;
+    padding: 10px 12px;
+    font-size: 14px;
+    margin-top: 6px;
   }
   
   .settingsIcon {
     bottom: 16px;
     left: 16px;
-    width: 52px;
-    height: 52px;
-    font-size: 20px;
+    width: 48px;
+    height: 48px;
+    font-size: 18px;
   }
 }
 
@@ -417,7 +472,7 @@
   .buttons {
     flex-direction: row;
     gap: 12px;
-    align-items: center;
+    align-items: flex-start;
   }
   
   .button {
@@ -438,7 +493,7 @@
     left: 32px;
     right: auto;
     transform: none;
-    max-width: 440px;
+    max-width: 420px;
   }
   
   .settingsIcon {
