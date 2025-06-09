@@ -8,6 +8,13 @@ import logo from "../assets/logo-contractai.png";
 import analysisImg from "../assets/screenshot-dashboard.png";
 import deadlineImg from "../assets/screenshot-deadline.png";
 
+// TypeScript-Interface für Window-Erweiterung
+declare global {
+  interface Window {
+    openCookieSettings?: () => void;
+  }
+}
+
 const HomeRedesign = () => {
   const { user } = useAuth();
   const heroRef = useRef<HTMLDivElement>(null);
@@ -60,8 +67,8 @@ const HomeRedesign = () => {
   // Cookie-Einstellungen öffnen
   const handleOpenCookieSettings = (e: React.MouseEvent) => {
     e.preventDefault();
-    if ((window as any).openCookieSettings) {
-      (window as any).openCookieSettings();
+    if (window.openCookieSettings) {
+      window.openCookieSettings();
     }
   };
 

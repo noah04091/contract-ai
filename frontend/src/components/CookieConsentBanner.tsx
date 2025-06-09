@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import styles from './CookieConsentBanner.module.css';
 
+// TypeScript-Interface für Window-Erweiterung
+declare global {
+  interface Window {
+    openCookieSettings?: () => void;
+  }
+}
+
 interface CookieConsent {
   essentiell: boolean;
   marketing: boolean;
@@ -35,14 +42,14 @@ const CookieConsentBanner: React.FC = () => {
     }
 
     // Globale Funktion zum Öffnen des Cookie-Banners
-    (window as any).openCookieSettings = () => {
+    window.openCookieSettings = () => {
       setIsVisible(true);
       setShowSettings(false);
     };
 
     // Cleanup
     return () => {
-      delete (window as any).openCookieSettings;
+      delete window.openCookieSettings;
     };
   }, []);
 
