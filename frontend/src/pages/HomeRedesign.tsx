@@ -57,6 +57,14 @@ const HomeRedesign = () => {
     }
   };
 
+  // Cookie-Einstellungen öffnen
+  const handleOpenCookieSettings = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if ((window as any).openCookieSettings) {
+      (window as any).openCookieSettings();
+    }
+  };
+
   return (
     <div className="landing-page">
       {/* Hero Section - Direkt an die Navbar angrenzend */}
@@ -600,6 +608,7 @@ const HomeRedesign = () => {
                   <li><Link to="/Datenschutz">Datenschutz</Link></li>
                   <li><Link to="/AGB">AGB</Link></li>
                   <li><Link to="/Impressum">Impressum</Link></li>
+                  <li><a href="#" onClick={handleOpenCookieSettings}>Cookie-Einstellungen ändern</a></li>
                 </ul>
               </div>
             </div>

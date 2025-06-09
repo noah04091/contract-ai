@@ -33,6 +33,17 @@ const CookieConsentBanner: React.FC = () => {
         setIsVisible(true);
       }
     }
+
+    // Globale Funktion zum Öffnen des Cookie-Banners
+    (window as any).openCookieSettings = () => {
+      setIsVisible(true);
+      setShowSettings(false);
+    };
+
+    // Cleanup
+    return () => {
+      delete (window as any).openCookieSettings;
+    };
   }, []);
 
   // Marketing-Skripte laden (Beispiel mit Stripe)
@@ -85,22 +96,8 @@ const CookieConsentBanner: React.FC = () => {
     saveConsent(true, marketingAccepted);
   };
 
-  // Settings-Icon Klick
-  const handleSettingsClick = () => {
-    setIsVisible(true);
-    setShowSettings(true);
-  };
-
   if (!isVisible) {
-    return (
-      <button 
-        className={styles.settingsIcon}
-        onClick={handleSettingsClick}
-        aria-label="Cookie-Einstellungen öffnen"
-      >
-        ⚙️
-      </button>
-    );
+    return null; // Kein Zahnrad mehr - wird über Footer-Link geöffnet
   }
 
   return (

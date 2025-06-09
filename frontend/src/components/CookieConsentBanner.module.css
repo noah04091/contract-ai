@@ -340,91 +340,6 @@
   outline-offset: 2px;
 }
 
-/* Settings Icon - Perfektes Floating Icon */
-.settingsIcon {
-  position: fixed;
-  bottom: 24px;
-  left: 24px;
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  font-size: 20px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 
-    0 8px 24px rgba(0, 0, 0, 0.12),
-    0 2px 8px rgba(0, 0, 0, 0.08);
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 1000;
-  color: #374151;
-  outline: none;
-  box-sizing: border-box;
-}
-
-.settingsIcon:hover {
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 
-    0 12px 32px rgba(0, 0, 0, 0.16),
-    0 4px 12px rgba(0, 0, 0, 0.12);
-  border-color: #cbd5e1;
-  background: #ffffff;
-}
-
-.settingsIcon:active {
-  transform: translateY(-1px) scale(0.98);
-  transition-duration: 0.1s;
-}
-
-.settingsIcon:focus-visible {
-  outline: 2px solid #2563eb;
-  outline-offset: 2px;
-}
-
-/* Tooltip für Settings Icon */
-.settingsIcon::after {
-  content: 'Cookie-Einstellungen';
-  position: absolute;
-  bottom: calc(100% + 12px);
-  left: 50%;
-  transform: translateX(-50%);
-  background: #1a1a1a;
-  color: #ffffff;
-  padding: 6px 10px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 500;
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  transition: all 0.2s ease;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-.settingsIcon::before {
-  content: '';
-  position: absolute;
-  bottom: calc(100% + 4px);
-  left: 50%;
-  transform: translateX(-50%);
-  border: 4px solid transparent;
-  border-top-color: #1a1a1a;
-  opacity: 0;
-  pointer-events: none;
-  transition: all 0.2s ease;
-}
-
-.settingsIcon:hover::after,
-.settingsIcon:hover::before {
-  opacity: 1;
-}
-
 /* Animationen - Smooth & Professional */
 @keyframes fadeIn {
   from {
@@ -498,14 +413,6 @@
     display: block;
     text-align: center;
   }
-  
-  .settingsIcon {
-    bottom: 16px;
-    left: 16px;
-    width: 48px;
-    height: 48px;
-    font-size: 18px;
-  }
 }
 
 /* Tablet & Desktop - Extra Platz für langen Text */
@@ -546,11 +453,6 @@
     transform: none;
     max-width: 460px;
   }
-  
-  .settingsIcon {
-    bottom: 32px;
-    left: 32px;
-  }
 }
 
 /* High DPI Displays */
@@ -562,10 +464,6 @@
   .button {
     border-width: 0.75px;
   }
-  
-  .settingsIcon {
-    border-width: 0.5px;
-  }
 }
 
 /* Reduced Motion Support */
@@ -573,14 +471,9 @@
   .overlay,
   .banner,
   .button,
-  .buttonLink,
-  .settingsIcon {
+  .buttonLink {
     animation: none;
     transition: none;
-  }
-  
-  .settingsIcon:hover {
-    transform: none;
   }
   
   .button:hover {
