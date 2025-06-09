@@ -117,6 +117,9 @@ const CookieConsentBanner: React.FC = () => {
             Essenzielle Cookies sind für die Grundfunktionen unserer Website erforderlich. 
             Marketing-Cookies helfen uns dabei, unser Angebot zu verbessern und zu personalisieren.
           </p>
+          <p className={styles.privacyLink}>
+            Mehr erfahren in unserer <a href="/datenschutz" className={styles.privacyLinkAnchor}>Datenschutzerklärung</a>
+          </p>
 
           {showSettings && (
             <div className={styles.settings}>

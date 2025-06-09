@@ -441,7 +441,12 @@
   
   .description {
     font-size: 14px;
-    margin-bottom: 24px;
+    margin-bottom: 10px;
+  }
+  
+  .privacyLink {
+    font-size: 12px;
+    margin-bottom: 20px;
   }
   
   .settings {
