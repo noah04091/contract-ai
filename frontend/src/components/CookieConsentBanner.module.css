@@ -190,7 +190,7 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Button-Container - Stabil und zentriert */
+/* Button-Container - Mit sichtbarem Link */
 .buttons {
   display: flex;
   flex-direction: column;
@@ -274,7 +274,7 @@
   box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
 }
 
-/* Link Button - Vollständig sichtbarer Text */
+/* Link Button - Deutlich sichtbar */
 .buttonLink {
   background: none;
   border: none;
@@ -292,8 +292,10 @@
   min-height: auto;
   width: auto;
   align-self: center;
-  margin-top: 12px;
+  margin-top: 16px;
   white-space: nowrap;
+  display: block;
+  text-align: center;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -460,9 +462,11 @@
   }
   
   .buttonLink {
-    padding: 10px 14px;
+    padding: 12px 16px;
     font-size: 15px;
-    margin-top: 8px;
+    margin-top: 12px;
+    display: block;
+    text-align: center;
   }
   
   .settingsIcon {
@@ -477,25 +481,29 @@
 /* Tablet & Desktop - Extra Platz für langen Text */
 @media (min-width: 768px) {
   .buttons {
-    flex-direction: row;
+    flex-direction: column;
     gap: 14px;
-    align-items: flex-start;
+    align-items: center;
   }
   
   .button {
-    flex: 1;
+    flex: none;
     min-width: 200px;
     font-size: 14px;
     min-height: 50px;
     padding: 14px 18px;
+    width: 100%;
+    max-width: 300px;
   }
   
   .buttonLink {
     flex: none;
-    margin-top: 14px;
+    margin-top: 16px;
     align-self: center;
     font-size: 15px;
     padding: 12px 20px;
+    display: block;
+    text-align: center;
   }
 }
 
