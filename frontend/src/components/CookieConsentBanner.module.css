@@ -201,21 +201,21 @@
   box-sizing: border-box;
 }
 
-/* Standard Button - Breiter für vollständigen Text */
+/* Standard Button - Extra breiter für langen Text */
 .button {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  padding: 14px 20px;
+  padding: 14px 16px;
   border: 1.5px solid #e2e8f0;
   border-radius: 11px;
   background: #ffffff;
   color: #374151;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease-in-out;
   text-align: center;
   min-height: 50px;
-  min-width: 160px;
+  min-width: 180px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -227,8 +227,7 @@
   max-width: 100%;
   box-sizing: border-box;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow: visible;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
@@ -475,20 +474,20 @@
   }
 }
 
-/* Tablet & Desktop - Optimized Button Layout */
+/* Tablet & Desktop - Extra Platz für langen Text */
 @media (min-width: 768px) {
   .buttons {
     flex-direction: row;
-    gap: 16px;
+    gap: 14px;
     align-items: flex-start;
   }
   
   .button {
     flex: 1;
-    min-width: 180px;
-    font-size: 15px;
+    min-width: 200px;
+    font-size: 14px;
     min-height: 50px;
-    padding: 14px 24px;
+    padding: 14px 18px;
   }
   
   .buttonLink {
