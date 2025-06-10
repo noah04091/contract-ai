@@ -62,6 +62,10 @@ try {
   saveContract = null;
 }
 
+// ✅ NEU: Rate Limiting für GPT-4
+let lastGPT4Request = 0;
+const GPT4_MIN_INTERVAL = 4000; // 4 Sekunden zwischen GPT-4 Requests
+
 // ✅ Debug function to check file existence - ENHANCED
 function checkFileExists(filename) {
   const fullPath = path.join(UPLOAD_PATH, filename);
@@ -241,6 +245,61 @@ async function saveContractWithLocalUpload(userId, analysisData, fileInfo, pdfTe
   }
 }
 
+// ✅ NEU: Rate-Limited GPT-4 Request mit intelligenten Retries
+const makeRateLimitedGPT4Request = async (prompt, requestId, openai, maxRetries = 3) => {
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      // ✅ Rate Limiting: Mindestabstand zwischen Requests
+      const timeSinceLastRequest = Date.now() - lastGPT4Request;
+      if (timeSinceLastRequest < GPT4_MIN_INTERVAL) {
+        const waitTime = GPT4_MIN_INTERVAL - timeSinceLastRequest;
+        console.log(`⏳ [${requestId}] Rate Limiting: Warte ${waitTime}ms vor GPT-4 Request...`);
+        await new Promise(resolve => setTimeout(resolve, waitTime));
+      }
+      
+      // ✅ Request-Timestamp speichern
+      lastGPT4Request = Date.now();
+      
+      console.log(`🤖 [${requestId}] GPT-4 Request (Versuch ${attempt}/${maxRetries})...`);
+      
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4", // ✅ GPT-4 beibehalten für beste Qualität
+        messages: [
+          { role: "system", content: "Du bist ein erfahrener Vertragsanalyst mit juristischer Expertise." },
+          { role: "user", content: prompt },
+        ],
+        temperature: 0.3,
+        max_tokens: 2000, // ✅ Token-Limit für bessere Rate-Kontrolle
+      });
+      
+      console.log(`✅ [${requestId}] GPT-4 Request erfolgreich!`);
+      return completion;
+      
+    } catch (error) {
+      console.error(`❌ [${requestId}] GPT-4 Fehler (Versuch ${attempt}):`, error.message);
+      
+      // ✅ Spezielle Behandlung für Rate Limit (429)
+      if (error.status === 429) {
+        if (attempt < maxRetries) {
+          // Exponential Backoff: 5s, 10s, 20s
+          const waitTime = Math.min(5000 * Math.pow(2, attempt - 1), 30000);
+          console.log(`⏳ [${requestId}] Rate Limit erreicht. Warte ${waitTime/1000}s vor Retry...`);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+          continue;
+        } else {
+          throw new Error(`GPT-4 Rate Limit erreicht. Bitte versuche es in einigen Minuten erneut.`);
+        }
+      }
+      
+      // ✅ Andere Fehler: Sofort weiterwerfen
+      throw error;
+    }
+  }
+  
+  throw new Error(`GPT-4 Request nach ${maxRetries} Versuchen fehlgeschlagen.`);
+};
+
 // ✅ MAIN ANALYZE ROUTE with enhanced debugging and FIXED paths
 router.post("/", verifyToken, upload.single("file"), async (req, res) => {
   const requestId = Date.now().toString();
@@ -405,7 +464,7 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
       );
     }
 
-    // ✅ OpenAI-Aufruf
+    // ✅ OpenAI-Aufruf - GEÄNDERT: Mit Rate Limiting
     console.log(`🤖 [${requestId}] OpenAI-Anfrage wird gesendet...`);
     
     const openai = getOpenAI();
@@ -433,17 +492,11 @@ Antwort im folgenden JSON-Format:
 
     let completion;
     try {
+      // ✅ GEÄNDERT: Rate-Limited GPT-4 Request mit Timeout
       completion = await Promise.race([
-        openai.chat.completions.create({
-          model: "gpt-4",
-          messages: [
-            { role: "system", content: "Du bist ein erfahrener Vertragsanalyst." },
-            { role: "user", content: prompt },
-          ],
-          temperature: 0.3,
-        }),
+        makeRateLimitedGPT4Request(prompt, requestId, openai),
         new Promise((_, reject) => 
-          setTimeout(() => reject(new Error("OpenAI API Timeout nach 30s")), 30000)
+          setTimeout(() => reject(new Error("OpenAI API Timeout nach 60s")), 60000) // ✅ Länger für Retries
         )
       ]);
     } catch (openaiError) {
@@ -643,7 +696,7 @@ Antwort im folgenden JSON-Format:
     } else if (error.message.includes("Datenbank") || error.message.includes("MongoDB")) {
       errorMessage = "Datenbank-Fehler. Bitte versuche es erneut.";
       errorCode = "DATABASE_ERROR";
-    } else if (error.message.includes("OpenAI")) {
+    } else if (error.message.includes("OpenAI") || error.message.includes("Rate Limit")) {
       errorMessage = "KI-Analyse-Service vorübergehend nicht verfügbar.";
       errorCode = "AI_SERVICE_ERROR";
     }
