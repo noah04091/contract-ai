@@ -1,4 +1,4 @@
-// 📁 src/pages/Contracts.tsx - KORRIGIERT: 3-Stufen-Preismodell (Free/Business/Premium) + Event-Bubbling Fix
+// 📁 src/pages/Contracts.tsx - KORRIGIERT: Event-Bubbling Fix ohne Upload-Bereich zu blockieren
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -224,8 +224,8 @@ export default function Contracts() {
           return b.name.localeCompare(a.name);
         default:
           return 0;
-      }
-    });
+        }
+      });
 
     setFilteredContracts(filtered);
   }, [contracts, searchQuery, statusFilter, dateFilter, sortOrder]);
@@ -278,33 +278,18 @@ export default function Contracts() {
     console.log(`✅ ${files.length} Dateien für Upload vorbereitet (${userInfo.subscriptionPlan})`);
   };
 
-  // ✅ FIXED: Einzelne Datei aus Upload-Liste entfernen + Event-Bubbling Fix
-  const removeUploadFile = (fileId: string, event?: React.MouseEvent) => {
-    if (event) {
-      event.preventDefault();
-      event.stopPropagation();
-    }
+  // ✅ KORRIGIERT: Normale Funktionen OHNE Event-Parameter
+  const removeUploadFile = (fileId: string) => {
     setUploadFiles(prev => prev.filter(item => item.id !== fileId));
   };
 
-  // ✅ FIXED: Alle Upload-Dateien zurücksetzen + Event-Bubbling Fix
-  const clearAllUploadFiles = (event?: React.MouseEvent) => {
-    if (event) {
-      event.preventDefault();
-      event.stopPropagation();
-    }
+  const clearAllUploadFiles = () => {
     setUploadFiles([]);
     setIsAnalyzing(false);
   };
 
-  // ✅ FIXED: Batch-Analyse mit Limit-Check + Event-Bubbling Fix
-  const startBatchAnalysis = async (event?: React.MouseEvent) => {
-    // ✅ CRITICAL FIX: Event-Bubbling stoppen
-    if (event) {
-      event.preventDefault();
-      event.stopPropagation();
-    }
-
+  // ✅ KORRIGIERT: Batch-Analyse NORMALE Funktion
+  const startBatchAnalysis = async () => {
     if (uploadFiles.length === 0) return;
 
     // ✅ KORRIGIERT: Nochmal Limit prüfen vor Analyse
@@ -404,13 +389,8 @@ export default function Contracts() {
     console.log("🎉 Batch-Analyse abgeschlossen");
   };
 
-  // ✅ FIXED: Einzelne Datei retry + Event-Bubbling Fix
-  const retryFileAnalysis = async (fileId: string, event?: React.MouseEvent) => {
-    if (event) {
-      event.preventDefault();
-      event.stopPropagation();
-    }
-    
+  // ✅ KORRIGIERT: Normale retry Funktion
+  const retryFileAnalysis = async (fileId: string) => {
     const fileItem = uploadFiles.find(item => item.id === fileId);
     if (!fileItem) return;
 
@@ -588,12 +568,7 @@ export default function Contracts() {
     }
   };
 
-  // ✅ FIXED: activateFileInput + Event-Bubbling Fix
-  const activateFileInput = (event?: React.MouseEvent) => {
-    if (event) {
-      event.preventDefault();
-      event.stopPropagation();
-    }
+  const activateFileInput = () => {
     fileInputRef.current?.click();
   };
 
@@ -862,11 +837,8 @@ export default function Contracts() {
                     onDragLeave={handleDrag}
                     onDragOver={handleDrag}
                     onDrop={handleDrop}
-                    // ✅ CRITICAL FIX: Nur clickable wenn keine Dateien ausgewählt sind
-                    onClick={hasAnalysesLeft && uploadFiles.length === 0 ? activateFileInput : undefined}
-                    style={{ 
-                      cursor: hasAnalysesLeft && uploadFiles.length === 0 ? 'pointer' : 'default' 
-                    }}
+                    // ✅ FIXED: Upload-Bereich IMMER clickable wenn Analysen verfügbar
+                    onClick={hasAnalysesLeft ? activateFileInput : undefined}
                   >
                     <input 
                       type="file" 
@@ -894,12 +866,14 @@ export default function Contracts() {
                             </div>
                           </div>
                           <div className={styles.multiFileActions}>
-                            {/* ✅ FIXED: Event-Bubbling stoppen */}
+                            {/* ✅ FIXED: Event-Bubbling nur in onClick stoppen */}
                             {!isAnalyzing && uploadFiles.some(f => f.status === 'pending') && hasAnalysesLeft && (
                               <button 
                                 className={styles.startAnalysisButton}
-                                onClick={(e) => startBatchAnalysis(e)}
-                                onMouseDown={(e) => e.stopPropagation()}
+                                onClick={(e) => {
+                                  e.stopPropagation(); // ✅ Stoppt Upload-Bereich Click
+                                  startBatchAnalysis(); // ✅ Normale Funktion ohne Event
+                                }}
                               >
                                 <PlayCircle size={16} />
                                 Analyse starten
@@ -907,8 +881,10 @@ export default function Contracts() {
                             )}
                             <button 
                               className={styles.clearFilesButton}
-                              onClick={(e) => clearAllUploadFiles(e)}
-                              onMouseDown={(e) => e.stopPropagation()}
+                              onClick={(e) => {
+                                e.stopPropagation(); // ✅ Stoppt Upload-Bereich Click
+                                clearAllUploadFiles(); // ✅ Normale Funktion ohne Event
+                              }}
                               disabled={isAnalyzing}
                             >
                               <X size={16} />
@@ -946,12 +922,14 @@ export default function Contracts() {
                                   {getUploadStatusText(fileItem)}
                                 </div>
                                 <div className={styles.fileItemActions}>
-                                  {/* ✅ FIXED: Event-Bubbling auch bei File-Actions stoppen */}
+                                  {/* ✅ FIXED: Event-Bubbling nur in onClick stoppen */}
                                   {fileItem.status === 'error' && hasAnalysesLeft && (
                                     <button 
                                       className={styles.retryButton}
-                                      onClick={(e) => retryFileAnalysis(fileItem.id, e)}
-                                      onMouseDown={(e) => e.stopPropagation()}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        retryFileAnalysis(fileItem.id);
+                                      }}
                                       disabled={isAnalyzing}
                                     >
                                       <RefreshCw size={14} />
@@ -960,8 +938,10 @@ export default function Contracts() {
                                   {!isAnalyzing && fileItem.status === 'pending' && (
                                     <button 
                                       className={styles.removeFileButton}
-                                      onClick={(e) => removeUploadFile(fileItem.id, e)}
-                                      onMouseDown={(e) => e.stopPropagation()}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        removeUploadFile(fileItem.id);
+                                      }}
                                     >
                                       <X size={14} />
                                     </button>
