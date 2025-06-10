@@ -1,4 +1,4 @@
-// 📁 src/pages/Contracts.tsx - KORRIGIERT: 3-Stufen-Preismodell (Free/Business/Premium)
+// 📁 src/pages/Contracts.tsx - KORRIGIERT: 3-Stufen-Preismodell (Free/Business/Premium) + Event-Bubbling Fix
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -278,19 +278,33 @@ export default function Contracts() {
     console.log(`✅ ${files.length} Dateien für Upload vorbereitet (${userInfo.subscriptionPlan})`);
   };
 
-  // ✅ NEU: Einzelne Datei aus Upload-Liste entfernen
-  const removeUploadFile = (fileId: string) => {
+  // ✅ FIXED: Einzelne Datei aus Upload-Liste entfernen + Event-Bubbling Fix
+  const removeUploadFile = (fileId: string, event?: React.MouseEvent) => {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
     setUploadFiles(prev => prev.filter(item => item.id !== fileId));
   };
 
-  // ✅ NEU: Alle Upload-Dateien zurücksetzen
-  const clearAllUploadFiles = () => {
+  // ✅ FIXED: Alle Upload-Dateien zurücksetzen + Event-Bubbling Fix
+  const clearAllUploadFiles = (event?: React.MouseEvent) => {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
     setUploadFiles([]);
     setIsAnalyzing(false);
   };
 
-  // ✅ KORRIGIERT: Batch-Analyse mit Limit-Check
-  const startBatchAnalysis = async () => {
+  // ✅ FIXED: Batch-Analyse mit Limit-Check + Event-Bubbling Fix
+  const startBatchAnalysis = async (event?: React.MouseEvent) => {
+    // ✅ CRITICAL FIX: Event-Bubbling stoppen
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
     if (uploadFiles.length === 0) return;
 
     // ✅ KORRIGIERT: Nochmal Limit prüfen vor Analyse
@@ -390,8 +404,13 @@ export default function Contracts() {
     console.log("🎉 Batch-Analyse abgeschlossen");
   };
 
-  // ✅ NEU: Einzelne Datei retry
-  const retryFileAnalysis = async (fileId: string) => {
+  // ✅ FIXED: Einzelne Datei retry + Event-Bubbling Fix
+  const retryFileAnalysis = async (fileId: string, event?: React.MouseEvent) => {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    
     const fileItem = uploadFiles.find(item => item.id === fileId);
     if (!fileItem) return;
 
@@ -569,7 +588,12 @@ export default function Contracts() {
     }
   };
 
-  const activateFileInput = () => {
+  // ✅ FIXED: activateFileInput + Event-Bubbling Fix
+  const activateFileInput = (event?: React.MouseEvent) => {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
     fileInputRef.current?.click();
   };
 
@@ -838,7 +862,11 @@ export default function Contracts() {
                     onDragLeave={handleDrag}
                     onDragOver={handleDrag}
                     onDrop={handleDrop}
-                    onClick={hasAnalysesLeft ? activateFileInput : undefined}
+                    // ✅ CRITICAL FIX: Nur clickable wenn keine Dateien ausgewählt sind
+                    onClick={hasAnalysesLeft && uploadFiles.length === 0 ? activateFileInput : undefined}
+                    style={{ 
+                      cursor: hasAnalysesLeft && uploadFiles.length === 0 ? 'pointer' : 'default' 
+                    }}
                   >
                     <input 
                       type="file" 
@@ -866,10 +894,12 @@ export default function Contracts() {
                             </div>
                           </div>
                           <div className={styles.multiFileActions}>
+                            {/* ✅ FIXED: Event-Bubbling stoppen */}
                             {!isAnalyzing && uploadFiles.some(f => f.status === 'pending') && hasAnalysesLeft && (
                               <button 
                                 className={styles.startAnalysisButton}
-                                onClick={startBatchAnalysis}
+                                onClick={(e) => startBatchAnalysis(e)}
+                                onMouseDown={(e) => e.stopPropagation()}
                               >
                                 <PlayCircle size={16} />
                                 Analyse starten
@@ -877,7 +907,8 @@ export default function Contracts() {
                             )}
                             <button 
                               className={styles.clearFilesButton}
-                              onClick={clearAllUploadFiles}
+                              onClick={(e) => clearAllUploadFiles(e)}
+                              onMouseDown={(e) => e.stopPropagation()}
                               disabled={isAnalyzing}
                             >
                               <X size={16} />
@@ -915,10 +946,12 @@ export default function Contracts() {
                                   {getUploadStatusText(fileItem)}
                                 </div>
                                 <div className={styles.fileItemActions}>
+                                  {/* ✅ FIXED: Event-Bubbling auch bei File-Actions stoppen */}
                                   {fileItem.status === 'error' && hasAnalysesLeft && (
                                     <button 
                                       className={styles.retryButton}
-                                      onClick={() => retryFileAnalysis(fileItem.id)}
+                                      onClick={(e) => retryFileAnalysis(fileItem.id, e)}
+                                      onMouseDown={(e) => e.stopPropagation()}
                                       disabled={isAnalyzing}
                                     >
                                       <RefreshCw size={14} />
@@ -927,7 +960,8 @@ export default function Contracts() {
                                   {!isAnalyzing && fileItem.status === 'pending' && (
                                     <button 
                                       className={styles.removeFileButton}
-                                      onClick={() => removeUploadFile(fileItem.id)}
+                                      onClick={(e) => removeUploadFile(fileItem.id, e)}
+                                      onMouseDown={(e) => e.stopPropagation()}
                                     >
                                       <X size={14} />
                                     </button>
@@ -981,7 +1015,10 @@ export default function Contracts() {
                         {!hasAnalysesLeft && (
                           <button 
                             className={styles.upgradeButton}
-                            onClick={() => window.location.href = '/pricing'}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.location.href = '/pricing';
+                            }}
                           >
                             <Crown size={16} />
                             Jetzt upgraden
