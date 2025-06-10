@@ -846,7 +846,7 @@ export default function Contracts() {
                     onDragLeave={handleDrag}
                     onDragOver={handleDrag}
                     onDrop={handleDrop}
-                    onClick={hasAnalysesLeft ? activateFileInput : undefined}
+                    onClick={uploadFiles.length === 0 && hasAnalysesLeft ? activateFileInput : undefined}
                   >
                     <input 
                       type="file" 
@@ -882,25 +882,18 @@ export default function Contracts() {
                           <div className={styles.multiFileActions}>
                             {!isAnalyzing && uploadFiles.some(f => f.status === 'pending') && hasAnalysesLeft && (
                               <button 
+                                type="button"
                                 className={styles.startAnalysisButton}
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  console.log("🚀 Button clicked, starting analysis...");
-                                  startBatchAnalysis();
-                                }}
+                                onClick={startBatchAnalysis}
                               >
                                 <PlayCircle size={16} />
                                 Analyse starten
                               </button>
                             )}
                             <button 
+                              type="button"
                               className={styles.clearFilesButton}
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                clearAllUploadFiles();
-                              }}
+                              onClick={clearAllUploadFiles}
                               disabled={isAnalyzing}
                             >
                               <X size={16} />
@@ -943,12 +936,9 @@ export default function Contracts() {
                                 <div className={styles.fileItemActions}>
                                   {fileItem.status === 'error' && hasAnalysesLeft && (
                                     <button 
+                                      type="button"
                                       className={styles.retryButton}
-                                      onClick={(e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        retryFileAnalysis(fileItem.id);
-                                      }}
+                                      onClick={() => retryFileAnalysis(fileItem.id)}
                                       disabled={isAnalyzing}
                                     >
                                       <RefreshCw size={14} />
@@ -956,12 +946,9 @@ export default function Contracts() {
                                   )}
                                   {!isAnalyzing && fileItem.status === 'pending' && (
                                     <button 
+                                      type="button"
                                       className={styles.removeFileButton}
-                                      onClick={(e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        removeUploadFile(fileItem.id);
-                                      }}
+                                      onClick={() => removeUploadFile(fileItem.id)}
                                     >
                                       <X size={14} />
                                     </button>
@@ -1013,6 +1000,7 @@ export default function Contracts() {
                         )}
                         {!hasAnalysesLeft && (
                           <button 
+                            type="button"
                             className={styles.upgradeButton}
                             onClick={(e) => {
                               e.stopPropagation();
