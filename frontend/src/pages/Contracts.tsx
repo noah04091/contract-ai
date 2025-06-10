@@ -1,4 +1,4 @@
-// 📁 src/pages/Contracts.tsx - KORRIGIERT: Event-Bubbling Fix ohne Upload-Bereich zu blockieren
+// 📁 src/pages/Contracts.tsx - JSX FIXED: Motion Button closing tag korrigiert
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -288,9 +288,18 @@ export default function Contracts() {
     setIsAnalyzing(false);
   };
 
-  // ✅ KORRIGIERT: Batch-Analyse NORMALE Funktion
+  // ✅ KORRIGIERT: Batch-Analyse NORMALE Funktion mit Debug
   const startBatchAnalysis = async () => {
-    if (uploadFiles.length === 0) return;
+    console.log("🚀 startBatchAnalysis called!", { 
+      uploadFilesLength: uploadFiles.length,
+      isAnalyzing,
+      userInfo 
+    });
+
+    if (uploadFiles.length === 0) {
+      console.warn("❌ Keine Dateien zum Analysieren");
+      return;
+    }
 
     // ✅ KORRIGIERT: Nochmal Limit prüfen vor Analyse
     const remainingAnalyses = userInfo.analysisLimit === Infinity 
@@ -837,7 +846,6 @@ export default function Contracts() {
                     onDragLeave={handleDrag}
                     onDragOver={handleDrag}
                     onDrop={handleDrop}
-                    // ✅ FIXED: Upload-Bereich IMMER clickable wenn Analysen verfügbar
                     onClick={hasAnalysesLeft ? activateFileInput : undefined}
                   >
                     <input 
@@ -852,8 +860,14 @@ export default function Contracts() {
                     />
                     
                     {uploadFiles.length > 0 ? (
-                      <div className={styles.multiFilePreview}>
-                        <div className={styles.multiFileHeader}>
+                      <div 
+                        className={styles.multiFilePreview}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div 
+                          className={styles.multiFileHeader}
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <div className={styles.multiFileInfo}>
                             <FileText size={24} />
                             <div>
@@ -866,13 +880,14 @@ export default function Contracts() {
                             </div>
                           </div>
                           <div className={styles.multiFileActions}>
-                            {/* ✅ FIXED: Event-Bubbling nur in onClick stoppen */}
                             {!isAnalyzing && uploadFiles.some(f => f.status === 'pending') && hasAnalysesLeft && (
                               <button 
                                 className={styles.startAnalysisButton}
                                 onClick={(e) => {
-                                  e.stopPropagation(); // ✅ Stoppt Upload-Bereich Click
-                                  startBatchAnalysis(); // ✅ Normale Funktion ohne Event
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  console.log("🚀 Button clicked, starting analysis...");
+                                  startBatchAnalysis();
                                 }}
                               >
                                 <PlayCircle size={16} />
@@ -882,8 +897,9 @@ export default function Contracts() {
                             <button 
                               className={styles.clearFilesButton}
                               onClick={(e) => {
-                                e.stopPropagation(); // ✅ Stoppt Upload-Bereich Click
-                                clearAllUploadFiles(); // ✅ Normale Funktion ohne Event
+                                e.preventDefault();
+                                e.stopPropagation();
+                                clearAllUploadFiles();
                               }}
                               disabled={isAnalyzing}
                             >
@@ -893,8 +909,10 @@ export default function Contracts() {
                           </div>
                         </div>
 
-                        {/* ✅ NEU: Datei-Liste */}
-                        <div className={styles.filesList}>
+                        <div 
+                          className={styles.filesList}
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           {uploadFiles.map((fileItem) => (
                             <motion.div 
                               key={fileItem.id}
@@ -902,6 +920,7 @@ export default function Contracts() {
                               initial={{ opacity: 0, y: 10 }}
                               animate={{ opacity: 1, y: 0 }}
                               layout
+                              onClick={(e) => e.stopPropagation()}
                             >
                               <div className={styles.fileItemLeft}>
                                 <div className={styles.fileItemIcon}>
@@ -922,11 +941,11 @@ export default function Contracts() {
                                   {getUploadStatusText(fileItem)}
                                 </div>
                                 <div className={styles.fileItemActions}>
-                                  {/* ✅ FIXED: Event-Bubbling nur in onClick stoppen */}
                                   {fileItem.status === 'error' && hasAnalysesLeft && (
                                     <button 
                                       className={styles.retryButton}
                                       onClick={(e) => {
+                                        e.preventDefault();
                                         e.stopPropagation();
                                         retryFileAnalysis(fileItem.id);
                                       }}
@@ -939,6 +958,7 @@ export default function Contracts() {
                                     <button 
                                       className={styles.removeFileButton}
                                       onClick={(e) => {
+                                        e.preventDefault();
                                         e.stopPropagation();
                                         removeUploadFile(fileItem.id);
                                       }}
@@ -949,7 +969,6 @@ export default function Contracts() {
                                 </div>
                               </div>
 
-                              {/* ✅ Progress Bar für analyzing */}
                               {fileItem.status === 'analyzing' && (
                                 <div className={styles.fileItemProgress}>
                                   <div 
@@ -1008,7 +1027,6 @@ export default function Contracts() {
                     )}
                   </div>
 
-                  {/* ✅ LEGACY: Einzeldatei-Analyse für Kompatibilität */}
                   {selectedFile && uploadFiles.length === 1 && (
                     <div className={styles.analysisContainer}>
                       <ContractAnalysis file={selectedFile} onReset={handleReset} />
@@ -1019,7 +1037,6 @@ export default function Contracts() {
             </motion.div>
           )}
 
-          {/* Contracts Section - Unverändert */}
           {activeSection === 'contracts' && (
             <motion.div 
               key="contracts-section"
@@ -1061,7 +1078,6 @@ export default function Contracts() {
                 </div>
               </div>
 
-              {/* Filters - Unverändert */}
               <div className={styles.filtersToolbar}>
                 <div className={styles.searchSection}>
                   <div className={styles.searchInputWrapper}>
@@ -1133,7 +1149,6 @@ export default function Contracts() {
                 </div>
               </div>
 
-              {/* Results Info */}
               {(searchQuery || activeFiltersCount() > 0) && (
                 <div className={styles.resultsInfo}>
                   <div className={styles.resultsText}>
@@ -1156,7 +1171,6 @@ export default function Contracts() {
                 </div>
               )}
 
-              {/* Contracts Table */}
               {loading && !refreshing ? (
                 <div className={styles.loadingContainer}>
                   <div className={styles.loadingSpinner}></div>
@@ -1304,7 +1318,6 @@ export default function Contracts() {
           )}
         </AnimatePresence>
 
-        {/* Contract Details Modal */}
         {selectedContract && (
           <ContractDetailsView
             contract={selectedContract}
