@@ -1,7 +1,7 @@
 import { Helmet } from "react-helmet-async";
 import { motion } from "framer-motion";
 import styles from "./Impressum.module.css";
-import { FileText, Mail, Phone, User, Globe } from "lucide-react";
+import { FileText, Mail, Phone, User, Globe, Building, CreditCard, AlertCircle } from "lucide-react";
 
 export default function Impressum() {
   return (
@@ -66,7 +66,11 @@ export default function Impressum() {
               </div>
               <div className={styles.infoGroup}>
                 <Globe size={18} className={styles.infoIcon} />
-                <div>Richard Oberle Weg: 27<br />Deutschland</div>
+                <div>Richard Oberle Weg 27<br />76448 Durmersheim<br />Deutschland</div>
+              </div>
+              <div className={styles.infoGroup}>
+                <Building size={18} className={styles.infoIcon} />
+                <div>Einzelunternehmen</div>
               </div>
             </div>
           </motion.div>
@@ -96,11 +100,11 @@ export default function Impressum() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.7, duration: 0.3 }}
           >
-            <h2>Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV</h2>
+            <h2>Umsatzsteuer-Identifikationsnummer</h2>
             <div className={styles.sectionContent}>
               <div className={styles.infoGroup}>
-                <User size={18} className={styles.infoIcon} />
-                <div>Noah Liebold</div>
+                <CreditCard size={18} className={styles.infoIcon} />
+                <div>USt-IdNr.: DE361461136</div>
               </div>
             </div>
           </motion.div>
@@ -111,19 +115,37 @@ export default function Impressum() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.8, duration: 0.3 }}
           >
+            <h2>Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV</h2>
+            <div className={styles.sectionContent}>
+              <div className={styles.infoGroup}>
+                <User size={18} className={styles.infoIcon} />
+                <div>Noah Liebold<br />Richard Oberle Weg 27<br />76448 Durmersheim</div>
+              </div>
+            </div>
+          </motion.div>
+
+          <motion.div 
+            className={styles.section}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.9, duration: 0.3 }}
+          >
             <h2>Streitbeilegung</h2>
             <div className={styles.sectionContent}>
-              <p>
-                Plattform der EU-Kommission zur Online-Streitbeilegung:{" "}
-                <a 
-                  href="https://ec.europa.eu/consumers/odr" 
-                  target="_blank" 
-                  rel="noreferrer"
-                  className={styles.link}
-                >
-                  https://ec.europa.eu/consumers/odr
-                </a>
-              </p>
+              <div className={styles.infoGroup}>
+                <AlertCircle size={18} className={styles.infoIcon} />
+                <div>
+                  Plattform der EU-Kommission zur Online-Streitbeilegung:{" "}
+                  <a 
+                    href="https://ec.europa.eu/consumers/odr" 
+                    target="_blank" 
+                    rel="noreferrer"
+                    className={styles.link}
+                  >
+                    https://ec.europa.eu/consumers/odr
+                  </a>
+                </div>
+              </div>
             </div>
           </motion.div>
         </div>
