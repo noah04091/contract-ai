@@ -848,16 +848,19 @@ export default function Contracts() {
                     onDrop={handleDrop}
                     onClick={uploadFiles.length === 0 && hasAnalysesLeft ? activateFileInput : undefined}
                   >
-                    <input 
-                      type="file" 
-                      onChange={handleMultipleFileChange}
-                      className={styles.fileInput}
-                      accept=".pdf,.doc,.docx"
-                      multiple={canMultiUpload}
-                      id="contractFile"
-                      ref={fileInputRef}
-                      disabled={!hasAnalysesLeft}
-                    />
+                    {/* ✅ Input-Element nur rendern wenn keine Dateien ausgewählt */}
+                    {uploadFiles.length === 0 && (
+                      <input 
+                        type="file" 
+                        onChange={handleMultipleFileChange}
+                        className={styles.fileInput}
+                        accept=".pdf,.doc,.docx"
+                        multiple={canMultiUpload}
+                        id="contractFile"
+                        ref={fileInputRef}
+                        disabled={!hasAnalysesLeft}
+                      />
+                    )}
                     
                     {uploadFiles.length > 0 ? (
                       <div 
@@ -884,7 +887,11 @@ export default function Contracts() {
                               <button 
                                 type="button"
                                 className={styles.startAnalysisButton}
-                                onClick={startBatchAnalysis}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  startBatchAnalysis();
+                                }}
                               >
                                 <PlayCircle size={16} />
                                 Analyse starten
@@ -893,7 +900,11 @@ export default function Contracts() {
                             <button 
                               type="button"
                               className={styles.clearFilesButton}
-                              onClick={clearAllUploadFiles}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                clearAllUploadFiles();
+                              }}
                               disabled={isAnalyzing}
                             >
                               <X size={16} />
@@ -938,7 +949,11 @@ export default function Contracts() {
                                     <button 
                                       type="button"
                                       className={styles.retryButton}
-                                      onClick={() => retryFileAnalysis(fileItem.id)}
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        retryFileAnalysis(fileItem.id);
+                                      }}
                                       disabled={isAnalyzing}
                                     >
                                       <RefreshCw size={14} />
@@ -948,7 +963,11 @@ export default function Contracts() {
                                     <button 
                                       type="button"
                                       className={styles.removeFileButton}
-                                      onClick={() => removeUploadFile(fileItem.id)}
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        removeUploadFile(fileItem.id);
+                                      }}
                                     >
                                       <X size={14} />
                                     </button>
