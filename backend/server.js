@@ -1,4 +1,4 @@
-// 📁 backend/server.js (Complete fixed version with ANALYZE route + OPTIMIZE route + IMPROVED FILE SERVING + S3 INTEGRATION + REDIRECT FIX + UPLOAD PATH FIX)
+// 📁 backend/server.js - OPTIMIZED: Zentrale MongoDB-Verbindung für schnelles Deployment
 const express = require("express");
 const app = express();
 require("dotenv").config();
@@ -9,7 +9,7 @@ const cors = require("cors");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs").promises;
-const fsSync = require("fs"); // ✅ SYNC FS für Directory Check
+const fsSync = require("fs");
 const pdfParse = require("pdf-parse");
 const { OpenAI } = require("openai");
 const nodemailer = require("nodemailer");
@@ -20,7 +20,7 @@ const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const verifyToken = require("./middleware/verifyToken");
 const createCheckSubscription = require("./middleware/checkSubscription");
 
-// ✅ NEU: S3 File Storage Import (mit Error Handling)
+// ✅ S3 File Storage Import (mit Error Handling)
 let s3Upload, generateSignedUrl;
 try {
   const fileStorage = require("./services/fileStorage");
@@ -33,8 +33,8 @@ try {
   generateSignedUrl = null;
 }
 
-// 📁 Setup - FIXED: Konsistente Upload-Pfade
-const UPLOAD_PATH = path.join(__dirname, "uploads"); // ✅ ABSOLUTE PATH
+// 📁 Setup
+const UPLOAD_PATH = path.join(__dirname, "uploads");
 const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
 const EMAIL_CONFIG = {
   host: process.env.EMAIL_HOST,
@@ -48,10 +48,9 @@ const EMAIL_CONFIG = {
 const ALLOWED_ORIGINS = [
   "https://contract-ai.de",
   "https://www.contract-ai.de",
-  "http://localhost:3000", // ✅ Für lokale Entwicklung
+  "http://localhost:3000",
 ];
 
-// ✅ NEU: Backend URL für File-URLs
 const API_BASE_URL = process.env.API_BASE_URL || (
   process.env.NODE_ENV === 'production' 
     ? 'https://api.contract-ai.de'
@@ -63,21 +62,18 @@ try {
   if (!fsSync.existsSync(UPLOAD_PATH)) {
     fsSync.mkdirSync(UPLOAD_PATH, { recursive: true });
     console.log(`📁 Upload-Ordner erstellt: ${UPLOAD_PATH}`);
-  } else {
-    console.log(`📁 Upload-Ordner existiert: ${UPLOAD_PATH}`);
   }
 } catch (err) {
   console.error(`❌ Fehler beim Erstellen des Upload-Ordners:`, err);
 }
 
-const transporter = nodemailer.createTransport(EMAIL_CONFIG);
+const transporter = nodemailer.createTransporter(EMAIL_CONFIG);
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-// ✅ CRITICAL: Same multer storage config as analyze.js
+// ✅ MULTER Setup
 const storage = multer.diskStorage({
   destination: UPLOAD_PATH,
   filename: (req, file, cb) => {
-    // ✅ SAME pattern as analyze.js
     const filename = Date.now() + path.extname(file.originalname);
     console.log(`📁 [SERVER] Generiere Dateiname: ${filename}`);
     cb(null, filename);
@@ -97,9 +93,9 @@ app.use(cors({
 app.use(cookieParser());
 app.use(express.json());
 
-// ✅ ENHANCED: Static File Serving mit erweiterten Debug-Logs
+// ✅ Static File Serving
 app.use('/uploads', (req, res, next) => {
-  const requestedFile = req.path.substring(1); // Remove leading slash
+  const requestedFile = req.path.substring(1);
   const fullPath = path.join(UPLOAD_PATH, requestedFile);
   
   console.log(`📁 Static file request:`, {
@@ -110,66 +106,48 @@ app.use('/uploads', (req, res, next) => {
     uploadPath: UPLOAD_PATH
   });
   
-  // Check if file exists
   if (!fsSync.existsSync(fullPath)) {
     console.error(`❌ File not found: ${fullPath}`);
-    
-    // List all files in uploads directory for debugging
     try {
       const files = fsSync.readdirSync(UPLOAD_PATH);
       console.log(`📂 Available files in uploads:`, files);
     } catch (err) {
       console.error(`❌ Could not read uploads directory:`, err);
     }
-    
     return res.status(404).json({ 
       error: "File not found",
       requestedFile: requestedFile,
       uploadPath: UPLOAD_PATH 
     });
   }
-  
   next();
 });
 
 app.use('/uploads', express.static(UPLOAD_PATH, {
-  // ✅ Korrekte MIME-Types und Headers für verschiedene Dateitypen
   setHeaders: (res, filePath) => {
     const ext = path.extname(filePath).toLowerCase();
-    
     console.log(`📁 Serving file: ${path.basename(filePath)} (${ext})`);
     
-    // PDF direkt im Browser anzeigen
     if (ext === '.pdf') {
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', 'inline');
-    }
-    // Word-Dokumente zum Download
-    else if (ext === '.docx') {
+    } else if (ext === '.docx') {
       res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
       res.setHeader('Content-Disposition', 'attachment');
-    }
-    else if (ext === '.doc') {
+    } else if (ext === '.doc') {
       res.setHeader('Content-Type', 'application/msword');
       res.setHeader('Content-Disposition', 'attachment');
-    }
-    // Excel-Dateien
-    else if (ext === '.xlsx') {
+    } else if (ext === '.xlsx') {
       res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
       res.setHeader('Content-Disposition', 'attachment');
-    }
-    // Bilder
-    else if (['.jpg', '.jpeg', '.png', '.gif'].includes(ext)) {
+    } else if (['.jpg', '.jpeg', '.png', '.gif'].includes(ext)) {
       res.setHeader('Content-Disposition', 'inline');
-    }
-    // Andere Dateien als Download
-    else {
+    } else {
       res.setHeader('Content-Disposition', 'attachment');
     }
     
-    // Cache-Header für bessere Performance
-    res.setHeader('Cache-Control', 'public, max-age=31536000'); // 1 Jahr
-    res.setHeader('Access-Control-Allow-Origin', '*'); // ✅ Für File-Downloads
+    res.setHeader('Cache-Control', 'public, max-age=31536000');
+    res.setHeader('Access-Control-Allow-Origin', '*');
   }
 }));
 
@@ -184,18 +162,18 @@ app.use((req, res, next) => {
   next();
 });
 
-// Debug-Middleware - Log alle Anfragen
+// Debug-Middleware
 app.use((req, res, next) => {
   console.log(`📡 ${req.method} ${req.path} - ${new Date().toISOString()}`);
   next();
 });
 
-// ✅ NEU: File URL Helper für Backend
+// ✅ File URL Helper
 function generateFileUrl(filename) {
   return `${API_BASE_URL}/uploads/${filename}`;
 }
 
-// Hilfsfunktionen zur Vertragsbewertung
+// Hilfsfunktionen
 function extractExpiryDate(laufzeit) {
   const match = laufzeit.match(/(\d+)\s*(Jahre|Monate)/i);
   if (!match) return "";
@@ -230,19 +208,64 @@ async function analyzeContract(pdfText) {
   return res.choices[0].message.content;
 }
 
-// 📦 MongoDB & Serverstart
+// 🚀 OPTIMIZED: Zentrale MongoDB-Verbindung
+let db = null;
+let client = null;
+
+const connectDB = async () => {
+  try {
+    console.log("🔗 Verbinde zentral zur MongoDB...");
+    const startTime = Date.now();
+    
+    client = new MongoClient(MONGO_URI, {
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+      connectTimeoutMS: 10000,
+      maxIdleTimeMS: 30000,
+    });
+    
+    await client.connect();
+    db = client.db("contract_ai");
+    
+    const connectTime = Date.now() - startTime;
+    console.log(`✅ MongoDB zentral verbunden in ${connectTime}ms!`);
+    
+    return db;
+  } catch (error) {
+    console.error("❌ MongoDB-Verbindung fehlgeschlagen:", error);
+    process.exit(1);
+  }
+};
+
+// 📦 OPTIMIZED: Serverstart mit zentraler DB
 (async () => {
   try {
-    const client = new MongoClient(MONGO_URI);
-    await client.connect();
-    const db = client.db("contract_ai");
-    const usersCollection = db.collection("users");
-    const contractsCollection = db.collection("contracts");
-    console.log("✅ MongoDB verbunden!");
+    // ✅ STEP 1: Zentrale DB-Verbindung
+    db = await connectDB();
+    
+    // ✅ STEP 2: DB an alle Routen weitergeben
+    app.use((req, res, next) => {
+      req.db = db;
+      req.usersCollection = db.collection("users");
+      req.contractsCollection = db.collection("contracts");
+      next();
+    });
 
-    const checkSubscription = createCheckSubscription(usersCollection);
+    // ✅ STEP 3: Subscription Middleware mit zentraler DB
+    const checkSubscription = createCheckSubscription(db.collection("users"));
 
-    // 🔐 Authentifizierung - WICHTIG: Diese müssen ZUERST kommen!
+    // ✅ STEP 4: Health Check für Render
+    app.get('/health', (req, res) => {
+      res.status(200).json({ 
+        status: 'OK',
+        mongodb: db ? 'connected' : 'disconnected',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime()
+      });
+    });
+
+    // 🔐 STEP 5: Auth-Routen (ERSTE PRIORITÄT)
     try {
       const authRoutes = require("./routes/auth")(db);
       app.use("/auth", authRoutes);
@@ -251,7 +274,7 @@ async function analyzeContract(pdfText) {
       console.error("❌ Fehler beim Laden der Auth-Routen:", err);
     }
 
-    // 💳 Stripe-Routen
+    // 💳 STEP 6: Stripe-Routen
     try {
       app.use("/stripe/portal", require("./routes/stripePortal"));
       app.use("/stripe", require("./routes/stripe"));
@@ -261,7 +284,7 @@ async function analyzeContract(pdfText) {
       console.error("❌ Fehler beim Laden der Stripe-Routen:", err);
     }
 
-    // 🔧 OPTIMIZE-ROUTE - KORREKT IMPLEMENTIERT (NEU/ERSETZT)
+    // 🔧 STEP 7: OPTIMIZE-ROUTE (Optimiert mit zentraler DB)
     try {
       console.log("🔧 Lade Optimize-Route...");
       app.use("/optimize", verifyToken, checkSubscription, require("./routes/optimize"));
@@ -278,7 +301,7 @@ async function analyzeContract(pdfText) {
       });
     }
 
-    // 📦 Weitere Vertragsrouten
+    // 📦 STEP 8: Weitere Vertragsrouten
     try {
       app.use("/compare", verifyToken, checkSubscription, require("./routes/compare"));
       console.log("✅ Compare-Route geladen");
@@ -293,7 +316,7 @@ async function analyzeContract(pdfText) {
       console.error("❌ Fehler bei Chat-Route:", err);
     }
 
-    // ✅ ANALYZE-ROUTE - CRITICAL: Now properly loaded!
+    // ✅ STEP 9: ANALYZE-ROUTE
     try {
       console.log("🔧 Lade Analyze-Route...");
       app.use("/analyze", verifyToken, checkSubscription, require("./routes/analyze"));
@@ -310,7 +333,7 @@ async function analyzeContract(pdfText) {
       });
     }
 
-    // 🚀 GENERATE-ROUTE - KORRIGIERT: Ohne /api/ da Proxy das entfernt
+    // 🚀 STEP 10: GENERATE-ROUTE
     try {
       console.log("🔧 Lade Generate-Route...");
       const generateRouter = require("./routes/generate");
@@ -328,7 +351,7 @@ async function analyzeContract(pdfText) {
       });
     }
 
-    // 📋 Weitere Standard-Routen
+    // 📋 STEP 11: Standard-Routen
     try {
       app.use("/analyze-type", require("./routes/analyzeType"));
       app.use("/extract-text", require("./routes/extractText"));
@@ -339,7 +362,7 @@ async function analyzeContract(pdfText) {
       console.error("❌ Fehler bei weiteren Routen:", err);
     }
 
-    // 🧠 Legal Pulse API Routes
+    // 🧠 STEP 12: Legal Pulse API Routes
     try {
       app.use("/api/legal-pulse", verifyToken, require("./routes/legalPulse"));
       console.log("✅ Legal Pulse Routen geladen");
@@ -347,9 +370,8 @@ async function analyzeContract(pdfText) {
       console.error("❌ Fehler bei Legal Pulse Routen:", err);
     }
 
-    // ✅ S3 ROUTES - Only if S3 services are available
+    // ✅ S3 ROUTES
     if (generateSignedUrl) {
-      // ✅ S3 Signed URL Route - REDIRECT statt JSON für Browser
       app.get("/s3/view", verifyToken, (req, res) => {
         try {
           const { file } = req.query;
@@ -361,13 +383,11 @@ async function analyzeContract(pdfText) {
           console.log(`🔗 Generating signed URL for: ${file}`);
           const signedUrl = generateSignedUrl(file);
           
-          // ✅ Check ob Request für JSON oder Redirect
           const acceptHeader = req.headers.accept || '';
           const userAgent = req.headers['user-agent'] || '';
           const wantsJson = acceptHeader.includes('application/json') || 
                            acceptHeader.includes('*/*') && userAgent.includes('fetch');
           
-          // ✅ DEBUG: Log welcher Typ von Request es ist
           console.log(`🔍 S3 View Request Type:`, {
             file: file,
             acceptHeader: acceptHeader,
@@ -377,7 +397,6 @@ async function analyzeContract(pdfText) {
           });
           
           if (wantsJson) {
-            // JSON Response für API-Calls (fetch requests)
             console.log(`📋 Returning JSON response for: ${file}`);
             res.json({ 
               fileUrl: signedUrl,
@@ -385,7 +404,6 @@ async function analyzeContract(pdfText) {
               s3Key: file
             });
           } else {
-            // ✅ REDIRECT für Browser-Navigation (Button clicks)
             console.log(`🔄 Redirecting to S3 file: ${signedUrl}`);
             res.redirect(302, signedUrl);
           }
@@ -396,7 +414,6 @@ async function analyzeContract(pdfText) {
         }
       });
 
-      // ✅ NEU: Separate JSON-Route für explizite API-Calls
       app.get("/s3/json", verifyToken, (req, res) => {
         try {
           const { file } = req.query;
@@ -420,7 +437,6 @@ async function analyzeContract(pdfText) {
     } else {
       console.log("⚠️ S3-Routen übersprungen (S3 nicht verfügbar)");
       
-      // Fallback für S3-Routen wenn S3 nicht verfügbar
       app.get("/s3/view", verifyToken, (req, res) => {
         res.status(503).json({ 
           message: "S3 Service nicht verfügbar",
@@ -429,7 +445,7 @@ async function analyzeContract(pdfText) {
       });
     }
 
-    // 📤 Upload-Logik mit S3 Analyse (nur wenn S3 verfügbar)
+    // 📤 Upload-Logik mit S3
     if (s3Upload) {
       app.post("/upload", verifyToken, checkSubscription, s3Upload.single("file"), async (req, res) => {
         if (!req.file) return res.status(400).json({ message: "Keine Datei hochgeladen" });
@@ -441,10 +457,8 @@ async function analyzeContract(pdfText) {
             location: req.file.location
           });
 
-          // ✅ PDF-Text-Extraktion von S3-Datei
           let analysisText = '';
           try {
-            // Datei von S3 herunterladen für Text-Extraktion
             const AWS = require('aws-sdk');
             const s3 = new AWS.S3({
               accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -463,7 +477,6 @@ async function analyzeContract(pdfText) {
             console.warn("⚠️ Text-Extraktion von S3 fehlgeschlagen:", extractError.message);
           }
 
-          // KI-Analyse (falls Text verfügbar)
           let name = "Unbekannt", laufzeit = "Unbekannt", kuendigung = "Unbekannt";
           if (analysisText) {
             try {
@@ -490,20 +503,15 @@ async function analyzeContract(pdfText) {
             expiryDate,
             status,
             uploadedAt: new Date(),
-            
-            // ✅ S3-spezifische Felder
-            s3Key: req.file.key,                        // S3-Pfad für interne Verwendung
-            s3Bucket: req.file.bucket,                  // S3-Bucket Name
-            s3Location: req.file.location,              // S3-URL (falls public)
-            filename: req.file.key,                     // S3-Key als filename
-            originalname: req.file.originalname,        // Original-Dateiname
-            mimetype: req.file.mimetype,                // MIME-Type
-            size: req.file.size,                        // Dateigröße
-            
-            // ✅ Legacy-Felder für Frontend-Kompatibilität
-            filePath: `/s3/${req.file.key}`,           // Legacy path
-            fileUrl: null,                              // Wird über /s3/view generiert
-            
+            s3Key: req.file.key,
+            s3Bucket: req.file.bucket,
+            s3Location: req.file.location,
+            filename: req.file.key,
+            originalname: req.file.originalname,
+            mimetype: req.file.mimetype,
+            size: req.file.size,
+            filePath: `/s3/${req.file.key}`,
+            fileUrl: null,
             legalPulse: {
               riskScore: null,
               summary: '',
@@ -517,11 +525,10 @@ async function analyzeContract(pdfText) {
             }
           };
 
-          const { insertedId } = await contractsCollection.insertOne(contract);
+          const { insertedId } = await req.contractsCollection.insertOne(contract);
 
           console.log(`✅ Contract saved with S3 key: ${req.file.key}`);
 
-          // E-Mail-Benachrichtigung (optional)
           try {
             await transporter.sendMail({
               from: `Contract AI <${process.env.EMAIL_USER}>`,
@@ -552,14 +559,14 @@ async function analyzeContract(pdfText) {
       console.log("⚠️ S3 Upload-Route übersprungen (S3 nicht verfügbar)");
     }
 
-    // 💾 POST-ROUTE für neue Verträge speichern (ERWEITERT)
+    // 💾 POST-ROUTE für neue Verträge
     app.post("/contracts", verifyToken, async (req, res) => {
       try {
         console.log("📄 Neuen Vertrag speichern - Request body:", req.body);
         
         const { 
           name, laufzeit, kuendigung, expiryDate, status, content, signature, isGenerated,
-          filename, originalname, fileUrl, filePath, mimetype, size // ✅ NEU: File-Informationen
+          filename, originalname, fileUrl, filePath, mimetype, size
         } = req.body;
         
         if (!name && !content) {
@@ -579,15 +586,13 @@ async function analyzeContract(pdfText) {
           signature: signature || null,
           isGenerated: isGenerated || false,
           uploadedAt: new Date(),
-          createdAt: new Date(), // ✅ ADDED for compatibility
-          // ✅ ERWEITERT: File-Informationen (S3 + Legacy Support)
+          createdAt: new Date(),
           filePath: filePath || "",
           fileUrl: fileUrl || (filename ? generateFileUrl(filename) : null),
           filename: filename || null,
           originalname: originalname || null,
           mimetype: mimetype || null,
           size: size || null,
-          // ✅ S3-Felder falls vorhanden
           s3Key: req.body.s3Key || null,
           s3Bucket: req.body.s3Bucket || null,
           s3Location: req.body.s3Location || null,
@@ -610,10 +615,10 @@ async function analyzeContract(pdfText) {
           name: contract.name,
           hasContent: !!contract.content,
           hasSignature: !!contract.signature,
-          hasFileUrl: !!contract.fileUrl // ✅ NEU: File-URL Debug
+          hasFileUrl: !!contract.fileUrl
         });
 
-        const { insertedId } = await contractsCollection.insertOne(contract);
+        const { insertedId } = await req.contractsCollection.insertOne(contract);
         
         console.log("✅ Vertrag erfolgreich gespeichert mit ID:", insertedId);
         
@@ -635,7 +640,7 @@ async function analyzeContract(pdfText) {
     // 📔 CRUD für einzelne Verträge
     app.get("/contracts/:id", verifyToken, async (req, res) => {
       try {
-        const contract = await contractsCollection.findOne({
+        const contract = await req.contractsCollection.findOne({
           _id: new ObjectId(req.params.id),
           userId: req.user.userId,
         });
@@ -650,11 +655,11 @@ async function analyzeContract(pdfText) {
     app.put("/contracts/:id", verifyToken, async (req, res) => {
       try {
         const { name, laufzeit, kuendigung } = req.body;
-        await contractsCollection.updateOne(
+        await req.contractsCollection.updateOne(
           { _id: new ObjectId(req.params.id), userId: req.user.userId },
           { $set: { name, laufzeit, kuendigung } }
         );
-        const updated = await contractsCollection.findOne({ _id: new ObjectId(req.params.id) });
+        const updated = await req.contractsCollection.findOne({ _id: new ObjectId(req.params.id) });
         res.json({ message: "Aktualisiert", contract: updated });
       } catch (error) {
         console.error("❌ Update contract error:", error);
@@ -664,7 +669,7 @@ async function analyzeContract(pdfText) {
 
     app.delete("/contracts/:id", verifyToken, async (req, res) => {
       try {
-        const result = await contractsCollection.deleteOne({
+        const result = await req.contractsCollection.deleteOne({
           _id: new ObjectId(req.params.id),
           userId: req.user.userId,
         });
@@ -676,7 +681,7 @@ async function analyzeContract(pdfText) {
       }
     });
 
-    // 🧪 Debug-Route (ERWEITERT mit S3-Status + Upload-Path Debug)
+    // 🧪 Debug-Route
     app.get("/debug", (req, res) => {
       console.log("Cookies:", req.cookies);
       res.cookie("debug_cookie", "test-value", {
@@ -686,7 +691,6 @@ async function analyzeContract(pdfText) {
         path: "/",
       });
       
-      // ✅ S3-Status prüfen
       const s3Status = {
         configured: !!(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY),
         bucket: process.env.AWS_S3_BUCKET || 'Not set',
@@ -694,7 +698,6 @@ async function analyzeContract(pdfText) {
         servicesLoaded: !!(s3Upload && generateSignedUrl)
       };
       
-      // ✅ Upload-Path Debug
       const uploadDebug = {
         UPLOAD_PATH: UPLOAD_PATH,
         exists: fsSync.existsSync(UPLOAD_PATH),
@@ -714,20 +717,21 @@ async function analyzeContract(pdfText) {
         cookies: req.cookies,
         timestamp: new Date().toISOString(),
         status: "working",
-        loadedRoutes: "all routes loaded with error handling",
+        mongodb: db ? 'ZENTRAL VERBUNDEN' : 'NICHT VERBUNDEN',
+        loadedRoutes: "all routes loaded with ZENTRALE DB",
         newFeature: "Contract save route enabled",
         analyzeRoute: "ANALYZE ROUTE NOW ACTIVE!",
         optimizeRoute: "OPTIMIZE ROUTE NOW ACTIVE!",
-        fileServing: "IMPROVED FILE SERVING ACTIVE!", // ✅ NEU
-        s3Integration: s3Status.servicesLoaded ? "S3 UPLOAD & SIGNED URLS + REDIRECT ACTIVE!" : "S3 Services not available", // ✅ UPDATED
-        apiBaseUrl: API_BASE_URL, // ✅ NEU: Zeige API Base URL
-        uploadDebug: uploadDebug, // ✅ NEU: Upload-Path Debug
+        fileServing: "IMPROVED FILE SERVING ACTIVE!",
+        s3Integration: s3Status.servicesLoaded ? "S3 UPLOAD & SIGNED URLS + REDIRECT ACTIVE!" : "S3 Services not available",
+        apiBaseUrl: API_BASE_URL,
+        uploadDebug: uploadDebug,
         nodeEnv: process.env.NODE_ENV,
-        s3Status: s3Status // ✅ NEU: S3-Konfigurationsstatus
+        s3Status: s3Status
       });
     });
 
-    // ⏰ Cron Jobs (unverändert)
+    // ⏰ Cron Jobs
     try {
       cron.schedule("0 8 * * *", async () => {
         console.log("⏰ Reminder-Cronjob gestartet");
@@ -755,8 +759,8 @@ async function analyzeContract(pdfText) {
     const PORT = process.env.PORT || 5000;
     app.listen(PORT, () => {
       console.log(`🚀 Server läuft auf Port ${PORT}`);
-      console.log(`📁 Static files serviert unter: ${API_BASE_URL}/uploads`); // ✅ NEU
-      console.log(`📁 Upload-Ordner: ${UPLOAD_PATH}`); // ✅ NEU: Upload-Path Debug
+      console.log(`📁 Static files serviert unter: ${API_BASE_URL}/uploads`);
+      console.log(`📁 Upload-Ordner: ${UPLOAD_PATH}`);
       console.log(`📡 Alle wichtigen Routen sollten geladen sein`);
       console.log(`🔧 Generate-Route: POST /contracts/generate (Proxy entfernt /api/)`);
       console.log(`💾 Save-Route: POST /contracts (NEU)`);
@@ -764,9 +768,9 @@ async function analyzeContract(pdfText) {
       console.log(`🔧 Optimize-Route: POST /optimize (NEU HINZUGEFÜGT!)`);
       console.log(`🔐 Auth-Routen: /auth/*`);
       if (s3Upload && generateSignedUrl) {
-        console.log(`🔗 S3-Routes: GET /s3/view (Redirect), GET /s3/json (JSON)`); // ✅ NEU
+        console.log(`🔗 S3-Routes: GET /s3/view (Redirect), GET /s3/json (JSON)`);
       }
-      console.log(`✅ Server deployment complete!`);
+      console.log(`✅ Server deployment complete mit ZENTRALER MONGODB!`);
     });
 
   } catch (err) {
@@ -782,13 +786,20 @@ try {
   console.error("❌ Reset Business Limits konnte nicht geladen werden:", err);
 }
 
-// ✅ Graceful Shutdown Handler
-process.on('SIGTERM', () => {
+// ✅ Graceful Shutdown
+process.on('SIGTERM', async () => {
   console.log('🛑 Received SIGTERM, closing database connection...');
-  // Hier könnten wir MongoDB-Verbindungen schließen
+  if (client) {
+    await client.close();
+    console.log('📦 MongoDB connection closed');
+  }
 });
 
-process.on('SIGINT', () => {
+process.on('SIGINT', async () => {
   console.log('🛑 Received SIGINT, closing server...');
+  if (client) {
+    await client.close();
+    console.log('📦 MongoDB connection closed');
+  }
   process.exit(0);
 });

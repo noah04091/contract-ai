@@ -1,4 +1,4 @@
-// 📁 backend/routes/optimize.js - ENHANCED VERTRAGSOPTIMIERUNG
+// 📁 backend/routes/optimize.js - OPTIMIZED: Verwendet zentrale MongoDB-Verbindung
 const express = require("express");
 const multer = require("multer");
 const pdfParse = require("pdf-parse");
@@ -6,7 +6,7 @@ const fs = require("fs").promises;
 const fsSync = require("fs");
 const { OpenAI } = require("openai");
 const verifyToken = require("../middleware/verifyToken");
-const { MongoClient, ObjectId } = require("mongodb");
+const { ObjectId } = require("mongodb");
 
 const router = express.Router();
 const upload = multer({ dest: "uploads/" });
@@ -20,7 +20,7 @@ const getOpenAI = () => {
     }
     openaiInstance = new OpenAI({ 
       apiKey: process.env.OPENAI_API_KEY,
-      timeout: 60000, // Längerer Timeout für komplexe Optimierung
+      timeout: 60000,
       maxRetries: 3
     });
     console.log("🔧 OpenAI-Instance für Optimierung initialisiert");
@@ -28,37 +28,8 @@ const getOpenAI = () => {
   return openaiInstance;
 };
 
-// MongoDB Setup
-const mongoUri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
-let mongoClient = null;
-let optimizationCollection = null;
-let usersCollection = null;
-
-const getMongoCollections = async () => {
-  if (!mongoClient) {
-    mongoClient = new MongoClient(mongoUri, {
-      maxPoolSize: 10,
-      serverSelectionTimeoutMS: 5000,
-      socketTimeoutMS: 60000,
-    });
-    await mongoClient.connect();
-    const db = mongoClient.db("contract_ai");
-    optimizationCollection = db.collection("optimizations");
-    usersCollection = db.collection("users");
-    console.log("🔧 MongoDB-Collections für Optimierung initialisiert");
-  }
-  return { optimizationCollection, usersCollection };
-};
-
-// Initialize on startup
-(async () => {
-  try {
-    await getMongoCollections();
-    console.log("🔧 Verbunden mit der Optimierung-Collection");
-  } catch (err) {
-    console.error("❌ MongoDB-Fehler (optimize.js):", err);
-  }
-})();
+// ✅ OPTIMIZED: Keine eigene MongoDB-Verbindung mehr - verwendet req.db
+// Alle MongoDB-Setup entfernt - wird jetzt von server.js bereitgestellt
 
 // ✅ ENHANCED: Premium Optimierungs-Prompt für bessere Ergebnisse
 const createOptimizationPrompt = (contractText, contractType, fileName) => {
@@ -115,7 +86,7 @@ STIL:
 - Fokus auf die 3-5 wichtigsten Optimierungen`;
 };
 
-// ✅ HAUPTROUTE: POST /optimize - Enhanced Vertragsoptimierung
+// ✅ HAUPTROUTE: POST /optimize - Enhanced Vertragsoptimierung mit zentraler DB
 router.post("/", verifyToken, upload.single("file"), async (req, res) => {
   const requestId = `opt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   console.log(`🔧 [${requestId}] Enhanced Optimierung-Request:`, {
@@ -142,13 +113,14 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
     tempFilePath = req.file.path;
     console.log(`📁 [${requestId}] Temp-Datei erstellt: ${tempFilePath}`);
 
-    // ✅ MongoDB-Collections sicher abrufen
-    const { optimizationCollection, usersCollection: users } = await getMongoCollections();
+    // ✅ OPTIMIZED: Verwende zentrale DB-Verbindung von server.js
+    const optimizationCollection = req.db.collection("optimizations");
+    const usersCollection = req.db.collection("users");
     
-    console.log(`🔍 [${requestId}] Prüfe User-Limits...`);
+    console.log(`🔍 [${requestId}] Prüfe User-Limits mit zentraler DB...`);
     
     // 📊 Nutzer auslesen + Enhanced Limit-Prüfung
-    const user = await users.findOne({ _id: new ObjectId(req.user.userId) });
+    const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
 
     if (!user) {
       console.error(`❌ [${requestId}] User nicht gefunden: ${req.user.userId}`);
@@ -197,7 +169,7 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
     let parsed;
     try {
       parsed = await pdfParse(buffer, {
-        max: 100000, // Mehr Text für bessere Analyse
+        max: 100000,
         normalizeWhitespace: true,
         disableCombineTextItems: false
       });
@@ -206,7 +178,7 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
       throw new Error(`PDF-Datei konnte nicht gelesen werden: ${pdfError.message}`);
     }
     
-    const contractText = parsed.text?.slice(0, 8000) || ''; // Mehr Text für detaillierte Analyse
+    const contractText = parsed.text?.slice(0, 8000) || '';
     
     console.log(`📄 [${requestId}] PDF-Text extrahiert: ${contractText.length} Zeichen`);
 
@@ -232,7 +204,7 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
     try {
       completion = await Promise.race([
         openai.chat.completions.create({
-          model: "gpt-4", // Premium-Modell für beste Ergebnisse
+          model: "gpt-4",
           messages: [
             { 
               role: "system", 
@@ -240,8 +212,8 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
             },
             { role: "user", content: prompt },
           ],
-          temperature: 0.1, // Sehr niedrig für maximale Präzision
-          max_tokens: 3000, // Mehr Tokens für detaillierte Optimierungen
+          temperature: 0.1,
+          max_tokens: 3000,
           top_p: 0.9,
           frequency_penalty: 0.1,
           presence_penalty: 0.1
@@ -278,14 +250,14 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
       console.warn(`⚠️ [${requestId}] Kurze KI-Response: ${optimizationResult.length} Zeichen`);
     }
 
-    console.log(`🔧 [${requestId}] Optimierung erfolgreich, speichere in DB...`);
+    console.log(`🔧 [${requestId}] Optimierung erfolgreich, speichere in zentrale DB...`);
 
     // 📦 Enhanced: Verbesserte Datenstruktur
     const optimizationData = {
       userId: req.user.userId,
       contractName: req.file.originalname,
       contractType: contractType,
-      originalText: contractText.substring(0, 2000), // Mehr Context speichern
+      originalText: contractText.substring(0, 2000),
       optimizationResult: optimizationResult,
       fileSize: req.file.size,
       textLength: contractText.length,
@@ -293,13 +265,12 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
       processingTime: Date.now() - parseInt(requestId.split('_')[1]),
       createdAt: new Date(),
       requestId,
-      // Enhanced: Metadata für Analyse
       metadata: {
         userPlan: plan,
         optimizationCount: optimizationCount + 1,
         fileName: fileName,
-        categories: [], // Wird vom Frontend gefüllt
-        score: null     // Wird vom Frontend berechnet
+        categories: [],
+        score: null
       }
     };
 
@@ -313,7 +284,7 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
 
     // ✅ Enhanced: Atomic Counter Update mit Retry
     try {
-      await users.updateOne(
+      await usersCollection.updateOne(
         { _id: user._id },
         { 
           $inc: { optimizationCount: 1 },
@@ -328,7 +299,7 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
       // Non-blocking - Optimierung war erfolgreich
     }
 
-    console.log(`✅ [${requestId}] Enhanced Optimierung komplett erfolgreich`);
+    console.log(`✅ [${requestId}] Enhanced Optimierung komplett erfolgreich mit zentraler DB`);
 
     // 📤 Enhanced Success Response
     res.json({ 
@@ -343,14 +314,14 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
         plan: plan,
         remaining: limit === Infinity ? Infinity : Math.max(0, limit - optimizationCount - 1)
       },
-      // Enhanced: Zusätzliche Metadaten für Frontend
       metadata: {
         fileName: fileName,
         fileSize: req.file.size,
         textLength: contractText.length,
         processingTime: Date.now() - parseInt(requestId.split('_')[1]),
         model: "gpt-4",
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        usedCentralDB: true // ✅ Debug-Info
       }
     });
 
@@ -390,7 +361,7 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
     } else if (error.message.includes("Premium-Feature")) {
       errorMessage = error.message;
       errorCode = "PREMIUM_REQUIRED";
-      statusCode = 402; // Payment Required
+      statusCode = 402;
     } else if (error.message.includes("Limit erreicht")) {
       errorMessage = error.message;
       errorCode = "LIMIT_EXCEEDED";
@@ -407,7 +378,6 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
       error: errorCode,
       requestId,
       details: process.env.NODE_ENV === 'development' ? error.message : undefined,
-      // Enhanced: Hilfreiche Zusatzinfos
       help: statusCode === 402 ? "Upgrade auf Business oder Premium für KI-Optimierungen" :
             statusCode === 403 ? "Warte bis zum nächsten Monat oder upgrade dein Paket" :
             statusCode === 429 ? "Versuche es in 1-2 Minuten erneut" :
@@ -428,22 +398,21 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
           path: tempFilePath,
           error: cleanupErr.message
         });
-        // Non-blocking - Request war bereits erfolgreich
       }
     }
   }
 });
 
-// 📚 Enhanced: Optimierungsverlauf mit Pagination
+// 📚 Enhanced: Optimierungsverlauf mit Pagination - verwendet zentrale DB
 router.get("/history", verifyToken, async (req, res) => {
   const requestId = `opt_hist_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   
   try {
     console.log(`📚 [${requestId}] Optimierung-Historie angefordert für User: ${req.user.userId}`);
     
-    const { optimizationCollection } = await getMongoCollections();
+    // ✅ OPTIMIZED: Verwende zentrale DB
+    const optimizationCollection = req.db.collection("optimizations");
     
-    // Enhanced: Pagination Support
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 20;
     const skip = (page - 1) * limit;
@@ -460,14 +429,14 @@ router.get("/history", verifyToken, async (req, res) => {
           createdAt: 1,
           requestId: 1,
           metadata: 1,
-          optimizationResult: { $substr: ["$optimizationResult", 0, 200] } // Nur Preview
+          optimizationResult: { $substr: ["$optimizationResult", 0, 200] }
         })
         .toArray(),
       
       optimizationCollection.countDocuments({ userId: req.user.userId })
     ]);
 
-    console.log(`📚 [${requestId}] ${history.length}/${totalCount} Optimierung-Einträge gefunden`);
+    console.log(`📚 [${requestId}] ${history.length}/${totalCount} Optimierung-Einträge gefunden (zentrale DB)`);
 
     res.json({
       success: true,
@@ -482,7 +451,8 @@ router.get("/history", verifyToken, async (req, res) => {
         hasPrev: page > 1
       },
       count: history.length,
-      totalCount: totalCount
+      totalCount: totalCount,
+      usedCentralDB: true // ✅ Debug-Info
     });
 
   } catch (err) {
@@ -502,28 +472,31 @@ router.get("/health", async (req, res) => {
     service: "Enhanced Contract Optimization",
     status: "online",
     timestamp: new Date().toISOString(),
-    version: "2.0.0",
+    version: "2.0.0-centralized",
     openaiConfigured: !!process.env.OPENAI_API_KEY,
     openaiModel: "gpt-4",
-    mongoConnected: false,
+    mongoConnected: !!req.db,
+    centralDB: true, // ✅ Verwendet zentrale DB
     uploadsPath: fsSync.existsSync("./uploads"),
     features: {
       premiumOptimization: true,
       structuredParsing: true,
       enhancedPrompts: true,
       intelligentErrors: true,
-      historyPagination: true
+      historyPagination: true,
+      centralizedDB: true // ✅ NEU
     }
   };
 
   try {
-    await getMongoCollections();
-    checks.mongoConnected = true;
-    
-    // Enhanced: DB Performance Check
-    const startTime = Date.now();
-    await optimizationCollection.findOne({}, { limit: 1 });
-    checks.dbResponseTime = Date.now() - startTime;
+    if (req.db) {
+      // Enhanced: DB Performance Check mit zentraler DB
+      const startTime = Date.now();
+      await req.db.collection("optimizations").findOne({}, { limit: 1 });
+      checks.dbResponseTime = Date.now() - startTime;
+      checks.dbPerformance = checks.dbResponseTime < 100 ? 'excellent' : 
+                            checks.dbResponseTime < 500 ? 'good' : 'slow';
+    }
     
   } catch (err) {
     checks.mongoConnected = false;
@@ -538,12 +511,13 @@ router.get("/health", async (req, res) => {
   });
 });
 
-// ✅ NEW: Einzelne Optimierung abrufen
+// ✅ NEW: Einzelne Optimierung abrufen - verwendet zentrale DB
 router.get("/:id", verifyToken, async (req, res) => {
   const requestId = `opt_get_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   
   try {
-    const { optimizationCollection } = await getMongoCollections();
+    // ✅ OPTIMIZED: Verwende zentrale DB
+    const optimizationCollection = req.db.collection("optimizations");
     
     const optimization = await optimizationCollection.findOne({
       _id: new ObjectId(req.params.id),
@@ -562,7 +536,8 @@ router.get("/:id", verifyToken, async (req, res) => {
     res.json({
       success: true,
       requestId,
-      optimization: optimization
+      optimization: optimization,
+      usedCentralDB: true // ✅ Debug-Info
     });
 
   } catch (err) {
@@ -576,22 +551,7 @@ router.get("/:id", verifyToken, async (req, res) => {
   }
 });
 
-// ✅ Enhanced Graceful Shutdown
-process.on('SIGTERM', async () => {
-  console.log('🔧 Enhanced Optimize service shutting down...');
-  if (mongoClient) {
-    await mongoClient.close();
-    console.log('📦 MongoDB connection closed');
-  }
-});
-
-process.on('SIGINT', async () => {
-  console.log('🔧 Enhanced Optimize service received SIGINT...');
-  if (mongoClient) {
-    await mongoClient.close();
-    console.log('📦 MongoDB connection closed');
-  }
-  process.exit(0);
-});
+// ✅ OPTIMIZED: Kein Graceful Shutdown nötig - zentrale DB wird von server.js verwaltet
+// Alle MongoDB-Verbindungs-Management entfernt
 
 module.exports = router;
