@@ -598,6 +598,7 @@ export default function Optimizer() {
       return;
     }
 
+    // ✅ ESLint Fix: Deklarationen vor switch-Statement
     const categoryNames = {
       'termination': 'Kündigungsregelungen',
       'liability': 'Haftungsklauseln', 
@@ -610,7 +611,7 @@ export default function Optimizer() {
 
     let pitch = "";
 
-    // ✅ PHASE 2: Style-spezifische Pitch-Generierung mit geschweiften Klammern für ESLint
+    // ✅ PHASE 2: Style-spezifische Pitch-Generierung
     switch (style) {
       case 'lawyer': {
         pitch = `Sehr geehrte Kolleginnen und Kollegen,
@@ -683,7 +684,7 @@ Mit freundlichen Grüßen`;
       }
 
       default: {
-        // Business-Stil als Fallback - direkter String
+        // Business-Stil als Fallback
         pitch = `Sehr geehrte Damen und Herren,
 
 nach einer KI-gestützten Vertragsanalyse möchte ich ${implementedSuggestions.length} Optimierungsvorschläge unterbreiten:
