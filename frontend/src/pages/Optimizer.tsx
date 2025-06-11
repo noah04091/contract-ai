@@ -61,7 +61,7 @@ interface PitchStyle {
   target: 'lawyer' | 'business' | 'private';
 }
 
-// ✅ ENHANCED: Verbesserte Parsing-Logik für mehr Optimierungen
+// ✅ ENHANCED: Verbesserte Parsing-Logik für mehr Optimierungen - ESLint-konform
 const parseOptimizationResult = (aiText: string, fileName: string): OptimizationSuggestion[] => {
   const optimizations: OptimizationSuggestion[] = [];
   
@@ -84,13 +84,13 @@ const parseOptimizationResult = (aiText: string, fileName: string): Optimization
   allSections.forEach((section, index) => {
     if (section.trim().length < 40) return;
     
-    // 🔧 ENHANCED: Bessere Kategorisierung
+    // 🔧 ENHANCED: Bessere Kategorisierung mit if-else statt switch
     let category: OptimizationSuggestion['category'] = 'clarity';
     let priority: OptimizationSuggestion['priority'] = 'medium';
     
     const lowerSection = section.toLowerCase();
     
-    // Bessere Keyword-Erkennung
+    // ✅ ESLint Fix: if-else statt switch für Kategorisierung
     if (lowerSection.includes('kündigung') || lowerSection.includes('laufzeit') || lowerSection.includes('frist') || lowerSection.includes('kündigungsfristen')) {
       category = 'termination';
       priority = lowerSection.includes('kurz') || lowerSection.includes('lange') ? 'high' : 'medium';
@@ -147,17 +147,35 @@ const parseOptimizationResult = (aiText: string, fileName: string): Optimization
       }
     }
 
-    // 🔧 ENHANCED: Bessere Savings-Schätzungen
-    const estimatedSavings = category === 'payment' ? `~${800 + Math.floor(Math.random() * 2000)}€/Jahr` : 
-                           category === 'termination' ? `~${400 + Math.floor(Math.random() * 800)}€ Flexibilität` :
-                           category === 'liability' ? `Risikoreduktion ~${5 + Math.floor(Math.random() * 15)}k€` :
-                           'Risikoreduzierung';
+    // 🔧 ENHANCED: Bessere Savings-Schätzungen mit if-else
+    let estimatedSavings = 'Risikoreduzierung';
+    if (category === 'payment') {
+      estimatedSavings = `~${800 + Math.floor(Math.random() * 2000)}€/Jahr`;
+    } else if (category === 'termination') {
+      estimatedSavings = `~${400 + Math.floor(Math.random() * 800)}€ Flexibilität`;
+    } else if (category === 'liability') {
+      estimatedSavings = `Risikoreduktion ~${5 + Math.floor(Math.random() * 15)}k€`;
+    }
 
-    // 🔧 ENHANCED: Market Benchmarks
-    const marketBenchmark = category === 'termination' ? `${60 + Math.floor(Math.random() * 30)}% der Verträge haben kürzere Fristen` :
-                          category === 'liability' ? `${70 + Math.floor(Math.random() * 25)}% begrenzen Haftung` :
-                          category === 'payment' ? `${80 + Math.floor(Math.random() * 15)}% haben kürzere Zahlungsfristen` :
-                          `Basierend auf ${fileName} Analyse`;
+    // 🔧 ENHANCED: Market Benchmarks mit if-else
+    let marketBenchmark = `Basierend auf ${fileName} Analyse`;
+    if (category === 'termination') {
+      marketBenchmark = `${60 + Math.floor(Math.random() * 30)}% der Verträge haben kürzere Fristen`;
+    } else if (category === 'liability') {
+      marketBenchmark = `${70 + Math.floor(Math.random() * 25)}% begrenzen Haftung`;
+    } else if (category === 'payment') {
+      marketBenchmark = `${80 + Math.floor(Math.random() * 15)}% haben kürzere Zahlungsfristen`;
+    }
+
+    // Implementation Difficulty mit if-else
+    let implementationDifficulty: 'easy' | 'medium' | 'complex' = 'easy';
+    if (category === 'liability') {
+      implementationDifficulty = 'complex';
+    } else if (category === 'compliance') {
+      implementationDifficulty = 'medium';
+    } else {
+      implementationDifficulty = Math.random() > 0.6 ? 'medium' : 'easy';
+    }
 
     optimizations.push({
       id: `opt_${Date.now()}_${index}_${Math.random().toString(36).substr(2, 4)}`,
@@ -173,9 +191,7 @@ const parseOptimizationResult = (aiText: string, fileName: string): Optimization
       businessImpact: priority === 'critical' ? 7 + Math.floor(Math.random() * 2) : 
                      priority === 'high' ? 5 + Math.floor(Math.random() * 2) : 
                      3 + Math.floor(Math.random() * 3),
-      implementationDifficulty: category === 'liability' ? 'complex' : 
-                               category === 'compliance' ? 'medium' : 
-                               Math.random() > 0.6 ? 'medium' : 'easy',
+      implementationDifficulty,
       estimatedSavings,
       marketBenchmark,
       implemented: false,
@@ -685,52 +701,44 @@ Mit freundlichen Grüßen`
     setShowPitchMenu(false);
   }, [optimizations, contractScore, calculateNewScore, selectedPitchStyle]);
 
-  // ✅ PHASE 2: Export Funktionen
+  // ✅ PHASE 2: Export Funktionen - ESLint-konform ohne switch
   const handleExport = useCallback(async (exportType: string) => {
-    switch (exportType) {
-      case 'pdf_marked':
-        // PDF Export Logic
-        setError("📄 PDF-Export wird vorbereitet...");
-        setTimeout(() => {
-          setError("✅ PDF-Export erfolgreich! Download startet...");
-          setTimeout(() => setError(null), 2000);
-        }, 1500);
-        break;
-
-      case 'word_comments':
-        // Word Export Logic
-        setError("📝 Word-Dokument wird generiert...");
-        setTimeout(() => {
-          setError("✅ Word-Dokument mit Kommentaren erstellt!");
-          setTimeout(() => setError(null), 2000);
-        }, 1500);
-        break;
-
-      case 'excel_comparison':
-        // Excel Export Logic
-        const csvContent = `Kategorie,Original,Verbesserung,Begründung,Priorität,Confidence,Estimierte Ersparnisse\n` +
-          optimizations.map(opt => 
-            `"${opt.category}","${opt.original.replace(/"/g, '""')}","${opt.improved.replace(/"/g, '""')}","${opt.reasoning.replace(/"/g, '""')}","${opt.priority}","${opt.confidence}%","${opt.estimatedSavings}"`
-          ).join('\n');
-        
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `Vertragsanalyse_${file?.name?.replace('.pdf', '')}_${new Date().toISOString().split('T')[0]}.csv`;
-        link.click();
-        
-        setError("✅ Excel-Vergleichstabelle heruntergeladen!");
+    // ✅ ESLint Fix: if-else statt switch für Export-Logic
+    if (exportType === 'pdf_marked') {
+      // PDF Export Logic
+      setError("📄 PDF-Export wird vorbereitet...");
+      setTimeout(() => {
+        setError("✅ PDF-Export erfolgreich! Download startet...");
         setTimeout(() => setError(null), 2000);
-        break;
-
-      case 'email_template':
-        // Email Template Export
-        generatePitch(selectedPitchStyle);
-        break;
-
-      default:
-        setError("❌ Export-Format nicht unterstützt");
+      }, 1500);
+    } else if (exportType === 'word_comments') {
+      // Word Export Logic
+      setError("📝 Word-Dokument wird generiert...");
+      setTimeout(() => {
+        setError("✅ Word-Dokument mit Kommentaren erstellt!");
         setTimeout(() => setError(null), 2000);
+      }, 1500);
+    } else if (exportType === 'excel_comparison') {
+      // Excel Export Logic
+      const csvContent = `Kategorie,Original,Verbesserung,Begründung,Priorität,Confidence,Estimierte Ersparnisse\n` +
+        optimizations.map(opt => 
+          `"${opt.category}","${opt.original.replace(/"/g, '""')}","${opt.improved.replace(/"/g, '""')}","${opt.reasoning.replace(/"/g, '""')}","${opt.priority}","${opt.confidence}%","${opt.estimatedSavings}"`
+        ).join('\n');
+      
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `Vertragsanalyse_${file?.name?.replace('.pdf', '')}_${new Date().toISOString().split('T')[0]}.csv`;
+      link.click();
+      
+      setError("✅ Excel-Vergleichstabelle heruntergeladen!");
+      setTimeout(() => setError(null), 2000);
+    } else if (exportType === 'email_template') {
+      // Email Template Export
+      generatePitch(selectedPitchStyle);
+    } else {
+      setError("❌ Export-Format nicht unterstützt");
+      setTimeout(() => setError(null), 2000);
     }
     
     setShowExportMenu(false);
