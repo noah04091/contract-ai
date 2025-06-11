@@ -206,8 +206,8 @@ const parseOptimizationResult = (aiText: string, fileName: string): Optimization
   return optimizations.slice(0, 8); // Maximal 8 Optimierungen für bessere UX
 };
 
-// 🔧 PHASE 1 FIX: Dynamische Score-Berechnung für Live-Simulation
-const calculateContractScore = (optimizations: OptimizationSuggestion[], implementedCount: number = 0): ContractHealthScore => {
+// 🔧 FIXED: Korrekte Score-Berechnung für Live-Simulation
+const calculateContractScore = (optimizations: OptimizationSuggestion[]): ContractHealthScore => {
   if (optimizations.length === 0) {
     return {
       overall: 85,
@@ -223,48 +223,53 @@ const calculateContractScore = (optimizations: OptimizationSuggestion[], impleme
     };
   }
 
-  const criticalCount = optimizations.filter(opt => opt.priority === 'critical').length;
-  const highCount = optimizations.filter(opt => opt.priority === 'high').length;
-  const mediumCount = optimizations.filter(opt => opt.priority === 'medium').length;
+  // Basis-Score Berechnung
+  const criticalCount = optimizations.filter(opt => opt.priority === 'critical' && !opt.implemented).length;
+  const highCount = optimizations.filter(opt => opt.priority === 'high' && !opt.implemented).length;
+  const mediumCount = optimizations.filter(opt => opt.priority === 'medium' && !opt.implemented).length;
   
-  // 🔧 ENHANCED: Bessere Score-Berechnung
-  let baseScore = 92; // Höherer Basis-Score
-  baseScore -= criticalCount * 18; // -18 pro kritisches Problem
-  baseScore -= highCount * 10;     // -10 pro hohes Problem  
-  baseScore -= mediumCount * 4;    // -4 pro mittleres Problem
-  baseScore = Math.max(25, baseScore); // Minimum 25
+  let baseScore = 92;
+  baseScore -= criticalCount * 18;
+  baseScore -= highCount * 10;
+  baseScore -= mediumCount * 4;
+  baseScore = Math.max(25, baseScore);
 
-  // 🔧 PHASE 1 FIX: Live-Simulation Bonus
-  const improvementBonus = implementedCount * (30 / optimizations.length); // Max 30 Punkte Verbesserung
-  const simulatedScore = Math.min(100, Math.round(baseScore + improvementBonus));
+  // 🔧 FIXED: Implementierte Optimierungen bringen Score-Bonus
+  const implementedCount = optimizations.filter(opt => opt.implemented).length;
+  const improvementBonus = implementedCount * 5; // +5 Punkte pro implementierte Optimierung
+  const finalScore = Math.min(100, Math.round(baseScore + improvementBonus));
 
-  // Kategorie-spezifische Scores
+  // Kategorie-spezifische Scores mit cleaner Math
   const categoryScores = {
-    termination: baseScore,
-    liability: baseScore,
-    payment: baseScore,
-    clarity: baseScore,
-    compliance: baseScore
+    termination: Math.round(baseScore),
+    liability: Math.round(baseScore),
+    payment: Math.round(baseScore),
+    clarity: Math.round(baseScore),
+    compliance: Math.round(baseScore)
   };
 
-  // Anpassung basierend auf gefundenen Kategorien mit Live-Simulation
+  // Kategorie-spezifische Anpassungen
   optimizations.forEach(opt => {
-    const reduction = opt.priority === 'critical' ? 15 : opt.priority === 'high' ? 8 : 4;
-    const currentReduction = opt.implemented ? reduction * 0.1 : reduction; // 90% Reduktion wenn implementiert
-    categoryScores[opt.category] = Math.max(15, categoryScores[opt.category] - currentReduction);
+    if (!opt.implemented) {
+      const reduction = opt.priority === 'critical' ? 15 : opt.priority === 'high' ? 8 : 4;
+      categoryScores[opt.category] = Math.max(15, Math.round(categoryScores[opt.category] - reduction));
+    } else {
+      // Bonus für implementierte Optimierungen
+      categoryScores[opt.category] = Math.min(100, Math.round(categoryScores[opt.category] + 3));
+    }
   });
 
   return {
-    overall: simulatedScore,
+    overall: Math.round(finalScore),
     categories: {
-      termination: { score: categoryScores.termination, trend: categoryScores.termination < baseScore ? 'down' : 'stable' },
-      liability: { score: categoryScores.liability, trend: categoryScores.liability < baseScore ? 'down' : 'stable' },
-      payment: { score: categoryScores.payment, trend: categoryScores.payment < baseScore ? 'down' : 'stable' },
-      clarity: { score: categoryScores.clarity, trend: categoryScores.clarity < baseScore ? 'down' : 'stable' },
-      compliance: { score: categoryScores.compliance, trend: categoryScores.compliance < baseScore ? 'down' : 'stable' }
+      termination: { score: Math.round(categoryScores.termination), trend: 'stable' },
+      liability: { score: Math.round(categoryScores.liability), trend: 'stable' },
+      payment: { score: Math.round(categoryScores.payment), trend: 'stable' },
+      clarity: { score: Math.round(categoryScores.clarity), trend: 'stable' },
+      compliance: { score: Math.round(categoryScores.compliance), trend: 'stable' }
     },
-    industryPercentile: Math.max(10, simulatedScore - 20),
-    riskLevel: simulatedScore < 40 ? 'critical' : simulatedScore < 60 ? 'high' : simulatedScore < 80 ? 'medium' : 'low'
+    industryPercentile: Math.max(10, Math.round(finalScore - 20)),
+    riskLevel: finalScore < 40 ? 'critical' : finalScore < 60 ? 'high' : finalScore < 80 ? 'medium' : 'low'
   };
 };
 
@@ -345,8 +350,7 @@ export default function Optimizer() {
   // 🔧 PHASE 1 FIX: Score-Update bei Optimierung-Changes
   useEffect(() => {
     if (optimizations.length > 0) {
-      const implementedCount = optimizations.filter(opt => opt.implemented).length;
-      const updatedScore = calculateContractScore(optimizations, implementedCount);
+      const updatedScore = calculateContractScore(optimizations);
       setContractScore(updatedScore);
     }
   }, [optimizations]);
@@ -390,7 +394,7 @@ export default function Optimizer() {
       // ✅ PHASE 1 FIX: Verbesserte Verarbeitung der OpenAI-Response
       if (data.optimizationResult && data.optimizationResult.trim()) {
         const parsedOptimizations = parseOptimizationResult(data.optimizationResult, file.name);
-        const calculatedScore = calculateContractScore(parsedOptimizations, 0);
+        const calculatedScore = calculateContractScore(parsedOptimizations);
         
         setOptimizations(parsedOptimizations);
         setContractScore(calculatedScore);
@@ -477,12 +481,11 @@ export default function Optimizer() {
     }
   }, []);
 
-  // 🔧 PHASE 1 FIX: Funktionale Live-Simulation
+  // 🔧 PHASE 1 FIX: Funktionale Live-Simulation - berechnet neuen Score basierend auf aktuellen Optimierungen
   const calculateNewScore = useCallback(() => {
-    if (!contractScore) return 0;
-    const implementedCount = optimizations.filter(opt => opt.implemented).length;
-    return calculateContractScore(optimizations, implementedCount).overall;
-  }, [optimizations, contractScore]);
+    if (!optimizations.length) return 0;
+    return calculateContractScore(optimizations).overall;
+  }, [optimizations]);
 
   // 🔧 PHASE 1 FIX: Funktionaler Toggle mit State-Update
   const toggleSuggestion = useCallback((id: string) => {
@@ -490,12 +493,6 @@ export default function Optimizer() {
       const updated = prev.map(opt => 
         opt.id === id ? { ...opt, implemented: !opt.implemented } : opt
       );
-      
-      // Trigger Score-Update
-      const implementedCount = updated.filter(opt => opt.implemented).length;
-      const newScore = calculateContractScore(updated, implementedCount);
-      setContractScore(newScore);
-      
       return updated;
     });
   }, []);
@@ -533,7 +530,7 @@ ${implementedSuggestions.map((opt, index) =>
    📈 Marktstandard: ${opt.marketBenchmark}
 `).join('\n')}
 
-Diese KI-basierten Empfehlungen würden unseren Vertragsscore von ${contractScore?.overall || 0} auf ${calculateNewScore()} Punkte verbessern (+${improvementScore} Punkte).
+Diese KI-basierten Empfehlungen würden unseren Vertragsscore von ${contractScore?.overall || 0} auf ${calculateNewScore()} Punkte verbessern (+${Math.max(0, improvementScore)} Punkte).
 
 Die Anpassungen entsprechen modernen Marktstandards und schaffen eine ausgewogenere, rechtssichere Grundlage für unsere Zusammenarbeit.
 
@@ -1240,9 +1237,9 @@ Mit freundlichen Grüßen`;
                     <div>
                       <h6 style={{ margin: '0 0 0.5rem', color: '#34c759' }}>Score-Verbesserung</h6>
                       <p style={{ margin: 0, fontSize: '1.2rem', fontWeight: 600 }}>
-                        {contractScore?.overall} → {calculateNewScore()} Punkte 
+                        {contractScore?.overall || 0} → {calculateNewScore()} Punkte 
                         <span style={{ color: '#34c759' }}>
-                          (+{calculateNewScore() - (contractScore?.overall || 0)})
+                          (+{Math.max(0, calculateNewScore() - (contractScore?.overall || 0))})
                         </span>
                       </p>
                     </div>

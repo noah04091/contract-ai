@@ -1,4 +1,4 @@
-// 📁 src/components/ContractHealthDashboard.tsx
+// 📁 src/components/ContractHealthDashboard.tsx - FIXED SCORE DISPLAY
 import React from "react";
 import { motion } from "framer-motion";
 import { Globe, Zap, TrendingUp } from "lucide-react";
@@ -23,8 +23,9 @@ const ContractHealthDashboard: React.FC<ContractHealthDashboardProps> = ({
     return '#d70015';
   };
 
-  const currentScore = showSimulation ? newScore : score.overall;
-  const improvement = newScore - score.overall;
+  // 🔧 FIXED: Saubere Score-Darstellung ohne Precision-Probleme
+  const currentScore = Math.round(showSimulation ? newScore : score.overall);
+  const improvement = Math.round(newScore - score.overall);
 
   const categoryLabels = {
     termination: 'Kündigung',
@@ -48,11 +49,11 @@ const ContractHealthDashboard: React.FC<ContractHealthDashboardProps> = ({
 
       <div className={styles.content}>
         <div className={styles.header}>
-          <div className={styles.titleSection}>
+          <div>
             <h3 className={styles.title}>Vertragsgesundheit</h3>
             <div className={styles.subtitle}>
               <Globe size={14} />
-              <span>{score.industryPercentile}. Perzentil in deiner Branche</span>
+              <span>{Math.round(score.industryPercentile)}. Perzentil in deiner Branche</span>
             </div>
           </div>
           
@@ -69,6 +70,7 @@ const ContractHealthDashboard: React.FC<ContractHealthDashboardProps> = ({
           </div>
         </div>
 
+        {/* 🔧 FIXED: Simulation Banner mit korrekter Improvement-Anzeige */}
         {showSimulation && improvement > 0 && (
           <motion.div
             className={styles.simulationBanner}
@@ -94,8 +96,8 @@ const ContractHealthDashboard: React.FC<ContractHealthDashboardProps> = ({
                   {categoryLabels[category as keyof typeof categoryLabels]}
                 </span>
                 <div className={styles.categoryScore}>
-                  <span style={{ color: scoreColor(data.score) }}>
-                    {data.score}
+                  <span style={{ color: scoreColor(Math.round(data.score)) }}>
+                    {Math.round(data.score)}
                   </span>
                   {data.trend === 'up' && <TrendingUp size={12} className={styles.trendUp} />}
                   {data.trend === 'down' && <TrendingUp size={12} className={styles.trendDown} />}
@@ -104,9 +106,9 @@ const ContractHealthDashboard: React.FC<ContractHealthDashboardProps> = ({
               <div className={styles.progressBar}>
                 <motion.div
                   className={styles.progressFill}
-                  style={{ backgroundColor: scoreColor(data.score) }}
+                  style={{ backgroundColor: scoreColor(Math.round(data.score)) }}
                   initial={{ width: 0 }}
-                  animate={{ width: `${data.score}%` }}
+                  animate={{ width: `${Math.round(data.score)}%` }}
                   transition={{ duration: 1, delay: 0.5 }}
                 />
               </div>
