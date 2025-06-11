@@ -610,9 +610,9 @@ export default function Optimizer() {
 
     let pitch = "";
 
-    // ✅ PHASE 2: Style-spezifische Pitch-Generierung
+    // ✅ PHASE 2: Style-spezifische Pitch-Generierung mit geschweiften Klammern für ESLint
     switch (style) {
-      case 'lawyer':
+      case 'lawyer': {
         pitch = `Sehr geehrte Kolleginnen und Kollegen,
 
 nach eingehender rechtlicher Prüfung des vorliegenden Vertrags mittels KI-gestützter Analyse (Confidence-Level: 75-95%) möchte ich ${implementedSuggestions.length} substantielle Optimierungsvorschläge unterbreiten:
@@ -632,8 +632,9 @@ Sämtliche Empfehlungen basieren auf aktueller Rechtsprechung und Marktstandards
 
 Mit kollegialen Grüßen`;
         break;
+      }
 
-      case 'business':
+      case 'business': {
         pitch = `Sehr geehrte Damen und Herren,
 
 nach einer professionellen KI-gestützten Vertragsanalyse möchte ich ${implementedSuggestions.length} strategische Optimierungsvorschläge unterbreiten, die unser Vertragsverhältnis zum beiderseitigen Vorteil verbessern können:
@@ -655,8 +656,9 @@ Gerne diskutiere ich diese Optimierungen in einem strategischen Meeting.
 
 Mit freundlichen Grüßen`;
         break;
+      }
 
-      case 'private':
+      case 'private': {
         pitch = `Liebe Vertragspartner,
 
 ich habe unseren Vertrag von einer modernen KI analysieren lassen und dabei ${implementedSuggestions.length} Verbesserungsvorschläge erhalten, die uns beiden zugutekommen könnten:
@@ -678,8 +680,9 @@ Falls Sie Interesse haben, können wir das gerne bei einem Kaffee besprechen.
 
 Mit freundlichen Grüßen`;
         break;
+      }
 
-      default:
+      default: {
         // Business-Stil als Fallback - direkter String
         pitch = `Sehr geehrte Damen und Herren,
 
@@ -694,6 +697,7 @@ Score-Verbesserung: ${contractScore?.overall || 0} → ${calculateNewScore()} Pu
 
 Mit freundlichen Grüßen`;
         break;
+      }
     }
 
     navigator.clipboard.writeText(pitch);
