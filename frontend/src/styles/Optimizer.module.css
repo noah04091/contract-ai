@@ -1,9 +1,10 @@
-/* Optimizer.module.css */
-@import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600&display=swap');
+/* 📁 src/styles/Optimizer.module.css */
+@import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700;800&display=swap');
 
-.pageContainer {
+/* ✨ ROOT VARIABLES */
+.optimizer {
   --apple-blue: #0071e3;
-  --apple-blue-dark: #0058b3;
+  --apple-blue-dark: #005bb5;
   --apple-gray-50: #f5f5f7;
   --apple-gray-100: #e8e8ed;
   --apple-gray-200: #d2d2d7;
@@ -13,415 +14,391 @@
   --apple-gray-800: #1d1d1f;
   --success-green: #34c759;
   --error-red: #ff453a;
-
+  --warning-orange: #ff9500;
+  --purple: #5856d6;
+  
   font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
-  background-color: var(--apple-gray-50);
+  background: linear-gradient(135deg, #f5f5f7 0%, #fafafa 100%);
   min-height: 100vh;
-  display: flex;
-  justify-content: center;
+  position: relative;
+}
+
+/* ✨ BACKGROUND ELEMENTS */
+.backgroundGradient {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 20% 80%, rgba(0, 113, 227, 0.08) 0%, transparent 50%), 
+              radial-gradient(circle at 80% 20%, rgba(255, 149, 0, 0.08) 0%, transparent 50%);
+  pointer-events: none;
 }
 
 .container {
-  max-width: 900px;
+  max-width: 1200px;
   width: 100%;
   margin: 0 auto;
-  padding: 2rem;
-  color: var(--apple-gray-800);
+  padding: 3rem 2rem;
+  position: relative;
+  z-index: 1;
 }
 
-/* Header Styling */
+/* ✨ HEADER STYLES */
 .header {
-  margin-bottom: 2.5rem;
-  max-width: 800px;
-  margin-left: auto;
-  margin-right: auto;
+  margin-bottom: 3rem;
   text-align: center;
 }
 
 .title {
-  font-size: 2.2rem;
-  font-weight: 500;
-  margin: 0 0 0.8rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.8rem;
-  letter-spacing: -0.02em;
-  color: var(--apple-gray-800);
-}
-
-.titleIcon {
-  color: var(--apple-blue);
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: 800;
+  margin: 0 0 1rem;
+  background: linear-gradient(135deg, #1d1d1f 0%, #0071e3 50%, #5856d6 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  animation: gradientShift 8s ease infinite;
+  background-size: 200% 200%;
 }
 
 .subtitle {
-  font-size: 1.1rem;
+  font-size: 1.3rem;
   font-weight: 400;
-  margin: 0;
+  margin: 0 auto 2rem;
   color: var(--apple-gray-400);
-  max-width: 700px;
-  margin-left: auto;
-  margin-right: auto;
+  max-width: 800px;
   line-height: 1.5;
 }
 
-/* Premium Notice Styling */
-.premiumNotice {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(20px);
-  border-radius: 16px;
-  padding: 1.5rem 2rem;
-  margin-bottom: 2.5rem;
+.featurePills {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.featurePill {
   display: flex;
   align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.2rem;
+  background-color: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--apple-gray-800);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.featurePill:hover {
+  transform: scale(1.05) translateY(-2px);
+}
+
+/* ✨ UPLOAD AREA */
+.uploadArea {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.6) 100%);
+  backdrop-filter: blur(40px);
+  border: 2px dashed rgba(0, 0, 0, 0.1);
+  border-radius: 24px;
+  padding: 4rem 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 3rem;
+}
+
+.uploadArea.dragActive {
+  background: linear-gradient(135deg, rgba(0, 113, 227, 0.1) 0%, rgba(0, 113, 227, 0.05) 100%);
+  border-color: rgba(0, 113, 227, 0.5);
+  transform: scale(1.02);
+}
+
+.uploadArea.disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.uploadArea:hover:not(.disabled) {
+  transform: scale(1.01) translateY(-2px);
+}
+
+.uploadAreaWithFile {
+  padding: 2rem;
+}
+
+.fileInfo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   gap: 1.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
-  max-width: 800px;
-  margin-left: auto;
-  margin-right: auto;
 }
 
-.premiumIcon {
-  font-size: 2.5rem;
-  color: #FFD700;
+.fileIcon {
+  padding: 1rem;
+  background-color: rgba(0, 113, 227, 0.1);
+  border-radius: 16px;
+  border: 1px solid rgba(0, 113, 227, 0.2);
 }
 
-.premiumContent {
-  flex: 1;
+.fileDetails {
+  text-align: left;
 }
 
-.premiumContent h3 {
+.fileName {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--apple-gray-800);
+  margin-bottom: 0.3rem;
+}
+
+.fileSize {
+  font-size: 0.9rem;
+  color: var(--apple-gray-400);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.uploadPrompt h3 {
   font-size: 1.3rem;
   font-weight: 600;
   margin: 0 0 0.8rem;
   color: var(--apple-gray-800);
 }
 
-.premiumContent p {
-  font-size: 1rem;
+.uploadPrompt p {
+  margin: 0 0 1rem;
   color: var(--apple-gray-400);
-  margin: 0 0 1.2rem;
+  font-size: 1.1rem;
   line-height: 1.5;
 }
 
-.upgradeButton {
-  background-color: var(--apple-blue);
-  color: white;
-  border: none;
-  padding: 0.7rem 1.5rem;
-  border-radius: 20px;
-  font-size: 0.95rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.upgradeButton:hover {
-  background-color: var(--apple-blue-dark);
-}
-
-/* Content Area */
-.contentArea {
-  max-width: 800px;
-  margin: 0 auto;
-}
-
-/* Upload Area */
-.uploadArea {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(10px);
-  border: 2px dashed var(--apple-gray-200);
-  border-radius: 16px;
-  padding: 3rem;
-  margin-bottom: 1.5rem;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.uploadArea:hover:not(.disabled) {
-  border-color: var(--apple-blue);
-  background: rgba(255, 255, 255, 0.9);
-}
-
-.dragActive {
-  border-color: var(--apple-blue);
-  background: rgba(0, 113, 227, 0.05);
-}
-
-.disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-.fileInput {
-  display: none;
-}
-
-.uploadPrompt {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-}
-
 .uploadIcon {
-  color: var(--apple-blue);
-  opacity: 0.8;
-}
-
-.uploadPrompt p {
-  margin: 0;
-  color: var(--apple-gray-500);
-  font-size: 1.1rem;
+  margin-bottom: 1.5rem;
+  filter: drop-shadow(0 4px 8px rgba(0, 113, 227, 0.2));
 }
 
 .premiumHint {
-  margin-top: 0.5rem !important;
-  font-size: 0.9rem !important;
-  color: var(--apple-gray-400) !important;
-  font-style: italic;
-}
-
-/* File Info Display */
-.fileInfo {
   display: flex;
-  flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
-}
-
-.fileIcon {
-  color: var(--apple-blue);
-  margin-bottom: 0.5rem;
-}
-
-.fileName {
-  font-weight: 500;
-  font-size: 1.1rem;
-  margin-bottom: 0.2rem;
-  color: var(--apple-gray-800);
-}
-
-.fileSize {
+  color: var(--error-red);
   font-size: 0.9rem;
-  color: var(--apple-gray-400);
+  font-weight: 500;
 }
 
-/* Button Container */
-.buttonContainer {
+/* ✨ BUTTONS */
+.actionButtons {
   display: flex;
   gap: 1rem;
   justify-content: center;
-  margin-bottom: 2rem;
+  margin-top: 2rem;
 }
 
-.analyzeButton, .resetButton {
-  font-family: inherit;
+.primaryButton {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  padding: 0.9rem 1.8rem;
-  border-radius: 10px;
-  font-size: 1rem;
-  font-weight: 500;
+  gap: 0.8rem;
+  padding: 1.2rem 2.5rem;
+  border-radius: 16px;
+  font-size: 1.1rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
   border: none;
-}
-
-.analyzeButton {
-  background-color: var(--apple-blue);
+  background: linear-gradient(135deg, var(--apple-blue) 0%, var(--apple-blue-dark) 100%);
   color: white;
-  min-width: 180px;
+  min-width: 220px;
+  box-shadow: 0 12px 32px rgba(0, 113, 227, 0.3);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.2s ease;
 }
 
-.analyzeButton:hover:not(:disabled) {
-  background-color: var(--apple-blue-dark);
+.primaryButton:hover:not(:disabled) {
+  transform: scale(1.02) translateY(-2px);
 }
 
-.analyzeButton:disabled {
-  opacity: 0.6;
+.primaryButton:disabled {
+  background: linear-gradient(135deg, #d2d2d7 0%, #a1a1a6 100%);
+  box-shadow: none;
   cursor: not-allowed;
 }
 
-.resetButton {
-  background-color: var(--apple-gray-100);
+.secondaryButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 1.2rem 2rem;
+  border-radius: 16px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  background-color: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
   color: var(--apple-gray-800);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+  transition: all 0.2s ease;
 }
 
-.resetButton:hover {
-  background-color: var(--apple-gray-200);
+.secondaryButton:hover {
+  transform: scale(1.02) translateY(-2px);
+  background-color: rgba(255, 255, 255, 0.9);
 }
 
-.buttonSpinner {
-  width: 18px;
-  height: 18px;
+.spinner {
+  width: 20px;
+  height: 20px;
   border: 2px solid rgba(255, 255, 255, 0.3);
   border-top-color: white;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+/* ✨ LOADING */
+.loadingContainer {
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: #f5f5f7;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* Error Message */
+.loadingContent {
+  text-align: center;
+}
+
+.loadingSpinner {
+  width: 60px;
+  height: 60px;
+  border: 3px solid rgba(0, 113, 227, 0.1);
+  border-top-color: var(--apple-blue);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+.loadingText {
+  color: var(--apple-gray-400);
+  font-size: 1.1rem;
+}
+
+/* ✨ ERROR MESSAGE */
 .errorMessage {
   display: flex;
   align-items: center;
-  gap: 0.8rem;
-  padding: 1rem 1.5rem;
-  border-radius: 10px;
+  gap: 1rem;
+  padding: 1.5rem 2rem;
+  border-radius: 16px;
   margin-bottom: 2rem;
-  background-color: rgba(255, 69, 58, 0.1);
+  background: linear-gradient(135deg, rgba(255, 69, 58, 0.1) 0%, rgba(255, 69, 58, 0.05) 100%);
   color: var(--error-red);
   font-weight: 500;
   border: 1px solid rgba(255, 69, 58, 0.2);
+  box-shadow: 0 8px 24px rgba(255, 69, 58, 0.15);
 }
 
-/* Results Container */
-.resultContainer {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(10px);
-  border-radius: 16px;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+.errorMessage span {
+  font-size: 1rem;
+}
+
+/* ✨ CARDS */
+.card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  padding: 1.5rem;
   margin-bottom: 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.06);
 }
 
-.resultHeader {
-  padding: 1.2rem 1.5rem;
-  border-bottom: 1px solid var(--apple-gray-100);
+.cardHeader {
   display: flex;
   align-items: center;
   gap: 0.8rem;
+  margin-bottom: 1.2rem;
 }
 
-.resultIcon {
-  color: var(--success-green);
-}
-
-.resultHeader h3 {
+.cardTitle {
   margin: 0;
   font-size: 1.1rem;
   font-weight: 600;
   color: var(--apple-gray-800);
 }
 
-.cards {
-  padding: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+/* ✨ ANIMATIONS */
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
-.card {
-  background: white;
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1px solid var(--apple-gray-100);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  transition: all 0.2s ease;
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
-.card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  transform: translateY(-2px);
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
 }
 
-.cardProblem, .cardSuggestion {
-  padding: 1.2rem 1.5rem;
-  display: flex;
-  gap: 1rem;
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
 }
 
-.cardProblem {
-  border-bottom: 1px solid var(--apple-gray-100);
-  background-color: rgba(255, 69, 58, 0.05);
-}
-
-.cardSuggestion {
-  background-color: rgba(52, 199, 89, 0.05);
-}
-
-.problemIcon {
-  color: var(--error-red);
-  flex-shrink: 0;
-  margin-top: 3px;
-}
-
-.suggestionIcon {
-  color: var(--success-green);
-  flex-shrink: 0;
-  margin-top: 3px;
-}
-
-.card h4 {
-  margin: 0 0 0.5rem;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--apple-gray-800);
-}
-
-.card p {
-  margin: 0;
-  font-size: 0.95rem;
-  line-height: 1.5;
-  color: var(--apple-gray-500);
-}
-
-/* Loading Container */
-.loadingContainer {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 300px;
-  gap: 1rem;
-  color: var(--apple-gray-400);
-}
-
-.loadingSpinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid rgba(0, 113, 227, 0.1);
-  border-top-color: var(--apple-blue);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-/* Responsive Styles */
+/* ✨ RESPONSIVE */
 @media (max-width: 768px) {
   .container {
-    padding: 1.5rem;
+    padding: 2rem 1rem;
   }
   
   .title {
-    font-size: 1.8rem;
+    font-size: 2.5rem;
   }
   
-  .premiumNotice {
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 1.5rem;
+  .subtitle {
+    font-size: 1.1rem;
   }
   
   .uploadArea {
     padding: 2rem 1rem;
   }
   
-  .buttonContainer {
+  .actionButtons {
     flex-direction: column;
+    align-items: center;
   }
   
-  .analyzeButton, .resetButton {
+  .primaryButton,
+  .secondaryButton {
     width: 100%;
+    max-width: 300px;
+  }
+  
+  .featurePills {
+    justify-content: center;
+  }
+  
+  .fileInfo {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .fileDetails {
+    text-align: center;
   }
 }

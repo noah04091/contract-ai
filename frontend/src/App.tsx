@@ -30,10 +30,10 @@ import ContractDetails from "./pages/ContractDetails";
 import EditContract from "./pages/EditContract";
 import Profile from "./pages/Profile";
 import CalendarView from "./pages/CalendarView";
-import Optimizer from "./pages/Optimizer";
+import Optimizer from "./pages/Optimizer"; // ✅ Legendäre KI-Vertragsoptimierung
 import Compare from "./pages/Compare";
 import Chat from "./pages/Chat";
-import Generate from "./pages/Generate"; // ✅ DAS ist deine echte Komponente!
+import Generate from "./pages/Generate";
 import Subscribe from "./pages/Subscribe";
 import Upgrade from "./pages/Upgrade";
 import BetterContracts from "./pages/BetterContracts";
@@ -54,7 +54,7 @@ function AppWithLoader() {
       <Navbar />
       <main style={{ flex: 1, paddingTop: "60px" }}>
         <Routes>
-          {/* 🔓 Öffentlich */}
+          {/* 🔓 Öffentliche Seiten */}
           <Route path="/" element={<HomeRedesign />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -70,14 +70,17 @@ function AppWithLoader() {
           <Route path="/blog" element={<Blog />} />
           <Route path="/blog/:slug" element={<BlogPost />} />
 
-          {/* 🔒 Geschützt */}
+          {/* 🔒 Geschützte Seiten */}
           <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
           <Route path="/contracts" element={<RequireAuth><Contracts /></RequireAuth>} />
           <Route path="/contracts/:id" element={<RequireAuth><ContractDetails /></RequireAuth>} />
           <Route path="/contracts/:id/edit" element={<RequireAuth><EditContract /></RequireAuth>} />
           <Route path="/me" element={<RequireAuth><Profile /></RequireAuth>} />
           <Route path="/calendar" element={<RequireAuth><CalendarView /></RequireAuth>} />
+          
+          {/* ✨ KI-Vertragsoptimierung - Legendary Feature */}
           <Route path="/optimizer" element={<RequireAuth><Optimizer /></RequireAuth>} />
+          
           <Route path="/compare" element={<RequireAuth><Compare /></RequireAuth>} />
           <Route path="/chat" element={<RequireAuth><Chat /></RequireAuth>} />
           <Route path="/Generate" element={<RequireAuth><Generate /></RequireAuth>} />

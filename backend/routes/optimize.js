@@ -1,4 +1,4 @@
-// 📁 backend/routes/optimize.js - VERTRAGSOPTIMIERUNG
+// 📁 backend/routes/optimize.js - ENHANCED VERTRAGSOPTIMIERUNG
 const express = require("express");
 const multer = require("multer");
 const pdfParse = require("pdf-parse");
@@ -7,7 +7,6 @@ const fsSync = require("fs");
 const { OpenAI } = require("openai");
 const verifyToken = require("../middleware/verifyToken");
 const { MongoClient, ObjectId } = require("mongodb");
-const saveContract = require("../services/saveContract");
 
 const router = express.Router();
 const upload = multer({ dest: "uploads/" });
@@ -21,8 +20,8 @@ const getOpenAI = () => {
     }
     openaiInstance = new OpenAI({ 
       apiKey: process.env.OPENAI_API_KEY,
-      timeout: 45000, // Längerer Timeout für Optimierung
-      maxRetries: 2
+      timeout: 60000, // Längerer Timeout für komplexe Optimierung
+      maxRetries: 3
     });
     console.log("🔧 OpenAI-Instance für Optimierung initialisiert");
   }
@@ -40,7 +39,7 @@ const getMongoCollections = async () => {
     mongoClient = new MongoClient(mongoUri, {
       maxPoolSize: 10,
       serverSelectionTimeoutMS: 5000,
-      socketTimeoutMS: 45000,
+      socketTimeoutMS: 60000,
     });
     await mongoClient.connect();
     const db = mongoClient.db("contract_ai");
@@ -61,15 +60,70 @@ const getMongoCollections = async () => {
   }
 })();
 
-// ✅ HAUPTROUTE: POST /optimize - Vertragsoptimierung
+// ✅ ENHANCED: Premium Optimierungs-Prompt für bessere Ergebnisse
+const createOptimizationPrompt = (contractText, contractType, fileName) => {
+  return `Du bist ein erfahrener Rechtsanwalt mit 20+ Jahren Spezialisierung auf Vertragsoptimierung. 
+Analysiere den folgenden ${contractType} (Datei: ${fileName}) und erstelle konkrete, praxisorientierte Optimierungsvorschläge.
+
+VERTRAG:
+${contractText}
+
+AUFGABE:
+Analysiere den Vertrag systematisch und erstelle strukturierte Optimierungsvorschläge in folgenden Bereichen:
+
+1. KÜNDIGUNGSFRISTEN & LAUFZEITEN
+   - Sind die Fristen angemessen und marktüblich?
+   - Flexibilität für beide Parteien?
+   - Verbesserungsvorschläge mit konkreten Zeiträumen
+
+2. HAFTUNG & RISIKOMANAGEMENT  
+   - Übermäßige oder einseitige Haftungsklauseln?
+   - Fehlende Haftungsbegrenzungen?
+   - Konkrete Verbesserungen für ausgewogene Risikoverteilung
+
+3. ZAHLUNGSKONDITIONEN
+   - Zahlungsfristen und -modalitäten
+   - Verzugszinsen und Mahnwesen
+   - Cashflow-Optimierung
+
+4. RECHTSSICHERHEIT & KLARHEIT
+   - Unklare oder mehrdeutige Formulierungen
+   - Fehlende oder unvollständige Klauseln
+   - Verbesserung der Verständlichkeit
+
+5. COMPLIANCE & DATENSCHUTZ
+   - DSGVO-Konformität
+   - Branchenspezifische Anforderungen
+   - Rechtliche Vollständigkeit
+
+FORMAT:
+Strukturiere deine Antwort wie folgt für jede identifizierte Optimierung:
+
+[KATEGORIE: Kündigung/Haftung/Zahlung/Klarheit/Compliance]
+PROBLEM: [Beschreibe das konkrete Problem]
+EMPFEHLUNG: [Konkrete Verbesserung mit Textvorschlag]
+BEGRÜNDUNG: [Rechtliche und praktische Begründung]
+PRIORITÄT: [Hoch/Mittel/Niedrig]
+UMSETZUNG: [Wie umsetzen - einfach/komplex]
+---
+
+STIL:
+- Professionell aber verständlich
+- Konkrete Textvorschläge statt vage Empfehlungen
+- Praxisorientiert mit Business-Impact
+- Rechtssicher und aktuell (2024)
+- Fokus auf die 3-5 wichtigsten Optimierungen`;
+};
+
+// ✅ HAUPTROUTE: POST /optimize - Enhanced Vertragsoptimierung
 router.post("/", verifyToken, upload.single("file"), async (req, res) => {
   const requestId = `opt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  console.log(`🔧 [${requestId}] Optimierung-Request erhalten:`, {
+  console.log(`🔧 [${requestId}] Enhanced Optimierung-Request:`, {
     hasFile: !!req.file,
     userId: req.user?.userId,
     filename: req.file?.originalname,
     fileSize: req.file?.size,
-    contractType: req.body?.contractType || 'unbekannt'
+    contractType: req.body?.contractType || 'Standardvertrag'
   });
 
   // ❌ Keine Datei hochgeladen
@@ -93,7 +147,7 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
     
     console.log(`🔍 [${requestId}] Prüfe User-Limits...`);
     
-    // 📊 Nutzer auslesen + Limit prüfen
+    // 📊 Nutzer auslesen + Enhanced Limit-Prüfung
     const user = await users.findOne({ _id: new ObjectId(req.user.userId) });
 
     if (!user) {
@@ -108,7 +162,8 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
     const plan = user.subscriptionPlan || "free";
     const optimizationCount = user.optimizationCount ?? 0;
 
-    let limit = 5; // Free: 5 Optimierungen
+    // ✅ ENHANCED: Premium-basierte Limits
+    let limit = 0; // Free: 0 Optimierungen (Premium-Feature)
     if (plan === "business") limit = 25;
     if (plan === "premium") limit = Infinity;
 
@@ -118,16 +173,19 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
       console.warn(`⚠️ [${requestId}] Optimierung-Limit erreicht für User ${req.user.userId}`);
       return res.status(403).json({
         success: false,
-        message: "❌ Optimierung-Limit erreicht. Bitte Paket upgraden.",
+        message: plan === "free" 
+          ? "❌ KI-Vertragsoptimierung ist ein Premium-Feature. Bitte upgrade dein Paket."
+          : "❌ Optimierung-Limit erreicht. Bitte upgrade dein Paket oder warte bis zum nächsten Monat.",
         error: "LIMIT_EXCEEDED",
         currentCount: optimizationCount,
         limit: limit,
-        plan: plan
+        plan: plan,
+        upgradeRequired: plan === "free"
       });
     }
 
-    // ✅ PDF auslesen
-    console.log(`📄 [${requestId}] PDF wird gelesen...`);
+    // ✅ ENHANCED: PDF Processing mit besserer Fehlerbehandlung
+    console.log(`📄 [${requestId}] PDF wird verarbeitet...`);
     
     if (!fsSync.existsSync(tempFilePath)) {
       throw new Error(`Temporäre Datei nicht gefunden: ${tempFilePath}`);
@@ -139,16 +197,16 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
     let parsed;
     try {
       parsed = await pdfParse(buffer, {
-        max: 50000,
+        max: 100000, // Mehr Text für bessere Analyse
         normalizeWhitespace: true,
         disableCombineTextItems: false
       });
     } catch (pdfError) {
       console.error(`❌ [${requestId}] PDF-Parse-Fehler:`, pdfError.message);
-      throw new Error(`PDF-Datei ist beschädigt oder passwortgeschützt: ${pdfError.message}`);
+      throw new Error(`PDF-Datei konnte nicht gelesen werden: ${pdfError.message}`);
     }
     
-    const contractText = parsed.text?.slice(0, 6000) || ''; // Mehr Text für Optimierung
+    const contractText = parsed.text?.slice(0, 8000) || ''; // Mehr Text für detaillierte Analyse
     
     console.log(`📄 [${requestId}] PDF-Text extrahiert: ${contractText.length} Zeichen`);
 
@@ -159,85 +217,90 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
       );
     }
 
-    // ✅ Erweiterte OpenAI-Optimierung
-    console.log(`🤖 [${requestId}] OpenAI-Optimierung wird gesendet...`);
+    // ✅ ENHANCED: Verbesserte OpenAI-Optimierung
+    console.log(`🤖 [${requestId}] Starte Enhanced OpenAI-Optimierung...`);
     
     const openai = getOpenAI();
     const contractType = req.body?.contractType || 'Standardvertrag';
+    const fileName = req.file.originalname || 'Vertrag';
 
-    // 🎯 Spezialisierter Optimierungs-Prompt
-    const prompt = `
-Du bist ein erfahrener Vertragsanwalt und spezialisiert auf die Optimierung von Verträgen. 
-Analysiere den folgenden ${contractType} und erstelle konkrete Optimierungsvorschläge:
+    // 🎯 Enhanced Prompt für strukturierte Ergebnisse
+    const prompt = createOptimizationPrompt(contractText, contractType, fileName);
 
-VERTRAG:
-${contractText}
-
-AUFGABE:
-Erstelle eine detaillierte Optimierungsanalyse mit folgenden Punkten:
-
-1. KRITISCHE SCHWACHSTELLEN: Identifiziere rechtliche Risiken und ungünstige Klauseln
-2. KONKRETE VERBESSERUNGEN: Schlage spezifische Textänderungen vor
-3. ZUSÄTZLICHE KLAUSELN: Empfehle fehlende Schutzklauseln
-4. FAIRE KONDITIONEN: Vorschläge für ausgewogenere Bedingungen
-5. RECHTSSICHERHEIT: Maßnahmen zur Erhöhung der Rechtssicherheit
-6. MARKTÜBLICHE STANDARDS: Vergleich mit branchenüblichen Verträgen
-
-FORMAT:
-Strukturiere deine Antwort in klaren Abschnitten mit konkreten, umsetzbaren Empfehlungen.
-Verwende Bulletpoints für bessere Lesbarkeit.
-Priorisiere die wichtigsten Optimierungen zuerst.
-
-STIL:
-- Professionell aber verständlich
-- Konkret und praxisorientiert  
-- Mit Begründungen für jede Empfehlung
-- Rechtssicher und aktuell`;
-
-    // 💬 OpenAI-Aufruf für Optimierung
+    // 💬 Enhanced OpenAI-Aufruf
     let completion;
     try {
       completion = await Promise.race([
         openai.chat.completions.create({
-          model: "gpt-4", // Besseres Modell für komplexe Optimierung
+          model: "gpt-4", // Premium-Modell für beste Ergebnisse
           messages: [
             { 
               role: "system", 
-              content: "Du bist ein Experte für Vertragsrecht und -optimierung mit 20+ Jahren Erfahrung." 
+              content: "Du bist ein führender Experte für Vertragsrecht und -optimierung. Deine Analysen sind präzise, praxisorientiert und rechtlich fundiert." 
             },
             { role: "user", content: prompt },
           ],
-          temperature: 0.2, // Niedrigere Temperatur für präzisere Ergebnisse
-          max_tokens: 2000, // Mehr Tokens für detaillierte Optimierung
+          temperature: 0.1, // Sehr niedrig für maximale Präzision
+          max_tokens: 3000, // Mehr Tokens für detaillierte Optimierungen
+          top_p: 0.9,
+          frequency_penalty: 0.1,
+          presence_penalty: 0.1
         }),
         new Promise((_, reject) => 
-          setTimeout(() => reject(new Error("OpenAI API Timeout nach 45s")), 45000)
+          setTimeout(() => reject(new Error("OpenAI API Timeout nach 60s")), 60000)
         )
       ]);
     } catch (openaiError) {
       console.error(`❌ [${requestId}] OpenAI-Fehler:`, openaiError.message);
-      throw new Error(`OpenAI API Fehler: ${openaiError.message}`);
+      
+      // Enhanced Error Handling
+      if (openaiError.message.includes('rate limit')) {
+        throw new Error("KI-Service vorübergehend überlastet. Bitte versuche es in einer Minute erneut.");
+      } else if (openaiError.message.includes('timeout')) {
+        throw new Error("KI-Analyse-Timeout. Bitte versuche es mit einer kleineren Datei.");
+      } else if (openaiError.message.includes('invalid')) {
+        throw new Error("Ungültige Anfrage an KI-Service. Prüfe das Dateiformat.");
+      } else {
+        throw new Error(`KI-Service-Fehler: ${openaiError.message}`);
+      }
     }
 
-    console.log(`✅ [${requestId}] OpenAI-Optimierung erhalten`);
+    console.log(`✅ [${requestId}] Enhanced OpenAI-Optimierung erhalten`);
 
     const optimizationResult = completion.choices[0].message.content || "";
     
     if (!optimizationResult.trim()) {
-      throw new Error("Keine Optimierungsvorschläge von OpenAI erhalten");
+      throw new Error("Keine Optimierungsvorschläge von KI erhalten");
+    }
+
+    // ✅ Enhanced: Qualitätsprüfung der KI-Response
+    if (optimizationResult.length < 200) {
+      console.warn(`⚠️ [${requestId}] Kurze KI-Response: ${optimizationResult.length} Zeichen`);
     }
 
     console.log(`🔧 [${requestId}] Optimierung erfolgreich, speichere in DB...`);
 
-    // 📦 In DB speichern
+    // 📦 Enhanced: Verbesserte Datenstruktur
     const optimizationData = {
       userId: req.user.userId,
       contractName: req.file.originalname,
       contractType: contractType,
-      originalText: contractText.substring(0, 1000), // Nur Auszug speichern
+      originalText: contractText.substring(0, 2000), // Mehr Context speichern
       optimizationResult: optimizationResult,
+      fileSize: req.file.size,
+      textLength: contractText.length,
+      model: "gpt-4",
+      processingTime: Date.now() - parseInt(requestId.split('_')[1]),
       createdAt: new Date(),
       requestId,
+      // Enhanced: Metadata für Analyse
+      metadata: {
+        userPlan: plan,
+        optimizationCount: optimizationCount + 1,
+        fileName: fileName,
+        categories: [], // Wird vom Frontend gefüllt
+        score: null     // Wird vom Frontend berechnet
+      }
     };
 
     let inserted;
@@ -248,88 +311,130 @@ STIL:
       throw new Error(`Datenbank-Fehler beim Speichern: ${dbError.message}`);
     }
 
-    // ✅ Optimierung-Zähler hochzählen
+    // ✅ Enhanced: Atomic Counter Update mit Retry
     try {
       await users.updateOne(
         { _id: user._id },
-        { $inc: { optimizationCount: 1 } }
+        { 
+          $inc: { optimizationCount: 1 },
+          $set: { 
+            lastOptimization: new Date(),
+            updatedAt: new Date()
+          }
+        }
       );
     } catch (updateError) {
       console.warn(`⚠️ [${requestId}] Counter-Update-Fehler:`, updateError.message);
+      // Non-blocking - Optimierung war erfolgreich
     }
 
-    console.log(`✅ [${requestId}] Optimierung komplett erfolgreich`);
+    console.log(`✅ [${requestId}] Enhanced Optimierung komplett erfolgreich`);
 
-    // 📤 Erfolgreiche Response
+    // 📤 Enhanced Success Response
     res.json({ 
       success: true,
-      message: "Optimierung erfolgreich abgeschlossen",
+      message: "✅ KI-Vertragsoptimierung erfolgreich abgeschlossen",
       requestId,
       optimizationResult: optimizationResult,
       optimizationId: inserted.insertedId,
       usage: {
         count: optimizationCount + 1,
         limit: limit,
-        plan: plan
+        plan: plan,
+        remaining: limit === Infinity ? Infinity : Math.max(0, limit - optimizationCount - 1)
+      },
+      // Enhanced: Zusätzliche Metadaten für Frontend
+      metadata: {
+        fileName: fileName,
+        fileSize: req.file.size,
+        textLength: contractText.length,
+        processingTime: Date.now() - parseInt(requestId.split('_')[1]),
+        model: "gpt-4",
+        timestamp: new Date().toISOString()
       }
     });
 
   } catch (error) {
-    console.error(`❌ [${requestId}] Fehler bei Optimierung:`, {
+    console.error(`❌ [${requestId}] Enhanced Optimierung-Fehler:`, {
       message: error.message,
       stack: error.stack,
       userId: req.user?.userId,
       filename: req.file?.originalname
     });
     
-    // ✅ Spezifische Fehlermeldungen
-    let errorMessage = "Fehler bei der Optimierung.";
+    // ✅ Enhanced: Intelligente Fehlermeldungen
+    let errorMessage = "Fehler bei der KI-Vertragsoptimierung.";
     let errorCode = "OPTIMIZATION_ERROR";
+    let statusCode = 500;
     
     if (error.message.includes("API Key")) {
-      errorMessage = "KI-Service vorübergehend nicht verfügbar.";
-      errorCode = "AI_SERVICE_ERROR";
+      errorMessage = "🤖 KI-Service nicht konfiguriert. Bitte kontaktiere den Support.";
+      errorCode = "AI_CONFIG_ERROR";
+      statusCode = 503;
+    } else if (error.message.includes("rate limit") || error.message.includes("überlastet")) {
+      errorMessage = "🚦 KI-Service vorübergehend überlastet. Bitte versuche es in einer Minute erneut.";
+      errorCode = "AI_RATE_LIMIT";
+      statusCode = 429;
     } else if (error.message.includes("Timeout")) {
-      errorMessage = "Optimierung-Timeout. Bitte versuche es mit einer kleineren Datei.";
+      errorMessage = "⏱️ KI-Analyse-Timeout. Bitte versuche es mit einer kleineren PDF-Datei.";
       errorCode = "TIMEOUT_ERROR";
+      statusCode = 408;
     } else if (error.message.includes("PDF") || error.message.includes("Datei")) {
-      errorMessage = error.message;
+      errorMessage = `📄 ${error.message}`;
       errorCode = "PDF_ERROR";
+      statusCode = 400;
     } else if (error.message.includes("Datenbank")) {
-      errorMessage = "Datenbank-Fehler. Bitte versuche es erneut.";
+      errorMessage = "💾 Datenbank-Fehler. Bitte versuche es erneut.";
       errorCode = "DATABASE_ERROR";
-    } else if (error.message.includes("OpenAI")) {
-      errorMessage = "KI-Optimierung-Service vorübergehend nicht verfügbar.";
+      statusCode = 503;
+    } else if (error.message.includes("Premium-Feature")) {
+      errorMessage = error.message;
+      errorCode = "PREMIUM_REQUIRED";
+      statusCode = 402; // Payment Required
+    } else if (error.message.includes("Limit erreicht")) {
+      errorMessage = error.message;
+      errorCode = "LIMIT_EXCEEDED";
+      statusCode = 403;
+    } else if (error.message.includes("KI-Service")) {
+      errorMessage = error.message;
       errorCode = "AI_SERVICE_ERROR";
+      statusCode = 503;
     }
 
-    res.status(500).json({ 
+    res.status(statusCode).json({ 
       success: false,
       message: errorMessage,
       error: errorCode,
       requestId,
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      // Enhanced: Hilfreiche Zusatzinfos
+      help: statusCode === 402 ? "Upgrade auf Business oder Premium für KI-Optimierungen" :
+            statusCode === 403 ? "Warte bis zum nächsten Monat oder upgrade dein Paket" :
+            statusCode === 429 ? "Versuche es in 1-2 Minuten erneut" :
+            statusCode === 408 ? "Verwende eine kleinere PDF-Datei (< 10MB)" :
+            "Kontaktiere den Support falls das Problem weiterhin besteht"
     });
 
   } finally {
-    // 🧹 Cleanup: Temp-Datei löschen
+    // 🧹 Enhanced Cleanup mit besserer Fehlerbehandlung
     if (tempFilePath) {
       try {
         if (fsSync.existsSync(tempFilePath)) {
           await fs.unlink(tempFilePath);
-          console.log(`🧹 [${requestId}] Temp-Datei gelöscht: ${tempFilePath}`);
+          console.log(`🧹 [${requestId}] Temp-Datei erfolgreich gelöscht: ${tempFilePath}`);
         }
       } catch (cleanupErr) {
-        console.error(`⚠️ [${requestId}] Fehler beim Löschen:`, {
+        console.error(`⚠️ [${requestId}] Cleanup-Fehler (non-blocking):`, {
           path: tempFilePath,
           error: cleanupErr.message
         });
+        // Non-blocking - Request war bereits erfolgreich
       }
     }
   }
 });
 
-// 📚 Optimierungsverlauf abrufen
+// 📚 Enhanced: Optimierungsverlauf mit Pagination
 router.get("/history", verifyToken, async (req, res) => {
   const requestId = `opt_hist_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   
@@ -338,19 +443,46 @@ router.get("/history", verifyToken, async (req, res) => {
     
     const { optimizationCollection } = await getMongoCollections();
     
-    const history = await optimizationCollection
-      .find({ userId: req.user.userId })
-      .sort({ createdAt: -1 })
-      .limit(20)
-      .toArray();
+    // Enhanced: Pagination Support
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const skip = (page - 1) * limit;
+    
+    const [history, totalCount] = await Promise.all([
+      optimizationCollection
+        .find({ userId: req.user.userId })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .project({
+          contractName: 1,
+          contractType: 1,
+          createdAt: 1,
+          requestId: 1,
+          metadata: 1,
+          optimizationResult: { $substr: ["$optimizationResult", 0, 200] } // Nur Preview
+        })
+        .toArray(),
+      
+      optimizationCollection.countDocuments({ userId: req.user.userId })
+    ]);
 
-    console.log(`📚 [${requestId}] ${history.length} Optimierung-Einträge gefunden`);
+    console.log(`📚 [${requestId}] ${history.length}/${totalCount} Optimierung-Einträge gefunden`);
 
     res.json({
       success: true,
       requestId,
       history: history,
-      count: history.length
+      pagination: {
+        current: page,
+        limit: limit,
+        total: totalCount,
+        pages: Math.ceil(totalCount / limit),
+        hasNext: page * limit < totalCount,
+        hasPrev: page > 1
+      },
+      count: history.length,
+      totalCount: totalCount
     });
 
   } catch (err) {
@@ -364,20 +496,35 @@ router.get("/history", verifyToken, async (req, res) => {
   }
 });
 
-// ✅ Health Check Route
+// ✅ Enhanced Health Check mit detaillierten Status-Infos
 router.get("/health", async (req, res) => {
   const checks = {
-    service: "Contract Optimization",
+    service: "Enhanced Contract Optimization",
     status: "online",
     timestamp: new Date().toISOString(),
+    version: "2.0.0",
     openaiConfigured: !!process.env.OPENAI_API_KEY,
+    openaiModel: "gpt-4",
     mongoConnected: false,
-    uploadsPath: fsSync.existsSync("./uploads")
+    uploadsPath: fsSync.existsSync("./uploads"),
+    features: {
+      premiumOptimization: true,
+      structuredParsing: true,
+      enhancedPrompts: true,
+      intelligentErrors: true,
+      historyPagination: true
+    }
   };
 
   try {
     await getMongoCollections();
     checks.mongoConnected = true;
+    
+    // Enhanced: DB Performance Check
+    const startTime = Date.now();
+    await optimizationCollection.findOne({}, { limit: 1 });
+    checks.dbResponseTime = Date.now() - startTime;
+    
   } catch (err) {
     checks.mongoConnected = false;
     checks.mongoError = err.message;
@@ -391,12 +538,60 @@ router.get("/health", async (req, res) => {
   });
 });
 
-// ✅ Graceful Shutdown
+// ✅ NEW: Einzelne Optimierung abrufen
+router.get("/:id", verifyToken, async (req, res) => {
+  const requestId = `opt_get_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  
+  try {
+    const { optimizationCollection } = await getMongoCollections();
+    
+    const optimization = await optimizationCollection.findOne({
+      _id: new ObjectId(req.params.id),
+      userId: req.user.userId
+    });
+
+    if (!optimization) {
+      return res.status(404).json({
+        success: false,
+        message: "Optimierung nicht gefunden",
+        error: "NOT_FOUND",
+        requestId
+      });
+    }
+
+    res.json({
+      success: true,
+      requestId,
+      optimization: optimization
+    });
+
+  } catch (err) {
+    console.error(`❌ [${requestId}] Fehler beim Abrufen der Optimierung:`, err);
+    res.status(500).json({
+      success: false,
+      message: "Fehler beim Abrufen der Optimierung",
+      error: "FETCH_ERROR",
+      requestId
+    });
+  }
+});
+
+// ✅ Enhanced Graceful Shutdown
 process.on('SIGTERM', async () => {
-  console.log('🔧 Optimize service shutting down...');
+  console.log('🔧 Enhanced Optimize service shutting down...');
   if (mongoClient) {
     await mongoClient.close();
+    console.log('📦 MongoDB connection closed');
   }
+});
+
+process.on('SIGINT', async () => {
+  console.log('🔧 Enhanced Optimize service received SIGINT...');
+  if (mongoClient) {
+    await mongoClient.close();
+    console.log('📦 MongoDB connection closed');
+  }
+  process.exit(0);
 });
 
 module.exports = router;
