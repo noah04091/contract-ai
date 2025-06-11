@@ -588,7 +588,7 @@ export default function Optimizer() {
     });
   }, []);
 
-  // ✅ PHASE 2: Enhanced Pitch Generator mit verschiedenen Stilen
+  // ✅ PHASE 2: Enhanced Pitch Generator mit ESLint-konformer Struktur
   const generatePitch = useCallback((style: string = selectedPitchStyle) => {
     const implementedSuggestions = optimizations.filter(opt => opt.implemented);
     
@@ -598,7 +598,7 @@ export default function Optimizer() {
       return;
     }
 
-    // ✅ ESLint Fix: Deklarationen vor switch-Statement
+    // ✅ ESLint Fix: Alle Deklarationen außerhalb des switch
     const categoryNames = {
       'termination': 'Kündigungsregelungen',
       'liability': 'Haftungsklauseln', 
@@ -608,13 +608,11 @@ export default function Optimizer() {
     };
 
     const improvementScore = calculateNewScore() - (contractScore?.overall || 0);
+    const styleNames = { lawyer: 'Rechtlicher', business: 'Business', private: 'Privater' };
 
-    let pitch = "";
-
-    // ✅ PHASE 2: Style-spezifische Pitch-Generierung
-    switch (style) {
-      case 'lawyer': {
-        pitch = `Sehr geehrte Kolleginnen und Kollegen,
+    // ✅ ESLint Fix: Pitch-Generierung als Objekt-Mapping statt switch
+    const pitchTemplates = {
+      lawyer: `Sehr geehrte Kolleginnen und Kollegen,
 
 nach eingehender rechtlicher Prüfung des vorliegenden Vertrags mittels KI-gestützter Analyse (Confidence-Level: 75-95%) möchte ich ${implementedSuggestions.length} substantielle Optimierungsvorschläge unterbreiten:
 
@@ -631,12 +629,9 @@ Die vorgeschlagenen Modifikationen würden den Vertragsscore von ${contractScore
 
 Sämtliche Empfehlungen basieren auf aktueller Rechtsprechung und Marktstandards (Stand 2024).
 
-Mit kollegialen Grüßen`;
-        break;
-      }
+Mit kollegialen Grüßen`,
 
-      case 'business': {
-        pitch = `Sehr geehrte Damen und Herren,
+      business: `Sehr geehrte Damen und Herren,
 
 nach einer professionellen KI-gestützten Vertragsanalyse möchte ich ${implementedSuggestions.length} strategische Optimierungsvorschläge unterbreiten, die unser Vertragsverhältnis zum beiderseitigen Vorteil verbessern können:
 
@@ -655,12 +650,9 @@ Die Anpassungen entsprechen Best Practices und modernen Marktstandards, schaffen
 
 Gerne diskutiere ich diese Optimierungen in einem strategischen Meeting.
 
-Mit freundlichen Grüßen`;
-        break;
-      }
+Mit freundlichen Grüßen`,
 
-      case 'private': {
-        pitch = `Liebe Vertragspartner,
+      private: `Liebe Vertragspartner,
 
 ich habe unseren Vertrag von einer modernen KI analysieren lassen und dabei ${implementedSuggestions.length} Verbesserungsvorschläge erhalten, die uns beiden zugutekommen könnten:
 
@@ -679,32 +671,15 @@ Alle Vorschläge sind fair und entsprechen dem, was heute üblich ist. Ich denke
 
 Falls Sie Interesse haben, können wir das gerne bei einem Kaffee besprechen.
 
-Mit freundlichen Grüßen`;
-        break;
-      }
+Mit freundlichen Grüßen`
+    };
 
-      default: {
-        // Business-Stil als Fallback
-        pitch = `Sehr geehrte Damen und Herren,
-
-nach einer KI-gestützten Vertragsanalyse möchte ich ${implementedSuggestions.length} Optimierungsvorschläge unterbreiten:
-
-${implementedSuggestions.map((opt, index) => 
-  `${index + 1}. ${categoryNames[opt.category]}: ${opt.reasoning.split('.')[0]}.
-   Impact: ${opt.estimatedSavings}
-`).join('\n')}
-
-Score-Verbesserung: ${contractScore?.overall || 0} → ${calculateNewScore()} Punkte (+${Math.max(0, improvementScore)}).
-
-Mit freundlichen Grüßen`;
-        break;
-      }
-    }
+    // Fallback auf Business-Stil
+    const pitch = pitchTemplates[style as keyof typeof pitchTemplates] || pitchTemplates.business;
 
     navigator.clipboard.writeText(pitch);
     
     // Erfolgs-Feedback
-    const styleNames = { lawyer: 'Rechtlicher', business: 'Business', private: 'Privater' };
     setError(`✅ ${styleNames[style as keyof typeof styleNames] || 'Business'} Pitch wurde in die Zwischenablage kopiert!`);
     setTimeout(() => setError(null), 3000);
     setShowPitchMenu(false);
