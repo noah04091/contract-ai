@@ -406,8 +406,20 @@ export default function Optimizer() {
   const [selectedPitchStyle, setSelectedPitchStyle] = useState<string>('business');
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const pitchButtonRef = useRef<HTMLButtonElement>(null);
+  const exportButtonRef = useRef<HTMLButtonElement>(null);
 
-  // ✅ SIMPLE DROPDOWN: Keine komplizierten Berechnungen mehr
+  // ✅ FINAL FIX: Berechne absolute Position für fixed positioning
+  const getButtonPosition = (buttonRef: React.RefObject<HTMLButtonElement | null>) => {
+    if (!buttonRef.current) return { top: 0, left: 0, right: 0 };
+    
+    const rect = buttonRef.current.getBoundingClientRect();
+    return {
+      top: rect.bottom + 8,
+      left: rect.left,
+      right: window.innerWidth - rect.right
+    };
+  };
 
   // ✅ PHASE 2: Export Options
   const exportOptions: ExportOption[] = [
@@ -515,17 +527,19 @@ export default function Optimizer() {
     }
   ];
 
-  // ✅ SIMPLE DROPDOWN: Click-Outside Handler
+  // ✅ FINAL FIX: Click-Outside Handler
   useEffect(() => {
-    const handleClickOutside = () => {
-      setShowPitchMenu(false);
-      setShowExportMenu(false);
+    const handleClickOutside = (event: MouseEvent) => {
+      if (pitchButtonRef.current && !pitchButtonRef.current.contains(event.target as Node)) {
+        setShowPitchMenu(false);
+      }
+      if (exportButtonRef.current && !exportButtonRef.current.contains(event.target as Node)) {
+        setShowExportMenu(false);
+      }
     };
 
     if (showPitchMenu || showExportMenu) {
-      setTimeout(() => {
-        document.addEventListener('mousedown', handleClickOutside);
-      }, 100);
+      document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
   }, [showPitchMenu, showExportMenu]);
@@ -1190,8 +1204,9 @@ Mit freundlichen Grüßen`
 
                 <div style={{ display: 'flex', gap: '0.8rem', flexWrap: 'wrap', position: 'relative' }}>
                   {/* ✅ PHASE 2: Enhanced Pitch Generator mit Dropdown */}
-                  <div style={{ position: 'relative' }} className={styles.dropdownContainer}>
+                  <div style={{ position: 'relative' }}>
                     <motion.button
+                      ref={pitchButtonRef}
                       onClick={() => setShowPitchMenu(!showPitchMenu)}
                       style={{
                         display: 'flex',
@@ -1223,20 +1238,19 @@ Mit freundlichen Grüßen`
                           initial={{ opacity: 0, y: 10, scale: 0.95 }}
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                          className={styles.dropdown}
                           style={{
-                            position: 'absolute',
-                            top: '100%',
-                            left: 0,
-                            marginTop: '0.5rem',
+                            position: 'fixed',
+                            top: getButtonPosition(pitchButtonRef).top,
+                            left: getButtonPosition(pitchButtonRef).left,
                             zIndex: 999999,
-                            backgroundColor: 'rgba(255, 255, 255, 0.98)',
+                            backgroundColor: 'white',
                             backdropFilter: 'blur(20px)',
                             borderRadius: '16px',
                             padding: '1rem',
-                            boxShadow: '0 16px 40px rgba(0, 0, 0, 0.1)',
-                            border: '1px solid rgba(255, 255, 255, 0.8)',
-                            minWidth: '280px'
+                            boxShadow: '0 16px 40px rgba(0, 0, 0, 0.2)',
+                            border: '1px solid rgba(0, 0, 0, 0.1)',
+                            minWidth: '280px',
+                            pointerEvents: 'auto'
                           }}
                         >
                           <h5 style={{ margin: '0 0 0.8rem', fontSize: '0.9rem', fontWeight: 600, color: '#1d1d1f' }}>
@@ -1286,8 +1300,9 @@ Mit freundlichen Grüßen`
                   </div>
                   
                   {/* ✅ PHASE 2: Enhanced Export Menu */}
-                  <div style={{ position: 'relative' }} className={styles.dropdownContainer}>
+                  <div style={{ position: 'relative' }}>
                     <motion.button
+                      ref={exportButtonRef}
                       onClick={() => setShowExportMenu(!showExportMenu)}
                       style={{
                         display: 'flex',
@@ -1319,20 +1334,19 @@ Mit freundlichen Grüßen`
                           initial={{ opacity: 0, y: 10, scale: 0.95 }}
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                          className={styles.dropdown}
                           style={{
-                            position: 'absolute',
-                            top: '100%',
-                            right: 0,
-                            marginTop: '0.5rem',
+                            position: 'fixed',
+                            top: getButtonPosition(exportButtonRef).top,
+                            right: getButtonPosition(exportButtonRef).right,
                             zIndex: 999999,
-                            backgroundColor: 'rgba(255, 255, 255, 0.98)',
+                            backgroundColor: 'white',
                             backdropFilter: 'blur(20px)',
                             borderRadius: '16px',
                             padding: '1rem',
-                            boxShadow: '0 16px 40px rgba(0, 0, 0, 0.1)',
-                            border: '1px solid rgba(255, 255, 255, 0.8)',
-                            minWidth: '300px'
+                            boxShadow: '0 16px 40px rgba(0, 0, 0, 0.2)',
+                            border: '1px solid rgba(0, 0, 0, 0.1)',
+                            minWidth: '300px',
+                            pointerEvents: 'auto'
                           }}
                         >
                           <h5 style={{ margin: '0 0 0.8rem', fontSize: '0.9rem', fontWeight: 600, color: '#1d1d1f' }}>
