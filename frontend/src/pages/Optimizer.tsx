@@ -1,5 +1,6 @@
-// 📁 src/pages/Optimizer.tsx - PHASE 2: Export Features & Enhanced UX - Z-INDEX FIXED
+// 📁 src/pages/Optimizer.tsx - PHASE 2: Export Features & Enhanced UX - PORTAL SOLUTION
 import React, { useEffect, useState, useRef, useCallback } from "react";
+import ReactDOM from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Upload, 
@@ -60,6 +61,48 @@ interface PitchStyle {
   description: string;
   target: 'lawyer' | 'business' | 'private';
 }
+
+// ✅ PORTAL SOLUTION: Dropdown Portal Component
+const DropdownPortal: React.FC<{
+  isOpen: boolean;
+  targetRef: React.RefObject<HTMLElement | null>;
+  children: React.ReactNode;
+  position?: 'left' | 'right';
+}> = ({ isOpen, targetRef, children, position = 'left' }) => {
+  const [portalPosition, setPortalPosition] = useState({ top: 0, left: 0 });
+
+  useEffect(() => {
+    if (isOpen && targetRef.current) {
+      const rect = targetRef.current.getBoundingClientRect();
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+      
+      setPortalPosition({
+        top: rect.bottom + scrollTop + 8,
+        left: position === 'right' 
+          ? rect.right + scrollLeft - 350  // Export dropdown right-aligned
+          : rect.left + scrollLeft         // Pitch dropdown left-aligned
+      });
+    }
+  }, [isOpen, targetRef, position]);
+
+  if (!isOpen) return null;
+
+  return ReactDOM.createPortal(
+    <div
+      style={{
+        position: 'absolute',
+        top: portalPosition.top,
+        left: Math.max(8, portalPosition.left), // Ensure it doesn't go off-screen
+        zIndex: 999999,
+        pointerEvents: 'auto'
+      }}
+    >
+      {children}
+    </div>,
+    document.body
+  );
+};
 
 // ✅ ENHANCED: Verbesserte Parsing-Logik für mehr Optimierungen - ESLint-konform
 const parseOptimizationResult = (aiText: string, fileName: string): OptimizationSuggestion[] => {
@@ -400,12 +443,14 @@ export default function Optimizer() {
   const [contractScore, setContractScore] = useState<ContractHealthScore | null>(null);
   const [showSimulation, setShowSimulation] = useState(false);
   
-  // ✅ PHASE 2: Export & Pitch States - SIMPLIFIED (no refs needed)
+  // ✅ PHASE 2: Export & Pitch States + PORTAL REFS
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showPitchMenu, setShowPitchMenu] = useState(false);
   const [selectedPitchStyle, setSelectedPitchStyle] = useState<string>('business');
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const pitchButtonRef = useRef<HTMLButtonElement>(null);
+  const exportButtonRef = useRef<HTMLButtonElement>(null);
 
   // ✅ PHASE 2: Export Options
   const exportOptions: ExportOption[] = [
@@ -537,18 +582,21 @@ export default function Optimizer() {
     }
   }, [optimizations]);
 
-  // ✅ PHASE 2: Close dropdowns when clicking outside - PROPER IMPLEMENTATION
+  // ✅ PORTAL SOLUTION: Simplified outside click handling
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Element;
       
-      // Close pitch menu if clicking outside its container
-      if (showPitchMenu && !target.closest('[data-dropdown="pitch"]')) {
+      // Check if click is on button or dropdown content
+      const isPitchButton = pitchButtonRef.current?.contains(target);
+      const isExportButton = exportButtonRef.current?.contains(target);
+      const isDropdownContent = target.closest('[data-portal-dropdown]');
+      
+      if (showPitchMenu && !isPitchButton && !isDropdownContent) {
         setShowPitchMenu(false);
       }
       
-      // Close export menu if clicking outside its container  
-      if (showExportMenu && !target.closest('[data-dropdown="export"]')) {
+      if (showExportMenu && !isExportButton && !isDropdownContent) {
         setShowExportMenu(false);
       }
     };
@@ -1196,9 +1244,10 @@ Mit freundlichen Grüßen`
                 </motion.button>
 
                 <div style={{ display: 'flex', gap: '0.8rem', flexWrap: 'wrap', position: 'relative' }}>
-                  {/* ✅ PHASE 2: FIXED Z-INDEX Pitch Generator Dropdown */}
-                  <div style={{ position: 'relative', zIndex: 999999 }} data-dropdown="pitch">
+                  {/* ✅ PORTAL SOLUTION: Pitch Generator mit Portal Dropdown */}
+                  <div style={{ position: 'relative' }}>
                     <motion.button
+                      ref={pitchButtonRef}
                       onClick={() => setShowPitchMenu(!showPitchMenu)}
                       style={{
                         display: 'flex',
@@ -1222,79 +1271,80 @@ Mit freundlichen Grüßen`
                       <span>Profi-Pitch generieren</span>
                       {showPitchMenu ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                     </motion.button>
-
-                    {/* ✅ Z-INDEX FIX: ABSOLUTE POSITIONING direkt unter Button */}
-                    <AnimatePresence>
-                      {showPitchMenu && (
-                        <motion.div
-                          initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                          exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                          style={{
-                            position: 'absolute',
-                            top: '100%',
-                            left: 0,
-                            marginTop: '0.5rem',
-                            background: 'rgba(255, 255, 255, 0.98)',
-                            backdropFilter: 'blur(20px)',
-                            borderRadius: '16px',
-                            padding: '1rem',
-                            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15), 0 8px 32px rgba(0, 0, 0, 0.1)',
-                            border: '1px solid rgba(255, 255, 255, 0.8)',
-                            minWidth: '280px',
-                            maxWidth: '320px',
-                            zIndex: 999999
-                          }}
-                        >
-                          <h5 style={{ margin: '0 0 0.8rem', fontSize: '0.9rem', fontWeight: 600, color: '#1d1d1f' }}>
-                            Pitch-Stil wählen:
-                          </h5>
-                          
-                          {pitchStyles.map((style) => (
-                            <motion.button
-                              key={style.id}
-                              onClick={() => {
-                                setSelectedPitchStyle(style.id);
-                                generatePitch(style.id);
-                              }}
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '0.8rem',
-                                width: '100%',
-                                padding: '0.8rem',
-                                marginBottom: '0.5rem',
-                                borderRadius: '12px',
-                                border: 'none',
-                                background: selectedPitchStyle === style.id 
-                                  ? 'rgba(52, 199, 89, 0.1)' 
-                                  : 'transparent',
-                                cursor: 'pointer',
-                                textAlign: 'left',
-                                transition: 'all 0.2s ease'
-                              }}
-                              whileHover={{ background: 'rgba(52, 199, 89, 0.1)' }}
-                              whileTap={{ scale: 0.98 }}
-                            >
-                              {style.icon}
-                              <div>
-                                <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1d1d1f' }}>
-                                  {style.name}
-                                </div>
-                                <div style={{ fontSize: '0.8rem', color: '#6e6e73' }}>
-                                  {style.description}
-                                </div>
-                              </div>
-                            </motion.button>
-                          ))}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
                   </div>
+
+                  {/* ✅ PORTAL DROPDOWN: Pitch Style Dropdown */}
+                  <DropdownPortal 
+                    isOpen={showPitchMenu} 
+                    targetRef={pitchButtonRef}
+                    position="left"
+                  >
+                    <AnimatePresence>
+                      <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        data-portal-dropdown
+                        style={{
+                          background: 'rgba(255, 255, 255, 0.98)',
+                          backdropFilter: 'blur(20px)',
+                          borderRadius: '16px',
+                          padding: '1rem',
+                          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15), 0 8px 32px rgba(0, 0, 0, 0.1)',
+                          border: '1px solid rgba(255, 255, 255, 0.8)',
+                          minWidth: '280px',
+                          maxWidth: '320px'
+                        }}
+                      >
+                        <h5 style={{ margin: '0 0 0.8rem', fontSize: '0.9rem', fontWeight: 600, color: '#1d1d1f' }}>
+                          Pitch-Stil wählen:
+                        </h5>
+                        
+                        {pitchStyles.map((style) => (
+                          <motion.button
+                            key={style.id}
+                            onClick={() => {
+                              setSelectedPitchStyle(style.id);
+                              generatePitch(style.id);
+                            }}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.8rem',
+                              width: '100%',
+                              padding: '0.8rem',
+                              marginBottom: '0.5rem',
+                              borderRadius: '12px',
+                              border: 'none',
+                              background: selectedPitchStyle === style.id 
+                                ? 'rgba(52, 199, 89, 0.1)' 
+                                : 'transparent',
+                              cursor: 'pointer',
+                              textAlign: 'left',
+                              transition: 'all 0.2s ease'
+                            }}
+                            whileHover={{ background: 'rgba(52, 199, 89, 0.1)' }}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            {style.icon}
+                            <div>
+                              <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1d1d1f' }}>
+                                {style.name}
+                              </div>
+                              <div style={{ fontSize: '0.8rem', color: '#6e6e73' }}>
+                                {style.description}
+                              </div>
+                            </div>
+                          </motion.button>
+                        ))}
+                      </motion.div>
+                    </AnimatePresence>
+                  </DropdownPortal>
                   
-                  {/* ✅ PHASE 2: FIXED Z-INDEX Export Menu */}
-                  <div style={{ position: 'relative', zIndex: 999999 }} data-dropdown="export">
+                  {/* ✅ PORTAL SOLUTION: Export Menu mit Portal Dropdown */}
+                  <div style={{ position: 'relative' }}>
                     <motion.button
+                      ref={exportButtonRef}
                       onClick={() => setShowExportMenu(!showExportMenu)}
                       style={{
                         display: 'flex',
@@ -1318,92 +1368,92 @@ Mit freundlichen Grüßen`
                       <span>Premium Export</span>
                       {showExportMenu ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                     </motion.button>
-
-                    {/* ✅ Z-INDEX FIX: ABSOLUTE POSITIONING direkt unter Button */}
-                    <AnimatePresence>
-                      {showExportMenu && (
-                        <motion.div
-                          initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                          exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                          style={{
-                            position: 'absolute',
-                            top: '100%',
-                            right: 0,
-                            marginTop: '0.5rem',
-                            background: 'rgba(255, 255, 255, 0.98)',
-                            backdropFilter: 'blur(20px)',
-                            borderRadius: '16px',
-                            padding: '1rem',
-                            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15), 0 8px 32px rgba(0, 0, 0, 0.1)',
-                            border: '1px solid rgba(255, 255, 255, 0.8)',
-                            minWidth: '300px',
-                            maxWidth: '350px',
-                            zIndex: 999999
-                          }}
-                        >
-                          <h5 style={{ margin: '0 0 0.8rem', fontSize: '0.9rem', fontWeight: 600, color: '#1d1d1f' }}>
-                            Export-Format wählen:
-                          </h5>
-                          
-                          {exportOptions.map((option) => (
-                            <motion.button
-                              key={option.id}
-                              onClick={() => handleExport(option.id)}
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '0.8rem',
-                                width: '100%',
-                                padding: '0.8rem',
-                                marginBottom: '0.5rem',
-                                borderRadius: '12px',
-                                border: 'none',
-                                background: 'transparent',
-                                cursor: 'pointer',
-                                textAlign: 'left',
-                                transition: 'all 0.2s ease',
-                                opacity: option.premium && !isPremium ? 0.6 : 1
-                              }}
-                              whileHover={{ background: 'rgba(88, 86, 214, 0.1)' }}
-                              whileTap={{ scale: 0.98 }}
-                              disabled={option.premium && !isPremium}
-                            >
-                              {option.icon}
-                              <div style={{ flex: 1 }}>
-                                <div style={{ 
-                                  display: 'flex', 
-                                  alignItems: 'center', 
-                                  gap: '0.5rem',
-                                  marginBottom: '0.2rem' 
-                                }}>
-                                  <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1d1d1f' }}>
-                                    {option.name}
-                                  </span>
-                                  <span style={{ 
-                                    fontSize: '0.7rem', 
-                                    color: '#5856d6',
-                                    background: 'rgba(88, 86, 214, 0.1)',
-                                    padding: '0.1rem 0.4rem',
-                                    borderRadius: '6px',
-                                    fontWeight: 600
-                                  }}>
-                                    {option.format}
-                                  </span>
-                                  {option.premium && (
-                                    <Lock size={12} style={{ color: '#ff9500' }} />
-                                  )}
-                                </div>
-                                <div style={{ fontSize: '0.8rem', color: '#6e6e73' }}>
-                                  {option.description}
-                                </div>
-                              </div>
-                            </motion.button>
-                          ))}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
                   </div>
+
+                  {/* ✅ PORTAL DROPDOWN: Export Options Dropdown */}
+                  <DropdownPortal 
+                    isOpen={showExportMenu} 
+                    targetRef={exportButtonRef}
+                    position="right"
+                  >
+                    <AnimatePresence>
+                      <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        data-portal-dropdown
+                        style={{
+                          background: 'rgba(255, 255, 255, 0.98)',
+                          backdropFilter: 'blur(20px)',
+                          borderRadius: '16px',
+                          padding: '1rem',
+                          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15), 0 8px 32px rgba(0, 0, 0, 0.1)',
+                          border: '1px solid rgba(255, 255, 255, 0.8)',
+                          minWidth: '300px',
+                          maxWidth: '350px'
+                        }}
+                      >
+                        <h5 style={{ margin: '0 0 0.8rem', fontSize: '0.9rem', fontWeight: 600, color: '#1d1d1f' }}>
+                          Export-Format wählen:
+                        </h5>
+                        
+                        {exportOptions.map((option) => (
+                          <motion.button
+                            key={option.id}
+                            onClick={() => handleExport(option.id)}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.8rem',
+                              width: '100%',
+                              padding: '0.8rem',
+                              marginBottom: '0.5rem',
+                              borderRadius: '12px',
+                              border: 'none',
+                              background: 'transparent',
+                              cursor: 'pointer',
+                              textAlign: 'left',
+                              transition: 'all 0.2s ease',
+                              opacity: option.premium && !isPremium ? 0.6 : 1
+                            }}
+                            whileHover={{ background: 'rgba(88, 86, 214, 0.1)' }}
+                            whileTap={{ scale: 0.98 }}
+                            disabled={option.premium && !isPremium}
+                          >
+                            {option.icon}
+                            <div style={{ flex: 1 }}>
+                              <div style={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: '0.5rem',
+                                marginBottom: '0.2rem' 
+                              }}>
+                                <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1d1d1f' }}>
+                                  {option.name}
+                                </span>
+                                <span style={{ 
+                                  fontSize: '0.7rem', 
+                                  color: '#5856d6',
+                                  background: 'rgba(88, 86, 214, 0.1)',
+                                  padding: '0.1rem 0.4rem',
+                                  borderRadius: '6px',
+                                  fontWeight: 600
+                                }}>
+                                  {option.format}
+                                </span>
+                                {option.premium && (
+                                  <Lock size={12} style={{ color: '#ff9500' }} />
+                                )}
+                              </div>
+                              <div style={{ fontSize: '0.8rem', color: '#6e6e73' }}>
+                                {option.description}
+                              </div>
+                            </div>
+                          </motion.button>
+                        ))}
+                      </motion.div>
+                    </AnimatePresence>
+                  </DropdownPortal>
                 </div>
               </motion.div>
 
