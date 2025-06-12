@@ -1,4 +1,4 @@
-// 📁 src/pages/Optimizer.tsx - PHASE 2: Export Features & Enhanced UX
+// 📁 src/pages/Optimizer.tsx - PHASE 2: Export Features & Enhanced UX - Z-INDEX FIXED
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -400,7 +400,7 @@ export default function Optimizer() {
   const [contractScore, setContractScore] = useState<ContractHealthScore | null>(null);
   const [showSimulation, setShowSimulation] = useState(false);
   
-  // ✅ PHASE 2: Export & Pitch States
+  // ✅ PHASE 2: Export & Pitch States mit REFS für z-index Fix
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showPitchMenu, setShowPitchMenu] = useState(false);
   const [selectedPitchStyle, setSelectedPitchStyle] = useState<string>('business');
@@ -408,18 +408,6 @@ export default function Optimizer() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pitchButtonRef = useRef<HTMLButtonElement>(null);
   const exportButtonRef = useRef<HTMLButtonElement>(null);
-
-  // ✅ FINAL FIX: Berechne absolute Position für fixed positioning
-  const getButtonPosition = (buttonRef: React.RefObject<HTMLButtonElement | null>) => {
-    if (!buttonRef.current) return { top: 0, left: 0, right: 0 };
-    
-    const rect = buttonRef.current.getBoundingClientRect();
-    return {
-      top: rect.bottom + 8,
-      left: rect.left,
-      right: window.innerWidth - rect.right
-    };
-  };
 
   // ✅ PHASE 2: Export Options
   const exportOptions: ExportOption[] = [
@@ -527,23 +515,6 @@ export default function Optimizer() {
     }
   ];
 
-  // ✅ FINAL FIX: Click-Outside Handler
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (pitchButtonRef.current && !pitchButtonRef.current.contains(event.target as Node)) {
-        setShowPitchMenu(false);
-      }
-      if (exportButtonRef.current && !exportButtonRef.current.contains(event.target as Node)) {
-        setShowExportMenu(false);
-      }
-    };
-
-    if (showPitchMenu || showExportMenu) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }
-  }, [showPitchMenu, showExportMenu]);
-
   // ✨ Premium Status laden
   useEffect(() => {
     const fetchPremiumStatus = async () => {
@@ -567,6 +538,25 @@ export default function Optimizer() {
       setContractScore(updatedScore);
     }
   }, [optimizations]);
+
+  // ✅ PHASE 2: Close dropdowns when clicking outside - Z-INDEX FIX
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showPitchMenu && pitchButtonRef.current && !pitchButtonRef.current.contains(event.target as Node)) {
+        setShowPitchMenu(false);
+      }
+      if (showExportMenu && exportButtonRef.current && !exportButtonRef.current.contains(event.target as Node)) {
+        setShowExportMenu(false);
+      }
+    };
+
+    if (showPitchMenu || showExportMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [showPitchMenu, showExportMenu]);
 
   // ✨ File Upload Handler mit echter API-Integration
   const handleUpload = async () => {
@@ -1159,7 +1149,7 @@ Mit freundlichen Grüßen`
                 </div>
               </motion.div>
 
-              {/* ✅ PHASE 2: Enhanced Control Panel mit Export & Pitch Menüs */}
+              {/* ✅ PHASE 2: Enhanced Control Panel mit FIXED Z-INDEX Dropdowns */}
               <motion.div
                 className={styles.card}
                 style={{
@@ -1203,7 +1193,7 @@ Mit freundlichen Grüßen`
                 </motion.button>
 
                 <div style={{ display: 'flex', gap: '0.8rem', flexWrap: 'wrap', position: 'relative' }}>
-                  {/* ✅ PHASE 2: Enhanced Pitch Generator mit Dropdown */}
+                  {/* ✅ PHASE 2: FIXED Z-INDEX Pitch Generator Dropdown */}
                   <div style={{ position: 'relative' }}>
                     <motion.button
                       ref={pitchButtonRef}
@@ -1231,7 +1221,7 @@ Mit freundlichen Grüßen`
                       {showPitchMenu ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                     </motion.button>
 
-                    {/* Pitch Style Dropdown */}
+                    {/* ✅ Z-INDEX FIX: FIXED POSITIONING Dropdown */}
                     <AnimatePresence>
                       {showPitchMenu && (
                         <motion.div
@@ -1240,17 +1230,24 @@ Mit freundlichen Grüßen`
                           exit={{ opacity: 0, y: 10, scale: 0.95 }}
                           style={{
                             position: 'fixed',
-                            top: getButtonPosition(pitchButtonRef).top,
-                            left: getButtonPosition(pitchButtonRef).left,
-                            zIndex: 999999,
-                            backgroundColor: 'white',
+                            top: pitchButtonRef.current ? 
+                              pitchButtonRef.current.getBoundingClientRect().bottom + window.scrollY + 8 : 
+                              '50%',
+                            left: pitchButtonRef.current ? 
+                              Math.max(8, Math.min(
+                                pitchButtonRef.current.getBoundingClientRect().left + window.scrollX,
+                                window.innerWidth - 320 - 16
+                              )) : 
+                              '50%',
+                            background: 'rgba(255, 255, 255, 0.98)',
                             backdropFilter: 'blur(20px)',
                             borderRadius: '16px',
                             padding: '1rem',
-                            boxShadow: '0 16px 40px rgba(0, 0, 0, 0.2)',
-                            border: '1px solid rgba(0, 0, 0, 0.1)',
-                            minWidth: '280px',
-                            pointerEvents: 'auto'
+                            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15), 0 8px 32px rgba(0, 0, 0, 0.1)',
+                            border: '1px solid rgba(255, 255, 255, 0.8)',
+                            minWidth: typeof window !== 'undefined' && window.innerWidth < 768 ? '280px' : '320px',
+                            maxWidth: typeof window !== 'undefined' && window.innerWidth < 768 ? 'calc(100vw - 32px)' : '320px',
+                            zIndex: 999999
                           }}
                         >
                           <h5 style={{ margin: '0 0 0.8rem', fontSize: '0.9rem', fontWeight: 600, color: '#1d1d1f' }}>
@@ -1299,7 +1296,7 @@ Mit freundlichen Grüßen`
                     </AnimatePresence>
                   </div>
                   
-                  {/* ✅ PHASE 2: Enhanced Export Menu */}
+                  {/* ✅ PHASE 2: FIXED Z-INDEX Export Menu */}
                   <div style={{ position: 'relative' }}>
                     <motion.button
                       ref={exportButtonRef}
@@ -1327,7 +1324,7 @@ Mit freundlichen Grüßen`
                       {showExportMenu ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                     </motion.button>
 
-                    {/* Export Options Dropdown */}
+                    {/* ✅ Z-INDEX FIX: FIXED POSITIONING Dropdown */}
                     <AnimatePresence>
                       {showExportMenu && (
                         <motion.div
@@ -1336,17 +1333,24 @@ Mit freundlichen Grüßen`
                           exit={{ opacity: 0, y: 10, scale: 0.95 }}
                           style={{
                             position: 'fixed',
-                            top: getButtonPosition(exportButtonRef).top,
-                            right: getButtonPosition(exportButtonRef).right,
-                            zIndex: 999999,
-                            backgroundColor: 'white',
+                            top: exportButtonRef.current ? 
+                              exportButtonRef.current.getBoundingClientRect().bottom + window.scrollY + 8 : 
+                              '50%',
+                            left: exportButtonRef.current ? 
+                              Math.max(8, Math.min(
+                                exportButtonRef.current.getBoundingClientRect().right + window.scrollX - 350,
+                                window.innerWidth - 350 - 16
+                              )) : 
+                              '50%',
+                            background: 'rgba(255, 255, 255, 0.98)',
                             backdropFilter: 'blur(20px)',
                             borderRadius: '16px',
                             padding: '1rem',
-                            boxShadow: '0 16px 40px rgba(0, 0, 0, 0.2)',
-                            border: '1px solid rgba(0, 0, 0, 0.1)',
-                            minWidth: '300px',
-                            pointerEvents: 'auto'
+                            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15), 0 8px 32px rgba(0, 0, 0, 0.1)',
+                            border: '1px solid rgba(255, 255, 255, 0.8)',
+                            minWidth: typeof window !== 'undefined' && window.innerWidth < 768 ? '280px' : '350px',
+                            maxWidth: typeof window !== 'undefined' && window.innerWidth < 768 ? 'calc(100vw - 32px)' : '350px',
+                            zIndex: 999999
                           }}
                         >
                           <h5 style={{ margin: '0 0 0.8rem', fontSize: '0.9rem', fontWeight: 600, color: '#1d1d1f' }}>

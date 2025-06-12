@@ -323,8 +323,6 @@
   margin-bottom: 2rem;
   border: 1px solid rgba(255, 255, 255, 0.6);
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.06);
-  position: relative;
-  z-index: 10;
 }
 
 .cardHeader {
@@ -339,42 +337,6 @@
   font-size: 1.1rem;
   font-weight: 600;
   color: var(--apple-gray-800);
-}
-
-/* ✅ DROPDOWN FIX: Spezielle CSS-Regeln für Dropdown-Sichtbarkeit */
-.dropdownContainer {
-  position: relative !important;
-  z-index: 1000000 !important;
-}
-
-.dropdown {
-  position: absolute !important;
-  z-index: 1000000 !important;
-  background: white !important;
-  border: 1px solid rgba(0, 0, 0, 0.1) !important;
-  border-radius: 12px !important;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25) !important;
-  backdrop-filter: blur(20px) !important;
-  pointer-events: auto !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  transform: none !important;
-}
-
-/* ✅ DROPDOWN FIX: Override für alle anderen z-index Regeln */
-.card .dropdown {
-  z-index: 1000000 !important;
-}
-
-.container .dropdown {
-  z-index: 1000000 !important;
-}
-
-/* ✅ DROPDOWN FIX: Spezifische Dropdown-Button Container */
-.pitchDropdownContainer,
-.exportDropdownContainer {
-  position: relative !important;
-  z-index: 1000000 !important;
 }
 
 /* ✨ ANIMATIONS */
