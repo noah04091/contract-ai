@@ -757,12 +757,14 @@ export default function Optimizer() {
         console.log("🔍 DEBUG: uploadData._id:", uploadData._id);
 
         // 🔧 SMART FALLBACK: Versuche verschiedene ID-Strukturen (für /api/analyze Response)
-        currentContractId = uploadData.contractId || 
+        currentContractId = uploadData.analysisId ||      // ✅ NEU: analysisId aus /api/analyze
+                          uploadData.contractId || 
                           uploadData.contract?.id || 
                           uploadData.contract?._id || 
                           uploadData.id || 
                           uploadData._id ||
-                          uploadData.contract;
+                          uploadData.contract ||
+                          uploadData.requestId;           // ✅ FALLBACK: requestId
         
         if (!currentContractId) {
           throw new Error("❌ Keine Contract ID im Upload Response gefunden. Response-Struktur: " + JSON.stringify(uploadData));
