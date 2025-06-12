@@ -400,14 +400,12 @@ export default function Optimizer() {
   const [contractScore, setContractScore] = useState<ContractHealthScore | null>(null);
   const [showSimulation, setShowSimulation] = useState(false);
   
-  // ✅ PHASE 2: Export & Pitch States mit REFS für z-index Fix
+  // ✅ PHASE 2: Export & Pitch States - SIMPLIFIED (no refs needed)
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showPitchMenu, setShowPitchMenu] = useState(false);
   const [selectedPitchStyle, setSelectedPitchStyle] = useState<string>('business');
   
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const pitchButtonRef = useRef<HTMLButtonElement>(null);
-  const exportButtonRef = useRef<HTMLButtonElement>(null);
 
   // ✅ PHASE 2: Export Options
   const exportOptions: ExportOption[] = [
@@ -539,13 +537,18 @@ export default function Optimizer() {
     }
   }, [optimizations]);
 
-  // ✅ PHASE 2: Close dropdowns when clicking outside - Z-INDEX FIX
+  // ✅ PHASE 2: Close dropdowns when clicking outside - PROPER IMPLEMENTATION
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (showPitchMenu && pitchButtonRef.current && !pitchButtonRef.current.contains(event.target as Node)) {
+      const target = event.target as Element;
+      
+      // Close pitch menu if clicking outside its container
+      if (showPitchMenu && !target.closest('[data-dropdown="pitch"]')) {
         setShowPitchMenu(false);
       }
-      if (showExportMenu && exportButtonRef.current && !exportButtonRef.current.contains(event.target as Node)) {
+      
+      // Close export menu if clicking outside its container  
+      if (showExportMenu && !target.closest('[data-dropdown="export"]')) {
         setShowExportMenu(false);
       }
     };
@@ -1194,9 +1197,8 @@ Mit freundlichen Grüßen`
 
                 <div style={{ display: 'flex', gap: '0.8rem', flexWrap: 'wrap', position: 'relative' }}>
                   {/* ✅ PHASE 2: FIXED Z-INDEX Pitch Generator Dropdown */}
-                  <div style={{ position: 'relative' }}>
+                  <div style={{ position: 'relative', zIndex: 999999 }} data-dropdown="pitch">
                     <motion.button
-                      ref={pitchButtonRef}
                       onClick={() => setShowPitchMenu(!showPitchMenu)}
                       style={{
                         display: 'flex',
@@ -1221,7 +1223,7 @@ Mit freundlichen Grüßen`
                       {showPitchMenu ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                     </motion.button>
 
-                    {/* ✅ Z-INDEX FIX: FIXED POSITIONING Dropdown */}
+                    {/* ✅ Z-INDEX FIX: ABSOLUTE POSITIONING direkt unter Button */}
                     <AnimatePresence>
                       {showPitchMenu && (
                         <motion.div
@@ -1229,24 +1231,18 @@ Mit freundlichen Grüßen`
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           exit={{ opacity: 0, y: 10, scale: 0.95 }}
                           style={{
-                            position: 'fixed',
-                            top: pitchButtonRef.current ? 
-                              pitchButtonRef.current.getBoundingClientRect().bottom + window.scrollY + 8 : 
-                              '50%',
-                            left: pitchButtonRef.current ? 
-                              Math.max(8, Math.min(
-                                pitchButtonRef.current.getBoundingClientRect().left + window.scrollX,
-                                window.innerWidth - 320 - 16
-                              )) : 
-                              '50%',
+                            position: 'absolute',
+                            top: '100%',
+                            left: 0,
+                            marginTop: '0.5rem',
                             background: 'rgba(255, 255, 255, 0.98)',
                             backdropFilter: 'blur(20px)',
                             borderRadius: '16px',
                             padding: '1rem',
                             boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15), 0 8px 32px rgba(0, 0, 0, 0.1)',
                             border: '1px solid rgba(255, 255, 255, 0.8)',
-                            minWidth: typeof window !== 'undefined' && window.innerWidth < 768 ? '280px' : '320px',
-                            maxWidth: typeof window !== 'undefined' && window.innerWidth < 768 ? 'calc(100vw - 32px)' : '320px',
+                            minWidth: '280px',
+                            maxWidth: '320px',
                             zIndex: 999999
                           }}
                         >
@@ -1297,9 +1293,8 @@ Mit freundlichen Grüßen`
                   </div>
                   
                   {/* ✅ PHASE 2: FIXED Z-INDEX Export Menu */}
-                  <div style={{ position: 'relative' }}>
+                  <div style={{ position: 'relative', zIndex: 999999 }} data-dropdown="export">
                     <motion.button
-                      ref={exportButtonRef}
                       onClick={() => setShowExportMenu(!showExportMenu)}
                       style={{
                         display: 'flex',
@@ -1324,7 +1319,7 @@ Mit freundlichen Grüßen`
                       {showExportMenu ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                     </motion.button>
 
-                    {/* ✅ Z-INDEX FIX: FIXED POSITIONING Dropdown */}
+                    {/* ✅ Z-INDEX FIX: ABSOLUTE POSITIONING direkt unter Button */}
                     <AnimatePresence>
                       {showExportMenu && (
                         <motion.div
@@ -1332,24 +1327,18 @@ Mit freundlichen Grüßen`
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           exit={{ opacity: 0, y: 10, scale: 0.95 }}
                           style={{
-                            position: 'fixed',
-                            top: exportButtonRef.current ? 
-                              exportButtonRef.current.getBoundingClientRect().bottom + window.scrollY + 8 : 
-                              '50%',
-                            left: exportButtonRef.current ? 
-                              Math.max(8, Math.min(
-                                exportButtonRef.current.getBoundingClientRect().right + window.scrollX - 350,
-                                window.innerWidth - 350 - 16
-                              )) : 
-                              '50%',
+                            position: 'absolute',
+                            top: '100%',
+                            right: 0,
+                            marginTop: '0.5rem',
                             background: 'rgba(255, 255, 255, 0.98)',
                             backdropFilter: 'blur(20px)',
                             borderRadius: '16px',
                             padding: '1rem',
                             boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15), 0 8px 32px rgba(0, 0, 0, 0.1)',
                             border: '1px solid rgba(255, 255, 255, 0.8)',
-                            minWidth: typeof window !== 'undefined' && window.innerWidth < 768 ? '280px' : '350px',
-                            maxWidth: typeof window !== 'undefined' && window.innerWidth < 768 ? 'calc(100vw - 32px)' : '350px',
+                            minWidth: '300px',
+                            maxWidth: '350px',
                             zIndex: 999999
                           }}
                         >
