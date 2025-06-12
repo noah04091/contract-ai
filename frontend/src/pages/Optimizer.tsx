@@ -1,4 +1,4 @@
-// 📁 src/pages/Optimizer.tsx - PHASE 3: Mit Smart Contract Generator Integration
+// 📁 src/pages/Optimizer.tsx - FIXED: Smart Contract Generator mit korrekter Contract-Speicherung
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import ReactDOM from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -80,8 +80,8 @@ const DropdownPortal: React.FC<{
       setPortalPosition({
         top: rect.bottom + scrollTop + 8,
         left: position === 'right' 
-          ? rect.right + scrollLeft - 350  // Export dropdown right-aligned
-          : rect.left + scrollLeft         // Pitch dropdown left-aligned
+          ? rect.right + scrollLeft - 350
+          : rect.left + scrollLeft
       });
     }
   }, [isOpen, targetRef, position]);
@@ -93,7 +93,7 @@ const DropdownPortal: React.FC<{
       style={{
         position: 'absolute',
         top: portalPosition.top,
-        left: Math.max(8, portalPosition.left), // Ensure it doesn't go off-screen
+        left: Math.max(8, portalPosition.left),
         zIndex: 999999,
         pointerEvents: 'auto'
       }}
@@ -104,7 +104,7 @@ const DropdownPortal: React.FC<{
   );
 };
 
-// ✅ ENHANCED: Verbesserte Parsing-Logik für mehr Optimierungen - ESLint-konform
+// ✅ ENHANCED: Verbesserte Parsing-Logik für mehr Optimierungen
 const parseOptimizationResult = (aiText: string, fileName: string): OptimizationSuggestion[] => {
   const optimizations: OptimizationSuggestion[] = [];
   
@@ -112,28 +112,24 @@ const parseOptimizationResult = (aiText: string, fileName: string): Optimization
     return optimizations;
   }
 
-  // 🔧 PHASE 1 FIX: Bessere Struktur-Erkennung für mehr Optimierungen
   const sections = aiText.split(/(?:\[KATEGORIE:|KATEGORIE:|PROBLEM:|EMPFEHLUNG:|\d+\.\s*)/i)
     .filter(section => section.trim().length > 30);
   
-  // 🔧 Zusätzlich: Split by common patterns für mehr Erkennungen
   const additionalSections = aiText.split(/(?:BEGRÜNDUNG:|PRIORITÄT:|UMSETZUNG:)/i)
     .filter(section => section.trim().length > 50);
   
   const allSections = [...sections, ...additionalSections]
-    .filter((section, index, arr) => arr.indexOf(section) === index) // Remove duplicates
-    .slice(0, 15); // Max 15 sections zu verarbeiten
+    .filter((section, index, arr) => arr.indexOf(section) === index)
+    .slice(0, 15);
 
   allSections.forEach((section, index) => {
     if (section.trim().length < 40) return;
     
-    // 🔧 ENHANCED: Bessere Kategorisierung mit if-else statt switch
     let category: OptimizationSuggestion['category'] = 'clarity';
     let priority: OptimizationSuggestion['priority'] = 'medium';
     
     const lowerSection = section.toLowerCase();
     
-    // ✅ ESLint Fix: if-else statt switch für Kategorisierung
     if (lowerSection.includes('kündigung') || lowerSection.includes('laufzeit') || lowerSection.includes('frist') || lowerSection.includes('kündigungsfristen')) {
       category = 'termination';
       priority = lowerSection.includes('kurz') || lowerSection.includes('lange') ? 'high' : 'medium';
@@ -151,7 +147,6 @@ const parseOptimizationResult = (aiText: string, fileName: string): Optimization
       priority = 'medium';
     }
 
-    // 🔧 ENHANCED: Confidence basierend auf mehr Faktoren
     let confidence = 75;
     if (section.length > 200) confidence += 10;
     if (lowerSection.includes('empfehlung') || lowerSection.includes('sollte') || lowerSection.includes('besser')) confidence += 8;
@@ -159,15 +154,12 @@ const parseOptimizationResult = (aiText: string, fileName: string): Optimization
     if (lowerSection.includes('standard') || lowerSection.includes('üblich') || lowerSection.includes('markt')) confidence += 5;
     if (section.includes('§') || section.includes('BGB') || section.includes('Gesetz')) confidence += 5;
     
-    // 🔧 PHASE 1 FIX: Strukturierte Text-Extraktion für 3-Spalten-Layout
     const sentences = section.split(/[.!?]+/).filter(s => s.trim().length > 15);
     
-    // Bessere Original/Improved/Reasoning Extraktion mit professionelleren Begründungen
     let original = "";
     let improved = "";
     let reasoning = "";
     
-    // Suche nach "PROBLEM:" und "EMPFEHLUNG:" Patterns
     if (section.includes('PROBLEM:') && section.includes('EMPFEHLUNG:')) {
       const problemMatch = section.match(/PROBLEM:\s*([^E]+)EMPFEHLUNG:/i);
       const empfehlungMatch = section.match(/EMPFEHLUNG:\s*([^B]+)(?:BEGRÜNDUNG:|$)/i);
@@ -178,7 +170,6 @@ const parseOptimizationResult = (aiText: string, fileName: string): Optimization
       const restText = section.replace(/PROBLEM:.*?EMPFEHLUNG:.*?(?:BEGRÜNDUNG:|$)/i, '').trim();
       reasoning = restText || section.substring(Math.max(0, section.length - 300));
     } else {
-      // Fallback: Intelligente Aufteilung der Sätze
       if (sentences.length >= 3) {
         original = sentences.slice(0, Math.ceil(sentences.length / 3)).join('. ').trim() + '.';
         improved = sentences.slice(Math.ceil(sentences.length / 3), Math.ceil(2 * sentences.length / 3)).join('. ').trim() + '.';
@@ -190,9 +181,7 @@ const parseOptimizationResult = (aiText: string, fileName: string): Optimization
       }
     }
 
-    // ✅ ENHANCED: Professionelle, kategorie-spezifische Begründungen
     if (reasoning.length < 100 || reasoning.includes('Priorität') || reasoning.includes('Umsetzung')) {
-      // Generiere professionelle Begründungen basierend auf Kategorie
       if (category === 'termination') {
         reasoning = `Diese Optimierung der Kündigungsregelungen ist rechtlich und wirtschaftlich vorteilhaft. Marktübliche Kündigungsfristen schaffen Planungssicherheit für beide Vertragsparteien und entsprechen aktuellen arbeitsrechtlichen Standards. Eine ausgewogene Regelung reduziert das Risiko rechtlicher Streitigkeiten und verbessert die Flexibilität bei Personalentscheidungen. Rechtsprechung und Tarifverträge unterstützen diese Anpassung.`;
       } else if (category === 'liability') {
@@ -206,7 +195,6 @@ const parseOptimizationResult = (aiText: string, fileName: string): Optimization
       }
     }
 
-    // 🔧 ENHANCED: Bessere Savings-Schätzungen mit if-else
     let estimatedSavings = 'Risikoreduzierung';
     if (category === 'payment') {
       estimatedSavings = `~${800 + Math.floor(Math.random() * 2000)}€/Jahr`;
@@ -216,7 +204,6 @@ const parseOptimizationResult = (aiText: string, fileName: string): Optimization
       estimatedSavings = `Risikoreduktion ~${5 + Math.floor(Math.random() * 15)}k€`;
     }
 
-    // 🔧 ENHANCED: Market Benchmarks mit if-else
     let marketBenchmark = `Basierend auf ${fileName} Analyse`;
     if (category === 'termination') {
       marketBenchmark = `${60 + Math.floor(Math.random() * 30)}% der Verträge haben kürzere Fristen`;
@@ -226,7 +213,6 @@ const parseOptimizationResult = (aiText: string, fileName: string): Optimization
       marketBenchmark = `${80 + Math.floor(Math.random() * 15)}% haben kürzere Zahlungsfristen`;
     }
 
-    // Implementation Difficulty mit if-else
     let implementationDifficulty: 'easy' | 'medium' | 'complex' = 'easy';
     if (category === 'liability') {
       implementationDifficulty = 'complex';
@@ -259,7 +245,6 @@ const parseOptimizationResult = (aiText: string, fileName: string): Optimization
     });
   });
 
-  // 🔧 PHASE 1 FIX: Mindestens 3 Optimierungen garantieren + alle Kategorien abdecken
   if (optimizations.length < 6) {
     const existingCategories = optimizations.map(opt => opt.category);
     const allCategories: OptimizationSuggestion['category'][] = ['termination', 'liability', 'payment', 'clarity', 'compliance'];
@@ -353,7 +338,6 @@ const parseOptimizationResult = (aiText: string, fileName: string): Optimization
       }
     ];
     
-    // Priorisiere fehlende Kategorien
     const categoriesToAdd = missingCategories.length > 0 
       ? additionalOptimizations.filter(opt => missingCategories.includes(opt.category))
       : additionalOptimizations;
@@ -362,10 +346,9 @@ const parseOptimizationResult = (aiText: string, fileName: string): Optimization
     optimizations.push(...categoriesToAdd.slice(0, neededCount));
   }
 
-  return optimizations.slice(0, 8); // Maximal 8 Optimierungen für bessere UX
+  return optimizations.slice(0, 8);
 };
 
-// 🔧 FIXED: Korrekte Score-Berechnung für Live-Simulation
 const calculateContractScore = (optimizations: OptimizationSuggestion[]): ContractHealthScore => {
   if (optimizations.length === 0) {
     return {
@@ -382,7 +365,6 @@ const calculateContractScore = (optimizations: OptimizationSuggestion[]): Contra
     };
   }
 
-  // Basis-Score Berechnung
   const criticalCount = optimizations.filter(opt => opt.priority === 'critical' && !opt.implemented).length;
   const highCount = optimizations.filter(opt => opt.priority === 'high' && !opt.implemented).length;
   const mediumCount = optimizations.filter(opt => opt.priority === 'medium' && !opt.implemented).length;
@@ -393,12 +375,10 @@ const calculateContractScore = (optimizations: OptimizationSuggestion[]): Contra
   baseScore -= mediumCount * 4;
   baseScore = Math.max(25, baseScore);
 
-  // 🔧 FIXED: Implementierte Optimierungen bringen Score-Bonus
   const implementedCount = optimizations.filter(opt => opt.implemented).length;
-  const improvementBonus = implementedCount * 5; // +5 Punkte pro implementierte Optimierung
+  const improvementBonus = implementedCount * 5;
   const finalScore = Math.min(100, Math.round(baseScore + improvementBonus));
 
-  // Kategorie-spezifische Scores mit cleaner Math
   const categoryScores = {
     termination: Math.round(baseScore),
     liability: Math.round(baseScore),
@@ -407,13 +387,11 @@ const calculateContractScore = (optimizations: OptimizationSuggestion[]): Contra
     compliance: Math.round(baseScore)
   };
 
-  // Kategorie-spezifische Anpassungen
   optimizations.forEach(opt => {
     if (!opt.implemented) {
       const reduction = opt.priority === 'critical' ? 15 : opt.priority === 'high' ? 8 : 4;
       categoryScores[opt.category] = Math.max(15, Math.round(categoryScores[opt.category] - reduction));
     } else {
-      // Bonus für implementierte Optimierungen
       categoryScores[opt.category] = Math.min(100, Math.round(categoryScores[opt.category] + 3));
     }
   });
@@ -454,6 +432,10 @@ export default function Optimizer() {
   // ✅ PHASE 3: Smart Contract Generator States
   const [contractId, setContractId] = useState<string | null>(null);
   const [isGeneratingContract, setIsGeneratingContract] = useState(false);
+  
+  // ✅ FIXED: Neue States für bessere Contract-Verwaltung
+  const [originalContractText, setOriginalContractText] = useState<string>('');
+  const [analysisData, setAnalysisData] = useState<any>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pitchButtonRef = useRef<HTMLButtonElement>(null);
@@ -519,7 +501,6 @@ export default function Optimizer() {
     }
   ];
 
-  // 🔧 PHASE 1 FIX: Dynamische Kategorien mit korrekter Filterung
   const categories: OptimizationCategory[] = [
     { 
       id: 'all', 
@@ -581,7 +562,6 @@ export default function Optimizer() {
     fetchPremiumStatus();
   }, []);
 
-  // 🔧 PHASE 1 FIX: Score-Update bei Optimierung-Changes
   useEffect(() => {
     if (optimizations.length > 0) {
       const updatedScore = calculateContractScore(optimizations);
@@ -594,7 +574,6 @@ export default function Optimizer() {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Element;
       
-      // Check if click is on button or dropdown content
       const isPitchButton = pitchButtonRef.current?.contains(target);
       const isExportButton = exportButtonRef.current?.contains(target);
       const isDropdownContent = target.closest('[data-portal-dropdown]');
@@ -623,6 +602,8 @@ export default function Optimizer() {
     setLoading(true);
     setOptimizations([]);
     setError(null);
+    setOriginalContractText(''); // Reset
+    setAnalysisData(null); // Reset
 
     const formData = new FormData();
     formData.append("file", file);
@@ -652,7 +633,15 @@ export default function Optimizer() {
         resultLength: data.optimizationResult?.length || 0
       });
 
-      // ✅ PHASE 1 FIX: Verbesserte Verarbeitung der OpenAI-Response
+      // ✅ CRITICAL FIX: Speichere die Analysis-Daten für Smart Contract Generator
+      setAnalysisData(data);
+      
+      // ✅ ENHANCED: Versuche originalen Text zu extrahieren (falls verfügbar)
+      if (data.originalText) {
+        setOriginalContractText(data.originalText);
+        console.log("✅ Original Contract Text gespeichert:", data.originalText.length + " Zeichen");
+      }
+
       if (data.optimizationResult && data.optimizationResult.trim()) {
         const parsedOptimizations = parseOptimizationResult(data.optimizationResult, file.name);
         const calculatedScore = calculateContractScore(parsedOptimizations);
@@ -699,13 +688,13 @@ export default function Optimizer() {
     }
   };
 
-  // ✅ NEW: Toast/Feedback Helper (moved up to fix dependency order)
+  // ✅ NEW: Toast/Feedback Helper
   const showToast = useCallback((message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 4000);
   }, []);
 
-  // ✅ PHASE 3: Smart Contract Generator Function
+  // ✅ FIXED: Smart Contract Generator Function mit robuster Contract-Erstellung
   const handleGenerateOptimizedContract = useCallback(async () => {
     // Validierung
     if (!file || optimizations.length === 0) {
@@ -716,7 +705,7 @@ export default function Optimizer() {
     // Prüfe ob Optimierungen ausgewählt wurden (falls Simulation an ist)
     const selectedOptimizations = showSimulation 
       ? optimizations.filter(opt => opt.implemented)
-      : optimizations; // Alle Optimierungen wenn keine Simulation
+      : optimizations;
 
     if (showSimulation && selectedOptimizations.length === 0) {
       showToast("❌ Bitte wähle mindestens eine Optimierung für den optimierten Vertrag aus.", 'error');
@@ -727,55 +716,94 @@ export default function Optimizer() {
     showToast("🪄 Optimierter Vertrag wird generiert...", 'success');
 
     try {
-      // Schritt 1: Contract hochladen und ID bekommen (falls noch nicht vorhanden)
+      // ✅ CRITICAL FIX: Robuste Contract-ID Beschaffung
       let currentContractId = contractId;
       
       if (!currentContractId) {
-        console.log("📤 Lade Contract hoch für Optimierung...");
+        console.log("📤 Erstelle Contract für Smart Contract Generator...");
         
-        // 🔧 FIX: Nutze bestehende /api/analyze Route statt /api/contracts
-        const formData = new FormData();
-        formData.append("file", file);
-        
-        const uploadRes = await fetch("/api/analyze", {
-          method: "POST",
-          credentials: "include",
-          body: formData,
-        });
+        // ✅ STRATEGY A: Versuche zuerst Contract zu speichern basierend auf Analysis-Daten
+        if (analysisData) {
+          try {
+            console.log("💾 Speichere Contract basierend auf Analysis-Daten...");
+            
+            const contractData = {
+              name: file.name,
+              content: originalContractText || `Inhalt von ${file.name}`,
+              laufzeit: analysisData.laufzeit || "Unbekannt",
+              kuendigung: analysisData.kuendigung || "Unbekannt",
+              expiryDate: analysisData.expiryDate || "",
+              status: analysisData.status || "Aktiv",
+              isGenerated: false,
+              originalname: file.name,
+              filePath: analysisData.fileUrl || "",
+              mimetype: file.type,
+              size: file.size,
+              // ✅ CRITICAL: Analysis-Referenz für Debugging
+              analysisId: analysisData.analysisId || analysisData.requestId,
+              uploadType: analysisData.uploadType || 'LOCAL_UPLOAD'
+            };
 
-        const uploadData = await uploadRes.json();
-        
-        if (!uploadRes.ok) {
-          throw new Error(uploadData.message || "Contract Upload fehlgeschlagen");
+            console.log("💾 Contract Data:", contractData);
+
+            const contractRes = await fetch("/api/contracts", {
+              method: "POST",
+              credentials: "include",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(contractData),
+            });
+
+            if (contractRes.ok) {
+              const contractResult = await contractRes.json();
+              currentContractId = contractResult.contractId;
+              setContractId(currentContractId);
+              console.log("✅ Contract erfolgreich erstellt mit ID:", currentContractId);
+            } else {
+              throw new Error("Contract-Speicherung fehlgeschlagen");
+            }
+          } catch (contractError) {
+            console.warn("⚠️ Contract-Speicherung fehlgeschlagen, versuche Alternative:", contractError);
+            currentContractId = null;
+          }
         }
-
-        // 🔧 DEBUG: Schaue die komplette Response-Struktur an
-        console.log("🔍 DEBUG: Complete Upload Response:", uploadData);
-        console.log("🔍 DEBUG: uploadData.contract:", uploadData.contract);
-        console.log("🔍 DEBUG: uploadData.contractId:", uploadData.contractId);
-        console.log("🔍 DEBUG: uploadData.id:", uploadData.id);
-        console.log("🔍 DEBUG: uploadData._id:", uploadData._id);
-
-        // 🔧 SMART FALLBACK: Versuche verschiedene ID-Strukturen (für /api/analyze Response)
-        currentContractId = uploadData.analysisId ||      // ✅ NEU: analysisId aus /api/analyze
-                          uploadData.contractId || 
-                          uploadData.contract?.id || 
-                          uploadData.contract?._id || 
-                          uploadData.id || 
-                          uploadData._id ||
-                          uploadData.contract ||
-                          uploadData.requestId;           // ✅ FALLBACK: requestId
         
+        // ✅ STRATEGY B: Fallback - Re-Upload für Contract-ID
         if (!currentContractId) {
-          throw new Error("❌ Keine Contract ID im Upload Response gefunden. Response-Struktur: " + JSON.stringify(uploadData));
+          console.log("📤 Fallback: Re-Upload für Contract-ID...");
+          
+          const formData = new FormData();
+          formData.append("file", file);
+          
+          const uploadRes = await fetch("/api/analyze", {
+            method: "POST",
+            credentials: "include",
+            body: formData,
+          });
+
+          const uploadData = await uploadRes.json();
+          
+          if (!uploadRes.ok) {
+            throw new Error(uploadData.message || "Contract Upload fehlgeschlagen");
+          }
+
+          // ✅ FALLBACK: Nutze Analysis-ID als Contract-ID
+          currentContractId = uploadData.analysisId || 
+                            uploadData.contractId || 
+                            uploadData.requestId;
+          
+          if (!currentContractId) {
+            throw new Error("❌ Keine Contract ID verfügbar. Bitte lade den Vertrag erneut hoch.");
+          }
+          
+          setContractId(currentContractId);
+          console.log("✅ Fallback Contract ID erhalten:", currentContractId);
         }
-        
-        setContractId(currentContractId);
-        console.log("✅ Contract hochgeladen mit ID:", currentContractId);
       }
 
-      // Schritt 2: Optimierten Vertrag generieren
-      console.log("🎯 Starte Smart Contract Generation...");
+      // ✅ STEP 2: Generate Optimized Contract
+      console.log("🎯 Starte Smart Contract Generation mit ID:", currentContractId);
       
       const generatePayload = {
         optimizations: selectedOptimizations.map(opt => ({
@@ -793,8 +821,20 @@ export default function Optimizer() {
           format: 'pdf',
           includeReasons: true,
           preserveLayout: true
+        },
+        // ✅ CRITICAL: Zusätzliche Daten für bessere Contract-Generierung
+        sourceData: {
+          originalFileName: file.name,
+          originalContent: originalContractText,
+          analysisData: analysisData
         }
       };
+
+      console.log("📤 Generate Payload:", {
+        optimizationCount: generatePayload.optimizations.length,
+        contractId: currentContractId,
+        hasOriginalContent: !!originalContractText
+      });
 
       const generateRes = await fetch(`/api/contracts/${currentContractId}/generate-optimized`, {
         method: "POST",
@@ -807,13 +847,27 @@ export default function Optimizer() {
 
       if (!generateRes.ok) {
         const errorData = await generateRes.json();
-        throw new Error(errorData.message || `Server Error: ${generateRes.status}`);
+        console.error("❌ Smart Contract Generation Error:", errorData);
+        
+        // ✅ ENHANCED ERROR HANDLING
+        if (generateRes.status === 404) {
+          throw new Error("❌ Contract nicht gefunden. Bitte lade den Vertrag erneut hoch.");
+        } else if (generateRes.status === 400) {
+          throw new Error("❌ Ungültige Optimierungsdaten. Führe die Analyse erneut durch.");
+        } else {
+          throw new Error(errorData.message || `Server Error: ${generateRes.status}`);
+        }
       }
 
-      // Schritt 3: PDF Download
+      // ✅ STEP 3: PDF Download
       console.log("📄 Download optimierte PDF...");
       
       const blob = await generateRes.blob();
+      
+      if (blob.size === 0) {
+        throw new Error("❌ Leere PDF erhalten. Versuche es erneut.");
+      }
+      
       const downloadUrl = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;
@@ -823,13 +877,14 @@ export default function Optimizer() {
       document.body.removeChild(link);
       URL.revokeObjectURL(downloadUrl);
 
-      // Success!
+      // ✅ Success!
       showToast(`✅ Optimierter Vertrag erfolgreich generiert! (${selectedOptimizations.length} Optimierungen angewendet)`, 'success');
       
       console.log("🎉 Smart Contract Generation erfolgreich abgeschlossen!", {
         contractId: currentContractId,
         optimizationsApplied: selectedOptimizations.length,
-        fileName: file.name
+        fileName: file.name,
+        pdfSize: blob.size
       });
 
     } catch (error) {
@@ -849,14 +904,14 @@ export default function Optimizer() {
       } else if (err.message.includes("Subscription")) {
         errorMessage = "⭐ Premium-Feature. Bitte upgrade dein Paket.";
       } else {
-        errorMessage = `❌ ${err.message}`;
+        errorMessage = err.message.startsWith("❌") ? err.message : `❌ ${err.message}`;
       }
       
       showToast(errorMessage, 'error');
     } finally {
       setIsGeneratingContract(false);
     }
-  }, [file, optimizations, contractId, showSimulation, showToast]);
+  }, [file, optimizations, contractId, showSimulation, showToast, originalContractText, analysisData]);
 
   // ✨ Handlers
   const handleReset = useCallback(() => {
@@ -871,6 +926,9 @@ export default function Optimizer() {
     // ✅ PHASE 3: Reset Smart Contract Generator State
     setContractId(null);
     setIsGeneratingContract(false);
+    // ✅ FIXED: Reset neue States
+    setOriginalContractText('');
+    setAnalysisData(null);
   }, []);
 
   const handleDrag = useCallback((e: React.DragEvent) => {
@@ -906,13 +964,11 @@ export default function Optimizer() {
     }
   }, []);
 
-  // 🔧 PHASE 1 FIX: Funktionale Live-Simulation - berechnet neuen Score basierend auf aktuellen Optimierungen
   const calculateNewScore = useCallback(() => {
     if (!optimizations.length) return 0;
     return calculateContractScore(optimizations).overall;
   }, [optimizations]);
 
-  // 🔧 PHASE 1 FIX: Funktionaler Toggle mit State-Update
   const toggleSuggestion = useCallback((id: string) => {
     setOptimizations(prev => {
       const updated = prev.map(opt => 
@@ -922,9 +978,7 @@ export default function Optimizer() {
     });
   }, []);
 
-
-
-  // ✅ ENHANCED: Pitch Generator mit besserem Feedback
+  // ✅ ENHANCED: Pitch Generator
   const generatePitch = useCallback((style: string = selectedPitchStyle) => {
     const implementedSuggestions = optimizations.filter(opt => opt.implemented);
     
@@ -933,7 +987,6 @@ export default function Optimizer() {
       return;
     }
 
-    // ✅ ESLint Fix: Alle Deklarationen außerhalb des switch
     const categoryNames = {
       'termination': 'Kündigungsregelungen',
       'liability': 'Haftungsklauseln', 
@@ -944,7 +997,6 @@ export default function Optimizer() {
 
     const improvementScore = calculateNewScore() - (contractScore?.overall || 0);
 
-    // ✅ ESLint Fix: Pitch-Generierung als Objekt-Mapping statt switch
     const pitchTemplates = {
       lawyer: `Sehr geehrte Kolleginnen und Kollegen,
 
@@ -1008,26 +1060,22 @@ Falls Sie Interesse haben, können wir das gerne bei einem Kaffee besprechen.
 Mit freundlichen Grüßen`
     };
 
-    // Fallback auf Business-Stil
     const pitch = pitchTemplates[style as keyof typeof pitchTemplates] || pitchTemplates.business;
 
     navigator.clipboard.writeText(pitch);
     
-    // ✅ BETTER FEEDBACK: Toast statt Error-State
     const styleNames = { lawyer: 'Rechtlicher', business: 'Business', private: 'Privater' };
     showToast(`✅ ${styleNames[style as keyof typeof styleNames] || 'Business'} Pitch wurde in die Zwischenablage kopiert!`);
     setShowPitchMenu(false);
   }, [optimizations, contractScore, calculateNewScore, selectedPitchStyle, showToast]);
 
-  // ✅ ENHANCED: Functional Export Functions
+  // ✅ ENHANCED: Export Functions
   const handleExport = useCallback(async (exportType: string) => {
     setShowExportMenu(false);
     
     if (exportType === 'pdf_marked') {
-      // ✅ PDF Export with Real Download
       showToast("📄 PDF wird generiert...", 'success');
       
-      // Create PDF content
       const pdfContent = `VERTRAGSANALYSE - ${file?.name || 'Unbekannt'}
 ===============================================
 
@@ -1047,7 +1095,6 @@ ${optimizations.map((opt, index) =>
 VERTRAGSSCORE: ${contractScore?.overall || 0}/100
 GENERIERT AM: ${new Date().toLocaleDateString('de-DE')}`;
 
-      // Download as text file (PDF generation would need additional library)
       const blob = new Blob([pdfContent], { type: 'text/plain;charset=utf-8' });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
@@ -1057,10 +1104,8 @@ GENERIERT AM: ${new Date().toLocaleDateString('de-DE')}`;
       setTimeout(() => showToast("✅ PDF-Analyse heruntergeladen!"), 1500);
       
     } else if (exportType === 'word_comments') {
-      // ✅ Word Export with Real Download
       showToast("📝 Word-Dokument wird erstellt...", 'success');
       
-      // Create Word-compatible content
       const wordContent = `VERTRAGSOPTIMIERUNG - ${file?.name || 'Unbekannt'}
 
 ZUSAMMENFASSUNG:
@@ -1104,7 +1149,6 @@ Generiert durch KI-Vertragsoptimierung`;
       setTimeout(() => showToast("✅ Word-Dokument heruntergeladen!"), 1500);
       
     } else if (exportType === 'excel_comparison') {
-      // ✅ Excel Export (CSV)
       const csvContent = `Kategorie,Original,Verbesserung,Begründung,Priorität,Confidence,Estimierte Ersparnisse,Markt-Benchmark\n` +
         optimizations.map(opt => 
           `"${opt.category}","${opt.original.replace(/"/g, '""')}","${opt.improved.replace(/"/g, '""')}","${opt.reasoning.replace(/"/g, '""')}","${opt.priority}","${opt.confidence}%","${opt.estimatedSavings}","${opt.marketBenchmark}"`
@@ -1119,7 +1163,6 @@ Generiert durch KI-Vertragsoptimierung`;
       showToast("✅ Excel-Vergleichstabelle heruntergeladen!");
       
     } else if (exportType === 'email_template') {
-      // ✅ Email Template Export
       generatePitch(selectedPitchStyle);
       
     } else {
@@ -1127,7 +1170,6 @@ Generiert durch KI-Vertragsoptimierung`;
     }
   }, [optimizations, file, generatePitch, selectedPitchStyle, contractScore, showToast]);
 
-  // 🔧 PHASE 1 FIX: Funktionierende Filterung
   const filteredOptimizations = selectedCategory === 'all' 
     ? optimizations 
     : optimizations.filter(opt => opt.category === selectedCategory);
@@ -1395,7 +1437,7 @@ Generiert durch KI-Vertragsoptimierung`;
                 />
               )}
 
-              {/* 🔧 PHASE 1 FIX: Funktionierende Category Filter */}
+              {/* Category Filter */}
               <motion.div
                 className={styles.card}
                 initial={{ opacity: 0, y: 20 }}
@@ -1470,7 +1512,7 @@ Generiert durch KI-Vertragsoptimierung`;
                 </div>
               </motion.div>
 
-              {/* ✅ PHASE 3: Enhanced Control Panel mit Smart Contract Generator */}
+              {/* ✅ FIXED: Enhanced Control Panel mit Smart Contract Generator */}
               <motion.div
                 className={styles.card}
                 style={{
@@ -1514,7 +1556,7 @@ Generiert durch KI-Vertragsoptimierung`;
                   <span>{showSimulation ? 'Simulation beenden' : 'Live-Simulation'}</span>
                 </motion.button>
 
-                {/* Center Section: Smart Contract Generator - NEUE HAUPTFUNKTION! */}
+                {/* ✅ MAIN FEATURE: Smart Contract Generator Button */}
                 <motion.button
                   onClick={handleGenerateOptimizedContract}
                   disabled={isGeneratingContract || !file || optimizations.length === 0 || !isPremium}
@@ -1607,7 +1649,7 @@ Generiert durch KI-Vertragsoptimierung`;
 
                 {/* Right Section: Export & Pitch Buttons */}
                 <div style={{ display: 'flex', gap: '0.8rem', flexWrap: 'wrap', position: 'relative' }}>
-                  {/* Existing Pitch Generator Button */}
+                  {/* Pitch Generator Button */}
                   <div style={{ position: 'relative' }}>
                     <motion.button
                       ref={pitchButtonRef}
@@ -1636,7 +1678,7 @@ Generiert durch KI-Vertragsoptimierung`;
                     </motion.button>
                   </div>
                   
-                  {/* Existing Export Button */}
+                  {/* Export Button */}
                   <div style={{ position: 'relative' }}>
                     <motion.button
                       ref={exportButtonRef}
@@ -1666,7 +1708,7 @@ Generiert durch KI-Vertragsoptimierung`;
                   </div>
                 </div>
 
-                {/* Existing Portal Dropdowns */}
+                {/* Portal Dropdowns */}
                 <DropdownPortal 
                   isOpen={showPitchMenu} 
                   targetRef={pitchButtonRef}
@@ -1819,7 +1861,7 @@ Generiert durch KI-Vertragsoptimierung`;
                 </DropdownPortal>
               </motion.div>
 
-              {/* 🔧 PHASE 1 FIX: Verbesserte Optimization Cards mit 3-Spalten-Layout */}
+              {/* Optimization Cards */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                   {filteredOptimizations.map((optimization, index) => (
                   <motion.div
@@ -1925,7 +1967,7 @@ Generiert durch KI-Vertragsoptimierung`;
                       )}
                     </div>
 
-                    {/* 🔧 PHASE 1 FIX: Echte 3-Spalten Klausel-Vergleichstabelle */}
+                    {/* 3-Column Layout */}
                     <div style={{ 
                       display: 'grid', 
                       gridTemplateColumns: '1fr 1fr 1fr', 
@@ -2017,7 +2059,7 @@ Generiert durch KI-Vertragsoptimierung`;
                       </div>
                     </div>
 
-                    {/* 🔧 PHASE 1 FIX: Strukturierte Zusatzinfos */}
+                    {/* Additional Info */}
                     <div style={{
                       display: 'grid',
                       gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
@@ -2083,7 +2125,7 @@ Generiert durch KI-Vertragsoptimierung`;
                 ))}
               </div>
 
-              {/* 🔧 PHASE 1 FIX: Zusammenfassung der implementierten Optimierungen */}
+              {/* Simulation Summary */}
               {showSimulation && optimizations.filter(opt => opt.implemented).length > 0 && (
                 <motion.div
                   className={styles.card}
