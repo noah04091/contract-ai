@@ -1190,7 +1190,7 @@ Mit freundlichen Grüßen`
 
                 <div style={{ display: 'flex', gap: '0.8rem', flexWrap: 'wrap', position: 'relative' }}>
                   {/* ✅ PHASE 2: Enhanced Pitch Generator mit Dropdown */}
-                  <div style={{ position: 'relative' }}>
+                  <div style={{ position: 'relative' }} className={styles.dropdownContainer}>
                     <motion.button
                       onClick={() => setShowPitchMenu(!showPitchMenu)}
                       style={{
@@ -1223,6 +1223,7 @@ Mit freundlichen Grüßen`
                           initial={{ opacity: 0, y: 10, scale: 0.95 }}
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                          className={styles.dropdown}
                           style={{
                             position: 'absolute',
                             top: '100%',
@@ -1285,7 +1286,7 @@ Mit freundlichen Grüßen`
                   </div>
                   
                   {/* ✅ PHASE 2: Enhanced Export Menu */}
-                  <div style={{ position: 'relative' }}>
+                  <div style={{ position: 'relative' }} className={styles.dropdownContainer}>
                     <motion.button
                       onClick={() => setShowExportMenu(!showExportMenu)}
                       style={{
@@ -1318,6 +1319,7 @@ Mit freundlichen Grüßen`
                           initial={{ opacity: 0, y: 10, scale: 0.95 }}
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                          className={styles.dropdown}
                           style={{
                             position: 'absolute',
                             top: '100%',
