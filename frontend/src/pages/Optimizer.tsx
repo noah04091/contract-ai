@@ -406,39 +406,8 @@ export default function Optimizer() {
   const [selectedPitchStyle, setSelectedPitchStyle] = useState<string>('business');
   
   const fileInputRef = useRef<HTMLInputElement>(null);
-  // ✅ DROPDOWN FIX: Button Refs hinzugefügt
-  const pitchButtonRef = useRef<HTMLButtonElement>(null);
-  const exportButtonRef = useRef<HTMLButtonElement>(null);
 
-  // ✅ DROPDOWN FIX: Intelligente Positionierungs-Funktion
-  const getDropdownPosition = (buttonRef: React.RefObject<HTMLButtonElement | null>) => {
-    if (!buttonRef.current) return {};
-    
-    const rect = buttonRef.current.getBoundingClientRect();
-    const windowHeight = window.innerHeight;
-    const dropdownHeight = 300; // Estimated dropdown height
-    
-    // Check if there's enough space below the button
-    const spaceBelow = windowHeight - rect.bottom;
-    const shouldOpenUpwards = spaceBelow < dropdownHeight;
-    
-    if (shouldOpenUpwards) {
-      return {
-        position: 'fixed' as const,
-        top: rect.top - 8,
-        right: window.innerWidth - rect.right,
-        transform: 'translateY(-100%)',
-        zIndex: 999999
-      };
-    } else {
-      return {
-        position: 'fixed' as const,
-        top: rect.bottom + 8,
-        right: window.innerWidth - rect.right,
-        zIndex: 999999
-      };
-    }
-  };
+  // ✅ SIMPLE DROPDOWN: Keine komplizierten Berechnungen mehr
 
   // ✅ PHASE 2: Export Options
   const exportOptions: ExportOption[] = [
@@ -546,19 +515,17 @@ export default function Optimizer() {
     }
   ];
 
-  // ✅ DROPDOWN FIX: Click-Outside Handler
+  // ✅ SIMPLE DROPDOWN: Click-Outside Handler
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (pitchButtonRef.current && !pitchButtonRef.current.contains(event.target as Node)) {
-        setShowPitchMenu(false);
-      }
-      if (exportButtonRef.current && !exportButtonRef.current.contains(event.target as Node)) {
-        setShowExportMenu(false);
-      }
+    const handleClickOutside = () => {
+      setShowPitchMenu(false);
+      setShowExportMenu(false);
     };
 
     if (showPitchMenu || showExportMenu) {
-      document.addEventListener('mousedown', handleClickOutside);
+      setTimeout(() => {
+        document.addEventListener('mousedown', handleClickOutside);
+      }, 100);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
   }, [showPitchMenu, showExportMenu]);
@@ -1225,7 +1192,6 @@ Mit freundlichen Grüßen`
                   {/* ✅ PHASE 2: Enhanced Pitch Generator mit Dropdown */}
                   <div style={{ position: 'relative' }}>
                     <motion.button
-                      ref={pitchButtonRef}
                       onClick={() => setShowPitchMenu(!showPitchMenu)}
                       style={{
                         display: 'flex',
@@ -1258,7 +1224,11 @@ Mit freundlichen Grüßen`
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           exit={{ opacity: 0, y: 10, scale: 0.95 }}
                           style={{
-                            ...getDropdownPosition(pitchButtonRef),
+                            position: 'absolute',
+                            top: '100%',
+                            left: 0,
+                            marginTop: '0.5rem',
+                            zIndex: 9999,
                             backgroundColor: 'rgba(255, 255, 255, 0.98)',
                             backdropFilter: 'blur(20px)',
                             borderRadius: '16px',
@@ -1317,7 +1287,6 @@ Mit freundlichen Grüßen`
                   {/* ✅ PHASE 2: Enhanced Export Menu */}
                   <div style={{ position: 'relative' }}>
                     <motion.button
-                      ref={exportButtonRef}
                       onClick={() => setShowExportMenu(!showExportMenu)}
                       style={{
                         display: 'flex',
@@ -1350,7 +1319,11 @@ Mit freundlichen Grüßen`
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           exit={{ opacity: 0, y: 10, scale: 0.95 }}
                           style={{
-                            ...getDropdownPosition(exportButtonRef),
+                            position: 'absolute',
+                            top: '100%',
+                            right: 0,
+                            marginTop: '0.5rem',
+                            zIndex: 9999,
                             backgroundColor: 'rgba(255, 255, 255, 0.98)',
                             backdropFilter: 'blur(20px)',
                             borderRadius: '16px',
