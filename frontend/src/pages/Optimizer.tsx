@@ -1,4 +1,4 @@
-// 📁 src/pages/Optimizer.tsx - FIXED: Smart Contract Generator mit korrekter Contract-Speicherung
+// 📁 src/pages/Optimizer.tsx - TYPESCRIPT FIXED: Smart Contract Generator Integration
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import ReactDOM from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -44,7 +44,26 @@ import {
 // Styles
 import styles from "../styles/Optimizer.module.css";
 
-// ✅ PHASE 2: Enhanced Export Functions
+// ✅ TYPESCRIPT FIX: Specific interfaces instead of 'any'
+interface AnalysisData {
+  success: boolean;
+  analysisId?: string;
+  contractId?: string;
+  requestId?: string;
+  uploadType?: string;
+  fileUrl?: string;
+  originalText?: string;
+  fullText?: string;
+  laufzeit?: string;
+  kuendigung?: string;
+  expiryDate?: string;
+  status?: string;
+  summary?: string;
+  legalAssessment?: string;
+  optimizationResult?: string;
+  [key: string]: unknown; // For additional properties
+}
+
 interface ExportOption {
   id: string;
   name: string;
@@ -433,9 +452,9 @@ export default function Optimizer() {
   const [contractId, setContractId] = useState<string | null>(null);
   const [isGeneratingContract, setIsGeneratingContract] = useState(false);
   
-  // ✅ FIXED: Neue States für bessere Contract-Verwaltung
+  // ✅ TYPESCRIPT FIXED: Specific types instead of 'any'
   const [originalContractText, setOriginalContractText] = useState<string>('');
-  const [analysisData, setAnalysisData] = useState<any>(null);
+  const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pitchButtonRef = useRef<HTMLButtonElement>(null);
@@ -694,7 +713,7 @@ export default function Optimizer() {
     setTimeout(() => setToast(null), 4000);
   }, []);
 
-  // ✅ FIXED: Smart Contract Generator Function mit robuster Contract-Erstellung
+  // ✅ TYPESCRIPT FIXED: Smart Contract Generator Function mit robuster Contract-Erstellung
   const handleGenerateOptimizedContract = useCallback(async () => {
     // Validierung
     if (!file || optimizations.length === 0) {
@@ -1512,7 +1531,7 @@ Generiert durch KI-Vertragsoptimierung`;
                 </div>
               </motion.div>
 
-              {/* ✅ FIXED: Enhanced Control Panel mit Smart Contract Generator */}
+              {/* Enhanced Control Panel mit Smart Contract Generator */}
               <motion.div
                 className={styles.card}
                 style={{
@@ -1556,7 +1575,7 @@ Generiert durch KI-Vertragsoptimierung`;
                   <span>{showSimulation ? 'Simulation beenden' : 'Live-Simulation'}</span>
                 </motion.button>
 
-                {/* ✅ MAIN FEATURE: Smart Contract Generator Button */}
+                {/* MAIN FEATURE: Smart Contract Generator Button */}
                 <motion.button
                   onClick={handleGenerateOptimizedContract}
                   disabled={isGeneratingContract || !file || optimizations.length === 0 || !isPremium}
