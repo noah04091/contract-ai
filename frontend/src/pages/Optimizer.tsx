@@ -733,10 +733,11 @@ export default function Optimizer() {
       if (!currentContractId) {
         console.log("📤 Lade Contract hoch für Optimierung...");
         
+        // 🔧 FIX: Nutze bestehende /api/analyze Route statt /api/contracts
         const formData = new FormData();
         formData.append("file", file);
         
-        const uploadRes = await fetch("/api/contracts", {
+        const uploadRes = await fetch("/api/analyze", {
           method: "POST",
           credentials: "include",
           body: formData,
@@ -748,7 +749,25 @@ export default function Optimizer() {
           throw new Error(uploadData.message || "Contract Upload fehlgeschlagen");
         }
 
-        currentContractId = uploadData.contract.id;
+        // 🔧 DEBUG: Schaue die komplette Response-Struktur an
+        console.log("🔍 DEBUG: Complete Upload Response:", uploadData);
+        console.log("🔍 DEBUG: uploadData.contract:", uploadData.contract);
+        console.log("🔍 DEBUG: uploadData.contractId:", uploadData.contractId);
+        console.log("🔍 DEBUG: uploadData.id:", uploadData.id);
+        console.log("🔍 DEBUG: uploadData._id:", uploadData._id);
+
+        // 🔧 SMART FALLBACK: Versuche verschiedene ID-Strukturen (für /api/analyze Response)
+        currentContractId = uploadData.contractId || 
+                          uploadData.contract?.id || 
+                          uploadData.contract?._id || 
+                          uploadData.id || 
+                          uploadData._id ||
+                          uploadData.contract;
+        
+        if (!currentContractId) {
+          throw new Error("❌ Keine Contract ID im Upload Response gefunden. Response-Struktur: " + JSON.stringify(uploadData));
+        }
+        
         setContractId(currentContractId);
         console.log("✅ Contract hochgeladen mit ID:", currentContractId);
       }
