@@ -351,6 +351,23 @@ const connectDB = async () => {
       });
     }
 
+    // ✅ STEP 10.5: PHASE 3 - SMART CONTRACT GENERATOR ROUTE
+    try {
+      console.log("🪄 Lade Smart Contract Generator Route...");
+      app.use("/contracts", verifyToken, checkSubscription, require("./routes/optimizedContract"));
+      console.log("✅ Smart Contract Generator Route geladen auf /contracts!");
+    } catch (err) {
+      console.error("❌ Fehler bei Smart Contract Generator Route:", err);
+      app.post("/contracts/:contractId/generate-optimized", verifyToken, checkSubscription, (req, res) => {
+        console.log("🆘 Fallback Smart Contract Generator aufgerufen");
+        res.status(503).json({
+          success: false,
+          message: "Smart Contract Generator vorübergehend nicht verfügbar",
+          error: "Route konnte nicht geladen werden"
+        });
+      });
+    }
+
     // 📋 STEP 11: Standard-Routen
     try {
       app.use("/analyze-type", require("./routes/analyzeType"));
@@ -718,10 +735,11 @@ const connectDB = async () => {
         timestamp: new Date().toISOString(),
         status: "working",
         mongodb: db ? 'ZENTRAL VERBUNDEN' : 'NICHT VERBUNDEN',
-        loadedRoutes: "all routes loaded with ZENTRALE DB",
-        newFeature: "Contract save route enabled",
+        loadedRoutes: "all routes loaded with ZENTRALE DB + SMART CONTRACT GENERATOR",
+        newFeature: "Smart Contract Generator ACTIVE!",
         analyzeRoute: "ANALYZE ROUTE NOW ACTIVE!",
         optimizeRoute: "OPTIMIZE ROUTE NOW ACTIVE!",
+        smartContractRoute: "SMART CONTRACT GENERATOR NOW ACTIVE!", // ✅ NEU
         fileServing: "IMPROVED FILE SERVING ACTIVE!",
         s3Integration: s3Status.servicesLoaded ? "S3 UPLOAD & SIGNED URLS + REDIRECT ACTIVE!" : "S3 Services not available",
         apiBaseUrl: API_BASE_URL,
@@ -763,6 +781,7 @@ const connectDB = async () => {
       console.log(`📁 Upload-Ordner: ${UPLOAD_PATH}`);
       console.log(`📡 Alle wichtigen Routen sollten geladen sein`);
       console.log(`🔧 Generate-Route: POST /contracts/generate (Proxy entfernt /api/)`);
+      console.log(`🪄 Smart Contract Generator: POST /contracts/:contractId/generate-optimized (NEU!)`); // ✅ NEU
       console.log(`💾 Save-Route: POST /contracts (NEU)`);
       console.log(`📊 Analyze-Route: POST /analyze (NEU HINZUGEFÜGT!)`);
       console.log(`🔧 Optimize-Route: POST /optimize (NEU HINZUGEFÜGT!)`);
@@ -770,7 +789,7 @@ const connectDB = async () => {
       if (s3Upload && generateSignedUrl) {
         console.log(`🔗 S3-Routes: GET /s3/view (Redirect), GET /s3/json (JSON)`);
       }
-      console.log(`✅ Server deployment complete mit ZENTRALER MONGODB!`);
+      console.log(`✅ Server deployment complete mit ZENTRALER MONGODB + SMART CONTRACT GENERATOR!`); // ✅ UPDATED
     });
 
   } catch (err) {

@@ -1,4 +1,4 @@
-// 📁 src/pages/Optimizer.tsx - PHASE 2: Export Features & Enhanced UX - PORTAL SOLUTION
+// 📁 src/pages/Optimizer.tsx - PHASE 3: Mit Smart Contract Generator Integration
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import ReactDOM from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -451,6 +451,10 @@ export default function Optimizer() {
   // ✅ NEW: Better Toast/Feedback System
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   
+  // ✅ PHASE 3: Smart Contract Generator States
+  const [contractId, setContractId] = useState<string | null>(null);
+  const [isGeneratingContract, setIsGeneratingContract] = useState(false);
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pitchButtonRef = useRef<HTMLButtonElement>(null);
   const exportButtonRef = useRef<HTMLButtonElement>(null);
@@ -695,6 +699,144 @@ export default function Optimizer() {
     }
   };
 
+  // ✅ NEW: Toast/Feedback Helper (moved up to fix dependency order)
+  const showToast = useCallback((message: string, type: 'success' | 'error' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 4000);
+  }, []);
+
+  // ✅ PHASE 3: Smart Contract Generator Function
+  const handleGenerateOptimizedContract = useCallback(async () => {
+    // Validierung
+    if (!file || optimizations.length === 0) {
+      showToast("❌ Bitte lade erst einen Vertrag hoch und führe eine Optimierung durch.", 'error');
+      return;
+    }
+
+    // Prüfe ob Optimierungen ausgewählt wurden (falls Simulation an ist)
+    const selectedOptimizations = showSimulation 
+      ? optimizations.filter(opt => opt.implemented)
+      : optimizations; // Alle Optimierungen wenn keine Simulation
+
+    if (showSimulation && selectedOptimizations.length === 0) {
+      showToast("❌ Bitte wähle mindestens eine Optimierung für den optimierten Vertrag aus.", 'error');
+      return;
+    }
+
+    setIsGeneratingContract(true);
+    showToast("🪄 Optimierter Vertrag wird generiert...", 'success');
+
+    try {
+      // Schritt 1: Contract hochladen und ID bekommen (falls noch nicht vorhanden)
+      let currentContractId = contractId;
+      
+      if (!currentContractId) {
+        console.log("📤 Lade Contract hoch für Optimierung...");
+        
+        const formData = new FormData();
+        formData.append("file", file);
+        
+        const uploadRes = await fetch("/api/contracts", {
+          method: "POST",
+          credentials: "include",
+          body: formData,
+        });
+
+        const uploadData = await uploadRes.json();
+        
+        if (!uploadRes.ok) {
+          throw new Error(uploadData.message || "Contract Upload fehlgeschlagen");
+        }
+
+        currentContractId = uploadData.contract.id;
+        setContractId(currentContractId);
+        console.log("✅ Contract hochgeladen mit ID:", currentContractId);
+      }
+
+      // Schritt 2: Optimierten Vertrag generieren
+      console.log("🎯 Starte Smart Contract Generation...");
+      
+      const generatePayload = {
+        optimizations: selectedOptimizations.map(opt => ({
+          id: opt.id,
+          category: opt.category,
+          priority: opt.priority,
+          originalText: opt.original,
+          improvedText: opt.improved,
+          reasoning: opt.reasoning,
+          confidence: opt.confidence,
+          estimatedSavings: opt.estimatedSavings,
+          marketBenchmark: opt.marketBenchmark
+        })),
+        options: {
+          format: 'pdf',
+          includeReasons: true,
+          preserveLayout: true
+        }
+      };
+
+      const generateRes = await fetch(`/api/contracts/${currentContractId}/generate-optimized`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(generatePayload)
+      });
+
+      if (!generateRes.ok) {
+        const errorData = await generateRes.json();
+        throw new Error(errorData.message || `Server Error: ${generateRes.status}`);
+      }
+
+      // Schritt 3: PDF Download
+      console.log("📄 Download optimierte PDF...");
+      
+      const blob = await generateRes.blob();
+      const downloadUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `Optimiert_${file.name.replace('.pdf', '')}_${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(downloadUrl);
+
+      // Success!
+      showToast(`✅ Optimierter Vertrag erfolgreich generiert! (${selectedOptimizations.length} Optimierungen angewendet)`, 'success');
+      
+      console.log("🎉 Smart Contract Generation erfolgreich abgeschlossen!", {
+        contractId: currentContractId,
+        optimizationsApplied: selectedOptimizations.length,
+        fileName: file.name
+      });
+
+    } catch (error) {
+      const err = error as Error;
+      console.error("❌ Smart Contract Generation Fehler:", err);
+      
+      let errorMessage = "❌ Fehler beim Generieren des optimierten Vertrags.";
+      
+      if (err.message.includes("nicht gefunden")) {
+        errorMessage = "❌ Contract nicht gefunden. Bitte lade den Vertrag erneut hoch.";
+      } else if (err.message.includes("PDF")) {
+        errorMessage = "❌ PDF-Generierung fehlgeschlagen. Prüfe das Dateiformat.";
+      } else if (err.message.includes("Optimierungen")) {
+        errorMessage = "❌ Ungültige Optimierungen. Führe die Analyse erneut durch.";
+      } else if (err.message.includes("authentifiziert")) {
+        errorMessage = "🔐 Authentifizierung fehlgeschlagen. Bitte logge dich neu ein.";
+      } else if (err.message.includes("Subscription")) {
+        errorMessage = "⭐ Premium-Feature. Bitte upgrade dein Paket.";
+      } else {
+        errorMessage = `❌ ${err.message}`;
+      }
+      
+      showToast(errorMessage, 'error');
+    } finally {
+      setIsGeneratingContract(false);
+    }
+  }, [file, optimizations, contractId, showSimulation, showToast]);
+
   // ✨ Handlers
   const handleReset = useCallback(() => {
     setFile(null);
@@ -705,6 +847,9 @@ export default function Optimizer() {
     setSelectedCategory('all');
     setShowExportMenu(false);
     setShowPitchMenu(false);
+    // ✅ PHASE 3: Reset Smart Contract Generator State
+    setContractId(null);
+    setIsGeneratingContract(false);
   }, []);
 
   const handleDrag = useCallback((e: React.DragEvent) => {
@@ -756,11 +901,7 @@ export default function Optimizer() {
     });
   }, []);
 
-  // ✅ NEW: Toast/Feedback Helper
-  const showToast = useCallback((message: string, type: 'success' | 'error' = 'success') => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 4000);
-  }, []);
+
 
   // ✅ ENHANCED: Pitch Generator mit besserem Feedback
   const generatePitch = useCallback((style: string = selectedPitchStyle) => {
@@ -1308,7 +1449,7 @@ Generiert durch KI-Vertragsoptimierung`;
                 </div>
               </motion.div>
 
-              {/* ✅ PHASE 2: Enhanced Control Panel mit FIXED Z-INDEX Dropdowns */}
+              {/* ✅ PHASE 3: Enhanced Control Panel mit Smart Contract Generator */}
               <motion.div
                 className={styles.card}
                 style={{
@@ -1323,6 +1464,7 @@ Generiert durch KI-Vertragsoptimierung`;
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
               >
+                {/* Left Section: Simulation Toggle */}
                 <motion.button
                   onClick={() => setShowSimulation(!showSimulation)}
                   style={{
@@ -1351,8 +1493,100 @@ Generiert durch KI-Vertragsoptimierung`;
                   <span>{showSimulation ? 'Simulation beenden' : 'Live-Simulation'}</span>
                 </motion.button>
 
+                {/* Center Section: Smart Contract Generator - NEUE HAUPTFUNKTION! */}
+                <motion.button
+                  onClick={handleGenerateOptimizedContract}
+                  disabled={isGeneratingContract || !file || optimizations.length === 0 || !isPremium}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.8rem',
+                    padding: '1rem 2rem',
+                    borderRadius: '16px',
+                    border: 'none',
+                    fontSize: '1rem',
+                    fontWeight: 700,
+                    cursor: isGeneratingContract || !file || optimizations.length === 0 || !isPremium ? 'not-allowed' : 'pointer',
+                    background: isGeneratingContract || !file || optimizations.length === 0 || !isPremium
+                      ? 'linear-gradient(135deg, #86868b 0%, #6e6e73 100%)'
+                      : 'linear-gradient(135deg, #af52de 0%, #d946ef 100%)',
+                    color: 'white',
+                    transition: 'all 0.3s ease',
+                    boxShadow: isGeneratingContract || !file || optimizations.length === 0 || !isPremium
+                      ? 'none'
+                      : '0 12px 32px rgba(175, 82, 222, 0.4)',
+                    opacity: isGeneratingContract || !file || optimizations.length === 0 || !isPremium ? 0.6 : 1,
+                    position: 'relative',
+                    overflow: 'hidden'
+                  }}
+                  whileHover={!isGeneratingContract && file && optimizations.length > 0 && isPremium ? { 
+                    scale: 1.05, 
+                    y: -2,
+                    boxShadow: '0 16px 40px rgba(175, 82, 222, 0.5)'
+                  } : undefined}
+                  whileTap={!isGeneratingContract && file && optimizations.length > 0 && isPremium ? { scale: 0.98 } : undefined}
+                >
+                  {/* Animated Background Gradient */}
+                  {!isGeneratingContract && file && optimizations.length > 0 && isPremium && (
+                    <motion.div
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: '-100%',
+                        width: '100%',
+                        height: '100%',
+                        background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)',
+                        zIndex: 1
+                      }}
+                      animate={{
+                        left: ['-100%', '100%']
+                      }}
+                      transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        ease: "linear"
+                      }}
+                    />
+                  )}
+
+                  {/* Button Content */}
+                  <div style={{ zIndex: 2, display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                    {isGeneratingContract ? (
+                      <>
+                        <motion.div
+                          style={{
+                            width: '20px',
+                            height: '20px',
+                            border: '2px solid rgba(255,255,255,0.3)',
+                            borderTop: '2px solid white',
+                            borderRadius: '50%'
+                          }}
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                        />
+                        <span>Generiere optimierten Vertrag...</span>
+                      </>
+                    ) : (
+                      <>
+                        <motion.div
+                          animate={file && optimizations.length > 0 && isPremium ? {
+                            rotate: [0, 10, -10, 0],
+                            scale: [1, 1.1, 1]
+                          } : {}}
+                          transition={{ duration: 2, repeat: Infinity }}
+                        >
+                          <Wand2 size={20} />
+                        </motion.div>
+                        <span>🪄 Optimierten Vertrag generieren</span>
+                        {!isPremium && <Lock size={16} />}
+                      </>
+                    )}
+                  </div>
+                </motion.button>
+
+                {/* Right Section: Export & Pitch Buttons */}
                 <div style={{ display: 'flex', gap: '0.8rem', flexWrap: 'wrap', position: 'relative' }}>
-                  {/* ✅ PORTAL SOLUTION: Pitch Generator mit Portal Dropdown */}
+                  {/* Existing Pitch Generator Button */}
                   <div style={{ position: 'relative' }}>
                     <motion.button
                       ref={pitchButtonRef}
@@ -1380,76 +1614,8 @@ Generiert durch KI-Vertragsoptimierung`;
                       {showPitchMenu ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                     </motion.button>
                   </div>
-
-                  {/* ✅ PORTAL DROPDOWN: Pitch Style Dropdown */}
-                  <DropdownPortal 
-                    isOpen={showPitchMenu} 
-                    targetRef={pitchButtonRef}
-                    position="left"
-                  >
-                    <AnimatePresence>
-                      <motion.div
-                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                        data-portal-dropdown
-                        style={{
-                          background: 'rgba(255, 255, 255, 0.98)',
-                          backdropFilter: 'blur(20px)',
-                          borderRadius: '16px',
-                          padding: '1rem',
-                          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15), 0 8px 32px rgba(0, 0, 0, 0.1)',
-                          border: '1px solid rgba(255, 255, 255, 0.8)',
-                          minWidth: '280px',
-                          maxWidth: '320px'
-                        }}
-                      >
-                        <h5 style={{ margin: '0 0 0.8rem', fontSize: '0.9rem', fontWeight: 600, color: '#1d1d1f' }}>
-                          Pitch-Stil wählen:
-                        </h5>
-                        
-                        {pitchStyles.map((style) => (
-                          <motion.button
-                            key={style.id}
-                            onClick={() => {
-                              setSelectedPitchStyle(style.id);
-                              generatePitch(style.id);
-                            }}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '0.8rem',
-                              width: '100%',
-                              padding: '0.8rem',
-                              marginBottom: '0.5rem',
-                              borderRadius: '12px',
-                              border: 'none',
-                              background: selectedPitchStyle === style.id 
-                                ? 'rgba(52, 199, 89, 0.1)' 
-                                : 'transparent',
-                              cursor: 'pointer',
-                              textAlign: 'left',
-                              transition: 'all 0.2s ease'
-                            }}
-                            whileHover={{ background: 'rgba(52, 199, 89, 0.1)' }}
-                            whileTap={{ scale: 0.98 }}
-                          >
-                            {style.icon}
-                            <div>
-                              <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1d1d1f' }}>
-                                {style.name}
-                              </div>
-                              <div style={{ fontSize: '0.8rem', color: '#6e6e73' }}>
-                                {style.description}
-                              </div>
-                            </div>
-                          </motion.button>
-                        ))}
-                      </motion.div>
-                    </AnimatePresence>
-                  </DropdownPortal>
                   
-                  {/* ✅ PORTAL SOLUTION: Export Menu mit Portal Dropdown */}
+                  {/* Existing Export Button */}
                   <div style={{ position: 'relative' }}>
                     <motion.button
                       ref={exportButtonRef}
@@ -1477,92 +1643,159 @@ Generiert durch KI-Vertragsoptimierung`;
                       {showExportMenu ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                     </motion.button>
                   </div>
-
-                  {/* ✅ PORTAL DROPDOWN: Export Options Dropdown */}
-                  <DropdownPortal 
-                    isOpen={showExportMenu} 
-                    targetRef={exportButtonRef}
-                    position="right"
-                  >
-                    <AnimatePresence>
-                      <motion.div
-                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                        data-portal-dropdown
-                        style={{
-                          background: 'rgba(255, 255, 255, 0.98)',
-                          backdropFilter: 'blur(20px)',
-                          borderRadius: '16px',
-                          padding: '1rem',
-                          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15), 0 8px 32px rgba(0, 0, 0, 0.1)',
-                          border: '1px solid rgba(255, 255, 255, 0.8)',
-                          minWidth: '300px',
-                          maxWidth: '350px'
-                        }}
-                      >
-                        <h5 style={{ margin: '0 0 0.8rem', fontSize: '0.9rem', fontWeight: 600, color: '#1d1d1f' }}>
-                          Export-Format wählen:
-                        </h5>
-                        
-                        {exportOptions.map((option) => (
-                          <motion.button
-                            key={option.id}
-                            onClick={() => handleExport(option.id)}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '0.8rem',
-                              width: '100%',
-                              padding: '0.8rem',
-                              marginBottom: '0.5rem',
-                              borderRadius: '12px',
-                              border: 'none',
-                              background: 'transparent',
-                              cursor: 'pointer',
-                              textAlign: 'left',
-                              transition: 'all 0.2s ease',
-                              opacity: option.premium && !isPremium ? 0.6 : 1
-                            }}
-                            whileHover={{ background: 'rgba(88, 86, 214, 0.1)' }}
-                            whileTap={{ scale: 0.98 }}
-                            disabled={option.premium && !isPremium}
-                          >
-                            {option.icon}
-                            <div style={{ flex: 1 }}>
-                              <div style={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                gap: '0.5rem',
-                                marginBottom: '0.2rem' 
-                              }}>
-                                <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1d1d1f' }}>
-                                  {option.name}
-                                </span>
-                                <span style={{ 
-                                  fontSize: '0.7rem', 
-                                  color: '#5856d6',
-                                  background: 'rgba(88, 86, 214, 0.1)',
-                                  padding: '0.1rem 0.4rem',
-                                  borderRadius: '6px',
-                                  fontWeight: 600
-                                }}>
-                                  {option.format}
-                                </span>
-                                {option.premium && (
-                                  <Lock size={12} style={{ color: '#ff9500' }} />
-                                )}
-                              </div>
-                              <div style={{ fontSize: '0.8rem', color: '#6e6e73' }}>
-                                {option.description}
-                              </div>
-                            </div>
-                          </motion.button>
-                        ))}
-                      </motion.div>
-                    </AnimatePresence>
-                  </DropdownPortal>
                 </div>
+
+                {/* Existing Portal Dropdowns */}
+                <DropdownPortal 
+                  isOpen={showPitchMenu} 
+                  targetRef={pitchButtonRef}
+                  position="left"
+                >
+                  <AnimatePresence>
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      data-portal-dropdown
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.98)',
+                        backdropFilter: 'blur(20px)',
+                        borderRadius: '16px',
+                        padding: '1rem',
+                        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15), 0 8px 32px rgba(0, 0, 0, 0.1)',
+                        border: '1px solid rgba(255, 255, 255, 0.8)',
+                        minWidth: '280px',
+                        maxWidth: '320px'
+                      }}
+                    >
+                      <h5 style={{ margin: '0 0 0.8rem', fontSize: '0.9rem', fontWeight: 600, color: '#1d1d1f' }}>
+                        Pitch-Stil wählen:
+                      </h5>
+                      
+                      {pitchStyles.map((style) => (
+                        <motion.button
+                          key={style.id}
+                          onClick={() => {
+                            setSelectedPitchStyle(style.id);
+                            generatePitch(style.id);
+                          }}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.8rem',
+                            width: '100%',
+                            padding: '0.8rem',
+                            marginBottom: '0.5rem',
+                            borderRadius: '12px',
+                            border: 'none',
+                            background: selectedPitchStyle === style.id 
+                              ? 'rgba(52, 199, 89, 0.1)' 
+                              : 'transparent',
+                            cursor: 'pointer',
+                            textAlign: 'left',
+                            transition: 'all 0.2s ease'
+                          }}
+                          whileHover={{ background: 'rgba(52, 199, 89, 0.1)' }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          {style.icon}
+                          <div>
+                            <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1d1d1f' }}>
+                              {style.name}
+                            </div>
+                            <div style={{ fontSize: '0.8rem', color: '#6e6e73' }}>
+                              {style.description}
+                            </div>
+                          </div>
+                        </motion.button>
+                      ))}
+                    </motion.div>
+                  </AnimatePresence>
+                </DropdownPortal>
+
+                <DropdownPortal 
+                  isOpen={showExportMenu} 
+                  targetRef={exportButtonRef}
+                  position="right"
+                >
+                  <AnimatePresence>
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      data-portal-dropdown
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.98)',
+                        backdropFilter: 'blur(20px)',
+                        borderRadius: '16px',
+                        padding: '1rem',
+                        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15), 0 8px 32px rgba(0, 0, 0, 0.1)',
+                        border: '1px solid rgba(255, 255, 255, 0.8)',
+                        minWidth: '300px',
+                        maxWidth: '350px'
+                      }}
+                    >
+                      <h5 style={{ margin: '0 0 0.8rem', fontSize: '0.9rem', fontWeight: 600, color: '#1d1d1f' }}>
+                        Export-Format wählen:
+                      </h5>
+                      
+                      {exportOptions.map((option) => (
+                        <motion.button
+                          key={option.id}
+                          onClick={() => handleExport(option.id)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.8rem',
+                            width: '100%',
+                            padding: '0.8rem',
+                            marginBottom: '0.5rem',
+                            borderRadius: '12px',
+                            border: 'none',
+                            background: 'transparent',
+                            cursor: 'pointer',
+                            textAlign: 'left',
+                            transition: 'all 0.2s ease',
+                            opacity: option.premium && !isPremium ? 0.6 : 1
+                          }}
+                          whileHover={{ background: 'rgba(88, 86, 214, 0.1)' }}
+                          whileTap={{ scale: 0.98 }}
+                          disabled={option.premium && !isPremium}
+                        >
+                          {option.icon}
+                          <div style={{ flex: 1 }}>
+                            <div style={{ 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              gap: '0.5rem',
+                              marginBottom: '0.2rem' 
+                            }}>
+                              <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1d1d1f' }}>
+                                {option.name}
+                              </span>
+                              <span style={{ 
+                                fontSize: '0.7rem', 
+                                color: '#5856d6',
+                                background: 'rgba(88, 86, 214, 0.1)',
+                                padding: '0.1rem 0.4rem',
+                                borderRadius: '6px',
+                                fontWeight: 600
+                              }}>
+                                {option.format}
+                              </span>
+                              {option.premium && (
+                                <Lock size={12} style={{ color: '#ff9500' }} />
+                              )}
+                            </div>
+                            <div style={{ fontSize: '0.8rem', color: '#6e6e73' }}>
+                              {option.description}
+                            </div>
+                          </div>
+                        </motion.button>
+                      ))}
+                    </motion.div>
+                  </AnimatePresence>
+                </DropdownPortal>
               </motion.div>
 
               {/* 🔧 PHASE 1 FIX: Verbesserte Optimization Cards mit 3-Spalten-Layout */}
