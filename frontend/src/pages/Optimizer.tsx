@@ -406,6 +406,39 @@ export default function Optimizer() {
   const [selectedPitchStyle, setSelectedPitchStyle] = useState<string>('business');
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // ✅ DROPDOWN FIX: Button Refs hinzugefügt
+  const pitchButtonRef = useRef<HTMLButtonElement>(null);
+  const exportButtonRef = useRef<HTMLButtonElement>(null);
+
+  // ✅ DROPDOWN FIX: Intelligente Positionierungs-Funktion
+  const getDropdownPosition = (buttonRef: React.RefObject<HTMLButtonElement | null>) => {
+    if (!buttonRef.current) return {};
+    
+    const rect = buttonRef.current.getBoundingClientRect();
+    const windowHeight = window.innerHeight;
+    const dropdownHeight = 300; // Estimated dropdown height
+    
+    // Check if there's enough space below the button
+    const spaceBelow = windowHeight - rect.bottom;
+    const shouldOpenUpwards = spaceBelow < dropdownHeight;
+    
+    if (shouldOpenUpwards) {
+      return {
+        position: 'fixed' as const,
+        top: rect.top - 8,
+        right: window.innerWidth - rect.right,
+        transform: 'translateY(-100%)',
+        zIndex: 999999
+      };
+    } else {
+      return {
+        position: 'fixed' as const,
+        top: rect.bottom + 8,
+        right: window.innerWidth - rect.right,
+        zIndex: 999999
+      };
+    }
+  };
 
   // ✅ PHASE 2: Export Options
   const exportOptions: ExportOption[] = [
@@ -512,6 +545,23 @@ export default function Optimizer() {
       count: optimizations.filter(o => o.category === 'compliance').length 
     }
   ];
+
+  // ✅ DROPDOWN FIX: Click-Outside Handler
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (pitchButtonRef.current && !pitchButtonRef.current.contains(event.target as Node)) {
+        setShowPitchMenu(false);
+      }
+      if (exportButtonRef.current && !exportButtonRef.current.contains(event.target as Node)) {
+        setShowExportMenu(false);
+      }
+    };
+
+    if (showPitchMenu || showExportMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showPitchMenu, showExportMenu]);
 
   // ✨ Premium Status laden
   useEffect(() => {
@@ -1175,6 +1225,7 @@ Mit freundlichen Grüßen`
                   {/* ✅ PHASE 2: Enhanced Pitch Generator mit Dropdown */}
                   <div style={{ position: 'relative' }}>
                     <motion.button
+                      ref={pitchButtonRef}
                       onClick={() => setShowPitchMenu(!showPitchMenu)}
                       style={{
                         display: 'flex',
@@ -1207,18 +1258,14 @@ Mit freundlichen Grüßen`
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           exit={{ opacity: 0, y: 10, scale: 0.95 }}
                           style={{
-                            position: 'absolute',
-                            top: '100%',
-                            left: 0,
-                            marginTop: '0.5rem',
-                            background: 'rgba(255, 255, 255, 0.95)',
+                            ...getDropdownPosition(pitchButtonRef),
+                            backgroundColor: 'rgba(255, 255, 255, 0.98)',
                             backdropFilter: 'blur(20px)',
                             borderRadius: '16px',
                             padding: '1rem',
                             boxShadow: '0 16px 40px rgba(0, 0, 0, 0.1)',
                             border: '1px solid rgba(255, 255, 255, 0.8)',
-                            minWidth: '280px',
-                            zIndex: 9999
+                            minWidth: '280px'
                           }}
                         >
                           <h5 style={{ margin: '0 0 0.8rem', fontSize: '0.9rem', fontWeight: 600, color: '#1d1d1f' }}>
@@ -1270,6 +1317,7 @@ Mit freundlichen Grüßen`
                   {/* ✅ PHASE 2: Enhanced Export Menu */}
                   <div style={{ position: 'relative' }}>
                     <motion.button
+                      ref={exportButtonRef}
                       onClick={() => setShowExportMenu(!showExportMenu)}
                       style={{
                         display: 'flex',
@@ -1302,18 +1350,14 @@ Mit freundlichen Grüßen`
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           exit={{ opacity: 0, y: 10, scale: 0.95 }}
                           style={{
-                            position: 'absolute',
-                            top: '100%',
-                            right: 0,
-                            marginTop: '0.5rem',
-                            background: 'rgba(255, 255, 255, 0.95)',
+                            ...getDropdownPosition(exportButtonRef),
+                            backgroundColor: 'rgba(255, 255, 255, 0.98)',
                             backdropFilter: 'blur(20px)',
                             borderRadius: '16px',
                             padding: '1rem',
                             boxShadow: '0 16px 40px rgba(0, 0, 0, 0.1)',
                             border: '1px solid rgba(255, 255, 255, 0.8)',
-                            minWidth: '300px',
-                            zIndex: 9999
+                            minWidth: '300px'
                           }}
                         >
                           <h5 style={{ margin: '0 0 0.8rem', fontSize: '0.9rem', fontWeight: 600, color: '#1d1d1f' }}>
