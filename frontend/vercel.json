@@ -13,12 +13,8 @@
       "destination": "https://api.contract-ai.de/analyze/:path*"
     },
     {
-      "source": "/api/contracts/:contractId/generate-optimized",
-      "destination": "https://api.contract-ai.de/api/contracts/:contractId/generate-optimized"
-    },
-    {
       "source": "/api/contracts/:path*",
-      "destination": "https://api.contract-ai.de/contracts/:path*"
+      "destination": "https://api.contract-ai.de/api/contracts/:path*"
     },
     {
       "source": "/api/debug/:path*",
