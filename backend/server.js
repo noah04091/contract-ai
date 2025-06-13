@@ -67,7 +67,7 @@ try {
   console.error(`❌ Fehler beim Erstellen des Upload-Ordners:`, err);
 }
 
-const transporter = nodemailer.createTransport(EMAIL_CONFIG);
+const transporter = nodemailer.createTransporter(EMAIL_CONFIG);
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // ✅ MULTER Setup
@@ -351,21 +351,60 @@ const connectDB = async () => {
       });
     }
 
-    // ✅ STEP 10.5: SMART CONTRACT GENERATOR mit separatem Pfad - FIX!
+    // ✅ STEP 10.5: SMART CONTRACT GENERATOR mit DEBUG - ENHANCED DEBUGGING
+    console.log("🔍 [DEBUG] Versuche Smart Contract Generator Route zu laden...");
     try {
-      console.log("🪄 Lade Smart Contract Generator Route...");
-      app.use("/api/contracts", verifyToken, checkSubscription, require("./routes/optimizedContract"));
-      console.log("✅ Smart Contract Generator Route geladen auf /api/contracts!");
+      // ✅ DEBUG: Teste zuerst ob die Datei überhaupt existiert
+      const routePath = path.join(__dirname, 'routes', 'optimizedContract.js');
+      console.log("📁 [DEBUG] Route-Pfad:", routePath);
+      console.log("📁 [DEBUG] Datei existiert:", fsSync.existsSync(routePath));
+      
+      if (fsSync.existsSync(routePath)) {
+        console.log("📁 [DEBUG] Dateigröße:", fsSync.statSync(routePath).size, "bytes");
+        
+        // ✅ DEBUG: Teste Syntax durch require
+        console.log("🔧 [DEBUG] Versuche optimizedContract.js zu laden...");
+        const optimizedContractRouter = require("./routes/optimizedContract");
+        console.log("✅ [DEBUG] optimizedContract.js erfolgreich geladen!");
+        console.log("🔍 [DEBUG] Router-Typ:", typeof optimizedContractRouter);
+        
+        // ✅ Registriere die Route
+        app.use("/api/contracts", verifyToken, checkSubscription, optimizedContractRouter);
+        console.log("✅ [DEBUG] Smart Contract Generator Route registriert auf /api/contracts");
+        console.log("🪄 Smart Contract Generator Route geladen auf /api/contracts!");
+        
+      } else {
+        console.error("❌ [DEBUG] optimizedContract.js Datei nicht gefunden!");
+        throw new Error("optimizedContract.js Datei nicht gefunden");
+      }
+      
     } catch (err) {
-      console.error("❌ Fehler bei Smart Contract Generator Route:", err);
+      console.error("❌ [DEBUG] Fehler beim Laden der Smart Contract Generator Route:", err.message);
+      console.error("❌ [DEBUG] Stack:", err.stack?.substring(0, 500));
+      
+      // ✅ FALLBACK: Erstelle minimale Test-Route
+      console.log("🔧 [DEBUG] Erstelle Fallback Test-Route...");
       app.post("/api/contracts/:contractId/generate-optimized", verifyToken, checkSubscription, (req, res) => {
-        console.log("🆘 Fallback Smart Contract Generator aufgerufen");
+        console.log("🆘 [DEBUG] Fallback Smart Contract Generator aufgerufen!", {
+          contractId: req.params.contractId,
+          userId: req.user?.userId,
+          hasBody: !!req.body,
+          optimizations: req.body?.optimizations?.length || 0
+        });
+        
         res.status(503).json({
           success: false,
-          message: "Smart Contract Generator vorübergehend nicht verfügbar",
-          error: "Route konnte nicht geladen werden"
+          message: "🔧 Smart Contract Generator Route hat Syntax-Fehler",
+          error: "ROUTE_LOADING_FAILED",
+          debug: {
+            originalError: err.message,
+            contractId: req.params.contractId,
+            timestamp: new Date().toISOString(),
+            help: "Prüfe die Konsole für Details zum Syntax-Fehler"
+          }
         });
       });
+      console.log("✅ [DEBUG] Fallback-Route für Smart Contract Generator erstellt");
     }
 
     // 📋 STEP 11: Standard-Routen - ORIGINAL BEIBEHALTEN
@@ -749,6 +788,60 @@ const connectDB = async () => {
       });
     });
 
+    // ✅ NEW DEBUG ROUTE: Route-Liste für Debugging
+    app.get("/debug/routes", (req, res) => {
+      const routes = [];
+      
+      function extractRoutes(stack, basePath = '') {
+        stack.forEach((middleware) => {
+          if (middleware.route) {
+            // Direct route
+            routes.push({
+              path: basePath + middleware.route.path,
+              methods: Object.keys(middleware.route.methods),
+              type: 'route'
+            });
+          } else if (middleware.name === 'router' && middleware.handle?.stack) {
+            // Router middleware
+            const routerBasePath = middleware.regexp.source
+              .replace(/^\^\\?/, '') // Remove leading ^\ 
+              .replace(/\$.*/, '') // Remove trailing $
+              .replace(/\\\//g, '/') // Replace \/ with /
+              .replace(/\(\?\:\\\/\)\?\(\?\=\\\/\|\$\)/, '') // Remove optional trailing slash regex
+              .replace(/\\\//g, '/'); // Final cleanup
+            
+            extractRoutes(middleware.handle.stack, basePath + routerBasePath);
+          }
+        });
+      }
+      
+      try {
+        extractRoutes(app._router.stack);
+      } catch (error) {
+        console.error("❌ Route extraction error:", error);
+      }
+      
+      const smartContractRoutes = routes.filter(r => 
+        r.path.includes('/api/contracts') || 
+        r.path.includes('generate-optimized')
+      );
+      
+      res.json({
+        success: true,
+        message: "🔍 Route Debug Info",
+        totalRoutes: routes.length,
+        smartContractRoutes: smartContractRoutes,
+        smartContractFound: smartContractRoutes.length > 0,
+        smartContractDebug: {
+          expectedRoute: "/api/contracts/:contractId/generate-optimized",
+          foundRoutes: smartContractRoutes.map(r => r.path),
+          routeExists: smartContractRoutes.some(r => r.path.includes('generate-optimized'))
+        },
+        allRoutes: routes.slice(0, 20), // Nur erste 20 für Übersichtlichkeit
+        timestamp: new Date().toISOString()
+      });
+    });
+
     // ⏰ Cron Jobs - ORIGINAL BEIBEHALTEN
     try {
       cron.schedule("0 8 * * *", async () => {
@@ -786,6 +879,7 @@ const connectDB = async () => {
       console.log(`📊 Analyze-Route: POST /analyze (ORIGINAL FUNKTIONIERT!)`);
       console.log(`🔧 Optimize-Route: POST /optimize (ORIGINAL FUNKTIONIERT!)`);
       console.log(`🔐 Auth-Routen: /auth/* (ORIGINAL)`);
+      console.log(`🔍 Debug-Route: GET /debug/routes (NEU für Debugging)`);
       if (s3Upload && generateSignedUrl) {
         console.log(`🔗 S3-Routes: GET /s3/view (Redirect), GET /s3/json (JSON)`);
       }

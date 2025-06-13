@@ -1,4 +1,4 @@
-// 📁 backend/routes/optimizedContract.js - ENHANCED: Ultra-Robuste Smart Contract Generator
+// 📁 backend/routes/optimizedContract.js - FIXED: Ultra-Robuste Smart Contract Generator
 const express = require("express");
 const fs = require("fs").promises;
 const fsSync = require("fs");
@@ -6,7 +6,6 @@ const path = require("path");
 const pdfParse = require("pdf-parse");
 const PDFDocument = require("pdfkit");
 const { ObjectId } = require("mongodb");
-const verifyToken = require("../middleware/verifyToken");
 
 const router = express.Router();
 
@@ -120,20 +119,25 @@ const getContractFile = async (contract) => {
     if (contract.s3Key) {
       console.log("📁 Loading S3 file:", contract.s3Key);
       try {
-        const AWS = require('aws-sdk');
-        const s3 = new AWS.S3({
-          accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-          region: process.env.AWS_REGION,
-        });
-        
-        const s3Object = await s3.getObject({
-          Bucket: contract.s3Bucket || process.env.AWS_S3_BUCKET,
-          Key: contract.s3Key
-        }).promise();
-        
-        console.log(`✅ S3 file loaded: ${s3Object.Body.length} bytes`);
-        return s3Object.Body;
+        // Only try AWS if environment variables exist
+        if (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) {
+          const AWS = require('aws-sdk');
+          const s3 = new AWS.S3({
+            accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+            region: process.env.AWS_REGION,
+          });
+          
+          const s3Object = await s3.getObject({
+            Bucket: contract.s3Bucket || process.env.AWS_S3_BUCKET,
+            Key: contract.s3Key
+          }).promise();
+          
+          console.log(`✅ S3 file loaded: ${s3Object.Body.length} bytes`);
+          return s3Object.Body;
+        } else {
+          console.warn(`⚠️ S3 credentials not available, skipping S3 loading`);
+        }
       } catch (s3Error) {
         console.warn(`⚠️ S3 loading failed: ${s3Error.message}`);
         // Continue to try local file strategies
@@ -457,18 +461,12 @@ const generateOptimizedPDF = async (contractData, optimizedText, appliedChanges,
       
       // ✅ Smart text processing with enhanced pagination
       const paragraphs = optimizedText.split('\n\n');
-      let currentFontSize = 11;
-      let currentFont = 'Helvetica';
-      let currentColor = '#1a1a1a';
       
-      paragraphs.forEach((paragraph, index) => {
+      paragraphs.forEach((paragraph) => {
         if (paragraph.trim()) {
           // Check if we need a new page (leave more space for footer)
           if (doc.y > 650) {
             doc.addPage();
-            currentFontSize = 11;
-            currentFont = 'Helvetica';
-            currentColor = '#1a1a1a';
           }
           
           // ✅ Enhanced formatting for different section types
@@ -577,7 +575,7 @@ const generateOptimizedPDF = async (contractData, optimizedText, appliedChanges,
 };
 
 // ✅ MAIN ROUTE: Generate Optimized Contract - ULTRA-ENHANCED
-router.post("/:contractId/generate-optimized", verifyToken, async (req, res) => {
+router.post("/:contractId/generate-optimized", async (req, res) => {
   const requestId = `gen_opt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   console.log(`🪄 [${requestId}] Ultra-Enhanced Smart Contract Generation:`, {
     contractId: req.params.contractId,
@@ -1032,7 +1030,7 @@ router.get("/health", (req, res) => {
   });
 });
 
-router.get("/:contractId/history", verifyToken, async (req, res) => {
+router.get("/:contractId/history", async (req, res) => {
   try {
     const { contractId } = req.params;
     const { limit = 10, includeMetadata = false } = req.query;
@@ -1080,7 +1078,7 @@ router.get("/:contractId/history", verifyToken, async (req, res) => {
   }
 });
 
-router.post("/bulk-generate", verifyToken, async (req, res) => {
+router.post("/bulk-generate", async (req, res) => {
   const requestId = `bulk_gen_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   
   try {
