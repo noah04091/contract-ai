@@ -351,10 +351,9 @@ const connectDB = async () => {
       });
     }
 
-    // ✅ STEP 10.5: SMART CONTRACT GENERATOR mit DEBUG - ENHANCED DEBUGGING
+    // ✅ STEP 10.5: SMART CONTRACT GENERATOR - DIREKTE ROUTE OHNE ROUTER (UMGEHT REGEX-PROBLEM)
     console.log("🔍 [DEBUG] Versuche Smart Contract Generator Route zu laden...");
     try {
-      // ✅ DEBUG: Teste zuerst ob die Datei überhaupt existiert
       const routePath = path.join(__dirname, 'routes', 'optimizedContract.js');
       console.log("📁 [DEBUG] Route-Pfad:", routePath);
       console.log("📁 [DEBUG] Datei existiert:", fsSync.existsSync(routePath));
@@ -362,16 +361,28 @@ const connectDB = async () => {
       if (fsSync.existsSync(routePath)) {
         console.log("📁 [DEBUG] Dateigröße:", fsSync.statSync(routePath).size, "bytes");
         
-        // ✅ DEBUG: Teste Syntax durch require
-        console.log("🔧 [DEBUG] Versuche optimizedContract.js zu laden...");
-        const optimizedContractRouter = require("./routes/optimizedContract");
-        console.log("✅ [DEBUG] optimizedContract.js erfolgreich geladen!");
-        console.log("🔍 [DEBUG] Router-Typ:", typeof optimizedContractRouter);
+        // ✅ DIREKTE ROUTE-REGISTRIERUNG (umgeht Router-Problem)
+        const optimizedContractModule = require("./routes/optimizedContract");
         
-        // ✅ Registriere die Route
-        app.use("/api/contracts", verifyToken, checkSubscription, optimizedContractRouter);
-        console.log("✅ [DEBUG] Smart Contract Generator Route registriert auf /api/contracts");
-        console.log("🪄 Smart Contract Generator Route geladen auf /api/contracts!");
+        // ✅ Prüfe ob es ein Router oder einzelne Funktionen exportiert
+        if (typeof optimizedContractModule === 'function') {
+          // Falls es ein Router ist, verwende ihn direkt
+          app.use("/api/contracts", verifyToken, checkSubscription, optimizedContractModule);
+          console.log("✅ [DEBUG] Router-Style Route registriert");
+        } else if (optimizedContractModule.generateOptimized) {
+          // Falls es einzelne Funktionen exportiert, registriere sie direkt
+          app.post("/api/contracts/:contractId/generate-optimized", 
+            verifyToken, checkSubscription, optimizedContractModule.generateOptimized);
+          app.get("/api/contracts/health", 
+            verifyToken, checkSubscription, optimizedContractModule.health);
+          console.log("✅ [DEBUG] Direkte Funktions-Routen registriert");
+        } else {
+          // Standard Router-Mounting
+          app.use("/api/contracts", verifyToken, checkSubscription, optimizedContractModule);
+        }
+        
+        console.log("✅ [DEBUG] Smart Contract Generator Route registriert");
+        console.log("🪄 Smart Contract Generator Route geladen!");
         
       } else {
         console.error("❌ [DEBUG] optimizedContract.js Datei nicht gefunden!");
@@ -380,16 +391,12 @@ const connectDB = async () => {
       
     } catch (err) {
       console.error("❌ [DEBUG] Fehler beim Laden der Smart Contract Generator Route:", err.message);
-      console.error("❌ [DEBUG] Stack:", err.stack?.substring(0, 500));
       
-      // ✅ FALLBACK: Erstelle minimale Test-Route
-      console.log("🔧 [DEBUG] Erstelle Fallback Test-Route...");
+      // ✅ FALLBACK: Erstelle minimale direkte Route
       app.post("/api/contracts/:contractId/generate-optimized", verifyToken, checkSubscription, (req, res) => {
         console.log("🆘 [DEBUG] Fallback Smart Contract Generator aufgerufen!", {
           contractId: req.params.contractId,
-          userId: req.user?.userId,
-          hasBody: !!req.body,
-          optimizations: req.body?.optimizations?.length || 0
+          userId: req.user?.userId
         });
         
         res.status(503).json({
@@ -399,8 +406,7 @@ const connectDB = async () => {
           debug: {
             originalError: err.message,
             contractId: req.params.contractId,
-            timestamp: new Date().toISOString(),
-            help: "Prüfe die Konsole für Details zum Syntax-Fehler"
+            help: "Prüfe die optimizedContract.js Datei"
           }
         });
       });
