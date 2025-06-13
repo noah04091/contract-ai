@@ -1,4 +1,4 @@
-// 📁 backend/server.js - FIXED: API-Route-Prefix für Frontend-Kompatibilität
+// 📁 backend/server.js - OPTIMIZED: Zentrale MongoDB-Verbindung für schnelles Deployment
 const express = require("express");
 const app = express();
 require("dotenv").config();
@@ -265,16 +265,16 @@ const connectDB = async () => {
       });
     });
 
-    // 🔐 STEP 5: Auth-Routen (ERSTE PRIORITÄT) - KEIN API PREFIX
+    // 🔐 STEP 5: Auth-Routen (ERSTE PRIORITÄT)
     try {
       const authRoutes = require("./routes/auth")(db);
       app.use("/auth", authRoutes);
-      console.log("✅ Auth-Routen geladen auf /auth");
+      console.log("✅ Auth-Routen geladen");
     } catch (err) {
       console.error("❌ Fehler beim Laden der Auth-Routen:", err);
     }
 
-    // 💳 STEP 6: Stripe-Routen - KEIN API PREFIX
+    // 💳 STEP 6: Stripe-Routen
     try {
       app.use("/stripe/portal", require("./routes/stripePortal"));
       app.use("/stripe", require("./routes/stripe"));
@@ -284,16 +284,14 @@ const connectDB = async () => {
       console.error("❌ Fehler beim Laden der Stripe-Routen:", err);
     }
 
-    // 🚀 STEP 7: HAUPT-API-ROUTEN MIT /api/ PREFIX - FIXED!
-    
-    // 🔧 OPTIMIZE-ROUTE mit API-Prefix
+    // 🔧 STEP 7: OPTIMIZE-ROUTE (Optimiert mit zentraler DB)
     try {
       console.log("🔧 Lade Optimize-Route...");
-      app.use("/api/optimize", verifyToken, checkSubscription, require("./routes/optimize"));
-      console.log("✅ Optimize-Route erfolgreich geladen auf /api/optimize!");
+      app.use("/optimize", verifyToken, checkSubscription, require("./routes/optimize"));
+      console.log("✅ Optimize-Route erfolgreich geladen auf /optimize!");
     } catch (err) {
       console.error("❌ Fehler bei Optimize-Route:", err);
-      app.post("/api/optimize", verifyToken, checkSubscription, (req, res) => {
+      app.post("/optimize", verifyToken, checkSubscription, (req, res) => {
         console.log("🆘 Fallback Optimize-Route aufgerufen");
         res.status(503).json({
           success: false,
@@ -303,14 +301,29 @@ const connectDB = async () => {
       });
     }
 
-    // 📊 ANALYZE-ROUTE mit API-Prefix
+    // 📦 STEP 8: Weitere Vertragsrouten
+    try {
+      app.use("/compare", verifyToken, checkSubscription, require("./routes/compare"));
+      console.log("✅ Compare-Route geladen");
+    } catch (err) {
+      console.error("❌ Fehler bei Compare-Route:", err);
+    }
+
+    try {
+      app.use("/chat", verifyToken, checkSubscription, require("./routes/chatWithContract"));
+      console.log("✅ Chat-Route geladen");
+    } catch (err) {
+      console.error("❌ Fehler bei Chat-Route:", err);
+    }
+
+    // ✅ STEP 9: ANALYZE-ROUTE
     try {
       console.log("🔧 Lade Analyze-Route...");
-      app.use("/api/analyze", verifyToken, checkSubscription, require("./routes/analyze"));
-      console.log("✅ Analyze-Route erfolgreich geladen auf /api/analyze!");
+      app.use("/analyze", verifyToken, checkSubscription, require("./routes/analyze"));
+      console.log("✅ Analyze-Route erfolgreich geladen auf /analyze!");
     } catch (err) {
       console.error("❌ Fehler beim Laden der Analyze-Route:", err);
-      app.post("/api/analyze", verifyToken, checkSubscription, (req, res) => {
+      app.post("/analyze", verifyToken, checkSubscription, (req, res) => {
         console.log("🆘 Fallback Analyze-Route aufgerufen");
         res.status(503).json({
           success: false,
@@ -320,32 +333,15 @@ const connectDB = async () => {
       });
     }
 
-    // 🪄 SMART CONTRACT GENERATOR mit API-Prefix - FIXED!
-    try {
-      console.log("🪄 Lade Smart Contract Generator Route...");
-      app.use("/api/contracts", verifyToken, checkSubscription, require("./routes/optimizedContract"));
-      console.log("✅ Smart Contract Generator Route geladen auf /api/contracts!");
-    } catch (err) {
-      console.error("❌ Fehler bei Smart Contract Generator Route:", err);
-      app.post("/api/contracts/:contractId/generate-optimized", verifyToken, checkSubscription, (req, res) => {
-        console.log("🆘 Fallback Smart Contract Generator aufgerufen");
-        res.status(503).json({
-          success: false,
-          message: "Smart Contract Generator vorübergehend nicht verfügbar",
-          error: "Route konnte nicht geladen werden"
-        });
-      });
-    }
-
-    // 🚀 GENERATE-ROUTE mit API-Prefix
+    // 🚀 STEP 10: GENERATE-ROUTE
     try {
       console.log("🔧 Lade Generate-Route...");
       const generateRouter = require("./routes/generate");
-      app.use("/api/contracts/generate", verifyToken, checkSubscription, generateRouter);
-      console.log("✅ Generate-Route erfolgreich geladen auf /api/contracts/generate!");
+      app.use("/contracts/generate", verifyToken, checkSubscription, generateRouter);
+      console.log("✅ Generate-Route erfolgreich geladen auf /contracts/generate!");
     } catch (err) {
       console.error("❌ Fehler beim Laden der Generate-Route:", err);
-      app.post("/api/contracts/generate", verifyToken, checkSubscription, (req, res) => {
+      app.post("/contracts/generate", verifyToken, checkSubscription, (req, res) => {
         console.log("🆘 Fallback Generate-Route aufgerufen");
         res.json({
           success: true,
@@ -355,36 +351,38 @@ const connectDB = async () => {
       });
     }
 
-    // 📦 STEP 8: Weitere Vertragsrouten mit API-Prefix
+    // ✅ STEP 10.5: PHASE 3 - SMART CONTRACT GENERATOR ROUTE
     try {
-      app.use("/api/compare", verifyToken, checkSubscription, require("./routes/compare"));
-      console.log("✅ Compare-Route geladen auf /api/compare");
+      console.log("🪄 Lade Smart Contract Generator Route...");
+      app.use("/contracts", verifyToken, checkSubscription, require("./routes/optimizedContract"));
+      console.log("✅ Smart Contract Generator Route geladen auf /contracts!");
     } catch (err) {
-      console.error("❌ Fehler bei Compare-Route:", err);
+      console.error("❌ Fehler bei Smart Contract Generator Route:", err);
+      app.post("/contracts/:contractId/generate-optimized", verifyToken, checkSubscription, (req, res) => {
+        console.log("🆘 Fallback Smart Contract Generator aufgerufen");
+        res.status(503).json({
+          success: false,
+          message: "Smart Contract Generator vorübergehend nicht verfügbar",
+          error: "Route konnte nicht geladen werden"
+        });
+      });
     }
 
-    try {
-      app.use("/api/chat", verifyToken, checkSubscription, require("./routes/chatWithContract"));
-      console.log("✅ Chat-Route geladen auf /api/chat");
-    } catch (err) {
-      console.error("❌ Fehler bei Chat-Route:", err);
-    }
-
-    // 📋 STEP 9: Standard-Routen OHNE API-Prefix (Legacy-Kompatibilität)
+    // 📋 STEP 11: Standard-Routen
     try {
       app.use("/analyze-type", require("./routes/analyzeType"));
       app.use("/extract-text", require("./routes/extractText"));
       app.use("/contracts", verifyToken, require("./routes/contracts"));
       app.use("/test", require("./testAuth"));
-      console.log("✅ Legacy-Routen geladen (ohne /api/ prefix)");
+      console.log("✅ Weitere Routen geladen");
     } catch (err) {
-      console.error("❌ Fehler bei Legacy-Routen:", err);
+      console.error("❌ Fehler bei weiteren Routen:", err);
     }
 
-    // 🧠 STEP 10: Legal Pulse API Routes
+    // 🧠 STEP 12: Legal Pulse API Routes
     try {
       app.use("/api/legal-pulse", verifyToken, require("./routes/legalPulse"));
-      console.log("✅ Legal Pulse Routen geladen auf /api/legal-pulse");
+      console.log("✅ Legal Pulse Routen geladen");
     } catch (err) {
       console.error("❌ Fehler bei Legal Pulse Routen:", err);
     }
@@ -578,8 +576,8 @@ const connectDB = async () => {
       console.log("⚠️ S3 Upload-Route übersprungen (S3 nicht verfügbar)");
     }
 
-    // 💾 POST-ROUTE für neue Verträge - MIT API-PREFIX
-    app.post("/api/contracts", verifyToken, async (req, res) => {
+    // 💾 POST-ROUTE für neue Verträge
+    app.post("/contracts", verifyToken, async (req, res) => {
       try {
         console.log("📄 Neuen Vertrag speichern - Request body:", req.body);
         
@@ -656,8 +654,8 @@ const connectDB = async () => {
       }
     });
 
-    // 📔 CRUD für einzelne Verträge - MIT API-PREFIX
-    app.get("/api/contracts/:id", verifyToken, async (req, res) => {
+    // 📔 CRUD für einzelne Verträge
+    app.get("/contracts/:id", verifyToken, async (req, res) => {
       try {
         const contract = await req.contractsCollection.findOne({
           _id: new ObjectId(req.params.id),
@@ -671,7 +669,7 @@ const connectDB = async () => {
       }
     });
 
-    app.put("/api/contracts/:id", verifyToken, async (req, res) => {
+    app.put("/contracts/:id", verifyToken, async (req, res) => {
       try {
         const { name, laufzeit, kuendigung } = req.body;
         await req.contractsCollection.updateOne(
@@ -686,7 +684,7 @@ const connectDB = async () => {
       }
     });
 
-    app.delete("/api/contracts/:id", verifyToken, async (req, res) => {
+    app.delete("/contracts/:id", verifyToken, async (req, res) => {
       try {
         const result = await req.contractsCollection.deleteOne({
           _id: new ObjectId(req.params.id),
@@ -737,11 +735,11 @@ const connectDB = async () => {
         timestamp: new Date().toISOString(),
         status: "working",
         mongodb: db ? 'ZENTRAL VERBUNDEN' : 'NICHT VERBUNDEN',
-        loadedRoutes: "all routes loaded with ZENTRALE DB + API PREFIX FIXED",
-        newFeature: "Smart Contract Generator ACTIVE with API PREFIX!",
-        analyzeRoute: "/api/analyze (FIXED WITH API PREFIX!)",
-        optimizeRoute: "/api/optimize (FIXED WITH API PREFIX!)",
-        smartContractRoute: "/api/contracts/:id/generate-optimized (FIXED WITH API PREFIX!)",
+        loadedRoutes: "all routes loaded with ZENTRALE DB + SMART CONTRACT GENERATOR",
+        newFeature: "Smart Contract Generator ACTIVE!",
+        analyzeRoute: "ANALYZE ROUTE NOW ACTIVE!",
+        optimizeRoute: "OPTIMIZE ROUTE NOW ACTIVE!",
+        smartContractRoute: "SMART CONTRACT GENERATOR NOW ACTIVE!", // ✅ NEU
         fileServing: "IMPROVED FILE SERVING ACTIVE!",
         s3Integration: s3Status.servicesLoaded ? "S3 UPLOAD & SIGNED URLS + REDIRECT ACTIVE!" : "S3 Services not available",
         apiBaseUrl: API_BASE_URL,
@@ -781,17 +779,17 @@ const connectDB = async () => {
       console.log(`🚀 Server läuft auf Port ${PORT}`);
       console.log(`📁 Static files serviert unter: ${API_BASE_URL}/uploads`);
       console.log(`📁 Upload-Ordner: ${UPLOAD_PATH}`);
-      console.log(`📡 Alle wichtigen API-Routen geladen:`);
-      console.log(`🔧 Generate-Route: POST /api/contracts/generate`);
-      console.log(`🪄 Smart Contract Generator: POST /api/contracts/:contractId/generate-optimized (API-PREFIX FIXED!)`);
-      console.log(`💾 Save-Route: POST /api/contracts`);
-      console.log(`📊 Analyze-Route: POST /api/analyze (API-PREFIX FIXED!)`);
-      console.log(`🔧 Optimize-Route: POST /api/optimize (API-PREFIX FIXED!)`);
-      console.log(`🔐 Auth-Routen: /auth/* (Legacy ohne API-Prefix)`);
+      console.log(`📡 Alle wichtigen Routen sollten geladen sein`);
+      console.log(`🔧 Generate-Route: POST /contracts/generate (Proxy entfernt /api/)`);
+      console.log(`🪄 Smart Contract Generator: POST /contracts/:contractId/generate-optimized (NEU!)`); // ✅ NEU
+      console.log(`💾 Save-Route: POST /contracts (NEU)`);
+      console.log(`📊 Analyze-Route: POST /analyze (NEU HINZUGEFÜGT!)`);
+      console.log(`🔧 Optimize-Route: POST /optimize (NEU HINZUGEFÜGT!)`);
+      console.log(`🔐 Auth-Routen: /auth/*`);
       if (s3Upload && generateSignedUrl) {
         console.log(`🔗 S3-Routes: GET /s3/view (Redirect), GET /s3/json (JSON)`);
       }
-      console.log(`✅ Server deployment complete mit API-PREFIX-FIX für Frontend-Kompatibilität!`);
+      console.log(`✅ Server deployment complete mit ZENTRALER MONGODB + SMART CONTRACT GENERATOR!`); // ✅ UPDATED
     });
 
   } catch (err) {
