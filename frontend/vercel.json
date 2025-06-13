@@ -2,7 +2,35 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://api.contract-ai.de/:path*"
+      "destination": "https://api.contract-ai.de/api/:path*"
+    },
+    {
+      "source": "/auth/:path*", 
+      "destination": "https://api.contract-ai.de/auth/:path*"
+    },
+    {
+      "source": "/optimize/:path*",
+      "destination": "https://api.contract-ai.de/optimize/:path*"
+    },
+    {
+      "source": "/analyze/:path*",
+      "destination": "https://api.contract-ai.de/analyze/:path*"
+    },
+    {
+      "source": "/contracts/:path*",
+      "destination": "https://api.contract-ai.de/contracts/:path*"
+    },
+    {
+      "source": "/debug/:path*",
+      "destination": "https://api.contract-ai.de/debug/:path*"
+    },
+    {
+      "source": "/s3/:path*",
+      "destination": "https://api.contract-ai.de/s3/:path*"
+    },
+    {
+      "source": "/stripe/:path*",
+      "destination": "https://api.contract-ai.de/stripe/:path*"
     },
     {
       "source": "/(.*)",
