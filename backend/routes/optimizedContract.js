@@ -1149,11 +1149,6 @@ router.post("/bulk-generate", async (req, res) => {
   }
 });
 
-// ✅ SAUBERER EXPORT: Nur der Router, keine komplizierte Logik
-module.exports = router;
-// 📁 backend/routes/optimizedContract.js - Phase B: Streaming Route hinzufügen
-// ✅ Füge diese Route zu deiner bestehenden optimizedContract.js hinzu
-
 // ✅ NEUE STREAMING ROUTE - Füge das nach deinen bestehenden Routen hinzu:
 router.post("/:contractId/generate-optimized-stream", async (req, res) => {
   const requestId = `stream_gen_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -1382,5 +1377,4 @@ router.post("/:contractId/generate-optimized-stream", async (req, res) => {
   }
 });
 
-// ✅ WICHTIG: Deine bestehenden Routen bleiben alle unverändert!
-// Das hier ist nur eine ZUSÄTZLICHE Route für Streaming
+module.exports = router;
