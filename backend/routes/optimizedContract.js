@@ -1151,3 +1151,236 @@ router.post("/bulk-generate", async (req, res) => {
 
 // ✅ SAUBERER EXPORT: Nur der Router, keine komplizierte Logik
 module.exports = router;
+// 📁 backend/routes/optimizedContract.js - Phase B: Streaming Route hinzufügen
+// ✅ Füge diese Route zu deiner bestehenden optimizedContract.js hinzu
+
+// ✅ NEUE STREAMING ROUTE - Füge das nach deinen bestehenden Routen hinzu:
+router.post("/:contractId/generate-optimized-stream", async (req, res) => {
+  const requestId = `stream_gen_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  
+  console.log(`🚀 [${requestId}] Streaming Contract Generation started:`, {
+    contractId: req.params.contractId,
+    userId: req.user?.userId,
+    optimizationCount: req.body?.optimizations?.length || 0
+  });
+
+  // ✅ Setup Server-Sent Events
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+    'Access-Control-Allow-Origin': 'https://contract-ai.de',
+    'Access-Control-Allow-Credentials': 'true',
+    'X-Request-ID': requestId
+  });
+
+  // ✅ Helper: Send Progress Updates
+  const sendProgress = (progress, message, data = {}) => {
+    const payload = {
+      requestId,
+      progress,
+      message,
+      timestamp: new Date().toISOString(),
+      ...data
+    };
+    res.write(`data: ${JSON.stringify(payload)}\n\n`);
+    console.log(`📡 [${requestId}] ${progress}%: ${message}`);
+  };
+
+  // ✅ Helper: Send Error
+  const sendError = (error, code = 'GENERATION_ERROR') => {
+    const payload = {
+      requestId,
+      error: true,
+      code,
+      message: error,
+      timestamp: new Date().toISOString()
+    };
+    res.write(`data: ${JSON.stringify(payload)}\n\n`);
+    res.end();
+    console.error(`❌ [${requestId}] ${code}: ${error}`);
+  };
+
+  // ✅ Helper: Send Complete
+  const sendComplete = (result) => {
+    const payload = {
+      requestId,
+      complete: true,
+      result,
+      timestamp: new Date().toISOString()
+    };
+    res.write(`data: ${JSON.stringify(payload)}\n\n`);
+    res.end();
+    console.log(`✅ [${requestId}] Generation completed:`, result);
+  };
+
+  try {
+    sendProgress(5, "🚀 Starte Smart Contract Generation...");
+
+    const { contractId } = req.params;
+    const { optimizations = [], options = {}, sourceData = {} } = req.body;
+    
+    // ✅ VALIDATION mit Progress
+    sendProgress(10, "🔍 Validiere Contract ID und Optimierungen...");
+    
+    if (!contractId || !ObjectId.isValid(contractId)) {
+      return sendError("❌ Ungültige Contract ID", "INVALID_CONTRACT_ID");
+    }
+    
+    if (!optimizations || !Array.isArray(optimizations) || optimizations.length === 0) {
+      return sendError("❌ Keine Optimierungen ausgewählt", "NO_OPTIMIZATIONS");
+    }
+    
+    sendProgress(15, `✅ Validation erfolgreich - ${optimizations.length} Optimierungen gefunden`);
+    
+    // ✅ LOAD CONTRACT mit Progress
+    sendProgress(20, "📋 Lade Contract-Daten...");
+    
+    let contractResult;
+    try {
+      contractResult = await getContractData(contractId, req);
+      sendProgress(30, `✅ Contract geladen: "${contractResult.data.name}"`, {
+        contractName: contractResult.data.name,
+        source: contractResult.source
+      });
+    } catch (loadError) {
+      return sendError(`❌ Contract nicht gefunden: ${loadError.message}`, "CONTRACT_NOT_FOUND");
+    }
+    
+    const contract = contractResult.data;
+    
+    // ✅ EXTRACT TEXT mit Progress
+    sendProgress(35, "📄 Extrahiere Vertragstext...");
+    
+    let originalText = '';
+    try {
+      if (contract.content && contract.content.length > 100) {
+        originalText = contract.content;
+        sendProgress(45, `✅ Text aus Datenbank: ${originalText.length} Zeichen`);
+      } else {
+        sendProgress(40, "📁 Lade Datei von Storage...");
+        const fileBuffer = await getContractFile(contract);
+        
+        const bufferStart = fileBuffer.slice(0, 4).toString();
+        if (bufferStart === '%PDF') {
+          sendProgress(42, "📄 Analysiere PDF-Datei...");
+          const parsed = await pdfParse(fileBuffer);
+          originalText = parsed.text || '';
+          sendProgress(45, `✅ PDF verarbeitet: ${originalText.length} Zeichen, ${parsed.numpages} Seiten`);
+        } else {
+          originalText = fileBuffer.toString('utf8');
+          sendProgress(45, `✅ Text-Datei: ${originalText.length} Zeichen`);
+        }
+      }
+      
+      if (originalText.length < 50) {
+        return sendError("❌ Vertragstext zu kurz oder leer", "TEXT_TOO_SHORT");
+      }
+      
+    } catch (textError) {
+      return sendError(`❌ Text-Extraktion fehlgeschlagen: ${textError.message}`, "TEXT_EXTRACTION_FAILED");
+    }
+    
+    // ✅ APPLY OPTIMIZATIONS mit Progress
+    sendProgress(50, "🔧 Wende Optimierungen an...");
+    
+    const { optimizedText, appliedChanges } = applyOptimizations(originalText, optimizations);
+    const successfulOptimizations = appliedChanges.filter(c => c.applied).length;
+    
+    sendProgress(65, `✅ Optimierungen angewendet: ${successfulOptimizations}/${optimizations.length}`, {
+      successfulOptimizations,
+      totalOptimizations: optimizations.length,
+      successRate: Math.round((successfulOptimizations / optimizations.length) * 100)
+    });
+    
+    if (successfulOptimizations === 0) {
+      return sendError("❌ Keine Optimierungen konnten angewendet werden", "NO_OPTIMIZATIONS_APPLIED");
+    }
+    
+    // ✅ GENERATE PDF mit Progress
+    sendProgress(70, "📄 Generiere professionelle PDF...");
+    
+    let pdfBuffer;
+    try {
+      // ✅ Verwende die bestehende generateOptimizedPDF Funktion
+      pdfBuffer = await generateOptimizedPDF(contract, optimizedText, appliedChanges, sourceData);
+      
+      sendProgress(85, `✅ PDF generiert: ${Math.round(pdfBuffer.length / 1024)} KB`);
+      
+    } catch (pdfError) {
+      return sendError(`❌ PDF-Generierung fehlgeschlagen: ${pdfError.message}`, "PDF_GENERATION_FAILED");
+    }
+    
+    // ✅ SAVE CONTRACT mit Progress
+    sendProgress(90, "💾 Speichere optimierten Vertrag...");
+    
+    const timestamp = new Date().toISOString().split('T')[0];
+    const cleanName = contract.name.replace(/[^a-zA-Z0-9\-_]/g, '_');
+    const filename = `${cleanName}_KI_Optimiert_${timestamp}_${requestId.split('_')[2]}.pdf`;
+    
+    // Save to file system for immediate download
+    const outputPath = path.join(__dirname, '..', 'uploads', filename);
+    await fs.writeFile(outputPath, pdfBuffer);
+    
+    sendProgress(95, "✅ PDF-Datei gespeichert");
+    
+    // Save metadata to database (optional - non-blocking)
+    const optimizedContractData = {
+      userId: req.user.userId,
+      name: `${contract.name.replace(/\.[^/.]+$/, "")} (KI-Optimiert)`,
+      content: optimizedText,
+      originalContractId: contract._id,
+      sourceType: contractResult.source,
+      originalContent: originalText,
+      optimizations: optimizations,
+      appliedChanges: appliedChanges,
+      isGenerated: true,
+      isOptimized: true,
+      generatedAt: new Date(),
+      filename: filename,
+      filePath: `/uploads/${filename}`,
+      fileUrl: `${process.env.API_BASE_URL || 'https://api.contract-ai.de'}/uploads/${filename}`,
+      requestId: requestId,
+      metadata: {
+        originalTextLength: originalText.length,
+        optimizedTextLength: optimizedText.length,
+        optimizationCount: optimizations.length,
+        successfulOptimizations: successfulOptimizations,
+        successRate: Math.round((successfulOptimizations / optimizations.length) * 100),
+        pdfSize: pdfBuffer.length,
+        generationTimeMs: Date.now() - parseInt(requestId.split('_')[2])
+      }
+    };
+    
+    try {
+      const contractsCollection = req.db.collection("contracts");
+      await contractsCollection.insertOne(optimizedContractData);
+      sendProgress(98, "✅ Metadaten in Datenbank gespeichert");
+    } catch (saveError) {
+      console.warn(`⚠️ [${requestId}] Database save failed (non-critical):`, saveError.message);
+      // Non-blocking - PDF generation was successful
+    }
+    
+    // ✅ COMPLETE mit Download-Link
+    sendComplete({
+      success: true,
+      filename: filename,
+      downloadUrl: `/uploads/${filename}`,
+      directDownloadUrl: `${process.env.API_BASE_URL || 'https://api.contract-ai.de'}/uploads/${filename}`,
+      pdfSize: pdfBuffer.length,
+      optimizationsApplied: successfulOptimizations,
+      successRate: optimizedContractData.metadata.successRate,
+      contractId: contractId,
+      requestId: requestId,
+      generationTime: optimizedContractData.metadata.generationTimeMs,
+      message: "🎉 Smart Contract erfolgreich optimiert!"
+    });
+    
+  } catch (error) {
+    console.error(`❌ [${requestId}] Streaming generation failed:`, error);
+    sendError(`Unerwarteter Fehler: ${error.message}`, "UNEXPECTED_ERROR");
+  }
+});
+
+// ✅ WICHTIG: Deine bestehenden Routen bleiben alle unverändert!
+// Das hier ist nur eine ZUSÄTZLICHE Route für Streaming
