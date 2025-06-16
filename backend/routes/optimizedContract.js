@@ -1,4 +1,4 @@
-// 📁 backend/routes/optimizedContract.js - FIXED: Ultra-Robuste Smart Contract Generator
+// 📁 backend/routes/optimizedContract.js - ✅ FIXED: Sauberer Router Export
 const express = require("express");
 const fs = require("fs").promises;
 const fsSync = require("fs");
@@ -7,6 +7,7 @@ const pdfParse = require("pdf-parse");
 const PDFDocument = require("pdfkit");
 const { ObjectId } = require("mongodb");
 
+// ✅ CLEAN: Einfacher Router Export - keine komplizierte Logik
 const router = express.Router();
 
 // ✅ ENHANCED: Ultra-Robuste Multi-Source Contract Loading
@@ -574,7 +575,11 @@ const generateOptimizedPDF = async (contractData, optimizedText, appliedChanges,
   });
 };
 
-// ✅ MAIN ROUTE: Generate Optimized Contract - ULTRA-ENHANCED
+// ==========================================
+// 🎯 MAIN ROUTES - SAUBERE ROUTER-STRUKTUR
+// ==========================================
+
+// ✅ MAIN ROUTE: Generate Optimized Contract - POST /:contractId/generate-optimized
 router.post("/:contractId/generate-optimized", async (req, res) => {
   const requestId = `gen_opt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   console.log(`🪄 [${requestId}] Ultra-Enhanced Smart Contract Generation:`, {
@@ -986,7 +991,7 @@ router.post("/:contractId/generate-optimized", async (req, res) => {
   }
 });
 
-// ✅ Keep existing routes unchanged
+// ✅ HEALTH CHECK ROUTE - GET /health
 router.get("/health", (req, res) => {
   const checks = {
     service: "Ultra-Enhanced Smart Contract Generator",
@@ -1030,6 +1035,7 @@ router.get("/health", (req, res) => {
   });
 });
 
+// ✅ HISTORY ROUTE - GET /:contractId/history
 router.get("/:contractId/history", async (req, res) => {
   try {
     const { contractId } = req.params;
@@ -1078,6 +1084,7 @@ router.get("/:contractId/history", async (req, res) => {
   }
 });
 
+// ✅ BULK GENERATE ROUTE - POST /bulk-generate
 router.post("/bulk-generate", async (req, res) => {
   const requestId = `bulk_gen_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   
@@ -1142,4 +1149,5 @@ router.post("/bulk-generate", async (req, res) => {
   }
 });
 
+// ✅ SAUBERER EXPORT: Nur der Router, keine komplizierte Logik
 module.exports = router;
