@@ -33,6 +33,7 @@ import {
 // Components
 import LegendaryPremiumNotice from "../components/LegendaryPremiumNotice";
 import ContractHealthDashboard from "../components/ContractHealthDashboard";
+import UltraProfessionalStreamingUI from "../components/UltraProfessionalStreamingUI";
 
 // Types
 import { 
@@ -45,25 +46,6 @@ import {
 import styles from "../styles/Optimizer.module.css";
 
 // ✅ TYPESCRIPT FIX: Specific interfaces instead of 'any'
-interface AnalysisData {
-  success: boolean;
-  analysisId?: string;
-  contractId?: string;
-  requestId?: string;
-  uploadType?: string;
-  fileUrl?: string;
-  originalText?: string;
-  fullText?: string;
-  laufzeit?: string;
-  kuendigung?: string;
-  expiryDate?: string;
-  status?: string;
-  summary?: string;
-  legalAssessment?: string;
-  optimizationResult?: string;
-  [key: string]: unknown; // For additional properties
-}
-
 interface ExportOption {
   id: string;
   name: string;
@@ -79,6 +61,19 @@ interface PitchStyle {
   icon: React.ReactNode;
   description: string;
   target: 'lawyer' | 'business' | 'private';
+}
+
+// ✅ STREAMING RESULT INTERFACE
+interface StreamingResult {
+  success: boolean;
+  error?: string;
+  downloadUrl?: string;
+  filename?: string;
+  pdfSize?: number;
+  successRate?: number;
+  generationTime?: number;
+  optimizationsApplied?: number;
+  message?: string;
 }
 
 // ✅ PORTAL SOLUTION: Dropdown Portal Component
@@ -452,10 +447,6 @@ export default function Optimizer() {
   const [contractId, setContractId] = useState<string | null>(null);
   const [isGeneratingContract, setIsGeneratingContract] = useState(false);
   
-  // ✅ TYPESCRIPT FIXED: Specific types instead of 'any'
-  const [originalContractText, setOriginalContractText] = useState<string>('');
-  const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
-  
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pitchButtonRef = useRef<HTMLButtonElement>(null);
   const exportButtonRef = useRef<HTMLButtonElement>(null);
@@ -621,8 +612,6 @@ export default function Optimizer() {
     setLoading(true);
     setOptimizations([]);
     setError(null);
-    setOriginalContractText(''); // Reset
-    setAnalysisData(null); // Reset
 
     const formData = new FormData();
     formData.append("file", file);
@@ -651,15 +640,6 @@ export default function Optimizer() {
         hasOptimizationResult: !!data.optimizationResult,
         resultLength: data.optimizationResult?.length || 0
       });
-
-      // ✅ CRITICAL FIX: Speichere die Analysis-Daten für Smart Contract Generator
-      setAnalysisData(data);
-      
-      // ✅ ENHANCED: Versuche originalen Text zu extrahieren (falls verfügbar)
-      if (data.originalText) {
-        setOriginalContractText(data.originalText);
-        console.log("✅ Original Contract Text gespeichert:", data.originalText.length + " Zeichen");
-      }
 
       if (data.optimizationResult && data.optimizationResult.trim()) {
         const parsedOptimizations = parseOptimizationResult(data.optimizationResult, file.name);
@@ -713,224 +693,46 @@ export default function Optimizer() {
     setTimeout(() => setToast(null), 4000);
   }, []);
 
-  // ✅ TYPESCRIPT FIXED: Smart Contract Generator Function mit robuster Contract-Erstellung
-  const handleGenerateOptimizedContract = useCallback(async () => {
+  // ✅ STREAMING UI CALLBACKS
+  const handleStreamingComplete = useCallback((result: StreamingResult) => {
+    console.log("🎉 Streaming Complete:", result);
+    setIsGeneratingContract(false);
+    
+    if (result.success) {
+      showToast(`✅ Optimierter Vertrag erfolgreich generiert! (${result.optimizationsApplied || 0} Optimierungen)`, 'success');
+    } else {
+      showToast(`❌ ${result.error || 'Generierung fehlgeschlagen'}`, 'error');
+    }
+  }, [showToast]);
+
+  const handleStreamingCancel = useCallback(() => {
+    console.log("🛑 Streaming Cancelled");
+    setIsGeneratingContract(false);
+    showToast("⏸️ Generierung abgebrochen", 'success');
+  }, [showToast]);
+
+  // ✅ SMART CONTRACT BUTTON HANDLER - Startet Ultra-Professional Streaming UI
+  const handleStartStreamingGeneration = useCallback(() => {
     // Validierung
-    if (!file || optimizations.length === 0) {
+    if (!file || optimizations.length === 0 || !isPremium) {
       showToast("❌ Bitte lade erst einen Vertrag hoch und führe eine Optimierung durch.", 'error');
       return;
     }
-
-    // Prüfe ob Optimierungen ausgewählt wurden (falls Simulation an ist)
+    
+    // Prüfe ob Optimierungen ausgewählt wurden (bei Simulation)
     const selectedOptimizations = showSimulation 
       ? optimizations.filter(opt => opt.implemented)
       : optimizations;
 
     if (showSimulation && selectedOptimizations.length === 0) {
-      showToast("❌ Bitte wähle mindestens eine Optimierung für den optimierten Vertrag aus.", 'error');
+      showToast("❌ Bitte wähle mindestens eine Optimierung aus.", 'error');
       return;
     }
 
+    // ✅ Aktiviere Streaming UI
     setIsGeneratingContract(true);
-    showToast("🪄 Optimierter Vertrag wird generiert...", 'success');
-
-    try {
-      // ✅ CRITICAL FIX: Robuste Contract-ID Beschaffung
-      let currentContractId = contractId;
-      
-      if (!currentContractId) {
-        console.log("📤 Erstelle Contract für Smart Contract Generator...");
-        
-        // ✅ STRATEGY A: Versuche zuerst Contract zu speichern basierend auf Analysis-Daten
-        if (analysisData) {
-          try {
-            console.log("💾 Speichere Contract basierend auf Analysis-Daten...");
-            
-            const contractData = {
-              name: file.name,
-              content: originalContractText || `Inhalt von ${file.name}`,
-              laufzeit: analysisData.laufzeit || "Unbekannt",
-              kuendigung: analysisData.kuendigung || "Unbekannt",
-              expiryDate: analysisData.expiryDate || "",
-              status: analysisData.status || "Aktiv",
-              isGenerated: false,
-              originalname: file.name,
-              filePath: analysisData.fileUrl || "",
-              mimetype: file.type,
-              size: file.size,
-              // ✅ CRITICAL: Analysis-Referenz für Debugging
-              analysisId: analysisData.analysisId || analysisData.requestId,
-              uploadType: analysisData.uploadType || 'LOCAL_UPLOAD'
-            };
-
-            console.log("💾 Contract Data:", contractData);
-
-            const contractRes = await fetch("/api/contracts", {
-              method: "POST",
-              credentials: "include",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify(contractData),
-            });
-
-            if (contractRes.ok) {
-              const contractResult = await contractRes.json();
-              currentContractId = contractResult.contractId;
-              setContractId(currentContractId);
-              console.log("✅ Contract erfolgreich erstellt mit ID:", currentContractId);
-            } else {
-              throw new Error("Contract-Speicherung fehlgeschlagen");
-            }
-          } catch (contractError) {
-            console.warn("⚠️ Contract-Speicherung fehlgeschlagen, versuche Alternative:", contractError);
-            currentContractId = null;
-          }
-        }
-        
-        // ✅ STRATEGY B: Fallback - Re-Upload für Contract-ID
-        if (!currentContractId) {
-          console.log("📤 Fallback: Re-Upload für Contract-ID...");
-          
-          const formData = new FormData();
-          formData.append("file", file);
-          
-          const uploadRes = await fetch("/api/analyze", {
-            method: "POST",
-            credentials: "include",
-            body: formData,
-          });
-
-          const uploadData = await uploadRes.json();
-          
-          if (!uploadRes.ok) {
-            throw new Error(uploadData.message || "Contract Upload fehlgeschlagen");
-          }
-
-          // ✅ FALLBACK: Nutze Analysis-ID als Contract-ID
-          currentContractId = uploadData.analysisId || 
-                            uploadData.contractId || 
-                            uploadData.requestId;
-          
-          if (!currentContractId) {
-            throw new Error("❌ Keine Contract ID verfügbar. Bitte lade den Vertrag erneut hoch.");
-          }
-          
-          setContractId(currentContractId);
-          console.log("✅ Fallback Contract ID erhalten:", currentContractId);
-        }
-      }
-
-      // ✅ STEP 2: Generate Optimized Contract
-      console.log("🎯 Starte Smart Contract Generation mit ID:", currentContractId);
-      
-      const generatePayload = {
-        optimizations: selectedOptimizations.map(opt => ({
-          id: opt.id,
-          category: opt.category,
-          priority: opt.priority,
-          originalText: opt.original,
-          improvedText: opt.improved,
-          reasoning: opt.reasoning,
-          confidence: opt.confidence,
-          estimatedSavings: opt.estimatedSavings,
-          marketBenchmark: opt.marketBenchmark
-        })),
-        options: {
-          format: 'pdf',
-          includeReasons: true,
-          preserveLayout: true
-        },
-        // ✅ CRITICAL: Zusätzliche Daten für bessere Contract-Generierung
-        sourceData: {
-          originalFileName: file.name,
-          originalContent: originalContractText,
-          analysisData: analysisData
-        }
-      };
-
-      console.log("📤 Generate Payload:", {
-        optimizationCount: generatePayload.optimizations.length,
-        contractId: currentContractId,
-        hasOriginalContent: !!originalContractText
-      });
-
-      const generateRes = await fetch(`/api/contracts/${currentContractId}/generate-optimized`, {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(generatePayload)
-      });
-
-      if (!generateRes.ok) {
-        const errorData = await generateRes.json();
-        console.error("❌ Smart Contract Generation Error:", errorData);
-        
-        // ✅ ENHANCED ERROR HANDLING
-        if (generateRes.status === 404) {
-          throw new Error("❌ Contract nicht gefunden. Bitte lade den Vertrag erneut hoch.");
-        } else if (generateRes.status === 400) {
-          throw new Error("❌ Ungültige Optimierungsdaten. Führe die Analyse erneut durch.");
-        } else {
-          throw new Error(errorData.message || `Server Error: ${generateRes.status}`);
-        }
-      }
-
-      // ✅ STEP 3: PDF Download
-      console.log("📄 Download optimierte PDF...");
-      
-      const blob = await generateRes.blob();
-      
-      if (blob.size === 0) {
-        throw new Error("❌ Leere PDF erhalten. Versuche es erneut.");
-      }
-      
-      const downloadUrl = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.download = `Optimiert_${file.name.replace('.pdf', '')}_${new Date().toISOString().split('T')[0]}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(downloadUrl);
-
-      // ✅ Success!
-      showToast(`✅ Optimierter Vertrag erfolgreich generiert! (${selectedOptimizations.length} Optimierungen angewendet)`, 'success');
-      
-      console.log("🎉 Smart Contract Generation erfolgreich abgeschlossen!", {
-        contractId: currentContractId,
-        optimizationsApplied: selectedOptimizations.length,
-        fileName: file.name,
-        pdfSize: blob.size
-      });
-
-    } catch (error) {
-      const err = error as Error;
-      console.error("❌ Smart Contract Generation Fehler:", err);
-      
-      let errorMessage = "❌ Fehler beim Generieren des optimierten Vertrags.";
-      
-      if (err.message.includes("nicht gefunden")) {
-        errorMessage = "❌ Contract nicht gefunden. Bitte lade den Vertrag erneut hoch.";
-      } else if (err.message.includes("PDF")) {
-        errorMessage = "❌ PDF-Generierung fehlgeschlagen. Prüfe das Dateiformat.";
-      } else if (err.message.includes("Optimierungen")) {
-        errorMessage = "❌ Ungültige Optimierungen. Führe die Analyse erneut durch.";
-      } else if (err.message.includes("authentifiziert")) {
-        errorMessage = "🔐 Authentifizierung fehlgeschlagen. Bitte logge dich neu ein.";
-      } else if (err.message.includes("Subscription")) {
-        errorMessage = "⭐ Premium-Feature. Bitte upgrade dein Paket.";
-      } else {
-        errorMessage = err.message.startsWith("❌") ? err.message : `❌ ${err.message}`;
-      }
-      
-      showToast(errorMessage, 'error');
-    } finally {
-      setIsGeneratingContract(false);
-    }
-  }, [file, optimizations, contractId, showSimulation, showToast, originalContractText, analysisData]);
+    showToast("🚀 Starte Ultra-Professional Contract Generator...", 'success');
+  }, [file, optimizations, showSimulation, isPremium, showToast]);
 
   // ✨ Handlers
   const handleReset = useCallback(() => {
@@ -945,9 +747,6 @@ export default function Optimizer() {
     // ✅ PHASE 3: Reset Smart Contract Generator State
     setContractId(null);
     setIsGeneratingContract(false);
-    // ✅ FIXED: Reset neue States
-    setOriginalContractText('');
-    setAnalysisData(null);
   }, []);
 
   const handleDrag = useCallback((e: React.DragEvent) => {
@@ -1531,621 +1330,619 @@ Generiert durch KI-Vertragsoptimierung`;
                 </div>
               </motion.div>
 
-              {/* Enhanced Control Panel mit Smart Contract Generator */}
-              <motion.div
-                className={styles.card}
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '1.5rem',
-                  flexWrap: 'wrap',
-                  gap: '1rem'
-                }}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-              >
-                {/* Left Section: Simulation Toggle */}
-                <motion.button
-                  onClick={() => setShowSimulation(!showSimulation)}
+              {/* ✅ ENHANCED CONTROL PANEL MIT ULTRA-PROFESSIONAL STREAMING UI INTEGRATION */}
+              {isGeneratingContract ? (
+                /* 🚀 WÄHREND GENERIERUNG: Ultra-Professional Streaming UI */
+                <UltraProfessionalStreamingUI 
+                  contractId={contractId}
+                  contractName={file?.name || "Unbekannter Vertrag"}
+                  optimizations={showSimulation 
+                    ? optimizations.filter(opt => opt.implemented)
+                    : optimizations
+                  }
+                  onComplete={handleStreamingComplete}
+                  onCancel={handleStreamingCancel}
+                />
+              ) : (
+                /* 📋 NORMAL: Bestehende Control Panel */
+                <motion.div
+                  className={styles.card}
                   style={{
                     display: 'flex',
+                    justifyContent: 'space-between',
                     alignItems: 'center',
-                    gap: '0.6rem',
-                    padding: '0.8rem 1.5rem',
-                    borderRadius: '12px',
-                    border: 'none',
-                    fontSize: '0.95rem',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    background: showSimulation 
-                      ? 'linear-gradient(135deg, #0071e3 0%, #005bb5 100%)'
-                      : 'rgba(0, 113, 227, 0.1)',
-                    color: showSimulation ? 'white' : '#0071e3',
-                    transition: 'all 0.2s ease',
-                    boxShadow: showSimulation 
-                      ? '0 8px 24px rgba(0, 113, 227, 0.3)'
-                      : 'none'
+                    padding: '1.5rem',
+                    flexWrap: 'wrap',
+                    gap: '1rem'
                   }}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
                 >
-                  {showSimulation ? <EyeOff size={16} /> : <Eye size={16} />}
-                  <span>{showSimulation ? 'Simulation beenden' : 'Live-Simulation'}</span>
-                </motion.button>
+                  {/* Left Section: Simulation Toggle */}
+                  <motion.button
+                    onClick={() => setShowSimulation(!showSimulation)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.6rem',
+                      padding: '0.8rem 1.5rem',
+                      borderRadius: '12px',
+                      border: 'none',
+                      fontSize: '0.95rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      background: showSimulation 
+                        ? 'linear-gradient(135deg, #0071e3 0%, #005bb5 100%)'
+                        : 'rgba(0, 113, 227, 0.1)',
+                      color: showSimulation ? 'white' : '#0071e3',
+                      transition: 'all 0.2s ease',
+                      boxShadow: showSimulation 
+                        ? '0 8px 24px rgba(0, 113, 227, 0.3)'
+                        : 'none'
+                    }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    {showSimulation ? <EyeOff size={16} /> : <Eye size={16} />}
+                    <span>{showSimulation ? 'Simulation beenden' : 'Live-Simulation'}</span>
+                  </motion.button>
 
-                {/* MAIN FEATURE: Smart Contract Generator Button */}
-                <motion.button
-                  onClick={handleGenerateOptimizedContract}
-                  disabled={isGeneratingContract || !file || optimizations.length === 0 || !isPremium}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.8rem',
-                    padding: '1rem 2rem',
-                    borderRadius: '16px',
-                    border: 'none',
-                    fontSize: '1rem',
-                    fontWeight: 700,
-                    cursor: isGeneratingContract || !file || optimizations.length === 0 || !isPremium ? 'not-allowed' : 'pointer',
-                    background: isGeneratingContract || !file || optimizations.length === 0 || !isPremium
-                      ? 'linear-gradient(135deg, #86868b 0%, #6e6e73 100%)'
-                      : 'linear-gradient(135deg, #af52de 0%, #d946ef 100%)',
-                    color: 'white',
-                    transition: 'all 0.3s ease',
-                    boxShadow: isGeneratingContract || !file || optimizations.length === 0 || !isPremium
-                      ? 'none'
-                      : '0 12px 32px rgba(175, 82, 222, 0.4)',
-                    opacity: isGeneratingContract || !file || optimizations.length === 0 || !isPremium ? 0.6 : 1,
-                    position: 'relative',
-                    overflow: 'hidden'
-                  }}
-                  whileHover={!isGeneratingContract && file && optimizations.length > 0 && isPremium ? { 
-                    scale: 1.05, 
-                    y: -2,
-                    boxShadow: '0 16px 40px rgba(175, 82, 222, 0.5)'
-                  } : undefined}
-                  whileTap={!isGeneratingContract && file && optimizations.length > 0 && isPremium ? { scale: 0.98 } : undefined}
-                >
-                  {/* Animated Background Gradient */}
-                  {!isGeneratingContract && file && optimizations.length > 0 && isPremium && (
+                  {/* ✅ ENHANCED: Ultra-Professional Generator Button */}
+                  <motion.button
+                    onClick={handleStartStreamingGeneration}
+                    disabled={!file || optimizations.length === 0 || !isPremium}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.8rem',
+                      padding: '1rem 2rem',
+                      borderRadius: '16px',
+                      border: 'none',
+                      fontSize: '1rem',
+                      fontWeight: 700,
+                      cursor: !file || optimizations.length === 0 || !isPremium ? 'not-allowed' : 'pointer',
+                      background: !file || optimizations.length === 0 || !isPremium
+                        ? 'linear-gradient(135deg, #86868b 0%, #6e6e73 100%)'
+                        : 'linear-gradient(135deg, #af52de 0%, #d946ef 100%)',
+                      color: 'white',
+                      transition: 'all 0.3s ease',
+                      boxShadow: !file || optimizations.length === 0 || !isPremium
+                        ? 'none'
+                        : '0 12px 32px rgba(175, 82, 222, 0.4)',
+                      opacity: !file || optimizations.length === 0 || !isPremium ? 0.6 : 1,
+                      position: 'relative',
+                      overflow: 'hidden'
+                    }}
+                    whileHover={file && optimizations.length > 0 && isPremium ? { 
+                      scale: 1.05, 
+                      y: -2,
+                      boxShadow: '0 16px 40px rgba(175, 82, 222, 0.5)'
+                    } : undefined}
+                    whileTap={file && optimizations.length > 0 && isPremium ? { scale: 0.98 } : undefined}
+                  >
+                    {/* Animated Background Gradient */}
+                    {file && optimizations.length > 0 && isPremium && (
+                      <motion.div
+                        style={{
+                          position: 'absolute',
+                          top: 0,
+                          left: '-100%',
+                          width: '100%',
+                          height: '100%',
+                          background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)',
+                          zIndex: 1
+                        }}
+                        animate={{
+                          left: ['-100%', '100%']
+                        }}
+                        transition={{
+                          duration: 2,
+                          repeat: Infinity,
+                          ease: "linear"
+                        }}
+                      />
+                    )}
+
+                    {/* Button Content */}
+                    <div style={{ zIndex: 2, display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                      <motion.div
+                        animate={file && optimizations.length > 0 && isPremium ? {
+                          rotate: [0, 10, -10, 0],
+                          scale: [1, 1.1, 1]
+                        } : {}}
+                        transition={{ duration: 2, repeat: Infinity }}
+                      >
+                        <Wand2 size={20} />
+                      </motion.div>
+                      <span>🪄 Ultra-Professional Generator starten</span>
+                      {!isPremium && <Lock size={16} />}
+                    </div>
+                  </motion.button>
+
+                  {/* Right Section: Export & Pitch Buttons */}
+                  <div style={{ display: 'flex', gap: '0.8rem', flexWrap: 'wrap', position: 'relative' }}>
+                    {/* Pitch Generator Button */}
+                    <div style={{ position: 'relative' }}>
+                      <motion.button
+                        ref={pitchButtonRef}
+                        onClick={() => setShowPitchMenu(!showPitchMenu)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.6rem',
+                          padding: '0.8rem 1.5rem',
+                          borderRadius: '12px',
+                          border: 'none',
+                          fontSize: '0.95rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          background: 'linear-gradient(135deg, #34c759 0%, #30a46c 100%)',
+                          color: 'white',
+                          transition: 'all 0.2s ease',
+                          boxShadow: '0 8px 24px rgba(52, 199, 89, 0.3)'
+                        }}
+                        whileHover={{ scale: 1.02, y: -1 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <Mail size={16} />
+                        <span>Profi-Pitch generieren</span>
+                        {showPitchMenu ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                      </motion.button>
+                    </div>
+                    
+                    {/* Export Button */}
+                    <div style={{ position: 'relative' }}>
+                      <motion.button
+                        ref={exportButtonRef}
+                        onClick={() => setShowExportMenu(!showExportMenu)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.6rem',
+                          padding: '0.8rem 1.5rem',
+                          borderRadius: '12px',
+                          border: 'none',
+                          fontSize: '0.95rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          background: 'linear-gradient(135deg, #5856d6 0%, #4c4ad6 100%)',
+                          color: 'white',
+                          transition: 'all 0.2s ease',
+                          boxShadow: '0 8px 24px rgba(88, 86, 214, 0.3)'
+                        }}
+                        whileHover={{ scale: 1.02, y: -1 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <Download size={16} />
+                        <span>Premium Export</span>
+                        {showExportMenu ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                      </motion.button>
+                    </div>
+                  </div>
+
+                  {/* Portal Dropdowns */}
+                  <DropdownPortal 
+                    isOpen={showPitchMenu} 
+                    targetRef={pitchButtonRef}
+                    position="left"
+                  >
+                    <AnimatePresence>
+                      <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        data-portal-dropdown
+                        style={{
+                          background: 'rgba(255, 255, 255, 0.98)',
+                          backdropFilter: 'blur(20px)',
+                          borderRadius: '16px',
+                          padding: '1rem',
+                          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15), 0 8px 32px rgba(0, 0, 0, 0.1)',
+                          border: '1px solid rgba(255, 255, 255, 0.8)',
+                          minWidth: '280px',
+                          maxWidth: '320px'
+                        }}
+                      >
+                        <h5 style={{ margin: '0 0 0.8rem', fontSize: '0.9rem', fontWeight: 600, color: '#1d1d1f' }}>
+                          Pitch-Stil wählen:
+                        </h5>
+                        
+                        {pitchStyles.map((style) => (
+                          <motion.button
+                            key={style.id}
+                            onClick={() => {
+                              setSelectedPitchStyle(style.id);
+                              generatePitch(style.id);
+                            }}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.8rem',
+                              width: '100%',
+                              padding: '0.8rem',
+                              marginBottom: '0.5rem',
+                              borderRadius: '12px',
+                              border: 'none',
+                              background: selectedPitchStyle === style.id 
+                                ? 'rgba(52, 199, 89, 0.1)' 
+                                : 'transparent',
+                              cursor: 'pointer',
+                              textAlign: 'left',
+                              transition: 'all 0.2s ease'
+                            }}
+                            whileHover={{ background: 'rgba(52, 199, 89, 0.1)' }}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            {style.icon}
+                            <div>
+                              <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1d1d1f' }}>
+                                {style.name}
+                              </div>
+                              <div style={{ fontSize: '0.8rem', color: '#6e6e73' }}>
+                                {style.description}
+                              </div>
+                            </div>
+                          </motion.button>
+                        ))}
+                      </motion.div>
+                    </AnimatePresence>
+                  </DropdownPortal>
+
+                  <DropdownPortal 
+                    isOpen={showExportMenu} 
+                    targetRef={exportButtonRef}
+                    position="right"
+                  >
+                    <AnimatePresence>
+                      <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        data-portal-dropdown
+                        style={{
+                          background: 'rgba(255, 255, 255, 0.98)',
+                          backdropFilter: 'blur(20px)',
+                          borderRadius: '16px',
+                          padding: '1rem',
+                          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15), 0 8px 32px rgba(0, 0, 0, 0.1)',
+                          border: '1px solid rgba(255, 255, 255, 0.8)',
+                          minWidth: '300px',
+                          maxWidth: '350px'
+                        }}
+                      >
+                        <h5 style={{ margin: '0 0 0.8rem', fontSize: '0.9rem', fontWeight: 600, color: '#1d1d1f' }}>
+                          Export-Format wählen:
+                        </h5>
+                        
+                        {exportOptions.map((option) => (
+                          <motion.button
+                            key={option.id}
+                            onClick={() => handleExport(option.id)}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.8rem',
+                              width: '100%',
+                              padding: '0.8rem',
+                              marginBottom: '0.5rem',
+                              borderRadius: '12px',
+                              border: 'none',
+                              background: 'transparent',
+                              cursor: 'pointer',
+                              textAlign: 'left',
+                              transition: 'all 0.2s ease',
+                              opacity: option.premium && !isPremium ? 0.6 : 1
+                            }}
+                            whileHover={{ background: 'rgba(88, 86, 214, 0.1)' }}
+                            whileTap={{ scale: 0.98 }}
+                            disabled={option.premium && !isPremium}
+                          >
+                            {option.icon}
+                            <div style={{ flex: 1 }}>
+                              <div style={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: '0.5rem',
+                                marginBottom: '0.2rem' 
+                              }}>
+                                <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1d1d1f' }}>
+                                  {option.name}
+                                </span>
+                                <span style={{ 
+                                  fontSize: '0.7rem', 
+                                  color: '#5856d6',
+                                  background: 'rgba(88, 86, 214, 0.1)',
+                                  padding: '0.1rem 0.4rem',
+                                  borderRadius: '6px',
+                                  fontWeight: 600
+                                }}>
+                                  {option.format}
+                                </span>
+                                {option.premium && (
+                                  <Lock size={12} style={{ color: '#ff9500' }} />
+                                )}
+                              </div>
+                              <div style={{ fontSize: '0.8rem', color: '#6e6e73' }}>
+                                {option.description}
+                              </div>
+                            </div>
+                          </motion.button>
+                        ))}
+                      </motion.div>
+                    </AnimatePresence>
+                  </DropdownPortal>
+                </motion.div>
+              )}
+
+              {/* Optimization Cards - NUR ANZEIGEN WENN NICHT GENERATING */}
+              {!isGeneratingContract && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                  {filteredOptimizations.map((optimization, index) => (
                     <motion.div
-                      style={{
+                      key={optimization.id}
+                      className={styles.card}
+                      style={{ 
+                        padding: '2rem', 
+                        position: 'relative',
+                        background: optimization.implemented && showSimulation 
+                          ? 'linear-gradient(135deg, rgba(52, 199, 89, 0.1) 0%, rgba(52, 199, 89, 0.05) 100%)'
+                          : 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%)',
+                        border: optimization.implemented && showSimulation 
+                          ? '2px solid rgba(52, 199, 89, 0.3)'
+                          : '1px solid rgba(255, 255, 255, 0.6)'
+                      }}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.4 + index * 0.1 }}
+                    >
+                      {/* Priority Indicator */}
+                      <div style={{
                         position: 'absolute',
                         top: 0,
-                        left: '-100%',
-                        width: '100%',
-                        height: '100%',
-                        background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)',
-                        zIndex: 1
-                      }}
-                      animate={{
-                        left: ['-100%', '100%']
-                      }}
-                      transition={{
-                        duration: 2,
-                        repeat: Infinity,
-                        ease: "linear"
-                      }}
-                    />
-                  )}
+                        left: 0,
+                        right: 0,
+                        height: '3px',
+                        background: optimization.priority === 'critical' ? '#d70015' : 
+                                   optimization.priority === 'high' ? '#ff453a' : 
+                                   optimization.priority === 'medium' ? '#ff9500' : '#34c759'
+                      }}></div>
 
-                  {/* Button Content */}
-                  <div style={{ zIndex: 2, display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-                    {isGeneratingContract ? (
-                      <>
-                        <motion.div
-                          style={{
-                            width: '20px',
-                            height: '20px',
-                            border: '2px solid rgba(255,255,255,0.3)',
-                            borderTop: '2px solid white',
-                            borderRadius: '50%'
-                          }}
-                          animate={{ rotate: 360 }}
-                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                        />
-                        <span>Generiere optimierten Vertrag...</span>
-                      </>
-                    ) : (
-                      <>
-                        <motion.div
-                          animate={file && optimizations.length > 0 && isPremium ? {
-                            rotate: [0, 10, -10, 0],
-                            scale: [1, 1.1, 1]
-                          } : {}}
-                          transition={{ duration: 2, repeat: Infinity }}
-                        >
-                          <Wand2 size={20} />
-                        </motion.div>
-                        <span>🪄 Optimierten Vertrag generieren</span>
-                        {!isPremium && <Lock size={16} />}
-                      </>
-                    )}
-                  </div>
-                </motion.button>
-
-                {/* Right Section: Export & Pitch Buttons */}
-                <div style={{ display: 'flex', gap: '0.8rem', flexWrap: 'wrap', position: 'relative' }}>
-                  {/* Pitch Generator Button */}
-                  <div style={{ position: 'relative' }}>
-                    <motion.button
-                      ref={pitchButtonRef}
-                      onClick={() => setShowPitchMenu(!showPitchMenu)}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.6rem',
-                        padding: '0.8rem 1.5rem',
-                        borderRadius: '12px',
-                        border: 'none',
-                        fontSize: '0.95rem',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        background: 'linear-gradient(135deg, #34c759 0%, #30a46c 100%)',
-                        color: 'white',
-                        transition: 'all 0.2s ease',
-                        boxShadow: '0 8px 24px rgba(52, 199, 89, 0.3)'
-                      }}
-                      whileHover={{ scale: 1.02, y: -1 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <Mail size={16} />
-                      <span>Profi-Pitch generieren</span>
-                      {showPitchMenu ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                    </motion.button>
-                  </div>
-                  
-                  {/* Export Button */}
-                  <div style={{ position: 'relative' }}>
-                    <motion.button
-                      ref={exportButtonRef}
-                      onClick={() => setShowExportMenu(!showExportMenu)}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.6rem',
-                        padding: '0.8rem 1.5rem',
-                        borderRadius: '12px',
-                        border: 'none',
-                        fontSize: '0.95rem',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        background: 'linear-gradient(135deg, #5856d6 0%, #4c4ad6 100%)',
-                        color: 'white',
-                        transition: 'all 0.2s ease',
-                        boxShadow: '0 8px 24px rgba(88, 86, 214, 0.3)'
-                      }}
-                      whileHover={{ scale: 1.02, y: -1 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <Download size={16} />
-                      <span>Premium Export</span>
-                      {showExportMenu ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                    </motion.button>
-                  </div>
-                </div>
-
-                {/* Portal Dropdowns */}
-                <DropdownPortal 
-                  isOpen={showPitchMenu} 
-                  targetRef={pitchButtonRef}
-                  position="left"
-                >
-                  <AnimatePresence>
-                    <motion.div
-                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      data-portal-dropdown
-                      style={{
-                        background: 'rgba(255, 255, 255, 0.98)',
-                        backdropFilter: 'blur(20px)',
-                        borderRadius: '16px',
-                        padding: '1rem',
-                        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15), 0 8px 32px rgba(0, 0, 0, 0.1)',
-                        border: '1px solid rgba(255, 255, 255, 0.8)',
-                        minWidth: '280px',
-                        maxWidth: '320px'
-                      }}
-                    >
-                      <h5 style={{ margin: '0 0 0.8rem', fontSize: '0.9rem', fontWeight: 600, color: '#1d1d1f' }}>
-                        Pitch-Stil wählen:
-                      </h5>
-                      
-                      {pitchStyles.map((style) => (
-                        <motion.button
-                          key={style.id}
-                          onClick={() => {
-                            setSelectedPitchStyle(style.id);
-                            generatePitch(style.id);
-                          }}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.8rem',
-                            width: '100%',
-                            padding: '0.8rem',
-                            marginBottom: '0.5rem',
-                            borderRadius: '12px',
-                            border: 'none',
-                            background: selectedPitchStyle === style.id 
-                              ? 'rgba(52, 199, 89, 0.1)' 
-                              : 'transparent',
-                            cursor: 'pointer',
-                            textAlign: 'left',
-                            transition: 'all 0.2s ease'
-                          }}
-                          whileHover={{ background: 'rgba(52, 199, 89, 0.1)' }}
-                          whileTap={{ scale: 0.98 }}
-                        >
-                          {style.icon}
-                          <div>
-                            <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1d1d1f' }}>
-                              {style.name}
-                            </div>
-                            <div style={{ fontSize: '0.8rem', color: '#6e6e73' }}>
-                              {style.description}
-                            </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', marginBottom: '0.5rem' }}>
+                            <h4 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 600 }}>
+                              {optimization.category === 'termination' ? 'Kündigung & Laufzeit' :
+                               optimization.category === 'liability' ? 'Haftung & Risiko' :
+                               optimization.category === 'payment' ? 'Vergütung & Zahlung' :
+                               optimization.category === 'compliance' ? 'Compliance & DSGVO' : 'Klarheit & Präzision'}
+                            </h4>
+                            <span style={{
+                              padding: '0.3rem 0.8rem',
+                              borderRadius: '12px',
+                              fontSize: '0.8rem',
+                              fontWeight: 600,
+                              backgroundColor: optimization.priority === 'critical' ? '#fff0f0' : 
+                                             optimization.priority === 'high' ? '#fff5f5' : 
+                                             optimization.priority === 'medium' ? '#fff8f0' : '#f0fff0',
+                              color: optimization.priority === 'critical' ? '#d70015' : 
+                                     optimization.priority === 'high' ? '#ff453a' : 
+                                     optimization.priority === 'medium' ? '#ff9500' : '#34c759'
+                            }}>
+                              {optimization.priority === 'critical' ? 'Kritisch' : 
+                               optimization.priority === 'high' ? 'Hoch' : 
+                               optimization.priority === 'medium' ? 'Mittel' : 'Niedrig'}
+                            </span>
                           </div>
-                        </motion.button>
-                      ))}
-                    </motion.div>
-                  </AnimatePresence>
-                </DropdownPortal>
+                          
+                          <div style={{ display: 'flex', gap: '1rem', fontSize: '0.85rem', color: '#6e6e73', flexWrap: 'wrap' }}>
+                            <span>KI-Vertrauen: {optimization.confidence}%</span>
+                            <span>Risiko: {optimization.legalRisk}/10</span>
+                            <span>Impact: {optimization.businessImpact}/10</span>
+                            <span>{optimization.estimatedSavings}</span>
+                          </div>
+                        </div>
 
-                <DropdownPortal 
-                  isOpen={showExportMenu} 
-                  targetRef={exportButtonRef}
-                  position="right"
-                >
-                  <AnimatePresence>
-                    <motion.div
-                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      data-portal-dropdown
-                      style={{
-                        background: 'rgba(255, 255, 255, 0.98)',
-                        backdropFilter: 'blur(20px)',
-                        borderRadius: '16px',
-                        padding: '1rem',
-                        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15), 0 8px 32px rgba(0, 0, 0, 0.1)',
-                        border: '1px solid rgba(255, 255, 255, 0.8)',
-                        minWidth: '300px',
-                        maxWidth: '350px'
-                      }}
-                    >
-                      <h5 style={{ margin: '0 0 0.8rem', fontSize: '0.9rem', fontWeight: 600, color: '#1d1d1f' }}>
-                        Export-Format wählen:
-                      </h5>
-                      
-                      {exportOptions.map((option) => (
-                        <motion.button
-                          key={option.id}
-                          onClick={() => handleExport(option.id)}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.8rem',
-                            width: '100%',
-                            padding: '0.8rem',
-                            marginBottom: '0.5rem',
-                            borderRadius: '12px',
-                            border: 'none',
-                            background: 'transparent',
-                            cursor: 'pointer',
-                            textAlign: 'left',
-                            transition: 'all 0.2s ease',
-                            opacity: option.premium && !isPremium ? 0.6 : 1
-                          }}
-                          whileHover={{ background: 'rgba(88, 86, 214, 0.1)' }}
-                          whileTap={{ scale: 0.98 }}
-                          disabled={option.premium && !isPremium}
-                        >
-                          {option.icon}
-                          <div style={{ flex: 1 }}>
-                            <div style={{ 
+                        {showSimulation && (
+                          <motion.label 
+                            style={{ 
                               display: 'flex', 
                               alignItems: 'center', 
                               gap: '0.5rem',
-                              marginBottom: '0.2rem' 
+                              cursor: 'pointer',
+                              padding: '0.5rem',
+                              backgroundColor: optimization.implemented ? 'rgba(52, 199, 89, 0.1)' : 'rgba(0, 113, 227, 0.1)',
+                              borderRadius: '8px',
+                              border: `1px solid ${optimization.implemented ? 'rgba(52, 199, 89, 0.3)' : 'rgba(0, 113, 227, 0.3)'}`
+                            }}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={optimization.implemented}
+                              onChange={() => toggleSuggestion(optimization.id)}
+                              style={{
+                                width: '18px',
+                                height: '18px',
+                                accentColor: '#0071e3'
+                              }}
+                            />
+                            <span style={{ 
+                              fontSize: '0.9rem', 
+                              fontWeight: 600, 
+                              color: optimization.implemented ? '#34c759' : '#0071e3'
                             }}>
-                              <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1d1d1f' }}>
-                                {option.name}
-                              </span>
-                              <span style={{ 
-                                fontSize: '0.7rem', 
-                                color: '#5856d6',
-                                background: 'rgba(88, 86, 214, 0.1)',
-                                padding: '0.1rem 0.4rem',
-                                borderRadius: '6px',
-                                fontWeight: 600
-                              }}>
-                                {option.format}
-                              </span>
-                              {option.premium && (
-                                <Lock size={12} style={{ color: '#ff9500' }} />
-                              )}
-                            </div>
-                            <div style={{ fontSize: '0.8rem', color: '#6e6e73' }}>
-                              {option.description}
-                            </div>
-                          </div>
-                        </motion.button>
-                      ))}
-                    </motion.div>
-                  </AnimatePresence>
-                </DropdownPortal>
-              </motion.div>
-
-              {/* Optimization Cards */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                  {filteredOptimizations.map((optimization, index) => (
-                  <motion.div
-                    key={optimization.id}
-                    className={styles.card}
-                    style={{ 
-                      padding: '2rem', 
-                      position: 'relative',
-                      background: optimization.implemented && showSimulation 
-                        ? 'linear-gradient(135deg, rgba(52, 199, 89, 0.1) 0%, rgba(52, 199, 89, 0.05) 100%)'
-                        : 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%)',
-                      border: optimization.implemented && showSimulation 
-                        ? '2px solid rgba(52, 199, 89, 0.3)'
-                        : '1px solid rgba(255, 255, 255, 0.6)'
-                    }}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 + index * 0.1 }}
-                  >
-                    {/* Priority Indicator */}
-                    <div style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      height: '3px',
-                      background: optimization.priority === 'critical' ? '#d70015' : 
-                                 optimization.priority === 'high' ? '#ff453a' : 
-                                 optimization.priority === 'medium' ? '#ff9500' : '#34c759'
-                    }}></div>
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
-                      <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', marginBottom: '0.5rem' }}>
-                          <h4 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 600 }}>
-                            {optimization.category === 'termination' ? 'Kündigung & Laufzeit' :
-                             optimization.category === 'liability' ? 'Haftung & Risiko' :
-                             optimization.category === 'payment' ? 'Vergütung & Zahlung' :
-                             optimization.category === 'compliance' ? 'Compliance & DSGVO' : 'Klarheit & Präzision'}
-                          </h4>
-                          <span style={{
-                            padding: '0.3rem 0.8rem',
-                            borderRadius: '12px',
-                            fontSize: '0.8rem',
-                            fontWeight: 600,
-                            backgroundColor: optimization.priority === 'critical' ? '#fff0f0' : 
-                                           optimization.priority === 'high' ? '#fff5f5' : 
-                                           optimization.priority === 'medium' ? '#fff8f0' : '#f0fff0',
-                            color: optimization.priority === 'critical' ? '#d70015' : 
-                                   optimization.priority === 'high' ? '#ff453a' : 
-                                   optimization.priority === 'medium' ? '#ff9500' : '#34c759'
-                          }}>
-                            {optimization.priority === 'critical' ? 'Kritisch' : 
-                             optimization.priority === 'high' ? 'Hoch' : 
-                             optimization.priority === 'medium' ? 'Mittel' : 'Niedrig'}
-                          </span>
-                        </div>
-                        
-                        <div style={{ display: 'flex', gap: '1rem', fontSize: '0.85rem', color: '#6e6e73', flexWrap: 'wrap' }}>
-                          <span>KI-Vertrauen: {optimization.confidence}%</span>
-                          <span>Risiko: {optimization.legalRisk}/10</span>
-                          <span>Impact: {optimization.businessImpact}/10</span>
-                          <span>{optimization.estimatedSavings}</span>
-                        </div>
+                              {optimization.implemented ? 'Aktiviert' : 'Anwenden'}
+                            </span>
+                            {optimization.implemented && (
+                              <TrendingUp size={14} style={{ color: '#34c759' }} />
+                            )}
+                          </motion.label>
+                        )}
                       </div>
 
-                      {showSimulation && (
-                        <motion.label 
-                          style={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            gap: '0.5rem',
-                            cursor: 'pointer',
-                            padding: '0.5rem',
-                            backgroundColor: optimization.implemented ? 'rgba(52, 199, 89, 0.1)' : 'rgba(0, 113, 227, 0.1)',
-                            borderRadius: '8px',
-                            border: `1px solid ${optimization.implemented ? 'rgba(52, 199, 89, 0.3)' : 'rgba(0, 113, 227, 0.3)'}`
-                          }}
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={optimization.implemented}
-                            onChange={() => toggleSuggestion(optimization.id)}
-                            style={{
-                              width: '18px',
-                              height: '18px',
-                              accentColor: '#0071e3'
-                            }}
-                          />
-                          <span style={{ 
+                      {/* 3-Column Layout */}
+                      <div style={{ 
+                        display: 'grid', 
+                        gridTemplateColumns: '1fr 1fr 1fr', 
+                        gap: '1.5rem',
+                        marginBottom: '1.5rem'
+                      }}>
+                        <div>
+                          <h5 style={{ 
+                            margin: '0 0 0.5rem', 
                             fontSize: '0.9rem', 
                             fontWeight: 600, 
-                            color: optimization.implemented ? '#34c759' : '#0071e3'
+                            color: '#ff453a',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.3rem'
                           }}>
-                            {optimization.implemented ? 'Aktiviert' : 'Anwenden'}
-                          </span>
-                          {optimization.implemented && (
-                            <TrendingUp size={14} style={{ color: '#34c759' }} />
-                          )}
-                        </motion.label>
-                      )}
-                    </div>
+                            <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#ff453a' }}></div>
+                            Original
+                          </h5>
+                          <p style={{ 
+                            margin: 0, 
+                            fontSize: '0.9rem', 
+                            lineHeight: 1.5, 
+                            color: '#1d1d1f',
+                            padding: '1rem',
+                            backgroundColor: 'rgba(255, 69, 58, 0.05)',
+                            borderRadius: '8px',
+                            border: '1px solid rgba(255, 69, 58, 0.1)',
+                            minHeight: '80px'
+                          }}>
+                            {optimization.original}
+                          </p>
+                        </div>
 
-                    {/* 3-Column Layout */}
-                    <div style={{ 
-                      display: 'grid', 
-                      gridTemplateColumns: '1fr 1fr 1fr', 
-                      gap: '1.5rem',
-                      marginBottom: '1.5rem'
-                    }}>
-                      <div>
-                        <h5 style={{ 
-                          margin: '0 0 0.5rem', 
-                          fontSize: '0.9rem', 
-                          fontWeight: 600, 
-                          color: '#ff453a',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.3rem'
-                        }}>
-                          <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#ff453a' }}></div>
-                          Original
-                        </h5>
-                        <p style={{ 
-                          margin: 0, 
-                          fontSize: '0.9rem', 
-                          lineHeight: 1.5, 
-                          color: '#1d1d1f',
-                          padding: '1rem',
-                          backgroundColor: 'rgba(255, 69, 58, 0.05)',
-                          borderRadius: '8px',
-                          border: '1px solid rgba(255, 69, 58, 0.1)',
-                          minHeight: '80px'
-                        }}>
-                          {optimization.original}
-                        </p>
+                        <div>
+                          <h5 style={{ 
+                            margin: '0 0 0.5rem', 
+                            fontSize: '0.9rem', 
+                            fontWeight: 600, 
+                            color: '#34c759',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.3rem'
+                          }}>
+                            <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#34c759' }}></div>
+                            Verbesserung
+                          </h5>
+                          <p style={{ 
+                            margin: 0, 
+                            fontSize: '0.9rem', 
+                            lineHeight: 1.5, 
+                            color: '#1d1d1f',
+                            padding: '1rem',
+                            backgroundColor: 'rgba(52, 199, 89, 0.05)',
+                            borderRadius: '8px',
+                            border: '1px solid rgba(52, 199, 89, 0.1)',
+                            minHeight: '80px'
+                          }}>
+                            {optimization.improved}
+                          </p>
+                        </div>
+
+                        <div>
+                          <h5 style={{ 
+                            margin: '0 0 0.5rem', 
+                            fontSize: '0.9rem', 
+                            fontWeight: 600, 
+                            color: '#5856d6',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.3rem'
+                          }}>
+                            <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#5856d6' }}></div>
+                            Begründung
+                          </h5>
+                          <p style={{ 
+                            margin: 0, 
+                            fontSize: '0.9rem', 
+                            lineHeight: 1.5, 
+                            color: '#1d1d1f',
+                            padding: '1rem',
+                            backgroundColor: 'rgba(88, 86, 214, 0.05)',
+                            borderRadius: '8px',
+                            border: '1px solid rgba(88, 86, 214, 0.1)',
+                            minHeight: '80px'
+                          }}>
+                            {optimization.reasoning.split('.').slice(0, 3).join('. ')}.
+                          </p>
+                        </div>
                       </div>
 
-                      <div>
-                        <h5 style={{ 
-                          margin: '0 0 0.5rem', 
-                          fontSize: '0.9rem', 
-                          fontWeight: 600, 
-                          color: '#34c759',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.3rem'
-                        }}>
-                          <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#34c759' }}></div>
-                          Verbesserung
-                        </h5>
-                        <p style={{ 
-                          margin: 0, 
-                          fontSize: '0.9rem', 
-                          lineHeight: 1.5, 
-                          color: '#1d1d1f',
-                          padding: '1rem',
-                          backgroundColor: 'rgba(52, 199, 89, 0.05)',
-                          borderRadius: '8px',
-                          border: '1px solid rgba(52, 199, 89, 0.1)',
-                          minHeight: '80px'
-                        }}>
-                          {optimization.improved}
-                        </p>
-                      </div>
-
-                      <div>
-                        <h5 style={{ 
-                          margin: '0 0 0.5rem', 
-                          fontSize: '0.9rem', 
-                          fontWeight: 600, 
-                          color: '#5856d6',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.3rem'
-                        }}>
-                          <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#5856d6' }}></div>
-                          Begründung
-                        </h5>
-                        <p style={{ 
-                          margin: 0, 
-                          fontSize: '0.9rem', 
-                          lineHeight: 1.5, 
-                          color: '#1d1d1f',
-                          padding: '1rem',
-                          backgroundColor: 'rgba(88, 86, 214, 0.05)',
-                          borderRadius: '8px',
-                          border: '1px solid rgba(88, 86, 214, 0.1)',
-                          minHeight: '80px'
-                        }}>
-                          {optimization.reasoning.split('.').slice(0, 3).join('. ')}.
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Additional Info */}
-                    <div style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                      gap: '1rem',
-                      padding: '1rem',
-                      backgroundColor: 'rgba(0, 113, 227, 0.03)',
-                      borderRadius: '8px',
-                      border: '1px solid rgba(0, 113, 227, 0.1)'
-                    }}>
-                      <div>
-                        <h6 style={{ margin: '0 0 0.3rem', fontSize: '0.8rem', fontWeight: 600, color: '#5856d6' }}>
-                          📊 Markt-Benchmark
-                        </h6>
-                        <p style={{ margin: 0, fontSize: '0.85rem', color: '#1d1d1f' }}>
-                          {optimization.marketBenchmark}
-                        </p>
-                      </div>
-                      
-                      <div>
-                        <h6 style={{ margin: '0 0 0.3rem', fontSize: '0.8rem', fontWeight: 600, color: '#5856d6' }}>
-                          🔧 Umsetzung
-                        </h6>
-                        <p style={{ margin: 0, fontSize: '0.85rem', color: '#1d1d1f' }}>
-                          {optimization.implementationDifficulty === 'easy' ? '✅ Einfach' :
-                           optimization.implementationDifficulty === 'medium' ? '⚠️ Mittel' : '🔴 Komplex'}
-                        </p>
-                      </div>
-
-                      <div>
-                        <h6 style={{ margin: '0 0 0.3rem', fontSize: '0.8rem', fontWeight: 600, color: '#5856d6' }}>
-                          💡 KI-Insight
-                        </h6>
-                        <p style={{ margin: 0, fontSize: '0.85rem', color: '#1d1d1f' }}>
-                          {optimization.aiInsight.substring(0, 80)}...
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Copy Button */}
-                    <motion.button
-                      onClick={() => {
-                        const text = `${optimization.improved}\n\nBegründung: ${optimization.reasoning}`;
-                        navigator.clipboard.writeText(text);
-                        showToast("✅ Verbesserung kopiert!");
-                      }}
-                      style={{
-                        position: 'absolute',
-                        top: '1rem',
-                        right: '1rem',
-                        background: 'rgba(255, 255, 255, 0.9)',
-                        border: '1px solid rgba(0, 113, 227, 0.2)',
+                      {/* Additional Info */}
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                        gap: '1rem',
+                        padding: '1rem',
+                        backgroundColor: 'rgba(0, 113, 227, 0.03)',
                         borderRadius: '8px',
-                        padding: '0.5rem',
-                        cursor: 'pointer',
-                        color: '#0071e3'
-                      }}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <Copy size={16} />
-                    </motion.button>
-                  </motion.div>
-                ))}
-              </div>
+                        border: '1px solid rgba(0, 113, 227, 0.1)'
+                      }}>
+                        <div>
+                          <h6 style={{ margin: '0 0 0.3rem', fontSize: '0.8rem', fontWeight: 600, color: '#5856d6' }}>
+                            📊 Markt-Benchmark
+                          </h6>
+                          <p style={{ margin: 0, fontSize: '0.85rem', color: '#1d1d1f' }}>
+                            {optimization.marketBenchmark}
+                          </p>
+                        </div>
+                        
+                        <div>
+                          <h6 style={{ margin: '0 0 0.3rem', fontSize: '0.8rem', fontWeight: 600, color: '#5856d6' }}>
+                            🔧 Umsetzung
+                          </h6>
+                          <p style={{ margin: 0, fontSize: '0.85rem', color: '#1d1d1f' }}>
+                            {optimization.implementationDifficulty === 'easy' ? '✅ Einfach' :
+                             optimization.implementationDifficulty === 'medium' ? '⚠️ Mittel' : '🔴 Komplex'}
+                          </p>
+                        </div>
 
-              {/* Simulation Summary */}
-              {showSimulation && optimizations.filter(opt => opt.implemented).length > 0 && (
+                        <div>
+                          <h6 style={{ margin: '0 0 0.3rem', fontSize: '0.8rem', fontWeight: 600, color: '#5856d6' }}>
+                            💡 KI-Insight
+                          </h6>
+                          <p style={{ margin: 0, fontSize: '0.85rem', color: '#1d1d1f' }}>
+                            {optimization.aiInsight.substring(0, 80)}...
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Copy Button */}
+                      <motion.button
+                        onClick={() => {
+                          const text = `${optimization.improved}\n\nBegründung: ${optimization.reasoning}`;
+                          navigator.clipboard.writeText(text);
+                          showToast("✅ Verbesserung kopiert!");
+                        }}
+                        style={{
+                          position: 'absolute',
+                          top: '1rem',
+                          right: '1rem',
+                          background: 'rgba(255, 255, 255, 0.9)',
+                          border: '1px solid rgba(0, 113, 227, 0.2)',
+                          borderRadius: '8px',
+                          padding: '0.5rem',
+                          cursor: 'pointer',
+                          color: '#0071e3'
+                        }}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        <Copy size={16} />
+                      </motion.button>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+
+              {/* Simulation Summary - NUR ANZEIGEN WENN NICHT GENERATING */}
+              {!isGeneratingContract && showSimulation && optimizations.filter(opt => opt.implemented).length > 0 && (
                 <motion.div
                   className={styles.card}
                   style={{
