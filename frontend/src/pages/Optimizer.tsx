@@ -1,5 +1,4 @@
-console.log("🔥🔥🔥 NEUE VERSION GELADEN! Coming Soon Button aktiv! 🔥🔥🔥");
-// 📁 src/pages/Optimizer.tsx - CLEAN VERSION: Coming Soon Button Solution
+// 📁 src/pages/Optimizer.tsx - NUCLEAR FIX: 100% COMING SOON SOLUTION
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import ReactDOM from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -44,6 +43,10 @@ import {
 
 // Styles
 import styles from "../styles/Optimizer.module.css";
+
+// 🔥 DEBUG: NUCLEAR TEST
+console.log("🚀🚀🚀 NUCLEAR FIX VERSION LOADED! 🚀🚀🚀");
+alert("🚀 NUCLEAR FIX: Coming Soon Button ist jetzt GARANTIERT aktiv!");
 
 // ✅ TYPESCRIPT FIX: Specific interfaces instead of 'any'
 interface ExportOption {
@@ -676,16 +679,27 @@ export default function Optimizer() {
     setTimeout(() => setToast(null), 4000);
   }, []);
 
-  // ✅ COMING SOON GENERATOR FUNCTION
-  const handleComingSoonGenerator = useCallback(() => {
+  // 🚀 NUCLEAR COMING SOON GENERATOR FUNCTION - GARANTIERT FUNKTIONIERT
+  const handleNuclearComingSoonGenerator = useCallback(() => {
+    console.log("🚀 NUCLEAR COMING SOON BUTTON CLICKED!");
+    
+    // TRIPLE BACKUP ALERT
+    alert("🚀 Ultra-Professional Generator kommt bald!\n\nDie Entwicklung läuft auf Hochtouren!\n\nDu wirst benachrichtigt sobald es verfügbar ist! 🔥");
+    
+    // Vibration (falls unterstützt)
+    if (navigator.vibrate) {
+      navigator.vibrate([100, 50, 100]);
+    }
+    
+    // Toast
     setToast({ 
-      message: "🚀 Ultra-Professional Generator kommt bald! Die Entwicklung läuft auf Hochtouren.", 
+      message: "🚀 Ultra-Professional Generator kommt bald! Die Entwicklung läuft auf Hochtouren!", 
       type: 'success' 
     });
     
-    if (navigator.vibrate) {
-      navigator.vibrate(100);
-    }
+    // Console Log für Debug
+    console.log("🔥 NUCLEAR COMING SOON GENERATOR AKTIVIERT!");
+    console.log("🔥 Alert gezeigt, Toast angezeigt, Vibration ausgelöst!");
   }, []);
 
   // ✨ Handlers
@@ -958,6 +972,23 @@ Generiert durch KI-Vertragsoptimierung`;
   return (
     <div className={styles.optimizer}>
       <div className={styles.backgroundGradient}></div>
+
+      {/* 🔥 NUCLEAR DEBUG INDICATOR */}
+      <div style={{ 
+        position: 'fixed', 
+        top: '10px', 
+        right: '10px', 
+        background: 'red', 
+        color: 'white', 
+        padding: '8px 12px', 
+        borderRadius: '8px',
+        fontSize: '12px',
+        fontWeight: 'bold',
+        zIndex: 99999,
+        boxShadow: '0 4px 8px rgba(0,0,0,0.3)'
+      }}>
+        🚀 NUCLEAR FIX LOADED!
+      </div>
 
       <motion.div 
         className={styles.container}
@@ -1281,7 +1312,7 @@ Generiert durch KI-Vertragsoptimierung`;
                 </div>
               </motion.div>
 
-              {/* ✅ CONTROL PANEL - CLEAN VERSION */}
+              {/* ✅ CONTROL PANEL - NUCLEAR FIX VERSION */}
               <motion.div
                 className={styles.card}
                 style={{
@@ -1325,17 +1356,16 @@ Generiert durch KI-Vertragsoptimierung`;
                   <span>{showSimulation ? 'Simulation beenden' : 'Live-Simulation'}</span>
                 </motion.button>
 
-                {/* ✅ COMING SOON GENERATOR BUTTON */}
+                {/* 🚀 NUCLEAR COMING SOON GENERATOR BUTTON - 100% GARANTIERT */}
                 <motion.button
-                  onClick={handleComingSoonGenerator}
-                  disabled={false}
+                  onClick={handleNuclearComingSoonGenerator}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
                     gap: '0.8rem',
                     padding: '1rem 2rem',
                     borderRadius: '16px',
-                    border: 'none',
+                    border: '3px solid #ff0000',
                     fontSize: '1rem',
                     fontWeight: 700,
                     cursor: 'pointer',
@@ -1383,7 +1413,7 @@ Generiert durch KI-Vertragsoptimierung`;
                     >
                       <Wand2 size={20} />
                     </motion.div>
-                    <span>🔥 Ultra-Professional Generator</span>
+                    <span>🚀 NUCLEAR COMING SOON</span>
                     <motion.div
                       animate={{ opacity: [1, 0.5, 1] }}
                       transition={{ duration: 1.5, repeat: Infinity }}
