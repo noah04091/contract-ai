@@ -32,13 +32,33 @@ interface StreamingResult {
   message?: string;
 }
 
-// ✅ UPDATED INTERFACE WITH NEW PROPS
+// ✅ ANALYSIS DATA INTERFACE (statt any)
+interface AnalysisData {
+  success?: boolean;
+  analysisId?: string;
+  contractId?: string;
+  requestId?: string;
+  uploadType?: string;
+  fileUrl?: string;
+  originalText?: string;
+  fullText?: string;
+  laufzeit?: string;
+  kuendigung?: string;
+  expiryDate?: string;
+  status?: string;
+  summary?: string;
+  legalAssessment?: string;
+  optimizationResult?: string;
+  [key: string]: unknown;
+}
+
+// ✅ UPDATED INTERFACE WITH PROPER TYPES
 interface UltraProfessionalStreamingUIProps {
   contractId?: string | null;
   contractName?: string;
   optimizations?: OptimizationSuggestion[];
   originalContractText?: string;    // 🆕 Für Backend PDF-Generierung
-  analysisData?: any;               // 🆕 Für Backend Analysis-Daten
+  analysisData?: AnalysisData;      // 🔧 FIXED: Nicht mehr 'any'
   onComplete?: (result: StreamingResult) => void;
   onCancel?: () => void;
   className?: string;
@@ -60,13 +80,13 @@ interface StreamingMetrics {
   pdfSize: number;
 }
 
-// ✅ COMPONENT WITH NEW PROPS
+// ✅ COMPONENT WITH PROPER TYPES
 const UltraProfessionalStreamingUI: React.FC<UltraProfessionalStreamingUIProps> = ({ 
   contractId,
   contractName = "Unbekannter Vertrag",
   optimizations = [],
   originalContractText,    // 🆕 Empfange neue Prop
-  analysisData,           // 🆕 Empfange neue Prop
+  analysisData,           // 🔧 FIXED: Jetzt mit richtigem Type
   onComplete,
   onCancel,
   className

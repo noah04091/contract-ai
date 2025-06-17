@@ -46,6 +46,25 @@ import {
 import styles from "../styles/Optimizer.module.css";
 
 // ✅ TYPESCRIPT FIX: Specific interfaces instead of 'any'
+interface AnalysisData {
+  success: boolean;
+  analysisId?: string;
+  contractId?: string;
+  requestId?: string;
+  uploadType?: string;
+  fileUrl?: string;
+  originalText?: string;
+  fullText?: string;
+  laufzeit?: string;
+  kuendigung?: string;
+  expiryDate?: string;
+  status?: string;
+  summary?: string;
+  legalAssessment?: string;
+  optimizationResult?: string;
+  [key: string]: unknown; // For additional properties
+}
+
 interface ExportOption {
   id: string;
   name: string;
@@ -449,7 +468,7 @@ export default function Optimizer() {
   
   // ✅ BACKEND BRAUCHT DIESE DATEN: Wieder hinzufügen für PDF-Generierung
   const [originalContractText, setOriginalContractText] = useState<string>('');
-  const [analysisData, setAnalysisData] = useState<any>(null);
+  const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pitchButtonRef = useRef<HTMLButtonElement>(null);
