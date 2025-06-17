@@ -58,7 +58,7 @@ interface UltraProfessionalStreamingUIProps {
   contractName?: string;
   optimizations?: OptimizationSuggestion[];
   originalContractText?: string;    // 🆕 Für Backend PDF-Generierung
-  analysisData?: AnalysisData;      // 🔧 FIXED: Nicht mehr 'any'
+  analysisData?: AnalysisData | null; // 🔧 FIXED: Akzeptiert auch null
   onComplete?: (result: StreamingResult) => void;
   onCancel?: () => void;
   className?: string;
