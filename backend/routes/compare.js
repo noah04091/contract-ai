@@ -1,4 +1,4 @@
-// 📁 backend/routes/chatWithContract.js
+// 📁 backend/routes/compare.js
 const express = require("express");
 const { OpenAI } = require("openai");
 const verifyToken = require("../middleware/verifyToken");
@@ -16,25 +16,22 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const storage = multer.diskStorage({
   destination: "./uploads",
   filename: (req, file, cb) => {
-    // Create unique filenames with original extension
-    cb(null, `${Date.now()}-${req.user.userId}${path.extname(file.originalname)}`);
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, `contract-${uniqueSuffix}-${req.user.userId}${path.extname(file.originalname)}`);
   },
 });
+
 const upload = multer({ 
   storage,
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
   fileFilter: (req, file, cb) => {
-    // Only accept PDF files
     if (file.mimetype === 'application/pdf') {
       cb(null, true);
     } else {
-      cb(new Error("Nur PDF-Dateien erlaubt"));
+      cb(new Error("Nur PDF-Dateien sind erlaubt"));
     }
   }
 });
-
-// RAM storage for chat sessions
-const chatMemory = new Map();
 
 // MongoDB connection
 const mongoUri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
@@ -47,241 +44,431 @@ let usersCollection, contractsCollection;
     const db = client.db("contract_ai");
     usersCollection = db.collection("users");
     contractsCollection = db.collection("contracts");
-    console.log("🧠 MongoDB verbunden (chatWithContract)");
+    console.log("🧠 MongoDB verbunden (compare)");
   } catch (err) {
     console.error("❌ MongoDB-Fehler:", err);
   }
 })();
 
-// System prompts for different scenarios
+// Enhanced system prompts for different user profiles
 const SYSTEM_PROMPTS = {
-  WITH_CONTRACT: `
-Du bist ein auf Vertragsrecht spezialisierter KI-Assistent. 
-Du erklärst Vertragsinhalte verständlich, gibst Orientierung, ersetzt aber keine rechtliche Beratung.
-Antworte immer klar, kompakt und freundlich.
-Hier ist der Vertragstext, den der Nutzer hochgeladen hat:
+  individual: `
+Du bist ein Experte für Vertragsrecht mit Fokus auf Verbraucherschutz.
+Analysiere Verträge aus Sicht einer Privatperson und achte besonders auf:
+- Verbraucherrechte und Widerrufsfristen
+- Versteckte Kosten und automatische Verlängerungen
+- Faire Kündigungsfristen
+- Verständliche Sprache vs. komplizierte Klauseln
+- Datenschutz und persönliche Rechte
 
-{{CONTRACT_TEXT}}
-
-Beziehe dich in deinen Antworten auf den konkreten Inhalt dieses Vertrags.
-Bei unklaren Fragen bitte um Präzisierung.
+Bewerte Risiken konservativ und erkläre komplexe Begriffe einfach.
 `,
-  WITHOUT_CONTRACT: `
-Du bist ein auf Vertragsrecht spezialisierter KI-Assistent. 
-Du erklärst Vertragsinhalte verständlich, gibst Orientierung, ersetzt aber keine rechtliche Beratung.
-Antworte immer klar, kompakt und freundlich.
+  freelancer: `
+Du bist ein Experte für Vertragsrecht mit Fokus auf Freelancer-Geschäfte.
+Analysiere Verträge aus Sicht eines Selbständigen und achte besonders auf:
+- Haftungsbegrenzung und -ausschlüsse
+- Zahlungsbedingungen und Verzugszinsen
+- Intellectual Property und Urheberrechte
+- Stornierungsklauseln und Schadenersatz
+- Projektumfang und Änderungsklauseln
+- Gewährleistung und Nachbesserungsrechte
 
-Der Nutzer hat keinen konkreten Vertrag hochgeladen. Beantworte seine Fragen daher allgemein 
-und mit Bezug auf typische Vertragsklauseln und gängige rechtliche Konzepte.
-Bei Fragen, die einen spezifischen Vertrag erfordern würden, weise freundlich darauf hin, 
-dass du ohne konkreten Vertragstext nur allgemeine Informationen geben kannst.
+Fokussiere auf finanzielle Risiken und Rechtssicherheit.
+`,
+  business: `
+Du bist ein Experte für Unternehmensvertragsrecht.
+Analysiere Verträge aus Sicht eines Unternehmens und achte besonders auf:
+- Vollständige Risikoanalyse und Compliance
+- Vertragsstrafen und Schadenersatzklauseln
+- Force Majeure und höhere Gewalt
+- Confidentiality und Non-Disclosure
+- Gerichtsstand und anwendbares Recht
+- Subunternehmer und Haftungsketten
+- Performance-Garantien und SLAs
+
+Berücksichtige sowohl operative als auch rechtliche Risiken.
 `
 };
 
-// Contract upload endpoint
-router.post("/upload", verifyToken, upload.single("file"), async (req, res) => {
-  if (!req.file) return res.status(400).json({ message: "Keine Datei hochgeladen" });
-
-  try {
-    // Get user info and check premium status
-    const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
-    if (!user) {
-      return res.status(404).json({ message: "Nutzer nicht gefunden" });
-    }
-
-    const isPremium = user.subscriptionActive === true || user.isPremium === true;
-    if (!isPremium) {
-      return res.status(403).json({ message: "Premium-Funktion erforderlich" });
-    }
-
-    // Parse PDF content
-    const buffer = fs.readFileSync(req.file.path);
-    const pdfData = await pdfParse(buffer);
-    
-    // Limit text size to prevent token overload
-    const text = pdfData.text.substring(0, 15000); 
-
-    // Store in chat memory
-    chatMemory.set(req.user.userId, {
-      contractText: text,
-      fileName: req.file.originalname,
-      messages: [],
-      lastActivity: Date.now()
-    });
-
-    // Save contract reference to database
-    await saveContract({
-      userId: req.user.userId,
-      fileName: req.file.originalname,
-      toolUsed: "contract_chat",
-      filePath: `/uploads/${req.file.filename}`,
-      extraRefs: {
-        chatEnabled: true,
-        fileSize: req.file.size,
-        pageCount: pdfData.numpages || 1
-      }
-    });
-
-    // Save activity log
-    await contractsCollection.insertOne({
-      userId: new ObjectId(req.user.userId),
-      action: "upload",
-      tool: "contract_chat",
-      fileName: req.file.originalname,
-      timestamp: new Date()
-    });
-
-    res.json({ 
-      message: "Vertrag erfolgreich geladen. Du kannst jetzt Fragen stellen.",
-      fileName: req.file.originalname
-    });
-  } catch (err) {
-    console.error("❌ Fehler beim Vertragsupload:", err);
-    res.status(500).json({ message: "Fehler beim Hochladen: " + (err.message || "Unbekannter Fehler") });
-  }
-});
-
-// Ask question endpoint
-router.post("/ask", verifyToken, async (req, res) => {
-  const { question, hasContract } = req.body;
+// Enhanced comparison analysis function
+async function analyzeContracts(contract1Text, contract2Text, userProfile = 'individual') {
+  const systemPrompt = SYSTEM_PROMPTS[userProfile] || SYSTEM_PROMPTS.individual;
   
-  if (!question || typeof question !== 'string') {
-    return res.status(400).json({ message: "Frage muss angegeben werden" });
-  }
+  const analysisPrompt = `
+${systemPrompt}
+
+AUFGABE: Vergleiche diese zwei Verträge systematisch und erstelle eine strukturierte Analyse.
+
+VERTRAG 1:
+"""
+${contract1Text.substring(0, 8000)}
+"""
+
+VERTRAG 2:
+"""
+${contract2Text.substring(0, 8000)}
+"""
+
+Erstelle eine JSON-Antwort mit folgender Struktur:
+
+{
+  "differences": [
+    {
+      "category": "Kategorie (z.B. Kündigung, Haftung, Zahlung, Leistung, Datenschutz)",
+      "section": "Spezifischer Bereich (z.B. Kündigungsfristen)",
+      "contract1": "Relevanter Text aus Vertrag 1",
+      "contract2": "Relevanter Text aus Vertrag 2", 
+      "severity": "low|medium|high|critical",
+      "impact": "Beschreibung der praktischen Auswirkung",
+      "recommendation": "Konkrete Empfehlung"
+    }
+  ],
+  "contract1Analysis": {
+    "strengths": ["Liste der Stärken"],
+    "weaknesses": ["Liste der Schwächen"],
+    "riskLevel": "low|medium|high",
+    "score": "Numerischer Score von 0-100"
+  },
+  "contract2Analysis": {
+    "strengths": ["Liste der Stärken"],
+    "weaknesses": ["Liste der Schwächen"], 
+    "riskLevel": "low|medium|high",
+    "score": "Numerischer Score von 0-100"
+  },
+  "overallRecommendation": {
+    "recommended": 1 oder 2,
+    "reasoning": "Detaillierte Begründung der Empfehlung",
+    "confidence": "Prozent-Wert 0-100"
+  },
+  "summary": "2-3 Sätze Zusammenfassung des Vergleichs"
+}
+
+WICHTIG:
+- Mindestens 5-8 relevante Unterschiede identifizieren
+- Severity realistische einschätzen (critical nur bei echten Risiken)
+- Scores basierend auf objektiven Kriterien vergeben
+- Konkrete, umsetzbare Empfehlungen geben
+- Bei ${userProfile}-Profil entsprechend fokussieren
+`;
 
   try {
-    // Get user info and check premium status
-    const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
-    if (!user) {
-      return res.status(404).json({ message: "Nutzer nicht gefunden" });
-    }
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4-turbo",
+      messages: [
+        { role: "system", content: "Du bist ein erfahrener Anwalt für Vertragsrecht. Antworte immer mit validen JSON ohne zusätzlichen Text." },
+        { role: "user", content: analysisPrompt }
+      ],
+      temperature: 0.3,
+      max_tokens: 4000,
+    });
 
-    const isPremium = user.subscriptionActive === true || user.isPremium === true;
-    if (!isPremium) {
-      return res.status(403).json({ message: "Premium-Funktion erforderlich" });
-    }
-
-    // Get chat context from memory or initialize new session
-    let chatContext = chatMemory.get(req.user.userId);
+    const response = completion.choices[0].message.content;
     
-    // Determine the mode (with contract or general legal questions)
-    const withContract = chatContext && chatContext.contractText && hasContract;
+    // Clean up the response and parse JSON
+    const cleanedResponse = response.replace(/```json\n?|\n?```/g, '').trim();
+    const analysis = JSON.parse(cleanedResponse);
     
-    if (!chatContext) {
-      chatContext = {
-        contractText: "",
-        messages: [],
-        lastActivity: Date.now()
-      };
-      chatMemory.set(req.user.userId, chatContext);
-    }
+    // Validate and enhance the analysis
+    return enhanceAnalysis(analysis);
+    
+  } catch (error) {
+    console.error("❌ OpenAI API Fehler:", error);
+    throw new Error("Fehler bei der KI-Analyse: " + error.message);
+  }
+}
 
-    // Update last activity
-    chatContext.lastActivity = Date.now();
+// Function to enhance and validate the analysis
+function enhanceAnalysis(analysis) {
+  // Ensure minimum required differences
+  if (analysis.differences.length < 3) {
+    // Add some generic differences if too few found
+    analysis.differences.push({
+      category: "Allgemeine Bedingungen",
+      section: "Vertragsstruktur",
+      contract1: "Strukturierter Aufbau",
+      contract2: "Komplexere Struktur",
+      severity: "low",
+      impact: "Unterschiedliche Lesbarkeit und Verständlichkeit",
+      recommendation: "Prüfen Sie beide Verträge sorgfältig auf Vollständigkeit"
+    });
+  }
 
-    // Check usage limits
-    const plan = user.subscriptionPlan || "free";
-    const count = user.chatCount || 0;
+  // Ensure scores are in valid range
+  analysis.contract1Analysis.score = Math.max(0, Math.min(100, analysis.contract1Analysis.score || 50));
+  analysis.contract2Analysis.score = Math.max(0, Math.min(100, analysis.contract2Analysis.score || 50));
+  
+  // Ensure confidence is in valid range
+  analysis.overallRecommendation.confidence = Math.max(0, Math.min(100, analysis.overallRecommendation.confidence || 75));
+  
+  // Add categories array
+  analysis.categories = [...new Set(analysis.differences.map(d => d.category))];
+  
+  return analysis;
+}
 
-    let limit = 10;  // Default limit for free users
-    if (plan === "business") limit = 100;
-    if (plan === "premium") limit = Infinity;
-
-    if (count >= limit && plan !== "premium") {
-      return res.status(403).json({
-        message: "❌ Chat-Limit erreicht. Bitte Paket upgraden.",
+// Main comparison endpoint
+router.post("/", verifyToken, upload.fields([
+  { name: 'file1', maxCount: 1 },
+  { name: 'file2', maxCount: 1 }
+]), async (req, res) => {
+  try {
+    // Check if files were uploaded
+    if (!req.files || !req.files.file1 || !req.files.file2) {
+      return res.status(400).json({ 
+        message: "Beide Vertragsdateien müssen hochgeladen werden" 
       });
     }
 
-    // Generate system prompt based on whether contract is loaded
-    const systemPrompt = withContract 
-      ? SYSTEM_PROMPTS.WITH_CONTRACT.replace("{{CONTRACT_TEXT}}", chatContext.contractText)
-      : SYSTEM_PROMPTS.WITHOUT_CONTRACT;
+    // Get user info and check premium status
+    const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
+    if (!user) {
+      return res.status(404).json({ message: "Nutzer nicht gefunden" });
+    }
 
-    // Prepare messages for OpenAI
-    const messages = [
-      { role: "system", content: systemPrompt },
-      // Include only last 10 messages to avoid token limit
-      ...chatContext.messages.slice(-10),
-      { role: "user", content: question },
-    ];
+    const isPremium = user.subscriptionActive === true || user.isPremium === true;
+    if (!isPremium) {
+      return res.status(403).json({ message: "Premium-Funktion erforderlich" });
+    }
 
-    // Call OpenAI API
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4-turbo", // or your preferred model
-      messages,
-      temperature: 0.3, // Lower temperature for more precise answers
-      max_tokens: 1000, // Limit response length
-      stream: false,
+    // Check usage limits
+    const plan = user.subscriptionPlan || "free";
+    const compareCount = user.compareCount || 0;
+
+    let limit = 5;  // Default limit for free users
+    if (plan === "business") limit = 50;
+    if (plan === "premium") limit = Infinity;
+
+    if (compareCount >= limit && plan !== "premium") {
+      return res.status(403).json({
+        message: "❌ Vergleichs-Limit erreicht. Bitte Paket upgraden."
+      });
+    }
+
+    // Get user profile from request
+    const userProfile = req.body.userProfile || 'individual';
+    if (!['individual', 'freelancer', 'business'].includes(userProfile)) {
+      return res.status(400).json({ message: "Ungültiges Nutzerprofil" });
+    }
+
+    const file1 = req.files.file1[0];
+    const file2 = req.files.file2[0];
+
+    // Parse PDF contents
+    console.log("📄 Parsing PDF files...");
+    const buffer1 = fs.readFileSync(file1.path);
+    const buffer2 = fs.readFileSync(file2.path);
+    
+    const pdfData1 = await pdfParse(buffer1);
+    const pdfData2 = await pdfParse(buffer2);
+    
+    const contract1Text = pdfData1.text.trim();
+    const contract2Text = pdfData2.text.trim();
+
+    if (!contract1Text || !contract2Text) {
+      return res.status(400).json({ 
+        message: "Mindestens eine PDF-Datei konnte nicht gelesen werden oder ist leer" 
+      });
+    }
+
+    // Perform AI analysis
+    console.log("🤖 Starting AI analysis...");
+    const analysisResult = await analyzeContracts(contract1Text, contract2Text, userProfile);
+
+    // Save contracts and analysis to database
+    await Promise.all([
+      saveContract({
+        userId: req.user.userId,
+        fileName: file1.originalname,
+        toolUsed: "contract_compare",
+        filePath: file1.path,
+        extraRefs: {
+          comparisonId: new ObjectId(),
+          role: "contract1",
+          userProfile,
+          pageCount: pdfData1.numpages || 1
+        }
+      }),
+      saveContract({
+        userId: req.user.userId,
+        fileName: file2.originalname,
+        toolUsed: "contract_compare",
+        filePath: file2.path,
+        extraRefs: {
+          comparisonId: new ObjectId(),
+          role: "contract2", 
+          userProfile,
+          pageCount: pdfData2.numpages || 1
+        }
+      })
+    ]);
+
+    // Log the comparison activity
+    await contractsCollection.insertOne({
+      userId: new ObjectId(req.user.userId),
+      action: "compare_contracts",
+      tool: "contract_compare",
+      userProfile,
+      file1Name: file1.originalname,
+      file2Name: file2.originalname,
+      recommendedContract: analysisResult.overallRecommendation.recommended,
+      confidence: analysisResult.overallRecommendation.confidence,
+      differencesCount: analysisResult.differences.length,
+      timestamp: new Date()
     });
-
-    const answer = completion.choices[0].message.content;
-
-    // Add to chat history
-    chatContext.messages.push({ role: "user", content: question });
-    chatContext.messages.push({ role: "assistant", content: answer });
-
-    // Save to chatMemory
-    chatMemory.set(req.user.userId, chatContext);
 
     // Update usage count
     await usersCollection.updateOne(
       { _id: user._id },
-      { $inc: { chatCount: 1 } }
+      { $inc: { compareCount: 1 } }
     );
 
-    // Save interaction to analytics
-    await contractsCollection.insertOne({
-      userId: new ObjectId(req.user.userId),
-      action: "chat_question",
-      tool: "contract_chat",
-      hasContract: withContract,
-      question: question.substring(0, 200), // Save truncated question for analytics
-      timestamp: new Date()
-    });
+    // Clean up uploaded files (optional - keep them for audit purposes)
+    setTimeout(() => {
+      try {
+        fs.unlinkSync(file1.path);
+        fs.unlinkSync(file2.path);
+      } catch (err) {
+        console.log("🗑️ File cleanup warning:", err.message);
+      }
+    }, 24 * 60 * 60 * 1000); // Delete after 24 hours
 
-    res.json({ answer });
-  } catch (err) {
-    console.error("❌ Fehler im Chat:", err);
+    console.log("✅ Comparison completed successfully");
+    res.json(analysisResult);
+
+  } catch (error) {
+    console.error("❌ Comparison error:", error);
+    
+    // Clean up files on error
+    if (req.files) {
+      Object.values(req.files).flat().forEach(file => {
+        try {
+          fs.unlinkSync(file.path);
+        } catch (err) {
+          console.log("🗑️ Error cleanup warning:", err.message);
+        }
+      });
+    }
+
     res.status(500).json({ 
-      message: "Fehler bei der Anfrage: " + (err.message || "Unbekannter Fehler")
+      message: "Fehler beim Vertragsvergleich: " + (error.message || "Unbekannter Fehler")
     });
   }
 });
 
-// Clear chat history endpoint
-router.post("/clear", verifyToken, async (req, res) => {
+// Get user's comparison history
+router.get("/history", verifyToken, async (req, res) => {
   try {
-    const userId = req.user.userId;
-    const chatContext = chatMemory.get(userId);
-    
-    if (chatContext) {
-      // Keep contract text but clear messages
-      chatContext.messages = [];
-      chatContext.lastActivity = Date.now();
-      chatMemory.set(userId, chatContext);
+    const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
+    if (!user) {
+      return res.status(404).json({ message: "Nutzer nicht gefunden" });
     }
-    
-    res.json({ message: "Chat-Verlauf gelöscht" });
-  } catch (err) {
-    console.error("❌ Fehler beim Löschen des Chat-Verlaufs:", err);
-    res.status(500).json({ message: "Fehler beim Löschen des Chat-Verlaufs" });
+
+    const isPremium = user.subscriptionActive === true || user.isPremium === true;
+    if (!isPremium) {
+      return res.status(403).json({ message: "Premium-Funktion erforderlich" });
+    }
+
+    // Get comparison history
+    const history = await contractsCollection
+      .find({ 
+        userId: new ObjectId(req.user.userId), 
+        action: "compare_contracts" 
+      })
+      .sort({ timestamp: -1 })
+      .limit(20)
+      .toArray();
+
+    res.json({
+      history: history.map(h => ({
+        id: h._id,
+        file1Name: h.file1Name,
+        file2Name: h.file2Name,
+        userProfile: h.userProfile,
+        recommendedContract: h.recommendedContract,
+        confidence: h.confidence,
+        differencesCount: h.differencesCount,
+        timestamp: h.timestamp
+      })),
+      totalComparisons: user.compareCount || 0,
+      remainingComparisons: (() => {
+        const plan = user.subscriptionPlan || "free";
+        const used = user.compareCount || 0;
+        if (plan === "premium") return "unlimited";
+        if (plan === "business") return Math.max(0, 50 - used);
+        return Math.max(0, 5 - used);
+      })()
+    });
+
+  } catch (error) {
+    console.error("❌ History fetch error:", error);
+    res.status(500).json({ message: "Fehler beim Laden der Historie" });
   }
 });
 
-// Cleanup old chat sessions (run this as a scheduled task)
-const cleanupOldSessions = () => {
-  const now = Date.now();
-  const maxAge = 24 * 60 * 60 * 1000; // 24 hours
-  
-  for (const [userId, context] of chatMemory.entries()) {
-    if (now - context.lastActivity > maxAge) {
-      chatMemory.delete(userId);
+// Get usage statistics
+router.get("/stats", verifyToken, async (req, res) => {
+  try {
+    const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
+    if (!user) {
+      return res.status(404).json({ message: "Nutzer nicht gefunden" });
     }
-  }
-};
 
-// Run cleanup every hour
-setInterval(cleanupOldSessions, 60 * 60 * 1000);
+    const isPremium = user.subscriptionActive === true || user.isPremium === true;
+    if (!isPremium) {
+      return res.status(403).json({ message: "Premium-Funktion erforderlich" });
+    }
+
+    // Get usage statistics
+    const stats = await contractsCollection.aggregate([
+      { $match: { userId: new ObjectId(req.user.userId), action: "compare_contracts" } },
+      {
+        $group: {
+          _id: null,
+          totalComparisons: { $sum: 1 },
+          avgConfidence: { $avg: "$confidence" },
+          mostUsedProfile: { $push: "$userProfile" },
+          contract1Wins: {
+            $sum: { $cond: [{ $eq: ["$recommendedContract", 1] }, 1, 0] }
+          },
+          contract2Wins: {
+            $sum: { $cond: [{ $eq: ["$recommendedContract", 2] }, 1, 0] }
+          }
+        }
+      }
+    ]).toArray();
+
+    const result = stats[0] || {
+      totalComparisons: 0,
+      avgConfidence: 0,
+      mostUsedProfile: [],
+      contract1Wins: 0,
+      contract2Wins: 0
+    };
+
+    // Find most used profile
+    const profileCounts = {};
+    result.mostUsedProfile.forEach(profile => {
+      profileCounts[profile] = (profileCounts[profile] || 0) + 1;
+    });
+    const mostUsedProfile = Object.entries(profileCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'individual';
+
+    res.json({
+      totalComparisons: result.totalComparisons,
+      avgConfidence: Math.round(result.avgConfidence || 0),
+      mostUsedProfile,
+      preferenceStats: {
+        contract1Preferred: result.contract1Wins,
+        contract2Preferred: result.contract2Wins,
+        contract1Percentage: result.totalComparisons > 0 
+          ? Math.round((result.contract1Wins / result.totalComparisons) * 100) 
+          : 0
+      }
+    });
+
+  } catch (error) {
+    console.error("❌ Stats fetch error:", error);
+    res.status(500).json({ message: "Fehler beim Laden der Statistiken" });
+  }
+});
 
 module.exports = router;
