@@ -355,58 +355,6 @@ export default function EnhancedCompare() {
   const file2InputRef = useRef<HTMLInputElement>(null);
   const [notification, setNotification] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
-  // Mock data for demonstration (replace with real API call)
-  const mockResult: ComparisonResult = {
-    differences: [
-      {
-        category: 'Kündigung',
-        section: 'Kündigungsfristen',
-        contract1: '30 Tage zum Monatsende',
-        contract2: '3 Monate zum Quartalsende',
-        severity: 'high',
-        impact: 'Längere Bindung in Vertrag 2 kann zu höheren Kosten führen',
-        recommendation: 'Vertrag 1 bietet mehr Flexibilität bei Kündigung'
-      },
-      {
-        category: 'Haftung',
-        section: 'Haftungsausschluss',
-        contract1: 'Haftung auf Vertragswert begrenzt',
-        contract2: 'Unbegrenzte Haftung',
-        severity: 'critical',
-        impact: 'Vertrag 2 birgt erhebliches finanzielles Risiko',
-        recommendation: 'Vertrag 1 mit begrenzter Haftung deutlich sicherer'
-      },
-      {
-        category: 'Zahlung',
-        section: 'Zahlungsbedingungen',
-        contract1: '14 Tage Zahlungsziel',
-        contract2: '30 Tage Zahlungsziel',
-        severity: 'low',
-        impact: 'Besserer Cashflow bei Vertrag 2',
-        recommendation: 'Vertrag 2 bietet mehr Zeit für Zahlungen'
-      }
-    ],
-    contract1Analysis: {
-      strengths: ['Flexible Kündigungsfristen', 'Begrenzte Haftung', 'Klare Regelungen'],
-      weaknesses: ['Kurze Zahlungsfristen', 'Weniger Verhandlungsspielraum'],
-      riskLevel: 'low',
-      score: 87
-    },
-    contract2Analysis: {
-      strengths: ['Längere Zahlungsfristen', 'Detaillierte Leistungsbeschreibung'],
-      weaknesses: ['Unbegrenzte Haftung', 'Lange Kündigungsfristen', 'Komplexe Klauseln'],
-      riskLevel: 'high',
-      score: 64
-    },
-    overallRecommendation: {
-      recommended: 1,
-      reasoning: 'Vertrag 1 bietet deutlich bessere Risikobegrenzung und mehr Flexibilität bei nur geringfügig schlechteren Zahlungsbedingungen.',
-      confidence: 92
-    },
-    summary: 'Nach eingehender Analyse empfehlen wir Vertrag 1 aufgrund der deutlich besseren Risikoverteilung und Flexibilität.',
-    categories: ['Kündigung', 'Haftung', 'Zahlung']
-  };
-
   useEffect(() => {
     const controller = new AbortController();
 
@@ -457,19 +405,7 @@ export default function EnhancedCompare() {
     setLoading(true);
     setResult(null);
 
-    // For demo purposes, use mock data
-    // In production, replace with actual API call
-    setTimeout(() => {
-      setResult(mockResult);
-      setLoading(false);
-      setNotification({
-        message: "Vertragsvergleich erfolgreich durchgeführt!",
-        type: "success"
-      });
-    }, 3000);
-
-    /* 
-    // Real implementation would be:
+    // PRODUCTION API CALL
     const formData = new FormData();
     formData.append("file1", file1);
     formData.append("file2", file2);
@@ -499,7 +435,6 @@ export default function EnhancedCompare() {
     } finally {
       setLoading(false);
     }
-    */
   };
 
   const handleReset = () => {
