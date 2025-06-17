@@ -368,7 +368,35 @@ export default function EnhancedCompare() {
         if (!res.ok) throw new Error("Nicht authentifiziert");
 
         const data = await res.json();
-        setIsPremium(data.subscriptionActive === true || data.isPremium === true);
+        
+        // 🎯 ROBUSTE PREMIUM-ERKENNUNG für alle 3 Abo-Modelle:
+        // Unterstützt sowohl data.user.* als auch data.* Struktur
+        const userData = data.user || data;
+        
+        const subscriptionPlan = userData.subscriptionPlan || userData.plan || "free";
+        const subscriptionActive = userData.subscriptionActive === true || userData.isActive === true;
+        const isPremiumFlag = userData.isPremium === true;
+        const subscriptionStatus = userData.subscriptionStatus === "active";
+        
+        // Premium-Berechtigung: business ODER premium Plan + aktiv
+        const hasPremiumAccess = 
+          isPremiumFlag || 
+          (subscriptionActive && ["premium", "business"].includes(subscriptionPlan)) ||
+          (subscriptionStatus && ["premium", "business"].includes(subscriptionPlan)) ||
+          ["premium", "business"].includes(subscriptionPlan);
+        
+        console.log("🔍 Premium Debug:", {
+          subscriptionPlan,
+          subscriptionActive,
+          isPremiumFlag,
+          subscriptionStatus,
+          hasPremiumAccess,
+          rawUserData: userData,
+          fullApiResponse: data
+        });
+        
+        setIsPremium(hasPremiumAccess);
+        
       } catch (err) {
         if (err instanceof DOMException && err.name === "AbortError") return;
         console.error("Fehler beim Abo-Check:", err);
