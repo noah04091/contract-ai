@@ -447,6 +447,10 @@ export default function Optimizer() {
   const [contractId, setContractId] = useState<string | null>(null);
   const [isGeneratingContract, setIsGeneratingContract] = useState(false);
   
+  // ✅ BACKEND BRAUCHT DIESE DATEN: Wieder hinzufügen für PDF-Generierung
+  const [originalContractText, setOriginalContractText] = useState<string>('');
+  const [analysisData, setAnalysisData] = useState<any>(null);
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pitchButtonRef = useRef<HTMLButtonElement>(null);
   const exportButtonRef = useRef<HTMLButtonElement>(null);
@@ -612,6 +616,8 @@ export default function Optimizer() {
     setLoading(true);
     setOptimizations([]);
     setError(null);
+    setOriginalContractText(''); // Reset für neue Analyse
+    setAnalysisData(null); // Reset für neue Analyse
 
     const formData = new FormData();
     formData.append("file", file);
@@ -640,6 +646,19 @@ export default function Optimizer() {
         hasOptimizationResult: !!data.optimizationResult,
         resultLength: data.optimizationResult?.length || 0
       });
+
+      // ✅ CRITICAL: Speichere Analysis-Daten für Smart Contract Generator
+      setAnalysisData(data);
+      
+      // ✅ ENHANCED: Versuche originalen Text zu extrahieren (falls verfügbar)
+      if (data.originalText) {
+        setOriginalContractText(data.originalText);
+        console.log("✅ Original Contract Text gespeichert:", data.originalText.length + " Zeichen");
+      } else {
+        // Fallback: Verwende den analysierten Text
+        setOriginalContractText(data.fullText || `Inhalt von ${file.name}`);
+        console.log("📄 Fallback: Verwende fullText oder Dateiname als Originaltext");
+      }
 
       if (data.optimizationResult && data.optimizationResult.trim()) {
         const parsedOptimizations = parseOptimizationResult(data.optimizationResult, file.name);
@@ -747,6 +766,9 @@ export default function Optimizer() {
     // ✅ PHASE 3: Reset Smart Contract Generator State
     setContractId(null);
     setIsGeneratingContract(false);
+    // ✅ Reset Backend-Daten für neue Analyse
+    setOriginalContractText('');
+    setAnalysisData(null);
   }, []);
 
   const handleDrag = useCallback((e: React.DragEvent) => {
@@ -1334,12 +1356,14 @@ Generiert durch KI-Vertragsoptimierung`;
               {isGeneratingContract ? (
                 /* 🚀 WÄHREND GENERIERUNG: Ultra-Professional Streaming UI */
                 <UltraProfessionalStreamingUI 
-                  contractId={contractId}
+                  contractId={contractId || analysisData?.contractId || analysisData?.analysisId}
                   contractName={file?.name || "Unbekannter Vertrag"}
                   optimizations={showSimulation 
                     ? optimizations.filter(opt => opt.implemented)
                     : optimizations
                   }
+                  originalContractText={originalContractText}
+                  analysisData={analysisData}
                   onComplete={handleStreamingComplete}
                   onCancel={handleStreamingCancel}
                 />

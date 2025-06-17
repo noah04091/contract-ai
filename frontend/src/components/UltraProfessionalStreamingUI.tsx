@@ -32,10 +32,13 @@ interface StreamingResult {
   message?: string;
 }
 
+// ✅ UPDATED INTERFACE WITH NEW PROPS
 interface UltraProfessionalStreamingUIProps {
   contractId?: string | null;
   contractName?: string;
   optimizations?: OptimizationSuggestion[];
+  originalContractText?: string;    // 🆕 Für Backend PDF-Generierung
+  analysisData?: any;               // 🆕 Für Backend Analysis-Daten
   onComplete?: (result: StreamingResult) => void;
   onCancel?: () => void;
   className?: string;
@@ -57,10 +60,13 @@ interface StreamingMetrics {
   pdfSize: number;
 }
 
+// ✅ COMPONENT WITH NEW PROPS
 const UltraProfessionalStreamingUI: React.FC<UltraProfessionalStreamingUIProps> = ({ 
   contractId,
   contractName = "Unbekannter Vertrag",
   optimizations = [],
+  originalContractText,    // 🆕 Empfange neue Prop
+  analysisData,           // 🆕 Empfange neue Prop
   onComplete,
   onCancel,
   className
@@ -109,7 +115,7 @@ const UltraProfessionalStreamingUI: React.FC<UltraProfessionalStreamingUIProps> 
     }]);
   }, []);
 
-  // ✅ Modern Streaming with ReadableStream - ENHANCED FOR TYPESCRIPT
+  // ✅ ENHANCED STREAMING WITH NEW PROPS
   const startStreaming = useCallback(async () => {
     if (!contractId) {
       setError("Keine Contract ID verfügbar. Bitte lade den Vertrag erneut hoch.");
@@ -134,6 +140,45 @@ const UltraProfessionalStreamingUI: React.FC<UltraProfessionalStreamingUIProps> 
     addLog("🚀 Ultra-Professional Contract Generator gestartet", 'info');
 
     try {
+      // ✅ ENHANCED PAYLOAD WITH NEW PROPS
+      const generatePayload = {
+        optimizations: optimizations.map(opt => ({
+          id: opt.id,
+          category: opt.category,
+          priority: opt.priority,
+          originalText: opt.original,
+          improvedText: opt.improved,
+          reasoning: opt.reasoning,
+          confidence: opt.confidence,
+          estimatedSavings: opt.estimatedSavings,
+          marketBenchmark: opt.marketBenchmark
+        })),
+        options: {
+          format: 'pdf',
+          includeReasons: true,
+          preserveLayout: true,
+          streaming: true,
+          detailedProgress: true,
+          highQuality: true
+        },
+        // ✅ CRITICAL: Nutze originalen Contract-Text und Analysis-Daten
+        sourceData: {
+          originalFileName: contractName,
+          originalContent: originalContractText || `Inhalt von ${contractName}`,
+          analysisData: analysisData || {},
+          contractType: 'employment_contract',
+          frontend: 'ultra-professional-ui'
+        }
+      };
+
+      console.log("📤 Generate Payload:", {
+        optimizationCount: generatePayload.optimizations.length,
+        contractId: contractId,
+        hasOriginalContent: !!originalContractText,
+        originalContentLength: originalContractText?.length || 0,
+        hasAnalysisData: !!analysisData
+      });
+
       const response = await fetch(`/api/contracts/${contractId}/generate-optimized-stream`, {
         method: 'POST',
         headers: { 
@@ -141,32 +186,7 @@ const UltraProfessionalStreamingUI: React.FC<UltraProfessionalStreamingUIProps> 
           'Accept': 'text/event-stream'
         },
         credentials: 'include',
-        body: JSON.stringify({
-          optimizations: optimizations.map(opt => ({
-            id: opt.id,
-            category: opt.category,
-            priority: opt.priority,
-            originalText: opt.original,
-            improvedText: opt.improved,
-            reasoning: opt.reasoning,
-            confidence: opt.confidence,
-            estimatedSavings: opt.estimatedSavings,
-            marketBenchmark: opt.marketBenchmark
-          })),
-          options: { 
-            streaming: true,
-            detailedProgress: true,
-            highQuality: true,
-            format: 'pdf',
-            includeReasons: true,
-            preserveLayout: true
-          },
-          sourceData: { 
-            contractType: 'employment_contract',
-            frontend: 'ultra-professional-ui',
-            originalFileName: contractName
-          }
-        })
+        body: JSON.stringify(generatePayload)
       });
 
       if (!response.ok) {
@@ -283,7 +303,7 @@ const UltraProfessionalStreamingUI: React.FC<UltraProfessionalStreamingUIProps> 
         onComplete(errorResult);
       }
     }
-  }, [contractId, optimizations, contractName, onComplete, addLog]);
+  }, [contractId, optimizations, contractName, originalContractText, analysisData, onComplete, addLog]);
 
   const handleCancel = useCallback(() => {
     setIsStreaming(false);
@@ -375,6 +395,11 @@ const UltraProfessionalStreamingUI: React.FC<UltraProfessionalStreamingUIProps> 
           <div className={styles.contractDetails}>
             <h3 className={styles.contractName}>{contractName}</h3>
             <p className={styles.contractId}>Contract ID: {contractId}</p>
+            {originalContractText && (
+              <p className={styles.contractSize}>
+                Original Text: {Math.round(originalContractText.length / 1000)}k Zeichen
+              </p>
+            )}
           </div>
           <div className={styles.contractStats}>
             <div className={styles.statItem}>
