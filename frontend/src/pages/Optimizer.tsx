@@ -1,4 +1,4 @@
-// 📁 src/pages/Optimizer.tsx - NUCLEAR FIX: 100% COMING SOON SOLUTION
+// 📁 src/pages/Optimizer.tsx - TYPESCRIPT FIXED: Smart Contract Generator Integration
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import ReactDOM from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -44,11 +44,26 @@ import {
 // Styles
 import styles from "../styles/Optimizer.module.css";
 
-// 🔥 DEBUG: NUCLEAR TEST
-console.log("🚀🚀🚀 NUCLEAR FIX VERSION LOADED! 🚀🚀🚀");
-alert("🚀 NUCLEAR FIX: Coming Soon Button ist jetzt GARANTIERT aktiv!");
-
 // ✅ TYPESCRIPT FIX: Specific interfaces instead of 'any'
+interface AnalysisData {
+  success: boolean;
+  analysisId?: string;
+  contractId?: string;
+  requestId?: string;
+  uploadType?: string;
+  fileUrl?: string;
+  originalText?: string;
+  fullText?: string;
+  laufzeit?: string;
+  kuendigung?: string;
+  expiryDate?: string;
+  status?: string;
+  summary?: string;
+  legalAssessment?: string;
+  optimizationResult?: string;
+  [key: string]: unknown; // For additional properties
+}
+
 interface ExportOption {
   id: string;
   name: string;
@@ -433,6 +448,14 @@ export default function Optimizer() {
   // ✅ NEW: Better Toast/Feedback System
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   
+  // ✅ PHASE 3: Smart Contract Generator States
+  const [contractId, setContractId] = useState<string | null>(null);
+  const [isGeneratingContract, setIsGeneratingContract] = useState(false);
+  
+  // ✅ TYPESCRIPT FIXED: Specific types instead of 'any'
+  const [originalContractText, setOriginalContractText] = useState<string>('');
+  const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pitchButtonRef = useRef<HTMLButtonElement>(null);
   const exportButtonRef = useRef<HTMLButtonElement>(null);
@@ -598,6 +621,8 @@ export default function Optimizer() {
     setLoading(true);
     setOptimizations([]);
     setError(null);
+    setOriginalContractText(''); // Reset
+    setAnalysisData(null); // Reset
 
     const formData = new FormData();
     formData.append("file", file);
@@ -626,6 +651,15 @@ export default function Optimizer() {
         hasOptimizationResult: !!data.optimizationResult,
         resultLength: data.optimizationResult?.length || 0
       });
+
+      // ✅ CRITICAL FIX: Speichere die Analysis-Daten für Smart Contract Generator
+      setAnalysisData(data);
+      
+      // ✅ ENHANCED: Versuche originalen Text zu extrahieren (falls verfügbar)
+      if (data.originalText) {
+        setOriginalContractText(data.originalText);
+        console.log("✅ Original Contract Text gespeichert:", data.originalText.length + " Zeichen");
+      }
 
       if (data.optimizationResult && data.optimizationResult.trim()) {
         const parsedOptimizations = parseOptimizationResult(data.optimizationResult, file.name);
@@ -679,28 +713,224 @@ export default function Optimizer() {
     setTimeout(() => setToast(null), 4000);
   }, []);
 
-  // 🚀 NUCLEAR COMING SOON GENERATOR FUNCTION - GARANTIERT FUNKTIONIERT
-  const handleNuclearComingSoonGenerator = useCallback(() => {
-    console.log("🚀 NUCLEAR COMING SOON BUTTON CLICKED!");
-    
-    // TRIPLE BACKUP ALERT
-    alert("🚀 Ultra-Professional Generator kommt bald!\n\nDie Entwicklung läuft auf Hochtouren!\n\nDu wirst benachrichtigt sobald es verfügbar ist! 🔥");
-    
-    // Vibration (falls unterstützt)
-    if (navigator.vibrate) {
-      navigator.vibrate([100, 50, 100]);
+  // ✅ TYPESCRIPT FIXED: Smart Contract Generator Function mit robuster Contract-Erstellung
+  const handleGenerateOptimizedContract = useCallback(async () => {
+    // Validierung
+    if (!file || optimizations.length === 0) {
+      showToast("❌ Bitte lade erst einen Vertrag hoch und führe eine Optimierung durch.", 'error');
+      return;
     }
-    
-    // Toast
-    setToast({ 
-      message: "🚀 Ultra-Professional Generator kommt bald! Die Entwicklung läuft auf Hochtouren!", 
-      type: 'success' 
-    });
-    
-    // Console Log für Debug
-    console.log("🔥 NUCLEAR COMING SOON GENERATOR AKTIVIERT!");
-    console.log("🔥 Alert gezeigt, Toast angezeigt, Vibration ausgelöst!");
-  }, []);
+
+    // Prüfe ob Optimierungen ausgewählt wurden (falls Simulation an ist)
+    const selectedOptimizations = showSimulation 
+      ? optimizations.filter(opt => opt.implemented)
+      : optimizations;
+
+    if (showSimulation && selectedOptimizations.length === 0) {
+      showToast("❌ Bitte wähle mindestens eine Optimierung für den optimierten Vertrag aus.", 'error');
+      return;
+    }
+
+    setIsGeneratingContract(true);
+    showToast("🪄 Optimierter Vertrag wird generiert...", 'success');
+
+    try {
+      // ✅ CRITICAL FIX: Robuste Contract-ID Beschaffung
+      let currentContractId = contractId;
+      
+      if (!currentContractId) {
+        console.log("📤 Erstelle Contract für Smart Contract Generator...");
+        
+        // ✅ STRATEGY A: Versuche zuerst Contract zu speichern basierend auf Analysis-Daten
+        if (analysisData) {
+          try {
+            console.log("💾 Speichere Contract basierend auf Analysis-Daten...");
+            
+            const contractData = {
+              name: file.name,
+              content: originalContractText || `Inhalt von ${file.name}`,
+              laufzeit: analysisData.laufzeit || "Unbekannt",
+              kuendigung: analysisData.kuendigung || "Unbekannt",
+              expiryDate: analysisData.expiryDate || "",
+              status: analysisData.status || "Aktiv",
+              isGenerated: false,
+              originalname: file.name,
+              filePath: analysisData.fileUrl || "",
+              mimetype: file.type,
+              size: file.size,
+              // ✅ CRITICAL: Analysis-Referenz für Debugging
+              analysisId: analysisData.analysisId || analysisData.requestId,
+              uploadType: analysisData.uploadType || 'LOCAL_UPLOAD'
+            };
+
+            console.log("💾 Contract Data:", contractData);
+
+            const contractRes = await fetch("/api/contracts", {
+              method: "POST",
+              credentials: "include",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(contractData),
+            });
+
+            if (contractRes.ok) {
+              const contractResult = await contractRes.json();
+              currentContractId = contractResult.contractId;
+              setContractId(currentContractId);
+              console.log("✅ Contract erfolgreich erstellt mit ID:", currentContractId);
+            } else {
+              throw new Error("Contract-Speicherung fehlgeschlagen");
+            }
+          } catch (contractError) {
+            console.warn("⚠️ Contract-Speicherung fehlgeschlagen, versuche Alternative:", contractError);
+            currentContractId = null;
+          }
+        }
+        
+        // ✅ STRATEGY B: Fallback - Re-Upload für Contract-ID
+        if (!currentContractId) {
+          console.log("📤 Fallback: Re-Upload für Contract-ID...");
+          
+          const formData = new FormData();
+          formData.append("file", file);
+          
+          const uploadRes = await fetch("/api/analyze", {
+            method: "POST",
+            credentials: "include",
+            body: formData,
+          });
+
+          const uploadData = await uploadRes.json();
+          
+          if (!uploadRes.ok) {
+            throw new Error(uploadData.message || "Contract Upload fehlgeschlagen");
+          }
+
+          // ✅ FALLBACK: Nutze Analysis-ID als Contract-ID
+          currentContractId = uploadData.analysisId || 
+                            uploadData.contractId || 
+                            uploadData.requestId;
+          
+          if (!currentContractId) {
+            throw new Error("❌ Keine Contract ID verfügbar. Bitte lade den Vertrag erneut hoch.");
+          }
+          
+          setContractId(currentContractId);
+          console.log("✅ Fallback Contract ID erhalten:", currentContractId);
+        }
+      }
+
+      // ✅ STEP 2: Generate Optimized Contract
+      console.log("🎯 Starte Smart Contract Generation mit ID:", currentContractId);
+      
+      const generatePayload = {
+        optimizations: selectedOptimizations.map(opt => ({
+          id: opt.id,
+          category: opt.category,
+          priority: opt.priority,
+          originalText: opt.original,
+          improvedText: opt.improved,
+          reasoning: opt.reasoning,
+          confidence: opt.confidence,
+          estimatedSavings: opt.estimatedSavings,
+          marketBenchmark: opt.marketBenchmark
+        })),
+        options: {
+          format: 'pdf',
+          includeReasons: true,
+          preserveLayout: true
+        },
+        // ✅ CRITICAL: Zusätzliche Daten für bessere Contract-Generierung
+        sourceData: {
+          originalFileName: file.name,
+          originalContent: originalContractText,
+          analysisData: analysisData
+        }
+      };
+
+      console.log("📤 Generate Payload:", {
+        optimizationCount: generatePayload.optimizations.length,
+        contractId: currentContractId,
+        hasOriginalContent: !!originalContractText
+      });
+
+      const generateRes = await fetch(`/api/contracts/${currentContractId}/generate-optimized`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(generatePayload)
+      });
+
+      if (!generateRes.ok) {
+        const errorData = await generateRes.json();
+        console.error("❌ Smart Contract Generation Error:", errorData);
+        
+        // ✅ ENHANCED ERROR HANDLING
+        if (generateRes.status === 404) {
+          throw new Error("❌ Contract nicht gefunden. Bitte lade den Vertrag erneut hoch.");
+        } else if (generateRes.status === 400) {
+          throw new Error("❌ Ungültige Optimierungsdaten. Führe die Analyse erneut durch.");
+        } else {
+          throw new Error(errorData.message || `Server Error: ${generateRes.status}`);
+        }
+      }
+
+      // ✅ STEP 3: PDF Download
+      console.log("📄 Download optimierte PDF...");
+      
+      const blob = await generateRes.blob();
+      
+      if (blob.size === 0) {
+        throw new Error("❌ Leere PDF erhalten. Versuche es erneut.");
+      }
+      
+      const downloadUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `Optimiert_${file.name.replace('.pdf', '')}_${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(downloadUrl);
+
+      // ✅ Success!
+      showToast(`✅ Optimierter Vertrag erfolgreich generiert! (${selectedOptimizations.length} Optimierungen angewendet)`, 'success');
+      
+      console.log("🎉 Smart Contract Generation erfolgreich abgeschlossen!", {
+        contractId: currentContractId,
+        optimizationsApplied: selectedOptimizations.length,
+        fileName: file.name,
+        pdfSize: blob.size
+      });
+
+    } catch (error) {
+      const err = error as Error;
+      console.error("❌ Smart Contract Generation Fehler:", err);
+      
+      let errorMessage = "❌ Fehler beim Generieren des optimierten Vertrags.";
+      
+      if (err.message.includes("nicht gefunden")) {
+        errorMessage = "❌ Contract nicht gefunden. Bitte lade den Vertrag erneut hoch.";
+      } else if (err.message.includes("PDF")) {
+        errorMessage = "❌ PDF-Generierung fehlgeschlagen. Prüfe das Dateiformat.";
+      } else if (err.message.includes("Optimierungen")) {
+        errorMessage = "❌ Ungültige Optimierungen. Führe die Analyse erneut durch.";
+      } else if (err.message.includes("authentifiziert")) {
+        errorMessage = "🔐 Authentifizierung fehlgeschlagen. Bitte logge dich neu ein.";
+      } else if (err.message.includes("Subscription")) {
+        errorMessage = "⭐ Premium-Feature. Bitte upgrade dein Paket.";
+      } else {
+        errorMessage = err.message.startsWith("❌") ? err.message : `❌ ${err.message}`;
+      }
+      
+      showToast(errorMessage, 'error');
+    } finally {
+      setIsGeneratingContract(false);
+    }
+  }, [file, optimizations, contractId, showSimulation, showToast, originalContractText, analysisData]);
 
   // ✨ Handlers
   const handleReset = useCallback(() => {
@@ -712,6 +942,12 @@ export default function Optimizer() {
     setSelectedCategory('all');
     setShowExportMenu(false);
     setShowPitchMenu(false);
+    // ✅ PHASE 3: Reset Smart Contract Generator State
+    setContractId(null);
+    setIsGeneratingContract(false);
+    // ✅ FIXED: Reset neue States
+    setOriginalContractText('');
+    setAnalysisData(null);
   }, []);
 
   const handleDrag = useCallback((e: React.DragEvent) => {
@@ -972,23 +1208,6 @@ Generiert durch KI-Vertragsoptimierung`;
   return (
     <div className={styles.optimizer}>
       <div className={styles.backgroundGradient}></div>
-
-      {/* 🔥 NUCLEAR DEBUG INDICATOR */}
-      <div style={{ 
-        position: 'fixed', 
-        top: '10px', 
-        right: '10px', 
-        background: 'red', 
-        color: 'white', 
-        padding: '8px 12px', 
-        borderRadius: '8px',
-        fontSize: '12px',
-        fontWeight: 'bold',
-        zIndex: 99999,
-        boxShadow: '0 4px 8px rgba(0,0,0,0.3)'
-      }}>
-        🚀 NUCLEAR FIX LOADED!
-      </div>
 
       <motion.div 
         className={styles.container}
@@ -1312,7 +1531,7 @@ Generiert durch KI-Vertragsoptimierung`;
                 </div>
               </motion.div>
 
-              {/* ✅ CONTROL PANEL - NUCLEAR FIX VERSION */}
+              {/* Enhanced Control Panel mit Smart Contract Generator */}
               <motion.div
                 className={styles.card}
                 style={{
@@ -1356,77 +1575,94 @@ Generiert durch KI-Vertragsoptimierung`;
                   <span>{showSimulation ? 'Simulation beenden' : 'Live-Simulation'}</span>
                 </motion.button>
 
-                {/* 🚀 NUCLEAR COMING SOON GENERATOR BUTTON - 100% GARANTIERT */}
+                {/* MAIN FEATURE: Smart Contract Generator Button */}
                 <motion.button
-                  onClick={handleNuclearComingSoonGenerator}
+                  onClick={handleGenerateOptimizedContract}
+                  disabled={isGeneratingContract || !file || optimizations.length === 0 || !isPremium}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
                     gap: '0.8rem',
                     padding: '1rem 2rem',
                     borderRadius: '16px',
-                    border: '3px solid #ff0000',
+                    border: 'none',
                     fontSize: '1rem',
                     fontWeight: 700,
-                    cursor: 'pointer',
-                    background: 'linear-gradient(135deg, #ff9500 0%, #ff8a00 100%)',
+                    cursor: isGeneratingContract || !file || optimizations.length === 0 || !isPremium ? 'not-allowed' : 'pointer',
+                    background: isGeneratingContract || !file || optimizations.length === 0 || !isPremium
+                      ? 'linear-gradient(135deg, #86868b 0%, #6e6e73 100%)'
+                      : 'linear-gradient(135deg, #af52de 0%, #d946ef 100%)',
                     color: 'white',
                     transition: 'all 0.3s ease',
-                    boxShadow: '0 12px 32px rgba(255, 149, 0, 0.4)',
+                    boxShadow: isGeneratingContract || !file || optimizations.length === 0 || !isPremium
+                      ? 'none'
+                      : '0 12px 32px rgba(175, 82, 222, 0.4)',
+                    opacity: isGeneratingContract || !file || optimizations.length === 0 || !isPremium ? 0.6 : 1,
                     position: 'relative',
                     overflow: 'hidden'
                   }}
-                  whileHover={{ 
+                  whileHover={!isGeneratingContract && file && optimizations.length > 0 && isPremium ? { 
                     scale: 1.05, 
                     y: -2,
-                    boxShadow: '0 16px 40px rgba(255, 149, 0, 0.5)'
-                  }}
-                  whileTap={{ scale: 0.98 }}
+                    boxShadow: '0 16px 40px rgba(175, 82, 222, 0.5)'
+                  } : undefined}
+                  whileTap={!isGeneratingContract && file && optimizations.length > 0 && isPremium ? { scale: 0.98 } : undefined}
                 >
-                  <motion.div
-                    style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: '-100%',
-                      width: '100%',
-                      height: '100%',
-                      background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)',
-                      zIndex: 1
-                    }}
-                    animate={{
-                      left: ['-100%', '100%']
-                    }}
-                    transition={{
-                      duration: 2.5,
-                      repeat: Infinity,
-                      ease: "linear"
-                    }}
-                  />
-
-                  <div style={{ zIndex: 2, display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                  {/* Animated Background Gradient */}
+                  {!isGeneratingContract && file && optimizations.length > 0 && isPremium && (
                     <motion.div
-                      animate={{
-                        rotate: [0, 10, -10, 0],
-                        scale: [1, 1.1, 1]
-                      }}
-                      transition={{ duration: 2, repeat: Infinity }}
-                    >
-                      <Wand2 size={20} />
-                    </motion.div>
-                    <span>🚀 NUCLEAR COMING SOON</span>
-                    <motion.div
-                      animate={{ opacity: [1, 0.5, 1] }}
-                      transition={{ duration: 1.5, repeat: Infinity }}
                       style={{
-                        fontSize: '0.8rem',
-                        background: 'rgba(255,255,255,0.3)',
-                        padding: '0.2rem 0.6rem',
-                        borderRadius: '12px',
-                        fontWeight: 600
+                        position: 'absolute',
+                        top: 0,
+                        left: '-100%',
+                        width: '100%',
+                        height: '100%',
+                        background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)',
+                        zIndex: 1
                       }}
-                    >
-                      BALD DA
-                    </motion.div>
+                      animate={{
+                        left: ['-100%', '100%']
+                      }}
+                      transition={{
+                        duration: 2,
+                        repeat: Infinity,
+                        ease: "linear"
+                      }}
+                    />
+                  )}
+
+                  {/* Button Content */}
+                  <div style={{ zIndex: 2, display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                    {isGeneratingContract ? (
+                      <>
+                        <motion.div
+                          style={{
+                            width: '20px',
+                            height: '20px',
+                            border: '2px solid rgba(255,255,255,0.3)',
+                            borderTop: '2px solid white',
+                            borderRadius: '50%'
+                          }}
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                        />
+                        <span>Generiere optimierten Vertrag...</span>
+                      </>
+                    ) : (
+                      <>
+                        <motion.div
+                          animate={file && optimizations.length > 0 && isPremium ? {
+                            rotate: [0, 10, -10, 0],
+                            scale: [1, 1.1, 1]
+                          } : {}}
+                          transition={{ duration: 2, repeat: Infinity }}
+                        >
+                          <Wand2 size={20} />
+                        </motion.div>
+                        <span>🪄 Optimierten Vertrag generieren</span>
+                        {!isPremium && <Lock size={16} />}
+                      </>
+                    )}
                   </div>
                 </motion.button>
 
@@ -1646,7 +1882,7 @@ Generiert durch KI-Vertragsoptimierung`;
 
               {/* Optimization Cards */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                {filteredOptimizations.map((optimization, index) => (
+                  {filteredOptimizations.map((optimization, index) => (
                   <motion.div
                     key={optimization.id}
                     className={styles.card}
