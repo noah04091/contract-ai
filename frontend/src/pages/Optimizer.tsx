@@ -1,3 +1,4 @@
+console.log("🔥🔥🔥 NEUE VERSION GELADEN! Coming Soon Button aktiv! 🔥🔥🔥");
 // 📁 src/pages/Optimizer.tsx - CLEAN VERSION: Coming Soon Button Solution
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import ReactDOM from "react-dom";
