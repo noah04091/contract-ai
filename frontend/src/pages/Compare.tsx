@@ -355,51 +355,59 @@ export default function EnhancedCompare() {
   const file2InputRef = useRef<HTMLInputElement>(null);
   const [notification, setNotification] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
+  // 🚨 DEBUG: Component Render Log
+  console.log("🚨 COMPONENT RENDER - Current isPremium state:", isPremium);
+
   useEffect(() => {
     const controller = new AbortController();
 
     const fetchStatus = async () => {
       try {
+        console.log("🚀 Starting auth check...");
+        
         const res = await fetch("/api/auth/me", {
           credentials: "include",
           signal: controller.signal,
         });
 
+        console.log("📡 Response status:", res.status, res.statusText);
+        
         if (!res.ok) throw new Error("Nicht authentifiziert");
 
         const data = await res.json();
         
-        // 🎯 ROBUSTE PREMIUM-ERKENNUNG für alle 3 Abo-Modelle:
-        // Unterstützt sowohl data.user.* als auch data.* Struktur
+        // 🎯 ULTRA-DETAILED DEBUG:
+        console.log("🔍 RAW API DATA:", JSON.stringify(data, null, 2));
+        
         const userData = data.user || data;
+        console.log("👤 USER DATA:", JSON.stringify(userData, null, 2));
         
-        const subscriptionPlan = userData.subscriptionPlan || userData.plan || "free";
-        const subscriptionActive = userData.subscriptionActive === true || userData.isActive === true;
-        const isPremiumFlag = userData.isPremium === true;
-        const subscriptionStatus = userData.subscriptionStatus === "active";
+        const tests = {
+          "userData.isPremium": userData.isPremium,
+          "userData.subscriptionPlan": userData.subscriptionPlan,
+          "userData.subscriptionActive": userData.subscriptionActive,
+          "data.user?.isPremium": data.user?.isPremium,
+          "data.user?.subscriptionPlan": data.user?.subscriptionPlan,
+          "data.isPremium": data.isPremium
+        };
         
-        // Premium-Berechtigung: business ODER premium Plan + aktiv
-        const hasPremiumAccess = 
-          isPremiumFlag || 
-          (subscriptionActive && ["premium", "business"].includes(subscriptionPlan)) ||
-          (subscriptionStatus && ["premium", "business"].includes(subscriptionPlan)) ||
-          ["premium", "business"].includes(subscriptionPlan);
+        console.log("🧪 ALL TESTS:", tests);
         
-        console.log("🔍 Premium Debug:", {
-          subscriptionPlan,
-          subscriptionActive,
-          isPremiumFlag,
-          subscriptionStatus,
-          hasPremiumAccess,
-          rawUserData: userData,
-          fullApiResponse: data
-        });
+        // Simple logic:
+        const hasPremium = 
+          userData.isPremium === true || 
+          userData.subscriptionPlan === "premium" || 
+          userData.subscriptionPlan === "business" ||
+          userData.subscriptionActive === true;
         
-        setIsPremium(hasPremiumAccess);
+        console.log("🎯 FINAL PREMIUM STATUS:", hasPremium);
+        console.log("🎯 SETTING isPremium to:", hasPremium);
+        
+        setIsPremium(hasPremium);
         
       } catch (err) {
         if (err instanceof DOMException && err.name === "AbortError") return;
-        console.error("Fehler beim Abo-Check:", err);
+        console.error("❌ Auth check error:", err);
         setIsPremium(false);
       }
     };
