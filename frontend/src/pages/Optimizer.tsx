@@ -1,4 +1,4 @@
-// 📁 src/pages/Optimizer.tsx - TYPESCRIPT FIXED: Smart Contract Generator Integration
+// 📁 src/pages/Optimizer.tsx - TYPESCRIPT FIXED: Smart Contract Generator Integration + DEBUG
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import ReactDOM from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -751,8 +751,13 @@ export default function Optimizer() {
 
   // ✅ SMART CONTRACT BUTTON HANDLER - Startet Ultra-Professional Streaming UI
   const handleStartStreamingGeneration = useCallback(() => {
+    console.log("🔥 DEBUG: handleStartStreamingGeneration aufgerufen!");
+    console.log("🔥 DEBUG: isGeneratingContract vor setzen:", isGeneratingContract);
+    console.log("🔥 DEBUG: File:", !!file, "Optimizations:", optimizations.length, "Premium:", isPremium);
+    
     // Validierung
     if (!file || optimizations.length === 0 || !isPremium) {
+      console.log("🔥 DEBUG: Validierung fehlgeschlagen!");
       showToast("❌ Bitte lade erst einen Vertrag hoch und führe eine Optimierung durch.", 'error');
       return;
     }
@@ -762,15 +767,20 @@ export default function Optimizer() {
       ? optimizations.filter(opt => opt.implemented)
       : optimizations;
 
+    console.log("🔥 DEBUG: Selected Optimizations:", selectedOptimizations.length, "Show Simulation:", showSimulation);
+
     if (showSimulation && selectedOptimizations.length === 0) {
+      console.log("🔥 DEBUG: Simulation validation failed!");
       showToast("❌ Bitte wähle mindestens eine Optimierung aus.", 'error');
       return;
     }
 
     // ✅ Aktiviere Streaming UI
+    console.log("🔥 DEBUG: Setze isGeneratingContract auf true...");
     setIsGeneratingContract(true);
+    console.log("🔥 DEBUG: isGeneratingContract auf true gesetzt!");
     showToast("🚀 Starte Ultra-Professional Contract Generator...", 'success');
-  }, [file, optimizations, showSimulation, isPremium, showToast]);
+  }, [file, optimizations, showSimulation, isPremium, showToast, isGeneratingContract]);
 
   // ✨ Handlers
   const handleReset = useCallback(() => {
@@ -1033,6 +1043,16 @@ Generiert durch KI-Vertragsoptimierung`;
     ? optimizations 
     : optimizations.filter(opt => opt.category === selectedCategory);
 
+  // 🔥 DEBUG RENDER LOG
+  console.log("🔥 RENDER DEBUG:", {
+    isGeneratingContract,
+    optimizationsLength: optimizations.length,
+    hasFile: !!file,
+    willShowStreamingUI: isGeneratingContract,
+    originalContentLength: originalContractText?.length || 0,
+    hasAnalysisData: !!analysisData
+  });
+
   // ✨ Loading State
   if (isPremium === null) {
     return (
@@ -1048,6 +1068,25 @@ Generiert durch KI-Vertragsoptimierung`;
   return (
     <div className={styles.optimizer}>
       <div className={styles.backgroundGradient}></div>
+
+      {/* 🔥 DEBUG INDICATOR - VISUELLE ANZEIGE */}
+      <div style={{ 
+        position: 'fixed', 
+        top: '10px', 
+        right: '10px', 
+        background: isGeneratingContract ? 'lime' : 'red', 
+        color: 'white', 
+        padding: '8px 12px', 
+        borderRadius: '8px',
+        fontSize: '12px',
+        fontWeight: 'bold',
+        zIndex: 99999,
+        boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+      }}>
+        🔥 DEBUG: {isGeneratingContract ? 'STREAMING UI AKTIV' : 'NORMAL UI'}
+        <br />
+        Content: {originalContractText?.length || 0} chars
+      </div>
 
       <motion.div 
         className={styles.container}

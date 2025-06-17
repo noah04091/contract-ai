@@ -1,4 +1,4 @@
-// 📁 src/components/UltraProfessionalStreamingUI.tsx
+// 📁 src/components/UltraProfessionalStreamingUI.tsx - MIT DEBUG LOGS
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -80,7 +80,7 @@ interface StreamingMetrics {
   pdfSize: number;
 }
 
-// ✅ COMPONENT WITH PROPER TYPES
+// ✅ COMPONENT WITH PROPER TYPES + DEBUG
 const UltraProfessionalStreamingUI: React.FC<UltraProfessionalStreamingUIProps> = ({ 
   contractId,
   contractName = "Unbekannter Vertrag",
@@ -91,6 +91,26 @@ const UltraProfessionalStreamingUI: React.FC<UltraProfessionalStreamingUIProps> 
   onCancel,
   className
 }) => {
+  // 🔥 DEBUG LOG BEIM KOMPONENTEN START
+  console.log("🔥 UltraProfessionalStreamingUI GELADEN!", {
+    contractId,
+    contractName,
+    optimizationsLength: optimizations.length,
+    hasOriginalContent: !!originalContractText,
+    originalContentLength: originalContractText?.length || 0,
+    hasAnalysisData: !!analysisData,
+    analysisDataKeys: analysisData ? Object.keys(analysisData) : [],
+    propsReceived: {
+      contractId: !!contractId,
+      contractName: !!contractName,
+      optimizations: optimizations.length,
+      originalContractText: !!originalContractText,
+      analysisData: !!analysisData,
+      onComplete: !!onComplete,
+      onCancel: !!onCancel
+    }
+  });
+
   const [isStreaming, setIsStreaming] = useState(false);
   const [progress, setProgress] = useState(0);
   const [currentMessage, setCurrentMessage] = useState('');
@@ -126,6 +146,7 @@ const UltraProfessionalStreamingUI: React.FC<UltraProfessionalStreamingUIProps> 
   // ✅ Add log helper
   const addLog = useCallback((message: string, type: StreamingLog['type'] = 'info', progress?: number) => {
     const timestamp = new Date().toLocaleTimeString();
+    console.log(`🔥 STREAMING LOG [${type.toUpperCase()}]: ${message}`, { progress });
     setStreamingLogs(prev => [...prev, {
       id: Date.now() + Math.random(),
       timestamp,
@@ -135,12 +156,23 @@ const UltraProfessionalStreamingUI: React.FC<UltraProfessionalStreamingUIProps> 
     }]);
   }, []);
 
-  // ✅ ENHANCED STREAMING WITH NEW PROPS
+  // ✅ ENHANCED STREAMING WITH NEW PROPS + DEBUG
   const startStreaming = useCallback(async () => {
+    console.log("🔥 startStreaming() aufgerufen!");
+    
     if (!contractId) {
+      console.log("🔥 ERROR: Keine Contract ID!");
       setError("Keine Contract ID verfügbar. Bitte lade den Vertrag erneut hoch.");
       return;
     }
+
+    console.log("🔥 Streaming startet mit:", {
+      contractId,
+      optimizationsLength: optimizations.length,
+      hasOriginalContent: !!originalContractText,
+      originalContentLength: originalContractText?.length || 0,
+      hasAnalysisData: !!analysisData
+    });
 
     setIsStreaming(true);
     setProgress(0);
@@ -160,7 +192,7 @@ const UltraProfessionalStreamingUI: React.FC<UltraProfessionalStreamingUIProps> 
     addLog("🚀 Ultra-Professional Contract Generator gestartet", 'info');
 
     try {
-      // ✅ ENHANCED PAYLOAD WITH NEW PROPS
+      // ✅ ENHANCED PAYLOAD WITH NEW PROPS + DEBUG
       const generatePayload = {
         optimizations: optimizations.map(opt => ({
           id: opt.id,
@@ -191,13 +223,18 @@ const UltraProfessionalStreamingUI: React.FC<UltraProfessionalStreamingUIProps> 
         }
       };
 
-      console.log("📤 Generate Payload:", {
+      console.log("🔥 Generate Payload FINAL:", {
         optimizationCount: generatePayload.optimizations.length,
         contractId: contractId,
         hasOriginalContent: !!originalContractText,
         originalContentLength: originalContractText?.length || 0,
-        hasAnalysisData: !!analysisData
+        hasAnalysisData: !!analysisData,
+        sourceDataKeys: Object.keys(generatePayload.sourceData),
+        endpoint: `/api/contracts/${contractId}/generate-optimized-stream`
       });
+
+      addLog(`📤 Sende Payload an Backend: ${optimizations.length} Optimierungen`, 'info');
+      addLog(`📄 Original Content: ${originalContractText?.length || 0} Zeichen`, 'info');
 
       const response = await fetch(`/api/contracts/${contractId}/generate-optimized-stream`, {
         method: 'POST',
@@ -209,14 +246,24 @@ const UltraProfessionalStreamingUI: React.FC<UltraProfessionalStreamingUIProps> 
         body: JSON.stringify(generatePayload)
       });
 
+      console.log("🔥 Response Status:", response.status, response.statusText);
+      addLog(`📡 Backend Response: ${response.status} ${response.statusText}`, response.ok ? 'success' : 'error');
+
       if (!response.ok) {
+        const errorText = await response.text();
+        console.log("🔥 ERROR Response Body:", errorText);
+        addLog(`❌ Backend Error: ${errorText}`, 'error');
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
       const reader = response.body?.getReader();
       if (!reader) {
+        console.log("🔥 ERROR: No reader available");
         throw new Error("Streaming wird nicht unterstützt");
       }
+
+      console.log("🔥 Starting to read stream...");
+      addLog("📡 Streaming-Verbindung hergestellt", 'success');
 
       const decoder = new TextDecoder();
       let buffer = '';
@@ -224,7 +271,10 @@ const UltraProfessionalStreamingUI: React.FC<UltraProfessionalStreamingUIProps> 
       while (true) {
         const { done, value } = await reader.read();
         
-        if (done) break;
+        if (done) {
+          console.log("🔥 Stream completed");
+          break;
+        }
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
@@ -234,6 +284,7 @@ const UltraProfessionalStreamingUI: React.FC<UltraProfessionalStreamingUIProps> 
           if (line.startsWith('data: ')) {
             try {
               const data = JSON.parse(line.slice(6));
+              console.log("🔥 Stream Data:", data);
               
               if (data.progress !== undefined) {
                 setProgress(data.progress);
@@ -254,6 +305,7 @@ const UltraProfessionalStreamingUI: React.FC<UltraProfessionalStreamingUIProps> 
               }
               
               if (data.complete) {
+                console.log("🔥 Stream COMPLETE:", data);
                 const finalResult: StreamingResult = {
                   success: true,
                   downloadUrl: data.result.downloadUrl,
@@ -279,11 +331,13 @@ const UltraProfessionalStreamingUI: React.FC<UltraProfessionalStreamingUIProps> 
 
                 // Call onComplete callback
                 if (onComplete) {
+                  console.log("🔥 Calling onComplete callback");
                   onComplete(finalResult);
                 }
               }
               
               if (data.error) {
+                console.log("🔥 Stream ERROR:", data);
                 const errorResult: StreamingResult = {
                   success: false,
                   error: data.message || "Unbekannter Fehler"
@@ -295,12 +349,13 @@ const UltraProfessionalStreamingUI: React.FC<UltraProfessionalStreamingUIProps> 
 
                 // Call onComplete with error
                 if (onComplete) {
+                  console.log("🔥 Calling onComplete with error");
                   onComplete(errorResult);
                 }
               }
               
             } catch (parseError) {
-              console.warn('Parse error:', parseError);
+              console.warn('🔥 Parse error:', parseError);
               addLog(`Parse Error: ${parseError}`, 'error');
             }
           }
@@ -309,6 +364,7 @@ const UltraProfessionalStreamingUI: React.FC<UltraProfessionalStreamingUIProps> 
       
     } catch (fetchError) {
       const error = fetchError as Error;
+      console.log("🔥 Fetch ERROR:", error);
       const errorResult: StreamingResult = {
         success: false,
         error: error.message
@@ -320,12 +376,14 @@ const UltraProfessionalStreamingUI: React.FC<UltraProfessionalStreamingUIProps> 
 
       // Call onComplete with error
       if (onComplete) {
+        console.log("🔥 Calling onComplete with fetch error");
         onComplete(errorResult);
       }
     }
   }, [contractId, optimizations, contractName, originalContractText, analysisData, onComplete, addLog]);
 
   const handleCancel = useCallback(() => {
+    console.log("🔥 handleCancel aufgerufen");
     setIsStreaming(false);
     addLog("🛑 Generierung abgebrochen", 'info');
     if (onCancel) {
@@ -334,6 +392,7 @@ const UltraProfessionalStreamingUI: React.FC<UltraProfessionalStreamingUIProps> 
   }, [onCancel, addLog]);
 
   const reset = useCallback(() => {
+    console.log("🔥 reset aufgerufen");
     setIsStreaming(false);
     setProgress(0);
     setCurrentMessage('');
@@ -350,6 +409,7 @@ const UltraProfessionalStreamingUI: React.FC<UltraProfessionalStreamingUIProps> 
   }, [optimizations.length]);
 
   const downloadPDF = useCallback(() => {
+    console.log("🔥 downloadPDF aufgerufen:", result?.downloadUrl);
     if (result?.downloadUrl) {
       const link = document.createElement('a');
       link.href = result.downloadUrl;
@@ -363,13 +423,39 @@ const UltraProfessionalStreamingUI: React.FC<UltraProfessionalStreamingUIProps> 
 
   // ✅ Auto-start streaming when component mounts
   useEffect(() => {
+    console.log("🔥 useEffect - Auto-start Check:", {
+      contractId: !!contractId,
+      optimizationsLength: optimizations.length,
+      isStreaming,
+      result: !!result,
+      error: !!error,
+      shouldAutoStart: !!(contractId && optimizations.length > 0 && !isStreaming && !result && !error)
+    });
+
     if (contractId && optimizations.length > 0 && !isStreaming && !result && !error) {
+      console.log("🔥 AUTO-START Streaming!");
       startStreaming();
     }
   }, [contractId, optimizations.length, isStreaming, result, error, startStreaming]);
 
   return (
     <div className={`${styles.streamingContainer} ${className || ''}`}>
+      {/* 🔥 DEBUG INDICATOR - KOMPONENTE GELADEN */}
+      <div style={{ 
+        position: 'absolute', 
+        top: '-40px', 
+        left: '0', 
+        background: 'lime', 
+        color: 'black', 
+        padding: '4px 8px', 
+        borderRadius: '4px',
+        fontSize: '11px',
+        fontWeight: 'bold',
+        zIndex: 99999
+      }}>
+        🔥 STREAMING UI GELADEN!
+      </div>
+
       {/* ✅ ULTRA-PROFESSIONAL HEADER */}
       <motion.div 
         className={styles.header}
