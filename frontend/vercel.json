@@ -1,12 +1,5 @@
 {
   "version": 2,
-  "functions": {
-    "api/**": {
-      "runtime": "nodejs20.x",
-      "maxDuration": 300,
-      "memory": 3008
-    }
-  },
   "rewrites": [
     {
       "source": "/api/:path*",
