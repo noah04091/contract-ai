@@ -7,7 +7,6 @@ const multer = require("multer");
 const fs = require("fs");
 const path = require("path");
 const { MongoClient, ObjectId } = require("mongodb");
-const saveContract = require("../services/saveContract");
 
 const router = express.Router();
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -49,6 +48,39 @@ let usersCollection, contractsCollection;
     console.error("❌ MongoDB-Fehler:", err);
   }
 })();
+
+// ✅ FIXED: Inline saveContract function (replaces external dependency)
+const saveContract = async (contractData) => {
+  try {
+    const contractDoc = {
+      userId: new ObjectId(contractData.userId),
+      fileName: contractData.fileName,
+      originalName: contractData.fileName,
+      toolUsed: contractData.toolUsed || "contract_compare",
+      filePath: contractData.filePath,
+      fileSize: contractData.fileSize || 0,
+      status: "processed",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      ...contractData.extraRefs
+    };
+
+    const result = await contractsCollection.insertOne(contractDoc);
+    console.log(`✅ Contract saved: ${contractData.fileName} (ID: ${result.insertedId})`);
+    
+    return {
+      success: true,
+      contractId: result.insertedId,
+      message: "Contract successfully saved"
+    };
+  } catch (error) {
+    console.error("❌ Error saving contract:", error);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+};
 
 // Enhanced system prompts for different user profiles
 const SYSTEM_PROMPTS = {
@@ -212,6 +244,8 @@ router.post("/", verifyToken, upload.fields([
   { name: 'file2', maxCount: 1 }
 ]), async (req, res) => {
   try {
+    console.log("🚀 Contract comparison started");
+    
     // Check if files were uploaded
     if (!req.files || !req.files.file1 || !req.files.file2) {
       return res.status(400).json({ 
@@ -253,6 +287,8 @@ router.post("/", verifyToken, upload.fields([
     const file1 = req.files.file1[0];
     const file2 = req.files.file2[0];
 
+    console.log(`📄 Processing files: ${file1.originalname} & ${file2.originalname}`);
+
     // Parse PDF contents
     console.log("📄 Parsing PDF files...");
     const buffer1 = fs.readFileSync(file1.path);
@@ -270,57 +306,79 @@ router.post("/", verifyToken, upload.fields([
       });
     }
 
+    console.log(`📝 Text extracted: Contract 1 (${contract1Text.length} chars), Contract 2 (${contract2Text.length} chars)`);
+
     // Perform AI analysis
     console.log("🤖 Starting AI analysis...");
     const analysisResult = await analyzeContracts(contract1Text, contract2Text, userProfile);
 
-    // Save contracts and analysis to database
-    await Promise.all([
-      saveContract({
-        userId: req.user.userId,
-        fileName: file1.originalname,
-        toolUsed: "contract_compare",
-        filePath: file1.path,
-        extraRefs: {
-          comparisonId: new ObjectId(),
-          role: "contract1",
-          userProfile,
-          pageCount: pdfData1.numpages || 1
-        }
-      }),
-      saveContract({
-        userId: req.user.userId,
-        fileName: file2.originalname,
-        toolUsed: "contract_compare",
-        filePath: file2.path,
-        extraRefs: {
-          comparisonId: new ObjectId(),
-          role: "contract2", 
-          userProfile,
-          pageCount: pdfData2.numpages || 1
-        }
-      })
-    ]);
+    // ✅ FIXED: Save contracts and analysis to database with proper error handling
+    console.log("💾 Saving contracts to database...");
+    try {
+      const comparisonId = new ObjectId();
+      
+      await Promise.all([
+        saveContract({
+          userId: req.user.userId,
+          fileName: file1.originalname,
+          toolUsed: "contract_compare",
+          filePath: file1.path,
+          fileSize: file1.size,
+          extraRefs: {
+            comparisonId: comparisonId,
+            role: "contract1",
+            userProfile,
+            pageCount: pdfData1.numpages || 1
+          }
+        }),
+        saveContract({
+          userId: req.user.userId,
+          fileName: file2.originalname,
+          toolUsed: "contract_compare",
+          filePath: file2.path,
+          fileSize: file2.size,
+          extraRefs: {
+            comparisonId: comparisonId,
+            role: "contract2", 
+            userProfile,
+            pageCount: pdfData2.numpages || 1
+          }
+        })
+      ]);
+
+      console.log("✅ Contracts saved successfully");
+    } catch (saveError) {
+      console.error("⚠️ Warning: Could not save contracts to database:", saveError.message);
+      // Continue with the comparison even if saving fails
+    }
 
     // Log the comparison activity
-    await contractsCollection.insertOne({
-      userId: new ObjectId(req.user.userId),
-      action: "compare_contracts",
-      tool: "contract_compare",
-      userProfile,
-      file1Name: file1.originalname,
-      file2Name: file2.originalname,
-      recommendedContract: analysisResult.overallRecommendation.recommended,
-      confidence: analysisResult.overallRecommendation.confidence,
-      differencesCount: analysisResult.differences.length,
-      timestamp: new Date()
-    });
+    try {
+      await contractsCollection.insertOne({
+        userId: new ObjectId(req.user.userId),
+        action: "compare_contracts",
+        tool: "contract_compare",
+        userProfile,
+        file1Name: file1.originalname,
+        file2Name: file2.originalname,
+        recommendedContract: analysisResult.overallRecommendation.recommended,
+        confidence: analysisResult.overallRecommendation.confidence,
+        differencesCount: analysisResult.differences.length,
+        timestamp: new Date()
+      });
+    } catch (logError) {
+      console.error("⚠️ Warning: Could not log comparison activity:", logError.message);
+    }
 
     // Update usage count
-    await usersCollection.updateOne(
-      { _id: user._id },
-      { $inc: { compareCount: 1 } }
-    );
+    try {
+      await usersCollection.updateOne(
+        { _id: user._id },
+        { $inc: { compareCount: 1 } }
+      );
+    } catch (updateError) {
+      console.error("⚠️ Warning: Could not update usage count:", updateError.message);
+    }
 
     // Clean up uploaded files (optional - keep them for audit purposes)
     setTimeout(() => {
