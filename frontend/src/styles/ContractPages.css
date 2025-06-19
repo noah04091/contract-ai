@@ -1,4 +1,4 @@
-/* Contract Pages - Apple Style */
+/* Contract Pages - Apple Style - Complete Version */
 .contract-page {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     color: #1d1d1f;
@@ -85,7 +85,7 @@
     color: #86868b;
     max-width: 600px;
     margin: 0 auto;
-    line-height: 1.5;
+    line-height: 1.6;
   }
   
   /* Progress Steps */
@@ -122,6 +122,7 @@
     color: #86868b;
     margin-bottom: 8px;
     transition: all 0.3s ease;
+    position: relative;
   }
   
   .step-label {
@@ -144,9 +145,20 @@
   }
   
   .step.completed .step-number {
-    background-color: #3d7cf3;
-    border-color: #3d7cf3;
+    background-color: #10b981;
+    border-color: #10b981;
     color: white;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+  }
+  
+  .step.completed .step-number::after {
+    content: "✓";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 12px;
+    font-weight: bold;
   }
   
   .step-connector {
@@ -170,6 +182,7 @@
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
     padding: 30px;
     margin-bottom: 20px;
+    animation: slideInUp 0.4s ease-out;
   }
   
   .contract-uploader {
@@ -325,10 +338,10 @@
     align-self: flex-end;
   }
   
-  .contract-button:hover {
+  .contract-button:hover:not(:disabled) {
     background-color: #2e60c1;
     transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(61, 124, 243, 0.2);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
   }
   
   .contract-button:active {
@@ -338,8 +351,9 @@
   .contract-button:disabled {
     background-color: #a1a1a6;
     cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
+    opacity: 0.6;
+    transform: none !important;
+    box-shadow: none !important;
   }
   
   .contract-button.secondary {
@@ -348,7 +362,7 @@
     border: 1px solid #3d7cf3;
   }
   
-  .contract-button.secondary:hover {
+  .contract-button.secondary:hover:not(:disabled) {
     background-color: rgba(61, 124, 243, 0.05);
     box-shadow: none;
   }
@@ -414,6 +428,15 @@
     box-shadow: 0 0 0 3px rgba(61, 124, 243, 0.15);
   }
   
+  .currency-input input:invalid {
+    border-color: #f87171;
+    box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.1);
+  }
+  
+  .currency-input input:valid {
+    border-color: #10b981;
+  }
+  
   .currency-symbol {
     position: absolute;
     right: 15px;
@@ -454,29 +477,24 @@
   }
   
   .spinner {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
     border: 2px solid rgba(255, 255, 255, 0.3);
     border-radius: 50%;
     border-top-color: white;
-    animation: spinner 0.8s linear infinite;
-  }
-  
-  @keyframes spinner {
-    to {
-      transform: rotate(360deg);
-    }
+    animation: spin 1s linear infinite;
   }
   
   .analyzing-progress {
     margin-top: 20px;
   }
   
-  .analyzing-text {
+  .analyzing-progress .analyzing-text {
     font-size: 14px;
     color: #86868b;
     text-align: center;
     margin-top: 10px;
+    font-weight: 500;
   }
   
   /* Results Section */
@@ -564,19 +582,137 @@
   
   /* Error Message */
   .error-message {
+    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+    border: 1px solid #fca5a5;
+    color: #991b1b;
+    padding: 12px 16px;
+    border-radius: 12px;
+    margin-top: 16px;
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 12px 16px;
-    background-color: rgba(255, 71, 87, 0.08);
-    border-radius: 8px;
-    color: #ff4757;
     font-size: 14px;
-    margin-top: 16px;
+    line-height: 1.5;
+    box-shadow: 0 1px 3px rgba(239, 68, 68, 0.1);
   }
   
   .error-message svg {
-    color: #ff4757;
+    color: #dc2626;
+    flex-shrink: 0;
+  }
+  
+  /* ========== NEW ADDITIONS FOR BETTER CONTRACTS ========== */
+  
+  /* Search Input Container */
+  .search-input-container {
+    margin-bottom: 1.5rem;
+  }
+  
+  .search-input-container label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #1d1d1f;
+    font-size: 14px;
+  }
+  
+  .search-input-container input {
+    width: 100%;
+    padding: 14px 15px;
+    border: 1px solid #d1d1d6;
+    border-radius: 10px;
+    font-size: 15px;
+    color: #1d1d1f;
+    background: white;
+    transition: all 0.2s ease;
+    outline: none;
+  }
+  
+  .search-input-container input:focus {
+    border-color: #3d7cf3;
+    box-shadow: 0 0 0 3px rgba(61, 124, 243, 0.15);
+  }
+  
+  .input-help {
+    margin-top: 6px;
+    font-size: 12px;
+    color: #86868b;
+    font-style: italic;
+  }
+  
+  /* Results Step Container */
+  .results-step {
+    padding: 0;
+    background: none;
+    border: none;
+    box-shadow: none;
+    min-height: 400px;
+  }
+  
+  /* Step Actions */
+  .step-actions {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 30px;
+    padding: 20px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  }
+  
+  /* Retry Button in Error Message */
+  .retry-button {
+    margin-left: 12px;
+    padding: 6px 12px;
+    background: #3d7cf3;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .retry-button:hover:not(:disabled) {
+    background: #2e60c1;
+    transform: translateY(-1px);
+  }
+  
+  .retry-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  /* Focus States for Accessibility */
+  .contract-button:focus,
+  .search-input-container input:focus,
+  .contract-text-form textarea:focus,
+  .currency-input input:focus {
+    outline: 2px solid #3d7cf3;
+    outline-offset: 2px;
+  }
+  
+  /* Animation Keyframes */
+  @keyframes slideInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @keyframes spin {
+    0% { 
+      transform: rotate(0deg); 
+    }
+    100% { 
+      transform: rotate(360deg); 
+    }
   }
   
   /* Responsive Styles */
@@ -618,6 +754,22 @@
       width: 100%;
       align-self: center;
     }
+    
+    .step-actions {
+      flex-direction: column;
+    }
+    
+    .retry-button {
+      margin-left: 0;
+      margin-top: 8px;
+      width: 100%;
+    }
+    
+    .error-message {
+      flex-direction: column;
+      text-align: center;
+      gap: 8px;
+    }
   }
   
   @media (max-width: 480px) {
@@ -649,5 +801,22 @@
     
     .comparison-title {
       font-size: 15px;
+    }
+    
+    .contract-container {
+      padding: 20px 15px;
+    }
+    
+    .contract-step-container {
+      padding: 15px;
+    }
+    
+    .price-input-section {
+      gap: 20px;
+    }
+    
+    .contract-info-box {
+      padding: 12px;
+      gap: 10px;
     }
   }

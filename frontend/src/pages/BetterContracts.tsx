@@ -1,27 +1,41 @@
 import React, { useState, useRef, useEffect } from "react";
-import UniversalContractComparison from "../components/UniversalContractComparison";
+import BetterContractsResults from "../components/BetterContractsResults";
 import "../styles/ContractPages.css";
+
+interface ApiResponse {
+  analysis: string;
+  alternatives: Array<{
+    title: string;
+    link: string;
+    snippet: string;
+    prices: string[];
+    relevantInfo: string;
+    hasDetailedData: boolean;
+  }>;
+  searchQuery: string;
+  performance: {
+    totalAlternatives: number;
+    detailedExtractions: number;
+    timestamp: string;
+  };
+  fromCache?: boolean;
+  cacheKey?: string;
+}
 
 const BetterContracts: React.FC = () => {
   const [contractText, setContractText] = useState("");
   const [contractType, setContractType] = useState("");
   const [currentPrice, setCurrentPrice] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [dragActive, setDragActive] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [results, setResults] = useState<ApiResponse | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [fileName, setFileName] = useState("");
   const [step, setStep] = useState(1);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [analyzingProgress, setAnalyzingProgress] = useState(0);
-
-  useEffect(() => {
-    // Reset state when contract type changes
-    if (contractType) {
-      setSuccess(true);
-    }
-  }, [contractType]);
 
   useEffect(() => {
     if (loading) {
@@ -31,15 +45,37 @@ const BetterContracts: React.FC = () => {
             clearInterval(timer);
             return prev;
           }
-          return prev + 5;
+          return prev + 2;
         });
-      }, 300);
+      }, 500);
       
       return () => clearInterval(timer);
     } else {
       setAnalyzingProgress(0);
     }
   }, [loading]);
+
+  // Generate smart search query based on contract type
+  const generateSearchQuery = (detectedType: string): string => {
+    const searchQueries: Record<string, string> = {
+      "handy": "günstige handytarife vergleich 2024",
+      "mobilfunk": "mobilfunk tarife vergleich günstig",
+      "internet": "internet dsl vergleich anbieter günstig",
+      "hosting": "webhosting vergleich günstig provider",
+      "versicherung": "versicherung vergleich günstig",
+      "kfz": "kfz versicherung vergleich günstig",
+      "haftpflicht": "haftpflichtversicherung vergleich",
+      "strom": "strom anbieter vergleich günstig",
+      "gas": "gas anbieter vergleich",
+      "fitness": "fitnessstudio vergleich günstig",
+      "streaming": "streaming dienst vergleich",
+      "bank": "girokonto vergleich kostenlos",
+      "kredit": "kredit vergleich günstig",
+      "default": "anbieter vergleich günstig alternative"
+    };
+
+    return searchQueries[detectedType.toLowerCase()] || searchQueries.default;
+  };
 
   const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -80,7 +116,6 @@ const BetterContracts: React.FC = () => {
     setFileName(file.name);
     setUploadProgress(0);
     
-    // Show upload progress animation
     const progressInterval = setInterval(() => {
       setUploadProgress(prev => {
         if (prev >= 95) {
@@ -101,15 +136,19 @@ const BetterContracts: React.FC = () => {
         body: formData
       });
 
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+
       setUploadProgress(100);
       setTimeout(() => setUploadProgress(0), 500);
       
       const data = await res.json();
-      setContractText(data.text);
+      setContractText(data.text || '');
       setStep(2);
     } catch (err) {
       console.error("Fehler beim Extrahieren:", err);
-      setError("Fehler beim Datei-Upload.");
+      setError("Fehler beim Datei-Upload. Bitte versuchen Sie es erneut.");
     } finally {
       clearInterval(progressInterval);
     }
@@ -117,35 +156,100 @@ const BetterContracts: React.FC = () => {
 
   const handleAnalyze = async () => {
     setError("");
-    if (!contractText || !currentPrice) {
-      setError("Bitte Vertragstext und Preis eingeben.");
+    setResults(null);
+    
+    if (!contractText || contractText.trim().length < 20) {
+      setError("Vertragstext muss mindestens 20 Zeichen lang sein.");
+      return;
+    }
+
+    if (!currentPrice || currentPrice <= 0) {
+      setError("Bitte geben Sie einen gültigen Preis ein.");
       return;
     }
 
     setLoading(true);
-    setSuccess(false);
 
     try {
-      const res = await fetch("/api/analyze-type", {
+      // Step 1: Detect contract type
+      console.log("🔍 Erkenne Vertragstyp...");
+      const typeRes = await fetch("/api/analyze-type", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ text: contractText })
       });
 
-      const data = await res.json();
-      if (data.contractType) {
-        setContractType(data.contractType);
-        setStep(3);
-      } else {
-        setError("Vertragstyp konnte nicht erkannt werden.");
+      if (!typeRes.ok) {
+        throw new Error(`Vertragstyp-Erkennung fehlgeschlagen: ${typeRes.status}`);
       }
-    } catch (err) {
-      console.error("Fehler bei Vertragstyp-Erkennung:", err);
-      setError("Serverfehler – bitte später erneut versuchen.");
+
+      const typeData = await typeRes.json();
+      const detectedType = typeData.contractType || 'unbekannt';
+      setContractType(detectedType);
+
+      // Step 2: Generate search query
+      const generatedQuery = searchQuery || generateSearchQuery(detectedType);
+      setSearchQuery(generatedQuery);
+
+      console.log(`📊 Vertragstyp: ${detectedType}, Suchanfrage: ${generatedQuery}`);
+
+      // Step 3: Find better alternatives
+      console.log("🚀 Suche nach besseren Alternativen...");
+      const contractRes = await fetch("/api/better-contracts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          contractText: contractText,
+          searchQuery: generatedQuery
+        })
+      });
+
+      if (!contractRes.ok) {
+        const errorData = await contractRes.json().catch(() => ({}));
+        throw new Error(errorData.error || `API Fehler: ${contractRes.status}`);
+      }
+
+      const contractData: ApiResponse = await contractRes.json();
+      console.log("✅ Alternativen gefunden:", contractData);
+
+      setResults(contractData);
+      setStep(3);
+
+    } catch (err: any) {
+      console.error("❌ Analyse-Fehler:", err);
+      
+      // User-friendly error messages
+      if (err.message.includes('429')) {
+        setError("Zu viele Anfragen. Bitte warten Sie eine Minute und versuchen Sie es erneut.");
+      } else if (err.message.includes('timeout') || err.message.includes('408')) {
+        setError("Die Analyse dauert zu lange. Bitte versuchen Sie es mit einem kürzeren Vertrag.");
+      } else if (err.message.includes('404')) {
+        setError("Keine passenden Alternativen gefunden. Versuchen Sie es mit einem anderen Vertragstyp.");
+      } else {
+        setError(`Fehler bei der Analyse: ${err.message}`);
+      }
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleRetry = () => {
+    setError("");
+    setResults(null);
+    handleAnalyze();
+  };
+
+  const handleStartOver = () => {
+    setStep(1);
+    setContractText("");
+    setContractType("");
+    setCurrentPrice(null);
+    setSearchQuery("");
+    setFileName("");
+    setResults(null);
+    setError("");
   };
 
   return (
@@ -167,7 +271,7 @@ const BetterContracts: React.FC = () => {
           </div>
           <h1>Bessere Alternativen zu deinem Vertrag</h1>
           <p className="contract-description">
-            Wir erkennen den Vertragstyp und zeigen dir bessere Anbieter. Lade deinen Vertrag hoch oder füge den Text manuell ein.
+            Wir analysieren deinen Vertrag und finden automatisch bessere Anbieter mit echten Preisen und Konditionen.
           </p>
         </div>
 
@@ -179,12 +283,12 @@ const BetterContracts: React.FC = () => {
           <div className="step-connector"></div>
           <div className={`step ${step >= 2 ? 'active' : ''} ${step > 2 ? 'completed' : ''}`}>
             <div className="step-number">2</div>
-            <div className="step-label">Preis eingeben</div>
+            <div className="step-label">Preis & Analyse</div>
           </div>
           <div className="step-connector"></div>
           <div className={`step ${step >= 3 ? 'active' : ''}`}>
             <div className="step-number">3</div>
-            <div className="step-label">Alternativen vergleichen</div>
+            <div className="step-label">Bessere Alternativen</div>
           </div>
         </div>
 
@@ -250,8 +354,8 @@ const BetterContracts: React.FC = () => {
               
               <button 
                 className="contract-button"
-                onClick={() => contractText ? setStep(2) : setError("Bitte Vertragstext eingeben.")}
-                disabled={!contractText}
+                onClick={() => contractText.trim().length >= 20 ? setStep(2) : setError("Vertragstext muss mindestens 20 Zeichen lang sein.")}
+                disabled={contractText.trim().length < 20}
               >
                 Weiter
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -275,7 +379,7 @@ const BetterContracts: React.FC = () => {
                   </svg>
                 </div>
                 <div className="info-text">
-                  <p>Füge den monatlichen Preis deines aktuellen Vertrags ein, um bessere Angebote zu finden.</p>
+                  <p>Geben Sie den monatlichen Preis ein. Wir suchen dann automatisch nach günstigeren Alternativen.</p>
                 </div>
               </div>
               
@@ -293,6 +397,19 @@ const BetterContracts: React.FC = () => {
                   />
                   <span className="currency-symbol">€</span>
                 </div>
+              </div>
+
+              {/* Optional: Custom Search Query */}
+              <div className="search-input-container">
+                <label htmlFor="search-query">Suchanfrage (optional)</label>
+                <input
+                  id="search-query"
+                  type="text"
+                  placeholder="z.B. 'günstige handytarife' (wird automatisch generiert)"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                <p className="input-help">Lassen Sie das Feld leer für automatische Erkennung</p>
               </div>
               
               <div className="contract-text-preview">
@@ -319,7 +436,7 @@ const BetterContracts: React.FC = () => {
                 <button 
                   className="contract-button"
                   onClick={handleAnalyze}
-                  disabled={!currentPrice || loading}
+                  disabled={!currentPrice || currentPrice <= 0 || loading}
                 >
                   {loading ? (
                     <>
@@ -328,7 +445,7 @@ const BetterContracts: React.FC = () => {
                     </>
                   ) : (
                     <>
-                      Vertrag analysieren
+                      Alternativen finden
                       <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M5 12h14"></path>
                         <path d="m12 5 7 7-7 7"></path>
@@ -346,54 +463,53 @@ const BetterContracts: React.FC = () => {
                       style={{ width: `${analyzingProgress}%` }}
                     ></div>
                   </div>
-                  <p className="analyzing-text">Analysiere Vertragstyp...</p>
+                  <p className="analyzing-text">
+                    {analyzingProgress < 30 ? "Erkenne Vertragstyp..." :
+                     analyzingProgress < 60 ? "Suche nach Alternativen..." :
+                     analyzingProgress < 90 ? "Analysiere Websites..." :
+                     "Erstelle Empfehlungen..."}
+                  </p>
                 </div>
               )}
             </div>
           </div>
         )}
 
-        {step === 3 && (
-          <div className="contract-step-container results-container">
-            <div className="result-header">
-              <div className={`result-badge ${success ? 'success' : ''}`}>
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        {step === 3 && results && (
+          <div className="contract-step-container results-step">
+            <BetterContractsResults
+              analysis={results.analysis}
+              alternatives={results.alternatives}
+              searchQuery={results.searchQuery}
+              currentPrice={currentPrice!}
+              contractType={contractType}
+              fromCache={results.fromCache}
+            />
+            
+            <div className="step-actions">
+              <button 
+                className="contract-button secondary"
+                onClick={handleRetry}
+                disabled={loading}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                  <path d="M3 3v5h5"></path>
                 </svg>
-                Vertragsanalyse abgeschlossen
-              </div>
+                Erneut suchen
+              </button>
               
-              <div className="result-summary">
-                <h3>Erkannter Vertragstyp: <span className="highlighted-text">{contractType}</span></h3>
-                <p>Aktueller Preis: <span className="highlighted-text">{currentPrice?.toFixed(2)}€</span> monatlich</p>
-              </div>
+              <button 
+                className="contract-button secondary"
+                onClick={handleStartOver}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                  <path d="M3 3v5h5"></path>
+                </svg>
+                Neuer Vertrag
+              </button>
             </div>
-            
-            <div className="comparison-container">
-              <h3 className="comparison-title">Bessere Alternativen für dich</h3>
-              <UniversalContractComparison
-                contractType={contractType}
-                currentPrice={currentPrice!}
-              />
-            </div>
-            
-            <button 
-              className="contract-button secondary new-search"
-              onClick={() => {
-                setStep(1);
-                setContractText("");
-                setContractType("");
-                setCurrentPrice(null);
-                setFileName("");
-              }}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
-                <path d="M3 3v5h5"></path>
-              </svg>
-              Neue Analyse starten
-            </button>
           </div>
         )}
         
@@ -405,6 +521,15 @@ const BetterContracts: React.FC = () => {
               <line x1="12" y1="16" x2="12.01" y2="16"></line>
             </svg>
             {error}
+            {step === 2 && (
+              <button 
+                className="retry-button"
+                onClick={handleRetry}
+                disabled={loading}
+              >
+                Erneut versuchen
+              </button>
+            )}
           </div>
         )}
       </div>
