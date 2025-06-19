@@ -1,7 +1,7 @@
 // 📁 src/components/BetterContractsResults.tsx
 
 import React, { useState } from "react";
-import "../styles/BetterContractsResults.css";
+import './BetterContractsResults.css';
 
 interface Alternative {
   title: string;
