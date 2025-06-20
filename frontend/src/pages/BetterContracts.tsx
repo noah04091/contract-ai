@@ -22,6 +22,10 @@ interface ApiResponse {
   cacheKey?: string;
 }
 
+interface ErrorWithMessage {
+  message: string;
+}
+
 const BetterContracts: React.FC = () => {
   const [contractText, setContractText] = useState("");
   const [contractType, setContractType] = useState("");
@@ -154,6 +158,15 @@ const BetterContracts: React.FC = () => {
     }
   };
 
+  const getErrorMessage = (error: unknown): string => {
+    if (error instanceof Error) return error.message;
+    if (typeof error === 'string') return error;
+    if (error && typeof error === 'object' && 'message' in error) {
+      return (error as ErrorWithMessage).message;
+    }
+    return 'Ein unbekannter Fehler ist aufgetreten';
+  };
+
   const handleAnalyze = async () => {
     setError("");
     setResults(null);
@@ -217,18 +230,20 @@ const BetterContracts: React.FC = () => {
       setResults(contractData);
       setStep(3);
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("❌ Analyse-Fehler:", err);
       
+      const errorMessage = getErrorMessage(err);
+      
       // User-friendly error messages
-      if (err.message.includes('429')) {
+      if (errorMessage.includes('429')) {
         setError("Zu viele Anfragen. Bitte warten Sie eine Minute und versuchen Sie es erneut.");
-      } else if (err.message.includes('timeout') || err.message.includes('408')) {
+      } else if (errorMessage.includes('timeout') || errorMessage.includes('408')) {
         setError("Die Analyse dauert zu lange. Bitte versuchen Sie es mit einem kürzeren Vertrag.");
-      } else if (err.message.includes('404')) {
+      } else if (errorMessage.includes('404')) {
         setError("Keine passenden Alternativen gefunden. Versuchen Sie es mit einem anderen Vertragstyp.");
       } else {
-        setError(`Fehler bei der Analyse: ${err.message}`);
+        setError(`Fehler bei der Analyse: ${errorMessage}`);
       }
     } finally {
       setLoading(false);
