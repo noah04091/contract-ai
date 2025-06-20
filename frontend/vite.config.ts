@@ -20,6 +20,8 @@ const securityHeaders = {
 };
 
 export default defineConfig({
+  base: "/", // ✅ wichtig für korrekte Pfade bei Rewrite + Deployment
+
   plugins: [react()],
   
   // 🔍 Dev-Server (nur lokal!)
