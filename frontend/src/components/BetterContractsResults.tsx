@@ -1,7 +1,7 @@
 // 📁 src/components/BetterContractsResults.tsx
 
 import React, { useState } from "react";
-import './BetterContractsResults.css';
+import "../styles/BetterContractsResults.css";
 
 interface Alternative {
   title: string;
@@ -26,6 +26,8 @@ interface ResultsProps {
   fromCache?: boolean;
 }
 
+type SortOption = 'price' | 'relevance' | 'features';
+
 const BetterContractsResults: React.FC<ResultsProps> = ({
   analysis,
   alternatives,
@@ -35,7 +37,7 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
   loading = false,
   fromCache = false
 }) => {
-  const [sortBy, setSortBy] = useState<'price' | 'relevance' | 'features'>('relevance');
+  const [sortBy, setSortBy] = useState<SortOption>('relevance');
   const [showAllAlternatives, setShowAllAlternatives] = useState(false);
 
   // Extract price from strings and estimate monthly cost
@@ -64,14 +66,17 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
   // Sort alternatives
   const sortedAlternatives = [...enhancedAlternatives].sort((a, b) => {
     switch (sortBy) {
-      case 'price':
+      case 'price': {
         const priceA = a.monthlyPrice || 999;
         const priceB = b.monthlyPrice || 999;
         return priceA - priceB;
-      case 'features':
+      }
+      case 'features': {
         return (b.features?.length || 0) - (a.features?.length || 0);
-      default:
+      }
+      default: {
         return b.hasDetailedData ? 1 : -1;
+      }
     }
   });
 
@@ -90,6 +95,10 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
       }
       return null;
     });
+  };
+
+  const handleSortChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setSortBy(event.target.value as SortOption);
   };
 
   if (loading) {
@@ -139,7 +148,7 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
           <label>Sortieren nach:</label>
           <select 
             value={sortBy} 
-            onChange={(e) => setSortBy(e.target.value as any)}
+            onChange={handleSortChange}
             className="filter-select"
           >
             <option value="relevance">Relevanz</option>
