@@ -1,4 +1,6 @@
 // 📁 backend/routes/analyzeType.js
+// MINIMAL ERWEITERT: Bestehende Route 100% unverändert + neue öffentliche Route
+
 const express = require("express");
 const router = express.Router();
 const { OpenAI } = require("openai");
@@ -25,6 +27,7 @@ let usersCollection;
   }
 })();
 
+// 🔒 DEINE BESTEHENDE AUTHENTIFIZIERTE ROUTE (100% UNVERÄNDERT!)
 router.post("/", verifyToken, async (req, res) => {
   const { text } = req.body;
 
@@ -89,6 +92,88 @@ router.post("/", verifyToken, async (req, res) => {
     console.error("❌ GPT-Fehler:", err.message);
     res.status(500).json({ error: "Fehler bei der Vertragstyp-Erkennung." });
   }
+});
+
+// 🆕 NEUE ÖFFENTLICHE ROUTE für Better Contracts (OHNE verifyToken, OHNE DB-Speicherung)
+router.post("/public", async (req, res) => {
+  console.log("🔍 Public Analyze-Type Request für Better Contracts");
+  
+  try {
+    const { text } = req.body;
+    
+    if (!text || text.trim().length < 10) {
+      return res.status(400).json({
+        error: "Text zu kurz",
+        message: "Mindestens 10 Zeichen erforderlich für Vertragstyp-Erkennung"
+      });
+    }
+
+    console.log(`🔍 Analysiere Vertragstyp für Text: ${text.substring(0, 100)}...`);
+
+    // 🧠 GPT-Analyse (gleiche Logik wie authentifizierte Route)
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4",
+      messages: [
+        {
+          role: "system",
+          content:
+            "Du bist Vertragsexperte. Analysiere den folgenden Vertragstext und gib NUR den passenden Vertragstyp als ein Wort zurück. Beispiele: handy, mobilfunk, internet, hosting, versicherung, kfz, haftpflicht, strom, gas, fitness, streaming, bank, kredit, unbekannt."
+        },
+        {
+          role: "user", 
+          content: text.substring(0, 2000) // Begrenzt für öffentliche Route
+        }
+      ],
+      temperature: 0.2
+    });
+
+    const contractType = completion.choices[0].message.content.toLowerCase().trim();
+    
+    console.log(`✅ Vertragstyp erkannt: ${contractType}`);
+
+    res.json({
+      contractType: contractType,
+      success: true,
+      textLength: text.length,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error("❌ Analyze-Type Public Error:", error);
+    
+    // Spezifische OpenAI Fehlerbehandlung
+    if (error.response?.status === 429) {
+      return res.status(429).json({
+        error: "OpenAI Rate Limit erreicht",
+        message: "Zu viele Anfragen. Bitte versuchen Sie es in einer Minute erneut."
+      });
+    }
+    
+    if (error.response?.status === 401) {
+      return res.status(503).json({
+        error: "OpenAI API Fehler", 
+        message: "Service temporär nicht verfügbar."
+      });
+    }
+
+    res.status(500).json({
+      error: "Fehler bei Vertragstyp-Erkennung",
+      message: "Ein unerwarteter Fehler ist aufgetreten."
+    });
+  }
+});
+
+// 🔍 Health Check
+router.get("/health", (req, res) => {
+  res.json({
+    status: "ok",
+    service: "analyze-type",
+    routes: {
+      authenticated: "/api/analyze-type (für Dashboard, normale Analyse etc.)",
+      public: "/api/analyze-type/public (für Better Contracts)"
+    },
+    timestamp: new Date().toISOString()
+  });
 });
 
 module.exports = router;

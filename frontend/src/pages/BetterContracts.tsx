@@ -213,7 +213,7 @@ const BetterContracts: React.FC = () => {
     try {
       // Step 1: Detect contract type
       console.log("🔍 Erkenne Vertragstyp...");
-      const typeRes = await fetch("/api/analyze-type", {
+      const typeRes = await fetch("/api/analyze-type/public", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
