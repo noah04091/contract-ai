@@ -67,7 +67,7 @@ try {
   console.error(`❌ Fehler beim Erstellen des Upload-Ordners:`, err);
 }
 
-const transporter = nodemailer.createTransport(EMAIL_CONFIG);
+const transporter = nodemailer.createTransporter(EMAIL_CONFIG);
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // ✅ MULTER Setup (unchanged)
@@ -358,6 +358,14 @@ const connectDB = async () => {
       console.error("❌ Fehler bei Extract-Text-Route:", err);
     }
 
+    // 🆕 BETTER CONTRACTS ROUTE - NUR DIESE ZEILEN HINZUGEFÜGT!
+    try {
+      app.use("/api/better-contracts", require("./routes/betterContracts"));
+      console.log("✅ Better-Contracts-Route geladen unter /api/better-contracts");
+    } catch (err) {
+      console.error("❌ Fehler bei Better-Contracts-Route:", err);
+    }
+
     // ✅ 8. LEGAL PULSE - BLEIBT WIE ES IST (war schon korrekt)
     try {
       app.use("/api/legal-pulse", verifyToken, require("./routes/legalPulse"));
@@ -554,6 +562,7 @@ const connectDB = async () => {
         optimizeRoute: "/api/optimize (FIXED!)",
         s3Routes: "/api/s3/* (FIXED!)",
         uploadRoute: "/api/upload (FIXED!)",
+        betterContractsRoute: "/api/better-contracts (ADDED!)", // ← NEU HINZUGEFÜGT
         s3Status: s3Status,
         message: "🎉 PFAD-CHAOS BEHOBEN - ALLES UNTER /api!"
       });
@@ -608,7 +617,8 @@ const connectDB = async () => {
           optimize: "/api/optimize",
           s3: "/api/s3/*",
           upload: "/api/upload",
-          stripe: "/api/stripe/*"
+          stripe: "/api/stripe/*",
+          betterContracts: "/api/better-contracts" // ← NEU HINZUGEFÜGT
         },
         warning: nonApiRoutes.length > 0 ? "⚠️ Es gibt noch non-/api Routen!" : "✅ Alle Routen unter /api!",
         timestamp: new Date().toISOString()
@@ -654,6 +664,7 @@ const connectDB = async () => {
       console.log(`☁️ S3-Routes: /api/s3/* (FIXED!)`);
       console.log(`📤 Upload-Route: /api/upload (FIXED!)`);
       console.log(`💳 Stripe-Routes: /api/stripe/* (FIXED!)`);
+      console.log(`🔍 Better-Contracts-Route: /api/better-contracts (ADDED!)`); // ← NEU HINZUGEFÜGT
       console.log(`✅ EINHEITLICHE /api STRUKTUR - BEREIT FÜR VERCEL!`);
     });
 
