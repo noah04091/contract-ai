@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";  // ← NEU
+import { useAuth } from "../hooks/useAuth";        // ← NEU
 import BetterContractsResults from "../components/BetterContractsResults";
 import "../styles/ContractPages.css";
 
@@ -27,6 +29,10 @@ interface ErrorWithMessage {
 }
 
 const BetterContracts: React.FC = () => {
+  // 🆕 AUTH HOOKS (ohne loading):
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
   const [contractText, setContractText] = useState("");
   const [contractType, setContractType] = useState("");
   const [currentPrice, setCurrentPrice] = useState<number | null>(null);
@@ -40,6 +46,13 @@ const BetterContracts: React.FC = () => {
   const [step, setStep] = useState(1);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [analyzingProgress, setAnalyzingProgress] = useState(0);
+
+  // 🆕 AUTH CHECK (vereinfacht):
+  useEffect(() => {
+    if (!user) {
+      navigate('/login?redirect=/better-contracts', { replace: true });
+    }
+  }, [user, navigate]);
 
   useEffect(() => {
     if (loading) {
@@ -58,6 +71,20 @@ const BetterContracts: React.FC = () => {
       setAnalyzingProgress(0);
     }
   }, [loading]);
+
+  // 🆕 FALLBACK wenn User nicht eingeloggt:
+  if (!user) {
+    return (
+      <div className="contract-page">
+        <div className="contract-container">
+          <div style={{ textAlign: 'center', padding: '2rem' }}>
+            <div className="spinner"></div>
+            <p>Prüfe Anmeldung...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Generate smart search query based on contract type
   const generateSearchQuery = (detectedType: string): string => {
@@ -134,7 +161,7 @@ const BetterContracts: React.FC = () => {
     formData.append("file", file);
 
     try {
-      const res = await fetch("/api/extract-text", {
+      const res = await fetch("/api/extract-text/public", {
         method: "POST",
         credentials: "include",
         body: formData
