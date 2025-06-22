@@ -99,7 +99,7 @@ export default function ForgotPassword() {
           <div className={styles.headerBlur} />
         </motion.div>
 
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="wait" initial={false}>
           {formStatus === 'idle' ? (
             <motion.form 
               key="reset-form"

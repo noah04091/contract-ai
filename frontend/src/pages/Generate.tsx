@@ -565,7 +565,7 @@ export default function Generate() {
             layout
             transition={{ duration: 0.3 }}
           >
-            <AnimatePresence mode="wait">
+            <AnimatePresence mode="wait" initial={false}>
               {/* Step 1: Contract Type Selection */}
               {currentStep === 1 && (
                 <motion.div

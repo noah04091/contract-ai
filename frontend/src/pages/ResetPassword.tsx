@@ -177,7 +177,7 @@ export default function ResetPassword() {
           <div className={styles.headerBlur} />
         </motion.div>
 
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="wait" initial={false}>
           {tokenValidated === null ? (
             <div className={styles.loadingContainer}>
               <div className={styles.loadingSpinner}></div>

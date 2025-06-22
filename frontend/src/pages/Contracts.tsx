@@ -739,7 +739,7 @@ export default function Contracts() {
           </button>
         </div>
 
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="wait" initial={false}>
           {activeSection === 'upload' && (
             <motion.div 
               key="upload-section"

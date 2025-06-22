@@ -381,7 +381,7 @@ export default function Pricing() {
           </button>
         </motion.div>
 
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="wait" initial={false}>
           {activeTab === 'cards' && (
             <motion.div 
               className={styles.plansContainer}
