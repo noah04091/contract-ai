@@ -162,12 +162,12 @@ export default function Contracts() {
   const applyFilters = useCallback(() => {
     let filtered = [...contracts];
 
-    // Text-Suche
+    // Text-Suche - FIXED: Sichere .toLowerCase() Aufrufe
     if (searchQuery.trim()) {
       filtered = filtered.filter(contract => 
-        contract.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        contract.status.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (contract.kuendigung && contract.kuendigung.toLowerCase().includes(searchQuery.toLowerCase()))
+        (contract.name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+        (contract.status?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+        (contract.kuendigung?.toLowerCase() || '').includes(searchQuery.toLowerCase())
       );
     }
 
