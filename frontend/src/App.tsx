@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Navbar from "./components/Navbar";
 import RequireAuth from "./components/RequireAuth";
 import PageLoader from "./components/PageLoader";
+import ErrorBoundary from "./components/ErrorBoundary";
 import { AuthProvider } from "./context/AuthContext";
 import CookieConsentBanner from "./components/CookieConsentBanner";
 
@@ -72,7 +73,13 @@ function AppWithLoader() {
 
           {/* 🔒 Geschützte Seiten */}
           <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
-          <Route path="/contracts" element={<RequireAuth><Contracts /></RequireAuth>} />
+          <Route path="/contracts" element={
+            <RequireAuth>
+              <ErrorBoundary>
+                <Contracts />
+              </ErrorBoundary>
+            </RequireAuth>
+          } />
           <Route path="/contracts/:id" element={<RequireAuth><ContractDetails /></RequireAuth>} />
           <Route path="/contracts/:id/edit" element={<RequireAuth><EditContract /></RequireAuth>} />
           <Route path="/me" element={<RequireAuth><Profile /></RequireAuth>} />
