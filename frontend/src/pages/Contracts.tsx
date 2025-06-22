@@ -174,7 +174,7 @@ export default function Contracts() {
     // Status-Filter
     if (statusFilter !== 'alle') {
       filtered = filtered.filter(contract => {
-        const status = contract.status.toLowerCase();
+        const status = (contract.status?.toLowerCase() || '');
         switch (statusFilter) {
           case 'aktiv':
             return status === 'aktiv' || status === 'gültig';
@@ -219,9 +219,9 @@ export default function Contracts() {
         case 'älteste':
           return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
         case 'name_az':
-          return a.name.localeCompare(b.name);
+          return (a.name || '').localeCompare(b.name || '');
         case 'name_za':
-          return b.name.localeCompare(a.name);
+          return (b.name || '').localeCompare(a.name || '');
         default:
           return 0;
         }
@@ -550,7 +550,7 @@ export default function Contracts() {
   };
 
   const getStatusColor = (status: string): string => {
-    status = status.toLowerCase();
+    status = (status?.toLowerCase() || '');
     if (status === "aktiv" || status === "gültig") {
       return styles.statusActive;
     } else if (status === "läuft ab" || status === "bald fällig") {
