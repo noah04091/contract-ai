@@ -43,6 +43,35 @@ function AppWithLoader() {
   const location = useLocation();
   const [loading, setLoading] = useState(false);
 
+  // 🛡️ DOM Error Handler für removeChild-Fehler
+  useEffect(() => {
+    const handleDOMError = (event: ErrorEvent) => {
+      if (event.error?.message?.includes('removeChild') || 
+          event.error?.name === 'NotFoundError') {
+        console.log('🔧 DOM-Fehler abgefangen:', event.error.message);
+        event.preventDefault(); // Verhindere den Crash
+        event.stopPropagation();
+        return false; // Unterdrücke weitere Error-Propagation
+      }
+    };
+
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      if (event.reason?.message?.includes('removeChild')) {
+        console.log('🔧 Promise-Rejection abgefangen:', event.reason.message);
+        event.preventDefault();
+      }
+    };
+
+    // Global Error Handler registrieren
+    window.addEventListener('error', handleDOMError, true);
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+
+    return () => {
+      window.removeEventListener('error', handleDOMError, true);
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+    };
+  }, []);
+
   useEffect(() => {
     setLoading(true);
     const timer = setTimeout(() => setLoading(false), 300);
@@ -50,54 +79,56 @@ function AppWithLoader() {
   }, [location]);
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-      {loading && <PageLoader />}
-      <Navbar />
-      <main style={{ flex: 1, paddingTop: "60px" }}>
-        <Routes>
-          {/* 🔓 Öffentliche Seiten */}
-          <Route path="/" element={<HomeRedesign />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/pricing" element={<Pricing />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/success" element={<Success />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/impressum" element={<Impressum />} />
-          <Route path="/datenschutz" element={<Datenschutz />} />
-          <Route path="/agb" element={<AGB />} />
-          <Route path="/hilfe" element={<HelpCenter />} />
-          <Route path="/blog" element={<Blog />} />
-          <Route path="/blog/:slug" element={<BlogPost />} />
+    <ErrorBoundary>
+      <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+        {loading && <PageLoader />}
+        <Navbar />
+        <main style={{ flex: 1, paddingTop: "60px" }}>
+          <Routes>
+            {/* 🔓 Öffentliche Seiten */}
+            <Route path="/" element={<HomeRedesign />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/pricing" element={<Pricing />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/success" element={<Success />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/impressum" element={<Impressum />} />
+            <Route path="/datenschutz" element={<Datenschutz />} />
+            <Route path="/agb" element={<AGB />} />
+            <Route path="/hilfe" element={<HelpCenter />} />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/blog/:slug" element={<BlogPost />} />
 
-          {/* 🔒 Geschützte Seiten */}
-          <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
-          <Route path="/contracts" element={
-            <RequireAuth>
-              <ErrorBoundary>
-                <Contracts />
-              </ErrorBoundary>
-            </RequireAuth>
-          } />
-          <Route path="/contracts/:id" element={<RequireAuth><ContractDetails /></RequireAuth>} />
-          <Route path="/contracts/:id/edit" element={<RequireAuth><EditContract /></RequireAuth>} />
-          <Route path="/me" element={<RequireAuth><Profile /></RequireAuth>} />
-          <Route path="/calendar" element={<RequireAuth><CalendarView /></RequireAuth>} />
-          
-          {/* ✨ KI-Vertragsoptimierung - Legendary Feature */}
-          <Route path="/optimizer" element={<RequireAuth><Optimizer /></RequireAuth>} />
-          
-          <Route path="/compare" element={<RequireAuth><Compare /></RequireAuth>} />
-          <Route path="/chat" element={<RequireAuth><Chat /></RequireAuth>} />
-          <Route path="/Generate" element={<RequireAuth><Generate /></RequireAuth>} />
-          <Route path="/subscribe" element={<RequireAuth><Subscribe /></RequireAuth>} />
-          <Route path="/upgrade" element={<RequireAuth><Upgrade /></RequireAuth>} />
-          <Route path="/better-contracts" element={<RequireAuth><BetterContracts /></RequireAuth>} />
-        </Routes>
-      </main>
-      <CookieConsentBanner />
-    </div>
+            {/* 🔒 Geschützte Seiten */}
+            <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
+            <Route path="/contracts" element={
+              <RequireAuth>
+                <ErrorBoundary>
+                  <Contracts />
+                </ErrorBoundary>
+              </RequireAuth>
+            } />
+            <Route path="/contracts/:id" element={<RequireAuth><ContractDetails /></RequireAuth>} />
+            <Route path="/contracts/:id/edit" element={<RequireAuth><EditContract /></RequireAuth>} />
+            <Route path="/me" element={<RequireAuth><Profile /></RequireAuth>} />
+            <Route path="/calendar" element={<RequireAuth><CalendarView /></RequireAuth>} />
+            
+            {/* ✨ KI-Vertragsoptimierung - Legendary Feature */}
+            <Route path="/optimizer" element={<RequireAuth><Optimizer /></RequireAuth>} />
+            
+            <Route path="/compare" element={<RequireAuth><Compare /></RequireAuth>} />
+            <Route path="/chat" element={<RequireAuth><Chat /></RequireAuth>} />
+            <Route path="/Generate" element={<RequireAuth><Generate /></RequireAuth>} />
+            <Route path="/subscribe" element={<RequireAuth><Subscribe /></RequireAuth>} />
+            <Route path="/upgrade" element={<RequireAuth><Upgrade /></RequireAuth>} />
+            <Route path="/better-contracts" element={<RequireAuth><BetterContracts /></RequireAuth>} />
+          </Routes>
+        </main>
+        <CookieConsentBanner />
+      </div>
+    </ErrorBoundary>
   );
 }
 
