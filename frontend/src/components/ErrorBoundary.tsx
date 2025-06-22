@@ -1,5 +1,5 @@
 // 🛡️ components/ErrorBoundary.tsx - Production-Ready Error Boundary
-import { Component, ReactNode } from 'react';
+import { Component, ReactNode, ErrorInfo } from 'react';
 import { motion } from 'framer-motion';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import styles from '../styles/ErrorBoundary.module.css';
@@ -13,7 +13,7 @@ interface Props {
 interface State {
   hasError: boolean;
   error: Error | null;
-  errorInfo: any;
+  errorInfo: ErrorInfo | null;
   retryCount: number;
 }
 
@@ -38,7 +38,7 @@ class ErrorBoundary extends Component<Props, State> {
     };
   }
 
-  componentDidCatch(error: Error, errorInfo: any) {
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('🚨 ErrorBoundary caught an error:', error);
     console.error('📊 Error Info:', errorInfo);
     
