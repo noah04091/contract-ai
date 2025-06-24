@@ -17,31 +17,31 @@ export function applyDOMProtectionFix() {
     // removeChild Protection
     Node.prototype.removeChild = function (this: Node, child: Node): Node {
       try {
-        // Prüfe ob Child wirklich ein Kind dieses Nodes ist
         if (!child || child.parentNode !== this) {
           console.warn("🛡️ DOM Protection: removeChild - Node ist nicht Child von Parent", {
             parent: this,
             child: child,
             actualParent: child?.parentNode
           });
-          return child; // Stil zurückgeben ohne Fehler
+          return child;
         }
-        
+
         return originalRemoveChild.call(this, child);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
         if (error.name === 'NotFoundError') {
           console.log("🛡️ DOM Protection: NotFoundError bei removeChild abgefangen", error.message);
           return child;
         }
-        // Andere Fehler normal weiterwerfen
         throw error;
       }
     } as any;
 
-    // insertBefore Protection (oft verwandt mit removeChild Problemen)
+    // insertBefore Protection
     Node.prototype.insertBefore = function (this: Node, newNode: Node, referenceNode: Node | null): Node {
       try {
         return originalInsertBefore.call(this, newNode, referenceNode);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
         if (error.name === 'NotFoundError') {
           console.log("🛡️ DOM Protection: NotFoundError bei insertBefore abgefangen, fallback zu appendChild");
