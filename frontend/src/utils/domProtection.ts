@@ -1,5 +1,7 @@
-// src/utils/domProtection.ts
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// DOM Protection Fix - any ist notwendig für DOM-Prototype-Patching
 
+// src/utils/domProtection.ts
 declare global {
   interface Window {
     __domProtectionApplied?: boolean;
@@ -25,9 +27,7 @@ export function applyDOMProtectionFix() {
           });
           return child;
         }
-
         return originalRemoveChild.call(this, child);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
         if (error.name === 'NotFoundError') {
           console.log("🛡️ DOM Protection: NotFoundError bei removeChild abgefangen", error.message);
@@ -41,7 +41,6 @@ export function applyDOMProtectionFix() {
     Node.prototype.insertBefore = function (this: Node, newNode: Node, referenceNode: Node | null): Node {
       try {
         return originalInsertBefore.call(this, newNode, referenceNode);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
         if (error.name === 'NotFoundError') {
           console.log("🛡️ DOM Protection: NotFoundError bei insertBefore abgefangen, fallback zu appendChild");
