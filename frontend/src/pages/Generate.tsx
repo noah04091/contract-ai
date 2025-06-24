@@ -453,6 +453,12 @@ export default function Generate() {
       const container = contractRef.current;
       if (!container) return;
 
+      // Phase 3: Schutz vor leerem DOM bei PDF-Export
+      if (!container || !container.innerHTML.trim()) {
+        alert("⚠️ Der Vertrag konnte nicht exportiert werden – keine Inhalte gefunden.");
+        return;
+      }
+
       // Add signature if exists
       const signatureDiv = document.createElement("div");
       if (signatureURL) {

@@ -84,6 +84,13 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
         
         document.body.appendChild(tempDiv);
         
+        // Phase 3: Schutz vor leerem DOM bei PDF-Export
+        if (!tempDiv || !tempDiv.innerHTML.trim()) {
+          alert("⚠️ Der Vertrag konnte nicht exportiert werden – keine Inhalte gefunden.");
+          document.body.removeChild(tempDiv);
+          return;
+        }
+        
         try {
           await html2pdf().set(opt).from(tempDiv).save();
           console.log("✅ PDF erfolgreich generiert (ContractContentViewer)");
