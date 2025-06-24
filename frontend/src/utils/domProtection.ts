@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// DOM Protection Fix - any ist notwendig für DOM-Prototype-Patching
+// DOM Protection Fix – any ist notwendig für DOM-Prototype-Patching
 
 // src/utils/domProtection.ts
 declare global {
@@ -10,7 +10,9 @@ declare global {
 
 export function applyDOMProtectionFix() {
   if (typeof window !== "undefined" && !window.__domProtectionApplied) {
-    console.log("🛡️ DOM Protection wird aktiviert...");
+    if (process.env.NODE_ENV === "development") {
+      console.log("🛡️ DOM Protection wird aktiviert...");
+    }
 
     // Original-Funktionen sichern
     const originalRemoveChild = Node.prototype.removeChild;
@@ -20,17 +22,21 @@ export function applyDOMProtectionFix() {
     Node.prototype.removeChild = function (this: Node, child: Node): Node {
       try {
         if (!child || child.parentNode !== this) {
-          console.warn("🛡️ DOM Protection: removeChild - Node ist nicht Child von Parent", {
-            parent: this,
-            child: child,
-            actualParent: child?.parentNode
-          });
+          if (process.env.NODE_ENV === "development") {
+            console.warn("🛡️ DOM Protection: removeChild - Node ist nicht Child von Parent", {
+              parent: this,
+              child: child,
+              actualParent: child?.parentNode
+            });
+          }
           return child;
         }
         return originalRemoveChild.call(this, child);
       } catch (error: any) {
-        if (error.name === 'NotFoundError') {
-          console.log("🛡️ DOM Protection: NotFoundError bei removeChild abgefangen", error.message);
+        if (error.name === "NotFoundError") {
+          if (process.env.NODE_ENV === "development") {
+            console.log("🛡️ DOM Protection: NotFoundError bei removeChild abgefangen", error.message);
+          }
           return child;
         }
         throw error;
@@ -42,8 +48,10 @@ export function applyDOMProtectionFix() {
       try {
         return originalInsertBefore.call(this, newNode, referenceNode);
       } catch (error: any) {
-        if (error.name === 'NotFoundError') {
-          console.log("🛡️ DOM Protection: NotFoundError bei insertBefore abgefangen, fallback zu appendChild");
+        if (error.name === "NotFoundError") {
+          if (process.env.NODE_ENV === "development") {
+            console.log("🛡️ DOM Protection: NotFoundError bei insertBefore abgefangen, fallback zu appendChild");
+          }
           return this.appendChild(newNode);
         }
         throw error;
@@ -51,6 +59,9 @@ export function applyDOMProtectionFix() {
     } as any;
 
     window.__domProtectionApplied = true;
-    console.log("✅ DOM Protection erfolgreich aktiviert");
+
+    if (process.env.NODE_ENV === "development") {
+      console.log("✅ DOM Protection erfolgreich aktiviert");
+    }
   }
 }
