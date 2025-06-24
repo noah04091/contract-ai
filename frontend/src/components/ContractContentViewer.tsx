@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // ContractContentViewer.tsx - Neue Komponente für Vertragsinhalt
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -83,7 +84,13 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
         
         document.body.appendChild(tempDiv);
         
-        await html2pdf().set(opt).from(tempDiv).save();
+        try {
+          await html2pdf().set(opt).from(tempDiv).save();
+          console.log("✅ PDF erfolgreich generiert (ContractContentViewer)");
+        } catch (pdfError) {
+          console.error("❌ PDF-Export fehlgeschlagen (ContractContentViewer)", pdfError);
+          alert("Beim Exportieren des Vertrags ist ein Fehler aufgetreten. Bitte versuche es erneut.");
+        }
         
         document.body.removeChild(tempDiv);
       }

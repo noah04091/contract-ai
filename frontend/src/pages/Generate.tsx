@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -484,7 +485,13 @@ export default function Generate() {
         },
       };
 
-      await html2pdf().from(container).set(opt).save();
+      try {
+        await html2pdf().from(container).set(opt).save();
+        console.log("✅ PDF erfolgreich generiert (Generate)");
+      } catch (pdfError) {
+        console.error("❌ PDF-Export fehlgeschlagen (Generate)", pdfError);
+        alert("Beim Exportieren des generierten Vertrags ist ein Fehler aufgetreten. Bitte versuche es erneut.");
+      }
       
       // Cleanup
       if (signatureDiv && container.contains(signatureDiv)) {
