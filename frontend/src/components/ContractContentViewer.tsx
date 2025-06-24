@@ -3,6 +3,7 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FileText, Download, Maximize2, X, Eye, Copy, CheckCircle, Printer } from 'lucide-react';
+import { toast } from 'react-toastify';
 
 interface ContractContentViewerProps {
   contract: {
@@ -86,24 +87,24 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
         
         // Phase 3: Schutz vor leerem DOM bei PDF-Export
         if (!tempDiv || !tempDiv.innerHTML.trim()) {
-          alert("⚠️ Der Vertrag konnte nicht exportiert werden – keine Inhalte gefunden.");
+          toast.warning("⚠️ Der Vertrag konnte nicht exportiert werden – keine Inhalte gefunden.");
           document.body.removeChild(tempDiv);
           return;
         }
         
         try {
           await html2pdf().set(opt).from(tempDiv).save();
-          console.log("✅ PDF erfolgreich generiert (ContractContentViewer)");
+          toast.success("✅ PDF erfolgreich generiert und heruntergeladen!");
         } catch (pdfError) {
           console.error("❌ PDF-Export fehlgeschlagen (ContractContentViewer)", pdfError);
-          alert("Beim Exportieren des Vertrags ist ein Fehler aufgetreten. Bitte versuche es erneut.");
+          toast.error("Beim Exportieren des Vertrags ist ein Fehler aufgetreten. Bitte versuche es erneut.");
         }
         
         document.body.removeChild(tempDiv);
       }
     } catch (error) {
       console.error('PDF-Export fehlgeschlagen:', error);
-      alert('PDF-Export fehlgeschlagen. Bitte versuchen Sie es erneut.');
+      toast.error('PDF-Export fehlgeschlagen. Bitte versuchen Sie es erneut.');
     }
   };
 
@@ -168,9 +169,11 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
     try {
       await navigator.clipboard.writeText(displayContent);
       setCopySuccess(true);
+      toast.success("📋 Text erfolgreich kopiert!");
       setTimeout(() => setCopySuccess(false), 2000);
     } catch (error) {
       console.error('Kopieren fehlgeschlagen:', error);
+      toast.error('Kopieren fehlgeschlagen. Bitte versuchen Sie es erneut.');
     }
   };
 

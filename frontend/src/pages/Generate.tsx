@@ -8,6 +8,7 @@ import {
   Eye, PenTool, RefreshCw, Zap
 } from "lucide-react";
 import styles from "../styles/Generate.module.css";
+import { toast } from 'react-toastify';
 
 // Types
 interface FormDataType {
@@ -345,7 +346,7 @@ export default function Generate() {
       setShowPreview(true);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Unbekannter Fehler";
-      alert("❌ Fehler: " + msg);
+      toast.error("❌ Fehler: " + msg);
     } finally {
       setLoading(false);
     }
@@ -355,9 +356,10 @@ export default function Generate() {
     try {
       await navigator.clipboard.writeText(generated);
       setCopied(true);
+      toast.success("📋 Vertrag erfolgreich kopiert!");
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      alert("❌ Kopieren fehlgeschlagen.");
+      toast.error("❌ Kopieren fehlgeschlagen.");
     }
   };
 
@@ -391,7 +393,7 @@ export default function Generate() {
       setSaved(true);
       
       // ✅ NEU: Erfolgreiche Benachrichtigung mit automatischer Weiterleitung
-      alert("✅ Vertrag wurde erfolgreich gespeichert! Sie werden zum Dashboard weitergeleitet.");
+      toast.success("✅ Vertrag wurde erfolgreich gespeichert! Sie werden zum Dashboard weitergeleitet.");
       
       // ✅ NEU: Automatische Weiterleitung zum Dashboard nach 1 Sekunde
       setTimeout(() => {
@@ -401,7 +403,7 @@ export default function Generate() {
     } catch (err) {
       console.error("❌ Save error:", err);
       const msg = err instanceof Error ? err.message : "Unbekannter Fehler";
-      alert("❌ Fehler beim Speichern: " + msg);
+      toast.error("❌ Fehler beim Speichern: " + msg);
     }
   };
 
@@ -421,7 +423,7 @@ export default function Generate() {
         const blankData = blankCanvas.toDataURL();
         
         if (canvasData === blankData) {
-          alert("Bitte zeichnen Sie zuerst eine Unterschrift!");
+          toast.warning("🖊️ Bitte zeichnen Sie zuerst eine Unterschrift!");
           return;
         }
       }
@@ -429,7 +431,7 @@ export default function Generate() {
       const dataURL = canvas.toDataURL("image/png");
       setSignatureURL(dataURL);
       console.log("🖊️ Unterschrift erfolgreich gespeichert!");
-      alert("✅ Unterschrift wurde erfolgreich gespeichert!");
+      toast.success("✅ Unterschrift wurde erfolgreich gespeichert!");
     }
   };
 
@@ -455,7 +457,7 @@ export default function Generate() {
 
       // Phase 3: Schutz vor leerem DOM bei PDF-Export
       if (!container || !container.innerHTML.trim()) {
-        alert("⚠️ Der Vertrag konnte nicht exportiert werden – keine Inhalte gefunden.");
+        toast.warning("⚠️ Der Vertrag konnte nicht exportiert werden – keine Inhalte gefunden.");
         return;
       }
 
@@ -493,10 +495,10 @@ export default function Generate() {
 
       try {
         await html2pdf().from(container).set(opt).save();
-        console.log("✅ PDF erfolgreich generiert (Generate)");
+        toast.success("✅ PDF erfolgreich generiert und heruntergeladen!");
       } catch (pdfError) {
         console.error("❌ PDF-Export fehlgeschlagen (Generate)", pdfError);
-        alert("Beim Exportieren des generierten Vertrags ist ein Fehler aufgetreten. Bitte versuche es erneut.");
+        toast.error("Beim Exportieren des generierten Vertrags ist ein Fehler aufgetreten. Bitte versuche es erneut.");
       }
       
       // Cleanup
@@ -505,7 +507,7 @@ export default function Generate() {
       }
     } catch (error) {
       console.error("PDF generation failed:", error);
-      alert("❌ Fehler beim PDF-Export");
+      toast.error("❌ Fehler beim PDF-Export");
     }
   };
 
