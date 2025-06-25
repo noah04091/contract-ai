@@ -1,4 +1,4 @@
-// 📁 src/pages/Contracts.tsx - JSX FIXED: Motion Button closing tag korrigiert + ANALYSE-ANZEIGE GEFIXT
+// 📁 src/pages/Contracts.tsx - JSX FIXED: Motion Button closing tag korrigiert + ANALYSE-ANZEIGE GEFIXT + RESPONSIVE
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -667,6 +667,95 @@ export default function Contracts() {
   const canMultiUpload = userInfo.subscriptionPlan === 'premium';
   const hasAnalysesLeft = userInfo.analysisLimit === Infinity || userInfo.analysisCount < userInfo.analysisLimit;
 
+  // ✅ RESPONSIVE: Mobile Card Component
+  const MobileContractCard = ({ contract }: { contract: Contract }) => (
+    <motion.div 
+      className={styles.contractCard}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      onClick={() => handleRowClick(contract)}
+    >
+      {/* Card Header */}
+      <div className={styles.cardHeader}>
+        <div className={styles.cardIcon}>
+          <FileText size={20} />
+        </div>
+        <div className={styles.cardTitle}>
+          <h3 className={styles.cardFileName}>{contract.name}</h3>
+          <div className={styles.cardStatus}>
+            <span className={`${styles.statusBadge} ${getStatusColor(contract.status)}`}>
+              {contract.status}
+            </span>
+            {contract.isGenerated && (
+              <span className={styles.generatedBadge}>Generiert</span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Card Details Grid */}
+      <div className={styles.cardDetails}>
+        <div className={styles.cardDetailItem}>
+          <span className={styles.cardDetailLabel}>Kündigungsfrist</span>
+          <div className={styles.cardDetailValue}>
+            <Clock size={14} />
+            <span>{contract.kuendigung || "—"}</span>
+          </div>
+        </div>
+        
+        <div className={styles.cardDetailItem}>
+          <span className={styles.cardDetailLabel}>Ablaufdatum</span>
+          <div className={styles.cardDetailValue}>
+            <Calendar size={14} />
+            <span>{formatDate(contract.expiryDate)}</span>
+          </div>
+        </div>
+        
+        <div className={`${styles.cardDetailItem} ${styles.fullWidth}`}>
+          <span className={styles.cardDetailLabel}>Upload-Datum</span>
+          <div className={styles.cardDetailValue}>
+            <span>{formatDate(contract.createdAt)}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Card Actions */}
+      <div className={styles.cardActions}>
+        <button 
+          className={styles.cardActionButton}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleRowClick(contract);
+          }}
+        >
+          <Eye size={14} />
+          <span>Details</span>
+        </button>
+        <button 
+          className={styles.cardActionButton}
+          onClick={(e) => {
+            e.stopPropagation();
+            console.log("Edit contract:", contract._id);
+          }}
+        >
+          <Edit size={14} />
+          <span>Bearbeiten</span>
+        </button>
+        <button 
+          className={`${styles.cardActionButton} ${styles.delete}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleDeleteContract(contract._id, contract.name);
+          }}
+        >
+          <Trash2 size={14} />
+          <span>Löschen</span>
+        </button>
+      </div>
+    </motion.div>
+  );
+
   return (
     <div className={styles.pageContainer}>
       <motion.div 
@@ -1243,102 +1332,116 @@ export default function Contracts() {
                   )}
                 </div>
               ) : (
-                <div className={styles.tableContainer}>
-                  <table className={styles.contractsTable}>
-                    <thead>
-                      <tr>
-                        <th>Vertragsname</th>
-                        <th>Kündigungsfrist</th>
-                        <th>Ablaufdatum</th>
-                        <th>Status</th>
-                        <th>Upload-Datum</th>
-                        <th>Aktionen</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredContracts.map((contract) => (
-                        <motion.tr 
-                          key={contract._id} 
-                          className={styles.tableRow}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ duration: 0.3 }}
-                          onClick={() => handleRowClick(contract)}
-                        >
-                          <td>
-                            <div className={styles.contractName}>
-                              <div className={styles.contractIcon}>
-                                <FileText size={16} />
+                // ✅ RESPONSIVE CONTAINER - Zeigt Tabelle UND Mobile Cards
+                <>
+                  {/* ✅ DESKTOP/TABLET TABLE */}
+                  <div className={styles.tableContainer}>
+                    <table className={styles.contractsTable}>
+                      <thead>
+                        <tr>
+                          <th>Vertragsname</th>
+                          <th>Kündigungsfrist</th>
+                          <th>Ablaufdatum</th>
+                          <th>Status</th>
+                          <th>Upload-Datum</th>
+                          <th>Aktionen</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredContracts.map((contract) => (
+                          <motion.tr 
+                            key={contract._id} 
+                            className={styles.tableRow}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.3 }}
+                            onClick={() => handleRowClick(contract)}
+                          >
+                            <td>
+                              <div className={styles.contractName}>
+                                <div className={styles.contractIcon}>
+                                  <FileText size={16} />
+                                </div>
+                                <div>
+                                  <span className={styles.contractNameText}>{contract.name}</span>
+                                  {contract.isGenerated && (
+                                    <span className={styles.generatedBadge}>Generiert</span>
+                                  )}
+                                </div>
                               </div>
-                              <div>
-                                <span className={styles.contractNameText}>{contract.name}</span>
-                                {contract.isGenerated && (
-                                  <span className={styles.generatedBadge}>Generiert</span>
-                                )}
+                            </td>
+                            <td>
+                              <div className={styles.contractDetail}>
+                                <Clock size={14} className={styles.detailIcon} />
+                                <span>{contract.kuendigung || "—"}</span>
                               </div>
-                            </div>
-                          </td>
-                          <td>
-                            <div className={styles.contractDetail}>
-                              <Clock size={14} className={styles.detailIcon} />
-                              <span>{contract.kuendigung || "—"}</span>
-                            </div>
-                          </td>
-                          <td>
-                            <div className={styles.contractDetail}>
-                              <Calendar size={14} className={styles.detailIcon} />
-                              <span>{formatDate(contract.expiryDate)}</span>
-                            </div>
-                          </td>
-                          <td>
-                            <span className={`${styles.statusBadge} ${getStatusColor(contract.status)}`}>
-                              {contract.status}
-                            </span>
-                          </td>
-                          <td>
-                            <span className={styles.uploadDate}>
-                              {formatDate(contract.createdAt)}
-                            </span>
-                          </td>
-                          <td>
-                            <div className={styles.actionButtons}>
-                              <button 
-                                className={styles.actionButton}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleRowClick(contract);
-                                }}
-                                title="Details anzeigen"
-                              >
-                                <Eye size={16} />
-                              </button>
-                              <button 
-                                className={styles.actionButton}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  console.log("Edit contract:", contract._id);
-                                }}
-                                title="Bearbeiten"
-                              >
-                                <Edit size={16} />
-                              </button>
-                              <button 
-                                className={`${styles.actionButton} ${styles.deleteButton}`}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDeleteContract(contract._id, contract.name);
-                                }}
-                                title="Löschen"
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            </div>
-                          </td>
-                        </motion.tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                            </td>
+                            <td>
+                              <div className={styles.contractDetail}>
+                                <Calendar size={14} className={styles.detailIcon} />
+                                <span>{formatDate(contract.expiryDate)}</span>
+                              </div>
+                            </td>
+                            <td>
+                              <span className={`${styles.statusBadge} ${getStatusColor(contract.status)}`}>
+                                {contract.status}
+                              </span>
+                            </td>
+                            <td>
+                              <span className={styles.uploadDate}>
+                                {formatDate(contract.createdAt)}
+                              </span>
+                            </td>
+                            <td>
+                              <div className={styles.actionButtons}>
+                                <button 
+                                  className={styles.actionButton}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRowClick(contract);
+                                  }}
+                                  title="Details anzeigen"
+                                >
+                                  <Eye size={16} />
+                                </button>
+                                <button 
+                                  className={styles.actionButton}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    console.log("Edit contract:", contract._id);
+                                  }}
+                                  title="Bearbeiten"
+                                >
+                                  <Edit size={16} />
+                                </button>
+                                <button 
+                                  className={`${styles.actionButton} ${styles.deleteButton}`}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteContract(contract._id, contract.name);
+                                  }}
+                                  title="Löschen"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </div>
+                            </td>
+                          </motion.tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* ✅ MOBILE CARDS - Automatically shown on mobile via CSS */}
+                  <div className={styles.mobileCardsContainer}>
+                    {filteredContracts.map((contract) => (
+                      <MobileContractCard
+                        key={`mobile-${contract._id}`}
+                        contract={contract}
+                      />
+                    ))}
+                  </div>
+                </>
               )}
             </motion.div>
           )}
