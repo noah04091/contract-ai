@@ -1,4 +1,4 @@
-// 📁 src/pages/Contracts.tsx - JSX FIXED: Motion Button closing tag korrigiert
+// 📁 src/pages/Contracts.tsx - JSX FIXED: Motion Button closing tag korrigiert + ANALYSE-ANZEIGE GEFIXT
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -241,7 +241,7 @@ export default function Contracts() {
     fetchContracts();
   }, []);
 
-  // ✅ KORRIGIERT: Mehrfach-Upload Handler mit Plan-Validierung
+  // ✅ KORRIGIERT: Mehrfach-Upload Handler mit Plan-Validierung + ANALYSE-FIX
   const handleMultipleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -273,6 +273,13 @@ export default function Contracts() {
     }));
 
     setUploadFiles(newUploadFiles);
+    
+    // ✅ CRITICAL FIX: selectedFile für Single-Upload setzen
+    if (files.length === 1) {
+      setSelectedFile(files[0]); // ⭐ DAS FEHLTE!
+      console.log("✅ selectedFile gesetzt für Single-Upload:", files[0].name);
+    }
+    
     setActiveSection('upload');
 
     console.log(`✅ ${files.length} Dateien für Upload vorbereitet (${userInfo.subscriptionPlan})`);
@@ -497,12 +504,19 @@ export default function Contracts() {
       }));
 
       setUploadFiles(newUploadFiles);
+      
+      // ✅ CRITICAL FIX: selectedFile für Single-Upload setzen (auch bei Drag&Drop)
+      if (files.length === 1) {
+        setSelectedFile(files[0]); // ⭐ DAS FEHLTE!
+        console.log("✅ selectedFile gesetzt für Single-Upload (Drag&Drop):", files[0].name);
+      }
+      
       setActiveSection('upload');
     }
   };
 
   const handleReset = () => {
-    setSelectedFile(null);
+    setSelectedFile(null); // ✅ CRITICAL FIX: selectedFile auch zurücksetzen
     clearAllUploadFiles();
     setActiveSection('contracts');
     fetchContracts();
@@ -1034,9 +1048,14 @@ export default function Contracts() {
                     )}
                   </div>
 
-                  {selectedFile && uploadFiles.length === 1 && (
+                  {/* ✅ CRITICAL FIX: ContractAnalysis wird jetzt korrekt gerendert mit initialResult */}
+                  {selectedFile && uploadFiles.length === 1 && uploadFiles[0].status === 'completed' && (
                     <div className={styles.analysisContainer}>
-                      <ContractAnalysis file={selectedFile} onReset={handleReset} />
+                      <ContractAnalysis 
+                        file={selectedFile} 
+                        onReset={handleReset}
+                        initialResult={uploadFiles[0].result} // ⭐ PASS RESULT DIRECTLY
+                      />
                     </div>
                   )}
                 </>

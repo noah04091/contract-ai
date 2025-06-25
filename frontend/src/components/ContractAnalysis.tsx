@@ -15,6 +15,7 @@ interface ContractAnalysisProps {
   file: File;
   onReset: () => void;
   onNavigateToContract?: (contractId: string) => void; // ✅ NEU: Navigation zu bestehendem Vertrag
+  initialResult?: AnalysisResult; // ✅ CRITICAL FIX: Neue prop für vorhandene Ergebnisse
 }
 
 interface AnalysisResult {
@@ -72,7 +73,7 @@ interface OptimizationResult {
   error?: string;
 }
 
-export default function ContractAnalysis({ file, onReset, onNavigateToContract }: ContractAnalysisProps) {
+export default function ContractAnalysis({ file, onReset, onNavigateToContract, initialResult }: ContractAnalysisProps) {
   const [analyzing, setAnalyzing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [result, setResult] = useState<AnalysisResult | null>(null);
@@ -95,6 +96,20 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract }
     checkAnalyzeHealth().then(setServiceHealth);
   }, []);
 
+  // ✅ CRITICAL FIX: useEffect um initialResult zu setzen
+  useEffect(() => {
+    if (initialResult) {
+      console.log("📊 InitialResult gefunden - zeige vorhandene Analyse an:", initialResult);
+      setResult(initialResult);
+      setProgress(100);
+      setAnalyzing(false);
+      setError(null);
+      
+      // Optional: Success-Message anzeigen
+      console.log("✅ Analyse bereits vorhanden - wird direkt angezeigt");
+    }
+  }, [initialResult]);
+
   // ✅ FIXED: Robustes State-Reset
   const resetAllStates = () => {
     console.log("🔄 Resetting all states...");
@@ -112,8 +127,14 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract }
     setShowNavigationMessage(false); // ✅ NEU: Reset auch Navigation-Message
   };
 
-  // ✅ FIXED: Robustes handleAnalyze mit besserem TypeScript-Handling
+  // ✅ FIXED: Robustes handleAnalyze mit besserem TypeScript-Handling + initialResult-Support
   const handleAnalyze = async (forceReanalyze = false) => {
+    // ✅ Wenn initialResult vorhanden und nicht forceReanalyze, nichts tun
+    if (initialResult && !forceReanalyze) {
+      console.log("📊 InitialResult vorhanden - überspringe Analyse");
+      return;
+    }
+
     console.log("🔄 Starte Analyse für:", file.name, forceReanalyze ? "(Re-Analyse)" : "");
     
     // ✅ WICHTIG: States zurücksetzen VOR der Analyse
@@ -543,12 +564,20 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract }
                     Aktualisiert
                   </span>
                 )}
+                {/* ✅ CRITICAL FIX: Badge für vorhandene Analyse */}
+                {initialResult && (
+                  <span className={styles.initialResultBadge}>
+                    <CheckCircle size={12} />
+                    Bereits analysiert
+                  </span>
+                )}
               </p>
             </div>
           </div>
           
           <div className={styles.actions}>
-            {!result && !analyzing && (
+            {/* ✅ CRITICAL FIX: Button-Logik für initialResult */}
+            {!result && !analyzing && !initialResult && (
               <motion.button 
                 className={styles.analyzeButton}
                 onClick={() => handleAnalyze(false)}
@@ -560,6 +589,19 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract }
                 <span>
                   {retryCount > 0 ? `Erneut versuchen (${retryCount})` : 'Analyse starten'}
                 </span>
+              </motion.button>
+            )}
+
+            {/* ✅ CRITICAL FIX: Re-Analyse Button wenn initialResult vorhanden */}
+            {initialResult && !analyzing && (
+              <motion.button 
+                className={styles.reanalyzeButton}
+                onClick={() => handleAnalyze(true)}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <RefreshCw size={18} />
+                <span>Erneut analysieren</span>
               </motion.button>
             )}
             
@@ -587,8 +629,8 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract }
         </div>
       </div>
 
-      {/* Progress */}
-      {analyzing && (
+      {/* ✅ CRITICAL FIX: Progress nur wenn aktuell analysiert wird (nicht bei initialResult) */}
+      {analyzing && !initialResult && (
         <motion.div 
           className={styles.progressContainer}
           initial={{ opacity: 0, y: 20 }}
@@ -730,66 +772,73 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract }
         </motion.div>
       )}
 
-      {/* Results */}
-      {result && result.success && (
+      {/* ✅ CRITICAL FIX: Results - funktioniert sowohl für neue als auch initialResult */}
+      {((result && result.success) || (initialResult && initialResult.success)) && (
         <motion.div 
           className={styles.resultsContainer}
           ref={analysisResultRef}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          {/* Success Header */}
+          {/* ✅ CRITICAL FIX: Success Header - angepasst für initialResult */}
           <div className={styles.successHeader}>
             <div className={styles.successInfo}>
               <CheckCircle size={28} className={styles.successIcon} />
               <div className={styles.successDetails}>
                 <h4>
-                  {result.isReanalysis ? 'Analyse aktualisiert' : 'Analyse abgeschlossen'}
+                  {initialResult 
+                    ? 'Analyse bereits verfügbar' 
+                    : result?.isReanalysis 
+                      ? 'Analyse aktualisiert' 
+                      : 'Analyse abgeschlossen'
+                  }
                 </h4>
                 <p>
-                  {result.isReanalysis 
-                    ? 'Bestehende Vertragsanalyse wurde erfolgreich überschrieben'
-                    : 'Rechtssichere Vertragseinschätzung in Sekunden'
+                  {initialResult 
+                    ? 'Diese Datei wurde bereits analysiert - Ergebnisse werden angezeigt'
+                    : result?.isReanalysis 
+                      ? 'Bestehende Vertragsanalyse wurde erfolgreich überschrieben'
+                      : 'Rechtssichere Vertragseinschätzung in Sekunden'
                   }
                 </p>
               </div>
             </div>
-            {result.requestId && (
+            {(result?.requestId || initialResult?.requestId) && (
               <span className={styles.requestId}>
-                ID: {result.requestId}
+                ID: {result?.requestId || initialResult?.requestId}
               </span>
             )}
           </div>
 
-          {/* Contract Score */}
-          {result.contractScore && (
+          {/* ✅ CRITICAL FIX: Contract Score - funktioniert für beide */}
+          {(result?.contractScore || initialResult?.contractScore) && (
             <div className={styles.scoreSection}>
               <h5 className={styles.scoreSectionTitle}>Contract Score</h5>
               
               <div className={styles.scoreSectionContent}>
-                <ScoreCircle score={result.contractScore} />
+                <ScoreCircle score={result?.contractScore || initialResult?.contractScore || 0} />
               </div>
               
               <div className={styles.scoreInfoContainer}>
-                {getScoreIcon(result.contractScore)}
-                <span className={styles.scoreLabel} style={{ color: getScoreColor(result.contractScore) }}>
-                  {getScoreLabel(result.contractScore)}
+                {getScoreIcon(result?.contractScore || initialResult?.contractScore || 0)}
+                <span className={styles.scoreLabel} style={{ color: getScoreColor(result?.contractScore || initialResult?.contractScore || 0) }}>
+                  {getScoreLabel(result?.contractScore || initialResult?.contractScore || 0)}
                 </span>
               </div>
               
               <p className={styles.scoreDescription}>
-                {result.contractScore >= 80 && "Dieser Vertrag bietet eine sehr gute Rechtssicherheit und faire Konditionen."}
-                {result.contractScore >= 60 && result.contractScore < 80 && "Dieser Vertrag ist grundsätzlich in Ordnung, hat aber Verbesserungspotential."}
-                {result.contractScore >= 40 && result.contractScore < 60 && "Dieser Vertrag weist einige Schwächen auf und sollte überprüft werden."}
-                {result.contractScore < 40 && "Dieser Vertrag enthält kritische Punkte und sollte dringend überarbeitet werden."}
+                {(result?.contractScore || initialResult?.contractScore || 0) >= 80 && "Dieser Vertrag bietet eine sehr gute Rechtssicherheit und faire Konditionen."}
+                {(result?.contractScore || initialResult?.contractScore || 0) >= 60 && (result?.contractScore || initialResult?.contractScore || 0) < 80 && "Dieser Vertrag ist grundsätzlich in Ordnung, hat aber Verbesserungspotential."}
+                {(result?.contractScore || initialResult?.contractScore || 0) >= 40 && (result?.contractScore || initialResult?.contractScore || 0) < 60 && "Dieser Vertrag weist einige Schwächen auf und sollte überprüft werden."}
+                {(result?.contractScore || initialResult?.contractScore || 0) < 40 && "Dieser Vertrag enthält kritische Punkte und sollte dringend überarbeitet werden."}
               </p>
             </div>
           )}
 
-          {/* Analysis Details */}
+          {/* ✅ CRITICAL FIX: Analysis Details - funktioniert für beide */}
           <div className={styles.detailsGrid}>
             {/* Zusammenfassung */}
-            {result.summary && (
+            {(result?.summary || initialResult?.summary) && (
               <div className={styles.detailCard}>
                 <div className={styles.detailHeader}>
                   <div className={`${styles.detailIconContainer} ${styles.blueIcon}`}>
@@ -799,7 +848,7 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract }
                 </div>
                 <div className={styles.cardContent}>
                   <ul className={styles.pointsList}>
-                    {formatTextToPoints(result.summary).map((point, index) => (
+                    {formatTextToPoints(result?.summary || initialResult?.summary || '').map((point, index) => (
                       <li key={index} className={styles.pointItem}>
                         <div className={`${styles.pointBullet} ${styles.blueBullet}`}></div>
                         <p className={styles.pointText}>{point}</p>
@@ -811,7 +860,7 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract }
             )}
 
             {/* Rechtssicherheit */}
-            {result.legalAssessment && (
+            {(result?.legalAssessment || initialResult?.legalAssessment) && (
               <div className={styles.detailCard}>
                 <div className={styles.detailHeader}>
                   <div className={`${styles.detailIconContainer} ${styles.greenIcon}`}>
@@ -821,7 +870,7 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract }
                 </div>
                 <div className={styles.cardContent}>
                   <ul className={styles.pointsList}>
-                    {formatTextToPoints(result.legalAssessment).map((point, index) => (
+                    {formatTextToPoints(result?.legalAssessment || initialResult?.legalAssessment || '').map((point, index) => (
                       <li key={index} className={styles.pointItem}>
                         <div className={`${styles.pointBullet} ${styles.greenBullet}`}></div>
                         <p className={styles.pointText}>{point}</p>
@@ -833,7 +882,7 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract }
             )}
 
             {/* Optimierungsvorschläge */}
-            {result.suggestions && (
+            {(result?.suggestions || initialResult?.suggestions) && (
               <div className={styles.detailCard}>
                 <div className={styles.detailHeader}>
                   <div className={`${styles.detailIconContainer} ${styles.yellowIcon}`}>
@@ -843,7 +892,7 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract }
                 </div>
                 <div className={styles.cardContent}>
                   <ul className={styles.pointsList}>
-                    {formatTextToPoints(result.suggestions).map((point, index) => (
+                    {formatTextToPoints(result?.suggestions || initialResult?.suggestions || '').map((point, index) => (
                       <li key={index} className={styles.pointItem}>
                         <div className={`${styles.pointBullet} ${styles.yellowBullet}`}></div>
                         <p className={styles.pointText}>{point}</p>
@@ -863,9 +912,9 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract }
                 <h5>Marktvergleich</h5>
               </div>
               <div className={styles.cardContent}>
-                {result.comparison ? (
+                {(result?.comparison || initialResult?.comparison) ? (
                   <ul className={styles.pointsList}>
-                    {formatTextToPoints(result.comparison).map((point, index) => (
+                    {formatTextToPoints(result?.comparison || initialResult?.comparison || '').map((point, index) => (
                       <li key={index} className={styles.pointItem}>
                         <div className={`${styles.pointBullet} ${styles.purpleBullet}`}></div>
                         <p className={styles.pointText}>{point}</p>
@@ -883,13 +932,13 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract }
             </div>
           </div>
 
-          {/* Usage Info */}
-          {result.usage && (
+          {/* ✅ CRITICAL FIX: Usage Info - funktioniert für beide */}
+          {(result?.usage || initialResult?.usage) && (
             <div className={styles.usageInfo}>
               <p>
-                📊 Analyse <strong>{result.usage.count}</strong> von <strong>{result.usage.limit === Infinity ? '∞' : result.usage.limit}</strong>
+                📊 Analyse <strong>{(result?.usage || initialResult?.usage)?.count}</strong> von <strong>{(result?.usage || initialResult?.usage)?.limit === Infinity ? '∞' : (result?.usage || initialResult?.usage)?.limit}</strong>
                 <span className={styles.planBadge}>
-                  {result.usage.plan}
+                  {(result?.usage || initialResult?.usage)?.plan}
                 </span>
               </p>
             </div>
