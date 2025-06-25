@@ -19,21 +19,7 @@ export default function Login() {
   const [emailFocused, setEmailFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const { setUser } = useAuth();
-
-  // Funktion, um Benutzerdaten vom Server zu holen
-  const fetchUserData = async () => {
-    const response = await fetch("/api/auth/me", {
-      method: "GET",
-      credentials: "include",
-    });
-    
-    if (!response.ok) {
-      throw new Error("Fehler beim Abrufen der Benutzerdaten");
-    }
-    
-    return await response.json();
-  };
+  const { refetchUser } = useAuth(); // ✅ Nur refetchUser needed
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,9 +55,8 @@ export default function Login() {
 
       setNotification({ message: "Login erfolgreich", type: "success" });
       
-      // ✅ Vollständige Benutzerdaten vom Server holen
-      const userData = await fetchUserData();
-      setUser(userData);
+      // ✅ Verwende refetchUser anstatt setUser direkt
+      await refetchUser();
 
       setTimeout(async () => {
         try {
@@ -135,9 +120,8 @@ export default function Login() {
 
         if (response.ok) {
           console.log("✅ Bereits eingeloggt via Cookie");
-          // Hole die Benutzerdaten und aktualisiere den Auth-Kontext
-          const userData = await response.json();
-          setUser(userData);
+          // Verwende refetchUser anstatt setUser direkt
+          await refetchUser();
           navigate("/dashboard");
           return;
         }
@@ -162,9 +146,8 @@ export default function Login() {
 
             if (authResponse.ok) {
               console.log("✅ Fallback-Auth erfolgreich");
-              // Hole die Benutzerdaten und aktualisiere den Auth-Kontext
-              const userData = await authResponse.json();
-              setUser(userData);
+              // Verwende refetchUser anstatt setUser direkt
+              await refetchUser();
               navigate("/dashboard");
               return;
             } else {
@@ -226,7 +209,7 @@ export default function Login() {
       if (redirectTimeout.current) clearTimeout(redirectTimeout.current);
       document.removeEventListener('mousemove', handleMouseMove);
     };
-  }, [navigate, setUser]);
+  }, [navigate, refetchUser]);
 
   return (
     <div className="apple-auth-container" ref={containerRef}>
