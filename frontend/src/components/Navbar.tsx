@@ -186,7 +186,7 @@ export default function Navbar() {
                     <span className={styles.navLinkText}>Optimierer</span>
                   </Link>
                 </motion.div>
-                {(!user || !user.subscriptionActive) && (
+                {!isLoading && (!user || !user.subscriptionActive) && (
                   <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                     <Link to="/pricing" className={`${styles.navLink} ${location.pathname === "/pricing" ? styles.activeNavLink : ""}`}>
                       <span className={styles.navLinkIcon}>💰</span>
@@ -194,7 +194,7 @@ export default function Navbar() {
                     </Link>
                   </motion.div>
                 )}
-                {user && user.subscriptionActive && (
+                {!isLoading && user && user.subscriptionActive && (
                   <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                     <Link to="/premium" className={`${styles.navLink} ${location.pathname === "/premium" ? styles.activeNavLink : ""}`}>
                       <span className={styles.navLinkIcon}>🔒</span>
@@ -210,7 +210,7 @@ export default function Navbar() {
         {/* Right Section */}
         <div className={styles.rightSection}>
           {/* Mobile: Auth Buttons oder User Dropdown */}
-          {isMobile && !user && (
+          {isMobile && !isLoading && !user && (
             <div className={styles.authButtonsMobile}>
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Link to="/login" className={styles.loginButtonMobile}>
@@ -225,7 +225,7 @@ export default function Navbar() {
             </div>
           )}
 
-          {isMobile && user && (
+          {isMobile && !isLoading && user && (
             <div className={styles.dropdownWrapper} ref={dropdownRef}>
               <motion.button
                 onClick={() => setDropdownOpen((prev) => !prev)}
@@ -256,7 +256,7 @@ export default function Navbar() {
           )}
 
           {/* Desktop: Auth Buttons wenn nicht eingeloggt */}
-          {!isMobile && !user && (
+          {!isMobile && !isLoading && !user && (
             <div className={styles.authButtons}>
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Link to="/login" className={styles.loginButton}>
@@ -272,7 +272,7 @@ export default function Navbar() {
           )}
 
           {/* Desktop: User Dropdown wenn eingeloggt */}
-          {!isMobile && user && (
+          {!isMobile && !isLoading && user && (
             <div className={styles.dropdownWrapper} ref={dropdownRef}>
               <motion.button
                 onClick={() => setDropdownOpen((prev) => !prev)}
@@ -320,7 +320,7 @@ export default function Navbar() {
         {/* Left Section */}
         <div className={styles.leftSection}>
           {/* Desktop: Immer Hamburger, Mobile: Nur wenn eingeloggt */}
-          {(!isMobile || user) && (
+          {(!isMobile || (!isLoading && user)) && (
             <motion.button
               className={styles.hamburger}
               onClick={toggleSidebar}
@@ -351,7 +351,7 @@ export default function Navbar() {
         {/* Right Section */}
         <div className={styles.rightSection}>
           {/* Desktop: Auth Buttons wenn nicht eingeloggt */}
-          {!isMobile && !user && (
+          {!isMobile && !isLoading && !user && (
             <div className={styles.authButtons}>
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Link to="/login" className={styles.loginButton}>
@@ -367,7 +367,7 @@ export default function Navbar() {
           )}
 
           {/* Desktop: User Dropdown wenn eingeloggt */}
-          {!isMobile && user && (
+          {!isMobile && !isLoading && user && (
             <div className={styles.dropdownWrapper} ref={dropdownRef}>
               <motion.button
                 onClick={() => setDropdownOpen((prev) => !prev)}
@@ -414,7 +414,7 @@ export default function Navbar() {
       <>
         {/* Left Section - Hamburger wenn eingeloggt */}
         <div className={styles.leftSection}>
-          {user && (
+          {!isLoading && user && (
             <motion.button
               className={styles.hamburger}
               onClick={toggleSidebar}
@@ -445,7 +445,7 @@ export default function Navbar() {
         {/* Right Section */}
         <div className={styles.rightSection}>
           {/* Desktop: User Dropdown wenn eingeloggt */}
-          {!isMobile && user && (
+          {!isMobile && !isLoading && user && (
             <div className={styles.dropdownWrapper} ref={dropdownRef}>
               <motion.button
                 onClick={() => setDropdownOpen((prev) => !prev)}
@@ -483,7 +483,7 @@ export default function Navbar() {
           )}
 
           {/* Mobile: User Dropdown wenn eingeloggt */}
-          {isMobile && user && (
+          {isMobile && !isLoading && user && (
             <div className={styles.dropdownWrapper} ref={dropdownRef}>
               <motion.button
                 onClick={() => setDropdownOpen((prev) => !prev)}
@@ -555,7 +555,7 @@ export default function Navbar() {
         {/* Right Section */}
         <div className={styles.rightSection}>
           {/* Desktop: Auth Buttons oder User Dropdown */}
-          {!isMobile && !user && (
+          {!isMobile && !isLoading && !user && (
             <div className={styles.authButtons}>
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Link to="/login" className={styles.loginButton}>
@@ -570,7 +570,7 @@ export default function Navbar() {
             </div>
           )}
 
-          {!isMobile && user && (
+          {!isMobile && !isLoading && user && (
             <div className={styles.dropdownWrapper} ref={dropdownRef}>
               <motion.button
                 onClick={() => setDropdownOpen((prev) => !prev)}
@@ -653,19 +653,19 @@ export default function Navbar() {
                     <span className={styles.mobileNavIcon}>🧠</span>
                     <span>Optimierer</span>
                   </Link>
-                  {user && !user.subscriptionActive && (
+                  {!isLoading && user && !user.subscriptionActive && (
                     <Link to="/pricing" className={`${styles.mobileNavLink} ${location.pathname === "/pricing" ? styles.activeMobileNavLink : ""}`}>
                       <span className={styles.mobileNavIcon}>💰</span>
                       <span>Preise</span>
                     </Link>
                   )}
-                  {user && user.subscriptionActive && (
+                  {!isLoading && user && user.subscriptionActive && (
                     <Link to="/premium" className={`${styles.mobileNavLink} ${location.pathname === "/premium" ? styles.activeMobileNavLink : ""}`}>
                       <span className={styles.mobileNavIcon}>🔒</span>
                       <span>Premium</span>
                     </Link>
                   )}
-                  {isLoading ? null : user && (
+                  {!isLoading && user && (
                     <>
                       <div className={styles.userInfo}>
                         <span className={styles.userEmail}>{user.email}</span>
@@ -830,7 +830,7 @@ export default function Navbar() {
                   </ul>
                 </div>
                 
-                {isLoading ? null : !user ? (
+                {!isLoading && !user ? (
                   <div className={styles.sidebarSection}>
                     <h3 className={styles.sidebarTitle}>Account</h3>
                     <div className={styles.sidebarAuth}>
@@ -842,7 +842,7 @@ export default function Navbar() {
                       </Link>
                     </div>
                   </div>
-                ) : (
+                ) : !isLoading && user ? (
                   <div className={styles.sidebarSection}>
                     <h3 className={styles.sidebarTitle}>Account</h3>
                     <div className={styles.sidebarUser}>
@@ -881,7 +881,7 @@ export default function Navbar() {
                       </motion.button>
                     </div>
                   </div>
-                )}
+                ) : null}
                 
                 <div className={styles.sidebarSection}>
                   <h3 className={styles.sidebarTitle}>Weitere Links</h3>
