@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import styles from "../styles/ContractChat.module.css";
+import { useAuth } from "../context/AuthContext";
 
 interface Message {
   id: string;
@@ -14,12 +15,15 @@ interface SuggestedQuestion {
 }
 
 export default function Chat() {
+  // Auth Context
+  const { user, isLoading } = useAuth();
+  const isPremium = user?.subscriptionActive === true;
+
   const [file, setFile] = useState<File | null>(null);
   const [question, setQuestion] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
   const [contractLoaded, setContractLoaded] = useState(false);
-  const [isPremium, setIsPremium] = useState<boolean | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [showSuggestions, setShowSuggestions] = useState(true);
@@ -65,41 +69,14 @@ export default function Chat() {
     return Date.now().toString(36) + Math.random().toString(36).substring(2);
   };
 
-  // Premium-Status abrufen und Willkommensnachricht setzen
+  // Willkommensnachricht setzen (nur einmal beim Start)
   useEffect(() => {
-    let cancelled = false;
-
-    const fetchStatus = async () => {
-      try {
-        const res = await fetch("/api/auth/me", {
-          credentials: "include",
-        });
-
-        if (!res.ok) throw new Error("Nicht authentifiziert");
-        const data = await res.json();
-
-        if (!cancelled) {
-          setIsPremium(data.subscriptionActive === true || data.isPremium === true);
-        }
-      } catch (err) {
-        console.error("❌ Fehler beim Abostatus:", err);
-        if (!cancelled) setIsPremium(false);
-      }
-    };
-
-    fetchStatus();
-    
-    // Willkommensnachricht hinzufügen
     setMessages([{
       id: generateId(),
       from: "system",
       text: "👋 Willkommen beim Contract AI-Assistenten! Lade einen Vertrag hoch oder stelle allgemeine Fragen zu rechtlichen Themen.",
       timestamp: getCurrentTime()
     }]);
-
-    return () => {
-      cancelled = true;
-    };
   }, []);
 
   // Zum Ende des Chats scrollen, wenn neue Nachrichten hinzukommen
@@ -280,7 +257,7 @@ export default function Chat() {
   };
 
   // Lade-Zustand anzeigen
-  if (isPremium === null) {
+  if (isLoading) {
     return (
       <div className={styles.loadingContainer}>
         <div className={styles.loadingSpinner}>

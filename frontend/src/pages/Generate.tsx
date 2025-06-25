@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { 
@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import styles from "../styles/Generate.module.css";
 import { toast } from 'react-toastify';
+import { useAuth } from "../context/AuthContext";
 
 // Types
 interface FormDataType {
@@ -149,6 +150,10 @@ export default function Generate() {
   // Navigation
   const navigate = useNavigate();
 
+  // Auth Context
+  const { user, isLoading } = useAuth();
+  const isPremium = user?.subscriptionActive === true;
+
   // State Management
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedType, setSelectedType] = useState<ContractType | null>(null);
@@ -157,7 +162,6 @@ export default function Generate() {
   const [loading, setLoading] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);
   const [saved, setSaved] = useState<boolean>(false);
-  const [isPremium, setIsPremium] = useState<boolean | null>(null);
   const [signatureURL, setSignatureURL] = useState<string | null>(null);
   const [isDrawing, setIsDrawing] = useState<boolean>(false);
   const [showPreview, setShowPreview] = useState<boolean>(false);
@@ -165,22 +169,6 @@ export default function Generate() {
   // Refs
   const contractRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  // Check Premium Status
-  useEffect(() => {
-    const fetchStatus = async () => {
-      try {
-        const res = await fetch("/api/auth/me", { credentials: "include" });
-        if (!res.ok) throw new Error("Nicht authentifiziert");
-        const data = await res.json();
-        setIsPremium(data.subscriptionActive === true);
-      } catch (err) {
-        console.error("❌ Fehler beim Abo-Check:", err);
-        setIsPremium(false);
-      }
-    };
-    fetchStatus();
-  }, []);
 
   // 🖊️ DIREKTE CANVAS-FUNKTIONEN (BESTEHENDE LÖSUNG)
   const handleCanvasMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -517,7 +505,7 @@ export default function Generate() {
   };
 
   // Loading State
-  if (isPremium === null) {
+  if (isLoading) {
     return (
       <div className={styles.loadingContainer}>
         <div className={styles.loadingContent}>
