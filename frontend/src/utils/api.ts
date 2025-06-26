@@ -1,4 +1,4 @@
-// 📁 src/utils/api.ts - ENHANCED LOCAL_UPLOAD Support & File URL Generation
+// 📁 src/utils/api.ts - FIXED: PDF-Fehlermeldungen + Duplikat-Handling
 const API_BASE_URL = "/api"; // Proxy-Pfad für Vercel & devServer (für API-Calls)
 
 // ✅ NEU: Separate Backend-URL für File-Downloads (absolute URLs)
@@ -41,13 +41,14 @@ interface ContractFile {
   };
 }
 
-// ✅ NEU: Interface für Analyse-Ergebnisse (TypeScript-Lint-Fix)
+// ✅ FIXED: Interface für Analyse-Ergebnisse mit vollständiger Duplikat-Unterstützung
 interface AnalysisResult {
   success: boolean;
   contractId?: string;
   message?: string;
   duplicate?: boolean;
   error?: string;
+  existingContract?: ContractFile; // ✅ WICHTIG: Für Duplikat-Modal
   analysisData?: {
     kuendigung?: string;
     laufzeit?: string;
@@ -224,7 +225,7 @@ export const checkFileAvailability = async (fileUrl: string): Promise<boolean> =
   }
 };
 
-// ✅ FIXED: Interface für Duplikat-Error-Response (robust)
+// ✅ FIXED: Interface für Duplikat-Error-Response (erweitert für existingContract)
 interface DuplicateError {
   status: 409;
   duplicate: true;
@@ -254,6 +255,24 @@ function isDuplicateError(error: unknown): error is DuplicateError {
     errorObj.status === 409 &&
     ('duplicate' in errorObj ? errorObj.duplicate === true : true)
   );
+}
+
+/**
+ * ✅ NEW: Helper um zu prüfen ob eine Fehlermeldung bereits benutzerfreundlich ist
+ */
+function isUserFriendlyError(message: string): boolean {
+  const userFriendlyMarkers = [
+    '📸', '📄', '🔄', '📊', '⏱️', '🔧', // Emojis aus Backend
+    'Diese PDF scheint gescannt zu sein',
+    'PDF enthält nur Bilddaten',
+    'Konvertiere die PDF zu einem durchsuchbaren Format',
+    'Öffne das Dokument in Word',
+    'automatische Scan-Erkennung',
+    'Probiere eine textbasierte PDF',
+    'Verwende einen PDF-zu-Text-Konverter'
+  ];
+  
+  return userFriendlyMarkers.some(marker => message.includes(marker));
 }
 
 /**
@@ -319,15 +338,15 @@ export const apiCall = async (
             errorMessage = errorData.message;
           }
           
-          // ✅ FIXED: Für 409 (Conflict/Duplikat) spezielle Behandlung
+          // ✅ FIXED: Für 409 (Conflict/Duplikat) spezielle Behandlung mit vollständigen Daten
           if (response.status === 409) {
             console.log("🔄 409 Conflict erkannt - Duplikat-Daten:", errorData);
             
-            // ✅ FIXED: Korrekte Duplikat-Error-Struktur
+            // ✅ CRITICAL: Korrekte Duplikat-Error-Struktur mit vollständigen Daten
             const duplicateError: DuplicateError = { 
               status: 409, 
               duplicate: true, 
-              data: errorData 
+              data: errorData  // ✅ Vollständige Backend-Response-Daten
             };
             throw duplicateError;
           }
@@ -343,7 +362,7 @@ export const apiCall = async (
             const duplicateError: DuplicateError = { 
               status: 409, 
               duplicate: true, 
-              data: null 
+              data: { message: "Duplikat erkannt", duplicate: true }
             };
             throw duplicateError;
           }
@@ -362,7 +381,7 @@ export const apiCall = async (
           const duplicateError: DuplicateError = { 
             status: 409, 
             duplicate: true, 
-            data: { message: "Duplikat erkannt" }
+            data: { message: "Duplikat erkannt", duplicate: true }
           };
           throw duplicateError;
         }
@@ -435,7 +454,7 @@ export const apiCall = async (
 };
 
 /**
- * ✅ ENHANCED: Spezielle Funktion für File-Upload mit Analyse - ROBUSTE DUPLIKAT-BEHANDLUNG
+ * ✅ FIXED: Spezielle Funktion für File-Upload mit Analyse - ROBUSTE DUPLIKAT-BEHANDLUNG + KORREKTE PDF-FEHLER
  */
 export const uploadAndAnalyze = async (
   file: File, 
@@ -474,14 +493,25 @@ export const uploadAndAnalyze = async (
   } catch (error) {
     if (onProgress) onProgress(0); // Reset bei Fehler
     
-    // ✅ FIXED: Robustes Spezial-Handling für Duplikat-Response
+    // ✅ FIXED: Robustes Spezial-Handling für Duplikat-Response mit vollständigen Daten
     if (isDuplicateError(error)) {
-      console.log("🔄 Duplikat erkannt in uploadAndAnalyze - gebe Daten weiter");
+      console.log("🔄 Duplikat erkannt in uploadAndAnalyze - gebe vollständige Daten weiter");
       
-      // ✅ FIXED: Korrekte Daten-Weiterleitung
+      // ✅ CRITICAL: Korrekte Daten-Weiterleitung mit existingContract
       if (error.data && typeof error.data === 'object') {
         console.log("✅ Duplikat-Daten gefunden:", error.data);
-        return error.data; // Korrekte Duplikat-Daten zurückgeben
+        
+        // ✅ CRITICAL: Stelle sicher, dass duplicate Flag gesetzt ist
+        const duplicateResult = {
+          ...error.data,
+          success: false,
+          duplicate: true,
+          // ✅ existingContract aus verschiedenen möglichen Feldern extrahieren
+          existingContract: (error.data as any).existingContract || (error.data as any).contract || (error.data as any).contractData || null
+        };
+        
+        console.log("🔄 Verarbeitete Duplikat-Daten:", duplicateResult);
+        return duplicateResult;
       } else {
         console.warn("⚠️ Duplikat-Error ohne Daten - erstelle Fallback");
         // Fallback für Duplikat ohne vollständige Daten
@@ -493,6 +523,7 @@ export const uploadAndAnalyze = async (
           contractId: "unknown",
           contractName: file.name,
           uploadedAt: new Date().toISOString(),
+          existingContract: null, // ✅ Explizit null setzen
           actions: {
             reanalyze: "Erneut analysieren",
             viewExisting: "Bestehenden Vertrag öffnen"
@@ -506,7 +537,13 @@ export const uploadAndAnalyze = async (
     // ✅ FIXED: TypeScript-sichere Fehlerbehandlung
     const errorMessage = getErrorMessage(error);
     
-    // ✅ Benutzerfreundliche Fehlermeldungen
+    // ✅ CRITICAL FIX: Benutzerfreundliche Backend-Fehlermeldungen NICHT überschreiben
+    if (isUserFriendlyError(errorMessage)) {
+      console.log("✅ Benutzerfreundliche Backend-Fehlermeldung erkannt - direkt weiterleiten:", errorMessage);
+      throw new Error(errorMessage); // ✅ Backend-Meldung direkt verwenden
+    }
+    
+    // ✅ Fallback-Fehlermeldungen nur für technische/unspezifische Fehler
     if (errorMessage.includes('nicht gefunden') || errorMessage.includes('404')) {
       throw new Error("❌ Analyse-Service ist derzeit nicht verfügbar. Bitte kontaktiere den Support.");
     }
@@ -523,7 +560,8 @@ export const uploadAndAnalyze = async (
       throw new Error("⏱️ Analyse-Timeout. Bitte versuche es mit einer kleineren PDF-Datei.");
     }
     
-    if (errorMessage.includes('PDF') || errorMessage.includes('Datei')) {
+    // ✅ FIXED: Generic PDF-Fehler nur wenn KEINE benutzerfreundliche Meldung vom Backend kommt
+    if ((errorMessage.includes('PDF') || errorMessage.includes('Datei')) && !isUserFriendlyError(errorMessage)) {
       throw new Error("📄 PDF-Datei konnte nicht verarbeitet werden. Bitte prüfe das Dateiformat.");
     }
     
