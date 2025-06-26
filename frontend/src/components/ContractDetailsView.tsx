@@ -4,7 +4,7 @@ import {
   X, FileText, Calendar, Clock, AlertCircle, CheckCircle, 
   Info, Eye, Download, Share2, Edit, Trash2, Star,
   BarChart3, Shield, Lightbulb, TrendingUp,
-  Copy, ExternalLink
+  Copy, ExternalLink, Cloud, AlertTriangle
 } from "lucide-react";
 import styles from "../styles/ContractDetailsView.module.css";
 import ReminderToggle from "./ReminderToggle";
@@ -34,6 +34,8 @@ interface Contract {
   s3Key?: string;
   s3Bucket?: string;
   s3Location?: string;
+  uploadType?: string; // ✅ NEU: Für S3 Migration
+  needsReupload?: boolean; // ✅ NEU: Für Legacy-Verträge
   analysis?: {
     summary?: string;
     legalAssessment?: string;
@@ -112,6 +114,53 @@ export default function ContractDetailsView({
     }
   };
 
+  // ✅ NEU: S3 Status Badge Funktion
+  const getContractStatusBadge = (contract: Contract) => {
+    if (contract.s3Key) {
+      return (
+        <span 
+          className={styles.statusBadge} 
+          style={{ 
+            background: 'rgba(52, 199, 89, 0.1)', 
+            color: '#34c759', 
+            border: '1px solid rgba(52, 199, 89, 0.2)' 
+          }}
+        >
+          <Cloud size={12} />
+          ☁️ Cloud
+        </span>
+      );
+    }
+    if (contract.needsReupload || contract.uploadType === 'LOCAL_LEGACY') {
+      return (
+        <span 
+          className={styles.statusBadge} 
+          style={{ 
+            background: 'rgba(255, 149, 0, 0.1)', 
+            color: '#ff9500', 
+            border: '1px solid rgba(255, 149, 0, 0.2)' 
+          }}
+        >
+          <AlertTriangle size={12} />
+          ⚠️ Reupload erforderlich
+        </span>
+      );
+    }
+    return (
+      <span 
+        className={styles.statusBadge} 
+        style={{ 
+          background: 'rgba(142, 142, 147, 0.1)', 
+          color: '#8e8e93', 
+          border: '1px solid rgba(142, 142, 147, 0.2)' 
+        }}
+      >
+        <FileText size={12} />
+        📁 Lokal
+      </span>
+    );
+  };
+
   const getScoreColor = (score: number): string => {
     if (score >= 80) return "#34c759";
     if (score >= 60) return "#ff9500";
@@ -138,15 +187,64 @@ export default function ContractDetailsView({
     return sentences.length > 0 ? sentences : [text.substring(0, 180) + '...'];
   };
 
+  // ✅ ENHANCED: S3-Integration für Contract Viewing
   const handleViewContract = async () => {
+    console.log('🔍 Opening contract with enhanced S3 integration:', {
+      contractId: contract._id,
+      contractName: contract.name,
+      hasS3Key: !!contract.s3Key,
+      uploadType: contract.uploadType,
+      needsReupload: contract.needsReupload
+    });
+
+    // ✅ STEP 1: Prüfe ob Vertrag S3-Integration hat
+    if (contract.s3Key) {
+      console.log('✅ S3 Contract detected, fetching signed URL...');
+      
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/s3/view?contractId=${contract._id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.fileUrl) {
+          console.log('✅ S3 URL fetched successfully');
+          window.open(data.fileUrl, '_blank', 'noopener,noreferrer');
+          return;
+        } else {
+          console.error('❌ S3 URL fetch failed:', data.error);
+          // Fallback to old logic below
+        }
+      } catch (error) {
+        console.error('❌ S3 URL fetch error:', error);
+        // Fallback to old logic below
+      }
+    }
+    
+    // ✅ STEP 2: Legacy-Vertrag oder S3-Fehler
+    if (contract.needsReupload || contract.uploadType === 'LOCAL_LEGACY') {
+      alert(`⚠️ Dieser Vertrag wurde vor der Cloud-Integration hochgeladen und ist nicht mehr verfügbar.\n\nBitte laden Sie "${contract.name}" erneut hoch, um ihn anzuzeigen.`);
+      return;
+    }
+
+    // ✅ STEP 3: Fallback - Original Logic (für Backward Compatibility)
+    console.log('🔄 Fallback: Using original file URL logic...');
+    
     const fileUrl = getContractFileUrl(contract);
     
     if (!fileUrl) {
       console.warn('⚠️ No file URL available');
+      alert(`❌ PDF-Datei nicht verfügbar.\n\nDieser Vertrag muss erneut hochgeladen werden.`);
       return;
     }
     
-    console.log('🔍 Opening file:', {
+    console.log('🔍 Opening file with fallback logic:', {
       contractName: contract.name,
       fileUrl: fileUrl,
       filename: contract.filename,
@@ -300,6 +398,8 @@ ${analysis.comparison || 'Nicht verfügbar'}
                         KI-Generiert
                       </span>
                     )}
+                    {/* ✅ NEU: S3 Status Badge */}
+                    {getContractStatusBadge(contract)}
                   </div>
                 </div>
               </div>
@@ -415,6 +515,11 @@ ${analysis.comparison || 'Nicht verfügbar'}
                         <span>{contract.status}</span>
                       </div>
                     </div>
+                    {/* ✅ NEU: Speicherstatus anzeigen */}
+                    <div className={styles.detailItem}>
+                      <label>Speicherstatus</label>
+                      {getContractStatusBadge(contract)}
+                    </div>
                     <div className={styles.detailItem}>
                       <label>Kündigungsfrist</label>
                       <span>{contract.kuendigung || "Nicht angegeben"}</span>
@@ -445,36 +550,47 @@ ${analysis.comparison || 'Nicht verfügbar'}
                     )}
                   </div>
                   
-                  {(() => {
-                    const fileUrl = getContractFileUrl(contract);
-                    
-                    if (fileUrl) {
-                      return (
-                        <div className={styles.viewContractSection}>
-                          <button 
-                            onClick={handleViewContract}
-                            className={styles.viewContractButton}
-                            title="Original-Vertragsdatei anzeigen"
-                          >
-                            📄 Vertrag anzeigen
-                          </button>
-                        </div>
-                      );
-                    } else {
-                      return (
-                        <div className={styles.viewContractSection}>
-                          <button 
-                            className={styles.viewContractButton}
-                            style={{ opacity: 0.5, cursor: 'not-allowed' }}
-                            disabled
-                            title="Keine Datei verfügbar"
-                          >
-                            📄 Datei nicht verfügbar
-                          </button>
-                        </div>
-                      );
-                    }
-                  })()}
+                  {/* ✅ ENHANCED: Contract View Button mit S3-Integration */}
+                  <div className={styles.viewContractSection}>
+                    {contract.needsReupload || contract.uploadType === 'LOCAL_LEGACY' ? (
+                      <div style={{ textAlign: 'center', padding: '1rem' }}>
+                        <button 
+                          className={styles.viewContractButton}
+                          style={{ 
+                            background: 'rgba(255, 149, 0, 0.1)', 
+                            border: '1px solid rgba(255, 149, 0, 0.3)',
+                            color: '#ff9500',
+                            cursor: 'pointer'
+                          }}
+                          onClick={handleViewContract}
+                          title="Legacy-Vertrag - Informationen anzeigen"
+                        >
+                          ⚠️ Legacy-Vertrag (Info anzeigen)
+                        </button>
+                        <p style={{ 
+                          fontSize: '0.875rem', 
+                          color: '#ff9500', 
+                          marginTop: '0.5rem',
+                          fontStyle: 'italic'
+                        }}>
+                          Dieser Vertrag wurde vor der Cloud-Integration hochgeladen und muss für die Anzeige erneut hochgeladen werden.
+                        </p>
+                      </div>
+                    ) : (
+                      <button 
+                        onClick={handleViewContract}
+                        className={styles.viewContractButton}
+                        title="Original-Vertragsdatei anzeigen"
+                        style={{
+                          background: contract.s3Key ? 'rgba(52, 199, 89, 0.1)' : 'rgba(0, 122, 255, 0.1)',
+                          border: contract.s3Key ? '1px solid rgba(52, 199, 89, 0.3)' : '1px solid rgba(0, 122, 255, 0.3)',
+                          color: contract.s3Key ? '#34c759' : '#007aff'
+                        }}
+                      >
+                        {contract.s3Key ? '☁️ Vertrag anzeigen (Cloud)' : '📄 Vertrag anzeigen'}
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 <div className={styles.section}>
