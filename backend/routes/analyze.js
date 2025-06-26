@@ -1,4 +1,4 @@
-// 📁 backend/routes/analyze.js - LIGHTWEIGHT: Bessere PDF-Verarbeitung ohne OCR (für Render-Test)
+// 📁 backend/routes/analyze.js - FULL OCR VERSION for Render Standard (2GB RAM)
 const express = require("express");
 const multer = require("multer");
 const pdfParse = require("pdf-parse");
@@ -8,11 +8,14 @@ const { OpenAI } = require("openai");
 const verifyToken = require("../middleware/verifyToken");
 const { MongoClient, ObjectId } = require("mongodb");
 const path = require("path");
+const Tesseract = require('tesseract.js'); // ✅ OCR-Integration
+const Queue = require('bull'); // ✅ Async Processing
+const redis = require('redis'); // ✅ Redis Support
 
 const router = express.Router();
 
 // ✅ CRITICAL FIX: Exact same UPLOAD_PATH as server.js
-const UPLOAD_PATH = path.join(__dirname, "..", "uploads"); // ✅ ABSOLUTE PATH to backend/uploads
+const UPLOAD_PATH = path.join(__dirname, "..", "uploads");
 
 // ✅ CRITICAL FIX: Ensure uploads directory exists (same as server.js)
 try {
@@ -28,9 +31,8 @@ try {
 
 // ✅ CRITICAL FIX: Exact same multer storage configuration as server.js
 const storage = multer.diskStorage({
-  destination: UPLOAD_PATH, // ✅ SAME ABSOLUTE PATH AS SERVER.JS
+  destination: UPLOAD_PATH,
   filename: (req, file, cb) => {
-    // ✅ SAME NAMING PATTERN AS SERVER.JS
     const filename = Date.now() + path.extname(file.originalname);
     console.log(`📁 [ANALYZE] Generiere Dateiname: ${filename}`);
     cb(null, filename);
@@ -38,9 +40,28 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({ 
-  storage, // ✅ USE STORAGE CONFIG INSTEAD OF DEST
+  storage,
   limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit
 });
+
+// ✅ Redis Queue Setup für Async Processing
+let analysisQueue = null;
+try {
+  analysisQueue = new Queue('PDF Analysis', {
+    redis: {
+      port: 6379,
+      host: '127.0.0.1',
+    },
+    defaultJobOptions: {
+      removeOnComplete: 10,
+      removeOnFail: 5,
+    }
+  });
+  console.log("✅ Analysis Queue initialisiert");
+} catch (err) {
+  console.warn("⚠️ Queue nicht verfügbar, verwende synchrone Verarbeitung:", err.message);
+  analysisQueue = null;
+}
 
 // ✅ FALLBACK: crypto nur importieren wenn verfügbar
 let crypto;
@@ -62,14 +83,14 @@ try {
   saveContract = null;
 }
 
-// ✅ NEU: Rate Limiting für GPT-4
+// ✅ Rate Limiting für GPT-4
 let lastGPT4Request = 0;
 const GPT4_MIN_INTERVAL = 4000; // 4 Sekunden zwischen GPT-4 Requests
 
-// ===== NEUE FUNKTIONEN FÜR VERBESSERTE PDF-VERARBEITUNG (OHNE OCR) =====
+// ===== OCR & ASYNC PROCESSING FUNCTIONS =====
 
 /**
- * ✅ NEU: Prüft die Qualität des extrahierten PDF-Texts
+ * ✅ Text-Qualitäts-Bewertung
  */
 function assessTextQuality(text) {
   if (!text || text.length < 50) {
@@ -77,16 +98,13 @@ function assessTextQuality(text) {
       quality: 'none', 
       score: 0, 
       reason: 'Kein oder zu wenig Text gefunden',
-      suggestion: 'PDF möglicherweise gescannt - verwende ein durchsuchbares PDF oder Word-Dokument'
+      suggestion: 'PDF möglicherweise gescannt - OCR wird versucht'
     };
   }
   
-  // Verhältnis von Buchstaben zu Sonderzeichen
   const letterCount = (text.match(/[a-zA-ZäöüÄÖÜß]/g) || []).length;
   const totalChars = text.length;
   const letterRatio = letterCount / totalChars;
-  
-  // Wörter zählen
   const wordCount = text.split(/\s+/).filter(word => word.length > 2).length;
   
   if (letterRatio > 0.7 && wordCount > 20) {
@@ -108,23 +126,57 @@ function assessTextQuality(text) {
       quality: 'poor', 
       score: 30, 
       reason: 'Wenig verwertbarer Text, hauptsächlich Symbole',
-      suggestion: 'PDF-Qualität verbessern oder Word-Dokument verwenden'
+      suggestion: 'OCR wird versucht zur Verbesserung'
     };
   } else {
     return { 
       quality: 'none', 
       score: 0, 
       reason: 'Kein verwertbarer Text gefunden',
-      suggestion: 'Verwende ein durchsuchbares PDF, Word-Dokument oder bessere Scan-Qualität'
+      suggestion: 'OCR-Texterkennung wird gestartet'
     };
   }
 }
 
 /**
- * ✅ NEU: VERBESSERTE PDF-TEXT-EXTRAKTION (ohne OCR, für Render-Kompatibilität)
+ * ✅ OCR-Texterkennung mit Tesseract
  */
-async function extractTextFromPDFEnhanced(buffer, filePath, requestId) {
-  console.log(`📖 [${requestId}] Starte verbesserte PDF-Text-Extraktion (ohne OCR)...`);
+async function performOCR(filePath, requestId, onProgress) {
+  console.log(`🔍 [${requestId}] Starte OCR-Texterkennung für: ${filePath}`);
+  
+  try {
+    // Tesseract Worker mit deutscher und englischer Sprache
+    const worker = await Tesseract.createWorker(['deu', 'eng']);
+    
+    console.log(`🤖 [${requestId}] Tesseract Worker erstellt`);
+    
+    // OCR ausführen mit Progress-Callback
+    const { data: { text } } = await worker.recognize(filePath, {
+      logger: m => {
+        if (m.status === 'recognizing text' && onProgress) {
+          onProgress(m.progress * 100);
+          console.log(`📊 [${requestId}] OCR Progress: ${Math.round(m.progress * 100)}%`);
+        }
+      }
+    });
+    
+    // Worker beenden
+    await worker.terminate();
+    
+    console.log(`✅ [${requestId}] OCR abgeschlossen: ${text.length} Zeichen erkannt`);
+    return text;
+    
+  } catch (error) {
+    console.error(`❌ [${requestId}] OCR-Fehler:`, error);
+    throw new Error(`Texterkennung fehlgeschlagen: ${error.message}`);
+  }
+}
+
+/**
+ * ✅ VERBESSERTE PDF-TEXT-EXTRAKTION mit OCR-Fallback
+ */
+async function extractTextFromPDFEnhanced(buffer, filePath, requestId, onProgress) {
+  console.log(`📖 [${requestId}] Starte verbesserte PDF-Text-Extraktion mit OCR...`);
   
   let extractionResult = {
     text: '',
@@ -134,7 +186,7 @@ async function extractTextFromPDFEnhanced(buffer, filePath, requestId) {
     pageCount: 0,
     charactersExtracted: 0,
     wordCount: 0,
-    ocrAvailable: false, // ✅ OCR nicht verfügbar in dieser Version
+    ocrUsed: false,
     processingTime: 0,
     suggestion: null
   };
@@ -142,19 +194,16 @@ async function extractTextFromPDFEnhanced(buffer, filePath, requestId) {
   const startTime = Date.now();
   
   try {
-    // SCHRITT 1: Erweiterte PDF-Text-Extraktion
-    console.log(`📄 [${requestId}] PDF-Text-Extraktion mit erweiterten Optionen...`);
+    // SCHRITT 1: Normale PDF-Text-Extraktion versuchen
+    console.log(`📄 [${requestId}] Schritt 1: Normale PDF-Text-Extraktion...`);
+    if (onProgress) onProgress(10);
     
     let pdfData;
     try {
-      // ✅ Verbesserte PDF-Parse-Optionen
       pdfData = await pdfParse(buffer, {
-        max: 200000, // ✅ Mehr Text extrahieren
+        max: 200000, // Mehr Text extrahieren
         normalizeWhitespace: true,
-        disableCombineTextItems: false,
-        // ✅ Zusätzliche Optionen für bessere Extraktion
-        version: 'v1.10.100',
-        verbosity: 0
+        disableCombineTextItems: false
       });
       
       extractionResult.pageCount = pdfData.numpages || 0;
@@ -165,63 +214,108 @@ async function extractTextFromPDFEnhanced(buffer, filePath, requestId) {
       throw new Error(`PDF-Verarbeitung fehlgeschlagen: ${pdfError.message}`);
     }
     
+    if (onProgress) onProgress(25);
+    
     // SCHRITT 2: Text-Qualität bewerten
-    const extractedText = pdfData.text || '';
-    const qualityAssessment = assessTextQuality(extractedText);
+    const initialText = pdfData.text || '';
+    const qualityAssessment = assessTextQuality(initialText);
     
     console.log(`📊 [${requestId}] Text-Qualität: ${qualityAssessment.quality} (Score: ${qualityAssessment.score}) - ${qualityAssessment.reason}`);
     
-    // SCHRITT 3: Text verarbeiten
+    // SCHRITT 3: Entscheiden ob OCR notwendig ist
     if (qualityAssessment.quality === 'good' || qualityAssessment.quality === 'fair') {
-      // Gute oder akzeptable Qualität
-      extractionResult.text = extractedText.slice(0, 4000); // Für GPT
-      extractionResult.fullText = extractedText; // Für Content-Tab
-      extractionResult.method = 'pdf-extraction-enhanced';
+      // Normale PDF-Extraktion war erfolgreich
+      extractionResult.text = initialText.slice(0, 4000); // Für GPT
+      extractionResult.fullText = initialText; // Für Content-Tab
+      extractionResult.method = 'pdf-extraction';
       extractionResult.quality = qualityAssessment.quality;
-      extractionResult.charactersExtracted = extractedText.length;
-      extractionResult.wordCount = extractedText.split(/\s+/).filter(w => w.length > 2).length;
+      extractionResult.charactersExtracted = initialText.length;
+      extractionResult.wordCount = initialText.split(/\s+/).filter(w => w.length > 2).length;
       
+      if (onProgress) onProgress(100);
       console.log(`✅ [${requestId}] PDF-Extraktion erfolgreich: ${extractionResult.charactersExtracted} Zeichen`);
       
-    } else if (qualityAssessment.quality === 'poor' && extractedText.length > 100) {
-      // Schlechte Qualität, aber versuchen wir es trotzdem
-      extractionResult.text = extractedText.slice(0, 4000);
-      extractionResult.fullText = extractedText;
-      extractionResult.method = 'pdf-extraction-poor';
-      extractionResult.quality = 'poor';
-      extractionResult.charactersExtracted = extractedText.length;
-      extractionResult.wordCount = extractedText.split(/\s+/).filter(w => w.length > 2).length;
-      extractionResult.suggestion = qualityAssessment.suggestion;
-      
-      console.log(`⚠️ [${requestId}] Schlechte PDF-Text-Qualität, aber verwertbar: ${extractionResult.charactersExtracted} Zeichen`);
-      
     } else {
-      // Keine verwertbaren Inhalte gefunden
-      extractionResult.suggestion = qualityAssessment.suggestion;
+      // Text-Qualität ist schlecht oder kein Text → OCR versuchen
+      console.log(`🔍 [${requestId}] Text-Qualität unzureichend → Starte OCR...`);
+      if (onProgress) onProgress(30);
       
-      throw new Error(
-        `PDF enthält keinen ausreichend lesbaren Text für eine Analyse. ` +
-        `${qualityAssessment.reason}. ` +
-        `Lösungsvorschläge: ${qualityAssessment.suggestion}`
-      );
+      try {
+        const ocrText = await performOCR(filePath, requestId, (progress) => {
+          if (onProgress) onProgress(30 + (progress * 0.6)); // 30-90% für OCR
+        });
+        
+        const ocrQuality = assessTextQuality(ocrText);
+        
+        console.log(`📊 [${requestId}] OCR-Text-Qualität: ${ocrQuality.quality} (Score: ${ocrQuality.score})`);
+        
+        if (ocrQuality.quality !== 'none' && ocrText.length > initialText.length) {
+          // OCR war erfolgreicher als normale Extraktion
+          extractionResult.text = ocrText.slice(0, 4000); // Für GPT
+          extractionResult.fullText = ocrText; // Für Content-Tab
+          extractionResult.method = 'ocr';
+          extractionResult.quality = ocrQuality.quality;
+          extractionResult.charactersExtracted = ocrText.length;
+          extractionResult.wordCount = ocrText.split(/\s+/).filter(w => w.length > 2).length;
+          extractionResult.ocrUsed = true;
+          
+          if (onProgress) onProgress(95);
+          console.log(`✅ [${requestId}] OCR erfolgreich: ${extractionResult.charactersExtracted} Zeichen`);
+          
+        } else if (initialText.length > 0) {
+          // OCR war nicht besser, aber wir haben wenigstens etwas Text aus PDF
+          extractionResult.text = initialText.slice(0, 4000);
+          extractionResult.fullText = initialText;
+          extractionResult.method = 'pdf-extraction-poor';
+          extractionResult.quality = 'poor';
+          extractionResult.charactersExtracted = initialText.length;
+          extractionResult.wordCount = initialText.split(/\s+/).filter(w => w.length > 2).length;
+          
+          if (onProgress) onProgress(95);
+          console.log(`⚠️ [${requestId}] Verwende schlechten PDF-Text: ${extractionResult.charactersExtracted} Zeichen`);
+          
+        } else {
+          // Weder PDF noch OCR haben brauchbaren Text geliefert
+          throw new Error('Weder PDF-Extraktion noch OCR konnten verwertbaren Text finden. Dokument möglicherweise beschädigt oder zu schlecht gescannt.');
+        }
+        
+      } catch (ocrError) {
+        console.error(`❌ [${requestId}] OCR fehlgeschlagen:`, ocrError.message);
+        
+        // Fallback: Versuche wenigstens den schlechten PDF-Text zu verwenden
+        if (initialText.length > 20) {
+          extractionResult.text = initialText.slice(0, 4000);
+          extractionResult.fullText = initialText;
+          extractionResult.method = 'pdf-extraction-fallback';
+          extractionResult.quality = 'poor';
+          extractionResult.charactersExtracted = initialText.length;
+          extractionResult.wordCount = initialText.split(/\s+/).filter(w => w.length > 2).length;
+          
+          if (onProgress) onProgress(95);
+          console.log(`⚠️ [${requestId}] Fallback auf schlechten PDF-Text: ${extractionResult.charactersExtracted} Zeichen`);
+        } else {
+          throw new Error(`Texterkennung fehlgeschlagen. ${ocrError.message}`);
+        }
+      }
     }
     
     // SCHRITT 4: Finale Validierung
     if (!extractionResult.text || extractionResult.text.trim().length < 30) {
       throw new Error(
         `Nicht genügend Text für eine zuverlässige Analyse gefunden. ` +
-        `Lösungsvorschläge: ${extractionResult.suggestion || 'PDF-Qualität verbessern oder Word-Dokument verwenden'}`
+        `${extractionResult.suggestion || 'PDF-Qualität verbessern oder anderes Format verwenden'}`
       );
     }
     
     extractionResult.processingTime = Date.now() - startTime;
+    if (onProgress) onProgress(100);
     
     console.log(`✅ [${requestId}] Text-Extraktion abgeschlossen:`, {
       method: extractionResult.method,
       quality: extractionResult.quality,
       characters: extractionResult.charactersExtracted,
       words: extractionResult.wordCount,
-      pages: extractionResult.pageCount,
+      ocrUsed: extractionResult.ocrUsed,
       processingTime: `${extractionResult.processingTime}ms`
     });
     
@@ -235,17 +329,16 @@ async function extractTextFromPDFEnhanced(buffer, filePath, requestId) {
       throw new Error('PDF ist passwortgeschützt. Bitte entferne den Passwortschutz und versuche es erneut.');
     } else if (error.message.includes('beschädigt')) {
       throw new Error('PDF-Datei ist beschädigt oder korrupt. Bitte verwende eine andere Datei.');
-    } else if (error.message.includes('keinen ausreichend lesbaren Text')) {
-      throw new Error(error.message); // Bereits benutzerfreundlich
+    } else if (error.message.includes('Texterkennung')) {
+      throw new Error(`${error.message} Versuche eine bessere Scan-Qualität oder ein durchsuchbares PDF.`);
     } else {
-      throw new Error(`PDF-Verarbeitung fehlgeschlagen: ${error.message}`);
+      throw error;
     }
   }
 }
 
-// ===== ENDE DER NEUEN FUNKTIONEN =====
+// ===== EXISTING FUNCTIONS (unchanged) =====
 
-// ✅ Debug function to check file existence - ENHANCED
 function checkFileExists(filename) {
   const fullPath = path.join(UPLOAD_PATH, filename);
   const exists = fsSync.existsSync(fullPath);
@@ -259,7 +352,6 @@ function checkFileExists(filename) {
   });
   
   if (!exists) {
-    // List all files in uploads directory for debugging
     try {
       const files = fsSync.readdirSync(UPLOAD_PATH);
       console.log(`📂 [ANALYZE] Available files in uploads:`, files);
@@ -271,7 +363,6 @@ function checkFileExists(filename) {
   return exists;
 }
 
-// ✅ SINGLETON OpenAI-Instance um Connection-Probleme zu vermeiden
 let openaiInstance = null;
 const getOpenAI = () => {
   if (!openaiInstance) {
@@ -288,7 +379,7 @@ const getOpenAI = () => {
   return openaiInstance;
 };
 
-// MongoDB Setup - ✅ Verbesserte Connection-Handhabung
+// MongoDB Setup
 const mongoUri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
 let mongoClient = null;
 let analysisCollection = null;
@@ -322,7 +413,6 @@ const getMongoCollections = async () => {
   }
 })();
 
-// ✅ FALLBACK: Hash-Berechnung nur wenn crypto verfügbar
 const calculateFileHash = (buffer) => {
   if (!crypto) {
     console.warn("⚠️ Crypto nicht verfügbar - verwende Fallback-Hash");
@@ -336,7 +426,6 @@ const calculateFileHash = (buffer) => {
   }
 };
 
-// ✅ FALLBACK: Dubletten-Check nur wenn alles verfügbar
 const checkForDuplicate = async (fileHash, userId) => {
   if (!crypto || !contractsCollection) {
     console.warn("⚠️ Dubletten-Check nicht verfügbar - überspringe");
@@ -352,11 +441,10 @@ const checkForDuplicate = async (fileHash, userId) => {
     return existingContract;
   } catch (error) {
     console.warn("⚠️ Dubletten-Check fehlgeschlagen:", error.message);
-    return null; // Bei Fehler weiter normal verarbeiten
+    return null;
   }
 };
 
-// ✅ Contract save function with all required fields for server.js compatibility - ENHANCED
 async function saveContractWithLocalUpload(userId, analysisData, fileInfo, pdfText) {
   try {
     const contract = {
@@ -367,30 +455,26 @@ async function saveContractWithLocalUpload(userId, analysisData, fileInfo, pdfTe
       expiryDate: analysisData.expiryDate || "",
       status: analysisData.status || "Aktiv",
       uploadedAt: new Date(),
-      createdAt: new Date(), // ✅ ADDED: For compatibility
+      createdAt: new Date(),
       
-      // ✅ CRITICAL: File information (compatible with server.js static serving)
-      filename: fileInfo.filename,           // multer filename (from storage config)
-      originalname: fileInfo.originalname,   // original filename
-      filePath: `/uploads/${fileInfo.filename}`, // ✅ CRITICAL: Server URL path
-      mimetype: fileInfo.mimetype,           // file type
-      size: fileInfo.size,                   // file size
+      filename: fileInfo.filename,
+      originalname: fileInfo.originalname,
+      filePath: `/uploads/${fileInfo.filename}`,
+      mimetype: fileInfo.mimetype,
+      size: fileInfo.size,
       
-      // ✅ CRITICAL: Upload type marker for frontend api.ts
-      uploadType: "LOCAL_UPLOAD",           // ✅ Important for api.ts logic
+      uploadType: "LOCAL_UPLOAD",
       extraRefs: {
-        uploadType: "LOCAL_UPLOAD",         // ✅ Backup field
-        uploadPath: UPLOAD_PATH,            // ✅ Debug info
-        serverPath: `/uploads/${fileInfo.filename}`, // ✅ Server URL path
-        analysisId: null // Will be set later
+        uploadType: "LOCAL_UPLOAD",
+        uploadPath: UPLOAD_PATH,
+        serverPath: `/uploads/${fileInfo.filename}`,
+        analysisId: null
       },
       
-      // ✅ CRITICAL: Content and analysis for ContractDetailsView
-      fullText: pdfText.substring(0, 100000), // ✅ Store extracted text for Content tab
-      content: pdfText.substring(0, 100000),  // ✅ Alternative field name
+      fullText: pdfText.substring(0, 100000),
+      content: pdfText.substring(0, 100000),
       analysisDate: new Date(),
       
-      // ✅ Legal Pulse placeholder
       legalPulse: {
         riskScore: null,
         summary: '',
@@ -424,12 +508,10 @@ async function saveContractWithLocalUpload(userId, analysisData, fileInfo, pdfTe
   }
 }
 
-// ✅ NEU: Rate-Limited GPT-4 Request mit intelligenten Retries
 const makeRateLimitedGPT4Request = async (prompt, requestId, openai, maxRetries = 3) => {
   
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      // ✅ Rate Limiting: Mindestabstand zwischen Requests
       const timeSinceLastRequest = Date.now() - lastGPT4Request;
       if (timeSinceLastRequest < GPT4_MIN_INTERVAL) {
         const waitTime = GPT4_MIN_INTERVAL - timeSinceLastRequest;
@@ -437,19 +519,18 @@ const makeRateLimitedGPT4Request = async (prompt, requestId, openai, maxRetries 
         await new Promise(resolve => setTimeout(resolve, waitTime));
       }
       
-      // ✅ Request-Timestamp speichern
       lastGPT4Request = Date.now();
       
       console.log(`🤖 [${requestId}] GPT-4 Request (Versuch ${attempt}/${maxRetries})...`);
       
       const completion = await openai.chat.completions.create({
-        model: "gpt-4", // ✅ GPT-4 beibehalten für beste Qualität
+        model: "gpt-4",
         messages: [
           { role: "system", content: "Du bist ein erfahrener Vertragsanalyst mit juristischer Expertise." },
           { role: "user", content: prompt },
         ],
         temperature: 0.3,
-        max_tokens: 2000, // ✅ Token-Limit für bessere Rate-Kontrolle
+        max_tokens: 2000,
       });
       
       console.log(`✅ [${requestId}] GPT-4 Request erfolgreich!`);
@@ -458,10 +539,8 @@ const makeRateLimitedGPT4Request = async (prompt, requestId, openai, maxRetries 
     } catch (error) {
       console.error(`❌ [${requestId}] GPT-4 Fehler (Versuch ${attempt}):`, error.message);
       
-      // ✅ Spezielle Behandlung für Rate Limit (429)
       if (error.status === 429) {
         if (attempt < maxRetries) {
-          // Exponential Backoff: 5s, 10s, 20s
           const waitTime = Math.min(5000 * Math.pow(2, attempt - 1), 30000);
           console.log(`⏳ [${requestId}] Rate Limit erreicht. Warte ${waitTime/1000}s vor Retry...`);
           await new Promise(resolve => setTimeout(resolve, waitTime));
@@ -471,7 +550,6 @@ const makeRateLimitedGPT4Request = async (prompt, requestId, openai, maxRetries 
         }
       }
       
-      // ✅ Andere Fehler: Sofort weiterwerfen
       throw error;
     }
   }
@@ -479,16 +557,16 @@ const makeRateLimitedGPT4Request = async (prompt, requestId, openai, maxRetries 
   throw new Error(`GPT-4 Request nach ${maxRetries} Versuchen fehlgeschlagen.`);
 };
 
-// ✅ MAIN ANALYZE ROUTE - ENHANCED (ohne OCR für Render-Kompatibilität)
+// ===== MAIN ANALYZE ROUTE with FULL OCR SUPPORT =====
 router.post("/", verifyToken, upload.single("file"), async (req, res) => {
   const requestId = Date.now().toString();
   
-  console.log(`📊 [${requestId}] LOKALER Analyse-Request erhalten (ohne OCR):`, {
+  console.log(`📊 [${requestId}] OCR-fähiger Analyse-Request erhalten:`, {
     uploadType: "LOCAL_UPLOAD",
     hasFile: !!req.file,
     userId: req.user?.userId,
     uploadPath: UPLOAD_PATH,
-    dirname: __dirname
+    ocrAvailable: true
   });
 
   if (!req.file) {
@@ -500,7 +578,6 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
   }
 
   try {
-    // ✅ CRITICAL: File validation and existence check
     console.log(`📄 [${requestId}] File info:`, {
       filename: req.file.filename,
       originalname: req.file.originalname,
@@ -525,11 +602,9 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
       });
     }
 
-    // ✅ MongoDB-Collections sicher abrufen
     const { analysisCollection, usersCollection: users, contractsCollection } = await getMongoCollections();
     console.log(`📊 [${requestId}] MongoDB-Collections verfügbar`);
     
-    // 📊 Nutzer auslesen + Limit prüfen
     const user = await users.findOne({ _id: new ObjectId(req.user.userId) });
 
     if (!user) {
@@ -562,7 +637,6 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
       });
     }
 
-    // ✅ PDF auslesen (lokal) - FIXED path
     console.log(`📄 [${requestId}] PDF wird lokal gelesen...`);
     
     const filePath = path.join(UPLOAD_PATH, req.file.filename);
@@ -573,11 +647,9 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
     const buffer = await fs.readFile(filePath);
     console.log(`📄 [${requestId}] Buffer gelesen: ${buffer.length} bytes`);
     
-    // ✅ Hash berechnen (mit Fallback)
     const fileHash = calculateFileHash(buffer);
     console.log(`🔍 [${requestId}] Datei-Hash berechnet: ${fileHash.substring(0, 12)}...`);
 
-    // ✅ Dubletten-Check (nur wenn verfügbar)
     let existingContract = null;
     if (crypto && contractsCollection) {
       try {
@@ -609,14 +681,13 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
         }
       } catch (dupError) {
         console.warn(`⚠️ [${requestId}] Dubletten-Check fehlgeschlagen:`, dupError.message);
-        // Weiter normal verarbeiten
       }
     } else {
       console.log(`⚠️ [${requestId}] Dubletten-Check übersprungen (nicht verfügbar)`);
     }
 
-    // ===== VERBESSERTE PDF-TEXT-EXTRAKTION (ohne OCR) =====
-    console.log(`📖 [${requestId}] Verwende verbesserte PDF-Extraktion (ohne OCR)...`);
+    // ===== ENHANCED PDF-TEXT-EXTRAKTION mit OCR =====
+    console.log(`📖 [${requestId}] Verwende verbesserte PDF-Extraktion mit OCR...`);
     
     const extractionResult = await extractTextFromPDFEnhanced(buffer, filePath, requestId);
     
@@ -626,13 +697,12 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
     console.log(`📊 [${requestId}] Extraktion erfolgreich:`, {
       method: extractionResult.method,
       quality: extractionResult.quality,
+      ocrUsed: extractionResult.ocrUsed,
       textLength: fullTextContent.length,
       pages: extractionResult.pageCount,
       processingTime: extractionResult.processingTime
     });
-    // ===== ENDE DER VERBESSERTEN PDF-EXTRAKTION =====
 
-    // ✅ OpenAI-Aufruf - GEÄNDERT: Mit Rate Limiting
     console.log(`🤖 [${requestId}] OpenAI-Anfrage wird gesendet...`);
     
     const openai = getOpenAI();
@@ -660,11 +730,10 @@ Antwort im folgenden JSON-Format:
 
     let completion;
     try {
-      // ✅ GEÄNDERT: Rate-Limited GPT-4 Request mit Timeout
       completion = await Promise.race([
         makeRateLimitedGPT4Request(prompt, requestId, openai),
         new Promise((_, reject) => 
-          setTimeout(() => reject(new Error("OpenAI API Timeout nach 60s")), 60000) // ✅ Länger für Retries
+          setTimeout(() => reject(new Error("OpenAI API Timeout nach 60s")), 60000)
         )
       ]);
     } catch (openaiError) {
@@ -700,42 +769,37 @@ Antwort im folgenden JSON-Format:
 
     console.log(`📊 [${requestId}] Analyse erfolgreich, speichere in DB...`);
 
-    // ✅ KRITISCH: Analyse in DB speichern MIT fullText für Content-Tab und Extraktion-Info
     const analysisData = {
       userId: req.user.userId,
       contractName: req.file.originalname,
       createdAt: new Date(),
       requestId,
-      fullText: fullTextContent, // ✅ KRITISCH: Vollständiger Text für Content-Tab
-      extractedText: fullTextContent, // ✅ Alternative Benennung als Fallback
-      originalFileName: req.file.originalname, // ✅ Zusätzliche Info
-      fileSize: buffer.length, // ✅ Dateigröße für Debug
-      uploadType: "LOCAL_UPLOAD", // ✅ Debug-Info
-      // ✅ Extraktion-Metadaten
+      fullText: fullTextContent,
+      extractedText: fullTextContent,
+      originalFileName: req.file.originalname,
+      fileSize: buffer.length,
+      uploadType: "LOCAL_UPLOAD",
       extractionMethod: extractionResult.method,
       extractionQuality: extractionResult.quality,
-      ocrUsed: false, // ✅ OCR nicht verfügbar
+      ocrUsed: extractionResult.ocrUsed,
       pageCount: extractionResult.pageCount,
       processingTime: extractionResult.processingTime,
       suggestion: extractionResult.suggestion,
-      // OpenAI Analyse-Ergebnisse:
       ...result,
     };
 
     let inserted;
     try {
       inserted = await analysisCollection.insertOne(analysisData);
-      console.log(`✅ [${requestId}] Lokale Analyse gespeichert: ${inserted.insertedId} (mit fullText: ${fullTextContent.length} Zeichen)`);
+      console.log(`✅ [${requestId}] OCR-Analyse gespeichert: ${inserted.insertedId} (mit fullText: ${fullTextContent.length} Zeichen, OCR: ${extractionResult.ocrUsed})`);
     } catch (dbError) {
       console.error(`❌ [${requestId}] DB-Insert-Fehler:`, dbError.message);
       throw new Error(`Datenbank-Fehler beim Speichern: ${dbError.message}`);
     }
 
-    // 💾 Vertrag speichern (mit Fallbacks) - ERWEITERT und FIXED
     try {
-      console.log(`💾 [${requestId}] Speichere Vertrag (lokal)...`);
+      console.log(`💾 [${requestId}] Speichere Vertrag (lokal mit OCR-Info)...`);
 
-      // Bei Duplikat: Bestehenden Vertrag aktualisieren
       if (existingContract && req.body.forceReanalyze === 'true') {
         console.log(`🔄 [${requestId}] Aktualisiere bestehenden Vertrag: ${existingContract._id}`);
         
@@ -744,23 +808,22 @@ Antwort im folgenden JSON-Format:
           { 
             $set: {
               lastAnalyzed: new Date(),
-              analysisId: inserted.insertedId, // ✅ KRITISCH: Reference zur Analyse
-              fullText: fullTextContent, // ✅ KRITISCH: Text direkt im Contract als Backup
-              content: fullTextContent, // ✅ ZUSÄTZLICH: Alternative Feldname für Kompatibilität
-              filePath: `/uploads/${req.file.filename}`, // ✅ FIXED: Korrekter lokaler Pfad
-              filename: req.file.filename, // ✅ ADDED: Für File Serving
-              uploadType: "LOCAL_UPLOAD", // ✅ CRITICAL: For frontend logic
-              // ✅ Extraktion-Metadaten im Contract
+              analysisId: inserted.insertedId,
+              fullText: fullTextContent,
+              content: fullTextContent,
+              filePath: `/uploads/${req.file.filename}`,
+              filename: req.file.filename,
+              uploadType: "LOCAL_UPLOAD",
               extractionMethod: extractionResult.method,
               extractionQuality: extractionResult.quality,
-              ocrUsed: false,
+              ocrUsed: extractionResult.ocrUsed,
               extraRefs: {
                 uploadType: "LOCAL_UPLOAD",
                 analysisId: inserted.insertedId,
                 uploadPath: UPLOAD_PATH,
                 serverPath: `/uploads/${req.file.filename}`,
                 extractionMethod: extractionResult.method,
-                ocrUsed: false
+                ocrUsed: extractionResult.ocrUsed
               },
               legalPulse: {
                 riskScore: result.contractScore || null,
@@ -774,13 +837,12 @@ Antwort im folgenden JSON-Format:
           }
         );
         
-        console.log(`✅ [${requestId}] Bestehender Vertrag aktualisiert mit fullText (${fullTextContent.length} Zeichen)`);
+        console.log(`✅ [${requestId}] Bestehender Vertrag aktualisiert mit OCR-Info (${fullTextContent.length} Zeichen, OCR: ${extractionResult.ocrUsed})`);
       } else {
-        // Neuen Vertrag speichern (lokal) - ENHANCED
         const contractAnalysisData = {
           name: result.summary ? req.file.originalname : req.file.originalname,
-          laufzeit: "Unbekannt", // TODO: Extract from AI response
-          kuendigung: "Unbekannt", // TODO: Extract from AI response  
+          laufzeit: "Unbekannt",
+          kuendigung: "Unbekannt",
           expiryDate: "",
           status: "Aktiv"
         };
@@ -792,7 +854,6 @@ Antwort im folgenden JSON-Format:
           fullTextContent
         );
 
-        // ✅ Update contract with analysis reference und Extraktion-Info
         await contractsCollection.updateOne(
           { _id: savedContract._id },
           { 
@@ -800,24 +861,22 @@ Antwort im folgenden JSON-Format:
               analysisId: inserted.insertedId,
               extractionMethod: extractionResult.method,
               extractionQuality: extractionResult.quality,
-              ocrUsed: false,
+              ocrUsed: extractionResult.ocrUsed,
               'extraRefs.analysisId': inserted.insertedId,
               'extraRefs.extractionMethod': extractionResult.method,
-              'extraRefs.ocrUsed': false
+              'extraRefs.ocrUsed': extractionResult.ocrUsed
             }
           }
         );
 
-        console.log(`✅ [${requestId}] Neuer Vertrag gespeichert: ${savedContract._id} mit analysisId: ${inserted.insertedId}`);
+        console.log(`✅ [${requestId}] Neuer Vertrag gespeichert: ${savedContract._id} mit OCR-analysisId: ${inserted.insertedId} (OCR: ${extractionResult.ocrUsed})`);
       }
       
     } catch (saveError) {
       console.error(`❌ [${requestId}] Vertrag-Speicher-Fehler:`, saveError.message);
-      // ✅ Vertrag-Speicher-Fehler soll Analyse nicht blockieren!
       console.warn(`⚠️ [${requestId}] Analyse war erfolgreich, aber Vertrag-Speicherung fehlgeschlagen`);
     }
 
-    // ✅ Analyse-Zähler hochzählen
     try {
       await users.updateOne(
         { _id: user._id },
@@ -828,21 +887,21 @@ Antwort im folgenden JSON-Format:
       console.warn(`⚠️ [${requestId}] Counter-Update-Fehler:`, updateError.message);
     }
 
-    console.log(`✅ [${requestId}] Lokale Analyse komplett erfolgreich`);
+    console.log(`✅ [${requestId}] OCR-fähige Analyse komplett erfolgreich`);
 
-    // 📤 Erfolgreiche Response - ERWEITERT mit Extraktion-Info
     const responseData = { 
       success: true,
-      message: "Lokale Analyse erfolgreich abgeschlossen",
+      message: extractionResult.ocrUsed ? 
+        "Analyse mit OCR-Texterkennung erfolgreich abgeschlossen" : 
+        "Lokale Analyse erfolgreich abgeschlossen",
       requestId,
-      uploadType: "LOCAL_UPLOAD", // ✅ Info für Frontend
-      fileUrl: `/uploads/${req.file.filename}`, // ✅ CRITICAL: For frontend file access
-      // ✅ Extraktion-Informationen für User-Feedback
+      uploadType: "LOCAL_UPLOAD",
+      fileUrl: `/uploads/${req.file.filename}`,
       extractionInfo: {
         method: extractionResult.method,
         quality: extractionResult.quality,
-        ocrUsed: false, // ✅ OCR nicht verfügbar
-        ocrAvailable: false, // ✅ OCR nicht verfügbar in dieser Version
+        ocrUsed: extractionResult.ocrUsed,
+        ocrAvailable: true, // ✅ OCR ist verfügbar
         processingTime: extractionResult.processingTime,
         charactersExtracted: extractionResult.charactersExtracted,
         pageCount: extractionResult.pageCount,
@@ -857,33 +916,24 @@ Antwort im folgenden JSON-Format:
       }
     };
 
-    // Bei Re-Analyse Hinweis hinzufügen
     if (existingContract && req.body.forceReanalyze === 'true') {
       responseData.isReanalysis = true;
       responseData.originalContractId = existingContract._id;
-      responseData.message = "Lokale Analyse erfolgreich aktualisiert";
-    }
-
-    // ✅ Warnung für schlechte Text-Qualität hinzufügen
-    if (extractionResult.quality === 'poor' && extractionResult.suggestion) {
-      responseData.warning = {
-        type: 'POOR_TEXT_QUALITY',
-        message: 'Text-Qualität könnte besser sein für optimale Analyse-Ergebnisse.',
-        suggestion: extractionResult.suggestion
-      };
+      responseData.message = extractionResult.ocrUsed ? 
+        "Analyse mit OCR-Texterkennung erfolgreich aktualisiert" : 
+        "Lokale Analyse erfolgreich aktualisiert";
     }
 
     res.json(responseData);
 
   } catch (error) {
-    console.error(`❌ [${requestId}] Fehler bei lokaler Analyse:`, {
+    console.error(`❌ [${requestId}] Fehler bei OCR-fähiger Analyse:`, {
       message: error.message,
-      stack: error.stack?.substring(0, 500), // Shortened stack trace
+      stack: error.stack?.substring(0, 500),
       userId: req.user?.userId,
       filename: req.file?.originalname
     });
     
-    // ✅ Spezifische Fehlermeldungen - ERWEITERT
     let errorMessage = "Fehler bei der Analyse.";
     let errorCode = "ANALYSIS_ERROR";
     
@@ -896,7 +946,7 @@ Antwort im folgenden JSON-Format:
     } else if (error.message.includes("JSON") || error.message.includes("Parse")) {
       errorMessage = "Fehler bei der Analyse-Verarbeitung.";
       errorCode = "PARSE_ERROR";
-    } else if (error.message.includes("PDF") || error.message.includes("Datei") || error.message.includes("passwortgeschützt") || error.message.includes("enthält nur Bilder")) {
+    } else if (error.message.includes("PDF") || error.message.includes("Datei") || error.message.includes("passwortgeschützt")) {
       errorMessage = error.message;
       errorCode = "PDF_ERROR";
     } else if (error.message.includes("Datenbank") || error.message.includes("MongoDB")) {
@@ -905,7 +955,10 @@ Antwort im folgenden JSON-Format:
     } else if (error.message.includes("OpenAI") || error.message.includes("Rate Limit")) {
       errorMessage = "KI-Analyse-Service vorübergehend nicht verfügbar.";
       errorCode = "AI_SERVICE_ERROR";
-    } else if (error.message.includes("keinen ausreichend lesbaren Text") || error.message.includes("Nicht genügend Text")) {
+    } else if (error.message.includes("Texterkennung") || error.message.includes("OCR")) {
+      errorMessage = error.message + " OCR konnte den Text nicht korrekt erkennen.";
+      errorCode = "OCR_ERROR";
+    } else if (error.message.includes("Nicht genügend Text")) {
       errorMessage = error.message;
       errorCode = "INSUFFICIENT_TEXT";
     }
@@ -920,7 +973,8 @@ Antwort im folgenden JSON-Format:
   }
 });
 
-// 📚 Analyseverlauf abrufen (unverändert)
+// ===== OTHER ROUTES (unchanged) =====
+
 router.get("/history", verifyToken, async (req, res) => {
   const requestId = `hist_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   
@@ -955,22 +1009,23 @@ router.get("/history", verifyToken, async (req, res) => {
   }
 });
 
-// ✅ Health Check Route - LOKALER UPLOAD ohne OCR
 router.get("/health", async (req, res) => {
   const checks = {
-    service: "Contract Analysis (Local Upload - Lightweight)", // ✅ Updated
+    service: "Contract Analysis (Local Upload + Full OCR Support)", // ✅ Updated
     status: "online",
     timestamp: new Date().toISOString(),
     openaiConfigured: !!process.env.OPENAI_API_KEY,
     mongoConnected: false,
     uploadsPath: fsSync.existsSync(UPLOAD_PATH),
     uploadPath: UPLOAD_PATH,
-    uploadType: "LOCAL_UPLOAD", // ✅ Info
-    s3Integration: "DISABLED (AWS SDK Conflict)", // ✅ Info
+    uploadType: "LOCAL_UPLOAD",
+    s3Integration: "DISABLED (AWS SDK Conflict)",
     cryptoAvailable: !!crypto,
     saveContractAvailable: !!saveContract,
-    ocrAvailable: false, // ✅ OCR nicht verfügbar in dieser Version
-    version: "lightweight" // ✅ Version-Info
+    ocrAvailable: true, // ✅ OCR ist verfügbar
+    tesseractLoaded: !!Tesseract, // ✅ Tesseract-Check
+    queueAvailable: !!analysisQueue, // ✅ Queue-Check
+    version: "full-ocr" // ✅ Version-Info
   };
 
   try {
@@ -981,7 +1036,7 @@ router.get("/health", async (req, res) => {
     checks.mongoError = err.message;
   }
 
-  const isHealthy = checks.openaiConfigured && checks.mongoConnected && checks.uploadsPath;
+  const isHealthy = checks.openaiConfigured && checks.mongoConnected && checks.uploadsPath && checks.ocrAvailable;
   
   res.status(isHealthy ? 200 : 503).json({
     success: isHealthy,
@@ -989,11 +1044,13 @@ router.get("/health", async (req, res) => {
   });
 });
 
-// ✅ Graceful Shutdown
 process.on('SIGTERM', async () => {
-  console.log('📊 Analyze service (local - lightweight) shutting down...');
+  console.log('📊 Analyze service (local + full OCR) shutting down...');
   if (mongoClient) {
     await mongoClient.close();
+  }
+  if (analysisQueue) {
+    await analysisQueue.close();
   }
 });
 
