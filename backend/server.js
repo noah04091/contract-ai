@@ -67,7 +67,7 @@ try {
   console.error(`❌ Fehler beim Erstellen des Upload-Ordners:`, err);
 }
 
-const transporter = nodemailer.createTransport(EMAIL_CONFIG);
+const transporter = nodemailer.createTransporter(EMAIL_CONFIG);
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // ✅ MULTER Setup (unchanged)
@@ -374,7 +374,16 @@ const connectDB = async () => {
       console.error("❌ Fehler bei Legal Pulse Routen:", err);
     }
 
-    // ✅ 9. S3 ROUTES - NEUE STRUKTUR UNTER /api/s3
+    // ✅ 9. S3 ROUTES - NEUE PROFESSIONELLE STRUKTUR
+    try {
+      const s3Routes = require("./routes/s3Routes");
+      app.use("/api/s3", s3Routes);
+      console.log("✅ S3-Routen geladen unter /api/s3 (neue robuste Struktur)");
+    } catch (err) {
+      console.error("❌ Fehler beim Laden der S3-Routen:", err);
+    }
+
+    // ✅ 10. S3 LEGACY ROUTES - BEHALTEN FÜR BACKWARDS COMPATIBILITY
     if (generateSignedUrl) {
       app.get("/api/s3/view", verifyToken, (req, res) => {  // ← FIX: /api PREFIX
         try {
@@ -418,10 +427,10 @@ const connectDB = async () => {
         }
       });
 
-      console.log("✅ S3-Routen geladen unter /api/s3");
+      console.log("✅ S3 Legacy-Routen geladen unter /api/s3 (backwards compatibility)");
     }
 
-    // ✅ 10. UPLOAD ROUTE - UNTER /api/upload
+    // ✅ 11. UPLOAD ROUTE - UNTER /api/upload
     if (s3Upload) {
       app.post("/api/upload", verifyToken, checkSubscription, s3Upload.single("file"), async (req, res) => {  // ← FIX: /api PREFIX
         if (!req.file) return res.status(400).json({ message: "Keine Datei hochgeladen" });
@@ -523,7 +532,7 @@ const connectDB = async () => {
       console.log("✅ Upload-Route geladen unter /api/upload");
     }
 
-    // ✅ 11. TEST & DEBUG ROUTES - MIT /api PREFIX
+    // ✅ 12. TEST & DEBUG ROUTES - MIT /api PREFIX
     try {
       app.use("/api/test", require("./testAuth"));  // ← FIX: /api PREFIX
       console.log("✅ Test-Route geladen unter /api/test");
@@ -531,7 +540,7 @@ const connectDB = async () => {
       console.error("❌ Fehler bei Test-Route:", err);
     }
 
-    // ✅ 12. DEBUG ROUTE - MIT /api PREFIX
+    // ✅ 13. DEBUG ROUTE - MIT /api PREFIX
     app.get("/api/debug", (req, res) => {  // ← FIX: /api PREFIX
       console.log("Cookies:", req.cookies);
       res.cookie("debug_cookie", "test-value", {
@@ -560,15 +569,15 @@ const connectDB = async () => {
         smartContractRoute: "/api/contracts/:id/generate-optimized (FIXED!)",
         analyzeRoute: "/api/analyze (FIXED!)",
         optimizeRoute: "/api/optimize (FIXED!)",
-        s3Routes: "/api/s3/* (FIXED!)",
+        s3Routes: "/api/s3/* (FIXED + ENHANCED!)",
         uploadRoute: "/api/upload (FIXED!)",
-        betterContractsRoute: "/api/better-contracts (ADDED!)", // ← NEU HINZUGEFÜGT
+        betterContractsRoute: "/api/better-contracts (ADDED!)",
         s3Status: s3Status,
-        message: "🎉 PFAD-CHAOS BEHOBEN - ALLES UNTER /api!"
+        message: "🎉 PFAD-CHAOS BEHOBEN - ALLES UNTER /api + S3 ROUTES ENHANCED!"
       });
     });
 
-    // ✅ 13. DEBUG ROUTES LIST
+    // ✅ 14. DEBUG ROUTES LIST
     app.get("/api/debug/routes", (req, res) => {  // ← FIX: /api PREFIX
       const routes = [];
       
@@ -604,7 +613,7 @@ const connectDB = async () => {
       
       res.json({
         success: true,
-        message: "🔍 Route Debug Info - NACH PFAD-FIX",
+        message: "🔍 Route Debug Info - NACH PFAD-FIX + S3 ENHANCEMENT",
         totalRoutes: routes.length,
         apiRoutes: apiRoutes,
         nonApiRoutes: nonApiRoutes,
@@ -615,10 +624,10 @@ const connectDB = async () => {
           generateOptimized: "/api/contracts/:contractId/generate-optimized", 
           analyze: "/api/analyze",
           optimize: "/api/optimize",
-          s3: "/api/s3/*",
+          s3: "/api/s3/* (enhanced with robust s3Routes.js)",
           upload: "/api/upload",
           stripe: "/api/stripe/*",
-          betterContracts: "/api/better-contracts" // ← NEU HINZUGEFÜGT
+          betterContracts: "/api/better-contracts"
         },
         warning: nonApiRoutes.length > 0 ? "⚠️ Es gibt noch non-/api Routen!" : "✅ Alle Routen unter /api!",
         timestamp: new Date().toISOString()
@@ -661,11 +670,11 @@ const connectDB = async () => {
       console.log(`🪄 Smart Contract: /api/contracts/:id/generate-optimized (FIXED!)`);
       console.log(`📊 Analyze-Route: /api/analyze (FIXED!)`);
       console.log(`🔧 Optimize-Route: /api/optimize (FIXED!)`);
-      console.log(`☁️ S3-Routes: /api/s3/* (FIXED!)`);
+      console.log(`☁️ S3-Routes: /api/s3/* (ENHANCED!)`);
       console.log(`📤 Upload-Route: /api/upload (FIXED!)`);
       console.log(`💳 Stripe-Routes: /api/stripe/* (FIXED!)`);
-      console.log(`🔍 Better-Contracts-Route: /api/better-contracts (ADDED!)`); // ← NEU HINZUGEFÜGT
-      console.log(`✅ EINHEITLICHE /api STRUKTUR - BEREIT FÜR VERCEL!`);
+      console.log(`🔍 Better-Contracts-Route: /api/better-contracts (ADDED!)`);
+      console.log(`✅ EINHEITLICHE /api STRUKTUR + S3 ENHANCEMENT - BEREIT FÜR VERCEL!`);
     });
 
   } catch (err) {

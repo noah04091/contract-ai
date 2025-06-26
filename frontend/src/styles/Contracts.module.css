@@ -23,6 +23,17 @@
   overflow: hidden;
 }
 
+/* ✅ NEU: Legacy-Modal für alte Verträge */
+.legacyModal {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  max-width: 480px;
+  width: 100%;
+  max-height: 80vh;
+  overflow: hidden;
+}
+
 .modalHeader {
   display: flex;
   align-items: center;
@@ -44,6 +55,10 @@
 
 .duplicateIcon {
   color: #d97706;
+}
+
+.legacyIcon {
+  color: #dc2626;
 }
 
 .modalHeader h3 {
@@ -121,6 +136,61 @@
   line-height: 1.5;
 }
 
+/* ✅ NEU: Legacy-Modal spezifische Styles */
+.legacyInfo {
+  text-align: center;
+}
+
+.contractInfo h4 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 8px 0;
+}
+
+.contractDate {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin: 0 0 20px 0;
+}
+
+.legacyMessage {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.legacyMessage p {
+  color: #991b1b;
+  margin: 0;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.legacyExplanation {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 16px;
+  text-align: left;
+}
+
+.legacyExplanation h5 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 8px 0;
+}
+
+.legacyExplanation p {
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.4;
+}
+
 .modalActions {
   display: flex;
   gap: 8px;
@@ -190,6 +260,46 @@
 
 .duplicateActionButton:hover {
   background: #2563eb;
+}
+
+/* ✅ NEU: Contract Badges - Cloud, Reupload etc. */
+.contractBadges {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+.cloudBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  background: #dcfce7;
+  color: #166534;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.reuploadBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  background: #fef3c7;
+  color: #92400e;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+/* ✅ NEU: Loading Icon Animation */
+.loadingIcon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 /* ✅ KORRIGIERT: Plan-Badges für Free/Business/Premium */
@@ -1242,10 +1352,6 @@
   margin: 0 auto 1rem;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
 /* Error */
 .errorContainer {
   text-align: center;
@@ -1498,6 +1604,11 @@
   color: #374151;
 }
 
+.actionButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .deleteButton {
   background: #fef2f2;
   border-color: #fecaca;
@@ -1564,12 +1675,10 @@
 }
 
 .cardStatus {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  padding: 0.25rem 0.5rem;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  font-weight: 500;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .cardDetails {
@@ -1633,6 +1742,11 @@
   background: #f9fafb;
   border-color: #d1d5db;
   color: #374151;
+}
+
+.cardActionButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .cardActionButton.delete:hover {
@@ -1812,7 +1926,8 @@
     padding: 10px;
   }
 
-  .duplicateModal {
+  .duplicateModal,
+  .legacyModal {
     max-width: 100%;
     max-height: 90vh;
   }

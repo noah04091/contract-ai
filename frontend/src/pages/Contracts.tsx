@@ -1,11 +1,11 @@
-// 📁 src/pages/Contracts.tsx - JSX FIXED: Motion Button closing tag korrigiert + ANALYSE-ANZEIGE GEFIXT + RESPONSIVE + DUPLIKATSERKENNUNG
+// 📁 src/pages/Contracts.tsx - JSX FIXED: Motion Button closing tag korrigiert + ANALYSE-ANZEIGE GEFIXT + RESPONSIVE + DUPLIKATSERKENNUNG + S3-INTEGRATION
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   FileText, RefreshCw, Upload, CheckCircle, AlertCircle, 
   Plus, Calendar, Clock, Trash2, Eye, Edit,
   Search, X, Crown, Users, Loader, PlayCircle,
-  Lock, Zap, BarChart3
+  Lock, Zap, BarChart3, ExternalLink
 } from "lucide-react";
 import styles from "../styles/Contracts.module.css";
 import ContractAnalysis from "../components/ContractAnalysis";
@@ -21,6 +21,11 @@ interface Contract {
   createdAt: string;
   content?: string;
   isGenerated?: boolean;
+  s3Key?: string; // ✅ NEU: S3-Schlüssel für Cloud-Dateien
+  s3Bucket?: string;
+  s3Location?: string;
+  uploadType?: string;
+  needsReupload?: boolean;
 }
 
 // ✅ KORRIGIERT: Interface für Mehrfach-Upload
@@ -64,6 +69,113 @@ type StatusFilter = 'alle' | 'aktiv' | 'bald_ablaufend' | 'abgelaufen' | 'gekün
 type DateFilter = 'alle' | 'letzte_7_tage' | 'letzte_30_tage' | 'letztes_jahr';
 type SortOrder = 'neueste' | 'älteste' | 'name_az' | 'name_za';
 
+// ✅ NEU: S3-Integration - Utility-Funktionen direkt in der Komponente
+interface S3UrlResponse {
+  fileUrl: string;
+  s3Key: string;
+  expiresIn: number;
+  contract?: {
+    id: string;
+    title: string;
+    uploadDate: string;
+  };
+  message: string;
+}
+
+interface S3ErrorResponse {
+  error: string;
+  suggestion?: string;
+  contractTitle?: string;
+  uploadDate?: string;
+}
+
+// ✅ NEU: S3-Funktionen - Optimiert ohne redundante fetchSignedUrl
+
+const getContractInfo = async (contractId: string): Promise<{
+  url: string | null;
+  hasS3Key: boolean;
+  isLegacy: boolean;
+  error?: string;
+  suggestion?: string;
+}> => {
+  try {
+    const token = localStorage.getItem('token');
+    
+    const response = await fetch(`/api/s3/view?contractId=${contractId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include'
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      const errorData = data as S3ErrorResponse;
+      
+      if (errorData.error.includes('before S3 integration')) {
+        return {
+          url: null,
+          hasS3Key: false,
+          isLegacy: true,
+          error: errorData.error,
+          suggestion: errorData.suggestion
+        };
+      }
+      
+      return {
+        url: null,
+        hasS3Key: false,
+        isLegacy: false,
+        error: errorData.error
+      };
+    }
+
+    const successData = data as S3UrlResponse;
+    
+    return {
+      url: successData.fileUrl,
+      hasS3Key: true,
+      isLegacy: false
+    };
+
+  } catch (error) {
+    return {
+      url: null,
+      hasS3Key: false,
+      isLegacy: false,
+      error: `Network Error: ${error}`
+    };
+  }
+};
+
+const openContract = async (
+  contractId: string, 
+  onError?: (message: string, isLegacy: boolean) => void
+) => {
+  const contractInfo = await getContractInfo(contractId);
+  
+  if (contractInfo.url) {
+    // Erfolgreich - öffne PDF
+    window.open(contractInfo.url, '_blank');
+    return;
+  }
+  
+  if (contractInfo.isLegacy) {
+    // Alter Vertrag - Reupload-Meldung
+    const message = 'Dieser Vertrag wurde vor der Cloud-Integration hochgeladen und ist nicht mehr verfügbar. Bitte laden Sie ihn erneut hoch.';
+    if (onError) onError(message, true);
+    else alert(`⚠️ ${message}`);
+    return;
+  }
+  
+  // Allgemeiner Fehler
+  const message = contractInfo.error || 'Die PDF-Datei konnte nicht geladen werden.';
+  if (onError) onError(message, false);
+  else alert(`❌ ${message}`);
+};
+
 export default function Contracts() {
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [filteredContracts, setFilteredContracts] = useState<Contract[]>([]);
@@ -92,6 +204,16 @@ export default function Contracts() {
     fileItem?: UploadFileItem;
     existingContract?: Contract;
   } | null>(null);
+
+  // ✅ NEU: Legacy-Modal State für alte Verträge
+  const [legacyModal, setLegacyModal] = useState<{
+    show: boolean;
+    contract?: Contract;
+    message?: string;
+  } | null>(null);
+
+  // ✅ NEU: PDF-Loading State
+  const [pdfLoading, setPdfLoading] = useState<{ [contractId: string]: boolean }>({});
   
   // ✅ Erweiterte Filter & Search States
   const [searchQuery, setSearchQuery] = useState("");
@@ -100,6 +222,115 @@ export default function Contracts() {
   const [sortOrder, setSortOrder] = useState<SortOrder>('neueste');
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // ✅ NEU: PDF anzeigen Handler mit S3-Integration
+  const handleViewContractPDF = async (contract: Contract) => {
+    setPdfLoading(prev => ({ ...prev, [contract._id]: true }));
+    
+    try {
+      await openContract(contract._id, (message, isLegacy) => {
+        if (isLegacy) {
+          setLegacyModal({
+            show: true,
+            contract,
+            message
+          });
+        } else {
+          setError(message);
+        }
+      });
+    } catch (error) {
+      console.error('❌ Error opening contract PDF:', error);
+      setError('Unerwarteter Fehler beim Öffnen des Vertrags');
+    } finally {
+      setPdfLoading(prev => ({ ...prev, [contract._id]: false }));
+    }
+  };
+
+  // ✅ NEU: Legacy-Modal Komponente
+  const LegacyModal = ({ 
+    contract, 
+    message, 
+    onClose, 
+    onReupload 
+  }: {
+    contract: Contract;
+    message: string;
+    onClose: () => void;
+    onReupload: () => void;
+  }) => (
+    <AnimatePresence>
+      <motion.div 
+        className={styles.modalOverlay}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+      >
+        <motion.div 
+          className={styles.legacyModal}
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className={styles.modalHeader}>
+            <div className={styles.modalIcon}>
+              <AlertCircle size={24} className={styles.legacyIcon} />
+            </div>
+            <h3>Vertrag nicht verfügbar</h3>
+            <button 
+              className={styles.modalCloseButton}
+              onClick={onClose}
+            >
+              <X size={20} />
+            </button>
+          </div>
+
+          <div className={styles.modalContent}>
+            <div className={styles.legacyInfo}>
+              <div className={styles.contractInfo}>
+                <h4>{contract.name}</h4>
+                <p className={styles.contractDate}>
+                  Hochgeladen am: {formatDate(contract.createdAt)}
+                </p>
+              </div>
+              
+              <div className={styles.legacyMessage}>
+                <p>{message}</p>
+              </div>
+              
+              <div className={styles.legacyExplanation}>
+                <h5>Warum ist das passiert?</h5>
+                <p>
+                  Dieser Vertrag wurde hochgeladen, bevor wir auf Cloud-Speicher umgestellt haben. 
+                  Die lokalen Dateien werden bei Server-Updates automatisch gelöscht.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.modalActions}>
+            <button 
+              className={`${styles.modalActionButton} ${styles.primaryAction}`}
+              onClick={onReupload}
+            >
+              <Upload size={16} />
+              <span>Vertrag erneut hochladen</span>
+            </button>
+            
+            <button 
+              className={styles.modalActionButton}
+              onClick={onClose}
+            >
+              <X size={16} />
+              <span>Schließen</span>
+            </button>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
 
   // ✅ NEU: Duplikat-Modal Komponente
   const DuplicateModal = ({ 
@@ -412,6 +643,19 @@ export default function Contracts() {
   const clearAllUploadFiles = () => {
     setUploadFiles([]);
     setIsAnalyzing(false);
+  };
+
+  // ✅ NEU: Legacy-Modal Handler
+  const handleLegacyReupload = () => {
+    setLegacyModal(null);
+    setActiveSection('upload');
+    // Optional: Scroll zum Upload-Bereich
+    setTimeout(() => {
+      const uploadSection = document.querySelector('[data-section="upload"]');
+      if (uploadSection) {
+        uploadSection.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 100);
   };
 
   // ✅ NEU: Duplikat-Aktionen Handler
@@ -910,6 +1154,12 @@ export default function Contracts() {
             {contract.isGenerated && (
               <span className={styles.generatedBadge}>Generiert</span>
             )}
+            {contract.s3Key && (
+              <span className={styles.cloudBadge}>☁️ Cloud</span>
+            )}
+            {contract.needsReupload && (
+              <span className={styles.reuploadBadge}>⚠️ Reupload</span>
+            )}
           </div>
         </div>
       </div>
@@ -951,6 +1201,21 @@ export default function Contracts() {
         >
           <Eye size={14} />
           <span>Details</span>
+        </button>
+        <button 
+          className={styles.cardActionButton}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleViewContractPDF(contract);
+          }}
+          disabled={pdfLoading[contract._id]}
+        >
+          {pdfLoading[contract._id] ? (
+            <Loader size={14} className={styles.loadingIcon} />
+          ) : (
+            <ExternalLink size={14} />
+          )}
+          <span>{pdfLoading[contract._id] ? 'Lädt...' : 'PDF'}</span>
         </button>
         <button 
           className={styles.cardActionButton}
@@ -1045,6 +1310,7 @@ export default function Contracts() {
             className={`${styles.tabButton} ${activeSection === 'upload' ? styles.activeTab : ''} ${!canUpload ? styles.disabledTab : ''}`}
             onClick={() => canUpload && setActiveSection('upload')}
             disabled={!canUpload}
+            data-section="upload"
           >
             <Upload size={18} />
             <span>
@@ -1584,9 +1850,17 @@ export default function Contracts() {
                                 </div>
                                 <div>
                                   <span className={styles.contractNameText}>{contract.name}</span>
-                                  {contract.isGenerated && (
-                                    <span className={styles.generatedBadge}>Generiert</span>
-                                  )}
+                                  <div className={styles.contractBadges}>
+                                    {contract.isGenerated && (
+                                      <span className={styles.generatedBadge}>Generiert</span>
+                                    )}
+                                    {contract.s3Key && (
+                                      <span className={styles.cloudBadge}>☁️</span>
+                                    )}
+                                    {contract.needsReupload && (
+                                      <span className={styles.reuploadBadge}>⚠️</span>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
                             </td>
@@ -1623,6 +1897,21 @@ export default function Contracts() {
                                   title="Details anzeigen"
                                 >
                                   <Eye size={16} />
+                                </button>
+                                <button 
+                                  className={styles.actionButton}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleViewContractPDF(contract);
+                                  }}
+                                  title="PDF anzeigen"
+                                  disabled={pdfLoading[contract._id]}
+                                >
+                                  {pdfLoading[contract._id] ? (
+                                    <Loader size={16} className={styles.loadingIcon} />
+                                  ) : (
+                                    <ExternalLink size={16} />
+                                  )}
                                 </button>
                                 <button 
                                   className={styles.actionButton}
@@ -1676,6 +1965,16 @@ export default function Contracts() {
               console.log("Edit contract:", contractId);
             }}
             onDelete={handleDeleteContract}
+          />
+        )}
+
+        {/* ✅ NEU: Legacy-Modal für alte Verträge */}
+        {legacyModal?.show && legacyModal.contract && (
+          <LegacyModal
+            contract={legacyModal.contract}
+            message={legacyModal.message || ''}
+            onClose={() => setLegacyModal(null)}
+            onReupload={handleLegacyReupload}
           />
         )}
 
