@@ -1,4 +1,4 @@
-// 📁 src/utils/api.ts - FIXED: PDF-Fehlermeldungen + Duplikat-Handling
+// 📁 src/utils/api.ts - FIXED: PDF-Fehlermeldungen + Duplikat-Handling (NO extractExistingContract)
 const API_BASE_URL = "/api"; // Proxy-Pfad für Vercel & devServer (für API-Calls)
 
 // ✅ NEU: Separate Backend-URL für File-Downloads (absolute URLs)
@@ -258,7 +258,7 @@ function isDuplicateError(error: unknown): error is DuplicateError {
 }
 
 /**
- * ✅ NEW: Helper um zu prüfen ob eine Fehlermeldung bereits benutzerfreundlich ist
+ * ✅ Helper um zu prüfen ob eine Fehlermeldung bereits benutzerfreundlich ist
  */
 function isUserFriendlyError(message: string): boolean {
   const userFriendlyMarkers = [
@@ -505,9 +505,8 @@ export const uploadAndAnalyze = async (
         const duplicateResult = {
           ...error.data,
           success: false,
-          duplicate: true,
-          // ✅ existingContract aus verschiedenen möglichen Feldern extrahieren
-          existingContract: (error.data as any).existingContract || (error.data as any).contract || (error.data as any).contractData || null
+          duplicate: true
+          // ✅ existingContract kommt direkt vom Backend (spread operator übernimmt alle Felder)
         };
         
         console.log("🔄 Verarbeitete Duplikat-Daten:", duplicateResult);
