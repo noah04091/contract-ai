@@ -1,5 +1,5 @@
+// ✅ TypeScript-konforme S3-Utils ohne React dependency
 // frontend/src/utils/s3Utils.ts
-// Wiederverwendbare S3-Utility-Funktionen für Contract AI
 
 export interface S3UrlResponse {
   fileUrl: string;
@@ -26,6 +26,30 @@ export interface ContractInfo {
   isLegacy: boolean;
   error?: string;
   suggestion?: string;
+}
+
+// Contract interface für Type Safety
+export interface ContractData {
+  _id: string;
+  name?: string;
+  s3Key?: string;
+  s3Bucket?: string;
+  s3Location?: string;
+  uploadType?: string;
+  needsReupload?: boolean;
+  filePath?: string;
+  filename?: string;
+  createdAt?: string;
+  isGenerated?: boolean;
+}
+
+export interface ContractDisplayMode {
+  canView: boolean;
+  isS3: boolean;
+  isLegacy: boolean;
+  needsReupload: boolean;
+  displayText: string;
+  iconType: 'cloud' | 'warning' | 'error' | 'normal';
 }
 
 /**
@@ -282,7 +306,7 @@ export async function downloadContract(
  * @param contract Contract-Objekt
  * @returns boolean
  */
-export function hasS3Integration(contract: any): boolean {
+export function hasS3Integration(contract: ContractData): boolean {
   return !!(contract.s3Key && contract.s3Bucket);
 }
 
@@ -291,7 +315,7 @@ export function hasS3Integration(contract: any): boolean {
  * @param contract Contract-Objekt
  * @returns string | null
  */
-export function getLegacyFileUrl(contract: any): string | null {
+export function getLegacyFileUrl(contract: ContractData): string | null {
   if (contract.filePath) {
     // Entferne führenden Slash falls vorhanden
     const cleanPath = contract.filePath.startsWith('/') 
@@ -312,16 +336,7 @@ export function getLegacyFileUrl(contract: any): string | null {
  * @param contract Contract-Objekt
  * @returns ContractDisplayMode
  */
-export interface ContractDisplayMode {
-  canView: boolean;
-  isS3: boolean;
-  isLegacy: boolean;
-  needsReupload: boolean;
-  displayText: string;
-  iconType: 'cloud' | 'warning' | 'error' | 'normal';
-}
-
-export function getContractDisplayMode(contract: any): ContractDisplayMode {
+export function getContractDisplayMode(contract: ContractData): ContractDisplayMode {
   if (hasS3Integration(contract)) {
     return {
       canView: true,
@@ -366,46 +381,3 @@ export function getContractDisplayMode(contract: any): ContractDisplayMode {
     iconType: 'error'
   };
 }
-
-/**
- * Hook für React-Komponenten: Contract URL Management
- */
-export function useContractUrl(contractId: string) {
-  const [url, setUrl] = React.useState<string | null>(null);
-  const [loading, setLoading] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
-  
-  const loadUrl = React.useCallback(async () => {
-    if (!contractId) return;
-    
-    setLoading(true);
-    setError(null);
-    
-    try {
-      const contractUrl = await getValidS3Url(contractId);
-      setUrl(contractUrl);
-      
-      if (!contractUrl) {
-        setError('URL konnte nicht geladen werden');
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unbekannter Fehler');
-    } finally {
-      setLoading(false);
-    }
-  }, [contractId]);
-  
-  React.useEffect(() => {
-    loadUrl();
-  }, [loadUrl]);
-  
-  return {
-    url,
-    loading,
-    error,
-    refresh: loadUrl
-  };
-}
-
-// React import für Hook (falls React verwendet wird)
-import * as React from 'react';
