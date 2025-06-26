@@ -1,4 +1,4 @@
-// 📁 src/pages/Contracts.tsx - JSX FIXED: Motion Button closing tag korrigiert + ANALYSE-ANZEIGE GEFIXT + RESPONSIVE
+// 📁 src/pages/Contracts.tsx - JSX FIXED: Motion Button closing tag korrigiert + ANALYSE-ANZEIGE GEFIXT + RESPONSIVE + DUPLIKATSERKENNUNG
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -30,6 +30,7 @@ interface AnalysisResult {
   contractId?: string;
   message?: string;
   duplicate?: boolean;
+  existingContract?: Contract; // ✅ NEU: Für Duplikatserkennung
   analysisData?: {
     kuendigung?: string;
     laufzeit?: string;
@@ -85,6 +86,13 @@ export default function Contracts() {
   const [uploadFiles, setUploadFiles] = useState<UploadFileItem[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   
+  // ✅ NEU: Duplikat-Modal State
+  const [duplicateModal, setDuplicateModal] = useState<{
+    show: boolean;
+    fileItem?: UploadFileItem;
+    existingContract?: Contract;
+  } | null>(null);
+  
   // ✅ Erweiterte Filter & Search States
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('alle');
@@ -92,6 +100,117 @@ export default function Contracts() {
   const [sortOrder, setSortOrder] = useState<SortOrder>('neueste');
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // ✅ NEU: Duplikat-Modal Komponente
+  const DuplicateModal = ({ 
+    fileItem, 
+    existingContract, 
+    onClose, 
+    onViewExisting, 
+    onReplaceFile, 
+    onAnalyzeAnyway 
+  }: {
+    fileItem: UploadFileItem;
+    existingContract: Contract;
+    onClose: () => void;
+    onViewExisting: () => void;
+    onReplaceFile: () => void;
+    onAnalyzeAnyway: () => void;
+  }) => (
+    <AnimatePresence>
+      <motion.div 
+        className={styles.modalOverlay}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+      >
+        <motion.div 
+          className={styles.duplicateModal}
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className={styles.modalHeader}>
+            <div className={styles.modalIcon}>
+              <Users size={24} className={styles.duplicateIcon} />
+            </div>
+            <h3>Datei bereits vorhanden</h3>
+            <button 
+              className={styles.modalCloseButton}
+              onClick={onClose}
+            >
+              <X size={20} />
+            </button>
+          </div>
+
+          <div className={styles.modalContent}>
+            <div className={styles.duplicateInfo}>
+              <div className={styles.duplicateDetails}>
+                <div className={styles.fileComparison}>
+                  <div className={styles.fileComparisonItem}>
+                    <div className={styles.fileComparisonLabel}>📄 Neue Datei</div>
+                    <div className={styles.fileComparisonName}>{fileItem.file.name}</div>
+                    <div className={styles.fileComparisonSize}>
+                      {(fileItem.file.size / 1024 / 1024).toFixed(2)} MB
+                    </div>
+                  </div>
+                  
+                  <div className={styles.duplicateArrow}>
+                    <Users size={20} />
+                  </div>
+                  
+                  <div className={styles.fileComparisonItem}>
+                    <div className={styles.fileComparisonLabel}>📁 Bereits vorhanden</div>
+                    <div className={styles.fileComparisonName}>
+                      {existingContract?.name || 'Unbenannt'}
+                    </div>
+                    <div className={styles.fileComparisonDate}>
+                      Hochgeladen: {existingContract?.createdAt ? formatDate(existingContract.createdAt) : '—'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className={styles.duplicateMessage}>
+                <p>
+                  Diese Datei wurde bereits hochgeladen und analysiert. 
+                  Was möchtest du tun?
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.modalActions}>
+            <button 
+              className={styles.modalActionButton}
+              onClick={onViewExisting}
+            >
+              <Eye size={16} />
+              <span>Vorhandene Datei anschauen</span>
+            </button>
+            
+            <button 
+              className={`${styles.modalActionButton} ${styles.primaryAction}`}
+              onClick={onAnalyzeAnyway}
+            >
+              <RefreshCw size={16} />
+              <span>Trotzdem neu analysieren</span>
+            </button>
+            
+            <button 
+              className={`${styles.modalActionButton} ${styles.warningAction}`}
+              onClick={onReplaceFile}
+            >
+              <Upload size={16} />
+              <span>Datei ersetzen</span>
+            </button>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  );
 
   // ✅ KORRIGIERT: User-Info laden mit 3-Stufen-Preismodell
   const fetchUserInfo = async () => {
@@ -295,6 +414,72 @@ export default function Contracts() {
     setIsAnalyzing(false);
   };
 
+  // ✅ NEU: Duplikat-Aktionen Handler
+  const handleDuplicateAction = (fileItem: UploadFileItem) => {
+    const existingContract = fileItem.duplicateInfo?.existingContract;
+    
+    if (!existingContract) return; // ✅ Safety check
+    
+    setDuplicateModal({
+      show: true,
+      fileItem,
+      existingContract
+    });
+  };
+
+  const handleViewExistingContract = () => {
+    if (!duplicateModal?.existingContract) return;
+    
+    // ✅ Wechsel zu Verträge-Tab und öffne Details
+    setActiveSection('contracts');
+    setSelectedContract(duplicateModal.existingContract);
+    setShowDetails(true);
+    setDuplicateModal(null);
+    
+    // ✅ Cleanup Upload
+    if (duplicateModal.fileItem) {
+      removeUploadFile(duplicateModal.fileItem.id);
+    }
+  };
+
+  const handleReplaceExistingFile = async () => {
+    if (!duplicateModal?.fileItem || !duplicateModal?.existingContract) return;
+    
+    try {
+      // ✅ Lösche alten Vertrag
+      await apiCall(`/contracts/${duplicateModal.existingContract._id}`, {
+        method: 'DELETE'
+      });
+      
+      console.log("✅ Alter Vertrag gelöscht für Ersetzung");
+      
+      // ✅ Starte neue Analyse
+      handleAnalyzeAnywayFromDuplicate();
+      
+    } catch (error) {
+      console.error("❌ Fehler beim Ersetzen:", error);
+      alert("Fehler beim Ersetzen der Datei. Bitte versuche es erneut.");
+    }
+  };
+
+  const handleAnalyzeAnywayFromDuplicate = () => {
+    if (!duplicateModal?.fileItem) return;
+    
+    // ✅ Setze Status zurück auf pending für neue Analyse
+    setUploadFiles(prev => prev.map(item => 
+      item.id === duplicateModal.fileItem!.id 
+        ? { ...item, status: 'pending', progress: 0, duplicateInfo: undefined, error: undefined }
+        : item
+    ));
+    
+    setDuplicateModal(null);
+    
+    // ✅ Starte Batch-Analyse für diese eine Datei
+    setTimeout(() => {
+      startBatchAnalysis();
+    }, 100);
+  };
+
   // ✅ KORRIGIERT: Batch-Analyse NORMALE Funktion mit Debug
   const startBatchAnalysis = async () => {
     console.log("🚀 startBatchAnalysis called!", { 
@@ -361,14 +546,36 @@ export default function Contracts() {
           ));
           console.log(`✅ Analyse erfolgreich: ${fileItem.file.name}`);
         } 
-        // ✅ Duplikat erkannt
+        // ✅ VERBESSERT: Duplikat erkannt - mit verbesserter Info
         else if (result?.duplicate) {
+          const existingContract = result?.existingContract;
+          
           setUploadFiles(prev => prev.map(item => 
             item.id === fileItem.id 
-              ? { ...item, status: 'duplicate', progress: 100, duplicateInfo: result }
+              ? { 
+                  ...item, 
+                  status: 'duplicate', 
+                  progress: 100, 
+                  duplicateInfo: { 
+                    ...result, 
+                    existingContract 
+                  } 
+                }
               : item
           ));
-          console.log(`🔄 Duplikat erkannt: ${fileItem.file.name}`);
+          
+          console.log(`🔄 Duplikat erkannt: ${fileItem.file.name}`, existingContract);
+          
+          // ✅ Auto-öffne Duplikat-Modal für bessere UX (nur wenn existingContract vorhanden)
+          if (existingContract) {
+            setTimeout(() => {
+              setDuplicateModal({
+                show: true,
+                fileItem: uploadFiles.find(f => f.id === fileItem.id),
+                existingContract
+              });
+            }, 500);
+          }
         }
         // ✅ Unbekannter Erfolgsfall
         else {
@@ -615,7 +822,7 @@ export default function Contracts() {
     }
   };
 
-  // ✅ NEU: Upload-Status Text
+  // ✅ VERBESSERT: Upload-Status Text mit Duplikat-Aktionen
   const getUploadStatusText = (item: UploadFileItem) => {
     switch (item.status) {
       case 'pending':
@@ -625,7 +832,20 @@ export default function Contracts() {
       case 'completed':
         return 'Analyse abgeschlossen';
       case 'duplicate':
-        return 'Bereits vorhanden';
+        return (
+          <div className={styles.duplicateStatus}>
+            <span>Bereits vorhanden</span>
+            <button 
+              className={styles.duplicateActionButton}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDuplicateAction(item);
+              }}
+            >
+              Aktionen anzeigen
+            </button>
+          </div>
+        );
       case 'error':
         return `Fehler: ${item.error}`;
       default:
@@ -1456,6 +1676,18 @@ export default function Contracts() {
               console.log("Edit contract:", contractId);
             }}
             onDelete={handleDeleteContract}
+          />
+        )}
+
+        {/* ✅ NEU: Duplikat-Modal (nur rendern wenn existingContract vorhanden) */}
+        {duplicateModal?.show && duplicateModal.fileItem && duplicateModal.existingContract && (
+          <DuplicateModal
+            fileItem={duplicateModal.fileItem}
+            existingContract={duplicateModal.existingContract}
+            onClose={() => setDuplicateModal(null)}
+            onViewExisting={handleViewExistingContract}
+            onReplaceFile={handleReplaceExistingFile}
+            onAnalyzeAnyway={handleAnalyzeAnywayFromDuplicate}
           />
         )}
       </motion.div>

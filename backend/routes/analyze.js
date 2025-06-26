@@ -1,4 +1,4 @@
-// 📁 backend/routes/analyze.js - STABLE VERSION (dein Code + stabile Fixes)
+// 📁 backend/routes/analyze.js - STABLE VERSION (dein Code + bessere PDF-Fehlermeldungen)
 const express = require("express");
 const multer = require("multer");
 const pdfParse = require("pdf-parse");
@@ -71,206 +71,199 @@ try {
 let lastGPT4Request = 0;
 const GPT4_MIN_INTERVAL = 4000; // 4 Sekunden zwischen GPT-4 Requests
 
-// ===== STABLE PROCESSING FUNCTIONS (OCR entfernt) =====
+// ===== IMPROVED PROCESSING FUNCTIONS (mit besseren Fehlermeldungen) =====
 
 /**
- * ✅ Text-Qualitäts-Bewertung (verbessert)
+ * ✅ VERBESSERTE Text-Qualitäts-Bewertung mit detaillierter Analyse
  */
-function assessTextQuality(text) {
-  if (!text || text.length < 50) {
-    return { 
-      quality: 'none', 
-      score: 0, 
-      reason: 'Kein oder zu wenig Text gefunden',
-      length: text ? text.length : 0,
-      words: 0,
-      lines: 0,
-      suggestion: 'PDF möglicherweise gescannt - verwende ein durchsuchbares PDF oder Word-Dokument'
+const assessTextQuality = (text, fileName = '') => {
+  if (!text) {
+    return {
+      level: 'none',
+      score: 0,
+      reason: 'Kein Text extrahiert',
+      characterCount: 0,
+      wordCount: 0
     };
   }
+
+  const cleanText = text.replace(/\s+/g, ' ').trim();
+  const characterCount = cleanText.length;
+  const wordCount = cleanText.split(' ').filter(word => word.length > 0).length;
   
-  const length = text.trim().length;
-  const words = text.trim().split(/\s+/).filter(word => word.length > 2).length;
-  const lines = text.split('\n').length;
+  // ✅ Verbesserte Qualitätsbewertung
+  let level, score, reason;
   
-  const letterCount = (text.match(/[a-zA-ZäöüÄÖÜß]/g) || []).length;
-  const totalChars = text.length;
-  const letterRatio = letterCount / totalChars;
-  
-  // Qualitätskriterien
-  const hasMinLength = length >= 100;
-  const hasMinWords = words >= 20;
-  const hasStructure = lines > 5;
-  const hasGermanText = /[äöüÄÖÜß]/.test(text) || /\b(der|die|das|und|ist|sind|haben|werden|mit|von|zu|auf|in|an|für|durch)\b/i.test(text);
-  const hasGoodLetterRatio = letterRatio > 0.7;
-  
-  let score = 0;
-  if (hasMinLength) score += 20;
-  if (hasMinWords) score += 20;
-  if (hasStructure) score += 20;
-  if (hasGermanText) score += 20;
-  if (hasGoodLetterRatio) score += 20;
-  
-  let quality, reason, suggestion;
-  if (score >= 80) {
-    quality = 'good';
-    reason = 'Normaler, gut lesbarer Text';
-    suggestion = null;
-  } else if (score >= 60) {
-    quality = 'fair';
-    reason = 'Text erkannt, aber möglicherweise unvollständig';
-    suggestion = 'Für beste Ergebnisse verwende ein durchsuchbares PDF';
-  } else if (score >= 25) {
-    quality = 'poor';
-    reason = 'Wenig verwertbarer Text gefunden';
-    suggestion = 'Verwende ein durchsuchbares PDF oder konvertiere das Dokument zu Word';
+  if (characterCount === 0) {
+    level = 'none';
+    score = 0;
+    reason = 'Keine Textdaten gefunden';
+  } else if (characterCount < 50) {
+    level = 'none';
+    score = characterCount;
+    reason = `Zu wenig Text gefunden (${characterCount} Zeichen, ${wordCount} Wörter)`;
+  } else if (characterCount < 200) {
+    level = 'poor';
+    score = Math.min(characterCount / 2, 100);
+    reason = `Sehr wenig Text gefunden (${characterCount} Zeichen, ${wordCount} Wörter)`;
+  } else if (characterCount < 500) {
+    level = 'fair';
+    score = Math.min(50 + (characterCount - 200) / 6, 100);
+    reason = `Wenig Text gefunden (${characterCount} Zeichen, ${wordCount} Wörter)`;
+  } else if (characterCount < 2000) {
+    level = 'good';
+    score = Math.min(70 + (characterCount - 500) / 50, 100);
+    reason = `Ausreichend Text gefunden (${characterCount} Zeichen, ${wordCount} Wörter)`;
   } else {
-    quality = 'none';
-    reason = 'Kein verwertbarer Text gefunden';
-    suggestion = 'PDF möglicherweise gescannt - verwende ein durchsuchbares PDF oder Word-Dokument';
+    level = 'excellent';
+    score = Math.min(90 + (characterCount - 2000) / 200, 100);
+    reason = `Viel Text gefunden (${characterCount} Zeichen, ${wordCount} Wörter)`;
   }
-  
-  return { 
-    quality, 
-    score, 
-    reason, 
-    length, 
-    words, 
-    lines,
-    letterRatio: Math.round(letterRatio * 100),
-    suggestion
+
+  return {
+    level,
+    score: Math.round(score),
+    reason,
+    characterCount,
+    wordCount,
+    fileName: fileName || 'unknown'
   };
-}
+};
 
 /**
- * ✅ STABLE PDF-TEXT-EXTRAKTION (ohne OCR, mit besseren Fehlermeldungen)
+ * ✅ NEU: Benutzerfreundliche PDF-Fehlermeldungen erstellen
  */
-async function extractTextFromPDFEnhanced(buffer, filePath, requestId, onProgress) {
-  console.log(`📖 [${requestId}] Starte verbesserte PDF-Text-Extraktion (stabile Version)...`);
+const createUserFriendlyPDFError = (textQuality, fileName, pages) => {
+  const isScanned = textQuality.score === 0 && pages > 0;
+  const hasLittleText = textQuality.score > 0 && textQuality.score < 20;
+  const isPossiblyProtected = textQuality.reason?.includes('password') || textQuality.reason?.includes('encryption');
   
-  let extractionResult = {
-    text: '',
-    fullText: '',
-    method: 'none',
-    quality: 'none',
-    pageCount: 0,
-    charactersExtracted: 0,
-    wordCount: 0,
-    ocrUsed: false, // ✅ Immer false in stabiler Version
-    processingTime: 0,
-    suggestion: null
-  };
+  let message = "";
+  let suggestions = [];
   
-  const startTime = Date.now();
-  
-  try {
-    // PDF-Text-Extraktion mit erweiterten Optionen
-    console.log(`📄 [${requestId}] PDF-Text-Extraktion mit erweiterten Optionen...`);
-    if (onProgress) onProgress(20);
-    
-    let pdfData;
-    try {
-      pdfData = await pdfParse(buffer, {
-        max: 200000, // Mehr Text extrahieren
-        normalizeWhitespace: true,
-        disableCombineTextItems: false,
-        // Weitere pdf-parse Optionen für bessere Extraktion
-        version: 'v1.10.100'
-      });
-      
-      extractionResult.pageCount = pdfData.numpages || 0;
-      console.log(`📊 [${requestId}] PDF hat ${extractionResult.pageCount} Seiten`);
-      
-    } catch (pdfError) {
-      console.warn(`⚠️ [${requestId}] PDF-Parse-Fehler:`, pdfError.message);
-      
-      if (pdfError.message.includes('password') || pdfError.message.includes('encrypted')) {
-        throw new Error('PDF ist passwortgeschützt. Bitte entferne den Passwortschutz und versuche es erneut.');
-      } else if (pdfError.message.includes('Invalid') || pdfError.message.includes('corrupt')) {
-        throw new Error('PDF-Datei ist beschädigt oder korrupt. Bitte verwende eine andere Datei.');
-      } else {
-        throw new Error(`PDF-Verarbeitung fehlgeschlagen: ${pdfError.message}`);
-      }
-    }
-    
-    if (onProgress) onProgress(50);
-    
-    // Text-Qualität bewerten
-    const initialText = pdfData.text || '';
-    const qualityAssessment = assessTextQuality(initialText);
-    
-    console.log(`📊 [${requestId}] Text-Qualität: ${qualityAssessment.quality} (Score: ${qualityAssessment.score}) - ${qualityAssessment.reason}`);
-    
-    if (onProgress) onProgress(75);
-    
-    // Entscheiden basierend auf Qualität
-    if (qualityAssessment.score >= 25) {
-      // Text ist verwertbar
-      extractionResult.text = initialText.slice(0, 4000); // Für GPT
-      extractionResult.fullText = initialText; // Für Content-Tab
-      extractionResult.method = 'pdf-extraction';
-      extractionResult.quality = qualityAssessment.quality;
-      extractionResult.charactersExtracted = initialText.length;
-      extractionResult.wordCount = qualityAssessment.words;
-      extractionResult.suggestion = qualityAssessment.suggestion;
-      
-      if (onProgress) onProgress(100);
-      console.log(`✅ [${requestId}] PDF-Extraktion erfolgreich: ${extractionResult.charactersExtracted} Zeichen`);
-      
-    } else {
-      // Text-Qualität ist unzureichend → Bessere Fehlermeldung
-      console.log(`❌ [${requestId}] Text-Qualität unzureichend (Score: ${qualityAssessment.score})`);
-      
-      const suggestions = [
-        "Verwende ein durchsuchbares PDF (Text-PDF statt Scan)",
-        "Konvertiere das Dokument zu Word und exportiere als PDF", 
-        "Stelle sicher, dass das PDF nicht passwortgeschützt ist",
-        "Prüfe, ob das PDF beschädigt ist",
-        "Für gescannte Dokumente: Verbessere die Scan-Qualität"
-      ];
-      
-      const errorMessage = `PDF enthält keinen ausreichend lesbaren Text für eine Analyse. ` +
-        `Qualität: ${qualityAssessment.reason} (${qualityAssessment.length} Zeichen, ${qualityAssessment.words} Wörter). ` +
-        `Lösungsvorschläge: ${suggestions.join('; ')}`;
-      
-      throw new Error(errorMessage);
-    }
-    
-    extractionResult.processingTime = Date.now() - startTime;
-    if (onProgress) onProgress(100);
-    
-    console.log(`✅ [${requestId}] Text-Extraktion abgeschlossen:`, {
-      method: extractionResult.method,
-      quality: extractionResult.quality,
-      characters: extractionResult.charactersExtracted,
-      words: extractionResult.wordCount,
-      ocrUsed: extractionResult.ocrUsed,
-      processingTime: `${extractionResult.processingTime}ms`
-    });
-    
-    return extractionResult;
-    
-  } catch (error) {
-    console.error(`❌ [${requestId}] PDF-Extraktion fehlgeschlagen:`, error);
-    
-    // Benutzerfreundliche Fehlermeldungen
-    if (error.message.includes('Lösungsvorschläge')) {
-      // Unsere eigene detaillierte Fehlermeldung weiterleiten
-      throw error;
-    } else if (error.message.includes('passwortgeschützt')) {
-      throw new Error('PDF ist passwortgeschützt. Bitte entferne den Passwortschutz und versuche es erneut.');
-    } else if (error.message.includes('beschädigt')) {
-      throw new Error('PDF-Datei ist beschädigt oder korrupt. Bitte verwende eine andere Datei.');
-    } else {
-      throw new Error(
-        `Fehler beim Lesen der PDF-Datei. ` +
-        `Das PDF könnte beschädigt, passwortgeschützt oder in einem ` +
-        `unkompatiblen Format sein. Versuche ein anderes PDF oder ` +
-        `konvertiere das Dokument neu.`
-      );
-    }
+  if (isScanned) {
+    // 📸 Gescannte PDF (nur Bilddaten)
+    message = `📸 Diese PDF scheint gescannt zu sein und enthält nur Bilddaten, die wir aktuell nicht analysieren können.`;
+    suggestions = [
+      "🔄 Konvertiere die PDF zu einem durchsuchbaren Format (z.B. mit Adobe Acrobat)",
+      "📝 Öffne das Dokument in Word, das kann oft Text aus Scans erkennen",
+      "🖨️ Erstelle eine neue PDF aus dem Original-Dokument (falls verfügbar)",
+      "🔍 Nutze ein Online-OCR-Tool (z.B. SmallPDF, PDF24) um Text zu extrahieren",
+      "⚡ Für automatische Scan-Erkennung: Upgrade auf Premium mit OCR-Support"
+    ];
+  } else if (hasLittleText) {
+    // 📄 Wenig lesbarer Text
+    message = `📄 Diese PDF enthält nur sehr wenig lesbaren Text (${textQuality.characterCount || 0} Zeichen). Für eine sinnvolle Vertragsanalyse benötigen wir mehr Textinhalt.`;
+    suggestions = [
+      "📖 Stelle sicher, dass die PDF vollständig und nicht beschädigt ist",
+      "🔒 Prüfe ob die PDF passwortgeschützt oder verschlüsselt ist",
+      "📝 Falls es eine gescannte PDF ist, konvertiere sie zu einem Text-PDF",
+      "📄 Lade eine andere Version der Datei hoch (z.B. das Original-Dokument)",
+      "⚡ Probiere eine andere PDF-Datei aus"
+    ];
+  } else if (isPossiblyProtected) {
+    // 🔒 Passwortgeschützt oder verschlüsselt
+    message = `🔒 Diese PDF scheint passwortgeschützt oder verschlüsselt zu sein und kann nicht gelesen werden.`;
+    suggestions = [
+      "🔓 Entferne den Passwortschutz und lade die PDF erneut hoch",
+      "📄 Exportiere das Dokument als neue, ungeschützte PDF",
+      "📝 Konvertiere die PDF zu Word und exportiere sie erneut als PDF",
+      "⚡ Probiere eine andere Version der Datei aus"
+    ];
+  } else {
+    // 🚫 Allgemeiner Fehler
+    message = `🚫 Diese PDF-Datei kann leider nicht für eine Vertragsanalyse verwendet werden.`;
+    suggestions = [
+      "📄 Prüfe ob die PDF-Datei vollständig und nicht beschädigt ist",
+      "🔄 Versuche eine andere Version oder ein anderes Format (DOC, DOCX)",
+      "📝 Stelle sicher, dass das Dokument ausreichend Text enthält",
+      "🔒 Prüfe ob die PDF passwortgeschützt ist",
+      "⚡ Probiere eine andere PDF-Datei aus"
+    ];
   }
-}
+  
+  return {
+    message,
+    suggestions,
+    type: isScanned ? 'scanned' : hasLittleText ? 'little_text' : 'other'
+  };
+};
+
+/**
+ * ✅ VERBESSERTE PDF-TEXT-EXTRAKTION (mit benutzerfreundlichen Fehlermeldungen)
+ */
+const extractTextFromPDFEnhanced = async (buffer, fileName, requestId, onProgress) => {
+  console.log(`📖 [${requestId}] Starte verbesserte PDF-Text-Extraktion...`);
+  console.log(`📄 [${requestId}] Datei: ${fileName}`);
+
+  try {
+    // ✅ Schritt 1: Normale PDF-Text-Extraktion mit erweiterten Optionen
+    console.log(`📄 [${requestId}] Schritt 1: Normale PDF-Text-Extraktion...`);
+    
+    const pdfOptions = {
+      normalizeWhitespace: true,
+      disableCombineTextItems: false,
+      max: 0, // Alle Seiten
+      version: 'v1.10.100'
+    };
+
+    const data = await pdfParse(buffer, pdfOptions);
+    
+    console.log(`📊 [${requestId}] PDF hat ${data.numpages} Seiten`);
+    console.log(`📊 [${requestId}] Roher Text: ${data.text?.length || 0} Zeichen`);
+
+    // ✅ Schritt 2: Text-Qualitäts-Bewertung mit detaillierter Analyse
+    const textQuality = assessTextQuality(data.text || '', fileName);
+    console.log(`📊 [${requestId}] Text-Qualität: ${textQuality.level} (Score: ${textQuality.score}) - ${textQuality.reason}`);
+
+    // ✅ Schritt 3: Benutzerfreundliche Behandlung basierend auf Qualität
+    if (textQuality.level === 'good' || textQuality.level === 'fair') {
+      console.log(`✅ [${requestId}] PDF-Text-Extraktion erfolgreich: ${data.text.length} Zeichen`);
+      return {
+        success: true,
+        text: data.text,
+        quality: textQuality,
+        pages: data.numpages,
+        extractionMethod: 'pdf-parse'
+      };
+    } else {
+      // ✅ VERBESSERUNG: Benutzerfreundliche Fehlermeldung statt technischem Fehler
+      console.log(`❌ [${requestId}] Text-Qualität unzureichend für Analyse`);
+      
+      // 🎯 Erstelle hilfreiche, spezifische Fehlermeldung
+      const userFriendlyError = createUserFriendlyPDFError(textQuality, fileName, data.numpages);
+      
+      return {
+        success: false,
+        error: userFriendlyError.message,
+        errorType: 'unreadable_pdf',
+        quality: textQuality,
+        pages: data.numpages,
+        suggestions: userFriendlyError.suggestions,
+        isUserError: true // ⭐ Kennzeichnet als User-Problem, nicht System-Fehler
+      };
+    }
+
+  } catch (error) {
+    console.error(`❌ [${requestId}] PDF-Parse-Fehler:`, error.message);
+    
+    // ✅ VERBESSERUNG: Auch hier benutzerfreundliche Fehlermeldung
+    const userFriendlyError = createUserFriendlyPDFError(
+      { level: 'none', score: 0, reason: 'PDF-Verarbeitungsfehler' }, 
+      fileName, 
+      0
+    );
+    
+    return {
+      success: false,
+      error: userFriendlyError.message,
+      errorType: 'pdf_processing_error',
+      suggestions: userFriendlyError.suggestions,
+      isUserError: true,
+      technicalError: error.message // Für Debugging
+    };
+  }
+};
 
 // ===== EXISTING FUNCTIONS (unchanged) =====
 
@@ -604,6 +597,7 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
               contractId: existingContract._id,
               contractName: existingContract.name,
               uploadedAt: existingContract.createdAt,
+              existingContract: existingContract, // ✅ VERBESSERUNG: Vollständige Contract-Info für Frontend
               requestId,
               actions: {
                 reanalyze: `Erneut analysieren und bestehende Analyse überschreiben`,
@@ -621,21 +615,36 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
       console.log(`⚠️ [${requestId}] Dubletten-Check übersprungen (nicht verfügbar)`);
     }
 
-    // ===== STABLE PDF-TEXT-EXTRAKTION (ohne OCR) =====
-    console.log(`📖 [${requestId}] Verwende stabile PDF-Extraktion (ohne OCR)...`);
+    // ===== VERBESSERTE PDF-TEXT-EXTRAKTION (mit benutzerfreundlichen Fehlermeldungen) =====
+    console.log(`📖 [${requestId}] Verwende verbesserte PDF-Extraktion...`);
     
-    const extractionResult = await extractTextFromPDFEnhanced(buffer, filePath, requestId);
+    const extractionResult = await extractTextFromPDFEnhanced(buffer, req.file.originalname, requestId);
     
-    const fullTextContent = extractionResult.fullText;
+    // ✅ VERBESSERUNG: Check ob Extraktion erfolgreich war
+    if (!extractionResult.success) {
+      console.log(`❌ [${requestId}] PDF-Extraktion fehlgeschlagen mit benutzerfreundlicher Meldung`);
+      
+      return res.status(400).json({
+        success: false,
+        message: extractionResult.error,
+        error: extractionResult.errorType,
+        suggestions: extractionResult.suggestions,
+        quality: extractionResult.quality,
+        pages: extractionResult.pages,
+        isUserError: extractionResult.isUserError,
+        requestId,
+        technicalError: extractionResult.technicalError
+      });
+    }
+    
+    const fullTextContent = extractionResult.text;
     const contractText = extractionResult.text;
     
     console.log(`📊 [${requestId}] Extraktion erfolgreich:`, {
-      method: extractionResult.method,
+      method: extractionResult.extractionMethod,
       quality: extractionResult.quality,
-      ocrUsed: extractionResult.ocrUsed,
       textLength: fullTextContent.length,
-      pages: extractionResult.pageCount,
-      processingTime: extractionResult.processingTime
+      pages: extractionResult.pages
     });
 
     console.log(`🤖 [${requestId}] OpenAI-Anfrage wird gesendet...`);
@@ -714,26 +723,23 @@ Antwort im folgenden JSON-Format:
       originalFileName: req.file.originalname,
       fileSize: buffer.length,
       uploadType: "LOCAL_UPLOAD",
-      extractionMethod: extractionResult.method,
+      extractionMethod: extractionResult.extractionMethod,
       extractionQuality: extractionResult.quality,
-      ocrUsed: extractionResult.ocrUsed,
-      pageCount: extractionResult.pageCount,
-      processingTime: extractionResult.processingTime,
-      suggestion: extractionResult.suggestion,
+      pageCount: extractionResult.pages,
       ...result,
     };
 
     let inserted;
     try {
       inserted = await analysisCollection.insertOne(analysisData);
-      console.log(`✅ [${requestId}] Stable Analyse gespeichert: ${inserted.insertedId} (mit fullText: ${fullTextContent.length} Zeichen, OCR: ${extractionResult.ocrUsed})`);
+      console.log(`✅ [${requestId}] Stable Analyse gespeichert: ${inserted.insertedId} (mit fullText: ${fullTextContent.length} Zeichen)`);
     } catch (dbError) {
       console.error(`❌ [${requestId}] DB-Insert-Fehler:`, dbError.message);
       throw new Error(`Datenbank-Fehler beim Speichern: ${dbError.message}`);
     }
 
     try {
-      console.log(`💾 [${requestId}] Speichere Vertrag (lokal ohne OCR)...`);
+      console.log(`💾 [${requestId}] Speichere Vertrag (lokal)...`);
 
       if (existingContract && req.body.forceReanalyze === 'true') {
         console.log(`🔄 [${requestId}] Aktualisiere bestehenden Vertrag: ${existingContract._id}`);
@@ -749,16 +755,14 @@ Antwort im folgenden JSON-Format:
               filePath: `/uploads/${req.file.filename}`,
               filename: req.file.filename,
               uploadType: "LOCAL_UPLOAD",
-              extractionMethod: extractionResult.method,
+              extractionMethod: extractionResult.extractionMethod,
               extractionQuality: extractionResult.quality,
-              ocrUsed: extractionResult.ocrUsed,
               extraRefs: {
                 uploadType: "LOCAL_UPLOAD",
                 analysisId: inserted.insertedId,
                 uploadPath: UPLOAD_PATH,
                 serverPath: `/uploads/${req.file.filename}`,
-                extractionMethod: extractionResult.method,
-                ocrUsed: extractionResult.ocrUsed
+                extractionMethod: extractionResult.extractionMethod
               },
               legalPulse: {
                 riskScore: result.contractScore || null,
@@ -772,7 +776,7 @@ Antwort im folgenden JSON-Format:
           }
         );
         
-        console.log(`✅ [${requestId}] Bestehender Vertrag aktualisiert (${fullTextContent.length} Zeichen, OCR: ${extractionResult.ocrUsed})`);
+        console.log(`✅ [${requestId}] Bestehender Vertrag aktualisiert (${fullTextContent.length} Zeichen)`);
       } else {
         const contractAnalysisData = {
           name: result.summary ? req.file.originalname : req.file.originalname,
@@ -794,17 +798,15 @@ Antwort im folgenden JSON-Format:
           { 
             $set: {
               analysisId: inserted.insertedId,
-              extractionMethod: extractionResult.method,
+              extractionMethod: extractionResult.extractionMethod,
               extractionQuality: extractionResult.quality,
-              ocrUsed: extractionResult.ocrUsed,
               'extraRefs.analysisId': inserted.insertedId,
-              'extraRefs.extractionMethod': extractionResult.method,
-              'extraRefs.ocrUsed': extractionResult.ocrUsed
+              'extraRefs.extractionMethod': extractionResult.extractionMethod
             }
           }
         );
 
-        console.log(`✅ [${requestId}] Neuer Vertrag gespeichert: ${savedContract._id} mit analysisId: ${inserted.insertedId} (OCR: ${extractionResult.ocrUsed})`);
+        console.log(`✅ [${requestId}] Neuer Vertrag gespeichert: ${savedContract._id} mit analysisId: ${inserted.insertedId}`);
       }
       
     } catch (saveError) {
@@ -831,14 +833,10 @@ Antwort im folgenden JSON-Format:
       uploadType: "LOCAL_UPLOAD",
       fileUrl: `/uploads/${req.file.filename}`,
       extractionInfo: {
-        method: extractionResult.method,
+        method: extractionResult.extractionMethod,
         quality: extractionResult.quality,
-        ocrUsed: extractionResult.ocrUsed,
-        ocrAvailable: false, // ✅ OCR ist in stabiler Version deaktiviert
-        processingTime: extractionResult.processingTime,
-        charactersExtracted: extractionResult.charactersExtracted,
-        pageCount: extractionResult.pageCount,
-        suggestion: extractionResult.suggestion
+        charactersExtracted: fullTextContent.length,
+        pageCount: extractionResult.pages
       },
       ...result, 
       analysisId: inserted.insertedId,
@@ -877,7 +875,7 @@ Antwort im folgenden JSON-Format:
     } else if (error.message.includes("JSON") || error.message.includes("Parse")) {
       errorMessage = "Fehler bei der Analyse-Verarbeitung.";
       errorCode = "PARSE_ERROR";
-    } else if (error.message.includes("PDF") || error.message.includes("Datei") || error.message.includes("passwortgeschützt") || error.message.includes("Lösungsvorschläge")) {
+    } else if (error.message.includes("PDF") || error.message.includes("Datei") || error.message.includes("passwortgeschützt") || error.message.includes("📸") || error.message.includes("📄") || error.message.includes("🔒")) {
       errorMessage = error.message;
       errorCode = "PDF_ERROR";
     } else if (error.message.includes("Datenbank") || error.message.includes("MongoDB")) {

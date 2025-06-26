@@ -1,3 +1,197 @@
+/* ✅ NEU: Duplikat-Modal Styles */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.duplicateModal {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  max-width: 500px;
+  width: 100%;
+  max-height: 80vh;
+  overflow: hidden;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.modalIcon {
+  width: 40px;
+  height: 40px;
+  background: #fef3c7;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.duplicateIcon {
+  color: #d97706;
+}
+
+.modalHeader h3 {
+  flex: 1;
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.modalCloseButton {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: none;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  transition: all 0.2s;
+}
+
+.modalCloseButton:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.modalContent {
+  padding: 24px;
+}
+
+.fileComparison {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.fileComparisonItem {
+  flex: 1;
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.fileComparisonLabel {
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.fileComparisonName {
+  font-weight: 500;
+  color: #111827;
+  margin-bottom: 4px;
+  word-break: break-word;
+}
+
+.fileComparisonSize,
+.fileComparisonDate {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.duplicateArrow {
+  color: #d97706;
+}
+
+.duplicateMessage p {
+  color: #6b7280;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.modalActions {
+  display: flex;
+  gap: 8px;
+  padding: 20px 24px;
+  background: #f9fafb;
+  border-top: 1px solid #e5e7eb;
+}
+
+.modalActionButton {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: 1px solid #d1d5db;
+  background: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.modalActionButton:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.primaryAction {
+  background: #3b82f6 !important;
+  border-color: #3b82f6 !important;
+  color: white !important;
+}
+
+.primaryAction:hover {
+  background: #2563eb !important;
+  border-color: #2563eb !important;
+}
+
+.warningAction {
+  background: #ef4444 !important;
+  border-color: #ef4444 !important;
+  color: white !important;
+}
+
+.warningAction:hover {
+  background: #dc2626 !important;
+  border-color: #dc2626 !important;
+}
+
+.duplicateStatus {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.duplicateActionButton {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.duplicateActionButton:hover {
+  background: #2563eb;
+}
+
 /* ✅ KORRIGIERT: Plan-Badges für Free/Business/Premium */
 .freeBadge {
   display: inline-flex;
@@ -1612,6 +1806,30 @@
     margin-top: 8px;
     align-self: flex-start;
   }
+
+  /* ✅ NEU: Mobile Modal Responsive */
+  .modalOverlay {
+    padding: 10px;
+  }
+
+  .duplicateModal {
+    max-width: 100%;
+    max-height: 90vh;
+  }
+
+  .modalActions {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .fileComparison {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .duplicateArrow {
+    transform: rotate(90deg);
+  }
 }
 
 /* 📱 VERY SMALL MOBILE (unter 480px) */
@@ -1670,5 +1888,18 @@
 
   .fileItemActions {
     justify-content: flex-end;
+  }
+
+  /* ✅ NEU: Very Small Mobile Modal */
+  .modalHeader {
+    padding: 16px;
+  }
+
+  .modalContent {
+    padding: 16px;
+  }
+
+  .modalActions {
+    padding: 16px;
   }
 }
