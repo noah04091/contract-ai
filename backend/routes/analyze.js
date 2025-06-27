@@ -214,9 +214,6 @@ const createUploadMiddleware = () => {
   }
 };
 
-// Create upload middleware
-const upload = createUploadMiddleware();
-
 /**
  * 🔄 DYNAMIC FILE READING
  * Reads file from S3 if uploaded there, from local disk otherwise
@@ -617,6 +614,15 @@ async function saveContractWithUpload(userId, analysisData, fileInfo, pdfText, u
       size: fileInfo.size,
       
       uploadType: uploadInfo.uploadType,
+      
+      // ✅ CRITICAL: Set s3Key at top level for frontend compatibility
+      ...(uploadInfo.s3Info && {
+        s3Key: uploadInfo.s3Info.key,
+        s3Bucket: uploadInfo.s3Info.bucket,
+        s3Location: uploadInfo.s3Info.location,
+        s3ETag: uploadInfo.s3Info.etag
+      }),
+      
       extraRefs: {
         uploadType: uploadInfo.uploadType,
         ...(uploadInfo.s3Info && {
@@ -656,11 +662,12 @@ async function saveContractWithUpload(userId, analysisData, fileInfo, pdfText, u
       uploadType: contract.uploadType,
       filePath: contract.filePath,
       textLength: contract.fullText.length,
+      s3Key: contract.s3Key || 'none',
       s3Info: uploadInfo.s3Info ? 'present' : 'none'
     });
 
     const { insertedId } = await contractsCollection.insertOne(contract);
-    console.log(`✅ [ANALYZE] Contract saved with ID: ${insertedId}`);
+    console.log(`✅ [ANALYZE] Contract saved with ID: ${insertedId}, s3Key: ${contract.s3Key || 'none'}`);
     
     return { ...contract, _id: insertedId };
   } catch (error) {
@@ -720,8 +727,8 @@ const makeRateLimitedGPT4Request = async (prompt, requestId, openai, maxRetries 
 
 // ===== MAIN ANALYZE ROUTE (S3 COMPATIBLE) =====
 router.post("/", verifyToken, async (req, res, next) => {
-  // Get upload middleware (created on first use)
-  const uploadMiddleware = await getUploadMiddleware();
+  // Get upload middleware (dynamically created)
+  const uploadMiddleware = createUploadMiddleware();
   
   // Use upload middleware
   uploadMiddleware.single("file")(req, res, async (err) => {
@@ -735,7 +742,7 @@ router.post("/", verifyToken, async (req, res, next) => {
       });
     }
     
-    // Continue with existing analysis logic
+    // Continue with analysis logic
     await handleAnalysisRequest(req, res);
   });
 });
@@ -744,16 +751,11 @@ router.post("/", verifyToken, async (req, res, next) => {
 const handleAnalysisRequest = async (req, res) => {
   const requestId = Date.now().toString();
   
-  // Get upload info to determine storage type
-  const uploadInfo = req.file ? getUploadInfo(req.file) : { uploadType: "UNKNOWN", fileUrl: null };
-  
   console.log(`📊 [${requestId}] Production S3 Analysis request received:`, {
-    uploadType: uploadInfo.uploadType,
     hasFile: !!req.file,
     userId: req.user?.userId,
     s3Available: S3_AVAILABLE,
-    s3Configured: S3_CONFIGURED,
-    bucket: uploadInfo.s3Info?.bucket || 'none'
+    s3Configured: S3_CONFIGURED
   });
 
   if (!req.file) {
@@ -764,17 +766,21 @@ const handleAnalysisRequest = async (req, res) => {
     });
   }
 
-  try {
-    console.log(`📄 [${requestId}] File info:`, {
-      filename: req.file.filename,
-      originalname: req.file.originalname,
-      mimetype: req.file.mimetype,
-      size: req.file.size,
-      key: req.file.key,
-      location: req.file.location,
-      uploadType: uploadInfo.uploadType
-    });
+  // Get upload info to determine storage type
+  const uploadInfo = getUploadInfo(req.file);
+  
+  console.log(`📄 [${requestId}] File info:`, {
+    filename: req.file.filename,
+    originalname: req.file.originalname,
+    mimetype: req.file.mimetype,
+    size: req.file.size,
+    key: req.file.key,
+    location: req.file.location,
+    uploadType: uploadInfo.uploadType,
+    s3Key: uploadInfo.s3Info?.key || 'none'
+  });
 
+  try {
     const { analysisCollection, usersCollection: users, contractsCollection } = await getMongoCollections();
     console.log(`📊 [${requestId}] MongoDB collections available`);
     
@@ -810,7 +816,7 @@ const handleAnalysisRequest = async (req, res) => {
       });
     }
 
-    console.log(`📄 [${requestId}] Reading uploaded file...`);
+    console.log(`📄 [${requestId}] Reading uploaded file (${uploadInfo.uploadType})...`);
     
     // Use dynamic file reading based on upload type
     const buffer = await readUploadedFile(req.file, requestId);
@@ -885,7 +891,8 @@ const handleAnalysisRequest = async (req, res) => {
       quality: extractionResult.quality,
       textLength: fullTextContent.length,
       pages: extractionResult.pages,
-      uploadType: uploadInfo.uploadType
+      uploadType: uploadInfo.uploadType,
+      s3Key: uploadInfo.s3Info?.key || 'none'
     });
 
     console.log(`🤖 [${requestId}] Sending OpenAI request...`);
@@ -988,47 +995,57 @@ Answer in the following JSON format:
       if (existingContract && req.body.forceReanalyze === 'true') {
         console.log(`🔄 [${requestId}] Updating existing contract: ${existingContract._id}`);
         
+        const updateData = {
+          lastAnalyzed: new Date(),
+          analysisId: inserted.insertedId,
+          fullText: fullTextContent,
+          content: fullTextContent,
+          filePath: uploadInfo.fileUrl,
+          filename: req.file.filename || req.file.key,
+          uploadType: uploadInfo.uploadType,
+          extractionMethod: extractionResult.extractionMethod,
+          extractionQuality: extractionResult.quality,
+          analyzeCount: (existingContract.analyzeCount || 0) + 1
+        };
+
+        // Add s3Key at top level if S3 upload
+        if (uploadInfo.s3Info) {
+          updateData.s3Key = uploadInfo.s3Info.key;
+          updateData.s3Bucket = uploadInfo.s3Info.bucket;
+          updateData.s3Location = uploadInfo.s3Info.location;
+          updateData.s3ETag = uploadInfo.s3Info.etag;
+        }
+
+        updateData.extraRefs = {
+          uploadType: uploadInfo.uploadType,
+          analysisId: inserted.insertedId,
+          ...(uploadInfo.s3Info && {
+            s3Bucket: uploadInfo.s3Info.bucket,
+            s3Key: uploadInfo.s3Info.key,
+            s3Location: uploadInfo.s3Info.location,
+            s3ETag: uploadInfo.s3Info.etag
+          }),
+          ...(uploadInfo.localInfo && {
+            uploadPath: UPLOAD_PATH,
+            serverPath: uploadInfo.localInfo.path
+          }),
+          extractionMethod: extractionResult.extractionMethod
+        };
+
+        updateData.legalPulse = {
+          riskScore: result.contractScore || null,
+          riskSummary: result.summary || '',
+          lastChecked: new Date(),
+          lawInsights: [],
+          marketSuggestions: []
+        };
+        
         await contractsCollection.updateOne(
           { _id: existingContract._id },
-          { 
-            $set: {
-              lastAnalyzed: new Date(),
-              analysisId: inserted.insertedId,
-              fullText: fullTextContent,
-              content: fullTextContent,
-              filePath: uploadInfo.fileUrl,
-              filename: req.file.filename || req.file.key,
-              uploadType: uploadInfo.uploadType,
-              extractionMethod: extractionResult.extractionMethod,
-              extractionQuality: extractionResult.quality,
-              extraRefs: {
-                uploadType: uploadInfo.uploadType,
-                analysisId: inserted.insertedId,
-                ...(uploadInfo.s3Info && {
-                  s3Bucket: uploadInfo.s3Info.bucket,
-                  s3Key: uploadInfo.s3Info.key,
-                  s3Location: uploadInfo.s3Info.location,
-                  s3ETag: uploadInfo.s3Info.etag
-                }),
-                ...(uploadInfo.localInfo && {
-                  uploadPath: UPLOAD_PATH,
-                  serverPath: uploadInfo.localInfo.path
-                }),
-                extractionMethod: extractionResult.extractionMethod
-              },
-              legalPulse: {
-                riskScore: result.contractScore || null,
-                riskSummary: result.summary || '',
-                lastChecked: new Date(),
-                lawInsights: [],
-                marketSuggestions: []
-              },
-              analyzeCount: (existingContract.analyzeCount || 0) + 1
-            }
-          }
+          { $set: updateData }
         );
         
-        console.log(`✅ [${requestId}] Existing contract updated (${fullTextContent.length} characters)`);
+        console.log(`✅ [${requestId}] Existing contract updated (${fullTextContent.length} characters) with s3Key: ${updateData.s3Key || 'none'}`);
       } else {
         const contractAnalysisData = {
           name: result.summary ? req.file.originalname : req.file.originalname,
@@ -1059,7 +1076,7 @@ Answer in the following JSON format:
           }
         );
 
-        console.log(`✅ [${requestId}] New contract saved: ${savedContract._id} with analysisId: ${inserted.insertedId}`);
+        console.log(`✅ [${requestId}] New contract saved: ${savedContract._id} with analysisId: ${inserted.insertedId}, s3Key: ${savedContract.s3Key || 'none'}`);
       }
       
     } catch (saveError) {
@@ -1197,7 +1214,7 @@ router.get("/history", verifyToken, async (req, res) => {
 router.get("/health", async (req, res) => {
   // Re-test S3 connectivity for health check
   if (S3_CONFIGURED && s3Instance) {
-    // await testS3ConnectivitySync();
+    await testS3Connectivity();
   }
 
   const checks = {
