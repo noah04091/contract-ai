@@ -19,7 +19,7 @@ router.get("/view", verifyToken, async (req, res) => {
       
       try {
         // Generiere Signed URL (24 Stunden) - DIREKT zu S3, KEIN MONGODB!
-        const signedUrlResult = generateSignedUrl(key, 86400); // 24 Stunden
+        const signedUrlResult = await generateSignedUrl(key, 86400); // 24 Stunden - AWAIT HINZUGEFÜGT!
         
         // Falls generateSignedUrl ein Objekt zurückgibt, extrahiere die URL
         const signedUrl = typeof signedUrlResult === 'string' ? signedUrlResult : signedUrlResult.url || signedUrlResult;
@@ -69,7 +69,7 @@ router.get("/view", verifyToken, async (req, res) => {
     }
 
     // Generiere Signed URL (24 Stunden statt nur 1 Stunde)
-    const fileUrl = generateSignedUrl(s3Key, 86400); // 24 Stunden
+    const fileUrl = await generateSignedUrl(s3Key, 86400); // 24 Stunden - AWAIT HINZUGEFÜGT!
     
     res.json({ 
       fileUrl, 
@@ -122,7 +122,7 @@ router.post("/refresh", verifyToken, async (req, res) => {
       keyToUse = contract.s3Key;
     }
     
-    const fileUrl = generateSignedUrl(keyToUse, 86400);
+    const fileUrl = await generateSignedUrl(keyToUse, 86400); // AWAIT HINZUGEFÜGT!
     
     res.json({ 
       fileUrl, 
