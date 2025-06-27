@@ -1,20 +1,23 @@
 // backend/services/fileStorage.js
-const AWS = require("aws-sdk");
+const { S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
+const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const multer = require("multer");
 const multerS3 = require("multer-s3");
-const path = require("path");
 
-const s3 = new AWS.S3({
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+// ➤ S3-Client (SDK v3)
+const s3 = new S3Client({
   region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  },
 });
 
-// Upload-Konfiguration mit multerS3
+// ➤ Multer-S3 Upload Konfiguration
 const upload = multer({
   storage: multerS3({
     s3,
-    bucket: process.env.S3_BUCKET_NAME,  // ✅ GEÄNDERT von AWS_S3_BUCKET
+    bucket: process.env.S3_BUCKET_NAME,
     contentType: multerS3.AUTO_CONTENT_TYPE,
     acl: "private",
     key: function (req, file, cb) {
@@ -24,13 +27,15 @@ const upload = multer({
   }),
 });
 
-const generateSignedUrl = (key) => {
-  const params = {
-    Bucket: process.env.S3_BUCKET_NAME,  // ✅ GEÄNDERT von AWS_S3_BUCKET
+// ➤ Signierte URL generieren (für Download-Links etc.)
+const generateSignedUrl = async (key) => {
+  const command = new GetObjectCommand({
+    Bucket: process.env.S3_BUCKET_NAME,
     Key: key,
-    Expires: 60 * 60, // 1 Stunde gültig
-  };
-  return s3.getSignedUrl("getObject", params);
+  });
+
+  const url = await getSignedUrl(s3, command, { expiresIn: 3600 }); // 1 Stunde
+  return url;
 };
 
 module.exports = {
