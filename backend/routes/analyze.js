@@ -719,7 +719,35 @@ const makeRateLimitedGPT4Request = async (prompt, requestId, openai, maxRetries 
 };
 
 // ===== MAIN ANALYZE ROUTE (S3 COMPATIBLE) =====
-router.post("/", verifyToken, upload.single("file"), async (req, res) => {
+router.post("/", verifyToken, async (req, res, next) => {
+  // Ensure upload middleware is initialized
+  if (!upload) {
+    return res.status(503).json({
+      success: false,
+      message: "Upload service is still initializing. Please try again in a moment.",
+      error: "UPLOAD_INITIALIZING"
+    });
+  }
+  
+  // Use upload middleware
+  upload.single("file")(req, res, async (err) => {
+    if (err) {
+      console.error("❌ Upload middleware error:", err.message);
+      return res.status(400).json({
+        success: false,
+        message: "File upload failed",
+        error: "UPLOAD_ERROR",
+        details: err.message
+      });
+    }
+    
+    // Continue with existing analysis logic
+    await handleAnalysisRequest(req, res);
+  });
+});
+
+// Move the main analysis logic to a separate function
+const handleAnalysisRequest = async (req, res) => {
   const requestId = Date.now().toString();
   
   // Get upload info to determine storage type
@@ -1133,7 +1161,7 @@ Answer in the following JSON format:
       details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
-});
+};
 
 // ===== OTHER ROUTES (unchanged) =====
 
@@ -1175,7 +1203,7 @@ router.get("/history", verifyToken, async (req, res) => {
 router.get("/health", async (req, res) => {
   // Re-test S3 connectivity for health check
   if (S3_CONFIGURED && s3Instance) {
-    await testS3Connectivity();
+    await testS3ConnectivitySync();
   }
 
   const checks = {
