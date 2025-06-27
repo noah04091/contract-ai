@@ -14,7 +14,7 @@ const s3 = new AWS.S3({
 const upload = multer({
   storage: multerS3({
     s3,
-    bucket: process.env.AWS_S3_BUCKET,
+    bucket: process.env.S3_BUCKET_NAME,  // ✅ GEÄNDERT von AWS_S3_BUCKET
     contentType: multerS3.AUTO_CONTENT_TYPE,
     acl: "private",
     key: function (req, file, cb) {
@@ -26,7 +26,7 @@ const upload = multer({
 
 const generateSignedUrl = (key) => {
   const params = {
-    Bucket: process.env.AWS_S3_BUCKET,
+    Bucket: process.env.S3_BUCKET_NAME,  // ✅ GEÄNDERT von AWS_S3_BUCKET
     Key: key,
     Expires: 60 * 60, // 1 Stunde gültig
   };
