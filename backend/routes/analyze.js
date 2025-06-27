@@ -1,4 +1,4 @@
-// 📁 backend/routes/analyze.js - PRODUCTION S3 VERSION
+// 📁 backend/routes/analyze.js - EMERGENCY ROLLBACK TO WORKING VERSION
 const express = require("express");
 const multer = require("multer");
 const pdfParse = require("pdf-parse");
@@ -9,110 +9,37 @@ const verifyToken = require("../middleware/verifyToken");
 const { MongoClient, ObjectId } = require("mongodb");
 const path = require("path");
 
-// ✅ S3 INTEGRATION: AWS SDK and multer-s3
-const AWS = require("aws-sdk");
-const multerS3 = require("multer-s3");
-
 const router = express.Router();
 
-// ✅ S3 CONFIGURATION: Robust setup with error handling
-let s3, s3Upload;
-try {
-  // Configure S3 with environment variables
-  s3 = new AWS.S3({
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-    region: process.env.AWS_REGION || 'eu-central-1',
-    signatureVersion: 'v4'
-  });
-
-  console.log("✅ [S3] AWS S3 configured successfully");
-  console.log(`✅ [S3] Region: ${process.env.AWS_REGION || 'eu-central-1'}`);
-  console.log(`✅ [S3] Bucket: ${process.env.S3_BUCKET_NAME || 'not-configured'}`);
-
-  // Test S3 connection
-  s3.headBucket({ Bucket: process.env.S3_BUCKET_NAME }, (err, data) => {
-    if (err) {
-      console.warn(`⚠️ [S3] Bucket access test failed: ${err.message}`);
-    } else {
-      console.log("✅ [S3] Bucket access verified");
-    }
-  });
-
-} catch (err) {
-  console.error("❌ [S3] Configuration failed:", err.message);
-  s3 = null;
-}
-
-// ✅ S3 MULTER CONFIGURATION: Direct upload to S3
-if (s3 && process.env.S3_BUCKET_NAME) {
-  s3Upload = multer({
-    storage: multerS3({
-      s3: s3,
-      bucket: process.env.S3_BUCKET_NAME,
-      acl: 'private', // ✅ SECURITY: Private access, use signed URLs later
-      contentType: multerS3.AUTO_CONTENT_TYPE,
-      metadata: function (req, file, cb) {
-        cb(null, {
-          fieldName: file.fieldname,
-          uploadedBy: req.user?.userId || 'unknown',
-          uploadedAt: new Date().toISOString()
-        });
-      },
-      key: function (req, file, cb) {
-        // ✅ ROBUST KEY GENERATION: Include user ID and timestamp
-        const userId = req.user?.userId || 'anonymous';
-        const timestamp = Date.now();
-        const sanitizedFilename = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
-        const key = `contracts/${userId}/${timestamp}_${sanitizedFilename}`;
-        
-        console.log(`📁 [S3] Generated key: ${key}`);
-        cb(null, key);
-      }
-    }),
-    limits: { 
-      fileSize: 50 * 1024 * 1024, // 50MB limit
-      files: 1 // Only one file per request
-    },
-    fileFilter: (req, file, cb) => {
-      // ✅ SECURITY: Only allow PDF files
-      if (file.mimetype === 'application/pdf') {
-        cb(null, true);
-      } else {
-        cb(new Error(`Nur PDF-Dateien sind erlaubt. Empfangen: ${file.mimetype}`), false);
-      }
-    }
-  });
-  
-  console.log("✅ [S3] Multer S3 upload configured");
-} else {
-  console.warn("⚠️ [S3] S3 upload not available - missing configuration");
-  s3Upload = null;
-}
-
-// ✅ FALLBACK: Keep local upload path for emergency fallback
+// ✅ CRITICAL FIX: Exact same UPLOAD_PATH as server.js
 const UPLOAD_PATH = path.join(__dirname, "..", "uploads");
 
-// ✅ FALLBACK: Local storage configuration (backup)
-const localStorage = multer.diskStorage({
+// ✅ CRITICAL FIX: Ensure uploads directory exists (same as server.js)
+try {
+  if (!fsSync.existsSync(UPLOAD_PATH)) {
+    fsSync.mkdirSync(UPLOAD_PATH, { recursive: true });
+    console.log(`📁 [ANALYZE] Upload-Ordner erstellt: ${UPLOAD_PATH}`);
+  } else {
+    console.log(`📁 [ANALYZE] Upload-Ordner existiert: ${UPLOAD_PATH}`);
+  }
+} catch (err) {
+  console.error(`❌ [ANALYZE] Fehler beim Upload-Ordner:`, err);
+}
+
+// ✅ CRITICAL FIX: Exact same multer storage configuration as server.js
+const storage = multer.diskStorage({
   destination: UPLOAD_PATH,
   filename: (req, file, cb) => {
     const filename = Date.now() + path.extname(file.originalname);
-    console.log(`📁 [LOCAL] Generiere Dateiname: ${filename}`);
+    console.log(`📁 [ANALYZE] Generiere Dateiname: ${filename}`);
     cb(null, filename);
   },
 });
 
-const localUpload = multer({ 
-  storage: localStorage,
-  limits: { fileSize: 50 * 1024 * 1024 }
+const upload = multer({ 
+  storage,
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit
 });
-
-// ✅ DYNAMIC UPLOAD: Choose S3 or local based on availability
-const upload = s3Upload || localUpload;
-const uploadType = s3Upload ? "S3_UPLOAD" : "LOCAL_UPLOAD";
-
-console.log(`🚀 [ANALYZE] Upload type: ${uploadType}`);
 
 // ✅ FALLBACK: crypto nur importieren wenn verfügbar
 let crypto;
@@ -138,7 +65,7 @@ try {
 let lastGPT4Request = 0;
 const GPT4_MIN_INTERVAL = 4000; // 4 Sekunden zwischen GPT-4 Requests
 
-// ===== IMPROVED PROCESSING FUNCTIONS (unchanged) =====
+// ===== IMPROVED PROCESSING FUNCTIONS (mit besseren Fehlermeldungen) =====
 
 /**
  * ✅ VERBESSERTE Text-Qualitäts-Bewertung mit detaillierter Analyse
@@ -158,6 +85,7 @@ const assessTextQuality = (text, fileName = '') => {
   const characterCount = cleanText.length;
   const wordCount = cleanText.split(' ').filter(word => word.length > 0).length;
   
+  // ✅ Verbesserte Qualitätsbewertung
   let level, score, reason;
   
   if (characterCount === 0) {
@@ -208,6 +136,7 @@ const createUserFriendlyPDFError = (textQuality, fileName, pages) => {
   let suggestions = [];
   
   if (isScanned) {
+    // 📸 Gescannte PDF (nur Bilddaten)
     message = `📸 Diese PDF scheint gescannt zu sein und enthält nur Bilddaten, die wir aktuell nicht analysieren können.`;
     suggestions = [
       "🔄 Konvertiere die PDF zu einem durchsuchbaren Format (z.B. mit Adobe Acrobat)",
@@ -217,6 +146,7 @@ const createUserFriendlyPDFError = (textQuality, fileName, pages) => {
       "⚡ Für automatische Scan-Erkennung: Upgrade auf Premium mit OCR-Support"
     ];
   } else if (hasLittleText) {
+    // 📄 Wenig lesbarer Text
     message = `📄 Diese PDF enthält nur sehr wenig lesbaren Text (${textQuality.characterCount || 0} Zeichen). Für eine sinnvolle Vertragsanalyse benötigen wir mehr Textinhalt.`;
     suggestions = [
       "📖 Stelle sicher, dass die PDF vollständig und nicht beschädigt ist",
@@ -226,6 +156,7 @@ const createUserFriendlyPDFError = (textQuality, fileName, pages) => {
       "⚡ Probiere eine andere PDF-Datei aus"
     ];
   } else if (isPossiblyProtected) {
+    // 🔒 Passwortgeschützt oder verschlüsselt
     message = `🔒 Diese PDF scheint passwortgeschützt oder verschlüsselt zu sein und kann nicht gelesen werden.`;
     suggestions = [
       "🔓 Entferne den Passwortschutz und lade die PDF erneut hoch",
@@ -234,6 +165,7 @@ const createUserFriendlyPDFError = (textQuality, fileName, pages) => {
       "⚡ Probiere eine andere Version der Datei aus"
     ];
   } else {
+    // 🚫 Allgemeiner Fehler
     message = `🚫 Diese PDF-Datei kann leider nicht für eine Vertragsanalyse verwendet werden.`;
     suggestions = [
       "📄 Prüfe ob die PDF-Datei vollständig und nicht beschädigt ist",
@@ -259,6 +191,7 @@ const extractTextFromPDFEnhanced = async (buffer, fileName, requestId, onProgres
   console.log(`📄 [${requestId}] Datei: ${fileName}`);
 
   try {
+    // ✅ Schritt 1: Normale PDF-Text-Extraktion mit erweiterten Optionen
     console.log(`📄 [${requestId}] Schritt 1: Normale PDF-Text-Extraktion...`);
     
     const pdfOptions = {
@@ -273,9 +206,11 @@ const extractTextFromPDFEnhanced = async (buffer, fileName, requestId, onProgres
     console.log(`📊 [${requestId}] PDF hat ${data.numpages} Seiten`);
     console.log(`📊 [${requestId}] Roher Text: ${data.text?.length || 0} Zeichen`);
 
+    // ✅ Schritt 2: Text-Qualitäts-Bewertung mit detaillierter Analyse
     const textQuality = assessTextQuality(data.text || '', fileName);
     console.log(`📊 [${requestId}] Text-Qualität: ${textQuality.level} (Score: ${textQuality.score}) - ${textQuality.reason}`);
 
+    // ✅ Schritt 3: Benutzerfreundliche Behandlung basierend auf Qualität
     if (textQuality.level === 'good' || textQuality.level === 'fair') {
       console.log(`✅ [${requestId}] PDF-Text-Extraktion erfolgreich: ${data.text.length} Zeichen`);
       return {
@@ -286,8 +221,10 @@ const extractTextFromPDFEnhanced = async (buffer, fileName, requestId, onProgres
         extractionMethod: 'pdf-parse'
       };
     } else {
+      // ✅ VERBESSERUNG: Benutzerfreundliche Fehlermeldung statt technischem Fehler
       console.log(`❌ [${requestId}] Text-Qualität unzureichend für Analyse`);
       
+      // 🎯 Erstelle hilfreiche, spezifische Fehlermeldung
       const userFriendlyError = createUserFriendlyPDFError(textQuality, fileName, data.numpages);
       
       return {
@@ -297,13 +234,14 @@ const extractTextFromPDFEnhanced = async (buffer, fileName, requestId, onProgres
         quality: textQuality,
         pages: data.numpages,
         suggestions: userFriendlyError.suggestions,
-        isUserError: true
+        isUserError: true // ⭐ Kennzeichnet als User-Problem, nicht System-Fehler
       };
     }
 
   } catch (error) {
     console.error(`❌ [${requestId}] PDF-Parse-Fehler:`, error.message);
     
+    // ✅ VERBESSERUNG: Auch hier benutzerfreundliche Fehlermeldung
     const userFriendlyError = createUserFriendlyPDFError(
       { level: 'none', score: 0, reason: 'PDF-Verarbeitungsfehler' }, 
       fileName, 
@@ -316,12 +254,12 @@ const extractTextFromPDFEnhanced = async (buffer, fileName, requestId, onProgres
       errorType: 'pdf_processing_error',
       suggestions: userFriendlyError.suggestions,
       isUserError: true,
-      technicalError: error.message
+      technicalError: error.message // Für Debugging
     };
   }
 };
 
-// ===== EXISTING FUNCTIONS (unchanged for local fallback) =====
+// ===== EXISTING FUNCTIONS (unchanged) =====
 
 function checkFileExists(filename) {
   const fullPath = path.join(UPLOAD_PATH, filename);
@@ -429,73 +367,6 @@ const checkForDuplicate = async (fileHash, userId) => {
   }
 };
 
-// ✅ S3 CONTRACT SAVING: New function for S3 uploads
-async function saveContractWithS3Upload(userId, analysisData, fileInfo, pdfText) {
-  try {
-    const contract = {
-      userId: new ObjectId(userId),
-      name: analysisData.name || fileInfo.originalname || "Unbekannt",
-      laufzeit: analysisData.laufzeit || "Unbekannt",
-      kuendigung: analysisData.kuendigung || "Unbekannt",
-      expiryDate: analysisData.expiryDate || "",
-      status: analysisData.status || "Aktiv",
-      uploadedAt: new Date(),
-      createdAt: new Date(),
-      
-      // ✅ S3 SPECIFIC FIELDS
-      filename: fileInfo.key, // S3 key as filename
-      originalname: fileInfo.originalname,
-      filePath: fileInfo.location, // ✅ S3 URL instead of local path
-      mimetype: fileInfo.mimetype,
-      size: fileInfo.size,
-      
-      uploadType: "S3_UPLOAD", // ✅ Mark as S3 upload
-      extraRefs: {
-        uploadType: "S3_UPLOAD",
-        s3Key: fileInfo.key,
-        s3Bucket: fileInfo.bucket,
-        s3Location: fileInfo.location,
-        s3ETag: fileInfo.etag,
-        analysisId: null
-      },
-      
-      fullText: pdfText.substring(0, 100000),
-      content: pdfText.substring(0, 100000),
-      analysisDate: new Date(),
-      
-      legalPulse: {
-        riskScore: null,
-        summary: '',
-        lastChecked: null,
-        lawInsights: [],
-        marketSuggestions: [],
-        riskFactors: [],
-        legalRisks: [],
-        recommendations: [],
-        analysisDate: null
-      }
-    };
-
-    console.log(`💾 [ANALYZE] Saving S3 contract:`, {
-      userId: contract.userId,
-      name: contract.name,
-      s3Key: contract.extraRefs.s3Key,
-      uploadType: contract.uploadType,
-      filePath: contract.filePath,
-      textLength: contract.fullText.length
-    });
-
-    const { insertedId } = await contractsCollection.insertOne(contract);
-    console.log(`✅ [ANALYZE] S3 Contract saved with ID: ${insertedId}`);
-    
-    return { ...contract, _id: insertedId };
-  } catch (error) {
-    console.error("❌ [ANALYZE] S3 Save error:", error);
-    throw error;
-  }
-}
-
-// ✅ LOCAL CONTRACT SAVING: Keep for fallback
 async function saveContractWithLocalUpload(userId, analysisData, fileInfo, pdfText) {
   try {
     const contract = {
@@ -539,7 +410,7 @@ async function saveContractWithLocalUpload(userId, analysisData, fileInfo, pdfTe
       }
     };
 
-    console.log(`💾 [ANALYZE] Saving local contract:`, {
+    console.log(`💾 [ANALYZE] Saving contract:`, {
       userId: contract.userId,
       name: contract.name,
       filename: contract.filename,
@@ -550,11 +421,11 @@ async function saveContractWithLocalUpload(userId, analysisData, fileInfo, pdfTe
     });
 
     const { insertedId } = await contractsCollection.insertOne(contract);
-    console.log(`✅ [ANALYZE] Local Contract saved with ID: ${insertedId}`);
+    console.log(`✅ [ANALYZE] Contract saved with ID: ${insertedId}`);
     
     return { ...contract, _id: insertedId };
   } catch (error) {
-    console.error("❌ [ANALYZE] Local Save error:", error);
+    console.error("❌ [ANALYZE] Save error:", error);
     throw error;
   }
 }
@@ -608,16 +479,16 @@ const makeRateLimitedGPT4Request = async (prompt, requestId, openai, maxRetries 
   throw new Error(`GPT-4 Request nach ${maxRetries} Versuchen fehlgeschlagen.`);
 };
 
-// ===== MAIN ANALYZE ROUTE - PRODUCTION S3 VERSION =====
+// ===== MAIN ANALYZE ROUTE (STABLE VERSION mit besseren Fehlermeldungen) =====
 router.post("/", verifyToken, upload.single("file"), async (req, res) => {
   const requestId = Date.now().toString();
   
-  console.log(`📊 [${requestId}] Production S3 Analyse-Request erhalten:`, {
-    uploadType: uploadType,
+  console.log(`📊 [${requestId}] Stable Analyse-Request erhalten:`, {
+    uploadType: "LOCAL_UPLOAD",
     hasFile: !!req.file,
     userId: req.user?.userId,
-    s3Available: !!s3Upload,
-    bucket: process.env.S3_BUCKET_NAME
+    uploadPath: UPLOAD_PATH,
+    ocrAvailable: false // ✅ OCR ist in stabiler Version deaktiviert
   });
 
   if (!req.file) {
@@ -629,47 +500,28 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
   }
 
   try {
-    console.log(`📄 [${requestId}] File info (${uploadType}):`, {
-      filename: req.file.filename || req.file.key,
+    console.log(`📄 [${requestId}] File info:`, {
+      filename: req.file.filename,
       originalname: req.file.originalname,
       mimetype: req.file.mimetype,
       size: req.file.size,
-      // S3 specific fields
-      key: req.file.key,
-      bucket: req.file.bucket,
-      location: req.file.location,
-      etag: req.file.etag,
-      // Local specific fields
       path: req.file.path,
-      destination: req.file.destination
+      destination: req.file.destination,
+      uploadPath: UPLOAD_PATH
     });
 
-    // ✅ FILE VALIDATION: Check if file exists (for local) or S3 upload succeeded
-    if (uploadType === "LOCAL_UPLOAD") {
-      const fileExists = checkFileExists(req.file.filename);
-      if (!fileExists) {
-        console.error(`❌ [${requestId}] Datei wurde nicht korrekt gespeichert:`, req.file.filename);
-        return res.status(500).json({
-          success: false,
-          message: "Datei wurde nicht korrekt hochgeladen",
-          debug: {
-            expectedPath: path.join(UPLOAD_PATH, req.file.filename),
-            uploadPath: UPLOAD_PATH,
-            filename: req.file.filename
-          }
-        });
-      }
-    } else if (uploadType === "S3_UPLOAD") {
-      // ✅ S3 VALIDATION: Check if required S3 fields are present
-      if (!req.file.key || !req.file.bucket || !req.file.location) {
-        console.error(`❌ [${requestId}] S3 Upload unvollständig:`, req.file);
-        return res.status(500).json({
-          success: false,
-          message: "S3-Upload fehlgeschlagen - unvollständige Datei-Informationen",
-          error: "S3_UPLOAD_INCOMPLETE"
-        });
-      }
-      console.log(`✅ [${requestId}] S3 Upload erfolgreich: ${req.file.location}`);
+    const fileExists = checkFileExists(req.file.filename);
+    if (!fileExists) {
+      console.error(`❌ [${requestId}] Datei wurde nicht korrekt gespeichert:`, req.file.filename);
+      return res.status(500).json({
+        success: false,
+        message: "Datei wurde nicht korrekt hochgeladen",
+        debug: {
+          expectedPath: path.join(UPLOAD_PATH, req.file.filename),
+          uploadPath: UPLOAD_PATH,
+          filename: req.file.filename
+        }
+      });
     }
 
     const { analysisCollection, usersCollection: users, contractsCollection } = await getMongoCollections();
@@ -707,56 +559,15 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
       });
     }
 
-    // ✅ FILE READING: S3 or local based on upload type
-    let buffer;
+    console.log(`📄 [${requestId}] PDF wird lokal gelesen...`);
     
-    if (uploadType === "S3_UPLOAD") {
-      console.log(`📄 [${requestId}] PDF wird von S3 gelesen...`);
-      
-      try {
-        // ✅ S3 RETRY LOGIC: Robust S3 reading with retries
-        let retries = 3;
-        let s3Object;
-        
-        while (retries > 0) {
-          try {
-            s3Object = await s3.getObject({
-              Bucket: req.file.bucket,
-              Key: req.file.key
-            }).promise();
-            break;
-          } catch (s3Error) {
-            retries--;
-            if (retries === 0) throw s3Error;
-            console.warn(`⚠️ [${requestId}] S3 read retry (${3-retries}/3):`, s3Error.message);
-            await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s before retry
-          }
-        }
-        
-        buffer = s3Object.Body;
-        console.log(`📄 [${requestId}] S3 Buffer gelesen: ${buffer.length} bytes`);
-        
-      } catch (s3Error) {
-        console.error(`❌ [${requestId}] S3-Read-Fehler:`, s3Error.message);
-        return res.status(500).json({
-          success: false,
-          message: "Fehler beim Lesen der Datei aus dem Cloud-Storage",
-          error: "S3_READ_ERROR",
-          details: s3Error.message
-        });
-      }
-      
-    } else {
-      console.log(`📄 [${requestId}] PDF wird lokal gelesen...`);
-      
-      const filePath = path.join(UPLOAD_PATH, req.file.filename);
-      if (!fsSync.existsSync(filePath)) {
-        throw new Error(`Datei nicht gefunden: ${filePath}`);
-      }
-
-      buffer = await fs.readFile(filePath);
-      console.log(`📄 [${requestId}] Local Buffer gelesen: ${buffer.length} bytes`);
+    const filePath = path.join(UPLOAD_PATH, req.file.filename);
+    if (!fsSync.existsSync(filePath)) {
+      throw new Error(`Datei nicht gefunden: ${filePath}`);
     }
+
+    const buffer = await fs.readFile(filePath);
+    console.log(`📄 [${requestId}] Buffer gelesen: ${buffer.length} bytes`);
     
     const fileHash = calculateFileHash(buffer);
     console.log(`🔍 [${requestId}] Datei-Hash berechnet: ${fileHash.substring(0, 12)}...`);
@@ -780,7 +591,7 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
               contractId: existingContract._id,
               contractName: existingContract.name,
               uploadedAt: existingContract.createdAt,
-              existingContract: existingContract,
+              existingContract: existingContract, // ✅ VERBESSERUNG: Vollständige Contract-Info für Frontend
               requestId,
               actions: {
                 reanalyze: `Erneut analysieren und bestehende Analyse überschreiben`,
@@ -798,11 +609,12 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
       console.log(`⚠️ [${requestId}] Dubletten-Check übersprungen (nicht verfügbar)`);
     }
 
-    // ===== PDF TEXT EXTRACTION (unchanged) =====
+    // ===== VERBESSERTE PDF-TEXT-EXTRAKTION (mit benutzerfreundlichen Fehlermeldungen) =====
     console.log(`📖 [${requestId}] Verwende verbesserte PDF-Extraktion...`);
     
     const extractionResult = await extractTextFromPDFEnhanced(buffer, req.file.originalname, requestId);
     
+    // ✅ VERBESSERUNG: Check ob Extraktion erfolgreich war
     if (!extractionResult.success) {
       console.log(`❌ [${requestId}] PDF-Extraktion fehlgeschlagen mit benutzerfreundlicher Meldung`);
       
@@ -904,81 +716,58 @@ Antwort im folgenden JSON-Format:
       extractedText: fullTextContent,
       originalFileName: req.file.originalname,
       fileSize: buffer.length,
-      uploadType: uploadType,
+      uploadType: "LOCAL_UPLOAD",
       extractionMethod: extractionResult.extractionMethod,
       extractionQuality: extractionResult.quality,
       pageCount: extractionResult.pages,
-      // ✅ S3 FIELDS: Add S3-specific fields if S3 upload
-      ...(uploadType === "S3_UPLOAD" && {
-        s3Key: req.file.key,
-        s3Bucket: req.file.bucket,
-        s3Location: req.file.location,
-        s3ETag: req.file.etag
-      }),
       ...result,
     };
 
     let inserted;
     try {
       inserted = await analysisCollection.insertOne(analysisData);
-      console.log(`✅ [${requestId}] ${uploadType} Analyse gespeichert: ${inserted.insertedId} (mit fullText: ${fullTextContent.length} Zeichen)`);
+      console.log(`✅ [${requestId}] Stable Analyse gespeichert: ${inserted.insertedId} (mit fullText: ${fullTextContent.length} Zeichen)`);
     } catch (dbError) {
       console.error(`❌ [${requestId}] DB-Insert-Fehler:`, dbError.message);
       throw new Error(`Datenbank-Fehler beim Speichern: ${dbError.message}`);
     }
 
     try {
-      console.log(`💾 [${requestId}] Speichere Vertrag (${uploadType})...`);
+      console.log(`💾 [${requestId}] Speichere Vertrag (lokal)...`);
 
       if (existingContract && req.body.forceReanalyze === 'true') {
         console.log(`🔄 [${requestId}] Aktualisiere bestehenden Vertrag: ${existingContract._id}`);
         
-        // ✅ DYNAMIC UPDATE: Update fields based on upload type
-        const updateFields = {
-          lastAnalyzed: new Date(),
-          analysisId: inserted.insertedId,
-          fullText: fullTextContent,
-          content: fullTextContent,
-          uploadType: uploadType,
-          extractionMethod: extractionResult.extractionMethod,
-          extractionQuality: extractionResult.quality,
-          legalPulse: {
-            riskScore: result.contractScore || null,
-            riskSummary: result.summary || '',
-            lastChecked: new Date(),
-            lawInsights: [],
-            marketSuggestions: []
-          },
-          analyzeCount: (existingContract.analyzeCount || 0) + 1
-        };
-
-        if (uploadType === "S3_UPLOAD") {
-          updateFields.filename = req.file.key;
-          updateFields.filePath = req.file.location;
-          updateFields.extraRefs = {
-            uploadType: "S3_UPLOAD",
-            s3Key: req.file.key,
-            s3Bucket: req.file.bucket,
-            s3Location: req.file.location,
-            s3ETag: req.file.etag,
-            analysisId: inserted.insertedId,
-            extractionMethod: extractionResult.extractionMethod
-          };
-        } else {
-          updateFields.filename = req.file.filename;
-          updateFields.filePath = `/uploads/${req.file.filename}`;
-          updateFields.extraRefs = {
-            uploadType: "LOCAL_UPLOAD",
-            analysisId: inserted.insertedId,
-            uploadPath: UPLOAD_PATH,
-            serverPath: `/uploads/${req.file.filename}`,
-            extractionMethod: extractionResult.extractionMethod
-          };
-        }
-        
         await contractsCollection.updateOne(
           { _id: existingContract._id },
-          { $set: updateFields }
+          { 
+            $set: {
+              lastAnalyzed: new Date(),
+              analysisId: inserted.insertedId,
+              fullText: fullTextContent,
+              content: fullTextContent,
+              filePath: `/uploads/${req.file.filename}`,
+              filename: req.file.filename,
+              uploadType: "LOCAL_UPLOAD",
+              extractionMethod: extractionResult.extractionMethod,
+              extractionQuality: extractionResult.quality,
+              extraRefs: {
+                uploadType: "LOCAL_UPLOAD",
+                analysisId: inserted.insertedId,
+                uploadPath: UPLOAD_PATH,
+                serverPath: `/uploads/${req.file.filename}`,
+                extractionMethod: extractionResult.extractionMethod
+              },
+              legalPulse: {
+                riskScore: result.contractScore || null,
+                riskSummary: result.summary || '',
+                lastChecked: new Date(),
+                lawInsights: [],
+                marketSuggestions: []
+              },
+              analyzeCount: (existingContract.analyzeCount || 0) + 1
+            }
+          }
         );
         
         console.log(`✅ [${requestId}] Bestehender Vertrag aktualisiert (${fullTextContent.length} Zeichen)`);
@@ -991,23 +780,12 @@ Antwort im folgenden JSON-Format:
           status: "Aktiv"
         };
 
-        // ✅ DYNAMIC SAVING: Use appropriate save function
-        let savedContract;
-        if (uploadType === "S3_UPLOAD") {
-          savedContract = await saveContractWithS3Upload(
-            req.user.userId,
-            contractAnalysisData,
-            req.file,
-            fullTextContent
-          );
-        } else {
-          savedContract = await saveContractWithLocalUpload(
-            req.user.userId,
-            contractAnalysisData,
-            req.file,
-            fullTextContent
-          );
-        }
+        const savedContract = await saveContractWithLocalUpload(
+          req.user.userId,
+          contractAnalysisData,
+          req.file,
+          fullTextContent
+        );
 
         await contractsCollection.updateOne(
           { _id: savedContract._id },
@@ -1022,7 +800,7 @@ Antwort im folgenden JSON-Format:
           }
         );
 
-        console.log(`✅ [${requestId}] Neuer ${uploadType} Vertrag gespeichert: ${savedContract._id} mit analysisId: ${inserted.insertedId}`);
+        console.log(`✅ [${requestId}] Neuer Vertrag gespeichert: ${savedContract._id} mit analysisId: ${inserted.insertedId}`);
       }
       
     } catch (saveError) {
@@ -1040,30 +818,20 @@ Antwort im folgenden JSON-Format:
       console.warn(`⚠️ [${requestId}] Counter-Update-Fehler:`, updateError.message);
     }
 
-    console.log(`✅ [${requestId}] ${uploadType} Analyse komplett erfolgreich`);
+    console.log(`✅ [${requestId}] Stable Analyse komplett erfolgreich`);
 
-    // ✅ DYNAMIC RESPONSE: Different response based on upload type
     const responseData = { 
       success: true,
       message: "Analyse erfolgreich abgeschlossen",
       requestId,
-      uploadType: uploadType,
-      fileUrl: uploadType === "S3_UPLOAD" ? req.file.location : `/uploads/${req.file.filename}`,
+      uploadType: "LOCAL_UPLOAD",
+      fileUrl: `/uploads/${req.file.filename}`,
       extractionInfo: {
         method: extractionResult.extractionMethod,
         quality: extractionResult.quality,
         charactersExtracted: fullTextContent.length,
         pageCount: extractionResult.pages
       },
-      // ✅ S3 RESPONSE: Add S3-specific info if S3 upload
-      ...(uploadType === "S3_UPLOAD" && {
-        s3Info: {
-          bucket: req.file.bucket,
-          key: req.file.key,
-          location: req.file.location,
-          etag: req.file.etag
-        }
-      }),
       ...result, 
       analysisId: inserted.insertedId,
       usage: {
@@ -1082,7 +850,7 @@ Antwort im folgenden JSON-Format:
     res.json(responseData);
 
   } catch (error) {
-    console.error(`❌ [${requestId}] Fehler bei ${uploadType} Analyse:`, {
+    console.error(`❌ [${requestId}] Fehler bei stabiler Analyse:`, {
       message: error.message,
       stack: error.stack?.substring(0, 500),
       userId: req.user?.userId,
@@ -1098,9 +866,6 @@ Antwort im folgenden JSON-Format:
     } else if (error.message.includes("Timeout")) {
       errorMessage = "Analyse-Timeout. Bitte versuche es mit einer kleineren Datei.";
       errorCode = "TIMEOUT_ERROR";
-    } else if (error.message.includes("S3") || error.message.includes("Cloud-Storage")) {
-      errorMessage = "Cloud-Storage-Fehler. Bitte versuche es erneut.";
-      errorCode = "S3_ERROR";
     } else if (error.message.includes("JSON") || error.message.includes("Parse")) {
       errorMessage = "Fehler bei der Analyse-Verarbeitung.";
       errorCode = "PARSE_ERROR";
@@ -1116,9 +881,6 @@ Antwort im folgenden JSON-Format:
     } else if (error.message.includes("Nicht genügend Text")) {
       errorMessage = error.message;
       errorCode = "INSUFFICIENT_TEXT";
-    } else if (error.message.includes("Nur PDF-Dateien")) {
-      errorMessage = error.message;
-      errorCode = "INVALID_FILE_TYPE";
     }
 
     res.status(500).json({ 
@@ -1126,7 +888,6 @@ Antwort im folgenden JSON-Format:
       message: errorMessage,
       error: errorCode,
       requestId,
-      uploadType: uploadType,
       details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
@@ -1168,24 +929,24 @@ router.get("/history", verifyToken, async (req, res) => {
   }
 });
 
-// ✅ UPDATED: Health Check für S3 Version
+// ✅ UPDATED: Health Check für stabile Version
 router.get("/health", async (req, res) => {
   const checks = {
-    service: "Contract Analysis (Production S3)",
+    service: "Contract Analysis (Emergency Rollback)", // ✅ Updated
     status: "online",
     timestamp: new Date().toISOString(),
     openaiConfigured: !!process.env.OPENAI_API_KEY,
     mongoConnected: false,
     uploadsPath: fsSync.existsSync(UPLOAD_PATH),
     uploadPath: UPLOAD_PATH,
-    uploadType: uploadType,
-    s3Available: !!s3Upload,
-    s3Configured: !!(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY && process.env.S3_BUCKET_NAME),
-    s3Region: process.env.AWS_REGION || 'eu-central-1',
-    s3Bucket: process.env.S3_BUCKET_NAME || 'not-configured',
+    uploadType: "LOCAL_UPLOAD",
+    s3Integration: "DISABLED (Emergency Rollback)",
     cryptoAvailable: !!crypto,
     saveContractAvailable: !!saveContract,
-    version: "production-s3"
+    ocrAvailable: false, // ✅ OCR ist in stabiler Version deaktiviert
+    tesseractLoaded: false, // ✅ Tesseract ist entfernt
+    queueAvailable: false, // ✅ Queue ist entfernt
+    version: "emergency-rollback" // ✅ Version-Info
   };
 
   try {
@@ -1196,19 +957,7 @@ router.get("/health", async (req, res) => {
     checks.mongoError = err.message;
   }
 
-  // ✅ S3 HEALTH CHECK: Test S3 connection
-  if (s3 && process.env.S3_BUCKET_NAME) {
-    try {
-      await s3.headBucket({ Bucket: process.env.S3_BUCKET_NAME }).promise();
-      checks.s3BucketAccessible = true;
-    } catch (s3Error) {
-      checks.s3BucketAccessible = false;
-      checks.s3Error = s3Error.message;
-    }
-  }
-
-  const isHealthy = checks.openaiConfigured && checks.mongoConnected && 
-                   (uploadType === "S3_UPLOAD" ? checks.s3Available : checks.uploadsPath);
+  const isHealthy = checks.openaiConfigured && checks.mongoConnected && checks.uploadsPath;
   
   res.status(isHealthy ? 200 : 503).json({
     success: isHealthy,
@@ -1217,7 +966,7 @@ router.get("/health", async (req, res) => {
 });
 
 process.on('SIGTERM', async () => {
-  console.log('📊 Analyze service (production S3) shutting down...');
+  console.log('📊 Analyze service (emergency rollback) shutting down...');
   if (mongoClient) {
     await mongoClient.close();
   }
