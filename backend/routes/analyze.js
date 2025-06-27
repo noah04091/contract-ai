@@ -1,4 +1,4 @@
-// 📁 backend/routes/analyze.js - PRODUCTION S3 INTEGRATION (AWS SDK v3)
+// 📁 backend/routes/analyze.js - PRODUCTION S3 INTEGRATION + SMART DOCUMENT ANALYSIS
 const express = require("express");
 const multer = require("multer");
 const pdfParse = require("pdf-parse");
@@ -11,7 +11,7 @@ const path = require("path");
 
 const router = express.Router();
 
-// ===== S3 INTEGRATION (AWS SDK v3) =====
+// ===== S3 INTEGRATION (AWS SDK v3) - UNCHANGED =====
 let S3Client, HeadBucketCommand, GetObjectCommand, multerS3, s3Instance;
 let S3_AVAILABLE = false;
 let S3_CONFIGURED = false;
@@ -125,7 +125,7 @@ const testS3Connectivity = async () => {
 // Initialize S3 on startup
 const s3InitSuccess = initializeS3();
 
-// ===== UPLOAD CONFIGURATION (DYNAMIC) =====
+// ===== UPLOAD CONFIGURATION (DYNAMIC) - UNCHANGED =====
 const UPLOAD_PATH = path.join(__dirname, "..", "uploads");
 
 // Ensure uploads directory exists for fallback
@@ -141,7 +141,7 @@ try {
 }
 
 /**
- * 🔄 DYNAMIC MULTER CONFIGURATION (AWS SDK v3)
+ * 🔄 DYNAMIC MULTER CONFIGURATION (AWS SDK v3) - UNCHANGED
  * Uses S3 if available, falls back to local storage
  */
 const createUploadMiddleware = () => {
@@ -213,7 +213,7 @@ const createUploadMiddleware = () => {
 };
 
 /**
- * 🔄 DYNAMIC FILE READING (AWS SDK v3)
+ * 🔄 DYNAMIC FILE READING (AWS SDK v3) - UNCHANGED
  * Reads file from S3 if uploaded there, from local disk otherwise
  */
 const readUploadedFile = async (fileInfo, requestId) => {
@@ -261,7 +261,7 @@ const readUploadedFile = async (fileInfo, requestId) => {
 };
 
 /**
- * 📊 GET UPLOAD TYPE AND FILE URL
+ * 📊 GET UPLOAD TYPE AND FILE URL - UNCHANGED
  * Returns appropriate upload type and file URL based on where file was stored
  */
 const getUploadInfo = (fileInfo) => {
@@ -290,7 +290,7 @@ const getUploadInfo = (fileInfo) => {
   }
 };
 
-// ===== EXISTING CODE (UNCHANGED) =====
+// ===== EXISTING SUPPORT MODULES - UNCHANGED =====
 
 // ✅ FALLBACK: crypto only import if available
 let crypto;
@@ -316,7 +316,412 @@ try {
 let lastGPT4Request = 0;
 const GPT4_MIN_INTERVAL = 4000; // 4 seconds between GPT-4 requests
 
-// ===== IMPROVED PROCESSING FUNCTIONS (unchanged) =====
+// ===== NEW: SMART DOCUMENT ANALYSIS PIPELINE =====
+
+/**
+ * 🎯 Enhanced Document Type Detection
+ * Detects document types and determines the best analysis strategy
+ */
+function detectDocumentType(filename, text, pageCount) {
+  const name = filename.toLowerCase();
+  const content = text.toLowerCase();
+  
+  // Document type patterns
+  const patterns = {
+    CONTRACT: {
+      keywords: ['vertrag', 'contract', 'vereinbarung', 'agreement', 'terms', 'conditions', 'klausel', 'verpflichtung', 'obligation', 'kündig', 'termination', 'laufzeit', 'duration'],
+      filePatterns: ['vertrag', 'contract', 'agreement', 'kontrakt'],
+      confidence: 0.8
+    },
+    INVOICE: {
+      keywords: ['rechnung', 'invoice', 'bill', 'faktura', 'betrag', 'amount', 'total', 'summe', 'netto', 'brutto', 'mehrwertsteuer', 'mwst', 'vat', 'steuer'],
+      filePatterns: ['rechnung', 'invoice', 'bill', 'faktura', 'rg'],
+      confidence: 0.7
+    },
+    RECEIPT: {
+      keywords: ['quittung', 'receipt', 'beleg', 'bon', 'kassenbon', 'correction', 'korrektur', 'storno'],
+      filePatterns: ['receipt', 'quittung', 'beleg', 'vat_correction', 'correction', 'bon'],
+      confidence: 0.6
+    },
+    FINANCIAL_DOCUMENT: {
+      keywords: ['buchung', 'booking', 'umsatz', 'revenue', 'gewinn', 'verlust', 'bilanz', 'übersicht', 'aufstellung', 'auswertung'],
+      filePatterns: ['buchung', 'booking', 'umsatz', 'financial', 'übersicht', 'auswertung'],
+      confidence: 0.5
+    },
+    TABLE_DOCUMENT: {
+      keywords: ['tabelle', 'table', 'liste', 'list', 'übersicht', 'overview', 'aufstellung', 'zusammenfassung'],
+      filePatterns: ['tabelle', 'table', 'liste', 'übersicht', 'list'],
+      confidence: 0.4
+    }
+  };
+
+  let bestMatch = { type: 'UNKNOWN', confidence: 0 };
+
+  for (const [type, pattern] of Object.entries(patterns)) {
+    let score = 0;
+    
+    // Check filename patterns
+    for (const filePattern of pattern.filePatterns) {
+      if (name.includes(filePattern)) {
+        score += 0.3;
+      }
+    }
+    
+    // Check content keywords
+    let keywordMatches = 0;
+    for (const keyword of pattern.keywords) {
+      if (content.includes(keyword)) {
+        keywordMatches++;
+      }
+    }
+    score += (keywordMatches / pattern.keywords.length) * 0.7;
+    
+    if (score > bestMatch.confidence && score >= pattern.confidence * 0.6) { // Lower threshold for better recognition
+      bestMatch = { type, confidence: score };
+    }
+  }
+
+  return bestMatch;
+}
+
+/**
+ * 🧪 Content Quality Assessment
+ * Analyzes if the document has enough meaningful content
+ */
+function assessContentQuality(text, pageCount) {
+  const words = text.split(/\s+/).filter(word => word.length > 2);
+  const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 10);
+  const lines = text.split('\n').filter(line => line.trim().length > 5);
+  
+  const metrics = {
+    wordCount: words.length,
+    sentenceCount: sentences.length,
+    lineCount: lines.length,
+    avgWordsPerPage: Math.round(words.length / pageCount),
+    avgSentencesPerPage: Math.round(sentences.length / pageCount),
+    hasStructure: sentences.length > 3 && lines.length > 5,
+    hasTabularData: text.includes('\t') || /\s{4,}/.test(text),
+    isScanned: words.length < 50 && pageCount > 1, // Likely scanned if very few words
+  };
+
+  // Quality scoring
+  let qualityScore = 0;
+  
+  if (metrics.wordCount > 100) qualityScore += 0.3;
+  if (metrics.sentenceCount > 5) qualityScore += 0.2;
+  if (metrics.hasStructure) qualityScore += 0.2;
+  if (metrics.avgWordsPerPage > 50) qualityScore += 0.2;
+  if (!metrics.isScanned) qualityScore += 0.1;
+
+  return { ...metrics, qualityScore };
+}
+
+/**
+ * 🎨 Smart Analysis Strategy Selector
+ * Determines the best analysis approach based on document type and quality
+ */
+function selectAnalysisStrategy(documentType, contentQuality, filename) {
+  const strategies = {
+    CONTRACT: {
+      method: 'FULL_CONTRACT_ANALYSIS',
+      requiresHighQuality: true,
+      fallbackToGeneral: true,
+      message: 'Vollständige Vertragsanalyse'
+    },
+    INVOICE: {
+      method: 'FINANCIAL_ANALYSIS',
+      requiresHighQuality: false,
+      fallbackToGeneral: true,
+      message: 'Rechnungsanalyse'
+    },
+    RECEIPT: {
+      method: 'RECEIPT_ANALYSIS',
+      requiresHighQuality: false,
+      fallbackToGeneral: true,
+      message: 'Beleganalyse'
+    },
+    FINANCIAL_DOCUMENT: {
+      method: 'GENERAL_FINANCIAL_ANALYSIS',
+      requiresHighQuality: false,
+      fallbackToGeneral: true,
+      message: 'Finanzielle Dokumentenanalyse'
+    },
+    TABLE_DOCUMENT: {
+      method: 'TABULAR_ANALYSIS',
+      requiresHighQuality: false,
+      fallbackToGeneral: true,
+      message: 'Tabellenanalyse'
+    },
+    UNKNOWN: {
+      method: 'GENERAL_DOCUMENT_ANALYSIS',
+      requiresHighQuality: false,
+      fallbackToGeneral: false,
+      message: 'Allgemeine Dokumentenanalyse'
+    }
+  };
+
+  const strategy = strategies[documentType.type] || strategies.UNKNOWN;
+  
+  // Check if quality is sufficient
+  const qualityThreshold = strategy.requiresHighQuality ? 0.6 : 0.2;
+  const hasEnoughQuality = contentQuality.qualityScore >= qualityThreshold;
+
+  return {
+    ...strategy,
+    canProceed: hasEnoughQuality || strategy.fallbackToGeneral,
+    needsOCR: contentQuality.isScanned,
+    confidence: documentType.confidence,
+    qualityMet: hasEnoughQuality
+  };
+}
+
+/**
+ * 🎨 Generate Analysis Prompt Based on Document Type
+ * Creates specialized prompts for different document types
+ */
+function generateAnalysisPrompt(text, documentType, strategy) {
+  const basePrompt = `Du bist ein Experte für Dokumentenanalyse. Analysiere das folgende Dokument detailliert und strukturiert.`;
+  
+  const strategyPrompts = {
+    FULL_CONTRACT_ANALYSIS: `
+${basePrompt}
+
+**VERTRAGSANALYSE:**
+Analysiere diesen Vertrag detailliert und erstelle eine strukturierte Auswertung mit:
+
+1. **Zusammenfassung** (2-3 Sätze): Was ist der Kerninhalt des Vertrags?
+2. **Vertragsparteien**: Wer sind die beteiligten Parteien und ihre Rollen?
+3. **Laufzeit und Kündigungsfristen**: Wie lange läuft der Vertrag und wie kann gekündigt werden?
+4. **Wesentliche Verpflichtungen**: Was sind die Hauptpflichten beider Seiten?
+5. **Zahlungsbedingungen**: Wie sind Zahlungen geregelt?
+6. **Risikobewertung**: Welche rechtlichen Risiken bestehen?
+7. **Optimierungsvorschläge**: Konkrete Verbesserungsempfehlungen
+8. **Vertragsscore** (1-100): Gesamtbewertung der Vertragsqualität
+
+Antworte im folgenden JSON-Format:
+{
+  "summary": "...",
+  "legalAssessment": "...",
+  "suggestions": "...",
+  "comparison": "...",
+  "contractScore": 87
+}
+
+**DOKUMENT:**
+${text}`,
+
+    FINANCIAL_ANALYSIS: `
+${basePrompt}
+
+**RECHNUNGSANALYSE:**
+Analysiere diese Rechnung strukturiert und extrahiere:
+
+1. **Zusammenfassung**: Art der Rechnung und Hauptinhalt
+2. **Rechnungsdetails**: Aussteller, Empfänger, Nummer, Datum
+3. **Finanzielle Bewertung**: Beträge, Steuern, Zahlungsbedingungen
+4. **Besonderheiten**: Auffälligkeiten oder wichtige Hinweise
+5. **Empfehlungen**: Hinweise zur Bearbeitung oder Archivierung
+
+Antworte im folgenden JSON-Format:
+{
+  "summary": "...",
+  "legalAssessment": "...",
+  "suggestions": "...",
+  "comparison": "...",
+  "contractScore": 75
+}
+
+**DOKUMENT:**
+${text}`,
+
+    RECEIPT_ANALYSIS: `
+${basePrompt}
+
+**BELEGANALYSE:**
+Analysiere diesen Beleg und gib eine strukturierte Auswertung:
+
+1. **Zusammenfassung**: Art des Belegs und Zweck
+2. **Transaktionsdetails**: Händler, Datum, Artikel/Dienstleistungen
+3. **Finanzanalyse**: Beträge, Steuern, Zahlungsart
+4. **Kategorisierung**: Geschäftliche Einordnung für Buchhaltung
+5. **Hinweise**: Steuerliche Relevanz oder Besonderheiten
+
+Antworte im folgenden JSON-Format:
+{
+  "summary": "...",
+  "legalAssessment": "...",
+  "suggestions": "...",
+  "comparison": "...",
+  "contractScore": 70
+}
+
+**DOKUMENT:**
+${text}`,
+
+    GENERAL_FINANCIAL_ANALYSIS: `
+${basePrompt}
+
+**FINANZIELLE DOKUMENTENANALYSE:**
+Analysiere dieses finanzielle Dokument und erstelle eine Auswertung:
+
+1. **Zusammenfassung**: Art und Zweck des Dokuments
+2. **Finanzanalyse**: Wichtige Kennzahlen und Beträge
+3. **Strukturanalyse**: Aufbau und Kategorien der Daten
+4. **Erkenntnisse**: Trends, Auffälligkeiten oder wichtige Punkte
+5. **Empfehlungen**: Handlungsempfehlungen oder weitere Schritte
+
+Antworte im folgenden JSON-Format:
+{
+  "summary": "...",
+  "legalAssessment": "...",
+  "suggestions": "...",
+  "comparison": "...",
+  "contractScore": 65
+}
+
+**DOKUMENT:**
+${text}`,
+
+    TABULAR_ANALYSIS: `
+${basePrompt}
+
+**TABELLENANALYSE:**
+Analysiere diese tabellarische Übersicht strukturiert:
+
+1. **Zusammenfassung**: Zweck und Inhalt der Tabelle
+2. **Strukturanalyse**: Aufbau, Spalten und Kategorien
+3. **Datenanalyse**: Wichtige Werte, Summen und Trends
+4. **Erkenntnisse**: Muster oder auffällige Datenpunkte
+5. **Praktische Hinweise**: Nutzungsmöglichkeiten der Daten
+
+Antworte im folgenden JSON-Format:
+{
+  "summary": "...",
+  "legalAssessment": "...",
+  "suggestions": "...",
+  "comparison": "...",
+  "contractScore": 60
+}
+
+**DOKUMENT:**
+${text}`,
+
+    GENERAL_DOCUMENT_ANALYSIS: `
+${basePrompt}
+
+**ALLGEMEINE DOKUMENTENANALYSE:**
+Analysiere dieses Dokument und gib eine strukturierte Zusammenfassung:
+
+1. **Zusammenfassung**: Art, Zweck und Hauptinhalt
+2. **Strukturanalyse**: Aufbau und wichtige Abschnitte
+3. **Inhaltsanalyse**: Kernaussagen und relevante Informationen
+4. **Bewertung**: Qualität und Vollständigkeit des Dokuments
+5. **Empfehlungen**: Weitere Schritte oder Nutzungsmöglichkeiten
+
+Antworte im folgenden JSON-Format:
+{
+  "summary": "...",
+  "legalAssessment": "...",
+  "suggestions": "...",
+  "comparison": "...",
+  "contractScore": 55
+}
+
+**DOKUMENT:**
+${text}`
+  };
+
+  return strategyPrompts[strategy] || strategyPrompts.GENERAL_DOCUMENT_ANALYSIS;
+}
+
+/**
+ * 🔍 Enhanced PDF Content Validator and Analyzer
+ * Combines the old assessment with new smart analysis
+ */
+async function validateAndAnalyzeDocument(filename, pdfText, pdfData, requestId) {
+  console.log(`🧠 [${requestId}] Starting smart document analysis for: ${filename}`);
+  
+  try {
+    // Basic PDF validation
+    if (!pdfText || pdfText.trim().length === 0) {
+      console.log(`⚠️ [${requestId}] No text extracted - potential scan document`);
+      return {
+        success: false,
+        error: 'NO_TEXT_CONTENT',
+        canRetryWithOCR: true,
+        message: '📸 Diese PDF enthält keinen lesbaren Text. Es handelt sich wahrscheinlich um ein gescanntes Dokument.',
+        details: 'Das Dokument scheint gescannt zu sein. Eine OCR-Analyse könnte helfen.',
+        suggestions: [
+          '🔄 Konvertiere die PDF in ein durchsuchbares Format (z.B. mit Adobe Acrobat)',
+          '📝 Öffne das Dokument in Word, das oft Text aus Scans erkennen kann',
+          '🖨️ Erstelle eine neue PDF aus dem Originaldokument (falls verfügbar)',
+          '🔍 Nutze ein Online-OCR-Tool (z.B. SmallPDF, PDF24) um Text zu extrahieren'
+        ]
+      };
+    }
+
+    // Get document properties
+    const pageCount = pdfData?.numpages || 1;
+    
+    // Detect document type using new smart analysis
+    const documentType = detectDocumentType(filename, pdfText, pageCount);
+    console.log(`📋 [${requestId}] Document type detected: ${documentType.type} (confidence: ${documentType.confidence.toFixed(2)})`);
+    
+    // Assess content quality using new metrics
+    const contentQuality = assessContentQuality(pdfText, pageCount);
+    console.log(`📊 [${requestId}] Content quality: ${contentQuality.qualityScore.toFixed(2)} (${contentQuality.wordCount} words, ${contentQuality.sentenceCount} sentences)`);
+    
+    // Select analysis strategy based on type and quality
+    const strategy = selectAnalysisStrategy(documentType, contentQuality, filename);
+    console.log(`🎯 [${requestId}] Analysis strategy: ${strategy.method} - ${strategy.message}`);
+    
+    // Decision logic - much more permissive than before!
+    if (!strategy.canProceed) {
+      return {
+        success: false,
+        error: 'INSUFFICIENT_CONTENT',
+        canRetryWithOCR: strategy.needsOCR,
+        documentType: documentType.type,
+        message: `📄 Dokument hat unzureichende Qualität für ${strategy.message.toLowerCase()}`,
+        details: `Erkannt als: ${documentType.type}, Qualität: ${(contentQuality.qualityScore * 100).toFixed(0)}%`,
+        suggestions: [
+          'Versuche eine PDF mit mehr Textinhalt',
+          'Prüfe ob das Dokument vollständig ist',
+          strategy.needsOCR ? 'OCR-Analyse könnte bei gescannten Dokumenten helfen' : null
+        ].filter(Boolean)
+      };
+    }
+
+    // Success - document can be analyzed
+    console.log(`✅ [${requestId}] Document validation successful - proceeding with ${strategy.method}`);
+    
+    return {
+      success: true,
+      documentType: documentType.type,
+      strategy: strategy.method,
+      confidence: documentType.confidence,
+      qualityScore: contentQuality.qualityScore,
+      analysisMessage: strategy.message,
+      metrics: {
+        wordCount: contentQuality.wordCount,
+        pageCount: pageCount,
+        hasTabularData: contentQuality.hasTabularData,
+        isStructured: contentQuality.hasStructure
+      }
+    };
+
+  } catch (error) {
+    console.error(`❌ [${requestId}] Document validation error:`, error);
+    return {
+      success: false,
+      error: 'VALIDATION_ERROR',
+      message: 'Fehler bei der Dokumentenanalyse',
+      details: error.message
+    };
+  }
+}
+
+// ===== EXISTING FUNCTIONS (KEPT FOR COMPATIBILITY) =====
 
 const assessTextQuality = (text, fileName = '') => {
   if (!text) {
@@ -423,6 +828,7 @@ const createUserFriendlyPDFError = (textQuality, fileName, pages) => {
   };
 };
 
+// Enhanced but kept for fallback compatibility
 const extractTextFromPDFEnhanced = async (buffer, fileName, requestId, onProgress) => {
   console.log(`📖 [${requestId}] Starting enhanced PDF text extraction...`);
   console.log(`📄 [${requestId}] File: ${fileName}`);
@@ -490,7 +896,7 @@ const extractTextFromPDFEnhanced = async (buffer, fileName, requestId, onProgres
   }
 };
 
-// ===== EXISTING HELPER FUNCTIONS (unchanged) =====
+// ===== EXISTING HELPER FUNCTIONS (UNCHANGED) =====
 
 function checkFileExists(filename) {
   const fullPath = path.join(UPLOAD_PATH, filename);
@@ -532,7 +938,7 @@ const getOpenAI = () => {
   return openaiInstance;
 };
 
-// MongoDB Setup
+// MongoDB Setup - UNCHANGED
 const mongoUri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
 let mongoClient = null;
 let analysisCollection = null;
@@ -599,7 +1005,7 @@ const checkForDuplicate = async (fileHash, userId) => {
 };
 
 /**
- * 💾 ENHANCED CONTRACT SAVING (S3 COMPATIBLE)
+ * 💾 ENHANCED CONTRACT SAVING (S3 COMPATIBLE) - UNCHANGED
  * Saves contract with appropriate upload info based on storage type
  */
 async function saveContractWithUpload(userId, analysisData, fileInfo, pdfText, uploadInfo) {
@@ -732,7 +1138,7 @@ const makeRateLimitedGPT4Request = async (prompt, requestId, openai, maxRetries 
   throw new Error(`GPT-4 request failed after ${maxRetries} attempts.`);
 };
 
-// ===== MAIN ANALYZE ROUTE (S3 COMPATIBLE) =====
+// ===== MAIN ANALYZE ROUTE (S3 COMPATIBLE) - UNCHANGED =====
 router.post("/", verifyToken, async (req, res, next) => {
   // Get upload middleware (dynamically created)
   const uploadMiddleware = createUploadMiddleware();
@@ -754,11 +1160,11 @@ router.post("/", verifyToken, async (req, res, next) => {
   });
 });
 
-// Move the main analysis logic to a separate function
+// ===== ENHANCED ANALYSIS REQUEST HANDLER =====
 const handleAnalysisRequest = async (req, res) => {
   const requestId = Date.now().toString();
   
-  console.log(`📊 [${requestId}] Production S3 Analysis request received:`, {
+  console.log(`🧠 [${requestId}] Enhanced Smart Analysis request received:`, {
     hasFile: !!req.file,
     userId: req.user?.userId,
     s3Available: S3_AVAILABLE,
@@ -869,68 +1275,72 @@ const handleAnalysisRequest = async (req, res) => {
       console.log(`⚠️ [${requestId}] Duplicate check skipped (not available)`);
     }
 
-    // Enhanced PDF text extraction
-    console.log(`📖 [${requestId}] Using enhanced PDF extraction...`);
-    
-    const extractionResult = await extractTextFromPDFEnhanced(buffer, req.file.originalname, requestId);
-    
-    if (!extractionResult.success) {
-      console.log(`❌ [${requestId}] PDF extraction failed with user-friendly message`);
+    // Parse PDF content first
+    console.log(`📖 [${requestId}] Parsing PDF content...`);
+    let pdfData;
+    try {
+      pdfData = await pdfParse(buffer);
+      console.log(`📄 [${requestId}] PDF parsed: ${pdfData.numpages} pages, ${pdfData.text.length} characters`);
+    } catch (error) {
+      console.error(`❌ [${requestId}] PDF parsing error:`, error);
+      return res.status(400).json({
+        success: false,
+        message: "📄 PDF-Datei konnte nicht verarbeitet werden",
+        error: "PDF_PARSE_ERROR",
+        details: "Die Datei scheint beschädigt oder kein gültiges PDF zu sein",
+        requestId
+      });
+    }
+
+    // NEW: Smart document validation and analysis strategy
+    const validationResult = await validateAndAnalyzeDocument(
+      req.file.originalname, 
+      pdfData.text, 
+      pdfData,
+      requestId
+    );
+
+    if (!validationResult.success) {
+      console.log(`⚠️ [${requestId}] Document validation failed: ${validationResult.error}`);
       
       return res.status(400).json({
         success: false,
-        message: extractionResult.error,
-        error: extractionResult.errorType,
-        suggestions: extractionResult.suggestions,
-        quality: extractionResult.quality,
-        pages: extractionResult.pages,
-        isUserError: extractionResult.isUserError,
-        requestId,
-        technicalError: extractionResult.technicalError
+        message: validationResult.message,
+        error: validationResult.error,
+        details: validationResult.details,
+        documentType: validationResult.documentType,
+        canRetryWithOCR: validationResult.canRetryWithOCR || false,
+        suggestions: validationResult.suggestions || [],
+        requestId
       });
     }
+
+    const fullTextContent = pdfData.text;
     
-    const fullTextContent = extractionResult.text;
-    const contractText = extractionResult.text;
-    
-    console.log(`📊 [${requestId}] Extraction successful:`, {
-      method: extractionResult.extractionMethod,
-      quality: extractionResult.quality,
+    console.log(`🎯 [${requestId}] Document analysis successful:`, {
+      documentType: validationResult.documentType,
+      strategy: validationResult.strategy,
+      confidence: Math.round(validationResult.confidence * 100),
+      qualityScore: Math.round(validationResult.qualityScore * 100),
       textLength: fullTextContent.length,
-      pages: extractionResult.pages,
+      pages: validationResult.metrics.pageCount,
       uploadType: uploadInfo.uploadType,
       s3Key: uploadInfo.s3Info?.key || 'none'
     });
 
-    console.log(`🤖 [${requestId}] Sending OpenAI request...`);
-    
-    const openai = getOpenAI();
+    // NEW: Generate specialized analysis prompt based on document type
+    const analysisPrompt = generateAnalysisPrompt(
+      fullTextContent, 
+      validationResult.documentType, 
+      validationResult.strategy
+    );
 
-    const prompt = `
-You are a contract analyst. Analyze the following contract:
-
-${contractText}
-
-Create an analysis with the following points:
-1. A brief summary in 2–3 sentences.
-2. Assessment of legal certainty.
-3. Concrete optimization suggestions.
-4. Comparable contracts with better conditions (if possible).
-5. A Contract Score rating from 1 to 100.
-
-Answer in the following JSON format:
-{
-  "summary": "...",
-  "legalAssessment": "...",
-  "suggestions": "...",
-  "comparison": "...",
-  "contractScore": 87
-}`;
+    console.log(`🤖 [${requestId}] Using ${validationResult.strategy} for ${validationResult.documentType} document`);
 
     let completion;
     try {
       completion = await Promise.race([
-        makeRateLimitedGPT4Request(prompt, requestId, openai),
+        makeRateLimitedGPT4Request(analysisPrompt, requestId, getOpenAI()),
         new Promise((_, reject) => 
           setTimeout(() => reject(new Error("OpenAI API timeout after 60s")), 60000)
         )
@@ -978,9 +1388,17 @@ Answer in the following JSON format:
       originalFileName: req.file.originalname,
       fileSize: buffer.length,
       uploadType: uploadInfo.uploadType,
-      extractionMethod: extractionResult.extractionMethod,
-      extractionQuality: extractionResult.quality,
-      pageCount: extractionResult.pages,
+      
+      // NEW: Enhanced metadata from smart analysis
+      documentType: validationResult.documentType,
+      analysisStrategy: validationResult.strategy,
+      confidence: validationResult.confidence,
+      qualityScore: validationResult.qualityScore,
+      analysisMessage: validationResult.analysisMessage,
+      extractionMethod: 'smart-analysis-enhanced',
+      extractionQuality: validationResult.qualityScore > 0.6 ? 'excellent' : validationResult.qualityScore > 0.4 ? 'good' : 'fair',
+      pageCount: validationResult.metrics.pageCount,
+      
       ...(uploadInfo.s3Info && {
         s3Info: uploadInfo.s3Info
       }),
@@ -990,7 +1408,7 @@ Answer in the following JSON format:
     let inserted;
     try {
       inserted = await analysisCollection.insertOne(analysisData);
-      console.log(`✅ [${requestId}] Production analysis saved: ${inserted.insertedId} (with fullText: ${fullTextContent.length} characters)`);
+      console.log(`✅ [${requestId}] Enhanced analysis saved: ${inserted.insertedId} (${validationResult.documentType}: ${validationResult.analysisMessage})`);
     } catch (dbError) {
       console.error(`❌ [${requestId}] DB insert error:`, dbError.message);
       throw new Error(`Database error while saving: ${dbError.message}`);
@@ -1010,8 +1428,14 @@ Answer in the following JSON format:
           filePath: uploadInfo.fileUrl,
           filename: req.file.filename || req.file.key,
           uploadType: uploadInfo.uploadType,
-          extractionMethod: extractionResult.extractionMethod,
-          extractionQuality: extractionResult.quality,
+          
+          // NEW: Enhanced metadata
+          documentType: validationResult.documentType,
+          analysisStrategy: validationResult.strategy,
+          confidence: validationResult.confidence,
+          qualityScore: validationResult.qualityScore,
+          extractionMethod: 'smart-analysis-enhanced',
+          extractionQuality: analysisData.extractionQuality,
           analyzeCount: (existingContract.analyzeCount || 0) + 1
         };
 
@@ -1026,6 +1450,8 @@ Answer in the following JSON format:
         updateData.extraRefs = {
           uploadType: uploadInfo.uploadType,
           analysisId: inserted.insertedId,
+          documentType: validationResult.documentType,
+          analysisStrategy: validationResult.strategy,
           ...(uploadInfo.s3Info && {
             s3Bucket: uploadInfo.s3Info.bucket,
             s3Key: uploadInfo.s3Info.key,
@@ -1036,7 +1462,7 @@ Answer in the following JSON format:
             uploadPath: UPLOAD_PATH,
             serverPath: uploadInfo.localInfo.path
           }),
-          extractionMethod: extractionResult.extractionMethod
+          extractionMethod: 'smart-analysis-enhanced'
         };
 
         updateData.legalPulse = {
@@ -1052,7 +1478,7 @@ Answer in the following JSON format:
           { $set: updateData }
         );
         
-        console.log(`✅ [${requestId}] Existing contract updated (${fullTextContent.length} characters) with s3Key: ${updateData.s3Key || 'none'}`);
+        console.log(`✅ [${requestId}] Existing contract updated (${fullTextContent.length} characters) with enhanced analysis`);
       } else {
         const contractAnalysisData = {
           name: result.summary ? req.file.originalname : req.file.originalname,
@@ -1075,15 +1501,24 @@ Answer in the following JSON format:
           { 
             $set: {
               analysisId: inserted.insertedId,
-              extractionMethod: extractionResult.extractionMethod,
-              extractionQuality: extractionResult.quality,
+              
+              // NEW: Enhanced metadata
+              documentType: validationResult.documentType,
+              analysisStrategy: validationResult.strategy,
+              confidence: validationResult.confidence,
+              qualityScore: validationResult.qualityScore,
+              extractionMethod: 'smart-analysis-enhanced',
+              extractionQuality: analysisData.extractionQuality,
+              
               'extraRefs.analysisId': inserted.insertedId,
-              'extraRefs.extractionMethod': extractionResult.extractionMethod
+              'extraRefs.documentType': validationResult.documentType,
+              'extraRefs.analysisStrategy': validationResult.strategy,
+              'extraRefs.extractionMethod': 'smart-analysis-enhanced'
             }
           }
         );
 
-        console.log(`✅ [${requestId}] New contract saved: ${savedContract._id} with analysisId: ${inserted.insertedId}, s3Key: ${savedContract.s3Key || 'none'}`);
+        console.log(`✅ [${requestId}] New contract saved: ${savedContract._id} with enhanced analysis (${validationResult.documentType})`);
       }
       
     } catch (saveError) {
@@ -1101,23 +1536,35 @@ Answer in the following JSON format:
       console.warn(`⚠️ [${requestId}] Counter update error:`, updateError.message);
     }
 
-    console.log(`✅ [${requestId}] Production S3 analysis completely successful`);
+    console.log(`🎉 [${requestId}] Enhanced Smart Analysis completely successful!`);
 
     const responseData = { 
       success: true,
-      message: "Analysis completed successfully",
+      message: `${validationResult.analysisMessage} erfolgreich abgeschlossen`,
       requestId,
       uploadType: uploadInfo.uploadType,
       fileUrl: uploadInfo.fileUrl,
+      
+      // NEW: Enhanced response data
+      documentType: validationResult.documentType,
+      analysisStrategy: validationResult.strategy,
+      confidence: Math.round(validationResult.confidence * 100),
+      qualityScore: Math.round(validationResult.qualityScore * 100),
+      analysisMessage: validationResult.analysisMessage,
+      
       extractionInfo: {
-        method: extractionResult.extractionMethod,
-        quality: extractionResult.quality,
+        method: 'smart-analysis-enhanced',
+        quality: analysisData.extractionQuality,
         charactersExtracted: fullTextContent.length,
-        pageCount: extractionResult.pages
+        pageCount: validationResult.metrics.pageCount,
+        hasTabularData: validationResult.metrics.hasTabularData,
+        isStructured: validationResult.metrics.isStructured
       },
+      
       ...(uploadInfo.s3Info && {
         s3Info: uploadInfo.s3Info
       }),
+      
       ...result, 
       analysisId: inserted.insertedId,
       usage: {
@@ -1130,13 +1577,13 @@ Answer in the following JSON format:
     if (existingContract && req.body.forceReanalyze === 'true') {
       responseData.isReanalysis = true;
       responseData.originalContractId = existingContract._id;
-      responseData.message = "Analysis updated successfully";
+      responseData.message = `${validationResult.analysisMessage} erfolgreich aktualisiert`;
     }
 
     res.json(responseData);
 
   } catch (error) {
-    console.error(`❌ [${requestId}] Error in production S3 analysis:`, {
+    console.error(`❌ [${requestId}] Error in enhanced smart analysis:`, {
       message: error.message,
       stack: error.stack?.substring(0, 500),
       userId: req.user?.userId,
@@ -1181,7 +1628,7 @@ Answer in the following JSON format:
   }
 };
 
-// ===== OTHER ROUTES (unchanged) =====
+// ===== OTHER ROUTES (UNCHANGED) =====
 
 router.get("/history", verifyToken, async (req, res) => {
   const requestId = `hist_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -1225,7 +1672,7 @@ router.get("/health", async (req, res) => {
   }
 
   const checks = {
-    service: "Contract Analysis (Production S3 - AWS SDK v3)",
+    service: "Contract Analysis (Enhanced Smart Analysis + S3 - AWS SDK v3)",
     status: "online",
     timestamp: new Date().toISOString(),
     openaiConfigured: !!process.env.OPENAI_API_KEY,
@@ -1240,7 +1687,14 @@ router.get("/health", async (req, res) => {
     s3ConfigError: S3_CONFIG_ERROR,
     cryptoAvailable: !!crypto,
     saveContractAvailable: !!saveContract,
-    version: "production-s3-aws-sdk-v3"
+    features: {
+      smartDocumentAnalysis: true,
+      documentTypeDetection: true,
+      qualityAssessment: true,
+      specializedPrompts: true,
+      enhancedLogging: true
+    },
+    version: "enhanced-smart-analysis-v1.0"
   };
 
   try {
@@ -1260,7 +1714,7 @@ router.get("/health", async (req, res) => {
 });
 
 process.on('SIGTERM', async () => {
-  console.log('📊 Analyze service (production S3 - AWS SDK v3) shutting down...');
+  console.log('🧠 Enhanced Smart Analysis service shutting down...');
   if (mongoClient) {
     await mongoClient.close();
   }
