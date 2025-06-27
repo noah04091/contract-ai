@@ -1,4 +1,4 @@
-// 📁 backend/routes/analyze.js - STABLE VERSION (dein Code + bessere PDF-Fehlermeldungen) + ✅ MINIMAL S3 PATCH
+// 📁 backend/routes/analyze.js - STABLE VERSION (dein Code + bessere PDF-Fehlermeldungen) - SAFE ROLLBACK
 const express = require("express");
 const multer = require("multer");
 const pdfParse = require("pdf-parse");
@@ -14,7 +14,7 @@ const path = require("path");
 
 const router = express.Router();
 
-// ✅ MINIMAL S3 PATCH #1: S3 Integration Import (only addition, nothing removed)
+// ✅ SAFE: S3 Integration - OPTIONAL, mit Fallback
 let s3Upload, generateSignedUrl;
 try {
   const fileStorage = require("../services/fileStorage");
@@ -22,7 +22,7 @@ try {
   generateSignedUrl = fileStorage.generateSignedUrl;
   console.log("✅ [ANALYZE] S3 File Storage Services geladen");
 } catch (err) {
-  console.warn("⚠️ [ANALYZE] S3 File Storage Services nicht verfügbar:", err.message);
+  console.warn("⚠️ [ANALYZE] S3 File Storage Services nicht verfügbar (Fallback zu lokal):", err.message);
   s3Upload = null;
   generateSignedUrl = null;
 }
@@ -56,11 +56,6 @@ const upload = multer({
   storage,
   limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit
 });
-
-// ✅ MINIMAL S3 PATCH #2: Dynamic upload middleware (addition, original upload kept as fallback)
-const uploadMiddleware = s3Upload ? s3Upload.single("file") : upload.single("file");
-const uploadType = s3Upload ? "S3_UPLOAD" : "LOCAL_UPLOAD";
-console.log(`📤 [ANALYZE] Upload-Methode: ${uploadType}`);
 
 // ❌ ENTFERNT: Redis Queue Setup - verursacht Worker-Crashes
 // Keine analysisQueue mehr
@@ -391,6 +386,7 @@ const checkForDuplicate = async (fileHash, userId) => {
   }
 };
 
+// ✅ ORIGINAL FUNCTION - UNCHANGED
 async function saveContractWithLocalUpload(userId, analysisData, fileInfo, pdfText) {
   try {
     const contract = {
@@ -454,7 +450,7 @@ async function saveContractWithLocalUpload(userId, analysisData, fileInfo, pdfTe
   }
 }
 
-// ✅ MINIMAL S3 PATCH #3: S3 Contract Saving Function (addition, local function kept)
+// ✅ NEW: S3 Contract Saving - SAFE OPTIONAL
 async function saveContractWithS3Upload(userId, analysisData, fileInfo, pdfText) {
   try {
     const contract = {
@@ -571,17 +567,21 @@ const makeRateLimitedGPT4Request = async (prompt, requestId, openai, maxRetries 
   throw new Error(`GPT-4 Request nach ${maxRetries} Versuchen fehlgeschlagen.`);
 };
 
-// ===== MAIN ANALYZE ROUTE (STABLE VERSION mit besseren Fehlermeldungen) + ✅ MINIMAL S3 PATCH =====
-router.post("/", verifyToken, uploadMiddleware, async (req, res) => {  // ✅ S3 PATCH: uploadMiddleware statt upload.single("file")
+// ===== MAIN ANALYZE ROUTE - SAFE VERSION WITH OPTIONAL S3 =====
+router.post("/", verifyToken, (req, res, next) => {
+  // ✅ SAFE: Choose upload middleware at runtime
+  const uploadMiddleware = s3Upload ? s3Upload.single("file") : upload.single("file");
+  uploadMiddleware(req, res, next);
+}, async (req, res) => {
   const requestId = Date.now().toString();
+  const uploadType = s3Upload ? "S3_UPLOAD" : "LOCAL_UPLOAD";
   
-  console.log(`📊 [${requestId}] Stable Analyse-Request erhalten:`, {
-    uploadType: uploadType,  // ✅ S3 PATCH: uploadType statt "LOCAL_UPLOAD"
+  console.log(`📊 [${requestId}] Safe Analyse-Request erhalten:`, {
+    uploadType: uploadType,
     hasFile: !!req.file,
     userId: req.user?.userId,
     uploadPath: UPLOAD_PATH,
-    ocrAvailable: false, // ✅ OCR ist in stabiler Version deaktiviert
-    s3Available: !!s3Upload  // ✅ S3 PATCH: S3 Status hinzugefügt
+    s3Available: !!s3Upload
   });
 
   if (!req.file) {
@@ -593,21 +593,20 @@ router.post("/", verifyToken, uploadMiddleware, async (req, res) => {  // ✅ S3
   }
 
   try {
-    console.log(`📄 [${requestId}] File info:`, {
+    console.log(`📄 [${requestId}] File info (${uploadType}):`, {
       filename: req.file.filename,
       originalname: req.file.originalname,
       mimetype: req.file.mimetype,
       size: req.file.size,
       path: req.file.path,
       destination: req.file.destination,
-      uploadPath: UPLOAD_PATH,
-      // ✅ S3 PATCH: S3-spezifische Felder hinzugefügt
+      // S3 fields (optional)
       s3Key: req.file.key,
       s3Bucket: req.file.bucket,
       s3Location: req.file.location
     });
 
-    // ✅ S3 PATCH: File exists check nur für lokale Uploads
+    // ✅ SAFE: File exists check only for local uploads
     if (uploadType === "LOCAL_UPLOAD") {
       const fileExists = checkFileExists(req.file.filename);
       if (!fileExists) {
@@ -659,12 +658,11 @@ router.post("/", verifyToken, uploadMiddleware, async (req, res) => {  // ✅ S3
       });
     }
 
-    // ✅ MINIMAL S3 PATCH #4: S3-kompatible Datei-Lesung (addition, local reading kept)
+    // ✅ SAFE: Get file buffer based on upload type
     let buffer;
     
     if (uploadType === "S3_UPLOAD") {
       console.log(`📄 [${requestId}] Reading from S3...`);
-      
       try {
         const AWS = require('aws-sdk');
         const s3 = new AWS.S3({
@@ -718,7 +716,7 @@ router.post("/", verifyToken, uploadMiddleware, async (req, res) => {  // ✅ S3
               contractId: existingContract._id,
               contractName: existingContract.name,
               uploadedAt: existingContract.createdAt,
-              existingContract: existingContract, // ✅ VERBESSERUNG: Vollständige Contract-Info für Frontend
+              existingContract: existingContract,
               requestId,
               actions: {
                 reanalyze: `Erneut analysieren und bestehende Analyse überschreiben`,
@@ -843,11 +841,11 @@ Antwort im folgenden JSON-Format:
       extractedText: fullTextContent,
       originalFileName: req.file.originalname,
       fileSize: buffer.length,
-      uploadType: uploadType,  // ✅ S3 PATCH: dynamischer uploadType
+      uploadType: uploadType,
       extractionMethod: extractionResult.extractionMethod,
       extractionQuality: extractionResult.quality,
       pageCount: extractionResult.pages,
-      // ✅ S3 PATCH: S3-Felder für Analysis hinzugefügt
+      // S3 fields (optional)
       s3Key: req.file.key || null,
       s3Bucket: req.file.bucket || null,
       s3Location: req.file.location || null,
@@ -869,7 +867,6 @@ Antwort im folgenden JSON-Format:
       if (existingContract && req.body.forceReanalyze === 'true') {
         console.log(`🔄 [${requestId}] Aktualisiere bestehenden Vertrag: ${existingContract._id}`);
         
-        // ✅ S3 PATCH: Update für beide Upload-Typen
         const updateFields = {
           lastAnalyzed: new Date(),
           analysisId: inserted.insertedId,
@@ -929,7 +926,6 @@ Antwort im folgenden JSON-Format:
           status: "Aktiv"
         };
 
-        // ✅ S3 PATCH: Dynamische Contract-Speicherung basierend auf Upload-Typ
         let savedContract;
         if (uploadType === "S3_UPLOAD") {
           savedContract = await saveContractWithS3Upload(
@@ -980,20 +976,18 @@ Antwort im folgenden JSON-Format:
 
     console.log(`✅ [${requestId}] ${uploadType} Analyse komplett erfolgreich`);
 
-    // ✅ MINIMAL S3 PATCH #5: Response-Daten für S3 erweitert (addition, local response kept)
     const responseData = { 
       success: true,
       message: "Analyse erfolgreich abgeschlossen",
       requestId,
-      uploadType: uploadType,  // ✅ S3 PATCH: dynamischer uploadType
-      fileUrl: uploadType === "S3_UPLOAD" ? req.file.location : `/uploads/${req.file.filename}`,  // ✅ S3 PATCH: dynamische fileUrl
+      uploadType: uploadType,
+      fileUrl: uploadType === "S3_UPLOAD" ? req.file.location : `/uploads/${req.file.filename}`,
       extractionInfo: {
         method: extractionResult.extractionMethod,
         quality: extractionResult.quality,
         charactersExtracted: fullTextContent.length,
         pageCount: extractionResult.pages
       },
-      // ✅ S3 PATCH: S3-Info hinzugefügt
       s3Info: uploadType === "S3_UPLOAD" ? {
         bucket: req.file.bucket,
         key: req.file.key,
@@ -1017,7 +1011,7 @@ Antwort im folgenden JSON-Format:
     res.json(responseData);
 
   } catch (error) {
-    console.error(`❌ [${requestId}] Fehler bei ${uploadType} Analyse:`, {  // ✅ S3 PATCH: dynamischer uploadType im Error
+    console.error(`❌ [${requestId}] Fehler bei ${uploadType} Analyse:`, {
       message: error.message,
       stack: error.stack?.substring(0, 500),
       userId: req.user?.userId,
@@ -1033,7 +1027,7 @@ Antwort im folgenden JSON-Format:
     } else if (error.message.includes("Timeout")) {
       errorMessage = "Analyse-Timeout. Bitte versuche es mit einer kleineren Datei.";
       errorCode = "TIMEOUT_ERROR";
-    } else if (error.message.includes("S3")) {  // ✅ S3 PATCH: S3-Error-Handling hinzugefügt
+    } else if (error.message.includes("S3")) {
       errorMessage = "Cloud-Storage-Fehler. Bitte versuche es erneut.";
       errorCode = "S3_ERROR";
     } else if (error.message.includes("JSON") || error.message.includes("Parse")) {
@@ -1058,7 +1052,7 @@ Antwort im folgenden JSON-Format:
       message: errorMessage,
       error: errorCode,
       requestId,
-      uploadType: uploadType,  // ✅ S3 PATCH: uploadType im Error-Response
+      uploadType: uploadType,
       details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
@@ -1102,23 +1096,25 @@ router.get("/history", verifyToken, async (req, res) => {
 
 // ✅ UPDATED: Health Check für stabile Version + S3 Status
 router.get("/health", async (req, res) => {
+  const uploadType = s3Upload ? "S3_UPLOAD" : "LOCAL_UPLOAD";
+  
   const checks = {
-    service: "Contract Analysis (S3-Enhanced Stable Version)",  // ✅ S3 PATCH: Service-Name aktualisiert
+    service: "Contract Analysis (Safe S3-Enhanced Version)",
     status: "online",
     timestamp: new Date().toISOString(),
     openaiConfigured: !!process.env.OPENAI_API_KEY,
     mongoConnected: false,
     uploadsPath: fsSync.existsSync(UPLOAD_PATH),
     uploadPath: UPLOAD_PATH,
-    uploadType: uploadType,  // ✅ S3 PATCH: dynamischer uploadType
-    s3Available: !!s3Upload,  // ✅ S3 PATCH: S3-Status hinzugefügt
-    s3Configured: !!(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY),  // ✅ S3 PATCH
+    uploadType: uploadType,
+    s3Available: !!s3Upload,
+    s3Configured: !!(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY),
     cryptoAvailable: !!crypto,
     saveContractAvailable: !!saveContract,
-    ocrAvailable: false, // ✅ OCR ist in stabiler Version deaktiviert
-    tesseractLoaded: false, // ✅ Tesseract ist entfernt
-    queueAvailable: false, // ✅ Queue ist entfernt
-    version: "stable-s3-enhanced"  // ✅ S3 PATCH: Version aktualisiert
+    ocrAvailable: false,
+    tesseractLoaded: false,
+    queueAvailable: false,
+    version: "safe-s3-enhanced"
   };
 
   try {
@@ -1130,7 +1126,7 @@ router.get("/health", async (req, res) => {
   }
 
   const isHealthy = checks.openaiConfigured && checks.mongoConnected && 
-                   (uploadType === "S3_UPLOAD" ? checks.s3Available : checks.uploadsPath);  // ✅ S3 PATCH: Health basierend auf Upload-Typ
+                   (uploadType === "S3_UPLOAD" ? checks.s3Available : checks.uploadsPath);
   
   res.status(isHealthy ? 200 : 503).json({
     success: isHealthy,
@@ -1139,7 +1135,7 @@ router.get("/health", async (req, res) => {
 });
 
 process.on('SIGTERM', async () => {
-  console.log('📊 Analyze service (S3-enhanced stable) shutting down...');  // ✅ S3 PATCH: Shutdown-Message aktualisiert
+  console.log('📊 Analyze service (safe S3-enhanced) shutting down...');
   if (mongoClient) {
     await mongoClient.close();
   }
