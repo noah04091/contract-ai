@@ -1,4 +1,4 @@
-// 📁 backend/routes/analyze.js - PRODUCTION S3 INTEGRATION (BULLETPROOF)
+// 📁 backend/routes/analyze.js - PRODUCTION S3 INTEGRATION (AWS SDK v3)
 const express = require("express");
 const multer = require("multer");
 const pdfParse = require("pdf-parse");
@@ -11,19 +11,19 @@ const path = require("path");
 
 const router = express.Router();
 
-// ===== S3 INTEGRATION (BULLETPROOF) =====
-let AWS, multerS3, s3Instance;
+// ===== S3 INTEGRATION (AWS SDK v3) =====
+let S3Client, HeadBucketCommand, GetObjectCommand, multerS3, s3Instance;
 let S3_AVAILABLE = false;
 let S3_CONFIGURED = false;
 let S3_CONFIG_ERROR = null;
 
 /**
- * 🛡️ BULLETPROOF S3 CONFIGURATION
+ * 🛡️ BULLETPROOF S3 CONFIGURATION (AWS SDK v3)
  * Tries to configure S3, falls back to local if anything goes wrong
  */
 const initializeS3 = () => {
   try {
-    console.log("🔧 [S3] Initializing S3 configuration...");
+    console.log("🔧 [S3] Initializing S3 configuration (AWS SDK v3)...");
     
     // Check if all required environment variables are present
     const requiredEnvVars = [
@@ -39,32 +39,28 @@ const initializeS3 = () => {
       throw new Error(`Missing environment variables: ${missingVars.join(', ')}`);
     }
     
-    // Try to load AWS SDK and multer-s3
+    // Try to load AWS SDK v3 and multer-s3
     try {
-      AWS = require("aws-sdk");
+      const { S3Client: _S3Client, HeadBucketCommand: _HeadBucketCommand, GetObjectCommand: _GetObjectCommand } = require("@aws-sdk/client-s3");
       multerS3 = require("multer-s3");
-      console.log("✅ [S3] AWS SDK and multer-s3 loaded successfully");
+      S3Client = _S3Client;
+      HeadBucketCommand = _HeadBucketCommand;
+      GetObjectCommand = _GetObjectCommand;
+      console.log("✅ [S3] AWS SDK v3 and multer-s3 loaded successfully");
     } catch (importError) {
       throw new Error(`Failed to import S3 dependencies: ${importError.message}`);
     }
     
-    // Configure AWS S3
-    AWS.config.update({
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-      region: process.env.AWS_REGION
+    // Configure AWS S3 Client (v3 style)
+    s3Instance = new S3Client({
+      region: process.env.AWS_REGION,
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      },
     });
     
-    s3Instance = new AWS.S3({
-      apiVersion: '2006-03-01',
-      signatureVersion: 'v4',
-      httpOptions: {
-        timeout: 30000,
-        connectTimeout: 5000
-      }
-    });
-    
-    console.log("✅ [S3] AWS S3 instance created successfully");
+    console.log("✅ [S3] AWS S3 Client v3 created successfully");
     console.log(`✅ [S3] Region: ${process.env.AWS_REGION}`);
     console.log(`✅ [S3] Bucket: ${process.env.S3_BUCKET_NAME}`);
     
@@ -89,21 +85,23 @@ const initializeS3 = () => {
 };
 
 /**
- * 🧪 TEST S3 CONNECTIVITY
+ * 🧪 TEST S3 CONNECTIVITY (AWS SDK v3)
  * Async test that doesn't block the application startup
  */
 const testS3Connectivity = async () => {
-  if (!S3_CONFIGURED || !s3Instance) {
+  if (!S3_CONFIGURED || !s3Instance || !HeadBucketCommand) {
     return false;
   }
   
   try {
     console.log("🧪 [S3] Testing bucket connectivity...");
     
-    // Test bucket access with a simple head request
-    await s3Instance.headBucket({ 
+    // Test bucket access with SDK v3
+    const command = new HeadBucketCommand({ 
       Bucket: process.env.S3_BUCKET_NAME 
-    }).promise();
+    });
+    
+    await s3Instance.send(command);
     
     console.log("✅ [S3] Bucket connectivity test successful");
     S3_AVAILABLE = true;
@@ -114,9 +112,9 @@ const testS3Connectivity = async () => {
     S3_AVAILABLE = false;
     
     // Log helpful error messages
-    if (error.statusCode === 403) {
+    if (error.name === 'Forbidden' || error.$metadata?.httpStatusCode === 403) {
       console.error("❌ [S3] Access denied - check IAM permissions");
-    } else if (error.statusCode === 404) {
+    } else if (error.name === 'NotFound' || error.$metadata?.httpStatusCode === 404) {
       console.error("❌ [S3] Bucket not found - check bucket name and region");
     }
     
@@ -143,13 +141,13 @@ try {
 }
 
 /**
- * 🔄 DYNAMIC MULTER CONFIGURATION
+ * 🔄 DYNAMIC MULTER CONFIGURATION (AWS SDK v3)
  * Uses S3 if available, falls back to local storage
  */
 const createUploadMiddleware = () => {
   // If S3 is configured and available, use S3 upload
   if (S3_CONFIGURED && S3_AVAILABLE && s3Instance && multerS3) {
-    console.log("🚀 [UPLOAD] Using S3 upload configuration");
+    console.log("🚀 [UPLOAD] Using S3 upload configuration (AWS SDK v3)");
     
     return multer({
       storage: multerS3({
@@ -215,22 +213,31 @@ const createUploadMiddleware = () => {
 };
 
 /**
- * 🔄 DYNAMIC FILE READING
+ * 🔄 DYNAMIC FILE READING (AWS SDK v3)
  * Reads file from S3 if uploaded there, from local disk otherwise
  */
 const readUploadedFile = async (fileInfo, requestId) => {
   try {
-    if (fileInfo.location && fileInfo.key && S3_AVAILABLE && s3Instance) {
-      // File was uploaded to S3
+    if (fileInfo.location && fileInfo.key && S3_AVAILABLE && s3Instance && GetObjectCommand) {
+      // File was uploaded to S3 (AWS SDK v3)
       console.log(`📖 [${requestId}] Reading file from S3: ${fileInfo.key}`);
       
-      const s3Object = await s3Instance.getObject({
+      const command = new GetObjectCommand({
         Bucket: process.env.S3_BUCKET_NAME,
         Key: fileInfo.key
-      }).promise();
+      });
       
-      console.log(`✅ [${requestId}] S3 file read successfully: ${s3Object.Body.length} bytes`);
-      return s3Object.Body;
+      const response = await s3Instance.send(command);
+      
+      // Convert stream to buffer
+      const chunks = [];
+      for await (const chunk of response.Body) {
+        chunks.push(chunk);
+      }
+      const buffer = Buffer.concat(chunks);
+      
+      console.log(`✅ [${requestId}] S3 file read successfully: ${buffer.length} bytes`);
+      return buffer;
       
     } else {
       // File was uploaded locally
@@ -1218,7 +1225,7 @@ router.get("/health", async (req, res) => {
   }
 
   const checks = {
-    service: "Contract Analysis (Production S3)",
+    service: "Contract Analysis (Production S3 - AWS SDK v3)",
     status: "online",
     timestamp: new Date().toISOString(),
     openaiConfigured: !!process.env.OPENAI_API_KEY,
@@ -1233,7 +1240,7 @@ router.get("/health", async (req, res) => {
     s3ConfigError: S3_CONFIG_ERROR,
     cryptoAvailable: !!crypto,
     saveContractAvailable: !!saveContract,
-    version: "production-s3"
+    version: "production-s3-aws-sdk-v3"
   };
 
   try {
@@ -1253,7 +1260,7 @@ router.get("/health", async (req, res) => {
 });
 
 process.on('SIGTERM', async () => {
-  console.log('📊 Analyze service (production S3) shutting down...');
+  console.log('📊 Analyze service (production S3 - AWS SDK v3) shutting down...');
   if (mongoClient) {
     await mongoClient.close();
   }
