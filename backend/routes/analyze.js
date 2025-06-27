@@ -1600,20 +1600,20 @@ const handleAnalysisRequest = async (req, res) => {
       uploadType: uploadInfo.uploadType,
       fileUrl: uploadInfo.fileUrl,
       
-      // Enhanced response data
-      documentType: validationResult.documentType,
-      analysisStrategy: validationResult.strategy,
-      confidence: Math.round(validationResult.confidence * 100),
-      qualityScore: Math.round(validationResult.qualityScore * 100),
-      analysisMessage: validationResult.analysisMessage,
+      // 🔧 Enhanced response data (Frontend-compatible strings)
+      documentType: validationResult.documentType || "UNKNOWN",
+      analysisStrategy: validationResult.strategy || "GENERAL_ANALYSIS", 
+      confidence: `${Math.round(validationResult.confidence * 100)}%`,
+      qualityScore: `${Math.round(validationResult.qualityScore * 100)}%`,
+      analysisMessage: validationResult.analysisMessage || "Dokumentenanalyse",
       
       extractionInfo: {
         method: 'smart-analysis-enhanced',
-        quality: analysisData.extractionQuality,
-        charactersExtracted: fullTextContent.length,
-        pageCount: validationResult.metrics.pageCount,
-        hasTabularData: validationResult.metrics.hasTabularData,
-        isStructured: validationResult.metrics.isStructured
+        quality: analysisData.extractionQuality || 'good',
+        charactersExtracted: `${fullTextContent.length}`,
+        pageCount: `${validationResult.metrics.pageCount}`,
+        hasTabularData: validationResult.metrics.hasTabularData ? "true" : "false",
+        isStructured: validationResult.metrics.isStructured ? "true" : "false"
       },
       
       ...(uploadInfo.s3Info && {
