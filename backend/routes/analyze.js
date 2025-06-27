@@ -720,17 +720,11 @@ const makeRateLimitedGPT4Request = async (prompt, requestId, openai, maxRetries 
 
 // ===== MAIN ANALYZE ROUTE (S3 COMPATIBLE) =====
 router.post("/", verifyToken, async (req, res, next) => {
-  // Ensure upload middleware is initialized
-  if (!upload) {
-    return res.status(503).json({
-      success: false,
-      message: "Upload service is still initializing. Please try again in a moment.",
-      error: "UPLOAD_INITIALIZING"
-    });
-  }
+  // Get upload middleware (created on first use)
+  const uploadMiddleware = await getUploadMiddleware();
   
   // Use upload middleware
-  upload.single("file")(req, res, async (err) => {
+  uploadMiddleware.single("file")(req, res, async (err) => {
     if (err) {
       console.error("❌ Upload middleware error:", err.message);
       return res.status(400).json({
