@@ -213,12 +213,14 @@ export default function ContractDetailsView({
         
         const data = await response.json();
         
+        console.log('🔍 S3 Response data:', data);
+        
         if (response.ok && data.url) {
-          console.log('✅ S3 URL fetched successfully');
+          console.log('✅ S3 URL fetched successfully:', data.url);
           window.open(data.url, '_blank', 'noopener,noreferrer');
           return;
         } else {
-          console.error('❌ S3 URL fetch failed:', data.error);
+          console.error('❌ S3 URL fetch failed:', data.error || 'No URL in response');
           // Fallback to old logic below
         }
       } catch (error) {
@@ -237,6 +239,8 @@ export default function ContractDetailsView({
     console.log('🔄 Fallback: Using original file URL logic...');
     
     const fileUrl = getContractFileUrl(contract);
+    
+    console.log('🔍 getContractFileUrl returned:', fileUrl, 'Type:', typeof fileUrl);
     
     if (!fileUrl) {
       console.warn('⚠️ No file URL available');
@@ -289,7 +293,7 @@ export default function ContractDetailsView({
         window.open(fileUrl, '_blank', 'noopener,noreferrer');
       }
     } else {
-      console.log('✅ Opening direct URL:', fileUrl);
+      console.log('✅ Opening direct URL:', fileUrl, 'Type:', typeof fileUrl);
       window.open(fileUrl, '_blank', 'noopener,noreferrer');
     }
   };
