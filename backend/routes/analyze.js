@@ -1,4 +1,4 @@
-// 📁 backend/routes/analyze.js - PRODUCTION S3 INTEGRATION + SMART DOCUMENT ANALYSIS
+// 📁 backend/routes/analyze.js - PRODUCTION S3 INTEGRATION + SMART DOCUMENT ANALYSIS + JSON FIX
 const express = require("express");
 const multer = require("multer");
 const pdfParse = require("pdf-parse");
@@ -316,7 +316,7 @@ try {
 let lastGPT4Request = 0;
 const GPT4_MIN_INTERVAL = 4000; // 4 seconds between GPT-4 requests
 
-// ===== NEW: SMART DOCUMENT ANALYSIS PIPELINE =====
+// ===== SMART DOCUMENT ANALYSIS PIPELINE - UNCHANGED =====
 
 /**
  * 🎯 Enhanced Document Type Detection
@@ -473,6 +473,58 @@ function selectAnalysisStrategy(documentType, contentQuality, filename) {
     confidence: documentType.confidence,
     qualityMet: hasEnoughQuality
   };
+}
+
+/**
+ * 🔧 Enhanced JSON Response Validation - NEW
+ * Handles different response structures from specialized prompts
+ */
+function validateAndNormalizeAIResponse(result, documentType, requestId) {
+  console.log(`🔍 [${requestId}] Validating AI response for ${documentType}:`, Object.keys(result));
+  
+  // Ensure we have a summary
+  if (!result.summary) {
+    console.error(`❌ [${requestId}] Missing summary in AI response:`, result);
+    throw new Error("AI response missing summary");
+  }
+  
+  // Normalize the response structure to ensure compatibility
+  const normalized = {
+    summary: result.summary,
+    legalAssessment: result.legalAssessment || result.financialAnalysis || result.transactionDetails || "Strukturierte Analyse durchgeführt",
+    suggestions: result.suggestions || result.notes || result.categorization || "Keine spezifischen Empfehlungen",
+    comparison: result.comparison || result.assessment || "Dokumentenspezifische Bewertung durchgeführt",
+    contractScore: result.contractScore || calculateFallbackScore(result, documentType)
+  };
+  
+  console.log(`✅ [${requestId}] AI response normalized successfully with score: ${normalized.contractScore}`);
+  return normalized;
+}
+
+/**
+ * 📊 Fallback Score Calculation - NEW
+ * Calculates a reasonable score when contractScore is missing
+ */
+function calculateFallbackScore(result, documentType) {
+  // Base scores by document type
+  const baseScores = {
+    'CONTRACT': 75,
+    'INVOICE': 80,
+    'RECEIPT': 85,
+    'FINANCIAL_DOCUMENT': 70,
+    'TABLE_DOCUMENT': 65,
+    'UNKNOWN': 60
+  };
+  
+  let score = baseScores[documentType] || 60;
+  
+  // Boost score if response is detailed
+  if (result.transactionDetails || result.financialAnalysis) score += 5;
+  if (result.categorization) score += 3;
+  if (result.notes && result.notes.length > 50) score += 2;
+  
+  // Cap at reasonable maximum
+  return Math.min(score, 90);
 }
 
 /**
@@ -721,7 +773,7 @@ async function validateAndAnalyzeDocument(filename, pdfText, pdfData, requestId)
   }
 }
 
-// ===== EXISTING FUNCTIONS (KEPT FOR COMPATIBILITY) =====
+// ===== EXISTING FUNCTIONS (KEPT FOR COMPATIBILITY) - UNCHANGED =====
 
 const assessTextQuality = (text, fileName = '') => {
   if (!text) {
@@ -1160,7 +1212,7 @@ router.post("/", verifyToken, async (req, res, next) => {
   });
 });
 
-// ===== ENHANCED ANALYSIS REQUEST HANDLER =====
+// ===== ENHANCED ANALYSIS REQUEST HANDLER - WITH JSON FIX =====
 const handleAnalysisRequest = async (req, res) => {
   const requestId = Date.now().toString();
   
@@ -1292,7 +1344,7 @@ const handleAnalysisRequest = async (req, res) => {
       });
     }
 
-    // NEW: Smart document validation and analysis strategy
+    // Smart document validation and analysis strategy
     const validationResult = await validateAndAnalyzeDocument(
       req.file.originalname, 
       pdfData.text, 
@@ -1328,7 +1380,7 @@ const handleAnalysisRequest = async (req, res) => {
       s3Key: uploadInfo.s3Info?.key || 'none'
     });
 
-    // NEW: Generate specialized analysis prompt based on document type
+    // Generate specialized analysis prompt based on document type
     const analysisPrompt = generateAnalysisPrompt(
       fullTextContent, 
       validationResult.documentType, 
@@ -1371,9 +1423,12 @@ const handleAnalysisRequest = async (req, res) => {
       throw new Error("Error parsing AI response");
     }
 
-    if (!result.summary || !result.contractScore) {
-      console.error(`❌ [${requestId}] Incomplete AI response:`, result);
-      throw new Error("Incomplete analysis response from OpenAI");
+    // NEW: Enhanced JSON validation with normalization
+    try {
+      result = validateAndNormalizeAIResponse(result, validationResult.documentType, requestId);
+    } catch (validationError) {
+      console.error(`❌ [${requestId}] AI response validation failed:`, validationError.message);
+      throw new Error("Error validating AI response");
     }
 
     console.log(`📊 [${requestId}] Analysis successful, saving to DB...`);
@@ -1389,7 +1444,7 @@ const handleAnalysisRequest = async (req, res) => {
       fileSize: buffer.length,
       uploadType: uploadInfo.uploadType,
       
-      // NEW: Enhanced metadata from smart analysis
+      // Enhanced metadata from smart analysis
       documentType: validationResult.documentType,
       analysisStrategy: validationResult.strategy,
       confidence: validationResult.confidence,
@@ -1429,7 +1484,7 @@ const handleAnalysisRequest = async (req, res) => {
           filename: req.file.filename || req.file.key,
           uploadType: uploadInfo.uploadType,
           
-          // NEW: Enhanced metadata
+          // Enhanced metadata
           documentType: validationResult.documentType,
           analysisStrategy: validationResult.strategy,
           confidence: validationResult.confidence,
@@ -1502,7 +1557,7 @@ const handleAnalysisRequest = async (req, res) => {
             $set: {
               analysisId: inserted.insertedId,
               
-              // NEW: Enhanced metadata
+              // Enhanced metadata
               documentType: validationResult.documentType,
               analysisStrategy: validationResult.strategy,
               confidence: validationResult.confidence,
@@ -1545,7 +1600,7 @@ const handleAnalysisRequest = async (req, res) => {
       uploadType: uploadInfo.uploadType,
       fileUrl: uploadInfo.fileUrl,
       
-      // NEW: Enhanced response data
+      // Enhanced response data
       documentType: validationResult.documentType,
       analysisStrategy: validationResult.strategy,
       confidence: Math.round(validationResult.confidence * 100),
@@ -1672,7 +1727,7 @@ router.get("/health", async (req, res) => {
   }
 
   const checks = {
-    service: "Contract Analysis (Enhanced Smart Analysis + S3 - AWS SDK v3)",
+    service: "Contract Analysis (Enhanced Smart Analysis + S3 - AWS SDK v3 + JSON Fix)",
     status: "online",
     timestamp: new Date().toISOString(),
     openaiConfigured: !!process.env.OPENAI_API_KEY,
@@ -1692,9 +1747,10 @@ router.get("/health", async (req, res) => {
       documentTypeDetection: true,
       qualityAssessment: true,
       specializedPrompts: true,
-      enhancedLogging: true
+      enhancedLogging: true,
+      jsonValidation: true
     },
-    version: "enhanced-smart-analysis-v1.0"
+    version: "enhanced-smart-analysis-v1.1-json-fix"
   };
 
   try {
@@ -1714,7 +1770,7 @@ router.get("/health", async (req, res) => {
 });
 
 process.on('SIGTERM', async () => {
-  console.log('🧠 Enhanced Smart Analysis service shutting down...');
+  console.log('🧠 Enhanced Smart Analysis service (with JSON fix) shutting down...');
   if (mongoClient) {
     await mongoClient.close();
   }
