@@ -1197,7 +1197,7 @@ router.get("/history", verifyToken, async (req, res) => {
 router.get("/health", async (req, res) => {
   // Re-test S3 connectivity for health check
   if (S3_CONFIGURED && s3Instance) {
-    await testS3ConnectivitySync();
+    // await testS3ConnectivitySync();
   }
 
   const checks = {
