@@ -1,4 +1,4 @@
-// 📁 backend/routes/analyze.js - STABLE VERSION (dein Code + bessere PDF-Fehlermeldungen)
+// 📁 backend/routes/analyze.js - STABLE VERSION (dein Code + bessere PDF-Fehlermeldungen) + ✅ MINIMAL S3 PATCH
 const express = require("express");
 const multer = require("multer");
 const pdfParse = require("pdf-parse");
@@ -13,6 +13,19 @@ const path = require("path");
 // ❌ ENTFERNT: const redis = require('redis'); // Redis Support entfernt
 
 const router = express.Router();
+
+// ✅ MINIMAL S3 PATCH #1: S3 Integration Import (only addition, nothing removed)
+let s3Upload, generateSignedUrl;
+try {
+  const fileStorage = require("../services/fileStorage");
+  s3Upload = fileStorage.upload;
+  generateSignedUrl = fileStorage.generateSignedUrl;
+  console.log("✅ [ANALYZE] S3 File Storage Services geladen");
+} catch (err) {
+  console.warn("⚠️ [ANALYZE] S3 File Storage Services nicht verfügbar:", err.message);
+  s3Upload = null;
+  generateSignedUrl = null;
+}
 
 // ✅ CRITICAL FIX: Exact same UPLOAD_PATH as server.js
 const UPLOAD_PATH = path.join(__dirname, "..", "uploads");
@@ -43,6 +56,11 @@ const upload = multer({
   storage,
   limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit
 });
+
+// ✅ MINIMAL S3 PATCH #2: Dynamic upload middleware (addition, original upload kept as fallback)
+const uploadMiddleware = s3Upload ? s3Upload.single("file") : upload.single("file");
+const uploadType = s3Upload ? "S3_UPLOAD" : "LOCAL_UPLOAD";
+console.log(`📤 [ANALYZE] Upload-Methode: ${uploadType}`);
 
 // ❌ ENTFERNT: Redis Queue Setup - verursacht Worker-Crashes
 // Keine analysisQueue mehr
@@ -436,6 +454,74 @@ async function saveContractWithLocalUpload(userId, analysisData, fileInfo, pdfTe
   }
 }
 
+// ✅ MINIMAL S3 PATCH #3: S3 Contract Saving Function (addition, local function kept)
+async function saveContractWithS3Upload(userId, analysisData, fileInfo, pdfText) {
+  try {
+    const contract = {
+      userId: new ObjectId(userId),
+      name: analysisData.name || fileInfo.originalname || "Unbekannt",
+      laufzeit: analysisData.laufzeit || "Unbekannt",
+      kuendigung: analysisData.kuendigung || "Unbekannt",
+      expiryDate: analysisData.expiryDate || "",
+      status: analysisData.status || "Aktiv",
+      uploadedAt: new Date(),
+      createdAt: new Date(),
+      
+      // S3-specific fields
+      s3Key: fileInfo.key,
+      s3Bucket: fileInfo.bucket,
+      s3Location: fileInfo.location,
+      filename: fileInfo.key,
+      originalname: fileInfo.originalname,
+      filePath: `/s3/${fileInfo.key}`,
+      mimetype: fileInfo.mimetype,
+      size: fileInfo.size,
+      
+      uploadType: "S3_UPLOAD",
+      extraRefs: {
+        uploadType: "S3_UPLOAD",
+        s3Key: fileInfo.key,
+        s3Bucket: fileInfo.bucket,
+        s3Location: fileInfo.location,
+        analysisId: null
+      },
+      
+      fullText: pdfText.substring(0, 100000),
+      content: pdfText.substring(0, 100000),
+      analysisDate: new Date(),
+      
+      legalPulse: {
+        riskScore: null,
+        summary: '',
+        lastChecked: null,
+        lawInsights: [],
+        marketSuggestions: [],
+        riskFactors: [],
+        legalRisks: [],
+        recommendations: [],
+        analysisDate: null
+      }
+    };
+
+    console.log(`💾 [ANALYZE] Saving S3 contract:`, {
+      userId: contract.userId,
+      name: contract.name,
+      s3Key: contract.s3Key,
+      uploadType: contract.uploadType,
+      filePath: contract.filePath,
+      textLength: contract.fullText.length
+    });
+
+    const { insertedId } = await contractsCollection.insertOne(contract);
+    console.log(`✅ [ANALYZE] S3 Contract saved with ID: ${insertedId}`);
+    
+    return { ...contract, _id: insertedId };
+  } catch (error) {
+    console.error("❌ [ANALYZE] S3 Save error:", error);
+    throw error;
+  }
+}
+
 const makeRateLimitedGPT4Request = async (prompt, requestId, openai, maxRetries = 3) => {
   
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -485,16 +571,17 @@ const makeRateLimitedGPT4Request = async (prompt, requestId, openai, maxRetries 
   throw new Error(`GPT-4 Request nach ${maxRetries} Versuchen fehlgeschlagen.`);
 };
 
-// ===== MAIN ANALYZE ROUTE (STABLE VERSION mit besseren Fehlermeldungen) =====
-router.post("/", verifyToken, upload.single("file"), async (req, res) => {
+// ===== MAIN ANALYZE ROUTE (STABLE VERSION mit besseren Fehlermeldungen) + ✅ MINIMAL S3 PATCH =====
+router.post("/", verifyToken, uploadMiddleware, async (req, res) => {  // ✅ S3 PATCH: uploadMiddleware statt upload.single("file")
   const requestId = Date.now().toString();
   
   console.log(`📊 [${requestId}] Stable Analyse-Request erhalten:`, {
-    uploadType: "LOCAL_UPLOAD",
+    uploadType: uploadType,  // ✅ S3 PATCH: uploadType statt "LOCAL_UPLOAD"
     hasFile: !!req.file,
     userId: req.user?.userId,
     uploadPath: UPLOAD_PATH,
-    ocrAvailable: false // ✅ OCR ist in stabiler Version deaktiviert
+    ocrAvailable: false, // ✅ OCR ist in stabiler Version deaktiviert
+    s3Available: !!s3Upload  // ✅ S3 PATCH: S3 Status hinzugefügt
   });
 
   if (!req.file) {
@@ -513,21 +600,28 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
       size: req.file.size,
       path: req.file.path,
       destination: req.file.destination,
-      uploadPath: UPLOAD_PATH
+      uploadPath: UPLOAD_PATH,
+      // ✅ S3 PATCH: S3-spezifische Felder hinzugefügt
+      s3Key: req.file.key,
+      s3Bucket: req.file.bucket,
+      s3Location: req.file.location
     });
 
-    const fileExists = checkFileExists(req.file.filename);
-    if (!fileExists) {
-      console.error(`❌ [${requestId}] Datei wurde nicht korrekt gespeichert:`, req.file.filename);
-      return res.status(500).json({
-        success: false,
-        message: "Datei wurde nicht korrekt hochgeladen",
-        debug: {
-          expectedPath: path.join(UPLOAD_PATH, req.file.filename),
-          uploadPath: UPLOAD_PATH,
-          filename: req.file.filename
-        }
-      });
+    // ✅ S3 PATCH: File exists check nur für lokale Uploads
+    if (uploadType === "LOCAL_UPLOAD") {
+      const fileExists = checkFileExists(req.file.filename);
+      if (!fileExists) {
+        console.error(`❌ [${requestId}] Datei wurde nicht korrekt gespeichert:`, req.file.filename);
+        return res.status(500).json({
+          success: false,
+          message: "Datei wurde nicht korrekt hochgeladen",
+          debug: {
+            expectedPath: path.join(UPLOAD_PATH, req.file.filename),
+            uploadPath: UPLOAD_PATH,
+            filename: req.file.filename
+          }
+        });
+      }
     }
 
     const { analysisCollection, usersCollection: users, contractsCollection } = await getMongoCollections();
@@ -565,15 +659,42 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
       });
     }
 
-    console.log(`📄 [${requestId}] PDF wird lokal gelesen...`);
+    // ✅ MINIMAL S3 PATCH #4: S3-kompatible Datei-Lesung (addition, local reading kept)
+    let buffer;
     
-    const filePath = path.join(UPLOAD_PATH, req.file.filename);
-    if (!fsSync.existsSync(filePath)) {
-      throw new Error(`Datei nicht gefunden: ${filePath}`);
-    }
+    if (uploadType === "S3_UPLOAD") {
+      console.log(`📄 [${requestId}] Reading from S3...`);
+      
+      try {
+        const AWS = require('aws-sdk');
+        const s3 = new AWS.S3({
+          accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+          region: process.env.AWS_REGION,
+        });
+        
+        const s3Object = await s3.getObject({
+          Bucket: req.file.bucket,
+          Key: req.file.key
+        }).promise();
+        
+        buffer = s3Object.Body;
+        console.log(`📄 [${requestId}] S3 Buffer gelesen: ${buffer.length} bytes`);
+      } catch (s3Error) {
+        console.error(`❌ [${requestId}] S3-Read-Fehler:`, s3Error.message);
+        throw new Error(`S3-Dateizugriff fehlgeschlagen: ${s3Error.message}`);
+      }
+    } else {
+      console.log(`📄 [${requestId}] PDF wird lokal gelesen...`);
+      
+      const filePath = path.join(UPLOAD_PATH, req.file.filename);
+      if (!fsSync.existsSync(filePath)) {
+        throw new Error(`Datei nicht gefunden: ${filePath}`);
+      }
 
-    const buffer = await fs.readFile(filePath);
-    console.log(`📄 [${requestId}] Buffer gelesen: ${buffer.length} bytes`);
+      buffer = await fs.readFile(filePath);
+      console.log(`📄 [${requestId}] Buffer gelesen: ${buffer.length} bytes`);
+    }
     
     const fileHash = calculateFileHash(buffer);
     console.log(`🔍 [${requestId}] Datei-Hash berechnet: ${fileHash.substring(0, 12)}...`);
@@ -722,58 +843,80 @@ Antwort im folgenden JSON-Format:
       extractedText: fullTextContent,
       originalFileName: req.file.originalname,
       fileSize: buffer.length,
-      uploadType: "LOCAL_UPLOAD",
+      uploadType: uploadType,  // ✅ S3 PATCH: dynamischer uploadType
       extractionMethod: extractionResult.extractionMethod,
       extractionQuality: extractionResult.quality,
       pageCount: extractionResult.pages,
+      // ✅ S3 PATCH: S3-Felder für Analysis hinzugefügt
+      s3Key: req.file.key || null,
+      s3Bucket: req.file.bucket || null,
+      s3Location: req.file.location || null,
       ...result,
     };
 
     let inserted;
     try {
       inserted = await analysisCollection.insertOne(analysisData);
-      console.log(`✅ [${requestId}] Stable Analyse gespeichert: ${inserted.insertedId} (mit fullText: ${fullTextContent.length} Zeichen)`);
+      console.log(`✅ [${requestId}] ${uploadType} Analyse gespeichert: ${inserted.insertedId} (mit fullText: ${fullTextContent.length} Zeichen)`);
     } catch (dbError) {
       console.error(`❌ [${requestId}] DB-Insert-Fehler:`, dbError.message);
       throw new Error(`Datenbank-Fehler beim Speichern: ${dbError.message}`);
     }
 
     try {
-      console.log(`💾 [${requestId}] Speichere Vertrag (lokal)...`);
+      console.log(`💾 [${requestId}] Speichere Vertrag (${uploadType})...`);
 
       if (existingContract && req.body.forceReanalyze === 'true') {
         console.log(`🔄 [${requestId}] Aktualisiere bestehenden Vertrag: ${existingContract._id}`);
         
+        // ✅ S3 PATCH: Update für beide Upload-Typen
+        const updateFields = {
+          lastAnalyzed: new Date(),
+          analysisId: inserted.insertedId,
+          fullText: fullTextContent,
+          content: fullTextContent,
+          uploadType: uploadType,
+          extractionMethod: extractionResult.extractionMethod,
+          extractionQuality: extractionResult.quality,
+          legalPulse: {
+            riskScore: result.contractScore || null,
+            riskSummary: result.summary || '',
+            lastChecked: new Date(),
+            lawInsights: [],
+            marketSuggestions: []
+          },
+          analyzeCount: (existingContract.analyzeCount || 0) + 1
+        };
+
+        if (uploadType === "S3_UPLOAD") {
+          updateFields.s3Key = req.file.key;
+          updateFields.s3Bucket = req.file.bucket;
+          updateFields.s3Location = req.file.location;
+          updateFields.filePath = `/s3/${req.file.key}`;
+          updateFields.filename = req.file.key;
+          updateFields.extraRefs = {
+            uploadType: "S3_UPLOAD",
+            s3Key: req.file.key,
+            s3Bucket: req.file.bucket,
+            s3Location: req.file.location,
+            analysisId: inserted.insertedId,
+            extractionMethod: extractionResult.extractionMethod
+          };
+        } else {
+          updateFields.filePath = `/uploads/${req.file.filename}`;
+          updateFields.filename = req.file.filename;
+          updateFields.extraRefs = {
+            uploadType: "LOCAL_UPLOAD",
+            analysisId: inserted.insertedId,
+            uploadPath: UPLOAD_PATH,
+            serverPath: `/uploads/${req.file.filename}`,
+            extractionMethod: extractionResult.extractionMethod
+          };
+        }
+        
         await contractsCollection.updateOne(
           { _id: existingContract._id },
-          { 
-            $set: {
-              lastAnalyzed: new Date(),
-              analysisId: inserted.insertedId,
-              fullText: fullTextContent,
-              content: fullTextContent,
-              filePath: `/uploads/${req.file.filename}`,
-              filename: req.file.filename,
-              uploadType: "LOCAL_UPLOAD",
-              extractionMethod: extractionResult.extractionMethod,
-              extractionQuality: extractionResult.quality,
-              extraRefs: {
-                uploadType: "LOCAL_UPLOAD",
-                analysisId: inserted.insertedId,
-                uploadPath: UPLOAD_PATH,
-                serverPath: `/uploads/${req.file.filename}`,
-                extractionMethod: extractionResult.extractionMethod
-              },
-              legalPulse: {
-                riskScore: result.contractScore || null,
-                riskSummary: result.summary || '',
-                lastChecked: new Date(),
-                lawInsights: [],
-                marketSuggestions: []
-              },
-              analyzeCount: (existingContract.analyzeCount || 0) + 1
-            }
-          }
+          { $set: updateFields }
         );
         
         console.log(`✅ [${requestId}] Bestehender Vertrag aktualisiert (${fullTextContent.length} Zeichen)`);
@@ -786,12 +929,23 @@ Antwort im folgenden JSON-Format:
           status: "Aktiv"
         };
 
-        const savedContract = await saveContractWithLocalUpload(
-          req.user.userId,
-          contractAnalysisData,
-          req.file,
-          fullTextContent
-        );
+        // ✅ S3 PATCH: Dynamische Contract-Speicherung basierend auf Upload-Typ
+        let savedContract;
+        if (uploadType === "S3_UPLOAD") {
+          savedContract = await saveContractWithS3Upload(
+            req.user.userId,
+            contractAnalysisData,
+            req.file,
+            fullTextContent
+          );
+        } else {
+          savedContract = await saveContractWithLocalUpload(
+            req.user.userId,
+            contractAnalysisData,
+            req.file,
+            fullTextContent
+          );
+        }
 
         await contractsCollection.updateOne(
           { _id: savedContract._id },
@@ -806,7 +960,7 @@ Antwort im folgenden JSON-Format:
           }
         );
 
-        console.log(`✅ [${requestId}] Neuer Vertrag gespeichert: ${savedContract._id} mit analysisId: ${inserted.insertedId}`);
+        console.log(`✅ [${requestId}] Neuer ${uploadType} Vertrag gespeichert: ${savedContract._id} mit analysisId: ${inserted.insertedId}`);
       }
       
     } catch (saveError) {
@@ -824,20 +978,27 @@ Antwort im folgenden JSON-Format:
       console.warn(`⚠️ [${requestId}] Counter-Update-Fehler:`, updateError.message);
     }
 
-    console.log(`✅ [${requestId}] Stable Analyse komplett erfolgreich`);
+    console.log(`✅ [${requestId}] ${uploadType} Analyse komplett erfolgreich`);
 
+    // ✅ MINIMAL S3 PATCH #5: Response-Daten für S3 erweitert (addition, local response kept)
     const responseData = { 
       success: true,
       message: "Analyse erfolgreich abgeschlossen",
       requestId,
-      uploadType: "LOCAL_UPLOAD",
-      fileUrl: `/uploads/${req.file.filename}`,
+      uploadType: uploadType,  // ✅ S3 PATCH: dynamischer uploadType
+      fileUrl: uploadType === "S3_UPLOAD" ? req.file.location : `/uploads/${req.file.filename}`,  // ✅ S3 PATCH: dynamische fileUrl
       extractionInfo: {
         method: extractionResult.extractionMethod,
         quality: extractionResult.quality,
         charactersExtracted: fullTextContent.length,
         pageCount: extractionResult.pages
       },
+      // ✅ S3 PATCH: S3-Info hinzugefügt
+      s3Info: uploadType === "S3_UPLOAD" ? {
+        bucket: req.file.bucket,
+        key: req.file.key,
+        location: req.file.location
+      } : null,
       ...result, 
       analysisId: inserted.insertedId,
       usage: {
@@ -856,7 +1017,7 @@ Antwort im folgenden JSON-Format:
     res.json(responseData);
 
   } catch (error) {
-    console.error(`❌ [${requestId}] Fehler bei stabiler Analyse:`, {
+    console.error(`❌ [${requestId}] Fehler bei ${uploadType} Analyse:`, {  // ✅ S3 PATCH: dynamischer uploadType im Error
       message: error.message,
       stack: error.stack?.substring(0, 500),
       userId: req.user?.userId,
@@ -872,6 +1033,9 @@ Antwort im folgenden JSON-Format:
     } else if (error.message.includes("Timeout")) {
       errorMessage = "Analyse-Timeout. Bitte versuche es mit einer kleineren Datei.";
       errorCode = "TIMEOUT_ERROR";
+    } else if (error.message.includes("S3")) {  // ✅ S3 PATCH: S3-Error-Handling hinzugefügt
+      errorMessage = "Cloud-Storage-Fehler. Bitte versuche es erneut.";
+      errorCode = "S3_ERROR";
     } else if (error.message.includes("JSON") || error.message.includes("Parse")) {
       errorMessage = "Fehler bei der Analyse-Verarbeitung.";
       errorCode = "PARSE_ERROR";
@@ -894,6 +1058,7 @@ Antwort im folgenden JSON-Format:
       message: errorMessage,
       error: errorCode,
       requestId,
+      uploadType: uploadType,  // ✅ S3 PATCH: uploadType im Error-Response
       details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
@@ -935,24 +1100,25 @@ router.get("/history", verifyToken, async (req, res) => {
   }
 });
 
-// ✅ UPDATED: Health Check für stabile Version
+// ✅ UPDATED: Health Check für stabile Version + S3 Status
 router.get("/health", async (req, res) => {
   const checks = {
-    service: "Contract Analysis (Local Upload - Stable)", // ✅ Updated
+    service: "Contract Analysis (S3-Enhanced Stable Version)",  // ✅ S3 PATCH: Service-Name aktualisiert
     status: "online",
     timestamp: new Date().toISOString(),
     openaiConfigured: !!process.env.OPENAI_API_KEY,
     mongoConnected: false,
     uploadsPath: fsSync.existsSync(UPLOAD_PATH),
     uploadPath: UPLOAD_PATH,
-    uploadType: "LOCAL_UPLOAD",
-    s3Integration: "DISABLED (AWS SDK Conflict)",
+    uploadType: uploadType,  // ✅ S3 PATCH: dynamischer uploadType
+    s3Available: !!s3Upload,  // ✅ S3 PATCH: S3-Status hinzugefügt
+    s3Configured: !!(process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY),  // ✅ S3 PATCH
     cryptoAvailable: !!crypto,
     saveContractAvailable: !!saveContract,
     ocrAvailable: false, // ✅ OCR ist in stabiler Version deaktiviert
     tesseractLoaded: false, // ✅ Tesseract ist entfernt
     queueAvailable: false, // ✅ Queue ist entfernt
-    version: "stable-no-ocr" // ✅ Version-Info
+    version: "stable-s3-enhanced"  // ✅ S3 PATCH: Version aktualisiert
   };
 
   try {
@@ -963,7 +1129,8 @@ router.get("/health", async (req, res) => {
     checks.mongoError = err.message;
   }
 
-  const isHealthy = checks.openaiConfigured && checks.mongoConnected && checks.uploadsPath;
+  const isHealthy = checks.openaiConfigured && checks.mongoConnected && 
+                   (uploadType === "S3_UPLOAD" ? checks.s3Available : checks.uploadsPath);  // ✅ S3 PATCH: Health basierend auf Upload-Typ
   
   res.status(isHealthy ? 200 : 503).json({
     success: isHealthy,
@@ -972,7 +1139,7 @@ router.get("/health", async (req, res) => {
 });
 
 process.on('SIGTERM', async () => {
-  console.log('📊 Analyze service (stable) shutting down...');
+  console.log('📊 Analyze service (S3-enhanced stable) shutting down...');  // ✅ S3 PATCH: Shutdown-Message aktualisiert
   if (mongoClient) {
     await mongoClient.close();
   }
