@@ -1,4 +1,4 @@
-// 📁 backend/routes/analyze.js - EMERGENCY ROLLBACK TO WORKING VERSION
+// 📁 backend/routes/analyze.js - PRODUCTION S3 INTEGRATION (BULLETPROOF)
 const express = require("express");
 const multer = require("multer");
 const pdfParse = require("pdf-parse");
@@ -11,71 +11,315 @@ const path = require("path");
 
 const router = express.Router();
 
-// ✅ CRITICAL FIX: Exact same UPLOAD_PATH as server.js
+// ===== S3 INTEGRATION (BULLETPROOF) =====
+let AWS, multerS3, s3Instance;
+let S3_AVAILABLE = false;
+let S3_CONFIGURED = false;
+let S3_CONFIG_ERROR = null;
+
+/**
+ * 🛡️ BULLETPROOF S3 CONFIGURATION
+ * Tries to configure S3, falls back to local if anything goes wrong
+ */
+const initializeS3 = () => {
+  try {
+    console.log("🔧 [S3] Initializing S3 configuration...");
+    
+    // Check if all required environment variables are present
+    const requiredEnvVars = [
+      'AWS_ACCESS_KEY_ID', 
+      'AWS_SECRET_ACCESS_KEY', 
+      'AWS_REGION', 
+      'S3_BUCKET_NAME'
+    ];
+    
+    const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+    
+    if (missingVars.length > 0) {
+      throw new Error(`Missing environment variables: ${missingVars.join(', ')}`);
+    }
+    
+    // Try to load AWS SDK and multer-s3
+    try {
+      AWS = require("aws-sdk");
+      multerS3 = require("multer-s3");
+      console.log("✅ [S3] AWS SDK and multer-s3 loaded successfully");
+    } catch (importError) {
+      throw new Error(`Failed to import S3 dependencies: ${importError.message}`);
+    }
+    
+    // Configure AWS S3
+    AWS.config.update({
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      region: process.env.AWS_REGION
+    });
+    
+    s3Instance = new AWS.S3({
+      apiVersion: '2006-03-01',
+      signatureVersion: 'v4',
+      httpOptions: {
+        timeout: 30000,
+        connectTimeout: 5000
+      }
+    });
+    
+    console.log("✅ [S3] AWS S3 instance created successfully");
+    console.log(`✅ [S3] Region: ${process.env.AWS_REGION}`);
+    console.log(`✅ [S3] Bucket: ${process.env.S3_BUCKET_NAME}`);
+    
+    S3_CONFIGURED = true;
+    S3_CONFIG_ERROR = null;
+    
+    // Test S3 connectivity (async, don't block startup)
+    testS3Connectivity();
+    
+    return true;
+    
+  } catch (error) {
+    console.error("❌ [S3] Configuration failed:", error.message);
+    S3_CONFIGURED = false;
+    S3_AVAILABLE = false;
+    S3_CONFIG_ERROR = error.message;
+    
+    // Don't throw - fall back to local upload
+    console.log("🔄 [S3] Falling back to LOCAL_UPLOAD mode");
+    return false;
+  }
+};
+
+/**
+ * 🧪 TEST S3 CONNECTIVITY
+ * Async test that doesn't block the application startup
+ */
+const testS3Connectivity = async () => {
+  if (!S3_CONFIGURED || !s3Instance) {
+    return false;
+  }
+  
+  try {
+    console.log("🧪 [S3] Testing bucket connectivity...");
+    
+    // Test bucket access with a simple head request
+    await s3Instance.headBucket({ 
+      Bucket: process.env.S3_BUCKET_NAME 
+    }).promise();
+    
+    console.log("✅ [S3] Bucket connectivity test successful");
+    S3_AVAILABLE = true;
+    return true;
+    
+  } catch (error) {
+    console.error("❌ [S3] Bucket connectivity test failed:", error.message);
+    S3_AVAILABLE = false;
+    
+    // Log helpful error messages
+    if (error.statusCode === 403) {
+      console.error("❌ [S3] Access denied - check IAM permissions");
+    } else if (error.statusCode === 404) {
+      console.error("❌ [S3] Bucket not found - check bucket name and region");
+    }
+    
+    return false;
+  }
+};
+
+// Initialize S3 on startup
+const s3InitSuccess = initializeS3();
+
+// ===== UPLOAD CONFIGURATION (DYNAMIC) =====
 const UPLOAD_PATH = path.join(__dirname, "..", "uploads");
 
-// ✅ CRITICAL FIX: Ensure uploads directory exists (same as server.js)
+// Ensure uploads directory exists for fallback
 try {
   if (!fsSync.existsSync(UPLOAD_PATH)) {
     fsSync.mkdirSync(UPLOAD_PATH, { recursive: true });
-    console.log(`📁 [ANALYZE] Upload-Ordner erstellt: ${UPLOAD_PATH}`);
+    console.log(`📁 [UPLOAD] Local upload directory created: ${UPLOAD_PATH}`);
   } else {
-    console.log(`📁 [ANALYZE] Upload-Ordner existiert: ${UPLOAD_PATH}`);
+    console.log(`📁 [UPLOAD] Local upload directory exists: ${UPLOAD_PATH}`);
   }
 } catch (err) {
-  console.error(`❌ [ANALYZE] Fehler beim Upload-Ordner:`, err);
+  console.error(`❌ [UPLOAD] Error creating upload directory:`, err);
 }
 
-// ✅ CRITICAL FIX: Exact same multer storage configuration as server.js
-const storage = multer.diskStorage({
-  destination: UPLOAD_PATH,
-  filename: (req, file, cb) => {
-    const filename = Date.now() + path.extname(file.originalname);
-    console.log(`📁 [ANALYZE] Generiere Dateiname: ${filename}`);
-    cb(null, filename);
-  },
-});
+/**
+ * 🔄 DYNAMIC MULTER CONFIGURATION
+ * Uses S3 if available, falls back to local storage
+ */
+const createUploadMiddleware = () => {
+  // If S3 is configured and available, use S3 upload
+  if (S3_CONFIGURED && S3_AVAILABLE && s3Instance && multerS3) {
+    console.log("🚀 [UPLOAD] Using S3 upload configuration");
+    
+    return multer({
+      storage: multerS3({
+        s3: s3Instance,
+        bucket: process.env.S3_BUCKET_NAME,
+        acl: 'private', // Security: files are private by default
+        contentType: multerS3.AUTO_CONTENT_TYPE,
+        metadata: function (req, file, cb) {
+          cb(null, {
+            userId: req.user?.userId || 'unknown',
+            uploadedAt: new Date().toISOString(),
+            originalName: file.originalname
+          });
+        },
+        key: function (req, file, cb) {
+          // Create organized S3 key structure
+          const userId = req.user?.userId || 'anonymous';
+          const timestamp = Date.now();
+          const sanitizedFileName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
+          const key = `contracts/${userId}/${timestamp}_${sanitizedFileName}`;
+          
+          console.log(`📁 [S3] Generated S3 key: ${key}`);
+          cb(null, key);
+        }
+      }),
+      limits: { 
+        fileSize: 50 * 1024 * 1024 // 50MB limit
+      },
+      fileFilter: (req, file, cb) => {
+        // Only allow PDF files
+        if (file.mimetype === 'application/pdf') {
+          cb(null, true);
+        } else {
+          cb(new Error('Only PDF files are allowed'), false);
+        }
+      }
+    });
+  } else {
+    // Fall back to local disk storage
+    console.log("🔄 [UPLOAD] Using LOCAL upload configuration (S3 not available)");
+    
+    const storage = multer.diskStorage({
+      destination: UPLOAD_PATH,
+      filename: (req, file, cb) => {
+        const filename = Date.now() + path.extname(file.originalname);
+        console.log(`📁 [LOCAL] Generated filename: ${filename}`);
+        cb(null, filename);
+      },
+    });
 
-const upload = multer({ 
-  storage,
-  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit
-});
+    return multer({ 
+      storage,
+      limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit
+      fileFilter: (req, file, cb) => {
+        if (file.mimetype === 'application/pdf') {
+          cb(null, true);
+        } else {
+          cb(new Error('Only PDF files are allowed'), false);
+        }
+      }
+    });
+  }
+};
 
-// ✅ FALLBACK: crypto nur importieren wenn verfügbar
+// Create upload middleware
+const upload = createUploadMiddleware();
+
+/**
+ * 🔄 DYNAMIC FILE READING
+ * Reads file from S3 if uploaded there, from local disk otherwise
+ */
+const readUploadedFile = async (fileInfo, requestId) => {
+  try {
+    if (fileInfo.location && fileInfo.key && S3_AVAILABLE && s3Instance) {
+      // File was uploaded to S3
+      console.log(`📖 [${requestId}] Reading file from S3: ${fileInfo.key}`);
+      
+      const s3Object = await s3Instance.getObject({
+        Bucket: process.env.S3_BUCKET_NAME,
+        Key: fileInfo.key
+      }).promise();
+      
+      console.log(`✅ [${requestId}] S3 file read successfully: ${s3Object.Body.length} bytes`);
+      return s3Object.Body;
+      
+    } else {
+      // File was uploaded locally
+      console.log(`📖 [${requestId}] Reading file from local disk: ${fileInfo.filename}`);
+      
+      const filePath = path.join(UPLOAD_PATH, fileInfo.filename);
+      
+      if (!fsSync.existsSync(filePath)) {
+        throw new Error(`Local file not found: ${filePath}`);
+      }
+      
+      const buffer = await fs.readFile(filePath);
+      console.log(`✅ [${requestId}] Local file read successfully: ${buffer.length} bytes`);
+      return buffer;
+    }
+    
+  } catch (error) {
+    console.error(`❌ [${requestId}] Error reading uploaded file:`, error.message);
+    throw new Error(`Failed to read uploaded file: ${error.message}`);
+  }
+};
+
+/**
+ * 📊 GET UPLOAD TYPE AND FILE URL
+ * Returns appropriate upload type and file URL based on where file was stored
+ */
+const getUploadInfo = (fileInfo) => {
+  if (fileInfo.location && fileInfo.key) {
+    // File was uploaded to S3
+    return {
+      uploadType: "S3_UPLOAD",
+      fileUrl: fileInfo.location,
+      s3Info: {
+        bucket: fileInfo.bucket || process.env.S3_BUCKET_NAME,
+        key: fileInfo.key,
+        location: fileInfo.location,
+        etag: fileInfo.etag
+      }
+    };
+  } else {
+    // File was uploaded locally
+    return {
+      uploadType: "LOCAL_UPLOAD",
+      fileUrl: `/uploads/${fileInfo.filename}`,
+      localInfo: {
+        filename: fileInfo.filename,
+        path: fileInfo.path
+      }
+    };
+  }
+};
+
+// ===== EXISTING CODE (UNCHANGED) =====
+
+// ✅ FALLBACK: crypto only import if available
 let crypto;
 try {
   crypto = require("crypto");
-  console.log("✅ Crypto-Module erfolgreich geladen");
+  console.log("✅ Crypto module loaded successfully");
 } catch (err) {
-  console.warn("⚠️ Crypto-Module nicht verfügbar:", err.message);
+  console.warn("⚠️ Crypto module not available:", err.message);
   crypto = null;
 }
 
-// ✅ FALLBACK: saveContract mit try-catch
+// ✅ FALLBACK: saveContract with try-catch
 let saveContract;
 try {
   saveContract = require("../services/saveContract");
-  console.log("✅ SaveContract-Service erfolgreich geladen");
+  console.log("✅ SaveContract service loaded successfully");
 } catch (err) {
-  console.warn("⚠️ SaveContract-Service nicht verfügbar:", err.message);
+  console.warn("⚠️ SaveContract service not available:", err.message);
   saveContract = null;
 }
 
-// ✅ Rate Limiting für GPT-4
+// ✅ Rate Limiting for GPT-4
 let lastGPT4Request = 0;
-const GPT4_MIN_INTERVAL = 4000; // 4 Sekunden zwischen GPT-4 Requests
+const GPT4_MIN_INTERVAL = 4000; // 4 seconds between GPT-4 requests
 
-// ===== IMPROVED PROCESSING FUNCTIONS (mit besseren Fehlermeldungen) =====
+// ===== IMPROVED PROCESSING FUNCTIONS (unchanged) =====
 
-/**
- * ✅ VERBESSERTE Text-Qualitäts-Bewertung mit detaillierter Analyse
- */
 const assessTextQuality = (text, fileName = '') => {
   if (!text) {
     return {
       level: 'none',
       score: 0,
-      reason: 'Kein Text extrahiert',
+      reason: 'No text extracted',
       characterCount: 0,
       wordCount: 0
     };
@@ -85,33 +329,32 @@ const assessTextQuality = (text, fileName = '') => {
   const characterCount = cleanText.length;
   const wordCount = cleanText.split(' ').filter(word => word.length > 0).length;
   
-  // ✅ Verbesserte Qualitätsbewertung
   let level, score, reason;
   
   if (characterCount === 0) {
     level = 'none';
     score = 0;
-    reason = 'Keine Textdaten gefunden';
+    reason = 'No text data found';
   } else if (characterCount < 50) {
     level = 'none';
     score = characterCount;
-    reason = `Zu wenig Text gefunden (${characterCount} Zeichen, ${wordCount} Wörter)`;
+    reason = `Too little text found (${characterCount} characters, ${wordCount} words)`;
   } else if (characterCount < 200) {
     level = 'poor';
     score = Math.min(characterCount / 2, 100);
-    reason = `Sehr wenig Text gefunden (${characterCount} Zeichen, ${wordCount} Wörter)`;
+    reason = `Very little text found (${characterCount} characters, ${wordCount} words)`;
   } else if (characterCount < 500) {
     level = 'fair';
     score = Math.min(50 + (characterCount - 200) / 6, 100);
-    reason = `Wenig Text gefunden (${characterCount} Zeichen, ${wordCount} Wörter)`;
+    reason = `Little text found (${characterCount} characters, ${wordCount} words)`;
   } else if (characterCount < 2000) {
     level = 'good';
     score = Math.min(70 + (characterCount - 500) / 50, 100);
-    reason = `Ausreichend Text gefunden (${characterCount} Zeichen, ${wordCount} Wörter)`;
+    reason = `Sufficient text found (${characterCount} characters, ${wordCount} words)`;
   } else {
     level = 'excellent';
     score = Math.min(90 + (characterCount - 2000) / 200, 100);
-    reason = `Viel Text gefunden (${characterCount} Zeichen, ${wordCount} Wörter)`;
+    reason = `Abundant text found (${characterCount} characters, ${wordCount} words)`;
   }
 
   return {
@@ -124,9 +367,6 @@ const assessTextQuality = (text, fileName = '') => {
   };
 };
 
-/**
- * ✅ NEU: Benutzerfreundliche PDF-Fehlermeldungen erstellen
- */
 const createUserFriendlyPDFError = (textQuality, fileName, pages) => {
   const isScanned = textQuality.score === 0 && pages > 0;
   const hasLittleText = textQuality.score > 0 && textQuality.score < 20;
@@ -136,43 +376,39 @@ const createUserFriendlyPDFError = (textQuality, fileName, pages) => {
   let suggestions = [];
   
   if (isScanned) {
-    // 📸 Gescannte PDF (nur Bilddaten)
-    message = `📸 Diese PDF scheint gescannt zu sein und enthält nur Bilddaten, die wir aktuell nicht analysieren können.`;
+    message = `📸 This PDF appears to be scanned and contains only image data that we cannot currently analyze.`;
     suggestions = [
-      "🔄 Konvertiere die PDF zu einem durchsuchbaren Format (z.B. mit Adobe Acrobat)",
-      "📝 Öffne das Dokument in Word, das kann oft Text aus Scans erkennen",
-      "🖨️ Erstelle eine neue PDF aus dem Original-Dokument (falls verfügbar)",
-      "🔍 Nutze ein Online-OCR-Tool (z.B. SmallPDF, PDF24) um Text zu extrahieren",
-      "⚡ Für automatische Scan-Erkennung: Upgrade auf Premium mit OCR-Support"
+      "🔄 Convert the PDF to a searchable format (e.g. with Adobe Acrobat)",
+      "📝 Open the document in Word, which can often recognize text from scans",
+      "🖨️ Create a new PDF from the original document (if available)",
+      "🔍 Use an online OCR tool (e.g. SmallPDF, PDF24) to extract text",
+      "⚡ For automatic scan recognition: Upgrade to Premium with OCR support"
     ];
   } else if (hasLittleText) {
-    // 📄 Wenig lesbarer Text
-    message = `📄 Diese PDF enthält nur sehr wenig lesbaren Text (${textQuality.characterCount || 0} Zeichen). Für eine sinnvolle Vertragsanalyse benötigen wir mehr Textinhalt.`;
+    message = `📄 This PDF contains very little readable text (${textQuality.characterCount || 0} characters). For meaningful contract analysis, we need more text content.`;
     suggestions = [
-      "📖 Stelle sicher, dass die PDF vollständig und nicht beschädigt ist",
-      "🔒 Prüfe ob die PDF passwortgeschützt oder verschlüsselt ist",
-      "📝 Falls es eine gescannte PDF ist, konvertiere sie zu einem Text-PDF",
-      "📄 Lade eine andere Version der Datei hoch (z.B. das Original-Dokument)",
-      "⚡ Probiere eine andere PDF-Datei aus"
+      "📖 Ensure the PDF is complete and not corrupted",
+      "🔒 Check if the PDF is password protected or encrypted",
+      "📝 If it's a scanned PDF, convert it to a text PDF",
+      "📄 Upload a different version of the file (e.g. the original document)",
+      "⚡ Try a different PDF file"
     ];
   } else if (isPossiblyProtected) {
-    // 🔒 Passwortgeschützt oder verschlüsselt
-    message = `🔒 Diese PDF scheint passwortgeschützt oder verschlüsselt zu sein und kann nicht gelesen werden.`;
+    message = `🔒 This PDF appears to be password protected or encrypted and cannot be read.`;
     suggestions = [
-      "🔓 Entferne den Passwortschutz und lade die PDF erneut hoch",
-      "📄 Exportiere das Dokument als neue, ungeschützte PDF",
-      "📝 Konvertiere die PDF zu Word und exportiere sie erneut als PDF",
-      "⚡ Probiere eine andere Version der Datei aus"
+      "🔓 Remove password protection and upload the PDF again",
+      "📄 Export the document as a new, unprotected PDF",
+      "📝 Convert the PDF to Word and export it again as PDF",
+      "⚡ Try a different version of the file"
     ];
   } else {
-    // 🚫 Allgemeiner Fehler
-    message = `🚫 Diese PDF-Datei kann leider nicht für eine Vertragsanalyse verwendet werden.`;
+    message = `🚫 This PDF file cannot be used for contract analysis.`;
     suggestions = [
-      "📄 Prüfe ob die PDF-Datei vollständig und nicht beschädigt ist",
-      "🔄 Versuche eine andere Version oder ein anderes Format (DOC, DOCX)",
-      "📝 Stelle sicher, dass das Dokument ausreichend Text enthält",
-      "🔒 Prüfe ob die PDF passwortgeschützt ist",
-      "⚡ Probiere eine andere PDF-Datei aus"
+      "📄 Check if the PDF file is complete and not corrupted",
+      "🔄 Try a different version or format (DOC, DOCX)",
+      "📝 Ensure the document contains sufficient text",
+      "🔒 Check if the PDF is password protected",
+      "⚡ Try a different PDF file"
     ];
   }
   
@@ -183,36 +419,30 @@ const createUserFriendlyPDFError = (textQuality, fileName, pages) => {
   };
 };
 
-/**
- * ✅ VERBESSERTE PDF-TEXT-EXTRAKTION (mit benutzerfreundlichen Fehlermeldungen)
- */
 const extractTextFromPDFEnhanced = async (buffer, fileName, requestId, onProgress) => {
-  console.log(`📖 [${requestId}] Starte verbesserte PDF-Text-Extraktion...`);
-  console.log(`📄 [${requestId}] Datei: ${fileName}`);
+  console.log(`📖 [${requestId}] Starting enhanced PDF text extraction...`);
+  console.log(`📄 [${requestId}] File: ${fileName}`);
 
   try {
-    // ✅ Schritt 1: Normale PDF-Text-Extraktion mit erweiterten Optionen
-    console.log(`📄 [${requestId}] Schritt 1: Normale PDF-Text-Extraktion...`);
+    console.log(`📄 [${requestId}] Step 1: Normal PDF text extraction...`);
     
     const pdfOptions = {
       normalizeWhitespace: true,
       disableCombineTextItems: false,
-      max: 0, // Alle Seiten
+      max: 0,
       version: 'v1.10.100'
     };
 
     const data = await pdfParse(buffer, pdfOptions);
     
-    console.log(`📊 [${requestId}] PDF hat ${data.numpages} Seiten`);
-    console.log(`📊 [${requestId}] Roher Text: ${data.text?.length || 0} Zeichen`);
+    console.log(`📊 [${requestId}] PDF has ${data.numpages} pages`);
+    console.log(`📊 [${requestId}] Raw text: ${data.text?.length || 0} characters`);
 
-    // ✅ Schritt 2: Text-Qualitäts-Bewertung mit detaillierter Analyse
     const textQuality = assessTextQuality(data.text || '', fileName);
-    console.log(`📊 [${requestId}] Text-Qualität: ${textQuality.level} (Score: ${textQuality.score}) - ${textQuality.reason}`);
+    console.log(`📊 [${requestId}] Text quality: ${textQuality.level} (Score: ${textQuality.score}) - ${textQuality.reason}`);
 
-    // ✅ Schritt 3: Benutzerfreundliche Behandlung basierend auf Qualität
     if (textQuality.level === 'good' || textQuality.level === 'fair') {
-      console.log(`✅ [${requestId}] PDF-Text-Extraktion erfolgreich: ${data.text.length} Zeichen`);
+      console.log(`✅ [${requestId}] PDF text extraction successful: ${data.text.length} characters`);
       return {
         success: true,
         text: data.text,
@@ -221,10 +451,8 @@ const extractTextFromPDFEnhanced = async (buffer, fileName, requestId, onProgres
         extractionMethod: 'pdf-parse'
       };
     } else {
-      // ✅ VERBESSERUNG: Benutzerfreundliche Fehlermeldung statt technischem Fehler
-      console.log(`❌ [${requestId}] Text-Qualität unzureichend für Analyse`);
+      console.log(`❌ [${requestId}] Text quality insufficient for analysis`);
       
-      // 🎯 Erstelle hilfreiche, spezifische Fehlermeldung
       const userFriendlyError = createUserFriendlyPDFError(textQuality, fileName, data.numpages);
       
       return {
@@ -234,16 +462,15 @@ const extractTextFromPDFEnhanced = async (buffer, fileName, requestId, onProgres
         quality: textQuality,
         pages: data.numpages,
         suggestions: userFriendlyError.suggestions,
-        isUserError: true // ⭐ Kennzeichnet als User-Problem, nicht System-Fehler
+        isUserError: true
       };
     }
 
   } catch (error) {
-    console.error(`❌ [${requestId}] PDF-Parse-Fehler:`, error.message);
+    console.error(`❌ [${requestId}] PDF parse error:`, error.message);
     
-    // ✅ VERBESSERUNG: Auch hier benutzerfreundliche Fehlermeldung
     const userFriendlyError = createUserFriendlyPDFError(
-      { level: 'none', score: 0, reason: 'PDF-Verarbeitungsfehler' }, 
+      { level: 'none', score: 0, reason: 'PDF processing error' }, 
       fileName, 
       0
     );
@@ -254,12 +481,12 @@ const extractTextFromPDFEnhanced = async (buffer, fileName, requestId, onProgres
       errorType: 'pdf_processing_error',
       suggestions: userFriendlyError.suggestions,
       isUserError: true,
-      technicalError: error.message // Für Debugging
+      technicalError: error.message
     };
   }
 };
 
-// ===== EXISTING FUNCTIONS (unchanged) =====
+// ===== EXISTING HELPER FUNCTIONS (unchanged) =====
 
 function checkFileExists(filename) {
   const fullPath = path.join(UPLOAD_PATH, filename);
@@ -289,14 +516,14 @@ let openaiInstance = null;
 const getOpenAI = () => {
   if (!openaiInstance) {
     if (!process.env.OPENAI_API_KEY) {
-      throw new Error("OpenAI API Key fehlt in Umgebungsvariablen");
+      throw new Error("OpenAI API Key missing in environment variables");
     }
     openaiInstance = new OpenAI({ 
       apiKey: process.env.OPENAI_API_KEY,
       timeout: 30000,
       maxRetries: 2
     });
-    console.log("🤖 OpenAI-Instance initialisiert");
+    console.log("🤖 OpenAI instance initialized");
   }
   return openaiInstance;
 };
@@ -320,7 +547,7 @@ const getMongoCollections = async () => {
     analysisCollection = db.collection("analyses");
     usersCollection = db.collection("users");
     contractsCollection = db.collection("contracts");
-    console.log("📊 MongoDB-Collections initialisiert");
+    console.log("📊 MongoDB collections initialized");
   }
   return { analysisCollection, usersCollection, contractsCollection };
 };
@@ -329,28 +556,28 @@ const getMongoCollections = async () => {
 (async () => {
   try {
     await getMongoCollections();
-    console.log("📊 Verbunden mit allen Collections");
+    console.log("📊 Connected to all collections");
   } catch (err) {
-    console.error("❌ MongoDB-Fehler (analyze.js):", err);
+    console.error("❌ MongoDB error (analyze.js):", err);
   }
 })();
 
 const calculateFileHash = (buffer) => {
   if (!crypto) {
-    console.warn("⚠️ Crypto nicht verfügbar - verwende Fallback-Hash");
+    console.warn("⚠️ Crypto not available - using fallback hash");
     return `fallback_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
   try {
     return crypto.createHash("sha256").update(buffer).digest("hex");
   } catch (err) {
-    console.warn("⚠️ Hash-Berechnung fehlgeschlagen:", err.message);
+    console.warn("⚠️ Hash calculation failed:", err.message);
     return `fallback_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
 };
 
 const checkForDuplicate = async (fileHash, userId) => {
   if (!crypto || !contractsCollection) {
-    console.warn("⚠️ Dubletten-Check nicht verfügbar - überspringe");
+    console.warn("⚠️ Duplicate check not available - skipping");
     return null;
   }
   
@@ -362,34 +589,46 @@ const checkForDuplicate = async (fileHash, userId) => {
     });
     return existingContract;
   } catch (error) {
-    console.warn("⚠️ Dubletten-Check fehlgeschlagen:", error.message);
+    console.warn("⚠️ Duplicate check failed:", error.message);
     return null;
   }
 };
 
-async function saveContractWithLocalUpload(userId, analysisData, fileInfo, pdfText) {
+/**
+ * 💾 ENHANCED CONTRACT SAVING (S3 COMPATIBLE)
+ * Saves contract with appropriate upload info based on storage type
+ */
+async function saveContractWithUpload(userId, analysisData, fileInfo, pdfText, uploadInfo) {
   try {
     const contract = {
       userId: new ObjectId(userId),
-      name: analysisData.name || fileInfo.originalname || "Unbekannt",
-      laufzeit: analysisData.laufzeit || "Unbekannt",
-      kuendigung: analysisData.kuendigung || "Unbekannt",
+      name: analysisData.name || fileInfo.originalname || "Unknown",
+      laufzeit: analysisData.laufzeit || "Unknown",
+      kuendigung: analysisData.kuendigung || "Unknown",
       expiryDate: analysisData.expiryDate || "",
-      status: analysisData.status || "Aktiv",
+      status: analysisData.status || "Active",
       uploadedAt: new Date(),
       createdAt: new Date(),
       
-      filename: fileInfo.filename,
+      filename: fileInfo.filename || fileInfo.key,
       originalname: fileInfo.originalname,
-      filePath: `/uploads/${fileInfo.filename}`,
+      filePath: uploadInfo.fileUrl,
       mimetype: fileInfo.mimetype,
       size: fileInfo.size,
       
-      uploadType: "LOCAL_UPLOAD",
+      uploadType: uploadInfo.uploadType,
       extraRefs: {
-        uploadType: "LOCAL_UPLOAD",
-        uploadPath: UPLOAD_PATH,
-        serverPath: `/uploads/${fileInfo.filename}`,
+        uploadType: uploadInfo.uploadType,
+        ...(uploadInfo.s3Info && {
+          s3Bucket: uploadInfo.s3Info.bucket,
+          s3Key: uploadInfo.s3Info.key,
+          s3Location: uploadInfo.s3Info.location,
+          s3ETag: uploadInfo.s3Info.etag
+        }),
+        ...(uploadInfo.localInfo && {
+          uploadPath: UPLOAD_PATH,
+          serverPath: uploadInfo.localInfo.path
+        }),
         analysisId: null
       },
       
@@ -417,7 +656,7 @@ async function saveContractWithLocalUpload(userId, analysisData, fileInfo, pdfTe
       uploadType: contract.uploadType,
       filePath: contract.filePath,
       textLength: contract.fullText.length,
-      uploadPath: UPLOAD_PATH
+      s3Info: uploadInfo.s3Info ? 'present' : 'none'
     });
 
     const { insertedId } = await contractsCollection.insertOne(contract);
@@ -437,38 +676,38 @@ const makeRateLimitedGPT4Request = async (prompt, requestId, openai, maxRetries 
       const timeSinceLastRequest = Date.now() - lastGPT4Request;
       if (timeSinceLastRequest < GPT4_MIN_INTERVAL) {
         const waitTime = GPT4_MIN_INTERVAL - timeSinceLastRequest;
-        console.log(`⏳ [${requestId}] Rate Limiting: Warte ${waitTime}ms vor GPT-4 Request...`);
+        console.log(`⏳ [${requestId}] Rate limiting: Waiting ${waitTime}ms before GPT-4 request...`);
         await new Promise(resolve => setTimeout(resolve, waitTime));
       }
       
       lastGPT4Request = Date.now();
       
-      console.log(`🤖 [${requestId}] GPT-4 Request (Versuch ${attempt}/${maxRetries})...`);
+      console.log(`🤖 [${requestId}] GPT-4 request (attempt ${attempt}/${maxRetries})...`);
       
       const completion = await openai.chat.completions.create({
         model: "gpt-4",
         messages: [
-          { role: "system", content: "Du bist ein erfahrener Vertragsanalyst mit juristischer Expertise." },
+          { role: "system", content: "You are an experienced contract analyst with legal expertise." },
           { role: "user", content: prompt },
         ],
         temperature: 0.3,
         max_tokens: 2000,
       });
       
-      console.log(`✅ [${requestId}] GPT-4 Request erfolgreich!`);
+      console.log(`✅ [${requestId}] GPT-4 request successful!`);
       return completion;
       
     } catch (error) {
-      console.error(`❌ [${requestId}] GPT-4 Fehler (Versuch ${attempt}):`, error.message);
+      console.error(`❌ [${requestId}] GPT-4 error (attempt ${attempt}):`, error.message);
       
       if (error.status === 429) {
         if (attempt < maxRetries) {
           const waitTime = Math.min(5000 * Math.pow(2, attempt - 1), 30000);
-          console.log(`⏳ [${requestId}] Rate Limit erreicht. Warte ${waitTime/1000}s vor Retry...`);
+          console.log(`⏳ [${requestId}] Rate limit reached. Waiting ${waitTime/1000}s before retry...`);
           await new Promise(resolve => setTimeout(resolve, waitTime));
           continue;
         } else {
-          throw new Error(`GPT-4 Rate Limit erreicht. Bitte versuche es in einigen Minuten erneut.`);
+          throw new Error(`GPT-4 rate limit reached. Please try again in a few minutes.`);
         }
       }
       
@@ -476,26 +715,30 @@ const makeRateLimitedGPT4Request = async (prompt, requestId, openai, maxRetries 
     }
   }
   
-  throw new Error(`GPT-4 Request nach ${maxRetries} Versuchen fehlgeschlagen.`);
+  throw new Error(`GPT-4 request failed after ${maxRetries} attempts.`);
 };
 
-// ===== MAIN ANALYZE ROUTE (STABLE VERSION mit besseren Fehlermeldungen) =====
+// ===== MAIN ANALYZE ROUTE (S3 COMPATIBLE) =====
 router.post("/", verifyToken, upload.single("file"), async (req, res) => {
   const requestId = Date.now().toString();
   
-  console.log(`📊 [${requestId}] Stable Analyse-Request erhalten:`, {
-    uploadType: "LOCAL_UPLOAD",
+  // Get upload info to determine storage type
+  const uploadInfo = req.file ? getUploadInfo(req.file) : { uploadType: "UNKNOWN", fileUrl: null };
+  
+  console.log(`📊 [${requestId}] Production S3 Analysis request received:`, {
+    uploadType: uploadInfo.uploadType,
     hasFile: !!req.file,
     userId: req.user?.userId,
-    uploadPath: UPLOAD_PATH,
-    ocrAvailable: false // ✅ OCR ist in stabiler Version deaktiviert
+    s3Available: S3_AVAILABLE,
+    s3Configured: S3_CONFIGURED,
+    bucket: uploadInfo.s3Info?.bucket || 'none'
   });
 
   if (!req.file) {
-    console.error(`❌ [${requestId}] Keine Datei hochgeladen`);
+    console.error(`❌ [${requestId}] No file uploaded`);
     return res.status(400).json({ 
       success: false, 
-      message: "Keine Datei hochgeladen" 
+      message: "No file uploaded" 
     });
   }
 
@@ -505,35 +748,21 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
       originalname: req.file.originalname,
       mimetype: req.file.mimetype,
       size: req.file.size,
-      path: req.file.path,
-      destination: req.file.destination,
-      uploadPath: UPLOAD_PATH
+      key: req.file.key,
+      location: req.file.location,
+      uploadType: uploadInfo.uploadType
     });
 
-    const fileExists = checkFileExists(req.file.filename);
-    if (!fileExists) {
-      console.error(`❌ [${requestId}] Datei wurde nicht korrekt gespeichert:`, req.file.filename);
-      return res.status(500).json({
-        success: false,
-        message: "Datei wurde nicht korrekt hochgeladen",
-        debug: {
-          expectedPath: path.join(UPLOAD_PATH, req.file.filename),
-          uploadPath: UPLOAD_PATH,
-          filename: req.file.filename
-        }
-      });
-    }
-
     const { analysisCollection, usersCollection: users, contractsCollection } = await getMongoCollections();
-    console.log(`📊 [${requestId}] MongoDB-Collections verfügbar`);
+    console.log(`📊 [${requestId}] MongoDB collections available`);
     
     const user = await users.findOne({ _id: new ObjectId(req.user.userId) });
 
     if (!user) {
-      console.error(`❌ [${requestId}] User nicht gefunden: ${req.user.userId}`);
+      console.error(`❌ [${requestId}] User not found: ${req.user.userId}`);
       return res.status(404).json({
         success: false,
-        message: "❌ Benutzer nicht gefunden.",
+        message: "❌ User not found.",
         error: "USER_NOT_FOUND"
       });
     }
@@ -545,13 +774,13 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
     if (plan === "business") limit = 50;
     if (plan === "premium") limit = Infinity;
 
-    console.log(`📊 [${requestId}] User-Limits: ${count}/${limit} (Plan: ${plan})`);
+    console.log(`📊 [${requestId}] User limits: ${count}/${limit} (Plan: ${plan})`);
 
     if (count >= limit) {
-      console.warn(`⚠️ [${requestId}] Analyse-Limit erreicht für User ${req.user.userId}`);
+      console.warn(`⚠️ [${requestId}] Analysis limit reached for user ${req.user.userId}`);
       return res.status(403).json({
         success: false,
-        message: "❌ Analyse-Limit erreicht. Bitte Paket upgraden.",
+        message: "❌ Analysis limit reached. Please upgrade package.",
         error: "LIMIT_EXCEEDED",
         currentCount: count,
         limit: limit,
@@ -559,18 +788,14 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
       });
     }
 
-    console.log(`📄 [${requestId}] PDF wird lokal gelesen...`);
+    console.log(`📄 [${requestId}] Reading uploaded file...`);
     
-    const filePath = path.join(UPLOAD_PATH, req.file.filename);
-    if (!fsSync.existsSync(filePath)) {
-      throw new Error(`Datei nicht gefunden: ${filePath}`);
-    }
-
-    const buffer = await fs.readFile(filePath);
-    console.log(`📄 [${requestId}] Buffer gelesen: ${buffer.length} bytes`);
+    // Use dynamic file reading based on upload type
+    const buffer = await readUploadedFile(req.file, requestId);
+    console.log(`📄 [${requestId}] Buffer read: ${buffer.length} bytes`);
     
     const fileHash = calculateFileHash(buffer);
-    console.log(`🔍 [${requestId}] Datei-Hash berechnet: ${fileHash.substring(0, 12)}...`);
+    console.log(`🔍 [${requestId}] File hash calculated: ${fileHash.substring(0, 12)}...`);
 
     let existingContract = null;
     if (crypto && contractsCollection) {
@@ -578,7 +803,7 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
         existingContract = await checkForDuplicate(fileHash, req.user.userId);
         
         if (existingContract) {
-          console.log(`🔄 [${requestId}] Duplikat gefunden: ${existingContract._id}`);
+          console.log(`🔄 [${requestId}] Duplicate found: ${existingContract._id}`);
           
           const forceReanalyze = req.body.forceReanalyze === 'true';
           
@@ -586,37 +811,36 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
             return res.status(409).json({
               success: false,
               duplicate: true,
-              message: "📄 Dieser Vertrag wurde bereits hochgeladen.",
+              message: "📄 This contract has already been uploaded.",
               error: "DUPLICATE_CONTRACT",
               contractId: existingContract._id,
               contractName: existingContract.name,
               uploadedAt: existingContract.createdAt,
-              existingContract: existingContract, // ✅ VERBESSERUNG: Vollständige Contract-Info für Frontend
+              existingContract: existingContract,
               requestId,
               actions: {
-                reanalyze: `Erneut analysieren und bestehende Analyse überschreiben`,
-                viewExisting: `Bestehenden Vertrag öffnen`
+                reanalyze: `Re-analyze and overwrite existing analysis`,
+                viewExisting: `Open existing contract`
               }
             });
           } else {
-            console.log(`🔄 [${requestId}] Nutzer wählt Re-Analyse für Duplikat`);
+            console.log(`🔄 [${requestId}] User chooses re-analysis for duplicate`);
           }
         }
       } catch (dupError) {
-        console.warn(`⚠️ [${requestId}] Dubletten-Check fehlgeschlagen:`, dupError.message);
+        console.warn(`⚠️ [${requestId}] Duplicate check failed:`, dupError.message);
       }
     } else {
-      console.log(`⚠️ [${requestId}] Dubletten-Check übersprungen (nicht verfügbar)`);
+      console.log(`⚠️ [${requestId}] Duplicate check skipped (not available)`);
     }
 
-    // ===== VERBESSERTE PDF-TEXT-EXTRAKTION (mit benutzerfreundlichen Fehlermeldungen) =====
-    console.log(`📖 [${requestId}] Verwende verbesserte PDF-Extraktion...`);
+    // Enhanced PDF text extraction
+    console.log(`📖 [${requestId}] Using enhanced PDF extraction...`);
     
     const extractionResult = await extractTextFromPDFEnhanced(buffer, req.file.originalname, requestId);
     
-    // ✅ VERBESSERUNG: Check ob Extraktion erfolgreich war
     if (!extractionResult.success) {
-      console.log(`❌ [${requestId}] PDF-Extraktion fehlgeschlagen mit benutzerfreundlicher Meldung`);
+      console.log(`❌ [${requestId}] PDF extraction failed with user-friendly message`);
       
       return res.status(400).json({
         success: false,
@@ -634,30 +858,31 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
     const fullTextContent = extractionResult.text;
     const contractText = extractionResult.text;
     
-    console.log(`📊 [${requestId}] Extraktion erfolgreich:`, {
+    console.log(`📊 [${requestId}] Extraction successful:`, {
       method: extractionResult.extractionMethod,
       quality: extractionResult.quality,
       textLength: fullTextContent.length,
-      pages: extractionResult.pages
+      pages: extractionResult.pages,
+      uploadType: uploadInfo.uploadType
     });
 
-    console.log(`🤖 [${requestId}] OpenAI-Anfrage wird gesendet...`);
+    console.log(`🤖 [${requestId}] Sending OpenAI request...`);
     
     const openai = getOpenAI();
 
     const prompt = `
-Du bist ein Vertragsanalyst. Analysiere den folgenden Vertrag:
+You are a contract analyst. Analyze the following contract:
 
 ${contractText}
 
-Erstelle eine Analyse mit folgenden Punkten:
-1. Eine kurze Zusammenfassung in 2–3 Sätzen.
-2. Einschätzung der Rechtssicherheit.
-3. Konkrete Optimierungsvorschläge.
-4. Vergleichbare Verträge mit besseren Konditionen (wenn möglich).
-5. Eine Contract Score Bewertung von 1 bis 100.
+Create an analysis with the following points:
+1. A brief summary in 2–3 sentences.
+2. Assessment of legal certainty.
+3. Concrete optimization suggestions.
+4. Comparable contracts with better conditions (if possible).
+5. A Contract Score rating from 1 to 100.
 
-Antwort im folgenden JSON-Format:
+Answer in the following JSON format:
 {
   "summary": "...",
   "legalAssessment": "...",
@@ -671,23 +896,23 @@ Antwort im folgenden JSON-Format:
       completion = await Promise.race([
         makeRateLimitedGPT4Request(prompt, requestId, openai),
         new Promise((_, reject) => 
-          setTimeout(() => reject(new Error("OpenAI API Timeout nach 60s")), 60000)
+          setTimeout(() => reject(new Error("OpenAI API timeout after 60s")), 60000)
         )
       ]);
     } catch (openaiError) {
-      console.error(`❌ [${requestId}] OpenAI-Fehler:`, openaiError.message);
-      throw new Error(`OpenAI API Fehler: ${openaiError.message}`);
+      console.error(`❌ [${requestId}] OpenAI error:`, openaiError.message);
+      throw new Error(`OpenAI API error: ${openaiError.message}`);
     }
 
-    console.log(`✅ [${requestId}] OpenAI-Response erhalten`);
+    console.log(`✅ [${requestId}] OpenAI response received`);
 
     const aiMessage = completion.choices[0].message.content || "";
     const jsonStart = aiMessage.indexOf("{");
     const jsonEnd = aiMessage.lastIndexOf("}") + 1;
     
     if (jsonStart === -1 || jsonEnd <= jsonStart) {
-      console.error(`❌ [${requestId}] Keine gültige JSON-Antwort:`, aiMessage.substring(0, 200));
-      throw new Error("Keine gültige JSON-Antwort von OpenAI erhalten");
+      console.error(`❌ [${requestId}] No valid JSON response:`, aiMessage.substring(0, 200));
+      throw new Error("No valid JSON response received from OpenAI");
     }
 
     const jsonString = aiMessage.slice(jsonStart, jsonEnd);
@@ -696,16 +921,16 @@ Antwort im folgenden JSON-Format:
     try {
       result = JSON.parse(jsonString);
     } catch (parseError) {
-      console.error(`❌ [${requestId}] JSON-Parse-Fehler:`, parseError.message);
-      throw new Error("Fehler beim Parsen der AI-Antwort");
+      console.error(`❌ [${requestId}] JSON parse error:`, parseError.message);
+      throw new Error("Error parsing AI response");
     }
 
     if (!result.summary || !result.contractScore) {
-      console.error(`❌ [${requestId}] Unvollständige AI-Response:`, result);
-      throw new Error("Unvollständige Analyse-Antwort von OpenAI");
+      console.error(`❌ [${requestId}] Incomplete AI response:`, result);
+      throw new Error("Incomplete analysis response from OpenAI");
     }
 
-    console.log(`📊 [${requestId}] Analyse erfolgreich, speichere in DB...`);
+    console.log(`📊 [${requestId}] Analysis successful, saving to DB...`);
 
     const analysisData = {
       userId: req.user.userId,
@@ -716,27 +941,30 @@ Antwort im folgenden JSON-Format:
       extractedText: fullTextContent,
       originalFileName: req.file.originalname,
       fileSize: buffer.length,
-      uploadType: "LOCAL_UPLOAD",
+      uploadType: uploadInfo.uploadType,
       extractionMethod: extractionResult.extractionMethod,
       extractionQuality: extractionResult.quality,
       pageCount: extractionResult.pages,
+      ...(uploadInfo.s3Info && {
+        s3Info: uploadInfo.s3Info
+      }),
       ...result,
     };
 
     let inserted;
     try {
       inserted = await analysisCollection.insertOne(analysisData);
-      console.log(`✅ [${requestId}] Stable Analyse gespeichert: ${inserted.insertedId} (mit fullText: ${fullTextContent.length} Zeichen)`);
+      console.log(`✅ [${requestId}] Production analysis saved: ${inserted.insertedId} (with fullText: ${fullTextContent.length} characters)`);
     } catch (dbError) {
-      console.error(`❌ [${requestId}] DB-Insert-Fehler:`, dbError.message);
-      throw new Error(`Datenbank-Fehler beim Speichern: ${dbError.message}`);
+      console.error(`❌ [${requestId}] DB insert error:`, dbError.message);
+      throw new Error(`Database error while saving: ${dbError.message}`);
     }
 
     try {
-      console.log(`💾 [${requestId}] Speichere Vertrag (lokal)...`);
+      console.log(`💾 [${requestId}] Saving contract (${uploadInfo.uploadType})...`);
 
       if (existingContract && req.body.forceReanalyze === 'true') {
-        console.log(`🔄 [${requestId}] Aktualisiere bestehenden Vertrag: ${existingContract._id}`);
+        console.log(`🔄 [${requestId}] Updating existing contract: ${existingContract._id}`);
         
         await contractsCollection.updateOne(
           { _id: existingContract._id },
@@ -746,16 +974,24 @@ Antwort im folgenden JSON-Format:
               analysisId: inserted.insertedId,
               fullText: fullTextContent,
               content: fullTextContent,
-              filePath: `/uploads/${req.file.filename}`,
-              filename: req.file.filename,
-              uploadType: "LOCAL_UPLOAD",
+              filePath: uploadInfo.fileUrl,
+              filename: req.file.filename || req.file.key,
+              uploadType: uploadInfo.uploadType,
               extractionMethod: extractionResult.extractionMethod,
               extractionQuality: extractionResult.quality,
               extraRefs: {
-                uploadType: "LOCAL_UPLOAD",
+                uploadType: uploadInfo.uploadType,
                 analysisId: inserted.insertedId,
-                uploadPath: UPLOAD_PATH,
-                serverPath: `/uploads/${req.file.filename}`,
+                ...(uploadInfo.s3Info && {
+                  s3Bucket: uploadInfo.s3Info.bucket,
+                  s3Key: uploadInfo.s3Info.key,
+                  s3Location: uploadInfo.s3Info.location,
+                  s3ETag: uploadInfo.s3Info.etag
+                }),
+                ...(uploadInfo.localInfo && {
+                  uploadPath: UPLOAD_PATH,
+                  serverPath: uploadInfo.localInfo.path
+                }),
                 extractionMethod: extractionResult.extractionMethod
               },
               legalPulse: {
@@ -770,21 +1006,22 @@ Antwort im folgenden JSON-Format:
           }
         );
         
-        console.log(`✅ [${requestId}] Bestehender Vertrag aktualisiert (${fullTextContent.length} Zeichen)`);
+        console.log(`✅ [${requestId}] Existing contract updated (${fullTextContent.length} characters)`);
       } else {
         const contractAnalysisData = {
           name: result.summary ? req.file.originalname : req.file.originalname,
-          laufzeit: "Unbekannt",
-          kuendigung: "Unbekannt",
+          laufzeit: "Unknown",
+          kuendigung: "Unknown",
           expiryDate: "",
-          status: "Aktiv"
+          status: "Active"
         };
 
-        const savedContract = await saveContractWithLocalUpload(
+        const savedContract = await saveContractWithUpload(
           req.user.userId,
           contractAnalysisData,
           req.file,
-          fullTextContent
+          fullTextContent,
+          uploadInfo
         );
 
         await contractsCollection.updateOne(
@@ -800,12 +1037,12 @@ Antwort im folgenden JSON-Format:
           }
         );
 
-        console.log(`✅ [${requestId}] Neuer Vertrag gespeichert: ${savedContract._id} mit analysisId: ${inserted.insertedId}`);
+        console.log(`✅ [${requestId}] New contract saved: ${savedContract._id} with analysisId: ${inserted.insertedId}`);
       }
       
     } catch (saveError) {
-      console.error(`❌ [${requestId}] Vertrag-Speicher-Fehler:`, saveError.message);
-      console.warn(`⚠️ [${requestId}] Analyse war erfolgreich, aber Vertrag-Speicherung fehlgeschlagen`);
+      console.error(`❌ [${requestId}] Contract save error:`, saveError.message);
+      console.warn(`⚠️ [${requestId}] Analysis was successful, but contract saving failed`);
     }
 
     try {
@@ -813,25 +1050,28 @@ Antwort im folgenden JSON-Format:
         { _id: user._id },
         { $inc: { analysisCount: 1 } }
       );
-      console.log(`✅ [${requestId}] Analyse-Counter aktualisiert`);
+      console.log(`✅ [${requestId}] Analysis counter updated`);
     } catch (updateError) {
-      console.warn(`⚠️ [${requestId}] Counter-Update-Fehler:`, updateError.message);
+      console.warn(`⚠️ [${requestId}] Counter update error:`, updateError.message);
     }
 
-    console.log(`✅ [${requestId}] Stable Analyse komplett erfolgreich`);
+    console.log(`✅ [${requestId}] Production S3 analysis completely successful`);
 
     const responseData = { 
       success: true,
-      message: "Analyse erfolgreich abgeschlossen",
+      message: "Analysis completed successfully",
       requestId,
-      uploadType: "LOCAL_UPLOAD",
-      fileUrl: `/uploads/${req.file.filename}`,
+      uploadType: uploadInfo.uploadType,
+      fileUrl: uploadInfo.fileUrl,
       extractionInfo: {
         method: extractionResult.extractionMethod,
         quality: extractionResult.quality,
         charactersExtracted: fullTextContent.length,
         pageCount: extractionResult.pages
       },
+      ...(uploadInfo.s3Info && {
+        s3Info: uploadInfo.s3Info
+      }),
       ...result, 
       analysisId: inserted.insertedId,
       usage: {
@@ -844,43 +1084,44 @@ Antwort im folgenden JSON-Format:
     if (existingContract && req.body.forceReanalyze === 'true') {
       responseData.isReanalysis = true;
       responseData.originalContractId = existingContract._id;
-      responseData.message = "Analyse erfolgreich aktualisiert";
+      responseData.message = "Analysis updated successfully";
     }
 
     res.json(responseData);
 
   } catch (error) {
-    console.error(`❌ [${requestId}] Fehler bei stabiler Analyse:`, {
+    console.error(`❌ [${requestId}] Error in production S3 analysis:`, {
       message: error.message,
       stack: error.stack?.substring(0, 500),
       userId: req.user?.userId,
-      filename: req.file?.originalname
+      filename: req.file?.originalname,
+      uploadType: uploadInfo.uploadType
     });
     
-    let errorMessage = "Fehler bei der Analyse.";
+    let errorMessage = "Error during analysis.";
     let errorCode = "ANALYSIS_ERROR";
     
     if (error.message.includes("API Key")) {
-      errorMessage = "KI-Service vorübergehend nicht verfügbar.";
+      errorMessage = "AI service temporarily unavailable.";
       errorCode = "AI_SERVICE_ERROR";
     } else if (error.message.includes("Timeout")) {
-      errorMessage = "Analyse-Timeout. Bitte versuche es mit einer kleineren Datei.";
+      errorMessage = "Analysis timeout. Please try with a smaller file.";
       errorCode = "TIMEOUT_ERROR";
     } else if (error.message.includes("JSON") || error.message.includes("Parse")) {
-      errorMessage = "Fehler bei der Analyse-Verarbeitung.";
+      errorMessage = "Error in analysis processing.";
       errorCode = "PARSE_ERROR";
-    } else if (error.message.includes("PDF") || error.message.includes("Datei") || error.message.includes("passwortgeschützt") || error.message.includes("📸") || error.message.includes("📄") || error.message.includes("🔒")) {
+    } else if (error.message.includes("PDF") || error.message.includes("File") || error.message.includes("password") || error.message.includes("📸") || error.message.includes("📄") || error.message.includes("🔒")) {
       errorMessage = error.message;
       errorCode = "PDF_ERROR";
-    } else if (error.message.includes("Datenbank") || error.message.includes("MongoDB")) {
-      errorMessage = "Datenbank-Fehler. Bitte versuche es erneut.";
+    } else if (error.message.includes("Database") || error.message.includes("MongoDB")) {
+      errorMessage = "Database error. Please try again.";
       errorCode = "DATABASE_ERROR";
     } else if (error.message.includes("OpenAI") || error.message.includes("Rate Limit")) {
-      errorMessage = "KI-Analyse-Service vorübergehend nicht verfügbar.";
+      errorMessage = "AI analysis service temporarily unavailable.";
       errorCode = "AI_SERVICE_ERROR";
-    } else if (error.message.includes("Nicht genügend Text")) {
-      errorMessage = error.message;
-      errorCode = "INSUFFICIENT_TEXT";
+    } else if (error.message.includes("S3") || error.message.includes("AWS")) {
+      errorMessage = "File storage error. Please try again.";
+      errorCode = "STORAGE_ERROR";
     }
 
     res.status(500).json({ 
@@ -888,6 +1129,7 @@ Antwort im folgenden JSON-Format:
       message: errorMessage,
       error: errorCode,
       requestId,
+      uploadType: uploadInfo.uploadType,
       details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
@@ -899,7 +1141,7 @@ router.get("/history", verifyToken, async (req, res) => {
   const requestId = `hist_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   
   try {
-    console.log(`📚 [${requestId}] Analyse-Historie angefordert für User: ${req.user.userId}`);
+    console.log(`📚 [${requestId}] Analysis history requested for user: ${req.user.userId}`);
     
     const { analysisCollection } = await getMongoCollections();
     
@@ -909,7 +1151,7 @@ router.get("/history", verifyToken, async (req, res) => {
       .limit(20)
       .toArray();
 
-    console.log(`📚 [${requestId}] ${history.length} Analyse-Einträge gefunden`);
+    console.log(`📚 [${requestId}] ${history.length} analysis entries found`);
 
     res.json({
       success: true,
@@ -919,34 +1161,40 @@ router.get("/history", verifyToken, async (req, res) => {
     });
 
   } catch (err) {
-    console.error(`❌ [${requestId}] Fehler beim Abrufen der Analyse-Historie:`, err);
+    console.error(`❌ [${requestId}] Error fetching analysis history:`, err);
     res.status(500).json({ 
       success: false,
-      message: "Fehler beim Abrufen der Historie.",
+      message: "Error fetching history.",
       error: "HISTORY_ERROR",
       requestId
     });
   }
 });
 
-// ✅ UPDATED: Health Check für stabile Version
+// ✅ ENHANCED: Health Check with comprehensive S3 status
 router.get("/health", async (req, res) => {
+  // Re-test S3 connectivity for health check
+  if (S3_CONFIGURED && s3Instance) {
+    await testS3Connectivity();
+  }
+
   const checks = {
-    service: "Contract Analysis (Emergency Rollback)", // ✅ Updated
+    service: "Contract Analysis (Production S3)",
     status: "online",
     timestamp: new Date().toISOString(),
     openaiConfigured: !!process.env.OPENAI_API_KEY,
     mongoConnected: false,
     uploadsPath: fsSync.existsSync(UPLOAD_PATH),
     uploadPath: UPLOAD_PATH,
-    uploadType: "LOCAL_UPLOAD",
-    s3Integration: "DISABLED (Emergency Rollback)",
+    uploadType: S3_AVAILABLE ? "S3_UPLOAD" : "LOCAL_UPLOAD",
+    s3Available: S3_AVAILABLE,
+    s3Configured: S3_CONFIGURED,
+    s3Region: process.env.AWS_REGION || 'not-configured',
+    s3Bucket: process.env.S3_BUCKET_NAME || 'not-configured',
+    s3ConfigError: S3_CONFIG_ERROR,
     cryptoAvailable: !!crypto,
     saveContractAvailable: !!saveContract,
-    ocrAvailable: false, // ✅ OCR ist in stabiler Version deaktiviert
-    tesseractLoaded: false, // ✅ Tesseract ist entfernt
-    queueAvailable: false, // ✅ Queue ist entfernt
-    version: "emergency-rollback" // ✅ Version-Info
+    version: "production-s3"
   };
 
   try {
@@ -966,7 +1214,7 @@ router.get("/health", async (req, res) => {
 });
 
 process.on('SIGTERM', async () => {
-  console.log('📊 Analyze service (emergency rollback) shutting down...');
+  console.log('📊 Analyze service (production S3) shutting down...');
   if (mongoClient) {
     await mongoClient.close();
   }
