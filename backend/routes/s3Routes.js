@@ -3,7 +3,7 @@ const express = require("express");
 const router = express.Router();
 const { generateSignedUrl } = require("../services/fileStorage");
 const verifyToken = require("../middleware/verifyToken");
-const Contract = require("../models/Contract"); // Dein Contract Model
+const Contract = require("../models/Contract"); // Für refresh route
 
 // @route   GET /api/s3/view?file=... ODER ?contractId=... ODER ?key=...
 // @desc    Get a signed URL to view the file from S3
@@ -18,7 +18,14 @@ router.get("/view", verifyToken, async (req, res) => {
       console.log("⏰ Starte S3-Zugriff...");
       
       try {
-        const signedUrl = generateSignedUrl(key, 86400); // 24 Stunden
+        // Generiere Signed URL (24 Stunden) - DIREKT zu S3, KEIN MONGODB!
+        const signedUrlResult = generateSignedUrl(key, 86400); // 24 Stunden
+        
+        // Falls generateSignedUrl ein Objekt zurückgibt, extrahiere die URL
+        const signedUrl = typeof signedUrlResult === 'string' ? signedUrlResult : signedUrlResult.url || signedUrlResult;
+        
+        console.log("✅ Generated signed URL:", signedUrl, "Type:", typeof signedUrl);
+        
         return res.json({ url: signedUrl });
       } catch (err) {
         console.error("❌ S3 Error:", err);
