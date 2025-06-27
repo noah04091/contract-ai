@@ -187,7 +187,7 @@ export default function ContractDetailsView({
     return sentences.length > 0 ? sentences : [text.substring(0, 180) + '...'];
   };
 
-  // ✅ ENHANCED: S3-Integration für Contract Viewing
+  // ✅ ANGEPASST: Original handleViewContract mit ChatGPT Fix für S3-Teil
   const handleViewContract = async () => {
     console.log('🔍 Opening contract with enhanced S3 integration:', {
       contractId: contract._id,
@@ -197,13 +197,13 @@ export default function ContractDetailsView({
       needsReupload: contract.needsReupload
     });
 
-    // ✅ STEP 1: Prüfe ob Vertrag S3-Integration hat
+    // ✅ CHATGPT FIX: Neue vereinfachte S3-Route mit key Parameter
     if (contract.s3Key) {
       console.log('✅ S3 Contract detected, fetching signed URL...');
       
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`/api/s3/view?contractId=${contract._id}`, {
+        const response = await fetch(`/api/s3/view?key=${encodeURIComponent(contract.s3Key)}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -213,9 +213,9 @@ export default function ContractDetailsView({
         
         const data = await response.json();
         
-        if (response.ok && data.fileUrl) {
+        if (response.ok && data.url) {
           console.log('✅ S3 URL fetched successfully');
-          window.open(data.fileUrl, '_blank', 'noopener,noreferrer');
+          window.open(data.url, '_blank', 'noopener,noreferrer');
           return;
         } else {
           console.error('❌ S3 URL fetch failed:', data.error);
@@ -227,13 +227,13 @@ export default function ContractDetailsView({
       }
     }
     
-    // ✅ STEP 2: Legacy-Vertrag oder S3-Fehler
+    // ✅ ORIGINAL: Legacy-Vertrag oder S3-Fehler
     if (contract.needsReupload || contract.uploadType === 'LOCAL_LEGACY') {
       alert(`⚠️ Dieser Vertrag wurde vor der Cloud-Integration hochgeladen und ist nicht mehr verfügbar.\n\nBitte laden Sie "${contract.name}" erneut hoch, um ihn anzuzeigen.`);
       return;
     }
 
-    // ✅ STEP 3: Fallback - Original Logic (für Backward Compatibility)
+    // ✅ ORIGINAL: Fallback - Original Logic (für Backward Compatibility)
     console.log('🔄 Fallback: Using original file URL logic...');
     
     const fileUrl = getContractFileUrl(contract);
@@ -275,9 +275,9 @@ export default function ContractDetailsView({
           
           const data = await response.json();
           
-          if (data.fileUrl) {
-            console.log('✅ Opening S3 file directly:', data.fileUrl);
-            window.open(data.fileUrl, '_blank', 'noopener,noreferrer');
+          if (data.fileUrl || data.url) {
+            console.log('✅ Opening S3 file directly:', data.fileUrl || data.url);
+            window.open(data.fileUrl || data.url, '_blank', 'noopener,noreferrer');
           } else {
             console.error('❌ No fileUrl in response:', data);
             alert('Fehler: Datei-URL konnte nicht generiert werden.');
@@ -550,7 +550,7 @@ ${analysis.comparison || 'Nicht verfügbar'}
                     )}
                   </div>
                   
-                  {/* ✅ ENHANCED: Contract View Button mit S3-Integration */}
+                  {/* ✅ ORIGINAL Contract View Button mit ChatGPT Fix */}
                   <div className={styles.viewContractSection}>
                     {contract.needsReupload || contract.uploadType === 'LOCAL_LEGACY' ? (
                       <div style={{ textAlign: 'center', padding: '1rem' }}>

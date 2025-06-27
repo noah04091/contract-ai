@@ -5,17 +5,32 @@ const { generateSignedUrl } = require("../services/fileStorage");
 const verifyToken = require("../middleware/verifyToken");
 const Contract = require("../models/Contract"); // Dein Contract Model
 
-// @route   GET /api/s3/view?file=... ODER ?contractId=...
+// @route   GET /api/s3/view?file=... ODER ?contractId=... ODER ?key=...
 // @desc    Get a signed URL to view the file from S3
 // @access  Private
 router.get("/view", verifyToken, async (req, res) => {
   try {
-    const { file, contractId } = req.query;
+    const { file, contractId, key } = req.query;
     
+    // ✅ CHATGPT FIX: Für direkten key-Zugriff OHNE MongoDB (löst Timeout-Problem)
+    if (key && !contractId && !file) {
+      console.log("🔍 S3 View aufgerufen mit key:", key);
+      console.log("⏰ Starte S3-Zugriff...");
+      
+      try {
+        const signedUrl = generateSignedUrl(key, 86400); // 24 Stunden
+        return res.json({ url: signedUrl });
+      } catch (err) {
+        console.error("❌ S3 Error:", err);
+        return res.status(500).json({ error: "S3-Fehler" });
+      }
+    }
+    
+    // ✅ ORIGINAL LOGIC: Für Backward Compatibility beibehalten
     if (!file && !contractId) {
       return res.status(400).json({ 
-        error: "No file or contractId provided",
-        usage: "Use ?file=s3key or ?contractId=mongoId"
+        error: "No file, contractId, or key provided",
+        usage: "Use ?file=s3key or ?contractId=mongoId or ?key=s3key"
       });
     }
 
