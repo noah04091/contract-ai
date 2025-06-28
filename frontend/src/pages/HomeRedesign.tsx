@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from "../hooks/useAuth";;
 import "../styles/landing.css";
@@ -19,8 +19,17 @@ const HomeRedesign = () => {
   const { user } = useAuth();
   const heroRef = useRef<HTMLDivElement>(null);
   const sectionsRef = useRef<{ [key: string]: HTMLElement | null }>({});
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
+    // Check if device is mobile
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+
     // Scroll event listener mit modifiziertem Parallax-Effekt
     const handleScroll = () => {
       const scrollPosition = window.scrollY;
@@ -54,7 +63,10 @@ const HomeRedesign = () => {
     // Initial call to ensure no transformation is applied on page load
     handleScroll();
     
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', checkMobile);
+    };
   }, []);
 
   // Register section refs
@@ -88,11 +100,13 @@ const HomeRedesign = () => {
           <img src={logo} alt="Contract AI Logo" className="pulse-logo" />
         </div>
         <div className="hero-content">
-          <h1 className="reveal-text">KI-gestützte Vertragsanalyse</h1>
-          <p className="subtitle reveal-text">Verträge analysieren, optimieren & verwalten – einfach & sicher.</p>
+          <h1 className="reveal-text">Verträge verstehen. Risiken erkennen.</h1>
+          <p className="subtitle reveal-text">
+            Contract AI analysiert, optimiert und verwaltet Ihre Verträge – vollautomatisch, rechtssicher & cloudbasiert.
+          </p>
+          <p className="hero-trust-hint reveal-text">🔐 DSGVO-konform – keine sensiblen Daten werden gespeichert</p>
           
           <div className="hero-cta reveal-text">
-            {/* ÄNDERUNG 1: isLoading-Prüfung entfernt */}
             {!user ? (
               <div className="auth-cta">
                 <Link to="/register" className="cta-button primary">
@@ -158,7 +172,31 @@ const HomeRedesign = () => {
         </div>
       </section>
 
-      {/* Features Section */}
+      {/* Trustbar Section - NEU */}
+      <section className="trustbar-section">
+        <div className="section-container">
+          <div className="trustbar">
+            <div className="trust-item reveal-card" style={{"--animation-order": 0} as React.CSSProperties}>
+              <span className="trust-icon">✅</span>
+              <span className="trust-text">DSGVO-konform</span>
+            </div>
+            <div className="trust-item reveal-card" style={{"--animation-order": 1} as React.CSSProperties}>
+              <span className="trust-icon">🇩🇪</span>
+              <span className="trust-text">Serverstandort: Frankfurt (EU-Cloud)</span>
+            </div>
+            <div className="trust-item reveal-card" style={{"--animation-order": 2} as React.CSSProperties}>
+              <span className="trust-icon">🧠</span>
+              <span className="trust-text">KI-gestützt & juristisch geprüft</span>
+            </div>
+            <div className="trust-item reveal-card" style={{"--animation-order": 3} as React.CSSProperties}>
+              <span className="trust-icon">🔒</span>
+              <span className="trust-text">Verschlüsselte Datenübertragung</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section - Erweitert auf 6 Cards */}
       <section className="features-section" ref={(el) => registerSection('features', el)}>
         <div className="section-container">
           <div className="section-title">
@@ -183,7 +221,7 @@ const HomeRedesign = () => {
                 </div>
               </div>
               <h3>Analyse</h3>
-              <p>Verträge KI-gestützt auswerten & bewerten lassen.</p>
+              <p>Verträge KI-basiert auswerten, Risiken erkennen & Transparenz gewinnen.</p>
               <Link to="/contracts" className="feature-link">
                 Mehr erfahren
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -204,7 +242,7 @@ const HomeRedesign = () => {
                 </div>
               </div>
               <h3>Optimierung</h3>
-              <p>Unvorteilhafte Inhalte erkennen & direkt verbessern.</p>
+              <p>Unvorteilhafte Klauseln erkennen und durch bessere Formulierungen ersetzen.</p>
               <Link to="/optimizer" className="feature-link">
                 Mehr erfahren
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -224,7 +262,7 @@ const HomeRedesign = () => {
                 </div>
               </div>
               <h3>Fristen</h3>
-              <p>Nie wieder Fristen verpassen dank automatischer Mails.</p>
+              <p>Kündigungsfristen automatisch erkennen & rechtzeitig per Mail erinnert werden.</p>
               <Link to="/calendar" className="feature-link">
                 Mehr erfahren
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -245,8 +283,52 @@ const HomeRedesign = () => {
                 </div>
               </div>
               <h3>Vergleich</h3>
-              <p>Zwei Verträge vergleichen & Unterschiede aufdecken.</p>
+              <p>Zwei Verträge gegenüberstellen, Unterschiede visuell hervorheben.</p>
               <Link to="/compare" className="feature-link">
+                Mehr erfahren
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12h14"></path>
+                  <path d="m12 5 7 7-7 7"></path>
+                </svg>
+              </Link>
+            </div>
+
+            {/* NEU: Generator Card */}
+            <div className="feature-card reveal-card" style={{"--animation-order": 4} as React.CSSProperties}>
+              <div className="feature-icon-wrapper green">
+                <div className="feature-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10 9 9 9 8 9"></polyline>
+                  </svg>
+                </div>
+              </div>
+              <h3>Generator</h3>
+              <p>Vertragsdokumente aus KI-Vorlagen erzeugen – z. B. Freelancer-, NDA- oder Mietverträge.</p>
+              <Link to="/generate" className="feature-link">
+                Mehr erfahren
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12h14"></path>
+                  <path d="m12 5 7 7-7 7"></path>
+                </svg>
+              </Link>
+            </div>
+
+            {/* NEU: Legal Pulse Card */}
+            <div className="feature-card reveal-card" style={{"--animation-order": 5} as React.CSSProperties}>
+              <div className="feature-icon-wrapper red">
+                <div className="feature-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                  </svg>
+                </div>
+              </div>
+              <h3>Legal Pulse</h3>
+              <p>Frühwarnsystem für neue Risiken durch Gesetzesänderungen oder unfaire Formulierungen.</p>
+              <Link to="/pulse" className="feature-link">
                 Mehr erfahren
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M5 12h14"></path>
@@ -534,7 +616,6 @@ const HomeRedesign = () => {
           <h2 className="reveal-text">Bereit, Ihre Verträge zu optimieren?</h2>
           <p className="reveal-text">Starten Sie jetzt mit Contract AI und erleben Sie die Zukunft des Vertragsmanagements.</p>
           <div className="cta-buttons reveal-text">
-            {/* ÄNDERUNG 1: isLoading-Prüfung entfernt */}
             {user ? (
               <Link to="/dashboard" className="cta-button primary glow">
                 <span className="button-icon">
@@ -595,6 +676,8 @@ const HomeRedesign = () => {
                   <li><Link to="/optimizer">Optimierung</Link></li>
                   <li><Link to="/calendar">Fristen</Link></li>
                   <li><Link to="/compare">Vergleich</Link></li>
+                  <li><Link to="/generate">Generator</Link></li>
+                  <li><Link to="/pulse">Legal Pulse</Link></li>
                 </ul>
               </div>
               
@@ -645,6 +728,24 @@ const HomeRedesign = () => {
           </div>
         </div>
       </footer>
+
+      {/* Mobile Sticky CTA - NEU */}
+      {isMobile && !user && (
+        <div className="mobile-sticky-cta">
+          <div className="mobile-cta-content">
+            <div className="mobile-cta-text">
+              <span className="mobile-cta-title">Jetzt kostenlos starten</span>
+              <span className="mobile-cta-subtitle">Ohne Registrierung testen</span>
+            </div>
+            <Link to="/register" className="mobile-cta-button">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 12h14"></path>
+                <path d="m12 5 7 7-7 7"></path>
+              </svg>
+            </Link>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

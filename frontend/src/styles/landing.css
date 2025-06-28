@@ -15,6 +15,7 @@
   --orange-color: #ff8c41;
   --purple-color: #8a4fff;
   --green-color: #2ed573;
+  --red-color: #ff4757;
   --text-color: #1d1d1f;
   --text-light: #86868b;
   --text-white: #f5f5f7;
@@ -82,15 +83,27 @@ a {
   width: 12px;
 }
 
+/* KONTRAST-FIX: Bessere Lesbarkeit für Überschriften */
 .section-title h2 {
   font-size: 40px;
   font-weight: 700;
   margin-bottom: 15px;
   letter-spacing: -0.02em;
-  background: linear-gradient(135deg, var(--text-color), #505050);
+  color: var(--text-color);
+  /* Fallback für besseren Kontrast */
+  background: linear-gradient(135deg, #1d1d1f 0%, #4a4a4a 100%);
   -webkit-background-clip: text;
   background-clip: text;
-  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Fallback für Browser ohne Gradient-Support */
+@supports not (-webkit-background-clip: text) {
+  .section-title h2 {
+    color: var(--text-color);
+    background: none;
+    -webkit-text-fill-color: initial;
+  }
 }
 
 .section-title p {
@@ -203,6 +216,17 @@ a {
   100% {
     transform: scale(1);
     filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.2));
+  }
+}
+
+@keyframes slideUpFade {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -915,8 +939,23 @@ a {
 
 .hero .subtitle {
   font-size: 24px;
-  margin-bottom: 40px;
+  margin-bottom: 20px;
   opacity: 0.9;
+}
+
+/* NEU: Hero Trust Hint */
+.hero-trust-hint {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 40px;
+  padding: 8px 16px;
+  border-radius: 100px;
+  background-color: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: inline-block;
+  font-weight: 500;
 }
 
 .hero-cta {
@@ -1027,6 +1066,54 @@ a {
   animation: scrollArrow 2s infinite;
 }
 
+/* === TRUSTBAR SECTION - NEU === */
+.trustbar-section {
+  background: linear-gradient(135deg, #f8faff 0%, #ffffff 100%);
+  padding: 40px 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  position: relative;
+  z-index: 3;
+}
+
+.trustbar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.trust-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background: white;
+  border-radius: var(--radius-md);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  transition: var(--transition);
+  text-align: left;
+}
+
+.trust-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.trust-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.trust-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-color);
+  margin: 0;
+}
+
 /* === FEATURES SECTION === */
 .features-section {
   padding: 120px 20px;
@@ -1035,9 +1122,10 @@ a {
   overflow: hidden;
 }
 
+/* GEÄNDERT: Grid von 4 auf 3 Spalten für 6 Cards */
 .features-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 30px;
 }
 
@@ -1103,6 +1191,17 @@ a {
   background: linear-gradient(135deg, #8a4fff, #6126d9);
 }
 
+/* NEU: Zusätzliche Icon-Wrapper */
+.feature-icon-wrapper.green {
+  background: linear-gradient(135deg, #2ed573, #1dd65f);
+  box-shadow: 0 10px 15px rgba(46, 213, 115, 0.2);
+}
+
+.feature-icon-wrapper.red {
+  background: linear-gradient(135deg, #ff4757, #ff3742);
+  box-shadow: 0 10px 15px rgba(255, 71, 87, 0.2);
+}
+
 .feature-icon {
   color: white;
   line-height: 0;
@@ -1112,6 +1211,7 @@ a {
   font-size: 22px;
   margin-bottom: 16px;
   font-weight: 600;
+  color: var(--text-color);
 }
 
 .feature-card p {
@@ -1284,11 +1384,13 @@ a {
   text-align: left;
 }
 
+/* KONTRAST-FIX: Bessere Lesbarkeit für Showcase-Überschriften */
 .showcase-content h3 {
   font-size: 32px;
   margin-bottom: 20px;
   font-weight: 600;
   letter-spacing: -0.02em;
+  color: var(--text-color);
 }
 
 .showcase-content p {
@@ -1838,6 +1940,68 @@ a[href*="kontakt"]:hover,
   z-index: 2;
 }
 
+/* === MOBILE STICKY CTA - NEU === */
+.mobile-sticky-cta {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+  z-index: 999;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  animation: slideUpFade 0.6s ease-out;
+}
+
+.mobile-cta-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  gap: 16px;
+}
+
+.mobile-cta-text {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.mobile-cta-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: white;
+  line-height: 1.2;
+}
+
+.mobile-cta-subtitle {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.8);
+  margin-top: 2px;
+}
+
+.mobile-cta-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  color: white;
+  transition: var(--transition);
+  flex-shrink: 0;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.mobile-cta-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+}
+
 /* === FOOTER === */
 .footer {
   background-color: var(--bg-dark);
@@ -1981,6 +2145,10 @@ a[href*="kontakt"]:hover,
   .nav-links li {
     margin: 0 10px;
   }
+  
+  .trustbar {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (max-width: 1024px) {
@@ -2054,6 +2222,10 @@ a[href*="kontakt"]:hover,
   .sidebar {
     width: 85%;
     max-width: 320px;
+  }
+  
+  .trustbar {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -2171,6 +2343,10 @@ a[href*="kontakt"]:hover,
     padding: 30px 20px;
   }
   
+  .features-grid {
+    grid-template-columns: 1fr;
+  }
+  
   .cta-section h2 {
     font-size: 32px;
   }
@@ -2199,6 +2375,18 @@ a[href*="kontakt"]:hover,
   .sidebar {
     width: 90%;
   }
+  
+  .trustbar-section {
+    padding: 30px 20px;
+  }
+  
+  .trust-item {
+    padding: 12px 16px;
+  }
+  
+  .trust-text {
+    font-size: 13px;
+  }
 }
 
 @media (max-width: 576px) {
@@ -2223,6 +2411,11 @@ a[href*="kontakt"]:hover,
     font-size: 16px;
   }
   
+  .hero-trust-hint {
+    font-size: 14px;
+    padding: 6px 12px;
+  }
+  
   .auth-cta {
     flex-direction: column;
     width: 100%;
@@ -2231,10 +2424,6 @@ a[href*="kontakt"]:hover,
   .cta-button {
     width: 100%;
     justify-content: center;
-  }
-  
-  .features-grid {
-    grid-template-columns: 1fr;
   }
   
   .showcase-content h3 {
@@ -2294,6 +2483,21 @@ a[href*="kontakt"]:hover,
   
   .primary-button .button-icon {
     display: none;
+  }
+  
+  .trustbar {
+    gap: 12px;
+  }
+  
+  .trust-item {
+    flex-direction: column;
+    text-align: center;
+    gap: 8px;
+    padding: 16px 12px;
+  }
+  
+  .trust-icon {
+    font-size: 24px;
   }
 }
 
