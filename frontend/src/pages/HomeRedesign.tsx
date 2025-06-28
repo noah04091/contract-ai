@@ -87,82 +87,131 @@ const HomeRedesign = () => {
 
   return (
     <div className="landing-page">
-      {/* Apple-Style Hero Section */}
-      <section className="hero apple-hero" ref={heroRef}>
-        <div className="apple-hero-bg">
-          <div className="apple-gradient-orb apple-orb-1"></div>
-          <div className="apple-gradient-orb apple-orb-2"></div>
-          <div className="apple-gradient-orb apple-orb-3"></div>
+      {/* Sophisticated Apple-Hero with Modern Effects */}
+      <section className="hero sophisticated-hero" ref={heroRef}>
+        {/* Advanced Background with Multiple Layers */}
+        <div className="sophisticated-hero-bg">
+          {/* Gradient Mesh Layer */}
+          <div className="gradient-mesh-layer">
+            <div className="gradient-mesh gradient-mesh-1"></div>
+            <div className="gradient-mesh gradient-mesh-2"></div>
+            <div className="gradient-mesh gradient-mesh-3"></div>
+            <div className="gradient-mesh gradient-mesh-4"></div>
+          </div>
+          
+          {/* Floating Glass Orbs */}
+          <div className="floating-orbs-layer">
+            <div className="glass-orb glass-orb-1"></div>
+            <div className="glass-orb glass-orb-2"></div>
+            <div className="glass-orb glass-orb-3"></div>
+            <div className="glass-orb glass-orb-4"></div>
+            <div className="glass-orb glass-orb-5"></div>
+          </div>
+          
+          {/* Light Rays Layer */}
+          <div className="light-rays-layer">
+            <div className="light-ray light-ray-1"></div>
+            <div className="light-ray light-ray-2"></div>
+          </div>
+          
+          {/* Noise Texture Overlay */}
+          <div className="noise-texture-overlay"></div>
         </div>
         
-        <div className="apple-logo-hero">
-          <img src={logoHeader} alt="Contract AI Logo Header" className="apple-logo-animation" />
+        {/* Content Glow Backdrop */}
+        <div className="content-glow-backdrop"></div>
+        
+        <div className="sophisticated-logo-hero">
+          <img src={logoHeader} alt="Contract AI Logo" className="sophisticated-logo-animation" />
         </div>
         
-        <div className="apple-hero-content">
-          <div className="apple-hero-text-container">
-            <h1 className="apple-hero-headline apple-fade-up">
-              Verträge verstehen.<br />
-              Risiken vermeiden.<br />
-              Freiheit gewinnen.
-            </h1>
+        <div className="sophisticated-hero-content">
+          <div className="sophisticated-hero-text-container">
+            {/* Headline with Glow Effect */}
+            <div className="headline-glow-wrapper">
+              <h1 className="sophisticated-hero-headline sophisticated-fade-up">
+                <span className="headline-line">Verträge verstehen.</span>
+                <span className="headline-line">Risiken vermeiden.</span>
+                <span className="headline-line">Freiheit gewinnen.</span>
+              </h1>
+            </div>
             
-            <p className="apple-hero-subheadline apple-fade-up-delay">
-              Schluss mit stundenlangem Lesen. Komplexe Verträge werden endlich klar und verständlich.
-            </p>
+            {/* Subheadline with Glass Effect */}
+            <div className="subheadline-glass-wrapper">
+              <p className="sophisticated-hero-subheadline sophisticated-fade-up-delay">
+                Schluss mit stundenlangem Lesen. Komplexe Verträge werden endlich klar und verständlich.
+              </p>
+            </div>
             
-            <div className="apple-hero-trust-hint apple-fade-up-delay-2">
-              🔐 Deutsche Server. Maximaler Schutz. Ihre Daten bleiben Ihre Daten.
+            {/* Trust Hint with Enhanced Glass Effect */}
+            <div className="trust-hint-enhanced-wrapper">
+              <div className="sophisticated-hero-trust-hint sophisticated-fade-up-delay-2">
+                <span className="trust-hint-icon">🔐</span>
+                <span className="trust-hint-text">Deutsche Server. Maximaler Schutz. Ihre Daten bleiben Ihre Daten.</span>
+              </div>
             </div>
           </div>
           
-          <div className="apple-hero-cta apple-fade-up-delay-3">
+          <div className="sophisticated-hero-cta sophisticated-fade-up-delay-3">
             {!user ? (
-              <div className="apple-auth-cta">
-                <Link to="/register" className="apple-cta-button apple-primary">
-                  <span className="apple-button-text">Jetzt starten</span>
-                  <span className="apple-button-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M5 12h14"></path>
-                      <path d="m12 5 7 7-7 7"></path>
-                    </svg>
+              <div className="sophisticated-auth-cta">
+                <Link to="/register" className="sophisticated-cta-button sophisticated-primary">
+                  <span className="cta-button-glow"></span>
+                  <span className="sophisticated-button-content">
+                    <span className="sophisticated-button-text">Jetzt starten</span>
+                    <span className="sophisticated-button-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M5 12h14"></path>
+                        <path d="m12 5 7 7-7 7"></path>
+                      </svg>
+                    </span>
                   </span>
                 </Link>
-                <Link to="/pricing" className="apple-cta-button apple-secondary">
-                  <span className="apple-button-text">Kostenlos testen</span>
+                <Link to="/pricing" className="sophisticated-cta-button sophisticated-secondary">
+                  <span className="sophisticated-button-content">
+                    <span className="sophisticated-button-text">Kostenlos testen</span>
+                  </span>
                 </Link>
               </div>
             ) : user.subscriptionActive ? (
-              <Link to="/dashboard" className="apple-cta-button apple-primary">
-                <span className="apple-button-text">Zum Dashboard</span>
-                <span className="apple-button-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M5 12h14"></path>
-                    <path d="m12 5 7 7-7 7"></path>
-                  </svg>
-                </span>
-              </Link>
-            ) : (
-              <div className="apple-auth-cta">
-                <Link to="/dashboard" className="apple-cta-button apple-primary">
-                  <span className="apple-button-text">Zum Dashboard</span>
-                  <span className="apple-button-icon">
+              <Link to="/dashboard" className="sophisticated-cta-button sophisticated-primary">
+                <span className="cta-button-glow"></span>
+                <span className="sophisticated-button-content">
+                  <span className="sophisticated-button-text">Zum Dashboard</span>
+                  <span className="sophisticated-button-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M5 12h14"></path>
                       <path d="m12 5 7 7-7 7"></path>
                     </svg>
                   </span>
+                </span>
+              </Link>
+            ) : (
+              <div className="sophisticated-auth-cta">
+                <Link to="/dashboard" className="sophisticated-cta-button sophisticated-primary">
+                  <span className="cta-button-glow"></span>
+                  <span className="sophisticated-button-content">
+                    <span className="sophisticated-button-text">Zum Dashboard</span>
+                    <span className="sophisticated-button-icon">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M5 12h14"></path>
+                        <path d="m12 5 7 7-7 7"></path>
+                      </svg>
+                    </span>
+                  </span>
                 </Link>
-                <Link to="/pricing" className="apple-cta-button apple-secondary">
-                  <span className="apple-button-text">🔒 Free – Jetzt upgraden</span>
+                <Link to="/pricing" className="sophisticated-cta-button sophisticated-secondary">
+                  <span className="sophisticated-button-content">
+                    <span className="sophisticated-button-text">🔒 Free – Jetzt upgraden</span>
+                  </span>
                 </Link>
               </div>
             )}
           </div>
         </div>
         
-        <div className="apple-scroll-indicator">
-          <div className="apple-scroll-chevron"></div>
+        <div className="sophisticated-scroll-indicator">
+          <div className="sophisticated-scroll-chevron"></div>
         </div>
       </section>
 
