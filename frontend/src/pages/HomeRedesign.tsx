@@ -86,99 +86,82 @@ const HomeRedesign = () => {
 
   return (
     <div className="landing-page">
-      {/* Hero Section - Direkt an die Navbar angrenzend */}
-      <section className="hero" ref={heroRef}>
-        <div className="hero-bg">
-          <div className="hero-shapes">
-            <div className="hero-shape shape-1"></div>
-            <div className="hero-shape shape-2"></div>
-            <div className="hero-shape shape-3"></div>
-            <div className="hero-glow"></div>
-          </div>
+      {/* Apple-Style Hero Section */}
+      <section className="hero apple-hero" ref={heroRef}>
+        <div className="apple-hero-bg">
+          <div className="apple-gradient-orb apple-orb-1"></div>
+          <div className="apple-gradient-orb apple-orb-2"></div>
+          <div className="apple-gradient-orb apple-orb-3"></div>
         </div>
-        <div className="logo-hero">
-          <img src={logo} alt="Contract AI Logo" className="pulse-logo" />
+        
+        <div className="apple-logo-hero">
+          <img src={logo} alt="Contract AI Logo" className="apple-logo-animation" />
         </div>
-        <div className="hero-content">
-          <div className="hero-text-container">
-            <h1 className="hero-headline reveal-text">
+        
+        <div className="apple-hero-content">
+          <div className="apple-hero-text-container">
+            <h1 className="apple-hero-headline apple-fade-up">
               Verträge verstehen.<br />
               Risiken vermeiden.<br />
               Freiheit gewinnen.
             </h1>
             
-            <p className="hero-subheadline reveal-text">
+            <p className="apple-hero-subheadline apple-fade-up-delay">
               Schluss mit stundenlangem Lesen. Komplexe Verträge werden endlich klar und verständlich.
             </p>
             
-            <div className="hero-trust-hint reveal-text">
+            <div className="apple-hero-trust-hint apple-fade-up-delay-2">
               🔐 Deutsche Server. Maximaler Schutz. Ihre Daten bleiben Ihre Daten.
             </div>
           </div>
           
-          <div className="hero-cta reveal-text">
+          <div className="apple-hero-cta apple-fade-up-delay-3">
             {!user ? (
-              <div className="auth-cta">
-                <Link to="/register" className="cta-button primary">
-                  <span className="button-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                      <circle cx="8.5" cy="7" r="4"></circle>
-                      <line x1="20" y1="8" x2="20" y2="14"></line>
-                      <line x1="23" y1="11" x2="17" y2="11"></line>
+              <div className="apple-auth-cta">
+                <Link to="/register" className="apple-cta-button apple-primary">
+                  <span className="apple-button-text">Jetzt starten</span>
+                  <span className="apple-button-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M5 12h14"></path>
+                      <path d="m12 5 7 7-7 7"></path>
                     </svg>
                   </span>
-                  Jetzt starten
                 </Link>
-                <Link to="/pricing" className="cta-button secondary">
-                  <span className="button-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M3 3h18v18H3zM12 8v4M8 12h8"></path>
-                    </svg>
-                  </span>
-                  Kostenlos testen
+                <Link to="/pricing" className="apple-cta-button apple-secondary">
+                  <span className="apple-button-text">Kostenlos testen</span>
                 </Link>
               </div>
             ) : user.subscriptionActive ? (
-              <Link to="/dashboard" className="cta-button primary">
-                <span className="button-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                    <line x1="8" y1="12" x2="16" y2="12"></line>
-                    <line x1="8" y1="16" x2="16" y2="16"></line>
-                    <line x1="8" y1="8" x2="10" y2="8"></line>
+              <Link to="/dashboard" className="apple-cta-button apple-primary">
+                <span className="apple-button-text">Zum Dashboard</span>
+                <span className="apple-button-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 12h14"></path>
+                    <path d="m12 5 7 7-7 7"></path>
                   </svg>
                 </span>
-                Zum Dashboard
               </Link>
             ) : (
-              <>
-                <Link to="/dashboard" className="cta-button primary">
-                  <span className="button-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                      <line x1="8" y1="12" x2="16" y2="12"></line>
-                      <line x1="8" y1="16" x2="16" y2="16"></line>
-                      <line x1="8" y1="8" x2="10" y2="8"></line>
+              <div className="apple-auth-cta">
+                <Link to="/dashboard" className="apple-cta-button apple-primary">
+                  <span className="apple-button-text">Zum Dashboard</span>
+                  <span className="apple-button-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M5 12h14"></path>
+                      <path d="m12 5 7 7-7 7"></path>
                     </svg>
                   </span>
-                  Zum Dashboard
                 </Link>
-                <Link to="/pricing" className="cta-button secondary">
-                  <span className="button-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                      <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                    </svg>
-                  </span>
-                  🔒 Free – Jetzt upgraden
+                <Link to="/pricing" className="apple-cta-button apple-secondary">
+                  <span className="apple-button-text">🔒 Free – Jetzt upgraden</span>
                 </Link>
-              </>
+              </div>
             )}
           </div>
         </div>
-        <div className="hero-scroll-indicator">
-          <div className="scroll-arrow"></div>
+        
+        <div className="apple-scroll-indicator">
+          <div className="apple-scroll-chevron"></div>
         </div>
       </section>
 
