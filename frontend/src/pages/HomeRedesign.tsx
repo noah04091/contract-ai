@@ -100,11 +100,21 @@ const HomeRedesign = () => {
           <img src={logo} alt="Contract AI Logo" className="pulse-logo" />
         </div>
         <div className="hero-content">
-          <h1 className="reveal-text">Verträge verstehen. Risiken erkennen.</h1>
-          <p className="subtitle reveal-text">
-            Contract AI analysiert, optimiert und verwaltet Ihre Verträge – vollautomatisch, rechtssicher & cloudbasiert.
-          </p>
-          <p className="hero-trust-hint reveal-text">🔐 DSGVO-konform – keine sensiblen Daten werden gespeichert</p>
+          <div className="hero-text-container">
+            <h1 className="hero-headline reveal-text">
+              Verträge verstehen.<br />
+              Risiken vermeiden.<br />
+              Freiheit gewinnen.
+            </h1>
+            
+            <p className="hero-subheadline reveal-text">
+              Schluss mit stundenlangem Lesen. Komplexe Verträge werden endlich klar und verständlich.
+            </p>
+            
+            <div className="hero-trust-hint reveal-text">
+              🔐 Deutsche Server. Maximaler Schutz. Ihre Daten bleiben Ihre Daten.
+            </div>
+          </div>
           
           <div className="hero-cta reveal-text">
             {!user ? (
@@ -172,7 +182,7 @@ const HomeRedesign = () => {
         </div>
       </section>
 
-      {/* Trustbar Section - NEU */}
+      {/* Trustbar Section */}
       <section className="trustbar-section">
         <div className="section-container">
           <div className="trustbar">
@@ -293,7 +303,7 @@ const HomeRedesign = () => {
               </Link>
             </div>
 
-            {/* NEU: Generator Card */}
+            {/* Generator Card */}
             <div className="feature-card reveal-card" style={{"--animation-order": 4} as React.CSSProperties}>
               <div className="feature-icon-wrapper green">
                 <div className="feature-icon">
@@ -317,7 +327,7 @@ const HomeRedesign = () => {
               </Link>
             </div>
 
-            {/* NEU: Legal Pulse Card */}
+            {/* Legal Pulse Card */}
             <div className="feature-card reveal-card" style={{"--animation-order": 5} as React.CSSProperties}>
               <div className="feature-icon-wrapper red">
                 <div className="feature-icon">
@@ -729,7 +739,7 @@ const HomeRedesign = () => {
         </div>
       </footer>
 
-      {/* Mobile Sticky CTA - NEU */}
+      {/* Mobile Sticky CTA */}
       {isMobile && !user && (
         <div className="mobile-sticky-cta">
           <div className="mobile-cta-content">

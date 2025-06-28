@@ -925,40 +925,68 @@ a {
   filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.2));
 }
 
-.hero h1 {
-  font-size: 56px;
-  font-weight: 700;
-  margin-bottom: 16px;
-  line-height: 1.2;
-  background: linear-gradient(to right, #ffffff, #e0e7ff);
+/* === NEUE HERO TEXT STRUKTUR === */
+
+/* Container für bessere Textstrukturierung */
+.hero-text-container {
+  max-width: 900px;
+  margin: 0 auto 50px auto;
+  text-align: center;
+}
+
+/* Hauptheadline - Dramatisch und kraftvoll */
+.hero-headline {
+  font-size: 64px;
+  font-weight: 800;
+  line-height: 1.1;
+  margin-bottom: 32px;
+  background: linear-gradient(135deg, #ffffff 0%, #e8f0ff 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-.hero .subtitle {
-  font-size: 24px;
-  margin-bottom: 20px;
-  opacity: 0.9;
-}
-
-/* NEU: Hero Trust Hint */
-.hero-trust-hint {
-  font-size: 16px;
-  color: rgba(255, 255, 255, 0.85);
-  margin-bottom: 40px;
-  padding: 8px 16px;
-  border-radius: 100px;
-  background-color: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  display: inline-block;
+/* Subheadline - Klar und überzeugend */
+.hero-subheadline {
+  font-size: 26px;
   font-weight: 500;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.95);
+  margin-bottom: 28px;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+  letter-spacing: -0.01em;
 }
 
+/* Trust-Hint - Neu gestylt mit besserem visuellen Gewicht */
+.hero-trust-hint {
+  font-size: 17px;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 0;
+  padding: 12px 24px;
+  border-radius: 100px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.08));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  display: inline-block;
+  font-weight: 600;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transition: var(--transition);
+}
+
+.hero-trust-hint:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
+}
+
+/* CTA-Bereich - Besserer Abstand */
 .hero-cta {
+  margin-top: 50px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1066,7 +1094,7 @@ a {
   animation: scrollArrow 2s infinite;
 }
 
-/* === TRUSTBAR SECTION - NEU === */
+/* === TRUSTBAR SECTION === */
 .trustbar-section {
   background: linear-gradient(135deg, #f8faff 0%, #ffffff 100%);
   padding: 40px 20px;
@@ -1191,7 +1219,7 @@ a {
   background: linear-gradient(135deg, #8a4fff, #6126d9);
 }
 
-/* NEU: Zusätzliche Icon-Wrapper */
+/* Zusätzliche Icon-Wrapper */
 .feature-icon-wrapper.green {
   background: linear-gradient(135deg, #2ed573, #1dd65f);
   box-shadow: 0 10px 15px rgba(46, 213, 115, 0.2);
@@ -1940,7 +1968,7 @@ a[href*="kontakt"]:hover,
   z-index: 2;
 }
 
-/* === MOBILE STICKY CTA - NEU === */
+/* === MOBILE STICKY CTA === */
 .mobile-sticky-cta {
   position: fixed;
   bottom: 0;
@@ -2156,12 +2184,19 @@ a[href*="kontakt"]:hover,
     font-size: 36px;
   }
   
-  .hero h1 {
-    font-size: 48px;
+  .hero-headline {
+    font-size: 56px;
+    margin-bottom: 28px;
   }
   
-  .hero .subtitle {
-    font-size: 22px;
+  .hero-subheadline {
+    font-size: 24px;
+    margin-bottom: 24px;
+  }
+  
+  .hero-trust-hint {
+    font-size: 16px;
+    padding: 10px 20px;
   }
   
   .cta-section h2 {
@@ -2191,7 +2226,7 @@ a[href*="kontakt"]:hover,
     height: 80px;
   }
   
-  .hero h1 {
+  .hero-headline {
     font-size: 42px;
   }
   
@@ -2323,12 +2358,30 @@ a[href*="kontakt"]:hover,
     margin-left: 10px;
   }
   
-  .hero h1 {
-    font-size: 36px;
+  .hero-text-container {
+    margin-bottom: 40px;
   }
   
-  .hero .subtitle {
-    font-size: 18px;
+  .hero-headline {
+    font-size: 44px;
+    margin-bottom: 24px;
+    line-height: 1.15;
+  }
+  
+  .hero-subheadline {
+    font-size: 20px;
+    margin-bottom: 20px;
+    padding: 0 10px;
+  }
+  
+  .hero-trust-hint {
+    font-size: 15px;
+    padding: 8px 16px;
+    margin: 0 20px;
+  }
+  
+  .hero-cta {
+    margin-top: 40px;
   }
   
   .section-title h2 {
@@ -2403,17 +2456,21 @@ a[href*="kontakt"]:hover,
     height: 60px;
   }
   
-  .hero h1 {
-    font-size: 32px;
+  .hero-headline {
+    font-size: 36px;
+    margin-bottom: 20px;
   }
   
-  .hero .subtitle {
-    font-size: 16px;
+  .hero-subheadline {
+    font-size: 18px;
+    margin-bottom: 18px;
+    padding: 0 15px;
   }
   
   .hero-trust-hint {
     font-size: 14px;
-    padding: 6px 12px;
+    padding: 6px 14px;
+    margin: 0 15px;
   }
   
   .auth-cta {
