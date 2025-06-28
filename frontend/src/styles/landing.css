@@ -6,6 +6,12 @@
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
+/* FIX: Prevent horizontal overflow */
+html, body {
+  width: 100%;
+  overflow-x: hidden;
+}
+
 :root {
   --primary-color: #3d7cf3;
   --primary-dark: #2e60c1;
@@ -56,6 +62,8 @@ a {
   padding: 0 20px;
   position: relative;
   z-index: 2;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .section-title {
@@ -317,6 +325,8 @@ a {
   padding: 0 20px;
   background: transparent !important;
   border: none !important;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* Dreispalten-Layout für die Navbar */
@@ -827,13 +837,15 @@ a {
   padding: 0 20px 140px;
   margin: 0 !important;
   text-align: center;
-  overflow: visible;
+  overflow: hidden;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   transition: all 0.8s cubic-bezier(0.25, 0.1, 0.25, 1);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .sophisticated-hero::before {
@@ -1079,6 +1091,8 @@ a {
   z-index: 10;
   max-width: 1000px;
   margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .sophisticated-hero-text-container {
@@ -1219,12 +1233,16 @@ a {
   flex-direction: column;
   align-items: center;
   gap: 28px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .sophisticated-auth-cta {
   display: flex;
   gap: 20px;
   align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 /* Enhanced CTA Buttons */
@@ -1487,6 +1505,8 @@ a {
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   position: relative;
   z-index: 3;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .trustbar {
@@ -1495,6 +1515,8 @@ a {
   gap: 20px;
   max-width: 1000px;
   margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .trust-item {
@@ -1508,6 +1530,8 @@ a {
   border: 1px solid rgba(0, 0, 0, 0.05);
   transition: var(--transition);
   text-align: left;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .trust-item:hover {
@@ -1534,6 +1558,8 @@ a {
   background-color: white;
   position: relative;
   overflow: hidden;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* GEÄNDERT: Grid von 4 auf 3 Spalten für 6 Cards */
@@ -1541,6 +1567,8 @@ a {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 30px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .feature-card {
@@ -1554,6 +1582,8 @@ a {
   flex-direction: column;
   border: 1px solid rgba(0, 0, 0, 0.05);
   transform-origin: center bottom;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .feature-card:hover {
@@ -1709,6 +1739,8 @@ a {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 30px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* === SHOWCASE SECTION === */
@@ -1717,6 +1749,8 @@ a {
   padding: 120px 20px;
   position: relative;
   overflow: hidden;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .showcase-bg {
@@ -1951,6 +1985,8 @@ a {
     rgba(255, 255, 255, 1) 85%,
     rgba(245, 245, 247, 0.5) 100%
   );
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .pricing-bg {
@@ -2014,6 +2050,8 @@ a {
   height: 100%;
   min-height: 520px;
   overflow: visible;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .pricing-plan:hover {
@@ -2293,6 +2331,8 @@ a[href*="kontakt"]:hover,
   text-align: center;
   position: relative;
   overflow: hidden;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .cta-bg {
@@ -2352,6 +2392,69 @@ a[href*="kontakt"]:hover,
   justify-content: center;
   position: relative;
   z-index: 2;
+  flex-wrap: wrap;
+}
+
+/* === CTA BUTTON FIXES (Kleiner machen) === */
+.cta-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 24px; /* Reduced from 16px 32px */
+  border-radius: 100px;
+  font-size: 16px; /* Reduced from 18px */
+  font-weight: 500;
+  text-decoration: none;
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+  height: 44px; /* Reduced from 56px */
+  min-width: 140px; /* Reduced from 180px */
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border: none;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.cta-button.primary {
+  background: linear-gradient(135deg, #007aff 0%, #5856d6 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(0, 122, 255, 0.3);
+}
+
+.cta-button.primary.glow {
+  box-shadow: 
+    0 4px 15px rgba(0, 122, 255, 0.3),
+    0 0 20px rgba(0, 122, 255, 0.2);
+}
+
+.cta-button.secondary {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.cta-button:hover {
+  transform: translateY(-2px);
+}
+
+.cta-button.primary:hover {
+  background: linear-gradient(135deg, #0056cc 0%, #4a4bb8 100%);
+  box-shadow: 0 6px 20px rgba(0, 122, 255, 0.4);
+}
+
+.cta-button.secondary:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.cta-button .button-icon {
+  margin-right: 8px; /* Reduced from 12px */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* === MOBILE STICKY CTA === */
@@ -2366,6 +2469,8 @@ a[href*="kontakt"]:hover,
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   animation: slideUpFade 0.6s ease-out;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .mobile-cta-content {
@@ -2421,11 +2526,15 @@ a[href*="kontakt"]:hover,
   background-color: var(--bg-dark);
   color: var(--text-white);
   padding: 100px 20px 40px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .footer-container {
   max-width: 1200px;
   margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .footer-top {
@@ -2981,6 +3090,14 @@ a[href*="kontakt"]:hover,
     height: 52px;
     padding: 16px 32px;
   }
+  
+  /* CTA Button Mobile Fix */
+  .cta-button {
+    padding: 10px 20px;
+    height: 40px;
+    min-width: 120px;
+    font-size: 14px;
+  }
 }
 
 /* === SOPHISTICATED DESIGN ENHANCEMENTS === */
@@ -3053,6 +3170,8 @@ a[href*="kontakt"]:hover,
   background: transparent !important;
   margin: 0 !important;
   padding: 0 !important;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .image {
