@@ -5,6 +5,7 @@ import "../styles/landing.css";
 
 // Importiere Bilder
 import logo from "../assets/logo-contractai.png";
+import logoHeader from "../assets/logo-header.png";
 import analysisImg from "../assets/screenshot-dashboard.png";
 import deadlineImg from "../assets/screenshot-deadline.png";
 
@@ -95,7 +96,7 @@ const HomeRedesign = () => {
         </div>
         
         <div className="apple-logo-hero">
-          <img src={logo} alt="Contract AI Logo" className="apple-logo-animation" />
+          <img src={logoHeader} alt="Contract AI Logo Header" className="apple-logo-animation" />
         </div>
         
         <div className="apple-hero-content">
