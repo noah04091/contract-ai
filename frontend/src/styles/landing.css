@@ -2401,7 +2401,7 @@ a[href*="kontakt"]:hover,
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  padding: 8px 16px !important;
+  padding: 8px 20px !important;
   border-radius: 100px !important;
   font-size: 14px !important;
   font-weight: 500 !important;
@@ -2410,15 +2410,16 @@ a[href*="kontakt"]:hover,
   position: relative !important;
   overflow: hidden !important;
   height: 36px !important;
-  width: 140px !important;
-  min-width: 140px !important;
-  max-width: 140px !important;
+  width: 150px !important;
+  min-width: 150px !important;
+  max-width: 150px !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
   border: none !important;
   cursor: pointer !important;
   box-sizing: border-box !important;
   text-align: center !important;
   white-space: nowrap !important;
+  flex-shrink: 0 !important;
 }
 
 .cta-section .cta-button.primary {
