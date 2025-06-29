@@ -1828,6 +1828,31 @@ a {
   background-color: var(--orange-color);
 }
 
+/* === NEW SHOWCASE LABEL COLORS === */
+.showcase-label.blue-label {
+  background-color: #3d7cf3;
+}
+
+.showcase-label.purple-label {
+  background-color: #8a4fff;
+}
+
+.showcase-label.green-label {
+  background-color: #2ed573;
+}
+
+.showcase-label.pink-label {
+  background-color: #f85ebd;
+}
+
+.showcase-label.teal-label {
+  background-color: #17a2b8;
+}
+
+.showcase-label.red-label {
+  background-color: #ff4757;
+}
+
 .showcase-content {
   text-align: left;
 }

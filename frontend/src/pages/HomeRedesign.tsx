@@ -383,7 +383,7 @@ const HomeRedesign = () => {
         </div>
       </section>
 
-      {/* Showcase Section */}
+      {/* Extended Showcase Section with 6 New Features */}
       <section className="showcase-section" ref={(el) => registerSection('showcase', el)}>
         <div className="showcase-bg">
           <div className="showcase-shape shape-1"></div>
@@ -400,6 +400,7 @@ const HomeRedesign = () => {
           </div>
           
           <div className="showcase-items">
+            {/* Existing Feature 1 */}
             <div className="showcase-item reveal-block">
               <div className="showcase-content">
                 <div className="showcase-label">
@@ -441,6 +442,7 @@ const HomeRedesign = () => {
               </div>
             </div>
             
+            {/* Existing Feature 2 */}
             <div className="showcase-item reverse reveal-block">
               <div className="showcase-content">
                 <div className="showcase-label orange-label">
@@ -475,6 +477,261 @@ const HomeRedesign = () => {
                   </div>
                   <div className="image-container">
                     <img src={deadlineImg} alt="Fristen Screenshot" />
+                    <div className="image-shine"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* New Feature 1: Analyse */}
+            <div className="showcase-item reveal-block">
+              <div className="showcase-content">
+                <div className="showcase-label blue-label">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                  </svg>
+                  KI-Powered
+                </div>
+                <h3>Vertragsanalyse mit Score</h3>
+                <p>Risiken, Chancen und Verständlichkeit auf einen Blick. Unsere KI bewertet Ihre Verträge und deckt versteckte Fallstricke auf.</p>
+                <ul className="feature-list">
+                  <li>Automatische Risikoanalyse</li>
+                  <li>Verständlichkeitsindex für Laien und Profis</li>
+                  <li>Detaillierte Klausel-Insights</li>
+                </ul>
+                <Link to="/contracts" className="showcase-link">
+                  Zur Vertragsanalyse
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 12h14"></path>
+                    <path d="m12 5 7 7-7 7"></path>
+                  </svg>
+                </Link>
+              </div>
+              <div className="showcase-image">
+                <div className="image-mac-frame">
+                  <div className="image-mac-topbar">
+                    <div className="image-mac-buttons">
+                      <span></span>
+                      <span></span>
+                      <span></span>
+                    </div>
+                  </div>
+                  <div className="image-container">
+                    <img src={analysisImg} alt="Vertragsanalyse Screenshot" />
+                    <div className="image-shine"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* New Feature 2: Optimierung */}
+            <div className="showcase-item reverse reveal-block">
+              <div className="showcase-content">
+                <div className="showcase-label purple-label">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                    <path d="M2 17l10 5 10-5"></path>
+                    <path d="M2 12l10 5 10-5"></path>
+                  </svg>
+                  Intelligent
+                </div>
+                <h3>Verträge optimieren & verbessern</h3>
+                <p>Schwache oder unfaire Klauseln? Unsere KI findet sie und schlägt sofort bessere Formulierungen vor — für fairere, stärkere Verträge.</p>
+                <ul className="feature-list">
+                  <li>Automatische Klausel-Optimierung</li>
+                  <li>Verständlichere Sprache</li>
+                  <li>Sofort einsatzbereite Änderungen</li>
+                </ul>
+                <Link to="/optimizer" className="showcase-link">
+                  Zum Optimierer
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 12h14"></path>
+                    <path d="m12 5 7 7-7 7"></path>
+                  </svg>
+                </Link>
+              </div>
+              <div className="showcase-image">
+                <div className="image-mac-frame">
+                  <div className="image-mac-topbar">
+                    <div className="image-mac-buttons">
+                      <span></span>
+                      <span></span>
+                      <span></span>
+                    </div>
+                  </div>
+                  <div className="image-container">
+                    <img src={analysisImg} alt="Optimierung Screenshot" />
+                    <div className="image-shine"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* New Feature 3: Fristen */}
+            <div className="showcase-item reveal-block">
+              <div className="showcase-content">
+                <div className="showcase-label green-label">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                  Automatisch
+                </div>
+                <h3>Fristen automatisch erkennen</h3>
+                <p>Verpassen Sie nie wieder eine Kündigungsfrist. Contract AI erkennt wichtige Fristen und erinnert Sie rechtzeitig.</p>
+                <ul className="feature-list">
+                  <li>Automatische Fristenerkennung</li>
+                  <li>Erinnerungsfunktion per E-Mail</li>
+                  <li>Integration in Ihren Kalender</li>
+                </ul>
+                <Link to="/calendar" className="showcase-link">
+                  Zum Fristenkalender
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 12h14"></path>
+                    <path d="m12 5 7 7-7 7"></path>
+                  </svg>
+                </Link>
+              </div>
+              <div className="showcase-image">
+                <div className="image-mac-frame">
+                  <div className="image-mac-topbar">
+                    <div className="image-mac-buttons">
+                      <span></span>
+                      <span></span>
+                      <span></span>
+                    </div>
+                  </div>
+                  <div className="image-container">
+                    <img src={deadlineImg} alt="Fristen Screenshot" />
+                    <div className="image-shine"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* New Feature 4: Vergleich */}
+            <div className="showcase-item reverse reveal-block">
+              <div className="showcase-content">
+                <div className="showcase-label pink-label">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 3H3v18h18V3z"></path>
+                    <path d="M9 3v18"></path>
+                    <path d="M3 9h18"></path>
+                  </svg>
+                  Präzise
+                </div>
+                <h3>Verträge intelligent vergleichen</h3>
+                <p>Lassen Sie zwei Verträge gegeneinander antreten. Contract AI zeigt Unterschiede, Fairness und empfiehlt den besseren Weg.</p>
+                <ul className="feature-list">
+                  <li>Visualisierte Unterschiede</li>
+                  <li>Fairness-Score & Verbesserungstipps</li>
+                  <li>Entscheidungshilfe in Sekunden</li>
+                </ul>
+                <Link to="/compare" className="showcase-link">
+                  Zum Vergleich
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 12h14"></path>
+                    <path d="m12 5 7 7-7 7"></path>
+                  </svg>
+                </Link>
+              </div>
+              <div className="showcase-image">
+                <div className="image-mac-frame">
+                  <div className="image-mac-topbar">
+                    <div className="image-mac-buttons">
+                      <span></span>
+                      <span></span>
+                      <span></span>
+                    </div>
+                  </div>
+                  <div className="image-container">
+                    <img src={analysisImg} alt="Vergleich Screenshot" />
+                    <div className="image-shine"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* New Feature 5: Generator */}
+            <div className="showcase-item reveal-block">
+              <div className="showcase-content">
+                <div className="showcase-label teal-label">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                  </svg>
+                  Kreativ
+                </div>
+                <h3>Verträge automatisch erstellen</h3>
+                <p>Erstellen Sie rechtssichere, individuelle Verträge aus geprüften Vorlagen — in Minuten statt Stunden.</p>
+                <ul className="feature-list">
+                  <li>Freelancer-, NDA- und Mietverträge</li>
+                  <li>Intelligente Eingabemasken</li>
+                  <li>Sofort exportieren & digital signieren</li>
+                </ul>
+                <Link to="/generate" className="showcase-link">
+                  Zum Generator
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 12h14"></path>
+                    <path d="m12 5 7 7-7 7"></path>
+                  </svg>
+                </Link>
+              </div>
+              <div className="showcase-image">
+                <div className="image-mac-frame">
+                  <div className="image-mac-topbar">
+                    <div className="image-mac-buttons">
+                      <span></span>
+                      <span></span>
+                      <span></span>
+                    </div>
+                  </div>
+                  <div className="image-container">
+                    <img src={analysisImg} alt="Generator Screenshot" />
+                    <div className="image-shine"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* New Feature 6: Legal Pulse */}
+            <div className="showcase-item reverse reveal-block">
+              <div className="showcase-content">
+                <div className="showcase-label red-label">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                  </svg>
+                  Proaktiv
+                </div>
+                <h3>Legal Pulse: Frühwarnsystem für Risiken</h3>
+                <p>Verfolgen Sie rechtliche Änderungen und bleiben Sie immer up to date. Contract AI schützt Sie vor neuen Risiken.</p>
+                <ul className="feature-list">
+                  <li>Aktuelle Markt- und Gesetzes-Checks</li>
+                  <li>Automatische Risiko-Alerts</li>
+                  <li>Empfehlungen zur Anpassung</li>
+                </ul>
+                <Link to="/pulse" className="showcase-link">
+                  Zum Legal Pulse
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 12h14"></path>
+                    <path d="m12 5 7 7-7 7"></path>
+                  </svg>
+                </Link>
+              </div>
+              <div className="showcase-image">
+                <div className="image-mac-frame">
+                  <div className="image-mac-topbar">
+                    <div className="image-mac-buttons">
+                      <span></span>
+                      <span></span>
+                      <span></span>
+                    </div>
+                  </div>
+                  <div className="image-container">
+                    <img src={deadlineImg} alt="Legal Pulse Screenshot" />
                     <div className="image-shine"></div>
                   </div>
                 </div>
