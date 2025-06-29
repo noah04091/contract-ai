@@ -2387,15 +2387,16 @@ a[href*="kontakt"]:hover,
 }
 
 .cta-buttons {
-  display: flex;
-  gap: 20px;
-  justify-content: center;
-  position: relative;
-  z-index: 2;
-  flex-wrap: wrap;
+  display: flex !important;
+  gap: 20px !important;
+  justify-content: center !important;
+  align-items: center !important;
+  position: relative !important;
+  z-index: 2 !important;
+  flex-wrap: wrap !important;
 }
 
-/* === CTA BUTTON FIXES (Klein mit !important erzwingen) === */
+/* === FINALE CTA BUTTON LÖSUNG (Klein & Zentriert) === */
 .cta-section .cta-button {
   display: inline-flex !important;
   align-items: center !important;
@@ -2896,10 +2897,10 @@ a[href*="kontakt"]:hover,
   }
   
   .cta-buttons {
-    flex-direction: column;
-    width: 100%;
-    max-width: 300px;
-    margin: 0 auto;
+    flex-direction: column !important;
+    width: 100% !important;
+    max-width: 300px !important;
+    margin: 0 auto !important;
   }
   
   .footer-bottom {
@@ -3094,10 +3095,10 @@ a[href*="kontakt"]:hover,
   
   /* CTA Buttons bleiben auf mobile gleich klein */
   .cta-button {
-    padding: 8px 16px;
-    height: 36px;
-    min-width: 120px;
-    font-size: 14px;
+    padding: 8px 16px !important;
+    height: 36px !important;
+    min-width: 120px !important;
+    font-size: 14px !important;
   }
 }
 
