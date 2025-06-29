@@ -2395,22 +2395,22 @@ a[href*="kontakt"]:hover,
   flex-wrap: wrap;
 }
 
-/* === CTA BUTTON FIXES (Kleiner machen) === */
+/* === CTA BUTTON FIXES (Noch kleiner machen wie im vorher-Screenshot) === */
 .cta-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 12px 24px; /* Reduced from 16px 32px */
+  padding: 8px 16px; /* Noch kleiner für filigranen Look */
   border-radius: 100px;
-  font-size: 16px; /* Reduced from 18px */
+  font-size: 14px; /* Noch kleinere Schrift */
   font-weight: 500;
   text-decoration: none;
   transition: var(--transition);
   position: relative;
   overflow: hidden;
-  height: 44px; /* Reduced from 56px */
-  min-width: 140px; /* Reduced from 180px */
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  height: 36px; /* Noch niedriger */
+  min-width: 120px; /* Noch schmaler */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   border: none;
   cursor: pointer;
   box-sizing: border-box;
