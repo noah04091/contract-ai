@@ -6,12 +6,13 @@ import "../styles/landing.css";
 // Importiere Bilder
 import logo from "../assets/logo-contractai.png";
 import logoHeader from "../assets/logo-header.png";
-import analysisImg from "../assets/Analyse.png";
+import analyseImg from "../assets/Analyse.png";
 import fristenImg from "../assets/Fristen.png";
-import optimizeImg from "../assets/optimize_contracts.png";
-import compareImg from "../assets/compare_contracts.png";
-import generatorImg from "../assets/generator.png";
-import legalPulseImg from "../assets/legal_pulse.png";
+import generatorImg from "../assets/Generator.png";
+import legalPulseImg from "../assets/Legal Pulse.png";
+import optimierungImg from "../assets/Optimierung.png";
+import vergleichImg from "../assets/Vergleich.png";
+
 
 
 
@@ -443,7 +444,7 @@ const HomeRedesign = () => {
                     </div>
                   </div>
                   <div className="image-container">
-                    <img src={analysisImg} alt="Vertragsanalyse mit Score" />
+                    <img src={analyseImg} alt="Vertragsanalyse mit Score" />
                     <div className="image-shine"></div>
                   </div>
                 </div>
@@ -486,7 +487,7 @@ const HomeRedesign = () => {
                     </div>
                   </div>
                   <div className="image-container">
-                    <img src={optimizeImg} alt="Verträge optimieren" />
+                    <img src={optimierungImg} alt="Verträge optimieren" />
                     <div className="image-shine"></div>
                   </div>
                 </div>
@@ -571,7 +572,7 @@ const HomeRedesign = () => {
                     </div>
                   </div>
                   <div className="image-container">
-                    <img src={compareImg} alt="Verträge vergleichen" />
+                    <img src={vergleichImg} alt="Verträge vergleichen" />
                     <div className="image-shine"></div>
                   </div>
                 </div>
