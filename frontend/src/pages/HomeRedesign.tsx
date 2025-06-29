@@ -7,7 +7,7 @@ import "../styles/landing.css";
 import logo from "../assets/logo-contractai.png";
 import logoHeader from "../assets/logo-header.png";
 import analysisImg from "../assets/Analyse.png";
-import deadlineImg from "../assets/fristen.png";
+import fristenImg from "../assets/fristen.png";
 import optimizeImg from "../assets/optimize_contracts.png";
 import compareImg from "../assets/compare_contracts.png";
 import generatorImg from "../assets/generator.png";
@@ -528,7 +528,7 @@ const HomeRedesign = () => {
                     </div>
                   </div>
                   <div className="image-container">
-                    <img src={deadlineImg} alt="Fristen Screenshot" />
+                    <img src={fristenImg} alt="Fristen Screenshot" />
                     <div className="image-shine"></div>
                   </div>
                 </div>
