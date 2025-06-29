@@ -6,7 +6,7 @@ import "../styles/landing.css";
 // Importiere Bilder
 import logo from "../assets/logo-contractai.png";
 import logoHeader from "../assets/logo-header.png";
-import analysisScoreImg from "../assets/analysis_score.png";
+import analysisImg from "../assets/Analyse.png";
 import deadlineImg from "../assets/fristen.png";
 import optimizeImg from "../assets/optimize_contracts.png";
 import compareImg from "../assets/compare_contracts.png";
@@ -443,7 +443,7 @@ const HomeRedesign = () => {
                     </div>
                   </div>
                   <div className="image-container">
-                    <img src={analysisScoreImg} alt="Vertragsanalyse mit Score" />
+                    <img src={analysisImg} alt="Vertragsanalyse mit Score" />
                     <div className="image-shine"></div>
                   </div>
                 </div>
