@@ -777,8 +777,7 @@ const HomeRedesign = () => {
         <div className="mobile-sticky-cta">
           <div className="mobile-cta-content">
             <div className="mobile-cta-text">
-              <span className="mobile-cta-title">Jetzt kostenlos starten</span>
-              <span className="mobile-cta-subtitle">Ohne Registrierung testen</span>
+              <span className="mobile-cta-title">Jetzt kostenlos testen</span>
             </div>
             <Link to="/register" className="mobile-cta-button">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
