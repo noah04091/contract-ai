@@ -2396,7 +2396,7 @@ a[href*="kontakt"]:hover,
   flex-wrap: wrap !important;
 }
 
-/* === FINALE CTA BUTTON LÖSUNG (Klein & Zentriert) === */
+/* === FINALE CTA BUTTON LÖSUNG (Klein, Zentriert & Gleiche Größe) === */
 .cta-section .cta-button {
   display: inline-flex !important;
   align-items: center !important;
@@ -2410,12 +2410,15 @@ a[href*="kontakt"]:hover,
   position: relative !important;
   overflow: hidden !important;
   height: 36px !important;
-  min-width: 120px !important;
-  max-width: 150px !important;
+  width: 140px !important;
+  min-width: 140px !important;
+  max-width: 140px !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
   border: none !important;
   cursor: pointer !important;
   box-sizing: border-box !important;
+  text-align: center !important;
+  white-space: nowrap !important;
 }
 
 .cta-section .cta-button.primary {
