@@ -6,8 +6,15 @@ import "../styles/landing.css";
 // Importiere Bilder
 import logo from "../assets/logo-contractai.png";
 import logoHeader from "../assets/logo-header.png";
-import analysisImg from "../assets/screenshot-dashboard.png";
-import deadlineImg from "../assets/screenshot-deadline.png";
+import analysisScoreImg from "../assets/analysis_score.png";
+import deadlineImg from "../assets/fristen.png";
+import optimizeImg from "../assets/optimize_contracts.png";
+import compareImg from "../assets/compare_contracts.png";
+import generatorImg from "../assets/generator.png";
+import legalPulseImg from "../assets/legal_pulse.png";
+
+
+
 
 // TypeScript-Interface für Window-Erweiterung
 declare global {
@@ -400,88 +407,6 @@ const HomeRedesign = () => {
           </div>
           
           <div className="showcase-items">
-            {/* Existing Feature 1 */}
-            <div className="showcase-item reveal-block">
-              <div className="showcase-content">
-                <div className="showcase-label">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="9 11 12 14 22 4"></polyline>
-                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
-                  </svg>
-                  Fortschrittlich
-                </div>
-                <h3>Vertragsanalyse mit Score</h3>
-                <p>Risiken, Chancen und Verständlichkeit per KI bewerten. Unsere intelligente Analyse identifiziert kritische Punkte in Ihren Verträgen und gibt Ihnen einen klaren Überblick über potenzielle Risiken.</p>
-                <ul className="feature-list">
-                  <li>Automatische Risikobewertung</li>
-                  <li>Verständlichkeitsindex</li>
-                  <li>Klauselanalyse</li>
-                </ul>
-                <Link to="/contracts" className="showcase-link">
-                  Zur Vertragsanalyse
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M5 12h14"></path>
-                    <path d="m12 5 7 7-7 7"></path>
-                  </svg>
-                </Link>
-              </div>
-              <div className="showcase-image">
-                <div className="image-mac-frame">
-                  <div className="image-mac-topbar">
-                    <div className="image-mac-buttons">
-                      <span></span>
-                      <span></span>
-                      <span></span>
-                    </div>
-                  </div>
-                  <div className="image-container">
-                    <img src={analysisImg} alt="Vertragsanalyse Screenshot" />
-                    <div className="image-shine"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            {/* Existing Feature 2 */}
-            <div className="showcase-item reverse reveal-block">
-              <div className="showcase-content">
-                <div className="showcase-label orange-label">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-                  </svg>
-                  Zeitsparend
-                </div>
-                <h3>Fristen automatisch erkennen</h3>
-                <p>Kündigungsfristen erkennen, Mails senden. Nie wieder eine wichtige Vertragsfrist verpassen mit unserer automatischen Fristenerkennung und Erinnerungsfunktion.</p>
-                <ul className="feature-list">
-                  <li>Automatische Fristenerkennung</li>
-                  <li>Rechtzeitige E-Mail-Benachrichtigungen</li>
-                  <li>Kalenderintegration</li>
-                </ul>
-                <Link to="/calendar" className="showcase-link">
-                  Zum Fristenkalender
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M5 12h14"></path>
-                    <path d="m12 5 7 7-7 7"></path>
-                  </svg>
-                </Link>
-              </div>
-              <div className="showcase-image">
-                <div className="image-mac-frame">
-                  <div className="image-mac-topbar">
-                    <div className="image-mac-buttons">
-                      <span></span>
-                      <span></span>
-                      <span></span>
-                    </div>
-                  </div>
-                  <div className="image-container">
-                    <img src={deadlineImg} alt="Fristen Screenshot" />
-                    <div className="image-shine"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
 
             {/* New Feature 1: Analyse */}
             <div className="showcase-item reveal-block">
@@ -518,7 +443,7 @@ const HomeRedesign = () => {
                     </div>
                   </div>
                   <div className="image-container">
-                    <img src={analysisImg} alt="Vertragsanalyse Screenshot" />
+                    <img src={analysisScoreImg} alt="Vertragsanalyse mit Score" />
                     <div className="image-shine"></div>
                   </div>
                 </div>
@@ -561,7 +486,7 @@ const HomeRedesign = () => {
                     </div>
                   </div>
                   <div className="image-container">
-                    <img src={analysisImg} alt="Optimierung Screenshot" />
+                    <img src={optimizeImg} alt="Verträge optimieren" />
                     <div className="image-shine"></div>
                   </div>
                 </div>
@@ -646,7 +571,7 @@ const HomeRedesign = () => {
                     </div>
                   </div>
                   <div className="image-container">
-                    <img src={analysisImg} alt="Vergleich Screenshot" />
+                    <img src={compareImg} alt="Verträge vergleichen" />
                     <div className="image-shine"></div>
                   </div>
                 </div>
@@ -690,7 +615,7 @@ const HomeRedesign = () => {
                     </div>
                   </div>
                   <div className="image-container">
-                    <img src={analysisImg} alt="Generator Screenshot" />
+                    <img src={generatorImg} alt="Verträge automatisch erstellen" />
                     <div className="image-shine"></div>
                   </div>
                 </div>
@@ -731,7 +656,7 @@ const HomeRedesign = () => {
                     </div>
                   </div>
                   <div className="image-container">
-                    <img src={deadlineImg} alt="Legal Pulse Screenshot" />
+                    <img src={legalPulseImg} alt="Legal Pulse Frühwarnsystem" />
                     <div className="image-shine"></div>
                   </div>
                 </div>
