@@ -7,7 +7,7 @@ import "../styles/landing.css";
 import logo from "../assets/logo-contractai.png";
 import logoHeader from "../assets/logo-header.png";
 import analysisImg from "../assets/Analyse.png";
-import fristenImg from "../assets/fristen.png";
+import fristenImg from "../assets/Fristen.png";
 import optimizeImg from "../assets/optimize_contracts.png";
 import compareImg from "../assets/compare_contracts.png";
 import generatorImg from "../assets/generator.png";
