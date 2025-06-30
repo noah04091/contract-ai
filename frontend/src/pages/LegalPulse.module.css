@@ -1,0 +1,1093 @@
+/* Legal Pulse Seite - Apple-like Design */
+.legalPulseContainer {
+  min-height: 100vh;
+  background: #fafafa;
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* ===== HERO SECTION ===== */
+.heroSection {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 80px 0 120px 0;
+  gap: 80px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 24px;
+  margin-bottom: 80px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.heroContent {
+  flex: 1;
+  padding: 0 60px;
+}
+
+.heroTitle {
+  font-size: 3.5rem;
+  font-weight: 700;
+  line-height: 1.1;
+  color: #1f2937;
+  margin: 0 0 24px 0;
+  letter-spacing: -0.02em;
+}
+
+.heroSubtitle {
+  font-size: 1.25rem;
+  line-height: 1.6;
+  color: #6b7280;
+  margin: 0 0 48px 0;
+  font-weight: 400;
+}
+
+.heroCTA {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 32px;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: white;
+  border: none;
+  border-radius: 16px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.3);
+}
+
+.heroCTA:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+}
+
+.heroCTA svg {
+  width: 20px;
+  height: 20px;
+}
+
+.heroVisual {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 0 60px;
+}
+
+.heroCard {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: white;
+  padding: 24px;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid #f1f5f9;
+  transition: all 0.3s ease;
+}
+
+.heroCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.heroCardIcon {
+  font-size: 2rem;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8fafc;
+  border-radius: 12px;
+}
+
+.heroCardContent h4 {
+  margin: 0 0 8px 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.heroCardContent p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.95rem;
+}
+
+/* ===== HEADER SECTION (Detail View) ===== */
+.headerSection {
+  margin-bottom: 40px;
+}
+
+.backButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  color: #6b7280;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 32px;
+}
+
+.backButton:hover {
+  background: #f9fafb;
+  color: #374151;
+}
+
+.backButton svg {
+  width: 16px;
+  height: 16px;
+}
+
+.contractHeader {
+  text-align: center;
+}
+
+.contractTitle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.contractTitle h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.generatedBadge {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.lastAnalysis {
+  color: #6b7280;
+  font-size: 1rem;
+  margin: 0;
+}
+
+/* ===== SCORE SECTION ===== */
+.scoreSection {
+  margin-bottom: 48px;
+}
+
+.scoreCard {
+  background: white;
+  border-radius: 24px;
+  padding: 48px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #f1f5f9;
+  text-align: center;
+}
+
+.scoreHeader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.scoreHeader h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+.scoreDisplay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 48px;
+}
+
+.scoreCircle {
+  position: relative;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: conic-gradient(
+    var(--score-color, #6b7280) 0deg,
+    var(--score-color, #6b7280) calc(var(--score, 0) * 3.6deg),
+    #f1f5f9 calc(var(--score, 0) * 3.6deg),
+    #f1f5f9 360deg
+  );
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
+.scoreCircle::before {
+  content: '';
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  background: white;
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.scoreNumber {
+  position: relative;
+  z-index: 1;
+  font-size: 3rem;
+  font-weight: 800;
+  color: var(--score-color, #6b7280);
+}
+
+.scoreMax {
+  position: relative;
+  z-index: 1;
+  font-size: 1.2rem;
+  color: #9ca3af;
+  margin-top: -8px;
+}
+
+.riskLevel {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.riskIcon {
+  font-size: 1.5rem;
+}
+
+.riskLabel {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.scoreTrend {
+  margin-top: 48px;
+  padding-top: 32px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.scoreTrend h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 24px 0;
+  text-align: center;
+}
+
+/* ===== TAB NAVIGATION ===== */
+.tabNavigation {
+  display: flex;
+  background: white;
+  border-radius: 16px;
+  padding: 8px;
+  gap: 4px;
+  margin-bottom: 32px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid #f1f5f9;
+}
+
+.tabButton {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 20px;
+  background: transparent;
+  border: none;
+  border-radius: 12px;
+  color: #6b7280;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tabButton.active {
+  background: #3b82f6;
+  color: white;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.tabButton:not(.active):hover {
+  background: #f9fafb;
+  color: #374151;
+}
+
+.tabButton svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ===== TAB CONTENT ===== */
+.tabContent {
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #f1f5f9;
+  margin-bottom: 48px;
+}
+
+/* Overview tab styles are handled by the parent .tabContent class */
+
+.overviewGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+}
+
+.quickStats h3,
+.overviewActions h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 24px 0;
+}
+
+.statsList {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.statItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.statItem:last-child {
+  border-bottom: none;
+}
+
+.statLabel {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.statValue {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.actionsList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.actionButton {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  color: #374151;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.actionButton:hover {
+  background: #f1f5f9;
+  transform: translateY(-1px);
+}
+
+.actionButton.primaryAction {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: white;
+  border-color: transparent;
+}
+
+.actionButton.primaryAction:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+}
+
+.actionButton svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ===== RISKS TAB ===== */
+.sectionHeader {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.sectionHeader h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 12px 0;
+}
+
+.sectionHeader p {
+  color: #6b7280;
+  font-size: 1rem;
+  margin: 0;
+}
+
+.risksList {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.riskCard {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 16px;
+  padding: 24px;
+  transition: all 0.2s ease;
+}
+
+.riskCard:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.riskHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.riskIcon {
+  font-size: 1.25rem;
+}
+
+.riskSeverity {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #dc2626;
+  background: #fee2e2;
+  padding: 4px 12px;
+  border-radius: 8px;
+}
+
+.riskDescription {
+  color: #7f1d1d;
+  font-size: 1rem;
+  line-height: 1.6;
+  margin: 0 0 20px 0;
+}
+
+.riskActions {
+  display: flex;
+  gap: 12px;
+}
+
+.riskActionButton {
+  padding: 8px 16px;
+  border: 1px solid #fca5a5;
+  background: transparent;
+  color: #dc2626;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.riskActionButton.primary {
+  background: #dc2626;
+  color: white;
+  border-color: #dc2626;
+}
+
+.riskActionButton:hover {
+  background: #fee2e2;
+}
+
+.riskActionButton.primary:hover {
+  background: #b91c1c;
+}
+
+/* ===== RECOMMENDATIONS TAB ===== */
+.recommendationsList {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.recommendationCard {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 16px;
+  padding: 24px;
+  transition: all 0.2s ease;
+}
+
+.recommendationCard:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.recommendationHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.recommendationIcon {
+  font-size: 1.25rem;
+}
+
+.recommendationPriority {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #059669;
+  background: #d1fae5;
+  padding: 4px 12px;
+  border-radius: 8px;
+}
+
+.recommendationDescription {
+  color: #064e3b;
+  font-size: 1rem;
+  line-height: 1.6;
+  margin: 0 0 20px 0;
+}
+
+.recommendationActions {
+  display: flex;
+  gap: 12px;
+}
+
+.recommendationActionButton {
+  padding: 8px 16px;
+  border: 1px solid #86efac;
+  background: transparent;
+  color: #059669;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.recommendationActionButton.primary {
+  background: #059669;
+  color: white;
+  border-color: #059669;
+}
+
+.recommendationActionButton:hover {
+  background: #d1fae5;
+}
+
+.recommendationActionButton.primary:hover {
+  background: #047857;
+}
+
+/* ===== HISTORY TAB ===== */
+.historyChart {
+  background: #fafafa;
+  border-radius: 12px;
+  padding: 24px;
+  border: 1px solid #f1f5f9;
+}
+
+/* ===== CONTRACTS SECTION ===== */
+.contractsSection {
+  margin-bottom: 80px;
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 40px;
+}
+
+.sectionHeader h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 8px 0;
+  letter-spacing: -0.01em;
+}
+
+.sectionHeader p {
+  color: #6b7280;
+  font-size: 1rem;
+  margin: 0;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.addContractButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: #3b82f6;
+  color: white;
+  text-decoration: none;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.addContractButton:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+
+.addContractButton svg {
+  width: 16px;
+  height: 16px;
+}
+
+.contractsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 24px;
+}
+
+.contractCard {
+  background: white;
+  border: 1px solid #f1f5f9;
+  border-radius: 20px;
+  padding: 32px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.contractCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
+  border-color: #e5e7eb;
+}
+
+.contractCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.contractInfo {
+  flex: 1;
+}
+
+.contractName {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 8px 0;
+  line-height: 1.3;
+}
+
+.riskBadge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: color-mix(in srgb, var(--risk-color, #6b7280) 10%, white);
+  border: 1px solid color-mix(in srgb, var(--risk-color, #6b7280) 20%, white);
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--risk-color, #6b7280);
+}
+
+.riskScore {
+  font-size: 1.1rem;
+}
+
+.contractCardBody {
+  margin-bottom: 24px;
+}
+
+.contractMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.metaItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.metaLabel {
+  color: #6b7280;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.metaValue {
+  color: #374151;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.lastRecommendation {
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.recommendationLabel {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #6b7280;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.recommendationText {
+  color: #374151;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.contractCardFooter {
+  padding-top: 24px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.detailsButton {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 12px 0;
+  background: transparent;
+  border: none;
+  color: #3b82f6;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.detailsButton:hover {
+  color: #2563eb;
+}
+
+.detailsButton svg {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.2s ease;
+}
+
+.contractCard:hover .detailsButton svg {
+  transform: translateX(4px);
+}
+
+/* ===== BOTTOM CTA ===== */
+.bottomCTA {
+  background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+  border-radius: 24px;
+  padding: 80px 60px;
+  text-align: center;
+  color: white;
+  margin: 80px 0 40px 0;
+}
+
+.ctaContent h2 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 0 0 16px 0;
+  letter-spacing: -0.01em;
+}
+
+.ctaContent p {
+  font-size: 1.25rem;
+  color: #d1d5db;
+  margin: 0 0 40px 0;
+  font-weight: 400;
+}
+
+.primaryCTAButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 40px;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: white;
+  border: none;
+  border-radius: 16px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
+}
+
+.primaryCTAButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(59, 130, 246, 0.5);
+}
+
+.primaryCTAButton svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* ===== LOADING & EMPTY STATES ===== */
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  text-align: center;
+}
+
+.loadingSpinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #f1f5f9;
+  border-top: 3px solid #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 24px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loadingContainer p {
+  color: #6b7280;
+  font-size: 1rem;
+  margin: 0;
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  text-align: center;
+  background: white;
+  border-radius: 20px;
+  border: 1px solid #f1f5f9;
+}
+
+.emptyStateIcon {
+  width: 80px;
+  height: 80px;
+  color: #d1d5db;
+  margin-bottom: 24px;
+}
+
+.emptyState h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 12px 0;
+}
+
+.emptyState p {
+  color: #6b7280;
+  font-size: 1rem;
+  margin: 0 0 32px 0;
+  max-width: 400px;
+  line-height: 1.6;
+}
+
+.emptyStateActions {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.primaryButton,
+.secondaryButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: none;
+}
+
+.primaryButton {
+  background: #3b82f6;
+  color: white;
+}
+
+.primaryButton:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+
+.secondaryButton {
+  background: #f8fafc;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+}
+
+.secondaryButton:hover {
+  background: #f1f5f9;
+}
+
+.primaryButton svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 1200px) {
+  .overviewGrid {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+  
+  .contractsGrid {
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .legalPulseContainer {
+    padding: 16px;
+  }
+  
+  .heroSection {
+    flex-direction: column;
+    text-align: center;
+    padding: 60px 40px;
+    gap: 48px;
+  }
+  
+  .heroTitle {
+    font-size: 2.5rem;
+  }
+  
+  .heroSubtitle {
+    font-size: 1.1rem;
+  }
+  
+  .heroContent,
+  .heroVisual {
+    padding: 0;
+  }
+  
+  .sectionHeader {
+    flex-direction: column;
+    gap: 20px;
+    text-align: center;
+  }
+  
+  .headerActions {
+    justify-content: center;
+  }
+  
+  .contractsGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .tabNavigation {
+    flex-wrap: wrap;
+  }
+  
+  .tabButton {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+  
+  .scoreCard {
+    padding: 32px 24px;
+  }
+  
+  .tabContent {
+    padding: 24px;
+  }
+  
+  .bottomCTA {
+    padding: 60px 40px;
+  }
+  
+  .ctaContent h2 {
+    font-size: 2rem;
+  }
+  
+  .ctaContent p {
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .heroTitle {
+    font-size: 2rem;
+  }
+  
+  .heroSection {
+    padding: 40px 24px;
+  }
+  
+  .contractCard {
+    padding: 24px;
+  }
+  
+  .scoreCircle {
+    width: 120px;
+    height: 120px;
+  }
+  
+  .scoreCircle::before {
+    width: 90px;
+    height: 90px;
+  }
+  
+  .scoreNumber {
+    font-size: 2rem;
+  }
+  
+  .bottomCTA {
+    padding: 40px 24px;
+  }
+}

@@ -810,9 +810,9 @@ export default function Navbar() {
                       </Link>
                     </li>
                     <li>
-                      <Link to="/calendar-view" className={styles.sidebarLink} onClick={() => setSidebarOpen(false)}>
+                      <Link to="/legalpulse" className={styles.sidebarLink} onClick={() => setSidebarOpen(false)}>
                         <span className={styles.sidebarIcon}>⚖️</span>
-                        Fristen
+                        Legal Pulse
                       </Link>
                     </li>
                     <li>

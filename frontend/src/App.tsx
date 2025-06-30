@@ -38,6 +38,7 @@ import Generate from "./pages/Generate";
 import Subscribe from "./pages/Subscribe";
 import Upgrade from "./pages/Upgrade";
 import BetterContracts from "./pages/BetterContracts";
+import LegalPulse from "./pages/LegalPulse";
 
 function AppWithLoader() {
   const location = useLocation();
@@ -117,6 +118,10 @@ function AppWithLoader() {
             
             {/* ✨ KI-Vertragsoptimierung - Legendary Feature */}
             <Route path="/optimizer" element={<RequireAuth><Optimizer /></RequireAuth>} />
+            
+            {/* 🔍 Legal Pulse - Rechtliche Risikoanalyse */}
+            <Route path="/legalpulse" element={<RequireAuth><LegalPulse /></RequireAuth>} />
+            <Route path="/legalpulse/:contractId" element={<RequireAuth><LegalPulse /></RequireAuth>} />
             
             <Route path="/compare" element={<RequireAuth><Compare /></RequireAuth>} />
             <Route path="/chat" element={<RequireAuth><Chat /></RequireAuth>} />

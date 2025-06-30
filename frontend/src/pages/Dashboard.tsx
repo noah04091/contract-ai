@@ -860,6 +860,23 @@ export default function Dashboard() {
 
             <button 
               className={styles.quickActionCard}
+              onClick={() => navigate('/legalpulse')}
+            >
+              <div className={styles.quickActionIcon}>
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 9V13" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M12 17H12.01" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M10.29 3.86L1.82 18A2 2 0 003.64 21H20.36A2 2 0 0022.18 18L13.71 3.86A2 2 0 0010.29 3.86Z" stroke="currentColor" strokeWidth="2"/>
+                </svg>
+              </div>
+              <div className={styles.quickActionContent}>
+                <h4>Legal Pulse</h4>
+                <p>Risikoanalyse ansehen</p>
+              </div>
+            </button>
+
+            <button 
+              className={styles.quickActionCard}
               onClick={exportToCSV}
             >
               <div className={styles.quickActionIcon}>
