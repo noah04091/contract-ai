@@ -379,7 +379,7 @@ const HomeRedesign = () => {
               </div>
               <h3>Legal Pulse</h3>
               <p>Frühwarnsystem für neue Risiken durch Gesetzesänderungen oder unfaire Formulierungen.</p>
-              <Link to="/pulse" className="feature-link">
+              <Link to="/legalpulse" className="feature-link">
                 Mehr erfahren
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M5 12h14"></path>
@@ -639,7 +639,7 @@ const HomeRedesign = () => {
                   <li>Automatische Risiko-Alerts</li>
                   <li>Empfehlungen zur Anpassung</li>
                 </ul>
-                <Link to="/pulse" className="showcase-link">
+                <Link to="/legalpulse" className="showcase-link">
                   Zum Legal Pulse
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M5 12h14"></path>
