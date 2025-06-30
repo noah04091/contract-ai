@@ -210,6 +210,42 @@
   opacity: 1;
 }
 
+/* 🆕 Anklickbare Metric Cards */
+.clickableCard {
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0.0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.clickableCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(16, 185, 129, 0.05));
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.clickableCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.clickableCard:hover::before {
+  opacity: 1;
+}
+
+.clickableCard:active {
+  transform: translateY(0px);
+  transition: transform 0.1s ease;
+}
+
 .metricHeader {
   display: flex;
   justify-content: space-between;
@@ -233,6 +269,12 @@
   height: 20px;
   color: #0369a1;
   stroke-width: 2;
+}
+
+.metricHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .metricTrend {
@@ -392,6 +434,173 @@
 .disabled:hover {
   transform: none !important;
   box-shadow: none !important;
+}
+
+/* 🆕 Legal Pulse Sektion */
+.legalPulseContainer {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+}
+
+.legalPulseGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+  padding: 24px;
+}
+
+.legalPulseCard {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.2s cubic-bezier(0.4, 0.0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.legalPulseCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.02), rgba(16, 185, 129, 0.02));
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+
+.legalPulseCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  border-color: rgba(59, 130, 246, 0.2);
+}
+
+.legalPulseCard:hover::before {
+  opacity: 1;
+}
+
+.legalPulseCard:active {
+  transform: translateY(0px);
+  transition: transform 0.1s ease;
+}
+
+/* Contract Header */
+.contractHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  gap: 12px;
+}
+
+.contractTitleSection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.contractTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.riskScoreBadge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  flex-shrink: 0;
+  border: 1px solid currentColor;
+  opacity: 0.9;
+}
+
+/* Contract Meta */
+.contractMeta {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.metaItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.metaLabel {
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.riskLabel {
+  font-weight: 600;
+}
+
+/* Contract Details */
+.contractDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.detailItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.detailIcon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: #9ca3af;
+}
+
+/* Card Footer */
+.cardFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 12px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.uploadDate {
+  font-size: 12px;
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+.arrowIcon {
+  width: 16px;
+  height: 16px;
+  color: #9ca3af;
+  transition: all 0.2s ease;
+}
+
+.legalPulseCard:hover .arrowIcon {
+  color: #3b82f6;
+  transform: translateX(2px);
 }
 
 /* Table Container */
@@ -832,6 +1041,15 @@
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
+.section {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 32px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
 .sectionHeader {
   display: flex;
   align-items: center;
@@ -856,6 +1074,12 @@
   color: #64748b;
   margin: 0;
   line-height: 1.4;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 /* Category Styling */
@@ -1049,50 +1273,56 @@
 }
 
 .generatedBadge {
-  font-size: 0.625rem;
-  font-weight: 600;
-  color: #f59e0b;
-  background: rgba(245, 158, 11, 0.1);
-  padding: 0.125rem 0.375rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 6px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
   border-radius: 4px;
-  border: 1px solid rgba(245, 158, 11, 0.2);
-  white-space: nowrap;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
 }
 
 /* Status Badge */
 .statusBadge {
   display: inline-flex;
   align-items: center;
-  padding: 0.25rem 0.75rem;
-  border-radius: 20px;
-  font-size: 0.75rem;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.5px;
+  border: 1px solid transparent;
 }
 
 .statusBadge.aktiv {
-  background: rgba(16, 185, 129, 0.1);
+  background-color: #ecfdf5;
   color: #059669;
-  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-color: #10b981;
 }
 
 .statusBadge.baldablaufend {
-  background: rgba(245, 158, 11, 0.1);
+  background-color: #fffbeb;
   color: #d97706;
-  border: 1px solid rgba(245, 158, 11, 0.2);
+  border-color: #f59e0b;
 }
 
 .statusBadge.abgelaufen {
-  background: rgba(239, 68, 68, 0.1);
+  background-color: #fef2f2;
   color: #dc2626;
-  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-color: #ef4444;
 }
 
+.statusBadge.unbekannt,
 .statusBadge.unknown {
-  background: rgba(107, 114, 128, 0.1);
+  background-color: #f3f4f6;
   color: #6b7280;
-  border: 1px solid rgba(107, 114, 128, 0.2);
+  border-color: #9ca3af;
 }
 
 /* Quick Actions Section */
@@ -1353,6 +1583,94 @@
   margin: -0.125rem -0.25rem;
 }
 
+/* Micro-Animationen für bessere UX */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.legalPulseCard {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+.legalPulseCard:nth-child(1) { animation-delay: 0ms; }
+.legalPulseCard:nth-child(2) { animation-delay: 50ms; }
+.legalPulseCard:nth-child(3) { animation-delay: 100ms; }
+.legalPulseCard:nth-child(4) { animation-delay: 150ms; }
+.legalPulseCard:nth-child(5) { animation-delay: 200ms; }
+
+/* Verbesserte Focus States für Accessibility */
+.clickableCard:focus,
+.legalPulseCard:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Accessibility Improvements */
+.analyticsCard:focus-within {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Responsive Design für Legal Pulse */
+@media (max-width: 768px) {
+  .legalPulseGrid {
+    grid-template-columns: 1fr;
+    padding: 16px;
+    gap: 12px;
+  }
+  
+  .contractHeader {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .riskScoreBadge {
+    align-self: flex-start;
+  }
+  
+  .contractMeta {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
+/* Loading States für Legal Pulse */
+.legalPulseContainer .loadingContainer {
+  padding: 60px 24px;
+  text-align: center;
+}
+
+.legalPulseContainer .loadingSpinner {
+  width: 32px;
+  height: 32px;
+  margin: 0 auto 16px;
+}
+
+/* Empty State für Legal Pulse */
+.legalPulseContainer .emptyState {
+  padding: 60px 24px;
+  text-align: center;
+}
+
+.legalPulseContainer .emptyStateIcon {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 16px;
+  color: #9ca3af;
+}
+
+/* 🆕 Erweiterte Hover-Effekte für bestehende Metric Cards */
+.metricCard:not(.clickableCard) {
+  transition: all 0.2s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
 /* Responsive Design */
 @media (max-width: 1024px) {
   .analyticsGrid {
@@ -1523,6 +1841,21 @@
     align-items: flex-start;
     gap: 0.25rem;
   }
+  
+  .headerActions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .analyticsHeader {
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+  }
+
+  .metricHeaderActions {
+    gap: 6px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -1620,15 +1953,25 @@
     width: 12px;
     height: 12px;
   }
+
+  .sectionHeader h2 {
+    font-size: 1.25rem;
+  }
+
+  .headerContent h2 {
+    font-size: 1.25rem;
+  }
+
+  .analyticsHeader h3 {
+    font-size: 1rem;
+  }
+
+  .quickActionsSection .sectionHeader h3 {
+    font-size: 1.125rem;
+  }
 }
 
-/* Accessibility Improvements */
-.analyticsCard:focus-within {
-  outline: 2px solid #3b82f6;
-  outline-offset: 2px;
-}
-
-/* Dark Mode Preparation */
+/* Dark Mode Support (falls gewünscht) */
 @media (prefers-color-scheme: dark) {
   .metricCard {
     background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
@@ -1679,6 +2022,19 @@
     border-color: #475569;
     color: #f8fafc;
   }
+
+  .legalPulseCard {
+    background: #1f2937;
+    border-color: #374151;
+  }
+  
+  .contractTitle {
+    color: #f9fafb;
+  }
+  
+  .cardFooter {
+    border-color: #374151;
+  }
 }
 
 /* Print Styles */
@@ -1708,140 +2064,5 @@
   .chartContainer {
     background: white !important;
     border: 1px solid #f3f4f6 !important;
-  }
-}
-/* ====================================== */
-/* InfoTooltip Header Layout Ergänzungen */
-/* ====================================== */
-
-/* Metric Card Header mit InfoTooltip */
-.metricHeaderActions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* Section Header Layout */
-.sectionHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 20px;
-  padding-bottom: 16px;
-  border-bottom: 2px solid #f8f9fa;
-}
-
-.sectionHeader h2 {
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #2c3e50;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* Header Content für komplexere Layouts */
-.headerContent {
-  flex: 1;
-}
-
-.headerContent h2 {
-  margin: 0 0 4px 0;
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #2c3e50;
-}
-
-.headerContent p {
-  margin: 0;
-  color: #6c757d;
-  font-size: 0.875rem;
-}
-
-/* Header Actions Container */
-.headerActions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-/* Analytics Header mit InfoTooltip */
-.analyticsHeader {
-  position: relative;
-  padding: 20px 20px 16px 20px;
-  border-bottom: 1px solid #f1f5f9;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-}
-
-.analyticsHeader h3 {
-  margin: 0 0 4px 0;
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #1e293b;
-}
-
-.analyticsHeader p {
-  margin: 0;
-  font-size: 0.875rem;
-  color: #64748b;
-}
-
-/* Quick Actions Header */
-.quickActionsSection .sectionHeader {
-  margin-bottom: 16px;
-}
-
-.quickActionsSection .sectionHeader h3 {
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #2c3e50;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* Responsive Design für Header-Layouts */
-@media (max-width: 768px) {
-  .sectionHeader {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
-
-  .headerActions {
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .analyticsHeader {
-    flex-direction: column;
-    gap: 8px;
-    align-items: flex-start;
-  }
-
-  .metricHeaderActions {
-    gap: 6px;
-  }
-}
-
-@media (max-width: 480px) {
-  .sectionHeader h2 {
-    font-size: 1.25rem;
-  }
-
-  .headerContent h2 {
-    font-size: 1.25rem;
-  }
-
-  .analyticsHeader h3 {
-    font-size: 1rem;
-  }
-
-  .quickActionsSection .sectionHeader h3 {
-    font-size: 1.125rem;
   }
 }

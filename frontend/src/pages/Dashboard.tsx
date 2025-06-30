@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import styles from "./Dashboard.module.css";
 import GeneratedContractsSection from "../components/GeneratedContractsSection";
-import LegalPulseOverview from "../components/LegalPulseOverview";
 import InfoTooltip from "../components/InfoTooltip";
 import { tooltipTexts } from "../utils/tooltipTexts";
 import { generateICS } from "../utils/icsGenerator";
@@ -198,6 +197,48 @@ export default function Dashboard() {
       });
     }
     return last30Days;
+  };
+
+  // 🆕 Legal Pulse Verträge für die Dashboard-Anzeige (nur 5 neueste)
+  const getRecentContractsForLegalPulse = () => {
+    return contracts
+      .filter(contract => contract.uploadedAt || contract.createdAt)
+      .sort((a, b) => {
+        const dateA = new Date(a.uploadedAt || a.createdAt || 0).getTime();
+        const dateB = new Date(b.uploadedAt || b.createdAt || 0).getTime();
+        return dateB - dateA; // neueste zuerst
+      })
+      .slice(0, 5);
+  };
+
+  // 🆕 Risk Score Helper Funktion
+  const getRiskScoreInfo = (score: number | null | undefined) => {
+    if (score === null || score === undefined) {
+      return {
+        color: '#6b7280',
+        label: 'Nicht bewertet',
+        bgColor: '#f3f4f6'
+      };
+    }
+    if (score <= 30) {
+      return {
+        color: '#10b981',
+        label: 'Niedrig',
+        bgColor: '#ecfdf5'
+      };
+    }
+    if (score <= 60) {
+      return {
+        color: '#f59e0b',
+        label: 'Mittel',
+        bgColor: '#fffbeb'
+      };
+    }
+    return {
+      color: '#ef4444',
+      label: 'Hoch',
+      bgColor: '#fef2f2'
+    };
   };
 
   // Hilfsfunktionen
@@ -460,6 +501,7 @@ export default function Dashboard() {
   const COLORS = ['#10b981', '#f59e0b', '#ef4444', '#6b7280'];
 
   const { pieData, monthlyData, riskData, trendData } = getAnalyticsData();
+  const recentLegalPulseContracts = getRecentContractsForLegalPulse();
 
   return (
     <div className={styles.dashboardContainer}>
@@ -533,9 +575,12 @@ export default function Dashboard() {
       )}
 
       <div className={styles.dashboardContent}>
-        {/* Metrics Cards Grid */}
+        {/* 🆕 Metrics Cards Grid - jetzt anklickbar */}
         <div className={styles.metricsGrid}>
-          <div className={styles.metricCard}>
+          <div 
+            className={`${styles.metricCard} ${styles.clickableCard}`}
+            onClick={() => navigate('/contracts')}
+          >
             <div className={styles.metricHeader}>
               <div className={styles.metricIcon}>
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -555,7 +600,10 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div className={styles.metricCard}>
+          <div 
+            className={`${styles.metricCard} ${styles.clickableCard}`}
+            onClick={() => navigate('/contracts?filter=reminder')}
+          >
             <div className={styles.metricHeader}>
               <div className={styles.metricIcon}>
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -578,7 +626,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div className={styles.metricCard}>
+          <div className={`${styles.metricCard} ${styles.clickableCard}`}>
             <div className={styles.metricHeader}>
               <div className={styles.metricIcon}>
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -599,7 +647,10 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div className={styles.metricCard}>
+          <div 
+            className={`${styles.metricCard} ${styles.clickableCard}`}
+            onClick={() => navigate('/contracts?filter=active')}
+          >
             <div className={styles.metricHeader}>
               <div className={styles.metricIcon}>
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -623,7 +674,10 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div className={styles.metricCard}>
+          <div 
+            className={`${styles.metricCard} ${styles.clickableCard}`}
+            onClick={() => navigate('/contracts?filter=expiring')}
+          >
             <div className={styles.metricHeader}>
               <div className={styles.metricIcon}>
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -657,8 +711,143 @@ export default function Dashboard() {
           <GeneratedContractsSection contracts={contracts} />
         </div>
 
-        {/* Legal Pulse Overview (hat bereits InfoTooltip in der Komponente) */}
-        <LegalPulseOverview contracts={contracts} />
+        {/* 🆕 Legal Pulse Overview - eigene Implementation */}
+        <div className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <div className={styles.headerContent}>
+              <h2>⚖️ Legal Pulse Analysen</h2>
+              <p>Risikoanalyse der neuesten Verträge</p>
+            </div>
+            <div className={styles.headerActions}>
+              <InfoTooltip {...tooltipTexts.legalPulse} />
+              <button 
+                className={`${styles.actionButton} ${styles.primaryButton}`}
+                onClick={() => navigate('/legalpulse')}
+              >
+                <svg className={styles.buttonIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 9V13" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M12 17H12.01" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M10.29 3.86L1.82 18A2 2 0 003.64 21H20.36A2 2 0 0022.18 18L13.71 3.86A2 2 0 0010.29 3.86Z" stroke="currentColor" strokeWidth="2"/>
+                </svg>
+                Alle Legal Pulse Analysen anzeigen
+              </button>
+            </div>
+          </div>
+
+          <div className={styles.legalPulseContainer}>
+            {isLoading ? (
+              <div className={styles.loadingContainer}>
+                <div className={styles.loadingSpinner}></div>
+                <p>Legal Pulse Analysen werden geladen...</p>
+              </div>
+            ) : recentLegalPulseContracts.length > 0 ? (
+              <div className={styles.legalPulseGrid}>
+                {recentLegalPulseContracts.map((contract) => {
+                  const riskInfo = getRiskScoreInfo(contract.legalPulse?.riskScore);
+                  
+                  return (
+                    <div 
+                      key={contract._id} 
+                      className={`${styles.legalPulseCard} ${styles.clickableCard}`}
+                      onClick={() => navigate(`/legalpulse/${contract._id}`)}
+                    >
+                      <div className={styles.contractHeader}>
+                        <div className={styles.contractTitleSection}>
+                          <h3 className={styles.contractTitle}>{contract.name || "Unbenannter Vertrag"}</h3>
+                          {contract.isGenerated && (
+                            <span className={styles.generatedBadge}>✨ KI</span>
+                          )}
+                        </div>
+                        <div 
+                          className={styles.riskScoreBadge}
+                          style={{ 
+                            backgroundColor: riskInfo.bgColor, 
+                            color: riskInfo.color 
+                          }}
+                        >
+                          {contract.legalPulse?.riskScore !== null && contract.legalPulse?.riskScore !== undefined 
+                            ? contract.legalPulse.riskScore 
+                            : '—'
+                          }
+                        </div>
+                      </div>
+                      
+                      <div className={styles.contractMeta}>
+                        <div className={styles.metaItem}>
+                          <span className={styles.metaLabel}>Status:</span>
+                          <span className={`${styles.statusBadge} ${styles[contract.status?.toLowerCase().replace(' ', '') || 'unknown']}`}>
+                            {contract.status || "Unbekannt"}
+                          </span>
+                        </div>
+                        <div className={styles.metaItem}>
+                          <span className={styles.metaLabel}>Risiko:</span>
+                          <span 
+                            className={styles.riskLabel}
+                            style={{ color: riskInfo.color }}
+                          >
+                            {riskInfo.label}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className={styles.contractDetails}>
+                        {contract.laufzeit && (
+                          <div className={styles.detailItem}>
+                            <svg className={styles.detailIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5"/>
+                              <path d="M12 6V12L16 14" stroke="currentColor" strokeWidth="1.5"/>
+                            </svg>
+                            <span>{contract.laufzeit}</span>
+                          </div>
+                        )}
+                        {contract.expiryDate && (
+                          <div className={styles.detailItem}>
+                            <svg className={styles.detailIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M19 4H5C3.89543 4 3 4.89543 3 6V20C3 21.1046 3.89543 22 5 22H19C20.1046 22 21 21.1046 21 20V6C21 4.89543 20.1046 4 19 4Z" stroke="currentColor" strokeWidth="1.5"/>
+                              <path d="M16 2V6" stroke="currentColor" strokeWidth="1.5"/>
+                              <path d="M8 2V6" stroke="currentColor" strokeWidth="1.5"/>
+                              <path d="M3 10H21" stroke="currentColor" strokeWidth="1.5"/>
+                            </svg>
+                            <span>{new Date(contract.expiryDate).toLocaleDateString('de-DE')}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className={styles.cardFooter}>
+                        <span className={styles.uploadDate}>
+                          Hochgeladen: {new Date(contract.uploadedAt || contract.createdAt || 0).toLocaleDateString('de-DE')}
+                        </span>
+                        <svg className={styles.arrowIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M9 18L15 12L9 6" stroke="currentColor" strokeWidth="2"/>
+                        </svg>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className={styles.emptyState}>
+                <svg className={styles.emptyStateIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 9V13" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M12 17H12.01" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M10.29 3.86L1.82 18A2 2 0 003.64 21H20.36A2 2 0 0022.18 18L13.71 3.86A2 2 0 0010.29 3.86Z" stroke="currentColor" strokeWidth="2"/>
+                </svg>
+                <h3>Keine Legal Pulse Analysen verfügbar</h3>
+                <p>Lade Verträge hoch, um automatische Risikoanalysen zu erhalten.</p>
+                <button 
+                  className={`${styles.actionButton} ${styles.primaryButton}`}
+                  onClick={() => setShowModal(true)}
+                >
+                  <svg className={styles.buttonIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 5V19" stroke="currentColor" strokeWidth="2"/>
+                    <path d="M5 12H19" stroke="currentColor" strokeWidth="2"/>
+                  </svg>
+                  Ersten Vertrag hochladen
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
 
         {/* Priority Verträge Sektion */}
         <div className={styles.priorityContractsSection}>
