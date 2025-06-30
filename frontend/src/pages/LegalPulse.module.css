@@ -236,6 +236,18 @@
   align-items: center;
   justify-content: center;
   font-weight: 700;
+  animation: scoreCircleGrow 0.8s ease-out;
+}
+
+@keyframes scoreCircleGrow {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .scoreCircle::before {
@@ -256,6 +268,19 @@
   font-size: 3rem;
   font-weight: 800;
   color: var(--score-color, #6b7280);
+  animation: scoreNumberPop 0.6s ease-out 0.2s both;
+}
+
+@keyframes scoreNumberPop {
+  from {
+    transform: scale(0);
+  }
+  60% {
+    transform: scale(1.1);
+  }
+  to {
+    transform: scale(1);
+  }
 }
 
 .scoreMax {
@@ -270,6 +295,18 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  animation: fadeInUp 0.5s ease-out 0.4s both;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .riskIcon {
@@ -328,11 +365,13 @@
   background: #3b82f6;
   color: white;
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+  transform: translateY(-1px);
 }
 
 .tabButton:not(.active):hover {
   background: #f9fafb;
   color: #374151;
+  transform: translateY(-1px);
 }
 
 .tabButton svg {
@@ -348,6 +387,18 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   border: 1px solid #f1f5f9;
   margin-bottom: 48px;
+  animation: tabContentSlide 0.3s ease-out;
+}
+
+@keyframes tabContentSlide {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Overview tab styles are handled by the parent .tabContent class */
@@ -378,6 +429,15 @@
   align-items: center;
   padding: 16px 0;
   border-bottom: 1px solid #f1f5f9;
+  transition: all 0.2s ease;
+}
+
+.statItem:hover {
+  background: #f8fafc;
+  margin: 0 -16px;
+  padding-left: 16px;
+  padding-right: 16px;
+  border-radius: 8px;
 }
 
 .statItem:last-child {
@@ -419,6 +479,7 @@
 .actionButton:hover {
   background: #f1f5f9;
   transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .actionButton.primaryAction {
@@ -429,6 +490,7 @@
 
 .actionButton.primaryAction:hover {
   background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
 }
 
 .actionButton svg {
@@ -466,12 +528,24 @@
   border: 1px solid #fecaca;
   border-radius: 16px;
   padding: 24px;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
+  animation: riskCardSlide 0.4s ease-out;
+}
+
+@keyframes riskCardSlide {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .riskCard:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
 }
 
 .riskHeader {
@@ -507,11 +581,11 @@
 }
 
 .riskActionButton {
-  padding: 8px 16px;
+  padding: 10px 18px;
   border: 1px solid #fca5a5;
   background: transparent;
   color: #dc2626;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 0.9rem;
   font-weight: 500;
   cursor: pointer;
@@ -526,10 +600,13 @@
 
 .riskActionButton:hover {
   background: #fee2e2;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
 }
 
 .riskActionButton.primary:hover {
   background: #b91c1c;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
 }
 
 /* ===== RECOMMENDATIONS TAB ===== */
@@ -544,12 +621,30 @@
   border: 1px solid #bbf7d0;
   border-radius: 16px;
   padding: 24px;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
+  animation: recommendationCardSlide 0.4s ease-out;
+}
+
+@keyframes recommendationCardSlide {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.recommendationCard.completed {
+  background: #f8fafc;
+  border-color: #d1d5db;
+  opacity: 0.8;
 }
 
 .recommendationCard:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
 }
 
 .recommendationHeader {
@@ -570,6 +665,14 @@
   background: #d1fae5;
   padding: 4px 12px;
   border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.completedLabel {
+  color: #6b7280;
+  font-weight: 500;
 }
 
 .recommendationDescription {
@@ -579,21 +682,32 @@
   margin: 0 0 20px 0;
 }
 
+.recommendationCard.completed .recommendationDescription {
+  color: #6b7280;
+  text-decoration: line-through;
+}
+
 .recommendationActions {
   display: flex;
   gap: 12px;
 }
 
 .recommendationActionButton {
-  padding: 8px 16px;
+  padding: 10px 18px;
   border: 1px solid #86efac;
   background: transparent;
   color: #059669;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 0.9rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
+}
+
+.recommendationActionButton.completed {
+  background: #10b981;
+  color: white;
+  border-color: #10b981;
 }
 
 .recommendationActionButton.primary {
@@ -604,10 +718,17 @@
 
 .recommendationActionButton:hover {
   background: #d1fae5;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.2);
 }
 
 .recommendationActionButton.primary:hover {
   background: #047857;
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+}
+
+.recommendationActionButton.completed:hover {
+  background: #059669;
 }
 
 /* ===== HISTORY TAB ===== */
@@ -688,6 +809,7 @@
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  position: relative;
 }
 
 .contractCard:hover {
@@ -705,6 +827,7 @@
 
 .contractInfo {
   flex: 1;
+  min-width: 0; /* Important for text overflow */
 }
 
 .contractName {
@@ -713,6 +836,54 @@
   color: #1f2937;
   margin: 0 0 8px 0;
   line-height: 1.3;
+  /* Text overflow handling */
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  position: relative;
+}
+
+/* Tooltip for long contract names */
+.nameTooltip {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: #1f2937;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  white-space: nowrap;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  animation: tooltipFade 0.2s ease-out;
+  max-width: 300px;
+  word-wrap: break-word;
+  white-space: normal;
+}
+
+@keyframes tooltipFade {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.nameTooltip::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: 16px;
+  width: 8px;
+  height: 8px;
+  background: #1f2937;
+  transform: rotate(45deg);
 }
 
 .riskBadge {
@@ -726,6 +897,16 @@
   font-size: 0.9rem;
   font-weight: 600;
   color: var(--risk-color, #6b7280);
+  animation: riskBadgePulse 2s ease-in-out infinite;
+}
+
+@keyframes riskBadgePulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
 }
 
 .riskScore {
@@ -781,6 +962,12 @@
   font-size: 0.9rem;
   line-height: 1.5;
   margin: 0;
+  /* Text overflow for long recommendations */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .contractCardFooter {
@@ -815,6 +1002,126 @@
 
 .contractCard:hover .detailsButton svg {
   transform: translateX(4px);
+}
+
+/* ===== MODAL STYLES ===== */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  animation: modalOverlayFade 0.3s ease-out;
+}
+
+@keyframes modalOverlayFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.riskModal {
+  background: white;
+  border-radius: 20px;
+  padding: 0;
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  animation: modalSlide 0.3s ease-out;
+}
+
+@keyframes modalSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 32px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.modalHeader h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+.modalCloseButton {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: #f8fafc;
+  border-radius: 8px;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modalCloseButton:hover {
+  background: #f1f5f9;
+  color: #374151;
+}
+
+.modalCloseButton svg {
+  width: 16px;
+  height: 16px;
+}
+
+.modalBody {
+  padding: 32px;
+}
+
+.riskDetailSection {
+  margin-bottom: 24px;
+}
+
+.riskDetailSection h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 12px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.riskDetailSection p {
+  color: #4b5563;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.modalActions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid #f1f5f9;
 }
 
 /* ===== BOTTOM CTA ===== */
@@ -865,6 +1172,49 @@
 .primaryCTAButton svg {
   width: 20px;
   height: 20px;
+}
+
+/* ===== BUTTON STYLES ===== */
+.primaryButton,
+.secondaryButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: none;
+}
+
+.primaryButton {
+  background: #3b82f6;
+  color: white;
+}
+
+.primaryButton:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.secondaryButton {
+  background: #f8fafc;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+}
+
+.secondaryButton:hover {
+  background: #f1f5f9;
+  transform: translateY(-1px);
+}
+
+.primaryButton svg {
+  width: 16px;
+  height: 16px;
 }
 
 /* ===== LOADING & EMPTY STATES ===== */
@@ -939,46 +1289,6 @@
   justify-content: center;
 }
 
-.primaryButton,
-.secondaryButton {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 24px;
-  border-radius: 12px;
-  font-size: 0.95rem;
-  font-weight: 500;
-  text-decoration: none;
-  transition: all 0.2s ease;
-  cursor: pointer;
-  border: none;
-}
-
-.primaryButton {
-  background: #3b82f6;
-  color: white;
-}
-
-.primaryButton:hover {
-  background: #2563eb;
-  transform: translateY(-1px);
-}
-
-.secondaryButton {
-  background: #f8fafc;
-  color: #374151;
-  border: 1px solid #e5e7eb;
-}
-
-.secondaryButton:hover {
-  background: #f1f5f9;
-}
-
-.primaryButton svg {
-  width: 16px;
-  height: 16px;
-}
-
 /* ===== RESPONSIVE DESIGN ===== */
 @media (max-width: 1200px) {
   .overviewGrid {
@@ -1037,10 +1347,26 @@
   .tabButton {
     min-width: 0;
     flex: 1 1 auto;
+    font-size: 0.85rem;
+    padding: 12px 16px;
   }
   
   .scoreCard {
     padding: 32px 24px;
+  }
+  
+  .scoreCircle {
+    width: 140px;
+    height: 140px;
+  }
+  
+  .scoreCircle::before {
+    width: 100px;
+    height: 100px;
+  }
+  
+  .scoreNumber {
+    font-size: 2.5rem;
   }
   
   .tabContent {
@@ -1058,6 +1384,31 @@
   .ctaContent p {
     font-size: 1.1rem;
   }
+  
+  .contractCard {
+    padding: 24px;
+  }
+  
+  .contractName {
+    max-width: 200px;
+  }
+  
+  .riskModal {
+    margin: 20px;
+    max-height: 80vh;
+  }
+  
+  .modalHeader {
+    padding: 20px 24px;
+  }
+  
+  .modalBody {
+    padding: 24px;
+  }
+  
+  .modalActions {
+    flex-direction: column;
+  }
 }
 
 @media (max-width: 480px) {
@@ -1070,7 +1421,12 @@
   }
   
   .contractCard {
-    padding: 24px;
+    padding: 20px;
+  }
+  
+  .contractName {
+    max-width: 150px;
+    font-size: 1.1rem;
   }
   
   .scoreCircle {
@@ -1089,5 +1445,16 @@
   
   .bottomCTA {
     padding: 40px 24px;
+  }
+  
+  .riskActions,
+  .recommendationActions {
+    flex-direction: column;
+  }
+  
+  .riskActionButton,
+  .recommendationActionButton {
+    width: 100%;
+    text-align: center;
   }
 }

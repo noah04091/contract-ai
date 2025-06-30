@@ -30,6 +30,20 @@ interface Contract {
   };
 }
 
+interface RiskDetail {
+  id: string;
+  title: string;
+  description: string;
+  severity: 'low' | 'medium' | 'high';
+  solution: string;
+  impact: string;
+  recommendation: string;
+}
+
+interface RecommendationStatus {
+  [key: string]: boolean;
+}
+
 export default function LegalPulse() {
   const { contractId } = useParams();
   const navigate = useNavigate();
@@ -38,8 +52,12 @@ export default function LegalPulse() {
   const [isLoading, setIsLoading] = useState(true);
   const [notification, setNotification] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'risks' | 'recommendations' | 'history'>('overview');
+  const [showRiskModal, setShowRiskModal] = useState(false);
+  const [selectedRisk, setSelectedRisk] = useState<RiskDetail | null>(null);
+  const [completedRecommendations, setCompletedRecommendations] = useState<RecommendationStatus>({});
+  const [showTooltip, setShowTooltip] = useState<{ [key: string]: boolean }>({});
 
-  // Mock-Daten für Demo-Zwecke
+  // Enhanced Mock-Daten für Demo-Zwecke
   const enrichContractWithMockData = (contract: Contract): Contract => {
     const riskScore = contract.legalPulse?.riskScore || Math.floor(Math.random() * 100);
     const lastAnalysis = new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString();
@@ -75,6 +93,49 @@ export default function LegalPulse() {
         recommendations: mockRecommendations.slice(0, Math.floor(Math.random() * 3) + 2),
         scoreHistory: mockScoreHistory
       }
+    };
+  };
+
+  // Detaillierte Risiko-Daten
+  const getRiskDetails = (riskTitle: string): RiskDetail => {
+    const riskDatabase: { [key: string]: RiskDetail } = {
+      "Veraltete Datenschutzklauseln (DSGVO-Konformität)": {
+        id: "dsgvo-risk",
+        title: "Veraltete Datenschutzklauseln",
+        description: "Die aktuellen Datenschutzbestimmungen entsprechen nicht den DSGVO-Anforderungen. Dies kann zu erheblichen Bußgeldern und rechtlichen Problemen führen.",
+        severity: "high",
+        solution: "Aktualisierung der Datenschutzerklärung nach Art. 13 und 14 DSGVO mit klaren Rechtsgrundlagen, Zweckbindung und Betroffenenrechten.",
+        impact: "Bußgelder bis zu 4% des Jahresumsatzes möglich",
+        recommendation: "Sofortige Überarbeitung durch Datenschutzexperten empfohlen"
+      },
+      "Fehlende Kündigungsfristen für bestimmte Vertragsarten": {
+        id: "kuendigung-risk",
+        title: "Unklare Kündigungsregelungen",
+        description: "Die Kündigungsfristen sind nicht eindeutig definiert oder entsprechen nicht den gesetzlichen Mindestanforderungen.",
+        severity: "medium",
+        solution: "Präzisierung der Kündigungsfristen gemäß § 573c BGB mit klaren Fristen und Modalitäten.",
+        impact: "Rechtsunsicherheit und potenzielle Vertragsverlängerungen",
+        recommendation: "Überarbeitung der Kündigungsklauseln binnen 30 Tagen"
+      },
+      "Unklare Haftungsregelungen bei Leistungsstörungen": {
+        id: "haftung-risk",
+        title: "Haftungsrisiken",
+        description: "Die Haftungsregelungen sind unvollständig oder unwirksam, was zu unvorhersehbaren finanziellen Risiken führen kann.",
+        severity: "high",
+        solution: "Überarbeitung der Haftungsklauseln nach § 309 BGB mit angemessenen Haftungsbeschränkungen.",
+        impact: "Unbegrenzte Haftungsrisiken",
+        recommendation: "Rechtliche Prüfung und Anpassung erforderlich"
+      }
+    };
+
+    return riskDatabase[riskTitle] || {
+      id: "generic-risk",
+      title: riskTitle,
+      description: "Dieses Risiko wurde identifiziert und sollte näher untersucht werden.",
+      severity: "medium",
+      solution: "Eine detaillierte Analyse und entsprechende Maßnahmen sind erforderlich.",
+      impact: "Potenzielle rechtliche oder finanzielle Auswirkungen",
+      recommendation: "Konsultation eines Rechtsexperten empfohlen"
     };
   };
 
@@ -120,6 +181,66 @@ export default function LegalPulse() {
     if (score <= 30) return '#10b981';
     if (score <= 60) return '#f59e0b';
     return '#ef4444';
+  };
+
+  // Event Handlers
+  const handleShowRiskDetails = (riskTitle: string) => {
+    const riskDetail = getRiskDetails(riskTitle);
+    setSelectedRisk(riskDetail);
+    setShowRiskModal(true);
+  };
+
+  const handleShowSolution = (riskTitle: string) => {
+    const riskDetail = getRiskDetails(riskTitle);
+    setSelectedRisk(riskDetail);
+    setShowRiskModal(true);
+    // Scroll to solution section in modal
+    setTimeout(() => {
+      const solutionElement = document.getElementById('risk-solution');
+      if (solutionElement) {
+        solutionElement.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 100);
+  };
+
+  const handleMarkRecommendationComplete = (recommendationIndex: number) => {
+    const key = `${selectedContract?._id}-${recommendationIndex}`;
+    setCompletedRecommendations(prev => ({
+      ...prev,
+      [key]: !prev[key]
+    }));
+    
+    const action = completedRecommendations[key] ? "als offen markiert" : "als erledigt markiert";
+    setNotification({ 
+      message: `Empfehlung ${action}`, 
+      type: "success" 
+    });
+  };
+
+  const handleImplementRecommendation = (recommendation: string) => {
+    setNotification({ 
+      message: "Weiterleitung zum Optimizer...", 
+      type: "success" 
+    });
+    // Navigate to optimizer with recommendation context
+    navigate('/optimizer', { 
+      state: { 
+        contractId: selectedContract?._id,
+        recommendation: recommendation 
+      } 
+    });
+  };
+
+  const handleContractCardClick = (contract: Contract) => {
+    navigate(`/legalpulse/${contract._id}`);
+  };
+
+  const handleMouseEnter = (contractId: string) => {
+    setShowTooltip(prev => ({ ...prev, [contractId]: true }));
+  };
+
+  const handleMouseLeave = (contractId: string) => {
+    setShowTooltip(prev => ({ ...prev, [contractId]: false }));
   };
 
   // Detailansicht für einzelnen Vertrag
@@ -183,7 +304,7 @@ export default function LegalPulse() {
             <div className={styles.scoreDisplay}>
               <div 
                 className={styles.scoreCircle}
-                style={{ '--score-color': riskLevel.color } as React.CSSProperties}
+                style={{ '--score-color': riskLevel.color, '--score': selectedContract.legalPulse?.riskScore || 0 } as React.CSSProperties}
               >
                 <span className={styles.scoreNumber}>
                   {selectedContract.legalPulse?.riskScore || '—'}
@@ -337,7 +458,7 @@ export default function LegalPulse() {
                     </button>
                     <button 
                       className={`${styles.actionButton} ${styles.primaryAction}`}
-                      onClick={() => navigate('/optimize')}
+                      onClick={() => navigate('/optimizer')}
                     >
                       <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M12 2L15.09 8.26L22 9L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9L8.91 8.26L12 2Z" stroke="currentColor" strokeWidth="2"/>
@@ -365,10 +486,16 @@ export default function LegalPulse() {
                     </div>
                     <p className={styles.riskDescription}>{risk}</p>
                     <div className={styles.riskActions}>
-                      <button className={styles.riskActionButton}>
+                      <button 
+                        className={styles.riskActionButton}
+                        onClick={() => handleShowRiskDetails(risk)}
+                      >
                         Details anzeigen
                       </button>
-                      <button className={`${styles.riskActionButton} ${styles.primary}`}>
+                      <button 
+                        className={`${styles.riskActionButton} ${styles.primary}`}
+                        onClick={() => handleShowSolution(risk)}
+                      >
                         Lösung anzeigen
                       </button>
                     </div>
@@ -389,23 +516,40 @@ export default function LegalPulse() {
                 <p>Konkrete Schritte zur Risikominimierung</p>
               </div>
               <div className={styles.recommendationsList}>
-                {selectedContract.legalPulse?.recommendations?.map((recommendation, index) => (
-                  <div key={index} className={styles.recommendationCard}>
-                    <div className={styles.recommendationHeader}>
-                      <span className={styles.recommendationIcon}>✅</span>
-                      <span className={styles.recommendationPriority}>Empfehlung {index + 1}</span>
+                {selectedContract.legalPulse?.recommendations?.map((recommendation, index) => {
+                  const isCompleted = completedRecommendations[`${selectedContract._id}-${index}`];
+                  return (
+                    <div 
+                      key={index} 
+                      className={`${styles.recommendationCard} ${isCompleted ? styles.completed : ''}`}
+                    >
+                      <div className={styles.recommendationHeader}>
+                        <span className={styles.recommendationIcon}>
+                          {isCompleted ? '✅' : '💡'}
+                        </span>
+                        <span className={styles.recommendationPriority}>
+                          Empfehlung {index + 1}
+                          {isCompleted && <span className={styles.completedLabel}> (Erledigt)</span>}
+                        </span>
+                      </div>
+                      <p className={styles.recommendationDescription}>{recommendation}</p>
+                      <div className={styles.recommendationActions}>
+                        <button 
+                          className={`${styles.recommendationActionButton} ${isCompleted ? styles.completed : ''}`}
+                          onClick={() => handleMarkRecommendationComplete(index)}
+                        >
+                          {isCompleted ? '✓ Als erledigt markiert' : 'Als erledigt markieren'}
+                        </button>
+                        <button 
+                          className={`${styles.recommendationActionButton} ${styles.primary}`}
+                          onClick={() => handleImplementRecommendation(recommendation)}
+                        >
+                          Jetzt umsetzen
+                        </button>
+                      </div>
                     </div>
-                    <p className={styles.recommendationDescription}>{recommendation}</p>
-                    <div className={styles.recommendationActions}>
-                      <button className={styles.recommendationActionButton}>
-                        Als erledigt markieren
-                      </button>
-                      <button className={`${styles.recommendationActionButton} ${styles.primary}`}>
-                        Jetzt umsetzen
-                      </button>
-                    </div>
-                  </div>
-                )) || (
+                  );
+                }) || (
                   <div className={styles.emptyState}>
                     <p>Keine Empfehlungen verfügbar</p>
                   </div>
@@ -451,6 +595,70 @@ export default function LegalPulse() {
           )}
         </div>
 
+        {/* Risk Details Modal */}
+        {showRiskModal && selectedRisk && (
+          <div className={styles.modalOverlay} onClick={() => setShowRiskModal(false)}>
+            <div className={styles.riskModal} onClick={(e) => e.stopPropagation()}>
+              <div className={styles.modalHeader}>
+                <h2>{selectedRisk.title}</h2>
+                <button 
+                  className={styles.modalCloseButton}
+                  onClick={() => setShowRiskModal(false)}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18 6L6 18" stroke="currentColor" strokeWidth="2"/>
+                    <path d="M6 6L18 18" stroke="currentColor" strokeWidth="2"/>
+                  </svg>
+                </button>
+              </div>
+              <div className={styles.modalBody}>
+                <div className={styles.riskDetailSection}>
+                  <h4>🔍 Beschreibung</h4>
+                  <p>{selectedRisk.description}</p>
+                </div>
+                
+                <div className={styles.riskDetailSection}>
+                  <h4>⚠️ Auswirkungen</h4>
+                  <p>{selectedRisk.impact}</p>
+                </div>
+                
+                <div className={styles.riskDetailSection} id="risk-solution">
+                  <h4>💡 Lösungsvorschlag</h4>
+                  <p>{selectedRisk.solution}</p>
+                </div>
+                
+                <div className={styles.riskDetailSection}>
+                  <h4>📋 Empfehlung</h4>
+                  <p>{selectedRisk.recommendation}</p>
+                </div>
+                
+                <div className={styles.modalActions}>
+                  <button 
+                    className={styles.secondaryButton}
+                    onClick={() => setShowRiskModal(false)}
+                  >
+                    Schließen
+                  </button>
+                  <button 
+                    className={styles.primaryButton}
+                    onClick={() => {
+                      setShowRiskModal(false);
+                      navigate('/optimizer', { 
+                        state: { 
+                          contractId: selectedContract._id,
+                          riskToFix: selectedRisk 
+                        } 
+                      });
+                    }}
+                  >
+                    Jetzt optimieren
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Bottom CTA */}
         <div className={styles.bottomCTA}>
           <div className={styles.ctaContent}>
@@ -458,7 +666,7 @@ export default function LegalPulse() {
             <p>Optimieren Sie Ihren Vertrag mit unserer KI-gestützten Lösung</p>
             <button 
               className={styles.primaryCTAButton}
-              onClick={() => navigate('/optimize')}
+              onClick={() => navigate('/optimizer')}
             >
               <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M12 2L15.09 8.26L22 9L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9L8.91 8.26L12 2Z" stroke="currentColor" strokeWidth="2"/>
@@ -569,11 +777,20 @@ export default function LegalPulse() {
                 <div 
                   key={contract._id} 
                   className={styles.contractCard}
-                  onClick={() => navigate(`/legalpulse/${contract._id}`)}
+                  onClick={() => handleContractCardClick(contract)}
+                  onMouseEnter={() => handleMouseEnter(contract._id)}
+                  onMouseLeave={() => handleMouseLeave(contract._id)}
                 >
                   <div className={styles.contractCardHeader}>
                     <div className={styles.contractInfo}>
-                      <h3 className={styles.contractName}>{contract.name}</h3>
+                      <h3 className={styles.contractName}>
+                        {contract.name}
+                        {showTooltip[contract._id] && (
+                          <div className={styles.nameTooltip}>
+                            {contract.name}
+                          </div>
+                        )}
+                      </h3>
                       {contract.isGenerated && (
                         <span className={styles.generatedBadge}>✨ KI</span>
                       )}
