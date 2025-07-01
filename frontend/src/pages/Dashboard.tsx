@@ -211,33 +211,29 @@ export default function Dashboard() {
       .slice(0, 5);
   };
 
-  // 🆕 Risk Score Helper Funktion
+  // 🆕 Risk Score Helper Funktion - KEINE INLINE STYLES MEHR!
   const getRiskScoreInfo = (score: number | null | undefined) => {
     if (score === null || score === undefined) {
       return {
-        color: '#6b7280',
         label: 'Nicht bewertet',
-        bgColor: '#f3f4f6'
+        className: 'riskScoreUnknown'
       };
     }
     if (score <= 30) {
       return {
-        color: '#10b981',
         label: 'Niedrig',
-        bgColor: '#ecfdf5'
+        className: 'riskScoreLow'
       };
     }
     if (score <= 60) {
       return {
-        color: '#f59e0b',
         label: 'Mittel',
-        bgColor: '#fffbeb'
+        className: 'riskScoreMedium'
       };
     }
     return {
-      color: '#ef4444',
       label: 'Hoch',
-      bgColor: '#fef2f2'
+      className: 'riskScoreHigh'
     };
   };
 
@@ -724,7 +720,7 @@ export default function Dashboard() {
           <GeneratedContractsSection contracts={contracts} />
         </div>
 
-        {/* 🆕 Legal Pulse Overview - eigene Implementation */}
+        {/* 🆕 Legal Pulse Overview - KOMPLETT HELL */}
         <div className={styles.section}>
           <div className={styles.sectionHeader}>
             <div className={styles.headerContent}>
@@ -771,7 +767,7 @@ export default function Dashboard() {
                             <span className={styles.generatedBadge}>✨ KI</span>
                           )}
                         </div>
-                        <div className={styles.riskScoreBadge}>
+                        <div className={`${styles.riskScoreBadge} ${styles[riskInfo.className]}`}>
                           {contract.legalPulse?.riskScore !== null && contract.legalPulse?.riskScore !== undefined 
                             ? contract.legalPulse.riskScore 
                             : '—'
@@ -788,7 +784,7 @@ export default function Dashboard() {
                         </div>
                         <div className={styles.metaItem}>
                           <span className={styles.metaLabel}>Risiko:</span>
-                          <span className={styles.riskLabel}>
+                          <span className={`${styles.riskLabel} ${styles[riskInfo.className]}`}>
                             {riskInfo.label}
                           </span>
                         </div>

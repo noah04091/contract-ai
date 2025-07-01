@@ -436,13 +436,15 @@
   box-shadow: none !important;
 }
 
-/* 🆕 Legal Pulse Sektion - KOMPLETT HELL WIE KI-VERTRÄGE */
+/* 🚀 LEGAL PULSE SEKTION - MAXIMALE HELLIGKEIT ERZWUNGEN! */
+
+/* Legal Pulse Container - HELL! */
 .legalPulseContainer {
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+  border-radius: 16px !important;
+  border: 1px solid #e2e8f0 !important;
   overflow: hidden;
-  padding: 24px;
+  padding: 24px !important;
 }
 
 .legalPulseGrid {
@@ -451,16 +453,18 @@
   gap: 16px;
 }
 
+/* Legal Pulse Karten - KOMPLETT HELL! */
 .legalPulseCard {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
-  padding: 24px;
-  transition: all 0.3s ease;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 16px !important;
+  padding: 24px !important;
+  transition: all 0.3s ease !important;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
   cursor: pointer;
+  color: #1e293b !important;
 }
 
 .legalPulseCard::before {
@@ -470,22 +474,23 @@
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, #3b82f6, #10b981, #f59e0b);
+  background: linear-gradient(90deg, #3b82f6, #10b981, #f59e0b) !important;
   opacity: 0;
   transition: opacity 0.3s ease;
 }
 
 .legalPulseCard:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-  border-color: rgba(59, 130, 246, 0.3);
+  transform: translateY(-4px) !important;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1) !important;
+  border-color: rgba(59, 130, 246, 0.3) !important;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
 }
 
 .legalPulseCard:hover::before {
   opacity: 1;
 }
 
-/* Contract Header - KOMPLETT HELL */
+/* Contract Header - HELL! */
 .contractHeader {
   display: flex;
   justify-content: space-between;
@@ -503,34 +508,61 @@
 }
 
 .contractTitle {
-  font-size: 18px;
-  font-weight: 600;
-  color: #1e293b;
-  margin: 0 0 8px 0;
-  line-height: 1.4;
+  font-size: 18px !important;
+  font-weight: 600 !important;
+  color: #1e293b !important;
+  margin: 0 0 8px 0 !important;
+  line-height: 1.4 !important;
 }
 
+/* Risk Score Badge - ALLE VERSIONEN HELL! */
 .riskScoreBadge {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  font-weight: 700;
-  font-size: 16px;
-  flex-shrink: 0;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  color: #64748b;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 48px !important;
+  height: 48px !important;
+  border-radius: 12px !important;
+  font-weight: 700 !important;
+  font-size: 16px !important;
+  flex-shrink: 0 !important;
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  color: #64748b !important;
 }
 
-/* Contract Meta - HELL UND EINFACH */
+/* Spezifische Risk Score Klassen - ALLE HELL! */
+.riskScoreLow {
+  background: #ecfdf5 !important;
+  color: #059669 !important;
+  border: 1px solid #10b981 !important;
+}
+
+.riskScoreMedium {
+  background: #fffbeb !important;
+  color: #d97706 !important;
+  border: 1px solid #f59e0b !important;
+}
+
+.riskScoreHigh {
+  background: #fef2f2 !important;
+  color: #dc2626 !important;
+  border: 1px solid #ef4444 !important;
+}
+
+.riskScoreUnknown {
+  background: #f3f4f6 !important;
+  color: #6b7280 !important;
+  border: 1px solid #9ca3af !important;
+}
+
+/* Contract Meta - HELL! */
 .contractMeta {
   display: flex;
   gap: 16px;
   margin-bottom: 16px;
   flex-wrap: wrap;
+  background: transparent !important;
 }
 
 .metaItem {
@@ -538,24 +570,45 @@
   align-items: center;
   gap: 6px;
   font-size: 13px;
-  color: #64748b;
+  color: #64748b !important;
+  background: transparent !important;
 }
 
 .metaLabel {
-  color: #64748b;
-  font-weight: 500;
+  color: #64748b !important;
+  font-weight: 500 !important;
+  background: transparent !important;
 }
 
 .riskLabel {
-  font-weight: 600;
+  font-weight: 600 !important;
+  background: transparent !important;
 }
 
-/* Contract Details - HELL UND EINFACH */
+/* Risk Label Klassen - HELL! */
+.riskLabel.riskScoreLow {
+  color: #059669 !important;
+}
+
+.riskLabel.riskScoreMedium {
+  color: #d97706 !important;
+}
+
+.riskLabel.riskScoreHigh {
+  color: #dc2626 !important;
+}
+
+.riskLabel.riskScoreUnknown {
+  color: #6b7280 !important;
+}
+
+/* Contract Details - HELL! */
 .contractDetails {
   display: flex;
   flex-direction: column;
   gap: 8px;
   margin-bottom: 16px;
+  background: transparent !important;
 }
 
 .detailItem {
@@ -563,42 +616,129 @@
   align-items: center;
   gap: 8px;
   font-size: 13px;
-  color: #64748b;
+  color: #64748b !important;
+  background: transparent !important;
 }
 
 .detailIcon {
   width: 14px;
   height: 14px;
   flex-shrink: 0;
-  color: #9ca3af;
+  color: #9ca3af !important;
 }
 
-/* Card Footer - HELL UND EINFACH */
+/* Card Footer - HELL! */
 .cardFooter {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding-top: 12px;
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid #f1f5f9 !important;
+  background: transparent !important;
 }
 
 .uploadDate {
   font-size: 12px;
-  color: #9ca3af;
-  font-weight: 500;
+  color: #9ca3af !important;
+  font-weight: 500 !important;
+  background: transparent !important;
 }
 
 .arrowIcon {
   width: 16px;
   height: 16px;
-  color: #9ca3af;
+  color: #9ca3af !important;
   transition: all 0.2s ease;
 }
 
 .legalPulseCard:hover .arrowIcon {
-  color: #3b82f6;
+  color: #3b82f6 !important;
   transform: translateX(2px);
 }
+
+/* Loading und Empty States für Legal Pulse - HELL! */
+.legalPulseContainer .loadingContainer {
+  padding: 60px 24px !important;
+  text-align: center;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
+  border-radius: 12px !important;
+}
+
+.legalPulseContainer .loadingSpinner {
+  width: 32px;
+  height: 32px;
+  margin: 0 auto 16px;
+}
+
+.legalPulseContainer .emptyState {
+  padding: 60px 24px !important;
+  text-align: center;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
+  border-radius: 12px !important;
+}
+
+.legalPulseContainer .emptyStateIcon {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 16px;
+  color: #9ca3af !important;
+}
+
+/* Dark Mode Überschreibung für Legal Pulse - HELL BLEIBT HELL! */
+@media (prefers-color-scheme: dark) {
+  .legalPulseCard {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+    border-color: #e2e8f0 !important;
+    color: #1e293b !important;
+  }
+  
+  .contractTitle {
+    color: #1e293b !important;
+  }
+  
+  .cardFooter {
+    border-color: #f1f5f9 !important;
+  }
+
+  .riskScoreBadge {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #64748b !important;
+  }
+
+  .metaItem,
+  .metaLabel,
+  .detailItem,
+  .uploadDate {
+    color: #64748b !important;
+  }
+
+  .legalPulseContainer {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+  }
+}
+
+/* Micro-Animationen für Legal Pulse */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.legalPulseCard {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+.legalPulseCard:nth-child(1) { animation-delay: 0ms; }
+.legalPulseCard:nth-child(2) { animation-delay: 50ms; }
+.legalPulseCard:nth-child(3) { animation-delay: 100ms; }
+.legalPulseCard:nth-child(4) { animation-delay: 150ms; }
+.legalPulseCard:nth-child(5) { animation-delay: 200ms; }
 
 /* Table Container */
 .tableContainer {
@@ -1580,28 +1720,6 @@
   margin: -0.125rem -0.25rem;
 }
 
-/* Micro-Animationen für bessere UX */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.legalPulseCard {
-  animation: fadeInUp 0.3s ease-out;
-}
-
-.legalPulseCard:nth-child(1) { animation-delay: 0ms; }
-.legalPulseCard:nth-child(2) { animation-delay: 50ms; }
-.legalPulseCard:nth-child(3) { animation-delay: 100ms; }
-.legalPulseCard:nth-child(4) { animation-delay: 150ms; }
-.legalPulseCard:nth-child(5) { animation-delay: 200ms; }
-
 /* Verbesserte Focus States für Accessibility */
 .clickableCard:focus,
 .legalPulseCard:focus {
@@ -1623,8 +1741,8 @@
   }
   
   .legalPulseCard {
-    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-    padding: 20px;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+    padding: 20px !important;
   }
   
   .contractHeader {
@@ -1634,43 +1752,14 @@
   
   .riskScoreBadge {
     align-self: flex-start;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
   }
   
   .contractMeta {
     flex-direction: column;
     gap: 8px;
   }
-}
-
-/* Loading States für Legal Pulse - HELL */
-.legalPulseContainer .loadingContainer {
-  padding: 60px 24px;
-  text-align: center;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border-radius: 12px;
-}
-
-.legalPulseContainer .loadingSpinner {
-  width: 32px;
-  height: 32px;
-  margin: 0 auto 16px;
-}
-
-/* Empty State für Legal Pulse - HELL */
-.legalPulseContainer .emptyState {
-  padding: 60px 24px;
-  text-align: center;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border-radius: 12px;
-}
-
-.legalPulseContainer .emptyStateIcon {
-  width: 48px;
-  height: 48px;
-  margin: 0 auto 16px;
-  color: #9ca3af;
 }
 
 /* 🆕 Erweiterte Hover-Effekte für bestehende Metric Cards */
@@ -2030,17 +2119,36 @@
     color: #f8fafc;
   }
 
+  /* ABER: Legal Pulse bleibt IMMER hell! */
   .legalPulseCard {
-    background: #1f2937;
-    border-color: #374151;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+    border-color: #e2e8f0 !important;
+    color: #1e293b !important;
   }
   
   .contractTitle {
-    color: #f9fafb;
+    color: #1e293b !important;
   }
   
   .cardFooter {
-    border-color: #374151;
+    border-color: #f1f5f9 !important;
+  }
+
+  .riskScoreBadge {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #64748b !important;
+  }
+
+  .metaItem,
+  .metaLabel,
+  .detailItem,
+  .uploadDate {
+    color: #64748b !important;
+  }
+
+  .legalPulseContainer {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
   }
 }
 
@@ -2071,5 +2179,11 @@
   .chartContainer {
     background: white !important;
     border: 1px solid #f3f4f6 !important;
+  }
+
+  .legalPulseCard {
+    background: white !important;
+    border: 1px solid #e5e7eb !important;
+    box-shadow: none !important;
   }
 }
