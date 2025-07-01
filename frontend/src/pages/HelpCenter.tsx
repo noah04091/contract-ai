@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Search, FileText, Eye, BarChart3, Download, RefreshCw, Settings, ChevronDown } from 'lucide-react';
+import { Helmet } from "react-helmet";
 import styles from '../styles/HelpCenter.module.css';
 
 interface GuideCard {
@@ -126,138 +127,158 @@ const HelpCenter: React.FC = () => {
   };
 
   return (
-    <div className={styles.helpCenter}>
-      {/* Hero Section */}
-      <section className={styles.hero}>
-        <div className={styles.container}>
-          <h1 className={styles.heroTitle}>Hilfe-Center</h1>
-          <p className={styles.heroSubtitle}>
-            Alles, was Sie über Contract AI wissen müssen – von ersten Schritten bis zu Profi-Tipps
-          </p>
-        </div>
-      </section>
+    <>
+      <Helmet>
+        <title>Hilfe & Support | Contract AI</title>
+        <meta name="description" content="Finde Antworten auf deine Fragen, Tutorials und Support rund um Vertragsanalyse, Optimierung und dein Contract AI Konto." />
+        <meta name="keywords" content="Hilfe, Support, FAQ, Contract AI Hilfe, Vertragsanalyse Support" />
+        <link rel="canonical" href="https://contract-ai.de/hilfe" />
+        {/* Open Graph / Facebook */}
+        <meta property="og:title" content="Hilfe & Support | Contract AI" />
+        <meta property="og:description" content="Alle Antworten auf deine Fragen zu Contract AI, Vertragsmanagement und KI-gestützter Analyse – in unserem Help Center." />
+        <meta property="og:url" content="https://contract-ai.de/hilfe" />
+        <meta property="og:type" content="website" />
+        <meta property="og:image" content="https://contract-ai.de/og-image.jpg" />
+        {/* Twitter */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Hilfe & Support | Contract AI" />
+        <meta name="twitter:description" content="Finde schnell Hilfe zu allen Funktionen und deinem Account im Contract AI Help Center." />
+        <meta name="twitter:image" content="https://contract-ai.de/og-image.jpg" />
+      </Helmet>
 
-      {/* Search Section */}
-      <section className={styles.searchSection}>
-        <div className={styles.container}>
-          <div className={styles.searchBar}>
-            <Search className={styles.searchIcon} size={20} />
-            <input
-              type="text"
-              className={styles.searchInput}
-              placeholder="Wonach suchen Sie? z.B. 'Vertrag hochladen'"
-              value={searchTerm}
-              onChange={handleSearch}
-            />
+      <div className={styles.helpCenter}>
+        {/* Hero Section */}
+        <section className={styles.hero}>
+          <div className={styles.container}>
+            <h1 className={styles.heroTitle}>Hilfe-Center</h1>
+            <p className={styles.heroSubtitle}>
+              Alles, was Sie über Contract AI wissen müssen – von ersten Schritten bis zu Profi-Tipps
+            </p>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Tab Navigation */}
-      <nav className={styles.tabNav}>
-        <div className={styles.tabButtons}>
-          <button
-            className={`${styles.tabButton} ${activeTab === 'handbuch' ? styles.active : ''}`}
-            onClick={() => setActiveTab('handbuch')}
-          >
-            📖 Handbuch
-          </button>
-          <button
-            className={`${styles.tabButton} ${activeTab === 'faq' ? styles.active : ''}`}
-            onClick={() => setActiveTab('faq')}
-          >
-            ❓ FAQ
-          </button>
-          <button
-            className={`${styles.tabButton} ${activeTab === 'leitfaeden' ? styles.active : ''}`}
-            onClick={() => setActiveTab('leitfaeden')}
-          >
-            💡 Leitfäden
-          </button>
-        </div>
-      </nav>
-
-      {/* Content Sections */}
-      <main className={styles.contentSection}>
-        <div className={styles.container}>
-          {/* Handbuch Tab */}
-          {activeTab === 'handbuch' && (
-            <div className={styles.tabContent}>
-              <h2 className={styles.sectionTitle}>Schritt-für-Schritt Anleitungen</h2>
-              <p className={styles.sectionSubtitle}>
-                Lernen Sie Contract AI in wenigen Minuten kennen
-              </p>
-              
-              <div className={styles.guideGrid}>
-                {guideCards.map((guide, index) => (
-                  <div key={index} className={styles.guideCard}>
-                    <div className={styles.guideIcon}>
-                      {guide.icon}
-                    </div>
-                    <h3 className={styles.guideTitle}>{guide.title}</h3>
-                    <p className={styles.guideDescription}>{guide.description}</p>
-                  </div>
-                ))}
-              </div>
+        {/* Search Section */}
+        <section className={styles.searchSection}>
+          <div className={styles.container}>
+            <div className={styles.searchBar}>
+              <Search className={styles.searchIcon} size={20} />
+              <input
+                type="text"
+                className={styles.searchInput}
+                placeholder="Wonach suchen Sie? z.B. 'Vertrag hochladen'"
+                value={searchTerm}
+                onChange={handleSearch}
+              />
             </div>
-          )}
+          </div>
+        </section>
 
-          {/* FAQ Tab */}
-          {activeTab === 'faq' && (
-            <div className={styles.tabContent}>
-              <h2 className={styles.sectionTitle}>Häufige Fragen</h2>
-              <p className={styles.sectionSubtitle}>
-                Schnelle Antworten auf die wichtigsten Fragen
-              </p>
-              
-              <div className={styles.faqList}>
-                {faqItems.map((faq, index) => (
-                  <div key={index} className={`${styles.faqItem} ${openFAQ === index ? styles.open : ''}`}>
-                    <button
-                      className={styles.faqQuestion}
-                      onClick={() => handleFAQToggle(index)}
-                    >
-                      {faq.question}
-                      <ChevronDown
-                        className={`${styles.faqToggle} ${openFAQ === index ? styles.rotated : ''}`}
-                        size={20}
-                      />
-                    </button>
-                    {openFAQ === index && (
-                      <div className={styles.faqAnswer}>
-                        <p>{faq.answer}</p>
+        {/* Tab Navigation */}
+        <nav className={styles.tabNav}>
+          <div className={styles.tabButtons}>
+            <button
+              className={`${styles.tabButton} ${activeTab === 'handbuch' ? styles.active : ''}`}
+              onClick={() => setActiveTab('handbuch')}
+            >
+              📖 Handbuch
+            </button>
+            <button
+              className={`${styles.tabButton} ${activeTab === 'faq' ? styles.active : ''}`}
+              onClick={() => setActiveTab('faq')}
+            >
+              ❓ FAQ
+            </button>
+            <button
+              className={`${styles.tabButton} ${activeTab === 'leitfaeden' ? styles.active : ''}`}
+              onClick={() => setActiveTab('leitfaeden')}
+            >
+              💡 Leitfäden
+            </button>
+          </div>
+        </nav>
+
+        {/* Content Sections */}
+        <main className={styles.contentSection}>
+          <div className={styles.container}>
+            {/* Handbuch Tab */}
+            {activeTab === 'handbuch' && (
+              <div className={styles.tabContent}>
+                <h2 className={styles.sectionTitle}>Schritt-für-Schritt Anleitungen</h2>
+                <p className={styles.sectionSubtitle}>
+                  Lernen Sie Contract AI in wenigen Minuten kennen
+                </p>
+                
+                <div className={styles.guideGrid}>
+                  {guideCards.map((guide, index) => (
+                    <div key={index} className={styles.guideCard}>
+                      <div className={styles.guideIcon}>
+                        {guide.icon}
                       </div>
-                    )}
-                  </div>
-                ))}
+                      <h3 className={styles.guideTitle}>{guide.title}</h3>
+                      <p className={styles.guideDescription}>{guide.description}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Leitfäden Tab */}
-          {activeTab === 'leitfaeden' && (
-            <div className={styles.tabContent}>
-              <h2 className={styles.sectionTitle}>Best Practice Leitfäden</h2>
-              <p className={styles.sectionSubtitle}>
-                Profi-Tipps für bessere Vertragsentscheidungen
-              </p>
-              
-              <div className={styles.practicesGrid}>
-                {practiceCards.map((practice, index) => (
-                  <div key={index} className={styles.practiceCard}>
-                    <h3 className={styles.practiceTitle}>{practice.title}</h3>
-                    <p className={styles.practiceDescription}>{practice.description}</p>
-                    <a href={practice.readMoreLink} className={styles.readMore}>
-                      Vollständigen Artikel lesen →
-                    </a>
-                  </div>
-                ))}
+            {/* FAQ Tab */}
+            {activeTab === 'faq' && (
+              <div className={styles.tabContent}>
+                <h2 className={styles.sectionTitle}>Häufige Fragen</h2>
+                <p className={styles.sectionSubtitle}>
+                  Schnelle Antworten auf die wichtigsten Fragen
+                </p>
+                
+                <div className={styles.faqList}>
+                  {faqItems.map((faq, index) => (
+                    <div key={index} className={`${styles.faqItem} ${openFAQ === index ? styles.open : ''}`}>
+                      <button
+                        className={styles.faqQuestion}
+                        onClick={() => handleFAQToggle(index)}
+                      >
+                        {faq.question}
+                        <ChevronDown
+                          className={`${styles.faqToggle} ${openFAQ === index ? styles.rotated : ''}`}
+                          size={20}
+                        />
+                      </button>
+                      {openFAQ === index && (
+                        <div className={styles.faqAnswer}>
+                          <p>{faq.answer}</p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
-        </div>
-      </main>
-    </div>
+            )}
+
+            {/* Leitfäden Tab */}
+            {activeTab === 'leitfaeden' && (
+              <div className={styles.tabContent}>
+                <h2 className={styles.sectionTitle}>Best Practice Leitfäden</h2>
+                <p className={styles.sectionSubtitle}>
+                  Profi-Tipps für bessere Vertragsentscheidungen
+                </p>
+                
+                <div className={styles.practicesGrid}>
+                  {practiceCards.map((practice, index) => (
+                    <div key={index} className={styles.practiceCard}>
+                      <h3 className={styles.practiceTitle}>{practice.title}</h3>
+                      <p className={styles.practiceDescription}>{practice.description}</p>
+                      <a href={practice.readMoreLink} className={styles.readMore}>
+                        Vollständigen Artikel lesen →
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </main>
+      </div>
+    </>
   );
 };
 

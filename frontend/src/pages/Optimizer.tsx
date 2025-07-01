@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import ReactDOM from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { Helmet } from "react-helmet";
 import { 
   Upload, 
   AlertCircle, 
@@ -1206,991 +1207,1011 @@ Generiert durch KI-Vertragsoptimierung`;
   }
 
   return (
-    <div className={styles.optimizer}>
-      <div className={styles.backgroundGradient}></div>
+    <>
+      <Helmet>
+        <title>Verträge optimieren mit KI | Contract AI</title>
+        <meta name="description" content="Lasse deine Verträge automatisch von KI prüfen und optimiere Klauseln in Sekunden. Contract AI sorgt für bessere Bedingungen und mehr Fairness in deinen Verträgen." />
+        <meta name="keywords" content="Vertragsoptimierung, Verträge verbessern, KI Vertragsanalyse, Klauseln optimieren, Contract AI" />
+        <link rel="canonical" href="https://contract-ai.de/optimizer" />
+        {/* Open Graph / Facebook */}
+        <meta property="og:title" content="Verträge optimieren mit KI | Contract AI" />
+        <meta property="og:description" content="Erkenne Schwächen in deinen Verträgen und verbessere sie mit KI-gestützten Optimierungsvorschlägen. Einfach, schnell und sicher." />
+        <meta property="og:url" content="https://contract-ai.de/optimizer" />
+        <meta property="og:type" content="website" />
+        <meta property="og:image" content="https://contract-ai.de/og-image.jpg" />
+        {/* Twitter */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Verträge optimieren mit KI | Contract AI" />
+        <meta name="twitter:description" content="Optimiere deine Verträge automatisch mit KI und sichere dir bessere Konditionen. Dein smarter Vertragsoptimierer von Contract AI." />
+        <meta name="twitter:image" content="https://contract-ai.de/og-image.jpg" />
+      </Helmet>
+      
+      <div className={styles.optimizer}>
+        <div className={styles.backgroundGradient}></div>
 
-      <motion.div 
-        className={styles.container}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.8 }}
-      >
-        {/* ✨ Header */}
         <motion.div 
-          className={styles.header}
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          className={styles.container}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8 }}
         >
-          <motion.h1 className={styles.title}>
-            KI-Vertragsoptimierung
-          </motion.h1>
-          
-          <motion.p 
-            className={styles.subtitle}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3, duration: 0.6 }}
-          >
-            Revolutionäre KI-Analyse für perfekte Verträge. 
-            Erkenne Risiken, optimiere Klauseln, spare Zeit und Geld.
-          </motion.p>
-
-          {/* Feature Pills */}
-          <motion.div
-            className={styles.featurePills}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5, duration: 0.6 }}
-          >
-            {[
-              { icon: <Brain size={16} />, text: 'KI-powered' },
-              { icon: <Shield size={16} />, text: 'Risiko-Analyse' },
-              { icon: <Download size={16} />, text: 'Instant-Optimierung' },
-              { icon: <CheckCircle2 size={16} />, text: 'Profi-Niveau' }
-            ].map((pill, index) => (
-              <motion.div
-                key={index}
-                className={styles.featurePill}
-                whileHover={{ scale: 1.05, y: -2 }}
-                transition={{ type: "spring", stiffness: 300 }}
-              >
-                {pill.icon}
-                {pill.text}
-              </motion.div>
-            ))}
-          </motion.div>
-        </motion.div>
-
-        {/* ✨ Premium Notice */}
-        {!isPremium && (
-          <LegendaryPremiumNotice onUpgrade={() => window.location.href = '/upgrade'} />
-        )}
-
-        {/* ✨ Upload Area */}
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 0.6 }}
-        >
+          {/* ✨ Header */}
           <motion.div 
-            className={`${styles.uploadArea} ${dragActive ? styles.dragActive : ''} ${!isPremium ? styles.disabled : ''} ${file ? styles.uploadAreaWithFile : ''}`}
-            onDragEnter={handleDrag}
-            onDragLeave={handleDrag}
-            onDragOver={handleDrag}
-            onDrop={handleDrop}
-            onClick={isPremium ? () => fileInputRef.current?.click() : undefined}
-            whileHover={isPremium ? { scale: 1.01, y: -2 } : undefined}
-            animate={dragActive ? { scale: 1.02 } : { scale: 1 }}
-          >
-            <input
-              type="file"
-              ref={fileInputRef}
-              style={{ display: 'none' }}
-              accept="application/pdf"
-              disabled={!isPremium}
-              onChange={handleFileChange}
-            />
-            
-            {file ? (
-              <motion.div 
-                className={styles.fileInfo}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-              >
-                <div className={styles.fileIcon}>
-                  <FileText size={32} style={{ color: '#0071e3' }} />
-                </div>
-                <div className={styles.fileDetails}>
-                  <div className={styles.fileName}>{file.name}</div>
-                  <div className={styles.fileSize}>
-                    <CheckCircle2 size={16} style={{ color: '#34c759' }} />
-                    {(file.size / 1024 / 1024).toFixed(2)} MB • Bereit für KI-Analyse
-                  </div>
-                </div>
-              </motion.div>
-            ) : (
-              <motion.div
-                className={styles.uploadPrompt}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.2 }}
-              >
-                <motion.div
-                  className={styles.uploadIcon}
-                  animate={dragActive ? { scale: 1.1, rotate: 5 } : { scale: 1, rotate: 0 }}
-                >
-                  <Upload size={48} style={{ 
-                    color: dragActive ? '#0071e3' : '#86868b'
-                  }} />
-                </motion.div>
-                <h3>
-                  {dragActive ? 'Datei hier ablegen' : 'Vertrag hochladen'}
-                </h3>
-                <p>
-                  {dragActive 
-                    ? 'Lass deine PDF-Datei los für die KI-Analyse'
-                    : 'Ziehe deine PDF-Datei hierher oder klicke zum Auswählen'
-                  }
-                </p>
-                {!isPremium && (
-                  <div className={styles.premiumHint}>
-                    <Lock size={16} />
-                    Premium-Feature
-                  </div>
-                )}
-              </motion.div>
-            )}
-          </motion.div>
-
-          {/* Action Buttons */}
-          <motion.div 
-            className={styles.actionButtons}
-            initial={{ opacity: 0, y: 20 }}
+            className={styles.header}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.6, duration: 0.6 }}
+            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
           >
-            <motion.button 
-              onClick={handleUpload}
-              disabled={!file || loading || !isPremium}
-              className={styles.primaryButton}
-              whileHover={file && isPremium && !loading ? { scale: 1.02, y: -2 } : undefined}
-              whileTap={file && isPremium && !loading ? { scale: 0.98 } : undefined}
-            >
-              {loading ? (
-                <>
-                  <div className={styles.spinner}></div>
-                  <span>KI analysiert...</span>
-                </>
-              ) : (
-                <>
-                  <Wand2 size={20} />
-                  <span>KI-Analyse starten</span>
-                </>
-              )}
-            </motion.button>
+            <motion.h1 className={styles.title}>
+              KI-Vertragsoptimierung
+            </motion.h1>
             
-            {file && (
-              <motion.button 
-                onClick={handleReset}
-                className={styles.secondaryButton}
-                whileHover={{ scale: 1.02, y: -2 }}
-                whileTap={{ scale: 0.98 }}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-              >
-                <RefreshCw size={18} />
-                <span>Zurücksetzen</span>
-              </motion.button>
-            )}
-          </motion.div>
-        </motion.div>
-
-        {/* ✨ Error Message */}
-        <AnimatePresence>
-          {error && (
-            <motion.div 
-              className={styles.errorMessage}
-              initial={{ opacity: 0, y: 20, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -20, scale: 0.95 }}
-              transition={{ type: "spring", stiffness: 500, damping: 25 }}
-            >
-              <AlertCircle size={24} />
-              <span>{error}</span>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* ✅ NEW: Better Toast Notification System */}
-        <AnimatePresence>
-          {toast && (
-            <motion.div
-              initial={{ opacity: 0, y: 50, scale: 0.9 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -50, scale: 0.9 }}
-              style={{
-                position: 'fixed',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                zIndex: 1000000,
-                background: toast.type === 'success' 
-                  ? 'linear-gradient(135deg, rgba(52, 199, 89, 0.95) 0%, rgba(52, 199, 89, 0.9) 100%)'
-                  : 'linear-gradient(135deg, rgba(255, 69, 58, 0.95) 0%, rgba(255, 69, 58, 0.9) 100%)',
-                color: 'white',
-                padding: '1rem 2rem',
-                borderRadius: '16px',
-                boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
-                backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                fontSize: '1rem',
-                fontWeight: 600,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                maxWidth: '400px',
-                textAlign: 'center'
-              }}
-            >
-              {toast.type === 'success' ? '✅' : '❌'} {toast.message}
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* ✨ Results Area */}
-        <AnimatePresence>
-          {optimizations.length > 0 && (
-            <motion.div 
+            <motion.p 
+              className={styles.subtitle}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.8 }}
+              transition={{ delay: 0.3, duration: 0.6 }}
             >
-              {/* Contract Health Dashboard */}
-              {contractScore && (
-                <ContractHealthDashboard 
-                  score={contractScore}
-                  showSimulation={showSimulation}
-                  newScore={calculateNewScore()}
-                />
-              )}
+              Revolutionäre KI-Analyse für perfekte Verträge. 
+              Erkenne Risiken, optimiere Klauseln, spare Zeit und Geld.
+            </motion.p>
 
-              {/* Category Filter */}
-              <motion.div
-                className={styles.card}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-              >
-                <div className={styles.cardHeader}>
-                  <Filter size={20} style={{ color: '#0071e3' }} />
-                  <span className={styles.cardTitle}>Filter & Kategorien</span>
-                  <span style={{ 
-                    marginLeft: 'auto',
-                    fontSize: '0.9rem',
-                    color: '#6e6e73',
-                    fontWeight: 500
-                  }}>
-                    {filteredOptimizations.length} von {optimizations.length} Optimierungen
-                  </span>
-                </div>
-                
-                <div style={{ 
-                  display: 'flex', 
-                  flexWrap: 'wrap', 
-                  gap: '0.8rem' 
-                }}>
-                  {categories.filter(cat => cat.count > 0 || cat.id === 'all').map((category) => (
-                    <motion.button
-                      key={category.id}
-                      onClick={() => setSelectedCategory(category.id)}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.6rem',
-                        padding: '0.8rem 1.2rem',
-                        borderRadius: '16px',
-                        border: 'none',
-                        fontSize: '0.9rem',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease',
-                        background: selectedCategory === category.id 
-                          ? `linear-gradient(135deg, ${category.color} 0%, ${category.color}dd 100%)`
-                          : 'rgba(255, 255, 255, 0.8)',
-                        color: selectedCategory === category.id ? 'white' : '#1d1d1f',
-                        boxShadow: selectedCategory === category.id 
-                          ? `0 8px 24px ${category.color}40`
-                          : '0 4px 12px rgba(0, 0, 0, 0.05)',
-                        transform: selectedCategory === category.id ? 'scale(1.02)' : 'scale(1)'
-                      }}
-                      whileHover={{ scale: 1.02, y: -1 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      {category.icon}
-                      {category.name}
-                      <span style={{
-                        backgroundColor: selectedCategory === category.id 
-                          ? 'rgba(255,255,255,0.3)' 
-                          : category.color + '20',
-                        color: selectedCategory === category.id 
-                          ? 'white' 
-                          : category.color,
-                        borderRadius: '12px',
-                        padding: '0.2rem 0.5rem',
-                        fontSize: '0.8rem',
-                        fontWeight: 700,
-                        minWidth: '20px',
-                        textAlign: 'center'
-                      }}>
-                        {category.count}
-                      </span>
-                    </motion.button>
-                  ))}
-                </div>
-              </motion.div>
-
-              {/* Enhanced Control Panel mit Smart Contract Generator */}
-              <motion.div
-                className={styles.card}
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '1.5rem',
-                  flexWrap: 'wrap',
-                  gap: '1rem'
-                }}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-              >
-                {/* Left Section: Simulation Toggle */}
-                <motion.button
-                  onClick={() => setShowSimulation(!showSimulation)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.6rem',
-                    padding: '0.8rem 1.5rem',
-                    borderRadius: '12px',
-                    border: 'none',
-                    fontSize: '0.95rem',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    background: showSimulation 
-                      ? 'linear-gradient(135deg, #0071e3 0%, #005bb5 100%)'
-                      : 'rgba(0, 113, 227, 0.1)',
-                    color: showSimulation ? 'white' : '#0071e3',
-                    transition: 'all 0.2s ease',
-                    boxShadow: showSimulation 
-                      ? '0 8px 24px rgba(0, 113, 227, 0.3)'
-                      : 'none'
-                  }}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+            {/* Feature Pills */}
+            <motion.div
+              className={styles.featurePills}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5, duration: 0.6 }}
+            >
+              {[
+                { icon: <Brain size={16} />, text: 'KI-powered' },
+                { icon: <Shield size={16} />, text: 'Risiko-Analyse' },
+                { icon: <Download size={16} />, text: 'Instant-Optimierung' },
+                { icon: <CheckCircle2 size={16} />, text: 'Profi-Niveau' }
+              ].map((pill, index) => (
+                <motion.div
+                  key={index}
+                  className={styles.featurePill}
+                  whileHover={{ scale: 1.05, y: -2 }}
+                  transition={{ type: "spring", stiffness: 300 }}
                 >
-                  {showSimulation ? <EyeOff size={16} /> : <Eye size={16} />}
-                  <span>{showSimulation ? 'Simulation beenden' : 'Live-Simulation'}</span>
-                </motion.button>
+                  {pill.icon}
+                  {pill.text}
+                </motion.div>
+              ))}
+            </motion.div>
+          </motion.div>
 
-                {/* MAIN FEATURE: Smart Contract Generator Button */}
-                <motion.button
-                  onClick={handleGenerateOptimizedContract}
-                  disabled={isGeneratingContract || !file || optimizations.length === 0 || !isPremium}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.8rem',
-                    padding: '1rem 2rem',
-                    borderRadius: '16px',
-                    border: 'none',
-                    fontSize: '1rem',
-                    fontWeight: 700,
-                    cursor: isGeneratingContract || !file || optimizations.length === 0 || !isPremium ? 'not-allowed' : 'pointer',
-                    background: isGeneratingContract || !file || optimizations.length === 0 || !isPremium
-                      ? 'linear-gradient(135deg, #86868b 0%, #6e6e73 100%)'
-                      : 'linear-gradient(135deg, #af52de 0%, #d946ef 100%)',
-                    color: 'white',
-                    transition: 'all 0.3s ease',
-                    boxShadow: isGeneratingContract || !file || optimizations.length === 0 || !isPremium
-                      ? 'none'
-                      : '0 12px 32px rgba(175, 82, 222, 0.4)',
-                    opacity: isGeneratingContract || !file || optimizations.length === 0 || !isPremium ? 0.6 : 1,
-                    position: 'relative',
-                    overflow: 'hidden'
-                  }}
-                  whileHover={!isGeneratingContract && file && optimizations.length > 0 && isPremium ? { 
-                    scale: 1.05, 
-                    y: -2,
-                    boxShadow: '0 16px 40px rgba(175, 82, 222, 0.5)'
-                  } : undefined}
-                  whileTap={!isGeneratingContract && file && optimizations.length > 0 && isPremium ? { scale: 0.98 } : undefined}
+          {/* ✨ Premium Notice */}
+          {!isPremium && (
+            <LegendaryPremiumNotice onUpgrade={() => window.location.href = '/upgrade'} />
+          )}
+
+          {/* ✨ Upload Area */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.6 }}
+          >
+            <motion.div 
+              className={`${styles.uploadArea} ${dragActive ? styles.dragActive : ''} ${!isPremium ? styles.disabled : ''} ${file ? styles.uploadAreaWithFile : ''}`}
+              onDragEnter={handleDrag}
+              onDragLeave={handleDrag}
+              onDragOver={handleDrag}
+              onDrop={handleDrop}
+              onClick={isPremium ? () => fileInputRef.current?.click() : undefined}
+              whileHover={isPremium ? { scale: 1.01, y: -2 } : undefined}
+              animate={dragActive ? { scale: 1.02 } : { scale: 1 }}
+            >
+              <input
+                type="file"
+                ref={fileInputRef}
+                style={{ display: 'none' }}
+                accept="application/pdf"
+                disabled={!isPremium}
+                onChange={handleFileChange}
+              />
+              
+              {file ? (
+                <motion.div 
+                  className={styles.fileInfo}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
                 >
-                  {/* Animated Background Gradient */}
-                  {!isGeneratingContract && file && optimizations.length > 0 && isPremium && (
-                    <motion.div
-                      style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: '-100%',
-                        width: '100%',
-                        height: '100%',
-                        background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)',
-                        zIndex: 1
-                      }}
-                      animate={{
-                        left: ['-100%', '100%']
-                      }}
-                      transition={{
-                        duration: 2,
-                        repeat: Infinity,
-                        ease: "linear"
-                      }}
-                    />
-                  )}
-
-                  {/* Button Content */}
-                  <div style={{ zIndex: 2, display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-                    {isGeneratingContract ? (
-                      <>
-                        <motion.div
-                          style={{
-                            width: '20px',
-                            height: '20px',
-                            border: '2px solid rgba(255,255,255,0.3)',
-                            borderTop: '2px solid white',
-                            borderRadius: '50%'
-                          }}
-                          animate={{ rotate: 360 }}
-                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                        />
-                        <span>Generiere optimierten Vertrag...</span>
-                      </>
-                    ) : (
-                      <>
-                        <motion.div
-                          animate={file && optimizations.length > 0 && isPremium ? {
-                            rotate: [0, 10, -10, 0],
-                            scale: [1, 1.1, 1]
-                          } : {}}
-                          transition={{ duration: 2, repeat: Infinity }}
-                        >
-                          <Wand2 size={20} />
-                        </motion.div>
-                        <span>🪄 Optimierten Vertrag generieren</span>
-                        {!isPremium && <Lock size={16} />}
-                      </>
-                    )}
+                  <div className={styles.fileIcon}>
+                    <FileText size={32} style={{ color: '#0071e3' }} />
                   </div>
-                </motion.button>
+                  <div className={styles.fileDetails}>
+                    <div className={styles.fileName}>{file.name}</div>
+                    <div className={styles.fileSize}>
+                      <CheckCircle2 size={16} style={{ color: '#34c759' }} />
+                      {(file.size / 1024 / 1024).toFixed(2)} MB • Bereit für KI-Analyse
+                    </div>
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  className={styles.uploadPrompt}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <motion.div
+                    className={styles.uploadIcon}
+                    animate={dragActive ? { scale: 1.1, rotate: 5 } : { scale: 1, rotate: 0 }}
+                  >
+                    <Upload size={48} style={{ 
+                      color: dragActive ? '#0071e3' : '#86868b'
+                    }} />
+                  </motion.div>
+                  <h3>
+                    {dragActive ? 'Datei hier ablegen' : 'Vertrag hochladen'}
+                  </h3>
+                  <p>
+                    {dragActive 
+                      ? 'Lass deine PDF-Datei los für die KI-Analyse'
+                      : 'Ziehe deine PDF-Datei hierher oder klicke zum Auswählen'
+                    }
+                  </p>
+                  {!isPremium && (
+                    <div className={styles.premiumHint}>
+                      <Lock size={16} />
+                      Premium-Feature
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </motion.div>
 
-                {/* Right Section: Export & Pitch Buttons */}
-                <div style={{ display: 'flex', gap: '0.8rem', flexWrap: 'wrap', position: 'relative' }}>
-                  {/* Pitch Generator Button */}
-                  <div style={{ position: 'relative' }}>
-                    <motion.button
-                      ref={pitchButtonRef}
-                      onClick={() => setShowPitchMenu(!showPitchMenu)}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.6rem',
-                        padding: '0.8rem 1.5rem',
-                        borderRadius: '12px',
-                        border: 'none',
-                        fontSize: '0.95rem',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        background: 'linear-gradient(135deg, #34c759 0%, #30a46c 100%)',
-                        color: 'white',
-                        transition: 'all 0.2s ease',
-                        boxShadow: '0 8px 24px rgba(52, 199, 89, 0.3)'
-                      }}
-                      whileHover={{ scale: 1.02, y: -1 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <Mail size={16} />
-                      <span>Profi-Pitch generieren</span>
-                      {showPitchMenu ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                    </motion.button>
+            {/* Action Buttons */}
+            <motion.div 
+              className={styles.actionButtons}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6, duration: 0.6 }}
+            >
+              <motion.button 
+                onClick={handleUpload}
+                disabled={!file || loading || !isPremium}
+                className={styles.primaryButton}
+                whileHover={file && isPremium && !loading ? { scale: 1.02, y: -2 } : undefined}
+                whileTap={file && isPremium && !loading ? { scale: 0.98 } : undefined}
+              >
+                {loading ? (
+                  <>
+                    <div className={styles.spinner}></div>
+                    <span>KI analysiert...</span>
+                  </>
+                ) : (
+                  <>
+                    <Wand2 size={20} />
+                    <span>KI-Analyse starten</span>
+                  </>
+                )}
+              </motion.button>
+              
+              {file && (
+                <motion.button 
+                  onClick={handleReset}
+                  className={styles.secondaryButton}
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                >
+                  <RefreshCw size={18} />
+                  <span>Zurücksetzen</span>
+                </motion.button>
+              )}
+            </motion.div>
+          </motion.div>
+
+          {/* ✨ Error Message */}
+          <AnimatePresence>
+            {error && (
+              <motion.div 
+                className={styles.errorMessage}
+                initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                transition={{ type: "spring", stiffness: 500, damping: 25 }}
+              >
+                <AlertCircle size={24} />
+                <span>{error}</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* ✅ NEW: Better Toast Notification System */}
+          <AnimatePresence>
+            {toast && (
+              <motion.div
+                initial={{ opacity: 0, y: 50, scale: 0.9 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -50, scale: 0.9 }}
+                style={{
+                  position: 'fixed',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  zIndex: 1000000,
+                  background: toast.type === 'success' 
+                    ? 'linear-gradient(135deg, rgba(52, 199, 89, 0.95) 0%, rgba(52, 199, 89, 0.9) 100%)'
+                    : 'linear-gradient(135deg, rgba(255, 69, 58, 0.95) 0%, rgba(255, 69, 58, 0.9) 100%)',
+                  color: 'white',
+                  padding: '1rem 2rem',
+                  borderRadius: '16px',
+                  boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+                  backdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  fontSize: '1rem',
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  maxWidth: '400px',
+                  textAlign: 'center'
+                }}
+              >
+                {toast.type === 'success' ? '✅' : '❌'} {toast.message}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* ✨ Results Area */}
+          <AnimatePresence>
+            {optimizations.length > 0 && (
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.8 }}
+              >
+                {/* Contract Health Dashboard */}
+                {contractScore && (
+                  <ContractHealthDashboard 
+                    score={contractScore}
+                    showSimulation={showSimulation}
+                    newScore={calculateNewScore()}
+                  />
+                )}
+
+                {/* Category Filter */}
+                <motion.div
+                  className={styles.card}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <div className={styles.cardHeader}>
+                    <Filter size={20} style={{ color: '#0071e3' }} />
+                    <span className={styles.cardTitle}>Filter & Kategorien</span>
+                    <span style={{ 
+                      marginLeft: 'auto',
+                      fontSize: '0.9rem',
+                      color: '#6e6e73',
+                      fontWeight: 500
+                    }}>
+                      {filteredOptimizations.length} von {optimizations.length} Optimierungen
+                    </span>
                   </div>
                   
-                  {/* Export Button */}
-                  <div style={{ position: 'relative' }}>
-                    <motion.button
-                      ref={exportButtonRef}
-                      onClick={() => setShowExportMenu(!showExportMenu)}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.6rem',
-                        padding: '0.8rem 1.5rem',
-                        borderRadius: '12px',
-                        border: 'none',
-                        fontSize: '0.95rem',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        background: 'linear-gradient(135deg, #5856d6 0%, #4c4ad6 100%)',
-                        color: 'white',
-                        transition: 'all 0.2s ease',
-                        boxShadow: '0 8px 24px rgba(88, 86, 214, 0.3)'
-                      }}
-                      whileHover={{ scale: 1.02, y: -1 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <Download size={16} />
-                      <span>Premium Export</span>
-                      {showExportMenu ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                    </motion.button>
+                  <div style={{ 
+                    display: 'flex', 
+                    flexWrap: 'wrap', 
+                    gap: '0.8rem' 
+                  }}>
+                    {categories.filter(cat => cat.count > 0 || cat.id === 'all').map((category) => (
+                      <motion.button
+                        key={category.id}
+                        onClick={() => setSelectedCategory(category.id)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.6rem',
+                          padding: '0.8rem 1.2rem',
+                          borderRadius: '16px',
+                          border: 'none',
+                          fontSize: '0.9rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          background: selectedCategory === category.id 
+                            ? `linear-gradient(135deg, ${category.color} 0%, ${category.color}dd 100%)`
+                            : 'rgba(255, 255, 255, 0.8)',
+                          color: selectedCategory === category.id ? 'white' : '#1d1d1f',
+                          boxShadow: selectedCategory === category.id 
+                            ? `0 8px 24px ${category.color}40`
+                            : '0 4px 12px rgba(0, 0, 0, 0.05)',
+                          transform: selectedCategory === category.id ? 'scale(1.02)' : 'scale(1)'
+                        }}
+                        whileHover={{ scale: 1.02, y: -1 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        {category.icon}
+                        {category.name}
+                        <span style={{
+                          backgroundColor: selectedCategory === category.id 
+                            ? 'rgba(255,255,255,0.3)' 
+                            : category.color + '20',
+                          color: selectedCategory === category.id 
+                            ? 'white' 
+                            : category.color,
+                          borderRadius: '12px',
+                          padding: '0.2rem 0.5rem',
+                          fontSize: '0.8rem',
+                          fontWeight: 700,
+                          minWidth: '20px',
+                          textAlign: 'center'
+                        }}>
+                          {category.count}
+                        </span>
+                      </motion.button>
+                    ))}
                   </div>
-                </div>
+                </motion.div>
 
-                {/* Portal Dropdowns */}
-                <DropdownPortal 
-                  isOpen={showPitchMenu} 
-                  targetRef={pitchButtonRef}
-                  position="left"
-                >
-                  <AnimatePresence>
-                    <motion.div
-                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      data-portal-dropdown
-                      style={{
-                        background: 'rgba(255, 255, 255, 0.98)',
-                        backdropFilter: 'blur(20px)',
-                        borderRadius: '16px',
-                        padding: '1rem',
-                        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15), 0 8px 32px rgba(0, 0, 0, 0.1)',
-                        border: '1px solid rgba(255, 255, 255, 0.8)',
-                        minWidth: '280px',
-                        maxWidth: '320px'
-                      }}
-                    >
-                      <h5 style={{ margin: '0 0 0.8rem', fontSize: '0.9rem', fontWeight: 600, color: '#1d1d1f' }}>
-                        Pitch-Stil wählen:
-                      </h5>
-                      
-                      {pitchStyles.map((style) => (
-                        <motion.button
-                          key={style.id}
-                          onClick={() => {
-                            setSelectedPitchStyle(style.id);
-                            generatePitch(style.id);
-                          }}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.8rem',
-                            width: '100%',
-                            padding: '0.8rem',
-                            marginBottom: '0.5rem',
-                            borderRadius: '12px',
-                            border: 'none',
-                            background: selectedPitchStyle === style.id 
-                              ? 'rgba(52, 199, 89, 0.1)' 
-                              : 'transparent',
-                            cursor: 'pointer',
-                            textAlign: 'left',
-                            transition: 'all 0.2s ease'
-                          }}
-                          whileHover={{ background: 'rgba(52, 199, 89, 0.1)' }}
-                          whileTap={{ scale: 0.98 }}
-                        >
-                          {style.icon}
-                          <div>
-                            <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1d1d1f' }}>
-                              {style.name}
-                            </div>
-                            <div style={{ fontSize: '0.8rem', color: '#6e6e73' }}>
-                              {style.description}
-                            </div>
-                          </div>
-                        </motion.button>
-                      ))}
-                    </motion.div>
-                  </AnimatePresence>
-                </DropdownPortal>
-
-                <DropdownPortal 
-                  isOpen={showExportMenu} 
-                  targetRef={exportButtonRef}
-                  position="right"
-                >
-                  <AnimatePresence>
-                    <motion.div
-                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      data-portal-dropdown
-                      style={{
-                        background: 'rgba(255, 255, 255, 0.98)',
-                        backdropFilter: 'blur(20px)',
-                        borderRadius: '16px',
-                        padding: '1rem',
-                        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15), 0 8px 32px rgba(0, 0, 0, 0.1)',
-                        border: '1px solid rgba(255, 255, 255, 0.8)',
-                        minWidth: '300px',
-                        maxWidth: '350px'
-                      }}
-                    >
-                      <h5 style={{ margin: '0 0 0.8rem', fontSize: '0.9rem', fontWeight: 600, color: '#1d1d1f' }}>
-                        Export-Format wählen:
-                      </h5>
-                      
-                      {exportOptions.map((option) => (
-                        <motion.button
-                          key={option.id}
-                          onClick={() => handleExport(option.id)}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.8rem',
-                            width: '100%',
-                            padding: '0.8rem',
-                            marginBottom: '0.5rem',
-                            borderRadius: '12px',
-                            border: 'none',
-                            background: 'transparent',
-                            cursor: 'pointer',
-                            textAlign: 'left',
-                            transition: 'all 0.2s ease',
-                            opacity: option.premium && !isPremium ? 0.6 : 1
-                          }}
-                          whileHover={{ background: 'rgba(88, 86, 214, 0.1)' }}
-                          whileTap={{ scale: 0.98 }}
-                          disabled={option.premium && !isPremium}
-                        >
-                          {option.icon}
-                          <div style={{ flex: 1 }}>
-                            <div style={{ 
-                              display: 'flex', 
-                              alignItems: 'center', 
-                              gap: '0.5rem',
-                              marginBottom: '0.2rem' 
-                            }}>
-                              <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1d1d1f' }}>
-                                {option.name}
-                              </span>
-                              <span style={{ 
-                                fontSize: '0.7rem', 
-                                color: '#5856d6',
-                                background: 'rgba(88, 86, 214, 0.1)',
-                                padding: '0.1rem 0.4rem',
-                                borderRadius: '6px',
-                                fontWeight: 600
-                              }}>
-                                {option.format}
-                              </span>
-                              {option.premium && (
-                                <Lock size={12} style={{ color: '#ff9500' }} />
-                              )}
-                            </div>
-                            <div style={{ fontSize: '0.8rem', color: '#6e6e73' }}>
-                              {option.description}
-                            </div>
-                          </div>
-                        </motion.button>
-                      ))}
-                    </motion.div>
-                  </AnimatePresence>
-                </DropdownPortal>
-              </motion.div>
-
-              {/* Optimization Cards */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                  {filteredOptimizations.map((optimization, index) => (
-                  <motion.div
-                    key={optimization.id}
-                    className={styles.card}
-                    style={{ 
-                      padding: '2rem', 
-                      position: 'relative',
-                      background: optimization.implemented && showSimulation 
-                        ? 'linear-gradient(135deg, rgba(52, 199, 89, 0.1) 0%, rgba(52, 199, 89, 0.05) 100%)'
-                        : 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%)',
-                      border: optimization.implemented && showSimulation 
-                        ? '2px solid rgba(52, 199, 89, 0.3)'
-                        : '1px solid rgba(255, 255, 255, 0.6)'
-                    }}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 + index * 0.1 }}
-                  >
-                    {/* Priority Indicator */}
-                    <div style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      height: '3px',
-                      background: optimization.priority === 'critical' ? '#d70015' : 
-                                 optimization.priority === 'high' ? '#ff453a' : 
-                                 optimization.priority === 'medium' ? '#ff9500' : '#34c759'
-                    }}></div>
-
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
-                      <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', marginBottom: '0.5rem' }}>
-                          <h4 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 600 }}>
-                            {optimization.category === 'termination' ? 'Kündigung & Laufzeit' :
-                             optimization.category === 'liability' ? 'Haftung & Risiko' :
-                             optimization.category === 'payment' ? 'Vergütung & Zahlung' :
-                             optimization.category === 'compliance' ? 'Compliance & DSGVO' : 'Klarheit & Präzision'}
-                          </h4>
-                          <span style={{
-                            padding: '0.3rem 0.8rem',
-                            borderRadius: '12px',
-                            fontSize: '0.8rem',
-                            fontWeight: 600,
-                            backgroundColor: optimization.priority === 'critical' ? '#fff0f0' : 
-                                           optimization.priority === 'high' ? '#fff5f5' : 
-                                           optimization.priority === 'medium' ? '#fff8f0' : '#f0fff0',
-                            color: optimization.priority === 'critical' ? '#d70015' : 
-                                   optimization.priority === 'high' ? '#ff453a' : 
-                                   optimization.priority === 'medium' ? '#ff9500' : '#34c759'
-                          }}>
-                            {optimization.priority === 'critical' ? 'Kritisch' : 
-                             optimization.priority === 'high' ? 'Hoch' : 
-                             optimization.priority === 'medium' ? 'Mittel' : 'Niedrig'}
-                          </span>
-                        </div>
-                        
-                        <div style={{ display: 'flex', gap: '1rem', fontSize: '0.85rem', color: '#6e6e73', flexWrap: 'wrap' }}>
-                          <span>KI-Vertrauen: {optimization.confidence}%</span>
-                          <span>Risiko: {optimization.legalRisk}/10</span>
-                          <span>Impact: {optimization.businessImpact}/10</span>
-                          <span>{optimization.estimatedSavings}</span>
-                        </div>
-                      </div>
-
-                      {showSimulation && (
-                        <motion.label 
-                          style={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            gap: '0.5rem',
-                            cursor: 'pointer',
-                            padding: '0.5rem',
-                            backgroundColor: optimization.implemented ? 'rgba(52, 199, 89, 0.1)' : 'rgba(0, 113, 227, 0.1)',
-                            borderRadius: '8px',
-                            border: `1px solid ${optimization.implemented ? 'rgba(52, 199, 89, 0.3)' : 'rgba(0, 113, 227, 0.3)'}`
-                          }}
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={optimization.implemented}
-                            onChange={() => toggleSuggestion(optimization.id)}
-                            style={{
-                              width: '18px',
-                              height: '18px',
-                              accentColor: '#0071e3'
-                            }}
-                          />
-                          <span style={{ 
-                            fontSize: '0.9rem', 
-                            fontWeight: 600, 
-                            color: optimization.implemented ? '#34c759' : '#0071e3'
-                          }}>
-                            {optimization.implemented ? 'Aktiviert' : 'Anwenden'}
-                          </span>
-                          {optimization.implemented && (
-                            <TrendingUp size={14} style={{ color: '#34c759' }} />
-                          )}
-                        </motion.label>
-                      )}
-                    </div>
-
-                    {/* 3-Column Layout */}
-                    <div style={{ 
-                      display: 'grid', 
-                      gridTemplateColumns: '1fr 1fr 1fr', 
-                      gap: '1.5rem',
-                      marginBottom: '1.5rem'
-                    }}>
-                      <div>
-                        <h5 style={{ 
-                          margin: '0 0 0.5rem', 
-                          fontSize: '0.9rem', 
-                          fontWeight: 600, 
-                          color: '#ff453a',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.3rem'
-                        }}>
-                          <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#ff453a' }}></div>
-                          Original
-                        </h5>
-                        <p style={{ 
-                          margin: 0, 
-                          fontSize: '0.9rem', 
-                          lineHeight: 1.5, 
-                          color: '#1d1d1f',
-                          padding: '1rem',
-                          backgroundColor: 'rgba(255, 69, 58, 0.05)',
-                          borderRadius: '8px',
-                          border: '1px solid rgba(255, 69, 58, 0.1)',
-                          minHeight: '80px'
-                        }}>
-                          {optimization.original}
-                        </p>
-                      </div>
-
-                      <div>
-                        <h5 style={{ 
-                          margin: '0 0 0.5rem', 
-                          fontSize: '0.9rem', 
-                          fontWeight: 600, 
-                          color: '#34c759',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.3rem'
-                        }}>
-                          <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#34c759' }}></div>
-                          Verbesserung
-                        </h5>
-                        <p style={{ 
-                          margin: 0, 
-                          fontSize: '0.9rem', 
-                          lineHeight: 1.5, 
-                          color: '#1d1d1f',
-                          padding: '1rem',
-                          backgroundColor: 'rgba(52, 199, 89, 0.05)',
-                          borderRadius: '8px',
-                          border: '1px solid rgba(52, 199, 89, 0.1)',
-                          minHeight: '80px'
-                        }}>
-                          {optimization.improved}
-                        </p>
-                      </div>
-
-                      <div>
-                        <h5 style={{ 
-                          margin: '0 0 0.5rem', 
-                          fontSize: '0.9rem', 
-                          fontWeight: 600, 
-                          color: '#5856d6',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.3rem'
-                        }}>
-                          <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#5856d6' }}></div>
-                          Begründung
-                        </h5>
-                        <p style={{ 
-                          margin: 0, 
-                          fontSize: '0.9rem', 
-                          lineHeight: 1.5, 
-                          color: '#1d1d1f',
-                          padding: '1rem',
-                          backgroundColor: 'rgba(88, 86, 214, 0.05)',
-                          borderRadius: '8px',
-                          border: '1px solid rgba(88, 86, 214, 0.1)',
-                          minHeight: '80px'
-                        }}>
-                          {optimization.reasoning.split('.').slice(0, 3).join('. ')}.
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Additional Info */}
-                    <div style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                      gap: '1rem',
-                      padding: '1rem',
-                      backgroundColor: 'rgba(0, 113, 227, 0.03)',
-                      borderRadius: '8px',
-                      border: '1px solid rgba(0, 113, 227, 0.1)'
-                    }}>
-                      <div>
-                        <h6 style={{ margin: '0 0 0.3rem', fontSize: '0.8rem', fontWeight: 600, color: '#5856d6' }}>
-                          📊 Markt-Benchmark
-                        </h6>
-                        <p style={{ margin: 0, fontSize: '0.85rem', color: '#1d1d1f' }}>
-                          {optimization.marketBenchmark}
-                        </p>
-                      </div>
-                      
-                      <div>
-                        <h6 style={{ margin: '0 0 0.3rem', fontSize: '0.8rem', fontWeight: 600, color: '#5856d6' }}>
-                          🔧 Umsetzung
-                        </h6>
-                        <p style={{ margin: 0, fontSize: '0.85rem', color: '#1d1d1f' }}>
-                          {optimization.implementationDifficulty === 'easy' ? '✅ Einfach' :
-                           optimization.implementationDifficulty === 'medium' ? '⚠️ Mittel' : '🔴 Komplex'}
-                        </p>
-                      </div>
-
-                      <div>
-                        <h6 style={{ margin: '0 0 0.3rem', fontSize: '0.8rem', fontWeight: 600, color: '#5856d6' }}>
-                          💡 KI-Insight
-                        </h6>
-                        <p style={{ margin: 0, fontSize: '0.85rem', color: '#1d1d1f' }}>
-                          {optimization.aiInsight.substring(0, 80)}...
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Copy Button */}
-                    <motion.button
-                      onClick={() => {
-                        const text = `${optimization.improved}\n\nBegründung: ${optimization.reasoning}`;
-                        navigator.clipboard.writeText(text);
-                        showToast("✅ Verbesserung kopiert!");
-                      }}
-                      style={{
-                        position: 'absolute',
-                        top: '1rem',
-                        right: '1rem',
-                        background: 'rgba(255, 255, 255, 0.9)',
-                        border: '1px solid rgba(0, 113, 227, 0.2)',
-                        borderRadius: '8px',
-                        padding: '0.5rem',
-                        cursor: 'pointer',
-                        color: '#0071e3'
-                      }}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <Copy size={16} />
-                    </motion.button>
-                  </motion.div>
-                ))}
-              </div>
-
-              {/* Simulation Summary */}
-              {showSimulation && optimizations.filter(opt => opt.implemented).length > 0 && (
+                {/* Enhanced Control Panel mit Smart Contract Generator */}
                 <motion.div
                   className={styles.card}
                   style={{
-                    background: 'linear-gradient(135deg, rgba(52, 199, 89, 0.1) 0%, rgba(52, 199, 89, 0.05) 100%)',
-                    border: '2px solid rgba(52, 199, 89, 0.3)'
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '1.5rem',
+                    flexWrap: 'wrap',
+                    gap: '1rem'
                   }}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
                 >
-                  <h4 style={{ margin: '0 0 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <CheckCircle2 size={20} style={{ color: '#34c759' }} />
-                    Simulation: Ausgewählte Optimierungen
-                  </h4>
-                  
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem' }}>
-                    <div>
-                      <h6 style={{ margin: '0 0 0.5rem', color: '#34c759' }}>Score-Verbesserung</h6>
-                      <p style={{ margin: 0, fontSize: '1.2rem', fontWeight: 600 }}>
-                        {contractScore?.overall || 0} → {calculateNewScore()} Punkte 
-                        <span style={{ color: '#34c759' }}>
-                          (+{Math.max(0, calculateNewScore() - (contractScore?.overall || 0))})
-                        </span>
-                      </p>
+                  {/* Left Section: Simulation Toggle */}
+                  <motion.button
+                    onClick={() => setShowSimulation(!showSimulation)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.6rem',
+                      padding: '0.8rem 1.5rem',
+                      borderRadius: '12px',
+                      border: 'none',
+                      fontSize: '0.95rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      background: showSimulation 
+                        ? 'linear-gradient(135deg, #0071e3 0%, #005bb5 100%)'
+                        : 'rgba(0, 113, 227, 0.1)',
+                      color: showSimulation ? 'white' : '#0071e3',
+                      transition: 'all 0.2s ease',
+                      boxShadow: showSimulation 
+                        ? '0 8px 24px rgba(0, 113, 227, 0.3)'
+                        : 'none'
+                    }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    {showSimulation ? <EyeOff size={16} /> : <Eye size={16} />}
+                    <span>{showSimulation ? 'Simulation beenden' : 'Live-Simulation'}</span>
+                  </motion.button>
+
+                  {/* MAIN FEATURE: Smart Contract Generator Button */}
+                  <motion.button
+                    onClick={handleGenerateOptimizedContract}
+                    disabled={isGeneratingContract || !file || optimizations.length === 0 || !isPremium}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.8rem',
+                      padding: '1rem 2rem',
+                      borderRadius: '16px',
+                      border: 'none',
+                      fontSize: '1rem',
+                      fontWeight: 700,
+                      cursor: isGeneratingContract || !file || optimizations.length === 0 || !isPremium ? 'not-allowed' : 'pointer',
+                      background: isGeneratingContract || !file || optimizations.length === 0 || !isPremium
+                        ? 'linear-gradient(135deg, #86868b 0%, #6e6e73 100%)'
+                        : 'linear-gradient(135deg, #af52de 0%, #d946ef 100%)',
+                      color: 'white',
+                      transition: 'all 0.3s ease',
+                      boxShadow: isGeneratingContract || !file || optimizations.length === 0 || !isPremium
+                        ? 'none'
+                        : '0 12px 32px rgba(175, 82, 222, 0.4)',
+                      opacity: isGeneratingContract || !file || optimizations.length === 0 || !isPremium ? 0.6 : 1,
+                      position: 'relative',
+                      overflow: 'hidden'
+                    }}
+                    whileHover={!isGeneratingContract && file && optimizations.length > 0 && isPremium ? { 
+                      scale: 1.05, 
+                      y: -2,
+                      boxShadow: '0 16px 40px rgba(175, 82, 222, 0.5)'
+                    } : undefined}
+                    whileTap={!isGeneratingContract && file && optimizations.length > 0 && isPremium ? { scale: 0.98 } : undefined}
+                  >
+                    {/* Animated Background Gradient */}
+                    {!isGeneratingContract && file && optimizations.length > 0 && isPremium && (
+                      <motion.div
+                        style={{
+                          position: 'absolute',
+                          top: 0,
+                          left: '-100%',
+                          width: '100%',
+                          height: '100%',
+                          background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)',
+                          zIndex: 1
+                        }}
+                        animate={{
+                          left: ['-100%', '100%']
+                        }}
+                        transition={{
+                          duration: 2,
+                          repeat: Infinity,
+                          ease: "linear"
+                        }}
+                      />
+                    )}
+
+                    {/* Button Content */}
+                    <div style={{ zIndex: 2, display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                      {isGeneratingContract ? (
+                        <>
+                          <motion.div
+                            style={{
+                              width: '20px',
+                              height: '20px',
+                              border: '2px solid rgba(255,255,255,0.3)',
+                              borderTop: '2px solid white',
+                              borderRadius: '50%'
+                            }}
+                            animate={{ rotate: 360 }}
+                            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                          />
+                          <span>Generiere optimierten Vertrag...</span>
+                        </>
+                      ) : (
+                        <>
+                          <motion.div
+                            animate={file && optimizations.length > 0 && isPremium ? {
+                              rotate: [0, 10, -10, 0],
+                              scale: [1, 1.1, 1]
+                            } : {}}
+                            transition={{ duration: 2, repeat: Infinity }}
+                          >
+                            <Wand2 size={20} />
+                          </motion.div>
+                          <span>🪄 Optimierten Vertrag generieren</span>
+                          {!isPremium && <Lock size={16} />}
+                        </>
+                      )}
+                    </div>
+                  </motion.button>
+
+                  {/* Right Section: Export & Pitch Buttons */}
+                  <div style={{ display: 'flex', gap: '0.8rem', flexWrap: 'wrap', position: 'relative' }}>
+                    {/* Pitch Generator Button */}
+                    <div style={{ position: 'relative' }}>
+                      <motion.button
+                        ref={pitchButtonRef}
+                        onClick={() => setShowPitchMenu(!showPitchMenu)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.6rem',
+                          padding: '0.8rem 1.5rem',
+                          borderRadius: '12px',
+                          border: 'none',
+                          fontSize: '0.95rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          background: 'linear-gradient(135deg, #34c759 0%, #30a46c 100%)',
+                          color: 'white',
+                          transition: 'all 0.2s ease',
+                          boxShadow: '0 8px 24px rgba(52, 199, 89, 0.3)'
+                        }}
+                        whileHover={{ scale: 1.02, y: -1 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <Mail size={16} />
+                        <span>Profi-Pitch generieren</span>
+                        {showPitchMenu ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                      </motion.button>
                     </div>
                     
-                    <div>
-                      <h6 style={{ margin: '0 0 0.5rem', color: '#34c759' }}>Implementiert</h6>
-                      <p style={{ margin: 0, fontSize: '1.2rem', fontWeight: 600 }}>
-                        {optimizations.filter(opt => opt.implemented).length} von {optimizations.length} Optimierungen
-                      </p>
-                    </div>
-                    
-                    <div>
-                      <h6 style={{ margin: '0 0 0.5rem', color: '#34c759' }}>Geschätzter Nutzen</h6>
-                      <p style={{ margin: 0, fontSize: '1.2rem', fontWeight: 600 }}>
-                        Risikoreduktion & Flexibilität
-                      </p>
+                    {/* Export Button */}
+                    <div style={{ position: 'relative' }}>
+                      <motion.button
+                        ref={exportButtonRef}
+                        onClick={() => setShowExportMenu(!showExportMenu)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.6rem',
+                          padding: '0.8rem 1.5rem',
+                          borderRadius: '12px',
+                          border: 'none',
+                          fontSize: '0.95rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          background: 'linear-gradient(135deg, #5856d6 0%, #4c4ad6 100%)',
+                          color: 'white',
+                          transition: 'all 0.2s ease',
+                          boxShadow: '0 8px 24px rgba(88, 86, 214, 0.3)'
+                        }}
+                        whileHover={{ scale: 1.02, y: -1 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <Download size={16} />
+                        <span>Premium Export</span>
+                        {showExportMenu ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                      </motion.button>
                     </div>
                   </div>
+
+                  {/* Portal Dropdowns */}
+                  <DropdownPortal 
+                    isOpen={showPitchMenu} 
+                    targetRef={pitchButtonRef}
+                    position="left"
+                  >
+                    <AnimatePresence>
+                      <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        data-portal-dropdown
+                        style={{
+                          background: 'rgba(255, 255, 255, 0.98)',
+                          backdropFilter: 'blur(20px)',
+                          borderRadius: '16px',
+                          padding: '1rem',
+                          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15), 0 8px 32px rgba(0, 0, 0, 0.1)',
+                          border: '1px solid rgba(255, 255, 255, 0.8)',
+                          minWidth: '280px',
+                          maxWidth: '320px'
+                        }}
+                      >
+                        <h5 style={{ margin: '0 0 0.8rem', fontSize: '0.9rem', fontWeight: 600, color: '#1d1d1f' }}>
+                          Pitch-Stil wählen:
+                        </h5>
+                        
+                        {pitchStyles.map((style) => (
+                          <motion.button
+                            key={style.id}
+                            onClick={() => {
+                              setSelectedPitchStyle(style.id);
+                              generatePitch(style.id);
+                            }}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.8rem',
+                              width: '100%',
+                              padding: '0.8rem',
+                              marginBottom: '0.5rem',
+                              borderRadius: '12px',
+                              border: 'none',
+                              background: selectedPitchStyle === style.id 
+                                ? 'rgba(52, 199, 89, 0.1)' 
+                                : 'transparent',
+                              cursor: 'pointer',
+                              textAlign: 'left',
+                              transition: 'all 0.2s ease'
+                            }}
+                            whileHover={{ background: 'rgba(52, 199, 89, 0.1)' }}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            {style.icon}
+                            <div>
+                              <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1d1d1f' }}>
+                                {style.name}
+                              </div>
+                              <div style={{ fontSize: '0.8rem', color: '#6e6e73' }}>
+                                {style.description}
+                              </div>
+                            </div>
+                          </motion.button>
+                        ))}
+                      </motion.div>
+                    </AnimatePresence>
+                  </DropdownPortal>
+
+                  <DropdownPortal 
+                    isOpen={showExportMenu} 
+                    targetRef={exportButtonRef}
+                    position="right"
+                  >
+                    <AnimatePresence>
+                      <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        data-portal-dropdown
+                        style={{
+                          background: 'rgba(255, 255, 255, 0.98)',
+                          backdropFilter: 'blur(20px)',
+                          borderRadius: '16px',
+                          padding: '1rem',
+                          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15), 0 8px 32px rgba(0, 0, 0, 0.1)',
+                          border: '1px solid rgba(255, 255, 255, 0.8)',
+                          minWidth: '300px',
+                          maxWidth: '350px'
+                        }}
+                      >
+                        <h5 style={{ margin: '0 0 0.8rem', fontSize: '0.9rem', fontWeight: 600, color: '#1d1d1f' }}>
+                          Export-Format wählen:
+                        </h5>
+                        
+                        {exportOptions.map((option) => (
+                          <motion.button
+                            key={option.id}
+                            onClick={() => handleExport(option.id)}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.8rem',
+                              width: '100%',
+                              padding: '0.8rem',
+                              marginBottom: '0.5rem',
+                              borderRadius: '12px',
+                              border: 'none',
+                              background: 'transparent',
+                              cursor: 'pointer',
+                              textAlign: 'left',
+                              transition: 'all 0.2s ease',
+                              opacity: option.premium && !isPremium ? 0.6 : 1
+                            }}
+                            whileHover={{ background: 'rgba(88, 86, 214, 0.1)' }}
+                            whileTap={{ scale: 0.98 }}
+                            disabled={option.premium && !isPremium}
+                          >
+                            {option.icon}
+                            <div style={{ flex: 1 }}>
+                              <div style={{ 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: '0.5rem',
+                                marginBottom: '0.2rem' 
+                              }}>
+                                <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1d1d1f' }}>
+                                  {option.name}
+                                </span>
+                                <span style={{ 
+                                  fontSize: '0.7rem', 
+                                  color: '#5856d6',
+                                  background: 'rgba(88, 86, 214, 0.1)',
+                                  padding: '0.1rem 0.4rem',
+                                  borderRadius: '6px',
+                                  fontWeight: 600
+                                }}>
+                                  {option.format}
+                                </span>
+                                {option.premium && (
+                                  <Lock size={12} style={{ color: '#ff9500' }} />
+                                )}
+                              </div>
+                              <div style={{ fontSize: '0.8rem', color: '#6e6e73' }}>
+                                {option.description}
+                              </div>
+                            </div>
+                          </motion.button>
+                        ))}
+                      </motion.div>
+                    </AnimatePresence>
+                  </DropdownPortal>
                 </motion.div>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
-    </div>
+
+                {/* Optimization Cards */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    {filteredOptimizations.map((optimization, index) => (
+                    <motion.div
+                      key={optimization.id}
+                      className={styles.card}
+                      style={{ 
+                        padding: '2rem', 
+                        position: 'relative',
+                        background: optimization.implemented && showSimulation 
+                          ? 'linear-gradient(135deg, rgba(52, 199, 89, 0.1) 0%, rgba(52, 199, 89, 0.05) 100%)'
+                          : 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%)',
+                        border: optimization.implemented && showSimulation 
+                          ? '2px solid rgba(52, 199, 89, 0.3)'
+                          : '1px solid rgba(255, 255, 255, 0.6)'
+                      }}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.4 + index * 0.1 }}
+                    >
+                      {/* Priority Indicator */}
+                      <div style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        height: '3px',
+                        background: optimization.priority === 'critical' ? '#d70015' : 
+                                   optimization.priority === 'high' ? '#ff453a' : 
+                                   optimization.priority === 'medium' ? '#ff9500' : '#34c759'
+                      }}></div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', marginBottom: '0.5rem' }}>
+                            <h4 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 600 }}>
+                              {optimization.category === 'termination' ? 'Kündigung & Laufzeit' :
+                               optimization.category === 'liability' ? 'Haftung & Risiko' :
+                               optimization.category === 'payment' ? 'Vergütung & Zahlung' :
+                               optimization.category === 'compliance' ? 'Compliance & DSGVO' : 'Klarheit & Präzision'}
+                            </h4>
+                            <span style={{
+                              padding: '0.3rem 0.8rem',
+                              borderRadius: '12px',
+                              fontSize: '0.8rem',
+                              fontWeight: 600,
+                              backgroundColor: optimization.priority === 'critical' ? '#fff0f0' : 
+                                             optimization.priority === 'high' ? '#fff5f5' : 
+                                             optimization.priority === 'medium' ? '#fff8f0' : '#f0fff0',
+                              color: optimization.priority === 'critical' ? '#d70015' : 
+                                     optimization.priority === 'high' ? '#ff453a' : 
+                                     optimization.priority === 'medium' ? '#ff9500' : '#34c759'
+                            }}>
+                              {optimization.priority === 'critical' ? 'Kritisch' : 
+                               optimization.priority === 'high' ? 'Hoch' : 
+                               optimization.priority === 'medium' ? 'Mittel' : 'Niedrig'}
+                            </span>
+                          </div>
+                          
+                          <div style={{ display: 'flex', gap: '1rem', fontSize: '0.85rem', color: '#6e6e73', flexWrap: 'wrap' }}>
+                            <span>KI-Vertrauen: {optimization.confidence}%</span>
+                            <span>Risiko: {optimization.legalRisk}/10</span>
+                            <span>Impact: {optimization.businessImpact}/10</span>
+                            <span>{optimization.estimatedSavings}</span>
+                          </div>
+                        </div>
+
+                        {showSimulation && (
+                          <motion.label 
+                            style={{ 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              gap: '0.5rem',
+                              cursor: 'pointer',
+                              padding: '0.5rem',
+                              backgroundColor: optimization.implemented ? 'rgba(52, 199, 89, 0.1)' : 'rgba(0, 113, 227, 0.1)',
+                              borderRadius: '8px',
+                              border: `1px solid ${optimization.implemented ? 'rgba(52, 199, 89, 0.3)' : 'rgba(0, 113, 227, 0.3)'}`
+                            }}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={optimization.implemented}
+                              onChange={() => toggleSuggestion(optimization.id)}
+                              style={{
+                                width: '18px',
+                                height: '18px',
+                                accentColor: '#0071e3'
+                              }}
+                            />
+                            <span style={{ 
+                              fontSize: '0.9rem', 
+                              fontWeight: 600, 
+                              color: optimization.implemented ? '#34c759' : '#0071e3'
+                            }}>
+                              {optimization.implemented ? 'Aktiviert' : 'Anwenden'}
+                            </span>
+                            {optimization.implemented && (
+                              <TrendingUp size={14} style={{ color: '#34c759' }} />
+                            )}
+                          </motion.label>
+                        )}
+                      </div>
+
+                      {/* 3-Column Layout */}
+                      <div style={{ 
+                        display: 'grid', 
+                        gridTemplateColumns: '1fr 1fr 1fr', 
+                        gap: '1.5rem',
+                        marginBottom: '1.5rem'
+                      }}>
+                        <div>
+                          <h5 style={{ 
+                            margin: '0 0 0.5rem', 
+                            fontSize: '0.9rem', 
+                            fontWeight: 600, 
+                            color: '#ff453a',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.3rem'
+                          }}>
+                            <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#ff453a' }}></div>
+                            Original
+                          </h5>
+                          <p style={{ 
+                            margin: 0, 
+                            fontSize: '0.9rem', 
+                            lineHeight: 1.5, 
+                            color: '#1d1d1f',
+                            padding: '1rem',
+                            backgroundColor: 'rgba(255, 69, 58, 0.05)',
+                            borderRadius: '8px',
+                            border: '1px solid rgba(255, 69, 58, 0.1)',
+                            minHeight: '80px'
+                          }}>
+                            {optimization.original}
+                          </p>
+                        </div>
+
+                        <div>
+                          <h5 style={{ 
+                            margin: '0 0 0.5rem', 
+                            fontSize: '0.9rem', 
+                            fontWeight: 600, 
+                            color: '#34c759',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.3rem'
+                          }}>
+                            <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#34c759' }}></div>
+                            Verbesserung
+                          </h5>
+                          <p style={{ 
+                            margin: 0, 
+                            fontSize: '0.9rem', 
+                            lineHeight: 1.5, 
+                            color: '#1d1d1f',
+                            padding: '1rem',
+                            backgroundColor: 'rgba(52, 199, 89, 0.05)',
+                            borderRadius: '8px',
+                            border: '1px solid rgba(52, 199, 89, 0.1)',
+                            minHeight: '80px'
+                          }}>
+                            {optimization.improved}
+                          </p>
+                        </div>
+
+                        <div>
+                          <h5 style={{ 
+                            margin: '0 0 0.5rem', 
+                            fontSize: '0.9rem', 
+                            fontWeight: 600, 
+                            color: '#5856d6',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.3rem'
+                          }}>
+                            <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#5856d6' }}></div>
+                            Begründung
+                          </h5>
+                          <p style={{ 
+                            margin: 0, 
+                            fontSize: '0.9rem', 
+                            lineHeight: 1.5, 
+                            color: '#1d1d1f',
+                            padding: '1rem',
+                            backgroundColor: 'rgba(88, 86, 214, 0.05)',
+                            borderRadius: '8px',
+                            border: '1px solid rgba(88, 86, 214, 0.1)',
+                            minHeight: '80px'
+                          }}>
+                            {optimization.reasoning.split('.').slice(0, 3).join('. ')}.
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Additional Info */}
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                        gap: '1rem',
+                        padding: '1rem',
+                        backgroundColor: 'rgba(0, 113, 227, 0.03)',
+                        borderRadius: '8px',
+                        border: '1px solid rgba(0, 113, 227, 0.1)'
+                      }}>
+                        <div>
+                          <h6 style={{ margin: '0 0 0.3rem', fontSize: '0.8rem', fontWeight: 600, color: '#5856d6' }}>
+                            📊 Markt-Benchmark
+                          </h6>
+                          <p style={{ margin: 0, fontSize: '0.85rem', color: '#1d1d1f' }}>
+                            {optimization.marketBenchmark}
+                          </p>
+                        </div>
+                        
+                        <div>
+                          <h6 style={{ margin: '0 0 0.3rem', fontSize: '0.8rem', fontWeight: 600, color: '#5856d6' }}>
+                            🔧 Umsetzung
+                          </h6>
+                          <p style={{ margin: 0, fontSize: '0.85rem', color: '#1d1d1f' }}>
+                            {optimization.implementationDifficulty === 'easy' ? '✅ Einfach' :
+                             optimization.implementationDifficulty === 'medium' ? '⚠️ Mittel' : '🔴 Komplex'}
+                          </p>
+                        </div>
+
+                        <div>
+                          <h6 style={{ margin: '0 0 0.3rem', fontSize: '0.8rem', fontWeight: 600, color: '#5856d6' }}>
+                            💡 KI-Insight
+                          </h6>
+                          <p style={{ margin: 0, fontSize: '0.85rem', color: '#1d1d1f' }}>
+                            {optimization.aiInsight.substring(0, 80)}...
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Copy Button */}
+                      <motion.button
+                        onClick={() => {
+                          const text = `${optimization.improved}\n\nBegründung: ${optimization.reasoning}`;
+                          navigator.clipboard.writeText(text);
+                          showToast("✅ Verbesserung kopiert!");
+                        }}
+                        style={{
+                          position: 'absolute',
+                          top: '1rem',
+                          right: '1rem',
+                          background: 'rgba(255, 255, 255, 0.9)',
+                          border: '1px solid rgba(0, 113, 227, 0.2)',
+                          borderRadius: '8px',
+                          padding: '0.5rem',
+                          cursor: 'pointer',
+                          color: '#0071e3'
+                        }}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        <Copy size={16} />
+                      </motion.button>
+                    </motion.div>
+                  ))}
+                </div>
+
+                {/* Simulation Summary */}
+                {showSimulation && optimizations.filter(opt => opt.implemented).length > 0 && (
+                  <motion.div
+                    className={styles.card}
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(52, 199, 89, 0.1) 0%, rgba(52, 199, 89, 0.05) 100%)',
+                      border: '2px solid rgba(52, 199, 89, 0.3)'
+                    }}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                  >
+                    <h4 style={{ margin: '0 0 1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <CheckCircle2 size={20} style={{ color: '#34c759' }} />
+                      Simulation: Ausgewählte Optimierungen
+                    </h4>
+                    
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem' }}>
+                      <div>
+                        <h6 style={{ margin: '0 0 0.5rem', color: '#34c759' }}>Score-Verbesserung</h6>
+                        <p style={{ margin: 0, fontSize: '1.2rem', fontWeight: 600 }}>
+                          {contractScore?.overall || 0} → {calculateNewScore()} Punkte 
+                          <span style={{ color: '#34c759' }}>
+                            (+{Math.max(0, calculateNewScore() - (contractScore?.overall || 0))})
+                          </span>
+                        </p>
+                      </div>
+                      
+                      <div>
+                        <h6 style={{ margin: '0 0 0.5rem', color: '#34c759' }}>Implementiert</h6>
+                        <p style={{ margin: 0, fontSize: '1.2rem', fontWeight: 600 }}>
+                          {optimizations.filter(opt => opt.implemented).length} von {optimizations.length} Optimierungen
+                        </p>
+                      </div>
+                      
+                      <div>
+                        <h6 style={{ margin: '0 0 0.5rem', color: '#34c759' }}>Geschätzter Nutzen</h6>
+                        <p style={{ margin: 0, fontSize: '1.2rem', fontWeight: 600 }}>
+                          Risikoreduktion & Flexibilität
+                        </p>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+      </div>
+    </>
   );
 }

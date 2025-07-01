@@ -506,8 +506,21 @@ export default function Dashboard() {
   return (
     <div className={styles.dashboardContainer}>
       <Helmet>
-        <title>Dashboard – Contract AI</title>
-        <meta name="description" content="Deine Vertragsübersicht mit Analyse, Export und Reminder auf einen Blick." />
+        <title>Dashboard – Deine Vertragsübersicht | Contract AI</title>
+        <meta name="description" content="Alle deine Verträge, Analysen und Optimierungen auf einen Blick. Verwalte deine Verträge zentral und behalte jederzeit volle Kontrolle mit Contract AI." />
+        <meta name="keywords" content="Dashboard, Vertragsübersicht, Verträge verwalten, Vertragsanalyse, Contract AI" />
+        <link rel="canonical" href="https://contract-ai.de/dashboard" />
+        {/* Open Graph / Facebook */}
+        <meta property="og:title" content="Dashboard – Deine Vertragsübersicht | Contract AI" />
+        <meta property="og:description" content="Deine persönliche Schaltzentrale für Vertragsmanagement. Analysen, Fristen und Optimierungen zentral verwalten." />
+        <meta property="og:url" content="https://contract-ai.de/dashboard" />
+        <meta property="og:type" content="website" />
+        <meta property="og:image" content="https://contract-ai.de/og-image.jpg" />
+        {/* Twitter */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Dashboard – Deine Vertragsübersicht | Contract AI" />
+        <meta name="twitter:description" content="Alle Vertragsanalysen und -optimierungen an einem Ort. Contract AI macht Vertragsmanagement einfach und smart." />
+        <meta name="twitter:image" content="https://contract-ai.de/og-image.jpg" />
       </Helmet>
 
       <div className={styles.dashboardHeader}>

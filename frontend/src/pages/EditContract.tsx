@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { Helmet } from "react-helmet";
 import "./EditContract.module.css";
 
 interface Contract {
@@ -137,105 +138,125 @@ export default function EditContract() {
   };
 
   return (
-    <motion.div 
-      className="edit-container"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.5 }}
-    >
-      <div className="header-container">
-        <motion.h1 
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="edit-title"
-        >
-          <span className="title-icon">✏️</span> Vertrag bearbeiten
-        </motion.h1>
-        
-        <motion.div 
-          className="header-blur"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5 }}
-        />
-      </div>
+    <>
+      <Helmet>
+        <title>Vertrag bearbeiten | Contract AI</title>
+        <meta name="description" content="Bearbeite deine Verträge direkt online. Ändere Daten, optimiere Inhalte und aktualisiere Vertragsdetails in wenigen Klicks mit Contract AI." />
+        <meta name="keywords" content="Vertrag bearbeiten, Vertragseditor, Vertrag ändern, Contract AI" />
+        <link rel="canonical" href="https://contract-ai.de/edit-contract" />
+        {/* Open Graph / Facebook */}
+        <meta property="og:title" content="Vertrag bearbeiten | Contract AI" />
+        <meta property="og:description" content="Aktualisiere deine Vertragsdaten online einfach und sicher mit dem Contract AI Editor." />
+        <meta property="og:url" content="https://contract-ai.de/edit-contract" />
+        <meta property="og:type" content="website" />
+        <meta property="og:image" content="https://contract-ai.de/og-image.jpg" />
+        {/* Twitter */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Vertrag bearbeiten | Contract AI" />
+        <meta name="twitter:description" content="Bearbeite deine Verträge in wenigen Schritten online mit Contract AI." />
+        <meta name="twitter:image" content="https://contract-ai.de/og-image.jpg" />
+      </Helmet>
 
       <motion.div 
-        className="edit-form"
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
+        className="edit-container"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
       >
-        {isLoading ? (
-          <div className="loading-container">
-            <div className="loading-spinner"></div>
-            <p>Vertrag wird geladen...</p>
-          </div>
-        ) : (
-          <>
-            <InputField 
-              label="Name" 
-              value={contract.name} 
-              onChange={(value) => setContract({ ...contract, name: value })}
-              placeholder="Vertragsname eingeben"
-            />
-            
-            <InputField 
-              label="Laufzeit" 
-              value={contract.laufzeit} 
-              onChange={(value) => setContract({ ...contract, laufzeit: value })}
-              placeholder="z.B. 12 Monate"
-            />
-            
-            <InputField 
-              label="Kündigungsfrist" 
-              value={contract.kuendigung} 
-              onChange={(value) => setContract({ ...contract, kuendigung: value })}
-              placeholder="z.B. 3 Monate vor Ablauf"
-            />
+        <div className="header-container">
+          <motion.h1 
+            initial={{ y: -20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="edit-title"
+          >
+            <span className="title-icon">✏️</span> Vertrag bearbeiten
+          </motion.h1>
+          
+          <motion.div 
+            className="header-blur"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          />
+        </div>
 
-            <div className="button-group">
-              <motion.button 
-                className="cancel-button"
-                onClick={handleCancel}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                transition={{ type: "spring", stiffness: 400, damping: 17 }}
-              >
-                Abbrechen
-              </motion.button>
-              
-              <motion.button 
-                className="save-button"
-                onClick={handleUpdate}
-                disabled={isSaving}
-                whileHover={{ scale: 1.02, boxShadow: "0 4px 8px rgba(0, 0, 0, 0.12)" }}
-                whileTap={{ scale: 0.98 }}
-                transition={{ type: "spring", stiffness: 400, damping: 17 }}
-              >
-                {isSaving ? (
-                  <>
-                    <span className="button-spinner"></span>
-                    <span>Wird gespeichert...</span>
-                  </>
-                ) : (
-                  <>
-                    <span className="save-icon">💾</span>
-                    <span>Speichern</span>
-                  </>
-                )}
-              </motion.button>
+        <motion.div 
+          className="edit-form"
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+        >
+          {isLoading ? (
+            <div className="loading-container">
+              <div className="loading-spinner"></div>
+              <p>Vertrag wird geladen...</p>
             </div>
-          </>
-        )}
-      </motion.div>
+          ) : (
+            <>
+              <InputField 
+                label="Name" 
+                value={contract.name} 
+                onChange={(value) => setContract({ ...contract, name: value })}
+                placeholder="Vertragsname eingeben"
+              />
+              
+              <InputField 
+                label="Laufzeit" 
+                value={contract.laufzeit} 
+                onChange={(value) => setContract({ ...contract, laufzeit: value })}
+                placeholder="z.B. 12 Monate"
+              />
+              
+              <InputField 
+                label="Kündigungsfrist" 
+                value={contract.kuendigung} 
+                onChange={(value) => setContract({ ...contract, kuendigung: value })}
+                placeholder="z.B. 3 Monate vor Ablauf"
+              />
 
-      <AnimatePresence>
-        {message && (
-          <Toast message={message} type={toastType} />
-        )}
-      </AnimatePresence>
-    </motion.div>
+              <div className="button-group">
+                <motion.button 
+                  className="cancel-button"
+                  onClick={handleCancel}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                >
+                  Abbrechen
+                </motion.button>
+                
+                <motion.button 
+                  className="save-button"
+                  onClick={handleUpdate}
+                  disabled={isSaving}
+                  whileHover={{ scale: 1.02, boxShadow: "0 4px 8px rgba(0, 0, 0, 0.12)" }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                >
+                  {isSaving ? (
+                    <>
+                      <span className="button-spinner"></span>
+                      <span>Wird gespeichert...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="save-icon">💾</span>
+                      <span>Speichern</span>
+                    </>
+                  )}
+                </motion.button>
+              </div>
+            </>
+          )}
+        </motion.div>
+
+        <AnimatePresence>
+          {message && (
+            <Toast message={message} type={toastType} />
+          )}
+        </AnimatePresence>
+      </motion.div>
+    </>
   );
 }

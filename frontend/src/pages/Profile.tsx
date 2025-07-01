@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Helmet } from "react-helmet";
 import { User, Key, CreditCard, Trash2, AlertCircle, CheckCircle, LogOut, FileText, Download } from "lucide-react";
 import styles from "../styles/Profile.module.css";
 import { useAuth } from "../hooks/useAuth";;
@@ -238,296 +239,266 @@ export default function Profile() {
   );
 
   return (
-    <div className={styles.pageContainer}>
-      <motion.div 
-        className={styles.container}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <div className={styles.header}>
-          <motion.div 
-            className={styles.profileIcon}
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-          >
-            <User size={32} className={styles.icon} />
-          </motion.div>
-          <motion.h1 
-            className={styles.title}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-          >
-            Dein Profil
-          </motion.h1>
-        </div>
+    <>
+      <Helmet>
+        <title>Mein Profil & Vertragsstatus | Contract AI</title>
+        <meta name="description" content="Verwalte dein Nutzerprofil, sieh deine Abo-Details und behalte alle Vertragsaktivitäten im Blick. Dein persönlicher Bereich bei Contract AI." />
+        <meta name="keywords" content="Profil, Benutzerkonto, Vertragsstatus, Account verwalten, Contract AI" />
+        <link rel="canonical" href="https://contract-ai.de/profile" />
+        
+        {/* Open Graph / Facebook */}
+        <meta property="og:title" content="Mein Profil & Vertragsstatus | Contract AI" />
+        <meta property="og:description" content="Alle Vertragsdetails und Abo-Infos auf einen Blick. Verwalte dein Contract AI Profil einfach und sicher." />
+        <meta property="og:url" content="https://contract-ai.de/profile" />
+        <meta property="og:type" content="website" />
+        <meta property="og:image" content="https://contract-ai.de/og-image.jpg" />
+        
+        {/* Twitter */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Mein Profil & Vertragsstatus | Contract AI" />
+        <meta name="twitter:description" content="Deine persönlichen Vertrags- und Abo-Infos jederzeit im Blick. Mit Contract AI alles an einem Ort." />
+        <meta name="twitter:image" content="https://contract-ai.de/og-image.jpg" />
+      </Helmet>
 
-        {user ? (
-          <motion.div 
-            className={styles.content}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-          >
-            <div className={styles.userInfo}>
-              <div className={styles.emailContainer}>
-                <div className={styles.label}>E-Mail-Adresse</div>
-                <div className={styles.email}>{user.email}</div>
+      <div className={styles.pageContainer}>
+        <motion.div 
+          className={styles.container}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <div className={styles.header}>
+            <motion.div 
+              className={styles.profileIcon}
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
+              <User size={32} className={styles.icon} />
+            </motion.div>
+            <motion.h1 
+              className={styles.title}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+            >
+              Dein Profil
+            </motion.h1>
+          </div>
+
+          {user ? (
+            <motion.div 
+              className={styles.content}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+            >
+              <div className={styles.userInfo}>
+                <div className={styles.emailContainer}>
+                  <div className={styles.label}>E-Mail-Adresse</div>
+                  <div className={styles.email}>{user.email}</div>
+                </div>
+
+                <div className={styles.subscriptionContainer}>
+                  <div className={styles.label}>Abo-Status</div>
+                  {isLoading ? (
+                    <span>Lade Abo-Status...</span>
+                  ) : !user ? (
+                    <span>❌ Nicht eingeloggt</span>
+                  ) : user.subscriptionPlan === "business" ? (
+                    <div className={styles.premium}>
+                      <span className={styles.premiumIcon}>🏢</span>
+                      Business – aktiv
+                    </div>
+                  ) : user.subscriptionPlan === "premium" ? (
+                    <div className={styles.premium}>
+                      <span className={styles.premiumIcon}>💎</span>
+                      Premium – aktiv
+                    </div>
+                  ) : (
+                    <div className={styles.standard}>
+                      <span className={styles.standardIcon}>🔓</span>
+                      Standard – kein Abo aktiv
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <div className={styles.subscriptionContainer}>
-                <div className={styles.label}>Abo-Status</div>
-                {isLoading ? (
-                  <span>Lade Abo-Status...</span>
-                ) : !user ? (
-                  <span>❌ Nicht eingeloggt</span>
-                ) : user.subscriptionPlan === "business" ? (
-                  <div className={styles.premium}>
-                    <span className={styles.premiumIcon}>🏢</span>
-                    Business – aktiv
+              {!user.subscriptionActive && (
+                <motion.div 
+                  className={styles.upgradeSection}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.5 }}
+                >
+                  <div className={styles.upgradeContent}>
+                    <CreditCard size={24} className={styles.upgradeIcon} />
+                    <div>
+                      <h3 className={styles.upgradeTitle}>Upgrade auf Premium</h3>
+                      <p className={styles.upgradeDescription}>
+                        Erhalte Zugriff auf unbegrenzte Analysen, Vertragsoptimierung, KI-Vertragserstellung und mehr.
+                      </p>
+                    </div>
                   </div>
-                ) : user.subscriptionPlan === "premium" ? (
-                  <div className={styles.premium}>
-                    <span className={styles.premiumIcon}>💎</span>
-                    Premium – aktiv
-                  </div>
-                ) : (
-                  <div className={styles.standard}>
-                    <span className={styles.standardIcon}>🔓</span>
-                    Standard – kein Abo aktiv
-                  </div>
-                )}
-              </div>
-            </div>
+                  <motion.button 
+                    className={styles.upgradeButton}
+                    onClick={handleUpgrade}
+                    disabled={isUpgrading}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                  >
+                    {isUpgrading ? (
+                      <>
+                        <span className={styles.buttonSpinner}></span>
+                        <span>Lade Stripe...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className={styles.upgradeButtonIcon}>💳</span>
+                        <span>Jetzt upgraden</span>
+                      </>
+                    )}
+                  </motion.button>
+                </motion.div>
+              )}
 
-            {!user.subscriptionActive && (
               <motion.div 
-                className={styles.upgradeSection}
+                className={styles.section}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.5 }}
+                transition={{ duration: 0.5, delay: 0.6 }}
               >
-                <div className={styles.upgradeContent}>
-                  <CreditCard size={24} className={styles.upgradeIcon} />
-                  <div>
-                    <h3 className={styles.upgradeTitle}>Upgrade auf Premium</h3>
-                    <p className={styles.upgradeDescription}>
-                      Erhalte Zugriff auf unbegrenzte Analysen, Vertragsoptimierung, KI-Vertragserstellung und mehr.
-                    </p>
-                  </div>
-                </div>
-                <motion.button 
-                  className={styles.upgradeButton}
-                  onClick={handleUpgrade}
-                  disabled={isUpgrading}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                >
-                  {isUpgrading ? (
-                    <>
-                      <span className={styles.buttonSpinner}></span>
-                      <span>Lade Stripe...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span className={styles.upgradeButtonIcon}>💳</span>
-                      <span>Jetzt upgraden</span>
-                    </>
-                  )}
-                </motion.button>
-              </motion.div>
-            )}
-
-            <motion.div 
-              className={styles.section}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.6 }}
-            >
-              <div className={styles.sectionHeader}>
-                <Key size={18} className={styles.sectionIcon} />
-                <h2 className={styles.sectionTitle}>Passwort ändern</h2>
-              </div>
-              
-              <div className={styles.passwordForm}>
-                <div className={styles.inputGroup}>
-                  <label htmlFor="oldPassword">Aktuelles Passwort</label>
-                  <input
-                    id="oldPassword"
-                    type="password"
-                    placeholder="••••••••"
-                    value={oldPassword}
-                    onChange={(e) => setOldPassword(e.target.value)}
-                    className={styles.input}
-                  />
+                <div className={styles.sectionHeader}>
+                  <Key size={18} className={styles.sectionIcon} />
+                  <h2 className={styles.sectionTitle}>Passwort ändern</h2>
                 </div>
                 
-                <div className={styles.inputGroup}>
-                  <label htmlFor="newPassword">Neues Passwort</label>
-                  <input
-                    id="newPassword"
-                    type="password"
-                    placeholder="••••••••"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    className={styles.input}
-                  />
-                </div>
-                
-                <div className={styles.inputGroup}>
-                  <label htmlFor="confirmPassword">Passwort bestätigen</label>
-                  <input
-                    id="confirmPassword"
-                    type="password"
-                    placeholder="••••••••"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className={styles.input}
-                  />
-                </div>
-                
-                <motion.button 
-                  onClick={handlePasswordChange}
-                  className={styles.passwordButton}
-                  disabled={isPasswordChanging || !oldPassword || !newPassword || !confirmPassword}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                >
-                  {isPasswordChanging ? (
-                    <>
-                      <span className={styles.buttonSpinner}></span>
-                      <span>Wird geändert...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Key size={16} />
-                      <span>Passwort ändern</span>
-                    </>
-                  )}
-                </motion.button>
-              </div>
-            </motion.div>
-
-            <motion.div 
-              className={styles.dangerSection}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.7 }}
-            >
-              <div className={styles.dangerHeader}>
-                <Trash2 size={18} className={styles.dangerIcon} />
-                <h2 className={styles.dangerTitle}>Konto löschen</h2>
-              </div>
-              
-              <p className={styles.dangerText}>
-                Diese Aktion ist permanent und kann nicht rückgängig gemacht werden. Alle deine Verträge und Daten werden gelöscht.
-              </p>
-              
-              <motion.button 
-                onClick={handleAccountDelete}
-                className={styles.deleteButton}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                transition={{ type: "spring", stiffness: 400, damping: 17 }}
-              >
-                <Trash2 size={16} />
-                <span>Account löschen</span>
-              </motion.button>
-            </motion.div>
-
-            {/* Neue Rechnungssektion */}
-            <motion.div 
-              className={styles.section}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.8 }}
-            >
-              <div className={styles.sectionHeader}>
-                <FileText size={18} className={styles.sectionIcon} />
-                <h2 className={styles.sectionTitle}>📄 Rechnungen</h2>
-              </div>
-              
-              {isLoadingInvoices ? (
-                <div className={styles.loadingContainer}>
-                  <div className={styles.loadingSpinner}></div>
-                  <p>Lade Rechnungsdaten...</p>
-                </div>
-              ) : invoices.length === 0 ? (
-                <p className={styles.noInvoices}>
-                  Keine Rechnungen gefunden.
-                </p>
-              ) : (
-                <div className={styles.invoicesContainer}>
-                  <div className={styles.invoiceTable}>
-                    <div className={styles.invoiceTableHeader}>
-                      <div className={styles.invoiceDate}>Datum</div>
-                      <div className={styles.invoicePlan}>Abo-Typ</div>
-                      <div className={styles.invoiceAmount}>Betrag</div>
-                      <div className={styles.invoiceAction}></div>
-                    </div>
-                    
-                    {invoices.map((invoice) => (
-                      <motion.div 
-                        key={invoice.invoiceNumber}
-                        className={styles.invoiceRow}
-                        whileHover={{ backgroundColor: "rgba(0,0,0,0.02)" }}
-                      >
-                        <div className={styles.invoiceDate}>{formatDate(invoice.date)}</div>
-                        <div className={styles.invoicePlan}>
-                          {invoice.plan === 'premium' ? (
-                            <span className={styles.premiumPlan}>
-                              <span className={styles.premiumIcon}>💎</span>
-                              Premium
-                            </span>
-                          ) : invoice.plan === 'business' ? (
-                            <span className={styles.businessPlan}>
-                              <span className={styles.businessIcon}>🏢</span>
-                              Business
-                            </span>
-                          ) : (
-                            <span className={styles.standardPlan}>
-                              <span className={styles.standardIcon}>🔓</span>
-                              Standard
-                            </span>
-                          )}
-                        </div>
-                        <div className={styles.invoiceAmount}>{formatAmount(invoice.amount)}</div>
-                        <div className={styles.invoiceAction}>
-                          <motion.button 
-                            className={styles.downloadButton}
-                            onClick={() => handleDownload(invoice.invoiceNumber)}
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                            aria-label="Download Rechnung"
-                          >
-                            <Download size={16} />
-                            <span>PDF</span>
-                          </motion.button>
-                        </div>
-                      </motion.div>
-                    ))}
+                <div className={styles.passwordForm}>
+                  <div className={styles.inputGroup}>
+                    <label htmlFor="oldPassword">Aktuelles Passwort</label>
+                    <input
+                      id="oldPassword"
+                      type="password"
+                      placeholder="••••••••"
+                      value={oldPassword}
+                      onChange={(e) => setOldPassword(e.target.value)}
+                      className={styles.input}
+                    />
                   </div>
                   
-                  {/* Responsive Card View für mobile Geräte */}
-                  <div className={styles.invoiceCards}>
-                    {invoices.map((invoice) => (
-                      <motion.div 
-                        key={invoice.invoiceNumber}
-                        className={styles.invoiceCard}
-                        whileHover={{ scale: 1.02 }}
-                        transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                      >
-                        <div className={styles.invoiceCardHeader}>
+                  <div className={styles.inputGroup}>
+                    <label htmlFor="newPassword">Neues Passwort</label>
+                    <input
+                      id="newPassword"
+                      type="password"
+                      placeholder="••••••••"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className={styles.input}
+                    />
+                  </div>
+                  
+                  <div className={styles.inputGroup}>
+                    <label htmlFor="confirmPassword">Passwort bestätigen</label>
+                    <input
+                      id="confirmPassword"
+                      type="password"
+                      placeholder="••••••••"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className={styles.input}
+                    />
+                  </div>
+                  
+                  <motion.button 
+                    onClick={handlePasswordChange}
+                    className={styles.passwordButton}
+                    disabled={isPasswordChanging || !oldPassword || !newPassword || !confirmPassword}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                  >
+                    {isPasswordChanging ? (
+                      <>
+                        <span className={styles.buttonSpinner}></span>
+                        <span>Wird geändert...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Key size={16} />
+                        <span>Passwort ändern</span>
+                      </>
+                    )}
+                  </motion.button>
+                </div>
+              </motion.div>
+
+              <motion.div 
+                className={styles.dangerSection}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.7 }}
+              >
+                <div className={styles.dangerHeader}>
+                  <Trash2 size={18} className={styles.dangerIcon} />
+                  <h2 className={styles.dangerTitle}>Konto löschen</h2>
+                </div>
+                
+                <p className={styles.dangerText}>
+                  Diese Aktion ist permanent und kann nicht rückgängig gemacht werden. Alle deine Verträge und Daten werden gelöscht.
+                </p>
+                
+                <motion.button 
+                  onClick={handleAccountDelete}
+                  className={styles.deleteButton}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                >
+                  <Trash2 size={16} />
+                  <span>Account löschen</span>
+                </motion.button>
+              </motion.div>
+
+              {/* Neue Rechnungssektion */}
+              <motion.div 
+                className={styles.section}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.8 }}
+              >
+                <div className={styles.sectionHeader}>
+                  <FileText size={18} className={styles.sectionIcon} />
+                  <h2 className={styles.sectionTitle}>📄 Rechnungen</h2>
+                </div>
+                
+                {isLoadingInvoices ? (
+                  <div className={styles.loadingContainer}>
+                    <div className={styles.loadingSpinner}></div>
+                    <p>Lade Rechnungsdaten...</p>
+                  </div>
+                ) : invoices.length === 0 ? (
+                  <p className={styles.noInvoices}>
+                    Keine Rechnungen gefunden.
+                  </p>
+                ) : (
+                  <div className={styles.invoicesContainer}>
+                    <div className={styles.invoiceTable}>
+                      <div className={styles.invoiceTableHeader}>
+                        <div className={styles.invoiceDate}>Datum</div>
+                        <div className={styles.invoicePlan}>Abo-Typ</div>
+                        <div className={styles.invoiceAmount}>Betrag</div>
+                        <div className={styles.invoiceAction}></div>
+                      </div>
+                      
+                      {invoices.map((invoice) => (
+                        <motion.div 
+                          key={invoice.invoiceNumber}
+                          className={styles.invoiceRow}
+                          whileHover={{ backgroundColor: "rgba(0,0,0,0.02)" }}
+                        >
                           <div className={styles.invoiceDate}>{formatDate(invoice.date)}</div>
-                          <div className={styles.invoiceAmount}>{formatAmount(invoice.amount)}</div>
-                        </div>
-                        <div className={styles.invoiceCardContent}>
-                          <div className={styles.invoicePlanLabel}>Abo-Typ:</div>
                           <div className={styles.invoicePlan}>
                             {invoice.plan === 'premium' ? (
                               <span className={styles.premiumPlan}>
@@ -546,90 +517,142 @@ export default function Profile() {
                               </span>
                             )}
                           </div>
-                        </div>
-                        <div className={styles.invoiceCardFooter}>
-                          <motion.button 
-                            className={styles.downloadButton}
-                            onClick={() => handleDownload(invoice.invoiceNumber)}
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                          >
-                            <Download size={16} />
-                            <span>Rechnung herunterladen</span>
-                          </motion.button>
-                        </div>
-                      </motion.div>
-                    ))}
+                          <div className={styles.invoiceAmount}>{formatAmount(invoice.amount)}</div>
+                          <div className={styles.invoiceAction}>
+                            <motion.button 
+                              className={styles.downloadButton}
+                              onClick={() => handleDownload(invoice.invoiceNumber)}
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                              aria-label="Download Rechnung"
+                            >
+                              <Download size={16} />
+                              <span>PDF</span>
+                            </motion.button>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                    
+                    {/* Responsive Card View für mobile Geräte */}
+                    <div className={styles.invoiceCards}>
+                      {invoices.map((invoice) => (
+                        <motion.div 
+                          key={invoice.invoiceNumber}
+                          className={styles.invoiceCard}
+                          whileHover={{ scale: 1.02 }}
+                          transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                        >
+                          <div className={styles.invoiceCardHeader}>
+                            <div className={styles.invoiceDate}>{formatDate(invoice.date)}</div>
+                            <div className={styles.invoiceAmount}>{formatAmount(invoice.amount)}</div>
+                          </div>
+                          <div className={styles.invoiceCardContent}>
+                            <div className={styles.invoicePlanLabel}>Abo-Typ:</div>
+                            <div className={styles.invoicePlan}>
+                              {invoice.plan === 'premium' ? (
+                                <span className={styles.premiumPlan}>
+                                  <span className={styles.premiumIcon}>💎</span>
+                                  Premium
+                                </span>
+                              ) : invoice.plan === 'business' ? (
+                                <span className={styles.businessPlan}>
+                                  <span className={styles.businessIcon}>🏢</span>
+                                  Business
+                                </span>
+                              ) : (
+                                <span className={styles.standardPlan}>
+                                  <span className={styles.standardIcon}>🔓</span>
+                                  Standard
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className={styles.invoiceCardFooter}>
+                            <motion.button 
+                              className={styles.downloadButton}
+                              onClick={() => handleDownload(invoice.invoiceNumber)}
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                            >
+                              <Download size={16} />
+                              <span>Rechnung herunterladen</span>
+                            </motion.button>
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
+              </motion.div>
+
+              {user?.subscriptionActive && (
+                <p style={{ fontSize: "0.85rem", marginTop: "2rem", textAlign: "center" }}>
+                  💳{" "}
+                  <span
+                    style={{
+                      textDecoration: "underline",
+                      cursor: "pointer",
+                      color: "#666"
+                    }}
+                    onClick={async () => {
+                      setIsPortalOpening(true);
+                      try {
+                        const res = await fetch("https://api.contract-ai.de/stripe/portal", {
+                          method: "POST",
+                          credentials: "include",
+                        });
+                        const data = await res.json();
+                        if (res.ok && data.url) {
+                          window.location.href = data.url;
+                        }
+                      } catch {
+                        alert("Fehler beim Öffnen des Kundenportals");
+                        setIsPortalOpening(false);
+                      }
+                    }}
+                  >
+                    {isPortalOpening ? (
+                      <>
+                        <span className={styles.buttonSpinner}></span>
+                        <span>Wird geöffnet...</span>
+                      </>
+                    ) : (
+                      "Abo kündigen"
+                    )}
+                  </span>
+                </p>
               )}
             </motion.div>
+          ) : (
+            <div className={styles.errorContainer}>
+              <AlertCircle size={40} className={styles.errorIcon} />
+              <p className={styles.errorMessage}>Keine Benutzerdaten gefunden.</p>
+              <motion.button 
+                className={styles.logoutButton}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => window.location.href = "/login"}
+              >
+                <LogOut size={16} />
+                <span>Zurück zum Login</span>
+              </motion.button>
+            </div>
+          )}
+        </motion.div>
 
-            {user?.subscriptionActive && (
-              <p style={{ fontSize: "0.85rem", marginTop: "2rem", textAlign: "center" }}>
-                💳{" "}
-                <span
-                  style={{
-                    textDecoration: "underline",
-                    cursor: "pointer",
-                    color: "#666"
-                  }}
-                  onClick={async () => {
-                    setIsPortalOpening(true);
-                    try {
-                      const res = await fetch("https://api.contract-ai.de/stripe/portal", {
-                        method: "POST",
-                        credentials: "include",
-                      });
-                      const data = await res.json();
-                      if (res.ok && data.url) {
-                        window.location.href = data.url;
-                      }
-                    } catch {
-                      alert("Fehler beim Öffnen des Kundenportals");
-                      setIsPortalOpening(false);
-                    }
-                  }}
-                >
-                  {isPortalOpening ? (
-                    <>
-                      <span className={styles.buttonSpinner}></span>
-                      <span>Wird geöffnet...</span>
-                    </>
-                  ) : (
-                    "Abo kündigen"
-                  )}
-                </span>
-              </p>
-            )}
-          </motion.div>
-        ) : (
-          <div className={styles.errorContainer}>
-            <AlertCircle size={40} className={styles.errorIcon} />
-            <p className={styles.errorMessage}>Keine Benutzerdaten gefunden.</p>
-            <motion.button 
-              className={styles.logoutButton}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => window.location.href = "/login"}
-            >
-              <LogOut size={16} />
-              <span>Zurück zum Login</span>
-            </motion.button>
-          </div>
-        )}
-      </motion.div>
-
-      <AnimatePresence>
-        {notification && (
-          <Notification
-            message={notification.message}
-            type={notification.type}
-            onClose={() => setNotification(null)}
-          />
-        )}
-      </AnimatePresence>
-    </div>
+        <AnimatePresence>
+          {notification && (
+            <Notification
+              message={notification.message}
+              type={notification.type}
+              onClose={() => setNotification(null)}
+            />
+          )}
+        </AnimatePresence>
+      </div>
+    </>
   );
 }

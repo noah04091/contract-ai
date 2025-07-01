@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
+import { Helmet } from "react-helmet";
 import styles from "./LegalPulse.module.css";
 import Notification from "../components/Notification";
 import { 
@@ -683,8 +683,23 @@ export default function LegalPulse() {
   return (
     <div className={styles.legalPulseContainer}>
       <Helmet>
-        <title>Legal Pulse – Rechtliche Risikoanalyse – Contract AI</title>
-        <meta name="description" content="Rechtliche Risiken erkennen, bevor sie entstehen. Legal Pulse analysiert alle Ihre Verträge live." />
+        <title>Legal Pulse – Risiken früh erkennen | Contract AI</title>
+        <meta name="description" content="Erkenne neue rechtliche Risiken sofort mit Legal Pulse. Contract AI überwacht Gesetzesänderungen und schützt deine Verträge proaktiv." />
+        <meta name="keywords" content="Legal Pulse, Vertragsrisiken erkennen, Gesetzesänderungen, Frühwarnsystem Verträge, Contract AI" />
+        <link rel="canonical" href="https://contract-ai.de/legalpulse" />
+        
+        {/* Open Graph / Facebook */}
+        <meta property="og:title" content="Legal Pulse – Risiken früh erkennen | Contract AI" />
+        <meta property="og:description" content="Bleibe immer rechtssicher: Mit Legal Pulse erkennst du Gesetzesänderungen und neue Risiken in deinen Verträgen sofort." />
+        <meta property="og:url" content="https://contract-ai.de/legalpulse" />
+        <meta property="og:type" content="website" />
+        <meta property="og:image" content="https://contract-ai.de/og-image.jpg" />
+        
+        {/* Twitter */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Legal Pulse – Risiken früh erkennen | Contract AI" />
+        <meta name="twitter:description" content="Rechtliche Risiken automatisch erkennen und immer auf dem Laufenden bleiben – mit dem Legal Pulse von Contract AI." />
+        <meta name="twitter:image" content="https://contract-ai.de/og-image.jpg" />
       </Helmet>
 
       {notification && (

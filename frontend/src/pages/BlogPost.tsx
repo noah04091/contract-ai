@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Calendar, Clock, User } from 'lucide-react';
+import { Helmet } from "react-helmet";
 import styles from '../styles/BlogPost.module.css';
 
 interface BlogPostProps {
@@ -240,97 +241,117 @@ const BlogPost: React.FC<BlogPostProps> = ({ article }) => {
   };
 
   return (
-    <div className={styles.blogPost}>
-      {/* Article Hero */}
-      <section className={styles.articleHero}>
-        <div className={styles.container}>
-          <div className={styles.articleHeroContent}>
-            <button className={styles.backButton} onClick={handleBackClick}>
-              <ArrowLeft size={20} />
-              Zurück zum Blog
-            </button>
-            <h1 className={styles.articleTitle}>{currentArticle.title}</h1>
-            <p className={styles.articleSubtitle}>{currentArticle.subtitle}</p>
-            <div className={styles.articleInfo}>
-              <span className={styles.infoItem}>
-                <Calendar size={16} />
-                {currentArticle.date}
-              </span>
-              <span className={styles.metaSeparator}>•</span>
-              <span className={styles.infoItem}>
-                <Clock size={16} />
-                {currentArticle.readTime}
-              </span>
-              <span className={styles.metaSeparator}>•</span>
-              <span className={styles.infoItem}>
-                <User size={16} />
-                {currentArticle.author}
-              </span>
-              <span className={styles.metaSeparator}>•</span>
-              <span className={styles.category}>{currentArticle.category}</span>
+    <>
+      <Helmet>
+        <title>Beitrag lesen | Contract AI Blog</title>
+        <meta name="description" content="Detaillierte Einblicke in Vertragsanalyse, KI-gestützte Optimierung und die Zukunft des Vertragsmanagements — jetzt im Contract AI Blogpost lesen." />
+        <meta name="keywords" content="Blogpost Vertragsanalyse, KI Vertragsoptimierung, Contract AI Beitrag, Vertragsmanagement Wissen" />
+        <link rel="canonical" href="https://contract-ai.de/blog/beitrag" />
+        {/* Open Graph / Facebook */}
+        <meta property="og:title" content="Beitrag lesen | Contract AI Blog" />
+        <meta property="og:description" content="Erfahre alles über aktuelle Trends und Strategien in der Vertragsanalyse und -optimierung. Mehr im Blog von Contract AI." />
+        <meta property="og:url" content="https://contract-ai.de/blog/beitrag" />
+        <meta property="og:type" content="article" />
+        <meta property="og:image" content="https://contract-ai.de/og-image.jpg" />
+        {/* Twitter */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Beitrag lesen | Contract AI Blog" />
+        <meta name="twitter:description" content="Insights zur Vertragswelt, direkt aus dem Contract AI Blog. Jetzt Beitrag entdecken." />
+        <meta name="twitter:image" content="https://contract-ai.de/og-image.jpg" />
+      </Helmet>
+
+      <div className={styles.blogPost}>
+        {/* Article Hero */}
+        <section className={styles.articleHero}>
+          <div className={styles.container}>
+            <div className={styles.articleHeroContent}>
+              <button className={styles.backButton} onClick={handleBackClick}>
+                <ArrowLeft size={20} />
+                Zurück zum Blog
+              </button>
+              <h1 className={styles.articleTitle}>{currentArticle.title}</h1>
+              <p className={styles.articleSubtitle}>{currentArticle.subtitle}</p>
+              <div className={styles.articleInfo}>
+                <span className={styles.infoItem}>
+                  <Calendar size={16} />
+                  {currentArticle.date}
+                </span>
+                <span className={styles.metaSeparator}>•</span>
+                <span className={styles.infoItem}>
+                  <Clock size={16} />
+                  {currentArticle.readTime}
+                </span>
+                <span className={styles.metaSeparator}>•</span>
+                <span className={styles.infoItem}>
+                  <User size={16} />
+                  {currentArticle.author}
+                </span>
+                <span className={styles.metaSeparator}>•</span>
+                <span className={styles.category}>{currentArticle.category}</span>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Article Body */}
-      <section className={styles.articleBody}>
-        <div className={styles.container}>
-          <div className={styles.articleContentFull}>
-            <div 
-              className={styles.content}
-              dangerouslySetInnerHTML={{ __html: currentArticle.content }}
-            />
+        {/* Article Body */}
+        <section className={styles.articleBody}>
+          <div className={styles.container}>
+            <div className={styles.articleContentFull}>
+              <div 
+                className={styles.content}
+                dangerouslySetInnerHTML={{ __html: currentArticle.content }}
+              />
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Related Articles */}
-      <section className={styles.relatedSection}>
-        <div className={styles.container}>
-          <h2 className={styles.relatedTitle}>Ähnliche Artikel</h2>
-          <div className={styles.relatedGrid}>
-            <article 
-              className={styles.relatedCard}
-              onClick={() => handleRelatedArticleClick('mietvertrag-unwirksame-klauseln')}
-            >
-              <h3>Mietvertrag-Check: Diese Klauseln sind unwirksam</h3>
-              <p>Schönheitsreparaturen, Haustierhaltung, Kautionshöhe – welche Klauseln rechtlich problematisch sind.</p>
-              <span className={styles.relatedLink}>Artikel lesen →</span>
-            </article>
-            <article 
-              className={styles.relatedCard}
-              onClick={() => handleRelatedArticleClick('arbeitsvertrag-rechte-verstehen')}
-            >
-              <h3>Arbeitsvertrag verstehen: Überstunden, Urlaub & Kündigung</h3>
-              <p>Was steht wirklich in Ihrem Arbeitsvertrag? Die wichtigsten Klauseln erklärt.</p>
-              <span className={styles.relatedLink}>Artikel lesen →</span>
-            </article>
-            <article 
-              className={styles.relatedCard}
-              onClick={() => handleRelatedArticleClick('vertragsverhandlung-strategien')}
-            >
-              <h3>Vertragsverhandlung: So erreichen Sie bessere Bedingungen</h3>
-              <p>Auch als Privatperson können Sie Verträge nachverhandeln. Die besten Strategien.</p>
-              <span className={styles.relatedLink}>Artikel lesen →</span>
-            </article>
+        {/* Related Articles */}
+        <section className={styles.relatedSection}>
+          <div className={styles.container}>
+            <h2 className={styles.relatedTitle}>Ähnliche Artikel</h2>
+            <div className={styles.relatedGrid}>
+              <article 
+                className={styles.relatedCard}
+                onClick={() => handleRelatedArticleClick('mietvertrag-unwirksame-klauseln')}
+              >
+                <h3>Mietvertrag-Check: Diese Klauseln sind unwirksam</h3>
+                <p>Schönheitsreparaturen, Haustierhaltung, Kautionshöhe – welche Klauseln rechtlich problematisch sind.</p>
+                <span className={styles.relatedLink}>Artikel lesen →</span>
+              </article>
+              <article 
+                className={styles.relatedCard}
+                onClick={() => handleRelatedArticleClick('arbeitsvertrag-rechte-verstehen')}
+              >
+                <h3>Arbeitsvertrag verstehen: Überstunden, Urlaub & Kündigung</h3>
+                <p>Was steht wirklich in Ihrem Arbeitsvertrag? Die wichtigsten Klauseln erklärt.</p>
+                <span className={styles.relatedLink}>Artikel lesen →</span>
+              </article>
+              <article 
+                className={styles.relatedCard}
+                onClick={() => handleRelatedArticleClick('vertragsverhandlung-strategien')}
+              >
+                <h3>Vertragsverhandlung: So erreichen Sie bessere Bedingungen</h3>
+                <p>Auch als Privatperson können Sie Verträge nachverhandeln. Die besten Strategien.</p>
+                <span className={styles.relatedLink}>Artikel lesen →</span>
+              </article>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* CTA Section */}
-      <section className={styles.ctaSection}>
-        <div className={styles.container}>
-          <h2 className={styles.ctaTitle}>Lassen Sie Ihre Verträge von KI prüfen</h2>
-          <p className={styles.ctaSubtitle}>
-            Contract AI analysiert Ihre Verträge in Sekunden und warnt vor problematischen Klauseln
-          </p>
-          <button className={styles.ctaButton} onClick={handleCTAClick}>
-            Jetzt kostenlos Vertrag prüfen
-          </button>
-        </div>
-      </section>
-    </div>
+        {/* CTA Section */}
+        <section className={styles.ctaSection}>
+          <div className={styles.container}>
+            <h2 className={styles.ctaTitle}>Lassen Sie Ihre Verträge von KI prüfen</h2>
+            <p className={styles.ctaSubtitle}>
+              Contract AI analysiert Ihre Verträge in Sekunden und warnt vor problematischen Klauseln
+            </p>
+            <button className={styles.ctaButton} onClick={handleCTAClick}>
+              Jetzt kostenlos Vertrag prüfen
+            </button>
+          </div>
+        </section>
+      </div>
+    </>
   );
 };
 

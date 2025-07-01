@@ -1,6 +1,7 @@
 // 📁 src/pages/Contracts.tsx - JSX FIXED: Motion Button closing tag korrigiert + ANALYSE-ANZEIGE GEFIXT + RESPONSIVE + DUPLIKATSERKENNUNG + S3-INTEGRATION
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Helmet } from "react-helmet";
 import { 
   FileText, RefreshCw, Upload, CheckCircle, AlertCircle, 
   Plus, Calendar, Clock, Trash2, Eye, Edit,
@@ -1242,754 +1243,776 @@ export default function Contracts() {
   );
 
   return (
-    <div className={styles.pageContainer}>
-      <motion.div 
-        className={styles.container}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        {/* Header */}
-        <div className={styles.header}>
-          <motion.h1 
-            className={styles.title}
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1, duration: 0.5 }}
-          >
-            <FileText size={28} className={styles.titleIcon} />
-            Vertragsanalyse & Verwaltung
-            {getPlanBadge()}
-          </motion.h1>
-          <motion.p 
-            className={styles.subtitle}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-          >
-            {userInfo.subscriptionPlan === 'free' && 
-              "Upgrade auf Business oder Premium für KI-Vertragsanalyse"
-            }
-            {userInfo.subscriptionPlan === 'business' && 
-              `Verträge analysieren und verwalten (${userInfo.analysisCount}/${userInfo.analysisLimit} Analysen)`
-            }
-            {userInfo.subscriptionPlan === 'premium' && 
-              "Verträge einzeln oder gleichzeitig analysieren und verwalten"
-            }
-          </motion.p>
+    <>
+      <Helmet>
+        <title>Verträge verwalten & analysieren | Contract AI</title>
+        <meta name="description" content="Lade deine Verträge hoch, analysiere Risiken und optimiere Inhalte mit KI. Contract AI bietet dir volle Transparenz und smarte Optimierungen für alle deine Verträge." />
+        <meta name="keywords" content="Verträge verwalten, Vertragsanalyse, Vertrag hochladen, Vertragsoptimierung, Contract AI" />
+        <link rel="canonical" href="https://contract-ai.de/contracts" />
+        
+        {/* Open Graph / Facebook */}
+        <meta property="og:title" content="Verträge verwalten & analysieren | Contract AI" />
+        <meta property="og:description" content="Mit Contract AI kannst du Verträge sicher hochladen, automatisch analysieren und intelligent optimieren. Mehr Klarheit, weniger Risiken." />
+        <meta property="og:url" content="https://contract-ai.de/contracts" />
+        <meta property="og:type" content="website" />
+        <meta property="og:image" content="https://contract-ai.de/og-image.jpg" />
+        
+        {/* Twitter */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Verträge verwalten & analysieren | Contract AI" />
+        <meta name="twitter:description" content="Verträge einfach hochladen, Risiken erkennen und sofort optimieren. Dein Vertragsmanagement mit KI – effizient und sicher." />
+        <meta name="twitter:image" content="https://contract-ai.de/og-image.jpg" />
+      </Helmet>
 
-          {/* ✅ KORRIGIERT: Analysis-Limit-Anzeige für Business */}
-          {userInfo.subscriptionPlan === 'business' && (
-            <div className={styles.limitProgress}>
-              <div className={styles.limitText}>
-                {userInfo.analysisCount} von {userInfo.analysisLimit} Analysen verwendet
-              </div>
-              <div className={styles.limitBar}>
-                <div 
-                  className={styles.limitBarFill}
-                  style={{ width: `${Math.min((userInfo.analysisCount / userInfo.analysisLimit) * 100, 100)}%` }}
-                />
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Tabs */}
-        <div className={styles.tabsContainer}>
-          <button 
-            className={`${styles.tabButton} ${activeSection === 'contracts' ? styles.activeTab : ''}`}
-            onClick={() => setActiveSection('contracts')}
-          >
-            <FileText size={18} />
-            <span>Verträge</span>
-            {contracts.length > 0 && (
-              <span className={styles.tabBadge}>{contracts.length}</span>
-            )}
-          </button>
-          <button 
-            className={`${styles.tabButton} ${activeSection === 'upload' ? styles.activeTab : ''} ${!canUpload ? styles.disabledTab : ''}`}
-            onClick={() => canUpload && setActiveSection('upload')}
-            disabled={!canUpload}
-            data-section="upload"
-          >
-            <Upload size={18} />
-            <span>
-              {userInfo.subscriptionPlan === 'free' ? 'Upgrade erforderlich' : 'Hochladen'}
-            </span>
-            {canMultiUpload && (
-              <span className={styles.premiumTabBadge}>
-                <Crown size={12} />
-                Multi
-              </span>
-            )}
-            {!canUpload && (
-              <Lock size={14} className={styles.lockIcon} />
-            )}
-          </button>
-        </div>
-
-        <AnimatePresence mode="wait" initial={false}>
-          {activeSection === 'upload' && (
-            <motion.div 
-              key="upload-section"
-              className={styles.section}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3 }}
+      <div className={styles.pageContainer}>
+        <motion.div 
+          className={styles.container}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          {/* Header */}
+          <div className={styles.header}>
+            <motion.h1 
+              className={styles.title}
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1, duration: 0.5 }}
             >
-              {/* ✅ KORRIGIERT: Free-User Upgrade-Bereich */}
-              {!canUpload ? (
-                <div className={styles.upgradeSection}>
-                  <div className={styles.upgradeIcon}>
-                    <Zap size={48} />
-                  </div>
-                  <h2>Upgrade für Vertragsanalyse</h2>
-                  <p className={styles.upgradeDescription}>
-                    Schalte die KI-gestützte Vertragsanalyse frei und erhalte detaillierte Einblicke in deine Verträge.
-                  </p>
-                  
-                  <div className={styles.upgradePlans}>
-                    <div className={styles.upgradePlan}>
-                      <div className={styles.upgradePlanHeader}>
-                        <BarChart3 size={20} />
-                        <h3>Business</h3>
-                      </div>
-                      <ul>
-                        <li>✅ 50 Analysen pro Monat</li>
-                        <li>✅ KI-Vertragsanalyse</li>
-                        <li>✅ Rechtssicherheits-Check</li>
-                        <li>✅ Optimierungsvorschläge</li>
-                      </ul>
-                    </div>
-                    
-                    <div className={`${styles.upgradePlan} ${styles.recommendedPlan}`}>
-                      <div className={styles.upgradePlanHeader}>
-                        <Crown size={20} />
-                        <h3>Premium</h3>
-                        <span className={styles.recommendedBadge}>Empfohlen</span>
-                      </div>
-                      <ul>
-                        <li>✅ Unbegrenzte Analysen</li>
-                        <li>✅ Mehrfach-Upload</li>
-                        <li>✅ Batch-Analyse</li>
-                        <li>✅ Alle Business-Features</li>
-                      </ul>
-                    </div>
-                  </div>
-                  
-                  <div className={styles.upgradeActions}>
-                    <button 
-                      className={styles.upgradeButton}
-                      onClick={() => window.location.href = '/pricing'}
-                    >
-                      <Crown size={16} />
-                      Jetzt upgraden
-                    </button>
-                  </div>
+              <FileText size={28} className={styles.titleIcon} />
+              Vertragsanalyse & Verwaltung
+              {getPlanBadge()}
+            </motion.h1>
+            <motion.p 
+              className={styles.subtitle}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2, duration: 0.5 }}
+            >
+              {userInfo.subscriptionPlan === 'free' && 
+                "Upgrade auf Business oder Premium für KI-Vertragsanalyse"
+              }
+              {userInfo.subscriptionPlan === 'business' && 
+                `Verträge analysieren und verwalten (${userInfo.analysisCount}/${userInfo.analysisLimit} Analysen)`
+              }
+              {userInfo.subscriptionPlan === 'premium' && 
+                "Verträge einzeln oder gleichzeitig analysieren und verwalten"
+              }
+            </motion.p>
+
+            {/* ✅ KORRIGIERT: Analysis-Limit-Anzeige für Business */}
+            {userInfo.subscriptionPlan === 'business' && (
+              <div className={styles.limitProgress}>
+                <div className={styles.limitText}>
+                  {userInfo.analysisCount} von {userInfo.analysisLimit} Analysen verwendet
                 </div>
-              ) : (
-                <>
-                  {/* ✅ KORRIGIERT: Upload-Bereich für Business/Premium */}
-                  <div className={styles.sectionHeader}>
-                    <h2>
-                      {canMultiUpload ? "Verträge hochladen" : "Vertrag hochladen"}
-                    </h2>
-                    <p className={styles.sectionDescription}>
-                      {canMultiUpload 
-                        ? "Lade einen oder mehrere Verträge gleichzeitig hoch, um sie zu analysieren und zu verwalten"
-                        : "Lade einen Vertrag hoch, um ihn zu analysieren und zu verwalten"
-                      }
+                <div className={styles.limitBar}>
+                  <div 
+                    className={styles.limitBarFill}
+                    style={{ width: `${Math.min((userInfo.analysisCount / userInfo.analysisLimit) * 100, 100)}%` }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Tabs */}
+          <div className={styles.tabsContainer}>
+            <button 
+              className={`${styles.tabButton} ${activeSection === 'contracts' ? styles.activeTab : ''}`}
+              onClick={() => setActiveSection('contracts')}
+            >
+              <FileText size={18} />
+              <span>Verträge</span>
+              {contracts.length > 0 && (
+                <span className={styles.tabBadge}>{contracts.length}</span>
+              )}
+            </button>
+            <button 
+              className={`${styles.tabButton} ${activeSection === 'upload' ? styles.activeTab : ''} ${!canUpload ? styles.disabledTab : ''}`}
+              onClick={() => canUpload && setActiveSection('upload')}
+              disabled={!canUpload}
+              data-section="upload"
+            >
+              <Upload size={18} />
+              <span>
+                {userInfo.subscriptionPlan === 'free' ? 'Upgrade erforderlich' : 'Hochladen'}
+              </span>
+              {canMultiUpload && (
+                <span className={styles.premiumTabBadge}>
+                  <Crown size={12} />
+                  Multi
+                </span>
+              )}
+              {!canUpload && (
+                <Lock size={14} className={styles.lockIcon} />
+              )}
+            </button>
+          </div>
+
+          <AnimatePresence mode="wait" initial={false}>
+            {activeSection === 'upload' && (
+              <motion.div 
+                key="upload-section"
+                className={styles.section}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                {/* ✅ KORRIGIERT: Free-User Upgrade-Bereich */}
+                {!canUpload ? (
+                  <div className={styles.upgradeSection}>
+                    <div className={styles.upgradeIcon}>
+                      <Zap size={48} />
+                    </div>
+                    <h2>Upgrade für Vertragsanalyse</h2>
+                    <p className={styles.upgradeDescription}>
+                      Schalte die KI-gestützte Vertragsanalyse frei und erhalte detaillierte Einblicke in deine Verträge.
                     </p>
                     
-                    {/* ✅ KORRIGIERT: Limit-Warnung für Business */}
-                    {userInfo.subscriptionPlan === 'business' && !hasAnalysesLeft && (
-                      <div className={styles.limitWarning}>
-                        <AlertCircle size={16} />
-                        <span>
-                          Analyse-Limit erreicht ({userInfo.analysisCount}/{userInfo.analysisLimit}). 
-                          <button onClick={() => window.location.href = '/pricing'}>
-                            Upgrade auf Premium
-                          </button>
-                        </span>
+                    <div className={styles.upgradePlans}>
+                      <div className={styles.upgradePlan}>
+                        <div className={styles.upgradePlanHeader}>
+                          <BarChart3 size={20} />
+                          <h3>Business</h3>
+                        </div>
+                        <ul>
+                          <li>✅ 50 Analysen pro Monat</li>
+                          <li>✅ KI-Vertragsanalyse</li>
+                          <li>✅ Rechtssicherheits-Check</li>
+                          <li>✅ Optimierungsvorschläge</li>
+                        </ul>
                       </div>
-                    )}
-                    
-                    {/* ✅ NEU: Premium-Upgrade-Hinweis für Business */}
-                    {userInfo.subscriptionPlan === 'business' && hasAnalysesLeft && (
-                      <div className={styles.premiumHint}>
-                        <Crown size={16} />
-                        <span>
-                          Mehrere Verträge gleichzeitig analysieren? 
-                          <button onClick={() => window.location.href = '/pricing'}>
-                            Upgrade auf Premium
-                          </button>
-                        </span>
+                      
+                      <div className={`${styles.upgradePlan} ${styles.recommendedPlan}`}>
+                        <div className={styles.upgradePlanHeader}>
+                          <Crown size={20} />
+                          <h3>Premium</h3>
+                          <span className={styles.recommendedBadge}>Empfohlen</span>
+                        </div>
+                        <ul>
+                          <li>✅ Unbegrenzte Analysen</li>
+                          <li>✅ Mehrfach-Upload</li>
+                          <li>✅ Batch-Analyse</li>
+                          <li>✅ Alle Business-Features</li>
+                        </ul>
                       </div>
-                    )}
-                  </div>
-                  
-                  <div 
-                    className={`${styles.uploadArea} ${dragActive ? styles.dragActive : ''} ${!hasAnalysesLeft ? styles.disabledUpload : ''}`} 
-                    onDragEnter={handleDrag}
-                    onDragLeave={handleDrag}
-                    onDragOver={handleDrag}
-                    onDrop={handleDrop}
-                    onClick={uploadFiles.length === 0 && hasAnalysesLeft ? activateFileInput : undefined}
-                  >
-                    {/* ✅ Input-Element nur rendern wenn keine Dateien ausgewählt */}
-                    {uploadFiles.length === 0 && (
-                      <input 
-                        type="file" 
-                        onChange={handleMultipleFileChange}
-                        className={styles.fileInput}
-                        accept=".pdf,.doc,.docx"
-                        multiple={canMultiUpload}
-                        id="contractFile"
-                        ref={fileInputRef}
-                        disabled={!hasAnalysesLeft}
-                      />
-                    )}
+                    </div>
                     
-                    {uploadFiles.length > 0 ? (
-                      <div 
-                        className={styles.multiFilePreview}
-                        onClick={(e) => e.stopPropagation()}
+                    <div className={styles.upgradeActions}>
+                      <button 
+                        className={styles.upgradeButton}
+                        onClick={() => window.location.href = '/pricing'}
                       >
+                        <Crown size={16} />
+                        Jetzt upgraden
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {/* ✅ KORRIGIERT: Upload-Bereich für Business/Premium */}
+                    <div className={styles.sectionHeader}>
+                      <h2>
+                        {canMultiUpload ? "Verträge hochladen" : "Vertrag hochladen"}
+                      </h2>
+                      <p className={styles.sectionDescription}>
+                        {canMultiUpload 
+                          ? "Lade einen oder mehrere Verträge gleichzeitig hoch, um sie zu analysieren und zu verwalten"
+                          : "Lade einen Vertrag hoch, um ihn zu analysieren und zu verwalten"
+                        }
+                      </p>
+                      
+                      {/* ✅ KORRIGIERT: Limit-Warnung für Business */}
+                      {userInfo.subscriptionPlan === 'business' && !hasAnalysesLeft && (
+                        <div className={styles.limitWarning}>
+                          <AlertCircle size={16} />
+                          <span>
+                            Analyse-Limit erreicht ({userInfo.analysisCount}/{userInfo.analysisLimit}). 
+                            <button onClick={() => window.location.href = '/pricing'}>
+                              Upgrade auf Premium
+                            </button>
+                          </span>
+                        </div>
+                      )}
+                      
+                      {/* ✅ NEU: Premium-Upgrade-Hinweis für Business */}
+                      {userInfo.subscriptionPlan === 'business' && hasAnalysesLeft && (
+                        <div className={styles.premiumHint}>
+                          <Crown size={16} />
+                          <span>
+                            Mehrere Verträge gleichzeitig analysieren? 
+                            <button onClick={() => window.location.href = '/pricing'}>
+                              Upgrade auf Premium
+                            </button>
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div 
+                      className={`${styles.uploadArea} ${dragActive ? styles.dragActive : ''} ${!hasAnalysesLeft ? styles.disabledUpload : ''}`} 
+                      onDragEnter={handleDrag}
+                      onDragLeave={handleDrag}
+                      onDragOver={handleDrag}
+                      onDrop={handleDrop}
+                      onClick={uploadFiles.length === 0 && hasAnalysesLeft ? activateFileInput : undefined}
+                    >
+                      {/* ✅ Input-Element nur rendern wenn keine Dateien ausgewählt */}
+                      {uploadFiles.length === 0 && (
+                        <input 
+                          type="file" 
+                          onChange={handleMultipleFileChange}
+                          className={styles.fileInput}
+                          accept=".pdf,.doc,.docx"
+                          multiple={canMultiUpload}
+                          id="contractFile"
+                          ref={fileInputRef}
+                          disabled={!hasAnalysesLeft}
+                        />
+                      )}
+                      
+                      {uploadFiles.length > 0 ? (
                         <div 
-                          className={styles.multiFileHeader}
+                          className={styles.multiFilePreview}
                           onClick={(e) => e.stopPropagation()}
                         >
-                          <div className={styles.multiFileInfo}>
-                            <FileText size={24} />
-                            <div>
-                              <h3>{uploadFiles.length} Datei{uploadFiles.length > 1 ? 'en' : ''} ausgewählt</h3>
-                              <p>
-                                {uploadFiles.filter(f => f.status === 'completed').length} abgeschlossen, {' '}
-                                {uploadFiles.filter(f => f.status === 'error').length} Fehler, {' '}
-                                {uploadFiles.filter(f => f.status === 'pending').length} wartend
-                              </p>
+                          <div 
+                            className={styles.multiFileHeader}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <div className={styles.multiFileInfo}>
+                              <FileText size={24} />
+                              <div>
+                                <h3>{uploadFiles.length} Datei{uploadFiles.length > 1 ? 'en' : ''} ausgewählt</h3>
+                                <p>
+                                  {uploadFiles.filter(f => f.status === 'completed').length} abgeschlossen, {' '}
+                                  {uploadFiles.filter(f => f.status === 'error').length} Fehler, {' '}
+                                  {uploadFiles.filter(f => f.status === 'pending').length} wartend
+                                </p>
+                              </div>
                             </div>
-                          </div>
-                          <div className={styles.multiFileActions}>
-                            {!isAnalyzing && uploadFiles.some(f => f.status === 'pending') && hasAnalysesLeft && (
+                            <div className={styles.multiFileActions}>
+                              {!isAnalyzing && uploadFiles.some(f => f.status === 'pending') && hasAnalysesLeft && (
+                                <button 
+                                  type="button"
+                                  className={styles.startAnalysisButton}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    startBatchAnalysis();
+                                  }}
+                                >
+                                  <PlayCircle size={16} />
+                                  Analyse starten
+                                </button>
+                              )}
                               <button 
                                 type="button"
-                                className={styles.startAnalysisButton}
+                                className={styles.clearFilesButton}
                                 onClick={(e) => {
                                   e.preventDefault();
                                   e.stopPropagation();
-                                  startBatchAnalysis();
+                                  clearAllUploadFiles();
                                 }}
+                                disabled={isAnalyzing}
                               >
-                                <PlayCircle size={16} />
-                                Analyse starten
+                                <X size={16} />
+                                Alle entfernen
                               </button>
-                            )}
+                            </div>
+                          </div>
+
+                          <div 
+                            className={styles.filesList}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {uploadFiles.map((fileItem) => (
+                              <motion.div 
+                                key={fileItem.id}
+                                className={styles.fileItem}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                layout
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <div className={styles.fileItemLeft}>
+                                  <div className={styles.fileItemIcon}>
+                                    {getUploadStatusIcon(fileItem.status)}
+                                  </div>
+                                  <div className={styles.fileItemInfo}>
+                                    <div className={styles.fileItemName}>
+                                      {fileItem.file.name}
+                                    </div>
+                                    <div className={styles.fileItemSize}>
+                                      {(fileItem.file.size / 1024 / 1024).toFixed(2)} MB
+                                    </div>
+                                  </div>
+                                </div>
+                                
+                                <div className={styles.fileItemRight}>
+                                  <div className={styles.fileItemStatus}>
+                                    {getUploadStatusText(fileItem)}
+                                  </div>
+                                  <div className={styles.fileItemActions}>
+                                    {fileItem.status === 'error' && hasAnalysesLeft && (
+                                      <button 
+                                        type="button"
+                                        className={styles.retryButton}
+                                        onClick={(e) => {
+                                          e.preventDefault();
+                                          e.stopPropagation();
+                                          retryFileAnalysis(fileItem.id);
+                                        }}
+                                        disabled={isAnalyzing}
+                                      >
+                                        <RefreshCw size={14} />
+                                      </button>
+                                    )}
+                                    {!isAnalyzing && fileItem.status === 'pending' && (
+                                      <button 
+                                        type="button"
+                                        className={styles.removeFileButton}
+                                        onClick={(e) => {
+                                          e.preventDefault();
+                                          e.stopPropagation();
+                                          removeUploadFile(fileItem.id);
+                                        }}
+                                      >
+                                        <X size={14} />
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {fileItem.status === 'analyzing' && (
+                                  <div className={styles.fileItemProgress}>
+                                    <div 
+                                      className={styles.fileItemProgressBar}
+                                      style={{ width: `${fileItem.progress}%` }}
+                                    />
+                                  </div>
+                                )}
+                              </motion.div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className={styles.uploadPrompt}>
+                          <div className={styles.uploadIcon}>
+                            <Upload size={40} />
+                          </div>
+                          <h3>
+                            {!hasAnalysesLeft 
+                              ? "Analyse-Limit erreicht"
+                              : canMultiUpload 
+                                ? "Dateien hierher ziehen" 
+                                : "Datei hierher ziehen"
+                            }
+                          </h3>
+                          <p>
+                            {!hasAnalysesLeft 
+                              ? `Du hast ${userInfo.analysisCount} von ${userInfo.analysisLimit} Analysen verwendet`
+                              : canMultiUpload 
+                                ? "oder klicke, um eine oder mehrere Dateien auszuwählen"
+                                : "oder klicke, um eine Datei auszuwählen"
+                            }
+                          </p>
+                          <div className={styles.uploadFormats}>
+                            Unterstützte Formate: PDF, DOC, DOCX
+                          </div>
+                          {canMultiUpload && hasAnalysesLeft && (
+                            <div className={styles.premiumFeature}>
+                              <Crown size={16} />
+                              <span>Mehrfach-Upload verfügbar</span>
+                            </div>
+                          )}
+                          {!hasAnalysesLeft && (
                             <button 
                               type="button"
-                              className={styles.clearFilesButton}
+                              className={styles.upgradeButton}
                               onClick={(e) => {
-                                e.preventDefault();
                                 e.stopPropagation();
-                                clearAllUploadFiles();
+                                window.location.href = '/pricing';
                               }}
-                              disabled={isAnalyzing}
                             >
-                              <X size={16} />
-                              Alle entfernen
+                              <Crown size={16} />
+                              Jetzt upgraden
                             </button>
-                          </div>
+                          )}
                         </div>
+                      )}
+                    </div>
 
-                        <div 
-                          className={styles.filesList}
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          {uploadFiles.map((fileItem) => (
-                            <motion.div 
-                              key={fileItem.id}
-                              className={styles.fileItem}
-                              initial={{ opacity: 0, y: 10 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              layout
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <div className={styles.fileItemLeft}>
-                                <div className={styles.fileItemIcon}>
-                                  {getUploadStatusIcon(fileItem.status)}
-                                </div>
-                                <div className={styles.fileItemInfo}>
-                                  <div className={styles.fileItemName}>
-                                    {fileItem.file.name}
-                                  </div>
-                                  <div className={styles.fileItemSize}>
-                                    {(fileItem.file.size / 1024 / 1024).toFixed(2)} MB
-                                  </div>
-                                </div>
-                              </div>
-                              
-                              <div className={styles.fileItemRight}>
-                                <div className={styles.fileItemStatus}>
-                                  {getUploadStatusText(fileItem)}
-                                </div>
-                                <div className={styles.fileItemActions}>
-                                  {fileItem.status === 'error' && hasAnalysesLeft && (
-                                    <button 
-                                      type="button"
-                                      className={styles.retryButton}
-                                      onClick={(e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        retryFileAnalysis(fileItem.id);
-                                      }}
-                                      disabled={isAnalyzing}
-                                    >
-                                      <RefreshCw size={14} />
-                                    </button>
-                                  )}
-                                  {!isAnalyzing && fileItem.status === 'pending' && (
-                                    <button 
-                                      type="button"
-                                      className={styles.removeFileButton}
-                                      onClick={(e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        removeUploadFile(fileItem.id);
-                                      }}
-                                    >
-                                      <X size={14} />
-                                    </button>
-                                  )}
-                                </div>
-                              </div>
-
-                              {fileItem.status === 'analyzing' && (
-                                <div className={styles.fileItemProgress}>
-                                  <div 
-                                    className={styles.fileItemProgressBar}
-                                    style={{ width: `${fileItem.progress}%` }}
-                                  />
-                                </div>
-                              )}
-                            </motion.div>
-                          ))}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className={styles.uploadPrompt}>
-                        <div className={styles.uploadIcon}>
-                          <Upload size={40} />
-                        </div>
-                        <h3>
-                          {!hasAnalysesLeft 
-                            ? "Analyse-Limit erreicht"
-                            : canMultiUpload 
-                              ? "Dateien hierher ziehen" 
-                              : "Datei hierher ziehen"
-                          }
-                        </h3>
-                        <p>
-                          {!hasAnalysesLeft 
-                            ? `Du hast ${userInfo.analysisCount} von ${userInfo.analysisLimit} Analysen verwendet`
-                            : canMultiUpload 
-                              ? "oder klicke, um eine oder mehrere Dateien auszuwählen"
-                              : "oder klicke, um eine Datei auszuwählen"
-                          }
-                        </p>
-                        <div className={styles.uploadFormats}>
-                          Unterstützte Formate: PDF, DOC, DOCX
-                        </div>
-                        {canMultiUpload && hasAnalysesLeft && (
-                          <div className={styles.premiumFeature}>
-                            <Crown size={16} />
-                            <span>Mehrfach-Upload verfügbar</span>
-                          </div>
-                        )}
-                        {!hasAnalysesLeft && (
-                          <button 
-                            type="button"
-                            className={styles.upgradeButton}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              window.location.href = '/pricing';
-                            }}
-                          >
-                            <Crown size={16} />
-                            Jetzt upgraden
-                          </button>
-                        )}
+                    {/* ✅ CRITICAL FIX: ContractAnalysis wird jetzt korrekt gerendert mit initialResult */}
+                    {selectedFile && uploadFiles.length === 1 && uploadFiles[0].status === 'completed' && (
+                      <div className={styles.analysisContainer}>
+                        <ContractAnalysis 
+                          file={selectedFile} 
+                          onReset={handleReset}
+                          initialResult={uploadFiles[0].result} // ⭐ PASS RESULT DIRECTLY
+                        />
                       </div>
                     )}
+                  </>
+                )}
+              </motion.div>
+            )}
+
+            {activeSection === 'contracts' && (
+              <motion.div 
+                key="contracts-section"
+                className={styles.section}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className={styles.sectionHeader}>
+                  <div>
+                    <h2>Deine Verträge</h2>
+                    <p className={styles.contractsCount}>
+                      {loading ? "Lade..." : `${filteredContracts.length} von ${contracts.length} Verträgen`}
+                    </p>
+                  </div>
+                  <div className={styles.sectionActions}>
+                    <motion.button 
+                      className={styles.refreshButton} 
+                      onClick={fetchContracts} 
+                      aria-label="Aktualisieren"
+                      disabled={refreshing}
+                      animate={{ rotate: refreshing ? 360 : 0 }}
+                      transition={{ duration: 1, ease: "linear", repeat: refreshing ? Infinity : 0 }}
+                    >
+                      <RefreshCw size={16} />
+                    </motion.button>
+                    <motion.button 
+                      className={`${styles.newContractButton} ${!canUpload ? styles.disabledButton : ''}`}
+                      onClick={() => canUpload && setActiveSection('upload')}
+                      whileHover={canUpload ? { scale: 1.02 } : {}}
+                      whileTap={canUpload ? { scale: 0.98 } : {}}
+                      disabled={!canUpload}
+                    >
+                      <Plus size={16} />
+                      <span>{canUpload ? 'Neuer Vertrag' : 'Upgrade erforderlich'}</span>
+                      {!canUpload && <Lock size={14} />}
+                    </motion.button>
+                  </div>
+                </div>
+
+                <div className={styles.filtersToolbar}>
+                  <div className={styles.searchSection}>
+                    <div className={styles.searchInputWrapper}>
+                      <Search size={18} className={styles.searchIcon} />
+                      <input 
+                        type="text" 
+                        placeholder="Verträge durchsuchen..." 
+                        className={styles.searchInput}
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                      />
+                      {searchQuery && (
+                        <button 
+                          className={styles.clearSearchButton}
+                          onClick={() => setSearchQuery("")}
+                        >
+                          <X size={16} />
+                        </button>
+                      )}
+                    </div>
                   </div>
 
-                  {/* ✅ CRITICAL FIX: ContractAnalysis wird jetzt korrekt gerendert mit initialResult */}
-                  {selectedFile && uploadFiles.length === 1 && uploadFiles[0].status === 'completed' && (
-                    <div className={styles.analysisContainer}>
-                      <ContractAnalysis 
-                        file={selectedFile} 
-                        onReset={handleReset}
-                        initialResult={uploadFiles[0].result} // ⭐ PASS RESULT DIRECTLY
-                      />
-                    </div>
-                  )}
-                </>
-              )}
-            </motion.div>
-          )}
-
-          {activeSection === 'contracts' && (
-            <motion.div 
-              key="contracts-section"
-              className={styles.section}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3 }}
-            >
-              <div className={styles.sectionHeader}>
-                <div>
-                  <h2>Deine Verträge</h2>
-                  <p className={styles.contractsCount}>
-                    {loading ? "Lade..." : `${filteredContracts.length} von ${contracts.length} Verträgen`}
-                  </p>
-                </div>
-                <div className={styles.sectionActions}>
-                  <motion.button 
-                    className={styles.refreshButton} 
-                    onClick={fetchContracts} 
-                    aria-label="Aktualisieren"
-                    disabled={refreshing}
-                    animate={{ rotate: refreshing ? 360 : 0 }}
-                    transition={{ duration: 1, ease: "linear", repeat: refreshing ? Infinity : 0 }}
-                  >
-                    <RefreshCw size={16} />
-                  </motion.button>
-                  <motion.button 
-                    className={`${styles.newContractButton} ${!canUpload ? styles.disabledButton : ''}`}
-                    onClick={() => canUpload && setActiveSection('upload')}
-                    whileHover={canUpload ? { scale: 1.02 } : {}}
-                    whileTap={canUpload ? { scale: 0.98 } : {}}
-                    disabled={!canUpload}
-                  >
-                    <Plus size={16} />
-                    <span>{canUpload ? 'Neuer Vertrag' : 'Upgrade erforderlich'}</span>
-                    {!canUpload && <Lock size={14} />}
-                  </motion.button>
-                </div>
-              </div>
-
-              <div className={styles.filtersToolbar}>
-                <div className={styles.searchSection}>
-                  <div className={styles.searchInputWrapper}>
-                    <Search size={18} className={styles.searchIcon} />
-                    <input 
-                      type="text" 
-                      placeholder="Verträge durchsuchen..." 
-                      className={styles.searchInput}
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                    {searchQuery && (
-                      <button 
-                        className={styles.clearSearchButton}
-                        onClick={() => setSearchQuery("")}
+                  <div className={styles.filtersSection}>
+                    <div className={styles.quickFilters}>
+                      <select 
+                        value={statusFilter} 
+                        onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+                        className={styles.quickFilter}
                       >
-                        <X size={16} />
+                        <option value="alle">Alle Status</option>
+                        <option value="aktiv">✅ Aktiv</option>
+                        <option value="bald_ablaufend">⚠️ Bald ablaufend</option>
+                        <option value="abgelaufen">❌ Abgelaufen</option>
+                        <option value="gekündigt">🚫 Gekündigt</option>
+                      </select>
+
+                      <select 
+                        value={dateFilter} 
+                        onChange={(e) => setDateFilter(e.target.value as DateFilter)}
+                        className={styles.quickFilter}
+                      >
+                        <option value="alle">Alle Zeiträume</option>
+                        <option value="letzte_7_tage">📅 Letzte 7 Tage</option>
+                        <option value="letzte_30_tage">📅 Letzte 30 Tage</option>
+                        <option value="letztes_jahr">📅 Letztes Jahr</option>
+                      </select>
+
+                      <select 
+                        value={sortOrder} 
+                        onChange={(e) => setSortOrder(e.target.value as SortOrder)}
+                        className={styles.quickFilter}
+                      >
+                        <option value="neueste">🕐 Neueste zuerst</option>
+                        <option value="älteste">🕐 Älteste zuerst</option>
+                        <option value="name_az">🔤 Name A-Z</option>
+                        <option value="name_za">🔤 Name Z-A</option>
+                      </select>
+                    </div>
+
+                    {activeFiltersCount() > 0 && (
+                      <button 
+                        className={styles.clearAllFilters}
+                        onClick={clearAllFilters}
+                      >
+                        <X size={14} />
+                        <span>Zurücksetzen</span>
                       </button>
                     )}
                   </div>
                 </div>
 
-                <div className={styles.filtersSection}>
-                  <div className={styles.quickFilters}>
-                    <select 
-                      value={statusFilter} 
-                      onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-                      className={styles.quickFilter}
-                    >
-                      <option value="alle">Alle Status</option>
-                      <option value="aktiv">✅ Aktiv</option>
-                      <option value="bald_ablaufend">⚠️ Bald ablaufend</option>
-                      <option value="abgelaufen">❌ Abgelaufen</option>
-                      <option value="gekündigt">🚫 Gekündigt</option>
-                    </select>
-
-                    <select 
-                      value={dateFilter} 
-                      onChange={(e) => setDateFilter(e.target.value as DateFilter)}
-                      className={styles.quickFilter}
-                    >
-                      <option value="alle">Alle Zeiträume</option>
-                      <option value="letzte_7_tage">📅 Letzte 7 Tage</option>
-                      <option value="letzte_30_tage">📅 Letzte 30 Tage</option>
-                      <option value="letztes_jahr">📅 Letztes Jahr</option>
-                    </select>
-
-                    <select 
-                      value={sortOrder} 
-                      onChange={(e) => setSortOrder(e.target.value as SortOrder)}
-                      className={styles.quickFilter}
-                    >
-                      <option value="neueste">🕐 Neueste zuerst</option>
-                      <option value="älteste">🕐 Älteste zuerst</option>
-                      <option value="name_az">🔤 Name A-Z</option>
-                      <option value="name_za">🔤 Name Z-A</option>
-                    </select>
-                  </div>
-
-                  {activeFiltersCount() > 0 && (
-                    <button 
-                      className={styles.clearAllFilters}
-                      onClick={clearAllFilters}
-                    >
-                      <X size={14} />
-                      <span>Zurücksetzen</span>
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {(searchQuery || activeFiltersCount() > 0) && (
-                <div className={styles.resultsInfo}>
-                  <div className={styles.resultsText}>
-                    <strong>{filteredContracts.length}</strong> Ergebnis
-                    {filteredContracts.length !== 1 ? 'se' : ''}
-                    {searchQuery && (
-                      <span> für <em>"{searchQuery}"</em></span>
-                    )}
-                  </div>
-                  {activeFiltersCount() > 0 && (
-                    <div className={styles.activeFilters}>
-                      {statusFilter !== 'alle' && (
-                        <span className={styles.activeFilter}>Status: {statusFilter}</span>
-                      )}
-                      {dateFilter !== 'alle' && (
-                        <span className={styles.activeFilter}>Zeitraum: {dateFilter.replace('_', ' ')}</span>
+                {(searchQuery || activeFiltersCount() > 0) && (
+                  <div className={styles.resultsInfo}>
+                    <div className={styles.resultsText}>
+                      <strong>{filteredContracts.length}</strong> Ergebnis
+                      {filteredContracts.length !== 1 ? 'se' : ''}
+                      {searchQuery && (
+                        <span> für <em>"{searchQuery}"</em></span>
                       )}
                     </div>
-                  )}
-                </div>
-              )}
+                    {activeFiltersCount() > 0 && (
+                      <div className={styles.activeFilters}>
+                        {statusFilter !== 'alle' && (
+                          <span className={styles.activeFilter}>Status: {statusFilter}</span>
+                        )}
+                        {dateFilter !== 'alle' && (
+                          <span className={styles.activeFilter}>Zeitraum: {dateFilter.replace('_', ' ')}</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
 
-              {loading && !refreshing ? (
-                <div className={styles.loadingContainer}>
-                  <div className={styles.loadingSpinner}></div>
-                  <p>Verträge werden geladen...</p>
-                </div>
-              ) : errorMessage ? (
-                <div className={styles.errorContainer}>
-                  <AlertCircle size={40} className={styles.errorIcon} />
-                  <p className={styles.errorMessage}>{errorMessage}</p>
-                  <motion.button 
-                    className={styles.retryButton} 
-                    onClick={fetchContracts}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    <RefreshCw size={16} />
-                    <span>Erneut versuchen</span>
-                  </motion.button>
-                </div>
-              ) : filteredContracts.length === 0 ? (
-                <div className={styles.emptyState}>
-                  <FileText size={64} className={styles.emptyIcon} />
-                  <h3>
-                    {activeFiltersCount() > 0 || searchQuery ? "Keine Ergebnisse gefunden" : "Keine Verträge vorhanden"}
-                  </h3>
-                  <p>
-                    {activeFiltersCount() > 0 || searchQuery
-                      ? "Probiere andere Suchbegriffe oder Filter-Einstellungen."
-                      : canUpload 
-                        ? "Lade deinen ersten Vertrag hoch, um ihn hier zu sehen."
-                        : "Upgrade auf Business oder Premium für Vertragsanalyse."
-                    }
-                  </p>
-                  {(!activeFiltersCount() && !searchQuery) && (
+                {loading && !refreshing ? (
+                  <div className={styles.loadingContainer}>
+                    <div className={styles.loadingSpinner}></div>
+                    <p>Verträge werden geladen...</p>
+                  </div>
+                ) : errorMessage ? (
+                  <div className={styles.errorContainer}>
+                    <AlertCircle size={40} className={styles.errorIcon} />
+                    <p className={styles.errorMessage}>{errorMessage}</p>
                     <motion.button 
-                      className={`${styles.uploadButton} ${!canUpload ? styles.upgradeButton : ''}`}
-                      onClick={() => canUpload ? setActiveSection('upload') : window.location.href = '/pricing'}
+                      className={styles.retryButton} 
+                      onClick={fetchContracts}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                     >
-                      {canUpload ? <Upload size={16} /> : <Crown size={16} />}
-                      <span>{canUpload ? 'Vertrag hochladen' : 'Jetzt upgraden'}</span>
+                      <RefreshCw size={16} />
+                      <span>Erneut versuchen</span>
                     </motion.button>
-                  )}
-                </div>
-              ) : (
-                // ✅ RESPONSIVE CONTAINER - Zeigt Tabelle UND Mobile Cards
-                <>
-                  {/* ✅ DESKTOP/TABLET TABLE */}
-                  <div className={styles.tableContainer}>
-                    <table className={styles.contractsTable}>
-                      <thead>
-                        <tr>
-                          <th>Vertragsname</th>
-                          <th>Kündigungsfrist</th>
-                          <th>Ablaufdatum</th>
-                          <th>Status</th>
-                          <th>Upload-Datum</th>
-                          <th>Aktionen</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredContracts.map((contract) => (
-                          <motion.tr 
-                            key={contract._id} 
-                            className={styles.tableRow}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.3 }}
-                            onClick={() => handleRowClick(contract)}
-                          >
-                            <td>
-                              <div className={styles.contractName}>
-                                <div className={styles.contractIcon}>
-                                  <FileText size={16} />
-                                </div>
-                                <div>
-                                  <span className={styles.contractNameText}>{contract.name}</span>
-                                  <div className={styles.contractBadges}>
-                                    {contract.isGenerated && (
-                                      <span className={styles.generatedBadge}>Generiert</span>
-                                    )}
-                                    {contract.s3Key && (
-                                      <span className={styles.cloudBadge}>☁️</span>
-                                    )}
-                                    {contract.needsReupload && (
-                                      <span className={styles.reuploadBadge}>⚠️</span>
-                                    )}
+                  </div>
+                ) : filteredContracts.length === 0 ? (
+                  <div className={styles.emptyState}>
+                    <FileText size={64} className={styles.emptyIcon} />
+                    <h3>
+                      {activeFiltersCount() > 0 || searchQuery ? "Keine Ergebnisse gefunden" : "Keine Verträge vorhanden"}
+                    </h3>
+                    <p>
+                      {activeFiltersCount() > 0 || searchQuery
+                        ? "Probiere andere Suchbegriffe oder Filter-Einstellungen."
+                        : canUpload 
+                          ? "Lade deinen ersten Vertrag hoch, um ihn hier zu sehen."
+                          : "Upgrade auf Business oder Premium für Vertragsanalyse."
+                      }
+                    </p>
+                    {(!activeFiltersCount() && !searchQuery) && (
+                      <motion.button 
+                        className={`${styles.uploadButton} ${!canUpload ? styles.upgradeButton : ''}`}
+                        onClick={() => canUpload ? setActiveSection('upload') : window.location.href = '/pricing'}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        {canUpload ? <Upload size={16} /> : <Crown size={16} />}
+                        <span>{canUpload ? 'Vertrag hochladen' : 'Jetzt upgraden'}</span>
+                      </motion.button>
+                    )}
+                  </div>
+                ) : (
+                  // ✅ RESPONSIVE CONTAINER - Zeigt Tabelle UND Mobile Cards
+                  <>
+                    {/* ✅ DESKTOP/TABLET TABLE */}
+                    <div className={styles.tableContainer}>
+                      <table className={styles.contractsTable}>
+                        <thead>
+                          <tr>
+                            <th>Vertragsname</th>
+                            <th>Kündigungsfrist</th>
+                            <th>Ablaufdatum</th>
+                            <th>Status</th>
+                            <th>Upload-Datum</th>
+                            <th>Aktionen</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filteredContracts.map((contract) => (
+                            <motion.tr 
+                              key={contract._id} 
+                              className={styles.tableRow}
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.3 }}
+                              onClick={() => handleRowClick(contract)}
+                            >
+                              <td>
+                                <div className={styles.contractName}>
+                                  <div className={styles.contractIcon}>
+                                    <FileText size={16} />
+                                  </div>
+                                  <div>
+                                    <span className={styles.contractNameText}>{contract.name}</span>
+                                    <div className={styles.contractBadges}>
+                                      {contract.isGenerated && (
+                                        <span className={styles.generatedBadge}>Generiert</span>
+                                      )}
+                                      {contract.s3Key && (
+                                        <span className={styles.cloudBadge}>☁️</span>
+                                      )}
+                                      {contract.needsReupload && (
+                                        <span className={styles.reuploadBadge}>⚠️</span>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                            </td>
-                            <td>
-                              <div className={styles.contractDetail}>
-                                <Clock size={14} className={styles.detailIcon} />
-                                <span>{contract.kuendigung || "—"}</span>
-                              </div>
-                            </td>
-                            <td>
-                              <div className={styles.contractDetail}>
-                                <Calendar size={14} className={styles.detailIcon} />
-                                <span>{formatDate(contract.expiryDate)}</span>
-                              </div>
-                            </td>
-                            <td>
-                              <span className={`${styles.statusBadge} ${getStatusColor(contract.status)}`}>
-                                {contract.status}
-                              </span>
-                            </td>
-                            <td>
-                              <span className={styles.uploadDate}>
-                                {formatDate(contract.createdAt)}
-                              </span>
-                            </td>
-                            <td>
-                              <div className={styles.actionButtons}>
-                                <button 
-                                  className={styles.actionButton}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleRowClick(contract);
-                                  }}
-                                  title="Details anzeigen"
-                                >
-                                  <Eye size={16} />
-                                </button>
-                                <button 
-                                  className={styles.actionButton}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleViewContractPDF(contract);
-                                  }}
-                                  title="PDF anzeigen"
-                                  disabled={pdfLoading[contract._id]}
-                                >
-                                  {pdfLoading[contract._id] ? (
-                                    <Loader size={16} className={styles.loadingIcon} />
-                                  ) : (
-                                    <ExternalLink size={16} />
-                                  )}
-                                </button>
-                                <button 
-                                  className={styles.actionButton}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    console.log("Edit contract:", contract._id);
-                                  }}
-                                  title="Bearbeiten"
-                                >
-                                  <Edit size={16} />
-                                </button>
-                                <button 
-                                  className={`${styles.actionButton} ${styles.deleteButton}`}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDeleteContract(contract._id, contract.name);
-                                  }}
-                                  title="Löschen"
-                                >
-                                  <Trash2 size={16} />
-                                </button>
-                              </div>
-                            </td>
-                          </motion.tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                              </td>
+                              <td>
+                                <div className={styles.contractDetail}>
+                                  <Clock size={14} className={styles.detailIcon} />
+                                  <span>{contract.kuendigung || "—"}</span>
+                                </div>
+                              </td>
+                              <td>
+                                <div className={styles.contractDetail}>
+                                  <Calendar size={14} className={styles.detailIcon} />
+                                  <span>{formatDate(contract.expiryDate)}</span>
+                                </div>
+                              </td>
+                              <td>
+                                <span className={`${styles.statusBadge} ${getStatusColor(contract.status)}`}>
+                                  {contract.status}
+                                </span>
+                              </td>
+                              <td>
+                                <span className={styles.uploadDate}>
+                                  {formatDate(contract.createdAt)}
+                                </span>
+                              </td>
+                              <td>
+                                <div className={styles.actionButtons}>
+                                  <button 
+                                    className={styles.actionButton}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleRowClick(contract);
+                                    }}
+                                    title="Details anzeigen"
+                                  >
+                                    <Eye size={16} />
+                                  </button>
+                                  <button 
+                                    className={styles.actionButton}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleViewContractPDF(contract);
+                                    }}
+                                    title="PDF anzeigen"
+                                    disabled={pdfLoading[contract._id]}
+                                  >
+                                    {pdfLoading[contract._id] ? (
+                                      <Loader size={16} className={styles.loadingIcon} />
+                                    ) : (
+                                      <ExternalLink size={16} />
+                                    )}
+                                  </button>
+                                  <button 
+                                    className={styles.actionButton}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      console.log("Edit contract:", contract._id);
+                                    }}
+                                    title="Bearbeiten"
+                                  >
+                                    <Edit size={16} />
+                                  </button>
+                                  <button 
+                                    className={`${styles.actionButton} ${styles.deleteButton}`}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDeleteContract(contract._id, contract.name);
+                                    }}
+                                    title="Löschen"
+                                  >
+                                    <Trash2 size={16} />
+                                  </button>
+                                </div>
+                              </td>
+                            </motion.tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
 
-                  {/* ✅ MOBILE CARDS - Automatically shown on mobile via CSS */}
-                  <div className={styles.mobileCardsContainer}>
-                    {filteredContracts.map((contract) => (
-                      <MobileContractCard
-                        key={`mobile-${contract._id}`}
-                        contract={contract}
-                      />
-                    ))}
-                  </div>
-                </>
-              )}
-            </motion.div>
+                    {/* ✅ MOBILE CARDS - Automatically shown on mobile via CSS */}
+                    <div className={styles.mobileCardsContainer}>
+                      {filteredContracts.map((contract) => (
+                        <MobileContractCard
+                          key={`mobile-${contract._id}`}
+                          contract={contract}
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {selectedContract && (
+            <ContractDetailsView
+              contract={selectedContract}
+              onClose={() => setShowDetails(false)}
+              show={showDetails}
+              onEdit={(contractId) => {
+                console.log("Edit contract:", contractId);
+              }}
+              onDelete={handleDeleteContract}
+            />
           )}
-        </AnimatePresence>
 
-        {selectedContract && (
-          <ContractDetailsView
-            contract={selectedContract}
-            onClose={() => setShowDetails(false)}
-            show={showDetails}
-            onEdit={(contractId) => {
-              console.log("Edit contract:", contractId);
-            }}
-            onDelete={handleDeleteContract}
-          />
-        )}
+          {/* ✅ NEU: Legacy-Modal für alte Verträge */}
+          {legacyModal?.show && legacyModal.contract && (
+            <LegacyModal
+              contract={legacyModal.contract}
+              message={legacyModal.message || ''}
+              onClose={() => setLegacyModal(null)}
+              onReupload={handleLegacyReupload}
+            />
+          )}
 
-        {/* ✅ NEU: Legacy-Modal für alte Verträge */}
-        {legacyModal?.show && legacyModal.contract && (
-          <LegacyModal
-            contract={legacyModal.contract}
-            message={legacyModal.message || ''}
-            onClose={() => setLegacyModal(null)}
-            onReupload={handleLegacyReupload}
-          />
-        )}
-
-        {/* ✅ NEU: Duplikat-Modal (nur rendern wenn existingContract vorhanden) */}
-        {duplicateModal?.show && duplicateModal.fileItem && duplicateModal.existingContract && (
-          <DuplicateModal
-            fileItem={duplicateModal.fileItem}
-            existingContract={duplicateModal.existingContract}
-            onClose={() => setDuplicateModal(null)}
-            onViewExisting={handleViewExistingContract}
-            onReplaceFile={handleReplaceExistingFile}
-            onAnalyzeAnyway={handleAnalyzeAnywayFromDuplicate}
-          />
-        )}
-      </motion.div>
-    </div>
+          {/* ✅ NEU: Duplikat-Modal (nur rendern wenn existingContract vorhanden) */}
+          {duplicateModal?.show && duplicateModal.fileItem && duplicateModal.existingContract && (
+            <DuplicateModal
+              fileItem={duplicateModal.fileItem}
+              existingContract={duplicateModal.existingContract}
+              onClose={() => setDuplicateModal(null)}
+              onViewExisting={handleViewExistingContract}
+              onReplaceFile={handleReplaceExistingFile}
+              onAnalyzeAnyway={handleAnalyzeAnywayFromDuplicate}
+            />
+          )}
+        </motion.div>
+      </div>
+    </>
   );
 }
