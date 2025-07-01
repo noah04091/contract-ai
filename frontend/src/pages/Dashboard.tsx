@@ -771,13 +771,7 @@ export default function Dashboard() {
                             <span className={styles.generatedBadge}>✨ KI</span>
                           )}
                         </div>
-                        <div 
-                          className={styles.riskScoreBadge}
-                          style={{ 
-                            backgroundColor: riskInfo.bgColor, 
-                            color: riskInfo.color 
-                          }}
-                        >
+                        <div className={styles.riskScoreBadge}>
                           {contract.legalPulse?.riskScore !== null && contract.legalPulse?.riskScore !== undefined 
                             ? contract.legalPulse.riskScore 
                             : '—'
@@ -794,10 +788,7 @@ export default function Dashboard() {
                         </div>
                         <div className={styles.metaItem}>
                           <span className={styles.metaLabel}>Risiko:</span>
-                          <span 
-                            className={styles.riskLabel}
-                            style={{ color: riskInfo.color }}
-                          >
+                          <span className={styles.riskLabel}>
                             {riskInfo.label}
                           </span>
                         </div>
