@@ -114,6 +114,30 @@ const HomeRedesign = () => {
         <meta name="twitter:title" content="Contract AI – Vertragsanalyse & Optimierung mit KI" />
         <meta name="twitter:description" content="Analysiere, optimiere und vergleiche Verträge mit KI. Mehr Sicherheit, bessere Konditionen, alles in einer Plattform." />
         <meta name="twitter:image" content="https://contract-ai.de/og-image.jpg" />
+
+        {/* Schema.org JSON-LD */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org/",
+            "@type": "SoftwareApplication",
+            "name": "Contract AI",
+            "operatingSystem": "Web",
+            "applicationCategory": "BusinessApplication",
+            "url": "https://contract-ai.de",
+            "logo": "https://contract-ai.de/logo.png",
+            "description": "Contract AI ist eine smarte SaaS-Lösung für KI-gestützte Vertragsanalyse, Optimierung und Vertragsverwaltung.",
+            "offers": {
+              "@type": "Offer",
+              "price": "4.90",
+              "priceCurrency": "EUR"
+            },
+            "publisher": {
+              "@type": "Organization",
+              "name": "Primetime Marketing UG",
+              "url": "https://contract-ai.de"
+            }
+          })}
+        </script>
       </Helmet>
 
       <div className="landing-page">
