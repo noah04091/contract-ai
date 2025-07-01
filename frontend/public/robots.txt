@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://contract-ai.de/sitemap.xml
