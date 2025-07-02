@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../hooks/useAuth";;
+import { useAuth } from "../hooks/useAuth";
+import Navbar from "../components/Navbar";
 import "../styles/AppleAuth.css";
 
 interface AuthResponse {
@@ -212,130 +213,133 @@ export default function Login() {
   }, [navigate, refetchUser]);
 
   return (
-    <div className="apple-auth-container" ref={containerRef}>
-      <div className="apple-bg">
-        <div className="shape shape-1"></div>
-        <div className="shape shape-2"></div>
-        <div className="shape shape-3"></div>
-      </div>
-      
-      <div className="apple-auth-card">
-        <div className="apple-logo">
-          <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-            <polyline points="14,2 14,8 20,8"></polyline>
-            <path d="M16 13H8"></path>
-            <path d="M16 17H8"></path>
-            <polyline points="10,9 9,9 8,9"></polyline>
-          </svg>
+    <>
+      <Navbar />
+      <div className="apple-auth-container" ref={containerRef}>
+        <div className="apple-bg">
+          <div className="shape shape-1"></div>
+          <div className="shape shape-2"></div>
+          <div className="shape shape-3"></div>
         </div>
         
-        <h1 className="apple-auth-title">Bei Contract AI anmelden</h1>
-        <p className="apple-auth-subtitle">Geben Sie Ihre Anmeldedaten ein, um fortzufahren</p>
-        
-        <form onSubmit={handleLogin} className="apple-auth-form">
-          <div className={`apple-input-group ${emailFocused || email ? 'focused' : ''}`}>
-            <label htmlFor="email">E-Mail</label>
-            <div className="apple-input-container">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                <polyline points="22,6 12,13 2,6"></polyline>
-              </svg>
-              <input 
-                type="email" 
-                id="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                onFocus={() => setEmailFocused(true)}
-                onBlur={() => setEmailFocused(false)}
-                required
-                autoComplete="email"
-              />
-            </div>
-          </div>
-          
-          <div className={`apple-input-group ${passwordFocused || password ? 'focused' : ''}`}>
-            <label htmlFor="password">Passwort</label>
-            <div className="apple-input-container">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                <line x1="12" y1="15" x2="12" y2="19"></line>
-              </svg>
-              <input 
-                type="password" 
-                id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onFocus={() => setPasswordFocused(true)}
-                onBlur={() => setPasswordFocused(false)}
-                required
-                autoComplete="current-password"
-              />
-            </div>
-          </div>
-          
-          <button type="submit" className={`apple-auth-button ${loading ? 'loading' : ''}`} disabled={loading}>
-            {loading ? (
-              <span className="loading-spinner"></span>
-            ) : (
-              <>
-                <span className="button-text">Anmelden</span>
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M5 12h14"></path>
-                  <path d="m12 5 7 7-7 7"></path>
-                </svg>
-              </>
-            )}
-          </button>
-        </form>
-        
-        <div className="apple-auth-links">
-          <p>
-            Noch kein Konto? 
-            <span className="apple-link" onClick={() => navigate("/register")}>
-              Registrieren
-            </span>
-          </p>
-          <p>
-            Passwort vergessen?
-            <span className="apple-link" onClick={() => navigate("/forgot-password")}>
-              Zurücksetzen
-            </span>
-          </p>
-        </div>
-      </div>
-      
-      {notification && (
-        <div className={`apple-notification ${notification.type}`}>
-          <div className="apple-notification-content">
-            <span className="notification-icon">
-              {notification.type === "success" ? (
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                </svg>
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <line x1="12" y1="8" x2="12" y2="12"></line>
-                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                </svg>
-              )}
-            </span>
-            <p>{notification.message}</p>
-          </div>
-          <button 
-            className="apple-notification-close"
-            onClick={() => setNotification(null)}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
+        <div className="apple-auth-card">
+          <div className="apple-logo">
+            <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14,2 14,8 20,8"></polyline>
+              <path d="M16 13H8"></path>
+              <path d="M16 17H8"></path>
+              <polyline points="10,9 9,9 8,9"></polyline>
             </svg>
-          </button>
+          </div>
+          
+          <h1 className="apple-auth-title">Bei Contract AI anmelden</h1>
+          <p className="apple-auth-subtitle">Geben Sie Ihre Anmeldedaten ein, um fortzufahren</p>
+          
+          <form onSubmit={handleLogin} className="apple-auth-form">
+            <div className={`apple-input-group ${emailFocused || email ? 'focused' : ''}`}>
+              <label htmlFor="email">E-Mail</label>
+              <div className="apple-input-container">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                  <polyline points="22,6 12,13 2,6"></polyline>
+                </svg>
+                <input 
+                  type="email" 
+                  id="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  onFocus={() => setEmailFocused(true)}
+                  onBlur={() => setEmailFocused(false)}
+                  required
+                  autoComplete="email"
+                />
+              </div>
+            </div>
+            
+            <div className={`apple-input-group ${passwordFocused || password ? 'focused' : ''}`}>
+              <label htmlFor="password">Passwort</label>
+              <div className="apple-input-container">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                  <line x1="12" y1="15" x2="12" y2="19"></line>
+                </svg>
+                <input 
+                  type="password" 
+                  id="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onFocus={() => setPasswordFocused(true)}
+                  onBlur={() => setPasswordFocused(false)}
+                  required
+                  autoComplete="current-password"
+                />
+              </div>
+            </div>
+            
+            <button type="submit" className={`apple-auth-button ${loading ? 'loading' : ''}`} disabled={loading}>
+              {loading ? (
+                <span className="loading-spinner"></span>
+              ) : (
+                <>
+                  <span className="button-text">Anmelden</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 12h14"></path>
+                    <path d="m12 5 7 7-7 7"></path>
+                  </svg>
+                </>
+              )}
+            </button>
+          </form>
+          
+          <div className="apple-auth-links">
+            <p>
+              Noch kein Konto? 
+              <span className="apple-link" onClick={() => navigate("/register")}>
+                Registrieren
+              </span>
+            </p>
+            <p>
+              Passwort vergessen?
+              <span className="apple-link" onClick={() => navigate("/forgot-password")}>
+                Zurücksetzen
+              </span>
+            </p>
+          </div>
         </div>
-      )}
-    </div>
+        
+        {notification && (
+          <div className={`apple-notification ${notification.type}`}>
+            <div className="apple-notification-content">
+              <span className="notification-icon">
+                {notification.type === "success" ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                  </svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                  </svg>
+                )}
+              </span>
+              <p>{notification.message}</p>
+            </div>
+            <button 
+              className="apple-notification-close"
+              onClick={() => setNotification(null)}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+        )}
+      </div>
+    </>
   );
 }
