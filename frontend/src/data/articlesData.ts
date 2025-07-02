@@ -16,6 +16,175 @@ export interface Article {
 
 export const articles: Article[] = [
   {
+    id: 11,
+    slug: 'teuerste-vertragsklauseln-deutschland',
+    title: 'Die 7 teuersten Vertragsklauseln Deutschlands – und wie du sie vermeidest',
+    subtitle: 'Diese Klauseln haben deutsche Verbraucher bereits Millionen gekostet. Mit unseren Tipps erkennst du sie sofort und schützt dein Geld.',
+    excerpt: 'Diese Klauseln haben deutsche Verbraucher bereits Millionen gekostet. Mit unseren Tipps erkennst du sie sofort und schützt dein Geld.',
+    category: 'tipps',
+    date: '3. Juli 2025',
+    readTime: '8 Min. Lesezeit',
+    author: 'Contract AI Team',
+    icon: '💰',
+    content: `
+      <p>Jeden Tag fallen Millionen Deutsche auf teure Vertragsklauseln herein. Oft sind es nur wenige Wörter, die den Unterschied zwischen einem fairen Deal und einer kostspieligen Falle ausmachen. Wir haben die teuersten Vertragsklauseln Deutschlands analysiert und zeigen dir, wie du sie erkennst.</p>
+
+      <h2>1. Die "Bearbeitungsgebühr"-Falle (Durchschnittskosten: 250€ pro Jahr)</h2>
+      
+      <p><strong>Die Klausel:</strong> "Für die Bearbeitung von Änderungen, Mahnungen oder Kündigungen wird eine angemessene Bearbeitungsgebühr erhoben."</p>
+      
+      <p><strong>Warum sie teuer ist:</strong> "Angemessen" kann alles zwischen 25€ und 150€ bedeuten. Bei mehreren Transaktionen pro Jahr summiert sich das schnell.</p>
+
+      <div class="highlight-box">
+        <h4>Contract AI Tipp</h4>
+        <p>Bestehe auf konkreten Beträgen. Formuliere: "Bearbeitungsgebühren sind auf maximal 15€ pro Vorgang begrenzt."</p>
+      </div>
+
+      <h2>2. Die Preiserhöhungs-Automatik (Durchschnittskosten: 480€ pro Jahr)</h2>
+      
+      <p><strong>Die Klausel:</strong> "Der Anbieter kann die Preise entsprechend der Inflation oder bei gestiegenen Kosten anpassen."</p>
+      
+      <p><strong>Warum sie teuer ist:</strong> Ohne Obergrenze können die Preise beliebig steigen. Viele zahlen heute 40-60% mehr als ursprünglich vereinbart.</p>
+
+      <div class="highlight-box">
+        <h4>Contract AI Tipp</h4>
+        <p>Fordere eine Obergrenze: "Preiserhöhungen sind auf maximal 3% pro Jahr begrenzt und müssen 3 Monate vorab angekündigt werden."</p>
+      </div>
+
+      <h2>3. Die Kündigungs-Blockade (Durchschnittskosten: 720€ pro Jahr)</h2>
+      
+      <p><strong>Die Klausel:</strong> "Der Vertrag verlängert sich automatisch um 12 Monate, wenn nicht 3 Monate vor Ablauf gekündigt wird."</p>
+      
+      <p><strong>Warum sie teuer ist:</strong> Wer die Frist verpasst, sitzt ein ganzes Jahr länger fest. Bei einem 60€-Vertrag sind das 720€ zusätzlich.</p>
+
+      <h2>4. Die Schadenersatz-Keule (Durchschnittskosten: 1.200€ einmalig)</h2>
+      
+      <p><strong>Die Klausel:</strong> "Bei vorzeitiger Kündigung wird eine Vertragsstrafe in Höhe der noch ausstehenden Zahlungen fällig."</p>
+      
+      <p><strong>Warum sie teuer ist:</strong> Bei einem 2-Jahres-Vertrag mit 50€ monatlich zahlst du bei vorzeitiger Kündigung nach 6 Monaten trotzdem die vollen 1.200€.</p>
+
+      <div class="highlight-box">
+        <h4>Contract AI Tipp</h4>
+        <p>Begrenze Vertragsstrafen: "Die Vertragsstrafe ist auf maximal 3 Monatsraten begrenzt" oder vereinbare ein ordentliches Kündigungsrecht.</p>
+      </div>
+
+      <h2>5. Die Sonderkündigungs-Verweigerung (Durchschnittskosten: 800€ pro Jahr)</h2>
+      
+      <p><strong>Die Klausel:</strong> "Ein Sonderkündigungsrecht besteht nur bei nachgewiesener Unmöglichkeit der Leistungserbringung."</p>
+      
+      <p><strong>Warum sie teuer ist:</strong> Selbst bei gravierenden Problemen wie Umzug oder Insolvenz kommst du nicht aus dem Vertrag heraus.</p>
+
+      <h2>6. Die Zusatzkosten-Lawine (Durchschnittskosten: 300€ pro Jahr)</h2>
+      
+      <p><strong>Die Klausel:</strong> "Zusätzlich zur Grundgebühr können Kosten für Wartung, Support und Updates anfallen."</p>
+      
+      <p><strong>Warum sie teuer ist:</strong> Was als 50€-Vertrag beginnt, kostet schnell 75€ durch "notwendige" Zusatzleistungen.</p>
+
+      <div class="highlight-box">
+        <h4>Contract AI Tipp</h4>
+        <p>Vereinbare ein All-Inclusive-Paket: "Alle Leistungen sind in der Grundgebühr enthalten. Zusatzkosten bedürfen der gesonderten Zustimmung."</p>
+      </div>
+
+      <h2>7. Die Stillschweigende-Änderungs-Falle (Durchschnittskosten: 400€ pro Jahr)</h2>
+      
+      <p><strong>Die Klausel:</strong> "Widerspruch gegen Änderungen der AGB ist binnen 6 Wochen zu erheben, andernfalls gelten sie als akzeptiert."</p>
+      
+      <p><strong>Warum sie teuer ist:</strong> Neue AGB verschlechtern oft die Konditionen. Wer nicht aufpasst, stimmt automatisch schlechteren Bedingungen zu.</p>
+
+      <h2>Fazit: 4.150€ weniger pro Jahr durch bessere Verträge</h2>
+      
+      <p>Im Schnitt fallen deutsche Verbraucher auf 3-4 dieser Klauseln herein. Das bedeutet Mehrkosten von über 4.000€ pro Jahr! Mit Contract AI erkennst du solche Fallen sofort und verhandelst bessere Konditionen.</p>
+
+      <div class="highlight-box">
+        <h4>Sofort handeln</h4>
+        <p>Prüfe deine bestehenden Verträge jetzt mit Contract AI. Jeder Tag, den du wartest, kostet dich Geld!</p>
+      </div>
+    `
+  },
+  {
+    id: 10,
+    slug: 'vertraege-optimieren-ki-5-schritte',
+    title: 'So optimierst du deine Verträge mit KI – 5 einfache Schritte für bessere Konditionen',
+    subtitle: 'Verträge optimieren war noch nie so einfach! Erfahre, wie du mit KI deine Verträge in fünf Schritten sicherer, fairer und profitabler machst.',
+    excerpt: 'Verträge optimieren war noch nie so einfach! Erfahre, wie du mit KI deine Verträge in fünf Schritten sicherer, fairer und profitabler machst.',
+    category: 'tipps',
+    date: '2. Juli 2025',
+    readTime: '6 Min. Lesezeit',
+    author: 'Contract AI Team',
+    icon: '🔧',
+    content: `
+      <p>Ob Mietvertrag, Dienstleistungsvertrag oder Softwarelizenz — oft verhandeln wir Verträge nur einmal und lassen sie dann jahrelang unverändert. Dabei verschenken wir bares Geld und riskieren Nachteile. Mit Contract AI kannst du deine Verträge schnell, einfach und intelligent optimieren.</p>
+
+      <p>Hier zeigen wir dir, wie das in fünf Schritten funktioniert.</p>
+
+      <h2>Schritt 1: Vertrag hochladen</h2>
+      
+      <p>Der erste Schritt ist denkbar einfach: Lade deinen Vertrag in Contract AI hoch. Unsere Plattform unterstützt gängige Dateiformate wie PDF oder Word und erkennt die Inhalte automatisch.</p>
+
+      <p>Die KI analysiert dabei nicht nur den Text, sondern auch die Struktur und erkennt verschiedene Klauseltypen automatisch. So wird auch bei komplexen Verträgen nichts übersehen.</p>
+
+      <div class="highlight-box">
+        <h4>Praxis-Tipp</h4>
+        <p>Für beste Ergebnisse sollte der Vertrag als durchsuchbares PDF oder Word-Dokument vorliegen. Eingescannte Dokumente werden automatisch per OCR erkannt.</p>
+      </div>
+
+      <h2>Schritt 2: Vertrag analysieren lassen</h2>
+      
+      <p>Nach dem Upload analysiert die KI deinen Vertrag innerhalb von Sekunden. Dabei werden Schwachstellen, Risiken und Verbesserungspotenziale markiert. Besonders praktisch: Du erhältst einen Score, der dir sofort zeigt, wie „gesund" dein Vertrag aktuell ist.</p>
+
+      <p>Die Analyse umfasst:</p>
+      
+      <ul>
+        <li>Kostenfallen und versteckte Gebühren</li>
+        <li>Einseitige oder unfaire Klauseln</li>
+        <li>Rechtliche Risiken und Haftungslücken</li>
+        <li>Kündigungs- und Verlängerungsbestimmungen</li>
+        <li>Datenschutz- und Compliance-Aspekte</li>
+      </ul>
+
+      <h2>Schritt 3: Optimierungsvorschläge durchgehen</h2>
+      
+      <p>Contract AI liefert dir konkrete Vorschläge — von besseren Kündigungsfristen über angepasste Haftungsklauseln bis hin zu optimierten Preisregelungen. Du kannst jeden Vorschlag prüfen und entscheiden, ob du ihn übernehmen möchtest.</p>
+
+      <p>Jeder Vorschlag wird mit einer klaren Begründung und dem potentiellen finanziellen Vorteil versehen. So siehst du sofort, welche Änderungen sich am meisten lohnen.</p>
+
+      <div class="highlight-box">
+        <h4>Intelligente Priorisierung</h4>
+        <p>Die KI priorisiert Verbesserungsvorschläge nach Wichtigkeit und Durchsetzbarkeit. So konzentrierst du dich zuerst auf die wertvollsten Optimierungen.</p>
+      </div>
+
+      <h2>Schritt 4: Änderungen umsetzen</h2>
+      
+      <p>Mit den Vorschlägen im Gepäck kannst du entweder direkt mit deinem Vertragspartner verhandeln oder unsere integrierte KI nutzen, um einen neuen Vertragsentwurf zu generieren. So sparst du Zeit und vermeidest juristische Fallstricke.</p>
+
+      <p>Contract AI hilft dir auch bei der Formulierung von Änderungsanträgen und gibt dir Verhandlungstipps basierend auf der Vertragsart und dem Vertragspartner.</p>
+
+      <h2>Schritt 5: Vertrag finalisieren und speichern</h2>
+      
+      <p>Nach den Anpassungen kannst du deinen optimierten Vertrag sicher speichern und jederzeit abrufen. Contract AI erinnert dich automatisch an wichtige Fristen und sorgt dafür, dass du immer die Kontrolle behältst.</p>
+
+      <p>Die Plattform bietet zusätzlich:</p>
+      
+      <ul>
+        <li>Automatische Erinnerungen an Kündigungsfristen</li>
+        <li>Überwachung von Preisänderungen</li>
+        <li>Benachrichtigungen bei neuen rechtlichen Entwicklungen</li>
+        <li>Sichere Cloud-Speicherung aller Dokumente</li>
+      </ul>
+
+      <div class="highlight-box">
+        <h4>Langfristige Betreuung</h4>
+        <p>Contract AI überwacht deine Verträge kontinuierlich und informiert dich über Optimierungsmöglichkeiten oder wichtige Fristen.</p>
+      </div>
+
+      <h2>Fazit: Verträge endlich als Chance nutzen</h2>
+      
+      <p>Verträge müssen keine statischen Dokumente sein. Mit Contract AI verwandelst du sie in ein dynamisches Tool, das dir finanzielle und rechtliche Vorteile verschafft. Starte noch heute und optimiere deine Verträge in wenigen Minuten.</p>
+
+      <p>Die meisten Nutzer sparen bereits im ersten Jahr mehrere hundert Euro durch optimierte Vertragsbedingungen. Zeit zu handeln!</p>
+    `
+  },
+  {
     id: 9,
     slug: 'groesste-risiken-vertraege-ki-erkennt',
     title: 'Die 5 größten Risiken in Verträgen – und wie KI sie für dich erkennt',
