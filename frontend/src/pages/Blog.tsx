@@ -1,20 +1,12 @@
-// 📁 src/pages/Blog.tsx - FIXED articles array dependency
+// 📁 src/pages/Blog.tsx - MODIFIZIERT für zentrale Artikel-Daten
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from "react-helmet";
 import { Search, Calendar, Clock, ArrowRight } from 'lucide-react';
 import styles from '../styles/Blog.module.css';
 
-interface BlogArticle {
-  id: number;
-  title: string;
-  excerpt: string;
-  category: string;
-  date: string;
-  readTime: string;
-  icon: string;
-  slug: string;
-}
+// ✅ Import der zentralen Artikel-Daten
+import { getArticlesByCategory, searchArticles, Article } from '../data/articlesData';
 
 interface CategoryFilter {
   key: string;
@@ -35,109 +27,21 @@ const Blog: React.FC = () => {
     { key: 'tipps', label: 'Praxis-Tipps' }
   ];
 
-  // ✅ FIXED: Articles array moved inside useMemo to prevent dependency changes
-  const filteredArticles = useMemo(() => {
-    // ✅ Articles array now defined inside useMemo
-    const articles: BlogArticle[] = [
-      {
-        id: 1,
-        title: '5 Warnsignale: So erkennen Sie schlechte Verträge sofort',
-        excerpt: 'Versteckte Kosten, unfaire Klauseln, einseitige Bedingungen – lernen Sie die häufigsten Fallen kennen und schützen Sie sich vor teuren Fehlentscheidungen.',
-        category: 'tipps',
-        date: '23. Mai 2025',
-        readTime: '5 Min. Lesezeit',
-        icon: '📋',
-        slug: 'warnsignale-schlechte-vertraege'
-      },
-      {
-        id: 2,
-        title: 'Mietvertrag-Check: Diese Klauseln sind unwirksam',
-        excerpt: 'Schönheitsreparaturen, Haustierhaltung, Kautionshöhe – welche Klauseln in Ihrem Mietvertrag rechtlich problematisch sind und was Sie dagegen tun können.',
-        category: 'mietrecht',
-        date: '20. Mai 2025',
-        readTime: '8 Min. Lesezeit',
-        icon: '🏠',
-        slug: 'mietvertrag-unwirksame-klauseln'
-      },
-      {
-        id: 3,
-        title: 'Arbeitsvertrag verstehen: Überstunden, Urlaub & Kündigung',
-        excerpt: 'Was steht wirklich in Ihrem Arbeitsvertrag? Wir erklären die wichtigsten Klauseln und Ihre Rechte als Arbeitnehmer.',
-        category: 'arbeitsrecht',
-        date: '18. Mai 2025',
-        readTime: '6 Min. Lesezeit',
-        icon: '💼',
-        slug: 'arbeitsvertrag-rechte-verstehen'
-      },
-      {
-        id: 4,
-        title: 'AGB-Fallen bei Online-Shopping: Darauf müssen Sie achten',
-        excerpt: 'Automatische Vertragsverlängerung, versteckte Kosten, eingeschränkte Gewährleistung – so durchschauen Sie problematische AGB.',
-        category: 'agb',
-        date: '15. Mai 2025',
-        readTime: '4 Min. Lesezeit',
-        icon: '📜',
-        slug: 'agb-fallen-online-shopping'
-      },
-      {
-        id: 5,
-        title: 'Autokauf-Vertrag: Gewährleistung, Sachmängel & Rücktritt',
-        excerpt: 'Beim Autokauf kann viel schiefgehen. So schützen Sie sich vor versteckten Mängeln und problematischen Verkäufern.',
-        category: 'kaufvertraege',
-        date: '12. Mai 2025',
-        readTime: '7 Min. Lesezeit',
-        icon: '🚗',
-        slug: 'autokauf-vertrag-gewährleistung'
-      },
-      {
-        id: 6,
-        title: 'Vertragsverhandlung: So erreichen Sie bessere Bedingungen',
-        excerpt: 'Auch als Privatperson können Sie Verträge nachverhandeln. Mit diesen Strategien erreichen Sie fairere Konditionen.',
-        category: 'tipps',
-        date: '10. Mai 2025',
-        readTime: '5 Min. Lesezeit',
-        icon: '⚖️',
-        slug: 'vertragsverhandlung-strategien'
-      },
-      {
-        id: 7,
-        title: 'Widerrufsrecht: 14 Tage richtig nutzen',
-        excerpt: 'Das Widerrufsrecht schützt Verbraucher – aber nur, wenn Sie es richtig anwenden. Die wichtigsten Regeln und Ausnahmen.',
-        category: 'agb',
-        date: '8. Mai 2025',
-        readTime: '6 Min. Lesezeit',
-        icon: '↩️',
-        slug: 'widerrufsrecht-richtig-nutzen'
-      },
-      {
-        id: 8,
-        title: 'Kündigung Arbeitsvertrag: Fristen und Formvorschriften',
-        excerpt: 'Kündigungsfristen, Formfehler, Kündigungsschutz – was Arbeitnehmer und Arbeitgeber bei Kündigungen beachten müssen.',
-        category: 'arbeitsrecht',
-        date: '5. Mai 2025',
-        readTime: '9 Min. Lesezeit',
-        icon: '📋',
-        slug: 'kuendigung-arbeitsvertrag-fristen'
-      }
-    ];
-
-    let filtered = articles;
-
-    // Filter by category
-    if (activeCategory !== 'alle') {
-      filtered = filtered.filter(article => article.category === activeCategory);
-    }
+  // ✅ SIMPLIFIED: Nutzt zentrale Funktionen statt lokales Array
+  const filteredArticles = useMemo((): Article[] => {
+    let filtered = getArticlesByCategory(activeCategory);
 
     // Filter by search term
     if (searchTerm) {
-      filtered = filtered.filter(article =>
-        article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        article.excerpt.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+      filtered = searchArticles(searchTerm);
+      // Falls Kategorie aktiv ist, zusätzlich nach Kategorie filtern
+      if (activeCategory !== 'alle') {
+        filtered = filtered.filter((article: Article) => article.category === activeCategory);
+      }
     }
 
     return filtered;
-  }, [activeCategory, searchTerm]); // ✅ Only activeCategory and searchTerm as dependencies
+  }, [activeCategory, searchTerm]);
 
   const handleCategoryFilter = (category: string) => {
     setActiveCategory(category);
@@ -248,7 +152,7 @@ const Blog: React.FC = () => {
               </div>
             ) : (
               <div className={styles.articlesGrid}>
-                {filteredArticles.map((article) => (
+                {filteredArticles.map((article: Article) => (
                   <article
                     key={article.id}
                     className={styles.articleCard}
