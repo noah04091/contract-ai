@@ -16,6 +16,77 @@ export interface Article {
 
 export const articles: Article[] = [
   {
+    id: 9,
+    slug: 'groesste-risiken-vertraege-ki-erkennt',
+    title: 'Die 5 größten Risiken in Verträgen – und wie KI sie für dich erkennt',
+    subtitle: 'Verträge enthalten oft versteckte Risiken, die viel Geld kosten können. Erfahre, wie KI-basierte Vertragsanalyse dir hilft, diese Gefahren frühzeitig zu erkennen und zu vermeiden.',
+    excerpt: 'Verträge enthalten oft versteckte Risiken, die viel Geld kosten können. Erfahre, wie KI-basierte Vertragsanalyse dir hilft, diese Gefahren frühzeitig zu erkennen und zu vermeiden.',
+    category: 'tipps',
+    date: '2. Juli 2025',
+    readTime: '7 Min. Lesezeit',
+    author: 'Contract AI Team',
+    icon: '💥',
+    content: `
+      <p>Verträge sind das Rückgrat jeder geschäftlichen Beziehung — egal ob beim Mietvertrag, beim Dienstleistungsvertrag oder beim IT-Projektvertrag. Doch viele Verträge enthalten Risiken, die oft erst dann auffallen, wenn es zu spät ist. Mit Hilfe von Künstlicher Intelligenz (KI) kannst du diese Risiken jedoch frühzeitig erkennen und deine Verträge zukunftssicher machen.</p>
+
+      <p>In diesem Artikel zeigen wir dir die fünf größten Vertragsrisiken und wie Contract AI dir hilft, sie zu vermeiden.</p>
+
+      <h2>1. Unklare oder fehlende Klauseln</h2>
+      
+      <p>Eine der häufigsten Fehlerquellen sind unklare Formulierungen. Vage Begriffe wie „zeitnah" oder „nach bestem Ermessen" lassen viel Interpretationsspielraum — ideal für Streitigkeiten.</p>
+
+      <div class="highlight-box">
+        <h4>Wie KI hilft</h4>
+        <p>Contract AI erkennt unklare Formulierungen automatisch, schlägt Alternativen vor und sorgt so für klare, rechtssichere Vereinbarungen.</p>
+      </div>
+
+      <h2>2. Versteckte Kosten oder Preisfallen</h2>
+      
+      <p>Zusatzgebühren, Indexanpassungen oder dynamische Preisanpassungen verstecken sich oft tief in den AGB oder Anhängen.</p>
+
+      <div class="highlight-box">
+        <h4>Wie KI hilft</h4>
+        <p>Unsere Analyse deckt Preis- und Kostenerhöhungen auf, markiert sie und gibt Empfehlungen, wie du diese Punkte verhandeln kannst.</p>
+      </div>
+
+      <h2>3. Ungünstige Kündigungs- oder Verlängerungsklauseln</h2>
+      
+      <p>Automatische Vertragsverlängerungen oder lange Kündigungsfristen binden dich unnötig lange.</p>
+
+      <div class="highlight-box">
+        <h4>Wie KI hilft</h4>
+        <p>Contract AI scannt deine Verträge auf solche Klauseln und zeigt dir Optimierungsmöglichkeiten, z. B. durch bessere Fristgestaltung.</p>
+      </div>
+
+      <h2>4. Haftungs- und Gewährleistungslücken</h2>
+      
+      <p>Fehlerhafte Haftungsregelungen können teuer werden — vor allem, wenn Schadensersatzansprüche entstehen.</p>
+
+      <div class="highlight-box">
+        <h4>Wie KI hilft</h4>
+        <p>Mit Contract AI kannst du Haftungs- und Gewährleistungsklauseln automatisiert prüfen lassen und erhältst Vorschläge zur Risikominimierung.</p>
+      </div>
+
+      <h2>5. Datenschutz- und Compliance-Risiken</h2>
+      
+      <p>Viele Verträge enthalten Klauseln, die nicht mit aktuellen Datenschutz- oder Compliance-Richtlinien konform sind — besonders bei internationalen Verträgen.</p>
+
+      <div class="highlight-box">
+        <h4>Wie KI hilft</h4>
+        <p>Unsere Lösung prüft die Vereinbarungen auf DSGVO-Konformität und andere gesetzliche Standards. So bleibst du immer compliant.</p>
+      </div>
+
+      <h2>Fazit: Verträge endlich verstehen und verbessern</h2>
+      
+      <p>Die Vertragsprüfung per Hand kostet Zeit, Geld und Nerven. Mit Contract AI analysierst du deine Verträge in Minuten, findest alle versteckten Risiken und kannst sie direkt optimieren. So sparst du nicht nur Geld, sondern schützt auch dein Unternehmen vor bösen Überraschungen.</p>
+
+      <div class="highlight-box">
+        <h4>Jetzt kostenlos testen</h4>
+        <p>Contract AI kostenlos ausprobieren und deine Verträge sofort optimieren.</p>
+      </div>
+    `
+  },
+  {
     id: 1,
     slug: 'warnsignale-schlechte-vertraege',
     title: '5 Warnsignale: So erkennen Sie schlechte Verträge sofort',
