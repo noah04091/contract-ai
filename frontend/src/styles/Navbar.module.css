@@ -1249,3 +1249,57 @@
     padding: 0.5rem 0.6rem;
   }
 }
+
+/* AUTH-SEITEN ZENTRIERUNG FIX - NEU HINZUGEFÜGTE REGELN */
+/* Auth-Seiten: Verstecke Hamburger & Buttons auf Mobile, zentriere Logo */
+@media (max-width: 768px) {
+  .authPageNavbar .leftSection {
+    visibility: hidden;
+    width: 0;
+    min-width: 0;
+  }
+  
+  .authPageNavbar .rightSection {
+    visibility: hidden;
+    width: 0;
+    min-width: 0;
+  }
+  
+  .authPageNavbar .centerSection {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .authPageNavbar .logoImage {
+    margin-right: 0;
+  }
+}
+
+/* Auth-Seiten: Desktop - zentriere Logo besser */
+@media (min-width: 769px) {
+  .authPageNavbar .navbarContent {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .authPageNavbar .leftSection {
+    min-width: 80px;
+  }
+  
+  .authPageNavbar .centerSection {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .authPageNavbar .rightSection {
+    min-width: 80px;
+    justify-content: flex-end;
+  }
+}

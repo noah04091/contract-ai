@@ -313,11 +313,11 @@ export default function Navbar() {
     );
   };
 
-  // Render Auth Pages Navbar (unverändert lassen)
+  // Render Auth Pages Navbar - HYBRIDE LÖSUNG: Hamburger + Zentrierung
   const renderAuthPagesNavbar = () => {
     return (
       <>
-        {/* Left Section */}
+        {/* Left Section - Hamburger Button */}
         <div className={styles.leftSection}>
           {/* Desktop: Immer Hamburger, Mobile: Nur wenn eingeloggt */}
           {(!isMobile || user) && (
@@ -348,7 +348,7 @@ export default function Navbar() {
           </Link>
         </div>
 
-        {/* Right Section */}
+        {/* Right Section - Auth Buttons */}
         <div className={styles.rightSection}>
           {/* Desktop: Auth Buttons wenn nicht eingeloggt */}
           {!isMobile && !user && (
