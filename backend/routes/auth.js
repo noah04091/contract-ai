@@ -36,7 +36,7 @@ module.exports = (db) => {
   return router;
 };
 
-// ✅ Registrierung - ERWEITERT mit optimizationCount
+// ✅ Registrierung - ERWEITERT mit Double-Opt-In
 router.post("/register", async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password)
@@ -52,6 +52,7 @@ router.post("/register", async (req, res) => {
     const newUser = {
       email,
       password: hashed,
+      verified: false, // ⭐ NEU: Double-Opt-In Status
       isPremium: false,
       // ⭐ ANALYSE & OPTIMIERUNG LIMITS
       analysisCount: 0,
@@ -73,18 +74,24 @@ router.post("/register", async (req, res) => {
     console.log("✅ Neuer User registriert:", {
       email: newUser.email,
       plan: newUser.subscriptionPlan,
+      verified: newUser.verified,
       analysisCount: newUser.analysisCount,
       optimizationCount: newUser.optimizationCount
     });
     
-    res.status(201).json({ message: "✅ Registrierung erfolgreich" });
+    // ⭐ NEU: Keine automatische Anmeldung - User muss E-Mail bestätigen
+    res.status(201).json({ 
+      message: "✅ Registrierung erfolgreich. Bitte bestätigen Sie Ihre E-Mail-Adresse.",
+      email: newUser.email,
+      verified: false
+    });
   } catch (err) {
     console.error("❌ Registrierung fehlgeschlagen:", err);
     res.status(500).json({ message: "Serverfehler bei Registrierung" });
   }
 });
 
-// ✅ Login - ERWEITERT mit Cookie-Debug
+// ✅ Login - ERWEITERT mit Double-Opt-In Check
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password)
@@ -96,6 +103,15 @@ router.post("/login", async (req, res) => {
 
     const match = await bcrypt.compare(password, user.password);
     if (!match) return res.status(401).json({ message: "❌ Ungültige Anmeldedaten" });
+
+    // ⭐ NEU: Double-Opt-In Verification Check
+    if (user.verified === false) {
+      return res.status(403).json({ 
+        message: "Bitte bestätigen Sie zuerst Ihre E-Mail-Adresse",
+        requiresVerification: true,
+        email: user.email
+      });
+    }
 
     const token = jwt.sign(
       { email: user.email, userId: user._id },
@@ -151,6 +167,7 @@ router.get("/me", verifyToken, async (req, res) => {
 
     const userData = {
       email: user.email,
+      verified: user.verified ?? true, // ⭐ NEU: Verification Status
       subscriptionPlan: plan,
       subscriptionStatus: status,
       subscriptionActive,
@@ -171,6 +188,7 @@ router.get("/me", verifyToken, async (req, res) => {
 
     console.log("✅ User-Info erfolgreich geladen:", {
       email: userData.email,
+      verified: userData.verified,
       plan: userData.subscriptionPlan,
       isPremium: userData.isPremium,
       analysisCount: userData.analysisCount,
@@ -311,14 +329,15 @@ router.post("/logout", (req, res) => {
   res.json({ message: "✅ Erfolgreich ausgeloggt" });
 });
 
-// ✅ NEUE ROUTE: Bestehende User upgraden (OPTIONAL - für Migration)
+// ✅ NEUE ROUTE: Bestehende User upgraden (UPDATED für verified field)
 router.post("/migrate-users", async (req, res) => {
   try {
     // Diese Route kann einmalig aufgerufen werden, um bestehende User zu updaten
     const result = await usersCollection.updateMany(
-      { optimizationCount: { $exists: false } }, // User ohne optimizationCount
+      { verified: { $exists: false } }, // User ohne verified field
       { 
         $set: { 
+          verified: true, // ⭐ Bestehende User als verifiziert markieren
           optimizationCount: 0,
           analysisCount: { $ifNull: ["$analysisCount", 0] },
           subscriptionPlan: { $ifNull: ["$subscriptionPlan", "free"] },
@@ -331,10 +350,42 @@ router.post("/migrate-users", async (req, res) => {
       }
     );
     
-    console.log(`✅ ${result.modifiedCount} User erfolgreich migriert`);
+    console.log(`✅ ${result.modifiedCount} User erfolgreich migriert (als verifiziert markiert)`);
     res.json({ 
       message: `✅ ${result.modifiedCount} User erfolgreich migriert`,
       modifiedCount: result.modifiedCount
+    });
+  } catch (err) {
+    console.error("❌ Fehler bei User-Migration:", err);
+    res.status(500).json({ message: "Fehler bei User-Migration" });
+  }
+});
+
+// ✅ TEMPORÄRE GET-Route für Browser-Migration
+router.get("/migrate-users", async (req, res) => {
+  try {
+    const result = await usersCollection.updateMany(
+      { verified: { $exists: false } },
+      { 
+        $set: { 
+          verified: true,
+          optimizationCount: 0,
+          analysisCount: { $ifNull: ["$analysisCount", 0] },
+          subscriptionPlan: { $ifNull: ["$subscriptionPlan", "free"] },
+          subscriptionStatus: { $ifNull: ["$subscriptionStatus", "inactive"] },
+          subscriptionActive: { $ifNull: ["$subscriptionActive", false] },
+          emailNotifications: { $ifNull: ["$emailNotifications", true] },
+          contractReminders: { $ifNull: ["$contractReminders", true] },
+          updatedAt: new Date()
+        }
+      }
+    );
+    
+    console.log(`✅ ${result.modifiedCount} User erfolgreich migriert (via GET)`);
+    res.json({ 
+      message: `✅ ${result.modifiedCount} User erfolgreich migriert`,
+      modifiedCount: result.modifiedCount,
+      success: true
     });
   } catch (err) {
     console.error("❌ Fehler bei User-Migration:", err);

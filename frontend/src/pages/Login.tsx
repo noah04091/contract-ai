@@ -7,28 +7,28 @@ interface AuthResponse {
   token?: string;
   message?: string;
   email?: string;
-  requiresVerification?: boolean; // ✅ NEU: Verification-Flag
+  requiresVerification?: boolean; // ✅ Double-Opt-In Flag
 }
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [notification, setNotification] = useState<{ message: string; type?: "success" | "error" | "warning" } | null>(null);
+  const [notification, setNotification] = useState<{ message: string; type?: "success" | "error" | "warning" | "info" } | null>(null);
   const navigate = useNavigate();
   const redirectTimeout = useRef<NodeJS.Timeout | null>(null);
   const [emailFocused, setEmailFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const { refetchUser } = useAuth(); // ✅ Nur refetchUser needed
+  const { refetchUser } = useAuth();
 
-  // ✅ NEU: E-Mail-Verification States
+  // ✅ E-Mail-Verification States
   const [showVerificationPrompt, setShowVerificationPrompt] = useState(false);
   const [verificationEmail, setVerificationEmail] = useState("");
   const [resendLoading, setResendLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
 
-  // ✅ NEU: E-Mail-Verification senden
+  // ✅ E-Mail-Verification senden
   const sendVerificationEmail = async (emailToVerify: string) => {
     try {
       const response = await fetch("/api/email-verification/send-verification", {
@@ -55,7 +55,7 @@ export default function Login() {
     }
   };
 
-  // ✅ NEU: Resend E-Mail mit Cooldown
+  // ✅ Resend E-Mail mit Cooldown
   const handleResendEmail = async () => {
     if (resendCooldown > 0 || resendLoading) return;
     
@@ -112,13 +112,13 @@ export default function Login() {
       );
 
       if (!response.ok) {
-        // ✅ NEU: Spezielle Behandlung für Verification-Fehler
+        // ✅ VERBESSERT: Double-Opt-In Check mit besserer UX
         if (data.requiresVerification) {
           setShowVerificationPrompt(true);
           setVerificationEmail(data.email || email);
           setNotification({ 
-            message: "Bitte bestätigen Sie zuerst Ihre E-Mail-Adresse.", 
-            type: "warning" 
+            message: "E-Mail-Adresse noch nicht bestätigt. Bitte prüfen Sie Ihr Postfach.", 
+            type: "info" // ✅ "info" statt "warning" - weniger alarmierend
           });
           setLoading(false);
           return;
@@ -311,13 +311,13 @@ export default function Login() {
           </svg>
         </div>
         
-        {/* ✅ NEU: Conditional Title basierend auf Verification-Status */}
+        {/* ✅ Conditional Title basierend auf Verification-Status */}
         <h1 className="apple-auth-title">
           {showVerificationPrompt ? "E-Mail bestätigen" : "Bei Contract AI anmelden"}
         </h1>
         <p className="apple-auth-subtitle">
           {showVerificationPrompt 
-            ? `Bitte bestätigen Sie Ihre E-Mail-Adresse (${verificationEmail}), um sich anmelden zu können.`
+            ? `Bitte bestätigen Sie Ihre E-Mail-Adresse, um sich anmelden zu können.`
             : "Geben Sie Ihre Anmeldedaten ein, um fortzufahren"
           }
         </p>
@@ -382,28 +382,68 @@ export default function Login() {
           </form>
         )}
 
-        {/* ✅ NEU: E-Mail-Verification Prompt */}
+        {/* ✅ VERBESSERTE E-Mail-Verification Prompt */}
         {showVerificationPrompt && (
-          <div className="apple-email-verification">
-            <div className="verification-icon warning">
-              <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                <line x1="12" y1="9" x2="12" y2="13"></line>
-                <line x1="12" y1="17" x2="12.01" y2="17"></line>
-              </svg>
+          <div className="apple-email-verification" style={{ textAlign: 'center' }}>
+            {/* ✅ FREUNDLICHERES Icon */}
+            <div className="verification-icon" style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+              <div style={{ 
+                background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)', 
+                borderRadius: '50%', 
+                width: '80px', 
+                height: '80px', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                marginBottom: '20px'
+              }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                  <polyline points="22,6 12,13 2,6"></polyline>
+                </svg>
+              </div>
             </div>
             
-            <div className="verification-message">
-              <p>
-                Haben Sie die Bestätigungs-E-Mail nicht erhalten? Wir können sie erneut senden.
+            {/* ✅ E-Mail Badge */}
+            <div style={{ 
+              display: 'inline-flex', 
+              alignItems: 'center', 
+              gap: '8px',
+              background: 'linear-gradient(135deg, #ecfdf5, #f0fdf4)',
+              border: '1px solid #10b981',
+              padding: '12px 20px',
+              borderRadius: '50px',
+              margin: '20px 0',
+              color: '#065f46',
+              fontWeight: '600'
+            }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                <polyline points="22,6 12,13 2,6"/>
+              </svg>
+              <span>{verificationEmail}</span>
+            </div>
+            
+            <div className="verification-message" style={{ margin: '20px 0', color: '#1f2937' }}>
+              <p style={{ fontSize: '16px', lineHeight: '1.5' }}>
+                Haben Sie die Bestätigungs-E-Mail nicht erhalten?
+                <br />
+                <strong>Schauen Sie auch in Ihren Spam-Ordner!</strong>
               </p>
             </div>
             
-            <div className="verification-actions">
+            <div className="verification-actions" style={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              gap: '12px', 
+              alignItems: 'center',
+              margin: '30px 0'
+            }}>
               <button 
-                className={`apple-auth-button secondary ${resendLoading ? 'loading' : ''}`}
+                className={`apple-auth-button primary ${resendLoading ? 'loading' : ''}`}
                 onClick={handleResendEmail}
                 disabled={resendLoading || resendCooldown > 0}
+                style={{ width: '100%', maxWidth: '300px' }}
               >
                 {resendLoading ? (
                   <span className="loading-spinner"></span>
@@ -411,27 +451,51 @@ export default function Login() {
                   <span>E-Mail erneut senden ({resendCooldown}s)</span>
                 ) : (
                   <>
-                    <span>Bestätigungs-E-Mail erneut senden</span>
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
                     </svg>
+                    <span>Bestätigungs-E-Mail erneut senden</span>
                   </>
                 )}
               </button>
               
               <button 
-                className="apple-auth-button outline"
+                className="apple-auth-button secondary"
                 onClick={() => {
                   setShowVerificationPrompt(false);
                   setNotification(null);
                 }}
+                style={{ width: '100%', maxWidth: '300px' }}
               >
-                <span>Zurück zur Anmeldung</span>
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M19 12H5"></path>
                   <path d="m12 19-7-7 7-7"></path>
                 </svg>
+                <span>Zurück zur Anmeldung</span>
               </button>
+            </div>
+
+            {/* ✅ HELPFUL TIP */}
+            <div style={{ 
+              background: 'rgba(59, 130, 246, 0.1)',
+              border: '1px solid rgba(59, 130, 246, 0.3)',
+              borderRadius: '12px',
+              padding: '15px',
+              margin: '20px 0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '10px'
+            }}>
+              <div>💡</div>
+              <p style={{ 
+                color: '#1f2937', 
+                margin: '0', 
+                fontSize: '14px',
+                textAlign: 'center'
+              }}>
+                <strong>Tipp:</strong> Nach der Bestätigung können Sie sich sofort anmelden!
+              </p>
             </div>
           </div>
         )}
@@ -469,6 +533,12 @@ export default function Login() {
                   <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
                   <line x1="12" y1="9" x2="12" y2="13"></line>
                   <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+              ) : notification.type === "info" ? (
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <path d="M12 16v-4"></path>
+                  <path d="M12 8h.01"></path>
                 </svg>
               ) : (
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
