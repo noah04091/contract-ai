@@ -69,29 +69,35 @@ export default function VerifySuccess() {
   }, [navigate]);
 
   return (
-    <div className="apple-auth-container success-page" ref={containerRef}>
-      {/* Enhanced Background */}
-      <div className="apple-bg success-bg">
+    <div className="apple-auth-container" ref={containerRef}>
+      {/* ✅ SUCCESS BACKGROUND - Gradient aber nicht zu hell */}
+      <div className="apple-bg success-gradient">
         <div className="shape shape-1"></div>
         <div className="shape shape-2"></div>
         <div className="shape shape-3"></div>
+        {/* ✅ SUCCESS PARTICLES */}
         <div className="success-particles">
-          {[...Array(20)].map((_, i) => (
-            <div key={i} className={`particle particle-${i + 1}`}></div>
+          {[...Array(15)].map((_, i) => (
+            <div key={i} className={`particle particle-${i + 1}`} 
+                 style={{
+                   left: `${Math.random() * 100}%`,
+                   animationDelay: `${Math.random() * 3}s`,
+                   animationDuration: `${2 + Math.random() * 3}s`
+                 }}></div>
           ))}
         </div>
       </div>
 
-      {/* Confetti Effect */}
+      {/* ✅ CONFETTI EFFECT */}
       {showConfetti && (
         <div className="confetti-container">
-          {[...Array(50)].map((_, i) => (
+          {[...Array(30)].map((_, i) => (
             <div 
               key={i} 
-              className={`confetti confetti-${i % 5 + 1}`}
+              className={`confetti confetti-${(i % 4) + 1}`}
               style={{
                 left: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 3}s`,
+                animationDelay: `${Math.random() * 2}s`,
                 animationDuration: `${3 + Math.random() * 2}s`
               }}
             ></div>
@@ -99,45 +105,56 @@ export default function VerifySuccess() {
         </div>
       )}
       
+      {/* ✅ MAIN SUCCESS CARD - Apple Style */}
       <div className="apple-auth-card success-card">
-        {/* Animated Success Icon */}
+        
+        {/* ✅ ANIMATED SUCCESS ICON - ZENTRIERT */}
         <div className="success-icon-container">
-          <div className="success-circle-wrapper">
-            <div className="success-circle">
-              <div className="checkmark-animation large">
-                <svg width="120" height="120" viewBox="0 0 120 120">
-                  <circle 
-                    className="checkmark-circle" 
-                    cx="60" 
-                    cy="60" 
-                    r="50" 
-                    fill="none" 
-                    stroke="url(#successGradient)" 
-                    strokeWidth="4"
-                  />
-                  <path 
-                    className="checkmark-path" 
-                    fill="none" 
-                    stroke="#22c55e" 
-                    strokeWidth="6" 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    d="M35 60l15 15 30-30"
-                  />
-                  <defs>
-                    <linearGradient id="successGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#22c55e" />
-                      <stop offset="50%" stopColor="#16a34a" />
-                      <stop offset="100%" stopColor="#15803d" />
-                    </linearGradient>
-                  </defs>
-                </svg>
-              </div>
+          <div className="success-icon-wrapper">
+            <div className="success-checkmark">
+              <svg width="120" height="120" viewBox="0 0 120 120">
+                <circle 
+                  className="success-circle-bg" 
+                  cx="60" 
+                  cy="60" 
+                  r="50" 
+                  fill="url(#successGradient)"
+                />
+                <circle 
+                  className="success-circle-border" 
+                  cx="60" 
+                  cy="60" 
+                  r="50" 
+                  fill="none" 
+                  stroke="#10b981" 
+                  strokeWidth="3"
+                  strokeDasharray="314"
+                  strokeDashoffset="314"
+                />
+                <path 
+                  className="success-checkmark-path" 
+                  fill="none" 
+                  stroke="white" 
+                  strokeWidth="6" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  d="M35 60l15 15 30-30"
+                  strokeDasharray="60"
+                  strokeDashoffset="60"
+                />
+                <defs>
+                  <linearGradient id="successGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#10b981" />
+                    <stop offset="50%" stopColor="#059669" />
+                    <stop offset="100%" stopColor="#047857" />
+                  </linearGradient>
+                </defs>
+              </svg>
             </div>
           </div>
         </div>
         
-        {/* Success Message */}
+        {/* ✅ SUCCESS CONTENT - DUNKLE SCHRIFT FÜR LESBARKEIT */}
         <div className="success-content">
           <h1 className="success-title">
             🎉 Fantastisch!
@@ -147,16 +164,19 @@ export default function VerifySuccess() {
             Ihre E-Mail-Adresse wurde erfolgreich bestätigt
           </p>
           
+          {/* ✅ EMAIL CONFIRMED BADGE - LESBARE FARBEN */}
           <div className="email-confirmed-badge">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-              <polyline points="22 4 12 14.01 9 11.01"/>
-            </svg>
-            <span>{email}</span>
+            <div className="email-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                <polyline points="22 4 12 14.01 9 11.01"/>
+              </svg>
+            </div>
+            <span className="email-text">{email}</span>
           </div>
         </div>
 
-        {/* What's Next Section */}
+        {/* ✅ WHAT'S NEXT SECTION - DUNKLE SCHRIFT */}
         <div className="whats-next-section">
           <h3 className="whats-next-title">
             🚀 Jetzt kann's losgehen!
@@ -165,43 +185,43 @@ export default function VerifySuccess() {
           <div className="feature-grid">
             <div className="feature-item">
               <div className="feature-icon">📄</div>
-              <div className="feature-text">
-                <strong>Verträge hochladen</strong>
-                <span>PDF-Dateien einfach per Drag & Drop</span>
+              <div className="feature-content">
+                <div className="feature-title">Verträge hochladen</div>
+                <div className="feature-description">PDF-Dateien einfach per Drag & Drop</div>
               </div>
             </div>
             
             <div className="feature-item">
               <div className="feature-icon">🤖</div>
-              <div className="feature-text">
-                <strong>KI-Analyse starten</strong>
-                <span>Automatische Vertragsprüfung</span>
+              <div className="feature-content">
+                <div className="feature-title">KI-Analyse starten</div>
+                <div className="feature-description">Automatische Vertragsprüfung</div>
               </div>
             </div>
             
             <div className="feature-item">
               <div className="feature-icon">💡</div>
-              <div className="feature-text">
-                <strong>Optimierungen erhalten</strong>
-                <span>Verbesserungsvorschläge von der KI</span>
+              <div className="feature-content">
+                <div className="feature-title">Optimierungen erhalten</div>
+                <div className="feature-description">Verbesserungsvorschläge von der KI</div>
               </div>
             </div>
             
             <div className="feature-item">
               <div className="feature-icon">📅</div>
-              <div className="feature-text">
-                <strong>Fristen verwalten</strong>
-                <span>Kündigungsfristen im Blick behalten</span>
+              <div className="feature-content">
+                <div className="feature-title">Fristen verwalten</div>
+                <div className="feature-description">Kündigungsfristen im Blick behalten</div>
               </div>
             </div>
           </div>
         </div>
         
-        {/* Action Buttons */}
+        {/* ✅ ACTION BUTTONS - APPLE STYLE & ZENTRIERT */}
         <div className="success-actions">
           <button 
             onClick={() => navigate("/login")}
-            className="apple-auth-button modern success-primary"
+            className="apple-auth-button primary success-primary"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
@@ -212,49 +232,211 @@ export default function VerifySuccess() {
           </button>
         </div>
 
-        {/* Countdown */}
+        {/* ✅ COUNTDOWN - LESBARE FARBEN */}
         <div className="auto-redirect-info">
-          <div className="countdown-circle">
-            <svg width="32" height="32" viewBox="0 0 32 32">
-              <circle
-                cx="16" 
-                cy="16" 
-                r="14"
-                fill="none"
-                stroke="#e2e8f0"
-                strokeWidth="2"
-              />
-              <circle
-                cx="16"
-                cy="16"
-                r="14"
-                fill="none"
-                stroke="#22c55e"
-                strokeWidth="2"
-                strokeDasharray="87.96"
-                strokeDashoffset={87.96 - (87.96 * (5 - countdown)) / 5}
-                style={{ transition: 'stroke-dashoffset 1s linear' }}
-                transform="rotate(-90 16 16)"
-              />
-              <text x="16" y="20" textAnchor="middle" fill="#22c55e" fontSize="10" fontWeight="bold">
-                {countdown}
-              </text>
-            </svg>
+          <div className="countdown-container">
+            <div className="countdown-circle">
+              <svg width="40" height="40" viewBox="0 0 40 40">
+                <circle
+                  cx="20" 
+                  cy="20" 
+                  r="18"
+                  fill="none"
+                  stroke="#e5e7eb"
+                  strokeWidth="2"
+                />
+                <circle
+                  cx="20"
+                  cy="20"
+                  r="18"
+                  fill="none"
+                  stroke="#10b981"
+                  strokeWidth="2"
+                  strokeDasharray={113.04}
+                  strokeDashoffset={113.04 - (113.04 * (5 - countdown)) / 5}
+                  style={{ transition: 'stroke-dashoffset 1s linear' }}
+                  transform="rotate(-90 20 20)"
+                />
+                <text x="20" y="26" textAnchor="middle" fill="#374151" fontSize="12" fontWeight="bold">
+                  {countdown}
+                </text>
+              </svg>
+            </div>
+            <div className="countdown-text">
+              <span className="countdown-label">Automatische Weiterleitung in</span>
+              <span className="countdown-timer">{countdown} Sekunden</span>
+            </div>
           </div>
-          <span>Automatische Weiterleitung in {countdown} Sekunden...</span>
         </div>
         
-        {/* Alternative Links */}
+        {/* ✅ ALTERNATIVE LINKS - LESBARE FARBEN */}
         <div className="success-links">
-          <button onClick={() => navigate("/")} className="link-button">
+          <button onClick={() => navigate("/")} className="success-link-button">
             🏠 Zur Startseite
           </button>
           <span className="link-separator">•</span>
-          <button onClick={() => navigate("/pricing")} className="link-button">
+          <button onClick={() => navigate("/pricing")} className="success-link-button">
             💎 Preise ansehen
           </button>
         </div>
       </div>
+
+      {/* ✅ CUSTOM STYLES für lesbare Farben */}
+      <style>{`
+        .apple-auth-container .success-gradient {
+          background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 50%, #f0f9ff 100%);
+        }
+        
+        .success-card {
+          background: rgba(255, 255, 255, 0.95);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .success-title {
+          color: #1f2937;
+          font-size: 2rem;
+          font-weight: 700;
+          margin: 20px 0 10px;
+          text-align: center;
+        }
+        
+        .success-subtitle {
+          color: #4b5563;
+          font-size: 1.1rem;
+          margin-bottom: 30px;
+          text-align: center;
+        }
+        
+        .email-confirmed-badge {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          background: linear-gradient(135deg, #ecfdf5, #f0fdf4);
+          border: 1px solid #10b981;
+          padding: 12px 20px;
+          border-radius: 50px;
+          margin: 20px 0;
+        }
+        
+        .email-icon {
+          color: #10b981;
+        }
+        
+        .email-text {
+          color: #065f46;
+          font-weight: 600;
+          font-size: 0.95rem;
+        }
+        
+        .whats-next-title {
+          color: #1f2937;
+          font-size: 1.3rem;
+          font-weight: 600;
+          margin: 30px 0 20px;
+          text-align: center;
+        }
+        
+        .feature-item {
+          display: flex;
+          align-items: center;
+          gap: 15px;
+          padding: 15px;
+          background: rgba(248, 250, 252, 0.8);
+          border-radius: 12px;
+          margin-bottom: 12px;
+          border: 1px solid rgba(226, 232, 240, 0.5);
+        }
+        
+        .feature-title {
+          color: #1e293b;
+          font-weight: 600;
+          font-size: 0.95rem;
+        }
+        
+        .feature-description {
+          color: #64748b;
+          font-size: 0.85rem;
+          margin-top: 2px;
+        }
+        
+        .countdown-label {
+          color: #6b7280;
+          font-size: 0.9rem;
+        }
+        
+        .countdown-timer {
+          color: #1f2937;
+          font-weight: 600;
+          margin-left: 5px;
+        }
+        
+        .success-link-button {
+          color: #4b5563;
+          background: none;
+          border: none;
+          cursor: pointer;
+          font-size: 0.9rem;
+          transition: color 0.2s;
+        }
+        
+        .success-link-button:hover {
+          color: #1f2937;
+        }
+        
+        .link-separator {
+          color: #d1d5db;
+          margin: 0 12px;
+        }
+        
+        .particle {
+          position: absolute;
+          width: 6px;
+          height: 6px;
+          background: #10b981;
+          border-radius: 50%;
+          opacity: 0.6;
+          animation: float 4s infinite ease-in-out;
+        }
+        
+        @keyframes float {
+          0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.6; }
+          50% { transform: translateY(-20px) rotate(180deg); opacity: 1; }
+        }
+        
+        .confetti {
+          position: absolute;
+          width: 8px;
+          height: 8px;
+          animation: confetti-fall linear infinite;
+        }
+        
+        .confetti-1 { background: #10b981; }
+        .confetti-2 { background: #3b82f6; }
+        .confetti-3 { background: #f59e0b; }
+        .confetti-4 { background: #ef4444; }
+        
+        @keyframes confetti-fall {
+          0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+          100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+        }
+        
+        .success-circle-border {
+          animation: draw-circle 2s ease-out forwards;
+        }
+        
+        .success-checkmark-path {
+          animation: draw-checkmark 1s ease-out 1.5s forwards;
+        }
+        
+        @keyframes draw-circle {
+          to { stroke-dashoffset: 0; }
+        }
+        
+        @keyframes draw-checkmark {
+          to { stroke-dashoffset: 0; }
+        }
+      `}</style>
     </div>
   );
 }

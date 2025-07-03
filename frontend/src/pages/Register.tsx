@@ -13,7 +13,7 @@ export default function Register() {
   const [emailFocused, setEmailFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
   
-  // ✅ NEU: E-Mail-Verification States
+  // ✅ E-Mail-Verification States
   const [showEmailVerification, setShowEmailVerification] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
@@ -21,7 +21,7 @@ export default function Register() {
   const containerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
-  // ✅ NEU: E-Mail-Verification senden
+  // ✅ E-Mail-Verification senden
   const sendVerificationEmail = async (emailToVerify: string) => {
     try {
       const response = await fetch("/api/email-verification/send-verification", {
@@ -48,7 +48,7 @@ export default function Register() {
     }
   };
 
-  // ✅ NEU: Resend E-Mail mit Cooldown
+  // ✅ Resend E-Mail mit Cooldown
   const handleResendEmail = async () => {
     if (resendCooldown > 0 || resendLoading) return;
     
@@ -100,7 +100,7 @@ export default function Register() {
       const data = await res.json();
 
       if (res.ok) {
-        // ✅ NEU: Nach erfolgreichem Register → E-Mail-Verification senden
+        // ✅ Nach erfolgreichem Register → E-Mail-Verification senden
         console.log("✅ Registrierung erfolgreich, sende Verification-E-Mail...");
         
         const emailResult = await sendVerificationEmail(email);
@@ -111,8 +111,6 @@ export default function Register() {
             message: "Bitte überprüfen Sie Ihre E-Mail und bestätigen Sie Ihre Registrierung.", 
             type: "info" 
           });
-          
-          // ✅ KEIN automatischer Redirect mehr - User muss E-Mail bestätigen
         } else {
           // Fallback: Registrierung war erfolgreich, aber E-Mail konnte nicht gesendet werden
           setNotification({ 
@@ -188,7 +186,7 @@ export default function Register() {
           </svg>
         </div>
         
-        {/* ✅ NEU: Conditional Title basierend auf Verification-Status */}
+        {/* ✅ CONDITIONAL TITLE - ZENTRIERT */}
         <h1 className="apple-auth-title">
           {showEmailVerification ? "E-Mail bestätigen" : "Konto erstellen"}
         </h1>
@@ -199,7 +197,7 @@ export default function Register() {
           }
         </p>
         
-        {/* ✅ Bestehende Form - nur anzeigen wenn noch nicht verifiziert */}
+        {/* ✅ STANDARD REGISTER FORM - nur anzeigen wenn noch nicht verifiziert */}
         {!showEmailVerification && (
           <form onSubmit={handleRegister} className="apple-auth-form">
             <div className={`apple-input-group ${emailFocused || email ? 'focused' : ''}`}>
@@ -267,78 +265,73 @@ export default function Register() {
           </form>
         )}
 
-        {/* ✅ NEU: E-Mail-Verification Sektion - KRASS GEMACHT! */}
+        {/* ✅ E-MAIL VERIFICATION SEKTION - APPLE STYLE & ZENTRIERT */}
         {showEmailVerification && (
-          <div className="apple-email-verification modern">
-            {/* Animated Success Icon */}
-            <div className="verification-icon-container">
-              <div className="success-circle">
-                <div className="checkmark-animation">
-                  <svg width="80" height="80" viewBox="0 0 80 80">
-                    <circle className="checkmark-circle" cx="40" cy="40" r="35" fill="none" stroke="url(#gradient)" strokeWidth="3"/>
-                    <path className="checkmark-path" fill="none" stroke="#22c55e" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" d="M25 40l10 10 20-20"/>
-                    <defs>
-                      <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stopColor="#3b82f6" />
-                        <stop offset="100%" stopColor="#8b5cf6" />
-                      </linearGradient>
-                    </defs>
-                  </svg>
-                </div>
-              </div>
-            </div>
-
-            {/* Main Content */}
-            <div className="verification-content">
-              <h2 className="verification-title">
-                📧 Fast geschafft! 
-              </h2>
-              <p className="verification-subtitle">
-                Wir haben eine <strong>Bestätigungs-E-Mail</strong> an
-              </p>
-              <div className="email-badge">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <div className="email-verification-section">
+            {/* ✅ ANIMATED MAIL ICON - ZENTRIERT */}
+            <div className="verification-mail-icon">
+              <div className="mail-animation">
+                <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
                   <polyline points="22,6 12,13 2,6"/>
                 </svg>
-                {email}
+                <div className="mail-pulse"></div>
               </div>
-              
-              <div className="next-steps">
-                <div className="step">
+            </div>
+
+            {/* ✅ SUCCESS CHECK ICON - ZENTRIERT */}
+            <div className="verification-check-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" fill="#10b981"/>
+                <path d="M8 12l2 2 4-4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            
+            {/* ✅ EMAIL BADGE - ZENTRIERT */}
+            <div className="verified-email-badge">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                <polyline points="22,6 12,13 2,6"/>
+              </svg>
+              <span>{email}</span>
+            </div>
+            
+            {/* ✅ NEXT STEPS - APPLE STYLE & ZENTRIERT */}
+            <div className="verification-steps">
+              <div className="step-indicator">
+                <div className="step-item active">
                   <div className="step-number">1</div>
-                  <div className="step-text">E-Mail öffnen</div>
+                  <span>E-Mail öffnen</span>
                 </div>
-                <div className="step-arrow">→</div>
-                <div className="step">
+                <div className="step-line"></div>
+                <div className="step-item">
                   <div className="step-number">2</div>
-                  <div className="step-text">Button klicken</div>
+                  <span>Link klicken</span>
                 </div>
-                <div className="step-arrow">→</div>
-                <div className="step">
+                <div className="step-line"></div>
+                <div className="step-item">
                   <div className="step-number">3</div>
-                  <div className="step-text">Anmelden</div>
+                  <span>Anmelden</span>
                 </div>
               </div>
             </div>
             
+            {/* ✅ ACTION BUTTONS - APPLE STYLE & ZENTRIERT */}
             <div className="verification-actions">
               <button 
-                className={`apple-auth-button modern primary ${resendLoading ? 'loading' : ''}`}
+                className={`apple-auth-button primary ${resendLoading ? 'loading' : ''} ${resendCooldown > 0 ? 'disabled' : ''}`}
                 onClick={handleResendEmail}
                 disabled={resendLoading || resendCooldown > 0}
               >
                 {resendLoading ? (
-                  <div className="loading-dots">
-                    <span></span><span></span><span></span>
-                  </div>
+                  <span className="loading-spinner"></span>
                 ) : resendCooldown > 0 ? (
                   <>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <circle cx="12" cy="12" r="10"/>
                       <polyline points="12,6 12,12 16,14"/>
                     </svg>
-                    <span>Erneut senden in {resendCooldown}s</span>
+                    <span>Erneut senden ({resendCooldown}s)</span>
                   </>
                 ) : (
                   <>
@@ -351,7 +344,7 @@ export default function Register() {
               </button>
               
               <button 
-                className="apple-auth-button modern secondary"
+                className="apple-auth-button secondary"
                 onClick={() => navigate("/login")}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -363,15 +356,17 @@ export default function Register() {
               </button>
             </div>
 
-            {/* Fun Fact */}
+            {/* ✅ HELPFUL TIP - APPLE STYLE */}
             <div className="verification-tip">
               <div className="tip-icon">💡</div>
-              <p><strong>Tipp:</strong> Schauen Sie auch in Ihren Spam-Ordner, falls die E-Mail nicht ankommt!</p>
+              <p>
+                <strong>Tipp:</strong> Schauen Sie auch in Ihren Spam-Ordner, falls die E-Mail nicht in wenigen Minuten ankommt.
+              </p>
             </div>
           </div>
         )}
         
-        {/* ✅ Auth-Links - nur anzeigen wenn nicht in Verification-Mode */}
+        {/* ✅ AUTH LINKS - nur anzeigen wenn nicht in Verification-Mode */}
         {!showEmailVerification && (
           <div className="apple-auth-links">
             <p>

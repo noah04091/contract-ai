@@ -53,47 +53,115 @@ module.exports = function(db) {
       const frontendUrl = process.env.FRONTEND_URL || "https://contract-ai.de";
       const verificationLink = `${frontendUrl}/api/email-verification/verify?token=${verificationToken}`;
 
-      // E-Mail-Template generieren
+      // ✅ MODERNES E-MAIL-TEMPLATE mit neuem Logo
       const emailHtml = generateEmailTemplate({
         title: "Willkommen bei Contract AI! 🚀",
+        preheader: "Bestätigen Sie Ihre E-Mail-Adresse, um loszulegen",
         body: `
-          <div style="text-align: center; margin: 20px 0;">
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-                        border-radius: 50%; width: 80px; height: 80px; 
-                        margin: 0 auto 20px; display: flex; align-items: center; justify-content: center;">
-              <span style="font-size: 32px;">🎉</span>
+          <div style="text-align: center; margin: 30px 0;">
+            <div style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); 
+                        border-radius: 20px; width: 100px; height: 100px; 
+                        margin: 0 auto 30px; display: flex; align-items: center; justify-content: center;
+                        box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);">
+              <span style="font-size: 48px;">🎉</span>
             </div>
           </div>
           
-          <h2 style="color: #1e293b; margin: 20px 0; font-size: 24px; font-weight: 600;">
+          <h2 style="color: #1e293b; margin: 20px 0; font-size: 28px; font-weight: 700; text-align: center;">
             Fast geschafft! Nur noch ein Klick...
           </h2>
           
-          <p style="color: #475569; font-size: 16px; line-height: 1.6; margin: 16px 0;">
-            Schön, dass Sie sich für <strong>Contract AI</strong> entschieden haben! 
+          <p style="color: #475569; font-size: 18px; line-height: 1.7; margin: 20px 0; text-align: center;">
+            Schön, dass Sie sich für <strong style="color: #1e293b;">Contract AI</strong> entschieden haben! 
             Bestätigen Sie jetzt Ihre E-Mail-Adresse, um Ihr Konto zu aktivieren.
           </p>
           
-          <div style="background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); 
-                      border-radius: 12px; padding: 20px; margin: 24px 0;">
-            <h3 style="color: #334155; margin: 0 0 12px 0; font-size: 18px;">
+          <div style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); 
+                      border: 1px solid #e2e8f0; border-radius: 16px; padding: 30px; margin: 30px 0;">
+            <h3 style="color: #1e293b; margin: 0 0 20px 0; font-size: 20px; font-weight: 600; text-align: center;">
               🚀 Was Sie als nächstes erwartet:
             </h3>
-            <ul style="color: #475569; margin: 0; padding-left: 20px; line-height: 1.8;">
-              <li><strong>KI-Vertragsanalyse</strong> - Ihre Verträge automatisch analysieren lassen</li>
-              <li><strong>Laufzeit-Management</strong> - Nie wieder wichtige Fristen verpassen</li>
-              <li><strong>Optimierungsvorschläge</strong> - Verbesserungen durch künstliche Intelligenz</li>
-              <li><strong>Risiko-Scanner</strong> - Problematische Klauseln frühzeitig erkennen</li>
-            </ul>
+            
+            <div style="display: grid; gap: 15px; margin-top: 20px;">
+              <div style="display: flex; align-items: center; gap: 15px; padding: 15px; 
+                          background: white; border-radius: 12px; border: 1px solid #e5e7eb;">
+                <div style="background: linear-gradient(135deg, #10b981, #059669); 
+                           width: 40px; height: 40px; border-radius: 10px; 
+                           display: flex; align-items: center; justify-content: center;
+                           flex-shrink: 0;">
+                  <span style="font-size: 18px;">📄</span>
+                </div>
+                <div>
+                  <div style="color: #1e293b; font-weight: 600; margin-bottom: 2px;">KI-Vertragsanalyse</div>
+                  <div style="color: #6b7280; font-size: 14px;">Ihre Verträge automatisch analysieren lassen</div>
+                </div>
+              </div>
+              
+              <div style="display: flex; align-items: center; gap: 15px; padding: 15px; 
+                          background: white; border-radius: 12px; border: 1px solid #e5e7eb;">
+                <div style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); 
+                           width: 40px; height: 40px; border-radius: 10px; 
+                           display: flex; align-items: center; justify-content: center;
+                           flex-shrink: 0;">
+                  <span style="font-size: 18px;">⏰</span>
+                </div>
+                <div>
+                  <div style="color: #1e293b; font-weight: 600; margin-bottom: 2px;">Laufzeit-Management</div>
+                  <div style="color: #6b7280; font-size: 14px;">Nie wieder wichtige Fristen verpassen</div>
+                </div>
+              </div>
+              
+              <div style="display: flex; align-items: center; gap: 15px; padding: 15px; 
+                          background: white; border-radius: 12px; border: 1px solid #e5e7eb;">
+                <div style="background: linear-gradient(135deg, #f59e0b, #d97706); 
+                           width: 40px; height: 40px; border-radius: 10px; 
+                           display: flex; align-items: center; justify-content: center;
+                           flex-shrink: 0;">
+                  <span style="font-size: 18px;">💡</span>
+                </div>
+                <div>
+                  <div style="color: #1e293b; font-weight: 600; margin-bottom: 2px;">Optimierungsvorschläge</div>
+                  <div style="color: #6b7280; font-size: 14px;">Verbesserungen durch künstliche Intelligenz</div>
+                </div>
+              </div>
+              
+              <div style="display: flex; align-items: center; gap: 15px; padding: 15px; 
+                          background: white; border-radius: 12px; border: 1px solid #e5e7eb;">
+                <div style="background: linear-gradient(135deg, #ef4444, #dc2626); 
+                           width: 40px; height: 40px; border-radius: 10px; 
+                           display: flex; align-items: center; justify-content: center;
+                           flex-shrink: 0;">
+                  <span style="font-size: 18px;">🛡️</span>
+                </div>
+                <div>
+                  <div style="color: #1e293b; font-weight: 600; margin-bottom: 2px;">Risiko-Scanner</div>
+                  <div style="color: #6b7280; font-size: 14px;">Problematische Klauseln frühzeitig erkennen</div>
+                </div>
+              </div>
+            </div>
           </div>
           
-          <p style="color: #64748b; font-size: 14px; margin: 24px 0 8px;">
-            <strong>⏰ Dieser Link ist 24 Stunden gültig.</strong><br>
+          <div style="text-align: center; margin: 30px 0;">
+            <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); 
+                        border: 1px solid #f59e0b; border-radius: 12px; padding: 20px;
+                        display: inline-block; margin: 0 auto;">
+              <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                <span style="font-size: 24px;">⏰</span>
+                <div style="text-align: left;">
+                  <div style="color: #92400e; font-weight: 700; font-size: 16px;">Dieser Link ist 24 Stunden gültig</div>
+                  <div style="color: #b45309; font-size: 14px;">Jetzt bestätigen und loslegen!</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <p style="color: #64748b; font-size: 14px; margin: 30px 0; text-align: center; line-height: 1.6;">
             Falls Sie diese E-Mail nicht angefordert haben, können Sie sie einfach ignorieren.
+            Ihr Konto wird ohne Bestätigung nicht aktiviert.
           </p>
         `,
         cta: {
-          text: "🔥 E-Mail-Adresse bestätigen",
+          text: "🚀 E-Mail-Adresse jetzt bestätigen",
           url: verificationLink
         }
       });
@@ -153,74 +221,118 @@ module.exports = function(db) {
 
       console.log(`✅ User verifiziert: ${user.email}`);
 
-      // Willkommens-E-Mail senden (optional)
+      // ✅ WILLKOMMENS-E-MAIL senden (optional)
       try {
         const welcomeEmailHtml = generateEmailTemplate({
           title: "🎉 Herzlich Willkommen bei Contract AI!",
+          preheader: "Ihr Konto ist jetzt aktiviert - lassen Sie uns loslegen!",
           body: `
-            <div style="text-align: center; margin: 20px 0;">
-              <div style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); 
-                          border-radius: 50%; width: 80px; height: 80px; 
-                          margin: 0 auto 20px; display: flex; align-items: center; justify-content: center;">
-                <span style="font-size: 32px;">✅</span>
+            <div style="text-align: center; margin: 30px 0;">
+              <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); 
+                          border-radius: 20px; width: 100px; height: 100px; 
+                          margin: 0 auto 30px; display: flex; align-items: center; justify-content: center;
+                          box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);">
+                <span style="font-size: 48px;">✅</span>
               </div>
             </div>
             
-            <h2 style="color: #1e293b; margin: 20px 0; font-size: 24px; font-weight: 600;">
+            <h2 style="color: #1e293b; margin: 20px 0; font-size: 28px; font-weight: 700; text-align: center;">
               Perfekt! Ihr Konto ist jetzt aktiviert 🚀
             </h2>
             
-            <p style="color: #475569; font-size: 16px; line-height: 1.6; margin: 16px 0;">
-              <strong>Glückwunsch!</strong> Ihre E-Mail-Adresse wurde erfolgreich bestätigt. 
+            <p style="color: #475569; font-size: 18px; line-height: 1.7; margin: 20px 0; text-align: center;">
+              <strong style="color: #1e293b;">Glückwunsch!</strong> Ihre E-Mail-Adresse wurde erfolgreich bestätigt. 
               Sie können jetzt die volle Power von Contract AI nutzen!
             </p>
             
             <div style="background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%); 
-                        border: 1px solid #bbf7d0; border-radius: 12px; padding: 24px; margin: 24px 0;">
-              <h3 style="color: #166534; margin: 0 0 16px 0; font-size: 18px;">
+                        border: 1px solid #10b981; border-radius: 16px; padding: 30px; margin: 30px 0;">
+              <h3 style="color: #065f46; margin: 0 0 25px 0; font-size: 20px; font-weight: 600; text-align: center;">
                 🎯 Ihre nächsten Schritte:
               </h3>
-              <div style="display: grid; gap: 12px;">
-                <div style="display: flex; align-items: center; gap: 12px;">
-                  <span style="background: #22c55e; color: white; border-radius: 50%; 
-                              width: 24px; height: 24px; display: flex; align-items: center; 
-                              justify-content: center; font-size: 12px; font-weight: bold;">1</span>
-                  <span style="color: #166534; font-weight: 500;">Ersten Vertrag hochladen</span>
+              
+              <div style="display: grid; gap: 15px;">
+                <div style="display: flex; align-items: center; gap: 15px; padding: 20px; 
+                            background: white; border-radius: 12px; border: 1px solid #a7f3d0;
+                            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.1);">
+                  <div style="background: #10b981; color: white; 
+                             width: 40px; height: 40px; border-radius: 50%; 
+                             display: flex; align-items: center; justify-content: center; 
+                             font-size: 18px; font-weight: bold; flex-shrink: 0;">1</div>
+                  <div>
+                    <div style="color: #065f46; font-weight: 600; font-size: 16px; margin-bottom: 4px;">
+                      Ersten Vertrag hochladen
+                    </div>
+                    <div style="color: #047857; font-size: 14px;">
+                      PDF einfach per Drag & Drop in Contract AI ziehen
+                    </div>
+                  </div>
                 </div>
-                <div style="display: flex; align-items: center; gap: 12px;">
-                  <span style="background: #22c55e; color: white; border-radius: 50%; 
-                              width: 24px; height: 24px; display: flex; align-items: center; 
-                              justify-content: center; font-size: 12px; font-weight: bold;">2</span>
-                  <span style="color: #166534; font-weight: 500;">KI-Analyse starten</span>
+                
+                <div style="display: flex; align-items: center; gap: 15px; padding: 20px; 
+                            background: white; border-radius: 12px; border: 1px solid #a7f3d0;
+                            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.1);">
+                  <div style="background: #10b981; color: white; 
+                             width: 40px; height: 40px; border-radius: 50%; 
+                             display: flex; align-items: center; justify-content: center; 
+                             font-size: 18px; font-weight: bold; flex-shrink: 0;">2</div>
+                  <div>
+                    <div style="color: #065f46; font-weight: 600; font-size: 16px; margin-bottom: 4px;">
+                      KI-Analyse starten
+                    </div>
+                    <div style="color: #047857; font-size: 14px;">
+                      Lassen Sie unsere KI Ihren Vertrag analysieren
+                    </div>
+                  </div>
                 </div>
-                <div style="display: flex; align-items: center; gap: 12px;">
-                  <span style="background: #22c55e; color: white; border-radius: 50%; 
-                              width: 24px; height: 24px; display: flex; align-items: center; 
-                              justify-content: center; font-size: 12px; font-weight: bold;">3</span>
-                  <span style="color: #166534; font-weight: 500;">Optimierungsvorschläge erhalten</span>
+                
+                <div style="display: flex; align-items: center; gap: 15px; padding: 20px; 
+                            background: white; border-radius: 12px; border: 1px solid #a7f3d0;
+                            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.1);">
+                  <div style="background: #10b981; color: white; 
+                             width: 40px; height: 40px; border-radius: 50%; 
+                             display: flex; align-items: center; justify-content: center; 
+                             font-size: 18px; font-weight: bold; flex-shrink: 0;">3</div>
+                  <div>
+                    <div style="color: #065f46; font-weight: 600; font-size: 16px; margin-bottom: 4px;">
+                      Optimierungsvorschläge erhalten
+                    </div>
+                    <div style="color: #047857; font-size: 14px;">
+                      Konkrete Verbesserungen für Ihre Verträge
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
             
-            <p style="color: #475569; font-size: 16px; line-height: 1.6; margin: 24px 0;">
-              <strong>💡 Tipp:</strong> Probieren Sie unsere KI-Vertragsoptimierung aus – 
-              sie findet Verbesserungspotenziale, die Sie überraschen werden!
-            </p>
+            <div style="text-align: center; margin: 30px 0;">
+              <div style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); 
+                          border: 1px solid #3b82f6; border-radius: 12px; padding: 20px;
+                          display: inline-block;">
+                <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                  <span style="font-size: 24px;">💡</span>
+                  <div style="text-align: left;">
+                    <div style="color: #1e40af; font-weight: 600; font-size: 16px;">Profi-Tipp:</div>
+                    <div style="color: #1d4ed8; font-size: 14px;">Probieren Sie unsere KI-Vertragsoptimierung aus!</div>
+                  </div>
+                </div>
+              </div>
+            </div>
             
-            <p style="color: #64748b; font-size: 14px; margin: 20px 0;">
+            <p style="color: #64748b; font-size: 14px; margin: 20px 0; text-align: center; line-height: 1.6;">
               Bei Fragen sind wir jederzeit für Sie da: 
-              <a href="mailto:support@contract-ai.de" style="color: #3b82f6; text-decoration: none;">
+              <a href="mailto:support@contract-ai.de" style="color: #3b82f6; text-decoration: none; font-weight: 600;">
                 support@contract-ai.de
               </a>
             </p>
           `,
           cta: {
-            text: "🚀 Jetzt loslegen",
-            url: `${process.env.FRONTEND_URL}/dashboard`
+            text: "🚀 Jetzt zum Dashboard",
+            url: `${process.env.FRONTEND_URL || "https://contract-ai.de"}/dashboard`
           }
         });
 
-        await sendEmailHtml(user.email, "Contract AI - Willkommen!", welcomeEmailHtml);
+        await sendEmailHtml(user.email, "Contract AI - Willkommen im Team! 🎉", welcomeEmailHtml);
       } catch (emailError) {
         console.log("⚠️ Willkommens-E-Mail konnte nicht gesendet werden:", emailError.message);
         // Nicht kritisch - Verification war erfolgreich
