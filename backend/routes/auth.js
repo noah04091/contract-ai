@@ -14,13 +14,16 @@ const JWT_EXPIRES_IN = "2h";
 const PASSWORD_SALT_ROUNDS = 10;
 const RESET_TOKEN_EXPIRES_IN_MS = 1000 * 60 * 15;
 const COOKIE_NAME = "token";
+
+// ✅ FIXED: Cookie-Einstellungen gelockert für bessere Kompatibilität
 const COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: true,
-  sameSite: "None",
+  secure: process.env.NODE_ENV === 'production', // ✅ Nur HTTPS in Production
+  sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax', // ✅ Weniger strikt in Development
   path: "/",
   maxAge: 1000 * 60 * 60 * 2,
-  domain: ".contract-ai.de",
+  // ✅ Domain nur in Production setzen
+  ...(process.env.NODE_ENV === 'production' && { domain: ".contract-ai.de" })
 };
 
 // 🔗 Collections werden dynamisch übergeben
@@ -81,7 +84,7 @@ router.post("/register", async (req, res) => {
   }
 });
 
-// ✅ Login
+// ✅ Login - ERWEITERT mit Cookie-Debug
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
   if (!email || !password)
@@ -100,7 +103,10 @@ router.post("/login", async (req, res) => {
       { expiresIn: JWT_EXPIRES_IN }
     );
 
+    // ✅ COOKIE-DEBUG: Log Cookie-Einstellungen
+    console.log("🍪 Setting Cookie with options:", COOKIE_OPTIONS);
     res.cookie(COOKIE_NAME, token, COOKIE_OPTIONS);
+    
     res.json({
       message: "✅ Login erfolgreich",
       isPremium: user.isPremium || false,
