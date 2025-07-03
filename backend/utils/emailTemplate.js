@@ -34,34 +34,35 @@ function generateEmailTemplate({
     }
   }
 
-  // ✅ AUFFÄLLIGER CTA-BUTTON - NICHT WEIß SONDERN BLAU!
+  // ✅ AUFFÄLLIGER CTA-BUTTON - DUNKLER TEXT & WEITER OBEN!
   const ctaHtml = cta ? `
-    <table border="0" cellpadding="0" cellspacing="0" style="margin: 50px auto; text-align: center;">
+    <table border="0" cellpadding="0" cellspacing="0" style="margin: 30px auto 20px auto; text-align: center;">
       <tr>
         <td align="center">
-          <!-- ✅ HAUPTBUTTON - GROß & AUFFÄLLIG -->
+          <!-- ✅ HAUPTBUTTON - GROß & LESBAR -->
           <table border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
             <tr>
               <td align="center" 
-                  style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); 
+                  style="background: #ffffff; 
                          border-radius: 16px; 
                          box-shadow: 0 12px 30px rgba(59, 130, 246, 0.4);
-                         border: 2px solid #1d4ed8;">
+                         border: 3px solid #1d4ed8;">
                 <a href="${cta.url}" target="_blank" 
                    style="display: inline-block; 
                           padding: 20px 50px; 
                           font-size: 20px; 
                           font-weight: 700; 
-                          color: white !important; 
+                          color: #1d4ed8 !important; 
                           text-decoration: none; 
                           border-radius: 16px; 
-                          background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+                          background: #ffffff;
                           text-align: center; 
                           min-width: 300px;
                           transition: all 0.3s ease;
                           font-family: 'Inter', sans-serif;
                           text-transform: uppercase;
-                          letter-spacing: 1px;">
+                          letter-spacing: 1px;
+                          border: 3px solid #1d4ed8;">
                   ${cta.text}
                 </a>
               </td>
@@ -70,11 +71,11 @@ function generateEmailTemplate({
           
           <!-- ✅ ZUSÄTZLICHER HINWEIS -->
           <div style="margin-top: 20px; padding: 15px; 
-                      background: rgba(59, 130, 246, 0.1); 
-                      border: 2px solid #3b82f6;
+                      background: rgba(29, 78, 216, 0.1); 
+                      border: 2px solid #1d4ed8;
                       border-radius: 12px; 
                       display: inline-block;">
-            <p style="color: #1e40af; font-weight: 600; margin: 0; font-size: 16px;">
+            <p style="color: #1d4ed8; font-weight: 600; margin: 0; font-size: 16px;">
               👆 Klicken Sie hier, um Ihr Konto zu aktivieren
             </p>
           </div>

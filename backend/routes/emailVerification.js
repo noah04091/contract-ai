@@ -76,6 +76,13 @@ module.exports = function(db) {
             Bestätigen Sie jetzt Ihre E-Mail-Adresse, um Ihr Konto zu aktivieren.
           </p>
           
+          <!-- ✅ BUTTON DIREKT NACH WILLKOMMENS-TEXT - WEITER OBEN! -->
+          <div style="text-align: center; margin: 40px 0;">
+            <p style="color: #1e293b; font-size: 18px; font-weight: 600; margin-bottom: 20px;">
+              🎯 Jetzt bestätigen und durchstarten!
+            </p>
+          </div>
+          
           <div style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); 
                       border: 1px solid #e2e8f0; border-radius: 16px; padding: 30px; margin: 30px 0;">
             <h3 style="color: #1e293b; margin: 0 0 20px 0; font-size: 20px; font-weight: 600; text-align: center;">
@@ -244,6 +251,13 @@ module.exports = function(db) {
               <strong style="color: #1e293b;">Glückwunsch!</strong> Ihre E-Mail-Adresse wurde erfolgreich bestätigt. 
               Sie können jetzt die volle Power von Contract AI nutzen!
             </p>
+            
+            <!-- ✅ BUTTON DIREKT NACH WILLKOMMENS-TEXT - WEITER OBEN! -->
+            <div style="text-align: center; margin: 40px 0;">
+              <p style="color: #1e293b; font-size: 18px; font-weight: 600; margin-bottom: 20px;">
+                🎯 Bereit loszulegen? Jetzt zum Dashboard!
+              </p>
+            </div>
             
             <div style="background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%); 
                         border: 1px solid #10b981; border-radius: 16px; padding: 30px; margin: 30px 0;">
