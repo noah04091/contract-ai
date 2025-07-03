@@ -1,4 +1,6 @@
-// 📁 src/context/AuthContext.tsx - SIMPLIFIED: Cleaner solution
+// 📁 frontend/src/context/AuthContext.tsx
+// ✅ VERBESSERTES DEBUGGING - Warum wird User-State nicht gesetzt?
+
 import { createContext, useState, useEffect, useContext } from "react";
 import { fetchUserData } from "../utils/fetchUserData";
 import type { UserData } from "../utils/authUtils";
@@ -22,17 +24,34 @@ export const useAuth = () => {
   return context;
 };
 
-// ✅ AuthProvider component - only component export
+// ✅ AuthProvider component - mit DEBUGGING
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // ✅ DEBUGGING: User-State-Änderungen loggen
+  useEffect(() => {
+    console.log("🔄 AuthContext User-State geändert:", user ? `${user.email} (${user.subscriptionPlan})` : "null");
+  }, [user]);
+
   const refetchUser = async () => {
+    console.log("🔄 refetchUser aufgerufen...");
     try {
       setIsLoading(true);
       const userData = await fetchUserData();
+      
+      console.log("✅ fetchUserData erfolgreich in refetchUser:", userData);
+      console.log("🔄 Setze User-State in refetchUser...");
+      
       setUser(userData);
-    } catch {
+      
+      // ✅ DEBUGGING: Prüfen ob setUser funktioniert hat
+      setTimeout(() => {
+        console.log("🔍 User-State nach setUser in refetchUser:", userData.email);
+      }, 100);
+      
+    } catch (error) {
+      console.error("❌ refetchUser Fehler:", error);
       setUser(null);
     } finally {
       setIsLoading(false);
@@ -41,27 +60,53 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     const loadUser = async () => {
+      console.log("🚀 AuthProvider: Lade User beim Start...");
       try {
+        setIsLoading(true);
         const userData = await fetchUserData();
+        
+        console.log("✅ Initial fetchUserData erfolgreich:", userData);
+        console.log("🔄 Setze initialen User-State...");
+        
         setUser(userData);
-      } catch {
+        
+        // ✅ DEBUGGING: Prüfen ob setUser funktioniert hat
+        setTimeout(() => {
+          console.log("🔍 Initial User-State nach setUser:", userData.email);
+        }, 100);
+        
+      } catch (error) {
+        console.error("❌ Initial loadUser Fehler:", error);
         setUser(null);
       } finally {
         setIsLoading(false);
+        console.log("✅ AuthProvider: Loading abgeschlossen");
       }
     };
 
     loadUser();
   }, []); // Läuft nur einmal beim Mount
 
+  // ✅ DEBUGGING: Context-Value loggen
+  const contextValue = { user, setUser, isLoading, refetchUser };
+  
+  useEffect(() => {
+    console.log("🔄 AuthContext contextValue:", {
+      hasUser: !!user,
+      userEmail: user?.email,
+      isLoading,
+      userPlan: user?.subscriptionPlan
+    });
+  }, [user, isLoading]);
+
   return (
-    <AuthContext.Provider value={{ user, setUser, isLoading, refetchUser }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-// ✅ Fast Refresh Fix - Dummy-Komponente (für React Fast Refresh)
+// ✅ Fast Refresh Fix - Dummy-Komponente
 export default function AuthContextDummy() { 
   return null; 
 }
