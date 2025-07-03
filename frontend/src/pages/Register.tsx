@@ -8,13 +8,80 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [notification, setNotification] = useState<{
     message: string;
-    type?: "success" | "error";
+    type?: "success" | "error" | "info";
   } | null>(null);
   const [emailFocused, setEmailFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
   
+  // ✅ NEU: E-Mail-Verification States
+  const [showEmailVerification, setShowEmailVerification] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  
+  const containerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+
+  // ✅ NEU: E-Mail-Verification senden
+  const sendVerificationEmail = async (emailToVerify: string) => {
+    try {
+      const response = await fetch("/api/email-verification/send-verification", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ email: emailToVerify }),
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        console.log("✅ Verification-E-Mail gesendet:", data);
+        return { success: true, message: data.message };
+      } else {
+        console.error("❌ Fehler beim E-Mail-Versand:", data);
+        return { success: false, message: data.message || "Fehler beim Senden der E-Mail" };
+      }
+    } catch (error) {
+      console.error("❌ Network error beim E-Mail-Versand:", error);
+      return { success: false, message: "Verbindung fehlgeschlagen" };
+    }
+  };
+
+  // ✅ NEU: Resend E-Mail mit Cooldown
+  const handleResendEmail = async () => {
+    if (resendCooldown > 0 || resendLoading) return;
+    
+    setResendLoading(true);
+    
+    const result = await sendVerificationEmail(email);
+    
+    if (result.success) {
+      setNotification({ 
+        message: "Bestätigungs-E-Mail wurde erneut gesendet", 
+        type: "success" 
+      });
+      
+      // 60 Sekunden Cooldown
+      setResendCooldown(60);
+      const countdown = setInterval(() => {
+        setResendCooldown((prev) => {
+          if (prev <= 1) {
+            clearInterval(countdown);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } else {
+      setNotification({ 
+        message: result.message, 
+        type: "error" 
+      });
+    }
+    
+    setResendLoading(false);
+  };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,8 +100,27 @@ export default function Register() {
       const data = await res.json();
 
       if (res.ok) {
-        setNotification({ message: "Registrierung erfolgreich", type: "success" });
-        setTimeout(() => navigate("/login"), 1500);
+        // ✅ NEU: Nach erfolgreichem Register → E-Mail-Verification senden
+        console.log("✅ Registrierung erfolgreich, sende Verification-E-Mail...");
+        
+        const emailResult = await sendVerificationEmail(email);
+        
+        if (emailResult.success) {
+          setShowEmailVerification(true);
+          setNotification({ 
+            message: "Bitte überprüfen Sie Ihre E-Mail und bestätigen Sie Ihre Registrierung.", 
+            type: "info" 
+          });
+          
+          // ✅ KEIN automatischer Redirect mehr - User muss E-Mail bestätigen
+        } else {
+          // Fallback: Registrierung war erfolgreich, aber E-Mail konnte nicht gesendet werden
+          setNotification({ 
+            message: "Registrierung erfolgreich, aber E-Mail konnte nicht gesendet werden. Versuchen Sie es erneut.", 
+            type: "error" 
+          });
+          setShowEmailVerification(true); // Zeige Resend-Option
+        }
       } else {
         setNotification({ message: data.message, type: "error" });
       }
@@ -102,82 +188,140 @@ export default function Register() {
           </svg>
         </div>
         
-        <h1 className="apple-auth-title">Konto erstellen</h1>
-        <p className="apple-auth-subtitle">Erstellen Sie ein Konto, um Contract AI nutzen zu können</p>
+        {/* ✅ NEU: Conditional Title basierend auf Verification-Status */}
+        <h1 className="apple-auth-title">
+          {showEmailVerification ? "E-Mail bestätigen" : "Konto erstellen"}
+        </h1>
+        <p className="apple-auth-subtitle">
+          {showEmailVerification 
+            ? `Wir haben eine Bestätigungs-E-Mail an ${email} gesendet. Klicken Sie auf den Link in der E-Mail, um Ihr Konto zu aktivieren.`
+            : "Erstellen Sie ein Konto, um Contract AI nutzen zu können"
+          }
+        </p>
         
-        <form onSubmit={handleRegister} className="apple-auth-form">
-          <div className={`apple-input-group ${emailFocused || email ? 'focused' : ''}`}>
-            <label htmlFor="email">E-Mail</label>
-            <div className="apple-input-container">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="2" y="4" width="20" height="16" rx="2"></rect>
-                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+        {/* ✅ Bestehende Form - nur anzeigen wenn noch nicht verifiziert */}
+        {!showEmailVerification && (
+          <form onSubmit={handleRegister} className="apple-auth-form">
+            <div className={`apple-input-group ${emailFocused || email ? 'focused' : ''}`}>
+              <label htmlFor="email">E-Mail</label>
+              <div className="apple-input-container">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                  <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+                </svg>
+                <input 
+                  type="email" 
+                  id="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  onFocus={() => setEmailFocused(true)}
+                  onBlur={() => setEmailFocused(false)}
+                  required
+                  autoComplete="email"
+                />
+              </div>
+            </div>
+            
+            <div className={`apple-input-group ${passwordFocused || password ? 'focused' : ''}`}>
+              <label htmlFor="password">Passwort</label>
+              <div className="apple-input-container">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+                <input 
+                  type="password" 
+                  id="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onFocus={() => setPasswordFocused(true)}
+                  onBlur={() => setPasswordFocused(false)}
+                  required
+                  autoComplete="new-password"
+                />
+              </div>
+              <div className="password-hint">
+                Mindestens 8 Zeichen empfohlen
+              </div>
+            </div>
+            
+            <div className="apple-terms">
+              <p>
+                Mit der Registrierung stimmen Sie unseren <a href="/terms" className="apple-link">Nutzungsbedingungen</a> und <a href="/privacy" className="apple-link">Datenschutzrichtlinien</a> zu.
+              </p>
+            </div>
+            
+            <button type="submit" className={`apple-auth-button ${loading ? 'loading' : ''}`} disabled={loading}>
+              {loading ? (
+                <span className="loading-spinner"></span>
+              ) : (
+                <>
+                  <span className="button-text">Konto erstellen</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 12h14"></path>
+                    <path d="m12 5 7 7-7 7"></path>
+                  </svg>
+                </>
+              )}
+            </button>
+          </form>
+        )}
+
+        {/* ✅ NEU: E-Mail-Verification Sektion */}
+        {showEmailVerification && (
+          <div className="apple-email-verification">
+            <div className="verification-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                <polyline points="22,6 12,13 2,6"></polyline>
               </svg>
-              <input 
-                type="email" 
-                id="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                onFocus={() => setEmailFocused(true)}
-                onBlur={() => setEmailFocused(false)}
-                required
-                autoComplete="email"
-              />
             </div>
-          </div>
-          
-          <div className={`apple-input-group ${passwordFocused || password ? 'focused' : ''}`}>
-            <label htmlFor="password">Passwort</label>
-            <div className="apple-input-container">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-              </svg>
-              <input 
-                type="password" 
-                id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onFocus={() => setPasswordFocused(true)}
-                onBlur={() => setPasswordFocused(false)}
-                required
-                autoComplete="new-password"
-              />
-            </div>
-            <div className="password-hint">
-              Mindestens 8 Zeichen empfohlen
-            </div>
-          </div>
-          
-          <div className="apple-terms">
-            <p>
-              Mit der Registrierung stimmen Sie unseren <a href="/terms" className="apple-link">Nutzungsbedingungen</a> und <a href="/privacy" className="apple-link">Datenschutzrichtlinien</a> zu.
-            </p>
-          </div>
-          
-          <button type="submit" className={`apple-auth-button ${loading ? 'loading' : ''}`} disabled={loading}>
-            {loading ? (
-              <span className="loading-spinner"></span>
-            ) : (
-              <>
-                <span className="button-text">Konto erstellen</span>
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            
+            <div className="verification-actions">
+              <button 
+                className={`apple-auth-button secondary ${resendLoading ? 'loading' : ''}`}
+                onClick={handleResendEmail}
+                disabled={resendLoading || resendCooldown > 0}
+              >
+                {resendLoading ? (
+                  <span className="loading-spinner"></span>
+                ) : resendCooldown > 0 ? (
+                  <span>E-Mail erneut senden ({resendCooldown}s)</span>
+                ) : (
+                  <>
+                    <span>Bestätigungs-E-Mail erneut senden</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
+                    </svg>
+                  </>
+                )}
+              </button>
+              
+              <button 
+                className="apple-auth-button outline"
+                onClick={() => navigate("/login")}
+              >
+                <span>Zur Anmeldung</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M5 12h14"></path>
                   <path d="m12 5 7 7-7 7"></path>
                 </svg>
-              </>
-            )}
-          </button>
-        </form>
+              </button>
+            </div>
+          </div>
+        )}
         
-        <div className="apple-auth-links">
-          <p>
-            Bereits ein Konto? 
-            <span className="apple-link" onClick={() => navigate("/login")}>
-              Anmelden
-            </span>
-          </p>
-        </div>
+        {/* ✅ Auth-Links - nur anzeigen wenn nicht in Verification-Mode */}
+        {!showEmailVerification && (
+          <div className="apple-auth-links">
+            <p>
+              Bereits ein Konto? 
+              <span className="apple-link" onClick={() => navigate("/login")}>
+                Anmelden
+              </span>
+            </p>
+          </div>
+        )}
       </div>
       
       {notification && (
@@ -188,6 +332,12 @@ export default function Register() {
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                   <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                </svg>
+              ) : notification.type === "info" ? (
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <path d="M12 16v-4"></path>
+                  <path d="M12 8h.01"></path>
                 </svg>
               ) : (
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
