@@ -34,19 +34,50 @@ function generateEmailTemplate({
     }
   }
 
-  // ✅ MODERNER CTA-BUTTON mit Gradient
+  // ✅ AUFFÄLLIGER CTA-BUTTON - NICHT WEIß SONDERN BLAU!
   const ctaHtml = cta ? `
-    <table border="0" cellpadding="0" cellspacing="0" style="margin: 40px auto; text-align: center;">
+    <table border="0" cellpadding="0" cellspacing="0" style="margin: 50px auto; text-align: center;">
       <tr>
-        <td align="center" style="border-radius: 12px; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); 
-                                   box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);">
-          <a href="${cta.url}" target="_blank" 
-             style="display: inline-block; padding: 18px 36px; font-size: 18px; font-weight: 600; 
-                    color: white; text-decoration: none; border-radius: 12px; 
-                    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-                    transition: all 0.3s ease; text-align: center; min-width: 200px;">
-            ${cta.text}
-          </a>
+        <td align="center">
+          <!-- ✅ HAUPTBUTTON - GROß & AUFFÄLLIG -->
+          <table border="0" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
+            <tr>
+              <td align="center" 
+                  style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); 
+                         border-radius: 16px; 
+                         box-shadow: 0 12px 30px rgba(59, 130, 246, 0.4);
+                         border: 2px solid #1d4ed8;">
+                <a href="${cta.url}" target="_blank" 
+                   style="display: inline-block; 
+                          padding: 20px 50px; 
+                          font-size: 20px; 
+                          font-weight: 700; 
+                          color: white !important; 
+                          text-decoration: none; 
+                          border-radius: 16px; 
+                          background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+                          text-align: center; 
+                          min-width: 300px;
+                          transition: all 0.3s ease;
+                          font-family: 'Inter', sans-serif;
+                          text-transform: uppercase;
+                          letter-spacing: 1px;">
+                  ${cta.text}
+                </a>
+              </td>
+            </tr>
+          </table>
+          
+          <!-- ✅ ZUSÄTZLICHER HINWEIS -->
+          <div style="margin-top: 20px; padding: 15px; 
+                      background: rgba(59, 130, 246, 0.1); 
+                      border: 2px solid #3b82f6;
+                      border-radius: 12px; 
+                      display: inline-block;">
+            <p style="color: #1e40af; font-weight: 600; margin: 0; font-size: 16px;">
+              👆 Klicken Sie hier, um Ihr Konto zu aktivieren
+            </p>
+          </div>
         </td>
       </tr>
     </table>

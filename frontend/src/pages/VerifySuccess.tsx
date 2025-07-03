@@ -217,11 +217,23 @@ export default function VerifySuccess() {
           </div>
         </div>
         
-        {/* ✅ ACTION BUTTONS - APPLE STYLE & ZENTRIERT */}
-        <div className="success-actions">
+        {/* ✅ ACTION BUTTONS - ZENTRIERT */}
+        <div className="success-actions" style={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center',
+          margin: '30px 0'
+        }}>
           <button 
             onClick={() => navigate("/login")}
             className="apple-auth-button primary success-primary"
+            style={{ 
+              width: '100%', 
+              maxWidth: '350px',
+              padding: '16px 32px',
+              fontSize: '18px',
+              fontWeight: '600'
+            }}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>

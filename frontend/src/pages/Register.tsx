@@ -265,13 +265,13 @@ export default function Register() {
           </form>
         )}
 
-        {/* ✅ E-MAIL VERIFICATION SEKTION - APPLE STYLE & ZENTRIERT */}
+        {/* ✅ E-MAIL VERIFICATION SEKTION - SCHWARZE SCHRIFT & ZENTRIERT */}
         {showEmailVerification && (
-          <div className="email-verification-section">
+          <div className="email-verification-section" style={{ textAlign: 'center', color: '#1f2937' }}>
             {/* ✅ ANIMATED MAIL ICON - ZENTRIERT */}
-            <div className="verification-mail-icon">
+            <div className="verification-mail-icon" style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
               <div className="mail-animation">
-                <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="1.5">
                   <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
                   <polyline points="22,6 12,13 2,6"/>
                 </svg>
@@ -280,48 +280,119 @@ export default function Register() {
             </div>
 
             {/* ✅ SUCCESS CHECK ICON - ZENTRIERT */}
-            <div className="verification-check-icon">
+            <div className="verification-check-icon" style={{ display: 'flex', justifyContent: 'center', marginBottom: '15px' }}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                 <circle cx="12" cy="12" r="10" fill="#10b981"/>
                 <path d="M8 12l2 2 4-4" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </div>
             
-            {/* ✅ EMAIL BADGE - ZENTRIERT */}
-            <div className="verified-email-badge">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            {/* ✅ EMAIL BADGE - ZENTRIERT & SCHWARZE SCHRIFT */}
+            <div className="verified-email-badge" style={{ 
+              display: 'inline-flex', 
+              alignItems: 'center', 
+              gap: '8px',
+              background: 'linear-gradient(135deg, #ecfdf5, #f0fdf4)',
+              border: '1px solid #10b981',
+              padding: '12px 20px',
+              borderRadius: '50px',
+              margin: '20px 0',
+              color: '#065f46',
+              fontWeight: '600'
+            }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2">
                 <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
                 <polyline points="22,6 12,13 2,6"/>
               </svg>
-              <span>{email}</span>
+              <span style={{ color: '#065f46' }}>{email}</span>
             </div>
             
-            {/* ✅ NEXT STEPS - APPLE STYLE & ZENTRIERT */}
-            <div className="verification-steps">
-              <div className="step-indicator">
-                <div className="step-item active">
-                  <div className="step-number">1</div>
-                  <span>E-Mail öffnen</span>
+            {/* ✅ NEXT STEPS - ZENTRIERT & SCHWARZE SCHRIFT */}
+            <div className="verification-steps" style={{ margin: '30px 0', display: 'flex', justifyContent: 'center' }}>
+              <div className="step-indicator" style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '15px',
+                color: '#1f2937'
+              }}>
+                <div className="step-item active" style={{ 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  alignItems: 'center', 
+                  gap: '8px' 
+                }}>
+                  <div className="step-number" style={{ 
+                    background: '#10b981', 
+                    color: 'white', 
+                    width: '30px', 
+                    height: '30px', 
+                    borderRadius: '50%', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    fontSize: '14px',
+                    fontWeight: 'bold'
+                  }}>1</div>
+                  <span style={{ color: '#1f2937', fontSize: '14px', fontWeight: '500' }}>E-Mail öffnen</span>
                 </div>
-                <div className="step-line"></div>
-                <div className="step-item">
-                  <div className="step-number">2</div>
-                  <span>Link klicken</span>
+                <div className="step-line" style={{ width: '30px', height: '2px', background: '#e5e7eb' }}></div>
+                <div className="step-item" style={{ 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  alignItems: 'center', 
+                  gap: '8px' 
+                }}>
+                  <div className="step-number" style={{ 
+                    background: '#e5e7eb', 
+                    color: '#6b7280', 
+                    width: '30px', 
+                    height: '30px', 
+                    borderRadius: '50%', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    fontSize: '14px',
+                    fontWeight: 'bold'
+                  }}>2</div>
+                  <span style={{ color: '#1f2937', fontSize: '14px', fontWeight: '500' }}>Link klicken</span>
                 </div>
-                <div className="step-line"></div>
-                <div className="step-item">
-                  <div className="step-number">3</div>
-                  <span>Anmelden</span>
+                <div className="step-line" style={{ width: '30px', height: '2px', background: '#e5e7eb' }}></div>
+                <div className="step-item" style={{ 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  alignItems: 'center', 
+                  gap: '8px' 
+                }}>
+                  <div className="step-number" style={{ 
+                    background: '#e5e7eb', 
+                    color: '#6b7280', 
+                    width: '30px', 
+                    height: '30px', 
+                    borderRadius: '50%', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    fontSize: '14px',
+                    fontWeight: 'bold'
+                  }}>3</div>
+                  <span style={{ color: '#1f2937', fontSize: '14px', fontWeight: '500' }}>Anmelden</span>
                 </div>
               </div>
             </div>
             
-            {/* ✅ ACTION BUTTONS - APPLE STYLE & ZENTRIERT */}
-            <div className="verification-actions">
+            {/* ✅ ACTION BUTTONS - ZENTRIERT */}
+            <div className="verification-actions" style={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              gap: '12px', 
+              alignItems: 'center',
+              margin: '30px 0'
+            }}>
               <button 
                 className={`apple-auth-button primary ${resendLoading ? 'loading' : ''} ${resendCooldown > 0 ? 'disabled' : ''}`}
                 onClick={handleResendEmail}
                 disabled={resendLoading || resendCooldown > 0}
+                style={{ width: '100%', maxWidth: '300px' }}
               >
                 {resendLoading ? (
                   <span className="loading-spinner"></span>
@@ -346,6 +417,7 @@ export default function Register() {
               <button 
                 className="apple-auth-button secondary"
                 onClick={() => navigate("/login")}
+                style={{ width: '100%', maxWidth: '300px' }}
               >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
@@ -356,10 +428,25 @@ export default function Register() {
               </button>
             </div>
 
-            {/* ✅ HELPFUL TIP - APPLE STYLE */}
-            <div className="verification-tip">
+            {/* ✅ HELPFUL TIP - ZENTRIERT & SCHWARZE SCHRIFT */}
+            <div className="verification-tip" style={{ 
+              background: 'rgba(59, 130, 246, 0.1)',
+              border: '1px solid rgba(59, 130, 246, 0.3)',
+              borderRadius: '12px',
+              padding: '15px',
+              margin: '20px 0',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '10px'
+            }}>
               <div className="tip-icon">💡</div>
-              <p>
+              <p style={{ 
+                color: '#1f2937', 
+                margin: '0', 
+                fontSize: '14px',
+                textAlign: 'center'
+              }}>
                 <strong>Tipp:</strong> Schauen Sie auch in Ihren Spam-Ordner, falls die E-Mail nicht in wenigen Minuten ankommt.
               </p>
             </div>
