@@ -6,8 +6,8 @@ const crypto = require("crypto");
 const router = express.Router();
 
 // E-Mail-Templates und Utilities importieren
-const sendEmailHtml = require("../utils/sendEmailHtml");
 const generateEmailTemplate = require("../utils/emailTemplate");
+const sendEmailHtml = require("../utils/sendEmailHtml");
 
 module.exports = function(db) {
   const usersCollection = db.collection("users");
