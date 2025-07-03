@@ -267,46 +267,106 @@ export default function Register() {
           </form>
         )}
 
-        {/* ✅ NEU: E-Mail-Verification Sektion */}
+        {/* ✅ NEU: E-Mail-Verification Sektion - KRASS GEMACHT! */}
         {showEmailVerification && (
-          <div className="apple-email-verification">
-            <div className="verification-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                <polyline points="22,6 12,13 2,6"></polyline>
-              </svg>
+          <div className="apple-email-verification modern">
+            {/* Animated Success Icon */}
+            <div className="verification-icon-container">
+              <div className="success-circle">
+                <div className="checkmark-animation">
+                  <svg width="80" height="80" viewBox="0 0 80 80">
+                    <circle className="checkmark-circle" cx="40" cy="40" r="35" fill="none" stroke="url(#gradient)" strokeWidth="3"/>
+                    <path className="checkmark-path" fill="none" stroke="#22c55e" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" d="M25 40l10 10 20-20"/>
+                    <defs>
+                      <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stopColor="#3b82f6" />
+                        <stop offset="100%" stopColor="#8b5cf6" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            {/* Main Content */}
+            <div className="verification-content">
+              <h2 className="verification-title">
+                📧 Fast geschafft! 
+              </h2>
+              <p className="verification-subtitle">
+                Wir haben eine <strong>Bestätigungs-E-Mail</strong> an
+              </p>
+              <div className="email-badge">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                  <polyline points="22,6 12,13 2,6"/>
+                </svg>
+                {email}
+              </div>
+              
+              <div className="next-steps">
+                <div className="step">
+                  <div className="step-number">1</div>
+                  <div className="step-text">E-Mail öffnen</div>
+                </div>
+                <div className="step-arrow">→</div>
+                <div className="step">
+                  <div className="step-number">2</div>
+                  <div className="step-text">Button klicken</div>
+                </div>
+                <div className="step-arrow">→</div>
+                <div className="step">
+                  <div className="step-number">3</div>
+                  <div className="step-text">Anmelden</div>
+                </div>
+              </div>
             </div>
             
             <div className="verification-actions">
               <button 
-                className={`apple-auth-button secondary ${resendLoading ? 'loading' : ''}`}
+                className={`apple-auth-button modern primary ${resendLoading ? 'loading' : ''}`}
                 onClick={handleResendEmail}
                 disabled={resendLoading || resendCooldown > 0}
               >
                 {resendLoading ? (
-                  <span className="loading-spinner"></span>
+                  <div className="loading-dots">
+                    <span></span><span></span><span></span>
+                  </div>
                 ) : resendCooldown > 0 ? (
-                  <span>E-Mail erneut senden ({resendCooldown}s)</span>
+                  <>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="12" cy="12" r="10"/>
+                      <polyline points="12,6 12,12 16,14"/>
+                    </svg>
+                    <span>Erneut senden in {resendCooldown}s</span>
+                  </>
                 ) : (
                   <>
-                    <span>Bestätigungs-E-Mail erneut senden</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
                     </svg>
+                    <span>E-Mail erneut senden</span>
                   </>
                 )}
               </button>
               
               <button 
-                className="apple-auth-button outline"
+                className="apple-auth-button modern secondary"
                 onClick={() => navigate("/login")}
               >
-                <span>Zur Anmeldung</span>
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M5 12h14"></path>
-                  <path d="m12 5 7 7-7 7"></path>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                  <polyline points="16,17 21,12 16,7"/>
+                  <path d="M21 12H9"/>
                 </svg>
+                <span>Zur Anmeldung</span>
               </button>
+            </div>
+
+            {/* Fun Fact */}
+            <div className="verification-tip">
+              <div className="tip-icon">💡</div>
+              <p><strong>Tipp:</strong> Schauen Sie auch in Ihren Spam-Ordner, falls die E-Mail nicht ankommt!</p>
             </div>
           </div>
         )}

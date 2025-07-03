@@ -55,17 +55,45 @@ module.exports = function(db) {
 
       // E-Mail-Template generieren
       const emailHtml = generateEmailTemplate({
-        title: "E-Mail-Adresse bestätigen",
+        title: "Willkommen bei Contract AI! 🚀",
         body: `
-          <h2>Willkommen bei Contract AI!</h2>
-          <p>Bitte bestätigen Sie Ihre E-Mail-Adresse, um Ihr Konto zu aktivieren:</p>
-          <p style="color: #666; font-size: 14px;">
-            Dieser Link ist 24 Stunden gültig. Falls Sie diese E-Mail nicht angefordert haben, 
-            können Sie sie ignorieren.
+          <div style="text-align: center; margin: 20px 0;">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                        border-radius: 50%; width: 80px; height: 80px; 
+                        margin: 0 auto 20px; display: flex; align-items: center; justify-content: center;">
+              <span style="font-size: 32px;">🎉</span>
+            </div>
+          </div>
+          
+          <h2 style="color: #1e293b; margin: 20px 0; font-size: 24px; font-weight: 600;">
+            Fast geschafft! Nur noch ein Klick...
+          </h2>
+          
+          <p style="color: #475569; font-size: 16px; line-height: 1.6; margin: 16px 0;">
+            Schön, dass Sie sich für <strong>Contract AI</strong> entschieden haben! 
+            Bestätigen Sie jetzt Ihre E-Mail-Adresse, um Ihr Konto zu aktivieren.
+          </p>
+          
+          <div style="background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); 
+                      border-radius: 12px; padding: 20px; margin: 24px 0;">
+            <h3 style="color: #334155; margin: 0 0 12px 0; font-size: 18px;">
+              🚀 Was Sie als nächstes erwartet:
+            </h3>
+            <ul style="color: #475569; margin: 0; padding-left: 20px; line-height: 1.8;">
+              <li><strong>KI-Vertragsanalyse</strong> - Ihre Verträge automatisch analysieren lassen</li>
+              <li><strong>Laufzeit-Management</strong> - Nie wieder wichtige Fristen verpassen</li>
+              <li><strong>Optimierungsvorschläge</strong> - Verbesserungen durch künstliche Intelligenz</li>
+              <li><strong>Risiko-Scanner</strong> - Problematische Klauseln frühzeitig erkennen</li>
+            </ul>
+          </div>
+          
+          <p style="color: #64748b; font-size: 14px; margin: 24px 0 8px;">
+            <strong>⏰ Dieser Link ist 24 Stunden gültig.</strong><br>
+            Falls Sie diese E-Mail nicht angefordert haben, können Sie sie einfach ignorieren.
           </p>
         `,
         cta: {
-          text: "E-Mail-Adresse bestätigen",
+          text: "🔥 E-Mail-Adresse bestätigen",
           url: verificationLink
         }
       });
@@ -128,16 +156,67 @@ module.exports = function(db) {
       // Willkommens-E-Mail senden (optional)
       try {
         const welcomeEmailHtml = generateEmailTemplate({
-          title: "Willkommen bei Contract AI!",
+          title: "🎉 Herzlich Willkommen bei Contract AI!",
           body: `
-            <h2>Herzlich willkommen!</h2>
-            <p>Ihre E-Mail-Adresse wurde erfolgreich bestätigt.</p>
-            <p>Sie können sich jetzt anmelden und Contract AI nutzen:</p>
-            <p>Viel Erfolg mit Contract AI!</p>
+            <div style="text-align: center; margin: 20px 0;">
+              <div style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); 
+                          border-radius: 50%; width: 80px; height: 80px; 
+                          margin: 0 auto 20px; display: flex; align-items: center; justify-content: center;">
+                <span style="font-size: 32px;">✅</span>
+              </div>
+            </div>
+            
+            <h2 style="color: #1e293b; margin: 20px 0; font-size: 24px; font-weight: 600;">
+              Perfekt! Ihr Konto ist jetzt aktiviert 🚀
+            </h2>
+            
+            <p style="color: #475569; font-size: 16px; line-height: 1.6; margin: 16px 0;">
+              <strong>Glückwunsch!</strong> Ihre E-Mail-Adresse wurde erfolgreich bestätigt. 
+              Sie können jetzt die volle Power von Contract AI nutzen!
+            </p>
+            
+            <div style="background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%); 
+                        border: 1px solid #bbf7d0; border-radius: 12px; padding: 24px; margin: 24px 0;">
+              <h3 style="color: #166534; margin: 0 0 16px 0; font-size: 18px;">
+                🎯 Ihre nächsten Schritte:
+              </h3>
+              <div style="display: grid; gap: 12px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <span style="background: #22c55e; color: white; border-radius: 50%; 
+                              width: 24px; height: 24px; display: flex; align-items: center; 
+                              justify-content: center; font-size: 12px; font-weight: bold;">1</span>
+                  <span style="color: #166534; font-weight: 500;">Ersten Vertrag hochladen</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <span style="background: #22c55e; color: white; border-radius: 50%; 
+                              width: 24px; height: 24px; display: flex; align-items: center; 
+                              justify-content: center; font-size: 12px; font-weight: bold;">2</span>
+                  <span style="color: #166534; font-weight: 500;">KI-Analyse starten</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <span style="background: #22c55e; color: white; border-radius: 50%; 
+                              width: 24px; height: 24px; display: flex; align-items: center; 
+                              justify-content: center; font-size: 12px; font-weight: bold;">3</span>
+                  <span style="color: #166534; font-weight: 500;">Optimierungsvorschläge erhalten</span>
+                </div>
+              </div>
+            </div>
+            
+            <p style="color: #475569; font-size: 16px; line-height: 1.6; margin: 24px 0;">
+              <strong>💡 Tipp:</strong> Probieren Sie unsere KI-Vertragsoptimierung aus – 
+              sie findet Verbesserungspotenziale, die Sie überraschen werden!
+            </p>
+            
+            <p style="color: #64748b; font-size: 14px; margin: 20px 0;">
+              Bei Fragen sind wir jederzeit für Sie da: 
+              <a href="mailto:support@contract-ai.de" style="color: #3b82f6; text-decoration: none;">
+                support@contract-ai.de
+              </a>
+            </p>
           `,
           cta: {
-            text: "Jetzt anmelden",
-            url: `${process.env.FRONTEND_URL}/login`
+            text: "🚀 Jetzt loslegen",
+            url: `${process.env.FRONTEND_URL}/dashboard`
           }
         });
 
