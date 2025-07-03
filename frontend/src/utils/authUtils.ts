@@ -1,21 +1,38 @@
-// 📁 src/utils/authUtils.ts - Separate utilities file for auth types and helpers
+// 📁 frontend/src/utils/authUtils.ts
+// ✅ HYBRID VERSION - Backend-kompatible Interface + deine Helper-Funktionen
 
-// ✅ User data interface - ERWEITERT um fehlende Properties
+// ✅ BACKEND-KOMPATIBLE UserData Interface 
 export interface UserData {
-  _id: string;
+  // 🔐 Auth-Basis (aus Backend)
   email: string;
+  subscriptionPlan: "free" | "business" | "premium";
+  subscriptionStatus: string;
+  subscriptionActive: boolean;
+  
+  // 🏷️ Plan-Booleans (aus Backend)
+  isPremium: boolean;
+  isBusiness: boolean;
+  isFree: boolean;
+  
+  // 📊 Limits (aus Backend)
+  analysisCount: number;
+  analysisLimit: number;
+  optimizationCount: number;
+  optimizationLimit: number;
+  
+  // 📅 Timestamps (aus Backend)
+  createdAt: string;
+  emailNotifications: boolean;
+  contractReminders: boolean;
+  
+  // ✅ OPTIONAL: Falls vorhanden (für Zukunft)
+  _id?: string;
   firstName?: string;
   lastName?: string;
-  subscriptionPlan?: string;
-  subscriptionStatus?: string;
-  subscriptionActive?: boolean; // ✅ HINZUGEFÜGT - War im bestehenden Code verwendet
-  analysisCount?: number;
-  createdAt?: string;
   updatedAt?: string;
-  // Add other user properties as needed
 }
 
-// ✅ Helper functions for auth (non-component exports)
+// ✅ DEINE HELPER-FUNKTIONEN (behalten!)
 export const getDisplayName = (user: UserData): string => {
   if (user.firstName && user.lastName) {
     return `${user.firstName} ${user.lastName}`;
@@ -42,7 +59,44 @@ export const isSubscribed = (user: UserData): boolean => {
   return user.subscriptionPlan === 'premium' || user.subscriptionPlan === 'business';
 };
 
-// ✅ NEU: Helper für subscriptionActive Check
 export const isSubscriptionActive = (user: UserData): boolean => {
   return user.subscriptionActive === true;
+};
+
+// ✅ TOKEN-UTILITIES (hinzugefügt)
+export const getAuthToken = (): string | null => {
+  const token = localStorage.getItem("token");
+  return token;
+};
+
+export const setAuthToken = (token: string): void => {
+  localStorage.setItem("token", token);
+};
+
+export const removeAuthToken = (): void => {
+  localStorage.removeItem("token");
+};
+
+export const isAuthenticated = (): boolean => {
+  const token = getAuthToken();
+  return !!token;
+};
+
+// ✅ NEUE HELPER für Backend-Properties
+export const hasAnalysisLimit = (user: UserData): boolean => {
+  return user.analysisLimit !== Infinity && user.analysisLimit > 0;
+};
+
+export const hasOptimizationLimit = (user: UserData): boolean => {
+  return user.optimizationLimit !== Infinity && user.optimizationLimit > 0;
+};
+
+export const getAnalysisRemaining = (user: UserData): number => {
+  if (user.analysisLimit === Infinity) return Infinity;
+  return Math.max(0, user.analysisLimit - user.analysisCount);
+};
+
+export const getOptimizationRemaining = (user: UserData): number => {
+  if (user.optimizationLimit === Infinity) return Infinity;
+  return Math.max(0, user.optimizationLimit - user.optimizationCount);
 };
