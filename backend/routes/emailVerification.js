@@ -6,8 +6,8 @@ const crypto = require("crypto");
 const router = express.Router();
 
 // E-Mail-Templates und Utilities importieren
-const { sendEmail } = require("../utils/sendEmail");
-const { generateEmailTemplate } = require("../utils/emailTemplate");
+const sendEmailHtml = require("../utils/sendEmailHtml");
+const generateEmailTemplate = require("../utils/emailTemplate");
 
 module.exports = function(db) {
   const usersCollection = db.collection("users");
@@ -56,32 +56,22 @@ module.exports = function(db) {
       // E-Mail-Template generieren
       const emailHtml = generateEmailTemplate({
         title: "E-Mail-Adresse bestätigen",
-        content: `
+        body: `
           <h2>Willkommen bei Contract AI!</h2>
           <p>Bitte bestätigen Sie Ihre E-Mail-Adresse, um Ihr Konto zu aktivieren:</p>
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${verificationLink}" 
-               style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                      color: white; padding: 15px 30px; text-decoration: none;
-                      border-radius: 8px; font-weight: bold; display: inline-block;">
-              E-Mail-Adresse bestätigen
-            </a>
-          </div>
           <p style="color: #666; font-size: 14px;">
             Dieser Link ist 24 Stunden gültig. Falls Sie diese E-Mail nicht angefordert haben, 
             können Sie sie ignorieren.
           </p>
         `,
-        buttonText: "E-Mail bestätigen",
-        buttonUrl: verificationLink
+        cta: {
+          text: "E-Mail-Adresse bestätigen",
+          url: verificationLink
+        }
       });
 
       // E-Mail senden
-      await sendEmail({
-        to: email,
-        subject: "Contract AI - E-Mail-Adresse bestätigen",
-        html: emailHtml
-      });
+      await sendEmailHtml(email, "Contract AI - E-Mail-Adresse bestätigen", emailHtml);
 
       console.log(`✅ Verification-E-Mail gesendet an: ${email}`);
       
@@ -139,29 +129,19 @@ module.exports = function(db) {
       try {
         const welcomeEmailHtml = generateEmailTemplate({
           title: "Willkommen bei Contract AI!",
-          content: `
+          body: `
             <h2>Herzlich willkommen!</h2>
             <p>Ihre E-Mail-Adresse wurde erfolgreich bestätigt.</p>
             <p>Sie können sich jetzt anmelden und Contract AI nutzen:</p>
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${process.env.FRONTEND_URL}/login" 
-                 style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                        color: white; padding: 15px 30px; text-decoration: none;
-                        border-radius: 8px; font-weight: bold; display: inline-block;">
-                Jetzt anmelden
-              </a>
-            </div>
             <p>Viel Erfolg mit Contract AI!</p>
           `,
-          buttonText: "Jetzt anmelden",
-          buttonUrl: `${process.env.FRONTEND_URL}/login`
+          cta: {
+            text: "Jetzt anmelden",
+            url: `${process.env.FRONTEND_URL}/login`
+          }
         });
 
-        await sendEmail({
-          to: user.email,
-          subject: "Contract AI - Willkommen!",
-          html: welcomeEmailHtml
-        });
+        await sendEmailHtml(user.email, "Contract AI - Willkommen!", welcomeEmailHtml);
       } catch (emailError) {
         console.log("⚠️ Willkommens-E-Mail konnte nicht gesendet werden:", emailError.message);
         // Nicht kritisch - Verification war erfolgreich
