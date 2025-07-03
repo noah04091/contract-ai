@@ -148,7 +148,8 @@ module.exports = function(db) {
       }
 
       // Redirect zum Frontend mit Success-Status
-      const redirectUrl = `${process.env.FRONTEND_URL}/verify-success?email=${encodeURIComponent(user.email)}`;
+      const frontendUrl = process.env.FRONTEND_URL || "https://contract-ai.de";
+      const redirectUrl = `${frontendUrl}/verify-success?email=${encodeURIComponent(user.email)}`;
       res.redirect(redirectUrl);
 
     } catch (error) {
