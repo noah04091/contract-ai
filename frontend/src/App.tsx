@@ -12,6 +12,7 @@ import CookieConsentBanner from "./components/CookieConsentBanner";
 import HomeRedesign from "./pages/HomeRedesign";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import VerifySuccess from "./pages/VerifySuccess"; // ✅ NEU: E-Mail-Bestätigung Success Page
 import Pricing from "./pages/Pricing";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
@@ -90,6 +91,7 @@ function AppWithLoader() {
             <Route path="/" element={<HomeRedesign />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/verify-success" element={<VerifySuccess />} /> {/* ✅ NEU: E-Mail bestätigt Seite */}
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/about" element={<About />} />
             <Route path="/success" element={<Success />} />

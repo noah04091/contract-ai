@@ -6,8 +6,8 @@ const crypto = require("crypto");
 const router = express.Router();
 
 // E-Mail-Templates und Utilities importieren
-const generateEmailTemplate = require("../utils/emailTemplate");
 const sendEmailHtml = require("../utils/sendEmailHtml");
+const generateEmailTemplate = require("../utils/emailTemplate");
 
 module.exports = function(db) {
   const usersCollection = db.collection("users");
@@ -51,7 +51,7 @@ module.exports = function(db) {
 
       // Verification-Link erstellen
       const frontendUrl = process.env.FRONTEND_URL || "https://contract-ai.de";
-      const verificationLink = `${frontendUrl}/verify?token=${verificationToken}`;
+      const verificationLink = `${frontendUrl}/api/email-verification/verify?token=${verificationToken}`;
 
       // E-Mail-Template generieren
       const emailHtml = generateEmailTemplate({
