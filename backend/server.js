@@ -67,7 +67,7 @@ try {
   console.error(`❌ Fehler beim Erstellen des Upload-Ordners:`, err);
 }
 
-const transporter = nodemailer.createTransport(EMAIL_CONFIG);
+const transporter = nodemailer.createTransporter(EMAIL_CONFIG);
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // ✅ MULTER Setup (unchanged)
@@ -250,7 +250,16 @@ const connectDB = async () => {
       console.error("❌ Fehler beim Laden der Auth-Routen:", err);
     }
 
-    // ✅ 2. STRIPE ROUTES - MIT /api PREFIX  
+    // ✅ 2. EMAIL VERIFICATION ROUTES - NEUE SEPARATE ROUTE
+    try {
+      const emailVerificationRoutes = require("./routes/emailVerification")(db);
+      app.use("/api/email-verification", emailVerificationRoutes);
+      console.log("✅ E-Mail-Verifizierungs-Routen geladen unter /api/email-verification");
+    } catch (err) {
+      console.error("❌ Fehler beim Laden der E-Mail-Verifizierungs-Routen:", err);
+    }
+
+    // ✅ 3. STRIPE ROUTES - MIT /api PREFIX  
     try {
       app.use("/api/stripe/portal", require("./routes/stripePortal"));  // ← FIX: /api PREFIX
       app.use("/api/stripe", require("./routes/stripe"));               // ← FIX: /api PREFIX
@@ -260,7 +269,7 @@ const connectDB = async () => {
       console.error("❌ Fehler beim Laden der Stripe-Routen:", err);
     }
 
-    // ✅ 3. KI ANALYSIS & OPTIMIZATION - MIT /api PREFIX
+    // ✅ 4. KI ANALYSIS & OPTIMIZATION - MIT /api PREFIX
     try {
       app.use("/api/analyze", verifyToken, checkSubscription, require("./routes/analyze"));  // ← FIX: /api PREFIX
       console.log("✅ Analyze-Route geladen unter /api/analyze");
@@ -289,7 +298,7 @@ const connectDB = async () => {
       });
     }
 
-    // ✅ 4. CONTRACT ROUTES - SPEZIFISCHE VOR ALLGEMEINEN!
+    // ✅ 5. CONTRACT ROUTES - SPEZIFISCHE VOR ALLGEMEINEN!
     try {
       // 🚨 CRITICAL: REIHENFOLGE! Generate-Route VOR CRUD-Routes mounten
       const generateRouter = require("./routes/generate");
@@ -305,7 +314,7 @@ const connectDB = async () => {
       });
     }
 
-    // ✅ 5. SMART CONTRACT GENERATOR - SAUBERER ROUTER MOUNT
+    // ✅ 6. SMART CONTRACT GENERATOR - SAUBERER ROUTER MOUNT
     try {
       const optimizedContractRouter = require("./routes/optimizedContract");
       app.use("/api/contracts", verifyToken, checkSubscription, optimizedContractRouter);  // ← CLEAN MOUNT
@@ -321,7 +330,7 @@ const connectDB = async () => {
       });
     }
 
-    // ✅ 6. S3 MIGRATION ROUTES - NEU HINZUGEFÜGT FÜR LEGACY CONTRACT MIGRATION
+    // ✅ 7. S3 MIGRATION ROUTES - NEU HINZUGEFÜGT FÜR LEGACY CONTRACT MIGRATION
     try {
       // ✅ MIGRATION: Legacy-Verträge markieren (einmalig ausführen)
       app.post("/api/contracts/migrate-legacy", verifyToken, async (req, res) => {
@@ -435,7 +444,7 @@ const connectDB = async () => {
       console.error("❌ Fehler bei S3 Migration Routes:", err);
     }
 
-    // ✅ 7. ALLGEMEINE CONTRACT CRUD - NACH SPEZIFISCHEN ROUTEN
+    // ✅ 8. ALLGEMEINE CONTRACT CRUD - NACH SPEZIFISCHEN ROUTEN
     try {
       app.use("/api/contracts", verifyToken, require("./routes/contracts"));  // ← FIX: /api PREFIX, NACH spezifischen Routen
       console.log("✅ Contracts CRUD-Routen geladen unter /api/contracts");
@@ -443,7 +452,7 @@ const connectDB = async () => {
       console.error("❌ Fehler bei Contract-CRUD-Routen:", err);
     }
 
-    // ✅ 8. WEITERE ROUTEN - ALLE MIT /api PREFIX
+    // ✅ 9. WEITERE ROUTEN - ALLE MIT /api PREFIX
     try {
       app.use("/api/compare", verifyToken, checkSubscription, require("./routes/compare"));  // ← FIX: /api PREFIX
       console.log("✅ Compare-Route geladen unter /api/compare");
@@ -480,7 +489,7 @@ const connectDB = async () => {
       console.error("❌ Fehler bei Better-Contracts-Route:", err);
     }
 
-    // ✅ 9. LEGAL PULSE - BLEIBT WIE ES IST (war schon korrekt)
+    // ✅ 10. LEGAL PULSE - BLEIBT WIE ES IST (war schon korrekt)
     try {
       app.use("/api/legal-pulse", verifyToken, require("./routes/legalPulse"));
       console.log("✅ Legal Pulse Routen geladen unter /api/legal-pulse");
@@ -488,7 +497,7 @@ const connectDB = async () => {
       console.error("❌ Fehler bei Legal Pulse Routen:", err);
     }
 
-    // ✅ 10. S3 ROUTES - NEUE PROFESSIONELLE STRUKTUR
+    // ✅ 11. S3 ROUTES - NEUE PROFESSIONELLE STRUKTUR
     try {
       const s3Routes = require("./routes/s3Routes");
       app.use("/api/s3", s3Routes);
@@ -497,7 +506,7 @@ const connectDB = async () => {
       console.error("❌ Fehler beim Laden der S3-Routen:", err);
     }
 
-    // ✅ 11. S3 LEGACY ROUTES - BEHALTEN FÜR BACKWARDS COMPATIBILITY
+    // ✅ 12. S3 LEGACY ROUTES - BEHALTEN FÜR BACKWARDS COMPATIBILITY
     if (generateSignedUrl) {
       app.get("/api/s3/view", verifyToken, (req, res) => {  // ← FIX: /api PREFIX
         try {
@@ -544,7 +553,7 @@ const connectDB = async () => {
       console.log("✅ S3 Legacy-Routen geladen unter /api/s3 (backwards compatibility)");
     }
 
-    // ✅ 12. UPLOAD ROUTE - UNTER /api/upload
+    // ✅ 13. UPLOAD ROUTE - UNTER /api/upload
     if (s3Upload) {
       app.post("/api/upload", verifyToken, checkSubscription, s3Upload.single("file"), async (req, res) => {  // ← FIX: /api PREFIX
         if (!req.file) return res.status(400).json({ message: "Keine Datei hochgeladen" });
@@ -646,7 +655,7 @@ const connectDB = async () => {
       console.log("✅ Upload-Route geladen unter /api/upload");
     }
 
-    // ✅ 13. TEST & DEBUG ROUTES - MIT /api PREFIX
+    // ✅ 14. TEST & DEBUG ROUTES - MIT /api PREFIX
     try {
       app.use("/api/test", require("./testAuth"));  // ← FIX: /api PREFIX
       console.log("✅ Test-Route geladen unter /api/test");
@@ -654,7 +663,7 @@ const connectDB = async () => {
       console.error("❌ Fehler bei Test-Route:", err);
     }
 
-    // ✅ 14. DEBUG ROUTE - MIT /api PREFIX
+    // ✅ 15. DEBUG ROUTE - MIT /api PREFIX
     app.get("/api/debug", (req, res) => {  // ← FIX: /api PREFIX
       console.log("Cookies:", req.cookies);
       res.cookie("debug_cookie", "test-value", {
@@ -678,6 +687,7 @@ const connectDB = async () => {
         mongodb: db ? 'ZENTRAL VERBUNDEN' : 'NICHT VERBUNDEN',
         routeStructure: "✅ ALLE ROUTEN UNTER /api - EINHEITLICH!",
         authRoute: "/api/auth/* (FIXED!)",
+        emailVerificationRoute: "/api/email-verification/* (NEW!)",
         contractsRoute: "/api/contracts/* (FIXED!)",
         generateRoute: "/api/contracts/generate (FIXED!)",
         smartContractRoute: "/api/contracts/:id/generate-optimized (FIXED!)",
@@ -688,11 +698,11 @@ const connectDB = async () => {
         betterContractsRoute: "/api/better-contracts (ADDED!)",
         migrationRoutes: "/api/contracts/migrate-legacy & migration-status (NEW!)",
         s3Status: s3Status,
-        message: "🎉 PFAD-CHAOS BEHOBEN - ALLES UNTER /api + S3 ROUTES ENHANCED + MIGRATION ROUTES!"
+        message: "🎉 PFAD-CHAOS BEHOBEN - ALLES UNTER /api + S3 ROUTES ENHANCED + MIGRATION ROUTES + EMAIL VERIFICATION!"
       });
     });
 
-    // ✅ 15. DEBUG ROUTES LIST
+    // ✅ 16. DEBUG ROUTES LIST
     app.get("/api/debug/routes", (req, res) => {  // ← FIX: /api PREFIX
       const routes = [];
       
@@ -728,12 +738,13 @@ const connectDB = async () => {
       
       res.json({
         success: true,
-        message: "🔍 Route Debug Info - NACH PFAD-FIX + S3 ENHANCEMENT + MIGRATION ROUTES",
+        message: "🔍 Route Debug Info - NACH PFAD-FIX + S3 ENHANCEMENT + MIGRATION ROUTES + EMAIL VERIFICATION",
         totalRoutes: routes.length,
         apiRoutes: apiRoutes,
         nonApiRoutes: nonApiRoutes,
         fixedStructure: {
           auth: "/api/auth/*",
+          emailVerification: "/api/email-verification/*",
           contracts: "/api/contracts/*",
           generate: "/api/contracts/generate",
           generateOptimized: "/api/contracts/:contractId/generate-optimized", 
@@ -781,6 +792,7 @@ const connectDB = async () => {
       console.log(`📁 Static files serviert unter: ${API_BASE_URL}/uploads`);
       console.log(`🎉 *** PFAD-CHAOS BEHOBEN - ALLE ROUTEN UNTER /api ***`);
       console.log(`🔐 Auth-Route: /api/auth/* (FIXED!)`);
+      console.log(`📧 E-Mail-Verification-Route: /api/email-verification/* (NEW!)`);
       console.log(`📄 Contracts-Route: /api/contracts/* (FIXED!)`);
       console.log(`🎯 Generate-Route: /api/contracts/generate (FIXED!)`);
       console.log(`🪄 Smart Contract: /api/contracts/:id/generate-optimized (FIXED!)`);
@@ -791,7 +803,7 @@ const connectDB = async () => {
       console.log(`💳 Stripe-Routes: /api/stripe/* (FIXED!)`);
       console.log(`🔍 Better-Contracts-Route: /api/better-contracts (ADDED!)`);
       console.log(`🚀 Migration-Routes: /api/contracts/migrate-legacy & migration-status (NEW!)`);
-      console.log(`✅ EINHEITLICHE /api STRUKTUR + S3 ENHANCEMENT + LEGACY MIGRATION - BEREIT FÜR VERCEL!`);
+      console.log(`✅ EINHEITLICHE /api STRUKTUR + S3 ENHANCEMENT + LEGACY MIGRATION + EMAIL VERIFICATION - BEREIT FÜR VERCEL!`);
     });
 
   } catch (err) {
