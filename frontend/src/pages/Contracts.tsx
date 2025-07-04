@@ -1,4 +1,4 @@
-// 📁 src/pages/Contracts.tsx - JSX FIXED: Motion Button closing tag korrigiert + ANALYSE-ANZEIGE GEFIXT + RESPONSIVE + DUPLIKATSERKENNUNG + S3-INTEGRATION
+// 📁 src/pages/Contracts.tsx - JSX FIXED: Motion Button closing tag korrigiert + ANALYSE-ANZEIGE GEFIXT + RESPONSIVE + DUPLIKATSERKENNUNG + S3-INTEGRATION + BATCH-ANALYSE-ANZEIGE
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet";
@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import styles from "../styles/Contracts.module.css";
 import ContractAnalysis from "../components/ContractAnalysis";
+import BatchAnalysisResults from "../components/BatchAnalysisResults"; // ✅ NEU: Import für Batch-Analyse
 import ContractDetailsView from "../components/ContractDetailsView";
 import { apiCall, uploadAndAnalyze } from "../utils/api";
 
@@ -1645,15 +1646,23 @@ export default function Contracts() {
                       )}
                     </div>
 
-                    {/* ✅ CRITICAL FIX: ContractAnalysis wird jetzt korrekt gerendert mit initialResult */}
+                    {/* ✅ DEINE BESTEHENDE ANALYSE-ANZEIGE bleibt unverändert */}
                     {selectedFile && uploadFiles.length === 1 && uploadFiles[0].status === 'completed' && (
                       <div className={styles.analysisContainer}>
                         <ContractAnalysis 
                           file={selectedFile} 
                           onReset={handleReset}
-                          initialResult={uploadFiles[0].result} // ⭐ PASS RESULT DIRECTLY
+                          initialResult={uploadFiles[0].result}
                         />
                       </div>
+                    )}
+
+                    {/* ✅ NEU: Zusätzliche Batch-Analyse für Multi-Upload (nur 4 Zeilen hinzugefügt!) */}
+                    {uploadFiles.length > 1 && uploadFiles.filter(f => f.status === 'completed').length > 0 && (
+                      <BatchAnalysisResults 
+                        uploadFiles={uploadFiles}
+                        onReset={handleReset}
+                      />
                     )}
                   </>
                 )}
