@@ -22,12 +22,22 @@ interface UploadFileItem {
     comparison?: string;
     analysisId?: string;
     requestId?: string;
+    message?: string;
+    duplicate?: boolean;
+    contractId?: string;
     usage?: {
       count: number;
       limit: number;
       plan: string;
     };
-    [key: string]: any;
+    analysisData?: {
+      kuendigung?: string;
+      laufzeit?: string;
+      expiryDate?: string;
+      status?: string;
+      risiken?: string[];
+      optimierungen?: string[];
+    };
   };
   error?: string;
 }
