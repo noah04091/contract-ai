@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";  // ← NEU
-import { useAuth } from "../hooks/useAuth";        // ← NEU
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
 import { Helmet } from "react-helmet";
 import BetterContractsResults from "../components/BetterContractsResults";
 import "../styles/ContractPages.css";
@@ -30,9 +30,14 @@ interface ErrorWithMessage {
 }
 
 const BetterContracts: React.FC = () => {
-  // 🆕 AUTH HOOKS (ohne loading):
-  const { user } = useAuth();
+  // ✅ Auth Context - ähnlich wie Chat.tsx
+  const { user, isLoading } = useAuth();
   const navigate = useNavigate();
+  
+  // ✅ Premium Check - wie in Chat.tsx
+  const isPremium = user?.subscriptionActive === true || 
+                    user?.subscriptionPlan === 'business' || 
+                    user?.subscriptionPlan === 'premium';
 
   const [contractText, setContractText] = useState("");
   const [contractType, setContractType] = useState("");
@@ -48,12 +53,12 @@ const BetterContracts: React.FC = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [analyzingProgress, setAnalyzingProgress] = useState(0);
 
-  // 🆕 AUTH CHECK (vereinfacht):
+  // ✅ AUTH CHECK (vereinfacht - nur redirect wenn nicht eingeloggt):
   useEffect(() => {
-    if (!user) {
+    if (!isLoading && !user) {
       navigate('/login?redirect=/better-contracts', { replace: true });
     }
-  }, [user, navigate]);
+  }, [user, isLoading, navigate]);
 
   useEffect(() => {
     if (loading) {
@@ -73,14 +78,14 @@ const BetterContracts: React.FC = () => {
     }
   }, [loading]);
 
-  // 🆕 FALLBACK wenn User nicht eingeloggt:
-  if (!user) {
+  // ✅ LOADING STATE
+  if (isLoading) {
     return (
       <div className="contract-page">
         <div className="contract-container">
           <div style={{ textAlign: 'center', padding: '2rem' }}>
             <div className="spinner"></div>
-            <p>Prüfe Anmeldung...</p>
+            <p>Lade Nutzerdaten...</p>
           </div>
         </div>
       </div>
@@ -114,6 +119,12 @@ const BetterContracts: React.FC = () => {
     e.stopPropagation();
     setDragActive(false);
     
+    // ✅ Premium Check
+    if (!isPremium) {
+      setError("Diese Funktion ist nur für Premium-Nutzer verfügbar.");
+      return;
+    }
+    
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const file = e.dataTransfer.files[0];
       await processFile(file);
@@ -123,7 +134,9 @@ const BetterContracts: React.FC = () => {
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    setDragActive(true);
+    if (isPremium) {
+      setDragActive(true);
+    }
   };
 
   const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
@@ -133,10 +146,16 @@ const BetterContracts: React.FC = () => {
   };
 
   const handleFileSelect = () => {
+    if (!isPremium) {
+      setError("Diese Funktion ist nur für Premium-Nutzer verfügbar.");
+      return;
+    }
     fileInputRef.current?.click();
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!isPremium) return;
+    
     const file = e.target.files?.[0];
     if (file) {
       await processFile(file);
@@ -144,6 +163,8 @@ const BetterContracts: React.FC = () => {
   };
 
   const processFile = async (file: File) => {
+    if (!isPremium) return;
+    
     setError("");
     setFileName(file.name);
     setUploadProgress(0);
@@ -196,6 +217,12 @@ const BetterContracts: React.FC = () => {
   };
 
   const handleAnalyze = async () => {
+    // ✅ Premium Check
+    if (!isPremium) {
+      setError("Diese Funktion ist nur für Premium-Nutzer verfügbar.");
+      return;
+    }
+    
     setError("");
     setResults(null);
     
@@ -279,6 +306,7 @@ const BetterContracts: React.FC = () => {
   };
 
   const handleRetry = () => {
+    if (!isPremium) return;
     setError("");
     setResults(null);
     handleAnalyze();
@@ -332,10 +360,79 @@ const BetterContracts: React.FC = () => {
               </svg>
             </div>
             <h1>Bessere Alternativen zu deinem Vertrag</h1>
+            
+            {/* ✅ Premium Badge wie in Chat.tsx */}
+            {!isPremium && (
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                color: 'white',
+                padding: '6px 12px',
+                borderRadius: '20px',
+                fontSize: '0.8rem',
+                fontWeight: '600',
+                marginTop: '0.5rem'
+              }}>
+                <span style={{ marginRight: '4px' }}>✦</span>
+                Premium erforderlich
+              </div>
+            )}
+            
             <p className="contract-description">
               Wir analysieren deinen Vertrag und finden automatisch bessere Anbieter mit echten Preisen und Konditionen.
             </p>
           </div>
+
+          {/* ✅ Premium Notice wie in Chat.tsx */}
+          {!isPremium && (
+            <div style={{
+              background: '#f8f9fa',
+              border: '1px solid #e9ecef',
+              borderRadius: '12px',
+              padding: '2rem',
+              margin: '2rem 0',
+              textAlign: 'center'
+            }}>
+              <div style={{
+                width: '60px',
+                height: '60px',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 1rem',
+                color: 'white',
+                fontSize: '1.5rem'
+              }}>
+                ⭐
+              </div>
+              <h3 style={{ marginBottom: '1rem', color: '#333' }}>Premium-Funktion</h3>
+              <p style={{ color: '#666', marginBottom: '1.5rem', lineHeight: '1.6' }}>
+                Mit einem Premium-Abonnement kannst du unbegrenzt Vertragsalternativen 
+                finden und sparst bares Geld durch bessere Angebote.
+              </p>
+              <button 
+                onClick={() => navigate('/pricing')}
+                style={{
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  color: 'white',
+                  border: 'none',
+                  padding: '12px 24px',
+                  borderRadius: '8px',
+                  fontSize: '1rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'transform 0.2s'
+                }}
+                onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+              >
+                Upgrade auf Premium
+              </button>
+            </div>
+          )}
 
           <div className="contract-progress-steps">
             <div className={`step ${step >= 1 ? 'active' : ''} ${step > 1 ? 'completed' : ''}`}>
@@ -357,11 +454,15 @@ const BetterContracts: React.FC = () => {
           {step === 1 && (
             <div className="contract-step-container">
               <div
-                className={`contract-uploader ${dragActive ? 'drag-active' : ''}`}
+                className={`contract-uploader ${dragActive ? 'drag-active' : ''} ${!isPremium ? 'disabled' : ''}`}
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onClick={handleFileSelect}
+                style={{
+                  opacity: isPremium ? 1 : 0.6,
+                  cursor: isPremium ? 'pointer' : 'not-allowed'
+                }}
               >
                 <input
                   type="file"
@@ -369,6 +470,7 @@ const BetterContracts: React.FC = () => {
                   onChange={handleFileChange}
                   accept=".pdf,.docx,.doc,.txt"
                   className="file-input"
+                  disabled={!isPremium}
                 />
                 
                 <div className="uploader-content">
@@ -383,7 +485,9 @@ const BetterContracts: React.FC = () => {
                   ) : (
                     <>
                       <p className="upload-title">Vertrag hochladen</p>
-                      <p className="upload-subtitle">PDF, DOCX oder Textdateien</p>
+                      <p className="upload-subtitle">
+                        {isPremium ? "PDF, DOCX oder Textdateien" : "Premium erforderlich"}
+                      </p>
                     </>
                   )}
                   
@@ -410,14 +514,23 @@ const BetterContracts: React.FC = () => {
                   id="contract-text"
                   value={contractText}
                   onChange={(e) => setContractText(e.target.value)}
-                  placeholder="Fügen Sie Ihren Vertragstext hier ein..."
+                  placeholder={isPremium ? "Fügen Sie Ihren Vertragstext hier ein..." : "Premium erforderlich für diese Funktion"}
                   rows={8}
+                  disabled={!isPremium}
+                  style={{
+                    opacity: isPremium ? 1 : 0.6,
+                    cursor: isPremium ? 'text' : 'not-allowed'
+                  }}
                 />
                 
                 <button 
                   className="contract-button"
-                  onClick={() => contractText.trim().length >= 20 ? setStep(2) : setError("Vertragstext muss mindestens 20 Zeichen lang sein.")}
-                  disabled={contractText.trim().length < 20}
+                  onClick={() => isPremium && contractText.trim().length >= 20 ? setStep(2) : setError(isPremium ? "Vertragstext muss mindestens 20 Zeichen lang sein." : "Premium erforderlich für diese Funktion.")}
+                  disabled={!isPremium || contractText.trim().length < 20}
+                  style={{
+                    opacity: isPremium && contractText.trim().length >= 20 ? 1 : 0.6,
+                    cursor: isPremium && contractText.trim().length >= 20 ? 'pointer' : 'not-allowed'
+                  }}
                 >
                   Weiter
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -456,6 +569,11 @@ const BetterContracts: React.FC = () => {
                       onChange={(e) => setCurrentPrice(parseFloat(e.target.value))}
                       min="0"
                       step="0.01"
+                      disabled={!isPremium}
+                      style={{
+                        opacity: isPremium ? 1 : 0.6,
+                        cursor: isPremium ? 'text' : 'not-allowed'
+                      }}
                     />
                     <span className="currency-symbol">€</span>
                   </div>
@@ -467,11 +585,18 @@ const BetterContracts: React.FC = () => {
                   <input
                     id="search-query"
                     type="text"
-                    placeholder="z.B. 'günstige handytarife' (wird automatisch generiert)"
+                    placeholder={isPremium ? "z.B. 'günstige handytarife' (wird automatisch generiert)" : "Premium erforderlich"}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
+                    disabled={!isPremium}
+                    style={{
+                      opacity: isPremium ? 1 : 0.6,
+                      cursor: isPremium ? 'text' : 'not-allowed'
+                    }}
                   />
-                  <p className="input-help">Lassen Sie das Feld leer für automatische Erkennung</p>
+                  <p className="input-help">
+                    {isPremium ? "Lassen Sie das Feld leer für automatische Erkennung" : "Premium erforderlich für diese Funktion"}
+                  </p>
                 </div>
                 
                 <div className="contract-text-preview">
@@ -498,7 +623,11 @@ const BetterContracts: React.FC = () => {
                   <button 
                     className="contract-button"
                     onClick={handleAnalyze}
-                    disabled={!currentPrice || currentPrice <= 0 || loading}
+                    disabled={!isPremium || !currentPrice || currentPrice <= 0 || loading}
+                    style={{
+                      opacity: isPremium && currentPrice && currentPrice > 0 && !loading ? 1 : 0.6,
+                      cursor: isPremium && currentPrice && currentPrice > 0 && !loading ? 'pointer' : 'not-allowed'
+                    }}
                   >
                     {loading ? (
                       <>
@@ -507,7 +636,7 @@ const BetterContracts: React.FC = () => {
                       </>
                     ) : (
                       <>
-                        Alternativen finden
+                        {isPremium ? "Alternativen finden" : "Premium erforderlich"}
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M5 12h14"></path>
                           <path d="m12 5 7 7-7 7"></path>
@@ -517,7 +646,7 @@ const BetterContracts: React.FC = () => {
                   </button>
                 </div>
                 
-                {loading && (
+                {loading && isPremium && (
                   <div className="analyzing-progress">
                     <div className="progress-container">
                       <div
@@ -537,7 +666,7 @@ const BetterContracts: React.FC = () => {
             </div>
           )}
 
-          {step === 3 && results && (
+          {step === 3 && results && isPremium && (
             <div className="contract-step-container results-step">
               <BetterContractsResults
                 analysis={results.analysis}
@@ -552,7 +681,11 @@ const BetterContracts: React.FC = () => {
                 <button 
                   className="contract-button secondary"
                   onClick={handleRetry}
-                  disabled={loading}
+                  disabled={loading || !isPremium}
+                  style={{
+                    opacity: isPremium && !loading ? 1 : 0.6,
+                    cursor: isPremium && !loading ? 'pointer' : 'not-allowed'
+                  }}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
@@ -583,7 +716,7 @@ const BetterContracts: React.FC = () => {
                 <line x1="12" y1="16" x2="12.01" y2="16"></line>
               </svg>
               {error}
-              {step === 2 && (
+              {step === 2 && isPremium && (
                 <button 
                   className="retry-button"
                   onClick={handleRetry}
