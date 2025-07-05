@@ -286,7 +286,7 @@ async function processStripeEvent(event, usersCollection, invoicesCollection) {
   }
 }
 
-const PORT = process.env.PORT || 3333;
+const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`🚀 Stripe Webhook-Server läuft auf Port ${PORT}`);
 });
