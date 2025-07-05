@@ -949,7 +949,7 @@ const HomeRedesign = () => {
                     <li><Link to="/calendar">Fristen</Link></li>
                     <li><Link to="/compare">Vergleich</Link></li>
                     <li><Link to="/generate">Generator</Link></li>
-                    <li><Link to="/pulse">Legal Pulse</Link></li>
+                    <li><Link to="/legalpulse">Legal Pulse</Link></li>
                   </ul>
                 </div>
                 
