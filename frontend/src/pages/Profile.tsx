@@ -604,7 +604,7 @@ export default function Profile() {
                     onClick={async () => {
                       setIsPortalOpening(true);
                       try {
-                        const res = await fetch("https://api.contract-ai.de/stripe/portal", {
+                        const res = await fetch("/api/stripe/portal", {
                           method: "POST",
                           credentials: "include",
                         });
