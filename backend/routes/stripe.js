@@ -59,7 +59,6 @@ router.post("/create-checkout-session", verifyToken, async (req, res) => {
       allow_promotion_codes: true,
       line_items: [{ price: selectedPriceId, quantity: 1 }],
       subscription_data: {
-        trial_period_days: 0, // keine Trial
         metadata: { userId: user._id.toString() },
       },
       success_url: "https://contract-ai.de/success",
