@@ -263,7 +263,7 @@ const connectDB = async () => {
     try {
       app.use("/api/stripe/portal", require("./routes/stripePortal"));  // ← FIX: /api PREFIX
       app.use("/api/stripe", require("./routes/stripe"));               // ← FIX: /api PREFIX
-      app.use("/api/stripe", require("./routes/subscribe"));            // ← FIX: /api PREFIX
+      //app.use("/api/stripe", require("./routes/subscribe"));            // ← FIX: /api PREFIX
       console.log("✅ Stripe-Routen geladen unter /api/stripe");
     } catch (err) {
       console.error("❌ Fehler beim Laden der Stripe-Routen:", err);

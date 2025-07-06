@@ -209,6 +209,10 @@ export default function Profile() {
       const res = await fetch("/api/stripe/create-checkout-session", {
         method: "POST",
         credentials: "include",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ plan: "premium" })
       });
 
       const data = await res.json();
