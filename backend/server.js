@@ -1,4 +1,4 @@
-// 📁 backend/server.js - ✅ FIXED: Einheitliche /api Struktur für ALLE Routen + S3 MIGRATION ROUTES
+// 📁 backend/server.js - ✅ FIXED: Einheitliche /api Struktur für ALLE Routen + S3 MIGRATION ROUTES + INVOICE ROUTES
 const express = require("express");
 const app = express();
 require("dotenv").config();
@@ -269,7 +269,15 @@ const connectDB = async () => {
       console.error("❌ Fehler beim Laden der Stripe-Routen:", err);
     }
 
-    // ✅ 4. KI ANALYSIS & OPTIMIZATION - MIT /api PREFIX
+    // ✅ 4. INVOICE ROUTES - NEU HINZUGEFÜGT!
+    try {
+      app.use("/api/invoices", verifyToken, require("./routes/invoices"));
+      console.log("✅ Invoice-Routen geladen unter /api/invoices");
+    } catch (err) {
+      console.error("❌ Fehler beim Laden der Invoice-Routen:", err);
+    }
+
+    // ✅ 5. KI ANALYSIS & OPTIMIZATION - MIT /api PREFIX
     try {
       app.use("/api/analyze", verifyToken, checkSubscription, require("./routes/analyze"));  // ← FIX: /api PREFIX
       console.log("✅ Analyze-Route geladen unter /api/analyze");
@@ -298,7 +306,7 @@ const connectDB = async () => {
       });
     }
 
-    // ✅ 5. CONTRACT ROUTES - SPEZIFISCHE VOR ALLGEMEINEN!
+    // ✅ 6. CONTRACT ROUTES - SPEZIFISCHE VOR ALLGEMEINEN!
     try {
       // 🚨 CRITICAL: REIHENFOLGE! Generate-Route VOR CRUD-Routes mounten
       const generateRouter = require("./routes/generate");
@@ -314,7 +322,7 @@ const connectDB = async () => {
       });
     }
 
-    // ✅ 6. SMART CONTRACT GENERATOR - SAUBERER ROUTER MOUNT
+    // ✅ 7. SMART CONTRACT GENERATOR - SAUBERER ROUTER MOUNT
     try {
       const optimizedContractRouter = require("./routes/optimizedContract");
       app.use("/api/contracts", verifyToken, checkSubscription, optimizedContractRouter);  // ← CLEAN MOUNT
@@ -330,7 +338,7 @@ const connectDB = async () => {
       });
     }
 
-    // ✅ 7. S3 MIGRATION ROUTES - NEU HINZUGEFÜGT FÜR LEGACY CONTRACT MIGRATION
+    // ✅ 8. S3 MIGRATION ROUTES - NEU HINZUGEFÜGT FÜR LEGACY CONTRACT MIGRATION
     try {
       // ✅ MIGRATION: Legacy-Verträge markieren (einmalig ausführen)
       app.post("/api/contracts/migrate-legacy", verifyToken, async (req, res) => {
@@ -444,7 +452,7 @@ const connectDB = async () => {
       console.error("❌ Fehler bei S3 Migration Routes:", err);
     }
 
-    // ✅ 8. ALLGEMEINE CONTRACT CRUD - NACH SPEZIFISCHEN ROUTEN
+    // ✅ 9. ALLGEMEINE CONTRACT CRUD - NACH SPEZIFISCHEN ROUTEN
     try {
       app.use("/api/contracts", verifyToken, require("./routes/contracts"));  // ← FIX: /api PREFIX, NACH spezifischen Routen
       console.log("✅ Contracts CRUD-Routen geladen unter /api/contracts");
@@ -452,7 +460,7 @@ const connectDB = async () => {
       console.error("❌ Fehler bei Contract-CRUD-Routen:", err);
     }
 
-    // ✅ 9. WEITERE ROUTEN - ALLE MIT /api PREFIX
+    // ✅ 10. WEITERE ROUTEN - ALLE MIT /api PREFIX
     try {
       app.use("/api/compare", verifyToken, checkSubscription, require("./routes/compare"));  // ← FIX: /api PREFIX
       console.log("✅ Compare-Route geladen unter /api/compare");
@@ -489,7 +497,7 @@ const connectDB = async () => {
       console.error("❌ Fehler bei Better-Contracts-Route:", err);
     }
 
-    // ✅ 10. LEGAL PULSE - BLEIBT WIE ES IST (war schon korrekt)
+    // ✅ 11. LEGAL PULSE - BLEIBT WIE ES IST (war schon korrekt)
     try {
       app.use("/api/legal-pulse", verifyToken, require("./routes/legalPulse"));
       console.log("✅ Legal Pulse Routen geladen unter /api/legal-pulse");
@@ -497,7 +505,7 @@ const connectDB = async () => {
       console.error("❌ Fehler bei Legal Pulse Routen:", err);
     }
 
-    // ✅ 11. S3 ROUTES - NEUE PROFESSIONELLE STRUKTUR
+    // ✅ 12. S3 ROUTES - NEUE PROFESSIONELLE STRUKTUR
     try {
       const s3Routes = require("./routes/s3Routes");
       app.use("/api/s3", s3Routes);
@@ -506,7 +514,7 @@ const connectDB = async () => {
       console.error("❌ Fehler beim Laden der S3-Routen:", err);
     }
 
-    // ✅ 12. S3 LEGACY ROUTES - BEHALTEN FÜR BACKWARDS COMPATIBILITY
+    // ✅ 13. S3 LEGACY ROUTES - BEHALTEN FÜR BACKWARDS COMPATIBILITY
     if (generateSignedUrl) {
       app.get("/api/s3/view", verifyToken, (req, res) => {  // ← FIX: /api PREFIX
         try {
@@ -553,7 +561,7 @@ const connectDB = async () => {
       console.log("✅ S3 Legacy-Routen geladen unter /api/s3 (backwards compatibility)");
     }
 
-    // ✅ 13. UPLOAD ROUTE - UNTER /api/upload
+    // ✅ 14. UPLOAD ROUTE - UNTER /api/upload
     if (s3Upload) {
       app.post("/api/upload", verifyToken, checkSubscription, s3Upload.single("file"), async (req, res) => {  // ← FIX: /api PREFIX
         if (!req.file) return res.status(400).json({ message: "Keine Datei hochgeladen" });
@@ -655,7 +663,7 @@ const connectDB = async () => {
       console.log("✅ Upload-Route geladen unter /api/upload");
     }
 
-    // ✅ 14. TEST & DEBUG ROUTES - MIT /api PREFIX
+    // ✅ 15. TEST & DEBUG ROUTES - MIT /api PREFIX
     try {
       app.use("/api/test", require("./testAuth"));  // ← FIX: /api PREFIX
       console.log("✅ Test-Route geladen unter /api/test");
@@ -663,7 +671,7 @@ const connectDB = async () => {
       console.error("❌ Fehler bei Test-Route:", err);
     }
 
-    // ✅ 15. DEBUG ROUTE - MIT /api PREFIX
+    // ✅ 16. DEBUG ROUTE - MIT /api PREFIX
     app.get("/api/debug", (req, res) => {  // ← FIX: /api PREFIX
       console.log("Cookies:", req.cookies);
       res.cookie("debug_cookie", "test-value", {
@@ -695,14 +703,16 @@ const connectDB = async () => {
         optimizeRoute: "/api/optimize (FIXED!)",
         s3Routes: "/api/s3/* (FIXED + ENHANCED!)",
         uploadRoute: "/api/upload (FIXED!)",
+        stripeRoutes: "/api/stripe/* (FIXED!)",
+        invoiceRoutes: "/api/invoices/* (ADDED!)",
         betterContractsRoute: "/api/better-contracts (ADDED!)",
         migrationRoutes: "/api/contracts/migrate-legacy & migration-status (NEW!)",
         s3Status: s3Status,
-        message: "🎉 PFAD-CHAOS BEHOBEN - ALLES UNTER /api + S3 ROUTES ENHANCED + MIGRATION ROUTES + EMAIL VERIFICATION!"
+        message: "🎉 PFAD-CHAOS BEHOBEN - ALLES UNTER /api + S3 ROUTES ENHANCED + MIGRATION ROUTES + EMAIL VERIFICATION + INVOICE ROUTES!"
       });
     });
 
-    // ✅ 16. DEBUG ROUTES LIST
+    // ✅ 17. DEBUG ROUTES LIST
     app.get("/api/debug/routes", (req, res) => {  // ← FIX: /api PREFIX
       const routes = [];
       
@@ -738,7 +748,7 @@ const connectDB = async () => {
       
       res.json({
         success: true,
-        message: "🔍 Route Debug Info - NACH PFAD-FIX + S3 ENHANCEMENT + MIGRATION ROUTES + EMAIL VERIFICATION",
+        message: "🔍 Route Debug Info - NACH PFAD-FIX + S3 ENHANCEMENT + MIGRATION ROUTES + EMAIL VERIFICATION + INVOICE ROUTES",
         totalRoutes: routes.length,
         apiRoutes: apiRoutes,
         nonApiRoutes: nonApiRoutes,
@@ -753,6 +763,7 @@ const connectDB = async () => {
           s3: "/api/s3/* (enhanced with robust s3Routes.js)",
           upload: "/api/upload",
           stripe: "/api/stripe/*",
+          invoices: "/api/invoices/* (ADDED!)",
           betterContracts: "/api/better-contracts",
           migrationRoutes: "/api/contracts/migrate-legacy & migration-status"
         },
@@ -801,9 +812,10 @@ const connectDB = async () => {
       console.log(`☁️ S3-Routes: /api/s3/* (ENHANCED!)`);
       console.log(`📤 Upload-Route: /api/upload (FIXED!)`);
       console.log(`💳 Stripe-Routes: /api/stripe/* (FIXED!)`);
+      console.log(`📄 Invoice-Routes: /api/invoices/* (ADDED!)`);
       console.log(`🔍 Better-Contracts-Route: /api/better-contracts (ADDED!)`);
       console.log(`🚀 Migration-Routes: /api/contracts/migrate-legacy & migration-status (NEW!)`);
-      console.log(`✅ EINHEITLICHE /api STRUKTUR + S3 ENHANCEMENT + LEGACY MIGRATION + EMAIL VERIFICATION - BEREIT FÜR VERCEL!`);
+      console.log(`✅ EINHEITLICHE /api STRUKTUR + S3 ENHANCEMENT + LEGACY MIGRATION + EMAIL VERIFICATION + INVOICE ROUTES - BEREIT FÜR VERCEL!`);
     });
 
   } catch (err) {
