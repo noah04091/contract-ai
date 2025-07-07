@@ -7,6 +7,13 @@ import logo from "../assets/logo.png";
 import { clearAuthData } from "../utils/api";
 import { useAuth } from "../hooks/useAuth";;
 
+// ✅ HINZUGEFÜGT: Minimal Interface für TypeScript Fix
+interface User {
+  email?: string;
+  subscriptionActive?: boolean;
+  subscriptionPlan?: string;
+}
+
 export default function Navbar() {
   const { user, setUser } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -32,8 +39,8 @@ export default function Navbar() {
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
-  // ✅ KORRIGIERT: Badge-Rendering-Funktion für korrekte Abo-Anzeige
-  const renderSubscriptionBadge = (user: any, isMobile: boolean = false) => {
+  // ✅ GEÄNDERT: TypeScript Fix - user: any wurde zu user: User | null
+  const renderSubscriptionBadge = (user: User | null, isMobile: boolean = false) => {
     if (!user?.subscriptionActive) return null;
     
     const badgeClass = isMobile ? styles.badgeMobile : styles.badge;
