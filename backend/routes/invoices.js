@@ -98,11 +98,11 @@ router.get("/me", verifyToken, async (req, res) => {
   }
 });
 
-// 📥 GET /api/invoices/download/:invoiceId - Rechnung herunterladen (Stripe PDF)
-router.get("/download/:invoiceId", verifyToken, async (req, res) => {
+// 📥 GET /api/invoices/download/:invoiceNumber - Rechnung herunterladen (nach number suchen!)
+router.get("/download/:invoiceNumber", verifyToken, async (req, res) => {
   try {
-    const { invoiceId } = req.params;
-    console.log(`📥 Download-Request für Stripe-Rechnung ${invoiceId} von ${req.user.email}`);
+    const { invoiceNumber } = req.params;
+    console.log(`📥 Download-Request für Rechnung ${invoiceNumber} von ${req.user.email}`);
 
     // 1. User validieren
     const user = await usersCollection.findOne({
@@ -118,23 +118,32 @@ router.get("/download/:invoiceId", verifyToken, async (req, res) => {
       });
     }
 
-    // 2. Rechnung von Stripe laden
-    const invoice = await stripe.invoices.retrieve(invoiceId);
+    // 2. ✅ RICHTIG: Alle Rechnungen laden und nach NUMBER suchen!
+    console.log(`🔍 Suche Rechnung mit Number: ${invoiceNumber} für Customer: ${user.stripeCustomerId}`);
+    
+    const invoicesList = await stripe.invoices.list({
+      customer: user.stripeCustomerId,
+      limit: 100 // Mehr Rechnungen laden für Suche
+    });
 
-    // 3. Berechtigung prüfen (gehört die Rechnung zu diesem Kunden?)
-    if (invoice.customer !== user.stripeCustomerId) {
-      console.warn(`⚠️ Unbefugter Zugriff: Rechnung ${invoiceId} gehört nicht zu User ${req.user.email}`);
-      return res.status(403).json({ 
-        message: "Keine Berechtigung für diese Rechnung" 
+    // 3. Rechnung nach NUMBER finden
+    const invoice = invoicesList.data.find(inv => inv.number === invoiceNumber);
+
+    if (!invoice) {
+      console.warn(`⚠️ Rechnung mit Number ${invoiceNumber} nicht gefunden für User ${req.user.email}`);
+      return res.status(404).json({ 
+        message: "Rechnung nicht gefunden" 
       });
     }
 
+    console.log(`✅ Rechnung gefunden: ID=${invoice.id}, Number=${invoice.number}`);
+
     // 4. Direkter Link zu Stripe's PDF
     if (invoice.invoice_pdf) {
-      console.log(`✅ Weiterleitung zu Stripe PDF für Rechnung ${invoiceId}`);
+      console.log(`✅ Weiterleitung zu Stripe PDF für Rechnung ${invoiceNumber}`);
       res.redirect(302, invoice.invoice_pdf);
     } else {
-      console.error(`❌ Kein PDF verfügbar für Rechnung ${invoiceId}`);
+      console.error(`❌ Kein PDF verfügbar für Rechnung ${invoiceNumber}`);
       return res.status(404).json({ 
         message: "PDF nicht verfügbar für diese Rechnung" 
       });
@@ -145,7 +154,8 @@ router.get("/download/:invoiceId", verifyToken, async (req, res) => {
     
     if (error.type === 'StripeInvalidRequestError') {
       return res.status(404).json({
-        message: "Rechnung nicht gefunden"
+        message: "Fehler bei Stripe API",
+        details: error.message
       });
     }
 

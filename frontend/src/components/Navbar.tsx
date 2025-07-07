@@ -32,6 +32,21 @@ export default function Navbar() {
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
+  // ✅ KORRIGIERT: Badge-Rendering-Funktion für korrekte Abo-Anzeige
+  const renderSubscriptionBadge = (user: any, isMobile: boolean = false) => {
+    if (!user?.subscriptionActive) return null;
+    
+    const badgeClass = isMobile ? styles.badgeMobile : styles.badge;
+    
+    if (user.subscriptionPlan === "business") {
+      return <span className={badgeClass}>🏢 Business</span>;
+    } else if (user.subscriptionPlan === "premium") {
+      return <span className={badgeClass}>💎 Premium</span>;
+    }
+    
+    return null; // Fallback für unbekannte Pläne
+  };
+
   // Check for mobile viewport
   useEffect(() => {
     const checkMobile = () => {
@@ -234,7 +249,7 @@ export default function Navbar() {
                 whileTap={{ scale: 0.98 }}
               >
                 Account
-                {user.subscriptionActive && <span className={styles.badgeMobile}>Premium</span>}
+                {renderSubscriptionBadge(user, true)} {/* ✅ KORRIGIERT */}
               </motion.button>
               
               <AnimatePresence>
@@ -280,7 +295,7 @@ export default function Navbar() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                {user.subscriptionActive && <span className={styles.badge}>Premium</span>} 
+                {renderSubscriptionBadge(user)} {/* ✅ KORRIGIERT */}
                 <span>Account</span>
                 <motion.span
                   animate={{ rotate: dropdownOpen ? 180 : 0 }}
@@ -375,7 +390,7 @@ export default function Navbar() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                {user.subscriptionActive && <span className={styles.badge}>Premium</span>} 
+                {renderSubscriptionBadge(user)} {/* ✅ KORRIGIERT */}
                 <span>Account</span>
                 <motion.span
                   animate={{ rotate: dropdownOpen ? 180 : 0 }}
@@ -453,7 +468,7 @@ export default function Navbar() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                {user.subscriptionActive && <span className={styles.badge}>Premium</span>} 
+                {renderSubscriptionBadge(user)} {/* ✅ KORRIGIERT */}
                 <span>Account</span>
                 <motion.span
                   animate={{ rotate: dropdownOpen ? 180 : 0 }}
@@ -492,7 +507,7 @@ export default function Navbar() {
                 whileTap={{ scale: 0.98 }}
               >
                 Account
-                {user.subscriptionActive && <span className={styles.badgeMobile}>Premium</span>}
+                {renderSubscriptionBadge(user, true)} {/* ✅ KORRIGIERT */}
               </motion.button>
               
               <AnimatePresence>
@@ -578,7 +593,7 @@ export default function Navbar() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                {user.subscriptionActive && <span className={styles.badge}>Premium</span>} 
+                {renderSubscriptionBadge(user)} {/* ✅ KORRIGIERT */}
                 <span>Account</span>
                 <motion.span
                   animate={{ rotate: dropdownOpen ? 180 : 0 }}
@@ -669,8 +684,11 @@ export default function Navbar() {
                     <>
                       <div className={styles.userInfo}>
                         <span className={styles.userEmail}>{user.email}</span>
+                        {/* ✅ KORRIGIERT: Mobile Menu Badge */}
                         {user.subscriptionActive && (
-                          <span className={styles.premiumBadge}>Premium</span>
+                          <span className={styles.premiumBadge}>
+                            {user.subscriptionPlan === "business" ? "🏢 Business" : "💎 Premium"}
+                          </span>
                         )}
                       </div>
                       <Link to="/me" className={`${styles.mobileNavLink} ${location.pathname === "/me" ? styles.activeMobileNavLink : ""}`}>
@@ -857,7 +875,10 @@ export default function Navbar() {
                           <span className={styles.sidebarUserEmail}>{user.email}</span>
                           <span className={styles.sidebarUserPlan}>
                             {user.subscriptionActive ? (
-                              <span className={styles.premiumBadgeSidebar}>Premium</span>
+                              <span className={styles.premiumBadgeSidebar}>
+                                {/* ✅ KORRIGIERT: Sidebar Badge */}
+                                {user.subscriptionPlan === "business" ? "🏢 Business" : "💎 Premium"}
+                              </span>
                             ) : (
                               <span className={styles.standardBadge}>Standard</span>
                             )}
