@@ -1,178 +1,268 @@
-// 📁 backend/routes/invoices.js - KORRIGIERT: parseInt Problem behoben
+// 📁 backend/routes/invoices.js - ✅ STRIPE INVOICES API VERSION (Professional)
 
 const express = require("express");
 const router = express.Router();
-const { MongoClient } = require("mongodb");
+const Stripe = require("stripe");
+const { MongoClient, ObjectId } = require("mongodb");
 const verifyToken = require("../middleware/verifyToken");
+require("dotenv").config();
 
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
 
-// GET /invoices/me – alle Rechnungen des aktuellen Nutzers
+// 🛢️ MongoDB-Verbindung für User-Daten
+let usersCollection;
+const client = new MongoClient(MONGO_URI);
+client.connect()
+  .then(() => {
+    const db = client.db("contract_ai");
+    usersCollection = db.collection("users");
+    console.log("✅ Invoices-Route: MongoDB verbunden (für User-Daten)");
+  })
+  .catch(err => {
+    console.error("❌ MongoDB-Verbindung fehlgeschlagen:", err.message);
+  });
+
+// 📋 GET /api/invoices/me - Alle Rechnungen des Users (von Stripe API)
 router.get("/me", verifyToken, async (req, res) => {
   try {
-    console.log("🔍 Lade Rechnungen für User:", req.user.email);
+    console.log("🔍 Lade Stripe-Rechnungen für User:", req.user.email);
 
-    const client = new MongoClient(MONGO_URI);
-    await client.connect();
-    const db = client.db("contract_ai");
-    const invoicesCollection = db.collection("invoices");
+    // 1. User aus MongoDB laden (für stripeCustomerId)
+    const user = await usersCollection.findOne({ 
+      $or: [
+        { _id: new ObjectId(req.user.userId) },
+        { email: req.user.email }
+      ]
+    });
 
-    const userEmail = req.user.email;
+    if (!user) {
+      console.warn("⚠️ User nicht gefunden:", req.user.email);
+      return res.status(404).json({ 
+        message: "Benutzer nicht gefunden",
+        error: "USER_NOT_FOUND" 
+      });
+    }
 
-    // Rechnungen laden und sortieren
-    const invoices = await invoicesCollection
-      .find({ customerEmail: userEmail })
-      .sort({ createdAt: -1 }) // Neueste zuerst - nach Datum sortiert
-      .project({ file: 0 }) // PDF-Datei nicht laden (zu groß für API Response)
-      .toArray();
+    if (!user.stripeCustomerId) {
+      console.warn("⚠️ Keine Stripe Customer ID für User:", req.user.email);
+      return res.json([]); // Leere Liste wenn noch kein Stripe-Kunde
+    }
 
-    console.log(`📊 ${invoices.length} Rechnungen gefunden für ${userEmail}`);
+    // 2. Rechnungen von Stripe API laden
+    console.log("🔍 Lade Stripe-Rechnungen für Customer:", user.stripeCustomerId);
 
-    // Rechnungen für Frontend formatieren
-    const formattedInvoices = invoices.map(invoice => ({
-      invoiceNumber: invoice.invoiceNumber,
-      plan: invoice.plan,
-      amount: Math.round(invoice.amount * 100), // Frontend erwartet Cent-Werte
-      date: invoice.createdAt ? invoice.createdAt.toISOString() : invoice.date
-    }));
+    const stripeInvoices = await stripe.invoices.list({
+      customer: user.stripeCustomerId,
+      limit: 50, // Letzte 50 Rechnungen
+      status: 'paid', // Nur bezahlte Rechnungen
+      expand: ['data.subscription', 'data.subscription.items.data.price']
+    });
 
+    console.log(`📊 ${stripeInvoices.data.length} Stripe-Rechnungen gefunden`);
+
+    // 3. Rechnungen für Frontend formatieren
+    const formattedInvoices = stripeInvoices.data.map(invoice => {
+      // Plan aus der Subscription ermitteln
+      let plan = "unknown";
+      if (invoice.subscription && invoice.subscription.items && invoice.subscription.items.data.length > 0) {
+        const priceId = invoice.subscription.items.data[0].price.id;
+        
+        // Plan-Mapping basierend auf Price-IDs
+        if (priceId === process.env.STRIPE_BUSINESS_PRICE_ID) {
+          plan = "business";
+        } else if (priceId === process.env.STRIPE_PREMIUM_PRICE_ID) {
+          plan = "premium";
+        }
+      }
+
+      return {
+        invoiceNumber: invoice.number || invoice.id, // Stripe's Rechnungsnummer
+        plan: plan,
+        amount: invoice.amount_paid, // Bereits in Cent von Stripe
+        date: new Date(invoice.created * 1000).toISOString(), // Unix timestamp → ISO string
+        stripeInvoiceId: invoice.id, // Für Download-Links
+        status: invoice.status,
+        currency: invoice.currency,
+        pdfUrl: invoice.invoice_pdf // Direkter PDF-Link von Stripe
+      };
+    });
+
+    // Nach Datum sortieren (neueste zuerst)
+    formattedInvoices.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    console.log(`✅ ${formattedInvoices.length} Rechnungen erfolgreich formatiert`);
     res.json(formattedInvoices);
-    await client.close();
 
-  } catch (err) {
-    console.error("❌ Fehler beim Abrufen der Rechnungen:", err);
-    res.status(500).json({ 
-      error: "Interner Serverfehler",
+  } catch (error) {
+    console.error("❌ Fehler beim Laden der Stripe-Rechnungen:", error);
+    
+    // Spezifische Stripe-Fehler behandeln
+    if (error.type === 'StripeInvalidRequestError') {
+      return res.status(400).json({
+        message: "Ungültige Stripe-Anfrage",
+        error: "STRIPE_INVALID_REQUEST",
+        details: error.message
+      });
+    }
+
+    res.status(500).json({
       message: "Fehler beim Laden der Rechnungen",
-      details: err.message 
+      error: "INTERNAL_SERVER_ERROR",
+      details: error.message
     });
   }
 });
 
-// GET /invoices/download/:invoiceNumber – einzelne Rechnung downloaden
-router.get("/download/:invoiceNumber", verifyToken, async (req, res) => {
-  // ✅ KRITISCHER FIX: Kein parseInt! invoiceNumber ist ein String wie "CA-2025-00001"
-  const invoiceNumber = req.params.invoiceNumber; // ← GEÄNDERT: Kein parseInt mehr!
-
+// 📥 GET /api/invoices/download/:invoiceId - Rechnung herunterladen (Stripe PDF)
+router.get("/download/:invoiceId", verifyToken, async (req, res) => {
   try {
-    console.log(`📥 Download-Request für Rechnung ${invoiceNumber} von ${req.user.email}`);
+    const { invoiceId } = req.params;
+    console.log(`📥 Download-Request für Stripe-Rechnung ${invoiceId} von ${req.user.email}`);
 
-    const client = new MongoClient(MONGO_URI);
-    await client.connect();
-    const db = client.db("contract_ai");
-    const invoicesCollection = db.collection("invoices");
-
-    // Rechnung finden und Berechtigung prüfen
-    const invoice = await invoicesCollection.findOne({
-      invoiceNumber: invoiceNumber, // String-Vergleich, nicht Number!
-      customerEmail: req.user.email, // Sicherheit: User kann nur eigene Rechnungen laden
+    // 1. User validieren
+    const user = await usersCollection.findOne({
+      $or: [
+        { _id: new ObjectId(req.user.userId) },
+        { email: req.user.email }
+      ]
     });
 
-    if (!invoice) {
-      console.warn(`⚠️ Rechnung ${invoiceNumber} nicht gefunden oder kein Zugriff für ${req.user.email}`);
-      await client.close();
-      return res.status(404).json({ error: "Rechnung nicht gefunden" });
+    if (!user || !user.stripeCustomerId) {
+      return res.status(404).json({ 
+        message: "Benutzer oder Stripe-Kunde nicht gefunden" 
+      });
     }
 
-    if (!invoice.file) {
-      console.error(`❌ PDF-Datei fehlt für Rechnung ${invoiceNumber}`);
-      await client.close();
-      return res.status(404).json({ error: "PDF-Datei nicht verfügbar" });
+    // 2. Rechnung von Stripe laden
+    const invoice = await stripe.invoices.retrieve(invoiceId);
+
+    // 3. Berechtigung prüfen (gehört die Rechnung zu diesem Kunden?)
+    if (invoice.customer !== user.stripeCustomerId) {
+      console.warn(`⚠️ Unbefugter Zugriff: Rechnung ${invoiceId} gehört nicht zu User ${req.user.email}`);
+      return res.status(403).json({ 
+        message: "Keine Berechtigung für diese Rechnung" 
+      });
     }
 
-    console.log(`✅ Sende PDF für Rechnung ${invoiceNumber} (${invoice.file.length} bytes)`);
+    // 4. Direkter Link zu Stripe's PDF oder Proxy
+    if (invoice.invoice_pdf) {
+      console.log(`✅ Weiterleitung zu Stripe PDF für Rechnung ${invoiceId}`);
+      
+      // Option A: Direkte Weiterleitung zu Stripe PDF
+      res.redirect(302, invoice.invoice_pdf);
+      
+      // Option B: Proxy (falls Sie Stripe-Links verstecken wollen)
+      // const response = await fetch(invoice.invoice_pdf);
+      // const buffer = await response.buffer();
+      // res.setHeader('Content-Type', 'application/pdf');
+      // res.setHeader('Content-Disposition', `attachment; filename="Rechnung-${invoice.number || invoiceId}.pdf"`);
+      // res.send(buffer);
+      
+    } else {
+      console.error(`❌ Kein PDF verfügbar für Rechnung ${invoiceId}`);
+      return res.status(404).json({ 
+        message: "PDF nicht verfügbar für diese Rechnung" 
+      });
+    }
 
-    // PDF-Headers setzen
-    res.set({
-      "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="Rechnung-${invoiceNumber}.pdf"`,
-      "Content-Length": invoice.file.length
-    });
+  } catch (error) {
+    console.error("❌ Fehler beim Download der Stripe-Rechnung:", error);
+    
+    if (error.type === 'StripeInvalidRequestError') {
+      return res.status(404).json({
+        message: "Rechnung nicht gefunden",
+        error: "STRIPE_INVOICE_NOT_FOUND"
+      });
+    }
 
-    // PDF-Buffer senden
-    res.send(invoice.file);
-    await client.close();
-
-  } catch (err) {
-    console.error("❌ Fehler beim Download der Rechnung:", err);
-    res.status(500).json({ 
-      error: "Interner Serverfehler",
+    res.status(500).json({
       message: "Fehler beim Herunterladen der Rechnung",
-      details: err.message 
+      error: "INTERNAL_SERVER_ERROR",
+      details: error.message
     });
   }
 });
 
-// 📊 GET /invoices/stats - Rechnung-Statistiken (optional, für Dashboard)
+// 📊 GET /api/invoices/stats - Rechnung-Statistiken (von Stripe API)
 router.get("/stats", verifyToken, async (req, res) => {
   try {
     const userEmail = req.user.email;
-    console.log("📊 Lade Rechnung-Statistiken für:", userEmail);
+    console.log("📊 Lade Stripe-Rechnung-Statistiken für:", userEmail);
 
-    const client = new MongoClient(MONGO_URI);
-    await client.connect();
-    const db = client.db("contract_ai");
-    const invoicesCollection = db.collection("invoices");
+    const user = await usersCollection.findOne({
+      $or: [
+        { _id: new ObjectId(req.user.userId) },
+        { email: req.user.email }
+      ]
+    });
 
-    // Aggregation für Statistiken
-    const stats = await invoicesCollection.aggregate([
-      { $match: { customerEmail: userEmail } },
-      {
-        $group: {
-          _id: null,
-          totalInvoices: { $sum: 1 },
-          totalAmount: { $sum: "$amount" },
-          lastInvoice: { $max: "$createdAt" },
-          planBreakdown: {
-            $push: {
-              plan: "$plan",
-              amount: "$amount",
-              date: "$createdAt"
-            }
-          }
-        }
-      }
-    ]).toArray();
+    if (!user || !user.stripeCustomerId) {
+      return res.json({
+        userEmail: userEmail,
+        totalInvoices: 0,
+        totalAmount: 0,
+        lastInvoice: null,
+        planSummary: {},
+        source: "stripe_api"
+      });
+    }
 
-    const result = stats.length > 0 ? stats[0] : {
-      totalInvoices: 0,
-      totalAmount: 0,
-      lastInvoice: null,
-      planBreakdown: []
-    };
+    // Alle bezahlten Rechnungen von Stripe laden
+    const stripeInvoices = await stripe.invoices.list({
+      customer: user.stripeCustomerId,
+      status: 'paid',
+      limit: 100
+    });
+
+    const totalInvoices = stripeInvoices.data.length;
+    const totalAmount = stripeInvoices.data.reduce((sum, inv) => sum + inv.amount_paid, 0);
+    const lastInvoice = stripeInvoices.data.length > 0 ? 
+      new Date(stripeInvoices.data[0].created * 1000).toISOString() : null;
 
     // Plan-Aufschlüsselung
     const planSummary = {};
-    result.planBreakdown.forEach(item => {
-      if (!planSummary[item.plan]) {
-        planSummary[item.plan] = { count: 0, total: 0 };
+    stripeInvoices.data.forEach(invoice => {
+      if (invoice.subscription && invoice.subscription.items) {
+        const priceId = invoice.subscription.items.data[0]?.price?.id;
+        let plan = "unknown";
+        
+        if (priceId === process.env.STRIPE_BUSINESS_PRICE_ID) {
+          plan = "business";
+        } else if (priceId === process.env.STRIPE_PREMIUM_PRICE_ID) {
+          plan = "premium";
+        }
+
+        if (!planSummary[plan]) {
+          planSummary[plan] = { count: 0, total: 0 };
+        }
+        planSummary[plan].count++;
+        planSummary[plan].total += invoice.amount_paid;
       }
-      planSummary[item.plan].count++;
-      planSummary[item.plan].total += item.amount;
     });
 
     res.json({
       userEmail: userEmail,
-      totalInvoices: result.totalInvoices,
-      totalAmount: result.totalAmount,
-      lastInvoice: result.lastInvoice,
+      stripeCustomerId: user.stripeCustomerId,
+      totalInvoices: totalInvoices,
+      totalAmount: totalAmount,
+      lastInvoice: lastInvoice,
       planSummary: planSummary,
+      source: "stripe_api",
       timestamp: new Date().toISOString()
     });
 
-    await client.close();
-
   } catch (error) {
-    console.error("❌ Fehler bei Invoice Stats:", error);
-    res.status(500).json({ 
-      error: "Interner Serverfehler",
+    console.error("❌ Fehler bei Stripe Invoice Stats:", error);
+    res.status(500).json({
       message: "Fehler beim Laden der Statistiken",
-      details: error.message 
+      error: "INTERNAL_SERVER_ERROR",
+      details: error.message
     });
   }
 });
 
-// 🔍 GET /invoices/debug - Debug-Info (nur Development)
+// 🔍 GET /api/invoices/debug - Debug-Info (Stripe API Version)
 router.get("/debug", verifyToken, async (req, res) => {
   if (process.env.NODE_ENV === 'production') {
     return res.status(403).json({ message: "Debug-Route nur in Development verfügbar" });
@@ -180,49 +270,58 @@ router.get("/debug", verifyToken, async (req, res) => {
 
   try {
     const userEmail = req.user.email;
-    console.log("🔍 Invoice Debug für:", userEmail);
-    
-    const client = new MongoClient(MONGO_URI);
-    await client.connect();
-    const db = client.db("contract_ai");
-    const invoicesCollection = db.collection("invoices");
-    
-    // Alle Rechnungen in DB zählen
-    const totalInvoicesInDB = await invoicesCollection.countDocuments();
-    
-    // User-spezifische Rechnungen
-    const userInvoices = await invoicesCollection
-      .find({ customerEmail: userEmail })
-      .toArray();
+    console.log("🔍 Stripe Invoice Debug für:", userEmail);
 
-    // Beispiel-Rechnung Struktur
-    const sampleInvoice = await invoicesCollection.findOne({});
+    const user = await usersCollection.findOne({
+      $or: [
+        { _id: new ObjectId(req.user.userId) },
+        { email: req.user.email }
+      ]
+    });
+
+    let stripeInfo = null;
+    if (user && user.stripeCustomerId) {
+      try {
+        // Stripe Customer Info
+        const customer = await stripe.customers.retrieve(user.stripeCustomerId);
+        const invoices = await stripe.invoices.list({
+          customer: user.stripeCustomerId,
+          limit: 5
+        });
+
+        stripeInfo = {
+          customerId: user.stripeCustomerId,
+          customerEmail: customer.email,
+          invoiceCount: invoices.data.length,
+          sampleInvoices: invoices.data.map(inv => ({
+            id: inv.id,
+            number: inv.number,
+            amount: inv.amount_paid,
+            status: inv.status,
+            created: new Date(inv.created * 1000).toISOString(),
+            hasPdf: !!inv.invoice_pdf,
+            pdfUrl: inv.invoice_pdf
+          }))
+        };
+      } catch (stripeError) {
+        stripeInfo = { error: stripeError.message };
+      }
+    }
 
     res.json({
       userEmail: userEmail,
-      totalInvoicesInDB: totalInvoicesInDB,
-      userInvoicesCount: userInvoices.length,
-      userInvoices: userInvoices.map(inv => ({
-        invoiceNumber: inv.invoiceNumber,
-        plan: inv.plan,
-        amount: inv.amount,
-        date: inv.createdAt,
-        hasFile: !!inv.file,
-        fileSize: inv.file ? inv.file.length : 0,
-        invoiceNumberType: typeof inv.invoiceNumber
-      })),
-      sampleInvoiceStructure: sampleInvoice ? {
-        fields: Object.keys(sampleInvoice),
-        hasFile: !!sampleInvoice.file,
-        fileType: sampleInvoice.file ? typeof sampleInvoice.file : null,
-        invoiceNumberExample: sampleInvoice.invoiceNumber,
-        invoiceNumberType: typeof sampleInvoice.invoiceNumber
-      } : null,
-      collectionExists: !!invoicesCollection,
-      note: "invoiceNumber wird jetzt als String behandelt (kein parseInt mehr!)"
+      userId: req.user.userId,
+      hasUser: !!user,
+      hasStripeCustomerId: !!(user && user.stripeCustomerId),
+      stripeInfo: stripeInfo,
+      environmentCheck: {
+        stripeSecretKey: !!process.env.STRIPE_SECRET_KEY,
+        businessPriceId: process.env.STRIPE_BUSINESS_PRICE_ID,
+        premiumPriceId: process.env.STRIPE_PREMIUM_PRICE_ID
+      },
+      apiVersion: "stripe_invoices_api",
+      note: "Diese Version verwendet die Stripe Invoices API anstelle von MongoDB"
     });
-
-    await client.close();
 
   } catch (error) {
     console.error("❌ Debug Fehler:", error);
