@@ -96,29 +96,14 @@ export default function Profile() {
     });
   };
 
-  const handleDownload = async (invoiceNumber: string) => {
+  // ✅ NEUE VERSION: CSP-Fix für PDF-Download
+  const handleDownload = (invoiceNumber: string) => {
     try {
-      const res = await fetch(`/api/invoices/download/${invoiceNumber}`, {
-        credentials: 'include',
-      });
-      
-      if (res.ok) {
-        const blob = await res.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `Rechnung-${invoiceNumber}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        a.remove();
-      } else {
-        setNotification({
-          message: "Fehler beim Herunterladen der Rechnung",
-          type: "error"
-        });
-      }
-    } catch {
+      // Direkte Navigation - keine fetch(), keine CSP-Probleme
+      const downloadUrl = `/api/invoices/download/${invoiceNumber}`;
+      window.open(downloadUrl, '_blank');
+    } catch (error) {
+      console.error("Fehler beim Öffnen des PDF-Links:", error);
       setNotification({
         message: "Fehler beim Herunterladen der Rechnung",
         type: "error"
