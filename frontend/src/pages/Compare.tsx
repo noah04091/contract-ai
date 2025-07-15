@@ -542,20 +542,20 @@ export default function EnhancedCompare() {
   return (
     <>
       <Helmet>
-        <title>Verträge vergleichen mit KI | Contract AI</title>
-        <meta name="description" content="Vergleiche zwei Verträge automatisch mit KI, erkenne Unterschiede und finde die fairste Option. Mit Contract AI siehst du sofort, welcher Vertrag die besseren Konditionen hat." />
-        <meta name="keywords" content="Vertragsvergleich, Verträge vergleichen, Unterschiede Verträge, KI Vertragsanalyse, Contract AI" />
+        <title>Verträge vergleichen & bessere Wahl treffen mit KI | Contract AI</title>
+        <meta name="description" content="Vergleiche Verträge in Sekunden mit KI: Unterschiede sehen, Fairness prüfen & bessere Konditionen sichern. Jetzt schnell & einfach vergleichen!" />
+        <meta name="keywords" content="Vertragsvergleich, Verträge vergleichen, Vertragsunterschiede, KI Vertragsanalyse, bessere Konditionen, Contract AI" />
         <link rel="canonical" href="https://contract-ai.de/compare" />
         {/* Open Graph / Facebook */}
-        <meta property="og:title" content="Verträge vergleichen mit KI | Contract AI" />
-        <meta property="og:description" content="Vergleiche Verträge auf Fairness, Preis und Konditionen in Sekunden. KI-gestützte Analyse für den besten Vertragsabschluss." />
+        <meta property="og:title" content="Verträge vergleichen & bessere Wahl treffen mit KI | Contract AI" />
+        <meta property="og:description" content="Vergleiche Verträge schnell & transparent mit KI. Unterschiede erkennen, Fairness prüfen & bessere Konditionen wählen. Jetzt ausprobieren!" />
         <meta property="og:url" content="https://contract-ai.de/compare" />
         <meta property="og:type" content="website" />
         <meta property="og:image" content="https://contract-ai.de/og-image.jpg" />
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Verträge vergleichen mit KI | Contract AI" />
-        <meta name="twitter:description" content="Finde mit KI heraus, welcher Vertrag besser ist. Vergleiche Inhalte, Klauseln und Konditionen — schnell und transparent." />
+        <meta name="twitter:title" content="Verträge vergleichen & bessere Wahl treffen mit KI | Contract AI" />
+        <meta name="twitter:description" content="Vergleiche Verträge in Sekunden mit KI: Fairness prüfen, Unterschiede sehen & die beste Wahl treffen. Jetzt testen!" />
         <meta name="twitter:image" content="https://contract-ai.de/og-image.jpg" />
       </Helmet>
 

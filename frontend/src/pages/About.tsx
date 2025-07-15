@@ -27,20 +27,20 @@ const About: React.FC = () => {
   return (
     <>
       <Helmet>
-        <title>Über uns – Contract AI</title>
-        <meta name="description" content="Lerne Contract AI kennen: Unsere Mission, unsere Vision und das Team, das hinter der führenden Plattform für KI-gestützte Vertragsanalyse steht." />
-        <meta name="keywords" content="Über uns, Contract AI, Team, Mission, Vertragsanalyse, KI Vertragsmanagement" />
+        <title>Über uns – Contract AI | Deine Experten für smarte Vertragsanalyse</title>
+        <meta name="description" content="Lerne das Team hinter Contract AI kennen. Wir entwickeln smarte KI-Lösungen für transparente, sichere und einfache Vertragsanalysen." />
+        <meta name="keywords" content="Über uns, Contract AI, Team, Mission, smarte Vertragsanalyse, KI Vertragsmanagement" />
         <link rel="canonical" href="https://contract-ai.de/about" />
         {/* Open Graph / Facebook */}
         <meta property="og:title" content="Über uns – Contract AI" />
-        <meta property="og:description" content="Erfahre mehr über Contract AI, unser Ziel einer transparenten Vertragswelt und das Team hinter der KI-Vertragsplattform." />
+        <meta property="og:description" content="Lerne das Team kennen, das Contract AI entwickelt hat, um deine Verträge smarter, sicherer und transparenter zu machen." />
         <meta property="og:url" content="https://contract-ai.de/about" />
         <meta property="og:type" content="website" />
         <meta property="og:image" content="https://contract-ai.de/og-image.jpg" />
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Über uns – Contract AI" />
-        <meta name="twitter:description" content="Entdecke, wer hinter Contract AI steckt und warum wir die Zukunft der Vertragsanalyse gestalten." />
+        <meta name="twitter:description" content="Wir sind das Team hinter Contract AI – der führenden Plattform für smarte, KI-gestützte Vertragsanalysen." />
         <meta name="twitter:image" content="https://contract-ai.de/og-image.jpg" />
       </Helmet>
       

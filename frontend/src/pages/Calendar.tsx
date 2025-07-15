@@ -168,20 +168,20 @@ export default function CalendarPage() {
   return (
     <>
       <Helmet>
-        <title>Fristenkalender – Verträge verwalten | Contract AI</title>
-        <meta name="description" content="Alle Kündigungs- und Vertragsfristen in deinem persönlichen Kalender. Contract AI erinnert dich automatisch und schützt vor teuren Fehlern." />
-        <meta name="keywords" content="Fristenkalender, Vertragsfristen, Kündigungsfristen verwalten, Kalender Verträge, Contract AI" />
+        <title>Fristen im Blick – Vertragskalender & Erinnerungen | Contract AI</title>
+        <meta name="description" content="Verpasse keine Frist mehr: Mit Contract AI alle Vertrags- und Kündigungstermine sicher im Blick. Automatisch erinnert & bestens geschützt. Jetzt starten!" />
+        <meta name="keywords" content="Fristenkalender, Vertragsfristen, Kündigungsfristen, Kalender Verträge, Erinnerungen Verträge, Contract AI" />
         <link rel="canonical" href="https://contract-ai.de/calendar" />
         {/* Open Graph / Facebook */}
-        <meta property="og:title" content="Fristenkalender – Verträge verwalten | Contract AI" />
-        <meta property="og:description" content="Verpasse keine Frist mehr. Mit Contract AI behältst du alle Vertrags- und Kündigungstermine sicher im Blick." />
+        <meta property="og:title" content="Fristen im Blick – Vertragskalender & Erinnerungen | Contract AI" />
+        <meta property="og:description" content="Behalte alle Fristen sicher im Blick: Contract AI erinnert dich automatisch an wichtige Vertrags- und Kündigungstermine. Jetzt ausprobieren!" />
         <meta property="og:url" content="https://contract-ai.de/calendar" />
         <meta property="og:type" content="website" />
         <meta property="og:image" content="https://contract-ai.de/og-image.jpg" />
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Fristenkalender – Verträge verwalten | Contract AI" />
-        <meta name="twitter:description" content="Alle Fristen immer im Blick: Verwalte deine Verträge mit dem intelligenten Fristenkalender von Contract AI." />
+        <meta name="twitter:title" content="Fristen im Blick – Vertragskalender & Erinnerungen | Contract AI" />
+        <meta name="twitter:description" content="Alle Fristen sicher im Blick – mit automatischen Erinnerungen von Contract AI. Mehr Kontrolle, weniger Stress. Jetzt starten!" />
         <meta name="twitter:image" content="https://contract-ai.de/og-image.jpg" />
       </Helmet>
       

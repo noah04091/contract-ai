@@ -520,20 +520,20 @@ export default function Generate() {
   return (
     <>
       <Helmet>
-        <title>Verträge automatisch erstellen | Contract AI</title>
-        <meta name="description" content="Erstelle individuelle, rechtssichere Verträge in Minuten. Contract AI kombiniert geprüfte Vorlagen mit KI-Personalisierung für perfekte Ergebnisse." />
-        <meta name="keywords" content="Verträge erstellen, Vertragsgenerator, Vertragsvorlagen, KI Vertragserstellung, Contract AI" />
+        <title>Verträge erstellen & sofort nutzen – KI-Generator | Contract AI</title>
+        <meta name="description" content="Erstelle rechtssichere, individuelle Verträge in Minuten mit KI. Einfach, schnell & sofort einsatzbereit. Jetzt starten & direkt nutzen!" />
+        <meta name="keywords" content="Verträge erstellen, Vertragsgenerator, KI Vertragserstellung, individuelle Vertragsvorlagen, Contract AI" />
         <link rel="canonical" href="https://contract-ai.de/generate" />
         {/* Open Graph / Facebook */}
-        <meta property="og:title" content="Verträge automatisch erstellen | Contract AI" />
-        <meta property="og:description" content="Schnell, einfach und rechtssicher: Erstelle deine Verträge mit dem KI-Generator von Contract AI." />
+        <meta property="og:title" content="Verträge erstellen & sofort nutzen – KI-Generator | Contract AI" />
+        <meta property="og:description" content="Erstelle individuelle, rechtssichere Verträge in Minuten mit unserem KI-Generator. Einfach & sofort nutzbar. Jetzt ausprobieren!" />
         <meta property="og:url" content="https://contract-ai.de/generate" />
         <meta property="og:type" content="website" />
         <meta property="og:image" content="https://contract-ai.de/og-image.jpg" />
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Verträge automatisch erstellen | Contract AI" />
-        <meta name="twitter:description" content="Dein smarter Vertragsgenerator für individuelle, rechtssichere Dokumente – powered by KI." />
+        <meta name="twitter:title" content="Verträge erstellen & sofort nutzen – KI-Generator | Contract AI" />
+        <meta name="twitter:description" content="Rechtssichere Verträge einfach mit KI erstellen & sofort einsetzen. Schnell, individuell & sicher. Jetzt starten!" />
         <meta name="twitter:image" content="https://contract-ai.de/og-image.jpg" />
       </Helmet>
 

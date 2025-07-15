@@ -1246,22 +1246,22 @@ export default function Contracts() {
   return (
     <>
       <Helmet>
-        <title>Verträge verwalten & analysieren | Contract AI</title>
-        <meta name="description" content="Lade deine Verträge hoch, analysiere Risiken und optimiere Inhalte mit KI. Contract AI bietet dir volle Transparenz und smarte Optimierungen für alle deine Verträge." />
-        <meta name="keywords" content="Verträge verwalten, Vertragsanalyse, Vertrag hochladen, Vertragsoptimierung, Contract AI" />
+        <title>Verträge mit KI analysieren & optimieren | Contract AI</title>
+        <meta name="description" content="Verträge hochladen, Risiken erkennen & direkt optimieren – alles mit KI. Mehr Klarheit, bessere Konditionen, volle Kontrolle. Jetzt ausprobieren!" />
+        <meta name="keywords" content="Vertragsanalyse, Verträge optimieren, Vertrag hochladen, Risiken erkennen, Contract AI" />
         <link rel="canonical" href="https://contract-ai.de/contracts" />
         
         {/* Open Graph / Facebook */}
-        <meta property="og:title" content="Verträge verwalten & analysieren | Contract AI" />
-        <meta property="og:description" content="Mit Contract AI kannst du Verträge sicher hochladen, automatisch analysieren und intelligent optimieren. Mehr Klarheit, weniger Risiken." />
+        <meta property="og:title" content="Verträge mit KI analysieren & optimieren | Contract AI" />
+        <meta property="og:description" content="Lade deine Verträge hoch, erkenne Risiken & optimiere Inhalte sofort mit KI. Mehr Sicherheit & bessere Ergebnisse." />
         <meta property="og:url" content="https://contract-ai.de/contracts" />
         <meta property="og:type" content="website" />
         <meta property="og:image" content="https://contract-ai.de/og-image.jpg" />
         
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Verträge verwalten & analysieren | Contract AI" />
-        <meta name="twitter:description" content="Verträge einfach hochladen, Risiken erkennen und sofort optimieren. Dein Vertragsmanagement mit KI – effizient und sicher." />
+        <meta name="twitter:title" content="Verträge mit KI analysieren & optimieren | Contract AI" />
+        <meta name="twitter:description" content="Verträge einfach hochladen, Risiken erkennen & optimieren – mit KI. Mehr Kontrolle & Klarheit für deine Verträge." />
         <meta name="twitter:image" content="https://contract-ai.de/og-image.jpg" />
       </Helmet>
 

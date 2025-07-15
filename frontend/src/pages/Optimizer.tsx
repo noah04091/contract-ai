@@ -1209,20 +1209,20 @@ Generiert durch KI-Vertragsoptimierung`;
   return (
     <>
       <Helmet>
-        <title>Verträge optimieren mit KI | Contract AI</title>
-        <meta name="description" content="Lasse deine Verträge automatisch von KI prüfen und optimiere Klauseln in Sekunden. Contract AI sorgt für bessere Bedingungen und mehr Fairness in deinen Verträgen." />
-        <meta name="keywords" content="Vertragsoptimierung, Verträge verbessern, KI Vertragsanalyse, Klauseln optimieren, Contract AI" />
+        <title>Verträge mit KI optimieren & bessere Konditionen sichern | Contract AI</title>
+        <meta name="description" content="Optimiere deine Verträge in Sekunden mit KI: Schwächen erkennen, Klauseln verbessern & bessere Konditionen sichern. Jetzt einfach & sicher optimieren!" />
+        <meta name="keywords" content="Vertragsoptimierung, Verträge verbessern, KI Vertragsanalyse, Klauseln verbessern, bessere Konditionen, Contract AI" />
         <link rel="canonical" href="https://contract-ai.de/optimizer" />
         {/* Open Graph / Facebook */}
-        <meta property="og:title" content="Verträge optimieren mit KI | Contract AI" />
-        <meta property="og:description" content="Erkenne Schwächen in deinen Verträgen und verbessere sie mit KI-gestützten Optimierungsvorschlägen. Einfach, schnell und sicher." />
+        <meta property="og:title" content="Verträge mit KI optimieren & bessere Konditionen sichern | Contract AI" />
+        <meta property="og:description" content="Verbessere deine Verträge mit KI: Schwächen erkennen, Klauseln optimieren & bessere Konditionen erreichen. Jetzt ausprobieren!" />
         <meta property="og:url" content="https://contract-ai.de/optimizer" />
         <meta property="og:type" content="website" />
         <meta property="og:image" content="https://contract-ai.de/og-image.jpg" />
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Verträge optimieren mit KI | Contract AI" />
-        <meta name="twitter:description" content="Optimiere deine Verträge automatisch mit KI und sichere dir bessere Konditionen. Dein smarter Vertragsoptimierer von Contract AI." />
+        <meta name="twitter:title" content="Verträge mit KI optimieren & bessere Konditionen sichern | Contract AI" />
+        <meta name="twitter:description" content="Optimiere deine Verträge mit KI, verbessere Klauseln & sichere dir die besten Konditionen. Schnell, einfach & sicher. Jetzt starten!" />
         <meta name="twitter:image" content="https://contract-ai.de/og-image.jpg" />
       </Helmet>
       

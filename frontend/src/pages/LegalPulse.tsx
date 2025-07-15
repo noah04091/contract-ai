@@ -683,22 +683,22 @@ export default function LegalPulse() {
   return (
     <div className={styles.legalPulseContainer}>
       <Helmet>
-        <title>Legal Pulse – Risiken früh erkennen | Contract AI</title>
-        <meta name="description" content="Erkenne neue rechtliche Risiken sofort mit Legal Pulse. Contract AI überwacht Gesetzesänderungen und schützt deine Verträge proaktiv." />
-        <meta name="keywords" content="Legal Pulse, Vertragsrisiken erkennen, Gesetzesänderungen, Frühwarnsystem Verträge, Contract AI" />
+        <title>Legal Pulse – Risiken erkennen & Verträge schützen | Contract AI</title>
+        <meta name="description" content="Erkenne rechtliche Risiken frühzeitig & schütze deine Verträge mit Legal Pulse. Bleib immer einen Schritt voraus. Jetzt prüfen & absichern!" />
+        <meta name="keywords" content="Legal Pulse, Vertragsrisiken erkennen, Gesetzesänderungen, Frühwarnsystem Verträge, Risiken prüfen, Contract AI" />
         <link rel="canonical" href="https://contract-ai.de/legalpulse" />
         
         {/* Open Graph / Facebook */}
-        <meta property="og:title" content="Legal Pulse – Risiken früh erkennen | Contract AI" />
-        <meta property="og:description" content="Bleibe immer rechtssicher: Mit Legal Pulse erkennst du Gesetzesänderungen und neue Risiken in deinen Verträgen sofort." />
+        <meta property="og:title" content="Legal Pulse – Risiken erkennen & Verträge schützen | Contract AI" />
+        <meta property="og:description" content="Mit Legal Pulse erkennst du rechtliche Risiken frühzeitig & schützt deine Verträge proaktiv. Bleib immer up to date. Jetzt ausprobieren!" />
         <meta property="og:url" content="https://contract-ai.de/legalpulse" />
         <meta property="og:type" content="website" />
         <meta property="og:image" content="https://contract-ai.de/og-image.jpg" />
         
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Legal Pulse – Risiken früh erkennen | Contract AI" />
-        <meta name="twitter:description" content="Rechtliche Risiken automatisch erkennen und immer auf dem Laufenden bleiben – mit dem Legal Pulse von Contract AI." />
+        <meta name="twitter:title" content="Legal Pulse – Risiken erkennen & Verträge schützen | Contract AI" />
+        <meta name="twitter:description" content="Erkenne rechtliche Risiken & sichere deine Verträge ab – mit Legal Pulse von Contract AI. Jetzt prüfen & geschützt bleiben!" />
         <meta name="twitter:image" content="https://contract-ai.de/og-image.jpg" />
       </Helmet>
 

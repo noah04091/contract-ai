@@ -319,22 +319,22 @@ export default function Pricing() {
   return (
     <>
       <Helmet>
-        <title>Preise & Abos für Vertragsanalyse | Contract AI</title>
-        <meta name="description" content="Flexible Preise für Contract AI: Wähle dein Abo, optimiere Verträge mit KI und sichere dir volle Kontrolle über deine Vertragslandschaft – schon ab 4,90 € im Monat." />
-        <meta name="keywords" content="Preise Contract AI, SaaS Preismodelle, Vertragsanalyse Abo, Vertragsoptimierung Kosten, Vertragsmanagement Preise" />
+        <title>Preise – Contract AI | Flexible Abos für deine Vertragsanalyse</title>
+        <meta name="description" content="Wähle deinen passenden Plan für KI-gestützte Vertragsanalyse & Optimierung. Schon ab 4,90 € im Monat. Jetzt starten & volle Kontrolle sichern!" />
+        <meta name="keywords" content="Preise Contract AI, Vertragsanalyse Abo, Vertragsoptimierung Kosten, SaaS Preismodelle, Vertragsmanagement Preise" />
         <link rel="canonical" href="https://contract-ai.de/pricing" />
         
         {/* Open Graph / Facebook */}
-        <meta property="og:title" content="Preise & Abos für Vertragsanalyse | Contract AI" />
-        <meta property="og:description" content="Entdecke die flexiblen Abos von Contract AI: KI-gestützte Vertragsanalyse und Optimierung ab nur 4,90 € pro Monat." />
+        <meta property="og:title" content="Preise – Contract AI | Flexible Abos für deine Vertragsanalyse" />
+        <meta property="og:description" content="Entdecke die passenden Pläne für deine KI-gestützte Vertragsanalyse & Optimierung. Ab 4,90 € monatlich. Jetzt loslegen!" />
         <meta property="og:url" content="https://contract-ai.de/pricing" />
         <meta property="og:type" content="website" />
         <meta property="og:image" content="https://contract-ai.de/og-image.jpg" />
         
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Preise & Abos für Vertragsanalyse | Contract AI" />
-        <meta name="twitter:description" content="Verträge sicher analysieren und optimieren — schon ab 4,90 € monatlich. Entdecke die Preismodelle von Contract AI." />
+        <meta name="twitter:title" content="Preise – Contract AI | Flexible Abos für deine Vertragsanalyse" />
+        <meta name="twitter:description" content="KI-gestützte Vertragsanalyse & Optimierung schon ab 4,90 €/Monat. Wähle deinen Plan & sichere dir volle Kontrolle. Jetzt starten!" />
         <meta name="twitter:image" content="https://contract-ai.de/og-image.jpg" />
       </Helmet>
 

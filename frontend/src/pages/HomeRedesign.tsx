@@ -97,22 +97,28 @@ const HomeRedesign = () => {
   return (
     <>
       <Helmet>
-        <title>Contract AI – Vertragsanalyse & Optimierung mit KI</title>
-        <meta name="description" content="Analysiere, optimiere und vergleiche deine Verträge in Minuten. Contract AI ist deine All-in-One Lösung für smarte Vertragsverwaltung mit KI – rechtssicher, schnell und einfach." />
-        <meta name="keywords" content="Vertragsanalyse, Vertragsoptimierung, KI Vertragsmanagement, Verträge analysieren, SaaS Vertragsplattform, Verträge vergleichen, Contract AI" />
+        <title>Contract AI – Verträge mit KI analysieren & optimieren | Jetzt testen</title>
+        <meta
+          name="description"
+          content="Analysiere, optimiere & vergleiche Verträge in Minuten mit KI. Einfach, sicher & effizient. Jetzt kostenlos starten mit Contract AI!"
+        />
+        <meta
+          name="keywords"
+          content="Vertragsanalyse, Vertragsoptimierung, KI Vertragsmanagement, Verträge analysieren, SaaS Vertragsplattform, Verträge vergleichen, Contract AI"
+        />
         <link rel="canonical" href="https://contract-ai.de/" />
         
         {/* Open Graph / Facebook */}
-        <meta property="og:title" content="Contract AI – Vertragsanalyse & Optimierung mit KI" />
-        <meta property="og:description" content="Smarte Vertragsanalyse mit KI: Risiken erkennen, Chancen nutzen und Verträge optimieren. Contract AI revolutioniert dein Vertragsmanagement." />
+        <meta property="og:title" content="Contract AI – Verträge mit KI analysieren & optimieren | Jetzt testen" />
+        <meta property="og:description" content="Analysiere, optimiere & vergleiche Verträge in Minuten mit KI. Contract AI ist deine smarte Lösung für sichere & effiziente Vertragsverwaltung." />
         <meta property="og:url" content="https://contract-ai.de/" />
         <meta property="og:type" content="website" />
         <meta property="og:image" content="https://contract-ai.de/og-image.jpg" />
         
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Contract AI – Vertragsanalyse & Optimierung mit KI" />
-        <meta name="twitter:description" content="Analysiere, optimiere und vergleiche Verträge mit KI. Mehr Sicherheit, bessere Konditionen, alles in einer Plattform." />
+        <meta name="twitter:title" content="Contract AI – Verträge mit KI analysieren & optimieren | Jetzt testen" />
+        <meta name="twitter:description" content="Sichere dir jetzt volle Kontrolle über deine Verträge. Analysiere & optimiere mit Contract AI – schnell, einfach & effizient." />
         <meta name="twitter:image" content="https://contract-ai.de/og-image.jpg" />
 
         {/* Schema.org JSON-LD */}
