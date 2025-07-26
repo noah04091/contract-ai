@@ -132,11 +132,11 @@ const HelpCenter: React.FC = () => {
         <title>Hilfe & Support | Contract AI</title>
         <meta name="description" content="Finde Antworten auf deine Fragen, Tutorials und Support rund um Vertragsanalyse, Optimierung und dein Contract AI Konto." />
         <meta name="keywords" content="Hilfe, Support, FAQ, Contract AI Hilfe, Vertragsanalyse Support" />
-        <link rel="canonical" href="https://contract-ai.de/hilfe" />
+        <link rel="canonical" href="https://www.contract-ai.de/hilfe" />
         {/* Open Graph / Facebook */}
         <meta property="og:title" content="Hilfe & Support | Contract AI" />
         <meta property="og:description" content="Alle Antworten auf deine Fragen zu Contract AI, Vertragsmanagement und KI-gestützter Analyse – in unserem Help Center." />
-        <meta property="og:url" content="https://contract-ai.de/hilfe" />
+        <meta property="og:url" content="https://www.contract-ai.de/hilfe" />
         <meta property="og:type" content="website" />
         <meta property="og:image" content="https://contract-ai.de/og-image.jpg" />
         {/* Twitter */}
