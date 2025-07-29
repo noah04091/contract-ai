@@ -2053,6 +2053,7 @@ a {
   flex: 1;
   overflow: hidden;
   border-radius: var(--radius-md);
+  touch-action: pan-y;
 }
 
 .slider-track {
@@ -2170,6 +2171,15 @@ a {
   background: var(--primary-color);
 }
 
+.mobile-swipe-hint {
+  display: none;
+  text-align: center;
+  margin-top: 15px;
+  color: var(--text-light);
+  font-size: 14px;
+  opacity: 0.7;
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
   .slider-nav {
@@ -2208,22 +2218,30 @@ a {
   .testimonial-text {
     font-size: 15px;
   }
+  
+  .mobile-swipe-hint {
+    display: block;
+  }
 }
 
 @media (max-width: 576px) {
   .slider-nav {
-    display: none;
+    width: 36px;
+    height: 36px;
   }
   
   .slider-container {
-    gap: 0;
+    gap: 8px;
   }
   
   .testimonial-slide {
-    padding: 0;
+    padding: 0 5px;
+  }
+  
+  .slider-dots {
+    margin-top: 20px;
   }
 }
-
 /* === PRICING SECTION === */
 .pricing-section {
   background-color: white;

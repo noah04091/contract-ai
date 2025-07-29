@@ -35,6 +35,8 @@ const HomeRedesign = () => {
   const TestimonialsSlider = () => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [itemsPerView, setItemsPerView] = useState(3);
+    const [touchStart, setTouchStart] = useState(0);
+    const [touchEnd, setTouchEnd] = useState(0);
 
     const testimonials = [
       {
@@ -97,6 +99,30 @@ const HomeRedesign = () => {
       setCurrentIndex(Math.min(index, maxIndex));
     };
 
+    // Touch handlers for mobile swipe
+    const handleTouchStart = (e: React.TouchEvent) => {
+      setTouchStart(e.targetTouches[0].clientX);
+    };
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+      setTouchEnd(e.targetTouches[0].clientX);
+    };
+
+    const handleTouchEnd = () => {
+      if (!touchStart || !touchEnd) return;
+      
+      const distance = touchStart - touchEnd;
+      const isLeftSwipe = distance > 50;
+      const isRightSwipe = distance < -50;
+
+      if (isLeftSwipe && currentIndex < maxIndex) {
+        nextSlide();
+      }
+      if (isRightSwipe && currentIndex > 0) {
+        prevSlide();
+      }
+    };
+
     return (
       <div className="testimonials-slider">
         <div className="slider-container">
@@ -110,7 +136,12 @@ const HomeRedesign = () => {
             </svg>
           </button>
 
-          <div className="slider-track-container">
+          <div 
+            className="slider-track-container"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
             <div 
               className="slider-track" 
               style={{ 
@@ -167,6 +198,11 @@ const HomeRedesign = () => {
             ))}
           </div>
         )}
+
+        {/* Mobile swipe indicator */}
+        <div className="mobile-swipe-hint">
+          <span>← Wischen um zu navigieren →</span>
+        </div>
       </div>
     );
   };
