@@ -2062,8 +2062,9 @@ a {
 }
 
 .testimonial-slide {
-  padding: 0 15px;
+  flex-shrink: 0;
   box-sizing: border-box;
+  padding: 0 15px;
 }
 
 .testimonial-card {

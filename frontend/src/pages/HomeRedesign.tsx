@@ -146,7 +146,14 @@ const HomeRedesign = () => {
               }}
             >
               {testimonials.map((testimonial) => (
-                <div key={testimonial.id} className="testimonial-slide" style={{ width: `${100 / itemsPerView}%` }}>
+                <div 
+                  key={testimonial.id} 
+                  className="testimonial-slide" 
+                  style={{ 
+                    width: `${100 / testimonials.length}%`,
+                    minWidth: `${100 / itemsPerView}%`
+                  }}
+                >
                   <div className="testimonial-card">
                     <div className="testimonial-content">
                       <div className="testimonial-quote">
