@@ -115,12 +115,12 @@ const TestimonialsSlider = () => {
           <div 
             className="slider-track" 
             style={{
-              transform: `translateX(-${currentIndex * (100 / getItemsPerView())}%)`,
-              width: `${(testimonials.length * 100) / getItemsPerView()}%`
+              transform: `translateX(-${(currentIndex * 100) / getItemsPerView()}%)`,
+              width: `${testimonials.length * (100 / getItemsPerView())}%`
             }}
           >
-            {testimonials.map((testimonial, _index) => (
-              <div key={testimonial.id} className="testimonial-slide" style={{ width: `${100 / testimonials.length}%` }}>
+            {testimonials.map((testimonial) => (
+              <div key={testimonial.id} className="testimonial-slide" style={{ width: `${100 / getItemsPerView()}%` }}>
                 <div className="testimonial-card">
                   <div className="testimonial-content">
                     <div className="testimonial-quote">
