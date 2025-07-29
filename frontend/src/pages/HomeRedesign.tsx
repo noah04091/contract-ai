@@ -95,10 +95,6 @@ const HomeRedesign = () => {
       setCurrentIndex(prev => prev <= 0 ? maxIndex : prev - 1);
     };
 
-    const goToSlide = (index: number) => {
-      setCurrentIndex(Math.min(index, maxIndex));
-    };
-
     // Touch handlers for mobile swipe
     const handleTouchStart = (e: React.TouchEvent) => {
       setTouchStart(e.targetTouches[0].clientX);
@@ -189,11 +185,11 @@ const HomeRedesign = () => {
 
         {testimonials.length > itemsPerView && (
           <div className="slider-dots">
-            {Array.from({ length: maxIndex + 1 }, (_, index) => (
+            {Array.from({ length: testimonials.length - itemsPerView + 1 }, (_, index) => (
               <button
                 key={index}
                 className={`slider-dot ${index === currentIndex ? 'active' : ''}`}
-                onClick={() => goToSlide(index)}
+                onClick={() => setCurrentIndex(index)}
               />
             ))}
           </div>
@@ -1189,7 +1185,7 @@ const HomeRedesign = () => {
                     <path d="M7 2C4.243 2 2 4.243 2 7v10c0 2.757 2.243 5 5 5h10c2.757 0 5-2.243 5-5V7c0-2.757-2.243-5-5-5H7zm10 2c1.654 0 3 1.346 3 3v10c0 1.654-1.346 3-3 3H7c-1.654 0-3-1.346-3-3V7c0-1.654 1.346-3 3-3h10zm-5 3a5 5 0 100 10 5 5 0 000-10zm0 2a3 3 0 110 6 3 3 0 010-6zm4.5-.5a1 1 0 100 2 1 1 0 000-2z"></path>
                   </svg>
                 </a>
-                <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="social-link">
+                <a href="https://www.facebook.com/profile.php?id=61578781115190" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="social-link">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path>
                   </svg>
