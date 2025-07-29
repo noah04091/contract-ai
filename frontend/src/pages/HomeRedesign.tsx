@@ -25,6 +25,153 @@ declare global {
   }
 }
 
+// Testimonials Slider Component
+const TestimonialsSlider = () => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isMobileView, setIsMobileView] = useState(false);
+  const [isTabletView, setIsTabletView] = useState(false);
+
+  const testimonials = [
+    {
+      id: 1,
+      text: "Habe bei meinem Werkvertrag einen Passus übersehen, der mich 280€ extra gekostet hätte. Contract AI hat das sofort erkannt!",
+      author: "Lisa K.",
+      role: "Freelancerin, Grafikdesign",
+      avatar: "LK"
+    },
+    {
+      id: 2,
+      text: "Endlich verstehe ich meine Mietverträge ohne Anwalt. Die KI erklärt alles verständlich — spart Zeit und Geld.",
+      author: "Marcus T.",
+      role: "Geschäftsführer, IT-Beratung",
+      avatar: "MT"
+    },
+    {
+      id: 3,
+      text: "Dachte, mein Handyvertrag läuft noch 6 Monate. War tatsächlich schon kündbar — 180€ gespart dank der Fristenerkennung!",
+      author: "Sarah M.",
+      role: "Alleinerziehende Mutter",
+      avatar: "SM"
+    },
+    {
+      id: 4,
+      text: "Für NDA-Verträge mit Investoren nutze ich nur noch Contract AI. Kein Rechtsanwalt nötig für Standardverträge.",
+      author: "Daniel R.",
+      role: "Startup-Gründer",
+      avatar: "DR"
+    }
+  ];
+
+  useEffect(() => {
+    const handleResize = () => {
+      const width = window.innerWidth;
+      setIsMobileView(width <= 768);
+      setIsTabletView(width > 768 && width <= 1024);
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const getItemsPerView = () => {
+    if (isMobileView) return 1;
+    if (isTabletView) return 2;
+    return 3;
+  };
+
+  const getMaxIndex = () => {
+    const itemsPerView = getItemsPerView();
+    return Math.max(0, testimonials.length - itemsPerView);
+  };
+
+  const nextSlide = () => {
+    setCurrentIndex(prev => Math.min(prev + 1, getMaxIndex()));
+  };
+
+  const prevSlide = () => {
+    setCurrentIndex(prev => Math.max(prev - 1, 0));
+  };
+
+  const goToSlide = (index: number) => {
+    setCurrentIndex(Math.min(index, getMaxIndex()));
+  };
+
+  return (
+    <div className="testimonials-slider">
+      <div className="slider-container">
+        <button 
+          className="slider-nav slider-prev" 
+          onClick={prevSlide}
+          disabled={currentIndex === 0}
+          aria-label="Vorheriges Testimonial"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m15 18-6-6 6-6"/>
+          </svg>
+        </button>
+
+        <div className="slider-track-container">
+          <div 
+            className="slider-track" 
+            style={{
+              transform: `translateX(-${currentIndex * (100 / getItemsPerView())}%)`,
+              width: `${(testimonials.length * 100) / getItemsPerView()}%`
+            }}
+          >
+            {testimonials.map((testimonial, _index) => (
+              <div key={testimonial.id} className="testimonial-slide" style={{ width: `${100 / testimonials.length}%` }}>
+                <div className="testimonial-card">
+                  <div className="testimonial-content">
+                    <div className="testimonial-quote">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="quote-icon">
+                        <path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"></path>
+                        <path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"></path>
+                      </svg>
+                    </div>
+                    <p className="testimonial-text">"{testimonial.text}"</p>
+                    <div className="testimonial-author">
+                      <div className="author-avatar">
+                        <span>{testimonial.avatar}</span>
+                      </div>
+                      <div className="author-info">
+                        <div className="author-name">{testimonial.author}</div>
+                        <div className="author-role">{testimonial.role}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <button 
+          className="slider-nav slider-next" 
+          onClick={nextSlide}
+          disabled={currentIndex >= getMaxIndex()}
+          aria-label="Nächstes Testimonial"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m9 18 6-6-6-6"/>
+          </svg>
+        </button>
+      </div>
+
+      <div className="slider-dots">
+        {Array.from({ length: getMaxIndex() + 1 }).map((_, index) => (
+          <button
+            key={index}
+            className={`slider-dot ${index === currentIndex ? 'active' : ''}`}
+            onClick={() => goToSlide(index)}
+            aria-label={`Gehe zu Testimonial ${index + 1}`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+};
+
 const HomeRedesign = () => {
   const { user } = useAuth();
   const heroRef = useRef<HTMLDivElement>(null);
@@ -731,99 +878,7 @@ const HomeRedesign = () => {
               <p className="reveal-text">Echte Erfahrungen von Menschen, die Contract AI bereits nutzen.</p>
             </div>
             
-            <div className="testimonials-grid">
-              <div className="testimonial-card reveal-card" style={{"--animation-order": 0} as React.CSSProperties}>
-                <div className="testimonial-content">
-                  <div className="testimonial-quote">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="quote-icon">
-                      <path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"></path>
-                      <path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"></path>
-                    </svg>
-                  </div>
-                  <p className="testimonial-text">
-                    "Habe bei meinem Werkvertrag einen Passus übersehen, der mich 280€ extra gekostet hätte. Contract AI hat das sofort erkannt!"
-                  </p>
-                  <div className="testimonial-author">
-                    <div className="author-avatar">
-                      <span>LK</span>
-                    </div>
-                    <div className="author-info">
-                      <div className="author-name">Lisa K.</div>
-                      <div className="author-role">Freelancerin, Grafikdesign</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="testimonial-card reveal-card" style={{"--animation-order": 1} as React.CSSProperties}>
-                <div className="testimonial-content">
-                  <div className="testimonial-quote">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="quote-icon">
-                      <path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"></path>
-                      <path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"></path>
-                    </svg>
-                  </div>
-                  <p className="testimonial-text">
-                    "Endlich verstehe ich meine Mietverträge ohne Anwalt. Die KI erklärt alles verständlich — spart Zeit und Geld."
-                  </p>
-                  <div className="testimonial-author">
-                    <div className="author-avatar">
-                      <span>MT</span>
-                    </div>
-                    <div className="author-info">
-                      <div className="author-name">Marcus T.</div>
-                      <div className="author-role">Geschäftsführer, IT-Beratung</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="testimonial-card reveal-card" style={{"--animation-order": 2} as React.CSSProperties}>
-                <div className="testimonial-content">
-                  <div className="testimonial-quote">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="quote-icon">
-                      <path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"></path>
-                      <path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"></path>
-                    </svg>
-                  </div>
-                  <p className="testimonial-text">
-                    "Dachte, mein Handyvertrag läuft noch 6 Monate. War tatsächlich schon kündbar — 180€ gespart dank der Fristenerkennung!"
-                  </p>
-                  <div className="testimonial-author">
-                    <div className="author-avatar">
-                      <span>SM</span>
-                    </div>
-                    <div className="author-info">
-                      <div className="author-name">Sarah M.</div>
-                      <div className="author-role">Alleinerziehende Mutter</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="testimonial-card reveal-card" style={{"--animation-order": 3} as React.CSSProperties}>
-                <div className="testimonial-content">
-                  <div className="testimonial-quote">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="quote-icon">
-                      <path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"></path>
-                      <path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"></path>
-                    </svg>
-                  </div>
-                  <p className="testimonial-text">
-                    "Für NDA-Verträge mit Investoren nutze ich nur noch Contract AI. Kein Rechtsanwalt nötig für Standardverträge."
-                  </p>
-                  <div className="testimonial-author">
-                    <div className="author-avatar">
-                      <span>DR</span>
-                    </div>
-                    <div className="author-info">
-                      <div className="author-name">Daniel R.</div>
-                      <div className="author-role">Startup-Gründer</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <TestimonialsSlider />
           </div>
         </section>
 
