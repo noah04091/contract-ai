@@ -28,7 +28,7 @@ declare global {
 // Testimonials Slider Component
 const TestimonialsSlider = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [itemsPerView, setItemsPerView] = useState(1);
+  const sliderRef = useRef<HTMLDivElement>(null);
 
   const testimonials = [
     {
@@ -61,42 +61,58 @@ const TestimonialsSlider = () => {
     }
   ];
 
+  const getItemsPerView = () => {
+    if (typeof window === 'undefined') return 1;
+    const width = window.innerWidth;
+    if (width <= 768) return 1;  // Mobile: 1 Testimonial
+    if (width <= 1024) return 2; // Tablet: 2 Testimonials
+    return 3; // Desktop: 3 Testimonials
+  };
+
+  const [itemsPerView, setItemsPerView] = useState(getItemsPerView());
+
   useEffect(() => {
     const handleResize = () => {
-      const width = window.innerWidth;
-      if (width <= 768) {
-        setItemsPerView(1);
-      } else if (width <= 1024) {
-        setItemsPerView(2);
-      } else {
-        setItemsPerView(3);
+      const newItemsPerView = getItemsPerView();
+      setItemsPerView(newItemsPerView);
+      
+      // Reset current index if out of bounds
+      const maxIndex = Math.max(0, testimonials.length - newItemsPerView);
+      if (currentIndex > maxIndex) {
+        setCurrentIndex(maxIndex);
       }
-      // Reset current index if it's out of bounds
-      const maxIndex = Math.max(0, testimonials.length - (width <= 768 ? 1 : width <= 1024 ? 2 : 3));
-      setCurrentIndex(prev => Math.min(prev, maxIndex));
     };
 
-    handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [testimonials.length]);
+  }, [currentIndex, testimonials.length]);
 
-  const maxIndex = Math.max(0, testimonials.length - itemsPerView);
+  const scrollToSlide = (index: number) => {
+    if (!sliderRef.current) return;
+    
+    const slideWidth = sliderRef.current.offsetWidth / itemsPerView;
+    const scrollLeft = index * slideWidth;
+    
+    sliderRef.current.scrollTo({
+      left: scrollLeft,
+      behavior: 'smooth'
+    });
+    
+    setCurrentIndex(index);
+  };
 
   const nextSlide = () => {
-    setCurrentIndex(prev => Math.min(prev + 1, maxIndex));
+    const maxIndex = Math.max(0, testimonials.length - itemsPerView);
+    const newIndex = Math.min(currentIndex + 1, maxIndex);
+    scrollToSlide(newIndex);
   };
 
   const prevSlide = () => {
-    setCurrentIndex(prev => Math.max(prev - 1, 0));
+    const newIndex = Math.max(currentIndex - 1, 0);
+    scrollToSlide(newIndex);
   };
 
-  const goToSlide = (index: number) => {
-    setCurrentIndex(Math.min(index, maxIndex));
-  };
-
-  // Calculate transform based on items per view
-  const translateX = -((currentIndex * 100) / itemsPerView);
+  const maxIndex = Math.max(0, testimonials.length - itemsPerView);
 
   return (
     <div className="testimonials-slider">
@@ -112,46 +128,34 @@ const TestimonialsSlider = () => {
           </svg>
         </button>
 
-        <div className="slider-viewport">
-          <div 
-            className="slider-track" 
-            style={{
-              transform: `translateX(${translateX}%)`,
-              width: `${(testimonials.length * 100) / itemsPerView}%`
-            }}
-          >
-            {testimonials.map((testimonial) => (
-              <div 
-                key={testimonial.id} 
-                className="testimonial-slide"
-                style={{ 
-                  flexBasis: `${100 / testimonials.length}%`,
-                  minWidth: `${100 / itemsPerView}%`
-                }}
-              >
-                <div className="testimonial-card">
-                  <div className="testimonial-content">
-                    <div className="testimonial-quote">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="quote-icon">
-                        <path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"></path>
-                        <path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"></path>
-                      </svg>
+        <div 
+          ref={sliderRef}
+          className="slider-track"
+        >
+          {testimonials.map((testimonial) => (
+            <div key={testimonial.id} className="testimonial-slide">
+              <div className="testimonial-card">
+                <div className="testimonial-content">
+                  <div className="testimonial-quote">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="quote-icon">
+                      <path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"></path>
+                      <path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"></path>
+                    </svg>
+                  </div>
+                  <p className="testimonial-text">"{testimonial.text}"</p>
+                  <div className="testimonial-author">
+                    <div className="author-avatar">
+                      <span>{testimonial.avatar}</span>
                     </div>
-                    <p className="testimonial-text">"{testimonial.text}"</p>
-                    <div className="testimonial-author">
-                      <div className="author-avatar">
-                        <span>{testimonial.avatar}</span>
-                      </div>
-                      <div className="author-info">
-                        <div className="author-name">{testimonial.author}</div>
-                        <div className="author-role">{testimonial.role}</div>
-                      </div>
+                    <div className="author-info">
+                      <div className="author-name">{testimonial.author}</div>
+                      <div className="author-role">{testimonial.role}</div>
                     </div>
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
 
         <button 
@@ -171,7 +175,7 @@ const TestimonialsSlider = () => {
           <button
             key={index}
             className={`slider-dot ${index === currentIndex ? 'active' : ''}`}
-            onClick={() => goToSlide(index)}
+            onClick={() => scrollToSlide(index)}
             aria-label={`Gehe zu Testimonial ${index + 1}`}
           />
         ))}
