@@ -2083,24 +2083,6 @@ a {
   width: 100%;
 }
 
-/* Tablet: 50% width (2 per view) */
-@media (min-width: 769px) and (max-width: 1024px) {
-  .testimonial-slide {
-    width: 50%;
-  }
-}
-
-/* Desktop: 33.33% width (3 per view) */
-@media (min-width: 1025px) {
-  .testimonial-slide {
-    width: 33.333%;
-  }
-  
-  .slider-track {
-    padding-right: 60px; /* Extra Platz für Desktop */
-  }
-}
-
 /* TESTIMONIAL CARDS - Kein Abschneiden mehr */
 .testimonial-card {
   background-color: white;
@@ -2219,6 +2201,61 @@ a {
 
 /* === RESPONSIVE OPTIMIERUNGEN === */
 
+/* Tablet: 50% width (2 per view) */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .testimonials-section {
+    padding: 80px 20px;
+  }
+  
+  .slider-nav {
+    width: 45px;
+    height: 45px;
+  }
+  
+  .testimonial-content {
+    padding: 25px;
+  }
+  
+  .testimonial-text {
+    font-size: 15px;
+  }
+  
+  .slider-track {
+    padding-right: 30px; /* Mittleres padding für Tablet */
+  }
+  
+  .testimonial-slide {
+    width: 50%;
+  }
+}
+
+/* Desktop: 33.33% width (3 per view) + GLEICHE HÖHE */
+@media (min-width: 1025px) {
+  .testimonial-slide {
+    width: 33.333%;
+    display: flex; /* Wichtig für gleiche Höhe */
+  }
+  
+  .slider-track {
+    padding-right: 60px; /* Extra Platz für Desktop */
+    align-items: stretch; /* Alle Slides gleich hoch */
+  }
+  
+  .testimonial-card {
+    min-height: 320px; /* Mindesthöhe für Konsistenz */
+    display: flex;
+    flex-direction: column;
+    height: 100%; /* Nimmt volle verfügbare Höhe */
+  }
+  
+  .testimonial-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Gleichmäßige Verteilung */
+    flex: 1;
+  }
+}
+
 /* Mobile (≤768px) */
 @media (max-width: 768px) {
   .testimonials-section {
@@ -2294,30 +2331,6 @@ a {
   
   .testimonial-text {
     font-size: 13px;
-  }
-}
-
-/* Tablet spezifische Anpassungen */
-@media (min-width: 769px) and (max-width: 1024px) {
-  .testimonials-section {
-    padding: 80px 20px;
-  }
-  
-  .slider-nav {
-    width: 45px;
-    height: 45px;
-  }
-  
-  .testimonial-content {
-    padding: 25px;
-  }
-  
-  .testimonial-text {
-    font-size: 15px;
-  }
-  
-  .slider-track {
-    padding-right: 30px; /* Mittleres padding für Tablet */
   }
 }
 /* === PRICING SECTION === */
