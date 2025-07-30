@@ -13,6 +13,8 @@ import generatorImg from "../assets/Generator.png";
 import legalPulseImg from "../assets/Legal Pulse.png";
 import optimierungImg from "../assets/Optimierung.png";
 import vergleichImg from "../assets/Vergleich.png";
+import dsgvoBadge from "../assets/dsgvo-badge.png";
+import trustpilotBadge from "../assets/trustpilot-badge.png";
 
 
 
@@ -1121,8 +1123,8 @@ const HomeRedesign = () => {
                   Wir helfen Ihnen, Verträge zu analysieren, optimieren und verwalten.
                 </p>
                 <div className="footer-trust-badges">
-                  <img src="/assets/dsgvo-badge.png" alt="DSGVO-konform" className="trust-badge" />
-                  <img src="/assets/trustpilot-badge.png" alt="Trustpilot Bewertungen" className="trust-badge" />
+                  <img src={dsgvoBadge} alt="DSGVO-konform" className="trust-badge" />
+                  <img src={trustpilotBadge} alt="Trustpilot Bewertungen" className="trust-badge" />
                 </div>
               </div>
               <div className="footer-columns">
