@@ -3020,21 +3020,18 @@ a[href*="kontakt"]:hover,
 }
 
 .trust-badge {
-  height: 150px !important; /* Hälfte von 300px */
+  height: 150px !important;
   width: auto !important;
   min-height: 150px !important;
   max-width: 200px !important;
   object-fit: contain !important;
-  transition: var(--transition);
-  filter: brightness(0.9);
-  opacity: 0.8;
+  /* HOVER-EFFEKT KOMPLETT ENTFERNT */
+  /* filter: brightness(0.9); - WEG */
+  /* opacity: 0.8; - WEG */
 }
 
-.trust-badge:hover {
-  transform: translateY(-3px);
-  filter: brightness(1);
-  opacity: 1;
-}
+/* HOVER-EFFEKT KOMPLETT ENTFERNT */
+/* .trust-badge:hover { ... } - WEG */
 
 /* Responsive Anpassungen für Trust Badges */
 @media (max-width: 768px) {
@@ -3045,7 +3042,7 @@ a[href*="kontakt"]:hover,
   }
   
   .trust-badge {
-    height: 125px !important; /* Hälfte von 250px */
+    height: 125px !important;
     min-height: 125px !important;
     max-width: 150px !important;
   }
@@ -3060,7 +3057,7 @@ a[href*="kontakt"]:hover,
   }
   
   .trust-badge {
-    height: 100px !important; /* Hälfte von 200px */
+    height: 100px !important;
     min-height: 100px !important;
     max-width: 125px !important;
   }
