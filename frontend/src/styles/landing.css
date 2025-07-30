@@ -3043,7 +3043,7 @@ a[href*="kontakt"]:hover,
   }
   
   .trust-badge {
-    height: 50px; /* Größer: von 35px auf 50px */
+    height: 80px; /* Größer: von 35px auf 50px */
   }
 }
 
@@ -3056,7 +3056,7 @@ a[href*="kontakt"]:hover,
   }
   
   .trust-badge {
-    height: 45px; /* Größer: von 32px auf 45px */
+    height: 80px; /* Größer: von 32px auf 45px */
   }
 }
 
