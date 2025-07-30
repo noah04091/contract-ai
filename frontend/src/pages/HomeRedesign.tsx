@@ -1120,6 +1120,10 @@ const HomeRedesign = () => {
                   Contract AI revolutioniert Ihr Vertragsmanagement mit neuester KI-Technologie.
                   Wir helfen Ihnen, Verträge zu analysieren, optimieren und verwalten.
                 </p>
+                <div className="footer-trust-badges">
+                  <img src="/assets/dsgvo-badge.png" alt="DSGVO-konform" className="trust-badge" />
+                  <img src="/assets/trustpilot-badge.png" alt="Trustpilot Bewertungen" className="trust-badge" />
+                </div>
               </div>
               <div className="footer-columns">
                 <div className="footer-column">
