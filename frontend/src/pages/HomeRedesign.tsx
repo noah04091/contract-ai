@@ -28,8 +28,7 @@ declare global {
 // Testimonials Slider Component
 const TestimonialsSlider = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isMobileView, setIsMobileView] = useState(false);
-  const [isTabletView, setIsTabletView] = useState(false);
+  const [itemsPerView, setItemsPerView] = useState(1);
 
   const testimonials = [
     {
@@ -65,28 +64,27 @@ const TestimonialsSlider = () => {
   useEffect(() => {
     const handleResize = () => {
       const width = window.innerWidth;
-      setIsMobileView(width <= 768);
-      setIsTabletView(width > 768 && width <= 1024);
+      if (width <= 768) {
+        setItemsPerView(1);
+      } else if (width <= 1024) {
+        setItemsPerView(2);
+      } else {
+        setItemsPerView(3);
+      }
+      // Reset current index if it's out of bounds
+      const maxIndex = Math.max(0, testimonials.length - (width <= 768 ? 1 : width <= 1024 ? 2 : 3));
+      setCurrentIndex(prev => Math.min(prev, maxIndex));
     };
 
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [testimonials.length]);
 
-  const getItemsPerView = () => {
-    if (isMobileView) return 1;
-    if (isTabletView) return 2;
-    return 3;
-  };
-
-  const getMaxIndex = () => {
-    const itemsPerView = getItemsPerView();
-    return Math.max(0, testimonials.length - itemsPerView);
-  };
+  const maxIndex = Math.max(0, testimonials.length - itemsPerView);
 
   const nextSlide = () => {
-    setCurrentIndex(prev => Math.min(prev + 1, getMaxIndex()));
+    setCurrentIndex(prev => Math.min(prev + 1, maxIndex));
   };
 
   const prevSlide = () => {
@@ -94,8 +92,11 @@ const TestimonialsSlider = () => {
   };
 
   const goToSlide = (index: number) => {
-    setCurrentIndex(Math.min(index, getMaxIndex()));
+    setCurrentIndex(Math.min(index, maxIndex));
   };
+
+  // Calculate transform based on items per view
+  const translateX = -((currentIndex * 100) / itemsPerView);
 
   return (
     <div className="testimonials-slider">
@@ -111,16 +112,23 @@ const TestimonialsSlider = () => {
           </svg>
         </button>
 
-        <div className="slider-track-container">
+        <div className="slider-viewport">
           <div 
             className="slider-track" 
             style={{
-              transform: `translateX(-${(currentIndex * 100) / getItemsPerView()}%)`,
-              width: `${testimonials.length * (100 / getItemsPerView())}%`
+              transform: `translateX(${translateX}%)`,
+              width: `${(testimonials.length * 100) / itemsPerView}%`
             }}
           >
             {testimonials.map((testimonial) => (
-              <div key={testimonial.id} className="testimonial-slide" style={{ width: `${100 / getItemsPerView()}%` }}>
+              <div 
+                key={testimonial.id} 
+                className="testimonial-slide"
+                style={{ 
+                  flexBasis: `${100 / testimonials.length}%`,
+                  minWidth: `${100 / itemsPerView}%`
+                }}
+              >
                 <div className="testimonial-card">
                   <div className="testimonial-content">
                     <div className="testimonial-quote">
@@ -149,7 +157,7 @@ const TestimonialsSlider = () => {
         <button 
           className="slider-nav slider-next" 
           onClick={nextSlide}
-          disabled={currentIndex >= getMaxIndex()}
+          disabled={currentIndex >= maxIndex}
           aria-label="Nächstes Testimonial"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -159,7 +167,7 @@ const TestimonialsSlider = () => {
       </div>
 
       <div className="slider-dots">
-        {Array.from({ length: getMaxIndex() + 1 }).map((_, index) => (
+        {Array.from({ length: maxIndex + 1 }).map((_, index) => (
           <button
             key={index}
             className={`slider-dot ${index === currentIndex ? 'active' : ''}`}
