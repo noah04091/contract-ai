@@ -1,4 +1,4 @@
-// 📁 src/pages/Contracts.tsx - JSX FIXED: Motion Button closing tag korrigiert + ANALYSE-ANZEIGE GEFIXT + RESPONSIVE + DUPLIKATSERKENNUNG + S3-INTEGRATION + BATCH-ANALYSE-ANZEIGE
+// 📁 src/pages/Contracts.tsx - JSX FIXED: Motion Button closing tag korrigiert + ANALYSE-ANZEIGE GEFIXT + RESPONSIVE + DUPLIKATSERKENNUNG + S3-INTEGRATION + BATCH-ANALYSE-ANZEIGE + PDF-SCHNELLAKTION FIX
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet";
@@ -72,110 +72,121 @@ type DateFilter = 'alle' | 'letzte_7_tage' | 'letzte_30_tage' | 'letztes_jahr';
 type SortOrder = 'neueste' | 'älteste' | 'name_az' | 'name_za';
 
 // ✅ NEU: S3-Integration - Utility-Funktionen direkt in der Komponente
-interface S3UrlResponse {
-  fileUrl: string;
-  s3Key: string;
-  expiresIn: number;
-  contract?: {
-    id: string;
-    title: string;
-    uploadDate: string;
-  };
-  message: string;
-}
 
-interface S3ErrorResponse {
-  error: string;
-  suggestion?: string;
-  contractTitle?: string;
-  uploadDate?: string;
-}
+// ✅ FIXED: PDF-Schnellaktion mit verbesserter S3-Logik (aus ContractDetailsView übernommen)
+const handleViewContractPDF = async (
+  contract: Contract,
+  setPdfLoading: React.Dispatch<React.SetStateAction<{ [contractId: string]: boolean }>>,
+  setError: React.Dispatch<React.SetStateAction<string | null>>,
+  setLegacyModal: React.Dispatch<React.SetStateAction<{
+    show: boolean;
+    contract?: Contract;
+    message?: string;
+  } | null>>
+) => {
+  console.log('🔍 PDF-Schnellaktion für Vertrag:', {
+    contractId: contract._id,
+    contractName: contract.name,
+    hasS3Key: !!contract.s3Key,
+    uploadType: contract.uploadType,
+    needsReupload: contract.needsReupload
+  });
 
-// ✅ NEU: S3-Funktionen - Optimiert ohne redundante fetchSignedUrl
-
-const getContractInfo = async (contractId: string): Promise<{
-  url: string | null;
-  hasS3Key: boolean;
-  isLegacy: boolean;
-  error?: string;
-  suggestion?: string;
-}> => {
+  setPdfLoading(prev => ({ ...prev, [contract._id]: true }));
+  
   try {
-    const token = localStorage.getItem('token');
-    
-    const response = await fetch(`/api/s3/view?contractId=${contractId}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      credentials: 'include'
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      const errorData = data as S3ErrorResponse;
+    // ✅ FIXED: Verwende die gleiche Logik wie in ContractDetailsView (direkte s3Key-Route)
+    if (contract.s3Key) {
+      console.log('✅ S3 Contract detected, fetching signed URL with key...');
       
-      if (errorData.error.includes('before S3 integration')) {
-        return {
-          url: null,
-          hasS3Key: false,
-          isLegacy: true,
-          error: errorData.error,
-          suggestion: errorData.suggestion
-        };
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/s3/view?key=${encodeURIComponent(contract.s3Key)}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
+        });
+        
+        const data = await response.json();
+        
+        console.log('🔍 S3 Response data:', data);
+        
+        if (response.ok && (data.url || data.fileUrl)) {
+          const signedUrl = data.url || data.fileUrl;
+          console.log('✅ S3 URL fetched successfully:', signedUrl);
+          window.open(signedUrl, '_blank', 'noopener,noreferrer');
+          return;
+        } else {
+          console.error('❌ S3 URL fetch failed:', data.error || 'No URL in response');
+          // Fallback zur contractId-Route
+        }
+      } catch (error) {
+        console.error('❌ S3 URL fetch error:', error);
+        // Fallback zur contractId-Route
       }
-      
-      return {
-        url: null,
-        hasS3Key: false,
-        isLegacy: false,
-        error: errorData.error
-      };
+    }
+    
+    // ✅ Legacy-Vertrag oder S3-Fehler - Fallback mit contractId-Route
+    if (contract.needsReupload || contract.uploadType === 'LOCAL_LEGACY') {
+      console.log('⚠️ Legacy contract detected');
+      setLegacyModal({
+        show: true,
+        contract,
+        message: 'Dieser Vertrag wurde vor der Cloud-Integration hochgeladen und ist nicht mehr verfügbar. Bitte laden Sie ihn erneut hoch.'
+      });
+      return;
     }
 
-    const successData = data as S3UrlResponse;
+    // ✅ Fallback: Verwende contractId-Route (für ältere Verträge)
+    console.log('🔄 Fallback: Using contractId route...');
     
-    return {
-      url: successData.fileUrl,
-      hasS3Key: true,
-      isLegacy: false
-    };
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/s3/view?contractId=${contract._id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
+      });
+
+      const data = await response.json();
+
+      if (response.ok && (data.fileUrl || data.url)) {
+        const signedUrl = data.fileUrl || data.url;
+        console.log('✅ ContractId route successful:', signedUrl);
+        window.open(signedUrl, '_blank', 'noopener,noreferrer');
+        return;
+      } else if (data.error?.includes('before S3 integration')) {
+        console.log('⚠️ Legacy contract identified via contractId route');
+        setLegacyModal({
+          show: true,
+          contract,
+          message: data.error
+        });
+        return;
+      } else {
+        throw new Error(data.error || 'Failed to get signed URL');
+      }
+    } catch (fallbackError) {
+      console.error('❌ ContractId route also failed:', fallbackError);
+      
+      // ✅ Final fallback error
+      const errorMessage = fallbackError instanceof Error 
+        ? fallbackError.message 
+        : 'Die PDF-Datei konnte nicht geladen werden.';
+      
+      setError(errorMessage);
+    }
 
   } catch (error) {
-    return {
-      url: null,
-      hasS3Key: false,
-      isLegacy: false,
-      error: `Network Error: ${error}`
-    };
+    console.error('❌ Unexpected error in PDF view:', error);
+    setError('Unerwarteter Fehler beim Öffnen des Vertrags');
+  } finally {
+    setPdfLoading(prev => ({ ...prev, [contract._id]: false }));
   }
-};
-
-const openContract = async (
-  contractId: string, 
-  onError?: (message: string, isLegacy: boolean) => void
-) => {
-  const contractInfo = await getContractInfo(contractId);
-  
-  if (contractInfo.url) {
-    // Erfolgreich - öffne PDF
-    window.open(contractInfo.url, '_blank');
-    return;
-  }
-  
-  if (contractInfo.isLegacy) {
-    // Alter Vertrag - Reupload-Meldung
-    const message = 'Dieser Vertrag wurde vor der Cloud-Integration hochgeladen und ist nicht mehr verfügbar. Bitte laden Sie ihn erneut hoch.';
-    if (onError) onError(message, true);
-    else alert(`⚠️ ${message}`);
-    return;
-  }
-  
-  // Allgemeiner Fehler
-  const message = contractInfo.error || 'Die PDF-Datei konnte nicht geladen werden.';
-  if (onError) onError(message, false);
-  else alert(`❌ ${message}`);
 };
 
 export default function Contracts() {
@@ -225,28 +236,9 @@ export default function Contracts() {
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // ✅ NEU: PDF anzeigen Handler mit S3-Integration
-  const handleViewContractPDF = async (contract: Contract) => {
-    setPdfLoading(prev => ({ ...prev, [contract._id]: true }));
-    
-    try {
-      await openContract(contract._id, (message, isLegacy) => {
-        if (isLegacy) {
-          setLegacyModal({
-            show: true,
-            contract,
-            message
-          });
-        } else {
-          setError(message);
-        }
-      });
-    } catch (error) {
-      console.error('❌ Error opening contract PDF:', error);
-      setError('Unerwarteter Fehler beim Öffnen des Vertrags');
-    } finally {
-      setPdfLoading(prev => ({ ...prev, [contract._id]: false }));
-    }
+  // ✅ FIXED: PDF anzeigen Handler - jetzt als Wrapper für die extrahierte Funktion
+  const handleViewContractPDFWrapper = async (contract: Contract) => {
+    await handleViewContractPDF(contract, setPdfLoading, setError, setLegacyModal);
   };
 
   // ✅ NEU: Legacy-Modal Komponente
@@ -1208,7 +1200,7 @@ export default function Contracts() {
           className={styles.cardActionButton}
           onClick={(e) => {
             e.stopPropagation();
-            handleViewContractPDF(contract);
+            handleViewContractPDFWrapper(contract);
           }}
           disabled={pdfLoading[contract._id]}
         >
@@ -1933,7 +1925,7 @@ export default function Contracts() {
                                     className={styles.actionButton}
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      handleViewContractPDF(contract);
+                                      handleViewContractPDFWrapper(contract);
                                     }}
                                     title="PDF anzeigen"
                                     disabled={pdfLoading[contract._id]}
