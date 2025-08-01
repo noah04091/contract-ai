@@ -10,7 +10,7 @@ import styles from "../styles/ContractDetailsView.module.css";
 import ReminderToggle from "./ReminderToggle";
 import ContractShareModal from "./ContractShareModal"; // ✅ NEU: Import Share Modal
 import ContractEditModal from "./ContractEditModal"; // ✅ NEU: Import Edit Modal
-import { getContractFileUrl } from "../utils/api";
+// ✅ getContractFileUrl nicht mehr benötigt - Mobile-freundliche PDF-Logik verwendet direkte API-Aufrufe
 
 interface Contract {
   _id: string;
@@ -187,9 +187,9 @@ export default function ContractDetailsView({
     return sentences.length > 0 ? sentences : [text.substring(0, 180) + '...'];
   };
 
-  // ✅ ANGEPASST: Original handleViewContract mit ChatGPT Fix für S3-Teil
+  // ✅ MOBILE-FIX: Neue Mobile-freundliche PDF-Öffnung
   const handleViewContract = async () => {
-    console.log('🔍 Opening contract with enhanced S3 integration:', {
+    console.log('🔍 Opening contract with mobile-friendly approach:', {
       contractId: contract._id,
       contractName: contract.name,
       hasS3Key: !!contract.s3Key,
@@ -197,12 +197,69 @@ export default function ContractDetailsView({
       needsReupload: contract.needsReupload
     });
 
-    // ✅ CHATGPT FIX: Neue vereinfachte S3-Route mit key Parameter
-    if (contract.s3Key) {
-      console.log('✅ S3 Contract detected, fetching signed URL...');
-      
-      try {
-        const token = localStorage.getItem('token');
+    // ✅ MOBILE-FIX: Temporäres Tab sofort öffnen (Popup-Blocker umgehen)
+    let tempWindow: Window | null = null;
+
+    try {
+      const token = localStorage.getItem('token');
+
+      // ✅ Legacy-Vertrag Check (vor Tab-Öffnung)
+      if (contract.needsReupload || contract.uploadType === 'LOCAL_LEGACY') {
+        alert(`⚠️ Dieser Vertrag wurde vor der Cloud-Integration hochgeladen und ist nicht mehr verfügbar.\n\nBitte laden Sie "${contract.name}" erneut hoch, um ihn anzuzeigen.`);
+        return;
+      }
+
+      // ✅ CRITICAL: Tab sofort öffnen (noch im User-Click-Context)
+      tempWindow = window.open('', '_blank');
+      if (tempWindow) {
+        tempWindow.document.write(`
+          <html>
+            <head>
+              <title>Lade ${contract.name}...</title>
+              <style>
+                body { 
+                  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                  display: flex; 
+                  justify-content: center; 
+                  align-items: center; 
+                  height: 100vh; 
+                  margin: 0; 
+                  background: #f5f5f7;
+                  color: #1d1d1f;
+                }
+                .loader {
+                  text-align: center;
+                }
+                .spinner {
+                  width: 40px;
+                  height: 40px;
+                  border: 3px solid #e5e5e5;
+                  border-top: 3px solid #007aff;
+                  border-radius: 50%;
+                  animation: spin 1s linear infinite;
+                  margin: 0 auto 20px;
+                }
+                @keyframes spin {
+                  0% { transform: rotate(0deg); }
+                  100% { transform: rotate(360deg); }
+                }
+              </style>
+            </head>
+            <body>
+              <div class="loader">
+                <div class="spinner"></div>
+                <h2>PDF wird geladen...</h2>
+                <p>Bitte warten Sie einen Moment.</p>
+              </div>
+            </body>
+          </html>
+        `);
+      }
+
+      // ✅ S3-Key-Route (prioritär)
+      if (contract.s3Key) {
+        console.log('✅ S3 Contract detected, fetching signed URL with key...');
+        
         const response = await fetch(`/api/s3/view?key=${encodeURIComponent(contract.s3Key)}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -215,86 +272,113 @@ export default function ContractDetailsView({
         
         console.log('🔍 S3 Response data:', data);
         
-        if (response.ok && data.url) {
-          console.log('✅ S3 URL fetched successfully:', data.url);
-          window.open(data.url, '_blank', 'noopener,noreferrer');
+        if (response.ok && (data.url || data.fileUrl)) {
+          const pdfUrl = data.url || data.fileUrl;
+          console.log('✅ S3 URL fetched successfully:', pdfUrl);
+          
+          if (tempWindow && !tempWindow.closed) {
+            tempWindow.location.href = pdfUrl;
+          } else {
+            // Fallback falls Tab geschlossen wurde
+            window.open(pdfUrl, '_blank', 'noopener,noreferrer');
+          }
           return;
         } else {
           console.error('❌ S3 URL fetch failed:', data.error || 'No URL in response');
-          // Fallback to old logic below
+          // Fallback to contractId route
         }
-      } catch (error) {
-        console.error('❌ S3 URL fetch error:', error);
-        // Fallback to old logic below
       }
-    }
-    
-    // ✅ ORIGINAL: Legacy-Vertrag oder S3-Fehler
-    if (contract.needsReupload || contract.uploadType === 'LOCAL_LEGACY') {
-      alert(`⚠️ Dieser Vertrag wurde vor der Cloud-Integration hochgeladen und ist nicht mehr verfügbar.\n\nBitte laden Sie "${contract.name}" erneut hoch, um ihn anzuzeigen.`);
-      return;
-    }
+      
+      // ✅ Fallback: ContractId-Route
+      console.log('🔄 Fallback: Using contractId route...');
+      
+      const response = await fetch(`/api/s3/view?contractId=${contract._id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
+      });
 
-    // ✅ ORIGINAL: Fallback - Original Logic (für Backward Compatibility)
-    console.log('🔄 Fallback: Using original file URL logic...');
-    
-    const fileUrl = getContractFileUrl(contract);
-    
-    console.log('🔍 getContractFileUrl returned:', fileUrl, 'Type:', typeof fileUrl);
-    
-    if (!fileUrl) {
-      console.warn('⚠️ No file URL available');
-      alert(`❌ PDF-Datei nicht verfügbar.\n\nDieser Vertrag muss erneut hochgeladen werden.`);
-      return;
-    }
-    
-    console.log('🔍 Opening file with fallback logic:', {
-      contractName: contract.name,
-      fileUrl: fileUrl,
-      filename: contract.filename,
-      originalname: contract.originalname,
-      filePath: contract.filePath,
-      s3Key: contract.s3Key,
-      usingFunction: 'getContractFileUrl'
-    });
-    
-    if (fileUrl.includes('/api/s3/view')) {
-      try {
-        console.log('🔗 S3 View Route detected, checking response type...');
+      const data = await response.json();
+
+      if (response.ok && (data.fileUrl || data.url)) {
+        const pdfUrl = data.fileUrl || data.url;
+        console.log('✅ ContractId route successful:', pdfUrl);
         
-        const headResponse = await fetch(fileUrl, { 
-          method: 'HEAD',
-          credentials: 'include'
-        });
-        
-        if (headResponse.redirected) {
-          console.log('✅ Backend redirected to:', headResponse.url);
-          window.open(headResponse.url, '_blank', 'noopener,noreferrer');
+        if (tempWindow && !tempWindow.closed) {
+          tempWindow.location.href = pdfUrl;
         } else {
-          console.log('📋 Backend returns JSON, fetching S3 URL...');
-          const response = await fetch(fileUrl, {
-            headers: { 'Accept': 'application/json' },
-            credentials: 'include'
-          });
-          
-          const data = await response.json();
-          
-          if (data.fileUrl || data.url) {
-            console.log('✅ Opening S3 file directly:', data.fileUrl || data.url);
-            window.open(data.fileUrl || data.url, '_blank', 'noopener,noreferrer');
-          } else {
-            console.error('❌ No fileUrl in response:', data);
-            alert('Fehler: Datei-URL konnte nicht generiert werden.');
-          }
+          // Fallback falls Tab geschlossen wurde
+          window.open(pdfUrl, '_blank', 'noopener,noreferrer');
         }
-      } catch (error) {
-        console.error('❌ Error handling S3 URL:', error);
-        console.log('🔄 Fallback: Opening URL directly...');
-        window.open(fileUrl, '_blank', 'noopener,noreferrer');
+        return;
+      } else if (data.error?.includes('before S3 integration')) {
+        console.log('⚠️ Legacy contract identified via contractId route');
+        if (tempWindow) tempWindow.close();
+        alert(`⚠️ Dieser Vertrag wurde vor der Cloud-Integration hochgeladen und ist nicht mehr verfügbar.\n\nBitte laden Sie "${contract.name}" erneut hoch, um ihn anzuzeigen.`);
+        return;
+      } else {
+        throw new Error(data.error || 'Failed to get signed URL');
       }
-    } else {
-      console.log('✅ Opening direct URL:', fileUrl, 'Type:', typeof fileUrl);
-      window.open(fileUrl, '_blank', 'noopener,noreferrer');
+
+    } catch (error) {
+      console.error('❌ Error in mobile-friendly PDF view:', error);
+      
+      // ✅ Tab schließen bei Fehler
+      if (tempWindow && !tempWindow.closed) {
+        tempWindow.document.write(`
+          <html>
+            <head>
+              <title>Fehler</title>
+              <style>
+                body { 
+                  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                  display: flex; 
+                  justify-content: center; 
+                  align-items: center; 
+                  height: 100vh; 
+                  margin: 0; 
+                  background: #f5f5f7;
+                  color: #1d1d1f;
+                  text-align: center;
+                }
+                .error { color: #ff3b30; }
+                button {
+                  margin-top: 20px;
+                  padding: 12px 24px;
+                  background: #007aff;
+                  color: white;
+                  border: none;
+                  border-radius: 8px;
+                  cursor: pointer;
+                  font-size: 16px;
+                }
+              </style>
+            </head>
+            <body>
+              <div>
+                <h2 class="error">❌ Fehler beim Laden</h2>
+                <p>Die PDF-Datei konnte nicht geöffnet werden.</p>
+                <button onclick="window.close()">Tab schließen</button>
+              </div>
+            </body>
+          </html>
+        `);
+        
+        // Auto-close nach 5 Sekunden
+        setTimeout(() => {
+          if (tempWindow && !tempWindow.closed) {
+            tempWindow.close();
+          }
+        }, 5000);
+      }
+      
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : 'Die PDF-Datei konnte nicht geladen werden.';
+      
+      alert(`❌ Fehler beim Öffnen des Vertrags:\n\n${errorMessage}`);
     }
   };
 
@@ -554,7 +638,7 @@ ${analysis.comparison || 'Nicht verfügbar'}
                     )}
                   </div>
                   
-                  {/* ✅ ORIGINAL Contract View Button mit ChatGPT Fix */}
+                  {/* ✅ MOBILE-FIX: Contract View Button mit Mobile-freundlicher Logik */}
                   <div className={styles.viewContractSection}>
                     {contract.needsReupload || contract.uploadType === 'LOCAL_LEGACY' ? (
                       <div style={{ textAlign: 'center', padding: '1rem' }}>

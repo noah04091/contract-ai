@@ -73,7 +73,7 @@ type SortOrder = 'neueste' | 'älteste' | 'name_az' | 'name_za';
 
 // ✅ NEU: S3-Integration - Utility-Funktionen direkt in der Komponente
 
-// ✅ MOBILE-FIX FINAL: ChatGPT-Lösung mit download-Attribut (Mobile-Browser-kompatibel)
+// ✅ FIXED: PDF-Schnellaktion mit verbesserter S3-Logik (aus ContractDetailsView übernommen)
 const handleViewContractPDF = async (
   contract: Contract,
   setPdfLoading: React.Dispatch<React.SetStateAction<{ [contractId: string]: boolean }>>,
@@ -84,7 +84,7 @@ const handleViewContractPDF = async (
     message?: string;
   } | null>>
 ) => {
-  console.log('📱 PDF-Schnellaktion (ChatGPT-Mobile-Fix):', {
+  console.log('🔍 PDF-Schnellaktion für Vertrag:', {
     contractId: contract._id,
     contractName: contract.name,
     hasS3Key: !!contract.s3Key,
@@ -95,7 +95,7 @@ const handleViewContractPDF = async (
   setPdfLoading(prev => ({ ...prev, [contract._id]: true }));
   
   try {
-    // ✅ S3-Key-Route
+    // ✅ FIXED: Verwende die gleiche Logik wie in ContractDetailsView (direkte s3Key-Route)
     if (contract.s3Key) {
       console.log('✅ S3 Contract detected, fetching signed URL with key...');
       
@@ -116,33 +116,19 @@ const handleViewContractPDF = async (
         if (response.ok && (data.url || data.fileUrl)) {
           const signedUrl = data.url || data.fileUrl;
           console.log('✅ S3 URL fetched successfully:', signedUrl);
-          
-          // ✅ ChatGPT-FIX: Mobile-kompatibles Öffnen per dynamischem Link
-          const link = document.createElement('a');
-          link.href = signedUrl;
-          link.target = '_blank';
-          link.rel = 'noopener noreferrer';
-          
-          // ✅ CRITICAL: Download-Attribut für iOS/Mobile-Browser
-          if (signedUrl.includes('.pdf') || signedUrl.includes('pdf')) {
-            link.download = contract.name?.replace(/\s+/g, '_') || 'vertrag.pdf';
-          }
-          
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
+          window.open(signedUrl, '_blank', 'noopener,noreferrer');
           return;
         } else {
           console.error('❌ S3 URL fetch failed:', data.error || 'No URL in response');
-          // Fallback weiter unten
+          // Fallback zur contractId-Route
         }
       } catch (error) {
         console.error('❌ S3 URL fetch error:', error);
-        // Fallback weiter unten
+        // Fallback zur contractId-Route
       }
     }
     
-    // ✅ Legacy-Vertrag oder S3-Fehler
+    // ✅ Legacy-Vertrag oder S3-Fehler - Fallback mit contractId-Route
     if (contract.needsReupload || contract.uploadType === 'LOCAL_LEGACY') {
       console.log('⚠️ Legacy contract detected');
       setLegacyModal({
@@ -153,7 +139,7 @@ const handleViewContractPDF = async (
       return;
     }
 
-    // ✅ Fallback: ContractId-Route
+    // ✅ Fallback: Verwende contractId-Route (für ältere Verträge)
     console.log('🔄 Fallback: Using contractId route...');
     
     try {
@@ -171,21 +157,7 @@ const handleViewContractPDF = async (
       if (response.ok && (data.fileUrl || data.url)) {
         const signedUrl = data.fileUrl || data.url;
         console.log('✅ ContractId route successful:', signedUrl);
-        
-        // ✅ ChatGPT-FIX: Mobile-kompatibles Öffnen per dynamischem Link
-        const link = document.createElement('a');
-        link.href = signedUrl;
-        link.target = '_blank';
-        link.rel = 'noopener noreferrer';
-        
-        // ✅ CRITICAL: Download-Attribut für iOS/Mobile-Browser
-        if (signedUrl.includes('.pdf') || signedUrl.includes('pdf')) {
-          link.download = contract.name?.replace(/\s+/g, '_') || 'vertrag.pdf';
-        }
-        
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        window.open(signedUrl, '_blank', 'noopener,noreferrer');
         return;
       } else if (data.error?.includes('before S3 integration')) {
         console.log('⚠️ Legacy contract identified via contractId route');
@@ -201,6 +173,7 @@ const handleViewContractPDF = async (
     } catch (fallbackError) {
       console.error('❌ ContractId route also failed:', fallbackError);
       
+      // ✅ Final fallback error
       const errorMessage = fallbackError instanceof Error 
         ? fallbackError.message 
         : 'Die PDF-Datei konnte nicht geladen werden.';
@@ -1226,7 +1199,7 @@ export default function Contracts() {
         <button 
           className={styles.cardActionButton}
           onClick={(e) => {
-            e.stopPropagation(); // ✅ CRITICAL: Verhindert Card-Click
+            e.stopPropagation();
             handleViewContractPDFWrapper(contract);
           }}
           disabled={pdfLoading[contract._id]}
@@ -1951,7 +1924,7 @@ export default function Contracts() {
                                   <button 
                                     className={styles.actionButton}
                                     onClick={(e) => {
-                                      e.stopPropagation(); // ✅ CRITICAL: Verhindert Row-Click
+                                      e.stopPropagation();
                                       handleViewContractPDFWrapper(contract);
                                     }}
                                     title="PDF anzeigen"
