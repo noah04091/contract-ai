@@ -73,7 +73,7 @@ type SortOrder = 'neueste' | 'älteste' | 'name_az' | 'name_za';
 
 // ✅ NEU: S3-Integration - Utility-Funktionen direkt in der Komponente
 
-// ✅ FIXED: PDF-Schnellaktion mit verbesserter S3-Logik (aus ContractDetailsView übernommen)
+// ✅ MOBILE-FIX: PDF-Schnellaktion mit Mobile-Browser-kompatiblem Link-Opening
 const handleViewContractPDF = async (
   contract: Contract,
   setPdfLoading: React.Dispatch<React.SetStateAction<{ [contractId: string]: boolean }>>,
@@ -84,7 +84,7 @@ const handleViewContractPDF = async (
     message?: string;
   } | null>>
 ) => {
-  console.log('🔍 PDF-Schnellaktion für Vertrag:', {
+  console.log('🔍 PDF-Schnellaktion für Vertrag (Mobile-optimiert):', {
     contractId: contract._id,
     contractName: contract.name,
     hasS3Key: !!contract.s3Key,
@@ -92,10 +92,42 @@ const handleViewContractPDF = async (
     needsReupload: contract.needsReupload
   });
 
+  // ✅ MOBILE-FIX: Legacy-Prüfung ZUERST (ohne async)
+  if (contract.needsReupload || contract.uploadType === 'LOCAL_LEGACY') {
+    console.log('⚠️ Legacy contract detected');
+    setLegacyModal({
+      show: true,
+      contract,
+      message: 'Dieser Vertrag wurde vor der Cloud-Integration hochgeladen und ist nicht mehr verfügbar. Bitte laden Sie ihn erneut hoch.'
+    });
+    return;
+  }
+
   setPdfLoading(prev => ({ ...prev, [contract._id]: true }));
   
+  // ✅ MOBILE-FIX: Erstelle sofort Link-Element (noch im synchronen Click-Context)
+  const openPDFWithLink = (pdfUrl: string) => {
+    console.log('📱 Opening PDF with mobile-compatible link:', pdfUrl);
+    
+    // Erstelle echtes <a> Element für Mobile-Kompatibilität
+    const link = document.createElement('a');
+    link.href = pdfUrl;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.style.display = 'none';
+    
+    // Temporär ins DOM einfügen
+    document.body.appendChild(link);
+    
+    // Klick simulieren (Mobile-Browser akzeptieren das als User-Aktion)
+    link.click();
+    
+    // Cleanup
+    document.body.removeChild(link);
+  };
+
   try {
-    // ✅ FIXED: Verwende die gleiche Logik wie in ContractDetailsView (direkte s3Key-Route)
+    // ✅ Strategie 1: Direkte S3-Key-Route (für neue Verträge)
     if (contract.s3Key) {
       console.log('✅ S3 Contract detected, fetching signed URL with key...');
       
@@ -116,30 +148,19 @@ const handleViewContractPDF = async (
         if (response.ok && (data.url || data.fileUrl)) {
           const signedUrl = data.url || data.fileUrl;
           console.log('✅ S3 URL fetched successfully:', signedUrl);
-          window.open(signedUrl, '_blank', 'noopener,noreferrer');
+          openPDFWithLink(signedUrl); // ✅ MOBILE-FIX: Link statt window.open
           return;
         } else {
           console.error('❌ S3 URL fetch failed:', data.error || 'No URL in response');
-          // Fallback zur contractId-Route
+          // Fallback zur contractId-Route weiter unten
         }
       } catch (error) {
         console.error('❌ S3 URL fetch error:', error);
-        // Fallback zur contractId-Route
+        // Fallback zur contractId-Route weiter unten
       }
     }
-    
-    // ✅ Legacy-Vertrag oder S3-Fehler - Fallback mit contractId-Route
-    if (contract.needsReupload || contract.uploadType === 'LOCAL_LEGACY') {
-      console.log('⚠️ Legacy contract detected');
-      setLegacyModal({
-        show: true,
-        contract,
-        message: 'Dieser Vertrag wurde vor der Cloud-Integration hochgeladen und ist nicht mehr verfügbar. Bitte laden Sie ihn erneut hoch.'
-      });
-      return;
-    }
 
-    // ✅ Fallback: Verwende contractId-Route (für ältere Verträge)
+    // ✅ Strategie 2: ContractId-Route als Fallback
     console.log('🔄 Fallback: Using contractId route...');
     
     try {
@@ -157,7 +178,7 @@ const handleViewContractPDF = async (
       if (response.ok && (data.fileUrl || data.url)) {
         const signedUrl = data.fileUrl || data.url;
         console.log('✅ ContractId route successful:', signedUrl);
-        window.open(signedUrl, '_blank', 'noopener,noreferrer');
+        openPDFWithLink(signedUrl); // ✅ MOBILE-FIX: Link statt window.open
         return;
       } else if (data.error?.includes('before S3 integration')) {
         console.log('⚠️ Legacy contract identified via contractId route');
