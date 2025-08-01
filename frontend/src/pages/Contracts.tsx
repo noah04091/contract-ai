@@ -1,4 +1,4 @@
-// 📁 src/pages/Contracts.tsx - JSX FIXED: Motion Button closing tag korrigiert + ANALYSE-ANZEIGE GEFIXT + RESPONSIVE + DUPLIKATSERKENNUNG + S3-INTEGRATION + BATCH-ANALYSE-ANZEIGE + PDF-SCHNELLAKTION FIX
+// 📁 src/pages/Contracts.tsx - JSX FIXED: Motion Button closing tag korrigiert + ANALYSE-ANZEIGE GEFIXT + RESPONSIVE + DUPLIKATSERKENNUNG + S3-INTEGRATION + BATCH-ANALYSE-ANZEIGE + PDF-SCHNELLAKTION MOBILE-FIX
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet";
@@ -73,7 +73,7 @@ type SortOrder = 'neueste' | 'älteste' | 'name_az' | 'name_za';
 
 // ✅ NEU: S3-Integration - Utility-Funktionen direkt in der Komponente
 
-// ✅ FIXED: PDF-Schnellaktion mit verbesserter S3-Logik (aus ContractDetailsView übernommen)
+// ✅ MOBILE-FIX: PDF-Schnellaktion mit "Temporäres Tab sofort öffnen" Methode (Mobile-freundlich)
 const handleViewContractPDF = async (
   contract: Contract,
   setPdfLoading: React.Dispatch<React.SetStateAction<{ [contractId: string]: boolean }>>,
@@ -84,7 +84,7 @@ const handleViewContractPDF = async (
     message?: string;
   } | null>>
 ) => {
-  console.log('🔍 PDF-Schnellaktion für Vertrag:', {
+  console.log('📱 PDF-Schnellaktion (Mobile-freundliche Methode):', {
     contractId: contract._id,
     contractName: contract.name,
     hasS3Key: !!contract.s3Key,
@@ -94,41 +94,13 @@ const handleViewContractPDF = async (
 
   setPdfLoading(prev => ({ ...prev, [contract._id]: true }));
   
+  // ✅ MOBILE-FIX: Temporäres Tab sofort öffnen (Popup-Blocker umgehen)
+  let tempWindow: Window | null = null;
+  
   try {
-    // ✅ FIXED: Verwende die gleiche Logik wie in ContractDetailsView (direkte s3Key-Route)
-    if (contract.s3Key) {
-      console.log('✅ S3 Contract detected, fetching signed URL with key...');
-      
-      try {
-        const token = localStorage.getItem('token');
-        const response = await fetch(`/api/s3/view?key=${encodeURIComponent(contract.s3Key)}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include'
-        });
-        
-        const data = await response.json();
-        
-        console.log('🔍 S3 Response data:', data);
-        
-        if (response.ok && (data.url || data.fileUrl)) {
-          const signedUrl = data.url || data.fileUrl;
-          console.log('✅ S3 URL fetched successfully:', signedUrl);
-          window.open(signedUrl, '_blank', 'noopener,noreferrer');
-          return;
-        } else {
-          console.error('❌ S3 URL fetch failed:', data.error || 'No URL in response');
-          // Fallback zur contractId-Route
-        }
-      } catch (error) {
-        console.error('❌ S3 URL fetch error:', error);
-        // Fallback zur contractId-Route
-      }
-    }
-    
-    // ✅ Legacy-Vertrag oder S3-Fehler - Fallback mit contractId-Route
+    const token = localStorage.getItem('token');
+
+    // ✅ Legacy-Vertrag Check (vor Tab-Öffnung)
     if (contract.needsReupload || contract.uploadType === 'LOCAL_LEGACY') {
       console.log('⚠️ Legacy contract detected');
       setLegacyModal({
@@ -139,51 +111,180 @@ const handleViewContractPDF = async (
       return;
     }
 
-    // ✅ Fallback: Verwende contractId-Route (für ältere Verträge)
-    console.log('🔄 Fallback: Using contractId route...');
-    
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`/api/s3/view?contractId=${contract._id}`, {
+    // ✅ CRITICAL: Tab sofort öffnen (noch im User-Click-Context)
+    tempWindow = window.open('', '_blank');
+    if (tempWindow) {
+      tempWindow.document.write(`
+        <html>
+          <head>
+            <title>Lade ${contract.name}...</title>
+            <style>
+              body { 
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                display: flex; 
+                justify-content: center; 
+                align-items: center; 
+                height: 100vh; 
+                margin: 0; 
+                background: #f5f5f7;
+                color: #1d1d1f;
+              }
+              .loader {
+                text-align: center;
+              }
+              .spinner {
+                width: 40px;
+                height: 40px;
+                border: 3px solid #e5e5e5;
+                border-top: 3px solid #007aff;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+                margin: 0 auto 20px;
+              }
+              @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="loader">
+              <div class="spinner"></div>
+              <h2>PDF wird geladen...</h2>
+              <p>Schnellaktion ausgeführt...</p>
+            </div>
+          </body>
+        </html>
+      `);
+    }
+
+    // ✅ S3-Key-Route (prioritär)
+    if (contract.s3Key) {
+      console.log('✅ S3 Contract detected, fetching signed URL with key...');
+      
+      const response = await fetch(`/api/s3/view?key=${encodeURIComponent(contract.s3Key)}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         credentials: 'include'
       });
-
+      
       const data = await response.json();
-
-      if (response.ok && (data.fileUrl || data.url)) {
-        const signedUrl = data.fileUrl || data.url;
-        console.log('✅ ContractId route successful:', signedUrl);
-        window.open(signedUrl, '_blank', 'noopener,noreferrer');
-        return;
-      } else if (data.error?.includes('before S3 integration')) {
-        console.log('⚠️ Legacy contract identified via contractId route');
-        setLegacyModal({
-          show: true,
-          contract,
-          message: data.error
-        });
+      
+      console.log('🔍 S3 Response data:', data);
+      
+      if (response.ok && (data.url || data.fileUrl)) {
+        const pdfUrl = data.url || data.fileUrl;
+        console.log('✅ S3 URL fetched successfully:', pdfUrl);
+        
+        if (tempWindow && !tempWindow.closed) {
+          tempWindow.location.href = pdfUrl;
+        } else {
+          // Fallback falls Tab geschlossen wurde
+          window.open(pdfUrl, '_blank', 'noopener,noreferrer');
+        }
         return;
       } else {
-        throw new Error(data.error || 'Failed to get signed URL');
+        console.error('❌ S3 URL fetch failed:', data.error || 'No URL in response');
+        // Fallback to contractId route
       }
-    } catch (fallbackError) {
-      console.error('❌ ContractId route also failed:', fallbackError);
+    }
+    
+    // ✅ Fallback: ContractId-Route
+    console.log('🔄 Fallback: Using contractId route...');
+    
+    const response = await fetch(`/api/s3/view?contractId=${contract._id}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include'
+    });
+
+    const data = await response.json();
+
+    if (response.ok && (data.fileUrl || data.url)) {
+      const pdfUrl = data.fileUrl || data.url;
+      console.log('✅ ContractId route successful:', pdfUrl);
       
-      // ✅ Final fallback error
-      const errorMessage = fallbackError instanceof Error 
-        ? fallbackError.message 
-        : 'Die PDF-Datei konnte nicht geladen werden.';
-      
-      setError(errorMessage);
+      if (tempWindow && !tempWindow.closed) {
+        tempWindow.location.href = pdfUrl;
+      } else {
+        // Fallback falls Tab geschlossen wurde
+        window.open(pdfUrl, '_blank', 'noopener,noreferrer');
+      }
+      return;
+    } else if (data.error?.includes('before S3 integration')) {
+      console.log('⚠️ Legacy contract identified via contractId route');
+      if (tempWindow) tempWindow.close();
+      setLegacyModal({
+        show: true,
+        contract,
+        message: data.error
+      });
+      return;
+    } else {
+      throw new Error(data.error || 'Failed to get signed URL');
     }
 
   } catch (error) {
-    console.error('❌ Unexpected error in PDF view:', error);
-    setError('Unerwarteter Fehler beim Öffnen des Vertrags');
+    console.error('❌ Error in mobile-friendly PDF schnellaktion:', error);
+    
+    // ✅ Tab schließen bei Fehler
+    if (tempWindow && !tempWindow.closed) {
+      tempWindow.document.write(`
+        <html>
+          <head>
+            <title>Fehler</title>
+            <style>
+              body { 
+                font-family: -apple-system, BlinkMacSystemFont, 'Segui UI', Roboto, sans-serif;
+                display: flex; 
+                justify-content: center; 
+                align-items: center; 
+                height: 100vh; 
+                margin: 0; 
+                background: #f5f5f7;
+                color: #1d1d1f;
+                text-align: center;
+              }
+              .error { color: #ff3b30; }
+              button {
+                margin-top: 20px;
+                padding: 12px 24px;
+                background: #007aff;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 16px;
+              }
+            </style>
+          </head>
+          <body>
+            <div>
+              <h2 class="error">❌ Schnellaktion Fehler</h2>
+              <p>Die PDF-Datei konnte nicht geöffnet werden.</p>
+              <button onclick="window.close()">Tab schließen</button>
+            </div>
+          </body>
+        </html>
+      `);
+      
+      // Auto-close nach 5 Sekunden
+      setTimeout(() => {
+        if (tempWindow && !tempWindow.closed) {
+          tempWindow.close();
+        }
+      }, 5000);
+    }
+    
+    const errorMessage = error instanceof Error 
+      ? error.message 
+      : 'Unerwarteter Fehler beim Öffnen des Vertrags';
+    
+    setError(errorMessage);
   } finally {
     setPdfLoading(prev => ({ ...prev, [contract._id]: false }));
   }
