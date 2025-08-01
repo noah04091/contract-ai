@@ -1225,8 +1225,8 @@ export default function Contracts() {
         </button>
         <button 
           className={styles.cardActionButton}
-          onClick={() => {
-            // ✅ MOBILE-FIX: Kein stopPropagation für bessere Mobile-Kompatibilität
+          onClick={(e) => {
+            e.stopPropagation(); // ✅ CRITICAL: Verhindert Card-Click
             handleViewContractPDFWrapper(contract);
           }}
           disabled={pdfLoading[contract._id]}
@@ -1950,8 +1950,8 @@ export default function Contracts() {
                                   </button>
                                   <button 
                                     className={styles.actionButton}
-                                    onClick={() => {
-                                      // ✅ MOBILE-FIX: Kein stopPropagation für bessere Mobile-Kompatibilität
+                                    onClick={(e) => {
+                                      e.stopPropagation(); // ✅ CRITICAL: Verhindert Row-Click
                                       handleViewContractPDFWrapper(contract);
                                     }}
                                     title="PDF anzeigen"
