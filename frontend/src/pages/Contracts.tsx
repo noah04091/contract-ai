@@ -73,7 +73,7 @@ type SortOrder = 'neueste' | 'älteste' | 'name_az' | 'name_za';
 
 // ✅ NEU: S3-Integration - Utility-Funktionen direkt in der Komponente
 
-// ✅ MOBILE-FIX v2: Direkter Link zur API ohne vorheriges Fetchen (Mobile-Browser-kompatibel)
+// ✅ MOBILE-FIX v3: Sofort Tab öffnen, dann URL nachträglich setzen (Mobile-Browser-kompatibel)
 const handleViewContractPDF = async (
   contract: Contract,
   setPdfLoading: React.Dispatch<React.SetStateAction<{ [contractId: string]: boolean }>>,
@@ -84,7 +84,7 @@ const handleViewContractPDF = async (
     message?: string;
   } | null>>
 ) => {
-  console.log('📱 PDF-Schnellaktion (Mobile-Direct-Link):', {
+  console.log('📱 PDF-Schnellaktion (Mobile-Tab-First):', {
     contractId: contract._id,
     contractName: contract.name,
     hasS3Key: !!contract.s3Key,
@@ -92,7 +92,7 @@ const handleViewContractPDF = async (
     needsReupload: contract.needsReupload
   });
 
-  // ✅ Legacy-Prüfung ZUERST (ohne Loading)
+  // ✅ Legacy-Prüfung ZUERST
   if (contract.needsReupload || contract.uploadType === 'LOCAL_LEGACY') {
     console.log('⚠️ Legacy contract detected');
     setLegacyModal({
@@ -103,62 +103,138 @@ const handleViewContractPDF = async (
     return;
   }
 
-  // ✅ MOBILE-FIX v2: Direkter Link zur API-Route (kein fetch, kein await!)
-  const openDirectLink = (apiUrl: string) => {
-    console.log('📱 Opening direct API link (Mobile-optimized):', apiUrl);
-    
-    // Methode 1: Direkter Link (am mobilfreundlichsten)
-    const link = document.createElement('a');
-    link.href = apiUrl;
-    link.target = '_blank';
-    link.rel = 'noopener noreferrer';
-    
-    // WICHTIG: Link muss sichtbar sein für manche Mobile-Browser
-    link.style.position = 'absolute';
-    link.style.left = '-9999px';
-    link.textContent = 'PDF Link';
-    
-    document.body.appendChild(link);
-    
-    // Simuliere echten Click (synchron im User-Event-Context)
-    const clickEvent = new MouseEvent('click', {
-      bubbles: true,
-      cancelable: true,
-      view: window
-    });
-    
-    link.dispatchEvent(clickEvent);
-    
-    // Cleanup nach kurzer Verzögerung
-    setTimeout(() => {
-      document.body.removeChild(link);
-    }, 100);
-  };
-
   setPdfLoading(prev => ({ ...prev, [contract._id]: true }));
 
+  // ✅ MOBILE-FIX v3: Sofort leeres Tab öffnen (noch im User-Context!)
+  const newTab = window.open('about:blank', '_blank', 'noopener,noreferrer');
+  
+  if (!newTab) {
+    console.error('❌ Failed to open new tab - popup blocked');
+    setError('Popup wurde blockiert. Bitte erlaube Popups für diese Seite.');
+    setPdfLoading(prev => ({ ...prev, [contract._id]: false }));
+    return;
+  }
+
+  // ✅ Loading-Anzeige im neuen Tab
+  newTab.document.write(`
+    <html>
+      <head><title>PDF wird geladen...</title></head>
+      <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+        <h2>📄 PDF wird geladen...</h2>
+        <p>Bitte warten Sie einen Moment.</p>
+        <div style="margin: 20px;">⏳</div>
+      </body>
+    </html>
+  `);
+
   try {
-    // ✅ Strategie 1: S3-Key-Route (direkt, ohne vorheriges Fetchen)
+    // ✅ Jetzt async die echte URL holen
+    let pdfUrl = null;
+    
+    // Strategie 1: S3-Key-Route
     if (contract.s3Key) {
-      console.log('✅ Using direct S3 key route');
-      const s3KeyUrl = `/api/s3/view?key=${encodeURIComponent(contract.s3Key)}`;
-      openDirectLink(s3KeyUrl);
-      return;
+      console.log('✅ S3 Contract detected, fetching signed URL with key...');
+      
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/s3/view?key=${encodeURIComponent(contract.s3Key)}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && (data.url || data.fileUrl)) {
+          pdfUrl = data.url || data.fileUrl;
+          console.log('✅ S3 URL fetched successfully:', pdfUrl);
+        } else {
+          console.error('❌ S3 URL fetch failed:', data.error);
+        }
+      } catch (error) {
+        console.error('❌ S3 URL fetch error:', error);
+      }
     }
 
-    // ✅ Strategie 2: ContractId-Route (direkt, ohne vorheriges Fetchen)
-    console.log('✅ Using direct contractId route');
-    const contractIdUrl = `/api/s3/view?contractId=${contract._id}`;
-    openDirectLink(contractIdUrl);
+    // Strategie 2: ContractId-Route als Fallback
+    if (!pdfUrl) {
+      console.log('🔄 Fallback: Using contractId route...');
+      
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/s3/view?contractId=${contract._id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
+        });
+
+        const data = await response.json();
+
+        if (response.ok && (data.fileUrl || data.url)) {
+          pdfUrl = data.fileUrl || data.url;
+          console.log('✅ ContractId route successful:', pdfUrl);
+        } else if (data.error?.includes('before S3 integration')) {
+          console.log('⚠️ Legacy contract identified');
+          newTab.close();
+          setLegacyModal({
+            show: true,
+            contract,
+            message: data.error
+          });
+          return;
+        } else {
+          throw new Error(data.error || 'Failed to get signed URL');
+        }
+      } catch (error) {
+        console.error('❌ ContractId route failed:', error);
+        throw error;
+      }
+    }
+
+    // ✅ PDF-URL in das bereits geöffnete Tab laden
+    if (pdfUrl && newTab && !newTab.closed) {
+      console.log('📱 Redirecting tab to PDF URL:', pdfUrl);
+      newTab.location.href = pdfUrl;
+    } else if (!pdfUrl) {
+      // Fehler-Seite im Tab anzeigen
+      newTab.document.write(`
+        <html>
+          <head><title>Fehler beim Laden</title></head>
+          <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+            <h2 style="color: red;">❌ Fehler beim Laden</h2>
+            <p>Die PDF-Datei konnte nicht geladen werden.</p>
+            <button onclick="window.close()">Tab schließen</button>
+          </body>
+        </html>
+      `);
+      setError('PDF-Datei konnte nicht geladen werden');
+    }
 
   } catch (error) {
-    console.error('❌ Error in direct PDF link:', error);
-    setError('Fehler beim Öffnen des Vertrags');
+    console.error('❌ Error loading PDF:', error);
+    
+    // Fehler-Seite im Tab anzeigen
+    if (newTab && !newTab.closed) {
+      newTab.document.write(`
+        <html>
+          <head><title>Fehler beim Laden</title></head>
+          <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+            <h2 style="color: red;">❌ Fehler beim Laden</h2>
+            <p>Die PDF-Datei konnte nicht geladen werden.</p>
+            <p><small>${error instanceof Error ? error.message : 'Unbekannter Fehler'}</small></p>
+            <button onclick="window.close()">Tab schließen</button>
+          </body>
+        </html>
+      `);
+    }
+    
+    setError('Unerwarteter Fehler beim Öffnen des Vertrags');
   } finally {
-    // Kurze Verzögerung vor Loading-Reset (damit User sieht, dass etwas passiert ist)
-    setTimeout(() => {
-      setPdfLoading(prev => ({ ...prev, [contract._id]: false }));
-    }, 1000);
+    setPdfLoading(prev => ({ ...prev, [contract._id]: false }));
   }
 };
 
