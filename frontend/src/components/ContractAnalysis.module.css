@@ -1,4 +1,4 @@
-/* ContractAnalysis.module.css - IMPROVED VERSION + DUPLIKAT-MODAL */
+/* ContractAnalysis.module.css - ENHANCED WITH 7-POINT LAWYER-LEVEL ANALYSIS STYLES */
 
 /* Base Container */
 .analysisContainer {
@@ -76,6 +76,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .serviceWarning {
@@ -100,11 +101,40 @@
   margin-left: 8px;
 }
 
+/* ✅ NEU: Lawyer-Level Badge */
+.lawyerBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  margin-left: 8px;
+}
+
+/* ✅ NEU: Initial Result Badge */
+.initialResultBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  margin-left: 8px;
+}
+
 /* Action Buttons */
 .actions {
   display: flex;
   gap: 0.75rem;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .analyzeButton {
@@ -133,6 +163,28 @@
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
+}
+
+/* ✅ NEU: Re-Analyze Button */
+.reanalyzeButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-weight: 500;
+  font-size: 0.925rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.reanalyzeButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
 }
 
 .loadingButton {
@@ -173,8 +225,7 @@
   cursor: not-allowed;
 }
 
-/* ✅ NEU: Duplikat-Modal Styles */
-/* Modal Overlay */
+/* ✅ Duplikat-Modal Styles */
 .modalOverlay {
   position: fixed;
   top: 0;
@@ -190,7 +241,6 @@
   padding: 20px;
 }
 
-/* Duplikat Modal */
 .duplicateModal {
   background: white;
   border-radius: 16px;
@@ -202,7 +252,6 @@
   position: relative;
 }
 
-/* Modal Header */
 .modalHeader {
   display: flex;
   align-items: center;
@@ -253,7 +302,6 @@
   color: #1e293b;
 }
 
-/* Modal Content */
 .modalContent {
   padding: 24px;
 }
@@ -270,7 +318,6 @@
   font-weight: 600;
 }
 
-/* Option Cards */
 .duplicateOptions {
   display: flex;
   flex-direction: column;
@@ -319,7 +366,6 @@
   line-height: 1.5;
 }
 
-/* Modal Actions */
 .modalActions {
   display: flex;
   gap: 12px;
@@ -367,7 +413,7 @@
   transform: translateY(-1px);
 }
 
-/* ✅ NEU: Schöne Navigation-Message für Duplikat-Verweis */
+/* ✅ Navigation-Message für Duplikat-Verweis */
 .navigationContainer {
   background: linear-gradient(135deg, #ecfdf5, #d1fae5);
   border: 1px solid #a7f3d0;
@@ -652,11 +698,46 @@
   color: #111827;
   margin: 0;
   line-height: 1.3;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .successDetails p {
   color: #6b7280;
   margin: 0.25rem 0 0;
+}
+
+/* ✅ NEU: Lawyer-Level Indikator */
+.lawyerLevelIndicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  border-radius: 8px;
+  color: white;
+  margin-right: 0.5rem;
+}
+
+/* ✅ NEU: Lawyer-Level Features */
+.lawyerLevelFeatures {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.feature {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  color: #8b5cf6;
+  font-weight: 500;
+  padding: 0.25rem 0.5rem;
+  background: rgba(139, 92, 246, 0.1);
+  border-radius: 6px;
 }
 
 .requestId {
@@ -685,7 +766,6 @@
   margin: 0 0 2rem;
 }
 
-/* ✅ NEW: Perfect circle centering wrapper */
 .scoreSectionContent {
   display: flex;
   justify-content: center;
@@ -798,7 +878,6 @@
   margin: 0;
 }
 
-/* ✅ NEW: Card content with proper spacing */
 .cardContent {
   padding: 0 1.5rem 1.5rem;
 }
@@ -838,8 +917,135 @@
   line-height: 1.6;
   margin: 0;
   font-weight: 400;
-  max-width: 500px; /* ✅ Better text width control */
+  max-width: 500px;
 }
+
+/* ✅ NEU: Strukturierte Listen für 7-Punkte-Analyse */
+.structuredList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.structuredItem {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 12px;
+  border-left: 4px solid #e5e7eb;
+  transition: all 0.2s ease;
+}
+
+.structuredItem:last-child {
+  margin-bottom: 0;
+}
+
+.structuredItem:hover {
+  background: #f1f5f9;
+  transform: translateX(2px);
+}
+
+.structuredHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.structuredTitle {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+  flex: 1;
+}
+
+.structuredDescription {
+  color: #374151;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ✅ NEU: Risiko-Level Badges */
+.riskBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.riskHigh {
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+  border-left-color: #dc2626;
+}
+
+.riskMedium {
+  background: rgba(245, 158, 11, 0.1);
+  color: #d97706;
+  border-left-color: #d97706;
+}
+
+.riskLow {
+  background: rgba(34, 197, 94, 0.1);
+  color: #16a34a;
+  border-left-color: #16a34a;
+}
+
+.riskNeutral {
+  background: rgba(107, 114, 128, 0.1);
+  color: #6b7280;
+  border-left-color: #6b7280;
+}
+
+/* ✅ NEU: Prioritäts-Level Badges */
+.priorityBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.priorityHigh {
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+  border-left-color: #dc2626;
+}
+
+.priorityMedium {
+  background: rgba(245, 158, 11, 0.1);
+  color: #d97706;
+  border-left-color: #d97706;
+}
+
+.priorityLow {
+  background: rgba(34, 197, 94, 0.1);
+  color: #16a34a;
+  border-left-color: #16a34a;
+}
+
+.priorityNeutral {
+  background: rgba(107, 114, 128, 0.1);
+  color: #6b7280;
+  border-left-color: #6b7280;
+}
+
+/* ✅ NEU: Icon Colors für Risiken und Prioritäten */
+.iconRed { color: #dc2626; }
+.iconOrange { color: #d97706; }
+.iconYellow { color: #eab308; }
+.iconGreen { color: #16a34a; }
+.iconGray { color: #6b7280; }
 
 .fallbackMessage {
   background: #f9fafb;
@@ -860,16 +1066,14 @@
 .greenIcon { background: rgba(16, 185, 129, 0.1); }
 .yellowIcon { background: rgba(245, 158, 11, 0.1); }
 .purpleIcon { background: rgba(139, 92, 246, 0.1); }
+.redIcon { background: rgba(239, 68, 68, 0.1); } /* ✅ NEU für kritische Punkte */
 
 .blueBullet { background: #3b82f6; }
 .greenBullet { background: #10b981; }
 .yellowBullet { background: #f59e0b; }
 .purpleBullet { background: #8b5cf6; }
 
-.iconGreen { color: #10b981; }
-.iconOrange { color: #f59e0b; }
 .iconOrangeRed { color: #f97316; }
-.iconRed { color: #ef4444; }
 
 /* Usage Info */
 .usageInfo {
@@ -936,6 +1140,8 @@
 .secondaryActions {
   display: flex;
   gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 .secondaryButton {
@@ -1038,7 +1244,6 @@
   line-height: 1.6;
 }
 
-/* ✅ NEW: Structured optimization sections */
 .optimizationSections {
   display: flex;
   flex-direction: column;
@@ -1111,6 +1316,7 @@
 
   .actions {
     justify-content: space-between;
+    flex-wrap: wrap;
   }
 
   .scoreSection {
@@ -1210,6 +1416,35 @@
   .optionCard {
     padding: 16px;
   }
+
+  /* ✅ NEU: Mobile-optimierte strukturierte Listen */
+  .structuredItem {
+    padding: 0.75rem;
+  }
+
+  .structuredHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .structuredTitle {
+    font-size: 0.9rem;
+  }
+
+  .structuredDescription {
+    font-size: 0.8rem;
+  }
+
+  /* ✅ NEU: Mobile Features */
+  .lawyerLevelFeatures {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .feature {
+    justify-content: center;
+  }
 }
 
 @media (max-width: 480px) {
@@ -1249,6 +1484,18 @@
   .cardContent {
     padding: 0 1rem 1rem;
   }
+
+  .fileSize {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .fileSize > span {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
 }
 
 /* ✅ Animation utilities */
@@ -1261,8 +1508,13 @@
   animation: spin 1s linear infinite;
 }
 
+.loadingIcon {
+  animation: spin 1s linear infinite;
+}
+
 /* ✅ Focus states for accessibility */
 .analyzeButton:focus,
+.reanalyzeButton:focus,
 .resetButton:focus,
 .primaryActionButton:focus,
 .secondaryButton:focus,
@@ -1288,5 +1540,48 @@
   .optimizationContent {
     height: auto !important;
     overflow: visible !important;
+  }
+
+  .lawyerLevelFeatures {
+    display: none;
+  }
+}
+
+/* ✅ NEU: Dark mode support (optional) */
+@media (prefers-color-scheme: dark) {
+  .analysisContainer {
+    background: #1f2937;
+    border-color: #374151;
+    color: #f9fafb;
+  }
+
+  .header {
+    background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+  }
+
+  .fileName {
+    color: #f9fafb;
+  }
+
+  .detailCard {
+    background: #1f2937;
+    border-color: #374151;
+  }
+
+  .detailCard h5 {
+    color: #f9fafb;
+  }
+
+  .pointText,
+  .structuredDescription {
+    color: #d1d5db;
+  }
+
+  .structuredItem {
+    background: #374151;
+  }
+
+  .structuredTitle {
+    color: #f9fafb;
   }
 }

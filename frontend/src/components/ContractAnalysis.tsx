@@ -6,7 +6,9 @@ import {
   Shield, TrendingUp, Lightbulb, FileSearch,
   Wrench, ArrowRight, AlertTriangle,
   Award, Target, Zap, ChevronDown, ChevronUp,
-  Copy, Eye, X // ✅ NEU: Icons für Duplikat-Modal
+  Copy, Eye, X, // ✅ Icons für Duplikat-Modal
+  CheckSquare, XCircle, BookOpen, // ✅ NEU: Icons für 7-Punkte-Struktur (Users und MapPin entfernt)
+  Gavel, Scale, Star // ✅ NEU: Anwalts-Icons
 } from "lucide-react";
 import styles from "./ContractAnalysis.module.css";
 import { uploadAndAnalyze, checkAnalyzeHealth, uploadAndOptimize } from "../utils/api";
@@ -14,22 +16,35 @@ import { uploadAndAnalyze, checkAnalyzeHealth, uploadAndOptimize } from "../util
 interface ContractAnalysisProps {
   file: File;
   onReset: () => void;
-  onNavigateToContract?: (contractId: string) => void; // ✅ NEU: Navigation zu bestehendem Vertrag
-  initialResult?: AnalysisResult; // ✅ CRITICAL FIX: Neue prop für vorhandene Ergebnisse
+  onNavigateToContract?: (contractId: string) => void;
+  initialResult?: AnalysisResult;
 }
 
+// ✅ ENHANCED: Erweiterte Interfaces für 7-Punkte-Struktur
 interface AnalysisResult {
   success: boolean;
   message?: string;
-  summary?: string;
-  legalAssessment?: string;
-  suggestions?: string;
-  comparison?: string;
+  summary?: string | string[];
+  legalAssessment?: string | string[];
+  suggestions?: string | string[];
+  comparison?: string | string[];
   contractScore?: number;
   analysisId?: string;
   requestId?: string;
-  isReanalysis?: boolean; // ✅ NEU
-  originalContractId?: string; // ✅ NEU
+  isReanalysis?: boolean;
+  originalContractId?: string;
+  
+  // ✅ NEU: 7-Punkte-Struktur
+  positiveAspects?: PositiveAspect[] | string;
+  criticalIssues?: CriticalIssue[] | string;
+  recommendations?: Recommendation[] | string;
+  
+  // ✅ NEU: Lawyer-Level Metadata
+  lawyerLevelAnalysis?: boolean;
+  analysisDepth?: string;
+  structuredAnalysis?: boolean;
+  completenessGuarantee?: boolean;
+  
   usage?: {
     count: number;
     limit: number;
@@ -38,9 +53,27 @@ interface AnalysisResult {
   error?: string;
 }
 
+// ✅ NEU: Strukturierte Interfaces für Lawyer-Level Analysis
+interface PositiveAspect {
+  title: string;
+  description: string;
+}
+
+interface CriticalIssue {
+  title: string;
+  description: string;
+  riskLevel: 'high' | 'medium' | 'low';
+}
+
+interface Recommendation {
+  title: string;
+  description: string;
+  priority: 'high' | 'medium' | 'low';
+}
+
 // ✅ FIXED: Erweiterte Response-Type für bessere TypeScript-Sicherheit
 interface AnalysisResponse extends AnalysisResult {
-  [key: string]: unknown; // Erlaubt zusätzliche Properties
+  [key: string]: unknown;
 }
 
 // ✅ NEU: Interface für Duplikat-Response (korrigiert)
@@ -88,7 +121,7 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
   // ✅ NEU: States für bessere UX-Behandlung
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
   const [duplicateInfo, setDuplicateInfo] = useState<DuplicateResponse | null>(null);
-  const [showNavigationMessage, setShowNavigationMessage] = useState(false); // ✅ NEU: Für schöne Navigation-Message
+  const [showNavigationMessage, setShowNavigationMessage] = useState(false);
   
   const analysisResultRef = useRef<HTMLDivElement>(null);
 
@@ -105,7 +138,6 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
       setAnalyzing(false);
       setError(null);
       
-      // Optional: Success-Message anzeigen
       console.log("✅ Analyse bereits vorhanden - wird direkt angezeigt");
     }
   }, [initialResult]);
@@ -124,7 +156,7 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
     setGeneratingPdf(false);
     setShowDuplicateModal(false);
     setDuplicateInfo(null);
-    setShowNavigationMessage(false); // ✅ NEU: Reset auch Navigation-Message
+    setShowNavigationMessage(false);
   };
 
   // ✅ FIXED: Robustes handleAnalyze mit besserem TypeScript-Handling + initialResult-Support
@@ -170,7 +202,7 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
           if ('contractId' in responseObj && 'contractName' in responseObj && 'actions' in responseObj) {
             setDuplicateInfo(response as DuplicateResponse);
             setShowDuplicateModal(true);
-            return; // Stoppe hier, warte auf User-Entscheidung
+            return;
           } else {
             console.error("❌ Unvollständige Duplikat-Response:", response);
             throw new Error("📄 Dieser Vertrag wurde bereits hochgeladen. Bitte prüfe deine Vertragsliste.");
@@ -228,7 +260,7 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
           errorMessage = "📄 PDF konnte nicht verarbeitet werden. Bitte prüfe das Dateiformat.";
           canRetry = false;
         } else if (errMsg.includes('bereits hochgeladen')) {
-          errorMessage = errMsg; // Duplikat-Fallback-Message
+          errorMessage = errMsg;
           canRetry = false;
         } else {
           errorMessage = errMsg;
@@ -249,9 +281,8 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
     console.log("🔄 User wählt: Erneut analysieren");
     setShowDuplicateModal(false);
     setDuplicateInfo(null);
-    // Kurze Verzögerung für bessere UX
     setTimeout(() => {
-      handleAnalyze(true); // Force re-analyze
+      handleAnalyze(true);
     }, 100);
   };
 
@@ -260,7 +291,6 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
     if (duplicateInfo && onNavigateToContract) {
       onNavigateToContract(duplicateInfo.contractId);
     } else {
-      // ✅ FIXED: Schöne Navigation-Message statt Error
       setShowDuplicateModal(false);
       setShowNavigationMessage(true);
     }
@@ -276,7 +306,7 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
   const handleReset = () => {
     console.log("🔄 User klickt Reset");
     resetAllStates();
-    onReset(); // Rufe Parent-Reset auf
+    onReset();
   };
 
   const handleOptimize = async () => {
@@ -390,9 +420,62 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
     return <AlertCircle size={24} className={styles.iconRed} />;
   };
 
-  const formatTextToPoints = (text: string): string[] => {
+  // ✅ NEW: Helper für Risiko-Level Icons und Farben
+  const getRiskLevelIcon = (riskLevel: string) => {
+    switch (riskLevel) {
+      case 'high':
+        return <XCircle size={16} className={styles.iconRed} />;
+      case 'medium':
+        return <AlertTriangle size={16} className={styles.iconOrange} />;
+      case 'low':
+        return <AlertCircle size={16} className={styles.iconYellow} />;
+      default:
+        return <AlertCircle size={16} className={styles.iconGray} />;
+    }
+  };
+
+  const getRiskLevelColor = (riskLevel: string): string => {
+    switch (riskLevel) {
+      case 'high': return styles.riskHigh;
+      case 'medium': return styles.riskMedium;
+      case 'low': return styles.riskLow;
+      default: return styles.riskNeutral;
+    }
+  };
+
+  // ✅ NEW: Helper für Prioritäts-Level
+  const getPriorityIcon = (priority: string) => {
+    switch (priority) {
+      case 'high':
+        return <Star size={16} className={styles.iconRed} />;
+      case 'medium':
+        return <Target size={16} className={styles.iconOrange} />;
+      case 'low':
+        return <CheckCircle size={16} className={styles.iconGreen} />;
+      default:
+        return <CheckCircle size={16} className={styles.iconGray} />;
+    }
+  };
+
+  const getPriorityColor = (priority: string): string => {
+    switch (priority) {
+      case 'high': return styles.priorityHigh;
+      case 'medium': return styles.priorityMedium;
+      case 'low': return styles.priorityLow;
+      default: return styles.priorityNeutral;
+    }
+  };
+
+  // ✅ ENHANCED: Backward-compatible text formatting
+  const formatTextToPoints = (text: string | string[]): string[] => {
     if (!text) return ['Keine Details verfügbar'];
     
+    // Wenn bereits Array, direkt verwenden
+    if (Array.isArray(text)) {
+      return text.filter(item => item && item.trim().length > 0);
+    }
+    
+    // String zu Array konvertieren
     const sentences = text
       .split(/[.!?]+|[-•]\s*/)
       .map(s => s.trim())
@@ -400,6 +483,29 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
       .slice(0, 4);
     
     return sentences.length > 0 ? sentences : [text.substring(0, 180) + '...'];
+  };
+
+  // ✅ NEW: Format structured data for new fields
+  const formatStructuredData = (data: PositiveAspect[] | CriticalIssue[] | Recommendation[] | string): Array<PositiveAspect | CriticalIssue | Recommendation> => {
+    if (!data) return [];
+    
+    // Wenn bereits strukturiert, direkt verwenden
+    if (Array.isArray(data)) {
+      return data;
+    }
+    
+    // String zu strukturiertem Array konvertieren
+    if (typeof data === 'string') {
+      const points = formatTextToPoints(data);
+      return points.map((point, index) => ({
+        title: `Punkt ${index + 1}`,
+        description: point,
+        ...(Math.random() > 0.5 && { riskLevel: 'medium' as const }),
+        ...(Math.random() > 0.5 && { priority: 'medium' as const })
+      }));
+    }
+    
+    return [];
   };
 
   const formatOptimizationText = (text: string) => {
@@ -564,6 +670,13 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
                     Aktualisiert
                   </span>
                 )}
+                {/* ✅ NEW: Lawyer-Level Badge */}
+                {result?.lawyerLevelAnalysis && (
+                  <span className={styles.lawyerBadge}>
+                    <Gavel size={12} />
+                    Anwaltsniveau
+                  </span>
+                )}
                 {/* ✅ CRITICAL FIX: Badge für vorhandene Analyse */}
                 {initialResult && (
                   <span className={styles.initialResultBadge}>
@@ -648,17 +761,17 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
           <div className={styles.progressTextContainer}>
             <p className={styles.progressText}>
               {progress < 30 && "📄 PDF wird verarbeitet..."}
-              {progress >= 30 && progress < 70 && "🤖 KI-Analyse läuft..."}
-              {progress >= 70 && progress < 100 && "📊 Bewertung wird erstellt..."}
-              {progress === 100 && "✅ Analyse abgeschlossen!"}
+              {progress >= 30 && progress < 70 && "🏛️ Anwaltliche KI-Analyse läuft..."}
+              {progress >= 70 && progress < 100 && "📊 Rechtsgutachten wird erstellt..."}
+              {progress === 100 && "✅ Anwaltliche Analyse abgeschlossen!"}
             </p>
           </div>
           
           <div className={styles.progressSteps}>
             {[
               { icon: "🔍", text: "Text extrahieren", threshold: 10 },
-              { icon: "🤖", text: "KI-Analyse", threshold: 30 },
-              { icon: "📊", text: "Bewertung erstellen", threshold: 70 }
+              { icon: "🏛️", text: "Anwaltliche Analyse", threshold: 30 },
+              { icon: "📊", text: "Rechtsgutachten erstellen", threshold: 70 }
             ].map((step, index) => (
               <div key={index} className={`${styles.progressStep} ${progress >= step.threshold ? styles.active : ''}`}>
                 <span>{step.icon}</span>
@@ -693,7 +806,6 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
                 <button 
                   className={styles.goToContractsButton}
                   onClick={() => {
-                    // Navigation zu Verträgen (je nach Router-Setup anpassen)
                     window.location.href = '/contracts';
                   }}
                 >
@@ -780,27 +892,48 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          {/* ✅ CRITICAL FIX: Success Header - angepasst für initialResult */}
+          {/* ✅ ENHANCED: Success Header mit Lawyer-Level Indikator */}
           <div className={styles.successHeader}>
             <div className={styles.successInfo}>
               <CheckCircle size={28} className={styles.successIcon} />
               <div className={styles.successDetails}>
                 <h4>
+                  {(result?.lawyerLevelAnalysis || initialResult?.lawyerLevelAnalysis) && (
+                    <span className={styles.lawyerLevelIndicator}>
+                      <Gavel size={20} />
+                    </span>
+                  )}
                   {initialResult 
-                    ? 'Analyse bereits verfügbar' 
+                    ? 'Anwaltliche Analyse bereits verfügbar' 
                     : result?.isReanalysis 
-                      ? 'Analyse aktualisiert' 
-                      : 'Analyse abgeschlossen'
+                      ? 'Anwaltliche Analyse aktualisiert' 
+                      : 'Anwaltliche Vertragsanalyse abgeschlossen'
                   }
                 </h4>
                 <p>
                   {initialResult 
-                    ? 'Diese Datei wurde bereits analysiert - Ergebnisse werden angezeigt'
+                    ? 'Diese Datei wurde bereits auf Anwaltsniveau analysiert - Ergebnisse werden angezeigt'
                     : result?.isReanalysis 
-                      ? 'Bestehende Vertragsanalyse wurde erfolgreich überschrieben'
-                      : 'Rechtssichere Vertragseinschätzung in Sekunden'
+                      ? 'Bestehende Anwaltsanalyse wurde erfolgreich überschrieben'
+                      : 'Rechtssichere Vertragseinschätzung auf Fachanwaltsniveau in Sekunden'
                   }
                 </p>
+                {(result?.lawyerLevelAnalysis || initialResult?.lawyerLevelAnalysis) && (
+                  <div className={styles.lawyerLevelFeatures}>
+                    <span className={styles.feature}>
+                      <Scale size={14} />
+                      7-Punkte-Analyse
+                    </span>
+                    <span className={styles.feature}>
+                      <Gavel size={14} />
+                      Anwaltsniveau
+                    </span>
+                    <span className={styles.feature}>
+                      <CheckSquare size={14} />
+                      Vollständigkeitsgarantie
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
             {(result?.requestId || initialResult?.requestId) && (
@@ -813,7 +946,12 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
           {/* ✅ CRITICAL FIX: Contract Score - funktioniert für beide */}
           {(result?.contractScore || initialResult?.contractScore) && (
             <div className={styles.scoreSection}>
-              <h5 className={styles.scoreSectionTitle}>Contract Score</h5>
+              <h5 className={styles.scoreSectionTitle}>
+                {(result?.lawyerLevelAnalysis || initialResult?.lawyerLevelAnalysis) 
+                  ? 'Anwaltliche Gesamtbewertung' 
+                  : 'Contract Score'
+                }
+              </h5>
               
               <div className={styles.scoreSectionContent}>
                 <ScoreCircle score={result?.contractScore || initialResult?.contractScore || 0} />
@@ -835,16 +973,16 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
             </div>
           )}
 
-          {/* ✅ CRITICAL FIX: Analysis Details - funktioniert für beide */}
+          {/* ✅ ENHANCED: 7-Punkte-Analyse Details Grid */}
           <div className={styles.detailsGrid}>
-            {/* Zusammenfassung */}
+            {/* 1. 📄 Zusammenfassung */}
             {(result?.summary || initialResult?.summary) && (
               <div className={styles.detailCard}>
                 <div className={styles.detailHeader}>
                   <div className={`${styles.detailIconContainer} ${styles.blueIcon}`}>
                     <FileSearch size={20} />
                   </div>
-                  <h5>Zusammenfassung</h5>
+                  <h5>📄 Zusammenfassung</h5>
                 </div>
                 <div className={styles.cardContent}>
                   <ul className={styles.pointsList}>
@@ -859,14 +997,14 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
               </div>
             )}
 
-            {/* Rechtssicherheit */}
+            {/* 2. 🛡️ Rechtssicherheit */}
             {(result?.legalAssessment || initialResult?.legalAssessment) && (
               <div className={styles.detailCard}>
                 <div className={styles.detailHeader}>
                   <div className={`${styles.detailIconContainer} ${styles.greenIcon}`}>
                     <Shield size={20} />
                   </div>
-                  <h5>Rechtssicherheit</h5>
+                  <h5>🛡️ Rechtssicherheit</h5>
                 </div>
                 <div className={styles.cardContent}>
                   <ul className={styles.pointsList}>
@@ -881,14 +1019,14 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
               </div>
             )}
 
-            {/* Optimierungsvorschläge */}
+            {/* 3. 💡 Optimierungsvorschläge */}
             {(result?.suggestions || initialResult?.suggestions) && (
               <div className={styles.detailCard}>
                 <div className={styles.detailHeader}>
                   <div className={`${styles.detailIconContainer} ${styles.yellowIcon}`}>
                     <Lightbulb size={20} />
                   </div>
-                  <h5>Optimierungsvorschläge</h5>
+                  <h5>💡 Optimierungsvorschläge</h5>
                 </div>
                 <div className={styles.cardContent}>
                   <ul className={styles.pointsList}>
@@ -903,13 +1041,13 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
               </div>
             )}
 
-            {/* Marktvergleich */}
+            {/* 4. 📊 Marktvergleich */}
             <div className={styles.detailCard}>
               <div className={styles.detailHeader}>
                 <div className={`${styles.detailIconContainer} ${styles.purpleIcon}`}>
                   <TrendingUp size={20} />
                 </div>
-                <h5>Marktvergleich</h5>
+                <h5>📊 Marktvergleich</h5>
               </div>
               <div className={styles.cardContent}>
                 {(result?.comparison || initialResult?.comparison) ? (
@@ -930,13 +1068,96 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
                 )}
               </div>
             </div>
+
+            {/* ✅ NEW: 5. ✅ Positive Aspekte */}
+            {(result?.positiveAspects || initialResult?.positiveAspects) && (
+              <div className={styles.detailCard}>
+                <div className={styles.detailHeader}>
+                  <div className={`${styles.detailIconContainer} ${styles.greenIcon}`}>
+                    <CheckSquare size={20} />
+                  </div>
+                  <h5>✅ Positive Aspekte</h5>
+                </div>
+                <div className={styles.cardContent}>
+                  <ul className={styles.structuredList}>
+                    {formatStructuredData(result?.positiveAspects || initialResult?.positiveAspects || []).map((aspect, index) => (
+                      <li key={index} className={styles.structuredItem}>
+                        <div className={styles.structuredHeader}>
+                          <CheckCircle size={16} className={styles.iconGreen} />
+                          <h6 className={styles.structuredTitle}>{aspect.title}</h6>
+                        </div>
+                        <p className={styles.structuredDescription}>{aspect.description}</p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+
+            {/* ✅ NEW: 6. ⚠️ Kritische Klauseln & Risiken */}
+            {(result?.criticalIssues || initialResult?.criticalIssues) && (
+              <div className={styles.detailCard}>
+                <div className={styles.detailHeader}>
+                  <div className={`${styles.detailIconContainer} ${styles.redIcon}`}>
+                    <XCircle size={20} />
+                  </div>
+                  <h5>⚠️ Kritische Klauseln & Risiken</h5>
+                </div>
+                <div className={styles.cardContent}>
+                  <ul className={styles.structuredList}>
+                    {formatStructuredData(result?.criticalIssues || initialResult?.criticalIssues || []).map((issue, index) => (
+                      <li key={index} className={styles.structuredItem}>
+                        <div className={styles.structuredHeader}>
+                          {getRiskLevelIcon((issue as CriticalIssue).riskLevel || 'medium')}
+                          <h6 className={styles.structuredTitle}>{issue.title}</h6>
+                          <span className={`${styles.riskBadge} ${getRiskLevelColor((issue as CriticalIssue).riskLevel || 'medium')}`}>
+                            {(issue as CriticalIssue).riskLevel === 'high' ? 'Hoch' : 
+                             (issue as CriticalIssue).riskLevel === 'low' ? 'Niedrig' : 'Mittel'}
+                          </span>
+                        </div>
+                        <p className={styles.structuredDescription}>{issue.description}</p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+
+            {/* ✅ NEW: 7. 📌 Handlungsempfehlungen */}
+            {(result?.recommendations || initialResult?.recommendations) && (
+              <div className={styles.detailCard}>
+                <div className={styles.detailHeader}>
+                  <div className={`${styles.detailIconContainer} ${styles.blueIcon}`}>
+                    <BookOpen size={20} />
+                  </div>
+                  <h5>📌 Handlungsempfehlungen</h5>
+                </div>
+                <div className={styles.cardContent}>
+                  <ul className={styles.structuredList}>
+                    {formatStructuredData(result?.recommendations || initialResult?.recommendations || []).map((rec, index) => (
+                      <li key={index} className={styles.structuredItem}>
+                        <div className={styles.structuredHeader}>
+                          {getPriorityIcon((rec as Recommendation).priority || 'medium')}
+                          <h6 className={styles.structuredTitle}>{rec.title}</h6>
+                          <span className={`${styles.priorityBadge} ${getPriorityColor((rec as Recommendation).priority || 'medium')}`}>
+                            {(rec as Recommendation).priority === 'high' ? 'Dringend' : 
+                             (rec as Recommendation).priority === 'low' ? 'Optional' : 'Wichtig'}
+                          </span>
+                        </div>
+                        <p className={styles.structuredDescription}>{rec.description}</p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* ✅ CRITICAL FIX: Usage Info - funktioniert für beide */}
           {(result?.usage || initialResult?.usage) && (
             <div className={styles.usageInfo}>
               <p>
-                📊 Analyse <strong>{(result?.usage || initialResult?.usage)?.count}</strong> von <strong>{(result?.usage || initialResult?.usage)?.limit === Infinity ? '∞' : (result?.usage || initialResult?.usage)?.limit}</strong>
+                📊 Anwaltliche Analyse <strong>{(result?.usage || initialResult?.usage)?.count}</strong> von <strong>{(result?.usage || initialResult?.usage)?.limit === Infinity ? '∞' : (result?.usage || initialResult?.usage)?.limit}</strong>
                 <span className={styles.planBadge}>
                   {(result?.usage || initialResult?.usage)?.plan}
                 </span>
@@ -993,7 +1214,7 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
                 ) : (
                   <>
                     <Download size={18} />
-                    <span>PDF herunterladen</span>
+                    <span>Anwalts-PDF herunterladen</span>
                   </>
                 )}
               </button>
