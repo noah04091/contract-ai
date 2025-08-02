@@ -1,4 +1,4 @@
-// 📁 backend/routes/analyze.js - ENHANCED LAWYER-LEVEL CONTRACT ANALYSIS + 7-POINT STRUCTURE + FALLBACK MECHANISMS
+// 📁 backend/routes/analyze.js - ENHANCED LAWYER-LEVEL CONTRACT ANALYSIS + 7-POINT STRUCTURE + TOKEN LIMIT FIX
 const express = require("express");
 const multer = require("multer");
 const pdfParse = require("pdf-parse");
@@ -316,7 +316,62 @@ try {
 let lastGPT4Request = 0;
 const GPT4_MIN_INTERVAL = 4000; // 4 seconds between GPT-4 requests
 
+// ✅ NEW: Token limits for different models
+const MODEL_LIMITS = {
+  'gpt-4': 8192,
+  'gpt-4-turbo': 128000,
+  'gpt-3.5-turbo': 16384
+};
+
 // ===== ENHANCED LAWYER-LEVEL ANALYSIS PIPELINE =====
+
+/**
+ * 🔢 NEW: Smart Token Counter and Text Optimizer
+ * Estimates tokens and optimizes text for GPT-4 limits
+ */
+function estimateTokens(text) {
+  // Rough estimation: 1 token ≈ 4 characters (conservative estimate)
+  return Math.ceil(text.length / 4);
+}
+
+/**
+ * ✂️ NEW: Intelligent Text Truncation for Large Documents
+ * Keeps the most important parts while staying within token limits
+ */
+function optimizeTextForGPT4(text, maxTokens = 6000, requestId) {
+  const currentTokens = estimateTokens(text);
+  
+  console.log(`🔢 [${requestId}] Text analysis: ${text.length} chars, ~${currentTokens} tokens (limit: ${maxTokens})`);
+  
+  if (currentTokens <= maxTokens) {
+    console.log(`✅ [${requestId}] Text within limits, no optimization needed`);
+    return text;
+  }
+  
+  console.log(`✂️ [${requestId}] Text too long, applying intelligent truncation...`);
+  
+  // Calculate target length (leave some buffer for prompt overhead)
+  const targetChars = Math.floor(maxTokens * 3.5); // Conservative: 3.5 chars per token
+  
+  // Strategy: Keep beginning (contract details) + middle (important clauses) + end (signatures/terms)
+  const startChars = Math.floor(targetChars * 0.4);   // 40% from start
+  const middleChars = Math.floor(targetChars * 0.4);  // 40% from middle  
+  const endChars = Math.floor(targetChars * 0.2);     // 20% from end
+  
+  const textStart = text.substring(0, startChars);
+  const textEnd = text.substring(text.length - endChars);
+  
+  // Find middle section
+  const middleStart = Math.floor((text.length - middleChars) / 2);
+  const textMiddle = text.substring(middleStart, middleStart + middleChars);
+  
+  const optimizedText = textStart + '\n\n[... DOKUMENT GEKÜRZT FÜR ANALYSE ...]\n\n' + textMiddle + '\n\n[... DOKUMENT GEKÜRZT FÜR ANALYSE ...]\n\n' + textEnd;
+  
+  const finalTokens = estimateTokens(optimizedText);
+  console.log(`✅ [${requestId}] Text optimized: ${optimizedText.length} chars, ~${finalTokens} tokens (reduction: ${Math.round((1 - finalTokens/currentTokens) * 100)}%)`);
+  
+  return optimizedText;
+}
 
 /**
  * 🎯 Enhanced Document Type Detection - UNCHANGED
@@ -683,10 +738,13 @@ function validateTextCompleteness(result, requestId) {
 }
 
 /**
- * 🏛️ NEW: Generate Enhanced Lawyer-Level Analysis Prompt
- * Creates specialized prompts with lawyer-level depth and precision
+ * 🏛️ NEW: Generate Enhanced Lawyer-Level Analysis Prompt WITH TOKEN OPTIMIZATION
+ * Creates specialized prompts with lawyer-level depth and precision + handles large documents
  */
-function generateLawyerLevelPrompt(text, documentType, strategy) {
+function generateLawyerLevelPrompt(text, documentType, strategy, requestId) {
+  // ✅ NEW: Optimize text for GPT-4 token limits BEFORE creating prompt
+  const optimizedText = optimizeTextForGPT4(text, 6000, requestId); // Leave 2192 tokens for prompt
+  
   const basePrompt = `Du bist ein erfahrener Rechtsanwalt mit Spezialisierung auf Vertragsrecht. Führe eine detaillierte, anwaltliche Prüfung durch.`;
   
   const strategyPrompts = {
@@ -754,7 +812,7 @@ Antworte im folgenden JSON-Format:
 }
 
 **DOKUMENT:**
-${text}`,
+${optimizedText}`,
 
     FINANCIAL_ANALYSIS: `
 ${basePrompt}
@@ -783,7 +841,7 @@ Antworte im folgenden JSON-Format:
 }
 
 **DOKUMENT:**
-${text}`,
+${optimizedText}`,
 
     RECEIPT_ANALYSIS: `
 ${basePrompt}
@@ -812,7 +870,7 @@ Antworte im folgenden JSON-Format:
 }
 
 **DOKUMENT:**
-${text}`,
+${optimizedText}`,
 
     GENERAL_FINANCIAL_ANALYSIS: `
 ${basePrompt}
@@ -831,7 +889,7 @@ Führe eine strukturierte Analyse durch:
 Antworte im JSON-Format wie oben mit contractScore zwischen 60-80.
 
 **DOKUMENT:**
-${text}`,
+${optimizedText}`,
 
     TABULAR_ANALYSIS: `
 ${basePrompt}
@@ -850,7 +908,7 @@ Analysiere diese tabellarische Übersicht:
 Antworte im JSON-Format wie oben mit contractScore zwischen 55-75.
 
 **DOKUMENT:**
-${text}`,
+${optimizedText}`,
 
     GENERAL_DOCUMENT_ANALYSIS: `
 ${basePrompt}
@@ -869,7 +927,7 @@ Führe eine strukturierte rechtliche Prüfung durch:
 Antworte im JSON-Format wie oben mit contractScore zwischen 50-70.
 
 **DOKUMENT:**
-${text}`
+${optimizedText}`
   };
 
   return strategyPrompts[strategy] || strategyPrompts.GENERAL_DOCUMENT_ANALYSIS;
@@ -1331,7 +1389,7 @@ async function saveContractWithUpload(userId, analysisData, fileInfo, pdfText, u
 }
 
 /**
- * 🏛️ NEW: Enhanced Rate-Limited GPT-4 Request with Retry for Incomplete Responses
+ * 🏛️ NEW: Enhanced Rate-Limited GPT-4 Request with Retry for Incomplete Responses + TOKEN OPTIMIZATION
  */
 const makeRateLimitedGPT4Request = async (prompt, requestId, openai, maxRetries = 3) => {
   
@@ -1347,6 +1405,15 @@ const makeRateLimitedGPT4Request = async (prompt, requestId, openai, maxRetries 
       lastGPT4Request = Date.now();
       
       console.log(`🏛️ [${requestId}] Enhanced GPT-4 lawyer request (attempt ${attempt}/${maxRetries})...`);
+      
+      // ✅ NEW: Estimate prompt tokens to verify it fits in limits
+      const promptTokens = estimateTokens(prompt);
+      console.log(`🔢 [${requestId}] Prompt estimated tokens: ${promptTokens}`);
+      
+      if (promptTokens > MODEL_LIMITS['gpt-4']) {
+        console.error(`❌ [${requestId}] Prompt still too long after optimization: ${promptTokens} tokens > ${MODEL_LIMITS['gpt-4']}`);
+        throw new Error(`Document too large for analysis. Please try with a smaller document.`);
+      }
       
       const completion = await openai.chat.completions.create({
         model: "gpt-4",
@@ -1379,6 +1446,12 @@ const makeRateLimitedGPT4Request = async (prompt, requestId, openai, maxRetries 
       
     } catch (error) {
       console.error(`❌ [${requestId}] GPT-4 error (attempt ${attempt}):`, error.message);
+      
+      // ✅ NEW: Handle token limit errors specifically
+      if (error.message && error.message.includes('maximum context length')) {
+        console.error(`❌ [${requestId}] Token limit exceeded even after optimization`);
+        throw new Error(`Document is too large for analysis. Please try with a smaller document.`);
+      }
       
       if (error.status === 429) {
         if (attempt < maxRetries) {
@@ -1422,7 +1495,7 @@ router.post("/", verifyToken, async (req, res, next) => {
   });
 });
 
-// ===== ENHANCED LAWYER-LEVEL ANALYSIS REQUEST HANDLER =====
+// ===== ENHANCED LAWYER-LEVEL ANALYSIS REQUEST HANDLER + TOKEN OPTIMIZATION =====
 const handleEnhancedLawyerAnalysisRequest = async (req, res) => {
   const requestId = Date.now().toString();
   
@@ -1590,11 +1663,12 @@ const handleEnhancedLawyerAnalysisRequest = async (req, res) => {
       s3Key: uploadInfo.s3Info?.key || 'none'
     });
 
-    // ✅ NEW: Generate enhanced lawyer-level analysis prompt
+    // ✅ NEW: Generate enhanced lawyer-level analysis prompt WITH TOKEN OPTIMIZATION
     const analysisPrompt = generateLawyerLevelPrompt(
       fullTextContent, 
       validationResult.documentType, 
-      validationResult.strategy
+      validationResult.strategy,
+      requestId // ✅ NEW: Pass requestId for token optimization logging
     );
 
     console.log(`🏛️ [${requestId}] Using LAWYER-LEVEL analysis strategy: ${validationResult.strategy} for ${validationResult.documentType} document`);
@@ -1609,6 +1683,24 @@ const handleEnhancedLawyerAnalysisRequest = async (req, res) => {
       ]);
     } catch (openaiError) {
       console.error(`❌ [${requestId}] OpenAI error:`, openaiError.message);
+      
+      // ✅ NEW: Better error handling for document size issues
+      if (openaiError.message.includes('too large') || openaiError.message.includes('maximum context length')) {
+        return res.status(400).json({
+          success: false,
+          message: "📄 Dokument ist zu groß für die Analyse",
+          error: "DOCUMENT_TOO_LARGE",
+          details: "Das PDF-Dokument enthält zu viel Text für eine vollständige Analyse. Bitte verwende ein kleineres Dokument oder teile es in mehrere Teile auf.",
+          suggestions: [
+            "📄 Teile das Dokument in kleinere Abschnitte auf",
+            "✂️ Entferne unnötige Seiten oder Anhänge",
+            "📝 Konvertiere zu einer kompakteren Version",
+            "📧 Kontaktiere den Support für Hilfe bei großen Dokumenten"
+          ],
+          requestId
+        });
+      }
+      
       throw new Error(`OpenAI API error: ${openaiError.message}`);
     }
 
@@ -1661,7 +1753,7 @@ const handleEnhancedLawyerAnalysisRequest = async (req, res) => {
       confidence: validationResult.confidence,
       qualityScore: validationResult.qualityScore,
       analysisMessage: validationResult.analysisMessage,
-      extractionMethod: 'lawyer-level-analysis-enhanced',
+      extractionMethod: 'lawyer-level-analysis-enhanced-token-optimized', // ✅ NEW: Updated method name
       extractionQuality: validationResult.qualityScore > 0.6 ? 'excellent' : validationResult.qualityScore > 0.4 ? 'good' : 'fair',
       pageCount: validationResult.metrics.pageCount,
       
@@ -1670,6 +1762,7 @@ const handleEnhancedLawyerAnalysisRequest = async (req, res) => {
       analysisDepth: 'lawyer-level',
       structuredAnalysis: true,
       completenessScore: 100, // Guaranteed complete responses
+      tokenOptimized: true,    // ✅ NEW: Indicates token optimization was used
       
       ...(uploadInfo.s3Info && {
         s3Info: uploadInfo.s3Info
@@ -1706,14 +1799,15 @@ const handleEnhancedLawyerAnalysisRequest = async (req, res) => {
           analysisStrategy: validationResult.strategy,
           confidence: validationResult.confidence,
           qualityScore: validationResult.qualityScore,
-          extractionMethod: 'lawyer-level-analysis-enhanced',
+          extractionMethod: 'lawyer-level-analysis-enhanced-token-optimized',
           extractionQuality: analysisData.extractionQuality,
           analyzeCount: (existingContract.analyzeCount || 0) + 1,
           
           // ✅ NEW: Lawyer-level flags
           lawyerLevelAnalysis: true,
           analysisDepth: 'lawyer-level',
-          structuredAnalysis: true
+          structuredAnalysis: true,
+          tokenOptimized: true
         };
 
         // Add s3Key at top level if S3 upload
@@ -1739,8 +1833,9 @@ const handleEnhancedLawyerAnalysisRequest = async (req, res) => {
             uploadPath: UPLOAD_PATH,
             serverPath: uploadInfo.localInfo.path
           }),
-          extractionMethod: 'lawyer-level-analysis-enhanced',
-          lawyerLevelAnalysis: true
+          extractionMethod: 'lawyer-level-analysis-enhanced-token-optimized',
+          lawyerLevelAnalysis: true,
+          tokenOptimized: true
         };
 
         updateData.legalPulse = {
@@ -1785,19 +1880,21 @@ const handleEnhancedLawyerAnalysisRequest = async (req, res) => {
               analysisStrategy: validationResult.strategy,
               confidence: validationResult.confidence,
               qualityScore: validationResult.qualityScore,
-              extractionMethod: 'lawyer-level-analysis-enhanced',
+              extractionMethod: 'lawyer-level-analysis-enhanced-token-optimized',
               extractionQuality: analysisData.extractionQuality,
               
               // ✅ NEW: Lawyer-level flags
               lawyerLevelAnalysis: true,
               analysisDepth: 'lawyer-level',
               structuredAnalysis: true,
+              tokenOptimized: true,
               
               'extraRefs.analysisId': inserted.insertedId,
               'extraRefs.documentType': validationResult.documentType,
               'extraRefs.analysisStrategy': validationResult.strategy,
-              'extraRefs.extractionMethod': 'lawyer-level-analysis-enhanced',
-              'extraRefs.lawyerLevelAnalysis': true
+              'extraRefs.extractionMethod': 'lawyer-level-analysis-enhanced-token-optimized',
+              'extraRefs.lawyerLevelAnalysis': true,
+              'extraRefs.tokenOptimized': true
             }
           }
         );
@@ -1841,14 +1938,16 @@ const handleEnhancedLawyerAnalysisRequest = async (req, res) => {
       analysisDepth: 'lawyer-level',
       structuredAnalysis: true,
       completenessGuarantee: true,
+      tokenOptimized: true, // ✅ NEW: Indicates the document was optimized for token limits
       
       extractionInfo: {
-        method: 'lawyer-level-analysis-enhanced',
+        method: 'lawyer-level-analysis-enhanced-token-optimized',
         quality: analysisData.extractionQuality || 'excellent',
         charactersExtracted: `${fullTextContent.length}`,
         pageCount: `${validationResult.metrics.pageCount}`,
         hasTabularData: validationResult.metrics.hasTabularData ? "true" : "false",
-        isStructured: validationResult.metrics.isStructured ? "true" : "false"
+        isStructured: validationResult.metrics.isStructured ? "true" : "false",
+        tokenOptimized: "true" // ✅ NEW: Frontend can show this info
       },
       
       ...(uploadInfo.s3Info && {
@@ -1905,6 +2004,9 @@ const handleEnhancedLawyerAnalysisRequest = async (req, res) => {
     } else if (error.message.includes("S3") || error.message.includes("AWS")) {
       errorMessage = "File storage error. Please try again.";
       errorCode = "STORAGE_ERROR";
+    } else if (error.message.includes("too large") || error.message.includes("maximum context length")) {
+      errorMessage = "Document is too large for analysis.";
+      errorCode = "DOCUMENT_TOO_LARGE";
     }
 
     res.status(500).json({ 
@@ -1914,6 +2016,7 @@ const handleEnhancedLawyerAnalysisRequest = async (req, res) => {
       requestId,
       uploadType: uploadInfo.uploadType,
       lawyerLevelAnalysis: true, // ✅ Even for errors, indicate this was a lawyer-level attempt
+      tokenOptimized: true,      // ✅ Even for errors, indicate optimization was attempted
       details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
@@ -1955,7 +2058,7 @@ router.get("/history", verifyToken, async (req, res) => {
   }
 });
 
-// ✅ ENHANCED: Health Check with comprehensive S3 status + Lawyer-Level Analysis
+// ✅ ENHANCED: Health Check with comprehensive S3 status + Lawyer-Level Analysis + Token Optimization
 router.get("/health", async (req, res) => {
   // Re-test S3 connectivity for health check
   if (S3_CONFIGURED && s3Instance) {
@@ -1963,7 +2066,7 @@ router.get("/health", async (req, res) => {
   }
 
   const checks = {
-    service: "Enhanced Lawyer-Level Contract Analysis + S3 (AWS SDK v3) + 7-Point Structure",
+    service: "Enhanced Lawyer-Level Contract Analysis + S3 (AWS SDK v3) + 7-Point Structure + Token Optimization",
     status: "online",
     timestamp: new Date().toISOString(),
     openaiConfigured: !!process.env.OPENAI_API_KEY,
@@ -1990,9 +2093,13 @@ router.get("/health", async (req, res) => {
       specializedPrompts: true,
       enhancedLogging: true,
       jsonValidation: true,
-      fallbackMechanisms: true
+      fallbackMechanisms: true,
+      tokenOptimization: true, // ✅ NEW: Token limit handling
+      smartTextTruncation: true, // ✅ NEW: Intelligent text optimization
+      largeDocumentSupport: true // ✅ NEW: Support for large documents
     },
-    version: "lawyer-level-analysis-v2.0-7-point-structure"
+    tokenLimits: MODEL_LIMITS, // ✅ NEW: Show supported model limits
+    version: "lawyer-level-analysis-v2.1-token-optimized-7-point-structure"
   };
 
   try {
@@ -2012,7 +2119,7 @@ router.get("/health", async (req, res) => {
 });
 
 process.on('SIGTERM', async () => {
-  console.log('🏛️ Enhanced Lawyer-Level Analysis service shutting down...');
+  console.log('🏛️ Enhanced Lawyer-Level Analysis service with Token Optimization shutting down...');
   if (mongoClient) {
     await mongoClient.close();
   }
