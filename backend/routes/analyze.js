@@ -338,7 +338,7 @@ function estimateTokens(text) {
  * ✂️ NEW: ULTRA-AGGRESSIVE Text Optimization for ANY Document Size
  * Guarantees ANY document will fit in GPT-4 limits, no matter how large
  */
-function optimizeTextForGPT4(text, maxTokens = 4500, requestId) {
+function optimizeTextForGPT4(text, maxTokens = 2500, requestId) {
   const currentTokens = estimateTokens(text);
   
   console.log(`🔢 [${requestId}] Text analysis: ${text.length} chars, ~${currentTokens} tokens (limit: ${maxTokens})`);
@@ -350,8 +350,8 @@ function optimizeTextForGPT4(text, maxTokens = 4500, requestId) {
   
   console.log(`✂️ [${requestId}] Text too long, applying ULTRA-AGGRESSIVE truncation...`);
   
-  // ✅ ULTRA-AGGRESSIVE: Target much lower to guarantee fit
-  const targetChars = Math.floor(maxTokens * 3.0); // Very conservative: 3.0 chars per token
+  // ✅ ULTRA-AGGRESSIVE: Target much lower to guarantee fit with shorter prompts
+  const targetChars = Math.floor(maxTokens * 3.2); // Slightly more aggressive: 3.2 chars per token
   
   if (text.length <= targetChars) {
     // Text is already small enough
@@ -842,128 +842,69 @@ function validateTextCompletenessAndDepth(result, requestId) {
 }
 
 /**
- * 🏛️ NEW: Generate DEEP ENHANCED Lawyer-Level Analysis Prompt WITH GUARANTEED TOKEN OPTIMIZATION
- * Creates ultra-specialized prompts with maximum lawyer-level depth and precision + handles ANY document size
+ * 🏛️ NEW: Generate COMPACT Lawyer-Level Analysis Prompt WITH TOKEN OPTIMIZATION
+ * Creates specialized prompts with lawyer-level depth while staying within token limits
  */
 function generateDeepLawyerLevelPrompt(text, documentType, strategy, requestId) {
   // ✅ CRITICAL: Apply ULTRA-AGGRESSIVE optimization for ALL documents
-  const optimizedText = optimizeTextForGPT4(text, 4500, requestId); // Very conservative limit
+  const optimizedText = optimizeTextForGPT4(text, 2500, requestId); // Reduced for prompt space
   
-  const basePrompt = `Du bist ein erfahrener Rechtsanwalt und Vertragsexperte mit über 15 Jahren Berufserfahrung im Vertragsrecht. Führe eine tiefgreifende, anwaltliche Vertragsanalyse durch, wie sie ein spezialisierter Fachanwalt für einen wichtigen Mandanten erstellen würde.`;
+  const basePrompt = `Du bist ein erfahrener Rechtsanwalt. Führe eine detaillierte, anwaltliche Vertragsanalyse durch.`;
   
   const strategyPrompts = {
     DEEP_LAWYER_LEVEL_CONTRACT_ANALYSIS: `
 ${basePrompt}
 
-**TIEFGREIFENDE ANWALTLICHE VERTRAGSANALYSE - VOLLSTÄNDIGES 7-PUNKTE-RECHTSGUTACHTEN:**
+**ANWALTLICHE 7-PUNKTE-ANALYSE:**
 
-Führe eine umfassende juristische Vertragsanalyse mit der Präzision und Tiefe eines spezialisierten Vertragsanwalts durch. Erstelle ein detailliertes Rechtsgutachten mit substantiellen, vollständigen Analysen für alle 7 Punkte:
+Erstelle eine strukturierte Rechtsanalyse mit vollständigen, juristisch fundierten Bewertungen:
 
-**WICHTIGE ANFORDERUNGEN:**
-- Jeder Punkt muss VOLLSTÄNDIG und DETAILLIERT ausgearbeitet werden (mindestens 2-3 aussagekräftige Sätze pro Unterpunkt)
-- Juristische BEGRÜNDUNGEN für jede Bewertung angeben
-- Konkrete RECHTSRISIKEN und deren praktische Auswirkungen nennen
-- SPEZIFISCHE Handlungsempfehlungen, die ein Anwalt einem Mandanten geben würde
-- Alle Antworten müssen VOLLSTÄNDIG sein - keine abgebrochenen Sätze
+**ANFORDERUNGEN:**
+- Jeder Punkt vollständig ausarbeiten (mind. 2 Sätze)
+- Juristische Begründungen angeben
+- Konkrete Rechtsrisiken benennen
+- Spezifische Handlungsempfehlungen
 
-**1. ZUSAMMENFASSUNG (summary):**
-Erstelle eine präzise juristische Zusammenfassung mit folgenden Elementen:
-- Vertragsart und rechtliche Einordnung der beteiligten Parteien
-- Vertragszweck, Hauptleistungspflichten und essentialia negotii
-- Laufzeit, Kündigungsmodalitäten und wichtigste wirtschaftliche Eckdaten
-- Erste juristische Einschätzung der Vertragsqualität und Rechtssicherheit
+**1. ZUSAMMENFASSUNG (summary):** Vertragsart, Parteien, Zweck, Laufzeit, erste Bewertung
+**2. RECHTSSICHERHEIT (legalAssessment):** Wirksamkeit, gesetzliche Anforderungen, Rechtsrisiken
+**3. OPTIMIERUNGSVORSCHLÄGE (suggestions):** Konkrete Klauselverbesserungen, Nachverhandlungen
+**4. MARKTVERGLEICH (comparison):** Branchenstandards, Marktüblichkeit, Fairness
+**5. POSITIVE ASPEKTE (positiveAspects):** [{title: "...", description: "Juristische Begründung..."}]
+**6. KRITISCHE RISIKEN (criticalIssues):** [{title: "...", description: "Risikobeschreibung...", riskLevel: "high/medium/low"}]
+**7. EMPFEHLUNGEN (recommendations):** [{title: "...", description: "Umsetzungsschritte...", priority: "high/medium/low"}]
 
-**2. RECHTSSICHERHEIT (legalAssessment):**
-Führe eine detaillierte rechtliche Bewertung durch:
-- Systematische Prüfung der rechtlichen Wirksamkeit und Bindungswirkung
-- Abgleich mit gesetzlichen Anforderungen, Formvorschriften und zwingenden Bestimmungen
-- Identifikation konkreter Rechtsrisiken mit Bewertung ihrer Eintrittswahrscheinlichkeit
-- Bewertung der Durchsetzbarkeit von Ansprüchen und potentieller Rechtsunsicherheiten
+**SCORE:** 1-100 basierend auf Rechtssicherheit, Ausgewogenheit, Vollständigkeit, Marktkonformität.
 
-**3. OPTIMIERUNGSVORSCHLÄGE (suggestions):**
-Entwickle konkrete, umsetzbare Verbesserungsvorschläge:
-- Spezifische Klauseländerungen zur Verbesserung der Rechtssicherheit
-- Ergänzende Vereinbarungen zur Risikominimierung
-- Nachverhandlungsstrategien mit konkreten Formulierungsvorschlägen
-- Juristische Absicherungsmaßnahmen für kritische Vertragspunkte
-
-**4. MARKTVERGLEICH (comparison):**
-Bewerte die Marktkonformität systematisch:
-- Vergleich mit branchenüblichen Standards und marktüblichen Konditionen
-- Identifikation von Abweichungen zu etablierten Marktpraktiken
-- Bewertung einseitiger vs. ausgewogener Klauseln im Branchenkontext
-- Einschätzung der Verhandlungsposition und Marktmacht der Parteien
-
-**5. POSITIVE ASPEKTE (positiveAspects):**
-Strukturiertes Array mit rechtlich vorteilhaften Klauseln (mindestens 2-3 Aspekte):
-[{
-  "title": "Konkrete Bezeichnung der vorteilhaften Klausel",
-  "description": "Detaillierte juristische Begründung, warum diese Klausel vorteilhaft ist, welche Rechte sie sichert und welche praktischen Vorteile sie bietet. Mindestens 2 vollständige Sätze mit konkreten rechtlichen Argumenten."
-}]
-
-**6. KRITISCHE KLAUSELN & RISIKEN (criticalIssues):**
-Strukturiertes Array mit problematischen Punkten (mindestens 2-3 kritische Punkte):
-[{
-  "title": "Spezifische Bezeichnung des rechtlichen Problems",
-  "description": "Ausführliche juristische Risikobeschreibung mit konkreten Auswirkungen, potentiellen Schäden und rechtlichen Konsequenzen. Erläuterung, warum diese Klausel riskant ist und welche praktischen Probleme entstehen können. Mindestens 2 vollständige Sätze.",
-  "riskLevel": "high/medium/low" (basierend auf Schwere der rechtlichen Konsequenzen)
-}]
-
-**7. HANDLUNGSEMPFEHLUNGEN (recommendations):**
-Strukturiertes Array mit konkreten anwaltlichen Maßnahmen (mindestens 3-4 Empfehlungen):
-[{
-  "title": "Spezifische Handlungsmaßnahme",
-  "description": "Detaillierte Umsetzungsanleitung mit konkreten Schritten, Zeitrahmen und erwarteten Ergebnissen. Erkläre WARUM diese Maßnahme notwendig ist und WIE sie umgesetzt werden sollte. Mindestens 2 vollständige Sätze mit praktischen Hinweisen.",
-  "priority": "high/medium/low" (basierend auf Dringlichkeit und Wichtigkeit)
-}]
-
-**VERTRAGSSCORE (contractScore):** 
-Vergebe einen Score von 1-100 basierend auf:
-- Rechtssicherheit und Durchsetzbarkeit (40%)
-- Ausgewogenheit der Risikoverteilung (25%)
-- Vollständigkeit und Klarheit (20%)
-- Marktkonformität (15%)
-
-**WICHTIG:** Alle Antworten müssen vollständig ausformuliert sein. Keine Abkürzungen, keine unvollständigen Sätze. Jeder Punkt muss substantiell und juristisch fundiert sein.
-
-Antworte ausschließlich im folgenden JSON-Format:
+JSON-Format:
 {
-  "summary": ["Vollständiger Punkt 1 mit mind. 2 Sätzen", "Vollständiger Punkt 2 mit mind. 2 Sätzen", "Vollständiger Punkt 3 mit mind. 2 Sätzen"],
-  "legalAssessment": ["Ausführliche rechtliche Bewertung 1", "Detaillierte rechtliche Bewertung 2", "Umfassende rechtliche Bewertung 3"],
-  "suggestions": ["Konkrete Optimierung 1 mit Begründung", "Spezifische Optimierung 2 mit Umsetzung", "Detaillierte Optimierung 3 mit Nutzen"],
-  "comparison": ["Marktvergleich 1 mit Einordnung", "Branchenanalyse 2 mit Bewertung", "Konkurrenzvergleich 3 mit Empfehlung"],
-  "positiveAspects": [
-    {"title": "Rechtlich vorteilhafte Klausel", "description": "Ausführliche juristische Begründung mit mindestens 2 vollständigen Sätzen und konkreten Vorteilen."}
-  ],
-  "criticalIssues": [
-    {"title": "Spezifisches rechtliches Risiko", "description": "Detaillierte Risikobewertung mit konkreten Auswirkungen und rechtlichen Konsequenzen in mindestens 2 vollständigen Sätzen.", "riskLevel": "high"}
-  ],
-  "recommendations": [
-    {"title": "Konkrete Handlungsempfehlung", "description": "Ausführliche Umsetzungsanleitung mit praktischen Schritten und juristischer Begründung in mindestens 2 vollständigen Sätzen.", "priority": "high"}
-  ],
+  "summary": ["Punkt 1", "Punkt 2", "Punkt 3"],
+  "legalAssessment": ["Bewertung 1", "Bewertung 2"],
+  "suggestions": ["Optimierung 1", "Optimierung 2"],
+  "comparison": ["Marktvergleich 1", "Marktvergleich 2"],
+  "positiveAspects": [{"title": "...", "description": "..."}],
+  "criticalIssues": [{"title": "...", "description": "...", "riskLevel": "medium"}],
+  "recommendations": [{"title": "...", "description": "...", "priority": "high"}],
   "contractScore": 75
 }
 
-**ZU ANALYSIERENDER VERTRAG:**
+**DOKUMENT:**
 ${optimizedText}`,
 
     DEEP_FINANCIAL_ANALYSIS: `
 ${basePrompt}
 
-**TIEFGREIFENDE FINANZIELLE DOKUMENTENANALYSE:**
-Analysiere dieses Finanzdokument mit der Sorgfalt eines Wirtschaftsanwalts und erstelle eine umfassende Bewertung:
+**FINANZIELLE DOKUMENTENANALYSE:**
+Erstelle eine strukturierte juristische Analyse:
 
-**1. ZUSAMMENFASSUNG:** Detaillierte Einordnung von Art, Zweck und rechtlicher Relevanz des Dokuments
-**2. RECHTLICHE BEWERTUNG:** Formelle Korrektheit, steuerliche Aspekte und gesetzliche Compliance
-**3. OPTIMIERUNGSVORSCHLÄGE:** Konkrete Verbesserungen für Buchhaltung, Compliance und Risikomanagement
-**4. MARKTVERGLEICH:** Branchenübliche Praktiken und Standards mit spezifischen Vergleichspunkten
-**5. POSITIVE ASPEKTE:** Korrekte Dokumentation und rechtskonforme Elemente mit Begründung
-**6. KRITISCHE PUNKTE:** Fehlende Angaben, Compliance-Risiken oder steuerliche Probleme
-**7. EMPFEHLUNGEN:** Konkrete nächste Schritte für optimale Bearbeitung und Archivierung
+1. **Zusammenfassung:** Art, Zweck, rechtliche Relevanz
+2. **Rechtliche Bewertung:** Formelle Korrektheit, steuerliche Aspekte, Compliance
+3. **Optimierungsvorschläge:** Konkrete Verbesserungen für Buchhaltung und Risikomanagement
+4. **Marktvergleich:** Branchenübliche Praktiken und Standards
+5. **Positive Aspekte:** Korrekte Dokumentation mit Begründung
+6. **Kritische Punkte:** Fehlende Angaben, Compliance-Risiken
+7. **Empfehlungen:** Konkrete nächste Schritte
 
-Alle Antworten müssen vollständig ausformuliert und rechtlich fundiert sein.
-
-Antworte im JSON-Format wie oben, mit contractScore zwischen 60-90.
+JSON-Format wie oben, contractScore 60-90.
 
 **DOKUMENT:**
 ${optimizedText}`,
@@ -971,20 +912,18 @@ ${optimizedText}`,
     DEEP_RECEIPT_ANALYSIS: `
 ${basePrompt}
 
-**DETAILLIERTE BELEGANALYSE:**
-Führe eine umfassende Analyse dieses Belegs durch:
+**BELEGANALYSE:**
+Führe eine juristische Belegprüfung durch:
 
-**1. ZUSAMMENFASSUNG:** Art des Belegs, Zweck, beteiligte Parteien und rechtliche Einordnung
-**2. RECHTLICHE BEWERTUNG:** Steuerliche Relevanz, Buchführungspflichten und gesetzliche Anforderungen
-**3. OPTIMIERUNGSVORSCHLÄGE:** Verbesserungen für Buchhaltung, Archivierung und Compliance
-**4. MARKTVERGLEICH:** Branchenübliche Belegstandards und formelle Anforderungen
-**5. POSITIVE ASPEKTE:** Vollständige und korrekte Angaben mit steuerlicher Relevanz
-**6. KRITISCHE PUNKTE:** Fehlende oder unvollständige Daten mit praktischen Auswirkungen
-**7. EMPFEHLUNGEN:** Konkrete Schritte für Archivierung, Buchung und weitere Bearbeitung
+1. **Zusammenfassung:** Art, Zweck, beteiligte Parteien
+2. **Rechtliche Bewertung:** Steuerliche Relevanz, Buchführungspflichten
+3. **Optimierungsvorschläge:** Verbesserungen für Buchhaltung, Archivierung
+4. **Marktvergleich:** Branchenübliche Belegstandards
+5. **Positive Aspekte:** Vollständige Angaben mit steuerlicher Relevanz
+6. **Kritische Punkte:** Fehlende/unvollständige Daten
+7. **Empfehlungen:** Konkrete Schritte für Archivierung, Buchung
 
-Alle Bewertungen müssen rechtlich fundiert und vollständig ausformuliert sein.
-
-Antworte im JSON-Format wie oben, mit contractScore zwischen 70-95.
+JSON-Format wie oben, contractScore 70-95.
 
 **DOKUMENT:**
 ${optimizedText}`,
@@ -992,20 +931,18 @@ ${optimizedText}`,
     DEEP_GENERAL_FINANCIAL_ANALYSIS: `
 ${basePrompt}
 
-**UMFASSENDE FINANZIELLE DOKUMENTENANALYSE:**
-Führe eine tiefgreifende Analyse dieses Finanzdokuments durch:
+**FINANZIELLE DOKUMENTENANALYSE:**
+Führe eine juristische Dokumentenprüfung durch:
 
-**1. ZUSAMMENFASSUNG:** Dokumentenart, Zweck, rechtliche und wirtschaftliche Relevanz
-**2. RECHTLICHE BEWERTUNG:** Formelle Anforderungen, Compliance und rechtliche Risiken
-**3. OPTIMIERUNGSVORSCHLÄGE:** Konkrete Verbesserungsmöglichkeiten mit Umsetzungshinweisen
-**4. MARKTVERGLEICH:** Standards, Best Practices und Branchenkonformität
-**5. POSITIVE ASPEKTE:** Gut dokumentierte Punkte mit rechtlicher und praktischer Relevanz
-**6. KRITISCHE PUNKTE:** Verbesserungsbedarf mit konkreten Risikobewertungen
-**7. EMPFEHLUNGEN:** Systematische nächste Schritte mit Prioritätensetzung
+1. **Zusammenfassung:** Dokumentenart, Zweck, rechtliche Relevanz
+2. **Rechtliche Bewertung:** Formelle Anforderungen, Compliance, Risiken
+3. **Optimierungsvorschläge:** Konkrete Verbesserungen mit Umsetzungshinweisen
+4. **Marktvergleich:** Standards, Best Practices, Branchenkonformität
+5. **Positive Aspekte:** Gut dokumentierte Punkte mit rechtlicher Relevanz
+6. **Kritische Punkte:** Verbesserungsbedarf mit Risikobewertungen
+7. **Empfehlungen:** Systematische nächste Schritte
 
-Alle Analysen müssen umfassend und rechtlich fundiert sein.
-
-Antworte im JSON-Format wie oben, mit contractScore zwischen 55-85.
+JSON-Format wie oben, contractScore 55-85.
 
 **DOKUMENT:**
 ${optimizedText}`,
@@ -1013,20 +950,18 @@ ${optimizedText}`,
     DEEP_TABULAR_ANALYSIS: `
 ${basePrompt}
 
-**ERWEITERTE TABELLENANALYSE:**
+**TABELLENANALYSE:**
 Analysiere diese tabellarische Übersicht umfassend:
 
-**1. ZUSAMMENFASSUNG:** Zweck, Inhalt, Datenqualität und rechtliche Relevanz der Tabelle
-**2. RECHTLICHE BEWERTUNG:** Dokumentationsqualität, Compliance-Aspekte und rechtliche Verwertbarkeit
-**3. OPTIMIERUNGSVORSCHLÄGE:** Verbesserungen der Darstellung, Vollständigkeit und Rechtssicherheit
-**4. MARKTVERGLEICH:** Übliche Tabellenformate, Standards und Best Practices
-**5. POSITIVE ASPEKTE:** Strukturierte Darstellung und vollständige Datenerfassung
-**6. KRITISCHE PUNKTE:** Unklarheiten, fehlende Daten oder Dokumentationsmängel
-**7. EMPFEHLUNGEN:** Konkrete Optimierung der Tabelle und Verwendungsempfehlungen
+1. **Zusammenfassung:** Zweck, Inhalt, Datenqualität, rechtliche Relevanz
+2. **Rechtliche Bewertung:** Dokumentationsqualität, Compliance-Aspekte
+3. **Optimierungsvorschläge:** Verbesserungen der Darstellung, Vollständigkeit
+4. **Marktvergleich:** Übliche Tabellenformate, Standards
+5. **Positive Aspekte:** Strukturierte Darstellung, vollständige Datenerfassung
+6. **Kritische Punkte:** Unklarheiten, fehlende Daten, Dokumentationsmängel
+7. **Empfehlungen:** Konkrete Optimierung der Tabelle
 
-Alle Bewertungen müssen detailliert und praxisorientiert sein.
-
-Antworte im JSON-Format wie oben, mit contractScore zwischen 50-80.
+JSON-Format wie oben, contractScore 50-80.
 
 **DOKUMENT:**
 ${optimizedText}`,
@@ -1034,20 +969,18 @@ ${optimizedText}`,
     DEEP_GENERAL_DOCUMENT_ANALYSIS: `
 ${basePrompt}
 
-**UMFASSENDE DOKUMENTENANALYSE:**
-Führe eine tiefgreifende rechtliche Prüfung dieses Dokuments durch:
+**DOKUMENTENANALYSE:**
+Führe eine juristische Dokumentenprüfung durch:
 
-**1. ZUSAMMENFASSUNG:** Art, Zweck, Hauptinhalt und rechtliche Einordnung des Dokuments
-**2. RECHTLICHE BEWERTUNG:** Rechtliche Einordnung, Bindungswirkung und Compliance-Aspekte
-**3. OPTIMIERUNGSVORSCHLÄGE:** Konkrete Verbesserungsvorschläge mit rechtlicher Begründung
-**4. MARKTVERGLEICH:** Übliche Standards, Branchenpraktiken und Vergleichsdokumente
-**5. POSITIVE ASPEKTE:** Gut gestaltete Bereiche mit rechtlicher und praktischer Relevanz
-**6. KRITISCHE PUNKTE:** Verbesserungswürdige Aspekte mit Risikobewertung
-**7. EMPFEHLUNGEN:** Konkrete Handlungsschritte mit Prioritätensetzung und Umsetzungshinweisen
+1. **Zusammenfassung:** Art, Zweck, Hauptinhalt, rechtliche Einordnung
+2. **Rechtliche Bewertung:** Rechtliche Einordnung, Bindungswirkung, Compliance
+3. **Optimierungsvorschläge:** Konkrete Verbesserungen mit rechtlicher Begründung
+4. **Marktvergleich:** Übliche Standards, Branchenpraktiken
+5. **Positive Aspekte:** Gut gestaltete Bereiche mit rechtlicher Relevanz
+6. **Kritische Punkte:** Verbesserungswürdige Aspekte mit Risikobewertung
+7. **Empfehlungen:** Konkrete Handlungsschritte mit Prioritätensetzung
 
-Alle Analysen müssen rechtlich fundiert und vollständig ausformuliert sein.
-
-Antworte im JSON-Format wie oben, mit contractScore zwischen 45-75.
+JSON-Format wie oben, contractScore 45-75.
 
 **DOKUMENT:**
 ${optimizedText}`
@@ -1538,12 +1471,12 @@ const makeRateLimitedGPT4Request = async (prompt, requestId, openai, maxRetries 
         messages: [
           { 
             role: "system", 
-            content: "Du bist ein hochspezialisierter Rechtsanwalt mit über 15 Jahren Erfahrung im Vertragsrecht. Antworte immer vollständig, detailliert und in korrektem JSON-Format. Alle Sätze müssen vollständig ausformuliert sein. Jede Analyse muss substantiell und juristisch fundiert sein. Verwende mindestens 2-3 vollständige Sätze pro Punkt." 
+            content: "Du bist ein Rechtsanwalt mit Spezialisierung auf Vertragsrecht. Antworte vollständig in korrektem JSON-Format. Alle Sätze müssen komplett ausformuliert sein." 
           },
           { role: "user", content: prompt },
         ],
         temperature: 0.1, // ✅ Even lower temperature for maximum consistency
-        max_tokens: 4000, // ✅ Maximum tokens for comprehensive deep analysis
+        max_tokens: 2500, // ✅ FIXED: Reduced from 4000 to fit within 8192 total limit
       });
       
       const response = completion.choices[0].message.content;
