@@ -8,9 +8,9 @@ import {
 } from "lucide-react";
 import styles from "../styles/ContractDetailsView.module.css";
 import ReminderToggle from "./ReminderToggle";
-import ContractShareModal from "./ContractShareModal"; // ✅ NEU: Import Share Modal
-import ContractEditModal from "./ContractEditModal"; // ✅ NEU: Import Edit Modal
-// ✅ getContractFileUrl nicht mehr benötigt - Mobile-freundliche PDF-Logik verwendet direkte API-Aufrufe
+// ✅ HOTFIX: Entfernt nicht-existierende Imports
+// import ContractShareModal from "./ContractShareModal";
+// import ContractEditModal from "./ContractEditModal";
 
 interface Contract {
   _id: string;
@@ -23,7 +23,7 @@ interface Contract {
   createdAt: string;
   content?: string;
   isGenerated?: boolean;
-  notes?: string; // ✅ NEU: Für eigene Notizen
+  notes?: string;
   // Erweiterte Felder für Analyse-Daten
   fullText?: string;
   extractedText?: string;
@@ -34,8 +34,8 @@ interface Contract {
   s3Key?: string;
   s3Bucket?: string;
   s3Location?: string;
-  uploadType?: string; // ✅ NEU: Für S3 Migration
-  needsReupload?: boolean; // ✅ NEU: Für Legacy-Verträge
+  uploadType?: string;
+  needsReupload?: boolean;
   analysis?: {
     summary?: string;
     legalAssessment?: string;
@@ -66,10 +66,10 @@ export default function ContractDetailsView({
 }: ContractDetailsViewProps) {
   const [activeTab, setActiveTab] = useState<'overview' | 'content' | 'analysis'>('overview');
   
-  // ✅ NEU: State für die beiden Modals
-  const [showShareModal, setShowShareModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [contract, setContract] = useState<Contract>(initialContract); // ✅ NEU: Lokaler Contract State für Updates
+  // ✅ HOTFIX: Entfernt nicht-existierende Modal States
+  // const [showShareModal, setShowShareModal] = useState(false);
+  // const [showEditModal, setShowEditModal] = useState(false);
+  const [contract, setContract] = useState<Contract>(initialContract);
 
   // ✅ NEU: Update contract wenn sich initialContract ändert
   useEffect(() => {
@@ -79,10 +79,13 @@ export default function ContractDetailsView({
   // ✅ BUG 1 FIX: Auto-Edit-Modal öffnen wenn autoOpenEdit Flag gesetzt
   useEffect(() => {
     if (autoOpenEdit && show) {
-      console.log('🔄 Auto-opening Edit Modal due to autoOpenEdit flag');
-      setShowEditModal(true);
+      console.log('🔄 Auto-Edit triggered - opening edit interface');
+      // ✅ HOTFIX: Temporärer Fallback bis Edit-Modal implementiert ist
+      if (onEdit) {
+        onEdit(contract._id);
+      }
     }
-  }, [autoOpenEdit, show]);
+  }, [autoOpenEdit, show, contract._id, onEdit]);
 
   const formatDate = (dateString: string): string => {
     if (!dateString) return "Unbekannt";
@@ -173,7 +176,7 @@ export default function ContractDetailsView({
 
   // ✅ BUG 2 FIX: Defensive Score-Helper mit Fallbacks
   const getScoreColor = (score?: number): string => {
-    if (typeof score !== 'number' || isNaN(score)) return "#8e8e93"; // Grau für ungültige Werte
+    if (typeof score !== 'number' || isNaN(score)) return "#8e8e93";
     if (score >= 80) return "#34c759";
     if (score >= 60) return "#ff9500";
     if (score >= 40) return "#ff6b35";
@@ -218,19 +221,16 @@ export default function ContractDetailsView({
       needsReupload: contract.needsReupload
     });
 
-    // ✅ MOBILE-FIX: Temporäres Tab sofort öffnen (Popup-Blocker umgehen)
     let tempWindow: Window | null = null;
 
     try {
       const token = localStorage.getItem('token');
 
-      // ✅ Legacy-Vertrag Check (vor Tab-Öffnung)
       if (contract.needsReupload || contract.uploadType === 'LOCAL_LEGACY') {
         alert(`⚠️ Dieser Vertrag wurde vor der Cloud-Integration hochgeladen und ist nicht mehr verfügbar.\n\nBitte laden Sie "${contract.name}" erneut hoch, um ihn anzuzeigen.`);
         return;
       }
 
-      // ✅ CRITICAL: Tab sofort öffnen (noch im User-Click-Context)
       tempWindow = window.open('', '_blank');
       if (tempWindow) {
         tempWindow.document.write(`
@@ -277,7 +277,6 @@ export default function ContractDetailsView({
         `);
       }
 
-      // ✅ S3-Key-Route (prioritär)
       if (contract.s3Key) {
         console.log('✅ S3 Contract detected, fetching signed URL with key...');
         
@@ -300,17 +299,14 @@ export default function ContractDetailsView({
           if (tempWindow && !tempWindow.closed) {
             tempWindow.location.href = pdfUrl;
           } else {
-            // Fallback falls Tab geschlossen wurde
             window.open(pdfUrl, '_blank', 'noopener,noreferrer');
           }
           return;
         } else {
           console.error('❌ S3 URL fetch failed:', data.error || 'No URL in response');
-          // Fallback to contractId route
         }
       }
       
-      // ✅ Fallback: ContractId-Route
       console.log('🔄 Fallback: Using contractId route...');
       
       const response = await fetch(`/api/s3/view?contractId=${contract._id}`, {
@@ -330,7 +326,6 @@ export default function ContractDetailsView({
         if (tempWindow && !tempWindow.closed) {
           tempWindow.location.href = pdfUrl;
         } else {
-          // Fallback falls Tab geschlossen wurde
           window.open(pdfUrl, '_blank', 'noopener,noreferrer');
         }
         return;
@@ -346,7 +341,6 @@ export default function ContractDetailsView({
     } catch (error) {
       console.error('❌ Error in mobile-friendly PDF view:', error);
       
-      // ✅ Tab schließen bei Fehler
       if (tempWindow && !tempWindow.closed) {
         tempWindow.document.write(`
           <html>
@@ -387,7 +381,6 @@ export default function ContractDetailsView({
           </html>
         `);
         
-        // Auto-close nach 5 Sekunden
         setTimeout(() => {
           if (tempWindow && !tempWindow.closed) {
             tempWindow.close();
@@ -403,27 +396,15 @@ export default function ContractDetailsView({
     }
   };
 
-  // ✅ NEU: Share-Handler
+  // ✅ HOTFIX: Temporäre Handler ohne Modals
   const handleShare = () => {
-    console.log('🔗 Opening share modal for contract:', contract._id);
-    setShowShareModal(true);
+    console.log('🔗 Share contract:', contract._id);
+    alert('Share-Funktion wird bald implementiert!');
   };
 
-  // ✅ NEU: Edit-Handler
   const handleEdit = () => {
-    console.log('✏️ Opening edit modal for contract:', contract._id);
-    setShowEditModal(true);
-  };
-
-  // ✅ NEU: Update-Handler für Edit-Modal
-  const handleContractUpdate = (updatedContract: Contract) => {
-    console.log('✅ Contract updated:', updatedContract);
-    setContract(updatedContract);
-    
-    // Optional: Auch Parent Component über Update informieren
-    if (onEdit) {
-      onEdit(updatedContract._id);
-    }
+    console.log('✏️ Edit contract:', contract._id);
+    alert('Edit-Modal wird bald implementiert!');
   };
 
   const handleDelete = () => {
@@ -492,7 +473,6 @@ ${analysis.comparison || 'Nicht verfügbar'}
     
     const analysis = contract.analysis;
     
-    // Prüfe ob mindestens ein Feld mit Inhalt vorhanden ist
     const hasContent = !!(
       (analysis.summary && analysis.summary.trim().length > 0) ||
       (analysis.legalAssessment && analysis.legalAssessment.trim().length > 0) ||
@@ -549,14 +529,12 @@ ${analysis.comparison || 'Nicht verfügbar'}
                         KI-Generiert
                       </span>
                     )}
-                    {/* ✅ NEU: S3 Status Badge */}
                     {getContractStatusBadge(contract)}
                   </div>
                 </div>
               </div>
 
               <div className={styles.headerActions}>
-                {/* ✅ UPDATED: Share Button mit Funktionalität */}
                 <button 
                   className={styles.actionBtn}
                   onClick={handleShare}
@@ -565,7 +543,6 @@ ${analysis.comparison || 'Nicht verfügbar'}
                   <Share2 size={18} />
                 </button>
                 
-                {/* ✅ UPDATED: Edit Button mit Funktionalität */}
                 <button 
                   className={styles.actionBtn}
                   onClick={handleEdit}
@@ -643,7 +620,6 @@ ${analysis.comparison || 'Nicht verfügbar'}
               >
                 <BarChart3 size={16} />
                 <span>Analyse</span>
-                {/* ✅ BUG 2 FIX: Zeige Badge wenn Analyse verfügbar */}
                 {hasValidAnalysis() && (
                   <span className={styles.analysisBadge}>✓</span>
                 )}
@@ -677,7 +653,6 @@ ${analysis.comparison || 'Nicht verfügbar'}
                         <span>{contract.status}</span>
                       </div>
                     </div>
-                    {/* ✅ NEU: Speicherstatus anzeigen */}
                     <div className={styles.detailItem}>
                       <label>Speicherstatus</label>
                       {getContractStatusBadge(contract)}
@@ -703,7 +678,6 @@ ${analysis.comparison || 'Nicht verfügbar'}
                       <span>{formatDate(contract.createdAt)}</span>
                     </div>
                     
-                    {/* ✅ NEU: Eigene Notizen anzeigen falls vorhanden */}
                     {contract.notes && (
                       <div className={styles.detailItem}>
                         <label>Eigene Notizen</label>
@@ -711,7 +685,6 @@ ${analysis.comparison || 'Nicht verfügbar'}
                       </div>
                     )}
                     
-                    {/* ✅ BUG 2 FIX: Analyse-Status-Übersicht */}
                     <div className={styles.detailItem}>
                       <label>Analyse-Status</label>
                       <span>
@@ -733,7 +706,6 @@ ${analysis.comparison || 'Nicht verfügbar'}
                     </div>
                   </div>
                   
-                  {/* ✅ MOBILE-FIX: Contract View Button mit Mobile-freundlicher Logik */}
                   <div className={styles.viewContractSection}>
                     {contract.needsReupload || contract.uploadType === 'LOCAL_LEGACY' ? (
                       <div style={{ textAlign: 'center', padding: '1rem' }}>
@@ -803,7 +775,7 @@ ${analysis.comparison || 'Nicht verfügbar'}
               </motion.div>
             )}
 
-            {/* Content Tab - unverändert */}
+            {/* Content Tab */}
             {activeTab === 'content' && (
               <motion.div 
                 className={styles.contentTab}
@@ -811,18 +783,6 @@ ${analysis.comparison || 'Nicht verfügbar'}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
               >
-                {(() => {
-                  console.log('🔍 Content Tab Debug:', {
-                    contractName: contract.name,
-                    hasFullText: !!contract.fullText,
-                    hasContent: !!contract.content,
-                    fullTextLength: contract.fullText ? contract.fullText.length : 0,
-                    contentLength: contract.content ? contract.content.length : 0,
-                    contractKeys: Object.keys(contract)
-                  });
-                  return null;
-                })()}
-                
                 {(() => {
                   const textContent = contract.fullText || contract.content || contract.extractedText || '';
                   
@@ -878,34 +838,12 @@ ${analysis.comparison || 'Nicht verfügbar'}
                       <div className={styles.noContent}>
                         <FileText size={48} />
                         <h3>Kein Textinhalt verfügbar</h3>
-                        <p>Der Vertragstext konnte nicht extrahiert werden oder ist nicht verfügbar. Möglicherweise handelt es sich um eine bildbasierte PDF oder ein anderes Format.</p>
-                        
-                        <div className={styles.debugInfo}>
-                          <details>
-                            <summary>Debug-Informationen</summary>
-                            <pre style={{ fontSize: '0.8rem', textAlign: 'left', background: '#f5f5f5', padding: '1rem', borderRadius: '8px', marginTop: '1rem' }}>
-                              {JSON.stringify({
-                                contractId: contract._id,
-                                contractName: contract.name,
-                                hasFullText: !!contract.fullText,
-                                hasContent: !!contract.content,
-                                hasExtractedText: !!contract.extractedText,
-                                hasAnalysis: !!contract.analysis,
-                                availableKeys: Object.keys(contract).filter(key => key.includes('text') || key.includes('content') || key === 'analysis')
-                              }, null, 2)}
-                            </pre>
-                          </details>
-                        </div>
+                        <p>Der Vertragstext konnte nicht extrahiert werden oder ist nicht verfügbar.</p>
                         
                         <div className={styles.noContentActions}>
                           <button 
                             className={styles.retryBtn}
                             onClick={() => {
-                              console.log('🔄 Retry text extraction for contract:', {
-                                id: contract._id,
-                                name: contract.name,
-                                availableFields: Object.keys(contract)
-                              });
                               alert('Text-Extraktion wird erneut versucht...');
                             }}
                           >
@@ -920,7 +858,7 @@ ${analysis.comparison || 'Nicht verfügbar'}
               </motion.div>
             )}
 
-            {/* ✅ BUG 2 FIX: Komplett überarbeiteter Analysis Tab mit defensiver Programmierung */}
+            {/* ✅ BUG 2 FIX: Analysis Tab mit defensiver Programmierung */}
             {activeTab === 'analysis' && (
               <motion.div 
                 className={styles.analysisTab}
@@ -928,25 +866,6 @@ ${analysis.comparison || 'Nicht verfügbar'}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
               >
-                {(() => {
-                  // ✅ BUG 2 FIX: Erweiterte Debug-Logs
-                  console.log('🔍 Analysis Tab Render Debug:', {
-                    contractId: contract._id,
-                    contractName: contract.name,
-                    hasAnalysisObject: !!contract.analysis,
-                    analysisType: typeof contract.analysis,
-                    hasValidAnalysis: hasValidAnalysis(),
-                    analysisKeys: contract.analysis ? Object.keys(contract.analysis) : [],
-                    analysisValues: contract.analysis ? Object.fromEntries(
-                      Object.entries(contract.analysis).map(([key, value]) => [
-                        key, 
-                        typeof value === 'string' ? `"${value.substring(0, 50)}..."` : value
-                      ])
-                    ) : {}
-                  });
-                  return null;
-                })()}
-
                 {hasValidAnalysis() ? (
                   <div className={styles.analysisViewer}>
                     <div className={styles.analysisHeader}>
@@ -963,7 +882,6 @@ ${analysis.comparison || 'Nicht verfügbar'}
                       </div>
                     </div>
 
-                    {/* ✅ BUG 2 FIX: Defensive Score-Anzeige */}
                     {contract.analysis?.contractScore && 
                      typeof contract.analysis.contractScore === 'number' && 
                      !isNaN(contract.analysis.contractScore) && (
@@ -990,7 +908,6 @@ ${analysis.comparison || 'Nicht verfügbar'}
                     )}
 
                     <div className={styles.analysisContent}>
-                      {/* ✅ BUG 2 FIX: Defensive Rendering jeder Sektion */}
                       {contract.analysis?.summary && 
                        typeof contract.analysis.summary === 'string' && 
                        contract.analysis.summary.trim().length > 0 && (
@@ -1082,48 +999,8 @@ ${analysis.comparison || 'Nicht verfügbar'}
                           </div>
                         </div>
                       )}
-
-                      {/* ✅ BUG 2 FIX: Fallback wenn Analysis-Object vorhanden aber leer */}
-                      {contract.analysis && 
-                       Object.keys(contract.analysis).length > 0 && 
-                       !contract.analysis.summary && 
-                       !contract.analysis.legalAssessment && 
-                       !contract.analysis.suggestions && 
-                       !contract.analysis.comparison && (
-                        <div className={styles.analysisSection}>
-                          <div className={styles.analysisSectionHeader}>
-                            <div className={styles.sectionIcon} style={{ background: 'rgba(255, 149, 0, 0.1)' }}>
-                              <AlertCircle size={20} style={{ color: '#ff9500' }} />
-                            </div>
-                            <h4>Analyse-Daten verfügbar</h4>
-                          </div>
-                          <div className={styles.analysisSectionContent}>
-                            <p style={{ color: '#6e6e73', lineHeight: 1.5 }}>
-                              Es sind Analyse-Daten vorhanden, aber diese können nicht in der erwarteten Form angezeigt werden. 
-                              Möglicherweise liegt ein Datenformat-Problem vor.
-                            </p>
-                            <details style={{ marginTop: '1rem' }}>
-                              <summary style={{ cursor: 'pointer', color: '#007aff' }}>
-                                Rohdaten anzeigen
-                              </summary>
-                              <pre style={{ 
-                                fontSize: '0.8rem', 
-                                background: '#f5f5f5', 
-                                padding: '1rem', 
-                                borderRadius: '6px', 
-                                marginTop: '0.5rem',
-                                overflow: 'auto',
-                                maxHeight: '200px'
-                              }}>
-                                {JSON.stringify(contract.analysis, null, 2)}
-                              </pre>
-                            </details>
-                          </div>
-                        </div>
-                      )}
                     </div>
 
-                    {/* ✅ BUG 2 FIX: Defensive Meta-Anzeige */}
                     {(contract.analysis?.lastAnalyzed || contract.analysis?.analysisId) && (
                       <div className={styles.analysisMeta}>
                         {contract.analysis.lastAnalyzed && (
@@ -1142,39 +1019,17 @@ ${analysis.comparison || 'Nicht verfügbar'}
                     )}
                   </div>
                 ) : (
-                  // ✅ BUG 2 FIX: Verbesserte "Keine Analyse" Anzeige
                   <div className={styles.noAnalysis}>
                     <BarChart3 size={48} />
                     <h3>Keine Analyse verfügbar</h3>
                     <p>
-                      Für diesen Vertrag wurde noch keine KI-Analyse durchgeführt oder die Analyse-Daten sind nicht in einem lesbaren Format verfügbar.
+                      Für diesen Vertrag wurde noch keine KI-Analyse durchgeführt.
                     </p>
-                    
-                    {/* ✅ BUG 2 FIX: Debug-Informationen für Entwicklung */}
-                    {contract.analysis && (
-                      <details style={{ marginTop: '1rem', textAlign: 'left' }}>
-                        <summary style={{ cursor: 'pointer', color: '#007aff', textAlign: 'center' }}>
-                          Debug-Informationen (Entwicklung)
-                        </summary>
-                        <pre style={{ 
-                          fontSize: '0.75rem', 
-                          background: '#f5f5f5', 
-                          padding: '1rem', 
-                          borderRadius: '6px', 
-                          marginTop: '0.5rem',
-                          overflow: 'auto',
-                          maxHeight: '150px'
-                        }}>
-                          Analysis Object: {JSON.stringify(contract.analysis, null, 2)}
-                        </pre>
-                      </details>
-                    )}
                     
                     <div className={styles.noAnalysisActions}>
                       <button 
                         className={styles.analyzeBtn}
                         onClick={() => {
-                          console.log('🚀 Start new analysis for contract:', contract._id);
                           alert('Neue Analyse starten - Feature wird bald implementiert!');
                         }}
                       >
@@ -1189,20 +1044,7 @@ ${analysis.comparison || 'Nicht verfügbar'}
           </div>
         </motion.div>
 
-        {/* ✅ NEU: Share Modal */}
-        <ContractShareModal
-          contract={{ _id: contract._id, name: contract.name }}
-          show={showShareModal}
-          onClose={() => setShowShareModal(false)}
-        />
-
-        {/* ✅ NEU: Edit Modal */}
-        <ContractEditModal
-          contract={contract}
-          show={showEditModal}
-          onClose={() => setShowEditModal(false)}
-          onUpdate={handleContractUpdate}
-        />
+        {/* ✅ HOTFIX: Entfernt nicht-existierende Modal-Aufrufe */}
       </motion.div>
     </AnimatePresence>
   );
