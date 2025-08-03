@@ -571,129 +571,123 @@ function selectAnalysisStrategy(documentType, contentQuality, filename) {
 }
 
 /**
- * 🏛️ NEW: ENHANCED 7-POINT LAWYER-LEVEL ANALYSIS VALIDATION WITH COMPLETENESS CHECK
- * Validates and normalizes AI response with lawyer-level requirements
+ * 🏛️ NEW: STRICT VALIDATION - NO GENERIC CONTENT TOLERANCE
+ * Validates response and REJECTS generic/incomplete answers
  */
 function validateAndNormalizeLawyerAnalysis(result, documentType, requestId) {
-  console.log(`🏛️ [${requestId}] Validating deep lawyer-level analysis for ${documentType}:`, Object.keys(result));
+  console.log(`🏛️ [${requestId}] STRICT validation for ${documentType}:`, Object.keys(result));
   
-  // ✅ CRITICAL: Check if this is the new 7-point structure
-  const hasNewStructure = result.positiveAspects || result.criticalIssues || result.recommendations;
+  // ✅ CRITICAL: Check for forbidden generic phrases
+  const forbiddenPhrases = [
+    'analyse wurde durchgeführt',
+    'prüfung wurde vorgenommen',
+    'bewertung wurde erstellt',
+    'details wurden geprüft',
+    'systematisch geprüft',
+    'eingehende analyse',
+    'umfassende prüfung',
+    'detaillierte bewertung'
+  ];
+
+  // ✅ Check all text fields for generic content
+  const textFields = ['summary', 'legalAssessment', 'suggestions', 'comparison'];
   
-  if (hasNewStructure) {
-    console.log(`✅ [${requestId}] New 7-point deep lawyer structure detected`);
-    
-    // ✅ NEW: Validate completeness of each section
-    const requiredFields = ['summary', 'legalAssessment', 'suggestions', 'comparison', 'positiveAspects', 'criticalIssues', 'recommendations'];
-    const missingFields = requiredFields.filter(field => !result[field] || (Array.isArray(result[field]) && result[field].length === 0));
-    
-    if (missingFields.length > 0) {
-      console.warn(`⚠️ [${requestId}] Missing or empty fields in deep lawyer analysis:`, missingFields);
-      
-      // ✅ AUTO-COMPLETION for missing fields with lawyer-level content
-      missingFields.forEach(field => {
-        if (!result[field]) {
-          result[field] = getDeepLawyerFallbackContent(field, documentType);
-          console.log(`🔧 [${requestId}] Auto-completed missing field with deep content: ${field}`);
+  for (const field of textFields) {
+    if (Array.isArray(result[field])) {
+      for (const text of result[field]) {
+        if (typeof text === 'string') {
+          const lowerText = text.toLowerCase();
+          for (const phrase of forbiddenPhrases) {
+            if (lowerText.includes(phrase)) {
+              console.error(`❌ [${requestId}] FORBIDDEN generic phrase in ${field}: "${phrase}"`);
+              throw new Error(`AI response contains forbidden generic content in ${field}: "${phrase}". Analysis must be restarted.`);
+            }
+          }
+          
+          // ✅ Check for too short/meaningless content
+          if (text.length < 50) {
+            console.error(`❌ [${requestId}] Content too short in ${field}: ${text.length} chars`);
+            throw new Error(`AI response too shallow in ${field}: only ${text.length} characters. Analysis must be restarted.`);
+          }
         }
-      });
-    }
-    
-    // ✅ NEW: Validate array structure for new fields
-    ['positiveAspects', 'criticalIssues', 'recommendations'].forEach(field => {
-      if (result[field] && !Array.isArray(result[field])) {
-        // Convert string to structured array
-        result[field] = [{
-          title: `${field === 'positiveAspects' ? 'Rechtlich vorteilhafte Regelung' : field === 'criticalIssues' ? 'Juristisch kritischer Punkt' : 'Anwaltliche Handlungsempfehlung'}`,
-          description: result[field],
-          ...(field === 'criticalIssues' && { riskLevel: 'medium' }),
-          ...(field === 'recommendations' && { priority: 'medium' })
-        }];
-        console.log(`🔧 [${requestId}] Converted ${field} to structured deep format`);
       }
-    });
-    
-    // ✅ NEW: Ensure contractScore is present and reasonable
-    if (!result.contractScore || result.contractScore < 1 || result.contractScore > 100) {
-      result.contractScore = calculateDeepLawyerScore(result, documentType);
-      console.log(`🔧 [${requestId}] Auto-calculated deep lawyer score: ${result.contractScore}`);
     }
-    
-  } else {
-    // ✅ FALLBACK: Legacy structure - convert to new format
-    console.log(`🔄 [${requestId}] Legacy structure detected - converting to deep lawyer format`);
-    
-    result = convertLegacyToDeepLawyerFormat(result, documentType, requestId);
+  }
+
+  // ✅ Check structured fields for generic content
+  ['positiveAspects', 'criticalIssues', 'recommendations'].forEach(field => {
+    if (Array.isArray(result[field])) {
+      for (const item of result[field]) {
+        if (item.description) {
+          const lowerDesc = item.description.toLowerCase();
+          for (const phrase of forbiddenPhrases) {
+            if (lowerDesc.includes(phrase)) {
+              console.error(`❌ [${requestId}] FORBIDDEN generic phrase in ${field}: "${phrase}"`);
+              throw new Error(`AI response contains forbidden generic content in ${field}: "${phrase}". Analysis must be restarted.`);
+            }
+          }
+        }
+      }
+    }
+  });
+
+  // ✅ NEW: Validate completeness of each section (but no auto-completion!)
+  const requiredFields = ['summary', 'legalAssessment', 'suggestions', 'comparison', 'positiveAspects', 'criticalIssues', 'recommendations'];
+  const missingFields = requiredFields.filter(field => !result[field] || (Array.isArray(result[field]) && result[field].length === 0));
+  
+  if (missingFields.length > 0) {
+    console.error(`❌ [${requestId}] Missing critical fields: ${missingFields.join(', ')}`);
+    throw new Error(`AI response incomplete. Missing fields: ${missingFields.join(', ')}. Analysis must be restarted.`);
+  }
+  
+  // ✅ NEW: Validate array structure for new fields
+  ['positiveAspects', 'criticalIssues', 'recommendations'].forEach(field => {
+    if (result[field] && !Array.isArray(result[field])) {
+      console.error(`❌ [${requestId}] Field ${field} is not properly structured`);
+      throw new Error(`AI response has improper structure for ${field}. Analysis must be restarted.`);
+    }
+  });
+  
+  // ✅ NEW: Ensure contractScore is present and reasonable
+  if (!result.contractScore || result.contractScore < 1 || result.contractScore > 100) {
+    result.contractScore = 50; // Safe fallback
+    console.log(`🔧 [${requestId}] Set fallback score: ${result.contractScore}`);
   }
   
   // ✅ NEW: Final validation of text completeness and depth
   validateTextCompletenessAndDepth(result, requestId);
   
-  console.log(`✅ [${requestId}] Deep lawyer-level analysis validation completed with score: ${result.contractScore}`);
+  console.log(`✅ [${requestId}] STRICT validation passed with score: ${result.contractScore}`);
   return result;
 }
 
 /**
- * 🔧 NEW: Auto-completion for missing deep lawyer analysis fields
+ * 🔧 NEW: STRICT Auto-completion - NO GENERIC CONTENT ALLOWED
  */
 function getDeepLawyerFallbackContent(field, documentType) {
-  const deepFallbacks = {
-    summary: [
-      `Umfassende juristische Dokumentenanalyse für ${documentType} wurde durchgeführt, dabei wurden alle wesentlichen Vertragsbestandteile und rechtlichen Aspekte systematisch geprüft.`, 
-      "Die strukturelle und inhaltliche Prüfung umfasste eine Bewertung der rechtlichen Bindungswirkung, Vollständigkeit der essentialia negotii und prozeduralen Korrektheit.", 
-      "Sämtliche rechtlich relevanten Kernpunkte wurden identifiziert und auf ihre Vereinbarkeit mit geltender Rechtslage sowie marktüblichen Standards überprüft."
-    ],
-    legalAssessment: [
-      `Rechtliche Detailprüfung des ${documentType} ergab eine systematische Bewertung der juristischen Bindungswirkung und Durchsetzbarkeit der enthaltenen Bestimmungen.`, 
-      "Die gesetzlichen Anforderungen wurden gegen die aktuell geltende Rechtslage abgeglichen, einschließlich Formvorschriften, Mindestinhalte und zwingende gesetzliche Bestimmungen.", 
-      "Potentielle Rechtsrisiken wurden identifiziert und hinsichtlich ihrer praktischen Auswirkungen und rechtlichen Relevanz bewertet."
-    ],
-    suggestions: [
-      `Konkrete Optimierungspotentiale für ${documentType} wurden identifiziert, die eine verbesserte Rechtssicherheit und ausgewogenere Vertragsgestaltung ermöglichen.`, 
-      "Verbesserungsvorschläge umfassen sowohl formelle Aspekte der Vertragsgestaltung als auch inhaltliche Optimierungen zur Risikominimierung.", 
-      "Nachverhandlungsoptionen wurden aufgezeigt, die eine für beide Parteien vorteilhaftere und rechtlich stabilere Vereinbarung ermöglichen."
-    ],
-    comparison: [
-      `Marktüblichkeit des ${documentType} wurde anhand branchenspezifischer Standards und vergleichbarer Vereinbarungen bewertet.`, 
-      "Branchenstandards wurden systematisch verglichen und Abweichungen von marktüblichen Konditionen identifiziert.", 
-      "Die Konditionen wurden in den Kontext vergleichbarer Marktverhältnisse eingeordnet und auf ihre Angemessenheit geprüft."
-    ],
+  // ✅ CRITICAL: Return error messages instead of generic content
+  const strictFallbacks = {
+    summary: [`FEHLER: Keine konkreten Vertragsdetails in der KI-Antwort gefunden. Der Vertrag muss erneut analysiert werden.`],
+    legalAssessment: [`FEHLER: Keine spezifischen rechtlichen Bewertungen erhalten. Eine Neuanalyse ist erforderlich.`],
+    suggestions: [`FEHLER: Keine konkreten Optimierungsvorschläge erhalten. Der Vertrag muss detaillierter analysiert werden.`],
+    comparison: [`FEHLER: Kein spezifischer Marktvergleich erhalten. Eine Neuanalyse ist erforderlich.`],
     positiveAspects: [{
-      title: "Ordnungsgemäße rechtliche Dokumentation",
-      description: "Das Dokument weist eine strukturierte und rechtlich nachvollziehbare Gliederung auf, die den formellen Anforderungen entspricht und eine klare Vertragslogik erkennen lässt."
-    }, {
-      title: "Vollständigkeit essentieller Vertragsbestandteile",
-      description: "Die wesentlichen Vertragsbestandteile (essentialia negotii) sind grundsätzlich vorhanden und ermöglichen eine rechtliche Bindungswirkung der Vereinbarung."
+      title: "FEHLER: Generische Antwort",
+      description: "Die KI-Analyse war zu oberflächlich. Bitte versuchen Sie es erneut oder kontaktieren Sie den Support."
     }],
     criticalIssues: [{
-      title: "Erforderlichkeit vertiefter rechtlicher Prüfung",
-      description: "Einzelne Klauseln und Bestimmungen sollten einer eingehenden rechtlichen Detailprüfung durch einen spezialisierten Fachanwalt unterzogen werden, um potentielle Risiken zu minimieren.",
-      riskLevel: "medium"
-    }, {
-      title: "Optimierungspotential bei Risikoverteilung",
-      description: "Die aktuelle Risikoverteilung zwischen den Vertragsparteien weist Asymmetrien auf, die durch ausgewogenere Klauselgestaltung verbessert werden könnten.",
-      riskLevel: "medium"
+      title: "FEHLER: Unvollständige Analyse",
+      description: "Es konnten keine konkreten Risiken identifiziert werden. Eine Neuanalyse oder manuelle Prüfung ist erforderlich.",
+      riskLevel: "high"
     }],
-    recommendations: [
-      {
-        title: "Fachspezifische juristische Begutachtung",
-        description: "Eine eingehende rechtliche Begutachtung durch einen auf das entsprechende Rechtsgebiet spezialisierten Rechtsanwalt wird dringend empfohlen, um rechtliche Risiken zu minimieren und Optimierungspotentiale zu identifizieren.",
-        priority: "high"
-      },
-      {
-        title: "Vollständige Dokumentation und Archivierung",
-        description: "Alle wesentlichen Vereinbarungen sollten schriftlich fixiert, vollständig dokumentiert und rechtssicher archiviert werden, um spätere Beweisprobleme zu vermeiden.",
-        priority: "medium"
-      },
-      {
-        title: "Regelmäßige Vertragsreviews etablieren",
-        description: "Ein systematisches Review-Verfahren sollte implementiert werden, um Verträge regelmäßig auf Aktualität, Rechtssicherheit und Marktkonformität zu überprüfen.",
-        priority: "medium"
-      }
-    ]
+    recommendations: [{
+      title: "FEHLER: Keine konkreten Empfehlungen",
+      description: "Die automatische Analyse konnte keine spezifischen Handlungsempfehlungen generieren. Bitte kontaktieren Sie einen Anwalt.",
+      priority: "high"
+    }]
   };
   
-  return deepFallbacks[field] || [`${field} wurde einer eingehenden juristischen Analyse unterzogen.`];
+  return strictFallbacks[field] || [`FEHLER: Unvollständige ${field}-Analyse`];
 }
 
 /**
@@ -842,50 +836,173 @@ function validateTextCompletenessAndDepth(result, requestId) {
 }
 
 /**
- * 🏛️ NEW: Generate COMPACT Lawyer-Level Analysis Prompt WITH TOKEN OPTIMIZATION
- * Creates specialized prompts with lawyer-level depth while staying within token limits
+ * 🏛️ NEW: Generate CONCRETE Lawyer-Level Analysis Prompt WITH SPECIFIC CONTENT REQUIREMENTS
+ * Forces AI to analyze actual contract content instead of generic responses
  */
 function generateDeepLawyerLevelPrompt(text, documentType, strategy, requestId) {
   // ✅ CRITICAL: Apply ULTRA-AGGRESSIVE optimization for ALL documents
   const optimizedText = optimizeTextForGPT4(text, 2500, requestId); // Reduced for prompt space
   
-  const basePrompt = `Du bist ein erfahrener Rechtsanwalt. Führe eine detaillierte, anwaltliche Vertragsanalyse durch.`;
+  const basePrompt = `Du bist ein erfahrener Rechtsanwalt. Du MUSST den vorliegenden Vertrag konkret analysieren.`;
   
   const strategyPrompts = {
     DEEP_LAWYER_LEVEL_CONTRACT_ANALYSIS: `
 ${basePrompt}
 
-**ANWALTLICHE 7-PUNKTE-ANALYSE:**
+**KRITISCHE REGEL: Du DARFST NICHT über die Analyse sprechen, sondern MUSST sie durchführen!**
 
-Erstelle eine strukturierte Rechtsanalyse mit vollständigen, juristisch fundierten Bewertungen:
+**VERBOTEN:** Sätze wie "Eine Analyse wurde durchgeführt", "Details wurden geprüft", "Rechtliche Bewertung vorgenommen"
+**GEFORDERT:** Konkrete Fakten aus dem Vertrag (Parteien, Beträge, Fristen, Klauseln)
 
-**ANFORDERUNGEN:**
-- Jeder Punkt vollständig ausarbeiten (mind. 2 Sätze)
-- Juristische Begründungen angeben
-- Konkrete Rechtsrisiken benennen
-- Spezifische Handlungsempfehlungen
+**ANWALTLICHE VERTRAGSANALYSE - 7 PUNKTE:**
 
-**1. ZUSAMMENFASSUNG (summary):** Vertragsart, Parteien, Zweck, Laufzeit, erste Bewertung
-**2. RECHTSSICHERHEIT (legalAssessment):** Wirksamkeit, gesetzliche Anforderungen, Rechtsrisiken
-**3. OPTIMIERUNGSVORSCHLÄGE (suggestions):** Konkrete Klauselverbesserungen, Nachverhandlungen
-**4. MARKTVERGLEICH (comparison):** Branchenstandards, Marktüblichkeit, Fairness
-**5. POSITIVE ASPEKTE (positiveAspects):** [{title: "...", description: "Juristische Begründung..."}]
-**6. KRITISCHE RISIKEN (criticalIssues):** [{title: "...", description: "Risikobeschreibung...", riskLevel: "high/medium/low"}]
-**7. EMPFEHLUNGEN (recommendations):** [{title: "...", description: "Umsetzungsschritte...", priority: "high/medium/low"}]
+**1. ZUSAMMENFASSUNG (summary):**
+ZWINGEND zu nennen (falls im Vertrag erkennbar):
+- Wer sind die Vertragsparteien? (Namen/Firmen)
+- Was ist der Vertragsgegenstand? (Leistung/Kauf/Miete/etc.)
+- Welche Laufzeit/Kündigungsfristen gelten?
+- Welche Hauptpflichten haben die Parteien?
+- Wie hoch sind die Beträge/Preise?
 
-**SCORE:** 1-100 basierend auf Rechtssicherheit, Ausgewogenheit, Vollständigkeit, Marktkonformität.
+**2. RECHTSSICHERHEIT (legalAssessment):**
+Bewerte KONKRET:
+- Sind alle wesentlichen Vertragsbestandteile vorhanden?
+- Welche rechtlichen Risiken siehst du? (benenne sie spezifisch)
+- Sind Klauseln rechtlich zulässig oder problematisch?
+- Fehlen wichtige Schutzklauseln?
 
-JSON-Format:
+**3. OPTIMIERUNGSVORSCHLÄGE (suggestions):**
+KONKRETE Verbesserungen:
+- Welche Klauseln sollten wie umformuliert werden?
+- Welche zusätzlichen Regelungen fehlen?
+- Wie können Risiken minimiert werden?
+- Konkrete Formulierungsvorschläge
+
+**4. MARKTVERGLEICH (comparison):**
+- Sind die Konditionen marktüblich?
+- Welche Abweichungen zu Standardverträgen?
+- Sind die Preise/Bedingungen fair?
+- Branchenvergleich der Klauseln
+
+**5. POSITIVE ASPEKTE (positiveAspects):**
+[{title: "Konkrete Klausel", description: "Warum ist diese Klausel vorteilhaft?"}]
+
+**6. KRITISCHE RISIKEN (criticalIssues):**
+[{title: "Spezifisches Risiko", description: "Welche konkreten Probleme entstehen?", riskLevel: "high/medium/low"}]
+
+**7. EMPFEHLUNGEN (recommendations):**
+[{title: "Konkrete Maßnahme", description: "Wie genau umsetzen?", priority: "high/medium/low"}]
+
+**BEISPIEL GUTER ANTWORTEN:**
+✅ "Der Mietvertrag zwischen Max Mustermann und Hausverwaltung XY regelt die Anmietung einer 80qm Wohnung für 1.200€/Monat mit 3-monatiger Kündigungsfrist."
+❌ "Eine umfassende Analyse des Vertrags wurde durchgeführt."
+
+**VERTRAGSSCORE:** 1-100 basierend auf konkreten Mängeln/Stärken
+
+Antworte im JSON-Format:
 {
-  "summary": ["Punkt 1", "Punkt 2", "Punkt 3"],
-  "legalAssessment": ["Bewertung 1", "Bewertung 2"],
-  "suggestions": ["Optimierung 1", "Optimierung 2"],
-  "comparison": ["Marktvergleich 1", "Marktvergleich 2"],
-  "positiveAspects": [{"title": "...", "description": "..."}],
-  "criticalIssues": [{"title": "...", "description": "...", "riskLevel": "medium"}],
-  "recommendations": [{"title": "...", "description": "...", "priority": "high"}],
+  "summary": ["Konkrete Vertragsdetails", "Nicht: 'Analyse durchgeführt'"],
+  "legalAssessment": ["Spezifische Rechtsprobleme", "Konkrete Risiken"],
+  "suggestions": ["Genaue Verbesserungsvorschläge", "Konkrete Klauseländerungen"],
+  "comparison": ["Marktvergleich mit Details", "Branchenspezifische Einordnung"],
+  "positiveAspects": [{"title": "Spezifische Klausel", "description": "Konkreter Vorteil"}],
+  "criticalIssues": [{"title": "Konkretes Problem", "description": "Spezifische Auswirkung", "riskLevel": "medium"}],
+  "recommendations": [{"title": "Genaue Handlung", "description": "Konkrete Umsetzung", "priority": "high"}],
   "contractScore": 75
 }
+
+**ZU ANALYSIERENDER VERTRAG:**
+${optimizedText}`,
+
+    DEEP_FINANCIAL_ANALYSIS: `
+${basePrompt}
+
+**KONKRETE DOKUMENTENANALYSE - KEINE METABESCHREIBUNGEN!**
+
+**VERBOTEN:** "Analyse durchgeführt", "Prüfung vorgenommen"
+**GEFORDERT:** Konkrete Zahlen, Daten, Fakten aus dem Dokument
+
+**1. ZUSAMMENFASSUNG:** Wer, was, wann, welche Beträge, welche Leistungen?
+**2. RECHTSSICHERHEIT:** Welche konkreten rechtlichen Probleme? Fehlende Pflichtangaben?
+**3. OPTIMIERUNGSVORSCHLÄGE:** Konkrete Verbesserungen der Dokumentation
+**4. MARKTVERGLEICH:** Sind die Konditionen üblich? Abweichungen zu Standards?
+**5. POSITIVE ASPEKTE:** Welche Angaben sind vollständig/korrekt?
+**6. KRITISCHE PUNKTE:** Welche Daten fehlen? Compliance-Probleme?
+**7. EMPFEHLUNGEN:** Konkrete nächste Schritte
+
+JSON-Format wie oben, Score 60-90.
+
+**DOKUMENT:**
+${optimizedText}`,
+
+    DEEP_RECEIPT_ANALYSIS: `
+${basePrompt}
+
+**KONKRETE BELEGANALYSE - KEINE FLOSKELN!**
+
+**1. ZUSAMMENFASSUNG:** Welcher Beleg? Von wem? Welche Beträge? Welche Leistung?
+**2. RECHTSSICHERHEIT:** Steuerlich verwertbar? Fehlende Pflichtangaben?
+**3. OPTIMIERUNGSVORSCHLÄGE:** Was muss ergänzt/korrigiert werden?
+**4. MARKTVERGLEICH:** Übliche Belegstandards erfüllt?
+**5. POSITIVE ASPEKTE:** Welche Angaben sind vollständig?
+**6. KRITISCHE PUNKTE:** Welche Daten fehlen für Buchhaltung?
+**7. EMPFEHLUNGEN:** Konkrete Archivierung/Buchung
+
+JSON-Format wie oben, Score 70-95.
+
+**DOKUMENT:**
+${optimizedText}`,
+
+    DEEP_GENERAL_FINANCIAL_ANALYSIS: `
+${basePrompt}
+
+**KONKRETE FINANZANALYSE:**
+
+**1. ZUSAMMENFASSUNG:** Art des Dokuments, beteiligte Parteien, Beträge, Zweck
+**2. RECHTSSICHERHEIT:** Rechtliche Einordnung, Compliance-Status
+**3. OPTIMIERUNGSVORSCHLÄGE:** Konkrete Verbesserungen
+**4. MARKTVERGLEICH:** Branchenstandards, Üblichkeit
+**5. POSITIVE ASPEKTE:** Gut dokumentierte Bereiche
+**6. KRITISCHE PUNKTE:** Risiken, fehlende Informationen
+**7. EMPFEHLUNGEN:** Spezifische Handlungsschritte
+
+JSON-Format wie oben, Score 55-85.
+
+**DOKUMENT:**
+${optimizedText}`,
+
+    DEEP_TABULAR_ANALYSIS: `
+${basePrompt}
+
+**KONKRETE TABELLENANALYSE:**
+
+**1. ZUSAMMENFASSUNG:** Was zeigt die Tabelle? Welche Daten? Welcher Zeitraum?
+**2. RECHTSSICHERHEIT:** Dokumentationsqualität, rechtliche Verwertbarkeit
+**3. OPTIMIERUNGSVORSCHLÄGE:** Verbesserungen der Datenqualität
+**4. MARKTVERGLEICH:** Standards für solche Dokumentationen
+**5. POSITIVE ASPEKTE:** Vollständige/strukturierte Bereiche
+**6. KRITISCHE PUNKTE:** Unvollständige/unklare Daten
+**7. EMPFEHLUNGEN:** Konkrete Optimierungen
+
+JSON-Format wie oben, Score 50-80.
+
+**DOKUMENT:**
+${optimizedText}`,
+
+    DEEP_GENERAL_DOCUMENT_ANALYSIS: `
+${basePrompt}
+
+**KONKRETE DOKUMENTENANALYSE:**
+
+**1. ZUSAMMENFASSUNG:** Art, Parteien, Inhalt, Zweck (konkret aus dem Dokument)
+**2. RECHTSSICHERHEIT:** Rechtliche Einordnung, Bindungswirkung
+**3. OPTIMIERUNGSVORSCHLÄGE:** Spezifische Verbesserungen
+**4. MARKTVERGLEICH:** Branchenübliche Standards
+**5. POSITIVE ASPEKTE:** Gut gestaltete Klauseln/Bereiche
+**6. KRITISCHE PUNKTE:** Problematische Formulierungen
+**7. EMPFEHLUNGEN:** Konkrete Handlungsschritte
+
+JSON-Format wie oben, Score 45-75.
 
 **DOKUMENT:**
 ${optimizedText}`,
