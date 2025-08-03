@@ -51,6 +51,7 @@ interface ContractDetailsViewProps {
   contract: Contract;
   onClose: () => void;
   show: boolean;
+  autoOpenEdit?: boolean; // ✅ BUG 1 FIX: Neues autoOpenEdit Flag
   onEdit?: (contractId: string) => void;
   onDelete?: (contractId: string, contractName: string) => void;
 }
@@ -59,6 +60,7 @@ export default function ContractDetailsView({
   contract: initialContract, 
   onClose, 
   show, 
+  autoOpenEdit = false, // ✅ BUG 1 FIX: Default false
   onEdit, 
   onDelete 
 }: ContractDetailsViewProps) {
@@ -73,6 +75,14 @@ export default function ContractDetailsView({
   useEffect(() => {
     setContract(initialContract);
   }, [initialContract]);
+
+  // ✅ BUG 1 FIX: Auto-Edit-Modal öffnen wenn autoOpenEdit Flag gesetzt
+  useEffect(() => {
+    if (autoOpenEdit && show) {
+      console.log('🔄 Auto-opening Edit Modal due to autoOpenEdit flag');
+      setShowEditModal(true);
+    }
+  }, [autoOpenEdit, show]);
 
   const formatDate = (dateString: string): string => {
     if (!dateString) return "Unbekannt";
@@ -161,30 +171,41 @@ export default function ContractDetailsView({
     );
   };
 
-  const getScoreColor = (score: number): string => {
+  // ✅ BUG 2 FIX: Defensive Score-Helper mit Fallbacks
+  const getScoreColor = (score?: number): string => {
+    if (typeof score !== 'number' || isNaN(score)) return "#8e8e93"; // Grau für ungültige Werte
     if (score >= 80) return "#34c759";
     if (score >= 60) return "#ff9500";
     if (score >= 40) return "#ff6b35";
     return "#ff3b30";
   };
 
-  const getScoreLabel = (score: number): string => {
+  const getScoreLabel = (score?: number): string => {
+    if (typeof score !== 'number' || isNaN(score)) return "Unbekannt";
     if (score >= 80) return "Ausgezeichnet";
     if (score >= 60) return "Gut";
     if (score >= 40) return "Akzeptabel";
     return "Kritisch";
   };
 
-  const formatTextToPoints = (text: string): string[] => {
-    if (!text) return ['Keine Details verfügbar'];
+  // ✅ BUG 2 FIX: Defensive Text-zu-Points Konvertierung
+  const formatTextToPoints = (text?: string): string[] => {
+    if (!text || typeof text !== 'string' || text.trim().length === 0) {
+      return ['Keine Details verfügbar'];
+    }
     
-    const sentences = text
-      .split(/[.!?]+|[-•]\s*/)
-      .map(s => s.trim())
-      .filter(s => s.length > 15 && s.length < 200)
-      .slice(0, 4);
-    
-    return sentences.length > 0 ? sentences : [text.substring(0, 180) + '...'];
+    try {
+      const sentences = text
+        .split(/[.!?]+|[-•]\s*/)
+        .map(s => s.trim())
+        .filter(s => s.length > 15 && s.length < 200)
+        .slice(0, 4);
+      
+      return sentences.length > 0 ? sentences : [text.substring(0, 180) + '...'];
+    } catch (error) {
+      console.warn('⚠️ Error formatting text to points:', error);
+      return [text.substring(0, 180) + '...'];
+    }
   };
 
   // ✅ MOBILE-FIX: Neue Mobile-freundliche PDF-Öffnung
@@ -424,12 +445,18 @@ export default function ContractDetailsView({
     window.URL.revokeObjectURL(url);
   };
 
+  // ✅ BUG 2 FIX: Defensive Copy-Analysis Handler
   const handleCopyAnalysis = () => {
     const analysis = contract.analysis;
-    if (!analysis) return;
+    if (!analysis || typeof analysis !== 'object') {
+      console.warn('⚠️ No analysis data available for copying');
+      alert('Keine Analysedaten zum Kopieren verfügbar.');
+      return;
+    }
     
-    const analysisText = `
-Vertragsanalyse: ${contract.name}
+    try {
+      const analysisText = `
+Vertragsanalyse: ${contract.name || 'Unbekannt'}
 Score: ${analysis.contractScore || 'N/A'}/100
 
 Zusammenfassung:
@@ -443,9 +470,45 @@ ${analysis.suggestions || 'Nicht verfügbar'}
 
 Marktvergleich:
 ${analysis.comparison || 'Nicht verfügbar'}
-    `.trim();
+      `.trim();
+      
+      navigator.clipboard.writeText(analysisText).then(() => {
+        console.log('✅ Analysis copied to clipboard');
+      }).catch(error => {
+        console.warn('⚠️ Failed to copy to clipboard:', error);
+        alert('Kopieren fehlgeschlagen. Bitte versuche es erneut.');
+      });
+    } catch (error) {
+      console.error('❌ Error copying analysis:', error);
+      alert('Fehler beim Kopieren der Analyse.');
+    }
+  };
+
+  // ✅ BUG 2 FIX: Defensive Analysis-Data-Check
+  const hasValidAnalysis = (): boolean => {
+    if (!contract.analysis || typeof contract.analysis !== 'object') {
+      return false;
+    }
     
-    navigator.clipboard.writeText(analysisText);
+    const analysis = contract.analysis;
+    
+    // Prüfe ob mindestens ein Feld mit Inhalt vorhanden ist
+    const hasContent = !!(
+      (analysis.summary && analysis.summary.trim().length > 0) ||
+      (analysis.legalAssessment && analysis.legalAssessment.trim().length > 0) ||
+      (analysis.suggestions && analysis.suggestions.trim().length > 0) ||
+      (analysis.comparison && analysis.comparison.trim().length > 0) ||
+      (typeof analysis.contractScore === 'number' && !isNaN(analysis.contractScore))
+    );
+    
+    console.log('🔍 Analysis validation:', {
+      hasAnalysisObject: !!contract.analysis,
+      hasContent,
+      analysisKeys: Object.keys(analysis),
+      contractScore: analysis.contractScore
+    });
+    
+    return hasContent;
   };
 
   if (!show) return null;
@@ -569,10 +632,21 @@ ${analysis.comparison || 'Nicht verfügbar'}
               </button>
               <button 
                 className={`${styles.tab} ${activeTab === 'analysis' ? styles.activeTab : ''}`}
-                onClick={() => setActiveTab('analysis')}
+                onClick={() => {
+                  console.log('🔍 Analysis tab clicked, checking data:', {
+                    hasAnalysis: !!contract.analysis,
+                    hasValidAnalysis: hasValidAnalysis(),
+                    analysisKeys: contract.analysis ? Object.keys(contract.analysis) : []
+                  });
+                  setActiveTab('analysis');
+                }}
               >
                 <BarChart3 size={16} />
                 <span>Analyse</span>
+                {/* ✅ BUG 2 FIX: Zeige Badge wenn Analyse verfügbar */}
+                {hasValidAnalysis() && (
+                  <span className={styles.analysisBadge}>✓</span>
+                )}
               </button>
             </div>
           </div>
@@ -636,6 +710,27 @@ ${analysis.comparison || 'Nicht verfügbar'}
                         <span>{contract.notes}</span>
                       </div>
                     )}
+                    
+                    {/* ✅ BUG 2 FIX: Analyse-Status-Übersicht */}
+                    <div className={styles.detailItem}>
+                      <label>Analyse-Status</label>
+                      <span>
+                        {hasValidAnalysis() ? (
+                          <span style={{ color: '#34c759', fontWeight: '500' }}>
+                            ✅ Analysiert
+                            {contract.analysis?.contractScore && (
+                              <span style={{ marginLeft: '0.5rem', color: '#6e6e73' }}>
+                                (Score: {contract.analysis.contractScore}/100)
+                              </span>
+                            )}
+                          </span>
+                        ) : (
+                          <span style={{ color: '#8e8e93' }}>
+                            ⏳ Keine Analyse verfügbar
+                          </span>
+                        )}
+                      </span>
+                    </div>
                   </div>
                   
                   {/* ✅ MOBILE-FIX: Contract View Button mit Mobile-freundlicher Logik */}
@@ -825,7 +920,7 @@ ${analysis.comparison || 'Nicht verfügbar'}
               </motion.div>
             )}
 
-            {/* Analysis Tab - unverändert */}
+            {/* ✅ BUG 2 FIX: Komplett überarbeiteter Analysis Tab mit defensiver Programmierung */}
             {activeTab === 'analysis' && (
               <motion.div 
                 className={styles.analysisTab}
@@ -833,7 +928,26 @@ ${analysis.comparison || 'Nicht verfügbar'}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
               >
-                {contract.analysis ? (
+                {(() => {
+                  // ✅ BUG 2 FIX: Erweiterte Debug-Logs
+                  console.log('🔍 Analysis Tab Render Debug:', {
+                    contractId: contract._id,
+                    contractName: contract.name,
+                    hasAnalysisObject: !!contract.analysis,
+                    analysisType: typeof contract.analysis,
+                    hasValidAnalysis: hasValidAnalysis(),
+                    analysisKeys: contract.analysis ? Object.keys(contract.analysis) : [],
+                    analysisValues: contract.analysis ? Object.fromEntries(
+                      Object.entries(contract.analysis).map(([key, value]) => [
+                        key, 
+                        typeof value === 'string' ? `"${value.substring(0, 50)}..."` : value
+                      ])
+                    ) : {}
+                  });
+                  return null;
+                })()}
+
+                {hasValidAnalysis() ? (
                   <div className={styles.analysisViewer}>
                     <div className={styles.analysisHeader}>
                       <h3>KI-Vertragsanalyse</h3>
@@ -849,12 +963,18 @@ ${analysis.comparison || 'Nicht verfügbar'}
                       </div>
                     </div>
 
-                    {contract.analysis.contractScore && (
+                    {/* ✅ BUG 2 FIX: Defensive Score-Anzeige */}
+                    {contract.analysis?.contractScore && 
+                     typeof contract.analysis.contractScore === 'number' && 
+                     !isNaN(contract.analysis.contractScore) && (
                       <div className={styles.scoreSection}>
                         <div className={styles.scoreDisplay}>
                           <div 
                             className={styles.scoreCircle}
-                            style={{ '--score-color': getScoreColor(contract.analysis.contractScore) } as React.CSSProperties}
+                            style={{ 
+                              '--score-color': getScoreColor(contract.analysis.contractScore),
+                              '--score': contract.analysis.contractScore 
+                            } as React.CSSProperties}
                           >
                             <span className={styles.scoreNumber}>{contract.analysis.contractScore}</span>
                             <span className={styles.scoreMax}>/100</span>
@@ -870,7 +990,10 @@ ${analysis.comparison || 'Nicht verfügbar'}
                     )}
 
                     <div className={styles.analysisContent}>
-                      {contract.analysis.summary && (
+                      {/* ✅ BUG 2 FIX: Defensive Rendering jeder Sektion */}
+                      {contract.analysis?.summary && 
+                       typeof contract.analysis.summary === 'string' && 
+                       contract.analysis.summary.trim().length > 0 && (
                         <div className={styles.analysisSection}>
                           <div className={styles.analysisSectionHeader}>
                             <div className={styles.sectionIcon}>
@@ -891,7 +1014,9 @@ ${analysis.comparison || 'Nicht verfügbar'}
                         </div>
                       )}
 
-                      {contract.analysis.legalAssessment && (
+                      {contract.analysis?.legalAssessment && 
+                       typeof contract.analysis.legalAssessment === 'string' && 
+                       contract.analysis.legalAssessment.trim().length > 0 && (
                         <div className={styles.analysisSection}>
                           <div className={styles.analysisSectionHeader}>
                             <div className={styles.sectionIcon} style={{ background: 'rgba(52, 199, 89, 0.1)' }}>
@@ -912,7 +1037,9 @@ ${analysis.comparison || 'Nicht verfügbar'}
                         </div>
                       )}
 
-                      {contract.analysis.suggestions && (
+                      {contract.analysis?.suggestions && 
+                       typeof contract.analysis.suggestions === 'string' && 
+                       contract.analysis.suggestions.trim().length > 0 && (
                         <div className={styles.analysisSection}>
                           <div className={styles.analysisSectionHeader}>
                             <div className={styles.sectionIcon} style={{ background: 'rgba(255, 149, 0, 0.1)' }}>
@@ -933,7 +1060,9 @@ ${analysis.comparison || 'Nicht verfügbar'}
                         </div>
                       )}
 
-                      {contract.analysis.comparison && (
+                      {contract.analysis?.comparison && 
+                       typeof contract.analysis.comparison === 'string' && 
+                       contract.analysis.comparison.trim().length > 0 && (
                         <div className={styles.analysisSection}>
                           <div className={styles.analysisSectionHeader}>
                             <div className={styles.sectionIcon} style={{ background: 'rgba(139, 92, 246, 0.1)' }}>
@@ -953,14 +1082,56 @@ ${analysis.comparison || 'Nicht verfügbar'}
                           </div>
                         </div>
                       )}
+
+                      {/* ✅ BUG 2 FIX: Fallback wenn Analysis-Object vorhanden aber leer */}
+                      {contract.analysis && 
+                       Object.keys(contract.analysis).length > 0 && 
+                       !contract.analysis.summary && 
+                       !contract.analysis.legalAssessment && 
+                       !contract.analysis.suggestions && 
+                       !contract.analysis.comparison && (
+                        <div className={styles.analysisSection}>
+                          <div className={styles.analysisSectionHeader}>
+                            <div className={styles.sectionIcon} style={{ background: 'rgba(255, 149, 0, 0.1)' }}>
+                              <AlertCircle size={20} style={{ color: '#ff9500' }} />
+                            </div>
+                            <h4>Analyse-Daten verfügbar</h4>
+                          </div>
+                          <div className={styles.analysisSectionContent}>
+                            <p style={{ color: '#6e6e73', lineHeight: 1.5 }}>
+                              Es sind Analyse-Daten vorhanden, aber diese können nicht in der erwarteten Form angezeigt werden. 
+                              Möglicherweise liegt ein Datenformat-Problem vor.
+                            </p>
+                            <details style={{ marginTop: '1rem' }}>
+                              <summary style={{ cursor: 'pointer', color: '#007aff' }}>
+                                Rohdaten anzeigen
+                              </summary>
+                              <pre style={{ 
+                                fontSize: '0.8rem', 
+                                background: '#f5f5f5', 
+                                padding: '1rem', 
+                                borderRadius: '6px', 
+                                marginTop: '0.5rem',
+                                overflow: 'auto',
+                                maxHeight: '200px'
+                              }}>
+                                {JSON.stringify(contract.analysis, null, 2)}
+                              </pre>
+                            </details>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
-                    {contract.analysis.lastAnalyzed && (
+                    {/* ✅ BUG 2 FIX: Defensive Meta-Anzeige */}
+                    {(contract.analysis?.lastAnalyzed || contract.analysis?.analysisId) && (
                       <div className={styles.analysisMeta}>
-                        <p>
-                          <Clock size={14} />
-                          Letzte Analyse: {formatDate(contract.analysis.lastAnalyzed)}
-                        </p>
+                        {contract.analysis.lastAnalyzed && (
+                          <p>
+                            <Clock size={14} />
+                            Letzte Analyse: {formatDate(contract.analysis.lastAnalyzed)}
+                          </p>
+                        )}
                         {contract.analysis.analysisId && (
                           <p>
                             <FileText size={14} />
@@ -971,16 +1142,40 @@ ${analysis.comparison || 'Nicht verfügbar'}
                     )}
                   </div>
                 ) : (
+                  // ✅ BUG 2 FIX: Verbesserte "Keine Analyse" Anzeige
                   <div className={styles.noAnalysis}>
                     <BarChart3 size={48} />
                     <h3>Keine Analyse verfügbar</h3>
-                    <p>Für diesen Vertrag wurde noch keine KI-Analyse durchgeführt oder die Analyse-Daten sind nicht verfügbar.</p>
+                    <p>
+                      Für diesen Vertrag wurde noch keine KI-Analyse durchgeführt oder die Analyse-Daten sind nicht in einem lesbaren Format verfügbar.
+                    </p>
+                    
+                    {/* ✅ BUG 2 FIX: Debug-Informationen für Entwicklung */}
+                    {contract.analysis && (
+                      <details style={{ marginTop: '1rem', textAlign: 'left' }}>
+                        <summary style={{ cursor: 'pointer', color: '#007aff', textAlign: 'center' }}>
+                          Debug-Informationen (Entwicklung)
+                        </summary>
+                        <pre style={{ 
+                          fontSize: '0.75rem', 
+                          background: '#f5f5f5', 
+                          padding: '1rem', 
+                          borderRadius: '6px', 
+                          marginTop: '0.5rem',
+                          overflow: 'auto',
+                          maxHeight: '150px'
+                        }}>
+                          Analysis Object: {JSON.stringify(contract.analysis, null, 2)}
+                        </pre>
+                      </details>
+                    )}
                     
                     <div className={styles.noAnalysisActions}>
                       <button 
                         className={styles.analyzeBtn}
                         onClick={() => {
-                          console.log('Start analysis for:', contract._id);
+                          console.log('🚀 Start new analysis for contract:', contract._id);
+                          alert('Neue Analyse starten - Feature wird bald implementiert!');
                         }}
                       >
                         <BarChart3 size={16} />

@@ -1,4 +1,4 @@
-// 📁 src/pages/Contracts.tsx - JSX FIXED: Motion Button closing tag korrigiert + ANALYSE-ANZEIGE GEFIXT + RESPONSIVE + DUPLIKATSERKENNUNG + S3-INTEGRATION + BATCH-ANALYSE-ANZEIGE + PDF-SCHNELLAKTION MOBILE-FIX
+// 📁 src/pages/Contracts.tsx - JSX FIXED: Motion Button closing tag korrigiert + ANALYSE-ANZEIGE GEFIXT + RESPONSIVE + DUPLIKATSERKENNUNG + S3-INTEGRATION + BATCH-ANALYSE-ANZEIGE + PDF-SCHNELLAKTION MOBILE-FIX + EDIT-SCHNELLAKTION GEFIXT
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet";
@@ -302,6 +302,9 @@ export default function Contracts() {
   const [activeSection, setActiveSection] = useState<'upload' | 'contracts'>('contracts');
   const [refreshing, setRefreshing] = useState(false);
   
+  // ✅ BUG 1 FIX: Neuer State für automatisches Edit-Modal öffnen
+  const [autoOpenEdit, setAutoOpenEdit] = useState(false);
+  
   // ✅ KORRIGIERT: User-Plan States
   const [userInfo, setUserInfo] = useState<UserInfo>({
     subscriptionPlan: 'free',
@@ -340,6 +343,30 @@ export default function Contracts() {
   // ✅ FIXED: PDF anzeigen Handler - jetzt als Wrapper für die extrahierte Funktion
   const handleViewContractPDFWrapper = async (contract: Contract) => {
     await handleViewContractPDF(contract, setPdfLoading, setError, setLegacyModal);
+  };
+
+  // ✅ BUG 1 FIX: Neue Edit-Handler Funktion
+  const handleEditContract = (contract: Contract) => {
+    console.log('✏️ Edit-Schnellaktion für Vertrag:', contract._id, contract.name);
+    
+    // Setze den Contract und öffne Details mit Edit-Modus
+    setSelectedContract(contract);
+    setAutoOpenEdit(true); // ✅ Flag für automatisches Edit-Modal öffnen
+    setShowDetails(true);
+  };
+
+  // ✅ BUG 1 FIX: Erweiterte Row-Click-Handler (für normale Details)
+  const handleRowClick = (contract: Contract) => {
+    setSelectedContract(contract);
+    setAutoOpenEdit(false); // ✅ Normaler Details-Modus, kein Auto-Edit
+    setShowDetails(true);
+  };
+
+  // ✅ BUG 1 FIX: Details schließen Handler (Reset Auto-Edit Flag)
+  const handleDetailsClose = () => {
+    setShowDetails(false);
+    setAutoOpenEdit(false); // ✅ Auto-Edit Flag zurücksetzen
+    setSelectedContract(null);
   };
 
   // ✅ NEU: Legacy-Modal Komponente
@@ -1068,11 +1095,6 @@ export default function Contracts() {
     fetchContracts();
   };
 
-  const handleRowClick = (contract: Contract) => {
-    setSelectedContract(contract);
-    setShowDetails(true);
-  };
-
   // ✅ Verbesserte Löschfunktion
   const handleDeleteContract = async (contractId: string, contractName: string) => {
     if (!confirm(`Möchtest du den Vertrag "${contractName}" wirklich löschen?`)) {
@@ -1316,7 +1338,7 @@ export default function Contracts() {
           className={styles.cardActionButton}
           onClick={(e) => {
             e.stopPropagation();
-            console.log("Edit contract:", contract._id);
+            handleEditContract(contract); // ✅ BUG 1 FIX: Korrekte Edit-Funktion
           }}
         >
           <Edit size={14} />
@@ -2041,7 +2063,7 @@ export default function Contracts() {
                                     className={styles.actionButton}
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      console.log("Edit contract:", contract._id);
+                                      handleEditContract(contract); // ✅ BUG 1 FIX: Korrekte Edit-Funktion
                                     }}
                                     title="Bearbeiten"
                                   >
@@ -2080,11 +2102,13 @@ export default function Contracts() {
             )}
           </AnimatePresence>
 
+          {/* ✅ BUG 1 FIX: ContractDetailsView mit erweiterten Props */}
           {selectedContract && (
             <ContractDetailsView
               contract={selectedContract}
-              onClose={() => setShowDetails(false)}
+              onClose={handleDetailsClose} // ✅ Erweiterte Close-Handler
               show={showDetails}
+              autoOpenEdit={autoOpenEdit} // ✅ NEU: Auto-Edit Flag
               onEdit={(contractId) => {
                 console.log("Edit contract:", contractId);
               }}
