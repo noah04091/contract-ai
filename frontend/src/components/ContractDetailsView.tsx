@@ -8,9 +8,9 @@ import {
 } from "lucide-react";
 import styles from "../styles/ContractDetailsView.module.css";
 import ReminderToggle from "./ReminderToggle";
-// ✅ HOTFIX: Entfernt nicht-existierende Imports
-// import ContractShareModal from "./ContractShareModal";
-// import ContractEditModal from "./ContractEditModal";
+import ContractShareModal from "./ContractShareModal"; // ✅ NEU: Import Share Modal
+import ContractEditModal from "./ContractEditModal"; // ✅ NEU: Import Edit Modal
+// ✅ getContractFileUrl nicht mehr benötigt - Mobile-freundliche PDF-Logik verwendet direkte API-Aufrufe
 
 interface Contract {
   _id: string;
@@ -23,7 +23,7 @@ interface Contract {
   createdAt: string;
   content?: string;
   isGenerated?: boolean;
-  notes?: string;
+  notes?: string; // ✅ NEU: Für eigene Notizen
   // Erweiterte Felder für Analyse-Daten
   fullText?: string;
   extractedText?: string;
@@ -34,8 +34,8 @@ interface Contract {
   s3Key?: string;
   s3Bucket?: string;
   s3Location?: string;
-  uploadType?: string;
-  needsReupload?: boolean;
+  uploadType?: string; // ✅ NEU: Für S3 Migration
+  needsReupload?: boolean; // ✅ NEU: Für Legacy-Verträge
   analysis?: {
     summary?: string;
     legalAssessment?: string;
@@ -47,11 +47,12 @@ interface Contract {
   };
 }
 
+// ✅ BUG FIX 1: Interface erweitert um openEditModalDirectly Prop
 interface ContractDetailsViewProps {
   contract: Contract;
   onClose: () => void;
   show: boolean;
-  autoOpenEdit?: boolean; // ✅ BUG 1 FIX: Neues autoOpenEdit Flag
+  openEditModalDirectly?: boolean; // ✅ NEU: Öffnet Edit-Modal direkt
   onEdit?: (contractId: string) => void;
   onDelete?: (contractId: string, contractName: string) => void;
 }
@@ -60,32 +61,29 @@ export default function ContractDetailsView({
   contract: initialContract, 
   onClose, 
   show, 
-  autoOpenEdit = false, // ✅ BUG 1 FIX: Default false
+  openEditModalDirectly = false, // ✅ BUG FIX 1: Neue Prop mit Default-Wert
   onEdit, 
   onDelete 
 }: ContractDetailsViewProps) {
   const [activeTab, setActiveTab] = useState<'overview' | 'content' | 'analysis'>('overview');
   
-  // ✅ HOTFIX: Entfernt nicht-existierende Modal States
-  // const [showShareModal, setShowShareModal] = useState(false);
-  // const [showEditModal, setShowEditModal] = useState(false);
-  const [contract, setContract] = useState<Contract>(initialContract);
+  // ✅ NEU: State für die beiden Modals
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [contract, setContract] = useState<Contract>(initialContract); // ✅ NEU: Lokaler Contract State für Updates
 
   // ✅ NEU: Update contract wenn sich initialContract ändert
   useEffect(() => {
     setContract(initialContract);
   }, [initialContract]);
 
-  // ✅ BUG 1 FIX: Auto-Edit-Modal öffnen wenn autoOpenEdit Flag gesetzt
+  // ✅ BUG FIX 1: Edit-Modal automatisch öffnen wenn openEditModalDirectly=true
   useEffect(() => {
-    if (autoOpenEdit && show) {
-      console.log('🔄 Auto-Edit triggered - opening edit interface');
-      // ✅ HOTFIX: Temporärer Fallback bis Edit-Modal implementiert ist
-      if (onEdit) {
-        onEdit(contract._id);
-      }
+    if (show && openEditModalDirectly) {
+      console.log('🚀 Auto-opening edit modal due to openEditModalDirectly=true');
+      setShowEditModal(true);
     }
-  }, [autoOpenEdit, show, contract._id, onEdit]);
+  }, [show, openEditModalDirectly]);
 
   const formatDate = (dateString: string): string => {
     if (!dateString) return "Unbekannt";
@@ -174,41 +172,30 @@ export default function ContractDetailsView({
     );
   };
 
-  // ✅ BUG 2 FIX: Defensive Score-Helper mit Fallbacks
-  const getScoreColor = (score?: number): string => {
-    if (typeof score !== 'number' || isNaN(score)) return "#8e8e93";
+  const getScoreColor = (score: number): string => {
     if (score >= 80) return "#34c759";
     if (score >= 60) return "#ff9500";
     if (score >= 40) return "#ff6b35";
     return "#ff3b30";
   };
 
-  const getScoreLabel = (score?: number): string => {
-    if (typeof score !== 'number' || isNaN(score)) return "Unbekannt";
+  const getScoreLabel = (score: number): string => {
     if (score >= 80) return "Ausgezeichnet";
     if (score >= 60) return "Gut";
     if (score >= 40) return "Akzeptabel";
     return "Kritisch";
   };
 
-  // ✅ BUG 2 FIX: Defensive Text-zu-Points Konvertierung
-  const formatTextToPoints = (text?: string): string[] => {
-    if (!text || typeof text !== 'string' || text.trim().length === 0) {
-      return ['Keine Details verfügbar'];
-    }
+  const formatTextToPoints = (text: string): string[] => {
+    if (!text) return ['Keine Details verfügbar'];
     
-    try {
-      const sentences = text
-        .split(/[.!?]+|[-•]\s*/)
-        .map(s => s.trim())
-        .filter(s => s.length > 15 && s.length < 200)
-        .slice(0, 4);
-      
-      return sentences.length > 0 ? sentences : [text.substring(0, 180) + '...'];
-    } catch (error) {
-      console.warn('⚠️ Error formatting text to points:', error);
-      return [text.substring(0, 180) + '...'];
-    }
+    const sentences = text
+      .split(/[.!?]+|[-•]\s*/)
+      .map(s => s.trim())
+      .filter(s => s.length > 15 && s.length < 200)
+      .slice(0, 4);
+    
+    return sentences.length > 0 ? sentences : [text.substring(0, 180) + '...'];
   };
 
   // ✅ MOBILE-FIX: Neue Mobile-freundliche PDF-Öffnung
@@ -221,16 +208,19 @@ export default function ContractDetailsView({
       needsReupload: contract.needsReupload
     });
 
+    // ✅ MOBILE-FIX: Temporäres Tab sofort öffnen (Popup-Blocker umgehen)
     let tempWindow: Window | null = null;
 
     try {
       const token = localStorage.getItem('token');
 
+      // ✅ Legacy-Vertrag Check (vor Tab-Öffnung)
       if (contract.needsReupload || contract.uploadType === 'LOCAL_LEGACY') {
         alert(`⚠️ Dieser Vertrag wurde vor der Cloud-Integration hochgeladen und ist nicht mehr verfügbar.\n\nBitte laden Sie "${contract.name}" erneut hoch, um ihn anzuzeigen.`);
         return;
       }
 
+      // ✅ CRITICAL: Tab sofort öffnen (noch im User-Click-Context)
       tempWindow = window.open('', '_blank');
       if (tempWindow) {
         tempWindow.document.write(`
@@ -277,6 +267,7 @@ export default function ContractDetailsView({
         `);
       }
 
+      // ✅ S3-Key-Route (prioritär)
       if (contract.s3Key) {
         console.log('✅ S3 Contract detected, fetching signed URL with key...');
         
@@ -299,14 +290,17 @@ export default function ContractDetailsView({
           if (tempWindow && !tempWindow.closed) {
             tempWindow.location.href = pdfUrl;
           } else {
+            // Fallback falls Tab geschlossen wurde
             window.open(pdfUrl, '_blank', 'noopener,noreferrer');
           }
           return;
         } else {
           console.error('❌ S3 URL fetch failed:', data.error || 'No URL in response');
+          // Fallback to contractId route
         }
       }
       
+      // ✅ Fallback: ContractId-Route
       console.log('🔄 Fallback: Using contractId route...');
       
       const response = await fetch(`/api/s3/view?contractId=${contract._id}`, {
@@ -326,6 +320,7 @@ export default function ContractDetailsView({
         if (tempWindow && !tempWindow.closed) {
           tempWindow.location.href = pdfUrl;
         } else {
+          // Fallback falls Tab geschlossen wurde
           window.open(pdfUrl, '_blank', 'noopener,noreferrer');
         }
         return;
@@ -341,6 +336,7 @@ export default function ContractDetailsView({
     } catch (error) {
       console.error('❌ Error in mobile-friendly PDF view:', error);
       
+      // ✅ Tab schließen bei Fehler
       if (tempWindow && !tempWindow.closed) {
         tempWindow.document.write(`
           <html>
@@ -381,6 +377,7 @@ export default function ContractDetailsView({
           </html>
         `);
         
+        // Auto-close nach 5 Sekunden
         setTimeout(() => {
           if (tempWindow && !tempWindow.closed) {
             tempWindow.close();
@@ -396,15 +393,27 @@ export default function ContractDetailsView({
     }
   };
 
-  // ✅ HOTFIX: Temporäre Handler ohne Modals
+  // ✅ NEU: Share-Handler
   const handleShare = () => {
-    console.log('🔗 Share contract:', contract._id);
-    alert('Share-Funktion wird bald implementiert!');
+    console.log('🔗 Opening share modal for contract:', contract._id);
+    setShowShareModal(true);
   };
 
+  // ✅ NEU: Edit-Handler
   const handleEdit = () => {
-    console.log('✏️ Edit contract:', contract._id);
-    alert('Edit-Modal wird bald implementiert!');
+    console.log('✏️ Opening edit modal for contract:', contract._id);
+    setShowEditModal(true);
+  };
+
+  // ✅ NEU: Update-Handler für Edit-Modal
+  const handleContractUpdate = (updatedContract: Contract) => {
+    console.log('✅ Contract updated:', updatedContract);
+    setContract(updatedContract);
+    
+    // Optional: Auch Parent Component über Update informieren
+    if (onEdit) {
+      onEdit(updatedContract._id);
+    }
   };
 
   const handleDelete = () => {
@@ -426,18 +435,12 @@ export default function ContractDetailsView({
     window.URL.revokeObjectURL(url);
   };
 
-  // ✅ BUG 2 FIX: Defensive Copy-Analysis Handler
   const handleCopyAnalysis = () => {
     const analysis = contract.analysis;
-    if (!analysis || typeof analysis !== 'object') {
-      console.warn('⚠️ No analysis data available for copying');
-      alert('Keine Analysedaten zum Kopieren verfügbar.');
-      return;
-    }
+    if (!analysis) return;
     
-    try {
-      const analysisText = `
-Vertragsanalyse: ${contract.name || 'Unbekannt'}
+    const analysisText = `
+Vertragsanalyse: ${contract.name}
 Score: ${analysis.contractScore || 'N/A'}/100
 
 Zusammenfassung:
@@ -451,44 +454,53 @@ ${analysis.suggestions || 'Nicht verfügbar'}
 
 Marktvergleich:
 ${analysis.comparison || 'Nicht verfügbar'}
-      `.trim();
-      
-      navigator.clipboard.writeText(analysisText).then(() => {
-        console.log('✅ Analysis copied to clipboard');
-      }).catch(error => {
-        console.warn('⚠️ Failed to copy to clipboard:', error);
-        alert('Kopieren fehlgeschlagen. Bitte versuche es erneut.');
-      });
-    } catch (error) {
-      console.error('❌ Error copying analysis:', error);
-      alert('Fehler beim Kopieren der Analyse.');
-    }
+    `.trim();
+    
+    navigator.clipboard.writeText(analysisText);
   };
 
-  // ✅ BUG 2 FIX: Defensive Analysis-Data-Check
-  const hasValidAnalysis = (): boolean => {
-    if (!contract.analysis || typeof contract.analysis !== 'object') {
-      return false;
+  // ✅ BUG FIX 2: Neue Analyse starten Handler (nur wenn keine Analyse vorhanden)
+  const handleStartNewAnalysis = async () => {
+    console.log('🚀 Starting new analysis for contract:', contract._id);
+    
+    try {
+      const token = localStorage.getItem('token');
+      
+      // API-Aufruf zum Starten einer neuen Analyse
+      const response = await fetch(`/api/contracts/${contract._id}/analyze`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log('✅ Analysis started successfully:', result);
+        
+        // Contract-Daten aktualisieren
+        if (result.analysis) {
+          setContract(prev => ({
+            ...prev,
+            analysis: result.analysis
+          }));
+        }
+        
+        // Parent-Component über Update informieren
+        if (onEdit) {
+          onEdit(contract._id);
+        }
+      } else {
+        const error = await response.json();
+        console.error('❌ Analysis failed:', error);
+        alert(`Analyse fehlgeschlagen: ${error.message || 'Unbekannter Fehler'}`);
+      }
+    } catch (error) {
+      console.error('❌ Error starting analysis:', error);
+      alert('Fehler beim Starten der Analyse. Bitte versuche es erneut.');
     }
-    
-    const analysis = contract.analysis;
-    
-    const hasContent = !!(
-      (analysis.summary && analysis.summary.trim().length > 0) ||
-      (analysis.legalAssessment && analysis.legalAssessment.trim().length > 0) ||
-      (analysis.suggestions && analysis.suggestions.trim().length > 0) ||
-      (analysis.comparison && analysis.comparison.trim().length > 0) ||
-      (typeof analysis.contractScore === 'number' && !isNaN(analysis.contractScore))
-    );
-    
-    console.log('🔍 Analysis validation:', {
-      hasAnalysisObject: !!contract.analysis,
-      hasContent,
-      analysisKeys: Object.keys(analysis),
-      contractScore: analysis.contractScore
-    });
-    
-    return hasContent;
   };
 
   if (!show) return null;
@@ -529,12 +541,14 @@ ${analysis.comparison || 'Nicht verfügbar'}
                         KI-Generiert
                       </span>
                     )}
+                    {/* ✅ NEU: S3 Status Badge */}
                     {getContractStatusBadge(contract)}
                   </div>
                 </div>
               </div>
 
               <div className={styles.headerActions}>
+                {/* ✅ UPDATED: Share Button mit Funktionalität */}
                 <button 
                   className={styles.actionBtn}
                   onClick={handleShare}
@@ -543,6 +557,7 @@ ${analysis.comparison || 'Nicht verfügbar'}
                   <Share2 size={18} />
                 </button>
                 
+                {/* ✅ UPDATED: Edit Button mit Funktionalität */}
                 <button 
                   className={styles.actionBtn}
                   onClick={handleEdit}
@@ -609,20 +624,10 @@ ${analysis.comparison || 'Nicht verfügbar'}
               </button>
               <button 
                 className={`${styles.tab} ${activeTab === 'analysis' ? styles.activeTab : ''}`}
-                onClick={() => {
-                  console.log('🔍 Analysis tab clicked, checking data:', {
-                    hasAnalysis: !!contract.analysis,
-                    hasValidAnalysis: hasValidAnalysis(),
-                    analysisKeys: contract.analysis ? Object.keys(contract.analysis) : []
-                  });
-                  setActiveTab('analysis');
-                }}
+                onClick={() => setActiveTab('analysis')}
               >
                 <BarChart3 size={16} />
                 <span>Analyse</span>
-                {hasValidAnalysis() && (
-                  <span className={styles.analysisBadge}>✓</span>
-                )}
               </button>
             </div>
           </div>
@@ -653,6 +658,7 @@ ${analysis.comparison || 'Nicht verfügbar'}
                         <span>{contract.status}</span>
                       </div>
                     </div>
+                    {/* ✅ NEU: Speicherstatus anzeigen */}
                     <div className={styles.detailItem}>
                       <label>Speicherstatus</label>
                       {getContractStatusBadge(contract)}
@@ -678,34 +684,16 @@ ${analysis.comparison || 'Nicht verfügbar'}
                       <span>{formatDate(contract.createdAt)}</span>
                     </div>
                     
+                    {/* ✅ NEU: Eigene Notizen anzeigen falls vorhanden */}
                     {contract.notes && (
                       <div className={styles.detailItem}>
                         <label>Eigene Notizen</label>
                         <span>{contract.notes}</span>
                       </div>
                     )}
-                    
-                    <div className={styles.detailItem}>
-                      <label>Analyse-Status</label>
-                      <span>
-                        {hasValidAnalysis() ? (
-                          <span style={{ color: '#34c759', fontWeight: '500' }}>
-                            ✅ Analysiert
-                            {contract.analysis?.contractScore && (
-                              <span style={{ marginLeft: '0.5rem', color: '#6e6e73' }}>
-                                (Score: {contract.analysis.contractScore}/100)
-                              </span>
-                            )}
-                          </span>
-                        ) : (
-                          <span style={{ color: '#8e8e93' }}>
-                            ⏳ Keine Analyse verfügbar
-                          </span>
-                        )}
-                      </span>
-                    </div>
                   </div>
                   
+                  {/* ✅ MOBILE-FIX: Contract View Button mit Mobile-freundlicher Logik */}
                   <div className={styles.viewContractSection}>
                     {contract.needsReupload || contract.uploadType === 'LOCAL_LEGACY' ? (
                       <div style={{ textAlign: 'center', padding: '1rem' }}>
@@ -775,7 +763,7 @@ ${analysis.comparison || 'Nicht verfügbar'}
               </motion.div>
             )}
 
-            {/* Content Tab */}
+            {/* Content Tab - unverändert */}
             {activeTab === 'content' && (
               <motion.div 
                 className={styles.contentTab}
@@ -783,6 +771,18 @@ ${analysis.comparison || 'Nicht verfügbar'}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
               >
+                {(() => {
+                  console.log('🔍 Content Tab Debug:', {
+                    contractName: contract.name,
+                    hasFullText: !!contract.fullText,
+                    hasContent: !!contract.content,
+                    fullTextLength: contract.fullText ? contract.fullText.length : 0,
+                    contentLength: contract.content ? contract.content.length : 0,
+                    contractKeys: Object.keys(contract)
+                  });
+                  return null;
+                })()}
+                
                 {(() => {
                   const textContent = contract.fullText || contract.content || contract.extractedText || '';
                   
@@ -838,12 +838,34 @@ ${analysis.comparison || 'Nicht verfügbar'}
                       <div className={styles.noContent}>
                         <FileText size={48} />
                         <h3>Kein Textinhalt verfügbar</h3>
-                        <p>Der Vertragstext konnte nicht extrahiert werden oder ist nicht verfügbar.</p>
+                        <p>Der Vertragstext konnte nicht extrahiert werden oder ist nicht verfügbar. Möglicherweise handelt es sich um eine bildbasierte PDF oder ein anderes Format.</p>
+                        
+                        <div className={styles.debugInfo}>
+                          <details>
+                            <summary>Debug-Informationen</summary>
+                            <pre style={{ fontSize: '0.8rem', textAlign: 'left', background: '#f5f5f5', padding: '1rem', borderRadius: '8px', marginTop: '1rem' }}>
+                              {JSON.stringify({
+                                contractId: contract._id,
+                                contractName: contract.name,
+                                hasFullText: !!contract.fullText,
+                                hasContent: !!contract.content,
+                                hasExtractedText: !!contract.extractedText,
+                                hasAnalysis: !!contract.analysis,
+                                availableKeys: Object.keys(contract).filter(key => key.includes('text') || key.includes('content') || key === 'analysis')
+                              }, null, 2)}
+                            </pre>
+                          </details>
+                        </div>
                         
                         <div className={styles.noContentActions}>
                           <button 
                             className={styles.retryBtn}
                             onClick={() => {
+                              console.log('🔄 Retry text extraction for contract:', {
+                                id: contract._id,
+                                name: contract.name,
+                                availableFields: Object.keys(contract)
+                              });
                               alert('Text-Extraktion wird erneut versucht...');
                             }}
                           >
@@ -858,7 +880,7 @@ ${analysis.comparison || 'Nicht verfügbar'}
               </motion.div>
             )}
 
-            {/* ✅ BUG 2 FIX: Analysis Tab mit defensiver Programmierung */}
+            {/* ✅ BUG FIX 2: Analysis Tab - Verbesserte Fehlerbehandlung */}
             {activeTab === 'analysis' && (
               <motion.div 
                 className={styles.analysisTab}
@@ -866,7 +888,21 @@ ${analysis.comparison || 'Nicht verfügbar'}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
               >
-                {hasValidAnalysis() ? (
+                {(() => {
+                  console.log('🔍 Analysis Tab Debug:', {
+                    contractName: contract.name,
+                    hasAnalysis: !!contract.analysis,
+                    analysisKeys: contract.analysis ? Object.keys(contract.analysis) : [],
+                    analysisData: contract.analysis
+                  });
+                  return null;
+                })()}
+
+                {/* ✅ BUG FIX 2: Prüfe ob Analyse vorhanden ist, BEVOR sie angezeigt wird */}
+                {contract.analysis && (
+                  Object.keys(contract.analysis).length > 0 && 
+                  (contract.analysis.summary || contract.analysis.legalAssessment || contract.analysis.suggestions || contract.analysis.comparison)
+                ) ? (
                   <div className={styles.analysisViewer}>
                     <div className={styles.analysisHeader}>
                       <h3>KI-Vertragsanalyse</h3>
@@ -882,17 +918,12 @@ ${analysis.comparison || 'Nicht verfügbar'}
                       </div>
                     </div>
 
-                    {contract.analysis?.contractScore && 
-                     typeof contract.analysis.contractScore === 'number' && 
-                     !isNaN(contract.analysis.contractScore) && (
+                    {contract.analysis.contractScore && (
                       <div className={styles.scoreSection}>
                         <div className={styles.scoreDisplay}>
                           <div 
                             className={styles.scoreCircle}
-                            style={{ 
-                              '--score-color': getScoreColor(contract.analysis.contractScore),
-                              '--score': contract.analysis.contractScore 
-                            } as React.CSSProperties}
+                            style={{ '--score-color': getScoreColor(contract.analysis.contractScore) } as React.CSSProperties}
                           >
                             <span className={styles.scoreNumber}>{contract.analysis.contractScore}</span>
                             <span className={styles.scoreMax}>/100</span>
@@ -908,9 +939,7 @@ ${analysis.comparison || 'Nicht verfügbar'}
                     )}
 
                     <div className={styles.analysisContent}>
-                      {contract.analysis?.summary && 
-                       typeof contract.analysis.summary === 'string' && 
-                       contract.analysis.summary.trim().length > 0 && (
+                      {contract.analysis.summary && (
                         <div className={styles.analysisSection}>
                           <div className={styles.analysisSectionHeader}>
                             <div className={styles.sectionIcon}>
@@ -931,9 +960,7 @@ ${analysis.comparison || 'Nicht verfügbar'}
                         </div>
                       )}
 
-                      {contract.analysis?.legalAssessment && 
-                       typeof contract.analysis.legalAssessment === 'string' && 
-                       contract.analysis.legalAssessment.trim().length > 0 && (
+                      {contract.analysis.legalAssessment && (
                         <div className={styles.analysisSection}>
                           <div className={styles.analysisSectionHeader}>
                             <div className={styles.sectionIcon} style={{ background: 'rgba(52, 199, 89, 0.1)' }}>
@@ -954,9 +981,7 @@ ${analysis.comparison || 'Nicht verfügbar'}
                         </div>
                       )}
 
-                      {contract.analysis?.suggestions && 
-                       typeof contract.analysis.suggestions === 'string' && 
-                       contract.analysis.suggestions.trim().length > 0 && (
+                      {contract.analysis.suggestions && (
                         <div className={styles.analysisSection}>
                           <div className={styles.analysisSectionHeader}>
                             <div className={styles.sectionIcon} style={{ background: 'rgba(255, 149, 0, 0.1)' }}>
@@ -977,9 +1002,7 @@ ${analysis.comparison || 'Nicht verfügbar'}
                         </div>
                       )}
 
-                      {contract.analysis?.comparison && 
-                       typeof contract.analysis.comparison === 'string' && 
-                       contract.analysis.comparison.trim().length > 0 && (
+                      {contract.analysis.comparison && (
                         <div className={styles.analysisSection}>
                           <div className={styles.analysisSectionHeader}>
                             <div className={styles.sectionIcon} style={{ background: 'rgba(139, 92, 246, 0.1)' }}>
@@ -1001,14 +1024,12 @@ ${analysis.comparison || 'Nicht verfügbar'}
                       )}
                     </div>
 
-                    {(contract.analysis?.lastAnalyzed || contract.analysis?.analysisId) && (
+                    {contract.analysis.lastAnalyzed && (
                       <div className={styles.analysisMeta}>
-                        {contract.analysis.lastAnalyzed && (
-                          <p>
-                            <Clock size={14} />
-                            Letzte Analyse: {formatDate(contract.analysis.lastAnalyzed)}
-                          </p>
-                        )}
+                        <p>
+                          <Clock size={14} />
+                          Letzte Analyse: {formatDate(contract.analysis.lastAnalyzed)}
+                        </p>
                         {contract.analysis.analysisId && (
                           <p>
                             <FileText size={14} />
@@ -1019,19 +1040,16 @@ ${analysis.comparison || 'Nicht verfügbar'}
                     )}
                   </div>
                 ) : (
+                  // ✅ BUG FIX 2: Zeige "Keine Analyse" nur wenn wirklich keine da ist
                   <div className={styles.noAnalysis}>
                     <BarChart3 size={48} />
                     <h3>Keine Analyse verfügbar</h3>
-                    <p>
-                      Für diesen Vertrag wurde noch keine KI-Analyse durchgeführt.
-                    </p>
+                    <p>Für diesen Vertrag wurde noch keine KI-Analyse durchgeführt oder die Analyse-Daten sind nicht verfügbar.</p>
                     
                     <div className={styles.noAnalysisActions}>
                       <button 
                         className={styles.analyzeBtn}
-                        onClick={() => {
-                          alert('Neue Analyse starten - Feature wird bald implementiert!');
-                        }}
+                        onClick={handleStartNewAnalysis} // ✅ BUG FIX 2: Echte Analyse-Funktion statt console.log
                       >
                         <BarChart3 size={16} />
                         <span>Jetzt analysieren</span>
@@ -1044,7 +1062,20 @@ ${analysis.comparison || 'Nicht verfügbar'}
           </div>
         </motion.div>
 
-        {/* ✅ HOTFIX: Entfernt nicht-existierende Modal-Aufrufe */}
+        {/* ✅ NEU: Share Modal */}
+        <ContractShareModal
+          contract={{ _id: contract._id, name: contract.name }}
+          show={showShareModal}
+          onClose={() => setShowShareModal(false)}
+        />
+
+        {/* ✅ NEU: Edit Modal */}
+        <ContractEditModal
+          contract={contract}
+          show={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          onUpdate={handleContractUpdate}
+        />
       </motion.div>
     </AnimatePresence>
   );
