@@ -784,72 +784,92 @@ function validateTextCompletenessAndDepth(result, requestId) {
 }
 
 /**
- * 🏛️ FIXED: Generate ROBUST Lawyer-Level Analysis Prompt (Shorter & Smarter)
- * Generates focused prompts that fit within token limits
+ * 🏛️ UNIVERSAL: Generate ULTRA-DEEP Lawyer-Level Analysis Prompt (All Contract Types)
+ * Generates universally enhanced prompts for true legal expert analysis of ANY contract
  */
 function generateDeepLawyerLevelPrompt(text, documentType, strategy, requestId) {
   // ✅ CRITICAL FIX: Apply CONSERVATIVE text optimization
-  const optimizedText = optimizeTextForGPT4(text, 2000, requestId); // Much more conservative
+  const optimizedText = optimizeTextForGPT4(text, 2000, requestId);
   
-  // ✅ FIXED: Shorter, focused prompt
-  const basePrompt = `Du bist ein erfahrener Rechtsanwalt. Analysiere den folgenden Vertrag gründlich.
+  // ✅ UNIVERSAL: Enhanced prompt for ALL contract types
+  const universalPrompt = `Du bist ein spezialisierter Fachanwalt mit 15+ Jahren Erfahrung in allen Vertragsarten. Führe eine tiefgreifende, praxisorientierte Vertragsanalyse durch, als würdest du für einen wichtigen Mandanten arbeiten.
 
-**WICHTIGE REGELN:**
-- Analysiere den tatsächlichen Vertragsinhalt
-- Benenne konkrete Details (Parteien, Beträge, Fristen)
-- Gebe juristische Bewertungen ab
-- Verwende vollständige Sätze
-- Alle Antworten müssen hilfreich und substantiell sein
+**UNIVERSELLE ANWALTS-STANDARDS (für JEDEN Vertrag):**
+- Identifiziere ALLE potentiellen Streitpunkte und versteckten Risiken
+- Benenne MINDESTENS 3-5 kritische Punkte (realistische juristische Prüfung!)
+- Gebe konkrete Formulierungsvorschläge und Verhandlungstipps  
+- Verwende spezifische Fachbegriffe und Rechtsbezüge (BGB, HGB, etc.)
+- Marktvergleich mit konkreten Zahlen/Benchmarks wo erkennbar
+- Analysiere Machtverteilung zwischen den Vertragsparteien
+- Bewerte jeden Paragraphen auf rechtliche Durchsetzbarkeit
+- Identifiziere AGB-rechtliche Probleme (§§ 305ff BGB)
+- Prüfe auf einseitige Benachteiligungen und unwirksame Klauseln
+- Bewerte Risiko-Nutzen-Verhältnis für beide Parteien
 
-**ANWALTLICHE VERTRAGSANALYSE (7 PUNKTE):**
+**ULTRA-DETAILLIERTE ANWALTLICHE ANALYSE (7 PUNKTE):**
 
 1. **ZUSAMMENFASSUNG (summary):**
-   - Vertragsparteien und Gegenstand
-   - Laufzeit und Kündigungsfristen
-   - Wichtigste Pflichten und Rechte
+   - Exakte Vertragsparteien mit Rollen und rechtlicher Stellung
+   - Präzise Vertragsgegenstände und Leistungsumfang
+   - Konkrete Laufzeiten, Fristen, Kündigungsmodalitäten
+   - Finanzielle Aspekte (Beträge, Zahlungsmodalitäten, Sicherheiten)
+   - Besondere Vereinbarungen oder rechtlich relevante Auffälligkeiten
 
 2. **RECHTSSICHERHEIT (legalAssessment):**
-   - Vollständigkeit der Vertragsbestandteile
-   - Rechtliche Probleme oder Risiken
-   - Formelle Anforderungen
+   - Vollständigkeitsprüfung aller essentialia negotii
+   - Identifikation rechtlicher Schwachstellen und Lücken
+   - Bewertung der Rechtsdurchsetzbarkeit einzelner Klauseln
+   - Prüfung auf AGB-rechtliche Probleme (§§ 305ff BGB)
+   - Analyse der Machtverteilung und einseitiger Benachteiligungen
 
 3. **OPTIMIERUNGSVORSCHLÄGE (suggestions):**
-   - Konkrete Verbesserungen
-   - Anpassungsbedarf bei Klauseln
-   - Zusätzliche Schutzklauseln
+   - Konkrete Umformulierungen problematischer Klauseln
+   - Zusätzliche Schutzklauseln mit präzisen Formulierungsvorschlägen
+   - Risikoallokations-Verbesserungen zwischen den Parteien
+   - Präventive Maßnahmen gegen typische Streitpunkte dieser Vertragsart
+   - Verhandlungsempfehlungen mit konkreten Argumenten
 
 4. **MARKTVERGLEICH (comparison):**
-   - Marktüblichkeit der Konditionen
-   - Abweichungen zu Standards
-   - Branchenvergleich
+   - Konkrete Benchmark-Werte und Vergleichszahlen (wo erkennbar)
+   - Branchenstandards und prozentuale Abweichungen
+   - Bewertung als "überdurchschnittlich/marktüblich/unterdurchschnittlich"
+   - Analyse der Verhandlungsposition und Marktmacht
+   - Vergleich mit typischen Vertragsbedingungen dieser Art
 
 5. **POSITIVE ASPEKTE (positiveAspects):**
-   JSON-Array: [{"title": "Klausel", "description": "Vorteil"}]
+   Mindestens 2-3 Punkte: [{"title": "Spezifische Klausel/Regelung", "description": "Konkreter rechtlicher/wirtschaftlicher Vorteil mit Begründung"}]
 
 6. **KRITISCHE RISIKEN (criticalIssues):**
-   JSON-Array: [{"title": "Risiko", "description": "Problem", "riskLevel": "high/medium/low"}]
+   Mindestens 3-5 Punkte: [{"title": "Konkretes Risiko/Problem", "description": "Spezifische rechtliche/finanzielle Auswirkung und Eintrittswahrscheinlichkeit", "riskLevel": "high/medium/low"}]
 
 7. **EMPFEHLUNGEN (recommendations):**
-   JSON-Array: [{"title": "Maßnahme", "description": "Umsetzung", "priority": "high/medium/low"}]
+   Mindestens 3-4 Punkte: [{"title": "Konkrete Maßnahme", "description": "Spezifische Umsetzung mit Formulierung oder Verhandlungsstrategie", "priority": "high/medium/low"}]
 
-**BEWERTUNG:** Vertragsscore 1-100
+**BEWERTUNG:** Vertragsscore 1-100 mit detaillierter juristischer Begründung
+
+**BEISPIELE FÜR ANWALTS-TIEFE (universell anwendbar):**
+✅ "Die Kündigungsfrist von 3 Monaten liegt über dem gesetzlichen Minimum und benachteiligt den Arbeitnehmer"
+✅ "Klausel § 8.3 enthält einen unwirksamen Haftungsausschluss nach § 309 Nr. 7 BGB"  
+✅ "Die Vergütung liegt 15% unter dem Branchendurchschnitt laut Tarifvergleich"
+✅ "Empfehlung: Ergänze Salvatorische Klausel: 'Sollten einzelne Bestimmungen unwirksam sein...'"
+✅ "Das Widerrufsrecht nach § 355 BGB wurde nicht ordnungsgemäß belehrt"
 
 Antworte im JSON-Format:
 {
-  "summary": ["Detail 1", "Detail 2"],
-  "legalAssessment": ["Bewertung 1", "Bewertung 2"],
-  "suggestions": ["Vorschlag 1", "Vorschlag 2"],
-  "comparison": ["Vergleich 1", "Vergleich 2"],
-  "positiveAspects": [{"title": "Titel", "description": "Beschreibung"}],
-  "criticalIssues": [{"title": "Titel", "description": "Beschreibung", "riskLevel": "medium"}],
-  "recommendations": [{"title": "Titel", "description": "Beschreibung", "priority": "high"}],
+  "summary": ["Konkrete Vertragsparteien und Details", "Spezifische Leistungen und Konditionen", "Relevante Zahlen und Fristen"],
+  "legalAssessment": ["Rechtliche Gesamtbewertung", "Compliance-Status und Risiken", "Durchsetzbarkeit und Bindungswirkung"],
+  "suggestions": ["Konkrete Verbesserung mit Begründung", "Formulierungsvorschlag für Klausel", "Risikoreduzierung durch Umformulierung"],
+  "comparison": ["Benchmark-Vergleich mit Zahlen", "Marktstandard-Abweichung", "Branchenübliche Konditionen"],
+  "positiveAspects": [{"title": "Spezifische Stärke", "description": "Konkreter Vorteil mit rechtlicher Begründung"}],
+  "criticalIssues": [{"title": "Konkretes Risiko", "description": "Spezifische Auswirkung und Rechtsfolgen", "riskLevel": "medium"}],
+  "recommendations": [{"title": "Konkrete Maßnahme", "description": "Spezifische Umsetzung oder Formulierung", "priority": "high"}],
   "contractScore": 75
 }
 
-**VERTRAG:**
+**ZU ANALYSIERENDER VERTRAG:**
 ${optimizedText}`;
 
-  return basePrompt;
+  return universalPrompt;
 }
 
 /**
