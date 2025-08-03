@@ -1,8 +1,8 @@
-/* ContractAnalysis.module.css - ENHANCED WITH 7-POINT LAWYER-LEVEL ANALYSIS STYLES */
+/* ContractAnalysis.module.css - OPTIMIZED FOR WHITE BACKGROUND & IMPROVED RESPONSIVENESS */
 
 /* Base Container */
 .analysisContainer {
-  background: white;
+  background: #ffffff;
   border: 1px solid #e5e5e7;
   border-radius: 20px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
@@ -17,7 +17,7 @@
 
 /* Header Styles */
 .header {
-  background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
   padding: 2rem;
   border-bottom: 1px solid #e5e7eb;
   display: flex;
@@ -47,6 +47,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.fileIconContainer:hover {
+  background: rgba(59, 130, 246, 0.15);
+  transform: scale(1.05);
 }
 
 .fileIcon {
@@ -54,29 +60,30 @@
 }
 
 .fileDetails h3 {
-  font-size: 1.25rem;
+  font-size: 1.3rem;
   font-weight: 600;
   margin: 0 0 0.25rem;
-  color: #111827;
+  color: #000000;
   line-height: 1.3;
 }
 
 .fileName {
-  font-size: 1.25rem;
+  font-size: 1.3rem;
   font-weight: 600;
   margin: 0 0 0.25rem;
-  color: #111827;
+  color: #000000;
   line-height: 1.3;
 }
 
 .fileSize {
-  font-size: 0.875rem;
-  color: #6b7280;
+  font-size: 0.9rem;
+  color: #374151;
   margin: 0;
   display: flex;
   align-items: center;
   gap: 0.5rem;
   flex-wrap: wrap;
+  font-weight: 500;
 }
 
 .serviceWarning {
@@ -84,52 +91,71 @@
   align-items: center;
   gap: 0.25rem;
   color: #ef4444;
-  font-weight: 500;
+  font-weight: 600;
 }
 
-/* ✅ NEU: Re-analysis Badge */
+/* ✅ OPTIMIZED: Enhanced Badge Styles */
 .reanalysisBadge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   background: linear-gradient(135deg, #10b981, #059669);
   color: white;
-  padding: 4px 8px;
-  border-radius: 6px;
+  padding: 5px 10px;
+  border-radius: 8px;
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 600;
   margin-left: 8px;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+  transition: all 0.2s ease;
 }
 
-/* ✅ NEU: Lawyer-Level Badge */
+.reanalysisBadge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+}
+
 .lawyerBadge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   background: linear-gradient(135deg, #8b5cf6, #7c3aed);
   color: white;
-  padding: 4px 8px;
-  border-radius: 6px;
+  padding: 5px 10px;
+  border-radius: 8px;
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 600;
   margin-left: 8px;
+  box-shadow: 0 2px 4px rgba(139, 92, 246, 0.2);
+  transition: all 0.2s ease;
 }
 
-/* ✅ NEU: Initial Result Badge */
+.lawyerBadge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(139, 92, 246, 0.3);
+}
+
 .initialResultBadge {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   background: linear-gradient(135deg, #3b82f6, #1d4ed8);
   color: white;
-  padding: 4px 8px;
-  border-radius: 6px;
+  padding: 5px 10px;
+  border-radius: 8px;
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 600;
   margin-left: 8px;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+  transition: all 0.2s ease;
 }
 
-/* Action Buttons */
+.initialResultBadge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+}
+
+/* ✅ OPTIMIZED: Enhanced Action Buttons */
 .actions {
   display: flex;
   gap: 0.75rem;
@@ -146,7 +172,7 @@
   color: white;
   border: none;
   border-radius: 12px;
-  font-weight: 500;
+  font-weight: 600;
   font-size: 0.925rem;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -156,6 +182,7 @@
 .analyzeButton:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
+  background: linear-gradient(135deg, #2563eb, #5b21b6);
 }
 
 .analyzeButton:disabled {
@@ -165,7 +192,6 @@
   box-shadow: none;
 }
 
-/* ✅ NEU: Re-Analyze Button */
 .reanalyzeButton {
   display: flex;
   align-items: center;
@@ -175,7 +201,7 @@
   color: white;
   border: none;
   border-radius: 12px;
-  font-weight: 500;
+  font-weight: 600;
   font-size: 0.925rem;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -185,6 +211,7 @@
 .reanalyzeButton:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
+  background: linear-gradient(135deg, #059669, #047857);
 }
 
 .loadingButton {
@@ -192,9 +219,9 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.875rem 1.5rem;
-  background: #f3f4f6;
-  color: #6b7280;
-  border: none;
+  background: #ffffff;
+  color: #374151;
+  border: 1px solid #d1d5db;
   border-radius: 12px;
   font-weight: 500;
   font-size: 0.925rem;
@@ -205,9 +232,9 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.875rem 1.25rem;
-  background: #f3f4f6;
-  color: #6b7280;
-  border: none;
+  background: #ffffff;
+  color: #374151;
+  border: 1px solid #d1d5db;
   border-radius: 12px;
   font-weight: 500;
   font-size: 0.925rem;
@@ -216,8 +243,10 @@
 }
 
 .resetButton:hover {
-  background: #e5e7eb;
-  color: #374151;
+  background: #f9fafb;
+  color: #111827;
+  border-color: #9ca3af;
+  transform: translateY(-1px);
 }
 
 .resetButton:disabled {
@@ -225,7 +254,7 @@
   cursor: not-allowed;
 }
 
-/* ✅ Duplikat-Modal Styles */
+/* ✅ OPTIMIZED: Enhanced Modal Styles */
 .modalOverlay {
   position: fixed;
   top: 0;
@@ -242,7 +271,7 @@
 }
 
 .duplicateModal {
-  background: white;
+  background: #ffffff;
   border-radius: 16px;
   box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
   max-width: 540px;
@@ -259,6 +288,7 @@
   padding: 24px 24px 16px 24px;
   border-bottom: 1px solid #f1f5f9;
   position: relative;
+  background: #ffffff;
 }
 
 .modalIcon {
@@ -271,11 +301,12 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
 }
 
 .modalHeader h3 {
   margin: 0;
-  color: #1e293b;
+  color: #000000;
   font-size: 20px;
   font-weight: 600;
   flex: 1;
@@ -299,22 +330,23 @@
 
 .modalCloseBtn:hover {
   background: #f1f5f9;
-  color: #1e293b;
+  color: #000000;
 }
 
 .modalContent {
   padding: 24px;
+  background: #ffffff;
 }
 
 .duplicateMessage {
   margin: 0 0 24px 0;
-  color: #475569;
+  color: #374151;
   font-size: 15px;
   line-height: 1.6;
 }
 
 .duplicateMessage strong {
-  color: #1e293b;
+  color: #000000;
   font-weight: 600;
 }
 
@@ -332,12 +364,14 @@
   border-radius: 12px;
   transition: all 0.2s;
   cursor: pointer;
+  background: #ffffff;
 }
 
 .optionCard:hover {
   border-color: #e2e8f0;
   background: #f8fafc;
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .optionIcon {
@@ -354,7 +388,7 @@
 
 .optionContent h4 {
   margin: 0 0 6px 0;
-  color: #1e293b;
+  color: #000000;
   font-size: 16px;
   font-weight: 600;
 }
@@ -371,6 +405,7 @@
   gap: 12px;
   padding: 16px 24px 24px 24px;
   border-top: 1px solid #f1f5f9;
+  background: #ffffff;
 }
 
 .primaryModalBtn,
@@ -401,7 +436,7 @@
 }
 
 .secondaryModalBtn {
-  background: #f8fafc;
+  background: #ffffff;
   color: #64748b;
   border: 1px solid #e2e8f0;
 }
@@ -413,13 +448,14 @@
   transform: translateY(-1px);
 }
 
-/* ✅ Navigation-Message für Duplikat-Verweis */
+/* ✅ OPTIMIZED: Navigation Message */
 .navigationContainer {
-  background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+  background: linear-gradient(135deg, #ffffff, #f0fdf4);
   border: 1px solid #a7f3d0;
   border-radius: 16px;
   padding: 2rem;
   margin-bottom: 2rem;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.1);
 }
 
 .navigationContent {
@@ -508,9 +544,9 @@
   border-color: #6ee7b7;
 }
 
-/* Progress Section */
+/* ✅ OPTIMIZED: Progress Section with White Background */
 .progressContainer {
-  background: #f9fafb;
+  background: #ffffff;
   border-bottom: 1px solid #e5e7eb;
   padding: 2rem;
 }
@@ -538,7 +574,7 @@
 
 .progressText {
   font-size: 1rem;
-  color: #374151;
+  color: #000000;
   margin: 0;
   font-weight: 500;
 }
@@ -559,18 +595,19 @@
 
 .progressStep.active {
   color: #3b82f6;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .progressStep:not(.active) {
-  color: #9ca3af;
+  color: #6b7280;
 }
 
-/* Error Handling */
+/* ✅ OPTIMIZED: Error Handling with Better Contrast */
 .errorContainer {
-  background: rgba(254, 242, 242, 1);
+  background: #ffffff;
   border-bottom: 1px solid rgba(252, 165, 165, 1);
   padding: 2rem;
+  border-left: 4px solid #dc2626;
 }
 
 .errorContent {
@@ -591,14 +628,15 @@
 .errorTitle {
   font-size: 1.125rem;
   font-weight: 600;
-  color: #7f1d1d;
+  color: #000000;
   margin: 0 0 0.5rem;
 }
 
 .errorMessage {
-  color: #991b1b;
+  color: #374151;
   margin: 0 0 1rem;
   line-height: 1.5;
+  font-weight: 500;
 }
 
 .retrySection {
@@ -623,6 +661,7 @@
 
 .retryButton:hover {
   background: #b91c1c;
+  transform: translateY(-1px);
 }
 
 .retryButton:disabled {
@@ -634,6 +673,7 @@
   font-size: 0.875rem;
   color: #dc2626;
   margin: 0;
+  font-weight: 500;
 }
 
 .exhaustedRetries {
@@ -641,10 +681,11 @@
   padding: 1rem;
   background: rgba(239, 68, 68, 0.1);
   border-radius: 8px;
+  border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
 .exhaustedRetries p {
-  color: #7f1d1d;
+  color: #000000;
   font-weight: 600;
   margin: 0 0 0.75rem;
 }
@@ -666,11 +707,13 @@
 
 .contactSupportButton:hover {
   background: #2563eb;
+  transform: translateY(-1px);
 }
 
-/* Results Section */
+/* ✅ OPTIMIZED: Results Section with White Background */
 .resultsContainer {
   padding: 2rem;
+  background: #ffffff;
 }
 
 .successHeader {
@@ -695,7 +738,7 @@
 .successDetails h4 {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #111827;
+  color: #000000;
   margin: 0;
   line-height: 1.3;
   display: flex;
@@ -704,11 +747,11 @@
 }
 
 .successDetails p {
-  color: #6b7280;
+  color: #374151;
   margin: 0.25rem 0 0;
+  font-weight: 500;
 }
 
-/* ✅ NEU: Lawyer-Level Indikator */
 .lawyerLevelIndicator {
   display: inline-flex;
   align-items: center;
@@ -718,9 +761,9 @@
   border-radius: 8px;
   color: white;
   margin-right: 0.5rem;
+  box-shadow: 0 2px 4px rgba(139, 92, 246, 0.3);
 }
 
-/* ✅ NEU: Lawyer-Level Features */
 .lawyerLevelFeatures {
   display: flex;
   gap: 1rem;
@@ -734,35 +777,38 @@
   gap: 0.25rem;
   font-size: 0.75rem;
   color: #8b5cf6;
-  font-weight: 500;
+  font-weight: 600;
   padding: 0.25rem 0.5rem;
   background: rgba(139, 92, 246, 0.1);
   border-radius: 6px;
+  border: 1px solid rgba(139, 92, 246, 0.2);
 }
 
 .requestId {
   font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Consolas', monospace;
   font-size: 0.75rem;
-  color: #9ca3af;
-  background: #f3f4f6;
+  color: #6b7280;
+  background: #f9fafb;
   padding: 0.25rem 0.5rem;
   border-radius: 4px;
+  border: 1px solid #e5e7eb;
 }
 
-/* ✅ IMPROVED: Score Display with perfect centering */
+/* ✅ OPTIMIZED: Score Display with White Background */
 .scoreSection {
-  background: linear-gradient(135deg, #f8fafc 0%, #e0f2fe 100%);
+  background: #ffffff;
   border-radius: 20px;
   padding: 2.5rem;
   margin-bottom: 2rem;
   text-align: center;
-  border: 1px solid #e0f2fe;
+  border: 2px solid #e0f2fe;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .scoreSectionTitle {
-  font-size: 1.125rem;
+  font-size: 1.2rem;
   font-weight: 600;
-  color: #374151;
+  color: #000000;
   margin: 0 0 2rem;
 }
 
@@ -800,7 +846,7 @@
 .scoreNumber {
   font-size: 2rem;
   font-weight: 700;
-  color: #111827;
+  color: #000000;
   line-height: 1;
 }
 
@@ -825,14 +871,15 @@
 }
 
 .scoreDescription {
-  font-size: 0.875rem;
-  color: #6b7280;
+  font-size: 0.9rem;
+  color: #374151;
   max-width: 28rem;
   margin: 0 auto;
   line-height: 1.5;
+  font-weight: 500;
 }
 
-/* ✅ IMPROVED: Better cards layout and typography */
+/* ✅ OPTIMIZED: Enhanced Cards Layout with White Background */
 .detailsGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -841,18 +888,19 @@
 }
 
 .detailCard {
-  background: white;
+  background: #ffffff;
   border: 1px solid #e5e7eb;
   border-radius: 16px;
   padding: 0;
   transition: all 0.2s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   overflow: hidden;
 }
 
 .detailCard:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+  border-color: #d1d5db;
 }
 
 .detailHeader {
@@ -861,6 +909,7 @@
   gap: 0.75rem;
   padding: 1.5rem 1.5rem 1rem;
   border-bottom: 1px solid #f3f4f6;
+  background: #ffffff;
 }
 
 .detailIconContainer {
@@ -869,19 +918,22 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.2s ease;
 }
 
 .detailCard h5 {
-  font-size: 1.125rem;
+  font-size: 1.15rem;
   font-weight: 600;
-  color: #111827;
+  color: #000000;
   margin: 0;
 }
 
 .cardContent {
   padding: 0 1.5rem 1.5rem;
+  background: #ffffff;
 }
 
+/* ✅ OPTIMIZED: Enhanced Point Lists with Better Readability */
 .pointsList {
   margin: 0;
   padding: 0;
@@ -907,20 +959,20 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  margin-top: 0.5rem;
+  margin-top: 0.6rem;
   flex-shrink: 0;
 }
 
 .pointText {
-  color: #374151;
-  font-size: 0.925rem;
+  color: #000000;
+  font-size: 0.95rem;
   line-height: 1.6;
   margin: 0;
-  font-weight: 400;
+  font-weight: 500;
   max-width: 500px;
 }
 
-/* ✅ NEU: Strukturierte Listen für 7-Punkte-Analyse */
+/* ✅ OPTIMIZED: Structured Lists with Enhanced Styling */
 .structuredList {
   margin: 0;
   padding: 0;
@@ -929,11 +981,12 @@
 
 .structuredItem {
   margin-bottom: 1.5rem;
-  padding: 1rem;
-  background: #f8fafc;
+  padding: 1.2rem;
+  background: #ffffff;
   border-radius: 12px;
   border-left: 4px solid #e5e7eb;
   transition: all 0.2s ease;
+  border: 1px solid #f3f4f6;
 }
 
 .structuredItem:last-child {
@@ -941,8 +994,10 @@
 }
 
 .structuredItem:hover {
-  background: #f1f5f9;
-  transform: translateX(2px);
+  background: #f8fafc;
+  transform: translateX(3px);
+  border-left-color: #3b82f6;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .structuredHeader {
@@ -956,139 +1011,127 @@
 .structuredTitle {
   font-size: 1rem;
   font-weight: 600;
-  color: #111827;
+  color: #000000;
   margin: 0;
   flex: 1;
 }
 
 .structuredDescription {
   color: #374151;
-  font-size: 0.875rem;
+  font-size: 0.9rem;
   line-height: 1.6;
   margin: 0;
+  font-weight: 500;
 }
 
-/* ✅ NEU: Risiko-Level Badges */
-.riskBadge {
+/* ✅ OPTIMIZED: Enhanced Risk and Priority Badges */
+.riskBadge, .priorityBadge {
   display: inline-flex;
   align-items: center;
-  padding: 0.25rem 0.5rem;
-  border-radius: 6px;
+  padding: 0.3rem 0.6rem;
+  border-radius: 8px;
   font-size: 0.75rem;
-  font-weight: 500;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.025em;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.riskHigh {
-  background: rgba(239, 68, 68, 0.1);
+.riskHigh, .priorityHigh {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.2));
   color: #dc2626;
   border-left-color: #dc2626;
+  border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
-.riskMedium {
-  background: rgba(245, 158, 11, 0.1);
+.riskMedium, .priorityMedium {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.2));
   color: #d97706;
   border-left-color: #d97706;
+  border: 1px solid rgba(245, 158, 11, 0.3);
 }
 
-.riskLow {
-  background: rgba(34, 197, 94, 0.1);
+.riskLow, .priorityLow {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(34, 197, 94, 0.2));
   color: #16a34a;
   border-left-color: #16a34a;
+  border: 1px solid rgba(34, 197, 94, 0.3);
 }
 
-.riskNeutral {
-  background: rgba(107, 114, 128, 0.1);
+.riskNeutral, .priorityNeutral {
+  background: linear-gradient(135deg, rgba(107, 114, 128, 0.1), rgba(107, 114, 128, 0.2));
   color: #6b7280;
   border-left-color: #6b7280;
+  border: 1px solid rgba(107, 114, 128, 0.3);
 }
 
-/* ✅ NEU: Prioritäts-Level Badges */
-.priorityBadge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.25rem 0.5rem;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.025em;
-}
-
-.priorityHigh {
-  background: rgba(239, 68, 68, 0.1);
-  color: #dc2626;
-  border-left-color: #dc2626;
-}
-
-.priorityMedium {
-  background: rgba(245, 158, 11, 0.1);
-  color: #d97706;
-  border-left-color: #d97706;
-}
-
-.priorityLow {
-  background: rgba(34, 197, 94, 0.1);
-  color: #16a34a;
-  border-left-color: #16a34a;
-}
-
-.priorityNeutral {
-  background: rgba(107, 114, 128, 0.1);
-  color: #6b7280;
-  border-left-color: #6b7280;
-}
-
-/* ✅ NEU: Icon Colors für Risiken und Prioritäten */
+/* ✅ OPTIMIZED: Icon Colors */
 .iconRed { color: #dc2626; }
 .iconOrange { color: #d97706; }
 .iconYellow { color: #eab308; }
 .iconGreen { color: #16a34a; }
 .iconGray { color: #6b7280; }
+.iconOrangeRed { color: #f97316; }
 
 .fallbackMessage {
-  background: #f9fafb;
+  background: #ffffff;
   border-radius: 10px;
   padding: 1.5rem;
   margin: 0;
+  border: 1px solid #f3f4f6;
 }
 
 .fallbackMessage p {
-  color: #6b7280;
-  font-size: 0.875rem;
+  color: #374151;
+  font-size: 0.9rem;
   margin: 0;
   line-height: 1.5;
+  font-weight: 500;
 }
 
-/* Color schemes for different card types */
-.blueIcon { background: rgba(59, 130, 246, 0.1); }
-.greenIcon { background: rgba(16, 185, 129, 0.1); }
-.yellowIcon { background: rgba(245, 158, 11, 0.1); }
-.purpleIcon { background: rgba(139, 92, 246, 0.1); }
-.redIcon { background: rgba(239, 68, 68, 0.1); } /* ✅ NEU für kritische Punkte */
+/* ✅ OPTIMIZED: Color schemes for different card types */
+.blueIcon { 
+  background: rgba(59, 130, 246, 0.1); 
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+.greenIcon { 
+  background: rgba(16, 185, 129, 0.1); 
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+.yellowIcon { 
+  background: rgba(245, 158, 11, 0.1); 
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+.purpleIcon { 
+  background: rgba(139, 92, 246, 0.1); 
+  border: 1px solid rgba(139, 92, 246, 0.2);
+}
+.redIcon { 
+  background: rgba(239, 68, 68, 0.1); 
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
 
 .blueBullet { background: #3b82f6; }
 .greenBullet { background: #10b981; }
 .yellowBullet { background: #f59e0b; }
 .purpleBullet { background: #8b5cf6; }
 
-.iconOrangeRed { color: #f97316; }
-
-/* Usage Info */
+/* ✅ OPTIMIZED: Usage Info with White Background */
 .usageInfo {
-  background: rgba(219, 234, 254, 1);
-  border: 1px solid rgba(147, 197, 253, 1);
+  background: #ffffff;
+  border: 1px solid #3b82f6;
   border-radius: 12px;
   padding: 1rem;
   margin-bottom: 2rem;
   text-align: center;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
 }
 
 .usageInfo p {
   margin: 0;
   font-size: 0.875rem;
   color: #1e40af;
+  font-weight: 500;
 }
 
 .planBadge {
@@ -1098,10 +1141,11 @@
   padding: 0.25rem 0.5rem;
   border-radius: 9999px;
   margin-left: 0.5rem;
-  font-weight: 500;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(59, 130, 246, 0.3);
 }
 
-/* Action Buttons */
+/* ✅ OPTIMIZED: Enhanced Action Buttons */
 .actionButtonsContainer {
   display: flex;
   flex-direction: column;
@@ -1128,6 +1172,7 @@
 .primaryActionButton:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 24px rgba(249, 115, 22, 0.5);
+  background: linear-gradient(135deg, #ea580c, #b91c1c);
 }
 
 .primaryActionButton:disabled {
@@ -1158,13 +1203,16 @@
 }
 
 .downloadButton {
-  background: #f3f4f6;
+  background: #ffffff;
   color: #374151;
+  border: 1px solid #d1d5db;
 }
 
 .downloadButton:hover {
-  background: #e5e7eb;
+  background: #f9fafb;
   transform: translateY(-1px);
+  border-color: #9ca3af;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .downloadButton:disabled {
@@ -1174,7 +1222,7 @@
 }
 
 .newAnalysisButton {
-  background: white;
+  background: #ffffff;
   color: #374151;
   border: 1px solid #d1d5db;
 }
@@ -1182,15 +1230,18 @@
 .newAnalysisButton:hover {
   background: #f9fafb;
   border-color: #9ca3af;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* ✅ IMPROVED: Optimization Result with better structure */
+/* ✅ OPTIMIZED: Optimization Result with White Background */
 .optimizationResult {
   margin-top: 2rem;
-  background: rgba(236, 253, 245, 1);
-  border: 1px solid rgba(167, 243, 208, 1);
+  background: #ffffff;
+  border: 2px solid #a7f3d0;
   border-radius: 16px;
   overflow: hidden;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.1);
 }
 
 .optimizationHeader {
@@ -1198,8 +1249,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 1.5rem;
-  background: rgba(220, 252, 231, 1);
-  border-bottom: 1px solid rgba(167, 243, 208, 1);
+  background: #ffffff;
+  border-bottom: 1px solid #a7f3d0;
 }
 
 .optimizationTitleSection {
@@ -1215,7 +1266,7 @@
 .optimizationHeader h5 {
   font-size: 1.125rem;
   font-weight: 600;
-  color: #047857;
+  color: #000000;
   margin: 0;
 }
 
@@ -1224,9 +1275,9 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 0.75rem;
-  background: rgba(16, 185, 129, 0.1);
+  background: #ffffff;
   color: #047857;
-  border: 1px solid rgba(167, 243, 208, 1);
+  border: 1px solid #a7f3d0;
   border-radius: 8px;
   font-size: 0.875rem;
   font-weight: 500;
@@ -1235,13 +1286,15 @@
 }
 
 .expandToggle:hover {
-  background: rgba(16, 185, 129, 0.2);
+  background: #f0fdf4;
+  transform: translateY(-1px);
 }
 
 .optimizationContent {
   padding: 1.5rem;
-  color: #374151;
+  color: #000000;
   line-height: 1.6;
+  background: #ffffff;
 }
 
 .optimizationSections {
@@ -1274,18 +1327,21 @@
   line-height: 1.6;
   margin: 0;
   font-size: 0.925rem;
+  font-weight: 500;
 }
 
 .optimizationPlainText {
   color: #374151;
   line-height: 1.6;
   white-space: pre-wrap;
+  font-weight: 500;
 }
 
-/* Responsive Design */
+/* ✅ OPTIMIZED: Enhanced Responsive Design */
 @media (max-width: 1024px) {
   .detailsGrid {
     grid-template-columns: 1fr;
+    gap: 1.25rem;
   }
   
   .scoreCircleWrapper {
@@ -1295,6 +1351,14 @@
   
   .scoreNumber {
     font-size: 1.75rem;
+  }
+
+  .pointText {
+    font-size: 0.9rem;
+  }
+
+  .structuredDescription {
+    font-size: 0.85rem;
   }
 }
 
@@ -1387,7 +1451,6 @@
     align-self: flex-end;
   }
 
-  /* ✅ Modal Responsive */
   .modalOverlay {
     padding: 16px;
   }
@@ -1417,9 +1480,8 @@
     padding: 16px;
   }
 
-  /* ✅ NEU: Mobile-optimierte strukturierte Listen */
   .structuredItem {
-    padding: 0.75rem;
+    padding: 1rem;
   }
 
   .structuredHeader {
@@ -1429,14 +1491,13 @@
   }
 
   .structuredTitle {
-    font-size: 0.9rem;
+    font-size: 0.95rem;
   }
 
   .structuredDescription {
-    font-size: 0.8rem;
+    font-size: 0.85rem;
   }
 
-  /* ✅ NEU: Mobile Features */
   .lawyerLevelFeatures {
     flex-direction: column;
     gap: 0.5rem;
@@ -1444,6 +1505,19 @@
 
   .feature {
     justify-content: center;
+  }
+
+  /* ✅ IMPROVED: Better font sizes for mobile */
+  .pointText {
+    font-size: 0.9rem;
+  }
+  
+  .fileName {
+    font-size: 1.2rem;
+  }
+  
+  .fileSize {
+    font-size: 0.85rem;
   }
 }
 
@@ -1474,7 +1548,7 @@
   }
   
   .pointText {
-    font-size: 0.875rem;
+    font-size: 0.85rem;
   }
   
   .detailHeader {
@@ -1496,6 +1570,18 @@
     align-items: center;
     gap: 0.25rem;
   }
+
+  .fileName {
+    font-size: 1.1rem;
+  }
+
+  .structuredDescription {
+    font-size: 0.8rem;
+  }
+
+  .structuredTitle {
+    font-size: 0.9rem;
+  }
 }
 
 /* ✅ Animation utilities */
@@ -1512,7 +1598,7 @@
   animation: spin 1s linear infinite;
 }
 
-/* ✅ Focus states for accessibility */
+/* ✅ OPTIMIZED: Enhanced Focus states for accessibility */
 .analyzeButton:focus,
 .reanalyzeButton:focus,
 .resetButton:focus,
@@ -1522,6 +1608,7 @@
 .secondaryModalBtn:focus {
   outline: 2px solid #3b82f6;
   outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
 }
 
 /* ✅ Print styles */
@@ -1529,6 +1616,7 @@
   .analysisContainer {
     box-shadow: none;
     border: 1px solid #ccc;
+    background: #ffffff;
   }
   
   .actions,
@@ -1545,43 +1633,11 @@
   .lawyerLevelFeatures {
     display: none;
   }
-}
 
-/* ✅ NEU: Dark mode support (optional) */
-@media (prefers-color-scheme: dark) {
-  .analysisContainer {
-    background: #1f2937;
-    border-color: #374151;
-    color: #f9fafb;
-  }
-
-  .header {
-    background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
-  }
-
-  .fileName {
-    color: #f9fafb;
-  }
-
-  .detailCard {
-    background: #1f2937;
-    border-color: #374151;
-  }
-
-  .detailCard h5 {
-    color: #f9fafb;
-  }
-
-  .pointText,
-  .structuredDescription {
-    color: #d1d5db;
-  }
-
-  .structuredItem {
-    background: #374151;
-  }
-
-  .structuredTitle {
-    color: #f9fafb;
+  * {
+    color: #000000 !important;
+    background: #ffffff !important;
   }
 }
+
+/* ✅ REMOVED: Dark mode support (focusing on white background as requested) */
