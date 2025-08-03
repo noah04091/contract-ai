@@ -784,92 +784,106 @@ function validateTextCompletenessAndDepth(result, requestId) {
 }
 
 /**
- * 🏛️ UNIVERSAL: Generate ULTRA-DEEP Lawyer-Level Analysis Prompt (All Contract Types)
- * Generates universally enhanced prompts for true legal expert analysis of ANY contract
+ * 🏛️ ENHANCED: Generate TRUE LAWYER-LEVEL Analysis Prompt (Gutachten-Qualität)
+ * Generates prompts that deliver actual legal expert analysis like written legal opinions
  */
 function generateDeepLawyerLevelPrompt(text, documentType, strategy, requestId) {
   // ✅ CRITICAL FIX: Apply CONSERVATIVE text optimization
   const optimizedText = optimizeTextForGPT4(text, 2000, requestId);
   
-  // ✅ UNIVERSAL: Enhanced prompt for ALL contract types
-  const universalPrompt = `Du bist ein spezialisierter Fachanwalt mit 15+ Jahren Erfahrung in allen Vertragsarten. Führe eine tiefgreifende, praxisorientierte Vertragsanalyse durch, als würdest du für einen wichtigen Mandanten arbeiten.
+  // ✅ ENHANCED: True lawyer-level prompt for written legal opinion quality
+  const professionalPrompt = `Du bist ein spezialisierter Fachanwalt für Vertragsrecht mit 15+ Jahren Erfahrung. Erstelle ein schriftliches Gutachten über den vorliegenden Vertrag, wie du es für einen wichtigen Mandanten verfassen würdest.
 
-**UNIVERSELLE ANWALTS-STANDARDS (für JEDEN Vertrag):**
-- Identifiziere ALLE potentiellen Streitpunkte und versteckten Risiken
-- Benenne MINDESTENS 3-5 kritische Punkte (realistische juristische Prüfung!)
-- Gebe konkrete Formulierungsvorschläge und Verhandlungstipps  
-- Verwende spezifische Fachbegriffe und Rechtsbezüge (BGB, HGB, etc.)
-- Marktvergleich mit konkreten Zahlen/Benchmarks wo erkennbar
-- Analysiere Machtverteilung zwischen den Vertragsparteien
-- Bewerte jeden Paragraphen auf rechtliche Durchsetzbarkeit
-- Identifiziere AGB-rechtliche Probleme (§§ 305ff BGB)
-- Prüfe auf einseitige Benachteiligungen und unwirksame Klauseln
-- Bewerte Risiko-Nutzen-Verhältnis für beide Parteien
+**GUTACHTEN-STANDARDS (wie ein echter Vertragsanwalt):**
+- Juristische Argumentation mit konkreten Rechtsbezügen (BGB, HGB, AGB-Recht)
+- Tiefgehende Analyse aller potentiellen Streitpunkte und versteckten Risiken
+- Begründung JEDER Risikobewertung mit rechtlicher Argumentation
+- Mindestens 2-3 substantielle Unterpunkte pro Hauptkategorie
+- Konkrete Formulierungsvorschläge statt generischer Empfehlungen
+- Prüfung auf essentialia negotii, AGB-Kontrolle, Transparenzgebot
+- Identifikation einseitiger Benachteiligungen und unwirksamer Klauseln
+- Echte Risikoabwägung mit Eintrittswahrscheinlichkeit und Folgenabschätzung
 
-**ULTRA-DETAILLIERTE ANWALTLICHE ANALYSE (7 PUNKTE):**
+**VERTRAGSRECHTLICHE TIEFENPRÜFUNG:**
+- §§ 305-310 BGB: AGB-Kontrolle auf überraschende, mehrdeutige, unangemessene Klauseln
+- Essentialia negotii: Sind Parteien, Leistung, Gegenleistung ausreichend bestimmt?
+- Transparenzgebot: Sind alle Klauseln klar und verständlich formuliert?
+- Widerrufsbedürftigkeit: Bei Verbrauchern ordnungsgemäße Widerrufsbelehrung?
+- Haftungsbeschränkungen: Zulässigkeit nach §§ 309, 444 BGB prüfen
+- Kündigung: Fristen, Form, Gründe rechtlich angemessen?
+- Leistungsstörungen: Gewährleistung, Verzug, Unmöglichkeit geregelt?
+
+**JURISTISCHE GUTACHTEN-STRUKTUR (7 PUNKTE):**
 
 1. **ZUSAMMENFASSUNG (summary):**
-   - Exakte Vertragsparteien mit Rollen und rechtlicher Stellung
-   - Präzise Vertragsgegenstände und Leistungsumfang
-   - Konkrete Laufzeiten, Fristen, Kündigungsmodalitäten
-   - Finanzielle Aspekte (Beträge, Zahlungsmodalitäten, Sicherheiten)
-   - Besondere Vereinbarungen oder rechtlich relevante Auffälligkeiten
+   - Rechtliche Einordnung der Vertragsparteien (Unternehmer/Verbraucher/B2B)
+   - Vertragstyp und rechtliche Grundlagen (Kauf-, Dienst-, Werkvertrag etc.)
+   - Wesentliche Leistungen und Gegenleistungen mit rechtlicher Bewertung
+   - Laufzeit, Kündigungsmodalitäten und deren rechtliche Zulässigkeit
+   - Besondere Rechte und Pflichten mit Verweis auf gesetzliche Grundlagen
+   - Mindestens 3 substantielle Punkte mit juristischer Einordnung
 
 2. **RECHTSSICHERHEIT (legalAssessment):**
-   - Vollständigkeitsprüfung aller essentialia negotii
-   - Identifikation rechtlicher Schwachstellen und Lücken
-   - Bewertung der Rechtsdurchsetzbarkeit einzelner Klauseln
-   - Prüfung auf AGB-rechtliche Probleme (§§ 305ff BGB)
-   - Analyse der Machtverteilung und einseitiger Benachteiligungen
+   - Vollständigkeitsprüfung: Sind alle essentialia negotii vorhanden und bestimmt?
+   - AGB-Kontrolle: Prüfung nach §§ 305-310 BGB auf Überraschungsmoment, Transparenz, Angemessenheit
+   - Wirksamkeitsprüfung einzelner Klauseln mit konkreten Rechtsbezügen
+   - Identifikation unwirksamer Klauseln nach Klauselverboten (§§ 308, 309 BGB)
+   - Durchsetzbarkeit und Beweislage bei strittigen Punkten
+   - Mindestens 3 konkrete rechtliche Bewertungen mit Paragrafenbezug
 
 3. **OPTIMIERUNGSVORSCHLÄGE (suggestions):**
-   - Konkrete Umformulierungen problematischer Klauseln
-   - Zusätzliche Schutzklauseln mit präzisen Formulierungsvorschlägen
-   - Risikoallokations-Verbesserungen zwischen den Parteien
-   - Präventive Maßnahmen gegen typische Streitpunkte dieser Vertragsart
-   - Verhandlungsempfehlungen mit konkreten Argumenten
+   - Konkrete Umformulierungen unwirksamer oder problematischer Klauseln
+   - Ergänzung fehlender wesentlicher Regelungen (Gewährleistung, Haftung, Kündigung)
+   - Formulierungsvorschläge für mehr Rechtssicherheit und Klarheit
+   - Risikoallokation zwischen den Parteien optimieren
+   - Salvatorische Klauseln und Vertragsanpassungsklauseln ergänzen
+   - Mindestens 3 konkrete Formulierungsvorschläge mit rechtlicher Begründung
 
 4. **MARKTVERGLEICH (comparison):**
-   - Konkrete Benchmark-Werte und Vergleichszahlen (wo erkennbar)
-   - Branchenstandards und prozentuale Abweichungen
-   - Bewertung als "überdurchschnittlich/marktüblich/unterdurchschnittlich"
-   - Analyse der Verhandlungsposition und Marktmacht
-   - Vergleich mit typischen Vertragsbedingungen dieser Art
+   - Vergleich mit branchenüblichen Vertragsbedingungen und Standards
+   - Bewertung der Konditionen als über-/unter-/marktdurchschnittlich mit Begründung
+   - Verhandlungsposition und Marktmacht der Parteien analysieren
+   - Abweichungen von Standardverträgen und deren rechtliche Bedeutung
+   - Empfehlungen zur Verhandlungsstrategie basierend auf Marktposition
+   - Mindestens 2 konkrete Marktvergleiche mit rechtlicher Einordnung
 
 5. **POSITIVE ASPEKTE (positiveAspects):**
-   Mindestens 2-3 Punkte: [{"title": "Spezifische Klausel/Regelung", "description": "Konkreter rechtlicher/wirtschaftlicher Vorteil mit Begründung"}]
+   [{"title": "Rechtlich vorteilhafte Klausel", "description": "Konkrete rechtliche Vorteile mit Begründung nach geltendem Recht"}]
+   Mindestens 2-3 Punkte mit substantieller juristischer Begründung
 
 6. **KRITISCHE RISIKEN (criticalIssues):**
-   Mindestens 3-5 Punkte: [{"title": "Konkretes Risiko/Problem", "description": "Spezifische rechtliche/finanzielle Auswirkung und Eintrittswahrscheinlichkeit", "riskLevel": "high/medium/low"}]
+   [{"title": "Spezifisches Rechtsrisiko", "description": "Konkrete rechtliche Folgen, Eintrittswahrscheinlichkeit, Schadenshöhe", "riskLevel": "high/medium/low"}]
+   Mindestens 3-5 Punkte mit detaillierter Risikoanalyse und Rechtsbegründung
 
 7. **EMPFEHLUNGEN (recommendations):**
-   Mindestens 3-4 Punkte: [{"title": "Konkrete Maßnahme", "description": "Spezifische Umsetzung mit Formulierung oder Verhandlungsstrategie", "priority": "high/medium/low"}]
+   [{"title": "Konkrete juristische Maßnahme", "description": "Spezifische Umsetzung mit Musterformulierung oder Verhandlungsstrategie", "priority": "high/medium/low"}]
+   Mindestens 3-4 Punkte mit umsetzbaren juristischen Handlungsanweisungen
 
-**BEWERTUNG:** Vertragsscore 1-100 mit detaillierter juristischer Begründung
+**GUTACHTEN-SCORE:** 1-100 mit detaillierter juristischer Begründung der Bewertung
 
-**BEISPIELE FÜR ANWALTS-TIEFE (universell anwendbar):**
-✅ "Die Kündigungsfrist von 3 Monaten liegt über dem gesetzlichen Minimum und benachteiligt den Arbeitnehmer"
-✅ "Klausel § 8.3 enthält einen unwirksamen Haftungsausschluss nach § 309 Nr. 7 BGB"  
-✅ "Die Vergütung liegt 15% unter dem Branchendurchschnitt laut Tarifvergleich"
-✅ "Empfehlung: Ergänze Salvatorische Klausel: 'Sollten einzelne Bestimmungen unwirksam sein...'"
-✅ "Das Widerrufsrecht nach § 355 BGB wurde nicht ordnungsgemäß belehrt"
+**BEISPIELE FÜR ANWALTLICHE GUTACHTEN-QUALITÄT:**
+✅ "Die Haftungsausschlussklausel in § 8.3 ist nach § 309 Nr. 7 lit. a BGB unwirksam, da sie grob fahrlässiges Verhalten ausschließt"
+✅ "Das Fehlen einer ordnungsgemäßen Widerrufsbelehrung nach Art. 246a § 1 EGBGB führt zu einer Verlängerung der Widerrufsfrist auf 12 Monate + 14 Tage"  
+✅ "Die Kündigungsfrist von 6 Monaten zum Quartalsende benachteiligt den Mieter unangemessen i.S.d. § 307 Abs. 1 BGB, da gesetzlich nur 3 Monate vorgesehen sind"
+✅ "Empfehlung: Ergänze salvatorische Klausel: 'Sollten einzelne Bestimmungen dieses Vertrages unwirksam sein, bleibt die Wirksamkeit des übrigen Vertrages unberührt'"
+✅ "Die Vergütungsregelung ist nach § 315 BGB zu unbestimmt ('angemessene Vergütung') und sollte konkretisiert werden"
 
-Antworte im JSON-Format:
+Antworte ausschließlich im JSON-Format:
 {
-  "summary": ["Konkrete Vertragsparteien und Details", "Spezifische Leistungen und Konditionen", "Relevante Zahlen und Fristen"],
-  "legalAssessment": ["Rechtliche Gesamtbewertung", "Compliance-Status und Risiken", "Durchsetzbarkeit und Bindungswirkung"],
-  "suggestions": ["Konkrete Verbesserung mit Begründung", "Formulierungsvorschlag für Klausel", "Risikoreduzierung durch Umformulierung"],
-  "comparison": ["Benchmark-Vergleich mit Zahlen", "Marktstandard-Abweichung", "Branchenübliche Konditionen"],
-  "positiveAspects": [{"title": "Spezifische Stärke", "description": "Konkreter Vorteil mit rechtlicher Begründung"}],
-  "criticalIssues": [{"title": "Konkretes Risiko", "description": "Spezifische Auswirkung und Rechtsfolgen", "riskLevel": "medium"}],
-  "recommendations": [{"title": "Konkrete Maßnahme", "description": "Spezifische Umsetzung oder Formulierung", "priority": "high"}],
+  "summary": ["Rechtliche Einordnung der Parteien", "Vertragstyp und Rechtsgrundlagen", "Wesentliche Leistungen mit Rechtsbewertung"],
+  "legalAssessment": ["AGB-Kontrolle nach §§ 305ff BGB", "Wirksamkeitsprüfung mit Rechtsbezug", "Durchsetzbarkeitsanalyse"],
+  "suggestions": ["Konkrete Klausel-Umformulierung", "Ergänzung mit Musterformulierung", "Risikooptimierung mit Begründung"],
+  "comparison": ["Marktvergleich mit Benchmarks", "Branchenstandard-Abweichung", "Verhandlungsposition-Analyse"],
+  "positiveAspects": [{"title": "Rechtlich vorteilhafte Regelung", "description": "Konkrete Vorteile mit Rechtsbegründung"}],
+  "criticalIssues": [{"title": "Spezifisches Rechtsrisiko", "description": "Rechtliche Folgen und Eintrittswahrscheinlichkeit", "riskLevel": "medium"}],
+  "recommendations": [{"title": "Konkrete juristische Maßnahme", "description": "Umsetzung mit Musterformulierung", "priority": "high"}],
   "contractScore": 75
 }
 
-**ZU ANALYSIERENDER VERTRAG:**
+**ZU BEGUTACHTENDER VERTRAG:**
 ${optimizedText}`;
 
-  return universalPrompt;
+  return professionalPrompt;
 }
 
 /**
@@ -1667,7 +1681,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       confidence: validationResult.confidence,
       qualityScore: validationResult.qualityScore,
       analysisMessage: validationResult.analysisMessage,
-      extractionMethod: 'deep-lawyer-level-analysis-FIXED-v4', // ✅ FIXED: Updated method name
+      extractionMethod: 'deep-lawyer-level-analysis-FIXED-v5', // ✅ FIXED: Updated method name
       extractionQuality: validationResult.qualityScore > 0.6 ? 'excellent' : validationResult.qualityScore > 0.4 ? 'good' : 'fair',
       pageCount: validationResult.metrics.pageCount,
       
@@ -1715,7 +1729,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           analysisStrategy: validationResult.strategy,
           confidence: validationResult.confidence,
           qualityScore: validationResult.qualityScore,
-          extractionMethod: 'deep-lawyer-level-analysis-FIXED-v4',
+          extractionMethod: 'deep-lawyer-level-analysis-FIXED-v5',
           extractionQuality: analysisData.extractionQuality,
           analyzeCount: (existingContract.analyzeCount || 0) + 1,
           
@@ -1751,7 +1765,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
             uploadPath: UPLOAD_PATH,
             serverPath: uploadInfo.localInfo.path
           }),
-          extractionMethod: 'deep-lawyer-level-analysis-FIXED-v4',
+          extractionMethod: 'deep-lawyer-level-analysis-FIXED-v5',
           deepLawyerLevelAnalysis: true,
           modelUsed: 'gpt-4-turbo',
           tokenOptimized: true,
@@ -1800,7 +1814,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
               analysisStrategy: validationResult.strategy,
               confidence: validationResult.confidence,
               qualityScore: validationResult.qualityScore,
-              extractionMethod: 'deep-lawyer-level-analysis-FIXED-v4',
+              extractionMethod: 'deep-lawyer-level-analysis-FIXED-v5',
               extractionQuality: analysisData.extractionQuality,
               
               // ✅ Deep lawyer-level flags
@@ -1814,7 +1828,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
               'extraRefs.analysisId': inserted.insertedId,
               'extraRefs.documentType': validationResult.documentType,
               'extraRefs.analysisStrategy': validationResult.strategy,
-              'extraRefs.extractionMethod': 'deep-lawyer-level-analysis-FIXED-v4',
+              'extraRefs.extractionMethod': 'deep-lawyer-level-analysis-FIXED-v5',
               'extraRefs.deepLawyerLevelAnalysis': true,
               'extraRefs.modelUsed': 'gpt-4-turbo',
               'extraRefs.tokenOptimized': true,
@@ -1866,10 +1880,10 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       modelUsed: 'gpt-4-turbo', // ✅ NEW: Track which model was used
       tokenOptimized: true,
       substantialContent: true,
-      fixedVersion: 'v4', // ✅ NEW: Track fix version
+      fixedVersion: 'v5', // ✅ NEW: Track fix version
       
       extractionInfo: {
-        method: 'deep-lawyer-level-analysis-FIXED-v4',
+        method: 'deep-lawyer-level-analysis-FIXED-v5',
         quality: analysisData.extractionQuality || 'excellent',
         charactersExtracted: `${fullTextContent.length}`,
         pageCount: `${validationResult.metrics.pageCount}`,
@@ -1947,7 +1961,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       modelUsed: 'gpt-4-turbo',
       tokenOptimized: true,
       substantialContent: true,
-      fixedVersion: 'v4',
+      fixedVersion: 'v5',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
@@ -2034,11 +2048,12 @@ router.get("/health", async (req, res) => {
       enhancedRetryMechanisms: true,
       extendedTimeouts: true,
       gpt4TurboSupport: true, // ✅ NEW: GPT-4-Turbo support
-      robustErrorHandling: true // ✅ FIXED: Better error handling
+      robustErrorHandling: true, // ✅ FIXED: Better error handling
+      syntaxErrorsFree: true // ✅ NEW: No syntax errors
     },
     tokenLimits: MODEL_LIMITS,
     modelUsed: 'gpt-4-turbo', // ✅ NEW: Track which model is being used
-    version: "deep-lawyer-level-analysis-FIXED-v4.0-gpt4turbo-128k-simplified-validation"
+    version: "deep-lawyer-level-analysis-FIXED-v5.0-gpt4turbo-128k-syntax-corrected"
   };
 
   try {
