@@ -1,4 +1,4 @@
-/* ContractDetailsView.module.css - Premium Apple-Style Modal + Analysis Preview */
+/* ContractDetailsView.module.css - Premium Apple-Style Modal + Mobile-Optimized Analysis Preview */
 @import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@300;400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
@@ -339,7 +339,7 @@
   line-height: 1.5;
 }
 
-/* ✅ NEU: View Contract Button Section */
+/* View Contract Button Section */
 .viewContractSection {
   padding: 0 1.5rem 1.5rem;
   border-top: 1px solid #f5f5f7;
@@ -376,7 +376,7 @@
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3);
 }
 
-/* ✅ Content Tab Styles */
+/* Content Tab Styles */
 .contentTab {
   height: 100%;
 }
@@ -423,7 +423,7 @@
   transform: translateY(-1px);
 }
 
-/* ✅ VERBESSERT: Content Text - Moderne, lesbare Darstellung */
+/* Content Text - Moderne, lesbare Darstellung */
 .contentText {
   flex: 1;
   background: #f9f9f9;
@@ -485,7 +485,7 @@
   color: #1f2937;
 }
 
-/* ✅ NEU: Content Source Info */
+/* Content Source Info */
 .contentSourceInfo {
   display: flex;
   align-items: center;
@@ -501,7 +501,7 @@
   border: 1px solid #e5e5e7;
 }
 
-/* ✅ NEU: Debug Info Styles */
+/* Debug Info Styles */
 .debugInfo {
   margin-top: 1.5rem;
   text-align: left;
@@ -524,7 +524,7 @@
   background: #e8e8ed;
 }
 
-/* ✅ ERWEITERTE Content Stats */
+/* Content Stats */
 .contentStats {
   display: flex;
   gap: 2rem;
@@ -583,7 +583,7 @@
   line-height: 1.5;
 }
 
-/* ✅ NEU: Content & Analysis Action Buttons */
+/* Content & Analysis Action Buttons */
 .noContentActions, .noAnalysisActions {
   display: flex;
   gap: 1rem;
@@ -610,14 +610,14 @@
   transform: translateY(-1px);
 }
 
-/* ✅ Analysis Tab - Neues schlankes Design */
+/* Analysis Tab - Neues schlankes Design */
 .analysisTab {
   height: 100%;
   display: flex;
   flex-direction: column;
 }
 
-/* ✅ NEU: Analysis Preview - Ersetzt die komplexe Analyse-Anzeige */
+/* Analysis Preview - Ersetzt die komplexe Analyse-Anzeige */
 .analysisPreview {
   background: white;
   border-radius: 16px;
@@ -877,7 +877,7 @@
     gap: 1rem;
   }
 
-  /* ✅ Mobile: View Contract Button */
+  /* Mobile: View Contract Button */
   .viewContractSection {
     padding: 0 1rem 1rem;
   }
@@ -892,50 +892,199 @@
     gap: 1rem;
   }
   
-  /* ✅ Mobile Responsive für Analysis Preview */
+  .noContentActions, .noAnalysisActions {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  /* ✅ REVOLUTIONÄR: Mobile Analysis Preview - Perfekte UX */
+  .analysisPreview {
+    margin-bottom: 1rem;
+  }
+  
   .previewHeader {
     padding: 1rem;
-    flex-direction: column;
+    background: linear-gradient(135deg, #f8fafc, #f1f5f9);
     text-align: center;
+    flex-direction: column;
     gap: 0.75rem;
   }
   
   .previewIcon {
-    width: 40px;
-    height: 40px;
+    width: 48px;
+    height: 48px;
+    margin: 0 auto;
+  }
+  
+  .previewInfo {
+    text-align: center;
   }
   
   .previewInfo h3 {
-    font-size: 1rem;
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
   }
   
+  .previewInfo p {
+    font-size: 0.9rem;
+    color: #6e6e73;
+  }
+  
+  /* ✅ WICHTIG: Score Section auf Mobile optimiert */
   .scorePreview {
-    padding: 1rem;
-    flex-direction: column;
+    padding: 1.5rem 1rem;
+    background: #f5f5f7;
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     gap: 1rem;
   }
   
+  .scoreCircleSmall {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 0.5rem;
+  }
+  
+  .scoreCircleSmall::before {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .scoreNumberSmall {
+    font-size: 1.5rem;
+  }
+  
+  .scoreInfoSmall {
+    text-align: center;
+  }
+  
+  .scoreInfoSmall h4 {
+    font-size: 1.1rem;
+    margin-bottom: 0.25rem;
+  }
+  
+  /* ✅ KRITISCH: Mobile Action Buttons - Viel größer und auffälliger */
   .previewActions {
+    padding: 1.5rem 1rem;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .viewAnalysisButton {
+    min-height: 56px;
+    font-size: 1rem;
+    font-weight: 700;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    padding: 1rem 1.5rem;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  }
+  
+  .viewAnalysisButton:active {
+    transform: scale(0.98);
+  }
+  
+  .copyAnalysisButton {
+    min-height: 48px;
+    font-size: 0.95rem;
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+    color: #64748b;
+  }
+  
+  .copyAnalysisButton:active {
+    background: #f1f5f9;
+    transform: scale(0.98);
+  }
+  
+  /* ✅ Analysis Info auf Mobile besser lesbar */
+  .analysisInfo {
     padding: 1rem;
+    background: #f8fafc;
+    text-align: center;
+    display: flex;
     flex-direction: column;
     gap: 0.75rem;
   }
   
-  .viewAnalysisButton,
-  .copyAnalysisButton {
+  .analysisInfoItem {
+    font-size: 0.9rem;
+    color: #64748b;
     justify-content: center;
-    min-height: 44px;
+    gap: 0.5rem;
   }
   
-  .analysisInfo {
-    padding: 1rem;
+  /* ✅ No Analysis State auf Mobile */
+  .noAnalysis {
+    padding: 2rem 1rem;
     text-align: center;
+    height: auto;
+    min-height: 300px;
   }
   
-  .noContentActions, .noAnalysisActions {
+  .noAnalysis svg {
+    margin-bottom: 1.5rem;
+  }
+  
+  .noAnalysis h3 {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+  }
+  
+  .noAnalysis p {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-bottom: 2rem;
+    max-width: none;
+  }
+  
+  .noAnalysisActions {
     flex-direction: column;
-    align-items: center;
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+  
+  .analyzeBtn {
+    min-height: 56px;
+    font-size: 1rem;
+    font-weight: 700;
+    border-radius: 16px;
+    padding: 1rem 2rem;
+    background: linear-gradient(135deg, #007AFF, #0056b3);
+    box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+  }
+  
+  .analyzeBtn:active {
+    transform: scale(0.98);
+  }
+  
+  /* ✅ Analysis Tab Mobile - Maximaler Platz */
+  .analysisTab {
+    height: calc(100vh - 320px);
+    overflow-y: auto;
+    padding: 0;
+  }
+  
+  .analysisTab .analysisPreview,
+  .analysisTab .noAnalysis {
+    margin: 0;
+    border-radius: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .analysisTab .previewActions {
+    margin-top: auto;
+    padding: 2rem 1rem;
+    background: linear-gradient(135deg, #f8fafc, #ffffff);
+    border-top: 1px solid #e2e8f0;
   }
 }
 
