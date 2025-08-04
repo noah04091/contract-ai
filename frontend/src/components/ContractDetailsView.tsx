@@ -3,13 +3,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   X, FileText, Calendar, Clock, AlertCircle, CheckCircle, 
   Info, Eye, Download, Share2, Edit, Trash2, Star,
-  BarChart3, Shield, Lightbulb, TrendingUp,
-  Copy, ExternalLink, Cloud, AlertTriangle
+  BarChart3, Copy, ExternalLink, Cloud, AlertTriangle
 } from "lucide-react";
 import styles from "../styles/ContractDetailsView.module.css";
 import ReminderToggle from "./ReminderToggle";
 import ContractShareModal from "./ContractShareModal"; // ✅ NEU: Import Share Modal
 import ContractEditModal from "./ContractEditModal"; // ✅ NEU: Import Edit Modal
+import AnalysisModal from "./AnalysisModal"; // ✅ NEU: Import Analysis Modal
 // ✅ getContractFileUrl nicht mehr benötigt - Mobile-freundliche PDF-Logik verwendet direkte API-Aufrufe
 
 interface Contract {
@@ -76,9 +76,10 @@ export default function ContractDetailsView({
 }: ContractDetailsViewProps) {
   const [activeTab, setActiveTab] = useState<'overview' | 'content' | 'analysis'>('overview');
   
-  // ✅ NEU: State für die beiden Modals
+  // ✅ NEU: State für die drei Modals
   const [showShareModal, setShowShareModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showAnalysisModal, setShowAnalysisModal] = useState(false); // ✅ NEU: Analysis Modal State
   const [contract, setContract] = useState<Contract>(initialContract); // ✅ NEU: Lokaler Contract State für Updates
 
   // ✅ NEU: Update contract wenn sich initialContract ändert
@@ -193,29 +194,6 @@ export default function ContractDetailsView({
     if (score >= 60) return "Gut";
     if (score >= 40) return "Akzeptabel";
     return "Kritisch";
-  };
-
-  const formatTextToPoints = (text: string | string[] | object | number | null | undefined): string[] => {
-    // ✅ BUG FIX 2: Sichere Behandlung verschiedener Datentypen
-    console.log('🔍 formatTextToPoints input:', { text, type: typeof text, isArray: Array.isArray(text) });
-    
-    if (!text) return ['Keine Details verfügbar'];
-    
-    // ✅ Wenn es bereits ein Array ist, direkt zurückgeben
-    if (Array.isArray(text)) {
-      return text.filter(item => item && typeof item === 'string' && item.trim().length > 0).slice(0, 4);
-    }
-    
-    // ✅ Wenn es kein String ist, zu String konvertieren
-    const textString = typeof text === 'string' ? text : String(text);
-    
-    const sentences = textString
-      .split(/[.!?]+|[-•]\s*/)
-      .map(s => s.trim())
-      .filter(s => s.length > 15 && s.length < 200)
-      .slice(0, 4);
-    
-    return sentences.length > 0 ? sentences : [textString.substring(0, 180) + '...'];
   };
 
   // ✅ MOBILE-FIX: Neue Mobile-freundliche PDF-Öffnung
@@ -453,30 +431,6 @@ export default function ContractDetailsView({
     link.click();
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
-  };
-
-  const handleCopyAnalysis = () => {
-    const analysis = contract.analysis;
-    if (!analysis) return;
-    
-    const analysisText = `
-Vertragsanalyse: ${contract.name}
-Score: ${analysis.contractScore || 'N/A'}/100
-
-Zusammenfassung:
-${analysis.summary || 'Nicht verfügbar'}
-
-Rechtssicherheit:
-${analysis.legalAssessment || 'Nicht verfügbar'}
-
-Optimierungsvorschläge:
-${analysis.suggestions || 'Nicht verfügbar'}
-
-Marktvergleich:
-${analysis.comparison || 'Nicht verfügbar'}
-    `.trim();
-    
-    navigator.clipboard.writeText(analysisText);
   };
 
   // ✅ BUG FIX 2: Neue Analyse starten Handler (nur wenn keine Analyse vorhanden)
@@ -900,7 +854,7 @@ ${analysis.comparison || 'Nicht verfügbar'}
               </motion.div>
             )}
 
-            {/* ✅ BUG FIX 2: Analysis Tab - Unterstützt BEIDE Strukturen (analysis + legalPulse) */}
+            {/* ✅ REVOLUTIONÄR: Analysis Tab - Nur Score + Button für Vollbild-Modal */}
             {activeTab === 'analysis' && (
               <motion.div 
                 className={styles.analysisTab}
@@ -921,293 +875,110 @@ ${analysis.comparison || 'Nicht verfügbar'}
                   return null;
                 })()}
 
-                {/* ✅ BUG FIX 2: Zeige NEUE Analysis-Struktur (falls vorhanden) */}
-                {contract.analysis ? (
-                  <div className={styles.analysisViewer}>
-                    <div className={styles.analysisHeader}>
-                      <h3>🤖 KI-Vertragsanalyse (Neu)</h3>
-                      <div className={styles.analysisActions}>
-                        <button 
-                          className={styles.copyBtn}
-                          onClick={handleCopyAnalysis}
-                          title="Analyse kopieren"
-                        >
-                          <Copy size={16} />
-                          <span>Kopieren</span>
-                        </button>
+                {/* ✅ EINFACH: Prüfe ob irgendeine Analyse vorhanden ist */}
+                {(contract.analysis || contract.legalPulse) ? (
+                  <div className={styles.analysisPreview}>
+                    <div className={styles.previewHeader}>
+                      <div className={styles.previewIcon}>
+                        <BarChart3 size={24} />
+                      </div>
+                      <div className={styles.previewInfo}>
+                        <h3>
+                          {contract.analysis ? '🤖 KI-Vertragsanalyse verfügbar' : '🧠 Legal Pulse Analyse verfügbar'}
+                        </h3>
+                        <p>Vollständige Analyse in separatem Fenster anzeigen</p>
                       </div>
                     </div>
 
-                    {contract.analysis.contractScore && (
-                      <div className={styles.scoreSection}>
-                        <div className={styles.scoreDisplay}>
-                          <div 
-                            className={styles.scoreCircle}
-                            style={{ '--score-color': getScoreColor(contract.analysis.contractScore) } as React.CSSProperties}
-                          >
-                            <span className={styles.scoreNumber}>{contract.analysis.contractScore}</span>
-                            <span className={styles.scoreMax}>/100</span>
+                    {/* Score Preview */}
+                    {(() => {
+                      const score = contract.analysis?.contractScore || contract.legalPulse?.riskScore;
+                      if (score !== null && score !== undefined) {
+                        return (
+                          <div className={styles.scorePreview}>
+                            <div 
+                              className={styles.scoreCircleSmall}
+                              style={{ '--score-color': getScoreColor(score) } as React.CSSProperties}
+                            >
+                              <span className={styles.scoreNumberSmall}>{score}</span>
+                              <span className={styles.scoreMaxSmall}>/100</span>
+                            </div>
+                            <div className={styles.scoreInfoSmall}>
+                              <h4 style={{ color: getScoreColor(score) }}>
+                                {getScoreLabel(score)}
+                              </h4>
+                              <p>{contract.analysis ? 'Contract Score' : 'Legal Pulse Score'}</p>
+                            </div>
                           </div>
-                          <div className={styles.scoreInfo}>
-                            <h4 style={{ color: getScoreColor(contract.analysis.contractScore) }}>
-                              {getScoreLabel(contract.analysis.contractScore)}
-                            </h4>
-                            <p>Contract Score</p>
-                          </div>
-                        </div>
+                        );
+                      }
+                      return null;
+                    })()}
+
+                    {/* Main Action Button */}
+                    <div className={styles.previewActions}>
+                      <button 
+                        className={styles.viewAnalysisButton}
+                        onClick={() => setShowAnalysisModal(true)}
+                      >
+                        <BarChart3 size={18} />
+                        <span>Vollständige Analyse anzeigen</span>
+                      </button>
+                      
+                      <button 
+                        className={styles.copyAnalysisButton}
+                        onClick={() => {
+                          // Quick copy ohne Modal zu öffnen
+                          let analysisText = '';
+                          
+                          if (contract.analysis) {
+                            analysisText = `Vertragsanalyse: ${contract.name}\nScore: ${contract.analysis.contractScore || 'N/A'}/100\n\nZusammenfassung: ${contract.analysis.summary || 'Nicht verfügbar'}`;
+                          } else if (contract.legalPulse) {
+                            analysisText = `Legal Pulse: ${contract.name}\nScore: ${contract.legalPulse.riskScore || 'N/A'}/100\n\nZusammenfassung: ${contract.legalPulse.summary || 'Nicht verfügbar'}`;
+                          }
+                          
+                          navigator.clipboard.writeText(analysisText).then(() => {
+                            // Kurzes Feedback
+                            const button = document.activeElement as HTMLButtonElement;
+                            const originalText = button.textContent;
+                            button.textContent = 'Kopiert!';
+                            setTimeout(() => {
+                              button.textContent = originalText;
+                            }, 1500);
+                          });
+                        }}
+                        title="Schnell-Kopie der Analyse"
+                      >
+                        <Copy size={16} />
+                        <span>Kopieren</span>
+                      </button>
+                    </div>
+
+                    {/* Analysis Info */}
+                    <div className={styles.analysisInfo}>
+                      <div className={styles.analysisInfoItem}>
+                        <Clock size={14} />
+                        <span>
+                          Letzte Analyse: {
+                            contract.analysis?.lastAnalyzed
+                              ? formatDate(contract.analysis.lastAnalyzed)
+                              : contract.legalPulse?.analysisDate
+                              ? formatDate(contract.legalPulse.analysisDate)
+                              : 'Unbekannt'
+                          }
+                        </span>
                       </div>
-                    )}
-
-                    <div className={styles.analysisContent}>
-                      {contract.analysis.summary && (
-                        <div className={styles.analysisSection}>
-                          <div className={styles.analysisSectionHeader}>
-                            <div className={styles.sectionIcon}>
-                              <FileText size={20} />
-                            </div>
-                            <h4>📋 Zusammenfassung</h4>
-                          </div>
-                          <div className={styles.analysisSectionContent}>
-                            <ul className={styles.analysisList}>
-                              {formatTextToPoints(contract.analysis.summary).map((point, index) => (
-                                <li key={index} className={styles.analysisPoint}>
-                                  <div className={styles.pointBullet}></div>
-                                  <span>{point}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        </div>
-                      )}
-
-                      {contract.analysis.legalAssessment && (
-                        <div className={styles.analysisSection}>
-                          <div className={styles.analysisSectionHeader}>
-                            <div className={styles.sectionIcon} style={{ background: 'rgba(52, 199, 89, 0.1)' }}>
-                              <Shield size={20} style={{ color: '#34c759' }} />
-                            </div>
-                            <h4>⚖️ Rechtssicherheit</h4>
-                          </div>
-                          <div className={styles.analysisSectionContent}>
-                            <ul className={styles.analysisList}>
-                              {formatTextToPoints(contract.analysis.legalAssessment).map((point, index) => (
-                                <li key={index} className={styles.analysisPoint}>
-                                  <div className={styles.pointBullet} style={{ background: '#34c759' }}></div>
-                                  <span>{point}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        </div>
-                      )}
-
-                      {contract.analysis.suggestions && (
-                        <div className={styles.analysisSection}>
-                          <div className={styles.analysisSectionHeader}>
-                            <div className={styles.sectionIcon} style={{ background: 'rgba(255, 149, 0, 0.1)' }}>
-                              <Lightbulb size={20} style={{ color: '#ff9500' }} />
-                            </div>
-                            <h4>💡 Optimierungsvorschläge</h4>
-                          </div>
-                          <div className={styles.analysisSectionContent}>
-                            <ul className={styles.analysisList}>
-                              {formatTextToPoints(contract.analysis.suggestions).map((point, index) => (
-                                <li key={index} className={styles.analysisPoint}>
-                                  <div className={styles.pointBullet} style={{ background: '#ff9500' }}></div>
-                                  <span>{point}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        </div>
-                      )}
-
-                      {contract.analysis.comparison && (
-                        <div className={styles.analysisSection}>
-                          <div className={styles.analysisSectionHeader}>
-                            <div className={styles.sectionIcon} style={{ background: 'rgba(139, 92, 246, 0.1)' }}>
-                              <TrendingUp size={20} style={{ color: '#8b5cf6' }} />
-                            </div>
-                            <h4>📊 Marktvergleich</h4>
-                          </div>
-                          <div className={styles.analysisSectionContent}>
-                            <ul className={styles.analysisList}>
-                              {formatTextToPoints(contract.analysis.comparison).map((point, index) => (
-                                <li key={index} className={styles.analysisPoint}>
-                                  <div className={styles.pointBullet} style={{ background: '#8b5cf6' }}></div>
-                                  <span>{point}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
+                      
+                      {contract.analysis?.analysisId && (
+                        <div className={styles.analysisInfoItem}>
+                          <FileText size={14} />
+                          <span>ID: {contract.analysis.analysisId}</span>
                         </div>
                       )}
                     </div>
-
-                    {contract.analysis.lastAnalyzed && (
-                      <div className={styles.analysisMeta}>
-                        <p>
-                          <Clock size={14} />
-                          Letzte Analyse: {formatDate(contract.analysis.lastAnalyzed)}
-                        </p>
-                        {contract.analysis.analysisId && (
-                          <p>
-                            <FileText size={14} />
-                            ID: {contract.analysis.analysisId}
-                          </p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                ) : contract.legalPulse ? (
-                  /* ✅ BUG FIX 2: Zeige ALTE LegalPulse-Struktur (Fallback für alte Verträge) */
-                  <div className={styles.analysisViewer}>
-                    <div className={styles.analysisHeader}>
-                      <h3>🧠 Legal Pulse Analyse</h3>
-                      <div className={styles.analysisActions}>
-                        <button 
-                          className={styles.copyBtn}
-                          onClick={() => {
-                            const pulse = contract.legalPulse;
-                            if (!pulse) return;
-                            
-                            const pulseText = `
-Legal Pulse Analyse: ${contract.name}
-Score: ${pulse.riskScore || 'N/A'}/100
-
-Zusammenfassung:
-${pulse.summary || 'Nicht verfügbar'}
-
-Risikofaktoren:
-${pulse.riskFactors?.join('\n- ') || 'Nicht verfügbar'}
-
-Rechtliche Hinweise:
-${pulse.legalRisks?.join('\n- ') || 'Nicht verfügbar'}
-
-Empfehlungen:
-${pulse.recommendations?.join('\n- ') || 'Nicht verfügbar'}
-                            `.trim();
-                            
-                            navigator.clipboard.writeText(pulseText);
-                          }}
-                          title="Legal Pulse kopieren"
-                        >
-                          <Copy size={16} />
-                          <span>Kopieren</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    {contract.legalPulse.riskScore !== null && contract.legalPulse.riskScore !== undefined && (
-                      <div className={styles.scoreSection}>
-                        <div className={styles.scoreDisplay}>
-                          <div 
-                            className={styles.scoreCircle}
-                            style={{ '--score-color': getScoreColor(contract.legalPulse.riskScore) } as React.CSSProperties}
-                          >
-                            <span className={styles.scoreNumber}>{contract.legalPulse.riskScore}</span>
-                            <span className={styles.scoreMax}>/100</span>
-                          </div>
-                          <div className={styles.scoreInfo}>
-                            <h4 style={{ color: getScoreColor(contract.legalPulse.riskScore) }}>
-                              {getScoreLabel(contract.legalPulse.riskScore)}
-                            </h4>
-                            <p>Legal Pulse Score</p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    <div className={styles.analysisContent}>
-                      {contract.legalPulse.summary && (
-                        <div className={styles.analysisSection}>
-                          <div className={styles.analysisSectionHeader}>
-                            <div className={styles.sectionIcon}>
-                              <FileText size={20} />
-                            </div>
-                            <h4>📋 Zusammenfassung</h4>
-                          </div>
-                          <div className={styles.analysisSectionContent}>
-                            <p style={{ lineHeight: '1.6', color: '#1d1d1f' }}>{contract.legalPulse.summary}</p>
-                          </div>
-                        </div>
-                      )}
-
-                      {contract.legalPulse.riskFactors && contract.legalPulse.riskFactors.length > 0 && (
-                        <div className={styles.analysisSection}>
-                          <div className={styles.analysisSectionHeader}>
-                            <div className={styles.sectionIcon} style={{ background: 'rgba(255, 69, 58, 0.1)' }}>
-                              <AlertTriangle size={20} style={{ color: '#ff453a' }} />
-                            </div>
-                            <h4>⚠️ Identifizierte Risiken</h4>
-                          </div>
-                          <div className={styles.analysisSectionContent}>
-                            <ul className={styles.analysisList}>
-                              {contract.legalPulse.riskFactors.map((risk, index) => (
-                                <li key={index} className={styles.analysisPoint}>
-                                  <div className={styles.pointBullet} style={{ background: '#ff453a' }}></div>
-                                  <span>{risk}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        </div>
-                      )}
-
-                      {contract.legalPulse.legalRisks && contract.legalPulse.legalRisks.length > 0 && (
-                        <div className={styles.analysisSection}>
-                          <div className={styles.analysisSectionHeader}>
-                            <div className={styles.sectionIcon} style={{ background: 'rgba(52, 199, 89, 0.1)' }}>
-                              <Shield size={20} style={{ color: '#34c759' }} />
-                            </div>
-                            <h4>⚖️ Rechtliche Hinweise</h4>
-                          </div>
-                          <div className={styles.analysisSectionContent}>
-                            <ul className={styles.analysisList}>
-                              {contract.legalPulse.legalRisks.map((legal, index) => (
-                                <li key={index} className={styles.analysisPoint}>
-                                  <div className={styles.pointBullet} style={{ background: '#34c759' }}></div>
-                                  <span>{legal}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        </div>
-                      )}
-
-                      {contract.legalPulse.recommendations && contract.legalPulse.recommendations.length > 0 && (
-                        <div className={styles.analysisSection}>
-                          <div className={styles.analysisSectionHeader}>
-                            <div className={styles.sectionIcon} style={{ background: 'rgba(255, 149, 0, 0.1)' }}>
-                              <Lightbulb size={20} style={{ color: '#ff9500' }} />
-                            </div>
-                            <h4>💡 Empfehlungen</h4>
-                          </div>
-                          <div className={styles.analysisSectionContent}>
-                            <ul className={styles.analysisList}>
-                              {contract.legalPulse.recommendations.map((rec, index) => (
-                                <li key={index} className={styles.analysisPoint}>
-                                  <div className={styles.pointBullet} style={{ background: '#ff9500' }}></div>
-                                  <span>{rec}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {contract.legalPulse.analysisDate && (
-                      <div className={styles.analysisMeta}>
-                        <p>
-                          <Clock size={14} />
-                          Analyse durchgeführt: {formatDate(contract.legalPulse.analysisDate)}
-                        </p>
-                      </div>
-                    )}
                   </div>
                 ) : (
-                  /* ✅ BUG FIX 2: Keine Analyse vorhanden */
+                  /* Keine Analyse vorhanden */
                   <div className={styles.noAnalysis}>
                     <BarChart3 size={48} />
                     <h3>Keine Analyse verfügbar</h3>
@@ -1228,6 +999,13 @@ ${pulse.recommendations?.join('\n- ') || 'Nicht verfügbar'}
             )}
           </div>
         </motion.div>
+
+        {/* ✅ NEU: Analysis Modal - Vollbild-Analyse */}
+        <AnalysisModal
+          contract={contract}
+          show={showAnalysisModal}
+          onClose={() => setShowAnalysisModal(false)}
+        />
 
         {/* ✅ NEU: Share Modal */}
         <ContractShareModal
