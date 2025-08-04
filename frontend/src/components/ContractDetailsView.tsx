@@ -880,7 +880,7 @@ ${analysis.comparison || 'Nicht verfügbar'}
               </motion.div>
             )}
 
-            {/* ✅ BUG FIX 2: Analysis Tab - Verbesserte Fehlerbehandlung */}
+            {/* ✅ BUG FIX 2: Analysis Tab - VEREINFACHT zur ursprünglichen Logik */}
             {activeTab === 'analysis' && (
               <motion.div 
                 className={styles.analysisTab}
@@ -898,11 +898,8 @@ ${analysis.comparison || 'Nicht verfügbar'}
                   return null;
                 })()}
 
-                {/* ✅ BUG FIX 2: Prüfe ob Analyse vorhanden ist, BEVOR sie angezeigt wird */}
-                {contract.analysis && (
-                  Object.keys(contract.analysis).length > 0 && 
-                  (contract.analysis.summary || contract.analysis.legalAssessment || contract.analysis.suggestions || contract.analysis.comparison)
-                ) ? (
+                {/* ✅ BUG FIX 2: EINFACHE Prüfung wie früher - nur ob contract.analysis existiert */}
+                {contract.analysis ? (
                   <div className={styles.analysisViewer}>
                     <div className={styles.analysisHeader}>
                       <h3>KI-Vertragsanalyse</h3>
@@ -1040,7 +1037,7 @@ ${analysis.comparison || 'Nicht verfügbar'}
                     )}
                   </div>
                 ) : (
-                  // ✅ BUG FIX 2: Zeige "Keine Analyse" nur wenn wirklich keine da ist
+                  // ✅ BUG FIX 2: Einfache "Keine Analyse" Anzeige wie früher
                   <div className={styles.noAnalysis}>
                     <BarChart3 size={48} />
                     <h3>Keine Analyse verfügbar</h3>
@@ -1049,7 +1046,7 @@ ${analysis.comparison || 'Nicht verfügbar'}
                     <div className={styles.noAnalysisActions}>
                       <button 
                         className={styles.analyzeBtn}
-                        onClick={handleStartNewAnalysis} // ✅ BUG FIX 2: Echte Analyse-Funktion statt console.log
+                        onClick={handleStartNewAnalysis}
                       >
                         <BarChart3 size={16} />
                         <span>Jetzt analysieren</span>
