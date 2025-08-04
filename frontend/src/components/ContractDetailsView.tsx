@@ -195,16 +195,27 @@ export default function ContractDetailsView({
     return "Kritisch";
   };
 
-  const formatTextToPoints = (text: string): string[] => {
+  const formatTextToPoints = (text: string | string[] | any): string[] => {
+    // ✅ BUG FIX 2: Sichere Behandlung verschiedener Datentypen
+    console.log('🔍 formatTextToPoints input:', { text, type: typeof text, isArray: Array.isArray(text) });
+    
     if (!text) return ['Keine Details verfügbar'];
     
-    const sentences = text
+    // ✅ Wenn es bereits ein Array ist, direkt zurückgeben
+    if (Array.isArray(text)) {
+      return text.filter(item => item && typeof item === 'string' && item.trim().length > 0).slice(0, 4);
+    }
+    
+    // ✅ Wenn es kein String ist, zu String konvertieren
+    const textString = typeof text === 'string' ? text : String(text);
+    
+    const sentences = textString
       .split(/[.!?]+|[-•]\s*/)
       .map(s => s.trim())
       .filter(s => s.length > 15 && s.length < 200)
       .slice(0, 4);
     
-    return sentences.length > 0 ? sentences : [text.substring(0, 180) + '...'];
+    return sentences.length > 0 ? sentences : [textString.substring(0, 180) + '...'];
   };
 
   // ✅ MOBILE-FIX: Neue Mobile-freundliche PDF-Öffnung
