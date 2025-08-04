@@ -195,7 +195,7 @@ export default function ContractDetailsView({
     return "Kritisch";
   };
 
-  const formatTextToPoints = (text: string | string[] | any): string[] => {
+  const formatTextToPoints = (text: string | string[] | object | number | null | undefined): string[] => {
     // ✅ BUG FIX 2: Sichere Behandlung verschiedener Datentypen
     console.log('🔍 formatTextToPoints input:', { text, type: typeof text, isArray: Array.isArray(text) });
     
