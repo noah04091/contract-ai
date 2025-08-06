@@ -1064,27 +1064,107 @@
     transform: scale(0.98);
   }
   
-  /* ✅ Analysis Tab Mobile - Maximaler Platz */
+  /* ✅ KRITISCHE MOBILE-FIX: Analysis Tab - Button immer sichtbar */
   .analysisTab {
-    height: calc(100vh - 320px);
+    min-height: calc(100vh - 320px);
+    max-height: calc(100vh - 320px);
     overflow-y: auto;
     padding: 0;
-  }
-  
-  .analysisTab .analysisPreview,
-  .analysisTab .noAnalysis {
-    margin: 0;
-    border-radius: 0;
-    height: 100%;
     display: flex;
     flex-direction: column;
   }
   
+  .analysisTab .analysisPreview {
+    margin: 0;
+    border-radius: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0; /* Wichtig für Flexbox-Scrolling */
+  }
+  
+  .analysisTab .noAnalysis {
+    margin: 0;
+    border-radius: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: calc(100vh - 320px);
+  }
+  
+  /* ✅ WICHTIG: Preview Header bleibt kompakt */
+  .analysisTab .previewHeader {
+    flex-shrink: 0;
+    padding: 1rem;
+  }
+  
+  /* ✅ WICHTIG: Score Preview bleibt kompakt */
+  .analysisTab .scorePreview {
+    flex-shrink: 0;
+    padding: 1rem;
+  }
+  
+  /* ✅ KRITISCH: Actions immer am unteren Rand, immer sichtbar */
   .analysisTab .previewActions {
+    flex-shrink: 0;
     margin-top: auto;
-    padding: 2rem 1rem;
+    padding: 1.5rem 1rem 2rem;
     background: linear-gradient(135deg, #f8fafc, #ffffff);
     border-top: 1px solid #e2e8f0;
+    /* Zusätzliche Mobile-Sicherheit */
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+  }
+  
+  /* ✅ Analysis Info kann scrollen wenn nötig */
+  .analysisTab .analysisInfo {
+    flex-shrink: 0;
+    padding: 1rem;
+  }
+  
+  /* ✅ NOTFALL-OPTIMIERUNG: Sehr kleine Screens (iPhone SE, etc.) */
+  @media (max-width: 480px), (max-height: 650px) {
+    .analysisTab {
+      min-height: calc(100vh - 280px);
+      max-height: calc(100vh - 280px);
+    }
+    
+    .analysisTab .previewHeader {
+      padding: 0.75rem;
+    }
+    
+    .analysisTab .scorePreview {
+      padding: 1rem 0.75rem;
+      gap: 0.75rem;
+    }
+    
+    .analysisTab .previewActions {
+      padding: 1rem 0.75rem 1.5rem;
+    }
+    
+    .viewAnalysisButton {
+      min-height: 52px;
+      font-size: 0.95rem;
+      padding: 0.875rem 1.25rem;
+    }
+    
+    .copyAnalysisButton {
+      min-height: 44px;
+      font-size: 0.9rem;
+    }
+    
+    .analysisTab .noAnalysis {
+      min-height: calc(100vh - 280px);
+      padding: 1.5rem 1rem;
+    }
+    
+    .analyzeBtn {
+      min-height: 52px;
+      font-size: 0.95rem;
+      padding: 0.875rem 1.75rem;
+    }
   }
 }
 
