@@ -6,50 +6,6 @@
       "destination": "https://api.contract-ai.de/api/:path*"
     },
     {
-      "source": "/contracts",
-      "destination": "/contracts.html"
-    },
-    {
-      "source": "/dashboard",
-      "destination": "/dashboard.html"
-    },
-    {
-      "source": "/profile",
-      "destination": "/profile.html"
-    },
-    {
-      "source": "/subscribe",
-      "destination": "/subscribe.html"
-    },
-    {
-      "source": "/upgrade",
-      "destination": "/upgrade.html"
-    },
-    {
-      "source": "/help-center",
-      "destination": "/help-center.html"
-    },
-    {
-      "source": "/legalpulse",
-      "destination": "/legalpulse.html"
-    },
-    {
-      "source": "/compare",
-      "destination": "/compare.html"
-    },
-    {
-      "source": "/chat",
-      "destination": "/chat.html"
-    },
-    {
-      "source": "/calendar-view",
-      "destination": "/calendar-view.html"
-    },
-    {
-      "source": "/optimizer",
-      "destination": "/optimizer.html"
-    },
-    {
       "source": "/((?!api|_next|static|.*\\.html$).*)",
       "destination": "/"
     }
