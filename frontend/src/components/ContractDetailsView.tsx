@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   X, FileText, Calendar, Clock, AlertCircle, CheckCircle, 
   Info, Eye, Download, Share2, Edit, Trash2, Star,
-  BarChart3, Copy, ExternalLink, Cloud, AlertTriangle
+  BarChart3, Copy, ExternalLink
 } from "lucide-react";
 import styles from "../styles/ContractDetailsView.module.css";
 import ReminderToggle from "./ReminderToggle";
@@ -133,53 +133,6 @@ export default function ContractDetailsView({
     } else {
       return styles.statusNeutral;
     }
-  };
-
-  // ✅ NEU: S3 Status Badge Funktion
-  const getContractStatusBadge = (contract: Contract) => {
-    if (contract.s3Key) {
-      return (
-        <span 
-          className={styles.statusBadge} 
-          style={{ 
-            background: 'rgba(52, 199, 89, 0.1)', 
-            color: '#34c759', 
-            border: '1px solid rgba(52, 199, 89, 0.2)' 
-          }}
-        >
-          <Cloud size={12} />
-          ☁️ Cloud
-        </span>
-      );
-    }
-    if (contract.needsReupload || contract.uploadType === 'LOCAL_LEGACY') {
-      return (
-        <span 
-          className={styles.statusBadge} 
-          style={{ 
-            background: 'rgba(255, 149, 0, 0.1)', 
-            color: '#ff9500', 
-            border: '1px solid rgba(255, 149, 0, 0.2)' 
-          }}
-        >
-          <AlertTriangle size={12} />
-          ⚠️ Reupload erforderlich
-        </span>
-      );
-    }
-    return (
-      <span 
-        className={styles.statusBadge} 
-        style={{ 
-          background: 'rgba(142, 142, 147, 0.1)', 
-          color: '#8e8e93', 
-          border: '1px solid rgba(142, 142, 147, 0.2)' 
-        }}
-      >
-        <FileText size={12} />
-        📁 Lokal
-      </span>
-    );
   };
 
   const getScoreColor = (score: number): string => {
@@ -515,8 +468,6 @@ export default function ContractDetailsView({
                         KI-Generiert
                       </span>
                     )}
-                    {/* ✅ NEU: S3 Status Badge */}
-                    {getContractStatusBadge(contract)}
                   </div>
                 </div>
               </div>
@@ -632,11 +583,6 @@ export default function ContractDetailsView({
                         <span>{contract.status}</span>
                       </div>
                     </div>
-                    {/* ✅ NEU: Speicherstatus anzeigen */}
-                    <div className={styles.detailItem}>
-                      <label>Speicherstatus</label>
-                      {getContractStatusBadge(contract)}
-                    </div>
                     <div className={styles.detailItem}>
                       <label>Kündigungsfrist</label>
                       <span>{contract.kuendigung || "Nicht angegeben"}</span>
@@ -698,13 +644,8 @@ export default function ContractDetailsView({
                         onClick={handleViewContract}
                         className={styles.viewContractButton}
                         title="Original-Vertragsdatei anzeigen"
-                        style={{
-                          background: contract.s3Key ? 'rgba(52, 199, 89, 0.1)' : 'rgba(0, 122, 255, 0.1)',
-                          border: contract.s3Key ? '1px solid rgba(52, 199, 89, 0.3)' : '1px solid rgba(0, 122, 255, 0.3)',
-                          color: contract.s3Key ? '#34c759' : '#007aff'
-                        }}
                       >
-                        {contract.s3Key ? '☁️ Vertrag anzeigen (Cloud)' : '📄 Vertrag anzeigen'}
+                        📄 Vertrag anzeigen
                       </button>
                     )}
                   </div>

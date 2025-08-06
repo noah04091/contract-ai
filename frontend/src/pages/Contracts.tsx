@@ -1261,12 +1261,6 @@ export default function Contracts() {
             {contract.isGenerated && (
               <span className={styles.generatedBadge}>Generiert</span>
             )}
-            {contract.s3Key && (
-              <span className={styles.cloudBadge}>☁️ Cloud</span>
-            )}
-            {contract.needsReupload && (
-              <span className={styles.reuploadBadge}>⚠️ Reupload</span>
-            )}
           </div>
         </div>
       </div>
@@ -1986,17 +1980,11 @@ export default function Contracts() {
                                   </div>
                                   <div>
                                     <span className={styles.contractNameText}>{contract.name}</span>
-                                    <div className={styles.contractBadges}>
-                                      {contract.isGenerated && (
+                                    {contract.isGenerated && (
+                                      <div className={styles.contractBadges}>
                                         <span className={styles.generatedBadge}>Generiert</span>
-                                      )}
-                                      {contract.s3Key && (
-                                        <span className={styles.cloudBadge}>☁️</span>
-                                      )}
-                                      {contract.needsReupload && (
-                                        <span className={styles.reuploadBadge}>⚠️</span>
-                                      )}
-                                    </div>
+                                      </div>
+                                    )}
                                   </div>
                                 </div>
                               </td>
