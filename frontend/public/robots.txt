@@ -1,4 +1,18 @@
+# robots.txt für contract-ai.de
 User-agent: *
 Allow: /
 
-Sitemap: https://contract-ai.de/sitemap.xml
+# Verhindere Indexierung von privaten Routen
+Disallow: /dashboard
+Disallow: /contracts
+Disallow: /optimizer
+Disallow: /profile
+Disallow: /compare
+Disallow: /calendar-view
+Disallow: /chat
+Disallow: /legalpulse
+Disallow: /upgrade
+Disallow: /subscribe
+
+# Sitemap
+Sitemap: https://www.contract-ai.de/sitemap.xml
