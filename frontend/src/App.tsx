@@ -20,6 +20,7 @@ import Impressum from "./pages/Impressum";
 import Datenschutz from "./pages/Datenschutz";
 import AGB from "./pages/AGB";
 import About from "./pages/About";
+import Press from "./pages/Press";
 import Success from "./pages/Success";
 import HelpCenter from "./pages/HelpCenter";
 import Blog from "./pages/Blog";
@@ -94,6 +95,7 @@ function AppWithLoader() {
             <Route path="/verify-success" element={<VerifySuccess />} /> {/* ✅ NEU: E-Mail bestätigt Seite */}
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/about" element={<About />} />
+            <Route path="/press" element={<Press />} />
             <Route path="/success" element={<Success />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
