@@ -1,4 +1,4 @@
-// 📁 src/pages/Optimizer.tsx - TYPESCRIPT FIXED: Smart Contract Generator Integration
+// 📁 src/pages/Optimizer.tsx - FIXED: Alle TypeScript-Fehler behoben
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import ReactDOM from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -28,16 +28,57 @@ import {
   Building2,
   User,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Home,
+  Calendar,
+  Euro,
+  Umbrella,        // Ersetzt Beach
+  Timer,
+  Receipt,
+  PiggyBank,       // Ersetzt Savings
+  Hammer,          // Ersetzt Build
+  CalendarClock,   // Ersetzt Schedule
+  Gavel,
+  Key,             // Ersetzt VpnKey
+  Truck,           // Ersetzt LocalShipping
+  ShieldCheck,     // Ersetzt VerifiedUser
+  Lightbulb,       // Ersetzt TipsAndUpdates
+  Briefcase,       // Ersetzt Work
+  Handshake,
+  ScrollText,      // Ersetzt Description
+  FileCheck,       // Ersetzt Policy
+  Landmark,        // Ersetzt AccountBalance
+  Info,
+  Award,
+  Zap
 } from "lucide-react";
 
 // Components
 import LegendaryPremiumNotice from "../components/LegendaryPremiumNotice";
 import ContractHealthDashboard from "../components/ContractHealthDashboard";
 
-// Types
+// Types - ERWEITERT für dynamische Kategorien
+interface ExtendedOptimizationSuggestion {
+  id: string;
+  category: string; // Jetzt string statt union type für Flexibilität
+  priority: 'critical' | 'high' | 'medium' | 'low';
+  confidence: number;
+  original: string;
+  improved: string;
+  reasoning: string;
+  legalRisk: number;
+  businessImpact: number;
+  implementationDifficulty: 'easy' | 'medium' | 'complex';
+  estimatedSavings: string;
+  marketBenchmark: string;
+  implemented: boolean;
+  aiInsight: string;
+  relatedClauses: string[];
+  categoryInfo?: ContractCategory;
+}
+
+// Import original types für Kompatibilität
 import { 
-  OptimizationSuggestion, 
   ContractHealthScore, 
   OptimizationCategory 
 } from "../types/optimizer";
@@ -45,7 +86,27 @@ import {
 // Styles
 import styles from "../styles/Optimizer.module.css";
 
-// ✅ TYPESCRIPT FIX: Specific interfaces instead of 'any'
+// ✅ ENHANCED INTERFACES mit Vertragstyp-Support
+interface ContractCategory {
+  id: string;
+  name: string;
+  nameEN?: string;
+  icon?: string;
+  description?: string;
+  priority?: string;
+  count?: number;
+  color?: string;
+}
+
+interface ContractTypeInfo {
+  contractType: string;
+  contractTypeEN?: string;
+  description?: string;
+  confidence?: number;
+  categories: ContractCategory[];
+  additionalInsights?: string;
+}
+
 interface AnalysisData {
   success: boolean;
   analysisId?: string;
@@ -62,7 +123,13 @@ interface AnalysisData {
   summary?: string;
   legalAssessment?: string;
   optimizationResult?: string;
-  [key: string]: unknown; // For additional properties
+  contractType?: string;
+  contractTypeEN?: string;
+  contractTypeConfidence?: number;
+  contractDescription?: string;
+  categories?: ContractCategory[];
+  structuredOptimizations?: ExtendedOptimizationSuggestion[];
+  [key: string]: unknown;
 }
 
 interface ExportOption {
@@ -81,6 +148,89 @@ interface PitchStyle {
   description: string;
   target: 'lawyer' | 'business' | 'private';
 }
+
+// ✅ FIXED: Intelligentes Icon-Mapping mit korrekten Icons
+const getIconForCategory = (categoryId: string, categoryName?: string): React.ReactNode => {
+  const iconMap: { [key: string]: React.ReactNode } = {
+    'termination': <Clock size={18} />,
+    'liability': <Shield size={18} />,
+    'payment': <DollarSign size={18} />,
+    'clarity': <Eye size={18} />,
+    'compliance': <CheckCircle2 size={18} />,
+    'salary': <Euro size={18} />,
+    'working_hours': <Calendar size={18} />,
+    'vacation': <Umbrella size={18} />,
+    'probation': <Timer size={18} />,
+    'rent': <Home size={18} />,
+    'utilities': <Receipt size={18} />,
+    'deposit': <PiggyBank size={18} />,
+    'repairs': <Hammer size={18} />,
+    'confidentiality': <Lock size={18} />,
+    'duration': <CalendarClock size={18} />,
+    'penalties': <Gavel size={18} />,
+    'exceptions': <FileCheck size={18} />,
+    'price': <Euro size={18} />,
+    'warranty': <ShieldCheck size={18} />,
+    'delivery': <Truck size={18} />,
+    'ownership': <Key size={18} />,
+    'other': <Lightbulb size={18} />,
+    'general': <BookOpen size={18} />
+  };
+  
+  if (iconMap[categoryId]) {
+    return iconMap[categoryId];
+  }
+  
+  // Intelligentes Keyword-basiertes Mapping
+  const nameLower = (categoryName || categoryId).toLowerCase();
+  
+  if (nameLower.includes('kündigung') || nameLower.includes('frist')) return <Clock size={18} />;
+  if (nameLower.includes('haftung') || nameLower.includes('risiko')) return <Shield size={18} />;
+  if (nameLower.includes('zahlung') || nameLower.includes('geld') || nameLower.includes('preis')) return <Euro size={18} />;
+  if (nameLower.includes('zeit') || nameLower.includes('stunde')) return <Calendar size={18} />;
+  if (nameLower.includes('urlaub') || nameLower.includes('ferien')) return <Umbrella size={18} />;
+  if (nameLower.includes('geheim') || nameLower.includes('vertraulich')) return <Lock size={18} />;
+  if (nameLower.includes('strafe') || nameLower.includes('sanktion')) return <Gavel size={18} />;
+  if (nameLower.includes('recht') || nameLower.includes('gesetz')) return <Landmark size={18} />;
+  if (nameLower.includes('arbeit') || nameLower.includes('beruf')) return <Briefcase size={18} />;
+  if (nameLower.includes('vertrag') || nameLower.includes('vereinbarung')) return <Handshake size={18} />;
+  if (nameLower.includes('daten') || nameLower.includes('information')) return <ScrollText size={18} />;
+  
+  // Fallback
+  return <BookOpen size={18} />;
+};
+
+// ✅ Farb-Mapping für Kategorien
+const getCategoryColor = (categoryId: string, priority?: string): string => {
+  if (priority === 'critical') return '#d70015';
+  if (priority === 'high') return '#ff453a';
+  if (priority === 'medium') return '#ff9500';
+  if (priority === 'low') return '#34c759';
+  
+  const colorMap: { [key: string]: string } = {
+    'termination': '#ff453a',
+    'liability': '#ff9500',
+    'payment': '#34c759',
+    'clarity': '#5856d6',
+    'compliance': '#af52de',
+    'salary': '#30a46c',
+    'working_hours': '#0091ff',
+    'vacation': '#00c8ff',
+    'probation': '#ff6b6b',
+    'rent': '#7c3aed',
+    'utilities': '#ec4899',
+    'deposit': '#10b981',
+    'repairs': '#f59e0b',
+    'confidentiality': '#8b5cf6',
+    'duration': '#06b6d4',
+    'penalties': '#dc2626',
+    'exceptions': '#64748b',
+    'other': '#6366f1',
+    'general': '#0071e3'
+  };
+  
+  return colorMap[categoryId] || '#0071e3';
+};
 
 // ✅ PORTAL SOLUTION: Dropdown Portal Component
 const DropdownPortal: React.FC<{
@@ -124,9 +274,24 @@ const DropdownPortal: React.FC<{
   );
 };
 
-// ✅ ENHANCED: Verbesserte Parsing-Logik für mehr Optimierungen
-const parseOptimizationResult = (aiText: string, fileName: string): OptimizationSuggestion[] => {
-  const optimizations: OptimizationSuggestion[] = [];
+// ✅ FIXED: Parse-Funktion mit flexiblen Kategorien
+const parseOptimizationResult = (
+  aiText: string, 
+  fileName: string, 
+  categories?: ContractCategory[], 
+  structuredOpts?: ExtendedOptimizationSuggestion[]
+): ExtendedOptimizationSuggestion[] => {
+  
+  if (structuredOpts && structuredOpts.length > 0) {
+    console.log("✅ Verwende strukturierte Optimierungen aus API:", structuredOpts.length);
+    return structuredOpts.map(opt => ({
+      ...opt,
+      id: opt.id || `opt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      implemented: false
+    }));
+  }
+  
+  const optimizations: ExtendedOptimizationSuggestion[] = [];
   
   if (!aiText || aiText.length < 50) {
     return optimizations;
@@ -145,34 +310,46 @@ const parseOptimizationResult = (aiText: string, fileName: string): Optimization
   allSections.forEach((section, index) => {
     if (section.trim().length < 40) return;
     
-    let category: OptimizationSuggestion['category'] = 'clarity';
-    let priority: OptimizationSuggestion['priority'] = 'medium';
+    let category: string = 'clarity';
+    let priority: ExtendedOptimizationSuggestion['priority'] = 'medium';
     
     const lowerSection = section.toLowerCase();
     
-    if (lowerSection.includes('kündigung') || lowerSection.includes('laufzeit') || lowerSection.includes('frist') || lowerSection.includes('kündigungsfristen')) {
-      category = 'termination';
-      priority = lowerSection.includes('kurz') || lowerSection.includes('lange') ? 'high' : 'medium';
-    } else if (lowerSection.includes('haftung') || lowerSection.includes('schäden') || lowerSection.includes('risiko') || lowerSection.includes('schadensersatz')) {
-      category = 'liability';
-      priority = lowerSection.includes('unbegrenzt') || lowerSection.includes('unbeschränkt') ? 'critical' : 'high';
-    } else if (lowerSection.includes('zahlung') || lowerSection.includes('vergütung') || lowerSection.includes('honorar') || lowerSection.includes('zahlungsfristen')) {
-      category = 'payment';
-      priority = lowerSection.includes('säumnis') || lowerSection.includes('verzug') ? 'high' : 'medium';
-    } else if (lowerSection.includes('dsgvo') || lowerSection.includes('datenschutz') || lowerSection.includes('compliance') || lowerSection.includes('rechtlich')) {
-      category = 'compliance';
-      priority = lowerSection.includes('dsgvo') ? 'high' : 'medium';
-    } else if (lowerSection.includes('unklar') || lowerSection.includes('mehrdeutig') || lowerSection.includes('formulierung') || lowerSection.includes('präzise')) {
-      category = 'clarity';
-      priority = 'medium';
+    // Versuche Kategorie aus den dynamischen Kategorien zu matchen
+    if (categories && categories.length > 0) {
+      for (const cat of categories) {
+        if (lowerSection.includes(cat.name.toLowerCase()) || 
+            (cat.nameEN && lowerSection.includes(cat.nameEN.toLowerCase()))) {
+          category = cat.id;
+          priority = cat.priority === 'critical' ? 'critical' :
+                    cat.priority === 'high' ? 'high' :
+                    cat.priority === 'low' ? 'low' : 'medium';
+          break;
+        }
+      }
+    }
+    
+    // Fallback auf keyword-basierte Erkennung
+    if (category === 'clarity') {
+      if (lowerSection.includes('kündigung') || lowerSection.includes('laufzeit')) {
+        category = 'termination';
+        priority = 'high';
+      } else if (lowerSection.includes('haftung') || lowerSection.includes('risiko')) {
+        category = 'liability';
+        priority = 'high';
+      } else if (lowerSection.includes('zahlung') || lowerSection.includes('vergütung')) {
+        category = 'payment';
+        priority = 'medium';
+      } else if (lowerSection.includes('dsgvo') || lowerSection.includes('datenschutz')) {
+        category = 'compliance';
+        priority = 'high';
+      }
     }
 
     let confidence = 75;
     if (section.length > 200) confidence += 10;
-    if (lowerSection.includes('empfehlung') || lowerSection.includes('sollte') || lowerSection.includes('besser')) confidence += 8;
-    if (lowerSection.includes('kritisch') || lowerSection.includes('wichtig') || lowerSection.includes('dringend')) confidence += 7;
-    if (lowerSection.includes('standard') || lowerSection.includes('üblich') || lowerSection.includes('markt')) confidence += 5;
-    if (section.includes('§') || section.includes('BGB') || section.includes('Gesetz')) confidence += 5;
+    if (lowerSection.includes('empfehlung') || lowerSection.includes('sollte')) confidence += 8;
+    if (lowerSection.includes('kritisch') || lowerSection.includes('wichtig')) confidence += 7;
     
     const sentences = section.split(/[.!?]+/).filter(s => s.trim().length > 15);
     
@@ -201,22 +378,12 @@ const parseOptimizationResult = (aiText: string, fileName: string): Optimization
       }
     }
 
-    if (reasoning.length < 100 || reasoning.includes('Priorität') || reasoning.includes('Umsetzung')) {
-      if (category === 'termination') {
-        reasoning = `Diese Optimierung der Kündigungsregelungen ist rechtlich und wirtschaftlich vorteilhaft. Marktübliche Kündigungsfristen schaffen Planungssicherheit für beide Vertragsparteien und entsprechen aktuellen arbeitsrechtlichen Standards. Eine ausgewogene Regelung reduziert das Risiko rechtlicher Streitigkeiten und verbessert die Flexibilität bei Personalentscheidungen. Rechtsprechung und Tarifverträge unterstützen diese Anpassung.`;
-      } else if (category === 'liability') {
-        reasoning = `Die Haftungsklausel bedarf einer rechtssicheren Anpassung, um beide Parteien angemessen zu schützen. Eine ausgewogene Haftungsregelung verhindert übermäßige Risiken und entspricht der aktuellen Rechtsprechung. Dies reduziert Versicherungskosten und schafft Rechtssicherheit. Die vorgeschlagene Formulierung folgt etablierten Marktstandards und minimiert das Streitpotential bei Schadensersatzansprüchen.`;
-      } else if (category === 'payment') {
-        reasoning = `Optimierte Zahlungskonditionen verbessern den Cashflow und reduzieren Ausfallrisiken. Die angepassten Fristen entsprechen Branchenstandards und erleichtern die Liquiditätsplanung. Klare Zahlungsmodalitäten reduzieren Verwaltungsaufwand und Mahnkosten. Diese Regelung schafft Transparenz und fördert eine vertrauensvolle Geschäftsbeziehung zwischen den Vertragsparteien.`;
-      } else if (category === 'compliance') {
-        reasoning = `Die Compliance-Anpassung gewährleistet die Einhaltung aktueller Rechtsvorschriften, insbesondere der DSGVO und branchenspezifischer Regularien. Dies reduziert Bußgeldrisiken und stärkt das Vertrauen von Kunden und Geschäftspartnern. Eine proaktive Compliance-Strategie ist heute unverzichtbar und schützt vor regulatorischen Risiken. Die Implementierung ist kostengünstig im Vergleich zu potentiellen Sanktionen.`;
-      } else {
-        reasoning = `Präzisere Vertragsformulierungen reduzieren Interpretationsspielräume und rechtliche Unsicherheiten. Klare, eindeutige Klauseln verhindern kostspielige Rechtsstreitigkeiten und schaffen Planungssicherheit. Die vorgeschlagenen Formulierungen entsprechen aktuellen juristischen Standards und erleichtern die Vertragsdurchsetzung. Dies verbessert die Geschäftsbeziehung und reduziert Transaktionskosten.`;
-      }
+    if (reasoning.length < 100) {
+      reasoning = generateContextualReasoning(category);
     }
 
     let estimatedSavings = 'Risikoreduzierung';
-    if (category === 'payment') {
+    if (category === 'payment' || category === 'salary') {
       estimatedSavings = `~${800 + Math.floor(Math.random() * 2000)}€/Jahr`;
     } else if (category === 'termination') {
       estimatedSavings = `~${400 + Math.floor(Math.random() * 800)}€ Flexibilität`;
@@ -229,17 +396,13 @@ const parseOptimizationResult = (aiText: string, fileName: string): Optimization
       marketBenchmark = `${60 + Math.floor(Math.random() * 30)}% der Verträge haben kürzere Fristen`;
     } else if (category === 'liability') {
       marketBenchmark = `${70 + Math.floor(Math.random() * 25)}% begrenzen Haftung`;
-    } else if (category === 'payment') {
-      marketBenchmark = `${80 + Math.floor(Math.random() * 15)}% haben kürzere Zahlungsfristen`;
     }
 
-    let implementationDifficulty: 'easy' | 'medium' | 'complex' = 'easy';
-    if (category === 'liability') {
+    let implementationDifficulty: ExtendedOptimizationSuggestion['implementationDifficulty'] = 'easy';
+    if (category === 'liability' || category === 'penalties') {
       implementationDifficulty = 'complex';
-    } else if (category === 'compliance') {
+    } else if (category === 'compliance' || category === 'confidentiality') {
       implementationDifficulty = 'medium';
-    } else {
-      implementationDifficulty = Math.random() > 0.6 ? 'medium' : 'easy';
     }
 
     optimizations.push({
@@ -265,111 +428,58 @@ const parseOptimizationResult = (aiText: string, fileName: string): Optimization
     });
   });
 
-  if (optimizations.length < 6) {
+  // Wenn zu wenige Optimierungen gefunden wurden, füge Fallbacks hinzu
+  if (optimizations.length < 5 && categories) {
     const existingCategories = optimizations.map(opt => opt.category);
-    const allCategories: OptimizationSuggestion['category'][] = ['termination', 'liability', 'payment', 'clarity', 'compliance'];
-    const missingCategories = allCategories.filter(cat => !existingCategories.includes(cat));
+    const missingCategories = categories.filter(cat => !existingCategories.includes(cat.id));
     
-    const additionalOptimizations: OptimizationSuggestion[] = [
-      {
-        id: `opt_fallback_clarity_${Date.now()}`,
-        category: 'clarity',
-        priority: 'medium',
-        confidence: 78,
-        original: "Einige Vertragsformulierungen sind rechtlich unspezifisch und könnten zu Interpretationsspielräumen führen",
-        improved: "Präzisere, rechtssichere Formulierungen verwenden, die eindeutige Rechte und Pflichten definieren",
-        reasoning: `Präzisere Vertragsformulierungen reduzieren Interpretationsspielräume und rechtliche Unsicherheiten. Klare, eindeutige Klauseln verhindern kostspielige Rechtsstreitigkeiten und schaffen Planungssicherheit. Die vorgeschlagenen Formulierungen entsprechen aktuellen juristischen Standards und erleichtern die Vertragsdurchsetzung. Dies verbessert die Geschäftsbeziehung und reduziert Transaktionskosten erheblich.`,
-        legalRisk: 5,
-        businessImpact: 4,
-        implementationDifficulty: 'easy',
-        estimatedSavings: "Risikoreduzierung ~2.500€",
-        marketBenchmark: "85% der Verträge sind präziser formuliert",
-        implemented: false,
-        aiInsight: "KI-Analyse zeigt Verbesserungspotential bei Formulierungen",
-        relatedClauses: ["Allgemeine Vertragsklarheit", "Rechtssicherheit"]
-      },
-      {
-        id: `opt_fallback_termination_${Date.now()}`,
-        category: 'termination',
-        priority: 'high',
-        confidence: 82,
-        original: "Kündigungsmodalitäten und -fristen sind nicht optimal ausbalanciert für beide Vertragsparteien",
-        improved: "Flexiblere, marktübliche Kündigungsfristen implementieren, die faire Planungssicherheit bieten",
-        reasoning: `Diese Optimierung der Kündigungsregelungen ist rechtlich und wirtschaftlich vorteilhaft. Marktübliche Kündigungsfristen schaffen Planungssicherheit für beide Vertragsparteien und entsprechen aktuellen arbeitsrechtlichen Standards. Eine ausgewogene Regelung reduziert das Risiko rechtlicher Streitigkeiten und verbessert die Flexibilität bei Personalentscheidungen. Rechtsprechung und Tarifverträge unterstützen diese Anpassung.`,
-        legalRisk: 6,
-        businessImpact: 7,
-        implementationDifficulty: 'medium',
-        estimatedSavings: "~1.200€ Flexibilität",
-        marketBenchmark: "70% haben flexiblere Kündigungsregelungen",
-        implemented: false,
-        aiInsight: "Verbesserungspotential bei Kündigungsklauseln erkannt",
-        relatedClauses: ["Kündigungsfristen", "Vertragsbeendigung", "Planungssicherheit"]
-      },
-      {
-        id: `opt_fallback_payment_${Date.now()}`,
-        category: 'payment',
-        priority: 'high',
-        confidence: 85,
-        original: "Zahlungsfristen und -modalitäten entsprechen nicht aktuellen Marktstandards",
-        improved: "Optimierte Zahlungskonditionen mit branchenüblichen Fristen und klaren Verzugsregelungen",
-        reasoning: `Optimierte Zahlungskonditionen verbessern den Cashflow und reduzieren Ausfallrisiken erheblich. Die angepassten Fristen entsprechen Branchenstandards und erleichtern die Liquiditätsplanung. Klare Zahlungsmodalitäten reduzieren Verwaltungsaufwand und Mahnkosten. Diese Regelung schafft Transparenz und fördert eine vertrauensvolle Geschäftsbeziehung zwischen den Vertragsparteien.`,
-        legalRisk: 4,
-        businessImpact: 8,
-        implementationDifficulty: 'easy',
-        estimatedSavings: "~1.800€/Jahr",
-        marketBenchmark: "78% haben kürzere Zahlungsfristen",
-        implemented: false,
-        aiInsight: "Cashflow-Optimierung durch bessere Zahlungskonditionen",
-        relatedClauses: ["Zahlungsfristen", "Verzugszinsen", "Cashflow"]
-      },
-      {
-        id: `opt_fallback_liability_${Date.now()}`,
-        category: 'liability',
-        priority: 'critical',
-        confidence: 88,
-        original: "Haftungsklauseln sind unausgewogen und schaffen einseitige Risiken",
-        improved: "Ausgewogene Haftungsregelungen mit angemessenen Begrenzungen für beide Parteien",
-        reasoning: `Die Haftungsklausel bedarf einer rechtssicheren Anpassung, um beide Parteien angemessen zu schützen. Eine ausgewogene Haftungsregelung verhindert übermäßige Risiken und entspricht der aktuellen Rechtsprechung. Dies reduziert Versicherungskosten und schafft Rechtssicherheit. Die vorgeschlagene Formulierung folgt etablierten Marktstandards und minimiert das Streitpotential bei Schadensersatzansprüchen.`,
-        legalRisk: 8,
-        businessImpact: 7,
-        implementationDifficulty: 'complex',
-        estimatedSavings: "Risikoreduktion ~8.500€",
-        marketBenchmark: "72% begrenzen Haftung angemessen",
-        implemented: false,
-        aiInsight: "Kritische Haftungsrisiken identifiziert",
-        relatedClauses: ["Haftungsbegrenzung", "Schadensersatz", "Versicherung"]
-      },
-      {
-        id: `opt_fallback_compliance_${Date.now()}`,
-        category: 'compliance',
-        priority: 'medium',
-        confidence: 80,
-        original: "Compliance-Regelungen entsprechen nicht vollständig aktuellen Rechtsvorschriften",
-        improved: "Vollständige DSGVO-konforme und branchenspezifische Compliance-Klauseln integrieren",
-        reasoning: `Die Compliance-Anpassung gewährleistet die Einhaltung aktueller Rechtsvorschriften, insbesondere der DSGVO und branchenspezifischer Regularien. Dies reduziert Bußgeldrisiken und stärkt das Vertrauen von Kunden und Geschäftspartnern. Eine proaktive Compliance-Strategie ist heute unverzichtbar und schützt vor regulatorischen Risiken. Die Implementierung ist kostengünstig im Vergleich zu potentiellen Sanktionen.`,
-        legalRisk: 6,
-        businessImpact: 6,
-        implementationDifficulty: 'medium',
-        estimatedSavings: "Bußgeldschutz ~5.000€",
-        marketBenchmark: "92% sind DSGVO-konform",
-        implemented: false,
-        aiInsight: "Compliance-Lücken bei Datenschutz erkannt",
-        relatedClauses: ["DSGVO", "Datenschutz", "Compliance"]
-      }
-    ];
-    
-    const categoriesToAdd = missingCategories.length > 0 
-      ? additionalOptimizations.filter(opt => missingCategories.includes(opt.category))
-      : additionalOptimizations;
-    
-    const neededCount = Math.min(6 - optimizations.length, categoriesToAdd.length);
-    optimizations.push(...categoriesToAdd.slice(0, neededCount));
+    missingCategories.slice(0, 5 - optimizations.length).forEach((cat, index) => {
+      optimizations.push(createFallbackOptimization(cat, index));
+    });
   }
 
-  return optimizations.slice(0, 8);
+  return optimizations.slice(0, 10);
 };
 
-const calculateContractScore = (optimizations: OptimizationSuggestion[]): ContractHealthScore => {
+// Helper-Funktion für kontextbasierte Begründungen
+const generateContextualReasoning = (category: string): string => {
+  const reasonings: { [key: string]: string } = {
+    'termination': `Diese Optimierung der Kündigungsregelungen ist rechtlich und wirtschaftlich vorteilhaft. Marktübliche Kündigungsfristen schaffen Planungssicherheit für beide Vertragsparteien und entsprechen aktuellen arbeitsrechtlichen Standards.`,
+    'liability': `Die Haftungsklausel bedarf einer rechtssicheren Anpassung, um beide Parteien angemessen zu schützen. Eine ausgewogene Haftungsregelung verhindert übermäßige Risiken und entspricht der aktuellen Rechtsprechung.`,
+    'payment': `Optimierte Zahlungskonditionen verbessern den Cashflow und reduzieren Ausfallrisiken. Die angepassten Fristen entsprechen Branchenstandards und erleichtern die Liquiditätsplanung.`,
+    'salary': `Eine marktgerechte Vergütungsstruktur ist essentiell für Mitarbeiterbindung und rechtliche Compliance. Die Anpassung berücksichtigt aktuelle Tarifverträge und Branchenstandards.`,
+    'compliance': `Die Compliance-Anpassung gewährleistet die Einhaltung aktueller Rechtsvorschriften, insbesondere der DSGVO und branchenspezifischer Regularien.`,
+    'confidentiality': `Verbesserte Geheimhaltungsklauseln schützen sensible Informationen effektiver und schaffen klare Grenzen für alle Beteiligten.`,
+    'rent': `Optimierte Mietkonditionen schaffen faire Bedingungen und reduzieren Konfliktpotential zwischen Mieter und Vermieter.`,
+    'default': `Diese Vertragsoptimierung verbessert die rechtliche Klarheit und reduziert potentielle Risiken für alle Vertragsparteien.`
+  };
+  
+  return reasonings[category] || reasonings['default'];
+};
+
+// Helper-Funktion für Fallback-Optimierungen
+const createFallbackOptimization = (category: ContractCategory, index: number): ExtendedOptimizationSuggestion => {
+  return {
+    id: `opt_fallback_${category.id}_${Date.now()}_${index}`,
+    category: category.id,
+    priority: category.priority === 'high' ? 'high' : 'medium',
+    confidence: 75 + Math.floor(Math.random() * 15),
+    original: `Aktuelle Regelung zu ${category.name} könnte optimiert werden`,
+    improved: `Verbesserte ${category.name}-Klausel mit marktüblichen Standards`,
+    reasoning: generateContextualReasoning(category.id),
+    legalRisk: category.priority === 'high' ? 6 : 4,
+    businessImpact: category.priority === 'high' ? 7 : 5,
+    implementationDifficulty: 'medium',
+    estimatedSavings: "Risikominimierung",
+    marketBenchmark: "Entspricht Best Practices",
+    implemented: false,
+    aiInsight: `KI-Empfehlung für ${category.name}`,
+    relatedClauses: [category.name]
+  };
+};
+
+// ✅ FIXED: Score-Berechnung mit flexiblen Kategorien
+const calculateContractScore = (optimizations: ExtendedOptimizationSuggestion[], categories?: ContractCategory[]): ContractHealthScore => {
   if (optimizations.length === 0) {
     return {
       overall: 85,
@@ -399,47 +509,67 @@ const calculateContractScore = (optimizations: OptimizationSuggestion[]): Contra
   const improvementBonus = implementedCount * 5;
   const finalScore = Math.min(100, Math.round(baseScore + improvementBonus));
 
-  const categoryScores = {
-    termination: Math.round(baseScore),
-    liability: Math.round(baseScore),
-    payment: Math.round(baseScore),
-    clarity: Math.round(baseScore),
-    compliance: Math.round(baseScore)
-  };
+  // Dynamische Kategorie-Scores
+  const categoryScores: { [key: string]: { score: number; trend: 'up' | 'down' | 'stable' } } = {};
+  
+  // Initialisiere mit Standard-Kategorien oder dynamischen
+  const defaultCategories = ['termination', 'liability', 'payment', 'clarity', 'compliance'];
+  const allCategories = categories 
+    ? categories.map(c => c.id)
+    : [...new Set([...defaultCategories, ...optimizations.map(o => o.category)])];
+  
+  allCategories.forEach(catId => {
+    categoryScores[catId] = { score: Math.round(baseScore), trend: 'stable' };
+  });
 
+  // Anpasse Scores basierend auf Optimierungen
   optimizations.forEach(opt => {
     if (!opt.implemented) {
       const reduction = opt.priority === 'critical' ? 15 : opt.priority === 'high' ? 8 : 4;
-      categoryScores[opt.category] = Math.max(15, Math.round(categoryScores[opt.category] - reduction));
+      if (categoryScores[opt.category]) {
+        categoryScores[opt.category].score = Math.max(15, Math.round(categoryScores[opt.category].score - reduction));
+      }
     } else {
-      categoryScores[opt.category] = Math.min(100, Math.round(categoryScores[opt.category] + 3));
+      if (categoryScores[opt.category]) {
+        categoryScores[opt.category].score = Math.min(100, Math.round(categoryScores[opt.category].score + 3));
+        categoryScores[opt.category].trend = 'up';
+      }
+    }
+  });
+
+  // Stelle sicher, dass mindestens die Standard-Kategorien vorhanden sind
+  defaultCategories.forEach(cat => {
+    if (!categoryScores[cat]) {
+      categoryScores[cat] = { score: Math.round(baseScore), trend: 'stable' };
     }
   });
 
   return {
     overall: Math.round(finalScore),
-    categories: {
-      termination: { score: Math.round(categoryScores.termination), trend: 'stable' },
-      liability: { score: Math.round(categoryScores.liability), trend: 'stable' },
-      payment: { score: Math.round(categoryScores.payment), trend: 'stable' },
-      clarity: { score: Math.round(categoryScores.clarity), trend: 'stable' },
-      compliance: { score: Math.round(categoryScores.compliance), trend: 'stable' }
-    },
+    categories: categoryScores as any,
     industryPercentile: Math.max(10, Math.round(finalScore - 20)),
     riskLevel: finalScore < 40 ? 'critical' : finalScore < 60 ? 'high' : finalScore < 80 ? 'medium' : 'low'
   };
 };
 
+// ==========================================
+// 🎯 MAIN COMPONENT
+// ==========================================
+
 export default function Optimizer() {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
-  const [optimizations, setOptimizations] = useState<OptimizationSuggestion[]>([]);
+  const [optimizations, setOptimizations] = useState<ExtendedOptimizationSuggestion[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isPremium, setIsPremium] = useState<boolean | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [contractScore, setContractScore] = useState<ContractHealthScore | null>(null);
   const [showSimulation, setShowSimulation] = useState(false);
+  
+  // ✅ NEU: Vertragstyp-Informationen
+  const [contractTypeInfo, setContractTypeInfo] = useState<ContractTypeInfo | null>(null);
+  const [dynamicCategories, setDynamicCategories] = useState<OptimizationCategory[]>([]);
   
   // ✅ PHASE 2: Export & Pitch States + PORTAL REFS
   const [showExportMenu, setShowExportMenu] = useState(false);
@@ -453,7 +583,6 @@ export default function Optimizer() {
   const [contractId, setContractId] = useState<string | null>(null);
   const [isGeneratingContract, setIsGeneratingContract] = useState(false);
   
-  // ✅ TYPESCRIPT FIXED: Specific types instead of 'any'
   const [originalContractText, setOriginalContractText] = useState<string>('');
   const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
   
@@ -521,51 +650,6 @@ export default function Optimizer() {
     }
   ];
 
-  const categories: OptimizationCategory[] = [
-    { 
-      id: 'all', 
-      name: 'Alle Bereiche', 
-      icon: <BookOpen size={18} />, 
-      color: '#0071e3', 
-      count: optimizations.length 
-    },
-    { 
-      id: 'termination', 
-      name: 'Kündigung', 
-      icon: <Clock size={18} />, 
-      color: '#ff453a', 
-      count: optimizations.filter(o => o.category === 'termination').length 
-    },
-    { 
-      id: 'liability', 
-      name: 'Haftung', 
-      icon: <Shield size={18} />, 
-      color: '#ff9500', 
-      count: optimizations.filter(o => o.category === 'liability').length 
-    },
-    { 
-      id: 'payment', 
-      name: 'Zahlung', 
-      icon: <DollarSign size={18} />, 
-      color: '#34c759', 
-      count: optimizations.filter(o => o.category === 'payment').length 
-    },
-    { 
-      id: 'clarity', 
-      name: 'Klarheit', 
-      icon: <Eye size={18} />, 
-      color: '#5856d6', 
-      count: optimizations.filter(o => o.category === 'clarity').length 
-    },
-    { 
-      id: 'compliance', 
-      name: 'Compliance', 
-      icon: <CheckCircle2 size={18} />, 
-      color: '#af52de', 
-      count: optimizations.filter(o => o.category === 'compliance').length 
-    }
-  ];
-
   // ✨ Premium Status laden
   useEffect(() => {
     const fetchPremiumStatus = async () => {
@@ -582,12 +666,100 @@ export default function Optimizer() {
     fetchPremiumStatus();
   }, []);
 
+  // ✅ NEU: Dynamische Kategorien basierend auf Optimierungen updaten
+  useEffect(() => {
+    if (contractTypeInfo && contractTypeInfo.categories) {
+      // Erstelle dynamische Kategorien aus Vertragstyp-Info
+      const categories: OptimizationCategory[] = [
+        { 
+          id: 'all', 
+          name: 'Alle Bereiche', 
+          icon: <BookOpen size={18} />, 
+          color: '#0071e3', 
+          count: optimizations.length 
+        },
+        ...contractTypeInfo.categories.map(cat => ({
+          id: cat.id,
+          name: cat.name,
+          icon: getIconForCategory(cat.id, cat.name),
+          color: getCategoryColor(cat.id, cat.priority),
+          count: optimizations.filter(o => o.category === cat.id).length
+        }))
+      ];
+      
+      // Füge "Sonstige" hinzu, falls es Optimierungen ohne Kategorie gibt
+      const otherOptimizations = optimizations.filter(
+        o => !contractTypeInfo.categories.some(c => c.id === o.category) && o.category !== 'other'
+      );
+      
+      if (otherOptimizations.length > 0 || optimizations.some(o => o.category === 'other')) {
+        categories.push({
+          id: 'other',
+          name: 'Sonstige Optimierungen',
+          icon: <Lightbulb size={18} />,
+          color: '#6366f1',
+          count: optimizations.filter(o => o.category === 'other').length + otherOptimizations.length
+        });
+      }
+      
+      setDynamicCategories(categories);
+    } else if (optimizations.length > 0) {
+      // Fallback auf Standard-Kategorien
+      const standardCategories: OptimizationCategory[] = [
+        { 
+          id: 'all', 
+          name: 'Alle Bereiche', 
+          icon: <BookOpen size={18} />, 
+          color: '#0071e3', 
+          count: optimizations.length 
+        },
+        { 
+          id: 'termination', 
+          name: 'Kündigung', 
+          icon: <Clock size={18} />, 
+          color: '#ff453a', 
+          count: optimizations.filter(o => o.category === 'termination').length 
+        },
+        { 
+          id: 'liability', 
+          name: 'Haftung', 
+          icon: <Shield size={18} />, 
+          color: '#ff9500', 
+          count: optimizations.filter(o => o.category === 'liability').length 
+        },
+        { 
+          id: 'payment', 
+          name: 'Zahlung', 
+          icon: <DollarSign size={18} />, 
+          color: '#34c759', 
+          count: optimizations.filter(o => o.category === 'payment').length 
+        },
+        { 
+          id: 'clarity', 
+          name: 'Klarheit', 
+          icon: <Eye size={18} />, 
+          color: '#5856d6', 
+          count: optimizations.filter(o => o.category === 'clarity').length 
+        },
+        { 
+          id: 'compliance', 
+          name: 'Compliance', 
+          icon: <CheckCircle2 size={18} />, 
+          color: '#af52de', 
+          count: optimizations.filter(o => o.category === 'compliance').length 
+        }
+      ];
+      
+      setDynamicCategories(standardCategories);
+    }
+  }, [optimizations, contractTypeInfo]);
+
   useEffect(() => {
     if (optimizations.length > 0) {
-      const updatedScore = calculateContractScore(optimizations);
+      const updatedScore = calculateContractScore(optimizations, contractTypeInfo?.categories);
       setContractScore(updatedScore);
     }
-  }, [optimizations]);
+  }, [optimizations, contractTypeInfo]);
 
   // ✅ PORTAL SOLUTION: Simplified outside click handling
   useEffect(() => {
@@ -615,21 +787,23 @@ export default function Optimizer() {
     }
   }, [showPitchMenu, showExportMenu]);
 
-  // ✨ File Upload Handler mit echter API-Integration
+  // ✨ ENHANCED File Upload Handler mit Vertragstyp-Erkennung
   const handleUpload = async () => {
     if (!file || !isPremium) return;
 
     setLoading(true);
     setOptimizations([]);
     setError(null);
-    setOriginalContractText(''); // Reset
-    setAnalysisData(null); // Reset
+    setOriginalContractText('');
+    setAnalysisData(null);
+    setContractTypeInfo(null);
+    setDynamicCategories([]);
 
     const formData = new FormData();
     formData.append("file", file);
 
     try {
-      console.log("🚀 Sende Datei an Backend für KI-Optimierung...");
+      console.log("🚀 Sende Datei an Backend für Enhanced KI-Optimierung mit Typ-Erkennung...");
       
       const res = await fetch("/api/optimize", {
         method: "POST",
@@ -647,24 +821,48 @@ export default function Optimizer() {
         throw new Error(data.message || "Optimierung fehlgeschlagen");
       }
 
-      console.log("✅ Backend Response erhalten:", {
+      console.log("✅ Enhanced Backend Response erhalten:", {
         success: data.success,
         hasOptimizationResult: !!data.optimizationResult,
-        resultLength: data.optimizationResult?.length || 0
+        contractType: data.contractType,
+        categoriesCount: data.categories?.length,
+        structuredOptimizationsCount: data.structuredOptimizations?.length
       });
 
-      // ✅ CRITICAL FIX: Speichere die Analysis-Daten für Smart Contract Generator
+      // ✅ CRITICAL: Speichere alle Daten
       setAnalysisData(data);
       
-      // ✅ ENHANCED: Versuche originalen Text zu extrahieren (falls verfügbar)
+      // ✅ NEU: Speichere Vertragstyp-Info
+      if (data.contractType) {
+        const typeInfo: ContractTypeInfo = {
+          contractType: data.contractType,
+          contractTypeEN: data.contractTypeEN,
+          description: data.contractDescription,
+          confidence: data.contractTypeConfidence || 85,
+          categories: data.categories || [],
+          additionalInsights: data.metadata?.additionalInsights
+        };
+        setContractTypeInfo(typeInfo);
+        console.log("✅ Vertragstyp erkannt:", typeInfo.contractType, `(${typeInfo.confidence}% Confidence)`);
+        console.log("📊 Dynamische Kategorien:", typeInfo.categories.map(c => c.name).join(", "));
+      }
+      
+      // ✅ Speichere originalen Text
       if (data.originalText) {
         setOriginalContractText(data.originalText);
         console.log("✅ Original Contract Text gespeichert:", data.originalText.length + " Zeichen");
       }
 
+      // ✅ Parse Optimierungen mit dynamischen Kategorien
       if (data.optimizationResult && data.optimizationResult.trim()) {
-        const parsedOptimizations = parseOptimizationResult(data.optimizationResult, file.name);
-        const calculatedScore = calculateContractScore(parsedOptimizations);
+        const parsedOptimizations = parseOptimizationResult(
+          data.optimizationResult, 
+          file.name,
+          data.categories,
+          data.structuredOptimizations
+        );
+        
+        const calculatedScore = calculateContractScore(parsedOptimizations, data.categories);
         
         setOptimizations(parsedOptimizations);
         setContractScore(calculatedScore);
@@ -714,7 +912,7 @@ export default function Optimizer() {
     setTimeout(() => setToast(null), 4000);
   }, []);
 
-  // ✅ TYPESCRIPT FIXED: Smart Contract Generator Function mit robuster Contract-Erstellung
+  // ✅ Smart Contract Generator Function
   const handleGenerateOptimizedContract = useCallback(async () => {
     // Validierung
     if (!file || optimizations.length === 0) {
@@ -759,9 +957,12 @@ export default function Optimizer() {
               filePath: analysisData.fileUrl || "",
               mimetype: file.type,
               size: file.size,
-              // ✅ CRITICAL: Analysis-Referenz für Debugging
               analysisId: analysisData.analysisId || analysisData.requestId,
-              uploadType: analysisData.uploadType || 'LOCAL_UPLOAD'
+              uploadType: analysisData.uploadType || 'LOCAL_UPLOAD',
+              // NEU: Vertragstyp-Info
+              contractType: contractTypeInfo?.contractType,
+              contractTypeEN: contractTypeInfo?.contractTypeEN,
+              categories: contractTypeInfo?.categories
             };
 
             console.log("💾 Contract Data:", contractData);
@@ -808,7 +1009,6 @@ export default function Optimizer() {
             throw new Error(uploadData.message || "Contract Upload fehlgeschlagen");
           }
 
-          // ✅ FALLBACK: Nutze Analysis-ID als Contract-ID
           currentContractId = uploadData.analysisId || 
                             uploadData.contractId || 
                             uploadData.requestId;
@@ -842,18 +1042,21 @@ export default function Optimizer() {
           includeReasons: true,
           preserveLayout: true
         },
-        // ✅ CRITICAL: Zusätzliche Daten für bessere Contract-Generierung
         sourceData: {
           originalFileName: file.name,
           originalContent: originalContractText,
-          analysisData: analysisData
+          analysisData: analysisData,
+          // NEU: Vertragstyp-Info
+          contractType: contractTypeInfo?.contractType,
+          contractCategories: contractTypeInfo?.categories
         }
       };
 
       console.log("📤 Generate Payload:", {
         optimizationCount: generatePayload.optimizations.length,
         contractId: currentContractId,
-        hasOriginalContent: !!originalContractText
+        hasOriginalContent: !!originalContractText,
+        contractType: contractTypeInfo?.contractType
       });
 
       const generateRes = await fetch(`/api/contracts/${currentContractId}/generate-optimized`, {
@@ -869,7 +1072,6 @@ export default function Optimizer() {
         const errorData = await generateRes.json();
         console.error("❌ Smart Contract Generation Error:", errorData);
         
-        // ✅ ENHANCED ERROR HANDLING
         if (generateRes.status === 404) {
           throw new Error("❌ Contract nicht gefunden. Bitte lade den Vertrag erneut hoch.");
         } else if (generateRes.status === 400) {
@@ -904,7 +1106,8 @@ export default function Optimizer() {
         contractId: currentContractId,
         optimizationsApplied: selectedOptimizations.length,
         fileName: file.name,
-        pdfSize: blob.size
+        pdfSize: blob.size,
+        contractType: contractTypeInfo?.contractType
       });
 
     } catch (error) {
@@ -931,9 +1134,9 @@ export default function Optimizer() {
     } finally {
       setIsGeneratingContract(false);
     }
-  }, [file, optimizations, contractId, showSimulation, showToast, originalContractText, analysisData]);
+  }, [file, optimizations, contractId, showSimulation, showToast, originalContractText, analysisData, contractTypeInfo]);
 
-  // ✨ Handlers
+  // ✨ Handlers  
   const handleReset = useCallback(() => {
     setFile(null);
     setOptimizations([]);
@@ -943,12 +1146,13 @@ export default function Optimizer() {
     setSelectedCategory('all');
     setShowExportMenu(false);
     setShowPitchMenu(false);
-    // ✅ PHASE 3: Reset Smart Contract Generator State
     setContractId(null);
     setIsGeneratingContract(false);
-    // ✅ FIXED: Reset neue States
     setOriginalContractText('');
     setAnalysisData(null);
+    // NEU: Reset Vertragstyp-Info
+    setContractTypeInfo(null);
+    setDynamicCategories([]);
   }, []);
 
   const handleDrag = useCallback((e: React.DragEvent) => {
@@ -986,8 +1190,8 @@ export default function Optimizer() {
 
   const calculateNewScore = useCallback(() => {
     if (!optimizations.length) return 0;
-    return calculateContractScore(optimizations).overall;
-  }, [optimizations]);
+    return calculateContractScore(optimizations, contractTypeInfo?.categories).overall;
+  }, [optimizations, contractTypeInfo]);
 
   const toggleSuggestion = useCallback((id: string) => {
     setOptimizations(prev => {
@@ -998,7 +1202,7 @@ export default function Optimizer() {
     });
   }, []);
 
-  // ✅ ENHANCED: Pitch Generator
+  // ✅ ENHANCED: Pitch Generator mit Vertragstyp-Awareness
   const generatePitch = useCallback((style: string = selectedPitchStyle) => {
     const implementedSuggestions = optimizations.filter(opt => opt.implemented);
     
@@ -1007,23 +1211,32 @@ export default function Optimizer() {
       return;
     }
 
-    const categoryNames = {
-      'termination': 'Kündigungsregelungen',
-      'liability': 'Haftungsklauseln', 
-      'payment': 'Zahlungskonditionen',
-      'compliance': 'Compliance & Datenschutz',
-      'clarity': 'Vertragsklarheit'
-    };
+    const categoryNames: { [key: string]: string } = {};
+    
+    // Nutze dynamische Kategorie-Namen wenn verfügbar
+    if (contractTypeInfo && contractTypeInfo.categories) {
+      contractTypeInfo.categories.forEach(cat => {
+        categoryNames[cat.id] = cat.name;
+      });
+    } else {
+      // Fallback auf Standard-Namen
+      categoryNames['termination'] = 'Kündigungsregelungen';
+      categoryNames['liability'] = 'Haftungsklauseln';
+      categoryNames['payment'] = 'Zahlungskonditionen';
+      categoryNames['compliance'] = 'Compliance & Datenschutz';
+      categoryNames['clarity'] = 'Vertragsklarheit';
+    }
 
     const improvementScore = calculateNewScore() - (contractScore?.overall || 0);
+    const contractTypeName = contractTypeInfo?.contractType || 'Vertrag';
 
     const pitchTemplates = {
       lawyer: `Sehr geehrte Kolleginnen und Kollegen,
 
-nach eingehender rechtlicher Prüfung des vorliegenden Vertrags mittels KI-gestützter Analyse (Confidence-Level: 75-95%) möchte ich ${implementedSuggestions.length} substantielle Optimierungsvorschläge unterbreiten:
+nach eingehender rechtlicher Prüfung des vorliegenden ${contractTypeName} mittels KI-gestützter Analyse (Confidence-Level: ${contractTypeInfo?.confidence || 85}%) möchte ich ${implementedSuggestions.length} substantielle Optimierungsvorschläge unterbreiten:
 
 ${implementedSuggestions.map((opt, index) => 
-  `${index + 1}. ${categoryNames[opt.category]} (Priorität: ${opt.priority}, Risiko-Level: ${opt.legalRisk}/10):
+  `${index + 1}. ${categoryNames[opt.category] || opt.category} (Priorität: ${opt.priority}, Risiko-Level: ${opt.legalRisk}/10):
    📋 Status quo: ${opt.original.substring(0, 120)}...
    ⚖️ Rechtliche Empfehlung: ${opt.improved.substring(0, 120)}...
    📖 Juristische Begründung: ${opt.reasoning.split('.')[0]}. (Rechtssicherheit: ${opt.confidence}%)
@@ -1033,16 +1246,16 @@ ${implementedSuggestions.map((opt, index) =>
 
 Die vorgeschlagenen Modifikationen würden den Vertragsscore von ${contractScore?.overall || 0} auf ${calculateNewScore()} Punkte optimieren (+${Math.max(0, improvementScore)} Punkte), was einer signifikanten Risikoreduktion und Rechtssicherheitsverbesserung entspricht.
 
-Sämtliche Empfehlungen basieren auf aktueller Rechtsprechung und Marktstandards (Stand 2024).
+Sämtliche Empfehlungen basieren auf aktueller Rechtsprechung und Marktstandards (Stand 2024) speziell für ${contractTypeName}.
 
 Mit kollegialen Grüßen`,
 
       business: `Sehr geehrte Damen und Herren,
 
-nach einer professionellen KI-gestützten Vertragsanalyse möchte ich ${implementedSuggestions.length} strategische Optimierungsvorschläge unterbreiten, die unser Vertragsverhältnis zum beiderseitigen Vorteil verbessern können:
+nach einer professionellen KI-gestützten Analyse Ihres ${contractTypeName} möchte ich ${implementedSuggestions.length} strategische Optimierungsvorschläge unterbreiten, die unser Vertragsverhältnis zum beiderseitigen Vorteil verbessern können:
 
 ${implementedSuggestions.map((opt, index) => 
-  `${index + 1}. ${categoryNames[opt.category]}:
+  `${index + 1}. ${categoryNames[opt.category] || opt.category}:
    📊 Aktueller Status: ${opt.original.substring(0, 100)}...
    🎯 Business-Optimierung: ${opt.improved.substring(0, 100)}...
    💡 Geschäftlicher Nutzen: ${opt.reasoning.split('.')[0]}.
@@ -1052,7 +1265,7 @@ ${implementedSuggestions.map((opt, index) =>
 
 Diese datenbasierten Empfehlungen würden unseren Vertragsscore von ${contractScore?.overall || 0} auf ${calculateNewScore()} Punkte steigern (+${Math.max(0, improvementScore)} Punkte), was messbaren Business-Value generiert.
 
-Die Anpassungen entsprechen Best Practices und modernen Marktstandards, schaffen Win-Win-Situationen und stärken unsere Partnerschaft nachhaltig.
+Die Anpassungen entsprechen Best Practices für ${contractTypeName} und schaffen Win-Win-Situationen für alle Parteien.
 
 Gerne diskutiere ich diese Optimierungen in einem strategischen Meeting.
 
@@ -1060,10 +1273,10 @@ Mit freundlichen Grüßen`,
 
       private: `Liebe Vertragspartner,
 
-ich habe unseren Vertrag von einer modernen KI analysieren lassen und dabei ${implementedSuggestions.length} Verbesserungsvorschläge erhalten, die uns beiden zugutekommen könnten:
+ich habe unseren ${contractTypeName} von einer modernen KI analysieren lassen und dabei ${implementedSuggestions.length} Verbesserungsvorschläge erhalten, die uns beiden zugutekommen könnten:
 
 ${implementedSuggestions.map((opt, index) => 
-  `${index + 1}. ${categoryNames[opt.category]}:
+  `${index + 1}. ${categoryNames[opt.category] || opt.category}:
    📝 So ist es jetzt: ${opt.original.substring(0, 100)}...
    ✨ So könnte es besser sein: ${opt.improved.substring(0, 100)}...
    💭 Warum das sinnvoll ist: ${opt.reasoning.split('.')[0]}.
@@ -1071,9 +1284,9 @@ ${implementedSuggestions.map((opt, index) =>
    📊 Das ist heute üblich: ${opt.marketBenchmark}
 `).join('\n')}
 
-Die KI bewertet unseren Vertrag aktuell mit ${contractScore?.overall || 0} von 100 Punkten. Mit diesen Verbesserungen würden wir auf ${calculateNewScore()} Punkte kommen - das ist eine deutliche Verbesserung!
+Die KI bewertet unseren ${contractTypeName} aktuell mit ${contractScore?.overall || 0} von 100 Punkten. Mit diesen Verbesserungen würden wir auf ${calculateNewScore()} Punkte kommen - das ist eine deutliche Verbesserung!
 
-Alle Vorschläge sind fair und entsprechen dem, was heute üblich ist. Ich denke, das wäre für uns beide von Vorteil.
+Alle Vorschläge sind fair und entsprechen dem, was heute bei ${contractTypeName} üblich ist.
 
 Falls Sie Interesse haben, können wir das gerne bei einem Kaffee besprechen.
 
@@ -1087,16 +1300,19 @@ Mit freundlichen Grüßen`
     const styleNames = { lawyer: 'Rechtlicher', business: 'Business', private: 'Privater' };
     showToast(`✅ ${styleNames[style as keyof typeof styleNames] || 'Business'} Pitch wurde in die Zwischenablage kopiert!`);
     setShowPitchMenu(false);
-  }, [optimizations, contractScore, calculateNewScore, selectedPitchStyle, showToast]);
+  }, [optimizations, contractScore, calculateNewScore, selectedPitchStyle, showToast, contractTypeInfo]);
 
   // ✅ ENHANCED: Export Functions
   const handleExport = useCallback(async (exportType: string) => {
     setShowExportMenu(false);
     
+    const contractTypeName = contractTypeInfo?.contractType || 'Vertrag';
+    
     if (exportType === 'pdf_marked') {
       showToast("📄 PDF wird generiert...", 'success');
       
       const pdfContent = `VERTRAGSANALYSE - ${file?.name || 'Unbekannt'}
+VERTRAGSTYP: ${contractTypeName} (Confidence: ${contractTypeInfo?.confidence || 0}%)
 ===============================================
 
 OPTIMIERUNGSVORSCHLÄGE:
@@ -1113,12 +1329,13 @@ ${optimizations.map((opt, index) =>
 `).join('\n')}
 
 VERTRAGSSCORE: ${contractScore?.overall || 0}/100
+VERTRAGSTYP: ${contractTypeName}
 GENERIERT AM: ${new Date().toLocaleDateString('de-DE')}`;
 
       const blob = new Blob([pdfContent], { type: 'text/plain;charset=utf-8' });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
-      link.download = `Vertragsanalyse_${file?.name?.replace('.pdf', '')}_${new Date().toISOString().split('T')[0]}.txt`;
+      link.download = `Vertragsanalyse_${contractTypeName}_${file?.name?.replace('.pdf', '')}_${new Date().toISOString().split('T')[0]}.txt`;
       link.click();
       
       setTimeout(() => showToast("✅ PDF-Analyse heruntergeladen!"), 1500);
@@ -1127,11 +1344,16 @@ GENERIERT AM: ${new Date().toLocaleDateString('de-DE')}`;
       showToast("📝 Word-Dokument wird erstellt...", 'success');
       
       const wordContent = `VERTRAGSOPTIMIERUNG - ${file?.name || 'Unbekannt'}
+VERTRAGSTYP: ${contractTypeName}
 
 ZUSAMMENFASSUNG:
 Vertragsscore: ${contractScore?.overall || 0}/100 Punkte
+Vertragstyp: ${contractTypeName} (${contractTypeInfo?.confidence || 0}% Confidence)
 Optimierungen gefunden: ${optimizations.length}
 Kritische Probleme: ${optimizations.filter(o => o.priority === 'critical').length}
+
+KATEGORIEN:
+${contractTypeInfo?.categories?.map(cat => `- ${cat.name}: ${cat.description || ''}`).join('\n') || 'Standard-Kategorien'}
 
 DETAILLIERTE OPTIMIERUNGSVORSCHLÄGE:
 
@@ -1158,26 +1380,26 @@ ${optimizations.map((opt, index) =>
 `).join('\n')}
 
 Erstellt am: ${new Date().toLocaleDateString('de-DE')}
-Generiert durch KI-Vertragsoptimierung`;
+Generiert durch KI-Vertragsoptimierung für ${contractTypeName}`;
 
       const blob = new Blob([wordContent], { type: 'text/plain;charset=utf-8' });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
-      link.download = `Vertragsoptimierung_${file?.name?.replace('.pdf', '')}_${new Date().toISOString().split('T')[0]}.txt`;
+      link.download = `Vertragsoptimierung_${contractTypeName}_${file?.name?.replace('.pdf', '')}_${new Date().toISOString().split('T')[0]}.txt`;
       link.click();
       
       setTimeout(() => showToast("✅ Word-Dokument heruntergeladen!"), 1500);
       
     } else if (exportType === 'excel_comparison') {
-      const csvContent = `Kategorie,Original,Verbesserung,Begründung,Priorität,Confidence,Estimierte Ersparnisse,Markt-Benchmark\n` +
+      const csvContent = `Vertragstyp,Kategorie,Original,Verbesserung,Begründung,Priorität,Confidence,Estimierte Ersparnisse,Markt-Benchmark\n` +
         optimizations.map(opt => 
-          `"${opt.category}","${opt.original.replace(/"/g, '""')}","${opt.improved.replace(/"/g, '""')}","${opt.reasoning.replace(/"/g, '""')}","${opt.priority}","${opt.confidence}%","${opt.estimatedSavings}","${opt.marketBenchmark}"`
+          `"${contractTypeName}","${opt.category}","${opt.original.replace(/"/g, '""')}","${opt.improved.replace(/"/g, '""')}","${opt.reasoning.replace(/"/g, '""')}","${opt.priority}","${opt.confidence}%","${opt.estimatedSavings}","${opt.marketBenchmark}"`
         ).join('\n');
       
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
-      link.download = `Vertragsanalyse_${file?.name?.replace('.pdf', '')}_${new Date().toISOString().split('T')[0]}.csv`;
+      link.download = `Vertragsanalyse_${contractTypeName}_${file?.name?.replace('.pdf', '')}_${new Date().toISOString().split('T')[0]}.csv`;
       link.click();
       
       showToast("✅ Excel-Vergleichstabelle heruntergeladen!");
@@ -1188,7 +1410,7 @@ Generiert durch KI-Vertragsoptimierung`;
     } else {
       showToast("❌ Export-Format nicht unterstützt", 'error');
     }
-  }, [optimizations, file, generatePitch, selectedPitchStyle, contractScore, showToast]);
+  }, [optimizations, file, generatePitch, selectedPitchStyle, contractScore, showToast, contractTypeInfo]);
 
   const filteredOptimizations = selectedCategory === 'all' 
     ? optimizations 
@@ -1206,6 +1428,7 @@ Generiert durch KI-Vertragsoptimierung`;
     );
   }
 
+  // ✨ RENDER
   return (
     <>
       <Helmet>
@@ -1213,13 +1436,11 @@ Generiert durch KI-Vertragsoptimierung`;
         <meta name="description" content="Optimiere deine Verträge in Sekunden mit KI: Schwächen erkennen, Klauseln verbessern & bessere Konditionen sichern. Jetzt einfach & sicher optimieren!" />
         <meta name="keywords" content="Vertragsoptimierung, Verträge verbessern, KI Vertragsanalyse, Klauseln verbessern, bessere Konditionen, Contract AI" />
         <link rel="canonical" href="https://contract-ai.de/optimizer" />
-        {/* Open Graph / Facebook */}
         <meta property="og:title" content="Verträge mit KI optimieren & bessere Konditionen sichern | Contract AI" />
         <meta property="og:description" content="Verbessere deine Verträge mit KI: Schwächen erkennen, Klauseln optimieren & bessere Konditionen erreichen. Jetzt ausprobieren!" />
         <meta property="og:url" content="https://contract-ai.de/optimizer" />
         <meta property="og:type" content="website" />
         <meta property="og:image" content="https://contract-ai.de/og-image.jpg" />
-        {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Verträge mit KI optimieren & bessere Konditionen sichern | Contract AI" />
         <meta name="twitter:description" content="Optimiere deine Verträge mit KI, verbessere Klauseln & sichere dir die besten Konditionen. Schnell, einfach & sicher. Jetzt starten!" />
@@ -1467,6 +1688,78 @@ Generiert durch KI-Vertragsoptimierung`;
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.8 }}
               >
+                {/* ✅ NEU: Vertragstyp-Badge */}
+                {contractTypeInfo && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '1rem',
+                      marginBottom: '2rem',
+                      flexWrap: 'wrap'
+                    }}
+                  >
+                    <motion.div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        padding: '0.8rem 1.5rem',
+                        background: 'linear-gradient(135deg, #af52de 0%, #d946ef 100%)',
+                        borderRadius: '16px',
+                        color: 'white',
+                        fontWeight: 600,
+                        fontSize: '1.1rem',
+                        boxShadow: '0 8px 24px rgba(175, 82, 222, 0.3)'
+                      }}
+                      whileHover={{ scale: 1.02 }}
+                    >
+                      <Award size={20} />
+                      {contractTypeInfo.contractType}
+                    </motion.div>
+                    
+                    <motion.div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.3rem',
+                        padding: '0.6rem 1rem',
+                        background: 'rgba(255, 255, 255, 0.9)',
+                        borderRadius: '12px',
+                        fontSize: '0.9rem',
+                        fontWeight: 500,
+                        color: '#6e6e73'
+                      }}
+                    >
+                      <Zap size={16} />
+                      {contractTypeInfo.confidence}% Confidence
+                    </motion.div>
+                    
+                    {contractTypeInfo.additionalInsights && (
+                      <motion.div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.3rem',
+                          padding: '0.6rem 1rem',
+                          background: 'rgba(0, 113, 227, 0.1)',
+                          borderRadius: '12px',
+                          fontSize: '0.85rem',
+                          color: '#0071e3',
+                          maxWidth: '300px'
+                        }}
+                      >
+                        <Info size={14} />
+                        {contractTypeInfo.additionalInsights}
+                      </motion.div>
+                    )}
+                  </motion.div>
+                )}
+
                 {/* Contract Health Dashboard */}
                 {contractScore && (
                   <ContractHealthDashboard 
@@ -1476,7 +1769,7 @@ Generiert durch KI-Vertragsoptimierung`;
                   />
                 )}
 
-                {/* Category Filter */}
+                {/* Category Filter - NEU: Mit dynamischen Kategorien */}
                 <motion.div
                   className={styles.card}
                   initial={{ opacity: 0, y: 20 }}
@@ -1501,7 +1794,7 @@ Generiert durch KI-Vertragsoptimierung`;
                     flexWrap: 'wrap', 
                     gap: '0.8rem' 
                   }}>
-                    {categories.filter(cat => cat.count > 0 || cat.id === 'all').map((category) => (
+                    {dynamicCategories.filter(cat => cat.count > 0 || cat.id === 'all').map((category) => (
                       <motion.button
                         key={category.id}
                         onClick={() => setSelectedCategory(category.id)}
@@ -1902,266 +2195,277 @@ Generiert durch KI-Vertragsoptimierung`;
 
                 {/* Optimization Cards */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                    {filteredOptimizations.map((optimization, index) => (
-                    <motion.div
-                      key={optimization.id}
-                      className={styles.card}
-                      style={{ 
-                        padding: '2rem', 
-                        position: 'relative',
-                        background: optimization.implemented && showSimulation 
-                          ? 'linear-gradient(135deg, rgba(52, 199, 89, 0.1) 0%, rgba(52, 199, 89, 0.05) 100%)'
-                          : 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%)',
-                        border: optimization.implemented && showSimulation 
-                          ? '2px solid rgba(52, 199, 89, 0.3)'
-                          : '1px solid rgba(255, 255, 255, 0.6)'
-                      }}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.4 + index * 0.1 }}
-                    >
-                      {/* Priority Indicator */}
-                      <div style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        height: '3px',
-                        background: optimization.priority === 'critical' ? '#d70015' : 
-                                   optimization.priority === 'high' ? '#ff453a' : 
-                                   optimization.priority === 'medium' ? '#ff9500' : '#34c759'
-                      }}></div>
+                    {filteredOptimizations.map((optimization, index) => {
+                      // Finde Kategorie-Info für diese Optimierung
+                      const categoryInfo = contractTypeInfo?.categories?.find(c => c.id === optimization.category);
+                      const categoryName = categoryInfo?.name || 
+                        (optimization.category === 'termination' ? 'Kündigung & Laufzeit' :
+                         optimization.category === 'liability' ? 'Haftung & Risiko' :
+                         optimization.category === 'payment' ? 'Vergütung & Zahlung' :
+                         optimization.category === 'compliance' ? 'Compliance & DSGVO' : 
+                         optimization.category === 'clarity' ? 'Klarheit & Präzision' :
+                         optimization.category === 'other' ? 'Sonstige Optimierung' :
+                         'Optimierung');
 
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
-                        <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', marginBottom: '0.5rem' }}>
-                            <h4 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 600 }}>
-                              {optimization.category === 'termination' ? 'Kündigung & Laufzeit' :
-                               optimization.category === 'liability' ? 'Haftung & Risiko' :
-                               optimization.category === 'payment' ? 'Vergütung & Zahlung' :
-                               optimization.category === 'compliance' ? 'Compliance & DSGVO' : 'Klarheit & Präzision'}
-                            </h4>
-                            <span style={{
-                              padding: '0.3rem 0.8rem',
-                              borderRadius: '12px',
-                              fontSize: '0.8rem',
-                              fontWeight: 600,
-                              backgroundColor: optimization.priority === 'critical' ? '#fff0f0' : 
-                                             optimization.priority === 'high' ? '#fff5f5' : 
-                                             optimization.priority === 'medium' ? '#fff8f0' : '#f0fff0',
-                              color: optimization.priority === 'critical' ? '#d70015' : 
-                                     optimization.priority === 'high' ? '#ff453a' : 
-                                     optimization.priority === 'medium' ? '#ff9500' : '#34c759'
-                            }}>
-                              {optimization.priority === 'critical' ? 'Kritisch' : 
-                               optimization.priority === 'high' ? 'Hoch' : 
-                               optimization.priority === 'medium' ? 'Mittel' : 'Niedrig'}
-                            </span>
-                          </div>
-                          
-                          <div style={{ display: 'flex', gap: '1rem', fontSize: '0.85rem', color: '#6e6e73', flexWrap: 'wrap' }}>
-                            <span>KI-Vertrauen: {optimization.confidence}%</span>
-                            <span>Risiko: {optimization.legalRisk}/10</span>
-                            <span>Impact: {optimization.businessImpact}/10</span>
-                            <span>{optimization.estimatedSavings}</span>
-                          </div>
-                        </div>
+                      return (
+                        <motion.div
+                          key={optimization.id}
+                          className={styles.card}
+                          style={{ 
+                            padding: '2rem', 
+                            position: 'relative',
+                            background: optimization.implemented && showSimulation 
+                              ? 'linear-gradient(135deg, rgba(52, 199, 89, 0.1) 0%, rgba(52, 199, 89, 0.05) 100%)'
+                              : 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%)',
+                            border: optimization.implemented && showSimulation 
+                              ? '2px solid rgba(52, 199, 89, 0.3)'
+                              : '1px solid rgba(255, 255, 255, 0.6)'
+                          }}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.4 + index * 0.1 }}
+                        >
+                          {/* Priority Indicator */}
+                          <div style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            height: '3px',
+                            background: optimization.priority === 'critical' ? '#d70015' : 
+                                       optimization.priority === 'high' ? '#ff453a' : 
+                                       optimization.priority === 'medium' ? '#ff9500' : '#34c759'
+                          }}></div>
 
-                        {showSimulation && (
-                          <motion.label 
-                            style={{ 
-                              display: 'flex', 
-                              alignItems: 'center', 
-                              gap: '0.5rem',
-                              cursor: 'pointer',
-                              padding: '0.5rem',
-                              backgroundColor: optimization.implemented ? 'rgba(52, 199, 89, 0.1)' : 'rgba(0, 113, 227, 0.1)',
-                              borderRadius: '8px',
-                              border: `1px solid ${optimization.implemented ? 'rgba(52, 199, 89, 0.3)' : 'rgba(0, 113, 227, 0.3)'}`
-                            }}
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={optimization.implemented}
-                              onChange={() => toggleSuggestion(optimization.id)}
-                              style={{
-                                width: '18px',
-                                height: '18px',
-                                accentColor: '#0071e3'
-                              }}
-                            />
-                            <span style={{ 
-                              fontSize: '0.9rem', 
-                              fontWeight: 600, 
-                              color: optimization.implemented ? '#34c759' : '#0071e3'
-                            }}>
-                              {optimization.implemented ? 'Aktiviert' : 'Anwenden'}
-                            </span>
-                            {optimization.implemented && (
-                              <TrendingUp size={14} style={{ color: '#34c759' }} />
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+                            <div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', marginBottom: '0.5rem' }}>
+                                {getIconForCategory(optimization.category, categoryName)}
+                                <h4 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 600 }}>
+                                  {categoryName}
+                                </h4>
+                                <span style={{
+                                  padding: '0.3rem 0.8rem',
+                                  borderRadius: '12px',
+                                  fontSize: '0.8rem',
+                                  fontWeight: 600,
+                                  backgroundColor: optimization.priority === 'critical' ? '#fff0f0' : 
+                                                 optimization.priority === 'high' ? '#fff5f5' : 
+                                                 optimization.priority === 'medium' ? '#fff8f0' : '#f0fff0',
+                                  color: optimization.priority === 'critical' ? '#d70015' : 
+                                         optimization.priority === 'high' ? '#ff453a' : 
+                                         optimization.priority === 'medium' ? '#ff9500' : '#34c759'
+                                }}>
+                                  {optimization.priority === 'critical' ? 'Kritisch' : 
+                                   optimization.priority === 'high' ? 'Hoch' : 
+                                   optimization.priority === 'medium' ? 'Mittel' : 'Niedrig'}
+                                </span>
+                              </div>
+                              
+                              <div style={{ display: 'flex', gap: '1rem', fontSize: '0.85rem', color: '#6e6e73', flexWrap: 'wrap' }}>
+                                <span>KI-Vertrauen: {optimization.confidence}%</span>
+                                <span>Risiko: {optimization.legalRisk}/10</span>
+                                <span>Impact: {optimization.businessImpact}/10</span>
+                                <span>{optimization.estimatedSavings}</span>
+                              </div>
+                            </div>
+
+                            {showSimulation && (
+                              <motion.label 
+                                style={{ 
+                                  display: 'flex', 
+                                  alignItems: 'center', 
+                                  gap: '0.5rem',
+                                  cursor: 'pointer',
+                                  padding: '0.5rem',
+                                  backgroundColor: optimization.implemented ? 'rgba(52, 199, 89, 0.1)' : 'rgba(0, 113, 227, 0.1)',
+                                  borderRadius: '8px',
+                                  border: `1px solid ${optimization.implemented ? 'rgba(52, 199, 89, 0.3)' : 'rgba(0, 113, 227, 0.3)'}`
+                                }}
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={optimization.implemented}
+                                  onChange={() => toggleSuggestion(optimization.id)}
+                                  style={{
+                                    width: '18px',
+                                    height: '18px',
+                                    accentColor: '#0071e3'
+                                  }}
+                                />
+                                <span style={{ 
+                                  fontSize: '0.9rem', 
+                                  fontWeight: 600, 
+                                  color: optimization.implemented ? '#34c759' : '#0071e3'
+                                }}>
+                                  {optimization.implemented ? 'Aktiviert' : 'Anwenden'}
+                                </span>
+                                {optimization.implemented && (
+                                  <TrendingUp size={14} style={{ color: '#34c759' }} />
+                                )}
+                              </motion.label>
                             )}
-                          </motion.label>
-                        )}
-                      </div>
+                          </div>
 
-                      {/* 3-Column Layout */}
-                      <div style={{ 
-                        display: 'grid', 
-                        gridTemplateColumns: '1fr 1fr 1fr', 
-                        gap: '1.5rem',
-                        marginBottom: '1.5rem'
-                      }}>
-                        <div>
-                          <h5 style={{ 
-                            margin: '0 0 0.5rem', 
-                            fontSize: '0.9rem', 
-                            fontWeight: 600, 
-                            color: '#ff453a',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.3rem'
+                          {/* 3-Column Layout */}
+                          <div style={{ 
+                            display: 'grid', 
+                            gridTemplateColumns: '1fr 1fr 1fr', 
+                            gap: '1.5rem',
+                            marginBottom: '1.5rem'
                           }}>
-                            <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#ff453a' }}></div>
-                            Original
-                          </h5>
-                          <p style={{ 
-                            margin: 0, 
-                            fontSize: '0.9rem', 
-                            lineHeight: 1.5, 
-                            color: '#1d1d1f',
+                            <div>
+                              <h5 style={{ 
+                                margin: '0 0 0.5rem', 
+                                fontSize: '0.9rem', 
+                                fontWeight: 600, 
+                                color: '#ff453a',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.3rem'
+                              }}>
+                                <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#ff453a' }}></div>
+                                Original
+                              </h5>
+                              <p style={{ 
+                                margin: 0, 
+                                fontSize: '0.9rem', 
+                                lineHeight: 1.5, 
+                                color: '#1d1d1f',
+                                padding: '1rem',
+                                backgroundColor: 'rgba(255, 69, 58, 0.05)',
+                                borderRadius: '8px',
+                                border: '1px solid rgba(255, 69, 58, 0.1)',
+                                minHeight: '80px'
+                              }}>
+                                {optimization.original}
+                              </p>
+                            </div>
+
+                            <div>
+                              <h5 style={{ 
+                                margin: '0 0 0.5rem', 
+                                fontSize: '0.9rem', 
+                                fontWeight: 600, 
+                                color: '#34c759',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.3rem'
+                              }}>
+                                <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#34c759' }}></div>
+                                Verbesserung
+                              </h5>
+                              <p style={{ 
+                                margin: 0, 
+                                fontSize: '0.9rem', 
+                                lineHeight: 1.5, 
+                                color: '#1d1d1f',
+                                padding: '1rem',
+                                backgroundColor: 'rgba(52, 199, 89, 0.05)',
+                                borderRadius: '8px',
+                                border: '1px solid rgba(52, 199, 89, 0.1)',
+                                minHeight: '80px'
+                              }}>
+                                {optimization.improved}
+                              </p>
+                            </div>
+
+                            <div>
+                              <h5 style={{ 
+                                margin: '0 0 0.5rem', 
+                                fontSize: '0.9rem', 
+                                fontWeight: 600, 
+                                color: '#5856d6',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.3rem'
+                              }}>
+                                <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#5856d6' }}></div>
+                                Begründung
+                              </h5>
+                              <p style={{ 
+                                margin: 0, 
+                                fontSize: '0.9rem', 
+                                lineHeight: 1.5, 
+                                color: '#1d1d1f',
+                                padding: '1rem',
+                                backgroundColor: 'rgba(88, 86, 214, 0.05)',
+                                borderRadius: '8px',
+                                border: '1px solid rgba(88, 86, 214, 0.1)',
+                                minHeight: '80px'
+                              }}>
+                                {optimization.reasoning.split('.').slice(0, 3).join('. ')}.
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Additional Info */}
+                          <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                            gap: '1rem',
                             padding: '1rem',
-                            backgroundColor: 'rgba(255, 69, 58, 0.05)',
+                            backgroundColor: 'rgba(0, 113, 227, 0.03)',
                             borderRadius: '8px',
-                            border: '1px solid rgba(255, 69, 58, 0.1)',
-                            minHeight: '80px'
+                            border: '1px solid rgba(0, 113, 227, 0.1)'
                           }}>
-                            {optimization.original}
-                          </p>
-                        </div>
+                            <div>
+                              <h6 style={{ margin: '0 0 0.3rem', fontSize: '0.8rem', fontWeight: 600, color: '#5856d6' }}>
+                                📊 Markt-Benchmark
+                              </h6>
+                              <p style={{ margin: 0, fontSize: '0.85rem', color: '#1d1d1f' }}>
+                                {optimization.marketBenchmark}
+                              </p>
+                            </div>
+                            
+                            <div>
+                              <h6 style={{ margin: '0 0 0.3rem', fontSize: '0.8rem', fontWeight: 600, color: '#5856d6' }}>
+                                🔧 Umsetzung
+                              </h6>
+                              <p style={{ margin: 0, fontSize: '0.85rem', color: '#1d1d1f' }}>
+                                {optimization.implementationDifficulty === 'easy' ? '✅ Einfach' :
+                                 optimization.implementationDifficulty === 'medium' ? '⚠️ Mittel' : '🔴 Komplex'}
+                              </p>
+                            </div>
 
-                        <div>
-                          <h5 style={{ 
-                            margin: '0 0 0.5rem', 
-                            fontSize: '0.9rem', 
-                            fontWeight: 600, 
-                            color: '#34c759',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.3rem'
-                          }}>
-                            <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#34c759' }}></div>
-                            Verbesserung
-                          </h5>
-                          <p style={{ 
-                            margin: 0, 
-                            fontSize: '0.9rem', 
-                            lineHeight: 1.5, 
-                            color: '#1d1d1f',
-                            padding: '1rem',
-                            backgroundColor: 'rgba(52, 199, 89, 0.05)',
-                            borderRadius: '8px',
-                            border: '1px solid rgba(52, 199, 89, 0.1)',
-                            minHeight: '80px'
-                          }}>
-                            {optimization.improved}
-                          </p>
-                        </div>
+                            <div>
+                              <h6 style={{ margin: '0 0 0.3rem', fontSize: '0.8rem', fontWeight: 600, color: '#5856d6' }}>
+                                💡 KI-Insight
+                              </h6>
+                              <p style={{ margin: 0, fontSize: '0.85rem', color: '#1d1d1f' }}>
+                                {optimization.aiInsight.substring(0, 80)}...
+                              </p>
+                            </div>
+                          </div>
 
-                        <div>
-                          <h5 style={{ 
-                            margin: '0 0 0.5rem', 
-                            fontSize: '0.9rem', 
-                            fontWeight: 600, 
-                            color: '#5856d6',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.3rem'
-                          }}>
-                            <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#5856d6' }}></div>
-                            Begründung
-                          </h5>
-                          <p style={{ 
-                            margin: 0, 
-                            fontSize: '0.9rem', 
-                            lineHeight: 1.5, 
-                            color: '#1d1d1f',
-                            padding: '1rem',
-                            backgroundColor: 'rgba(88, 86, 214, 0.05)',
-                            borderRadius: '8px',
-                            border: '1px solid rgba(88, 86, 214, 0.1)',
-                            minHeight: '80px'
-                          }}>
-                            {optimization.reasoning.split('.').slice(0, 3).join('. ')}.
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Additional Info */}
-                      <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                        gap: '1rem',
-                        padding: '1rem',
-                        backgroundColor: 'rgba(0, 113, 227, 0.03)',
-                        borderRadius: '8px',
-                        border: '1px solid rgba(0, 113, 227, 0.1)'
-                      }}>
-                        <div>
-                          <h6 style={{ margin: '0 0 0.3rem', fontSize: '0.8rem', fontWeight: 600, color: '#5856d6' }}>
-                            📊 Markt-Benchmark
-                          </h6>
-                          <p style={{ margin: 0, fontSize: '0.85rem', color: '#1d1d1f' }}>
-                            {optimization.marketBenchmark}
-                          </p>
-                        </div>
-                        
-                        <div>
-                          <h6 style={{ margin: '0 0 0.3rem', fontSize: '0.8rem', fontWeight: 600, color: '#5856d6' }}>
-                            🔧 Umsetzung
-                          </h6>
-                          <p style={{ margin: 0, fontSize: '0.85rem', color: '#1d1d1f' }}>
-                            {optimization.implementationDifficulty === 'easy' ? '✅ Einfach' :
-                             optimization.implementationDifficulty === 'medium' ? '⚠️ Mittel' : '🔴 Komplex'}
-                          </p>
-                        </div>
-
-                        <div>
-                          <h6 style={{ margin: '0 0 0.3rem', fontSize: '0.8rem', fontWeight: 600, color: '#5856d6' }}>
-                            💡 KI-Insight
-                          </h6>
-                          <p style={{ margin: 0, fontSize: '0.85rem', color: '#1d1d1f' }}>
-                            {optimization.aiInsight.substring(0, 80)}...
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Copy Button */}
-                      <motion.button
-                        onClick={() => {
-                          const text = `${optimization.improved}\n\nBegründung: ${optimization.reasoning}`;
-                          navigator.clipboard.writeText(text);
-                          showToast("✅ Verbesserung kopiert!");
-                        }}
-                        style={{
-                          position: 'absolute',
-                          top: '1rem',
-                          right: '1rem',
-                          background: 'rgba(255, 255, 255, 0.9)',
-                          border: '1px solid rgba(0, 113, 227, 0.2)',
-                          borderRadius: '8px',
-                          padding: '0.5rem',
-                          cursor: 'pointer',
-                          color: '#0071e3'
-                        }}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        <Copy size={16} />
-                      </motion.button>
-                    </motion.div>
-                  ))}
+                          {/* Copy Button */}
+                          <motion.button
+                            onClick={() => {
+                              const text = `${optimization.improved}\n\nBegründung: ${optimization.reasoning}`;
+                              navigator.clipboard.writeText(text);
+                              showToast("✅ Verbesserung kopiert!");
+                            }}
+                            style={{
+                              position: 'absolute',
+                              top: '1rem',
+                              right: '1rem',
+                              background: 'rgba(255, 255, 255, 0.9)',
+                              border: '1px solid rgba(0, 113, 227, 0.2)',
+                              borderRadius: '8px',
+                              padding: '0.5rem',
+                              cursor: 'pointer',
+                              color: '#0071e3'
+                            }}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                          >
+                            <Copy size={16} />
+                          </motion.button>
+                        </motion.div>
+                      );
+                    })}
                 </div>
 
                 {/* Simulation Summary */}
