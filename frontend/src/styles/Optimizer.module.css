@@ -680,38 +680,66 @@ div[class*="flex-wrap"] > button {
   font-weight: 500;
 }
 
-/* ✨ GENERATE BUTTON - SPECIAL */
-.generateButton {
+/* ✨ BIG GENERATE BUTTON - HERO STYLE */
+.bigGenerateButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 20px 48px;
+  border-radius: 16px;
+  font-size: 18px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #AF52DE 0%, #FF375F 100%);
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 8px 24px rgba(175, 82, 222, 0.4);
+  text-transform: none;
+  letter-spacing: -0.01em;
+}
+
+.bigGenerateButton:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(175, 82, 222, 0.5);
+}
+
+.bigGenerateButton:active {
+  transform: translateY(0);
+}
+
+.bigGenerateButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* ✨ SECONDARY BUTTON STYLE */
+.secondaryButton {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 12px 32px;
+  padding: 10px 20px;
   border-radius: 10px;
-  font-size: 16px;
-  font-weight: 600;
-  background: #AF52DE;
-  color: white;
-  border: none;
+  font-size: 14px;
+  font-weight: 500;
+  background: white;
+  color: #1d1d1f;
+  border: 1px solid #d1d1d6;
   cursor: pointer;
   transition: all 0.15s ease;
-  box-shadow: 0 2px 8px rgba(175, 82, 222, 0.3);
 }
 
-.generateButton:hover:not(:disabled) {
-  background: #9B42C8;
+.secondaryButton:hover {
+  background: #f5f5f7;
+  border-color: #007AFF;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(175, 82, 222, 0.4);
 }
 
-.generateButton:active {
+.secondaryButton:active {
   transform: translateY(0);
-}
-
-.generateButton:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-  box-shadow: none;
 }
 
 /* ✨ PREMIUM TOUCHES */

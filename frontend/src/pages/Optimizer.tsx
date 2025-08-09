@@ -6,12 +6,9 @@ import {
   Upload, 
   AlertCircle, 
   RefreshCw, 
-  Brain, 
   FileText, 
   Filter,
   Download,
-  Eye,
-  EyeOff,
   Mail,
   DollarSign,
   CheckCircle2,
@@ -26,14 +23,8 @@ import {
   ChevronUp,
   Sparkles,
   Target,
-  AlertTriangle,
-  Zap,
-  Check,
-  X,
   BarChart3,
-  GitCompare,
   Layers,
-  Award,
   FileSignature,
   Briefcase,
   Home,
@@ -42,8 +33,6 @@ import {
   Cloud,
   Loader2,
   Minimize2,
-  RotateCcw,
-  RotateCw,
   Settings,
   ArrowRight
 } from "lucide-react";
@@ -509,7 +498,6 @@ export default function Optimizer() {
   const [dragActive, setDragActive] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [contractScore, setContractScore] = useState<ContractHealthScore | null>(null);
-  const [showSimulation, setShowSimulation] = useState(false);
   
   // ✅ ORIGINAL: Export & Pitch States + Portal Refs
   const [showExportMenu, setShowExportMenu] = useState(false);
@@ -523,17 +511,13 @@ export default function Optimizer() {
   const [originalContractText, setOriginalContractText] = useState<string>('');
   const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
   
-  // 🚀 REVOLUTIONARY: New Enhanced States (only keeping used ones)
+  // 🚀 SIMPLIFIED: Only essential states
   const [optimizationResult, setOptimizationResult] = useState<OptimizationResult | null>(null);
-  const [selectedIssues, setSelectedIssues] = useState<Set<string>>(new Set());
-  const [appliedIssues, setAppliedIssues] = useState<Set<string>>(new Set());
-  const [dismissedIssues, setDismissedIssues] = useState<Set<string>>(new Set());
-  const [undoStack, setUndoStack] = useState<Array<{selected: Set<string>, applied: Set<string>, dismissed: Set<string>}>>([]);
-  const [redoStack, setRedoStack] = useState<Array<{selected: Set<string>, applied: Set<string>, dismissed: Set<string>}>>([]);
   const [showAdvancedView, setShowAdvancedView] = useState(false);
   const [showStatistics, setShowStatistics] = useState(true);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
+  const [selectedOptimizations, setSelectedOptimizations] = useState<Set<string>>(new Set());
   
   // ✅ ORIGINAL: Refs
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -607,7 +591,7 @@ export default function Optimizer() {
     formData.append("file", file);
 
     try {
-      console.log("🚀 REVOLUTIONARY: Starting world-class contract optimization...");
+      console.log("🚀 Starting contract optimization...");
       
       // Simulate progress
       const progressInterval = setInterval(() => {
@@ -633,7 +617,7 @@ export default function Optimizer() {
         throw new Error(data.message || "Optimierung fehlgeschlagen");
       }
 
-      console.log("✅ REVOLUTIONARY Response:", {
+      console.log("✅ Response:", {
         hasCategories: !!data.categories,
         hasMeta: !!data.meta,
         contractType: data.meta?.type,
@@ -655,18 +639,7 @@ export default function Optimizer() {
       setOptimizations(parsedOptimizations);
       setContractScore(calculatedScore);
       
-      // 🚀 Auto-select quick wins
-      if (data.summary?.quickWins > 0) {
-        const quickWinIds = new Set<string>();
-        parsedOptimizations.forEach(opt => {
-          if (opt.implementationDifficulty === 'easy' && opt.confidence >= 80 && opt.legalRisk <= 4) {
-            quickWinIds.add(opt.id);
-          }
-        });
-        setSelectedIssues(quickWinIds);
-      }
-      
-      showToast(`✅ ${parsedOptimizations.length} revolutionäre Optimierungen gefunden!`, 'success');
+      showToast(`✅ ${parsedOptimizations.length} Optimierungen gefunden!`, 'success');
       
     } catch (error) {
       const err = error as Error;
@@ -686,26 +659,25 @@ export default function Optimizer() {
     setTimeout(() => setToast(null), 4000);
   }, []);
 
-  // ✅ ORIGINAL + ENHANCED: Smart Contract Generator
+  // ✅ SIMPLIFIED: Smart Contract Generator
   const handleGenerateOptimizedContract = useCallback(async () => {
     if (!file || optimizations.length === 0) {
-      showToast("❌ Bitte lade erst einen Vertrag hoch und führe eine Optimierung durch.", 'error');
+      showToast("❌ Bitte lade erst einen Vertrag hoch.", 'error');
       return;
     }
 
-    const selectedOptimizations = showSimulation 
-      ? optimizations.filter(opt => opt.implemented)
-      : selectedIssues.size > 0 
-        ? optimizations.filter(opt => selectedIssues.has(opt.id))
-        : optimizations;
+    // Use selected optimizations if in advanced mode, otherwise use ALL
+    const optimizationsToApply = showAdvancedView && selectedOptimizations.size > 0
+      ? optimizations.filter(opt => selectedOptimizations.has(opt.id))
+      : optimizations; // Default: Use ALL optimizations
 
-    if (selectedOptimizations.length === 0) {
-      showToast("❌ Bitte wähle mindestens eine Optimierung aus.", 'error');
+    if (optimizationsToApply.length === 0) {
+      showToast("❌ Keine Optimierungen ausgewählt.", 'error');
       return;
     }
 
     setIsGeneratingContract(true);
-    showToast("🪄 Revolutionärer optimierter Vertrag wird generiert...", 'success');
+    showToast(`🪄 Dein verbesserter Vertrag wird generiert...`, 'success');
 
     try {
       let currentContractId = contractId;
@@ -746,7 +718,7 @@ export default function Optimizer() {
       }
 
       const generatePayload = {
-        optimizations: selectedOptimizations.map(opt => ({
+        optimizations: optimizationsToApply.map(opt => ({
           id: opt.id,
           category: opt.category,
           priority: opt.priority,
@@ -794,7 +766,7 @@ export default function Optimizer() {
       document.body.removeChild(link);
       URL.revokeObjectURL(downloadUrl);
 
-      showToast(`✅ Revolutionärer Vertrag generiert! (${selectedOptimizations.length} Optimierungen)`, 'success');
+      showToast(`✅ Dein verbesserter Vertrag wurde erstellt! (${optimizationsToApply.length} Optimierungen)`, 'success');
 
     } catch (error) {
       const err = error as Error;
@@ -803,115 +775,27 @@ export default function Optimizer() {
     } finally {
       setIsGeneratingContract(false);
     }
-  }, [file, optimizations, contractId, showSimulation, selectedIssues, originalContractText, analysisData, showToast]);
+  }, [file, optimizations, contractId, showAdvancedView, selectedOptimizations, originalContractText, analysisData, showToast]);
 
-  // 🚀 REVOLUTIONARY: Issue Management
-  const toggleIssueSelection = useCallback((issueId: string) => {
-    setUndoStack(prev => [...prev.slice(-19), {
-      selected: new Set(selectedIssues),
-      applied: new Set(appliedIssues),
-      dismissed: new Set(dismissedIssues)
-    }]);
-    setRedoStack([]);
-    
-    setSelectedIssues(prev => {
+  // 🚀 SIMPLIFIED: Toggle optimization selection (for advanced mode)
+  const toggleOptimizationSelection = useCallback((id: string) => {
+    setSelectedOptimizations(prev => {
       const newSet = new Set(prev);
-      if (newSet.has(issueId)) {
-        newSet.delete(issueId);
+      if (newSet.has(id)) {
+        newSet.delete(id);
       } else {
-        newSet.add(issueId);
+        newSet.add(id);
       }
-      return newSet;
-    });
-  }, [selectedIssues, appliedIssues, dismissedIssues]);
-
-  const applySelectedIssues = useCallback(async () => {
-    if (selectedIssues.size === 0) {
-      showToast('Wähle erst Optimierungen aus', 'info');
-      return;
-    }
-    
-    setAppliedIssues(new Set([...appliedIssues, ...selectedIssues]));
-    setSelectedIssues(new Set());
-    showToast(`✅ ${selectedIssues.size} Optimierungen angewendet`, 'success');
-  }, [selectedIssues, appliedIssues, showToast]);
-
-  const dismissIssue = useCallback((issueId: string) => {
-    setDismissedIssues(prev => new Set(prev).add(issueId));
-    setSelectedIssues(prev => {
-      const newSet = new Set(prev);
-      newSet.delete(issueId);
       return newSet;
     });
   }, []);
 
-  const undoAction = useCallback(() => {
-    if (undoStack.length === 0) return;
-    
-    const previousState = undoStack[undoStack.length - 1];
-    setRedoStack(prev => [...prev, {
-      selected: new Set(selectedIssues),
-      applied: new Set(appliedIssues),
-      dismissed: new Set(dismissedIssues)
-    }]);
-    
-    setSelectedIssues(previousState.selected);
-    setAppliedIssues(previousState.applied);
-    setDismissedIssues(previousState.dismissed);
-    setUndoStack(prev => prev.slice(0, -1));
-  }, [undoStack, selectedIssues, appliedIssues, dismissedIssues]);
-
-  const redoAction = useCallback(() => {
-    if (redoStack.length === 0) return;
-    
-    const nextState = redoStack[redoStack.length - 1];
-    setUndoStack(prev => [...prev, {
-      selected: new Set(selectedIssues),
-      applied: new Set(appliedIssues),
-      dismissed: new Set(dismissedIssues)
-    }]);
-    
-    setSelectedIssues(nextState.selected);
-    setAppliedIssues(nextState.applied);
-    setDismissedIssues(nextState.dismissed);
-    setRedoStack(prev => prev.slice(0, -1));
-  }, [redoStack, selectedIssues, appliedIssues, dismissedIssues]);
-
-  // 🚀 REVOLUTIONARY: Quick Actions
-  const applyQuickWins = useCallback(() => {
-    const quickWinIds = new Set<string>();
-    optimizations.forEach(opt => {
-      if (opt.implementationDifficulty === 'easy' && 
-          opt.confidence >= 80 && 
-          opt.legalRisk <= 4 &&
-          !dismissedIssues.has(opt.id)) {
-        quickWinIds.add(opt.id);
-      }
-    });
-    
-    setSelectedIssues(quickWinIds);
-    showToast(`${quickWinIds.size} Quick Wins ausgewählt`, 'success');
-  }, [optimizations, dismissedIssues, showToast]);
-
-  const selectHighRiskIssues = useCallback(() => {
-    const highRiskIds = new Set<string>();
-    optimizations.forEach(opt => {
-      if (opt.legalRisk >= 7 && !dismissedIssues.has(opt.id)) {
-        highRiskIds.add(opt.id);
-      }
-    });
-    
-    setSelectedIssues(highRiskIds);
-    showToast(`${highRiskIds.size} kritische Risiken ausgewählt`, 'info');
-  }, [optimizations, dismissedIssues, showToast]);
-
-  // ✅ ORIGINAL: Handlers
+  // ✅ SIMPLIFIED: Handlers
   const handleReset = useCallback(() => {
     setFile(null);
     setOptimizations([]);
     setError(null);
     setContractScore(null);
-    setShowSimulation(false);
     setSelectedCategory('all');
     setShowExportMenu(false);
     setShowPitchMenu(false);
@@ -920,11 +804,7 @@ export default function Optimizer() {
     setOriginalContractText('');
     setAnalysisData(null);
     setOptimizationResult(null);
-    setSelectedIssues(new Set());
-    setAppliedIssues(new Set());
-    setDismissedIssues(new Set());
-    setUndoStack([]);
-    setRedoStack([]);
+    setSelectedOptimizations(new Set());
   }, []);
 
   const handleDrag = useCallback((e: React.DragEvent) => {
@@ -960,28 +840,10 @@ export default function Optimizer() {
     }
   }, []);
 
-  const calculateNewScore = useCallback(() => {
-    if (!optimizations.length) return 0;
-    return calculateContractScore(optimizations).overall;
-  }, [optimizations]);
-
-  const toggleSuggestion = useCallback((id: string) => {
-    setOptimizations(prev => {
-      const updated = prev.map(opt => 
-        opt.id === id ? { ...opt, implemented: !opt.implemented } : opt
-      );
-      return updated;
-    });
-  }, []);
-
-  // ✅ ORIGINAL: Pitch Generator
+  // ✅ SIMPLIFIED: Pitch Generator
   const generatePitch = useCallback((style: string = selectedPitchStyle) => {
-    const implementedSuggestions = optimizations.filter(opt => 
-      opt.implemented || selectedIssues.has(opt.id) || appliedIssues.has(opt.id)
-    );
-    
-    if (implementedSuggestions.length === 0) {
-      showToast("❌ Bitte wähle Optimierungen aus.", 'error');
+    if (optimizations.length === 0) {
+      showToast("❌ Keine Optimierungen verfügbar.", 'error');
       return;
     }
 
@@ -993,29 +855,26 @@ export default function Optimizer() {
       'clarity': 'Vertragsklarheit'
     };
 
-    const improvementScore = calculateNewScore() - (contractScore?.overall || 0);
-
     const pitchTemplates = {
       lawyer: `Sehr geehrte Kolleginnen und Kollegen,
 
-nach revolutionärer KI-Analyse mit ${optimizationResult?.meta?.confidence || 95}% Konfidenz:
+nach KI-Analyse mit ${optimizationResult?.meta?.confidence || 95}% Konfidenz:
 
-${implementedSuggestions.map((opt, index) => 
+${optimizations.slice(0, 5).map((opt, index) => 
   `${index + 1}. ${categoryNames[opt.category]} (Risiko: ${opt.legalRisk}/10)
-   Original: ${opt.original.substring(0, 100)}...
    Empfehlung: ${opt.improved.substring(0, 100)}...
    Benchmark: ${opt.marketBenchmark}`
 ).join('\n\n')}
 
-Score-Verbesserung: ${contractScore?.overall} → ${calculateNewScore()} (+${improvementScore})
+${optimizations.length > 5 ? `\n+ ${optimizations.length - 5} weitere Optimierungen\n` : ''}
 
 Mit kollegialen Grüßen`,
 
       business: `Geschätzter Geschäftspartner,
 
-unsere revolutionäre KI-Analyse hat ${implementedSuggestions.length} Optimierungen identifiziert:
+unsere KI-Analyse hat ${optimizations.length} Optimierungen identifiziert:
 
-${implementedSuggestions.map((opt, index) => 
+${optimizations.slice(0, 5).map((opt, index) => 
   `${index + 1}. ${categoryNames[opt.category]}
    Impact: ${opt.estimatedSavings}
    ${opt.marketBenchmark}`
@@ -1027,13 +886,11 @@ Beste Grüße`,
 
       private: `Hallo,
 
-die KI hat ${implementedSuggestions.length} Verbesserungen gefunden:
+die KI hat ${optimizations.length} Verbesserungen gefunden:
 
-${implementedSuggestions.map((opt, index) => 
+${optimizations.slice(0, 5).map((opt, index) => 
   `${index + 1}. ${categoryNames[opt.category]}: ${opt.estimatedSavings}`
 ).join('\n')}
-
-Vertragsscore: ${contractScore?.overall} → ${calculateNewScore()} Punkte
 
 Viele Grüße`
     };
@@ -1042,7 +899,7 @@ Viele Grüße`
     navigator.clipboard.writeText(pitch);
     showToast(`✅ ${style} Pitch kopiert!`, 'success');
     setShowPitchMenu(false);
-  }, [optimizations, contractScore, calculateNewScore, selectedPitchStyle, showToast, selectedIssues, appliedIssues, optimizationResult]);
+  }, [optimizations, optimizationResult, selectedPitchStyle, showToast]);
 
   // ✅ ORIGINAL: Export Functions
   const handleExport = useCallback(async () => {
@@ -1132,14 +989,12 @@ Konfidenz: ${opt.confidence}%\n`
     ? optimizations 
     : optimizations.filter(opt => opt.category === selectedCategory);
 
-  // 🚀 REVOLUTIONARY: Statistics
+  // 🚀 SIMPLIFIED: Statistics
   const statistics = useMemo(() => {
     if (!optimizationResult?.summary && optimizations.length === 0) return null;
     
     const totalIssues = optimizationResult?.summary?.totalIssues || optimizations.length;
-    const appliedCount = appliedIssues.size;
-    const dismissedCount = dismissedIssues.size;
-    const selectedCount = selectedIssues.size;
+    const selectedCount = selectedOptimizations.size;
     
     const avgRisk = optimizations.reduce((sum, opt) => sum + opt.legalRisk, 0) / (optimizations.length || 1);
     const avgImpact = optimizations.reduce((sum, opt) => sum + opt.businessImpact, 0) / (optimizations.length || 1);
@@ -1147,18 +1002,16 @@ Konfidenz: ${opt.confidence}%\n`
     
     return {
       totalIssues,
-      appliedCount,
-      dismissedCount,
       selectedCount,
-      remainingCount: totalIssues - appliedCount - dismissedCount,
       avgRisk: Math.round(avgRisk),
       avgImpact: Math.round(avgImpact),
       avgConfidence: Math.round(avgConfidence),
-      progressPercentage: Math.round(((appliedCount + dismissedCount) / totalIssues) * 100),
-      redFlags: optimizationResult?.summary?.redFlags || optimizations.filter(o => o.priority === 'critical').length,
-      quickWins: optimizationResult?.summary?.quickWins || optimizations.filter(o => o.implementationDifficulty === 'easy' && o.confidence >= 80).length
+      criticalCount: optimizations.filter(o => o.priority === 'critical').length,
+      highCount: optimizations.filter(o => o.priority === 'high').length,
+      mediumCount: optimizations.filter(o => o.priority === 'medium').length,
+      lowCount: optimizations.filter(o => o.priority === 'low').length
     };
-  }, [optimizations, optimizationResult, appliedIssues, dismissedIssues, selectedIssues]);
+  }, [optimizations, optimizationResult, selectedOptimizations]);
 
   // ✅ ORIGINAL: Export Options
   const exportOptions: ExportOption[] = [
@@ -1226,7 +1079,7 @@ Konfidenz: ${opt.confidence}%\n`
       <div className={styles.loadingContainer}>
         <div className={styles.loadingContent}>
           <div className={styles.loadingSpinner}></div>
-          <p className={styles.loadingText}>Initialisiere revolutionäre KI...</p>
+          <p className={styles.loadingText}>Initialisiere KI...</p>
         </div>
       </div>
     );
@@ -1252,31 +1105,12 @@ Konfidenz: ${opt.confidence}%\n`
           >
             <motion.h1 className={styles.title}>
               <Sparkles className="inline-block" />
-              Revolutionäre KI-Vertragsoptimierung
+              KI-Vertragsoptimierung
             </motion.h1>
             
             <motion.p className={styles.subtitle}>
-              Weltklasse-KI erkennt 20+ Vertragstypen, analysiert Lücken und generiert perfekte Klauseln.
+              Lade deinen Vertrag hoch und wir machen ihn besser - einfach und automatisch.
             </motion.p>
-
-            <motion.div className={styles.featurePills}>
-              {[
-                { icon: <Brain size={16} />, text: 'Multi-Model AI' },
-                { icon: <Target size={16} />, text: 'Typ-Erkennung' },
-                { icon: <GitCompare size={16} />, text: 'Lückenanalyse' },
-                { icon: <Award size={16} />, text: 'Fertige Klauseln' }
-              ].map((pill, index) => (
-                <motion.div
-                  key={index}
-                  className={styles.featurePill}
-                  whileHover={{ scale: 1.05, y: -2 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  {pill.icon}
-                  {pill.text}
-                </motion.div>
-              ))}
-            </motion.div>
           </motion.div>
 
           {/* Premium Notice */}
@@ -1319,7 +1153,7 @@ Konfidenz: ${opt.confidence}%\n`
                     <div className={styles.fileName}>{file.name}</div>
                     <div className={styles.fileSize}>
                       <CheckCircle2 size={16} style={{ color: '#34C759' }} />
-                      {(file.size / 1024 / 1024).toFixed(2)} MB • Bereit für revolutionäre Analyse
+                      {(file.size / 1024 / 1024).toFixed(2)} MB • Bereit für Analyse
                     </div>
                   </div>
                 </motion.div>
@@ -1350,12 +1184,12 @@ Konfidenz: ${opt.confidence}%\n`
                 {loading ? (
                   <>
                     <div className={styles.spinner}></div>
-                    <span>Revolutionäre Analyse läuft...</span>
+                    <span>Analyse läuft...</span>
                   </>
                 ) : (
                   <>
                     <Sparkles size={20} />
-                    <span>Weltklasse-Analyse starten</span>
+                    <span>Vertrag analysieren</span>
                   </>
                 )}
               </motion.button>
@@ -1383,7 +1217,7 @@ Konfidenz: ${opt.confidence}%\n`
             >
               <div className="flex items-center gap-3 mb-3">
                 <Loader2 className="animate-spin w-5 h-5 text-blue-500" />
-                <span className="font-semibold">Revolutionäre KI-Analyse läuft...</span>
+                <span className="font-semibold">KI-Analyse läuft...</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
                 <motion.div 
@@ -1495,22 +1329,22 @@ Konfidenz: ${opt.confidence}%\n`
                 {contractScore && (
                   <ContractHealthDashboard 
                     score={contractScore}
-                    showSimulation={showSimulation}
-                    newScore={calculateNewScore()}
+                    showSimulation={false}
+                    newScore={contractScore.overall}
                   />
                 )}
 
-                {/* Statistics Dashboard - Apple Style */}
+                {/* Statistics Dashboard - SIMPLIFIED */}
                 {statistics && showStatistics && (
                   <motion.div 
-                    className={`${styles.card} ${styles.premiumGlow}`}
+                    className={styles.card}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                   >
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-lg font-bold flex items-center gap-2">
                         <BarChart3 className="w-5 h-5" style={{ color: '#007AFF' }} />
-                        Optimierungs-Dashboard
+                        Gefundene Optimierungen
                       </h3>
                       <button
                         onClick={() => setShowStatistics(false)}
@@ -1523,48 +1357,39 @@ Konfidenz: ${opt.confidence}%\n`
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                       <motion.div 
                         className="text-center p-3 rounded-xl"
-                        style={{ background: 'linear-gradient(135deg, rgba(0, 122, 255, 0.1) 0%, rgba(0, 122, 255, 0.05) 100%)' }}
+                        style={{ background: 'rgba(255, 59, 48, 0.1)' }}
                         whileHover={{ scale: 1.05 }}
                       >
-                        <div className="text-2xl font-bold" style={{ color: '#007AFF' }}>{statistics.totalIssues}</div>
-                        <div className="text-xs text-gray-600 font-medium">Gefunden</div>
+                        <div className="text-2xl font-bold" style={{ color: '#FF3B30' }}>{statistics.criticalCount}</div>
+                        <div className="text-xs text-gray-600 font-medium">Kritisch</div>
                       </motion.div>
                       <motion.div 
                         className="text-center p-3 rounded-xl"
-                        style={{ background: 'linear-gradient(135deg, rgba(52, 199, 89, 0.1) 0%, rgba(52, 199, 89, 0.05) 100%)' }}
+                        style={{ background: 'rgba(255, 149, 0, 0.1)' }}
                         whileHover={{ scale: 1.05 }}
                       >
-                        <div className="text-2xl font-bold" style={{ color: '#34C759' }}>{statistics.appliedCount}</div>
-                        <div className="text-xs text-gray-600 font-medium">Angewendet</div>
+                        <div className="text-2xl font-bold" style={{ color: '#FF9500' }}>{statistics.highCount}</div>
+                        <div className="text-xs text-gray-600 font-medium">Hoch</div>
                       </motion.div>
                       <motion.div 
                         className="text-center p-3 rounded-xl"
-                        style={{ background: 'linear-gradient(135deg, rgba(255, 204, 0, 0.1) 0%, rgba(255, 204, 0, 0.05) 100%)' }}
+                        style={{ background: 'rgba(255, 204, 0, 0.1)' }}
                         whileHover={{ scale: 1.05 }}
                       >
-                        <div className="text-2xl font-bold" style={{ color: '#FFCC00' }}>{statistics.selectedCount}</div>
-                        <div className="text-xs text-gray-600 font-medium">Ausgewählt</div>
+                        <div className="text-2xl font-bold" style={{ color: '#FFCC00' }}>{statistics.mediumCount}</div>
+                        <div className="text-xs text-gray-600 font-medium">Mittel</div>
                       </motion.div>
                       <motion.div 
                         className="text-center p-3 rounded-xl"
-                        style={{ background: 'linear-gradient(135deg, rgba(175, 82, 222, 0.1) 0%, rgba(175, 82, 222, 0.05) 100%)' }}
+                        style={{ background: 'rgba(52, 199, 89, 0.1)' }}
                         whileHover={{ scale: 1.05 }}
                       >
-                        <div className="text-2xl font-bold" style={{ color: '#AF52DE' }}>{statistics.progressPercentage}%</div>
-                        <div className="text-xs text-gray-600 font-medium">Fortschritt</div>
+                        <div className="text-2xl font-bold" style={{ color: '#34C759' }}>{statistics.lowCount}</div>
+                        <div className="text-xs text-gray-600 font-medium">Niedrig</div>
                       </motion.div>
                     </div>
                     
-                    <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                      <motion.div 
-                        className="bg-gradient-to-r from-blue-500 to-purple-500 h-3 rounded-full relative"
-                        initial={{ width: 0 }}
-                        animate={{ width: `${statistics.progressPercentage}%` }}
-                        transition={{ duration: 1, ease: "easeOut" }}
-                      />
-                    </div>
-                    
-                    <div className="grid grid-cols-3 gap-4 mt-4">
+                    <div className="grid grid-cols-3 gap-4">
                       <div className="text-center">
                         <div className="text-sm text-gray-600">Ø Risiko</div>
                         <div className="text-lg font-bold">{statistics.avgRisk}/10</div>
@@ -1581,62 +1406,49 @@ Konfidenz: ${opt.confidence}%\n`
                   </motion.div>
                 )}
 
-                {/* Quick Actions & Controls - Apple Style */}
+                {/* MAIN ACTION - MACH MEINEN VERTRAG BESSER! */}
                 <motion.div 
                   className={styles.card}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
+                  style={{ 
+                    background: 'linear-gradient(135deg, rgba(175, 82, 222, 0.05) 0%, rgba(255, 55, 95, 0.05) 100%)',
+                    borderColor: '#AF52DE'
+                  }}
                 >
-                  <div className={styles.buttonGroup}>
+                  <div className="text-center">
+                    <h3 className="text-2xl font-bold mb-2">
+                      {optimizations.length} Verbesserungen gefunden!
+                    </h3>
+                    <p className="text-gray-600 mb-6">
+                      Klicke auf den Button um deinen optimierten Vertrag zu erhalten
+                    </p>
+                    
                     <button
-                      onClick={applyQuickWins}
-                      className={styles.actionButton}
-                      data-color="green"
+                      onClick={handleGenerateOptimizedContract}
+                      disabled={isGeneratingContract || !file || optimizations.length === 0}
+                      className={styles.bigGenerateButton}
                     >
-                      <Zap className="w-4 h-4" />
-                      Quick Wins ({statistics?.quickWins || 0})
+                      {isGeneratingContract ? (
+                        <>
+                          <div className={styles.spinner}></div>
+                          Dein Vertrag wird verbessert...
+                        </>
+                      ) : (
+                        <>
+                          <Wand2 className="w-6 h-6" />
+                          🪄 Mach meinen Vertrag besser!
+                        </>
+                      )}
                     </button>
-                    <button
-                      onClick={selectHighRiskIssues}
-                      className={styles.actionButton}
-                      data-color="red"
-                    >
-                      <AlertTriangle className="w-4 h-4" />
-                      Kritische Risiken ({statistics?.redFlags || 0})
-                    </button>
-                    <button
-                      onClick={applySelectedIssues}
-                      disabled={selectedIssues.size === 0}
-                      className={styles.actionButton}
-                      data-color="blue"
-                    >
-                      <Check className="w-4 h-4" />
-                      Ausgewählte anwenden ({selectedIssues.size})
-                    </button>
-                    <button
-                      onClick={() => setShowSimulation(!showSimulation)}
-                      className={styles.actionButton}
-                      data-color="purple"
-                    >
-                      {showSimulation ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      {showSimulation ? 'Simulation aus' : 'Live-Simulation'}
-                    </button>
-                    <button
-                      onClick={undoAction}
-                      disabled={undoStack.length === 0}
-                      className={styles.actionButton}
-                      data-color="gray"
-                    >
-                      <RotateCcw className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={redoAction}
-                      disabled={redoStack.length === 0}
-                      className={styles.actionButton}
-                      data-color="gray"
-                    >
-                      <RotateCw className="w-4 h-4" />
-                    </button>
+                    
+                    {showAdvancedView && (
+                      <p className="text-sm text-gray-500 mt-4">
+                        {selectedOptimizations.size > 0 
+                          ? `${selectedOptimizations.size} von ${optimizations.length} ausgewählt`
+                          : 'Alle Optimierungen werden angewendet'}
+                      </p>
+                    )}
                   </div>
                 </motion.div>
 
@@ -1668,42 +1480,22 @@ Konfidenz: ${opt.confidence}%\n`
                   </div>
                 </motion.div>
 
-                {/* Main Control Panel with Generate Button - Apple Style */}
+                {/* Additional Options - SIMPLIFIED */}
                 <motion.div className={styles.card}>
                   <div className={styles.controlPanel}>
                     <button
                       onClick={() => setShowAdvancedView(!showAdvancedView)}
-                      className={styles.actionButton}
-                      data-color="gray"
+                      className={styles.secondaryButton}
                     >
                       <Settings className="w-4 h-4" />
-                      {showAdvancedView ? 'Einfache Ansicht' : 'Erweiterte Ansicht'}
-                    </button>
-                    
-                    <button
-                      onClick={handleGenerateOptimizedContract}
-                      disabled={isGeneratingContract || !file || optimizations.length === 0}
-                      className={styles.generateButton}
-                    >
-                      {isGeneratingContract ? (
-                        <>
-                          <div className={styles.spinner}></div>
-                          Generiere revolutionären Vertrag...
-                        </>
-                      ) : (
-                        <>
-                          <Wand2 className="w-5 h-5" />
-                          Optimierten Vertrag generieren
-                        </>
-                      )}
+                      {showAdvancedView ? 'Einfache Ansicht' : 'Einzelne auswählen'}
                     </button>
                     
                     <div className={styles.dropdownGroup}>
                       <button
                         ref={pitchButtonRef}
                         onClick={() => setShowPitchMenu(!showPitchMenu)}
-                        className={styles.actionButton}
-                        data-color="green"
+                        className={styles.secondaryButton}
                       >
                         <Mail className="w-4 h-4" />
                         Pitch
@@ -1713,8 +1505,7 @@ Konfidenz: ${opt.confidence}%\n`
                       <button
                         ref={exportButtonRef}
                         onClick={() => setShowExportMenu(!showExportMenu)}
-                        className={styles.actionButton}
-                        data-color="blue"
+                        className={styles.secondaryButton}
                       >
                         <Download className="w-4 h-4" />
                         Export
@@ -1781,8 +1572,11 @@ Konfidenz: ${opt.confidence}%\n`
                   </motion.div>
                 </DropdownPortal>
 
-                {/* Optimization Cards - Apple Style */}
+                {/* Optimization Cards - SIMPLIFIED */}
                 <div className="space-y-4">
+                  <h3 className="text-lg font-semibold px-2">
+                    {showAdvancedView ? 'Wähle die gewünschten Optimierungen aus:' : 'Gefundene Optimierungen:'}
+                  </h3>
                   {filteredOptimizations.map((optimization, index) => (
                     <motion.div
                       key={optimization.id}
@@ -1791,16 +1585,7 @@ Konfidenz: ${opt.confidence}%\n`
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.05 }}
                       style={{
-                        background: optimization.implemented && showSimulation
-                          ? 'linear-gradient(135deg, rgba(52, 199, 89, 0.1) 0%, rgba(52, 199, 89, 0.05) 100%)'
-                          : appliedIssues.has(optimization.id)
-                          ? 'linear-gradient(135deg, rgba(52, 199, 89, 0.1) 0%, rgba(52, 199, 89, 0.05) 100%)'
-                          : dismissedIssues.has(optimization.id)
-                          ? 'linear-gradient(135deg, rgba(255, 69, 58, 0.05) 0%, transparent 100%)'
-                          : selectedIssues.has(optimization.id)
-                          ? 'linear-gradient(135deg, rgba(0, 122, 255, 0.1) 0%, rgba(0, 122, 255, 0.05) 100%)'
-                          : undefined,
-                        opacity: dismissedIssues.has(optimization.id) ? 0.5 : 1
+                        opacity: selectedOptimizations.has(optimization.id) ? 1 : (showAdvancedView ? 0.7 : 1)
                       }}
                     >
                       {/* Priority Indicator */}
@@ -1850,81 +1635,35 @@ Konfidenz: ${opt.confidence}%\n`
                         </div>
 
                         <div className="flex gap-2">
-                          {showSimulation ? (
+                          {showAdvancedView && (
                             <label className="flex items-center gap-2 cursor-pointer">
                               <input
                                 type="checkbox"
-                                checked={optimization.implemented}
-                                onChange={() => toggleSuggestion(optimization.id)}
+                                checked={selectedOptimizations.has(optimization.id)}
+                                onChange={() => toggleOptimizationSelection(optimization.id)}
                                 className="w-5 h-5"
                                 style={{ accentColor: '#007AFF' }}
                               />
-                              <span className="font-medium">{optimization.implemented ? 'Aktiviert' : 'Anwenden'}</span>
+                              <span className="font-medium">Anwenden</span>
                             </label>
-                          ) : (
-                            <>
-                              {!dismissedIssues.has(optimization.id) && !appliedIssues.has(optimization.id) && (
-                                <motion.button
-                                  onClick={() => toggleIssueSelection(optimization.id)}
-                                  className={`px-3 py-1.5 rounded-lg font-medium ${
-                                    selectedIssues.has(optimization.id)
-                                      ? 'bg-blue-500 text-white'
-                                      : 'bg-gray-100 hover:bg-gray-200'
-                                  }`}
-                                  whileHover={{ scale: 1.05 }}
-                                  whileTap={{ scale: 0.95 }}
-                                >
-                                  {selectedIssues.has(optimization.id) ? <Check className="w-4 h-4" /> : 'Auswählen'}
-                                </motion.button>
-                              )}
-                              {!appliedIssues.has(optimization.id) && !dismissedIssues.has(optimization.id) && (
-                                <motion.button
-                                  onClick={() => dismissIssue(optimization.id)}
-                                  className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg"
-                                  whileHover={{ scale: 1.05 }}
-                                  whileTap={{ scale: 0.95 }}
-                                >
-                                  <X className="w-4 h-4" />
-                                </motion.button>
-                              )}
-                              {appliedIssues.has(optimization.id) && (
-                                <span className="px-3 py-1.5 bg-green-500 text-white rounded-lg flex items-center gap-1 font-medium">
-                                  <Check className="w-4 h-4" />
-                                  Angewendet
-                                </span>
-                              )}
-                            </>
                           )}
                         </div>
                       </div>
 
-                      {/* Content Grid */}
-                      {showAdvancedView ? (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <div>
-                            <h5 className="font-semibold text-red-600 mb-2">Original</h5>
-                            <div className="p-3 rounded-lg text-sm" style={{ background: 'linear-gradient(135deg, rgba(255, 59, 48, 0.08) 0%, rgba(255, 59, 48, 0.04) 100%)' }}>
-                              {optimization.original}
-                            </div>
+                      {/* Content */}
+                      <div className="p-3 rounded-lg" style={{ background: 'rgba(142, 142, 147, 0.08)' }}>
+                        <p className="text-sm mb-3">{optimization.reasoning}</p>
+                        {showAdvancedView && (
+                          <div className="mt-3 pt-3 border-t border-gray-200">
+                            <p className="text-xs text-gray-600 mb-1">
+                              <strong>Original:</strong> {optimization.original.substring(0, 100)}...
+                            </p>
+                            <p className="text-xs text-green-600">
+                              <strong>Optimiert:</strong> {optimization.improved.substring(0, 100)}...
+                            </p>
                           </div>
-                          <div>
-                            <h5 className="font-semibold text-green-600 mb-2">Optimiert</h5>
-                            <div className="p-3 rounded-lg text-sm" style={{ background: 'linear-gradient(135deg, rgba(52, 199, 89, 0.08) 0%, rgba(52, 199, 89, 0.04) 100%)' }}>
-                              {optimization.improved}
-                            </div>
-                          </div>
-                          <div>
-                            <h5 className="font-semibold text-blue-600 mb-2">Begründung</h5>
-                            <div className="p-3 rounded-lg text-sm" style={{ background: 'linear-gradient(135deg, rgba(0, 122, 255, 0.08) 0%, rgba(0, 122, 255, 0.04) 100%)' }}>
-                              {optimization.reasoning}
-                            </div>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="p-3 rounded-lg" style={{ background: 'linear-gradient(135deg, rgba(142, 142, 147, 0.08) 0%, rgba(142, 142, 147, 0.04) 100%)' }}>
-                          <p className="text-sm">{optimization.reasoning}</p>
-                        </div>
-                      )}
+                        )}
+                      </div>
 
                       {/* Additional Info */}
                       <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
@@ -1956,40 +1695,6 @@ Konfidenz: ${opt.confidence}%\n`
                     </motion.div>
                   ))}
                 </div>
-
-                {/* Simulation Summary */}
-                {showSimulation && optimizations.filter(opt => opt.implemented).length > 0 && (
-                  <motion.div className={styles.card}>
-                    <h4 className="font-bold mb-4 flex items-center gap-2">
-                      <CheckCircle2 className="w-5 h-5 text-green-500" />
-                      Simulation: Ausgewählte Optimierungen
-                    </h4>
-                    
-                    <div className="grid grid-cols-3 gap-4">
-                      <div>
-                        <h6 className="text-gray-600 font-medium">Score-Verbesserung</h6>
-                        <p className="text-xl font-bold">
-                          {contractScore?.overall} → {calculateNewScore()}
-                          <span className="text-green-500 ml-2">
-                            (+{Math.max(0, calculateNewScore() - (contractScore?.overall || 0))})
-                          </span>
-                        </p>
-                      </div>
-                      
-                      <div>
-                        <h6 className="text-gray-600 font-medium">Implementiert</h6>
-                        <p className="text-xl font-bold">
-                          {optimizations.filter(opt => opt.implemented).length} / {optimizations.length}
-                        </p>
-                      </div>
-                      
-                      <div>
-                        <h6 className="text-gray-600 font-medium">Geschätzter Nutzen</h6>
-                        <p className="text-xl font-bold">Signifikant</p>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
 
               </motion.div>
             )}
