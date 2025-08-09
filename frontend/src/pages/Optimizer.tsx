@@ -1,4 +1,4 @@
-// 📁 src/pages/Optimizer.tsx - REVOLUTION COMPLETE: Cleaned & Optimized
+// 📁 src/pages/Optimizer.tsx - APPLE DESIGN REVOLUTION ✨
 import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import ReactDOM from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -44,7 +44,8 @@ import {
   Minimize2,
   RotateCcw,
   RotateCw,
-  Settings
+  Settings,
+  ArrowRight
 } from "lucide-react";
 
 // Components
@@ -164,79 +165,92 @@ const CONTRACT_TYPE_INFO = {
   arbeitsvertrag: {
     name: 'Arbeitsvertrag',
     icon: <Users className="w-5 h-5" />,
-    color: '#0071e3',
+    color: '#007AFF',
+    gradient: 'linear-gradient(135deg, #007AFF 0%, #0051D5 100%)',
     description: 'Optimierung für Arbeitsverhältnisse'
   },
   mietvertrag: {
     name: 'Mietvertrag',
     icon: <Home className="w-5 h-5" />,
-    color: '#ff9500',
+    color: '#FF9500',
+    gradient: 'linear-gradient(135deg, #FF9500 0%, #FF7A00 100%)',
     description: 'Wohn- und Gewerberaummiete'
   },
   nda: {
     name: 'NDA / Geheimhaltung',
     icon: <Lock className="w-5 h-5" />,
-    color: '#af52de',
+    color: '#AF52DE',
+    gradient: 'linear-gradient(135deg, #AF52DE 0%, #9B42C8 100%)',
     description: 'Vertraulichkeitsvereinbarungen'
   },
   saas_vertrag: {
     name: 'SaaS / Software',
     icon: <Cloud className="w-5 h-5" />,
-    color: '#34c759',
+    color: '#34C759',
+    gradient: 'linear-gradient(135deg, #34C759 0%, #2EB150 100%)',
     description: 'Cloud & Software-Services'
   },
   kaufvertrag: {
     name: 'Kaufvertrag',
     icon: <DollarSign className="w-5 h-5" />,
-    color: '#ff453a',
+    color: '#FF3B30',
+    gradient: 'linear-gradient(135deg, #FF3B30 0%, #E5302A 100%)',
     description: 'Kauf und Verkauf'
   },
   dienstvertrag: {
     name: 'Dienstvertrag',
     icon: <Briefcase className="w-5 h-5" />,
-    color: '#5856d6',
+    color: '#5856D6',
+    gradient: 'linear-gradient(135deg, #5856D6 0%, #4840C0 100%)',
     description: 'Freie Dienstleistungen'
   },
   werkvertrag: {
     name: 'Werkvertrag',
     icon: <Target className="w-5 h-5" />,
-    color: '#00c7be',
+    color: '#5AC8FA',
+    gradient: 'linear-gradient(135deg, #5AC8FA 0%, #40B8F0 100%)',
     description: 'Werkleistungen mit Erfolg'
   },
   lizenzvertrag: {
     name: 'Lizenzvertrag',
     icon: <FileSignature className="w-5 h-5" />,
-    color: '#007aff',
+    color: '#007AFF',
+    gradient: 'linear-gradient(135deg, #007AFF 0%, #0051D5 100%)',
     description: 'Software & IP-Lizenzen'
   },
   gesellschaftsvertrag: {
     name: 'Gesellschaftsvertrag',
     icon: <Building2 className="w-5 h-5" />,
-    color: '#ff6482',
+    color: '#FF375F',
+    gradient: 'linear-gradient(135deg, #FF375F 0%, #E52D53 100%)',
     description: 'GmbH, AG & Co.'
   },
   darlehensvertrag: {
     name: 'Darlehensvertrag',
     icon: <Calculator className="w-5 h-5" />,
-    color: '#30d158',
+    color: '#30D158',
+    gradient: 'linear-gradient(135deg, #30D158 0%, #28B84C 100%)',
     description: 'Kredite & Darlehen'
   },
   agb: {
     name: 'AGB',
     icon: <FileText className="w-5 h-5" />,
-    color: '#64d2ff',
+    color: '#64D2FF',
+    gradient: 'linear-gradient(135deg, #64D2FF 0%, #48C8F8 100%)',
     description: 'Allgemeine Geschäftsbedingungen'
   },
   franchise: {
     name: 'Franchise',
     icon: <Package className="w-5 h-5" />,
-    color: '#bf5af2',
+    color: '#BF5AF2',
+    gradient: 'linear-gradient(135deg, #BF5AF2 0%, #A842D8 100%)',
     description: 'Franchise-Vereinbarungen'
   },
   sonstiges: {
     name: 'Sonstiger Vertrag',
     icon: <FileText className="w-5 h-5" />,
-    color: '#86868b',
+    color: '#8E8E93',
+    gradient: 'linear-gradient(135deg, #8E8E93 0%, #636366 100%)',
     description: 'Allgemeine Vertragsoptimierung'
   }
 };
@@ -1060,7 +1074,7 @@ Konfidenz: ${opt.confidence}%\n`
         id: 'all',
         name: 'Alle Optimierungen',
         icon: <Layers className="w-5 h-5" />,
-        color: '#0071e3',
+        gradient: 'linear-gradient(135deg, #007AFF 0%, #AF52DE 100%)',
         count: optimizations.length
       }
     ];
@@ -1072,7 +1086,7 @@ Konfidenz: ${opt.confidence}%\n`
             id: category.tag,
             name: category.label,
             icon: <FileText className="w-5 h-5" />,
-            color: '#5856d6',
+            gradient: 'linear-gradient(135deg, #5856D6 0%, #4840C0 100%)',
             count: category.issues.length
           });
         }
@@ -1083,6 +1097,14 @@ Konfidenz: ${opt.confidence}%\n`
       optimizations.forEach(opt => {
         categoryMap.set(opt.category, (categoryMap.get(opt.category) || 0) + 1);
       });
+      
+      const categoryGradients = {
+        'termination': 'linear-gradient(135deg, #FF9500 0%, #FF7A00 100%)',
+        'liability': 'linear-gradient(135deg, #FF3B30 0%, #E5302A 100%)',
+        'payment': 'linear-gradient(135deg, #34C759 0%, #2EB150 100%)',
+        'clarity': 'linear-gradient(135deg, #5AC8FA 0%, #40B8F0 100%)',
+        'compliance': 'linear-gradient(135deg, #AF52DE 0%, #9B42C8 100%)'
+      };
       
       categoryMap.forEach((count, cat) => {
         const labels = {
@@ -1096,7 +1118,7 @@ Konfidenz: ${opt.confidence}%\n`
           id: cat,
           name: labels[cat as keyof typeof labels] || cat,
           icon: <FileText className="w-5 h-5" />,
-          color: '#86868b',
+          gradient: categoryGradients[cat as keyof typeof categoryGradients] || 'linear-gradient(135deg, #8E8E93 0%, #636366 100%)',
           count
         });
       });
@@ -1229,7 +1251,7 @@ Konfidenz: ${opt.confidence}%\n`
             transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
           >
             <motion.h1 className={styles.title}>
-              <Sparkles className="inline-block mr-3 text-purple-500" />
+              <Sparkles className="inline-block" />
               Revolutionäre KI-Vertragsoptimierung
             </motion.h1>
             
@@ -1248,6 +1270,7 @@ Konfidenz: ${opt.confidence}%\n`
                   key={index}
                   className={styles.featurePill}
                   whileHover={{ scale: 1.05, y: -2 }}
+                  whileTap={{ scale: 0.95 }}
                 >
                   {pill.icon}
                   {pill.text}
@@ -1270,6 +1293,8 @@ Konfidenz: ${opt.confidence}%\n`
               onDragOver={handleDrag}
               onDrop={handleDrop}
               onClick={isPremium ? () => fileInputRef.current?.click() : undefined}
+              whileHover={isPremium ? { scale: 1.01 } : undefined}
+              whileTap={isPremium ? { scale: 0.99 } : undefined}
             >
               <input
                 type="file"
@@ -1281,21 +1306,30 @@ Konfidenz: ${opt.confidence}%\n`
               />
               
               {file ? (
-                <motion.div className={styles.fileInfo}>
+                <motion.div 
+                  className={styles.fileInfo}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ type: "spring", stiffness: 300 }}
+                >
                   <div className={styles.fileIcon}>
-                    <FileText size={32} style={{ color: '#0071e3' }} />
+                    <FileText size={32} />
                   </div>
                   <div className={styles.fileDetails}>
                     <div className={styles.fileName}>{file.name}</div>
                     <div className={styles.fileSize}>
-                      <CheckCircle2 size={16} style={{ color: '#34c759' }} />
+                      <CheckCircle2 size={16} style={{ color: '#34C759' }} />
                       {(file.size / 1024 / 1024).toFixed(2)} MB • Bereit für revolutionäre Analyse
                     </div>
                   </div>
                 </motion.div>
               ) : (
                 <motion.div className={styles.uploadPrompt}>
-                  <motion.div className={styles.uploadIcon}>
+                  <motion.div 
+                    className={styles.uploadIcon}
+                    animate={{ y: [0, -5, 0] }}
+                    transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+                  >
                     <Upload size={48} />
                   </motion.div>
                   <h3>Vertrag hochladen</h3>
@@ -1311,6 +1345,7 @@ Konfidenz: ${opt.confidence}%\n`
                 disabled={!file || loading || !isPremium}
                 className={styles.primaryButton}
                 whileHover={file && isPremium && !loading ? { scale: 1.02 } : undefined}
+                whileTap={file && isPremium && !loading ? { scale: 0.98 } : undefined}
               >
                 {loading ? (
                   <>
@@ -1326,7 +1361,12 @@ Konfidenz: ${opt.confidence}%\n`
               </motion.button>
               
               {file && (
-                <motion.button onClick={handleReset} className={styles.secondaryButton}>
+                <motion.button 
+                  onClick={handleReset} 
+                  className={styles.secondaryButton}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
                   <RefreshCw size={18} />
                   <span>Zurücksetzen</span>
                 </motion.button>
@@ -1345,11 +1385,12 @@ Konfidenz: ${opt.confidence}%\n`
                 <Loader2 className="animate-spin w-5 h-5 text-blue-500" />
                 <span className="font-semibold">Revolutionäre KI-Analyse läuft...</span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-3">
+              <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
                 <motion.div 
                   className="bg-gradient-to-r from-blue-500 to-purple-500 h-3 rounded-full"
                   initial={{ width: 0 }}
                   animate={{ width: `${analysisProgress}%` }}
+                  transition={{ duration: 0.5 }}
                 />
               </div>
             </motion.div>
@@ -1358,14 +1399,19 @@ Konfidenz: ${opt.confidence}%\n`
           {/* Error Message */}
           <AnimatePresence>
             {error && (
-              <motion.div className={styles.errorMessage}>
+              <motion.div 
+                className={styles.errorMessage}
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+              >
                 <AlertCircle size={24} />
                 <span>{error}</span>
               </motion.div>
             )}
           </AnimatePresence>
 
-          {/* Toast */}
+          {/* Toast - Enhanced Apple Style */}
           <AnimatePresence>
             {toast && (
               <motion.div
@@ -1379,19 +1425,22 @@ Konfidenz: ${opt.confidence}%\n`
                   transform: 'translate(-50%, -50%)',
                   zIndex: 1000000,
                   background: toast.type === 'success' 
-                    ? 'linear-gradient(135deg, rgba(52, 199, 89, 0.95) 0%, rgba(52, 199, 89, 0.9) 100%)'
+                    ? 'linear-gradient(135deg, rgba(52, 199, 89, 0.95) 0%, rgba(46, 177, 80, 0.95) 100%)'
                     : toast.type === 'error'
-                    ? 'linear-gradient(135deg, rgba(255, 69, 58, 0.95) 0%, rgba(255, 69, 58, 0.9) 100%)'
-                    : 'linear-gradient(135deg, rgba(0, 122, 255, 0.95) 0%, rgba(0, 122, 255, 0.9) 100%)',
+                    ? 'linear-gradient(135deg, rgba(255, 59, 48, 0.95) 0%, rgba(229, 48, 42, 0.95) 100%)'
+                    : 'linear-gradient(135deg, rgba(0, 122, 255, 0.95) 0%, rgba(0, 81, 213, 0.95) 100%)',
                   color: 'white',
-                  padding: '1rem 2rem',
-                  borderRadius: '16px',
-                  boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+                  padding: '1.25rem 2.5rem',
+                  borderRadius: '20px',
+                  boxShadow: '0 25px 60px rgba(0, 0, 0, 0.35)',
                   fontSize: '1rem',
                   fontWeight: 600,
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.5rem'
+                  gap: '0.75rem',
+                  backdropFilter: 'blur(20px)',
+                  WebkitBackdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)'
                 }}
               >
                 {toast.type === 'success' ? '✅' : toast.type === 'error' ? '❌' : 'ℹ️'} {toast.message}
@@ -1411,8 +1460,8 @@ Konfidenz: ${opt.confidence}%\n`
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     style={{
-                      background: `linear-gradient(135deg, ${CONTRACT_TYPE_INFO[optimizationResult.meta.type as keyof typeof CONTRACT_TYPE_INFO]?.color || '#86868b'}15 0%, transparent 100%)`,
-                      borderColor: CONTRACT_TYPE_INFO[optimizationResult.meta.type as keyof typeof CONTRACT_TYPE_INFO]?.color || '#86868b'
+                      background: `linear-gradient(135deg, ${CONTRACT_TYPE_INFO[optimizationResult.meta.type as keyof typeof CONTRACT_TYPE_INFO]?.color || '#8E8E93'}15 0%, transparent 100%)`,
+                      borderColor: CONTRACT_TYPE_INFO[optimizationResult.meta.type as keyof typeof CONTRACT_TYPE_INFO]?.color || '#8E8E93'
                     }}
                   >
                     <div className="flex items-center justify-between">
@@ -1451,48 +1500,64 @@ Konfidenz: ${opt.confidence}%\n`
                   />
                 )}
 
-                {/* Statistics Dashboard */}
+                {/* Statistics Dashboard - Apple Style */}
                 {statistics && showStatistics && (
                   <motion.div 
-                    className={styles.card}
+                    className={`${styles.card} ${styles.premiumGlow}`}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                   >
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-lg font-bold flex items-center gap-2">
-                        <BarChart3 className="w-5 h-5 text-blue-500" />
+                        <BarChart3 className="w-5 h-5" style={{ color: '#007AFF' }} />
                         Optimierungs-Dashboard
                       </h3>
                       <button
                         onClick={() => setShowStatistics(false)}
-                        className="text-gray-500 hover:text-gray-700"
+                        className="text-gray-500 hover:text-gray-700 p-1 rounded-lg hover:bg-gray-100 transition-all"
                       >
                         <Minimize2 className="w-5 h-5" />
                       </button>
                     </div>
                     
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                      <div className="text-center p-3 bg-gray-50 rounded-lg">
-                        <div className="text-2xl font-bold text-blue-500">{statistics.totalIssues}</div>
-                        <div className="text-xs text-gray-600">Gefunden</div>
-                      </div>
-                      <div className="text-center p-3 bg-green-50 rounded-lg">
-                        <div className="text-2xl font-bold text-green-500">{statistics.appliedCount}</div>
-                        <div className="text-xs text-gray-600">Angewendet</div>
-                      </div>
-                      <div className="text-center p-3 bg-yellow-50 rounded-lg">
-                        <div className="text-2xl font-bold text-yellow-500">{statistics.selectedCount}</div>
-                        <div className="text-xs text-gray-600">Ausgewählt</div>
-                      </div>
-                      <div className="text-center p-3 bg-purple-50 rounded-lg">
-                        <div className="text-2xl font-bold text-purple-500">{statistics.progressPercentage}%</div>
-                        <div className="text-xs text-gray-600">Fortschritt</div>
-                      </div>
+                      <motion.div 
+                        className="text-center p-3 rounded-xl"
+                        style={{ background: 'linear-gradient(135deg, rgba(0, 122, 255, 0.1) 0%, rgba(0, 122, 255, 0.05) 100%)' }}
+                        whileHover={{ scale: 1.05 }}
+                      >
+                        <div className="text-2xl font-bold" style={{ color: '#007AFF' }}>{statistics.totalIssues}</div>
+                        <div className="text-xs text-gray-600 font-medium">Gefunden</div>
+                      </motion.div>
+                      <motion.div 
+                        className="text-center p-3 rounded-xl"
+                        style={{ background: 'linear-gradient(135deg, rgba(52, 199, 89, 0.1) 0%, rgba(52, 199, 89, 0.05) 100%)' }}
+                        whileHover={{ scale: 1.05 }}
+                      >
+                        <div className="text-2xl font-bold" style={{ color: '#34C759' }}>{statistics.appliedCount}</div>
+                        <div className="text-xs text-gray-600 font-medium">Angewendet</div>
+                      </motion.div>
+                      <motion.div 
+                        className="text-center p-3 rounded-xl"
+                        style={{ background: 'linear-gradient(135deg, rgba(255, 204, 0, 0.1) 0%, rgba(255, 204, 0, 0.05) 100%)' }}
+                        whileHover={{ scale: 1.05 }}
+                      >
+                        <div className="text-2xl font-bold" style={{ color: '#FFCC00' }}>{statistics.selectedCount}</div>
+                        <div className="text-xs text-gray-600 font-medium">Ausgewählt</div>
+                      </motion.div>
+                      <motion.div 
+                        className="text-center p-3 rounded-xl"
+                        style={{ background: 'linear-gradient(135deg, rgba(175, 82, 222, 0.1) 0%, rgba(175, 82, 222, 0.05) 100%)' }}
+                        whileHover={{ scale: 1.05 }}
+                      >
+                        <div className="text-2xl font-bold" style={{ color: '#AF52DE' }}>{statistics.progressPercentage}%</div>
+                        <div className="text-xs text-gray-600 font-medium">Fortschritt</div>
+                      </motion.div>
                     </div>
                     
-                    <div className="w-full bg-gray-200 rounded-full h-3">
+                    <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
                       <motion.div 
-                        className="bg-gradient-to-r from-blue-500 to-purple-500 h-3 rounded-full"
+                        className="bg-gradient-to-r from-blue-500 to-purple-500 h-3 rounded-full relative"
                         initial={{ width: 0 }}
                         animate={{ width: `${statistics.progressPercentage}%` }}
                         transition={{ duration: 1, ease: "easeOut" }}
@@ -1516,65 +1581,83 @@ Konfidenz: ${opt.confidence}%\n`
                   </motion.div>
                 )}
 
-                {/* Quick Actions & Controls */}
+                {/* Quick Actions & Controls - Apple Style */}
                 <motion.div 
                   className={styles.card}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                 >
                   <div className="flex flex-wrap gap-2">
-                    <button
+                    <motion.button
                       onClick={applyQuickWins}
-                      className="px-4 py-2 bg-green-500 text-white rounded-lg flex items-center gap-2 hover:bg-green-600"
+                      className="px-4 py-2.5 text-white rounded-xl flex items-center gap-2 font-medium"
+                      style={{ background: 'linear-gradient(135deg, #34C759 0%, #2EB150 100%)' }}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
                     >
                       <Zap className="w-4 h-4" />
                       Quick Wins ({statistics?.quickWins || 0})
-                    </button>
-                    <button
+                    </motion.button>
+                    <motion.button
                       onClick={selectHighRiskIssues}
-                      className="px-4 py-2 bg-red-500 text-white rounded-lg flex items-center gap-2 hover:bg-red-600"
+                      className="px-4 py-2.5 text-white rounded-xl flex items-center gap-2 font-medium"
+                      style={{ background: 'linear-gradient(135deg, #FF3B30 0%, #E5302A 100%)' }}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
                     >
                       <AlertTriangle className="w-4 h-4" />
                       Kritische Risiken ({statistics?.redFlags || 0})
-                    </button>
-                    <button
+                    </motion.button>
+                    <motion.button
                       onClick={applySelectedIssues}
                       disabled={selectedIssues.size === 0}
-                      className="px-4 py-2 bg-blue-500 text-white rounded-lg flex items-center gap-2 hover:bg-blue-600 disabled:opacity-50"
+                      className="px-4 py-2.5 text-white rounded-xl flex items-center gap-2 font-medium disabled:opacity-50"
+                      style={{ background: 'linear-gradient(135deg, #007AFF 0%, #0051D5 100%)' }}
+                      whileHover={selectedIssues.size > 0 ? { scale: 1.02 } : undefined}
+                      whileTap={selectedIssues.size > 0 ? { scale: 0.98 } : undefined}
                     >
                       <Check className="w-4 h-4" />
                       Ausgewählte anwenden ({selectedIssues.size})
-                    </button>
-                    <button
+                    </motion.button>
+                    <motion.button
                       onClick={() => setShowSimulation(!showSimulation)}
-                      className="px-4 py-2 bg-purple-500 text-white rounded-lg flex items-center gap-2 hover:bg-purple-600"
+                      className="px-4 py-2.5 text-white rounded-xl flex items-center gap-2 font-medium"
+                      style={{ background: 'linear-gradient(135deg, #AF52DE 0%, #9B42C8 100%)' }}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
                     >
                       {showSimulation ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       {showSimulation ? 'Simulation aus' : 'Live-Simulation'}
-                    </button>
-                    <button
+                    </motion.button>
+                    <motion.button
                       onClick={undoAction}
                       disabled={undoStack.length === 0}
-                      className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 disabled:opacity-50"
+                      className="px-4 py-2.5 text-white rounded-xl font-medium disabled:opacity-50"
+                      style={{ background: 'linear-gradient(135deg, #8E8E93 0%, #636366 100%)' }}
+                      whileHover={undoStack.length > 0 ? { scale: 1.02 } : undefined}
+                      whileTap={undoStack.length > 0 ? { scale: 0.98 } : undefined}
                     >
                       <RotateCcw className="w-4 h-4" />
-                    </button>
-                    <button
+                    </motion.button>
+                    <motion.button
                       onClick={redoAction}
                       disabled={redoStack.length === 0}
-                      className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 disabled:opacity-50"
+                      className="px-4 py-2.5 text-white rounded-xl font-medium disabled:opacity-50"
+                      style={{ background: 'linear-gradient(135deg, #8E8E93 0%, #636366 100%)' }}
+                      whileHover={redoStack.length > 0 ? { scale: 1.02 } : undefined}
+                      whileTap={redoStack.length > 0 ? { scale: 0.98 } : undefined}
                     >
                       <RotateCw className="w-4 h-4" />
-                    </button>
+                    </motion.button>
                   </div>
                 </motion.div>
 
-                {/* Category Filter */}
+                {/* Category Filter - Apple Style */}
                 <motion.div className={styles.card}>
                   <div className={styles.cardHeader}>
                     <Filter size={20} />
                     <span className={styles.cardTitle}>Dynamische Kategorien</span>
-                    <span className="ml-auto text-sm text-gray-600">
+                    <span className="ml-auto text-sm text-gray-600 font-medium">
                       {filteredOptimizations.length} Optimierungen
                     </span>
                   </div>
@@ -1584,19 +1667,20 @@ Konfidenz: ${opt.confidence}%\n`
                       <motion.button
                         key={category.id}
                         onClick={() => setSelectedCategory(category.id)}
-                        className="px-4 py-2 rounded-lg flex items-center gap-2 transition-all"
+                        className="px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all font-medium"
                         style={{
                           background: selectedCategory === category.id 
-                            ? `linear-gradient(135deg, ${category.color} 0%, ${category.color}dd 100%)`
+                            ? category.gradient
                             : 'rgba(255, 255, 255, 0.8)',
-                          color: selectedCategory === category.id ? 'white' : '#1d1d1f'
+                          color: selectedCategory === category.id ? 'white' : '#1d1d1f',
+                          border: selectedCategory === category.id ? 'none' : '1px solid rgba(0, 0, 0, 0.1)'
                         }}
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                       >
                         {category.icon}
                         {category.name}
-                        <span className="px-2 py-1 text-xs rounded-full bg-white/20">
+                        <span className="px-2 py-0.5 text-xs rounded-full bg-white/20 font-semibold">
                           {category.count}
                         </span>
                       </motion.button>
@@ -1604,21 +1688,30 @@ Konfidenz: ${opt.confidence}%\n`
                   </div>
                 </motion.div>
 
-                {/* Main Control Panel with Generate Button */}
+                {/* Main Control Panel with Generate Button - Apple Style */}
                 <motion.div className={styles.card}>
-                  <div className="flex flex-wrap gap-2 items-center justify-between">
-                    <button
+                  <div className="flex flex-wrap gap-3 items-center justify-between">
+                    <motion.button
                       onClick={() => setShowAdvancedView(!showAdvancedView)}
-                      className="px-4 py-2 bg-gray-500 text-white rounded-lg flex items-center gap-2"
+                      className="px-4 py-2.5 text-white rounded-xl flex items-center gap-2 font-medium"
+                      style={{ background: 'linear-gradient(135deg, #8E8E93 0%, #636366 100%)' }}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
                     >
                       <Settings className="w-4 h-4" />
                       {showAdvancedView ? 'Einfache Ansicht' : 'Erweiterte Ansicht'}
-                    </button>
+                    </motion.button>
                     
-                    <button
+                    <motion.button
                       onClick={handleGenerateOptimizedContract}
                       disabled={isGeneratingContract || !file || optimizations.length === 0}
-                      className="px-8 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-bold hover:from-purple-600 hover:to-pink-600 disabled:opacity-50 flex items-center gap-3"
+                      className="px-8 py-3 text-white rounded-xl font-bold disabled:opacity-50 flex items-center gap-3 shadow-xl"
+                      style={{ 
+                        background: 'linear-gradient(135deg, #AF52DE 0%, #FF375F 100%)',
+                        fontSize: '1.05rem'
+                      }}
+                      whileHover={!isGeneratingContract && file && optimizations.length > 0 ? { scale: 1.02 } : undefined}
+                      whileTap={!isGeneratingContract && file && optimizations.length > 0 ? { scale: 0.98 } : undefined}
                     >
                       {isGeneratingContract ? (
                         <>
@@ -1631,31 +1724,37 @@ Konfidenz: ${opt.confidence}%\n`
                           🪄 Optimierten Vertrag generieren
                         </>
                       )}
-                    </button>
+                    </motion.button>
                     
                     <div className="flex gap-2">
                       <div className="relative">
-                        <button
+                        <motion.button
                           ref={pitchButtonRef}
                           onClick={() => setShowPitchMenu(!showPitchMenu)}
-                          className="px-4 py-2 bg-green-500 text-white rounded-lg flex items-center gap-2"
+                          className="px-4 py-2.5 text-white rounded-xl flex items-center gap-2 font-medium"
+                          style={{ background: 'linear-gradient(135deg, #34C759 0%, #2EB150 100%)' }}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
                         >
                           <Mail className="w-4 h-4" />
                           Pitch
                           {showPitchMenu ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                        </button>
+                        </motion.button>
                       </div>
                       
                       <div className="relative">
-                        <button
+                        <motion.button
                           ref={exportButtonRef}
                           onClick={() => setShowExportMenu(!showExportMenu)}
-                          className="px-4 py-2 bg-blue-500 text-white rounded-lg flex items-center gap-2"
+                          className="px-4 py-2.5 text-white rounded-xl flex items-center gap-2 font-medium"
+                          style={{ background: 'linear-gradient(135deg, #007AFF 0%, #0051D5 100%)' }}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
                         >
                           <Download className="w-4 h-4" />
                           Export
                           {showExportMenu ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                        </button>
+                        </motion.button>
                       </div>
                     </div>
                   </div>
@@ -1667,21 +1766,23 @@ Konfidenz: ${opt.confidence}%\n`
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     data-portal-dropdown
-                    className="bg-white rounded-lg shadow-xl p-4 min-w-[280px]"
+                    className="p-4 min-w-[280px]"
                   >
                     <h5 className="font-semibold mb-3">Pitch-Stil wählen:</h5>
                     {pitchStyles.map(style => (
-                      <button
+                      <motion.button
                         key={style.id}
                         onClick={() => generatePitch(style.id)}
-                        className="w-full p-3 mb-2 rounded-lg hover:bg-gray-100 flex items-center gap-3"
+                        className="w-full p-3 mb-2 rounded-lg flex items-center gap-3"
+                        whileHover={{ x: 4 }}
                       >
                         {style.icon}
                         <div className="text-left">
                           <div className="font-semibold">{style.name}</div>
                           <div className="text-sm text-gray-600">{style.description}</div>
                         </div>
-                      </button>
+                        <ArrowRight className="w-4 h-4 ml-auto text-gray-400" />
+                      </motion.button>
                     ))}
                   </motion.div>
                 </DropdownPortal>
@@ -1691,15 +1792,16 @@ Konfidenz: ${opt.confidence}%\n`
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     data-portal-dropdown
-                    className="bg-white rounded-lg shadow-xl p-4 min-w-[300px]"
+                    className="p-4 min-w-[300px]"
                   >
                     <h5 className="font-semibold mb-3">Export-Format:</h5>
                     {exportOptions.map(option => (
-                      <button
+                      <motion.button
                         key={option.id}
                         onClick={() => handleExport()}
                         disabled={option.premium && !isPremium}
-                        className="w-full p-3 mb-2 rounded-lg hover:bg-gray-100 flex items-center gap-3 disabled:opacity-50"
+                        className="w-full p-3 mb-2 rounded-lg flex items-center gap-3 disabled:opacity-50"
+                        whileHover={!option.premium || isPremium ? { x: 4 } : undefined}
                       >
                         {option.icon}
                         <div className="text-left flex-1">
@@ -1709,13 +1811,13 @@ Konfidenz: ${opt.confidence}%\n`
                           </div>
                           <div className="text-sm text-gray-600">{option.description}</div>
                         </div>
-                        <span className="text-xs bg-gray-200 px-2 py-1 rounded">{option.format}</span>
-                      </button>
+                        <span className="text-xs bg-gray-100 px-2 py-1 rounded font-medium">{option.format}</span>
+                      </motion.button>
                     ))}
                   </motion.div>
                 </DropdownPortal>
 
-                {/* Optimization Cards */}
+                {/* Optimization Cards - Apple Style */}
                 <div className="space-y-4">
                   {filteredOptimizations.map((optimization, index) => (
                     <motion.div
@@ -1744,9 +1846,14 @@ Konfidenz: ${opt.confidence}%\n`
                         left: 0,
                         right: 0,
                         height: '3px',
-                        background: optimization.priority === 'critical' ? '#d70015' : 
-                                   optimization.priority === 'high' ? '#ff453a' : 
-                                   optimization.priority === 'medium' ? '#ff9500' : '#34c759'
+                        borderRadius: '20px 20px 0 0',
+                        background: optimization.priority === 'critical' 
+                          ? 'linear-gradient(90deg, #FF3B30 0%, #E5302A 100%)' : 
+                                   optimization.priority === 'high' 
+                          ? 'linear-gradient(90deg, #FF9500 0%, #FF7A00 100%)' : 
+                                   optimization.priority === 'medium' 
+                          ? 'linear-gradient(90deg, #FFCC00 0%, #F5B800 100%)' 
+                          : 'linear-gradient(90deg, #34C759 0%, #2EB150 100%)'
                       }}></div>
 
                       <div className="flex items-start justify-between mb-4">
@@ -1758,7 +1865,7 @@ Konfidenz: ${opt.confidence}%\n`
                                optimization.category === 'payment' ? 'Vergütung & Zahlung' :
                                optimization.category === 'compliance' ? 'Compliance & DSGVO' : 'Klarheit & Präzision'}
                             </h4>
-                            <span className={`px-2 py-1 text-xs rounded-full ${
+                            <span className={`px-2.5 py-1 text-xs rounded-full font-semibold ${
                               optimization.priority === 'critical' ? 'bg-red-100 text-red-700' :
                               optimization.priority === 'high' ? 'bg-orange-100 text-orange-700' :
                               optimization.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
@@ -1770,7 +1877,7 @@ Konfidenz: ${opt.confidence}%\n`
                             </span>
                           </div>
                           
-                          <div className="flex gap-4 text-sm text-gray-600">
+                          <div className="flex gap-4 text-sm text-gray-600 font-medium">
                             <span>KI: {optimization.confidence}%</span>
                             <span>Risiko: {optimization.legalRisk}/10</span>
                             <span>Impact: {optimization.businessImpact}/10</span>
@@ -1786,33 +1893,38 @@ Konfidenz: ${opt.confidence}%\n`
                                 checked={optimization.implemented}
                                 onChange={() => toggleSuggestion(optimization.id)}
                                 className="w-5 h-5"
+                                style={{ accentColor: '#007AFF' }}
                               />
-                              {optimization.implemented ? 'Aktiviert' : 'Anwenden'}
+                              <span className="font-medium">{optimization.implemented ? 'Aktiviert' : 'Anwenden'}</span>
                             </label>
                           ) : (
                             <>
                               {!dismissedIssues.has(optimization.id) && !appliedIssues.has(optimization.id) && (
-                                <button
+                                <motion.button
                                   onClick={() => toggleIssueSelection(optimization.id)}
-                                  className={`px-3 py-1 rounded-lg ${
+                                  className={`px-3 py-1.5 rounded-lg font-medium ${
                                     selectedIssues.has(optimization.id)
                                       ? 'bg-blue-500 text-white'
-                                      : 'bg-gray-200 hover:bg-gray-300'
+                                      : 'bg-gray-100 hover:bg-gray-200'
                                   }`}
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
                                 >
                                   {selectedIssues.has(optimization.id) ? <Check className="w-4 h-4" /> : 'Auswählen'}
-                                </button>
+                                </motion.button>
                               )}
                               {!appliedIssues.has(optimization.id) && !dismissedIssues.has(optimization.id) && (
-                                <button
+                                <motion.button
                                   onClick={() => dismissIssue(optimization.id)}
-                                  className="px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded-lg"
+                                  className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg"
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
                                 >
                                   <X className="w-4 h-4" />
-                                </button>
+                                </motion.button>
                               )}
                               {appliedIssues.has(optimization.id) && (
-                                <span className="px-3 py-1 bg-green-500 text-white rounded-lg flex items-center gap-1">
+                                <span className="px-3 py-1.5 bg-green-500 text-white rounded-lg flex items-center gap-1 font-medium">
                                   <Check className="w-4 h-4" />
                                   Angewendet
                                 </span>
@@ -1827,25 +1939,25 @@ Konfidenz: ${opt.confidence}%\n`
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div>
                             <h5 className="font-semibold text-red-600 mb-2">Original</h5>
-                            <div className="p-3 bg-red-50 rounded-lg text-sm">
+                            <div className="p-3 rounded-lg text-sm" style={{ background: 'linear-gradient(135deg, rgba(255, 59, 48, 0.08) 0%, rgba(255, 59, 48, 0.04) 100%)' }}>
                               {optimization.original}
                             </div>
                           </div>
                           <div>
                             <h5 className="font-semibold text-green-600 mb-2">Optimiert</h5>
-                            <div className="p-3 bg-green-50 rounded-lg text-sm">
+                            <div className="p-3 rounded-lg text-sm" style={{ background: 'linear-gradient(135deg, rgba(52, 199, 89, 0.08) 0%, rgba(52, 199, 89, 0.04) 100%)' }}>
                               {optimization.improved}
                             </div>
                           </div>
                           <div>
                             <h5 className="font-semibold text-blue-600 mb-2">Begründung</h5>
-                            <div className="p-3 bg-blue-50 rounded-lg text-sm">
+                            <div className="p-3 rounded-lg text-sm" style={{ background: 'linear-gradient(135deg, rgba(0, 122, 255, 0.08) 0%, rgba(0, 122, 255, 0.04) 100%)' }}>
                               {optimization.reasoning}
                             </div>
                           </div>
                         </div>
                       ) : (
-                        <div className="p-3 bg-gray-50 rounded-lg">
+                        <div className="p-3 rounded-lg" style={{ background: 'linear-gradient(135deg, rgba(142, 142, 147, 0.08) 0%, rgba(142, 142, 147, 0.04) 100%)' }}>
                           <p className="text-sm">{optimization.reasoning}</p>
                         </div>
                       )}
@@ -1854,11 +1966,11 @@ Konfidenz: ${opt.confidence}%\n`
                       <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                         <div>
                           <span className="text-gray-600">Benchmark:</span>
-                          <span className="ml-2">{optimization.marketBenchmark}</span>
+                          <span className="ml-2 font-medium">{optimization.marketBenchmark}</span>
                         </div>
                         <div>
                           <span className="text-gray-600">Umsetzung:</span>
-                          <span className="ml-2">
+                          <span className="ml-2 font-medium">
                             {optimization.implementationDifficulty === 'easy' ? 'Einfach' :
                              optimization.implementationDifficulty === 'medium' ? 'Mittel' : 'Komplex'}
                           </span>
@@ -1866,15 +1978,17 @@ Konfidenz: ${opt.confidence}%\n`
                       </div>
 
                       {/* Copy Button */}
-                      <button
+                      <motion.button
                         onClick={() => {
                           navigator.clipboard.writeText(`${optimization.improved}\n\nBegründung: ${optimization.reasoning}`);
                           showToast("✅ Kopiert!", 'success');
                         }}
-                        className="absolute top-4 right-4 p-2 bg-white rounded-lg hover:bg-gray-100"
+                        className="absolute top-4 right-4 p-2 bg-white rounded-lg hover:bg-gray-100 shadow-sm"
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
                       >
                         <Copy className="w-4 h-4" />
-                      </button>
+                      </motion.button>
                     </motion.div>
                   ))}
                 </div>
@@ -1889,7 +2003,7 @@ Konfidenz: ${opt.confidence}%\n`
                     
                     <div className="grid grid-cols-3 gap-4">
                       <div>
-                        <h6 className="text-gray-600">Score-Verbesserung</h6>
+                        <h6 className="text-gray-600 font-medium">Score-Verbesserung</h6>
                         <p className="text-xl font-bold">
                           {contractScore?.overall} → {calculateNewScore()}
                           <span className="text-green-500 ml-2">
@@ -1899,14 +2013,14 @@ Konfidenz: ${opt.confidence}%\n`
                       </div>
                       
                       <div>
-                        <h6 className="text-gray-600">Implementiert</h6>
+                        <h6 className="text-gray-600 font-medium">Implementiert</h6>
                         <p className="text-xl font-bold">
                           {optimizations.filter(opt => opt.implemented).length} / {optimizations.length}
                         </p>
                       </div>
                       
                       <div>
-                        <h6 className="text-gray-600">Geschätzter Nutzen</h6>
+                        <h6 className="text-gray-600 font-medium">Geschätzter Nutzen</h6>
                         <p className="text-xl font-bold">Signifikant</p>
                       </div>
                     </div>
