@@ -1587,68 +1587,56 @@ Konfidenz: ${opt.confidence}%\n`
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                 >
-                  <div className="flex flex-wrap gap-2">
-                    <motion.button
+                  <div className={styles.buttonGroup}>
+                    <button
                       onClick={applyQuickWins}
-                      className="px-4 py-2.5 text-white rounded-xl flex items-center gap-2 font-medium"
-                      style={{ background: 'linear-gradient(135deg, #34C759 0%, #2EB150 100%)' }}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
+                      className={styles.actionButton}
+                      data-color="green"
                     >
                       <Zap className="w-4 h-4" />
                       Quick Wins ({statistics?.quickWins || 0})
-                    </motion.button>
-                    <motion.button
+                    </button>
+                    <button
                       onClick={selectHighRiskIssues}
-                      className="px-4 py-2.5 text-white rounded-xl flex items-center gap-2 font-medium"
-                      style={{ background: 'linear-gradient(135deg, #FF3B30 0%, #E5302A 100%)' }}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
+                      className={styles.actionButton}
+                      data-color="red"
                     >
                       <AlertTriangle className="w-4 h-4" />
                       Kritische Risiken ({statistics?.redFlags || 0})
-                    </motion.button>
-                    <motion.button
+                    </button>
+                    <button
                       onClick={applySelectedIssues}
                       disabled={selectedIssues.size === 0}
-                      className="px-4 py-2.5 text-white rounded-xl flex items-center gap-2 font-medium disabled:opacity-50"
-                      style={{ background: 'linear-gradient(135deg, #007AFF 0%, #0051D5 100%)' }}
-                      whileHover={selectedIssues.size > 0 ? { scale: 1.02 } : undefined}
-                      whileTap={selectedIssues.size > 0 ? { scale: 0.98 } : undefined}
+                      className={styles.actionButton}
+                      data-color="blue"
                     >
                       <Check className="w-4 h-4" />
                       Ausgewählte anwenden ({selectedIssues.size})
-                    </motion.button>
-                    <motion.button
+                    </button>
+                    <button
                       onClick={() => setShowSimulation(!showSimulation)}
-                      className="px-4 py-2.5 text-white rounded-xl flex items-center gap-2 font-medium"
-                      style={{ background: 'linear-gradient(135deg, #AF52DE 0%, #9B42C8 100%)' }}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
+                      className={styles.actionButton}
+                      data-color="purple"
                     >
                       {showSimulation ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       {showSimulation ? 'Simulation aus' : 'Live-Simulation'}
-                    </motion.button>
-                    <motion.button
+                    </button>
+                    <button
                       onClick={undoAction}
                       disabled={undoStack.length === 0}
-                      className="px-4 py-2.5 text-white rounded-xl font-medium disabled:opacity-50"
-                      style={{ background: 'linear-gradient(135deg, #8E8E93 0%, #636366 100%)' }}
-                      whileHover={undoStack.length > 0 ? { scale: 1.02 } : undefined}
-                      whileTap={undoStack.length > 0 ? { scale: 0.98 } : undefined}
+                      className={styles.actionButton}
+                      data-color="gray"
                     >
                       <RotateCcw className="w-4 h-4" />
-                    </motion.button>
-                    <motion.button
+                    </button>
+                    <button
                       onClick={redoAction}
                       disabled={redoStack.length === 0}
-                      className="px-4 py-2.5 text-white rounded-xl font-medium disabled:opacity-50"
-                      style={{ background: 'linear-gradient(135deg, #8E8E93 0%, #636366 100%)' }}
-                      whileHover={redoStack.length > 0 ? { scale: 1.02 } : undefined}
-                      whileTap={redoStack.length > 0 ? { scale: 0.98 } : undefined}
+                      className={styles.actionButton}
+                      data-color="gray"
                     >
                       <RotateCw className="w-4 h-4" />
-                    </motion.button>
+                    </button>
                   </div>
                 </motion.div>
 
@@ -1657,61 +1645,45 @@ Konfidenz: ${opt.confidence}%\n`
                   <div className={styles.cardHeader}>
                     <Filter size={20} />
                     <span className={styles.cardTitle}>Dynamische Kategorien</span>
-                    <span className="ml-auto text-sm text-gray-600 font-medium">
+                    <span className={styles.categoryCount}>
                       {filteredOptimizations.length} Optimierungen
                     </span>
                   </div>
                   
-                  <div className="flex flex-wrap gap-2">
+                  <div className={styles.buttonGroup}>
                     {dynamicCategories.map(category => (
-                      <motion.button
+                      <button
                         key={category.id}
                         onClick={() => setSelectedCategory(category.id)}
-                        className="px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all font-medium"
-                        style={{
-                          background: selectedCategory === category.id 
-                            ? category.gradient
-                            : 'rgba(255, 255, 255, 0.8)',
-                          color: selectedCategory === category.id ? 'white' : '#1d1d1f',
-                          border: selectedCategory === category.id ? 'none' : '1px solid rgba(0, 0, 0, 0.1)'
-                        }}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
+                        className={`${styles.categoryButton} ${selectedCategory === category.id ? styles.categoryButtonActive : ''}`}
+                        data-category={category.id}
                       >
                         {category.icon}
                         {category.name}
-                        <span className="px-2 py-0.5 text-xs rounded-full bg-white/20 font-semibold">
+                        <span className={styles.categoryBadge}>
                           {category.count}
                         </span>
-                      </motion.button>
+                      </button>
                     ))}
                   </div>
                 </motion.div>
 
                 {/* Main Control Panel with Generate Button - Apple Style */}
                 <motion.div className={styles.card}>
-                  <div className="flex flex-wrap gap-3 items-center justify-between">
-                    <motion.button
+                  <div className={styles.controlPanel}>
+                    <button
                       onClick={() => setShowAdvancedView(!showAdvancedView)}
-                      className="px-4 py-2.5 text-white rounded-xl flex items-center gap-2 font-medium"
-                      style={{ background: 'linear-gradient(135deg, #8E8E93 0%, #636366 100%)' }}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
+                      className={styles.actionButton}
+                      data-color="gray"
                     >
                       <Settings className="w-4 h-4" />
                       {showAdvancedView ? 'Einfache Ansicht' : 'Erweiterte Ansicht'}
-                    </motion.button>
+                    </button>
                     
-                    <motion.button
+                    <button
                       onClick={handleGenerateOptimizedContract}
                       disabled={isGeneratingContract || !file || optimizations.length === 0}
-                      className="px-8 py-3 text-white rounded-xl font-bold disabled:opacity-50 flex items-center gap-3 shadow-xl"
-                      style={{ 
-                        background: 'linear-gradient(135deg, #AF52DE 0%, #FF375F 100%)',
-                        fontSize: '1.05rem'
-                      }}
-                      whileHover={!isGeneratingContract && file && optimizations.length > 0 ? { scale: 1.02 } : undefined}
-                      whileTap={!isGeneratingContract && file && optimizations.length > 0 ? { scale: 0.98 } : undefined}
+                      className={styles.generateButton}
                     >
                       {isGeneratingContract ? (
                         <>
@@ -1720,42 +1692,34 @@ Konfidenz: ${opt.confidence}%\n`
                         </>
                       ) : (
                         <>
-                          <Wand2 className="w-6 h-6" />
-                          🪄 Optimierten Vertrag generieren
+                          <Wand2 className="w-5 h-5" />
+                          Optimierten Vertrag generieren
                         </>
                       )}
-                    </motion.button>
+                    </button>
                     
-                    <div className="flex gap-2">
-                      <div className="relative">
-                        <motion.button
-                          ref={pitchButtonRef}
-                          onClick={() => setShowPitchMenu(!showPitchMenu)}
-                          className="px-4 py-2.5 text-white rounded-xl flex items-center gap-2 font-medium"
-                          style={{ background: 'linear-gradient(135deg, #34C759 0%, #2EB150 100%)' }}
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                        >
-                          <Mail className="w-4 h-4" />
-                          Pitch
-                          {showPitchMenu ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                        </motion.button>
-                      </div>
+                    <div className={styles.dropdownGroup}>
+                      <button
+                        ref={pitchButtonRef}
+                        onClick={() => setShowPitchMenu(!showPitchMenu)}
+                        className={styles.actionButton}
+                        data-color="green"
+                      >
+                        <Mail className="w-4 h-4" />
+                        Pitch
+                        {showPitchMenu ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                      </button>
                       
-                      <div className="relative">
-                        <motion.button
-                          ref={exportButtonRef}
-                          onClick={() => setShowExportMenu(!showExportMenu)}
-                          className="px-4 py-2.5 text-white rounded-xl flex items-center gap-2 font-medium"
-                          style={{ background: 'linear-gradient(135deg, #007AFF 0%, #0051D5 100%)' }}
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                        >
-                          <Download className="w-4 h-4" />
-                          Export
-                          {showExportMenu ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                        </motion.button>
-                      </div>
+                      <button
+                        ref={exportButtonRef}
+                        onClick={() => setShowExportMenu(!showExportMenu)}
+                        className={styles.actionButton}
+                        data-color="blue"
+                      >
+                        <Download className="w-4 h-4" />
+                        Export
+                        {showExportMenu ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                      </button>
                     </div>
                   </div>
                 </motion.div>

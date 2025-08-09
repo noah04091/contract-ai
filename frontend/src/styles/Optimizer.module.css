@@ -231,23 +231,21 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 12px 24px;
-  border-radius: 10px;
+  padding: 11px 20px;
+  border-radius: 8px;
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
   border: none;
-  background: var(--apple-blue);
+  background: #007AFF;
   color: white;
-  min-width: 200px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
-  transition: all 0.2s ease;
+  min-width: 180px;
+  transition: all 0.15s ease;
   letter-spacing: -0.01em;
 }
 
 .primaryButton:hover:not(:disabled) {
-  background: var(--apple-blue-hover);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+  background: #0051D5;
 }
 
 .primaryButton:active:not(:disabled) {
@@ -255,9 +253,8 @@
 }
 
 .primaryButton:disabled {
-  background: #d1d1d6;
-  color: #8e8e93;
-  box-shadow: none;
+  background: #c7c7cc;
+  color: rgba(255, 255, 255, 0.8);
   cursor: not-allowed;
 }
 
@@ -266,19 +263,20 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 12px 24px;
-  border-radius: 10px;
+  padding: 11px 20px;
+  border-radius: 8px;
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 500;
   cursor: pointer;
-  border: none;
-  background: rgba(0, 0, 0, 0.05);
-  color: var(--apple-blue);
-  transition: all 0.2s ease;
+  border: 1px solid #d1d1d6;
+  background: white;
+  color: #007AFF;
+  transition: all 0.15s ease;
 }
 
 .secondaryButton:hover {
-  background: rgba(0, 0, 0, 0.08);
+  background: #f5f5f7;
+  border-color: #007AFF;
 }
 
 .secondaryButton:active {
@@ -376,7 +374,7 @@
 
 /* ✨ SPECIAL BUTTON STYLES IN CARDS - CLEAN APPLE */
 .card button {
-  font-weight: 600;
+  font-weight: 500;
   font-size: 14px;
   border-radius: 8px;
   padding: 8px 16px;
@@ -384,14 +382,19 @@
   transition: all 0.15s ease;
   letter-spacing: -0.01em;
   cursor: pointer;
+  margin: 0 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .card button:hover:not(:disabled) {
-  transform: scale(1.02);
+  opacity: 0.9;
+  transform: translateY(-1px);
 }
 
 .card button:active:not(:disabled) {
-  transform: scale(0.98);
+  transform: translateY(0);
 }
 
 /* Clean Apple Colors for Buttons */
@@ -438,6 +441,25 @@
 
 .card button[class*="bg-gray"]:hover {
   background: #636366;
+}
+
+/* Category Filter Buttons */
+.card button[style*="background"] {
+  margin: 4px !important;
+}
+
+/* Button groups */
+.card div[class*="flex"] > button {
+  margin: 4px;
+}
+
+/* Ensure proper spacing in button rows */
+div[class*="flex-wrap"] {
+  gap: 8px;
+}
+
+div[class*="flex-wrap"] > button {
+  margin: 0;
 }
 
 /* Text hierarchy in cards */
@@ -520,59 +542,176 @@
   }
 }
 
-/* Root Variables Update - Standard Apple buttons */
-.optimizer button {
-  /* Default button reset */
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
-  font-weight: 600;
+/* ✨ BUTTON GROUPS & LAYOUTS */
+.buttonGroup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.controlPanel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dropdownGroup {
+  display: flex;
+  gap: 8px;
+}
+
+/* ✨ ACTION BUTTONS - APPLE STYLE */
+.actionButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 18px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: white;
   border: none;
   cursor: pointer;
   transition: all 0.15s ease;
+  white-space: nowrap;
+  background: #007AFF;
 }
 
-/* Standard colored buttons in content */
-button[class*="px-4"][class*="py-2"] {
-  padding: 10px 20px !important;
-  border-radius: 10px !important;
-  font-size: 15px !important;
-  font-weight: 600 !important;
-  border: none !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12) !important;
-  transition: all 0.15s ease !important;
+.actionButton:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
-button[class*="px-4"][class*="py-2"]:hover:not(:disabled) {
-  transform: scale(1.02) !important;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15) !important;
+.actionButton:active {
+  transform: translateY(0);
 }
 
-button[class*="px-4"][class*="py-2"]:active {
-  transform: scale(0.98) !important;
+.actionButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
-/* Specific color overrides for inline buttons */
-button[style*="linear-gradient"] {
-  background: var(--apple-blue) !important;
+/* Button Colors */
+.actionButton[data-color="green"] {
+  background: #34C759;
 }
 
-button[style*="#34C759"] {
-  background: #34C759 !important;
+.actionButton[data-color="green"]:hover:not(:disabled) {
+  background: #2EB150;
 }
 
-button[style*="#FF3B30"] {
-  background: #FF3B30 !important;
+.actionButton[data-color="red"] {
+  background: #FF3B30;
 }
 
-button[style*="#007AFF"] {
+.actionButton[data-color="red"]:hover:not(:disabled) {
+  background: #E5302A;
+}
+
+.actionButton[data-color="blue"] {
+  background: #007AFF;
+}
+
+.actionButton[data-color="blue"]:hover:not(:disabled) {
+  background: #0051D5;
+}
+
+.actionButton[data-color="purple"] {
+  background: #AF52DE;
+}
+
+.actionButton[data-color="purple"]:hover:not(:disabled) {
+  background: #9B42C8;
+}
+
+.actionButton[data-color="gray"] {
+  background: #8E8E93;
+}
+
+.actionButton[data-color="gray"]:hover:not(:disabled) {
+  background: #636366;
+}
+
+/* ✨ CATEGORY BUTTONS */
+.categoryButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  background: white;
+  color: #1d1d1f;
+  border: 1px solid #d1d1d6;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.categoryButton:hover {
+  background: #f5f5f7;
+  border-color: #007AFF;
+  transform: translateY(-1px);
+}
+
+.categoryButtonActive {
   background: #007AFF !important;
+  color: white !important;
+  border-color: #007AFF !important;
 }
 
-button[style*="#AF52DE"] {
-  background: #AF52DE !important;
+.categoryBadge {
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.2);
 }
 
-button[style*="#8E8E93"] {
-  background: #8E8E93 !important;
+.categoryCount {
+  margin-left: auto;
+  font-size: 14px;
+  color: #86868b;
+  font-weight: 500;
+}
+
+/* ✨ GENERATE BUTTON - SPECIAL */
+.generateButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 32px;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  background: #AF52DE;
+  color: white;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 8px rgba(175, 82, 222, 0.3);
+}
+
+.generateButton:hover:not(:disabled) {
+  background: #9B42C8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(175, 82, 222, 0.4);
+}
+
+.generateButton:active {
+  transform: translateY(0);
+}
+
+.generateButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 /* ✨ PREMIUM TOUCHES */
