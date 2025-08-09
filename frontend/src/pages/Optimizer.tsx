@@ -283,17 +283,39 @@ const DropdownPortal: React.FC<{
   );
 };
 
-// ✅ ORIGINAL + ENHANCED: Parse function with revolutionary features
-const parseOptimizationResult = (data: any, fileName: string): OptimizationSuggestion[] => {
+// ✅ ORIGINAL + ENHANCED: Parse function with revolutionary features  
+const parseOptimizationResult = (data: OptimizationResult, fileName: string): OptimizationSuggestion[] => {
   // 🚀 NEW: Handle structured response from revolutionary backend
   if (data.categories && Array.isArray(data.categories)) {
     const suggestions: OptimizationSuggestion[] = [];
     
     data.categories.forEach((category: RevolutionaryCategory) => {
       category.issues.forEach((issue: OptimizationIssue) => {
+        // Map category tag to valid OptimizationSuggestion category
+        let mappedCategory: OptimizationSuggestion['category'] = 'clarity';
+        
+        // Category mapping
+        const categoryMap: Record<string, OptimizationSuggestion['category']> = {
+          'termination': 'termination',
+          'liability': 'liability',
+          'payment': 'payment',
+          'compliance': 'compliance',
+          'clarity': 'clarity',
+          'working_hours': 'termination',
+          'compensation': 'payment',
+          'data_protection': 'compliance',
+          'confidentiality': 'compliance',
+          'warranty': 'liability',
+          'delivery': 'clarity',
+          'service_levels': 'clarity',
+          'support': 'clarity'
+        };
+        
+        mappedCategory = categoryMap[category.tag] || 'clarity';
+        
         suggestions.push({
           id: issue.id,
-          category: category.tag as any,
+          category: mappedCategory, // ✅ Now properly typed
           priority: issue.risk >= 8 ? 'critical' : issue.risk >= 6 ? 'high' : issue.risk >= 4 ? 'medium' : 'low',
           confidence: issue.confidence,
           original: issue.originalText,
