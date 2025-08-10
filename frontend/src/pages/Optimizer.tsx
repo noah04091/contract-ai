@@ -244,6 +244,271 @@ const CONTRACT_TYPE_INFO = {
   }
 };
 
+// 🚀 UNIVERSAL: Klausel-Vervollständigung für ALLE Vertragstypen
+// MOVED OUTSIDE AND BEFORE THE COMPONENT!
+const expandOptimizationClause = (optimization: OptimizationSuggestion, contractType: string = 'standard'): OptimizationSuggestion => {
+  // Wenn die Klausel schon lang genug ist, nichts tun
+  if (optimization.improved.length > 500) return optimization;
+  
+  // Check ob es eine fehlende Klausel ist
+  const isMissing = optimization.original.includes("FEHLT");
+  
+  // Contract-Type spezifische Templates
+  const clauseTemplates: Record<string, Record<string, string>> = {
+    arbeitsvertrag: {
+      termination: `§ [X] Kündigung und Beendigung des Arbeitsverhältnisses
+
+(1) Das Arbeitsverhältnis kann von beiden Seiten unter Einhaltung der gesetzlichen Kündigungsfristen ordentlich gekündigt werden.
+
+(2) Die Kündigungsfrist beträgt:
+- während der Probezeit: 2 Wochen zum Monatsende
+- nach der Probezeit: 4 Wochen zum 15. oder zum Ende eines Kalendermonats
+- nach 2 Jahren Betriebszugehörigkeit: 1 Monat zum Ende eines Kalendermonats
+- nach 5 Jahren: 2 Monate zum Ende eines Kalendermonats
+- nach 8 Jahren: 3 Monate zum Ende eines Kalendermonats
+
+(3) Das Recht zur außerordentlichen Kündigung aus wichtigem Grund bleibt unberührt.
+
+(4) Kündigungen bedürfen zu ihrer Wirksamkeit der Schriftform.`,
+      
+      liability: `§ [X] Haftung des Arbeitnehmers
+
+(1) Der Arbeitnehmer haftet für Schäden, die er dem Arbeitgeber vorsätzlich oder grob fahrlässig zufügt.
+
+(2) Bei leichter Fahrlässigkeit haftet der Arbeitnehmer nur bei Verletzung wesentlicher Vertragspflichten und nur bis zur Höhe des typischerweise vorhersehbaren Schadens.
+
+(3) Die Haftungsbeschränkung gilt nicht für Schäden aus der Verletzung des Lebens, des Körpers oder der Gesundheit.`,
+      
+      payment: `§ [X] Vergütung
+
+(1) Der Arbeitnehmer erhält eine monatliche Bruttovergütung in Höhe von [BETRAG] EUR.
+
+(2) Die Vergütung ist jeweils zum Monatsende fällig und wird bargeldlos auf ein vom Arbeitnehmer benanntes Konto überwiesen.
+
+(3) Überstunden werden mit einem Zuschlag von 25% vergütet oder nach Wahl des Arbeitgebers durch Freizeit ausgeglichen.
+
+(4) Eine jährliche Überprüfung der Vergütung findet jeweils zum [DATUM] statt.`,
+      
+      compliance: `§ [X] Datenschutz und Compliance
+
+(1) Der Arbeitnehmer verpflichtet sich zur Einhaltung aller datenschutzrechtlichen Bestimmungen, insbesondere der DSGVO.
+
+(2) Personenbezogene Daten sind vertraulich zu behandeln und dürfen nur im Rahmen der arbeitsvertraglichen Aufgaben verarbeitet werden.
+
+(3) Der Arbeitnehmer wird regelmäßig datenschutzrechtlich geschult.
+
+(4) Verstöße gegen datenschutzrechtliche Bestimmungen sind unverzüglich zu melden.`,
+      
+      clarity: `§ [X] Arbeitszeit und Arbeitsort
+
+(1) Die regelmäßige wöchentliche Arbeitszeit beträgt [X] Stunden.
+
+(2) Die Verteilung der Arbeitszeit richtet sich nach den betrieblichen Erfordernissen.
+
+(3) Der Arbeitsort ist [ORT]. Der Arbeitgeber behält sich vor, den Arbeitnehmer auch an anderen Orten einzusetzen.
+
+(4) Homeoffice ist nach Absprache mit dem Vorgesetzten möglich.`
+    },
+    
+    mietvertrag: {
+      termination: `§ [X] Kündigung und Mietzeit
+
+(1) Das Mietverhältnis beginnt am [DATUM] und läuft auf unbestimmte Zeit.
+
+(2) Die Kündigung ist unter Einhaltung der gesetzlichen Frist von drei Monaten zum Monatsende möglich.
+
+(3) Die Kündigungsfrist für den Vermieter verlängert sich nach 5 Jahren auf 6 Monate und nach 8 Jahren auf 9 Monate.
+
+(4) Das Recht zur außerordentlichen fristlosen Kündigung bleibt unberührt.
+
+(5) Die Kündigung muss schriftlich erfolgen.`,
+      
+      payment: `§ [X] Miete und Nebenkosten
+
+(1) Die monatliche Grundmiete beträgt [BETRAG] EUR.
+
+(2) Die monatliche Nebenkostenvorauszahlung beträgt [BETRAG] EUR.
+
+(3) Die Gesamtmiete ist monatlich im Voraus, spätestens bis zum dritten Werktag eines Monats, auf folgendes Konto zu zahlen: [KONTODATEN]
+
+(4) Der Vermieter ist berechtigt, die Nebenkostenvorauszahlung einmal jährlich nach Abrechnung anzupassen.`,
+      
+      liability: `§ [X] Haftung und Schäden
+
+(1) Der Mieter haftet für alle Schäden, die durch schuldhafte Verletzung der ihm obliegenden Sorgfalts- und Anzeigepflichten entstehen.
+
+(2) Der Mieter haftet auch für Schäden, die durch Angehörige seines Haushalts, Besucher oder sonstige Personen verursacht werden, denen er den Zutritt zur Wohnung gestattet hat.
+
+(3) Kleinreparaturen bis zu einem Betrag von 100 EUR im Einzelfall trägt der Mieter, maximal jedoch 8% der Jahresmiete.`,
+      
+      compliance: `§ [X] Hausordnung und Ruhezeiten
+
+(1) Der Mieter verpflichtet sich zur Einhaltung der Hausordnung.
+
+(2) Ruhezeiten: werktags 22:00 - 6:00 Uhr, sonn- und feiertags ganztägig.
+
+(3) Tierhaltung bedarf der schriftlichen Zustimmung des Vermieters.
+
+(4) Bauliche Veränderungen sind nur mit schriftlicher Genehmigung gestattet.`,
+      
+      clarity: `§ [X] Zustand und Übergabe
+
+(1) Die Wohnung wird in renoviertem/unrenoviertem Zustand übergeben.
+
+(2) Ein Übergabeprotokoll wird bei Ein- und Auszug erstellt.
+
+(3) Der Mieter ist verpflichtet, die Wohnung pfleglich zu behandeln.
+
+(4) Schönheitsreparaturen obliegen dem Mieter/Vermieter.`
+    },
+    
+    kaufvertrag: {
+      payment: `§ [X] Kaufpreis und Zahlung
+
+(1) Der Kaufpreis beträgt [BETRAG] EUR (in Worten: [BETRAG IN WORTEN]).
+
+(2) Der Kaufpreis ist fällig bei Übergabe der Kaufsache / nach Rechnungsstellung / in folgenden Raten: [RATENVEREINBARUNG]
+
+(3) Bei Zahlungsverzug werden Verzugszinsen in Höhe von 9 Prozentpunkten über dem Basiszinssatz berechnet.
+
+(4) Die Zahlung erfolgt per Überweisung auf folgendes Konto: [KONTODATEN]`,
+      
+      liability: `§ [X] Gewährleistung und Haftung
+
+(1) Die gesetzlichen Gewährleistungsrechte finden Anwendung.
+
+(2) Die Gewährleistungsfrist beträgt bei neuen Sachen 2 Jahre, bei gebrauchten Sachen 1 Jahr.
+
+(3) Offensichtliche Mängel sind unverzüglich, spätestens binnen 14 Tagen nach Erhalt, anzuzeigen.
+
+(4) Die Haftung für leichte Fahrlässigkeit wird ausgeschlossen, soweit keine wesentlichen Vertragspflichten verletzt werden.`,
+      
+      termination: `§ [X] Rücktritt und Widerruf
+
+(1) Der Käufer kann vom Vertrag zurücktreten, wenn der Verkäufer eine fällige Leistung nicht oder nicht vertragsgemäß erbringt.
+
+(2) Bei Fernabsatzgeschäften steht dem Verbraucher ein 14-tägiges Widerrufsrecht zu.
+
+(3) Der Rücktritt ist schriftlich zu erklären.
+
+(4) Im Falle des Rücktritts sind empfangene Leistungen zurückzugewähren.`,
+      
+      clarity: `§ [X] Lieferung und Gefahrübergang
+
+(1) Die Lieferung erfolgt bis zum [DATUM] an folgende Adresse: [LIEFERADRESSE]
+
+(2) Die Gefahr des zufälligen Untergangs geht mit Übergabe auf den Käufer über.
+
+(3) Bei Versendung geht die Gefahr mit Übergabe an den Spediteur über.
+
+(4) Lieferverzögerungen sind unverzüglich mitzuteilen.`,
+      
+      compliance: `§ [X] Eigentumsvorbehalt
+
+(1) Die Ware bleibt bis zur vollständigen Zahlung Eigentum des Verkäufers.
+
+(2) Bei Zahlungsverzug ist der Verkäufer berechtigt, die Ware zurückzufordern.
+
+(3) Der Käufer ist verpflichtet, die Ware pfleglich zu behandeln.
+
+(4) Verpfändungen oder Sicherungsübereignungen sind unzulässig.`
+    },
+    
+    // Universal-Template für unbekannte Vertragstypen
+    standard: {
+      termination: `§ [X] Vertragsbeendigung
+
+(1) Dieser Vertrag kann von beiden Parteien unter Einhaltung einer Frist von [FRIST] gekündigt werden.
+
+(2) Die Kündigung bedarf der Schriftform.
+
+(3) Das Recht zur außerordentlichen Kündigung aus wichtigem Grund bleibt unberührt.
+
+(4) Nach Vertragsbeendigung sind alle erhaltenen Unterlagen und Gegenstände zurückzugeben.`,
+      
+      payment: `§ [X] Vergütung und Zahlungsbedingungen
+
+(1) Die vereinbarte Vergütung beträgt [BETRAG] EUR zzgl. gesetzlicher Mehrwertsteuer.
+
+(2) Die Zahlung ist innerhalb von [TAGE] Tagen nach Rechnungsstellung fällig.
+
+(3) Bei Zahlungsverzug werden Verzugszinsen gemäß gesetzlicher Regelung berechnet.
+
+(4) Aufrechnungen sind nur mit unbestrittenen oder rechtskräftig festgestellten Forderungen zulässig.`,
+      
+      liability: `§ [X] Haftung
+
+(1) Die Haftung für leichte Fahrlässigkeit wird ausgeschlossen, soweit nicht wesentliche Vertragspflichten verletzt werden.
+
+(2) Die Haftungsbeschränkung gilt nicht für Schäden aus der Verletzung des Lebens, des Körpers oder der Gesundheit.
+
+(3) Die Haftung ist auf den vertragstypischen, vorhersehbaren Schaden begrenzt.
+
+(4) Die gesetzliche Haftung für Vorsatz und grobe Fahrlässigkeit bleibt unberührt.`,
+      
+      compliance: `§ [X] Datenschutz und Vertraulichkeit
+
+(1) Die Parteien verpflichten sich zur Einhaltung der geltenden Datenschutzbestimmungen.
+
+(2) Vertrauliche Informationen sind geheim zu halten und nicht an Dritte weiterzugeben.
+
+(3) Die Vertraulichkeitsverpflichtung besteht auch nach Vertragsbeendigung fort.
+
+(4) Ausnahmen gelten nur bei gesetzlicher Offenlegungspflicht.`,
+      
+      clarity: `§ [X] Allgemeine Bestimmungen
+
+(1) Änderungen und Ergänzungen dieses Vertrages bedürfen der Schriftform.
+
+(2) Sollten einzelne Bestimmungen unwirksam sein, bleibt der übrige Vertrag wirksam.
+
+(3) Erfüllungsort ist [ORT].
+
+(4) Gerichtsstand ist [ORT], soweit gesetzlich zulässig.`
+    }
+  };
+  
+  // Vertragstyp-Mapping
+  const contractTypeKey = contractType.toLowerCase().replace(/\s+/g, '');
+  const templates = clauseTemplates[contractTypeKey] || clauseTemplates.standard;
+  
+  // Template basierend auf Kategorie auswählen
+  const template = templates[optimization.category] || templates.clarity;
+  
+  // Wenn es eine fehlende Klausel ist, nutze das Template
+  if (isMissing) {
+    return {
+      ...optimization,
+      improved: template
+        .replace(/\[X\]/g, Math.floor(Math.random() * 20 + 1).toString())
+        .replace(/\[BETRAG\]/g, 'siehe Vereinbarung')
+        .replace(/\[DATUM\]/g, 'siehe Vereinbarung')
+        .replace(/\[ORT\]/g, 'siehe Vereinbarung')
+        .replace(/\[FRIST\]/g, '3 Monate')
+        .replace(/\[TAGE\]/g, '30')
+        .replace(/\[KONTODATEN\]/g, 'werden separat mitgeteilt')
+        .replace(/\[LIEFERADRESSE\]/g, 'siehe Bestellung')
+        .replace(/\[BETRAG IN WORTEN\]/g, 'siehe oben')
+        .replace(/\[RATENVEREINBARUNG\]/g, 'nach Vereinbarung')
+    };
+  }
+  
+  // Für bestehende kurze Klauseln: Erweitern
+  if (optimization.improved.length < 400) {
+    const expandedText = `${optimization.improved}
+
+Vollständige Regelung:
+${template.split('\n').slice(2).join('\n')}`;
+    
+    return {
+      ...optimization,
+      improved: expandedText
+    };
+  }
+  
+  return optimization;
+};
+
 // ✅ ORIGINAL: Portal Component für Dropdowns
 const DropdownPortal: React.FC<{
   isOpen: boolean;
@@ -288,6 +553,8 @@ const DropdownPortal: React.FC<{
 
 // ✅ ORIGINAL + ENHANCED: Parse function with revolutionary features  
 const parseOptimizationResult = (data: OptimizationResult, fileName: string): OptimizationSuggestion[] => {
+  const contractType = data.meta?.type || 'standard';
+  
   // 🚀 NEW: Handle structured response from revolutionary backend
   if (data.categories && Array.isArray(data.categories)) {
     const suggestions: OptimizationSuggestion[] = [];
@@ -316,9 +583,9 @@ const parseOptimizationResult = (data: OptimizationResult, fileName: string): Op
         
         mappedCategory = categoryMap[category.tag] || 'clarity';
         
-        suggestions.push({
+        let suggestion: OptimizationSuggestion = {
           id: issue.id,
-          category: mappedCategory, // ✅ Now properly typed
+          category: mappedCategory,
           priority: issue.risk >= 8 ? 'critical' : issue.risk >= 6 ? 'high' : issue.risk >= 4 ? 'medium' : 'low',
           confidence: issue.confidence,
           original: issue.originalText,
@@ -332,7 +599,12 @@ const parseOptimizationResult = (data: OptimizationResult, fileName: string): Op
           implemented: false,
           aiInsight: `KI-Vertrauen ${issue.confidence}%: ${issue.summary}`,
           relatedClauses: [`Kategorie: ${category.label}`, `Priorität: ${issue.risk >= 8 ? 'kritisch' : 'hoch'}`]
-        });
+        };
+        
+        // ERWEITERE kurze oder fehlende Klauseln
+        suggestion = expandOptimizationClause(suggestion, contractType);
+        
+        suggestions.push(suggestion);
       });
     });
     
@@ -400,7 +672,7 @@ const parseOptimizationResult = (data: OptimizationResult, fileName: string): Op
       reasoning = sentences.slice(1).join('. ').trim() || section.substring(150, 400) + '...';
     }
 
-    optimizations.push({
+    let optimization: OptimizationSuggestion = {
       id: `opt_${Date.now()}_${index}_${Math.random().toString(36).substr(2, 4)}`,
       category,
       priority,
@@ -420,7 +692,12 @@ const parseOptimizationResult = (data: OptimizationResult, fileName: string): Op
       implemented: false,
       aiInsight: `KI-Vertrauen ${confidence}%: ${section.substring(0, 100)}...`,
       relatedClauses: [`Bezug zu ${category}`, `Priorität: ${priority}`]
-    });
+    };
+    
+    // ERWEITERE kurze Klauseln
+    optimization = expandOptimizationClause(optimization, contractType);
+    
+    optimizations.push(optimization);
   });
 
   return optimizations;
@@ -511,7 +788,6 @@ export default function Optimizer() {
   const [originalContractText, setOriginalContractText] = useState<string>('');
   const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
   
-  // 🚀 SIMPLIFIED: Only essential states
   const [optimizationResult, setOptimizationResult] = useState<OptimizationResult | null>(null);
   const [showAdvancedView, setShowAdvancedView] = useState(false);
   const [showStatistics, setShowStatistics] = useState(true);
@@ -1437,7 +1713,9 @@ Konfidenz: ${opt.confidence}%\n`
                       ) : (
                         <>
                           <Wand2 className="w-6 h-6" />
-                          🪄 Mach meinen Vertrag besser!
+                          🪄 Mach meinen {optimizationResult?.meta?.type ? 
+                            CONTRACT_TYPE_INFO[optimizationResult.meta.type as keyof typeof CONTRACT_TYPE_INFO]?.name || 'Vertrag' 
+                            : 'Vertrag'} besser!
                         </>
                       )}
                     </button>
@@ -1655,12 +1933,29 @@ Konfidenz: ${opt.confidence}%\n`
                         <p className="text-sm mb-3">{optimization.reasoning}</p>
                         {showAdvancedView && (
                           <div className="mt-3 pt-3 border-t border-gray-200">
-                            <p className="text-xs text-gray-600 mb-1">
-                              <strong>Original:</strong> {optimization.original.substring(0, 100)}...
-                            </p>
-                            <p className="text-xs text-green-600">
-                              <strong>Optimiert:</strong> {optimization.improved.substring(0, 100)}...
-                            </p>
+                            {optimization.original === "FEHLT" || optimization.original.includes("FEHLT") ? (
+                              <div className="mb-2 p-2 rounded-lg" style={{ background: 'rgba(255, 59, 48, 0.1)' }}>
+                                <strong className="text-red-600">⚠️ Fehlende Pflichtklausel</strong>
+                                <p className="text-xs text-gray-600 mt-1">Diese wichtige Klausel fehlt komplett in deinem Vertrag</p>
+                              </div>
+                            ) : (
+                              <p className="text-xs text-gray-600 mb-1">
+                                <strong>Original:</strong> {optimization.original.substring(0, 100)}...
+                              </p>
+                            )}
+                            <div className="mt-2 p-2 rounded-lg" style={{ background: 'rgba(52, 199, 89, 0.1)' }}>
+                              <p className="text-xs text-green-600">
+                                <strong>✅ Optimiert:</strong>
+                              </p>
+                              <p className="text-xs text-gray-700 mt-1 whitespace-pre-wrap">
+                                {optimization.improved}
+                              </p>
+                              {optimization.improved.length < 200 && (
+                                <p className="text-xs text-orange-600 mt-2">
+                                  ⚠️ <em>Vollständige Klausel im generierten PDF</em>
+                                </p>
+                              )}
+                            </div>
                           </div>
                         )}
                       </div>
