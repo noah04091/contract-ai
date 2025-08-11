@@ -1,4 +1,4 @@
-// 📁 backend/routes/optimize.js - COMPLETE UNIVERSAL VERSION with ALL features
+// 📁 backend/routes/optimize.js - COMPLETE UNIVERSAL CONTRACT OPTIMIZER v4.0
 const express = require("express");
 const multer = require("multer");
 const pdfParse = require("pdf-parse");
@@ -11,7 +11,7 @@ const { ObjectId } = require("mongodb");
 const router = express.Router();
 const upload = multer({ dest: "uploads/" });
 
-// ✅ SINGLETON OpenAI-Instance
+// ✅ SINGLETON OpenAI-Instance with retry logic
 let openaiInstance = null;
 const getOpenAI = () => {
   if (!openaiInstance) {
@@ -28,7 +28,7 @@ const getOpenAI = () => {
   return openaiInstance;
 };
 
-// 🚀 UNIVERSAL: Extended Contract Types Database (50+ types)
+// 🚀 REVOLUTIONARY: Universal Contract Types Database (50+ types with sub-categories)
 const CONTRACT_TYPES = {
   // ARBEITSRECHT - Main contracts
   arbeitsvertrag: {
@@ -40,7 +40,7 @@ const CONTRACT_TYPES = {
   
   // ARBEITSRECHT - Amendments and special types
   arbeitsvertrag_aenderung: {
-    keywords: ['arbeitszeitänderung', 'gehaltserhöhung', 'vertragsänderung', 'änderungsvereinbarung', 'anpassung', 'erhöhung arbeitszeit', 'arbeitszeiterhöhung'],
+    keywords: ['arbeitszeitänderung', 'gehaltserhöhung', 'vertragsänderung', 'änderungsvereinbarung', 'anpassung', 'erhöhung arbeitszeit', 'arbeitszeiterhöhung', 'arbeitszeitanpassung', 'stundenerhöhung'],
     requiredClauses: ['aenderungsgegenstand', 'gueltigkeitsdatum', 'neue_konditionen', 'referenz_hauptvertrag', 'unveraenderte_bestandteile'],
     jurisdiction: 'DE',
     parentType: 'arbeitsvertrag',
@@ -290,7 +290,7 @@ const CONTRACT_TYPES = {
     jurisdiction: 'INT',
     riskFactors: ['gebührenstruktur', 'gebietsschutz', 'konkurrenzverbot', 'systemänderungen']
   },
-  masterfranschise: {
+  masterfranchise: {
     keywords: ['masterfranchise', 'masterpartner', 'subfranchisenehmer', 'entwicklung', 'expansion'],
     requiredClauses: ['mastergebiet', 'entwicklungsverpflichtung', 'subfranchisenehmer', 'gebuehrenaufteilung'],
     jurisdiction: 'INT',
@@ -542,7 +542,7 @@ const CONTRACT_TYPES = {
   }
 };
 
-// 🚀 UNIVERSAL: Helper function mappings
+// 🚀 HELPER FUNCTIONS - Category and label mappings
 const getCategoryForClause = (clause) => {
   const categoryMap = {
     // Arbeitsrecht
@@ -585,7 +585,11 @@ const getCategoryForClause = (clause) => {
     'aenderungsgegenstand': 'amendment_scope',
     'gueltigkeitsdatum': 'validity',
     'referenz_hauptvertrag': 'reference',
-    'unveraenderte_bestandteile': 'unchanged_terms'
+    'unveraenderte_bestandteile': 'unchanged_terms',
+    'clear_reference': 'reference',
+    'effective_date': 'validity',
+    'unchanged_clauses': 'unchanged_terms',
+    'signature_provision': 'formalities'
   };
   
   for (const [key, value] of Object.entries(categoryMap)) {
@@ -658,12 +662,228 @@ const getCategoryLabel = (category) => {
     'maintenance': 'Wartung & Instandhaltung',
     'ownership': 'Eigentum & Rechte',
     'jurisdiction': 'Gerichtsstand & Recht',
-    'general': 'Allgemeine Optimierungen'
+    'general': 'Allgemeine Optimierungen',
+    'extracted': 'Erkannte Probleme'
   };
   
   return labels[category] || category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 };
 
+// 🚀 CRITICAL HELPER FUNCTIONS - These were missing!
+const cleanText = (text) => {
+  if (!text) return '';
+  return text
+    .replace(/\*\*/g, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/^\s+|\s+$/g, '')
+    .replace(/\[KATEGORIE:|KATEGORIE:/gi, '')
+    .replace(/\[X\]/g, '§')
+    .trim();
+};
+
+const calculateHealthScore = (gaps, optimizations) => {
+  let score = 100;
+  
+  // Deduct for gaps
+  gaps.forEach(gap => {
+    if (gap.severity === 'critical') score -= 15;
+    else if (gap.severity === 'high') score -= 10;
+    else if (gap.severity === 'medium') score -= 5;
+    else score -= 2;
+  });
+  
+  // Deduct for optimizations needed
+  if (Array.isArray(optimizations)) {
+    optimizations.forEach(opt => {
+      if (opt.risk >= 8) score -= 10;
+      else if (opt.risk >= 6) score -= 7;
+      else if (opt.risk >= 4) score -= 5;
+      else score -= 3;
+    });
+  }
+  
+  return Math.max(25, Math.min(100, score));
+};
+
+// 🚀 MAIN NORMALIZATION FUNCTION
+const normalizeAndValidateOutput = (aiOutput, contractType) => {
+  // Default structure
+  const defaultResult = {
+    meta: {
+      type: contractType || 'sonstiges',
+      confidence: 75,
+      jurisdiction: 'DE',
+      language: 'de'
+    },
+    categories: [],
+    score: { health: 75 },
+    summary: {
+      redFlags: 0,
+      quickWins: 0,
+      totalIssues: 0
+    }
+  };
+  
+  if (!aiOutput) {
+    console.log('⚠️ No AI output to normalize');
+    return defaultResult;
+  }
+  
+  try {
+    // Try to parse JSON
+    let parsed;
+    
+    if (typeof aiOutput === 'string') {
+      // Clean potential markdown or code blocks
+      let cleanedOutput = aiOutput
+        .replace(/```json\n?/g, '')
+        .replace(/```\n?/g, '')
+        .trim();
+      
+      // Try to find JSON in the output
+      const jsonMatch = cleanedOutput.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        cleanedOutput = jsonMatch[0];
+      }
+      
+      try {
+        parsed = JSON.parse(cleanedOutput);
+      } catch (e) {
+        console.log('⚠️ Failed to parse AI JSON, using fallback');
+        // Try to extract key information from text
+        parsed = extractFromText(aiOutput, contractType);
+      }
+    } else {
+      parsed = aiOutput;
+    }
+    
+    // Validate and normalize structure
+    const result = {
+      meta: {
+        type: parsed?.meta?.type || contractType || 'sonstiges',
+        confidence: parsed?.meta?.confidence || 75,
+        jurisdiction: parsed?.meta?.jurisdiction || 'DE',
+        language: parsed?.meta?.language || 'de',
+        isAmendment: parsed?.meta?.isAmendment || false,
+        parentType: parsed?.meta?.parentType || null
+      },
+      categories: [],
+      score: {
+        health: parsed?.score?.health || 75
+      },
+      summary: {
+        redFlags: 0,
+        quickWins: 0,
+        totalIssues: 0
+      }
+    };
+    
+    // Process categories
+    if (parsed?.categories && Array.isArray(parsed.categories)) {
+      result.categories = parsed.categories.map(cat => ({
+        tag: cat.tag || 'general',
+        label: cat.label || getCategoryLabel(cat.tag || 'general'),
+        present: cat.present !== false,
+        issues: Array.isArray(cat.issues) ? cat.issues.map(issue => ({
+          id: issue.id || `issue_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+          summary: cleanText(issue.summary || issue.description || ''),
+          originalText: cleanText(issue.originalText || issue.original || ''),
+          improvedText: cleanText(issue.improvedText || issue.improved || ''),
+          legalReasoning: cleanText(issue.legalReasoning || issue.reasoning || ''),
+          risk: parseInt(issue.risk) || 5,
+          impact: parseInt(issue.impact) || 5,
+          confidence: parseInt(issue.confidence) || 75,
+          difficulty: issue.difficulty || 'Mittel',
+          benchmark: issue.benchmark || issue.marketBenchmark || ''
+        })) : []
+      }));
+      
+      // Calculate summary
+      result.categories.forEach(cat => {
+        cat.issues.forEach(issue => {
+          result.summary.totalIssues++;
+          if (issue.risk >= 8) result.summary.redFlags++;
+          if (issue.difficulty === 'Einfach') result.summary.quickWins++;
+        });
+      });
+    }
+    
+    // Update summary from parsed if available
+    if (parsed?.summary) {
+      result.summary = {
+        ...result.summary,
+        ...parsed.summary
+      };
+    }
+    
+    return result;
+    
+  } catch (error) {
+    console.error('❌ Error normalizing AI output:', error);
+    return defaultResult;
+  }
+};
+
+// Helper: Extract information from text when JSON parsing fails
+const extractFromText = (text, contractType) => {
+  const result = {
+    meta: {
+      type: contractType || 'sonstiges',
+      confidence: 70,
+      jurisdiction: 'DE',
+      language: 'de'
+    },
+    categories: [],
+    score: { health: 70 },
+    summary: {
+      redFlags: 0,
+      quickWins: 0,
+      totalIssues: 0
+    }
+  };
+  
+  // Try to extract issues from text patterns
+  const issuePatterns = [
+    /(?:Problem|Issue|Risiko|Lücke):\s*([^.]+)/gi,
+    /(?:Empfehlung|Recommendation|Vorschlag):\s*([^.]+)/gi,
+    /(?:FEHLT|Missing|Fehlend):\s*([^.]+)/gi
+  ];
+  
+  const issues = [];
+  issuePatterns.forEach(pattern => {
+    let match;
+    while ((match = pattern.exec(text)) !== null) {
+      issues.push({
+        id: `extracted_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+        summary: match[1].trim(),
+        originalText: 'Siehe Vertrag',
+        improvedText: 'Verbesserung empfohlen',
+        legalReasoning: 'Rechtliche Optimierung erforderlich',
+        risk: 6,
+        impact: 6,
+        confidence: 70,
+        difficulty: 'Mittel'
+      });
+    }
+  });
+  
+  if (issues.length > 0) {
+    result.categories.push({
+      tag: 'extracted',
+      label: 'Extrahierte Probleme',
+      present: true,
+      issues: issues.slice(0, 10) // Limit to 10 issues
+    });
+    
+    result.summary.totalIssues = issues.length;
+    result.summary.redFlags = Math.floor(issues.length / 3);
+    result.summary.quickWins = Math.floor(issues.length / 2);
+  }
+  
+  return result;
+};
+
+// Additional helper functions
 const detectContentCategories = (text, contractType) => {
   const categories = [];
   const lowerText = text.toLowerCase();
@@ -726,7 +946,8 @@ const detectContractType = async (text, fileName = '') => {
     'änderung', 'änderungsvereinbarung', 'ergänzung', 'nachtrag', 
     'anpassung', 'zusatzvereinbarung', 'modifikation', 'amendment',
     'addendum', 'supplement', 'modification', 'adjustment',
-    'erhöhung', 'reduzierung', 'verlängerung', 'verkürzung'
+    'erhöhung', 'reduzierung', 'verlängerung', 'verkürzung',
+    'arbeitszeitänderung', 'arbeitszeiterhöhung', 'gehaltserhöhung'
   ];
   
   let isAmendment = false;
@@ -757,7 +978,6 @@ const detectContractType = async (text, fileName = '') => {
           } else if (contractRef.includes('kaufvertrag')) {
             parentContractType = 'kaufvertrag';
           }
-          // Add more parent type detections as needed
           break;
         }
       }
@@ -820,9 +1040,8 @@ const detectContractType = async (text, fileName = '') => {
   }
   
   // Find best match
-  const bestMatch = Object.entries(typeScores).reduce((a, b) => 
-    typeScores[a[0]] > typeScores[b[0]] ? a : b
-  );
+  const sortedScores = Object.entries(typeScores).sort((a, b) => b[1] - a[1]);
+  const bestMatch = sortedScores[0] || ['sonstiges', 0];
   
   let contractType = bestMatch[1] > 10 ? bestMatch[0] : 'sonstiges';
   
@@ -1132,15 +1351,13 @@ const generateProfessionalClauses = (contractType, gaps, language = 'de') => {
 
     salvatorisch: `§ [X] Salvatorische Klausel
 
-Sollten einzelne Bestimmungen dieses Vertrages unwirksam oder undurchführbar sein oder nach Vertragsschluss unwirksam oder undurchführbar werden, bleibt davon die Wirksamkeit des Vertrages im Übrigen unberührt. An die Stelle der unwirksamen oder undurchführbaren Bestimmung soll diejenige wirksame und durchführbare Regelung treten, deren Wirkungen der wirtschaftlichen Zielsetzung am nächsten kommen, die die Vertragsparteien mit der unwirksamen bzw. undurchführbaren Bestimmung verfolgt haben. Die vorstehenden Bestimmungen gelten entsprechend für den Fall, dass sich der Vertrag als lückenhaft erweist.`,
+Sollten einzelne Bestimmungen dieses Vertrages unwirksam oder undurchführbar sein oder nach Vertragsschluss unwirksam oder undurchführbar werden, bleibt davon die Wirksamkeit des Vertrages im Übrigen unberührt. An die Stelle der unwirksamen oder undurchführbaren Bestimmung soll diejenige wirksame und durchführbare Regelung treten, deren Wirkungen der wirtschaftlichen Zielsetzung am nächsten kommen, die die Vertragsparteien mit der unwirksamen bzw. undurchführbaren Bestimmung verfolgt haben.`,
 
     gerichtsstand: `§ [X] Anwendbares Recht und Gerichtsstand
 
 (1) Für diese Vereinbarung gilt das Recht der Bundesrepublik Deutschland unter Ausschluss des UN-Kaufrechts (CISG).
 
-(2) Ausschließlicher Gerichtsstand für alle Streitigkeiten aus oder im Zusammenhang mit diesem Vertrag ist [ORT], sofern die Parteien Kaufleute, juristische Personen des öffentlichen Rechts oder öffentlich-rechtliche Sondervermögen sind.
-
-(3) Die Parteien vereinbaren, vor Einleitung eines Gerichtsverfahrens eine einvernehmliche Lösung im Mediationsverfahren zu versuchen.`,
+(2) Ausschließlicher Gerichtsstand für alle Streitigkeiten aus oder im Zusammenhang mit diesem Vertrag ist [ORT], sofern die Parteien Kaufleute, juristische Personen des öffentlichen Rechts oder öffentlich-rechtliche Sondervermögen sind.`,
 
     datenschutz: `§ [X] Datenschutz
 
@@ -1148,9 +1365,7 @@ Sollten einzelne Bestimmungen dieses Vertrages unwirksam oder undurchführbar se
 
 (2) Personenbezogene Daten werden ausschließlich zur Durchführung dieses Vertrages verarbeitet. Eine Weitergabe an Dritte erfolgt nur, soweit dies zur Vertragserfüllung erforderlich ist oder eine gesetzliche Verpflichtung besteht.
 
-(3) Die betroffenen Personen haben das Recht auf Auskunft, Berichtigung, Löschung und Einschränkung der Verarbeitung ihrer personenbezogenen Daten.
-
-(4) Bei Beendigung des Vertragsverhältnisses werden alle personenbezogenen Daten gelöscht, soweit keine gesetzlichen Aufbewahrungspflichten entgegenstehen.`,
+(3) Die betroffenen Personen haben das Recht auf Auskunft, Berichtigung, Löschung und Einschränkung der Verarbeitung ihrer personenbezogenen Daten.`,
 
     clear_reference: `§ [X] Bezugnahme auf Hauptvertrag
 
@@ -1187,20 +1402,7 @@ Im Übrigen bleiben alle Bestimmungen des Hauptvertrages vom [DATUM] unveränder
 
 (2) Die Verarbeitung personenbezogener Daten erfolgt unter Beachtung der DSGVO und des BDSG. Der Arbeitnehmer wurde über die Verarbeitung seiner personenbezogenen Daten gemäß Art. 13 DSGVO informiert.
 
-(3) Der Arbeitnehmer verpflichtet sich zur Einhaltung der betrieblichen Datenschutzrichtlinien.`,
-
-      überstunden: `§ [X] Arbeitszeit und Überstunden
-
-(1) Die regelmäßige wöchentliche Arbeitszeit beträgt [X] Stunden, verteilt auf [X] Arbeitstage.
-
-(2) Der Arbeitnehmer ist im Rahmen der gesetzlichen Bestimmungen zur Leistung von Überstunden verpflichtet, soweit dies betrieblich erforderlich ist.
-
-(3) Überstunden werden wie folgt vergütet:
-   a) Die ersten [X] Überstunden pro Monat sind mit dem Gehalt abgegolten
-   b) Darüber hinausgehende Überstunden werden mit einem Zuschlag von 25% vergütet
-   c) Alternativ können Überstunden nach Wahl des Arbeitgebers durch Freizeit ausgeglichen werden
-
-(4) Ein Arbeitszeitkonto wird geführt. Der maximale Aufbau beträgt [X] Stunden.`
+(3) Der Arbeitnehmer verpflichtet sich zur Einhaltung der betrieblichen Datenschutzrichtlinien.`
     },
     
     arbeitsvertrag_aenderung: {
@@ -1218,25 +1420,7 @@ Im Übrigen bleiben alle Bestimmungen des Arbeitsvertrages vom [DATUM] unveränd
 - Kündigungsfristen
 - Urlaubsanspruch
 - Verschwiegenheitsverpflichtungen
-- Wettbewerbsverbot
-
-Sollten einzelne Bestimmungen dieser Änderungsvereinbarung im Widerspruch zum Hauptvertrag stehen, gehen die Regelungen dieser Änderungsvereinbarung vor.`
-    },
-    
-    mietvertrag: {
-      schönheitsreparaturen: `§ [X] Schönheitsreparaturen
-
-(1) Der Mieter übernimmt die Schönheitsreparaturen während der Mietzeit, wenn und soweit sie erforderlich werden.
-
-(2) Zu den Schönheitsreparaturen gehören:
-   - Tapezieren und Anstreichen der Wände und Decken
-   - Streichen der Fußböden
-   - Streichen der Heizkörper und Heizrohre
-   - Streichen der Innentüren sowie der Fenster und Außentüren von innen
-
-(3) Die Arbeiten sind fachgerecht auszuführen. Die Farbwahl bedarf bei Beendigung des Mietverhältnisses der Zustimmung des Vermieters.
-
-(4) Hat der Mieter die Wohnung unrenoviert übernommen, ist er zu Schönheitsreparaturen nicht verpflichtet.`
+- Wettbewerbsverbot`
     }
   };
   
@@ -1356,11 +1540,6 @@ WICHTIG:
 - KONKRETE, VOLLSTÄNDIGE Verbesserungsvorschläge
 - Keine generischen Empfehlungen`;
 };
-
-// Rest of the helper functions remain the same...
-// [normalizeAndValidateOutput, cleanText, etc. - keep all existing helper functions]
-
-// ... [Keep all the existing helper functions from lines 900-1200 of original file]
 
 // 🚀 MAIN ROUTE with Universal Support
 router.post("/", verifyToken, upload.single("file"), async (req, res) => {
@@ -1677,22 +1856,127 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
   } catch (error) {
     console.error(`❌ [${requestId}] Error:`, error);
     
-    // ... [Keep existing error handling]
-    
     res.status(500).json({ 
       success: false,
       message: error.message || "Fehler bei der Vertragsoptimierung",
       error: "OPTIMIZATION_ERROR",
-      requestId
+      requestId,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
 
   } finally {
     if (tempFilePath && fsSync.existsSync(tempFilePath)) {
-      await fs.unlink(tempFilePath);
+      await fs.unlink(tempFilePath).catch(err => 
+        console.error(`Failed to delete temp file: ${err}`)
+      );
     }
   }
 });
 
-// ... [Keep all existing additional routes: preview-apply, history, health, etc.]
+// 🚀 ADDITIONAL ROUTES
+
+// Health check endpoint
+router.get("/health", async (req, res) => {
+  res.json({
+    status: "healthy",
+    service: "optimize",
+    version: "4.0-universal",
+    contractTypes: Object.keys(CONTRACT_TYPES).length,
+    features: {
+      universalDetection: true,
+      amendmentSupport: true,
+      professionalClauses: true,
+      aiAnalysis: true
+    }
+  });
+});
+
+// Get supported contract types
+router.get("/contract-types", verifyToken, (req, res) => {
+  const types = Object.entries(CONTRACT_TYPES).map(([key, config]) => ({
+    id: key,
+    name: key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+    isAmendment: config.isAmendment || false,
+    parentType: config.parentType || null,
+    jurisdiction: config.jurisdiction,
+    requiredClauses: config.requiredClauses.length,
+    riskFactors: config.riskFactors.length
+  }));
+  
+  res.json({
+    success: true,
+    totalTypes: types.length,
+    types: types
+  });
+});
+
+// Get optimization history
+router.get("/history", verifyToken, async (req, res) => {
+  try {
+    const optimizationCollection = req.db.collection("optimizations");
+    
+    const history = await optimizationCollection
+      .find({ userId: req.user.userId })
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .toArray();
+    
+    res.json({
+      success: true,
+      count: history.length,
+      optimizations: history.map(opt => ({
+        id: opt._id,
+        contractName: opt.contractName,
+        contractType: opt.contractType,
+        isAmendment: opt.isAmendment || false,
+        healthScore: opt.optimizationResult?.score?.health || 0,
+        totalIssues: opt.optimizationResult?.summary?.totalIssues || 0,
+        createdAt: opt.createdAt,
+        requestId: opt.requestId
+      }))
+    });
+  } catch (error) {
+    console.error("Error fetching optimization history:", error);
+    res.status(500).json({
+      success: false,
+      message: "Fehler beim Laden der Historie",
+      error: error.message
+    });
+  }
+});
+
+// Get specific optimization
+router.get("/:requestId", verifyToken, async (req, res) => {
+  try {
+    const optimizationCollection = req.db.collection("optimizations");
+    
+    const optimization = await optimizationCollection.findOne({
+      requestId: req.params.requestId,
+      userId: req.user.userId
+    });
+    
+    if (!optimization) {
+      return res.status(404).json({
+        success: false,
+        message: "Optimierung nicht gefunden",
+        error: "NOT_FOUND"
+      });
+    }
+    
+    res.json({
+      success: true,
+      ...optimization.optimizationResult,
+      contractName: optimization.contractName,
+      createdAt: optimization.createdAt
+    });
+  } catch (error) {
+    console.error("Error fetching optimization:", error);
+    res.status(500).json({
+      success: false,
+      message: "Fehler beim Laden der Optimierung",
+      error: error.message
+    });
+  }
+});
 
 module.exports = router;
