@@ -1,30 +1,32 @@
-// 📁 backend/routes/contracts.js - FIXED: Mit Analyse-Daten laden
+// 📁 backend/routes/contracts.js - ERWEITERT mit Calendar Integration
 const express = require("express");
 const { MongoClient, ObjectId } = require("mongodb");
 const verifyToken = require("../middleware/verifyToken");
+const { onContractChange } = require("../services/calendarEvents");
 
 const router = express.Router();
 const mongoUri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
 const client = new MongoClient(mongoUri);
 let contractsCollection;
-let analysisCollection; // ✅ NEU: Auch Analyse-Collection
+let analysisCollection;
+let eventsCollection; // ✅ NEU: Events Collection
 
 (async () => {
   try {
     await client.connect();
     const db = client.db("contract_ai");
     contractsCollection = db.collection("contracts");
-    analysisCollection = db.collection("analyses"); // ✅ NEU
-    console.log("📦 Verbunden mit contracts UND analyses (GET /contracts)");
+    analysisCollection = db.collection("analyses");
+    eventsCollection = db.collection("contract_events"); // ✅ NEU
+    console.log("📦 Verbunden mit contracts, analyses UND contract_events");
   } catch (err) {
     console.error("❌ MongoDB-Fehler (contracts.js):", err);
   }
 })();
 
-// ✅ ERWEITERTE HELPER: Analyse-Daten UND fullText zu Contract hinzufügen
+// Helper: Analyse-Daten laden
 async function enrichContractWithAnalysis(contract) {
   try {
-    // Suche nach Analyse-Daten über analysisId oder analysisRef
     let analysis = null;
     
     if (contract.analysisId) {
@@ -33,26 +35,19 @@ async function enrichContractWithAnalysis(contract) {
       });
     }
     
-    // Fallback: Suche über contractName und userId
     if (!analysis && contract.name) {
       analysis = await analysisCollection.findOne({
         userId: contract.userId.toString(),
-        contractName: contract.name
-      });
-    }
-    
-    // ✅ ERWEITERT: Auch nach originalFileName suchen
-    if (!analysis && contract.name) {
-      analysis = await analysisCollection.findOne({
-        userId: contract.userId.toString(),
-        originalFileName: contract.name
+        $or: [
+          { contractName: contract.name },
+          { originalFileName: contract.name }
+        ]
       });
     }
     
     if (analysis) {
-      console.log(`✅ Analyse gefunden für Vertrag: ${contract.name} (fullText: ${analysis.fullText ? analysis.fullText.length : 0} Zeichen)`);
+      console.log(`✅ Analyse gefunden für Vertrag: ${contract.name}`);
       
-      // Analyse-Daten in korrektem Format hinzufügen
       contract.analysis = {
         summary: analysis.summary,
         legalAssessment: analysis.legalAssessment,
@@ -63,41 +58,50 @@ async function enrichContractWithAnalysis(contract) {
         lastAnalyzed: analysis.createdAt
       };
       
-      // ✅ KRITISCH: fullText für Content-Tab (mehrere Quellen prüfen)
       if (analysis.fullText) {
         contract.fullText = analysis.fullText;
-        console.log(`✅ fullText aus Analyse geladen: ${analysis.fullText.length} Zeichen`);
       } else if (analysis.extractedText) {
         contract.fullText = analysis.extractedText;
-        console.log(`✅ fullText aus extractedText geladen: ${analysis.extractedText.length} Zeichen`);
       }
-      
-    } else {
-      console.log(`⚠️ Keine Analyse gefunden für Vertrag: ${contract.name}`);
     }
     
-    // ✅ FALLBACK: fullText direkt aus Contract-Feldern laden (falls vorhanden)
     if (!contract.fullText) {
       if (contract.content) {
         contract.fullText = contract.content;
-        console.log(`✅ fullText aus contract.content geladen: ${contract.content.length} Zeichen`);
       } else if (contract.extractedText) {
         contract.fullText = contract.extractedText;
-        console.log(`✅ fullText aus contract.extractedText geladen`);
       }
     }
     
-    // ✅ DEBUG: Log final status
-    console.log(`🔍 Contract "${contract.name}": hasAnalysis=${!!contract.analysis}, hasFullText=${!!contract.fullText}, fullTextLength=${contract.fullText ? contract.fullText.length : 0}`);
+    // ✅ NEU: Calendar Events hinzufügen
+    const events = await eventsCollection
+      .find({ 
+        contractId: contract._id,
+        status: { $ne: "dismissed" }
+      })
+      .sort({ date: 1 })
+      .limit(5)
+      .toArray();
+    
+    if (events.length > 0) {
+      contract.upcomingEvents = events.map(e => ({
+        id: e._id,
+        type: e.type,
+        title: e.title,
+        date: e.date,
+        severity: e.severity,
+        status: e.status
+      }));
+    }
     
     return contract;
   } catch (err) {
-    console.error("❌ Fehler beim Laden der Analyse:", err.message);
-    return contract; // Contract ohne Analyse zurückgeben
+    console.error("❌ Fehler beim Laden der Analyse/Events:", err.message);
+    return contract;
   }
 }
 
-// GET /contracts – alle Verträge des Nutzers abrufen (mit Analyse-Daten)
+// GET /contracts – alle Verträge mit Events
 router.get("/", verifyToken, async (req, res) => {
   try {
     const contracts = await contractsCollection
@@ -105,12 +109,11 @@ router.get("/", verifyToken, async (req, res) => {
       .sort({ createdAt: -1 })
       .toArray();
 
-    // ✅ NEU: Alle Verträge mit Analyse-Daten anreichern
     const enrichedContracts = await Promise.all(
       contracts.map(contract => enrichContractWithAnalysis(contract))
     );
 
-    console.log(`📦 ${enrichedContracts.length} Verträge geladen (mit Analyse-Check)`);
+    console.log(`📦 ${enrichedContracts.length} Verträge geladen (mit Analyse & Events)`);
     res.json(enrichedContracts);
   } catch (err) {
     console.error("❌ Fehler beim Laden der Verträge:", err.message);
@@ -118,30 +121,29 @@ router.get("/", verifyToken, async (req, res) => {
   }
 });
 
-// ✅ ERWEITERT: GET /contracts/:id – Einzelnen Vertrag abrufen (mit Analyse-Daten)
+// GET /contracts/:id – Einzelvertrag mit Events
 router.get("/:id", verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
     
-    console.log("🔍 Suche Vertrag mit ID:", id);
-
     const contract = await contractsCollection.findOne({
       _id: new ObjectId(id),
       userId: new ObjectId(req.user.userId)
     });
 
     if (!contract) {
-      console.log("❌ Vertrag nicht gefunden für ID:", id);
       return res.status(404).json({ 
         message: "Vertrag nicht gefunden",
         error: "Contract not found" 
       });
     }
 
-    // ✅ NEU: Contract mit Analyse-Daten anreichern
     const enrichedContract = await enrichContractWithAnalysis(contract);
-
-    console.log("✅ Vertrag gefunden:", enrichedContract.name, "| Analyse:", !!enrichedContract.analysis);
+    
+    console.log("✅ Vertrag gefunden:", enrichedContract.name, 
+                "| Analyse:", !!enrichedContract.analysis,
+                "| Events:", enrichedContract.upcomingEvents?.length || 0);
+    
     res.json(enrichedContract);
 
   } catch (err) {
@@ -153,7 +155,7 @@ router.get("/:id", verifyToken, async (req, res) => {
   }
 });
 
-// POST /contracts – Neuen Vertrag speichern (generiert oder hochgeladen)
+// POST /contracts – Neuen Vertrag mit Event-Generierung
 router.post("/", verifyToken, async (req, res) => {
   try {
     const {
@@ -164,12 +166,16 @@ router.post("/", verifyToken, async (req, res) => {
       status,
       content,
       signature,
-      isGenerated  // ✅ Wichtig: isGenerated aus Request Body lesen
+      isGenerated,
+      provider,
+      amount,
+      priceIncreaseDate,
+      newPrice,
+      autoRenewMonths
     } = req.body;
 
     console.log("📝 Speichere Vertrag:", { name, isGenerated });
 
-    // Neuen Vertrag erstellen
     const contractDoc = {
       userId: new ObjectId(req.user.userId),
       name: name || "Unbekannter Vertrag",
@@ -179,10 +185,14 @@ router.post("/", verifyToken, async (req, res) => {
       status: status || "Aktiv",
       content: content || "",
       signature: signature || null,
-      isGenerated: Boolean(isGenerated), // ✅ Explizit als Boolean setzen
+      isGenerated: Boolean(isGenerated),
+      provider: provider || null,
+      amount: amount || null,
+      priceIncreaseDate: priceIncreaseDate || null,
+      newPrice: newPrice || null,
+      autoRenewMonths: autoRenewMonths || 12,
       createdAt: new Date(),
       updatedAt: new Date(),
-      // Legal Pulse Platzhalter
       legalPulse: {
         riskScore: null,
         riskSummary: '',
@@ -192,17 +202,26 @@ router.post("/", verifyToken, async (req, res) => {
       }
     };
 
-    // In Datenbank speichern
     const result = await contractsCollection.insertOne(contractDoc);
+    const contractId = result.insertedId;
     
-    console.log("✅ Vertrag gespeichert mit ID:", result.insertedId);
+    console.log("✅ Vertrag gespeichert mit ID:", contractId);
+    
+    // ✅ NEU: Calendar Events generieren
+    try {
+      const fullContract = { ...contractDoc, _id: contractId };
+      await onContractChange(client.db("contract_ai"), fullContract, "create");
+      console.log("📅 Calendar Events generiert für:", name);
+    } catch (eventError) {
+      console.warn("⚠️ Calendar Events konnten nicht generiert werden:", eventError.message);
+      // Fehler nicht werfen - Contract wurde trotzdem gespeichert
+    }
 
-    // Erfolgreiche Antwort
     res.status(201).json({ 
       success: true, 
-      contractId: result.insertedId,
+      contractId: contractId,
       message: 'Vertrag erfolgreich gespeichert',
-      contract: { ...contractDoc, _id: result.insertedId }
+      contract: { ...contractDoc, _id: contractId }
     });
 
   } catch (error) {
@@ -215,13 +234,12 @@ router.post("/", verifyToken, async (req, res) => {
   }
 });
 
-// PUT /contracts/:id – Vertrag aktualisieren
+// PUT /contracts/:id – Vertrag mit Event-Update
 router.put("/:id", verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
     const updateData = { ...req.body, updatedAt: new Date() };
     
-    // User-ID aus Update-Daten entfernen (Sicherheit)
     delete updateData.userId;
     delete updateData._id;
 
@@ -235,6 +253,22 @@ router.put("/:id", verifyToken, async (req, res) => {
 
     if (result.matchedCount === 0) {
       return res.status(404).json({ message: "Vertrag nicht gefunden" });
+    }
+    
+    // ✅ NEU: Calendar Events aktualisieren
+    if (result.modifiedCount > 0) {
+      try {
+        const updatedContract = await contractsCollection.findOne({ 
+          _id: new ObjectId(id) 
+        });
+        
+        if (updatedContract) {
+          await onContractChange(client.db("contract_ai"), updatedContract, "update");
+          console.log("📅 Calendar Events aktualisiert für:", updatedContract.name);
+        }
+      } catch (eventError) {
+        console.warn("⚠️ Calendar Events Update fehlgeschlagen:", eventError.message);
+      }
     }
 
     res.json({ 
@@ -250,10 +284,21 @@ router.put("/:id", verifyToken, async (req, res) => {
   }
 });
 
-// DELETE /contracts/:id – Vertrag löschen
+// DELETE /contracts/:id – Vertrag mit Event-Löschung
 router.delete("/:id", verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
+
+    // ✅ NEU: Zugehörige Events löschen
+    try {
+      await eventsCollection.deleteMany({
+        contractId: new ObjectId(id),
+        userId: new ObjectId(req.user.userId)
+      });
+      console.log("📅 Calendar Events gelöscht für Contract:", id);
+    } catch (eventError) {
+      console.warn("⚠️ Calendar Events konnten nicht gelöscht werden:", eventError.message);
+    }
 
     const result = await contractsCollection.deleteOne({
       _id: new ObjectId(id),
@@ -277,12 +322,11 @@ router.delete("/:id", verifyToken, async (req, res) => {
   }
 });
 
-// PATCH /contracts/:id/reminder – Erinnerung umschalten
+// PATCH /contracts/:id/reminder – Erinnerung mit Event-Update
 router.patch("/:id/reminder", verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Aktuellen Reminder-Status abfragen
     const contract = await contractsCollection.findOne({
       _id: new ObjectId(id),
       userId: new ObjectId(req.user.userId)
@@ -292,7 +336,6 @@ router.patch("/:id/reminder", verifyToken, async (req, res) => {
       return res.status(404).json({ message: "Vertrag nicht gefunden" });
     }
 
-    // Reminder-Status umschalten
     const newReminderStatus = !contract.reminder;
 
     const result = await contractsCollection.updateOne(
@@ -307,6 +350,39 @@ router.patch("/:id/reminder", verifyToken, async (req, res) => {
         }
       }
     );
+    
+    // ✅ NEU: Events aktivieren/deaktivieren basierend auf Reminder-Status
+    if (newReminderStatus === false) {
+      // Reminder deaktiviert - Events auf "muted" setzen
+      await eventsCollection.updateMany(
+        {
+          contractId: new ObjectId(id),
+          status: { $in: ["scheduled", "notified"] }
+        },
+        {
+          $set: {
+            status: "muted",
+            mutedAt: new Date()
+          }
+        }
+      );
+    } else {
+      // Reminder aktiviert - Events reaktivieren
+      await eventsCollection.updateMany(
+        {
+          contractId: new ObjectId(id),
+          status: "muted"
+        },
+        {
+          $set: {
+            status: "scheduled"
+          },
+          $unset: {
+            mutedAt: ""
+          }
+        }
+      );
+    }
 
     res.json({ 
       success: true, 
@@ -318,6 +394,92 @@ router.patch("/:id/reminder", verifyToken, async (req, res) => {
     console.error('❌ Fehler beim Umschalten der Erinnerung:', error);
     res.status(500).json({ 
       message: 'Fehler beim Umschalten der Erinnerung' 
+    });
+  }
+});
+
+// ✅ NEU: GET /contracts/:id/events – Events für einen Vertrag
+router.get("/:id/events", verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Verify contract ownership
+    const contract = await contractsCollection.findOne({
+      _id: new ObjectId(id),
+      userId: new ObjectId(req.user.userId)
+    });
+    
+    if (!contract) {
+      return res.status(404).json({ 
+        message: "Vertrag nicht gefunden" 
+      });
+    }
+    
+    // Get all events for this contract
+    const events = await eventsCollection
+      .find({ 
+        contractId: new ObjectId(id)
+      })
+      .sort({ date: 1 })
+      .toArray();
+    
+    res.json({
+      success: true,
+      contractName: contract.name,
+      events: events
+    });
+    
+  } catch (error) {
+    console.error('❌ Fehler beim Abrufen der Events:', error);
+    res.status(500).json({ 
+      message: 'Fehler beim Abrufen der Events' 
+    });
+  }
+});
+
+// ✅ NEU: POST /contracts/:id/regenerate-events – Events neu generieren
+router.post("/:id/regenerate-events", verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const contract = await contractsCollection.findOne({
+      _id: new ObjectId(id),
+      userId: new ObjectId(req.user.userId)
+    });
+    
+    if (!contract) {
+      return res.status(404).json({ 
+        message: "Vertrag nicht gefunden" 
+      });
+    }
+    
+    // Delete old events
+    await eventsCollection.deleteMany({
+      contractId: new ObjectId(id),
+      status: "scheduled"
+    });
+    
+    // Generate new events
+    await onContractChange(client.db("contract_ai"), contract, "update");
+    
+    // Get new events
+    const newEvents = await eventsCollection
+      .find({ 
+        contractId: new ObjectId(id)
+      })
+      .sort({ date: 1 })
+      .toArray();
+    
+    res.json({
+      success: true,
+      message: `${newEvents.length} Events neu generiert`,
+      events: newEvents
+    });
+    
+  } catch (error) {
+    console.error('❌ Fehler beim Regenerieren der Events:', error);
+    res.status(500).json({ 
+      message: 'Fehler beim Regenerieren der Events' 
     });
   }
 });

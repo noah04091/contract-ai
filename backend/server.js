@@ -1,4 +1,4 @@
-// 📁 backend/server.js - ✅ FIXED: Einheitliche /api Struktur für ALLE Routen + S3 MIGRATION ROUTES + INVOICE ROUTES
+// 📁 backend/server.js - ✅ FIXED: Einheitliche /api Struktur für ALLE Routen + S3 MIGRATION ROUTES + INVOICE ROUTES + CALENDAR INTEGRATION
 const express = require("express");
 const app = express();
 require("dotenv").config();
@@ -19,6 +19,10 @@ const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 const verifyToken = require("./middleware/verifyToken");
 const createCheckSubscription = require("./middleware/checkSubscription");
+
+// ✅ CALENDAR INTEGRATION IMPORTS
+const { onContractChange } = require("./services/calendarEvents");
+const { checkAndSendNotifications } = require("./services/calendarNotifier");
 
 // ✅ S3 File Storage Import (unchanged)
 let s3Upload, generateSignedUrl;
@@ -180,6 +184,80 @@ async function analyzeContract(pdfText) {
   return res.choices[0].message.content;
 }
 
+// ✅ CALENDAR HELPER FUNCTIONS
+async function extractContractMetadata(text) {
+  const metadata = {
+    provider: null,
+    amount: null,
+    contractNumber: null,
+    customerNumber: null,
+    priceIncreaseDate: null,
+    newPrice: null,
+    autoRenewMonths: 12
+  };
+  
+  try {
+    // Provider/Anbieter extrahieren
+    const providerPatterns = [
+      /(?:anbieter|firma|unternehmen|provider|vertragspartner)[\s:]+([A-Z][A-Za-z\s&\-\.]+)/i,
+      /^([A-Z][A-Za-z\s&\-\.]+)\s+(?:GmbH|AG|KG|UG|e\.V\.|Inc\.|Ltd\.)/m
+    ];
+    
+    for (const pattern of providerPatterns) {
+      const match = text.match(pattern);
+      if (match) {
+        metadata.provider = match[1].trim();
+        break;
+      }
+    }
+    
+    // Betrag/Preis extrahieren
+    const amountPatterns = [
+      /(?:monatlich|monthly|mtl\.?)\s*:?\s*([0-9]+[,.]?[0-9]*)\s*(?:€|EUR|Euro)/i,
+      /(?:betrag|preis|kosten|gebühr)\s*:?\s*([0-9]+[,.]?[0-9]*)\s*(?:€|EUR|Euro)/i,
+      /([0-9]+[,.]?[0-9]*)\s*(?:€|EUR|Euro)\s*(?:pro|je|\/)\s*(?:monat|month)/i
+    ];
+    
+    for (const pattern of amountPatterns) {
+      const match = text.match(pattern);
+      if (match) {
+        metadata.amount = parseFloat(match[1].replace(',', '.'));
+        break;
+      }
+    }
+    
+    // Vertragsnummer extrahieren
+    const contractNumberPatterns = [
+      /(?:vertragsnummer|contract\s*(?:number|no\.?)|kundennr\.?)\s*:?\s*([A-Z0-9\-\/]+)/i,
+      /(?:referenz|ref\.?|aktenzeichen)\s*:?\s*([A-Z0-9\-\/]+)/i
+    ];
+    
+    for (const pattern of contractNumberPatterns) {
+      const match = text.match(pattern);
+      if (match) {
+        metadata.contractNumber = match[1].trim();
+        break;
+      }
+    }
+    
+    // Automatische Verlängerung
+    const renewalPattern = /(?:verlängert|erneuert|renewed?).*?(?:um|by|für)\s*([0-9]+)\s*(?:monate|months?|jahre|years?)/i;
+    const renewalMatch = text.match(renewalPattern);
+    if (renewalMatch) {
+      let months = parseInt(renewalMatch[1]);
+      if (text.toLowerCase().includes('jahr') || text.toLowerCase().includes('year')) {
+        months *= 12;
+      }
+      metadata.autoRenewMonths = months;
+    }
+    
+  } catch (error) {
+    console.error("⚠️ Fehler bei Metadaten-Extraktion:", error);
+  }
+  
+  return metadata;
+}
+
 // 🚀 MongoDB Connection (unchanged)
 let db = null;
 let client = null;
@@ -244,7 +322,7 @@ const connectDB = async () => {
     // ✅ 1. AUTH ROUTES - MIT /api PREFIX
     try {
       const authRoutes = require("./routes/auth")(db);
-      app.use("/api/auth", authRoutes);  // ← FIX: /api PREFIX HINZUGEFÜGT
+      app.use("/api/auth", authRoutes);
       console.log("✅ Auth-Routen geladen unter /api/auth");
     } catch (err) {
       console.error("❌ Fehler beim Laden der Auth-Routen:", err);
@@ -261,9 +339,8 @@ const connectDB = async () => {
 
     // ✅ 3. STRIPE ROUTES - MIT /api PREFIX  
     try {
-      app.use("/api/stripe/portal", require("./routes/stripePortal"));  // ← FIX: /api PREFIX
-      app.use("/api/stripe", require("./routes/stripe"));               // ← FIX: /api PREFIX
-      //app.use("/api/stripe", require("./routes/subscribe"));            // ← FIX: /api PREFIX
+      app.use("/api/stripe/portal", require("./routes/stripePortal"));
+      app.use("/api/stripe", require("./routes/stripe"));
       console.log("✅ Stripe-Routen geladen unter /api/stripe");
     } catch (err) {
       console.error("❌ Fehler beim Laden der Stripe-Routen:", err);
@@ -277,13 +354,37 @@ const connectDB = async () => {
       console.error("❌ Fehler beim Laden der Invoice-Routen:", err);
     }
 
-    // ✅ 5. KI ANALYSIS & OPTIMIZATION - MIT /api PREFIX
+    // ✅ 5. CALENDAR ROUTES - NEU HINZUGEFÜGT!
     try {
-      app.use("/api/analyze", verifyToken, checkSubscription, require("./routes/analyze"));  // ← FIX: /api PREFIX
+      const calendarRoutes = require("./routes/calendar");
+      app.use("/api/calendar", verifyToken, calendarRoutes);
+      console.log("✅ Calendar-Routen geladen unter /api/calendar");
+    } catch (err) {
+      console.error("❌ Fehler beim Laden der Calendar-Routen:", err);
+      // Fallback
+      app.get("/api/calendar/events", verifyToken, (req, res) => {
+        res.status(503).json({
+          success: false,
+          message: "Calendar-Service vorübergehend nicht verfügbar"
+        });
+      });
+    }
+
+    // ✅ 6. CANCELLATIONS ROUTES - NEU HINZUGEFÜGT!
+    try {
+      const cancellationsRoutes = require("./routes/cancellations");
+      app.use("/api/cancellations", verifyToken, cancellationsRoutes);
+      console.log("✅ Cancellations-Routen geladen unter /api/cancellations");
+    } catch (err) {
+      console.error("❌ Fehler beim Laden der Cancellations-Routen:", err);
+    }
+
+    // ✅ 7. KI ANALYSIS & OPTIMIZATION - MIT /api PREFIX
+    try {
+      app.use("/api/analyze", verifyToken, checkSubscription, require("./routes/analyze"));
       console.log("✅ Analyze-Route geladen unter /api/analyze");
     } catch (err) {
       console.error("❌ Fehler bei Analyze-Route:", err);
-      // Fallback
       app.post("/api/analyze", verifyToken, checkSubscription, (req, res) => {
         res.status(503).json({
           success: false,
@@ -293,11 +394,10 @@ const connectDB = async () => {
     }
 
     try {
-      app.use("/api/optimize", verifyToken, checkSubscription, require("./routes/optimize"));  // ← FIX: /api PREFIX
+      app.use("/api/optimize", verifyToken, checkSubscription, require("./routes/optimize"));
       console.log("✅ Optimize-Route geladen unter /api/optimize");
     } catch (err) {
       console.error("❌ Fehler bei Optimize-Route:", err);
-      // Fallback
       app.post("/api/optimize", verifyToken, checkSubscription, (req, res) => {
         res.status(503).json({
           success: false,
@@ -306,11 +406,10 @@ const connectDB = async () => {
       });
     }
 
-    // ✅ 6. CONTRACT ROUTES - SPEZIFISCHE VOR ALLGEMEINEN!
+    // ✅ 8. CONTRACT ROUTES - SPEZIFISCHE VOR ALLGEMEINEN!
     try {
-      // 🚨 CRITICAL: REIHENFOLGE! Generate-Route VOR CRUD-Routes mounten
       const generateRouter = require("./routes/generate");
-      app.use("/api/contracts/generate", verifyToken, checkSubscription, generateRouter);  // ← SPEZIFISCH ZUERST
+      app.use("/api/contracts/generate", verifyToken, checkSubscription, generateRouter);
       console.log("✅ Generate-Route geladen unter /api/contracts/generate");
     } catch (err) {
       console.error("❌ Fehler bei Generate-Route:", err);
@@ -322,14 +421,13 @@ const connectDB = async () => {
       });
     }
 
-    // ✅ 7. SMART CONTRACT GENERATOR - SAUBERER ROUTER MOUNT
+    // ✅ 9. SMART CONTRACT GENERATOR - SAUBERER ROUTER MOUNT
     try {
       const optimizedContractRouter = require("./routes/optimizedContract");
-      app.use("/api/contracts", verifyToken, checkSubscription, optimizedContractRouter);  // ← CLEAN MOUNT
+      app.use("/api/contracts", verifyToken, checkSubscription, optimizedContractRouter);
       console.log("✅ Smart Contract Generator geladen unter /api/contracts/:contractId/generate-optimized");
     } catch (err) {
       console.error("❌ Fehler bei Smart Contract Generator:", err);
-      // Fallback Route
       app.post("/api/contracts/:contractId/generate-optimized", verifyToken, checkSubscription, (req, res) => {
         res.status(503).json({
           success: false,
@@ -338,14 +436,12 @@ const connectDB = async () => {
       });
     }
 
-    // ✅ 8. S3 MIGRATION ROUTES - NEU HINZUGEFÜGT FÜR LEGACY CONTRACT MIGRATION
+    // ✅ 10. S3 MIGRATION ROUTES
     try {
-      // ✅ MIGRATION: Legacy-Verträge markieren (einmalig ausführen)
       app.post("/api/contracts/migrate-legacy", verifyToken, async (req, res) => {
         try {
           console.log("🚀 Starting legacy contract migration...");
           
-          // Finde alle Verträge ohne s3Key
           const legacyContracts = await req.contractsCollection.find({
             $or: [
               { s3Key: { $exists: false } },
@@ -356,7 +452,6 @@ const connectDB = async () => {
           
           console.log(`📊 Found ${legacyContracts.length} legacy contracts`);
           
-          // Markiere sie als Legacy
           const updateResult = await req.contractsCollection.updateMany(
             {
               $or: [
@@ -375,7 +470,6 @@ const connectDB = async () => {
             }
           );
           
-          // Zähle S3-Verträge
           const s3Contracts = await req.contractsCollection.countDocuments({
             s3Key: { $exists: true, $ne: null, $ne: "" }
           });
@@ -413,7 +507,6 @@ const connectDB = async () => {
         }
       });
 
-      // ✅ STATUS: Check Migration Status
       app.get("/api/contracts/migration-status", verifyToken, async (req, res) => {
         try {
           const legacyCount = await req.contractsCollection.countDocuments({
@@ -452,44 +545,43 @@ const connectDB = async () => {
       console.error("❌ Fehler bei S3 Migration Routes:", err);
     }
 
-    // ✅ 9. ALLGEMEINE CONTRACT CRUD - NACH SPEZIFISCHEN ROUTEN
+    // ✅ 11. ALLGEMEINE CONTRACT CRUD - NACH SPEZIFISCHEN ROUTEN
     try {
-      app.use("/api/contracts", verifyToken, require("./routes/contracts"));  // ← FIX: /api PREFIX, NACH spezifischen Routen
+      app.use("/api/contracts", verifyToken, require("./routes/contracts"));
       console.log("✅ Contracts CRUD-Routen geladen unter /api/contracts");
     } catch (err) {
       console.error("❌ Fehler bei Contract-CRUD-Routen:", err);
     }
 
-    // ✅ 10. WEITERE ROUTEN - ALLE MIT /api PREFIX
+    // ✅ 12. WEITERE ROUTEN - ALLE MIT /api PREFIX
     try {
-      app.use("/api/compare", verifyToken, checkSubscription, require("./routes/compare"));  // ← FIX: /api PREFIX
+      app.use("/api/compare", verifyToken, checkSubscription, require("./routes/compare"));
       console.log("✅ Compare-Route geladen unter /api/compare");
     } catch (err) {
       console.error("❌ Fehler bei Compare-Route:", err);
     }
 
     try {
-      app.use("/api/chat", verifyToken, checkSubscription, require("./routes/chatWithContract"));  // ← FIX: /api PREFIX
+      app.use("/api/chat", verifyToken, checkSubscription, require("./routes/chatWithContract"));
       console.log("✅ Chat-Route geladen unter /api/chat");
     } catch (err) {
       console.error("❌ Fehler bei Chat-Route:", err);
     }
 
     try {
-      app.use("/api/analyze-type", require("./routes/analyzeType"));  // ← FIX: /api PREFIX
+      app.use("/api/analyze-type", require("./routes/analyzeType"));
       console.log("✅ Analyze-Type-Route geladen unter /api/analyze-type");
     } catch (err) {
       console.error("❌ Fehler bei Analyze-Type-Route:", err);
     }
 
     try {
-      app.use("/api/extract-text", require("./routes/extractText"));  // ← FIX: /api PREFIX
+      app.use("/api/extract-text", require("./routes/extractText"));
       console.log("✅ Extract-Text-Route geladen unter /api/extract-text");
     } catch (err) {
       console.error("❌ Fehler bei Extract-Text-Route:", err);
     }
 
-    // 🆕 BETTER CONTRACTS ROUTE - NUR DIESE ZEILEN HINZUGEFÜGT!
     try {
       app.use("/api/better-contracts", require("./routes/betterContracts"));
       console.log("✅ Better-Contracts-Route geladen unter /api/better-contracts");
@@ -497,7 +589,7 @@ const connectDB = async () => {
       console.error("❌ Fehler bei Better-Contracts-Route:", err);
     }
 
-    // ✅ 11. LEGAL PULSE - BLEIBT WIE ES IST (war schon korrekt)
+    // ✅ 13. LEGAL PULSE
     try {
       app.use("/api/legal-pulse", verifyToken, require("./routes/legalPulse"));
       console.log("✅ Legal Pulse Routen geladen unter /api/legal-pulse");
@@ -505,18 +597,18 @@ const connectDB = async () => {
       console.error("❌ Fehler bei Legal Pulse Routen:", err);
     }
 
-    // ✅ 12. S3 ROUTES - NEUE PROFESSIONELLE STRUKTUR
+    // ✅ 14. S3 ROUTES
     try {
       const s3Routes = require("./routes/s3Routes");
       app.use("/api/s3", s3Routes);
-      console.log("✅ S3-Routen geladen unter /api/s3 (neue robuste Struktur)");
+      console.log("✅ S3-Routen geladen unter /api/s3");
     } catch (err) {
       console.error("❌ Fehler beim Laden der S3-Routen:", err);
     }
 
-    // ✅ 13. S3 LEGACY ROUTES - BEHALTEN FÜR BACKWARDS COMPATIBILITY
+    // ✅ 15. S3 LEGACY ROUTES
     if (generateSignedUrl) {
-      app.get("/api/s3/view", verifyToken, (req, res) => {  // ← FIX: /api PREFIX
+      app.get("/api/s3/view", verifyToken, (req, res) => {
         try {
           const { file } = req.query;
           if (!file) return res.status(400).json({ message: "File parameter required" });
@@ -542,7 +634,7 @@ const connectDB = async () => {
         }
       });
 
-      app.get("/api/s3/json", verifyToken, (req, res) => {  // ← FIX: /api PREFIX
+      app.get("/api/s3/json", verifyToken, (req, res) => {
         try {
           const { file } = req.query;
           if (!file) return res.status(400).json({ message: "File parameter required" });
@@ -558,12 +650,12 @@ const connectDB = async () => {
         }
       });
 
-      console.log("✅ S3 Legacy-Routen geladen unter /api/s3 (backwards compatibility)");
+      console.log("✅ S3 Legacy-Routen geladen unter /api/s3");
     }
 
-    // ✅ 14. UPLOAD ROUTE - UNTER /api/upload
+    // ✅ 16. UPLOAD ROUTE MIT CALENDAR INTEGRATION
     if (s3Upload) {
-      app.post("/api/upload", verifyToken, checkSubscription, s3Upload.single("file"), async (req, res) => {  // ← FIX: /api PREFIX
+      app.post("/api/upload", verifyToken, checkSubscription, s3Upload.single("file"), async (req, res) => {
         if (!req.file) return res.status(400).json({ message: "Keine Datei hochgeladen" });
 
         try {
@@ -573,8 +665,10 @@ const connectDB = async () => {
             location: req.file.location
           });
 
-          // ... Rest der Upload-Logik bleibt unverändert ...
+          // Text-Extraktion aus S3
           let analysisText = '';
+          let extractedData = {};
+          
           try {
             const AWS = require('aws-sdk');
             const s3 = new AWS.S3({
@@ -590,10 +684,15 @@ const connectDB = async () => {
             
             const pdfData = await pdfParse(s3Object.Body);
             analysisText = pdfData.text.substring(0, 5000);
+            
+            // ✅ CALENDAR: Erweiterte Datenextraktion
+            extractedData = await extractContractMetadata(analysisText);
+            
           } catch (extractError) {
             console.warn("⚠️ Text-Extraktion von S3 fehlgeschlagen:", extractError.message);
           }
 
+          // KI-Analyse
           let name = "Unbekannt", laufzeit = "Unbekannt", kuendigung = "Unbekannt";
           if (analysisText) {
             try {
@@ -612,6 +711,7 @@ const connectDB = async () => {
           const expiryDate = extractExpiryDate(laufzeit);
           const status = determineContractStatus(expiryDate);
 
+          // ✅ ERWEITERT: Contract mit Calendar-Metadaten
           const contract = {
             userId: req.user.userId,
             name,
@@ -629,6 +729,15 @@ const connectDB = async () => {
             size: req.file.size,
             filePath: `/s3/${req.file.key}`,
             fileUrl: null,
+            // ✅ CALENDAR: Zusätzliche Felder
+            provider: extractedData.provider || null,
+            amount: extractedData.amount || null,
+            contractNumber: extractedData.contractNumber || null,
+            customerNumber: extractedData.customerNumber || null,
+            priceIncreaseDate: extractedData.priceIncreaseDate || null,
+            newPrice: extractedData.newPrice || null,
+            autoRenewMonths: extractedData.autoRenewMonths || 12,
+            extractedText: analysisText,
             legalPulse: {
               riskScore: null,
               summary: '',
@@ -643,6 +752,15 @@ const connectDB = async () => {
           };
 
           const { insertedId } = await req.contractsCollection.insertOne(contract);
+          
+          // ✅ CALENDAR: Events generieren
+          try {
+            const fullContract = { ...contract, _id: insertedId };
+            const generatedEvents = await onContractChange(req.db, fullContract, "create");
+            console.log(`📅 Calendar Events generiert für: ${name}`);
+          } catch (eventError) {
+            console.warn("⚠️ Calendar Events konnten nicht generiert werden:", eventError.message);
+          }
 
           res.status(201).json({ 
             message: "Vertrag gespeichert", 
@@ -663,16 +781,16 @@ const connectDB = async () => {
       console.log("✅ Upload-Route geladen unter /api/upload");
     }
 
-    // ✅ 15. TEST & DEBUG ROUTES - MIT /api PREFIX
+    // ✅ 17. TEST & DEBUG ROUTES
     try {
-      app.use("/api/test", require("./testAuth"));  // ← FIX: /api PREFIX
+      app.use("/api/test", require("./testAuth"));
       console.log("✅ Test-Route geladen unter /api/test");
     } catch (err) {
       console.error("❌ Fehler bei Test-Route:", err);
     }
 
-    // ✅ 16. DEBUG ROUTE - MIT /api PREFIX
-    app.get("/api/debug", (req, res) => {  // ← FIX: /api PREFIX
+    // ✅ 18. DEBUG ROUTE
+    app.get("/api/debug", (req, res) => {
       console.log("Cookies:", req.cookies);
       res.cookie("debug_cookie", "test-value", {
         httpOnly: true,
@@ -707,13 +825,21 @@ const connectDB = async () => {
         invoiceRoutes: "/api/invoices/* (ADDED!)",
         betterContractsRoute: "/api/better-contracts (ADDED!)",
         migrationRoutes: "/api/contracts/migrate-legacy & migration-status (NEW!)",
+        calendarRoutes: "/api/calendar/* (NEW!)",
+        cancellationsRoutes: "/api/cancellations/* (NEW!)",
+        calendarFeatures: {
+          eventGeneration: "✅ Automatisch bei Upload/Edit",
+          notifications: "✅ Täglicher Check um 8 Uhr",
+          quickActions: "✅ Cancel, Compare, Optimize, Snooze",
+          oneClickCancel: "✅ Direkt aus Calendar oder E-Mail"
+        },
         s3Status: s3Status,
-        message: "🎉 PFAD-CHAOS BEHOBEN - ALLES UNTER /api + S3 ROUTES ENHANCED + MIGRATION ROUTES + EMAIL VERIFICATION + INVOICE ROUTES!"
+        message: "🎉 PFAD-CHAOS BEHOBEN + CALENDAR INTEGRATION ACTIVE!"
       });
     });
 
-    // ✅ 17. DEBUG ROUTES LIST
-    app.get("/api/debug/routes", (req, res) => {  // ← FIX: /api PREFIX
+    // ✅ 19. DEBUG ROUTES LIST
+    app.get("/api/debug/routes", (req, res) => {
       const routes = [];
       
       function extractRoutes(stack, basePath = '') {
@@ -748,7 +874,7 @@ const connectDB = async () => {
       
       res.json({
         success: true,
-        message: "🔍 Route Debug Info - NACH PFAD-FIX + S3 ENHANCEMENT + MIGRATION ROUTES + EMAIL VERIFICATION + INVOICE ROUTES",
+        message: "🔍 Route Debug Info - WITH CALENDAR INTEGRATION",
         totalRoutes: routes.length,
         apiRoutes: apiRoutes,
         nonApiRoutes: nonApiRoutes,
@@ -760,30 +886,87 @@ const connectDB = async () => {
           generateOptimized: "/api/contracts/:contractId/generate-optimized", 
           analyze: "/api/analyze",
           optimize: "/api/optimize",
-          s3: "/api/s3/* (enhanced with robust s3Routes.js)",
+          s3: "/api/s3/*",
           upload: "/api/upload",
           stripe: "/api/stripe/*",
-          invoices: "/api/invoices/* (ADDED!)",
+          invoices: "/api/invoices/*",
           betterContracts: "/api/better-contracts",
-          migrationRoutes: "/api/contracts/migrate-legacy & migration-status"
+          migrationRoutes: "/api/contracts/migrate-legacy & migration-status",
+          calendar: "/api/calendar/* (NEW!)",
+          cancellations: "/api/cancellations/* (NEW!)"
         },
         warning: nonApiRoutes.length > 0 ? "⚠️ Es gibt noch non-/api Routen!" : "✅ Alle Routen unter /api!",
         timestamp: new Date().toISOString()
       });
     });
 
-    // ⏰ Cron Jobs (unchanged)
+    // ⏰ ERWEITERTE Cron Jobs mit Calendar Integration
     try {
+      // ✅ BESTEHENDER Reminder-Cronjob ERWEITERT mit Calendar Notifications
       cron.schedule("0 8 * * *", async () => {
-        console.log("⏰ Reminder-Cronjob gestartet");
+        console.log("⏰ Täglicher Reminder-Check gestartet");
         try {
+          // Alte Reminder-Funktion
           const checkContractsAndSendReminders = require("./services/cron");
           await checkContractsAndSendReminders();
+          
+          // ✅ CALENDAR: Neue Calendar Notifications
+          console.log("📅 Calendar Notification Check gestartet");
+          await checkAndSendNotifications(db);
         } catch (error) {
-          console.error("❌ Reminder Cron Error:", error);
+          console.error("❌ Reminder/Calendar Cron Error:", error);
         }
       });
 
+      // ✅ CALENDAR: Event-Generierung für neue Verträge (täglich um 2 Uhr nachts)
+      cron.schedule("0 2 * * *", async () => {
+        console.log("🔄 Starte tägliche Event-Generierung für neue Verträge...");
+        try {
+          const { regenerateAllEvents } = require("./services/calendarEvents");
+          
+          // Finde Verträge ohne Events
+          const contractsWithoutEvents = await db.collection("contracts")
+            .aggregate([
+              {
+                $lookup: {
+                  from: "contract_events",
+                  localField: "_id",
+                  foreignField: "contractId",
+                  as: "events"
+                }
+              },
+              {
+                $match: {
+                  "events": { $size: 0 }
+                }
+              }
+            ])
+            .toArray();
+          
+          console.log(`📊 ${contractsWithoutEvents.length} Verträge ohne Events gefunden`);
+          
+          for (const contract of contractsWithoutEvents) {
+            await onContractChange(db, contract, "create");
+          }
+          
+          console.log("✅ Event-Generierung abgeschlossen");
+        } catch (error) {
+          console.error("❌ Event Generation Cron Error:", error);
+        }
+      });
+
+      // ✅ CALENDAR: Abgelaufene Events aufräumen (täglich um 3 Uhr nachts)
+      cron.schedule("0 3 * * *", async () => {
+        console.log("🧹 Starte Bereinigung abgelaufener Events...");
+        try {
+          const { updateExpiredEvents } = require("./services/calendarEvents");
+          await updateExpiredEvents(db);
+        } catch (error) {
+          console.error("❌ Event Cleanup Cron Error:", error);
+        }
+      });
+
+      // BESTEHENDER Legal Pulse Scan (unverändert)
       cron.schedule("0 6 * * *", async () => {
         console.log("🧠 Starte täglichen AI-powered Legal Pulse Scan...");
         try {
@@ -793,6 +976,8 @@ const connectDB = async () => {
           console.error("❌ Legal Pulse Scan Error:", error);
         }
       });
+      
+      console.log("✅ Alle Cron Jobs aktiviert (inkl. Calendar Events)");
     } catch (err) {
       console.error("❌ Cron Jobs konnten nicht gestartet werden:", err);
     }
@@ -815,7 +1000,9 @@ const connectDB = async () => {
       console.log(`📄 Invoice-Routes: /api/invoices/* (ADDED!)`);
       console.log(`🔍 Better-Contracts-Route: /api/better-contracts (ADDED!)`);
       console.log(`🚀 Migration-Routes: /api/contracts/migrate-legacy & migration-status (NEW!)`);
-      console.log(`✅ EINHEITLICHE /api STRUKTUR + S3 ENHANCEMENT + LEGACY MIGRATION + EMAIL VERIFICATION + INVOICE ROUTES - BEREIT FÜR VERCEL!`);
+      console.log(`📅 Calendar-Routes: /api/calendar/* (NEW!)`);
+      console.log(`🚀 1-Klick-Kündigung: /api/cancellations/* (NEW!)`);
+      console.log(`✅ REVOLUTIONARY CALENDAR FEATURES ACTIVE!`);
     });
 
   } catch (err) {

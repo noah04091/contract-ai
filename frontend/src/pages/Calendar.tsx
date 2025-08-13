@@ -1,222 +1,456 @@
 // src/pages/Calendar.tsx
-import { useEffect, useState, useRef } from "react";
-import axios from "axios";
-import Calendar from "react-calendar";
+import { useEffect, useState, useCallback } from "react";
 import { Helmet } from "react-helmet";
+import Calendar from "react-calendar";
+import { motion, AnimatePresence } from "framer-motion";
+import { 
+  AlertCircle, 
+  Clock, 
+  X, 
+  ChevronRight,
+  Zap,
+  TrendingUp,
+  FileText,
+  Bell,
+  BellOff,
+  RefreshCw,
+  Filter
+} from "lucide-react";
+
+// Use SVG for Calendar Icon
+const CalendarIcon = ({ size = 24 }: { size?: number }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+    <line x1="16" y1="2" x2="16" y2="6"></line>
+    <line x1="8" y1="2" x2="8" y2="6"></line>
+    <line x1="3" y1="10" x2="21" y2="10"></line>
+  </svg>
+);
+import axios from "axios";
 import "../styles/AppleCalendar.css";
 
-interface Contract {
-  _id: string;
-  name: string;
-  expiryDate?: string;
-  description?: string;
+// Type für react-calendar
+type ValuePiece = Date | null;
+type Value = ValuePiece | [ValuePiece, ValuePiece];
+
+interface CalendarEvent {
+  id: string;
+  contractId: string;
+  contractName: string;
+  title: string;
+  description: string;
+  date: string;
+  type: string;
+  severity: "info" | "warning" | "critical";
+  status: string;
+  metadata?: {
+    provider?: string;
+    noticePeriodDays?: number;
+    autoRenewMonths?: number;
+    suggestedAction?: string;
+    daysLeft?: number;
+    daysUntilWindow?: number;
+  };
   provider?: string;
   amount?: number;
 }
 
-interface ContractWithDate extends Contract {
-  parsedDate: Date;
+interface ApiResponse<T> {
+  success: boolean;
+  events?: T[];
+  message?: string;
+  result?: {
+    redirect?: string;
+    message?: string;
+  };
+}
+
+interface QuickActionsProps {
+  event: CalendarEvent;
+  onAction: (action: string, eventId: string) => void;
+  onClose: () => void;
+}
+
+function QuickActionsModal({ event, onAction, onClose }: QuickActionsProps) {
+  return (
+    <motion.div
+      className="quick-actions-overlay"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+    >
+      <motion.div
+        className="quick-actions-modal"
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="quick-actions-header">
+          <div className="event-info">
+            <span className={`severity-badge severity-${event.severity}`}>
+              {event.severity === "critical" ? "🔴" : event.severity === "warning" ? "🟡" : "🔵"}
+            </span>
+            <div>
+              <h3>{event.contractName}</h3>
+              <p>{event.title}</p>
+            </div>
+          </div>
+          <button className="close-btn" onClick={onClose}>
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="quick-actions-content">
+          <p className="event-description">{event.description}</p>
+          
+          <div className="event-details">
+            <div className="detail-item">
+              <CalendarIcon size={16} />
+              <span>{new Date(event.date).toLocaleDateString('de-DE', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+              })}</span>
+            </div>
+            {event.provider && (
+              <div className="detail-item">
+                <FileText size={16} />
+                <span>{event.provider}</span>
+              </div>
+            )}
+            {event.metadata?.daysLeft && (
+              <div className="detail-item">
+                <Clock size={16} />
+                <span>{event.metadata.daysLeft} Tage verbleibend</span>
+              </div>
+            )}
+          </div>
+
+          <div className="quick-actions-buttons">
+            {event.metadata?.suggestedAction === "cancel" && (
+              <button 
+                className="action-btn primary"
+                onClick={() => onAction("cancel", event.id)}
+              >
+                <Zap size={18} />
+                <span>Jetzt kündigen</span>
+                <ChevronRight size={16} />
+              </button>
+            )}
+            
+            <button 
+              className="action-btn secondary"
+              onClick={() => onAction("compare", event.id)}
+            >
+              <TrendingUp size={18} />
+              <span>Alternativen vergleichen</span>
+              <ChevronRight size={16} />
+            </button>
+            
+            <button 
+              className="action-btn secondary"
+              onClick={() => onAction("optimize", event.id)}
+            >
+              <RefreshCw size={18} />
+              <span>Vertrag optimieren</span>
+              <ChevronRight size={16} />
+            </button>
+            
+            <div className="action-divider"></div>
+            
+            <button 
+              className="action-btn ghost"
+              onClick={() => onAction("snooze", event.id)}
+            >
+              <BellOff size={18} />
+              <span>7 Tage verschieben</span>
+            </button>
+            
+            <button 
+              className="action-btn ghost danger"
+              onClick={() => onAction("dismiss", event.id)}
+            >
+              <X size={18} />
+              <span>Erinnerung verwerfen</span>
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
 }
 
 export default function CalendarPage() {
-  const [markedDates, setMarkedDates] = useState<ContractWithDate[]>([]);
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [filteredEvents, setFilteredEvents] = useState<CalendarEvent[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [today] = useState(new Date());
   const [view, setView] = useState<"month" | "year">("month");
-  const [selectedContract, setSelectedContract] = useState<ContractWithDate | null>(null);
-  const modalRef = useRef<HTMLDivElement>(null);
+  const [filterSeverity, setFilterSeverity] = useState<string>("all");
+  const [filterType, setFilterType] = useState<string>("all");
+  const [showQuickActions, setShowQuickActions] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    const fetchContracts = async () => {
-      setLoading(true);
-      setError("");
-      
-      try {
-        const token = localStorage.getItem("token") || "";
-        const res = await axios.get("https://contract-ai-backend.onrender.com/calendar-events", {
-          headers: { Authorization: token },
-        });
-
-        const contracts = res.data as Contract[];
-        
-        // Filter and parse dates
-        const contractsWithDates = contracts
-          .filter((c) => c.expiryDate)
-          .map((c) => ({
-            ...c,
-            parsedDate: new Date(c.expiryDate!)
-          }));
-        
-        setMarkedDates(contractsWithDates);
-      } catch (err) {
-        console.error("Fehler beim Laden der Verträge:", err);
-        setError("Die Vertragsdaten konnten nicht geladen werden. Bitte versuche es später erneut.");
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Fetch Events from new Calendar API
+  const fetchEvents = useCallback(async () => {
+    setLoading(true);
+    setError("");
     
-    fetchContracts();
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get<ApiResponse<CalendarEvent>>("/api/calendar/events", {
+        headers: { Authorization: `Bearer ${token}` },
+        params: {
+          from: new Date().toISOString(),
+          to: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString() // Next year
+        }
+      });
+
+      if (response.data.success && response.data.events) {
+        setEvents(response.data.events);
+        setFilteredEvents(response.data.events);
+      }
+    } catch (err) {
+      console.error("Fehler beim Laden der Kalenderereignisse:", err);
+      setError("Die Kalenderdaten konnten nicht geladen werden.");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
-    // Close modal when clicking outside
-    const handleClickOutside = (event: MouseEvent) => {
-      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
-        setSelectedContract(null);
-      }
-    };
+    fetchEvents();
+  }, [fetchEvents]);
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
-  const tileClassName = ({ date }: { date: Date }) => {
-    const dateString = date.toDateString();
+  // Filter events
+  useEffect(() => {
+    let filtered = [...events];
     
-    // Check if any contract expires on this date
-    const hasContract = markedDates.some(c => c.parsedDate.toDateString() === dateString);
-    
-    // Check if date is in the past
-    const isPast = date < today && date.toDateString() !== today.toDateString();
-    
-    if (hasContract) {
-      return "marked-date";
-    } else if (isPast) {
-      return "past-date";
+    if (filterSeverity !== "all") {
+      filtered = filtered.filter(e => e.severity === filterSeverity);
     }
     
-    return null;
+    if (filterType !== "all") {
+      filtered = filtered.filter(e => e.type === filterType);
+    }
+    
+    setFilteredEvents(filtered);
+  }, [events, filterSeverity, filterType]);
+
+  // Regenerate all events
+  const handleRegenerateEvents = async () => {
+    setRefreshing(true);
+    
+    try {
+      const token = localStorage.getItem("token");
+      await axios.post("/api/calendar/regenerate-all", {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      // Reload events
+      await fetchEvents();
+    } catch (err) {
+      console.error("Fehler beim Regenerieren der Events:", err);
+      alert("Events konnten nicht regeneriert werden.");
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  // Handle Quick Actions
+  const handleQuickAction = async (action: string, eventId: string) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.post<ApiResponse<CalendarEvent>>("/api/calendar/quick-action", {
+        eventId,
+        action,
+        data: action === "snooze" ? { days: 7 } : {}
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (response.data.success) {
+        if (response.data.result?.redirect) {
+          window.location.href = response.data.result.redirect;
+        } else {
+          // Refresh events
+          await fetchEvents();
+          setShowQuickActions(false);
+          setSelectedEvent(null);
+        }
+      }
+    } catch (err) {
+      console.error("Fehler bei Quick Action:", err);
+      alert("Aktion konnte nicht ausgeführt werden.");
+    }
+  };
+
+  // Calendar tile styling
+  const tileClassName = ({ date }: { date: Date }) => {
+    const dateString = date.toISOString().split('T')[0];
+    const dayEvents = filteredEvents.filter(e => 
+      e.date && e.date.split('T')[0] === dateString
+    );
+    
+    if (dayEvents.length === 0) return null;
+    
+    // Get highest severity
+    const hasCritical = dayEvents.some(e => e.severity === "critical");
+    const hasWarning = dayEvents.some(e => e.severity === "warning");
+    
+    if (hasCritical) return "event-critical";
+    if (hasWarning) return "event-warning";
+    return "event-info";
   };
 
   const tileContent = ({ date }: { date: Date }) => {
-    const contractsForDate = markedDates.filter(
-      c => c.parsedDate.toDateString() === date.toDateString()
+    const dateString = date.toISOString().split('T')[0];
+    const dayEvents = filteredEvents.filter(e => 
+      e.date && e.date.split('T')[0] === dateString
     );
     
-    if (contractsForDate.length > 0) {
-      return (
-        <div className="contract-indicator">
-          <span className="contract-dot"></span>
-          {contractsForDate.length > 1 && (
-            <span className="contract-count">{contractsForDate.length}</span>
-          )}
-        </div>
-      );
-    }
+    if (dayEvents.length === 0) return null;
     
-    return null;
+    const hasCritical = dayEvents.some(e => e.severity === "critical");
+    const hasWarning = dayEvents.some(e => e.severity === "warning");
+    
+    return (
+      <div className="event-indicators">
+        {hasCritical && <span className="indicator critical">●</span>}
+        {hasWarning && !hasCritical && <span className="indicator warning">●</span>}
+        {!hasCritical && !hasWarning && <span className="indicator info">●</span>}
+        {dayEvents.length > 1 && (
+          <span className="event-count">{dayEvents.length}</span>
+        )}
+      </div>
+    );
   };
 
-  // Wir können das onChange von react-calendar direkt verwenden
-  // @ts-expect-error - Um den TypeScript-Fehler zu umgehen
-  const handleDateClick = (value) => {
+  const handleDateClick = (value: Value) => {
+    // Prüfe ob value ein einzelnes Date ist
     if (value instanceof Date) {
       setSelectedDate(value);
       
-      // Find contracts for the selected date
-      const contractsForDate = markedDates.filter(
-        c => c.parsedDate.toDateString() === value.toDateString()
+      const dateString = value.toISOString().split('T')[0];
+      const dayEvents = filteredEvents.filter(e => 
+        e.date && e.date.split('T')[0] === dateString
       );
       
-      if (contractsForDate.length === 1) {
-        setSelectedContract(contractsForDate[0]);
-      } else if (contractsForDate.length > 1) {
-        // If multiple contracts, first one will be selected
-        setSelectedContract(contractsForDate[0]);
-      } else {
-        setSelectedContract(null);
+      if (dayEvents.length === 1) {
+        setSelectedEvent(dayEvents[0]);
+        setShowQuickActions(true);
+      } else if (dayEvents.length > 1) {
+        // Show event list modal
+        setSelectedEvent(dayEvents[0]);
+        setShowQuickActions(true);
       }
+    } else if (Array.isArray(value) && value[0] instanceof Date) {
+      // Falls es ein Date-Range ist, nehme das erste Datum
+      setSelectedDate(value[0]);
     }
   };
 
-  const formatDate = (date: Date) => {
-    const options: Intl.DateTimeFormatOptions = { 
-      day: 'numeric', 
-      month: 'long', 
-      year: 'numeric' 
-    };
-    return date.toLocaleDateString('de-DE', options);
+  const getUpcomingCriticalEvents = () => {
+    const now = new Date();
+    const future = new Date();
+    future.setDate(future.getDate() + 30);
+    
+    return filteredEvents
+      .filter(e => {
+        const eventDate = new Date(e.date);
+        return eventDate >= now && 
+               eventDate <= future && 
+               (e.severity === "critical" || e.severity === "warning");
+      })
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .slice(0, 5);
   };
 
-  const getUpcomingContracts = () => {
+  const getDaysRemaining = (date: string) => {
     const now = new Date();
-    
-    // Filter contracts that expire in the future and sort by expiry date
-    const upcoming = [...markedDates]
-      .filter(contract => contract.parsedDate >= now)
-      .sort((a, b) => a.parsedDate.getTime() - b.parsedDate.getTime());
-    
-    // Return the next 3 contracts
-    return upcoming.slice(0, 3);
-  };
-
-  const getDaysRemaining = (date: Date) => {
-    const now = new Date();
-    const diffTime = date.getTime() - now.getTime();
+    const eventDate = new Date(date);
+    const diffTime = eventDate.getTime() - now.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
     if (diffDays === 0) return "Heute";
     if (diffDays === 1) return "Morgen";
+    if (diffDays < 0) return "Abgelaufen";
     return `In ${diffDays} Tagen`;
   };
 
   return (
     <>
       <Helmet>
-        <title>Fristen im Blick – Vertragskalender & Erinnerungen | Contract AI</title>
-        <meta name="description" content="Verpasse keine Frist mehr: Mit Contract AI alle Vertrags- und Kündigungstermine sicher im Blick. Automatisch erinnert & bestens geschützt. Jetzt starten!" />
-        <meta name="keywords" content="Fristenkalender, Vertragsfristen, Kündigungsfristen, Kalender Verträge, Erinnerungen Verträge, Contract AI" />
-        <link rel="canonical" href="https://contract-ai.de/calendar" />
-        {/* Open Graph / Facebook */}
-        <meta property="og:title" content="Fristen im Blick – Vertragskalender & Erinnerungen | Contract AI" />
-        <meta property="og:description" content="Behalte alle Fristen sicher im Blick: Contract AI erinnert dich automatisch an wichtige Vertrags- und Kündigungstermine. Jetzt ausprobieren!" />
-        <meta property="og:url" content="https://contract-ai.de/calendar" />
-        <meta property="og:type" content="website" />
-        <meta property="og:image" content="https://contract-ai.de/og-image.jpg" />
-        {/* Twitter */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Fristen im Blick – Vertragskalender & Erinnerungen | Contract AI" />
-        <meta name="twitter:description" content="Alle Fristen sicher im Blick – mit automatischen Erinnerungen von Contract AI. Mehr Kontrolle, weniger Stress. Jetzt starten!" />
-        <meta name="twitter:image" content="https://contract-ai.de/og-image.jpg" />
+        <title>Intelligenter Vertragskalender – Nie wieder Fristen verpassen | Contract AI</title>
+        <meta name="description" content="Revolutionärer Vertragskalender mit automatischen Erinnerungen, 1-Klick-Kündigung und KI-gestützten Optimierungsvorschlägen. Sparen Sie Zeit und Geld!" />
       </Helmet>
       
-      <div className="apple-calendar-page">
+      <div className="apple-calendar-page enhanced">
         <div className="calendar-bg">
           <div className="calendar-shape shape-1"></div>
           <div className="calendar-shape shape-2"></div>
+          <div className="calendar-shape shape-3"></div>
         </div>
         
         <div className="calendar-container">
           <div className="calendar-header">
-            <div className="calendar-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                <line x1="16" y1="2" x2="16" y2="6"></line>
-                <line x1="8" y1="2" x2="8" y2="6"></line>
-                <line x1="3" y1="10" x2="21" y2="10"></line>
-              </svg>
+            <div className="calendar-icon animated">
+              <CalendarIcon size={28} />
             </div>
-            <h1>Vertragskalender</h1>
-            <p className="calendar-subtitle">Übersicht aller ablaufenden Verträge</p>
+            <h1>Intelligenter Vertragskalender</h1>
+            <p className="calendar-subtitle">
+              Automatische Erinnerungen • 1-Klick-Kündigung • KI-Optimierung
+            </p>
           </div>
           
-          <div className="calendar-view-toggle">
+          {/* Filter Bar */}
+          <div className="filter-bar">
+            <div className="filter-group">
+              <label>
+                <Filter size={16} />
+                Dringlichkeit:
+              </label>
+              <select 
+                value={filterSeverity} 
+                onChange={(e) => setFilterSeverity(e.target.value)}
+              >
+                <option value="all">Alle</option>
+                <option value="critical">🔴 Kritisch</option>
+                <option value="warning">🟡 Warnung</option>
+                <option value="info">🔵 Info</option>
+              </select>
+            </div>
+            
+            <div className="filter-group">
+              <label>
+                <FileText size={16} />
+                Ereignistyp:
+              </label>
+              <select 
+                value={filterType} 
+                onChange={(e) => setFilterType(e.target.value)}
+              >
+                <option value="all">Alle</option>
+                <option value="CANCEL_WINDOW_OPEN">Kündigungsfenster</option>
+                <option value="LAST_CANCEL_DAY">Letzte Chance</option>
+                <option value="PRICE_INCREASE">Preiserhöhung</option>
+                <option value="AUTO_RENEWAL">Verlängerung</option>
+                <option value="REVIEW">Review</option>
+              </select>
+            </div>
+            
             <button 
-              className={view === "month" ? "active" : ""} 
-              onClick={() => setView("month")}
+              className="refresh-btn"
+              onClick={handleRegenerateEvents}
+              disabled={refreshing}
             >
-              Monat
-            </button>
-            <button 
-              className={view === "year" ? "active" : ""} 
-              onClick={() => setView("year")}
-            >
-              Jahr
+              <RefreshCw size={16} className={refreshing ? "spinning" : ""} />
+              {refreshing ? "Aktualisiere..." : "Events neu generieren"}
             </button>
           </div>
           
@@ -225,128 +459,135 @@ export default function CalendarPage() {
               {loading ? (
                 <div className="calendar-loading">
                   <div className="spinner"></div>
-                  <p>Verträge werden geladen...</p>
+                  <p>Kalenderereignisse werden geladen...</p>
                 </div>
               ) : error ? (
                 <div className="calendar-error">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <line x1="12" y1="8" x2="12" y2="12"></line>
-                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                  </svg>
+                  <AlertCircle size={24} />
                   <p>{error}</p>
                 </div>
               ) : (
-                <Calendar 
-                  onChange={handleDateClick}
-                  value={selectedDate || today}
-                  tileClassName={tileClassName}
-                  tileContent={tileContent}
-                  view={view}
-                  onViewChange={({ view: newView }) => setView(newView as "month" | "year")}
-                  showNeighboringMonth={false}
-                  minDetail="year"
-                  next2Label={null}
-                  prev2Label={null}
-                  formatMonthYear={(_, date) => {
-                    const month = date.toLocaleDateString('de-DE', { month: 'long' });
-                    const year = date.getFullYear();
-                    return `${month} ${year}`;
-                  }}
-                  formatShortWeekday={(_, date) => 
-                    date.toLocaleDateString('de-DE', { weekday: 'short' }).substring(0, 2)
-                  }
-                />
+                <>
+                  <Calendar 
+                    onChange={handleDateClick}
+                    value={selectedDate || new Date()}
+                    tileClassName={tileClassName}
+                    tileContent={tileContent}
+                    view={view}
+                    onViewChange={({ view: newView }) => setView(newView as "month" | "year")}
+                    showNeighboringMonth={false}
+                    minDetail="year"
+                    locale="de-DE"
+                  />
+                  
+                  <div className="calendar-legend enhanced">
+                    <div className="legend-item">
+                      <span className="legend-dot critical"></span>
+                      <span className="legend-text">Kritisch - Sofort handeln</span>
+                    </div>
+                    <div className="legend-item">
+                      <span className="legend-dot warning"></span>
+                      <span className="legend-text">Warnung - Bald fällig</span>
+                    </div>
+                    <div className="legend-item">
+                      <span className="legend-dot info"></span>
+                      <span className="legend-text">Info - Zur Kenntnisnahme</span>
+                    </div>
+                  </div>
+                </>
               )}
-              
-              <div className="calendar-legend">
-                <div className="legend-item">
-                  <span className="legend-dot"></span>
-                  <span className="legend-text">Vertrag läuft aus</span>
-                </div>
-                <div className="legend-item">
-                  <span className="legend-today"></span>
-                  <span className="legend-text">Heute</span>
-                </div>
-              </div>
             </div>
             
             <div className="calendar-sidebar">
-              <div className="sidebar-section">
-                <h3>Kommende Ereignisse</h3>
-                {getUpcomingContracts().length > 0 ? (
-                  <div className="upcoming-contracts">
-                    {getUpcomingContracts().map((contract) => (
-                      <div 
-                        key={contract._id} 
-                        className="contract-card"
-                        onClick={() => setSelectedContract(contract)}
+              <div className="sidebar-section urgent-events">
+                <h3>
+                  <AlertCircle size={18} />
+                  Dringende Ereignisse
+                </h3>
+                {getUpcomingCriticalEvents().length > 0 ? (
+                  <div className="urgent-events-list">
+                    {getUpcomingCriticalEvents().map((event) => (
+                      <motion.div 
+                        key={event.id} 
+                        className={`event-card severity-${event.severity}`}
+                        whileHover={{ scale: 1.02 }}
+                        onClick={() => {
+                          setSelectedEvent(event);
+                          setShowQuickActions(true);
+                        }}
                       >
-                        <div className="contract-card-header">
-                          <h4>{contract.name || "Unbenannter Vertrag"}</h4>
-                          <span className="expiry-badge">
-                            {getDaysRemaining(contract.parsedDate)}
+                        <div className="event-card-header">
+                          <h4>{event.contractName}</h4>
+                          <span className="days-badge">
+                            {getDaysRemaining(event.date)}
                           </span>
                         </div>
-                        <div className="contract-date">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                            <line x1="16" y1="2" x2="16" y2="6"></line>
-                            <line x1="8" y1="2" x2="8" y2="6"></line>
-                            <line x1="3" y1="10" x2="21" y2="10"></line>
-                          </svg>
-                          {formatDate(contract.parsedDate)}
+                        <p className="event-card-title">{event.title}</p>
+                        <div className="event-card-footer">
+                          <span className="event-date">
+                            <CalendarIcon size={14} />
+                            {new Date(event.date).toLocaleDateString('de-DE')}
+                          </span>
+                          {event.metadata?.suggestedAction && (
+                            <span className="suggested-action">
+                              <Zap size={14} />
+                              {event.metadata.suggestedAction === "cancel" ? "Kündigen" :
+                               event.metadata.suggestedAction === "compare" ? "Vergleichen" :
+                               event.metadata.suggestedAction === "review" ? "Prüfen" :
+                               "Handeln"}
+                            </span>
+                          )}
                         </div>
-                        {contract.provider && (
-                          <div className="contract-provider">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M20 7h-9"></path>
-                              <path d="M14 17H5"></path>
-                              <circle cx="17" cy="17" r="3"></circle>
-                              <circle cx="7" cy="7" r="3"></circle>
-                            </svg>
-                            {contract.provider}
-                          </div>
-                        )}
-                        {contract.amount && (
-                          <div className="contract-amount">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <line x1="12" y1="1" x2="12" y2="23"></line>
-                              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-                            </svg>
-                            {contract.amount.toFixed(2)} €
-                          </div>
-                        )}
-                      </div>
+                      </motion.div>
                     ))}
                   </div>
                 ) : (
-                  <p className="no-contracts">Keine kommenden Vertragsenden</p>
+                  <p className="no-events">
+                    Keine dringenden Ereignisse in den nächsten 30 Tagen
+                  </p>
                 )}
               </div>
               
-              <div className="sidebar-section">
-                <h3>Kalenderübersicht</h3>
-                <div className="calendar-stats">
+              <div className="sidebar-section calendar-stats">
+                <h3>Statistiken</h3>
+                <div className="stats-grid">
                   <div className="stat-card">
-                    <div className="stat-value">{markedDates.length}</div>
-                    <div className="stat-label">Verträge gesamt</div>
+                    <div className="stat-value">{events.length}</div>
+                    <div className="stat-label">Ereignisse gesamt</div>
                   </div>
                   <div className="stat-card">
                     <div className="stat-value">
-                      {markedDates.filter(c => c.parsedDate >= today).length}
+                      {events.filter(e => e.severity === "critical").length}
                     </div>
-                    <div className="stat-label">Zukünftige Ereignisse</div>
+                    <div className="stat-label">Kritische Events</div>
                   </div>
                   <div className="stat-card">
                     <div className="stat-value">
-                      {markedDates.filter(c => {
-                        const diffTime = c.parsedDate.getTime() - today.getTime();
-                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                        return diffDays <= 30 && diffDays >= 0;
-                      }).length}
+                      {events.filter(e => e.status === "notified").length}
                     </div>
-                    <div className="stat-label">In den nächsten 30 Tagen</div>
+                    <div className="stat-label">Benachrichtigt</div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="sidebar-section features">
+                <h3>Premium Features</h3>
+                <div className="feature-list">
+                  <div className="feature-item">
+                    <Zap size={16} className="feature-icon" />
+                    <span>1-Klick-Kündigung direkt aus dem Kalender</span>
+                  </div>
+                  <div className="feature-item">
+                    <Bell size={16} className="feature-icon" />
+                    <span>Intelligente Erinnerungen per E-Mail</span>
+                  </div>
+                  <div className="feature-item">
+                    <TrendingUp size={16} className="feature-icon" />
+                    <span>Automatischer Marktvergleich</span>
+                  </div>
+                  <div className="feature-item">
+                    <RefreshCw size={16} className="feature-icon" />
+                    <span>KI-gestützte Optimierungsvorschläge</span>
                   </div>
                 </div>
               </div>
@@ -354,71 +595,18 @@ export default function CalendarPage() {
           </div>
         </div>
         
-        {selectedContract && (
-          <div className="contract-modal-overlay">
-            <div className="contract-modal" ref={modalRef}>
-              <div className="modal-header">
-                <h3>{selectedContract.name || "Unbenannter Vertrag"}</h3>
-                <button 
-                  className="close-modal"
-                  onClick={() => setSelectedContract(null)}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                  </svg>
-                </button>
-              </div>
-              
-              <div className="modal-content">
-                <div className="modal-detail">
-                  <span className="detail-label">Ablaufdatum:</span>
-                  <span className="detail-value">{formatDate(selectedContract.parsedDate)}</span>
-                </div>
-                
-                {selectedContract.provider && (
-                  <div className="modal-detail">
-                    <span className="detail-label">Anbieter:</span>
-                    <span className="detail-value">{selectedContract.provider}</span>
-                  </div>
-                )}
-                
-                {selectedContract.amount && (
-                  <div className="modal-detail">
-                    <span className="detail-label">Betrag:</span>
-                    <span className="detail-value">{selectedContract.amount.toFixed(2)} €</span>
-                  </div>
-                )}
-                
-                {selectedContract.description && (
-                  <div className="modal-detail">
-                    <span className="detail-label">Beschreibung:</span>
-                    <p className="detail-value description">
-                      {selectedContract.description}
-                    </p>
-                  </div>
-                )}
-                
-                <div className="modal-actions">
-                  <button className="modal-button secondary">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                      <path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4Z"></path>
-                    </svg>
-                    Bearbeiten
-                  </button>
-                  <button className="modal-button primary">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
-                      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
-                    </svg>
-                    Zum Vertrag
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        <AnimatePresence>
+          {showQuickActions && selectedEvent && (
+            <QuickActionsModal
+              event={selectedEvent}
+              onAction={handleQuickAction}
+              onClose={() => {
+                setShowQuickActions(false);
+                setSelectedEvent(null);
+              }}
+            />
+          )}
+        </AnimatePresence>
       </div>
     </>
   );
