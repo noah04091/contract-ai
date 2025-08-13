@@ -195,16 +195,35 @@ export default function CalendarView() {
     setError("");
     
     try {
-      const token = localStorage.getItem("token");
+      // Versuche verschiedene Token-Namen
+      const token = localStorage.getItem("token") || 
+                    localStorage.getItem("authToken") || 
+                    localStorage.getItem("jwtToken") ||
+                    localStorage.getItem("accessToken") ||
+                    sessionStorage.getItem("token") ||
+                    sessionStorage.getItem("authToken");
+      
+      console.log("Token-Suche:", {
+        token: !!token,
+        localStorage: Object.keys(localStorage),
+        sessionStorage: Object.keys(sessionStorage)
+      });
+      
       if (!token) {
-        console.warn("Kein Token gefunden");
-        setError("Bitte melden Sie sich an.");
-        setLoading(false);
-        return;
+        console.warn("Kein Token gefunden in localStorage/sessionStorage");
+        // Versuche ohne Token - manche APIs nutzen Cookies
+        console.log("Versuche Request ohne Token (Cookie-Auth)...");
       }
 
+      // Request mit oder ohne Token (falls Cookie-Auth verwendet wird)
+      const headers: any = {};
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+      
       const response = await axios.get<ApiResponse<CalendarEvent>>("/api/calendar/events", {
-        headers: { Authorization: `Bearer ${token}` },
+        headers,
+        withCredentials: true, // Wichtig für Cookie-Auth
         params: {
           from: new Date().toISOString(),
           to: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString() // Next year
@@ -254,9 +273,18 @@ export default function CalendarView() {
     setRefreshing(true);
     
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("token") || 
+                    localStorage.getItem("authToken") || 
+                    localStorage.getItem("jwtToken");
+      
+      const headers: any = {};
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+      
       await axios.post("/api/calendar/regenerate-all", {}, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers,
+        withCredentials: true
       });
       
       // Reload events
@@ -273,13 +301,22 @@ export default function CalendarView() {
   // Handle Quick Actions
   const handleQuickAction = async (action: string, eventId: string) => {
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("token") || 
+                    localStorage.getItem("authToken") || 
+                    localStorage.getItem("jwtToken");
+      
+      const headers: any = {};
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+      
       const response = await axios.post<ApiResponse<CalendarEvent>>("/api/calendar/quick-action", {
         eventId,
         action,
         data: action === "snooze" ? { days: 7 } : {}
       }, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers,
+        withCredentials: true
       });
 
       if (response.data.success) {
