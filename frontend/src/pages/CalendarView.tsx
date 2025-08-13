@@ -216,7 +216,7 @@ export default function CalendarView() {
       }
 
       // Request mit oder ohne Token (falls Cookie-Auth verwendet wird)
-      const headers: any = {};
+      const headers: Record<string, string> = {};
       if (token) {
         headers.Authorization = `Bearer ${token}`;
       }
@@ -277,7 +277,7 @@ export default function CalendarView() {
                     localStorage.getItem("authToken") || 
                     localStorage.getItem("jwtToken");
       
-      const headers: any = {};
+      const headers: Record<string, string> = {};
       if (token) {
         headers.Authorization = `Bearer ${token}`;
       }
@@ -305,7 +305,7 @@ export default function CalendarView() {
                     localStorage.getItem("authToken") || 
                     localStorage.getItem("jwtToken");
       
-      const headers: any = {};
+      const headers: Record<string, string> = {};
       if (token) {
         headers.Authorization = `Bearer ${token}`;
       }
