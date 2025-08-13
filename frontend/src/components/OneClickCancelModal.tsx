@@ -199,9 +199,13 @@ ${formData.customerName}
       } else {
         throw new Error(data.error || "Fehler beim Senden der Kündigung");
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error("Fehler beim Senden der Kündigung:", err);
-      setError(err.message || "Fehler beim Senden der Kündigung");
+      // Typ-sichere Fehlerbehandlung
+      const errorMessage = err instanceof Error 
+        ? err.message 
+        : "Fehler beim Senden der Kündigung";
+      setError(errorMessage);
       setStep("preview");
     } finally {
       setLoading(false);
