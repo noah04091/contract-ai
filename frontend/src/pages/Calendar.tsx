@@ -2,6 +2,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { Helmet } from "react-helmet";
 import Calendar from "react-calendar";
+import "react-calendar/dist/Calendar.css";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   AlertCircle, 
@@ -14,18 +15,9 @@ import {
   Bell,
   BellOff,
   RefreshCw,
-  Filter
+  Filter,
+  Calendar as CalendarIconLucide
 } from "lucide-react";
-
-// Use SVG for Calendar Icon
-const CalendarIcon = ({ size = 24 }: { size?: number }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-    <line x1="16" y1="2" x2="16" y2="6"></line>
-    <line x1="8" y1="2" x2="8" y2="6"></line>
-    <line x1="3" y1="10" x2="21" y2="10"></line>
-  </svg>
-);
 import axios from "axios";
 import "../styles/AppleCalendar.css";
 
@@ -50,6 +42,7 @@ interface CalendarEvent {
     suggestedAction?: string;
     daysLeft?: number;
     daysUntilWindow?: number;
+    contractName?: string;
   };
   provider?: string;
   amount?: number;
@@ -93,7 +86,7 @@ function QuickActionsModal({ event, onAction, onClose }: QuickActionsProps) {
               {event.severity === "critical" ? "🔴" : event.severity === "warning" ? "🟡" : "🔵"}
             </span>
             <div>
-              <h3>{event.contractName}</h3>
+              <h3>{event.metadata?.contractName || event.contractName}</h3>
               <p>{event.title}</p>
             </div>
           </div>
@@ -107,7 +100,7 @@ function QuickActionsModal({ event, onAction, onClose }: QuickActionsProps) {
           
           <div className="event-details">
             <div className="detail-item">
-              <CalendarIcon size={16} />
+              <CalendarIconLucide size={16} />
               <span>{new Date(event.date).toLocaleDateString('de-DE', {
                 weekday: 'long',
                 year: 'numeric',
@@ -203,6 +196,13 @@ export default function CalendarPage() {
     
     try {
       const token = localStorage.getItem("token");
+      if (!token) {
+        console.warn("Kein Token gefunden");
+        setError("Bitte melden Sie sich an.");
+        setLoading(false);
+        return;
+      }
+
       const response = await axios.get<ApiResponse<CalendarEvent>>("/api/calendar/events", {
         headers: { Authorization: `Bearer ${token}` },
         params: {
@@ -211,13 +211,20 @@ export default function CalendarPage() {
         }
       });
 
+      console.log("Calendar Events Response:", response.data);
+
       if (response.data.success && response.data.events) {
         setEvents(response.data.events);
         setFilteredEvents(response.data.events);
+      } else {
+        setEvents([]);
+        setFilteredEvents([]);
       }
     } catch (err) {
       console.error("Fehler beim Laden der Kalenderereignisse:", err);
       setError("Die Kalenderdaten konnten nicht geladen werden.");
+      setEvents([]);
+      setFilteredEvents([]);
     } finally {
       setLoading(false);
     }
@@ -254,6 +261,7 @@ export default function CalendarPage() {
       
       // Reload events
       await fetchEvents();
+      alert("Events wurden erfolgreich regeneriert!");
     } catch (err) {
       console.error("Fehler beim Regenerieren der Events:", err);
       alert("Events konnten nicht regeneriert werden.");
@@ -282,6 +290,10 @@ export default function CalendarPage() {
           await fetchEvents();
           setShowQuickActions(false);
           setSelectedEvent(null);
+          
+          if (response.data.result?.message) {
+            alert(response.data.result.message);
+          }
         }
       }
     } catch (err) {
@@ -345,7 +357,7 @@ export default function CalendarPage() {
         setSelectedEvent(dayEvents[0]);
         setShowQuickActions(true);
       } else if (dayEvents.length > 1) {
-        // Show event list modal
+        // Show first event or create a selection modal
         setSelectedEvent(dayEvents[0]);
         setShowQuickActions(true);
       }
@@ -400,7 +412,7 @@ export default function CalendarPage() {
         <div className="calendar-container">
           <div className="calendar-header">
             <div className="calendar-icon animated">
-              <CalendarIcon size={28} />
+              <CalendarIconLucide size={28} />
             </div>
             <h1>Intelligenter Vertragskalender</h1>
             <p className="calendar-subtitle">
@@ -517,7 +529,7 @@ export default function CalendarPage() {
                         }}
                       >
                         <div className="event-card-header">
-                          <h4>{event.contractName}</h4>
+                          <h4>{event.metadata?.contractName || event.contractName}</h4>
                           <span className="days-badge">
                             {getDaysRemaining(event.date)}
                           </span>
@@ -525,7 +537,7 @@ export default function CalendarPage() {
                         <p className="event-card-title">{event.title}</p>
                         <div className="event-card-footer">
                           <span className="event-date">
-                            <CalendarIcon size={14} />
+                            <CalendarIconLucide size={14} />
                             {new Date(event.date).toLocaleDateString('de-DE')}
                           </span>
                           {event.metadata?.suggestedAction && (
@@ -543,7 +555,9 @@ export default function CalendarPage() {
                   </div>
                 ) : (
                   <p className="no-events">
-                    Keine dringenden Ereignisse in den nächsten 30 Tagen
+                    {events.length === 0 
+                      ? "Keine Events vorhanden. Laden Sie Verträge hoch oder klicken Sie auf 'Events neu generieren'."
+                      : "Keine dringenden Ereignisse in den nächsten 30 Tagen"}
                   </p>
                 )}
               </div>
