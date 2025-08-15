@@ -2,9 +2,11 @@
 const { MongoClient, ObjectId } = require("mongodb");
 require("dotenv").config();
 const sendEmail = require("./mailer");
+const { checkAndSendNotifications } = require("./calendarNotifier"); // NEU
 
 const client = new MongoClient(process.env.MONGO_URI);
 
+// DEINE BESTEHENDE FUNKTION - BEHALTEN!
 async function checkContractsAndSendReminders() {
   try {
     await client.connect();
@@ -45,4 +47,25 @@ async function checkContractsAndSendReminders() {
   }
 }
 
-module.exports = checkContractsAndSendReminders;
+// NEU: Calendar Event Notifications
+async function checkCalendarEventsAndSendNotifications() {
+  try {
+    await client.connect();
+    const db = client.db("contract_ai");
+    
+    console.log("📅 Prüfe Calendar Events für Benachrichtigungen...");
+    const sentCount = await checkAndSendNotifications(db);
+    console.log(`✅ ${sentCount} Calendar-Benachrichtigungen versendet`);
+    
+  } catch (err) {
+    console.error("❌ Fehler im Calendar-Cronjob:", err);
+  } finally {
+    await client.close();
+  }
+}
+
+// EXPORTIERE BEIDE FUNKTIONEN
+module.exports = {
+  checkContractsAndSendReminders,
+  checkCalendarEventsAndSendNotifications
+};

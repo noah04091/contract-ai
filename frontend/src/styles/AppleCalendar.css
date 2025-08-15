@@ -1334,3 +1334,158 @@
 .stat-card:hover::before {
   opacity: 1;
 }
+
+/* ============================================ */
+/* NEUE RESPONSIVE ERGÄNZUNGEN - Am Ende anfügen */
+/* ============================================ */
+
+/* Verbesserte Mobile-Optimierung für Quick Actions */
+@media (max-width: 768px) {
+  /* Allgemeine Mobile-Verbesserungen */
+  .apple-calendar-page {
+    padding: 16px 12px;
+  }
+  
+  .calendar-header h1 {
+    font-size: clamp(24px, 5vw, 32px);
+    line-height: 1.2;
+  }
+  
+  .calendar-subtitle {
+    font-size: clamp(14px, 3vw, 16px);
+    padding: 0 16px;
+  }
+  
+  /* Filter Bar Mobile - Vollständig vertikal */
+  .filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 16px;
+  }
+  
+  .filter-group {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+  
+  .filter-group label {
+    margin-bottom: 6px;
+  }
+  
+  .filter-group select {
+    width: 100%;
+    padding: 12px;
+    min-height: 48px; /* Touch-friendly */
+  }
+  
+  .refresh-btn {
+    margin-left: 0;
+    justify-content: center;
+    width: 100%;
+    padding: 12px 20px;
+    min-height: 48px;
+  }
+  
+  /* Quick Actions Modal Mobile-optimiert */
+  .quick-actions-overlay {
+    padding: 0;
+  }
+  
+  .quick-actions-modal {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 20px 20px 0 0;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-height: 85vh;
+  }
+  
+  .quick-actions-buttons .action-btn {
+    padding: 16px 20px;
+    min-height: 52px;
+    font-size: 16px;
+  }
+  
+  /* Touch-friendly für alle Buttons */
+  button {
+    min-height: 48px;
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Typography Clamp für bessere Lesbarkeit */
+  p, span {
+    font-size: clamp(14px, 3.5vw, 16px);
+  }
+  
+  h3 {
+    font-size: clamp(16px, 4vw, 18px);
+  }
+  
+  h4 {
+    font-size: clamp(14px, 3.5vw, 16px);
+  }
+}
+
+/* Extra kleine Geräte */
+@media (max-width: 480px) {
+  .calendar-icon {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .react-calendar__navigation button {
+    min-width: 36px;
+    height: 36px;
+    font-size: 14px;
+  }
+  
+  .stats-grid {
+    gap: 8px;
+  }
+  
+  .stat-card {
+    padding: 12px;
+  }
+  
+  .stat-value {
+    font-size: 18px;
+  }
+  
+  .stat-label {
+    font-size: 11px;
+  }
+}
+
+/* Touch-Geräte spezifisch */
+@media (hover: none) and (pointer: coarse) {
+  .action-btn:active {
+    transform: scale(0.98);
+  }
+  
+  .event-card {
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  .event-card:active {
+    opacity: 0.9;
+  }
+}
+
+/* Landscape Mobile */
+@media (max-width: 812px) and (orientation: landscape) {
+  .calendar-header {
+    margin-bottom: 20px;
+  }
+  
+  .calendar-container {
+    padding: 16px;
+  }
+  
+  .quick-actions-modal {
+    max-height: 95vh;
+  }
+}

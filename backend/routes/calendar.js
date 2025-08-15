@@ -148,12 +148,14 @@ router.post("/regenerate-all", verifyToken, async (req, res) => {
   }
 });
 
+// Ergänze in backend/routes/calendar.js die PATCH Route für Event-Updates:
+
 // PATCH /api/calendar/events/:eventId - Event-Status aktualisieren
 router.patch("/events/:eventId", verifyToken, async (req, res) => {
   try {
     const eventId = new ObjectId(req.params.eventId);
     const userId = new ObjectId(req.user.userId);
-    const { status, notes } = req.body;
+    const { status, notes, snoozeDays } = req.body;
     
     // Verify event ownership
     const event = await req.db.collection("contract_events").findOne({
@@ -173,7 +175,18 @@ router.patch("/events/:eventId", verifyToken, async (req, res) => {
       updatedAt: new Date() 
     };
     
-    if (status) updateData.status = status;
+    if (status) {
+      updateData.status = status;
+      
+      // Handle snooze
+      if (status === 'snoozed' && snoozeDays) {
+        const newDate = new Date(event.date);
+        newDate.setDate(newDate.getDate() + snoozeDays);
+        updateData.date = newDate;
+        updateData.snoozedUntil = newDate;
+      }
+    }
+    
     if (notes !== undefined) updateData.notes = notes;
     
     await req.db.collection("contract_events").updateOne(

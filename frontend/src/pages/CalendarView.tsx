@@ -6,7 +6,7 @@ import "react-calendar/dist/Calendar.css";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   AlertCircle, 
-  Clock, 
+  // Clock entfernt - wurde nicht verwendet
   X, 
   ChevronRight,
   Zap,
@@ -18,6 +18,7 @@ import {
   Filter,
   Calendar as CalendarIconLucide
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../styles/AppleCalendar.css";
 
@@ -65,6 +66,44 @@ interface QuickActionsProps {
 }
 
 function QuickActionsModal({ event, onAction, onClose }: QuickActionsProps) {
+  const navigate = useNavigate();
+
+  const handleCancel = () => {
+    navigate(`/cancel/${event.contractId}`);
+    onClose();
+  };
+
+  const handleCompare = () => {
+    navigate(`/better-contracts?contractId=${event.contractId}`);
+    onClose();
+  };
+
+  const handleOptimize = () => {
+    navigate(`/optimizer?contractId=${event.contractId}`);
+    onClose();
+  };
+
+  const getDaysRemaining = () => {
+    const now = new Date();
+    const eventDate = new Date(event.date);
+    const diffTime = eventDate.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return "Heute";
+    if (diffDays === 1) return "Morgen";
+    if (diffDays < 0) return "Abgelaufen";
+    return `In ${diffDays} Tagen`;
+  };
+
+  const formatDate = () => {
+    return new Date(event.date).toLocaleDateString('de-DE', {
+      weekday: 'long',
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric'
+    });
+  };
+
   return (
     <motion.div
       className="quick-actions-overlay"
@@ -101,12 +140,7 @@ function QuickActionsModal({ event, onAction, onClose }: QuickActionsProps) {
           <div className="event-details">
             <div className="detail-item">
               <CalendarIconLucide size={16} />
-              <span>{new Date(event.date).toLocaleDateString('de-DE', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-              })}</span>
+              <span>{formatDate()}</span>
             </div>
             {event.provider && (
               <div className="detail-item">
@@ -114,19 +148,16 @@ function QuickActionsModal({ event, onAction, onClose }: QuickActionsProps) {
                 <span>{event.provider}</span>
               </div>
             )}
-            {event.metadata?.daysLeft && (
-              <div className="detail-item">
-                <Clock size={16} />
-                <span>{event.metadata.daysLeft} Tage verbleibend</span>
-              </div>
-            )}
+            <div className="detail-item">
+              <span className="days-badge">{getDaysRemaining()}</span>
+            </div>
           </div>
 
           <div className="quick-actions-buttons">
             {event.metadata?.suggestedAction === "cancel" && (
               <button 
                 className="action-btn primary"
-                onClick={() => onAction("cancel", event.id)}
+                onClick={handleCancel}
               >
                 <Zap size={18} />
                 <span>Jetzt kündigen</span>
@@ -136,7 +167,7 @@ function QuickActionsModal({ event, onAction, onClose }: QuickActionsProps) {
             
             <button 
               className="action-btn secondary"
-              onClick={() => onAction("compare", event.id)}
+              onClick={handleCompare}
             >
               <TrendingUp size={18} />
               <span>Alternativen vergleichen</span>
@@ -145,7 +176,7 @@ function QuickActionsModal({ event, onAction, onClose }: QuickActionsProps) {
             
             <button 
               className="action-btn secondary"
-              onClick={() => onAction("optimize", event.id)}
+              onClick={handleOptimize}
             >
               <RefreshCw size={18} />
               <span>Vertrag optimieren</span>
@@ -309,29 +340,32 @@ export default function CalendarView() {
       if (token) {
         headers.Authorization = `Bearer ${token}`;
       }
-      
-      const response = await axios.post<ApiResponse<CalendarEvent>>("/api/calendar/quick-action", {
-        eventId,
-        action,
-        data: action === "snooze" ? { days: 7 } : {}
-      }, {
-        headers,
-        withCredentials: true
-      });
 
-      if (response.data.success) {
-        if (response.data.result?.redirect) {
-          window.location.href = response.data.result.redirect;
-        } else {
-          // Refresh events
-          await fetchEvents();
-          setShowQuickActions(false);
-          setSelectedEvent(null);
-          
-          if (response.data.result?.message) {
-            alert(response.data.result.message);
-          }
-        }
+      if (action === "snooze") {
+        await axios.patch(`/api/calendar/events/${eventId}`, {
+          status: 'snoozed',
+          snoozeDays: 7
+        }, {
+          headers,
+          withCredentials: true
+        });
+        
+        alert('Erinnerung um 7 Tage verschoben');
+        await fetchEvents();
+        setShowQuickActions(false);
+        setSelectedEvent(null);
+      } else if (action === "dismiss") {
+        await axios.patch(`/api/calendar/events/${eventId}`, {
+          status: 'dismissed'
+        }, {
+          headers,
+          withCredentials: true
+        });
+        
+        alert('Erinnerung verworfen');
+        await fetchEvents();
+        setShowQuickActions(false);
+        setSelectedEvent(null);
       }
     } catch (err) {
       console.error("Fehler bei Quick Action:", err);
@@ -435,7 +469,7 @@ export default function CalendarView() {
   return (
     <>
       <Helmet>
-        <title>Intelligenter Vertragskalender – Nie wieder Fristen verpassen | Contract AI</title>
+        <title>Intelligenter Vertragskalender — Nie wieder Fristen verpassen | Contract AI</title>
         <meta name="description" content="Revolutionärer Vertragskalender mit automatischen Erinnerungen, 1-Klick-Kündigung und KI-gestützten Optimierungsvorschlägen. Sparen Sie Zeit und Geld!" />
       </Helmet>
       

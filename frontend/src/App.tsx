@@ -1,4 +1,4 @@
-// 📁 src/App.tsx
+// 📄 src/App.tsx
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import Navbar from "./components/Navbar";
@@ -33,6 +33,7 @@ import ContractDetails from "./pages/ContractDetails";
 import EditContract from "./pages/EditContract";
 import Profile from "./pages/Profile";
 import CalendarView from "./pages/CalendarView";
+import Cancel from "./pages/Cancel"; // ✅ NEU: Cancel Page
 import Optimizer from "./pages/Optimizer"; // ✅ Legendäre KI-Vertragsoptimierung
 import Compare from "./pages/Compare";
 import Chat from "./pages/Chat";
@@ -119,6 +120,9 @@ function AppWithLoader() {
             <Route path="/contracts/:id/edit" element={<RequireAuth><EditContract /></RequireAuth>} />
             <Route path="/me" element={<RequireAuth><Profile /></RequireAuth>} />
             <Route path="/calendar" element={<RequireAuth><CalendarView /></RequireAuth>} />
+            
+            {/* ✅ NEU: Cancel Route */}
+            <Route path="/cancel/:contractId" element={<RequireAuth><Cancel /></RequireAuth>} />
             
             {/* ✨ KI-Vertragsoptimierung - Legendary Feature */}
             <Route path="/optimizer" element={<RequireAuth><Optimizer /></RequireAuth>} />
