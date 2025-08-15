@@ -117,7 +117,7 @@ function AppWithLoader() {
             <Route path="/features/fristen" element={<Fristen />} />
             <Route path="/features/vergleich" element={<Vergleich />} />
             <Route path="/features/generator" element={<GeneratorPage />} />
-            <Route path="/features/legal-pulse" element={<LegalPulsePage />} />
+            <Route path="/features/legalpulse" element={<LegalPulsePage />} />
 
 
 
