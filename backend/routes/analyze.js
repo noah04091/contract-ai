@@ -1,4 +1,4 @@
-// 📊 backend/routes/analyze.js - ENHANCED DEEP LAWYER-LEVEL CONTRACT ANALYSIS + CRITICAL FIXES
+// 📊 backend/routes/analyze.js - ENHANCED DEEP LAWYER-LEVEL CONTRACT ANALYSIS + CRITICAL FIXES + AUTO-RENEWAL
 const express = require("express");
 const multer = require("multer");
 const pdfParse = require("pdf-parse");
@@ -8,7 +8,7 @@ const { OpenAI } = require("openai");
 const verifyToken = require("../middleware/verifyToken");
 const { MongoClient, ObjectId } = require("mongodb");
 const path = require("path");
-const contractAnalyzer = require("../services/contractAnalyzer"); // 📍 ÄNDERUNG 1: Provider Detection Import
+const contractAnalyzer = require("../services/contractAnalyzer"); // 🔍 ÄNDERUNG 1: Provider Detection Import
 const { generateEventsForContract } = require("../services/calendarEvents"); // 🆕 CALENDAR EVENTS IMPORT
 
 const router = express.Router();
@@ -189,7 +189,7 @@ const createUploadMiddleware = () => {
     });
   } else {
     // Fall back to local disk storage
-    console.log("🔄 [UPLOAD] Using LOCAL upload configuration (S3 not available)");
+    console.log("📄 [UPLOAD] Using LOCAL upload configuration (S3 not available)");
     
     const storage = multer.diskStorage({
       destination: UPLOAD_PATH,
@@ -906,8 +906,8 @@ async function validateAndAnalyzeDocument(filename, pdfText, pdfData, requestId)
         message: '📸 Diese PDF enthält keinen lesbaren Text. Es handelt sich wahrscheinlich um ein gescanntes Dokument.',
         details: 'Das Dokument scheint gescannt zu sein. Eine OCR-Analyse könnte helfen.',
         suggestions: [
-          '🔄 Konvertiere die PDF in ein durchsuchbares Format (z.B. mit Adobe Acrobat)',
-          '📝 Öffne das Dokument in Word, das oft Text aus Scans erkennen kann',
+          '📄 Konvertiere die PDF in ein durchsuchbares Format (z.B. mit Adobe Acrobat)',
+          '🔍 Öffne das Dokument in Word, das oft Text aus Scans erkennen kann',
           '🖨️ Erstelle eine neue PDF aus dem Originaldokument (falls verfügbar)',
           '🔍 Nutze ein Online-OCR-Tool (z.B. SmallPDF, PDF24) um Text zu extrahieren'
         ]
@@ -1041,8 +1041,8 @@ const createUserFriendlyPDFError = (textQuality, fileName, pages) => {
   if (isScanned) {
     message = `📸 This PDF appears to be scanned and contains only image data that we cannot currently analyze.`;
     suggestions = [
-      "🔄 Convert the PDF to a searchable format (e.g. with Adobe Acrobat)",
-      "📝 Open the document in Word, which can often recognize text from scans",
+      "📄 Convert the PDF to a searchable format (e.g. with Adobe Acrobat)",
+      "🔍 Open the document in Word, which can often recognize text from scans",
       "🖨️ Create a new PDF from the original document (if available)",
       "🔍 Use an online OCR tool (e.g. SmallPDF, PDF24) to extract text",
       "⚡ For automatic scan recognition: Upgrade to Premium with OCR support"
@@ -1052,24 +1052,24 @@ const createUserFriendlyPDFError = (textQuality, fileName, pages) => {
     suggestions = [
       "📖 Ensure the PDF is complete and not corrupted",
       "🔒 Check if the PDF is password protected or encrypted",
-      "📝 If it's a scanned PDF, convert it to a text PDF",
-      "🔄 Upload a different version of the file (e.g. the original document)",
+      "🔍 If it's a scanned PDF, convert it to a text PDF",
+      "📄 Upload a different version of the file (e.g. the original document)",
       "⚡ Try a different PDF file"
     ];
   } else if (isPossiblyProtected) {
     message = `🔒 This PDF appears to be password protected or encrypted and cannot be read.`;
     suggestions = [
       "🔓 Remove password protection and upload the PDF again",
-      "🔄 Export the document as a new, unprotected PDF",
-      "📝 Convert the PDF to Word and export it again as PDF",
+      "📄 Export the document as a new, unprotected PDF",
+      "🔍 Convert the PDF to Word and export it again as PDF",
       "⚡ Try a different version of the file"
     ];
   } else {
     message = `🚫 This PDF file cannot be used for contract analysis.`;
     suggestions = [
-      "🔄 Check if the PDF file is complete and not corrupted",
+      "📄 Check if the PDF file is complete and not corrupted",
       "📄 Try a different version or format (DOC, DOCX)",
-      "📝 Ensure the document contains sufficient text",
+      "🔍 Ensure the document contains sufficient text",
       "🔒 Check if the PDF is password protected",
       "⚡ Try a different PDF file"
     ];
@@ -1259,7 +1259,7 @@ const checkForDuplicate = async (fileHash, userId) => {
 };
 
 /**
- * 💾 ENHANCED CONTRACT SAVING (S3 COMPATIBLE) - WITH PROVIDER DETECTION
+ * 💾 ENHANCED CONTRACT SAVING (S3 COMPATIBLE) - WITH PROVIDER DETECTION & AUTO-RENEWAL
  * Saves contract with appropriate upload info based on storage type
  */
 async function saveContractWithUpload(userId, analysisData, fileInfo, pdfText, uploadInfo) {
@@ -1272,13 +1272,14 @@ async function saveContractWithUpload(userId, analysisData, fileInfo, pdfText, u
       expiryDate: analysisData.expiryDate || "",
       status: analysisData.status || "Active",
       
-      // 📍 ÄNDERUNG 5: Provider Detection Fields
+      // 🔍 ÄNDERUNG 5: Provider Detection Fields
       provider: analysisData.provider || null,
       contractNumber: analysisData.contractNumber || null,
       customerNumber: analysisData.customerNumber || null,
       providerDetected: analysisData.providerDetected || false,
       providerConfidence: analysisData.providerConfidence || 0,
       cancellationPeriod: analysisData.cancellationPeriod || null,
+      isAutoRenewal: analysisData.isAutoRenewal || false, // 🆕 AUTO-RENEWAL
       
       uploadedAt: new Date(),
       createdAt: new Date(),
@@ -1340,11 +1341,12 @@ async function saveContractWithUpload(userId, analysisData, fileInfo, pdfText, u
       textLength: contract.fullText.length,
       s3Key: contract.s3Key || 'none',
       s3Info: uploadInfo.s3Info ? 'present' : 'none',
-      provider: contract.provider?.displayName || 'none' // 📍 Provider log
+      provider: contract.provider?.displayName || 'none', // 🔍 Provider log
+      isAutoRenewal: contract.isAutoRenewal // 🆕 AUTO-RENEWAL log
     });
 
     const { insertedId } = await contractsCollection.insertOne(contract);
-    console.log(`✅ [ANALYZE] Contract saved with ID: ${insertedId}, s3Key: ${contract.s3Key || 'none'}, provider: ${contract.provider?.displayName || 'none'}`);
+    console.log(`✅ [ANALYZE] Contract saved with ID: ${insertedId}, s3Key: ${contract.s3Key || 'none'}, provider: ${contract.provider?.displayName || 'none'}, autoRenewal: ${contract.isAutoRenewal}`);
     
     return { ...contract, _id: insertedId };
   } catch (error) {
@@ -1449,7 +1451,7 @@ router.post("/", verifyToken, async (req, res, next) => {
   });
 });
 
-// ===== FIXED: ENHANCED DEEP LAWYER-LEVEL ANALYSIS REQUEST HANDLER =====
+// ===== FIXED: ENHANCED DEEP LAWYER-LEVEL ANALYSIS REQUEST HANDLER WITH AUTO-RENEWAL =====
 const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
   const requestId = Date.now().toString();
   
@@ -1606,13 +1608,14 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
 
     const fullTextContent = pdfData.text;
     
-    // 📍 ÄNDERUNG 2: PROVIDER DETECTION - Extract provider and contract details
+    // 🔍 ÄNDERUNG 2: PROVIDER DETECTION - Extract provider and contract details WITH AUTO-RENEWAL
     console.log(`🔍 [${requestId}] Extracting provider and contract details...`);
     let extractedProvider = null;
     let extractedContractNumber = null;
     let extractedCustomerNumber = null;
     let extractedEndDate = null;
     let extractedCancellationPeriod = null;
+    let extractedIsAutoRenewal = null; // 🆕 AUTO-RENEWAL
     
     try {
       const providerAnalysis = await contractAnalyzer.analyzeContract(
@@ -1624,23 +1627,25 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
         extractedProvider = providerAnalysis.data.provider;
         extractedContractNumber = providerAnalysis.data.contractNumber;
         extractedCustomerNumber = providerAnalysis.data.customerNumber;
-        // WICHTIG: endDate nach expiryDate mappen!
-        extractedEndDate = providerAnalysis.data.endDate; 
+        extractedEndDate = providerAnalysis.data.endDate;
         extractedCancellationPeriod = providerAnalysis.data.cancellationPeriod;
+        extractedIsAutoRenewal = providerAnalysis.data.isAutoRenewal || false; // 🆕 AUTO-RENEWAL
 
         // Debug-Log hinzufügen
         console.log(`📅 [${requestId}] Date extraction:`, {
           endDate: extractedEndDate,
           cancellationPeriod: extractedCancellationPeriod,
+          isAutoRenewal: extractedIsAutoRenewal, // 🆕 AUTO-RENEWAL
           originalData: providerAnalysis.data
-     });
+        });
         
         console.log(`✅ [${requestId}] Provider detected:`, extractedProvider?.displayName || 'None');
         console.log(`📋 [${requestId}] Contract details:`, {
           contractNumber: extractedContractNumber,
           customerNumber: extractedCustomerNumber,
           endDate: extractedEndDate,
-          cancellationPeriod: extractedCancellationPeriod
+          cancellationPeriod: extractedCancellationPeriod,
+          isAutoRenewal: extractedIsAutoRenewal // 🆕 AUTO-RENEWAL
         });
       } else {
         console.log(`⚠️ [${requestId}] No provider or contract details extracted`);
@@ -1719,7 +1724,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
 
     console.log(`🛠️ [${requestId}] FIXED Deep lawyer-level analysis successful, saving to DB...`);
 
-    // 📍 ÄNDERUNG 3: UPDATE analysisData OBJECT
+    // 🔍 ÄNDERUNG 3: UPDATE analysisData OBJECT WITH AUTO-RENEWAL
     const analysisData = {
       userId: req.user.userId,
       contractName: req.file.originalname,
@@ -1731,7 +1736,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       fileSize: buffer.length,
       uploadType: uploadInfo.uploadType,
       
-      // 📍 NEUE FELDER HINZUFÜGEN:
+      // 🔍 NEUE FELDER HINZUFÜGEN:
       provider: extractedProvider,
       contractNumber: extractedContractNumber,
       customerNumber: extractedCustomerNumber,
@@ -1739,6 +1744,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       cancellationPeriod: extractedCancellationPeriod,
       providerDetected: !!extractedProvider,
       providerConfidence: extractedProvider?.confidence || 0,
+      isAutoRenewal: extractedIsAutoRenewal || false, // 🆕 AUTO-RENEWAL
       
       // Enhanced metadata from deep lawyer-level analysis
       documentType: validationResult.documentType,
@@ -1789,7 +1795,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           filename: req.file.filename || req.file.key,
           uploadType: uploadInfo.uploadType,
           
-          // 📍 Provider Detection Fields
+          // 🔍 Provider Detection Fields WITH AUTO-RENEWAL
           provider: extractedProvider,
           contractNumber: extractedContractNumber,
           customerNumber: extractedCustomerNumber,
@@ -1797,6 +1803,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           providerConfidence: extractedProvider?.confidence || 0,
           cancellationPeriod: extractedCancellationPeriod,
           expiryDate: extractedEndDate,
+          isAutoRenewal: extractedIsAutoRenewal || false, // 🆕 AUTO-RENEWAL
           
           // Enhanced metadata
           documentType: validationResult.documentType,
@@ -1866,13 +1873,13 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           const db = mongoClient.db("contract_ai");
           const updatedContract = await contractsCollection.findOne({ _id: existingContract._id });
           const events = await generateEventsForContract(db, updatedContract);
-          console.log(`📅 Calendar Events regeneriert für ${updatedContract.name}: ${events.length} Events`);
+          console.log(`📅 Calendar Events regeneriert für ${updatedContract.name}: ${events.length} Events${updatedContract.isAutoRenewal ? ' (Auto-Renewal)' : ''}`);
         } catch (eventError) {
           console.warn(`⚠️ Calendar Events konnten nicht regeneriert werden:`, eventError.message);
         }
         
       } else {
-        // 📍 ÄNDERUNG 4: UPDATE contractAnalysisData
+        // 🔍 ÄNDERUNG 4: UPDATE contractAnalysisData WITH AUTO-RENEWAL
         const contractAnalysisData = {
           name: Array.isArray(result.summary) ? req.file.originalname : req.file.originalname,
           laufzeit: extractedCancellationPeriod ? 
@@ -1884,13 +1891,14 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           expiryDate: extractedEndDate || null,  // null statt "" für Datums-Checks!
           status: "Active",
           
-          // 📍 NEUE FELDER:
+          // 🔍 NEUE FELDER:
           provider: extractedProvider,
           contractNumber: extractedContractNumber,
           customerNumber: extractedCustomerNumber,
           providerDetected: !!extractedProvider,
           providerConfidence: extractedProvider?.confidence || 0,
-          cancellationPeriod: extractedCancellationPeriod
+          cancellationPeriod: extractedCancellationPeriod,
+          isAutoRenewal: extractedIsAutoRenewal || false // 🆕 AUTO-RENEWAL
         };
 
         const savedContract = await saveContractWithUpload(
@@ -1941,7 +1949,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
         try {
           const db = mongoClient.db("contract_ai");
           const events = await generateEventsForContract(db, savedContract);
-          console.log(`📅 Calendar Events generiert für ${savedContract.name}: ${events.length} Events`);
+          console.log(`📅 Calendar Events generiert für ${savedContract.name}: ${events.length} Events${savedContract.isAutoRenewal ? ' (Auto-Renewal)' : ''}`);
           console.log(`📅 Events:`, events.map(e => ({
             type: e.type,
             date: e.date,
@@ -1969,7 +1977,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
 
     console.log(`🛠️🎉 [${requestId}] FIXED Enhanced DEEP Lawyer-Level Analysis completely successful!`);
 
-    // 📍 ÄNDERUNG 6: UPDATE responseData
+    // 🔍 ÄNDERUNG 6: UPDATE responseData WITH AUTO-RENEWAL
     const responseData = { 
       success: true,
       message: `${validationResult.analysisMessage} auf höchstem Anwaltsniveau erfolgreich abgeschlossen`,
@@ -1977,7 +1985,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       uploadType: uploadInfo.uploadType,
       fileUrl: uploadInfo.fileUrl,
       
-      // 📍 NEUE FELDER HINZUFÜGEN:
+      // 🔍 NEUE FELDER HINZUFÜGEN:
       provider: extractedProvider,
       contractNumber: extractedContractNumber,
       customerNumber: extractedCustomerNumber,
@@ -1985,6 +1993,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       cancellationPeriod: extractedCancellationPeriod,
       providerDetected: !!extractedProvider,
       providerConfidence: extractedProvider?.confidence || 0,
+      isAutoRenewal: extractedIsAutoRenewal || false, // 🆕 AUTO-RENEWAL
       
       // Enhanced response data (Frontend-compatible strings)
       documentType: validationResult.documentType || "UNKNOWN",
@@ -2125,7 +2134,7 @@ router.get("/history", verifyToken, async (req, res) => {
   }
 });
 
-// ✅ ENHANCED: Health Check with comprehensive S3 status + FIXED Deep Lawyer-Level Analysis
+// ✅ ENHANCED: Health Check with comprehensive S3 status + FIXED Deep Lawyer-Level Analysis + AUTO-RENEWAL
 router.get("/health", async (req, res) => {
   // Re-test S3 connectivity for health check
   if (S3_CONFIGURED && s3Instance) {
@@ -2133,7 +2142,7 @@ router.get("/health", async (req, res) => {
   }
 
   const checks = {
-    service: "FIXED Enhanced DEEP Lawyer-Level Contract Analysis + S3 (AWS SDK v3) + GPT-4-Turbo + 7-Point Structure + Provider Detection + Calendar Events",
+    service: "FIXED Enhanced DEEP Lawyer-Level Contract Analysis + S3 (AWS SDK v3) + GPT-4-Turbo + 7-Point Structure + Provider Detection + Calendar Events + Auto-Renewal",
     status: "online",
     timestamp: new Date().toISOString(),
     openaiConfigured: !!process.env.OPENAI_API_KEY,
@@ -2151,9 +2160,10 @@ router.get("/health", async (req, res) => {
     features: {
       deepLawyerLevelAnalysis: true,
       lawyerLevelAnalysis: true, // Backward compatibility
-      providerDetection: true, // 📍 NEW
-      contractDataExtraction: true, // 📍 NEW
+      providerDetection: true, // 🔍 NEW
+      contractDataExtraction: true, // 🔍 NEW
       calendarEventsGeneration: true, // 🆕 NEW
+      autoRenewalDetection: true, // 🆕 AUTO-RENEWAL
       sevenPointStructure: true,
       simplifiedValidation: true, // ✅ FIXED: Less aggressive validation
       completenessGuarantee: true,
@@ -2178,7 +2188,7 @@ router.get("/health", async (req, res) => {
     },
     tokenLimits: MODEL_LIMITS,
     modelUsed: 'gpt-4-turbo', // ✅ NEW: Track which model is being used
-    version: "deep-lawyer-level-analysis-FIXED-v5.2-gpt4turbo-128k-provider-detection-calendar-events"
+    version: "deep-lawyer-level-analysis-FIXED-v5.3-gpt4turbo-128k-provider-detection-calendar-events-auto-renewal"
   };
 
   try {
@@ -2198,7 +2208,7 @@ router.get("/health", async (req, res) => {
 });
 
 process.on('SIGTERM', async () => {
-  console.log('🛠️ FIXED Enhanced DEEP Lawyer-Level Analysis service with GPT-4-Turbo shutting down...');
+  console.log('🛠️ FIXED Enhanced DEEP Lawyer-Level Analysis service with GPT-4-Turbo and Auto-Renewal shutting down...');
   if (mongoClient) {
     await mongoClient.close();
   }

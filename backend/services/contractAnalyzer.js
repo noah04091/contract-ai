@@ -1,112 +1,182 @@
-// contractAnalyzer.js - Enhanced Contract Analysis with Provider Detection
+// contractAnalyzer.js - Intelligent Contract Analysis WITHOUT Provider Database
 // Place this in backend/services/contractAnalyzer.js
-
-const { detectProviderWithConfidence } = require('./providerDatabase');
 
 class ContractAnalyzer {
   constructor() {
     this.patterns = {
-      // Provider patterns - look for company names in headers
+      // Provider patterns - intelligently detect from text
       provider: [
-        /^([A-Z][A-Za-zäöüÄÖÜß\s&\-\.]+(?:GmbH|AG|SE|KG|e\.V\.|Ltd|GmbH\s&\sCo\.\sKG))/m,
-        /Vertragspartner:\s*([^\n]+)/i,
-        /Anbieter:\s*([^\n]+)/i,
-        /Gesellschaft:\s*([^\n]+)/i,
-        /zwischen.*?und\s+([A-Z][A-Za-zäöüÄÖÜß\s&\-\.]+)/i,
-        /Versicherer:\s*([^\n]+)/i,
-        /Versicherungsgesellschaft:\s*([^\n]+)/i,
-        /^([A-Z][A-Za-zäöüÄÖÜß]+[\s\w]*)\s*\n[=\-]{3,}/m, // Company name with underline
+        // Company name with legal form
+        /(?:Versicherer|Versicherung|Gesellschaft|Anbieter|Unternehmen|zwischen.*?und|Vertragspartner)[\s:]*([A-Z][A-Za-zÄÖÜäöüß\s&\-\.]+(?:AG|GmbH|SE|KG|OHG|e\.V\.|Bank|Versicherung|mbH|GmbH\s&\sCo\.\sKG))/gi,
+        // Standalone company names with legal forms
+        /^([A-Z][A-Za-zÄÖÜäöüß\s&\-\.]+(?:AG|GmbH|SE|KG|OHG|e\.V\.|Bank|Versicherung|mbH))/gm,
+        // Special patterns for known providers (but detected from text!)
+        /adam\s*riese/gi,
+        /ADAM\s*RIESE/g,
+        /allianz/gi,
+        /telekom/gi,
+        /vodafone/gi,
+        /o2\s*telefonica/gi,
+        // Headers with company names
+        /^([A-Z][A-Za-zÄÖÜäöüß]+[\s\w]*)\s*\n[=\-]{3,}/gm,
+        // Email domain extraction as fallback
+        /@([a-z0-9\-]+)\.(de|com|net|org)/gi
       ],
       
       // Contract details
       contractNumber: [
-        /Vertragsnummer[:\s]+([A-Z0-9\-\/]+)/i,
-        /Versicherungsscheinnummer[:\s]+([A-Z0-9\-\/]+)/i,
-        /Police[:\s]+([A-Z0-9\-\/]+)/i,
-        /Vertrags-?Nr\.?[:\s]+([A-Z0-9\-\/]+)/i,
-        /Policennummer[:\s]+([A-Z0-9\-\/]+)/i,
-        /Kundennummer[:\s]+([A-Z0-9\-\/]+)/i,
-        /Mitgliedsnummer[:\s]+([A-Z0-9\-\/]+)/i,
-        /Referenznummer[:\s]+([A-Z0-9\-\/]+)/i
+        /(?:Vertrags|Police|Versicherungsschein|Kunden|Mitglieds|Referenz)[\s\-]*(?:nummer|nr\.?)[\s:]+([A-Z0-9\-\/]+)/gi,
+        /(?:Contract|Policy)[\s\-]*(?:number|no\.?)[\s:]+([A-Z0-9\-\/]+)/gi,
+        /Policennummer[\s:]+([A-Z0-9\-\/]+)/gi,
+        /Police[\s:]+([A-Z0-9\-\/]+)/gi
       ],
       
       customerNumber: [
-        /Kundennummer[:\s]+([A-Z0-9\-\/]+)/i,
-        /Kunden-?Nr\.?[:\s]+([A-Z0-9\-\/]+)/i,
-        /Mitgliedsnummer[:\s]+([A-Z0-9\-\/]+)/i,
-        /Versicherungsnehmer-?Nr\.?[:\s]+([A-Z0-9\-\/]+)/i,
-        /Partner-?Nr\.?[:\s]+([A-Z0-9\-\/]+)/i
+        /(?:Kunden|Mitglieds|Partner|Versicherungsnehmer)[\s\-]*(?:nummer|nr\.?)[\s:]+([A-Z0-9\-\/]+)/gi,
+        /(?:Customer|Member)[\s\-]*(?:number|no\.?)[\s:]+([A-Z0-9\-\/]+)/gi
       ],
 
-      // Dates
-      startDate: [
-        /Vertragsbeginn[:\s]+(\d{1,2}[\.\/-]\d{1,2}[\.\/-]\d{2,4})/i,
-        /Beginn[:\s]+(\d{1,2}[\.\/-]\d{1,2}[\.\/-]\d{2,4})/i,
-        /Versicherungsbeginn[:\s]+(\d{1,2}[\.\/-]\d{1,2}[\.\/-]\d{2,4})/i,
-        /Gültig\s+ab[:\s]+(\d{1,2}[\.\/-]\d{1,2}[\.\/-]\d{2,4})/i,
-        /ab\s+dem\s+(\d{1,2}[\.\/-]\d{1,2}[\.\/-]\d{2,4})/i
+      // Dates - improved patterns
+      dates: [
+        /(?:Vertragsbeginn|Beginn|Versicherungsbeginn|Gültig\s+ab|ab\s+dem)[\s:]*(\d{1,2})[.\s]+(\d{1,2})[.\s]+(\d{2,4})/gi,
+        /(?:Vertragsende|Ablauf|Laufzeit\s+bis|Gültig\s+bis|Befristet\s+bis|endet\s+am|läuft\s+ab\s+am)[\s:]*(\d{1,2})[.\s]+(\d{1,2})[.\s]+(\d{2,4})/gi,
+        /(\d{1,2})[.\s]+(\d{1,2})[.\s]+(\d{2,4})[\s]*(?:Ende|Ablauf|bis)/gi
       ],
       
-      endDate: [
-        /Vertragsende[:\s]+(\d{1,2}[\.\/-]\d{1,2}[\.\/-]\d{2,4})/i,
-        /Ablauf[:\s]+(\d{1,2}[\.\/-]\d{1,2}[\.\/-]\d{2,4})/i,
-        /Laufzeit\s+bis[:\s]+(\d{1,2}[\.\/-]\d{1,2}[\.\/-]\d{2,4})/i,
-        /Gültig\s+bis[:\s]+(\d{1,2}[\.\/-]\d{1,2}[\.\/-]\d{2,4})/i,
-        /Befristet\s+bis[:\s]+(\d{1,2}[\.\/-]\d{1,2}[\.\/-]\d{2,4})/i
-      ],
-      
-      // Cancellation terms
+      // Cancellation terms - ENHANCED patterns
       cancellationPeriod: [
-        /Kündigungsfrist[:\s]+(\d+)\s*(Monat|Tag|Woche)/i,
-        /kündbar\s+mit\s+(\d+)\s*(Monat|Tag|Woche)/i,
-        /Kündigung\s+(\d+)\s*(Monat|Tag|Woche)\s+vor/i,
-        /(\d+)\s*(Monat|Tag|Woche)n?\s+vor\s+Ablauf/i,
-        /Frist\s+von\s+(\d+)\s*(Monat|Tag|Woche)/i
+        /kündigungsfrist[\s:]+(\d+)\s*(monat|woche|tag)/gi,
+        /kündigung.*?(\d+)\s*(monat|woche|tag).*?vor/gi,
+        /(\d+)\s*(monat|woche|tag).*?kündig/gi,
+        /frist.*?(\d+)\s*(monat|woche|tag)/gi,
+        /spätestens\s*(\d+)\s*(monat|woche|tag)/gi,
+        /mindestens\s*(\d+)\s*(monat|woche|tag).*?vorher/gi,
+        /(\d+)\s*(monat|woche|tag).*?zum\s+(?:ende|ablauf)/gi,
+        /mit\s+einer\s+frist\s+von\s+(\d+)\s*(monat|woche|tag)/gi
       ],
       
-      // Monthly cost
-      monthlyCost: [
-        /Monatsbeitrag[:\s]+([0-9.,]+)\s*€/i,
-        /Monatlich[:\s]+([0-9.,]+)\s*€/i,
-        /mtl\.[:\s]+([0-9.,]+)\s*€/i,
-        /pro\s+Monat[:\s]+([0-9.,]+)\s*€/i,
-        /([0-9.,]+)\s*€\s*\/\s*Monat/i,
-        /([0-9.,]+)\s*€\s*monatlich/i
-      ],
-      
-      // Annual cost
-      annualCost: [
-        /Jahresbeitrag[:\s]+([0-9.,]+)\s*€/i,
-        /Jährlich[:\s]+([0-9.,]+)\s*€/i,
-        /pro\s+Jahr[:\s]+([0-9.,]+)\s*€/i,
-        /([0-9.,]+)\s*€\s*\/\s*Jahr/i,
-        /([0-9.,]+)\s*€\s*jährlich/i,
-        /Gesamtbeitrag[:\s]+([0-9.,]+)\s*€/i
+      // Auto-renewal patterns
+      autoRenewal: [
+        /verlängert\s*sich\s*(?:automatisch|stillschweigend)/gi,
+        /automatische\s*verlängerung/gi,
+        /stillschweigende\s*verlängerung/gi,
+        /jeweils\s*um\s*(?:ein|1)\s*jahr/gi,
+        /jährlich\s*verlänger/gi,
+        /erneuert\s*sich\s*automatisch/gi,
+        /auto.*?renewal/gi,
+        /vertrag\s*verlängert\s*sich/gi
       ],
 
-      // Contact information extraction
-      email: [
-        /E-Mail[:\s]+([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i,
-        /Email[:\s]+([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i,
-        /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/
+      // Costs
+      monthlyCost: [
+        /(?:Monatsbeitrag|Monatlich|mtl\.|pro\s+Monat)[\s:]+([0-9.,]+)\s*€/gi,
+        /([0-9.,]+)\s*€\s*(?:\/\s*Monat|monatlich)/gi
       ],
       
-      phone: [
-        /Tel\.?[:\s]+([\+0-9\s\-\(\)\/]+)/i,
-        /Telefon[:\s]+([\+0-9\s\-\(\)\/]+)/i,
-        /Hotline[:\s]+([\+0-9\s\-\(\)\/]+)/i,
-        /Service[:\s]+([\+0-9\s\-\(\)\/]+)/i,
-        /([\+0-9]{1,4}[\s\-]?[\(]?[0-9]{1,5}[\)]?[\s\-]?[0-9]{1,10})/
-      ],
-      
-      address: [
-        /([A-Za-zäöüÄÖÜß\s]+straße\s+\d+[\w]*)/i,
-        /([A-Za-zäöüÄÖÜß\s]+weg\s+\d+[\w]*)/i,
-        /([A-Za-zäöüÄÖÜß\s]+platz\s+\d+[\w]*)/i,
-        /([A-Za-zäöüÄÖÜß\s]+allee\s+\d+[\w]*)/i,
-        /(\d{5}\s+[A-Za-zäöüÄÖÜß\s]+)/  // PLZ + City
+      annualCost: [
+        /(?:Jahresbeitrag|Jährlich|pro\s+Jahr)[\s:]+([0-9.,]+)\s*€/gi,
+        /([0-9.,]+)\s*€\s*(?:\/\s*Jahr|jährlich)/gi
       ]
     };
+  }
+
+  /**
+   * Extract provider directly from text WITHOUT database
+   */
+  extractProviderFromText(text) {
+    console.log('🔍 Extrahiere Provider direkt aus Text...');
+    
+    let bestMatch = null;
+    let highestConfidence = 0;
+    
+    for (const pattern of this.patterns.provider) {
+      const matches = Array.from(text.matchAll(pattern));
+      
+      for (const match of matches) {
+        let providerName = match[1] || match[0];
+        
+        // Clean up the provider name
+        providerName = providerName
+          .replace(/^(?:Versicherer|Versicherung|Gesellschaft|Anbieter|Unternehmen|zwischen|und|Vertragspartner)[\s:]*/gi, '')
+          .replace(/[\s:]+$/, '')
+          .trim();
+        
+        // Skip if too short or invalid
+        if (!providerName || providerName.length < 3) continue;
+        
+        // Calculate confidence based on pattern and position
+        let confidence = 50;
+        
+        // Higher confidence for legal forms
+        if (providerName.match(/(?:AG|GmbH|SE|KG|Bank|Versicherung|mbH)$/)) {
+          confidence += 30;
+        }
+        
+        // Higher confidence if found in first 1000 chars
+        const position = match.index || 0;
+        if (position < 1000) {
+          confidence += 20;
+        }
+        
+        // Special handling for known providers (still detected from text!)
+        const knownProviders = {
+          'adam riese': { name: 'Adam Riese', confidence: 95 },
+          'allianz': { name: 'Allianz', confidence: 90 },
+          'telekom': { name: 'Telekom', confidence: 90 },
+          'vodafone': { name: 'Vodafone', confidence: 90 },
+          'ing': { name: 'ING', confidence: 85 },
+          'ing-diba': { name: 'ING-DiBa', confidence: 90 },
+          'axa': { name: 'AXA', confidence: 85 },
+          'ergo': { name: 'ERGO', confidence: 85 },
+          'huk': { name: 'HUK', confidence: 85 },
+          'huk-coburg': { name: 'HUK-Coburg', confidence: 90 },
+          'debeka': { name: 'Debeka', confidence: 85 },
+          'r+v': { name: 'R+V Versicherung', confidence: 85 },
+          'generali': { name: 'Generali', confidence: 85 },
+          'zurich': { name: 'Zurich', confidence: 85 },
+          'signal iduna': { name: 'Signal Iduna', confidence: 90 },
+          'tk': { name: 'Techniker Krankenkasse', confidence: 85 },
+          'aok': { name: 'AOK', confidence: 85 },
+          'barmer': { name: 'Barmer', confidence: 85 },
+          'dak': { name: 'DAK', confidence: 85 }
+        };
+        
+        const lowerName = providerName.toLowerCase();
+        for (const [key, value] of Object.entries(knownProviders)) {
+          if (lowerName.includes(key)) {
+            providerName = value.name;
+            confidence = value.confidence;
+            break;
+          }
+        }
+        
+        console.log(`📊 Möglicher Provider gefunden: "${providerName}" (Konfidenz: ${confidence}%)`);
+        
+        if (confidence > highestConfidence) {
+          highestConfidence = confidence;
+          bestMatch = providerName;
+        }
+      }
+    }
+    
+    if (bestMatch) {
+      console.log(`✅ Bester Provider-Match: "${bestMatch}" (Konfidenz: ${highestConfidence}%)`);
+      
+      // Clean up display name
+      const displayName = bestMatch
+        .replace(/(?:AG|GmbH|SE|KG|OHG|e\.V\.|mbH|GmbH\s&\sCo\.\sKG).*$/i, '')
+        .trim();
+      
+      return {
+        name: bestMatch,
+        displayName: displayName,
+        confidence: highestConfidence,
+        extractedFromText: true
+      };
+    }
+    
+    console.log('⚠️ Kein Provider im Text gefunden');
+    return null;
   }
 
   extractPattern(text, patterns) {
@@ -123,7 +193,7 @@ class ContractAnalyzer {
     if (!dateStr) return null;
     
     // Handle DD.MM.YYYY or DD/MM/YYYY or DD-MM-YYYY
-    const parts = dateStr.split(/[\.\/-]/);
+    const parts = dateStr.split(/[.\/-]/);
     if (parts.length === 3) {
       const day = parseInt(parts[0]);
       const month = parseInt(parts[1]) - 1; // JavaScript months are 0-indexed
@@ -139,6 +209,110 @@ class ContractAnalyzer {
     return null;
   }
 
+  /**
+   * Extract all dates from text and determine end date
+   */
+  extractDates(text) {
+    let startDate = null;
+    let endDate = null;
+    
+    // Try all date patterns
+    for (const pattern of this.patterns.dates) {
+      const matches = Array.from(text.matchAll(pattern));
+      
+      for (const match of matches) {
+        const dateStr = `${match[1]}.${match[2]}.${match[3]}`;
+        const date = this.parseGermanDate(dateStr);
+        
+        if (!date) continue;
+        
+        // Check context to determine if it's start or end date
+        const context = text.substring(Math.max(0, match.index - 50), match.index);
+        
+        if (context.match(/(?:beginn|ab|start|gültig\s+ab)/i)) {
+          if (!startDate) startDate = date;
+        } else if (context.match(/(?:ende|ablauf|bis|läuft|endet)/i)) {
+          if (!endDate) endDate = date;
+        }
+      }
+    }
+    
+    // If we only found one date, assume it's the end date
+    if (!endDate && startDate) {
+      // Look for typical contract duration (usually 1 year)
+      if (text.match(/(?:ein|1)\s*jahr/i)) {
+        endDate = new Date(startDate);
+        endDate.setFullYear(endDate.getFullYear() + 1);
+      }
+    }
+    
+    return { startDate, endDate };
+  }
+
+  /**
+   * Enhanced cancellation period extraction
+   */
+  extractCancellationPeriod(text) {
+    console.log('🔍 Extrahiere Kündigungsfrist...');
+    
+    for (const pattern of this.patterns.cancellationPeriod) {
+      const matches = Array.from(text.matchAll(pattern));
+      
+      for (const match of matches) {
+        const value = parseInt(match[1]);
+        const unit = match[2].toLowerCase();
+        
+        if (value && unit) {
+          const unitMap = {
+            'tag': 'days',
+            'tage': 'days',
+            'woche': 'weeks',
+            'wochen': 'weeks',
+            'monat': 'months',
+            'monate': 'months'
+          };
+          
+          const mappedUnit = unitMap[unit] || (unit.includes('monat') ? 'months' : unit.includes('woche') ? 'weeks' : 'days');
+          const inDays = mappedUnit === 'months' ? value * 30 : mappedUnit === 'weeks' ? value * 7 : value;
+          
+          console.log(`✅ Kündigungsfrist gefunden: ${value} ${unit} (${inDays} Tage)`);
+          
+          return {
+            value: value,
+            unit: mappedUnit,
+            inDays: inDays
+          };
+        }
+      }
+    }
+    
+    // Check for special terms
+    if (text.match(/quartal/i)) {
+      console.log('✅ Kündigungsfrist: Quartal (90 Tage)');
+      return { value: 3, unit: 'months', inDays: 90 };
+    }
+    if (text.match(/halbjahr/i)) {
+      console.log('✅ Kündigungsfrist: Halbjahr (180 Tage)');
+      return { value: 6, unit: 'months', inDays: 180 };
+    }
+    
+    console.log('⚠️ Keine Kündigungsfrist gefunden - verwende Standard: 3 Monate');
+    return { value: 3, unit: 'months', inDays: 90 }; // Default
+  }
+
+  /**
+   * Check for auto-renewal clauses
+   */
+  detectAutoRenewal(text) {
+    for (const pattern of this.patterns.autoRenewal) {
+      if (pattern.test(text)) {
+        console.log('✅ Auto-Renewal Klausel erkannt!');
+        return true;
+      }
+    }
+    return false;
+  }
+
   parseCost(costStr) {
     if (!costStr) return null;
     
@@ -152,34 +326,9 @@ class ContractAnalyzer {
     return parseFloat(normalized);
   }
 
-  analyzeCancellationPeriod(text) {
-    const match = text.match(/(\d+)\s*(Monat|Tag|Woche)/i);
-    if (!match) return null;
-    
-    const value = parseInt(match[1]);
-    const unit = match[2].toLowerCase();
-    
-    const unitMap = {
-      'tag': 'days',
-      'tage': 'days',
-      'woche': 'weeks',
-      'wochen': 'weeks',
-      'monat': 'months',
-      'monate': 'months'
-    };
-    
-    return {
-      value,
-      unit: unitMap[unit] || unit,
-      inDays: unit.includes('tag') ? value : 
-              unit.includes('woche') ? value * 7 : 
-              value * 30
-    };
-  }
-
   detectContractType(text) {
     const types = {
-      insurance: ['versicherung', 'police', 'versicherer', 'deckung', 'schutzbrief', 'haftpflicht', 'krankenversicherung'],
+      insurance: ['versicherung', 'police', 'versicherer', 'deckung', 'schutzbrief', 'haftpflicht', 'krankenversicherung', 'rechtsschutz'],
       telecom: ['mobilfunk', 'internet', 'telefon', 'dsl', 'glasfaser', 'festnetz', 'tarif', 'datenvolumen'],
       energy: ['strom', 'gas', 'energie', 'kwh', 'grundversorgung', 'kilowattstunde', 'verbrauch'],
       subscription: ['abo', 'abonnement', 'mitgliedschaft', 'premium', 'streaming', 'zeitschrift'],
@@ -202,66 +351,46 @@ class ContractAnalyzer {
     return Object.keys(scores).find(key => scores[key] === maxScore);
   }
 
+  /**
+   * Main analysis function
+   */
   async analyzeContract(text, filename = '') {
     try {
+      console.log('📄 Analysiere Vertrag:', filename);
+      
       // Basic extraction
       const contractNumber = this.extractPattern(text, this.patterns.contractNumber);
       const customerNumber = this.extractPattern(text, this.patterns.customerNumber);
-      const startDateStr = this.extractPattern(text, this.patterns.startDate);
-      const endDateStr = this.extractPattern(text, this.patterns.endDate);
-      const cancellationStr = this.extractPattern(text, this.patterns.cancellationPeriod);
+      
+      // Provider detection WITHOUT database
+      const provider = this.extractProviderFromText(text);
+      
+      // Date extraction
+      const { startDate, endDate } = this.extractDates(text);
+      
+      // Cancellation period extraction (ENHANCED)
+      const cancellationPeriod = this.extractCancellationPeriod(text);
+      
+      // Auto-renewal detection
+      const isAutoRenewal = this.detectAutoRenewal(text);
+      
+      // Handle auto-renewal for expired contracts
+      let adjustedEndDate = endDate;
+      if (endDate && isAutoRenewal && endDate < new Date()) {
+        console.log('🔄 Auto-Renewal Vertrag - berechne nächste Periode');
+        const now = new Date();
+        adjustedEndDate = new Date(endDate);
+        while (adjustedEndDate < now) {
+          adjustedEndDate.setFullYear(adjustedEndDate.getFullYear() + 1);
+        }
+        console.log(`📅 Nächstes Ablaufdatum berechnet: ${adjustedEndDate.toISOString()}`);
+      }
+      
+      // Extract costs
       const monthlyCostStr = this.extractPattern(text, this.patterns.monthlyCost);
       const annualCostStr = this.extractPattern(text, this.patterns.annualCost);
-      
-      // Provider detection with confidence
-      const providerDetection = detectProviderWithConfidence(text);
-      let provider = providerDetection.provider;
-      
-      // If no provider found in text, try filename
-      if (!provider && filename) {
-        const filenameDetection = detectProviderWithConfidence(filename);
-        if (filenameDetection.confidence > 50) {
-          provider = filenameDetection.provider;
-        }
-      }
-      
-      // Extract provider contact details from document if not in database
-      let providerEmail = provider?.cancelEmail || provider?.email;
-      let providerPhone = provider?.phone;
-      let providerAddress = provider?.address;
-      
-      // Try to extract from document if not found
-      if (!providerEmail) {
-        providerEmail = this.extractPattern(text, this.patterns.email);
-      }
-      if (!providerPhone) {
-        providerPhone = this.extractPattern(text, this.patterns.phone);
-      }
-      if (!providerAddress) {
-        const street = this.extractPattern(text, this.patterns.address);
-        if (street) {
-          // Try to find ZIP and city
-          const zipCityMatch = text.match(/(\d{5})\s+([A-Za-zäöüÄÖÜß\s]+)/);
-          if (zipCityMatch) {
-            providerAddress = {
-              street: street,
-              zip: zipCityMatch[1],
-              city: zipCityMatch[2].trim()
-            };
-          }
-        }
-      }
-      
-      // Parse dates
-      const startDate = this.parseGermanDate(startDateStr);
-      const endDate = this.parseGermanDate(endDateStr);
-      
-      // Parse costs
       const monthlyCost = this.parseCost(monthlyCostStr);
       const annualCost = this.parseCost(annualCostStr) || (monthlyCost ? monthlyCost * 12 : null);
-      
-      // Parse cancellation period
-      const cancellationPeriod = this.analyzeCancellationPeriod(cancellationStr || text);
       
       // Detect contract type
       const contractType = this.detectContractType(text);
@@ -271,47 +400,44 @@ class ContractAnalyzer {
       let nextCancellationDate = null;
       let autoRenewalDate = null;
       
-      if (endDate && cancellationPeriod) {
-        const cancellationDeadline = new Date(endDate);
+      if (adjustedEndDate && cancellationPeriod) {
+        const cancellationDeadline = new Date(adjustedEndDate);
         cancellationDeadline.setDate(cancellationDeadline.getDate() - cancellationPeriod.inDays);
         nextCancellationDate = cancellationDeadline;
         
         // Auto renewal is typically the day after contract end
-        autoRenewalDate = new Date(endDate);
+        autoRenewalDate = new Date(adjustedEndDate);
         autoRenewalDate.setDate(autoRenewalDate.getDate() + 1);
       }
       
       // Risk assessment
       const riskFactors = [];
-      if (endDate && endDate < new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000)) {
+      if (adjustedEndDate && adjustedEndDate < new Date(now.getTime() + 90 * 24 * 60 * 60 * 1000)) {
         riskFactors.push('Contract ending soon');
       }
       if (nextCancellationDate && nextCancellationDate < new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)) {
         riskFactors.push('Cancellation deadline approaching');
       }
-      if (text.toLowerCase().includes('automatisch') || text.toLowerCase().includes('verlänger')) {
+      if (isAutoRenewal) {
         riskFactors.push('Auto-renewal clause detected');
-      }
-      if (text.toLowerCase().includes('preiserhöhung') || text.toLowerCase().includes('anpassung')) {
-        riskFactors.push('Price increase clause detected');
       }
       
       const riskLevel = riskFactors.length >= 2 ? 'high' : 
                        riskFactors.length === 1 ? 'medium' : 'low';
 
+      console.log('📊 Analyse abgeschlossen:', {
+        provider: provider?.displayName,
+        contractNumber,
+        endDate: adjustedEndDate?.toISOString(),
+        isAutoRenewal,
+        cancellationPeriod
+      });
+
       return {
         success: true,
         data: {
-          // Provider information
-          provider: provider ? {
-            name: provider.name,
-            displayName: provider.displayName,
-            email: providerEmail,
-            phone: providerPhone,
-            address: providerAddress,
-            category: provider.category,
-            confidence: providerDetection.confidence
-          } : null,
+          // Provider information (extracted from text)
+          provider: provider,
           
           // Contract identification
           contractNumber,
@@ -320,12 +446,16 @@ class ContractAnalyzer {
           
           // Dates
           startDate: startDate?.toISOString(),
-          endDate: endDate?.toISOString(),
+          endDate: adjustedEndDate?.toISOString(),
+          originalEndDate: endDate?.toISOString(), // Keep original for reference
           nextCancellationDate: nextCancellationDate?.toISOString(),
           autoRenewalDate: autoRenewalDate?.toISOString(),
           
           // Cancellation terms
           cancellationPeriod,
+          
+          // Auto-renewal
+          isAutoRenewal,
           
           // Costs
           monthlyCost,
@@ -337,7 +467,7 @@ class ContractAnalyzer {
           
           // Metadata
           analyzedAt: new Date().toISOString(),
-          confidence: providerDetection.confidence || 0
+          confidence: provider?.confidence || 0
         }
       };
     } catch (error) {
@@ -347,56 +477,6 @@ class ContractAnalyzer {
         error: error.message
       };
     }
-  }
-
-  // Generate smart recommendations based on analysis
-  generateRecommendations(analysis) {
-    const recommendations = [];
-    const { data } = analysis;
-    
-    if (data.riskLevel === 'high') {
-      recommendations.push({
-        type: 'urgent',
-        title: 'Immediate Action Required',
-        description: 'Your contract requires immediate attention to avoid auto-renewal or missing cancellation deadlines.',
-        action: 'cancel_now'
-      });
-    }
-    
-    if (data.nextCancellationDate) {
-      const daysUntilCancellation = Math.floor(
-        (new Date(data.nextCancellationDate) - new Date()) / (1000 * 60 * 60 * 24)
-      );
-      
-      if (daysUntilCancellation <= 30) {
-        recommendations.push({
-          type: 'warning',
-          title: `Cancellation deadline in ${daysUntilCancellation} days`,
-          description: 'Act now to keep your options open.',
-          action: 'prepare_cancellation'
-        });
-      }
-    }
-    
-    if (data.contractType === 'insurance' || data.contractType === 'energy') {
-      recommendations.push({
-        type: 'optimization',
-        title: 'Compare Better Offers',
-        description: `The ${data.contractType} market changes frequently. You might find better rates.`,
-        action: 'compare_offers'
-      });
-    }
-    
-    if (data.annualCost > 1000) {
-      recommendations.push({
-        type: 'savings',
-        title: 'High-Value Contract',
-        description: 'This contract represents significant annual spending. Regular reviews could lead to substantial savings.',
-        action: 'review_contract'
-      });
-    }
-    
-    return recommendations;
   }
 }
 

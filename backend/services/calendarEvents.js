@@ -1,8 +1,9 @@
-// 📅 backend/services/calendarEvents.js
+// 📅 backend/services/calendarEvents.js - WITH AUTO-RENEWAL SUPPORT
 const { ObjectId } = require("mongodb");
 
 /**
  * Generiert automatisch Kalenderereignisse basierend auf Vertragsdaten
+ * NEU: Unterstützt Auto-Renewal für "alte" aber aktive Verträge
  */
 async function generateEventsForContract(db, contract) {
   const events = [];
@@ -10,11 +11,27 @@ async function generateEventsForContract(db, contract) {
   
   try {
     // 🔧 FIX: Flexible Feldnamen-Unterstützung für verschiedene Datenquellen
-    const expiryDate = contract.expiryDate 
+    let expiryDate = contract.expiryDate 
       ? new Date(contract.expiryDate) 
       : contract.endDate 
         ? new Date(contract.endDate)
         : null;
+    
+    // 🆕 AUTO-RENEWAL HANDLING
+    const isAutoRenewal = contract.isAutoRenewal || false;
+    
+    // Wenn Auto-Renewal und Datum in Vergangenheit → Berechne nächstes Ablaufdatum
+    if (isAutoRenewal && expiryDate && expiryDate < now) {
+      console.log(`🔄 Auto-Renewal Vertrag "${contract.name}" - berechne nächste Periode`);
+      const originalExpiry = new Date(expiryDate);
+      
+      // Berechne nächstes Ablaufdatum (jährliche Verlängerung)
+      while (expiryDate < now) {
+        expiryDate.setFullYear(expiryDate.getFullYear() + 1);
+      }
+      
+      console.log(`📅 Ablaufdatum angepasst von ${originalExpiry.toISOString()} auf ${expiryDate.toISOString()}`);
+    }
     
     const createdDate = new Date(contract.createdAt || contract.uploadedAt);
     
@@ -39,27 +56,31 @@ async function generateEventsForContract(db, contract) {
     
     const autoRenewMonths = contract.autoRenewMonths || 12;
     
-    // 🔧 DEBUG LOG
+    // 📊 DEBUG LOG
     console.log(`📊 Event Generation für "${contract.name}":`, {
       expiryDate: expiryDate?.toISOString(),
       noticePeriodDays,
       autoRenewMonths,
+      isAutoRenewal,
       provider: contract.provider?.displayName || contract.provider || 'Unbekannt'
     });
     
-    if (expiryDate && expiryDate > now) {
+    // 🆕 GENERIERE EVENTS AUCH FÜR "ALTE" AKTIVE VERTRÄGE
+    if (expiryDate) { // Entfernt die "> now" Prüfung!
+      
       // 1. Kündigungsfenster öffnet
       if (noticePeriodDays > 0) {
         const cancelWindowDate = new Date(expiryDate);
         cancelWindowDate.setDate(cancelWindowDate.getDate() - noticePeriodDays);
         
+        // Nur zukünftige Events erstellen
         if (cancelWindowDate > now) {
           events.push({
             userId: contract.userId,
             contractId: contract._id,
             type: "CANCEL_WINDOW_OPEN",
             title: `🟢 Kündigungsfenster öffnet: ${contract.name}`,
-            description: `Ab heute können Sie "${contract.name}" kündigen. Die Kündigungsfrist beträgt ${noticePeriodDays} Tage.`,
+            description: `Ab heute können Sie "${contract.name}" kündigen. Die Kündigungsfrist beträgt ${noticePeriodDays} Tage.${isAutoRenewal ? ' (Auto-Renewal Vertrag)' : ''}`,
             date: cancelWindowDate,
             severity: "info",
             status: "scheduled",
@@ -68,7 +89,8 @@ async function generateEventsForContract(db, contract) {
               noticePeriodDays,
               suggestedAction: "cancel",
               contractName: contract.name,
-              expiryDate: expiryDate
+              expiryDate: expiryDate,
+              isAutoRenewal
             },
             createdAt: new Date(),
             updatedAt: new Date()
@@ -84,7 +106,7 @@ async function generateEventsForContract(db, contract) {
               contractId: contract._id,
               type: "CANCEL_REMINDER",
               title: `📅 Kündigungsfrist naht: ${contract.name}`,
-              description: `In 30 Tagen öffnet sich das Kündigungsfenster für "${contract.name}".`,
+              description: `In 30 Tagen öffnet sich das Kündigungsfenster für "${contract.name}".${isAutoRenewal ? ' Dieser Vertrag verlängert sich automatisch!' : ''}`,
               date: reminderDate,
               severity: "info",
               status: "scheduled",
@@ -92,7 +114,8 @@ async function generateEventsForContract(db, contract) {
                 provider: contract.provider,
                 daysUntilWindow: 30,
                 suggestedAction: "prepare",
-                contractName: contract.name
+                contractName: contract.name,
+                isAutoRenewal
               },
               createdAt: new Date(),
               updatedAt: new Date()
@@ -112,7 +135,7 @@ async function generateEventsForContract(db, contract) {
             contractId: contract._id,
             type: "LAST_CANCEL_DAY",
             title: `🔴 LETZTER TAG: ${contract.name} kündigen!`,
-            description: `Heute ist die letzte Chance, "${contract.name}" zu kündigen. Sonst verlängert sich der Vertrag automatisch um ${autoRenewMonths} Monate!`,
+            description: `Heute ist die letzte Chance, "${contract.name}" zu kündigen. ${isAutoRenewal ? `Der Vertrag verlängert sich sonst automatisch um ${autoRenewMonths} Monate!` : 'Sonst verlängert sich der Vertrag!'}`,
             date: lastCancelDate,
             severity: "critical",
             status: "scheduled",
@@ -122,7 +145,8 @@ async function generateEventsForContract(db, contract) {
               suggestedAction: "cancel",
               urgent: true,
               contractName: contract.name,
-              expiryDate: expiryDate
+              expiryDate: expiryDate,
+              isAutoRenewal
             },
             createdAt: new Date(),
             updatedAt: new Date()
@@ -138,7 +162,7 @@ async function generateEventsForContract(db, contract) {
               contractId: contract._id,
               type: "CANCEL_WARNING",
               title: `⚠️ Nur noch 7 Tage: ${contract.name}`,
-              description: `In 7 Tagen endet die Kündigungsfrist für "${contract.name}". Handeln Sie jetzt!`,
+              description: `In 7 Tagen endet die Kündigungsfrist für "${contract.name}". ${isAutoRenewal ? 'Auto-Renewal Vertrag - handeln Sie jetzt!' : 'Handeln Sie jetzt!'}`,
               date: warningDate,
               severity: "warning",
               status: "scheduled",
@@ -146,7 +170,8 @@ async function generateEventsForContract(db, contract) {
                 provider: contract.provider,
                 daysLeft: 7,
                 suggestedAction: "cancel",
-                contractName: contract.name
+                contractName: contract.name,
+                isAutoRenewal
               },
               createdAt: new Date(),
               updatedAt: new Date()
@@ -156,25 +181,28 @@ async function generateEventsForContract(db, contract) {
       }
       
       // 3. Automatische Verlängerung
-      events.push({
-        userId: contract.userId,
-        contractId: contract._id,
-        type: "AUTO_RENEWAL",
-        title: `🔄 Automatische Verlängerung: ${contract.name}`,
-        description: `"${contract.name}" verlängert sich heute automatisch um ${autoRenewMonths} Monate, falls nicht gekündigt wurde.`,
-        date: expiryDate,
-        severity: "warning",
-        status: "scheduled",
-        metadata: {
-          provider: contract.provider,
-          autoRenewMonths,
-          newExpiryDate: calculateNewExpiryDate(expiryDate, autoRenewMonths),
-          suggestedAction: "review",
-          contractName: contract.name
-        },
-        createdAt: new Date(),
-        updatedAt: new Date()
-      });
+      if (expiryDate > now) {
+        events.push({
+          userId: contract.userId,
+          contractId: contract._id,
+          type: "AUTO_RENEWAL",
+          title: `🔄 ${isAutoRenewal ? 'Automatische' : 'Mögliche'} Verlängerung: ${contract.name}`,
+          description: `"${contract.name}" ${isAutoRenewal ? 'verlängert sich heute automatisch' : 'könnte sich heute verlängern'} um ${autoRenewMonths} Monate, falls nicht gekündigt wurde.`,
+          date: expiryDate,
+          severity: isAutoRenewal ? "critical" : "warning",
+          status: "scheduled",
+          metadata: {
+            provider: contract.provider,
+            autoRenewMonths,
+            newExpiryDate: calculateNewExpiryDate(expiryDate, autoRenewMonths),
+            suggestedAction: "review",
+            contractName: contract.name,
+            isAutoRenewal
+          },
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
+      }
       
       // 4. Preissteigerung (falls erkannt)
       if (contract.priceIncreaseDate) {
@@ -195,7 +223,8 @@ async function generateEventsForContract(db, contract) {
               oldPrice: contract.amount,
               newPrice: contract.newPrice,
               suggestedAction: "compare",
-              contractName: contract.name
+              contractName: contract.name,
+              isAutoRenewal
             },
             createdAt: new Date(),
             updatedAt: new Date()
@@ -219,7 +248,8 @@ async function generateEventsForContract(db, contract) {
                 provider: contract.provider,
                 daysUntilIncrease: 30,
                 suggestedAction: "compare",
-                contractName: contract.name
+                contractName: contract.name,
+                isAutoRenewal
               },
               createdAt: new Date(),
               updatedAt: new Date()
@@ -238,7 +268,7 @@ async function generateEventsForContract(db, contract) {
           contractId: contract._id,
           type: "REVIEW",
           title: `🔍 Jahres-Review: ${contract.name}`,
-          description: `Zeit für einen Check: Ist "${contract.name}" noch optimal für Sie? Prüfen Sie Alternativen!`,
+          description: `Zeit für einen Check: Ist "${contract.name}" noch optimal für Sie? ${isAutoRenewal ? 'Dieser Vertrag verlängert sich automatisch.' : 'Prüfen Sie Alternativen!'}`,
           date: oneYearFromCreation,
           severity: "info",
           status: "scheduled",
@@ -246,7 +276,8 @@ async function generateEventsForContract(db, contract) {
             provider: contract.provider,
             contractAge: "1 Jahr",
             suggestedAction: "review",
-            contractName: contract.name
+            contractName: contract.name,
+            isAutoRenewal
           },
           createdAt: new Date(),
           updatedAt: new Date()
@@ -259,15 +290,16 @@ async function generateEventsForContract(db, contract) {
           userId: contract.userId,
           contractId: contract._id,
           type: "CONTRACT_EXPIRY",
-          title: `📋 Vertrag läuft ab: ${contract.name}`,
-          description: `"${contract.name}" läuft heute ab.`,
+          title: `📋 Vertrag ${isAutoRenewal ? 'verlängert sich' : 'läuft ab'}: ${contract.name}`,
+          description: `"${contract.name}" ${isAutoRenewal ? 'verlängert sich heute automatisch, falls nicht gekündigt' : 'läuft heute ab'}.`,
           date: expiryDate,
-          severity: "info",
+          severity: isAutoRenewal ? "warning" : "info",
           status: "scheduled",
           metadata: {
             provider: contract.provider,
-            suggestedAction: "archive",
-            contractName: contract.name
+            suggestedAction: isAutoRenewal ? "check" : "archive",
+            contractName: contract.name,
+            isAutoRenewal
           },
           createdAt: new Date(),
           updatedAt: new Date()
@@ -288,9 +320,9 @@ async function generateEventsForContract(db, contract) {
       
       // Füge neue Events ein
       const result = await db.collection("contract_events").insertMany(events);
-      console.log(`✅ ${result.insertedCount} Events für Vertrag "${contract.name}" generiert`);
+      console.log(`✅ ${result.insertedCount} Events für Vertrag "${contract.name}" generiert${isAutoRenewal ? ' (Auto-Renewal)' : ''}`);
     } else {
-      console.log(`ℹ️ Keine Events für "${contract.name}" generiert (keine relevanten Daten)`);
+      console.log(`ℹ️ Keine Events für "${contract.name}" generiert (keine relevanten Daten oder alle Events in Vergangenheit)`);
     }
     
   } catch (error) {
@@ -419,7 +451,7 @@ async function updateExpiredEvents(db) {
  */
 async function onContractChange(db, contract, action = "create") {
   try {
-    console.log(`📅 Calendar Hook: ${action} für Vertrag "${contract.name}"`);
+    console.log(`📅 Calendar Hook: ${action} für Vertrag "${contract.name}"${contract.isAutoRenewal ? ' (Auto-Renewal)' : ''}`);
     
     // Generiere Events für den Vertrag
     await generateEventsForContract(db, contract);
@@ -427,7 +459,7 @@ async function onContractChange(db, contract, action = "create") {
     // Optional: Sende Bestätigungs-Email
     if (action === "create") {
       // TODO: Email-Service benachrichtigen
-      console.log(`📧 Neue Events für "${contract.name}" erstellt`);
+      console.log(`📧 Neue Events für "${contract.name}" erstellt${contract.isAutoRenewal ? ' (Auto-Renewal Vertrag)' : ''}`);
     }
     
   } catch (error) {
