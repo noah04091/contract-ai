@@ -17,31 +17,32 @@ import {
 } from "lucide-react";
 import styles from "../styles/OneClickCancelModal.module.css";
 
+// Proper TypeScript interfaces
+interface ProviderAddress {
+  street?: string;
+  city?: string;
+  zip?: string;
+}
+
+interface ProviderInfo {
+  name?: string;
+  displayName?: string;
+  email?: string;
+  phone?: string;
+  address?: ProviderAddress;
+  category?: string;
+  confidence?: number;
+}
+
 interface Contract {
   _id: string;
   name: string;
-  provider?: string | {
-    name?: string;
-    displayName?: string;
-    email?: string;
-    phone?: string;
-    address?: {
-      street?: string;
-      city?: string;
-      zip?: string;
-    };
-    category?: string;
-    confidence?: number;
-  };
+  provider?: string | ProviderInfo;
   contractNumber?: string;
   customerNumber?: string;
   expiryDate?: string;
   amount?: number;
-  address?: {
-    street?: string;
-    city?: string;
-    zip?: string;
-  };
+  address?: ProviderAddress;
 }
 
 interface OneClickCancelModalProps {
@@ -49,6 +50,14 @@ interface OneClickCancelModalProps {
   show: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+}
+
+// Type for extracted provider info
+interface ExtractedProviderInfo {
+  providerName?: string;
+  providerEmail?: string;
+  providerPhone?: string;
+  providerAddress?: string;
 }
 
 export default function OneClickCancelModal({ 
@@ -86,23 +95,25 @@ export default function OneClickCancelModal({
       // Load user data from localStorage
       const userData = JSON.parse(localStorage.getItem("userData") || "{}");
       
-      // Extract provider information if available
-      let providerInfo: any = {};
+      // Extract provider information if available - FIXED: Using proper types
+      const providerInfo: ExtractedProviderInfo = {};
+      
       if (contract.provider) {
         if (typeof contract.provider === 'string') {
           providerInfo.providerName = contract.provider;
         } else if (typeof contract.provider === 'object') {
-          providerInfo.providerName = contract.provider.displayName || contract.provider.name || "";
-          providerInfo.providerEmail = contract.provider.email || "";
-          providerInfo.providerPhone = contract.provider.phone || "";
+          const provider = contract.provider as ProviderInfo;
+          providerInfo.providerName = provider.displayName || provider.name || "";
+          providerInfo.providerEmail = provider.email || "";
+          providerInfo.providerPhone = provider.phone || "";
           
-          if (contract.provider.address) {
-            const addr = contract.provider.address;
+          if (provider.address) {
+            const addr = provider.address;
             providerInfo.providerAddress = `${addr.street || ''}\n${addr.zip || ''} ${addr.city || ''}`.trim();
           }
           
           // Mark as detected if confidence is high enough
-          if (contract.provider.confidence && contract.provider.confidence > 50) {
+          if (provider.confidence && provider.confidence > 50) {
             setProviderDetected(true);
           }
         }
