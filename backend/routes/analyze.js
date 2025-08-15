@@ -1,4 +1,4 @@
-// 📁 backend/routes/analyze.js - ENHANCED DEEP LAWYER-LEVEL CONTRACT ANALYSIS + CRITICAL FIXES
+// 📊 backend/routes/analyze.js - ENHANCED DEEP LAWYER-LEVEL CONTRACT ANALYSIS + CRITICAL FIXES
 const express = require("express");
 const multer = require("multer");
 const pdfParse = require("pdf-parse");
@@ -8,6 +8,7 @@ const { OpenAI } = require("openai");
 const verifyToken = require("../middleware/verifyToken");
 const { MongoClient, ObjectId } = require("mongodb");
 const path = require("path");
+const contractAnalyzer = require("../services/contractAnalyzer"); // 🔍 ÄNDERUNG 1: Provider Detection Import
 
 const router = express.Router();
 
@@ -169,7 +170,7 @@ const createUploadMiddleware = () => {
           const sanitizedFileName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
           const key = `contracts/${userId}/${timestamp}_${sanitizedFileName}`;
           
-          console.log(`📁 [S3] Generated S3 key: ${key}`);
+          console.log(`📝 [S3] Generated S3 key: ${key}`);
           cb(null, key);
         }
       }),
@@ -193,7 +194,7 @@ const createUploadMiddleware = () => {
       destination: UPLOAD_PATH,
       filename: (req, file, cb) => {
         const filename = Date.now() + path.extname(file.originalname);
-        console.log(`📁 [LOCAL] Generated filename: ${filename}`);
+        console.log(`📝 [LOCAL] Generated filename: ${filename}`);
         cb(null, filename);
       },
     });
@@ -213,7 +214,7 @@ const createUploadMiddleware = () => {
 };
 
 /**
- * 🔄 DYNAMIC FILE READING (AWS SDK v3) - UNCHANGED
+ * 📄 DYNAMIC FILE READING (AWS SDK v3) - UNCHANGED
  * Reads file from S3 if uploaded there, from local disk otherwise
  */
 const readUploadedFile = async (fileInfo, requestId) => {
@@ -327,7 +328,7 @@ const MODEL_LIMITS = {
 // ===== ENHANCED DEEP LAWYER-LEVEL ANALYSIS PIPELINE =====
 
 /**
- * 🔢 FIXED: Smart Token Counter and Text Optimizer
+ * 📊 FIXED: Smart Token Counter and Text Optimizer
  * Estimates tokens and optimizes text for GPT-4 limits
  */
 function estimateTokens(text) {
@@ -342,7 +343,7 @@ function estimateTokens(text) {
 function optimizeTextForGPT4(text, maxTokens = 2000, requestId) {
   const currentTokens = estimateTokens(text);
   
-  console.log(`🔢 [${requestId}] Text analysis: ${text.length} chars, ~${currentTokens} tokens (limit: ${maxTokens})`);
+  console.log(`📊 [${requestId}] Text analysis: ${text.length} chars, ~${currentTokens} tokens (limit: ${maxTokens})`);
   
   if (currentTokens <= maxTokens) {
     console.log(`✅ [${requestId}] Text within limits, no optimization needed`);
@@ -571,11 +572,11 @@ function selectAnalysisStrategy(documentType, contentQuality, filename) {
 }
 
 /**
- * 🏛️ FIXED: SIMPLIFIED Validation - Much Less Aggressive
+ * 🛠️ FIXED: SIMPLIFIED Validation - Much Less Aggressive
  * Validates response but allows more content through
  */
 function validateAndNormalizeLawyerAnalysis(result, documentType, requestId) {
-  console.log(`🏛️ [${requestId}] SIMPLIFIED validation for ${documentType}:`, Object.keys(result));
+  console.log(`🛠️ [${requestId}] SIMPLIFIED validation for ${documentType}:`, Object.keys(result));
   
   // ✅ FIXED: Only check for critical errors (much less restrictive)
   const criticalErrors = [
@@ -784,7 +785,7 @@ function validateTextCompletenessAndDepth(result, requestId) {
 }
 
 /**
- * 🏛️ ENHANCED: Generate TRUE LAWYER-LEVEL Analysis Prompt (Gutachten-Qualität)
+ * 🛠️ ENHANCED: Generate TRUE LAWYER-LEVEL Analysis Prompt (Gutachten-Qualität)
  * Generates prompts that deliver actual legal expert analysis like written legal opinions
  */
 function generateDeepLawyerLevelPrompt(text, documentType, strategy, requestId) {
@@ -904,8 +905,8 @@ async function validateAndAnalyzeDocument(filename, pdfText, pdfData, requestId)
         message: '📸 Diese PDF enthält keinen lesbaren Text. Es handelt sich wahrscheinlich um ein gescanntes Dokument.',
         details: 'Das Dokument scheint gescannt zu sein. Eine OCR-Analyse könnte helfen.',
         suggestions: [
-          '🔄 Konvertiere die PDF in ein durchsuchbares Format (z.B. mit Adobe Acrobat)',
-          '📝 Öffne das Dokument in Word, das oft Text aus Scans erkennen kann',
+          '📄 Konvertiere die PDF in ein durchsuchbares Format (z.B. mit Adobe Acrobat)',
+          '🔍 Öffne das Dokument in Word, das oft Text aus Scans erkennen kann',
           '🖨️ Erstelle eine neue PDF aus dem Originaldokument (falls verfügbar)',
           '🔍 Nutze ein Online-OCR-Tool (z.B. SmallPDF, PDF24) um Text zu extrahieren'
         ]
@@ -1039,8 +1040,8 @@ const createUserFriendlyPDFError = (textQuality, fileName, pages) => {
   if (isScanned) {
     message = `📸 This PDF appears to be scanned and contains only image data that we cannot currently analyze.`;
     suggestions = [
-      "🔄 Convert the PDF to a searchable format (e.g. with Adobe Acrobat)",
-      "📝 Open the document in Word, which can often recognize text from scans",
+      "📄 Convert the PDF to a searchable format (e.g. with Adobe Acrobat)",
+      "🔍 Open the document in Word, which can often recognize text from scans",
       "🖨️ Create a new PDF from the original document (if available)",
       "🔍 Use an online OCR tool (e.g. SmallPDF, PDF24) to extract text",
       "⚡ For automatic scan recognition: Upgrade to Premium with OCR support"
@@ -1050,7 +1051,7 @@ const createUserFriendlyPDFError = (textQuality, fileName, pages) => {
     suggestions = [
       "📖 Ensure the PDF is complete and not corrupted",
       "🔒 Check if the PDF is password protected or encrypted",
-      "📝 If it's a scanned PDF, convert it to a text PDF",
+      "🔍 If it's a scanned PDF, convert it to a text PDF",
       "📄 Upload a different version of the file (e.g. the original document)",
       "⚡ Try a different PDF file"
     ];
@@ -1059,15 +1060,15 @@ const createUserFriendlyPDFError = (textQuality, fileName, pages) => {
     suggestions = [
       "🔓 Remove password protection and upload the PDF again",
       "📄 Export the document as a new, unprotected PDF",
-      "📝 Convert the PDF to Word and export it again as PDF",
+      "🔍 Convert the PDF to Word and export it again as PDF",
       "⚡ Try a different version of the file"
     ];
   } else {
     message = `🚫 This PDF file cannot be used for contract analysis.`;
     suggestions = [
       "📄 Check if the PDF file is complete and not corrupted",
-      "🔄 Try a different version or format (DOC, DOCX)",
-      "📝 Ensure the document contains sufficient text",
+      "📄 Try a different version or format (DOC, DOCX)",
+      "🔍 Ensure the document contains sufficient text",
       "🔒 Check if the PDF is password protected",
       "⚡ Try a different PDF file"
     ];
@@ -1257,7 +1258,7 @@ const checkForDuplicate = async (fileHash, userId) => {
 };
 
 /**
- * 💾 ENHANCED CONTRACT SAVING (S3 COMPATIBLE) - UNCHANGED
+ * 💾 ENHANCED CONTRACT SAVING (S3 COMPATIBLE) - WITH PROVIDER DETECTION
  * Saves contract with appropriate upload info based on storage type
  */
 async function saveContractWithUpload(userId, analysisData, fileInfo, pdfText, uploadInfo) {
@@ -1269,6 +1270,15 @@ async function saveContractWithUpload(userId, analysisData, fileInfo, pdfText, u
       kuendigung: analysisData.kuendigung || "Unknown",
       expiryDate: analysisData.expiryDate || "",
       status: analysisData.status || "Active",
+      
+      // 🔍 ÄNDERUNG 5: Provider Detection Fields
+      provider: analysisData.provider || null,
+      contractNumber: analysisData.contractNumber || null,
+      customerNumber: analysisData.customerNumber || null,
+      providerDetected: analysisData.providerDetected || false,
+      providerConfidence: analysisData.providerConfidence || 0,
+      cancellationPeriod: analysisData.cancellationPeriod || null,
+      
       uploadedAt: new Date(),
       createdAt: new Date(),
       
@@ -1328,11 +1338,12 @@ async function saveContractWithUpload(userId, analysisData, fileInfo, pdfText, u
       filePath: contract.filePath,
       textLength: contract.fullText.length,
       s3Key: contract.s3Key || 'none',
-      s3Info: uploadInfo.s3Info ? 'present' : 'none'
+      s3Info: uploadInfo.s3Info ? 'present' : 'none',
+      provider: contract.provider?.displayName || 'none' // 🔍 Provider log
     });
 
     const { insertedId } = await contractsCollection.insertOne(contract);
-    console.log(`✅ [ANALYZE] Contract saved with ID: ${insertedId}, s3Key: ${contract.s3Key || 'none'}`);
+    console.log(`✅ [ANALYZE] Contract saved with ID: ${insertedId}, s3Key: ${contract.s3Key || 'none'}, provider: ${contract.provider?.displayName || 'none'}`);
     
     return { ...contract, _id: insertedId };
   } catch (error) {
@@ -1342,7 +1353,7 @@ async function saveContractWithUpload(userId, analysisData, fileInfo, pdfText, u
 }
 
 /**
- * 🏛️ FIXED: Enhanced Rate-Limited GPT-4 Request (Uses GPT-4-Turbo for 128k Context)
+ * 🛠️ FIXED: Enhanced Rate-Limited GPT-4 Request (Uses GPT-4-Turbo for 128k Context)
  */
 const makeRateLimitedGPT4Request = async (prompt, requestId, openai, maxRetries = 3) => {
   
@@ -1357,7 +1368,7 @@ const makeRateLimitedGPT4Request = async (prompt, requestId, openai, maxRetries 
       
       lastGPT4Request = Date.now();
       
-      console.log(`🏛️ [${requestId}] GPT-4-Turbo request (attempt ${attempt}/${maxRetries})...`);
+      console.log(`🛠️ [${requestId}] GPT-4-Turbo request (attempt ${attempt}/${maxRetries})...`);
       
       // ✅ CRITICAL FIX: Use GPT-4-Turbo for 128k context window
       const completion = await openai.chat.completions.create({
@@ -1441,7 +1452,7 @@ router.post("/", verifyToken, async (req, res, next) => {
 const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
   const requestId = Date.now().toString();
   
-  console.log(`🏛️ [${requestId}] FIXED Enhanced Deep Lawyer-Level Analysis request received:`, {
+  console.log(`🛠️ [${requestId}] FIXED Enhanced Deep Lawyer-Level Analysis request received:`, {
     hasFile: !!req.file,
     userId: req.user?.userId,
     s3Available: S3_AVAILABLE,
@@ -1513,7 +1524,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
     console.log(`📄 [${requestId}] Buffer read: ${buffer.length} bytes`);
     
     const fileHash = calculateFileHash(buffer);
-    console.log(`🔍 [${requestId}] File hash calculated: ${fileHash.substring(0, 12)}...`);
+    console.log(`🔐 [${requestId}] File hash calculated: ${fileHash.substring(0, 12)}...`);
 
     let existingContract = null;
     if (crypto && contractsCollection) {
@@ -1521,7 +1532,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
         existingContract = await checkForDuplicate(fileHash, req.user.userId);
         
         if (existingContract) {
-          console.log(`🔄 [${requestId}] Duplicate found: ${existingContract._id}`);
+          console.log(`📄 [${requestId}] Duplicate found: ${existingContract._id}`);
           
           const forceReanalyze = req.body.forceReanalyze === 'true';
           
@@ -1542,7 +1553,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
               }
             });
           } else {
-            console.log(`🔄 [${requestId}] User chooses deep re-analysis for duplicate`);
+            console.log(`📄 [${requestId}] User chooses deep re-analysis for duplicate`);
           }
         }
       } catch (dupError) {
@@ -1594,7 +1605,42 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
 
     const fullTextContent = pdfData.text;
     
-    console.log(`🏛️ [${requestId}] Document analysis successful - proceeding with FIXED DEEP LAWYER-LEVEL analysis:`, {
+    // 🔍 ÄNDERUNG 2: PROVIDER DETECTION - Extract provider and contract details
+    console.log(`🔍 [${requestId}] Extracting provider and contract details...`);
+    let extractedProvider = null;
+    let extractedContractNumber = null;
+    let extractedCustomerNumber = null;
+    let extractedEndDate = null;
+    let extractedCancellationPeriod = null;
+    
+    try {
+      const providerAnalysis = await contractAnalyzer.analyzeContract(
+        fullTextContent,
+        req.file.originalname
+      );
+      
+      if (providerAnalysis.success && providerAnalysis.data) {
+        extractedProvider = providerAnalysis.data.provider;
+        extractedContractNumber = providerAnalysis.data.contractNumber;
+        extractedCustomerNumber = providerAnalysis.data.customerNumber;
+        extractedEndDate = providerAnalysis.data.endDate;
+        extractedCancellationPeriod = providerAnalysis.data.cancellationPeriod;
+        
+        console.log(`✅ [${requestId}] Provider detected:`, extractedProvider?.displayName || 'None');
+        console.log(`📋 [${requestId}] Contract details:`, {
+          contractNumber: extractedContractNumber,
+          customerNumber: extractedCustomerNumber,
+          endDate: extractedEndDate,
+          cancellationPeriod: extractedCancellationPeriod
+        });
+      } else {
+        console.log(`⚠️ [${requestId}] No provider or contract details extracted`);
+      }
+    } catch (error) {
+      console.warn(`⚠️ [${requestId}] Provider detection failed:`, error.message);
+    }
+    
+    console.log(`🛠️ [${requestId}] Document analysis successful - proceeding with FIXED DEEP LAWYER-LEVEL analysis:`, {
       documentType: validationResult.documentType,
       strategy: validationResult.strategy,
       confidence: Math.round(validationResult.confidence * 100),
@@ -1613,7 +1659,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       requestId
     );
 
-    console.log(`🏛️ [${requestId}] Using FIXED DEEP LAWYER-LEVEL analysis strategy: ${validationResult.strategy} for ${validationResult.documentType} document`);
+    console.log(`🛠️ [${requestId}] Using FIXED DEEP LAWYER-LEVEL analysis strategy: ${validationResult.strategy} for ${validationResult.documentType} document`);
 
     let completion;
     try {
@@ -1662,8 +1708,9 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       result = convertLegacyToDeepLawyerFormat(result, validationResult.documentType, requestId);
     }
 
-    console.log(`🏛️ [${requestId}] FIXED Deep lawyer-level analysis successful, saving to DB...`);
+    console.log(`🛠️ [${requestId}] FIXED Deep lawyer-level analysis successful, saving to DB...`);
 
+    // 🔍 ÄNDERUNG 3: UPDATE analysisData OBJECT
     const analysisData = {
       userId: req.user.userId,
       contractName: req.file.originalname,
@@ -1674,6 +1721,15 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       originalFileName: req.file.originalname,
       fileSize: buffer.length,
       uploadType: uploadInfo.uploadType,
+      
+      // 🔍 NEUE FELDER HINZUFÜGEN:
+      provider: extractedProvider,
+      contractNumber: extractedContractNumber,
+      customerNumber: extractedCustomerNumber,
+      expiryDate: extractedEndDate,
+      cancellationPeriod: extractedCancellationPeriod,
+      providerDetected: !!extractedProvider,
+      providerConfidence: extractedProvider?.confidence || 0,
       
       // Enhanced metadata from deep lawyer-level analysis
       documentType: validationResult.documentType,
@@ -1713,7 +1769,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       console.log(`💾 [${requestId}] Saving contract with FIXED deep lawyer-level analysis (${uploadInfo.uploadType})...`);
 
       if (existingContract && req.body.forceReanalyze === 'true') {
-        console.log(`🔄 [${requestId}] Updating existing contract with FIXED deep lawyer-level analysis: ${existingContract._id}`);
+        console.log(`📄 [${requestId}] Updating existing contract with FIXED deep lawyer-level analysis: ${existingContract._id}`);
         
         const updateData = {
           lastAnalyzed: new Date(),
@@ -1723,6 +1779,15 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           filePath: uploadInfo.fileUrl,
           filename: req.file.filename || req.file.key,
           uploadType: uploadInfo.uploadType,
+          
+          // 🔍 Provider Detection Fields
+          provider: extractedProvider,
+          contractNumber: extractedContractNumber,
+          customerNumber: extractedCustomerNumber,
+          providerDetected: !!extractedProvider,
+          providerConfidence: extractedProvider?.confidence || 0,
+          cancellationPeriod: extractedCancellationPeriod,
+          expiryDate: extractedEndDate,
           
           // Enhanced metadata
           documentType: validationResult.documentType,
@@ -1787,12 +1852,25 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
         
         console.log(`✅ [${requestId}] Existing contract updated with FIXED deep lawyer-level analysis (${fullTextContent.length} characters)`);
       } else {
+        // 🔍 ÄNDERUNG 4: UPDATE contractAnalysisData
         const contractAnalysisData = {
           name: Array.isArray(result.summary) ? req.file.originalname : req.file.originalname,
-          laufzeit: "Unknown",
-          kuendigung: "Unknown",
-          expiryDate: "",
-          status: "Active"
+          laufzeit: extractedCancellationPeriod ? 
+            `${extractedCancellationPeriod.value} ${extractedCancellationPeriod.unit}` : 
+            "Unknown",
+          kuendigung: extractedCancellationPeriod ? 
+            `${extractedCancellationPeriod.value} ${extractedCancellationPeriod.unit}` : 
+            "Unknown",
+          expiryDate: extractedEndDate || "",
+          status: "Active",
+          
+          // 🔍 NEUE FELDER:
+          provider: extractedProvider,
+          contractNumber: extractedContractNumber,
+          customerNumber: extractedCustomerNumber,
+          providerDetected: !!extractedProvider,
+          providerConfidence: extractedProvider?.confidence || 0,
+          cancellationPeriod: extractedCancellationPeriod
         };
 
         const savedContract = await saveContractWithUpload(
@@ -1855,14 +1933,24 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       console.warn(`⚠️ [${requestId}] Counter update error:`, updateError.message);
     }
 
-    console.log(`🏛️🎉 [${requestId}] FIXED Enhanced DEEP Lawyer-Level Analysis completely successful!`);
+    console.log(`🛠️🎉 [${requestId}] FIXED Enhanced DEEP Lawyer-Level Analysis completely successful!`);
 
+    // 🔍 ÄNDERUNG 6: UPDATE responseData
     const responseData = { 
       success: true,
       message: `${validationResult.analysisMessage} auf höchstem Anwaltsniveau erfolgreich abgeschlossen`,
       requestId,
       uploadType: uploadInfo.uploadType,
       fileUrl: uploadInfo.fileUrl,
+      
+      // 🔍 NEUE FELDER HINZUFÜGEN:
+      provider: extractedProvider,
+      contractNumber: extractedContractNumber,
+      customerNumber: extractedCustomerNumber,
+      expiryDate: extractedEndDate,
+      cancellationPeriod: extractedCancellationPeriod,
+      providerDetected: !!extractedProvider,
+      providerConfidence: extractedProvider?.confidence || 0,
       
       // Enhanced response data (Frontend-compatible strings)
       documentType: validationResult.documentType || "UNKNOWN",
@@ -2011,7 +2099,7 @@ router.get("/health", async (req, res) => {
   }
 
   const checks = {
-    service: "FIXED Enhanced DEEP Lawyer-Level Contract Analysis + S3 (AWS SDK v3) + GPT-4-Turbo + 7-Point Structure",
+    service: "FIXED Enhanced DEEP Lawyer-Level Contract Analysis + S3 (AWS SDK v3) + GPT-4-Turbo + 7-Point Structure + Provider Detection",
     status: "online",
     timestamp: new Date().toISOString(),
     openaiConfigured: !!process.env.OPENAI_API_KEY,
@@ -2029,6 +2117,8 @@ router.get("/health", async (req, res) => {
     features: {
       deepLawyerLevelAnalysis: true,
       lawyerLevelAnalysis: true, // Backward compatibility
+      providerDetection: true, // 🔍 NEW
+      contractDataExtraction: true, // 🔍 NEW
       sevenPointStructure: true,
       simplifiedValidation: true, // ✅ FIXED: Less aggressive validation
       completenessGuarantee: true,
@@ -2053,7 +2143,7 @@ router.get("/health", async (req, res) => {
     },
     tokenLimits: MODEL_LIMITS,
     modelUsed: 'gpt-4-turbo', // ✅ NEW: Track which model is being used
-    version: "deep-lawyer-level-analysis-FIXED-v5.0-gpt4turbo-128k-syntax-corrected"
+    version: "deep-lawyer-level-analysis-FIXED-v5.1-gpt4turbo-128k-provider-detection"
   };
 
   try {
@@ -2073,7 +2163,7 @@ router.get("/health", async (req, res) => {
 });
 
 process.on('SIGTERM', async () => {
-  console.log('🏛️ FIXED Enhanced DEEP Lawyer-Level Analysis service with GPT-4-Turbo shutting down...');
+  console.log('🛠️ FIXED Enhanced DEEP Lawyer-Level Analysis service with GPT-4-Turbo shutting down...');
   if (mongoClient) {
     await mongoClient.close();
   }
