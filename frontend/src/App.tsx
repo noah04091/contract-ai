@@ -25,6 +25,12 @@ import Success from "./pages/Success";
 import HelpCenter from "./pages/HelpCenter";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
+import Vertragsanalyse from "./pages/features/Vertragsanalyse";
+import Optimierung from "./pages/features/Optimierung";
+import Fristen from "./pages/features/Fristen";
+import Vergleich from "./pages/features/Vergleich";
+import GeneratorPage from "./pages/features/Generator";
+import LegalPulsePage from "./pages/features/LegalPulse";
 
 // 🔒 Geschützte Seiten
 import Dashboard from "./pages/Dashboard";
@@ -106,6 +112,14 @@ function AppWithLoader() {
             <Route path="/hilfe" element={<HelpCenter />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
+            <Route path="/features/vertragsanalyse" element={<Vertragsanalyse />} />
+            <Route path="/features/optimierung" element={<Optimierung />} />
+            <Route path="/features/fristen" element={<Fristen />} />
+            <Route path="/features/vergleich" element={<Vergleich />} />
+            <Route path="/features/generator" element={<GeneratorPage />} />
+            <Route path="/features/legal-pulse" element={<LegalPulsePage />} />
+
+
 
             {/* 🔒 Geschützte Seiten */}
             <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />

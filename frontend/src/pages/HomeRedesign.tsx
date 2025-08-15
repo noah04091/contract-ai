@@ -486,7 +486,7 @@ const HomeRedesign = () => {
                 </div>
                 <h3>Analyse</h3>
                 <p>Verträge KI-basiert auswerten, Risiken erkennen & Transparenz gewinnen.</p>
-                <Link to="/contracts" className="feature-link">
+                <Link to="/features/vertragsanalyse" className="feature-link">
                   Mehr erfahren
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M5 12h14"></path>
@@ -507,7 +507,7 @@ const HomeRedesign = () => {
                 </div>
                 <h3>Optimierung</h3>
                 <p>Unvorteilhafte Klauseln erkennen und durch bessere Formulierungen ersetzen.</p>
-                <Link to="/optimizer" className="feature-link">
+                <Link to="/features/optimierung" className="feature-link">
                   Mehr erfahren
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M5 12h14"></path>
@@ -527,7 +527,7 @@ const HomeRedesign = () => {
                 </div>
                 <h3>Fristen</h3>
                 <p>Kündigungsfristen automatisch erkennen & rechtzeitig per Mail erinnert werden.</p>
-                <Link to="/calendar" className="feature-link">
+                <Link to="/features/fristen" className="feature-link">
                   Mehr erfahren
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M5 12h14"></path>
@@ -548,7 +548,7 @@ const HomeRedesign = () => {
                 </div>
                 <h3>Vergleich</h3>
                 <p>Zwei Verträge gegenüberstellen, Unterschiede visuell hervorheben.</p>
-                <Link to="/compare" className="feature-link">
+                <Link to="/features/vergleich" className="feature-link">
                   Mehr erfahren
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M5 12h14"></path>
@@ -572,7 +572,7 @@ const HomeRedesign = () => {
                 </div>
                 <h3>Generator</h3>
                 <p>Vertragsdokumente aus KI-Vorlagen erzeugen – z. B. Freelancer-, NDA- oder Mietverträge.</p>
-                <Link to="/generate" className="feature-link">
+                <Link to="/features/generator" className="feature-link">
                   Mehr erfahren
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M5 12h14"></path>
@@ -592,7 +592,7 @@ const HomeRedesign = () => {
                 </div>
                 <h3>Legal Pulse</h3>
                 <p>Frühwarnsystem für neue Risiken durch Gesetzesänderungen oder unfaire Formulierungen.</p>
-                <Link to="/legalpulse" className="feature-link">
+                <Link to="/features/legalpulse" className="feature-link">
                   Mehr erfahren
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M5 12h14"></path>
@@ -639,7 +639,7 @@ const HomeRedesign = () => {
                     <li>Verständlichkeitsindex für Laien und Profis</li>
                     <li>Detaillierte Klausel-Insights</li>
                   </ul>
-                  <Link to="/contracts" className="showcase-link">
+                  <Link to="/features/vertragsanalyse" className="showcase-link">
                     Zur Vertragsanalyse
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M5 12h14"></path>
@@ -682,7 +682,7 @@ const HomeRedesign = () => {
                     <li>Verständlichere Sprache</li>
                     <li>Sofort einsatzbereite Änderungen</li>
                   </ul>
-                  <Link to="/optimizer" className="showcase-link">
+                  <Link to="/features/optimierung" className="showcase-link">
                     Zum Optimierer
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M5 12h14"></path>
@@ -724,7 +724,7 @@ const HomeRedesign = () => {
                     <li>Erinnerungsfunktion per E-Mail</li>
                     <li>Integration in Ihren Kalender</li>
                   </ul>
-                  <Link to="/calendar" className="showcase-link">
+                  <Link to="/features/fristen" className="showcase-link">
                     Zum Fristenkalender
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M5 12h14"></path>
@@ -767,7 +767,7 @@ const HomeRedesign = () => {
                     <li>Fairness-Score & Verbesserungstipps</li>
                     <li>Entscheidungshilfe in Sekunden</li>
                   </ul>
-                  <Link to="/compare" className="showcase-link">
+                  <Link to="/features/vergleich" className="showcase-link">
                     Zum Vergleich
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M5 12h14"></path>
@@ -811,7 +811,7 @@ const HomeRedesign = () => {
                     <li>Intelligente Eingabemasken</li>
                     <li>Sofort exportieren & digital signieren</li>
                   </ul>
-                  <Link to="/generate" className="showcase-link">
+                  <Link to="/features/generator" className="showcase-link">
                     Zum Generator
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M5 12h14"></path>
@@ -852,7 +852,7 @@ const HomeRedesign = () => {
                     <li>Automatische Risiko-Alerts</li>
                     <li>Empfehlungen zur Anpassung</li>
                   </ul>
-                  <Link to="/legalpulse" className="showcase-link">
+                  <Link to="/features/legalpulse" className="showcase-link">
                     Zum Legal Pulse
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M5 12h14"></path>

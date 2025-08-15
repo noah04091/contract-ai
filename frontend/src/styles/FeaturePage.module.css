@@ -1,0 +1,475 @@
+/* FeaturePage.module.css - Gemeinsames Styling für alle Feature-Landingpages */
+
+/* Container */
+.featureContainer {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 120px 24px;
+  color: #333;
+}
+
+/* Hero Section */
+.heroSection {
+  text-align: center;
+  margin-bottom: 120px;
+  position: relative;
+  padding: 80px 0;
+}
+
+.heroSection::after {
+  content: '';
+  display: block;
+  width: 48px;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(0,122,255,0), rgba(0,122,255,1), rgba(0,122,255,0));
+  margin: 60px auto 0;
+}
+
+.heroIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 120px;
+  height: 120px;
+  background: linear-gradient(135deg, rgba(0,122,255,0.1) 0%, rgba(64,156,255,0.1) 100%);
+  border-radius: 50%;
+  margin-bottom: 32px;
+  color: #007aff;
+  animation: pulse 3s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(0,122,255,0.2);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 20px rgba(0,122,255,0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(0,122,255,0);
+  }
+}
+
+.heroTitle {
+  font-size: 56px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+  max-width: 900px;
+  margin: 0 auto 24px;
+  color: #1d1d1f;
+}
+
+.heroTitleHighlight {
+  background: linear-gradient(90deg, rgba(0,122,255,1) 0%, rgba(64,156,255,1) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+}
+
+.heroSubtitle {
+  font-size: 20px;
+  line-height: 1.5;
+  color: #666;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* Content Container */
+.contentContainer {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* Section Titles */
+.sectionTitle {
+  font-size: 40px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+  margin-bottom: 48px;
+  color: #1d1d1f;
+  text-align: center;
+  position: relative;
+}
+
+.sectionTitle::after {
+  content: '';
+  display: block;
+  width: 30px;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(0,122,255,0), rgba(0,122,255,1), rgba(0,122,255,0));
+  margin: 16px auto 0;
+}
+
+/* Funktion Section */
+.funktionSection {
+  margin-bottom: 120px;
+}
+
+.funktionGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.funktionItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  padding: 24px;
+  background: #f5f5f7;
+  border-radius: 16px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.funktionItem:hover {
+  transform: translateX(8px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+}
+
+.funktionIcon {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border-radius: 50%;
+  color: #007aff;
+}
+
+.funktionText {
+  font-size: 18px;
+  line-height: 1.6;
+  color: #333;
+  margin: 0;
+}
+
+/* Vorteile Section */
+.vorteileSection {
+  margin-bottom: 120px;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e6f7ff 100%);
+  padding: 80px 0;
+  margin-left: -24px;
+  margin-right: -24px;
+}
+
+.vorteileGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 32px;
+}
+
+.vorteilCard {
+  background: white;
+  padding: 32px;
+  border-radius: 16px;
+  border-left: 4px solid #007aff;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.vorteilCard:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.12);
+}
+
+.vorteilTitle {
+  font-size: 24px;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin-bottom: 12px;
+}
+
+.vorteilText {
+  font-size: 17px;
+  line-height: 1.6;
+  color: #333;
+  margin: 0;
+}
+
+/* Beispiel Section */
+.beispielSection {
+  margin-bottom: 120px;
+}
+
+.beispielBox {
+  background: linear-gradient(135deg, #fff9f0 0%, #fffaf5 100%);
+  border-radius: 24px;
+  padding: 48px;
+  text-align: center;
+  position: relative;
+  border: 1px solid rgba(255,140,0,0.1);
+}
+
+.beispielIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, rgba(255,140,0,0.1) 0%, rgba(255,100,0,0.1) 100%);
+  border-radius: 50%;
+  margin-bottom: 24px;
+  color: #ff8c00;
+}
+
+.beispielText {
+  font-size: 20px;
+  font-style: italic;
+  line-height: 1.6;
+  color: #333;
+  margin: 0 0 20px 0;
+  position: relative;
+  padding: 0 40px;
+}
+
+.beispielText::before,
+.beispielText::after {
+  content: '"';
+  font-size: 48px;
+  color: #ff8c00;
+  opacity: 0.2;
+  position: absolute;
+}
+
+.beispielText::before {
+  left: 0;
+  top: -10px;
+}
+
+.beispielText::after {
+  right: 0;
+  bottom: -30px;
+}
+
+.beispielHinweis {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* Stats Section */
+.statsSection {
+  margin-bottom: 120px;
+  background: #1d1d1f;
+  padding: 80px 0;
+  margin-left: -24px;
+  margin-right: -24px;
+  border-radius: 24px;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 48px;
+  text-align: center;
+}
+
+.statItem {
+  color: white;
+}
+
+.statNumber {
+  font-size: 48px;
+  font-weight: 700;
+  background: linear-gradient(90deg, #007aff 0%, #409cff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+  margin-bottom: 8px;
+}
+
+.statLabel {
+  font-size: 16px;
+  color: #999;
+  font-weight: 500;
+}
+
+/* CTA Section */
+.ctaSection {
+  margin-bottom: 80px;
+}
+
+.ctaCard {
+  background: linear-gradient(135deg, #007aff 0%, #409cff 100%);
+  border-radius: 24px;
+  padding: 64px 48px;
+  text-align: center;
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.ctaCard::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+  animation: rotate 20s linear infinite;
+}
+
+@keyframes rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.ctaTitle {
+  font-size: 36px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  position: relative;
+  z-index: 1;
+}
+
+.ctaSubtitle {
+  font-size: 18px;
+  margin-bottom: 32px;
+  opacity: 0.95;
+  position: relative;
+  z-index: 1;
+}
+
+.ctaButton {
+  display: inline-block;
+  background: white;
+  color: #007aff;
+  padding: 16px 48px;
+  border-radius: 100px;
+  font-size: 18px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.ctaButton:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.2);
+}
+
+/* Animation Classes */
+:global(.fadeInUp) {
+  opacity: 0;
+  transform: translateY(30px);
+  animation: fadeInUp 0.8s ease forwards;
+}
+
+:global(.scaleIn) {
+  opacity: 0;
+  transform: scale(0.95);
+  animation: scaleIn 0.8s ease forwards;
+}
+
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .featureContainer {
+    padding: 80px 20px;
+  }
+  
+  .heroSection {
+    padding: 60px 0;
+    margin-bottom: 80px;
+  }
+  
+  .heroIcon {
+    width: 80px;
+    height: 80px;
+  }
+  
+  .heroTitle {
+    font-size: 40px;
+  }
+  
+  .heroSubtitle {
+    font-size: 18px;
+  }
+  
+  .sectionTitle {
+    font-size: 32px;
+    margin-bottom: 32px;
+  }
+  
+  .funktionItem {
+    padding: 20px;
+  }
+  
+  .funktionText {
+    font-size: 16px;
+  }
+  
+  .vorteileSection {
+    padding: 60px 0;
+  }
+  
+  .vorteileGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .beispielBox {
+    padding: 32px 24px;
+  }
+  
+  .beispielText {
+    font-size: 18px;
+    padding: 0 20px;
+  }
+  
+  .statsSection {
+    padding: 60px 0;
+  }
+  
+  .statsGrid {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+  
+  .statNumber {
+    font-size: 36px;
+  }
+  
+  .ctaCard {
+    padding: 48px 32px;
+  }
+  
+  .ctaTitle {
+    font-size: 28px;
+  }
+  
+  .ctaSubtitle {
+    font-size: 16px;
+  }
+  
+  .ctaButton {
+    padding: 14px 32px;
+    font-size: 16px;
+  }
+}
