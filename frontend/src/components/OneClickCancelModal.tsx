@@ -11,14 +11,28 @@ import {
   Download,
   Loader,
   User,
-  Calendar
+  Calendar,
+  Building2,
+  Sparkles
 } from "lucide-react";
 import styles from "../styles/OneClickCancelModal.module.css";
 
 interface Contract {
   _id: string;
   name: string;
-  provider?: string;
+  provider?: string | {
+    name?: string;
+    displayName?: string;
+    email?: string;
+    phone?: string;
+    address?: {
+      street?: string;
+      city?: string;
+      zip?: string;
+    };
+    category?: string;
+    confidence?: number;
+  };
   contractNumber?: string;
   customerNumber?: string;
   expiryDate?: string;
@@ -49,8 +63,12 @@ export default function OneClickCancelModal({
     customerAddress: "",
     customerEmail: "",
     customerPhone: "",
-    contractNumber: contract.contractNumber || "",
-    customerNumber: contract.customerNumber || "",
+    contractNumber: "",
+    customerNumber: "",
+    providerName: "",
+    providerEmail: "",
+    providerAddress: "",
+    providerPhone: "",
     cancellationReason: "better_offer",
     cancellationDate: "immediate",
     customDate: "",
@@ -61,20 +79,53 @@ export default function OneClickCancelModal({
   const [cancellationLetter, setCancellationLetter] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [providerDetected, setProviderDetected] = useState(false);
 
   useEffect(() => {
-    // Load user data from localStorage or API
-    const userData = JSON.parse(localStorage.getItem("userData") || "{}");
-    if (userData) {
+    if (show && contract) {
+      // Load user data from localStorage
+      const userData = JSON.parse(localStorage.getItem("userData") || "{}");
+      
+      // Extract provider information if available
+      let providerInfo: any = {};
+      if (contract.provider) {
+        if (typeof contract.provider === 'string') {
+          providerInfo.providerName = contract.provider;
+        } else if (typeof contract.provider === 'object') {
+          providerInfo.providerName = contract.provider.displayName || contract.provider.name || "";
+          providerInfo.providerEmail = contract.provider.email || "";
+          providerInfo.providerPhone = contract.provider.phone || "";
+          
+          if (contract.provider.address) {
+            const addr = contract.provider.address;
+            providerInfo.providerAddress = `${addr.street || ''}\n${addr.zip || ''} ${addr.city || ''}`.trim();
+          }
+          
+          // Mark as detected if confidence is high enough
+          if (contract.provider.confidence && contract.provider.confidence > 50) {
+            setProviderDetected(true);
+          }
+        }
+      }
+      
+      // Set all form data
       setFormData(prev => ({
         ...prev,
+        // User data
         customerName: userData.name || "",
         customerAddress: userData.address || "",
         customerEmail: userData.email || "",
-        customerPhone: userData.phone || ""
+        customerPhone: userData.phone || "",
+        // Contract data
+        contractNumber: contract.contractNumber || "",
+        customerNumber: contract.customerNumber || "",
+        // Provider data
+        ...providerInfo,
+        // Keep recipient email in sync
+        recipientEmail: providerInfo.providerEmail || ""
       }));
     }
-  }, []);
+  }, [show, contract]);
 
   const generateCancellationLetter = () => {
     const today = new Date().toLocaleDateString('de-DE');
@@ -92,13 +143,19 @@ export default function OneClickCancelModal({
       other: formData.additionalNotes
     }[formData.cancellationReason];
 
+    // Use detected provider name or placeholder
+    const providerName = formData.providerName || "[Anbieter]";
+    const providerAddress = formData.providerAddress || "[Adresse des Anbieters]";
+
     const letter = `
 ${formData.customerName}
 ${formData.customerAddress}
+${formData.customerEmail}
+${formData.customerPhone ? `Tel: ${formData.customerPhone}` : ''}
 
-${contract.provider || "[Anbieter]"}
+${providerName}
 Kundendienst
-[Adresse des Anbieters]
+${providerAddress}
 
 ${today}
 
@@ -150,6 +207,11 @@ ${formData.customerName}
     try {
       const token = localStorage.getItem("token");
       
+      // Use provider email if detected, otherwise use manually entered email
+      const finalRecipientEmail = formData.sendMethod === "email" 
+        ? (formData.recipientEmail || formData.providerEmail || "")
+        : "";
+      
       const response = await fetch("/api/cancellations/send", {
         method: "POST",
         headers: {
@@ -159,10 +221,10 @@ ${formData.customerName}
         body: JSON.stringify({
           contractId: contract._id,
           contractName: contract.name,
-          provider: contract.provider,
+          provider: formData.providerName || contract.provider,
           cancellationLetter,
           sendMethod: formData.sendMethod,
-          recipientEmail: formData.recipientEmail || contract.provider,
+          recipientEmail: finalRecipientEmail,
           customerData: {
             name: formData.customerName,
             email: formData.customerEmail,
@@ -173,7 +235,8 @@ ${formData.customerName}
             reason: formData.cancellationReason,
             cancellationDate: formData.cancellationDate,
             customDate: formData.customDate,
-            notes: formData.additionalNotes
+            notes: formData.additionalNotes,
+            providerDetected: providerDetected
           }
         })
       });
@@ -201,7 +264,6 @@ ${formData.customerName}
       }
     } catch (err) {
       console.error("Fehler beim Senden der Kündigung:", err);
-      // Typ-sichere Fehlerbehandlung
       const errorMessage = err instanceof Error 
         ? err.message 
         : "Fehler beim Senden der Kündigung";
@@ -250,6 +312,12 @@ ${formData.customerName}
               <div>
                 <h2>1-Klick Kündigung</h2>
                 <p>Kündigen Sie "{contract.name}" mit nur einem Klick</p>
+                {providerDetected && (
+                  <div className={styles.providerBadge}>
+                    <Sparkles size={14} />
+                    Anbieter automatisch erkannt: {formData.providerName}
+                  </div>
+                )}
               </div>
             </div>
             <button className={styles.closeBtn} onClick={onClose}>
@@ -321,6 +389,13 @@ ${formData.customerName}
                     Vertragsdaten
                   </h3>
                   
+                  {(formData.contractNumber || formData.customerNumber) && (
+                    <div className={styles.autoFilledNotice}>
+                      <CheckCircle size={16} />
+                      Daten wurden automatisch aus Ihrem Vertrag übernommen
+                    </div>
+                  )}
+                  
                   <div className={styles.formGrid}>
                     <div className={styles.formGroup}>
                       <label>Vertragsnummer</label>
@@ -328,7 +403,8 @@ ${formData.customerName}
                         type="text"
                         value={formData.contractNumber}
                         onChange={(e) => setFormData({...formData, contractNumber: e.target.value})}
-                        placeholder="Optional"
+                        placeholder={formData.contractNumber ? "" : "Optional"}
+                        className={formData.contractNumber ? styles.autoFilled : ""}
                       />
                     </div>
                     
@@ -338,10 +414,38 @@ ${formData.customerName}
                         type="text"
                         value={formData.customerNumber}
                         onChange={(e) => setFormData({...formData, customerNumber: e.target.value})}
-                        placeholder="Optional"
+                        placeholder={formData.customerNumber ? "" : "Optional"}
+                        className={formData.customerNumber ? styles.autoFilled : ""}
                       />
                     </div>
                   </div>
+                  
+                  {providerDetected && (
+                    <div className={styles.providerInfo}>
+                      <h4>
+                        <Building2 size={16} />
+                        Erkannter Anbieter
+                      </h4>
+                      <div className={styles.providerDetails}>
+                        <p><strong>{formData.providerName}</strong></p>
+                        {formData.providerAddress && (
+                          <p className={styles.providerAddress}>{formData.providerAddress}</p>
+                        )}
+                        {formData.providerEmail && (
+                          <p className={styles.providerContact}>
+                            <Mail size={14} />
+                            {formData.providerEmail}
+                          </p>
+                        )}
+                        {formData.providerPhone && (
+                          <p className={styles.providerContact}>
+                            <span>📞</span>
+                            {formData.providerPhone}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className={styles.formSection}>
@@ -438,12 +542,26 @@ ${formData.customerName}
                   {formData.sendMethod === "email" && (
                     <div className={styles.formGroup}>
                       <label>E-Mail des Anbieters</label>
-                      <input
-                        type="email"
-                        value={formData.recipientEmail}
-                        onChange={(e) => setFormData({...formData, recipientEmail: e.target.value})}
-                        placeholder="service@anbieter.de"
-                      />
+                      {providerDetected && formData.providerEmail ? (
+                        <div className={styles.providerEmailInfo}>
+                          <p>✓ E-Mail wird gesendet an:</p>
+                          <strong>{formData.providerEmail}</strong>
+                          <input
+                            type="email"
+                            value={formData.recipientEmail}
+                            onChange={(e) => setFormData({...formData, recipientEmail: e.target.value})}
+                            placeholder="Alternative E-Mail eingeben"
+                            className={styles.alternativeEmail}
+                          />
+                        </div>
+                      ) : (
+                        <input
+                          type="email"
+                          value={formData.recipientEmail}
+                          onChange={(e) => setFormData({...formData, recipientEmail: e.target.value})}
+                          placeholder="service@anbieter.de"
+                        />
+                      )}
                     </div>
                   )}
                 </div>
@@ -540,7 +658,7 @@ ${formData.customerName}
                 <h3>Kündigung erfolgreich!</h3>
                 <p>
                   {formData.sendMethod === "email" 
-                    ? `Die Kündigung wurde erfolgreich an ${formData.recipientEmail || contract.provider} gesendet.`
+                    ? `Die Kündigung wurde erfolgreich an ${formData.recipientEmail || formData.providerEmail || contract.provider} gesendet.`
                     : "Die Kündigung wurde erfolgreich erstellt und gespeichert."
                   }
                 </p>
