@@ -1,4 +1,4 @@
-// 📁 backend/services/calendarEvents.js
+// 📅 backend/services/calendarEvents.js
 const { ObjectId } = require("mongodb");
 
 /**
@@ -9,13 +9,43 @@ async function generateEventsForContract(db, contract) {
   const now = new Date();
   
   try {
-    // Parse contract dates
-    const expiryDate = contract.expiryDate ? new Date(contract.expiryDate) : null;
+    // 🔧 FIX: Flexible Feldnamen-Unterstützung für verschiedene Datenquellen
+    const expiryDate = contract.expiryDate 
+      ? new Date(contract.expiryDate) 
+      : contract.endDate 
+        ? new Date(contract.endDate)
+        : null;
+    
     const createdDate = new Date(contract.createdAt || contract.uploadedAt);
     
-    // Extract notice period from contract (defaults)
-    const noticePeriodDays = extractNoticePeriod(contract.kuendigung);
+    // 🔧 FIX: Extrahiere Notice Period aus verschiedenen Quellen
+    let noticePeriodDays = 90; // Default
+    
+    if (contract.cancellationPeriod) {
+      if (typeof contract.cancellationPeriod === 'object') {
+        // Neues Format vom contractAnalyzer
+        noticePeriodDays = contract.cancellationPeriod.inDays || 90;
+      } else if (typeof contract.cancellationPeriod === 'string') {
+        // String-Format
+        noticePeriodDays = extractNoticePeriod(contract.cancellationPeriod);
+      } else if (typeof contract.cancellationPeriod === 'number') {
+        // Direkte Anzahl Tage
+        noticePeriodDays = contract.cancellationPeriod;
+      }
+    } else if (contract.kuendigung) {
+      // Fallback auf altes Feld
+      noticePeriodDays = extractNoticePeriod(contract.kuendigung);
+    }
+    
     const autoRenewMonths = contract.autoRenewMonths || 12;
+    
+    // 🔧 DEBUG LOG
+    console.log(`📊 Event Generation für "${contract.name}":`, {
+      expiryDate: expiryDate?.toISOString(),
+      noticePeriodDays,
+      autoRenewMonths,
+      provider: contract.provider?.displayName || contract.provider || 'Unbekannt'
+    });
     
     if (expiryDate && expiryDate > now) {
       // 1. Kündigungsfenster öffnet
@@ -243,6 +273,9 @@ async function generateEventsForContract(db, contract) {
           updatedAt: new Date()
         });
       }
+    } else if (!expiryDate) {
+      // 🔧 FIX: Log wenn keine Daten vorhanden
+      console.log(`⚠️ Keine Ablaufdaten für "${contract.name}" gefunden. Events können nicht generiert werden.`);
     }
     
     // Speichere Events in DB (update or insert)
@@ -256,6 +289,8 @@ async function generateEventsForContract(db, contract) {
       // Füge neue Events ein
       const result = await db.collection("contract_events").insertMany(events);
       console.log(`✅ ${result.insertedCount} Events für Vertrag "${contract.name}" generiert`);
+    } else {
+      console.log(`ℹ️ Keine Events für "${contract.name}" generiert (keine relevanten Daten)`);
     }
     
   } catch (error) {
@@ -267,11 +302,29 @@ async function generateEventsForContract(db, contract) {
 
 /**
  * Extrahiert die Kündigungsfrist in Tagen aus dem Kündigungstext
+ * 🔧 FIX: Unterstützt jetzt Object-Format vom contractAnalyzer
  */
-function extractNoticePeriod(kuendigungsText) {
-  if (!kuendigungsText) return 90; // Default: 3 Monate
+function extractNoticePeriod(input) {
+  // Handle object format from contractAnalyzer
+  if (typeof input === 'object' && input !== null) {
+    if (input.inDays) return input.inDays;
+    if (input.value && input.unit) {
+      const multipliers = {
+        'days': 1,
+        'day': 1,
+        'weeks': 7,
+        'week': 7,
+        'months': 30,
+        'month': 30
+      };
+      return input.value * (multipliers[input.unit] || 30);
+    }
+  }
   
-  const text = kuendigungsText.toLowerCase();
+  // Handle string format (legacy)
+  if (!input || typeof input !== 'string') return 90; // Default: 3 Monate
+  
+  const text = input.toLowerCase();
   
   // Suche nach Mustern wie "3 Monate", "90 Tage", "6 Wochen"
   const patterns = [

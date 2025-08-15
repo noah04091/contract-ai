@@ -1624,8 +1624,16 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
         extractedProvider = providerAnalysis.data.provider;
         extractedContractNumber = providerAnalysis.data.contractNumber;
         extractedCustomerNumber = providerAnalysis.data.customerNumber;
-        extractedEndDate = providerAnalysis.data.endDate;
+        // WICHTIG: endDate nach expiryDate mappen!
+        extractedEndDate = providerAnalysis.data.endDate; 
         extractedCancellationPeriod = providerAnalysis.data.cancellationPeriod;
+
+        // Debug-Log hinzufügen
+        console.log(`📅 [${requestId}] Date extraction:`, {
+          endDate: extractedEndDate,
+          cancellationPeriod: extractedCancellationPeriod,
+          originalData: providerAnalysis.data
+     });
         
         console.log(`✅ [${requestId}] Provider detected:`, extractedProvider?.displayName || 'None');
         console.log(`📋 [${requestId}] Contract details:`, {
@@ -1873,7 +1881,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           kuendigung: extractedCancellationPeriod ? 
             `${extractedCancellationPeriod.value} ${extractedCancellationPeriod.unit}` : 
             "Unknown",
-          expiryDate: extractedEndDate || "",
+          expiryDate: extractedEndDate || null,  // null statt "" für Datums-Checks!
           status: "Active",
           
           // 📍 NEUE FELDER:
