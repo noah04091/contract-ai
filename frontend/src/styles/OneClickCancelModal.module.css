@@ -170,7 +170,7 @@
   font-family: inherit;
 }
 
-/* Send Method Grid */
+/* Send Method Grid - VERBESSERT MIT FARBIGEN LABELS */
 .sendMethodGrid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -197,18 +197,44 @@
   border-radius: 10px;
   background: white;
   transition: all 0.2s ease;
+  /* ✅ NEU: Immer farbig! */
+  color: #007aff;
+  font-weight: 500;
 }
 
-.radioLabel input[type="radio"]:checked + .radioContent {
-  border-color: #007aff;
-  background: rgba(0, 122, 255, 0.05);
+/* ✅ NEU: Icons immer in Farbe */
+.radioContent svg {
   color: #007aff;
 }
 
+/* Wenn ausgewählt: Stärkere Betonung */
+.radioLabel input[type="radio"]:checked + .radioContent {
+  border-color: #007aff;
+  background: linear-gradient(135deg, rgba(0, 122, 255, 0.08), rgba(0, 122, 255, 0.04));
+  color: #0051d5;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.15);
+}
+
+.radioLabel input[type="radio"]:checked + .radioContent svg {
+  color: #0051d5;
+}
+
+/* Hover-Effekt */
 .radioLabel:hover .radioContent {
   border-color: #007aff;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.15);
+  background: rgba(0, 122, 255, 0.02);
+}
+
+/* ✅ NEU: Nicht ausgewählte Option etwas gedimmt aber trotzdem farbig */
+.radioLabel input[type="radio"]:not(:checked) + .radioContent {
+  opacity: 0.85;
+}
+
+.radioLabel input[type="radio"]:not(:checked):hover + .radioContent {
+  opacity: 1;
 }
 
 /* Preview Step */
