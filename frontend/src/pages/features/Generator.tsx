@@ -138,7 +138,7 @@ const Generator: React.FC = () => {
                 <div className={styles.statLabel}>Vertragsvorlagen</div>
               </div>
               <div className={styles.statItem}>
-                <div className={styles.statNumber}> 10 Min</div>
+                <div className={styles.statNumber}> 2 Min</div>
                 <div className={styles.statLabel}>Erstellungszeit</div>
               </div>
               <div className={styles.statItem}>
