@@ -1,11 +1,18 @@
 /* FeaturePage.module.css - Gemeinsames Styling für alle Feature-Landingpages */
 
+/* Global Smooth Scrolling */
+:global(html) {
+  scroll-behavior: smooth;
+}
+
 /* Container */
 .featureContainer {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 120px 24px;
+  padding: 160px 24px 120px 24px;
   color: #333;
+  padding-top: calc(64px + 100px); /* Navbar height + extra space */
+  min-height: 100vh;
 }
 
 /* Hero Section */
@@ -14,6 +21,10 @@
   margin-bottom: 120px;
   position: relative;
   padding: 80px 0;
+  background: linear-gradient(180deg, #f8faff 0%, white 100%);
+  margin-top: -80px;
+  padding-top: 160px;
+  border-radius: 0 0 40px 40px;
 }
 
 .heroSection::after {
@@ -36,6 +47,23 @@
   margin-bottom: 32px;
   color: #007aff;
   animation: pulse 3s infinite;
+  box-shadow: 0 8px 32px rgba(0,122,255,0.15);
+}
+
+/* Floating animation for hero icon */
+@media (prefers-reduced-motion: no-preference) {
+  .heroIcon {
+    animation: float 6s ease-in-out infinite, pulse 3s infinite;
+  }
+}
+
+@keyframes float {
+  0%, 100% { 
+    transform: translateY(0);
+  }
+  50% { 
+    transform: translateY(-10px);
+  }
 }
 
 @keyframes pulse {
@@ -94,6 +122,11 @@
   color: #1d1d1f;
   text-align: center;
   position: relative;
+  transition: color 0.3s ease;
+}
+
+.sectionTitle:hover {
+  color: #007aff;
 }
 
 .sectionTitle::after {
@@ -124,11 +157,15 @@
   background: #f5f5f7;
   border-radius: 16px;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  border: 1px solid rgba(0,0,0,0.04);
 }
 
 .funktionItem:hover {
   transform: translateX(8px);
   box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  background: white;
+  border-color: rgba(0,122,255,0.1);
 }
 
 .funktionIcon {
@@ -141,6 +178,13 @@
   background: white;
   border-radius: 50%;
   color: #007aff;
+  box-shadow: 0 2px 8px rgba(0,122,255,0.15);
+  transition: all 0.3s ease;
+}
+
+.funktionItem:hover .funktionIcon {
+  transform: scale(1.1) rotate(10deg);
+  box-shadow: 0 4px 12px rgba(0,122,255,0.25);
 }
 
 .funktionText {
@@ -171,11 +215,15 @@
   border-radius: 16px;
   border-left: 4px solid #007aff;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  border: 1px solid rgba(0,0,0,0.06);
+  border-left: 4px solid #007aff;
 }
 
 .vorteilCard:hover {
   transform: translateY(-8px);
   box-shadow: 0 12px 32px rgba(0,0,0,0.12);
+  border-color: rgba(0,122,255,0.2);
 }
 
 .vorteilTitle {
@@ -204,6 +252,13 @@
   text-align: center;
   position: relative;
   border: 1px solid rgba(255,140,0,0.1);
+  box-shadow: 0 4px 20px rgba(255,140,0,0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.beispielBox:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(255,140,0,0.12);
 }
 
 .beispielIcon {
@@ -257,11 +312,25 @@
 /* Stats Section */
 .statsSection {
   margin-bottom: 120px;
-  background: #1d1d1f;
+  background: linear-gradient(135deg, #1d1d1f 0%, #2a2a2f 100%);
   padding: 80px 0;
   margin-left: -24px;
   margin-right: -24px;
   border-radius: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.statsSection::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 20% 80%, rgba(0,122,255,0.1) 0%, transparent 50%),
+              radial-gradient(circle at 80% 20%, rgba(64,156,255,0.1) 0%, transparent 50%);
+  pointer-events: none;
 }
 
 .statsGrid {
@@ -273,6 +342,16 @@
 
 .statItem {
   color: white;
+  padding: 20px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(10px);
+  transition: transform 0.3s ease, background 0.3s ease;
+}
+
+.statItem:hover {
+  transform: translateY(-5px);
+  background: rgba(255,255,255,0.08);
 }
 
 .statNumber {
@@ -284,6 +363,18 @@
   background-clip: text;
   color: transparent;
   margin-bottom: 8px;
+  animation: countUp 1.5s ease-out;
+}
+
+@keyframes countUp {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .statLabel {
@@ -305,6 +396,13 @@
   color: white;
   position: relative;
   overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,122,255,0.3);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.ctaCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 25px 70px rgba(0,122,255,0.4);
 }
 
 .ctaCard::before {
@@ -316,6 +414,17 @@
   height: 200%;
   background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
   animation: rotate 20s linear infinite;
+}
+
+.ctaCard::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,0.1) 0%, transparent 100%);
+  pointer-events: none;
 }
 
 @keyframes rotate {
@@ -352,27 +461,47 @@
   font-size: 18px;
   font-weight: 600;
   text-decoration: none;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   z-index: 1;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.ctaButton::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, #f0f0f0 0%, #e0e0e0 100%);
+  border-radius: 100px;
+  opacity: 0;
+  z-index: -1;
+  transition: opacity 0.3s ease;
 }
 
 .ctaButton:hover {
-  transform: translateY(-4px);
+  transform: translateY(-4px) scale(1.02);
   box-shadow: 0 12px 32px rgba(0,0,0,0.2);
+  color: #0056cc;
+}
+
+.ctaButton:hover::before {
+  opacity: 1;
 }
 
 /* Animation Classes */
 :global(.fadeInUp) {
   opacity: 0;
   transform: translateY(30px);
-  animation: fadeInUp 0.8s ease forwards;
+  animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 :global(.scaleIn) {
   opacity: 0;
   transform: scale(0.95);
-  animation: scaleIn 0.8s ease forwards;
+  animation: scaleIn 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 @keyframes fadeInUp {
@@ -389,15 +518,24 @@
   }
 }
 
+/* Smooth hover transitions for all interactive elements */
+* {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .featureContainer {
-    padding: 80px 20px;
+    padding: 140px 20px 80px 20px;
+    padding-top: calc(60px + 60px); /* Mobile navbar + space */
   }
   
   .heroSection {
     padding: 60px 0;
     margin-bottom: 80px;
+    margin-top: -60px;
+    padding-top: 120px;
+    border-radius: 0 0 24px 24px;
   }
   
   .heroIcon {

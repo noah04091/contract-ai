@@ -7,6 +7,7 @@ import PageLoader from "./components/PageLoader";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { AuthProvider } from "./context/AuthContext";
 import CookieConsentBanner from "./components/CookieConsentBanner";
+import ScrollToTop from "./components/ScrollToTop"; // ✅ NEU: ScrollToTop Component
 
 // 🔓 Öffentliche Seiten
 import HomeRedesign from "./pages/HomeRedesign";
@@ -25,6 +26,8 @@ import Success from "./pages/Success";
 import HelpCenter from "./pages/HelpCenter";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
+
+// 🌟 Feature-Landingpages
 import Vertragsanalyse from "./pages/features/Vertragsanalyse";
 import Optimierung from "./pages/features/Optimierung";
 import Fristen from "./pages/features/Fristen";
@@ -90,6 +93,7 @@ function AppWithLoader() {
 
   return (
     <ErrorBoundary>
+      <ScrollToTop /> {/* ✅ NEU: Scrollt bei Seitenwechsel automatisch nach oben */}
       <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
         {loading && <PageLoader />}
         <Navbar />
@@ -112,14 +116,14 @@ function AppWithLoader() {
             <Route path="/hilfe" element={<HelpCenter />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
+            
+            {/* 🌟 Feature-Landingpages (NEU) */}
             <Route path="/features/vertragsanalyse" element={<Vertragsanalyse />} />
             <Route path="/features/optimierung" element={<Optimierung />} />
             <Route path="/features/fristen" element={<Fristen />} />
             <Route path="/features/vergleich" element={<Vergleich />} />
             <Route path="/features/generator" element={<GeneratorPage />} />
             <Route path="/features/legalpulse" element={<LegalPulsePage />} />
-
-
 
             {/* 🔒 Geschützte Seiten */}
             <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
