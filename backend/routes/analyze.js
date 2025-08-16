@@ -1267,9 +1267,21 @@ async function saveContractWithUpload(userId, analysisData, fileInfo, pdfText, u
     const contract = {
       userId: new ObjectId(userId),
       name: analysisData.name || fileInfo.originalname || "Unknown",
-      laufzeit: analysisData.laufzeit || "Unknown",
-      kuendigung: analysisData.kuendigung || "Unknown",
-      expiryDate: analysisData.expiryDate || "",
+      
+      // Format Laufzeit (contract duration) - NULL if not found
+      laufzeit: analysisData.contractDuration ? 
+        `${analysisData.contractDuration.value} ${analysisData.contractDuration.unit}` : 
+        null,
+      
+      // Format Kündigungsfrist (cancellation period) - NULL if not found
+      kuendigung: analysisData.cancellationPeriod ? 
+        (analysisData.cancellationPeriod.type === 'daily' ? 'Täglich kündbar' :
+         analysisData.cancellationPeriod.type === 'end_of_period' ? 'Zum Ende der Laufzeit' :
+         `${analysisData.cancellationPeriod.value} ${analysisData.cancellationPeriod.unit}`) : 
+        null,
+      
+      startDate: analysisData.startDate || null, // 🆕 START DATE
+      expiryDate: analysisData.expiryDate || null,
       status: analysisData.status || "Active",
       
       // 🔍 ÄNDERUNG 5: Provider Detection Fields
@@ -1278,6 +1290,7 @@ async function saveContractWithUpload(userId, analysisData, fileInfo, pdfText, u
       customerNumber: analysisData.customerNumber || null,
       providerDetected: analysisData.providerDetected || false,
       providerConfidence: analysisData.providerConfidence || 0,
+      contractDuration: analysisData.contractDuration || null, // 🆕 CONTRACT DURATION object
       cancellationPeriod: analysisData.cancellationPeriod || null,
       isAutoRenewal: analysisData.isAutoRenewal || false, // 🆕 AUTO-RENEWAL
       
@@ -1342,11 +1355,13 @@ async function saveContractWithUpload(userId, analysisData, fileInfo, pdfText, u
       s3Key: contract.s3Key || 'none',
       s3Info: uploadInfo.s3Info ? 'present' : 'none',
       provider: contract.provider?.displayName || 'none', // 🔍 Provider log
-      isAutoRenewal: contract.isAutoRenewal // 🆕 AUTO-RENEWAL log
+      isAutoRenewal: contract.isAutoRenewal, // 🆕 AUTO-RENEWAL log
+      laufzeit: contract.laufzeit || 'none', // 🆕 DURATION log
+      kuendigung: contract.kuendigung || 'none' // 🆕 CANCELLATION log
     });
 
     const { insertedId } = await contractsCollection.insertOne(contract);
-    console.log(`✅ [ANALYZE] Contract saved with ID: ${insertedId}, s3Key: ${contract.s3Key || 'none'}, provider: ${contract.provider?.displayName || 'none'}, autoRenewal: ${contract.isAutoRenewal}`);
+    console.log(`✅ [ANALYZE] Contract saved with ID: ${insertedId}, provider: ${contract.provider?.displayName || 'none'}, laufzeit: ${contract.laufzeit || 'none'}, kuendigung: ${contract.kuendigung || 'none'}, autoRenewal: ${contract.isAutoRenewal}`);
     
     return { ...contract, _id: insertedId };
   } catch (error) {
@@ -1608,7 +1623,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
 
     const fullTextContent = pdfData.text;
     
-    // 🔍 ÄNDERUNG 2: PROVIDER DETECTION - Extract provider and contract details WITH AUTO-RENEWAL
+    // 🔍 ÄNDERUNG 2: PROVIDER DETECTION - Extract provider and contract details WITH AUTO-RENEWAL & DURATION
     console.log(`🔍 [${requestId}] Extracting provider and contract details...`);
     let extractedProvider = null;
     let extractedContractNumber = null;
@@ -1616,6 +1631,8 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
     let extractedEndDate = null;
     let extractedCancellationPeriod = null;
     let extractedIsAutoRenewal = null; // 🆕 AUTO-RENEWAL
+    let extractedContractDuration = null; // 🆕 CONTRACT DURATION (Laufzeit)
+    let extractedStartDate = null; // 🆕 START DATE
     
     try {
       const providerAnalysis = await contractAnalyzer.analyzeContract(
@@ -1627,13 +1644,17 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
         extractedProvider = providerAnalysis.data.provider;
         extractedContractNumber = providerAnalysis.data.contractNumber;
         extractedCustomerNumber = providerAnalysis.data.customerNumber;
+        extractedStartDate = providerAnalysis.data.startDate; // 🆕 START DATE
         extractedEndDate = providerAnalysis.data.endDate;
+        extractedContractDuration = providerAnalysis.data.contractDuration; // 🆕 CONTRACT DURATION
         extractedCancellationPeriod = providerAnalysis.data.cancellationPeriod;
         extractedIsAutoRenewal = providerAnalysis.data.isAutoRenewal || false; // 🆕 AUTO-RENEWAL
 
         // Debug-Log hinzufügen
         console.log(`📅 [${requestId}] Date extraction:`, {
+          startDate: extractedStartDate,
           endDate: extractedEndDate,
+          contractDuration: extractedContractDuration,
           cancellationPeriod: extractedCancellationPeriod,
           isAutoRenewal: extractedIsAutoRenewal, // 🆕 AUTO-RENEWAL
           originalData: providerAnalysis.data
@@ -1643,7 +1664,9 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
         console.log(`📋 [${requestId}] Contract details:`, {
           contractNumber: extractedContractNumber,
           customerNumber: extractedCustomerNumber,
+          startDate: extractedStartDate,
           endDate: extractedEndDate,
+          contractDuration: extractedContractDuration,
           cancellationPeriod: extractedCancellationPeriod,
           isAutoRenewal: extractedIsAutoRenewal // 🆕 AUTO-RENEWAL
         });
@@ -1724,7 +1747,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
 
     console.log(`🛠️ [${requestId}] FIXED Deep lawyer-level analysis successful, saving to DB...`);
 
-    // 🔍 ÄNDERUNG 3: UPDATE analysisData OBJECT WITH AUTO-RENEWAL
+    // 🔍 ÄNDERUNG 3: UPDATE analysisData OBJECT WITH AUTO-RENEWAL & DURATION
     const analysisData = {
       userId: req.user.userId,
       contractName: req.file.originalname,
@@ -1740,7 +1763,9 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       provider: extractedProvider,
       contractNumber: extractedContractNumber,
       customerNumber: extractedCustomerNumber,
+      startDate: extractedStartDate, // 🆕 START DATE
       expiryDate: extractedEndDate,
+      contractDuration: extractedContractDuration, // 🆕 CONTRACT DURATION
       cancellationPeriod: extractedCancellationPeriod,
       providerDetected: !!extractedProvider,
       providerConfidence: extractedProvider?.confidence || 0,
@@ -1795,14 +1820,28 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           filename: req.file.filename || req.file.key,
           uploadType: uploadInfo.uploadType,
           
-          // 🔍 Provider Detection Fields WITH AUTO-RENEWAL
+          // 🔍 Provider Detection Fields WITH AUTO-RENEWAL & DURATION
           provider: extractedProvider,
           contractNumber: extractedContractNumber,
           customerNumber: extractedCustomerNumber,
           providerDetected: !!extractedProvider,
           providerConfidence: extractedProvider?.confidence || 0,
+          
+          // Format strings for display
+          laufzeit: extractedContractDuration ? 
+            `${extractedContractDuration.value} ${extractedContractDuration.unit}` : 
+            null,
+          kuendigung: extractedCancellationPeriod ? 
+            (extractedCancellationPeriod.type === 'daily' ? 'Täglich kündbar' :
+             extractedCancellationPeriod.type === 'end_of_period' ? 'Zum Ende der Laufzeit' :
+             `${extractedCancellationPeriod.value} ${extractedCancellationPeriod.unit}`) : 
+            null,
+          
+          // Store objects for precise data
+          contractDuration: extractedContractDuration, // 🆕 CONTRACT DURATION object
           cancellationPeriod: extractedCancellationPeriod,
-          expiryDate: extractedEndDate,
+          startDate: extractedStartDate || null, // 🆕 START DATE
+          expiryDate: extractedEndDate || null,
           isAutoRenewal: extractedIsAutoRenewal || false, // 🆕 AUTO-RENEWAL
           
           // Enhanced metadata
@@ -1879,15 +1918,23 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
         }
         
       } else {
-        // 🔍 ÄNDERUNG 4: UPDATE contractAnalysisData WITH AUTO-RENEWAL
+        // 🔍 ÄNDERUNG 4: UPDATE contractAnalysisData WITH AUTO-RENEWAL & DURATION
         const contractAnalysisData = {
           name: Array.isArray(result.summary) ? req.file.originalname : req.file.originalname,
-          laufzeit: extractedCancellationPeriod ? 
-            `${extractedCancellationPeriod.value} ${extractedCancellationPeriod.unit}` : 
-            "Unknown",
+          
+          // Laufzeit (contract duration) - NULL if not found
+          laufzeit: extractedContractDuration ? 
+            `${extractedContractDuration.value} ${extractedContractDuration.unit}` : 
+            null,
+          
+          // Kündigungsfrist (cancellation period) - NULL if not found  
           kuendigung: extractedCancellationPeriod ? 
-            `${extractedCancellationPeriod.value} ${extractedCancellationPeriod.unit}` : 
-            "Unknown",
+            (extractedCancellationPeriod.type === 'daily' ? 'Täglich kündbar' :
+             extractedCancellationPeriod.type === 'end_of_period' ? 'Zum Ende der Laufzeit' :
+             `${extractedCancellationPeriod.value} ${extractedCancellationPeriod.unit}`) : 
+            null,
+          
+          startDate: extractedStartDate || null, // 🆕 START DATE
           expiryDate: extractedEndDate || null,  // null statt "" für Datums-Checks!
           status: "Active",
           
@@ -1897,6 +1944,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           customerNumber: extractedCustomerNumber,
           providerDetected: !!extractedProvider,
           providerConfidence: extractedProvider?.confidence || 0,
+          contractDuration: extractedContractDuration, // 🆕 CONTRACT DURATION object
           cancellationPeriod: extractedCancellationPeriod,
           isAutoRenewal: extractedIsAutoRenewal || false // 🆕 AUTO-RENEWAL
         };
@@ -1977,7 +2025,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
 
     console.log(`🛠️🎉 [${requestId}] FIXED Enhanced DEEP Lawyer-Level Analysis completely successful!`);
 
-    // 🔍 ÄNDERUNG 6: UPDATE responseData WITH AUTO-RENEWAL
+    // 🔍 ÄNDERUNG 6: UPDATE responseData WITH AUTO-RENEWAL & DURATION
     const responseData = { 
       success: true,
       message: `${validationResult.analysisMessage} auf höchstem Anwaltsniveau erfolgreich abgeschlossen`,
@@ -1989,11 +2037,23 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       provider: extractedProvider,
       contractNumber: extractedContractNumber,
       customerNumber: extractedCustomerNumber,
+      startDate: extractedStartDate, // 🆕 START DATE
       expiryDate: extractedEndDate,
+      contractDuration: extractedContractDuration, // 🆕 CONTRACT DURATION
       cancellationPeriod: extractedCancellationPeriod,
       providerDetected: !!extractedProvider,
       providerConfidence: extractedProvider?.confidence || 0,
       isAutoRenewal: extractedIsAutoRenewal || false, // 🆕 AUTO-RENEWAL
+      
+      // Formatted strings for display
+      laufzeit: extractedContractDuration ? 
+        `${extractedContractDuration.value} ${extractedContractDuration.unit}` : 
+        null,
+      kuendigung: extractedCancellationPeriod ? 
+        (extractedCancellationPeriod.type === 'daily' ? 'Täglich kündbar' :
+         extractedCancellationPeriod.type === 'end_of_period' ? 'Zum Ende der Laufzeit' :
+         `${extractedCancellationPeriod.value} ${extractedCancellationPeriod.unit}`) : 
+        null,
       
       // Enhanced response data (Frontend-compatible strings)
       documentType: validationResult.documentType || "UNKNOWN",
@@ -2134,7 +2194,7 @@ router.get("/history", verifyToken, async (req, res) => {
   }
 });
 
-// ✅ ENHANCED: Health Check with comprehensive S3 status + FIXED Deep Lawyer-Level Analysis + AUTO-RENEWAL
+// ✅ ENHANCED: Health Check with comprehensive S3 status + FIXED Deep Lawyer-Level Analysis + AUTO-RENEWAL + DURATION
 router.get("/health", async (req, res) => {
   // Re-test S3 connectivity for health check
   if (S3_CONFIGURED && s3Instance) {
@@ -2142,7 +2202,7 @@ router.get("/health", async (req, res) => {
   }
 
   const checks = {
-    service: "FIXED Enhanced DEEP Lawyer-Level Contract Analysis + S3 (AWS SDK v3) + GPT-4-Turbo + 7-Point Structure + Provider Detection + Calendar Events + Auto-Renewal",
+    service: "FIXED Enhanced DEEP Lawyer-Level Contract Analysis + S3 + Provider Detection WITHOUT Database + Auto-Renewal + Duration Extraction",
     status: "online",
     timestamp: new Date().toISOString(),
     openaiConfigured: !!process.env.OPENAI_API_KEY,
@@ -2160,10 +2220,13 @@ router.get("/health", async (req, res) => {
     features: {
       deepLawyerLevelAnalysis: true,
       lawyerLevelAnalysis: true, // Backward compatibility
-      providerDetection: true, // 🔍 NEW
+      providerDetectionWithoutDatabase: true, // 🔍 NO DATABASE!
       contractDataExtraction: true, // 🔍 NEW
       calendarEventsGeneration: true, // 🆕 NEW
       autoRenewalDetection: true, // 🆕 AUTO-RENEWAL
+      contractDurationExtraction: true, // 🆕 DURATION
+      dailyCancellationDetection: true, // 🆕 DAILY CANCELLATION
+      nullInsteadOfDefaults: true, // 🆕 NULL VALUES
       sevenPointStructure: true,
       simplifiedValidation: true, // ✅ FIXED: Less aggressive validation
       completenessGuarantee: true,
@@ -2188,7 +2251,7 @@ router.get("/health", async (req, res) => {
     },
     tokenLimits: MODEL_LIMITS,
     modelUsed: 'gpt-4-turbo', // ✅ NEW: Track which model is being used
-    version: "deep-lawyer-level-analysis-FIXED-v5.3-gpt4turbo-128k-provider-detection-calendar-events-auto-renewal"
+    version: "deep-lawyer-level-analysis-FIXED-v5.4-no-database-provider-detection-duration-daily-cancel"
   };
 
   try {
