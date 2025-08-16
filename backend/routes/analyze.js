@@ -171,7 +171,7 @@ const createUploadMiddleware = () => {
           const sanitizedFileName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
           const key = `contracts/${userId}/${timestamp}_${sanitizedFileName}`;
           
-          console.log(`📁 [S3] Generated S3 key: ${key}`);
+          console.log(`📍 [S3] Generated S3 key: ${key}`);
           cb(null, key);
         }
       }),
@@ -684,10 +684,10 @@ function calculateDeepLawyerScore(result, documentType) {
 }
 
 /**
- * 📄 Convert legacy format to new deep 7-point lawyer structure - UNCHANGED
+ * 🔄 Convert legacy format to new deep 7-point lawyer structure - UNCHANGED
  */
 function convertLegacyToDeepLawyerFormat(result, documentType, requestId) {
-  console.log(`📄 [${requestId}] Converting legacy format to deep lawyer structure`);
+  console.log(`🔄 [${requestId}] Converting legacy format to deep lawyer structure`);
   
   // ✅ Keep existing fields for backward compatibility
   const converted = {
@@ -907,7 +907,7 @@ async function validateAndAnalyzeDocument(filename, pdfText, pdfData, requestId)
         details: 'Das Dokument scheint gescannt zu sein. Eine OCR-Analyse könnte helfen.',
         suggestions: [
           '📄 Konvertiere die PDF in ein durchsuchbares Format (z.B. mit Adobe Acrobat)',
-          '📝 Öffne das Dokument in Word, das oft Text aus Scans erkennen kann',
+          '🔍 Öffne das Dokument in Word, das oft Text aus Scans erkennen kann',
           '🖨️ Erstelle eine neue PDF aus dem Originaldokument (falls verfügbar)',
           '🔍 Nutze ein Online-OCR-Tool (z.B. SmallPDF, PDF24) um Text zu extrahieren'
         ]
@@ -1042,7 +1042,7 @@ const createUserFriendlyPDFError = (textQuality, fileName, pages) => {
     message = `📸 This PDF appears to be scanned and contains only image data that we cannot currently analyze.`;
     suggestions = [
       "📄 Convert the PDF to a searchable format (e.g. with Adobe Acrobat)",
-      "📝 Open the document in Word, which can often recognize text from scans",
+      "🔍 Open the document in Word, which can often recognize text from scans",
       "🖨️ Create a new PDF from the original document (if available)",
       "🔍 Use an online OCR tool (e.g. SmallPDF, PDF24) to extract text",
       "⚡ For automatic scan recognition: Upgrade to Premium with OCR support"
@@ -1051,17 +1051,17 @@ const createUserFriendlyPDFError = (textQuality, fileName, pages) => {
     message = `📄 This PDF contains very little readable text (${textQuality.characterCount || 0} characters). For meaningful contract analysis, we need more text content.`;
     suggestions = [
       "📖 Ensure the PDF is complete and not corrupted",
-      "🔑 Check if the PDF is password protected or encrypted",
+      "🔒 Check if the PDF is password protected or encrypted",
       "🔍 If it's a scanned PDF, convert it to a text PDF",
       "📄 Upload a different version of the file (e.g. the original document)",
       "⚡ Try a different PDF file"
     ];
   } else if (isPossiblyProtected) {
-    message = `🔑 This PDF appears to be password protected or encrypted and cannot be read.`;
+    message = `🔒 This PDF appears to be password protected or encrypted and cannot be read.`;
     suggestions = [
       "🔓 Remove password protection and upload the PDF again",
       "📄 Export the document as a new, unprotected PDF",
-      "📝 Convert the PDF to Word and export it again as PDF",
+      "🔍 Convert the PDF to Word and export it again as PDF",
       "⚡ Try a different version of the file"
     ];
   } else {
@@ -1070,7 +1070,7 @@ const createUserFriendlyPDFError = (textQuality, fileName, pages) => {
       "📄 Check if the PDF file is complete and not corrupted",
       "📄 Try a different version or format (DOC, DOCX)",
       "🔍 Ensure the document contains sufficient text",
-      "🔑 Check if the PDF is password protected",
+      "🔒 Check if the PDF is password protected",
       "⚡ Try a different PDF file"
     ];
   }
@@ -1262,7 +1262,7 @@ const checkForDuplicate = async (fileHash, userId) => {
  * 💾 ENHANCED CONTRACT SAVING (S3 COMPATIBLE) - WITH PROVIDER DETECTION & AUTO-RENEWAL
  * Saves contract with appropriate upload info based on storage type
  */
-async function saveContractWithUpload(userId, analysisData, fileInfo, pdfText, uploadInfo) {
+async function saveContractWithUpload(userId, analysisData, fileInfo, pdfText, uploadInfo, fileHash) {
   try {
     const contract = {
       userId: new ObjectId(userId),
@@ -1302,6 +1302,7 @@ async function saveContractWithUpload(userId, analysisData, fileInfo, pdfText, u
       filePath: uploadInfo.fileUrl,
       mimetype: fileInfo.mimetype,
       size: fileInfo.size,
+      fileHash: fileHash, // Add file hash for duplicate detection
       
       uploadType: uploadInfo.uploadType,
       
@@ -1954,7 +1955,8 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           contractAnalysisData,
           req.file,
           fullTextContent,
-          uploadInfo
+          uploadInfo,
+          fileHash
         );
 
         await contractsCollection.updateOne(
@@ -2023,65 +2025,90 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       console.warn(`⚠️ [${requestId}] Counter update error:`, updateError.message);
     }
 
-    // ✅ CRITICAL FIX: Build complete response object
-    let contractId = existingContract?._id || null;  // ✅ let statt const!
-    let contractName = req.file.originalname;
-    let fileUrl = uploadInfo.fileUrl;
-    let s3Url = null;
-    
-    // Get contract details if saved
-    if (!existingContract) {
-      try {
-        const savedContract = await contractsCollection.findOne({
-          userId: new ObjectId(req.user.userId),
-          analysisId: inserted.insertedId
-        });
-        if (savedContract) {
-          contractId = savedContract._id;
-          contractName = savedContract.name;
-          fileUrl = savedContract.filePath;
-          s3Url = savedContract.s3Location || null;
-        }
-      } catch (err) {
-        console.warn(`⚠️ [${requestId}] Could not fetch saved contract:`, err.message);
-      }
-    }
-
     console.log(`🛠️🎉 [${requestId}] FIXED Enhanced DEEP Lawyer-Level Analysis completely successful!`);
 
-    // 📋 ÄNDERUNG 6: FINAL RESPONSE WITH expiryDate
-    res.status(200).json({
+    // ✅ KRITISCHER FIX: ORIGINAL RESPONSE-STRUKTUR OHNE "data" WRAPPER!
+    const responseData = { 
       success: true,
-      message: 'Vertrag erfolgreich analysiert',
-      data: {
-        _id: contractId,
-        name: contractName,
-        category: analysisData.documentType || 'CONTRACT',
-        provider: extractedProvider?.displayName || extractedProvider?.name || null,
-        contractNumber: extractedContractNumber || null,
-        customerNumber: extractedCustomerNumber || null,
-        laufzeit: extractedContractDuration ? 
-          `${extractedContractDuration.value} ${extractedContractDuration.unit}` : null,
-        kuendigung: extractedCancellationPeriod ? 
-          (extractedCancellationPeriod.type === 'daily' ? 'Täglich kündbar' :
-           extractedCancellationPeriod.type === 'end_of_period' ? 'Zum Ende der Laufzeit' :
-           `${extractedCancellationPeriod.value} ${extractedCancellationPeriod.unit}`) : null,
-        expiryDate: extractedEndDate || null,  // ✅ CRITICAL FIX: ADDED expiryDate!
-        startDate: extractedStartDate || null,  // ✅ ADDED startDate too
-        isAutoRenewal: extractedIsAutoRenewal || false,
-        fileUrl: fileUrl || s3Url,
-        analysisData: {
-          summary: result.summary,
-          legalAssessment: result.legalAssessment,
-          suggestions: result.suggestions,
-          comparison: result.comparison,
-          positiveAspects: result.positiveAspects,
-          criticalIssues: result.criticalIssues,
-          recommendations: result.recommendations,
-          contractScore: result.contractScore
-        }
+      message: `${validationResult.analysisMessage} auf höchstem Anwaltsniveau erfolgreich abgeschlossen`,
+      requestId,
+      uploadType: uploadInfo.uploadType,
+      fileUrl: uploadInfo.fileUrl,
+      
+      // 📋 ALLE FELDER DIREKT IM ROOT (KEIN data OBJEKT!)
+      provider: extractedProvider,
+      contractNumber: extractedContractNumber,
+      customerNumber: extractedCustomerNumber,
+      startDate: extractedStartDate,
+      expiryDate: extractedEndDate,
+      contractDuration: extractedContractDuration,
+      cancellationPeriod: extractedCancellationPeriod,
+      providerDetected: !!extractedProvider,
+      providerConfidence: extractedProvider?.confidence || 0,
+      isAutoRenewal: extractedIsAutoRenewal || false,
+      
+      // Formatted strings for display
+      laufzeit: extractedContractDuration ? 
+        `${extractedContractDuration.value} ${extractedContractDuration.unit}` : 
+        null,
+      kuendigung: extractedCancellationPeriod ? 
+        (extractedCancellationPeriod.type === 'daily' ? 'Täglich kündbar' :
+         extractedCancellationPeriod.type === 'end_of_period' ? 'Zum Ende der Laufzeit' :
+         `${extractedCancellationPeriod.value} ${extractedCancellationPeriod.unit}`) : 
+        null,
+      
+      // Enhanced response data
+      documentType: validationResult.documentType || "UNKNOWN",
+      analysisStrategy: validationResult.strategy || "DEEP_LAWYER_LEVEL_ANALYSIS", 
+      confidence: `${Math.round(validationResult.confidence * 100)}%`,
+      qualityScore: `${Math.round(validationResult.qualityScore * 100)}%`,
+      analysisMessage: validationResult.analysisMessage || "Tiefgehende anwaltliche Vertragsanalyse",
+      
+      deepLawyerLevelAnalysis: true,
+      lawyerLevelAnalysis: true,
+      analysisDepth: 'deep-lawyer-level',
+      structuredAnalysis: true,
+      completenessGuarantee: true,
+      modelUsed: 'gpt-4-turbo',
+      tokenOptimized: true,
+      substantialContent: true,
+      fixedVersion: 'v5',
+      
+      extractionInfo: {
+        method: 'deep-lawyer-level-analysis-FIXED-v5',
+        quality: analysisData.extractionQuality || 'excellent',
+        charactersExtracted: `${fullTextContent.length}`,
+        pageCount: `${validationResult.metrics.pageCount}`,
+        hasTabularData: validationResult.metrics.hasTabularData ? "true" : "false",
+        isStructured: validationResult.metrics.isStructured ? "true" : "false",
+        modelUsed: 'gpt-4-turbo',
+        tokenOptimized: "true",
+        substantialContent: "true"
+      },
+      
+      ...(uploadInfo.s3Info && {
+        s3Info: uploadInfo.s3Info
+      }),
+      
+      // ✅ WICHTIG: Result-Felder DIREKT im Root spreaden (kein data wrapper!)
+      ...result, 
+      
+      analysisId: inserted.insertedId,
+      usage: {
+        count: count + 1,
+        limit: limit,
+        plan: plan
       }
-    });
+    };
+
+    if (existingContract && req.body.forceReanalyze === 'true') {
+      responseData.isReanalysis = true;
+      responseData.originalContractId = existingContract._id;
+      responseData.message = `${validationResult.analysisMessage} auf höchstem Anwaltsniveau erfolgreich aktualisiert`;
+    }
+
+    // ✅ DIREKT responseData senden, KEIN data wrapper!
+    res.json(responseData);
 
   } catch (error) {
     console.error(`❌ [${requestId}] Error in FIXED enhanced deep lawyer-level analysis:`, {
@@ -2104,7 +2131,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
     } else if (error.message.includes("JSON") || error.message.includes("Parse")) {
       errorMessage = "Error in deep analysis processing.";
       errorCode = "PARSE_ERROR";
-    } else if (error.message.includes("PDF") || error.message.includes("File") || error.message.includes("password") || error.message.includes("📸") || error.message.includes("📄") || error.message.includes("🔑")) {
+    } else if (error.message.includes("PDF") || error.message.includes("File") || error.message.includes("password") || error.message.includes("📸") || error.message.includes("📄") || error.message.includes("🔒")) {
       errorMessage = error.message;
       errorCode = "PDF_ERROR";
     } else if (error.message.includes("Database") || error.message.includes("MongoDB")) {
@@ -2179,7 +2206,7 @@ router.get("/health", async (req, res) => {
   }
 
   const checks = {
-    service: "FIXED Enhanced DEEP Lawyer-Level Contract Analysis + S3 + Provider Detection WITHOUT Database + Auto-Renewal + Duration Extraction",
+    service: "FIXED Enhanced DEEP Lawyer-Level Contract Analysis + S3 + Provider Detection WITHOUT Database + Auto-Renewal + Duration Extraction + FIXED RESPONSE STRUCTURE",
     status: "online",
     timestamp: new Date().toISOString(),
     openaiConfigured: !!process.env.OPENAI_API_KEY,
@@ -2224,11 +2251,12 @@ router.get("/health", async (req, res) => {
       extendedTimeouts: true,
       gpt4TurboSupport: true, // ✅ NEW: GPT-4-Turbo support
       robustErrorHandling: true, // ✅ FIXED: Better error handling
-      syntaxErrorsFree: true // ✅ NEW: No syntax errors
+      syntaxErrorsFree: true, // ✅ NEW: No syntax errors
+      fixedResponseStructure: true // ✅ CRITICAL FIX: No data wrapper!
     },
     tokenLimits: MODEL_LIMITS,
     modelUsed: 'gpt-4-turbo', // ✅ NEW: Track which model is being used
-    version: "deep-lawyer-level-analysis-FIXED-v5.4-no-database-provider-detection-duration-daily-cancel-WITH-EXPIRY-DATE"
+    version: "deep-lawyer-level-analysis-FIXED-v5.5-response-structure-fixed"
   };
 
   try {
