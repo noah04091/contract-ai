@@ -339,8 +339,9 @@ class ContractAnalyzer {
   extractCancellationPeriod(text) {
     console.log('🔍 Extrahiere Kündigungsfrist...');
     
-    // Check for daily/immediate cancellation first
+    // PRIORITY 1: Check for daily/immediate cancellation FIRST (highest priority!)
     const dailyPatterns = [
+      /täglich[\s\(]/gi,  // "täglich" with space or bracket after
       /täglich\s+(?:kündbar|gekündigt|kündigen)/gi,
       /tägliche[rs]?\s+kündigungsrecht/gi,
       /jederzeit\s+(?:kündbar|gekündigt|kündigen)/gi,
@@ -349,34 +350,48 @@ class ContractAnalyzer {
       /täglich\s*\(jedoch\s+nicht\s+rückwirkend\)/gi
     ];
     
+    // Check for daily cancellation with higher priority
     for (const pattern of dailyPatterns) {
-      if (pattern.test(text)) {
-        console.log('✅ Tägliche Kündigung möglich!');
-        return {
-          value: 0,
-          unit: 'days',
-          inDays: 0,
-          type: 'daily'
-        };
+      const match = text.match(pattern);
+      if (match) {
+        // Check context around "täglich" to confirm it's about cancellation
+        const contextStart = Math.max(0, match.index - 50);
+        const contextEnd = Math.min(text.length, match.index + 100);
+        const context = text.substring(contextStart, contextEnd).toLowerCase();
+        
+        if (context.includes('kündig') || context.includes('vertrag')) {
+          console.log('✅ Tägliche Kündigung möglich! Found at position:', match.index);
+          return {
+            value: 0,
+            unit: 'days',
+            inDays: 0,
+            type: 'daily'
+          };
+        }
       }
     }
     
-    // Check for "end of contract period" cancellation
+    // PRIORITY 2: Only check for "end of period" if NO daily cancellation found
+    // This prevents "zum Ende der Vertragslaufzeit" from overriding "täglich"
     const endOfPeriodPatterns = [
       /zum\s+ende\s+der\s+(?:vertrags)?laufzeit/gi,
       /zum\s+ablauf\s+der\s+(?:vertrags)?laufzeit/gi,
       /ende\s+der\s+vertragslaufzeit/gi
     ];
     
-    for (const pattern of endOfPeriodPatterns) {
-      if (pattern.test(text)) {
-        console.log('✅ Kündigung zum Ende der Vertragslaufzeit möglich');
-        return {
-          value: 0,
-          unit: 'days',
-          inDays: 0,
-          type: 'end_of_period'
-        };
+    // Only check if text does NOT contain "täglich"
+    const hasDaily = /täglich/i.test(text);
+    if (!hasDaily) {
+      for (const pattern of endOfPeriodPatterns) {
+        if (pattern.test(text)) {
+          console.log('✅ Kündigung zum Ende der Vertragslaufzeit möglich');
+          return {
+            value: 0,
+            unit: 'days',
+            inDays: 0,
+            type: 'end_of_period'
+          };
+        }
       }
     }
     

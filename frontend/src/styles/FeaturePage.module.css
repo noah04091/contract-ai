@@ -9,30 +9,29 @@
 .featureContainer {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 160px 24px 120px 24px;
+  padding: 80px 24px 120px 24px;
   color: #333;
-  padding-top: calc(64px + 100px); /* Navbar height + extra space */
+  padding-top: calc(64px + 40px); /* Navbar height + extra space */
   min-height: 100vh;
 }
 
 /* Hero Section */
 .heroSection {
   text-align: center;
-  margin-bottom: 120px;
+  margin-bottom: 100px;
   position: relative;
-  padding: 80px 0;
-  background: linear-gradient(180deg, #f8faff 0%, white 100%);
-  margin-top: -80px;
-  padding-top: 160px;
-  border-radius: 0 0 40px 40px;
+  padding: 60px 20px;
+  background: white;
+  margin-top: 0;
+  padding-top: 120px;
 }
 
 .heroSection::after {
   content: '';
   display: block;
-  width: 48px;
+  width: 60px;
   height: 1px;
-  background: linear-gradient(90deg, rgba(0,122,255,0), rgba(0,122,255,1), rgba(0,122,255,0));
+  background: rgba(0, 0, 0, 0.1);
   margin: 60px auto 0;
 }
 
@@ -40,14 +39,14 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 120px;
-  height: 120px;
-  background: linear-gradient(135deg, rgba(0,122,255,0.1) 0%, rgba(64,156,255,0.1) 100%);
-  border-radius: 50%;
+  width: 100px;
+  height: 100px;
+  background: linear-gradient(135deg, #f5f5f7 0%, #e8e8ed 100%);
+  border-radius: 24px;
   margin-bottom: 32px;
   color: #007aff;
-  animation: pulse 3s infinite;
-  box-shadow: 0 8px 32px rgba(0,122,255,0.15);
+  animation: float 6s ease-in-out infinite;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
 }
 
 /* Floating animation for hero icon */
@@ -155,17 +154,17 @@
   gap: 20px;
   padding: 24px;
   background: #f5f5f7;
-  border-radius: 16px;
+  border-radius: 12px;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-  border: 1px solid rgba(0,0,0,0.04);
+  box-shadow: none;
+  border: 1px solid transparent;
 }
 
 .funktionItem:hover {
   transform: translateX(8px);
-  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
   background: white;
-  border-color: rgba(0,122,255,0.1);
+  border-color: rgba(0,0,0,0.08);
 }
 
 .funktionIcon {
@@ -197,7 +196,7 @@
 /* Vorteile Section */
 .vorteileSection {
   margin-bottom: 120px;
-  background: linear-gradient(135deg, #f0f9ff 0%, #e6f7ff 100%);
+  background: #f5f5f7;
   padding: 80px 0;
   margin-left: -24px;
   margin-right: -24px;
@@ -526,16 +525,14 @@
 /* Responsive Design */
 @media (max-width: 768px) {
   .featureContainer {
-    padding: 140px 20px 80px 20px;
-    padding-top: calc(60px + 60px); /* Mobile navbar + space */
+    padding: 60px 20px 80px 20px;
+    padding-top: calc(60px + 20px); /* Mobile navbar + space */
   }
   
   .heroSection {
-    padding: 60px 0;
-    margin-bottom: 80px;
-    margin-top: -60px;
-    padding-top: 120px;
-    border-radius: 0 0 24px 24px;
+    padding: 40px 20px;
+    margin-bottom: 60px;
+    padding-top: 80px;
   }
   
   .heroIcon {
