@@ -3631,3 +3631,10 @@ main,
   transform: none !important;
   z-index: 10;
 }
+
+/* Standard: Alle Feature-Icons weiß (funktioniert auf farbigen Pills am besten) */
+.feature-icon-wrapper .feature-icon svg {
+  color: #000000 !important;        /* steuert stroke via currentColor */
+  stroke: currentColor !important;  /* erzwingt Farbe aus 'color' */
+  fill: none !important;
+}
