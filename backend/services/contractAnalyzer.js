@@ -1,5 +1,6 @@
 // contractAnalyzer.js - Intelligent Contract Analysis WITHOUT Provider Database
 // PRINCIPLE: Better NULL than wrong data!
+// VERSION 9: IMPROVED DATE EXTRACTION
 // Place this in backend/services/contractAnalyzer.js
 
 class ContractAnalyzer {
@@ -32,11 +33,24 @@ class ContractAnalyzer {
         /(?:Customer|Member)[\s\-]*(?:number|no\.?)[\s:]+([A-Z0-9\-\/]+)/gi
       ],
 
-      // Dates - improved patterns
+      // IMPROVED Date patterns - MORE PATTERNS!
       dates: [
+        // Start date patterns
         /(?:BEGINN|Vertragsbeginn|Beginn|Versicherungsbeginn|Gültig\s+ab|ab\s+dem)[\s:]*(\d{1,2})[.\s]+(\d{1,2})[.\s]+(\d{2,4})/gi,
+        /(?:Start|Anfang|Startdatum|Vertragsdatum)[\s:]*(\d{1,2})[.\s]+(\d{1,2})[.\s]+(\d{2,4})/gi,
+        /(?:gültig\s+)?ab[\s:]*(\d{1,2})[.\s]+(\d{1,2})[.\s]+(\d{2,4})/gi,
+        
+        // End date patterns - ENHANCED!
         /(?:ABLAUF|Vertragsende|Ablauf|Laufzeit\s+bis|Gültig\s+bis|Befristet\s+bis|endet\s+am|läuft\s+ab\s+am)[\s:]*(\d{1,2})[.\s]+(\d{1,2})[.\s]+(\d{2,4})/gi,
-        /(\d{1,2})[.\s]+(\d{1,2})[.\s]+(\d{2,4})[\s]*(?:Ende|Ablauf|bis)/gi
+        /(?:Ende|Enddatum|Ablaufdatum|bis\s+zum)[\s:]*(\d{1,2})[.\s]+(\d{1,2})[.\s]+(\d{2,4})/gi,
+        /(\d{1,2})[.\s]+(\d{1,2})[.\s]+(\d{2,4})[\s]*(?:Ende|Ablauf|bis)/gi,
+        
+        // For insurance contracts - annual renewal patterns
+        /(?:jährlich\s+zum|jeweils\s+zum|verlängert\s+sich\s+zum)[\s:]*(\d{1,2})[.\s]+(\d{1,2})[.\s]+/gi,
+        /(?:Hauptfälligkeit|Fälligkeit)[\s:]*(\d{1,2})[.\s]+(\d{1,2})[.\s]+(\d{2,4})?/gi,
+        
+        // Generic date patterns with context
+        /(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{2,4})/g
       ],
       
       // Contract duration patterns (Laufzeit)
@@ -46,7 +60,10 @@ class ContractAnalyzer {
         /läuft\s+(?:zunächst\s+)?(\d+|ein|zwei|drei)\s*(jahr|monat|tag)/gi,
         /mindestlaufzeit[\s:]+(\d+)\s*(jahr|monat|tag)/gi,
         /erstlaufzeit[\s:]+(\d+)\s*(jahr|monat|tag)/gi,
-        /für\s+(\d+|ein|zwei|drei)\s*(jahr|monat)(?:e)?/gi
+        /für\s+(\d+|ein|zwei|drei)\s*(jahr|monat)(?:e)?/gi,
+        // Annual patterns for insurance
+        /jährlich(?:e)?(?:\s+verlängerung)?/gi,
+        /(?:verlängert\s+sich\s+)?(?:jeweils\s+)?(?:um\s+)?ein\s+jahr/gi
       ],
       
       // Cancellation period patterns (Kündigungsfrist) - ENHANCED
@@ -125,7 +142,9 @@ class ContractAnalyzer {
       { pattern: /\btk\b/gi, name: 'Techniker Krankenkasse', confidence: 80 },
       { pattern: /aok/gi, name: 'AOK', confidence: 85 },
       { pattern: /barmer/gi, name: 'Barmer', confidence: 85 },
-      { pattern: /dak/gi, name: 'DAK', confidence: 85 }
+      { pattern: /dak/gi, name: 'DAK', confidence: 85 },
+      { pattern: /bavariadirekt/gi, name: 'BavariaDirekt Versicherung AG', confidence: 95 },
+      { pattern: /bavaria\s*direkt/gi, name: 'BavariaDirekt Versicherung AG', confidence: 95 }
     ];
     
     // Check for special providers first
@@ -241,36 +260,110 @@ class ContractAnalyzer {
   }
 
   /**
-   * Extract all dates from text and determine start/end date
+   * ENHANCED: Extract all dates from text with better logic
    */
   extractDates(text) {
     let startDate = null;
     let endDate = null;
+    const allDates = [];
     
-    // Try all date patterns
+    // Collect ALL dates first
     for (const pattern of this.patterns.dates) {
       const matches = Array.from(text.matchAll(pattern));
       
       for (const match of matches) {
-        const dateStr = `${match[1]}.${match[2]}.${match[3]}`;
+        let dateStr;
+        
+        // Handle different capture groups based on pattern
+        if (match[3]) {
+          // Has year
+          dateStr = `${match[1]}.${match[2]}.${match[3]}`;
+        } else if (match[2]) {
+          // Missing year - assume current or next year
+          const currentYear = new Date().getFullYear();
+          dateStr = `${match[1]}.${match[2]}.${currentYear}`;
+        } else {
+          continue;
+        }
+        
         const date = this.parseGermanDate(dateStr);
+        if (!date || isNaN(date.getTime())) continue;
         
-        if (!date) continue;
+        // Get context around the date
+        const contextStart = Math.max(0, match.index - 100);
+        const contextEnd = Math.min(text.length, match.index + 100);
+        const context = text.substring(contextStart, contextEnd).toLowerCase();
         
-        // Check context to determine if it's start or end date
-        const context = text.substring(Math.max(0, match.index - 50), match.index);
+        allDates.push({
+          date,
+          context,
+          index: match.index,
+          isStart: false,
+          isEnd: false
+        });
+      }
+    }
+    
+    // Analyze dates and context
+    for (const dateInfo of allDates) {
+      const ctx = dateInfo.context;
+      
+      // Check for start date indicators
+      if (ctx.match(/(?:beginn|start|anfang|gültig\s+ab|ab\s+dem|versicherungsbeginn|vertragsbeginn)/i)) {
+        dateInfo.isStart = true;
+        if (!startDate) {
+          startDate = dateInfo.date;
+          console.log(`📅 Vertragsbeginn gefunden: ${startDate.toISOString()}`);
+        }
+      }
+      
+      // Check for end date indicators
+      if (ctx.match(/(?:ablauf|ende|enddatum|bis|läuft|endet|befristet|gültig\s+bis|hauptfälligkeit)/i)) {
+        dateInfo.isEnd = true;
+        if (!endDate) {
+          endDate = dateInfo.date;
+          console.log(`📅 Vertragsende gefunden: ${endDate.toISOString()}`);
+        }
+      }
+    }
+    
+    // FALLBACK: If we found dates but couldn't identify them
+    if (!startDate && !endDate && allDates.length > 0) {
+      // Sort dates
+      allDates.sort((a, b) => a.date - b.date);
+      
+      // For insurance contracts, check for annual patterns
+      const isInsurance = text.toLowerCase().includes('versicherung') || 
+                         text.toLowerCase().includes('police');
+      
+      if (isInsurance && allDates.length === 1) {
+        // Single date in insurance contract - likely start date with annual renewal
+        startDate = allDates[0].date;
         
-        if (context.match(/(?:BEGINN|beginn|ab|start|gültig\s+ab)/i)) {
-          if (!startDate) {
-            startDate = date;
-            console.log(`📅 Vertragsbeginn gefunden: ${startDate.toISOString()}`);
-          }
-        } else if (context.match(/(?:ABLAUF|ende|ablauf|bis|läuft|endet)/i)) {
-          if (!endDate) {
-            endDate = date;
-            console.log(`📅 Vertragsende gefunden: ${endDate.toISOString()}`);
+        // Calculate end date as 1 year from start
+        endDate = new Date(startDate);
+        endDate.setFullYear(endDate.getFullYear() + 1);
+        
+        console.log(`📅 Versicherung: Beginn ${startDate.toISOString()}, jährliche Verlängerung bis ${endDate.toISOString()}`);
+      } else if (allDates.length >= 2) {
+        // Multiple dates - first is likely start, last is likely end
+        startDate = allDates[0].date;
+        endDate = allDates[allDates.length - 1].date;
+        
+        // Sanity check: end should be after start
+        if (endDate <= startDate) {
+          // Maybe they're in wrong order or same date
+          if (allDates.length > 2) {
+            // Try middle date as end
+            endDate = allDates[Math.floor(allDates.length / 2)].date;
+          } else {
+            // Add 1 year to start as default duration
+            endDate = new Date(startDate);
+            endDate.setFullYear(endDate.getFullYear() + 1);
           }
         }
+        
+        console.log(`📅 Fallback: Beginn ${startDate.toISOString()}, Ende ${endDate.toISOString()}`);
       }
     }
     
@@ -283,12 +376,25 @@ class ContractAnalyzer {
   extractContractDuration(text) {
     console.log('🔍 Extrahiere Vertragslaufzeit...');
     
+    // Check for annual contracts first (common for insurance)
+    if (text.match(/jährlich(?:e)?(?:\s+verlängerung)?/gi) || 
+        text.match(/(?:verlängert\s+sich\s+)?(?:jeweils\s+)?(?:um\s+)?ein\s+jahr/gi)) {
+      console.log('✅ Jährliche Vertragslaufzeit erkannt');
+      return {
+        value: 1,
+        unit: 'years',
+        inMonths: 12
+      };
+    }
+    
     for (const pattern of this.patterns.contractDuration) {
       const matches = Array.from(text.matchAll(pattern));
       
       for (const match of matches) {
         let value = match[1];
-        const unit = match[2].toLowerCase();
+        const unit = match[2]?.toLowerCase();
+        
+        if (!unit) continue;
         
         // Convert text numbers to digits
         const textToNumber = {
@@ -327,6 +433,16 @@ class ContractAnalyzer {
           };
         }
       }
+    }
+    
+    // DEFAULT for insurance contracts
+    if (text.toLowerCase().includes('versicherung') || text.toLowerCase().includes('police')) {
+      console.log('✅ Standard-Versicherungslaufzeit: 1 Jahr');
+      return {
+        value: 1,
+        unit: 'years',
+        inMonths: 12
+      };
     }
     
     console.log('⚠️ Keine Vertragslaufzeit gefunden - returning NULL');
@@ -520,7 +636,7 @@ class ContractAnalyzer {
         console.log('❌ Kein Provider erkannt');
       }
       
-      // Date extraction
+      // Date extraction with ENHANCED logic
       const { startDate, endDate } = this.extractDates(text);
       console.log('📅 Extrahierte Daten:', {
         startDate: startDate?.toISOString() || 'nicht gefunden',
