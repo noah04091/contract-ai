@@ -2024,7 +2024,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
     }
 
     // ✅ CRITICAL FIX: Build complete response object
-    const contractId = existingContract?._id || null;
+    let contractId = existingContract?._id || null;  // ✅ let statt const!
     let contractName = req.file.originalname;
     let fileUrl = uploadInfo.fileUrl;
     let s3Url = null;
