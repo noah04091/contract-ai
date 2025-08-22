@@ -127,11 +127,13 @@ export default function Login() {
         throw new Error(data.message || "Login fehlgeschlagen");
       }
 
+      // ✅ CRITICAL FIX: Token NICHT mehr in localStorage speichern
+      // Cookie-Auth wird vom Backend gesetzt und automatisch mitgesendet
       if (data.token) {
-        localStorage.setItem("authToken", data.token);
+        console.log("✅ Auth-Cookie wurde vom Backend gesetzt");
+        // Nur Email für UI-Zwecke speichern
         localStorage.setItem("authEmail", email);
         localStorage.setItem("authTimestamp", String(Date.now()));
-        console.log("🔑 Token im localStorage gespeichert");
       }
 
       setNotification({ message: "Login erfolgreich", type: "success" });

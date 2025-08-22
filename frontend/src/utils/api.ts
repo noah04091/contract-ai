@@ -289,16 +289,13 @@ export const apiCall = async (
   options: RequestInit = {},
   retryCount: number = 0
 ): Promise<unknown> => {
-  const authToken = localStorage.getItem("authToken");
+  // ✅ CRITICAL FIX: Keine localStorage Token mehr - nur Cookie-Auth
   const isFormData = options.body instanceof FormData;
   const maxRetries = 2;
 
   const defaultHeaders: Record<string, string> = {
     Accept: "application/json",
     ...(isFormData ? {} : { "Content-Type": "application/json" }),
-    ...(authToken && !(options.headers && "Authorization" in options.headers)
-      ? { Authorization: `Bearer ${authToken}` }
-      : {}),
   };
 
   const mergedOptions: RequestInit = {
@@ -874,7 +871,9 @@ export const getDashboardStats = async (): Promise<unknown> => {
  * Löscht alle gespeicherten Authentifizierungsdaten
  */
 export const clearAuthData = (): void => {
+  // ✅ Legacy Token entfernen (falls noch vorhanden)
   localStorage.removeItem("authToken");
+  localStorage.removeItem("token");
   localStorage.removeItem("authEmail");
   localStorage.removeItem("authTimestamp");
 };

@@ -15,15 +15,15 @@ const PASSWORD_SALT_ROUNDS = 10;
 const RESET_TOKEN_EXPIRES_IN_MS = 1000 * 60 * 15;
 const COOKIE_NAME = "token";
 
-// ✅ FIXED: Cookie-Einstellungen gelockert für bessere Kompatibilität
+// ✅ FIXED: Cookie-Einstellungen für Cross-Domain mit Vercel Proxy
 const COOKIE_OPTIONS = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production', // ✅ Nur HTTPS in Production
-  sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax', // ✅ Weniger strikt in Development
+  sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax', // ✅ Cross-Domain in Production
   path: "/",
-  maxAge: 1000 * 60 * 60 * 2,
-  // ✅ Domain nur in Production setzen
-  ...(process.env.NODE_ENV === 'production' && { domain: ".contract-ai.de" })
+  maxAge: 1000 * 60 * 60 * 24, // ✅ 24h statt 2h für bessere UX
+  // ✅ WICHTIG: Domain OHNE Punkt für bessere Kompatibilität
+  ...(process.env.NODE_ENV === 'production' && { domain: "contract-ai.de" })
 };
 
 // 🔗 Collections werden dynamisch übergeben
@@ -120,7 +120,11 @@ router.post("/login", async (req, res) => {
     );
 
     // ✅ COOKIE-DEBUG: Log Cookie-Einstellungen
-    console.log("🍪 Setting Cookie with options:", COOKIE_OPTIONS);
+    console.log("🍪 Setting Cookie with options:", {
+      ...COOKIE_OPTIONS,
+      domain: COOKIE_OPTIONS.domain || 'not set',
+      env: process.env.NODE_ENV || 'development'
+    });
     res.cookie(COOKIE_NAME, token, COOKIE_OPTIONS);
     
     res.json({
@@ -324,8 +328,17 @@ router.post("/reset-password", async (req, res) => {
 
 // 🚪 Logout
 router.post("/logout", (req, res) => {
-  res.clearCookie(COOKIE_NAME, COOKIE_OPTIONS);
-  console.log("🍪 Logout erfolgreich – Cookie gelöscht");
+  // ✅ CRITICAL FIX: Cookie mit gleichen Optionen löschen wie beim Setzen
+  const clearOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
+    path: "/",
+    ...(process.env.NODE_ENV === 'production' && { domain: "contract-ai.de" })
+  };
+  
+  res.clearCookie(COOKIE_NAME, clearOptions);
+  console.log("🍪 Logout erfolgreich – Cookie gelöscht mit Options:", clearOptions);
   res.json({ message: "✅ Erfolgreich ausgeloggt" });
 });
 

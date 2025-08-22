@@ -52,7 +52,8 @@ const EMAIL_CONFIG = {
 const ALLOWED_ORIGINS = [
   "https://contract-ai.de",
   "https://www.contract-ai.de",
-  "http://localhost:3000",
+  "https://api.contract-ai.de",  // ✅ API-Domain für Direktzugriffe
+  "http://localhost:5173",  // ✅ Vite dev server port
 ];
 
 const API_BASE_URL = process.env.API_BASE_URL || (
@@ -85,7 +86,11 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// 🌍 Middleware (unchanged)
+// 🌍 Middleware
+// ✅ Trust proxy: 1 = vertraut dem ersten Proxy (Vercel/Render) für korrekte Client-IPs
+app.set('trust proxy', 1);
+
+// ✅ CORS mit Preflight-Support und credentials
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin || ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
@@ -93,6 +98,9 @@ app.use(cors({
     callback(null, false);
   },
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+  maxAge: 86400 // Preflight-Cache für 24h
 }));
 app.use(cookieParser());
 app.use(express.json());
@@ -124,20 +132,11 @@ app.use('/uploads', express.static(UPLOAD_PATH, {
       res.setHeader('Content-Disposition', 'attachment');
     }
     res.setHeader('Cache-Control', 'public, max-age=31536000');
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    // ✅ ENTFERNT: Access-Control-Allow-Origin (wird durch CORS middleware gehandhabt)
   }
 }));
 
-// CORS Header (unchanged)
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (origin && ALLOWED_ORIGINS.includes(origin)) {
-    res.header("Access-Control-Allow-Origin", origin);
-  }
-  res.header("Access-Control-Allow-Credentials", "true");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
-  next();
-});
+// ✅ ENTFERNT: Doppelte CORS-Header (bereits durch cors() Middleware gehandhabt)
 
 // Debug-Middleware (unchanged)
 app.use((req, res, next) => {

@@ -20,24 +20,14 @@ export interface UserData {
 
 export const fetchUserData = async (): Promise<UserData> => {
   try {
-    // ✅ Token aus localStorage holen (falls vorhanden)
-    const token = localStorage.getItem("token");
-    
-    // ✅ Headers vorbereiten
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-    };
-    
-    // ✅ Authorization Header hinzufügen (falls Token vorhanden)
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-      console.log("🔑 Using Authorization Header für /api/auth/me");
-    }
-
+    // ✅ CRITICAL FIX: Cookie-basierte Auth priorisieren, localStorage als Fallback
     const response = await fetch("/api/auth/me", {
       method: "GET",
-      credentials: "include", // ✅ Für Cookies (falls sie funktionieren)
-      headers,
+      credentials: "include", // ✅ WICHTIG: Cookies werden mitgesendet
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+      },
     });
 
     if (!response.ok) {
