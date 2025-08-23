@@ -1950,6 +1950,175 @@ a {
   }
 }
 
+/* Mobile optimizations for Contracts Management Section */
+@media (max-width: 768px) {
+  .contracts-management {
+    padding: 80px 20px;
+  }
+  
+  .contracts-management::before {
+    width: 400px;
+    height: 400px;
+    right: -200px;
+  }
+  
+  .cm-grid {
+    gap: 32px;
+  }
+  
+  .cm-text h2 {
+    font-size: 28px;
+    margin-bottom: 20px;
+  }
+  
+  .cm-subtext {
+    font-size: 16px;
+    line-height: 1.6;
+    margin-bottom: 32px;
+  }
+  
+  .cm-bullets {
+    gap: 16px;
+    margin-bottom: 36px;
+  }
+  
+  .cm-bullets li {
+    padding: 16px 20px;
+    gap: 12px;
+  }
+  
+  .cm-bullets li svg {
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+  }
+  
+  .cm-bullets li span {
+    font-size: 15px;
+    line-height: 1.4;
+  }
+  
+  .cm-btn-primary {
+    width: 100%;
+    padding: 14px 24px;
+    font-size: 15px;
+  }
+  
+  .cm-visual {
+    min-height: 240px;
+  }
+  
+  .cm-visual svg {
+    max-width: 90%;
+    margin: 0 auto;
+    display: block;
+  }
+}
+
+@media (max-width: 480px) {
+  .contracts-management {
+    padding: 64px 16px;
+  }
+  
+  .contracts-management::before {
+    width: 300px;
+    height: 300px;
+    right: -150px;
+    top: -30%;
+  }
+  
+  .cm-grid {
+    gap: 24px;
+  }
+  
+  .cm-text h2 {
+    font-size: 26px;
+    margin-bottom: 16px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+  }
+  
+  .cm-subtext {
+    font-size: 15px;
+    line-height: 1.5;
+    margin-bottom: 24px;
+  }
+  
+  .cm-bullets {
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+  
+  .cm-bullets li {
+    padding: 12px 16px;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  
+  .cm-bullets li:hover {
+    transform: none;
+  }
+  
+  .cm-bullets li svg {
+    width: 16px;
+    height: 16px;
+    min-width: 16px;
+    margin-top: 2px;
+  }
+  
+  .cm-bullets li span {
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  
+  .cm-bullets li strong {
+    font-weight: 600;
+    display: inline;
+  }
+  
+  .cm-cta {
+    margin-bottom: 8px;
+  }
+  
+  .cm-btn-primary {
+    width: 100%;
+    padding: 12px 20px;
+    font-size: 14px;
+    border-radius: 24px;
+  }
+  
+  .cm-btn-primary svg {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .cm-visual {
+    min-height: 200px;
+    padding: 0 10px;
+  }
+  
+  .cm-visual svg {
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+/* Extra small mobile adjustments */
+@media (max-width: 375px) {
+  .cm-text h2 {
+    font-size: 24px;
+  }
+  
+  .cm-bullets li {
+    padding: 10px 14px;
+  }
+  
+  .cm-bullets li span {
+    font-size: 13px;
+  }
+}
+
 /* === SHOWCASE SECTION === */
 .showcase-section {
   background-color: var(--bg-color);
