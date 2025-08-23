@@ -1741,6 +1741,215 @@ a {
   box-sizing: border-box;
 }
 
+/* === CONTRACTS MANAGEMENT SECTION === */
+.contracts-management {
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  padding: 120px 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.contracts-management::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -10%;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(61, 124, 243, 0.05) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.cm-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 60px;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+}
+
+.cm-text h2 {
+  font-size: 42px;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 24px;
+  background: linear-gradient(135deg, var(--text-color) 0%, var(--primary-color) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.cm-subtext {
+  font-size: 18px;
+  line-height: 1.7;
+  color: var(--text-light);
+  margin-bottom: 40px;
+}
+
+.cm-bullets {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 48px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.cm-bullets li {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  background: white;
+  border-radius: var(--radius-md);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.cm-bullets li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(180deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  opacity: 0;
+  transition: var(--transition);
+}
+
+.cm-bullets li:hover {
+  transform: translateX(8px);
+  box-shadow: 0 4px 16px rgba(61, 124, 243, 0.15);
+}
+
+.cm-bullets li:hover::before {
+  opacity: 1;
+}
+
+.cm-bullets li svg {
+  flex-shrink: 0;
+  color: var(--primary-color);
+}
+
+.cm-bullets li span {
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--text-color);
+}
+
+.cm-bullets li strong {
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.cm-cta {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.cm-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 32px;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: var(--radius-xl);
+  transition: var(--transition);
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.cm-btn-primary::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 300%;
+  height: 300%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+  transform: translate(-50%, -50%) scale(0);
+  transition: transform 0.5s ease;
+}
+
+.cm-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(61, 124, 243, 0.3);
+}
+
+.cm-btn-primary:hover::before {
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.cm-btn-primary svg {
+  transition: transform 0.3s ease;
+}
+
+.cm-btn-primary:hover svg {
+  transform: translateX(4px);
+}
+
+.cm-visual {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  position: relative;
+}
+
+.cm-visual svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Responsive Design */
+@media (min-width: 768px) {
+  .cm-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+  }
+  
+  .cm-text {
+    order: 1;
+  }
+  
+  .cm-visual {
+    order: 2;
+    min-height: 400px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .contracts-management {
+    padding: 160px 20px;
+  }
+  
+  .cm-text h2 {
+    font-size: 48px;
+  }
+  
+  .cm-subtext {
+    font-size: 20px;
+  }
+  
+  .cm-bullets li {
+    padding: 24px 32px;
+  }
+  
+  .cm-bullets li span {
+    font-size: 17px;
+  }
+}
+
 /* === SHOWCASE SECTION === */
 .showcase-section {
   background-color: var(--bg-color);
