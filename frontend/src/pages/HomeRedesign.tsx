@@ -604,6 +604,107 @@ const HomeRedesign = () => {
           </div>
         </section>
 
+        {/* Digitale Vertragsverwaltung Section */}
+        <section className="contracts-management" aria-labelledby="contracts-management-title">
+          <div className="section-container">
+            <div className="cm-grid">
+              <div className="cm-text">
+                <h2 id="contracts-management-title" className="reveal-text">📂 Digitale Vertragsverwaltung — Alles an einem Ort, jederzeit verfügbar</h2>
+                <p className="cm-subtext reveal-text">Speichern, organisieren und verwalten Sie all Ihre Verträge sicher in der Contract AI Cloud. Mit automatischen Erinnerungen, schneller Suche und DSGVO-konformer Speicherung behalten Sie jederzeit den Überblick — ob am Schreibtisch oder unterwegs.</p>
+                <ul className="cm-bullets reveal-block">
+                  <li>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M22 10v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2v1Z"></path>
+                    </svg>
+                    <span><strong>Zentrale Ablage:</strong> Alle Verträge sicher an einem Ort</span>
+                  </li>
+                  <li>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="11" cy="11" r="8"></circle>
+                      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <span><strong>Sofortiger Zugriff:</strong> Finden Sie Dokumente in Sekunden</span>
+                  </li>
+                  <li>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                      <line x1="16" y1="2" x2="16" y2="6"></line>
+                      <line x1="8" y1="2" x2="8" y2="6"></line>
+                      <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    <span><strong>Automatische Erinnerungen:</strong> Fristen nie wieder verpassen</span>
+                  </li>
+                  <li>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="11" width="18" height="10" rx="2" ry="2"></rect>
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
+                    <span><strong>100 % DSGVO-konform:</strong> Speicherung auf deutschen Servern</span>
+                  </li>
+                </ul>
+                <div className="cm-cta reveal-text">
+                  <Link to="/dashboard" className="cm-btn-primary" data-track="cta-upload-contracts">
+                    Jetzt Verträge hochladen
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M5 12h14"></path>
+                      <path d="m12 5 7 7-7 7"></path>
+                    </svg>
+                  </Link>
+                </div>
+              </div>
+              <div className="cm-visual" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="100%" height="100%">
+                  <defs>
+                    <linearGradient id="cm-gradient-1" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#3d7cf3" stopOpacity="0.1"/>
+                      <stop offset="100%" stopColor="#5c7eea" stopOpacity="0.3"/>
+                    </linearGradient>
+                    <linearGradient id="cm-gradient-2" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#4e20e4" stopOpacity="0.1"/>
+                      <stop offset="100%" stopColor="#8a4fff" stopOpacity="0.2"/>
+                    </linearGradient>
+                  </defs>
+                  
+                  {/* Background circles */}
+                  <circle cx="200" cy="150" r="120" fill="url(#cm-gradient-1)" opacity="0.4"/>
+                  <circle cx="250" cy="100" r="80" fill="url(#cm-gradient-2)" opacity="0.3"/>
+                  
+                  {/* Main folder icon */}
+                  <g transform="translate(150, 100)">
+                    <rect x="0" y="20" width="100" height="70" rx="8" fill="#3d7cf3" opacity="0.9"/>
+                    <path d="M0 20 L0 12 Q0 8 4 8 L30 8 L38 16 L96 16 Q100 16 100 20" fill="#5c7eea" opacity="0.9"/>
+                    
+                    {/* Document icons inside folder */}
+                    <rect x="15" y="35" width="20" height="25" rx="2" fill="white" opacity="0.9"/>
+                    <rect x="40" y="40" width="20" height="25" rx="2" fill="white" opacity="0.7"/>
+                    <rect x="65" y="45" width="20" height="25" rx="2" fill="white" opacity="0.5"/>
+                  </g>
+                  
+                  {/* Floating elements */}
+                  <g opacity="0.6">
+                    <circle cx="120" cy="80" r="4" fill="#f85ebd"/>
+                    <circle cx="320" cy="120" r="3" fill="#2ed573"/>
+                    <circle cx="280" cy="220" r="5" fill="#ff8c41"/>
+                    <circle cx="100" cy="200" r="3" fill="#8a4fff"/>
+                  </g>
+                  
+                  {/* Search icon */}
+                  <g transform="translate(270, 180)" opacity="0.7">
+                    <circle cx="15" cy="15" r="12" fill="none" stroke="#3d7cf3" strokeWidth="3"/>
+                    <line x1="24" y1="24" x2="32" y2="32" stroke="#3d7cf3" strokeWidth="3" strokeLinecap="round"/>
+                  </g>
+                  
+                  {/* Lock icon for security */}
+                  <g transform="translate(100, 140)" opacity="0.6">
+                    <rect x="0" y="10" width="24" height="18" rx="3" fill="#2ed573"/>
+                    <path d="M6 10 L6 6 Q6 0 12 0 Q18 0 18 6 L18 10" fill="none" stroke="#2ed573" strokeWidth="2"/>
+                  </g>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Extended Showcase Section with 6 New Features */}
         <section className="showcase-section" ref={(el) => registerSection('showcase', el)}>
           <div className="showcase-bg">
