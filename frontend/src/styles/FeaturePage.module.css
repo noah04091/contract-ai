@@ -604,3 +604,49 @@
     font-size: 16px;
   }
 }
+
+/* === Polishing: Buttons, Cards, Typography === */
+.hero { text-align: center; }
+.hero .lead { max-width: 820px; margin: 0 auto; }
+.badges { justify-content: center; }
+
+/* CTA-Gruppen (Hero & Sticky) */
+.ctaWrap { 
+  display: flex; 
+  gap: 12px; 
+  flex-wrap: wrap; 
+  justify-content: center; 
+  align-items: center;
+}
+.ctaWrap .btn { padding: 14px 18px; }
+
+@media (max-width: 768px) {
+  .ctaWrap { 
+    flex-direction: column; 
+    align-items: stretch; 
+  }
+  .ctaWrap .btn { width: 100%; }
+}
+
+@media (min-width: 1024px) {
+  .ctaWrap { justify-content: flex-start; }
+}
+
+/* Karten konsistent hoch, ohne starre Höhe */
+.grid { align-items: stretch; }
+.grid .card { 
+  height: 100%; 
+  display: flex; 
+  flex-direction: column; 
+  gap: 8px;
+}
+
+/* bessere Umbrüche für lange deutsche Wörter */
+.card h3, 
+.p, 
+.list li, 
+.h2 {
+  hyphens: auto; 
+  overflow-wrap: anywhere; 
+  word-break: normal;
+}
