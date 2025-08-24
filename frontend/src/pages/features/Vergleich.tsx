@@ -3,22 +3,25 @@ import { Link } from 'react-router-dom';
 import { useAuth } from "../../hooks/useAuth";
 import styles from "../../styles/FeaturePage.module.css";
 import Footer from "../../components/Footer";
-import "../../styles/landing.css";
+import { GitCompare, Target, BarChart3, AlertTriangle } from "lucide-react";
 
 const Vergleich: React.FC = () => {
   const { user } = useAuth();
+  const isAuthenticated = user && user.subscriptionActive;
+  const targetInApp = "/compare";
+  const target = isAuthenticated ? targetInApp : `/login?next=${encodeURIComponent(targetInApp)}`;
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    document.title = "Verträge intelligent vergleichen | Contract AI";
+    document.title = "Vertragsvergleich – Contract AI | Verträge verstehen, optimieren, absichern";
     
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
-      metaDescription.setAttribute('content', 'Welcher Vertrag ist besser? Finden Sie es heraus! Contract AI vergleicht Verträge und liefert klare Empfehlungen.');
+      metaDescription.setAttribute('content', 'KI-basierter Vertragsvergleich mit Diff-Ansicht, Fairness-Score & klarer Empfehlung. DSGVO-konform, Server in Frankfurt. Jetzt testen.');
     } else {
       const meta = document.createElement('meta');
       meta.name = 'description';
-      meta.content = 'Welcher Vertrag ist besser? Finden Sie es heraus! Contract AI vergleicht Verträge und liefert klare Empfehlungen.';
+      meta.content = 'KI-basierter Vertragsvergleich mit Diff-Ansicht, Fairness-Score & klarer Empfehlung. DSGVO-konform, Server in Frankfurt. Jetzt testen.';
       document.head.appendChild(meta);
     }
 
@@ -27,146 +30,266 @@ const Vergleich: React.FC = () => {
     };
   }, []);
 
-  const vorteile = [
-    {
-      title: "Klarheit",
-      description: "Keine versteckten Unterschiede mehr"
-    },
-    {
-      title: "Entscheidungshilfe",
-      description: "Für Kauf, Miete, Dienstleistung"
-    },
-    {
-      title: "Objektiv",
-      description: "KI-Bewertung statt Bauchgefühl"
-    }
-  ];
-
-  const funktionen = [
-    "Zeigt Unterschiede visuell nebeneinander",
-    "Bewertet Fairness und Risiken",
-    "Gibt eine klare Handlungsempfehlung"
-  ];
-
   return (
     <>
       <div className={styles.featureContainer}>
         
-        {/* Hero Section */}
+        {/* HERO */}
         <section className={styles.heroSection}>
           <div className={styles.heroIcon}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 3H3v18h18V3z"></path>
-              <path d="M9 3v18"></path>
-              <path d="M3 9h18"></path>
-            </svg>
+            <GitCompare size={64} />
           </div>
-          <h1 className={`${styles.heroTitle} fadeInUp`}>
-            Welcher Vertrag ist besser? <br />
-            <span className={styles.heroTitleHighlight}>Finden Sie es heraus!</span>
+          <h1 className={styles.heroTitle}>
+            Welcher Vertrag ist besser? <span className={styles.heroTitleHighlight}>Die KI zeigt es Ihnen</span>
           </h1>
-          <p className={`${styles.heroSubtitle} fadeInUp`} style={{ animationDelay: '0.1s' }}>
-            Manchmal ist der Unterschied zwischen zwei Verträgen nicht auf den ersten Blick erkennbar. 
-            Unsere KI vergleicht beide und liefert Ihnen eine klare Empfehlung.
+          <p className={styles.heroSubtitle}>
+            Lassen Sie zwei Verträge gegeneinander antreten. Wir visualisieren die Unterschiede, bewerten Fairness & Risiko und geben eine klare Empfehlung.
           </p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginTop: '24px', justifyContent: 'center' }}>
+            <Link to={target} className={styles.ctaButton} aria-label="Verträge vergleichen">
+              Verträge vergleichen
+            </Link>
+            <a href="#so-funktionierts" style={{ background: 'rgba(255,255,255,0.1)', color: '#007aff', border: '1px solid rgba(0,122,255,0.3)', padding: '12px 16px', borderRadius: '12px', fontWeight: '600', textDecoration: 'none' }} aria-label="Wie der Vergleich arbeitet">
+              Wie der Vergleich arbeitet
+            </a>
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', marginTop: '24px', justifyContent: 'center', fontSize: '14px', color: '#666' }}>
+            <span>📊 Diff-Ansicht</span>
+            <span>⚖️ Fairness-Score</span>
+            <span>✅ Empfehlung</span>
+          </div>
         </section>
-        
-        {/* Was es macht Section */}
-        <section className={styles.funktionSection}>
-          <div className={`${styles.contentContainer} fadeInUp`} style={{ animationDelay: '0.2s' }}>
-            <h2 className={styles.sectionTitle}>Was es macht</h2>
+
+        <div className={styles.contentContainer}>
+          
+          {/* PAIN */}
+          <section className={styles.funktionSection}>
+            <h2 className={styles.sectionTitle}>Kleine Unterschiede, große Wirkung</h2>
             <div className={styles.funktionGrid}>
-              {funktionen.map((funktion, index) => (
-                <div key={index} className={`${styles.funktionItem} fadeInUp`} style={{ animationDelay: `${0.3 + index * 0.1}s` }}>
-                  <div className={styles.funktionIcon}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                  </div>
-                  <p className={styles.funktionText}>{funktion}</p>
+              <div className={styles.funktionItem}>
+                <div className={styles.funktionIcon}>
+                  <AlertTriangle size={20} />
                 </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Vorteile Section */}
-        <section className={styles.vorteileSection}>
-          <div className={`${styles.contentContainer} fadeInUp`} style={{ animationDelay: '0.4s' }}>
-            <h2 className={styles.sectionTitle}>Ihre Vorteile</h2>
-            <div className={styles.vorteileGrid}>
-              {vorteile.map((vorteil, index) => (
-                <div key={index} className={`${styles.vorteilCard} fadeInUp`} style={{ animationDelay: `${0.5 + index * 0.1}s` }}>
-                  <h3 className={styles.vorteilTitle}>{vorteil.title}</h3>
-                  <p className={styles.vorteilText}>{vorteil.description}</p>
+                <p className={styles.funktionText}>
+                  Zwei Dokumente wirken ähnlich – aber Abweichungen bei Kündigungsfristen, Haftung, Kosten oder Leistungsumfang haben spürbare Folgen. Als Mieter zahlen Sie womöglich 200€ mehr Nebenkosten pro Jahr, als Freelancer warten Sie 30 Tage länger auf Ihr Geld, als Unternehmer tragen Sie unnötige Haftungsrisiken.
+                </p>
+              </div>
+              <div className={styles.funktionItem}>
+                <div className={styles.funktionIcon}>
+                  <Target size={20} />
                 </div>
-              ))}
+                <p className={styles.funktionText}>
+                  Der Vergleich macht Unterschiede transparent und hilft, sicher zu entscheiden. Keine stundenlangen Tabellen-Kämpfe, kein Raten bei komplizierten Klauseln – die KI analysiert beide Verträge systematisch und gibt eine nachvollziehbare Empfehlung basierend auf Ihren Prioritäten.
+                </p>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
 
-        {/* Beispiel Section */}
-        <section className={styles.beispielSection}>
-          <div className={`${styles.contentContainer} fadeInUp`} style={{ animationDelay: '0.6s' }}>
-            <h2 className={styles.sectionTitle}>Praxisbeispiel</h2>
+          {/* SOLUTION */}
+          <section className={styles.funktionSection}>
+            <h2 className={styles.sectionTitle}>Die Lösung: Intelligenter Vertragsvergleich mit visueller Diff-Ansicht</h2>
+            <p className={styles.funktionText} style={{ fontSize: '18px', lineHeight: '1.6', marginBottom: '24px' }}>
+              Contract AI stellt beide Verträge nebeneinander dar und markiert automatisch alle relevanten Unterschiede. Die KI bewertet nicht nur die offensichtlichen Abweichungen, sondern analysiert auch die Auswirkungen auf Fairness, Risiko und Kosten – über mehrere Dimensionen hinweg.
+            </p>
+            <ul style={{ fontSize: '16px', lineHeight: '1.7', maxWidth: '800px', margin: '0 auto' }}>
+              <li style={{ margin: '12px 0', color: '#2a3440' }}>📊 <strong>Visualisierte Unterschiede:</strong> Abschnitte werden nebeneinander dargestellt und Abweichungen hervorgehoben</li>
+              <li style={{ margin: '12px 0', color: '#2a3440' }}>⚖️ <strong>Fairness-Score:</strong> KI bewertet, wie ausgewogen die Verträge sind – über Kündigung, Zahlung, Haftung, Klarheit</li>
+              <li style={{ margin: '12px 0', color: '#2a3440' }}>🎯 <strong>Präferenz-basierte Empfehlung:</strong> Basierend auf Ihren Prioritäten (Flexibilität vs. Preis) mit Begründung</li>
+              <li style={{ margin: '12px 0', color: '#2a3440' }}>🔧 <strong>What-if-Analyse:</strong> Ändern Sie Parameter um zu sehen, wie sich die Bewertung verschiebt</li>
+            </ul>
+          </section>
+
+          {/* HOW IT WORKS */}
+          <section id="so-funktionierts" className={styles.funktionSection}>
+            <h2 className={styles.sectionTitle}>So funktioniert's – in 3 Schritten</h2>
+            <div className={styles.funktionGrid}>
+              <div className={styles.funktionItem}>
+                <div className={styles.funktionIcon}>
+                  <span style={{ fontSize: '20px', fontWeight: 'bold', color: '#007aff' }}>1</span>
+                </div>
+                <p className={styles.funktionText}>
+                  <strong>Beide Verträge hochladen:</strong> PDF oder DOCX der beiden Alternativen hochladen – sicher verschlüsselt auf EU-Servern verarbeitet.
+                </p>
+              </div>
+              <div className={styles.funktionItem}>
+                <div className={styles.funktionIcon}>
+                  <span style={{ fontSize: '20px', fontWeight: 'bold', color: '#007aff' }}>2</span>
+                </div>
+                <p className={styles.funktionText}>
+                  <strong>KI-Vergleich & Bewertung:</strong> Intelligente Analyse aller Unterschiede, Fairness-Bewertung und Risiko-Assessment für beide Optionen.
+                </p>
+              </div>
+              <div className={styles.funktionItem}>
+                <div className={styles.funktionIcon}>
+                  <span style={{ fontSize: '20px', fontWeight: 'bold', color: '#007aff' }}>3</span>
+                </div>
+                <p className={styles.funktionText}>
+                  <strong>Empfehlung mit Begründung:</strong> Klare Visualisierung der Unterschiede plus konkrete Handlungsempfehlung basierend auf Ihren Präferenzen.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* FEATURES GRID */}
+          <section className={styles.vorteileSection}>
+            <div className={styles.contentContainer}>
+              <h2 className={styles.sectionTitle}>Funktionen im Überblick</h2>
+              <div className={styles.vorteileGrid}>
+                <div className={styles.vorteilCard}>
+                  <h3 className={styles.vorteilTitle}>Side-by-Side Diff-View</h3>
+                  <p className={styles.vorteilText}>Beide Verträge nebeneinander mit farblicher Markierung aller Unterschiede – sofort erkennbar.</p>
+                </div>
+                <div className={styles.vorteilCard}>
+                  <h3 className={styles.vorteilTitle}>Multi-Dimensionaler Score</h3>
+                  <p className={styles.vorteilText}>Bewertung über Fairness, Flexibilität, Kostenklarheit, Risiko und Verständlichkeit.</p>
+                </div>
+                <div className={styles.vorteilCard}>
+                  <h3 className={styles.vorteilTitle}>Smarte Empfehlungslogik</h3>
+                  <p className={styles.vorteilText}>KI berücksichtigt Ihre Präferenzen und gibt eine begründete, nachvollziehbare Empfehlung.</p>
+                </div>
+                <div className={styles.vorteilCard}>
+                  <h3 className={styles.vorteilTitle}>Kosten-Nutzen-Analyse</h3>
+                  <p className={styles.vorteilText}>Quantifiziert finanzielle Auswirkungen der Unterschiede auf Basis der Vertragslaufzeit.</p>
+                </div>
+                <div className={styles.vorteilCard}>
+                  <h3 className={styles.vorteilTitle}>Verhandlungs-Insights</h3>
+                  <p className={styles.vorteilText}>Zeigt auf, welche Klauseln aus dem besseren Vertrag übernommen werden sollten.</p>
+                </div>
+                <div className={styles.vorteilCard}>
+                  <h3 className={styles.vorteilTitle}>Export & Dokumentation</h3>
+                  <p className={styles.vorteilText}>Vergleichsergebnis als PDF exportieren und für Entscheidungsprozesse teilen.</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* USE CASES */}
+          <section className={styles.beispielSection}>
+            <h2 className={styles.sectionTitle}>Typische Entscheidungen</h2>
+            <div style={{ display: 'grid', gap: '20px', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', marginBottom: '40px' }}>
+              <div style={{ background: '#f8fbff', border: '1px dashed #d7e0ef', borderRadius: '14px', padding: '20px' }}>
+                <h3 style={{ margin: '0 0 12px', color: '#1d1d1f' }}>Mietvertrag A vs. B</h3>
+                <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#666' }}>B hat niedrigere Nebenkosten und kürzere Fristen</p>
+                <p style={{ margin: '0', fontSize: '14px', color: '#333' }}><strong>→ Empfehlung: B</strong></p>
+              </div>
+              <div style={{ background: '#f8fbff', border: '1px dashed #d7e0ef', borderRadius: '14px', padding: '20px' }}>
+                <h3 style={{ margin: '0 0 12px', color: '#1d1d1f' }}>Jobangebot</h3>
+                <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#666' }}>A: 28 Urlaubstage, B: 24 + Remote-Option</p>
+                <p style={{ margin: '0', fontSize: '14px', color: '#333' }}><strong>→ Abhängig von Präferenzprofil</strong></p>
+              </div>
+              <div style={{ background: '#f8fbff', border: '1px dashed #d7e0ef', borderRadius: '14px', padding: '20px' }}>
+                <h3 style={{ margin: '0 0 12px', color: '#1d1d1f' }}>Lieferantenvertrag</h3>
+                <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#666' }}>A: bessere Preise, B: bessere SLA</p>
+                <p style={{ margin: '0', fontSize: '14px', color: '#333' }}><strong>→ A + SLA-Klausel aus B übernehmen</strong></p>
+              </div>
+              <div style={{ background: '#f8fbff', border: '1px dashed #d7e0ef', borderRadius: '14px', padding: '20px' }}>
+                <h3 style={{ margin: '0 0 12px', color: '#1d1d1f' }}>SaaS-Angebote</h3>
+                <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#666' }}>A: günstiger, B: flexible Kündigung</p>
+                <p style={{ margin: '0', fontSize: '14px', color: '#333' }}><strong>→ B bei hoher Planungsunsicherheit</strong></p>
+              </div>
+            </div>
             <div className={styles.beispielBox}>
               <div className={styles.beispielIcon}>
-                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M9 11l3 3L22 4"></path>
-                  <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"></path>
-                </svg>
+                <BarChart3 size={32} />
               </div>
-              <blockquote className={styles.beispielText}>
-                „Vertrag B hat kürzere Kündigungsfristen und niedrigere Nebenkosten – 
-                Empfehlung: Vertrag B."
-              </blockquote>
+              <p className={styles.beispielText}>
+                "Der Vergleich hat uns 3 Stunden Recherche gespart und eine objektive Basis für die Entscheidung gegeben. Genau das, was wir brauchten."
+              </p>
               <p className={styles.beispielHinweis}>
-                Klare Entscheidungshilfe auf einen Blick
+                Feedback einer Geschäftsführerin beim Anbietervergleich
               </p>
             </div>
-          </div>
-        </section>
+          </section>
 
-        {/* Stats Section */}
-        <section className={styles.statsSection}>
-          <div className={`${styles.contentContainer} fadeInUp`} style={{ animationDelay: '0.7s' }}>
-            <div className={styles.statsGrid}>
-              <div className={styles.statItem}>
-                <div className={styles.statNumber}>2-3 Min</div>
-                <div className={styles.statLabel}>Vergleichsdauer</div>
-              </div>
-              <div className={styles.statItem}>
-                <div className={styles.statNumber}>95%</div>
-                <div className={styles.statLabel}>Genauigkeit</div>
-              </div>
-              <div className={styles.statItem}>
-                <div className={styles.statNumber}>50+</div>
-                <div className={styles.statLabel}>Vergleichskriterien</div>
+          {/* DIFFERENTIATION */}
+          <section className={styles.funktionSection}>
+            <h2 className={styles.sectionTitle}>Warum Contract AI?</h2>
+            <ul style={{ fontSize: '16px', lineHeight: '1.7', maxWidth: '800px', margin: '0 auto' }}>
+              <li style={{ margin: '12px 0', color: '#2a3440' }}>🔍 <strong>Detailgenaue Diff-Ansicht</strong> statt oberflächlicher Checklisten – jede relevante Abweichung wird erfasst</li>
+              <li style={{ margin: '12px 0', color: '#2a3440' }}>🇪🇺 <strong>Server in Deutschland (Frankfurt)</strong>, volle DSGVO-Konformität und EU-Datenschutz</li>
+              <li style={{ margin: '12px 0', color: '#2a3440' }}>🎯 <strong>Präferenz-basierte Bewertung:</strong> Empfehlungen passend zu Ihren individuellen Prioritäten</li>
+              <li style={{ margin: '12px 0', color: '#2a3440' }}>📊 <strong>Multi-Dimensionaler Score</strong> – nicht nur Preis, sondern Fairness, Flexibilität, Risiko und Klarheit</li>
+              <li style={{ margin: '12px 0', color: '#2a3440' }}>💡 <strong>Verhandlungsoptimierte Insights:</strong> Zeigt konkret, welche Klauseln übernommen werden sollten</li>
+            </ul>
+          </section>
+
+          {/* SECURITY */}
+          <section className={styles.statsSection}>
+            <div className={styles.contentContainer}>
+              <h2 className={styles.sectionTitle} style={{ color: 'white' }}>Sicherheit & Datenschutz</h2>
+              <p style={{ color: '#ccc', textAlign: 'center', marginBottom: '40px', fontSize: '17px' }}>
+                Ihre Verträge werden verschlüsselt übertragen und ausschließlich auf EU-Servern in Frankfurt verarbeitet. 
+                Vergleichsanalyse erfolgt datenschutzkonform, keine Weitergabe an Dritte. Löschung jederzeit auf Wunsch möglich.
+              </p>
+              <div className={styles.statsGrid}>
+                <div className={styles.statItem}>
+                  <div className={styles.statNumber}>2-3 Min</div>
+                  <div className={styles.statLabel}>Vergleichsdauer</div>
+                </div>
+                <div className={styles.statItem}>
+                  <div className={styles.statNumber}>95%</div>
+                  <div className={styles.statLabel}>Bewertungsgenauigkeit</div>
+                </div>
+                <div className={styles.statItem}>
+                  <div className={styles.statNumber}>50+</div>
+                  <div className={styles.statLabel}>Vergleichskriterien</div>
+                </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
 
-        {/* CTA Section */}
-        <section className={styles.ctaSection}>
-          <div className={`${styles.contentContainer} fadeInUp`} style={{ animationDelay: '0.8s' }}>
+          {/* FAQ */}
+          <section className={styles.funktionSection}>
+            <h2 className={styles.sectionTitle}>Häufige Fragen</h2>
+            <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
+                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Welche Vertragsarten kann ich vergleichen?</summary>
+                <p style={{ margin: '0', color: '#666' }}>Alle Standardverträge: Mietverträge, Arbeitsverträge, Dienstleistungsverträge, Kaufverträge, Versicherungen, SaaS-Abos. Beide Verträge sollten ähnlichen Zweck haben für optimale Ergebnisse.</p>
+              </details>
+              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
+                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Wie objektiv ist die KI-Bewertung?</summary>
+                <p style={{ margin: '0', color: '#666' }}>Die KI nutzt bewährte Rechtsmuster und Marktstandards als Basis. Sie ist objektiver als das Bauchgefühl, aber Sie definieren die Gewichtung der Kriterien (Preis vs. Flexibilität).</p>
+              </details>
+              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
+                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Kann ich die Bewertungskriterien anpassen?</summary>
+                <p style={{ margin: '0', color: '#666' }}>Ja, Sie können Prioritäten setzen: Ist Ihnen Kostenklarheit wichtiger als Flexibilität? Kurze Fristen wichtiger als niedrige Preise? Die Empfehlung passt sich entsprechend an.</p>
+              </details>
+              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
+                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Werden beide Verträge gleich behandelt?</summary>
+                <p style={{ margin: '0', color: '#666' }}>Ja, die Analyse ist symmetrisch. Beide Verträge werden nach denselben Kriterien bewertet. Es gibt keine Bevorzugung für "Vertrag A" oder "Vertrag B".</p>
+              </details>
+              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
+                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Kann ich das Ergebnis exportieren?</summary>
+                <p style={{ margin: '0', color: '#666' }}>Ja, der komplette Vergleichsreport kann als PDF exportiert werden – inklusive Diff-View, Scores, Empfehlung und Begründung. Ideal für Team-Entscheidungen.</p>
+              </details>
+              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
+                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Was passiert mit meinen Vertragsdaten?</summary>
+                <p style={{ margin: '0', color: '#666' }}>Verschlüsselte Übertragung und Verarbeitung ausschließlich auf EU-Servern. Speicherung nur für Verlaufsanzeige, jederzeit löschbar. Keine Weitergabe an Dritte.</p>
+              </details>
+            </div>
+          </section>
+
+          {/* FINAL CTA */}
+          <section className={styles.ctaSection}>
             <div className={styles.ctaCard}>
-              <h2 className={styles.ctaTitle}>Treffen Sie die richtige Entscheidung</h2>
+              <h2 className={styles.ctaTitle}>Entscheiden Sie mit Klarheit statt Bauchgefühl</h2>
               <p className={styles.ctaSubtitle}>
-                Vergleichen Sie Ihre Verträge und wählen Sie den besten
+                Objektive Analyse, visualisierte Unterschiede und eine klare Empfehlung – damit Sie die richtige Wahl treffen.
               </p>
-              {user && user.subscriptionActive ? (
-                <Link to="/compare" className={styles.ctaButton}>
-                  Jetzt Verträge vergleichen
+              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center', marginTop: '24px' }}>
+                <button 
+                  style={{ background: 'rgba(255,255,255,0.2)', color: 'white', border: '1px solid rgba(255,255,255,0.3)', padding: '12px 16px', borderRadius: '12px', fontWeight: '600', cursor: 'pointer' }}
+                  onClick={() => document.getElementById('so-funktionierts')?.scrollIntoView({ behavior: 'smooth' })}
+                >
+                  Wie der Vergleich arbeitet
+                </button>
+                <Link to={target} className={styles.ctaButton} aria-label="Verträge vergleichen">
+                  Verträge vergleichen
                 </Link>
-              ) : (
-                <Link to="/login" className={styles.ctaButton}>
-                  Jetzt kostenlos testen
-                </Link>
-              )}
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        </div>
       </div>
       
       <Footer />

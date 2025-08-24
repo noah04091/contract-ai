@@ -3,22 +3,25 @@ import { Link } from 'react-router-dom';
 import { useAuth } from "../../hooks/useAuth";
 import styles from "../../styles/FeaturePage.module.css";
 import Footer from "../../components/Footer";
-import "../../styles/landing.css";
+import { FileText, Zap, Shield, PenTool } from "lucide-react";
 
 const Generator: React.FC = () => {
   const { user } = useAuth();
+  const isAuthenticated = user && user.subscriptionActive;
+  const targetInApp = "/generate";
+  const target = isAuthenticated ? targetInApp : `/login?next=${encodeURIComponent(targetInApp)}`;
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    document.title = "Verträge automatisch erstellen | Contract AI";
+    document.title = "Generator – Contract AI | Verträge verstehen, optimieren, absichern";
     
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
-      metaDescription.setAttribute('content', 'Individuelle, rechtssichere Verträge in Minuten. Erstellen Sie professionelle Verträge aus geprüften Vorlagen mit Contract AI.');
+      metaDescription.setAttribute('content', 'Contract Generator: Neue Verträge aus Bausteinen erstellen. Individuell anpassbar, rechtssicher, sofort einsatzbereit. DSGVO-konform, Frankfurt. Jetzt testen.');
     } else {
       const meta = document.createElement('meta');
       meta.name = 'description';
-      meta.content = 'Individuelle, rechtssichere Verträge in Minuten. Erstellen Sie professionelle Verträge aus geprüften Vorlagen mit Contract AI.';
+      meta.content = 'Contract Generator: Neue Verträge aus Bausteinen erstellen. Individuell anpassbar, rechtssicher, sofort einsatzbereit. DSGVO-konform, Frankfurt. Jetzt testen.';
       document.head.appendChild(meta);
     }
 
@@ -27,148 +30,274 @@ const Generator: React.FC = () => {
     };
   }, []);
 
-  const vorteile = [
-    {
-      title: "Schnell",
-      description: "In unter 10 Minuten einsatzbereit"
-    },
-    {
-      title: "Rechtssicher",
-      description: "Basierend auf geprüften Vorlagen"
-    },
-    {
-      title: "Individuell",
-      description: "Passt sich automatisch an Ihre Angaben an"
-    }
-  ];
-
-  const funktionen = [
-    "Auswahl aus geprüften, juristischen Vorlagen",
-    "Intelligente Eingabemasken passen Text automatisch an",
-    "Export als PDF & digitale Signatur möglich"
-  ];
-
   return (
     <>
       <div className={styles.featureContainer}>
         
-        {/* Hero Section */}
+        {/* HERO */}
         <section className={styles.heroSection}>
           <div className={styles.heroIcon}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-              <polyline points="14 2 14 8 20 8"></polyline>
-              <line x1="16" y1="13" x2="8" y2="13"></line>
-              <line x1="16" y1="17" x2="8" y2="17"></line>
-              <polyline points="10 9 9 9 8 9"></polyline>
-            </svg>
+            <FileText size={64} />
           </div>
-          <h1 className={`${styles.heroTitle} fadeInUp`}>
-            Individuelle, rechtssichere <br />
-            <span className={styles.heroTitleHighlight}>Verträge in Minuten</span>
+          <h1 className={styles.heroTitle}>
+            Generator – Neue <span className={styles.heroTitleHighlight}>Verträge</span> in wenigen Minuten
           </h1>
-          <p className={`${styles.heroSubtitle} fadeInUp`} style={{ animationDelay: '0.1s' }}>
-            Ob Freelancer, NDA oder Mietvertrag – erstellen Sie mit wenigen Klicks 
-            einen professionellen Vertrag aus geprüften Vorlagen.
+          <p className={styles.heroSubtitle}>
+            Von der leeren Vorlage zum unterschriftsfertigen Vertrag: Der Generator baut aus erprobten Klauseln genau den Vertrag, den Sie brauchen.
           </p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginTop: '24px', justifyContent: 'center' }}>
+            <Link to={target} className={styles.ctaButton} aria-label="Generator starten">
+              Generator starten
+            </Link>
+            <a href="#so-funktionierts" style={{ background: 'rgba(255,255,255,0.1)', color: '#007aff', border: '1px solid rgba(0,122,255,0.3)', padding: '12px 16px', borderRadius: '12px', fontWeight: '600', textDecoration: 'none' }} aria-label="Wie der Generator arbeitet">
+              Wie der Generator arbeitet
+            </a>
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', marginTop: '24px', justifyContent: 'center', fontSize: '14px', color: '#666' }}>
+            <span>📋 Vorgefertigte Templates</span>
+            <span>🎯 Individuell konfigurierbar</span>
+            <span>📄 Sofort einsatzbereit</span>
+          </div>
         </section>
-        
-        {/* Was es macht Section */}
-        <section className={styles.funktionSection}>
-          <div className={`${styles.contentContainer} fadeInUp`} style={{ animationDelay: '0.2s' }}>
-            <h2 className={styles.sectionTitle}>Was es macht</h2>
+
+        <div className={styles.contentContainer}>
+          
+          {/* PAIN */}
+          <section className={styles.funktionSection}>
+            <h2 className={styles.sectionTitle}>Neue Verträge brauchen Sie öfter als gedacht</h2>
             <div className={styles.funktionGrid}>
-              {funktionen.map((funktion, index) => (
-                <div key={index} className={`${styles.funktionItem} fadeInUp`} style={{ animationDelay: `${0.3 + index * 0.1}s` }}>
-                  <div className={styles.funktionIcon}>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="20 6 9 17 4 12"></polyline>
-                    </svg>
-                  </div>
-                  <p className={styles.funktionText}>{funktion}</p>
+              <div className={styles.funktionItem}>
+                <div className={styles.funktionIcon}>
+                  <Shield size={20} />
                 </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Vorteile Section */}
-        <section className={styles.vorteileSection}>
-          <div className={`${styles.contentContainer} fadeInUp`} style={{ animationDelay: '0.4s' }}>
-            <h2 className={styles.sectionTitle}>Ihre Vorteile</h2>
-            <div className={styles.vorteileGrid}>
-              {vorteile.map((vorteil, index) => (
-                <div key={index} className={`${styles.vorteilCard} fadeInUp`} style={{ animationDelay: `${0.5 + index * 0.1}s` }}>
-                  <h3 className={styles.vorteilTitle}>{vorteil.title}</h3>
-                  <p className={styles.vorteilText}>{vorteil.description}</p>
+                <p className={styles.funktionText}>
+                  Freelancer-Auftrag, NDA, Mietvertrag, Kooperationen: Oft stehen Sie vor einem leeren Blatt – oder kopieren alte Verträge, die nicht ganz passen. Dann doch zum Anwalt? Das dauert Wochen und kostet Hunderte von Euro für Standard-Klauseln, die es längst gibt.
+                </p>
+              </div>
+              <div className={styles.funktionItem}>
+                <div className={styles.funktionIcon}>
+                  <Zap size={20} />
                 </div>
-              ))}
+                <p className={styles.funktionText}>
+                  Der Generator löst das: Aus bewährten Klausel-Bausteinen entsteht in Minuten der passende Vertrag. Keine Blindkopie alter Dokumente, keine wochenlange Wartezeit – sondern zielgerichtete Zusammenstellung genau für Ihren Anwendungsfall.
+                </p>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
 
-        {/* Beispiel Section */}
-        <section className={styles.beispielSection}>
-          <div className={`${styles.contentContainer} fadeInUp`} style={{ animationDelay: '0.6s' }}>
-            <h2 className={styles.sectionTitle}>Praxisbeispiel</h2>
+          {/* SOLUTION */}
+          <section className={styles.funktionSection}>
+            <h2 className={styles.sectionTitle}>Die Lösung: Modularer Vertragsaufbau nach Ihren Anforderungen</h2>
+            <p className={styles.funktionText} style={{ fontSize: '18px', lineHeight: '1.6', marginBottom: '24px' }}>
+              Der Generator führt Sie Schritt für Schritt durch die Vertragsgestaltung. Basierend auf bewährten Klausel-Bibliotheken wählen Sie die Module, die Sie brauchen. Das Ergebnis: Ein rechtssicherer, individueller Vertrag – ohne die Kosten und Wartezeit eines Anwalts.
+            </p>
+            <ul style={{ fontSize: '16px', lineHeight: '1.7', maxWidth: '800px', margin: '0 auto' }}>
+              <li style={{ margin: '12px 0', color: '#2a3440' }}>📋 <strong>Klausel-Bibliothek:</strong> Hunderte bewährte Bausteine für alle Vertragstypen – von Standard bis spezifisch</li>
+              <li style={{ margin: '12px 0', color: '#2a3440' }}>🎯 <strong>Geführte Auswahl:</strong> Intelligente Fragen führen zu den passenden Klauseln für Ihren Fall</li>
+              <li style={{ margin: '12px 0', color: '#2a3440' }}>⚖️ <strong>Rechtssicherheit:</strong> Alle Klauseln sind geprüft und aktuell – keine veralteten Formulierungen</li>
+              <li style={{ margin: '12px 0', color: '#2a3440' }}>📝 <strong>Sofort einsatzbereit:</strong> PDF zum Signieren oder DOCX zur weiteren Anpassung – je nach Bedarf</li>
+            </ul>
+          </section>
+
+          {/* HOW IT WORKS */}
+          <section id="so-funktionierts" className={styles.funktionSection}>
+            <h2 className={styles.sectionTitle}>So funktioniert's – in 4 Schritten</h2>
+            <div className={styles.funktionGrid}>
+              <div className={styles.funktionItem}>
+                <div className={styles.funktionIcon}>
+                  <span style={{ fontSize: '20px', fontWeight: 'bold', color: '#007aff' }}>1</span>
+                </div>
+                <p className={styles.funktionText}>
+                  <strong>Vertragstyp wählen:</strong> Freelancer, NDA, Mietvertrag, Koop – oder „individuell" für maßgeschneiderte Zusammenstellung.
+                </p>
+              </div>
+              <div className={styles.funktionItem}>
+                <div className={styles.funktionIcon}>
+                  <span style={{ fontSize: '20px', fontWeight: 'bold', color: '#007aff' }}>2</span>
+                </div>
+                <p className={styles.funktionText}>
+                  <strong>Module konfigurieren:</strong> Geführte Fragen zu Ihren Anforderungen – Laufzeit, Haftung, IP-Rechte, Besonderheiten.
+                </p>
+              </div>
+              <div className={styles.funktionItem}>
+                <div className={styles.funktionIcon}>
+                  <span style={{ fontSize: '20px', fontWeight: 'bold', color: '#007aff' }}>3</span>
+                </div>
+                <p className={styles.funktionText}>
+                  <strong>Preview & Anpassung:</strong> Vollständigen Vertragstext prüfen, optional einzelne Klauseln austauschen oder ergänzen.
+                </p>
+              </div>
+              <div className={styles.funktionItem}>
+                <div className={styles.funktionIcon}>
+                  <span style={{ fontSize: '20px', fontWeight: 'bold', color: '#007aff' }}>4</span>
+                </div>
+                <p className={styles.funktionText}>
+                  <strong>Export & Signatur:</strong> PDF für sofortige Signatur oder DOCX zum Weiterbearbeiten – inklusive digitaler Signatur-Option.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* FEATURES GRID */}
+          <section className={styles.vorteileSection}>
+            <div className={styles.contentContainer}>
+              <h2 className={styles.sectionTitle}>Funktionen im Detail</h2>
+              <div className={styles.vorteileGrid}>
+                <div className={styles.vorteilCard}>
+                  <h3 className={styles.vorteilTitle}>Intelligente Templates</h3>
+                  <p className={styles.vorteilText}>Vorgefertigte Vorlagen für häufige Vertragstypen – als Basis für individuelle Anpassungen.</p>
+                </div>
+                <div className={styles.vorteilCard}>
+                  <h3 className={styles.vorteilTitle}>Klausel-Empfehlungen</h3>
+                  <p className={styles.vorteilText}>Automatische Vorschläge basierend auf Ihren Angaben: Branche, Risiko, Vertragswert.</p>
+                </div>
+                <div className={styles.vorteilCard}>
+                  <h3 className={styles.vorteilTitle}>Konsistenz-Check</h3>
+                  <p className={styles.vorteilText}>Automatische Prüfung auf widersprüchliche Klauseln und fehlende Bausteine.</p>
+                </div>
+                <div className={styles.vorteilCard}>
+                  <h3 className={styles.vorteilTitle}>Modulare Klauselpakete</h3>
+                  <p className={styles.vorteilText}>Zusätzliche Klauseln für spezielle Anforderungen: IP, Wettbewerb, Service-Level, Compliance.</p>
+                </div>
+                <div className={styles.vorteilCard}>
+                  <h3 className={styles.vorteilTitle}>Digitale Signatur</h3>
+                  <p className={styles.vorteilText}>Rechtsgültige elektronische Unterschrift mit Zeitstempel und direktem Versand an Vertragspartner.</p>
+                </div>
+                <div className={styles.vorteilCard}>
+                  <h3 className={styles.vorteilTitle}>Export-Flexibilität</h3>
+                  <p className={styles.vorteilText}>PDF für Signatur, DOCX zur weiteren Bearbeitung – je nach Workflow-Anforderung.</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* USE CASES */}
+          <section className={styles.beispielSection}>
+            <h2 className={styles.sectionTitle}>Beispiele, die täglich vorkommen</h2>
+            <div style={{ display: 'grid', gap: '20px', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', marginBottom: '40px' }}>
+              <div style={{ background: '#f8fbff', border: '1px dashed #d7e0ef', borderRadius: '14px', padding: '20px' }}>
+                <h3 style={{ margin: '0 0 12px', color: '#1d1d1f' }}>Freelancer-Vertrag</h3>
+                <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#666' }}>Umfang, Abnahme, Zahlungsplan, Nutzungsrechte</p>
+                <p style={{ margin: '0', fontSize: '14px', color: '#333' }}><strong>→ Alles sauber geregelt, sofort einsatzbereit</strong></p>
+              </div>
+              <div style={{ background: '#f8fbff', border: '1px dashed #d7e0ef', borderRadius: '14px', padding: '20px' }}>
+                <h3 style={{ margin: '0 0 12px', color: '#1d1d1f' }}>NDA</h3>
+                <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#666' }}>Vertraulichkeit präzise definiert</p>
+                <p style={{ margin: '0', fontSize: '14px', color: '#333' }}><strong>→ Ausnahmen, Laufzeit, Vertragsstrafe geregelt</strong></p>
+              </div>
+              <div style={{ background: '#f8fbff', border: '1px dashed #d7e0ef', borderRadius: '14px', padding: '20px' }}>
+                <h3 style={{ margin: '0 0 12px', color: '#1d1d1f' }}>Mietvertrag</h3>
+                <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#666' }}>Individuelle Klauseln zu Nebenkosten, Renovierung</p>
+                <p style={{ margin: '0', fontSize: '14px', color: '#333' }}><strong>→ Haustiere, Untermiete – ohne Grauzonen</strong></p>
+              </div>
+              <div style={{ background: '#f8fbff', border: '1px dashed #d7e0ef', borderRadius: '14px', padding: '20px' }}>
+                <h3 style={{ margin: '0 0 12px', color: '#1d1d1f' }}>Kooperationsvertrag</h3>
+                <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#666' }}>Ziele, IP, Haftung, Exit-Regelungen</p>
+                <p style={{ margin: '0', fontSize: '14px', color: '#333' }}><strong>→ Modular wählbar je nach Partnerschaft</strong></p>
+              </div>
+            </div>
             <div className={styles.beispielBox}>
               <div className={styles.beispielIcon}>
-                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 20h9"></path>
-                  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-                </svg>
+                <PenTool size={32} />
               </div>
-              <blockquote className={styles.beispielText}>
-                „Freelancervertrag mit angepasstem Leistungsumfang und Zahlungsplan erstellt – 
-                sofort einsatzbereit."
-              </blockquote>
+              <p className={styles.beispielText}>
+                "In 8 Minuten vom leeren Blatt zum unterschriftsfertigen Freelancer-Vertrag. Das hätte beim Anwalt Wochen gedauert und 400€ gekostet."
+              </p>
               <p className={styles.beispielHinweis}>
-                Von der Vorlage zum fertigen Vertrag in wenigen Minuten
+                Feedback eines Designers bei seinem ersten generierten Vertrag
               </p>
             </div>
-          </div>
-        </section>
+          </section>
 
-        {/* Stats Section */}
-        <section className={styles.statsSection}>
-          <div className={`${styles.contentContainer} fadeInUp`} style={{ animationDelay: '0.7s' }}>
-            <div className={styles.statsGrid}>
-              <div className={styles.statItem}>
-                <div className={styles.statNumber}>30+</div>
-                <div className={styles.statLabel}>Vertragsvorlagen</div>
-              </div>
-              <div className={styles.statItem}>
-                <div className={styles.statNumber}> 2 Min</div>
-                <div className={styles.statLabel}>Erstellungszeit</div>
-              </div>
-              <div className={styles.statItem}>
-                <div className={styles.statNumber}>100%</div>
-                <div className={styles.statLabel}>Rechtssicher</div>
+          {/* DIFFERENTIATION */}
+          <section className={styles.funktionSection}>
+            <h2 className={styles.sectionTitle}>Warum Contract AI?</h2>
+            <ul style={{ fontSize: '16px', lineHeight: '1.7', maxWidth: '800px', margin: '0 auto' }}>
+              <li style={{ margin: '12px 0', color: '#2a3440' }}>⚖️ <strong>Rechtssicher & aktuell</strong> – alle Klauseln sind geprüft und entsprechen aktuellem Recht</li>
+              <li style={{ margin: '12px 0', color: '#2a3440' }}>🇪🇺 <strong>Server in Deutschland (Frankfurt)</strong>, volle DSGVO-Konformität und EU-Datenschutz</li>
+              <li style={{ margin: '12px 0', color: '#2a3440' }}>🎯 <strong>Modularer Aufbau:</strong> Nur die Klauseln, die Sie wirklich brauchen – kein unnötiger Ballast</li>
+              <li style={{ margin: '12px 0', color: '#2a3440' }}>⚡ <strong>Zeit & Kostenersparnis:</strong> In Minuten statt Wochen zum fertigen Vertrag</li>
+              <li style={{ margin: '12px 0', color: '#2a3440' }}>🔄 <strong>Nahtlose Integration:</strong> Direkter Übergang zu Analyse, Optimierung oder Fristenverwaltung</li>
+            </ul>
+          </section>
+
+          {/* SECURITY */}
+          <section className={styles.statsSection}>
+            <div className={styles.contentContainer}>
+              <h2 className={styles.sectionTitle} style={{ color: 'white' }}>Sicherheit & Rechtssicherheit</h2>
+              <p style={{ color: '#ccc', textAlign: 'center', marginBottom: '40px', fontSize: '17px' }}>
+                Alle Klauseln werden von Juristen geprüft und regelmäßig aktualisiert. 
+                Ihre Vertragsdaten sind verschlüsselt und werden ausschließlich auf EU-Servern verarbeitet.
+              </p>
+              <div className={styles.statsGrid}>
+                <div className={styles.statItem}>
+                  <div className={styles.statNumber}>500+</div>
+                  <div className={styles.statLabel}>Klausel-Bausteine</div>
+                </div>
+                <div className={styles.statItem}>
+                  <div className={styles.statNumber}>⚖️</div>
+                  <div className={styles.statLabel}>Juristisch geprüft</div>
+                </div>
+                <div className={styles.statItem}>
+                  <div className={styles.statNumber}>&lt; 5 Min</div>
+                  <div className={styles.statLabel}>Durchschnittliche Erstellung</div>
+                </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
 
-        {/* CTA Section */}
-        <section className={styles.ctaSection}>
-          <div className={`${styles.contentContainer} fadeInUp`} style={{ animationDelay: '0.8s' }}>
+          {/* FAQ */}
+          <section className={styles.funktionSection}>
+            <h2 className={styles.sectionTitle}>Häufige Fragen</h2>
+            <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
+                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Welche Vertragstypen kann der Generator erstellen?</summary>
+                <p style={{ margin: '0', color: '#666' }}>Freelancer-Verträge, NDAs, Mietverträge, Kooperationsverträge, Lizenzverträge, Service-Agreements und individuelle Zusammenstellungen aus unserer Klausel-Bibliothek.</p>
+              </details>
+              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
+                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Sind die generierten Verträge rechtssicher?</summary>
+                <p style={{ margin: '0', color: '#666' }}>Ja, alle Klauseln sind von Juristen geprüft und entsprechen aktuellem deutschen/EU-Recht. Für hochspezifische Fälle empfehlen wir zusätzliche Anwaltsberatung.</p>
+              </details>
+              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
+                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Kann ich die Verträge nachträglich ändern?</summary>
+                <p style={{ margin: '0', color: '#666' }}>Ja, Sie erhalten sowohl PDF als auch DOCX-Format. Im Dashboard können Sie Verträge erneut öffnen und anpassen.</p>
+              </details>
+              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
+                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Funktioniert die digitale Signatur rechtsgültig?</summary>
+                <p style={{ margin: '0', color: '#666' }}>Ja, unsere eIDAS-konforme elektronische Signatur ist in der EU voll rechtsgültig. Mit Zeitstempel und Versand per E-Mail.</p>
+              </details>
+              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
+                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Wie viele Verträge kann ich generieren?</summary>
+                <p style={{ margin: '0', color: '#666' }}>Je nach Plan: Premium 5/Monat, Business 20/Monat, Legendary unbegrenzt. Alle mit Export-Funktion und digitaler Signatur.</p>
+              </details>
+              <details style={{ marginBottom: '16px', padding: '16px', border: '1px solid #e7ecf2', borderRadius: '12px' }}>
+                <summary style={{ fontWeight: '600', cursor: 'pointer', marginBottom: '12px' }}>Was unterscheidet das von Standard-Vorlagen?</summary>
+                <p style={{ margin: '0', color: '#666' }}>Individuelle Konfiguration statt starrer Vorlagen, immer aktuelle Klauseln, Konsistenz-Checks und nahtlose Integration in Ihren Workflow.</p>
+              </details>
+            </div>
+          </section>
+
+          {/* FINAL CTA */}
+          <section className={styles.ctaSection}>
             <div className={styles.ctaCard}>
-              <h2 className={styles.ctaTitle}>Erstellen Sie Ihren ersten Vertrag</h2>
+              <h2 className={styles.ctaTitle}>Vom Bedarf zum fertigen Vertrag – in wenigen Minuten</h2>
               <p className={styles.ctaSubtitle}>
-                Professionelle Verträge in Minuten – ohne Anwalt
+                Keine Wartezeiten, keine Anwaltskosten für Standard-Verträge. Der Generator baut aus bewährten Bausteinen genau das, was Sie brauchen.
               </p>
-              {user && user.subscriptionActive ? (
-                <Link to="/generate" className={styles.ctaButton}>
-                  Zum Vertragsgenerator
+              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center', marginTop: '24px' }}>
+                <button 
+                  style={{ background: 'rgba(255,255,255,0.2)', color: 'white', border: '1px solid rgba(255,255,255,0.3)', padding: '12px 16px', borderRadius: '12px', fontWeight: '600', cursor: 'pointer' }}
+                  onClick={() => document.getElementById('so-funktionierts')?.scrollIntoView({ behavior: 'smooth' })}
+                >
+                  Wie der Generator arbeitet
+                </button>
+                <Link to={target} className={styles.ctaButton} aria-label="Generator starten">
+                  Generator starten
                 </Link>
-              ) : (
-                <Link to="/login" className={styles.ctaButton}>
-                  Jetzt kostenlos testen
-                </Link>
-              )}
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        </div>
       </div>
       
       <Footer />
