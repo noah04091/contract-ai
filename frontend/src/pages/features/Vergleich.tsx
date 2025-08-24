@@ -25,6 +25,26 @@ const Vergleich: React.FC = () => {
       document.head.appendChild(meta);
     }
 
+    // Add canonical link
+    const canonical = document.querySelector('link[rel="canonical"]');
+    if (canonical) {
+      canonical.setAttribute('href', 'https://www.contract-ai.de/features/vergleich');
+    } else {
+      const link = document.createElement('link');
+      link.rel = 'canonical';
+      link.href = 'https://www.contract-ai.de/features/vergleich';
+      document.head.appendChild(link);
+    }
+
+    // Add robots meta
+    const robots = document.querySelector('meta[name="robots"]');
+    if (!robots) {
+      const meta = document.createElement('meta');
+      meta.name = 'robots';
+      meta.content = 'index,follow';
+      document.head.appendChild(meta);
+    }
+
     return () => {
       document.title = 'Contract AI';
     };

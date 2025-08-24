@@ -54,6 +54,9 @@ const Optimierung: React.FC = () => {
         <meta name="description" content="🔧 KI findet problematische Klauseln und schlägt sofort bessere Formulierungen vor → Faire Verträge, verhandlungsfertig. DSGVO-konform. Jetzt kostenlos testen!" />
         <meta name="keywords" content="Vertragsoptimierung, KI, Vertrag verbessern, Klauseln ändern, Contract AI, LegalTech, Vertragsverhandlung" />
         
+        <link rel="canonical" href="https://www.contract-ai.de/features/optimierer" />
+        <meta name="robots" content="index,follow" />
+        
         {/* Open Graph */}
         <meta property="og:title" content="Vertragsoptimierung mit KI - Schwache Klauseln automatisch verbessern" />
         <meta property="og:description" content="🔧 KI findet problematische Klauseln und schlägt sofort bessere Formulierungen vor → Faire Verträge, verhandlungsfertig. Jetzt kostenlos testen!" />

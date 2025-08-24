@@ -54,6 +54,9 @@ const Vertragsanalyse: React.FC = () => {
         <meta name="description" content="🔍 KI analysiert Ihren Vertrag in 60 Sekunden → Chancen-Risiken-Score, kritische Klauseln, Handlungsempfehlungen. DSGVO-konform, EU-Server. Jetzt kostenlos testen!" />
         <meta name="keywords" content="Vertragsanalyse, KI, AI, Vertrag prüfen, Risiken erkennen, Contract AI, Künstliche Intelligenz, Rechtstech, LegalTech" />
         
+        <link rel="canonical" href="https://www.contract-ai.de/features/vertragsanalyse" />
+        <meta name="robots" content="index,follow" />
+        
         {/* Open Graph */}
         <meta property="og:title" content="Vertragsanalyse mit KI - Versteckte Risiken in 60 Sekunden aufdecken" />
         <meta property="og:description" content="🔍 KI analysiert Ihren Vertrag in 60 Sekunden → Chancen-Risiken-Score, kritische Klauseln, Handlungsempfehlungen. Jetzt kostenlos testen!" />
