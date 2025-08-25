@@ -405,6 +405,14 @@ const connectDB = async () => {
         });
       });
     }
+    
+    // 🚀 Revolutionary: Optimized Contract Generation Route
+    try {
+      app.use("/api/optimized-contract", verifyToken, require("./routes/optimizedContract"));
+      console.log("✅ Optimized-Contract-Route geladen unter /api/optimized-contract");
+    } catch (error) {
+      console.error("❌ Fehler beim Laden der Optimized-Contract-Route:", error);
+    }
 
     // ✅ 8. CONTRACT ROUTES - SPEZIFISCHE VOR ALLGEMEINEN!
     try {

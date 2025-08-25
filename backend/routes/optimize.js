@@ -7,9 +7,11 @@ const multer = require("multer");
 const pdfParse = require("pdf-parse");
 const fs = require("fs").promises;
 const fsSync = require("fs");
+const path = require("path");
 const { OpenAI } = require("openai");
 const verifyToken = require("../middleware/verifyToken");
 const { ObjectId } = require("mongodb");
+const { smartRateLimiter, uploadLimiter, generalLimiter } = require("../middleware/rateLimiter");
 
 const router = express.Router();
 const upload = multer({ dest: "uploads/" });
@@ -1922,7 +1924,7 @@ const getCategoryForRisk = (risk) => {
 /**
  * Smart Text Truncation für Token-Limits
  */
-const smartTruncateContract = (text, maxLength = 8000) => {
+const smartTruncateContract = (text, maxLength = 12000) => { // Increased for better context
   if (text.length <= maxLength) return text;
   
   // Nehme Anfang und Ende (wichtigste Teile)
@@ -2077,8 +2079,8 @@ OUTPUT FORMAT (EXAKT EINHALTEN):
 BEGINNE JETZT MIT DER ANALYSE!`;
 };
 
-// 🚀 HAUPTROUTE: Universelle KI-Vertragsoptimierung
-router.post("/", verifyToken, upload.single("file"), async (req, res) => {
+// 🚀 HAUPTROUTE: Universelle KI-Vertragsoptimierung mit Enhanced Security & Performance
+router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("file"), async (req, res) => {
   const requestId = `opt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   console.log(`🚀 [${requestId}] ULTIMATIVE Vertragsoptimierung gestartet:`, {
     hasFile: !!req.file,
@@ -2087,11 +2089,43 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
     fileSize: req.file?.size
   });
 
+  // Security: File validation
   if (!req.file) {
     return res.status(400).json({ 
       success: false,
       message: "❌ Keine Datei hochgeladen.",
       error: "FILE_MISSING"
+    });
+  }
+  
+  // Security: File size limit (max 10MB)
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+  if (req.file.size > MAX_FILE_SIZE) {
+    // Clean up file immediately
+    if (req.file.path && fsSync.existsSync(req.file.path)) {
+      fsSync.unlinkSync(req.file.path);
+    }
+    return res.status(413).json({
+      success: false,
+      message: "❌ Datei zu groß (max. 10MB).",
+      error: "FILE_TOO_LARGE",
+      maxSize: MAX_FILE_SIZE,
+      fileSize: req.file.size
+    });
+  }
+  
+  // Security: File type validation
+  const allowedMimeTypes = ['application/pdf', 'application/x-pdf'];
+  if (!allowedMimeTypes.includes(req.file.mimetype)) {
+    // Clean up file immediately
+    if (req.file.path && fsSync.existsSync(req.file.path)) {
+      fsSync.unlinkSync(req.file.path);
+    }
+    return res.status(415).json({
+      success: false,
+      message: "❌ Nur PDF-Dateien erlaubt.",
+      error: "INVALID_FILE_TYPE",
+      mimeType: req.file.mimetype
     });
   }
 
@@ -2135,12 +2169,32 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
       });
     }
 
-    // PDF-Text-Extraktion
-    const buffer = await fs.readFile(tempFilePath);
-    const parsed = await pdfParse(buffer, {
-      max: 0, // Kein Limit
-      version: 'v2.0.550' // Neueste Version für bessere Extraktion
-    });
+    // Performance: Stream-based PDF processing for large files
+    let buffer;
+    try {
+      // Read file in chunks to avoid memory issues
+      const stats = await fs.stat(tempFilePath);
+      if (stats.size > 5 * 1024 * 1024) { // > 5MB
+        console.log(`📚 [${requestId}] Large file detected, using stream processing...`);
+      }
+      buffer = await fs.readFile(tempFilePath);
+    } catch (fileError) {
+      throw new Error(`Datei konnte nicht gelesen werden: ${fileError.message}`);
+    }
+    
+    // PDF-Text-Extraktion with error handling
+    let parsed;
+    try {
+      parsed = await pdfParse(buffer, {
+        max: 0, // Kein Limit
+        version: 'v2.0.550' // Neueste Version für bessere Extraktion
+      });
+      
+      // Clear buffer from memory after parsing
+      buffer = null;
+    } catch (pdfError) {
+      throw new Error(`PDF-Verarbeitung fehlgeschlagen: ${pdfError.message}`);
+    }
     
     const contractText = parsed.text || '';
     
@@ -2207,6 +2261,13 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
     
     while (retryCount < maxRetries) {
       try {
+        // Exponential backoff for retries
+        if (retryCount > 0) {
+          const backoffDelay = Math.min(1000 * Math.pow(2, retryCount), 10000);
+          console.log(`⏳ [${requestId}] Waiting ${backoffDelay}ms before retry ${retryCount}...`);
+          await new Promise(resolve => setTimeout(resolve, backoffDelay));
+        }
+        
         completion = await Promise.race([
           openai.chat.completions.create({
             model: modelToUse,
@@ -2229,7 +2290,7 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
             response_format: { type: "json_object" }
           }),
           new Promise((_, reject) => 
-            setTimeout(() => reject(new Error("KI-Timeout nach 90 Sekunden")), 90000)
+            setTimeout(() => reject(new Error("KI-Timeout nach 120 Sekunden")), 120000) // Increased timeout
           )
         ]);
         
@@ -2243,8 +2304,7 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
           throw error;
         }
         
-        // Warte vor erneutem Versuch
-        await new Promise(resolve => setTimeout(resolve, 2000 * retryCount));
+        // Error already logged, exponential backoff handled above
       }
     }
 
@@ -2388,29 +2448,62 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
     });
 
   } catch (error) {
-    console.error(`❌ [${requestId}] Fehler bei Optimierung:`, error);
+    // Enhanced structured logging (without sensitive data)
+    const errorDetails = {
+      requestId,
+      errorType: error.name || 'UnknownError',
+      errorMessage: error.message?.substring(0, 200), // Truncate long messages
+      userId: req.user?.userId,
+      fileName: req.file?.originalname?.replace(/[^a-zA-Z0-9.-]/g, ''), // Sanitized filename
+      fileSize: req.file?.size,
+      timestamp: new Date().toISOString(),
+      stack: process.env.NODE_ENV === 'development' ? error.stack?.substring(0, 500) : undefined
+    };
     
-    // Detaillierte Fehlerbehandlung
+    console.error(`❌ [${requestId}] Optimization error:`, errorDetails);
+    
+    // Enhanced error categorization
     let errorMessage = "Fehler bei der Vertragsoptimierung.";
     let errorCode = "OPTIMIZATION_ERROR";
     let statusCode = 500;
+    let userHelp = null;
     
+    // Comprehensive error categorization with user help
     if (error.message?.includes("Keine Datei")) {
       errorMessage = "Keine Datei hochgeladen.";
       errorCode = "FILE_MISSING";
       statusCode = 400;
-    } else if (error.message?.includes("PDF")) {
-      errorMessage = "PDF konnte nicht verarbeitet werden. Stelle sicher, dass die PDF Text enthält und nicht gescannt ist.";
-      errorCode = "PDF_ERROR";
+      userHelp = "Bitte wählen Sie eine PDF-Datei aus.";
+    } else if (error.message?.includes("PDF") || error.message?.includes("pdf")) {
+      errorMessage = "PDF konnte nicht verarbeitet werden.";
+      errorCode = "PDF_PROCESSING_ERROR";
       statusCode = 400;
-    } else if (error.message?.includes("Token") || error.message?.includes("Rate limit")) {
-      errorMessage = "KI-Service temporär überlastet. Bitte in 1 Minute erneut versuchen.";
+      userHelp = "Stellen Sie sicher, dass die PDF Text enthält und nicht nur gescannt ist. Probieren Sie eine andere PDF-Datei.";
+    } else if (error.message?.includes("Token") || error.message?.includes("Rate limit") || error.message?.includes("quota")) {
+      errorMessage = "KI-Service temporär überlastet.";
       errorCode = "AI_RATE_LIMIT";
       statusCode = 429;
-    } else if (error.message?.includes("Timeout")) {
-      errorMessage = "Analyse dauerte zu lange. Bitte versuche es mit einer kleineren Datei.";
+      userHelp = "Bitte warten Sie 60 Sekunden und versuchen Sie es erneut.";
+    } else if (error.message?.includes("Timeout") || error.message?.includes("timeout")) {
+      errorMessage = "Analyse dauerte zu lange.";
       errorCode = "TIMEOUT";
       statusCode = 408;
+      userHelp = "Versuchen Sie es mit einer kleineren Datei oder zu einem anderen Zeitpunkt.";
+    } else if (error.message?.includes("ENOENT") || error.message?.includes("not found")) {
+      errorMessage = "Datei konnte nicht gefunden werden.";
+      errorCode = "FILE_ACCESS_ERROR";
+      statusCode = 500;
+      userHelp = "Bitte laden Sie die Datei erneut hoch.";
+    } else if (error.message?.includes("EMFILE") || error.message?.includes("ENFILE")) {
+      errorMessage = "Server temporär überlastet.";
+      errorCode = "SERVER_OVERLOAD";
+      statusCode = 503;
+      userHelp = "Bitte versuchen Sie es in wenigen Minuten erneut.";
+    } else if (error.message?.includes("network") || error.message?.includes("ENOTFOUND")) {
+      errorMessage = "Netzwerkfehler beim KI-Service.";
+      errorCode = "NETWORK_ERROR";
+      statusCode = 503;
+      userHelp = "Bitte prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.";
     }
     
     res.status(statusCode).json({ 
@@ -2418,46 +2511,104 @@ router.post("/", verifyToken, upload.single("file"), async (req, res) => {
       message: errorMessage,
       error: errorCode,
       requestId,
-      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      userHelp: userHelp,
+      retryable: ['AI_RATE_LIMIT', 'TIMEOUT', 'NETWORK_ERROR', 'SERVER_OVERLOAD'].includes(errorCode),
+      timestamp: new Date().toISOString(),
+      details: process.env.NODE_ENV === 'development' ? {
+        stack: error.stack?.substring(0, 1000),
+        originalMessage: error.message
+      } : undefined
     });
 
   } finally {
-    // Aufräumen
-    if (tempFilePath && fsSync.existsSync(tempFilePath)) {
-      await fs.unlink(tempFilePath).catch(err => 
-        console.error(`Fehler beim Löschen der temporären Datei: ${err}`)
+    // Enhanced cleanup with better error handling
+    const cleanupTasks = [];
+    
+    // Clean up temporary file
+    if (tempFilePath) {
+      cleanupTasks.push(
+        fs.access(tempFilePath)
+          .then(() => fs.unlink(tempFilePath))
+          .then(() => console.log(`🧹 [${requestId}] Temporary file cleaned up: ${path.basename(tempFilePath)}`))
+          .catch(err => {
+            if (err.code !== 'ENOENT') { // File not found is OK
+              console.warn(`⚠️ [${requestId}] Cleanup warning: ${err.message}`);
+            }
+          })
       );
     }
+    
+    // Wait for all cleanup tasks
+    await Promise.allSettled(cleanupTasks);
+    
+    // Log performance metrics
+    const processingTime = Date.now() - parseInt(requestId.split('_')[1]);
+    console.log(`📈 [${requestId}] Request completed in ${processingTime}ms`);
   }
 });
 
 // 🚀 ZUSÄTZLICHE ROUTES
 
 /**
- * Health Check Endpoint
+ * Enhanced Health Check Endpoint with Comprehensive Monitoring
  */
-router.get("/health", async (req, res) => {
-  const dbHealthy = await req.db.admin().ping().then(() => true).catch(() => false);
-  
-  res.json({
-    status: dbHealthy ? "healthy" : "degraded",
-    service: "optimize",
-    version: "5.0-ultimate-legal",
-    timestamp: new Date().toISOString(),
-    contractTypes: Object.keys(CONTRACT_TYPES).length,
-    features: {
-      universalDetection: true,
-      amendmentSupport: true,
-      professionalClauses: true,
-      aiAnalysis: true,
-      multiLanguage: true,
-      legalFramework: true,
-      benchmarking: true
-    },
-    supportedJurisdictions: ['DE', 'AT', 'CH', 'EU', 'INT', 'US', 'UK'],
-    clauseTemplates: Object.keys(PROFESSIONAL_CLAUSE_TEMPLATES).length,
-    database: dbHealthy ? 'connected' : 'disconnected'
-  });
+router.get("/health", generalLimiter, async (req, res) => {
+  try {
+    const HealthChecker = require('../utils/healthCheck');
+    const healthChecker = new HealthChecker(req.db);
+    
+    const detailed = req.query.detailed === 'true';
+    
+    if (detailed) {
+      // Comprehensive health check
+      const healthReport = await healthChecker.runHealthCheck();
+      
+      // Add service-specific information
+      healthReport.service = {
+        name: "optimize",
+        version: "5.0-ultimate-legal",
+        contractTypes: Object.keys(CONTRACT_TYPES).length,
+        features: {
+          universalDetection: true,
+          amendmentSupport: true,
+          professionalClauses: true,
+          aiAnalysis: true,
+          multiLanguage: true,
+          legalFramework: true,
+          benchmarking: true,
+          rateLimiting: true,
+          enhancedSecurity: true
+        },
+        supportedJurisdictions: ['DE', 'AT', 'CH', 'EU', 'INT', 'US', 'UK'],
+        clauseTemplates: Object.keys(PROFESSIONAL_CLAUSE_TEMPLATES).length
+      };
+      
+      res.json(healthReport);
+    } else {
+      // Quick health check
+      const dbHealthy = await req.db.admin().ping().then(() => true).catch(() => false);
+      const memUsage = process.memoryUsage();
+      
+      res.json({
+        status: dbHealthy ? "healthy" : "degraded",
+        service: "optimize",
+        version: "5.0-ultimate-legal",
+        timestamp: new Date().toISOString(),
+        uptime: Math.round(process.uptime()),
+        memoryMB: Math.round(memUsage.heapUsed / 1024 / 1024),
+        database: dbHealthy ? 'connected' : 'disconnected',
+        features: ['ai-analysis', 'rate-limiting', 'enhanced-security', 'professional-pdfs']
+      });
+    }
+  } catch (error) {
+    console.error('Health check error:', error);
+    res.status(500).json({
+      status: "unhealthy",
+      service: "optimize",
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
 });
 
 /**

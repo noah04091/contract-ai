@@ -468,7 +468,7 @@ const applyOptimizations = (originalText, optimizations) => {
 const generateOptimizedPDF = async (contractData, optimizedText, appliedChanges, sourceData = {}) => {
   return new Promise((resolve, reject) => {
     try {
-      console.log("📄 Generating ultra-enhanced optimized PDF...");
+      console.log("📄 Generating professional-grade optimized PDF...");
       
       const doc = new PDFDocument({
         margin: 50,
@@ -490,14 +490,21 @@ const generateOptimizedPDF = async (contractData, optimizedText, appliedChanges,
       });
       doc.on('error', reject);
       
-      // ✅ HEADER
-      doc.fontSize(28).font('Helvetica-Bold')
-         .fillColor('#0071e3')
-         .text('⚡ REVOLUTIONÄR OPTIMIERTER VERTRAG', { align: 'center' });
+      // ✅ PROFESSIONAL HEADER
+      // Add watermark for legal protection
+      doc.fontSize(8).fillColor('#f0f0f0')
+         .text('CONFIDENTIAL - LEGAL DOCUMENT', 400, 30, { align: 'right' });
       
-      doc.fontSize(12).font('Helvetica')
+      doc.fontSize(24).font('Helvetica-Bold')
+         .fillColor('#1a1a1a')
+         .text('OPTIMIERTER VERTRAG', { align: 'center' });
+      
+      doc.fontSize(11).font('Helvetica')
          .fillColor('#666666')
-         .text('Professionell optimiert durch revolutionäre Contract AI', { align: 'center' });
+         .text('Juristische Optimierung durch Contract AI', { align: 'center' });
+      
+      doc.fontSize(8).fillColor('#999999')
+         .text('Diese Optimierungen ersetzen nicht die Rechtsberatung durch einen Anwalt', { align: 'center' });
       
       doc.moveDown(1);
       
@@ -690,12 +697,68 @@ const generateOptimizedPDF = async (contractData, optimizedText, appliedChanges,
       for (let i = 0; i < pageCount; i++) {
         doc.switchToPage(i);
         
+        // Professional footer
         doc.fontSize(8).font('Helvetica').fillColor('#999999')
            .text('──────────────────────────────────────────────────────────────────────────', 50, 750, { align: 'center' })
-           .text('🤖 Generiert durch Revolutionary Contract AI - Weltklasse KI-Vertragsoptimierung', 50, 765, { align: 'center' })
-           .text(`📅 ${new Date().toLocaleString('de-DE')} | 🔧 Version 4.0 Revolutionary | Seite ${i + 1}/${pageCount}`, 50, 780, { align: 'center' })
-           .text('⚖️ Rechtlicher Hinweis: Diese Optimierungen sind KI-Empfehlungen. Lassen Sie Änderungen rechtlich prüfen.', 50, 795, { align: 'center' });
+           .text('Generiert durch Contract AI - Juristische Optimierungsplattform', 50, 765, { align: 'center' })
+           .text(`Erstellt am: ${new Date().toLocaleString('de-DE')} | Version 5.0 | Seite ${i + 1}/${pageCount}`, 50, 780, { align: 'center' });
       }
+      
+      // Add final page with signature fields and legal disclaimers
+      doc.addPage();
+      
+      // Professional signature section
+      doc.fontSize(16).font('Helvetica-Bold').fillColor('#1a1a1a')
+         .text('UNTERSCHRIFTEN', { align: 'center' });
+      
+      doc.moveDown(2);
+      
+      // Party 1 signature block
+      doc.fontSize(12).font('Helvetica').fillColor('#333333');
+      const signatureBlockHeight = 80;
+      const party1Y = doc.y;
+      
+      doc.rect(50, party1Y, 240, signatureBlockHeight).stroke('#d0d0d0');
+      doc.text('Vertragspartei 1:', 60, party1Y + 10);
+      doc.fontSize(10).fillColor('#666666')
+         .text('Name: _________________________________', 60, party1Y + 30)
+         .text('Datum: _______________________________', 60, party1Y + 45)
+         .text('Unterschrift: ________________________', 60, party1Y + 60);
+      
+      // Party 2 signature block  
+      const party2Y = party1Y;
+      doc.rect(305, party2Y, 240, signatureBlockHeight).stroke('#d0d0d0');
+      doc.fontSize(12).fillColor('#333333')
+         .text('Vertragspartei 2:', 315, party2Y + 10);
+      doc.fontSize(10).fillColor('#666666')
+         .text('Name: _________________________________', 315, party2Y + 30)
+         .text('Datum: _______________________________', 315, party2Y + 45)
+         .text('Unterschrift: ________________________', 315, party2Y + 60);
+      
+      doc.y = party1Y + signatureBlockHeight + 30;
+      doc.moveDown(2);
+      
+      // Legal disclaimer section
+      doc.fontSize(14).font('Helvetica-Bold').fillColor('#d32f2f')
+         .text('⚖️ WICHTIGE RECHTLICHE HINWEISE', { align: 'center' });
+      
+      doc.moveDown(1);
+      
+      const disclaimerBox = doc.y;
+      doc.rect(50, disclaimerBox, 495, 160).fill('#fff3e0').stroke('#ff9800');
+      
+      doc.fontSize(10).font('Helvetica-Bold').fillColor('#e65100')
+         .text('⚠️ HAFTUNGSAUSSCHLUSS', 60, disclaimerBox + 15);
+      
+      doc.fontSize(9).font('Helvetica').fillColor('#333333')
+         .text('• Diese Optimierungen wurden durch KI-Systeme generiert und ersetzen NICHT die Beratung durch einen qualifizierten Rechtsanwalt.', 60, disclaimerBox + 35, { width: 475 })
+         .text('• Vor Verwendung dieses optimierten Vertrags sollte eine rechtliche Prüfung durch einen Fachanwalt erfolgen.', 60, disclaimerBox + 55, { width: 475 })
+         .text('• Contract AI übernimmt keine Haftung für rechtliche Konsequenzen aus der Verwendung dieser Optimierungen.', 60, disclaimerBox + 75, { width: 475 })
+         .text('• Alle Angaben ohne Gewähr. Änderungen vorbehalten.', 60, disclaimerBox + 95, { width: 475 });
+      
+      doc.fontSize(8).font('Helvetica-Bold').fillColor('#1976d2')
+         .text('📞 Support: support@contract-ai.de | 🌐 www.contract-ai.de', 60, disclaimerBox + 120, { width: 475 })
+         .text(`Dokument-ID: ${requestId || 'N/A'} | Generiert: ${new Date().toISOString()}`, 60, disclaimerBox + 135, { width: 475 });
       
       doc.end();
       

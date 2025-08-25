@@ -248,7 +248,7 @@ const CONTRACT_TYPE_INFO = {
 // MOVED OUTSIDE AND BEFORE THE COMPONENT!
 const expandOptimizationClause = (optimization: OptimizationSuggestion, contractType: string = 'standard'): OptimizationSuggestion => {
   // Wenn die Klausel schon lang genug ist, nichts tun
-  if (optimization.improved.length > 500) return optimization;
+  if (optimization.improved.length > 800) return optimization;
   
   // Check ob es eine fehlende Klausel ist
   const isMissing = optimization.original.includes("FEHLT");
@@ -493,16 +493,21 @@ const expandOptimizationClause = (optimization: OptimizationSuggestion, contract
     };
   }
   
-  // Für bestehende kurze Klauseln: Erweitern
-  if (optimization.improved.length < 400) {
+  // Für bestehende kurze Klauseln: Professionell erweitern
+  if (optimization.improved.length < 600) {
+    // Extract the most relevant parts of the template
+    const templateLines = template.split('\n');
+    const relevantLines = templateLines.slice(2, Math.min(templateLines.length, 15)).join('\n');
+    
     const expandedText = `${optimization.improved}
 
-Vollständige Regelung:
-${template.split('\n').slice(2).join('\n')}`;
+📄 Vollständige juristische Ausformulierung:
+${relevantLines}`;
     
     return {
       ...optimization,
-      improved: expandedText
+      improved: expandedText,
+      aiInsight: optimization.aiInsight + ' | Erweitert mit professioneller Klausel-Bibliothek'
     };
   }
   
@@ -601,7 +606,7 @@ const parseOptimizationResult = (data: OptimizationResult, fileName: string): Op
           relatedClauses: [`Kategorie: ${category.label}`, `Priorität: ${issue.risk >= 8 ? 'kritisch' : 'hoch'}`]
         };
         
-        // ERWEITERE kurze oder fehlende Klauseln
+        // ERWEITERE kurze oder fehlende Klauseln mit professionellem Content
         suggestion = expandOptimizationClause(suggestion, contractType);
         
         suggestions.push(suggestion);
@@ -824,7 +829,7 @@ export default function Optimizer() {
     }
   }, [optimizations]);
 
-  // ✅ ORIGINAL: Outside Click Handling
+  // ✅ ORIGINAL: Outside Click Handling with Debounce
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Element;
@@ -843,8 +848,13 @@ export default function Optimizer() {
     };
 
     if (showPitchMenu || showExportMenu) {
-      document.addEventListener('mousedown', handleClickOutside);
+      // Add small delay to prevent immediate closing
+      const timer = setTimeout(() => {
+        document.addEventListener('mousedown', handleClickOutside);
+      }, 100);
+      
       return () => {
+        clearTimeout(timer);
         document.removeEventListener('mousedown', handleClickOutside);
       };
     }
@@ -941,6 +951,11 @@ export default function Optimizer() {
       showToast("❌ Bitte lade erst einen Vertrag hoch.", 'error');
       return;
     }
+    
+    // Prevent duplicate calls
+    if (isGeneratingContract) {
+      return;
+    }
 
     // Use selected optimizations if in advanced mode, otherwise use ALL
     const optimizationsToApply = showAdvancedView && selectedOptimizations.size > 0
@@ -1021,7 +1036,7 @@ export default function Optimizer() {
         }
       };
 
-      const generateRes = await fetch(`/api/contracts/${currentContractId}/generate-optimized`, {
+      const generateRes = await fetch(`/api/optimized-contract/${currentContractId}/generate`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -1042,12 +1057,23 @@ export default function Optimizer() {
       document.body.removeChild(link);
       URL.revokeObjectURL(downloadUrl);
 
-      showToast(`✅ Dein verbesserter Vertrag wurde erstellt! (${optimizationsToApply.length} Optimierungen)`, 'success');
+      showToast(`✅ Professioneller Vertrag mit ${optimizationsToApply.length} Optimierungen erstellt!`, 'success');
 
     } catch (error) {
       const err = error as Error;
       console.error("❌ Generation error:", err);
-      showToast(err.message, 'error');
+      
+      // Better error messages for users
+      let userMessage = 'Fehler beim Generieren des Vertrags';
+      if (err.message.includes('network')) {
+        userMessage = '🌐 Netzwerkfehler - Bitte prüfe deine Internetverbindung';
+      } else if (err.message.includes('401') || err.message.includes('403')) {
+        userMessage = '🔒 Sitzung abgelaufen - Bitte neu anmelden';
+      } else if (err.message.includes('500')) {
+        userMessage = '⚠️ Server-Fehler - Bitte versuche es später erneut';
+      }
+      
+      showToast(userMessage, 'error');
     } finally {
       setIsGeneratingContract(false);
     }
@@ -1132,43 +1158,59 @@ export default function Optimizer() {
     };
 
     const pitchTemplates = {
-      lawyer: `Sehr geehrte Kolleginnen und Kollegen,
+      lawyer: `Sehr geehrte Damen und Herren,
 
-nach KI-Analyse mit ${optimizationResult?.meta?.confidence || 95}% Konfidenz:
-
-${optimizations.slice(0, 5).map((opt, index) => 
-  `${index + 1}. ${categoryNames[opt.category]} (Risiko: ${opt.legalRisk}/10)
-   Empfehlung: ${opt.improved.substring(0, 100)}...
-   Benchmark: ${opt.marketBenchmark}`
-).join('\n\n')}
-
-${optimizations.length > 5 ? `\n+ ${optimizations.length - 5} weitere Optimierungen\n` : ''}
-
-Mit kollegialen Grüßen`,
-
-      business: `Geschätzter Geschäftspartner,
-
-unsere KI-Analyse hat ${optimizations.length} Optimierungen identifiziert:
+im Rahmen unserer rechtlichen Prüfung haben wir folgende kritische Optimierungspunkte identifiziert:
 
 ${optimizations.slice(0, 5).map((opt, index) => 
   `${index + 1}. ${categoryNames[opt.category]}
-   Impact: ${opt.estimatedSavings}
-   ${opt.marketBenchmark}`
+   • Rechtliches Risiko: ${opt.legalRisk}/10
+   • Maßnahme: ${opt.improved.substring(0, 120)}...
+   • Rechtsgrundlage: ${opt.marketBenchmark || 'Aktuelle Rechtsprechung und Vertragspraxis'}`
 ).join('\n\n')}
 
-ROI der Optimierungen: Signifikant
+${optimizations.length > 5 ? `\nWeitere ${optimizations.length - 5} Optimierungen sind im vollständigen Bericht enthalten.\n` : ''}
 
-Beste Grüße`,
+Die vorgeschlagenen Änderungen entsprechen der aktuellen Rechtsprechung und herrschenden Meinung.
 
-      private: `Hallo,
+Mit freundlichen Grüßen`,
 
-die KI hat ${optimizations.length} Verbesserungen gefunden:
+      business: `Sehr geehrte Geschäftspartner,
+
+anbei unsere Vertragsoptimierungen für maximale Rechtssicherheit und Wirtschaftlichkeit:
+
+📊 Zusammenfassung: ${optimizations.length} kritische Verbesserungen identifiziert
 
 ${optimizations.slice(0, 5).map((opt, index) => 
-  `${index + 1}. ${categoryNames[opt.category]}: ${opt.estimatedSavings}`
-).join('\n')}
+  `${index + 1}. ${categoryNames[opt.category]}
+   • Wirtschaftlicher Impact: ${opt.estimatedSavings || 'Risikominimierung'}
+   • Priorität: ${opt.priority === 'critical' ? '🔴 Kritisch' : opt.priority === 'high' ? '🟠 Hoch' : '🟢 Mittel'}
+   • Maßnahme: ${opt.marketBenchmark || 'Best Practice Implementierung'}`
+).join('\n\n')}
 
-Viele Grüße`
+💡 Empfehlung: Zeitnahe Implementierung zur Risikominimierung und Vertragsoptimierung.
+
+Für Rückfragen stehen wir gerne zur Verfügung.
+
+Mit freundlichen Grüßen`,
+
+      private: `Guten Tag,
+
+wir haben Ihren Vertrag geprüft und wichtige Verbesserungsmöglichkeiten gefunden:
+
+✅ ${optimizations.length} Optimierungen für mehr Sicherheit
+
+${optimizations.slice(0, 5).map((opt, index) => 
+  `${index + 1}. ${categoryNames[opt.category]}
+   → ${opt.estimatedSavings || 'Besserer Schutz Ihrer Interessen'}
+   → Schwierigkeit: ${opt.implementationDifficulty === 'easy' ? 'Einfach umzusetzen' : 'Benötigt rechtliche Beratung'}`
+).join('\n\n')}
+
+Wir empfehlen, diese Änderungen vor der Unterzeichnung einzuarbeiten.
+
+Bei Fragen helfen wir gerne weiter.
+
+Freundliche Grüße`
     };
 
     const pitch = pitchTemplates[style as keyof typeof pitchTemplates] || pitchTemplates.business;
@@ -1200,7 +1242,7 @@ Konfidenz: ${opt.confidence}%\n`
     showToast(`✅ Export erfolgreich!`, 'success');
   }, [optimizations, file, showToast]);
 
-  // 🚀 REVOLUTIONARY: Dynamic Categories
+  // 🚀 REVOLUTIONARY: Dynamic Categories with Performance Optimization
   const dynamicCategories = useMemo(() => {
     const cats = [
       {
@@ -1260,10 +1302,11 @@ Konfidenz: ${opt.confidence}%\n`
     return cats;
   }, [optimizations, optimizationResult]);
 
-  // ✅ ORIGINAL: Filter optimizations
-  const filteredOptimizations = selectedCategory === 'all' 
-    ? optimizations 
-    : optimizations.filter(opt => opt.category === selectedCategory);
+  // ✅ ORIGINAL: Filter optimizations with Memoization
+  const filteredOptimizations = useMemo(() => {
+    if (selectedCategory === 'all') return optimizations;
+    return optimizations.filter(opt => opt.category === selectedCategory);
+  }, [optimizations, selectedCategory]);
 
   // 🚀 SIMPLIFIED: Statistics
   const statistics = useMemo(() => {
@@ -1484,24 +1527,35 @@ Konfidenz: ${opt.confidence}%\n`
             </motion.div>
           </motion.div>
 
-          {/* Analysis Progress */}
+          {/* Analysis Progress - Enhanced */}
           {isAnalyzing && (
             <motion.div 
               className={styles.card}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
+              style={{ borderColor: '#007AFF', background: 'linear-gradient(135deg, rgba(0, 122, 255, 0.03) 0%, rgba(175, 82, 222, 0.03) 100%)' }}
             >
-              <div className="flex items-center gap-3 mb-3">
-                <Loader2 className="animate-spin w-5 h-5 text-blue-500" />
-                <span className="font-semibold">KI-Analyse läuft...</span>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <Loader2 className="animate-spin w-5 h-5" style={{ color: '#007AFF' }} />
+                  <span className="font-semibold">Rechtliche Analyse läuft...</span>
+                </div>
+                <span className="text-sm font-medium" style={{ color: '#007AFF' }}>{analysisProgress}%</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
                 <motion.div 
-                  className="bg-gradient-to-r from-blue-500 to-purple-500 h-3 rounded-full"
+                  className="h-3 rounded-full"
+                  style={{ background: 'linear-gradient(90deg, #007AFF 0%, #AF52DE 100%)' }}
                   initial={{ width: 0 }}
                   animate={{ width: `${analysisProgress}%` }}
-                  transition={{ duration: 0.5 }}
+                  transition={{ duration: 0.5, ease: "easeInOut" }}
                 />
+              </div>
+              <div className="mt-3 text-sm text-gray-600">
+                {analysisProgress < 30 ? '🔍 Vertrag wird eingelesen...' :
+                 analysisProgress < 60 ? '🧠 KI analysiert Klauseln...' :
+                 analysisProgress < 90 ? '⚖️ Juristische Prüfung...' :
+                 '✅ Finalisierung...'}
               </div>
             </motion.div>
           )}
@@ -1620,7 +1674,7 @@ Konfidenz: ${opt.confidence}%\n`
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-lg font-bold flex items-center gap-2">
                         <BarChart3 className="w-5 h-5" style={{ color: '#007AFF' }} />
-                        Gefundene Optimierungen
+                        Analyse-Dashboard
                       </h3>
                       <button
                         onClick={() => setShowStatistics(false)}
@@ -1632,9 +1686,10 @@ Konfidenz: ${opt.confidence}%\n`
                     
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                       <motion.div 
-                        className="text-center p-3 rounded-xl"
+                        className="text-center p-3 rounded-xl cursor-pointer"
                         style={{ background: 'rgba(255, 59, 48, 0.1)' }}
                         whileHover={{ scale: 1.05 }}
+                        onClick={() => setSelectedCategory('all')}
                       >
                         <div className="text-2xl font-bold" style={{ color: '#FF3B30' }}>{statistics.criticalCount}</div>
                         <div className="text-xs text-gray-600 font-medium">Kritisch</div>
@@ -1666,17 +1721,17 @@ Konfidenz: ${opt.confidence}%\n`
                     </div>
                     
                     <div className="grid grid-cols-3 gap-4">
-                      <div className="text-center">
+                      <div className="text-center p-2 rounded-lg" style={{ background: 'rgba(0, 122, 255, 0.05)' }}>
                         <div className="text-sm text-gray-600">Ø Risiko</div>
-                        <div className="text-lg font-bold">{statistics.avgRisk}/10</div>
+                        <div className="text-lg font-bold" style={{ color: statistics.avgRisk >= 7 ? '#FF3B30' : statistics.avgRisk >= 5 ? '#FF9500' : '#34C759' }}>{statistics.avgRisk}/10</div>
                       </div>
-                      <div className="text-center">
+                      <div className="text-center p-2 rounded-lg" style={{ background: 'rgba(0, 122, 255, 0.05)' }}>
                         <div className="text-sm text-gray-600">Ø Impact</div>
-                        <div className="text-lg font-bold">{statistics.avgImpact}/10</div>
+                        <div className="text-lg font-bold" style={{ color: '#007AFF' }}>{statistics.avgImpact}/10</div>
                       </div>
-                      <div className="text-center">
-                        <div className="text-sm text-gray-600">Ø Konfidenz</div>
-                        <div className="text-lg font-bold">{statistics.avgConfidence}%</div>
+                      <div className="text-center p-2 rounded-lg" style={{ background: 'rgba(0, 122, 255, 0.05)' }}>
+                        <div className="text-sm text-gray-600">KI-Konfidenz</div>
+                        <div className="text-lg font-bold" style={{ color: statistics.avgConfidence >= 85 ? '#34C759' : statistics.avgConfidence >= 70 ? '#FF9500' : '#FF3B30' }}>{statistics.avgConfidence}%</div>
                       </div>
                     </div>
                   </motion.div>
@@ -1694,10 +1749,10 @@ Konfidenz: ${opt.confidence}%\n`
                 >
                   <div className="text-center">
                     <h3 className="text-2xl font-bold mb-2">
-                      {optimizations.length} Verbesserungen gefunden!
+                      ✨ Dein Vertrag wurde analysiert
                     </h3>
                     <p className="text-gray-600 mb-6">
-                      Klicke auf den Button um deinen optimierten Vertrag zu erhalten
+                      {optimizations.length} kritische Optimierungen identifiziert – Erstelle jetzt deinen rechtssicheren Vertrag
                     </p>
                     
                     <button
@@ -1713,9 +1768,7 @@ Konfidenz: ${opt.confidence}%\n`
                       ) : (
                         <>
                           <Wand2 className="w-6 h-6" />
-                          🪄 Mach meinen {optimizationResult?.meta?.type ? 
-                            CONTRACT_TYPE_INFO[optimizationResult.meta.type as keyof typeof CONTRACT_TYPE_INFO]?.name || 'Vertrag' 
-                            : 'Vertrag'} besser!
+                          ⚡ Optimierten Vertrag generieren
                         </>
                       )}
                     </button>
@@ -1948,11 +2001,11 @@ Konfidenz: ${opt.confidence}%\n`
                                 <strong>✅ Optimiert:</strong>
                               </p>
                               <p className="text-xs text-gray-700 mt-1 whitespace-pre-wrap">
-                                {optimization.improved}
+                                {optimization.improved.length > 500 ? optimization.improved.substring(0, 500) + '...' : optimization.improved}
                               </p>
-                              {optimization.improved.length < 200 && (
-                                <p className="text-xs text-orange-600 mt-2">
-                                  ⚠️ <em>Vollständige Klausel im generierten PDF</em>
+                              {(optimization.improved.length < 200 || optimization.improved.length > 500) && (
+                                <p className="text-xs text-blue-600 mt-2">
+                                  ℹ️ <em>Vollständige juristische Klausel wird im PDF generiert</em>
                                 </p>
                               )}
                             </div>
