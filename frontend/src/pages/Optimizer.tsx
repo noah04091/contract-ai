@@ -893,7 +893,7 @@ export default function Optimizer() {
     } finally {
       setIsGeneratingContract(false);
     }
-  }, [file, optimizations, contractId, showAdvancedView, selectedOptimizations, originalContractText, analysisData, showToast, isGeneratingContract, isPremium]);
+  }, [file, optimizations, contractId, showAdvancedView, selectedOptimizations, originalContractText, analysisData, showToast, isPremium]);
 
   // 🚀 SIMPLIFIED: Toggle optimization selection (for advanced mode)
   const toggleOptimizationSelection = useCallback((id: string) => {
@@ -1192,7 +1192,7 @@ Viele Grüße`
         if (parsed.categories) {
           return parsed.categories;
         }
-      } catch (e) {
+      } catch {
         console.log("Could not parse optimization result as JSON");
       }
     }

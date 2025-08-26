@@ -4,7 +4,7 @@
 // Zweck: Visualisiert Unterschiede zwischen Original- und optimierter Version
 // Features: Toggle für Teilübernahme, Side-by-Side-Ansicht, Change-Highlighting
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Eye, 
@@ -75,11 +75,11 @@ const DiffViewer: React.FC<DiffViewerProps> = ({
   };
 
   // Get change status
-  const getChangeStatus = (changeId: string): 'accepted' | 'rejected' | 'default' => {
+  const getChangeStatus = useCallback((changeId: string): 'accepted' | 'rejected' | 'default' => {
     if (acceptedIds.has(changeId)) return 'accepted';
     if (rejectedIds.has(changeId)) return 'rejected';
     return 'default';
-  };
+  }, [acceptedIds, rejectedIds]);
 
   // Toggle change details expansion
   const toggleChangeExpansion = (changeId: string) => {
