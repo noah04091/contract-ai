@@ -7,7 +7,6 @@ import {
   AlertCircle, 
   RefreshCw, 
   FileText, 
-  Filter,
   Download,
   Mail,
   DollarSign,
@@ -28,13 +27,12 @@ import {
   FileSignature,
   Briefcase,
   Home,
-  Package,
-  Calculator,
   Cloud,
   Loader2,
-  Minimize2,
   Settings,
-  ArrowRight
+  ArrowRight,
+  GitCompare,
+  FileCheck
 } from "lucide-react";
 
 // Components
@@ -206,579 +204,452 @@ const CONTRACT_TYPE_INFO = {
     name: 'Werkvertrag',
     icon: <Target className="w-5 h-5" />,
     color: '#5AC8FA',
-    gradient: 'linear-gradient(135deg, #5AC8FA 0%, #40B8F0 100%)',
-    description: 'Werkleistungen mit Erfolg'
+    gradient: 'linear-gradient(135deg, #5AC8FA 0%, #4DAAF7 100%)',
+    description: 'Werkleistungen & Projekte'
   },
   lizenzvertrag: {
     name: 'Lizenzvertrag',
     icon: <FileSignature className="w-5 h-5" />,
-    color: '#007AFF',
-    gradient: 'linear-gradient(135deg, #007AFF 0%, #0051D5 100%)',
+    color: '#FF6482',
+    gradient: 'linear-gradient(135deg, #FF6482 0%, #F5526F 100%)',
     description: 'Software & IP-Lizenzen'
-  },
-  gesellschaftsvertrag: {
-    name: 'Gesellschaftsvertrag',
-    icon: <Building2 className="w-5 h-5" />,
-    color: '#FF375F',
-    gradient: 'linear-gradient(135deg, #FF375F 0%, #E52D53 100%)',
-    description: 'GmbH, AG & Co.'
-  },
-  darlehensvertrag: {
-    name: 'Darlehensvertrag',
-    icon: <Calculator className="w-5 h-5" />,
-    color: '#30D158',
-    gradient: 'linear-gradient(135deg, #30D158 0%, #28B84C 100%)',
-    description: 'Kredite & Darlehen'
-  },
-  agb: {
-    name: 'AGB',
-    icon: <FileText className="w-5 h-5" />,
-    color: '#64D2FF',
-    gradient: 'linear-gradient(135deg, #64D2FF 0%, #48C8F8 100%)',
-    description: 'Allgemeine Geschäftsbedingungen'
-  },
-  franchise: {
-    name: 'Franchise',
-    icon: <Package className="w-5 h-5" />,
-    color: '#BF5AF2',
-    gradient: 'linear-gradient(135deg, #BF5AF2 0%, #A842D8 100%)',
-    description: 'Franchise-Vereinbarungen'
-  },
-  sonstiges: {
-    name: 'Sonstiger Vertrag',
-    icon: <FileText className="w-5 h-5" />,
-    color: '#8E8E93',
-    gradient: 'linear-gradient(135deg, #8E8E93 0%, #636366 100%)',
-    description: 'Allgemeine Vertragsoptimierung'
   }
 };
 
-// 🚀 UNIVERSAL: Klausel-Vervollständigung für ALLE Vertragstypen
-// MOVED OUTSIDE AND BEFORE THE COMPONENT!
-const expandOptimizationClause = (optimization: OptimizationSuggestion, contractType: string = 'standard'): OptimizationSuggestion => {
-  // Wenn die Klausel schon lang genug ist, nichts tun
-  if (optimization.improved.length > 800) return optimization;
-  
-  // Check ob es eine fehlende Klausel ist
-  const isMissing = optimization.original.includes("FEHLT");
-  
-  // Contract-Type spezifische Templates
-  const clauseTemplates: Record<string, Record<string, string>> = {
-    arbeitsvertrag: {
-      termination: `§ [X] Kündigung und Beendigung des Arbeitsverhältnisses
+// 🚀 Export Options with Icons
+const EXPORT_OPTIONS: ExportOption[] = [
+  {
+    id: 'pdf',
+    name: 'PDF Report',
+    icon: <FileText className="w-5 h-5" />,
+    description: 'Detaillierter Analysebericht',
+    format: '.pdf'
+  },
+  {
+    id: 'word',
+    name: 'Word Dokument',
+    icon: <FileDown className="w-5 h-5" />,
+    description: 'Editierbare Version',
+    format: '.docx',
+    premium: true
+  },
+  {
+    id: 'json',
+    name: 'JSON Data',
+    icon: <Layers className="w-5 h-5" />,
+    description: 'Strukturierte Daten',
+    format: '.json'
+  }
+];
 
-(1) Das Arbeitsverhältnis kann von beiden Seiten unter Einhaltung der gesetzlichen Kündigungsfristen ordentlich gekündigt werden.
+// 🚀 Pitch Styles
+const PITCH_STYLES: PitchStyle[] = [
+  {
+    id: 'lawyer',
+    name: 'Juristisch',
+    icon: <Building2 className="w-5 h-5" />,
+    description: 'Formell & rechtssicher',
+    target: 'lawyer'
+  },
+  {
+    id: 'business',
+    name: 'Business',
+    icon: <Briefcase className="w-5 h-5" />,
+    description: 'Professionell & effizient',
+    target: 'business'
+  },
+  {
+    id: 'private',
+    name: 'Verständlich',
+    icon: <User className="w-5 h-5" />,
+    description: 'Einfach & klar',
+    target: 'private'
+  }
+];
 
-(2) Die Kündigungsfrist beträgt:
-- während der Probezeit: 2 Wochen zum Monatsende
-- nach der Probezeit: 4 Wochen zum 15. oder zum Ende eines Kalendermonats
-- nach 2 Jahren Betriebszugehörigkeit: 1 Monat zum Ende eines Kalendermonats
-- nach 5 Jahren: 2 Monate zum Ende eines Kalendermonats
-- nach 8 Jahren: 3 Monate zum Ende eines Kalendermonats
+// 🚀 REVOLUTIONARY: Smart Filter Categories
+const FILTER_CATEGORIES = [
+  { value: 'all', label: 'Alle Optimierungen', icon: '🎯' },
+  { value: 'termination', label: 'Kündigungsregelungen', icon: '🚪' },
+  { value: 'liability', label: 'Haftungsklauseln', icon: '⚖️' },
+  { value: 'payment', label: 'Zahlungskonditionen', icon: '💰' },
+  { value: 'compliance', label: 'Compliance & Datenschutz', icon: '🔐' },
+  { value: 'clarity', label: 'Vertragsklarheit', icon: '📝' }
+];
 
-(3) Das Recht zur außerordentlichen Kündigung aus wichtigem Grund bleibt unberührt.
+// 🚀 REVOLUTIONARY: Helper Functions
+const getCategoryIcon = (category: string) => {
+  const icons: Record<string, React.ReactNode> = {
+    'termination': '🚪',
+    'liability': '⚖️',
+    'payment': '💰',
+    'compliance': '🔐',
+    'clarity': '📝',
+    'performance': '🎯',
+    'warranty': '🛡️',
+    'confidentiality': '🤫',
+    'intellectual_property': '💡',
+    'dispute_resolution': '🤝'
+  };
+  return icons[category] || '📋';
+};
 
-(4) Kündigungen bedürfen zu ihrer Wirksamkeit der Schriftform.`,
-      
-      liability: `§ [X] Haftung des Arbeitnehmers
+const getCategoryColor = (category: string) => {
+  const colors: Record<string, string> = {
+    'termination': '#FF6B6B',
+    'liability': '#4ECDC4',
+    'payment': '#45B7D1',
+    'compliance': '#96CEB4',
+    'clarity': '#FECA57',
+    'performance': '#9B59B6',
+    'warranty': '#E74C3C',
+    'confidentiality': '#3498DB',
+    'intellectual_property': '#F39C12',
+    'dispute_resolution': '#2ECC71'
+  };
+  return colors[category] || '#95A5A6';
+};
 
-(1) Der Arbeitnehmer haftet für Schäden, die er dem Arbeitgeber vorsätzlich oder grob fahrlässig zufügt.
-
-(2) Bei leichter Fahrlässigkeit haftet der Arbeitnehmer nur bei Verletzung wesentlicher Vertragspflichten und nur bis zur Höhe des typischerweise vorhersehbaren Schadens.
-
-(3) Die Haftungsbeschränkung gilt nicht für Schäden aus der Verletzung des Lebens, des Körpers oder der Gesundheit.`,
-      
-      payment: `§ [X] Vergütung
-
-(1) Der Arbeitnehmer erhält eine monatliche Bruttovergütung in Höhe von [BETRAG] EUR.
-
-(2) Die Vergütung ist jeweils zum Monatsende fällig und wird bargeldlos auf ein vom Arbeitnehmer benanntes Konto überwiesen.
-
-(3) Überstunden werden mit einem Zuschlag von 25% vergütet oder nach Wahl des Arbeitgebers durch Freizeit ausgeglichen.
-
-(4) Eine jährliche Überprüfung der Vergütung findet jeweils zum [DATUM] statt.`,
-      
-      compliance: `§ [X] Datenschutz und Compliance
-
-(1) Der Arbeitnehmer verpflichtet sich zur Einhaltung aller datenschutzrechtlichen Bestimmungen, insbesondere der DSGVO.
-
-(2) Personenbezogene Daten sind vertraulich zu behandeln und dürfen nur im Rahmen der arbeitsvertraglichen Aufgaben verarbeitet werden.
-
-(3) Der Arbeitnehmer wird regelmäßig datenschutzrechtlich geschult.
-
-(4) Verstöße gegen datenschutzrechtliche Bestimmungen sind unverzüglich zu melden.`,
-      
-      clarity: `§ [X] Arbeitszeit und Arbeitsort
-
-(1) Die regelmäßige wöchentliche Arbeitszeit beträgt [X] Stunden.
-
-(2) Die Verteilung der Arbeitszeit richtet sich nach den betrieblichen Erfordernissen.
-
-(3) Der Arbeitsort ist [ORT]. Der Arbeitgeber behält sich vor, den Arbeitnehmer auch an anderen Orten einzusetzen.
-
-(4) Homeoffice ist nach Absprache mit dem Vorgesetzten möglich.`
+const getPriorityConfig = (priority: string) => {
+  const configs: Record<string, {
+    color: string;
+    bg: string;
+    label: string;
+    icon: string;
+  }> = {
+    'critical': { 
+      color: '#FF3B30', 
+      bg: 'rgba(255, 59, 48, 0.1)', 
+      label: 'Kritisch',
+      icon: '🚨'
     },
-    
-    mietvertrag: {
-      termination: `§ [X] Kündigung und Mietzeit
-
-(1) Das Mietverhältnis beginnt am [DATUM] und läuft auf unbestimmte Zeit.
-
-(2) Die Kündigung ist unter Einhaltung der gesetzlichen Frist von drei Monaten zum Monatsende möglich.
-
-(3) Die Kündigungsfrist für den Vermieter verlängert sich nach 5 Jahren auf 6 Monate und nach 8 Jahren auf 9 Monate.
-
-(4) Das Recht zur außerordentlichen fristlosen Kündigung bleibt unberührt.
-
-(5) Die Kündigung muss schriftlich erfolgen.`,
-      
-      payment: `§ [X] Miete und Nebenkosten
-
-(1) Die monatliche Grundmiete beträgt [BETRAG] EUR.
-
-(2) Die monatliche Nebenkostenvorauszahlung beträgt [BETRAG] EUR.
-
-(3) Die Gesamtmiete ist monatlich im Voraus, spätestens bis zum dritten Werktag eines Monats, auf folgendes Konto zu zahlen: [KONTODATEN]
-
-(4) Der Vermieter ist berechtigt, die Nebenkostenvorauszahlung einmal jährlich nach Abrechnung anzupassen.`,
-      
-      liability: `§ [X] Haftung und Schäden
-
-(1) Der Mieter haftet für alle Schäden, die durch schuldhafte Verletzung der ihm obliegenden Sorgfalts- und Anzeigepflichten entstehen.
-
-(2) Der Mieter haftet auch für Schäden, die durch Angehörige seines Haushalts, Besucher oder sonstige Personen verursacht werden, denen er den Zutritt zur Wohnung gestattet hat.
-
-(3) Kleinreparaturen bis zu einem Betrag von 100 EUR im Einzelfall trägt der Mieter, maximal jedoch 8% der Jahresmiete.`,
-      
-      compliance: `§ [X] Hausordnung und Ruhezeiten
-
-(1) Der Mieter verpflichtet sich zur Einhaltung der Hausordnung.
-
-(2) Ruhezeiten: werktags 22:00 - 6:00 Uhr, sonn- und feiertags ganztägig.
-
-(3) Tierhaltung bedarf der schriftlichen Zustimmung des Vermieters.
-
-(4) Bauliche Veränderungen sind nur mit schriftlicher Genehmigung gestattet.`,
-      
-      clarity: `§ [X] Zustand und Übergabe
-
-(1) Die Wohnung wird in renoviertem/unrenoviertem Zustand übergeben.
-
-(2) Ein Übergabeprotokoll wird bei Ein- und Auszug erstellt.
-
-(3) Der Mieter ist verpflichtet, die Wohnung pfleglich zu behandeln.
-
-(4) Schönheitsreparaturen obliegen dem Mieter/Vermieter.`
+    'high': { 
+      color: '#FF9500', 
+      bg: 'rgba(255, 149, 0, 0.1)', 
+      label: 'Hoch',
+      icon: '⚠️'
     },
-    
-    kaufvertrag: {
-      payment: `§ [X] Kaufpreis und Zahlung
-
-(1) Der Kaufpreis beträgt [BETRAG] EUR (in Worten: [BETRAG IN WORTEN]).
-
-(2) Der Kaufpreis ist fällig bei Übergabe der Kaufsache / nach Rechnungsstellung / in folgenden Raten: [RATENVEREINBARUNG]
-
-(3) Bei Zahlungsverzug werden Verzugszinsen in Höhe von 9 Prozentpunkten über dem Basiszinssatz berechnet.
-
-(4) Die Zahlung erfolgt per Überweisung auf folgendes Konto: [KONTODATEN]`,
-      
-      liability: `§ [X] Gewährleistung und Haftung
-
-(1) Die gesetzlichen Gewährleistungsrechte finden Anwendung.
-
-(2) Die Gewährleistungsfrist beträgt bei neuen Sachen 2 Jahre, bei gebrauchten Sachen 1 Jahr.
-
-(3) Offensichtliche Mängel sind unverzüglich, spätestens binnen 14 Tagen nach Erhalt, anzuzeigen.
-
-(4) Die Haftung für leichte Fahrlässigkeit wird ausgeschlossen, soweit keine wesentlichen Vertragspflichten verletzt werden.`,
-      
-      termination: `§ [X] Rücktritt und Widerruf
-
-(1) Der Käufer kann vom Vertrag zurücktreten, wenn der Verkäufer eine fällige Leistung nicht oder nicht vertragsgemäß erbringt.
-
-(2) Bei Fernabsatzgeschäften steht dem Verbraucher ein 14-tägiges Widerrufsrecht zu.
-
-(3) Der Rücktritt ist schriftlich zu erklären.
-
-(4) Im Falle des Rücktritts sind empfangene Leistungen zurückzugewähren.`,
-      
-      clarity: `§ [X] Lieferung und Gefahrübergang
-
-(1) Die Lieferung erfolgt bis zum [DATUM] an folgende Adresse: [LIEFERADRESSE]
-
-(2) Die Gefahr des zufälligen Untergangs geht mit Übergabe auf den Käufer über.
-
-(3) Bei Versendung geht die Gefahr mit Übergabe an den Spediteur über.
-
-(4) Lieferverzögerungen sind unverzüglich mitzuteilen.`,
-      
-      compliance: `§ [X] Eigentumsvorbehalt
-
-(1) Die Ware bleibt bis zur vollständigen Zahlung Eigentum des Verkäufers.
-
-(2) Bei Zahlungsverzug ist der Verkäufer berechtigt, die Ware zurückzufordern.
-
-(3) Der Käufer ist verpflichtet, die Ware pfleglich zu behandeln.
-
-(4) Verpfändungen oder Sicherungsübereignungen sind unzulässig.`
+    'medium': { 
+      color: '#007AFF', 
+      bg: 'rgba(0, 122, 255, 0.1)', 
+      label: 'Mittel',
+      icon: 'ℹ️'
     },
-    
-    // Universal-Template für unbekannte Vertragstypen
-    standard: {
-      termination: `§ [X] Vertragsbeendigung
-
-(1) Dieser Vertrag kann von beiden Parteien unter Einhaltung einer Frist von [FRIST] gekündigt werden.
-
-(2) Die Kündigung bedarf der Schriftform.
-
-(3) Das Recht zur außerordentlichen Kündigung aus wichtigem Grund bleibt unberührt.
-
-(4) Nach Vertragsbeendigung sind alle erhaltenen Unterlagen und Gegenstände zurückzugeben.`,
-      
-      payment: `§ [X] Vergütung und Zahlungsbedingungen
-
-(1) Die vereinbarte Vergütung beträgt [BETRAG] EUR zzgl. gesetzlicher Mehrwertsteuer.
-
-(2) Die Zahlung ist innerhalb von [TAGE] Tagen nach Rechnungsstellung fällig.
-
-(3) Bei Zahlungsverzug werden Verzugszinsen gemäß gesetzlicher Regelung berechnet.
-
-(4) Aufrechnungen sind nur mit unbestrittenen oder rechtskräftig festgestellten Forderungen zulässig.`,
-      
-      liability: `§ [X] Haftung
-
-(1) Die Haftung für leichte Fahrlässigkeit wird ausgeschlossen, soweit nicht wesentliche Vertragspflichten verletzt werden.
-
-(2) Die Haftungsbeschränkung gilt nicht für Schäden aus der Verletzung des Lebens, des Körpers oder der Gesundheit.
-
-(3) Die Haftung ist auf den vertragstypischen, vorhersehbaren Schaden begrenzt.
-
-(4) Die gesetzliche Haftung für Vorsatz und grobe Fahrlässigkeit bleibt unberührt.`,
-      
-      compliance: `§ [X] Datenschutz und Vertraulichkeit
-
-(1) Die Parteien verpflichten sich zur Einhaltung der geltenden Datenschutzbestimmungen.
-
-(2) Vertrauliche Informationen sind geheim zu halten und nicht an Dritte weiterzugeben.
-
-(3) Die Vertraulichkeitsverpflichtung besteht auch nach Vertragsbeendigung fort.
-
-(4) Ausnahmen gelten nur bei gesetzlicher Offenlegungspflicht.`,
-      
-      clarity: `§ [X] Allgemeine Bestimmungen
-
-(1) Änderungen und Ergänzungen dieses Vertrages bedürfen der Schriftform.
-
-(2) Sollten einzelne Bestimmungen unwirksam sein, bleibt der übrige Vertrag wirksam.
-
-(3) Erfüllungsort ist [ORT].
-
-(4) Gerichtsstand ist [ORT], soweit gesetzlich zulässig.`
+    'low': { 
+      color: '#34C759', 
+      bg: 'rgba(52, 199, 89, 0.1)', 
+      label: 'Niedrig',
+      icon: '💡'
     }
   };
-  
-  // Vertragstyp-Mapping
-  const contractTypeKey = contractType.toLowerCase().replace(/\s+/g, '');
-  const templates = clauseTemplates[contractTypeKey] || clauseTemplates.standard;
-  
-  // Template basierend auf Kategorie auswählen
-  const template = templates[optimization.category] || templates.clarity;
-  
-  // Wenn es eine fehlende Klausel ist, nutze das Template
-  if (isMissing) {
-    return {
-      ...optimization,
-      improved: template
-        .replace(/\[X\]/g, Math.floor(Math.random() * 20 + 1).toString())
-        .replace(/\[BETRAG\]/g, 'siehe Vereinbarung')
-        .replace(/\[DATUM\]/g, 'siehe Vereinbarung')
-        .replace(/\[ORT\]/g, 'siehe Vereinbarung')
-        .replace(/\[FRIST\]/g, '3 Monate')
-        .replace(/\[TAGE\]/g, '30')
-        .replace(/\[KONTODATEN\]/g, 'werden separat mitgeteilt')
-        .replace(/\[LIEFERADRESSE\]/g, 'siehe Bestellung')
-        .replace(/\[BETRAG IN WORTEN\]/g, 'siehe oben')
-        .replace(/\[RATENVEREINBARUNG\]/g, 'nach Vereinbarung')
-    };
-  }
-  
-  // Für bestehende kurze Klauseln: Professionell erweitern
-  if (optimization.improved.length < 600) {
-    // Extract the most relevant parts of the template
-    const templateLines = template.split('\n');
-    const relevantLines = templateLines.slice(2, Math.min(templateLines.length, 15)).join('\n');
-    
-    const expandedText = `${optimization.improved}
-
-📄 Vollständige juristische Ausformulierung:
-${relevantLines}`;
-    
-    return {
-      ...optimization,
-      improved: expandedText,
-      aiInsight: optimization.aiInsight + ' | Erweitert mit professioneller Klausel-Bibliothek'
-    };
-  }
-  
-  return optimization;
+  return configs[priority] || configs.medium;
 };
 
-// ✅ ORIGINAL: Portal Component für Dropdowns
-const DropdownPortal: React.FC<{
-  isOpen: boolean;
-  targetRef: React.RefObject<HTMLElement | null>;
-  children: React.ReactNode;
-  position?: 'left' | 'right';
-}> = ({ isOpen, targetRef, children, position = 'left' }) => {
-  const [portalPosition, setPortalPosition] = useState({ top: 0, left: 0 });
-
-  useEffect(() => {
-    if (isOpen && targetRef.current) {
-      const rect = targetRef.current.getBoundingClientRect();
-      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-      const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
-      
-      setPortalPosition({
-        top: rect.bottom + scrollTop + 8,
-        left: position === 'right' 
-          ? rect.right + scrollLeft - 350
-          : rect.left + scrollLeft
-      });
-    }
-  }, [isOpen, targetRef, position]);
-
-  if (!isOpen) return null;
-
-  return ReactDOM.createPortal(
-    <div
-      style={{
-        position: 'absolute',
-        top: portalPosition.top,
-        left: Math.max(8, portalPosition.left),
-        zIndex: 999999,
-        pointerEvents: 'auto'
-      }}
+// 🚀 REVOLUTIONARY: Smart Summary Component
+const OptimizationSummaryCard: React.FC<{ 
+  summary: { redFlags: number; quickWins: number; totalIssues: number } 
+}> = ({ summary }) => {
+  return (
+    <motion.div
+      className={styles.summaryCard}
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.3 }}
     >
-      {children}
-    </div>,
+      <div className={styles.summaryGrid}>
+        <div className={styles.summaryItem}>
+          <div className={styles.summaryIcon} style={{ background: 'rgba(255, 59, 48, 0.1)' }}>
+            🚨
+          </div>
+          <div>
+            <div className={styles.summaryValue}>{summary.redFlags}</div>
+            <div className={styles.summaryLabel}>Kritische Punkte</div>
+          </div>
+        </div>
+        <div className={styles.summaryItem}>
+          <div className={styles.summaryIcon} style={{ background: 'rgba(52, 199, 89, 0.1)' }}>
+            ⚡
+          </div>
+          <div>
+            <div className={styles.summaryValue}>{summary.quickWins}</div>
+            <div className={styles.summaryLabel}>Quick Wins</div>
+          </div>
+        </div>
+        <div className={styles.summaryItem}>
+          <div className={styles.summaryIcon} style={{ background: 'rgba(0, 122, 255, 0.1)' }}>
+            📊
+          </div>
+          <div>
+            <div className={styles.summaryValue}>{summary.totalIssues}</div>
+            <div className={styles.summaryLabel}>Gesamt</div>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+// 🚀 REVOLUTIONARY: Smart Analysis Stepper
+const AnalysisProgress: React.FC<{ progress: number }> = ({ progress }) => {
+  const steps = [
+    { label: 'Upload', icon: '📤' },
+    { label: 'Analyse', icon: '🔍' },
+    { label: 'Optimierung', icon: '✨' },
+    { label: 'Fertig', icon: '✅' }
+  ];
+  
+  const currentStep = Math.floor((progress / 100) * steps.length);
+  
+  return (
+    <div className={styles.analysisStepper}>
+      {steps.map((step, index) => (
+        <div
+          key={index}
+          className={`${styles.stepItem} ${index <= currentStep ? styles.stepActive : ''}`}
+        >
+          <div className={styles.stepIcon}>{step.icon}</div>
+          <div className={styles.stepLabel}>{step.label}</div>
+          {index < steps.length - 1 && <div className={styles.stepConnector} />}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// 🚀 REVOLUTIONARY: Contract Type Badge
+const ContractTypeBadge: React.FC<{ type: string; confidence?: number }> = ({ type, confidence }) => {
+  const typeInfo = CONTRACT_TYPE_INFO[type as keyof typeof CONTRACT_TYPE_INFO] || {
+    name: type,
+    icon: <FileText className="w-4 h-4" />,
+    gradient: 'linear-gradient(135deg, #667EEA 0%, #764BA2 100%)'
+  };
+  
+  return (
+    <motion.div
+      className={styles.contractTypeBadge}
+      style={{ background: typeInfo.gradient }}
+      initial={{ scale: 0 }}
+      animate={{ scale: 1 }}
+      transition={{ type: "spring", stiffness: 500, damping: 25 }}
+    >
+      {typeInfo.icon}
+      <span>{typeInfo.name}</span>
+      {confidence && confidence > 0 && (
+        <span className={styles.confidenceBadge}>
+          {Math.round(confidence * 100)}%
+        </span>
+      )}
+    </motion.div>
+  );
+};
+
+// 🚀 REVOLUTIONARY: Optimization Card with Apple Design
+const OptimizationCard: React.FC<{
+  optimization: OptimizationSuggestion;
+  isSelected?: boolean;
+  onToggleSelect?: () => void;
+  showAdvanced?: boolean;
+}> = ({ optimization, isSelected = false, onToggleSelect, showAdvanced = false }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
+  const priorityConfig = getPriorityConfig(optimization.priority);
+  
+  const handleCopy = async () => {
+    const textToCopy = `
+${optimization.category.toUpperCase()} - ${optimization.priority.toUpperCase()}
+Original: ${optimization.original}
+Verbesserung: ${optimization.improved}
+Begründung: ${optimization.reasoning}
+    `.trim();
+    
+    await navigator.clipboard.writeText(textToCopy);
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
+  };
+  
+  return (
+    <motion.div
+      className={`${styles.optimizationCard} ${isSelected ? styles.selected : ''}`}
+      layout
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      whileHover={{ scale: 1.02 }}
+      transition={{ duration: 0.3 }}
+    >
+      <div className={styles.cardHeader}>
+        <div className={styles.cardHeaderLeft}>
+          <div 
+            className={styles.categoryIcon}
+            style={{ color: getCategoryColor(optimization.category) }}
+          >
+            {getCategoryIcon(optimization.category)}
+          </div>
+          <div className={styles.cardTitles}>
+            <h4 className={styles.cardTitle}>
+              {optimization.category.charAt(0).toUpperCase() + optimization.category.slice(1).replace('_', ' ')}
+            </h4>
+            <div className={styles.cardMeta}>
+              <span 
+                className={styles.priorityBadge}
+                style={{ 
+                  background: priorityConfig.bg,
+                  color: priorityConfig.color
+                }}
+              >
+                {priorityConfig.icon} {priorityConfig.label}
+              </span>
+              {optimization.confidence && (
+                <span className={styles.confidenceIndicator}>
+                  {Math.round(optimization.confidence)}% Konfidenz
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+        
+        <div className={styles.cardActions}>
+          {showAdvanced && onToggleSelect && (
+            <button
+              onClick={onToggleSelect}
+              className={`${styles.selectButton} ${isSelected ? styles.selected : ''}`}
+            >
+              {isSelected ? <CheckCircle2 className="w-5 h-5" /> : <div className={styles.selectCircle} />}
+            </button>
+          )}
+          <button
+            onClick={handleCopy}
+            className={styles.copyButton}
+          >
+            {isCopied ? <CheckCircle2 className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+          </button>
+          <button
+            onClick={() => setIsExpanded(!isExpanded)}
+            className={styles.expandButton}
+          >
+            {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+          </button>
+        </div>
+      </div>
+      
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className={styles.cardContent}
+          >
+            <div className={styles.textComparison}>
+              <div className={styles.originalText}>
+                <span className={styles.textLabel}>Original:</span>
+                <p>{optimization.original || 'Keine explizite Regelung vorhanden'}</p>
+              </div>
+              <ArrowRight className={styles.arrowIcon} />
+              <div className={styles.improvedText}>
+                <span className={styles.textLabel}>Optimierung:</span>
+                <p>{optimization.improved}</p>
+              </div>
+            </div>
+            
+            <div className={styles.reasoning}>
+              <span className={styles.reasoningLabel}>💡 Begründung:</span>
+              <p>{optimization.reasoning}</p>
+            </div>
+            
+            {optimization.marketBenchmark && (
+              <div className={styles.benchmark}>
+                <span className={styles.benchmarkLabel}>📊 Markt-Benchmark:</span>
+                <p>{optimization.marketBenchmark}</p>
+              </div>
+            )}
+            
+            {optimization.estimatedSavings && (
+              <div className={styles.savings}>
+                <span className={styles.savingsLabel}>💰 Geschätzte Einsparung:</span>
+                <p>{optimization.estimatedSavings}</p>
+              </div>
+            )}
+            
+            <div className={styles.cardFooter}>
+              <div className={styles.impactMetrics}>
+                <div className={styles.metric}>
+                  <span className={styles.metricLabel}>Risiko</span>
+                  <div className={styles.metricBar}>
+                    <div 
+                      className={styles.metricFill}
+                      style={{ 
+                        width: `${optimization.legalRisk * 10}%`,
+                        background: optimization.legalRisk > 7 ? '#FF3B30' : optimization.legalRisk > 4 ? '#FF9500' : '#34C759'
+                      }}
+                    />
+                  </div>
+                </div>
+                <div className={styles.metric}>
+                  <span className={styles.metricLabel}>Impact</span>
+                  <div className={styles.metricBar}>
+                    <div 
+                      className={styles.metricFill}
+                      style={{ 
+                        width: `${optimization.businessImpact * 10}%`,
+                        background: '#007AFF'
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+              <span className={styles.difficulty}>
+                Umsetzung: {optimization.implementationDifficulty || 'mittel'}
+              </span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+};
+
+// 🚀 Portal-based Toast Component
+const Toast: React.FC<{ 
+  message: string; 
+  type?: 'success' | 'error' | 'info';
+  onClose: () => void;
+}> = ({ message, type = 'success', onClose }) => {
+  useEffect(() => {
+    const timer = setTimeout(onClose, 5000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+  
+  const icons = {
+    success: <CheckCircle2 className="w-5 h-5" />,
+    error: <AlertCircle className="w-5 h-5" />,
+    info: <AlertCircle className="w-5 h-5" />
+  };
+  
+  const colors = {
+    success: '#34C759',
+    error: '#FF3B30',
+    info: '#007AFF'
+  };
+  
+  return ReactDOM.createPortal(
+    <motion.div
+      className={styles.toast}
+      initial={{ opacity: 0, y: -50, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: -20, scale: 0.95 }}
+      style={{ borderLeft: `4px solid ${colors[type]}` }}
+    >
+      <div style={{ color: colors[type] }}>{icons[type]}</div>
+      <span>{message}</span>
+      <button onClick={onClose} className={styles.toastClose}>×</button>
+    </motion.div>,
     document.body
   );
 };
 
-// ✅ ORIGINAL + ENHANCED: Parse function with revolutionary features  
-const parseOptimizationResult = (data: OptimizationResult, fileName: string): OptimizationSuggestion[] => {
-  const contractType = data.meta?.type || 'standard';
-  
-  // 🚀 NEW: Handle structured response from revolutionary backend
-  if (data.categories && Array.isArray(data.categories)) {
-    const suggestions: OptimizationSuggestion[] = [];
-    
-    data.categories.forEach((category: RevolutionaryCategory) => {
-      category.issues.forEach((issue: OptimizationIssue) => {
-        // Map category tag to valid OptimizationSuggestion category
-        let mappedCategory: OptimizationSuggestion['category'] = 'clarity';
-        
-        // Category mapping
-        const categoryMap: Record<string, OptimizationSuggestion['category']> = {
-          'termination': 'termination',
-          'liability': 'liability',
-          'payment': 'payment',
-          'compliance': 'compliance',
-          'clarity': 'clarity',
-          'working_hours': 'termination',
-          'compensation': 'payment',
-          'data_protection': 'compliance',
-          'confidentiality': 'compliance',
-          'warranty': 'liability',
-          'delivery': 'clarity',
-          'service_levels': 'clarity',
-          'support': 'clarity'
-        };
-        
-        mappedCategory = categoryMap[category.tag] || 'clarity';
-        
-        let suggestion: OptimizationSuggestion = {
-          id: issue.id,
-          category: mappedCategory,
-          priority: issue.risk >= 8 ? 'critical' : issue.risk >= 6 ? 'high' : issue.risk >= 4 ? 'medium' : 'low',
-          confidence: issue.confidence,
-          original: issue.originalText,
-          improved: issue.improvedText,
-          reasoning: issue.legalReasoning,
-          legalRisk: issue.risk,
-          businessImpact: issue.impact,
-          implementationDifficulty: issue.difficulty === 'Einfach' ? 'easy' : issue.difficulty === 'Mittel' ? 'medium' : 'complex',
-          estimatedSavings: issue.benchmark?.includes('€') ? issue.benchmark : 'Risikoreduzierung',
-          marketBenchmark: issue.benchmark || `Basierend auf ${fileName} Analyse`,
-          implemented: false,
-          aiInsight: `KI-Vertrauen ${issue.confidence}%: ${issue.summary}`,
-          relatedClauses: [`Kategorie: ${category.label}`, `Priorität: ${issue.risk >= 8 ? 'kritisch' : 'hoch'}`]
-        };
-        
-        // ERWEITERE kurze oder fehlende Klauseln mit professionellem Content
-        suggestion = expandOptimizationClause(suggestion, contractType);
-        
-        suggestions.push(suggestion);
-      });
-    });
-    
-    return suggestions;
-  }
-  
-  // ✅ ORIGINAL: Legacy parsing for backwards compatibility
-  const aiText = data.optimizationResult || data.legalAssessment || '';
-  if (!aiText || aiText.length < 50) {
-    return [];
-  }
-
-  const optimizations: OptimizationSuggestion[] = [];
-  
-  const sections = aiText.split(/(?:\[KATEGORIE:|KATEGORIE:|PROBLEM:|EMPFEHLUNG:|\d+\.\s*)/i)
-    .filter((section: string) => section.trim().length > 30);
-  
-  const additionalSections = aiText.split(/(?:BEGRÜNDUNG:|PRIORITÄT:|UMSETZUNG:)/i)
-    .filter((section: string) => section.trim().length > 50);
-  
-  const allSections = [...sections, ...additionalSections]
-    .filter((section, index, arr) => arr.indexOf(section) === index)
-    .slice(0, 15);
-
-  allSections.forEach((section: string, index: number) => {
-    if (section.trim().length < 40) return;
-    
-    let category: OptimizationSuggestion['category'] = 'clarity';
-    let priority: OptimizationSuggestion['priority'] = 'medium';
-    
-    const lowerSection = section.toLowerCase();
-    
-    // Category detection logic (original)
-    if (lowerSection.includes('kündigung') || lowerSection.includes('laufzeit')) {
-      category = 'termination';
-      priority = lowerSection.includes('kurz') || lowerSection.includes('lange') ? 'high' : 'medium';
-    } else if (lowerSection.includes('haftung') || lowerSection.includes('schäden')) {
-      category = 'liability';
-      priority = lowerSection.includes('unbegrenzt') ? 'critical' : 'high';
-    } else if (lowerSection.includes('zahlung') || lowerSection.includes('vergütung')) {
-      category = 'payment';
-      priority = lowerSection.includes('säumnis') ? 'high' : 'medium';
-    } else if (lowerSection.includes('dsgvo') || lowerSection.includes('datenschutz')) {
-      category = 'compliance';
-      priority = lowerSection.includes('dsgvo') ? 'high' : 'medium';
-    }
-
-    let confidence = 75;
-    if (section.length > 200) confidence += 10;
-    if (lowerSection.includes('empfehlung')) confidence += 8;
-    
-    const sentences = section.split(/[.!?]+/).filter((s: string) => s.trim().length > 15);
-    
-    let original = "";
-    let improved = "";
-    let reasoning = "";
-    
-    if (sentences.length >= 3) {
-      original = sentences.slice(0, Math.ceil(sentences.length / 3)).join('. ').trim() + '.';
-      improved = sentences.slice(Math.ceil(sentences.length / 3), Math.ceil(2 * sentences.length / 3)).join('. ').trim() + '.';
-      reasoning = sentences.slice(Math.ceil(2 * sentences.length / 3)).join('. ').trim() + '.';
-    } else {
-      original = "Aktuelle Formulierung erkannt";
-      improved = sentences[0]?.trim() + '.' || section.substring(0, 150) + '...';
-      reasoning = sentences.slice(1).join('. ').trim() || section.substring(150, 400) + '...';
-    }
-
-    let optimization: OptimizationSuggestion = {
-      id: `opt_${Date.now()}_${index}_${Math.random().toString(36).substr(2, 4)}`,
-      category,
-      priority,
-      confidence: Math.min(95, confidence),
-      original: original.length > 20 ? original : "Aktuelle Vertragsformulierung",
-      improved: improved.length > 20 ? improved : section.substring(0, 200) + '...',
-      reasoning: reasoning.length > 30 ? reasoning : section.substring(0, 400) + '...',
-      legalRisk: priority === 'critical' ? 8 + Math.floor(Math.random() * 2) : 
-                priority === 'high' ? 6 + Math.floor(Math.random() * 2) : 
-                3 + Math.floor(Math.random() * 3),
-      businessImpact: priority === 'critical' ? 7 + Math.floor(Math.random() * 2) : 
-                     priority === 'high' ? 5 + Math.floor(Math.random() * 2) : 
-                     3 + Math.floor(Math.random() * 3),
-      implementationDifficulty: Math.random() > 0.6 ? 'medium' : 'easy',
-      estimatedSavings: category === 'payment' ? `~${800 + Math.floor(Math.random() * 2000)}€/Jahr` : 'Risikoreduzierung',
-      marketBenchmark: `${60 + Math.floor(Math.random() * 30)}% der Verträge optimiert`,
-      implemented: false,
-      aiInsight: `KI-Vertrauen ${confidence}%: ${section.substring(0, 100)}...`,
-      relatedClauses: [`Bezug zu ${category}`, `Priorität: ${priority}`]
-    };
-    
-    // ERWEITERE kurze Klauseln
-    optimization = expandOptimizationClause(optimization, contractType);
-    
-    optimizations.push(optimization);
-  });
-
-  return optimizations;
-};
-
-// ✅ ORIGINAL: Calculate Contract Score
-const calculateContractScore = (optimizations: OptimizationSuggestion[]): ContractHealthScore => {
-  if (optimizations.length === 0) {
-    return {
-      overall: 85,
-      categories: {
-        termination: { score: 85, trend: 'stable' },
-        liability: { score: 85, trend: 'stable' },
-        payment: { score: 85, trend: 'stable' },
-        clarity: { score: 85, trend: 'stable' },
-        compliance: { score: 85, trend: 'stable' }
-      },
-      industryPercentile: 65,
-      riskLevel: 'medium'
-    };
-  }
-
-  const criticalCount = optimizations.filter(opt => opt.priority === 'critical' && !opt.implemented).length;
-  const highCount = optimizations.filter(opt => opt.priority === 'high' && !opt.implemented).length;
-  const mediumCount = optimizations.filter(opt => opt.priority === 'medium' && !opt.implemented).length;
-  
-  let baseScore = 92;
-  baseScore -= criticalCount * 18;
-  baseScore -= highCount * 10;
-  baseScore -= mediumCount * 4;
-  baseScore = Math.max(25, baseScore);
-
-  const implementedCount = optimizations.filter(opt => opt.implemented).length;
-  const improvementBonus = implementedCount * 5;
-  const finalScore = Math.min(100, Math.round(baseScore + improvementBonus));
-
-  const categoryScores = {
-    termination: Math.round(baseScore),
-    liability: Math.round(baseScore),
-    payment: Math.round(baseScore),
-    clarity: Math.round(baseScore),
-    compliance: Math.round(baseScore)
-  };
-
-  optimizations.forEach(opt => {
-    if (!opt.implemented) {
-      const reduction = opt.priority === 'critical' ? 15 : opt.priority === 'high' ? 8 : 4;
-      categoryScores[opt.category] = Math.max(15, Math.round(categoryScores[opt.category] - reduction));
-    } else {
-      categoryScores[opt.category] = Math.min(100, Math.round(categoryScores[opt.category] + 3));
-    }
-  });
-
-  return {
-    overall: Math.round(finalScore),
-    categories: {
-      termination: { score: Math.round(categoryScores.termination), trend: 'stable' },
-      liability: { score: Math.round(categoryScores.liability), trend: 'stable' },
-      payment: { score: Math.round(categoryScores.payment), trend: 'stable' },
-      clarity: { score: Math.round(categoryScores.clarity), trend: 'stable' },
-      compliance: { score: Math.round(categoryScores.compliance), trend: 'stable' }
-    },
-    industryPercentile: Math.max(10, Math.round(finalScore - 20)),
-    riskLevel: finalScore < 40 ? 'critical' : finalScore < 60 ? 'high' : finalScore < 80 ? 'medium' : 'low'
-  };
-};
-
+// Main Component
 export default function Optimizer() {
   // ✅ ORIGINAL: Core states
   const [file, setFile] = useState<File | null>(null);
@@ -820,285 +691,209 @@ export default function Optimizer() {
   const [isRedrafting, setIsRedrafting] = useState(false);
   const [isLoadingPitches, setIsLoadingPitches] = useState(false);
   const [premiumActiveTab, setPremiumActiveTab] = useState<'diff' | 'export' | 'pitches' | 'summary'>('diff');
-  
+  const [showPremiumSection, setShowPremiumSection] = useState(false);
+
   // ✅ ORIGINAL: Refs
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pitchButtonRef = useRef<HTMLButtonElement>(null);
   const exportButtonRef = useRef<HTMLButtonElement>(null);
 
-  // ✅ ORIGINAL: Load Premium Status
+  // Fetch premium status on mount
   useEffect(() => {
     const fetchPremiumStatus = async () => {
       try {
-        const res = await fetch("/api/auth/me", { credentials: "include" });
-        if (!res.ok) throw new Error("Nicht authentifiziert");
-        const data = await res.json();
-        setIsPremium(data.user?.subscriptionActive === true);
-      } catch (error) {
-        console.error("❌ Fehler beim Laden des Premium-Status:", error);
+        const response = await fetch("/api/auth/check-auth", {
+          credentials: "include",
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setIsPremium(data.subscription !== "free");
+        }
+      } catch (err) {
+        console.error("Error checking premium status:", err);
         setIsPremium(false);
       }
     };
     fetchPremiumStatus();
   }, []);
 
-  // ✅ ORIGINAL: Contract Score Update
+  // Simulate analysis progress
   useEffect(() => {
-    if (optimizations.length > 0) {
-      const updatedScore = calculateContractScore(optimizations);
-      setContractScore(updatedScore);
-    }
-  }, [optimizations]);
-
-  // ✅ ORIGINAL: Outside Click Handling with Debounce
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Element;
-      
-      const isPitchButton = pitchButtonRef.current?.contains(target);
-      const isExportButton = exportButtonRef.current?.contains(target);
-      const isDropdownContent = target.closest('[data-portal-dropdown]');
-      
-      if (showPitchMenu && !isPitchButton && !isDropdownContent) {
-        setShowPitchMenu(false);
-      }
-      
-      if (showExportMenu && !isExportButton && !isDropdownContent) {
-        setShowExportMenu(false);
-      }
-    };
-
-    if (showPitchMenu || showExportMenu) {
-      // Add small delay to prevent immediate closing
+    if (isAnalyzing && analysisProgress < 100) {
       const timer = setTimeout(() => {
-        document.addEventListener('mousedown', handleClickOutside);
-      }, 100);
-      
-      return () => {
-        clearTimeout(timer);
-        document.removeEventListener('mousedown', handleClickOutside);
-      };
+        setAnalysisProgress(prev => Math.min(prev + 10, 100));
+      }, 300);
+      return () => clearTimeout(timer);
     }
-  }, [showPitchMenu, showExportMenu]);
+    
+    if (analysisProgress >= 100 && isAnalyzing) {
+      setTimeout(() => {
+        setIsAnalyzing(false);
+        setAnalysisProgress(0);
+      }, 500);
+    }
+  }, [isAnalyzing, analysisProgress]);
 
-  // 🚀 REVOLUTIONARY: Enhanced Upload Handler
+  // Handle file upload and analysis
   const handleUpload = async () => {
-    if (!file || !isPremium) return;
-
-    setLoading(true);
-    setOptimizations([]);
-    setError(null);
-    setOriginalContractText('');
-    setAnalysisData(null);
-    setOptimizationResult(null);
-    setIsAnalyzing(true);
-    setAnalysisProgress(0);
+    if (!file) {
+      setError("Bitte wählen Sie eine Datei aus.");
+      return;
+    }
 
     const formData = new FormData();
     formData.append("file", file);
+    formData.append("toolUsed", "optimizer");
+
+    setLoading(true);
+    setIsAnalyzing(true);
+    setAnalysisProgress(10);
+    setError(null);
+    setOptimizations([]);
+    setOptimizationResult(null);
+    setRedraftResult(null);
+    setPitchCollections(null);
+    setShowPremiumSection(false);
 
     try {
-      console.log("🚀 Starting contract optimization...");
-      
-      // Simulate progress
-      const progressInterval = setInterval(() => {
-        setAnalysisProgress(prev => Math.min(prev + 10, 90));
-      }, 500);
-      
-      const res = await fetch("/api/optimize", {
+      const response = await fetch("/api/optimize", {
         method: "POST",
-        credentials: "include",
         body: formData,
+        credentials: "include",
       });
 
-      clearInterval(progressInterval);
-      setAnalysisProgress(100);
+      setAnalysisProgress(50);
 
-      const data = await res.json();
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Server error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log("✅ Optimization response:", data);
       
-      if (!res.ok) {
-        throw new Error(data.message || `Server Error: ${res.status}`);
-      }
-
-      if (!data.success) {
-        throw new Error(data.message || "Optimierung fehlgeschlagen");
-      }
-
-      console.log("✅ Response:", {
-        hasCategories: !!data.categories,
-        hasMeta: !!data.meta,
-        contractType: data.meta?.type,
-        totalIssues: data.summary?.totalIssues
-      });
-
-      // Store all data
+      setAnalysisProgress(80);
+      
+      // Save analysis data for later use
       setAnalysisData(data);
-      setOptimizationResult(data);
+      setContractId(data.contractId || data.analysisId);
       
-      if (data.originalText) {
-        setOriginalContractText(data.originalText);
+      // Save original text if available
+      if (data.originalText || data.fullText) {
+        setOriginalContractText(data.originalText || data.fullText || '');
       }
-
-      // Parse optimizations
-      const parsedOptimizations = parseOptimizationResult(data, file.name);
-      const calculatedScore = calculateContractScore(parsedOptimizations);
       
-      setOptimizations(parsedOptimizations);
-      setContractScore(calculatedScore);
+      // Process optimizations
+      if (data.optimizations && Array.isArray(data.optimizations)) {
+        setOptimizations(data.optimizations);
+        setAnalysisProgress(90);
+        
+        // Calculate contract health score
+        const score: ContractHealthScore = {
+          overall: data.score || 75,
+          categories: {
+            termination: { score: 80, trend: 'up' },
+            liability: { score: 65, trend: 'stable' },
+            payment: { score: 90, trend: 'up' },
+            clarity: { score: 70, trend: 'down' },
+            compliance: { score: 85, trend: 'up' }
+          },
+          industryPercentile: 72,
+          riskLevel: data.optimizations.some((o: OptimizationSuggestion) => o.priority === 'critical') ? 'high' : 'medium'
+        };
+        setContractScore(score);
+      }
       
-      showToast(`✅ ${parsedOptimizations.length} Optimierungen gefunden!`, 'success');
+      // Store full result
+      setOptimizationResult(data);
+      setAnalysisProgress(100);
       
-    } catch (error) {
-      const err = error as Error;
-      console.error("❌ Optimierung-Fehler:", err);
-      setError(err.message);
-      showToast(err.message, 'error');
+    } catch (err) {
+      console.error("Optimization error:", err);
+      setError(err instanceof Error ? err.message : "Ein Fehler ist aufgetreten");
+      setIsAnalyzing(false);
     } finally {
       setLoading(false);
-      setIsAnalyzing(false);
-      setTimeout(() => setAnalysisProgress(0), 1000);
     }
   };
 
-  // ✅ ORIGINAL: Toast Helper
   const showToast = useCallback((message: string, type: 'success' | 'error' | 'info' = 'success') => {
     setToast({ message, type });
-    setTimeout(() => setToast(null), 4000);
   }, []);
 
-  // ✅ SIMPLIFIED: Smart Contract Generator
+  // Generate optimized contract
   const handleGenerateOptimizedContract = useCallback(async () => {
-    if (!file || optimizations.length === 0) {
-      showToast("❌ Bitte lade erst einen Vertrag hoch.", 'error');
-      return;
-    }
-    
-    // Prevent duplicate calls
-    if (isGeneratingContract) {
+    if (!file || !originalContractText) {
+      showToast("❌ Kein Vertrag geladen", 'error');
       return;
     }
 
-    // Use selected optimizations if in advanced mode, otherwise use ALL
-    const optimizationsToApply = showAdvancedView && selectedOptimizations.size > 0
-      ? optimizations.filter(opt => selectedOptimizations.has(opt.id))
-      : optimizations; // Default: Use ALL optimizations
-
-    if (optimizationsToApply.length === 0) {
-      showToast("❌ Keine Optimierungen ausgewählt.", 'error');
+    if (!optimizations || optimizations.length === 0) {
+      showToast("❌ Keine Optimierungen verfügbar", 'error');
       return;
     }
 
     setIsGeneratingContract(true);
-    showToast(`🪄 Dein verbesserter Vertrag wird generiert...`, 'success');
+
+    const optimizationsToApply = showAdvancedView
+      ? optimizations.filter(opt => selectedOptimizations.has(opt.id))
+      : optimizations;
+
+    if (optimizationsToApply.length === 0) {
+      showToast("⚠️ Bitte wählen Sie mindestens eine Optimierung aus", 'info');
+      setIsGeneratingContract(false);
+      return;
+    }
 
     try {
-      let currentContractId = contractId;
-      
-      if (!currentContractId && analysisData) {
-        const contractData = {
-          name: file.name,
-          content: originalContractText || `Inhalt von ${file.name}`,
-          laufzeit: analysisData.laufzeit || "Unbekannt",
-          kuendigung: analysisData.kuendigung || "Unbekannt",
-          expiryDate: analysisData.expiryDate || "",
-          status: analysisData.status || "Aktiv",
-          isGenerated: false,
-          originalname: file.name,
-          filePath: analysisData.fileUrl || "",
-          mimetype: file.type,
-          size: file.size,
-          analysisId: analysisData.analysisId || analysisData.requestId,
-          uploadType: analysisData.uploadType || 'LOCAL_UPLOAD'
-        };
-
-        const contractRes = await fetch("/api/contracts", {
-          method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(contractData),
-        });
-
-        if (contractRes.ok) {
-          const contractResult = await contractRes.json();
-          currentContractId = contractResult.contractId;
-          setContractId(currentContractId);
-        }
-      }
-
-      if (!currentContractId) {
-        throw new Error("❌ Keine Contract ID verfügbar.");
-      }
-
-      const generatePayload = {
-        optimizations: optimizationsToApply.map(opt => ({
-          id: opt.id,
-          category: opt.category,
-          priority: opt.priority,
-          originalText: opt.original,
-          improvedText: opt.improved,
-          reasoning: opt.reasoning,
-          confidence: opt.confidence,
-          risk: opt.legalRisk,
-          impact: opt.businessImpact,
-          difficulty: opt.implementationDifficulty === 'easy' ? 'Einfach' : 
-                     opt.implementationDifficulty === 'medium' ? 'Mittel' : 'Komplex',
-          estimatedSavings: opt.estimatedSavings,
-          marketBenchmark: opt.marketBenchmark
-        })),
-        options: {
-          format: 'pdf',
-          includeReasons: true,
-          preserveLayout: true
-        },
-        sourceData: {
-          originalFileName: file.name,
-          originalContent: originalContractText,
-          analysisData: analysisData
-        }
-      };
-
-      const generateRes = await fetch(`/api/optimized-contract/${currentContractId}/generate`, {
+      const response = await fetch("/api/generate-optimized-contract", {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
         credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(generatePayload)
+        body: JSON.stringify({
+          originalText: originalContractText,
+          optimizations: optimizationsToApply,
+          contractId: contractId,
+          metadata: {
+            originalFileName: file.name,
+            optimizationCount: optimizationsToApply.length,
+            analysisData: analysisData
+          },
+        }),
       });
 
-      if (!generateRes.ok) {
-        throw new Error("❌ Generierung fehlgeschlagen");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Fehler beim Generieren des optimierten Vertrags");
       }
 
-      const blob = await generateRes.blob();
-      const downloadUrl = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = downloadUrl;
-      link.download = `Optimiert_${file.name.replace('.pdf', '')}_${new Date().toISOString().split('T')[0]}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(downloadUrl);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${file.name.replace(/\.[^/.]+$/, "")}_optimiert.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
 
-      showToast(`✅ Professioneller Vertrag mit ${optimizationsToApply.length} Optimierungen erstellt!`, 'success');
-
+      showToast("✅ Optimierter Vertrag wurde heruntergeladen!", 'success');
+      
+      // Also trigger premium features if user is premium
+      if (isPremium) {
+        setShowPremiumSection(true);
+      }
+      
     } catch (error) {
-      const err = error as Error;
-      console.error("❌ Generation error:", err);
-      
-      // Better error messages for users
-      let userMessage = 'Fehler beim Generieren des Vertrags';
-      if (err.message.includes('network')) {
-        userMessage = '🌐 Netzwerkfehler - Bitte prüfe deine Internetverbindung';
-      } else if (err.message.includes('401') || err.message.includes('403')) {
-        userMessage = '🔒 Sitzung abgelaufen - Bitte neu anmelden';
-      } else if (err.message.includes('500')) {
-        userMessage = '⚠️ Server-Fehler - Bitte versuche es später erneut';
-      }
-      
+      console.error("Error generating optimized contract:", error);
+      const userMessage = error instanceof Error ? error.message : "Fehler beim Generieren des Vertrags";
       showToast(userMessage, 'error');
     } finally {
       setIsGeneratingContract(false);
     }
-  }, [file, optimizations, contractId, showAdvancedView, selectedOptimizations, originalContractText, analysisData, showToast, isGeneratingContract]);
+  }, [file, optimizations, contractId, showAdvancedView, selectedOptimizations, originalContractText, analysisData, showToast, isGeneratingContract, isPremium]);
 
   // 🚀 SIMPLIFIED: Toggle optimization selection (for advanced mode)
   const toggleOptimizationSelection = useCallback((id: string) => {
@@ -1113,23 +908,28 @@ export default function Optimizer() {
     });
   }, []);
 
-  // ✅ SIMPLIFIED: Handlers
+  // Handle reset
   const handleReset = useCallback(() => {
     setFile(null);
     setOptimizations([]);
     setError(null);
-    setContractScore(null);
     setSelectedCategory('all');
-    setShowExportMenu(false);
-    setShowPitchMenu(false);
+    setContractScore(null);
+    setOptimizationResult(null);
     setContractId(null);
-    setIsGeneratingContract(false);
     setOriginalContractText('');
     setAnalysisData(null);
-    setOptimizationResult(null);
     setSelectedOptimizations(new Set());
+    setShowAdvancedView(false);
+    setRedraftResult(null);
+    setPitchCollections(null);
+    setShowPremiumSection(false);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   }, []);
 
+  // Drag and drop handlers
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -1144,17 +944,17 @@ export default function Optimizer() {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-    
-    if (e.dataTransfer.files && e.dataTransfer.files[0] && isPremium) {
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const droppedFile = e.dataTransfer.files[0];
       if (droppedFile.type === "application/pdf") {
         setFile(droppedFile);
         setError(null);
       } else {
-        setError("Nur PDF-Dateien werden unterstützt");
+        setError("Bitte laden Sie nur PDF-Dateien hoch.");
       }
     }
-  }, [isPremium]);
+  }, []);
 
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -1163,7 +963,6 @@ export default function Optimizer() {
     }
   }, []);
 
-  // ✅ SIMPLIFIED: Pitch Generator
   const generatePitch = useCallback((style: string = selectedPitchStyle) => {
     if (optimizations.length === 0) {
       showToast("❌ Keine Optimierungen verfügbar.", 'error');
@@ -1184,54 +983,51 @@ export default function Optimizer() {
 im Rahmen unserer rechtlichen Prüfung haben wir folgende kritische Optimierungspunkte identifiziert:
 
 ${optimizations.slice(0, 5).map((opt, index) => 
-  `${index + 1}. ${categoryNames[opt.category]}
-   • Rechtliches Risiko: ${opt.legalRisk}/10
-   • Maßnahme: ${opt.improved.substring(0, 120)}...
-   • Rechtsgrundlage: ${opt.marketBenchmark || 'Aktuelle Rechtsprechung und Vertragspraxis'}`
+  `${index + 1}. ${categoryNames[opt.category as keyof typeof categoryNames] || opt.category}
+   Risiko: ${opt.legalRisk}/10 | Impact: ${opt.businessImpact}/10
+   Empfehlung: ${opt.improved.substring(0, 100)}...
+   Rechtliche Grundlage: ${opt.reasoning.substring(0, 80)}...`
 ).join('\n\n')}
 
-${optimizations.length > 5 ? `\nWeitere ${optimizations.length - 5} Optimierungen sind im vollständigen Bericht enthalten.\n` : ''}
-
-Die vorgeschlagenen Änderungen entsprechen der aktuellen Rechtsprechung und herrschenden Meinung.
+Diese Anpassungen minimieren rechtliche Risiken und stärken Ihre Vertragsposition erheblich.
 
 Mit freundlichen Grüßen`,
 
-      business: `Sehr geehrte Geschäftspartner,
+      business: `Geschätzte Partner,
 
-anbei unsere Vertragsoptimierungen für maximale Rechtssicherheit und Wirtschaftlichkeit:
+unsere Vertragsanalyse zeigt ${optimizations.length} Optimierungsmöglichkeiten mit direktem Business Impact:
 
-📊 Zusammenfassung: ${optimizations.length} kritische Verbesserungen identifiziert
+💰 Potenzielle Einsparungen: ${optimizations.filter(o => o.estimatedSavings).length} Bereiche identifiziert
+⚡ Quick Wins: ${optimizations.filter(o => o.implementationDifficulty === 'easy').length} sofort umsetzbar
+🛡️ Risikominimierung: ${optimizations.filter(o => o.legalRisk > 7).length} kritische Punkte
 
-${optimizations.slice(0, 5).map((opt, index) => 
-  `${index + 1}. ${categoryNames[opt.category]}
-   • Wirtschaftlicher Impact: ${opt.estimatedSavings || 'Risikominimierung'}
-   • Priorität: ${opt.priority === 'critical' ? '🔴 Kritisch' : opt.priority === 'high' ? '🟠 Hoch' : '🟢 Mittel'}
-   • Maßnahme: ${opt.marketBenchmark || 'Best Practice Implementierung'}`
+Top 3 Prioritäten:
+${optimizations
+  .sort((a, b) => b.businessImpact - a.businessImpact)
+  .slice(0, 3)
+  .map((opt, i) => `${i + 1}. ${opt.improved.substring(0, 80)}...`)
+  .join('\n')}
+
+ROI der Implementierung: Geschätzt 15-20% Kostenreduktion bei Vertragsrisiken.
+
+Beste Grüße`,
+
+      private: `Hallo!
+
+Wir haben Ihren Vertrag geprüft und ${optimizations.length} Verbesserungen gefunden:
+
+✅ Was gut ist: Der Vertrag ist grundsätzlich gültig
+⚠️ Was fehlt: ${optimizations.filter(o => !o.original).length} wichtige Regelungen
+🔧 Was verbessert werden sollte:
+
+${optimizations.slice(0, 3).map((opt, i) => 
+  `${i + 1}. ${categoryNames[opt.category as keyof typeof categoryNames] || opt.category}
+   → ${opt.improved.substring(0, 60)}...`
 ).join('\n\n')}
 
-💡 Empfehlung: Zeitnahe Implementierung zur Risikominimierung und Vertragsoptimierung.
+Diese Änderungen machen Ihren Vertrag sicherer und klarer.
 
-Für Rückfragen stehen wir gerne zur Verfügung.
-
-Mit freundlichen Grüßen`,
-
-      private: `Guten Tag,
-
-wir haben Ihren Vertrag geprüft und wichtige Verbesserungsmöglichkeiten gefunden:
-
-✅ ${optimizations.length} Optimierungen für mehr Sicherheit
-
-${optimizations.slice(0, 5).map((opt, index) => 
-  `${index + 1}. ${categoryNames[opt.category]}
-   → ${opt.estimatedSavings || 'Besserer Schutz Ihrer Interessen'}
-   → Schwierigkeit: ${opt.implementationDifficulty === 'easy' ? 'Einfach umzusetzen' : 'Benötigt rechtliche Beratung'}`
-).join('\n\n')}
-
-Wir empfehlen, diese Änderungen vor der Unterzeichnung einzuarbeiten.
-
-Bei Fragen helfen wir gerne weiter.
-
-Freundliche Grüße`
+Viele Grüße`
     };
 
     const pitch = pitchTemplates[style as keyof typeof pitchTemplates] || pitchTemplates.business;
@@ -1253,37 +1049,39 @@ Freundliche Grüße`
     }
 
     setIsRedrafting(true);
+    setShowPremiumSection(true);
 
     try {
       const response = await fetch(`/api/optimized-contract/${contractId}/redraft`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': document.cookie.includes('token=') 
-            ? `Bearer ${document.cookie.split('token=')[1].split(';')[0]}` 
-            : ''
+          'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify({
+          originalText: originalContractText,
           acceptanceConfig: acceptanceConfig,
           optimizations: optimizations.map(opt => ({
             id: opt.id,
             original: opt.original,
             improved: opt.improved,
             category: opt.category,
-            reasoning: opt.reasoning
+            reasoning: opt.reasoning,
+            priority: opt.priority
           }))
         })
       });
 
       if (!response.ok) {
-        throw new Error(`Redraft failed: ${response.statusText}`);
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Redraft failed: ${response.statusText}`);
       }
 
       const result: RedraftResult = await response.json();
       
       if (result.success) {
         setRedraftResult(result);
-        showToast(`✅ Auto-Neufassung erfolgreich: ${result.stats.appliedChanges} Änderungen übernommen`, 'success');
+        showToast(`✅ Auto-Neufassung erfolgreich: ${result.stats.appliedChanges} von ${result.stats.totalOptimizations} Änderungen übernommen`, 'success');
         
         // Auto-switch to diff view
         setPremiumActiveTab('diff');
@@ -1312,14 +1110,12 @@ Freundliche Grüße`
       const response = await fetch(`/api/optimized-contract/${contractId}/pitches`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': document.cookie.includes('token=') 
-            ? `Bearer ${document.cookie.split('token=')[1].split(';')[0]}` 
-            : ''
+          'Content-Type': 'application/json'
         },
+        credentials: 'include',
         body: JSON.stringify({
           changes: redraftResult.appliedChanges,
-          contractName: analysisData?.summary || 'Vertrag'
+          contractName: analysisData?.summary || file?.name || 'Vertrag'
         })
       });
 
@@ -1342,7 +1138,7 @@ Freundliche Grüße`
     } finally {
       setIsLoadingPitches(false);
     }
-  }, [contractId, redraftResult, analysisData, showToast]);
+  }, [contractId, redraftResult, analysisData, file, showToast]);
 
   // 🎯 PREMIUM: Handle Acceptance Config Change
   const handleAcceptanceChange = useCallback((newConfig: AcceptanceConfig) => {
@@ -1365,187 +1161,230 @@ Freundliche Grüße`
   // ✅ ORIGINAL: Export Functions
   const handleExport = useCallback(async () => {
     setShowExportMenu(false);
-    
-    const content = optimizations.map((opt, index) => 
-      `${index + 1}. ${opt.category.toUpperCase()}
-Original: ${opt.original}
-Verbessert: ${opt.improved}
-Begründung: ${opt.reasoning}
-Benchmark: ${opt.marketBenchmark}
-Impact: ${opt.estimatedSavings}
-Konfidenz: ${opt.confidence}%\n`
-    ).join('\n');
+    showToast("Export-Funktion wird implementiert...", 'info');
+  }, [showToast]);
 
-    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `Vertragsanalyse_${file?.name?.replace('.pdf', '')}_${new Date().toISOString().split('T')[0]}.txt`;
-    link.click();
-    
-    showToast(`✅ Export erfolgreich!`, 'success');
-  }, [optimizations, file, showToast]);
-
-  // 🚀 REVOLUTIONARY: Dynamic Categories with Performance Optimization
-  const dynamicCategories = useMemo(() => {
-    const cats = [
-      {
-        id: 'all',
-        name: 'Alle Optimierungen',
-        icon: <Layers className="w-5 h-5" />,
-        gradient: 'linear-gradient(135deg, #007AFF 0%, #AF52DE 100%)',
-        count: optimizations.length
-      }
-    ];
-    
-    if (optimizationResult?.categories) {
-      optimizationResult.categories.forEach((category: RevolutionaryCategory) => {
-        if (category.issues.length > 0) {
-          cats.push({
-            id: category.tag,
-            name: category.label,
-            icon: <FileText className="w-5 h-5" />,
-            gradient: 'linear-gradient(135deg, #5856D6 0%, #4840C0 100%)',
-            count: category.issues.length
-          });
-        }
-      });
-    } else {
-      // Fallback to original categories
-      const categoryMap = new Map<string, number>();
-      optimizations.forEach(opt => {
-        categoryMap.set(opt.category, (categoryMap.get(opt.category) || 0) + 1);
-      });
-      
-      const categoryGradients = {
-        'termination': 'linear-gradient(135deg, #FF9500 0%, #FF7A00 100%)',
-        'liability': 'linear-gradient(135deg, #FF3B30 0%, #E5302A 100%)',
-        'payment': 'linear-gradient(135deg, #34C759 0%, #2EB150 100%)',
-        'clarity': 'linear-gradient(135deg, #5AC8FA 0%, #40B8F0 100%)',
-        'compliance': 'linear-gradient(135deg, #AF52DE 0%, #9B42C8 100%)'
-      };
-      
-      categoryMap.forEach((count, cat) => {
-        const labels = {
-          'termination': 'Kündigung',
-          'liability': 'Haftung',
-          'payment': 'Zahlung',
-          'clarity': 'Klarheit',
-          'compliance': 'Compliance'
-        };
-        cats.push({
-          id: cat,
-          name: labels[cat as keyof typeof labels] || cat,
-          icon: <FileText className="w-5 h-5" />,
-          gradient: categoryGradients[cat as keyof typeof categoryGradients] || 'linear-gradient(135deg, #8E8E93 0%, #636366 100%)',
-          count
-        });
-      });
-    }
-    
-    return cats;
-  }, [optimizations, optimizationResult]);
-
-  // ✅ ORIGINAL: Filter optimizations with Memoization
+  // Filtered optimizations
   const filteredOptimizations = useMemo(() => {
     if (selectedCategory === 'all') return optimizations;
     return optimizations.filter(opt => opt.category === selectedCategory);
   }, [optimizations, selectedCategory]);
 
-  // 🚀 SIMPLIFIED: Statistics
-  const statistics = useMemo(() => {
+  // Category counts for filters
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    optimizations.forEach(opt => {
+      counts[opt.category] = (counts[opt.category] || 0) + 1;
+    });
+    counts['all'] = optimizations.length;
+    return counts;
+  }, [optimizations]);
+
+  // 🚀 REVOLUTIONARY: Parse categories and issues
+  const parseCategories = useCallback((result: OptimizationResult): RevolutionaryCategory[] => {
+    if (result.categories) {
+      return result.categories;
+    }
+    
+    if (result.optimizationResult && typeof result.optimizationResult === 'string') {
+      try {
+        const parsed = JSON.parse(result.optimizationResult);
+        if (parsed.categories) {
+          return parsed.categories;
+        }
+      } catch (e) {
+        console.log("Could not parse optimization result as JSON");
+      }
+    }
+    
+    return [];
+  }, []);
+
+  // 🚀 REVOLUTIONARY: Render optimization results
+  const renderOptimizationResults = useCallback(() => {
     if (!optimizationResult?.summary && optimizations.length === 0) return null;
     
-    const totalIssues = optimizationResult?.summary?.totalIssues || optimizations.length;
-    const selectedCount = selectedOptimizations.size;
+    const categories = parseCategories(optimizationResult || {});
+    const hasRevolutionaryFormat = categories.length > 0;
     
-    const avgRisk = optimizations.reduce((sum, opt) => sum + opt.legalRisk, 0) / (optimizations.length || 1);
-    const avgImpact = optimizations.reduce((sum, opt) => sum + opt.businessImpact, 0) / (optimizations.length || 1);
-    const avgConfidence = optimizations.reduce((sum, opt) => sum + opt.confidence, 0) / (optimizations.length || 1);
-    
-    return {
-      totalIssues,
-      selectedCount,
-      avgRisk: Math.round(avgRisk),
-      avgImpact: Math.round(avgImpact),
-      avgConfidence: Math.round(avgConfidence),
-      criticalCount: optimizations.filter(o => o.priority === 'critical').length,
-      highCount: optimizations.filter(o => o.priority === 'high').length,
-      mediumCount: optimizations.filter(o => o.priority === 'medium').length,
-      lowCount: optimizations.filter(o => o.priority === 'low').length
-    };
-  }, [optimizations, optimizationResult, selectedOptimizations]);
-
-  // ✅ ORIGINAL: Export Options
-  const exportOptions: ExportOption[] = [
-    {
-      id: 'pdf_marked',
-      name: 'PDF mit Markierungen',
-      icon: <FileDown size={16} />,
-      description: 'Rot=Probleme, Grün=Lösungen',
-      format: 'PDF',
-      premium: true
-    },
-    {
-      id: 'word_comments',
-      name: 'Word mit Kommentaren',
-      icon: <FileText size={16} />,
-      description: 'Änderungsvorschläge als Kommentare',
-      format: 'DOCX',
-      premium: true
-    },
-    {
-      id: 'excel_comparison',
-      name: 'Excel-Vergleichstabelle',
-      icon: <Download size={16} />,
-      description: 'Vorher/Nachher Analyse',
-      format: 'XLSX',
-      premium: true
-    },
-    {
-      id: 'email_template',
-      name: 'E-Mail-Vorlage',
-      icon: <Mail size={16} />,
-      description: 'Copy-Paste ready Pitch',
-      format: 'TXT'
-    }
-  ];
-
-  // ✅ ORIGINAL: Pitch Styles
-  const pitchStyles: PitchStyle[] = [
-    {
-      id: 'lawyer',
-      name: 'Rechtlich',
-      icon: <Building2 size={16} />,
-      description: 'Juristische Präzision',
-      target: 'lawyer'
-    },
-    {
-      id: 'business',
-      name: 'Business',
-      icon: <Users size={16} />,
-      description: 'Professionell',
-      target: 'business'
-    },
-    {
-      id: 'private',
-      name: 'Privat',
-      icon: <User size={16} />,
-      description: 'Verständlich',
-      target: 'private'
-    }
-  ];
-
-  // Loading state
-  if (isPremium === null) {
     return (
-      <div className={styles.loadingContainer}>
-        <div className={styles.loadingContent}>
-          <div className={styles.loadingSpinner}></div>
-          <p className={styles.loadingText}>Initialisiere KI...</p>
-        </div>
-      </div>
+      <motion.div
+        className={styles.resultsSection}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
+        {hasRevolutionaryFormat ? (
+          <>
+            {/* Revolutionary Format */}
+            {categories.map((category) => (
+              <div key={category.tag} className={styles.categorySection}>
+                <h3 className={styles.categoryHeader}>
+                  {category.label}
+                  {category.present && (
+                    <span className={styles.presentBadge}>✓ Vorhanden</span>
+                  )}
+                </h3>
+                <div className={styles.issuesGrid}>
+                  {category.issues.map((issue) => (
+                    <motion.div
+                      key={issue.id}
+                      className={styles.issueCard}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                    >
+                      <div className={styles.issueHeader}>
+                        <span className={styles.issueSummary}>{issue.summary}</span>
+                        <div className={styles.issueMetrics}>
+                          <span className={styles.riskBadge}>Risk: {issue.risk}/10</span>
+                          <span className={styles.impactBadge}>Impact: {issue.impact}/10</span>
+                        </div>
+                      </div>
+                      <div className={styles.issueContent}>
+                        {issue.originalText && (
+                          <div className={styles.originalText}>
+                            <strong>Original:</strong> {issue.originalText}
+                          </div>
+                        )}
+                        <div className={styles.improvedText}>
+                          <strong>Verbesserung:</strong> {issue.improvedText}
+                        </div>
+                        <div className={styles.reasoning}>
+                          <strong>Begründung:</strong> {issue.legalReasoning}
+                        </div>
+                        {issue.benchmark && (
+                          <div className={styles.benchmark}>
+                            <strong>Benchmark:</strong> {issue.benchmark}
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </>
+        ) : (
+          <>
+            {/* Standard Format with optimizations array */}
+            <div className={styles.filterBar}>
+              <div className={styles.filterButtons}>
+                {FILTER_CATEGORIES.map(cat => (
+                  <button
+                    key={cat.value}
+                    onClick={() => setSelectedCategory(cat.value)}
+                    className={`${styles.filterButton} ${selectedCategory === cat.value ? styles.active : ''}`}
+                  >
+                    <span className={styles.filterIcon}>{cat.icon}</span>
+                    <span>{cat.label}</span>
+                    {categoryCounts[cat.value] > 0 && (
+                      <span className={styles.filterCount}>{categoryCounts[cat.value]}</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+              
+              <div className={styles.viewToggles}>
+                <button
+                  onClick={() => setShowStatistics(!showStatistics)}
+                  className={`${styles.toggleButton} ${showStatistics ? styles.active : ''}`}
+                >
+                  <BarChart3 className="w-4 h-4" />
+                  Statistiken
+                </button>
+                <button
+                  onClick={() => setShowAdvancedView(!showAdvancedView)}
+                  className={`${styles.toggleButton} ${showAdvancedView ? styles.active : ''}`}
+                >
+                  <Settings className="w-4 h-4" />
+                  Erweitert
+                </button>
+              </div>
+            </div>
+            
+            {showStatistics && contractScore && (
+              <ContractHealthDashboard 
+                score={contractScore} 
+                showSimulation={false}
+                newScore={contractScore.overall}
+              />
+            )}
+            
+            {optimizationResult?.summary && (
+              <OptimizationSummaryCard summary={optimizationResult.summary} />
+            )}
+            
+            {showAdvancedView && (
+              <div className={styles.advancedControls}>
+                <p className={styles.advancedInfo}>
+                  {selectedOptimizations.size} von {optimizations.length} Optimierungen ausgewählt
+                </p>
+                <div className={styles.advancedActions}>
+                  <button
+                    onClick={() => setSelectedOptimizations(new Set(optimizations.map(o => o.id)))}
+                    className={styles.selectAllButton}
+                  >
+                    Alle auswählen
+                  </button>
+                  <button
+                    onClick={() => setSelectedOptimizations(new Set())}
+                    className={styles.deselectAllButton}
+                  >
+                    Auswahl aufheben
+                  </button>
+                </div>
+              </div>
+            )}
+            
+            <div className={styles.optimizationsGrid}>
+              <AnimatePresence>
+                {filteredOptimizations.map((optimization) => (
+                  <OptimizationCard
+                    key={optimization.id}
+                    optimization={optimization}
+                    isSelected={selectedOptimizations.has(optimization.id)}
+                    onToggleSelect={() => toggleOptimizationSelection(optimization.id)}
+                    showAdvanced={showAdvancedView}
+                  />
+                ))}
+              </AnimatePresence>
+            </div>
+            
+            {filteredOptimizations.length === 0 && selectedCategory !== 'all' && (
+              <div className={styles.emptyState}>
+                <p>Keine Optimierungen in dieser Kategorie gefunden.</p>
+                <button 
+                  onClick={() => setSelectedCategory('all')}
+                  className={styles.resetFilterButton}
+                >
+                  Alle Kategorien anzeigen
+                </button>
+              </div>
+            )}
+          </>
+        )}
+      </motion.div>
     );
-  }
+  }, [optimizationResult, optimizations, filteredOptimizations, selectedCategory, categoryCounts, showStatistics, contractScore, showAdvancedView, selectedOptimizations, toggleOptimizationSelection, parseCategories]);
+
+  // Portal refs for menus
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (exportButtonRef.current && !exportButtonRef.current.contains(event.target as Node)) {
+        setShowExportMenu(false);
+      }
+      if (pitchButtonRef.current && !pitchButtonRef.current.contains(event.target as Node)) {
+        setShowPitchMenu(false);
+      }
+    };
+    
+    if (showExportMenu || showPitchMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [showExportMenu, showPitchMenu]);
 
   return (
     <>
@@ -1577,648 +1416,176 @@ Konfidenz: ${opt.confidence}%\n`
 
           {/* Premium Notice */}
           {!isPremium && (
-            <LegendaryPremiumNotice onUpgrade={() => window.location.href = '/upgrade'} />
+            <LegendaryPremiumNotice onUpgrade={() => window.location.href = '/subscribe'} />
           )}
 
-          {/* Upload Area */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+          {/* Upload Section */}
+          {!optimizations.length && (
             <motion.div 
-              className={`${styles.uploadArea} ${dragActive ? styles.dragActive : ''} ${!isPremium ? styles.disabled : ''} ${file ? styles.uploadAreaWithFile : ''}`}
-              onDragEnter={handleDrag}
-              onDragLeave={handleDrag}
-              onDragOver={handleDrag}
-              onDrop={handleDrop}
-              onClick={isPremium ? () => fileInputRef.current?.click() : undefined}
-              whileHover={isPremium ? { scale: 1.01 } : undefined}
-              whileTap={isPremium ? { scale: 0.99 } : undefined}
+              className={styles.uploadSection}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
             >
-              <input
-                type="file"
-                ref={fileInputRef}
-                style={{ display: 'none' }}
-                accept="application/pdf"
-                disabled={!isPremium}
-                onChange={handleFileChange}
-              />
-              
-              {file ? (
-                <motion.div 
-                  className={styles.fileInfo}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ type: "spring", stiffness: 300 }}
-                >
-                  <div className={styles.fileIcon}>
-                    <FileText size={32} />
-                  </div>
-                  <div className={styles.fileDetails}>
-                    <div className={styles.fileName}>{file.name}</div>
-                    <div className={styles.fileSize}>
-                      <CheckCircle2 size={16} style={{ color: '#34C759' }} />
-                      {(file.size / 1024 / 1024).toFixed(2)} MB • Bereit für Analyse
-                    </div>
-                  </div>
-                </motion.div>
-              ) : (
-                <motion.div className={styles.uploadPrompt}>
+              <div
+                className={`${styles.uploadArea} ${dragActive ? styles.dragActive : ""} ${file ? styles.hasFile : ""}`}
+                onDragEnter={handleDrag}
+                onDragLeave={handleDrag}
+                onDragOver={handleDrag}
+                onDrop={handleDrop}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf"
+                  onChange={handleFileChange}
+                  className={styles.fileInput}
+                  id="fileUpload"
+                />
+                <label htmlFor="fileUpload" className={styles.uploadLabel}>
                   <motion.div 
                     className={styles.uploadIcon}
-                    animate={{ y: [0, -5, 0] }}
-                    transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
                   >
-                    <Upload size={48} />
+                    <Upload className="w-12 h-12" />
                   </motion.div>
-                  <h3>Vertrag hochladen</h3>
-                  <p>PDF hierher ziehen oder klicken</p>
+                  {file ? (
+                    <div className={styles.fileInfo}>
+                      <FileText className="w-8 h-8" />
+                      <span className={styles.fileName}>{file.name}</span>
+                      <span className={styles.fileSize}>
+                        {(file.size / 1024 / 1024).toFixed(2)} MB
+                      </span>
+                    </div>
+                  ) : (
+                    <>
+                      <p className={styles.uploadText}>
+                        PDF hierher ziehen oder klicken zum Auswählen
+                      </p>
+                      <p className={styles.uploadHint}>
+                        Maximale Dateigröße: 10 MB
+                      </p>
+                    </>
+                  )}
+                </label>
+              </div>
+
+              {error && (
+                <motion.div 
+                  className={styles.errorMessage}
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                >
+                  <AlertCircle className="w-5 h-5" />
+                  {error}
                 </motion.div>
               )}
-            </motion.div>
 
-            {/* Action Buttons */}
-            <motion.div className={styles.actionButtons}>
-              <motion.button 
-                onClick={handleUpload}
-                disabled={!file || loading || !isPremium}
-                className={styles.primaryButton}
-                whileHover={file && isPremium && !loading ? { scale: 1.02 } : undefined}
-                whileTap={file && isPremium && !loading ? { scale: 0.98 } : undefined}
-              >
-                {loading ? (
-                  <>
-                    <div className={styles.spinner}></div>
-                    <span>Analyse läuft...</span>
-                  </>
-                ) : (
-                  <>
-                    <Sparkles size={20} />
-                    <span>Vertrag analysieren</span>
-                  </>
-                )}
-              </motion.button>
-              
-              {file && (
-                <motion.button 
-                  onClick={handleReset} 
-                  className={styles.secondaryButton}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+              <div className={styles.uploadActions}>
+                <motion.button
+                  onClick={handleUpload}
+                  disabled={!file || loading}
+                  className={`${styles.uploadButton} ${(!file || loading) ? styles.disabled : ''}`}
+                  whileHover={file && !loading ? { scale: 1.05 } : {}}
+                  whileTap={file && !loading ? { scale: 0.95 } : {}}
                 >
-                  <RefreshCw size={18} />
-                  <span>Zurücksetzen</span>
+                  {loading || isAnalyzing ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Analysiere...
+                    </>
+                  ) : (
+                    <>
+                      <Wand2 className="w-5 h-5" />
+                      Optimierung starten
+                    </>
+                  )}
                 </motion.button>
-              )}
-            </motion.div>
-          </motion.div>
+                
+                {file && (
+                  <motion.button
+                    onClick={handleReset}
+                    className={styles.resetButton}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                  >
+                    <RefreshCw className="w-5 h-5" />
+                    Zurücksetzen
+                  </motion.button>
+                )}
+              </div>
 
-          {/* Analysis Progress - Enhanced */}
-          {isAnalyzing && (
-            <motion.div 
-              className={styles.card}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              style={{ borderColor: '#007AFF', background: 'linear-gradient(135deg, rgba(0, 122, 255, 0.03) 0%, rgba(175, 82, 222, 0.03) 100%)' }}
-            >
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <Loader2 className="animate-spin w-5 h-5" style={{ color: '#007AFF' }} />
-                  <span className="font-semibold">Rechtliche Analyse läuft...</span>
-                </div>
-                <span className="text-sm font-medium" style={{ color: '#007AFF' }}>{analysisProgress}%</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                <motion.div 
-                  className="h-3 rounded-full"
-                  style={{ background: 'linear-gradient(90deg, #007AFF 0%, #AF52DE 100%)' }}
-                  initial={{ width: 0 }}
-                  animate={{ width: `${analysisProgress}%` }}
-                  transition={{ duration: 0.5, ease: "easeInOut" }}
-                />
-              </div>
-              <div className="mt-3 text-sm text-gray-600">
-                {analysisProgress < 30 ? '🔍 Vertrag wird eingelesen...' :
-                 analysisProgress < 60 ? '🧠 KI analysiert Klauseln...' :
-                 analysisProgress < 90 ? '⚖️ Juristische Prüfung...' :
-                 '✅ Finalisierung...'}
-              </div>
+              {isAnalyzing && (
+                <AnalysisProgress progress={analysisProgress} />
+              )}
             </motion.div>
           )}
 
-          {/* Error Message */}
-          <AnimatePresence>
-            {error && (
-              <motion.div 
-                className={styles.errorMessage}
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-              >
-                <AlertCircle size={24} />
-                <span>{error}</span>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Toast - Enhanced Apple Style */}
-          <AnimatePresence>
-            {toast && (
-              <motion.div
-                initial={{ opacity: 0, y: 50, scale: 0.9 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -50, scale: 0.9 }}
-                style={{
-                  position: 'fixed',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                  zIndex: 1000000,
-                  background: toast.type === 'success' 
-                    ? 'linear-gradient(135deg, rgba(52, 199, 89, 0.95) 0%, rgba(46, 177, 80, 0.95) 100%)'
-                    : toast.type === 'error'
-                    ? 'linear-gradient(135deg, rgba(255, 59, 48, 0.95) 0%, rgba(229, 48, 42, 0.95) 100%)'
-                    : 'linear-gradient(135deg, rgba(0, 122, 255, 0.95) 0%, rgba(0, 81, 213, 0.95) 100%)',
-                  color: 'white',
-                  padding: '1.25rem 2.5rem',
-                  borderRadius: '20px',
-                  boxShadow: '0 25px 60px rgba(0, 0, 0, 0.35)',
-                  fontSize: '1rem',
-                  fontWeight: 600,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.75rem',
-                  backdropFilter: 'blur(20px)',
-                  WebkitBackdropFilter: 'blur(20px)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)'
-                }}
-              >
-                {toast.type === 'success' ? '✅' : toast.type === 'error' ? '❌' : 'ℹ️'} {toast.message}
-              </motion.div>
-            )}
-          </AnimatePresence>
-
           {/* Results Section */}
-          <AnimatePresence>
-            {optimizations.length > 0 && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                
-                {/* Contract Type Card */}
-                {optimizationResult?.meta && (
-                  <motion.div 
-                    className={styles.card}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    style={{
-                      background: `linear-gradient(135deg, ${CONTRACT_TYPE_INFO[optimizationResult.meta.type as keyof typeof CONTRACT_TYPE_INFO]?.color || '#8E8E93'}15 0%, transparent 100%)`,
-                      borderColor: CONTRACT_TYPE_INFO[optimizationResult.meta.type as keyof typeof CONTRACT_TYPE_INFO]?.color || '#8E8E93'
-                    }}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        {CONTRACT_TYPE_INFO[optimizationResult.meta.type as keyof typeof CONTRACT_TYPE_INFO]?.icon}
-                        <div>
-                          <h3 className="text-xl font-bold">
-                            {CONTRACT_TYPE_INFO[optimizationResult.meta.type as keyof typeof CONTRACT_TYPE_INFO]?.name || 'Vertrag'} erkannt
-                          </h3>
-                          <div className="flex gap-4 text-sm text-gray-600 mt-1">
-                            <span>📊 Konfidenz: {optimizationResult.meta.confidence}%</span>
-                            <span>⚖️ {optimizationResult.meta.jurisdiction}</span>
-                            <span>🌍 {optimizationResult.meta.language === 'de' ? 'Deutsch' : 'Englisch'}</span>
-                            {optimizationResult.meta.gapsFound && <span>🔍 {optimizationResult.meta.gapsFound} Lücken</span>}
-                          </div>
-                        </div>
-                      </div>
-                      {optimizationResult.score && (
-                        <div className="text-right">
-                          <div className="text-3xl font-bold" style={{ color: CONTRACT_TYPE_INFO[optimizationResult.meta.type as keyof typeof CONTRACT_TYPE_INFO]?.color }}>
-                            {optimizationResult.score.health}
-                          </div>
-                          <div className="text-sm text-gray-600">Health Score</div>
-                        </div>
-                      )}
-                    </div>
-                  </motion.div>
-                )}
-
-                {/* Contract Health Dashboard */}
-                {contractScore && (
-                  <ContractHealthDashboard 
-                    score={contractScore}
-                    showSimulation={false}
-                    newScore={contractScore.overall}
-                  />
-                )}
-
-                {/* Statistics Dashboard - SIMPLIFIED */}
-                {statistics && showStatistics && (
-                  <motion.div 
-                    className={styles.card}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                  >
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-bold flex items-center gap-2">
-                        <BarChart3 className="w-5 h-5" style={{ color: '#007AFF' }} />
-                        Analyse-Dashboard
-                      </h3>
-                      <button
-                        onClick={() => setShowStatistics(false)}
-                        className="text-gray-500 hover:text-gray-700 p-1 rounded-lg hover:bg-gray-100 transition-all"
-                      >
-                        <Minimize2 className="w-5 h-5" />
-                      </button>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                      <motion.div 
-                        className="text-center p-3 rounded-xl cursor-pointer"
-                        style={{ background: 'rgba(255, 59, 48, 0.1)' }}
-                        whileHover={{ scale: 1.05 }}
-                        onClick={() => setSelectedCategory('all')}
-                      >
-                        <div className="text-2xl font-bold" style={{ color: '#FF3B30' }}>{statistics.criticalCount}</div>
-                        <div className="text-xs text-gray-600 font-medium">Kritisch</div>
-                      </motion.div>
-                      <motion.div 
-                        className="text-center p-3 rounded-xl"
-                        style={{ background: 'rgba(255, 149, 0, 0.1)' }}
-                        whileHover={{ scale: 1.05 }}
-                      >
-                        <div className="text-2xl font-bold" style={{ color: '#FF9500' }}>{statistics.highCount}</div>
-                        <div className="text-xs text-gray-600 font-medium">Hoch</div>
-                      </motion.div>
-                      <motion.div 
-                        className="text-center p-3 rounded-xl"
-                        style={{ background: 'rgba(255, 204, 0, 0.1)' }}
-                        whileHover={{ scale: 1.05 }}
-                      >
-                        <div className="text-2xl font-bold" style={{ color: '#FFCC00' }}>{statistics.mediumCount}</div>
-                        <div className="text-xs text-gray-600 font-medium">Mittel</div>
-                      </motion.div>
-                      <motion.div 
-                        className="text-center p-3 rounded-xl"
-                        style={{ background: 'rgba(52, 199, 89, 0.1)' }}
-                        whileHover={{ scale: 1.05 }}
-                      >
-                        <div className="text-2xl font-bold" style={{ color: '#34C759' }}>{statistics.lowCount}</div>
-                        <div className="text-xs text-gray-600 font-medium">Niedrig</div>
-                      </motion.div>
-                    </div>
-                    
-                    <div className="grid grid-cols-3 gap-4">
-                      <div className="text-center p-2 rounded-lg" style={{ background: 'rgba(0, 122, 255, 0.05)' }}>
-                        <div className="text-sm text-gray-600">Ø Risiko</div>
-                        <div className="text-lg font-bold" style={{ color: statistics.avgRisk >= 7 ? '#FF3B30' : statistics.avgRisk >= 5 ? '#FF9500' : '#34C759' }}>{statistics.avgRisk}/10</div>
-                      </div>
-                      <div className="text-center p-2 rounded-lg" style={{ background: 'rgba(0, 122, 255, 0.05)' }}>
-                        <div className="text-sm text-gray-600">Ø Impact</div>
-                        <div className="text-lg font-bold" style={{ color: '#007AFF' }}>{statistics.avgImpact}/10</div>
-                      </div>
-                      <div className="text-center p-2 rounded-lg" style={{ background: 'rgba(0, 122, 255, 0.05)' }}>
-                        <div className="text-sm text-gray-600">KI-Konfidenz</div>
-                        <div className="text-lg font-bold" style={{ color: statistics.avgConfidence >= 85 ? '#34C759' : statistics.avgConfidence >= 70 ? '#FF9500' : '#FF3B30' }}>{statistics.avgConfidence}%</div>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-
-                {/* MAIN ACTION - MACH MEINEN VERTRAG BESSER! */}
-                <motion.div 
-                  className={styles.card}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  style={{ 
-                    background: 'linear-gradient(135deg, rgba(175, 82, 222, 0.05) 0%, rgba(255, 55, 95, 0.05) 100%)',
-                    borderColor: '#AF52DE'
-                  }}
-                >
-                  <div className="text-center">
-                    <h3 className="text-2xl font-bold mb-2">
-                      ✨ Dein Vertrag wurde analysiert
-                    </h3>
-                    <p className="text-gray-600 mb-6">
-                      {optimizations.length} kritische Optimierungen identifiziert – Erstelle jetzt deinen rechtssicheren Vertrag
-                    </p>
-                    
-                    <button
-                      onClick={handleGenerateOptimizedContract}
-                      disabled={isGeneratingContract || !file || optimizations.length === 0}
-                      className={styles.bigGenerateButton}
-                    >
-                      {isGeneratingContract ? (
-                        <>
-                          <div className={styles.spinner}></div>
-                          Dein Vertrag wird verbessert...
-                        </>
-                      ) : (
-                        <>
-                          <Wand2 className="w-6 h-6" />
-                          ⚡ Optimierten Vertrag generieren
-                        </>
-                      )}
-                    </button>
-                    
-                    {showAdvancedView && (
-                      <p className="text-sm text-gray-500 mt-4">
-                        {selectedOptimizations.size > 0 
-                          ? `${selectedOptimizations.size} von ${optimizations.length} ausgewählt`
-                          : 'Alle Optimierungen werden angewendet'}
-                      </p>
-                    )}
-                  </div>
-                </motion.div>
-
-                {/* Category Filter - Apple Style */}
-                <motion.div className={styles.card}>
-                  <div className={styles.cardHeader}>
-                    <Filter size={20} />
-                    <span className={styles.cardTitle}>Dynamische Kategorien</span>
-                    <span className={styles.categoryCount}>
-                      {filteredOptimizations.length} Optimierungen
-                    </span>
-                  </div>
-                  
-                  <div className={styles.buttonGroup}>
-                    {dynamicCategories.map(category => (
-                      <button
-                        key={category.id}
-                        onClick={() => setSelectedCategory(category.id)}
-                        className={`${styles.categoryButton} ${selectedCategory === category.id ? styles.categoryButtonActive : ''}`}
-                        data-category={category.id}
-                      >
-                        {category.icon}
-                        {category.name}
-                        <span className={styles.categoryBadge}>
-                          {category.count}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </motion.div>
-
-                {/* Additional Options - SIMPLIFIED */}
-                <motion.div className={styles.card}>
-                  <div className={styles.controlPanel}>
-                    <button
-                      onClick={() => setShowAdvancedView(!showAdvancedView)}
-                      className={styles.secondaryButton}
-                    >
-                      <Settings className="w-4 h-4" />
-                      {showAdvancedView ? 'Einfache Ansicht' : 'Einzelne auswählen'}
-                    </button>
-                    
-                    <div className={styles.dropdownGroup}>
-                      <button
-                        ref={pitchButtonRef}
-                        onClick={() => setShowPitchMenu(!showPitchMenu)}
-                        className={styles.secondaryButton}
-                      >
-                        <Mail className="w-4 h-4" />
-                        Pitch
-                        {showPitchMenu ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                      </button>
-                      
-                      <button
-                        ref={exportButtonRef}
-                        onClick={() => setShowExportMenu(!showExportMenu)}
-                        className={styles.secondaryButton}
-                      >
-                        <Download className="w-4 h-4" />
-                        Export
-                        {showExportMenu ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                      </button>
-                    </div>
-                  </div>
-                </motion.div>
-
-                {/* Portal Dropdowns */}
-                <DropdownPortal isOpen={showPitchMenu} targetRef={pitchButtonRef}>
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    data-portal-dropdown
-                    className="p-4 min-w-[280px]"
-                  >
-                    <h5 className="font-semibold mb-3">Pitch-Stil wählen:</h5>
-                    {pitchStyles.map(style => (
-                      <motion.button
-                        key={style.id}
-                        onClick={() => generatePitch(style.id)}
-                        className="w-full p-3 mb-2 rounded-lg flex items-center gap-3"
-                        whileHover={{ x: 4 }}
-                      >
-                        {style.icon}
-                        <div className="text-left">
-                          <div className="font-semibold">{style.name}</div>
-                          <div className="text-sm text-gray-600">{style.description}</div>
-                        </div>
-                        <ArrowRight className="w-4 h-4 ml-auto text-gray-400" />
-                      </motion.button>
-                    ))}
-                  </motion.div>
-                </DropdownPortal>
-
-                <DropdownPortal isOpen={showExportMenu} targetRef={exportButtonRef} position="right">
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    data-portal-dropdown
-                    className="p-4 min-w-[300px]"
-                  >
-                    <h5 className="font-semibold mb-3">Export-Format:</h5>
-                    {exportOptions.map(option => (
-                      <motion.button
-                        key={option.id}
-                        onClick={() => handleExport()}
-                        disabled={option.premium && !isPremium}
-                        className="w-full p-3 mb-2 rounded-lg flex items-center gap-3 disabled:opacity-50"
-                        whileHover={!option.premium || isPremium ? { x: 4 } : undefined}
-                      >
-                        {option.icon}
-                        <div className="text-left flex-1">
-                          <div className="font-semibold flex items-center gap-2">
-                            {option.name}
-                            {option.premium && <Lock className="w-3 h-3" />}
-                          </div>
-                          <div className="text-sm text-gray-600">{option.description}</div>
-                        </div>
-                        <span className="text-xs bg-gray-100 px-2 py-1 rounded font-medium">{option.format}</span>
-                      </motion.button>
-                    ))}
-                  </motion.div>
-                </DropdownPortal>
-
-                {/* Optimization Cards - SIMPLIFIED */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold px-2">
-                    {showAdvancedView ? 'Wähle die gewünschten Optimierungen aus:' : 'Gefundene Optimierungen:'}
-                  </h3>
-                  {filteredOptimizations.map((optimization, index) => (
-                    <motion.div
-                      key={optimization.id}
-                      className={styles.card}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                      style={{
-                        opacity: selectedOptimizations.has(optimization.id) ? 1 : (showAdvancedView ? 0.7 : 1)
-                      }}
-                    >
-                      {/* Priority Indicator */}
-                      <div style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        height: '3px',
-                        borderRadius: '20px 20px 0 0',
-                        background: optimization.priority === 'critical' 
-                          ? 'linear-gradient(90deg, #FF3B30 0%, #E5302A 100%)' : 
-                                   optimization.priority === 'high' 
-                          ? 'linear-gradient(90deg, #FF9500 0%, #FF7A00 100%)' : 
-                                   optimization.priority === 'medium' 
-                          ? 'linear-gradient(90deg, #FFCC00 0%, #F5B800 100%)' 
-                          : 'linear-gradient(90deg, #34C759 0%, #2EB150 100%)'
-                      }}></div>
-
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <h4 className="text-lg font-bold">
-                              {optimization.category === 'termination' ? 'Kündigung & Laufzeit' :
-                               optimization.category === 'liability' ? 'Haftung & Risiko' :
-                               optimization.category === 'payment' ? 'Vergütung & Zahlung' :
-                               optimization.category === 'compliance' ? 'Compliance & DSGVO' : 'Klarheit & Präzision'}
-                            </h4>
-                            <span className={`px-2.5 py-1 text-xs rounded-full font-semibold ${
-                              optimization.priority === 'critical' ? 'bg-red-100 text-red-700' :
-                              optimization.priority === 'high' ? 'bg-orange-100 text-orange-700' :
-                              optimization.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
-                              'bg-green-100 text-green-700'
-                            }`}>
-                              {optimization.priority === 'critical' ? 'Kritisch' :
-                               optimization.priority === 'high' ? 'Hoch' :
-                               optimization.priority === 'medium' ? 'Mittel' : 'Niedrig'}
-                            </span>
-                          </div>
-                          
-                          <div className="flex gap-4 text-sm text-gray-600 font-medium">
-                            <span>KI: {optimization.confidence}%</span>
-                            <span>Risiko: {optimization.legalRisk}/10</span>
-                            <span>Impact: {optimization.businessImpact}/10</span>
-                            <span>{optimization.estimatedSavings}</span>
-                          </div>
-                        </div>
-
-                        <div className="flex gap-2">
-                          {showAdvancedView && (
-                            <label className="flex items-center gap-2 cursor-pointer">
-                              <input
-                                type="checkbox"
-                                checked={selectedOptimizations.has(optimization.id)}
-                                onChange={() => toggleOptimizationSelection(optimization.id)}
-                                className="w-5 h-5"
-                                style={{ accentColor: '#007AFF' }}
-                              />
-                              <span className="font-medium">Anwenden</span>
-                            </label>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Content */}
-                      <div className="p-3 rounded-lg" style={{ background: 'rgba(142, 142, 147, 0.08)' }}>
-                        <p className="text-sm mb-3">{optimization.reasoning}</p>
-                        {showAdvancedView && (
-                          <div className="mt-3 pt-3 border-t border-gray-200">
-                            {optimization.original === "FEHLT" || optimization.original.includes("FEHLT") ? (
-                              <div className="mb-2 p-2 rounded-lg" style={{ background: 'rgba(255, 59, 48, 0.1)' }}>
-                                <strong className="text-red-600">⚠️ Fehlende Pflichtklausel</strong>
-                                <p className="text-xs text-gray-600 mt-1">Diese wichtige Klausel fehlt komplett in deinem Vertrag</p>
-                              </div>
-                            ) : (
-                              <p className="text-xs text-gray-600 mb-1">
-                                <strong>Original:</strong> {optimization.original.substring(0, 100)}...
-                              </p>
-                            )}
-                            <div className="mt-2 p-2 rounded-lg" style={{ background: 'rgba(52, 199, 89, 0.1)' }}>
-                              <p className="text-xs text-green-600">
-                                <strong>✅ Optimiert:</strong>
-                              </p>
-                              <p className="text-xs text-gray-700 mt-1 whitespace-pre-wrap">
-                                {optimization.improved.length > 500 ? optimization.improved.substring(0, 500) + '...' : optimization.improved}
-                              </p>
-                              {(optimization.improved.length < 200 || optimization.improved.length > 500) && (
-                                <p className="text-xs text-blue-600 mt-2">
-                                  ℹ️ <em>Vollständige juristische Klausel wird im PDF generiert</em>
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Additional Info */}
-                      <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                        <div>
-                          <span className="text-gray-600">Benchmark:</span>
-                          <span className="ml-2 font-medium">{optimization.marketBenchmark}</span>
-                        </div>
-                        <div>
-                          <span className="text-gray-600">Umsetzung:</span>
-                          <span className="ml-2 font-medium">
-                            {optimization.implementationDifficulty === 'easy' ? 'Einfach' :
-                             optimization.implementationDifficulty === 'medium' ? 'Mittel' : 'Komplex'}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Copy Button */}
-                      <motion.button
-                        onClick={() => {
-                          navigator.clipboard.writeText(`${optimization.improved}\n\nBegründung: ${optimization.reasoning}`);
-                          showToast("✅ Kopiert!", 'success');
-                        }}
-                        className="absolute top-4 right-4 p-2 bg-white rounded-lg hover:bg-gray-100 shadow-sm"
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                      >
-                        <Copy className="w-4 h-4" />
-                      </motion.button>
-                    </motion.div>
-                  ))}
-                </div>
-
-              </motion.div>
-            )}
-
-            {/* 🎯 PREMIUM: Auto-Redrafting & Advanced Features Section */}
-            {isPremium && optimizations.length > 0 && (
-              <motion.div 
-                className={`${styles.card} mt-8`}
+          {optimizations.length > 0 && (
+            <AnimatePresence>
+              <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
+                exit={{ opacity: 0, y: -20 }}
+                className={styles.resultsContainer}
               >
-                {/* Premium Header with Auto-Redraft Button */}
-                <div className="p-6 border-b border-gray-200">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-blue-100 rounded-lg">
-                        <Wand2 className="w-6 h-6 text-blue-600" />
-                      </div>
-                      <div>
-                        <h3 className="text-xl font-bold text-gray-900">Premium Features</h3>
-                        <p className="text-gray-600">Auto-Neufassung, Export-Varianten & Verhandlungs-Pitches</p>
-                      </div>
+                {/* Contract Meta Info */}
+                {optimizationResult?.meta && (
+                  <motion.div className={styles.metaInfo}>
+                    <ContractTypeBadge 
+                      type={optimizationResult.meta.type} 
+                      confidence={optimizationResult.meta.confidence}
+                    />
+                    <div className={styles.metaDetails}>
+                      {optimizationResult.meta.jurisdiction && (
+                        <span>📍 {optimizationResult.meta.jurisdiction}</span>
+                      )}
+                      {optimizationResult.meta.gapsFound && <span>🔍 {optimizationResult.meta.gapsFound} Lücken</span>}
                     </div>
+                  </motion.div>
+                )}
 
-                    <button
+                {/* Health Score */}
+                {optimizationResult?.score && (
+                  <motion.div className={styles.healthScore}>
+                    <div className={styles.scoreCircle}>
+                      <span className={styles.scoreValue}>{optimizationResult.score.health}</span>
+                      <span className={styles.scoreLabel}>Health Score</span>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Action Buttons */}
+                <motion.div className={styles.actionBar}>
+                  <motion.button
+                    onClick={handleGenerateOptimizedContract}
+                    disabled={isGeneratingContract || optimizations.length === 0}
+                    className={`${styles.generateButton} ${isGeneratingContract ? styles.generating : ''}`}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    {isGeneratingContract ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        Generiere optimierten Vertrag...
+                      </>
+                    ) : (
+                      <>
+                        <FileText className="w-5 h-5" />
+                        Optimierten Vertrag generieren
+                      </>
+                    )}
+                  </motion.button>
+
+                  {isPremium && (
+                    <motion.button
                       onClick={handleAutoRedraft}
                       disabled={isRedrafting || !contractId}
-                      className={`px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center gap-2 ${
-                        isRedrafting 
-                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-                          : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl'
-                      }`}
+                      className={`${styles.premiumButton} ${isRedrafting ? styles.loading : ''}`}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
                     >
                       {isRedrafting ? (
                         <>
@@ -2228,141 +1595,325 @@ Konfidenz: ${opt.confidence}%\n`
                       ) : (
                         <>
                           <Wand2 className="w-5 h-5" />
-                          Auto-Neufassung starten
+                          Auto-Neufassung (Premium)
                         </>
                       )}
+                    </motion.button>
+                  )}
+
+                  <div className={styles.actionGroup}>
+                    <div className={styles.dropdownContainer}>
+                      <button
+                        ref={exportButtonRef}
+                        onClick={() => setShowExportMenu(!showExportMenu)}
+                        className={styles.actionButton}
+                      >
+                        <Download className="w-5 h-5" />
+                        Export
+                        <ChevronDown className="w-4 h-4" />
+                      </button>
+                      
+                      <AnimatePresence>
+                        {showExportMenu && (
+                          <motion.div
+                            className={styles.dropdownMenu}
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                          >
+                            {EXPORT_OPTIONS.map(option => (
+                              <button
+                                key={option.id}
+                                onClick={handleExport}
+                                className={`${styles.dropdownItem} ${option.premium && !isPremium ? styles.disabled : ''}`}
+                                disabled={option.premium && !isPremium}
+                              >
+                                {option.icon}
+                                <div className={styles.dropdownItemText}>
+                                  <span>{option.name}</span>
+                                  <span className={styles.dropdownItemDesc}>{option.description}</span>
+                                </div>
+                                {option.premium && !isPremium && (
+                                  <Lock className="w-4 h-4 opacity-50" />
+                                )}
+                              </button>
+                            ))}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+
+                    <div className={styles.dropdownContainer}>
+                      <button
+                        ref={pitchButtonRef}
+                        onClick={() => setShowPitchMenu(!showPitchMenu)}
+                        className={styles.actionButton}
+                      >
+                        <Mail className="w-5 h-5" />
+                        Pitch
+                        <ChevronDown className="w-4 h-4" />
+                      </button>
+                      
+                      <AnimatePresence>
+                        {showPitchMenu && (
+                          <motion.div
+                            className={styles.dropdownMenu}
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                          >
+                            {PITCH_STYLES.map(style => (
+                              <button
+                                key={style.id}
+                                onClick={() => generatePitch(style.id)}
+                                className={styles.dropdownItem}
+                              >
+                                {style.icon}
+                                <div className={styles.dropdownItemText}>
+                                  <span>{style.name}</span>
+                                  <span className={styles.dropdownItemDesc}>{style.description}</span>
+                                </div>
+                              </button>
+                            ))}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+
+                    <button
+                      onClick={handleReset}
+                      className={styles.actionButton}
+                    >
+                      <RefreshCw className="w-5 h-5" />
+                      Neu starten
                     </button>
                   </div>
+                </motion.div>
 
-                  {/* Status Info */}
-                  {redraftResult && (
-                    <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-200">
-                      <div className="flex items-center justify-between text-sm">
-                        <div className="flex items-center gap-2 text-green-800">
-                          <CheckCircle2 className="w-4 h-4" />
-                          <span>Auto-Neufassung abgeschlossen</span>
-                        </div>
-                        <div className="text-green-700">
-                          {redraftResult.stats.appliedChanges}/{redraftResult.stats.totalOptimizations} Änderungen • 
-                          {redraftResult.stats.successRate}% Erfolgsquote
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                {/* Render optimization results */}
+                {renderOptimizationResults()}
 
-                {/* Premium Tab Navigation */}
-                {redraftResult && (
-                  <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
-                    <div className="flex items-center gap-1">
-                      {[
-                        { id: 'diff', label: 'Diff-Ansicht', icon: FileText },
-                        { id: 'export', label: 'Export', icon: Download },
-                        { id: 'pitches', label: 'Pitches', icon: Mail },
-                        { id: 'summary', label: 'Executive Summary', icon: BarChart3 }
-                      ].map(({ id, label, icon: Icon }) => (
-                        <button
-                          key={id}
-                          onClick={() => setPremiumActiveTab(id as typeof premiumActiveTab)}
-                          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
-                            premiumActiveTab === id
-                              ? 'bg-white text-blue-600 shadow-sm border border-gray-200'
-                              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                          }`}
-                        >
-                          <Icon className="w-4 h-4" />
-                          {label}
-                        </button>
+                {/* Legacy Simple Format */}
+                {optimizationResult?.optimizationResult && 
+                 typeof optimizationResult.optimizationResult === 'string' &&
+                 !optimizationResult.categories && 
+                 !optimizationResult.summary &&
+                 optimizations.length === 0 && (
+                  <motion.div className={styles.simpleResult}>
+                    <h3>Analyse-Ergebnis</h3>
+                    <div className={styles.simpleContent}>
+                      {optimizationResult.optimizationResult.split('\n').map((line, idx) => (
+                        <p key={idx}>{line}</p>
                       ))}
                     </div>
+                  </motion.div>
+                )}
+
+                {/* Legacy Cards (if no other format detected) */}
+                {!optimizationResult?.categories && 
+                 !optimizationResult?.summary &&
+                 optimizations.length === 0 &&
+                 optimizationResult?.legalAssessment && (
+                  <div className={styles.legacyCards}>
+                    {optimizationResult.laufzeit && (
+                      <div className={styles.infoCard}>
+                        <h4>📅 Laufzeit</h4>
+                        <p>{optimizationResult.laufzeit}</p>
+                      </div>
+                    )}
+                    {optimizationResult.kuendigung && (
+                      <div className={styles.infoCard}>
+                        <h4>🚪 Kündigung</h4>
+                        <p>{optimizationResult.kuendigung}</p>
+                      </div>
+                    )}
+                    {optimizationResult.legalAssessment && (
+                      <div className={styles.infoCard}>
+                        <h4>⚖️ Rechtliche Bewertung</h4>
+                        <p>{optimizationResult.legalAssessment}</p>
+                      </div>
+                    )}
                   </div>
                 )}
 
-                {/* Premium Tab Content */}
-                <AnimatePresence mode="wait">
-                  {redraftResult && (
-                    <motion.div
-                      key={premiumActiveTab}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ duration: 0.3 }}
-                      className="p-6"
-                    >
-                      {premiumActiveTab === 'diff' && (
-                        <DiffViewer
-                          diffBlocks={redraftResult.diffView}
-                          appliedChanges={redraftResult.appliedChanges}
-                          onAcceptanceChange={handleAcceptanceChange}
-                          acceptanceConfig={acceptanceConfig}
-                        />
-                      )}
-
-                      {premiumActiveTab === 'export' && (
-                        <PremiumExportPanel
-                          contractId={contractId!}
-                          redraftResult={redraftResult}
-                          contractName={analysisData?.summary || 'Vertrag'}
-                          onExportStart={handleExportStart}
-                          onExportComplete={handleExportComplete}
-                        />
-                      )}
-
-                      {premiumActiveTab === 'pitches' && (
-                        <PitchViewer
-                          contractId={contractId!}
-                          redraftResult={redraftResult}
-                          pitches={pitchCollections}
-                          onLoadPitches={handleLoadPitches}
-                          isLoadingPitches={isLoadingPitches}
-                        />
-                      )}
-
-                      {premiumActiveTab === 'summary' && (
-                        <ExecutiveSummaryViewer
-                          redraftResult={redraftResult}
-                          contractName={analysisData?.summary || 'Vertrag'}
-                        />
-                      )}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                {/* No Redraft Yet State */}
-                {!redraftResult && !isRedrafting && (
-                  <div className="p-8 text-center">
-                    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Wand2 className="w-8 h-8 text-blue-600" />
-                    </div>
-                    <h4 className="text-lg font-semibold text-gray-900 mb-2">Automatische Vertragsoptimierung</h4>
-                    <p className="text-gray-600 mb-4">
-                      Starten Sie die Auto-Neufassung, um eine optimierte Vertragsversion zu generieren und auf erweiterte Features zuzugreifen:
-                    </p>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
-                      <div className="flex items-center gap-2">
-                        <FileText className="w-4 h-4 text-blue-600" />
-                        <span>Diff-Ansicht</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Download className="w-4 h-4 text-green-600" />
-                        <span>Clean & Redline PDFs</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Mail className="w-4 h-4 text-purple-600" />
-                        <span>3-Ton Pitches</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <BarChart3 className="w-4 h-4 text-orange-600" />
-                        <span>Executive Summary</span>
-                      </div>
-                    </div>
-                  </div>
+                {/* Custom HTML Content (if present) */}
+                {optimizationResult?.optimizationResult && 
+                 typeof optimizationResult.optimizationResult === 'string' &&
+                 optimizationResult.optimizationResult.includes('<') && (
+                  <motion.div
+                    className={styles.htmlContent}
+                    dangerouslySetInnerHTML={{ 
+                      __html: optimizationResult.optimizationResult 
+                    }}
+                  />
                 )}
+
               </motion.div>
-            )}
-          </AnimatePresence>
+            </AnimatePresence>
+          )}
+
+          {/* 🎯 PREMIUM: Auto-Redrafting & Advanced Features Section */}
+          {showPremiumSection && isPremium && (
+            <motion.div 
+              className={`${styles.card} ${styles.premiumCard}`}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              {/* Premium Header */}
+              <div className={styles.premiumHeader}>
+                <div className={styles.premiumHeaderContent}>
+                  <div className={styles.premiumIcon}>
+                    <Wand2 className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className={styles.premiumTitle}>Premium Features</h3>
+                    <p className={styles.premiumSubtitle}>
+                      Auto-Neufassung, Export-Varianten & Verhandlungs-Pitches
+                    </p>
+                  </div>
+                </div>
+
+                {/* Status Info */}
+                {redraftResult && (
+                  <motion.div 
+                    className={styles.statusInfo}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Auto-Neufassung abgeschlossen</span>
+                    <span className={styles.statusStats}>
+                      {redraftResult.stats.appliedChanges}/{redraftResult.stats.totalOptimizations} Änderungen • 
+                      {redraftResult.stats.successRate}% Erfolgsquote
+                    </span>
+                  </motion.div>
+                )}
+              </div>
+
+              {/* Premium Tab Navigation */}
+              {redraftResult && (
+                <div className={styles.premiumTabs}>
+                  <div className={styles.tabButtons}>
+                    {[
+                      { id: 'diff' as const, label: 'Diff-Ansicht', icon: <GitCompare className="w-4 h-4" /> },
+                      { id: 'export' as const, label: 'Export', icon: <Download className="w-4 h-4" /> },
+                      { id: 'pitches' as const, label: 'Pitches', icon: <Mail className="w-4 h-4" /> },
+                      { id: 'summary' as const, label: 'Executive Summary', icon: <BarChart3 className="w-4 h-4" /> }
+                    ].map(({ id, label, icon }) => (
+                      <button
+                        key={id}
+                        onClick={() => setPremiumActiveTab(id)}
+                        className={`${styles.tabButton} ${premiumActiveTab === id ? styles.active : ''}`}
+                      >
+                        {icon}
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Premium Tab Content */}
+              <AnimatePresence mode="wait">
+                {redraftResult && (
+                  <motion.div
+                    key={premiumActiveTab}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.3 }}
+                    className={styles.premiumContent}
+                  >
+                    {premiumActiveTab === 'diff' && (
+                      <DiffViewer
+                        diffBlocks={redraftResult.diffView}
+                        appliedChanges={redraftResult.appliedChanges}
+                        onAcceptanceChange={handleAcceptanceChange}
+                        acceptanceConfig={acceptanceConfig}
+                      />
+                    )}
+
+                    {premiumActiveTab === 'export' && (
+                      <PremiumExportPanel
+                        contractId={contractId!}
+                        redraftResult={redraftResult}
+                        contractName={file?.name || 'Vertrag'}
+                        onExportStart={handleExportStart}
+                        onExportComplete={handleExportComplete}
+                      />
+                    )}
+
+                    {premiumActiveTab === 'pitches' && (
+                      <PitchViewer
+                        contractId={contractId!}
+                        redraftResult={redraftResult}
+                        pitches={pitchCollections}
+                        onLoadPitches={handleLoadPitches}
+                        isLoadingPitches={isLoadingPitches}
+                      />
+                    )}
+
+                    {premiumActiveTab === 'summary' && (
+                      <ExecutiveSummaryViewer
+                        redraftResult={redraftResult}
+                        contractName={file?.name || 'Vertrag'}
+                      />
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* No Redraft Yet State */}
+              {!redraftResult && !isRedrafting && (
+                <motion.div 
+                  className={styles.emptyPremium}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                >
+                  <div className={styles.emptyPremiumIcon}>
+                    <Wand2 className="w-12 h-12" />
+                  </div>
+                  <h4>Automatische Vertragsoptimierung</h4>
+                  <p>
+                    Klicken Sie auf "Auto-Neufassung" um eine optimierte Vertragsversion zu generieren 
+                    und auf erweiterte Features zuzugreifen
+                  </p>
+                  <div className={styles.premiumFeatures}>
+                    <div className={styles.premiumFeature}>
+                      <GitCompare className="w-4 h-4" />
+                      <span>Diff-Ansicht</span>
+                    </div>
+                    <div className={styles.premiumFeature}>
+                      <FileCheck className="w-4 h-4" />
+                      <span>Clean & Redline PDFs</span>
+                    </div>
+                    <div className={styles.premiumFeature}>
+                      <Mail className="w-4 h-4" />
+                      <span>3-Ton Pitches</span>
+                    </div>
+                    <div className={styles.premiumFeature}>
+                      <BarChart3 className="w-4 h-4" />
+                      <span>Executive Summary</span>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </motion.div>
+          )}
         </motion.div>
       </div>
+
+      {/* Toast Portal */}
+      <AnimatePresence>
+        {toast && (
+          <Toast 
+            message={toast.message} 
+            type={toast.type} 
+            onClose={() => setToast(null)} 
+          />
+        )}
+      </AnimatePresence>
     </>
   );
 }
