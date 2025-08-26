@@ -34,7 +34,7 @@ interface ExecutiveSummaryViewerProps {
 
 const ExecutiveSummaryViewer: React.FC<ExecutiveSummaryViewerProps> = ({
   redraftResult,
-  contractName: _contractName,
+  contractName,
   className = '',
   onPrintMode
 }) => {
@@ -122,7 +122,7 @@ const ExecutiveSummaryViewer: React.FC<ExecutiveSummaryViewerProps> = ({
         <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-1">{summary.title}</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-1">{summary.title || contractName}</h2>
               <p className="text-gray-600">Executive Summary • {summary.contractInfo.dateAnalyzed}</p>
             </div>
 

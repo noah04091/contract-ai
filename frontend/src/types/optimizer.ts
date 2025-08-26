@@ -102,7 +102,7 @@ export interface RedraftStats {
   successRate: number;
   processingTimeMs: number;
   textLengthChange: number;
-  improvementAreas: Record<string, any>;
+  improvementAreas: Record<string, number | string>;
 }
 
 export interface RedraftMetadata {

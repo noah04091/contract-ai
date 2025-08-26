@@ -121,7 +121,7 @@ const DiffViewer: React.FC<DiffViewerProps> = ({
     const defaultCount = totalChanges - acceptedCount - rejectedCount;
 
     return { totalChanges, acceptedCount, rejectedCount, defaultCount };
-  }, [appliedChanges, acceptedIds, rejectedIds]);
+  }, [appliedChanges, getChangeStatus]);
 
   return (
     <div className={`diff-viewer ${className}`}>

@@ -64,7 +64,7 @@ const PremiumExportPanel: React.FC<PremiumExportPanelProps> = ({
   const performExport = async (
     exportType: 'clean-pdf' | 'redline-pdf' | 'executive-summary',
     endpoint: string,
-    payload: any,
+    payload: Record<string, unknown>,
     filename: string
   ) => {
     if (!redraftResult) return;

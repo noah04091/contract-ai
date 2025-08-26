@@ -1098,7 +1098,7 @@ export default function Optimizer() {
     } finally {
       setIsGeneratingContract(false);
     }
-  }, [file, optimizations, contractId, showAdvancedView, selectedOptimizations, originalContractText, analysisData, showToast]);
+  }, [file, optimizations, contractId, showAdvancedView, selectedOptimizations, originalContractText, analysisData, showToast, isGeneratingContract]);
 
   // 🚀 SIMPLIFIED: Toggle optimization selection (for advanced mode)
   const toggleOptimizationSelection = useCallback((id: string) => {
@@ -1238,7 +1238,7 @@ Freundliche Grüße`
     navigator.clipboard.writeText(pitch);
     showToast(`✅ ${style} Pitch kopiert!`, 'success');
     setShowPitchMenu(false);
-  }, [optimizations, optimizationResult, selectedPitchStyle, showToast]);
+  }, [optimizations, selectedPitchStyle, showToast]);
 
   // 🎯 PREMIUM: Auto-Redrafting Function
   const handleAutoRedraft = useCallback(async () => {
