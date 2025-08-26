@@ -41,10 +41,19 @@ import {
 import LegendaryPremiumNotice from "../components/LegendaryPremiumNotice";
 import ContractHealthDashboard from "../components/ContractHealthDashboard";
 
+// 🎯 PREMIUM: Advanced Components
+import DiffViewer from "../components/DiffViewer";
+import PremiumExportPanel from "../components/PremiumExportPanel";
+import PitchViewer from "../components/PitchViewer";
+import ExecutiveSummaryViewer from "../components/ExecutiveSummaryViewer";
+
 // Types für revolutionäre Features
 import { 
   OptimizationSuggestion, 
-  ContractHealthScore
+  ContractHealthScore,
+  RedraftResult,
+  PitchCollection,
+  AcceptanceConfig
 } from "../types/optimizer";
 
 // Styles
@@ -800,6 +809,18 @@ export default function Optimizer() {
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [selectedOptimizations, setSelectedOptimizations] = useState<Set<string>>(new Set());
   
+  // 🎯 PREMIUM: Auto-Redrafting & Advanced Features States
+  const [redraftResult, setRedraftResult] = useState<RedraftResult | null>(null);
+  const [pitchCollections, setPitchCollections] = useState<PitchCollection[] | null>(null);
+  const [acceptanceConfig, setAcceptanceConfig] = useState<AcceptanceConfig>({
+    defaultAcceptAll: true,
+    acceptedIds: [],
+    rejectedIds: []
+  });
+  const [isRedrafting, setIsRedrafting] = useState(false);
+  const [isLoadingPitches, setIsLoadingPitches] = useState(false);
+  const [premiumActiveTab, setPremiumActiveTab] = useState<'diff' | 'export' | 'pitches' | 'summary'>('diff');
+  
   // ✅ ORIGINAL: Refs
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pitchButtonRef = useRef<HTMLButtonElement>(null);
@@ -1218,6 +1239,128 @@ Freundliche Grüße`
     showToast(`✅ ${style} Pitch kopiert!`, 'success');
     setShowPitchMenu(false);
   }, [optimizations, optimizationResult, selectedPitchStyle, showToast]);
+
+  // 🎯 PREMIUM: Auto-Redrafting Function
+  const handleAutoRedraft = useCallback(async () => {
+    if (!contractId || !originalContractText) {
+      showToast('❌ Kein Vertrag geladen oder keine Original-Text verfügbar.', 'error');
+      return;
+    }
+
+    if (!optimizations || optimizations.length === 0) {
+      showToast('❌ Keine Optimierungen verfügbar für Auto-Neufassung.', 'error');
+      return;
+    }
+
+    setIsRedrafting(true);
+
+    try {
+      const response = await fetch(`/api/optimized-contract/${contractId}/redraft`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': document.cookie.includes('token=') 
+            ? `Bearer ${document.cookie.split('token=')[1].split(';')[0]}` 
+            : ''
+        },
+        body: JSON.stringify({
+          acceptanceConfig: acceptanceConfig,
+          optimizations: optimizations.map(opt => ({
+            id: opt.id,
+            original: opt.original,
+            improved: opt.improved,
+            category: opt.category,
+            reasoning: opt.reasoning
+          }))
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Redraft failed: ${response.statusText}`);
+      }
+
+      const result: RedraftResult = await response.json();
+      
+      if (result.success) {
+        setRedraftResult(result);
+        showToast(`✅ Auto-Neufassung erfolgreich: ${result.stats.appliedChanges} Änderungen übernommen`, 'success');
+        
+        // Auto-switch to diff view
+        setPremiumActiveTab('diff');
+      } else {
+        throw new Error('Redrafting failed on server side');
+      }
+
+    } catch (error) {
+      console.error('Auto-redraft error:', error);
+      showToast(`❌ Auto-Neufassung fehlgeschlagen: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`, 'error');
+    } finally {
+      setIsRedrafting(false);
+    }
+  }, [contractId, originalContractText, optimizations, acceptanceConfig, showToast]);
+
+  // 🎯 PREMIUM: Load Pitches Function
+  const handleLoadPitches = useCallback(async () => {
+    if (!contractId || !redraftResult) {
+      showToast('❌ Führen Sie zuerst eine Auto-Neufassung durch.', 'error');
+      return;
+    }
+
+    setIsLoadingPitches(true);
+
+    try {
+      const response = await fetch(`/api/optimized-contract/${contractId}/pitches`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': document.cookie.includes('token=') 
+            ? `Bearer ${document.cookie.split('token=')[1].split(';')[0]}` 
+            : ''
+        },
+        body: JSON.stringify({
+          changes: redraftResult.appliedChanges,
+          contractName: analysisData?.summary || 'Vertrag'
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Pitch generation failed: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.success && result.pitches) {
+        setPitchCollections(result.pitches);
+        showToast(`✅ ${result.pitches.length} Verhandlungsargumente in 3 Tonarten generiert`, 'success');
+      } else {
+        throw new Error('Pitch generation failed');
+      }
+
+    } catch (error) {
+      console.error('Load pitches error:', error);
+      showToast(`❌ Pitch-Generierung fehlgeschlagen: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`, 'error');
+    } finally {
+      setIsLoadingPitches(false);
+    }
+  }, [contractId, redraftResult, analysisData, showToast]);
+
+  // 🎯 PREMIUM: Handle Acceptance Config Change
+  const handleAcceptanceChange = useCallback((newConfig: AcceptanceConfig) => {
+    setAcceptanceConfig(newConfig);
+  }, []);
+
+  // 🎯 PREMIUM: Export Event Handlers
+  const handleExportStart = useCallback(() => {
+    showToast('📄 Export wird vorbereitet...', 'info');
+  }, [showToast]);
+
+  const handleExportComplete = useCallback((exportType: string, success: boolean) => {
+    if (success) {
+      showToast(`✅ ${exportType} erfolgreich exportiert`, 'success');
+    } else {
+      showToast(`❌ ${exportType} Export fehlgeschlagen`, 'error');
+    }
+  }, [showToast]);
 
   // ✅ ORIGINAL: Export Functions
   const handleExport = useCallback(async () => {
@@ -2044,6 +2187,177 @@ Konfidenz: ${opt.confidence}%\n`
                   ))}
                 </div>
 
+              </motion.div>
+            )}
+
+            {/* 🎯 PREMIUM: Auto-Redrafting & Advanced Features Section */}
+            {isPremium && optimizations.length > 0 && (
+              <motion.div 
+                className={`${styles.card} mt-8`}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                {/* Premium Header with Auto-Redraft Button */}
+                <div className="p-6 border-b border-gray-200">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-100 rounded-lg">
+                        <Wand2 className="w-6 h-6 text-blue-600" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-900">Premium Features</h3>
+                        <p className="text-gray-600">Auto-Neufassung, Export-Varianten & Verhandlungs-Pitches</p>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={handleAutoRedraft}
+                      disabled={isRedrafting || !contractId}
+                      className={`px-6 py-3 rounded-lg font-medium transition-all duration-200 flex items-center gap-2 ${
+                        isRedrafting 
+                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                          : 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl'
+                      }`}
+                    >
+                      {isRedrafting ? (
+                        <>
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                          Erstelle Neufassung...
+                        </>
+                      ) : (
+                        <>
+                          <Wand2 className="w-5 h-5" />
+                          Auto-Neufassung starten
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                  {/* Status Info */}
+                  {redraftResult && (
+                    <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-200">
+                      <div className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-2 text-green-800">
+                          <CheckCircle2 className="w-4 h-4" />
+                          <span>Auto-Neufassung abgeschlossen</span>
+                        </div>
+                        <div className="text-green-700">
+                          {redraftResult.stats.appliedChanges}/{redraftResult.stats.totalOptimizations} Änderungen • 
+                          {redraftResult.stats.successRate}% Erfolgsquote
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Premium Tab Navigation */}
+                {redraftResult && (
+                  <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
+                    <div className="flex items-center gap-1">
+                      {[
+                        { id: 'diff', label: 'Diff-Ansicht', icon: FileText },
+                        { id: 'export', label: 'Export', icon: Download },
+                        { id: 'pitches', label: 'Pitches', icon: Mail },
+                        { id: 'summary', label: 'Executive Summary', icon: BarChart3 }
+                      ].map(({ id, label, icon: Icon }) => (
+                        <button
+                          key={id}
+                          onClick={() => setPremiumActiveTab(id as typeof premiumActiveTab)}
+                          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
+                            premiumActiveTab === id
+                              ? 'bg-white text-blue-600 shadow-sm border border-gray-200'
+                              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                          }`}
+                        >
+                          <Icon className="w-4 h-4" />
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Premium Tab Content */}
+                <AnimatePresence mode="wait">
+                  {redraftResult && (
+                    <motion.div
+                      key={premiumActiveTab}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ duration: 0.3 }}
+                      className="p-6"
+                    >
+                      {premiumActiveTab === 'diff' && (
+                        <DiffViewer
+                          diffBlocks={redraftResult.diffView}
+                          appliedChanges={redraftResult.appliedChanges}
+                          onAcceptanceChange={handleAcceptanceChange}
+                          acceptanceConfig={acceptanceConfig}
+                        />
+                      )}
+
+                      {premiumActiveTab === 'export' && (
+                        <PremiumExportPanel
+                          contractId={contractId!}
+                          redraftResult={redraftResult}
+                          contractName={analysisData?.summary || 'Vertrag'}
+                          onExportStart={handleExportStart}
+                          onExportComplete={handleExportComplete}
+                        />
+                      )}
+
+                      {premiumActiveTab === 'pitches' && (
+                        <PitchViewer
+                          contractId={contractId!}
+                          redraftResult={redraftResult}
+                          pitches={pitchCollections}
+                          onLoadPitches={handleLoadPitches}
+                          isLoadingPitches={isLoadingPitches}
+                        />
+                      )}
+
+                      {premiumActiveTab === 'summary' && (
+                        <ExecutiveSummaryViewer
+                          redraftResult={redraftResult}
+                          contractName={analysisData?.summary || 'Vertrag'}
+                        />
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* No Redraft Yet State */}
+                {!redraftResult && !isRedrafting && (
+                  <div className="p-8 text-center">
+                    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Wand2 className="w-8 h-8 text-blue-600" />
+                    </div>
+                    <h4 className="text-lg font-semibold text-gray-900 mb-2">Automatische Vertragsoptimierung</h4>
+                    <p className="text-gray-600 mb-4">
+                      Starten Sie die Auto-Neufassung, um eine optimierte Vertragsversion zu generieren und auf erweiterte Features zuzugreifen:
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
+                      <div className="flex items-center gap-2">
+                        <FileText className="w-4 h-4 text-blue-600" />
+                        <span>Diff-Ansicht</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Download className="w-4 h-4 text-green-600" />
+                        <span>Clean & Redline PDFs</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Mail className="w-4 h-4 text-purple-600" />
+                        <span>3-Ton Pitches</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <BarChart3 className="w-4 h-4 text-orange-600" />
+                        <span>Executive Summary</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </motion.div>
             )}
           </AnimatePresence>

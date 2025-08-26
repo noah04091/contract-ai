@@ -7,6 +7,10 @@ const pdfParse = require("pdf-parse");
 const PDFDocument = require("pdfkit");
 const { ObjectId } = require("mongodb");
 
+// 🎯 PREMIUM: Import new utilities
+const ContractRedrafting = require("../utils/contractRedrafting");
+const AdvancedPDFGenerator = require("../utils/pdfGenerator");
+
 // ✅ ORIGINAL: Express Router Export
 const router = express.Router();
 
@@ -1591,5 +1595,407 @@ router.get("/statistics", async (req, res) => {
     });
   }
 });
+
+// ==========================================
+// 🎯 PREMIUM FEATURES - Auto-Redrafting & Advanced Exports
+// ==========================================
+
+/**
+ * 🎯 PREMIUM: Auto-Redrafting with Partial Acceptance
+ * POST /:contractId/redraft
+ */
+router.post("/:contractId/redraft", async (req, res) => {
+  const requestId = `redraft_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  console.log(`🔄 [${requestId}] Auto-redrafting contract:`, {
+    contractId: req.params.contractId,
+    userId: req.user?.userId
+  });
+
+  try {
+    const { contractId } = req.params;
+    const { 
+      optimizations = [], 
+      acceptanceConfig = { defaultAcceptAll: true },
+      options = {}
+    } = req.body;
+
+    // Validate inputs
+    if (!contractId || !ObjectId.isValid(contractId)) {
+      return res.status(400).json({
+        success: false,
+        message: "❌ Ungültige Contract ID",
+        error: "INVALID_CONTRACT_ID"
+      });
+    }
+
+    if (!optimizations || !Array.isArray(optimizations)) {
+      return res.status(400).json({
+        success: false,
+        message: "❌ Keine Optimierungen bereitgestellt",
+        error: "NO_OPTIMIZATIONS"
+      });
+    }
+
+    // Load contract
+    const contractResult = await getContractData(contractId, req);
+    const originalText = contractResult.data.content;
+
+    if (!originalText || originalText.length < 100) {
+      return res.status(400).json({
+        success: false,
+        message: "❌ Vertrag enthält keinen ausreichenden Text",
+        error: "INSUFFICIENT_TEXT"
+      });
+    }
+
+    // Generate auto-redrafted version
+    const redraftResult = ContractRedrafting.generateOptimizedVersion(
+      originalText, 
+      optimizations, 
+      acceptanceConfig
+    );
+
+    if (!redraftResult.success) {
+      return res.status(500).json({
+        success: false,
+        message: "❌ Auto-Redrafting fehlgeschlagen",
+        error: "REDRAFTING_FAILED",
+        details: redraftResult.error
+      });
+    }
+
+    // Generate Executive Summary
+    const executiveSummary = ContractRedrafting.generateExecutiveSummary(
+      redraftResult,
+      {
+        name: contractResult.data.name,
+        type: contractResult.data.contractType,
+        jurisdiction: 'Deutschland'
+      }
+    );
+
+    // Save redrafted version (optional)
+    if (options.saveRedraft) {
+      try {
+        await req.db.collection('contracts').insertOne({
+          userId: req.user.userId,
+          name: contractResult.data.name + ' (Optimiert)',
+          content: redraftResult.optimizedText,
+          originalContractId: contractId,
+          redraftMetadata: redraftResult.metadata,
+          executiveSummary: executiveSummary,
+          createdAt: new Date(),
+          isRedraft: true
+        });
+      } catch (saveError) {
+        console.warn(`⚠️ [${requestId}] Could not save redraft:`, saveError.message);
+      }
+    }
+
+    console.log(`✅ [${requestId}] Redrafting completed:`, {
+      appliedChanges: redraftResult.appliedChanges.length,
+      skippedChanges: redraftResult.skippedChanges.length,
+      successRate: redraftResult.stats.successRate
+    });
+
+    res.json({
+      success: true,
+      requestId,
+      originalText: originalText,
+      optimizedText: redraftResult.optimizedText,
+      changeLog: redraftResult.changeLog,
+      appliedChanges: redraftResult.appliedChanges,
+      skippedChanges: redraftResult.skippedChanges,
+      diffView: redraftResult.diffView,
+      stats: redraftResult.stats,
+      executiveSummary: executiveSummary,
+      metadata: redraftResult.metadata
+    });
+
+  } catch (error) {
+    console.error(`❌ [${requestId}] Redrafting error:`, error);
+    res.status(500).json({
+      success: false,
+      message: "Fehler beim Auto-Redrafting",
+      error: "REDRAFTING_ERROR",
+      requestId: requestId,
+      details: error.message
+    });
+  }
+});
+
+/**
+ * 🎯 PREMIUM: Generate Clean PDF (Final Version)
+ * POST /:contractId/export/clean-pdf
+ */
+router.post("/:contractId/export/clean-pdf", async (req, res) => {
+  const requestId = `clean_pdf_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  
+  try {
+    const { contractId } = req.params;
+    const { optimizedText, metadata = {} } = req.body;
+
+    if (!optimizedText) {
+      return res.status(400).json({
+        success: false,
+        message: "❌ Optimierter Text fehlt",
+        error: "MISSING_OPTIMIZED_TEXT"
+      });
+    }
+
+    // Generate Clean PDF
+    const pdfBuffer = await AdvancedPDFGenerator.generateCleanPDF(
+      optimizedText,
+      {
+        title: metadata.title || 'Optimierter Vertrag',
+        type: metadata.type || 'Sonstiges',
+        jurisdiction: metadata.jurisdiction || 'Deutschland',
+        version: metadata.version || '1.0',
+        documentId: requestId
+      }
+    );
+
+    // Set headers for PDF download
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="vertrag-optimiert-${Date.now()}.pdf"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+    res.setHeader('X-Request-ID', requestId);
+
+    console.log(`✅ [${requestId}] Clean PDF generated: ${pdfBuffer.length} bytes`);
+    res.send(pdfBuffer);
+
+  } catch (error) {
+    console.error(`❌ [${requestId}] Clean PDF error:`, error);
+    res.status(500).json({
+      success: false,
+      message: "Fehler beim Clean PDF Export",
+      error: "CLEAN_PDF_ERROR",
+      requestId: requestId
+    });
+  }
+});
+
+/**
+ * 🎯 PREMIUM: Generate Redline PDF (Changes Marked)
+ * POST /:contractId/export/redline-pdf
+ */
+router.post("/:contractId/export/redline-pdf", async (req, res) => {
+  const requestId = `redline_pdf_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  
+  try {
+    const { contractId } = req.params;
+    const { originalText, optimizedText, changes = [], metadata = {} } = req.body;
+
+    if (!originalText || !optimizedText) {
+      return res.status(400).json({
+        success: false,
+        message: "❌ Original- und optimierter Text erforderlich",
+        error: "MISSING_TEXT"
+      });
+    }
+
+    // Generate Redline PDF
+    const pdfBuffer = await AdvancedPDFGenerator.generateRedlinePDF(
+      originalText,
+      optimizedText,
+      changes,
+      {
+        title: metadata.title || 'Vertrag',
+        type: metadata.type || 'Sonstiges',
+        jurisdiction: metadata.jurisdiction || 'Deutschland',
+        version: metadata.version || '1.0-REDLINE',
+        documentId: requestId
+      }
+    );
+
+    // Set headers for PDF download
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="vertrag-redline-${Date.now()}.pdf"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+    res.setHeader('X-Request-ID', requestId);
+
+    console.log(`✅ [${requestId}] Redline PDF generated: ${pdfBuffer.length} bytes`);
+    res.send(pdfBuffer);
+
+  } catch (error) {
+    console.error(`❌ [${requestId}] Redline PDF error:`, error);
+    res.status(500).json({
+      success: false,
+      message: "Fehler beim Redline PDF Export",
+      error: "REDLINE_PDF_ERROR",
+      requestId: requestId
+    });
+  }
+});
+
+/**
+ * 🎯 PREMIUM: Generate Executive Summary PDF
+ * POST /:contractId/export/executive-summary
+ */
+router.post("/:contractId/export/executive-summary", async (req, res) => {
+  const requestId = `exec_summary_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  
+  try {
+    const { contractId } = req.params;
+    const { summaryData, metadata = {} } = req.body;
+
+    if (!summaryData) {
+      return res.status(400).json({
+        success: false,
+        message: "❌ Executive Summary Daten fehlen",
+        error: "MISSING_SUMMARY_DATA"
+      });
+    }
+
+    // Generate Executive Summary PDF
+    const pdfBuffer = await AdvancedPDFGenerator.generateExecutiveSummaryPDF(
+      summaryData,
+      {
+        title: 'Executive Summary - ' + (metadata.title || 'Vertragsanalyse'),
+        documentId: requestId
+      }
+    );
+
+    // Set headers for PDF download
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="executive-summary-${Date.now()}.pdf"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+    res.setHeader('X-Request-ID', requestId);
+
+    console.log(`✅ [${requestId}] Executive Summary PDF generated: ${pdfBuffer.length} bytes`);
+    res.send(pdfBuffer);
+
+  } catch (error) {
+    console.error(`❌ [${requestId}] Executive Summary PDF error:`, error);
+    res.status(500).json({
+      success: false,
+      message: "Fehler beim Executive Summary Export",
+      error: "EXECUTIVE_PDF_ERROR",
+      requestId: requestId
+    });
+  }
+});
+
+/**
+ * 🎯 PREMIUM: Generate Three-Tone Pitches
+ * POST /:contractId/pitches
+ */
+router.post("/:contractId/pitches", async (req, res) => {
+  const requestId = `pitches_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  
+  try {
+    const { contractId } = req.params;
+    const { changes = [], metadata = {} } = req.body;
+
+    if (!changes.length) {
+      return res.status(400).json({
+        success: false,
+        message: "❌ Keine Änderungen für Pitches verfügbar",
+        error: "NO_CHANGES"
+      });
+    }
+
+    // Generate pitches for each change in three tones
+    const pitches = changes.map(change => ({
+      changeId: change.id,
+      category: change.category,
+      summary: change.original?.substring(0, 100) || 'Optimierung',
+      tones: {
+        friendly: generateFriendlyPitch(change),
+        neutral: generateNeutralPitch(change),
+        firm: generateFirmPitch(change)
+      }
+    }));
+
+    console.log(`✅ [${requestId}] Generated pitches for ${pitches.length} changes`);
+
+    res.json({
+      success: true,
+      requestId,
+      pitches: pitches,
+      metadata: {
+        totalChanges: changes.length,
+        contractName: metadata.title || 'Vertrag',
+        generatedAt: new Date().toISOString()
+      }
+    });
+
+  } catch (error) {
+    console.error(`❌ [${requestId}] Pitches generation error:`, error);
+    res.status(500).json({
+      success: false,
+      message: "Fehler bei der Pitch-Generierung",
+      error: "PITCHES_ERROR",
+      requestId: requestId
+    });
+  }
+});
+
+// Helper functions for pitch generation
+function generateFriendlyPitch(change) {
+  const categoryNames = {
+    'termination': 'Kündigungsregelungen',
+    'liability': 'Haftungsbestimmungen',
+    'payment': 'Zahlungskonditionen',
+    'data_protection': 'Datenschutzbestimmungen',
+    'general': 'allgemeine Verbesserungen'
+  };
+
+  const categoryName = categoryNames[change.category] || 'Vertragsoptimierungen';
+
+  return `Liebe Kolleginnen und Kollegen,
+
+wir haben eine interessante Optimierungsmöglichkeit bei den ${categoryName} entdeckt. 
+
+Die aktuelle Formulierung könnte noch präziser gestaltet werden, um beiden Seiten mehr Klarheit zu verschaffen. Unsere KI-Analyse zeigt, dass eine kleine Anpassung das Risiko für Missverständnisse deutlich reduzieren würde.
+
+Möchten wir diese Verbesserung gemeinsam besprechen? Ich bin zuversichtlich, dass wir eine Lösung finden, die für alle Beteiligten vorteilhaft ist.
+
+Mit freundlichen Grüßen`;
+}
+
+function generateNeutralPitch(change) {
+  const categoryNames = {
+    'termination': 'Kündigungsbestimmungen',
+    'liability': 'Haftungsbeschränkungen',
+    'payment': 'Zahlungsmodalitäten',
+    'data_protection': 'Datenschutzklauseln',
+    'general': 'Vertragsbestimmungen'
+  };
+
+  const categoryName = categoryNames[change.category] || 'Vertragsklauseln';
+
+  return `Sehr geehrte Damen und Herren,
+
+basierend auf unserer rechtlichen Analyse empfehlen wir eine Anpassung der ${categoryName}.
+
+Die vorgeschlagene Änderung dient der Rechtssicherheit und entspricht der aktuellen Rechtsprechung. Eine Überarbeitung würde das Risiko rechtlicher Auseinandersetzungen minimieren.
+
+Wir sind bereit, diese Optimierung im Detail zu erläutern und freuen uns auf Ihre Rückmeldung.
+
+Mit freundlichen Grüßen`;
+}
+
+function generateFirmPitch(change) {
+  const categoryNames = {
+    'termination': 'Kündigungsklauseln',
+    'liability': 'Haftungsregelungen',
+    'payment': 'Zahlungsbedingungen',
+    'data_protection': 'Datenschutzbestimmungen',
+    'general': 'Vertragsbestimmungen'
+  };
+
+  const categoryName = categoryNames[change.category] || 'Vertragsklauseln';
+
+  return `Sehr geehrte Vertragspartei,
+
+unsere rechtliche Prüfung hat bei den ${categoryName} erhebliche Risiken identifiziert, die dringend korrigiert werden müssen.
+
+Die aktuelle Formulierung entspricht nicht den rechtlichen Standards und könnte im Streitfall zu erheblichen Nachteilen führen. Eine Anpassung ist aus rechtlicher Sicht zwingend erforderlich.
+
+Wir erwarten eine zeitnahe Umsetzung dieser kritischen Optimierung, um rechtliche Risiken zu vermeiden.
+
+Mit freundlichen Grüßen`;
+}
 
 module.exports = router;
