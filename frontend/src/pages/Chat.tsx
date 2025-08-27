@@ -206,7 +206,7 @@ export default function Chat() {
       text: "👋 Willkommen beim Contract AI-Assistenten! Lade einen Vertrag hoch oder stelle allgemeine Fragen zu rechtlichen Themen.",
       timestamp: getCurrentTime()
     }]);
-  }, []);
+  }, [generateId, getCurrentTime]);
 
   // Cleanup AbortControllers bei Component Unmount
   useEffect(() => {
@@ -446,7 +446,7 @@ export default function Chat() {
           title: 'Contract AI Chat',
           text: text,
         });
-      } catch (err) {
+      } catch {
         // Fallback zu copy
         copyMessage('', text);
       }
