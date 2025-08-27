@@ -7,7 +7,7 @@ const multer = require("multer");
 const fs = require("fs");
 const path = require("path");
 const { MongoClient, ObjectId } = require("mongodb");
-const saveContract = require("../services/saveContract"); // 🆕 Import
+const { saveContract } = require("../services/saveContract"); // 🆕 Destructured Import
 
 const router = express.Router();
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
