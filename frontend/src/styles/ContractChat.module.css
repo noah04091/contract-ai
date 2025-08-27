@@ -33,6 +33,59 @@
   margin: 0;
 }
 
+.premiumTooltip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: help;
+}
+
+.premiumIcon {
+  color: #ffc107;
+  font-size: 16px;
+  transition: transform 0.2s ease;
+}
+
+.premiumTooltip:hover .premiumIcon {
+  transform: scale(1.1);
+}
+
+.tooltipContent {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background-color: #1c1c1e;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: all 0.2s ease;
+  margin-top: 8px;
+}
+
+.tooltipContent::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  right: 12px;
+  width: 8px;
+  height: 8px;
+  background-color: #1c1c1e;
+  transform: rotate(45deg);
+}
+
+.premiumTooltip:hover .tooltipContent {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
 .premiumBadge {
   display: flex;
   align-items: center;
@@ -42,12 +95,6 @@
   font-size: 12px;
   color: #8e8e93;
   font-weight: 500;
-}
-
-.premiumIcon {
-  color: #ffc107;
-  margin-right: 6px;
-  font-size: 14px;
 }
 
 .premiumNotice {
@@ -235,20 +282,22 @@
   color: #333333 !important;
 }
 
-/* Restlicher CSS-Code unverändert */
+/* Enhanced typing indicator with smoother animation */
 .typing .typingIndicator {
   display: flex;
   align-items: center;
+  padding: 4px 0;
 }
 
 .typing .typingIndicator span {
   width: 8px;
   height: 8px;
-  background-color: #8e8e93;
+  background-color: #5E5CE6;
   border-radius: 50%;
   margin-right: 4px;
-  animation: typingAnimation 1.4s infinite ease-in-out;
-  opacity: 0.6;
+  animation: typingPulse 1.6s infinite ease-in-out;
+  opacity: 0.4;
+  transform: scale(0.8);
 }
 
 .typing .typingIndicator span:nth-child(1) {
@@ -256,17 +305,23 @@
 }
 
 .typing .typingIndicator span:nth-child(2) {
-  animation-delay: 0.2s;
+  animation-delay: 0.3s;
 }
 
 .typing .typingIndicator span:nth-child(3) {
-  animation-delay: 0.4s;
+  animation-delay: 0.6s;
   margin-right: 0;
 }
 
-@keyframes typingAnimation {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-4px); }
+@keyframes typingPulse {
+  0%, 60%, 100% { 
+    opacity: 0.4;
+    transform: scale(0.8) translateY(0);
+  }
+  30% { 
+    opacity: 1;
+    transform: scale(1.1) translateY(-3px);
+  }
 }
 
 .uploadArea {
@@ -436,6 +491,37 @@
   cursor: not-allowed;
 }
 
+.suggestionsButton {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background-color: #f2f2f7;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-right: 4px;
+}
+
+.suggestionsButton:hover {
+  background-color: #e5e5ea;
+  transform: scale(1.05);
+}
+
+.suggestionsButton:disabled {
+  background-color: #f2f2f7;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.suggestionsButton svg {
+  width: 18px;
+  height: 18px;
+  color: #007AFF;
+}
+
 .sendButton {
   width: 38px;
   height: 38px;
@@ -584,26 +670,55 @@
   background-color: #e5e5ea;
 }
 
-/* Mobile-Version: Ausklappbare Vorschläge */
+/* Mobile-Version: Bottom Sheet Style */
 .suggestedQuestionsCollapsible {
-  border-top: 1px solid #e5e5ea;
-  margin-top: auto;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: white;
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+  transform: translateY(100%);
+  transition: transform 0.3s ease-out;
+  z-index: 1000;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.suggestedQuestionsCollapsible.expanded {
+  transform: translateY(0);
 }
 
 .suggestionsToggle {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
+  justify-content: center;
+  padding: 16px;
   cursor: pointer;
   color: #007AFF;
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 16px;
+  font-weight: 600;
+  border-bottom: 1px solid #f2f2f7;
+  position: relative;
+}
+
+.suggestionsToggle::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 36px;
+  height: 4px;
+  background-color: #d1d1d6;
+  border-radius: 2px;
 }
 
 .suggestionsToggle svg {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
+  margin-left: 8px;
   transition: transform 0.2s;
 }
 
@@ -611,33 +726,51 @@
   transform: rotate(180deg);
 }
 
-.suggestedQuestionsCollapsible.expanded {
-  border-top: 1px solid #e5e5ea;
-  border-bottom: 1px solid #e5e5ea;
-  background-color: #f9f9fb;
-}
-
 .suggestionsGrid {
   display: flex;
   flex-direction: column;
-  padding: 0 16px 16px;
-  gap: 8px;
+  padding: 16px;
+  gap: 12px;
 }
 
 .suggestionButton {
-  background-color: #fff;
-  border: 1px solid #e5e5ea;
-  border-radius: 10px;
-  padding: 10px 16px;
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  padding: 16px;
   text-align: left;
-  font-size: 13px;
-  color: #007AFF;
+  font-size: 14px;
+  color: #1c1c1e;
   cursor: pointer;
   transition: all 0.2s;
+  font-weight: 500;
+  line-height: 1.4;
 }
 
 .suggestionButton:hover, .suggestionButton:active {
-  background-color: #f2f2f7;
+  background-color: #007AFF;
+  color: white;
+  border-color: #007AFF;
+  transform: translateY(-1px);
+}
+
+/* Backdrop for mobile bottom sheet */
+.bottomSheetBackdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.3);
+  z-index: 999;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.bottomSheetBackdrop.visible {
+  opacity: 1;
+  visibility: visible;
 }
 
 .clearChatButton {
@@ -668,6 +801,299 @@
   color: #8e8e93;
   text-align: center;
   margin: 8px 0 0;
+}
+
+/* Keyboard Shortcuts Hint */
+.keyboardHints {
+  font-size: 10px;
+  color: #a1a1a6;
+  text-align: center;
+  margin: 4px 0;
+  line-height: 1.3;
+}
+
+.keyboardHints kbd {
+  background: #f2f2f7;
+  border: 1px solid #d1d1d6;
+  border-radius: 3px;
+  padding: 1px 4px;
+  font-size: 9px;
+  font-family: monospace;
+  margin: 0 1px;
+}
+
+/* Dark Mode Toggle Button */
+.darkModeToggle {
+  background: none;
+  border: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 17px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #8e8e93;
+  transition: all 0.2s;
+  margin-left: 8px;
+}
+
+.darkModeToggle:hover {
+  background-color: #e5e5ea;
+  transform: scale(1.05);
+}
+
+.darkModeToggle svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Dark Mode Styles */
+.container.darkMode {
+  background-color: #1c1c1e;
+  color: #f2f2f7;
+}
+
+.darkMode .header {
+  background-color: #2c2c2e;
+  border-bottom-color: #3a3a3c;
+}
+
+.darkMode .header h2 {
+  color: #f2f2f7;
+}
+
+.darkMode .chatMessages {
+  background-color: #1c1c1e;
+}
+
+.darkMode .messageBody {
+  background-color: #2c2c2e;
+}
+
+.darkMode .userMessage .messageBody {
+  background-color: #0a84ff;
+}
+
+.darkMode .aiMessage .messageBody {
+  background-color: #48484a;
+}
+
+.darkMode .systemMessage .messageBody {
+  background-color: #3a3a3c;
+  border-color: rgba(255, 149, 0, 0.3);
+}
+
+.darkMode .messageBody p,
+.darkMode .messageHeader,
+.darkMode .messageSender,
+.darkMode .messageTime {
+  color: #f2f2f7 !important;
+}
+
+.darkMode .chatInput {
+  background-color: #2c2c2e;
+}
+
+.darkMode .chatInput input {
+  color: #f2f2f7;
+}
+
+.darkMode .chatInput input::placeholder {
+  color: #8e8e93;
+}
+
+.darkMode .chatInputContainer {
+  background-color: #1c1c1e;
+  border-top-color: #3a3a3c;
+}
+
+.darkMode .quickPrompts {
+  background-color: #1c1c1e;
+}
+
+.darkMode .exportAllButton {
+  background-color: #2c2c2e;
+  border-color: #3a3a3c;
+  color: #0a84ff;
+}
+
+.darkMode .exportAllButton:hover {
+  background-color: #3a3a3c;
+}
+
+.darkMode .actionButton {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #8e8e93;
+}
+
+.darkMode .actionButton:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #f2f2f7;
+}
+
+.darkMode .darkModeToggle {
+  color: #f2f2f7;
+}
+
+.darkMode .darkModeToggle:hover {
+  background-color: #3a3a3c;
+}
+
+/* Search Bar */
+.searchBar {
+  padding: 8px 16px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e5e5ea;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.searchInput {
+  flex: 1;
+  border: 1px solid #d1d1d6;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 13px;
+  background: white;
+}
+
+.searchResults {
+  font-size: 11px;
+  color: #8e8e93;
+}
+
+.darkMode .searchBar {
+  background: #2c2c2e;
+  border-bottom-color: #3a3a3c;
+}
+
+.darkMode .searchInput {
+  background: #1c1c1e;
+  border-color: #3a3a3c;
+  color: #f2f2f7;
+}
+
+/* Quick-Prompts Feature */
+.quickPrompts {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.quickPrompts::-webkit-scrollbar {
+  display: none;
+}
+
+.quickPromptButton {
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #007AFF 0%, #5856d6 100%);
+  color: white;
+  border: none;
+  border-radius: 16px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.2);
+}
+
+.quickPromptButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+}
+
+.quickPromptButton:active {
+  transform: translateY(0);
+}
+
+.quickPromptButton:disabled {
+  background: #d1d1d6;
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.quickPromptButton.contract {
+  background: linear-gradient(135deg, #34c759 0%, #30d158 100%);
+  box-shadow: 0 2px 8px rgba(52, 199, 89, 0.2);
+}
+
+.quickPromptButton.contract:hover {
+  box-shadow: 0 4px 12px rgba(52, 199, 89, 0.3);
+}
+
+/* Message Export Buttons */
+.messageActions {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.message:hover .messageActions {
+  opacity: 1;
+}
+
+.actionButton {
+  background: rgba(0, 0, 0, 0.05);
+  border: none;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 11px;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.actionButton:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: #333;
+}
+
+.actionButton svg {
+  width: 12px;
+  height: 12px;
+}
+
+.actionButton.copied {
+  background: rgba(52, 199, 89, 0.1);
+  color: #34c759;
+}
+
+.exportAllButton {
+  background: #f2f2f7;
+  border: 1px solid #e5e5ea;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #007AFF;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 16px;
+}
+
+.exportAllButton:hover {
+  background: #e5e5ea;
+}
+
+.exportAllButton svg {
+  width: 14px;
+  height: 14px;
 }
 
 /* VERBESSERT: Responsive Design für mobile Geräte */
