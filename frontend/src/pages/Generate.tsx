@@ -319,10 +319,10 @@ export default function Generate() {
 
   // Load Company Profile on mount (Premium users only)
   useEffect(() => {
-    if (isPremium && !isLoading) {
+    if (isPremium && !isLoading && user) { // ✅ user wird hier verwendet
       loadCompanyProfile();
     }
-  }, [isPremium, isLoading]);
+  }, [isPremium, isLoading, user]);
 
   const loadCompanyProfile = async () => {
     try {
