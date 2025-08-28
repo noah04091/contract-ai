@@ -379,6 +379,15 @@ const connectDB = async () => {
       console.error("❌ Fehler beim Laden der Cancellations-Routen:", err);
     }
 
+    // ✅ 6.1 COMPANY PROFILE ROUTES - NEU HINZUGEFÜGT!
+    try {
+      const companyProfileRoutes = require("./routes/companyProfile");
+      app.use("/api/company-profile", verifyToken, companyProfileRoutes);
+      console.log("✅ Company-Profile-Routen geladen unter /api/company-profile");
+    } catch (err) {
+      console.error("❌ Fehler beim Laden der Company-Profile-Routen:", err);
+    }
+
     // ✅ 7. KI ANALYSIS & OPTIMIZATION - MIT /api PREFIX
     try {
       app.use("/api/analyze", verifyToken, checkSubscription, require("./routes/analyze"));
@@ -901,7 +910,8 @@ const connectDB = async () => {
           betterContracts: "/api/better-contracts",
           migrationRoutes: "/api/contracts/migrate-legacy & migration-status",
           calendar: "/api/calendar/* (NEW!)",
-          cancellations: "/api/cancellations/* (NEW!)"
+          cancellations: "/api/cancellations/* (NEW!)",
+          companyProfile: "/api/company-profile/* (NEW!)"
         },
         warning: nonApiRoutes.length > 0 ? "⚠️ Es gibt noch non-/api Routen!" : "✅ Alle Routen unter /api!",
         timestamp: new Date().toISOString()

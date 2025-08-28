@@ -352,6 +352,140 @@
   margin: 0 auto;
 }
 
+/* Company Profile Toggle */
+.companyProfileToggle {
+  background: rgba(248, 250, 252, 0.5);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 14px;
+  padding: 1.25rem;
+  margin-bottom: 2rem;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.toggleHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.toggleInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.toggleInfo svg {
+  color: #0a84ff;
+  flex-shrink: 0;
+}
+
+.toggleInfo h4 {
+  margin: 0 0 0.25rem 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1d1d1f;
+}
+
+.toggleInfo p {
+  margin: 0;
+  font-size: 14px;
+  color: #86868b;
+}
+
+/* Toggle Switch */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.1);
+  transition: all 0.3s cubic-bezier(0.28, 0.44, 0.49, 1);
+  border-radius: 12px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 2px;
+  bottom: 2px;
+  background-color: white;
+  transition: all 0.3s cubic-bezier(0.28, 0.44, 0.49, 1);
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+input:checked + .slider {
+  background-color: #0a84ff;
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.15);
+}
+
+input:checked + .slider:before {
+  transform: translateX(20px);
+}
+
+/* Profile Preview */
+.profilePreview {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.profilePreview img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  border-radius: 6px;
+  background: white;
+  padding: 0.25rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.profileInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.profileInfo strong {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1d1d1f;
+}
+
+.profileInfo span {
+  font-size: 12px;
+  color: #86868b;
+}
+
 .formGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -406,6 +540,78 @@
 .formGroup textarea {
   min-height: 120px;
   line-height: 1.47059;
+}
+
+.formGroup select {
+  cursor: pointer;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23666' viewBox='0 0 16 16'><path d='M8 11.5l-4-4h8l-4 4z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+.formGroup select.placeholder {
+  color: #98989d;
+}
+
+.formGroup select:focus {
+  color: #1d1d1f;
+}
+
+/* Field Groups */
+.fieldGroup {
+  margin-bottom: 2rem;
+}
+
+.groupHeader {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin: 0 0 1rem 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.groupHeader::before {
+  content: '';
+  width: 3px;
+  height: 20px;
+  background: linear-gradient(135deg, #0a84ff 0%, #07c 100%);
+  border-radius: 2px;
+}
+
+.groupFields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.25rem;
+}
+
+/* Help Text */
+.helpText {
+  display: block;
+  font-size: 12px;
+  color: #86868b;
+  font-weight: 400;
+  margin-top: 0.25rem;
+  font-style: italic;
+}
+
+/* Field Errors */
+.fieldError {
+  display: block;
+  font-size: 12px;
+  color: #ff3b30;
+  margin-top: 0.5rem;
+  background: rgba(255, 59, 48, 0.05);
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  border-left: 3px solid #ff3b30;
 }
 
 /* Generate Button */

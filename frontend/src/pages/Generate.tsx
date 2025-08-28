@@ -19,17 +19,51 @@ interface FormDataType {
   [key: string]: string | undefined;
 }
 
+interface CompanyProfile {
+  _id?: string;
+  companyName: string;
+  legalForm: string;
+  street: string;
+  postalCode: string;
+  city: string;
+  country: string;
+  vatId: string;
+  tradeRegister: string;
+  contactEmail: string;
+  contactPhone: string;
+  bankName: string;
+  iban: string;
+  bic: string;
+  logoUrl?: string;
+  logoKey?: string;
+}
+
 interface ContractType {
   id: string;
   name: string;
   description: string;
   icon: string;
+  // Erweiterte Felder - bestehende bleiben unverändert
+  jurisdiction?: string; // Rechtsprechung (DE, AT, CH)
+  category?: string; // Kategorie für Gruppierung
+  estimatedDuration?: string; // Geschätzte Bearbeitungszeit
   fields: Array<{
     name: string;
     label: string;
-    type: 'text' | 'textarea' | 'date' | 'number' | 'email';
+    type: 'text' | 'textarea' | 'date' | 'number' | 'email' | 'phone' | 'iban' | 'vat' | 'select';
     placeholder: string;
     required: boolean;
+    // Neue Validierungsfelder
+    validation?: {
+      pattern?: string; // Regex Pattern
+      min?: number; // Minimum (für Zahlen/Länge)
+      max?: number; // Maximum (für Zahlen/Länge)
+      message?: string; // Custom Error Message
+    };
+    options?: string[]; // Für Select-Felder
+    group?: string; // Feldgruppierung
+    helpText?: string; // Hilftext
+    dependsOn?: string; // Abhängigkeit von anderem Feld
   }>;
 }
 
@@ -44,14 +78,122 @@ const CONTRACT_TYPES: ContractType[] = [
     name: 'Freelancer-Vertrag',
     description: 'Für freiberufliche Projekttätigkeiten',
     icon: '💼',
+    jurisdiction: 'DE',
+    category: 'Dienstleistung',
+    estimatedDuration: '5-8 Minuten',
     fields: [
+      // ✅ BESTEHENDE FELDER - unverändert beibehalten
       { name: 'nameClient', label: 'Auftraggeber', type: 'text', placeholder: 'Firmenname oder Privatperson', required: true },
       { name: 'nameFreelancer', label: 'Freelancer', type: 'text', placeholder: 'Ihr Name', required: true },
       { name: 'description', label: 'Leistungsbeschreibung', type: 'textarea', placeholder: 'Detaillierte Beschreibung der zu erbringenden Leistung...', required: true },
       { name: 'timeframe', label: 'Projektdauer', type: 'text', placeholder: 'z.B. 3 Monate oder bis 31.12.2024', required: true },
       { name: 'payment', label: 'Vergütung', type: 'text', placeholder: 'z.B. 5.000€ oder 80€/Stunde', required: true },
       { name: 'rights', label: 'Nutzungsrechte', type: 'text', placeholder: 'Wer erhält welche Rechte an den Ergebnissen?', required: true },
-      { name: 'terminationClause', label: 'Kündigungsfrist', type: 'text', placeholder: 'z.B. 14 Tage zum Monatsende', required: true }
+      { name: 'terminationClause', label: 'Kündigungsfrist', type: 'text', placeholder: 'z.B. 14 Tage zum Monatsende', required: true },
+      
+      // ✅ NEUE ERWEITERTE FELDER - rechtssicher und detailliert
+      { 
+        name: 'clientAddress', 
+        label: 'Adresse Auftraggeber', 
+        type: 'textarea', 
+        placeholder: 'Vollständige Geschäftsadresse des Auftraggebers', 
+        required: true,
+        group: 'Vertragsparteien',
+        helpText: 'Für rechtsgültige Verträge erforderlich'
+      },
+      { 
+        name: 'freelancerAddress', 
+        label: 'Adresse Freelancer', 
+        type: 'textarea', 
+        placeholder: 'Ihre vollständige Geschäftsadresse', 
+        required: true,
+        group: 'Vertragsparteien'
+      },
+      { 
+        name: 'freelancerTaxId', 
+        label: 'Steuer-ID Freelancer', 
+        type: 'vat', 
+        placeholder: 'z.B. DE123456789 oder Steuer-ID', 
+        required: false,
+        group: 'Steuerliche Angaben',
+        validation: {
+          pattern: '^(DE[0-9]{9}|[0-9]{11})$',
+          message: 'Bitte gültige USt-IdNr. (DE123456789) oder Steuer-ID eingeben'
+        }
+      },
+      { 
+        name: 'paymentTerms', 
+        label: 'Zahlungsbedingungen', 
+        type: 'select', 
+        placeholder: 'Wann wird die Rechnung fällig?', 
+        required: true,
+        group: 'Vergütung',
+        options: ['Sofort nach Erhalt', '7 Tage netto', '14 Tage netto', '30 Tage netto', 'Bei Projektabschluss']
+      },
+      { 
+        name: 'invoiceInterval', 
+        label: 'Rechnungsstellung', 
+        type: 'select', 
+        placeholder: 'Wie oft wird abgerechnet?', 
+        required: true,
+        group: 'Vergütung',
+        options: ['Einmalig bei Fertigstellung', 'Monatlich', 'Nach Meilensteine', 'Stunden-basiert']
+      },
+      { 
+        name: 'workLocation', 
+        label: 'Arbeitsort', 
+        type: 'select', 
+        placeholder: 'Wo wird die Leistung erbracht?', 
+        required: true,
+        group: 'Arbeitsmodalitäten',
+        options: ['Remote/Homeoffice', 'Beim Auftraggeber vor Ort', 'Eigene Räumlichkeiten', 'Flexibel nach Absprache']
+      },
+      { 
+        name: 'ipOwnership', 
+        label: 'Eigentum an Arbeitsergebnissen', 
+        type: 'select', 
+        placeholder: 'Wem gehören die Ergebnisse?', 
+        required: true,
+        group: 'Rechte & Pflichten',
+        options: ['Vollständig an Auftraggeber', 'Gemeinsame Nutzung', 'Bei Freelancer mit Nutzungsrecht', 'Nach Vereinbarung']
+      },
+      { 
+        name: 'confidentiality', 
+        label: 'Vertraulichkeitsgrad', 
+        type: 'select', 
+        placeholder: 'Wie vertraulich sind die Informationen?', 
+        required: true,
+        group: 'Rechte & Pflichten',
+        options: ['Standard-Vertraulichkeit', 'Erhöhte Vertraulichkeit', 'Streng vertraulich', 'Keine besonderen Anforderungen']
+      },
+      { 
+        name: 'liability', 
+        label: 'Haftungsbegrenzung', 
+        type: 'select', 
+        placeholder: 'Wie soll die Haftung begrenzt werden?', 
+        required: true,
+        group: 'Haftung & Risiko',
+        options: ['Auf Auftragswert begrenzt', 'Auf doppelten Auftragswert begrenzt', 'Nur Vorsatz und grobe Fahrlässigkeit', 'Gesetzliche Haftung']
+      },
+      { 
+        name: 'governingLaw', 
+        label: 'Anwendbares Recht', 
+        type: 'select', 
+        placeholder: 'Welches Recht soll gelten?', 
+        required: true,
+        group: 'Rechtliches',
+        options: ['Deutsches Recht', 'Österreichisches Recht', 'Schweizer Recht'],
+        helpText: 'Bestimmt die Rechtsprechung bei Streitigkeiten'
+      },
+      { 
+        name: 'jurisdiction', 
+        label: 'Gerichtsstand', 
+        type: 'text', 
+        placeholder: 'z.B. Berlin, München, Hamburg', 
+        required: true,
+        group: 'Rechtliches',
+        helpText: 'Zuständiges Gericht bei Rechtsstreitigkeiten'
+      }
     ]
   },
   {
@@ -166,10 +308,91 @@ export default function Generate() {
   const [signatureURL, setSignatureURL] = useState<string | null>(null);
   const [isDrawing, setIsDrawing] = useState<boolean>(false);
   const [showPreview, setShowPreview] = useState<boolean>(false);
+  
+  // Company Profile State
+  const [companyProfile, setCompanyProfile] = useState<CompanyProfile | null>(null);
+  const [useCompanyProfile, setUseCompanyProfile] = useState<boolean>(false);
+  const [profileLoading, setProfileLoading] = useState<boolean>(false);
 
   // Refs
   const contractRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  // Load Company Profile on mount (Premium users only)
+  useEffect(() => {
+    if (isPremium && !isLoading) {
+      loadCompanyProfile();
+    }
+  }, [isPremium, isLoading]);
+
+  const loadCompanyProfile = async () => {
+    try {
+      setProfileLoading(true);
+      const response = await fetch('/api/company-profile/me', {
+        credentials: 'include'
+      });
+
+      const data = await response.json();
+      
+      if (data.success && data.profile) {
+        setCompanyProfile(data.profile);
+        console.log('✅ Firmenprofil geladen:', data.profile.companyName);
+      }
+    } catch (error) {
+      console.error('❌ Fehler beim Laden des Firmenprofils:', error);
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
+  // Auto-fill company data when profile is used
+  const toggleCompanyProfile = (enabled: boolean) => {
+    setUseCompanyProfile(enabled);
+    
+    if (enabled && companyProfile && selectedType) {
+      // Auto-fill company data based on contract type
+      const updatedFormData = { ...formData };
+      
+      switch (selectedType.id) {
+        case 'freelancer':
+          updatedFormData.nameClient = companyProfile.companyName;
+          updatedFormData.clientAddress = `${companyProfile.street}, ${companyProfile.postalCode} ${companyProfile.city}, ${companyProfile.country}`;
+          break;
+        case 'arbeitsvertrag':
+          updatedFormData.employer = `${companyProfile.companyName} (${companyProfile.legalForm})`;
+          break;
+        case 'mietvertrag':
+          updatedFormData.landlord = companyProfile.companyName;
+          break;
+        case 'kaufvertrag':
+          updatedFormData.seller = companyProfile.companyName;
+          break;
+        case 'nda':
+          updatedFormData.partyA = companyProfile.companyName;
+          break;
+      }
+      
+      setFormData(updatedFormData);
+      toast.success('✅ Firmendaten wurden automatisch eingefügt!');
+    }
+  };
+
+  // ✅ NEU: Feld-Validierung
+  const validateField = (field: typeof selectedType.fields[0], value: string): boolean => {
+    if (!field.validation) return true;
+    
+    // Pattern validation (Regex)
+    if (field.validation.pattern) {
+      const regex = new RegExp(field.validation.pattern);
+      if (!regex.test(value)) return false;
+    }
+    
+    // Length validation
+    if (field.validation.min && value.length < field.validation.min) return false;
+    if (field.validation.max && value.length > field.validation.max) return false;
+    
+    return true;
+  };
 
   // 🖊️ DIREKTE CANVAS-FUNKTIONEN (BESTEHENDE LÖSUNG)
   const handleCanvasMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -648,6 +871,43 @@ export default function Generate() {
                     </div>
 
                     <div className={styles.contractForm}>
+                      {/* Company Profile Toggle */}
+                      {isPremium && companyProfile && (
+                        <motion.div 
+                          className={styles.companyProfileToggle}
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          <div className={styles.toggleHeader}>
+                            <div className={styles.toggleInfo}>
+                              <Building size={20} />
+                              <div>
+                                <h4>Firmenprofil verwenden</h4>
+                                <p>Automatisch {companyProfile.companyName} als Vertragspartei einfügen</p>
+                              </div>
+                            </div>
+                            <label className={styles.switch}>
+                              <input
+                                type="checkbox"
+                                checked={useCompanyProfile}
+                                onChange={(e) => toggleCompanyProfile(e.target.checked)}
+                              />
+                              <span className={styles.slider}></span>
+                            </label>
+                          </div>
+                          {companyProfile.logoUrl && useCompanyProfile && (
+                            <div className={styles.profilePreview}>
+                              <img src={companyProfile.logoUrl} alt="Logo" />
+                              <div className={styles.profileInfo}>
+                                <strong>{companyProfile.companyName}</strong>
+                                <span>{companyProfile.street}, {companyProfile.postalCode} {companyProfile.city}</span>
+                              </div>
+                            </div>
+                          )}
+                        </motion.div>
+                      )}
+
                       <div className={styles.formGrid}>
                         {/* Title Field */}
                         <div className={`${styles.formGroup} ${styles.spanning}`}>
@@ -662,33 +922,81 @@ export default function Generate() {
                           />
                         </div>
 
-                        {/* Dynamic Fields */}
-                        {selectedType.fields.map((field) => (
-                          <div key={field.name} className={styles.formGroup}>
-                            <label htmlFor={field.name}>
-                              {field.label} {field.required && '*'}
-                            </label>
-                            {field.type === 'textarea' ? (
-                              <textarea
-                                id={field.name}
-                                rows={4}
-                                value={formData[field.name] || ''}
-                                onChange={(e) => handleInputChange(field.name, e.target.value)}
-                                placeholder={field.placeholder}
-                                disabled={!isPremium}
-                              />
-                            ) : (
-                              <input
-                                id={field.name}
-                                type={field.type}
-                                value={formData[field.name] || ''}
-                                onChange={(e) => handleInputChange(field.name, e.target.value)}
-                                placeholder={field.placeholder}
-                                disabled={!isPremium}
-                              />
-                            )}
-                          </div>
-                        ))}
+                        {/* ✅ ERWEITERTE Dynamic Fields mit Gruppierung */}
+                        {(() => {
+                          // Gruppiere Felder nach "group" Eigenschaft - NEUE FUNKTION
+                          const groupedFields = selectedType.fields.reduce((groups, field) => {
+                            const group = field.group || 'Allgemeine Angaben';
+                            if (!groups[group]) groups[group] = [];
+                            groups[group].push(field);
+                            return groups;
+                          }, {} as Record<string, typeof selectedType.fields>);
+
+                          return Object.entries(groupedFields).map(([groupName, fields]) => (
+                            <div key={groupName} className={styles.fieldGroup}>
+                              {groupName !== 'Allgemeine Angaben' && (
+                                <h4 className={styles.groupHeader}>{groupName}</h4>
+                              )}
+                              <div className={styles.groupFields}>
+                                {fields.map((field) => (
+                                  <div key={field.name} className={styles.formGroup}>
+                                    <label htmlFor={field.name}>
+                                      {field.label} {field.required && '*'}
+                                      {field.helpText && (
+                                        <span className={styles.helpText}>{field.helpText}</span>
+                                      )}
+                                    </label>
+                                    
+                                    {/* ✅ ERWEITERTES Feld-Rendering - unterstützt jetzt mehr Typen */}
+                                    {field.type === 'textarea' ? (
+                                      <textarea
+                                        id={field.name}
+                                        rows={4}
+                                        value={formData[field.name] || ''}
+                                        onChange={(e) => handleInputChange(field.name, e.target.value)}
+                                        placeholder={field.placeholder}
+                                        disabled={!isPremium}
+                                      />
+                                    ) : field.type === 'select' ? (
+                                      // ✅ NEU: Select-Felder
+                                      <select
+                                        id={field.name}
+                                        value={formData[field.name] || ''}
+                                        onChange={(e) => handleInputChange(field.name, e.target.value)}
+                                        disabled={!isPremium}
+                                        className={!formData[field.name] ? styles.placeholder : ''}
+                                      >
+                                        <option value="">{field.placeholder}</option>
+                                        {field.options?.map((option) => (
+                                          <option key={option} value={option}>
+                                            {option}
+                                          </option>
+                                        ))}
+                                      </select>
+                                    ) : (
+                                      // ✅ BESTEHENDE Input-Felder - unverändert + erweitert
+                                      <input
+                                        id={field.name}
+                                        type={field.type === 'vat' || field.type === 'phone' ? 'text' : field.type}
+                                        value={formData[field.name] || ''}
+                                        onChange={(e) => handleInputChange(field.name, e.target.value)}
+                                        placeholder={field.placeholder}
+                                        disabled={!isPremium}
+                                      />
+                                    )}
+                                    
+                                    {/* ✅ NEU: Validierungsfehler anzeigen */}
+                                    {field.validation && formData[field.name] && !validateField(field, formData[field.name] || '') && (
+                                      <span className={styles.fieldError}>
+                                        {field.validation.message || 'Ungültige Eingabe'}
+                                      </span>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ));
+                        })()}
                       </div>
 
                       <motion.button

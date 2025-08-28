@@ -3,6 +3,13 @@ const express = require("express");
 const { OpenAI } = require("openai");
 const verifyToken = require("../middleware/verifyToken");
 const { MongoClient, ObjectId } = require("mongodb");
+// ✅ NEU: Template-System importieren - ERWEITERT das bestehende System
+const { 
+  contractTemplates, 
+  TemplateEngine, 
+  validateRequiredFields, 
+  prepareTemplateData 
+} = require("../utils/contractTemplates");
 
 const router = express.Router();
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -27,13 +34,29 @@ let usersCollection, contractsCollection;
 router.post("/", verifyToken, async (req, res) => {
   console.log("🚀 Generate Route aufgerufen!"); // Debug-Log
   
-  const { type, formData } = req.body;
+  const { type, formData, useCompanyProfile = false } = req.body;
 
   if (!type || !formData || !formData.title) {
     return res.status(400).json({ message: "❌ Fehlende Felder für Vertragserstellung." });
   }
 
   try {
+    // ✅ NEU: Company Profile laden falls gewünscht
+    let companyProfile = null;
+    if (useCompanyProfile) {
+      try {
+        companyProfile = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
+        if (companyProfile) {
+          const profileData = await usersCollection.db().collection("company_profiles").findOne({ 
+            userId: new ObjectId(req.user.userId) 
+          });
+          companyProfile = profileData;
+          console.log("✅ Company Profile geladen für Template-Generation");
+        }
+      } catch (profileError) {
+        console.log("⚠️ Company Profile konnte nicht geladen werden:", profileError.message);
+      }
+    }
     // Warten bis MongoDB verbunden ist
     if (!usersCollection) {
       return res.status(500).json({ message: "❌ Datenbankverbindung nicht bereit." });
@@ -55,8 +78,58 @@ router.post("/", verifyToken, async (req, res) => {
       });
     }
 
-    // 📤 Prompt erstellen
+    // ✅ NEU: Template-basierte Generierung (PHASE 1)
+    let templateResult = null;
+    let contractText = "";
+    
+    // Prüfe ob Template-System verfügbar ist
+    if (contractTemplates[type]) {
+      try {
+        console.log("🎯 Template-basierte Generierung für Typ:", type);
+        
+        // Validiere Pflichtfelder
+        const validationErrors = validateRequiredFields(type, formData);
+        if (validationErrors.length > 0) {
+          console.log("⚠️ Validierungsfehler (nicht kritisch):", validationErrors);
+        }
+        
+        // Template-Daten vorbereiten
+        const templateData = prepareTemplateData(type, formData, companyProfile);
+        console.log("📋 Template-Daten vorbereitet:", Object.keys(templateData));
+        
+        // Template rendern
+        const template = contractTemplates[type].template;
+        templateResult = TemplateEngine.render(template, templateData);
+        
+        console.log("✅ Template erfolgreich gerendert - Länge:", templateResult.length);
+        
+        // Template-Result als Basis verwenden
+        contractText = templateResult;
+        
+      } catch (templateError) {
+        console.error("❌ Template-Generierung fehlgeschlagen:", templateError.message);
+        console.log("🔄 Fallback zu reiner GPT-Generierung...");
+      }
+    }
+
+    // ✅ BESTEHENDE GPT-Generierung - als Fallback oder Veredelung
     let prompt = "";
+    let useGPTForPolishing = false;
+    
+    if (templateResult) {
+      // Template erfolgreich - GPT nur für Veredelung verwenden
+      useGPTForPolishing = true;
+      prompt = `Du bist ein erfahrener Vertragsanwalt. Verbessere und vervollständige den folgenden Vertragsentwurf.
+
+WICHTIG: Behalte die Struktur und alle wichtigen Klauseln bei. Verbessere nur Sprache, Rechtschreibung und füge fehlende Standard-Klauseln hinzu:
+
+${templateResult}
+
+Bitte verbessere den Vertrag sprachlich und rechtlich, ohne die Grundstruktur zu ändern.`;
+      
+    } else {
+      // Kein Template verfügbar - bestehende GPT-Generierung verwenden
+      console.log("🔄 Fallback: Reine GPT-Generierung");
 
     switch (type) {
       case "freelancer":
@@ -110,18 +183,32 @@ Strukturiere den Vertrag professionell mit Einleitung, Paragraphen und Abschluss
       default:
         return res.status(400).json({ message: "❌ Unbekannter Vertragstyp." });
     }
+    } // ✅ Schließt den Template-Fallback Block
 
-    // 🧠 GPT-Generierung
+    // ✅ ERWEITERTE GPT-Generierung (Template-aware)
     const completion = await openai.chat.completions.create({
       model: "gpt-4",
       messages: [
-        { role: "system", content: "Du bist ein erfahrener Jurist und Vertragsersteller." },
+        { 
+          role: "system", 
+          content: useGPTForPolishing 
+            ? "Du bist ein erfahrener Rechtsanwalt. Deine Aufgabe ist es, Verträge sprachlich zu verbessern und zu vervollständigen, ohne die Struktur zu ändern."
+            : "Du bist ein erfahrener Jurist und Vertragsersteller."
+        },
         { role: "user", content: prompt }
       ],
-      temperature: 0.4,
+      temperature: useGPTForPolishing ? 0.2 : 0.4, // Niedrigere Temperatur für Veredelung
     });
 
-    const content = completion.choices[0].message.content;
+    const gptResult = completion.choices[0].message.content;
+    
+    // Finalen Contract-Text bestimmen
+    contractText = gptResult || contractText || "Fehler bei der Vertragsgenerierung";
+    
+    console.log(useGPTForPolishing 
+      ? "✅ Template + GPT-Veredelung abgeschlossen" 
+      : "✅ Reine GPT-Generierung abgeschlossen"
+    );
 
     // ✅ Analyse-Zähler hochzählen
     await usersCollection.updateOne(
@@ -129,17 +216,22 @@ Strukturiere den Vertrag professionell mit Einleitung, Paragraphen und Abschluss
       { $inc: { analysisCount: 1 } }
     );
 
-    // 🧾 Vertrag in DB speichern
+    // ✅ ERWEITERTE Vertrag in DB speichern
     const contract = {
       userId: req.user.userId,
       name: formData.title,
-      content: content,
+      content: contractText, // ✅ Verwendet Template + GPT Result
       laufzeit: "Generiert",
-      kuendigung: "Generiert",
+      kuendigung: "Generiert", 
       expiryDate: "",
       status: "Aktiv",
       uploadedAt: new Date(),
-      isGenerated: true
+      isGenerated: true,
+      // ✅ NEU: Template-Metadaten
+      generationMethod: useGPTForPolishing ? "template_plus_gpt" : "gpt_only",
+      contractType: type,
+      hasCompanyProfile: !!companyProfile,
+      templateVersion: contractTemplates[type]?.version || null
     };
 
     const result = await contractsCollection.insertOne(contract);
@@ -147,7 +239,15 @@ Strukturiere den Vertrag professionell mit Einleitung, Paragraphen und Abschluss
     res.json({
       message: "✅ Vertrag erfolgreich generiert & gespeichert.",
       contractId: result.insertedId,
-      contractText: content,
+      contractText: contractText,
+      // ✅ NEU: Erweiterte Metadaten
+      metadata: {
+        generationMethod: useGPTForPolishing ? "template_plus_gpt" : "gpt_only",
+        templateUsed: !!templateResult,
+        contractType: type,
+        hasCompanyProfile: !!companyProfile,
+        processingTime: Date.now() - Date.now() // Kann erweitert werden
+      }
     });
   } catch (err) {
     console.error("❌ Fehler beim Erzeugen/Speichern:", err);

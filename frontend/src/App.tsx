@@ -47,6 +47,7 @@ import Optimizer from "./pages/Optimizer"; // ✅ Legendäre KI-Vertragsoptimier
 import Compare from "./pages/Compare";
 import Chat from "./pages/Chat";
 import Generate from "./pages/Generate";
+import CompanyProfile from "./pages/CompanyProfile";
 import Subscribe from "./pages/Subscribe";
 import Upgrade from "./pages/Upgrade";
 import BetterContracts from "./pages/BetterContracts";
@@ -152,6 +153,7 @@ function AppWithLoader() {
             <Route path="/compare" element={<RequireAuth><Compare /></RequireAuth>} />
             <Route path="/chat" element={<RequireAuth><Chat /></RequireAuth>} />
             <Route path="/Generate" element={<RequireAuth><Generate /></RequireAuth>} />
+            <Route path="/company-profile" element={<RequireAuth><CompanyProfile /></RequireAuth>} />
             <Route path="/subscribe" element={<RequireAuth><Subscribe /></RequireAuth>} />
             <Route path="/upgrade" element={<RequireAuth><Upgrade /></RequireAuth>} />
             <Route path="/better-contracts" element={<RequireAuth><BetterContracts /></RequireAuth>} />
