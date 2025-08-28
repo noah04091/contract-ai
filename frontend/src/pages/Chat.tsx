@@ -31,12 +31,6 @@ export default function Chat() {
   const [suggestionsExpanded, setSuggestionsExpanded] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    // Check localStorage or system preference
-    const saved = localStorage.getItem('chat-dark-mode');
-    if (saved !== null) return JSON.parse(saved);
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
-  });
   const [searchQuery, setSearchQuery] = useState("");
   const [showSearch, setShowSearch] = useState(false);
   
@@ -506,13 +500,6 @@ export default function Chat() {
     }
   }, [loading, question, handleAsk, messages]);
 
-  // Dark Mode Toggle
-  const toggleDarkMode = useCallback(() => {
-    const newMode = !isDarkMode;
-    setIsDarkMode(newMode);
-    localStorage.setItem('chat-dark-mode', JSON.stringify(newMode));
-  }, [isDarkMode]);
-
   // Search Toggle
   const toggleSearch = useCallback(() => {
     setShowSearch(prev => !prev);
@@ -586,7 +573,7 @@ export default function Chat() {
         <meta name="twitter:image" content="https://contract-ai.de/og-image.jpg" />
       </Helmet>
       
-      <div className={`${styles.container} ${isDarkMode ? styles.darkMode : ''}`}>
+      <div className={styles.container}>
         <div className={styles.header}>
           <h2>🧠 Vertrags-Chat – Frag die KI</h2>
           {!isPremium && (
@@ -610,29 +597,6 @@ export default function Chat() {
                 </svg>
               </button>
             )}
-            <button
-              className={styles.darkModeToggle}
-              onClick={toggleDarkMode}
-              aria-label={isDarkMode ? "Light Mode aktivieren" : "Dark Mode aktivieren"}
-            >
-              {isDarkMode ? (
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="12" cy="12" r="5" stroke="currentColor" strokeWidth="2"/>
-                  <line x1="12" y1="1" x2="12" y2="3" stroke="currentColor" strokeWidth="2"/>
-                  <line x1="12" y1="21" x2="12" y2="23" stroke="currentColor" strokeWidth="2"/>
-                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" stroke="currentColor" strokeWidth="2"/>
-                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" stroke="currentColor" strokeWidth="2"/>
-                  <line x1="1" y1="12" x2="3" y2="12" stroke="currentColor" strokeWidth="2"/>
-                  <line x1="21" y1="12" x2="23" y2="12" stroke="currentColor" strokeWidth="2"/>
-                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" stroke="currentColor" strokeWidth="2"/>
-                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" stroke="currentColor" strokeWidth="2"/>
-                </svg>
-              ) : (
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="currentColor" strokeWidth="2"/>
-                </svg>
-              )}
-            </button>
             {messages.length > 1 && isPremium && (
               <button 
                 className={styles.clearChatButton} 
@@ -989,9 +953,6 @@ export default function Chat() {
               </button>
             </div>
             <p className={styles.disclaimer}>Hinweis: Die KI gibt keine rechtsverbindliche Beratung. Bei konkreten Rechtsfragen wende dich an einen Anwalt.</p>
-            <div className={styles.keyboardHints}>
-              Shortcuts: <kbd>Enter</kbd> senden • <kbd>↑</kbd> letzte Frage • <kbd>Esc</kbd> löschen • <kbd>Cmd/Ctrl + /</kbd> fokus • <kbd>Cmd/Ctrl + Shift + E</kbd> export
-            </div>
           </div>
         </div>
       </div>
