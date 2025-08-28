@@ -895,6 +895,9 @@ export default function Navbar() {
                       <Link to="/me" className={styles.sidebarUserProfile} onClick={() => setSidebarOpen(false)}>
                         Profil bearbeiten
                       </Link>
+                      <Link to="/company-profile" className={styles.sidebarUserProfile} onClick={() => setSidebarOpen(false)}>
+                        🏢 Firmenprofil (NEU!)
+                      </Link>
                       <motion.button 
                         className={styles.sidebarLogoutBtn} 
                         onClick={() => {

@@ -42,16 +42,20 @@ const logoUpload = multer({
   }
 });
 
-// Middleware: Premium Check
+// Middleware: Premium Check - TEMPORÄR DEAKTIVIERT für Testing
 const requirePremium = (req, res, next) => {
-  if (req.user?.subscriptionPlan === 'free') {
-    return res.status(403).json({
-      success: false,
-      message: "Firmenprofil ist nur für Premium-Nutzer verfügbar",
-      requiresUpgrade: true
-    });
-  }
+  // Temporär für Testing deaktiviert
   next();
+  
+  // Original Code:
+  // if (req.user?.subscriptionPlan === 'free') {
+  //   return res.status(403).json({
+  //     success: false,
+  //     message: "Firmenprofil ist nur für Premium-Nutzer verfügbar",
+  //     requiresUpgrade: true
+  //   });
+  // }
+  // next();
 };
 
 // GET /api/company-profile/me - Firmenprofil abrufen

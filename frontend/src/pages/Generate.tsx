@@ -295,7 +295,7 @@ export default function Generate() {
 
   // Auth Context
   const { user, isLoading } = useAuth();
-  const isPremium = user?.subscriptionActive === true;
+  const isPremium = true; // user?.subscriptionActive === true; // TEMPORÄR für Testing
 
   // State Management
   const [currentStep, setCurrentStep] = useState(1);
