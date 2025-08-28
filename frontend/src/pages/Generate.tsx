@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet";
 import { 
   CheckCircle, Clipboard, Save, FileText, Check, Download,
-  ArrowRight, ArrowLeft, Sparkles, Edit3,
+  ArrowRight, ArrowLeft, Sparkles, Edit3, Building,
   Eye, PenTool, RefreshCw, Zap
 } from "lucide-react";
 import styles from "../styles/Generate.module.css";
@@ -312,7 +312,6 @@ export default function Generate() {
   // Company Profile State
   const [companyProfile, setCompanyProfile] = useState<CompanyProfile | null>(null);
   const [useCompanyProfile, setUseCompanyProfile] = useState<boolean>(false);
-  const [profileLoading, setProfileLoading] = useState<boolean>(false);
 
   // Refs
   const contractRef = useRef<HTMLDivElement>(null);
@@ -327,7 +326,6 @@ export default function Generate() {
 
   const loadCompanyProfile = async () => {
     try {
-      setProfileLoading(true);
       const response = await fetch('/api/company-profile/me', {
         credentials: 'include'
       });
@@ -340,8 +338,6 @@ export default function Generate() {
       }
     } catch (error) {
       console.error('❌ Fehler beim Laden des Firmenprofils:', error);
-    } finally {
-      setProfileLoading(false);
     }
   };
 
@@ -378,7 +374,7 @@ export default function Generate() {
   };
 
   // ✅ NEU: Feld-Validierung
-  const validateField = (field: typeof selectedType.fields[0], value: string): boolean => {
+  const validateField = (field: ContractType['fields'][0], value: string): boolean => {
     if (!field.validation) return true;
     
     // Pattern validation (Regex)

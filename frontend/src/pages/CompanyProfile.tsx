@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Helmet } from 'react-helmet';
 import {
-  Building, Upload, X, Check, Save, Eye, Camera,
-  MapPin, Phone, Mail, FileText, CreditCard, Globe,
+  Building, Upload, X, Save, Eye, Camera,
+  Phone, FileText, CreditCard, Globe,
   AlertCircle, Sparkles, ArrowLeft
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
