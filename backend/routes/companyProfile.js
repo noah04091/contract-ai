@@ -21,6 +21,9 @@ const logoUpload = multer({
   storage: multerS3({
     s3: s3,
     bucket: process.env.S3_BUCKET_NAME,
+    metadata: function (req, file, cb) {
+      cb(null, { fieldName: file.fieldname });
+    },
     key: function (req, file, cb) {
       const userId = req.user.userId;
       const timestamp = Date.now();
@@ -161,6 +164,9 @@ router.post("/", verifyToken, requirePremium, async (req, res) => {
 // POST /api/company-profile/logo - Logo hochladen
 router.post("/logo", verifyToken, requirePremium, logoUpload.single('logo'), async (req, res) => {
   try {
+    console.log("📸 Logo-Upload gestartet für User:", req.user.userId);
+    console.log("📁 File Info:", req.file);
+    
     if (!req.file) {
       return res.status(400).json({
         success: false,
@@ -191,6 +197,7 @@ router.post("/logo", verifyToken, requirePremium, logoUpload.single('logo'), asy
     });
     
     console.log("✅ Logo hochgeladen für User:", req.user.userId);
+    console.log("🔗 Logo URL:", logoUrl);
     
     res.json({
       success: true,
@@ -200,9 +207,11 @@ router.post("/logo", verifyToken, requirePremium, logoUpload.single('logo'), asy
     });
   } catch (error) {
     console.error("❌ Fehler beim Logo-Upload:", error);
+    console.error("Stack:", error.stack);
     res.status(500).json({
       success: false,
-      message: error.message || "Fehler beim Logo-Upload"
+      message: error.message || "Fehler beim Logo-Upload",
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 });
