@@ -84,7 +84,13 @@ router.get("/me", verifyToken, async (req, res) => {
         Key: profile.logoKey,
         Expires: 3600 // 1 Stunde
       });
+      console.log("✅ Logo-URL generiert:", profile.logoUrl);
     }
+    
+    console.log("📤 Profil wird zurückgegeben mit Logo:", {
+      hasLogoKey: !!profile.logoKey,
+      hasLogoUrl: !!profile.logoUrl
+    });
     
     res.json({
       success: true,
@@ -134,6 +140,14 @@ router.post("/", verifyToken, requirePremium, async (req, res) => {
       bic: req.body.bic || '',
       updatedAt: new Date()
     };
+    
+    // Logo-Informationen beibehalten, falls vorhanden
+    if (req.body.logoUrl) {
+      profileData.logoUrl = req.body.logoUrl;
+    }
+    if (req.body.logoKey) {
+      profileData.logoKey = req.body.logoKey;
+    }
     
     // Upsert (Update oder Insert)
     const result = await db.collection("company_profiles").updateOne(

@@ -99,12 +99,18 @@ export default function CompanyProfile() {
       });
 
       const data = await response.json();
+      console.log('📥 Profil-Daten empfangen:', data);
       
       if (data.success && data.profile) {
         setProfile(data.profile);
         setOriginalProfile(data.profile);
         if (data.profile.logoUrl) {
+          console.log('🖼️ Logo-URL gefunden:', data.profile.logoUrl);
           setLogoPreview(data.profile.logoUrl);
+        } else if (data.profile.logoKey) {
+          console.log('🔑 Logo-Key vorhanden, aber keine URL:', data.profile.logoKey);
+        } else {
+          console.log('❌ Kein Logo im Profil');
         }
       }
     } catch (error) {
@@ -298,7 +304,22 @@ export default function CompanyProfile() {
               <div className={styles.logoContainer}>
                 {logoPreview ? (
                   <div className={styles.logoPreview}>
-                    <img src={logoPreview} alt="Firmenlogo" />
+                    <img 
+                      src={logoPreview} 
+                      alt="Firmenlogo"
+                      onError={(e) => {
+                        console.error('❌ Logo konnte nicht geladen werden:', logoPreview);
+                        console.error('Error:', e);
+                      }}
+                      onLoad={() => {
+                        console.log('✅ Logo erfolgreich geladen:', logoPreview);
+                      }}
+                      style={{ 
+                        display: 'block',
+                        maxWidth: '100%',
+                        height: 'auto'
+                      }}
+                    />
                     <div className={styles.logoActions}>
                       <button
                         className={styles.logoActionButton}
