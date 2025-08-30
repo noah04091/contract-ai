@@ -1,3 +1,4 @@
+// Company Profile Page with Logo Upload
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Helmet } from 'react-helmet';
