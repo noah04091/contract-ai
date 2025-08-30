@@ -2,7 +2,7 @@
 // ContractContentViewer.tsx - Neue Komponente für Vertragsinhalt
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FileText, Download, Maximize2, X, Eye, Copy, CheckCircle, Printer, Edit, Save, Building } from 'lucide-react';
+import { FileText, Download, Maximize2, X, Eye, Copy, CheckCircle, Printer, Edit, Save } from 'lucide-react';
 import { toast } from 'react-toastify';
 
 interface ContractContentViewerProps {
