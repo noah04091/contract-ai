@@ -192,16 +192,28 @@ router.post("/logo", verifyToken, requirePremium, logoUpload.single('logo'), asy
     const db = req.db;
     const logoKey = req.file.key;
     
-    // Logo-Key im Profil speichern
-    await db.collection("company_profiles").updateOne(
+    // Logo-Key im Profil speichern (mit upsert falls Profil noch nicht existiert)
+    const updateResult = await db.collection("company_profiles").updateOne(
       { userId },
       {
         $set: {
           logoKey,
           updatedAt: new Date()
+        },
+        $setOnInsert: {
+          userId,
+          companyName: '',
+          street: '',
+          postalCode: '',
+          city: '',
+          country: 'Deutschland',
+          createdAt: new Date()
         }
-      }
+      },
+      { upsert: true }
     );
+    
+    console.log("✅ Logo-Key in DB gespeichert:", { logoKey, updateResult });
     
     // Signierte URL für direkten Zugriff generieren
     const logoUrl = s3.getSignedUrl('getObject', {

@@ -187,6 +187,11 @@ export default function CompanyProfile() {
         setLogoPreview(data.logoUrl);
         setProfile(prev => ({ ...prev, logoUrl: data.logoUrl, logoKey: data.logoKey }));
         toast.success('✅ Logo erfolgreich hochgeladen!');
+        
+        // Profil neu laden um sicherzustellen, dass alles korrekt ist
+        setTimeout(() => {
+          loadProfile();
+        }, 500);
       } else {
         throw new Error(data.message || 'Upload fehlgeschlagen');
       }
