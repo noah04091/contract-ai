@@ -8,6 +8,8 @@ const verifyToken = require("../middleware/verifyToken");
 const aws = require("aws-sdk");
 const multer = require("multer");
 const multerS3 = require("multer-s3");
+const https = require("https");
+const http = require("http");
 
 // AWS S3 Configuration
 const s3 = new aws.S3({
@@ -45,6 +47,30 @@ const logoUpload = multer({
   }
 });
 
+// Helper: Convert S3 URL to Base64
+const convertS3ToBase64 = async (url) => {
+  return new Promise((resolve, reject) => {
+    const protocol = url.startsWith('https') ? https : http;
+    
+    protocol.get(url, (response) => {
+      const chunks = [];
+      
+      response.on('data', (chunk) => {
+        chunks.push(chunk);
+      });
+      
+      response.on('end', () => {
+        const buffer = Buffer.concat(chunks);
+        const base64 = buffer.toString('base64');
+        const mimeType = response.headers['content-type'] || 'image/png';
+        resolve(`data:${mimeType};base64,${base64}`);
+      });
+      
+      response.on('error', reject);
+    }).on('error', reject);
+  });
+};
+
 // Middleware: Premium Check - TEMPORÄR DEAKTIVIERT für Testing
 const requirePremium = (req, res, next) => {
   // Temporär für Testing deaktiviert
@@ -77,19 +103,34 @@ router.get("/me", verifyToken, async (req, res) => {
       });
     }
     
-    // Logo-URL generieren falls vorhanden
+    // Logo als Base64 konvertieren falls vorhanden
     if (profile.logoKey) {
-      profile.logoUrl = s3.getSignedUrl('getObject', {
-        Bucket: process.env.S3_BUCKET_NAME,
-        Key: profile.logoKey,
-        Expires: 3600 // 1 Stunde
-      });
-      console.log("✅ Logo-URL generiert:", profile.logoUrl);
+      try {
+        const s3Url = s3.getSignedUrl('getObject', {
+          Bucket: process.env.S3_BUCKET_NAME,
+          Key: profile.logoKey,
+          Expires: 3600 // 1 Stunde
+        });
+        
+        console.log("🔄 Konvertiere S3-URL zu Base64...");
+        const base64Logo = await convertS3ToBase64(s3Url);
+        profile.logoUrl = base64Logo;
+        console.log("✅ Logo als Base64 konvertiert (Länge:", base64Logo.length, "Zeichen)");
+      } catch (error) {
+        console.error("❌ Fehler bei Base64-Konvertierung:", error);
+        // Fallback auf S3-URL
+        profile.logoUrl = s3.getSignedUrl('getObject', {
+          Bucket: process.env.S3_BUCKET_NAME,
+          Key: profile.logoKey,
+          Expires: 3600
+        });
+      }
     }
     
     console.log("📤 Profil wird zurückgegeben mit Logo:", {
       hasLogoKey: !!profile.logoKey,
-      hasLogoUrl: !!profile.logoUrl
+      hasLogoUrl: !!profile.logoUrl,
+      isBase64: profile.logoUrl?.startsWith('data:')
     });
     
     res.json({
@@ -215,15 +256,29 @@ router.post("/logo", verifyToken, requirePremium, logoUpload.single('logo'), asy
     
     console.log("✅ Logo-Key in DB gespeichert:", { logoKey, updateResult });
     
-    // Signierte URL für direkten Zugriff generieren
-    const logoUrl = s3.getSignedUrl('getObject', {
-      Bucket: process.env.S3_BUCKET_NAME,
-      Key: logoKey,
-      Expires: 3600
-    });
+    // Logo als Base64 zurückgeben für CSP-Umgehung
+    let logoUrl;
+    try {
+      const s3Url = s3.getSignedUrl('getObject', {
+        Bucket: process.env.S3_BUCKET_NAME,
+        Key: logoKey,
+        Expires: 3600
+      });
+      
+      console.log("🔄 Konvertiere hochgeladenes Logo zu Base64...");
+      logoUrl = await convertS3ToBase64(s3Url);
+      console.log("✅ Logo als Base64 konvertiert");
+    } catch (error) {
+      console.error("❌ Base64-Konvertierung fehlgeschlagen:", error);
+      // Fallback auf S3-URL
+      logoUrl = s3.getSignedUrl('getObject', {
+        Bucket: process.env.S3_BUCKET_NAME,
+        Key: logoKey,
+        Expires: 3600
+      });
+    }
     
     console.log("✅ Logo hochgeladen für User:", req.user.userId);
-    console.log("🔗 Logo URL:", logoUrl);
     
     res.json({
       success: true,
