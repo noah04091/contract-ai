@@ -3,13 +3,7 @@ const express = require("express");
 const { OpenAI } = require("openai");
 const verifyToken = require("../middleware/verifyToken");
 const { MongoClient, ObjectId } = require("mongodb");
-// ✅ NEU: Template-System importieren - ERWEITERT das bestehende System
-const { 
-  contractTemplates, 
-  TemplateEngine, 
-  validateRequiredFields, 
-  prepareTemplateData 
-} = require("../utils/contractTemplates");
+// Template-System entfernt - Verwende reine GPT-Generierung
 
 const router = express.Router();
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -94,58 +88,13 @@ router.post("/", verifyToken, async (req, res) => {
       });
     }
 
-    // ✅ NEU: Template-basierte Generierung (PHASE 1)
-    let templateResult = null;
+    // ✅ TEMPLATE-SYSTEM DEAKTIVIERT - Verwende reine GPT-Generierung
     let contractText = "";
-    
-    // Prüfe ob Template-System verfügbar ist
-    if (contractTemplates[type]) {
-      try {
-        console.log("🎯 Template-basierte Generierung für Typ:", type);
-        
-        // Validiere Pflichtfelder
-        const validationErrors = validateRequiredFields(type, formData);
-        if (validationErrors.length > 0) {
-          console.log("⚠️ Validierungsfehler (nicht kritisch):", validationErrors);
-        }
-        
-        // Template-Daten vorbereiten
-        const templateData = prepareTemplateData(type, formData, companyProfile);
-        console.log("📋 Template-Daten vorbereitet:", Object.keys(templateData));
-        
-        // Template rendern
-        const template = contractTemplates[type].template;
-        templateResult = TemplateEngine.render(template, templateData);
-        
-        console.log("✅ Template erfolgreich gerendert - Länge:", templateResult.length);
-        
-        // Template-Result als Basis verwenden
-        contractText = templateResult;
-        
-      } catch (templateError) {
-        console.error("❌ Template-Generierung fehlgeschlagen:", templateError.message);
-        console.log("🔄 Fallback zu reiner GPT-Generierung...");
-      }
-    }
+    console.log("🔄 Verwende reine GPT-Generierung für saubere Ergebnisse...");
 
-    // ✅ BESTEHENDE GPT-Generierung - als Fallback oder Veredelung
+    // ✅ REINE GPT-Generierung für alle Verträge
     let prompt = "";
-    let useGPTForPolishing = false;
-    
-    if (templateResult) {
-      // Template erfolgreich - GPT nur für Veredelung verwenden
-      useGPTForPolishing = true;
-      prompt = `Du bist ein erfahrener Vertragsanwalt. Verbessere und vervollständige den folgenden Vertragsentwurf.
-
-WICHTIG: Behalte die Struktur und alle wichtigen Klauseln bei. Verbessere nur Sprache, Rechtschreibung und füge fehlende Standard-Klauseln hinzu:
-
-${templateResult}
-
-Bitte verbessere den Vertrag sprachlich und rechtlich, ohne die Grundstruktur zu ändern.`;
-      
-    } else {
-      // Kein Template verfügbar - bestehende GPT-Generierung verwenden
-      console.log("🔄 Fallback: Reine GPT-Generierung");
+    console.log("🔄 Reine GPT-Generierung für alle Vertragstypen");
 
     switch (type) {
       case "freelancer":
@@ -199,27 +148,24 @@ Strukturiere den Vertrag professionell mit Einleitung, Paragraphen und Abschluss
       default:
         return res.status(400).json({ message: "❌ Unbekannter Vertragstyp." });
     }
-    } // ✅ Schließt den Template-Fallback Block
 
-    // ✅ ERWEITERTE GPT-Generierung (Template-aware)
+    // ✅ GPT-Generierung für alle Vertragstypen
     const completion = await openai.chat.completions.create({
       model: "gpt-4",
       messages: [
         { 
           role: "system", 
-          content: useGPTForPolishing 
-            ? "Du bist ein erfahrener Rechtsanwalt. Deine Aufgabe ist es, Verträge sprachlich zu verbessern und zu vervollständigen, ohne die Struktur zu ändern."
-            : "Du bist ein erfahrener Jurist und Vertragsersteller."
+          content: "Du bist ein erfahrener Jurist und Vertragsersteller. Erstelle professionelle, rechtssichere Verträge im deutschen Recht."
         },
         { role: "user", content: prompt }
       ],
-      temperature: useGPTForPolishing ? 0.2 : 0.4, // Niedrigere Temperatur für Veredelung
+      temperature: 0.4,
     });
 
     const gptResult = completion.choices[0].message.content;
     
     // Finalen Contract-Text bestimmen
-    contractText = gptResult || contractText || "Fehler bei der Vertragsgenerierung";
+    contractText = gptResult || "Fehler bei der Vertragsgenerierung";
     
     // ✅ FIRMENKOPF HINZUFÜGEN wenn Company Profile vorhanden UND aktiviert
     console.log("🔍 Company Profile Check:", {
@@ -233,20 +179,25 @@ Strukturiere den Vertrag professionell mit Einleitung, Paragraphen und Abschluss
       console.log("✅ Füge Firmenkopf hinzu...");
       let companyHeader = '';
       
-      // Professioneller Firmenkopf als formatierter Text (nicht HTML!)
-      companyHeader = `---
-${companyProfile.logoUrl ? `![${companyProfile.companyName} Logo](${companyProfile.logoUrl})` : ''}
-
-**${companyProfile.companyName || ''}**
-${companyProfile.legalForm ? companyProfile.legalForm : ''}
-${companyProfile.street || ''}
-${companyProfile.postalCode || ''} ${companyProfile.city || ''}
-${companyProfile.contactEmail ? `E-Mail: ${companyProfile.contactEmail}` : ''}
-${companyProfile.contactPhone ? `Tel: ${companyProfile.contactPhone}` : ''}
-${companyProfile.vatId ? `USt-IdNr.: ${companyProfile.vatId}` : ''}
-${companyProfile.tradeRegister ? companyProfile.tradeRegister : ''}
-
----
+      // Professioneller Firmenkopf als HTML (für richtige Logo-Darstellung)
+      companyHeader = `
+<div style="border-bottom: 2px solid #0066cc; padding-bottom: 15px; margin-bottom: 30px;">
+  ${companyProfile.logoUrl ? `
+  <div style="text-align: center; margin-bottom: 15px;">
+    <img src="${companyProfile.logoUrl}" alt="${companyProfile.companyName} Logo" style="max-width: 200px; max-height: 80px; object-fit: contain;" />
+  </div>` : ''}
+  
+  <div style="text-align: center; font-family: Arial, sans-serif;">
+    <h2 style="margin: 5px 0; color: #333; font-size: 18px;">${companyProfile.companyName || ''}</h2>
+    ${companyProfile.legalForm ? `<p style="margin: 2px 0; color: #666; font-size: 14px;">${companyProfile.legalForm}</p>` : ''}
+    <p style="margin: 3px 0; font-size: 13px;">${companyProfile.street || ''}</p>
+    <p style="margin: 3px 0; font-size: 13px;">${companyProfile.postalCode || ''} ${companyProfile.city || ''}</p>
+    ${companyProfile.contactEmail ? `<p style="margin: 3px 0; color: #0066cc; font-size: 13px;">${companyProfile.contactEmail}</p>` : ''}
+    ${companyProfile.contactPhone ? `<p style="margin: 3px 0; font-size: 13px;">Tel: ${companyProfile.contactPhone}</p>` : ''}
+    ${companyProfile.vatId ? `<p style="margin: 5px 0; color: #666; font-size: 12px;">USt-IdNr.: ${companyProfile.vatId}</p>` : ''}
+    ${companyProfile.tradeRegister ? `<p style="margin: 3px 0; color: #666; font-size: 12px;">${companyProfile.tradeRegister}</p>` : ''}
+  </div>
+</div>
 
 `;
       
@@ -314,10 +265,7 @@ ${companyProfile.vatId ? `USt-IdNr.: ${companyProfile.vatId}` : ''}`.trim();
       });
     }
     
-    console.log(useGPTForPolishing 
-      ? "✅ Template + GPT-Veredelung + Firmendaten abgeschlossen" 
-      : "✅ Reine GPT-Generierung + Firmendaten abgeschlossen"
-    );
+    console.log("✅ GPT-Generierung + Firmendaten abgeschlossen");
 
     // ✅ Analyse-Zähler hochzählen
     await usersCollection.updateOne(
@@ -336,11 +284,10 @@ ${companyProfile.vatId ? `USt-IdNr.: ${companyProfile.vatId}` : ''}`.trim();
       status: "Aktiv",
       uploadedAt: new Date(),
       isGenerated: true,
-      // ✅ NEU: Template-Metadaten
-      generationMethod: useGPTForPolishing ? "template_plus_gpt" : "gpt_only",
+      // ✅ Generierungs-Metadaten
+      generationMethod: "gpt_only",
       contractType: type,
-      hasCompanyProfile: !!companyProfile,
-      templateVersion: contractTemplates[type]?.version || null
+      hasCompanyProfile: !!companyProfile
     };
 
     const result = await contractsCollection.insertOne(contract);
@@ -349,13 +296,11 @@ ${companyProfile.vatId ? `USt-IdNr.: ${companyProfile.vatId}` : ''}`.trim();
       message: "✅ Vertrag erfolgreich generiert & gespeichert.",
       contractId: result.insertedId,
       contractText: contractText,
-      // ✅ NEU: Erweiterte Metadaten
+      // ✅ Generierungs-Metadaten
       metadata: {
-        generationMethod: useGPTForPolishing ? "template_plus_gpt" : "gpt_only",
-        templateUsed: !!templateResult,
+        generationMethod: "gpt_only",
         contractType: type,
-        hasCompanyProfile: !!companyProfile,
-        processingTime: Date.now() - Date.now() // Kann erweitert werden
+        hasCompanyProfile: !!companyProfile
       }
     });
   } catch (err) {
