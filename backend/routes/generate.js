@@ -182,17 +182,21 @@ Strukturiere den Vertrag professionell mit Einleitung, Paragraphen und Abschluss
       // ✅ PROFESSIONELLER FIRMENKOPF mit funktionierendem Logo
       console.log("🔍 Logo URL verfügbar:", companyProfile.logoUrl);
       
-      // Logo-Bereich nur wenn Logo vorhanden
+      // ✅ ROBUSTE Logo-Implementierung mit Fallback
       let logoDisplay = '';
       if (companyProfile.logoUrl) {
-        // Teste verschiedene Logo-Formate für maximale Kompatibilität
-        logoDisplay = `
-<div style="text-align: center; margin: 15px 0;">
-  <img src="${companyProfile.logoUrl}" 
-       alt="${companyProfile.companyName} Logo" 
-       style="max-width: 180px; max-height: 100px; object-fit: contain; border: none;" 
-       onerror="this.style.display='none'" />
-</div>`;
+        // Escape HTML-Zeichen in der URL für Sicherheit
+        const safeLogoUrl = companyProfile.logoUrl.replace(/"/g, '&quot;');
+        const safeCompanyName = (companyProfile.companyName || '').replace(/"/g, '&quot;');
+        
+        logoDisplay = `<div style="text-align: center; margin: 15px 0;"><img src="${safeLogoUrl}" alt="${safeCompanyName} Logo" style="max-width: 180px; max-height: 100px; object-fit: contain; border: none;" onerror="this.style.display='none';" /></div>`;
+        
+        console.log("🔗 Logo Details:", {
+          originalUrl: companyProfile.logoUrl,
+          safeUrl: safeLogoUrl,
+          htmlLength: logoDisplay.length,
+          firstChars: logoDisplay.substring(0, 100)
+        });
       }
       
       // Kompakte Firmendaten - professionell formatiert
@@ -207,10 +211,8 @@ Strukturiere den Vertrag professionell mit Einleitung, Paragraphen und Abschluss
         companyProfile.tradeRegister || ''
       ].filter(item => item.trim() !== '').join('<br>');
       
-      companyHeader = `${logoDisplay}
-<div style="text-align: center; border-bottom: 2px solid #333; padding: 15px 0; margin-bottom: 25px; font-family: Arial, sans-serif; line-height: 1.4;">
-${firmendaten}
-</div>
+      // ✅ KOMPAKTER Header ohne Zeilenumbrüche 
+      companyHeader = `${logoDisplay}<div style="text-align: center; border-bottom: 2px solid #333; padding: 15px 0; margin-bottom: 25px; font-family: Arial, sans-serif; line-height: 1.4;">${firmendaten}</div>
 
 `;
       
