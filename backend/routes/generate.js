@@ -193,7 +193,24 @@ Strukturiere den Vertrag professionell mit Einleitung, Paragraphen und Abschluss
       messages: [
         { 
           role: "system", 
-          content: "Du bist ein erfahrener Jurist und Vertragsersteller. Erstelle professionelle, rechtssichere Verträge im deutschen Recht. WICHTIG: Verwende für die Formatierung NUR HTML-Tags und professionelle Typografie: <h1> für Vertragsüberschriften, <h2> für Paragraphen (z.B. <h2>§ 1 Kaufgegenstand</h2>), <p> für Absätze, <strong> für wichtige Begriffe. Strukturiere den Vertrag mit klaren Abständen und guter Lesbarkeit."
+          content: `Du bist ein erfahrener Fachanwalt für Vertragsrecht. Erstelle hochprofessionelle, rechtssichere Verträge nach deutschem Recht.
+
+FORMATIERUNG (WICHTIG - NUR HTML):
+- Verwende <h2 style="font-size: 16px; color: #1f2937; margin: 25px 0 15px 0; font-weight: 600;">§ 1 Überschrift</h2> für Paragraphen
+- Verwende <p style="margin: 10px 0; line-height: 1.6; color: #374151;"> für Absätze
+- Verwende <strong> für wichtige Begriffe und Parteien
+- Verwende <div style="margin: 20px 0; padding: 15px; background: #f9fafb; border-left: 3px solid #3b82f6;"> für wichtige Klauseln
+
+STRUKTUR:
+1. Beginne direkt mit "Zwischen" (Vertragsparteien)
+2. Nutze klare Paragraphen-Struktur (§ 1, § 2, etc.)
+3. Füge professionelle Salvatorische Klausel am Ende ein
+4. KEINE Unterschriftszeilen (werden automatisch hinzugefügt)
+
+SPRACHE:
+- Präzise juristische Formulierungen
+- Vollständige, eindeutige Sätze
+- Vermeide Abkürzungen außer "bzw.", "z.B.", "usw."`
         },
         { role: "user", content: prompt }
       ],
@@ -254,30 +271,30 @@ Strukturiere den Vertrag professionell mit Einleitung, Paragraphen und Abschluss
         }
       }
       
-      // ✅ ZWEISPALTIGER PROFESSIONAL HEADER
+      // ✅ ULTRA-PROFESSIONELLER ANWALTS-HEADER
       const logoSection = finalLogoUrl 
-        ? `<img src="${finalLogoUrl}" alt="Logo" style="max-width: 120px; max-height: 60px; object-fit: contain;" />`
-        : `<div style="width: 120px; height: 60px;"></div>`;
+        ? `<img src="${finalLogoUrl}" alt="Logo" style="max-width: 90px; max-height: 45px; object-fit: contain;" />`
+        : '';
         
       const companyInfoSection = `
-        <div style="text-align: right; font-size: 14px; line-height: 1.4;">
-          <div style="font-size: 18px; font-weight: bold; color: #1a365d; margin-bottom: 8px;">
+        <div style="text-align: right; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+          <div style="font-size: 20px; font-weight: 700; color: #1a1a1a; margin-bottom: 6px; letter-spacing: -0.5px;">
             ${companyProfile.companyName || ''}
           </div>
-          <div style="color: #4a5568; font-size: 13px;">
-            ${companyProfile.legalForm ? companyProfile.legalForm + '<br>' : ''}
-            ${companyProfile.street || ''}<br>
+          <div style="color: #6b7280; font-size: 11px; line-height: 1.4;">
+            ${companyProfile.legalForm ? `<span style="font-weight: 500;">${companyProfile.legalForm}</span> · ` : ''}
+            ${companyProfile.street || ''} · 
             ${companyProfile.postalCode || ''} ${companyProfile.city || ''}<br>
-            ${companyProfile.contactEmail ? `<span style="color: #3182ce;">${companyProfile.contactEmail}</span><br>` : ''}
-            ${companyProfile.contactPhone ? `Tel: ${companyProfile.contactPhone}<br>` : ''}
-            ${companyProfile.vatId ? `<span style="font-size: 11px; color: #718096;">USt-IdNr.: ${companyProfile.vatId}</span><br>` : ''}
-            ${companyProfile.tradeRegister ? `<span style="font-size: 11px; color: #718096;">${companyProfile.tradeRegister}</span>` : ''}
+            ${companyProfile.contactEmail ? `${companyProfile.contactEmail} · ` : ''}
+            ${companyProfile.contactPhone ? `${companyProfile.contactPhone}` : ''}<br>
+            ${companyProfile.vatId ? `<span style="font-size: 10px;">USt-IdNr.: ${companyProfile.vatId}</span>` : ''}
+            ${companyProfile.tradeRegister ? ` · <span style="font-size: 10px;">${companyProfile.tradeRegister}</span>` : ''}
           </div>
         </div>`;
 
       companyHeader = `
-<div style="display: flex; justify-content: space-between; align-items: flex-start; padding: 20px 0; margin-bottom: 30px; border-bottom: 3px solid #3182ce; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-  <div style="flex: 0 0 140px;">
+<div style="display: flex; justify-content: space-between; align-items: center; padding: 15px 0 20px 0; margin-bottom: 35px; border-bottom: 1px solid #e5e7eb; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+  <div style="flex: 0 0 100px;">
     ${logoSection}
   </div>
   <div style="flex: 1; margin-left: 20px;">
@@ -294,9 +311,81 @@ Strukturiere den Vertrag professionell mit Einleitung, Paragraphen und Abschluss
         headerPreview: companyHeader.substring(0, 300)
       });
       
-      // Firmenkopf am Anfang des Vertrags einfügen
-      contractText = companyHeader + contractText;
-      console.log("✅ Firmenkopf eingefügt! Neue Vertragslänge:", contractText.length);
+      // ✅ PROFESSIONELLER VERTRAGSTITEL MIT DATUM
+      const today = new Date().toLocaleDateString('de-DE', { 
+        day: '2-digit', 
+        month: 'long', 
+        year: 'numeric' 
+      });
+      
+      const contractTitle = `
+<div style="text-align: center; margin-bottom: 40px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+  <h1 style="font-size: 24px; font-weight: 700; color: #111827; margin: 0 0 8px 0; letter-spacing: -0.5px;">
+    ${formData.title || getContractTitle(type)}
+  </h1>
+  <p style="color: #6b7280; font-size: 13px; margin: 0 0 4px 0;">
+    Erstellt am ${today} mit Contract AI
+  </p>
+  <p style="color: #9ca3af; font-size: 12px; font-style: italic; margin: 0;">
+    Dieser Vertrag wurde automatisch generiert und kann an Ihre individuellen Bedürfnisse angepasst werden.
+  </p>
+</div>`;
+
+      // ✅ PROFESSIONELLER UNTERSCHRIFTSBEREICH
+      const signatureSection = `
+<div style="margin-top: 60px; padding-top: 40px; border-top: 1px solid #e5e7eb; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+  <div style="display: flex; justify-content: space-between; margin-bottom: 80px;">
+    <div style="flex: 1; max-width: 45%;">
+      <p style="color: #6b7280; font-size: 12px; margin-bottom: 50px;">Ort, Datum:</p>
+      <div style="border-bottom: 1px solid #d1d5db; margin-bottom: 8px;"></div>
+      <p style="color: #4b5563; font-size: 13px; margin: 0;">Unterschrift ${getPartyLabel(type, 'company')}</p>
+      <p style="color: #6b7280; font-size: 11px; margin: 4px 0 0 0;">(${companyProfile.companyName})</p>
+    </div>
+    <div style="flex: 1; max-width: 45%;">
+      <p style="color: #6b7280; font-size: 12px; margin-bottom: 50px;">Ort, Datum:</p>
+      <div style="border-bottom: 1px solid #d1d5db; margin-bottom: 8px;"></div>
+      <p style="color: #4b5563; font-size: 13px; margin: 0;">Unterschrift ${getPartyLabel(type, 'counterparty')}</p>
+      <p style="color: #6b7280; font-size: 11px; margin: 4px 0 0 0;">(${formData.buyer || formData.tenant || formData.employee || formData.partyB || 'Vertragspartner'})</p>
+    </div>
+  </div>
+</div>`;
+
+      // ✅ CONTRACT AI FOOTER
+      const footer = `
+<div style="text-align: center; margin-top: 60px; padding-top: 20px; border-top: 1px solid #f3f4f6; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+  <p style="color: #9ca3af; font-size: 11px; margin: 0;">
+    Erstellt mit <span style="color: #3b82f6; font-weight: 500;">Contract AI</span> · www.contract-ai.de
+  </p>
+</div>`;
+      
+      // Vertrag zusammensetzen
+      contractText = companyHeader + contractTitle + contractText + signatureSection + footer;
+      console.log("✅ Professioneller Vertrag komplett erstellt! Länge:", contractText.length);
+      
+      // Helper-Funktionen
+      function getContractTitle(contractType) {
+        const titles = {
+          'freelancer': 'Freelancer-Dienstleistungsvertrag',
+          'kaufvertrag': 'Kaufvertrag',
+          'mietvertrag': 'Mietvertrag',
+          'arbeitsvertrag': 'Arbeitsvertrag',
+          'nda': 'Geheimhaltungsvereinbarung (NDA)',
+          'custom': 'Individueller Vertrag'
+        };
+        return titles[contractType] || 'Vertrag';
+      }
+      
+      function getPartyLabel(contractType, party) {
+        const labels = {
+          'freelancer': { company: 'Auftraggeber', counterparty: 'Auftragnehmer' },
+          'kaufvertrag': { company: 'Verkäufer', counterparty: 'Käufer' },
+          'mietvertrag': { company: 'Vermieter', counterparty: 'Mieter' },
+          'arbeitsvertrag': { company: 'Arbeitgeber', counterparty: 'Arbeitnehmer' },
+          'nda': { company: 'Partei A', counterparty: 'Partei B' },
+          'custom': { company: 'Vertragspartner A', counterparty: 'Vertragspartner B' }
+        };
+        return labels[contractType]?.[party] || labels.custom[party];
+      }
       
       // Testen ob Logo-URL erreichbar ist
       if (companyProfile.logoUrl) {
