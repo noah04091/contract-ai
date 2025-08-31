@@ -193,7 +193,7 @@ Strukturiere den Vertrag professionell mit Einleitung, Paragraphen und Abschluss
       messages: [
         { 
           role: "system", 
-          content: "Du bist ein erfahrener Jurist und Vertragsersteller. Erstelle professionelle, rechtssichere Verträge im deutschen Recht."
+          content: "Du bist ein erfahrener Jurist und Vertragsersteller. Erstelle professionelle, rechtssichere Verträge im deutschen Recht. WICHTIG: Verwende für die Formatierung NUR HTML-Tags und professionelle Typografie: <h1> für Vertragsüberschriften, <h2> für Paragraphen (z.B. <h2>§ 1 Kaufgegenstand</h2>), <p> für Absätze, <strong> für wichtige Begriffe. Strukturiere den Vertrag mit klaren Abständen und guter Lesbarkeit."
         },
         { role: "user", content: prompt }
       ],
@@ -224,72 +224,66 @@ Strukturiere den Vertrag professionell mit Einleitung, Paragraphen und Abschluss
         urlPreview: companyProfile.logoUrl?.substring(0, 100) + "..."
       });
       
-      // ✅ CORS-FREIE Logo-Implementierung mit Base64 bevorzugt
-      let logoDisplay = '';
+      // ✅ PROFESSIONAL TWO-COLUMN HEADER
+      let finalLogoUrl = null;
+      
+      // Logo-Verarbeitung (falls vorhanden)
       if (companyProfile.logoUrl) {
-        let finalLogoUrl = companyProfile.logoUrl;
-        
-        // Wenn es KEINE Base64-URL ist, konvertiere S3-URL zu Base64 (CORS-frei!)
         if (!companyProfile.logoUrl.startsWith('data:')) {
           console.log("🔄 S3-Logo zu Base64 konvertieren mit frischer URL...");
           try {
-            // ✅ FRISCHE S3-URL generieren (alte ist abgelaufen!)
             let freshS3Url = companyProfile.logoUrl;
             
-            // Wenn es ein Logo-Key gibt, neue S3-URL generieren
             if (companyProfile.logoKey) {
               console.log("🔑 Generiere frische S3-URL für logoKey:", companyProfile.logoKey);
               freshS3Url = s3.getSignedUrl('getObject', {
                 Bucket: process.env.S3_BUCKET_NAME,
                 Key: companyProfile.logoKey,
-                Expires: 3600 // 1 Stunde gültig
+                Expires: 3600
               });
-              console.log("✅ Frische S3-URL generiert:", freshS3Url.substring(0, 100) + "...");
+              console.log("✅ Frische S3-URL generiert");
             }
             
-            // Base64-Konvertierung mit frischer URL
             finalLogoUrl = await convertS3ToBase64(freshS3Url);
-            console.log("✅ S3-Logo zu Base64 konvertiert:", {
-              usedFreshUrl: !!companyProfile.logoKey,
-              base64Length: finalLogoUrl.length,
-              isBase64: finalLogoUrl.startsWith('data:'),
-              mimeType: finalLogoUrl.substring(0, 30)
-            });
+            console.log("✅ Logo erfolgreich zu Base64 konvertiert");
           } catch (error) {
-            console.error("❌ S3 zu Base64 Konvertierung fehlgeschlagen:", error.message);
-            logoDisplay = ''; // Fallback: Kein Logo
-            finalLogoUrl = null;
+            console.error("❌ Logo-Konvertierung fehlgeschlagen:", error.message);
           }
-        }
-        
-        // Base64 Logo verwenden (entweder original oder konvertiert)
-        if (finalLogoUrl) {
-          // Base64 Logo verwenden - CORS-frei!
-          const safeCompanyName = (companyProfile.companyName || '').replace(/"/g, '&quot;');
-          logoDisplay = `<div style="text-align: center; margin: 15px 0;"><img src="${finalLogoUrl}" alt="${safeCompanyName} Logo" style="max-width: 180px; max-height: 100px; object-fit: contain; border: none;" /></div>`;
-          
-          console.log("✅ Base64 Logo bereit für Vertrag:", {
-            isBase64: finalLogoUrl.startsWith('data:'),
-            base64Preview: finalLogoUrl.substring(0, 50) + "...",
-            htmlLength: logoDisplay.length
-          });
+        } else {
+          finalLogoUrl = companyProfile.logoUrl;
         }
       }
       
-      // Kompakte Firmendaten - professionell formatiert
-      const firmendaten = [
-        `<strong>${companyProfile.companyName || ''}</strong>`,
-        companyProfile.legalForm || '',
-        companyProfile.street || '',
-        `${companyProfile.postalCode || ''} ${companyProfile.city || ''}`.trim(),
-        companyProfile.contactEmail || '',
-        companyProfile.contactPhone ? `Tel: ${companyProfile.contactPhone}` : '',
-        companyProfile.vatId ? `USt-IdNr.: ${companyProfile.vatId}` : '',
-        companyProfile.tradeRegister || ''
-      ].filter(item => item.trim() !== '').join('<br>');
-      
-      // ✅ KOMPAKTER Header ohne Zeilenumbrüche 
-      companyHeader = `${logoDisplay}<div style="text-align: center; border-bottom: 2px solid #333; padding: 15px 0; margin-bottom: 25px; font-family: Arial, sans-serif; line-height: 1.4;">${firmendaten}</div>
+      // ✅ ZWEISPALTIGER PROFESSIONAL HEADER
+      const logoSection = finalLogoUrl 
+        ? `<img src="${finalLogoUrl}" alt="Logo" style="max-width: 120px; max-height: 60px; object-fit: contain;" />`
+        : `<div style="width: 120px; height: 60px;"></div>`;
+        
+      const companyInfoSection = `
+        <div style="text-align: right; font-size: 14px; line-height: 1.4;">
+          <div style="font-size: 18px; font-weight: bold; color: #1a365d; margin-bottom: 8px;">
+            ${companyProfile.companyName || ''}
+          </div>
+          <div style="color: #4a5568; font-size: 13px;">
+            ${companyProfile.legalForm ? companyProfile.legalForm + '<br>' : ''}
+            ${companyProfile.street || ''}<br>
+            ${companyProfile.postalCode || ''} ${companyProfile.city || ''}<br>
+            ${companyProfile.contactEmail ? `<span style="color: #3182ce;">${companyProfile.contactEmail}</span><br>` : ''}
+            ${companyProfile.contactPhone ? `Tel: ${companyProfile.contactPhone}<br>` : ''}
+            ${companyProfile.vatId ? `<span style="font-size: 11px; color: #718096;">USt-IdNr.: ${companyProfile.vatId}</span><br>` : ''}
+            ${companyProfile.tradeRegister ? `<span style="font-size: 11px; color: #718096;">${companyProfile.tradeRegister}</span>` : ''}
+          </div>
+        </div>`;
+
+      companyHeader = `
+<div style="display: flex; justify-content: space-between; align-items: flex-start; padding: 20px 0; margin-bottom: 30px; border-bottom: 3px solid #3182ce; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+  <div style="flex: 0 0 140px;">
+    ${logoSection}
+  </div>
+  <div style="flex: 1; margin-left: 20px;">
+    ${companyInfoSection}
+  </div>
+</div>
 
 `;
       
