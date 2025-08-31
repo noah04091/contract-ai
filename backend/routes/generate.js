@@ -17,12 +17,12 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 // MongoDB Setup direkt hier
 const mongoUri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
 const client = new MongoClient(mongoUri);
-let usersCollection, contractsCollection;
+let usersCollection, contractsCollection, db;
 
 (async () => {
   try {
     await client.connect();
-    const db = client.db("contract_ai");
+    db = client.db("contract_ai");
     usersCollection = db.collection("users");
     contractsCollection = db.collection("contracts");
     console.log("📄 Generate.js: MongoDB verbunden!");
@@ -50,8 +50,12 @@ router.post("/", verifyToken, async (req, res) => {
     // ✅ IMMER Company Profile laden wenn vorhanden
     let companyProfile = null;
     try {
-      // Direkt auf company_profiles Collection zugreifen
-      const db = usersCollection.db();
+      // Warten bis DB verbunden ist
+      if (!db) {
+        console.log("⚠️ DB noch nicht bereit, warte...");
+        return res.status(500).json({ message: "❌ Datenbankverbindung noch nicht bereit." });
+      }
+      
       const profileData = await db.collection("company_profiles").findOne({ 
         userId: new ObjectId(req.user.userId) 
       });
