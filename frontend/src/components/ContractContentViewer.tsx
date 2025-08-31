@@ -490,7 +490,7 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
         }}
       >
         {!isEditing ? (
-          displayContent
+          <div dangerouslySetInnerHTML={{ __html: displayContent }} />
         ) : (
           <textarea
             ref={editTextareaRef}
@@ -639,7 +639,7 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
                   color: '#1e293b'
                 }}
               >
-                {displayContent}
+                <div dangerouslySetInnerHTML={{ __html: displayContent }} />
               </div>
 
               {/* Modal Signature */}
