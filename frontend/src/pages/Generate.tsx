@@ -324,6 +324,14 @@ export default function Generate() {
     }
   }, [isPremium, isLoading, user]);
 
+  // Auto-activate company profile when loaded
+  useEffect(() => {
+    if (companyProfile && !useCompanyProfile) {
+      setUseCompanyProfile(true);
+      console.log('✅ Company Profile automatisch aktiviert');
+    }
+  }, [companyProfile]);
+
   const loadCompanyProfile = async () => {
     try {
       const response = await fetch('/api/company-profile/me', {
@@ -348,23 +356,25 @@ export default function Generate() {
     if (enabled && companyProfile && selectedType) {
       // Auto-fill company data based on contract type
       const updatedFormData = { ...formData };
+      const companyFullName = `${companyProfile.companyName}${companyProfile.legalForm ? ` (${companyProfile.legalForm})` : ''}`;
+      const companyFullAddress = `${companyProfile.street}, ${companyProfile.postalCode} ${companyProfile.city}`;
       
       switch (selectedType.id) {
         case 'freelancer':
-          updatedFormData.nameClient = companyProfile.companyName;
-          updatedFormData.clientAddress = `${companyProfile.street}, ${companyProfile.postalCode} ${companyProfile.city}, ${companyProfile.country}`;
+          updatedFormData.nameClient = companyFullName;
+          updatedFormData.clientAddress = companyFullAddress;
           break;
         case 'arbeitsvertrag':
-          updatedFormData.employer = `${companyProfile.companyName} (${companyProfile.legalForm})`;
+          updatedFormData.employer = companyFullName;
           break;
         case 'mietvertrag':
-          updatedFormData.landlord = companyProfile.companyName;
+          updatedFormData.landlord = companyFullName;
           break;
         case 'kaufvertrag':
-          updatedFormData.seller = companyProfile.companyName;
+          updatedFormData.seller = companyFullName;
           break;
         case 'nda':
-          updatedFormData.partyA = companyProfile.companyName;
+          updatedFormData.partyA = companyFullName;
           break;
       }
       
@@ -510,7 +520,34 @@ export default function Generate() {
 
   const handleTypeSelect = (type: ContractType) => {
     setSelectedType(type);
-    setFormData({ title: `${type.name} - ${new Date().toLocaleDateString()}` });
+    const initialData: FormDataType = { title: `${type.name} - ${new Date().toLocaleDateString()}` };
+    
+    // Auto-fill company data if profile is active
+    if (useCompanyProfile && companyProfile) {
+      const companyFullName = `${companyProfile.companyName}${companyProfile.legalForm ? ` (${companyProfile.legalForm})` : ''}`;
+      const companyFullAddress = `${companyProfile.street}, ${companyProfile.postalCode} ${companyProfile.city}`;
+      
+      switch (type.id) {
+        case 'freelancer':
+          initialData.nameClient = companyFullName;
+          initialData.clientAddress = companyFullAddress;
+          break;
+        case 'arbeitsvertrag':
+          initialData.employer = companyFullName;
+          break;
+        case 'mietvertrag':
+          initialData.landlord = companyFullName;
+          break;
+        case 'kaufvertrag':
+          initialData.seller = companyFullName;
+          break;
+        case 'nda':
+          initialData.partyA = companyFullName;
+          break;
+      }
+    }
+    
+    setFormData(initialData);
     setCurrentStep(2);
   };
 
@@ -543,7 +580,7 @@ export default function Generate() {
         body: JSON.stringify({ 
           type: selectedType.id, 
           formData: { ...formData, title: formData.title || selectedType.name },
-          useCompanyProfile: !!companyProfile // Automatisch Company Profile verwenden wenn vorhanden
+          useCompanyProfile: useCompanyProfile && !!companyProfile // Nur wenn aktiviert UND vorhanden
         }),
       });
 

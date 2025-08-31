@@ -212,9 +212,87 @@ Strukturiere den Vertrag professionell mit Einleitung, Paragraphen und Abschluss
     // Finalen Contract-Text bestimmen
     contractText = gptResult || contractText || "Fehler bei der Vertragsgenerierung";
     
+    // ✅ FIRMENKOPF HINZUFÜGEN wenn Company Profile vorhanden
+    if (companyProfile && contractText) {
+      let companyHeaderHTML = '';
+      
+      // Professioneller Firmenkopf erstellen
+      if (companyProfile.logoUrl) {
+        // Mit Logo
+        companyHeaderHTML = `
+<div style="border-bottom: 3px solid #0A84FF; padding-bottom: 20px; margin-bottom: 40px;">
+  <div style="display: flex; justify-content: space-between; align-items: start;">
+    <div style="flex: 1;">
+      <img src="${companyProfile.logoUrl}" alt="Firmenlogo" style="max-width: 180px; max-height: 100px; object-fit: contain;" />
+    </div>
+    <div style="text-align: right; flex: 1;">
+      <h2 style="margin: 0; color: #1d1d1f; font-size: 20px; font-weight: bold;">${companyProfile.companyName || ''}</h2>
+      ${companyProfile.legalForm ? `<p style="margin: 2px 0; color: #666; font-size: 14px;">${companyProfile.legalForm}</p>` : ''}
+      <p style="margin: 4px 0; color: #666; font-size: 12px;">${companyProfile.street || ''}</p>
+      <p style="margin: 2px 0; color: #666; font-size: 12px;">${companyProfile.postalCode || ''} ${companyProfile.city || ''}</p>
+      ${companyProfile.contactEmail ? `<p style="margin: 4px 0; color: #0A84FF; font-size: 12px;">${companyProfile.contactEmail}</p>` : ''}
+      ${companyProfile.contactPhone ? `<p style="margin: 2px 0; color: #666; font-size: 12px;">Tel: ${companyProfile.contactPhone}</p>` : ''}
+      ${companyProfile.vatId ? `<p style="margin: 8px 0 2px 0; color: #666; font-size: 11px;">USt-IdNr.: ${companyProfile.vatId}</p>` : ''}
+      ${companyProfile.tradeRegister ? `<p style="margin: 2px 0; color: #666; font-size: 11px;">${companyProfile.tradeRegister}</p>` : ''}
+    </div>
+  </div>
+</div>
+
+`;
+      } else {
+        // Ohne Logo
+        companyHeaderHTML = `
+<div style="border-bottom: 3px solid #0A84FF; padding-bottom: 20px; margin-bottom: 40px; text-align: right;">
+  <h2 style="margin: 0; color: #1d1d1f; font-size: 20px; font-weight: bold;">${companyProfile.companyName || ''}</h2>
+  ${companyProfile.legalForm ? `<p style="margin: 2px 0; color: #666; font-size: 14px;">${companyProfile.legalForm}</p>` : ''}
+  <p style="margin: 4px 0; color: #666; font-size: 12px;">${companyProfile.street || ''}</p>
+  <p style="margin: 2px 0; color: #666; font-size: 12px;">${companyProfile.postalCode || ''} ${companyProfile.city || ''}</p>
+  ${companyProfile.contactEmail ? `<p style="margin: 4px 0; color: #0A84FF; font-size: 12px;">${companyProfile.contactEmail}</p>` : ''}
+  ${companyProfile.contactPhone ? `<p style="margin: 2px 0; color: #666; font-size: 12px;">Tel: ${companyProfile.contactPhone}</p>` : ''}
+  ${companyProfile.vatId ? `<p style="margin: 8px 0 2px 0; color: #666; font-size: 11px;">USt-IdNr.: ${companyProfile.vatId}</p>` : ''}
+  ${companyProfile.tradeRegister ? `<p style="margin: 2px 0; color: #666; font-size: 11px;">${companyProfile.tradeRegister}</p>` : ''}
+</div>
+
+`;
+      }
+      
+      // Firmenkopf am Anfang des Vertrags einfügen
+      contractText = companyHeaderHTML + contractText;
+      
+      // Firma automatisch als Partei A einsetzen (je nach Vertragstyp)
+      const companyFullName = `${companyProfile.companyName}${companyProfile.legalForm ? ` (${companyProfile.legalForm})` : ''}`;
+      const companyFullAddress = `${companyProfile.street}, ${companyProfile.postalCode} ${companyProfile.city}`;
+      
+      // Intelligente Ersetzung basierend auf Vertragstyp
+      switch(type) {
+        case 'freelancer':
+          contractText = contractText.replace(/Auftraggeber:\s*\n.*?(?=\n\n)/s, 
+            `Auftraggeber:\n${companyFullName}\n${companyFullAddress}\n${companyProfile.vatId ? `USt-IdNr.: ${companyProfile.vatId}` : ''}`);
+          break;
+        case 'kaufvertrag':
+          contractText = contractText.replace(/Verkäufer:\s*\n.*?(?=\n\n)/s,
+            `Verkäufer:\n${companyFullName}\n${companyFullAddress}\n${companyProfile.vatId ? `USt-IdNr.: ${companyProfile.vatId}` : ''}`);
+          break;
+        case 'mietvertrag':
+          contractText = contractText.replace(/Vermieter:\s*\n.*?(?=\n\n)/s,
+            `Vermieter:\n${companyFullName}\n${companyFullAddress}`);
+          break;
+        case 'arbeitsvertrag':
+          contractText = contractText.replace(/Arbeitgeber:\s*\n.*?(?=\n\n)/s,
+            `Arbeitgeber:\n${companyFullName}\n${companyFullAddress}\n${companyProfile.vatId ? `USt-IdNr.: ${companyProfile.vatId}` : ''}`);
+          break;
+        case 'nda':
+          contractText = contractText.replace(/Partei A:\s*\n.*?(?=\n\n)/s,
+            `Partei A:\n${companyFullName}\n${companyFullAddress}`);
+          break;
+      }
+      
+      console.log("✅ Firmenkopf und Firmendaten in Vertrag eingefügt");
+    }
+    
     console.log(useGPTForPolishing 
-      ? "✅ Template + GPT-Veredelung abgeschlossen" 
-      : "✅ Reine GPT-Generierung abgeschlossen"
+      ? "✅ Template + GPT-Veredelung + Firmendaten abgeschlossen" 
+      : "✅ Reine GPT-Generierung + Firmendaten abgeschlossen"
     );
 
     // ✅ Analyse-Zähler hochzählen
