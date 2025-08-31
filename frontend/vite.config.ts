@@ -11,6 +11,7 @@ const securityHeaders = {
     "connect-src 'self' https://api.contract-ai.de;", // 🔁 angepasst für Rewrite-Proxys
     "font-src 'self' data:;",
     "style-src 'self' 'unsafe-inline';",
+    "img-src 'self' data: https://noah-contract-ai-documents.s3.eu-north-1.amazonaws.com;", // ✅ S3 Bilder erlauben
     "object-src 'none';"
   ].join(" "),
   "X-Content-Type-Options": "nosniff",
