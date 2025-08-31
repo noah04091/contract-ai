@@ -33,6 +33,12 @@ let usersCollection, contractsCollection;
 
 router.post("/", verifyToken, async (req, res) => {
   console.log("🚀 Generate Route aufgerufen!"); // Debug-Log
+  console.log("📊 Request Body:", {
+    type: req.body.type,
+    hasFormData: !!req.body.formData,
+    useCompanyProfile: req.body.useCompanyProfile,
+    userId: req.user?.userId
+  });
   
   const { type, formData, useCompanyProfile = false } = req.body;
 
@@ -212,7 +218,15 @@ Strukturiere den Vertrag professionell mit Einleitung, Paragraphen und Abschluss
     contractText = gptResult || contractText || "Fehler bei der Vertragsgenerierung";
     
     // ✅ FIRMENKOPF HINZUFÜGEN wenn Company Profile vorhanden UND aktiviert
+    console.log("🔍 Company Profile Check:", {
+      hasProfile: !!companyProfile,
+      hasContractText: !!contractText,
+      useCompanyProfile,
+      condition: companyProfile && contractText && (useCompanyProfile !== false)
+    });
+    
     if (companyProfile && contractText && (useCompanyProfile !== false)) {
+      console.log("✅ Füge Firmenkopf hinzu...");
       let companyHeader = '';
       
       // Professioneller Firmenkopf als formatierter Text (nicht HTML!)
@@ -232,8 +246,11 @@ ${companyProfile.tradeRegister ? companyProfile.tradeRegister : ''}
 
 `;
       
+      console.log("📝 Company Header erstellt:", companyHeader.substring(0, 200) + "...");
+      
       // Firmenkopf am Anfang des Vertrags einfügen
       contractText = companyHeader + contractText;
+      console.log("✅ Firmenkopf eingefügt! Neue Länge:", contractText.length);
       
       // Firma automatisch als Partei A einsetzen (je nach Vertragstyp)
       const companyFullName = `${companyProfile.companyName}${companyProfile.legalForm ? ` (${companyProfile.legalForm})` : ''}`;
@@ -282,6 +299,15 @@ ${companyProfile.vatId ? `USt-IdNr.: ${companyProfile.vatId}` : ''}`.trim();
       }
       
       console.log("✅ Firmenkopf und Firmendaten in Vertrag eingefügt");
+    } else {
+      console.log("❌ Firmenkopf NICHT eingefügt:", {
+        hasProfile: !!companyProfile,
+        hasContractText: !!contractText,
+        useCompanyProfile,
+        reason: !companyProfile ? "Kein Company Profile" : 
+                !contractText ? "Kein Contract Text" : 
+                useCompanyProfile === false ? "Company Profile deaktiviert" : "Unbekannt"
+      });
     }
     
     console.log(useGPTForPolishing 
