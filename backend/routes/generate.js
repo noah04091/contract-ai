@@ -195,22 +195,30 @@ Strukturiere den Vertrag professionell mit Einleitung, Paragraphen und Abschluss
           role: "system", 
           content: `Du bist ein erfahrener Fachanwalt für Vertragsrecht. Erstelle hochprofessionelle, rechtssichere Verträge nach deutschem Recht.
 
-FORMATIERUNG (WICHTIG - NUR HTML):
-- Verwende <h2 style="font-size: 16px; color: #1f2937; margin: 25px 0 15px 0; font-weight: 600;">§ 1 Überschrift</h2> für Paragraphen
-- Verwende <p style="margin: 10px 0; line-height: 1.6; color: #374151;"> für Absätze
-- Verwende <strong> für wichtige Begriffe und Parteien
-- Verwende <div style="margin: 20px 0; padding: 15px; background: #f9fafb; border-left: 3px solid #3b82f6;"> für wichtige Klauseln
+LAYOUT-CONTAINER:
+- Beginne mit: <div style="padding: 0 50px; max-width: 650px; margin: 0 auto; font-family: 'Helvetica Neue', 'Segoe UI', Arial, sans-serif;">
+- Beende mit: </div>
+
+FORMATIERUNG INNERHALB DES CONTAINERS:
+- Paragraphen: <h2 style="font-size: 16px; color: #222; margin: 25px 0 10px 0; font-weight: 600;">§ 1 Überschrift</h2>
+- Fließtext: <p style="margin: 12px 0; line-height: 1.5; color: #444; font-size: 13px;">
+- Wichtige Begriffe: <strong style="color: #222;">
+- Beträge und Daten: <strong style="color: #222;">
+
+VERTRAGSPARTEIEN-BOXEN:
+Erstelle für Verkäufer/Käufer je eine Box:
+<div style="background-color: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; padding: 16px; margin: 25px 0;">
+<div style="font-size: 14px; font-weight: 600; color: #222; margin-bottom: 4px;">Verkäufer (Partei A)</div>
+<div style="font-size: 13px; color: #333;">[Automatisch gefüllt]</div>
+</div>
 
 STRUKTUR:
-1. Beginne direkt mit "Zwischen" (Vertragsparteien)
-2. Nutze klare Paragraphen-Struktur (§ 1, § 2, etc.)
-3. Füge professionelle Salvatorische Klausel am Ende ein
-4. KEINE Unterschriftszeilen (werden automatisch hinzugefügt)
+1. Beginne mit Vertragsparteien-Boxen
+2. Dann Paragraphen-Struktur (§ 1, § 2, etc.)
+3. KEINE Unterschriftszeilen (werden automatisch hinzugefügt)
+4. Salvatorische Klausel am Ende
 
-SPRACHE:
-- Präzise juristische Formulierungen
-- Vollständige, eindeutige Sätze
-- Vermeide Abkürzungen außer "bzw.", "z.B.", "usw."`
+WICHTIG: Alles in einem Container mit max-width: 650px!`
         },
         { role: "user", content: prompt }
       ],
@@ -271,34 +279,35 @@ SPRACHE:
         }
       }
       
-      // ✅ ULTRA-PROFESSIONELLER ANWALTS-HEADER
+      // ✅ APPLE-STYLE MINIMALIST HEADER
       const logoSection = finalLogoUrl 
-        ? `<img src="${finalLogoUrl}" alt="Logo" style="max-width: 90px; max-height: 45px; object-fit: contain;" />`
+        ? `<img src="${finalLogoUrl}" alt="Logo" style="max-height: 80px; width: auto; object-fit: contain;" />`
         : '';
         
       const companyInfoSection = `
-        <div style="text-align: right; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-          <div style="font-size: 20px; font-weight: 700; color: #1a1a1a; margin-bottom: 6px; letter-spacing: -0.5px;">
+        <div style="text-align: right; font-family: 'Helvetica Neue', 'Segoe UI', Arial, sans-serif; line-height: 1.3;">
+          <div style="font-size: 16px; font-weight: 600; color: #222; margin-bottom: 4px;">
             ${companyProfile.companyName || ''}
           </div>
-          <div style="color: #6b7280; font-size: 11px; line-height: 1.4;">
-            ${companyProfile.legalForm ? `<span style="font-weight: 500;">${companyProfile.legalForm}</span> · ` : ''}
-            ${companyProfile.street || ''} · 
+          <div style="color: #666; font-size: 13px;">
+            ${companyProfile.street || ''}<br>
             ${companyProfile.postalCode || ''} ${companyProfile.city || ''}<br>
-            ${companyProfile.contactEmail ? `${companyProfile.contactEmail} · ` : ''}
-            ${companyProfile.contactPhone ? `${companyProfile.contactPhone}` : ''}<br>
-            ${companyProfile.vatId ? `<span style="font-size: 10px;">USt-IdNr.: ${companyProfile.vatId}</span>` : ''}
-            ${companyProfile.tradeRegister ? ` · <span style="font-size: 10px;">${companyProfile.tradeRegister}</span>` : ''}
+            ${companyProfile.contactEmail || ''}<br>
+            ${companyProfile.contactPhone ? `Tel: ${companyProfile.contactPhone}` : ''}<br>
+            ${companyProfile.vatId ? `USt-IdNr.: ${companyProfile.vatId}` : ''}
+            ${companyProfile.tradeRegister ? `<br>${companyProfile.tradeRegister}` : ''}
           </div>
         </div>`;
 
       companyHeader = `
-<div style="display: flex; justify-content: space-between; align-items: center; padding: 15px 0 20px 0; margin-bottom: 35px; border-bottom: 1px solid #e5e7eb; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-  <div style="flex: 0 0 100px;">
-    ${logoSection}
-  </div>
-  <div style="flex: 1; margin-left: 20px;">
-    ${companyInfoSection}
+<div style="padding: 40px 50px 0 50px; max-width: 650px; margin: 0 auto;">
+  <div style="display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 15px; margin-bottom: 20px; border-bottom: 2px solid #1A73E8; font-family: 'Helvetica Neue', 'Segoe UI', Arial, sans-serif;">
+    <div style="flex: 0 0 auto; margin-top: 20px;">
+      ${logoSection}
+    </div>
+    <div style="flex: 0 0 auto;">
+      ${companyInfoSection}
+    </div>
   </div>
 </div>
 
@@ -319,43 +328,47 @@ SPRACHE:
       });
       
       const contractTitle = `
-<div style="text-align: center; margin-bottom: 40px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-  <h1 style="font-size: 24px; font-weight: 700; color: #111827; margin: 0 0 8px 0; letter-spacing: -0.5px;">
+<div style="padding: 0 50px; max-width: 650px; margin: 0 auto; font-family: 'Helvetica Neue', 'Segoe UI', Arial, sans-serif;">
+  <h1 style="font-size: 24px; font-weight: 600; color: #222; margin: 25px 0 10px 0; text-align: left;">
     ${formData.title || getContractTitle(type)}
   </h1>
-  <p style="color: #6b7280; font-size: 13px; margin: 0 0 4px 0;">
-    Erstellt am ${today} mit Contract AI
+  <p style="color: #666; font-size: 13px; margin: 0 0 10px 0;">
+    Erstellt am ${today}
   </p>
-  <p style="color: #9ca3af; font-size: 12px; font-style: italic; margin: 0;">
-    Dieser Vertrag wurde automatisch generiert und kann an Ihre individuellen Bedürfnisse angepasst werden.
+  <p style="color: #777; font-size: 12px; font-style: italic; margin: 0 0 30px 0;">
+    Dieser Vertrag wurde automatisch mit Contract AI erstellt und kann individuell angepasst werden.
   </p>
 </div>`;
 
-      // ✅ PROFESSIONELLER UNTERSCHRIFTSBEREICH
+      // ✅ ELEGANTE UNTERSCHRIFTS-BOX
       const signatureSection = `
-<div style="margin-top: 60px; padding-top: 40px; border-top: 1px solid #e5e7eb; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-  <div style="display: flex; justify-content: space-between; margin-bottom: 80px;">
-    <div style="flex: 1; max-width: 45%;">
-      <p style="color: #6b7280; font-size: 12px; margin-bottom: 50px;">Ort, Datum:</p>
-      <div style="border-bottom: 1px solid #d1d5db; margin-bottom: 8px;"></div>
-      <p style="color: #4b5563; font-size: 13px; margin: 0;">Unterschrift ${getPartyLabel(type, 'company')}</p>
-      <p style="color: #6b7280; font-size: 11px; margin: 4px 0 0 0;">(${companyProfile.companyName})</p>
-    </div>
-    <div style="flex: 1; max-width: 45%;">
-      <p style="color: #6b7280; font-size: 12px; margin-bottom: 50px;">Ort, Datum:</p>
-      <div style="border-bottom: 1px solid #d1d5db; margin-bottom: 8px;"></div>
-      <p style="color: #4b5563; font-size: 13px; margin: 0;">Unterschrift ${getPartyLabel(type, 'counterparty')}</p>
-      <p style="color: #6b7280; font-size: 11px; margin: 4px 0 0 0;">(${formData.buyer || formData.tenant || formData.employee || formData.partyB || 'Vertragspartner'})</p>
+<div style="padding: 0 50px; max-width: 650px; margin: 40px auto 0 auto;">
+  <div style="background-color: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; padding: 20px; font-family: 'Helvetica Neue', 'Segoe UI', Arial, sans-serif;">
+    <div style="display: flex; justify-content: space-between; margin-bottom: 60px;">
+      <div style="flex: 1; margin-right: 30px;">
+        <p style="color: #555; font-size: 13px; margin: 10px 0;">Ort, Datum: ____________________________</p>
+        <p style="color: #555; font-size: 13px; margin: 40px 0 0 0;">Unterschrift ${getPartyLabel(type, 'company')}</p>
+        <div style="border-bottom: 1px solid #ccc; margin: 5px 0 8px 0; width: 250px;"></div>
+        <p style="color: #666; font-size: 11px; margin: 0;">(${companyProfile.companyName})</p>
+      </div>
+      <div style="flex: 1; margin-left: 30px;">
+        <p style="color: #555; font-size: 13px; margin: 10px 0;">Ort, Datum: ____________________________</p>
+        <p style="color: #555; font-size: 13px; margin: 40px 0 0 0;">Unterschrift ${getPartyLabel(type, 'counterparty')}</p>
+        <div style="border-bottom: 1px solid #ccc; margin: 5px 0 8px 0; width: 250px;"></div>
+        <p style="color: #666; font-size: 11px; margin: 0;">(${formData.buyer || formData.tenant || formData.employee || formData.partyB || 'Vertragspartner'})</p>
+      </div>
     </div>
   </div>
 </div>`;
 
-      // ✅ CONTRACT AI FOOTER
+      // ✅ MINIMALIST FOOTER
       const footer = `
-<div style="text-align: center; margin-top: 60px; padding-top: 20px; border-top: 1px solid #f3f4f6; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-  <p style="color: #9ca3af; font-size: 11px; margin: 0;">
-    Erstellt mit <span style="color: #3b82f6; font-weight: 500;">Contract AI</span> · www.contract-ai.de
-  </p>
+<div style="padding: 0 50px; max-width: 650px; margin: 0 auto;">
+  <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #E5E7EB;">
+    <p style="color: #888; font-size: 11px; margin: 0; font-family: 'Helvetica Neue', 'Segoe UI', Arial, sans-serif;">
+      Erstellt mit Contract AI · www.contract-ai.de
+    </p>
+  </div>
 </div>`;
       
       // Vertrag zusammensetzen
