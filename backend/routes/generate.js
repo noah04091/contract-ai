@@ -193,32 +193,41 @@ Strukturiere den Vertrag professionell mit Einleitung, Paragraphen und Abschluss
       messages: [
         { 
           role: "system", 
-          content: `Du bist ein erfahrener Fachanwalt für Vertragsrecht. Erstelle hochprofessionelle, rechtssichere Verträge nach deutschem Recht.
+          content: `Du bist ein renommierter Fachanwalt für Vertragsrecht. Erstelle hochprofessionelle Verträge nach deutschem Recht auf Premium-Niveau.
 
-LAYOUT-CONTAINER:
-- Beginne mit: <div style="padding: 0 50px; max-width: 650px; margin: 0 auto; font-family: 'Helvetica Neue', 'Segoe UI', Arial, sans-serif;">
-- Beende mit: </div>
+PREMIUM LAYOUT:
+- Container: <div style="padding: 0 50px; max-width: 640px; margin: 0 auto; font-family: 'Helvetica Neue', 'Segoe UI', Arial, sans-serif;">
+- Schließe mit: </div>
 
-FORMATIERUNG INNERHALB DES CONTAINERS:
-- Paragraphen: <h2 style="font-size: 16px; color: #222; margin: 25px 0 10px 0; font-weight: 600;">§ 1 Überschrift</h2>
-- Fließtext: <p style="margin: 12px 0; line-height: 1.5; color: #444; font-size: 13px;">
-- Wichtige Begriffe: <strong style="color: #222;">
-- Beträge und Daten: <strong style="color: #222;">
-
-VERTRAGSPARTEIEN-BOXEN:
-Erstelle für Verkäufer/Käufer je eine Box:
-<div style="background-color: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; padding: 16px; margin: 25px 0;">
-<div style="font-size: 14px; font-weight: 600; color: #222; margin-bottom: 4px;">Verkäufer (Partei A)</div>
-<div style="font-size: 13px; color: #333;">[Automatisch gefüllt]</div>
+VERTRAGSPARTEIEN - ELEGANTE BOXEN NEBENEINANDER:
+<div style="display: flex; gap: 20px; margin: 30px 0;">
+  <div style="flex: 1; background-color: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; padding: 15px;">
+    <div style="font-size: 14px; font-weight: 600; color: #222; margin-bottom: 4px;">Verkäufer (Partei A)</div>
+    <div style="font-size: 13px; color: #333; line-height: 1.4;">
+      [Wird automatisch gefüllt]
+    </div>
+  </div>
+  <div style="flex: 1; background-color: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; padding: 15px;">
+    <div style="font-size: 14px; font-weight: 600; color: #222; margin-bottom: 4px;">Käufer (Partei B)</div>
+    <div style="font-size: 13px; color: #333; line-height: 1.4;">
+      [Eingabedaten verwenden]
+    </div>
+  </div>
 </div>
 
-STRUKTUR:
-1. Beginne mit Vertragsparteien-Boxen
-2. Dann Paragraphen-Struktur (§ 1, § 2, etc.)
-3. KEINE Unterschriftszeilen (werden automatisch hinzugefügt)
-4. Salvatorische Klausel am Ende
+PARAGRAPHEN - PREMIUM FORMATIERUNG:
+- Überschriften: <h2 style="font-size: 16px; color: #222; margin: 25px 0 8px 0; font-weight: 600;">§ 1 Überschrift</h2>
+- Fließtext: <p style="margin: 12px 0; line-height: 1.5; color: #333; font-size: 13px;">
+- Beträge/Daten: <strong style="color: #222;">15.000,00 €</strong>
+- Namen: <strong style="color: #222;">
 
-WICHTIG: Alles in einem Container mit max-width: 650px!`
+STRUKTUR:
+1. Beginne mit den zwei Vertragsparteien-Boxen nebeneinander
+2. Dann § 1, § 2, § 3, etc.
+3. KEINE Unterschriften (werden separat hinzugefügt)
+4. Professionelle Salvatorische Klausel
+
+PREMIUM-QUALITÄT: Keine Hinweise auf automatische Generierung, nur höchste Anwaltsqualität!`
         },
         { role: "user", content: prompt }
       ],
@@ -279,30 +288,29 @@ WICHTIG: Alles in einem Container mit max-width: 650px!`
         }
       }
       
-      // ✅ APPLE-STYLE MINIMALIST HEADER
+      // ✅ PREMIUM HEADER - KOMPAKT & HOCH PLATZIERT
       const logoSection = finalLogoUrl 
-        ? `<img src="${finalLogoUrl}" alt="Logo" style="max-height: 80px; width: auto; object-fit: contain;" />`
+        ? `<img src="${finalLogoUrl}" alt="Logo" style="max-height: 65px; width: auto; object-fit: contain;" />`
         : '';
         
       const companyInfoSection = `
-        <div style="text-align: right; font-family: 'Helvetica Neue', 'Segoe UI', Arial, sans-serif; line-height: 1.3;">
-          <div style="font-size: 16px; font-weight: 600; color: #222; margin-bottom: 4px;">
+        <div style="text-align: right; font-family: 'Helvetica Neue', 'Segoe UI', Arial, sans-serif; line-height: 1.2;">
+          <div style="font-size: 16px; font-weight: 600; color: #222; margin-bottom: 3px;">
             ${companyProfile.companyName || ''}
           </div>
-          <div style="color: #666; font-size: 13px;">
+          <div style="color: #555; font-size: 13px; line-height: 16px;">
             ${companyProfile.street || ''}<br>
             ${companyProfile.postalCode || ''} ${companyProfile.city || ''}<br>
             ${companyProfile.contactEmail || ''}<br>
             ${companyProfile.contactPhone ? `Tel: ${companyProfile.contactPhone}` : ''}<br>
             ${companyProfile.vatId ? `USt-IdNr.: ${companyProfile.vatId}` : ''}
-            ${companyProfile.tradeRegister ? `<br>${companyProfile.tradeRegister}` : ''}
           </div>
         </div>`;
 
       companyHeader = `
-<div style="padding: 40px 50px 0 50px; max-width: 650px; margin: 0 auto;">
-  <div style="display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 15px; margin-bottom: 20px; border-bottom: 2px solid #1A73E8; font-family: 'Helvetica Neue', 'Segoe UI', Arial, sans-serif;">
-    <div style="flex: 0 0 auto; margin-top: 20px;">
+<div style="padding: 60px 50px 0 50px; max-width: 640px; margin: 0 auto;">
+  <div style="display: flex; justify-content: space-between; align-items: flex-start; padding-top: 10px; padding-bottom: 15px; margin-bottom: 25px; border-bottom: 2px solid #1A73E8; font-family: 'Helvetica Neue', 'Segoe UI', Arial, sans-serif;">
+    <div style="flex: 0 0 auto;">
       ${logoSection}
     </div>
     <div style="flex: 0 0 auto;">
@@ -327,52 +335,44 @@ WICHTIG: Alles in einem Container mit max-width: 650px!`
         year: 'numeric' 
       });
       
+      // ✅ ZENTRIERTER PREMIUM TITEL - OHNE BRANDING
       const contractTitle = `
-<div style="padding: 0 50px; max-width: 650px; margin: 0 auto; font-family: 'Helvetica Neue', 'Segoe UI', Arial, sans-serif;">
-  <h1 style="font-size: 24px; font-weight: 600; color: #222; margin: 25px 0 10px 0; text-align: left;">
-    ${formData.title || getContractTitle(type)}
-  </h1>
-  <p style="color: #666; font-size: 13px; margin: 0 0 10px 0;">
-    Erstellt am ${today}
-  </p>
-  <p style="color: #777; font-size: 12px; font-style: italic; margin: 0 0 30px 0;">
-    Dieser Vertrag wurde automatisch mit Contract AI erstellt und kann individuell angepasst werden.
-  </p>
+<div style="padding: 0 50px; max-width: 640px; margin: 0 auto; font-family: 'Helvetica Neue', 'Segoe UI', Arial, sans-serif;">
+  <div style="text-align: center; margin-bottom: 30px;">
+    <h1 style="font-size: 24px; font-weight: 600; color: #222; margin: 0 0 10px 0;">
+      ${formData.title || getContractTitle(type)}
+    </h1>
+    <p style="color: #666; font-size: 13px; margin: 0;">
+      Erstellt am ${today}
+    </p>
+  </div>
 </div>`;
 
-      // ✅ ELEGANTE UNTERSCHRIFTS-BOX
+      // ✅ PREMIUM UNTERSCHRIFTSBLOCK - SYMMETRISCH & EDEL
       const signatureSection = `
-<div style="padding: 0 50px; max-width: 650px; margin: 40px auto 0 auto;">
+<div style="padding: 0 50px; max-width: 640px; margin: 40px auto 0 auto;">
   <div style="background-color: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; padding: 20px; font-family: 'Helvetica Neue', 'Segoe UI', Arial, sans-serif;">
-    <div style="display: flex; justify-content: space-between; margin-bottom: 60px;">
-      <div style="flex: 1; margin-right: 30px;">
-        <p style="color: #555; font-size: 13px; margin: 10px 0;">Ort, Datum: ____________________________</p>
-        <p style="color: #555; font-size: 13px; margin: 40px 0 0 0;">Unterschrift ${getPartyLabel(type, 'company')}</p>
-        <div style="border-bottom: 1px solid #ccc; margin: 5px 0 8px 0; width: 250px;"></div>
+    <div style="display: flex; justify-content: space-between; gap: 40px;">
+      <div style="flex: 1;">
+        <p style="color: #333; font-size: 13px; margin: 0 0 40px 0;">Ort, Datum: ______________________</p>
+        <p style="color: #333; font-size: 13px; margin: 0 0 5px 0;">Unterschrift ${getPartyLabel(type, 'company')}</p>
+        <div style="border-bottom: 1px solid #333; margin: 0 0 8px 0; width: 100%;"></div>
         <p style="color: #666; font-size: 11px; margin: 0;">(${companyProfile.companyName})</p>
       </div>
-      <div style="flex: 1; margin-left: 30px;">
-        <p style="color: #555; font-size: 13px; margin: 10px 0;">Ort, Datum: ____________________________</p>
-        <p style="color: #555; font-size: 13px; margin: 40px 0 0 0;">Unterschrift ${getPartyLabel(type, 'counterparty')}</p>
-        <div style="border-bottom: 1px solid #ccc; margin: 5px 0 8px 0; width: 250px;"></div>
+      <div style="flex: 1;">
+        <p style="color: #333; font-size: 13px; margin: 0 0 40px 0;">Ort, Datum: ______________________</p>
+        <p style="color: #333; font-size: 13px; margin: 0 0 5px 0;">Unterschrift ${getPartyLabel(type, 'counterparty')}</p>
+        <div style="border-bottom: 1px solid #333; margin: 0 0 8px 0; width: 100%;"></div>
         <p style="color: #666; font-size: 11px; margin: 0;">(${formData.buyer || formData.tenant || formData.employee || formData.partyB || 'Vertragspartner'})</p>
       </div>
     </div>
   </div>
 </div>`;
 
-      // ✅ MINIMALIST FOOTER
-      const footer = `
-<div style="padding: 0 50px; max-width: 650px; margin: 0 auto;">
-  <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #E5E7EB;">
-    <p style="color: #888; font-size: 11px; margin: 0; font-family: 'Helvetica Neue', 'Segoe UI', Arial, sans-serif;">
-      Erstellt mit Contract AI · www.contract-ai.de
-    </p>
-  </div>
-</div>`;
+      // ✅ KEIN FOOTER - PREMIUM CLEAN
       
-      // Vertrag zusammensetzen
-      contractText = companyHeader + contractTitle + contractText + signatureSection + footer;
+      // Vertrag zusammensetzen - OHNE FOOTER
+      contractText = companyHeader + contractTitle + contractText + signatureSection;
       console.log("✅ Professioneller Vertrag komplett erstellt! Länge:", contractText.length);
       
       // Helper-Funktionen
