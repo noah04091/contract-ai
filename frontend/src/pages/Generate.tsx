@@ -542,7 +542,8 @@ export default function Generate() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           type: selectedType.id, 
-          formData: { ...formData, title: formData.title || selectedType.name }
+          formData: { ...formData, title: formData.title || selectedType.name },
+          useCompanyProfile: !!companyProfile // Automatisch Company Profile verwenden wenn vorhanden
         }),
       });
 

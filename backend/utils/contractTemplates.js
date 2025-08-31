@@ -14,7 +14,27 @@ const contractTemplates = {
       'parties', 'services', 'compensation', 'duration', 'termination', 
       'liability', 'intellectual_property', 'confidentiality', 'governing_law'
     ],
-    template: `# FREELANCER-DIENSTLEISTUNGSVERTRAG
+    template: `{{#if companyHeader}}
+<div style="margin-bottom: 40px; padding-bottom: 20px; border-bottom: 3px solid #0A84FF;">
+  {{#if companyHeader.logoUrl}}
+  <div style="text-align: center; margin-bottom: 20px;">
+    <img src="{{companyHeader.logoUrl}}" alt="Firmenlogo" style="max-width: 180px; max-height: 100px; object-fit: contain;" />
+  </div>
+  {{/if}}
+  <div style="text-align: right;">
+    <h2 style="margin: 0; color: #1d1d1f; font-size: 18px; font-weight: bold;">{{companyHeader.companyName}}</h2>
+    {{#if companyHeader.legalForm}}<p style="margin: 2px 0; color: #666; font-size: 12px;">{{companyHeader.legalForm}}</p>{{/if}}
+    <p style="margin: 2px 0; color: #666; font-size: 11px;">{{companyHeader.street}}</p>
+    <p style="margin: 2px 0; color: #666; font-size: 11px;">{{companyHeader.postalCode}} {{companyHeader.city}}</p>
+    {{#if companyHeader.contactEmail}}<p style="margin: 2px 0; color: #0A84FF; font-size: 11px;">{{companyHeader.contactEmail}}</p>{{/if}}
+    {{#if companyHeader.contactPhone}}<p style="margin: 2px 0; color: #666; font-size: 11px;">Tel: {{companyHeader.contactPhone}}</p>{{/if}}
+    {{#if companyHeader.vatId}}<p style="margin: 5px 0 2px 0; color: #666; font-size: 10px;">USt-IdNr.: {{companyHeader.vatId}}</p>{{/if}}
+    {{#if companyHeader.tradeRegister}}<p style="margin: 2px 0; color: #666; font-size: 10px;">{{companyHeader.tradeRegister}}</p>{{/if}}
+  </div>
+</div>
+{{/if}}
+
+# FREELANCER-DIENSTLEISTUNGSVERTRAG
 
 ## § 1 VERTRAGSPARTEIEN
 
@@ -23,6 +43,8 @@ const contractTemplates = {
 {{partyA.street}}
 {{partyA.postalCode}} {{partyA.city}}, {{partyA.country}}
 {{#if partyA.vatId}}USt-IdNr.: {{partyA.vatId}}{{/if}}
+{{#if partyA.contactEmail}}E-Mail: {{partyA.contactEmail}}{{/if}}
+{{#if partyA.contactPhone}}Tel: {{partyA.contactPhone}}{{/if}}
 
 **Auftragnehmer (Freelancer):**
 {{partyB.name}}
@@ -106,13 +128,34 @@ _____________________
   nda: {
     jurisdiction: 'DE',
     requiredClauses: ['parties', 'purpose', 'confidentiality', 'duration', 'governing_law'],
-    template: `# GEHEIMHALTUNGSVEREINBARUNG (NDA)
+    template: `{{#if companyHeader}}
+<div style="margin-bottom: 40px; padding-bottom: 20px; border-bottom: 3px solid #0A84FF;">
+  {{#if companyHeader.logoUrl}}
+  <div style="text-align: center; margin-bottom: 20px;">
+    <img src="{{companyHeader.logoUrl}}" alt="Firmenlogo" style="max-width: 180px; max-height: 100px; object-fit: contain;" />
+  </div>
+  {{/if}}
+  <div style="text-align: right;">
+    <h2 style="margin: 0; color: #1d1d1f; font-size: 18px; font-weight: bold;">{{companyHeader.companyName}}</h2>
+    {{#if companyHeader.legalForm}}<p style="margin: 2px 0; color: #666; font-size: 12px;">{{companyHeader.legalForm}}</p>{{/if}}
+    <p style="margin: 2px 0; color: #666; font-size: 11px;">{{companyHeader.street}}</p>
+    <p style="margin: 2px 0; color: #666; font-size: 11px;">{{companyHeader.postalCode}} {{companyHeader.city}}</p>
+    {{#if companyHeader.contactEmail}}<p style="margin: 2px 0; color: #0A84FF; font-size: 11px;">{{companyHeader.contactEmail}}</p>{{/if}}
+    {{#if companyHeader.contactPhone}}<p style="margin: 2px 0; color: #666; font-size: 11px;">Tel: {{companyHeader.contactPhone}}</p>{{/if}}
+    {{#if companyHeader.vatId}}<p style="margin: 5px 0 2px 0; color: #666; font-size: 10px;">USt-IdNr.: {{companyHeader.vatId}}</p>{{/if}}
+    {{#if companyHeader.tradeRegister}}<p style="margin: 2px 0; color: #666; font-size: 10px;">{{companyHeader.tradeRegister}}</p>{{/if}}
+  </div>
+</div>
+{{/if}}
+
+# GEHEIMHALTUNGSVEREINBARUNG (NDA)
 
 ## § 1 VERTRAGSPARTEIEN
 
 **Partei A:**
 {{partyA.name}}
 {{partyA.address}}
+{{#if partyA.contactEmail}}E-Mail: {{partyA.contactEmail}}{{/if}}
 
 **Partei B:**
 {{partyB.name}}
@@ -247,6 +290,23 @@ function prepareTemplateData(contractType, formData, companyProfile = null) {
     }
   };
 
+  // Company Header für professionelle Darstellung
+  if (companyProfile) {
+    baseData.companyHeader = {
+      companyName: companyProfile.companyName,
+      legalForm: companyProfile.legalForm,
+      street: companyProfile.street,
+      postalCode: companyProfile.postalCode,
+      city: companyProfile.city,
+      country: companyProfile.country,
+      vatId: companyProfile.vatId,
+      tradeRegister: companyProfile.tradeRegister,
+      contactEmail: companyProfile.contactEmail,
+      contactPhone: companyProfile.contactPhone,
+      logoUrl: companyProfile.logoUrl
+    };
+  }
+
   // Mapping je nach Vertragstyp
   switch (contractType) {
     case 'freelancer':
@@ -259,7 +319,10 @@ function prepareTemplateData(contractType, formData, companyProfile = null) {
           postalCode: companyProfile?.postalCode,
           city: companyProfile?.city,
           country: companyProfile?.country || 'Deutschland',
-          vatId: companyProfile?.vatId
+          vatId: companyProfile?.vatId,
+          contactEmail: companyProfile?.contactEmail,
+          contactPhone: companyProfile?.contactPhone,
+          tradeRegister: companyProfile?.tradeRegister
         },
         partyB: {
           name: formData.nameFreelancer,
@@ -297,7 +360,8 @@ function prepareTemplateData(contractType, formData, companyProfile = null) {
         ...baseData,
         partyA: {
           name: formData.partyA || companyProfile?.companyName,
-          address: companyProfile ? `${companyProfile.street}, ${companyProfile.postalCode} ${companyProfile.city}` : formData.partyAAddress
+          address: companyProfile ? `${companyProfile.street}, ${companyProfile.postalCode} ${companyProfile.city}` : formData.partyAAddress,
+          contactEmail: companyProfile?.contactEmail
         },
         partyB: {
           name: formData.partyB,
