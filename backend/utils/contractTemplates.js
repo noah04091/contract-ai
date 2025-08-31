@@ -189,6 +189,286 @@ _____________________
 
 _____________________  
 {{partyB.name}}`
+  },
+
+  kaufvertrag: {
+    jurisdiction: 'DE',
+    requiredClauses: ['parties', 'item', 'price', 'delivery', 'governing_law'],
+    template: `{{#if companyHeader}}
+<div style="margin-bottom: 40px; padding-bottom: 20px; border-bottom: 3px solid #0A84FF;">
+  {{#if companyHeader.logoUrl}}
+  <div style="text-align: center; margin-bottom: 20px;">
+    <img src="{{companyHeader.logoUrl}}" alt="Firmenlogo" style="max-width: 180px; max-height: 100px; object-fit: contain;" />
+  </div>
+  {{/if}}
+  <div style="text-align: right;">
+    <h2 style="margin: 0; color: #1d1d1f; font-size: 18px; font-weight: bold;">{{companyHeader.companyName}}</h2>
+    {{#if companyHeader.legalForm}}<p style="margin: 2px 0; color: #666; font-size: 12px;">{{companyHeader.legalForm}}</p>{{/if}}
+    <p style="margin: 2px 0; color: #666; font-size: 11px;">{{companyHeader.street}}</p>
+    <p style="margin: 2px 0; color: #666; font-size: 11px;">{{companyHeader.postalCode}} {{companyHeader.city}}</p>
+    {{#if companyHeader.contactEmail}}<p style="margin: 2px 0; color: #0A84FF; font-size: 11px;">{{companyHeader.contactEmail}}</p>{{/if}}
+    {{#if companyHeader.contactPhone}}<p style="margin: 2px 0; color: #666; font-size: 11px;">Tel: {{companyHeader.contactPhone}}</p>{{/if}}
+    {{#if companyHeader.vatId}}<p style="margin: 5px 0 2px 0; color: #666; font-size: 10px;">USt-IdNr.: {{companyHeader.vatId}}</p>{{/if}}
+    {{#if companyHeader.tradeRegister}}<p style="margin: 2px 0; color: #666; font-size: 10px;">{{companyHeader.tradeRegister}}</p>{{/if}}
+  </div>
+</div>
+{{/if}}
+
+# KAUFVERTRAG
+
+## § 1 VERTRAGSPARTEIEN
+
+**Verkäufer:**
+{{seller.name}}{{#if seller.legalForm}} ({{seller.legalForm}}){{/if}}
+{{seller.street}}
+{{seller.postalCode}} {{seller.city}}
+{{#if seller.vatId}}USt-IdNr.: {{seller.vatId}}{{/if}}
+{{#if seller.contactEmail}}E-Mail: {{seller.contactEmail}}{{/if}}
+{{#if seller.contactPhone}}Tel: {{seller.contactPhone}}{{/if}}
+
+**Käufer:**
+{{buyer.name}}
+{{buyer.address}}
+
+## § 2 KAUFGEGENSTAND
+
+Der Verkäufer verkauft und der Käufer kauft folgenden Gegenstand:
+
+{{item.description}}
+
+## § 3 KAUFPREIS
+
+Der Kaufpreis beträgt: **{{price}}**
+
+Die Zahlung erfolgt {{paymentTerms}}.
+
+## § 4 LIEFERUNG UND GEFAHRÜBERGANG
+
+**Liefertermin:** {{deliveryDate}}
+**Lieferort:** {{deliveryLocation}}
+
+Die Gefahr geht mit Übergabe der Ware auf den Käufer über.
+
+## § 5 GEWÄHRLEISTUNG
+
+Es gelten die gesetzlichen Gewährleistungsbestimmungen.
+
+## § 6 EIGENTUMSVORBEHALT
+
+Die Ware bleibt bis zur vollständigen Bezahlung Eigentum des Verkäufers.
+
+## § 7 SCHLUSSBESTIMMUNGEN
+
+**Anwendbares Recht:** Deutsches Recht
+**Gerichtsstand:** {{jurisdiction}}
+
+Änderungen und Ergänzungen dieses Vertrages bedürfen der Schriftform.
+
+---
+
+**Ort, Datum:** {{contract.place}}, {{contract.date}}
+
+**Unterschriften:**
+
+_____________________  
+{{seller.name}}  
+(Verkäufer)
+
+_____________________  
+{{buyer.name}}  
+(Käufer)`
+  },
+
+  mietvertrag: {
+    jurisdiction: 'DE', 
+    requiredClauses: ['parties', 'property', 'rent', 'duration', 'governing_law'],
+    template: `{{#if companyHeader}}
+<div style="margin-bottom: 40px; padding-bottom: 20px; border-bottom: 3px solid #0A84FF;">
+  {{#if companyHeader.logoUrl}}
+  <div style="text-align: center; margin-bottom: 20px;">
+    <img src="{{companyHeader.logoUrl}}" alt="Firmenlogo" style="max-width: 180px; max-height: 100px; object-fit: contain;" />
+  </div>
+  {{/if}}
+  <div style="text-align: right;">
+    <h2 style="margin: 0; color: #1d1d1f; font-size: 18px; font-weight: bold;">{{companyHeader.companyName}}</h2>
+    {{#if companyHeader.legalForm}}<p style="margin: 2px 0; color: #666; font-size: 12px;">{{companyHeader.legalForm}}</p>{{/if}}
+    <p style="margin: 2px 0; color: #666; font-size: 11px;">{{companyHeader.street}}</p>
+    <p style="margin: 2px 0; color: #666; font-size: 11px;">{{companyHeader.postalCode}} {{companyHeader.city}}</p>
+    {{#if companyHeader.contactEmail}}<p style="margin: 2px 0; color: #0A84FF; font-size: 11px;">{{companyHeader.contactEmail}}</p>{{/if}}
+    {{#if companyHeader.contactPhone}}<p style="margin: 2px 0; color: #666; font-size: 11px;">Tel: {{companyHeader.contactPhone}}</p>{{/if}}
+    {{#if companyHeader.vatId}}<p style="margin: 5px 0 2px 0; color: #666; font-size: 10px;">USt-IdNr.: {{companyHeader.vatId}}</p>{{/if}}
+    {{#if companyHeader.tradeRegister}}<p style="margin: 2px 0; color: #666; font-size: 10px;">{{companyHeader.tradeRegister}}</p>{{/if}}
+  </div>
+</div>
+{{/if}}
+
+# MIETVERTRAG
+
+## § 1 VERTRAGSPARTEIEN
+
+**Vermieter:**
+{{landlord.name}}{{#if landlord.legalForm}} ({{landlord.legalForm}}){{/if}}
+{{landlord.street}}
+{{landlord.postalCode}} {{landlord.city}}
+{{#if landlord.contactEmail}}E-Mail: {{landlord.contactEmail}}{{/if}}
+{{#if landlord.contactPhone}}Tel: {{landlord.contactPhone}}{{/if}}
+
+**Mieter:**
+{{tenant.name}}
+{{tenant.address}}
+
+## § 2 MIETGEGENSTAND
+
+Vermietet wird folgende Immobilie:
+
+{{property.address}}
+
+{{#if property.description}}
+Beschreibung: {{property.description}}
+{{/if}}
+
+## § 3 MIETZEIT
+
+Das Mietverhältnis beginnt am **{{startDate}}** und läuft auf unbestimmte Zeit.
+
+## § 4 MIETZINS
+
+**Kaltmiete:** {{baseRent}}
+**Nebenkosten (Vorauszahlung):** {{extraCosts}}
+**Gesamtmiete:** {{totalRent}}
+
+Die Miete ist monatlich im Voraus bis zum 3. Werktag zu zahlen.
+
+## § 5 KAUTION
+
+Der Mieter leistet eine Kaution in Höhe von {{deposit}}.
+
+## § 6 KÜNDIGUNG
+
+Die Kündigungsfrist beträgt {{termination}}.
+
+## § 7 SCHÖNHEITSREPARATUREN
+
+Schönheitsreparaturen sind vom Mieter durchzuführen.
+
+## § 8 HAUSORDNUNG
+
+Der Mieter verpflichtet sich zur Einhaltung der Hausordnung.
+
+## § 9 SCHLUSSBESTIMMUNGEN
+
+**Anwendbares Recht:** Deutsches Recht
+**Gerichtsstand:** {{jurisdiction}}
+
+---
+
+**Ort, Datum:** {{contract.place}}, {{contract.date}}
+
+**Unterschriften:**
+
+_____________________  
+{{landlord.name}}  
+(Vermieter)
+
+_____________________  
+{{tenant.name}}  
+(Mieter)`
+  },
+
+  arbeitsvertrag: {
+    jurisdiction: 'DE',
+    requiredClauses: ['parties', 'position', 'salary', 'workingHours', 'startDate', 'governing_law'],
+    template: `{{#if companyHeader}}
+<div style="margin-bottom: 40px; padding-bottom: 20px; border-bottom: 3px solid #0A84FF;">
+  {{#if companyHeader.logoUrl}}
+  <div style="text-align: center; margin-bottom: 20px;">
+    <img src="{{companyHeader.logoUrl}}" alt="Firmenlogo" style="max-width: 180px; max-height: 100px; object-fit: contain;" />
+  </div>
+  {{/if}}
+  <div style="text-align: right;">
+    <h2 style="margin: 0; color: #1d1d1f; font-size: 18px; font-weight: bold;">{{companyHeader.companyName}}</h2>
+    {{#if companyHeader.legalForm}}<p style="margin: 2px 0; color: #666; font-size: 12px;">{{companyHeader.legalForm}}</p>{{/if}}
+    <p style="margin: 2px 0; color: #666; font-size: 11px;">{{companyHeader.street}}</p>
+    <p style="margin: 2px 0; color: #666; font-size: 11px;">{{companyHeader.postalCode}} {{companyHeader.city}}</p>
+    {{#if companyHeader.contactEmail}}<p style="margin: 2px 0; color: #0A84FF; font-size: 11px;">{{companyHeader.contactEmail}}</p>{{/if}}
+    {{#if companyHeader.contactPhone}}<p style="margin: 2px 0; color: #666; font-size: 11px;">Tel: {{companyHeader.contactPhone}}</p>{{/if}}
+    {{#if companyHeader.vatId}}<p style="margin: 5px 0 2px 0; color: #666; font-size: 10px;">USt-IdNr.: {{companyHeader.vatId}}</p>{{/if}}
+    {{#if companyHeader.tradeRegister}}<p style="margin: 2px 0; color: #666; font-size: 10px;">{{companyHeader.tradeRegister}}</p>{{/if}}
+  </div>
+</div>
+{{/if}}
+
+# ARBEITSVERTRAG
+
+## § 1 VERTRAGSPARTEIEN
+
+**Arbeitgeber:**
+{{employer.name}}{{#if employer.legalForm}} ({{employer.legalForm}}){{/if}}
+{{employer.street}}
+{{employer.postalCode}} {{employer.city}}
+{{#if employer.vatId}}USt-IdNr.: {{employer.vatId}}{{/if}}
+{{#if employer.contactEmail}}E-Mail: {{employer.contactEmail}}{{/if}}
+{{#if employer.contactPhone}}Tel: {{employer.contactPhone}}{{/if}}
+
+**Arbeitnehmer:**
+{{employee.name}}
+{{employee.address}}
+
+## § 2 TÄTIGKEIT
+
+Der Arbeitnehmer wird als **{{position}}** eingestellt.
+
+Die Tätigkeiten umfassen:
+{{jobDescription}}
+
+## § 3 BEGINN DES ARBEITSVERHÄLTNISSES
+
+Das Arbeitsverhältnis beginnt am **{{startDate}}**.
+
+## § 4 PROBEZEIT
+
+Die ersten sechs Monate gelten als Probezeit.
+
+## § 5 ARBEITSZEIT
+
+Die regelmäßige Arbeitszeit beträgt **{{workingHours}}**.
+
+## § 6 VERGÜTUNG
+
+Der Arbeitnehmer erhält ein Bruttogehalt von **{{salary}}**.
+
+Die Zahlung erfolgt monatlich zum Monatsende.
+
+## § 7 URLAUB
+
+Der Arbeitnehmer hat Anspruch auf {{vacation}} Arbeitstage Urlaub pro Kalenderjahr.
+
+## § 8 KÜNDIGUNG
+
+Nach Ablauf der Probezeit gelten die gesetzlichen Kündigungsfristen.
+
+## § 9 VERSCHWIEGENHEIT
+
+Der Arbeitnehmer verpflichtet sich zur Verschwiegenheit über Geschäfts- und Betriebsgeheimnisse.
+
+## § 10 SCHLUSSBESTIMMUNGEN
+
+**Anwendbares Recht:** Deutsches Recht
+**Gerichtsstand:** {{jurisdiction}}
+
+---
+
+**Ort, Datum:** {{contract.place}}, {{contract.date}}
+
+**Unterschriften:**
+
+_____________________  
+{{employer.name}}  
+(Arbeitgeber)
+
+_____________________  
+{{employee.name}}  
+(Arbeitnehmer)`
   }
 };
 
@@ -200,22 +480,24 @@ class TemplateEngine {
   static render(template, data) {
     let result = template;
 
-    // Replace simple variables {{variable}}
-    result = result.replace(/\{\{([^#\/\}]+)\}\}/g, (match, path) => {
-      const value = this.getNestedValue(data, path.trim());
-      return value !== undefined ? value : '';
+    // WICHTIG: Zuerst die komplexeren Strukturen ersetzen, dann die einfachen Variablen
+    
+    // 1. Handle {{#if condition}}content{{else}}alternative{{/if}} blocks
+    result = result.replace(/\{\{#if\s+([^}]+)\}\}([\s\S]*?)\{\{else\}\}([\s\S]*?)\{\{\/if\}\}/g, (match, condition, truthy, falsy) => {
+      const value = this.getNestedValue(data, condition.trim());
+      return value ? truthy : falsy;
     });
 
-    // Handle {{#if condition}} blocks
+    // 2. Handle {{#if condition}} blocks (ohne else)
     result = result.replace(/\{\{#if\s+([^}]+)\}\}([\s\S]*?)\{\{\/if\}\}/g, (match, condition, content) => {
       const value = this.getNestedValue(data, condition.trim());
       return value ? content : '';
     });
 
-    // Handle {{#if condition}}content{{else}}alternative{{/if}} blocks
-    result = result.replace(/\{\{#if\s+([^}]+)\}\}([\s\S]*?)\{\{else\}\}([\s\S]*?)\{\{\/if\}\}/g, (match, condition, truthy, falsy) => {
-      const value = this.getNestedValue(data, condition.trim());
-      return value ? truthy : falsy;
+    // 3. Replace simple variables {{variable}} - ZULETZT!
+    result = result.replace(/\{\{([^#\/\}]+)\}\}/g, (match, path) => {
+      const value = this.getNestedValue(data, path.trim());
+      return value !== undefined && value !== null ? value : '';
     });
 
     return result;
@@ -370,6 +652,88 @@ function prepareTemplateData(contractType, formData, companyProfile = null) {
         purpose: formData.purpose,
         duration: formData.duration,
         jurisdiction: formData.jurisdiction || companyProfile?.city || 'Berlin'
+      };
+
+    case 'kaufvertrag':
+      return {
+        ...baseData,
+        seller: {
+          name: formData.seller || companyProfile?.companyName,
+          legalForm: companyProfile?.legalForm,
+          street: companyProfile?.street,
+          postalCode: companyProfile?.postalCode,
+          city: companyProfile?.city,
+          vatId: companyProfile?.vatId,
+          contactEmail: companyProfile?.contactEmail,
+          contactPhone: companyProfile?.contactPhone
+        },
+        buyer: {
+          name: formData.buyer,
+          address: formData.buyerAddress || ''
+        },
+        item: {
+          description: formData.item
+        },
+        price: formData.price,
+        paymentTerms: 'bei Übergabe',
+        deliveryDate: formData.deliveryDate,
+        deliveryLocation: formData.deliveryLocation || 'am Firmensitz',
+        jurisdiction: companyProfile?.city || 'Berlin'
+      };
+
+    case 'mietvertrag':
+      return {
+        ...baseData,
+        landlord: {
+          name: formData.landlord || companyProfile?.companyName,
+          legalForm: companyProfile?.legalForm,
+          street: companyProfile?.street,
+          postalCode: companyProfile?.postalCode,
+          city: companyProfile?.city,
+          contactEmail: companyProfile?.contactEmail,
+          contactPhone: companyProfile?.contactPhone
+        },
+        tenant: {
+          name: formData.tenant,
+          address: formData.tenantAddress || ''
+        },
+        property: {
+          address: formData.address,
+          description: formData.propertyDescription || ''
+        },
+        startDate: formData.startDate,
+        baseRent: formData.baseRent,
+        extraCosts: formData.extraCosts,
+        totalRent: formData.totalRent || `${parseFloat(formData.baseRent?.replace(/[^\d,]/g, '').replace(',', '.') || '0') + parseFloat(formData.extraCosts?.replace(/[^\d,]/g, '').replace(',', '.') || '0')}€`,
+        deposit: formData.deposit || '3 Monatsmieten',
+        termination: formData.termination,
+        jurisdiction: companyProfile?.city || 'Berlin'
+      };
+
+    case 'arbeitsvertrag':
+      return {
+        ...baseData,
+        employer: {
+          name: formData.employer || `${companyProfile?.companyName} ${companyProfile?.legalForm || ''}`.trim(),
+          legalForm: companyProfile?.legalForm,
+          street: companyProfile?.street,
+          postalCode: companyProfile?.postalCode,
+          city: companyProfile?.city,
+          vatId: companyProfile?.vatId,
+          contactEmail: companyProfile?.contactEmail,
+          contactPhone: companyProfile?.contactPhone
+        },
+        employee: {
+          name: formData.employee,
+          address: formData.employeeAddress || ''
+        },
+        position: formData.position,
+        jobDescription: formData.jobDescription || 'gemäß beigefügter Stellenbeschreibung',
+        startDate: formData.startDate,
+        workingHours: formData.workingHours,
+        salary: formData.salary,
+        vacation: formData.vacation || '30',
+        jurisdiction: companyProfile?.city || 'Berlin'
       };
 
     default:

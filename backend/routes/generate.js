@@ -45,13 +45,20 @@ router.post("/", verifyToken, async (req, res) => {
     let companyProfile = null;
     if (useCompanyProfile) {
       try {
-        companyProfile = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
-        if (companyProfile) {
-          const profileData = await usersCollection.db().collection("company_profiles").findOne({ 
-            userId: new ObjectId(req.user.userId) 
-          });
+        // Direkt auf company_profiles Collection zugreifen
+        const db = usersCollection.db();
+        const profileData = await db.collection("company_profiles").findOne({ 
+          userId: new ObjectId(req.user.userId) 
+        });
+        
+        if (profileData) {
           companyProfile = profileData;
-          console.log("✅ Company Profile geladen für Template-Generation");
+          console.log("✅ Company Profile geladen für Template-Generation:", {
+            companyName: companyProfile.companyName,
+            hasLogo: !!companyProfile.logoUrl
+          });
+        } else {
+          console.log("⚠️ Kein Company Profile gefunden für User:", req.user.userId);
         }
       } catch (profileError) {
         console.log("⚠️ Company Profile konnte nicht geladen werden:", profileError.message);
