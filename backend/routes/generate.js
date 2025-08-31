@@ -289,12 +289,9 @@ Strukturiere den Vertrag professionell mit Einleitung, Paragraphen und Abschluss
       
       console.log("📝 Company Header Debug:", {
         hasLogo: !!companyProfile.logoUrl,
-        logoUrl: companyProfile.logoUrl,
+        hasBase64Logo: !!finalLogoUrl,
         headerLength: companyHeader.length,
-        logoDisplayLength: logoDisplay.length,
-        hasLogoDisplay: logoDisplay.length > 0,
-        headerPreview: companyHeader.substring(0, 300),
-        logoDisplayPreview: logoDisplay.substring(0, 200)
+        headerPreview: companyHeader.substring(0, 300)
       });
       
       // Firmenkopf am Anfang des Vertrags einfügen
