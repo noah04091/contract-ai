@@ -5,7 +5,15 @@ const verifyToken = require("../middleware/verifyToken");
 const { MongoClient, ObjectId } = require("mongodb");
 const https = require("https");
 const http = require("http");
+const AWS = require("aws-sdk");
 // Template-System entfernt - Verwende reine GPT-Generierung
+
+// ✅ S3 Setup für frische Logo-URLs
+const s3 = new AWS.S3({
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  region: process.env.AWS_REGION
+});
 
 // ✅ Base64-Konvertierung für S3-Logos (CORS-frei!)
 const convertS3ToBase64 = async (url) => {
@@ -223,13 +231,29 @@ Strukturiere den Vertrag professionell mit Einleitung, Paragraphen und Abschluss
         
         // Wenn es KEINE Base64-URL ist, konvertiere S3-URL zu Base64 (CORS-frei!)
         if (!companyProfile.logoUrl.startsWith('data:')) {
-          console.log("🔄 S3-Logo zu Base64 konvertieren für CORS-freie Darstellung...");
+          console.log("🔄 S3-Logo zu Base64 konvertieren mit frischer URL...");
           try {
-            finalLogoUrl = await convertS3ToBase64(companyProfile.logoUrl);
+            // ✅ FRISCHE S3-URL generieren (alte ist abgelaufen!)
+            let freshS3Url = companyProfile.logoUrl;
+            
+            // Wenn es ein Logo-Key gibt, neue S3-URL generieren
+            if (companyProfile.logoKey) {
+              console.log("🔑 Generiere frische S3-URL für logoKey:", companyProfile.logoKey);
+              freshS3Url = s3.getSignedUrl('getObject', {
+                Bucket: process.env.S3_BUCKET_NAME,
+                Key: companyProfile.logoKey,
+                Expires: 3600 // 1 Stunde gültig
+              });
+              console.log("✅ Frische S3-URL generiert:", freshS3Url.substring(0, 100) + "...");
+            }
+            
+            // Base64-Konvertierung mit frischer URL
+            finalLogoUrl = await convertS3ToBase64(freshS3Url);
             console.log("✅ S3-Logo zu Base64 konvertiert:", {
-              originalUrl: companyProfile.logoUrl.substring(0, 80) + "...",
+              usedFreshUrl: !!companyProfile.logoKey,
               base64Length: finalLogoUrl.length,
-              isBase64: finalLogoUrl.startsWith('data:')
+              isBase64: finalLogoUrl.startsWith('data:'),
+              mimeType: finalLogoUrl.substring(0, 30)
             });
           } catch (error) {
             console.error("❌ S3 zu Base64 Konvertierung fehlgeschlagen:", error.message);
