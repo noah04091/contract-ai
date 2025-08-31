@@ -3,7 +3,37 @@ const express = require("express");
 const { OpenAI } = require("openai");
 const verifyToken = require("../middleware/verifyToken");
 const { MongoClient, ObjectId } = require("mongodb");
+const https = require("https");
+const http = require("http");
 // Template-System entfernt - Verwende reine GPT-Generierung
+
+// ✅ Base64-Konvertierung für S3-Logos (CORS-frei!)
+const convertS3ToBase64 = async (url) => {
+  return new Promise((resolve, reject) => {
+    const protocol = url.startsWith('https') ? https : http;
+    
+    protocol.get(url, (response) => {
+      const chunks = [];
+      
+      response.on('data', (chunk) => {
+        chunks.push(chunk);
+      });
+      
+      response.on('end', () => {
+        const buffer = Buffer.concat(chunks);
+        const mimeType = response.headers['content-type'] || 'image/jpeg';
+        const base64 = `data:${mimeType};base64,${buffer.toString('base64')}`;
+        resolve(base64);
+      });
+      
+      response.on('error', (error) => {
+        reject(error);
+      });
+    }).on('error', (error) => {
+      reject(error);
+    });
+  });
+};
 
 const router = express.Router();
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -180,23 +210,46 @@ Strukturiere den Vertrag professionell mit Einleitung, Paragraphen und Abschluss
       let companyHeader = '';
       
       // ✅ PROFESSIONELLER FIRMENKOPF mit funktionierendem Logo
-      console.log("🔍 Logo URL verfügbar:", companyProfile.logoUrl);
+      console.log("🔍 Logo Details verfügbar:", {
+        hasLogo: !!companyProfile.logoUrl,
+        isBase64: companyProfile.logoUrl?.startsWith('data:'),
+        urlPreview: companyProfile.logoUrl?.substring(0, 100) + "..."
+      });
       
-      // ✅ ROBUSTE Logo-Implementierung mit Fallback
+      // ✅ CORS-FREIE Logo-Implementierung mit Base64 bevorzugt
       let logoDisplay = '';
       if (companyProfile.logoUrl) {
-        // Escape HTML-Zeichen in der URL für Sicherheit
-        const safeLogoUrl = companyProfile.logoUrl.replace(/"/g, '&quot;');
-        const safeCompanyName = (companyProfile.companyName || '').replace(/"/g, '&quot;');
+        let finalLogoUrl = companyProfile.logoUrl;
         
-        logoDisplay = `<div style="text-align: center; margin: 15px 0;"><img src="${safeLogoUrl}" alt="${safeCompanyName} Logo" style="max-width: 180px; max-height: 100px; object-fit: contain; border: none;" onerror="this.style.display='none';" /></div>`;
+        // Wenn es KEINE Base64-URL ist, konvertiere S3-URL zu Base64 (CORS-frei!)
+        if (!companyProfile.logoUrl.startsWith('data:')) {
+          console.log("🔄 S3-Logo zu Base64 konvertieren für CORS-freie Darstellung...");
+          try {
+            finalLogoUrl = await convertS3ToBase64(companyProfile.logoUrl);
+            console.log("✅ S3-Logo zu Base64 konvertiert:", {
+              originalUrl: companyProfile.logoUrl.substring(0, 80) + "...",
+              base64Length: finalLogoUrl.length,
+              isBase64: finalLogoUrl.startsWith('data:')
+            });
+          } catch (error) {
+            console.error("❌ S3 zu Base64 Konvertierung fehlgeschlagen:", error.message);
+            logoDisplay = ''; // Fallback: Kein Logo
+            finalLogoUrl = null;
+          }
+        }
         
-        console.log("🔗 Logo Details:", {
-          originalUrl: companyProfile.logoUrl,
-          safeUrl: safeLogoUrl,
-          htmlLength: logoDisplay.length,
-          firstChars: logoDisplay.substring(0, 100)
-        });
+        // Base64 Logo verwenden (entweder original oder konvertiert)
+        if (finalLogoUrl) {
+          // Base64 Logo verwenden - CORS-frei!
+          const safeCompanyName = (companyProfile.companyName || '').replace(/"/g, '&quot;');
+          logoDisplay = `<div style="text-align: center; margin: 15px 0;"><img src="${finalLogoUrl}" alt="${safeCompanyName} Logo" style="max-width: 180px; max-height: 100px; object-fit: contain; border: none;" /></div>`;
+          
+          console.log("✅ Base64 Logo bereit für Vertrag:", {
+            isBase64: finalLogoUrl.startsWith('data:'),
+            base64Preview: finalLogoUrl.substring(0, 50) + "...",
+            htmlLength: logoDisplay.length
+          });
+        }
       }
       
       // Kompakte Firmendaten - professionell formatiert
