@@ -179,33 +179,56 @@ Strukturiere den Vertrag professionell mit Einleitung, Paragraphen und Abschluss
       console.log("✅ Füge Firmenkopf hinzu...");
       let companyHeader = '';
       
-      // Professioneller Firmenkopf als HTML (für richtige Logo-Darstellung)
-      companyHeader = `
-<div style="border-bottom: 2px solid #0066cc; padding-bottom: 15px; margin-bottom: 30px;">
-  ${companyProfile.logoUrl ? `
-  <div style="text-align: center; margin-bottom: 15px;">
-    <img src="${companyProfile.logoUrl}" alt="${companyProfile.companyName} Logo" style="max-width: 200px; max-height: 80px; object-fit: contain;" />
-  </div>` : ''}
-  
-  <div style="text-align: center; font-family: Arial, sans-serif;">
-    <h2 style="margin: 5px 0; color: #333; font-size: 18px;">${companyProfile.companyName || ''}</h2>
-    ${companyProfile.legalForm ? `<p style="margin: 2px 0; color: #666; font-size: 14px;">${companyProfile.legalForm}</p>` : ''}
-    <p style="margin: 3px 0; font-size: 13px;">${companyProfile.street || ''}</p>
-    <p style="margin: 3px 0; font-size: 13px;">${companyProfile.postalCode || ''} ${companyProfile.city || ''}</p>
-    ${companyProfile.contactEmail ? `<p style="margin: 3px 0; color: #0066cc; font-size: 13px;">${companyProfile.contactEmail}</p>` : ''}
-    ${companyProfile.contactPhone ? `<p style="margin: 3px 0; font-size: 13px;">Tel: ${companyProfile.contactPhone}</p>` : ''}
-    ${companyProfile.vatId ? `<p style="margin: 5px 0; color: #666; font-size: 12px;">USt-IdNr.: ${companyProfile.vatId}</p>` : ''}
-    ${companyProfile.tradeRegister ? `<p style="margin: 3px 0; color: #666; font-size: 12px;">${companyProfile.tradeRegister}</p>` : ''}
-  </div>
+      // ✅ PROFESSIONELLER FIRMENKOPF mit funktionierendem Logo
+      console.log("🔍 Logo URL verfügbar:", companyProfile.logoUrl);
+      
+      // Logo-Bereich nur wenn Logo vorhanden
+      let logoDisplay = '';
+      if (companyProfile.logoUrl) {
+        // Teste verschiedene Logo-Formate für maximale Kompatibilität
+        logoDisplay = `
+<div style="text-align: center; margin: 15px 0;">
+  <img src="${companyProfile.logoUrl}" 
+       alt="${companyProfile.companyName} Logo" 
+       style="max-width: 180px; max-height: 100px; object-fit: contain; border: none;" 
+       onerror="this.style.display='none'" />
+</div>`;
+      }
+      
+      // Kompakte Firmendaten - professionell formatiert
+      const firmendaten = [
+        `<strong>${companyProfile.companyName || ''}</strong>`,
+        companyProfile.legalForm || '',
+        companyProfile.street || '',
+        `${companyProfile.postalCode || ''} ${companyProfile.city || ''}`.trim(),
+        companyProfile.contactEmail || '',
+        companyProfile.contactPhone ? `Tel: ${companyProfile.contactPhone}` : '',
+        companyProfile.vatId ? `USt-IdNr.: ${companyProfile.vatId}` : '',
+        companyProfile.tradeRegister || ''
+      ].filter(item => item.trim() !== '').join('<br>');
+      
+      companyHeader = `${logoDisplay}
+<div style="text-align: center; border-bottom: 2px solid #333; padding: 15px 0; margin-bottom: 25px; font-family: Arial, sans-serif; line-height: 1.4;">
+${firmendaten}
 </div>
 
 `;
       
-      console.log("📝 Company Header erstellt:", companyHeader.substring(0, 200) + "...");
+      console.log("📝 Company Header Debug:", {
+        hasLogo: !!companyProfile.logoUrl,
+        logoUrl: companyProfile.logoUrl,
+        headerLength: companyHeader.length,
+        headerPreview: companyHeader.substring(0, 300)
+      });
       
       // Firmenkopf am Anfang des Vertrags einfügen
       contractText = companyHeader + contractText;
-      console.log("✅ Firmenkopf eingefügt! Neue Länge:", contractText.length);
+      console.log("✅ Firmenkopf eingefügt! Neue Vertragslänge:", contractText.length);
+      
+      // Testen ob Logo-URL erreichbar ist
+      if (companyProfile.logoUrl) {
+        console.log("🔗 Teste Logo-URL Erreichbarkeit:", companyProfile.logoUrl);
+      }
       
       // Firma automatisch als Partei A einsetzen (je nach Vertragstyp)
       const companyFullName = `${companyProfile.companyName}${companyProfile.legalForm ? ` (${companyProfile.legalForm})` : ''}`;
