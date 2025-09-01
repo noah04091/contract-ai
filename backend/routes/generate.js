@@ -232,49 +232,69 @@ Strukturiere den Vertrag professionell mit Einleitung, Paragraphen und Abschluss
         return res.status(400).json({ message: "❌ Unbekannter Vertragstyp." });
     }
 
-    // ✅ KLASSISCHE DEUTSCHE KANZLEI-VORLAGE - DIN A4 KONFORM
+    // ✅ UNIVERSELLE PROFESSIONELLE VERTRAGSVORLAGE - DIN A4 KONFORM
     const completion = await openai.chat.completions.create({
       model: "gpt-4",
       messages: [
         { 
           role: "system", 
-          content: `Du bist Senior Partner einer renommierten deutschen Anwaltskanzlei. Erstelle klassische Verträge im traditionellen deutschen Kanzlei-Stil.
+          content: `Du bist Vertragsexperte und erstellst professionelle Verträge nach deutschen Standards.
 
-📐 KLASSISCHES DIN A4 LAYOUT:
-- Schriftart: Times New Roman, Georgia, serif
-- Schriftgröße: 11pt
-- Zeilenhöhe: 1.45
-- Blocksatz mit Silbentrennung
-- Farbe: #111 (fast schwarz)
+📐 PROFESSIONELLES DIN A4 LAYOUT:
+- Format: DIN A4 (210 × 297 mm)
+- Seitenränder: Oben 2.5cm, Unten 2cm, Links 3cm, Rechts 2cm
+- Schriftart: Arial oder Calibri
+- Fließtext: 11pt regular, Zeilenabstand 1.15
+- Absatzabstand: 6pt nach jedem Absatz
+- Farbe: #000000 (schwarz)
 
-🎯 VERTRAGSSTRUKTUR - KLASSISCHER STIL:
+🎯 DOKUMENTENSTRUKTUR - PROFESSIONELLER STANDARD:
 
-1️⃣ EINLEITUNG MIT PARTEIEN (klassischer Fließtext):
-<section style="font-family: 'Times New Roman', Georgia, serif; font-size: 11pt; line-height: 1.45; color: #111; break-inside: avoid; page-break-inside: avoid; margin-bottom: 12mm;">
-  <p style="text-align: justify; hyphens: auto; margin: 0 0 10pt;">abgeschlossen zwischen der</p>
-  <p style="margin: 6pt 0 2pt;"><strong style="text-transform: uppercase;">[COMPANY_NAME]</strong>, [COMPANY_ADDRESS]</p>
-  <p style="font-size: 10pt; color: #555; font-style: italic; margin: 2pt 0;">in der Folge kurz [DYNAMIC_PARTY_A_LABEL] genannt,</p>
-  <p style="text-align: center; margin: 10pt 0;">und</p>
-  <p style="margin: 6pt 0 2pt;"><strong style="text-transform: uppercase;">[PARTY_B_NAME]</strong>, [PARTY_B_ADDRESS]</p>
-  <p style="font-size: 10pt; color: #555; font-style: italic; margin: 2pt 0;">in der Folge kurz [DYNAMIC_PARTY_B_LABEL] genannt,</p>
-  <p style="font-size: 10pt; color: #555; font-style: italic; margin: 2pt 0;">andererseits</p>
+1️⃣ VERTRAGSPARTEIEN:
+<div style="margin-bottom: 18pt; font-family: Arial, Calibri, sans-serif; font-size: 11pt; line-height: 1.15;">
+  <p style="text-align: center; margin: 0 0 6pt;">zwischen</p>
+  
+  <div style="margin: 6pt 0;">
+    <strong>[COMPANY_NAME]</strong><br>
+    [COMPANY_ADDRESS]<br>
+    [COMPANY_REGISTRATION]<br>
+    <span style="font-style: italic;">- nachfolgend "[DYNAMIC_PARTY_A_LABEL]" genannt -</span>
+  </div>
+  
+  <p style="text-align: center; margin: 12pt 0;">und</p>
+  
+  <div style="margin: 6pt 0;">
+    <strong>[PARTY_B_NAME]</strong><br>
+    [PARTY_B_ADDRESS]<br>
+    [PARTY_B_REGISTRATION]<br>
+    <span style="font-style: italic;">- nachfolgend "[DYNAMIC_PARTY_B_LABEL]" genannt -</span>
+  </div>
+</div>
+
+2️⃣ PARAGRAPHEN-STRUKTUR:
+<section style="margin-bottom: 12pt; page-break-inside: avoid;">
+  <h2 style="font-family: Arial, Calibri, sans-serif; font-size: 12pt; font-weight: bold; margin: 0 0 6pt;">§ 1 Vertragsgegenstand</h2>
+  
+  <div style="font-family: Arial, Calibri, sans-serif; font-size: 11pt; line-height: 1.15; text-align: justify; margin-bottom: 6pt;">
+    <p style="margin: 0 0 6pt;">(1) [Absatztext mit automatischer Nummerierung]</p>
+    <p style="margin: 0 0 6pt;">(2) [Weiterer Absatztext]</p>
+  </div>
 </section>
 
-2️⃣ PARAGRAPHEN (§) - KLASSISCHER KANZLEI-STIL:
-<section style="break-inside: avoid; page-break-inside: avoid; margin-top: 12mm;">
-  <h2 style="font-size: 12pt; font-weight: 700; margin: 0 0 8pt;">§ 1 Vertragsgegenstand</h2>
-  <p style="text-align: justify; hyphens: auto; -webkit-hyphens: auto; orphans: 3; widows: 3; margin: 0 0 10pt; font-size: 11pt; line-height: 1.45;">
-    [Inhalt des Paragraphen - Blocksatz mit Silbentrennung]
-  </p>
-</section>
+HIERARCHIE:
+- § X - Hauptparagraph (12pt, fett)
+- (1), (2), (3) - Absätze (11pt, regular)
+- a), b), c) - Unterpunkte (11pt, 1cm eingerückt)
+- aa), bb), cc) - Unter-Unterpunkte (11pt, 2cm eingerückt)
 
-3️⃣ WICHTIGE FORMATIERUNGSREGELN:
-- KEIN modernes Design, KEINE Boxen
-- Klassischer Fließtext-Stil
-- Beträge und Termine: <strong>15.000,00 EUR</strong>
-- Namen in Verträgen: <strong>Name</strong>
-- Blocksatz IMMER mit: text-align: justify; hyphens: auto;
-- Absätze mit orphans: 3; widows: 3; (keine Hurenkinder/Schusterjungen)
+3️⃣ FORMATIERUNGSREGELN:
+- Professionelles, klares Layout
+- Wichtige Begriffe: <strong>fett</strong>
+- Beträge: <strong>15.000,00 EUR</strong>
+- Datumsangaben: <strong>31.12.2024</strong>
+- Blocksatz mit: text-align: justify;
+- Vermeidung von Hurenkindern/Schusterjungen (orphans: 3; widows: 3)
+- Mindestens 3 Zeilen eines Absatzes müssen zusammenbleiben
 
 4️⃣ VERTRAGSTYP-SPEZIFISCHE LABELS:
 - Kaufvertrag: "Verkäufer" / "Käufer"
@@ -283,23 +303,25 @@ Strukturiere den Vertrag professionell mit Einleitung, Paragraphen und Abschluss
 - Dienstleistungsvertrag: "Auftraggeber" / "Auftragnehmer"
 - NDA: "Offenlegender" / "Empfänger"
 
-5️⃣ STRUKTUR DER PARAGRAPHEN:
+5️⃣ STANDARD-PARAGRAPHEN:
 § 1 Vertragsgegenstand
-§ 2 Leistungen/Pflichten
-§ 3 Vergütung/Zahlung
+§ 2 Leistungen und Pflichten
+§ 3 Vergütung und Zahlungsbedingungen
 § 4 Laufzeit und Kündigung
-§ 5 Gewährleistung/Haftung
-§ 6 Vertraulichkeit (falls relevant)
-§ 7 Salvatorische Klausel
+§ 5 Gewährleistung und Haftung
+§ 6 Vertraulichkeit
+§ 7 Datenschutz
 § 8 Schlussbestimmungen
+§ 9 Salvatorische Klausel
 
-⚖️ KLASSISCHE QUALITÄT:
-- Traditioneller deutscher Kanzlei-Stil
-- Keine modernen Elemente oder Farben
-- Times New Roman als Hauptschrift
-- Professioneller juristischer Ton
+⚖️ PROFESSIONELLE QUALITÄT:
+- Moderner, seriöser Geschäftsstil
+- Klare Struktur und Hierarchie
+- Arial/Calibri als Hauptschrift
+- Professioneller Ton
 - KEINE Hinweise auf automatische Generierung
 - Saubere Seitenumbrüche
+- Barrierefreiheit: Mindestens 11pt Schrift
 
 WICHTIG: Ersetze [DYNAMIC_PARTY_A_LABEL] und [DYNAMIC_PARTY_B_LABEL] mit den korrekten Bezeichnungen!
 Ersetze [COMPANY_NAME] mit dem Firmennamen aus dem Profil!
@@ -312,28 +334,13 @@ Ersetze [PARTY_B_NAME] mit den Eingabedaten!`
 
     const gptResult = completion.choices[0].message.content;
     
-    // ✅ UNIVERSELLE PARTEI-LABELS UND DATEN ERSETZEN
+    // ✅ UNIVERSELLE PARTEI-LABELS ERSETZEN
     let processedGptResult = gptResult || "Fehler bei der Vertragsgenerierung";
     const partyLabels = getPartyLabel(type, 'both');
     
-    // Firmeninformationen (companyProfile wurde weiter oben geladen)
-    const companyName = (companyProfile && useCompanyProfile !== false) ? 
-      companyProfile.companyName : (formData.seller || formData.landlord || formData.nameClient || 'Partei A');
-    const companyAddress = (companyProfile && useCompanyProfile !== false) ? 
-      `${companyProfile.street || ''}, ${companyProfile.postalCode || ''} ${companyProfile.city || ''}` : 
-      (formData.addressSeller || formData.addressLandlord || formData.addressClient || '[Adresse]');
-    
-    // Partei B Informationen
-    const partyBName = formData.buyer || formData.tenant || formData.employee || formData.nameFreelancer || formData.partyB || 'Partei B';
-    const partyBAddress = formData.addressBuyer || formData.addressTenant || formData.addressEmployee || formData.addressFreelancer || '[Adresse]';
-    
     processedGptResult = processedGptResult
       .replace(/\[DYNAMIC_PARTY_A_LABEL\]/g, partyLabels.company)
-      .replace(/\[DYNAMIC_PARTY_B_LABEL\]/g, partyLabels.counterparty)
-      .replace(/\[COMPANY_NAME\]/g, companyName)
-      .replace(/\[COMPANY_ADDRESS\]/g, companyAddress)
-      .replace(/\[PARTY_B_NAME\]/g, partyBName)
-      .replace(/\[PARTY_B_ADDRESS\]/g, partyBAddress);
+      .replace(/\[DYNAMIC_PARTY_B_LABEL\]/g, partyLabels.counterparty);
     
     // Finalen Contract-Text bestimmen
     contractText = processedGptResult;
@@ -387,47 +394,47 @@ Ersetze [PARTY_B_NAME] mit den Eingabedaten!`
         }
       }
       
-      // ✅ KLASSISCHER KANZLEI-HEADER - DIN A4 KONFORM
+      // ✅ PROFESSIONELLER HEADER - DIN A4 KONFORM
       const logoSection = finalLogoUrl 
-        ? `<img src="${finalLogoUrl}" alt="Logo" style="height: 56px; object-fit: contain;" />`
+        ? `<img src="${finalLogoUrl}" alt="Logo" style="max-height: 2.5cm; object-fit: contain;" />`
         : '';
-        
-      const companyInfoSection = `
-        <div style="text-align: right; font-family: 'Times New Roman', Georgia, serif;">
-          <div style="font-weight: 700; font-size: 12pt; color: #111; margin-bottom: 3pt;">
-            ${companyProfile.companyName || ''}
-          </div>
-          <div style="font-size: 10pt; color: #444; line-height: 12pt;">
-            ${companyProfile.legalForm ? `${companyProfile.legalForm}<br>` : ''}
-            ${companyProfile.street || ''} · ${companyProfile.postalCode || ''} ${companyProfile.city || ''}<br>
-            ${companyProfile.contactEmail || ''} · ${companyProfile.contactPhone ? `${companyProfile.contactPhone}` : ''}<br>
-            ${companyProfile.vatId ? `USt-IdNr.: ${companyProfile.vatId}` : ''}${companyProfile.hrbNumber ? ` · HRB ${companyProfile.hrbNumber}` : ''}
-          </div>
-        </div>`;
 
       companyHeader = `
-<!-- Klassischer Kanzlei-Header -->
+<!-- Professioneller DIN A4 Header -->
 <style>
-  @page { size: A4; margin: 25mm 20mm 25mm 25mm; }
-  html, body { font-family: 'Times New Roman', Georgia, serif; font-size: 11pt; line-height: 1.45; color: #111; }
-  p { text-align: justify; hyphens: auto; -webkit-hyphens: auto; orphans: 3; widows: 3; margin: 0 0 10pt; }
-  section, .party, .clause, .signature, .titleblock { break-inside: avoid; page-break-inside: avoid; }
+  @page { 
+    size: A4; 
+    margin: 2.5cm 2cm 2cm 3cm; /* Oben, Rechts, Unten, Links */
+  }
+  * {
+    font-family: Arial, Calibri, sans-serif;
+    color: #000000;
+  }
+  body { 
+    font-size: 11pt; 
+    line-height: 1.15;
+    margin: 0;
+    padding: 0;
+  }
+  p { 
+    text-align: justify; 
+    margin: 0 0 6pt 0;
+    orphans: 3;
+    widows: 3;
+  }
+  strong {
+    font-weight: bold;
+  }
+  .avoid-break {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
 </style>
-<header style="
-  display: grid;
-  grid-template-columns: 1fr 2fr;
-  column-gap: 12mm;
-  margin-bottom: 8mm;
-  font-family: 'Times New Roman', Georgia, serif;
-">
-  <div style="margin-top: 10mm;">
-    ${logoSection}
-  </div>
-  <div style="margin-top: 10mm;">
-    ${companyInfoSection}
-  </div>
-</header>
-<div style="height: 1px; background: #C9CCD1; margin-bottom: 14mm;"></div>
+
+<!-- Firmenlogo -->
+<div style="text-align: center; margin-bottom: 12pt;">
+  ${logoSection}
+</div>
 
 `;
       
@@ -438,101 +445,130 @@ Ersetze [PARTY_B_NAME] mit den Eingabedaten!`
         headerPreview: companyHeader.substring(0, 300)
       });
       
-      // ✅ KLASSISCHER VERTRAGSTITEL - DIN A4 KONFORM
+      // ✅ VORBEREITUNG DER PARTEI-INFORMATIONEN
+      const companyName = companyProfile.companyName || 'Partei A';
+      const companyAddress = `${companyProfile.street || ''}, ${companyProfile.postalCode || ''} ${companyProfile.city || ''}`;
+      const partyBName = formData.buyer || formData.tenant || formData.employee || formData.nameFreelancer || formData.partyB || 'Partei B';
+      const partyBAddress = formData.addressBuyer || formData.addressTenant || formData.addressEmployee || formData.addressFreelancer || '[Adresse]';
+      
+      // ✅ PROFESSIONELLER VERTRAGSTITEL - DIN A4 KONFORM
       const today = new Date().toLocaleDateString('de-DE', { 
         day: '2-digit', 
-        month: 'long', 
+        month: '2-digit', 
         year: 'numeric' 
       });
       
       const contractTitle = `
-<!-- Klassischer Titelblock -->
-<section style="
-  text-align: center;
-  margin: 12mm 0 10mm 0;
-  font-family: 'Times New Roman', Georgia, serif;
-">
+<!-- Vertragstitel -->
+<div style="text-align: center; margin-bottom: 12pt;">
   <h1 style="
+    font-family: Arial, Calibri, sans-serif;
+    font-size: 16pt;
+    font-weight: bold;
     text-transform: uppercase;
-    letter-spacing: 0.5pt;
-    font-size: 15pt;
-    font-weight: 700;
-    margin: 0;
-    color: #111;
+    margin: 0 0 12pt 0;
+    color: #000000;
   ">
     ${getContractTitle(type).toUpperCase()}
   </h1>
-  <div style="
-    text-align: center;
-    color: #555;
-    font-size: 10pt;
-    margin-top: 8pt;
-  ">
-    ${today}
-  </div>
-</section>`;
+</div>
 
-      // ✅ KLASSISCHER UNTERSCHRIFTSBLOCK - DIN A4 KONFORM
+<!-- Vertragsparteien -->
+<div style="margin-bottom: 18pt; font-family: Arial, Calibri, sans-serif; font-size: 11pt;">
+  <p style="text-align: center; margin: 0 0 6pt;">zwischen</p>
+  
+  <div style="margin: 6pt 0;">
+    <strong>${companyName}</strong><br>
+    ${companyAddress}<br>
+    ${companyProfile?.hrbNumber ? `HRB: ${companyProfile.hrbNumber}<br>` : ''}
+    <span style="font-style: italic;">- nachfolgend "${getPartyLabel(type, 'company')}" genannt -</span>
+  </div>
+  
+  <p style="text-align: center; margin: 12pt 0 6pt;">und</p>
+  
+  <div style="margin: 6pt 0 18pt;">
+    <strong>${partyBName}</strong><br>
+    ${partyBAddress}<br>
+    <span style="font-style: italic;">- nachfolgend "${getPartyLabel(type, 'counterparty')}" genannt -</span>
+  </div>
+</div>`;
+
+      // ✅ PROFESSIONELLER UNTERSCHRIFTSBLOCK - DIN A4 KONFORM
       const signatureSection = `
-<!-- Klassischer Unterschriftenblock -->
-<section style="
-  margin-top: 16mm;
-  break-inside: avoid;
+<!-- Unterschriftenbereich -->
+<div style="
   page-break-inside: avoid;
-  font-family: 'Times New Roman', Georgia, serif;
+  margin-top: 36pt;
+  font-family: Arial, Calibri, sans-serif;
   font-size: 11pt;
 ">
-  <table style="
-    width: 100%;
-    border-collapse: collapse;
-  ">
+  <table style="width: 100%; border-collapse: collapse;">
     <tr>
-      <td style="width: 50%; vertical-align: top; padding-right: 8mm;">
-        Ort, Datum: ____________________
+      <td style="width: 45%; padding-right: 10%;">
+        <div style="margin-bottom: 24pt;">
+          _____________________<br>
+          Ort, Datum
+        </div>
+        <div style="margin-top: 36pt; margin-bottom: 4pt;">
+          _____________________<br>
+          <strong>${companyProfile.companyName}</strong><br>
+          ${getPartyLabel(type, 'company')}<br>
+          ${companyProfile.legalForm || ''}
+        </div>
       </td>
-      <td style="width: 50%; vertical-align: top;">
-        Ort, Datum: ____________________
-      </td>
-    </tr>
-    <tr>
-      <td style="padding-top: 12pt; padding-right: 8mm;">
-        Unterschrift ${getPartyLabel(type, 'company')}
-      </td>
-      <td style="padding-top: 12pt;">
-        Unterschrift ${getPartyLabel(type, 'counterparty')}
-      </td>
-    </tr>
-    <tr>
-      <td style="padding-top: 8pt; padding-right: 8mm;">
-        ______________________________
-      </td>
-      <td style="padding-top: 8pt;">
-        ______________________________
-      </td>
-    </tr>
-    <tr>
-      <td style="padding-top: 4pt; padding-right: 8mm; font-size: 10pt; color: #555;">
-        (${companyProfile.companyName})
-      </td>
-      <td style="padding-top: 4pt; font-size: 10pt; color: #555;">
-        (${formData.buyer || formData.tenant || formData.employee || formData.partyB || 'Vertragspartner'})
+      <td style="width: 45%;">
+        <div style="margin-bottom: 24pt;">
+          _____________________<br>
+          Ort, Datum
+        </div>
+        <div style="margin-top: 36pt; margin-bottom: 4pt;">
+          _____________________<br>
+          <strong>${partyBName}</strong><br>
+          ${getPartyLabel(type, 'counterparty')}
+        </div>
       </td>
     </tr>
   </table>
-</section>`;
+</div>`;
 
-      // ✅ KLASSISCHER FOOTER MIT SEITENZAHLEN
+      // ✅ PROFESSIONELLER FOOTER MIT KOPF-/FUSSZEILEN
       const footerSection = `
-<!-- Klassischer Footer -->
-<div style="
-  position: fixed;
-  bottom: 12mm;
-  left: 0;
-  right: 0;
+<!-- Kopf- und Fußzeilen -->
+<style>
+  @media print {
+    .page-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1cm;
+      font-size: 10pt;
+      font-style: italic;
+      border-bottom: 0.5pt solid #000;
+      padding: 0 3cm 0 3cm;
+    }
+    .page-footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 1cm;
+      font-size: 10pt;
+      text-align: center;
+      border-top: 0.5pt solid #000;
+      padding: 5pt 0;
+    }
+  }
+</style>
+
+<!-- Fußzeile -->
+<div class="page-footer" style="
+  margin-top: 24pt;
+  padding-top: 12pt;
+  border-top: 0.5pt solid #000;
   text-align: center;
-  color: #666;
-  font-size: 9pt;
-  font-family: 'Times New Roman', Georgia, serif;
+  font-size: 10pt;
+  font-family: Arial, Calibri, sans-serif;
 ">
   Seite 1 von 1
 </div>`;
