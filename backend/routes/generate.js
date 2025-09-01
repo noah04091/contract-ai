@@ -187,57 +187,116 @@ Strukturiere den Vertrag professionell mit Einleitung, Paragraphen und Abschluss
         return res.status(400).json({ message: "❌ Unbekannter Vertragstyp." });
     }
 
-    // ✅ GPT-Generierung für alle Vertragstypen
+    // ✅ UNIVERSELLE PREMIUM GPT-GENERIERUNG - DIN A4 KONFORM
     const completion = await openai.chat.completions.create({
       model: "gpt-4",
       messages: [
         { 
           role: "system", 
-          content: `Du bist ein renommierter Fachanwalt für Vertragsrecht. Erstelle hochprofessionelle Verträge nach deutschem Recht auf Premium-Niveau.
+          content: `Du bist Senior Partner einer renommierten Anwaltskanzlei. Erstelle universell einsetzbare, hochprofessionelle Verträge nach deutschem Recht auf Corporate-Level.
 
-PREMIUM LAYOUT:
-- Container: <div style="padding: 0 50px; max-width: 640px; margin: 0 auto; font-family: 'Helvetica Neue', 'Segoe UI', Arial, sans-serif;">
-- Schließe mit: </div>
+🎯 UNIVERSELLE DIN A4 VERTRAGSVORLAGE
+Diese Vorlage funktioniert für ALLE Vertragstypen (Kaufvertrag, NDA, Arbeitsvertrag, Mietvertrag, Freelancervertrag etc.)
 
-VERTRAGSPARTEIEN - ELEGANTE BOXEN NEBENEINANDER:
-<div style="display: flex; gap: 20px; margin: 30px 0;">
-  <div style="flex: 1; background-color: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; padding: 15px;">
-    <div style="font-size: 14px; font-weight: 600; color: #222; margin-bottom: 4px;">Verkäufer (Partei A)</div>
-    <div style="font-size: 13px; color: #333; line-height: 1.4;">
-      [Wird automatisch gefüllt]
+📐 SEITENLAYOUT DIN A4:
+- Format: 21×29,7 cm (perfekt druckbar)
+- Textbreite: Max. 640px
+- Schriftart: 'Helvetica Neue', 'Segoe UI', Arial
+- Basis-Schriftgröße: 13pt
+- Zeilenhöhe: 150% (1.5-fach)
+- Nie Umbrüche mitten in Paragraphen!
+
+🏢 VERTRAGSPARTEIEN - ELEGANTE BOXEN:
+<div style="
+  width: 100%; 
+  max-width: 640px; 
+  margin: 25mm auto; 
+  padding: 0 50mm;
+  font-family: 'Helvetica Neue', 'Segoe UI', Arial, sans-serif;
+  page-break-inside: avoid;
+">
+  <div style="display: flex; gap: 15mm; margin: 0;">
+    <div style="
+      flex: 1; 
+      background-color: #F9FAFB; 
+      border: 1px solid #E5E7EB; 
+      border-radius: 6px; 
+      padding: 15mm; 
+      font-size: 13pt;
+    ">
+      <div style="font-size: 14pt; font-weight: 600; color: #222; margin-bottom: 4mm;">
+        [DYNAMIC_PARTY_A_LABEL] (Partei A)
+      </div>
+      <div style="font-size: 13pt; color: #333; line-height: 1.4;">
+        [Wird automatisch aus Unternehmensprofil gefüllt]
+      </div>
     </div>
-  </div>
-  <div style="flex: 1; background-color: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; padding: 15px;">
-    <div style="font-size: 14px; font-weight: 600; color: #222; margin-bottom: 4px;">Käufer (Partei B)</div>
-    <div style="font-size: 13px; color: #333; line-height: 1.4;">
-      [Eingabedaten verwenden]
+    <div style="
+      flex: 1; 
+      background-color: #F9FAFB; 
+      border: 1px solid #E5E7EB; 
+      border-radius: 6px; 
+      padding: 15mm; 
+      font-size: 13pt;
+    ">
+      <div style="font-size: 14pt; font-weight: 600; color: #222; margin-bottom: 4mm;">
+        [DYNAMIC_PARTY_B_LABEL] (Partei B)
+      </div>
+      <div style="font-size: 13pt; color: #333; line-height: 1.4;">
+        [Eingabedaten der zweiten Vertragspartei]
+      </div>
     </div>
   </div>
 </div>
 
-PARAGRAPHEN - PREMIUM FORMATIERUNG:
-- Überschriften: <h2 style="font-size: 16px; color: #222; margin: 25px 0 8px 0; font-weight: 600;">§ 1 Überschrift</h2>
-- Fließtext: <p style="margin: 12px 0; line-height: 1.5; color: #333; font-size: 13px;">
+📜 PARAGRAPHEN-STRUKTUR (§ Format):
+- Überschriften: <h2 style="font-size: 16pt; color: #222; margin: 20mm 0 8mm 0; font-weight: 600; page-break-after: avoid;">§ 1 Überschrift</h2>
+- Container: <div style="width: 100%; max-width: 640px; margin: 0 auto; padding: 0 50mm; font-family: 'Helvetica Neue', 'Segoe UI', Arial, sans-serif;">
+- Fließtext: <p style="margin: 12px 0; line-height: 1.5; color: #333; font-size: 13pt; page-break-inside: avoid;">
 - Beträge/Daten: <strong style="color: #222;">15.000,00 €</strong>
-- Namen: <strong style="color: #222;">
+- Namen: <strong style="color: #222;">Name</strong>
+- Schließe Container: </div>
 
-STRUKTUR:
-1. Beginne mit den zwei Vertragsparteien-Boxen nebeneinander
-2. Dann § 1, § 2, § 3, etc.
-3. KEINE Unterschriften (werden separat hinzugefügt)
-4. Professionelle Salvatorische Klausel
+🏗️ VERTRAGSSTRUKTUR:
+1. Beginne mit Vertragsparteien-Boxen (automatische Labels je nach Typ)
+2. Dann § 1 Vertragsgegenstand, § 2 Leistungen, § 3 Vergütung, etc.
+3. KEINE Unterschriften (werden separat eingefügt)
+4. § X Salvatorische Klausel (professionell)
+5. § X+1 Schlussbestimmungen
 
-PREMIUM-QUALITÄT: Keine Hinweise auf automatische Generierung, nur höchste Anwaltsqualität!`
+⚖️ UNIVERSELLE PARTEI-LABELS:
+- Kaufvertrag: "Verkäufer" / "Käufer"
+- Freelancervertrag: "Auftraggeber" / "Auftragnehmer" 
+- Arbeitsvertrag: "Arbeitgeber" / "Arbeitnehmer"
+- Mietvertrag: "Vermieter" / "Mieter"
+- NDA: "Partei A" / "Partei B"
+
+🎖️ PREMIUM-QUALITÄT:
+- Höchste juristische Standards
+- Keine Hinweise auf KI-Generierung
+- Corporate-Level Professionalität
+- Perfekte Druckqualität für DIN A4
+- Saubere Seitenumbrüche ohne zerrissene Sätze
+
+WICHTIG: Verwende die [DYNAMIC_PARTY_A_LABEL] und [DYNAMIC_PARTY_B_LABEL] Platzhalter - diese werden automatisch ersetzt!`
         },
         { role: "user", content: prompt }
       ],
-      temperature: 0.4,
+      temperature: 0.3,
     });
 
     const gptResult = completion.choices[0].message.content;
     
+    // ✅ UNIVERSELLE PARTEI-LABELS ERSETZEN
+    let processedGptResult = gptResult || "Fehler bei der Vertragsgenerierung";
+    const partyLabels = getPartyLabel(type, 'both');
+    
+    processedGptResult = processedGptResult
+      .replace(/\[DYNAMIC_PARTY_A_LABEL\]/g, partyLabels.company)
+      .replace(/\[DYNAMIC_PARTY_B_LABEL\]/g, partyLabels.counterparty);
+    
     // Finalen Contract-Text bestimmen
-    contractText = gptResult || "Fehler bei der Vertragsgenerierung";
+    contractText = processedGptResult;
     
     // ✅ FIRMENKOPF HINZUFÜGEN wenn Company Profile vorhanden UND aktiviert
     console.log("🔍 Company Profile Check:", {
@@ -288,28 +347,40 @@ PREMIUM-QUALITÄT: Keine Hinweise auf automatische Generierung, nur höchste Anw
         }
       }
       
-      // ✅ PREMIUM HEADER - KOMPAKT & HOCH PLATZIERT
+      // ✅ UNIVERSELLE PREMIUM HEADER - DIN A4 KONFORM
       const logoSection = finalLogoUrl 
-        ? `<img src="${finalLogoUrl}" alt="Logo" style="max-height: 65px; width: auto; object-fit: contain;" />`
-        : '';
+        ? `<img src="${finalLogoUrl}" alt="Logo" style="max-height: 60px; width: auto; object-fit: contain; margin-top: 15mm;" />`
+        : '<div style="margin-top: 15mm; height: 60px;"></div>';
         
       const companyInfoSection = `
-        <div style="text-align: right; font-family: 'Helvetica Neue', 'Segoe UI', Arial, sans-serif; line-height: 1.2;">
-          <div style="font-size: 16px; font-weight: 600; color: #222; margin-bottom: 3px;">
+        <div style="text-align: right; font-family: 'Helvetica Neue', 'Segoe UI', Arial, sans-serif; margin-top: 15mm;">
+          <div style="font-size: 14pt; font-weight: 600; color: #222; margin-bottom: 2px;">
             ${companyProfile.companyName || ''}
           </div>
-          <div style="color: #555; font-size: 13px; line-height: 16px;">
+          <div style="color: #555; font-size: 12pt; line-height: 15pt;">
+            ${companyProfile.legalForm ? `${companyProfile.legalForm}<br>` : ''}
             ${companyProfile.street || ''}<br>
             ${companyProfile.postalCode || ''} ${companyProfile.city || ''}<br>
             ${companyProfile.contactEmail || ''}<br>
-            ${companyProfile.contactPhone ? `Tel: ${companyProfile.contactPhone}` : ''}<br>
-            ${companyProfile.vatId ? `USt-IdNr.: ${companyProfile.vatId}` : ''}
+            ${companyProfile.contactPhone ? `Tel: ${companyProfile.contactPhone}<br>` : ''}
+            ${companyProfile.vatId ? `USt-IdNr.: ${companyProfile.vatId}<br>` : ''}
+            ${companyProfile.hrbNumber ? `HRB: ${companyProfile.hrbNumber}` : ''}
           </div>
         </div>`;
 
       companyHeader = `
-<div style="padding: 60px 50px 0 50px; max-width: 640px; margin: 0 auto;">
-  <div style="display: flex; justify-content: space-between; align-items: flex-start; padding-top: 10px; padding-bottom: 15px; margin-bottom: 25px; border-bottom: 2px solid #1A73E8; font-family: 'Helvetica Neue', 'Segoe UI', Arial, sans-serif;">
+<!-- DIN A4 Premium Contract Header -->
+<div style="
+  width: 100%; 
+  max-width: 640px; 
+  margin: 0 auto; 
+  padding: 60mm 50mm 0 50mm;
+  font-family: 'Helvetica Neue', 'Segoe UI', Arial, sans-serif;
+  font-size: 13pt;
+  line-height: 1.5;
+  page-break-inside: avoid;
+">
+  <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15mm;">
     <div style="flex: 0 0 auto;">
       ${logoSection}
     </div>
@@ -317,6 +388,7 @@ PREMIUM-QUALITÄT: Keine Hinweise auf automatische Generierung, nur höchste Anw
       ${companyInfoSection}
     </div>
   </div>
+  <div style="height: 2px; background-color: #1A73E8; width: 100%; margin-bottom: 15mm;"></div>
 </div>
 
 `;
@@ -328,64 +400,139 @@ PREMIUM-QUALITÄT: Keine Hinweise auf automatische Generierung, nur höchste Anw
         headerPreview: companyHeader.substring(0, 300)
       });
       
-      // ✅ PROFESSIONELLER VERTRAGSTITEL MIT DATUM
+      // ✅ PREMIUM VERTRAGSTITEL - DIN A4 KONFORM
       const today = new Date().toLocaleDateString('de-DE', { 
         day: '2-digit', 
         month: 'long', 
         year: 'numeric' 
       });
       
-      // ✅ ZENTRIERTER PREMIUM TITEL - OHNE BRANDING
       const contractTitle = `
-<div style="padding: 0 50px; max-width: 640px; margin: 0 auto; font-family: 'Helvetica Neue', 'Segoe UI', Arial, sans-serif;">
-  <div style="text-align: center; margin-bottom: 30px;">
-    <h1 style="font-size: 24px; font-weight: 600; color: #222; margin: 0 0 10px 0;">
+<!-- DIN A4 Contract Title Section -->
+<div style="
+  width: 100%; 
+  max-width: 640px; 
+  margin: 0 auto 20mm auto; 
+  padding: 0 50mm;
+  font-family: 'Helvetica Neue', 'Segoe UI', Arial, sans-serif;
+  page-break-inside: avoid;
+">
+  <div style="text-align: center; margin: 20mm 0;">
+    <h1 style="font-size: 22pt; font-weight: 600; color: #222; margin: 0 0 5mm 0; page-break-after: avoid;">
       ${formData.title || getContractTitle(type)}
     </h1>
-    <p style="color: #666; font-size: 13px; margin: 0;">
+    <p style="color: #444; font-size: 14pt; margin: 0 0 5mm 0;">
+      ${getContractSubtitle(type)}
+    </p>
+    <p style="color: #555; font-size: 11pt; margin: 0;">
       Erstellt am ${today}
     </p>
   </div>
 </div>`;
 
-      // ✅ PREMIUM UNTERSCHRIFTSBLOCK - SYMMETRISCH & EDEL
+      // ✅ PREMIUM UNTERSCHRIFTSBLOCK - DIN A4 KONFORM
       const signatureSection = `
-<div style="padding: 0 50px; max-width: 640px; margin: 40px auto 0 auto;">
-  <div style="background-color: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; padding: 20px; font-family: 'Helvetica Neue', 'Segoe UI', Arial, sans-serif;">
-    <div style="display: flex; justify-content: space-between; gap: 40px;">
+<!-- DIN A4 Signature Block - Always Complete on One Page -->
+<div style="
+  width: 100%; 
+  max-width: 640px; 
+  margin: 30mm auto 60mm auto; 
+  padding: 0 50mm;
+  font-family: 'Helvetica Neue', 'Segoe UI', Arial, sans-serif;
+  page-break-inside: avoid;
+">
+  <div style="
+    background-color: #F9FAFB; 
+    border: 1px solid #E5E7EB; 
+    border-radius: 6px; 
+    padding: 20mm; 
+    font-size: 13pt;
+  ">
+    <div style="display: flex; justify-content: space-between; gap: 15mm;">
       <div style="flex: 1;">
-        <p style="color: #333; font-size: 13px; margin: 0 0 40px 0;">Ort, Datum: ______________________</p>
-        <p style="color: #333; font-size: 13px; margin: 0 0 5px 0;">Unterschrift ${getPartyLabel(type, 'company')}</p>
+        <p style="color: #333; margin: 0 0 15mm 0;">
+          Ort, Datum: ____________________________
+        </p>
+        <p style="color: #333; margin: 0 0 5mm 0;">
+          Unterschrift ${getPartyLabel(type, 'company')}
+        </p>
         <div style="border-bottom: 1px solid #333; margin: 0 0 8px 0; width: 100%;"></div>
-        <p style="color: #666; font-size: 11px; margin: 0;">(${companyProfile.companyName})</p>
+        <p style="color: #666; font-size: 11pt; margin: 0;">
+          (${companyProfile.companyName})
+        </p>
       </div>
       <div style="flex: 1;">
-        <p style="color: #333; font-size: 13px; margin: 0 0 40px 0;">Ort, Datum: ______________________</p>
-        <p style="color: #333; font-size: 13px; margin: 0 0 5px 0;">Unterschrift ${getPartyLabel(type, 'counterparty')}</p>
+        <p style="color: #333; margin: 0 0 15mm 0;">
+          Ort, Datum: ____________________________
+        </p>
+        <p style="color: #333; margin: 0 0 5mm 0;">
+          Unterschrift ${getPartyLabel(type, 'counterparty')}
+        </p>
         <div style="border-bottom: 1px solid #333; margin: 0 0 8px 0; width: 100%;"></div>
-        <p style="color: #666; font-size: 11px; margin: 0;">(${formData.buyer || formData.tenant || formData.employee || formData.partyB || 'Vertragspartner'})</p>
+        <p style="color: #666; font-size: 11pt; margin: 0;">
+          (${formData.buyer || formData.tenant || formData.employee || formData.partyB || 'Vertragspartner'})
+        </p>
       </div>
     </div>
   </div>
 </div>`;
 
-      // ✅ KEIN FOOTER - PREMIUM CLEAN
+      // ✅ PREMIUM FOOTER MIT SEITENZAHLEN
+      const footerSection = `
+<!-- DIN A4 Footer Section -->
+<div style="
+  width: 100%; 
+  max-width: 640px; 
+  margin: 0 auto; 
+  padding: 0 50mm 20mm 50mm;
+  font-family: 'Helvetica Neue', 'Segoe UI', Arial, sans-serif;
+  text-align: center;
+">
+  <div style="
+    color: #888; 
+    font-size: 10pt; 
+    border-top: 1px solid #E5E7EB;
+    padding-top: 10mm;
+  ">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <div style="flex: 1;">
+        ${finalLogoUrl ? `<img src="${finalLogoUrl}" alt="Logo" style="max-height: 20px; width: auto; opacity: 0.6;" />` : ''}
+      </div>
+      <div style="flex: 1; text-align: center;">
+        Seite 1 von 1
+      </div>
+      <div style="flex: 1;"></div>
+    </div>
+  </div>
+</div>`;
       
-      // Vertrag zusammensetzen - OHNE FOOTER
-      contractText = companyHeader + contractTitle + contractText + signatureSection;
+      // Vertrag zusammensetzen - MIT PREMIUM FOOTER
+      contractText = companyHeader + contractTitle + contractText + signatureSection + footerSection;
       console.log("✅ Professioneller Vertrag komplett erstellt! Länge:", contractText.length);
       
       // Helper-Funktionen
       function getContractTitle(contractType) {
         const titles = {
           'freelancer': 'Freelancer-Dienstleistungsvertrag',
-          'kaufvertrag': 'Kaufvertrag',
+          'kaufvertrag': 'Kaufvertrag', 
           'mietvertrag': 'Mietvertrag',
           'arbeitsvertrag': 'Arbeitsvertrag',
           'nda': 'Geheimhaltungsvereinbarung (NDA)',
           'custom': 'Individueller Vertrag'
         };
         return titles[contractType] || 'Vertrag';
+      }
+      
+      function getContractSubtitle(contractType) {
+        const subtitles = {
+          'freelancer': 'Dienstleistungsvertrag',
+          'kaufvertrag': 'Kaufvertrag beweglicher Sachen',
+          'mietvertrag': 'Mietvertrag für Wohnraum',
+          'arbeitsvertrag': 'Arbeitsvertrag',
+          'nda': 'Geheimhaltungsvereinbarung',
+          'custom': 'Individueller Vertrag'
+        };
+        return subtitles[contractType] || '';
       }
       
       function getPartyLabel(contractType, party) {
@@ -397,7 +544,14 @@ PREMIUM-QUALITÄT: Keine Hinweise auf automatische Generierung, nur höchste Anw
           'nda': { company: 'Partei A', counterparty: 'Partei B' },
           'custom': { company: 'Vertragspartner A', counterparty: 'Vertragspartner B' }
         };
-        return labels[contractType]?.[party] || labels.custom[party];
+        
+        const contractLabels = labels[contractType] || labels.custom;
+        
+        if (party === 'both') {
+          return contractLabels;
+        }
+        
+        return contractLabels[party] || 'Partei';
       }
       
       // Testen ob Logo-URL erreichbar ist
