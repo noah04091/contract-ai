@@ -72,6 +72,50 @@ router.post("/", verifyToken, async (req, res) => {
     userId: req.user?.userId
   });
   
+  // ✅ HELPER FUNKTIONEN - Außerhalb des IF-Blocks für globale Verfügbarkeit
+  function getContractTitle(contractType) {
+    const titles = {
+      'freelancer': 'Freelancer-Dienstleistungsvertrag',
+      'kaufvertrag': 'Kaufvertrag', 
+      'mietvertrag': 'Mietvertrag',
+      'arbeitsvertrag': 'Arbeitsvertrag',
+      'nda': 'Geheimhaltungsvereinbarung (NDA)',
+      'custom': 'Individueller Vertrag'
+    };
+    return titles[contractType] || 'Vertrag';
+  }
+  
+  function getContractSubtitle(contractType) {
+    const subtitles = {
+      'freelancer': 'Dienstleistungsvertrag',
+      'kaufvertrag': 'Kaufvertrag beweglicher Sachen',
+      'mietvertrag': 'Mietvertrag für Wohnraum',
+      'arbeitsvertrag': 'Arbeitsvertrag',
+      'nda': 'Geheimhaltungsvereinbarung',
+      'custom': 'Individueller Vertrag'
+    };
+    return subtitles[contractType] || '';
+  }
+  
+  function getPartyLabel(contractType, party) {
+    const labels = {
+      'freelancer': { company: 'Auftraggeber', counterparty: 'Auftragnehmer' },
+      'kaufvertrag': { company: 'Verkäufer', counterparty: 'Käufer' },
+      'mietvertrag': { company: 'Vermieter', counterparty: 'Mieter' },
+      'arbeitsvertrag': { company: 'Arbeitgeber', counterparty: 'Arbeitnehmer' },
+      'nda': { company: 'Partei A', counterparty: 'Partei B' },
+      'custom': { company: 'Vertragspartner A', counterparty: 'Vertragspartner B' }
+    };
+    
+    const contractLabels = labels[contractType] || labels.custom;
+    
+    if (party === 'both') {
+      return contractLabels;
+    }
+    
+    return contractLabels[party] || 'Partei';
+  }
+  
   const { type, formData, useCompanyProfile = false } = req.body;
 
   if (!type || !formData || !formData.title) {
@@ -509,50 +553,6 @@ WICHTIG: Verwende die [DYNAMIC_PARTY_A_LABEL] und [DYNAMIC_PARTY_B_LABEL] Platzh
       // Vertrag zusammensetzen - MIT PREMIUM FOOTER
       contractText = companyHeader + contractTitle + contractText + signatureSection + footerSection;
       console.log("✅ Professioneller Vertrag komplett erstellt! Länge:", contractText.length);
-      
-      // Helper-Funktionen
-      function getContractTitle(contractType) {
-        const titles = {
-          'freelancer': 'Freelancer-Dienstleistungsvertrag',
-          'kaufvertrag': 'Kaufvertrag', 
-          'mietvertrag': 'Mietvertrag',
-          'arbeitsvertrag': 'Arbeitsvertrag',
-          'nda': 'Geheimhaltungsvereinbarung (NDA)',
-          'custom': 'Individueller Vertrag'
-        };
-        return titles[contractType] || 'Vertrag';
-      }
-      
-      function getContractSubtitle(contractType) {
-        const subtitles = {
-          'freelancer': 'Dienstleistungsvertrag',
-          'kaufvertrag': 'Kaufvertrag beweglicher Sachen',
-          'mietvertrag': 'Mietvertrag für Wohnraum',
-          'arbeitsvertrag': 'Arbeitsvertrag',
-          'nda': 'Geheimhaltungsvereinbarung',
-          'custom': 'Individueller Vertrag'
-        };
-        return subtitles[contractType] || '';
-      }
-      
-      function getPartyLabel(contractType, party) {
-        const labels = {
-          'freelancer': { company: 'Auftraggeber', counterparty: 'Auftragnehmer' },
-          'kaufvertrag': { company: 'Verkäufer', counterparty: 'Käufer' },
-          'mietvertrag': { company: 'Vermieter', counterparty: 'Mieter' },
-          'arbeitsvertrag': { company: 'Arbeitgeber', counterparty: 'Arbeitnehmer' },
-          'nda': { company: 'Partei A', counterparty: 'Partei B' },
-          'custom': { company: 'Vertragspartner A', counterparty: 'Vertragspartner B' }
-        };
-        
-        const contractLabels = labels[contractType] || labels.custom;
-        
-        if (party === 'both') {
-          return contractLabels;
-        }
-        
-        return contractLabels[party] || 'Partei';
-      }
       
       // Testen ob Logo-URL erreichbar ist
       if (companyProfile.logoUrl) {
