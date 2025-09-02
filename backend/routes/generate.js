@@ -1,4 +1,4 @@
-// 📄 backend/routes/generate.js - VERBESSERTE VERSION
+// 🔄 backend/routes/generate.js - KORRIGIERTE VERSION
 const express = require("express");
 const { OpenAI } = require("openai");
 const verifyToken = require("../middleware/verifyToken");
@@ -56,7 +56,7 @@ let usersCollection, contractsCollection, db;
     db = client.db("contract_ai");
     usersCollection = db.collection("users");
     contractsCollection = db.collection("contracts");
-    console.log("📄 Generate.js: MongoDB verbunden!");
+    console.log("🔄 Generate.js: MongoDB verbunden!");
   } catch (err) {
     console.error("❌ Generate.js MongoDB Fehler:", err);
   }
@@ -380,7 +380,7 @@ Strukturiere den Vertrag professionell mit allen notwendigen rechtlichen Klausel
         
         let result = completion.choices[0].message.content || "";
         
-        // 🔍 QUALITÄTSKONTROLLE
+        // 📝 QUALITÄTSKONTROLLE
         if (result.length < 500) {
           console.warn("⚠️ GPT Antwort zu kurz (" + result.length + " Zeichen), versuche zweiten Versuch...");
           // Zweiter Versuch mit leicht veränderten Parametern
@@ -397,7 +397,7 @@ Strukturiere den Vertrag professionell mit allen notwendigen rechtlichen Klausel
           console.log("🔄 Zweiter Versuch abgeschlossen, neue Länge:", result.length);
         }
         
-        // 🔍 STRUKTUR-VALIDATION
+        // 📝 STRUKTUR-VALIDATION
         const hasRequiredElements = result.includes('§ 1') && 
                                    result.includes('Unterschrift') && 
                                    result.length > 800;
@@ -431,7 +431,7 @@ Strukturiere den Vertrag professionell mit allen notwendigen rechtlichen Klausel
     // GPT-4 Generierung mit Backup-System
     let contractText = await generateContractWithFallback(systemPrompt, userPrompt);
 
-    // 🛡️ ROBUSTE COMPANY PROFILE INTEGRATION
+    // 🛡️ ROBUSTE COMPANY PROFILE INTEGRATION - KORRIGIERT!
     if (companyProfile && useCompanyProfile) {
       const validateAndFormatCompanyData = (profile) => {
         // Minimale Requirements checken
@@ -454,9 +454,32 @@ Strukturiere den Vertrag professionell mit allen notwendigen rechtlichen Klausel
       const companyDetails = validateAndFormatCompanyData(companyProfile);
       
       if (companyDetails) {
-        // 🔍 ROBUSTE ERSETZUNG mit mehreren Fallback-Patterns
+        // 📝 ROBUSTE ERSETZUNG mit mehreren Fallback-Patterns - KORRIGIERT!
         const replaceCompanyData = (text, details, contractType) => {
           let result = text;
+          
+          // WICHTIG: replacement Variable außerhalb definieren!
+          let replacement = '';
+          
+          switch(contractType) {
+            case 'freelancer':
+              replacement = 'AUFTRAGGEBER';
+              break;
+            case 'kaufvertrag':
+              replacement = 'VERKÄUFER';
+              break;
+            case 'mietvertrag':
+              replacement = 'VERMIETER';
+              break;
+            case 'arbeitsvertrag':
+              replacement = 'ARBEITGEBER';
+              break;
+            case 'nda':
+              replacement = 'PARTEI A (Offenlegender)';
+              break;
+            default:
+              replacement = 'PARTEI A';
+          }
           
           // Mehrere Pattern für verschiedene GPT-Formatierungen
           const patterns = {
@@ -498,12 +521,6 @@ Strukturiere den Vertrag professionell mit allen notwendigen rechtlichen Klausel
           // Versuche alle Pattern, nimm das erste was matcht
           for (const pattern of typePatterns) {
             if (pattern.test(result)) {
-              const replacement = contractType === 'freelancer' ? 'AUFTRAGGEBER' :
-                                contractType === 'kaufvertrag' ? 'VERKÄUFER' :
-                                contractType === 'mietvertrag' ? 'VERMIETER' :
-                                contractType === 'arbeitsvertrag' ? 'ARBEITGEBER' :
-                                contractType === 'nda' ? 'PARTEI A (Offenlegender)' : 'PARTEI A';
-              
               result = result.replace(pattern, `${replacement}:\n${details}`);
               replaced = true;
               console.log(`✅ Company data ersetzt für ${contractType} mit Pattern: ${pattern}`);
@@ -517,6 +534,7 @@ Strukturiere den Vertrag professionell mit allen notwendigen rechtlichen Klausel
             const titleMatch = result.match(/^={3,}\n(.+)\n={3,}/m);
             if (titleMatch) {
               const insertPoint = result.indexOf(titleMatch[0]) + titleMatch[0].length;
+              // HIER WAR DER FEHLER - replacement ist jetzt definiert!
               const insertion = `\n\n${replacement}:\n${details}\n\nund\n\n`;
               result = result.slice(0, insertPoint) + insertion + result.slice(insertPoint);
             }
