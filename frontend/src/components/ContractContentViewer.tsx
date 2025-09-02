@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // ContractContentViewer.tsx - VERBESSERTE VERSION mit professioneller Formatierung
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FileText, Download, Maximize2, X, Eye, Copy, CheckCircle, Printer, Edit, Save, Keyboard } from 'lucide-react';
 import { toast } from 'react-toastify';
@@ -133,6 +133,7 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditing, isFullscreen]); // Dependencies für korrekte Event-Handler
 
   // Initialize edited content
@@ -153,7 +154,7 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
     
     // Absätze formatieren
     formatted = formatted.replace(/^\((\d+)\) /gm, '<div style="margin-left: 20px; margin-bottom: 8px;"><strong>($1)</strong> ');
-    formatted = formatted.replace(/^   ([a-z])\) /gm, '<div style="margin-left: 40px; margin-bottom: 4px;">$1) ');
+    formatted = formatted.replace(/^ {3}([a-z])\) /gm, '<div style="margin-left: 40px; margin-bottom: 4px;">$1) ');
     
     // Parteien hervorheben
     formatted = formatted.replace(/^(AUFTRAGGEBER|AUFTRAGNEHMER|VERKÄUFER|KÄUFER|VERMIETER|MIETER|ARBEITGEBER|ARBEITNEHMER|PARTEI [AB]):/gm, '<strong style="display: block; margin-top: 10px;">$1:</strong>');
@@ -174,7 +175,7 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
         new Date(contract.uploadedAt || '').toLocaleDateString('de-DE')
     }.\n\nDetaillierte Vertragsinhalte können durch Analyse oder manuellen Upload bereitgestellt werden.`);
 
-  const handleSaveContent = async () => {
+  const handleSaveContent = useCallback(async () => {
     try {
       const response = await fetch(`/api/contracts/${contract._id}`, {
         method: 'PATCH',
@@ -194,7 +195,7 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
       console.error('Save error:', error);
       toast.error('❌ Fehler beim Speichern der Änderungen');
     }
-  };
+  }, [contract, editedContent]);
 
   const handleDownloadPDF = async () => {
     try {

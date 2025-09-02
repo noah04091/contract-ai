@@ -658,7 +658,7 @@ export default function Generate() {
       setUseCompanyProfile(true);
       console.log('✅ Company Profile automatisch aktiviert');
     }
-  }, [companyProfile]);
+  }, [companyProfile, useCompanyProfile]);
 
   const loadCompanyProfile = async () => {
     try {
