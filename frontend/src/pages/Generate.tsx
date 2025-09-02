@@ -6,7 +6,7 @@ import { Helmet } from "react-helmet";
 import { 
   CheckCircle, Clipboard, Save, FileText, Check, Download,
   ArrowRight, ArrowLeft, Sparkles, Edit3, Building,
-  Eye, PenTool, RefreshCw, Zap
+  Eye, PenTool, RefreshCw, Zap, BookOpen, Star, TrendingUp
 } from "lucide-react";
 import styles from "../styles/Generate.module.css";
 import { toast } from 'react-toastify';
@@ -43,36 +43,48 @@ interface ContractType {
   name: string;
   description: string;
   icon: string;
-  // Erweiterte Felder - bestehende bleiben unverändert
-  jurisdiction?: string; // Rechtsprechung (DE, AT, CH)
-  category?: string; // Kategorie für Gruppierung
-  estimatedDuration?: string; // Geschätzte Bearbeitungszeit
+  jurisdiction?: string;
+  category?: string;
+  estimatedDuration?: string;
+  popularity?: number; // Für "Beliebt" Badge
+  isNew?: boolean; // Für "Neu" Badge
   fields: Array<{
     name: string;
     label: string;
     type: 'text' | 'textarea' | 'date' | 'number' | 'email' | 'phone' | 'iban' | 'vat' | 'select';
     placeholder: string;
     required: boolean;
-    // Neue Validierungsfelder
     validation?: {
-      pattern?: string; // Regex Pattern
-      min?: number; // Minimum (für Zahlen/Länge)
-      max?: number; // Maximum (für Zahlen/Länge)
-      message?: string; // Custom Error Message
+      pattern?: string;
+      min?: number;
+      max?: number;
+      message?: string;
     };
-    options?: string[]; // Für Select-Felder
-    group?: string; // Feldgruppierung
-    helpText?: string; // Hilftext
-    dependsOn?: string; // Abhängigkeit von anderem Feld
+    options?: string[];
+    group?: string;
+    helpText?: string;
+    dependsOn?: string;
   }>;
 }
 
-// HTML2PDF Types (using unknown to avoid linting errors)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// Contract Templates Interface
+interface ContractTemplate {
+  id: string;
+  name: string;
+  description: string;
+  contractType: string;
+  icon: string;
+  prefilled: FormDataType;
+  tags: string[];
+  isPremium?: boolean;
+}
+
+// HTML2PDF Types
 type Html2PdfOptions = any;
 
-// Contract Types Configuration
+// 🎯 ERWEITERTE VERTRAGSTYPEN - JETZT MIT ALLEN WICHTIGEN TYPEN
 const CONTRACT_TYPES: ContractType[] = [
+  // BESTEHENDE VERTRÄGE
   {
     id: 'freelancer',
     name: 'Freelancer-Vertrag',
@@ -81,8 +93,8 @@ const CONTRACT_TYPES: ContractType[] = [
     jurisdiction: 'DE',
     category: 'Dienstleistung',
     estimatedDuration: '5-8 Minuten',
+    popularity: 95,
     fields: [
-      // ✅ BESTEHENDE FELDER - unverändert beibehalten
       { name: 'nameClient', label: 'Auftraggeber', type: 'text', placeholder: 'Firmenname oder Privatperson', required: true },
       { name: 'nameFreelancer', label: 'Freelancer', type: 'text', placeholder: 'Ihr Name', required: true },
       { name: 'description', label: 'Leistungsbeschreibung', type: 'textarea', placeholder: 'Detaillierte Beschreibung der zu erbringenden Leistung...', required: true },
@@ -90,8 +102,6 @@ const CONTRACT_TYPES: ContractType[] = [
       { name: 'payment', label: 'Vergütung', type: 'text', placeholder: 'z.B. 5.000€ oder 80€/Stunde', required: true },
       { name: 'rights', label: 'Nutzungsrechte', type: 'text', placeholder: 'Wer erhält welche Rechte an den Ergebnissen?', required: true },
       { name: 'terminationClause', label: 'Kündigungsfrist', type: 'text', placeholder: 'z.B. 14 Tage zum Monatsende', required: true },
-      
-      // ✅ NEUE ERWEITERTE FELDER - rechtssicher und detailliert
       { 
         name: 'clientAddress', 
         label: 'Adresse Auftraggeber', 
@@ -201,6 +211,7 @@ const CONTRACT_TYPES: ContractType[] = [
     name: 'Mietvertrag',
     description: 'Für Wohnraum oder Gewerbeflächen',
     icon: '🏠',
+    popularity: 85,
     fields: [
       { name: 'landlord', label: 'Vermieter', type: 'text', placeholder: 'Name des Vermieters', required: true },
       { name: 'tenant', label: 'Mieter', type: 'text', placeholder: 'Name des Mieters', required: true },
@@ -216,6 +227,7 @@ const CONTRACT_TYPES: ContractType[] = [
     name: 'Arbeitsvertrag',
     description: 'Für Festanstellungen',
     icon: '👔',
+    popularity: 90,
     fields: [
       { name: 'employer', label: 'Arbeitgeber', type: 'text', placeholder: 'Firmenname', required: true },
       { name: 'employee', label: 'Arbeitnehmer', type: 'text', placeholder: 'Name des Mitarbeiters', required: true },
@@ -230,6 +242,7 @@ const CONTRACT_TYPES: ContractType[] = [
     name: 'Kaufvertrag',
     description: 'Für Waren und Dienstleistungen',
     icon: '🛒',
+    popularity: 80,
     fields: [
       { name: 'seller', label: 'Verkäufer', type: 'text', placeholder: 'Name des Verkäufers', required: true },
       { name: 'buyer', label: 'Käufer', type: 'text', placeholder: 'Name des Käufers', required: true },
@@ -243,11 +256,112 @@ const CONTRACT_TYPES: ContractType[] = [
     name: 'Geheimhaltungsvertrag',
     description: 'Vertraulichkeitsvereinbarung',
     icon: '🔒',
+    popularity: 75,
     fields: [
       { name: 'partyA', label: 'Partei A', type: 'text', placeholder: 'Name der ersten Vertragspartei', required: true },
       { name: 'partyB', label: 'Partei B', type: 'text', placeholder: 'Name der zweiten Vertragspartei', required: true },
       { name: 'purpose', label: 'Zweck/Anlass', type: 'textarea', placeholder: 'Worum geht es? Warum wird Vertraulichkeit benötigt?', required: true },
       { name: 'duration', label: 'Gültigkeitsdauer', type: 'text', placeholder: 'z.B. 5 Jahre oder unbefristet', required: true }
+    ]
+  },
+  
+  // 🆕 NEUE ERWEITERTE VERTRAGSTYPEN
+  {
+    id: 'gesellschaftsvertrag',
+    name: 'Gesellschaftsvertrag',
+    description: 'Für GbR, GmbH, UG Gründungen',
+    icon: '🏢',
+    category: 'Gesellschaftsrecht',
+    isNew: true,
+    popularity: 70,
+    fields: [
+      { name: 'companyName', label: 'Gesellschaftsname', type: 'text', placeholder: 'Name der zu gründenden Gesellschaft', required: true },
+      { name: 'companyType', label: 'Gesellschaftsform', type: 'select', placeholder: 'Wählen Sie die Rechtsform', required: true,
+        options: ['GbR (Gesellschaft bürgerlichen Rechts)', 'GmbH (Gesellschaft mit beschränkter Haftung)', 'UG (haftungsbeschränkt)', 'OHG (Offene Handelsgesellschaft)', 'KG (Kommanditgesellschaft)']
+      },
+      { name: 'partners', label: 'Gesellschafter', type: 'textarea', placeholder: 'Namen und Adressen aller Gesellschafter', required: true },
+      { name: 'capital', label: 'Stammkapital', type: 'text', placeholder: 'z.B. 25.000€ (GmbH) oder 1€ (UG)', required: true },
+      { name: 'shares', label: 'Geschäftsanteile', type: 'textarea', placeholder: 'Verteilung der Anteile in Prozent', required: true },
+      { name: 'purpose', label: 'Unternehmensgegenstand', type: 'textarea', placeholder: 'Beschreibung der Geschäftstätigkeit', required: true },
+      { name: 'management', label: 'Geschäftsführung', type: 'text', placeholder: 'Wer wird Geschäftsführer?', required: true }
+    ]
+  },
+  {
+    id: 'darlehensvertrag',
+    name: 'Darlehensvertrag',
+    description: 'Für private oder geschäftliche Kredite',
+    icon: '💰',
+    category: 'Finanzierung',
+    isNew: true,
+    popularity: 65,
+    fields: [
+      { name: 'lender', label: 'Darlehensgeber', type: 'text', placeholder: 'Name des Kreditgebers', required: true },
+      { name: 'borrower', label: 'Darlehensnehmer', type: 'text', placeholder: 'Name des Kreditnehmers', required: true },
+      { name: 'amount', label: 'Darlehenssumme', type: 'number', placeholder: 'z.B. 50000', required: true },
+      { name: 'interestRate', label: 'Zinssatz', type: 'text', placeholder: 'z.B. 3,5% p.a.', required: true },
+      { name: 'duration', label: 'Laufzeit', type: 'text', placeholder: 'z.B. 5 Jahre', required: true },
+      { name: 'repayment', label: 'Rückzahlung', type: 'select', placeholder: 'Art der Rückzahlung', required: true,
+        options: ['Monatliche Raten', 'Vierteljährliche Raten', 'Jährliche Raten', 'Endfällig', 'Nach Vereinbarung']
+      },
+      { name: 'security', label: 'Sicherheiten', type: 'textarea', placeholder: 'z.B. Grundschuld, Bürgschaft, etc.', required: false }
+    ]
+  },
+  {
+    id: 'lizenzvertrag',
+    name: 'Lizenzvertrag',
+    description: 'Für Software, Marken, Patente',
+    icon: '©️',
+    category: 'Geistiges Eigentum',
+    popularity: 60,
+    fields: [
+      { name: 'licensor', label: 'Lizenzgeber', type: 'text', placeholder: 'Inhaber der Rechte', required: true },
+      { name: 'licensee', label: 'Lizenznehmer', type: 'text', placeholder: 'Nutzer der Lizenz', required: true },
+      { name: 'subject', label: 'Lizenzgegenstand', type: 'textarea', placeholder: 'Was wird lizenziert? (Software, Marke, Patent, etc.)', required: true },
+      { name: 'licenseType', label: 'Lizenzart', type: 'select', placeholder: 'Art der Lizenz', required: true,
+        options: ['Exklusivlizenz', 'Einfache Lizenz', 'Unterlizenzierbar', 'Nicht übertragbar']
+      },
+      { name: 'territory', label: 'Territorium', type: 'text', placeholder: 'z.B. Deutschland, EU, Weltweit', required: true },
+      { name: 'fee', label: 'Lizenzgebühren', type: 'text', placeholder: 'z.B. Einmalzahlung oder % vom Umsatz', required: true },
+      { name: 'duration', label: 'Laufzeit', type: 'text', placeholder: 'z.B. 5 Jahre oder unbefristet', required: true }
+    ]
+  },
+  {
+    id: 'aufhebungsvertrag',
+    name: 'Aufhebungsvertrag',
+    description: 'Einvernehmliche Vertragsbeendigung',
+    icon: '🤝',
+    category: 'Arbeitsrecht',
+    popularity: 55,
+    fields: [
+      { name: 'employer', label: 'Arbeitgeber', type: 'text', placeholder: 'Firmenname', required: true },
+      { name: 'employee', label: 'Arbeitnehmer', type: 'text', placeholder: 'Name des Mitarbeiters', required: true },
+      { name: 'endDate', label: 'Beendigungsdatum', type: 'date', placeholder: '', required: true },
+      { name: 'severance', label: 'Abfindung', type: 'text', placeholder: 'z.B. 3 Monatsgehälter', required: false },
+      { name: 'reason', label: 'Beendigungsgrund', type: 'select', placeholder: 'Grund der Beendigung', required: true,
+        options: ['Betriebsbedingt', 'Einvernehmlich', 'Umstrukturierung', 'Persönliche Gründe']
+      },
+      { name: 'vacation', label: 'Resturlaub', type: 'text', placeholder: 'Anzahl der Tage', required: true },
+      { name: 'reference', label: 'Zeugnis', type: 'select', placeholder: 'Art des Arbeitszeugnisses', required: true,
+        options: ['Sehr gutes Zeugnis', 'Gutes Zeugnis', 'Einfaches Zeugnis', 'Nach Vereinbarung']
+      }
+    ]
+  },
+  {
+    id: 'pachtvertrag',
+    name: 'Pachtvertrag',
+    description: 'Für landwirtschaftliche Flächen oder Gastronomie',
+    icon: '🌾',
+    category: 'Immobilien',
+    isNew: true,
+    popularity: 50,
+    fields: [
+      { name: 'lessor', label: 'Verpächter', type: 'text', placeholder: 'Name des Verpächters', required: true },
+      { name: 'lessee', label: 'Pächter', type: 'text', placeholder: 'Name des Pächters', required: true },
+      { name: 'object', label: 'Pachtobjekt', type: 'textarea', placeholder: 'Beschreibung (z.B. Gaststätte, Acker, etc.)', required: true },
+      { name: 'startDate', label: 'Pachtbeginn', type: 'date', placeholder: '', required: true },
+      { name: 'rent', label: 'Pachtzins', type: 'text', placeholder: 'z.B. 2.000€ monatlich', required: true },
+      { name: 'duration', label: 'Pachtdauer', type: 'text', placeholder: 'z.B. 10 Jahre', required: true },
+      { name: 'usage', label: 'Nutzungszweck', type: 'text', placeholder: 'z.B. Gastronomie, Landwirtschaft', required: true }
     ]
   },
   {
@@ -261,6 +375,157 @@ const CONTRACT_TYPES: ContractType[] = [
   }
 ];
 
+// 🎯 VERTRAGSBIBLIOTHEK MIT VORLAGEN
+const CONTRACT_TEMPLATES: ContractTemplate[] = [
+  // Freelancer Templates
+  {
+    id: 'freelancer_webdev',
+    name: 'Webentwicklung Freelancer',
+    description: 'Optimiert für Webentwicklungs-Projekte',
+    contractType: 'freelancer',
+    icon: '🌐',
+    tags: ['IT', 'Web', 'Development'],
+    prefilled: {
+      description: 'Entwicklung einer responsiven Webseite mit modernem Frontend (React/Vue) und Backend (Node.js). Inklusive Setup, Testing und Deployment.',
+      payment: '80€ pro Stunde',
+      timeframe: '3 Monate',
+      rights: 'Alle Rechte gehen nach vollständiger Bezahlung an den Auftraggeber über',
+      workLocation: 'Remote/Homeoffice',
+      ipOwnership: 'Vollständig an Auftraggeber',
+      invoiceInterval: 'Monatlich'
+    }
+  },
+  {
+    id: 'freelancer_design',
+    name: 'Grafikdesign Freelancer',
+    description: 'Für Design- und Kreativprojekte',
+    contractType: 'freelancer',
+    icon: '🎨',
+    tags: ['Design', 'Kreativ', 'Marketing'],
+    prefilled: {
+      description: 'Erstellung von Corporate Design, Logo, Geschäftsausstattung und Marketing-Materialien.',
+      payment: '65€ pro Stunde',
+      timeframe: '6 Wochen',
+      rights: 'Exklusive Nutzungsrechte für den Auftraggeber',
+      workLocation: 'Flexibel nach Absprache',
+      ipOwnership: 'Vollständig an Auftraggeber',
+      invoiceInterval: 'Nach Meilensteine'
+    }
+  },
+  {
+    id: 'freelancer_consulting',
+    name: 'Unternehmensberatung',
+    description: 'Für Beratungs- und Consulting-Projekte',
+    contractType: 'freelancer',
+    icon: '📊',
+    tags: ['Beratung', 'Business', 'Strategie'],
+    isPremium: true,
+    prefilled: {
+      description: 'Strategische Unternehmensberatung, Prozessoptimierung und Change Management.',
+      payment: '1.200€ Tagessatz',
+      timeframe: '6 Monate',
+      rights: 'Auftraggeber erhält uneingeschränkte Nutzungsrechte',
+      confidentiality: 'Streng vertraulich',
+      liability: 'Auf doppelten Auftragswert begrenzt'
+    }
+  },
+  
+  // Mietvertrag Templates
+  {
+    id: 'miet_wohnung',
+    name: 'Standard Wohnungsmietvertrag',
+    description: '3-Zimmer Wohnung in der Stadt',
+    contractType: 'mietvertrag',
+    icon: '🏙️',
+    tags: ['Wohnung', 'Stadt', 'Standard'],
+    prefilled: {
+      baseRent: '1.200€',
+      extraCosts: '250€ Vorauszahlung',
+      termination: '3 Monate zum Monatsende'
+    }
+  },
+  {
+    id: 'miet_gewerbe',
+    name: 'Gewerbemietvertrag',
+    description: 'Für Büro- oder Ladenflächen',
+    contractType: 'mietvertrag',
+    icon: '🏪',
+    tags: ['Gewerbe', 'Büro', 'Laden'],
+    isPremium: true,
+    prefilled: {
+      baseRent: '2.500€',
+      extraCosts: '500€ Vorauszahlung',
+      termination: '6 Monate zum Quartalsende'
+    }
+  },
+  
+  // Arbeitsvertrag Templates
+  {
+    id: 'arbeit_vollzeit',
+    name: 'Vollzeit Arbeitsvertrag',
+    description: 'Standard Vollzeitanstellung',
+    contractType: 'arbeitsvertrag',
+    icon: '💼',
+    tags: ['Vollzeit', 'Festanstellung'],
+    prefilled: {
+      workingHours: '40 Stunden/Woche',
+      salary: '60.000€ brutto/Jahr'
+    }
+  },
+  {
+    id: 'arbeit_teilzeit',
+    name: 'Teilzeit Arbeitsvertrag',
+    description: '20-30 Stunden pro Woche',
+    contractType: 'arbeitsvertrag',
+    icon: '⏰',
+    tags: ['Teilzeit', 'Flexibel'],
+    prefilled: {
+      workingHours: '25 Stunden/Woche',
+      salary: '35.000€ brutto/Jahr'
+    }
+  },
+  {
+    id: 'arbeit_minijob',
+    name: 'Minijob Vertrag',
+    description: '520€ Basis',
+    contractType: 'arbeitsvertrag',
+    icon: '👤',
+    tags: ['Minijob', '520€'],
+    prefilled: {
+      workingHours: '10 Stunden/Woche',
+      salary: '520€/Monat'
+    }
+  },
+  
+  // Kaufvertrag Templates
+  {
+    id: 'kauf_auto',
+    name: 'KFZ-Kaufvertrag',
+    description: 'Für Gebrauchtwagen',
+    contractType: 'kaufvertrag',
+    icon: '🚗',
+    tags: ['Auto', 'KFZ', 'Fahrzeug'],
+    prefilled: {
+      item: 'Gebrauchtes Kraftfahrzeug, Marke: [MARKE], Modell: [MODELL], Baujahr: [JAHR], Kilometerstand: [KM]',
+      price: '15.000€'
+    }
+  },
+  {
+    id: 'kauf_immobilie',
+    name: 'Immobilienkaufvertrag',
+    description: 'Für Häuser und Wohnungen',
+    contractType: 'kaufvertrag',
+    icon: '🏡',
+    tags: ['Immobilie', 'Haus', 'Wohnung'],
+    isPremium: true,
+    prefilled: {
+      item: 'Eigentumswohnung/Haus, [QM]m², Baujahr: [JAHR], Lage: [ORT]',
+      price: '450.000€'
+    }
+  }
+];
+
+// Premium Notice Component
 const PremiumNotice: React.FC<{ onUpgradeClick: () => void }> = ({ onUpgradeClick }) => (
   <motion.div 
     className={styles.premiumNotice}
@@ -289,13 +554,75 @@ const PremiumNotice: React.FC<{ onUpgradeClick: () => void }> = ({ onUpgradeClic
   </motion.div>
 );
 
+// 🆕 Template Library Component
+const TemplateLibrary: React.FC<{
+  contractType: string;
+  onSelectTemplate: (template: ContractTemplate) => void;
+  isPremium: boolean;
+}> = ({ contractType, onSelectTemplate, isPremium }) => {
+  const relevantTemplates = CONTRACT_TEMPLATES.filter(t => t.contractType === contractType);
+  
+  if (relevantTemplates.length === 0) return null;
+  
+  return (
+    <motion.div 
+      className={styles.templateLibrary}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      <div className={styles.templateHeader}>
+        <BookOpen size={20} />
+        <h3>Vorlagen-Bibliothek</h3>
+        <span className={styles.templateCount}>{relevantTemplates.length} Vorlagen</span>
+      </div>
+      
+      <div className={styles.templateGrid}>
+        {relevantTemplates.map((template) => (
+          <motion.div
+            key={template.id}
+            className={`${styles.templateCard} ${template.isPremium && !isPremium ? styles.locked : ''}`}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => {
+              if (!template.isPremium || isPremium) {
+                onSelectTemplate(template);
+                toast.success(`✅ Vorlage "${template.name}" geladen!`);
+              } else {
+                toast.warning('🔒 Diese Vorlage erfordert Premium');
+              }
+            }}
+          >
+            <div className={styles.templateIcon}>{template.icon}</div>
+            <div className={styles.templateInfo}>
+              <h4>{template.name}</h4>
+              <p>{template.description}</p>
+              <div className={styles.templateTags}>
+                {template.tags.map(tag => (
+                  <span key={tag} className={styles.tag}>{tag}</span>
+                ))}
+              </div>
+            </div>
+            {template.isPremium && (
+              <div className={styles.premiumBadge}>
+                <Star size={12} />
+                Premium
+              </div>
+            )}
+          </motion.div>
+        ))}
+      </div>
+    </motion.div>
+  );
+};
+
 export default function Generate() {
   // Navigation
   const navigate = useNavigate();
 
   // Auth Context
   const { user, isLoading } = useAuth();
-  const isPremium = true; // user?.subscriptionActive === true; // TEMPORÄR für Testing
+  const isPremium = true; // Temporär für Testing
 
   // State Management
   const [currentStep, setCurrentStep] = useState(1);
@@ -308,6 +635,7 @@ export default function Generate() {
   const [signatureURL, setSignatureURL] = useState<string | null>(null);
   const [isDrawing, setIsDrawing] = useState<boolean>(false);
   const [showPreview, setShowPreview] = useState<boolean>(false);
+  const [showTemplates, setShowTemplates] = useState<boolean>(false); // 🆕
   
   // Company Profile State
   const [companyProfile, setCompanyProfile] = useState<CompanyProfile | null>(null);
@@ -317,9 +645,9 @@ export default function Generate() {
   const contractRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // Load Company Profile on mount (Premium users only)
+  // Load Company Profile on mount
   useEffect(() => {
-    if (isPremium && !isLoading && user) { // ✅ user wird hier verwendet
+    if (isPremium && !isLoading && user) {
       loadCompanyProfile();
     }
   }, [isPremium, isLoading, user]);
@@ -349,12 +677,21 @@ export default function Generate() {
     }
   };
 
+  // 🆕 Template Selection Handler
+  const handleTemplateSelect = (template: ContractTemplate) => {
+    setFormData(prev => ({
+      ...prev,
+      ...template.prefilled,
+      title: `${template.name} - ${new Date().toLocaleDateString()}`
+    }));
+    setShowTemplates(false);
+  };
+
   // Auto-fill company data when profile is used
   const toggleCompanyProfile = (enabled: boolean) => {
     setUseCompanyProfile(enabled);
     
     if (enabled && companyProfile && selectedType) {
-      // Auto-fill company data based on contract type
       const updatedFormData = { ...formData };
       const companyFullName = `${companyProfile.companyName}${companyProfile.legalForm ? ` (${companyProfile.legalForm})` : ''}`;
       const companyFullAddress = `${companyProfile.street}, ${companyProfile.postalCode} ${companyProfile.city}`;
@@ -376,6 +713,21 @@ export default function Generate() {
         case 'nda':
           updatedFormData.partyA = companyFullName;
           break;
+        case 'gesellschaftsvertrag':
+          updatedFormData.partners = `${companyFullName}\n${companyFullAddress}`;
+          break;
+        case 'darlehensvertrag':
+          updatedFormData.lender = companyFullName;
+          break;
+        case 'lizenzvertrag':
+          updatedFormData.licensor = companyFullName;
+          break;
+        case 'pachtvertrag':
+          updatedFormData.lessor = companyFullName;
+          break;
+        case 'aufhebungsvertrag':
+          updatedFormData.employer = companyFullName;
+          break;
       }
       
       setFormData(updatedFormData);
@@ -383,24 +735,22 @@ export default function Generate() {
     }
   };
 
-  // ✅ NEU: Feld-Validierung
+  // Field Validation
   const validateField = (field: ContractType['fields'][0], value: string): boolean => {
     if (!field.validation) return true;
     
-    // Pattern validation (Regex)
     if (field.validation.pattern) {
       const regex = new RegExp(field.validation.pattern);
       if (!regex.test(value)) return false;
     }
     
-    // Length validation
     if (field.validation.min && value.length < field.validation.min) return false;
     if (field.validation.max && value.length > field.validation.max) return false;
     
     return true;
   };
 
-  // 🖊️ DIREKTE CANVAS-FUNKTIONEN (BESTEHENDE LÖSUNG)
+  // Canvas Functions (existing)
   const handleCanvasMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -408,7 +758,6 @@ export default function Generate() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Canvas-Setup falls noch nicht geschehen
     if (canvas.width !== 800) {
       canvas.width = 800;
       canvas.height = 200;
@@ -426,8 +775,6 @@ export default function Generate() {
     
     ctx.beginPath();
     ctx.moveTo(x, y);
-    
-    console.log("🖊️ Maus gedrückt - Zeichnen startet:", { x, y });
   };
 
   const handleCanvasMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -449,14 +796,13 @@ export default function Generate() {
 
   const handleCanvasMouseUp = () => {
     setIsDrawing(false);
-    console.log("🖊️ Maus losgelassen - Zeichnen beendet");
   };
 
   const handleCanvasClick = () => {
-    console.log("🖊️ Canvas wurde geklickt! Canvas ist funktionsfähig.");
+    console.log("🖊️ Canvas wurde geklickt!");
   };
 
-  // Touch-Events für Mobile
+  // Touch Events für Mobile
   const handleCanvasTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
     e.preventDefault();
     const canvas = canvasRef.current;
@@ -465,7 +811,6 @@ export default function Generate() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Canvas-Setup falls noch nicht geschehen
     if (canvas.width !== 800) {
       canvas.width = 800;
       canvas.height = 200;
@@ -484,8 +829,6 @@ export default function Generate() {
     
     ctx.beginPath();
     ctx.moveTo(x, y);
-    
-    console.log("🖊️ Touch gestartet:", { x, y });
   };
 
   const handleCanvasTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => {
@@ -510,7 +853,6 @@ export default function Generate() {
   const handleCanvasTouchEnd = (e: React.TouchEvent<HTMLCanvasElement>) => {
     e.preventDefault();
     setIsDrawing(false);
-    console.log("🖊️ Touch beendet");
   };
 
   // Form Handling
@@ -544,11 +886,27 @@ export default function Generate() {
         case 'nda':
           initialData.partyA = companyFullName;
           break;
+        case 'gesellschaftsvertrag':
+          initialData.partners = `${companyFullName}\n${companyFullAddress}`;
+          break;
+        case 'darlehensvertrag':
+          initialData.lender = companyFullName;
+          break;
+        case 'lizenzvertrag':
+          initialData.licensor = companyFullName;
+          break;
+        case 'pachtvertrag':
+          initialData.lessor = companyFullName;
+          break;
+        case 'aufhebungsvertrag':
+          initialData.employer = companyFullName;
+          break;
       }
     }
     
     setFormData(initialData);
     setCurrentStep(2);
+    setShowTemplates(true); // Show templates when type is selected
   };
 
   const isStepComplete = (step: number): boolean => {
@@ -580,7 +938,7 @@ export default function Generate() {
         body: JSON.stringify({ 
           type: selectedType.id, 
           formData: { ...formData, title: formData.title || selectedType.name },
-          useCompanyProfile: useCompanyProfile && !!companyProfile // Nur wenn aktiviert UND vorhanden
+          useCompanyProfile: useCompanyProfile && !!companyProfile
         }),
       });
 
@@ -609,7 +967,6 @@ export default function Generate() {
     }
   };
 
-  // ✅ AKTUALISIERTE SAVE-FUNKTION mit Dashboard-Weiterleitung
   const handleSave = async () => {
     try {
       const res = await fetch("/api/contracts", {
@@ -624,7 +981,7 @@ export default function Generate() {
           status: "Aktiv",
           content: generated,
           signature: signatureURL,
-          isGenerated: true // ✅ Wichtig für Dashboard-Filter
+          isGenerated: true
         }),
       });
       
@@ -637,11 +994,8 @@ export default function Generate() {
       console.log("✅ Vertrag gespeichert:", result);
       
       setSaved(true);
-      
-      // ✅ NEU: Erfolgreiche Benachrichtigung mit automatischer Weiterleitung
       toast.success("✅ Vertrag wurde erfolgreich gespeichert! Sie werden zum Dashboard weitergeleitet.");
       
-      // ✅ NEU: Automatische Weiterleitung zum Dashboard nach 1 Sekunde
       setTimeout(() => {
         navigate('/dashboard');
       }, 1000);
@@ -656,15 +1010,12 @@ export default function Generate() {
   const saveSignature = () => {
     const canvas = canvasRef.current;
     if (canvas) {
-      // VEREINFACHTE Überprüfung - vergleicht mit leerem Canvas
       const ctx = canvas.getContext("2d");
       if (ctx) {
-        // Erstelle ein leeres Referenz-Canvas zum Vergleich
         const blankCanvas = document.createElement('canvas');
         blankCanvas.width = canvas.width;
         blankCanvas.height = canvas.height;
         
-        // Vergleiche die Canvas-Inhalte
         const canvasData = canvas.toDataURL();
         const blankData = blankCanvas.toDataURL();
         
@@ -676,7 +1027,6 @@ export default function Generate() {
       
       const dataURL = canvas.toDataURL("image/png");
       setSignatureURL(dataURL);
-      console.log("🖊️ Unterschrift erfolgreich gespeichert!");
       toast.success("✅ Unterschrift wurde erfolgreich gespeichert!");
     }
   };
@@ -687,27 +1037,22 @@ export default function Generate() {
     if (ctx && canvas) {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       setSignatureURL(null);
-      console.log("🖊️ Canvas wurde geleert");
     }
   };
 
   const handleDownloadPDF = async () => {
     try {
-      // Dynamically import html2pdf - disable linting for this specific case
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const html2pdfModule = await import("html2pdf.js") as any;
       const html2pdf = html2pdfModule.default || html2pdfModule;
       
       const container = contractRef.current;
       if (!container) return;
 
-      // Phase 3: Schutz vor leerem DOM bei PDF-Export
       if (!container || !container.innerHTML.trim()) {
         toast.warning("⚠️ Der Vertrag konnte nicht exportiert werden – keine Inhalte gefunden.");
         return;
       }
 
-      // Add signature if exists
       const signatureDiv = document.createElement("div");
       if (signatureURL) {
         signatureDiv.innerHTML = `
@@ -743,11 +1088,10 @@ export default function Generate() {
         await html2pdf().from(container).set(opt).save();
         toast.success("✅ PDF erfolgreich generiert und heruntergeladen!");
       } catch (pdfError) {
-        console.error("❌ PDF-Export fehlgeschlagen (Generate)", pdfError);
-        toast.error("Beim Exportieren des generierten Vertrags ist ein Fehler aufgetreten. Bitte versuche es erneut.");
+        console.error("❌ PDF-Export fehlgeschlagen", pdfError);
+        toast.error("Beim Exportieren des generierten Vertrags ist ein Fehler aufgetreten.");
       }
       
-      // Cleanup
       if (signatureDiv && container.contains(signatureDiv)) {
         container.removeChild(signatureDiv);
       }
@@ -757,7 +1101,6 @@ export default function Generate() {
     }
   };
 
-  // ✅ NEU: Upgrade Button Handler
   const handleUpgradeClick = () => {
     navigate('/upgrade');
   };
@@ -781,17 +1124,6 @@ export default function Generate() {
         <meta name="description" content="Erstelle rechtssichere, individuelle Verträge in Minuten mit KI. Einfach, schnell & sofort einsatzbereit. Jetzt starten & direkt nutzen!" />
         <meta name="keywords" content="Verträge erstellen, Vertragsgenerator, KI Vertragserstellung, individuelle Vertragsvorlagen, Contract AI" />
         <link rel="canonical" href="https://contract-ai.de/generate" />
-        {/* Open Graph / Facebook */}
-        <meta property="og:title" content="Verträge erstellen & sofort nutzen – KI-Generator | Contract AI" />
-        <meta property="og:description" content="Erstelle individuelle, rechtssichere Verträge in Minuten mit unserem KI-Generator. Einfach & sofort nutzbar. Jetzt ausprobieren!" />
-        <meta property="og:url" content="https://contract-ai.de/generate" />
-        <meta property="og:type" content="website" />
-        <meta property="og:image" content="https://contract-ai.de/og-image.jpg" />
-        {/* Twitter */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Verträge erstellen & sofort nutzen – KI-Generator | Contract AI" />
-        <meta name="twitter:description" content="Rechtssichere Verträge einfach mit KI erstellen & sofort einsetzen. Schnell, individuell & sicher. Jetzt starten!" />
-        <meta name="twitter:image" content="https://contract-ai.de/og-image.jpg" />
       </Helmet>
 
       <div className={styles.contractGenerator}>
@@ -857,7 +1189,7 @@ export default function Generate() {
                   >
                     <div className={styles.stepHeader}>
                       <h2>Welchen Vertrag möchten Sie erstellen?</h2>
-                      <p>Wählen Sie den passenden Vertragstyp aus unserer Bibliothek</p>
+                      <p>Wählen Sie den passenden Vertragstyp aus unserer erweiterten Bibliothek</p>
                     </div>
 
                     <div className={styles.contractTypesGrid}>
@@ -871,6 +1203,15 @@ export default function Generate() {
                           whileTap={isPremium ? { scale: 0.98 } : {}}
                           transition={{ duration: 0.2 }}
                         >
+                          {type.isNew && (
+                            <div className={styles.newBadge}>NEU</div>
+                          )}
+                          {type.popularity && type.popularity > 80 && (
+                            <div className={styles.popularBadge}>
+                              <TrendingUp size={12} />
+                              Beliebt
+                            </div>
+                          )}
                           <div className={styles.cardIcon}>{type.icon}</div>
                           <h3>{type.name}</h3>
                           <p>{type.description}</p>
@@ -901,8 +1242,17 @@ export default function Generate() {
                         Zurück
                       </button>
                       <h2>{selectedType.name} erstellen</h2>
-                      <p>Füllen Sie die benötigten Informationen aus</p>
+                      <p>Füllen Sie die benötigten Informationen aus oder wählen Sie eine Vorlage</p>
                     </div>
+
+                    {/* 🆕 Template Library */}
+                    {showTemplates && (
+                      <TemplateLibrary 
+                        contractType={selectedType.id}
+                        onSelectTemplate={handleTemplateSelect}
+                        isPremium={isPremium}
+                      />
+                    )}
 
                     <div className={styles.contractForm}>
                       {/* Company Profile Toggle */}
@@ -956,9 +1306,8 @@ export default function Generate() {
                           />
                         </div>
 
-                        {/* ✅ ERWEITERTE Dynamic Fields mit Gruppierung */}
+                        {/* Dynamic Fields with Grouping */}
                         {(() => {
-                          // Gruppiere Felder nach "group" Eigenschaft - NEUE FUNKTION
                           const groupedFields = selectedType.fields.reduce((groups, field) => {
                             const group = field.group || 'Allgemeine Angaben';
                             if (!groups[group]) groups[group] = [];
@@ -981,7 +1330,6 @@ export default function Generate() {
                                       )}
                                     </label>
                                     
-                                    {/* ✅ ERWEITERTES Feld-Rendering - unterstützt jetzt mehr Typen */}
                                     {field.type === 'textarea' ? (
                                       <textarea
                                         id={field.name}
@@ -992,7 +1340,6 @@ export default function Generate() {
                                         disabled={!isPremium}
                                       />
                                     ) : field.type === 'select' ? (
-                                      // ✅ NEU: Select-Felder
                                       <select
                                         id={field.name}
                                         value={formData[field.name] || ''}
@@ -1008,7 +1355,6 @@ export default function Generate() {
                                         ))}
                                       </select>
                                     ) : (
-                                      // ✅ BESTEHENDE Input-Felder - unverändert + erweitert
                                       <input
                                         id={field.name}
                                         type={field.type === 'vat' || field.type === 'phone' ? 'text' : field.type}
@@ -1019,7 +1365,6 @@ export default function Generate() {
                                       />
                                     )}
                                     
-                                    {/* ✅ NEU: Validierungsfehler anzeigen */}
                                     {field.validation && formData[field.name] && !validateField(field, formData[field.name] || '') && (
                                       <span className={styles.fieldError}>
                                         {field.validation.message || 'Ungültige Eingabe'}
@@ -1057,7 +1402,7 @@ export default function Generate() {
                   </motion.div>
                 )}
 
-                {/* Step 3: Generated Contract */}
+                {/* Step 3: Generated Contract (unchanged) */}
                 {currentStep === 3 && (
                   <motion.div
                     key="step3"

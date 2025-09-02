@@ -1,8 +1,8 @@
 /* =================================
-   📱 APPLE-STYLE CONTRACT GENERATOR - LIGHT THEME
+   📱 APPLE-STYLE CONTRACT GENERATOR - ENHANCED VERSION
    ================================= */
 
-/* Base Styles */
+/* Base Styles - BESTEHEND */
 .contractGenerator {
   min-height: 100vh;
   background: linear-gradient(145deg, #f5f7fa 0%, #f1f5f7 100%);
@@ -15,7 +15,7 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Header Section */
+/* Header Section - BESTEHEND */
 .generatorHeader {
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(25px);
@@ -61,7 +61,7 @@
   font-weight: 400;
 }
 
-/* Progress Steps */
+/* Progress Steps - BESTEHEND */
 .progressSteps {
   display: flex;
   justify-content: center;
@@ -121,14 +121,14 @@
   transform: scale(1.05);
 }
 
-/* Main Content */
+/* Main Content - BESTEHEND */
 .generatorContent {
   max-width: 980px;
   margin: 0 auto;
   padding: 1rem 1.5rem 3rem;
 }
 
-/* Premium Notice */
+/* Premium Notice - BESTEHEND */
 .premiumNotice {
   background: linear-gradient(145deg, #fff7ec 0%, #fff3e0 100%);
   border: 1px solid rgba(255, 159, 10, 0.2);
@@ -187,7 +187,7 @@
   transform: scale(1.02);
 }
 
-/* Content Grid */
+/* Content Grid - BESTEHEND */
 .contentGrid {
   display: grid;
   grid-template-columns: 1fr;
@@ -199,7 +199,7 @@
   grid-template-columns: 1fr 1fr;
 }
 
-/* Form Panel */
+/* Form Panel - BESTEHEND */
 .formPanel {
   background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(15px);
@@ -212,8 +212,8 @@
 
 .stepContent {
   min-height: 400px;
-  margin-top: 24px; /* Added spacing to prevent overlap */
-  padding-bottom: 24px; /* Added bottom spacing */
+  margin-top: 24px;
+  padding-bottom: 24px;
 }
 
 .stepHeader {
@@ -258,7 +258,7 @@
   transform: translateX(-2px);
 }
 
-/* Contract Type Grid */
+/* Contract Type Grid - ERWEITERT */
 .contractTypesGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -279,6 +279,44 @@
   overflow: hidden;
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
+}
+
+/* 🆕 NEU: Badges für Vertragstypen */
+.newBadge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: linear-gradient(135deg, #ff3b30, #ff6961);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 8px rgba(255, 59, 48, 0.3);
+  animation: pulse 2s infinite;
+}
+
+.popularBadge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: linear-gradient(135deg, #30d158, #34c759);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  box-shadow: 0 2px 8px rgba(48, 209, 88, 0.3);
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
 }
 
 .contractTypeCard::before {
@@ -346,13 +384,141 @@
   transform: translateX(4px);
 }
 
-/* Form Styles */
+/* 🆕 NEU: Template Library Styles */
+.templateLibrary {
+  background: linear-gradient(145deg, #f8fafc, #f1f5f7);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 14px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.03);
+}
+
+.templateHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.templateHeader h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1d1d1f;
+  flex: 1;
+}
+
+.templateHeader svg {
+  color: #0a84ff;
+}
+
+.templateCount {
+  background: rgba(10, 132, 255, 0.1);
+  color: #0a84ff;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.templateGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+.templateCard {
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 12px;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.28, 0.44, 0.49, 1);
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.templateCard:hover {
+  background: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+.templateCard.locked {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.templateCard.locked:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.templateIcon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.templateInfo {
+  flex: 1;
+}
+
+.templateInfo h4 {
+  margin: 0 0 0.25rem 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1d1d1f;
+}
+
+.templateInfo p {
+  margin: 0 0 0.5rem 0;
+  font-size: 12px;
+  color: #86868b;
+  line-height: 1.4;
+}
+
+.templateTags {
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.tag {
+  background: rgba(0, 0, 0, 0.04);
+  color: #6e6e73;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.premiumBadge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: linear-gradient(135deg, #ffd700, #ffed4e);
+  color: #1d1d1f;
+  padding: 3px 6px;
+  border-radius: 6px;
+  font-size: 9px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* Form Styles - BESTEHEND */
 .contractForm {
   max-width: 800px;
   margin: 0 auto;
 }
 
-/* Company Profile Toggle */
+/* Company Profile Toggle - BESTEHEND */
 .companyProfileToggle {
   background: rgba(248, 250, 252, 0.5);
   border: 1px solid rgba(0, 0, 0, 0.05);
@@ -395,7 +561,7 @@
   color: #86868b;
 }
 
-/* Toggle Switch */
+/* Toggle Switch - BESTEHEND */
 .switch {
   position: relative;
   display: inline-block;
@@ -447,7 +613,7 @@ input:checked + .slider:before {
   transform: translateX(20px);
 }
 
-/* Profile Preview */
+/* Profile Preview - BESTEHEND */
 .profilePreview {
   display: flex;
   align-items: center;
@@ -486,6 +652,7 @@ input:checked + .slider:before {
   color: #86868b;
 }
 
+/* Form Grid - VERBESSERT */
 .formGrid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -510,7 +677,8 @@ input:checked + .slider:before {
 }
 
 .formGroup input,
-.formGroup textarea {
+.formGroup textarea,
+.formGroup select {
   padding: 0.75rem 1rem;
   border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 10px;
@@ -523,7 +691,8 @@ input:checked + .slider:before {
 }
 
 .formGroup input:focus,
-.formGroup textarea:focus {
+.formGroup textarea:focus,
+.formGroup select:focus {
   outline: none;
   border-color: #0a84ff;
   box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.15);
@@ -531,7 +700,8 @@ input:checked + .slider:before {
 }
 
 .formGroup input:disabled,
-.formGroup textarea:disabled {
+.formGroup textarea:disabled,
+.formGroup select:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   background: #f5f5f7;
@@ -551,6 +721,7 @@ input:checked + .slider:before {
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
+  padding-right: 36px;
 }
 
 .formGroup select.placeholder {
@@ -561,9 +732,13 @@ input:checked + .slider:before {
   color: #1d1d1f;
 }
 
-/* Field Groups */
+/* Field Groups - VERBESSERT */
 .fieldGroup {
   margin-bottom: 2rem;
+  padding: 1.25rem;
+  background: rgba(248, 250, 252, 0.3);
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.03);
 }
 
 .groupHeader {
@@ -592,7 +767,7 @@ input:checked + .slider:before {
   gap: 1.25rem;
 }
 
-/* Help Text */
+/* Help Text - BESTEHEND */
 .helpText {
   display: block;
   font-size: 12px;
@@ -602,7 +777,7 @@ input:checked + .slider:before {
   font-style: italic;
 }
 
-/* Field Errors */
+/* Field Errors - BESTEHEND */
 .fieldError {
   display: block;
   font-size: 12px;
@@ -614,7 +789,7 @@ input:checked + .slider:before {
   border-left: 3px solid #ff3b30;
 }
 
-/* Generate Button */
+/* Generate Button - BESTEHEND */
 .generateButton {
   display: flex;
   align-items: center;
@@ -634,6 +809,7 @@ input:checked + .slider:before {
   overflow: hidden;
   position: relative;
   letter-spacing: -0.01em;
+  margin-top: 1.5rem;
 }
 
 .generateButton::before {
@@ -664,7 +840,7 @@ input:checked + .slider:before {
   box-shadow: none;
 }
 
-/* Action Buttons */
+/* Action Buttons - BESTEHEND */
 .actionButtons {
   display: flex;
   gap: 1rem;
@@ -720,7 +896,7 @@ input:checked + .slider:before {
   box-shadow: 0 2px 8px rgba(48, 209, 88, 0.15);
 }
 
-/* Signature Section - ENHANCED FOR BETTER CANVAS FUNCTIONALITY */
+/* Signature Section - BESTEHEND & VERBESSERT */
 .signatureSection {
   background: rgba(248, 250, 252, 0.5);
   border-radius: 14px;
@@ -742,7 +918,7 @@ input:checked + .slider:before {
 .signatureCanvasContainer {
   position: relative;
   background: white;
-  border: 2px solid rgba(0, 0, 0, 0.1);
+  border: 2px dashed #cbd5e1;
   border-radius: 12px;
   overflow: hidden;
   transition: all 0.3s cubic-bezier(0.28, 0.44, 0.49, 1);
@@ -751,8 +927,8 @@ input:checked + .slider:before {
 }
 
 .signatureCanvasContainer:hover {
-  border-color: rgba(10, 132, 255, 0.3);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .signatureCanvas {
@@ -762,13 +938,11 @@ input:checked + .slider:before {
   cursor: crosshair !important;
   transition: all 0.3s cubic-bezier(0.28, 0.44, 0.49, 1);
   background: white;
-  /* WICHTIG für Touch-Geräte */
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
-  /* Verhindert Kontext-Menüs */
   -webkit-touch-callout: none;
   -webkit-tap-highlight-color: transparent;
 }
@@ -900,7 +1074,7 @@ input:checked + .slider:before {
   transform: translateX(-2px);
 }
 
-/* Preview Panel */
+/* Preview Panel - BESTEHEND */
 .previewPanel {
   background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(15px);
@@ -965,16 +1139,44 @@ input:checked + .slider:before {
   padding: 1.5rem;
 }
 
+/* 🆕 PROFESSIONELLE VERTRAGS-DARSTELLUNG */
 .contractContent {
-  color: #1d1d1f;
-  line-height: 1.6;
-  font-family: 'SF Serif Display', 'New York', 'Times New Roman', 'Georgia', serif;
-  font-size: 15px;
+  font-family: Arial, Calibri, sans-serif !important;
+  font-size: 11pt;
+  line-height: 1.5;
+  color: #000;
   background: white;
-  padding: 2rem;
+  padding: 40px;
+  max-width: 210mm; /* DIN A4 Breite */
+  margin: 0 auto;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
   border-radius: 14px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
   border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.contractContent h1 {
+  font-size: 18pt;
+  text-align: center;
+  margin: 30px 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: bold;
+  color: #000;
+}
+
+.contractContent h2 {
+  font-size: 13pt;
+  font-weight: bold;
+  margin: 20px 0 10px 0;
+  page-break-after: avoid;
+  color: #000;
+}
+
+.contractContent p {
+  margin-bottom: 8px;
+  text-align: justify;
+  orphans: 3;
+  widows: 3;
 }
 
 .signatureInPreview {
@@ -1005,7 +1207,7 @@ input:checked + .slider:before {
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
 }
 
-/* Loading States */
+/* Loading States - BESTEHEND */
 .loadingContainer {
   min-height: 60vh;
   display: flex;
@@ -1076,7 +1278,7 @@ input:checked + .slider:before {
   100% { width: 100%; }
 }
 
-/* Loading Spinner */
+/* Loading Spinner - BESTEHEND */
 .loadingSpinner {
   width: 36px;
   height: 36px;
@@ -1104,7 +1306,36 @@ input:checked + .slider:before {
   100% { transform: rotate(360deg); }
 }
 
-/* Responsive Design */
+/* 🆕 PDF-Export Optimierungen */
+@media print {
+  .contractContent {
+    padding: 0;
+    box-shadow: none;
+    max-width: 100%;
+    border: none;
+    border-radius: 0;
+  }
+  
+  .actionButtons,
+  .signatureControls {
+    display: none !important;
+  }
+  
+  h2 {
+    page-break-after: avoid;
+  }
+  
+  .section {
+    page-break-inside: avoid;
+  }
+  
+  /* Professionelle Unterschrift */
+  .signatureSection {
+    page-break-inside: avoid;
+  }
+}
+
+/* Responsive Design - BESTEHEND */
 @media (max-width: 1024px) {
   .contentGrid.withPreview {
     grid-template-columns: 1fr;
@@ -1112,6 +1343,10 @@ input:checked + .slider:before {
 
   .generatorContent {
     padding: 1rem 1.5rem 2rem;
+  }
+  
+  .templateGrid {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -1189,7 +1424,6 @@ input:checked + .slider:before {
     border-radius: 12px;
   }
 
-  /* Mobile Canvas Optimizations */
   .signatureCanvas {
     height: 180px;
     touch-action: none !important;
@@ -1197,6 +1431,10 @@ input:checked + .slider:before {
 
   .signatureCanvasContainer {
     border-width: 2px;
+  }
+  
+  .templateCard {
+    grid-column: 1 / -1;
   }
 }
 
@@ -1232,7 +1470,6 @@ input:checked + .slider:before {
     padding: 0.75rem 1rem;
   }
 
-  /* Fix for notch phones and safe areas */
   .contractGenerator {
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
@@ -1241,10 +1478,9 @@ input:checked + .slider:before {
   }
   
   .stepContent {
-    margin-top: 28px; /* Extra space on very small screens */
+    margin-top: 28px;
   }
 
-  /* Enhanced mobile touch support */
   .signatureCanvasContainer {
     margin: 1rem 0;
     border-radius: 16px;
@@ -1254,16 +1490,24 @@ input:checked + .slider:before {
     font-size: 16px;
     padding: 1rem;
   }
+  
+  .fieldGroup {
+    padding: 1rem;
+  }
+  
+  .templateLibrary {
+    padding: 1rem;
+  }
 }
 
-/* High DPI Displays */
+/* High DPI Displays - BESTEHEND */
 @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
   .contractContent {
     font-size: 16px;
   }
 }
 
-/* Print Styles */
+/* Print Styles - VERBESSERT */
 @media print {
   .contractGenerator {
     background: white;
@@ -1288,7 +1532,7 @@ input:checked + .slider:before {
   }
 }
 
-/* Accessibility Improvements */
+/* Accessibility Improvements - BESTEHEND */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -1299,20 +1543,35 @@ input:checked + .slider:before {
   }
 }
 
-/* Focus styles for accessibility */
+/* Focus styles for accessibility - BESTEHEND */
 .contractTypeCard:focus-visible,
 .actionButton:focus-visible,
 .generateButton:focus-visible,
 .signatureButton:focus-visible,
 .backButton:focus-visible,
 .backToStartButton:focus-visible,
-.upgradeButton:focus-visible {
+.upgradeButton:focus-visible,
+.templateCard:focus-visible {
   outline: 2px solid #0a84ff;
   outline-offset: 2px;
 }
 
-/* Enhanced Canvas Focus */
+/* Enhanced Canvas Focus - BESTEHEND */
 .signatureCanvas:focus {
   outline: 2px solid #0a84ff;
   outline-offset: 2px;
+}
+
+/* Barrierefreiheit */
+@media (prefers-contrast: high) {
+  .contractContent {
+    background: white;
+    color: black;
+    border: 2px solid black;
+  }
+  
+  .contractContent h1,
+  .contractContent h2 {
+    color: black;
+  }
 }
