@@ -1,4 +1,4 @@
-// 📄 backend/routes/generate.js - MIT VERBESSERTER HTML-FORMATIERUNG FÜR PROFESSIONELLE PDFs
+// 📄 backend/routes/generate.js - MIT PUPPETEER FÜR PROFESSIONELLE PDFs
 const express = require("express");
 const { OpenAI } = require("openai");
 const verifyToken = require("../middleware/verifyToken");
@@ -6,6 +6,7 @@ const { MongoClient, ObjectId } = require("mongodb");
 const https = require("https");
 const http = require("http");
 const AWS = require("aws-sdk");
+const puppeteer = require("puppeteer"); // 🆕 PUPPETEER IMPORT
 
 // ✅ S3 Setup für frische Logo-URLs
 const s3 = new AWS.S3({
@@ -882,7 +883,7 @@ Strukturiere den Vertrag professionell mit allen notwendigen rechtlichen Klausel
       });
       
       contractText = retryCompletion.choices[0].message.content || contractText;
-      console.log("🔄 Zweiter Versuch abgeschlossen, neue Länge:", contractText.length);
+      console.log("📄 Zweiter Versuch abgeschlossen, neue Länge:", contractText.length);
     }
     
     // Struktur-Validation
@@ -915,8 +916,11 @@ Strukturiere den Vertrag professionell mit allen notwendigen rechtlichen Klausel
         logoUrl: companyProfile?.logoUrl?.substring(0, 50) + "...",
         htmlLength: formattedHTML.length,
         containsLogo: formattedHTML.includes('img src='),
-        containsHeader: formattedHTML.includes('class="header"')
+        containsHeader: formattedHTML.includes('background:')
       });
+    } else {
+      // Auch ohne Company Profile HTML generieren
+      formattedHTML = await formatContractToHTML(contractText, null, type, designVariant);
     }
 
     // Analyse-Zähler hochzählen
@@ -939,7 +943,8 @@ Strukturiere den Vertrag professionell mit allen notwendigen rechtlichen Klausel
       isGenerated: true,
       contractType: type,
       hasCompanyProfile: !!companyProfile,
-      formData: formData
+      formData: formData,
+      designVariant: designVariant // Design-Variante speichern
     };
 
     const result = await contractsCollection.insertOne(contract);
@@ -974,13 +979,119 @@ Strukturiere den Vertrag professionell mit allen notwendigen rechtlichen Klausel
         hasLogo: !!companyProfile?.logoUrl,
         contentLength: contractText.length,
         generatedAt: new Date().toISOString(),
-        version: 'v4_professional'
+        version: 'v4_professional',
+        designVariant: designVariant
       }
     });
     
   } catch (err) {
     console.error("❌ Fehler beim Erzeugen/Speichern:", err);
     res.status(500).json({ message: "Serverfehler beim Erzeugen oder Speichern." });
+  }
+});
+
+// 🆕 NEUE ROUTE: PROFESSIONELLE PDF-GENERIERUNG MIT PUPPETEER
+router.post("/generate-pdf", verifyToken, async (req, res) => {
+  const { contractId } = req.body;
+  
+  console.log("🎨 PDF-Generierung mit Puppeteer gestartet für Vertrag:", contractId);
+  
+  try {
+    // Hole Vertrag aus DB
+    const contract = await contractsCollection.findOne({ 
+      _id: new ObjectId(contractId),
+      userId: req.user.userId // Sicherheitsprüfung
+    });
+    
+    if (!contract) {
+      return res.status(404).json({ message: "Vertrag nicht gefunden" });
+    }
+
+    // Lade Company Profile wenn vorhanden
+    let companyProfile = null;
+    if (contract.hasCompanyProfile) {
+      companyProfile = await db.collection("company_profiles").findOne({ 
+        userId: new ObjectId(req.user.userId) 
+      });
+    }
+
+    // HTML vorbereiten (nutze vorhandenes HTML oder generiere neu)
+    let htmlContent = contract.contentHTML;
+    if (!htmlContent) {
+      console.log("📄 Kein HTML vorhanden, generiere neu...");
+      htmlContent = await formatContractToHTML(
+        contract.content, 
+        companyProfile, 
+        contract.contractType,
+        contract.designVariant || 'executive'
+      );
+    }
+
+    // Starte Puppeteer
+    console.log("🚀 Starte Puppeteer Browser...");
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--no-first-run',
+        '--no-zygote',
+        '--disable-gpu'
+      ]
+    });
+    
+    const page = await browser.newPage();
+    
+    // Setze Viewport für A4
+    await page.setViewport({
+      width: 794,
+      height: 1123,
+      deviceScaleFactor: 2
+    });
+    
+    // Lade HTML
+    console.log("📝 Lade HTML in Puppeteer...");
+    await page.setContent(htmlContent, { 
+      waitUntil: 'networkidle0' // Warte bis alles geladen ist
+    });
+    
+    // Warte kurz für Rendering
+    await page.waitForTimeout(500);
+    
+    // Generiere PDF
+    console.log("📄 Generiere PDF...");
+    const pdfBuffer = await page.pdf({
+      format: 'A4',
+      printBackground: true,
+      displayHeaderFooter: false,
+      margin: {
+        top: '10mm',
+        bottom: '10mm',
+        left: '10mm', 
+        right: '10mm'
+      },
+      preferCSSPageSize: false
+    });
+    
+    await browser.close();
+    console.log("✅ PDF erfolgreich generiert, Größe:", Math.round(pdfBuffer.length / 1024), "KB");
+    
+    // Sende PDF als Response
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="${contract.name || 'Vertrag'}_${new Date().toISOString().split('T')[0]}.pdf"`,
+      'Content-Length': pdfBuffer.length
+    });
+    res.send(pdfBuffer);
+    
+  } catch (error) {
+    console.error("❌ PDF Generation Error:", error);
+    res.status(500).json({ 
+      message: "PDF-Generierung fehlgeschlagen",
+      error: error.message 
+    });
   }
 });
 

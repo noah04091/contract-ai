@@ -226,7 +226,7 @@ const CONTRACT_TYPES: ContractType[] = [
     id: 'arbeitsvertrag',  
     name: 'Arbeitsvertrag',
     description: 'Für Festanstellungen',
-    icon: '👔',
+    icon: '💻',
     popularity: 90,
     fields: [
       { name: 'employer', label: 'Arbeitgeber', type: 'text', placeholder: 'Firmenname', required: true },
@@ -629,10 +629,11 @@ export default function Generate() {
   const [selectedType, setSelectedType] = useState<ContractType | null>(null);
   const [formData, setFormData] = useState<FormDataType>({});
   const [generated, setGenerated] = useState<string>("");
-  const [generatedHTML, setGeneratedHTML] = useState<string>(""); // 🔴 NEU: HTML-Version für professionelle PDFs
+  const [generatedHTML, setGeneratedHTML] = useState<string>(""); // 📴 NEU: HTML-Version für professionelle PDFs
   const [loading, setLoading] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);
   const [saved, setSaved] = useState<boolean>(false);
+  const [savedContractId, setSavedContractId] = useState<string | null>(null); // 🆕 NEU: Contract ID speichern
   const [signatureURL, setSignatureURL] = useState<string | null>(null);
   const [isDrawing, setIsDrawing] = useState<boolean>(false);
   const [showPreview, setShowPreview] = useState<boolean>(false);
@@ -926,15 +927,16 @@ export default function Generate() {
     }
   };
 
-  // 🔴 AKTUALISIERT: handleGenerate empfängt jetzt auch HTML
+  // 📴 AKTUALISIERT: handleGenerate empfängt jetzt auch HTML
   const handleGenerate = async () => {
     if (!selectedType || !isPremium) return;
 
     setLoading(true);
     setGenerated("");
-    setGeneratedHTML(""); // 🔴 NEU: HTML zurücksetzen
+    setGeneratedHTML(""); // 📴 NEU: HTML zurücksetzen
     setCopied(false);
     setSaved(false);
+    setSavedContractId(null); // Reset saved contract ID
 
     try {
       const res = await fetch("/api/contracts/generate", {
@@ -953,7 +955,7 @@ export default function Generate() {
       if (!res.ok) throw new Error(data.message || "Fehler bei der Generierung.");
       
       setGenerated(data.contractText);
-      setGeneratedHTML(data.contractHTML || ""); // 🔴 NEU: HTML speichern wenn vorhanden
+      setGeneratedHTML(data.contractHTML || ""); // 📴 NEU: HTML speichern wenn vorhanden
       setCurrentStep(3);
       setShowPreview(true);
       
@@ -982,7 +984,7 @@ export default function Generate() {
     }
   };
 
-  // 🔴 AKTUALISIERT: handleSave speichert auch HTML
+  // 📴 AKTUALISIERT: handleSave speichert auch HTML und Contract ID
   const handleSave = async () => {
     try {
       const res = await fetch("/api/contracts", {
@@ -996,9 +998,11 @@ export default function Generate() {
           expiryDate: "",
           status: "Aktiv",
           content: generated,
-          contentHTML: generatedHTML, // 🔴 NEU: HTML auch speichern
+          contentHTML: generatedHTML, // 📴 NEU: HTML auch speichern
           signature: signatureURL,
-          isGenerated: true
+          isGenerated: true,
+          contractType: selectedType?.id,
+          designVariant: selectedDesignVariant
         }),
       });
       
@@ -1009,6 +1013,12 @@ export default function Generate() {
       
       const result = await res.json();
       console.log("✅ Vertrag gespeichert:", result);
+      
+      // 🆕 Speichere Contract ID für PDF-Download
+      if (result.contractId) {
+        setSavedContractId(result.contractId);
+        localStorage.setItem('lastContractId', result.contractId);
+      }
       
       setSaved(true);
       toast.success("✅ Vertrag wurde erfolgreich gespeichert! Sie werden zum Dashboard weitergeleitet.");
@@ -1057,9 +1067,53 @@ export default function Generate() {
     }
   };
 
-  // 🔴 VERBESSERT: handleDownloadPDF nutzt jetzt HTML wenn vorhanden
+  // 🆕 VERBESSERT: handleDownloadPDF nutzt jetzt Puppeteer wenn verfügbar
   const handleDownloadPDF = async () => {
     try {
+      // Versuche zuerst Puppeteer-Route (professionelle PDF) wenn Vertrag gespeichert wurde
+      if (savedContractId) {
+        console.log("🎨 Nutze Puppeteer für professionelle PDF-Generierung");
+        
+        // Mache Puppeteer PDF Request
+        const response = await fetch('/api/contracts/generate-pdf', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ 
+            contractId: savedContractId
+          })
+        });
+        
+        if (response.ok) {
+          // Download PDF
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${formData.title || 'Vertrag'}_${new Date().toISOString().split('T')[0]}.pdf`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          window.URL.revokeObjectURL(url);
+          
+          toast.success("✅ Professionelle PDF mit Puppeteer erstellt!");
+          console.log("✅ Puppeteer PDF erfolgreich heruntergeladen");
+          return; // Fertig, kein Fallback nötig
+        } else {
+          console.warn("⚠️ Puppeteer PDF fehlgeschlagen, nutze Fallback");
+        }
+      } else if (!saved) {
+        // Wenn noch nicht gespeichert, speichere zuerst
+        await handleSave();
+        if (savedContractId) {
+          // Versuche nochmal mit Puppeteer
+          await handleDownloadPDF();
+          return;
+        }
+      }
+      
+      // Fallback zu html2pdf.js (alte Methode)
+      console.log("📄 Nutze html2pdf.js Fallback");
       const html2pdfModule = await import("html2pdf.js") as any;
       const html2pdf = html2pdfModule.default || html2pdfModule;
       
@@ -1071,7 +1125,7 @@ export default function Generate() {
         return;
       }
 
-      // 🔴 NEU: Verwende HTML-Version wenn vorhanden
+      // 📴 NEU: Verwende HTML-Version wenn vorhanden
       let pdfContent;
       if (generatedHTML) {
         console.log("🎨 Verwende professionelle HTML-Version für PDF Export");
@@ -1649,9 +1703,10 @@ export default function Generate() {
                         setSelectedType(null);
                         setFormData({});
                         setGenerated("");
-                        setGeneratedHTML(""); // 🔴 NEU: HTML zurücksetzen
+                        setGeneratedHTML(""); // 📴 NEU: HTML zurücksetzen
                         setShowPreview(false);
                         setSignatureURL(null);
+                        setSavedContractId(null); // Reset saved contract ID
                       }}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
