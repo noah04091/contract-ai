@@ -641,6 +641,9 @@ export default function Generate() {
   // Company Profile State
   const [companyProfile, setCompanyProfile] = useState<CompanyProfile | null>(null);
   const [useCompanyProfile, setUseCompanyProfile] = useState<boolean>(false);
+  
+  // Design Variant State 
+  const [selectedDesignVariant, setSelectedDesignVariant] = useState<string>('executive');
 
   // Refs
   const contractRef = useRef<HTMLDivElement>(null);
@@ -941,7 +944,8 @@ export default function Generate() {
         body: JSON.stringify({ 
           type: selectedType.id, 
           formData: { ...formData, title: formData.title || selectedType.name },
-          useCompanyProfile: useCompanyProfile && !!companyProfile
+          useCompanyProfile: useCompanyProfile && !!companyProfile,
+          designVariant: selectedDesignVariant
         }),
       });
 
@@ -1353,6 +1357,64 @@ export default function Generate() {
                               </div>
                             </div>
                           )}
+                        </motion.div>
+                      )}
+
+                      {/* Design Variant Selector */}
+                      {isPremium && (
+                        <motion.div 
+                          className={styles.designVariantSelector}
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3, delay: 0.1 }}
+                        >
+                          <div className={styles.selectorHeader}>
+                            <div className={styles.selectorInfo}>
+                              <Sparkles size={20} />
+                              <div>
+                                <h4>Design-Variante wählen</h4>
+                                <p>Wählen Sie das perfekte Design für Ihre Verträge</p>
+                              </div>
+                            </div>
+                          </div>
+                          <div className={styles.designOptions}>
+                            <div 
+                              className={`${styles.designOption} ${selectedDesignVariant === 'executive' ? styles.active : ''}`}
+                              onClick={() => setSelectedDesignVariant('executive')}
+                            >
+                              <div className={styles.designPreview}>
+                                <div className={styles.executivePreview}></div>
+                              </div>
+                              <div className={styles.designDetails}>
+                                <strong>Executive</strong>
+                                <span>Elegant & Kraftvoll - Perfekt für wichtige Geschäftsverträge</span>
+                              </div>
+                            </div>
+                            <div 
+                              className={`${styles.designOption} ${selectedDesignVariant === 'modern' ? styles.active : ''}`}
+                              onClick={() => setSelectedDesignVariant('modern')}
+                            >
+                              <div className={styles.designPreview}>
+                                <div className={styles.modernPreview}></div>
+                              </div>
+                              <div className={styles.designDetails}>
+                                <strong>Modern</strong>
+                                <span>Frisch & Dynamisch - Ideal für innovative Unternehmen</span>
+                              </div>
+                            </div>
+                            <div 
+                              className={`${styles.designOption} ${selectedDesignVariant === 'minimal' ? styles.active : ''}`}
+                              onClick={() => setSelectedDesignVariant('minimal')}
+                            >
+                              <div className={styles.designPreview}>
+                                <div className={styles.minimalPreview}></div>
+                              </div>
+                              <div className={styles.designDetails}>
+                                <strong>Minimal</strong>
+                                <span>Klar & Fokussiert - Für maximale Lesbarkeit und Klarheit</span>
+                              </div>
+                            </div>
+                          </div>
                         </motion.div>
                       )}
 
