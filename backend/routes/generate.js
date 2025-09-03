@@ -1,4 +1,4 @@
-// 🔄 backend/routes/generate.js - KORRIGIERTE VERSION
+// 🔄 backend/routes/generate.js - OPTIMIERTE VERSION MIT ALLEN FEATURES
 const express = require("express");
 const { OpenAI } = require("openai");
 const verifyToken = require("../middleware/verifyToken");
@@ -7,14 +7,14 @@ const https = require("https");
 const http = require("http");
 const AWS = require("aws-sdk");
 
-// ✅ S3 Setup für frische Logo-URLs
+// ✅ S3 Setup für frische Logo-URLs (BEHALTEN!)
 const s3 = new AWS.S3({
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
   region: process.env.AWS_REGION
 });
 
-// ✅ Base64-Konvertierung für S3-Logos (CORS-frei!)
+// ✅ Base64-Konvertierung für S3-Logos (BEHALTEN!)
 const convertS3ToBase64 = async (url) => {
   return new Promise((resolve, reject) => {
     const protocol = url.startsWith('https') ? https : http;
@@ -45,7 +45,7 @@ const convertS3ToBase64 = async (url) => {
 const router = express.Router();
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-// MongoDB Setup
+// MongoDB Setup (BEHALTEN!)
 const mongoUri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
 const client = new MongoClient(mongoUri);
 let usersCollection, contractsCollection, db;
@@ -62,7 +62,7 @@ let usersCollection, contractsCollection, db;
   }
 })();
 
-// 🎯 PROFESSIONELLE VERTRAGSGENERIERUNG
+// 🎯 PROFESSIONELLE VERTRAGSGENERIERUNG - OPTIMIERT
 router.post("/", verifyToken, async (req, res) => {
   console.log("🚀 Generate Route aufgerufen!");
   
@@ -73,7 +73,7 @@ router.post("/", verifyToken, async (req, res) => {
   }
 
   try {
-    // Company Profile laden
+    // Company Profile laden (BEHALTEN!)
     let companyProfile = null;
     if (db) {
       const profileData = await db.collection("company_profiles").findOne({ 
@@ -86,7 +86,7 @@ router.post("/", verifyToken, async (req, res) => {
       }
     }
 
-    // Nutzer & Limit prüfen
+    // Nutzer & Limit prüfen (BEHALTEN!)
     const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
     const plan = user.subscriptionPlan || "free";
     const count = user.analysisCount ?? 0;
@@ -101,89 +101,128 @@ router.post("/", verifyToken, async (req, res) => {
       });
     }
 
-    // 🎯 VERBESSERTE PROMPT-GENERIERUNG
+    // Company Details vorbereiten WENN vorhanden
+    let companyDetails = "";
+    if (companyProfile && useCompanyProfile) {
+      companyDetails = `${companyProfile.companyName}`;
+      if (companyProfile.legalForm) companyDetails += ` (${companyProfile.legalForm})`;
+      companyDetails += `\n${companyProfile.street}, ${companyProfile.postalCode || ''} ${companyProfile.city}`;
+      if (companyProfile.vatId) companyDetails += `\nUSt-IdNr.: ${companyProfile.vatId}`;
+      if (companyProfile.tradeRegister) companyDetails += `\n${companyProfile.tradeRegister}`;
+    }
+
+    // 🎯 STARK VERBESSERTE PROMPT-GENERIERUNG
     let systemPrompt = `Du bist ein Experte für deutsches Vertragsrecht und erstellst professionelle, rechtssichere Verträge.
 
-WICHTIGE FORMATIERUNGSREGELN:
+ABSOLUT KRITISCHE REGELN:
+1. Erstelle einen VOLLSTÄNDIGEN Vertrag mit MINDESTENS 10-12 Paragraphen
+2. KEIN HTML, KEIN MARKDOWN - nur reiner Text
+3. Verwende EXAKT diese Struktur (keine Abweichungen!)
+4. Fülle ALLE Felder mit echten Daten - KEINE Platzhalter in eckigen Klammern
 
-1. VERWENDE NUR REINEN TEXT - KEIN HTML!
-2. Strukturiere mit klaren Überschriften und Absätzen
-3. Nutze folgende Hierarchie:
-   - VERTRAGSNAME (Großbuchstaben)
-   - § 1 Überschrift
-   - (1) Absätze
-   - a) Unterpunkte
-
-VERTRAGSSTRUKTUR:
+EXAKTE VERTRAGSSTRUKTUR (BITTE GENAU SO VERWENDEN):
 
 =================================
-[VERTRAGSTYP]
+[VERTRAGSTYP IN GROSSBUCHSTABEN]
 =================================
 
 zwischen
 
-[Partei A - vollständige Angaben]
-- nachfolgend "[Bezeichnung A]" genannt -
+[Vollständige Angaben Partei A mit allen Details]
+- nachfolgend "[Kurzbezeichnung]" genannt -
 
 und
 
-[Partei B - vollständige Angaben]  
-- nachfolgend "[Bezeichnung B]" genannt -
+[Vollständige Angaben Partei B mit allen Details]
+- nachfolgend "[Kurzbezeichnung]" genannt -
 
 PRÄAMBEL
-[Kurze Einleitung zum Vertragszweck]
+[Mindestens 2-3 Sätze zur Einleitung und zum Vertragszweck]
 
 § 1 VERTRAGSGEGENSTAND
 
-(1) [Hauptgegenstand des Vertrags]
+(1) [Hauptgegenstand sehr detailliert beschreiben - mindestens 3-4 Zeilen]
 
-(2) [Weitere Details]
+(2) [Weitere wichtige Details zum Gegenstand]
+
+(3) [Zusätzliche Spezifikationen falls relevant]
 
 § 2 LEISTUNGEN UND PFLICHTEN
 
-(1) Pflichten [Partei A]:
-   a) [Pflicht 1]
-   b) [Pflicht 2]
+(1) Der [Bezeichnung Partei A] verpflichtet sich zu folgenden Leistungen:
+   a) [Detaillierte Pflicht 1]
+   b) [Detaillierte Pflicht 2]
+   c) [Detaillierte Pflicht 3]
+   d) [Weitere Pflichten falls relevant]
 
-(2) Pflichten [Partei B]:
-   a) [Pflicht 1]
-   b) [Pflicht 2]
+(2) Der [Bezeichnung Partei B] verpflichtet sich zu folgenden Leistungen:
+   a) [Detaillierte Pflicht 1]
+   b) [Detaillierte Pflicht 2]
+   c) [Weitere Pflichten falls relevant]
 
 § 3 VERGÜTUNG UND ZAHLUNGSBEDINGUNGEN
 
-(1) Die Vergütung beträgt [BETRAG] EUR [Zahlungsweise].
+(1) Die Vergütung beträgt [EXAKTER BETRAG mit Währung].
 
-(2) Die Zahlung ist fällig [Fälligkeit].
+(2) Die Zahlung erfolgt [genaue Zahlungsmodalitäten].
+
+(3) Bei Zahlungsverzug werden Verzugszinsen in Höhe von 9 Prozentpunkten über dem Basiszinssatz berechnet.
 
 § 4 LAUFZEIT UND KÜNDIGUNG
 
-(1) Der Vertrag beginnt am [Datum] und läuft [Dauer].
+(1) Dieser Vertrag tritt am [Datum] in Kraft und läuft [Laufzeitdetails].
 
-(2) Die Kündigung ist möglich [Kündigungsbedingungen].
+(2) Die ordentliche Kündigung ist [Kündigungsdetails].
 
-§ 5 GEWÄHRLEISTUNG UND HAFTUNG
+(3) Das Recht zur außerordentlichen Kündigung aus wichtigem Grund bleibt unberührt.
 
-(1) [Gewährleistungsregelungen]
+§ 5 GEWÄHRLEISTUNG
 
-(2) Die Haftung ist begrenzt auf [Haftungsbegrenzung].
+(1) [Detaillierte Gewährleistungsregelungen - mindestens 3-4 Zeilen]
 
-§ 6 VERTRAULICHKEIT
+(2) Die Gewährleistungsfrist beträgt [Zeitraum].
 
-(1) Die Parteien verpflichten sich zur Geheimhaltung aller vertraulichen Informationen.
+(3) [Regelungen zur Nacherfüllung]
 
-§ 7 DATENSCHUTZ
+§ 6 HAFTUNG
 
-(1) Die Parteien verpflichten sich zur Einhaltung der DSGVO.
+(1) Die Haftung richtet sich nach den gesetzlichen Bestimmungen, soweit nachfolgend nichts anderes bestimmt ist.
 
-§ 8 SCHLUSSBESTIMMUNGEN
+(2) [Haftungsbeschränkungen detailliert]
 
-(1) Änderungen bedürfen der Schriftform.
+(3) Die Verjährungsfrist für Schadensersatzansprüche beträgt [Zeitraum].
 
-(2) Sollte eine Bestimmung unwirksam sein, bleibt der übrige Vertrag wirksam.
+§ 7 EIGENTUMSVORBEHALT / GEFAHRÜBERGANG
 
-(3) Gerichtsstand ist [Ort].
+(1) [Bei Kaufverträgen: Eigentumsvorbehalt, sonst Gefahrübergang]
 
-(4) Es gilt deutsches Recht.
+(2) [Weitere Details]
+
+§ 8 VERTRAULICHKEIT
+
+(1) Die Vertragsparteien verpflichten sich, über alle vertraulichen Informationen Stillschweigen zu bewahren.
+
+(2) Diese Verpflichtung besteht auch nach Beendigung des Vertrages fort.
+
+§ 9 DATENSCHUTZ
+
+(1) Die Parteien verpflichten sich zur Einhaltung aller geltenden Datenschutzbestimmungen, insbesondere der DSGVO.
+
+(2) Personenbezogene Daten werden ausschließlich zur Vertragsdurchführung verarbeitet.
+
+§ 10 ZUSÄTZLICHE VEREINBARUNGEN [Je nach Vertragstyp anpassen]
+
+(1) [Vertragstyp-spezifische Klauseln]
+
+§ 11 SCHLUSSBESTIMMUNGEN
+
+(1) Änderungen und Ergänzungen dieses Vertrages bedürfen zu ihrer Wirksamkeit der Schriftform. Dies gilt auch für die Änderung dieser Schriftformklausel selbst.
+
+(2) Sollten einzelne Bestimmungen dieses Vertrages unwirksam oder undurchführbar sein oder werden, so wird hierdurch die Wirksamkeit des Vertrages im Übrigen nicht berührt.
+
+(3) Erfüllungsort und Gerichtsstand für alle Streitigkeiten aus diesem Vertrag ist [Ort].
+
+(4) Es gilt ausschließlich das Recht der Bundesrepublik Deutschland unter Ausschluss des UN-Kaufrechts.
 
 
 _______________________     _______________________
@@ -191,76 +230,98 @@ Ort, Datum                  Ort, Datum
 
 
 _______________________     _______________________
-[Partei A]                  [Partei B]
-[Funktion]                  [Funktion]
-
-WICHTIG:
-- Verwende klare, verständliche Sprache
-- Füge alle relevanten rechtlichen Klauseln ein
-- Achte auf vollständige Angaben
-- Keine Platzhalter in eckigen Klammern verwenden - ersetze mit echten Daten`;
+[Name Partei A]             [Name Partei B]
+[Funktion/Titel]            [Funktion/Titel]`;
 
     // Detaillierter User-Prompt basierend auf Vertragstyp
     let userPrompt = "";
     
     switch (type) {
+      case "kaufvertrag":
+        const verkäufer = companyDetails || formData.seller || "Verkäufer";
+        const käufer = formData.buyer || "Käufer";
+        
+        userPrompt = `Erstelle einen VOLLSTÄNDIGEN, professionellen Kaufvertrag mit MINDESTENS 11 Paragraphen.
+
+VERTRAGSTYP: KAUFVERTRAG
+
+VERKÄUFER (verwende als Partei A):
+${verkäufer}
+
+KÄUFER (verwende als Partei B):
+${käufer}
+
+KAUFGEGENSTAND:
+${formData.item || "Gebrauchtes Kraftfahrzeug, Marke: [MARKE], Modell: [MODELL], Baujahr: [JAHR], Kilometerstand: [KM]"}
+
+KAUFPREIS:
+${formData.price || "15.000 EUR"}
+
+ÜBERGABE/LIEFERUNG:
+${formData.deliveryDate || new Date().toISOString().split('T')[0]}
+
+ERSTELLE EINEN VOLLSTÄNDIGEN VERTRAG MIT:
+- § 1 Vertragsgegenstand (sehr detailliert)
+- § 2 Kaufpreis und Zahlungsbedingungen
+- § 3 Übergabe und Lieferung
+- § 4 Gewährleistung (detailliert!)
+- § 5 Haftung
+- § 6 Eigentumsvorbehalt
+- § 7 Gefahrübergang
+- § 8 Beschaffenheit der Kaufsache
+- § 9 Vertraulichkeit
+- § 10 Datenschutz
+- § 11 Schlussbestimmungen
+
+Verwende professionelle juristische Sprache und fülle ALLE Angaben vollständig aus!`;
+        break;
+
       case "freelancer":
-        userPrompt = `Erstelle einen professionellen Dienstleistungsvertrag mit folgenden Daten:
+        const auftraggeber = companyDetails || formData.nameClient || "Auftraggeber GmbH";
+        
+        userPrompt = `Erstelle einen VOLLSTÄNDIGEN Dienstleistungsvertrag mit MINDESTENS 12 Paragraphen.
 
-VERTRAGSTYP: Dienstleistungsvertrag / Freelancer-Vertrag
+VERTRAGSTYP: DIENSTLEISTUNGSVERTRAG / FREELANCER-VERTRAG
 
-AUFTRAGGEBER:
-${formData.nameClient}
-${formData.clientAddress || '[Adresse des Auftraggebers]'}
+AUFTRAGGEBER (verwende als Partei A):
+${auftraggeber}
+${formData.clientAddress || ""}
 
-AUFTRAGNEHMER (Freelancer):
-${formData.nameFreelancer}
-${formData.freelancerAddress || '[Adresse des Freelancers]'}
+AUFTRAGNEHMER (verwende als Partei B):
+${formData.nameFreelancer || "Freelancer"}
+${formData.freelancerAddress || ""}
 ${formData.freelancerTaxId ? `Steuer-ID/USt-IdNr.: ${formData.freelancerTaxId}` : ''}
 
 LEISTUNGSBESCHREIBUNG:
-${formData.description}
+${formData.description || "Beratungsdienstleistungen"}
 
 PROJEKTDAUER:
-${formData.timeframe}
+${formData.timeframe || "3 Monate"}
 
 VERGÜTUNG:
-${formData.payment}
+${formData.payment || "5000 EUR"}
 Zahlungsbedingungen: ${formData.paymentTerms || '14 Tage netto'}
 Rechnungsstellung: ${formData.invoiceInterval || 'Monatlich'}
 
-ARBEITSORT:
-${formData.workLocation || 'Remote/Homeoffice'}
+WEITERE DETAILS:
+- Arbeitsort: ${formData.workLocation || 'Remote/Homeoffice'}
+- Nutzungsrechte: ${formData.rights || "Vollständig an Auftraggeber"}
+- Vertraulichkeit: ${formData.confidentiality || 'Standard-Vertraulichkeit'}
+- Haftung: ${formData.liability || 'Auf Auftragswert begrenzt'}
+- Kündigung: ${formData.terminationClause || "14 Tage zum Monatsende"}
+- Gerichtsstand: ${formData.jurisdiction || 'Sitz des Auftraggebers'}
 
-NUTZUNGSRECHTE:
-${formData.rights}
-Eigentum an Arbeitsergebnissen: ${formData.ipOwnership || 'Vollständig an Auftraggeber'}
-
-VERTRAULICHKEIT:
-${formData.confidentiality || 'Standard-Vertraulichkeit'}
-
-HAFTUNG:
-${formData.liability || 'Auf Auftragswert begrenzt'}
-
-KÜNDIGUNG:
-${formData.terminationClause}
-
-ANWENDBARES RECHT:
-${formData.governingLaw || 'Deutsches Recht'}
-
-GERICHTSSTAND:
-${formData.jurisdiction || 'Sitz des Auftraggebers'}
-
-Erstelle einen vollständigen, rechtssicheren Vertrag mit allen notwendigen Klauseln.`;
+Erstelle einen VOLLSTÄNDIGEN Vertrag mit allen erforderlichen Paragraphen!`;
         break;
 
+      // ALLE ANDEREN VERTRAGSTYPEN BEHALTEN
       case "mietvertrag":
         userPrompt = `Erstelle einen professionellen Mietvertrag mit folgenden Daten:
 
 VERTRAGSTYP: Mietvertrag für Wohnraum
 
 VERMIETER:
-${formData.landlord}
+${companyDetails || formData.landlord}
 
 MIETER:
 ${formData.tenant}
@@ -287,7 +348,7 @@ Füge alle mietrechtlich relevanten Klauseln ein (Schönheitsreparaturen, Kautio
 VERTRAGSTYP: Arbeitsvertrag
 
 ARBEITGEBER:
-${formData.employer}
+${companyDetails || formData.employer}
 
 ARBEITNEHMER:
 ${formData.employee}
@@ -307,36 +368,13 @@ ${formData.workingHours}
 Füge alle arbeitsrechtlich relevanten Klauseln ein (Probezeit, Urlaub, Krankheit, Verschwiegenheit, etc.).`;
         break;
 
-      case "kaufvertrag":
-        userPrompt = `Erstelle einen professionellen Kaufvertrag mit folgenden Daten:
-
-VERTRAGSTYP: Kaufvertrag
-
-VERKÄUFER:
-${formData.seller}
-
-KÄUFER:
-${formData.buyer}
-
-KAUFGEGENSTAND:
-${formData.item}
-
-KAUFPREIS:
-${formData.price}
-
-ÜBERGABE/LIEFERUNG:
-${formData.deliveryDate}
-
-Füge alle kaufrechtlich relevanten Klauseln ein (Eigentumsvorbehalt, Gewährleistung, Gefahrübergang, etc.).`;
-        break;
-
       case "nda":
         userPrompt = `Erstelle eine professionelle Geheimhaltungsvereinbarung (NDA) mit folgenden Daten:
 
 VERTRAGSTYP: Geheimhaltungsvereinbarung / Non-Disclosure Agreement (NDA)
 
 PARTEI A (Offenlegender):
-${formData.partyA}
+${companyDetails || formData.partyA}
 
 PARTEI B (Empfänger):
 ${formData.partyB}
@@ -348,6 +386,142 @@ GÜLTIGKEITSDAUER:
 ${formData.duration}
 
 Füge alle relevanten Klauseln ein (Definition vertraulicher Informationen, Ausnahmen, Rückgabe von Unterlagen, Vertragsstrafe, etc.).`;
+        break;
+
+      // NEUE VERTRAGSTYPEN HINZUFÜGEN
+      case "gesellschaftsvertrag":
+        userPrompt = `Erstelle einen professionellen Gesellschaftsvertrag mit folgenden Daten:
+
+VERTRAGSTYP: Gesellschaftsvertrag
+
+GESELLSCHAFTSNAME:
+${formData.companyName}
+
+GESELLSCHAFTSFORM:
+${formData.companyType}
+
+GESELLSCHAFTER:
+${formData.partners}
+
+STAMMKAPITAL:
+${formData.capital}
+
+GESCHÄFTSANTEILE:
+${formData.shares}
+
+UNTERNEHMENSGEGENSTAND:
+${formData.purpose}
+
+GESCHÄFTSFÜHRUNG:
+${formData.management}`;
+        break;
+
+      case "darlehensvertrag":
+        userPrompt = `Erstelle einen professionellen Darlehensvertrag mit folgenden Daten:
+
+VERTRAGSTYP: Darlehensvertrag
+
+DARLEHENSGEBER:
+${companyDetails || formData.lender}
+
+DARLEHENSNEHMER:
+${formData.borrower}
+
+DARLEHENSSUMME:
+${formData.amount}
+
+ZINSSATZ:
+${formData.interestRate}
+
+LAUFZEIT:
+${formData.duration}
+
+RÜCKZAHLUNG:
+${formData.repayment}
+
+SICHERHEITEN:
+${formData.security || "Keine"}`;
+        break;
+
+      case "lizenzvertrag":
+        userPrompt = `Erstelle einen professionellen Lizenzvertrag mit folgenden Daten:
+
+VERTRAGSTYP: Lizenzvertrag
+
+LIZENZGEBER:
+${companyDetails || formData.licensor}
+
+LIZENZNEHMER:
+${formData.licensee}
+
+LIZENZGEGENSTAND:
+${formData.subject}
+
+LIZENZART:
+${formData.licenseType}
+
+TERRITORIUM:
+${formData.territory}
+
+LIZENZGEBÜHREN:
+${formData.fee}
+
+LAUFZEIT:
+${formData.duration}`;
+        break;
+
+      case "aufhebungsvertrag":
+        userPrompt = `Erstelle einen professionellen Aufhebungsvertrag mit folgenden Daten:
+
+VERTRAGSTYP: Aufhebungsvertrag
+
+ARBEITGEBER:
+${companyDetails || formData.employer}
+
+ARBEITNEHMER:
+${formData.employee}
+
+BEENDIGUNGSDATUM:
+${formData.endDate}
+
+ABFINDUNG:
+${formData.severance || "Keine"}
+
+BEENDIGUNGSGRUND:
+${formData.reason}
+
+RESTURLAUB:
+${formData.vacation}
+
+ARBEITSZEUGNIS:
+${formData.reference}`;
+        break;
+
+      case "pachtvertrag":
+        userPrompt = `Erstelle einen professionellen Pachtvertrag mit folgenden Daten:
+
+VERTRAGSTYP: Pachtvertrag
+
+VERPÄCHTER:
+${companyDetails || formData.lessor}
+
+PÄCHTER:
+${formData.lessee}
+
+PACHTOBJEKT:
+${formData.object}
+
+PACHTBEGINN:
+${formData.startDate}
+
+PACHTZINS:
+${formData.rent}
+
+PACHTDAUER:
+${formData.duration}
+
+NUTZUNGSZWECK:
+${formData.usage}`;
         break;
 
       case "custom":
@@ -363,197 +537,69 @@ Strukturiere den Vertrag professionell mit allen notwendigen rechtlichen Klausel
         return res.status(400).json({ message: "❌ Unbekannter Vertragstyp." });
     }
 
-    // 🛟 GPT BACKUP & ERROR RECOVERY SYSTEM
-    const generateContractWithFallback = async (systemPrompt, userPrompt) => {
-      try {
-        // Erster Versuch mit GPT-4
-        console.log("🚀 Starte GPT-4 Vertragsgenerierung...");
-        const completion = await openai.chat.completions.create({
-          model: "gpt-4",
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: userPrompt }
-          ],
-          temperature: 0.3,
-          max_tokens: 3000
-        });
-        
-        let result = completion.choices[0].message.content || "";
-        
-        // 📝 QUALITÄTSKONTROLLE
-        if (result.length < 500) {
-          console.warn("⚠️ GPT Antwort zu kurz (" + result.length + " Zeichen), versuche zweiten Versuch...");
-          // Zweiter Versuch mit leicht veränderten Parametern
-          const retryCompletion = await openai.chat.completions.create({
-            model: "gpt-4",
-            messages: [
-              { role: "system", content: systemPrompt + "\n\nErstelle einen DETAILLIERTEN, vollständigen Vertrag mit mindestens 8 Paragraphen." },
-              { role: "user", content: userPrompt }
-            ],
-            temperature: 0.4,
-            max_tokens: 4000
-          });
-          result = retryCompletion.choices[0].message.content || result;
-          console.log("🔄 Zweiter Versuch abgeschlossen, neue Länge:", result.length);
-        }
-        
-        // 📝 STRUKTUR-VALIDATION
-        const hasRequiredElements = result.includes('§ 1') && 
-                                   result.includes('Unterschrift') && 
-                                   result.length > 800;
-        
-        if (!hasRequiredElements) {
-          console.warn("⚠️ Vertrag unvollständig, füge Standard-Klauseln hinzu...");
-          
-          // Füge fehlende Elemente hinzu
-          if (!result.includes('§ 1')) {
-            result = "§ 1 VERTRAGSGEGENSTAND\n\n(1) " + result;
-          }
-          
-          if (!result.includes('Schlussbestimmungen')) {
-            result += `\n\n§ 8 SCHLUSSBESTIMMUNGEN\n\n(1) Änderungen bedürfen der Schriftform.\n\n(2) Sollte eine Bestimmung unwirksam sein, bleibt der übrige Vertrag wirksam.\n\n(3) Gerichtsstand ist der Sitz des Auftraggebers.\n\n(4) Es gilt deutsches Recht.`;
-          }
-          
-          if (!result.includes('Unterschrift')) {
-            result += `\n\n\n_______________________     _______________________\nOrt, Datum                  Ort, Datum\n\n\n_______________________     _______________________\n[Partei A]                  [Partei B]\n[Funktion]                  [Funktion]`;
-          }
-        }
-        
-        console.log("✅ Vertragsgenerierung erfolgreich, finale Länge:", result.length);
-        return result;
-        
-      } catch (error) {
-        console.error("❌ GPT-Fehler:", error.message);
-        throw new Error(`Vertragsgenerierung fehlgeschlagen: ${error.message}. Bitte versuchen Sie es erneut.`);
-      }
-    };
-
-    // GPT-4 Generierung mit Backup-System
-    let contractText = await generateContractWithFallback(systemPrompt, userPrompt);
-
-    // 🛡️ ROBUSTE COMPANY PROFILE INTEGRATION - KORRIGIERT!
-    if (companyProfile && useCompanyProfile) {
-      const validateAndFormatCompanyData = (profile) => {
-        // Minimale Requirements checken
-        const hasMinimumData = profile.companyName && profile.street && profile.city;
-        
-        if (!hasMinimumData) {
-          console.warn("⚠️ Company Profile unvollständig, verwende Fallback");
-          return null;
-        }
-        
-        // Formatierung mit Fallbacks
-        let details = `${profile.companyName}`;
-        if (profile.legalForm) details += ` (${profile.legalForm})`;
-        details += `\n${profile.street}, ${profile.postalCode || ''} ${profile.city}`;
-        if (profile.vatId) details += `\nUSt-IdNr.: ${profile.vatId}`;
-        if (profile.tradeRegister) details += `\n${profile.tradeRegister}`;
-        return details.trim();
-      };
-
-      const companyDetails = validateAndFormatCompanyData(companyProfile);
+    // 🛟 OPTIMIERTE GPT GENERIERUNG
+    console.log("🚀 Starte GPT-4 Vertragsgenerierung...");
+    
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt }
+      ],
+      temperature: 0.3,
+      max_tokens: 4000  // ERHÖHT für längere Verträge
+    });
+    
+    let contractText = completion.choices[0].message.content || "";
+    
+    // 📝 VERBESSERTE QUALITÄTSKONTROLLE
+    if (contractText.length < 2000) {  // HÖHERE Mindestlänge
+      console.warn("⚠️ Vertrag zu kurz (" + contractText.length + " Zeichen), fordere längere Version an...");
       
-      if (companyDetails) {
-        // 📝 ROBUSTE ERSETZUNG mit mehreren Fallback-Patterns - KORRIGIERT!
-        const replaceCompanyData = (text, details, contractType) => {
-          let result = text;
-          
-          // WICHTIG: replacement Variable außerhalb definieren!
-          let replacement = '';
-          
-          switch(contractType) {
-            case 'freelancer':
-              replacement = 'AUFTRAGGEBER';
-              break;
-            case 'kaufvertrag':
-              replacement = 'VERKÄUFER';
-              break;
-            case 'mietvertrag':
-              replacement = 'VERMIETER';
-              break;
-            case 'arbeitsvertrag':
-              replacement = 'ARBEITGEBER';
-              break;
-            case 'nda':
-              replacement = 'PARTEI A (Offenlegender)';
-              break;
-            default:
-              replacement = 'PARTEI A';
+      const retryCompletion = await openai.chat.completions.create({
+        model: "gpt-4",
+        messages: [
+          { 
+            role: "system", 
+            content: systemPrompt + "\n\nWICHTIG: Erstelle einen SEHR DETAILLIERTEN, vollständigen Vertrag mit MINDESTENS 12 ausführlichen Paragraphen! Jeder Paragraph muss mehrere Absätze haben!" 
+          },
+          { 
+            role: "user", 
+            content: userPrompt + "\n\nDER VERTRAG MUSS SEHR AUSFÜHRLICH SEIN! Mindestens 12 Paragraphen mit jeweils mehreren Absätzen!" 
           }
-          
-          // Mehrere Pattern für verschiedene GPT-Formatierungen
-          const patterns = {
-            freelancer: [
-              /AUFTRAGGEBER:\s*\n[^\n]+/,
-              /Auftraggeber:\s*\n[^\n]+/,
-              /\*\*Auftraggeber:\*\*\s*\n[^\n]+/,
-              /AUFTRAGGEBER \([^)]+\):\s*\n[^\n]+/
-            ],
-            kaufvertrag: [
-              /VERKÄUFER:\s*\n[^\n]+/,
-              /Verkäufer:\s*\n[^\n]+/,
-              /\*\*Verkäufer:\*\*\s*\n[^\n]+/,
-              /VERKÄUFER \([^)]+\):\s*\n[^\n]+/
-            ],
-            mietvertrag: [
-              /VERMIETER:\s*\n[^\n]+/,
-              /Vermieter:\s*\n[^\n]+/,
-              /\*\*Vermieter:\*\*\s*\n[^\n]+/,
-              /VERMIETER \([^)]+\):\s*\n[^\n]+/
-            ],
-            arbeitsvertrag: [
-              /ARBEITGEBER:\s*\n[^\n]+/,
-              /Arbeitgeber:\s*\n[^\n]+/,
-              /\*\*Arbeitgeber:\*\*\s*\n[^\n]+/,
-              /ARBEITGEBER \([^)]+\):\s*\n[^\n]+/
-            ],
-            nda: [
-              /PARTEI A[^\n]*:\s*\n[^\n]+/,
-              /Partei A[^\n]*:\s*\n[^\n]+/,
-              /\*\*Partei A[^\n]*:\*\*\s*\n[^\n]+/,
-              /PARTEI A \([^)]+\):\s*\n[^\n]+/
-            ]
-          };
-          
-          const typePatterns = patterns[contractType] || [];
-          let replaced = false;
-          
-          // Versuche alle Pattern, nimm das erste was matcht
-          for (const pattern of typePatterns) {
-            if (pattern.test(result)) {
-              result = result.replace(pattern, `${replacement}:\n${details}`);
-              replaced = true;
-              console.log(`✅ Company data ersetzt für ${contractType} mit Pattern: ${pattern}`);
-              break;
-            }
-          }
-          
-          if (!replaced) {
-            console.warn(`⚠️ Kein Pattern gefunden für ${contractType}, füge Company-Details am Anfang hinzu`);
-            // Fallback: Füge am Anfang nach dem Titel hinzu
-            const titleMatch = result.match(/^={3,}\n(.+)\n={3,}/m);
-            if (titleMatch) {
-              const insertPoint = result.indexOf(titleMatch[0]) + titleMatch[0].length;
-              // HIER WAR DER FEHLER - replacement ist jetzt definiert!
-              const insertion = `\n\n${replacement}:\n${details}\n\nund\n\n`;
-              result = result.slice(0, insertPoint) + insertion + result.slice(insertPoint);
-            }
-          }
-          
-          return result;
-        };
-
-        contractText = replaceCompanyData(contractText, companyDetails, type);
+        ],
+        temperature: 0.4,
+        max_tokens: 4000
+      });
+      
+      contractText = retryCompletion.choices[0].message.content || contractText;
+      console.log("🔄 Zweiter Versuch abgeschlossen, neue Länge:", contractText.length);
+    }
+    
+    // 📝 STRUKTUR-VALIDATION
+    const hasRequiredElements = contractText.includes('§ 1') && 
+                               contractText.includes('§ 5') && 
+                               contractText.includes('§ 10') &&
+                               contractText.includes('Unterschrift') && 
+                               contractText.length > 2000;
+    
+    if (!hasRequiredElements) {
+      console.warn("⚠️ Vertrag unvollständig, füge fehlende Standard-Klauseln hinzu...");
+      
+      if (!contractText.includes('§ 10')) {
+        contractText = contractText.replace('§ 11 SCHLUSSBESTIMMUNGEN', '§ 10 ZUSÄTZLICHE VEREINBARUNGEN\n\n(1) Weitere Vereinbarungen wurden nicht getroffen.\n\n§ 11 SCHLUSSBESTIMMUNGEN');
       }
     }
+    
+    console.log("✅ Vertragsgenerierung erfolgreich, finale Länge:", contractText.length);
 
-    // Analyse-Zähler hochzählen
+    // Analyse-Zähler hochzählen (BEHALTEN!)
     await usersCollection.updateOne(
       { _id: user._id },
       { $inc: { analysisCount: 1 } }
     );
 
-    // Vertrag in DB speichern
+    // Vertrag in DB speichern (BEHALTEN!)
     const contract = {
       userId: req.user.userId,
       name: formData.title,
@@ -566,12 +612,12 @@ Strukturiere den Vertrag professionell mit allen notwendigen rechtlichen Klausel
       isGenerated: true,
       contractType: type,
       hasCompanyProfile: !!companyProfile,
-      formData: formData // Speichere Formulardaten für spätere Bearbeitung
+      formData: formData
     };
 
     const result = await contractsCollection.insertOne(contract);
 
-    // 📊 CONTRACT ANALYTICS
+    // 📊 CONTRACT ANALYTICS (BEHALTEN!)
     const logContractGeneration = (contract, user, companyProfile) => {
       const analytics = {
         contractType: contract.contractType,
@@ -579,15 +625,12 @@ Strukturiere den Vertrag professionell mit allen notwendigen rechtlichen Klausel
         userPlan: user.subscriptionPlan || 'free',
         timestamp: new Date(),
         contentLength: contract.content.length,
-        generationSource: 'ai_generation_v2_enhanced',
+        generationSource: 'ai_generation_v3_optimized',
         userId: user._id.toString(),
         success: true
       };
       
       console.log("📊 Contract Generated Analytics:", analytics);
-      
-      // Hier könnte später Analytics Service eingebaut werden
-      // await analyticsService.track('contract_generated', analytics);
     };
 
     // Analytics loggen
@@ -602,7 +645,7 @@ Strukturiere den Vertrag professionell mit allen notwendigen rechtlichen Klausel
         hasCompanyProfile: !!companyProfile,
         contentLength: contractText.length,
         generatedAt: new Date().toISOString(),
-        version: 'v2_enhanced'
+        version: 'v3_optimized'
       }
     });
     
