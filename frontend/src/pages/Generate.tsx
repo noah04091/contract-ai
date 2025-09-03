@@ -629,6 +629,7 @@ export default function Generate() {
   const [selectedType, setSelectedType] = useState<ContractType | null>(null);
   const [formData, setFormData] = useState<FormDataType>({});
   const [generated, setGenerated] = useState<string>("");
+  const [generatedHTML, setGeneratedHTML] = useState<string>(""); // 🔴 NEU: HTML-Version für professionelle PDFs
   const [loading, setLoading] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);
   const [saved, setSaved] = useState<boolean>(false);
@@ -922,11 +923,13 @@ export default function Generate() {
     }
   };
 
+  // 🔴 AKTUALISIERT: handleGenerate empfängt jetzt auch HTML
   const handleGenerate = async () => {
     if (!selectedType || !isPremium) return;
 
     setLoading(true);
     setGenerated("");
+    setGeneratedHTML(""); // 🔴 NEU: HTML zurücksetzen
     setCopied(false);
     setSaved(false);
 
@@ -946,6 +949,7 @@ export default function Generate() {
       if (!res.ok) throw new Error(data.message || "Fehler bei der Generierung.");
       
       setGenerated(data.contractText);
+      setGeneratedHTML(data.contractHTML || ""); // 🔴 NEU: HTML speichern wenn vorhanden
       setCurrentStep(3);
       setShowPreview(true);
     } catch (err) {
@@ -967,6 +971,7 @@ export default function Generate() {
     }
   };
 
+  // 🔴 AKTUALISIERT: handleSave speichert auch HTML
   const handleSave = async () => {
     try {
       const res = await fetch("/api/contracts", {
@@ -980,6 +985,7 @@ export default function Generate() {
           expiryDate: "",
           status: "Aktiv",
           content: generated,
+          contentHTML: generatedHTML, // 🔴 NEU: HTML auch speichern
           signature: signatureURL,
           isGenerated: true
         }),
@@ -1040,6 +1046,7 @@ export default function Generate() {
     }
   };
 
+  // 🔴 AKTUALISIERT: handleDownloadPDF nutzt jetzt HTML wenn vorhanden
   const handleDownloadPDF = async () => {
     try {
       const html2pdfModule = await import("html2pdf.js") as any;
@@ -1053,28 +1060,61 @@ export default function Generate() {
         return;
       }
 
-      const signatureDiv = document.createElement("div");
-      if (signatureURL) {
-        signatureDiv.innerHTML = `
-          <div style="margin-top: 40px; border-top: 1px solid #e5e7eb; padding-top: 20px;">
-            <p style="margin-bottom: 10px; font-weight: 600;">Digitale Unterschrift:</p>
-            <img src="${signatureURL}" style="max-width: 200px; border: 1px solid #e5e7eb; border-radius: 4px;" />
-            <p style="margin-top: 10px; font-size: 12px; color: #6b7280;">
-              Unterschrieben am ${new Date().toLocaleString('de-DE')}
-            </p>
-          </div>
-        `;
-        container.appendChild(signatureDiv);
+      // 🔴 NEU: Verwende HTML-Version wenn vorhanden
+      let pdfContent;
+      if (generatedHTML) {
+        const tempDiv = document.createElement("div");
+        tempDiv.innerHTML = generatedHTML;
+        
+        // Füge Unterschrift zum HTML hinzu wenn vorhanden
+        if (signatureURL) {
+          const signatureHTML = `
+            <div style="margin-top: 40px; border-top: 1px solid #e5e7eb; padding-top: 20px; page-break-inside: avoid;">
+              <p style="margin-bottom: 10px; font-weight: 600;">Digitale Unterschrift:</p>
+              <img src="${signatureURL}" style="max-width: 200px; border: 1px solid #e5e7eb; border-radius: 4px;" />
+              <p style="margin-top: 10px; font-size: 12px; color: #6b7280;">
+                Unterschrieben am ${new Date().toLocaleString('de-DE')}
+              </p>
+            </div>
+          `;
+          const contractContent = tempDiv.querySelector('.contract-content');
+          if (contractContent) {
+            contractContent.insertAdjacentHTML('beforeend', signatureHTML);
+          } else {
+            tempDiv.insertAdjacentHTML('beforeend', signatureHTML);
+          }
+        }
+        pdfContent = tempDiv;
+      } else {
+        // Fallback: Alte Methode für Verträge ohne HTML
+        pdfContent = container.cloneNode(true) as HTMLElement;
+        
+        if (signatureURL) {
+          const signatureDiv = document.createElement("div");
+          signatureDiv.innerHTML = `
+            <div style="margin-top: 40px; border-top: 1px solid #e5e7eb; padding-top: 20px;">
+              <p style="margin-bottom: 10px; font-weight: 600;">Digitale Unterschrift:</p>
+              <img src="${signatureURL}" style="max-width: 200px; border: 1px solid #e5e7eb; border-radius: 4px;" />
+              <p style="margin-top: 10px; font-size: 12px; color: #6b7280;">
+                Unterschrieben am ${new Date().toLocaleString('de-DE')}
+              </p>
+            </div>
+          `;
+          pdfContent.appendChild(signatureDiv);
+        }
       }
 
+      document.body.appendChild(pdfContent);
+
       const opt: Html2PdfOptions = {
-        margin: [20, 20, 20, 20],
+        margin: generatedHTML ? [5, 5, 5, 5] : [20, 20, 20, 20], // Kleinere Margins wenn HTML
         filename: `${formData.title || 'Vertrag'}.pdf`,
         image: { type: "jpeg", quality: 0.98 },
         html2canvas: { 
           scale: 2,
           useCORS: true,
-          letterRendering: true
+          letterRendering: true,
+          allowTaint: true
         },
         jsPDF: { 
           unit: "pt", 
@@ -1082,19 +1122,20 @@ export default function Generate() {
           orientation: "portrait",
           putOnlyUsedFonts: true
         },
+        pagebreak: { 
+          mode: ['avoid-all', 'css', 'legacy']
+        }
       };
 
       try {
-        await html2pdf().from(container).set(opt).save();
+        await html2pdf().from(pdfContent).set(opt).save();
         toast.success("✅ PDF erfolgreich generiert und heruntergeladen!");
       } catch (pdfError) {
         console.error("❌ PDF-Export fehlgeschlagen", pdfError);
         toast.error("Beim Exportieren des generierten Vertrags ist ein Fehler aufgetreten.");
       }
       
-      if (signatureDiv && container.contains(signatureDiv)) {
-        container.removeChild(signatureDiv);
-      }
+      document.body.removeChild(pdfContent);
     } catch (error) {
       console.error("PDF generation failed:", error);
       toast.error("❌ Fehler beim PDF-Export");
@@ -1523,6 +1564,7 @@ export default function Generate() {
                         setSelectedType(null);
                         setFormData({});
                         setGenerated("");
+                        setGeneratedHTML(""); // 🔴 NEU: HTML zurücksetzen
                         setShowPreview(false);
                         setSignatureURL(null);
                       }}

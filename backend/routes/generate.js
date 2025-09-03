@@ -1,4 +1,4 @@
-// 🔄 backend/routes/generate.js - OPTIMIERTE VERSION MIT ALLEN FEATURES
+// 🔄 backend/routes/generate.js - MIT HTML-FORMATIERUNG
 const express = require("express");
 const { OpenAI } = require("openai");
 const verifyToken = require("../middleware/verifyToken");
@@ -7,14 +7,14 @@ const https = require("https");
 const http = require("http");
 const AWS = require("aws-sdk");
 
-// ✅ S3 Setup für frische Logo-URLs (BEHALTEN!)
+// ✅ S3 Setup für frische Logo-URLs
 const s3 = new AWS.S3({
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
   region: process.env.AWS_REGION
 });
 
-// ✅ Base64-Konvertierung für S3-Logos (BEHALTEN!)
+// ✅ Base64-Konvertierung für S3-Logos
 const convertS3ToBase64 = async (url) => {
   return new Promise((resolve, reject) => {
     const protocol = url.startsWith('https') ? https : http;
@@ -42,10 +42,295 @@ const convertS3ToBase64 = async (url) => {
   });
 };
 
+// 🎨 NEU: PROFESSIONELLE HTML-FORMATIERUNG FÜR VERTRÄGE
+const formatContractToHTML = async (contractText, companyProfile, contractType) => {
+  // Logo als Base64 konvertieren falls vorhanden
+  let logoBase64 = null;
+  if (companyProfile?.logoUrl) {
+    try {
+      if (companyProfile.logoUrl.includes('s3.amazonaws.com')) {
+        logoBase64 = await convertS3ToBase64(companyProfile.logoUrl);
+      } else {
+        logoBase64 = companyProfile.logoUrl;
+      }
+      console.log("✅ Logo für PDF vorbereitet");
+    } catch (error) {
+      console.warn("⚠️ Logo konnte nicht geladen werden:", error);
+    }
+  }
+
+  // Text in strukturierte Abschnitte aufteilen
+  const lines = contractText.split('\n');
+  let htmlContent = '';
+  let currentSection = '';
+  
+  for (const line of lines) {
+    const trimmedLine = line.trim();
+    
+    // Vertragsüberschrift
+    if (trimmedLine.startsWith('===') && trimmedLine.endsWith('===')) {
+      continue; // Überspringen, wird durch Header ersetzt
+    }
+    
+    // Hauptüberschrift (KAUFVERTRAG etc.)
+    if (trimmedLine === trimmedLine.toUpperCase() && trimmedLine.length > 5 && !trimmedLine.startsWith('§')) {
+      htmlContent += `<h1 class="contract-title">${trimmedLine}</h1>`;
+    }
+    // Paragraph-Überschriften (§ 1, § 2, etc.)
+    else if (trimmedLine.startsWith('§')) {
+      if (currentSection) {
+        htmlContent += '</div>'; // Vorherige Section schließen
+      }
+      currentSection = trimmedLine;
+      htmlContent += `<div class="section"><h2 class="paragraph-title">${trimmedLine}</h2>`;
+    }
+    // Unterabschnitte (1), (2), etc.
+    else if (trimmedLine.match(/^\(\d+\)/)) {
+      htmlContent += `<div class="subsection">${trimmedLine}</div>`;
+    }
+    // Unterpunkte a), b), etc.
+    else if (trimmedLine.match(/^[a-z]\)/)) {
+      htmlContent += `<div class="subpoint">${trimmedLine}</div>`;
+    }
+    // PRÄAMBEL
+    else if (trimmedLine === 'PRÄAMBEL') {
+      htmlContent += `<h3 class="preamble-title">PRÄAMBEL</h3>`;
+    }
+    // Zwischen-Klausel
+    else if (trimmedLine === 'zwischen') {
+      htmlContent += `<p class="between-clause">zwischen</p>`;
+    }
+    // Nachfolgend genannt
+    else if (trimmedLine.includes('nachfolgend') && trimmedLine.includes('genannt')) {
+      htmlContent += `<p class="party-designation">${trimmedLine}</p>`;
+    }
+    // Unterschriftszeilen
+    else if (trimmedLine.includes('_______')) {
+      htmlContent += `<div class="signature-line">${trimmedLine.replace(/_+/g, '<span class="line"></span>')}</div>`;
+    }
+    // Normaler Text
+    else if (trimmedLine) {
+      htmlContent += `<p class="contract-text">${trimmedLine}</p>`;
+    }
+  }
+  
+  if (currentSection) {
+    htmlContent += '</div>'; // Letzte Section schließen
+  }
+
+  // Vollständiges HTML-Dokument mit professionellem Styling
+  const fullHTML = `
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    @page {
+      size: A4;
+      margin: 25mm 20mm 30mm 25mm;
+      
+      @bottom-center {
+        content: counter(page) " von " counter(pages);
+        font-size: 9pt;
+        color: #666;
+      }
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Arial', 'Helvetica', sans-serif;
+      font-size: 11pt;
+      line-height: 1.5;
+      color: #000;
+      background: white;
+    }
+    
+    /* PROFESSIONELLER HEADER MIT LOGO */
+    .header {
+      margin-bottom: 40px;
+      ${logoBase64 ? 'border-bottom: 2px solid #003366;' : ''}
+      padding-bottom: 20px;
+    }
+    
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    
+    .company-info {
+      flex: 1;
+    }
+    
+    .company-name {
+      font-size: 14pt;
+      font-weight: bold;
+      color: #003366;
+      margin-bottom: 5px;
+    }
+    
+    .company-details {
+      font-size: 9pt;
+      color: #333;
+      line-height: 1.3;
+    }
+    
+    .logo-container {
+      width: 120px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+    }
+    
+    .logo-container img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+    
+    /* VERTRAGSTITEL */
+    .contract-title {
+      font-size: 18pt;
+      font-weight: bold;
+      text-align: center;
+      margin: 40px 0 30px 0;
+      color: #000;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    
+    /* PARAGRAPHEN */
+    .section {
+      margin-bottom: 25px;
+      page-break-inside: avoid;
+    }
+    
+    .paragraph-title {
+      font-size: 13pt;
+      font-weight: bold;
+      margin: 25px 0 12px 0;
+      color: #003366;
+      page-break-after: avoid;
+    }
+    
+    /* TEXTFORMATIERUNG */
+    .contract-text {
+      margin-bottom: 10px;
+      text-align: justify;
+      text-justify: inter-word;
+      hyphens: auto;
+    }
+    
+    .subsection {
+      margin: 12px 0 8px 15px;
+      text-align: justify;
+    }
+    
+    .subpoint {
+      margin: 5px 0 5px 30px;
+      text-align: justify;
+    }
+    
+    .between-clause {
+      text-align: center;
+      margin: 20px 0;
+      font-style: italic;
+    }
+    
+    .party-designation {
+      text-align: center;
+      font-style: italic;
+      margin: 5px 0 15px 0;
+    }
+    
+    .preamble-title {
+      font-size: 12pt;
+      font-weight: bold;
+      margin: 20px 0 10px 0;
+    }
+    
+    /* UNTERSCHRIFTEN BEREICH */
+    .signature-section {
+      margin-top: 60px;
+      page-break-inside: avoid;
+    }
+    
+    .signature-line {
+      margin: 40px 0 5px 0;
+      display: flex;
+      justify-content: space-between;
+    }
+    
+    .signature-line .line {
+      display: inline-block;
+      width: 200px;
+      border-bottom: 1px solid #000;
+    }
+    
+    /* SEITENUMBRUCH-KONTROLLE */
+    h1, h2, h3 {
+      page-break-after: avoid;
+    }
+    
+    p {
+      orphans: 3;
+      widows: 3;
+    }
+    
+    .section {
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    
+    /* Verhindere Umbruch nach Überschriften */
+    .paragraph-title + * {
+      page-break-before: avoid;
+    }
+  </style>
+</head>
+<body>
+  ${companyProfile ? `
+  <div class="header">
+    <div class="header-content">
+      <div class="company-info">
+        <div class="company-name">${companyProfile.companyName}</div>
+        <div class="company-details">
+          ${companyProfile.legalForm ? `${companyProfile.legalForm}<br>` : ''}
+          ${companyProfile.street}, ${companyProfile.postalCode} ${companyProfile.city}<br>
+          ${companyProfile.contactEmail ? `E-Mail: ${companyProfile.contactEmail}<br>` : ''}
+          ${companyProfile.contactPhone ? `Tel: ${companyProfile.contactPhone}<br>` : ''}
+          ${companyProfile.vatId ? `USt-IdNr.: ${companyProfile.vatId}<br>` : ''}
+          ${companyProfile.tradeRegister ? companyProfile.tradeRegister : ''}
+        </div>
+      </div>
+      ${logoBase64 ? `
+      <div class="logo-container">
+        <img src="${logoBase64}" alt="Firmenlogo">
+      </div>
+      ` : ''}
+    </div>
+  </div>
+  ` : ''}
+  
+  <div class="contract-content">
+    ${htmlContent}
+  </div>
+</body>
+</html>`;
+
+  return fullHTML;
+};
+
 const router = express.Router();
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-// MongoDB Setup (BEHALTEN!)
+// MongoDB Setup
 const mongoUri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
 const client = new MongoClient(mongoUri);
 let usersCollection, contractsCollection, db;
@@ -62,7 +347,7 @@ let usersCollection, contractsCollection, db;
   }
 })();
 
-// 🎯 PROFESSIONELLE VERTRAGSGENERIERUNG - OPTIMIERT
+// 🎯 PROFESSIONELLE VERTRAGSGENERIERUNG
 router.post("/", verifyToken, async (req, res) => {
   console.log("🚀 Generate Route aufgerufen!");
   
@@ -73,7 +358,7 @@ router.post("/", verifyToken, async (req, res) => {
   }
 
   try {
-    // Company Profile laden (BEHALTEN!)
+    // Company Profile laden
     let companyProfile = null;
     if (db) {
       const profileData = await db.collection("company_profiles").findOne({ 
@@ -86,7 +371,7 @@ router.post("/", verifyToken, async (req, res) => {
       }
     }
 
-    // Nutzer & Limit prüfen (BEHALTEN!)
+    // Nutzer & Limit prüfen
     const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
     const plan = user.subscriptionPlan || "free";
     const count = user.analysisCount ?? 0;
@@ -101,7 +386,7 @@ router.post("/", verifyToken, async (req, res) => {
       });
     }
 
-    // Company Details vorbereiten WENN vorhanden
+    // Company Details vorbereiten
     let companyDetails = "";
     if (companyProfile && useCompanyProfile) {
       companyDetails = `${companyProfile.companyName}`;
@@ -111,7 +396,7 @@ router.post("/", verifyToken, async (req, res) => {
       if (companyProfile.tradeRegister) companyDetails += `\n${companyProfile.tradeRegister}`;
     }
 
-    // 🎯 STARK VERBESSERTE PROMPT-GENERIERUNG
+    // System Prompt (IHRE VERSION BEHALTEN)
     let systemPrompt = `Du bist ein Experte für deutsches Vertragsrecht und erstellst professionelle, rechtssichere Verträge.
 
 ABSOLUT KRITISCHE REGELN:
@@ -233,7 +518,7 @@ _______________________     _______________________
 [Name Partei A]             [Name Partei B]
 [Funktion/Titel]            [Funktion/Titel]`;
 
-    // Detaillierter User-Prompt basierend auf Vertragstyp
+    // User Prompts (ALLE IHRE CASES BEHALTEN)
     let userPrompt = "";
     
     switch (type) {
@@ -314,7 +599,7 @@ WEITERE DETAILS:
 Erstelle einen VOLLSTÄNDIGEN Vertrag mit allen erforderlichen Paragraphen!`;
         break;
 
-      // ALLE ANDEREN VERTRAGSTYPEN BEHALTEN
+      // ALLE ANDEREN CASES BLEIBEN GLEICH
       case "mietvertrag":
         userPrompt = `Erstelle einen professionellen Mietvertrag mit folgenden Daten:
 
@@ -388,7 +673,6 @@ ${formData.duration}
 Füge alle relevanten Klauseln ein (Definition vertraulicher Informationen, Ausnahmen, Rückgabe von Unterlagen, Vertragsstrafe, etc.).`;
         break;
 
-      // NEUE VERTRAGSTYPEN HINZUFÜGEN
       case "gesellschaftsvertrag":
         userPrompt = `Erstelle einen professionellen Gesellschaftsvertrag mit folgenden Daten:
 
@@ -537,7 +821,7 @@ Strukturiere den Vertrag professionell mit allen notwendigen rechtlichen Klausel
         return res.status(400).json({ message: "❌ Unbekannter Vertragstyp." });
     }
 
-    // 🛟 OPTIMIERTE GPT GENERIERUNG
+    // GPT-4 Generierung
     console.log("🚀 Starte GPT-4 Vertragsgenerierung...");
     
     const completion = await openai.chat.completions.create({
@@ -547,13 +831,13 @@ Strukturiere den Vertrag professionell mit allen notwendigen rechtlichen Klausel
         { role: "user", content: userPrompt }
       ],
       temperature: 0.3,
-      max_tokens: 4000  // ERHÖHT für längere Verträge
+      max_tokens: 4000
     });
     
     let contractText = completion.choices[0].message.content || "";
     
-    // 📝 VERBESSERTE QUALITÄTSKONTROLLE
-    if (contractText.length < 2000) {  // HÖHERE Mindestlänge
+    // Qualitätskontrolle
+    if (contractText.length < 2000) {
       console.warn("⚠️ Vertrag zu kurz (" + contractText.length + " Zeichen), fordere längere Version an...");
       
       const retryCompletion = await openai.chat.completions.create({
@@ -576,7 +860,7 @@ Strukturiere den Vertrag professionell mit allen notwendigen rechtlichen Klausel
       console.log("🔄 Zweiter Versuch abgeschlossen, neue Länge:", contractText.length);
     }
     
-    // 📝 STRUKTUR-VALIDATION
+    // Struktur-Validation
     const hasRequiredElements = contractText.includes('§ 1') && 
                                contractText.includes('§ 5') && 
                                contractText.includes('§ 10') &&
@@ -593,17 +877,25 @@ Strukturiere den Vertrag professionell mit allen notwendigen rechtlichen Klausel
     
     console.log("✅ Vertragsgenerierung erfolgreich, finale Länge:", contractText.length);
 
-    // Analyse-Zähler hochzählen (BEHALTEN!)
+    // 🎨 NEU: HTML-Formatierung für professionelle Darstellung
+    let formattedHTML = "";
+    if (useCompanyProfile && companyProfile) {
+      formattedHTML = await formatContractToHTML(contractText, companyProfile, type);
+      console.log("✅ Professionelle HTML-Formatierung mit Logo erstellt");
+    }
+
+    // Analyse-Zähler hochzählen
     await usersCollection.updateOne(
       { _id: user._id },
       { $inc: { analysisCount: 1 } }
     );
 
-    // Vertrag in DB speichern (BEHALTEN!)
+    // Vertrag in DB speichern
     const contract = {
       userId: req.user.userId,
       name: formData.title,
       content: contractText,
+      contentHTML: formattedHTML, // NEU: HTML-Version speichern
       laufzeit: "Generiert",
       kuendigung: "Generiert", 
       expiryDate: "",
@@ -617,7 +909,7 @@ Strukturiere den Vertrag professionell mit allen notwendigen rechtlichen Klausel
 
     const result = await contractsCollection.insertOne(contract);
 
-    // 📊 CONTRACT ANALYTICS (BEHALTEN!)
+    // CONTRACT ANALYTICS
     const logContractGeneration = (contract, user, companyProfile) => {
       const analytics = {
         contractType: contract.contractType,
@@ -625,7 +917,7 @@ Strukturiere den Vertrag professionell mit allen notwendigen rechtlichen Klausel
         userPlan: user.subscriptionPlan || 'free',
         timestamp: new Date(),
         contentLength: contract.content.length,
-        generationSource: 'ai_generation_v3_optimized',
+        generationSource: 'ai_generation_v4_professional',
         userId: user._id.toString(),
         success: true
       };
@@ -640,12 +932,14 @@ Strukturiere den Vertrag professionell mit allen notwendigen rechtlichen Klausel
       message: "✅ Vertrag erfolgreich generiert & gespeichert.",
       contractId: result.insertedId,
       contractText: contractText,
+      contractHTML: formattedHTML, // NEU: HTML zurückgeben
       metadata: {
         contractType: type,
         hasCompanyProfile: !!companyProfile,
+        hasLogo: !!companyProfile?.logoUrl,
         contentLength: contractText.length,
         generatedAt: new Date().toISOString(),
-        version: 'v3_optimized'
+        version: 'v4_professional'
       }
     });
     

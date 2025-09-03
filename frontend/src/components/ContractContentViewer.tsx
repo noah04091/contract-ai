@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// ContractContentViewer.tsx - VERBESSERTE VERSION mit professioneller Formatierung
+// ContractContentViewer.tsx - VERBESSERTE VERSION mit HTML-Support für professionelle PDFs
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FileText, Download, Maximize2, X, Eye, Copy, CheckCircle, Printer, Edit, Save, Keyboard } from 'lucide-react';
@@ -10,6 +10,7 @@ interface ContractContentViewerProps {
     _id: string;
     name: string;
     content?: string;
+    contentHTML?: string; // 🔴 NEU: HTML-Version für professionelle PDFs
     signature?: string;
     isGenerated?: boolean;
     createdAt?: string;
@@ -38,6 +39,7 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
   const [copySuccess, setCopySuccess] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState('');
+  const [editedHTML, setEditedHTML] = useState(''); // 🔴 NEU: HTML-Version beim Editieren
   const [companyProfile, setCompanyProfile] = useState<CompanyProfile | null>(null);
   const [showKeyboardHints, setShowKeyboardHints] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -139,7 +141,8 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
   // Initialize edited content
   useEffect(() => {
     setEditedContent(contract.content || '');
-  }, [contract.content]);
+    setEditedHTML(contract.contentHTML || ''); // 🔴 NEU: HTML initialisieren
+  }, [contract.content, contract.contentHTML]);
 
   // Formatiere Content für bessere Darstellung
   const formatContentForDisplay = (content: string): string => {
@@ -168,24 +171,32 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
     return formatted;
   };
 
-  const displayContent = isEditing ? editedContent : formatContentForDisplay(contract.content || 
+  // 🔴 NEU: Verwende HTML wenn vorhanden, sonst formatiere den normalen Content
+  const displayContent = isEditing ? editedContent : (
+    contract.contentHTML || formatContentForDisplay(contract.content || 
     `Vertrag: ${contract.name}\n\nDieser Vertrag wurde ${contract.isGenerated ? 'generiert' : 'hochgeladen'} am ${
       contract.isGenerated ? 
         new Date(contract.createdAt || '').toLocaleDateString('de-DE') : 
         new Date(contract.uploadedAt || '').toLocaleDateString('de-DE')
-    }.\n\nDetaillierte Vertragsinhalte können durch Analyse oder manuellen Upload bereitgestellt werden.`);
+    }.\n\nDetaillierte Vertragsinhalte können durch Analyse oder manuellen Upload bereitgestellt werden.`)
+  );
 
+  // 🔴 AKTUALISIERT: Speichere sowohl Text als auch HTML
   const handleSaveContent = useCallback(async () => {
     try {
       const response = await fetch(`/api/contracts/${contract._id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ content: editedContent })
+        body: JSON.stringify({ 
+          content: editedContent,
+          contentHTML: editedHTML // 🔴 NEU: HTML auch speichern
+        })
       });
       
       if (response.ok) {
         contract.content = editedContent;
+        contract.contentHTML = editedHTML; // 🔴 NEU: HTML aktualisieren
         setIsEditing(false);
         toast.success('✅ Änderungen erfolgreich gespeichert!');
       } else {
@@ -195,204 +206,245 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
       console.error('Save error:', error);
       toast.error('❌ Fehler beim Speichern der Änderungen');
     }
-  }, [contract, editedContent]);
+  }, [contract, editedContent, editedHTML]);
 
+  // 🔴 HAUPTVERBESSERUNG: PDF Export mit HTML-Support
   const handleDownloadPDF = async () => {
     try {
       const html2pdfModule = await import('html2pdf.js');
       const html2pdf = (html2pdfModule.default || html2pdfModule) as typeof import('html2pdf.js').default;
       
       if (contentRef.current) {
-        // Erstelle professionelles PDF-Layout
-        const tempDiv = document.createElement('div');
+        let pdfContent;
         
-        // PROFESSIONELLER PDF-INHALT
-        tempDiv.innerHTML = `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <style>
-              @page {
-                size: A4;
-                margin: 25mm 20mm 20mm 30mm;
-              }
-              
-              * {
-                margin: 0;
-                padding: 0;
-                box-sizing: border-box;
-              }
-              
-              body {
-                font-family: Arial, Calibri, sans-serif;
-                font-size: 11pt;
-                line-height: 1.5;
-                color: #000;
-              }
-              
-              .header {
-                text-align: center;
-                margin-bottom: 40px;
-                padding-bottom: 20px;
-                border-bottom: 2px solid #000;
-              }
-              
-              .logo {
-                max-height: 60px;
-                margin-bottom: 20px;
-              }
-              
-              .company-info {
-                text-align: center;
-                font-size: 10pt;
-                color: #333;
-                margin-bottom: 30px;
-              }
-              
-              h1 {
-                font-size: 18pt;
-                font-weight: bold;
-                text-align: center;
-                margin: 30px 0;
-                text-transform: uppercase;
-                letter-spacing: 1px;
-              }
-              
-              h2 {
-                font-size: 13pt;
-                font-weight: bold;
-                margin: 20px 0 10px 0;
-                page-break-after: avoid;
-              }
-              
-              p {
-                margin-bottom: 8px;
-                text-align: justify;
-                orphans: 3;
-                widows: 3;
-              }
-              
-              .parties {
-                margin: 30px 0;
-                page-break-inside: avoid;
-              }
-              
-              .party {
-                margin: 15px 0;
-              }
-              
-              .party strong {
-                display: block;
-                margin-bottom: 5px;
-              }
-              
-              .between {
-                text-align: center;
-                font-style: italic;
-                margin: 15px 0;
-              }
-              
-              .section {
-                margin: 20px 0;
-                page-break-inside: avoid;
-              }
-              
-              .subsection {
-                margin-left: 20px;
-                margin-bottom: 10px;
-              }
-              
-              .subpoint {
-                margin-left: 40px;
-                margin-bottom: 5px;
-              }
-              
-              .signature-section {
-                margin-top: 50px;
-                page-break-inside: avoid;
-              }
-              
-              .signature-grid {
-                display: table;
-                width: 100%;
-                margin-top: 40px;
-              }
-              
-              .signature-block {
-                display: table-cell;
-                width: 45%;
-                vertical-align: top;
-              }
-              
-              .signature-line {
-                border-bottom: 1px solid #000;
-                width: 200px;
-                margin: 40px 0 5px 0;
-              }
-              
-              .footer {
-                margin-top: 30px;
-                padding-top: 20px;
-                border-top: 1px solid #ccc;
-                text-align: center;
-                font-size: 9pt;
-                color: #666;
-              }
-              
-              @media print {
-                .section { page-break-inside: avoid; }
-                h2 { page-break-after: avoid; }
-              }
-            </style>
-          </head>
-          <body>
-            ${companyProfile?.logoUrl ? `
-              <div class="header">
-                <img src="${companyProfile.logoUrl}" alt="Logo" class="logo" />
-              </div>
-            ` : ''}
-            
-            ${companyProfile ? `
-              <div class="company-info">
-                <strong>${companyProfile.companyName}</strong>
-                ${companyProfile.legalForm ? `<br/>${companyProfile.legalForm}` : ''}
-                <br/>${companyProfile.street}, ${companyProfile.postalCode} ${companyProfile.city}
-                ${companyProfile.contactEmail ? `<br/>E-Mail: ${companyProfile.contactEmail}` : ''}
-                ${companyProfile.contactPhone ? `<br/>Tel: ${companyProfile.contactPhone}` : ''}
-                ${companyProfile.vatId ? `<br/>USt-IdNr.: ${companyProfile.vatId}` : ''}
-              </div>
-            ` : ''}
-            
-            <div class="content">
-              ${formatContentForDisplay(contract.content || '')}
-            </div>
-            
-            ${contract.signature ? `
-              <div class="signature-section">
-                <h3>Digitale Unterschrift:</h3>
-                <img src="${contract.signature}" alt="Unterschrift" style="max-width: 200px; margin-top: 10px;" />
+        // 🔴 NEU: Prüfe ob HTML-Version vorhanden ist
+        if (contract.contentHTML) {
+          // Verwende die professionelle HTML-Version mit Logo etc.
+          const tempDiv = document.createElement('div');
+          tempDiv.innerHTML = contract.contentHTML;
+          
+          // Füge Unterschrift zur HTML-Version hinzu wenn vorhanden
+          if (contract.signature) {
+            const signatureHTML = `
+              <div style="margin-top: 50px; page-break-inside: avoid;">
+                <h3 style="font-size: 14pt; font-weight: bold; margin-bottom: 10px;">Digitale Unterschrift:</h3>
+                <img src="${contract.signature}" alt="Unterschrift" style="max-width: 200px; margin-top: 10px; border: 1px solid #e2e8f0; padding: 8px; background: white;" />
                 <p style="font-size: 9pt; color: #666; margin-top: 10px;">
-                  Elektronisch unterschrieben am ${new Date().toLocaleDateString('de-DE')}
+                  Elektronisch unterschrieben am ${new Date().toLocaleDateString('de-DE', { 
+                    day: '2-digit', 
+                    month: '2-digit', 
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
                 </p>
               </div>
-            ` : ''}
+            `;
             
-            <div class="footer">
-              <p>Erstellt mit Contract AI - ${new Date().toLocaleDateString('de-DE')}</p>
-              <p style="font-size: 8pt; margin-top: 5px;">
-                ${contract.isGenerated ? 'KI-generierter Vertrag' : 'Hochgeladener Vertrag'} | 
-                Dokument-ID: ${contract._id}
-              </p>
-            </div>
-          </body>
-          </html>
-        `;
+            // Suche nach dem contract-content div oder füge es am Ende hinzu
+            const contentArea = tempDiv.querySelector('.contract-content');
+            if (contentArea) {
+              contentArea.insertAdjacentHTML('beforeend', signatureHTML);
+            } else {
+              tempDiv.insertAdjacentHTML('beforeend', signatureHTML);
+            }
+          }
+          
+          pdfContent = tempDiv;
+          
+        } else {
+          // Fallback: Erstelle HTML aus normalem Content (für ältere Verträge ohne HTML)
+          const tempDiv = document.createElement('div');
+          
+          tempDiv.innerHTML = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <style>
+                @page {
+                  size: A4;
+                  margin: 25mm 20mm 20mm 30mm;
+                }
+                
+                * {
+                  margin: 0;
+                  padding: 0;
+                  box-sizing: border-box;
+                }
+                
+                body {
+                  font-family: Arial, Calibri, sans-serif;
+                  font-size: 11pt;
+                  line-height: 1.5;
+                  color: #000;
+                }
+                
+                .header {
+                  text-align: center;
+                  margin-bottom: 40px;
+                  padding-bottom: 20px;
+                  border-bottom: 2px solid #000;
+                }
+                
+                .logo {
+                  max-height: 60px;
+                  margin-bottom: 20px;
+                }
+                
+                .company-info {
+                  text-align: center;
+                  font-size: 10pt;
+                  color: #333;
+                  margin-bottom: 30px;
+                }
+                
+                h1 {
+                  font-size: 18pt;
+                  font-weight: bold;
+                  text-align: center;
+                  margin: 30px 0;
+                  text-transform: uppercase;
+                  letter-spacing: 1px;
+                }
+                
+                h2 {
+                  font-size: 13pt;
+                  font-weight: bold;
+                  margin: 20px 0 10px 0;
+                  page-break-after: avoid;
+                }
+                
+                p {
+                  margin-bottom: 8px;
+                  text-align: justify;
+                  orphans: 3;
+                  widows: 3;
+                }
+                
+                .parties {
+                  margin: 30px 0;
+                  page-break-inside: avoid;
+                }
+                
+                .party {
+                  margin: 15px 0;
+                }
+                
+                .party strong {
+                  display: block;
+                  margin-bottom: 5px;
+                }
+                
+                .between {
+                  text-align: center;
+                  font-style: italic;
+                  margin: 15px 0;
+                }
+                
+                .section {
+                  margin: 20px 0;
+                  page-break-inside: avoid;
+                }
+                
+                .subsection {
+                  margin-left: 20px;
+                  margin-bottom: 10px;
+                }
+                
+                .subpoint {
+                  margin-left: 40px;
+                  margin-bottom: 5px;
+                }
+                
+                .signature-section {
+                  margin-top: 50px;
+                  page-break-inside: avoid;
+                }
+                
+                .signature-grid {
+                  display: table;
+                  width: 100%;
+                  margin-top: 40px;
+                }
+                
+                .signature-block {
+                  display: table-cell;
+                  width: 45%;
+                  vertical-align: top;
+                }
+                
+                .signature-line {
+                  border-bottom: 1px solid #000;
+                  width: 200px;
+                  margin: 40px 0 5px 0;
+                }
+                
+                .footer {
+                  margin-top: 30px;
+                  padding-top: 20px;
+                  border-top: 1px solid #ccc;
+                  text-align: center;
+                  font-size: 9pt;
+                  color: #666;
+                }
+                
+                @media print {
+                  .section { page-break-inside: avoid; }
+                  h2 { page-break-after: avoid; }
+                }
+              </style>
+            </head>
+            <body>
+              ${companyProfile?.logoUrl ? `
+                <div class="header">
+                  <img src="${companyProfile.logoUrl}" alt="Logo" class="logo" />
+                </div>
+              ` : ''}
+              
+              ${companyProfile ? `
+                <div class="company-info">
+                  <strong>${companyProfile.companyName}</strong>
+                  ${companyProfile.legalForm ? `<br/>${companyProfile.legalForm}` : ''}
+                  <br/>${companyProfile.street}, ${companyProfile.postalCode} ${companyProfile.city}
+                  ${companyProfile.contactEmail ? `<br/>E-Mail: ${companyProfile.contactEmail}` : ''}
+                  ${companyProfile.contactPhone ? `<br/>Tel: ${companyProfile.contactPhone}` : ''}
+                  ${companyProfile.vatId ? `<br/>USt-IdNr.: ${companyProfile.vatId}` : ''}
+                </div>
+              ` : ''}
+              
+              <div class="content">
+                ${formatContentForDisplay(contract.content || '')}
+              </div>
+              
+              ${contract.signature ? `
+                <div class="signature-section">
+                  <h3>Digitale Unterschrift:</h3>
+                  <img src="${contract.signature}" alt="Unterschrift" style="max-width: 200px; margin-top: 10px;" />
+                  <p style="font-size: 9pt; color: #666; margin-top: 10px;">
+                    Elektronisch unterschrieben am ${new Date().toLocaleDateString('de-DE')}
+                  </p>
+                </div>
+              ` : ''}
+              
+              <div class="footer">
+                <p>Erstellt mit Contract AI - ${new Date().toLocaleDateString('de-DE')}</p>
+                <p style="font-size: 8pt; margin-top: 5px;">
+                  ${contract.isGenerated ? 'KI-generierter Vertrag' : 'Hochgeladener Vertrag'} | 
+                  Dokument-ID: ${contract._id}
+                </p>
+              </div>
+            </body>
+            </html>
+          `;
+          
+          pdfContent = tempDiv;
+        }
         
-        document.body.appendChild(tempDiv);
+        document.body.appendChild(pdfContent);
         
         // 🎨 ERWEITERTE PDF-OPTIONEN - PROFESSIONAL GRADE
         const enhancedPdfOptions = {
-          margin: [15, 15, 15, 15],
+          margin: contract.contentHTML ? [5, 5, 5, 5] : [15, 15, 15, 15], // Kleinere Margins wenn HTML vorhanden
           filename: `${contract.name.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`,
           image: { type: 'jpeg', quality: 0.98 },
           html2canvas: { 
@@ -443,13 +495,14 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
         
         try {
           console.log("🚀 Starte erweiterten PDF-Export...");
-          const pdfGenerator = html2pdf().set(enhancedPdfOptions).from(tempDiv);
+          const pdfGenerator = html2pdf().set(enhancedPdfOptions).from(pdfContent);
           
           // 📊 ANALYTICS: PDF Generation Start
           console.log("📊 PDF Export gestartet:", {
             contractId: contract._id,
             contractType: contract.contractType,
             hasCompanyProfile: !!companyProfile,
+            hasHTMLVersion: !!contract.contentHTML,
             timestamp: new Date().toISOString()
           });
           
@@ -490,7 +543,7 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
           toast.error("PDF-Export fehlgeschlagen. Bitte versuchen Sie es erneut.");
         }
         
-        document.body.removeChild(tempDiv);
+        document.body.removeChild(pdfContent);
       }
     } catch (error) {
       console.error('PDF-Export fehlgeschlagen:', error);
@@ -499,7 +552,7 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
   };
 
   const handlePrint = () => {
-    const printContent = formatContentForDisplay(contract.content || '');
+    const printContent = contract.contentHTML || formatContentForDisplay(contract.content || '');
     const printWindow = window.open('', '_blank');
     if (printWindow) {
       printWindow.document.write(`
@@ -522,6 +575,7 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
           <body>
             ${companyProfile ? `
               <div style="text-align: center; margin-bottom: 30px;">
+                ${companyProfile.logoUrl ? `<img src="${companyProfile.logoUrl}" style="max-height: 60px; margin-bottom: 20px;" alt="Logo" />` : ''}
                 <strong>${companyProfile.companyName}</strong><br/>
                 ${companyProfile.street}, ${companyProfile.postalCode} ${companyProfile.city}
               </div>
@@ -557,6 +611,7 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
 
   const handleStartEdit = () => {
     setEditedContent(contract.content || '');
+    setEditedHTML(''); // HTML wird beim Editieren zurückgesetzt
     setIsEditing(true);
     setTimeout(() => {
       if (editTextareaRef.current) {
@@ -567,6 +622,7 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
 
   const handleCancelEdit = () => {
     setEditedContent(contract.content || '');
+    setEditedHTML(contract.contentHTML || '');
     setIsEditing(false);
   };
 
@@ -799,6 +855,7 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
         }}
       >
         {!isEditing ? (
+          // 🔴 NEU: Zeige HTML-Version wenn vorhanden, sonst formatiere den normalen Content
           <div dangerouslySetInnerHTML={{ __html: displayContent }} />
         ) : (
           <textarea
@@ -1095,6 +1152,7 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
                   color: '#1e293b'
                 }}
               >
+                {/* 🔴 NEU: Zeige HTML-Version wenn vorhanden in Fullscreen */}
                 <div dangerouslySetInnerHTML={{ __html: displayContent }} />
               </div>
 
