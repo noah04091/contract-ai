@@ -14,52 +14,193 @@ const s3 = new AWS.S3({
   region: process.env.AWS_REGION
 });
 
-// ✅ Base64-Konvertierung für S3-Logos
+// ✅ ERWEITERTE Base64-Konvertierung für S3-Logos mit DEBUGGING und FALLBACKS
 const convertS3ToBase64 = async (url) => {
   return new Promise((resolve, reject) => {
-    const protocol = url.startsWith('https') ? https : http;
+    console.log("🔄 Logo-Konvertierung gestartet:", url);
     
-    protocol.get(url, (response) => {
-      const chunks = [];
+    const protocol = url.startsWith('https') ? https : http;
+    const maxRetries = 3;
+    let currentRetry = 0;
+    
+    const attemptDownload = () => {
+      console.log(`🔄 Logo Download Versuch ${currentRetry + 1}/${maxRetries}`);
       
-      response.on('data', (chunk) => {
-        chunks.push(chunk);
+      const request = protocol.get(url, {
+        timeout: 10000, // 10 Sekunden Timeout
+        headers: {
+          'User-Agent': 'Contract-AI-Logo-Fetcher/1.0',
+          'Accept': 'image/*'
+        }
+      }, (response) => {
+        console.log(`📊 Logo Response Status: ${response.statusCode}`);
+        console.log(`📊 Logo Content-Type: ${response.headers['content-type']}`);
+        console.log(`📊 Logo Content-Length: ${response.headers['content-length']}`);
+        
+        if (response.statusCode !== 200) {
+          console.error(`❌ Logo HTTP Error: ${response.statusCode}`);
+          if (currentRetry < maxRetries - 1) {
+            currentRetry++;
+            setTimeout(attemptDownload, 1000); // 1 Sekunde warten
+            return;
+          } else {
+            reject(new Error(`HTTP ${response.statusCode}: ${response.statusMessage}`));
+            return;
+          }
+        }
+        
+        const chunks = [];
+        let totalSize = 0;
+        
+        response.on('data', (chunk) => {
+          chunks.push(chunk);
+          totalSize += chunk.length;
+          if (totalSize > 5 * 1024 * 1024) { // Max 5MB
+            console.error("❌ Logo zu groß (>5MB)");
+            request.destroy();
+            reject(new Error('Logo file too large (>5MB)'));
+            return;
+          }
+        });
+        
+        response.on('end', () => {
+          try {
+            const buffer = Buffer.concat(chunks);
+            const mimeType = response.headers['content-type'] || 'image/jpeg';
+            
+            // Validiere Bildformat
+            const validImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+            if (!validImageTypes.includes(mimeType)) {
+              console.error(`❌ Ungültiges Bildformat: ${mimeType}`);
+              reject(new Error(`Unsupported image type: ${mimeType}`));
+              return;
+            }
+            
+            const base64 = `data:${mimeType};base64,${buffer.toString('base64')}`;
+            console.log(`✅ Logo erfolgreich konvertiert: ${buffer.length} bytes, ${mimeType}`);
+            resolve(base64);
+          } catch (error) {
+            console.error("❌ Base64 Konvertierung fehlgeschlagen:", error);
+            reject(error);
+          }
+        });
+        
+        response.on('error', (error) => {
+          console.error(`❌ Logo Response Error:`, error);
+          if (currentRetry < maxRetries - 1) {
+            currentRetry++;
+            setTimeout(attemptDownload, 1000);
+          } else {
+            reject(error);
+          }
+        });
       });
       
-      response.on('end', () => {
-        const buffer = Buffer.concat(chunks);
-        const mimeType = response.headers['content-type'] || 'image/jpeg';
-        const base64 = `data:${mimeType};base64,${buffer.toString('base64')}`;
-        resolve(base64);
+      request.on('timeout', () => {
+        console.error("❌ Logo Download Timeout");
+        request.destroy();
+        if (currentRetry < maxRetries - 1) {
+          currentRetry++;
+          setTimeout(attemptDownload, 2000);
+        } else {
+          reject(new Error('Download timeout after multiple retries'));
+        }
       });
       
-      response.on('error', (error) => {
-        reject(error);
+      request.on('error', (error) => {
+        console.error(`❌ Logo Request Error:`, error);
+        if (currentRetry < maxRetries - 1) {
+          currentRetry++;
+          setTimeout(attemptDownload, 1000);
+        } else {
+          reject(error);
+        }
       });
-    }).on('error', (error) => {
-      reject(error);
-    });
+    };
+    
+    attemptDownload();
   });
 };
 
-// 🎨 VERBESSERTE HTML-FORMATIERUNG FÜR PROFESSIONELLE PDFs
-const formatContractToHTML = async (contractText, companyProfile, contractType) => {
-  // Logo als Base64 konvertieren falls vorhanden
-  let logoBase64 = null;
-  if (companyProfile?.logoUrl) {
-    try {
-      // Prüfe ob es ein S3-Link ist
-      if (companyProfile.logoUrl.includes('s3.amazonaws.com') || companyProfile.logoUrl.startsWith('https://')) {
-        logoBase64 = await convertS3ToBase64(companyProfile.logoUrl);
-        console.log("✅ Logo erfolgreich als Base64 konvertiert");
-      } else if (companyProfile.logoUrl.startsWith('data:')) {
-        // Bereits Base64
-        logoBase64 = companyProfile.logoUrl;
-        console.log("✅ Logo ist bereits Base64");
-      }
-    } catch (error) {
-      console.error("⚠️ Logo konnte nicht geladen werden:", error);
+// 🆕 NEUE FUNKTION: Frische S3 URL generieren
+const generateFreshS3Url = (logoKey) => {
+  try {
+    const freshUrl = s3.getSignedUrl('getObject', {
+      Bucket: process.env.S3_BUCKET_NAME,
+      Key: logoKey,
+      Expires: 3600 // 1 Stunde gültig
+    });
+    console.log("✅ Frische S3 URL generiert:", freshUrl.substring(0, 100) + "...");
+    return freshUrl;
+  } catch (error) {
+    console.error("❌ S3 URL Generierung fehlgeschlagen:", error);
+    return null;
+  }
+};
+
+// 🆕 NEUE FUNKTION: Logo mit mehreren Fallback-Strategien laden
+const loadLogoWithFallbacks = async (companyProfile) => {
+  console.log("🎨 Logo-Loading mit Fallbacks gestartet");
+  
+  if (!companyProfile?.logoUrl) {
+    console.log("ℹ️ Kein Logo-URL im Company Profile vorhanden");
+    return null;
+  }
+  
+  const strategies = [];
+  
+  // Strategie 1: Direkte URL verwenden wenn bereits Base64
+  if (companyProfile.logoUrl.startsWith('data:')) {
+    console.log("📊 Strategie 1: Logo ist bereits Base64");
+    return companyProfile.logoUrl;
+  }
+  
+  // Strategie 2: Frische S3 URL generieren wenn logoKey vorhanden
+  if (companyProfile.logoKey) {
+    const freshUrl = generateFreshS3Url(companyProfile.logoKey);
+    if (freshUrl) {
+      strategies.push({ name: 'Frische S3 URL', url: freshUrl });
     }
+  }
+  
+  // Strategie 3: Original URL verwenden
+  strategies.push({ name: 'Original URL', url: companyProfile.logoUrl });
+  
+  // Alle Strategien durchprobieren
+  for (const strategy of strategies) {
+    try {
+      console.log(`🔄 Versuche ${strategy.name}: ${strategy.url.substring(0, 100)}...`);
+      const base64Logo = await convertS3ToBase64(strategy.url);
+      console.log(`✅ ${strategy.name} erfolgreich!`);
+      return base64Logo;
+    } catch (error) {
+      console.error(`❌ ${strategy.name} fehlgeschlagen:`, error.message);
+      continue;
+    }
+  }
+  
+  console.error("❌ Alle Logo-Loading-Strategien fehlgeschlagen");
+  return null;
+};
+
+// 🎨 BOMBASTISCHE HTML-FORMATIERUNG FÜR PROFESSIONELLE PDFs
+const formatContractToHTML = async (contractText, companyProfile, contractType) => {
+  console.log("🚀 Starte bombastische HTML-Formatierung für:", contractType);
+  
+  // 🎨 VERBESSERTES Logo-Loading mit allen Fallback-Strategien
+  let logoBase64 = null;
+  if (companyProfile) {
+    console.log("🏢 Company Profile vorhanden, lade Logo...");
+    logoBase64 = await loadLogoWithFallbacks(companyProfile);
+    
+    if (logoBase64) {
+      console.log("✅ Logo erfolgreich geladen und konvertiert!");
+      console.log(`📊 Logo Größe: ${Math.round(logoBase64.length / 1024)} KB`);
+    } else {
+      console.warn("⚠️ Logo konnte nicht geladen werden - verwende Fallback");
+    }
+  } else {
+    console.log("ℹ️ Kein Company Profile vorhanden");
   }
 
   // Text in strukturierte Abschnitte aufteilen
@@ -141,22 +282,33 @@ const formatContractToHTML = async (contractText, companyProfile, contractType) 
     htmlContent += '</div>';
   }
 
-  // Vollständiges HTML-Dokument mit VERBESSERTEM professionellem Styling
+  // 🎨 BOMBASTISCHES HTML-Dokument mit PREMIUM-Styling
   const fullHTML = `
 <!DOCTYPE html>
 <html lang="de">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Professioneller Vertrag - ${contractType || 'Contract'}</title>
   <style>
     @page {
       size: A4;
-      margin: 20mm 15mm 25mm 20mm;
+      margin: 15mm 15mm 20mm 20mm;
+      
+      @top-center {
+        content: "${companyProfile?.companyName || 'Professional Contract'}";
+        font-size: 9pt;
+        color: #666;
+        padding-bottom: 5pt;
+        border-bottom: 0.5pt solid #e0e0e0;
+      }
       
       @bottom-center {
-        content: counter(page);
-        font-size: 10pt;
+        content: "Seite " counter(page) " von " counter(pages);
+        font-size: 9pt;
         color: #666;
+        padding-top: 5pt;
+        border-top: 0.5pt solid #e0e0e0;
       }
     }
     
@@ -167,173 +319,308 @@ const formatContractToHTML = async (contractText, companyProfile, contractType) 
     }
     
     body {
-      font-family: 'Arial', 'Helvetica', sans-serif;
+      font-family: 'Segoe UI', 'Helvetica Neue', 'Arial', sans-serif;
       font-size: 11pt;
-      line-height: 1.6;
-      color: #000;
-      background: white;
-      padding: 20px;
+      line-height: 1.7;
+      color: #1a1a1a;
+      background: linear-gradient(135deg, #ffffff 0%, #fafafa 100%);
+      padding: 0;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
     
-    /* PROFESSIONELLER HEADER MIT LOGO */
+    /* 🎨 BOMBASTISCHER HEADER MIT PREMIUM-DESIGN */
     .header {
+      background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #6366f1 100%);
+      color: white;
+      padding: 25px 30px;
+      margin: -20px -20px 40px -20px;
       display: flex;
       justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 30px;
-      padding-bottom: 15px;
-      border-bottom: 3px solid #003366;
+      align-items: center;
+      box-shadow: 0 8px 32px rgba(30, 58, 138, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="pattern" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse"><circle cx="10" cy="10" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23pattern)"/></svg>');
+      opacity: 0.1;
     }
     
     .company-info {
       flex: 1;
+      position: relative;
+      z-index: 2;
     }
     
     .company-name {
-      font-size: 16pt;
-      font-weight: bold;
-      color: #003366;
+      font-size: 22pt;
+      font-weight: 800;
       margin-bottom: 8px;
-      letter-spacing: 0.5px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      letter-spacing: 1px;
     }
     
     .company-details {
-      font-size: 10pt;
-      color: #333;
-      line-height: 1.4;
+      font-size: 11pt;
+      opacity: 0.95;
+      line-height: 1.5;
+      font-weight: 300;
     }
     
     .company-details div {
-      margin-bottom: 2px;
+      margin-bottom: 3px;
     }
     
     .logo-container {
-      width: 150px;
-      height: 80px;
+      width: 180px;
+      height: 100px;
       display: flex;
       align-items: center;
       justify-content: flex-end;
-      margin-left: 20px;
+      margin-left: 30px;
+      position: relative;
+      z-index: 2;
     }
     
     .logo-container img {
       max-width: 100%;
       max-height: 100%;
       object-fit: contain;
+      filter: drop-shadow(0 4px 12px rgba(255,255,255,0.3));
+      border-radius: 8px;
+      background: rgba(255,255,255,0.1);
+      padding: 10px;
+      backdrop-filter: blur(10px);
     }
     
-    /* VERTRAGSTITEL */
+    /* 🎨 BOMBASTISCHER VERTRAGSTITEL */
     .contract-title {
-      font-size: 20pt;
-      font-weight: bold;
+      font-size: 26pt;
+      font-weight: 900;
       text-align: center;
-      margin: 50px 0 40px 0;
-      color: #000;
-      letter-spacing: 3px;
+      margin: 40px 0;
+      background: linear-gradient(135deg, #1e3a8a, #3b82f6, #6366f1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
       text-transform: uppercase;
-      border-bottom: 2px solid #000;
-      padding-bottom: 10px;
+      letter-spacing: 4px;
+      position: relative;
+      padding: 20px 0;
     }
     
-    /* PARTEIEN */
+    .contract-title::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 200px;
+      height: 4px;
+      background: linear-gradient(135deg, #3b82f6, #6366f1);
+      border-radius: 2px;
+      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+    }
+    
+    /* 🎨 PREMIUM PARTEIEN-STYLING */
     .between-clause {
       text-align: center;
-      margin: 30px 0 20px 0;
+      margin: 40px 0 30px 0;
       font-style: italic;
-      font-size: 11pt;
+      font-size: 13pt;
+      color: #4f46e5;
+      font-weight: 600;
+      text-transform: lowercase;
+      letter-spacing: 1px;
     }
     
     .and-clause {
       text-align: center;
-      margin: 20px 0;
+      margin: 30px 0;
       font-style: italic;
+      color: #4f46e5;
+      font-weight: 600;
+      font-size: 13pt;
+      letter-spacing: 1px;
     }
     
     .party-designation {
       text-align: center;
       font-style: italic;
-      margin: 5px 0 20px 0;
-      color: #555;
+      margin: 10px 0 30px 0;
+      color: #6b7280;
+      font-weight: 500;
+      font-size: 10pt;
     }
     
     .registry-number {
       text-align: center;
-      font-size: 14pt;
-      font-weight: bold;
-      margin: 20px 0;
-      padding: 10px;
-      background-color: #f0f4f8;
-      border: 1px solid #d0d4d8;
+      font-size: 16pt;
+      font-weight: 800;
+      margin: 30px 0;
+      padding: 20px;
+      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      color: #1e40af;
+      box-shadow: 0 4px 12px rgba(30, 64, 175, 0.1);
     }
     
-    /* PRÄAMBEL */
+    /* 🎨 ELEGANTE PRÄAMBEL */
     .preamble-title {
-      font-size: 14pt;
-      font-weight: bold;
-      margin: 30px 0 15px 0;
+      font-size: 16pt;
+      font-weight: 700;
+      margin: 40px 0 20px 0;
       text-align: center;
-      letter-spacing: 1px;
+      letter-spacing: 2px;
+      color: #374151;
+      text-transform: uppercase;
+      position: relative;
     }
     
-    /* PARAGRAPHEN */
+    .preamble-title::before,
+    .preamble-title::after {
+      content: '◆';
+      color: #3b82f6;
+      font-size: 12pt;
+      margin: 0 20px;
+    }
+    
+    /* 🎨 PREMIUM PARAGRAPHEN-DESIGN */
     .section {
-      margin-bottom: 30px;
+      margin-bottom: 35px;
       page-break-inside: avoid;
+      position: relative;
     }
     
     .paragraph-title {
-      font-size: 14pt;
-      font-weight: bold;
-      margin: 35px 0 15px 0;
-      color: #003366;
+      font-size: 16pt;
+      font-weight: 800;
+      margin: 40px 0 20px 0;
+      color: #1e40af;
       page-break-after: avoid;
-      border-left: 4px solid #003366;
-      padding-left: 10px;
+      padding: 15px 20px;
+      background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+      border-left: 6px solid #3b82f6;
+      border-radius: 0 8px 8px 0;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+      position: relative;
     }
     
-    /* TEXTFORMATIERUNG */
+    .paragraph-title::before {
+      content: '';
+      position: absolute;
+      left: -6px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 0;
+      height: 0;
+      border-top: 10px solid transparent;
+      border-bottom: 10px solid transparent;
+      border-left: 10px solid #3b82f6;
+    }
+    
+    /* 🎨 PREMIUM TEXTFORMATIERUNG */
     .contract-text {
-      margin-bottom: 12px;
+      margin-bottom: 15px;
       text-align: justify;
       text-justify: inter-word;
       hyphens: auto;
-      line-height: 1.7;
+      line-height: 1.8;
+      font-weight: 400;
+      color: #374151;
+      padding: 5px 0;
     }
     
     .subsection {
-      margin: 15px 0 10px 20px;
+      margin: 18px 0 12px 30px;
       text-align: justify;
-      font-weight: 500;
+      font-weight: 600;
+      color: #1f2937;
+      padding: 8px 0;
+      position: relative;
+    }
+    
+    .subsection::before {
+      content: '';
+      position: absolute;
+      left: -15px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 4px;
+      height: 4px;
+      background: #3b82f6;
+      border-radius: 50%;
     }
     
     .subpoint {
-      margin: 8px 0 8px 40px;
+      margin: 10px 0 10px 50px;
       text-align: justify;
+      color: #4b5563;
+      position: relative;
+      padding-left: 15px;
     }
     
-    /* UNTERSCHRIFTEN BEREICH */
+    .subpoint::before {
+      content: '▸';
+      position: absolute;
+      left: 0;
+      color: #6366f1;
+      font-weight: bold;
+    }
+    
+    /* 🎨 PREMIUM UNTERSCHRIFTEN-BEREICH */
     .signature-section {
-      margin-top: 80px;
+      margin-top: 100px;
+      padding: 30px;
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      border-radius: 12px;
+      border: 2px solid #e2e8f0;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
       page-break-inside: avoid;
     }
     
     .signature-line {
-      margin: 50px 0 10px 0;
+      margin: 60px 0 15px 0;
       display: flex;
       justify-content: space-between;
       align-items: flex-end;
+      position: relative;
     }
     
     .signature-line .line {
       display: inline-block;
-      width: 250px;
-      border-bottom: 1px solid #000;
-      margin: 0 20px;
+      width: 280px;
+      border-bottom: 3px solid #3b82f6;
+      margin: 0 30px;
+      position: relative;
     }
     
-    /* SEITENUMBRUCH-KONTROLLE */
+    .signature-line .line::after {
+      content: '';
+      position: absolute;
+      bottom: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 50px;
+      height: 2px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      border-radius: 1px;
+    }
+    
+    /* 🎨 PREMIUM SEITENUMBRUCH-KONTROLLE */
     h1, h2, h3 {
       page-break-after: avoid;
+      page-break-inside: avoid;
     }
     
     p {
@@ -346,23 +633,82 @@ const formatContractToHTML = async (contractText, companyProfile, contractType) 
       break-inside: avoid;
     }
     
-    /* Professioneller Look */
+    /* 🎨 BOMBASTISCHE ANIMATIONS & EFFECTS */
+    .contract-content {
+      animation: fadeInUp 0.8s ease-out;
+    }
+    
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    /* 🎨 PREMIUM PRINT-OPTIMIERUNG */
     @media print {
+      * {
+        -webkit-print-color-adjust: exact !important;
+        color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+      
       body {
         padding: 0;
+        background: white !important;
       }
       
       .header {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        background: white;
-        border-bottom: 3px solid #003366;
+        position: relative;
+        margin-bottom: 40px;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
       }
       
       .contract-content {
-        margin-top: 120px;
+        margin-top: 0;
+      }
+      
+      .section {
+        page-break-inside: avoid;
+      }
+      
+      .paragraph-title {
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+      }
+      
+      .signature-section {
+        page-break-inside: avoid;
+        margin-top: 50px;
+      }
+    }
+    
+    /* 🎨 RESPONSIVE DESIGN für Preview */
+    @media screen and (max-width: 768px) {
+      .header {
+        flex-direction: column;
+        text-align: center;
+      }
+      
+      .logo-container {
+        margin: 20px 0 0 0;
+        width: 100%;
+        justify-content: center;
+      }
+      
+      .contract-title {
+        font-size: 20pt;
+        letter-spacing: 2px;
+      }
+      
+      .paragraph-title {
+        font-size: 14pt;
+        padding: 12px 15px;
       }
     }
   </style>

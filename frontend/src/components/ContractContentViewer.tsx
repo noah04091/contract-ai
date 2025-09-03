@@ -5,6 +5,126 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FileText, Download, Maximize2, X, Eye, Copy, CheckCircle, Printer, Edit, Save, Keyboard } from 'lucide-react';
 import { toast } from 'react-toastify';
 
+// 🎨 BOMBASTISCHE CSS-Styles für Premium-Verträge
+const premiumContractStyles = `
+  <style>
+    .premium-contract-preview {
+      position: relative;
+      animation: slideInFromBottom 0.8s ease-out;
+    }
+    
+    @keyframes slideInFromBottom {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .contract-quality-badge {
+      position: absolute;
+      top: -15px;
+      right: -15px;
+      z-index: 10;
+    }
+    
+    .quality-indicator {
+      background: linear-gradient(135deg, #3b82f6, #6366f1);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+      transform: rotate(12deg);
+    }
+    
+    .quality-icon {
+      animation: sparkle 2s infinite;
+    }
+    
+    @keyframes sparkle {
+      0%, 100% { transform: scale(1) rotate(0deg); }
+      50% { transform: scale(1.2) rotate(180deg); }
+    }
+    
+    /* PREMIUM HEADER STYLING für HTML-Verträge */
+    .premium-contract-display .header {
+      margin: -30px -30px 40px -30px;
+      border-radius: 16px 16px 0 0;
+    }
+    
+    /* PREMIUM PARAGRAPHEN im Frontend */
+    .premium-contract-display .paragraph-title {
+      margin: 25px -15px 15px -15px;
+      padding: 15px 20px;
+      border-radius: 8px;
+    }
+    
+    /* FALLBACK STYLING für normale Verträge */
+    .contract-preview-fallback {
+      text-align: center;
+      padding: 40px 20px;
+      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+      border-radius: 12px;
+      margin: -15px;
+    }
+    
+    .contract-meta {
+      background: rgba(59, 130, 246, 0.1);
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+      border-left: 4px solid #3b82f6;
+    }
+    
+    .content-placeholder {
+      margin-top: 30px;
+      padding: 30px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .placeholder-icon {
+      font-size: 48px;
+      margin-bottom: 20px;
+      opacity: 0.7;
+    }
+    
+    .company-preview {
+      margin-top: 30px;
+      padding: 20px;
+      background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+      border-radius: 12px;
+      border: 2px solid #93c5fd;
+    }
+    
+    /* RESPONSIVE OPTIMIERUNGEN */
+    @media (max-width: 768px) {
+      .premium-contract-display .header {
+        margin: -20px -20px 30px -20px;
+        padding: 20px;
+      }
+      
+      .premium-contract-display .company-name {
+        font-size: 18pt;
+      }
+      
+      .premium-contract-display .contract-title {
+        font-size: 20pt;
+        letter-spacing: 2px;
+      }
+    }
+  </style>
+`;
+
 interface ContractContentViewerProps {
   contract: {
     _id: string;
@@ -172,14 +292,41 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
     return formatted;
   };
 
-  // 🔴 NEU: Verwende HTML wenn vorhanden, sonst formatiere den normalen Content
+  // 🎨 BOMBASTISCHER Content mit Premium-Styling für normale Ansicht
   const displayContent = isEditing ? editedContent : (
-    contract.contentHTML || formatContentForDisplay(contract.content || 
-    `Vertrag: ${contract.name}\n\nDieser Vertrag wurde ${contract.isGenerated ? 'generiert' : 'hochgeladen'} am ${
-      contract.isGenerated ? 
-        new Date(contract.createdAt || '').toLocaleDateString('de-DE') : 
-        new Date(contract.uploadedAt || '').toLocaleDateString('de-DE')
-    }.\n\nDetaillierte Vertragsinhalte können durch Analyse oder manuellen Upload bereitgestellt werden.`)
+    contract.contentHTML ? 
+      // HTML-Version für bombastische Darstellung
+      `<div class="premium-contract-preview">
+         ${contract.contentHTML}
+         <div class="contract-quality-badge">
+           <div class="quality-indicator">
+             <span class="quality-icon">⭐</span>
+             <span class="quality-text">Premium Vertrag</span>
+           </div>
+         </div>
+       </div>` :
+      // Fallback für normale Verträge mit verbesserter Formatierung  
+      formatContentForDisplay(contract.content || 
+        `<div class="contract-preview-fallback">
+           <h2 style="color: #1e40af; margin-bottom: 20px;">📄 ${contract.name}</h2>
+           <div class="contract-meta">
+             <p>Dieser Vertrag wurde ${contract.isGenerated ? '🤖 <strong>automatisch generiert</strong>' : '📤 <strong>hochgeladen</strong>'} am 
+             <strong>${contract.isGenerated ? 
+               new Date(contract.createdAt || '').toLocaleDateString('de-DE') : 
+               new Date(contract.uploadedAt || '').toLocaleDateString('de-DE')
+             }</strong>.</p>
+           </div>
+           <div class="content-placeholder">
+             <div class="placeholder-icon">📋</div>
+             <p>Detaillierte Vertragsinhalte können durch Analyse oder manuellen Upload bereitgestellt werden.</p>
+             ${companyProfile?.logoUrl ? `
+               <div class="company-preview">
+                 <img src="${companyProfile.logoUrl}" alt="Firmenlogo" style="max-height: 60px; margin: 20px auto; display: block; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" />
+                 <p style="text-align: center; color: #3b82f6; font-weight: 600;">${companyProfile.companyName}</p>
+               </div>
+             ` : ''}
+           </div>
+         </div>`)
   );
 
   // 🔴 AKTUALISIERT: Speichere sowohl Text als auch HTML
@@ -1003,24 +1150,30 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
       {/* Content Preview */}
       <div
         ref={contentRef}
-        className="contract-content-scroll"
+        className="contract-content-scroll premium-contract-display"
         style={{
-          border: '1px solid #e2e8f0',
-          borderRadius: '12px',
-          backgroundColor: '#ffffff',
-          padding: '24px',
-          maxHeight: '600px',
+          border: '2px solid #e2e8f0',
+          borderRadius: '16px',
+          background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+          padding: '30px',
+          maxHeight: '700px',
           overflowY: 'auto',
-          fontFamily: 'Arial, sans-serif',
-          fontSize: '12px',
-          lineHeight: '1.6',
-          color: '#1e293b',
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+          fontFamily: "'Segoe UI', 'Helvetica Neue', Arial, sans-serif",
+          fontSize: '13px',
+          lineHeight: '1.7',
+          color: '#1a1a1a',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
+          position: 'relative',
+          backdropFilter: 'blur(10px)'
         }}
       >
         {!isEditing ? (
-          // 🔴 NEU: Zeige HTML-Version wenn vorhanden, sonst formatiere den normalen Content
-          <div dangerouslySetInnerHTML={{ __html: displayContent }} />
+          // 🎨 BOMBASTISCHE HTML-Version mit Premium-Styling
+          <div 
+            dangerouslySetInnerHTML={{ 
+              __html: premiumContractStyles + displayContent 
+            }} 
+          />
         ) : (
           <textarea
             ref={editTextareaRef}
