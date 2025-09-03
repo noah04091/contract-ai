@@ -55,6 +55,7 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
         const data = await response.json();
         if (data.success && data.profile) {
           setCompanyProfile(data.profile);
+          console.log('✅ Company Profile geladen für PDF Export');
         }
       } catch (error) {
         console.error('Failed to load company profile:', error);
@@ -208,7 +209,7 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
     }
   }, [contract, editedContent, editedHTML]);
 
-  // 🔴 HAUPTVERBESSERUNG: PDF Export mit HTML-Support
+  // 🔴 HAUPTVERBESSERUNG: PDF Export mit HTML-Support und besserem Styling - KORRIGIERT
   const handleDownloadPDF = async () => {
     try {
       const html2pdfModule = await import('html2pdf.js');
@@ -217,19 +218,24 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
       if (contentRef.current) {
         let pdfContent;
         
-        // 🔴 NEU: Prüfe ob HTML-Version vorhanden ist
+        // 🔴 VERBESSERT: Prüfe ob HTML-Version vorhanden ist
         if (contract.contentHTML) {
+          console.log("🎨 Verwende professionelle HTML-Version für PDF");
           // Verwende die professionelle HTML-Version mit Logo etc.
           const tempDiv = document.createElement('div');
           tempDiv.innerHTML = contract.contentHTML;
+          tempDiv.style.fontFamily = 'Arial, sans-serif';
+          tempDiv.style.fontSize = '11pt';
+          tempDiv.style.lineHeight = '1.6';
+          tempDiv.style.color = '#000';
           
           // Füge Unterschrift zur HTML-Version hinzu wenn vorhanden
           if (contract.signature) {
             const signatureHTML = `
-              <div style="margin-top: 50px; page-break-inside: avoid;">
-                <h3 style="font-size: 14pt; font-weight: bold; margin-bottom: 10px;">Digitale Unterschrift:</h3>
-                <img src="${contract.signature}" alt="Unterschrift" style="max-width: 200px; margin-top: 10px; border: 1px solid #e2e8f0; padding: 8px; background: white;" />
-                <p style="font-size: 9pt; color: #666; margin-top: 10px;">
+              <div style="margin-top: 60px; page-break-inside: avoid; padding-top: 20px; border-top: 2px solid #003366;">
+                <h3 style="font-size: 14pt; font-weight: bold; margin-bottom: 15px; color: #003366;">Digitale Unterschrift:</h3>
+                <img src="${contract.signature}" alt="Unterschrift" style="max-width: 250px; margin: 10px 0; border: 2px solid #e2e8f0; padding: 10px; background: white; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);" />
+                <p style="font-size: 10pt; color: #666; margin-top: 15px; font-style: italic;">
                   Elektronisch unterschrieben am ${new Date().toLocaleDateString('de-DE', { 
                     day: '2-digit', 
                     month: '2-digit', 
@@ -237,6 +243,9 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
                     hour: '2-digit',
                     minute: '2-digit'
                   })}
+                </p>
+                <p style="font-size: 8pt; color: #999; margin-top: 5px;">
+                  Dokument-ID: ${contract._id}
                 </p>
               </div>
             `;
@@ -250,10 +259,23 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
             }
           }
           
+          // Füge Footer hinzu
+          const footerHTML = `
+            <div style="margin-top: 50px; padding-top: 20px; border-top: 1px solid #ccc; text-align: center; font-size: 9pt; color: #666;">
+              <p>Erstellt mit Contract AI - ${new Date().toLocaleDateString('de-DE')}</p>
+              <p style="font-size: 8pt; margin-top: 5px;">
+                ${contract.isGenerated ? 'KI-generierter Vertrag' : 'Hochgeladener Vertrag'} | 
+                Dokument-ID: ${contract._id}
+              </p>
+            </div>
+          `;
+          tempDiv.insertAdjacentHTML('beforeend', footerHTML);
+          
           pdfContent = tempDiv;
           
         } else {
-          // Fallback: Erstelle HTML aus normalem Content (für ältere Verträge ohne HTML)
+          console.log("⚠️ Keine HTML-Version vorhanden, erstelle professionellen Fallback");
+          // Fallback: Erstelle professionelles HTML aus normalem Content
           const tempDiv = document.createElement('div');
           
           tempDiv.innerHTML = `
@@ -263,7 +285,12 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
               <style>
                 @page {
                   size: A4;
-                  margin: 25mm 20mm 20mm 30mm;
+                  margin: 20mm 15mm 25mm 20mm;
+                  @bottom-center {
+                    content: counter(page);
+                    font-size: 10pt;
+                    color: #666;
+                  }
                 }
                 
                 * {
@@ -275,50 +302,84 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
                 body {
                   font-family: Arial, Calibri, sans-serif;
                   font-size: 11pt;
-                  line-height: 1.5;
+                  line-height: 1.6;
                   color: #000;
+                  background: white;
                 }
                 
                 .header {
-                  text-align: center;
-                  margin-bottom: 40px;
-                  padding-bottom: 20px;
-                  border-bottom: 2px solid #000;
-                }
-                
-                .logo {
-                  max-height: 60px;
-                  margin-bottom: 20px;
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: flex-start;
+                  margin-bottom: 30px;
+                  padding-bottom: 15px;
+                  border-bottom: 3px solid #003366;
                 }
                 
                 .company-info {
-                  text-align: center;
+                  flex: 1;
+                }
+                
+                .company-name {
+                  font-size: 16pt;
+                  font-weight: bold;
+                  color: #003366;
+                  margin-bottom: 8px;
+                  letter-spacing: 0.5px;
+                }
+                
+                .company-details {
                   font-size: 10pt;
                   color: #333;
-                  margin-bottom: 30px;
+                  line-height: 1.4;
+                }
+                
+                .company-details div {
+                  margin-bottom: 2px;
+                }
+                
+                .logo-container {
+                  width: 150px;
+                  height: 80px;
+                  display: flex;
+                  align-items: center;
+                  justify-content: flex-end;
+                  margin-left: 20px;
+                }
+                
+                .logo-container img {
+                  max-width: 100%;
+                  max-height: 100%;
+                  object-fit: contain;
                 }
                 
                 h1 {
-                  font-size: 18pt;
+                  font-size: 20pt;
                   font-weight: bold;
                   text-align: center;
-                  margin: 30px 0;
+                  margin: 40px 0;
                   text-transform: uppercase;
-                  letter-spacing: 1px;
+                  letter-spacing: 2px;
+                  border-bottom: 2px solid #000;
+                  padding-bottom: 10px;
                 }
                 
                 h2 {
-                  font-size: 13pt;
+                  font-size: 14pt;
                   font-weight: bold;
-                  margin: 20px 0 10px 0;
+                  margin: 25px 0 15px 0;
+                  color: #003366;
+                  border-left: 4px solid #003366;
+                  padding-left: 10px;
                   page-break-after: avoid;
                 }
                 
                 p {
-                  margin-bottom: 8px;
+                  margin-bottom: 10px;
                   text-align: justify;
                   orphans: 3;
                   widows: 3;
+                  hyphens: auto;
                 }
                 
                 .parties {
@@ -328,37 +389,44 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
                 
                 .party {
                   margin: 15px 0;
+                  padding: 10px;
+                  background: #f8f9fa;
+                  border-left: 3px solid #003366;
                 }
                 
                 .party strong {
                   display: block;
                   margin-bottom: 5px;
+                  color: #003366;
                 }
                 
                 .between {
                   text-align: center;
                   font-style: italic;
-                  margin: 15px 0;
+                  margin: 20px 0;
+                  font-size: 11pt;
                 }
                 
                 .section {
-                  margin: 20px 0;
+                  margin: 25px 0;
                   page-break-inside: avoid;
                 }
                 
                 .subsection {
                   margin-left: 20px;
-                  margin-bottom: 10px;
+                  margin-bottom: 12px;
                 }
                 
                 .subpoint {
                   margin-left: 40px;
-                  margin-bottom: 5px;
+                  margin-bottom: 8px;
                 }
                 
                 .signature-section {
-                  margin-top: 50px;
+                  margin-top: 60px;
                   page-break-inside: avoid;
+                  border-top: 2px solid #003366;
+                  padding-top: 20px;
                 }
                 
                 .signature-grid {
@@ -371,16 +439,17 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
                   display: table-cell;
                   width: 45%;
                   vertical-align: top;
+                  text-align: center;
                 }
                 
                 .signature-line {
-                  border-bottom: 1px solid #000;
-                  width: 200px;
-                  margin: 40px 0 5px 0;
+                  border-bottom: 2px solid #000;
+                  width: 250px;
+                  margin: 40px auto 10px;
                 }
                 
                 .footer {
-                  margin-top: 30px;
+                  margin-top: 50px;
                   padding-top: 20px;
                   border-top: 1px solid #ccc;
                   text-align: center;
@@ -391,24 +460,29 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
                 @media print {
                   .section { page-break-inside: avoid; }
                   h2 { page-break-after: avoid; }
+                  .signature-section { page-break-inside: avoid; }
                 }
               </style>
             </head>
             <body>
-              ${companyProfile?.logoUrl ? `
-                <div class="header">
-                  <img src="${companyProfile.logoUrl}" alt="Logo" class="logo" />
-                </div>
-              ` : ''}
-              
               ${companyProfile ? `
-                <div class="company-info">
-                  <strong>${companyProfile.companyName}</strong>
-                  ${companyProfile.legalForm ? `<br/>${companyProfile.legalForm}` : ''}
-                  <br/>${companyProfile.street}, ${companyProfile.postalCode} ${companyProfile.city}
-                  ${companyProfile.contactEmail ? `<br/>E-Mail: ${companyProfile.contactEmail}` : ''}
-                  ${companyProfile.contactPhone ? `<br/>Tel: ${companyProfile.contactPhone}` : ''}
-                  ${companyProfile.vatId ? `<br/>USt-IdNr.: ${companyProfile.vatId}` : ''}
+                <div class="header">
+                  <div class="company-info">
+                    <div class="company-name">${companyProfile.companyName || 'Firmenname'}${companyProfile.legalForm ? ` ${companyProfile.legalForm}` : ''}</div>
+                    <div class="company-details">
+                      ${companyProfile.street ? `<div>${companyProfile.street}</div>` : ''}
+                      ${companyProfile.postalCode || companyProfile.city ? `<div>${companyProfile.postalCode || ''} ${companyProfile.city || ''}</div>` : ''}
+                      ${companyProfile.contactEmail ? `<div>E-Mail: ${companyProfile.contactEmail}</div>` : ''}
+                      ${companyProfile.contactPhone ? `<div>Tel: ${companyProfile.contactPhone}</div>` : ''}
+                      ${companyProfile.vatId ? `<div>USt-IdNr.: ${companyProfile.vatId}</div>` : ''}
+                      ${companyProfile.tradeRegister ? `<div>${companyProfile.tradeRegister}</div>` : ''}
+                    </div>
+                  </div>
+                  ${companyProfile.logoUrl ? `
+                    <div class="logo-container">
+                      <img src="${companyProfile.logoUrl}" alt="Firmenlogo" />
+                    </div>
+                  ` : ''}
                 </div>
               ` : ''}
               
@@ -418,16 +492,23 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
               
               ${contract.signature ? `
                 <div class="signature-section">
-                  <h3>Digitale Unterschrift:</h3>
-                  <img src="${contract.signature}" alt="Unterschrift" style="max-width: 200px; margin-top: 10px;" />
-                  <p style="font-size: 9pt; color: #666; margin-top: 10px;">
-                    Elektronisch unterschrieben am ${new Date().toLocaleDateString('de-DE')}
+                  <h3 style="color: #003366;">Digitale Unterschrift:</h3>
+                  <img src="${contract.signature}" alt="Unterschrift" style="max-width: 250px; margin: 15px auto; display: block; border: 2px solid #e2e8f0; padding: 10px; background: white; border-radius: 4px;" />
+                  <p style="font-size: 10pt; color: #666; text-align: center; font-style: italic;">
+                    Elektronisch unterschrieben am ${new Date().toLocaleDateString('de-DE', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
                   </p>
                 </div>
               ` : ''}
               
               <div class="footer">
-                <p>Erstellt mit Contract AI - ${new Date().toLocaleDateString('de-DE')}</p>
+                <p><strong>Contract AI</strong> - Intelligente Vertragsverwaltung</p>
+                <p>Erstellt am ${new Date().toLocaleDateString('de-DE')} um ${new Date().toLocaleTimeString('de-DE')}</p>
                 <p style="font-size: 8pt; margin-top: 5px;">
                   ${contract.isGenerated ? 'KI-generierter Vertrag' : 'Hochgeladener Vertrag'} | 
                   Dokument-ID: ${contract._id}
@@ -442,11 +523,14 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
         
         document.body.appendChild(pdfContent);
         
-        // 🎨 ERWEITERTE PDF-OPTIONEN - PROFESSIONAL GRADE
+        // 🎨 PDF-OPTIONEN - PROFESSIONAL GRADE (OHNE PROBLEMATISCHE METHODEN)
         const enhancedPdfOptions = {
-          margin: contract.contentHTML ? [5, 5, 5, 5] : [15, 15, 15, 15], // Kleinere Margins wenn HTML vorhanden
+          margin: contract.contentHTML ? [5, 5, 5, 5] : [10, 10, 10, 10],
           filename: `${contract.name.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`,
-          image: { type: 'jpeg', quality: 0.98 },
+          image: { 
+            type: 'jpeg', 
+            quality: 0.98 
+          },
           html2canvas: { 
             scale: 2, 
             useCORS: true,
@@ -455,7 +539,9 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
             allowTaint: true,
             backgroundColor: '#ffffff',
             removeContainer: true,
-            foreignObjectRendering: true
+            foreignObjectRendering: true,
+            windowWidth: 794,
+            windowHeight: 1123
           },
           jsPDF: { 
             unit: 'mm', 
@@ -464,38 +550,20 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
             compress: true,
             precision: 16,
             putOnlyUsedFonts: true,
-            floatPrecision: 16
+            floatPrecision: 16,
+            hotfixes: ['px_scaling']
           },
           pagebreak: { 
             mode: ['avoid-all', 'css', 'legacy'],
             before: '.page-break-before',
             after: '.page-break-after',
-            avoid: ['h1', 'h2', '.avoid-break', '.signature-section', '.company-info']
-          }
-        };
-
-        // 📄 PDF METADATA SETUP
-        const addPdfMetadata = (pdf: any) => {
-          try {
-            pdf.setProperties({
-              title: contract.name,
-              subject: `Vertrag erstellt mit Contract AI`,
-              author: companyProfile?.companyName || 'Contract AI User',
-              keywords: `Vertrag, Contract, Legal, ${contract.contractType}`,
-              creator: 'Contract AI v2 Enhanced',
-              producer: 'Contract AI PDF Generator',
-              creationDate: new Date(),
-              modDate: new Date()
-            });
-            console.log("✅ PDF Metadata hinzugefügt");
-          } catch (error) {
-            console.warn("⚠️ PDF Metadata konnte nicht hinzugefügt werden:", error);
-          }
+            avoid: ['h1', 'h2', 'h3', '.avoid-break', '.signature-section', '.company-info', '.header', '.section']
+          },
+          enableLinks: false
         };
         
         try {
-          console.log("🚀 Starte erweiterten PDF-Export...");
-          const pdfGenerator = html2pdf().set(enhancedPdfOptions).from(pdfContent);
+          console.log("🚀 Starte professionellen PDF-Export...");
           
           // 📊 ANALYTICS: PDF Generation Start
           console.log("📊 PDF Export gestartet:", {
@@ -503,35 +571,25 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
             contractType: contract.contractType,
             hasCompanyProfile: !!companyProfile,
             hasHTMLVersion: !!contract.contentHTML,
+            hasSignature: !!contract.signature,
             timestamp: new Date().toISOString()
           });
           
-          // PDF generieren und Metadata hinzufügen
-          const pdfBlob = await pdfGenerator.outputPdf() as Blob;
+          // PDF direkt generieren und speichern - OHNE outputPdf() AUFRUF!
+          await html2pdf().set(enhancedPdfOptions).from(pdfContent).save();
           
-          // Versuche Metadata hinzuzufügen (falls möglich)
-          try {
-            const pdfDoc = await pdfGenerator.outputPdf() as any;
-            addPdfMetadata(pdfDoc);
-          } catch (metadataError) {
-            console.warn("Metadata konnte nicht hinzugefügt werden:", metadataError);
-          }
-          
-          // PDF speichern
-          await pdfGenerator.save();
-          
-          console.log("✅ PDF erfolgreich generiert mit erweiterten Features");
-          toast.success("✅ PDF erfolgreich generiert!");
+          console.log("✅ PDF erfolgreich generiert mit professionellen Features");
+          toast.success("✅ PDF wurde erfolgreich heruntergeladen!");
           
           // 📊 ANALYTICS: PDF Generation Success
           console.log("📊 PDF Export erfolgreich:", {
             contractId: contract._id,
-            pdfSize: pdfBlob.size,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            quality: 'professional'
           });
           
         } catch (pdfError: any) {
-          console.error("❌ Erweiterter PDF-Export fehlgeschlagen", pdfError);
+          console.error("❌ Professioneller PDF-Export fehlgeschlagen", pdfError);
           
           // 📊 ANALYTICS: PDF Generation Error
           console.log("📊 PDF Export Fehler:", {
@@ -540,7 +598,23 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
             timestamp: new Date().toISOString()
           });
           
-          toast.error("PDF-Export fehlgeschlagen. Bitte versuchen Sie es erneut.");
+          // Fallback zu einfacherem Export
+          try {
+            console.log("🔄 Versuche Fallback PDF-Export...");
+            const simplePdfOptions = {
+              margin: 15,
+              filename: `${contract.name}_${new Date().toISOString().split('T')[0]}.pdf`,
+              image: { type: 'jpeg', quality: 0.95 },
+              html2canvas: { scale: 1.5 },
+              jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            
+            await html2pdf().set(simplePdfOptions).from(pdfContent).save();
+            toast.warning("⚠️ PDF mit reduzierter Qualität exportiert");
+          } catch (fallbackError) {
+            console.error("❌ Auch Fallback fehlgeschlagen:", fallbackError);
+            toast.error("PDF-Export fehlgeschlagen. Bitte versuchen Sie es erneut.");
+          }
         }
         
         document.body.removeChild(pdfContent);
@@ -560,38 +634,100 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
           <head>
             <title>${contract.name}</title>
             <style>
-              @page { size: A4; margin: 25mm 20mm; }
+              @page { 
+                size: A4; 
+                margin: 20mm 15mm 25mm 20mm;
+              }
               body { 
                 font-family: Arial, sans-serif; 
                 font-size: 11pt;
-                line-height: 1.5;
+                line-height: 1.6;
                 color: #000;
               }
-              h1 { font-size: 18pt; text-align: center; margin: 30px 0; }
-              h2 { font-size: 13pt; margin: 20px 0 10px; }
-              .signature { margin-top: 50px; }
+              .header {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                margin-bottom: 30px;
+                padding-bottom: 15px;
+                border-bottom: 3px solid #003366;
+              }
+              .company-info {
+                flex: 1;
+              }
+              .company-name {
+                font-size: 16pt;
+                font-weight: bold;
+                color: #003366;
+                margin-bottom: 8px;
+              }
+              .company-details {
+                font-size: 10pt;
+                color: #333;
+                line-height: 1.4;
+              }
+              h1 { 
+                font-size: 18pt; 
+                text-align: center; 
+                margin: 30px 0;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+              }
+              h2 { 
+                font-size: 13pt; 
+                margin: 20px 0 10px;
+                color: #003366;
+                border-left: 4px solid #003366;
+                padding-left: 10px;
+              }
+              .signature { 
+                margin-top: 50px;
+                page-break-inside: avoid;
+                border-top: 2px solid #003366;
+                padding-top: 20px;
+              }
+              @media print {
+                .no-print { display: none; }
+              }
             </style>
           </head>
           <body>
             ${companyProfile ? `
-              <div style="text-align: center; margin-bottom: 30px;">
-                ${companyProfile.logoUrl ? `<img src="${companyProfile.logoUrl}" style="max-height: 60px; margin-bottom: 20px;" alt="Logo" />` : ''}
-                <strong>${companyProfile.companyName}</strong><br/>
-                ${companyProfile.street}, ${companyProfile.postalCode} ${companyProfile.city}
+              <div class="header">
+                <div class="company-info">
+                  <div class="company-name">${companyProfile.companyName}${companyProfile.legalForm ? ` ${companyProfile.legalForm}` : ''}</div>
+                  <div class="company-details">
+                    ${companyProfile.street ? `${companyProfile.street}<br/>` : ''}
+                    ${companyProfile.postalCode || companyProfile.city ? `${companyProfile.postalCode || ''} ${companyProfile.city || ''}<br/>` : ''}
+                    ${companyProfile.contactEmail ? `E-Mail: ${companyProfile.contactEmail}<br/>` : ''}
+                    ${companyProfile.contactPhone ? `Tel: ${companyProfile.contactPhone}<br/>` : ''}
+                    ${companyProfile.vatId ? `USt-IdNr.: ${companyProfile.vatId}<br/>` : ''}
+                  </div>
+                </div>
+                ${companyProfile.logoUrl ? `
+                  <div style="width: 150px; text-align: right;">
+                    <img src="${companyProfile.logoUrl}" style="max-width: 150px; max-height: 80px;" alt="Logo" />
+                  </div>
+                ` : ''}
               </div>
             ` : ''}
             ${printContent}
             ${contract.signature ? `
               <div class="signature">
-                <p>Digitale Unterschrift:</p>
+                <h3>Digitale Unterschrift:</h3>
                 <img src="${contract.signature}" alt="Unterschrift" style="max-width: 200px;" />
+                <p style="margin-top: 10px; font-size: 10pt; color: #666;">
+                  Elektronisch unterschrieben am ${new Date().toLocaleString('de-DE')}
+                </p>
               </div>
             ` : ''}
           </body>
         </html>
       `);
       printWindow.document.close();
-      printWindow.print();
+      setTimeout(() => {
+        printWindow.print();
+      }, 250);
     }
   };
 
@@ -611,19 +747,21 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
 
   const handleStartEdit = () => {
     setEditedContent(contract.content || '');
-    setEditedHTML(''); // HTML wird beim Editieren zurückgesetzt
+    setEditedHTML(''); // HTML wird beim Editieren zurückgesetzt (muss neu generiert werden)
     setIsEditing(true);
     setTimeout(() => {
       if (editTextareaRef.current) {
         editTextareaRef.current.focus();
       }
     }, 100);
+    toast.info("✏️ Bearbeitungsmodus aktiviert");
   };
 
   const handleCancelEdit = () => {
     setEditedContent(contract.content || '');
     setEditedHTML(contract.contentHTML || '');
     setIsEditing(false);
+    toast.info("❌ Bearbeitung abgebrochen");
   };
 
   return (
@@ -655,6 +793,21 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
               gap: '4px'
             }}>
               ✨ KI-Generiert
+            </span>
+          )}
+          {contract.contentHTML && (
+            <span style={{
+              background: 'linear-gradient(135deg, #3b82f6, #1e40af)',
+              color: 'white',
+              padding: '4px 8px',
+              borderRadius: '12px',
+              fontSize: '11px',
+              fontWeight: '600',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}>
+              📄 Professionelles Format
             </span>
           )}
         </div>
@@ -743,11 +896,22 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
               fontSize: '13px',
               fontWeight: '500',
               cursor: 'pointer',
-              transition: 'all 0.2s'
+              transition: 'all 0.2s',
+              boxShadow: '0 2px 4px rgba(59, 130, 246, 0.3)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#2563eb';
+              e.currentTarget.style.transform = 'translateY(-1px)';
+              e.currentTarget.style.boxShadow = '0 4px 8px rgba(59, 130, 246, 0.4)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#3b82f6';
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 2px 4px rgba(59, 130, 246, 0.3)';
             }}
           >
             <Download size={14} />
-            PDF
+            PDF Export
           </button>
 
           <button
@@ -885,11 +1049,11 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
         <div style={{
           marginTop: '16px',
           padding: '16px',
-          border: '1px solid #e2e8f0',
+          border: '2px solid #003366',
           borderRadius: '8px',
           backgroundColor: '#f8fafc'
         }}>
-          <p style={{ margin: '0 0 8px 0', fontSize: '13px', color: '#64748b', fontWeight: '500' }}>
+          <p style={{ margin: '0 0 8px 0', fontSize: '13px', color: '#003366', fontWeight: '600' }}>
             Digitale Unterschrift:
           </p>
           <img 
@@ -898,12 +1062,22 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
             style={{ 
               maxWidth: '200px', 
               height: 'auto',
-              border: '1px solid #e2e8f0',
+              border: '2px solid #e2e8f0',
               borderRadius: '4px',
               backgroundColor: 'white',
-              padding: '8px'
+              padding: '8px',
+              boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
             }} 
           />
+          <p style={{ margin: '8px 0 0 0', fontSize: '11px', color: '#64748b', fontStyle: 'italic' }}>
+            Unterschrieben am {new Date(contract.createdAt || '').toLocaleDateString('de-DE', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            })}
+          </p>
         </div>
       )}
 
@@ -1160,10 +1334,10 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
               {contract.signature && (
                 <div style={{
                   padding: '20px',
-                  borderTop: '1px solid #e2e8f0',
+                  borderTop: '2px solid #003366',
                   backgroundColor: '#f8fafc'
                 }}>
-                  <p style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#64748b', fontWeight: '500' }}>
+                  <p style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#003366', fontWeight: '600' }}>
                     Digitale Unterschrift:
                   </p>
                   <img 
@@ -1172,12 +1346,22 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
                     style={{ 
                       maxWidth: '250px', 
                       height: 'auto',
-                      border: '1px solid #e2e8f0',
+                      border: '2px solid #e2e8f0',
                       borderRadius: '4px',
                       backgroundColor: 'white',
-                      padding: '12px'
+                      padding: '12px',
+                      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
                     }} 
                   />
+                  <p style={{ margin: '12px 0 0 0', fontSize: '12px', color: '#64748b', fontStyle: 'italic' }}>
+                    Elektronisch unterschrieben am {new Date(contract.createdAt || '').toLocaleDateString('de-DE', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </p>
                 </div>
               )}
             </motion.div>

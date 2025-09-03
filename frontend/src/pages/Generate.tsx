@@ -46,8 +46,8 @@ interface ContractType {
   jurisdiction?: string;
   category?: string;
   estimatedDuration?: string;
-  popularity?: number; // Für "Beliebt" Badge
-  isNew?: boolean; // Für "Neu" Badge
+  popularity?: number;
+  isNew?: boolean;
   fields: Array<{
     name: string;
     label: string;
@@ -952,6 +952,13 @@ export default function Generate() {
       setGeneratedHTML(data.contractHTML || ""); // 🔴 NEU: HTML speichern wenn vorhanden
       setCurrentStep(3);
       setShowPreview(true);
+      
+      console.log("✅ Vertrag generiert mit HTML-Support:", {
+        hasHTML: !!data.contractHTML,
+        htmlLength: data.contractHTML?.length || 0,
+        hasCompanyProfile: data.metadata?.hasCompanyProfile,
+        hasLogo: data.metadata?.hasLogo
+      });
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Unbekannter Fehler";
       toast.error("❌ Fehler: " + msg);
@@ -1046,7 +1053,7 @@ export default function Generate() {
     }
   };
 
-  // 🔴 AKTUALISIERT: handleDownloadPDF nutzt jetzt HTML wenn vorhanden
+  // 🔴 VERBESSERT: handleDownloadPDF nutzt jetzt HTML wenn vorhanden
   const handleDownloadPDF = async () => {
     try {
       const html2pdfModule = await import("html2pdf.js") as any;
@@ -1063,17 +1070,24 @@ export default function Generate() {
       // 🔴 NEU: Verwende HTML-Version wenn vorhanden
       let pdfContent;
       if (generatedHTML) {
+        console.log("🎨 Verwende professionelle HTML-Version für PDF Export");
         const tempDiv = document.createElement("div");
         tempDiv.innerHTML = generatedHTML;
         
         // Füge Unterschrift zum HTML hinzu wenn vorhanden
         if (signatureURL) {
           const signatureHTML = `
-            <div style="margin-top: 40px; border-top: 1px solid #e5e7eb; padding-top: 20px; page-break-inside: avoid;">
-              <p style="margin-bottom: 10px; font-weight: 600;">Digitale Unterschrift:</p>
-              <img src="${signatureURL}" style="max-width: 200px; border: 1px solid #e5e7eb; border-radius: 4px;" />
-              <p style="margin-top: 10px; font-size: 12px; color: #6b7280;">
-                Unterschrieben am ${new Date().toLocaleString('de-DE')}
+            <div style="margin-top: 50px; page-break-inside: avoid; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+              <h3 style="font-size: 14pt; font-weight: bold; margin-bottom: 10px;">Digitale Unterschrift:</h3>
+              <img src="${signatureURL}" style="max-width: 200px; border: 1px solid #e5e7eb; border-radius: 4px; padding: 8px; background: white;" />
+              <p style="margin-top: 10px; font-size: 10pt; color: #666;">
+                Elektronisch unterschrieben am ${new Date().toLocaleString('de-DE', { 
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
               </p>
             </div>
           `;
@@ -1086,6 +1100,7 @@ export default function Generate() {
         }
         pdfContent = tempDiv;
       } else {
+        console.log("⚠️ Keine HTML-Version vorhanden, nutze Fallback");
         // Fallback: Alte Methode für Verträge ohne HTML
         pdfContent = container.cloneNode(true) as HTMLElement;
         
@@ -1108,27 +1123,35 @@ export default function Generate() {
 
       const opt: Html2PdfOptions = {
         margin: generatedHTML ? [5, 5, 5, 5] : [20, 20, 20, 20], // Kleinere Margins wenn HTML
-        filename: `${formData.title || 'Vertrag'}.pdf`,
+        filename: `${formData.title || 'Vertrag'}_${new Date().toISOString().split('T')[0]}.pdf`,
         image: { type: "jpeg", quality: 0.98 },
         html2canvas: { 
           scale: 2,
           useCORS: true,
           letterRendering: true,
-          allowTaint: true
+          allowTaint: true,
+          backgroundColor: '#ffffff',
+          logging: false
         },
         jsPDF: { 
           unit: "pt", 
           format: "a4", 
           orientation: "portrait",
+          compress: true,
           putOnlyUsedFonts: true
         },
         pagebreak: { 
-          mode: ['avoid-all', 'css', 'legacy']
+          mode: ['avoid-all', 'css', 'legacy'],
+          before: '.page-break-before',
+          after: '.page-break-after',
+          avoid: ['.signature-section', '.section', 'h2']
         }
       };
 
       try {
+        console.log("🚀 Starte PDF Export...");
         await html2pdf().from(pdfContent).set(opt).save();
+        console.log("✅ PDF erfolgreich generiert!");
         toast.success("✅ PDF erfolgreich generiert und heruntergeladen!");
       } catch (pdfError) {
         console.error("❌ PDF-Export fehlgeschlagen", pdfError);
