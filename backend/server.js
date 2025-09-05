@@ -1,4 +1,4 @@
-// 📁 backend/server.js - ✅ FIXED: Einheitliche /api Struktur für ALLE Routen + S3 MIGRATION ROUTES + INVOICE ROUTES + CALENDAR INTEGRATION
+// 🚀 backend/server.js - ✅ FIXED: Einheitliche /api Struktur für ALLE Routen + S3 MIGRATION ROUTES + INVOICE ROUTES + CALENDAR INTEGRATION
 const express = require("express");
 const app = express();
 require("dotenv").config();
@@ -85,7 +85,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// 🌍 Middleware (unchanged)
+// 🌐 Middleware (unchanged)
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin || ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
@@ -95,7 +95,11 @@ app.use(cors({
   credentials: true,
 }));
 app.use(cookieParser());
-app.use(express.json());
+
+// 🆕 FIX: Erhöhtes JSON-Limit für große HTML-Inhalte mit Logos
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
+console.log("✅ JSON-Limit erhöht auf 50MB für große Verträge mit Logos");
 
 // ✅ Static File Serving (unchanged)
 app.use('/uploads', (req, res, next) => {
@@ -311,7 +315,8 @@ const connectDB = async () => {
         status: 'OK',
         mongodb: db ? 'connected' : 'disconnected',
         timestamp: new Date().toISOString(),
-        uptime: process.uptime()
+        uptime: process.uptime(),
+        jsonLimit: '50mb'
       });
     });
 
@@ -828,6 +833,7 @@ const connectDB = async () => {
         timestamp: new Date().toISOString(),
         status: "working",
         mongodb: db ? 'ZENTRAL VERBUNDEN' : 'NICHT VERBUNDEN',
+        jsonLimit: '50mb',
         routeStructure: "✅ ALLE ROUTEN UNTER /api - EINHEITLICH!",
         authRoute: "/api/auth/* (FIXED!)",
         emailVerificationRoute: "/api/email-verification/* (NEW!)",
@@ -851,7 +857,7 @@ const connectDB = async () => {
           oneClickCancel: "✅ Direkt aus Calendar oder E-Mail"
         },
         s3Status: s3Status,
-        message: "🎉 PFAD-CHAOS BEHOBEN + CALENDAR INTEGRATION ACTIVE!"
+        message: "🎉 PFAD-CHAOS BEHOBEN + CALENDAR INTEGRATION ACTIVE + 50MB LIMIT!"
       });
     });
 
@@ -891,7 +897,7 @@ const connectDB = async () => {
       
       res.json({
         success: true,
-        message: "🔍 Route Debug Info - WITH CALENDAR INTEGRATION",
+        message: "📁 Route Debug Info - WITH CALENDAR INTEGRATION",
         totalRoutes: routes.length,
         apiRoutes: apiRoutes,
         nonApiRoutes: nonApiRoutes,
@@ -1004,8 +1010,9 @@ const connectDB = async () => {
     app.listen(PORT, () => {
       console.log(`🚀 Server läuft auf Port ${PORT}`);
       console.log(`📁 Static files serviert unter: ${API_BASE_URL}/uploads`);
+      console.log(`📏 JSON-Limit: 50MB für große Verträge`);
       console.log(`🎉 *** PFAD-CHAOS BEHOBEN - ALLE ROUTEN UNTER /api ***`);
-      console.log(`🔐 Auth-Route: /api/auth/* (FIXED!)`);
+      console.log(`📄 Auth-Route: /api/auth/* (FIXED!)`);
       console.log(`📧 E-Mail-Verification-Route: /api/email-verification/* (NEW!)`);
       console.log(`📄 Contracts-Route: /api/contracts/* (FIXED!)`);
       console.log(`🎯 Generate-Route: /api/contracts/generate (FIXED!)`);
@@ -1016,11 +1023,12 @@ const connectDB = async () => {
       console.log(`📤 Upload-Route: /api/upload (FIXED!)`);
       console.log(`💳 Stripe-Routes: /api/stripe/* (FIXED!)`);
       console.log(`📄 Invoice-Routes: /api/invoices/* (ADDED!)`);
-      console.log(`🔍 Better-Contracts-Route: /api/better-contracts (ADDED!)`);
+      console.log(`📝 Better-Contracts-Route: /api/better-contracts (ADDED!)`);
       console.log(`🚀 Migration-Routes: /api/contracts/migrate-legacy & migration-status (NEW!)`);
       console.log(`📅 Calendar-Routes: /api/calendar/* (NEW!)`);
       console.log(`🚀 1-Klick-Kündigung: /api/cancellations/* (NEW!)`);
       console.log(`✅ REVOLUTIONARY CALENDAR FEATURES ACTIVE!`);
+      console.log(`✅ PUPPETEER PDF READY WITH 50MB SUPPORT!`);
     });
 
   } catch (err) {

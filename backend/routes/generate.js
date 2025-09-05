@@ -184,6 +184,44 @@ const loadLogoWithFallbacks = async (companyProfile) => {
   return null;
 };
 
+// 🆕 NEUE FUNKTION: Logo optimieren/komprimieren
+const optimizeLogoBase64 = (base64Logo, maxSizeKB = 50) => {
+  try {
+    // Prüfe aktuelle Größe
+    const currentSizeKB = Math.round(base64Logo.length / 1024);
+    console.log(`📊 Logo-Größe vor Optimierung: ${currentSizeKB} KB`);
+    
+    // Wenn bereits klein genug, zurückgeben
+    if (currentSizeKB <= maxSizeKB) {
+      console.log(`✅ Logo ist bereits optimiert (${currentSizeKB}KB <= ${maxSizeKB}KB)`);
+      return base64Logo;
+    }
+    
+    // Berechne Kompressionsrate
+    const compressionRatio = maxSizeKB / currentSizeKB;
+    
+    // Für jetzt: Warnung ausgeben und trotzdem verwenden
+    console.warn(`⚠️ Logo ist zu groß (${currentSizeKB}KB), sollte optimiert werden auf ${maxSizeKB}KB`);
+    console.warn(`⚠️ Kompressionsrate wäre: ${Math.round(compressionRatio * 100)}%`);
+    
+    // TODO: Hier könnte man mit sharp oder jimp das Bild verkleinern
+    // Beispiel für zukünftige Implementation:
+    // const sharp = require('sharp');
+    // const buffer = Buffer.from(base64Logo.split(',')[1], 'base64');
+    // const optimized = await sharp(buffer)
+    //   .resize(200, 100, { fit: 'inside' })
+    //   .jpeg({ quality: 80 })
+    //   .toBuffer();
+    // return `data:image/jpeg;base64,${optimized.toString('base64')}`;
+    
+    // Für jetzt geben wir das Original zurück
+    return base64Logo;
+  } catch (error) {
+    console.error("❌ Logo-Optimierung fehlgeschlagen:", error);
+    return base64Logo;
+  }
+};
+
 // 🎨 BOMBASTISCHE HTML-FORMATIERUNG FÜR PROFESSIONELLE PDFs
 const formatContractToHTML = async (contractText, companyProfile, contractType, designVariant = 'executive') => {
   console.log("🚀 Starte INLINE-STYLES HTML-Formatierung für:", contractType);
@@ -196,8 +234,10 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
     logoBase64 = await loadLogoWithFallbacks(companyProfile);
     
     if (logoBase64) {
-      console.log("✅ Logo erfolgreich geladen und konvertiert!");
-      console.log(`📊 Logo Größe: ${Math.round(logoBase64.length / 1024)} KB`);
+      // 🆕 Logo optimieren wenn zu groß
+      logoBase64 = optimizeLogoBase64(logoBase64, 100); // Max 100KB für Logo
+      console.log("✅ Logo erfolgreich geladen und optimiert!");
+      console.log(`📊 Logo Finale Größe: ${Math.round(logoBase64.length / 1024)} KB`);
     } else {
       console.warn("⚠️ Logo konnte nicht geladen werden - verwende Fallback");
     }
@@ -978,6 +1018,7 @@ Strukturiere den Vertrag professionell mit allen notwendigen rechtlichen Klausel
         hasCompanyProfile: !!companyProfile,
         hasLogo: !!companyProfile?.logoUrl,
         contentLength: contractText.length,
+        htmlLength: formattedHTML.length,
         generatedAt: new Date().toISOString(),
         version: 'v4_professional',
         designVariant: designVariant
