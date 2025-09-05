@@ -185,7 +185,7 @@ const loadLogoWithFallbacks = async (companyProfile) => {
 };
 
 // 🆕 NEUE FUNKTION: Logo optimieren/komprimieren
-const optimizeLogoBase64 = (base64Logo, maxSizeKB = 50) => {
+const optimizeLogoBase64 = (base64Logo, maxSizeKB = 100) => {
   try {
     // Prüfe aktuelle Größe
     const currentSizeKB = Math.round(base64Logo.length / 1024);
@@ -351,7 +351,6 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
   if (inSignatureSection) {
     htmlContent += '</div>';
   }
-
 
   // 🎨 VOLLSTÄNDIG INLINE-STYLES HTML-Dokument (löst PDF-Problem!)
   const fullHTML = `
@@ -1032,7 +1031,8 @@ Strukturiere den Vertrag professionell mit allen notwendigen rechtlichen Klausel
 });
 
 // 🆕 NEUE ROUTE: PROFESSIONELLE PDF-GENERIERUNG MIT PUPPETEER
-router.post("/generate-pdf", verifyToken, async (req, res) => {
+// ⚠️ WICHTIG: Diese Route muss NACH der Hauptroute "/" kommen!
+router.post("/pdf", verifyToken, async (req, res) => {
   const { contractId } = req.body;
   
   console.log("🎨 PDF-Generierung mit Puppeteer gestartet für Vertrag:", contractId);
