@@ -1082,18 +1082,65 @@ export default function Generate() {
     }
   };
 
-  // 📴 HAUPTFIX: KORRIGIERTE handleDownloadPDF MIT PUPPETEER PRIORITÄT
+  // 🚀 NEUE VERBESSERTE handleDownloadPDF MIT AUTOMATISCHEM SPEICHERN
   const handleDownloadPDF = async () => {
     try {
       console.log("🚀 Starte PDF Export...");
       
+      // Dynamisch html2pdf laden
+      const html2pdfModule = await import('html2pdf.js');
+      const html2pdf = html2pdfModule.default || html2pdfModule;
+      
       // Prüfe ob Contract ID vorhanden ist
-      const contractId = savedContractId || localStorage.getItem('lastGeneratedContractId');
+      let contractId = savedContractId || localStorage.getItem('lastGeneratedContractId');
       console.log("📊 Contract ID Status:", { 
         savedContractId, 
         fromLocalStorage: localStorage.getItem('lastGeneratedContractId'), 
         final: contractId 
       });
+      
+      // 🆕 AUTOMATISCH SPEICHERN wenn noch nicht gespeichert
+      if (!contractId && contractText) {
+        console.log("📝 Speichere Vertrag automatisch vor PDF-Export...");
+        toast.info("📝 Speichere Vertrag für optimale PDF-Qualität...", {
+          autoClose: 2000
+        });
+        
+        try {
+          const res = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: `${contractData.contractType || 'Vertrag'} - ${new Date().toLocaleDateString('de-DE')}`,
+              content: contractText,
+              htmlContent: generatedHTML,
+              isGenerated: true,
+              metadata: {
+                contractType: contractData.contractType,
+                parties: contractData.parties,
+                contractDetails: contractData.contractDetails,
+                hasLogo: !!(useCompanyProfile && companyProfile?.logoUrl),
+                generatedAt: new Date().toISOString()
+              }
+            })
+          });
+
+          const data = await res.json();
+          if (res.ok && data.contractId) {
+            contractId = data.contractId;
+            setSavedContractId(data.contractId);
+            localStorage.setItem('lastGeneratedContractId', data.contractId);
+            setSaved(true);
+            console.log("✅ Vertrag automatisch gespeichert:", data.contractId);
+          } else {
+            console.warn("⚠️ Automatisches Speichern fehlgeschlagen:", data.error);
+          }
+        } catch (saveError) {
+          console.error("❌ Fehler beim automatischen Speichern:", saveError);
+          // Fahre trotzdem mit html2pdf fort
+        }
+      }
       
       // ✅ PRIORITÄT 1: Nutze Puppeteer wenn Contract gespeichert wurde
       if (contractId) {
@@ -1137,7 +1184,7 @@ export default function Generate() {
               window.URL.revokeObjectURL(url);
               document.body.removeChild(a);
               
-              toast.success("✅ Professionelles PDF mit Puppeteer generiert!");
+              toast.success("✅ Professionelles PDF mit Logo generiert!");
               console.log("✅ Puppeteer PDF erfolgreich heruntergeladen");
               return; // WICHTIG: Beende hier, kein Fallback!
             } else {
@@ -1207,15 +1254,9 @@ export default function Generate() {
         };
 
         // @ts-expect-error - html2pdf type definitions are incomplete
-        await html2pdf().set(opt).from(element).save();
+        await html2pdf.set(opt).from(tempDiv).save();
         
         document.body.removeChild(tempDiv);
-        
-        if (!contractId) {
-          toast.info("💡 Tipp: Speichern Sie den Vertrag für professionelle PDF-Qualität mit Logo!", {
-            autoClose: 5000 // FIX: autoClose statt duration
-          });
-        }
         
         console.log("✅ PDF mit html2pdf.js generiert");
         
@@ -1244,10 +1285,10 @@ export default function Generate() {
         };
         
         // @ts-expect-error - html2pdf type definitions are incomplete
-        await html2pdf().set(opt).from(element).save();
+        await html2pdf.set(opt).from(element).save();
         
-        toast.info("💡 Speichern Sie den Vertrag für bessere PDF-Qualität!", {
-          autoClose: 5000 // FIX: autoClose statt duration
+        toast.info("💡 PDF wurde erstellt!", {
+          autoClose: 3000
         });
       } else {
         toast.error("❌ Kein Vertrag zum Exportieren vorhanden");
