@@ -1655,7 +1655,7 @@ Strukturiere den Vertrag professionell mit allen notwendigen rechtlichen Klausel
   }
 });
 
-// 🔴 KORRIGIERTE PUPPETEER PDF-ROUTE
+// 📴 KORRIGIERTE PUPPETEER PDF-ROUTE - MIT USERID FIX
 router.post("/pdf", verifyToken, async (req, res) => {
   const { contractId } = req.body;
   
@@ -1683,46 +1683,56 @@ router.post("/pdf", verifyToken, async (req, res) => {
       }
     }
     
-    // Hole Vertrag aus DB - mit mehreren Versuchen
+    // KRITISCHER FIX: Hole Vertrag mit flexiblem userId Vergleich
     let contract = null;
     
-    // Versuch 1: Mit ObjectId
+    // Versuch 1: Mit ObjectId für beides
     try {
       contract = await contractsCollection.findOne({ 
         _id: new ObjectId(contractId),
-        userId: req.user.userId
+        userId: new ObjectId(req.user.userId)
       });
-      console.log("✅ Versuch 1 (mit ObjectId):", !!contract);
+      console.log("✅ Versuch 1 (beide als ObjectId):", !!contract);
     } catch (objectIdError) {
       console.log("⚠️ ObjectId-Konvertierung fehlgeschlagen:", objectIdError.message);
     }
     
-    // Versuch 2: Als String
+    // Versuch 2: contractId als ObjectId, userId als String
     if (!contract) {
       try {
         contract = await contractsCollection.findOne({ 
-          _id: contractId,
+          _id: new ObjectId(contractId),
           userId: req.user.userId
         });
-        console.log("✅ Versuch 2 (als String):", !!contract);
+        console.log("✅ Versuch 2 (userId als String):", !!contract);
       } catch (stringError) {
         console.log("⚠️ String-Suche fehlgeschlagen:", stringError.message);
       }
     }
     
-    // Versuch 3: Nur mit contractId, ohne userId (für Debug)
+    // Versuch 3: Flexibler Vergleich mit toString()
     if (!contract) {
       try {
-        contract = await contractsCollection.findOne({ 
+        const tempContract = await contractsCollection.findOne({ 
           _id: new ObjectId(contractId)
         });
-        if (contract) {
-          console.log("⚠️ Vertrag gefunden, aber userId stimmt nicht überein!");
-          console.log("📊 Vertrag userId:", contract.userId);
+        
+        if (tempContract) {
+          console.log("⚠️ Vertrag gefunden, prüfe userId Übereinstimmung...");
+          console.log("📊 Vertrag userId:", tempContract.userId);
           console.log("📊 Request userId:", req.user.userId);
           
-          // Wenn der Vertrag existiert aber die userId nicht übereinstimmt
-          if (contract.userId !== req.user.userId) {
+          // Flexibler Vergleich - beide zu String konvertieren
+          const contractUserId = tempContract.userId?.toString ? tempContract.userId.toString() : String(tempContract.userId);
+          const requestUserId = req.user.userId?.toString ? req.user.userId.toString() : String(req.user.userId);
+          
+          if (contractUserId === requestUserId) {
+            contract = tempContract;
+            console.log("✅ Vertrag nach String-Konvertierung gefunden!");
+          } else {
+            console.log("❌ UserId stimmt nicht überein nach String-Konvertierung");
+            console.log("📊 Contract userId (String):", contractUserId);
+            console.log("📊 Request userId (String):", requestUserId);
             return res.status(403).json({ message: "Keine Berechtigung für diesen Vertrag" });
           }
         }
