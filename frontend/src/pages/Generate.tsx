@@ -1154,7 +1154,7 @@ export default function Generate() {
               if (errorJson.error) {
                 toast.error(`Puppeteer-Fehler: ${errorJson.error}`);
               }
-            } catch (e) {
+            } catch {
               // Nicht JSON
             }
           }
@@ -1206,7 +1206,7 @@ export default function Generate() {
           }
         };
 
-        // @ts-ignore
+        // @ts-expect-error
         await html2pdf().set(opt).from(tempDiv).save();
         
         document.body.removeChild(tempDiv);
@@ -1243,7 +1243,7 @@ export default function Generate() {
           jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
         };
         
-        // @ts-ignore
+        // @ts-expect-error
         await html2pdf().set(opt).from(element).save();
         
         toast.info("💡 Speichern Sie den Vertrag für bessere PDF-Qualität!", {
