@@ -1655,45 +1655,138 @@ Strukturiere den Vertrag professionell mit allen notwendigen rechtlichen Klausel
   }
 });
 
-// 🆕 NEUE ROUTE: PROFESSIONELLE PDF-GENERIERUNG MIT PUPPETEER
-// ⚠️ WICHTIG: Diese Route muss NACH der Hauptroute "/" kommen!
+// 🔴 KORRIGIERTE PUPPETEER PDF-ROUTE
 router.post("/pdf", verifyToken, async (req, res) => {
   const { contractId } = req.body;
   
   console.log("🎨 PDF-Generierung mit Puppeteer gestartet für Vertrag:", contractId);
+  console.log("📊 User ID:", req.user.userId);
   
   try {
-    // Hole Vertrag aus DB
-    const contract = await contractsCollection.findOne({ 
-      _id: new ObjectId(contractId),
-      userId: req.user.userId // Sicherheitsprüfung
-    });
+    // Validierung
+    if (!contractId) {
+      return res.status(400).json({ message: "Contract ID fehlt" });
+    }
+    
+    // Stelle sicher, dass DB verbunden ist
+    if (!db || !contractsCollection) {
+      console.error("❌ Datenbank nicht verbunden! Versuche Reconnect...");
+      try {
+        await client.connect();
+        db = client.db("contract_ai");
+        contractsCollection = db.collection("contracts");
+        usersCollection = db.collection("users");
+        console.log("✅ Datenbank neu verbunden");
+      } catch (reconnectError) {
+        console.error("❌ Reconnect fehlgeschlagen:", reconnectError);
+        return res.status(500).json({ message: "Datenbankverbindung fehlgeschlagen" });
+      }
+    }
+    
+    // Hole Vertrag aus DB - mit mehreren Versuchen
+    let contract = null;
+    
+    // Versuch 1: Mit ObjectId
+    try {
+      contract = await contractsCollection.findOne({ 
+        _id: new ObjectId(contractId),
+        userId: req.user.userId
+      });
+      console.log("✅ Versuch 1 (mit ObjectId):", !!contract);
+    } catch (objectIdError) {
+      console.log("⚠️ ObjectId-Konvertierung fehlgeschlagen:", objectIdError.message);
+    }
+    
+    // Versuch 2: Als String
+    if (!contract) {
+      try {
+        contract = await contractsCollection.findOne({ 
+          _id: contractId,
+          userId: req.user.userId
+        });
+        console.log("✅ Versuch 2 (als String):", !!contract);
+      } catch (stringError) {
+        console.log("⚠️ String-Suche fehlgeschlagen:", stringError.message);
+      }
+    }
+    
+    // Versuch 3: Nur mit contractId, ohne userId (für Debug)
+    if (!contract) {
+      try {
+        contract = await contractsCollection.findOne({ 
+          _id: new ObjectId(contractId)
+        });
+        if (contract) {
+          console.log("⚠️ Vertrag gefunden, aber userId stimmt nicht überein!");
+          console.log("📊 Vertrag userId:", contract.userId);
+          console.log("📊 Request userId:", req.user.userId);
+          
+          // Wenn der Vertrag existiert aber die userId nicht übereinstimmt
+          if (contract.userId !== req.user.userId) {
+            return res.status(403).json({ message: "Keine Berechtigung für diesen Vertrag" });
+          }
+        }
+      } catch (debugError) {
+        console.log("⚠️ Debug-Suche fehlgeschlagen:", debugError.message);
+      }
+    }
     
     if (!contract) {
+      console.error("❌ Vertrag nicht gefunden in DB");
+      console.log("🔍 Gesucht mit:", { contractId, userId: req.user.userId });
+      
+      // Debug: Zeige die letzten Verträge des Users
+      try {
+        const userContracts = await contractsCollection.find({ 
+          userId: req.user.userId 
+        }).limit(5).toArray();
+        console.log("📋 Letzte 5 Verträge des Users:", userContracts.map(c => ({
+          id: c._id.toString(),
+          name: c.name,
+          created: c.uploadedAt
+        })));
+      } catch (debugListError) {
+        console.error("❌ Fehler beim Auflisten der User-Verträge:", debugListError);
+      }
+      
       return res.status(404).json({ message: "Vertrag nicht gefunden" });
     }
 
+    console.log("✅ Vertrag gefunden:", contract.name);
+
     // Lade Company Profile wenn vorhanden
     let companyProfile = null;
-    if (contract.hasCompanyProfile) {
-      companyProfile = await db.collection("company_profiles").findOne({ 
-        userId: new ObjectId(req.user.userId) 
-      });
+    if (contract.hasCompanyProfile || contract.metadata?.hasLogo) {
+      try {
+        companyProfile = await db.collection("company_profiles").findOne({ 
+          userId: new ObjectId(req.user.userId) 
+        });
+        console.log("🏢 Company Profile geladen:", !!companyProfile);
+      } catch (profileError) {
+        console.error("⚠️ Fehler beim Laden des Company Profiles:", profileError);
+      }
     }
 
-    // HTML vorbereiten (nutze vorhandenes HTML oder generiere neu)
-    let htmlContent = contract.contentHTML;
+    // HTML vorbereiten - prüfe verschiedene Felder
+    let htmlContent = contract.htmlContent || contract.contentHTML;
+    
     if (!htmlContent) {
-      console.log("🔄 Kein HTML vorhanden, generiere neu...");
+      console.log("📄 Kein HTML vorhanden, generiere neu...");
       htmlContent = await formatContractToHTML(
         contract.content, 
         companyProfile, 
-        contract.contractType,
-        contract.designVariant || 'executive'
+        contract.contractType || contract.metadata?.contractType || 'vertrag',
+        contract.designVariant || contract.metadata?.designVariant || 'executive'
       );
     }
 
-    // Starte Puppeteer
+    // Stelle sicher, dass HTML-Content vorhanden ist
+    if (!htmlContent || htmlContent.length < 100) {
+      console.error("❌ HTML-Content ist leer oder zu kurz");
+      return res.status(500).json({ message: "HTML-Content konnte nicht generiert werden" });
+    }
+
+    // Puppeteer starten
     console.log("🚀 Starte Puppeteer Browser...");
     const browser = await puppeteer.launch({
       headless: true,
@@ -1704,59 +1797,69 @@ router.post("/pdf", verifyToken, async (req, res) => {
         '--disable-accelerated-2d-canvas',
         '--no-first-run',
         '--no-zygote',
+        '--single-process',
         '--disable-gpu'
       ]
     });
     
-    const page = await browser.newPage();
-    
-    // Setze Viewport für A4
-    await page.setViewport({
-      width: 794,
-      height: 1123,
-      deviceScaleFactor: 2
-    });
-    
-    // Lade HTML
-    console.log("📄 Lade HTML in Puppeteer...");
-    await page.setContent(htmlContent, { 
-      waitUntil: 'networkidle0' // Warte bis alles geladen ist
-    });
-    
-    // Warte kurz für Rendering
-    await page.waitForTimeout(500);
-    
-    // Generiere PDF
-    console.log("📄 Generiere PDF...");
-    const pdfBuffer = await page.pdf({
-      format: 'A4',
-      printBackground: true,
-      displayHeaderFooter: false,
-      margin: {
-        top: '10mm',
-        bottom: '10mm',
-        left: '10mm', 
-        right: '10mm'
-      },
-      preferCSSPageSize: false
-    });
-    
-    await browser.close();
-    console.log("✅ PDF erfolgreich generiert, Größe:", Math.round(pdfBuffer.length / 1024), "KB");
-    
-    // Sende PDF als Response
-    res.set({
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="${contract.name || 'Vertrag'}_${new Date().toISOString().split('T')[0]}.pdf"`,
-      'Content-Length': pdfBuffer.length
-    });
-    res.send(pdfBuffer);
+    try {
+      const page = await browser.newPage();
+      
+      // Setze Viewport für A4
+      await page.setViewport({
+        width: 794,
+        height: 1123,
+        deviceScaleFactor: 2
+      });
+      
+      // Lade HTML
+      console.log("📄 Lade HTML in Puppeteer (Länge:", htmlContent.length, "Zeichen)");
+      await page.setContent(htmlContent, { 
+        waitUntil: 'networkidle0',
+        timeout: 30000
+      });
+      
+      // Warte auf Rendering
+      await page.waitForTimeout(1500);
+      
+      // Generiere PDF
+      console.log("📄 Generiere PDF...");
+      const pdfBuffer = await page.pdf({
+        format: 'A4',
+        printBackground: true,
+        displayHeaderFooter: false,
+        margin: {
+          top: '10mm',
+          bottom: '10mm',
+          left: '10mm', 
+          right: '10mm'
+        },
+        preferCSSPageSize: false
+      });
+      
+      console.log("✅ PDF erfolgreich generiert, Größe:", Math.round(pdfBuffer.length / 1024), "KB");
+      
+      // Sende PDF als Response
+      res.set({
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="${contract.name || 'Vertrag'}_${new Date().toISOString().split('T')[0]}.pdf"`,
+        'Content-Length': pdfBuffer.length
+      });
+      
+      res.send(pdfBuffer);
+      
+    } finally {
+      await browser.close();
+      console.log("✅ Puppeteer Browser geschlossen");
+    }
     
   } catch (error) {
     console.error("❌ PDF Generation Error:", error);
+    console.error("Stack:", error.stack);
     res.status(500).json({ 
       message: "PDF-Generierung fehlgeschlagen",
-      error: error.message 
+      error: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 });
