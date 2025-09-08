@@ -1082,14 +1082,10 @@ export default function Generate() {
     }
   };
 
-  // 🚀 NEUE VERBESSERTE handleDownloadPDF MIT AUTOMATISCHEM SPEICHERN
+  // 🔴 FIX: VERBESSERTE handleDownloadPDF MIT KORREKTEM IMPORT UND KLEINER VERZÖGERUNG
   const handleDownloadPDF = async () => {
     try {
       console.log("🚀 Starte PDF Export...");
-      
-      // Dynamisch html2pdf laden
-      const html2pdfModule = await import('html2pdf.js');
-      const html2pdf = html2pdfModule.default || html2pdfModule;
       
       // Prüfe ob Contract ID vorhanden ist
       let contractId = savedContractId || localStorage.getItem('lastGeneratedContractId');
@@ -1133,6 +1129,9 @@ export default function Generate() {
             localStorage.setItem('lastGeneratedContractId', data.contractId);
             setSaved(true);
             console.log("✅ Vertrag automatisch gespeichert:", data.contractId);
+            
+            // 🔴 WICHTIG: Kleine Verzögerung damit MongoDB die Daten hat
+            await new Promise(resolve => setTimeout(resolve, 500));
           } else {
             console.warn("⚠️ Automatisches Speichern fehlgeschlagen:", data.error);
           }
@@ -1213,85 +1212,94 @@ export default function Generate() {
       // ✅ PRIORITÄT 2: Fallback zu html2pdf.js nur wenn Puppeteer nicht funktioniert
       console.log("⚠️ Fallback zu html2pdf.js");
       
-      if (generatedHTML) {
-        console.log("🎨 Verwende HTML-Version für html2pdf.js Export");
+      // 🔴 FIX: Korrekter Import von html2pdf.js
+      try {
+        // Dynamisch html2pdf laden mit korrektem Import
+        const html2pdfModule = await import('html2pdf.js');
+        const html2pdf = html2pdfModule.default;
         
-        // Erstelle temporären Container
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = generatedHTML;
-        tempDiv.style.position = 'absolute';
-        tempDiv.style.left = '-9999px';
-        tempDiv.style.top = '0';
-        tempDiv.style.width = '210mm';
-        document.body.appendChild(tempDiv);
+        if (generatedHTML) {
+          console.log("🎨 Verwende HTML-Version für html2pdf.js Export");
+          
+          // Erstelle temporären Container
+          const tempDiv = document.createElement('div');
+          tempDiv.innerHTML = generatedHTML;
+          tempDiv.style.position = 'absolute';
+          tempDiv.style.left = '-9999px';
+          tempDiv.style.top = '0';
+          tempDiv.style.width = '210mm';
+          document.body.appendChild(tempDiv);
 
-        const opt = {
-          margin: [15, 10, 15, 10],
-          filename: `${contractData.contractType || 'vertrag'}_${new Date().toLocaleDateString('de-DE').replace(/\./g, '-')}.pdf`,
-          image: { 
-            type: 'jpeg', 
-            quality: 0.98 
-          },
-          html2canvas: { 
-            scale: 2,
-            useCORS: true,
-            letterRendering: true,
-            logging: false,
-            width: tempDiv.scrollWidth,
-            height: tempDiv.scrollHeight
-          },
-          jsPDF: { 
-            unit: 'mm', 
-            format: 'a4', 
-            orientation: 'portrait',
-            compress: true
-          },
-          pagebreak: { 
-            mode: ['avoid-all', 'css'],
-            before: '.page-break-before',
-            after: '.page-break-after'
-          }
-        };
+          const opt = {
+            margin: [15, 10, 15, 10],
+            filename: `${contractData.contractType || 'vertrag'}_${new Date().toLocaleDateString('de-DE').replace(/\./g, '-')}.pdf`,
+            image: { 
+              type: 'jpeg', 
+              quality: 0.98 
+            },
+            html2canvas: { 
+              scale: 2,
+              useCORS: true,
+              letterRendering: true,
+              logging: false,
+              width: tempDiv.scrollWidth,
+              height: tempDiv.scrollHeight
+            },
+            jsPDF: { 
+              unit: 'mm', 
+              format: 'a4', 
+              orientation: 'portrait',
+              compress: true
+            },
+            pagebreak: { 
+              mode: ['avoid-all', 'css'],
+              before: '.page-break-before',
+              after: '.page-break-after'
+            }
+          };
 
-        // @ts-expect-error - html2pdf type definitions are incomplete
-        await html2pdf.set(opt).from(tempDiv).save();
-        
-        document.body.removeChild(tempDiv);
-        
-        console.log("✅ PDF mit html2pdf.js generiert");
-        
-      } else if (contractText) {
-        // ✅ PRIORITÄT 3: Text-Fallback
-        console.log("📄 Text-Fallback für PDF Export");
-        
-        const element = document.createElement('div');
-        element.innerHTML = `
-          <div style="font-family: Arial, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto;">
-            <h1 style="color: #1e3a8a; border-bottom: 2px solid #1e3a8a; padding-bottom: 10px;">
-              ${contractData.contractType || 'Vertrag'}
-            </h1>
-            <div style="margin-top: 30px; line-height: 1.6; white-space: pre-wrap;">
-              ${contractText}
+          await html2pdf().set(opt).from(tempDiv).save();
+          
+          document.body.removeChild(tempDiv);
+          
+          console.log("✅ PDF mit html2pdf.js generiert");
+          toast.success("✅ PDF wurde erstellt!");
+          
+        } else if (contractText) {
+          // ✅ PRIORITÄT 3: Text-Fallback
+          console.log("📄 Text-Fallback für PDF Export");
+          
+          const element = document.createElement('div');
+          element.innerHTML = `
+            <div style="font-family: Arial, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto;">
+              <h1 style="color: #1e3a8a; border-bottom: 2px solid #1e3a8a; padding-bottom: 10px;">
+                ${contractData.contractType || 'Vertrag'}
+              </h1>
+              <div style="margin-top: 30px; line-height: 1.6; white-space: pre-wrap;">
+                ${contractText}
+              </div>
             </div>
-          </div>
-        `;
-        
-        const opt = {
-          margin: 1,
-          filename: `${contractData.contractType || 'vertrag'}_${new Date().toLocaleDateString('de-DE').replace(/\./g, '-')}_basic.pdf`,
-          image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2 },
-          jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
-        };
-        
-        // @ts-expect-error - html2pdf type definitions are incomplete
-        await html2pdf.set(opt).from(element).save();
-        
-        toast.info("💡 PDF wurde erstellt!", {
-          autoClose: 3000
-        });
-      } else {
-        toast.error("❌ Kein Vertrag zum Exportieren vorhanden");
+          `;
+          
+          const opt = {
+            margin: 1,
+            filename: `${contractData.contractType || 'vertrag'}_${new Date().toLocaleDateString('de-DE').replace(/\./g, '-')}_basic.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+          };
+          
+          await html2pdf().set(opt).from(element).save();
+          
+          toast.info("💡 PDF wurde erstellt!", {
+            autoClose: 3000
+          });
+        } else {
+          toast.error("❌ Kein Vertrag zum Exportieren vorhanden");
+        }
+      } catch (html2pdfError) {
+        console.error("❌ Fehler beim html2pdf Import/Export:", html2pdfError);
+        toast.error("❌ PDF-Export fehlgeschlagen. Bitte versuchen Sie es erneut.");
       }
       
     } catch (error) {
