@@ -1206,8 +1206,8 @@ export default function Generate() {
           }
         };
 
-        // @ts-expect-error
-        await html2pdf().set(opt).from(tempDiv).save();
+        // @ts-expect-error - html2pdf type definitions are incomplete
+        await html2pdf().set(opt).from(element).save();
         
         document.body.removeChild(tempDiv);
         
@@ -1243,7 +1243,7 @@ export default function Generate() {
           jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
         };
         
-        // @ts-expect-error
+        // @ts-expect-error - html2pdf type definitions are incomplete
         await html2pdf().set(opt).from(element).save();
         
         toast.info("💡 Speichern Sie den Vertrag für bessere PDF-Qualität!", {
