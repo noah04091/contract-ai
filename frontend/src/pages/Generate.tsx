@@ -79,9 +79,6 @@ interface ContractTemplate {
   isPremium?: boolean;
 }
 
-// HTML2PDF Types
-type Html2PdfOptions = any;
-
 // 🎯 ERWEITERTE VERTRAGSTYPEN - JETZT MIT ALLEN WICHTIGEN TYPEN
 const CONTRACT_TYPES: ContractType[] = [
   // BESTEHENDE VERTRÄGE
@@ -628,7 +625,7 @@ export default function Generate() {
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedType, setSelectedType] = useState<ContractType | null>(null);
   const [formData, setFormData] = useState<FormDataType>({});
-  const [generated, setGenerated] = useState<string>("");
+  const [contractText, setContractText] = useState<string>(""); // 📴 RENAMED von generated
   const [generatedHTML, setGeneratedHTML] = useState<string>(""); // 📴 NEU: HTML-Version für professionelle PDFs
   const [loading, setLoading] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);
@@ -645,6 +642,13 @@ export default function Generate() {
   
   // Design Variant State 
   const [selectedDesignVariant, setSelectedDesignVariant] = useState<string>('executive');
+
+  // Contract Data State
+  const [contractData, setContractData] = useState<any>({
+    contractType: '',
+    parties: {},
+    contractDetails: {}
+  });
 
   // Refs
   const contractRef = useRef<HTMLDivElement>(null);
@@ -682,9 +686,9 @@ export default function Generate() {
     }
   };
 
-  // 🆕 Template Selection Handler
+  // 🆕 Template Selection Handler - FIX für TypeScript Fehler #1
   const handleTemplateSelect = (template: ContractTemplate) => {
-    setFormData(prev => ({
+    setFormData((prev: FormDataType) => ({
       ...prev,
       ...template.prefilled,
       title: `${template.name} - ${new Date().toLocaleDateString()}`
@@ -865,8 +869,15 @@ export default function Generate() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  // FIX für TypeScript Fehler #2
   const handleTypeSelect = (type: ContractType) => {
     setSelectedType(type);
+    setContractData((prev: any) => ({
+      ...prev,
+      contractType: type.name,
+      parties: formData,
+      contractDetails: formData
+    }));
     const initialData: FormDataType = { title: `${type.name} - ${new Date().toLocaleDateString()}` };
     
     // Auto-fill company data if profile is active
@@ -922,7 +933,7 @@ export default function Generate() {
         return selectedType.fields.filter(f => f.required).every(field => 
           formData[field.name] && formData[field.name]!.trim() !== ''
         );
-      case 3: return generated !== "";
+      case 3: return contractText !== "";
       default: return false;
     }
   };
@@ -932,7 +943,7 @@ export default function Generate() {
     if (!selectedType || !isPremium) return;
 
     setLoading(true);
-    setGenerated("");
+    setContractText("");
     setGeneratedHTML(""); // 📴 NEU: HTML zurücksetzen
     setCopied(false);
     setSaved(false);
@@ -954,8 +965,17 @@ export default function Generate() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || "Fehler bei der Generierung.");
       
-      setGenerated(data.contractText);
+      setContractText(data.contractText);
       setGeneratedHTML(data.contractHTML || ""); // 📴 NEU: HTML speichern wenn vorhanden
+      
+      // Update contractData with generated info
+      setContractData((prev: any) => ({
+        ...prev,
+        contractType: selectedType.name,
+        parties: formData,
+        contractDetails: formData
+      }));
+      
       setCurrentStep(3);
       setShowPreview(true);
       
@@ -975,7 +995,7 @@ export default function Generate() {
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(generated);
+      await navigator.clipboard.writeText(contractText);
       setCopied(true);
       toast.success("📋 Vertrag erfolgreich kopiert!");
       setTimeout(() => setCopied(false), 2000);
@@ -987,102 +1007,255 @@ export default function Generate() {
   // ✅ FIX 1: VERBESSERTE handleSave FUNKTION OHNE AUTOMATISCHEN REDIRECT
   const handleSave = async () => {
     try {
-      // Prüfe ob Contract schon gespeichert wurde
-      if (savedContractId) {
-        toast.success("✅ Vertrag wurde bereits gespeichert!");
-        return;
-      }
-
-      // Validierung
-      if (!generated) {
-        toast.error("Bitte generieren Sie zuerst einen Vertrag!");
-        return;
-      }
-
-      if (!formData.title || formData.title.trim() === "") {
-        toast.error("Bitte geben Sie einen Titel ein!");
-        return;
-      }
-
       console.log("📤 Speichere Vertrag...");
       
-      // Speichere Vertrag
-      const res = await fetch("/api/contracts", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({
-          name: formData.title || "Generierter Vertrag",
-          content: generated, 
-          contentHTML: generatedHTML, // HTML-Version mitspeichern
-          status: "Aktiv",
-          laufzeit: "Generiert",
-          kuendigung: "Generiert",
-          expiryDate: "",
+          name: `${contractData.contractType || 'Vertrag'} - ${new Date().toLocaleDateString('de-DE')}`,
+          content: contractText || '',
+          htmlContent: generatedHTML || undefined,
           isGenerated: true,
-          contractType: selectedType?.id,
-          signature: signatureURL,
-          hasCompanyProfile: useCompanyProfile,
-          formData: formData,
-          designVariant: selectedDesignVariant
-        }),
+          metadata: {
+            contractType: contractData.contractType,
+            parties: contractData.parties,
+            contractDetails: contractData.contractDetails,
+            hasLogo: !!(useCompanyProfile && companyProfile?.logoUrl),
+            generatedAt: new Date().toISOString()
+          }
+        })
       });
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || "Speichern fehlgeschlagen.");
+      const data = await res.json();
+      
+      if (res.ok && data.contractId) {
+        console.log("✅ Vertrag gespeichert:", data);
+        
+        // WICHTIG: Setze savedContractId UND localStorage
+        setSavedContractId(data.contractId);
+        localStorage.setItem('lastGeneratedContractId', data.contractId);
+        setSaved(true);
+        
+        // 📴 FIX: Einfachere Toast-Lösung ohne id-Property
+        toast.success("✅ Vertrag erfolgreich gespeichert!", {
+          autoClose: 3000,
+          position: 'top-center',
+        });
+        
+        // Optional: Zeige Buttons als separate Info-Toast
+        setTimeout(() => {
+          toast.info(
+            <div className="flex gap-2">
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="px-2 py-1 bg-blue-600 text-white rounded text-xs"
+              >
+                Dashboard
+              </button>
+              <button
+                onClick={() => navigate(`/contracts/${data.contractId}`)}
+                className="px-2 py-1 bg-green-600 text-white rounded text-xs"
+              >
+                Ansehen
+              </button>
+            </div>,
+            {
+              autoClose: 5000,
+              position: 'top-center',
+              closeButton: true
+            }
+          );
+        }, 100);
+        
+        // KEIN automatischer Redirect!
+        
+      } else {
+        throw new Error(data.error || 'Speichern fehlgeschlagen');
       }
+    } catch (error) {
+      console.error("❌ Fehler beim Speichern:", error);
+      toast.error(`❌ Fehler beim Speichern: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`);
+    }
+  };
+
+  // 📴 HAUPTFIX: KORRIGIERTE handleDownloadPDF MIT PUPPETEER PRIORITÄT
+  const handleDownloadPDF = async () => {
+    try {
+      console.log("🚀 Starte PDF Export...");
       
-      const result = await res.json();
-      console.log("✅ Vertrag gespeichert:", result);
-      
-      // Speichere Contract ID für PDF-Download
-      if (result.contractId || result.contract?._id) {
-        const contractId = result.contractId || result.contract._id;
-        setSavedContractId(contractId);
-        localStorage.setItem('lastSavedContractId', contractId);
-      }
-      
-      setSaved(true);
-      
-      // ✅ KEIN AUTOMATISCHER REDIRECT MEHR!
-      // Stattdessen nur Toast mit optionalem Button
-      toast((t: any) => (
-        <div className="flex flex-col gap-2">
-          <span className="font-medium">✅ Vertrag erfolgreich gespeichert!</span>
-          <div className="flex gap-2">
-            <button
-              onClick={() => {
-                navigate('/dashboard');
-                toast.dismiss(t.id);
-              }}
-              className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-sm"
-            >
-              Zum Dashboard
-            </button>
-            <button
-              onClick={() => toast.dismiss(t.id)}
-              className="px-3 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition text-sm"
-            >
-              Hier bleiben
-            </button>
-          </div>
-        </div>
-      ), {
-        autoClose: 6000,
-        position: 'top-center',
-        style: {
-          background: '#fff',
-          padding: '16px',
-          borderRadius: '8px',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-        }
+      // Prüfe ob Contract ID vorhanden ist
+      const contractId = savedContractId || localStorage.getItem('lastGeneratedContractId');
+      console.log("📊 Contract ID Status:", { 
+        savedContractId, 
+        fromLocalStorage: localStorage.getItem('lastGeneratedContractId'), 
+        final: contractId 
       });
       
-    } catch (err) {
-      console.error("❌ Save error:", err);
-      const msg = err instanceof Error ? err.message : "Unbekannter Fehler";
-      toast.error("❌ Fehler beim Speichern: " + msg);
+      // ✅ PRIORITÄT 1: Nutze Puppeteer wenn Contract gespeichert wurde
+      if (contractId) {
+        console.log("🚀 Versuche Puppeteer PDF-Generierung mit Contract ID:", contractId);
+        
+        try {
+          const puppeteerUrl = `${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/generate/pdf`;
+          console.log("📊 Puppeteer URL:", puppeteerUrl);
+          
+          const response = await fetch(puppeteerUrl, {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+              contractId: contractId 
+            })
+          });
+
+          console.log("📊 Puppeteer Response:", {
+            status: response.status,
+            statusText: response.statusText,
+            contentType: response.headers.get('content-type')
+          });
+
+          if (response.ok) {
+            const contentType = response.headers.get('content-type');
+            
+            if (contentType && contentType.includes('application/pdf')) {
+              // PDF erfolgreich erhalten
+              const blob = await response.blob();
+              console.log("✅ PDF Blob erhalten:", blob.size, "bytes");
+              
+              const url = window.URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `${contractData.contractType || 'vertrag'}_${new Date().toLocaleDateString('de-DE').replace(/\./g, '-')}_professional.pdf`;
+              document.body.appendChild(a);
+              a.click();
+              window.URL.revokeObjectURL(url);
+              document.body.removeChild(a);
+              
+              toast.success("✅ Professionelles PDF mit Puppeteer generiert!");
+              console.log("✅ Puppeteer PDF erfolgreich heruntergeladen");
+              return; // WICHTIG: Beende hier, kein Fallback!
+            } else {
+              console.error("❌ Unerwarteter Content-Type von Puppeteer:", contentType);
+              const errorText = await response.text();
+              console.error("Response Body:", errorText);
+            }
+          } else {
+            const errorText = await response.text();
+            console.error("❌ Puppeteer Fehler:", response.status, errorText);
+            
+            try {
+              const errorJson = JSON.parse(errorText);
+              if (errorJson.error) {
+                toast.error(`Puppeteer-Fehler: ${errorJson.error}`);
+              }
+            } catch (e) {
+              // Nicht JSON
+            }
+          }
+        } catch (puppeteerError) {
+          console.error("❌ Netzwerkfehler bei Puppeteer:", puppeteerError);
+        }
+      }
+
+      // ✅ PRIORITÄT 2: Fallback zu html2pdf.js nur wenn Puppeteer nicht funktioniert
+      console.log("⚠️ Fallback zu html2pdf.js");
+      
+      if (generatedHTML) {
+        console.log("🎨 Verwende HTML-Version für html2pdf.js Export");
+        
+        // Erstelle temporären Container
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = generatedHTML;
+        tempDiv.style.position = 'absolute';
+        tempDiv.style.left = '-9999px';
+        tempDiv.style.top = '0';
+        tempDiv.style.width = '210mm';
+        document.body.appendChild(tempDiv);
+
+        const opt = {
+          margin: [15, 10, 15, 10],
+          filename: `${contractData.contractType || 'vertrag'}_${new Date().toLocaleDateString('de-DE').replace(/\./g, '-')}.pdf`,
+          image: { 
+            type: 'jpeg', 
+            quality: 0.98 
+          },
+          html2canvas: { 
+            scale: 2,
+            useCORS: true,
+            letterRendering: true,
+            logging: false,
+            width: tempDiv.scrollWidth,
+            height: tempDiv.scrollHeight
+          },
+          jsPDF: { 
+            unit: 'mm', 
+            format: 'a4', 
+            orientation: 'portrait',
+            compress: true
+          },
+          pagebreak: { 
+            mode: ['avoid-all', 'css'],
+            before: '.page-break-before',
+            after: '.page-break-after'
+          }
+        };
+
+        // @ts-ignore
+        await html2pdf().set(opt).from(tempDiv).save();
+        
+        document.body.removeChild(tempDiv);
+        
+        if (!contractId) {
+          toast.info("💡 Tipp: Speichern Sie den Vertrag für professionelle PDF-Qualität mit Logo!", {
+            autoClose: 5000 // FIX: autoClose statt duration
+          });
+        }
+        
+        console.log("✅ PDF mit html2pdf.js generiert");
+        
+      } else if (contractText) {
+        // ✅ PRIORITÄT 3: Text-Fallback
+        console.log("📄 Text-Fallback für PDF Export");
+        
+        const element = document.createElement('div');
+        element.innerHTML = `
+          <div style="font-family: Arial, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto;">
+            <h1 style="color: #1e3a8a; border-bottom: 2px solid #1e3a8a; padding-bottom: 10px;">
+              ${contractData.contractType || 'Vertrag'}
+            </h1>
+            <div style="margin-top: 30px; line-height: 1.6; white-space: pre-wrap;">
+              ${contractText}
+            </div>
+          </div>
+        `;
+        
+        const opt = {
+          margin: 1,
+          filename: `${contractData.contractType || 'vertrag'}_${new Date().toLocaleDateString('de-DE').replace(/\./g, '-')}_basic.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2 },
+          jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+        };
+        
+        // @ts-ignore
+        await html2pdf().set(opt).from(element).save();
+        
+        toast.info("💡 Speichern Sie den Vertrag für bessere PDF-Qualität!", {
+          autoClose: 5000 // FIX: autoClose statt duration
+        });
+      } else {
+        toast.error("❌ Kein Vertrag zum Exportieren vorhanden");
+      }
+      
+    } catch (error) {
+      console.error("❌ Fehler beim PDF-Export:", error);
+      toast.error(`❌ PDF-Export fehlgeschlagen: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`);
     }
   };
 
@@ -1119,179 +1292,6 @@ export default function Generate() {
     }
   };
 
-  // ✅ FIX 2: VERBESSERTE handleDownloadPDF MIT PUPPETEER-ROUTE
-  const handleDownloadPDF = async () => {
-    try {
-      console.log("🚀 Starte PDF Export...");
-      
-      // Contract ID prüfen (aus State oder localStorage)
-      const contractId = savedContractId || localStorage.getItem('lastSavedContractId');
-      
-      // ✅ PRIORITÄT 1: Nutze Puppeteer wenn Contract ID vorhanden
-      if (contractId) {
-        console.log("📄 Nutze Puppeteer für professionelle PDF-Generierung");
-        
-        try {
-          // Rufe Puppeteer-Route auf
-          const response = await fetch('/api/contracts/generate/pdf', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify({ 
-              contractId: contractId
-            })
-          });
-          
-          if (response.ok) {
-            // PDF erfolgreich generiert
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${formData.title || 'Vertrag'}_${new Date().toISOString().split('T')[0]}.pdf`;
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
-            
-            console.log("✅ PDF erfolgreich mit Puppeteer generiert!");
-            toast.success("✅ Professionelle PDF erstellt!");
-            return;
-          } else {
-            console.warn("⚠️ Puppeteer-Route fehlgeschlagen, nutze Fallback");
-          }
-        } catch (puppeteerError) {
-          console.warn("⚠️ Puppeteer nicht verfügbar:", puppeteerError);
-        }
-      }
-      
-      // ✅ PRIORITÄT 2: HTML-Version mit html2pdf.js wenn kein Puppeteer
-      if (generatedHTML) {
-        console.log("📄 Nutze html2pdf.js Fallback");
-        console.log("🎨 Verwende professionelle HTML-Version für PDF Export");
-        
-        // Erstelle temporäres div für HTML
-        const pdfContent = document.createElement('div');
-        pdfContent.innerHTML = generatedHTML;
-        pdfContent.style.position = 'absolute';
-        pdfContent.style.left = '-9999px';
-        pdfContent.style.top = '-9999px';
-        pdfContent.style.width = '210mm';
-        pdfContent.style.minHeight = '297mm';
-        pdfContent.style.padding = '10mm';
-        pdfContent.style.backgroundColor = 'white';
-        pdfContent.style.fontFamily = 'Arial, sans-serif';
-        
-        // Füge Unterschrift hinzu wenn vorhanden
-        if (signatureURL) {
-          const signatureHTML = `
-            <div style="margin-top: 50px; page-break-inside: avoid; padding-top: 20px; border-top: 1px solid #e5e7eb;">
-              <h3 style="font-size: 14pt; font-weight: bold; margin-bottom: 10px;">Digitale Unterschrift:</h3>
-              <img src="${signatureURL}" style="max-width: 200px; border: 1px solid #e5e7eb; border-radius: 4px; padding: 8px; background: white;" />
-              <p style="margin-top: 10px; font-size: 10pt; color: #666;">
-                Elektronisch unterschrieben am ${new Date().toLocaleString('de-DE', { 
-                  day: '2-digit',
-                  month: '2-digit',
-                  year: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit'
-                })}
-              </p>
-            </div>
-          `;
-          pdfContent.insertAdjacentHTML('beforeend', signatureHTML);
-        }
-        
-        document.body.appendChild(pdfContent);
-        
-        // PDF-Optionen
-        const html2pdfModule = await import("html2pdf.js") as any;
-        const html2pdf = html2pdfModule.default || html2pdfModule;
-        
-        const opt: Html2PdfOptions = {
-          margin: [10, 10, 10, 10],
-          filename: `${formData.title || 'Vertrag'}_${new Date().toISOString().split('T')[0]}.pdf`,
-          image: { 
-            type: 'jpeg', 
-            quality: 0.98 
-          },
-          html2canvas: { 
-            scale: 2,
-            useCORS: true,
-            logging: false,
-            letterRendering: true,
-            allowTaint: true,
-            backgroundColor: '#ffffff'
-          },
-          jsPDF: { 
-            unit: 'mm', 
-            format: 'a4', 
-            orientation: 'portrait',
-            compress: true 
-          },
-          pagebreak: { 
-            mode: ['avoid-all', 'css', 'legacy'],
-            before: '.page-break-before',
-            after: '.page-break-after',
-            avoid: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p']
-          }
-        };
-        
-        // Generiere PDF
-        await html2pdf().from(pdfContent).set(opt).save();
-        
-        // Cleanup
-        document.body.removeChild(pdfContent);
-        
-        console.log("✅ PDF erfolgreich generiert!");
-        toast.success("✅ PDF erfolgreich heruntergeladen!");
-        
-        // Hinweis für bessere Qualität
-        if (!contractId) {
-          toast.info("💡 Tipp: Speichern Sie den Vertrag für noch bessere PDF-Qualität!", {
-            autoClose: 5000
-          });
-        }
-        
-      } else if (generated) {
-        // ✅ PRIORITÄT 3: Fallback mit reinem Text
-        console.warn("⚠️ Keine HTML-Version vorhanden, nutze Text-Fallback");
-        
-        const element = document.createElement('div');
-        element.style.padding = '20mm';
-        element.style.fontFamily = 'Arial, sans-serif';
-        element.style.fontSize = '11pt';
-        element.style.lineHeight = '1.6';
-        element.style.whiteSpace = 'pre-wrap';
-        element.textContent = generated;
-        
-        const html2pdfModule = await import("html2pdf.js") as any;
-        const html2pdf = html2pdfModule.default || html2pdfModule;
-        
-        const opt = {
-          margin: [10, 10, 10, 10],
-          filename: `${formData.title || 'Vertrag'}_${new Date().toISOString().split('T')[0]}.pdf`,
-          image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2, logging: false },
-          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        };
-        
-        await html2pdf().from(element).set(opt).save();
-        
-        toast.success("✅ PDF heruntergeladen (Text-Version)");
-        toast.info("💡 Speichern Sie den Vertrag für professionelle PDF-Qualität!", {
-          autoClose: 5000
-        });
-      } else {
-        toast.error("❌ Kein Vertrag zum Exportieren vorhanden!");
-      }
-      
-    } catch (error) {
-      console.error("❌ PDF Export fehlgeschlagen:", error);
-      toast.error("Fehler beim PDF-Export: " + (error instanceof Error ? error.message : "Unbekannter Fehler"));
-    }
-  };
-
   const handleUpgradeClick = () => {
     navigate('/upgrade');
   };
@@ -1308,6 +1308,7 @@ export default function Generate() {
     );
   }
 
+  // FORTSETZUNG DER KOMPONENTE... (Rest des JSX bleibt gleich)
   return (
     <>
       <Helmet>
@@ -1651,7 +1652,7 @@ export default function Generate() {
                   </motion.div>
                 )}
 
-                {/* Step 3: Generated Contract (unchanged) */}
+                {/* Step 3: Generated Contract */}
                 {currentStep === 3 && (
                   <motion.div
                     key="step3"
@@ -1771,7 +1772,7 @@ export default function Generate() {
                         setCurrentStep(1);
                         setSelectedType(null);
                         setFormData({});
-                        setGenerated("");
+                        setContractText("");
                         setGeneratedHTML(""); // 📴 NEU: HTML zurücksetzen
                         setShowPreview(false);
                         setSignatureURL(null);
@@ -1790,7 +1791,7 @@ export default function Generate() {
 
             {/* Right Panel - Preview */}
             <AnimatePresence>
-              {showPreview && generated && (
+              {showPreview && contractText && (
                 <motion.div 
                   className={styles.previewPanel}
                   initial={{ opacity: 0, x: 20, width: 0 }}
@@ -1816,7 +1817,7 @@ export default function Generate() {
                       ref={contractRef}
                       className={styles.contractContent}
                       dangerouslySetInnerHTML={{ 
-                        __html: generated.replace(/\n/g, '<br/>') 
+                        __html: contractText.replace(/\n/g, '<br/>') 
                       }}
                     />
                     
