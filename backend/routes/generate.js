@@ -1245,7 +1245,7 @@ KÄUFER (verwende als Partei B):
 ${käufer}
 
 KAUFGEGENSTAND:
-${formData.item || "Gebrauchtes Kraftfahrzeug, Marke: [MARKE], Modell: [MODELL], Baujahr: [JAHR], Kilometerstand: [KM]"}
+${formData.item || "Gebrauchtes Kraftfahrzeug, Marke: Mercedes, Modell: E-Klasse, Baujahr: 2020, Kilometerstand: 45.000 km"}
 
 KAUFPREIS:
 ${formData.price || "15.000 EUR"}
@@ -1616,7 +1616,7 @@ Strukturiere den Vertrag professionell mit allen notwendigen rechtlichen Klausel
       userId: req.user.userId,
       name: formData.title,
       content: contractText,
-      contentHTML: formattedHTML, // NEU: HTML-Version speichern
+      contractHTML: formattedHTML, // 🔴 FIX 1: HTML direkt beim Speichern
       laufzeit: "Generiert",
       kuendigung: "Generiert", 
       expiryDate: "",
@@ -1630,6 +1630,15 @@ Strukturiere den Vertrag professionell mit allen notwendigen rechtlichen Klausel
     };
 
     const result = await contractsCollection.insertOne(contract);
+    
+    // 🔴 FIX 1 FORTSETZUNG: HTML auch in DB updaten für schnelleren PDF-Export
+    if (formattedHTML && result.insertedId) {
+      await contractsCollection.updateOne(
+        { _id: result.insertedId },
+        { $set: { contractHTML: formattedHTML } }
+      );
+      console.log("✅ HTML im Vertrag gespeichert für schnelleren PDF-Export");
+    }
 
     // CONTRACT ANALYTICS
     const logContractGeneration = (contract, user, companyProfile) => {
@@ -1674,7 +1683,7 @@ Strukturiere den Vertrag professionell mit allen notwendigen rechtlichen Klausel
   }
 });
 
-// 📴 KORRIGIERTE PUPPETEER PDF-ROUTE - MIT USERID FIX
+// 🔴 KORRIGIERTE PUPPETEER PDF-ROUTE - MIT USERID FIX UND PERFORMANCE-OPTIMIERUNGEN
 router.post("/pdf", verifyToken, async (req, res) => {
   const { contractId } = req.body;
   
@@ -1796,8 +1805,8 @@ router.post("/pdf", verifyToken, async (req, res) => {
       }
     }
 
-    // HTML vorbereiten - prüfe verschiedene Felder
-    let htmlContent = contract.htmlContent || contract.contentHTML;
+    // 🔴 FIX: HTML aus DB laden statt neu generieren
+    let htmlContent = contract.contractHTML || contract.htmlContent || contract.contentHTML;
     
     if (!htmlContent) {
       console.log("🔄 Kein HTML vorhanden, generiere neu...");
@@ -1807,6 +1816,15 @@ router.post("/pdf", verifyToken, async (req, res) => {
         contract.contractType || contract.metadata?.contractType || 'vertrag',
         contract.designVariant || contract.metadata?.designVariant || 'executive'
       );
+      
+      // HTML für nächstes Mal speichern
+      await contractsCollection.updateOne(
+        { _id: contract._id },
+        { $set: { contractHTML: htmlContent } }
+      );
+      console.log("✅ HTML für zukünftige Verwendung gespeichert");
+    } else {
+      console.log("✅ HTML aus Datenbank geladen (Cache-Hit)");
     }
 
     // Stelle sicher, dass HTML-Content vorhanden ist
@@ -1815,20 +1833,34 @@ router.post("/pdf", verifyToken, async (req, res) => {
       return res.status(500).json({ message: "HTML-Content konnte nicht generiert werden" });
     }
 
-    // Puppeteer starten - mit Render.com Kompatibilität
+    // 🔴 FIX 3: Puppeteer mit Performance-Optimierungen starten
     console.log("🚀 Starte Puppeteer Browser...");
     
     let browser;
     try {
-      // Konfiguration für Render.com
+      // Konfiguration für Render.com mit Performance-Optimierungen
       if (chromium) {
         // Produktion auf Render mit chrome-aws-lambda
         browser = await puppeteer.launch({
-          args: chromium.args,
+          args: [
+            ...chromium.args,
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-gpu',
+            '--no-zygote',
+            '--single-process', // 🔴 Schneller für Lambda
+            '--disable-web-security',
+            '--disable-features=VizDisplayCompositor',
+            '--disable-background-timer-throttling',
+            '--disable-backgrounding-occluded-windows',
+            '--disable-renderer-backgrounding'
+          ],
           defaultViewport: chromium.defaultViewport,
           executablePath: await chromium.executablePath(),
           headless: chromium.headless,
           ignoreHTTPSErrors: true,
+          timeout: 30000 // 30 Sekunden Timeout
         });
       } else {
         // Lokale Entwicklung mit normalem Puppeteer
@@ -1843,7 +1875,8 @@ router.post("/pdf", verifyToken, async (req, res) => {
             '--no-zygote',
             '--single-process',
             '--disable-gpu'
-          ]
+          ],
+          timeout: 30000
         });
       }
     } catch (launchError) {
