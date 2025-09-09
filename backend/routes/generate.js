@@ -6,7 +6,25 @@ const { MongoClient, ObjectId } = require("mongodb");
 const https = require("https");
 const http = require("http");
 const AWS = require("aws-sdk");
-const puppeteer = require("puppeteer"); // 🆕 PUPPETEER IMPORT
+
+// 🔴 KRITISCHER FIX #1: Puppeteer richtig importieren für Render.com
+let puppeteer;
+let chromium;
+
+try {
+  // Für Produktion auf Render
+  chromium = require('@sparticuz/chromium');
+  puppeteer = require('puppeteer-core');
+  console.log("✅ Verwende puppeteer-core mit @sparticuz/chromium für Render");
+} catch (error) {
+  // Für lokale Entwicklung
+  try {
+    puppeteer = require('puppeteer');
+    console.log("✅ Verwende normales puppeteer für lokale Entwicklung");
+  } catch (puppeteerError) {
+    console.error("⚠️ Weder puppeteer-core noch puppeteer verfügbar");
+  }
+}
 
 // ✅ S3 Setup für frische Logo-URLs
 const s3 = new AWS.S3({
@@ -1632,11 +1650,12 @@ Strukturiere den Vertrag professionell mit allen notwendigen rechtlichen Klausel
     // Analytics loggen
     logContractGeneration(contract, user, companyProfile);
 
+    // 🔴 KRITISCHER FIX #2: HTML in Response zurückgeben!
     res.json({
       message: "✅ Vertrag erfolgreich generiert & gespeichert.",
       contractId: result.insertedId,
       contractText: contractText,
-      contractHTML: formattedHTML, // NEU: HTML zurückgeben
+      contractHTML: formattedHTML, // 🔴 WICHTIG: HTML muss hier zurückgegeben werden!
       metadata: {
         contractType: type,
         hasCompanyProfile: !!companyProfile,
@@ -1781,7 +1800,7 @@ router.post("/pdf", verifyToken, async (req, res) => {
     let htmlContent = contract.htmlContent || contract.contentHTML;
     
     if (!htmlContent) {
-      console.log("📄 Kein HTML vorhanden, generiere neu...");
+      console.log("🔄 Kein HTML vorhanden, generiere neu...");
       htmlContent = await formatContractToHTML(
         contract.content, 
         companyProfile, 
@@ -1807,7 +1826,7 @@ router.post("/pdf", verifyToken, async (req, res) => {
         browser = await puppeteer.launch({
           args: chromium.args,
           defaultViewport: chromium.defaultViewport,
-          executablePath: await chromium.executablePath,
+          executablePath: await chromium.executablePath(),
           headless: chromium.headless,
           ignoreHTTPSErrors: true,
         });
