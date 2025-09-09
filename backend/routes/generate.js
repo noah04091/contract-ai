@@ -240,7 +240,7 @@ const optimizeLogoBase64 = (base64Logo, maxSizeKB = 100) => {
   }
 };
 
-// 🎨 PREMIUM HTML-FORMATIERUNG FÜR ABSOLUT PROFESSIONELLE VERTRÄGE
+// 🎨 PREMIUM HTML-FORMATIERUNG FÜR ABSOLUT PROFESSIONELLE VERTRÄGE - ERWEITERTE VERSION
 const formatContractToHTML = async (contractText, companyProfile, contractType, designVariant = 'executive') => {
   console.log("🚀 Starte PREMIUM HTML-Formatierung für:", contractType);
   console.log('🎨 Design-Variante:', designVariant);
@@ -257,7 +257,7 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
     }
   }
 
-  // 🎨 PREMIUM DESIGN-VARIANTEN mit modernen Farben und Effekten
+  // 🎨 PREMIUM DESIGN-VARIANTEN mit modernen Farben und Effekten - ERWEITERT
   const designVariants = {
     executive: {
       primary: '#0F172A',      // Sehr dunkles Blau-Grau
@@ -268,7 +268,15 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
       gradient: 'linear-gradient(135deg, #0F172A 0%, #1E40AF 50%, #3B82F6 100%)',
       headerGradient: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
       shadow: '0 20px 60px rgba(15, 23, 42, 0.15)',
-      borderRadius: '12px'
+      borderRadius: '12px',
+      // Executive-spezifische Eigenschaften
+      fontMain: 'Georgia, "Times New Roman", serif',
+      fontHeading: '"Playfair Display", Georgia, serif',
+      letterSpacing: '0.5px',
+      headerHeight: '180px',
+      sectionNumberSize: '36px',
+      useSerif: true,
+      formalTone: true
     },
     modern: {
       primary: '#059669',      // Smaragdgrün
@@ -279,7 +287,15 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
       gradient: 'linear-gradient(135deg, #059669 0%, #10B981 50%, #34D399 100%)',
       headerGradient: 'linear-gradient(135deg, #047857 0%, #059669 100%)',
       shadow: '0 20px 60px rgba(5, 150, 105, 0.15)',
-      borderRadius: '16px'
+      borderRadius: '16px',
+      // Modern-spezifische Eigenschaften
+      fontMain: '"Inter", "Helvetica Neue", Arial, sans-serif',
+      fontHeading: '"Montserrat", "Helvetica Neue", sans-serif',
+      letterSpacing: '0px',
+      headerHeight: '160px',
+      sectionNumberSize: '32px',
+      useSerif: false,
+      formalTone: false
     },
     minimal: {
       primary: '#18181B',      // Fast Schwarz
@@ -290,7 +306,15 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
       gradient: 'linear-gradient(135deg, #18181B 0%, #52525B 100%)',
       headerGradient: 'linear-gradient(135deg, #18181B 0%, #27272A 100%)',
       shadow: '0 10px 30px rgba(24, 24, 27, 0.08)',
-      borderRadius: '8px'
+      borderRadius: '8px',
+      // Minimal-spezifische Eigenschaften
+      fontMain: '"Helvetica Neue", Arial, sans-serif',
+      fontHeading: '"Helvetica Neue", Arial, sans-serif',
+      letterSpacing: '-0.5px',
+      headerHeight: '120px',
+      sectionNumberSize: '28px',
+      useSerif: false,
+      formalTone: true
     }
   };
 
@@ -318,81 +342,179 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
         !trimmedLine.startsWith('§') &&
         !trimmedLine.includes('HRB') &&
         !['PRÄAMBEL', 'ZWISCHEN', 'UND'].includes(trimmedLine)) {
-      htmlContent += `
-        <div style="
-          margin: 60px 0 50px 0;
-          text-align: center;
-          position: relative;
-          page-break-after: avoid;
-        ">
+      
+      if (designVariant === 'executive') {
+        htmlContent += `
           <div style="
-            position: absolute;
-            top: -30px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100px;
-            height: 3px;
-            background: ${theme.gradient};
-            border-radius: 2px;
-          "></div>
-          <h1 style="
-            font-size: 32pt;
-            font-weight: 900;
-            color: ${theme.primary};
-            letter-spacing: 8px;
-            text-transform: uppercase;
-            margin: 0;
-            padding: 30px 0;
-            background: linear-gradient(135deg, ${theme.primary} 0%, ${theme.secondary} 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-          ">${trimmedLine}</h1>
+            margin: 60px 0 50px 0;
+            text-align: center;
+            position: relative;
+            page-break-after: avoid;
+          ">
+            <div style="
+              position: absolute;
+              top: -30px;
+              left: 50%;
+              transform: translateX(-50%);
+              width: 100px;
+              height: 3px;
+              background: ${theme.gradient};
+              border-radius: 2px;
+            "></div>
+            <h1 style="
+              font-family: ${theme.fontHeading};
+              font-size: 32pt;
+              font-weight: 900;
+              color: ${theme.primary};
+              letter-spacing: 8px;
+              text-transform: uppercase;
+              margin: 0;
+              padding: 30px 0;
+              background: linear-gradient(135deg, ${theme.primary} 0%, ${theme.secondary} 100%);
+              -webkit-background-clip: text;
+              -webkit-text-fill-color: transparent;
+              background-clip: text;
+              text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            ">${trimmedLine}</h1>
+            <div style="
+              margin: 20px auto 0;
+              width: 200px;
+              height: 2px;
+              background: ${theme.gradient};
+              border-radius: 1px;
+            "></div>
+          </div>
+        `;
+      } else if (designVariant === 'modern') {
+        htmlContent += `
           <div style="
-            margin: 20px auto 0;
-            width: 200px;
-            height: 2px;
-            background: ${theme.gradient};
-            border-radius: 1px;
-          "></div>
-        </div>
-      `;
+            margin: 50px 0 40px 0;
+            text-align: center;
+            position: relative;
+          ">
+            <div style="
+              display: inline-block;
+              padding: 20px 60px;
+              background: ${theme.gradient};
+              border-radius: ${theme.borderRadius};
+              box-shadow: ${theme.shadow};
+            ">
+              <h1 style="
+                font-family: ${theme.fontHeading};
+                font-size: 28pt;
+                font-weight: 800;
+                color: white;
+                letter-spacing: 4px;
+                text-transform: uppercase;
+                margin: 0;
+                text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+              ">${trimmedLine}</h1>
+            </div>
+          </div>
+        `;
+      } else { // minimal
+        htmlContent += `
+          <div style="
+            margin: 40px 0;
+            text-align: center;
+            border-top: 1px solid ${theme.primary};
+            border-bottom: 1px solid ${theme.primary};
+            padding: 20px 0;
+          ">
+            <h1 style="
+              font-family: ${theme.fontHeading};
+              font-size: 24pt;
+              font-weight: 400;
+              color: ${theme.primary};
+              letter-spacing: 12px;
+              text-transform: uppercase;
+              margin: 0;
+            ">${trimmedLine}</h1>
+          </div>
+        `;
+      }
     }
     // HANDELSREGISTER - Elegantes Info-Box Design
     else if (trimmedLine.includes('HRB')) {
-      htmlContent += `
-        <div style="
-          margin: 30px 0;
-          padding: 25px;
-          background: linear-gradient(135deg, ${theme.light} 0%, white 100%);
-          border-left: 4px solid ${theme.secondary};
-          border-radius: ${theme.borderRadius};
-          box-shadow: ${theme.shadow};
-          position: relative;
-          overflow: hidden;
-        ">
+      if (designVariant === 'executive') {
+        htmlContent += `
           <div style="
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 100px;
-            height: 100px;
-            background: ${theme.gradient};
-            opacity: 0.05;
-            border-radius: 50%;
-            transform: translate(30px, -30px);
-          "></div>
-          <p style="
-            font-size: 14pt;
-            font-weight: 600;
-            color: ${theme.primary};
-            margin: 0;
+            margin: 30px 0;
+            padding: 25px;
+            background: linear-gradient(135deg, ${theme.light} 0%, white 100%);
+            border-left: 4px solid ${theme.secondary};
+            border-radius: ${theme.borderRadius};
+            box-shadow: ${theme.shadow};
             position: relative;
-            z-index: 1;
-          ">${trimmedLine}</p>
-        </div>
-      `;
+            overflow: hidden;
+          ">
+            <div style="
+              position: absolute;
+              top: 0;
+              right: 0;
+              width: 100px;
+              height: 100px;
+              background: ${theme.gradient};
+              opacity: 0.05;
+              border-radius: 50%;
+              transform: translate(30px, -30px);
+            "></div>
+            <p style="
+              font-family: ${theme.fontMain};
+              font-size: 14pt;
+              font-weight: 600;
+              color: ${theme.primary};
+              margin: 0;
+              position: relative;
+              z-index: 1;
+            ">${trimmedLine}</p>
+          </div>
+        `;
+      } else if (designVariant === 'modern') {
+        htmlContent += `
+          <div style="
+            margin: 25px 0;
+            padding: 20px;
+            background: ${theme.light};
+            border: 2px solid ${theme.accent};
+            border-radius: ${theme.borderRadius};
+            position: relative;
+          ">
+            <span style="
+              position: absolute;
+              top: -10px;
+              left: 20px;
+              background: white;
+              padding: 0 10px;
+              color: ${theme.primary};
+              font-size: 10pt;
+              font-weight: 600;
+            ">HANDELSREGISTER</span>
+            <p style="
+              font-family: ${theme.fontMain};
+              font-size: 13pt;
+              font-weight: 500;
+              color: ${theme.text};
+              margin: 0;
+            ">${trimmedLine}</p>
+          </div>
+        `;
+      } else { // minimal
+        htmlContent += `
+          <div style="
+            margin: 20px 0;
+            padding: 15px 0;
+            border-bottom: 1px solid ${theme.secondary};
+          ">
+            <p style="
+              font-family: ${theme.fontMain};
+              font-size: 12pt;
+              color: ${theme.text};
+              margin: 0;
+            ">${trimmedLine}</p>
+          </div>
+        `;
+      }
     }
     // PARAGRAPH-ÜBERSCHRIFTEN - Modernes Card-Design
     else if (trimmedLine.startsWith('§')) {
@@ -401,225 +523,542 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
         htmlContent += '</div></div>';
       }
       currentSection = trimmedLine;
-      htmlContent += `
-        <div style="
-          margin: 40px 0;
-          page-break-inside: avoid;
-          position: relative;
-        ">
+      
+      if (designVariant === 'executive') {
+        htmlContent += `
           <div style="
-            background: white;
-            border-radius: ${theme.borderRadius};
-            box-shadow: ${theme.shadow};
-            overflow: hidden;
-            border: 1px solid rgba(0,0,0,0.05);
+            margin: 40px 0;
+            page-break-inside: avoid;
+            position: relative;
           ">
             <div style="
-              background: ${theme.headerGradient};
-              color: white;
-              padding: 20px 30px;
-              position: relative;
+              background: white;
+              border-radius: ${theme.borderRadius};
+              box-shadow: ${theme.shadow};
               overflow: hidden;
+              border: 1px solid rgba(0,0,0,0.05);
             ">
               <div style="
-                position: absolute;
-                top: 50%;
-                right: 30px;
-                transform: translateY(-50%);
-                font-size: 60pt;
-                font-weight: 900;
-                opacity: 0.1;
+                background: ${theme.headerGradient};
                 color: white;
+                padding: 20px 30px;
+                position: relative;
+                overflow: hidden;
+              ">
+                <div style="
+                  position: absolute;
+                  top: 50%;
+                  right: 30px;
+                  transform: translateY(-50%);
+                  font-size: 60pt;
+                  font-weight: 900;
+                  opacity: 0.1;
+                  color: white;
+                ">${sectionCounter}</div>
+                <h2 style="
+                  font-family: ${theme.fontHeading};
+                  font-size: 16pt;
+                  font-weight: 700;
+                  margin: 0;
+                  letter-spacing: 2px;
+                  text-transform: uppercase;
+                  position: relative;
+                  z-index: 1;
+                ">${trimmedLine}</h2>
+              </div>
+              <div style="padding: 25px 30px;">
+        `;
+      } else if (designVariant === 'modern') {
+        htmlContent += `
+          <div style="
+            margin: 35px 0;
+            page-break-inside: avoid;
+          ">
+            <div style="
+              display: flex;
+              align-items: center;
+              margin-bottom: 20px;
+            ">
+              <div style="
+                width: ${theme.sectionNumberSize};
+                height: ${theme.sectionNumberSize};
+                background: ${theme.gradient};
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-weight: 700;
+                font-size: 16pt;
+                margin-right: 15px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.1);
               ">${sectionCounter}</div>
               <h2 style="
-                font-size: 16pt;
+                font-family: ${theme.fontHeading};
+                font-size: 15pt;
                 font-weight: 700;
+                color: ${theme.primary};
                 margin: 0;
-                letter-spacing: 2px;
+                letter-spacing: 1px;
                 text-transform: uppercase;
-                position: relative;
-                z-index: 1;
               ">${trimmedLine}</h2>
             </div>
-            <div style="padding: 25px 30px;">
-      `;
+            <div style="
+              padding-left: calc(${theme.sectionNumberSize} + 15px);
+            ">
+        `;
+      } else { // minimal
+        htmlContent += `
+          <div style="
+            margin: 30px 0;
+            page-break-inside: avoid;
+          ">
+            <div style="
+              display: flex;
+              align-items: baseline;
+              margin-bottom: 15px;
+              padding-bottom: 10px;
+              border-bottom: 1px solid ${theme.secondary};
+            ">
+              <span style="
+                font-family: ${theme.fontMain};
+                font-size: 14pt;
+                font-weight: 300;
+                color: ${theme.secondary};
+                margin-right: 15px;
+              ">${sectionCounter.toString().padStart(2, '0')}</span>
+              <h2 style="
+                font-family: ${theme.fontHeading};
+                font-size: 14pt;
+                font-weight: 400;
+                color: ${theme.primary};
+                margin: 0;
+                text-transform: uppercase;
+                letter-spacing: 2px;
+              ">${trimmedLine}</h2>
+            </div>
+            <div style="padding-left: 40px;">
+        `;
+      }
     }
     // PRÄAMBEL - Eleganter Intro-Bereich
     else if (trimmedLine === 'PRÄAMBEL') {
-      htmlContent += `
-        <div style="
-          margin: 50px 0 30px 0;
-          text-align: center;
-          position: relative;
-        ">
-          <h3 style="
-            font-size: 18pt;
-            font-weight: 700;
-            color: ${theme.primary};
-            letter-spacing: 4px;
-            text-transform: uppercase;
+      if (designVariant === 'executive') {
+        htmlContent += `
+          <div style="
+            margin: 50px 0 30px 0;
+            text-align: center;
             position: relative;
-            display: inline-block;
-            padding: 0 40px;
           ">
-            <span style="
-              position: absolute;
-              left: 0;
-              top: 50%;
-              transform: translateY(-50%);
-              width: 30px;
-              height: 2px;
-              background: ${theme.gradient};
-            "></span>
-            ${trimmedLine}
-            <span style="
-              position: absolute;
-              right: 0;
-              top: 50%;
-              transform: translateY(-50%);
-              width: 30px;
-              height: 2px;
-              background: ${theme.gradient};
-            "></span>
-          </h3>
-        </div>
-      `;
+            <h3 style="
+              font-family: ${theme.fontHeading};
+              font-size: 18pt;
+              font-weight: 700;
+              color: ${theme.primary};
+              letter-spacing: 4px;
+              text-transform: uppercase;
+              position: relative;
+              display: inline-block;
+              padding: 0 40px;
+            ">
+              <span style="
+                position: absolute;
+                left: 0;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 30px;
+                height: 2px;
+                background: ${theme.gradient};
+              "></span>
+              ${trimmedLine}
+              <span style="
+                position: absolute;
+                right: 0;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 30px;
+                height: 2px;
+                background: ${theme.gradient};
+              "></span>
+            </h3>
+          </div>
+        `;
+      } else if (designVariant === 'modern') {
+        htmlContent += `
+          <div style="
+            margin: 40px 0 25px 0;
+            text-align: center;
+          ">
+            <div style="
+              display: inline-block;
+              padding: 10px 30px;
+              background: ${theme.light};
+              border-radius: 30px;
+              border: 2px solid ${theme.accent};
+            ">
+              <h3 style="
+                font-family: ${theme.fontHeading};
+                font-size: 16pt;
+                font-weight: 600;
+                color: ${theme.primary};
+                letter-spacing: 3px;
+                text-transform: uppercase;
+                margin: 0;
+              ">${trimmedLine}</h3>
+            </div>
+          </div>
+        `;
+      } else { // minimal
+        htmlContent += `
+          <div style="
+            margin: 35px 0 20px 0;
+            text-align: center;
+          ">
+            <h3 style="
+              font-family: ${theme.fontHeading};
+              font-size: 14pt;
+              font-weight: 300;
+              color: ${theme.primary};
+              letter-spacing: 6px;
+              text-transform: uppercase;
+              margin: 0;
+            ">${trimmedLine}</h3>
+          </div>
+        `;
+      }
     }
     // ZWISCHEN - Elegante Verbindung
     else if (trimmedLine.toLowerCase() === 'zwischen') {
-      htmlContent += `
-        <p style="
-          text-align: center;
-          margin: 40px 0 30px 0;
-          font-size: 14pt;
-          color: ${theme.secondary};
-          font-style: italic;
-          font-weight: 500;
-          letter-spacing: 2px;
-        ">${trimmedLine}</p>
-      `;
+      if (designVariant === 'executive') {
+        htmlContent += `
+          <p style="
+            text-align: center;
+            margin: 40px 0 30px 0;
+            font-family: ${theme.fontMain};
+            font-size: 14pt;
+            color: ${theme.secondary};
+            font-style: italic;
+            font-weight: 500;
+            letter-spacing: 2px;
+          ">${trimmedLine}</p>
+        `;
+      } else if (designVariant === 'modern') {
+        htmlContent += `
+          <p style="
+            text-align: center;
+            margin: 35px 0 25px 0;
+            font-family: ${theme.fontMain};
+            font-size: 13pt;
+            color: ${theme.primary};
+            font-weight: 600;
+            text-transform: lowercase;
+            letter-spacing: 3px;
+          ">${trimmedLine}</p>
+        `;
+      } else { // minimal
+        htmlContent += `
+          <p style="
+            text-align: center;
+            margin: 30px 0 20px 0;
+            font-family: ${theme.fontMain};
+            font-size: 12pt;
+            color: ${theme.text};
+            font-style: italic;
+          ">${trimmedLine}</p>
+        `;
+      }
     }
     // PARTEIEN-BEZEICHNUNG (nachfolgend genannt)
     else if (trimmedLine.includes('nachfolgend') && trimmedLine.includes('genannt')) {
-      htmlContent += `
-        <div style="
-          text-align: center;
-          margin: 15px 0 35px 0;
-          padding: 12px 20px;
-          background: linear-gradient(90deg, transparent, ${theme.light}, transparent);
-          border-radius: 30px;
-          display: inline-block;
-          width: 100%;
-        ">
+      if (designVariant === 'executive') {
+        htmlContent += `
+          <div style="
+            text-align: center;
+            margin: 15px 0 35px 0;
+            padding: 12px 20px;
+            background: linear-gradient(90deg, transparent, ${theme.light}, transparent);
+            border-radius: 30px;
+            display: inline-block;
+            width: 100%;
+          ">
+            <p style="
+              margin: 0;
+              font-family: ${theme.fontMain};
+              font-style: italic;
+              color: ${theme.secondary};
+              font-size: 11pt;
+              font-weight: 500;
+            ">${trimmedLine}</p>
+          </div>
+        `;
+      } else if (designVariant === 'modern') {
+        htmlContent += `
+          <div style="
+            text-align: center;
+            margin: 10px 0 30px 0;
+          ">
+            <p style="
+              margin: 0;
+              font-family: ${theme.fontMain};
+              color: ${theme.accent};
+              font-size: 10pt;
+              font-weight: 500;
+              letter-spacing: 1px;
+            ">${trimmedLine}</p>
+          </div>
+        `;
+      } else { // minimal
+        htmlContent += `
           <p style="
-            margin: 0;
-            font-style: italic;
+            text-align: center;
+            margin: 10px 0 25px 0;
+            font-family: ${theme.fontMain};
+            font-size: 10pt;
             color: ${theme.secondary};
-            font-size: 11pt;
-            font-weight: 500;
+            font-style: italic;
           ">${trimmedLine}</p>
-        </div>
-      `;
+        `;
+      }
     }
     // UND (zwischen Parteien)
     else if (trimmedLine.toLowerCase() === 'und') {
-      htmlContent += `
-        <div style="
-          text-align: center;
-          margin: 35px 0;
-          position: relative;
-        ">
+      if (designVariant === 'executive') {
+        htmlContent += `
           <div style="
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, ${theme.accent}, transparent);
-          "></div>
-          <span style="
-            background: white;
-            padding: 8px 30px;
+            text-align: center;
+            margin: 35px 0;
             position: relative;
+          ">
+            <div style="
+              position: absolute;
+              top: 50%;
+              left: 0;
+              right: 0;
+              height: 1px;
+              background: linear-gradient(90deg, transparent, ${theme.accent}, transparent);
+            "></div>
+            <span style="
+              background: white;
+              padding: 8px 30px;
+              position: relative;
+              font-family: ${theme.fontMain};
+              font-style: italic;
+              color: ${theme.secondary};
+              font-size: 13pt;
+              font-weight: 500;
+              letter-spacing: 2px;
+            ">${trimmedLine}</span>
+          </div>
+        `;
+      } else if (designVariant === 'modern') {
+        htmlContent += `
+          <div style="
+            text-align: center;
+            margin: 30px 0;
+          ">
+            <div style="
+              display: inline-block;
+              padding: 5px 25px;
+              background: ${theme.accent};
+              color: white;
+              border-radius: 20px;
+              font-family: ${theme.fontMain};
+              font-size: 12pt;
+              font-weight: 600;
+              letter-spacing: 2px;
+            ">${trimmedLine}</div>
+          </div>
+        `;
+      } else { // minimal
+        htmlContent += `
+          <p style="
+            text-align: center;
+            margin: 25px 0;
+            font-family: ${theme.fontMain};
+            font-size: 12pt;
+            color: ${theme.text};
             font-style: italic;
-            color: ${theme.secondary};
-            font-size: 13pt;
-            font-weight: 500;
-            letter-spacing: 2px;
-          ">${trimmedLine}</span>
-        </div>
-      `;
+          ">${trimmedLine}</p>
+        `;
+      }
     }
     // UNTERABSCHNITTE (1), (2), etc. - Strukturierte Liste
     else if (trimmedLine.match(/^\(\d+\)/)) {
       const number = trimmedLine.match(/^\((\d+)\)/)[1];
       const content = trimmedLine.replace(/^\(\d+\)\s*/, '');
-      htmlContent += `
-        <div style="
-          margin: 20px 0;
-          padding-left: 40px;
-          position: relative;
-        ">
+      
+      if (designVariant === 'executive') {
+        htmlContent += `
           <div style="
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 30px;
-            height: 30px;
-            background: ${theme.gradient};
-            border-radius: 50%;
+            margin: 20px 0;
+            padding-left: 40px;
+            position: relative;
+          ">
+            <div style="
+              position: absolute;
+              left: 0;
+              top: 0;
+              width: 30px;
+              height: 30px;
+              background: ${theme.gradient};
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              color: white;
+              font-weight: 700;
+              font-size: 12pt;
+              box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            ">${number}</div>
+            <p style="
+              margin: 0;
+              font-family: ${theme.fontMain};
+              line-height: 1.8;
+              color: ${theme.text};
+              text-align: justify;
+              font-size: 11pt;
+            ">${content}</p>
+          </div>
+        `;
+      } else if (designVariant === 'modern') {
+        htmlContent += `
+          <div style="
+            margin: 18px 0;
             display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 700;
-            font-size: 12pt;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-          ">${number}</div>
-          <p style="
-            margin: 0;
-            line-height: 1.8;
-            color: ${theme.text};
-            text-align: justify;
-            font-size: 11pt;
-          ">${content}</p>
-        </div>
-      `;
+            align-items: flex-start;
+          ">
+            <span style="
+              display: inline-block;
+              min-width: 35px;
+              padding: 2px 8px;
+              background: ${theme.light};
+              border: 2px solid ${theme.accent};
+              border-radius: 8px;
+              color: ${theme.primary};
+              font-family: ${theme.fontMain};
+              font-weight: 600;
+              font-size: 10pt;
+              text-align: center;
+              margin-right: 15px;
+            ">${number}</span>
+            <p style="
+              margin: 0;
+              font-family: ${theme.fontMain};
+              line-height: 1.7;
+              color: ${theme.text};
+              font-size: 11pt;
+              flex: 1;
+            ">${content}</p>
+          </div>
+        `;
+      } else { // minimal
+        htmlContent += `
+          <div style="
+            margin: 15px 0;
+            display: flex;
+          ">
+            <span style="
+              font-family: ${theme.fontMain};
+              color: ${theme.secondary};
+              margin-right: 15px;
+              font-weight: 500;
+            ">(${number})</span>
+            <p style="
+              margin: 0;
+              font-family: ${theme.fontMain};
+              line-height: 1.6;
+              color: ${theme.text};
+              font-size: 11pt;
+              flex: 1;
+            ">${content}</p>
+          </div>
+        `;
+      }
     }
     // UNTERPUNKTE a), b), etc. - Elegante Sub-Liste
     else if (trimmedLine.match(/^[a-z]\)/)) {
       const letter = trimmedLine.match(/^([a-z])\)/)[1];
       const content = trimmedLine.replace(/^[a-z]\)\s*/, '');
-      htmlContent += `
-        <div style="
-          margin: 15px 0 15px 60px;
-          padding-left: 25px;
-          position: relative;
-        ">
+      
+      if (designVariant === 'executive') {
+        htmlContent += `
           <div style="
-            position: absolute;
-            left: 0;
-            top: 3px;
-            width: 20px;
-            height: 20px;
-            background: white;
-            border: 2px solid ${theme.accent};
-            border-radius: 50%;
+            margin: 15px 0 15px 60px;
+            padding-left: 25px;
+            position: relative;
+          ">
+            <div style="
+              position: absolute;
+              left: 0;
+              top: 3px;
+              width: 20px;
+              height: 20px;
+              background: white;
+              border: 2px solid ${theme.accent};
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              color: ${theme.secondary};
+              font-weight: 600;
+              font-size: 10pt;
+            ">${letter}</div>
+            <p style="
+              margin: 0;
+              font-family: ${theme.fontMain};
+              line-height: 1.7;
+              color: ${theme.text};
+              font-size: 10.5pt;
+            ">${content}</p>
+          </div>
+        `;
+      } else if (designVariant === 'modern') {
+        htmlContent += `
+          <div style="
+            margin: 12px 0 12px 50px;
             display: flex;
-            align-items: center;
-            justify-content: center;
-            color: ${theme.secondary};
-            font-weight: 600;
-            font-size: 10pt;
-          ">${letter}</div>
-          <p style="
-            margin: 0;
-            line-height: 1.7;
-            color: ${theme.text};
-            font-size: 10.5pt;
-          ">${content}</p>
-        </div>
-      `;
+            align-items: flex-start;
+          ">
+            <span style="
+              color: ${theme.accent};
+              font-family: ${theme.fontMain};
+              font-weight: 600;
+              margin-right: 10px;
+              font-size: 10pt;
+            ">${letter})</span>
+            <p style="
+              margin: 0;
+              font-family: ${theme.fontMain};
+              line-height: 1.6;
+              color: ${theme.text};
+              font-size: 10.5pt;
+              flex: 1;
+            ">${content}</p>
+          </div>
+        `;
+      } else { // minimal
+        htmlContent += `
+          <div style="
+            margin: 10px 0 10px 40px;
+            display: flex;
+          ">
+            <span style="
+              color: ${theme.secondary};
+              font-family: ${theme.fontMain};
+              margin-right: 10px;
+              font-size: 10pt;
+            ">${letter})</span>
+            <p style="
+              margin: 0;
+              font-family: ${theme.fontMain};
+              line-height: 1.5;
+              color: ${theme.text};
+              font-size: 10.5pt;
+              flex: 1;
+            ">${content}</p>
+          </div>
+        `;
+      }
     }
     // UNTERSCHRIFTSBEREICH - Premium Signature Section
     else if (trimmedLine.includes('_____')) {
@@ -628,37 +1067,80 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
           htmlContent += '</div></div>';
           currentSection = '';
         }
-        htmlContent += `
-          <div style="
-            margin-top: 80px;
-            padding: 40px;
-            background: linear-gradient(135deg, ${theme.light} 0%, white 100%);
-            border-radius: ${theme.borderRadius};
-            border: 2px solid ${theme.accent};
-            box-shadow: ${theme.shadow};
-            page-break-inside: avoid;
-            position: relative;
-          ">
+        
+        if (designVariant === 'executive') {
+          htmlContent += `
             <div style="
-              position: absolute;
-              top: -20px;
-              left: 50%;
-              transform: translateX(-50%);
-              background: white;
-              padding: 8px 30px;
-              border-radius: 20px;
+              margin-top: 80px;
+              padding: 40px;
+              background: linear-gradient(135deg, ${theme.light} 0%, white 100%);
+              border-radius: ${theme.borderRadius};
               border: 2px solid ${theme.accent};
+              box-shadow: ${theme.shadow};
+              page-break-inside: avoid;
+              position: relative;
+            ">
+              <div style="
+                position: absolute;
+                top: -20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: white;
+                padding: 8px 30px;
+                border-radius: 20px;
+                border: 2px solid ${theme.accent};
+              ">
+                <h3 style="
+                  margin: 0;
+                  font-family: ${theme.fontHeading};
+                  color: ${theme.primary};
+                  font-size: 12pt;
+                  font-weight: 700;
+                  letter-spacing: 1px;
+                  text-transform: uppercase;
+                ">Unterschriften</h3>
+              </div>
+          `;
+        } else if (designVariant === 'modern') {
+          htmlContent += `
+            <div style="
+              margin-top: 70px;
+              padding: 35px;
+              background: ${theme.light};
+              border-radius: ${theme.borderRadius};
+              box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+              page-break-inside: avoid;
             ">
               <h3 style="
-                margin: 0;
+                text-align: center;
+                font-family: ${theme.fontHeading};
+                color: ${theme.primary};
+                font-size: 14pt;
+                font-weight: 600;
+                letter-spacing: 2px;
+                text-transform: uppercase;
+                margin: 0 0 30px 0;
+              ">Unterschriften</h3>
+          `;
+        } else { // minimal
+          htmlContent += `
+            <div style="
+              margin-top: 60px;
+              padding: 30px 0;
+              border-top: 2px solid ${theme.primary};
+              page-break-inside: avoid;
+            ">
+              <h3 style="
+                font-family: ${theme.fontHeading};
                 color: ${theme.primary};
                 font-size: 12pt;
-                font-weight: 700;
-                letter-spacing: 1px;
+                font-weight: 400;
+                letter-spacing: 3px;
                 text-transform: uppercase;
+                margin: 0 0 40px 0;
               ">Unterschriften</h3>
-            </div>
-        `;
+          `;
+        }
         inSignatureSection = true;
       }
       
@@ -675,25 +1157,80 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
       `;
       
       for (let i = 0; i < parts.length - 1; i++) {
-        htmlContent += `
-          <div style="
-            flex: 1;
-            min-width: 200px;
-            text-align: center;
-          ">
+        if (designVariant === 'executive') {
+          htmlContent += `
             <div style="
-              border-bottom: 3px solid ${theme.secondary};
-              margin-bottom: 10px;
-              min-height: 50px;
-            "></div>
-            <p style="
-              margin: 0;
-              color: ${theme.text};
-              font-size: 10pt;
-              font-weight: 500;
-            ">${parts[i] || 'Ort, Datum'}</p>
-          </div>
-        `;
+              flex: 1;
+              min-width: 200px;
+              text-align: center;
+            ">
+              <div style="
+                border-bottom: 3px solid ${theme.secondary};
+                margin-bottom: 10px;
+                min-height: 50px;
+              "></div>
+              <p style="
+                margin: 0;
+                font-family: ${theme.fontMain};
+                color: ${theme.text};
+                font-size: 10pt;
+                font-weight: 500;
+              ">${parts[i] || 'Ort, Datum'}</p>
+            </div>
+          `;
+        } else if (designVariant === 'modern') {
+          htmlContent += `
+            <div style="
+              flex: 1;
+              min-width: 200px;
+              text-align: center;
+            ">
+              <div style="
+                border-bottom: 2px solid ${theme.accent};
+                margin-bottom: 8px;
+                min-height: 45px;
+                position: relative;
+              ">
+                <div style="
+                  position: absolute;
+                  bottom: -5px;
+                  left: 50%;
+                  transform: translateX(-50%);
+                  width: 10px;
+                  height: 10px;
+                  background: ${theme.accent};
+                  border-radius: 50%;
+                "></div>
+              </div>
+              <p style="
+                margin: 0;
+                font-family: ${theme.fontMain};
+                color: ${theme.text};
+                font-size: 9pt;
+                font-weight: 500;
+              ">${parts[i] || 'Ort, Datum'}</p>
+            </div>
+          `;
+        } else { // minimal
+          htmlContent += `
+            <div style="
+              flex: 1;
+              min-width: 200px;
+            ">
+              <div style="
+                border-bottom: 1px solid ${theme.primary};
+                margin-bottom: 8px;
+                min-height: 40px;
+              "></div>
+              <p style="
+                margin: 0;
+                font-family: ${theme.fontMain};
+                color: ${theme.secondary};
+                font-size: 9pt;
+              ">${parts[i] || 'Ort, Datum'}</p>
+            </div>
+          `;
+        }
       }
       
       if (parts[parts.length - 1]) {
@@ -704,6 +1241,7 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
             margin-top: 10px;
           ">
             <p style="
+              font-family: ${theme.fontMain};
               color: ${theme.text};
               font-size: 10pt;
             ">${parts[parts.length - 1]}</p>
@@ -715,18 +1253,41 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
     }
     // NORMALER TEXT - Optimierte Lesbarkeit
     else if (trimmedLine) {
-      htmlContent += `
-        <p style="
-          margin: 0 0 15px 0;
-          line-height: 1.9;
-          color: ${theme.text};
-          text-align: justify;
-          font-size: 11pt;
-          hyphens: auto;
-          word-spacing: 0.05em;
-          letter-spacing: 0.01em;
-        ">${trimmedLine}</p>
-      `;
+      if (designVariant === 'executive') {
+        htmlContent += `
+          <p style="
+            margin: 0 0 15px 0;
+            font-family: ${theme.fontMain};
+            line-height: 1.9;
+            color: ${theme.text};
+            text-align: justify;
+            font-size: 11pt;
+            hyphens: auto;
+            word-spacing: 0.05em;
+            letter-spacing: ${theme.letterSpacing};
+          ">${trimmedLine}</p>
+        `;
+      } else if (designVariant === 'modern') {
+        htmlContent += `
+          <p style="
+            margin: 0 0 14px 0;
+            font-family: ${theme.fontMain};
+            line-height: 1.8;
+            color: ${theme.text};
+            font-size: 11pt;
+          ">${trimmedLine}</p>
+        `;
+      } else { // minimal
+        htmlContent += `
+          <p style="
+            margin: 0 0 12px 0;
+            font-family: ${theme.fontMain};
+            line-height: 1.7;
+            color: ${theme.text};
+            font-size: 11pt;
+          ">${trimmedLine}</p>
+        `;
+      }
     }
   }
   
@@ -738,7 +1299,7 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
     htmlContent += '</div>';
   }
 
-  // 🎨 VOLLSTÄNDIGES PREMIUM HTML-DOKUMENT
+  // 🎨 VOLLSTÄNDIGES PREMIUM HTML-DOKUMENT - ERWEITERT
   const fullHTML = `
 <!DOCTYPE html>
 <html lang="de">
@@ -747,7 +1308,7 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${contractType || 'Premium Vertrag'} - ${companyProfile?.companyName || 'Contract AI'}</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@400;600;700;800;900&family=Montserrat:wght@400;500;600;700;800&display=swap');
     
     * {
       margin: 0;
@@ -767,7 +1328,7 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
     }
     
     body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+      font-family: ${theme.fontMain};
       font-size: 11pt;
       line-height: 1.6;
       color: ${theme.text};
@@ -778,7 +1339,8 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
       -moz-osx-font-smoothing: grayscale;
     }
     
-    /* Animations */
+    /* Animations - nur für Executive */
+    ${designVariant === 'executive' ? `
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
@@ -787,6 +1349,7 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
     .page-container {
       animation: fadeIn 0.6s ease-out;
     }
+    ` : ''}
     
     /* Print Optimizations */
     @media print {
@@ -809,6 +1372,7 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
   <div class="page-container">
     ${companyProfile ? `
     <!-- PREMIUM HEADER MIT COMPANY BRANDING -->
+    ${designVariant === 'executive' ? `
     <header style="
       background: ${theme.headerGradient};
       color: white;
@@ -845,6 +1409,7 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
       <!-- Company Info -->
       <div style="flex: 1; position: relative; z-index: 2;">
         <h1 style="
+          font-family: ${theme.fontHeading};
           font-size: 24pt;
           font-weight: 800;
           margin-bottom: 12px;
@@ -939,8 +1504,107 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
       </div>
       ` : ''}
     </header>
+    ` : designVariant === 'modern' ? `
+    <header style="
+      background: white;
+      padding: 30px 40px;
+      margin: -20px -20px 40px -20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 3px solid ${theme.primary};
+      position: relative;
+    ">
+      <!-- Company Info -->
+      <div style="flex: 1;">
+        <h1 style="
+          font-family: ${theme.fontHeading};
+          font-size: 22pt;
+          font-weight: 700;
+          color: ${theme.primary};
+          margin-bottom: 10px;
+        ">
+          ${companyProfile.companyName || 'Firmenname'}
+          ${companyProfile.legalForm ? `<span style="
+            font-size: 13pt;
+            font-weight: 400;
+            color: ${theme.secondary};
+            margin-left: 10px;
+          ">${companyProfile.legalForm}</span>` : ''}
+        </h1>
+        
+        <div style="
+          font-size: 9pt;
+          color: ${theme.text};
+          line-height: 1.5;
+          display: flex;
+          flex-wrap: wrap;
+          gap: 15px;
+        ">
+          ${companyProfile.street ? `<div>${companyProfile.street}</div>` : ''}
+          ${companyProfile.postalCode || companyProfile.city ? `<div>${companyProfile.postalCode || ''} ${companyProfile.city || ''}</div>` : ''}
+          ${companyProfile.contactEmail ? `<div>${companyProfile.contactEmail}</div>` : ''}
+          ${companyProfile.contactPhone ? `<div>${companyProfile.contactPhone}</div>` : ''}
+        </div>
+      </div>
+      
+      <!-- Logo Container -->
+      ${logoBase64 ? `
+      <div style="
+        width: 180px;
+        height: 100px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        margin-left: 30px;
+      ">
+        <img src="${logoBase64}" alt="Firmenlogo" style="
+          max-width: 150px;
+          max-height: 80px;
+          object-fit: contain;
+        " />
+      </div>
+      ` : ''}
+    </header>
+    ` : `
+    <!-- Minimal Header -->
+    <header style="
+      padding: 20px 0;
+      margin-bottom: 30px;
+      border-bottom: 1px solid ${theme.primary};
+    ">
+      <div style="
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+      ">
+        <div>
+          <h1 style="
+            font-family: ${theme.fontHeading};
+            font-size: 18pt;
+            font-weight: 400;
+            color: ${theme.primary};
+            margin: 0;
+          ">${companyProfile.companyName}</h1>
+          <p style="
+            font-size: 9pt;
+            color: ${theme.secondary};
+            margin-top: 5px;
+          ">${companyProfile.street}, ${companyProfile.postalCode} ${companyProfile.city}</p>
+        </div>
+        ${logoBase64 ? `
+        <img src="${logoBase64}" alt="Logo" style="
+          max-height: 40px;
+          max-width: 120px;
+          object-fit: contain;
+        " />
+        ` : ''}
+      </div>
+    </header>
+    `}
     ` : `
     <!-- FALLBACK HEADER OHNE COMPANY PROFILE -->
+    ${designVariant === 'executive' ? `
     <header style="
       background: ${theme.headerGradient};
       color: white;
@@ -951,6 +1615,7 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
       border-radius: 0 0 ${theme.borderRadius} ${theme.borderRadius};
     ">
       <h1 style="
+        font-family: ${theme.fontHeading};
         font-size: 22pt;
         font-weight: 800;
         letter-spacing: 2px;
@@ -963,6 +1628,43 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
         letter-spacing: 1px;
       ">Intelligente Vertragserstellung</p>
     </header>
+    ` : designVariant === 'modern' ? `
+    <header style="
+      background: ${theme.light};
+      padding: 25px 35px;
+      margin: -20px -20px 40px -20px;
+      text-align: center;
+      border-bottom: 3px solid ${theme.primary};
+    ">
+      <h1 style="
+        font-family: ${theme.fontHeading};
+        font-size: 20pt;
+        font-weight: 700;
+        color: ${theme.primary};
+        letter-spacing: 1px;
+      ">CONTRACT AI</h1>
+      <p style="
+        font-size: 10pt;
+        color: ${theme.secondary};
+        margin-top: 5px;
+      ">Intelligente Vertragserstellung</p>
+    </header>
+    ` : `
+    <header style="
+      padding: 20px 0;
+      margin-bottom: 30px;
+      text-align: center;
+      border-bottom: 1px solid ${theme.primary};
+    ">
+      <h1 style="
+        font-family: ${theme.fontHeading};
+        font-size: 18pt;
+        font-weight: 300;
+        color: ${theme.primary};
+        letter-spacing: 4px;
+      ">CONTRACT AI</h1>
+    </header>
+    `}
     `}
     
     <!-- VERTRAGSKÖRPER -->
@@ -975,6 +1677,7 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
     </main>
     
     <!-- PREMIUM FOOTER -->
+    ${designVariant === 'executive' ? `
     <footer style="
       margin-top: 100px;
       padding-top: 30px;
@@ -1028,6 +1731,65 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
         Alle Rechte vorbehalten. © ${new Date().getFullYear()}
       </div>
     </footer>
+    ` : designVariant === 'modern' ? `
+    <footer style="
+      margin-top: 80px;
+      padding: 30px;
+      background: ${theme.light};
+      border-radius: ${theme.borderRadius};
+      page-break-inside: avoid;
+    ">
+      <div style="
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      ">
+        <div>
+          <strong style="color: ${theme.primary}; font-size: 10pt;">Dokument-ID</strong><br/>
+          <span style="font-family: monospace; font-size: 8pt; color: ${theme.secondary};">
+            ${new Date().getTime()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}
+          </span>
+        </div>
+        <div style="text-align: center;">
+          <div style="
+            padding: 6px 16px;
+            background: ${theme.primary};
+            color: white;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 9pt;
+          ">
+            ${contractType?.toUpperCase() || 'VERTRAG'}
+          </div>
+        </div>
+        <div style="text-align: right;">
+          <strong style="color: ${theme.primary}; font-size: 10pt;">Erstellt</strong><br/>
+          <span style="font-size: 9pt; color: ${theme.secondary};">
+            ${new Date().toLocaleDateString('de-DE')} | ${new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
+          </span>
+        </div>
+      </div>
+    </footer>
+    ` : `
+    <footer style="
+      margin-top: 60px;
+      padding-top: 20px;
+      border-top: 1px solid ${theme.primary};
+      font-size: 8pt;
+      color: ${theme.secondary};
+      page-break-inside: avoid;
+    ">
+      <div style="
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+      ">
+        <div>${contractType || 'Vertrag'}</div>
+        <div>${new Date().toLocaleDateString('de-DE')}</div>
+        <div>Seite <span class="page-number"></span></div>
+      </div>
+    </footer>
+    `}
   </div>
 </body>
 </html>`;
@@ -1915,8 +2677,11 @@ router.post("/pdf", verifyToken, async (req, res) => {
         timeout: 30000
       });
       
+      // Warte auf Fonts
+      await page.evaluateHandle('document.fonts.ready');
+      
       // Warte auf Rendering
-      await page.waitForTimeout(1500);
+      await page.waitForTimeout(2000);
       
       // Generiere PDF
       console.log("📄 Generiere PDF...");
@@ -1925,12 +2690,13 @@ router.post("/pdf", verifyToken, async (req, res) => {
         printBackground: true,
         displayHeaderFooter: false,
         margin: {
-          top: '10mm',
-          bottom: '10mm',
-          left: '10mm', 
-          right: '10mm'
+          top: '20mm',
+          bottom: '20mm',
+          left: '15mm', 
+          right: '15mm'
         },
-        preferCSSPageSize: false
+        preferCSSPageSize: true,
+        scale: 1
       });
       
       console.log("✅ PDF erfolgreich generiert, Größe:", Math.round(pdfBuffer.length / 1024), "KB");
