@@ -1796,21 +1796,55 @@ router.post("/pdf", verifyToken, async (req, res) => {
       return res.status(500).json({ message: "HTML-Content konnte nicht generiert werden" });
     }
 
-    // Puppeteer starten
+    // Puppeteer starten - mit Render.com Kompatibilität
     console.log("🚀 Starte Puppeteer Browser...");
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--no-first-run',
-        '--no-zygote',
-        '--single-process',
-        '--disable-gpu'
-      ]
-    });
+    
+    let browser;
+    try {
+      // Konfiguration für Render.com
+      if (chromium) {
+        // Produktion auf Render mit chrome-aws-lambda
+        browser = await puppeteer.launch({
+          args: chromium.args,
+          defaultViewport: chromium.defaultViewport,
+          executablePath: await chromium.executablePath,
+          headless: chromium.headless,
+          ignoreHTTPSErrors: true,
+        });
+      } else {
+        // Lokale Entwicklung mit normalem Puppeteer
+        browser = await puppeteer.launch({
+          headless: true,
+          args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-accelerated-2d-canvas',
+            '--no-first-run',
+            '--no-zygote',
+            '--single-process',
+            '--disable-gpu'
+          ]
+        });
+      }
+    } catch (launchError) {
+      console.error("❌ Puppeteer Launch Error:", launchError);
+      
+      // Fallback: Versuche mit minimalsten Optionen
+      try {
+        browser = await puppeteer.launch({
+          headless: 'new',
+          args: ['--no-sandbox', '--disable-setuid-sandbox']
+        });
+      } catch (fallbackError) {
+        console.error("❌ Auch Fallback fehlgeschlagen:", fallbackError);
+        return res.status(500).json({ 
+          message: "PDF-Generierung fehlgeschlagen - Chrome nicht verfügbar",
+          error: "Bitte verwenden Sie den Download-Button erneut (html2pdf Fallback wird aktiviert)",
+          suggestion: "Installieren Sie chrome-aws-lambda für Render.com Kompatibilität"
+        });
+      }
+    }
     
     try {
       const page = await browser.newPage();
