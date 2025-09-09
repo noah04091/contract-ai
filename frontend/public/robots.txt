@@ -2,7 +2,7 @@
 User-agent: *
 Allow: /
 
-# Verhindere Indexierung von privaten Routen
+# Private/Account-Bereiche und App-Only-Routen ausschließen
 Disallow: /dashboard
 Disallow: /contracts
 Disallow: /optimizer
@@ -10,9 +10,21 @@ Disallow: /profile
 Disallow: /compare
 Disallow: /calendar-view
 Disallow: /chat
-Disallow: /legalpulse
+Disallow: /legalpulse          # (interner Bereich)
 Disallow: /upgrade
 Disallow: /subscribe
+Disallow: /generate
+Disallow: /company              # falls vorhanden
+Disallow: /contract-details     # falls vorhanden
 
-# Sitemap
+# Auth/Transaktionsseiten nicht indexieren (räumt "Gecrawlt – nicht indexiert" auf)
+Disallow: /login
+Disallow: /register
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /verify-success
+Disallow: /success
+Disallow: /cancel
+
+# Sitemap-Hinweis
 Sitemap: https://www.contract-ai.de/sitemap.xml

@@ -1,128 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-<url>
-<loc>https://www.contract-ai.de/</loc>
-<lastmod>2025-08-24</lastmod>
-<changefreq>monthly</changefreq>
-<priority>1.0</priority>
-</url>
-<url>
-<loc>https://www.contract-ai.de/login</loc>
-<lastmod>2025-08-07</lastmod>
-<changefreq>monthly</changefreq>
-<priority>0.8</priority>
-</url>
-<url>
-<loc>https://www.contract-ai.de/register</loc>
-<lastmod>2025-08-07</lastmod>
-<changefreq>monthly</changefreq>
-<priority>0.8</priority>
-</url>
-<url>
-<loc>https://www.contract-ai.de/verify-success</loc>
-<lastmod>2025-08-07</lastmod>
-<changefreq>monthly</changefreq>
-<priority>0.8</priority>
-</url>
-<url>
-<loc>https://www.contract-ai.de/pricing</loc>
-<lastmod>2025-08-07</lastmod>
-<changefreq>monthly</changefreq>
-<priority>0.8</priority>
-</url>
-<url>
-<loc>https://www.contract-ai.de/about</loc>
-<lastmod>2025-08-07</lastmod>
-<changefreq>monthly</changefreq>
-<priority>0.8</priority>
-</url>
-<url>
-<loc>https://www.contract-ai.de/press</loc>
-<lastmod>2025-08-07</lastmod>
-<changefreq>monthly</changefreq>
-<priority>0.8</priority>
-</url>
-<url>
-<loc>https://www.contract-ai.de/success</loc>
-<lastmod>2025-08-07</lastmod>
-<changefreq>monthly</changefreq>
-<priority>0.8</priority>
-</url>
-<url>
-<loc>https://www.contract-ai.de/forgot-password</loc>
-<lastmod>2025-08-07</lastmod>
-<changefreq>monthly</changefreq>
-<priority>0.8</priority>
-</url>
-<url>
-<loc>https://www.contract-ai.de/impressum</loc>
-<lastmod>2025-08-07</lastmod>
-<changefreq>monthly</changefreq>
-<priority>0.8</priority>
-</url>
-<url>
-<loc>https://www.contract-ai.de/datenschutz</loc>
-<lastmod>2025-08-07</lastmod>
-<changefreq>monthly</changefreq>
-<priority>0.8</priority>
-</url>
-<url>
-<loc>https://www.contract-ai.de/agb</loc>
-<lastmod>2025-08-07</lastmod>
-<changefreq>monthly</changefreq>
-<priority>0.8</priority>
-</url>
-<url>
-<loc>https://www.contract-ai.de/hilfe</loc>
-<lastmod>2025-08-07</lastmod>
-<changefreq>monthly</changefreq>
-<priority>0.8</priority>
-</url>
-<url>
-<loc>https://www.contract-ai.de/blog</loc>
-<lastmod>2025-08-07</lastmod>
-<changefreq>monthly</changefreq>
-<priority>0.8</priority>
-</url>
-<url>
-<loc>https://www.contract-ai.de/blog/[slug]</loc>
-<lastmod>2025-08-07</lastmod>
-<changefreq>weekly</changefreq>
-<priority>0.7</priority>
-</url>
-<url>
-<loc>https://www.contract-ai.de/features/vertragsanalyse</loc>
-<lastmod>2025-08-24</lastmod>
-<changefreq>weekly</changefreq>
-<priority>0.8</priority>
-</url>
-<url>
-<loc>https://www.contract-ai.de/features/optimierer</loc>
-<lastmod>2025-08-24</lastmod>
-<changefreq>weekly</changefreq>
-<priority>0.8</priority>
-</url>
-<url>
-<loc>https://www.contract-ai.de/features/fristenkalender</loc>
-<lastmod>2025-08-24</lastmod>
-<changefreq>weekly</changefreq>
-<priority>0.8</priority>
-</url>
-<url>
-<loc>https://www.contract-ai.de/features/vergleich</loc>
-<lastmod>2025-08-24</lastmod>
-<changefreq>weekly</changefreq>
-<priority>0.8</priority>
-</url>
-<url>
-<loc>https://www.contract-ai.de/features/generator</loc>
-<lastmod>2025-08-24</lastmod>
-<changefreq>weekly</changefreq>
-<priority>0.8</priority>
-</url>
-<url>
-<loc>https://www.contract-ai.de/features/legal-pulse</loc>
-<lastmod>2025-08-24</lastmod>
-<changefreq>weekly</changefreq>
-<priority>0.8</priority>
-</url>
+
+  <!-- Hauptseiten -->
+  <url>
+    <loc>https://www.contract-ai.de/</loc>
+    <lastmod>2025-09-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://www.contract-ai.de/about</loc>
+    <lastmod>2025-09-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.contract-ai.de/pricing</loc>
+    <lastmod>2025-09-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.contract-ai.de/press</loc>
+    <lastmod>2025-09-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.contract-ai.de/agb</loc>
+    <lastmod>2025-09-09</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://www.contract-ai.de/datenschutz</loc>
+    <lastmod>2025-09-09</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://www.contract-ai.de/impressum</loc>
+    <lastmod>2025-09-09</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://www.contract-ai.de/help-center</loc>
+    <lastmod>2025-09-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Feature-Landingpages -->
+  <url>
+    <loc>https://www.contract-ai.de/features/vertragsanalyse</loc>
+    <lastmod>2025-09-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.contract-ai.de/features/optimierer</loc>
+    <lastmod>2025-09-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.contract-ai.de/features/fristenkalender</loc>
+    <lastmod>2025-09-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.contract-ai.de/features/vergleich</loc>
+    <lastmod>2025-09-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.contract-ai.de/features/generator</loc>
+    <lastmod>2025-09-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://www.contract-ai.de/features/legal-pulse</loc>
+    <lastmod>2025-09-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Blog Übersicht -->
+  <url>
+    <loc>https://www.contract-ai.de/blog</loc>
+    <lastmod>2025-09-09</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Blog-Artikel -->
+  <url>
+    <loc>https://www.contract-ai.de/blog/dsgvo-fallen-vertraege-bussgelder-vermeiden</loc>
+    <lastmod>2025-09-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.contract-ai.de/blog/rechtssicherer-vertrag-5-minuten-generator</loc>
+    <lastmod>2025-09-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.contract-ai.de/blog/rechtsanwalt-vs-ki-wann-welche-loesung</loc>
+    <lastmod>2025-09-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.contract-ai.de/blog/vertraege-vergleichen-ki-beste-option</loc>
+    <lastmod>2025-09-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.contract-ai.de/blog/teuerste-vertragsklauseln-deutschland</loc>
+    <lastmod>2025-09-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.contract-ai.de/blog/vertraege-optimieren-ki-5-schritte</loc>
+    <lastmod>2025-09-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.contract-ai.de/blog/groesste-risiken-vertraege-ki-erkennt</loc>
+    <lastmod>2025-09-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.contract-ai.de/blog/warnsignale-schlechte-vertraege</loc>
+    <lastmod>2025-09-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.contract-ai.de/blog/mietvertrag-unwirksame-klauseln</loc>
+    <lastmod>2025-09-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.contract-ai.de/blog/arbeitsvertrag-rechte-verstehen</loc>
+    <lastmod>2025-09-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.contract-ai.de/blog/agb-fallen-online-shopping</loc>
+    <lastmod>2025-09-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.contract-ai.de/blog/autokauf-vertrag-gew%C3%A4hrleistung</loc>
+    <lastmod>2025-09-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.contract-ai.de/blog/vertragsverhandlung-strategien</loc>
+    <lastmod>2025-09-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.contract-ai.de/blog/widerrufsrecht-richtig-nutzen</loc>
+    <lastmod>2025-09-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://www.contract-ai.de/blog/kuendigung-arbeitsvertrag-fristen</loc>
+    <lastmod>2025-09-09</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
 </urlset>
