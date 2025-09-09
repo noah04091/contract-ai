@@ -255,7 +255,7 @@ export default function ContractDetails() {
         <title>Vertragsdetails ansehen | Contract AI</title>
         <meta name="description" content="Detaillierte Einblicke in deine hochgeladenen Verträge. Sieh Klauseln, Analyseergebnisse und Optimierungsvorschläge im Detail." />
         <meta name="keywords" content="Vertragsdetails, Vertrag ansehen, Vertragsanalyse, Contract AI" />
-        <link rel="canonical" href="https://contract-ai.de/contract-details" />
+        <link rel="canonical" href="https://www.contract-ai.de/contract-details" />
         {/* Open Graph / Facebook */}
         <meta property="og:title" content="Vertragsdetails ansehen | Contract AI" />
         <meta property="og:description" content="Alle Details zu deinem Vertrag übersichtlich aufbereitet. Mit Contract AI alles im Blick." />

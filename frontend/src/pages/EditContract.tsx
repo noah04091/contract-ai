@@ -143,7 +143,7 @@ export default function EditContract() {
         <title>Vertrag bearbeiten | Contract AI</title>
         <meta name="description" content="Bearbeite deine Verträge direkt online. Ändere Daten, optimiere Inhalte und aktualisiere Vertragsdetails in wenigen Klicks mit Contract AI." />
         <meta name="keywords" content="Vertrag bearbeiten, Vertragseditor, Vertrag ändern, Contract AI" />
-        <link rel="canonical" href="https://contract-ai.de/edit-contract" />
+        <link rel="canonical" href="https://www.contract-ai.de/edit-contract" />
         {/* Open Graph / Facebook */}
         <meta property="og:title" content="Vertrag bearbeiten | Contract AI" />
         <meta property="og:description" content="Aktualisiere deine Vertragsdaten online einfach und sicher mit dem Contract AI Editor." />

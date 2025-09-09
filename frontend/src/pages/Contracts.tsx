@@ -1348,7 +1348,7 @@ export default function Contracts() {
         <title>Verträge mit KI analysieren & optimieren | Contract AI</title>
         <meta name="description" content="Verträge hochladen, Risiken erkennen & direkt optimieren – alles mit KI. Mehr Klarheit, bessere Konditionen, volle Kontrolle. Jetzt ausprobieren!" />
         <meta name="keywords" content="Vertragsanalyse, Verträge optimieren, Vertrag hochladen, Risiken erkennen, Contract AI" />
-        <link rel="canonical" href="https://contract-ai.de/contracts" />
+        <link rel="canonical" href="https://www.contract-ai.de/contracts" />
         
         {/* Open Graph / Facebook */}
         <meta property="og:title" content="Verträge mit KI analysieren & optimieren | Contract AI" />

@@ -545,7 +545,7 @@ export default function EnhancedCompare() {
         <title>Verträge vergleichen & bessere Wahl treffen mit KI | Contract AI</title>
         <meta name="description" content="Vergleiche Verträge in Sekunden mit KI: Unterschiede sehen, Fairness prüfen & bessere Konditionen sichern. Jetzt schnell & einfach vergleichen!" />
         <meta name="keywords" content="Vertragsvergleich, Verträge vergleichen, Vertragsunterschiede, KI Vertragsanalyse, bessere Konditionen, Contract AI" />
-        <link rel="canonical" href="https://contract-ai.de/compare" />
+        <link rel="canonical" href="https://www.contract-ai.de/compare" />
         {/* Open Graph / Facebook */}
         <meta property="og:title" content="Verträge vergleichen & bessere Wahl treffen mit KI | Contract AI" />
         <meta property="og:description" content="Vergleiche Verträge schnell & transparent mit KI. Unterschiede erkennen, Fairness prüfen & bessere Konditionen wählen. Jetzt ausprobieren!" />

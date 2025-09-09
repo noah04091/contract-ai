@@ -267,7 +267,7 @@ const HomeRedesign = () => {
           name="keywords"
           content="Vertragsanalyse, Vertragsoptimierung, KI Vertragsmanagement, Verträge analysieren, SaaS Vertragsplattform, Verträge vergleichen, Contract AI"
         />
-        <link rel="canonical" href="https://contract-ai.de/" />
+        <link rel="canonical" href="https://www.contract-ai.de/" />
         
         {/* Open Graph / Facebook */}
         <meta property="og:title" content="Contract AI – Verträge mit KI analysieren & optimieren | Jetzt testen" />

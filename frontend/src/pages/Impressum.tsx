@@ -10,7 +10,7 @@ export default function Impressum() {
         <title>Impressum | Contract AI</title>
         <meta name="description" content="Alle rechtlichen Angaben und Kontaktdaten zu Contract AI findest du im Impressum." />
         <meta name="keywords" content="Impressum, Anbieterkennzeichnung, Kontakt Contract AI" />
-        <link rel="canonical" href="https://contract-ai.de/impressum" />
+        <link rel="canonical" href="https://www.contract-ai.de/impressum" />
         {/* Open Graph / Facebook */}
         <meta property="og:title" content="Impressum | Contract AI" />
         <meta property="og:description" content="Rechtliche Informationen und Kontaktdaten zu Contract AI findest du hier im Impressum." />

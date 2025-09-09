@@ -41,7 +41,7 @@ export default function Datenschutz() {
         <title>Datenschutzerklärung | Contract AI</title>
         <meta name="description" content="Alles zur Verarbeitung deiner Daten, Datenschutzrichtlinien und Sicherheitsmaßnahmen bei Contract AI." />
         <meta name="keywords" content="Datenschutz, Datenschutzerklärung, Contract AI Datenschutz, DSGVO" />
-        <link rel="canonical" href="https://contract-ai.de/datenschutz" />
+        <link rel="canonical" href="https://www.contract-ai.de/datenschutz" />
         
         {/* Open Graph / Facebook */}
         <meta property="og:title" content="Datenschutzerklärung | Contract AI" />

@@ -31,7 +31,7 @@ const Success: React.FC = () => {
         <title>Erfolgreich abonniert | Contract AI</title>
         <meta name="description" content="Danke für dein Vertrauen! Dein Abo bei Contract AI ist nun aktiv. Starte jetzt mit deiner Vertragsanalyse und allen Premium-Features." />
         <meta name="keywords" content="Abo erfolgreich, Vertragsanalyse starten, Contract AI Premium" />
-        <link rel="canonical" href="https://contract-ai.de/success" />
+        <link rel="canonical" href="https://www.contract-ai.de/success" />
         {/* Open Graph / Facebook */}
         <meta property="og:title" content="Erfolgreich abonniert | Contract AI" />
         <meta property="og:description" content="Du hast erfolgreich dein Contract AI Abo abgeschlossen. Los geht's mit allen Premium-Funktionen!" />

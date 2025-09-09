@@ -559,7 +559,7 @@ export default function Chat() {
         <title>Vertrags-Chat – Fragen an deine Verträge | Contract AI</title>
         <meta name="description" content="Chatte direkt mit deinen Verträgen, stelle Fragen und erhalte Antworten in Echtzeit. Mit dem KI-Vertrags-Chat von Contract AI wird Vertragsverständnis einfach." />
         <meta name="keywords" content="Vertrags-Chat, Fragen an Verträge, KI Vertragsfragen, Contract AI Chat" />
-        <link rel="canonical" href="https://contract-ai.de/chat" />
+        <link rel="canonical" href="https://www.contract-ai.de/chat" />
         {/* Open Graph / Facebook */}
         <meta property="og:title" content="Vertrags-Chat – Fragen an deine Verträge | Contract AI" />
         <meta property="og:description" content="Verstehe komplexe Vertragsdetails durch direkten KI-Chat. Fragen stellen, Antworten erhalten, sofort Klarheit gewinnen." />

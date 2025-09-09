@@ -147,7 +147,7 @@ export default function ResetPassword() {
         <title>Passwort zurücksetzen | Contract AI</title>
         <meta name="description" content="Hier kannst du dein Contract AI Passwort mit einem sicheren Link zurücksetzen und sofort wieder einloggen." />
         <meta name="keywords" content="Passwort zurücksetzen, Passwort ändern, Contract AI Login" />
-        <link rel="canonical" href="https://contract-ai.de/reset-password" />
+        <link rel="canonical" href="https://www.contract-ai.de/reset-password" />
         {/* Open Graph / Facebook */}
         <meta property="og:title" content="Passwort zurücksetzen | Contract AI" />
         <meta property="og:description" content="Sichere Passwortänderung für dein Contract AI Konto. Schnell und unkompliziert." />

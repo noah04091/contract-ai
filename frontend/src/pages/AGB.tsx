@@ -44,7 +44,7 @@ export default function AGB() {
         <title>Allgemeine Geschäftsbedingungen | Contract AI</title>
         <meta name="description" content="Hier findest du die Allgemeinen Geschäftsbedingungen (AGB) von Contract AI – transparent, fair und verständlich erklärt." />
         <meta name="keywords" content="AGB, Vertragsbedingungen, Contract AI AGB, Nutzungsbedingungen" />
-        <link rel="canonical" href="https://contract-ai.de/agb" />
+        <link rel="canonical" href="https://www.contract-ai.de/agb" />
         {/* Open Graph / Facebook */}
         <meta property="og:title" content="Allgemeine Geschäftsbedingungen | Contract AI" />
         <meta property="og:description" content="Unsere AGB geben dir volle Transparenz zu den Vertragsbedingungen und der Nutzung von Contract AI." />

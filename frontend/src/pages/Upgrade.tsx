@@ -99,7 +99,7 @@ export default function Upgrade() {
         <title>Upgrade auf Premium | Contract AI</title>
         <meta name="description" content="Upgrade dein Contract AI Konto auf Premium und erhalte Zugang zu erweiterten Analyse- und Optimierungsfunktionen für deine Verträge." />
         <meta name="keywords" content="Upgrade, Contract AI Premium, Premium Funktionen, Vertragsmanagement Upgrade" />
-        <link rel="canonical" href="https://contract-ai.de/upgrade" />
+        <link rel="canonical" href="https://www.contract-ai.de/upgrade" />
         {/* Open Graph / Facebook */}
         <meta property="og:title" content="Upgrade auf Premium | Contract AI" />
         <meta property="og:description" content="Wechsle jetzt auf Premium und profitiere von allen Profi-Funktionen für deine Vertragsanalyse." />

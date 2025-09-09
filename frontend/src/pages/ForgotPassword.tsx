@@ -69,7 +69,7 @@ export default function ForgotPassword() {
         <title>Passwort vergessen | Contract AI</title>
         <meta name="description" content="Setze dein Passwort für Contract AI sicher und schnell zurück, um wieder Zugriff auf deine Vertragsanalysen zu erhalten." />
         <meta name="keywords" content="Passwort vergessen, Passwort zurücksetzen, Contract AI Login Hilfe" />
-        <link rel="canonical" href="https://contract-ai.de/forgot-password" />
+        <link rel="canonical" href="https://www.contract-ai.de/forgot-password" />
         {/* Open Graph / Facebook */}
         <meta property="og:title" content="Passwort vergessen | Contract AI" />
         <meta property="og:description" content="Hier kannst du dein Contract AI Passwort zurücksetzen, wenn du es vergessen hast." />

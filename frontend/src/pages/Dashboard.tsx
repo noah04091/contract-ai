@@ -505,7 +505,7 @@ export default function Dashboard() {
         <title>Dashboard – Deine Vertragsübersicht | Contract AI</title>
         <meta name="description" content="Alle deine Verträge, Analysen und Optimierungen auf einen Blick. Verwalte deine Verträge zentral und behalte jederzeit volle Kontrolle mit Contract AI." />
         <meta name="keywords" content="Dashboard, Vertragsübersicht, Verträge verwalten, Vertragsanalyse, Contract AI" />
-        <link rel="canonical" href="https://contract-ai.de/dashboard" />
+        <link rel="canonical" href="https://www.contract-ai.de/dashboard" />
         {/* Open Graph / Facebook */}
         <meta property="og:title" content="Dashboard – Deine Vertragsübersicht | Contract AI" />
         <meta property="og:description" content="Deine persönliche Schaltzentrale für Vertragsmanagement. Analysen, Fristen und Optimierungen zentral verwalten." />

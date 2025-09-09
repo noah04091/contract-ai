@@ -329,7 +329,7 @@ const BetterContracts: React.FC = () => {
         <title>Bessere Vertragsalternativen finden | Contract AI</title>
         <meta name="description" content="Finde automatisch bessere Alternativen zu deinen bestehenden Verträgen. Spare Geld, verbessere Leistungen — mit Contract AI Better Contracts." />
         <meta name="keywords" content="bessere Verträge, Vertragsalternativen, Verträge vergleichen, Contract AI Better Contracts" />
-        <link rel="canonical" href="https://contract-ai.de/better-contracts" />
+        <link rel="canonical" href="https://www.contract-ai.de/better-contracts" />
         {/* Open Graph / Facebook */}
         <meta property="og:title" content="Bessere Vertragsalternativen finden | Contract AI" />
         <meta property="og:description" content="Vergleiche deine aktuellen Verträge mit besseren Angeboten. Spare sofort mit Contract AI Better Contracts." />

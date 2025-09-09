@@ -233,7 +233,7 @@ export default function Profile() {
         <title>Mein Profil & Vertragsstatus | Contract AI</title>
         <meta name="description" content="Verwalte dein Nutzerprofil, sieh deine Abo-Details und behalte alle Vertragsaktivitäten im Blick. Dein persönlicher Bereich bei Contract AI." />
         <meta name="keywords" content="Profil, Benutzerkonto, Vertragsstatus, Account verwalten, Contract AI" />
-        <link rel="canonical" href="https://contract-ai.de/profile" />
+        <link rel="canonical" href="https://www.contract-ai.de/profile" />
         
         {/* Open Graph / Facebook */}
         <meta property="og:title" content="Mein Profil & Vertragsstatus | Contract AI" />

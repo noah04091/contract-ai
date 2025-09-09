@@ -76,7 +76,7 @@ const Blog: React.FC = () => {
           name="keywords"
           content="Vertragsanalyse Blog, Contract AI News, Vertragsoptimierung Tipps, KI Vertragsmanagement Artikel"
         />
-        <link rel="canonical" href="https://contract-ai.de/blog" />
+        <link rel="canonical" href="https://www.contract-ai.de/blog" />
         
         {/* Open Graph / Facebook */}
         <meta property="og:title" content="Blog & News zu Vertragsanalyse | Contract AI" />

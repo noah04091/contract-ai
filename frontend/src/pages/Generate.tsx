@@ -1359,7 +1359,7 @@ export default function Generate() {
         <title>Verträge erstellen & sofort nutzen – KI-Generator | Contract AI</title>
         <meta name="description" content="Erstelle rechtssichere, individuelle Verträge in Minuten mit KI. Einfach, schnell & sofort einsatzbereit. Jetzt starten & direkt nutzen!" />
         <meta name="keywords" content="Verträge erstellen, Vertragsgenerator, KI Vertragserstellung, individuelle Vertragsvorlagen, Contract AI" />
-        <link rel="canonical" href="https://contract-ai.de/generate" />
+        <link rel="canonical" href="https://www.contract-ai.de/generate" />
       </Helmet>
 
       <div className={styles.contractGenerator}>

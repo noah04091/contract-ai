@@ -120,7 +120,7 @@ export default function Subscribe() {
         <title>Abo abschließen | Contract AI</title>
         <meta name="description" content="Schließe dein Contract AI Abo ab und schalte alle Premium-Funktionen für deine Vertragsanalyse und -optimierung frei." />
         <meta name="keywords" content="Abo abschließen, Contract AI Premium, Vertragsanalyse Abo, Upgrade Vertragsmanagement" />
-        <link rel="canonical" href="https://contract-ai.de/subscribe" />
+        <link rel="canonical" href="https://www.contract-ai.de/subscribe" />
         {/* Open Graph / Facebook */}
         <meta property="og:title" content="Abo abschließen | Contract AI" />
         <meta property="og:description" content="Entdecke alle Vorteile von Contract AI Premium und starte direkt mit der besten Vertragsanalyse." />

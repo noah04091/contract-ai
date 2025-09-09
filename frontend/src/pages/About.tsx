@@ -30,7 +30,7 @@ const About: React.FC = () => {
         <title>Über uns – Contract AI | Deine Experten für smarte Vertragsanalyse</title>
         <meta name="description" content="Lerne das Team hinter Contract AI kennen. Wir entwickeln smarte KI-Lösungen für transparente, sichere und einfache Vertragsanalysen." />
         <meta name="keywords" content="Über uns, Contract AI, Team, Mission, smarte Vertragsanalyse, KI Vertragsmanagement" />
-        <link rel="canonical" href="https://contract-ai.de/about" />
+        <link rel="canonical" href="https://www.contract-ai.de/about" />
         {/* Open Graph / Facebook */}
         <meta property="og:title" content="Über uns – Contract AI" />
         <meta property="og:description" content="Lerne das Team kennen, das Contract AI entwickelt hat, um deine Verträge smarter, sicherer und transparenter zu machen." />

@@ -322,7 +322,7 @@ export default function Pricing() {
         <title>Preise – Contract AI | Flexible Abos für deine Vertragsanalyse</title>
         <meta name="description" content="Wähle deinen passenden Plan für KI-gestützte Vertragsanalyse & Optimierung. Schon ab 4,90 € im Monat. Jetzt starten & volle Kontrolle sichern!" />
         <meta name="keywords" content="Preise Contract AI, Vertragsanalyse Abo, Vertragsoptimierung Kosten, SaaS Preismodelle, Vertragsmanagement Preise" />
-        <link rel="canonical" href="https://contract-ai.de/pricing" />
+        <link rel="canonical" href="https://www.contract-ai.de/pricing" />
         
         {/* Open Graph / Facebook */}
         <meta property="og:title" content="Preise – Contract AI | Flexible Abos für deine Vertragsanalyse" />

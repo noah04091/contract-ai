@@ -686,7 +686,7 @@ export default function LegalPulse() {
         <title>Legal Pulse – Risiken erkennen & Verträge schützen | Contract AI</title>
         <meta name="description" content="Erkenne rechtliche Risiken frühzeitig & schütze deine Verträge mit Legal Pulse. Bleib immer einen Schritt voraus. Jetzt prüfen & absichern!" />
         <meta name="keywords" content="Legal Pulse, Vertragsrisiken erkennen, Gesetzesänderungen, Frühwarnsystem Verträge, Risiken prüfen, Contract AI" />
-        <link rel="canonical" href="https://contract-ai.de/legalpulse" />
+        <link rel="canonical" href="https://www.contract-ai.de/legalpulse" />
         
         {/* Open Graph / Facebook */}
         <meta property="og:title" content="Legal Pulse – Risiken erkennen & Verträge schützen | Contract AI" />
