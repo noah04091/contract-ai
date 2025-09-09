@@ -625,6 +625,10 @@ export default function Generate() {
   const [showPreview, setShowPreview] = useState<boolean>(false);
   const [showTemplates, setShowTemplates] = useState<boolean>(false);
   
+  // 🔴 FIX 2: Loading State für PDF-Button
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState<boolean>(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
+  
   // Company Profile State
   const [companyProfile, setCompanyProfile] = useState<CompanyProfile | null>(null);
   const [useCompanyProfile, setUseCompanyProfile] = useState<boolean>(false);
@@ -1061,12 +1065,23 @@ export default function Generate() {
     }
   };
 
-  // KRITISCHE FUNKTION: handleDownloadPDF - Komplett überarbeitet und getestet
+  // 🔴 FIX 2: KOMPLETT ÜBERARBEITETE handleDownloadPDF MIT LOADING-STATE
   const handleDownloadPDF = async () => {
+    // Verhindere Mehrfachklicks
+    if (isGeneratingPDF) return;
+    
+    setIsGeneratingPDF(true);
+    setDownloadError(null);
+    
+    // Zeige Ladeindikator
+    const loadingToast = toast.loading("PDF wird generiert... (kann 5-10 Sekunden dauern)", {
+      position: 'top-center'
+    });
+    
     try {
       console.log("🚀 Starte PDF Export...");
       
-      // NUR die aktuelle Contract ID verwenden, KEINE alten IDs aus localStorage!
+      // NUR die aktuelle Contract ID verwenden
       let contractId = savedContractId;
       
       console.log("📊 Contract ID Status:", { 
@@ -1077,8 +1092,11 @@ export default function Generate() {
       // Wenn noch nicht gespeichert, automatisch speichern
       if (!contractId && contractText) {
         console.log("📝 Speichere Vertrag automatisch vor PDF-Export...");
-        toast.info("📝 Speichere Vertrag für optimale PDF-Qualität...", {
-          autoClose: 2000
+        
+        toast.update(loadingToast, {
+          render: "Speichere Vertrag für optimale PDF-Qualität...",
+          type: "info",
+          isLoading: true
         });
         
         try {
@@ -1117,6 +1135,13 @@ export default function Generate() {
           console.error("❌ Fehler beim automatischen Speichern:", saveError);
         }
       }
+      
+      // Update Toast
+      toast.update(loadingToast, {
+        render: "PDF wird generiert...",
+        type: "info",
+        isLoading: true
+      });
       
       // Versuche Puppeteer wenn Contract ID vorhanden
       if (contractId) {
@@ -1159,7 +1184,14 @@ export default function Generate() {
               window.URL.revokeObjectURL(url);
               document.body.removeChild(a);
               
-              toast.success("✅ Professionelles PDF mit Logo generiert!");
+              // Erfolg!
+              toast.update(loadingToast, {
+                render: "✅ Professionelles PDF mit Logo generiert!",
+                type: "success",
+                isLoading: false,
+                autoClose: 3000
+              });
+              
               console.log("✅ Puppeteer PDF erfolgreich heruntergeladen");
               return; // Erfolgreich - beende hier
             }
@@ -1174,8 +1206,14 @@ export default function Generate() {
         }
       }
 
-      // Fallback zu html2pdf.js - mit verbessertem Rendering
+      // Fallback zu html2pdf.js
       console.log("⚠️ Fallback zu html2pdf.js");
+      
+      toast.update(loadingToast, {
+        render: "Verwende alternativen PDF-Generator...",
+        type: "info",
+        isLoading: true
+      });
       
       try {
         // Dynamisch html2pdf laden
@@ -1240,7 +1278,13 @@ export default function Generate() {
           document.body.removeChild(tempDiv);
           
           console.log("✅ PDF mit html2pdf.js generiert");
-          toast.success("✅ PDF wurde erstellt!");
+          
+          toast.update(loadingToast, {
+            render: "✅ PDF wurde erstellt!",
+            type: "success",
+            isLoading: false,
+            autoClose: 3000
+          });
           
         } else if (contractText) {
           // Text-Fallback wenn kein HTML vorhanden
@@ -1288,18 +1332,35 @@ export default function Generate() {
           
           document.body.removeChild(element);
           
-          toast.info("💡 PDF wurde erstellt (Text-Version)");
+          toast.update(loadingToast, {
+            render: "💡 PDF wurde erstellt (Text-Version)",
+            type: "info",
+            isLoading: false,
+            autoClose: 3000
+          });
         } else {
-          toast.error("❌ Kein Vertrag zum Exportieren vorhanden");
+          throw new Error("Kein Vertrag zum Exportieren vorhanden");
         }
       } catch (html2pdfError) {
         console.error("❌ html2pdf Fehler:", html2pdfError);
-        toast.error("❌ PDF-Export fehlgeschlagen. Bitte versuchen Sie es erneut.");
+        throw html2pdfError;
       }
       
     } catch (error) {
       console.error("❌ Kritischer Fehler beim PDF-Export:", error);
-      toast.error(`❌ PDF-Export fehlgeschlagen: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`);
+      
+      // Error Toast
+      toast.update(loadingToast, {
+        render: `❌ PDF-Export fehlgeschlagen: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`,
+        type: "error",
+        isLoading: false,
+        autoClose: 5000
+      });
+      
+      setDownloadError(error instanceof Error ? error.message : 'PDF-Export fehlgeschlagen');
+      
+    } finally {
+      setIsGeneratingPDF(false);
     }
   };
 
@@ -1732,16 +1793,38 @@ export default function Generate() {
                         <span>{saved ? "Gespeichert!" : "Vertrag speichern"}</span>
                       </motion.button>
 
+                      {/* 🔴 FIX 2: PDF-Button mit Loading-State */}
                       <motion.button
                         onClick={handleDownloadPDF}
-                        className={`${styles.actionButton} ${styles.primary}`}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
+                        disabled={isGeneratingPDF || !contractText}
+                        className={`${styles.actionButton} ${styles.primary} ${isGeneratingPDF ? styles.loading : ''}`}
+                        whileHover={!isGeneratingPDF ? { scale: 1.02 } : {}}
+                        whileTap={!isGeneratingPDF ? { scale: 0.98 } : {}}
                       >
-                        <Download size={16} />
-                        <span>Als PDF herunterladen</span>
+                        {isGeneratingPDF ? (
+                          <>
+                            <div className={`${styles.loadingSpinner} ${styles.small}`}></div>
+                            <span>PDF wird generiert...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Download size={16} />
+                            <span>Als PDF herunterladen</span>
+                          </>
+                        )}
                       </motion.button>
                     </div>
+                    
+                    {/* Error Display */}
+                    {downloadError && (
+                      <motion.div 
+                        className={styles.errorMessage}
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                      >
+                        <p>❌ {downloadError}</p>
+                      </motion.div>
+                    )}
 
                     {/* Digital Signature */}
                     <div className={styles.signatureSection}>
@@ -1822,6 +1905,8 @@ export default function Generate() {
                         setSignatureURL(null);
                         setSavedContractId(null);
                         setSaved(false);
+                        setIsGeneratingPDF(false);
+                        setDownloadError(null);
                       }}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
