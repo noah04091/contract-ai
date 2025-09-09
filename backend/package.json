@@ -13,11 +13,11 @@
     "@aws-sdk/client-s3": "^3.837.0",
     "@aws-sdk/lib-storage": "^3.837.0",
     "@aws-sdk/s3-request-presigner": "^3.837.0",
+    "@sparticuz/chromium": "^138.0.2",
     "aws-sdk": "^2.1692.0",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^3.0.2",
     "cheerio": "^1.1.0",
-    "chrome-aws-lambda": "^10.1.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
@@ -33,7 +33,7 @@
     "openai": "^4.89.0",
     "pdf-parse": "^1.1.1",
     "pdfkit": "^0.17.1",
-    "puppeteer-core": "^24.19.0",
+    "puppeteer-core": "^21.11.0",
     "stripe": "^18.0.0"
   }
 }
