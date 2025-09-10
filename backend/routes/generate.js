@@ -1,4 +1,4 @@
-// 📄 backend/routes/generate.js - MIT PUPPETEER UND PREMIUM HTML-FORMATIERUNG
+// 📄 backend/routes/generate.js - VOLLSTÄNDIGE ENTERPRISE EDITION MIT ALLEN FUNKTIONEN
 const express = require("express");
 const { OpenAI } = require("openai");
 const verifyToken = require("../middleware/verifyToken");
@@ -6,6 +6,7 @@ const { MongoClient, ObjectId } = require("mongodb");
 const https = require("https");
 const http = require("http");
 const AWS = require("aws-sdk");
+const crypto = require("crypto");
 
 // 🔴 KRITISCHER FIX #1: Puppeteer richtig importieren für Render.com
 let puppeteer;
@@ -88,7 +89,7 @@ const convertS3ToBase64 = async (url) => {
             const mimeType = response.headers['content-type'] || 'image/jpeg';
             
             // Validiere Bildformat
-            const validImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+            const validImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'];
             if (!validImageTypes.includes(mimeType)) {
               console.error(`❌ Ungültiges Bildformat: ${mimeType}`);
               reject(new Error(`Unsupported image type: ${mimeType}`));
@@ -185,6 +186,12 @@ const loadLogoWithFallbacks = async (companyProfile) => {
   // Strategie 3: Original URL verwenden
   strategies.push({ name: 'Original URL', url: companyProfile.logoUrl });
   
+  // Strategie 4: Alternative URL-Formate probieren
+  if (companyProfile.logoUrl.includes('amazonaws.com')) {
+    const alternativeUrl = companyProfile.logoUrl.replace('https://', 'http://');
+    strategies.push({ name: 'HTTP Alternative', url: alternativeUrl });
+  }
+  
   // Alle Strategien durchprobieren
   for (const strategy of strategies) {
     try {
@@ -240,86 +247,142 @@ const optimizeLogoBase64 = (base64Logo, maxSizeKB = 100) => {
   }
 };
 
-// 🎨 PREMIUM HTML-FORMATIERUNG FÜR ABSOLUT PROFESSIONELLE VERTRÄGE - ERWEITERTE VERSION
-const formatContractToHTML = async (contractText, companyProfile, contractType, designVariant = 'executive') => {
-  console.log("🚀 Starte PREMIUM HTML-Formatierung für:", contractType);
+// 🆕 ENTERPRISE FUNKTION: Generiere Dokument-Hash für Verifizierung
+const generateDocumentHash = (content) => {
+  return crypto.createHash('sha256').update(content).digest('hex').substring(0, 16).toUpperCase();
+};
+
+// 🆕 ENTERPRISE FUNKTION: Generiere Inhaltsverzeichnis
+const generateTableOfContents = (contractText) => {
+  const sections = [];
+  const lines = contractText.split('\n');
+  let pageEstimate = 1;
+  let lineCount = 0;
+  
+  for (const line of lines) {
+    lineCount++;
+    // Schätze Seitenzahl (ca. 40 Zeilen pro Seite)
+    if (lineCount % 40 === 0) pageEstimate++;
+    
+    if (line.trim().startsWith('§')) {
+      sections.push({
+        title: line.trim(),
+        page: pageEstimate
+      });
+    }
+  }
+  
+  return sections;
+};
+
+// 🎨 ENTERPRISE HTML-FORMATIERUNG FÜR ABSOLUT PROFESSIONELLE VERTRÄGE - VOLLSTÄNDIGE VERSION
+const formatContractToHTML = async (contractText, companyProfile, contractType, designVariant = 'executive', isDraft = false) => {
+  console.log("🚀 Starte ENTERPRISE HTML-Formatierung für:", contractType);
   console.log('🎨 Design-Variante:', designVariant);
+  console.log('📄 Vertragstyp:', contractType);
+  console.log('🏢 Company Profile vorhanden:', !!companyProfile);
+  console.log('📝 Entwurf-Modus:', isDraft);
   
   // 🎨 Logo-Loading mit allen Fallback-Strategien
   let logoBase64 = null;
-  if (companyProfile) {
+  if (companyProfile && companyProfile.logoUrl) {
     console.log("🏢 Company Profile vorhanden, lade Logo...");
     logoBase64 = await loadLogoWithFallbacks(companyProfile);
     
     if (logoBase64) {
       logoBase64 = optimizeLogoBase64(logoBase64, 100);
       console.log("✅ Logo erfolgreich geladen und optimiert!");
+    } else {
+      console.log("⚠️ Logo konnte nicht geladen werden, verwende Text-Header");
     }
   }
 
-  // 🎨 PREMIUM DESIGN-VARIANTEN mit modernen Farben und Effekten - ERWEITERT
+  // Generiere Dokument-ID und Hash
+  const documentId = `${contractType.toUpperCase()}-${new Date().getTime()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+  const documentHash = generateDocumentHash(contractText);
+  
+  // Generiere Inhaltsverzeichnis
+  const tableOfContents = generateTableOfContents(contractText);
+
+  // 🎨 ENTERPRISE DESIGN-VARIANTEN - KLAR UNTERSCHEIDBAR
   const designVariants = {
     executive: {
-      primary: '#0F172A',      // Sehr dunkles Blau-Grau
-      secondary: '#1E40AF',    // Königsblau
-      accent: '#3B82F6',       // Helles Blau
-      text: '#1E293B',         // Dunkles Grau
-      light: '#F8FAFC',        // Sehr helles Grau
-      gradient: 'linear-gradient(135deg, #0F172A 0%, #1E40AF 50%, #3B82F6 100%)',
-      headerGradient: 'linear-gradient(135deg, #0F172A 0%, #1E293B 100%)',
-      shadow: '0 20px 60px rgba(15, 23, 42, 0.15)',
-      borderRadius: '12px',
-      // Executive-spezifische Eigenschaften
-      fontMain: 'Georgia, "Times New Roman", serif',
-      fontHeading: '"Playfair Display", Georgia, serif',
-      letterSpacing: '0.5px',
-      headerHeight: '180px',
-      sectionNumberSize: '36px',
+      // Konzern-Style: Dunkelblau, Gold-Akzente, Serif
+      primary: '#1a2332',           // Sehr dunkles Blau
+      secondary: '#2c3e50',         // Mittelblau
+      accent: '#c9a961',            // Gold
+      text: '#2c3e50',              // Textfarbe
+      lightBg: '#f7f9fc',           // Sehr heller Hintergrund
+      border: '#e1e8f0',            // Helle Border
+      headerBg: 'linear-gradient(90deg, #1a2332 0%, #2c3e50 100%)',
+      fontFamily: '"Georgia", "Times New Roman", serif',
+      headingFont: '"Playfair Display", "Georgia", serif',
+      fontSize: '11pt',
+      lineHeight: '1.8',
+      letterSpacing: '0.3px',
+      sectionNumberStyle: 'background: linear-gradient(135deg, #c9a961 0%, #b8985a 100%); color: white; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-right: 15px; font-weight: bold; font-size: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);',
+      pageMargins: 'margin: 0; padding: 0;',
+      sectionMargin: 'margin: 25px 0;',
+      paragraphSpacing: 'margin-bottom: 14px;',
+      headerHeight: '100px',
+      useGradients: true,
       useSerif: true,
-      formalTone: true
+      borderRadius: '8px',
+      boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
     },
     modern: {
-      primary: '#059669',      // Smaragdgrün
-      secondary: '#10B981',    // Helles Grün
-      accent: '#34D399',       // Sehr helles Grün
-      text: '#064E3B',         // Dunkles Grün
-      light: '#F0FDF4',        // Sehr helles Grün
-      gradient: 'linear-gradient(135deg, #059669 0%, #10B981 50%, #34D399 100%)',
-      headerGradient: 'linear-gradient(135deg, #047857 0%, #059669 100%)',
-      shadow: '0 20px 60px rgba(5, 150, 105, 0.15)',
-      borderRadius: '16px',
-      // Modern-spezifische Eigenschaften
-      fontMain: '"Inter", "Helvetica Neue", Arial, sans-serif',
-      fontHeading: '"Montserrat", "Helvetica Neue", sans-serif',
+      // Tech-Style: Blau-Grün, Sans-Serif, Clean
+      primary: '#0ea5e9',           // Himmelblau
+      secondary: '#0284c7',         // Dunkleres Blau
+      accent: '#06b6d4',            // Cyan
+      text: '#1e293b',              // Dunkles Grau
+      lightBg: '#f0f9ff',           // Sehr helles Blau
+      border: '#e0f2fe',            // Blau Border
+      headerBg: 'linear-gradient(90deg, #0ea5e9 0%, #06b6d4 100%)',
+      fontFamily: '"Inter", "Segoe UI", "Arial", sans-serif',
+      headingFont: '"Montserrat", "Arial", sans-serif',
+      fontSize: '10.5pt',
+      lineHeight: '1.7',
       letterSpacing: '0px',
-      headerHeight: '160px',
-      sectionNumberSize: '32px',
+      sectionNumberStyle: 'background: white; color: #0ea5e9; border: 2px solid #0ea5e9; width: 30px; height: 30px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; margin-right: 12px; font-weight: 600; font-size: 13px;',
+      pageMargins: 'margin: 0; padding: 0;',
+      sectionMargin: 'margin: 20px 0;',
+      paragraphSpacing: 'margin-bottom: 12px;',
+      headerHeight: '90px',
+      useGradients: true,
       useSerif: false,
-      formalTone: false
+      borderRadius: '12px',
+      boxShadow: '0 4px 12px rgba(14,165,233,0.1)'
     },
     minimal: {
-      primary: '#18181B',      // Fast Schwarz
-      secondary: '#52525B',    // Mittelgrau
-      accent: '#A1A1AA',       // Hellgrau
-      text: '#27272A',         // Dunkles Grau
-      light: '#FAFAFA',        // Fast Weiß
-      gradient: 'linear-gradient(135deg, #18181B 0%, #52525B 100%)',
-      headerGradient: 'linear-gradient(135deg, #18181B 0%, #27272A 100%)',
-      shadow: '0 10px 30px rgba(24, 24, 27, 0.08)',
-      borderRadius: '8px',
-      // Minimal-spezifische Eigenschaften
-      fontMain: '"Helvetica Neue", Arial, sans-serif',
-      fontHeading: '"Helvetica Neue", Arial, sans-serif',
-      letterSpacing: '-0.5px',
-      headerHeight: '120px',
-      sectionNumberSize: '28px',
+      // Schweizer Style: Nur Schwarz-Weiß, Ultra-Clean
+      primary: '#000000',           // Schwarz
+      secondary: '#4b5563',         // Mittelgrau
+      accent: '#9ca3af',            // Hellgrau
+      text: '#111827',              // Fast Schwarz
+      lightBg: '#fafafa',           // Fast Weiß
+      border: '#e5e7eb',            // Grau Border
+      headerBg: '#000000',
+      fontFamily: '"Helvetica Neue", "Arial", sans-serif',
+      headingFont: '"Helvetica Neue", "Arial", sans-serif',
+      fontSize: '10pt',
+      lineHeight: '1.6',
+      letterSpacing: '-0.2px',
+      sectionNumberStyle: 'color: #000; margin-right: 20px; font-weight: 400; font-size: 14px; min-width: 25px; display: inline-block;',
+      pageMargins: 'margin: 0; padding: 0;',
+      sectionMargin: 'margin: 18px 0;',
+      paragraphSpacing: 'margin-bottom: 10px;',
+      headerHeight: '70px',
+      useGradients: false,
       useSerif: false,
-      formalTone: true
+      borderRadius: '0px',
+      boxShadow: 'none'
     }
   };
 
+  // WICHTIG: Design-Variante korrekt auswählen
   const theme = designVariants[designVariant] || designVariants.executive;
-  console.log('🎨 Verwendetes Theme:', theme);
+  console.log('🎨 Verwendetes Theme:', designVariant, theme);
 
   // 📝 INTELLIGENTE TEXT-VERARBEITUNG mit verbesserter Struktur
   const lines = contractText.split('\n');
@@ -327,8 +390,10 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
   let currentSection = '';
   let inSignatureSection = false;
   let sectionCounter = 0;
+  let subsectionCounters = {};
   
-  for (const line of lines) {
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
     const trimmedLine = line.trim();
     
     // Überspringe die === Linien
@@ -336,7 +401,7 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
       continue;
     }
     
-    // HAUPTÜBERSCHRIFT (KAUFVERTRAG etc.) - BOMBASTISCHES DESIGN
+    // HAUPTÜBERSCHRIFT (KAUFVERTRAG etc.) - PROFESSIONELLES DESIGN
     if (trimmedLine === trimmedLine.toUpperCase() && 
         trimmedLine.length > 5 && 
         !trimmedLine.startsWith('§') &&
@@ -346,68 +411,60 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
       if (designVariant === 'executive') {
         htmlContent += `
           <div style="
-            margin: 60px 0 50px 0;
+            margin: 40px 0 35px 0;
             text-align: center;
             position: relative;
             page-break-after: avoid;
           ">
             <div style="
               position: absolute;
-              top: -30px;
+              top: -20px;
               left: 50%;
               transform: translateX(-50%);
-              width: 100px;
-              height: 3px;
-              background: ${theme.gradient};
-              border-radius: 2px;
+              width: 80px;
+              height: 2px;
+              background: ${theme.accent};
             "></div>
             <h1 style="
-              font-family: ${theme.fontHeading};
-              font-size: 32pt;
-              font-weight: 900;
+              font-family: ${theme.headingFont};
+              font-size: 24pt;
+              font-weight: 700;
               color: ${theme.primary};
-              letter-spacing: 8px;
+              letter-spacing: 4px;
               text-transform: uppercase;
               margin: 0;
-              padding: 30px 0;
-              background: linear-gradient(135deg, ${theme.primary} 0%, ${theme.secondary} 100%);
-              -webkit-background-clip: text;
-              -webkit-text-fill-color: transparent;
-              background-clip: text;
-              text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+              padding: 20px 0;
             ">${trimmedLine}</h1>
             <div style="
-              margin: 20px auto 0;
-              width: 200px;
-              height: 2px;
-              background: ${theme.gradient};
-              border-radius: 1px;
+              margin: 15px auto 0;
+              width: 150px;
+              height: 1px;
+              background: linear-gradient(90deg, transparent, ${theme.accent}, transparent);
             "></div>
           </div>
         `;
       } else if (designVariant === 'modern') {
         htmlContent += `
           <div style="
-            margin: 50px 0 40px 0;
+            margin: 35px 0 30px 0;
             text-align: center;
             position: relative;
           ">
             <div style="
               display: inline-block;
-              padding: 20px 60px;
-              background: ${theme.gradient};
+              padding: 15px 40px;
+              background: ${theme.lightBg};
+              border: 2px solid ${theme.primary};
               border-radius: ${theme.borderRadius};
-              box-shadow: ${theme.shadow};
             ">
               <h1 style="
-                font-family: ${theme.fontHeading};
-                font-size: 28pt;
-                font-weight: 800;
-                color: white;
-                letter-spacing: 4px;
+                font-family: ${theme.headingFont};
+                font-size: 22pt;
+                font-weight: 600;
+                color: ${theme.primary};
+                letter-spacing: 2px;
                 text-transform: uppercase;
                 margin: 0;
-                text-shadow: 0 2px 8px rgba(0,0,0,0.2);
               ">${trimmedLine}</h1>
             </div>
           </div>
@@ -415,18 +472,18 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
       } else { // minimal
         htmlContent += `
           <div style="
-            margin: 40px 0;
+            margin: 30px 0;
             text-align: center;
+            padding: 15px 0;
             border-top: 1px solid ${theme.primary};
             border-bottom: 1px solid ${theme.primary};
-            padding: 20px 0;
           ">
             <h1 style="
-              font-family: ${theme.fontHeading};
-              font-size: 24pt;
-              font-weight: 400;
+              font-family: ${theme.headingFont};
+              font-size: 20pt;
+              font-weight: 300;
               color: ${theme.primary};
-              letter-spacing: 12px;
+              letter-spacing: 8px;
               text-transform: uppercase;
               margin: 0;
             ">${trimmedLine}</h1>
@@ -439,12 +496,15 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
       if (designVariant === 'executive') {
         htmlContent += `
           <div style="
-            margin: 30px 0;
-            padding: 25px;
-            background: linear-gradient(135deg, ${theme.light} 0%, white 100%);
-            border-left: 4px solid ${theme.secondary};
-            border-radius: ${theme.borderRadius};
-            box-shadow: ${theme.shadow};
+            margin: 20px 0;
+            padding: 15px 20px;
+            background: linear-gradient(135deg, ${theme.lightBg} 0%, white 100%);
+            border-left: 3px solid ${theme.accent};
+            border-radius: 0 ${theme.borderRadius} ${theme.borderRadius} 0;
+            font-family: ${theme.fontFamily};
+            font-size: 10pt;
+            color: ${theme.text};
+            font-weight: 500;
             position: relative;
             overflow: hidden;
           ">
@@ -452,233 +512,210 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
               position: absolute;
               top: 0;
               right: 0;
-              width: 100px;
-              height: 100px;
-              background: ${theme.gradient};
+              width: 60px;
+              height: 60px;
+              background: ${theme.accent};
               opacity: 0.05;
               border-radius: 50%;
-              transform: translate(30px, -30px);
+              transform: translate(20px, -20px);
             "></div>
-            <p style="
-              font-family: ${theme.fontMain};
-              font-size: 14pt;
-              font-weight: 600;
-              color: ${theme.primary};
-              margin: 0;
-              position: relative;
-              z-index: 1;
-            ">${trimmedLine}</p>
+            <span style="position: relative; z-index: 1;">${trimmedLine}</span>
           </div>
         `;
       } else if (designVariant === 'modern') {
         htmlContent += `
           <div style="
-            margin: 25px 0;
-            padding: 20px;
-            background: ${theme.light};
-            border: 2px solid ${theme.accent};
+            margin: 18px 0;
+            padding: 12px 18px;
+            background: ${theme.lightBg};
+            border: 1px solid ${theme.border};
             border-radius: ${theme.borderRadius};
+            font-family: ${theme.fontFamily};
+            font-size: 10pt;
+            color: ${theme.text};
             position: relative;
           ">
             <span style="
               position: absolute;
-              top: -10px;
-              left: 20px;
+              top: -8px;
+              left: 15px;
               background: white;
-              padding: 0 10px;
+              padding: 0 8px;
               color: ${theme.primary};
-              font-size: 10pt;
+              font-size: 8pt;
               font-weight: 600;
             ">HANDELSREGISTER</span>
-            <p style="
-              font-family: ${theme.fontMain};
-              font-size: 13pt;
-              font-weight: 500;
-              color: ${theme.text};
-              margin: 0;
-            ">${trimmedLine}</p>
+            ${trimmedLine}
           </div>
         `;
       } else { // minimal
         htmlContent += `
           <div style="
-            margin: 20px 0;
-            padding: 15px 0;
-            border-bottom: 1px solid ${theme.secondary};
-          ">
-            <p style="
-              font-family: ${theme.fontMain};
-              font-size: 12pt;
-              color: ${theme.text};
-              margin: 0;
-            ">${trimmedLine}</p>
-          </div>
+            margin: 15px 0;
+            padding: 10px 0;
+            border-bottom: 1px solid ${theme.border};
+            font-family: ${theme.fontFamily};
+            font-size: 10pt;
+            color: ${theme.text};
+          ">${trimmedLine}</div>
         `;
       }
     }
-    // PARAGRAPH-ÜBERSCHRIFTEN - Modernes Card-Design
+    // PARAGRAPH-ÜBERSCHRIFTEN - Professionelles Card-Design
     else if (trimmedLine.startsWith('§')) {
       sectionCounter++;
+      subsectionCounters[sectionCounter] = 0;
+      
+      // Schließe vorherige Section
       if (currentSection) {
         htmlContent += '</div></div>';
       }
+      
       currentSection = trimmedLine;
       
       if (designVariant === 'executive') {
         htmlContent += `
           <div style="
-            margin: 40px 0;
+            margin: ${theme.sectionMargin};
             page-break-inside: avoid;
             position: relative;
           ">
             <div style="
               background: white;
+              border: 1px solid ${theme.border};
               border-radius: ${theme.borderRadius};
-              box-shadow: ${theme.shadow};
               overflow: hidden;
-              border: 1px solid rgba(0,0,0,0.05);
+              box-shadow: ${theme.boxShadow};
             ">
               <div style="
-                background: ${theme.headerGradient};
+                background: linear-gradient(135deg, ${theme.primary} 0%, ${theme.secondary} 100%);
                 color: white;
-                padding: 20px 30px;
+                padding: 15px 20px;
                 position: relative;
-                overflow: hidden;
               ">
                 <div style="
                   position: absolute;
                   top: 50%;
-                  right: 30px;
+                  right: 20px;
                   transform: translateY(-50%);
-                  font-size: 60pt;
+                  font-size: 40pt;
                   font-weight: 900;
                   opacity: 0.1;
                   color: white;
                 ">${sectionCounter}</div>
                 <h2 style="
-                  font-family: ${theme.fontHeading};
-                  font-size: 16pt;
-                  font-weight: 700;
+                  font-family: ${theme.headingFont};
+                  font-size: 14pt;
+                  font-weight: 600;
                   margin: 0;
-                  letter-spacing: 2px;
+                  letter-spacing: 1px;
                   text-transform: uppercase;
                   position: relative;
                   z-index: 1;
-                ">${trimmedLine}</h2>
+                  display: flex;
+                  align-items: center;
+                ">
+                  <span style="${theme.sectionNumberStyle}">${sectionCounter}</span>
+                  ${trimmedLine}
+                </h2>
               </div>
-              <div style="padding: 25px 30px;">
+              <div style="padding: 20px 25px;">
         `;
       } else if (designVariant === 'modern') {
         htmlContent += `
           <div style="
-            margin: 35px 0;
+            margin: ${theme.sectionMargin};
             page-break-inside: avoid;
           ">
             <div style="
-              display: flex;
-              align-items: center;
-              margin-bottom: 20px;
+              background: white;
+              border: 1px solid ${theme.border};
+              border-radius: ${theme.borderRadius};
+              padding: 0;
+              overflow: hidden;
             ">
               <div style="
-                width: ${theme.sectionNumberSize};
-                height: ${theme.sectionNumberSize};
-                background: ${theme.gradient};
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                color: white;
-                font-weight: 700;
-                font-size: 16pt;
-                margin-right: 15px;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-              ">${sectionCounter}</div>
-              <h2 style="
-                font-family: ${theme.fontHeading};
-                font-size: 15pt;
-                font-weight: 700;
-                color: ${theme.primary};
-                margin: 0;
-                letter-spacing: 1px;
-                text-transform: uppercase;
-              ">${trimmedLine}</h2>
-            </div>
-            <div style="
-              padding-left: calc(${theme.sectionNumberSize} + 15px);
-            ">
+                background: ${theme.lightBg};
+                padding: 12px 20px;
+                border-bottom: 2px solid ${theme.primary};
+              ">
+                <h2 style="
+                  font-family: ${theme.headingFont};
+                  font-size: 13pt;
+                  font-weight: 600;
+                  color: ${theme.primary};
+                  margin: 0;
+                  display: flex;
+                  align-items: center;
+                ">
+                  <span style="${theme.sectionNumberStyle}">${sectionCounter}</span>
+                  ${trimmedLine}
+                </h2>
+              </div>
+              <div style="padding: 18px 20px;">
         `;
       } else { // minimal
         htmlContent += `
           <div style="
-            margin: 30px 0;
+            margin: ${theme.sectionMargin};
             page-break-inside: avoid;
           ">
-            <div style="
+            <h2 style="
+              font-family: ${theme.headingFont};
+              font-size: 12pt;
+              font-weight: 400;
+              color: ${theme.primary};
+              margin: 0 0 12px 0;
+              padding-bottom: 8px;
+              border-bottom: 1px solid ${theme.border};
               display: flex;
               align-items: baseline;
-              margin-bottom: 15px;
-              padding-bottom: 10px;
-              border-bottom: 1px solid ${theme.secondary};
             ">
-              <span style="
-                font-family: ${theme.fontMain};
-                font-size: 14pt;
-                font-weight: 300;
-                color: ${theme.secondary};
-                margin-right: 15px;
-              ">${sectionCounter.toString().padStart(2, '0')}</span>
-              <h2 style="
-                font-family: ${theme.fontHeading};
-                font-size: 14pt;
-                font-weight: 400;
-                color: ${theme.primary};
-                margin: 0;
-                text-transform: uppercase;
-                letter-spacing: 2px;
-              ">${trimmedLine}</h2>
-            </div>
-            <div style="padding-left: 40px;">
+              <span style="${theme.sectionNumberStyle}">${sectionCounter}.</span>
+              ${trimmedLine}
+            </h2>
+            <div style="padding-left: 30px;">
         `;
       }
     }
     // PRÄAMBEL - Eleganter Intro-Bereich
-    else if (trimmedLine === 'PRÄAMBEL') {
+    else if (trimmedLine === 'PRÄAMBEL' || trimmedLine === 'Präambel') {
       if (designVariant === 'executive') {
         htmlContent += `
           <div style="
-            margin: 50px 0 30px 0;
+            margin: 35px 0 25px 0;
             text-align: center;
             position: relative;
           ">
             <h3 style="
-              font-family: ${theme.fontHeading};
-              font-size: 18pt;
-              font-weight: 700;
+              font-family: ${theme.headingFont};
+              font-size: 14pt;
+              font-weight: 600;
               color: ${theme.primary};
-              letter-spacing: 4px;
+              letter-spacing: 3px;
               text-transform: uppercase;
               position: relative;
               display: inline-block;
-              padding: 0 40px;
+              padding: 0 30px;
             ">
               <span style="
                 position: absolute;
                 left: 0;
                 top: 50%;
                 transform: translateY(-50%);
-                width: 30px;
-                height: 2px;
-                background: ${theme.gradient};
+                width: 20px;
+                height: 1px;
+                background: ${theme.accent};
               "></span>
-              ${trimmedLine}
+              ${trimmedLine.toUpperCase()}
               <span style="
                 position: absolute;
                 right: 0;
                 top: 50%;
                 transform: translateY(-50%);
-                width: 30px;
-                height: 2px;
-                background: ${theme.gradient};
+                width: 20px;
+                height: 1px;
+                background: ${theme.accent};
               "></span>
             </h3>
           </div>
@@ -686,43 +723,43 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
       } else if (designVariant === 'modern') {
         htmlContent += `
           <div style="
-            margin: 40px 0 25px 0;
+            margin: 30px 0 20px 0;
             text-align: center;
           ">
             <div style="
               display: inline-block;
-              padding: 10px 30px;
-              background: ${theme.light};
-              border-radius: 30px;
-              border: 2px solid ${theme.accent};
+              padding: 8px 25px;
+              background: ${theme.lightBg};
+              border-radius: 20px;
+              border: 1px solid ${theme.accent};
             ">
               <h3 style="
-                font-family: ${theme.fontHeading};
-                font-size: 16pt;
-                font-weight: 600;
+                font-family: ${theme.headingFont};
+                font-size: 13pt;
+                font-weight: 500;
                 color: ${theme.primary};
-                letter-spacing: 3px;
+                letter-spacing: 2px;
                 text-transform: uppercase;
                 margin: 0;
-              ">${trimmedLine}</h3>
+              ">${trimmedLine.toUpperCase()}</h3>
             </div>
           </div>
         `;
       } else { // minimal
         htmlContent += `
           <div style="
-            margin: 35px 0 20px 0;
+            margin: 25px 0 15px 0;
             text-align: center;
           ">
             <h3 style="
-              font-family: ${theme.fontHeading};
-              font-size: 14pt;
+              font-family: ${theme.headingFont};
+              font-size: 12pt;
               font-weight: 300;
               color: ${theme.primary};
-              letter-spacing: 6px;
+              letter-spacing: 4px;
               text-transform: uppercase;
               margin: 0;
-            ">${trimmedLine}</h3>
+            ">${trimmedLine.toUpperCase()}</h3>
           </div>
         `;
       }
@@ -733,35 +770,35 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
         htmlContent += `
           <p style="
             text-align: center;
-            margin: 40px 0 30px 0;
-            font-family: ${theme.fontMain};
-            font-size: 14pt;
+            margin: 30px 0 20px 0;
+            font-family: ${theme.fontFamily};
+            font-size: 11pt;
             color: ${theme.secondary};
             font-style: italic;
             font-weight: 500;
-            letter-spacing: 2px;
+            letter-spacing: 1px;
           ">${trimmedLine}</p>
         `;
       } else if (designVariant === 'modern') {
         htmlContent += `
           <p style="
             text-align: center;
-            margin: 35px 0 25px 0;
-            font-family: ${theme.fontMain};
-            font-size: 13pt;
+            margin: 25px 0 18px 0;
+            font-family: ${theme.fontFamily};
+            font-size: 10pt;
             color: ${theme.primary};
-            font-weight: 600;
+            font-weight: 500;
             text-transform: lowercase;
-            letter-spacing: 3px;
+            letter-spacing: 2px;
           ">${trimmedLine}</p>
         `;
       } else { // minimal
         htmlContent += `
           <p style="
             text-align: center;
-            margin: 30px 0 20px 0;
-            font-family: ${theme.fontMain};
-            font-size: 12pt;
+            margin: 20px 0 15px 0;
+            font-family: ${theme.fontFamily};
+            font-size: 10pt;
             color: ${theme.text};
             font-style: italic;
           ">${trimmedLine}</p>
@@ -774,46 +811,44 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
         htmlContent += `
           <div style="
             text-align: center;
-            margin: 15px 0 35px 0;
-            padding: 12px 20px;
-            background: linear-gradient(90deg, transparent, ${theme.light}, transparent);
-            border-radius: 30px;
-            display: inline-block;
-            width: 100%;
+            margin: 8px 0 25px 0;
+            padding: 8px 15px;
+            background: linear-gradient(90deg, transparent, ${theme.lightBg}, transparent);
+            border-radius: 20px;
           ">
             <p style="
               margin: 0;
-              font-family: ${theme.fontMain};
+              font-family: ${theme.fontFamily};
               font-style: italic;
               color: ${theme.secondary};
-              font-size: 11pt;
-              font-weight: 500;
-            ">${trimmedLine}</p>
+              font-size: 9pt;
+              font-weight: 400;
+            ">— ${trimmedLine} —</p>
           </div>
         `;
       } else if (designVariant === 'modern') {
         htmlContent += `
           <div style="
             text-align: center;
-            margin: 10px 0 30px 0;
+            margin: 6px 0 20px 0;
           ">
             <p style="
               margin: 0;
-              font-family: ${theme.fontMain};
+              font-family: ${theme.fontFamily};
               color: ${theme.accent};
-              font-size: 10pt;
-              font-weight: 500;
-              letter-spacing: 1px;
-            ">${trimmedLine}</p>
+              font-size: 9pt;
+              font-weight: 400;
+              letter-spacing: 0.5px;
+            ">– ${trimmedLine} –</p>
           </div>
         `;
       } else { // minimal
         htmlContent += `
           <p style="
             text-align: center;
-            margin: 10px 0 25px 0;
-            font-family: ${theme.fontMain};
-            font-size: 10pt;
+            margin: 5px 0 18px 0;
+            font-family: ${theme.fontFamily};
+            font-size: 9pt;
             color: ${theme.secondary};
             font-style: italic;
           ">${trimmedLine}</p>
@@ -826,27 +861,27 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
         htmlContent += `
           <div style="
             text-align: center;
-            margin: 35px 0;
+            margin: 25px 0;
             position: relative;
           ">
             <div style="
               position: absolute;
               top: 50%;
-              left: 0;
-              right: 0;
+              left: 10%;
+              right: 10%;
               height: 1px;
               background: linear-gradient(90deg, transparent, ${theme.accent}, transparent);
             "></div>
             <span style="
               background: white;
-              padding: 8px 30px;
+              padding: 5px 20px;
               position: relative;
-              font-family: ${theme.fontMain};
+              font-family: ${theme.fontFamily};
               font-style: italic;
               color: ${theme.secondary};
-              font-size: 13pt;
-              font-weight: 500;
-              letter-spacing: 2px;
+              font-size: 11pt;
+              font-weight: 400;
+              letter-spacing: 1px;
             ">${trimmedLine}</span>
           </div>
         `;
@@ -854,18 +889,18 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
         htmlContent += `
           <div style="
             text-align: center;
-            margin: 30px 0;
+            margin: 20px 0;
           ">
             <div style="
               display: inline-block;
-              padding: 5px 25px;
-              background: ${theme.accent};
+              padding: 4px 18px;
+              background: ${theme.primary};
               color: white;
-              border-radius: 20px;
-              font-family: ${theme.fontMain};
-              font-size: 12pt;
-              font-weight: 600;
-              letter-spacing: 2px;
+              border-radius: 15px;
+              font-family: ${theme.fontFamily};
+              font-size: 10pt;
+              font-weight: 500;
+              letter-spacing: 1px;
             ">${trimmedLine}</div>
           </div>
         `;
@@ -873,9 +908,9 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
         htmlContent += `
           <p style="
             text-align: center;
-            margin: 25px 0;
-            font-family: ${theme.fontMain};
-            font-size: 12pt;
+            margin: 18px 0;
+            font-family: ${theme.fontFamily};
+            font-size: 10pt;
             color: ${theme.text};
             font-style: italic;
           ">${trimmedLine}</p>
@@ -884,93 +919,83 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
     }
     // UNTERABSCHNITTE (1), (2), etc. - Strukturierte Liste
     else if (trimmedLine.match(/^\(\d+\)/)) {
+      subsectionCounters[sectionCounter]++;
       const number = trimmedLine.match(/^\((\d+)\)/)[1];
       const content = trimmedLine.replace(/^\(\d+\)\s*/, '');
       
       if (designVariant === 'executive') {
         htmlContent += `
           <div style="
-            margin: 20px 0;
-            padding-left: 40px;
+            margin: 12px 0;
+            padding-left: 35px;
             position: relative;
+            font-family: ${theme.fontFamily};
+            font-size: ${theme.fontSize};
+            color: ${theme.text};
+            line-height: ${theme.lineHeight};
           ">
             <div style="
               position: absolute;
               left: 0;
-              top: 0;
-              width: 30px;
-              height: 30px;
-              background: ${theme.gradient};
+              top: 2px;
+              width: 24px;
+              height: 24px;
+              background: linear-gradient(135deg, ${theme.accent} 0%, #b8985a 100%);
               border-radius: 50%;
               display: flex;
               align-items: center;
               justify-content: center;
               color: white;
-              font-weight: 700;
-              font-size: 12pt;
-              box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            ">${number}</div>
-            <p style="
-              margin: 0;
-              font-family: ${theme.fontMain};
-              line-height: 1.8;
-              color: ${theme.text};
-              text-align: justify;
+              font-weight: 600;
               font-size: 11pt;
-            ">${content}</p>
+              box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            ">${number}</div>
+            <span style="text-align: justify;">${content}</span>
           </div>
         `;
       } else if (designVariant === 'modern') {
         htmlContent += `
           <div style="
-            margin: 18px 0;
+            margin: 10px 0;
             display: flex;
             align-items: flex-start;
+            font-family: ${theme.fontFamily};
+            font-size: ${theme.fontSize};
+            color: ${theme.text};
+            line-height: ${theme.lineHeight};
           ">
             <span style="
               display: inline-block;
-              min-width: 35px;
-              padding: 2px 8px;
-              background: ${theme.light};
-              border: 2px solid ${theme.accent};
-              border-radius: 8px;
+              min-width: 32px;
+              padding: 1px 6px;
+              background: ${theme.lightBg};
+              border: 1px solid ${theme.accent};
+              border-radius: 4px;
               color: ${theme.primary};
-              font-family: ${theme.fontMain};
-              font-weight: 600;
-              font-size: 10pt;
+              font-weight: 500;
+              font-size: 9pt;
               text-align: center;
-              margin-right: 15px;
+              margin-right: 12px;
             ">${number}</span>
-            <p style="
-              margin: 0;
-              font-family: ${theme.fontMain};
-              line-height: 1.7;
-              color: ${theme.text};
-              font-size: 11pt;
-              flex: 1;
-            ">${content}</p>
+            <span style="flex: 1;">${content}</span>
           </div>
         `;
       } else { // minimal
         htmlContent += `
           <div style="
-            margin: 15px 0;
+            margin: 8px 0;
             display: flex;
+            font-family: ${theme.fontFamily};
+            font-size: ${theme.fontSize};
+            color: ${theme.text};
+            line-height: ${theme.lineHeight};
           ">
             <span style="
-              font-family: ${theme.fontMain};
               color: ${theme.secondary};
-              margin-right: 15px;
-              font-weight: 500;
+              margin-right: 12px;
+              font-weight: 400;
             ">(${number})</span>
-            <p style="
-              margin: 0;
-              font-family: ${theme.fontMain};
-              line-height: 1.6;
-              color: ${theme.text};
-              font-size: 11pt;
-              flex: 1;
-            ">${content}</p>
+            <span style="flex: 1;">${content}</span>
           </div>
         `;
       }
@@ -983,84 +1008,74 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
       if (designVariant === 'executive') {
         htmlContent += `
           <div style="
-            margin: 15px 0 15px 60px;
-            padding-left: 25px;
+            margin: 8px 0 8px 45px;
+            padding-left: 20px;
             position: relative;
+            font-family: ${theme.fontFamily};
+            font-size: 10pt;
+            color: ${theme.text};
+            line-height: ${theme.lineHeight};
           ">
             <div style="
               position: absolute;
               left: 0;
-              top: 3px;
-              width: 20px;
-              height: 20px;
+              top: 2px;
+              width: 18px;
+              height: 18px;
               background: white;
-              border: 2px solid ${theme.accent};
+              border: 1.5px solid ${theme.accent};
               border-radius: 50%;
               display: flex;
               align-items: center;
               justify-content: center;
               color: ${theme.secondary};
-              font-weight: 600;
-              font-size: 10pt;
+              font-weight: 500;
+              font-size: 9pt;
             ">${letter}</div>
-            <p style="
-              margin: 0;
-              font-family: ${theme.fontMain};
-              line-height: 1.7;
-              color: ${theme.text};
-              font-size: 10.5pt;
-            ">${content}</p>
+            <span>${content}</span>
           </div>
         `;
       } else if (designVariant === 'modern') {
         htmlContent += `
           <div style="
-            margin: 12px 0 12px 50px;
+            margin: 6px 0 6px 40px;
             display: flex;
             align-items: flex-start;
+            font-family: ${theme.fontFamily};
+            font-size: 10pt;
+            color: ${theme.text};
+            line-height: ${theme.lineHeight};
           ">
             <span style="
               color: ${theme.accent};
-              font-family: ${theme.fontMain};
-              font-weight: 600;
-              margin-right: 10px;
-              font-size: 10pt;
+              font-weight: 500;
+              margin-right: 8px;
+              font-size: 9pt;
             ">${letter})</span>
-            <p style="
-              margin: 0;
-              font-family: ${theme.fontMain};
-              line-height: 1.6;
-              color: ${theme.text};
-              font-size: 10.5pt;
-              flex: 1;
-            ">${content}</p>
+            <span style="flex: 1;">${content}</span>
           </div>
         `;
       } else { // minimal
         htmlContent += `
           <div style="
-            margin: 10px 0 10px 40px;
+            margin: 5px 0 5px 35px;
             display: flex;
+            font-family: ${theme.fontFamily};
+            font-size: 10pt;
+            color: ${theme.text};
+            line-height: ${theme.lineHeight};
           ">
             <span style="
               color: ${theme.secondary};
-              font-family: ${theme.fontMain};
-              margin-right: 10px;
-              font-size: 10pt;
+              margin-right: 8px;
+              font-size: 9pt;
             ">${letter})</span>
-            <p style="
-              margin: 0;
-              font-family: ${theme.fontMain};
-              line-height: 1.5;
-              color: ${theme.text};
-              font-size: 10.5pt;
-              flex: 1;
-            ">${content}</p>
+            <span style="flex: 1;">${content}</span>
           </div>
         `;
       }
     }
-    // UNTERSCHRIFTSBEREICH - Premium Signature Section
+    // UNTERSCHRIFTSBEREICH - Enterprise Signature Section
     else if (trimmedLine.includes('_____')) {
       if (!inSignatureSection) {
         if (currentSection) {
@@ -1071,32 +1086,30 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
         if (designVariant === 'executive') {
           htmlContent += `
             <div style="
-              margin-top: 80px;
-              padding: 40px;
-              background: linear-gradient(135deg, ${theme.light} 0%, white 100%);
+              margin-top: 60px;
+              padding: 30px;
+              background: linear-gradient(135deg, ${theme.lightBg} 0%, white 100%);
+              border: 1px solid ${theme.border};
               border-radius: ${theme.borderRadius};
-              border: 2px solid ${theme.accent};
-              box-shadow: ${theme.shadow};
               page-break-inside: avoid;
               position: relative;
             ">
               <div style="
                 position: absolute;
-                top: -20px;
-                left: 50%;
-                transform: translateX(-50%);
+                top: -15px;
+                left: 40px;
                 background: white;
-                padding: 8px 30px;
-                border-radius: 20px;
-                border: 2px solid ${theme.accent};
+                padding: 5px 20px;
+                border: 1px solid ${theme.accent};
+                border-radius: 15px;
               ">
                 <h3 style="
                   margin: 0;
-                  font-family: ${theme.fontHeading};
+                  font-family: ${theme.headingFont};
                   color: ${theme.primary};
-                  font-size: 12pt;
-                  font-weight: 700;
-                  letter-spacing: 1px;
+                  font-size: 11pt;
+                  font-weight: 600;
+                  letter-spacing: 0.5px;
                   text-transform: uppercase;
                 ">Unterschriften</h3>
               </div>
@@ -1104,187 +1117,153 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
         } else if (designVariant === 'modern') {
           htmlContent += `
             <div style="
-              margin-top: 70px;
-              padding: 35px;
-              background: ${theme.light};
+              margin-top: 50px;
+              padding: 25px;
+              background: ${theme.lightBg};
               border-radius: ${theme.borderRadius};
-              box-shadow: 0 10px 30px rgba(0,0,0,0.05);
               page-break-inside: avoid;
             ">
               <h3 style="
                 text-align: center;
-                font-family: ${theme.fontHeading};
+                font-family: ${theme.headingFont};
                 color: ${theme.primary};
-                font-size: 14pt;
-                font-weight: 600;
-                letter-spacing: 2px;
+                font-size: 12pt;
+                font-weight: 500;
+                letter-spacing: 1px;
                 text-transform: uppercase;
-                margin: 0 0 30px 0;
+                margin: 0 0 25px 0;
+                padding-bottom: 10px;
+                border-bottom: 2px solid ${theme.primary};
               ">Unterschriften</h3>
           `;
         } else { // minimal
           htmlContent += `
             <div style="
-              margin-top: 60px;
-              padding: 30px 0;
-              border-top: 2px solid ${theme.primary};
+              margin-top: 45px;
+              padding: 20px 0;
+              border-top: 1px solid ${theme.primary};
               page-break-inside: avoid;
             ">
               <h3 style="
-                font-family: ${theme.fontHeading};
+                font-family: ${theme.headingFont};
                 color: ${theme.primary};
-                font-size: 12pt;
+                font-size: 11pt;
                 font-weight: 400;
-                letter-spacing: 3px;
+                letter-spacing: 2px;
                 text-transform: uppercase;
-                margin: 0 0 40px 0;
+                margin: 0 0 30px 0;
               ">Unterschriften</h3>
           `;
         }
         inSignatureSection = true;
       }
       
-      // Formatiere die Unterschriftszeilen
-      const parts = trimmedLine.split('_____');
+      // Formatiere die Unterschriftszeilen professionell
       htmlContent += `
         <div style="
-          display: flex;
-          justify-content: space-between;
-          margin: 60px 0 20px 0;
-          flex-wrap: wrap;
-          gap: 40px;
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 60px;
+          margin: 40px 0;
         ">
+          <div>
+            <div style="
+              border-bottom: 1px solid ${theme.primary};
+              margin-bottom: 5px;
+              min-height: 40px;
+            "></div>
+            <p style="
+              margin: 0 0 3px 0;
+              font-family: ${theme.fontFamily};
+              font-size: 8pt;
+              color: ${theme.secondary};
+            ">Ort, Datum</p>
+            
+            <div style="
+              border-bottom: 1px solid ${theme.primary};
+              margin: 25px 0 5px 0;
+              min-height: 40px;
+            "></div>
+            <p style="
+              margin: 0;
+              font-family: ${theme.fontFamily};
+              font-size: 9pt;
+              color: ${theme.text};
+            ">${companyProfile?.companyName || 'Verkäufer'}<br/>
+            <span style="font-size: 8pt; color: ${theme.secondary};">
+              ${companyProfile?.ceo || 'Geschäftsführung'}
+            </span></p>
+          </div>
+          
+          <div>
+            <div style="
+              border-bottom: 1px solid ${theme.primary};
+              margin-bottom: 5px;
+              min-height: 40px;
+            "></div>
+            <p style="
+              margin: 0 0 3px 0;
+              font-family: ${theme.fontFamily};
+              font-size: 8pt;
+              color: ${theme.secondary};
+            ">Ort, Datum</p>
+            
+            <div style="
+              border-bottom: 1px solid ${theme.primary};
+              margin: 25px 0 5px 0;
+              min-height: 40px;
+            "></div>
+            <p style="
+              margin: 0;
+              font-family: ${theme.fontFamily};
+              font-size: 9pt;
+              color: ${theme.text};
+            ">Käufer<br/>
+            <span style="font-size: 8pt; color: ${theme.secondary};">
+              Name, Funktion
+            </span></p>
+          </div>
+        </div>
       `;
       
-      for (let i = 0; i < parts.length - 1; i++) {
-        if (designVariant === 'executive') {
-          htmlContent += `
-            <div style="
-              flex: 1;
-              min-width: 200px;
-              text-align: center;
-            ">
-              <div style="
-                border-bottom: 3px solid ${theme.secondary};
-                margin-bottom: 10px;
-                min-height: 50px;
-              "></div>
-              <p style="
-                margin: 0;
-                font-family: ${theme.fontMain};
-                color: ${theme.text};
-                font-size: 10pt;
-                font-weight: 500;
-              ">${parts[i] || 'Ort, Datum'}</p>
-            </div>
-          `;
-        } else if (designVariant === 'modern') {
-          htmlContent += `
-            <div style="
-              flex: 1;
-              min-width: 200px;
-              text-align: center;
-            ">
-              <div style="
-                border-bottom: 2px solid ${theme.accent};
-                margin-bottom: 8px;
-                min-height: 45px;
-                position: relative;
-              ">
-                <div style="
-                  position: absolute;
-                  bottom: -5px;
-                  left: 50%;
-                  transform: translateX(-50%);
-                  width: 10px;
-                  height: 10px;
-                  background: ${theme.accent};
-                  border-radius: 50%;
-                "></div>
-              </div>
-              <p style="
-                margin: 0;
-                font-family: ${theme.fontMain};
-                color: ${theme.text};
-                font-size: 9pt;
-                font-weight: 500;
-              ">${parts[i] || 'Ort, Datum'}</p>
-            </div>
-          `;
-        } else { // minimal
-          htmlContent += `
-            <div style="
-              flex: 1;
-              min-width: 200px;
-            ">
-              <div style="
-                border-bottom: 1px solid ${theme.primary};
-                margin-bottom: 8px;
-                min-height: 40px;
-              "></div>
-              <p style="
-                margin: 0;
-                font-family: ${theme.fontMain};
-                color: ${theme.secondary};
-                font-size: 9pt;
-              ">${parts[i] || 'Ort, Datum'}</p>
-            </div>
-          `;
-        }
-      }
-      
-      if (parts[parts.length - 1]) {
-        htmlContent += `
-          <div style="
-            width: 100%;
-            text-align: center;
-            margin-top: 10px;
-          ">
-            <p style="
-              font-family: ${theme.fontMain};
-              color: ${theme.text};
-              font-size: 10pt;
-            ">${parts[parts.length - 1]}</p>
-          </div>
-        `;
-      }
-      
-      htmlContent += '</div>';
+      // Überspringe die Original-Linie
+      continue;
     }
     // NORMALER TEXT - Optimierte Lesbarkeit
     else if (trimmedLine) {
       if (designVariant === 'executive') {
         htmlContent += `
           <p style="
-            margin: 0 0 15px 0;
-            font-family: ${theme.fontMain};
-            line-height: 1.9;
+            margin: 0 0 ${theme.paragraphSpacing} 0;
+            font-family: ${theme.fontFamily};
+            font-size: ${theme.fontSize};
+            line-height: ${theme.lineHeight};
             color: ${theme.text};
             text-align: justify;
-            font-size: 11pt;
+            letter-spacing: ${theme.letterSpacing};
             hyphens: auto;
             word-spacing: 0.05em;
-            letter-spacing: ${theme.letterSpacing};
           ">${trimmedLine}</p>
         `;
       } else if (designVariant === 'modern') {
         htmlContent += `
           <p style="
-            margin: 0 0 14px 0;
-            font-family: ${theme.fontMain};
-            line-height: 1.8;
+            margin: 0 0 ${theme.paragraphSpacing} 0;
+            font-family: ${theme.fontFamily};
+            font-size: ${theme.fontSize};
+            line-height: ${theme.lineHeight};
             color: ${theme.text};
-            font-size: 11pt;
+            text-align: left;
           ">${trimmedLine}</p>
         `;
       } else { // minimal
         htmlContent += `
           <p style="
-            margin: 0 0 12px 0;
-            font-family: ${theme.fontMain};
-            line-height: 1.7;
+            margin: 0 0 ${theme.paragraphSpacing} 0;
+            font-family: ${theme.fontFamily};
+            font-size: ${theme.fontSize};
+            line-height: ${theme.lineHeight};
             color: ${theme.text};
-            font-size: 11pt;
           ">${trimmedLine}</p>
         `;
       }
@@ -1299,497 +1278,449 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
     htmlContent += '</div>';
   }
 
-  // 🎨 VOLLSTÄNDIGES PREMIUM HTML-DOKUMENT - ERWEITERT
+  // 🎨 VOLLSTÄNDIGES ENTERPRISE HTML-DOKUMENT
   const fullHTML = `
 <!DOCTYPE html>
 <html lang="de">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${contractType || 'Premium Vertrag'} - ${companyProfile?.companyName || 'Contract AI'}</title>
+  <title>${contractType || 'Vertrag'} - ${companyProfile?.companyName || 'Vertragsdokument'}</title>
+  
+  <!-- Google Fonts für Enterprise Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Playfair+Display:wght@400;600;700;800;900&family=Montserrat:wght@400;500;600;700;800&display=swap');
-    
+    /* Reset & Base */
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
     
+    /* A4 Format für Print */
     @page {
       size: A4;
-      margin: 15mm 20mm 20mm 20mm;
+      margin: 20mm 15mm 20mm 20mm;
+      
+      @top-center {
+        content: "${companyProfile?.companyName || 'Vertragsdokument'} - ${documentId}";
+        font-size: 8pt;
+        color: #6b7280;
+      }
       
       @bottom-center {
-        content: counter(page) " von " counter(pages);
-        font-size: 9pt;
-        color: #94A3B8;
+        content: "Seite " counter(page) " von " counter(pages);
+        font-size: 8pt;
+        color: #6b7280;
       }
     }
     
     body {
-      font-family: ${theme.fontMain};
-      font-size: 11pt;
-      line-height: 1.6;
+      font-family: ${theme.fontFamily};
+      font-size: ${theme.fontSize};
+      line-height: ${theme.lineHeight};
       color: ${theme.text};
       background: white;
       margin: 0;
       padding: 0;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
     }
     
-    /* Animations - nur für Executive */
-    ${designVariant === 'executive' ? `
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
+    /* Container für Seite */
+    .page-container {
+      max-width: 210mm;
+      margin: 0 auto;
+      padding: 20mm;
+      background: white;
+      min-height: 297mm;
+      position: relative;
     }
     
-    .page-container {
-      animation: fadeIn 0.6s ease-out;
+    /* Wasserzeichen für Entwürfe */
+    ${isDraft ? `
+    .watermark {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-45deg);
+      font-size: 120pt;
+      color: rgba(0, 0, 0, 0.03);
+      z-index: -1;
+      pointer-events: none;
+      font-weight: bold;
+      letter-spacing: 20px;
+      text-transform: uppercase;
     }
     ` : ''}
     
-    /* Print Optimizations */
+    /* Header für jede Seite */
+    .page-header {
+      position: running(header);
+      font-size: 8pt;
+      color: ${theme.secondary};
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 10px;
+      border-bottom: 1px solid ${theme.border};
+      margin-bottom: 20px;
+    }
+    
+    /* Footer für jede Seite */
+    .page-footer {
+      position: running(footer);
+      font-size: 8pt;
+      color: ${theme.secondary};
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 10px;
+      border-top: 1px solid ${theme.border};
+      margin-top: 20px;
+    }
+    
+    /* Inhaltsverzeichnis Styles */
+    .table-of-contents {
+      page-break-after: always;
+      padding: 30px 0;
+    }
+    
+    .toc-title {
+      font-family: ${theme.headingFont};
+      font-size: 16pt;
+      font-weight: bold;
+      color: ${theme.primary};
+      margin-bottom: 30px;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+    
+    .toc-entry {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin: 10px 0;
+      font-family: ${theme.fontFamily};
+      font-size: ${theme.fontSize};
+      color: ${theme.text};
+    }
+    
+    .toc-dots {
+      flex: 1;
+      border-bottom: 1px dotted ${theme.accent};
+      margin: 0 10px;
+      height: 1px;
+      position: relative;
+      top: -4px;
+    }
+    
+    .toc-page {
+      font-weight: 500;
+      color: ${theme.secondary};
+    }
+    
+    /* Initialen-Felder */
+    .initial-fields {
+      position: absolute;
+      bottom: 15mm;
+      right: 15mm;
+      display: flex;
+      gap: 20px;
+      font-size: 7pt;
+      color: ${theme.secondary};
+    }
+    
+    .initial-field {
+      text-align: center;
+    }
+    
+    .initial-box {
+      width: 30px;
+      height: 20px;
+      border-bottom: 1px solid ${theme.secondary};
+      margin-bottom: 2px;
+    }
+    
+    /* Print-Optimierungen */
     @media print {
       body {
         print-color-adjust: exact;
         -webkit-print-color-adjust: exact;
       }
       
-      .page-break {
-        page-break-after: always;
+      .page-container {
+        padding: 0;
+        margin: 0;
       }
       
-      .no-break {
+      .no-print {
+        display: none !important;
+      }
+      
+      /* Verhindere Seitenumbruch in wichtigen Bereichen */
+      h1, h2, h3, h4 {
+        page-break-after: avoid;
         page-break-inside: avoid;
       }
+      
+      p {
+        orphans: 3;
+        widows: 3;
+        page-break-inside: avoid;
+      }
+      
+      .section-container {
+        page-break-inside: avoid;
+      }
+      
+      .signature-section {
+        page-break-inside: avoid;
+      }
+      
+      /* Halte Paragraphen zusammen */
+      div[style*="page-break-inside: avoid"] {
+        page-break-inside: avoid !important;
+      }
+    }
+    
+    /* Animations nur für Screen */
+    @media screen {
+      ${designVariant === 'executive' ? `
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      
+      .page-container {
+        animation: fadeIn 0.5s ease-out;
+      }
+      ` : ''}
     }
   </style>
 </head>
 <body>
+  ${isDraft ? '<div class="watermark">ENTWURF</div>' : ''}
+  
   <div class="page-container">
-    ${companyProfile ? `
-    <!-- PREMIUM HEADER MIT COMPANY BRANDING -->
-    ${designVariant === 'executive' ? `
+    <!-- Enterprise Header - Erste Seite -->
     <header style="
-      background: ${theme.headerGradient};
+      margin: -20mm -20mm 20px -20mm;
+      padding: 25px 30px;
+      background: ${designVariant === 'minimal' ? '#000' : theme.headerBg};
       color: white;
-      padding: 35px 40px;
-      margin: -20px -20px 50px -20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      box-shadow: ${theme.shadow};
+      min-height: ${theme.headerHeight};
       position: relative;
       overflow: hidden;
-      border-radius: 0 0 ${theme.borderRadius} ${theme.borderRadius};
     ">
-      <!-- Decorative Background Elements -->
-      <div style="
-        position: absolute;
-        top: -50%;
-        right: -10%;
-        width: 300px;
-        height: 300px;
-        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-        border-radius: 50%;
-      "></div>
-      <div style="
-        position: absolute;
-        bottom: -30%;
-        left: -5%;
-        width: 200px;
-        height: 200px;
-        background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
-        border-radius: 50%;
-      "></div>
+      ${designVariant === 'executive' ? `
+        <!-- Decorative Elements für Executive -->
+        <div style="
+          position: absolute;
+          top: -30%;
+          right: -5%;
+          width: 200px;
+          height: 200px;
+          background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+          border-radius: 50%;
+        "></div>
+        <div style="
+          position: absolute;
+          bottom: -20%;
+          left: -3%;
+          width: 150px;
+          height: 150px;
+          background: radial-gradient(circle, rgba(201,169,97,0.1) 0%, transparent 70%);
+          border-radius: 50%;
+        "></div>
+      ` : ''}
       
-      <!-- Company Info -->
       <div style="flex: 1; position: relative; z-index: 2;">
-        <h1 style="
-          font-family: ${theme.fontHeading};
-          font-size: 24pt;
-          font-weight: 800;
-          margin-bottom: 12px;
-          letter-spacing: -0.5px;
-          text-shadow: 0 2px 8px rgba(0,0,0,0.2);
-        ">
-          ${companyProfile.companyName || 'Firmenname'}
-          ${companyProfile.legalForm ? `<span style="
-            font-size: 14pt;
-            font-weight: 500;
-            opacity: 0.9;
-            margin-left: 10px;
-          ">${companyProfile.legalForm}</span>` : ''}
-        </h1>
-        
-        <div style="
-          font-size: 10pt;
-          opacity: 0.95;
-          line-height: 1.6;
-          font-weight: 400;
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 8px 30px;
-          margin-top: 15px;
-        ">
-          ${companyProfile.street ? `
-            <div style="display: flex; align-items: center;">
-              <span style="opacity: 0.7; margin-right: 8px;">📍</span>
-              ${companyProfile.street}
-            </div>
-          ` : ''}
-          ${companyProfile.postalCode || companyProfile.city ? `
-            <div style="display: flex; align-items: center;">
-              <span style="opacity: 0.7; margin-right: 8px;">🏙️</span>
-              ${companyProfile.postalCode || ''} ${companyProfile.city || ''}
-            </div>
-          ` : ''}
-          ${companyProfile.contactEmail ? `
-            <div style="display: flex; align-items: center;">
-              <span style="opacity: 0.7; margin-right: 8px;">✉️</span>
-              ${companyProfile.contactEmail}
-            </div>
-          ` : ''}
-          ${companyProfile.contactPhone ? `
-            <div style="display: flex; align-items: center;">
-              <span style="opacity: 0.7; margin-right: 8px;">📞</span>
-              ${companyProfile.contactPhone}
-            </div>
-          ` : ''}
-          ${companyProfile.vatId ? `
-            <div style="display: flex; align-items: center;">
-              <span style="opacity: 0.7; margin-right: 8px;">🏛️</span>
-              USt-IdNr.: ${companyProfile.vatId}
-            </div>
-          ` : ''}
-          ${companyProfile.tradeRegister ? `
-            <div style="display: flex; align-items: center;">
-              <span style="opacity: 0.7; margin-right: 8px;">📋</span>
-              ${companyProfile.tradeRegister}
-            </div>
-          ` : ''}
-        </div>
-      </div>
-      
-      <!-- Logo Container -->
-      ${logoBase64 ? `
-      <div style="
-        width: 200px;
-        height: 120px;
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-        margin-left: 40px;
-        position: relative;
-        z-index: 2;
-      ">
-        <div style="
-          background: rgba(255, 255, 255, 0.15);
-          backdrop-filter: blur(20px);
-          border-radius: ${theme.borderRadius};
-          padding: 15px;
-          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-          border: 1px solid rgba(255, 255, 255, 0.2);
-        ">
-          <img src="${logoBase64}" alt="Firmenlogo" style="
-            max-width: 160px;
-            max-height: 90px;
-            object-fit: contain;
-            filter: brightness(1.1) contrast(1.05);
-          " />
-        </div>
-      </div>
-      ` : ''}
-    </header>
-    ` : designVariant === 'modern' ? `
-    <header style="
-      background: white;
-      padding: 30px 40px;
-      margin: -20px -20px 40px -20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 3px solid ${theme.primary};
-      position: relative;
-    ">
-      <!-- Company Info -->
-      <div style="flex: 1;">
-        <h1 style="
-          font-family: ${theme.fontHeading};
-          font-size: 22pt;
-          font-weight: 700;
-          color: ${theme.primary};
-          margin-bottom: 10px;
-        ">
-          ${companyProfile.companyName || 'Firmenname'}
-          ${companyProfile.legalForm ? `<span style="
-            font-size: 13pt;
-            font-weight: 400;
-            color: ${theme.secondary};
-            margin-left: 10px;
-          ">${companyProfile.legalForm}</span>` : ''}
-        </h1>
-        
-        <div style="
-          font-size: 9pt;
-          color: ${theme.text};
-          line-height: 1.5;
-          display: flex;
-          flex-wrap: wrap;
-          gap: 15px;
-        ">
-          ${companyProfile.street ? `<div>${companyProfile.street}</div>` : ''}
-          ${companyProfile.postalCode || companyProfile.city ? `<div>${companyProfile.postalCode || ''} ${companyProfile.city || ''}</div>` : ''}
-          ${companyProfile.contactEmail ? `<div>${companyProfile.contactEmail}</div>` : ''}
-          ${companyProfile.contactPhone ? `<div>${companyProfile.contactPhone}</div>` : ''}
-        </div>
-      </div>
-      
-      <!-- Logo Container -->
-      ${logoBase64 ? `
-      <div style="
-        width: 180px;
-        height: 100px;
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-        margin-left: 30px;
-      ">
-        <img src="${logoBase64}" alt="Firmenlogo" style="
-          max-width: 150px;
-          max-height: 80px;
-          object-fit: contain;
-        " />
-      </div>
-      ` : ''}
-    </header>
-    ` : `
-    <!-- Minimal Header -->
-    <header style="
-      padding: 20px 0;
-      margin-bottom: 30px;
-      border-bottom: 1px solid ${theme.primary};
-    ">
-      <div style="
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-end;
-      ">
-        <div>
+        ${companyProfile ? `
           <h1 style="
-            font-family: ${theme.fontHeading};
-            font-size: 18pt;
-            font-weight: 400;
-            color: ${theme.primary};
-            margin: 0;
-          ">${companyProfile.companyName}</h1>
-          <p style="
-            font-size: 9pt;
-            color: ${theme.secondary};
-            margin-top: 5px;
-          ">${companyProfile.street}, ${companyProfile.postalCode} ${companyProfile.city}</p>
-        </div>
-        ${logoBase64 ? `
-        <img src="${logoBase64}" alt="Logo" style="
-          max-height: 40px;
-          max-width: 120px;
-          object-fit: contain;
-        " />
-        ` : ''}
+            font-size: 20pt;
+            font-weight: bold;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+            text-shadow: ${designVariant === 'executive' ? '0 2px 4px rgba(0,0,0,0.2)' : 'none'};
+          ">${companyProfile.companyName}${companyProfile.legalForm ? ` ${companyProfile.legalForm}` : ''}</h1>
+          <div style="font-size: 9pt; opacity: 0.95; line-height: 1.4;">
+            ${companyProfile.street ? `${companyProfile.street}, ` : ''}
+            ${companyProfile.postalCode || ''} ${companyProfile.city || ''}
+            ${companyProfile.contactEmail ? `<br/>✉ ${companyProfile.contactEmail}` : ''}
+            ${companyProfile.contactPhone ? ` | ☎ ${companyProfile.contactPhone}` : ''}
+            ${companyProfile.vatId ? `<br/>USt-IdNr.: ${companyProfile.vatId}` : ''}
+            ${companyProfile.tradeRegister ? ` | ${companyProfile.tradeRegister}` : ''}
+            ${companyProfile.website ? `<br/>🌐 ${companyProfile.website}` : ''}
+          </div>
+        ` : `
+          <h1 style="font-size: 18pt; font-weight: bold; letter-spacing: 1px;">Vertragsdokument</h1>
+          <p style="font-size: 10pt; opacity: 0.9; margin-top: 5px;">Professionell erstellt mit Contract AI</p>
+        `}
       </div>
+      
+      ${logoBase64 ? `
+        <div style="
+          width: 140px;
+          height: 70px;
+          display: flex;
+          align-items: center;
+          justify-content: flex-end;
+          margin-left: 20px;
+          position: relative;
+          z-index: 2;
+        ">
+          <div style="
+            background: rgba(255, 255, 255, 0.95);
+            padding: 10px;
+            border-radius: ${theme.borderRadius};
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+          ">
+            <img src="${logoBase64}" alt="Logo" style="
+              max-width: 120px;
+              max-height: 50px;
+              object-fit: contain;
+            " />
+          </div>
+        </div>
+      ` : ''}
     </header>
-    `}
-    ` : `
-    <!-- FALLBACK HEADER OHNE COMPANY PROFILE -->
-    ${designVariant === 'executive' ? `
-    <header style="
-      background: ${theme.headerGradient};
-      color: white;
-      padding: 30px 40px;
-      margin: -20px -20px 50px -20px;
-      text-align: center;
-      box-shadow: ${theme.shadow};
-      border-radius: 0 0 ${theme.borderRadius} ${theme.borderRadius};
-    ">
-      <h1 style="
-        font-family: ${theme.fontHeading};
-        font-size: 22pt;
-        font-weight: 800;
-        letter-spacing: 2px;
-        text-shadow: 0 2px 8px rgba(0,0,0,0.2);
-      ">CONTRACT AI</h1>
-      <p style="
-        font-size: 11pt;
-        opacity: 0.9;
-        margin-top: 8px;
-        letter-spacing: 1px;
-      ">Intelligente Vertragserstellung</p>
-    </header>
-    ` : designVariant === 'modern' ? `
-    <header style="
-      background: ${theme.light};
-      padding: 25px 35px;
-      margin: -20px -20px 40px -20px;
-      text-align: center;
-      border-bottom: 3px solid ${theme.primary};
-    ">
-      <h1 style="
-        font-family: ${theme.fontHeading};
-        font-size: 20pt;
-        font-weight: 700;
-        color: ${theme.primary};
-        letter-spacing: 1px;
-      ">CONTRACT AI</h1>
-      <p style="
-        font-size: 10pt;
-        color: ${theme.secondary};
-        margin-top: 5px;
-      ">Intelligente Vertragserstellung</p>
-    </header>
-    ` : `
-    <header style="
-      padding: 20px 0;
-      margin-bottom: 30px;
-      text-align: center;
-      border-bottom: 1px solid ${theme.primary};
-    ">
-      <h1 style="
-        font-family: ${theme.fontHeading};
-        font-size: 18pt;
-        font-weight: 300;
-        color: ${theme.primary};
-        letter-spacing: 4px;
-      ">CONTRACT AI</h1>
-    </header>
-    `}
-    `}
     
-    <!-- VERTRAGSKÖRPER -->
-    <main style="
-      padding: 0 20px;
-      max-width: 100%;
-      margin: 0 auto;
+    <!-- Dokument-Info Box -->
+    <div style="
+      background: ${theme.lightBg};
+      border: 1px solid ${theme.border};
+      border-radius: ${theme.borderRadius};
+      padding: 15px 20px;
+      margin-bottom: 30px;
+      font-size: 9pt;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      box-shadow: ${theme.boxShadow};
     ">
+      <div><strong style="color: ${theme.primary};">Dokument-ID:</strong> ${documentId}</div>
+      <div><strong style="color: ${theme.primary};">Erstellt am:</strong> ${new Date().toLocaleDateString('de-DE', { 
+        day: '2-digit', 
+        month: 'long', 
+        year: 'numeric' 
+      })}</div>
+      <div><strong style="color: ${theme.primary};">Vertragstyp:</strong> ${contractType?.toUpperCase() || 'VERTRAG'}</div>
+      <div><strong style="color: ${theme.primary};">Hash:</strong> ${documentHash}</div>
+      ${companyProfile?.registrationNumber ? `
+        <div><strong style="color: ${theme.primary};">Registrierungsnr.:</strong> ${companyProfile.registrationNumber}</div>
+      ` : ''}
+      <div><strong style="color: ${theme.primary};">Status:</strong> ${isDraft ? 'ENTWURF' : 'FINAL'}</div>
+    </div>
+    
+    <!-- Inhaltsverzeichnis (wenn mehr als 5 Paragraphen) -->
+    ${tableOfContents.length > 5 ? `
+      <div class="table-of-contents">
+        <h2 class="toc-title">INHALTSVERZEICHNIS</h2>
+        ${tableOfContents.map(section => `
+          <div class="toc-entry">
+            <span>${section.title}</span>
+            <span class="toc-dots"></span>
+            <span class="toc-page">Seite ${section.page}</span>
+          </div>
+        `).join('')}
+      </div>
+    ` : ''}
+    
+    <!-- Vertragskörper -->
+    <main style="margin-top: 30px;">
       ${htmlContent}
     </main>
     
-    <!-- PREMIUM FOOTER -->
-    ${designVariant === 'executive' ? `
-    <footer style="
-      margin-top: 100px;
-      padding-top: 30px;
-      border-top: 2px solid ${theme.accent};
-      text-align: center;
-      color: ${theme.secondary};
-      font-size: 9pt;
-      page-break-inside: avoid;
-    ">
-      <div style="
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-      ">
-        <div style="text-align: left;">
-          <strong style="color: ${theme.primary};">Vertragsdokument</strong><br/>
-          Erstellt am ${new Date().toLocaleDateString('de-DE', { 
-            day: '2-digit', 
-            month: 'long', 
-            year: 'numeric' 
-          })}
-        </div>
-        <div style="text-align: center;">
-          <div style="
-            display: inline-block;
-            padding: 8px 20px;
-            background: ${theme.gradient};
-            color: white;
-            border-radius: 20px;
-            font-weight: 600;
-            font-size: 10pt;
-            letter-spacing: 1px;
-          ">
-            ${contractType?.toUpperCase() || 'VERTRAG'}
-          </div>
-        </div>
-        <div style="text-align: right;">
-          <strong style="color: ${theme.primary};">Contract AI</strong><br/>
-          Premium Vertragserstellung
-        </div>
-      </div>
-      <div style="
-        margin-top: 20px;
-        padding-top: 20px;
-        border-top: 1px solid ${theme.light};
-        font-size: 8pt;
-        color: #94A3B8;
-      ">
-        Dieses Dokument wurde mit Contract AI erstellt und ist rechtlich bindend. 
-        Alle Rechte vorbehalten. © ${new Date().getFullYear()}
-      </div>
-    </footer>
-    ` : designVariant === 'modern' ? `
-    <footer style="
-      margin-top: 80px;
-      padding: 30px;
-      background: ${theme.light};
+    <!-- Anhang-Platzhalter -->
+    <div style="
+      margin-top: 50px;
+      padding: 20px;
+      background: ${theme.lightBg};
+      border: 1px dashed ${theme.border};
       border-radius: ${theme.borderRadius};
       page-break-inside: avoid;
     ">
-      <div style="
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      ">
-        <div>
-          <strong style="color: ${theme.primary}; font-size: 10pt;">Dokument-ID</strong><br/>
-          <span style="font-family: monospace; font-size: 8pt; color: ${theme.secondary};">
-            ${new Date().getTime()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}
-          </span>
-        </div>
-        <div style="text-align: center;">
-          <div style="
-            padding: 6px 16px;
-            background: ${theme.primary};
-            color: white;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 9pt;
-          ">
-            ${contractType?.toUpperCase() || 'VERTRAG'}
-          </div>
-        </div>
-        <div style="text-align: right;">
-          <strong style="color: ${theme.primary}; font-size: 10pt;">Erstellt</strong><br/>
-          <span style="font-size: 9pt; color: ${theme.secondary};">
-            ${new Date().toLocaleDateString('de-DE')} | ${new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
-          </span>
-        </div>
-      </div>
-    </footer>
-    ` : `
+      <h3 style="
+        font-family: ${theme.headingFont};
+        font-size: 12pt;
+        color: ${theme.primary};
+        margin-bottom: 10px;
+      ">ANLAGEN</h3>
+      <p style="
+        font-family: ${theme.fontFamily};
+        font-size: 9pt;
+        color: ${theme.secondary};
+        font-style: italic;
+      ">Diesem Vertrag sind keine Anlagen beigefügt.</p>
+    </div>
+    
+    <!-- Enterprise Footer mit QR-Code -->
     <footer style="
       margin-top: 60px;
       padding-top: 20px;
-      border-top: 1px solid ${theme.primary};
-      font-size: 8pt;
-      color: ${theme.secondary};
+      border-top: 2px solid ${theme.accent};
       page-break-inside: avoid;
     ">
       <div style="
-        display: flex;
-        justify-content: space-between;
-        align-items: baseline;
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        gap: 30px;
+        align-items: flex-end;
+        margin-bottom: 20px;
       ">
-        <div>${contractType || 'Vertrag'}</div>
-        <div>${new Date().toLocaleDateString('de-DE')}</div>
-        <div>Seite <span class="page-number"></span></div>
+        <div style="font-size: 8pt; color: ${theme.secondary};">
+          <strong style="color: ${theme.primary}; font-size: 9pt;">${contractType?.toUpperCase() || 'VERTRAGSDOKUMENT'}</strong><br/>
+          Erstellt mit Contract AI<br/>
+          Enterprise Edition v5.0<br/>
+          ${companyProfile?.companyName ? `© ${new Date().getFullYear()} ${companyProfile.companyName}` : ''}
+        </div>
+        
+        <div style="text-align: center;">
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(JSON.stringify({
+            id: documentId,
+            hash: documentHash,
+            type: contractType,
+            date: new Date().toISOString(),
+            company: companyProfile?.companyName || 'N/A'
+          }))}" 
+               alt="Verifizierungs-QR" 
+               style="width: 100px; height: 100px; border: 1px solid ${theme.border}; padding: 5px; background: white;" />
+          <div style="font-size: 7pt; color: ${theme.secondary}; margin-top: 5px;">
+            <strong>Digitale Verifizierung</strong><br/>
+            ${documentHash}
+          </div>
+        </div>
+        
+        <div style="text-align: right; font-size: 8pt; color: ${theme.secondary};">
+          <strong style="color: ${theme.primary};">Rechtlicher Hinweis:</strong><br/>
+          Dieses Dokument ist rechtlich bindend.<br/>
+          Alle Rechte vorbehalten.<br/>
+          Gerichtsstand: ${companyProfile?.city || 'Deutschland'}
+        </div>
+      </div>
+      
+      <!-- Initialen-Felder für jede Seite -->
+      <div class="initial-fields no-print">
+        <div class="initial-field">
+          <div class="initial-box"></div>
+          <div>${companyProfile?.companyName ? companyProfile.companyName.substring(0, 2).toUpperCase() : 'VK'}</div>
+        </div>
+        <div class="initial-field">
+          <div class="initial-box"></div>
+          <div>KÄ</div>
+        </div>
       </div>
     </footer>
-    `}
   </div>
 </body>
 </html>`;
@@ -1817,9 +1748,15 @@ let usersCollection, contractsCollection, db;
   }
 })();
 
-// 🎯 PROFESSIONELLE VERTRAGSGENERIERUNG
+// 🎯 PROFESSIONELLE VERTRAGSGENERIERUNG - HAUPTROUTE
 router.post("/", verifyToken, async (req, res) => {
   console.log("🚀 Generate Route aufgerufen!");
+  console.log("📊 Request Body:", {
+    type: req.body.type,
+    useCompanyProfile: req.body.useCompanyProfile,
+    designVariant: req.body.designVariant,
+    formDataKeys: Object.keys(req.body.formData || {})
+  });
   
   const { type, formData, useCompanyProfile = false, designVariant = 'executive' } = req.body;
 
@@ -1828,17 +1765,30 @@ router.post("/", verifyToken, async (req, res) => {
   }
 
   try {
-    // Company Profile laden
+    // Company Profile laden - KRITISCHER FIX
     let companyProfile = null;
     if (db && useCompanyProfile) {
-      const profileData = await db.collection("company_profiles").findOne({ 
-        userId: new ObjectId(req.user.userId) 
-      });
-      
-      if (profileData) {
-        companyProfile = profileData;
-        console.log("✅ Company Profile gefunden:", companyProfile.companyName);
+      try {
+        console.log("🔍 Suche Company Profile für User:", req.user.userId);
+        const profileData = await db.collection("company_profiles").findOne({ 
+          userId: new ObjectId(req.user.userId) 
+        });
+        
+        if (profileData) {
+          companyProfile = profileData;
+          console.log("✅ Company Profile gefunden:", {
+            name: companyProfile.companyName,
+            hasLogo: !!companyProfile.logoUrl,
+            logoType: companyProfile.logoUrl ? (companyProfile.logoUrl.startsWith('data:') ? 'base64' : 'url') : 'none'
+          });
+        } else {
+          console.log("⚠️ Kein Company Profile gefunden für User:", req.user.userId);
+        }
+      } catch (profileError) {
+        console.error("❌ Fehler beim Laden des Company Profiles:", profileError);
       }
+    } else {
+      console.log("ℹ️ Company Profile nicht angefordert (useCompanyProfile:", useCompanyProfile, ")");
     }
 
     // Nutzer & Limit prüfen
@@ -1856,7 +1806,7 @@ router.post("/", verifyToken, async (req, res) => {
       });
     }
 
-    // Company Details vorbereiten
+    // Company Details vorbereiten für GPT
     let companyDetails = "";
     if (companyProfile && useCompanyProfile) {
       companyDetails = `${companyProfile.companyName}`;
@@ -1864,9 +1814,12 @@ router.post("/", verifyToken, async (req, res) => {
       companyDetails += `\n${companyProfile.street}, ${companyProfile.postalCode || ''} ${companyProfile.city}`;
       if (companyProfile.vatId) companyDetails += `\nUSt-IdNr.: ${companyProfile.vatId}`;
       if (companyProfile.tradeRegister) companyDetails += `\n${companyProfile.tradeRegister}`;
+      if (companyProfile.ceo) companyDetails += `\nGeschäftsführer: ${companyProfile.ceo}`;
+      if (companyProfile.contactEmail) companyDetails += `\nE-Mail: ${companyProfile.contactEmail}`;
+      if (companyProfile.contactPhone) companyDetails += `\nTelefon: ${companyProfile.contactPhone}`;
     }
 
-    // System Prompt (IHRE VERSION BEHALTEN)
+    // System Prompt für GPT-4 - VOLLSTÄNDIG
     let systemPrompt = `Du bist ein Experte für deutsches Vertragsrecht und erstellst professionelle, rechtssichere Verträge.
 
 ABSOLUT KRITISCHE REGELN:
@@ -1874,6 +1827,8 @@ ABSOLUT KRITISCHE REGELN:
 2. KEIN HTML, KEIN MARKDOWN - nur reiner Text
 3. Verwende EXAKT diese Struktur (keine Abweichungen!)
 4. Fülle ALLE Felder mit echten Daten - KEINE Platzhalter in eckigen Klammern
+5. Verwende professionelle juristische Sprache
+6. Jeder Paragraph muss detailliert ausformuliert sein
 
 EXAKTE VERTRAGSSTRUKTUR (BITTE GENAU SO VERWENDEN):
 
@@ -1884,80 +1839,98 @@ EXAKTE VERTRAGSSTRUKTUR (BITTE GENAU SO VERWENDEN):
 zwischen
 
 [Vollständige Angaben Partei A mit allen Details]
+[Adresse]
+[Weitere relevante Angaben wie HRB, USt-IdNr.]
 - nachfolgend "[Kurzbezeichnung]" genannt -
 
 und
 
 [Vollständige Angaben Partei B mit allen Details]
+[Adresse falls vorhanden]
 - nachfolgend "[Kurzbezeichnung]" genannt -
 
 PRÄAMBEL
-[Mindestens 2-3 Sätze zur Einleitung und zum Vertragszweck]
+
+[Mindestens 2-3 Sätze zur Einleitung und zum Vertragszweck. Erkläre den Hintergrund und die Absicht der Parteien.]
 
 § 1 VERTRAGSGEGENSTAND
 
-(1) [Hauptgegenstand sehr detailliert beschreiben - mindestens 3-4 Zeilen]
+(1) [Hauptgegenstand sehr detailliert beschreiben - mindestens 3-4 Zeilen. Sei spezifisch über alle Eigenschaften und Merkmale.]
 
-(2) [Weitere wichtige Details zum Gegenstand]
+(2) [Weitere wichtige Details zum Gegenstand, technische Spezifikationen, Qualitätsmerkmale etc.]
 
-(3) [Zusätzliche Spezifikationen falls relevant]
+(3) [Zusätzliche Spezifikationen, Abgrenzungen, was NICHT zum Vertragsgegenstand gehört]
 
 § 2 LEISTUNGEN UND PFLICHTEN
 
 (1) Der [Bezeichnung Partei A] verpflichtet sich zu folgenden Leistungen:
-   a) [Detaillierte Pflicht 1]
-   b) [Detaillierte Pflicht 2]
-   c) [Detaillierte Pflicht 3]
+   a) [Detaillierte Pflicht 1 - ausführlich beschreiben]
+   b) [Detaillierte Pflicht 2 - ausführlich beschreiben]
+   c) [Detaillierte Pflicht 3 - ausführlich beschreiben]
    d) [Weitere Pflichten falls relevant]
 
 (2) Der [Bezeichnung Partei B] verpflichtet sich zu folgenden Leistungen:
-   a) [Detaillierte Pflicht 1]
-   b) [Detaillierte Pflicht 2]
+   a) [Detaillierte Pflicht 1 - ausführlich beschreiben]
+   b) [Detaillierte Pflicht 2 - ausführlich beschreiben]
    c) [Weitere Pflichten falls relevant]
+
+(3) Beide Parteien verpflichten sich zur vertrauensvollen Zusammenarbeit und gegenseitigen Information über alle vertragsrelevanten Umstände.
 
 § 3 VERGÜTUNG UND ZAHLUNGSBEDINGUNGEN
 
-(1) Die Vergütung beträgt [EXAKTER BETRAG mit Währung].
+(1) Die Vergütung beträgt [EXAKTER BETRAG mit Währung und ggf. MwSt.-Angabe].
 
-(2) Die Zahlung erfolgt [genaue Zahlungsmodalitäten].
+(2) Die Zahlung erfolgt [genaue Zahlungsmodalitäten, Fristen, Zahlungsweise].
 
 (3) Bei Zahlungsverzug werden Verzugszinsen in Höhe von 9 Prozentpunkten über dem Basiszinssatz berechnet.
 
+(4) [Weitere Zahlungsdetails wie Ratenzahlung, Skonto, Vorauszahlung etc.]
+
 § 4 LAUFZEIT UND KÜNDIGUNG
 
-(1) Dieser Vertrag tritt am [Datum] in Kraft und läuft [Laufzeitdetails].
+(1) Dieser Vertrag tritt am [Datum] in Kraft und läuft [Laufzeitdetails - befristet/unbefristet].
 
-(2) Die ordentliche Kündigung ist [Kündigungsdetails].
+(2) Die ordentliche Kündigung [Kündigungsfristen und -modalitäten genau beschreiben].
 
 (3) Das Recht zur außerordentlichen Kündigung aus wichtigem Grund bleibt unberührt.
 
+(4) Kündigungen bedürfen zu ihrer Wirksamkeit der Schriftform.
+
 § 5 GEWÄHRLEISTUNG
 
-(1) [Detaillierte Gewährleistungsregelungen - mindestens 3-4 Zeilen]
+(1) [Detaillierte Gewährleistungsregelungen - mindestens 3-4 Zeilen. Beschreibe Umfang und Grenzen der Gewährleistung.]
 
-(2) Die Gewährleistungsfrist beträgt [Zeitraum].
+(2) Die Gewährleistungsfrist beträgt [Zeitraum] ab [Beginn der Frist].
 
-(3) [Regelungen zur Nacherfüllung]
+(3) [Regelungen zur Nacherfüllung, Rechte des Käufers bei Mängeln]
+
+(4) [Ausschlüsse und Einschränkungen der Gewährleistung]
 
 § 6 HAFTUNG
 
 (1) Die Haftung richtet sich nach den gesetzlichen Bestimmungen, soweit nachfolgend nichts anderes bestimmt ist.
 
-(2) [Haftungsbeschränkungen detailliert]
+(2) [Haftungsbeschränkungen detailliert - bei leichter Fahrlässigkeit, Höchstbeträge etc.]
 
 (3) Die Verjährungsfrist für Schadensersatzansprüche beträgt [Zeitraum].
 
+(4) Die vorstehenden Haftungsbeschränkungen gelten nicht bei Vorsatz, grober Fahrlässigkeit sowie bei der Verletzung von Leben, Körper und Gesundheit.
+
 § 7 EIGENTUMSVORBEHALT / GEFAHRÜBERGANG
 
-(1) [Bei Kaufverträgen: Eigentumsvorbehalt, sonst Gefahrübergang]
+(1) [Bei Kaufverträgen: Eigentumsvorbehalt bis zur vollständigen Zahlung; sonst: Regelung zum Gefahrübergang]
 
-(2) [Weitere Details]
+(2) [Weitere Details zu Eigentum und Gefahr]
+
+(3) [Regelungen bei Weiterveräußerung, Verarbeitung etc.]
 
 § 8 VERTRAULICHKEIT
 
-(1) Die Vertragsparteien verpflichten sich, über alle vertraulichen Informationen Stillschweigen zu bewahren.
+(1) Die Vertragsparteien verpflichten sich, über alle vertraulichen Informationen, die ihnen im Rahmen dieses Vertrages bekannt werden, Stillschweigen zu bewahren.
 
-(2) Diese Verpflichtung besteht auch nach Beendigung des Vertrages fort.
+(2) Als vertraulich gelten alle Informationen, die als solche bezeichnet werden oder ihrer Natur nach als vertraulich anzusehen sind.
+
+(3) Diese Verpflichtung besteht auch nach Beendigung des Vertrages für einen Zeitraum von [X] Jahren fort.
 
 § 9 DATENSCHUTZ
 
@@ -1965,36 +1938,40 @@ PRÄAMBEL
 
 (2) Personenbezogene Daten werden ausschließlich zur Vertragsdurchführung verarbeitet.
 
-§ 10 ZUSÄTZLICHE VEREINBARUNGEN [Je nach Vertragstyp anpassen]
+(3) [Weitere datenschutzrechtliche Regelungen, Auftragsverarbeitung etc.]
 
-(1) [Vertragstyp-spezifische Klauseln]
+§ 10 [VERTRAGSTYP-SPEZIFISCHE KLAUSEL]
+
+(1) [Spezielle Regelungen je nach Vertragstyp - z.B. bei Mietvertrag: Schönheitsreparaturen, bei Arbeitsvertrag: Urlaub, etc.]
+
+(2) [Weitere spezifische Details]
 
 § 11 SCHLUSSBESTIMMUNGEN
 
 (1) Änderungen und Ergänzungen dieses Vertrages bedürfen zu ihrer Wirksamkeit der Schriftform. Dies gilt auch für die Änderung dieser Schriftformklausel selbst.
 
-(2) Sollten einzelne Bestimmungen dieses Vertrages unwirksam oder undurchführbar sein oder werden, so wird hierdurch die Wirksamkeit des Vertrages im Übrigen nicht berührt.
+(2) Sollten einzelne Bestimmungen dieses Vertrages unwirksam oder undurchführbar sein oder werden, so wird hierdurch die Wirksamkeit des Vertrages im Übrigen nicht berührt. Die Parteien verpflichten sich, die unwirksame Bestimmung durch eine wirksame zu ersetzen, die dem wirtschaftlichen Zweck der unwirksamen Bestimmung am nächsten kommt.
 
-(3) Erfüllungsort und Gerichtsstand für alle Streitigkeiten aus diesem Vertrag ist [Ort].
+(3) Erfüllungsort und Gerichtsstand für alle Streitigkeiten aus diesem Vertrag ist [Ort], sofern die Parteien Kaufleute, juristische Personen des öffentlichen Rechts oder öffentlich-rechtliche Sondervermögen sind.
 
 (4) Es gilt ausschließlich das Recht der Bundesrepublik Deutschland unter Ausschluss des UN-Kaufrechts.
 
 
-_______________________     _______________________
-Ort, Datum                  Ort, Datum
+_______________________          _______________________
+Ort, Datum                       Ort, Datum
 
 
-_______________________     _______________________
-[Name Partei A]             [Name Partei B]
-[Funktion/Titel]            [Funktion/Titel]`;
+_______________________          _______________________
+[Name Partei A]                  [Name Partei B]
+[Funktion/Titel]                 [Funktion/Titel]`;
 
-    // User Prompts (ALLE IHRE CASES BEHALTEN)
+    // User Prompts für verschiedene Vertragstypen - VOLLSTÄNDIG
     let userPrompt = "";
     
     switch (type) {
       case "kaufvertrag":
-        const verkäufer = companyDetails || formData.seller || "Verkäufer";
-        const käufer = formData.buyer || "Käufer";
+        const verkäufer = companyDetails || formData.seller || "Max Mustermann GmbH, Musterstraße 1, 12345 Musterstadt";
+        const käufer = formData.buyer || "Erika Musterfrau, Beispielweg 2, 54321 Beispielstadt";
         
         userPrompt = `Erstelle einen VOLLSTÄNDIGEN, professionellen Kaufvertrag mit MINDESTENS 11 Paragraphen.
 
@@ -2007,34 +1984,24 @@ KÄUFER (verwende als Partei B):
 ${käufer}
 
 KAUFGEGENSTAND:
-${formData.item || "Gebrauchtes Kraftfahrzeug, Marke: Mercedes, Modell: E-Klasse, Baujahr: 2020, Kilometerstand: 45.000 km"}
+${formData.item || "Hochwertige Büromöbel bestehend aus 10 Schreibtischen, 10 Bürostühlen und 5 Aktenschränken"}
 
 KAUFPREIS:
-${formData.price || "15.000 EUR"}
+${formData.price || "15.000 EUR zzgl. 19% MwSt."}
 
 ÜBERGABE/LIEFERUNG:
 ${formData.deliveryDate || new Date().toISOString().split('T')[0]}
 
-ERSTELLE EINEN VOLLSTÄNDIGEN VERTRAG MIT:
-- § 1 Vertragsgegenstand (sehr detailliert)
-- § 2 Kaufpreis und Zahlungsbedingungen
-- § 3 Übergabe und Lieferung
-- § 4 Gewährleistung (detailliert!)
-- § 5 Haftung
-- § 6 Eigentumsvorbehalt
-- § 7 Gefahrübergang
-- § 8 Beschaffenheit der Kaufsache
-- § 9 Vertraulichkeit
-- § 10 Datenschutz
-- § 11 Schlussbestimmungen
+ZAHLUNGSBEDINGUNGEN:
+${formData.paymentTerms || "14 Tage netto nach Rechnungsstellung"}
 
-Verwende professionelle juristische Sprache und fülle ALLE Angaben vollständig aus!`;
+Erstelle einen VOLLSTÄNDIGEN Vertrag mit allen erforderlichen Paragraphen. Verwende professionelle juristische Sprache und fülle ALLE Angaben vollständig aus!`;
         break;
 
       case "freelancer":
-        const auftraggeber = companyDetails || formData.nameClient || "Auftraggeber GmbH";
+        const auftraggeber = companyDetails || formData.nameClient || "Auftraggeber GmbH, Hauptstraße 10, 10115 Berlin";
         
-        userPrompt = `Erstelle einen VOLLSTÄNDIGEN Dienstleistungsvertrag mit MINDESTENS 12 Paragraphen.
+        userPrompt = `Erstelle einen VOLLSTÄNDIGEN Dienstleistungsvertrag/Freelancer-Vertrag mit MINDESTENS 12 Paragraphen.
 
 VERTRAGSTYP: DIENSTLEISTUNGSVERTRAG / FREELANCER-VERTRAG
 
@@ -2043,248 +2010,442 @@ ${auftraggeber}
 ${formData.clientAddress || ""}
 
 AUFTRAGNEHMER (verwende als Partei B):
-${formData.nameFreelancer || "Freelancer"}
-${formData.freelancerAddress || ""}
-${formData.freelancerTaxId ? `Steuer-ID/USt-IdNr.: ${formData.freelancerTaxId}` : ''}
+${formData.nameFreelancer || "Max Mustermann"}
+${formData.freelancerAddress || "Freiberuflerweg 5, 80331 München"}
+${formData.freelancerTaxId ? `Steuer-ID/USt-IdNr.: ${formData.freelancerTaxId}` : 'Steuer-ID: 12/345/67890'}
 
 LEISTUNGSBESCHREIBUNG:
-${formData.description || "Beratungsdienstleistungen"}
+${formData.description || "Entwicklung einer Webanwendung mit React und Node.js, inklusive Datenbankdesign und API-Entwicklung"}
 
 PROJEKTDAUER:
-${formData.timeframe || "3 Monate"}
+${formData.timeframe || "3 Monate ab Vertragsbeginn"}
 
 VERGÜTUNG:
-${formData.payment || "5000 EUR"}
-Zahlungsbedingungen: ${formData.paymentTerms || '14 Tage netto'}
-Rechnungsstellung: ${formData.invoiceInterval || 'Monatlich'}
+${formData.payment || "450 EUR pro Tagessatz, geschätzt 60 Arbeitstage"}
+Zahlungsbedingungen: ${formData.paymentTerms || '14 Tage netto nach Rechnungsstellung'}
+Rechnungsstellung: ${formData.invoiceInterval || 'Monatlich zum Monatsende'}
 
 WEITERE DETAILS:
-- Arbeitsort: ${formData.workLocation || 'Remote/Homeoffice'}
-- Nutzungsrechte: ${formData.rights || "Vollständig an Auftraggeber"}
-- Vertraulichkeit: ${formData.confidentiality || 'Standard-Vertraulichkeit'}
-- Haftung: ${formData.liability || 'Auf Auftragswert begrenzt'}
-- Kündigung: ${formData.terminationClause || "14 Tage zum Monatsende"}
+- Arbeitsort: ${formData.workLocation || 'Remote mit gelegentlichen Meetings beim Auftraggeber'}
+- Arbeitszeiten: ${formData.workingHours || 'Flexible Zeiteinteilung, Kernarbeitszeit 10-16 Uhr'}
+- Nutzungsrechte: ${formData.rights || "Vollständige Übertragung aller Rechte an den Auftraggeber"}
+- Vertraulichkeit: ${formData.confidentiality || 'Strenge Vertraulichkeit für 5 Jahre nach Vertragsende'}
+- Haftung: ${formData.liability || 'Begrenzt auf die Höhe des Auftragswerts'}
+- Kündigung: ${formData.terminationClause || "4 Wochen zum Monatsende"}
 - Gerichtsstand: ${formData.jurisdiction || 'Sitz des Auftraggebers'}
 
-Erstelle einen VOLLSTÄNDIGEN Vertrag mit allen erforderlichen Paragraphen!`;
+Erstelle einen VOLLSTÄNDIGEN Vertrag mit allen erforderlichen Paragraphen für einen professionellen Freelancer-Vertrag!`;
         break;
 
-      // ALLE ANDEREN CASES BLEIBEN GLEICH
       case "mietvertrag":
-        userPrompt = `Erstelle einen professionellen Mietvertrag mit folgenden Daten:
+        const vermieter = companyDetails || formData.landlord || "Immobilien GmbH, Vermietstraße 1, 60311 Frankfurt";
+        const mieter = formData.tenant || "Familie Mustermann";
+        
+        userPrompt = `Erstelle einen VOLLSTÄNDIGEN Mietvertrag für Wohnraum mit MINDESTENS 15 Paragraphen.
 
-VERTRAGSTYP: Mietvertrag für Wohnraum
+VERTRAGSTYP: MIETVERTRAG FÜR WOHNRAUM
 
-VERMIETER:
-${companyDetails || formData.landlord}
+VERMIETER (verwende als Partei A):
+${vermieter}
 
-MIETER:
-${formData.tenant}
+MIETER (verwende als Partei B):
+${mieter}
+${formData.tenantAddress || ""}
 
 MIETOBJEKT:
-${formData.address}
+${formData.address || "3-Zimmer-Wohnung, 2. OG rechts, Musterstraße 15, 10115 Berlin"}
+Wohnfläche: ${formData.size || "85 qm"}
+Zimmer: ${formData.rooms || "3 Zimmer, Küche, Bad, Balkon"}
 
 MIETBEGINN:
-${formData.startDate}
+${formData.startDate || new Date().toISOString().split('T')[0]}
 
 MIETE:
-Kaltmiete: ${formData.baseRent}
-Nebenkosten: ${formData.extraCosts}
+Kaltmiete: ${formData.baseRent || "950,00 EUR"}
+Nebenkosten-Vorauszahlung: ${formData.extraCosts || "200,00 EUR"}
+Gesamtmiete: ${formData.totalRent || "1.150,00 EUR"}
+
+KAUTION:
+${formData.deposit || "3 Kaltmieten (2.850,00 EUR)"}
 
 KÜNDIGUNG:
-${formData.termination}
+${formData.termination || "Gesetzliche Kündigungsfrist von 3 Monaten"}
 
-Füge alle mietrechtlich relevanten Klauseln ein (Schönheitsreparaturen, Kaution, Hausordnung, etc.).`;
+BESONDERE VEREINBARUNGEN:
+- Haustiere: ${formData.pets || "Nach Absprache mit dem Vermieter"}
+- Schönheitsreparaturen: ${formData.renovations || "Nach gesetzlichen Bestimmungen"}
+- Garten/Balkon: ${formData.garden || "Mitbenutzung des Gartens"}
+
+Füge alle mietrechtlich relevanten Klauseln ein, inklusive:
+- Betriebskosten-Aufstellung
+- Schönheitsreparaturen
+- Hausordnung
+- Untervermietung
+- Modernisierung
+- Mieterhöhung
+- Betreten der Wohnung
+- Tierhaltung`;
         break;
 
       case "arbeitsvertrag":
-        userPrompt = `Erstelle einen professionellen Arbeitsvertrag mit folgenden Daten:
+        const arbeitgeber = companyDetails || formData.employer || "Arbeitgeber GmbH, Firmenweg 1, 80331 München";
+        const arbeitnehmer = formData.employee || "Max Mustermann";
+        
+        userPrompt = `Erstelle einen VOLLSTÄNDIGEN Arbeitsvertrag mit MINDESTENS 18 Paragraphen.
 
-VERTRAGSTYP: Arbeitsvertrag
+VERTRAGSTYP: ARBEITSVERTRAG
 
-ARBEITGEBER:
-${companyDetails || formData.employer}
+ARBEITGEBER (verwende als Partei A):
+${arbeitgeber}
+vertreten durch: ${formData.representative || "Geschäftsführer Hans Schmidt"}
 
-ARBEITNEHMER:
-${formData.employee}
+ARBEITNEHMER (verwende als Partei B):
+${arbeitnehmer}
+${formData.employeeAddress || "Arbeitnehmerstraße 10, 80331 München"}
+geboren am: ${formData.birthDate || "01.01.1990"}
+Sozialversicherungsnummer: ${formData.socialSecurityNumber || "[wird nachgereicht]"}
 
 POSITION/TÄTIGKEIT:
-${formData.position}
+${formData.position || "Senior Software Developer"}
+Abteilung: ${formData.department || "IT-Entwicklung"}
+Vorgesetzter: ${formData.supervisor || "Abteilungsleiter IT"}
 
 ARBEITSBEGINN:
-${formData.startDate}
+${formData.startDate || new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0]}
+
+PROBEZEIT:
+${formData.probation || "6 Monate"}
 
 VERGÜTUNG:
-${formData.salary}
+Bruttogehalt: ${formData.salary || "5.500,00 EUR monatlich"}
+Sonderzahlungen: ${formData.bonuses || "Weihnachtsgeld in Höhe eines Monatsgehalts"}
+Überstunden: ${formData.overtime || "Mit Gehalt abgegolten bis 10 Std./Monat"}
 
 ARBEITSZEIT:
-${formData.workingHours}
+${formData.workingHours || "40 Stunden pro Woche, Montag bis Freitag"}
+Gleitzeit: ${formData.flexTime || "Kernarbeitszeit 10:00 - 15:00 Uhr"}
+Homeoffice: ${formData.homeOffice || "2 Tage pro Woche nach Absprache"}
 
-Füge alle arbeitsrechtlich relevanten Klauseln ein (Probezeit, Urlaub, Krankheit, Verschwiegenheit, etc.).`;
+URLAUB:
+${formData.vacation || "30 Arbeitstage pro Kalenderjahr"}
+
+WEITERE REGELUNGEN:
+- Fortbildung: ${formData.training || "5 Tage Bildungsurlaub pro Jahr"}
+- Firmenwagen: ${formData.companyCar || "nicht vorgesehen"}
+- Betriebliche Altersvorsorge: ${formData.pension || "Arbeitgeberzuschuss 50%"}
+
+Füge alle arbeitsrechtlich relevanten Klauseln ein, inklusive:
+- Verschwiegenheitspflicht
+- Nebentätigkeit
+- Krankheit
+- Wettbewerbsverbot
+- Rückzahlungsklauseln
+- Vertragsstrafen
+- Zeugnis`;
         break;
 
       case "nda":
-        userPrompt = `Erstelle eine professionelle Geheimhaltungsvereinbarung (NDA) mit folgenden Daten:
+        const offenlegender = companyDetails || formData.partyA || "Technologie GmbH, Innovationsweg 1, 10115 Berlin";
+        const empfänger = formData.partyB || "Beratung AG, Consultingstraße 5, 60311 Frankfurt";
+        
+        userPrompt = `Erstelle eine VOLLSTÄNDIGE Geheimhaltungsvereinbarung (NDA) mit MINDESTENS 12 Paragraphen.
 
-VERTRAGSTYP: Geheimhaltungsvereinbarung / Non-Disclosure Agreement (NDA)
+VERTRAGSTYP: GEHEIMHALTUNGSVEREINBARUNG / NON-DISCLOSURE AGREEMENT (NDA)
 
-PARTEI A (Offenlegender):
-${companyDetails || formData.partyA}
+OFFENLEGENDE PARTEI (Partei A):
+${offenlegender}
 
-PARTEI B (Empfänger):
-${formData.partyB}
+EMPFANGENDE PARTEI (Partei B):
+${empfänger}
 
 ZWECK DER VEREINBARUNG:
-${formData.purpose}
+${formData.purpose || "Prüfung einer möglichen Geschäftspartnerschaft im Bereich KI-Entwicklung"}
+
+ART DER INFORMATIONEN:
+${formData.informationType || "Technische Dokumentationen, Geschäftsgeheimnisse, Kundendaten, Finanzdaten, Sourcecode"}
 
 GÜLTIGKEITSDAUER:
-${formData.duration}
+Vertragslaufzeit: ${formData.duration || "2 Jahre ab Unterzeichnung"}
+Geheimhaltungspflicht: ${formData.confidentialityPeriod || "5 Jahre nach Vertragsende"}
 
-Füge alle relevanten Klauseln ein (Definition vertraulicher Informationen, Ausnahmen, Rückgabe von Unterlagen, Vertragsstrafe, etc.).`;
+ERLAUBTE NUTZUNG:
+${formData.permittedUse || "Ausschließlich zur Evaluierung der Geschäftspartnerschaft"}
+
+VERTRAGSSTRAFE:
+${formData.penalty || "50.000 EUR pro Verstoß"}
+
+Füge alle relevanten Klauseln ein, inklusive:
+- Definition vertraulicher Informationen
+- Ausnahmen von der Geheimhaltung
+- Erlaubte Offenlegungen
+- Rückgabe/Vernichtung von Unterlagen
+- Keine Lizenzgewährung
+- Rechtsmittel bei Verstößen
+- Keine Verpflichtung zur Offenlegung`;
         break;
 
       case "gesellschaftsvertrag":
-        userPrompt = `Erstelle einen professionellen Gesellschaftsvertrag mit folgenden Daten:
+        userPrompt = `Erstelle einen VOLLSTÄNDIGEN Gesellschaftsvertrag (GmbH) mit MINDESTENS 20 Paragraphen.
 
-VERTRAGSTYP: Gesellschaftsvertrag
+VERTRAGSTYP: GESELLSCHAFTSVERTRAG (GmbH)
 
 GESELLSCHAFTSNAME:
-${formData.companyName}
+${formData.companyName || "Neue Ventures GmbH"}
 
-GESELLSCHAFTSFORM:
-${formData.companyType}
+SITZ DER GESELLSCHAFT:
+${formData.companySeat || "Berlin"}
 
 GESELLSCHAFTER:
-${formData.partners}
+${formData.partners || `1. Max Mustermann, Musterstraße 1, 10115 Berlin - 60% Anteile
+2. Erika Musterfrau, Beispielweg 2, 10115 Berlin - 40% Anteile`}
 
 STAMMKAPITAL:
-${formData.capital}
+${formData.capital || "25.000 EUR"}
 
 GESCHÄFTSANTEILE:
-${formData.shares}
+${formData.shares || `Gesellschafter 1: 15.000 EUR (Geschäftsanteil Nr. 1)
+Gesellschafter 2: 10.000 EUR (Geschäftsanteil Nr. 2)`}
 
 UNTERNEHMENSGEGENSTAND:
-${formData.purpose}
+${formData.purpose || "Entwicklung und Vertrieb von Software, IT-Beratung und damit verbundene Dienstleistungen"}
 
 GESCHÄFTSFÜHRUNG:
-${formData.management}`;
+${formData.management || "Max Mustermann (Einzelvertretungsberechtigung)"}
+
+GESCHÄFTSJAHR:
+${formData.fiscalYear || "Kalenderjahr"}
+
+Füge alle gesellschaftsrechtlich relevanten Klauseln ein, inklusive:
+- Einlagen und Einzahlung
+- Geschäftsführung und Vertretung
+- Gesellschafterversammlung
+- Gesellschafterbeschlüsse
+- Gewinnverteilung
+- Jahresabschluss
+- Abtretung von Geschäftsanteilen
+- Vorkaufsrecht
+- Einziehung von Geschäftsanteilen
+- Abfindung
+- Wettbewerbsverbot
+- Kündigung
+- Auflösung und Liquidation`;
         break;
 
       case "darlehensvertrag":
-        userPrompt = `Erstelle einen professionellen Darlehensvertrag mit folgenden Daten:
+        const darlehensgeber = companyDetails || formData.lender || "Finanz GmbH, Kapitalweg 1, 60311 Frankfurt";
+        const darlehensnehmer = formData.borrower || "Max Mustermann, Kreditstraße 5, 10115 Berlin";
+        
+        userPrompt = `Erstelle einen VOLLSTÄNDIGEN Darlehensvertrag mit MINDESTENS 14 Paragraphen.
 
-VERTRAGSTYP: Darlehensvertrag
+VERTRAGSTYP: DARLEHENSVERTRAG
 
-DARLEHENSGEBER:
-${companyDetails || formData.lender}
+DARLEHENSGEBER (Partei A):
+${darlehensgeber}
 
-DARLEHENSNEHMER:
-${formData.borrower}
+DARLEHENSNEHMER (Partei B):
+${darlehensnehmer}
 
 DARLEHENSSUMME:
-${formData.amount}
+${formData.amount || "50.000,00 EUR (in Worten: fünfzigtausend Euro)"}
+
+AUSZAHLUNG:
+${formData.disbursement || "Überweisung auf das Konto des Darlehensnehmers binnen 5 Werktagen nach Unterzeichnung"}
 
 ZINSSATZ:
-${formData.interestRate}
+${formData.interestRate || "4,5% p.a. (nominal)"}
+Zinsberechnung: ${formData.interestCalculation || "30/360 Tage Methode"}
+Zinszahlung: ${formData.interestPayment || "Monatlich zum Monatsende"}
 
 LAUFZEIT:
-${formData.duration}
+${formData.duration || "5 Jahre (60 Monate)"}
+Beginn: ${formData.startDate || new Date().toISOString().split('T')[0]}
 
-RÜCKZAHLUNG:
-${formData.repayment}
+TILGUNG:
+${formData.repayment || "Monatliche Annuität von 932,56 EUR"}
+Sondertilgungen: ${formData.specialRepayments || "Jährlich bis zu 20% der ursprünglichen Darlehenssumme kostenfrei möglich"}
 
 SICHERHEITEN:
-${formData.security || "Keine"}`;
+${formData.security || "Grundschuld auf Immobilie Grundbuch Berlin Blatt 12345"}
+
+VERWENDUNGSZWECK:
+${formData.purpose || "Immobilienfinanzierung / Modernisierung"}
+
+Füge alle relevanten Klauseln ein, inklusive:
+- Auszahlungsvoraussetzungen
+- Verzug und Verzugszinsen
+- Kündigungsrechte
+- Vorfälligkeitsentschädigung
+- Aufrechnung und Abtretung
+- Kosten und Gebühren`;
         break;
 
       case "lizenzvertrag":
-        userPrompt = `Erstelle einen professionellen Lizenzvertrag mit folgenden Daten:
+        const lizenzgeber = companyDetails || formData.licensor || "Software Innovations GmbH, Techpark 1, 80331 München";
+        const lizenznehmer = formData.licensee || "Anwender AG, Nutzerweg 10, 10115 Berlin";
+        
+        userPrompt = `Erstelle einen VOLLSTÄNDIGEN Lizenzvertrag mit MINDESTENS 15 Paragraphen.
 
-VERTRAGSTYP: Lizenzvertrag
+VERTRAGSTYP: LIZENZVERTRAG
 
-LIZENZGEBER:
-${companyDetails || formData.licensor}
+LIZENZGEBER (Partei A):
+${lizenzgeber}
 
-LIZENZNEHMER:
-${formData.licensee}
+LIZENZNEHMER (Partei B):
+${lizenznehmer}
 
 LIZENZGEGENSTAND:
-${formData.subject}
+${formData.subject || "Software 'DataAnalyzer Pro' Version 5.0 inklusive Updates für die Vertragslaufzeit"}
 
 LIZENZART:
-${formData.licenseType}
+${formData.licenseType || "Nicht-exklusive, übertragbare Unternehmenslizenz"}
+
+LIZENZUMFANG:
+Nutzer: ${formData.users || "bis zu 50 gleichzeitige Nutzer"}
+Installation: ${formData.installations || "Unbegrenzte Installationen innerhalb des Unternehmens"}
+Nutzungsart: ${formData.usage || "Kommerzielle Nutzung erlaubt"}
 
 TERRITORIUM:
-${formData.territory}
+${formData.territory || "Deutschland, Österreich, Schweiz (DACH-Region)"}
 
 LIZENZGEBÜHREN:
-${formData.fee}
+Einmalige Lizenzgebühr: ${formData.fee || "25.000,00 EUR netto"}
+Jährliche Wartung: ${formData.maintenance || "5.000,00 EUR netto"}
+Zahlungsbedingungen: ${formData.payment || "30 Tage netto nach Rechnungsstellung"}
 
 LAUFZEIT:
-${formData.duration}`;
+${formData.duration || "Unbefristet mit jährlicher Wartungsverlängerung"}
+
+SUPPORT:
+${formData.support || "E-Mail und Telefon-Support werktags 9-17 Uhr, Updates und Patches inklusive"}
+
+Füge alle relevanten Klauseln ein, inklusive:
+- Rechteeinräumung im Detail
+- Nutzungsbeschränkungen
+- Quellcode-Hinterlegung
+- Gewährleistung und Haftung
+- Schutzrechte Dritter
+- Vertraulichkeit
+- Audit-Rechte`;
         break;
 
       case "aufhebungsvertrag":
-        userPrompt = `Erstelle einen professionellen Aufhebungsvertrag mit folgenden Daten:
+        const arbeitgeberAufhebung = companyDetails || formData.employer || "Arbeitgeber GmbH, Trennungsweg 1, 50667 Köln";
+        const arbeitnehmerAufhebung = formData.employee || "Maria Musterfrau";
+        
+        userPrompt = `Erstelle einen VOLLSTÄNDIGEN Aufhebungsvertrag mit MINDESTENS 16 Paragraphen.
 
-VERTRAGSTYP: Aufhebungsvertrag
+VERTRAGSTYP: AUFHEBUNGSVERTRAG
 
-ARBEITGEBER:
-${companyDetails || formData.employer}
+ARBEITGEBER (Partei A):
+${arbeitgeberAufhebung}
+vertreten durch: ${formData.representative || "Personalleiter Thomas Schmidt"}
 
-ARBEITNEHMER:
-${formData.employee}
+ARBEITNEHMER (Partei B):
+${arbeitnehmerAufhebung}
+${formData.employeeAddress || "Arbeitnehmerstraße 20, 50667 Köln"}
+Personalnummer: ${formData.employeeNumber || "2024-4567"}
+
+BESTEHENDES ARBEITSVERHÄLTNIS:
+Beginn: ${formData.employmentStart || "01.04.2020"}
+Position: ${formData.position || "Marketing Manager"}
 
 BEENDIGUNGSDATUM:
-${formData.endDate}
-
-ABFINDUNG:
-${formData.severance || "Keine"}
+${formData.endDate || "31.12.2024"}
 
 BEENDIGUNGSGRUND:
-${formData.reason}
+${formData.reason || "Einvernehmliche Beendigung auf Wunsch des Arbeitnehmers wegen beruflicher Neuorientierung"}
+
+ABFINDUNG:
+${formData.severance || "3 Bruttomonatsgehälter = 15.000,00 EUR brutto"}
+Auszahlung: ${formData.severancePayment || "Mit der letzten Gehaltsabrechnung"}
+Versteuerung: ${formData.taxation || "Nach § 34 EStG (Fünftelregelung)"}
 
 RESTURLAUB:
-${formData.vacation}
+${formData.vacation || "25 Tage, werden bis zum Beendigungsdatum gewährt"}
+
+FREISTELLUNG:
+${formData.gardenLeave || "Unwiderrufliche Freistellung ab 01.11.2024 unter Anrechnung von Resturlaub"}
 
 ARBEITSZEUGNIS:
-${formData.reference}`;
+${formData.reference || "Qualifiziertes Zeugnis mit der Note 'sehr gut', Entwurf als Anlage"}
+
+WEITERE REGELUNGEN:
+- Bonuszahlung: ${formData.bonus || "Anteiliger Bonus für 2024"}
+- Firmenwagen: ${formData.companyCar || "Rückgabe zum Beendigungsdatum"}
+- Firmenhandy/Laptop: ${formData.equipment || "Rückgabe zum Beendigungsdatum"}
+- Betriebliche Altersvorsorge: ${formData.pension || "Unverfallbare Anwartschaften bleiben bestehen"}
+
+Füge alle relevanten Klauseln ein, inklusive:
+- Gehaltsfortzahlung
+- Wettbewerbsverbot
+- Verschwiegenheit
+- Rückgabe von Firmeneigentum
+- Ausgleichsklausel
+- Sperrzeit-Hinweis`;
         break;
 
       case "pachtvertrag":
-        userPrompt = `Erstelle einen professionellen Pachtvertrag mit folgenden Daten:
+        const verpächter = companyDetails || formData.lessor || "Grundstücks GmbH, Pachtweg 1, 01067 Dresden";
+        const pächter = formData.lessee || "Landwirt Müller, Feldweg 10, 01099 Dresden";
+        
+        userPrompt = `Erstelle einen VOLLSTÄNDIGEN Pachtvertrag mit MINDESTENS 14 Paragraphen.
 
-VERTRAGSTYP: Pachtvertrag
+VERTRAGSTYP: PACHTVERTRAG
 
-VERPÄCHTER:
-${companyDetails || formData.lessor}
+VERPÄCHTER (Partei A):
+${verpächter}
 
-PÄCHTER:
-${formData.lessee}
+PÄCHTER (Partei B):
+${pächter}
 
 PACHTOBJEKT:
-${formData.object}
+${formData.object || "Landwirtschaftliche Nutzfläche, 10 Hektar, Flurstück 123/45, Gemarkung Dresden"}
+Lage: ${formData.location || "Angrenzend an B6, mit Zufahrt über Feldweg"}
+Bodenbeschaffenheit: ${formData.soilQuality || "Ackerland, Bodenqualität 65 Punkte"}
 
 PACHTBEGINN:
-${formData.startDate}
-
-PACHTZINS:
-${formData.rent}
+${formData.startDate || "01.01.2025"}
 
 PACHTDAUER:
-${formData.duration}
+${formData.duration || "12 Jahre (bis 31.12.2036)"}
+
+PACHTZINS:
+${formData.rent || "500,00 EUR pro Hektar und Jahr = 5.000,00 EUR jährlich"}
+Zahlungsweise: ${formData.paymentMethod || "Jährlich im Voraus zum 01.01."}
+Anpassung: ${formData.adjustment || "Alle 3 Jahre entsprechend dem Verbraucherpreisindex"}
 
 NUTZUNGSZWECK:
-${formData.usage}`;
+${formData.usage || "Landwirtschaftliche Nutzung, Anbau von Getreide und Feldfrüchten"}
+
+BESONDERE VEREINBARUNGEN:
+- Düngung: ${formData.fertilization || "Nach guter fachlicher Praxis"}
+- Fruchtfolge: ${formData.cropRotation || "Mindestens 3-gliedrig"}
+- Pflege: ${formData.maintenance || "Hecken und Gräben durch Pächter"}
+
+Füge alle relevanten Klauseln ein, inklusive:
+- Übergabe und Rückgabe
+- Instandhaltung und Verbesserungen
+- Unterverpachtung
+- Betretungsrecht
+- Jagd- und Fischereirechte
+- Vorzeitige Kündigung`;
         break;
 
       case "custom":
         userPrompt = `Erstelle einen professionellen Vertrag mit dem Titel: ${formData.title}
 
-VERTRAGSINHALTE:
-${formData.details}
+VERTRAGSART: ${formData.contractType || "Individueller Vertrag"}
 
-Strukturiere den Vertrag professionell mit allen notwendigen rechtlichen Klauseln.`;
+PARTEIEN:
+${formData.parties || "Partei A und Partei B mit vollständigen Angaben"}
+
+VERTRAGSINHALTE:
+${formData.details || "Detaillierte Beschreibung des Vertragsgegenstands"}
+
+BESONDERE VEREINBARUNGEN:
+${formData.specialTerms || "Keine besonderen Vereinbarungen"}
+
+Strukturiere den Vertrag professionell mit mindestens 10-12 Paragraphen und allen notwendigen rechtlichen Klauseln.`;
         break;
 
       default:
@@ -2293,6 +2454,8 @@ Strukturiere den Vertrag professionell mit allen notwendigen rechtlichen Klausel
 
     // GPT-4 Generierung
     console.log("🚀 Starte GPT-4 Vertragsgenerierung...");
+    console.log("📝 Vertragstyp:", type);
+    console.log("🎨 Design-Variante:", designVariant);
     
     const completion = await openai.chat.completions.create({
       model: "gpt-4",
@@ -2334,7 +2497,7 @@ Strukturiere den Vertrag professionell mit allen notwendigen rechtlichen Klausel
     const hasRequiredElements = contractText.includes('§ 1') && 
                                contractText.includes('§ 5') && 
                                contractText.includes('§ 10') &&
-                               contractText.includes('Unterschrift') && 
+                               contractText.includes('____') && 
                                contractText.length > 2000;
     
     if (!hasRequiredElements) {
@@ -2343,29 +2506,33 @@ Strukturiere den Vertrag professionell mit allen notwendigen rechtlichen Klausel
       if (!contractText.includes('§ 10')) {
         contractText = contractText.replace('§ 11 SCHLUSSBESTIMMUNGEN', '§ 10 ZUSÄTZLICHE VEREINBARUNGEN\n\n(1) Weitere Vereinbarungen wurden nicht getroffen.\n\n§ 11 SCHLUSSBESTIMMUNGEN');
       }
+      
+      if (!contractText.includes('____')) {
+        contractText += `\n\n\n_______________________          _______________________\nOrt, Datum                       Ort, Datum\n\n\n_______________________          _______________________\n${companyProfile?.companyName || 'Partei A'}                  Partei B\nGeschäftsführung                 Name, Funktion`;
+      }
     }
     
     console.log("✅ Vertragsgenerierung erfolgreich, finale Länge:", contractText.length);
 
-    // 🎨 VERBESSERTE HTML-Formatierung für professionelle Darstellung
+    // 🎨 ENTERPRISE HTML-Formatierung
     let formattedHTML = "";
-    if (useCompanyProfile && companyProfile) {
-      formattedHTML = await formatContractToHTML(contractText, companyProfile, type, designVariant);
-      console.log("✅ Professionelle HTML-Formatierung mit Logo erstellt");
-      
-      // Debug-Ausgabe
-      console.log("📊 HTML-Generierung Debug:", {
-        hasCompanyProfile: !!companyProfile,
-        hasLogo: !!companyProfile?.logoUrl,
-        logoUrl: companyProfile?.logoUrl?.substring(0, 50) + "...",
-        htmlLength: formattedHTML.length,
-        containsLogo: formattedHTML.includes('img src='),
-        containsHeader: formattedHTML.includes('background:')
-      });
-    } else {
-      // Auch ohne Company Profile HTML generieren
-      formattedHTML = await formatContractToHTML(contractText, null, type, designVariant);
-    }
+    const isDraft = formData.isDraft || false;
+    
+    formattedHTML = await formatContractToHTML(
+      contractText, 
+      companyProfile,  // Jetzt korrekt geladen mit Logo
+      type, 
+      designVariant,   // Wird korrekt durchgereicht
+      isDraft          // Entwurf-Modus
+    );
+    
+    console.log("✅ Enterprise HTML-Formatierung erstellt:", {
+      htmlLength: formattedHTML.length,
+      hasCompanyProfile: !!companyProfile,
+      hasLogo: !!companyProfile?.logoUrl,
+      designVariant: designVariant,
+      isDraft: isDraft
+    });
 
     // Analyse-Zähler hochzählen
     await usersCollection.updateOne(
@@ -2378,40 +2545,40 @@ Strukturiere den Vertrag professionell mit allen notwendigen rechtlichen Klausel
       userId: req.user.userId,
       name: formData.title,
       content: contractText,
-      contractHTML: formattedHTML, // 🔴 FIX 1: HTML direkt beim Speichern
-      laufzeit: "Generiert",
-      kuendigung: "Generiert", 
-      expiryDate: "",
-      status: "Aktiv",
+      contractHTML: formattedHTML,  // Enterprise HTML
+      laufzeit: formData.duration || "Generiert",
+      kuendigung: formData.termination || "Generiert", 
+      expiryDate: formData.expiryDate || "",
+      status: isDraft ? "Entwurf" : "Aktiv",
       uploadedAt: new Date(),
       isGenerated: true,
       contractType: type,
       hasCompanyProfile: !!companyProfile,
       formData: formData,
-      designVariant: designVariant // Design-Variante speichern
+      designVariant: designVariant,
+      metadata: {
+        version: 'v5_enterprise',
+        features: ['table_of_contents', 'qr_code', 'document_hash', 'initial_fields'],
+        generatedBy: 'GPT-4',
+        templateVersion: '2024.1'
+      }
     };
 
     const result = await contractsCollection.insertOne(contract);
     
-    // 🔴 FIX 1 FORTSETZUNG: HTML auch in DB updaten für schnelleren PDF-Export
-    if (formattedHTML && result.insertedId) {
-      await contractsCollection.updateOne(
-        { _id: result.insertedId },
-        { $set: { contractHTML: formattedHTML } }
-      );
-      console.log("✅ HTML im Vertrag gespeichert für schnelleren PDF-Export");
-    }
-
-    // CONTRACT ANALYTICS
+    // Contract Analytics
     const logContractGeneration = (contract, user, companyProfile) => {
       const analytics = {
         contractType: contract.contractType,
         hasCompanyProfile: !!companyProfile,
+        hasLogo: !!companyProfile?.logoUrl,
         userPlan: user.subscriptionPlan || 'free',
         timestamp: new Date(),
         contentLength: contract.content.length,
-        generationSource: 'ai_generation_v4_professional',
+        htmlLength: contract.contractHTML.length,
+        generationSource: 'ai_generation_v5_enterprise',
         userId: user._id.toString(),
+        designVariant: contract.designVariant,
         success: true
       };
       
@@ -2421,31 +2588,44 @@ Strukturiere den Vertrag professionell mit allen notwendigen rechtlichen Klausel
     // Analytics loggen
     logContractGeneration(contract, user, companyProfile);
 
-    // 🔴 KRITISCHER FIX #2: HTML in Response zurückgeben!
+    // Response mit allen Daten
     res.json({
       message: "✅ Vertrag erfolgreich generiert & gespeichert.",
       contractId: result.insertedId,
       contractText: contractText,
-      contractHTML: formattedHTML, // 🔴 WICHTIG: HTML muss hier zurückgegeben werden!
+      contractHTML: formattedHTML,
       metadata: {
         contractType: type,
         hasCompanyProfile: !!companyProfile,
         hasLogo: !!companyProfile?.logoUrl,
+        companyName: companyProfile?.companyName,
         contentLength: contractText.length,
         htmlLength: formattedHTML.length,
         generatedAt: new Date().toISOString(),
-        version: 'v4_professional',
-        designVariant: designVariant
+        version: 'v5_enterprise',
+        designVariant: designVariant,
+        isDraft: isDraft,
+        features: {
+          tableOfContents: true,
+          qrCode: true,
+          documentHash: true,
+          initialFields: true,
+          watermark: isDraft
+        }
       }
     });
     
   } catch (err) {
     console.error("❌ Fehler beim Erzeugen/Speichern:", err);
-    res.status(500).json({ message: "Serverfehler beim Erzeugen oder Speichern." });
+    console.error("Stack:", err.stack);
+    res.status(500).json({ 
+      message: "Serverfehler beim Erzeugen oder Speichern.",
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
   }
 });
 
-// 🔴 KORRIGIERTE PUPPETEER PDF-ROUTE - MIT USERID FIX UND PERFORMANCE-OPTIMIERUNGEN
+// 🔴 KORRIGIERTE PUPPETEER PDF-ROUTE - MIT ALLEN ENTERPRISE FEATURES
 router.post("/pdf", verifyToken, async (req, res) => {
   const { contractId } = req.body;
   
@@ -2552,7 +2732,12 @@ router.post("/pdf", verifyToken, async (req, res) => {
       return res.status(404).json({ message: "Vertrag nicht gefunden" });
     }
 
-    console.log("✅ Vertrag gefunden:", contract.name);
+    console.log("✅ Vertrag gefunden:", {
+      name: contract.name,
+      type: contract.contractType,
+      hasCompanyProfile: contract.hasCompanyProfile,
+      designVariant: contract.designVariant
+    });
 
     // Lade Company Profile wenn vorhanden
     let companyProfile = null;
@@ -2562,21 +2747,31 @@ router.post("/pdf", verifyToken, async (req, res) => {
           userId: new ObjectId(req.user.userId) 
         });
         console.log("🏢 Company Profile geladen:", !!companyProfile);
+        if (companyProfile) {
+          console.log("📊 Company Profile Details:", {
+            name: companyProfile.companyName,
+            hasLogo: !!companyProfile.logoUrl,
+            logoType: companyProfile.logoUrl ? (companyProfile.logoUrl.startsWith('data:') ? 'base64' : 'url') : 'none'
+          });
+        }
       } catch (profileError) {
         console.error("⚠️ Fehler beim Laden des Company Profiles:", profileError);
       }
     }
 
-    // 🔴 FIX: HTML aus DB laden statt neu generieren
+    // 🔴 FIX: HTML aus DB laden oder neu generieren
     let htmlContent = contract.contractHTML || contract.htmlContent || contract.contentHTML;
     
     if (!htmlContent) {
       console.log("🔄 Kein HTML vorhanden, generiere neu...");
+      const isDraft = contract.status === 'Entwurf' || contract.formData?.isDraft;
+      
       htmlContent = await formatContractToHTML(
         contract.content, 
         companyProfile, 
         contract.contractType || contract.metadata?.contractType || 'vertrag',
-        contract.designVariant || contract.metadata?.designVariant || 'executive'
+        contract.designVariant || contract.metadata?.designVariant || 'executive',
+        isDraft
       );
       
       // HTML für nächstes Mal speichern
@@ -2616,7 +2811,8 @@ router.post("/pdf", verifyToken, async (req, res) => {
             '--disable-features=VizDisplayCompositor',
             '--disable-background-timer-throttling',
             '--disable-backgrounding-occluded-windows',
-            '--disable-renderer-backgrounding'
+            '--disable-renderer-backgrounding',
+            '--font-render-hinting=none'
           ],
           defaultViewport: chromium.defaultViewport,
           executablePath: await chromium.executablePath(),
@@ -2636,7 +2832,8 @@ router.post("/pdf", verifyToken, async (req, res) => {
             '--no-first-run',
             '--no-zygote',
             '--single-process',
-            '--disable-gpu'
+            '--disable-gpu',
+            '--font-render-hinting=none'
           ],
           timeout: 30000
         });
@@ -2654,8 +2851,8 @@ router.post("/pdf", verifyToken, async (req, res) => {
         console.error("❌ Auch Fallback fehlgeschlagen:", fallbackError);
         return res.status(500).json({ 
           message: "PDF-Generierung fehlgeschlagen - Chrome nicht verfügbar",
-          error: "Bitte verwenden Sie den Download-Button erneut (html2pdf Fallback wird aktiviert)",
-          suggestion: "Installieren Sie chrome-aws-lambda für Render.com Kompatibilität"
+          error: "Bitte verwenden Sie den Download-Button erneut oder installieren Sie chrome-aws-lambda",
+          suggestion: "Alternative: Nutzen Sie die HTML-Vorschau und drucken Sie als PDF"
         });
       }
     }
@@ -2670,33 +2867,81 @@ router.post("/pdf", verifyToken, async (req, res) => {
         deviceScaleFactor: 2
       });
       
-      // Lade HTML
+      // Setze zusätzliche HTTP-Header
+      await page.setExtraHTTPHeaders({
+        'Accept-Language': 'de-DE,de;q=0.9'
+      });
+      
+      // Lade HTML mit optimierten Einstellungen
       console.log("📄 Lade HTML in Puppeteer (Länge:", htmlContent.length, "Zeichen)");
       await page.setContent(htmlContent, { 
         waitUntil: 'networkidle0',
         timeout: 30000
       });
       
-      // Warte auf Fonts
-      await page.evaluateHandle('document.fonts.ready');
+      // Warte auf Fonts und wichtige Elemente
+      try {
+        await page.evaluateHandle('document.fonts.ready');
+        console.log("✅ Fonts geladen");
+      } catch (fontError) {
+        console.warn("⚠️ Font-Loading fehlgeschlagen, fahre fort:", fontError.message);
+      }
       
-      // Warte auf Rendering
+      // Zusätzliche Wartezeit für komplexe Layouts
       await page.waitForTimeout(2000);
       
-      // Generiere PDF
+      // Injiziere zusätzliches CSS für bessere Print-Darstellung
+      await page.addStyleTag({
+        content: `
+          @media print {
+            * {
+              print-color-adjust: exact !important;
+              -webkit-print-color-adjust: exact !important;
+            }
+            body {
+              margin: 0 !important;
+              padding: 0 !important;
+            }
+            .page-container {
+              margin: 0 !important;
+              padding: 20mm !important;
+            }
+            .no-print {
+              display: none !important;
+            }
+          }
+        `
+      });
+      
+      // Generiere PDF mit Enterprise-Einstellungen
       console.log("📄 Generiere PDF...");
       const pdfBuffer = await page.pdf({
         format: 'A4',
         printBackground: true,
-        displayHeaderFooter: false,
+        displayHeaderFooter: true,
+        headerTemplate: `
+          <div style="font-size: 8pt; width: 100%; text-align: center; color: #666;">
+            <span>${contract.name || 'Vertragsdokument'}</span>
+          </div>
+        `,
+        footerTemplate: `
+          <div style="font-size: 8pt; width: 100%; display: flex; justify-content: space-between; padding: 0 20px; color: #666;">
+            <span>${contract.contractType?.toUpperCase() || 'VERTRAG'}</span>
+            <span>Seite <span class="pageNumber"></span> von <span class="totalPages"></span></span>
+            <span>${new Date().toLocaleDateString('de-DE')}</span>
+          </div>
+        `,
         margin: {
-          top: '20mm',
-          bottom: '20mm',
-          left: '15mm', 
-          right: '15mm'
+          top: '25mm',
+          bottom: '25mm',
+          left: '20mm', 
+          right: '20mm'
         },
-        preferCSSPageSize: true,
-        scale: 1
+        preferCSSPageSize: false,
+        scale: 1,
+        pageRanges: '',
+        width: '210mm',
+        height: '297mm'
       });
       
       console.log("✅ PDF erfolgreich generiert, Größe:", Math.round(pdfBuffer.length / 1024), "KB");
@@ -2705,11 +2950,17 @@ router.post("/pdf", verifyToken, async (req, res) => {
       res.set({
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="${contract.name || 'Vertrag'}_${new Date().toISOString().split('T')[0]}.pdf"`,
-        'Content-Length': pdfBuffer.length
+        'Content-Length': pdfBuffer.length,
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
       });
       
       res.send(pdfBuffer);
       
+    } catch (pageError) {
+      console.error("❌ Fehler bei der PDF-Generierung:", pageError);
+      throw pageError;
     } finally {
       await browser.close();
       console.log("✅ Puppeteer Browser geschlossen");
@@ -2721,9 +2972,313 @@ router.post("/pdf", verifyToken, async (req, res) => {
     res.status(500).json({ 
       message: "PDF-Generierung fehlgeschlagen",
       error: error.message,
-      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      suggestion: "Bitte versuchen Sie es erneut oder nutzen Sie die HTML-Vorschau"
     });
   }
 });
 
+// 🆕 NEUE ROUTE: HTML-Vorschau generieren (ohne PDF)
+router.post("/preview", verifyToken, async (req, res) => {
+  const { contractId } = req.body;
+  
+  console.log("👁️ HTML-Vorschau angefordert für Vertrag:", contractId);
+  
+  try {
+    if (!contractId) {
+      return res.status(400).json({ message: "Contract ID fehlt" });
+    }
+    
+    // Vertrag laden
+    const contract = await contractsCollection.findOne({ 
+      _id: new ObjectId(contractId)
+    });
+    
+    if (!contract) {
+      return res.status(404).json({ message: "Vertrag nicht gefunden" });
+    }
+    
+    // Berechtigungsprüfung
+    const contractUserId = contract.userId?.toString ? contract.userId.toString() : String(contract.userId);
+    const requestUserId = req.user.userId?.toString ? req.user.userId.toString() : String(req.user.userId);
+    
+    if (contractUserId !== requestUserId) {
+      return res.status(403).json({ message: "Keine Berechtigung für diesen Vertrag" });
+    }
+    
+    // Company Profile laden wenn vorhanden
+    let companyProfile = null;
+    if (contract.hasCompanyProfile) {
+      try {
+        companyProfile = await db.collection("company_profiles").findOne({ 
+          userId: new ObjectId(req.user.userId) 
+        });
+      } catch (error) {
+        console.error("⚠️ Fehler beim Laden des Company Profiles:", error);
+      }
+    }
+    
+    // HTML generieren oder aus Cache
+    let htmlContent = contract.contractHTML;
+    
+    if (!htmlContent) {
+      const isDraft = contract.status === 'Entwurf';
+      htmlContent = await formatContractToHTML(
+        contract.content, 
+        companyProfile, 
+        contract.contractType,
+        contract.designVariant || 'executive',
+        isDraft
+      );
+      
+      // Speichern für nächstes Mal
+      await contractsCollection.updateOne(
+        { _id: contract._id },
+        { $set: { contractHTML: htmlContent } }
+      );
+    }
+    
+    // HTML als Response senden
+    res.set({
+      'Content-Type': 'text/html; charset=utf-8',
+      'Cache-Control': 'no-cache'
+    });
+    
+    res.send(htmlContent);
+    
+  } catch (error) {
+    console.error("❌ Preview Generation Error:", error);
+    res.status(500).json({ 
+      message: "Vorschau-Generierung fehlgeschlagen",
+      error: error.message
+    });
+  }
+});
+
+// 🆕 NEUE ROUTE: Design-Variante ändern
+router.post("/change-design", verifyToken, async (req, res) => {
+  const { contractId, newDesignVariant } = req.body;
+  
+  console.log("🎨 Design-Änderung angefordert:", { contractId, newDesignVariant });
+  
+  try {
+    if (!contractId || !newDesignVariant) {
+      return res.status(400).json({ message: "Contract ID oder Design-Variante fehlt" });
+    }
+    
+    // Validiere Design-Variante
+    const validDesigns = ['executive', 'modern', 'minimal'];
+    if (!validDesigns.includes(newDesignVariant)) {
+      return res.status(400).json({ message: "Ungültige Design-Variante" });
+    }
+    
+    // Vertrag laden
+    const contract = await contractsCollection.findOne({ 
+      _id: new ObjectId(contractId),
+      userId: req.user.userId
+    });
+    
+    if (!contract) {
+      return res.status(404).json({ message: "Vertrag nicht gefunden" });
+    }
+    
+    // Company Profile laden wenn vorhanden
+    let companyProfile = null;
+    if (contract.hasCompanyProfile) {
+      companyProfile = await db.collection("company_profiles").findOne({ 
+        userId: new ObjectId(req.user.userId) 
+      });
+    }
+    
+    // Neues HTML mit neuer Design-Variante generieren
+    const isDraft = contract.status === 'Entwurf';
+    const newHTML = await formatContractToHTML(
+      contract.content, 
+      companyProfile, 
+      contract.contractType,
+      newDesignVariant,
+      isDraft
+    );
+    
+    // Vertrag aktualisieren
+    await contractsCollection.updateOne(
+      { _id: new ObjectId(contractId) },
+      { 
+        $set: { 
+          designVariant: newDesignVariant,
+          contractHTML: newHTML,
+          lastModified: new Date()
+        } 
+      }
+    );
+    
+    res.json({
+      message: "✅ Design-Variante erfolgreich geändert",
+      newDesignVariant: newDesignVariant,
+      htmlLength: newHTML.length
+    });
+    
+  } catch (error) {
+    console.error("❌ Design Change Error:", error);
+    res.status(500).json({ 
+      message: "Design-Änderung fehlgeschlagen",
+      error: error.message
+    });
+  }
+});
+
+// 🆕 NEUE ROUTE: Vertrag als Entwurf/Final markieren
+router.post("/toggle-draft", verifyToken, async (req, res) => {
+  const { contractId } = req.body;
+  
+  try {
+    const contract = await contractsCollection.findOne({ 
+      _id: new ObjectId(contractId),
+      userId: req.user.userId
+    });
+    
+    if (!contract) {
+      return res.status(404).json({ message: "Vertrag nicht gefunden" });
+    }
+    
+    const newStatus = contract.status === 'Entwurf' ? 'Aktiv' : 'Entwurf';
+    const isDraft = newStatus === 'Entwurf';
+    
+    // Company Profile laden wenn vorhanden
+    let companyProfile = null;
+    if (contract.hasCompanyProfile) {
+      companyProfile = await db.collection("company_profiles").findOne({ 
+        userId: new ObjectId(req.user.userId) 
+      });
+    }
+    
+    // HTML neu generieren mit/ohne Wasserzeichen
+    const newHTML = await formatContractToHTML(
+      contract.content, 
+      companyProfile, 
+      contract.contractType,
+      contract.designVariant || 'executive',
+      isDraft
+    );
+    
+    // Vertrag aktualisieren
+    await contractsCollection.updateOne(
+      { _id: new ObjectId(contractId) },
+      { 
+        $set: { 
+          status: newStatus,
+          contractHTML: newHTML,
+          lastModified: new Date()
+        } 
+      }
+    );
+    
+    res.json({
+      message: `✅ Vertrag ist jetzt ${newStatus}`,
+      newStatus: newStatus,
+      isDraft: isDraft
+    });
+    
+  } catch (error) {
+    console.error("❌ Toggle Draft Error:", error);
+    res.status(500).json({ 
+      message: "Status-Änderung fehlgeschlagen",
+      error: error.message
+    });
+  }
+});
+
+// 🆕 NEUE ROUTE: Batch-Export mehrerer Verträge
+router.post("/batch-export", verifyToken, async (req, res) => {
+  const { contractIds } = req.body;
+  
+  console.log("📦 Batch-Export angefordert für", contractIds?.length, "Verträge");
+  
+  try {
+    if (!contractIds || !Array.isArray(contractIds) || contractIds.length === 0) {
+      return res.status(400).json({ message: "Keine Contract IDs angegeben" });
+    }
+    
+    if (contractIds.length > 10) {
+      return res.status(400).json({ message: "Maximal 10 Verträge gleichzeitig exportierbar" });
+    }
+    
+    // Alle Verträge laden
+    const contracts = await contractsCollection.find({
+      _id: { $in: contractIds.map(id => new ObjectId(id)) },
+      userId: req.user.userId
+    }).toArray();
+    
+    if (contracts.length === 0) {
+      return res.status(404).json({ message: "Keine Verträge gefunden" });
+    }
+    
+    // PDFs generieren
+    const pdfs = [];
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
+    
+    try {
+      for (const contract of contracts) {
+        const page = await browser.newPage();
+        
+        // HTML laden oder generieren
+        let htmlContent = contract.contractHTML;
+        if (!htmlContent) {
+          // Company Profile laden wenn nötig
+          let companyProfile = null;
+          if (contract.hasCompanyProfile) {
+            companyProfile = await db.collection("company_profiles").findOne({ 
+              userId: new ObjectId(req.user.userId) 
+            });
+          }
+          
+          htmlContent = await formatContractToHTML(
+            contract.content, 
+            companyProfile, 
+            contract.contractType,
+            contract.designVariant || 'executive',
+            contract.status === 'Entwurf'
+          );
+        }
+        
+        await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+        await page.evaluateHandle('document.fonts.ready');
+        
+        const pdfBuffer = await page.pdf({
+          format: 'A4',
+          printBackground: true,
+          margin: { top: '20mm', bottom: '20mm', left: '15mm', right: '15mm' }
+        });
+        
+        pdfs.push({
+          name: contract.name,
+          buffer: pdfBuffer
+        });
+        
+        await page.close();
+      }
+    } finally {
+      await browser.close();
+    }
+    
+    // Als ZIP zurückgeben (benötigt zusätzliche Library wie archiver)
+    res.json({
+      message: `✅ ${pdfs.length} PDFs erfolgreich generiert`,
+      count: pdfs.length,
+      totalSize: pdfs.reduce((sum, pdf) => sum + pdf.buffer.length, 0)
+    });
+    
+  } catch (error) {
+    console.error("❌ Batch Export Error:", error);
+    res.status(500).json({ 
+      message: "Batch-Export fehlgeschlagen",
+      error: error.message
+    });
+  }
+});
+
+// Export
 module.exports = router;
