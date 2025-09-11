@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   X, Copy, Check, Share2, Mail, MessageSquare, 
-  QrCode, ExternalLink 
+  ExternalLink 
 } from "lucide-react";
 import styles from "../styles/ContractShareModal.module.css";
 

@@ -16,6 +16,7 @@ interface Contract {
   expiryDate?: string;
   status: string;
   createdAt: string; // ✅ HINZUGEFÜGT: Für Kompatibilität mit ContractDetailsView
+  updatedAt?: string; // ✅ HINZUGEFÜGT: Für Update-Timestamps
   notes?: string; // Für eigene Notizen
 }
 
@@ -57,7 +58,7 @@ export default function ContractEditModal({
   useEffect(() => {
     const handleEscapeKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && show) {
-        handleClose(); // Verwende handleClose für Änderungs-Check
+        onClose(); // Verwende onClose für Änderungs-Check
       }
     };
 

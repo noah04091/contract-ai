@@ -207,7 +207,6 @@ export const getContractFileUrl = (contract: ContractFile): string | null => {
   
   // ✅ SAFETY: Detaillierte Fallback-Informationen
   console.warn('⚠️ No valid file URL found for contract:', {
-    contractId: contract._id || 'unknown',
     availableFields: {
       hasFileUrl: !!contract.fileUrl,
       hasS3Key: !!contract.s3Key,
