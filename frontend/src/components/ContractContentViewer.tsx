@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // ContractContentViewer.tsx - VERBESSERTE VERSION mit HTML-Support für professionelle PDFs
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FileText, Download, Maximize2, X, Eye, Copy, CheckCircle, Printer, Edit, Save, Keyboard } from 'lucide-react';
 import { toast } from 'react-toastify';
@@ -159,6 +159,7 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
   const [copySuccess, setCopySuccess] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState('');
+  const [isExportingPDF, setIsExportingPDF] = useState(false);
   const [editedHTML, setEditedHTML] = useState(''); // 🔴 NEU: HTML-Version beim Editieren
   const [companyProfile, setCompanyProfile] = useState<CompanyProfile | null>(null);
   const [showKeyboardHints, setShowKeyboardHints] = useState(false);
@@ -265,8 +266,22 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
     setEditedHTML(contract.contentHTML || ''); // 🔴 NEU: HTML initialisieren
   }, [contract.content, contract.contentHTML]);
 
-  // Formatiere Content für bessere Darstellung
-  const formatContentForDisplay = (content: string): string => {
+  // ✅ PERFORMANCE: Memoized formatContentForDisplay
+  const formatContentForDisplay = useMemo(() => {
+    return (content: string): string => {
+    // ✅ EMPTY STATE: Behandle leeren/fehlenden Content
+    if (!content || content.trim().length === 0) {
+      return `
+        <div style="text-align: center; padding: 40px 20px; color: #6b7280; border: 2px dashed #e5e7eb; border-radius: 8px; margin: 20px 0;">
+          <div style="font-size: 48px; margin-bottom: 16px;">📄</div>
+          <h3 style="margin: 0 0 8px 0; color: #374151;">Kein Vertragsinhalt verfügbar</h3>
+          <p style="margin: 0; font-size: 14px;">
+            Dieser Vertrag enthält keinen anzeigbaren Text oder wurde als PDF hochgeladen.
+          </p>
+        </div>
+      `;
+    }
+
     // Konvertiere Text-Struktur zu HTML für bessere Darstellung
     let formatted = content;
     
@@ -290,7 +305,8 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
     formatted = formatted.replace(/\n/g, '<br/>');
     
     return formatted;
-  };
+    };
+  }, []); // ✅ PERFORMANCE: No dependencies - pure function
 
   // 🎨 BOMBASTISCHER Content mit Premium-Styling für normale Ansicht
   const displayContent = isEditing ? editedContent : (
@@ -358,6 +374,9 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
 
   // 🔴 HAUPTVERBESSERUNG: PDF Export mit HTML-Support und besserem Styling - KORRIGIERT
   const handleDownloadPDF = async () => {
+    if (isExportingPDF) return; // Prevent double-clicks
+    setIsExportingPDF(true);
+    
     try {
       const html2pdfModule = await import('html2pdf.js');
       const html2pdf = (html2pdfModule.default || html2pdfModule) as typeof import('html2pdf.js').default;
@@ -769,13 +788,16 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
     } catch (error) {
       console.error('PDF-Export fehlgeschlagen:', error);
       toast.error('PDF-Export fehlgeschlagen.');
+    } finally {
+      setIsExportingPDF(false);
     }
   };
 
   const handlePrint = () => {
-    const printContent = contract.contentHTML || formatContentForDisplay(contract.content || '');
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
+    try {
+      const printContent = contract.contentHTML || formatContentForDisplay(contract.content || '');
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
       printWindow.document.write(`
         <html>
           <head>
@@ -875,6 +897,12 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
       setTimeout(() => {
         printWindow.print();
       }, 250);
+    } else {
+      alert('Pop-up wurde blockiert. Bitte erlaube Pop-ups für diese Seite.');
+    }
+    } catch (error) {
+      console.error('Print failed:', error);
+      alert('Drucken fehlgeschlagen. Bitte versuche es erneut.');
     }
   };
 
@@ -1031,34 +1059,40 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
           
           <button
             onClick={handleDownloadPDF}
+            disabled={isExportingPDF}
             style={{
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
               padding: '8px 12px',
-              backgroundColor: '#3b82f6',
+              backgroundColor: isExportingPDF ? '#94a3b8' : '#3b82f6',
               color: 'white',
               border: 'none',
               borderRadius: '8px',
               fontSize: '13px',
               fontWeight: '500',
-              cursor: 'pointer',
+              cursor: isExportingPDF ? 'not-allowed' : 'pointer',
               transition: 'all 0.2s',
-              boxShadow: '0 2px 4px rgba(59, 130, 246, 0.3)'
+              boxShadow: isExportingPDF ? '0 1px 2px rgba(0,0,0,0.1)' : '0 2px 4px rgba(59, 130, 246, 0.3)',
+              opacity: isExportingPDF ? 0.7 : 1
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = '#2563eb';
-              e.currentTarget.style.transform = 'translateY(-1px)';
-              e.currentTarget.style.boxShadow = '0 4px 8px rgba(59, 130, 246, 0.4)';
+              if (!isExportingPDF) {
+                e.currentTarget.style.backgroundColor = '#2563eb';
+                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.boxShadow = '0 4px 8px rgba(59, 130, 246, 0.4)';
+              }
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = '#3b82f6';
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 2px 4px rgba(59, 130, 246, 0.3)';
+              if (!isExportingPDF) {
+                e.currentTarget.style.backgroundColor = '#3b82f6';
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 2px 4px rgba(59, 130, 246, 0.3)';
+              }
             }}
           >
             <Download size={14} />
-            PDF Export
+            {isExportingPDF ? 'Exportiere...' : 'PDF Export'}
           </button>
 
           <button

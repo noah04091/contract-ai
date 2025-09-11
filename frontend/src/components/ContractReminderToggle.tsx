@@ -1,3 +1,6 @@
+// TODO: Diese Komponente scheint unbenutzt zu sein (keine Imports gefunden)
+// Alternative zu ReminderToggle.tsx mit button-style statt checkbox-style
+// Erwäge Entfernung oder Integration in ReminderToggle.tsx
 import { useState } from "react";
 
 interface Props {
@@ -19,6 +22,10 @@ export default function ContractReminderToggle({
     try {
       const res = await fetch(`/api/contracts/${contractId}/reminder`, {
         method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ reminder: !active }),
         credentials: "include",
       });
 

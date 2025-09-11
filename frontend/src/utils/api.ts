@@ -65,6 +65,12 @@ interface AnalysisResult {
  * 🔧 INTELLIGENT: Unterscheidet zwischen lokalen und S3 Uploads basierend auf uploadType
  */
 export const getContractFileUrl = (contract: ContractFile): string | null => {
+  // ✅ SAFETY: Null/undefined Check für contract
+  if (!contract) {
+    console.warn('⚠️ getContractFileUrl: contract ist null oder undefined');
+    return null;
+  }
+
   console.log('🔍 Contract File URL Debug (Enhanced Local vs S3):', {
     contractData: contract,
     hasFileUrl: !!contract.fileUrl,
@@ -104,24 +110,33 @@ export const getContractFileUrl = (contract: ContractFile): string | null => {
     console.log('🔧 S3_UPLOAD detected - using S3 signed URL');
     
     const s3Key = contract.s3Key || (contract.filePath ? contract.filePath.replace('/s3/', '') : null);
-    if (s3Key) {
-      const s3ViewUrl = `${API_BASE_URL}/s3/view?file=${s3Key}`;
+    // ✅ SAFETY: S3-Key Validierung
+    if (s3Key && s3Key.trim().length > 0) {
+      const s3ViewUrl = `${API_BASE_URL}/s3/view?file=${encodeURIComponent(s3Key)}`;
       console.log('✅ S3_UPLOAD: Generated S3 URL:', s3ViewUrl);
       return s3ViewUrl;
+    } else {
+      console.warn('⚠️ S3_UPLOAD detected but s3Key is empty or invalid:', s3Key);
     }
   }
 
   // ✅ PRIORITÄT 2: Expliziter S3-Key → S3 Signed URL
-  if (contract.s3Key) {
-    const s3ViewUrl = `${API_BASE_URL}/s3/view?file=${contract.s3Key}`;
+  if (contract.s3Key && contract.s3Key.trim().length > 0) {
+    const s3ViewUrl = `${API_BASE_URL}/s3/view?file=${encodeURIComponent(contract.s3Key)}`;
     console.log('✅ Using S3 signed URL endpoint (explicit s3Key):', s3ViewUrl);
     return s3ViewUrl;
   }
 
   // ✅ PRIORITÄT 3: Bestehende fileUrl (falls absolute URL)
   if (contract.fileUrl && contract.fileUrl.startsWith('http')) {
-    console.log('✅ Using existing absolute fileUrl:', contract.fileUrl);
-    return contract.fileUrl;
+    // ✅ SAFETY: URL Validierung
+    try {
+      new URL(contract.fileUrl); // Wirft Error wenn URL ungültig ist
+      console.log('✅ Using existing absolute fileUrl:', contract.fileUrl);
+      return contract.fileUrl;
+    } catch (error) {
+      console.warn('⚠️ Invalid fileUrl detected:', contract.fileUrl, error);
+    }
   }
   
   // ✅ PRIORITÄT 4: filePath Analysis für Legacy-Support
@@ -190,7 +205,18 @@ export const getContractFileUrl = (contract: ContractFile): string | null => {
     }
   }
   
-  console.warn('⚠️ No valid file URL found for contract');
+  // ✅ SAFETY: Detaillierte Fallback-Informationen
+  console.warn('⚠️ No valid file URL found for contract:', {
+    contractId: contract._id || 'unknown',
+    availableFields: {
+      hasFileUrl: !!contract.fileUrl,
+      hasS3Key: !!contract.s3Key,
+      hasFilename: !!contract.filename,
+      hasOriginalname: !!contract.originalname,
+      hasFilePath: !!contract.filePath,
+      uploadType: contract.uploadType || contract.extraRefs?.uploadType || 'not set'
+    }
+  });
   return null;
 };
 

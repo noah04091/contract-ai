@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   X, FileText, Shield, Lightbulb, TrendingUp, Clock, 
@@ -36,6 +36,59 @@ interface AnalysisModalProps {
 
 export default function AnalysisModal({ contract, show, onClose }: AnalysisModalProps) {
   const [copySuccess, setCopySuccess] = useState(false);
+
+  // ✅ Escape-Key-Handler und Focus-Trap für Accessibility
+  useEffect(() => {
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && show) {
+        onClose();
+      }
+    };
+
+    const handleTabKey = (event: KeyboardEvent) => {
+      if (event.key === 'Tab' && show) {
+        const focusableElements = document.querySelectorAll(
+          'button:not([disabled]), [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        const focusableArray = Array.from(focusableElements).filter(el => 
+          el.closest('[role="dialog"]') !== null
+        );
+        
+        if (focusableArray.length === 0) return;
+        
+        const firstElement = focusableArray[0] as HTMLElement;
+        const lastElement = focusableArray[focusableArray.length - 1] as HTMLElement;
+        
+        if (event.shiftKey) {
+          if (document.activeElement === firstElement) {
+            event.preventDefault();
+            lastElement.focus();
+          }
+        } else {
+          if (document.activeElement === lastElement) {
+            event.preventDefault();
+            firstElement.focus();
+          }
+        }
+      }
+    };
+
+    if (show) {
+      document.addEventListener('keydown', handleEscapeKey);
+      document.addEventListener('keydown', handleTabKey);
+      
+      // Focus auf erstes focusable Element beim Öffnen
+      setTimeout(() => {
+        const firstFocusable = document.querySelector('[role="dialog"] button') as HTMLElement;
+        if (firstFocusable) firstFocusable.focus();
+      }, 100);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscapeKey);
+      document.removeEventListener('keydown', handleTabKey);
+    };
+  }, [show, onClose]);
 
   const formatDate = (dateString: string): string => {
     if (!dateString) return "Unbekannt";
@@ -169,6 +222,9 @@ ${contract.legalPulse.recommendations?.join('\n- ') || 'Nicht verfügbar'}
       >
         <motion.div 
           className={styles.modal}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="analysis-modal-title"
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -182,7 +238,7 @@ ${contract.legalPulse.recommendations?.join('\n- ') || 'Nicht verfügbar'}
                 <BarChart3 size={24} />
               </div>
               <div className={styles.headerInfo}>
-                <h2 className={styles.title}>
+                <h2 id="analysis-modal-title" className={styles.title}>
                   {hasNewAnalysis ? '🤖 KI-Vertragsanalyse' : '🧠 Legal Pulse Analyse'}
                 </h2>
                 <p className={styles.contractName}>{contract.name}</p>
@@ -202,6 +258,7 @@ ${contract.legalPulse.recommendations?.join('\n- ') || 'Nicht verfügbar'}
               <button 
                 className={styles.closeBtn}
                 onClick={onClose}
+                aria-label="Analysis Modal schließen"
                 title="Schließen"
               >
                 <X size={20} />

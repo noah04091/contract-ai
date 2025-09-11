@@ -1964,7 +1964,41 @@ export default function Contracts() {
                           </tr>
                         </thead>
                         <tbody>
-                          {filteredContracts.map((contract) => (
+                          {filteredContracts.length === 0 ? (
+                            <tr>
+                              <td colSpan={6} style={{ textAlign: 'center', padding: '60px 20px' }}>
+                                <div style={{ color: '#6b7280' }}>
+                                  <div style={{ fontSize: '48px', marginBottom: '16px' }}>📄</div>
+                                  <h3 style={{ margin: '0 0 8px 0', color: '#374151' }}>
+                                    {searchQuery ? 'Keine passenden Verträge gefunden' : 'Keine Verträge vorhanden'}
+                                  </h3>
+                                  <p style={{ margin: '0', fontSize: '14px' }}>
+                                    {searchQuery 
+                                      ? `Kein Vertrag entspricht "${searchQuery}". Versuche andere Suchbegriffe.`
+                                      : 'Lade deinen ersten Vertrag hoch, um loszulegen.'
+                                    }
+                                  </p>
+                                  {!searchQuery && (
+                                    <button 
+                                      style={{
+                                        marginTop: '16px',
+                                        padding: '8px 16px',
+                                        backgroundColor: '#3b82f6',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '6px',
+                                        cursor: 'pointer'
+                                      }}
+                                      onClick={() => fileInputRef.current?.click()}
+                                    >
+                                      <Plus size={16} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+                                      Ersten Vertrag hochladen
+                                    </button>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          ) : filteredContracts.map((contract) => (
                             <motion.tr 
                               key={contract._id} 
                               className={styles.tableRow}

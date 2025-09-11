@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   X, Copy, Check, Share2, Mail, MessageSquare, 
@@ -22,6 +22,59 @@ export default function ContractShareModal({
 }: ContractShareModalProps) {
   const [copied, setCopied] = useState(false);
   const [copySuccess, setCopySuccess] = useState<string | null>(null);
+
+  // ✅ Escape-Key-Handler und Focus-Trap für Accessibility
+  useEffect(() => {
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && show) {
+        onClose();
+      }
+    };
+
+    const handleTabKey = (event: KeyboardEvent) => {
+      if (event.key === 'Tab' && show) {
+        const focusableElements = document.querySelectorAll(
+          'button:not([disabled]), [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        const focusableArray = Array.from(focusableElements).filter(el => 
+          el.closest('[role="dialog"]') !== null
+        );
+        
+        if (focusableArray.length === 0) return;
+        
+        const firstElement = focusableArray[0] as HTMLElement;
+        const lastElement = focusableArray[focusableArray.length - 1] as HTMLElement;
+        
+        if (event.shiftKey) {
+          if (document.activeElement === firstElement) {
+            event.preventDefault();
+            lastElement.focus();
+          }
+        } else {
+          if (document.activeElement === lastElement) {
+            event.preventDefault();
+            firstElement.focus();
+          }
+        }
+      }
+    };
+
+    if (show) {
+      document.addEventListener('keydown', handleEscapeKey);
+      document.addEventListener('keydown', handleTabKey);
+      
+      // Focus auf erstes focusable Element beim Öffnen
+      setTimeout(() => {
+        const firstFocusable = document.querySelector('[role="dialog"] button') as HTMLElement;
+        if (firstFocusable) firstFocusable.focus();
+      }, 100);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscapeKey);
+      document.removeEventListener('keydown', handleTabKey);
+    };
+  }, [show, onClose]);
 
   // Generiere den Contract-Link
   const contractLink = `https://contract-ai.de/contracts/${contract._id}`;
@@ -51,18 +104,36 @@ export default function ContractShareModal({
   };
 
   const handleShareViaEmail = () => {
-    const mailtoLink = `mailto:?subject=${emailSubject}&body=${emailBody}`;
-    window.open(mailtoLink, '_blank');
+    try {
+      const mailtoLink = `mailto:?subject=${emailSubject}&body=${emailBody}`;
+      window.open(mailtoLink, '_blank');
+    } catch (error) {
+      console.error('Email sharing failed:', error);
+      alert('E-Mail-Client konnte nicht geöffnet werden.');
+    }
   };
 
   const handleShareViaSMS = () => {
-    const smsText = encodeURIComponent(`${shareText}\n${contractLink}`);
-    const smsLink = `sms:?body=${smsText}`;
-    window.open(smsLink, '_self');
+    try {
+      const smsText = encodeURIComponent(`${shareText}\n${contractLink}`);
+      const smsLink = `sms:?body=${smsText}`;
+      window.open(smsLink, '_self');
+    } catch (error) {
+      console.error('SMS sharing failed:', error);
+      alert('SMS-App konnte nicht geöffnet werden.');
+    }
   };
 
   const handleOpenInNewTab = () => {
-    window.open(contractLink, '_blank', 'noopener,noreferrer');
+    try {
+      const newWindow = window.open(contractLink, '_blank', 'noopener,noreferrer');
+      if (!newWindow) {
+        alert('Pop-up wurde blockiert. Bitte erlaube Pop-ups für diese Seite.');
+      }
+    } catch (error) {
+      console.error('Opening link failed:', error);
+      alert('Link konnte nicht geöffnet werden.');
+    }
   };
 
   if (!show) return null;
@@ -78,6 +149,9 @@ export default function ContractShareModal({
       >
         <motion.div 
           className={styles.modal}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="share-modal-title"
           initial={{ scale: 0.95, opacity: 0, y: 20 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.95, opacity: 0, y: 20 }}
@@ -90,12 +164,13 @@ export default function ContractShareModal({
               <Share2 size={24} />
             </div>
             <div className={styles.headerText}>
-              <h2>Vertrag teilen</h2>
+              <h2 id="share-modal-title">Vertrag teilen</h2>
               <p>"{contract.name}"</p>
             </div>
             <button 
               className={styles.closeBtn}
               onClick={onClose}
+              aria-label="Modal schließen"
               title="Schließen"
             >
               <X size={20} />
@@ -182,6 +257,7 @@ export default function ContractShareModal({
                 <span>Öffnen</span>
               </button>
 
+              {/* TODO: QR-Code Funktionalität implementieren
               <button 
                 className={styles.shareOption}
                 onClick={() => {
@@ -195,6 +271,7 @@ export default function ContractShareModal({
                 </div>
                 <span>QR-Code</span>
               </button>
+              */}
             </div>
           </div>
 

@@ -53,6 +53,23 @@ export default function ContractEditModal({
   const [success, setSuccess] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
 
+  // ✅ Escape-Key-Handler für Accessibility
+  useEffect(() => {
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && show) {
+        handleClose(); // Verwende handleClose für Änderungs-Check
+      }
+    };
+
+    if (show) {
+      document.addEventListener('keydown', handleEscapeKey);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscapeKey);
+    };
+  }, [show]);
+
   // Formular mit Contract-Daten initialisieren
   useEffect(() => {
     if (contract && show) {
@@ -138,10 +155,14 @@ export default function ContractEditModal({
         setSuccess(true);
         setHasChanges(false);
         
-        // Aktualisierte Contract-Daten erstellen
-        const updatedContract: Contract = {
+        // ✅ VERBESSERUNG: Verwende Server-Response wenn verfügbar, sonst lokale Daten
+        const updatedContract: Contract = response.contract ? {
           ...contract,
-          ...updateData
+          ...response.contract  // ✅ Server-Daten haben Priorität
+        } : {
+          ...contract,
+          ...updateData,        // ✅ Fallback zu lokalen Daten
+          updatedAt: new Date().toISOString() // ✅ Timestamp hinzufügen
         };
         
         // Parent Component über Update informieren

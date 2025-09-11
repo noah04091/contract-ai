@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   X, FileText, Calendar, Clock, AlertCircle, CheckCircle, 
@@ -81,6 +81,7 @@ export default function ContractDetailsView({
   const [showEditModal, setShowEditModal] = useState(false);
   const [showAnalysisModal, setShowAnalysisModal] = useState(false); // ✅ NEU: Analysis Modal State
   const [contract, setContract] = useState<Contract>(initialContract); // ✅ NEU: Lokaler Contract State für Updates
+  const [isAnalyzing, setIsAnalyzing] = useState(false); // ✅ NEU: Loading State für Analyse
 
   // ✅ NEU: Update contract wenn sich initialContract ändert
   useEffect(() => {
@@ -95,21 +96,44 @@ export default function ContractDetailsView({
     }
   }, [show, openEditModalDirectly]);
 
-  const formatDate = (dateString: string): string => {
-    if (!dateString) return "Unbekannt";
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString("de-DE", {
-        day: "2-digit",
-        month: "long",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit"
-      });
-    } catch {
-      return dateString;
+  // ✅ Escape-Key-Handler für Accessibility (nur wenn keine Sub-Modals offen sind)
+  useEffect(() => {
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && show) {
+        // Prüfe ob Sub-Modals offen sind - diese haben Priorität
+        if (!showShareModal && !showEditModal && !showAnalysisModal) {
+          onClose();
+        }
+      }
+    };
+
+    if (show) {
+      document.addEventListener('keydown', handleEscapeKey);
     }
-  };
+
+    return () => {
+      document.removeEventListener('keydown', handleEscapeKey);
+    };
+  }, [show, onClose, showShareModal, showEditModal, showAnalysisModal]);
+
+  // ✅ PERFORMANCE: Memoized formatDate function
+  const formatDate = useMemo(() => {
+    return (dateString: string): string => {
+      if (!dateString) return "Unbekannt";
+      try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString("de-DE", {
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit"
+        });
+      } catch {
+        return dateString;
+      }
+    };
+  }, []); // ✅ No dependencies - pure function
 
   const getStatusIcon = (status: string) => {
     const statusLower = status.toLowerCase();
@@ -150,7 +174,7 @@ export default function ContractDetailsView({
   };
 
   // ✅ MOBILE-FIX: Neue Mobile-freundliche PDF-Öffnung
-  const handleViewContract = async () => {
+  const handleViewContract = useCallback(async () => {
     console.log('🔍 Opening contract with mobile-friendly approach:', {
       contractId: contract._id,
       contractName: contract.name,
@@ -177,6 +201,9 @@ export default function ContractDetailsView({
         tempWindow.document.write(`
           <html>
             <head>
+              <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+              <meta name="mobile-web-app-capable" content="yes">
+              <meta name="apple-mobile-web-app-capable" content="yes">
               <title>Lade ${contract.name}...</title>
               <style>
                 body { 
@@ -292,6 +319,9 @@ export default function ContractDetailsView({
         tempWindow.document.write(`
           <html>
             <head>
+              <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+              <meta name="mobile-web-app-capable" content="yes">
+              <meta name="apple-mobile-web-app-capable" content="yes">
               <title>Fehler</title>
               <style>
                 body { 
@@ -342,7 +372,7 @@ export default function ContractDetailsView({
       
       alert(`❌ Fehler beim Öffnen des Vertrags:\n\n${errorMessage}`);
     }
-  };
+  }, [contract._id, contract.name, contract.s3Key, contract.uploadType, contract.needsReupload]); // ✅ PERFORMANCE: Dependencies für useCallback
 
   // ✅ NEU: Share-Handler
   const handleShare = () => {
@@ -388,7 +418,10 @@ export default function ContractDetailsView({
 
   // ✅ BUG FIX 2: Neue Analyse starten Handler (nur wenn keine Analyse vorhanden)
   const handleStartNewAnalysis = async () => {
+    if (isAnalyzing) return; // Prevent double-clicks
+    
     console.log('🚀 Starting new analysis for contract:', contract._id);
+    setIsAnalyzing(true);
     
     try {
       const token = localStorage.getItem('token');
@@ -411,7 +444,8 @@ export default function ContractDetailsView({
         if (result.analysis) {
           setContract(prev => ({
             ...prev,
-            analysis: result.analysis
+            analysis: result.analysis,
+            lastAnalyzed: new Date().toISOString() // ✅ VERBESSERUNG: Timestamp hinzufügen
           }));
         }
         
@@ -427,6 +461,8 @@ export default function ContractDetailsView({
     } catch (error) {
       console.error('❌ Error starting analysis:', error);
       alert('Fehler beim Starten der Analyse. Bitte versuche es erneut.');
+    } finally {
+      setIsAnalyzing(false);
     }
   };
 
@@ -929,9 +965,11 @@ export default function ContractDetailsView({
                       <button 
                         className={styles.analyzeBtn}
                         onClick={handleStartNewAnalysis}
+                        disabled={isAnalyzing}
+                        style={{ opacity: isAnalyzing ? 0.7 : 1, cursor: isAnalyzing ? 'not-allowed' : 'pointer' }}
                       >
                         <BarChart3 size={16} />
-                        <span>Jetzt analysieren</span>
+                        <span>{isAnalyzing ? 'Analysiere...' : 'Jetzt analysieren'}</span>
                       </button>
                     </div>
                   </div>

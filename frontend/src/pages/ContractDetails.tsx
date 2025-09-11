@@ -49,6 +49,8 @@ export default function ContractDetails() {
     type?: NotificationType;
   } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const fetchContract = async () => {
@@ -87,6 +89,8 @@ export default function ContractDetails() {
   };
 
   const handleSave = async () => {
+    if (saving) return; // Prevent double-clicks
+    setSaving(true);
     try {
       const res = await fetch(`/api/contracts/${id}`, {
         method: "PUT",
@@ -109,13 +113,16 @@ export default function ContractDetails() {
     } catch (error) {
       console.error("Fehler beim Speichern:", error);
       setNotification({ message: "Serverfehler beim Speichern", type: "error" });
+    } finally {
+      setSaving(false);
     }
   };
 
   const handleDelete = async () => {
     const confirmDelete = window.confirm("Bist du sicher, dass du diesen Vertrag löschen möchtest?");
-    if (!confirmDelete) return;
+    if (!confirmDelete || deleting) return; // Prevent double-clicks
 
+    setDeleting(true);
     try {
       const res = await fetch(`/api/contracts/${id}`, {
         method: "DELETE",
@@ -131,6 +138,8 @@ export default function ContractDetails() {
     } catch (error) {
       console.error("Fehler beim Löschen:", error);
       setNotification({ message: "Serverfehler beim Löschen", type: "error" });
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -516,8 +525,13 @@ export default function ContractDetails() {
               </div>
               
               <div className={styles.formActions}>
-                <button className={styles.primaryButton} onClick={handleSave}>
-                  Speichern
+                <button 
+                  className={styles.primaryButton} 
+                  onClick={handleSave}
+                  disabled={saving}
+                  style={{ opacity: saving ? 0.7 : 1, cursor: saving ? 'not-allowed' : 'pointer' }}
+                >
+                  {saving ? 'Speichere...' : 'Speichern'}
                 </button>
                 <button className={styles.secondaryButton} onClick={() => setEditing(false)}>
                   Abbrechen
@@ -567,11 +581,13 @@ export default function ContractDetails() {
               <button
                 className={styles.dangerButton}
                 onClick={handleDelete}
+                disabled={deleting}
+                style={{ opacity: deleting ? 0.7 : 1, cursor: deleting ? 'not-allowed' : 'pointer' }}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M16 9V19H8V9M10 5H14M6 9H18M14 5L13 4H11L10 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-                Löschen
+                {deleting ? 'Lösche...' : 'Löschen'}
               </button>
             </div>
           )}
