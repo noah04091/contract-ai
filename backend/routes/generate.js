@@ -1574,10 +1574,10 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
       }
     ` : ''}
     
-    /* A4 Format für Print - KANZLEI-STANDARD */
+    /* 📄 DIN A4 FORMAT - EXAKTE SEITENRÄNDER NACH VORGABE */
     @page {
       size: A4;
-      margin: 20mm 15mm 20mm 20mm;
+      margin: 25mm 20mm 20mm 25mm; /* Oben 25mm, Rechts 20mm, Unten 20mm, Links 25mm */
     }
     
     body {
@@ -1594,13 +1594,13 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
       -moz-osx-font-smoothing: grayscale;
     }
     
-    /* Container für Seite */
+    /* 📄 SEITEN-CONTAINER - DIN A4 MIT EXAKTEN RÄNDERN */
     .page-container {
-      max-width: 210mm;
+      max-width: 210mm; /* DIN A4 Breite */
       margin: 0 auto;
-      padding: 20mm;
+      padding: 25mm 20mm 20mm 25mm; /* Exakte Seitenränder nach Vorgabe */
       background: white;
-      min-height: 297mm;
+      min-height: 297mm; /* DIN A4 Höhe */
       position: relative;
     }
     
@@ -1774,160 +1774,122 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
   
   <div class="page-container" style="
     margin: 0;
-    padding: 25.4mm; /* 1 Zoll - Kanzlei-Standard */
-    background: ${theme.lightBg};
+    padding: 25mm 20mm 20mm 25mm; /* Exakte DIN A4 Seitenränder */
+    background: white;
     min-height: 297mm; /* A4 Höhe */
     position: relative;
     z-index: 2;
   ">
     
-    <!-- 🏢 WELTKLASSE-KANZLEI-BRIEFKOPF - FRESHFIELDS/CLIFFORD CHANCE NIVEAU -->
+    <!-- 📄 IDEALER BRIEFKOPF NACH DIN-VORGABEN -->
     <header style="
-      background: ${theme.headerBg};
-      border: 1px solid ${theme.border};
-      border-radius: ${theme.borderRadius};
-      margin-bottom: 12.7mm; /* 36pt = 12.7mm */
+      margin-bottom: 15mm;
       page-break-after: avoid;
-      /* Kanzlei-Standard: Kein Box-Shadow */
     ">
       <div style="
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
-        padding: 8.47mm; /* 24pt = 8.47mm */
-        min-height: ${theme.headerHeight};
-        position: relative;
+        margin-bottom: 0;
       ">
         
-        <!-- LOGO-BEREICH (LINKS) - PROFESSIONELL BEGRENZT -->
+        <!-- LOGO LINKS (ganz links oben, bündig mit oberem Rand) -->
         <div style="
-          flex: 0 0 60mm; 
+          flex: 0 0 auto;
           max-width: 60mm;
-          height: 25.4mm; /* 1 Zoll Höhe */
-          display: flex;
-          align-items: center;
-          justify-content: flex-start;
         ">
           ${logoBase64 ? `
             <img src="${logoBase64}" style="
-              max-width: 55mm;
               max-height: 20mm;
+              width: auto;
               object-fit: contain;
-              object-position: left center;
-              border: none;
+              display: block;
             " alt="Firmenlogo"/>
           ` : `
+            <!-- Initialen-Fallback -->
             <div style="
-              font: bold 14pt ${theme.headingFont};
-              color: ${theme.primary};
-              border: 2pt solid ${theme.primary};
-              padding: 8mm 12mm;
-              text-align: center;
-              background: ${theme.lightBg};
-              border-radius: ${theme.borderRadius};
-              max-width: 55mm;
-              word-wrap: break-word;
-              min-height: 20mm;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-            ">${companyProfile?.companyName ? generateCompanyInitials(companyProfile.companyName) : 'LOGO'}</div>
+              font: bold 14pt 'Times New Roman', serif;
+              color: #1a1a1a;
+              padding: 4mm 8mm;
+              display: inline-block;
+              line-height: 1.2;
+            ">${companyProfile?.companyName ? generateCompanyInitials(companyProfile.companyName) : 'AC'}</div>
           `}
         </div>
         
-        <!-- FIRMENDATEN (RECHTS) - KANZLEI-FORMATIERUNG -->
+        <!-- UNTERNEHMENSBLOCK RECHTS (rechtsbündig) -->
         <div style="
-          flex: 1;
           text-align: right;
-          font: 9pt ${theme.fontFamily};
-          line-height: 1.3;
-          color: ${theme.primary};
-          margin-left: 8.47mm; /* 24pt */
-          max-width: 80mm;
+          font-family: 'Times New Roman', serif;
+          font-size: 10pt;
+          line-height: 1.2;
+          color: #1a1a1a;
         ">
+          <!-- Fett: Unternehmensname + Rechtsform -->
           <div style="
-            font-weight: bold; 
-            font-size: 12pt; 
-            margin-bottom: 3.17mm; /* 9pt = 3.17mm */
-            color: ${theme.primary};
+            font-weight: bold;
+            margin-bottom: 2mm;
           ">
-            ${(() => {
-              const name = companyProfile?.companyName || 'Ihr Unternehmen';
-              console.log('🔍 DEBUG HTML-Template - Company Name:', name);
-              return name;
-            })()}
+            ${companyProfile?.companyName || 'Ihr Unternehmen'}${companyProfile?.legalForm ? ` ${companyProfile.legalForm}` : ''}
           </div>
           
-          <div style="color: ${theme.secondary}; line-height: 1.5; font-size: 10pt;">
-            ${(() => {
-              console.log('🔍 DEBUG HTML-Template - Company Data:', {
-                street: companyProfile?.street,
-                postalCode: companyProfile?.postalCode, 
-                city: companyProfile?.city,
-                contactPhone: companyProfile?.contactPhone,
-                contactEmail: companyProfile?.contactEmail,
-                vatId: companyProfile?.vatId,
-                tradeRegister: companyProfile?.tradeRegister
-              });
-              return '';
-            })()}
-            ${companyProfile?.street || 'Musterstraße 123'}<br/>
-            ${companyProfile?.postalCode || '12345'} ${companyProfile?.city || 'Musterstadt'}<br/>
-            ${companyProfile?.contactPhone ? `Telefon: ${companyProfile.contactPhone}<br/>` : 'Telefon: +49 (0) 123 456789<br/>'}
-            ${companyProfile?.contactEmail ? `E-Mail: ${companyProfile.contactEmail}<br/>` : 'E-Mail: info@beispiel.de<br/>'}
-            ${companyProfile?.vatId ? `USt-ID: ${companyProfile.vatId}<br/>` : ''}
-            ${companyProfile?.tradeRegister ? `HRB: ${companyProfile.tradeRegister}` : ''}
+          <!-- Adresse -->
+          <div style="margin-bottom: 1mm;">
+            ${companyProfile?.street || 'Musterstraße 123'}
           </div>
+          <div style="margin-bottom: 2mm;">
+            ${companyProfile?.postalCode || '12345'} ${companyProfile?.city || 'Musterstadt'}
+          </div>
+          
+          <!-- Kontakt -->
+          ${companyProfile?.contactEmail ? `<div style="margin-bottom: 1mm;">E-Mail: ${companyProfile.contactEmail}</div>` : '<div style="margin-bottom: 1mm;">E-Mail: info@beispiel.de</div>'}
+          ${companyProfile?.contactPhone ? `<div style="margin-bottom: 2mm;">Telefon: ${companyProfile.contactPhone}</div>` : '<div style="margin-bottom: 2mm;">Telefon: +49 (0) 123 456789</div>'}
+          
+          <!-- Registergericht/HRB, USt-ID -->
+          ${companyProfile?.tradeRegister ? `<div style="margin-bottom: 1mm;">${companyProfile.tradeRegister}</div>` : ''}
+          ${companyProfile?.vatId ? `<div>USt-ID: ${companyProfile.vatId}</div>` : ''}
         </div>
-        
-        <!-- 🔍 DEZENTER QR-CODE (RECHTS UNTEN) -->
-        ${enterpriseQRCode ? `
-          <div style="
-            position: absolute;
-            bottom: 8.47mm;
-            right: 8.47mm;
-            width: 12mm;
-            height: 12mm;
-            z-index: 10;
-            opacity: 0.7;
-          ">
-            <img src="${enterpriseQRCode}" style="
-              width: 12mm;
-              height: 12mm;
-              object-fit: contain;
-              filter: grayscale(100%);
-              opacity: 0.8;
-            " alt="QR-Code zur Dokumentenverifizierung"/>
-          </div>
-        ` : ''}
         
       </div>
       
-      <!-- 🆕 DOKUMENT-METADATEN-LEISTE -->
+      <!-- Horizontale Trennlinie (6mm nach oben/unten) -->
       <div style="
-        background: ${theme.lightBg};
-        border-top: 1px solid ${theme.border};
-        padding: 4.23mm 8.47mm; /* 12pt/24pt */
-        font: 8pt ${theme.fontFamily};
-        color: ${theme.secondary};
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      ">
-        <div>
-          <strong>Dokument-ID:</strong> ${documentId.substring(0, 20)}...
-        </div>
-        <div>
-          <strong>Typ:</strong> ${contractType.toUpperCase()}
-        </div>
-        <div>
-          <strong>Status:</strong> ${isDraft ? 'ENTWURF' : 'FINAL'}
-        </div>
-        <div>
-          <strong>Erstellt:</strong> ${new Date().toLocaleDateString('de-DE')}
-        </div>
-      </div>
+        margin: 6mm 0;
+        height: 1px;
+        background-color: #cccccc;
+        width: 100%;
+      "></div>
     </header>
+    
+    <!-- VERTRAGSTITEL (exakt mittig auf der Seite, ca. ⅓ von oben) -->
+    <div style="
+      text-align: center;
+      margin: 40mm 0 20mm 0;
+    ">
+      <h1 style="
+        font-family: 'Times New Roman', serif;
+        font-size: 18pt;
+        font-weight: bold;
+        color: #1a1a1a;
+        text-transform: uppercase;
+        margin: 0;
+        letter-spacing: 1px;
+      ">${contractType?.toUpperCase() || 'KAUFVERTRAG'}</h1>
+      
+      <!-- Optional: Datumszeile -->
+      <div style="
+        font-family: 'Times New Roman', serif;
+        font-size: 10pt;
+        color: #666;
+        margin-top: 5mm;
+      ">
+        geschlossen am ${new Date().toLocaleDateString('de-DE', { 
+          day: '2-digit', 
+          month: 'long', 
+          year: 'numeric' 
+        })}
+      </div>
+    </div>
     
     <!-- HAUPTINHALT-BEREICH -->
     <div style="
@@ -2005,39 +1967,43 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
           </div>
         </div>
       ` : ''}
-    </header>
     
-    <!-- Dokument-Info Box -->
+    <!-- PARTEIENBLOCK ("zwischen") -->
     <div style="
-      background: ${theme.lightBg};
-      border: 1px solid ${theme.border};
-      border-radius: ${theme.borderRadius};
-      padding: 15px 20px;
-      margin-bottom: 30px;
-      font-size: 9pt;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      /* Kanzlei-Standard: Kein Box-Shadow */
+      font-family: 'Times New Roman', serif;
+      font-size: 11pt;
+      line-height: 1.3;
+      margin: 15mm 0 20mm 0;
+      color: #1a1a1a;
     ">
-      <div><strong style="color: ${theme.primary};">Dokument-ID:</strong> ${documentId}</div>
-      <div><strong style="color: ${theme.primary};">Erstellt am:</strong> ${new Date().toLocaleDateString('de-DE', { 
-        day: '2-digit', 
-        month: 'long', 
-        year: 'numeric' 
-      })}</div>
-      <div><strong style="color: ${theme.primary};">Vertragstyp:</strong> ${contractType?.toUpperCase() || 'VERTRAG'}</div>
-      <div><strong style="color: ${theme.primary};">Hash:</strong> ${documentHash}</div>
-      ${companyProfile?.registrationNumber ? `
-        <div><strong style="color: ${theme.primary};">Registrierungsnr.:</strong> ${companyProfile.registrationNumber}</div>
-      ` : ''}
-      <div><strong style="color: ${theme.primary};">Status:</strong> ${isDraft ? 'ENTWURF' : 'FINAL'}</div>
+      <div style="font-weight: bold; margin-bottom: 10mm;">zwischen</div>
+      
+      <div style="margin-bottom: 15mm;">
+        <div style="font-weight: bold;">${companyProfile?.companyName || 'ACME GmbH'}${companyProfile?.legalForm ? ` ${companyProfile.legalForm}` : ''}</div>
+        <div>${companyProfile?.street || 'Musterstraße 1'}</div>
+        <div>${companyProfile?.postalCode || '12345'} ${companyProfile?.city || 'Berlin'}</div>
+        ${companyProfile?.tradeRegister ? `<div>eingetragen im Handelsregister des AG ${companyProfile.city || 'Berlin'}, ${companyProfile.tradeRegister}</div>` : '<div>eingetragen im Handelsregister des AG Berlin, HRB 123456</div>'}
+        <div style="font-style: italic; margin-top: 3mm;">– nachfolgend "Verkäufer" genannt –</div>
+      </div>
+      
+      <div style="font-weight: bold; margin-bottom: 10mm;">und</div>
+      
+      <div style="margin-bottom: 15mm;">
+        <div style="font-weight: bold;">Naomi Baba</div>
+        <div>Beispielstraße 2</div>
+        <div>54321 Hamburg</div>
+        <div style="font-style: italic; margin-top: 3mm;">– nachfolgend "Käufer" genannt –</div>
+      </div>
     </div>
     
-    <!-- Inhaltsverzeichnis deaktiviert bis Seitenzahlen korrekt -->
-    
-    <!-- Vertragskörper -->
-    <main style="margin-top: 30px;">
+    <!-- VERTRAGSKÖRPER -->
+    <main style="
+      font-family: 'Times New Roman', serif;
+      font-size: 11pt;
+      line-height: 1.3;
+      text-align: justify;
+      color: #1a1a1a;
+    ">
       ${htmlContent}
     </main>
     
