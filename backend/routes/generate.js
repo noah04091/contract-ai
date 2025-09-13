@@ -288,7 +288,7 @@ const generateEnterpriseQRCode = async (contractData, companyProfile) => {
       type: contractData.contractType,
       
       // Enterprise-Metadaten
-      issuer: companyProfile?.companyName || 'Contract AI Enterprise',
+      issuer: companyProfile?.companyName || 'Vertragsdokument Generator',
       timestamp: Date.now(),
       iso_date: new Date().toISOString(),
       
@@ -355,6 +355,37 @@ const generateEnterpriseQRCode = async (contractData, companyProfile) => {
   }
 };
 
+// 🆕 INITIALEN-FALLBACK WENN LOGO NICHT LÄDT
+const generateCompanyInitials = (companyName) => {
+  if (!companyName) return "MM";
+  
+  const words = companyName.trim().split(/\s+/);
+  if (words.length >= 2) {
+    // Erste zwei Wörter: "Max Mustermann GmbH" → "MM"
+    return (words[0][0] + words[1][0]).toUpperCase();
+  } else if (words[0].length >= 2) {
+    // Ein Wort, erste zwei Buchstaben: "Mustermann" → "MU"
+    return words[0].substring(0, 2).toUpperCase();
+  } else {
+    // Fallback
+    return words[0][0].toUpperCase();
+  }
+};
+
+// 🆕 SVG-LOGO AUS INITIALEN GENERIEREN
+const generateInitialsLogo = (initials, color = '#1a1a1a') => {
+  const svgLogo = `
+    <svg width="120" height="60" xmlns="http://www.w3.org/2000/svg">
+      <rect width="120" height="60" fill="${color}" rx="4"/>
+      <text x="60" y="38" fill="white" font-family="Arial, sans-serif" font-size="24" font-weight="bold" text-anchor="middle">${initials}</text>
+    </svg>
+  `;
+  
+  // Konvertiere SVG zu Data-URL
+  const base64 = Buffer.from(svgLogo).toString('base64');
+  return `data:image/svg+xml;base64,${base64}`;
+};
+
 // 🎨 ENTERPRISE HTML-FORMATIERUNG FÜR ABSOLUT PROFESSIONELLE VERTRÄGE - VOLLSTÄNDIGE VERSION
 const formatContractToHTML = async (contractText, companyProfile, contractType, designVariant = 'executive', isDraft = false) => {
   console.log("🚀 Starte ENTERPRISE HTML-Formatierung für:", contractType);
@@ -363,8 +394,10 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
   console.log('🏢 Company Profile vorhanden:', !!companyProfile);
   console.log('📝 Entwurf-Modus:', isDraft);
   
-  // 🎨 Logo-Loading mit allen Fallback-Strategien
+  // 🎨 ERWEITERTES LOGO-LOADING MIT INITIALEN-FALLBACK
   let logoBase64 = null;
+  let useInitialsFallback = false;
+  
   if (companyProfile && companyProfile.logoUrl) {
     console.log("🏢 Company Profile vorhanden, lade Logo...");
     logoBase64 = await loadLogoWithFallbacks(companyProfile);
@@ -373,8 +406,19 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
       logoBase64 = optimizeLogoBase64(logoBase64, 100);
       console.log("✅ Logo erfolgreich geladen und optimiert!");
     } else {
-      console.log("⚠️ Logo konnte nicht geladen werden, verwende Text-Header");
+      console.log("⚠️ Logo konnte nicht geladen werden, generiere Initialen-Fallback");
+      useInitialsFallback = true;
     }
+  } else {
+    console.log("ℹ️ Kein Logo verfügbar, verwende Initialen-Fallback");
+    useInitialsFallback = true;
+  }
+  
+  // 🔤 INITIALEN-FALLBACK GENERIEREN
+  if (useInitialsFallback && companyProfile?.companyName) {
+    const initials = generateCompanyInitials(companyProfile.companyName);
+    logoBase64 = generateInitialsLogo(initials, '#1a1a1a');
+    console.log("✅ Initialen-Logo generiert:", initials);
   }
 
   // Generiere Dokument-ID und Hash
@@ -410,13 +454,13 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
       text: '#1a1a1a',                  // Tiefschwarz für Text
       lightBg: '#fefefe',               // Nahezu reines Weiß
       border: '#cccccc',                // Neutrales Grau für Abgrenzungen
-      headerBg: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)', // Subtiler Hintergrund
+      headerBg: 'transparent', // Kanzlei-Standard: Kein Background
       
       // 🔥 EXAKTE KANZLEI-TYPOGRAFIE (FRESHFIELDS-STANDARD)
       fontFamily: '"Times New Roman", "Liberation Serif", "DejaVu Serif", serif',
       headingFont: '"Times New Roman", serif',
-      fontSize: '11pt',                 // EXAKT 11pt - Kanzlei-Standard
-      lineHeight: '1.45',               // EXAKT 1.45 für optimale Lesbarkeit
+      fontSize: '10.5pt',               // KOMPAKT 10.5pt für 5-6 Seiten
+      lineHeight: '1.35',               // KOMPAKT 1.35 für mehr Inhalt pro Seite
       letterSpacing: '0px',             // Kein Letter-Spacing bei Kanzleien
       textAlign: 'justify',             // BLOCKSATZ - Kanzlei-Pflicht
       hyphens: 'auto',                  // Automatische Silbentrennung
@@ -451,16 +495,16 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
       text: '#2c3e50',              
       lightBg: '#f7f9fc',           
       border: '#e1e8f0',            
-      headerBg: 'linear-gradient(90deg, #1a2332 0%, #2c3e50 100%)',
+      headerBg: 'transparent', // Kanzlei-Standard: Neutral
       fontFamily: '"Georgia", "Times New Roman", serif',
-      headingFont: '"Playfair Display", "Georgia", serif',
-      fontSize: '11pt',
-      lineHeight: '1.8',
+      headingFont: '"Georgia", "Times New Roman", serif',
+      fontSize: '10.5pt',               // KOMPAKT für mehr Inhalt
+      lineHeight: '1.35',               // KOMPAKT für 5-6 Seiten
       letterSpacing: '0.3px',
-      sectionNumberStyle: 'background: linear-gradient(135deg, #c9a961 0%, #b8985a 100%); color: white; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-right: 15px; font-weight: bold; font-size: 14px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);',
+      sectionNumberStyle: 'background: #c9a961; color: white; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-right: 15px; font-weight: bold; font-size: 14px;',
       pageMargins: 'margin: 0; padding: 0;',
-      sectionMargin: 'margin: 25px 0;',
-      paragraphSpacing: 'margin-bottom: 14px;',
+      sectionMargin: 'margin: 8.8mm 0;',      // 25px = 8.8mm
+      paragraphSpacing: 'margin-bottom: 4.9mm;', // 14px = 4.9mm
       headerHeight: '100px',
       useGradients: true,
       useSerif: true,
@@ -475,16 +519,16 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
       text: '#1e293b',              // Dunkles Grau
       lightBg: '#f0f9ff',           // Sehr helles Blau
       border: '#e0f2fe',            // Blau Border
-      headerBg: 'linear-gradient(90deg, #0ea5e9 0%, #06b6d4 100%)',
-      fontFamily: '"Inter", "Segoe UI", "Arial", sans-serif',
-      headingFont: '"Montserrat", "Arial", sans-serif',
+      headerBg: 'transparent', // Kanzlei-Standard: Neutral
+      fontFamily: '"Arial", "Helvetica", sans-serif',
+      headingFont: '"Arial", "Helvetica", sans-serif',
       fontSize: '10.5pt',
-      lineHeight: '1.7',
+      lineHeight: '1.35',               // KOMPAKT für mehr Inhalt
       letterSpacing: '0px',
       sectionNumberStyle: 'background: white; color: #0ea5e9; border: 2px solid #0ea5e9; width: 30px; height: 30px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; margin-right: 12px; font-weight: 600; font-size: 13px;',
       pageMargins: 'margin: 0; padding: 0;',
-      sectionMargin: 'margin: 20px 0;',
-      paragraphSpacing: 'margin-bottom: 12px;',
+      sectionMargin: 'margin: 7.1mm 0;',      // 20px = 7.1mm  
+      paragraphSpacing: 'margin-bottom: 4.2mm;', // 12px = 4.2mm
       headerHeight: '90px',
       useGradients: true,
       useSerif: false,
@@ -502,13 +546,13 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
       headerBg: '#000000',
       fontFamily: '"Helvetica Neue", "Arial", sans-serif',
       headingFont: '"Helvetica Neue", "Arial", sans-serif',
-      fontSize: '10pt',
-      lineHeight: '1.6',
+      fontSize: '10.5pt',               // KOMPAKT aber lesbar
+      lineHeight: '1.35',               // KOMPAKT für 5-6 Seiten
       letterSpacing: '-0.2px',
       sectionNumberStyle: 'color: #000; margin-right: 20px; font-weight: 400; font-size: 14px; min-width: 25px; display: inline-block;',
       pageMargins: 'margin: 0; padding: 0;',
-      sectionMargin: 'margin: 18px 0;',
-      paragraphSpacing: 'margin-bottom: 10px;',
+      sectionMargin: 'margin: 6.4mm 0;',      // 18px = 6.4mm
+      paragraphSpacing: 'margin-bottom: 3.5mm;', // 10px = 3.5mm
       headerHeight: '70px',
       useGradients: false,
       useSerif: false,
@@ -576,7 +620,7 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
               margin: 15px auto 0;
               width: 150px;
               height: 1px;
-              background: linear-gradient(90deg, transparent, ${theme.accent}, transparent);
+              background: ${theme.accent};
             "></div>
           </div>
         `;
@@ -635,7 +679,7 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
           <div style="
             margin: 20px 0;
             padding: 15px 20px;
-            background: linear-gradient(135deg, ${theme.lightBg} 0%, white 100%);
+            background: ${theme.lightBg};
             border-left: 3px solid ${theme.accent};
             border-radius: 0 ${theme.borderRadius} ${theme.borderRadius} 0;
             font-family: ${theme.fontFamily};
@@ -722,10 +766,10 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
               border: 1px solid ${theme.border};
               border-radius: ${theme.borderRadius};
               overflow: hidden;
-              box-shadow: ${theme.boxShadow};
+              /* Kanzlei-Standard: Kein Box-Shadow */
             ">
               <div style="
-                background: linear-gradient(135deg, ${theme.primary} 0%, ${theme.secondary} 100%);
+                background: ${theme.primary};
                 color: white;
                 padding: 15px 20px;
                 position: relative;
@@ -950,8 +994,8 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
             text-align: center;
             margin: 8px 0 25px 0;
             padding: 8px 15px;
-            background: linear-gradient(90deg, transparent, ${theme.lightBg}, transparent);
-            border-radius: 20px;
+            background: ${theme.lightBg};
+            border-radius: 4px;
           ">
             <p style="
               margin: 0;
@@ -1007,7 +1051,7 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
               left: 10%;
               right: 10%;
               height: 1px;
-              background: linear-gradient(90deg, transparent, ${theme.accent}, transparent);
+              background: ${theme.accent};
             "></div>
             <span style="
               background: white;
@@ -1077,7 +1121,7 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
               top: 2px;
               width: 24px;
               height: 24px;
-              background: linear-gradient(135deg, ${theme.accent} 0%, #b8985a 100%);
+              background: ${theme.accent};
               border-radius: 50%;
               display: flex;
               align-items: center;
@@ -1085,7 +1129,7 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
               color: white;
               font-weight: 600;
               font-size: 11pt;
-              box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+              /* Kanzlei-Standard: Kein Box-Shadow */
             ">${number}</div>
             <span style="text-align: justify;">${content}</span>
           </div>
@@ -1225,7 +1269,7 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
             <div style="
               margin-top: 60px;
               padding: 30px;
-              background: linear-gradient(135deg, ${theme.lightBg} 0%, white 100%);
+              background: ${theme.lightBg};
               border: 1px solid ${theme.border};
               border-radius: ${theme.borderRadius};
               page-break-inside: avoid;
@@ -1295,70 +1339,97 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
         inSignatureSection = true;
       }
       
-      // Formatiere die Unterschriftszeilen professionell
+      // 🖋️ PROFESSIONELLE SIGNATUREN MIT DYNAMISCHEN DATEN
       htmlContent += `
         <div style="
           display: grid;
           grid-template-columns: 1fr 1fr;
-          gap: 60px;
-          margin: 40px 0;
+          gap: 50px;
+          margin: 45px 0;
+          page-break-inside: avoid;
         ">
-          <div>
+          <div style="background: white; padding: 20px 0;">
+            <!-- Ort und Datum Linie -->
             <div style="
-              border-bottom: 1px solid ${theme.primary};
-              margin-bottom: 5px;
-              min-height: 40px;
-            "></div>
+              border-bottom: 2px dashed ${theme.secondary};
+              margin-bottom: 8px;
+              min-height: 25mm;
+              position: relative;
+            ">
+              <div style="
+                position: absolute;
+                bottom: 8px;
+                right: 0;
+                font-size: 8pt;
+                color: ${theme.secondary};
+                font-style: italic;
+              ">${companyProfile?.city || 'Ort'}, ${new Date().toLocaleDateString('de-DE')}</div>
+            </div>
             <p style="
-              margin: 0 0 3px 0;
+              margin: 0 0 6px 0;
               font-family: ${theme.fontFamily};
               font-size: 8pt;
               color: ${theme.secondary};
+              font-weight: 500;
             ">Ort, Datum</p>
             
+            <!-- Unterschrift Linie -->
             <div style="
-              border-bottom: 1px solid ${theme.primary};
-              margin: 25px 0 5px 0;
-              min-height: 40px;
+              border-bottom: 2px dashed ${theme.primary};
+              margin: 20px 0 8px 0;
+              min-height: 25mm;
             "></div>
-            <p style="
-              margin: 0;
-              font-family: ${theme.fontFamily};
-              font-size: 9pt;
-              color: ${theme.text};
-            ">${companyProfile?.companyName || 'Verkäufer'}<br/>
-            <span style="font-size: 8pt; color: ${theme.secondary};">
-              ${companyProfile?.ceo || 'Geschäftsführung'}
-            </span></p>
+            <div style="margin: 0; font-family: ${theme.fontFamily};">
+              <p style="margin: 0; font-size: 9pt; color: ${theme.text}; font-weight: 600;">
+                ${companyProfile?.companyName || 'Verkäufer/Vertragspartei A'}
+              </p>
+              <p style="margin: 2px 0 0 0; font-size: 8pt; color: ${theme.secondary};">
+                ${companyProfile?.ceo || 'Geschäftsführung'}<br/>
+                ${companyProfile?.street ? companyProfile.street + ', ' : ''}${companyProfile?.postalCode || ''} ${companyProfile?.city || ''}
+              </p>
+            </div>
           </div>
           
-          <div>
+          <div style="background: white; padding: 20px 0;">
+            <!-- Ort und Datum Linie -->
             <div style="
-              border-bottom: 1px solid ${theme.primary};
-              margin-bottom: 5px;
-              min-height: 40px;
-            "></div>
+              border-bottom: 2px dashed ${theme.secondary};
+              margin-bottom: 8px;
+              min-height: 25mm;
+              position: relative;
+            ">
+              <div style="
+                position: absolute;
+                bottom: 8px;
+                right: 0;
+                font-size: 8pt;
+                color: ${theme.secondary};
+                font-style: italic;
+              ">________________, ${new Date().toLocaleDateString('de-DE')}</div>
+            </div>
             <p style="
-              margin: 0 0 3px 0;
+              margin: 0 0 6px 0;
               font-family: ${theme.fontFamily};
               font-size: 8pt;
               color: ${theme.secondary};
+              font-weight: 500;
             ">Ort, Datum</p>
             
+            <!-- Unterschrift Linie -->
             <div style="
-              border-bottom: 1px solid ${theme.primary};
-              margin: 25px 0 5px 0;
-              min-height: 40px;
+              border-bottom: 2px dashed ${theme.primary};
+              margin: 20px 0 8px 0;
+              min-height: 25mm;
             "></div>
-            <p style="
-              margin: 0;
-              font-family: ${theme.fontFamily};
-              font-size: 9pt;
-              color: ${theme.text};
-            ">Käufer<br/>
-            <span style="font-size: 8pt; color: ${theme.secondary};">
-              Name, Funktion
-            </span></p>
+            <div style="margin: 0; font-family: ${theme.fontFamily};">
+              <p style="margin: 0; font-size: 9pt; color: ${theme.text}; font-weight: 600;">
+                Käufer/Vertragspartei B
+              </p>
+              <p style="margin: 2px 0 0 0; font-size: 8pt; color: ${theme.secondary};">
+                Name, Vorname<br/>
+                Adresse nach Vereinbarung
+              </p>
+            </div>
           </div>
         </div>
       `;
@@ -1537,18 +1608,6 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
     @page {
       size: A4;
       margin: 20mm 15mm 20mm 20mm;
-      
-      @top-center {
-        content: "${companyProfile?.companyName || 'Vertragsdokument'} - ${documentId}";
-        font-size: 8pt;
-        color: #6b7280;
-      }
-      
-      @bottom-center {
-        content: "Seite " counter(page) " von " counter(pages);
-        font-size: 8pt;
-        color: #6b7280;
-      }
     }
     
     body {
@@ -1759,7 +1818,7 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
       border-radius: ${theme.borderRadius};
       margin-bottom: 12.7mm; /* 36pt = 12.7mm */
       page-break-after: avoid;
-      ${theme.boxShadow ? `box-shadow: ${theme.boxShadow};` : ''}
+      /* Kanzlei-Standard: Kein Box-Shadow */
     ">
       <div style="
         display: flex;
@@ -1831,29 +1890,24 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
           </div>
         </div>
         
-        <!-- 🆕 QR-CODE INTEGRATION (RECHTS OBEN) -->
+        <!-- 🔍 DEZENTER QR-CODE (RECHTS UNTEN) -->
         ${enterpriseQRCode ? `
           <div style="
             position: absolute;
-            top: 8.47mm;
+            bottom: 8.47mm;
             right: 8.47mm;
-            width: 20mm;
-            height: 20mm;
+            width: 12mm;
+            height: 12mm;
             z-index: 10;
+            opacity: 0.7;
           ">
             <img src="${enterpriseQRCode}" style="
-              width: 20mm;
-              height: 20mm;
+              width: 12mm;
+              height: 12mm;
               object-fit: contain;
-              border: 1px solid ${theme.border};
-              background: white;
+              filter: grayscale(100%);
+              opacity: 0.8;
             " alt="QR-Code zur Dokumentenverifizierung"/>
-            <div style="
-              font-size: 6pt;
-              text-align: center;
-              margin-top: 1mm;
-              color: ${theme.secondary};
-            ">DOK-VERIFIKATION</div>
           </div>
         ` : ''}
         
@@ -1931,7 +1985,7 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
           </div>
         ` : `
           <h1 style="font-size: 18pt; font-weight: bold; letter-spacing: 1px;">Vertragsdokument</h1>
-          <p style="font-size: 10pt; opacity: 0.9; margin-top: 5px;">Professionell erstellt mit Contract AI</p>
+          <p style="font-size: 10pt; opacity: 0.9; margin-top: 5px;">Professionell erstelltes Dokument</p>
         `}
       </div>
       
@@ -1950,11 +2004,11 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
             background: rgba(255, 255, 255, 0.95);
             padding: 10px;
             border-radius: ${theme.borderRadius};
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            /* Kanzlei-Standard: Kein Box-Shadow */
           ">
             <img src="${logoBase64}" alt="Logo" style="
-              max-width: 120px;
-              max-height: 50px;
+              max-width: 42mm;
+              max-height: 18mm;
               object-fit: contain;
             " />
           </div>
@@ -1973,7 +2027,7 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 10px;
-      box-shadow: ${theme.boxShadow};
+      /* Kanzlei-Standard: Kein Box-Shadow */
     ">
       <div><strong style="color: ${theme.primary};">Dokument-ID:</strong> ${documentId}</div>
       <div><strong style="color: ${theme.primary};">Erstellt am:</strong> ${new Date().toLocaleDateString('de-DE', { 
@@ -2047,21 +2101,11 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
       ">
         <div style="font-size: 8pt; color: ${theme.secondary};">
           <strong style="color: ${theme.primary}; font-size: 9pt;">${contractType?.toUpperCase() || 'VERTRAGSDOKUMENT'}</strong><br/>
-          Erstellt mit Contract AI<br/>
-          Enterprise Edition v5.0<br/>
-          ${companyProfile?.companyName ? `© ${new Date().getFullYear()} ${companyProfile.companyName}` : ''}
+          ${companyProfile?.companyName ? `© ${new Date().getFullYear()} ${companyProfile.companyName}` : 'Rechtsdokument'}
         </div>
         
         <div style="text-align: center;">
-          <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(JSON.stringify({
-            id: documentId,
-            hash: documentHash,
-            type: contractType,
-            date: new Date().toISOString(),
-            company: companyProfile?.companyName || 'N/A'
-          }))}" 
-               alt="Verifizierungs-QR" 
-               style="width: 100px; height: 100px; border: 1px solid ${theme.border}; padding: 5px; background: white;" />
+          ${enterpriseQRCode ? `<img src="${enterpriseQRCode}" alt="Verifizierungs-QR" style="width: 25mm; height: 25mm; border: 1px solid ${theme.border}; padding: 2mm; background: white;" />` : ''}
           <div style="font-size: 7pt; color: ${theme.secondary}; margin-top: 5px;">
             <strong>Digitale Verifizierung</strong><br/>
             ${documentHash}
@@ -3318,7 +3362,7 @@ router.post("/pdf", verifyToken, async (req, res) => {
       console.log("🏛️ Generiere WELTKLASSE-KANZLEI PDF...");
       
       // Enterprise-Dokument-Metadaten vorbereiten
-      const documentId = contract.metadata?.documentId || `${contract.contractType?.toUpperCase()}-${Date.now()}`;
+      const documentId = contract.metadata?.documentId || `${contract.contractType?.toUpperCase()}-${new Date().getTime()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
       const contractType = contract.contractType || 'VERTRAG';
       
       // 🆕 ENTERPRISE PDF-OPTIONEN MIT WELTKLASSE-METADATEN
@@ -3327,23 +3371,8 @@ router.post("/pdf", verifyToken, async (req, res) => {
         printBackground: true,
         displayHeaderFooter: true,
         
-        // 🔥 WELTKLASSE HEADER - DEZENT & PROFESSIONELL
-        headerTemplate: `
-          <div style="
-            font-size: 9pt; 
-            font-family: 'Times New Roman', serif;
-            width: 100%; 
-            text-align: center; 
-            color: #666;
-            padding: 0 25.4mm;
-            border-bottom: 1px solid #eee;
-            background: #fafafa;
-          ">
-            <div style="padding: 4mm 0;">
-              <strong>${companyProfile?.companyName || 'Contract AI Enterprise'}</strong> | ${contract.name || 'Vertragsdokument'}
-            </div>
-          </div>
-        `,
+        // 🔥 MINIMALER HEADER - KANZLEI-STANDARD
+        headerTemplate: '<div style="font-size:8pt;text-align:center;color:#666;"></div>',
         
         // 🔥 FRESHFIELDS-STYLE FOOTER MIT PIPE-FORMAT
         footerTemplate: `
@@ -3361,7 +3390,7 @@ router.post("/pdf", verifyToken, async (req, res) => {
             height: 15mm;
           ">
             <span style="flex: 1; text-align: left;">
-              <strong>DOK-ID:</strong> ${documentId.substring(0, 16)}...
+              ${documentId && documentId !== 'undefined' ? '<strong>DOK-ID:</strong> ' + documentId.substring(0, 16) + '...' : ''}
             </span>
             <span style="flex: 1; text-align: center; font-weight: bold;">
               Seite <span class="pageNumber"></span> | <span class="totalPages"></span>
@@ -3395,10 +3424,10 @@ router.post("/pdf", verifyToken, async (req, res) => {
         metadata: {
           // BASIS-METADATEN
           title: `${contractType.toUpperCase()} - ${companyProfile?.companyName || 'Unbekannt'}`,
-          author: `${companyProfile?.companyName || 'Contract AI Enterprise'}`,
+          author: `${companyProfile?.companyName || 'Professioneller Dokumentenservice'}`,
           subject: `Rechtsdokument ID: ${documentId} | ${contractType}`,
-          keywords: `${contractType}, Vertrag, Rechtsgeschäft, ${companyProfile?.companyName || 'Contract AI'}, ${new Date().getFullYear()}`,
-          creator: 'Contract AI Enterprise v6.0 - Professional Legal Document Generator',
+          keywords: `${contractType}, Vertrag, Rechtsgeschäft, ${companyProfile?.companyName || 'Professional Document'}, ${new Date().getFullYear()}`,
+          creator: 'Professional Legal Document Generator v6.0',
           producer: 'Puppeteer-Core/Chrome Headless - Enterprise PDF Engine',
           
           // ZEITSTEMPEL
