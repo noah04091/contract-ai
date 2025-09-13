@@ -372,6 +372,12 @@ const generateCompanyInitials = (companyName) => {
   }
 };
 
+// 🆕 TITLE-CASE FUNCTION FÜR NAMEN
+const toTitleCase = (str) => {
+  if (!str) return str;
+  return str.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
+};
+
 // 🆕 SVG-LOGO AUS INITIALEN GENERIEREN
 const generateInitialsLogo = (initials, color = '#1a1a1a') => {
   const svgLogo = `
@@ -425,8 +431,8 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
     console.log("📊 CompanyProfile:", companyProfile);
   }
 
-  // Generiere Dokument-ID und Hash
-  const documentId = `${contractType.toUpperCase()}-${new Date().getTime()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+  // Generiere Dokument-ID und Hash  
+  const documentId = companyProfile?.metadata?.documentId || companyProfile?._id?.toString().slice(0,8) || `${contractType.toUpperCase()}-${Date.now().toString().slice(-8)}`;
   const documentHash = generateDocumentHash(contractText);
   
   // 🆕 ENTERPRISE QR-CODE GENERATION - WELTKLASSE-NIVEAU
@@ -596,30 +602,28 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
       if (designVariant === 'executive') {
         htmlContent += `
           <div style="
-            margin: 40px 0 35px 0;
+            margin: 8mm 0 12mm 0;
             text-align: center;
-            position: relative;
+            page-break-inside: avoid;
             page-break-after: avoid;
+            clear: both;
           ">
-            <div style="
-              position: absolute;
-              top: -20px;
-              left: 50%;
-              transform: translateX(-50%);
-              width: 80px;
-              height: 2px;
-              background: ${theme.accent};
-            "></div>
             <h1 style="
               font-family: ${theme.headingFont};
-              font-size: 24pt;
+              font-size: 22pt;
               font-weight: 700;
               color: ${theme.primary};
-              letter-spacing: 4px;
+              letter-spacing: 2px;
               text-transform: uppercase;
               margin: 0;
-              padding: 20px 0;
+              padding: 0;
             ">${trimmedLine}</h1>
+            <div style="
+              font-size: 9pt;
+              color: ${theme.secondary};
+              margin-top: 6mm;
+              font-style: italic;
+            ">Erstellt am ${new Date().toLocaleDateString('de-DE')}</div>
             <div style="
               margin: 15px auto 0;
               width: 150px;
@@ -900,7 +904,7 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
             font-style: italic;
             font-weight: 500;
             letter-spacing: 1px;
-          ">${trimmedLine}</p>
+          ">${trimmedLine.replace(/\b[a-z]+\s+[a-z]+\b/g, match => match.length > 3 && match.includes(' ') ? toTitleCase(match) : match)}</p>
         `;
       } else if (designVariant === 'modern') {
         htmlContent += `
@@ -913,7 +917,7 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
             font-weight: 500;
             text-transform: lowercase;
             letter-spacing: 2px;
-          ">${trimmedLine}</p>
+          ">${trimmedLine.replace(/\b[a-z]+\s+[a-z]+\b/g, match => match.length > 3 && match.includes(' ') ? toTitleCase(match) : match)}</p>
         `;
       } else { // minimal
         htmlContent += `
@@ -924,7 +928,7 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
             font-size: 10pt;
             color: ${theme.text};
             font-style: italic;
-          ">${trimmedLine}</p>
+          ">${trimmedLine.replace(/\b[a-z]+\s+[a-z]+\b/g, match => match.length > 3 && match.includes(' ') ? toTitleCase(match) : match)}</p>
         `;
       }
     }
@@ -974,7 +978,7 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
             font-size: 9pt;
             color: ${theme.secondary};
             font-style: italic;
-          ">${trimmedLine}</p>
+          ">${trimmedLine.replace(/\b[a-z]+\s+[a-z]+\b/g, match => match.length > 3 && match.includes(' ') ? toTitleCase(match) : match)}</p>
         `;
       }
     }
@@ -1036,7 +1040,7 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
             font-size: 10pt;
             color: ${theme.text};
             font-style: italic;
-          ">${trimmedLine}</p>
+          ">${trimmedLine.replace(/\b[a-z]+\s+[a-z]+\b/g, match => match.length > 3 && match.includes(' ') ? toTitleCase(match) : match)}</p>
         `;
       }
     }
@@ -1283,94 +1287,46 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
       
       // 🖋️ PROFESSIONELLE SIGNATUREN MIT DYNAMISCHEN DATEN
       htmlContent += `
-        <div style="
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 50px;
-          margin: 45px 0;
-          page-break-inside: auto;
+        <div class="signature" style="
+          display: flex;
+          justify-content: space-between;
+          gap: 12mm;
+          margin-top: 18mm;
+          page-break-inside: avoid;
         ">
-          <div style="background: white; padding: 20px 0;">
-            <!-- Ort und Datum Linie -->
+          <div style="width: 48%;">
             <div style="
-              border-bottom: 2px dashed ${theme.secondary};
-              margin-bottom: 8px;
-              min-height: 25mm;
-              position: relative;
-            ">
-              <div style="
-                position: absolute;
-                bottom: 8px;
-                right: 0;
-                font-size: 8pt;
-                color: ${theme.secondary};
-                font-style: italic;
-              ">${companyProfile?.city || 'Ort'}, ${new Date().toLocaleDateString('de-DE')}</div>
-            </div>
-            <p style="
-              margin: 0 0 6px 0;
-              font-family: ${theme.fontFamily};
-              font-size: 8pt;
-              color: ${theme.secondary};
-              font-weight: 500;
-            ">Ort, Datum</p>
-            
-            <!-- Unterschrift Linie -->
-            <div style="
-              border-bottom: 2px dashed ${theme.primary};
-              margin: 20px 0 8px 0;
-              min-height: 25mm;
+              border-bottom: 1px dashed #666;
+              height: 0;
+              margin-bottom: 6mm;
+              min-height: 15mm;
             "></div>
-            <div style="margin: 0; font-family: ${theme.fontFamily};">
-              <p style="margin: 0; font-size: 9pt; color: ${theme.text}; font-weight: 600;">
-                ${companyProfile?.companyName || 'Verkäufer/Vertragspartei A'}
-              </p>
-              <p style="margin: 2px 0 0 0; font-size: 8pt; color: ${theme.secondary};">
-                ${companyProfile?.ceo || 'Geschäftsführung'}<br/>
-                ${companyProfile?.street ? companyProfile.street + ', ' : ''}${companyProfile?.postalCode || ''} ${companyProfile?.city || ''}
-              </p>
+            <div style="
+              font-size: 9pt;
+              color: #555;
+              line-height: 1.4;
+            ">
+              Ort, Datum<br/>
+              ${companyProfile?.companyName ? toTitleCase(companyProfile.companyName) : 'Verkäufer'} – ${companyProfile?.ceo ? toTitleCase(companyProfile.ceo) : 'Geschäftsführung'}<br/>
+              ${companyProfile?.name || companyProfile?.companyName || 'Firma'}
             </div>
           </div>
           
-          <div style="background: white; padding: 20px 0;">
-            <!-- Ort und Datum Linie -->
+          <div style="width: 48%;">
             <div style="
-              border-bottom: 2px dashed ${theme.secondary};
-              margin-bottom: 8px;
-              min-height: 25mm;
-              position: relative;
-            ">
-              <div style="
-                position: absolute;
-                bottom: 8px;
-                right: 0;
-                font-size: 8pt;
-                color: ${theme.secondary};
-                font-style: italic;
-              ">________________, ${new Date().toLocaleDateString('de-DE')}</div>
-            </div>
-            <p style="
-              margin: 0 0 6px 0;
-              font-family: ${theme.fontFamily};
-              font-size: 8pt;
-              color: ${theme.secondary};
-              font-weight: 500;
-            ">Ort, Datum</p>
-            
-            <!-- Unterschrift Linie -->
-            <div style="
-              border-bottom: 2px dashed ${theme.primary};
-              margin: 20px 0 8px 0;
-              min-height: 25mm;
+              border-bottom: 1px dashed #666;
+              height: 0;
+              margin-bottom: 6mm;
+              min-height: 15mm;
             "></div>
-            <div style="margin: 0; font-family: ${theme.fontFamily};">
-              <p style="margin: 0; font-size: 9pt; color: ${theme.text}; font-weight: 600;">
-                Käufer/Vertragspartei B
-              </p>
-              <p style="margin: 2px 0 0 0; font-size: 8pt; color: ${theme.secondary};">
-                Name, Vorname<br/>
-                Adresse nach Vereinbarung
-              </p>
+            <div style="
+              font-size: 9pt;
+              color: #555;
+              line-height: 1.4;
+            ">
+              Ort, Datum<br/>
+              Käufer – Privatperson<br/>
+              Name, Vorname
             </div>
           </div>
         </div>
@@ -1393,7 +1349,7 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
             letter-spacing: ${theme.letterSpacing};
             hyphens: auto;
             word-spacing: 0.05em;
-          ">${trimmedLine}</p>
+          ">${trimmedLine.replace(/\b[a-z]+\s+[a-z]+\b/g, match => match.length > 3 && match.includes(' ') ? toTitleCase(match) : match)}</p>
         `;
       } else if (designVariant === 'modern') {
         htmlContent += `
@@ -1404,7 +1360,7 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
             line-height: ${theme.lineHeight};
             color: ${theme.text};
             text-align: left;
-          ">${trimmedLine}</p>
+          ">${trimmedLine.replace(/\b[a-z]+\s+[a-z]+\b/g, match => match.length > 3 && match.includes(' ') ? toTitleCase(match) : match)}</p>
         `;
       } else { // minimal
         htmlContent += `
@@ -1414,7 +1370,7 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
             font-size: ${theme.fontSize};
             line-height: ${theme.lineHeight};
             color: ${theme.text};
-          ">${trimmedLine}</p>
+          ">${trimmedLine.replace(/\b[a-z]+\s+[a-z]+\b/g, match => match.length > 3 && match.includes(' ') ? toTitleCase(match) : match)}</p>
         `;
       }
     }
@@ -1827,35 +1783,26 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
           </div>
           
           <div style="color: ${theme.secondary}; line-height: 1.5; font-size: 10pt;">
-            ${companyProfile?.address || 'Musterstraße 123<br/>12345 Musterstadt'}<br/>
-            ${companyProfile?.phone ? `Telefon: ${companyProfile.phone}<br/>` : 'Telefon: +49 (0) 123 456789<br/>'}
-            ${companyProfile?.email ? `E-Mail: ${companyProfile.email}<br/>` : 'E-Mail: info@beispiel.de<br/>'}
-            ${companyProfile?.website ? `Web: ${companyProfile.website}<br/>` : ''}
-            ${companyProfile?.registerNumber ? `Handelsregister: ${companyProfile.registerNumber}<br/>` : ''}
-            ${companyProfile?.taxNumber ? `Steuernummer: ${companyProfile.taxNumber}` : ''}
+            ${companyProfile?.name || companyProfile?.companyName || 'Firmenname'} ${companyProfile?.legalForm ? companyProfile.legalForm : ''}<br/>
+            ${companyProfile?.street || companyProfile?.address || 'Musterstraße 123'}<br/>
+            ${companyProfile?.postalCode || '12345'} ${companyProfile?.city || 'Musterstadt'}<br/>
+            ${companyProfile?.phone ? `Telefon: ${companyProfile.phone}<br/>` : ''}
+            ${companyProfile?.email ? `E-Mail: ${companyProfile.email}<br/>` : ''}
+            ${companyProfile?.vatId ? `USt-ID: ${companyProfile.vatId}<br/>` : ''}
+            ${companyProfile?.hrb || companyProfile?.registerNumber ? `HRB: ${companyProfile.hrb || companyProfile.registerNumber}` : ''}
           </div>
         </div>
         
-        <!-- 🔍 DEZENTER QR-CODE (RECHTS UNTEN) -->
-        ${enterpriseQRCode ? `
-          <div style="
-            position: absolute;
-            bottom: 8.47mm;
-            right: 8.47mm;
-            width: 12mm;
-            height: 12mm;
-            z-index: 10;
-            opacity: 0.7;
-          ">
-            <img src="${enterpriseQRCode}" style="
-              width: 12mm;
-              height: 12mm;
-              object-fit: contain;
-              filter: grayscale(100%);
-              opacity: 0.8;
-            " alt="QR-Code zur Dokumentenverifizierung"/>
-          </div>
-        ` : ''}
+        
+      </div>
+      
+      <!-- ZARTE TRENNLINIE -->
+      <div style="
+        width: 100%;
+        height: 1px;
+        background: #e0e0e0;
+        margin: 8mm 0 12mm 0;
+      ">
         
       </div>
       
@@ -3325,7 +3272,7 @@ router.post("/pdf", verifyToken, async (req, res) => {
             height: 15mm;
           ">
             <span style="flex: 1; text-align: left;">
-              ${documentId && typeof documentId !== 'undefined' && documentId !== 'undefined' ? '<strong>DOK-ID:</strong> ' + documentId.substring(0, 16) + '...' : '<strong>DOK-ID:</strong> ' + `${contractType || 'DOK'}-${Date.now()}`.substring(0, 16) + '...'}
+              ${documentId ? `<strong>DOK-ID:</strong> ${documentId}` : ''}
             </span>
             <span style="flex: 1; text-align: center; font-weight: bold;">
               Seite <span class="pageNumber"></span> | <span class="totalPages"></span>
