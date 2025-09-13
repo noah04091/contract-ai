@@ -437,7 +437,14 @@ router.post("/", verifyToken, async (req, res) => {
       newPrice,
       autoRenewMonths,
       contractNumber,
-      customerNumber
+      customerNumber,
+      // 🔍 NEU: Metadaten für Company Profile Support
+      contractType,
+      hasCompanyProfile,
+      designVariant,
+      metadata,
+      contractHTML,
+      formData
     } = req.body;
 
     console.log("📁 Speichere Vertrag:", { name, isGenerated });
@@ -473,6 +480,13 @@ router.post("/", verifyToken, async (req, res) => {
       autoRenewMonths: autoRenewMonths || 12,
       contractNumber: extractedDetails.contractNumber || contractNumber || null,
       customerNumber: extractedDetails.customerNumber || customerNumber || null,
+      // 🔍 NEU: Metadaten für Company Profile Support
+      contractType: contractType || null,
+      hasCompanyProfile: hasCompanyProfile || false,
+      designVariant: designVariant || 'executive',
+      metadata: metadata || null,
+      contractHTML: contractHTML || null,
+      formData: formData || null,
       createdAt: new Date(),
       updatedAt: new Date(),
       legalPulse: {

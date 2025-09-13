@@ -3139,7 +3139,7 @@ router.post("/pdf", verifyToken, async (req, res) => {
     const shouldLoadCompanyProfile = contract.hasCompanyProfile || 
                                    contract.metadata?.hasLogo || 
                                    contract.metadata?.hasCompanyProfile ||
-                                   (user.subscriptionPlan === 'premium');
+                                   true; // Temporary: Always try to load for now
     
     if (shouldLoadCompanyProfile) {
       try {
