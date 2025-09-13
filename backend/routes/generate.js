@@ -396,6 +396,22 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
   console.log('🏢 Company Profile vorhanden:', !!companyProfile);
   console.log('📝 Entwurf-Modus:', isDraft);
   
+  // 🔍 DEBUG: Company Profile Details
+  if (companyProfile) {
+    console.log('🔍 DEBUG Company Profile Details:', {
+      companyName: companyProfile.companyName,
+      street: companyProfile.street,
+      city: companyProfile.city,
+      contactPhone: companyProfile.contactPhone,
+      contactEmail: companyProfile.contactEmail,
+      hasLogoUrl: !!companyProfile.logoUrl,
+      hasLogoKey: !!companyProfile.logoKey,
+      logoUrlType: companyProfile.logoUrl ? (companyProfile.logoUrl.startsWith('data:') ? 'base64' : 'url') : 'none'
+    });
+  } else {
+    console.log('❌ DEBUG: Company Profile ist NULL oder UNDEFINED!');
+  }
+  
   // 🎨 ERWEITERTES LOGO-LOADING MIT INITIALEN-FALLBACK
   let logoBase64 = null;
   let useInitialsFallback = false;
@@ -426,6 +442,14 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
     console.log("❌ Kein Firmenname für Initialen-Fallback verfügbar");
     console.log("📊 CompanyProfile:", companyProfile);
   }
+  
+  // 🔍 DEBUG: Finales Logo-Status
+  console.log('🔍 DEBUG Finales Logo-Status:', {
+    logoBase64Available: !!logoBase64,
+    logoBase64Length: logoBase64 ? logoBase64.length : 0,
+    useInitialsFallback: useInitialsFallback,
+    companyNameForInitials: companyProfile?.companyName || 'NICHT VERFÜGBAR'
+  });
 
   // Generiere Dokument-ID und Hash
   const documentId = `${contractType.toUpperCase()}-${new Date().getTime()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
@@ -1827,10 +1851,26 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
             margin-bottom: 3.17mm; /* 9pt = 3.17mm */
             color: ${theme.primary};
           ">
-            ${companyProfile?.companyName || 'Ihr Unternehmen'}
+            ${(() => {
+              const name = companyProfile?.companyName || 'Ihr Unternehmen';
+              console.log('🔍 DEBUG HTML-Template - Company Name:', name);
+              return name;
+            })()}
           </div>
           
           <div style="color: ${theme.secondary}; line-height: 1.5; font-size: 10pt;">
+            ${(() => {
+              console.log('🔍 DEBUG HTML-Template - Company Data:', {
+                street: companyProfile?.street,
+                postalCode: companyProfile?.postalCode, 
+                city: companyProfile?.city,
+                contactPhone: companyProfile?.contactPhone,
+                contactEmail: companyProfile?.contactEmail,
+                vatId: companyProfile?.vatId,
+                tradeRegister: companyProfile?.tradeRegister
+              });
+              return '';
+            })()}
             ${companyProfile?.street || 'Musterstraße 123'}<br/>
             ${companyProfile?.postalCode || '12345'} ${companyProfile?.city || 'Musterstadt'}<br/>
             ${companyProfile?.contactPhone ? `Telefon: ${companyProfile.contactPhone}<br/>` : 'Telefon: +49 (0) 123 456789<br/>'}
