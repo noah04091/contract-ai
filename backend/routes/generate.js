@@ -1281,97 +1281,99 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
         inSignatureSection = true;
       }
       
-      // 🖋️ PROFESSIONELLE SIGNATUREN MIT DYNAMISCHEN DATEN
+      // 🖋️ PROFESSIONELLER UNTERSCHRIFTENBEREICH - KLASSISCH JURISTISCH  
       htmlContent += `
+        <!-- PROFESSIONELLER UNTERSCHRIFTENBEREICH - KLASSISCH JURISTISCH -->
         <div style="
+          margin: 40mm 0 20mm 0;
+          padding: 0;
           display: grid;
           grid-template-columns: 1fr 1fr;
-          gap: 50px;
-          margin: 45px 0;
-          page-break-inside: auto;
+          gap: 40mm;
+          page-break-inside: avoid;
         ">
-          <div style="background: white; padding: 20px 0;">
-            <!-- Ort und Datum Linie -->
+          <!-- LINKE SPALTE: VERKÄUFER/ANBIETER -->
+          <div style="text-align: center;">
+            <!-- Ort, Datum Eingabelinie -->
             <div style="
-              border-bottom: 2px dashed ${theme.secondary};
-              margin-bottom: 8px;
-              min-height: 25mm;
-              position: relative;
-            ">
-              <div style="
-                position: absolute;
-                bottom: 8px;
-                right: 0;
-                font-size: 8pt;
-                color: ${theme.secondary};
-                font-style: italic;
-              ">${companyProfile?.city || 'Ort'}, ${new Date().toLocaleDateString('de-DE')}</div>
-            </div>
+              border-bottom: 1px solid ${theme.text};
+              margin-bottom: 8mm;
+              min-height: 8mm;
+            "></div>
             <p style="
-              margin: 0 0 6px 0;
+              margin: 0 0 15mm 0;
               font-family: ${theme.fontFamily};
-              font-size: 8pt;
+              font-size: 9pt;
               color: ${theme.secondary};
-              font-weight: 500;
             ">Ort, Datum</p>
             
-            <!-- Unterschrift Linie -->
+            <!-- Unterschriftslinie -->
             <div style="
-              border-bottom: 2px dashed ${theme.primary};
-              margin: 20px 0 8px 0;
-              min-height: 25mm;
+              border-bottom: 1px solid ${theme.text};
+              margin-bottom: 8mm;
+              min-height: 8mm;
             "></div>
-            <div style="margin: 0; font-family: ${theme.fontFamily};">
-              <p style="margin: 0; font-size: 9pt; color: ${theme.text}; font-weight: 600;">
-                ${companyProfile?.companyName || 'Verkäufer/Vertragspartei A'}
-              </p>
-              <p style="margin: 2px 0 0 0; font-size: 8pt; color: ${theme.secondary};">
-                ${companyProfile?.ceo || 'Geschäftsführung'}<br/>
-                ${companyProfile?.street ? companyProfile.street + ', ' : ''}${companyProfile?.postalCode || ''} ${companyProfile?.city || ''}
-              </p>
-            </div>
+            <p style="
+              margin: 0 0 15mm 0;
+              font-family: ${theme.fontFamily};
+              font-size: 9pt;
+              color: ${theme.secondary};
+            ">Unterschrift Verkäufer/in</p>
+            
+            <!-- Name in Druckbuchstaben Linie -->
+            <div style="
+              border-bottom: 1px solid ${theme.text};
+              margin-bottom: 8mm;
+              min-height: 8mm;
+            "></div>
+            <p style="
+              margin: 0;
+              font-family: ${theme.fontFamily};
+              font-size: 9pt;
+              color: ${theme.secondary};
+            ">Name Verkäufer/in (Druckbuchstaben)</p>
           </div>
           
-          <div style="background: white; padding: 20px 0;">
-            <!-- Ort und Datum Linie -->
+          <!-- RECHTE SPALTE: KÄUFER/VERTRAGSPARTNER -->
+          <div style="text-align: center;">
+            <!-- Ort, Datum Eingabelinie -->
             <div style="
-              border-bottom: 2px dashed ${theme.secondary};
-              margin-bottom: 8px;
-              min-height: 25mm;
-              position: relative;
-            ">
-              <div style="
-                position: absolute;
-                bottom: 8px;
-                right: 0;
-                font-size: 8pt;
-                color: ${theme.secondary};
-                font-style: italic;
-              ">________________, ${new Date().toLocaleDateString('de-DE')}</div>
-            </div>
+              border-bottom: 1px solid ${theme.text};
+              margin-bottom: 8mm;
+              min-height: 8mm;
+            "></div>
             <p style="
-              margin: 0 0 6px 0;
+              margin: 0 0 15mm 0;
               font-family: ${theme.fontFamily};
-              font-size: 8pt;
+              font-size: 9pt;
               color: ${theme.secondary};
-              font-weight: 500;
             ">Ort, Datum</p>
             
-            <!-- Unterschrift Linie -->
+            <!-- Unterschriftslinie -->
             <div style="
-              border-bottom: 2px dashed ${theme.primary};
-              margin: 20px 0 8px 0;
-              min-height: 25mm;
+              border-bottom: 1px solid ${theme.text};
+              margin-bottom: 8mm;
+              min-height: 8mm;
             "></div>
-            <div style="margin: 0; font-family: ${theme.fontFamily};">
-              <p style="margin: 0; font-size: 9pt; color: ${theme.text}; font-weight: 600;">
-                Käufer/Vertragspartei B
-              </p>
-              <p style="margin: 2px 0 0 0; font-size: 8pt; color: ${theme.secondary};">
-                Name, Vorname<br/>
-                Adresse nach Vereinbarung
-              </p>
-            </div>
+            <p style="
+              margin: 0 0 15mm 0;
+              font-family: ${theme.fontFamily};
+              font-size: 9pt;
+              color: ${theme.secondary};
+            ">Unterschrift Käufer/in</p>
+            
+            <!-- Name in Druckbuchstaben Linie -->
+            <div style="
+              border-bottom: 1px solid ${theme.text};
+              margin-bottom: 8mm;
+              min-height: 8mm;
+            "></div>
+            <p style="
+              margin: 0;
+              font-family: ${theme.fontFamily};
+              font-size: 9pt;
+              color: ${theme.secondary};
+            ">Name Käufer/in (Druckbuchstaben)</p>
           </div>
         </div>
       `;
