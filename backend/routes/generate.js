@@ -419,6 +419,10 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
     const initials = generateCompanyInitials(companyProfile.companyName);
     logoBase64 = generateInitialsLogo(initials, '#1a1a1a');
     console.log("✅ Initialen-Logo generiert:", initials);
+    console.log("📊 LogoBase64 gesetzt:", logoBase64 ? "JA" : "NEIN");
+  } else if (useInitialsFallback) {
+    console.log("❌ Kein Firmenname für Initialen-Fallback verfügbar");
+    console.log("📊 CompanyProfile:", companyProfile);
   }
 
   // Generiere Dokument-ID und Hash
@@ -756,106 +760,44 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
       
       if (designVariant === 'executive') {
         htmlContent += `
-          <div style="
-            margin: ${theme.sectionMargin};
-            page-break-inside: avoid;
-            position: relative;
+          <h2 style="
+            font-family: ${theme.headingFont};
+            font-size: 12pt;
+            font-weight: 600;
+            color: ${theme.primary};
+            margin: 25px 0 15px 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
           ">
-            <div style="
-              background: white;
-              border: 1px solid ${theme.border};
-              border-radius: ${theme.borderRadius};
-              overflow: hidden;
-              /* Kanzlei-Standard: Kein Box-Shadow */
-            ">
-              <div style="
-                background: ${theme.primary};
-                color: white;
-                padding: 15px 20px;
-                position: relative;
-              ">
-                <div style="
-                  position: absolute;
-                  top: 50%;
-                  right: 20px;
-                  transform: translateY(-50%);
-                  font-size: 40pt;
-                  font-weight: 900;
-                  opacity: 0.1;
-                  color: white;
-                ">${sectionCounter}</div>
-                <h2 style="
-                  font-family: ${theme.headingFont};
-                  font-size: 14pt;
-                  font-weight: 600;
-                  margin: 0;
-                  letter-spacing: 1px;
-                  text-transform: uppercase;
-                  position: relative;
-                  z-index: 1;
-                  display: flex;
-                  align-items: center;
-                ">
-                  <span style="${theme.sectionNumberStyle}">${sectionCounter}</span>
-                  ${trimmedLine}
-                </h2>
-              </div>
-              <div style="padding: 20px 25px;">
+            ${sectionCounter}. ${trimmedLine}
+          </h2>
+          <div style="margin-left: 0;">
         `;
       } else if (designVariant === 'modern') {
         htmlContent += `
-          <div style="
-            margin: ${theme.sectionMargin};
-            page-break-inside: avoid;
+          <h2 style="
+            font-family: ${theme.headingFont};
+            font-size: 12pt;
+            font-weight: 600;
+            color: ${theme.primary};
+            margin: 25px 0 15px 0;
           ">
-            <div style="
-              background: white;
-              border: 1px solid ${theme.border};
-              border-radius: ${theme.borderRadius};
-              padding: 0;
-              overflow: hidden;
-            ">
-              <div style="
-                background: ${theme.lightBg};
-                padding: 12px 20px;
-                border-bottom: 2px solid ${theme.primary};
-              ">
-                <h2 style="
-                  font-family: ${theme.headingFont};
-                  font-size: 13pt;
-                  font-weight: 600;
-                  color: ${theme.primary};
-                  margin: 0;
-                  display: flex;
-                  align-items: center;
-                ">
-                  <span style="${theme.sectionNumberStyle}">${sectionCounter}</span>
-                  ${trimmedLine}
-                </h2>
-              </div>
-              <div style="padding: 18px 20px;">
+            ${sectionCounter}. ${trimmedLine}
+          </h2>
+          <div style="margin-left: 0;">
         `;
       } else { // minimal
         htmlContent += `
-          <div style="
-            margin: ${theme.sectionMargin};
-            page-break-inside: avoid;
+          <h2 style="
+            font-family: ${theme.headingFont};
+            font-size: 12pt;
+            font-weight: 600;
+            color: ${theme.primary};
+            margin: 25px 0 15px 0;
           ">
-            <h2 style="
-              font-family: ${theme.headingFont};
-              font-size: 12pt;
-              font-weight: 400;
-              color: ${theme.primary};
-              margin: 0 0 12px 0;
-              padding-bottom: 8px;
-              border-bottom: 1px solid ${theme.border};
-              display: flex;
-              align-items: baseline;
-            ">
-              <span style="${theme.sectionNumberStyle}">${sectionCounter}.</span>
-              ${trimmedLine}
-            </h2>
-            <div style="padding-left: 30px;">
+            ${sectionCounter}. ${trimmedLine}
+          </h2>
+          <div style="margin-left: 0;">
         `;
       }
     }
@@ -1272,7 +1214,7 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
               background: ${theme.lightBg};
               border: 1px solid ${theme.border};
               border-radius: ${theme.borderRadius};
-              page-break-inside: avoid;
+              page-break-inside: auto;
               position: relative;
             ">
               <div style="
@@ -1346,7 +1288,7 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
           grid-template-columns: 1fr 1fr;
           gap: 50px;
           margin: 45px 0;
-          page-break-inside: avoid;
+          page-break-inside: auto;
         ">
           <div style="background: white; padding: 20px 0;">
             <!-- Ort und Datum Linie -->
@@ -1541,7 +1483,7 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
     
     /* 🆕 FRESHFIELDS-LEVEL SEITENUMBRUCH-KONTROLLE */
     .section-container {
-      page-break-inside: ${theme.pageBreakInside} !important;
+      page-break-inside: auto !important;
       break-inside: avoid !important;
       ${theme.sectionMargin}
       orphans: ${theme.orphans} !important;
@@ -1549,9 +1491,9 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
     }
     
     .section-title {
-      page-break-after: avoid !important;
+      page-break-after: auto !important;
       break-after: avoid !important;
-      page-break-inside: avoid !important;
+      page-break-inside: auto !important;
       break-inside: avoid !important;
       font-family: ${theme.headingFont} !important;
       font-weight: bold !important;
@@ -1574,13 +1516,13 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
     }
     
     .party-block, .table-container {
-      page-break-inside: avoid !important;
+      page-break-inside: auto !important;
       break-inside: avoid !important;
       margin-bottom: 4.23mm; /* 12pt = 4.23mm */
     }
     
     .paragraph-block {
-      page-break-inside: avoid !important;
+      page-break-inside: auto !important;
       break-inside: avoid !important;
       min-height: 8.47mm; /* 24pt = 8.47mm - Mindesthöhe */
     }
@@ -1759,17 +1701,17 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
       /* Verhindere Seitenumbruch in wichtigen Bereichen */
       h1, h2, h3, h4 {
         page-break-after: avoid;
-        page-break-inside: avoid;
+        page-break-inside: auto;
       }
       
       p {
         orphans: 3;
         widows: 3;
-        page-break-inside: avoid;
+        page-break-inside: auto;
       }
       
       .section-container {
-        page-break-inside: avoid;
+        page-break-inside: auto;
       }
       
       .signature-section {
@@ -1778,7 +1720,7 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
       
       /* Halte Paragraphen zusammen */
       div[style*="page-break-inside: avoid"] {
-        page-break-inside: avoid !important;
+        page-break-inside: auto !important;
       }
     }
     
@@ -1850,14 +1792,18 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
             <div style="
               font: bold 14pt ${theme.headingFont};
               color: ${theme.primary};
-              border: 1pt solid ${theme.primary};
-              padding: 4.23mm 8.47mm; /* 12pt/24pt */
+              border: 2pt solid ${theme.primary};
+              padding: 8mm 12mm;
               text-align: center;
               background: ${theme.lightBg};
               border-radius: ${theme.borderRadius};
               max-width: 55mm;
               word-wrap: break-word;
-            ">${companyProfile?.companyName || 'UNTERNEHMEN'}</div>
+              min-height: 20mm;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            ">${companyProfile?.companyName ? generateCompanyInitials(companyProfile.companyName) : 'LOGO'}</div>
           `}
         </div>
         
@@ -1880,13 +1826,13 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
             ${companyProfile?.companyName || 'Ihr Unternehmen'}
           </div>
           
-          <div style="color: ${theme.secondary}; line-height: 1.4;">
-            ${companyProfile?.address || 'Firmenadresse'}<br/>
-            ${companyProfile?.phone ? `Tel.: ${companyProfile.phone}<br/>` : ''}
-            ${companyProfile?.email ? `E-Mail: ${companyProfile.email}<br/>` : ''}
-            ${companyProfile?.website ? `Internet: ${companyProfile.website}<br/>` : ''}
-            ${companyProfile?.registerNumber ? `HRB: ${companyProfile.registerNumber}<br/>` : ''}
-            ${companyProfile?.taxNumber ? `St.-Nr.: ${companyProfile.taxNumber}` : ''}
+          <div style="color: ${theme.secondary}; line-height: 1.5; font-size: 10pt;">
+            ${companyProfile?.address || 'Musterstraße 123<br/>12345 Musterstadt'}<br/>
+            ${companyProfile?.phone ? `Telefon: ${companyProfile.phone}<br/>` : 'Telefon: +49 (0) 123 456789<br/>'}
+            ${companyProfile?.email ? `E-Mail: ${companyProfile.email}<br/>` : 'E-Mail: info@beispiel.de<br/>'}
+            ${companyProfile?.website ? `Web: ${companyProfile.website}<br/>` : ''}
+            ${companyProfile?.registerNumber ? `Handelsregister: ${companyProfile.registerNumber}<br/>` : ''}
+            ${companyProfile?.taxNumber ? `Steuernummer: ${companyProfile.taxNumber}` : ''}
           </div>
         </div>
         
@@ -1940,6 +1886,7 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
     </header>
     
     <!-- HAUPTINHALT-BEREICH -->
+    <div style="
       position: relative;
       overflow: hidden;
     ">
@@ -2043,19 +1990,7 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
       <div><strong style="color: ${theme.primary};">Status:</strong> ${isDraft ? 'ENTWURF' : 'FINAL'}</div>
     </div>
     
-    <!-- Inhaltsverzeichnis (wenn mehr als 5 Paragraphen) -->
-    ${tableOfContents.length > 5 ? `
-      <div class="table-of-contents">
-        <h2 class="toc-title">INHALTSVERZEICHNIS</h2>
-        ${tableOfContents.map(section => `
-          <div class="toc-entry">
-            <span>${section.title}</span>
-            <span class="toc-dots"></span>
-            <span class="toc-page">Seite ${section.page}</span>
-          </div>
-        `).join('')}
-      </div>
-    ` : ''}
+    <!-- Inhaltsverzeichnis deaktiviert bis Seitenzahlen korrekt -->
     
     <!-- Vertragskörper -->
     <main style="margin-top: 30px;">
@@ -3390,7 +3325,7 @@ router.post("/pdf", verifyToken, async (req, res) => {
             height: 15mm;
           ">
             <span style="flex: 1; text-align: left;">
-              ${documentId && documentId !== 'undefined' ? '<strong>DOK-ID:</strong> ' + documentId.substring(0, 16) + '...' : ''}
+              ${documentId && typeof documentId !== 'undefined' && documentId !== 'undefined' ? '<strong>DOK-ID:</strong> ' + documentId.substring(0, 16) + '...' : '<strong>DOK-ID:</strong> ' + `${contractType || 'DOK'}-${Date.now()}`.substring(0, 16) + '...'}
             </span>
             <span style="flex: 1; text-align: center; font-weight: bold;">
               Seite <span class="pageNumber"></span> | <span class="totalPages"></span>
