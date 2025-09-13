@@ -163,15 +163,15 @@ const generateFreshS3Url = (logoKey) => {
 const loadLogoWithFallbacks = async (companyProfile) => {
   console.log("🎨 Logo-Loading mit Fallbacks gestartet");
   
-  if (!companyProfile?.logoUrl) {
-    console.log("ℹ️ Kein Logo-URL im Company Profile vorhanden");
+  if (!companyProfile?.logoUrl && !companyProfile?.logoKey) {
+    console.log("ℹ️ Kein Logo-URL oder LogoKey im Company Profile vorhanden");
     return null;
   }
   
   const strategies = [];
   
   // Strategie 1: Direkte URL verwenden wenn bereits Base64
-  if (companyProfile.logoUrl.startsWith('data:')) {
+  if (companyProfile.logoUrl && companyProfile.logoUrl.startsWith('data:')) {
     console.log("📊 Strategie 1: Logo ist bereits Base64");
     return companyProfile.logoUrl;
   }
@@ -185,12 +185,14 @@ const loadLogoWithFallbacks = async (companyProfile) => {
   }
   
   // Strategie 3: Original URL verwenden
-  strategies.push({ name: 'Original URL', url: companyProfile.logoUrl });
-  
-  // Strategie 4: Alternative URL-Formate probieren
-  if (companyProfile.logoUrl.includes('amazonaws.com')) {
-    const alternativeUrl = companyProfile.logoUrl.replace('https://', 'http://');
-    strategies.push({ name: 'HTTP Alternative', url: alternativeUrl });
+  if (companyProfile.logoUrl) {
+    strategies.push({ name: 'Original URL', url: companyProfile.logoUrl });
+    
+    // Strategie 4: Alternative URL-Formate probieren
+    if (companyProfile.logoUrl.includes('amazonaws.com')) {
+      const alternativeUrl = companyProfile.logoUrl.replace('https://', 'http://');
+      strategies.push({ name: 'HTTP Alternative', url: alternativeUrl });
+    }
   }
   
   // Alle Strategien durchprobieren
@@ -398,7 +400,7 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
   let logoBase64 = null;
   let useInitialsFallback = false;
   
-  if (companyProfile && companyProfile.logoUrl) {
+  if (companyProfile && (companyProfile.logoUrl || companyProfile.logoKey)) {
     console.log("🏢 Company Profile vorhanden, lade Logo...");
     logoBase64 = await loadLogoWithFallbacks(companyProfile);
     
@@ -1829,12 +1831,12 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
           </div>
           
           <div style="color: ${theme.secondary}; line-height: 1.5; font-size: 10pt;">
-            ${companyProfile?.address || 'Musterstraße 123<br/>12345 Musterstadt'}<br/>
-            ${companyProfile?.phone ? `Telefon: ${companyProfile.phone}<br/>` : 'Telefon: +49 (0) 123 456789<br/>'}
-            ${companyProfile?.email ? `E-Mail: ${companyProfile.email}<br/>` : 'E-Mail: info@beispiel.de<br/>'}
-            ${companyProfile?.website ? `Web: ${companyProfile.website}<br/>` : ''}
-            ${companyProfile?.registerNumber ? `Handelsregister: ${companyProfile.registerNumber}<br/>` : ''}
-            ${companyProfile?.taxNumber ? `Steuernummer: ${companyProfile.taxNumber}` : ''}
+            ${companyProfile?.street || 'Musterstraße 123'}<br/>
+            ${companyProfile?.postalCode || '12345'} ${companyProfile?.city || 'Musterstadt'}<br/>
+            ${companyProfile?.contactPhone ? `Telefon: ${companyProfile.contactPhone}<br/>` : 'Telefon: +49 (0) 123 456789<br/>'}
+            ${companyProfile?.contactEmail ? `E-Mail: ${companyProfile.contactEmail}<br/>` : 'E-Mail: info@beispiel.de<br/>'}
+            ${companyProfile?.vatId ? `USt-ID: ${companyProfile.vatId}<br/>` : ''}
+            ${companyProfile?.tradeRegister ? `HRB: ${companyProfile.tradeRegister}` : ''}
           </div>
         </div>
         
