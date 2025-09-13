@@ -3128,10 +3128,20 @@ router.post("/pdf", verifyToken, async (req, res) => {
       hasCompanyProfile: contract.hasCompanyProfile,
       designVariant: contract.designVariant
     });
+    
+    // 🔍 DEBUG: Vollständiger Contract Debug
+    console.log("🔍 DEBUG Full Contract Object Keys:", Object.keys(contract));
+    console.log("🔍 DEBUG Contract Metadata:", contract.metadata);
 
     // Lade Company Profile wenn vorhanden
     let companyProfile = null;
-    if (contract.hasCompanyProfile || contract.metadata?.hasLogo) {
+    // 🔍 ERWEITERTE BEDINGUNG: Immer versuchen Company Profile zu laden für Premium Users
+    const shouldLoadCompanyProfile = contract.hasCompanyProfile || 
+                                   contract.metadata?.hasLogo || 
+                                   contract.metadata?.hasCompanyProfile ||
+                                   (user.subscriptionPlan === 'premium');
+    
+    if (shouldLoadCompanyProfile) {
       try {
         companyProfile = await db.collection("company_profiles").findOne({ 
           userId: new ObjectId(req.user.userId) 
