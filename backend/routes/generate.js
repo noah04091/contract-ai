@@ -602,6 +602,7 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
   let inSignatureSection = false;
   let sectionCounter = 0;
   let subsectionCounters = {};
+  let skipPartiesSection = false; // Flag für Parteien-Bereich
   
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
@@ -609,6 +610,22 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
     
     // Überspringe die === Linien
     if (trimmedLine.startsWith('===') || trimmedLine.endsWith('===')) {
+      continue;
+    }
+    
+    // PARTEIEN-BEREICH ÜBERSPRINGEN (da wir eigenen implementiert haben)
+    if (trimmedLine.toLowerCase() === 'zwischen') {
+      skipPartiesSection = true;
+      continue;
+    }
+    
+    // Ende des Parteien-Bereichs erkennen (bei PRÄAMBEL oder § 1)
+    if (skipPartiesSection && (trimmedLine === 'PRÄAMBEL' || trimmedLine === 'Präambel' || trimmedLine.startsWith('§'))) {
+      skipPartiesSection = false;
+    }
+    
+    // Überspringe Zeilen im Parteien-Bereich
+    if (skipPartiesSection) {
       continue;
     }
     
