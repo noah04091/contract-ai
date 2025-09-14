@@ -1310,10 +1310,11 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
   // Unterschriften IMMER hinzufügen - nicht nur wenn inSignatureSection gesetzt
   {
     htmlContent += `
-      <!-- UNTERSCHRIFTSBEREICH - KANZLEI-STANDARD (KOMPAKT) -->
+      <!-- UNTERSCHRIFTSBEREICH - IMMER EIGENE SEITE -->
       <div style="
-        margin-top: 30mm;
-        padding: 20mm 0 0 0;
+        page-break-before: always;
+        margin-top: 25mm;
+        padding: 0;
         page-break-inside: avoid;
       ">
         <!-- Überschrift - dezent und professionell (kompakt) -->
@@ -1474,24 +1475,6 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
           </div>
         </div>
         
-        <!-- Zusätzliche Zeugen-Sektion (optional) - kompakt -->
-        <div style="
-          margin-top: 15mm;
-          padding-top: 8mm;
-          border-top: 1px solid #ddd;
-        ">
-          <p style="
-            font-family: ${theme.fontFamily};
-            font-size: 8pt;
-            color: #999;
-            text-align: center;
-            font-style: italic;
-            margin-bottom: 8mm;
-          ">
-            Dieser Vertrag wurde in zweifacher Ausfertigung erstellt. 
-            Jede Partei erhält eine Ausfertigung.
-          </p>
-        </div>
         
       </div>
     `;
