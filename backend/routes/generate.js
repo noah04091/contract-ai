@@ -1869,35 +1869,36 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
         
       </div>
       
-      <!-- Horizontale Trennlinie (6mm nach oben/unten) -->
+      <!-- Professionelle Trennlinie (verstärkt) -->
       <div style="
         margin: 6mm 0;
-        height: 1px;
-        background-color: #cccccc;
+        height: 1.5px;
+        background-color: #666666;
         width: 100%;
       "></div>
     </header>
     
-    <!-- VERTRAGSTITEL (weiter oben positioniert) -->
+    <!-- VERTRAGSTITEL (kompakt nach oben) -->
     <div style="
       text-align: center;
-      margin: 20mm 0 15mm 0;
+      margin: 10mm 0 12mm 0;
     ">
       <h1 style="
         font-family: 'Times New Roman', serif;
-        font-size: 18pt;
+        font-size: 21pt;
         font-weight: bold;
         color: #1a1a1a;
         text-transform: uppercase;
         margin: 0;
-        letter-spacing: 1px;
+        letter-spacing: 2.5px;
       ">${contractType?.toUpperCase() || 'KAUFVERTRAG'}</h1>
       
-      <!-- Optional: Datumszeile -->
+      <!-- Elegante Datumszeile -->
       <div style="
         font-family: 'Times New Roman', serif;
-        font-size: 10pt;
-        color: #666;
+        font-size: 11pt;
+        color: #666666;
+        font-style: italic;
         margin-top: 5mm;
       ">
         geschlossen am ${new Date().toLocaleDateString('de-DE', { 
@@ -1918,17 +1919,15 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
     ">
       <div style="font-weight: bold; margin-bottom: 8mm;">zwischen</div>
       
-      <div style="margin-bottom: 12mm;">
+      <div style="margin-bottom: 10mm;">
         <div style="font-weight: bold;">${companyProfile?.companyName || 'ACME GmbH'}${companyProfile?.legalForm ? ` ${companyProfile.legalForm}` : ''}</div>
-        <div>${companyProfile?.street || 'Musterstraße 1'}</div>
-        <div>${companyProfile?.postalCode || '12345'} ${companyProfile?.city || 'Berlin'}</div>
-        ${companyProfile?.tradeRegister ? `<div>eingetragen im Handelsregister des AG ${companyProfile.city || 'Berlin'}, ${companyProfile.tradeRegister}</div>` : '<div>eingetragen im Handelsregister des AG Berlin, HRB 123456</div>'}
+        <div style="font-style: italic; margin-top: 2mm; color: #666666; font-size: 10pt;">(vollständige Angaben siehe Briefkopf)</div>
         <div style="font-style: italic; margin-top: 3mm;">– nachfolgend "Verkäufer" genannt –</div>
       </div>
       
-      <div style="font-weight: bold; margin-bottom: 8mm;">und</div>
+      <div style="font-weight: bold; margin-bottom: 6mm;">und</div>
       
-      <div style="margin-bottom: 12mm;">
+      <div style="margin-bottom: 10mm;">
         <div style="font-weight: bold;">Naomi Baba</div>
         <div>Beispielstraße 2</div>
         <div>54321 Hamburg</div>
