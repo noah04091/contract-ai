@@ -1861,10 +1861,10 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
       "></div>
     </header>
     
-    <!-- VERTRAGSTITEL (exakt mittig auf der Seite, ca. ⅓ von oben) -->
+    <!-- VERTRAGSTITEL (weiter oben positioniert) -->
     <div style="
       text-align: center;
-      margin: 40mm 0 20mm 0;
+      margin: 20mm 0 15mm 0;
     ">
       <h1 style="
         font-family: 'Times New Roman', serif;
@@ -1891,94 +1891,17 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
       </div>
     </div>
     
-    <!-- HAUPTINHALT-BEREICH -->
-    <div style="
-      position: relative;
-      overflow: hidden;
-    ">
-      ${designVariant === 'executive' ? `
-        <!-- Decorative Elements für Executive -->
-        <div style="
-          position: absolute;
-          top: -30%;
-          right: -5%;
-          width: 200px;
-          height: 200px;
-          background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-          border-radius: 50%;
-        "></div>
-        <div style="
-          position: absolute;
-          bottom: -20%;
-          left: -3%;
-          width: 150px;
-          height: 150px;
-          background: radial-gradient(circle, rgba(201,169,97,0.1) 0%, transparent 70%);
-          border-radius: 50%;
-        "></div>
-      ` : ''}
-      
-      <div style="flex: 1; position: relative; z-index: 2;">
-        ${companyProfile ? `
-          <h1 style="
-            font-size: 20pt;
-            font-weight: bold;
-            margin-bottom: 8px;
-            letter-spacing: 0.5px;
-            text-shadow: ${designVariant === 'executive' ? '0 2px 4px rgba(0,0,0,0.2)' : 'none'};
-          ">${companyProfile.companyName}${companyProfile.legalForm ? ` ${companyProfile.legalForm}` : ''}</h1>
-          <div style="font-size: 9pt; opacity: 0.95; line-height: 1.4;">
-            ${companyProfile.street ? `${companyProfile.street}, ` : ''}
-            ${companyProfile.postalCode || ''} ${companyProfile.city || ''}
-            ${companyProfile.contactEmail ? `<br/>✉ ${companyProfile.contactEmail}` : ''}
-            ${companyProfile.contactPhone ? ` | ☎ ${companyProfile.contactPhone}` : ''}
-            ${companyProfile.vatId ? `<br/>USt-IdNr.: ${companyProfile.vatId}` : ''}
-            ${companyProfile.tradeRegister ? ` | ${companyProfile.tradeRegister}` : ''}
-            ${companyProfile.website ? `<br/>🌐 ${companyProfile.website}` : ''}
-          </div>
-        ` : `
-          <h1 style="font-size: 18pt; font-weight: bold; letter-spacing: 1px;">Vertragsdokument</h1>
-          <p style="font-size: 10pt; opacity: 0.9; margin-top: 5px;">Professionell erstelltes Dokument</p>
-        `}
-      </div>
-      
-      ${logoBase64 ? `
-        <div style="
-          width: 140px;
-          height: 70px;
-          display: flex;
-          align-items: center;
-          justify-content: flex-end;
-          margin-left: 20px;
-          position: relative;
-          z-index: 2;
-        ">
-          <div style="
-            background: rgba(255, 255, 255, 0.95);
-            padding: 10px;
-            border-radius: ${theme.borderRadius};
-            /* Kanzlei-Standard: Kein Box-Shadow */
-          ">
-            <img src="${logoBase64}" alt="Logo" style="
-              max-width: 42mm;
-              max-height: 18mm;
-              object-fit: contain;
-            " />
-          </div>
-        </div>
-      ` : ''}
-    
     <!-- PARTEIENBLOCK ("zwischen") -->
     <div style="
       font-family: 'Times New Roman', serif;
       font-size: 11pt;
       line-height: 1.3;
-      margin: 15mm 0 20mm 0;
+      margin: 0 0 15mm 0;
       color: #1a1a1a;
     ">
-      <div style="font-weight: bold; margin-bottom: 10mm;">zwischen</div>
+      <div style="font-weight: bold; margin-bottom: 8mm;">zwischen</div>
       
-      <div style="margin-bottom: 15mm;">
+      <div style="margin-bottom: 12mm;">
         <div style="font-weight: bold;">${companyProfile?.companyName || 'ACME GmbH'}${companyProfile?.legalForm ? ` ${companyProfile.legalForm}` : ''}</div>
         <div>${companyProfile?.street || 'Musterstraße 1'}</div>
         <div>${companyProfile?.postalCode || '12345'} ${companyProfile?.city || 'Berlin'}</div>
@@ -1986,9 +1909,9 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
         <div style="font-style: italic; margin-top: 3mm;">– nachfolgend "Verkäufer" genannt –</div>
       </div>
       
-      <div style="font-weight: bold; margin-bottom: 10mm;">und</div>
+      <div style="font-weight: bold; margin-bottom: 8mm;">und</div>
       
-      <div style="margin-bottom: 15mm;">
+      <div style="margin-bottom: 12mm;">
         <div style="font-weight: bold;">Naomi Baba</div>
         <div>Beispielstraße 2</div>
         <div>54321 Hamburg</div>
