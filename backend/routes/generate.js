@@ -1950,7 +1950,6 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
       font-family: 'Times New Roman', serif;
       font-size: 11pt;
       line-height: 1.3;
-      text-align: justify;
       color: #1a1a1a;
     ">
       ${htmlContent}
