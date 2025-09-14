@@ -811,7 +811,7 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
             margin: 12pt 0 8pt 0;
             text-transform: uppercase;
             letter-spacing: 0px;
-            text-align: left;
+            text-align: left !important;
           ">
             ${trimmedLine}
           </h2>
@@ -827,7 +827,7 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
             margin: 12pt 0 8pt 0;
             text-transform: uppercase;
             letter-spacing: 0px;
-            text-align: left;
+            text-align: left !important;
           ">
             ${trimmedLine}
           </h2>
@@ -843,7 +843,7 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
             margin: 12pt 0 8pt 0;
             text-transform: uppercase;
             letter-spacing: 0px;
-            text-align: left;
+            text-align: left !important;
           ">
             ${trimmedLine}
           </h2>
