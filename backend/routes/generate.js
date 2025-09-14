@@ -1305,9 +1305,10 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
     htmlContent += '</div></div>';
   }
   
-  // 🖋️ PROFESSIONELLE UNTERSCHRIFTSSEKTION - NUR AM ENDE DES DOKUMENTS
-  if (inSignatureSection) {
-    console.log('🎯 *** FÜGE JETZT PROFESSIONELLE UNTERSCHRIFTSSEKTION HINZU ***');
+  // 🖋️ PROFESSIONELLE UNTERSCHRIFTSSEKTION - IMMER AM ENDE HINZUFÜGEN
+  console.log('🎯 *** FÜGE PROFESSIONELLE UNTERSCHRIFTSSEKTION HINZU (IMMER) ***');
+  // Unterschriften IMMER hinzufügen - nicht nur wenn inSignatureSection gesetzt
+  {
     htmlContent += `
       <!-- UNTERSCHRIFTSBEREICH - KANZLEI-STANDARD -->
       <div style="
@@ -1507,7 +1508,7 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
         </div>
       </div>
     `;
-  }
+  } // Ende Unterschriftssektion - wird IMMER hinzugefügt
 
   // 🎨 VOLLSTÄNDIGES ENTERPRISE HTML-DOKUMENT
   const fullHTML = `
