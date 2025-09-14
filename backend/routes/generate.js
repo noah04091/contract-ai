@@ -1248,187 +1248,15 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
         `;
       }
     }
-    // UNTERSCHRIFTSBEREICH - Enterprise Signature Section
+    // UNTERSCHRIFTS-LINIEN ÜBERSPRINGEN - Werden am Ende des Dokuments separat hinzugefügt
     else if (trimmedLine.includes('_____')) {
+      // Flag setzen dass Unterschriften benötigt werden (nur beim ersten Mal)
       if (!inSignatureSection) {
-        if (currentSection) {
-          htmlContent += '</div></div>';
-          currentSection = '';
-        }
-        
-        if (designVariant === 'executive') {
-          htmlContent += `
-            <div style="
-              margin-top: 60px;
-              padding: 30px;
-              background: ${theme.lightBg};
-              border: 1px solid ${theme.border};
-              border-radius: ${theme.borderRadius};
-              page-break-inside: auto;
-              position: relative;
-            ">
-              <div style="
-                position: absolute;
-                top: -15px;
-                left: 40px;
-                background: white;
-                padding: 5px 20px;
-                border: 1px solid ${theme.accent};
-                border-radius: 15px;
-              ">
-                <h3 style="
-                  margin: 0;
-                  font-family: ${theme.headingFont};
-                  color: ${theme.primary};
-                  font-size: 11pt;
-                  font-weight: 600;
-                  letter-spacing: 0.5px;
-                  text-transform: uppercase;
-                ">Unterschriften</h3>
-              </div>
-          `;
-        } else if (designVariant === 'modern') {
-          htmlContent += `
-            <div style="
-              margin-top: 50px;
-              padding: 25px;
-              background: ${theme.lightBg};
-              border-radius: ${theme.borderRadius};
-              page-break-inside: avoid;
-            ">
-              <h3 style="
-                text-align: center;
-                font-family: ${theme.headingFont};
-                color: ${theme.primary};
-                font-size: 12pt;
-                font-weight: 500;
-                letter-spacing: 1px;
-                text-transform: uppercase;
-                margin: 0 0 25px 0;
-                padding-bottom: 10px;
-                border-bottom: 2px solid ${theme.primary};
-              ">Unterschriften</h3>
-          `;
-        } else { // minimal
-          htmlContent += `
-            <div style="
-              margin-top: 45px;
-              padding: 20px 0;
-              border-top: 1px solid ${theme.primary};
-              page-break-inside: avoid;
-            ">
-              <h3 style="
-                font-family: ${theme.headingFont};
-                color: ${theme.primary};
-                font-size: 11pt;
-                font-weight: 400;
-                letter-spacing: 2px;
-                text-transform: uppercase;
-                margin: 0 0 30px 0;
-              ">Unterschriften</h3>
-          `;
-        }
         inSignatureSection = true;
+        console.log('🖋️ Unterschrifts-Flag gesetzt - wird am Ende hinzugefügt');
       }
-      
-      // 🖋️ PROFESSIONELLER UNTERSCHRIFTENBEREICH - KLASSISCH JURISTISCH  
-      htmlContent += `
-        <!-- PROFESSIONELLER UNTERSCHRIFTENBEREICH - KLASSISCH JURISTISCH -->
-        <div style="
-          margin: 40mm 0 20mm 0;
-          padding: 0;
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 40mm;
-          page-break-inside: avoid;
-        ">
-          <!-- LINKE SPALTE: VERKÄUFER/ANBIETER -->
-          <div style="text-align: center;">
-            <!-- Ort, Datum Eingabelinie -->
-            <div style="
-              border-bottom: 1px solid ${theme.text};
-              margin-bottom: 8mm;
-              min-height: 8mm;
-            "></div>
-            <p style="
-              margin: 0 0 15mm 0;
-              font-family: ${theme.fontFamily};
-              font-size: 9pt;
-              color: ${theme.secondary};
-            ">Ort, Datum</p>
-            
-            <!-- Unterschriftslinie -->
-            <div style="
-              border-bottom: 1px solid ${theme.text};
-              margin-bottom: 8mm;
-              min-height: 8mm;
-            "></div>
-            <p style="
-              margin: 0 0 15mm 0;
-              font-family: ${theme.fontFamily};
-              font-size: 9pt;
-              color: ${theme.secondary};
-            ">Unterschrift Verkäufer/in</p>
-            
-            <!-- Name in Druckbuchstaben Linie -->
-            <div style="
-              border-bottom: 1px solid ${theme.text};
-              margin-bottom: 8mm;
-              min-height: 8mm;
-            "></div>
-            <p style="
-              margin: 0;
-              font-family: ${theme.fontFamily};
-              font-size: 9pt;
-              color: ${theme.secondary};
-            ">Name Verkäufer/in (Druckbuchstaben)</p>
-          </div>
-          
-          <!-- RECHTE SPALTE: KÄUFER/VERTRAGSPARTNER -->
-          <div style="text-align: center;">
-            <!-- Ort, Datum Eingabelinie -->
-            <div style="
-              border-bottom: 1px solid ${theme.text};
-              margin-bottom: 8mm;
-              min-height: 8mm;
-            "></div>
-            <p style="
-              margin: 0 0 15mm 0;
-              font-family: ${theme.fontFamily};
-              font-size: 9pt;
-              color: ${theme.secondary};
-            ">Ort, Datum</p>
-            
-            <!-- Unterschriftslinie -->
-            <div style="
-              border-bottom: 1px solid ${theme.text};
-              margin-bottom: 8mm;
-              min-height: 8mm;
-            "></div>
-            <p style="
-              margin: 0 0 15mm 0;
-              font-family: ${theme.fontFamily};
-              font-size: 9pt;
-              color: ${theme.secondary};
-            ">Unterschrift Käufer/in</p>
-            
-            <!-- Name in Druckbuchstaben Linie -->
-            <div style="
-              border-bottom: 1px solid ${theme.text};
-              margin-bottom: 8mm;
-              min-height: 8mm;
-            "></div>
-            <p style="
-              margin: 0;
-              font-family: ${theme.fontFamily};
-              font-size: 9pt;
-              color: ${theme.secondary};
-            ">Name Käufer/in (Druckbuchstaben)</p>
-          </div>
-        </div>
-      `;
-      
-      // Überspringe die Original-Linie
+      // Alle _____ Linien im Text überspringen
+      console.log('🚫 Überspringe Unterschriftslinie:', trimmedLine.substring(0, 50) + '...');
       continue;
     }
     // NORMALER TEXT - Optimierte Lesbarkeit
@@ -1476,8 +1304,209 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
   if (currentSection) {
     htmlContent += '</div></div>';
   }
+  
+  // 🖋️ PROFESSIONELLE UNTERSCHRIFTSSEKTION - NUR AM ENDE DES DOKUMENTS
   if (inSignatureSection) {
-    htmlContent += '</div>';
+    console.log('✅ Füge professionelle Unterschriftssektion hinzu');
+    htmlContent += `
+      <!-- UNTERSCHRIFTSBEREICH - KANZLEI-STANDARD -->
+      <div style="
+        page-break-before: always;
+        margin-top: 80px;
+        padding: 40px 0;
+        min-height: 400px;
+        page-break-inside: avoid;
+      ">
+        <!-- Überschrift -->
+        <h2 style="
+          text-align: center;
+          font-family: ${theme.headingFont};
+          font-size: 14pt;
+          font-weight: 600;
+          color: ${theme.primary};
+          margin-bottom: 60px;
+          text-transform: uppercase;
+          letter-spacing: 2px;
+        ">UNTERSCHRIFTEN DER VERTRAGSPARTEIEN</h2>
+        
+        <!-- Zweispaltiges Layout -->
+        <div style="
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 60px;
+          margin: 0 auto;
+          max-width: 100%;
+        ">
+          <!-- LINKE SPALTE: VERKÄUFER/PARTEI A -->
+          <div style="
+            padding: 20px;
+            min-height: 200px;
+          ">
+            <!-- Überschrift -->
+            <h3 style="
+              font-family: ${theme.fontFamily};
+              font-size: 10pt;
+              font-weight: 600;
+              color: ${theme.primary};
+              margin-bottom: 30px;
+              text-align: center;
+              text-transform: uppercase;
+            ">Verkäufer / Partei A</h3>
+            
+            <!-- Ort und Datum -->
+            <div style="margin-bottom: 40px;">
+              <label style="
+                font-family: ${theme.fontFamily};
+                font-size: 9pt;
+                color: #666;
+                display: block;
+                margin-bottom: 8px;
+              ">Ort, Datum:</label>
+              <div style="
+                border-bottom: 1px solid #999;
+                height: 25px;
+                position: relative;
+              ">
+                <span style="
+                  position: absolute;
+                  bottom: 2px;
+                  left: 0;
+                  font-size: 9pt;
+                  color: #333;
+                  font-style: italic;
+                ">${companyProfile?.city || '________________'}, _____________</span>
+              </div>
+            </div>
+            
+            <!-- Unterschriftslinie -->
+            <div style="margin-bottom: 8px;">
+              <div style="
+                border-bottom: 2px solid #666;
+                height: 40px;
+                margin-bottom: 8px;
+              "></div>
+              <p style="
+                font-family: ${theme.fontFamily};
+                font-size: 9pt;
+                color: #666;
+                text-align: center;
+                margin: 0;
+              ">(Unterschrift / Stempel)</p>
+            </div>
+            
+            <!-- Name -->
+            <div style="
+              margin-top: 20px;
+              padding-top: 10px;
+              border-top: 1px dotted #ccc;
+            ">
+              <p style="
+                font-family: ${theme.fontFamily};
+                font-size: 10pt;
+                color: ${theme.text};
+                margin: 0;
+              ">
+                <strong>Name:</strong> ${companyProfile?.companyName || 'Verkäufer'}
+              </p>
+              <p style="
+                font-family: ${theme.fontFamily};
+                font-size: 9pt;
+                color: #666;
+                margin: 4px 0 0 0;
+              ">${companyProfile?.street ? `${companyProfile.street}, ${companyProfile.postalCode} ${companyProfile.city}` : ''}</p>
+            </div>
+          </div>
+          
+          <!-- RECHTE SPALTE: KÄUFER/PARTEI B -->
+          <div style="
+            padding: 20px;
+            min-height: 200px;
+          ">
+            <!-- Überschrift -->
+            <h3 style="
+              font-family: ${theme.fontFamily};
+              font-size: 10pt;
+              font-weight: 600;
+              color: ${theme.primary};
+              margin-bottom: 30px;
+              text-align: center;
+              text-transform: uppercase;
+            ">Käufer / Partei B</h3>
+            
+            <!-- Ort und Datum -->
+            <div style="margin-bottom: 40px;">
+              <label style="
+                font-family: ${theme.fontFamily};
+                font-size: 9pt;
+                color: #666;
+                display: block;
+                margin-bottom: 8px;
+              ">Ort, Datum:</label>
+              <div style="
+                border-bottom: 1px solid #999;
+                height: 25px;
+              "></div>
+            </div>
+            
+            <!-- Unterschriftslinie -->
+            <div style="margin-bottom: 8px;">
+              <div style="
+                border-bottom: 2px solid #666;
+                height: 40px;
+                margin-bottom: 8px;
+              "></div>
+              <p style="
+                font-family: ${theme.fontFamily};
+                font-size: 9pt;
+                color: #666;
+                text-align: center;
+                margin: 0;
+              ">(Unterschrift)</p>
+            </div>
+            
+            <!-- Name -->
+            <div style="
+              margin-top: 20px;
+              padding-top: 10px;
+              border-top: 1px dotted #ccc;
+            ">
+              <p style="
+                font-family: ${theme.fontFamily};
+                font-size: 10pt;
+                color: ${theme.text};
+                margin: 0;
+              ">
+                <strong>Name:</strong> ___________________________
+              </p>
+              <p style="
+                font-family: ${theme.fontFamily};
+                font-size: 9pt;
+                color: #666;
+                margin: 4px 0 0 0;
+              ">(Name in Druckbuchstaben)</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Zusätzliche Zeugen-Sektion (optional) -->
+        <div style="
+          margin-top: 60px;
+          padding-top: 30px;
+          border-top: 1px solid #ddd;
+        ">
+          <p style="
+            font-family: ${theme.fontFamily};
+            font-size: 8pt;
+            color: #999;
+            text-align: center;
+            font-style: italic;
+          ">
+            Dieser Vertrag wurde in zweifacher Ausfertigung erstellt. 
+            Jede Partei erhält eine Ausfertigung.
+          </p>
+        </div>
+      </div>
+    `;
   }
 
   // 🎨 VOLLSTÄNDIGES ENTERPRISE HTML-DOKUMENT
