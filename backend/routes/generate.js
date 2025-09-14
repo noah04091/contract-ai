@@ -1942,6 +1942,9 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
       </div>
     </div>
     
+    <!-- SEITENUMBRUCH: Seite 2 beginnt hier -->
+    <div style="page-break-after: always;"></div>
+    
     <!-- VERTRAGSKÖRPER -->
     <main style="
       font-family: 'Times New Roman', serif;
