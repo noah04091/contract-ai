@@ -1253,7 +1253,7 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
       // Flag setzen dass Unterschriften benötigt werden (nur beim ersten Mal)
       if (!inSignatureSection) {
         inSignatureSection = true;
-        console.log('🖋️ Unterschrifts-Flag gesetzt - wird am Ende hinzugefügt');
+        console.log('🖋️ UNTERSCHRIFTS-FLAG GESETZT - Professionelle Sektion wird am Ende hinzugefügt!');
       }
       // Alle _____ Linien im Text überspringen
       console.log('🚫 Überspringe Unterschriftslinie:', trimmedLine.substring(0, 50) + '...');
@@ -1307,7 +1307,7 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
   
   // 🖋️ PROFESSIONELLE UNTERSCHRIFTSSEKTION - NUR AM ENDE DES DOKUMENTS
   if (inSignatureSection) {
-    console.log('✅ Füge professionelle Unterschriftssektion hinzu');
+    console.log('🎯 *** FÜGE JETZT PROFESSIONELLE UNTERSCHRIFTSSEKTION HINZU ***');
     htmlContent += `
       <!-- UNTERSCHRIFTSBEREICH - KANZLEI-STANDARD -->
       <div style="
@@ -2290,13 +2290,7 @@ PRÄAMBEL
 (4) Es gilt ausschließlich das Recht der Bundesrepublik Deutschland unter Ausschluss des UN-Kaufrechts.
 
 
-_______________________          _______________________
-Ort, Datum                       Ort, Datum
-
-
-_______________________          _______________________
-[Name Partei A]                  [Name Partei B]
-[Funktion/Titel]                 [Funktion/Titel]`;
+`;
 
     // User Prompts für verschiedene Vertragstypen - VOLLSTÄNDIG
     let userPrompt = "";
@@ -2840,9 +2834,7 @@ Strukturiere den Vertrag professionell mit mindestens 10-12 Paragraphen und alle
         contractText = contractText.replace('§ 11 SCHLUSSBESTIMMUNGEN', '§ 10 ZUSÄTZLICHE VEREINBARUNGEN\n\n(1) Weitere Vereinbarungen wurden nicht getroffen.\n\n§ 11 SCHLUSSBESTIMMUNGEN');
       }
       
-      if (!contractText.includes('____')) {
-        contractText += `\n\n\n_______________________          _______________________\nOrt, Datum                       Ort, Datum\n\n\n_______________________          _______________________\n${companyProfile?.companyName || 'Partei A'}                  Partei B\nGeschäftsführung                 Name, Funktion`;
-      }
+      // ✅ Unterschriften werden jetzt über formatContractToHTML hinzugefügt - nicht hier!
     }
     
     console.log("✅ Vertragsgenerierung erfolgreich, finale Länge:", contractText.length);
