@@ -1318,17 +1318,16 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
         min-height: 400px;
         page-break-inside: avoid;
       ">
-        <!-- Überschrift -->
+        <!-- Überschrift - dezent und professionell -->
         <h2 style="
           text-align: center;
           font-family: ${theme.headingFont};
-          font-size: 14pt;
+          font-size: 12pt;
           font-weight: 600;
           color: ${theme.primary};
-          margin-bottom: 60px;
-          text-transform: uppercase;
-          letter-spacing: 2px;
-        ">UNTERSCHRIFTEN DER VERTRAGSPARTEIEN</h2>
+          margin-bottom: 40mm;
+          letter-spacing: 0.5px;
+        ">Unterschriften der Vertragsparteien</h2>
         
         <!-- Zweispaltiges Layout -->
         <div style="
@@ -1354,67 +1353,57 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
               text-transform: uppercase;
             ">Verkäufer / Partei A</h3>
             
-            <!-- Ort und Datum -->
-            <div style="margin-bottom: 40px;">
-              <label style="
-                font-family: ${theme.fontFamily};
-                font-size: 9pt;
-                color: #666;
-                display: block;
-                margin-bottom: 8px;
-              ">Ort, Datum:</label>
+            <!-- Ort und Datum - einheitlich -->
+            <div style="margin-bottom: 15mm;">
               <div style="
-                border-bottom: 1px solid #999;
-                height: 25px;
-                position: relative;
-              ">
-                <span style="
-                  position: absolute;
-                  bottom: 2px;
-                  left: 0;
-                  font-size: 9pt;
-                  color: #333;
-                  font-style: italic;
-                ">${companyProfile?.city || '________________'}, _____________</span>
-              </div>
-            </div>
-            
-            <!-- Unterschriftslinie -->
-            <div style="margin-bottom: 8px;">
-              <div style="
-                border-bottom: 2px solid #666;
-                height: 40px;
-                margin-bottom: 8px;
+                border-bottom: 1px solid #666;
+                height: 12mm;
+                margin-bottom: 3mm;
               "></div>
               <p style="
                 font-family: ${theme.fontFamily};
                 font-size: 9pt;
                 color: #666;
-                text-align: center;
+                margin: 0;
+                text-align: left;
+              ">Ort, Datum</p>
+            </div>
+            
+            <!-- Unterschriftslinie - länger mit mehr Abstand -->
+            <div style="margin-bottom: 15mm;">
+              <div style="
+                border-bottom: 2px solid #333;
+                height: 15mm;
+                margin-bottom: 4mm;
+                width: 100%;
+              "></div>
+              <p style="
+                font-family: ${theme.fontFamily};
+                font-size: 9pt;
+                color: #666;
+                text-align: left;
                 margin: 0;
               ">(Unterschrift / Stempel)</p>
             </div>
             
-            <!-- Name -->
+            <!-- Name - kompakt und professionell -->
             <div style="
-              margin-top: 20px;
-              padding-top: 10px;
+              padding-top: 8mm;
               border-top: 1px dotted #ccc;
             ">
               <p style="
                 font-family: ${theme.fontFamily};
                 font-size: 10pt;
                 color: ${theme.text};
-                margin: 0;
-              ">
-                <strong>Name:</strong> ${companyProfile?.companyName || 'Verkäufer'}
-              </p>
+                margin: 0 0 2mm 0;
+                font-weight: 600;
+              ">${companyProfile?.companyName || 'Verkäufer'}</p>
               <p style="
                 font-family: ${theme.fontFamily};
                 font-size: 9pt;
                 color: #666;
-                margin: 4px 0 0 0;
-              ">${companyProfile?.street ? `${companyProfile.street}, ${companyProfile.postalCode} ${companyProfile.city}` : ''}</p>
+                margin: 0;
+              ">(Geschäftsführung)</p>
             </div>
           </div>
           
@@ -1434,65 +1423,63 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
               text-transform: uppercase;
             ">Käufer / Partei B</h3>
             
-            <!-- Ort und Datum -->
-            <div style="margin-bottom: 40px;">
-              <label style="
-                font-family: ${theme.fontFamily};
-                font-size: 9pt;
-                color: #666;
-                display: block;
-                margin-bottom: 8px;
-              ">Ort, Datum:</label>
+            <!-- Ort und Datum - identisch zur Verkäufer-Spalte -->
+            <div style="margin-bottom: 15mm;">
               <div style="
-                border-bottom: 1px solid #999;
-                height: 25px;
-              "></div>
-            </div>
-            
-            <!-- Unterschriftslinie -->
-            <div style="margin-bottom: 8px;">
-              <div style="
-                border-bottom: 2px solid #666;
-                height: 40px;
-                margin-bottom: 8px;
+                border-bottom: 1px solid #666;
+                height: 12mm;
+                margin-bottom: 3mm;
               "></div>
               <p style="
                 font-family: ${theme.fontFamily};
                 font-size: 9pt;
                 color: #666;
-                text-align: center;
+                margin: 0;
+                text-align: left;
+              ">Ort, Datum</p>
+            </div>
+            
+            <!-- Unterschriftslinie - identisch zur Verkäufer-Spalte -->
+            <div style="margin-bottom: 15mm;">
+              <div style="
+                border-bottom: 2px solid #333;
+                height: 15mm;
+                margin-bottom: 4mm;
+                width: 100%;
+              "></div>
+              <p style="
+                font-family: ${theme.fontFamily};
+                font-size: 9pt;
+                color: #666;
+                text-align: left;
                 margin: 0;
               ">(Unterschrift)</p>
             </div>
             
-            <!-- Name -->
+            <!-- Name - symmetrisch zur Verkäufer-Spalte -->
             <div style="
-              margin-top: 20px;
-              padding-top: 10px;
+              padding-top: 8mm;
               border-top: 1px dotted #ccc;
             ">
-              <p style="
-                font-family: ${theme.fontFamily};
-                font-size: 10pt;
-                color: ${theme.text};
-                margin: 0;
-              ">
-                <strong>Name:</strong> ___________________________
-              </p>
+              <div style="
+                border-bottom: 1px solid #ccc;
+                height: 6mm;
+                margin-bottom: 2mm;
+              "></div>
               <p style="
                 font-family: ${theme.fontFamily};
                 font-size: 9pt;
                 color: #666;
-                margin: 4px 0 0 0;
-              ">(Name in Druckbuchstaben)</p>
+                margin: 0;
+              ">(Name in Druckschrift)</p>
             </div>
           </div>
         </div>
         
         <!-- Zusätzliche Zeugen-Sektion (optional) -->
         <div style="
-          margin-top: 60px;
-          padding-top: 30px;
+          margin-top: 40mm;
+          padding-top: 15mm;
           border-top: 1px solid #ddd;
         ">
           <p style="
@@ -1501,10 +1488,40 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
             color: #999;
             text-align: center;
             font-style: italic;
+            margin-bottom: 15mm;
           ">
             Dieser Vertrag wurde in zweifacher Ausfertigung erstellt. 
             Jede Partei erhält eine Ausfertigung.
           </p>
+        </div>
+        
+        <!-- PROFESSIONAL FOOTER - Nach Unterschriften -->
+        <div style="
+          margin-top: 20mm;
+          padding-top: 10mm;
+          border-top: 1px solid #ccc;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 8pt;
+          color: #666;
+        ">
+          <div>
+            <strong style="font-size: 10pt; color: #333;">KAUFVERTRAG</strong><br/>
+            © ${new Date().getFullYear()} ${companyProfile?.companyName || 'Online Handel Noah Liebold'}
+          </div>
+          
+          <div style="text-align: center;">
+            <strong>Digitale Verifizierung</strong><br/>
+            ${documentHash || '3D1B88A9629F1FFC'}
+          </div>
+          
+          <div style="text-align: right;">
+            <strong>Rechtlicher Hinweis:</strong><br/>
+            Dieses Dokument ist rechtlich bindend.<br/>
+            Alle Rechte vorbehalten.<br/>
+            Gerichtsstand: ${companyProfile?.city || 'Durmersheim'}
+          </div>
         </div>
       </div>
     `;
