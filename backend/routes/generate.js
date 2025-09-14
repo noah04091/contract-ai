@@ -3103,7 +3103,10 @@ router.post("/pdf", verifyToken, async (req, res) => {
     }
 
     // 🔴 FIX: HTML aus DB laden oder neu generieren
-    let htmlContent = contract.contractHTML || contract.htmlContent || contract.contentHTML;
+    // 🚧 DEVELOPMENT FLAG: Force-Regenerate für Unterschrifts-Testing
+    const FORCE_REGENERATE_HTML = true; // <- Auf false setzen nach Testing
+    
+    let htmlContent = FORCE_REGENERATE_HTML ? null : (contract.contractHTML || contract.htmlContent || contract.contentHTML);
     
     if (!htmlContent) {
       console.log("🔄 Kein HTML vorhanden, generiere neu...");
