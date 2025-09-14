@@ -1493,34 +1493,6 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
           </p>
         </div>
         
-        <!-- PROFESSIONAL FOOTER - Nach Unterschriften (kompakt) -->
-        <div style="
-          margin-top: 10mm;
-          padding-top: 6mm;
-          border-top: 1px solid #ccc;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          font-size: 8pt;
-          color: #666;
-        ">
-          <div>
-            <strong style="font-size: 10pt; color: #333;">KAUFVERTRAG</strong><br/>
-            © ${new Date().getFullYear()} ${companyProfile?.companyName || 'Online Handel Noah Liebold'}
-          </div>
-          
-          <div style="text-align: center;">
-            <strong>Digitale Verifizierung</strong><br/>
-            ${documentHash || '3D1B88A9629F1FFC'}
-          </div>
-          
-          <div style="text-align: right;">
-            <strong>Rechtlicher Hinweis:</strong><br/>
-            Dieses Dokument ist rechtlich bindend.<br/>
-            Alle Rechte vorbehalten.<br/>
-            Gerichtsstand: ${companyProfile?.city || 'Durmersheim'}
-          </div>
-        </div>
       </div>
     `;
   } // Ende Unterschriftssektion - wird IMMER hinzugefügt
