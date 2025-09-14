@@ -480,7 +480,7 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
       // 🆕 FRESHFIELDS/CLIFFORD CHANCE NIVEAU - WELTKLASSE-KANZLEI-STANDARD
       primary: '#1a1a1a',              // TIEFSCHWARZ für maximale Seriosität
       secondary: '#2c2c2c',             // Dunkelgrau für Akzente
-      accent: '#8B4513',                // Dezentes Braun (traditionell-konservativ)
+      accent: '#333333',                // SERIÖSES DUNKELGRAU (Kanzlei-Standard)
       text: '#1a1a1a',                  // Tiefschwarz für Text
       lightBg: '#fefefe',               // Nahezu reines Weiß
       border: '#cccccc',                // Neutrales Grau für Abgrenzungen
@@ -490,14 +490,14 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
       fontFamily: '"Times New Roman", "Liberation Serif", "DejaVu Serif", serif',
       headingFont: '"Times New Roman", serif',
       fontSize: '10.5pt',               // KOMPAKT 10.5pt für 5-6 Seiten
-      lineHeight: '1.35',               // KOMPAKT 1.35 für mehr Inhalt pro Seite
+      lineHeight: '1.15',               // HOCHWERTIGE 1.15 für elegante Lesbarkeit
       letterSpacing: '0px',             // Kein Letter-Spacing bei Kanzleien
       textAlign: 'justify',             // BLOCKSATZ - Kanzlei-Pflicht
       hyphens: 'auto',                  // Automatische Silbentrennung
       hyphenateCharacter: '"-"',        // Deutsche Silbentrennung
       
       // 🔥 MILLIMETER-BASIERTE ABSTÄNDE (PROFESSIONELL)
-      sectionMargin: 'margin: 8.47mm 0;',          // 24pt = 8.47mm
+      sectionMargin: 'margin: 10.58mm 0;',         // 30pt = 10.58mm (mehr Raum zwischen §§)
       paragraphSpacing: 'margin-bottom: 4.23mm;',  // 12pt = 4.23mm
       indentation: 'text-indent: 12.7mm;',         // 36pt = 12.7mm für Einrückungen
       
@@ -507,7 +507,7 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
       pageBreakInside: 'avoid',         // Blockelemente nicht trennen
       
       // DESIGN-ELEMENTE
-      sectionNumberStyle: 'color: #1a1a1a; margin-right: 8.47mm; font-weight: bold; font-size: 11pt; min-width: 12.7mm; display: inline-block; text-align: left;',
+      sectionNumberStyle: 'color: #1a1a1a; margin-right: 10mm; font-weight: bold; font-size: 11pt; min-width: 12.7mm; display: inline-block; text-align: left;',
       pageMargins: 'margin: 0; padding: 0;',
       headerHeight: '33.87mm',          // ~96pt in mm für professionellen Header
       useGradients: false,              // Kanzleien verwenden keine Gradienten
@@ -531,7 +531,7 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
       fontSize: '10.5pt',               // KOMPAKT für mehr Inhalt
       lineHeight: '1.35',               // KOMPAKT für 5-6 Seiten
       letterSpacing: '0.3px',
-      sectionNumberStyle: 'background: #c9a961; color: white; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-right: 15px; font-weight: bold; font-size: 14px;',
+      sectionNumberStyle: 'background: #c9a961; color: white; width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-right: 18px; font-weight: bold; font-size: 14px;',
       pageMargins: 'margin: 0; padding: 0;',
       sectionMargin: 'margin: 8.8mm 0;',      // 25px = 8.8mm
       paragraphSpacing: 'margin-bottom: 4.9mm;', // 14px = 4.9mm
@@ -555,7 +555,7 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
       fontSize: '10.5pt',
       lineHeight: '1.35',               // KOMPAKT für mehr Inhalt
       letterSpacing: '0px',
-      sectionNumberStyle: 'background: white; color: #0ea5e9; border: 2px solid #0ea5e9; width: 30px; height: 30px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; margin-right: 12px; font-weight: 600; font-size: 13px;',
+      sectionNumberStyle: 'background: white; color: #0ea5e9; border: 2px solid #0ea5e9; width: 30px; height: 30px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; margin-right: 15px; font-weight: 600; font-size: 13px;',
       pageMargins: 'margin: 0; padding: 0;',
       sectionMargin: 'margin: 7.1mm 0;',      // 20px = 7.1mm  
       paragraphSpacing: 'margin-bottom: 4.2mm;', // 12px = 4.2mm
@@ -808,7 +808,7 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
             font-size: 12pt;
             font-weight: bold;
             color: ${theme.primary};
-            margin: 12pt 0 6pt 0;
+            margin: 12pt 0 8pt 0;
             text-transform: uppercase;
             letter-spacing: 0px;
             text-align: left;
@@ -824,7 +824,7 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
             font-size: 12pt;
             font-weight: bold;
             color: ${theme.primary};
-            margin: 12pt 0 6pt 0;
+            margin: 12pt 0 8pt 0;
             text-transform: uppercase;
             letter-spacing: 0px;
             text-align: left;
@@ -840,7 +840,7 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
             font-size: 12pt;
             font-weight: bold;
             color: ${theme.primary};
-            margin: 12pt 0 6pt 0;
+            margin: 12pt 0 8pt 0;
             text-transform: uppercase;
             letter-spacing: 0px;
             text-align: left;
@@ -862,10 +862,10 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
           ">
             <h3 style="
               font-family: ${theme.headingFont};
-              font-size: 14pt;
-              font-weight: 600;
+              font-size: 12pt;
+              font-weight: bold;
               color: ${theme.primary};
-              letter-spacing: 3px;
+              letter-spacing: 1px;
               text-transform: uppercase;
               position: relative;
               display: inline-block;
