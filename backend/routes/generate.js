@@ -789,14 +789,14 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
         `;
       }
     }
-    // PARAGRAPH-ÜBERSCHRIFTEN - Professionelles Card-Design
+    // PARAGRAPH-ÜBERSCHRIFTEN - EINHEITLICHES PROFESSIONELLES FORMAT
     else if (trimmedLine.startsWith('§')) {
       sectionCounter++;
       subsectionCounters[sectionCounter] = 0;
       
       // Schließe vorherige Section
       if (currentSection) {
-        htmlContent += '</div></div>';
+        htmlContent += '</div>';
       }
       
       currentSection = trimmedLine;
@@ -806,13 +806,14 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
           <h2 style="
             font-family: ${theme.headingFont};
             font-size: 12pt;
-            font-weight: 600;
+            font-weight: bold;
             color: ${theme.primary};
-            margin: 25px 0 15px 0;
+            margin: 12pt 0 6pt 0;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0px;
+            text-align: left;
           ">
-            ${sectionCounter}. ${trimmedLine}
+            ${trimmedLine}
           </h2>
           <div style="margin-left: 0;">
         `;
@@ -821,11 +822,14 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
           <h2 style="
             font-family: ${theme.headingFont};
             font-size: 12pt;
-            font-weight: 600;
+            font-weight: bold;
             color: ${theme.primary};
-            margin: 25px 0 15px 0;
+            margin: 12pt 0 6pt 0;
+            text-transform: uppercase;
+            letter-spacing: 0px;
+            text-align: left;
           ">
-            ${sectionCounter}. ${trimmedLine}
+            ${trimmedLine}
           </h2>
           <div style="margin-left: 0;">
         `;
@@ -834,11 +838,14 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
           <h2 style="
             font-family: ${theme.headingFont};
             font-size: 12pt;
-            font-weight: 600;
+            font-weight: bold;
             color: ${theme.primary};
-            margin: 25px 0 15px 0;
+            margin: 12pt 0 6pt 0;
+            text-transform: uppercase;
+            letter-spacing: 0px;
+            text-align: left;
           ">
-            ${sectionCounter}. ${trimmedLine}
+            ${trimmedLine}
           </h2>
           <div style="margin-left: 0;">
         `;
