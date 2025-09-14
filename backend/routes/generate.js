@@ -1310,22 +1310,20 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
   // Unterschriften IMMER hinzufügen - nicht nur wenn inSignatureSection gesetzt
   {
     htmlContent += `
-      <!-- UNTERSCHRIFTSBEREICH - KANZLEI-STANDARD -->
+      <!-- UNTERSCHRIFTSBEREICH - KANZLEI-STANDARD (KOMPAKT) -->
       <div style="
-        page-break-before: always;
-        margin-top: 80px;
-        padding: 40px 0;
-        min-height: 400px;
+        margin-top: 30mm;
+        padding: 20mm 0 0 0;
         page-break-inside: avoid;
       ">
-        <!-- Überschrift - dezent und professionell -->
+        <!-- Überschrift - dezent und professionell (kompakt) -->
         <h2 style="
           text-align: center;
           font-family: ${theme.headingFont};
           font-size: 12pt;
           font-weight: 600;
           color: ${theme.primary};
-          margin-bottom: 40mm;
+          margin-bottom: 20mm;
           letter-spacing: 0.5px;
         ">Unterschriften der Vertragsparteien</h2>
         
@@ -1353,12 +1351,12 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
               text-transform: uppercase;
             ">Verkäufer / Partei A</h3>
             
-            <!-- Ort und Datum - einheitlich -->
-            <div style="margin-bottom: 15mm;">
+            <!-- Ort und Datum - kompakt -->
+            <div style="margin-bottom: 10mm;">
               <div style="
                 border-bottom: 1px solid #666;
-                height: 12mm;
-                margin-bottom: 3mm;
+                height: 8mm;
+                margin-bottom: 2mm;
               "></div>
               <p style="
                 font-family: ${theme.fontFamily};
@@ -1369,12 +1367,12 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
               ">Ort, Datum</p>
             </div>
             
-            <!-- Unterschriftslinie - länger mit mehr Abstand -->
-            <div style="margin-bottom: 15mm;">
+            <!-- Unterschriftslinie - kompakt aber professionell -->
+            <div style="margin-bottom: 10mm;">
               <div style="
                 border-bottom: 2px solid #333;
-                height: 15mm;
-                margin-bottom: 4mm;
+                height: 12mm;
+                margin-bottom: 3mm;
                 width: 100%;
               "></div>
               <p style="
@@ -1423,12 +1421,12 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
               text-transform: uppercase;
             ">Käufer / Partei B</h3>
             
-            <!-- Ort und Datum - identisch zur Verkäufer-Spalte -->
-            <div style="margin-bottom: 15mm;">
+            <!-- Ort und Datum - identisch zur Verkäufer-Spalte (kompakt) -->
+            <div style="margin-bottom: 10mm;">
               <div style="
                 border-bottom: 1px solid #666;
-                height: 12mm;
-                margin-bottom: 3mm;
+                height: 8mm;
+                margin-bottom: 2mm;
               "></div>
               <p style="
                 font-family: ${theme.fontFamily};
@@ -1439,12 +1437,12 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
               ">Ort, Datum</p>
             </div>
             
-            <!-- Unterschriftslinie - identisch zur Verkäufer-Spalte -->
-            <div style="margin-bottom: 15mm;">
+            <!-- Unterschriftslinie - identisch zur Verkäufer-Spalte (kompakt) -->
+            <div style="margin-bottom: 10mm;">
               <div style="
                 border-bottom: 2px solid #333;
-                height: 15mm;
-                margin-bottom: 4mm;
+                height: 12mm;
+                margin-bottom: 3mm;
                 width: 100%;
               "></div>
               <p style="
@@ -1476,10 +1474,10 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
           </div>
         </div>
         
-        <!-- Zusätzliche Zeugen-Sektion (optional) -->
+        <!-- Zusätzliche Zeugen-Sektion (optional) - kompakt -->
         <div style="
-          margin-top: 40mm;
-          padding-top: 15mm;
+          margin-top: 15mm;
+          padding-top: 8mm;
           border-top: 1px solid #ddd;
         ">
           <p style="
@@ -1488,17 +1486,17 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
             color: #999;
             text-align: center;
             font-style: italic;
-            margin-bottom: 15mm;
+            margin-bottom: 8mm;
           ">
             Dieser Vertrag wurde in zweifacher Ausfertigung erstellt. 
             Jede Partei erhält eine Ausfertigung.
           </p>
         </div>
         
-        <!-- PROFESSIONAL FOOTER - Nach Unterschriften -->
+        <!-- PROFESSIONAL FOOTER - Nach Unterschriften (kompakt) -->
         <div style="
-          margin-top: 20mm;
-          padding-top: 10mm;
+          margin-top: 10mm;
+          padding-top: 6mm;
           border-top: 1px solid #ccc;
           display: flex;
           justify-content: space-between;
