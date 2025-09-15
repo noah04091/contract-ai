@@ -7,6 +7,9 @@ const axios = require("axios");
 const { OpenAI } = require("openai");
 const cheerio = require("cheerio");
 
+// 🔧 Load environment variables
+require("dotenv").config();
+
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const SERP_API_KEY = process.env.SERP_API_KEY;
 
