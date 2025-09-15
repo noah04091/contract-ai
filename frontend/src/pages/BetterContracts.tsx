@@ -146,18 +146,33 @@ const BetterContracts: React.FC = () => {
   };
 
   const handleFileSelect = () => {
+    console.log('🖱️ File select clicked');
+
     if (!isPremium) {
       setError("Diese Funktion ist nur für Premium-Nutzer verfügbar.");
       return;
     }
-    fileInputRef.current?.click();
+
+    // ✅ Reset file input value vor dem Click um onChange zu garantieren
+    if (fileInputRef.current) {
+      console.log('🔄 Resetting file input value');
+      fileInputRef.current.value = '';
+      setTimeout(() => {
+        // ✅ Kleine Verzögerung um sicherzustellen dass reset komplett ist
+        console.log('🖱️ Triggering file input click');
+        fileInputRef.current?.click();
+      }, 10);
+    }
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('📁 File change event triggered', e.target.files?.length);
+
     if (!isPremium) return;
 
     const file = e.target.files?.[0];
     if (file) {
+      console.log('📄 File selected:', file.name);
       await processFile(file);
       // ✅ File input wird bereits in processFile zurückgesetzt
     }
@@ -463,6 +478,15 @@ const BetterContracts: React.FC = () => {
 
           {step === 1 && (
             <div className="contract-step-container">
+              {/* ✅ File input outside the clickable area to prevent conflicts */}
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept=".pdf,.docx,.doc,.txt"
+                style={{ display: 'none' }}
+                disabled={!isPremium}
+              />
               <div
                 className={`contract-uploader ${dragActive ? 'drag-active' : ''} ${!isPremium ? 'disabled' : ''}`}
                 onDrop={handleDrop}
@@ -474,14 +498,6 @@ const BetterContracts: React.FC = () => {
                   cursor: isPremium ? 'pointer' : 'not-allowed'
                 }}
               >
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
-                  accept=".pdf,.docx,.doc,.txt"
-                  className="file-input"
-                  disabled={!isPremium}
-                />
                 
                 <div className="uploader-content">
                   <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
