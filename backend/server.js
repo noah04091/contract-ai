@@ -611,7 +611,15 @@ const connectDB = async () => {
       console.error("❌ Fehler bei Better-Contracts-Route:", err);
     }
 
-    // ✅ 13. LEGAL PULSE
+    // ✅ 13. SAVED ALTERNATIVES
+    try {
+      app.use("/api/saved-alternatives", verifyToken, require("./routes/savedAlternatives"));
+      console.log("✅ Saved Alternatives Routen geladen unter /api/saved-alternatives");
+    } catch (err) {
+      console.error("❌ Fehler bei Saved Alternatives Routen:", err);
+    }
+
+    // ✅ 14. LEGAL PULSE
     try {
       app.use("/api/legal-pulse", verifyToken, require("./routes/legalPulse"));
       console.log("✅ Legal Pulse Routen geladen unter /api/legal-pulse");
@@ -619,7 +627,7 @@ const connectDB = async () => {
       console.error("❌ Fehler bei Legal Pulse Routen:", err);
     }
 
-    // ✅ 14. S3 ROUTES
+    // ✅ 15. S3 ROUTES
     try {
       const s3Routes = require("./routes/s3Routes");
       app.use("/api/s3", s3Routes);

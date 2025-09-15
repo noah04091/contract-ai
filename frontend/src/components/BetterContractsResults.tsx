@@ -11,7 +11,7 @@ interface Alternative {
   relevantInfo: string;
   hasDetailedData: boolean;
   recommendation?: 'best' | 'value' | 'premium';
-  monthlyPrice?: number;
+  monthlyPrice?: number | null;
   provider?: string;
   features?: string[];
 }
@@ -39,6 +39,82 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
 }) => {
   const [sortBy, setSortBy] = useState<SortOption>('relevance');
   const [showAllAlternatives, setShowAllAlternatives] = useState(false);
+  const [savingStates, setSavingStates] = useState<Record<string, boolean>>({});
+  const [savedStates, setSavedStates] = useState<Record<string, boolean>>({});
+
+  // 💾 Save alternative function
+  const handleSaveAlternative = async (alternative: Alternative & { monthlyPrice?: number | null; provider?: string; features?: string[] }) => {
+    const alternativeKey = alternative.link;
+
+    if (savedStates[alternativeKey]) {
+      // Already saved, show message
+      alert('Diese Alternative wurde bereits gespeichert!');
+      return;
+    }
+
+    setSavingStates(prev => ({ ...prev, [alternativeKey]: true }));
+
+    try {
+      const response = await fetch('/api/saved-alternatives', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          title: alternative.title,
+          link: alternative.link,
+          snippet: alternative.snippet,
+          prices: alternative.prices,
+          provider: alternative.provider || 'Unknown',
+          features: alternative.features || [],
+          contractType,
+          relevantInfo: alternative.relevantInfo,
+          hasDetailedData: alternative.hasDetailedData,
+          monthlyPrice: alternative.monthlyPrice
+        }),
+      });
+
+      if (response.ok) {
+        setSavedStates(prev => ({ ...prev, [alternativeKey]: true }));
+
+        // Show success message
+        const successDiv = document.createElement('div');
+        successDiv.innerHTML = `
+          <div style="
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #10b981;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            z-index: 10000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+          ">
+            ✅ Alternative gespeichert! Im Dashboard anzeigen
+          </div>
+        `;
+        document.body.appendChild(successDiv);
+        setTimeout(() => document.body.removeChild(successDiv), 3000);
+
+      } else {
+        const error = await response.json();
+        if (response.status === 409) {
+          // Already exists
+          setSavedStates(prev => ({ ...prev, [alternativeKey]: true }));
+          alert('Diese Alternative wurde bereits gespeichert!');
+        } else {
+          throw new Error(error.error || 'Fehler beim Speichern');
+        }
+      }
+    } catch (error) {
+      console.error('Error saving alternative:', error);
+      alert('Fehler beim Speichern der Alternative. Bitte versuchen Sie es erneut.');
+    } finally {
+      setSavingStates(prev => ({ ...prev, [alternativeKey]: false }));
+    }
+  };
 
   // Extract price from strings and estimate monthly cost
   const extractPrice = (priceStrings: string[]): number | null => {
@@ -248,11 +324,40 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
                   Zum Anbieter
                 </a>
                 
-                <button className="action-button secondary">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7z"/>
-                  </svg>
-                  Merken
+                <button
+                  className={`action-button ${savedStates[alternative.link] ? 'saved' : 'secondary'}`}
+                  onClick={() => handleSaveAlternative(alternative)}
+                  disabled={savingStates[alternative.link]}
+                >
+                  {savingStates[alternative.link] ? (
+                    <>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="animate-spin">
+                        <path d="M12 2v4"/>
+                        <path d="M12 18v4"/>
+                        <path d="M4.93 4.93l2.83 2.83"/>
+                        <path d="M16.24 16.24l2.83 2.83"/>
+                        <path d="M2 12h4"/>
+                        <path d="M18 12h4"/>
+                        <path d="M4.93 19.07l2.83-2.83"/>
+                        <path d="M16.24 7.76l2.83-2.83"/>
+                      </svg>
+                      Speichern...
+                    </>
+                  ) : savedStates[alternative.link] ? (
+                    <>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M20 6L9 17l-5-5"/>
+                      </svg>
+                      Gespeichert
+                    </>
+                  ) : (
+                    <>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.51 4.04 3 5.5l7 7z"/>
+                      </svg>
+                      Merken
+                    </>
+                  )}
                 </button>
               </div>
 

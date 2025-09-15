@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import styles from "./Dashboard.module.css";
 import GeneratedContractsSection from "../components/GeneratedContractsSection";
+import SavedAlternatives from "../components/SavedAlternatives";
 import InfoTooltip from "../components/InfoTooltip";
 import { tooltipTexts } from "../utils/tooltipTexts";
 import { generateICS } from "../utils/icsGenerator";
@@ -719,6 +720,9 @@ export default function Dashboard() {
           </div>
           <GeneratedContractsSection contracts={contracts} />
         </div>
+
+        {/* 🔖 Gespeicherte Alternativen Sektion */}
+        <SavedAlternatives />
 
         {/* 🆕 Legal Pulse Overview - KOMPLETT HELL */}
         <div className={styles.section}>
