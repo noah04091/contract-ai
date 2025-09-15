@@ -166,15 +166,6 @@ const SavedAlternatives: React.FC = () => {
     }
   };
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'saved': return 'Gespeichert';
-      case 'compared': return 'Verglichen';
-      case 'contacted': return 'Kontaktiert';
-      case 'dismissed': return 'Abgelehnt';
-      default: return 'Unbekannt';
-    }
-  };
 
   if (loading) {
     return (
