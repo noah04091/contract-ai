@@ -154,8 +154,82 @@ function validateInput(contractText, searchQuery) {
   };
 }
 
-// 🆕 Erweiterte Search Query Generation
+// 🆕 Contract Context Analysis
+function analyzeContractContext(contractText) {
+  const context = {
+    provider: null,
+    service: null,
+    priceInfo: null,
+    specificFeatures: [],
+    category: 'unknown'
+  };
+
+  const text = contractText.toLowerCase();
+
+  // Provider Detection
+  const providers = {
+    'anthropic': 'AI/Claude API',
+    'openai': 'AI/ChatGPT API',
+    'telekom': 'Mobilfunk/Internet',
+    'vodafone': 'Mobilfunk/Internet',
+    'o2': 'Mobilfunk/Internet',
+    '1&1': 'Internet/Hosting',
+    'check24': 'Vergleichsportal',
+    'verivox': 'Vergleichsportal',
+    'allianz': 'Versicherung',
+    'axa': 'Versicherung',
+    'mcfit': 'Fitness',
+    'netflix': 'Streaming',
+    'spotify': 'Streaming'
+  };
+
+  for (const [provider, category] of Object.entries(providers)) {
+    if (text.includes(provider)) {
+      context.provider = provider;
+      context.category = category;
+      break;
+    }
+  }
+
+  // Service Detection
+  const services = {
+    'max plan': 'AI API Premium Plan',
+    'claude': 'AI Assistant Service',
+    'gpt': 'AI Language Model',
+    'api': 'API Service',
+    'hosting': 'Web Hosting',
+    'webspace': 'Web Hosting',
+    'haftpflicht': 'Haftpflichtversicherung',
+    'kfz': 'KFZ Versicherung',
+    'handy': 'Mobilfunk',
+    'internet': 'Internet/DSL',
+    'strom': 'Stromtarif',
+    'gas': 'Gastarif'
+  };
+
+  for (const [service, description] of Object.entries(services)) {
+    if (text.includes(service)) {
+      context.service = service;
+      context.specificFeatures.push(description);
+      break;
+    }
+  }
+
+  // Price Detection
+  const priceMatches = contractText.match(/[€$](\d+[\.,]?\d*)/g);
+  if (priceMatches) {
+    context.priceInfo = priceMatches[0];
+  }
+
+  return context;
+}
+
+// 🆕 Erweiterte Search Query Generation mit Contract Context Analysis
 function generateEnhancedSearchQueries(detectedType, contractText) {
+  // 🔍 Analyze contract content for specific context
+  const contractContext = analyzeContractContext(contractText);
+  console.log(`📊 Contract Context:`, contractContext);
+
   const baseQueries = {
     "handy": [
       "günstige handytarife ohne vertrag 2024",
@@ -197,39 +271,95 @@ function generateEnhancedSearchQueries(detectedType, contractText) {
     "streaming": [
       "streaming dienste vergleich deutschland 2024",
       "netflix alternativen günstiger"
+    ],
+    "hosting": [
+      "webhosting vergleich günstig deutschland",
+      "hosting anbieter wechsel 2024",
+      "günstige webspace alternative"
+    ],
+    "software": [
+      "software alternativen günstig",
+      "saas tools vergleich deutschland",
+      "günstige software lizenz alternativen"
+    ],
+    "ai": [
+      "AI tools alternativen günstiger",
+      "chatgpt alternativen deutschland",
+      "künstliche intelligenz software vergleich",
+      "ai subscription günstiger"
     ]
   };
 
-  // Erweiterte Suche basierend auf Vertragsinhalt
+  // 🆕 Context-based Query Generation
   const enhancedQueries = [];
-  const type = detectedType.toLowerCase();
 
-  if (baseQueries[type]) {
-    enhancedQueries.push(...baseQueries[type]);
+  // 1. Use detected contract context for better targeting
+  if (contractContext.provider === 'anthropic' || contractContext.service === 'max plan') {
+    enhancedQueries.push(
+      "ChatGPT alternativen deutschland günstig",
+      "AI assistant software vergleich",
+      "claude alternative günstiger",
+      "openai chatgpt konkurrenten 2024",
+      "künstliche intelligenz tools günstig"
+    );
+  } else if (contractContext.category === 'AI/Claude API' || contractContext.category === 'AI/ChatGPT API') {
+    enhancedQueries.push(
+      "AI API alternativen günstiger",
+      "language model api vergleich",
+      "chatbot software günstig"
+    );
+  } else {
+    // Use original type-based queries
+    const type = detectedType.toLowerCase();
+    if (baseQueries[type]) {
+      enhancedQueries.push(...baseQueries[type]);
+    }
   }
 
-  // Zusätzliche Queries basierend auf Preisrange
-  if (contractText.includes('€') || contractText.includes('euro')) {
-    const priceMatches = contractText.match(/(\d+)[,.]?(\d*)\s*(€|euro)/gi);
-    if (priceMatches && priceMatches.length > 0) {
-      const price = parseFloat(priceMatches[0].replace(/[€euro,]/g, '').trim());
-      if (price > 0) {
-        enhancedQueries.push(`${type} unter ${Math.floor(price)}€ vergleich`);
-        enhancedQueries.push(`günstige ${type} alternative unter ${Math.floor(price * 0.8)}€`);
+  // 2. Add context-specific searches
+  if (contractContext.provider) {
+    enhancedQueries.push(`${contractContext.provider} alternative günstiger`);
+    enhancedQueries.push(`${contractContext.provider} konkurrent vergleich`);
+  }
+
+  if (contractContext.service) {
+    enhancedQueries.push(`${contractContext.service} alternative deutschland`);
+  }
+
+  // 3. Price-based queries (improved)
+  if (contractContext.priceInfo) {
+    const price = parseFloat(contractContext.priceInfo.replace(/[€$,]/g, ''));
+    if (price > 0) {
+      if (contractContext.category.includes('AI')) {
+        enhancedQueries.push(`AI tools unter ${Math.floor(price)}€ monatlich`);
+        enhancedQueries.push(`chatbot software unter ${Math.floor(price * 0.7)}€`);
+      } else {
+        enhancedQueries.push(`${detectedType} unter ${Math.floor(price)}€ vergleich`);
+        enhancedQueries.push(`günstige ${detectedType} alternative unter ${Math.floor(price * 0.8)}€`);
       }
     }
   }
 
-  // Fallback wenn Typ unbekannt
+  // 4. Fallback with better generic searches
   if (enhancedQueries.length === 0) {
-    enhancedQueries.push(
-      "vertragsvergleich deutschland günstig",
-      "anbieter wechsel bonus 2024",
-      "günstige alternative vertrag"
-    );
+    if (contractContext.category !== 'unknown') {
+      enhancedQueries.push(
+        `${contractContext.category} alternativen deutschland`,
+        `${contractContext.category} vergleich günstig`,
+        `${contractContext.category} anbieter wechsel 2024`
+      );
+    } else {
+      enhancedQueries.push(
+        "software subscription alternativen",
+        "saas tools vergleich deutschland",
+        "günstige service alternative"
+      );
+    }
   }
 
-  return enhancedQueries;
+  // 5. Remove duplicates and limit
+  const uniqueQueries = [...new Set(enhancedQueries)];
+  return uniqueQueries.slice(0, 6); // Limit to 6 best queries
 }
 
 // 🆕 Multi-Source Search Function
@@ -548,11 +678,11 @@ router.post("/", async (req, res) => {
         messages: [
           {
             role: "system",
-            content: "Du bist ein Experte für Vertragsanalyse. Erkenne den Typ des gegebenen Vertrags. Antworte nur mit einem der folgenden Begriffe: handy, mobilfunk, internet, strom, gas, versicherung, kfz, fitness, streaming, bank, kredit, hosting, unbekannt"
+            content: "Du bist ein Experte für Vertragsanalyse. Erkenne den Typ des gegebenen Vertrags. Antworte nur mit einem der folgenden Begriffe: handy, mobilfunk, internet, strom, gas, versicherung, kfz, fitness, streaming, bank, kredit, hosting, software, ai, saas, unbekannt. Besondere Aufmerksamkeit für: Anthropic/Claude = ai, OpenAI/ChatGPT = ai, Software-Abos = software, Web-Services = saas"
           },
           {
             role: "user",
-            content: `Analysiere diesen Vertrag und erkenne den Typ:\n\n${cleanContractText.slice(0, 1000)}`
+            content: `Analysiere diesen Vertrag und erkenne den Typ. Achte besonders auf Anbieter wie Anthropic, OpenAI, oder Software-Services:\n\n${cleanContractText.slice(0, 1000)}`
           }
         ],
         temperature: 0.1,
