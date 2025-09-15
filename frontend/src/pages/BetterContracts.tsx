@@ -155,10 +155,11 @@ const BetterContracts: React.FC = () => {
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!isPremium) return;
-    
+
     const file = e.target.files?.[0];
     if (file) {
       await processFile(file);
+      // ✅ File input wird bereits in processFile zurückgesetzt
     }
   };
 
@@ -199,9 +200,18 @@ const BetterContracts: React.FC = () => {
       const data = await res.json();
       setContractText(data.text || '');
       setStep(2);
+
+      // ✅ Reset file input nach erfolgreichem Upload
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     } catch (err) {
       console.error("Fehler beim Extrahieren:", err);
       setError("Fehler beim Datei-Upload. Bitte versuchen Sie es erneut.");
+      // ✅ Reset file input auch bei Fehlern
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     } finally {
       clearInterval(progressInterval);
     }
