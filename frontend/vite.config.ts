@@ -37,7 +37,8 @@ export default defineConfig({
         target: "https://api.contract-ai.de",
         changeOrigin: true,
         secure: true,
-        rewrite: (path) => path.replace(/^\/api/, ""),
+        // 🔧 FIXED: Behalte /api im Pfad - Backend erwartet /api/better-contracts
+        // rewrite: (path) => path.replace(/^\/api/, ""), // REMOVED
       },
     },
     fs: {
