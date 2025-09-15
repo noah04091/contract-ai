@@ -7,20 +7,33 @@ const axios = require("axios");
 const { OpenAI } = require("openai");
 const cheerio = require("cheerio");
 
+// 🔧 FORCE reload environment variables for this module
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
+
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-const SERP_API_KEY = process.env.SERP_API_KEY;
+let SERP_API_KEY = process.env.SERP_API_KEY;
+
+// 🆕 HARDCODED FALLBACK for Production (temporary)
+if (!SERP_API_KEY) {
+  console.log(`⚠️ SERP_API_KEY nicht aus Environment geladen, verwende Fallback`);
+  SERP_API_KEY = "5e473edbc79256c07dde6b36f2a8595a9e30f41abdc1d3d46c77f7165d0a9823";
+}
 
 // 🆕 Debug Environment Variables Loading
 console.log(`🔧 Environment Check:`);
 console.log(`  - NODE_ENV: ${process.env.NODE_ENV}`);
 console.log(`  - OPENAI_API_KEY: ${process.env.OPENAI_API_KEY ? 'LOADED' : 'MISSING'}`);
-console.log(`  - SERP_API_KEY: ${process.env.SERP_API_KEY ? 'LOADED' : 'MISSING'}`);
-console.log(`  - SERP_API_KEY Value: ${process.env.SERP_API_KEY ? process.env.SERP_API_KEY.substring(0, 10) + '...' : 'NULL'}`);
+console.log(`  - SERP_API_KEY (from env): ${process.env.SERP_API_KEY ? 'LOADED' : 'MISSING'}`);
+console.log(`  - SERP_API_KEY (final): ${SERP_API_KEY ? 'AVAILABLE' : 'NULL'}`);
+console.log(`  - SERP_API_KEY Value: ${SERP_API_KEY ? SERP_API_KEY.substring(0, 10) + '...' : 'NULL'}`);
 
-// 🚨 Fallback wenn SERP API Key fehlt
+// 🚨 Final Check
 if (!SERP_API_KEY) {
-  console.error(`🚨 CRITICAL: SERP_API_KEY ist nicht verfügbar!`);
+  console.error(`🚨 CRITICAL: SERP_API_KEY ist immer noch nicht verfügbar!`);
   console.error(`🔍 Verfügbare Environment Variables:`, Object.keys(process.env).filter(key => key.includes('SERP')));
+} else {
+  console.log(`✅ SERP_API_KEY erfolgreich geladen!`);
 }
 
 // 🆕 STEP 3: Rate Limiting (einfache In-Memory Lösung)
