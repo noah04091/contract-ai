@@ -128,57 +128,313 @@ function validateInput(contractText, searchQuery) {
   };
 }
 
-// 🔧 Website-Inhalt extrahieren (unverändert)
+// 🆕 Erweiterte Search Query Generation
+function generateEnhancedSearchQueries(detectedType, contractText) {
+  const baseQueries = {
+    "handy": [
+      "günstige handytarife ohne vertrag 2024",
+      "mobilfunk allnet flat vergleich deutschland",
+      "prepaid tarife vergleich check24",
+      "smartphone tarif wechsel bonus"
+    ],
+    "mobilfunk": [
+      "mobilfunk tarife vergleich günstig deutschland",
+      "handyvertrag ohne laufzeit günstig",
+      "allnet flat unter 20 euro vergleich"
+    ],
+    "internet": [
+      "dsl internet tarife vergleich günstig",
+      "glasfaser anbieter wechsel 2024",
+      "internet flatrate ohne drosselung vergleich"
+    ],
+    "strom": [
+      "stromanbieter wechsel bonus 2024",
+      "günstiger strom vergleich deutschland",
+      "ökostrom tarife günstig vergleich"
+    ],
+    "gas": [
+      "gasanbieter vergleich günstig deutschland",
+      "gas tarife wechsel bonus 2024"
+    ],
+    "versicherung": [
+      "versicherung vergleich günstig deutschland",
+      "versicherungstarife wechsel 2024"
+    ],
+    "kfz": [
+      "kfz versicherung vergleich günstig",
+      "autoversicherung wechsel 2024 check24"
+    ],
+    "fitness": [
+      "fitnessstudio preise vergleich deutschland",
+      "günstige fitness studios kündigung"
+    ],
+    "streaming": [
+      "streaming dienste vergleich deutschland 2024",
+      "netflix alternativen günstiger"
+    ]
+  };
+
+  // Erweiterte Suche basierend auf Vertragsinhalt
+  const enhancedQueries = [];
+  const type = detectedType.toLowerCase();
+
+  if (baseQueries[type]) {
+    enhancedQueries.push(...baseQueries[type]);
+  }
+
+  // Zusätzliche Queries basierend auf Preisrange
+  if (contractText.includes('€') || contractText.includes('euro')) {
+    const priceMatches = contractText.match(/(\d+)[,.]?(\d*)\s*(€|euro)/gi);
+    if (priceMatches && priceMatches.length > 0) {
+      const price = parseFloat(priceMatches[0].replace(/[€euro,]/g, '').trim());
+      if (price > 0) {
+        enhancedQueries.push(`${type} unter ${Math.floor(price)}€ vergleich`);
+        enhancedQueries.push(`günstige ${type} alternative unter ${Math.floor(price * 0.8)}€`);
+      }
+    }
+  }
+
+  // Fallback wenn Typ unbekannt
+  if (enhancedQueries.length === 0) {
+    enhancedQueries.push(
+      "vertragsvergleich deutschland günstig",
+      "anbieter wechsel bonus 2024",
+      "günstige alternative vertrag"
+    );
+  }
+
+  return enhancedQueries;
+}
+
+// 🆕 Multi-Source Search Function
+async function performMultiSourceSearch(searchQueries, SERP_API_KEY) {
+  const allResults = [];
+
+  // Probiere mehrere Suchanfragen nacheinander
+  for (let i = 0; i < Math.min(searchQueries.length, 3); i++) {
+    const query = searchQueries[i];
+    console.log(`🔍 Suche ${i + 1}: "${query}"`);
+
+    try {
+      const serpRes = await axios.get("https://serpapi.com/search.json", {
+        params: {
+          q: query,
+          api_key: SERP_API_KEY,
+          num: 8,
+          gl: "de",
+          hl: "de"
+        },
+        timeout: 8000
+      });
+
+      const results = serpRes.data.organic_results || [];
+      console.log(`📊 Query ${i + 1}: ${results.length} Ergebnisse`);
+
+      if (results.length > 0) {
+        allResults.push(...results);
+
+        // Stop wenn wir genug Ergebnisse haben
+        if (allResults.length >= 15) break;
+      }
+
+      // Kurze Pause zwischen Requests
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+    } catch (error) {
+      console.warn(`⚠️ Query ${i + 1} fehlgeschlagen:`, error.message);
+      continue;
+    }
+  }
+
+  // Deduplizierung basierend auf URL
+  const uniqueResults = [];
+  const seenUrls = new Set();
+
+  for (const result of allResults) {
+    if (!seenUrls.has(result.link)) {
+      seenUrls.add(result.link);
+      uniqueResults.push(result);
+    }
+  }
+
+  console.log(`✅ Multi-Search: ${uniqueResults.length} eindeutige Ergebnisse`);
+  return uniqueResults;
+}
+
+// 🆕 Specialized Scrapers für deutsche Vergleichsportale
+async function extractCheck24Content(url, $, bodyText) {
+  const prices = [];
+  const features = [];
+
+  // Check24-spezifische Selektoren
+  $('.price, .tariff-price, [data-testid*="price"]').each((i, el) => {
+    const priceText = $(el).text().trim();
+    if (priceText.includes('€')) {
+      prices.push(priceText);
+    }
+  });
+
+  // Features extrahieren
+  $('.feature-list li, .tariff-details li, .comparison-feature').each((i, el) => {
+    const feature = $(el).text().trim();
+    if (feature.length > 5 && feature.length < 100) {
+      features.push(feature);
+    }
+  });
+
+  return {
+    prices: prices.slice(0, 8),
+    features: features.slice(0, 5),
+    provider: bodyText.match(/(Telekom|Vodafone|O2|1&1|Congstar|Klarmobil)/gi)?.[0] || 'Unknown'
+  };
+}
+
+async function extractVerivoxContent(url, $, bodyText) {
+  const prices = [];
+  const features = [];
+
+  // Verivox-spezifische Selektoren
+  $('.price-value, .tariff-price, .monthly-cost').each((i, el) => {
+    const priceText = $(el).text().trim();
+    if (priceText.includes('€')) {
+      prices.push(priceText);
+    }
+  });
+
+  // Tarif-Details
+  $('.tariff-feature, .detail-item, .tariff-benefits li').each((i, el) => {
+    const feature = $(el).text().trim();
+    if (feature.length > 5 && feature.length < 100) {
+      features.push(feature);
+    }
+  });
+
+  return {
+    prices: prices.slice(0, 8),
+    features: features.slice(0, 5),
+    provider: bodyText.match(/(E\\.ON|Vattenfall|EnBW|RWE|Check24)/gi)?.[0] || 'Unknown'
+  };
+}
+
+async function extractTarifcheckContent(url, $, bodyText) {
+  const prices = [];
+  const features = [];
+
+  // Tarifcheck-spezifische Selektoren
+  $('.price, .cost, .monthly-price, [class*="price"]').each((i, el) => {
+    const priceText = $(el).text().trim();
+    if (priceText.includes('€') || priceText.includes('EUR')) {
+      prices.push(priceText);
+    }
+  });
+
+  return {
+    prices: prices.slice(0, 8),
+    features: features.slice(0, 5),
+    provider: 'Tarifcheck'
+  };
+}
+
+// 🆕 Enhanced Website-Inhalt extrahieren mit Portal-spezifischer Logik
 async function extractWebContent(url) {
   try {
     console.log(`📄 Extrahiere Inhalt von: ${url}`);
-    
+
+    // Enhanced Headers für bessere Anti-Bot Umgehung
+    const headers = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+      'Accept-Language': 'de-DE,de;q=0.9,en;q=0.8',
+      'Accept-Encoding': 'gzip, deflate, br',
+      'DNT': '1',
+      'Connection': 'keep-alive',
+      'Upgrade-Insecure-Requests': '1',
+      'Sec-Fetch-Dest': 'document',
+      'Sec-Fetch-Mode': 'navigate',
+      'Sec-Fetch-Site': 'none',
+      'Cache-Control': 'max-age=0'
+    };
+
     const response = await axios.get(url, {
-      timeout: 8000,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-      }
+      timeout: 10000,
+      headers,
+      maxRedirects: 3,
+      validateStatus: (status) => status < 400
     });
-    
+
     const $ = cheerio.load(response.data);
-    
-    let prices = [];
-    const priceTexts = $('body').text().match(/\d+[,.]?\d*\s*(€|EUR|euro)/gi) || [];
-    prices = priceTexts.slice(0, 5);
-    
-    const title = $('title').text() || 'Unbekannter Titel';
-    const description = $('meta[name="description"]').attr('content') || '';
-    const bodyText = $('body').text().replace(/\s+/g, ' ').slice(0, 1500);
-    
-    const keywords = ['laufzeit', 'monatlich', 'jährlich', 'kündigung', 'tarif', 'flat', 'unlimited'];
+    const bodyText = $('body').text().replace(/\s+/g, ' ').slice(0, 2000);
+
+    // Portal-spezifische Extraktion
+    let specialData = { prices: [], features: [], provider: 'Unknown' };
+
+    if (url.includes('check24')) {
+      specialData = await extractCheck24Content(url, $, bodyText);
+    } else if (url.includes('verivox')) {
+      specialData = await extractVerivoxContent(url, $, bodyText);
+    } else if (url.includes('tarifcheck')) {
+      specialData = await extractTarifcheckContent(url, $, bodyText);
+    }
+
+    // Fallback: Generische Preis-Extraktion
+    if (specialData.prices.length === 0) {
+      const priceTexts = bodyText.match(/\d+[,.]?\d*\s*(€|EUR|euro)/gi) || [];
+      specialData.prices = priceTexts.slice(0, 8);
+    }
+
+    const title = $('title').text() || $('h1').first().text() || 'Unbekannter Titel';
+    const description = $('meta[name="description"]').attr('content') ||
+                       $('meta[property="og:description"]').attr('content') || '';
+
+    // Enhanced Keywords für bessere Relevanz
+    const keywords = [
+      'laufzeit', 'monatlich', 'jährlich', 'kündigung', 'tarif', 'flat', 'unlimited',
+      'grundgebühr', 'einmalig', 'anschluss', 'wechsel', 'bonus', 'rabatt', 'aktion',
+      'mindestvertragslaufzeit', 'kündigungsfrist', 'bereitstellung', 'versand'
+    ];
+
     let relevantInfo = '';
-    
     keywords.forEach(keyword => {
-      const regex = new RegExp(`.{0,80}${keyword}.{0,80}`, 'gi');
+      const regex = new RegExp(`.{0,100}${keyword}.{0,100}`, 'gi');
       const matches = bodyText.match(regex);
       if (matches) {
-        relevantInfo += matches[0] + ' ';
+        relevantInfo += matches.slice(0, 2).join(' ') + ' ';
       }
     });
-    
+
     return {
       url,
-      title: title.slice(0, 100),
-      description: description.slice(0, 200),
-      prices: prices,
-      relevantInfo: relevantInfo.slice(0, 500),
-      success: true
+      title: title.slice(0, 120),
+      description: description.slice(0, 250),
+      prices: specialData.prices,
+      features: specialData.features || [],
+      provider: specialData.provider,
+      relevantInfo: relevantInfo.slice(0, 600),
+      success: true,
+      isSpecialPortal: url.includes('check24') || url.includes('verivox') || url.includes('tarifcheck')
     };
-    
+
   } catch (error) {
     console.warn(`❌ Fehler bei ${url}:`, error.message);
+
+    // Enhanced Error Info
+    const errorDetails = {
+      message: error.message,
+      code: error.code,
+      status: error.response?.status,
+      isTimeout: error.code === 'ECONNABORTED'
+    };
+
     return {
       url,
       title: 'Nicht verfügbar',
-      description: '',
+      description: `Fehler: ${error.message}`,
       prices: [],
+      features: [],
+      provider: 'Unknown',
       relevantInfo: '',
-      success: false
+      success: false,
+      error: errorDetails
     };
   }
 }
@@ -226,58 +482,162 @@ router.post("/better-contracts", async (req, res) => {
     
     console.log(`🔍 Cache MISS - Starte neue Analyse für: "${cleanSearchQuery}"`);
     console.log(`📊 Request von IP: ${clientIP}`);
-    
-    // SerpAPI Suche
-    const serpRes = await axios.get("https://serpapi.com/search.json", {
-      params: {
-        q: cleanSearchQuery,
-        api_key: SERP_API_KEY,
-        num: 10,
-        gl: "de",
-        hl: "de"
-      },
-      timeout: 10000
+
+    // 🆕 Debug: SERP API Key Check
+    console.log(`🔑 SERP API Key verfügbar: ${SERP_API_KEY ? 'JA' : 'NEIN'}`);
+
+    // 🆕 Step 1: Contract Type Detection (Enhanced)
+    console.log("🔍 Erkenne Vertragstyp...");
+    const typeRes = await fetch("/api/analyze-type/public", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: cleanContractText })
     });
 
-    const organicResults = serpRes.data.organic_results || [];
-    
+    let detectedType = 'unbekannt';
+    if (typeRes.ok) {
+      const typeData = await typeRes.json();
+      detectedType = typeData.contractType || 'unbekannt';
+      console.log(`📊 Erkannter Vertragstyp: ${detectedType}`);
+    } else {
+      console.warn("⚠️ Vertragstyp-Erkennung fehlgeschlagen, verwende fallback");
+    }
+
+    // 🆕 Step 2: Generate Enhanced Search Queries
+    const enhancedQueries = generateEnhancedSearchQueries(detectedType, cleanContractText);
+
+    // Benutzer-Query als erste Option hinzufügen
+    if (cleanSearchQuery && cleanSearchQuery.length > 0) {
+      enhancedQueries.unshift(cleanSearchQuery);
+    }
+
+    console.log(`🎯 Generierte Suchanfragen (${enhancedQueries.length}):`, enhancedQueries.slice(0, 3));
+
+    // 🆕 Step 3: Multi-Source Search
+    const organicResults = await performMultiSourceSearch(enhancedQueries, SERP_API_KEY);
+
+    // 🆕 Enhanced Debug Info
     if (organicResults.length === 0) {
-      return res.status(404).json({ 
+      console.log(`❌ Multi-Search Problem - Keine Ergebnisse gefunden`);
+      console.log(`🔍 Versuchte Queries:`, enhancedQueries.slice(0, 3));
+
+      return res.status(404).json({
         error: "Keine Suchergebnisse gefunden",
         searchQuery: cleanSearchQuery,
-        suggestion: "Versuchen Sie eine andere Suchanfrage"
+        detectedType,
+        attemptedQueries: enhancedQueries.slice(0, 3),
+        suggestion: "Versuchen Sie es mit einem anderen Vertragstyp oder anderen Keywords",
+        debug: {
+          totalQueriesAttempted: enhancedQueries.length,
+          organicResultsLength: organicResults.length
+        }
       });
     }
     
     console.log(`📊 ${organicResults.length} Suchergebnisse gefunden`);
-    
-    // Content Extraktion
-    const topUrls = organicResults.slice(0, 3).map(result => result.link);
-    
-    console.log(`📄 Extrahiere Inhalte von ${topUrls.length} Websites...`);
-    
-    const extractionPromises = topUrls.map(url => extractWebContent(url));
+
+    // 🆕 Enhanced Content Extraktion mit Priorisierung
+    // Priorisiere Vergleichsportale und extrahiere mehr URLs
+    const priorityUrls = [];
+    const regularUrls = [];
+
+    organicResults.slice(0, 8).forEach(result => {
+      const url = result.link;
+      if (url.includes('check24') || url.includes('verivox') || url.includes('tarifcheck') ||
+          url.includes('idealo') || url.includes('billiger.de')) {
+        priorityUrls.push({ ...result, isPriority: true });
+      } else {
+        regularUrls.push({ ...result, isPriority: false });
+      }
+    });
+
+    // Kombiniere Priority und Regular URLs (max 6)
+    const urlsToExtract = [...priorityUrls, ...regularUrls].slice(0, 6);
+    console.log(`📄 Extrahiere Inhalte von ${urlsToExtract.length} Websites (${priorityUrls.length} Priority)...`);
+
+    // 🆕 Parallele Extraktion mit Error-Handling
+    const extractionPromises = urlsToExtract.map(async (result, index) => {
+      // Delays für Rate-Limiting
+      await new Promise(resolve => setTimeout(resolve, index * 200));
+
+      try {
+        const extracted = await extractWebContent(result.link);
+        return { ...extracted, originalResult: result };
+      } catch (error) {
+        console.warn(`⚠️ Extraktion fehlgeschlagen für ${result.link}:`, error.message);
+        return {
+          url: result.link,
+          success: false,
+          error: error.message,
+          originalResult: result
+        };
+      }
+    });
+
     const extractedContents = await Promise.allSettled(extractionPromises);
-    
+
     const successfulExtractions = extractedContents
-      .filter(result => result.status === 'fulfilled' && result.value.success)
+      .filter(result => result.status === 'fulfilled' && result.value?.success)
       .map(result => result.value);
-    
-    console.log(`✅ ${successfulExtractions.length} Websites erfolgreich extrahiert`);
-    
-    // Daten kombinieren
-    const enrichedResults = organicResults.slice(0, 5).map((result, index) => {
+
+    const failedExtractions = extractedContents
+      .filter(result => result.status === 'rejected' || !result.value?.success)
+      .length;
+
+    console.log(`✅ ${successfulExtractions.length} erfolgreich, ${failedExtractions} fehlgeschlagen`);
+
+    // 🆕 Enhanced Data Kombinierung mit mehr Details
+    const enrichedResults = organicResults.slice(0, 8).map((result, index) => {
       const extracted = successfulExtractions.find(ext => ext.url === result.link);
-      
+
       return {
         title: result.title,
         link: result.link,
         snippet: result.snippet,
-        prices: extracted ? extracted.prices : [],
-        relevantInfo: extracted ? extracted.relevantInfo : '',
-        hasDetailedData: !!extracted
+        prices: extracted?.prices || [],
+        features: extracted?.features || [],
+        provider: extracted?.provider || 'Unknown',
+        relevantInfo: extracted?.relevantInfo || '',
+        hasDetailedData: !!extracted,
+        isPriorityPortal: extracted?.isSpecialPortal || false,
+        position: result.position || index + 1,
+        extractionError: extracted?.error || null
       };
     });
+
+    // 🆕 Fallback wenn keine erfolgreichen Extraktionen
+    if (successfulExtractions.length === 0) {
+      console.log(`⚠️ Keine Website-Inhalte extrahiert - verwende nur Suchergebnisse`);
+
+      // Verwende nur die Suchergebnisse ohne detaillierte Daten
+      const fallbackResults = organicResults.slice(0, 5).map((result, index) => ({
+        title: result.title,
+        link: result.link,
+        snippet: result.snippet,
+        prices: [],
+        features: [],
+        provider: 'Unknown',
+        relevantInfo: result.snippet || '',
+        hasDetailedData: false,
+        isPriorityPortal: false,
+        position: index + 1,
+        extractionError: 'Content extraction failed'
+      }));
+
+      return res.json({
+        analysis: "⚠️ Aufgrund technischer Beschränkungen konnten detaillierte Preise nicht extrahiert werden. Die folgenden Anbieter könnten jedoch relevante Alternativen sein. Besuchen Sie die Links für aktuelle Preise und Details.",
+        alternatives: fallbackResults,
+        searchQuery: enhancedQueries[0],
+        contractType: detectedType,
+        performance: {
+          totalAlternatives: fallbackResults.length,
+          detailedExtractions: 0,
+          timestamp: new Date().toISOString(),
+          warning: "Limited data extraction"
+        },
+        fromCache: false
+      });
+    }
     
     // GPT-Analyse
     const systemPrompt = `Du bist ein professioneller Vertragsanalyst. Analysiere den gegebenen Vertrag und vergleiche ihn mit gefundenen Alternativen.
