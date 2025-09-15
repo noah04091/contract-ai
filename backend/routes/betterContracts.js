@@ -440,7 +440,7 @@ async function extractWebContent(url) {
 }
 
 // 🚀 HAUPTROUTE mit verbesserter Validierung
-router.post("/better-contracts", async (req, res) => {
+router.post("/", async (req, res) => {
   console.log(`🚀 START better-contracts Route - ${new Date().toISOString()}`);
 
   try {
