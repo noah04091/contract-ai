@@ -441,36 +441,56 @@ async function extractWebContent(url) {
 
 // 🚀 HAUPTROUTE mit verbesserter Validierung
 router.post("/better-contracts", async (req, res) => {
+  console.log(`🚀 START better-contracts Route - ${new Date().toISOString()}`);
+
   try {
+    console.log(`📋 Request Body Keys: ${Object.keys(req.body).join(', ')}`);
+    console.log(`📋 Request Body: ${JSON.stringify(req.body, null, 2)}`);
+
     // 🆕 STEP 3: Rate Limiting prüfen
     const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
+    console.log(`🌐 Client IP: ${clientIP}`);
     
+    console.log(`✅ Rate Limit Check passed`);
+
     if (!checkRateLimit(clientIP)) {
+      console.log(`❌ Rate Limit exceeded for IP: ${clientIP}`);
       return res.status(429).json({
         error: "Rate Limit erreicht",
         message: `Maximal ${MAX_REQUESTS_PER_IP} Anfragen alle 15 Minuten erlaubt`,
         retryAfter: Math.ceil(RATE_LIMIT_WINDOW / 1000 / 60) + " Minuten"
       });
     }
-    
+
+    console.log(`✅ Rate Limit OK`);
+
     // 🆕 STEP 3: Erweiterte Input-Validierung
     const { contractText, searchQuery } = req.body;
+    console.log(`📝 Input - ContractText Length: ${contractText?.length || 0}, SearchQuery: "${searchQuery || 'empty'}"`);
+
     const validation = validateInput(contractText, searchQuery);
-    
+    console.log(`🔍 Validation Result: ${validation.isValid ? 'VALID' : 'INVALID'}`);
+
     if (!validation.isValid) {
+      console.log(`❌ Validation Errors:`, validation.errors);
       return res.status(400).json({
         error: "Eingabefehler",
         details: validation.errors
       });
     }
-    
+
     const cleanContractText = validation.cleanContractText;
     const cleanSearchQuery = validation.cleanSearchQuery;
+    console.log(`✅ Clean Input - ContractText: ${cleanContractText.length} chars, SearchQuery: "${cleanSearchQuery}"`);
+
+    console.log(`🚀 POINT 1: Input validation passed`);
     
     // Cache Check
+    console.log(`🚀 POINT 2: Starting cache check`);
     const cacheKey = getCacheKey(cleanContractText, cleanSearchQuery);
+    console.log(`🔑 Cache Key generated: ${cacheKey}`);
     const cachedResult = getFromCache(cacheKey);
-    
+
     if (cachedResult) {
       console.log(`💾 Cache HIT für Key: ${cacheKey}`);
       return res.json({
@@ -479,42 +499,76 @@ router.post("/better-contracts", async (req, res) => {
         cacheKey
       });
     }
-    
+
     console.log(`🔍 Cache MISS - Starte neue Analyse für: "${cleanSearchQuery}"`);
     console.log(`📊 Request von IP: ${clientIP}`);
 
     // 🆕 Debug: SERP API Key Check
     console.log(`🔑 SERP API Key verfügbar: ${SERP_API_KEY ? 'JA' : 'NEIN'}`);
+    console.log(`🔑 SERP API Key (first 10 chars): ${SERP_API_KEY ? SERP_API_KEY.substring(0, 10) + '...' : 'NULL'}`);
+
+    console.log(`🚀 POINT 3: Starting contract type detection`);
 
     // 🆕 Step 1: Contract Type Detection (Enhanced)
     console.log("🔍 Erkenne Vertragstyp...");
-    const typeRes = await fetch("/api/analyze-type/public", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: cleanContractText })
-    });
 
+    // 🆕 Contract Type Detection with OpenAI directly (no internal fetch)
     let detectedType = 'unbekannt';
-    if (typeRes.ok) {
-      const typeData = await typeRes.json();
-      detectedType = typeData.contractType || 'unbekannt';
+    try {
+      console.log(`🤖 Rufe OpenAI für Vertragstyp-Erkennung auf...`);
+
+      const typeCompletion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: "Du bist ein Experte für Vertragsanalyse. Erkenne den Typ des gegebenen Vertrags. Antworte nur mit einem der folgenden Begriffe: handy, mobilfunk, internet, strom, gas, versicherung, kfz, fitness, streaming, bank, kredit, hosting, unbekannt"
+          },
+          {
+            role: "user",
+            content: `Analysiere diesen Vertrag und erkenne den Typ:\n\n${cleanContractText.slice(0, 1000)}`
+          }
+        ],
+        temperature: 0.1,
+        max_tokens: 50
+      });
+
+      detectedType = typeCompletion.choices[0].message.content.trim().toLowerCase();
       console.log(`📊 Erkannter Vertragstyp: ${detectedType}`);
-    } else {
-      console.warn("⚠️ Vertragstyp-Erkennung fehlgeschlagen, verwende fallback");
+
+    } catch (typeError) {
+      console.error(`❌ Vertragstyp-Erkennung fehlgeschlagen:`, typeError.message);
+      detectedType = 'unbekannt';
     }
 
+    console.log(`🚀 POINT 4: Contract type detected: ${detectedType}`);
+
     // 🆕 Step 2: Generate Enhanced Search Queries
+    console.log(`🚀 POINT 5: Generating search queries`);
     const enhancedQueries = generateEnhancedSearchQueries(detectedType, cleanContractText);
+    console.log(`🎯 Generated ${enhancedQueries.length} base queries`);
 
     // Benutzer-Query als erste Option hinzufügen
     if (cleanSearchQuery && cleanSearchQuery.length > 0) {
       enhancedQueries.unshift(cleanSearchQuery);
+      console.log(`➕ Added user query to front: "${cleanSearchQuery}"`);
     }
 
-    console.log(`🎯 Generierte Suchanfragen (${enhancedQueries.length}):`, enhancedQueries.slice(0, 3));
+    console.log(`🎯 Final Suchanfragen (${enhancedQueries.length}):`, enhancedQueries.slice(0, 3));
+
+    console.log(`🚀 POINT 6: Starting multi-source search`);
 
     // 🆕 Step 3: Multi-Source Search
-    const organicResults = await performMultiSourceSearch(enhancedQueries, SERP_API_KEY);
+    let organicResults;
+    try {
+      organicResults = await performMultiSourceSearch(enhancedQueries, SERP_API_KEY);
+      console.log(`✅ Multi-search completed with ${organicResults.length} results`);
+    } catch (searchError) {
+      console.error(`❌ Multi-source search failed:`, searchError);
+      organicResults = [];
+    }
+
+    console.log(`🚀 POINT 7: Search completed`);
 
     // 🆕 Enhanced Debug Info
     if (organicResults.length === 0) {
@@ -712,35 +766,44 @@ Bitte analysiere diese Alternativen und gib eine fundierte Empfehlung.`;
     });
 
   } catch (err) {
-    console.error("❌ /better-contracts error:", err);
-    
+    console.error("❌❌❌ FATAL ERROR in /better-contracts:", err);
+    console.error("❌ Error Stack:", err.stack);
+    console.error("❌ Error Message:", err.message);
+    console.error("❌ Error Code:", err.code);
+    console.error("❌ Error Response:", err.response?.data);
+
     // Spezifische Fehlerbehandlung
     if (err.response?.status === 429) {
-      return res.status(429).json({ 
+      console.log("📡 Returning 429 Rate Limit Error");
+      return res.status(429).json({
         error: "API Rate Limit erreicht",
         message: "Zu viele Anfragen an externe Services. Bitte versuchen Sie es später erneut.",
         retryAfter: "60 Sekunden"
       });
     }
-    
+
     if (err.code === 'ECONNABORTED') {
-      return res.status(408).json({ 
+      console.log("📡 Returning 408 Timeout Error");
+      return res.status(408).json({
         error: "Zeitüberschreitung",
         message: "Die Analyse dauert zu lange. Versuchen Sie es mit einer einfacheren Suchanfrage."
       });
     }
-    
+
     if (err.response?.status === 403) {
+      console.log("📡 Returning 503 Service Unavailable");
       return res.status(503).json({
         error: "Service temporär nicht verfügbar",
         message: "Problem mit externen APIs. Bitte versuchen Sie es später erneut."
       });
     }
-    
-    return res.status(500).json({ 
+
+    console.log("📡 Returning 500 Internal Server Error");
+    return res.status(500).json({
       error: "Interner Serverfehler",
       message: "Unerwarteter Fehler beim Vertragsvergleich",
-      details: process.env.NODE_ENV === 'development' ? err.message : undefined
+      details: err.message,
+      stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
     });
   }
 });
