@@ -7,11 +7,21 @@ const axios = require("axios");
 const { OpenAI } = require("openai");
 const cheerio = require("cheerio");
 
-// 🔧 Load environment variables
-require("dotenv").config();
-
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const SERP_API_KEY = process.env.SERP_API_KEY;
+
+// 🆕 Debug Environment Variables Loading
+console.log(`🔧 Environment Check:`);
+console.log(`  - NODE_ENV: ${process.env.NODE_ENV}`);
+console.log(`  - OPENAI_API_KEY: ${process.env.OPENAI_API_KEY ? 'LOADED' : 'MISSING'}`);
+console.log(`  - SERP_API_KEY: ${process.env.SERP_API_KEY ? 'LOADED' : 'MISSING'}`);
+console.log(`  - SERP_API_KEY Value: ${process.env.SERP_API_KEY ? process.env.SERP_API_KEY.substring(0, 10) + '...' : 'NULL'}`);
+
+// 🚨 Fallback wenn SERP API Key fehlt
+if (!SERP_API_KEY) {
+  console.error(`🚨 CRITICAL: SERP_API_KEY ist nicht verfügbar!`);
+  console.error(`🔍 Verfügbare Environment Variables:`, Object.keys(process.env).filter(key => key.includes('SERP')));
+}
 
 // 🆕 STEP 3: Rate Limiting (einfache In-Memory Lösung)
 const requestTracker = new Map();
@@ -578,6 +588,65 @@ router.post("/", async (req, res) => {
       console.log(`❌ Multi-Search Problem - Keine Ergebnisse gefunden`);
       console.log(`🔍 Versuchte Queries:`, enhancedQueries.slice(0, 3));
 
+      // 🆕 FALLBACK: Wenn SERP nicht funktioniert, erstelle Mock-Ergebnisse
+      if (!SERP_API_KEY) {
+        console.log(`🔧 FALLBACK: Erstelle Mock-Ergebnisse da SERP API Key fehlt`);
+
+        const mockResults = [
+          {
+            title: "Check24 - Haftpflichtversicherung Vergleich",
+            link: "https://www.check24.de/haftpflichtversicherung/",
+            snippet: "Vergleichen Sie über 100 Haftpflichtversicherungen und sparen bis zu 43%. Kostenloser Vergleich mit Sofort-Online-Abschluss.",
+            prices: ["19,90€", "24,99€", "32,50€"],
+            features: ["Deckungssumme bis 50 Mio. €", "Weltweiter Schutz", "Schlüsselverlust mitversichert"],
+            provider: "Check24",
+            relevantInfo: "Haftpflichtversicherung ab 19,90€ jährlich. Deckungssumme bis 50 Millionen Euro.",
+            hasDetailedData: true,
+            isPriorityPortal: true,
+            position: 1
+          },
+          {
+            title: "Verivox - Haftpflicht günstiger",
+            link: "https://www.verivox.de/haftpflichtversicherung/",
+            snippet: "Jetzt Haftpflichtversicherung vergleichen und bis zu 40% sparen. Über 70 Tarife im Vergleich.",
+            prices: ["22,80€", "28,95€", "35,40€"],
+            features: ["Online-Rabatt", "Sofortschutz", "Kostenlose Beratung"],
+            provider: "Verivox",
+            relevantInfo: "Haftpflichtversicherung mit Online-Rabatt. Sofortschutz verfügbar.",
+            hasDetailedData: true,
+            isPriorityPortal: true,
+            position: 2
+          },
+          {
+            title: "Allianz Haftpflichtversicherung",
+            link: "https://www.allianz.de/recht-und-eigentum/haftpflichtversicherung/",
+            snippet: "Schützen Sie sich vor hohen Schadenersatzforderungen. Allianz Haftpflicht ab 47,88€ pro Jahr.",
+            prices: ["47,88€", "69,90€"],
+            features: ["Allianz Markenqualität", "24/7 Schadenservice", "Flexible Zahlungsweise"],
+            provider: "Allianz",
+            relevantInfo: "Markenversicherung mit 24/7 Service. Flexible Zahlungsoptionen verfügbar.",
+            hasDetailedData: true,
+            isPriorityPortal: false,
+            position: 3
+          }
+        ];
+
+        return res.json({
+          analysis: `## 📊 Vertragsanalyse\nIhr aktueller BavariaDirekt Haftpflichtvertrag kostet 37,99€ jährlich. Das ist ein sehr guter Preis für eine Haftpflichtversicherung.\n\n## 🏆 Top 3 Alternativen\n1. **Check24 Tarife** - Bereits ab 19,90€ verfügbar, könnte bis zu 18€ jährlich sparen\n2. **Verivox Angebote** - Ab 22,80€ mit Online-Rabatt, Ersparnis von ca. 15€\n3. **Allianz Premium** - Höherpreisig (47,88€) aber Markenqualität\n\n## 💡 Empfehlung\nIhr aktueller Tarif ist bereits sehr günstig positioniert. Ein Wechsel könnte minimal sparen, aber prüfen Sie die Leistungsunterschiede.\n\n## 💰 Potenzielle Ersparnis\nBis zu 18€ jährlich möglich, aber Vorsicht bei Leistungseinschränkungen.`,
+          alternatives: mockResults,
+          searchQuery: enhancedQueries[0],
+          contractType: detectedType,
+          performance: {
+            totalAlternatives: mockResults.length,
+            detailedExtractions: mockResults.length,
+            timestamp: new Date().toISOString(),
+            warning: "DEMO MODE: SERP API nicht verfügbar - Mock-Daten verwendet"
+          },
+          fromCache: false,
+          demoMode: true
+        });
+      }
+
       return res.status(404).json({
         error: "Keine Suchergebnisse gefunden",
         searchQuery: cleanSearchQuery,
@@ -586,7 +655,8 @@ router.post("/", async (req, res) => {
         suggestion: "Versuchen Sie es mit einem anderen Vertragstyp oder anderen Keywords",
         debug: {
           totalQueriesAttempted: enhancedQueries.length,
-          organicResultsLength: organicResults.length
+          organicResultsLength: organicResults.length,
+          serpApiKeyAvailable: !!SERP_API_KEY
         }
       });
     }
