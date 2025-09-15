@@ -178,9 +178,28 @@ function analyzeContractContext(contractText) {
     'verivox': 'Vergleichsportal',
     'allianz': 'Versicherung',
     'axa': 'Versicherung',
+    'ergo': 'Versicherung',
+    'generali': 'Versicherung',
+    'zurich': 'Versicherung',
+    'huk': 'Versicherung',
+    'debeka': 'Versicherung',
+    'signal iduna': 'Versicherung',
+    'adam riese': 'Versicherung',
+    'bavariadirekt': 'Versicherung',
+    'cosmos': 'Versicherung',
+    'wgv': 'Versicherung',
+    'lvm': 'Versicherung',
+    'volkswohl': 'Versicherung',
+    'nürnberger': 'Versicherung',
+    'gothaer': 'Versicherung',
+    'helvetia': 'Versicherung',
+    'alte leipziger': 'Versicherung',
+    'continentale': 'Versicherung',
     'mcfit': 'Fitness',
     'netflix': 'Streaming',
-    'spotify': 'Streaming'
+    'spotify': 'Streaming',
+    'amazon': 'Streaming/Shopping',
+    'apple': 'Software/Streaming'
   };
 
   for (const [provider, category] of Object.entries(providers)) {
@@ -199,12 +218,20 @@ function analyzeContractContext(contractText) {
     'api': 'API Service',
     'hosting': 'Web Hosting',
     'webspace': 'Web Hosting',
+    'rechtsschutz': 'Rechtsschutzversicherung',
     'haftpflicht': 'Haftpflichtversicherung',
+    'hausrat': 'Hausratversicherung',
+    'berufsunfähigkeit': 'Berufsunfähigkeitsversicherung',
+    'krankenversicherung': 'Krankenversicherung',
+    'lebensversicherung': 'Lebensversicherung',
     'kfz': 'KFZ Versicherung',
+    'autoversicherung': 'KFZ Versicherung',
     'handy': 'Mobilfunk',
     'internet': 'Internet/DSL',
     'strom': 'Stromtarif',
-    'gas': 'Gastarif'
+    'gas': 'Gastarif',
+    'fitness': 'Fitnessstudio',
+    'streaming': 'Streaming Service'
   };
 
   for (const [service, description] of Object.entries(services)) {
@@ -260,6 +287,37 @@ function generateEnhancedSearchQueries(detectedType, contractText) {
       "versicherung vergleich günstig deutschland",
       "versicherungstarife wechsel 2024"
     ],
+    "rechtsschutzversicherung": [
+      "rechtsschutzversicherung vergleich check24",
+      "rechtsschutz versicherung günstig deutschland",
+      "rechtsschutz tarife vergleich 2024",
+      "rechtsschutzversicherung wechsel bonus"
+    ],
+    "haftpflichtversicherung": [
+      "haftpflichtversicherung vergleich check24",
+      "privathaftpflicht versicherung günstig",
+      "haftpflicht tarife vergleich deutschland"
+    ],
+    "hausratversicherung": [
+      "hausratversicherung vergleich günstig",
+      "hausrat versicherung check24",
+      "wohngebäudeversicherung vergleich"
+    ],
+    "berufsunfähigkeitsversicherung": [
+      "berufsunfähigkeitsversicherung vergleich",
+      "bu versicherung günstig check24",
+      "berufsunfähigkeit tarife vergleich"
+    ],
+    "krankenversicherung": [
+      "private krankenversicherung vergleich",
+      "krankenkasse wechsel bonus 2024",
+      "gesetzliche krankenversicherung vergleich"
+    ],
+    "lebensversicherung": [
+      "lebensversicherung vergleich check24",
+      "kapitallebensversicherung alternativen",
+      "risikolebensversicherung günstig"
+    ],
     "kfz": [
       "kfz versicherung vergleich günstig",
       "autoversicherung wechsel 2024 check24"
@@ -293,8 +351,28 @@ function generateEnhancedSearchQueries(detectedType, contractText) {
   // 🆕 Context-based Query Generation
   const enhancedQueries = [];
 
-  // 1. Use detected contract context for better targeting
-  if (contractContext.provider === 'anthropic' || contractContext.service === 'max plan') {
+  // 1. PRIORITY: Insurance-specific context detection
+  if (contractContext.category === 'Versicherung' || contractContext.service && contractContext.service.includes('versicherung')) {
+    console.log(`🏥 Insurance contract detected: ${contractContext.service || 'generic insurance'}`);
+
+    // Get specific insurance queries
+    const insuranceType = contractContext.service || detectedType.toLowerCase();
+    if (baseQueries[insuranceType]) {
+      enhancedQueries.push(...baseQueries[insuranceType]);
+      console.log(`📋 Added ${baseQueries[insuranceType].length} insurance-specific queries for: ${insuranceType}`);
+    } else {
+      // Generic insurance fallback
+      enhancedQueries.push(
+        "versicherung vergleich check24 deutschland",
+        "günstige versicherung alternative wechsel",
+        "versicherungstarife vergleich 2024",
+        "online versicherung vergleichsportal"
+      );
+      console.log(`📋 Added generic insurance queries as fallback`);
+    }
+  }
+  // 2. AI-specific context for Anthropic/Claude contracts
+  else if (contractContext.provider === 'anthropic' || contractContext.service === 'max plan') {
     enhancedQueries.push(
       "ChatGPT alternativen deutschland günstig",
       "AI assistant software vergleich",
@@ -308,7 +386,9 @@ function generateEnhancedSearchQueries(detectedType, contractText) {
       "language model api vergleich",
       "chatbot software günstig"
     );
-  } else {
+  }
+  // 3. Other contract types
+  else {
     // Use original type-based queries
     const type = detectedType.toLowerCase();
     if (baseQueries[type]) {
@@ -316,21 +396,27 @@ function generateEnhancedSearchQueries(detectedType, contractText) {
     }
   }
 
-  // 2. Add context-specific searches
-  if (contractContext.provider) {
-    enhancedQueries.push(`${contractContext.provider} alternative günstiger`);
-    enhancedQueries.push(`${contractContext.provider} konkurrent vergleich`);
+  // 4. Add context-specific searches (only if not insurance to avoid dilution)
+  if (contractContext.category !== 'Versicherung') {
+    if (contractContext.provider) {
+      enhancedQueries.push(`${contractContext.provider} alternative günstiger`);
+      enhancedQueries.push(`${contractContext.provider} konkurrent vergleich`);
+    }
+
+    if (contractContext.service && !contractContext.service.includes('versicherung')) {
+      enhancedQueries.push(`${contractContext.service} alternative deutschland`);
+    }
   }
 
-  if (contractContext.service) {
-    enhancedQueries.push(`${contractContext.service} alternative deutschland`);
-  }
-
-  // 3. Price-based queries (improved)
+  // 5. Price-based queries (improved)
   if (contractContext.priceInfo) {
     const price = parseFloat(contractContext.priceInfo.replace(/[€$,]/g, ''));
     if (price > 0) {
-      if (contractContext.category.includes('AI')) {
+      if (contractContext.category === 'Versicherung') {
+        const insuranceType = contractContext.service || 'versicherung';
+        enhancedQueries.push(`${insuranceType} unter ${Math.floor(price)}€ monatlich`);
+        enhancedQueries.push(`günstige ${insuranceType} unter ${Math.floor(price * 0.8)}€`);
+      } else if (contractContext.category.includes('AI')) {
         enhancedQueries.push(`AI tools unter ${Math.floor(price)}€ monatlich`);
         enhancedQueries.push(`chatbot software unter ${Math.floor(price * 0.7)}€`);
       } else {
@@ -340,14 +426,23 @@ function generateEnhancedSearchQueries(detectedType, contractText) {
     }
   }
 
-  // 4. Fallback with better generic searches
+  // 6. Fallback with better generic searches
   if (enhancedQueries.length === 0) {
+    console.log(`⚠️ No specific queries found, using fallback for category: ${contractContext.category}`);
     if (contractContext.category !== 'unknown') {
-      enhancedQueries.push(
-        `${contractContext.category} alternativen deutschland`,
-        `${contractContext.category} vergleich günstig`,
-        `${contractContext.category} anbieter wechsel 2024`
-      );
+      if (contractContext.category === 'Versicherung') {
+        enhancedQueries.push(
+          "versicherung vergleich check24 deutschland",
+          "günstige versicherung online vergleich",
+          "versicherung anbieter wechsel bonus 2024"
+        );
+      } else {
+        enhancedQueries.push(
+          `${contractContext.category} alternativen deutschland`,
+          `${contractContext.category} vergleich günstig`,
+          `${contractContext.category} anbieter wechsel 2024`
+        );
+      }
     } else {
       enhancedQueries.push(
         "software subscription alternativen",
@@ -359,7 +454,10 @@ function generateEnhancedSearchQueries(detectedType, contractText) {
 
   // 5. Remove duplicates and limit
   const uniqueQueries = [...new Set(enhancedQueries)];
-  return uniqueQueries.slice(0, 6); // Limit to 6 best queries
+  return {
+    queries: uniqueQueries.slice(0, 6), // Limit to 6 best queries
+    contractContext: contractContext
+  };
 }
 
 // 🆕 Multi-Source Search Function
@@ -701,7 +799,9 @@ router.post("/", async (req, res) => {
 
     // 🆕 Step 2: Generate Enhanced Search Queries
     console.log(`🚀 POINT 5: Generating search queries`);
-    const enhancedQueries = generateEnhancedSearchQueries(detectedType, cleanContractText);
+    const queryResult = generateEnhancedSearchQueries(detectedType, cleanContractText);
+    const enhancedQueries = queryResult.queries;
+    const contractContext = queryResult.contractContext;
     console.log(`🎯 Generated ${enhancedQueries.length} base queries`);
 
     // Benutzer-Query als erste Option hinzufügen
@@ -725,6 +825,45 @@ router.post("/", async (req, res) => {
     }
 
     console.log(`🚀 POINT 7: Search completed`);
+
+    // 🆕 Intelligent Result Filtering for Insurance Contracts
+    if (contractContext.category === 'Versicherung' && organicResults.length > 0) {
+      console.log(`🏥 Applying insurance-specific filtering to ${organicResults.length} results`);
+
+      // Priority insurance domains
+      const insuranceDomains = [
+        'check24.de', 'verivox.de', 'tarifcheck.de', 'finanzcheck.de',
+        'cosmosdirekt.de', 'huk.de', 'allianz.de', 'axa.de', 'ergo.de',
+        'generali.de', 'zurich.de', 'debeka.de', 'signal-iduna.de',
+        'versicherung.net', 'versicherungsvergleich.de'
+      ];
+
+      // Filter out irrelevant domains for insurance contracts
+      const irrelevantDomains = [
+        'idealo.de', 'amazon.de', 'ebay.de', 'otto.de',
+        'telekom.de', 'vodafone.de', 'o2.de', '1und1.de',
+        'saturn.de', 'mediamarkt.de', 'alternate.de'
+      ];
+
+      // Separate results into insurance-relevant and others
+      const insuranceResults = organicResults.filter(result => {
+        const domain = result.link.toLowerCase();
+        return insuranceDomains.some(insDomain => domain.includes(insDomain)) ||
+               result.title.toLowerCase().includes('versicherung') ||
+               result.snippet.toLowerCase().includes('versicherung');
+      });
+
+      const otherResults = organicResults.filter(result => {
+        const domain = result.link.toLowerCase();
+        return !irrelevantDomains.some(badDomain => domain.includes(badDomain)) &&
+               !insuranceResults.some(insResult => insResult.link === result.link);
+      });
+
+      // Prioritize insurance results
+      organicResults = [...insuranceResults, ...otherResults];
+
+      console.log(`🏥 After insurance filtering: ${insuranceResults.length} insurance results, ${otherResults.length} other results`);
+    }
 
     // 🆕 Enhanced Debug Info
     if (organicResults.length === 0) {
