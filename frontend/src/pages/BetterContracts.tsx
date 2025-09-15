@@ -146,8 +146,6 @@ const BetterContracts: React.FC = () => {
   };
 
   const handleFileSelect = () => {
-    console.log('🖱️ File select clicked');
-
     if (!isPremium) {
       setError("Diese Funktion ist nur für Premium-Nutzer verfügbar.");
       return;
@@ -155,26 +153,20 @@ const BetterContracts: React.FC = () => {
 
     // ✅ Reset file input value vor dem Click um onChange zu garantieren
     if (fileInputRef.current) {
-      console.log('🔄 Resetting file input value');
       fileInputRef.current.value = '';
       setTimeout(() => {
         // ✅ Kleine Verzögerung um sicherzustellen dass reset komplett ist
-        console.log('🖱️ Triggering file input click');
         fileInputRef.current?.click();
       }, 10);
     }
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log('📁 File change event triggered', e.target.files?.length);
-
     if (!isPremium) return;
 
     const file = e.target.files?.[0];
     if (file) {
-      console.log('📄 File selected:', file.name);
       await processFile(file);
-      // ✅ File input wird bereits in processFile zurückgesetzt
     }
   };
 
