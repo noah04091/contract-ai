@@ -1,11 +1,12 @@
 /* SavedAlternativesFull.css - Full version for Better Contracts page */
 
 .full-saved-alternatives {
+  max-width: 800px;
+  margin: 3rem auto 2rem auto;
+  padding: 40px 20px;
   background: white;
   border-radius: 12px;
-  padding: 2rem;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  margin: 3rem 0 2rem 0;
 }
 
 .full-saved-alternatives-header {
@@ -123,8 +124,9 @@
 
 .full-alternatives-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
   gap: 1.5rem;
+  justify-content: center;
 }
 
 .full-alternative-card {
@@ -291,43 +293,152 @@
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
+
+/* Large Desktop (1200px+) */
+@media (min-width: 1200px) {
   .full-saved-alternatives {
-    padding: 1rem;
-    margin: 2rem 0;
+    max-width: 1000px;
+    padding: 60px 40px;
+  }
+
+  .full-alternatives-grid {
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 2rem;
+  }
+}
+
+/* Desktop/Laptop (992px - 1199px) */
+@media (min-width: 992px) and (max-width: 1199px) {
+  .full-saved-alternatives {
+    max-width: 900px;
+    padding: 50px 30px;
+  }
+
+  .full-alternatives-grid {
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  }
+}
+
+/* Tablet (768px - 991px) */
+@media (min-width: 768px) and (max-width: 991px) {
+  .full-saved-alternatives {
+    max-width: 100%;
+    padding: 40px 30px;
+    margin: 2rem 20px;
+  }
+
+  .full-alternatives-grid {
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .full-controls {
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+}
+
+/* Mobile (max-width: 767px) */
+@media (max-width: 767px) {
+  .full-saved-alternatives {
+    max-width: 100%;
+    padding: 20px 15px;
+    margin: 1rem 10px;
+    border-radius: 8px;
   }
 
   .full-saved-alternatives-header {
     flex-direction: column;
     gap: 1rem;
     align-items: flex-start;
+    margin-bottom: 1.5rem;
+  }
+
+  .full-saved-alternatives-header h2 {
+    font-size: 1.25rem;
   }
 
   .full-stats-summary {
-    gap: 1rem;
+    gap: 1.5rem;
+    justify-content: center;
+    width: 100%;
   }
 
   .full-controls {
     flex-direction: column;
     gap: 1rem;
     align-items: stretch;
+    padding: 0.75rem;
   }
 
   .full-alternatives-grid {
     grid-template-columns: 1fr;
+    gap: 1rem;
   }
 
   .full-card-header {
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.75rem;
     align-items: stretch;
+    padding: 1rem 1rem 0.75rem;
   }
 
   .full-card-actions {
     justify-content: space-between;
+    flex-direction: row;
   }
 
   .full-alternative-meta {
     gap: 0.5rem;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .full-alternative-title {
+    font-size: 1rem;
+  }
+
+  .full-card-content {
+    padding: 0 1rem 0.75rem;
+  }
+
+  .full-card-footer {
+    padding: 0.75rem 1rem;
+  }
+}
+
+/* Small Mobile (max-width: 480px) */
+@media (max-width: 480px) {
+  .full-saved-alternatives {
+    margin: 0.5rem 5px;
+    padding: 15px 10px;
+  }
+
+  .full-saved-alternatives-header h2 {
+    font-size: 1.125rem;
+  }
+
+  .full-stats-summary {
+    gap: 1rem;
+  }
+
+  .full-stat-number {
+    font-size: 1.5rem;
+  }
+
+  .full-controls {
+    padding: 0.5rem;
+  }
+
+  .full-card-header,
+  .full-card-content,
+  .full-card-footer {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  .full-visit-btn {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
   }
 }
