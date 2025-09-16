@@ -124,7 +124,7 @@ const SavedAlternatives: React.FC = () => {
       if (response.ok) {
         setAlternatives(prev =>
           prev.map(alt =>
-            alt._id === id ? { ...alt, status: status as any } : alt
+            alt._id === id ? { ...alt, status: status as 'saved' | 'compared' | 'contacted' | 'dismissed' } : alt
           )
         );
       }
@@ -142,10 +142,11 @@ const SavedAlternatives: React.FC = () => {
           return new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime();
         case 'oldest':
           return new Date(a.savedAt).getTime() - new Date(b.savedAt).getTime();
-        case 'price':
+        case 'price': {
           const priceA = a.monthlyPrice || 0;
           const priceB = b.monthlyPrice || 0;
           return priceA - priceB;
+        }
         case 'type':
           return a.contractType.localeCompare(b.contractType);
         default:
@@ -228,7 +229,7 @@ const SavedAlternatives: React.FC = () => {
               <label>Sortieren:</label>
               <select
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as any)}
+                onChange={(e) => setSortBy(e.target.value as 'newest' | 'oldest' | 'price' | 'type')}
                 className="sort-select"
               >
                 <option value="newest">Neueste zuerst</option>
