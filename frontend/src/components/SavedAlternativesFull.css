@@ -1,53 +1,18 @@
 /* SavedAlternativesFull.css - Full version for Better Contracts page */
 
 .full-saved-alternatives {
-  max-width: 800px;
-  margin: 3rem auto 2rem auto;
-  padding: 40px 20px;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  /* Container-Styling wird jetzt von .contract-container übernommen */
+  padding: 0;
+  margin: 0;
+  background: transparent;
 }
 
 .full-saved-alternatives-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-  padding-bottom: 1rem;
-  border-bottom: 2px solid #f1f5f9;
+  /* Header wird jetzt von der Seite übernommen */
+  display: none;
 }
 
-.full-saved-alternatives-header h2 {
-  margin: 0;
-  color: #1e293b;
-  font-size: 1.5rem;
-  font-weight: 600;
-}
-
-.full-stats-summary {
-  display: flex;
-  gap: 2rem;
-}
-
-.full-stat-item {
-  text-align: center;
-}
-
-.full-stat-number {
-  display: block;
-  font-size: 2rem;
-  font-weight: 700;
-  color: #3b82f6;
-  line-height: 1;
-}
-
-.full-stat-label {
-  display: block;
-  font-size: 0.875rem;
-  color: #64748b;
-  margin-top: 0.25rem;
-}
+/* Header und stats styles entfernt - werden jetzt von der Seite übernommen */
 
 .full-saved-alternatives-loading {
   text-align: center;
@@ -297,8 +262,7 @@
 /* Large Desktop (1200px+) */
 @media (min-width: 1200px) {
   .full-saved-alternatives {
-    max-width: 1000px;
-    padding: 60px 40px;
+    /* Container-Styling wird jetzt von .contract-container übernommen */
   }
 
   .full-alternatives-grid {
@@ -310,8 +274,7 @@
 /* Desktop/Laptop (992px - 1199px) */
 @media (min-width: 992px) and (max-width: 1199px) {
   .full-saved-alternatives {
-    max-width: 900px;
-    padding: 50px 30px;
+    /* Container-Styling wird jetzt von .contract-container übernommen */
   }
 
   .full-alternatives-grid {
@@ -322,9 +285,7 @@
 /* Tablet (768px - 991px) */
 @media (min-width: 768px) and (max-width: 991px) {
   .full-saved-alternatives {
-    max-width: 100%;
-    padding: 40px 30px;
-    margin: 2rem 20px;
+    /* Container-Styling wird jetzt von .contract-container übernommen */
   }
 
   .full-alternatives-grid {
@@ -341,28 +302,10 @@
 /* Mobile (max-width: 767px) */
 @media (max-width: 767px) {
   .full-saved-alternatives {
-    max-width: 100%;
-    padding: 20px 15px;
-    margin: 1rem 10px;
-    border-radius: 8px;
+    /* Container-Styling wird jetzt von .contract-container übernommen */
   }
 
-  .full-saved-alternatives-header {
-    flex-direction: column;
-    gap: 1rem;
-    align-items: flex-start;
-    margin-bottom: 1.5rem;
-  }
-
-  .full-saved-alternatives-header h2 {
-    font-size: 1.25rem;
-  }
-
-  .full-stats-summary {
-    gap: 1.5rem;
-    justify-content: center;
-    width: 100%;
-  }
+  /* Header wird jetzt von der Seite übernommen, styles nicht mehr benötigt */
 
   .full-controls {
     flex-direction: column;
@@ -410,21 +353,10 @@
 /* Small Mobile (max-width: 480px) */
 @media (max-width: 480px) {
   .full-saved-alternatives {
-    margin: 0.5rem 5px;
-    padding: 15px 10px;
+    /* Container-Styling wird jetzt von .contract-container übernommen */
   }
 
-  .full-saved-alternatives-header h2 {
-    font-size: 1.125rem;
-  }
-
-  .full-stats-summary {
-    gap: 1rem;
-  }
-
-  .full-stat-number {
-    font-size: 1.5rem;
-  }
+  /* Header und stats styles nicht mehr benötigt - werden von der Seite übernommen */
 
   .full-controls {
     padding: 0.5rem;

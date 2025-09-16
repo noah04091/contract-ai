@@ -748,8 +748,22 @@ const BetterContracts: React.FC = () => {
           )}
         </div>
 
-        {/* 🔖 Meine gespeicherten Alternativen - Vollständige Sektion */}
-        <SavedAlternativesFull />
+        {/* 🔖 Meine gespeicherten Alternativen - Seiten-Sektion */}
+        <div className="contract-container">
+          <div className="contract-header">
+            <div className="contract-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+              </svg>
+            </div>
+            <h1>Meine gespeicherten Alternativen</h1>
+            <p className="contract-subtitle">
+              Verwalten Sie Ihre gemerkten Vertragsalternativen und behalten Sie den Überblick
+            </p>
+          </div>
+
+          <SavedAlternativesFull />
+        </div>
 
       </div>
     </>
