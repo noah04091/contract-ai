@@ -108,28 +108,6 @@ const SavedAlternatives: React.FC = () => {
     }
   };
 
-  const handleUpdateStatus = async (id: string, status: string) => {
-    try {
-      const response = await fetch(`/api/saved-alternatives/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ status })
-      });
-
-      if (response.ok) {
-        setAlternatives(prev =>
-          prev.map(alt =>
-            alt._id === id ? { ...alt, status: status as 'saved' | 'compared' | 'contacted' | 'dismissed' } : alt
-          )
-        );
-      }
-    } catch (error) {
-      console.error('Error updating status:', error);
-    }
-  };
 
   // Sort alternatives by newest first and show only first 3 in dashboard
   const sortedAlternatives = alternatives
@@ -137,16 +115,6 @@ const SavedAlternatives: React.FC = () => {
 
   // Show only first 3 alternatives in dashboard
   const displayedAlternatives = sortedAlternatives.slice(0, 3);
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'saved': return '#6b7280';
-      case 'compared': return '#f59e0b';
-      case 'contacted': return '#10b981';
-      case 'dismissed': return '#ef4444';
-      default: return '#6b7280';
-    }
-  };
 
 
   if (loading) {
@@ -190,74 +158,36 @@ const SavedAlternatives: React.FC = () => {
           <div className="alternatives-grid">
             {displayedAlternatives.map((alternative) => (
               <div key={alternative._id} className="alternative-card">
-                <div className="card-header">
-                  <h3 className="alternative-title">{alternative.title}</h3>
-                  <div className="card-actions">
-                    <select
-                      value={alternative.status}
-                      onChange={(e) => handleUpdateStatus(alternative._id, e.target.value)}
-                      className="status-select"
-                      style={{ color: getStatusColor(alternative.status) }}
+                <div className="compact-card-content">
+                  <div className="compact-header">
+                    <h3 className="compact-title">{alternative.title}</h3>
+                    <span className="contract-type-badge">{alternative.contractType}</span>
+                  </div>
+
+                  <div className="compact-info">
+                    <span className="provider-text">von {alternative.provider}</span>
+                    {alternative.monthlyPrice && (
+                      <span className="compact-price">{alternative.monthlyPrice}€/Monat</span>
+                    )}
+                  </div>
+
+                  <div className="compact-actions">
+                    <a
+                      href={alternative.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="compact-visit-btn"
                     >
-                      <option value="saved">Gespeichert</option>
-                      <option value="compared">Verglichen</option>
-                      <option value="contacted">Kontaktiert</option>
-                      <option value="dismissed">Abgelehnt</option>
-                    </select>
+                      Anbieter besuchen
+                    </a>
                     <button
                       onClick={() => handleDelete(alternative._id)}
-                      className="delete-btn"
+                      className="compact-delete-btn"
                       title="Löschen"
                     >
                       🗑️
                     </button>
                   </div>
-                </div>
-
-                <div className="card-content">
-                  <div className="alternative-meta">
-                    <span className="contract-type">{alternative.contractType}</span>
-                    <span className="provider">von {alternative.provider}</span>
-                    <span className="saved-date">
-                      {new Date(alternative.savedAt).toLocaleDateString('de-DE')}
-                    </span>
-                  </div>
-
-                  {alternative.monthlyPrice && (
-                    <div className="price-info">
-                      <span className="price">{alternative.monthlyPrice}€</span>
-                      <span className="price-label">pro Monat</span>
-                    </div>
-                  )}
-
-                  <p className="snippet">{alternative.snippet}</p>
-
-                  {alternative.features.length > 0 && (
-                    <div className="features">
-                      <h4>Features:</h4>
-                      <ul>
-                        {alternative.features.slice(0, 3).map((feature, index) => (
-                          <li key={index}>{feature}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-
-                <div className="card-footer">
-                  <a
-                    href={alternative.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="visit-btn"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                      <polyline points="15 3 21 3 21 9"/>
-                      <line x1="10" y1="14" x2="21" y2="3"/>
-                    </svg>
-                    Anbieter besuchen
-                  </a>
                 </div>
               </div>
             ))}

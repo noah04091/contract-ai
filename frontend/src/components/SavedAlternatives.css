@@ -123,20 +123,130 @@
 .alternatives-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1rem;
+  gap: 16px;
 }
 
 .alternative-card {
-  background: #fafafa;
-  border: 1px solid #e5e7eb;
+  background: white;
+  border: 1px solid #e2e8f0;
   border-radius: 12px;
+  padding: 20px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  position: relative;
   overflow: hidden;
-  transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .alternative-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Compact Card Content */
+.compact-card-content {
+  /* All content in single container, no extra spacing */
+}
+
+.compact-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  gap: 12px;
+}
+
+.compact-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e293b;
+  line-height: 1.4;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.contract-type-badge {
+  background: #dbeafe;
+  color: #1e40af;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.compact-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  gap: 12px;
+}
+
+.provider-text {
+  color: #6b7280;
+  font-size: 14px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.compact-price {
+  font-size: 14px;
+  font-weight: 600;
+  color: #059669;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.compact-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.compact-visit-btn {
+  background: #3b82f6;
+  color: white;
+  text-decoration: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+  flex: 1;
+  text-align: center;
+}
+
+.compact-visit-btn:hover {
+  background: #2563eb;
+  text-decoration: none;
+  color: white;
+}
+
+.compact-delete-btn {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.compact-delete-btn:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
 }
 
 .card-header {
