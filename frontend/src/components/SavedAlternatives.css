@@ -121,10 +121,10 @@
 }
 
 .alternatives-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 400px));
+  display: flex;
+  flex-wrap: wrap;
   gap: 16px;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 .alternative-card {
@@ -136,6 +136,9 @@
   cursor: pointer;
   position: relative;
   overflow: hidden;
+  width: 320px;
+  max-width: 320px;
+  flex-shrink: 0;
 }
 
 .alternative-card:hover {
