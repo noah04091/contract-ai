@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { Helmet } from "react-helmet";
 import BetterContractsResults from "../components/BetterContractsResults";
+import SavedAlternativesFull from "../components/SavedAlternativesFull";
 import "../styles/ContractPages.css";
 
 interface ApiResponse {
@@ -746,6 +747,10 @@ const BetterContracts: React.FC = () => {
             </div>
           )}
         </div>
+
+        {/* 🔖 Meine gespeicherten Alternativen - Vollständige Sektion */}
+        <SavedAlternativesFull />
+
       </div>
     </>
   );

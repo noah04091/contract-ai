@@ -200,9 +200,9 @@ const SavedAlternatives: React.FC = () => {
               </p>
               <button
                 className="btn-primary"
-                onClick={() => window.location.href = '/saved-alternatives'}
+                onClick={() => window.location.href = '/better-contracts'}
               >
-                Alle {sortedAlternatives.length} Alternativen anzeigen
+                Alle {sortedAlternatives.length} Alternativen in Better Contracts verwalten
               </button>
             </div>
           )}
