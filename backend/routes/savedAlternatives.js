@@ -1,6 +1,6 @@
 const express = require('express');
 const { ObjectId } = require('mongodb');
-const { getDb } = require('../config/database');
+const database = require('../config/database');
 const verifyToken = require('../middleware/verifyToken');
 
 const router = express.Router();
@@ -8,13 +8,10 @@ const router = express.Router();
 // 📱 GET /api/saved-alternatives - Alle gespeicherten Alternativen abrufen
 router.get('/', verifyToken, async (req, res) => {
   try {
-    const db = getDb();
-    const savedAlternatives = db.collection('saved_alternatives');
-
-    const alternatives = await savedAlternatives
-      .find({ userId: new ObjectId(req.user.userId) })
-      .sort({ savedAt: -1 })
-      .toArray();
+    const alternatives = await database.find('saved_alternatives',
+      { userId: new ObjectId(req.user.userId) },
+      { sort: { savedAt: -1 } }
+    );
 
     res.json({
       success: true,
@@ -54,11 +51,8 @@ router.post('/', verifyToken, async (req, res) => {
       });
     }
 
-    const db = getDb();
-    const savedAlternatives = db.collection('saved_alternatives');
-
     // Prüfen ob bereits gespeichert
-    const existing = await savedAlternatives.findOne({
+    const existing = await database.findOne('saved_alternatives', {
       userId: new ObjectId(req.user.userId),
       link: link
     });
@@ -88,7 +82,7 @@ router.post('/', verifyToken, async (req, res) => {
       notes: ''
     };
 
-    const result = await savedAlternatives.insertOne(savedAlternative);
+    const result = await database.insertOne('saved_alternatives', savedAlternative);
 
     console.log(`✅ Alternative gespeichert für User ${req.user.userId}: ${title}`);
 
@@ -118,10 +112,7 @@ router.delete('/:id', verifyToken, async (req, res) => {
       });
     }
 
-    const db = getDb();
-    const savedAlternatives = db.collection('saved_alternatives');
-
-    const result = await savedAlternatives.deleteOne({
+    const result = await database.deleteOne('saved_alternatives', {
       _id: new ObjectId(id),
       userId: new ObjectId(req.user.userId)
     });
@@ -160,9 +151,6 @@ router.put('/:id', verifyToken, async (req, res) => {
       });
     }
 
-    const db = getDb();
-    const savedAlternatives = db.collection('saved_alternatives');
-
     const updateData = {
       updatedAt: new Date()
     };
@@ -170,7 +158,7 @@ router.put('/:id', verifyToken, async (req, res) => {
     if (status) updateData.status = status;
     if (typeof notes === 'string') updateData.notes = notes;
 
-    const result = await savedAlternatives.updateOne(
+    const result = await database.updateOne('saved_alternatives',
       {
         _id: new ObjectId(id),
         userId: new ObjectId(req.user.userId)
@@ -203,10 +191,7 @@ router.put('/:id', verifyToken, async (req, res) => {
 // 📊 GET /api/saved-alternatives/stats - Statistiken
 router.get('/stats', verifyToken, async (req, res) => {
   try {
-    const db = getDb();
-    const savedAlternatives = db.collection('saved_alternatives');
-
-    const stats = await savedAlternatives.aggregate([
+    const stats = await database.aggregate('saved_alternatives', [
       {
         $match: { userId: new ObjectId(req.user.userId) }
       },
@@ -220,9 +205,9 @@ router.get('/stats', verifyToken, async (req, res) => {
       {
         $sort: { count: -1 }
       }
-    ]).toArray();
+    ]);
 
-    const totalCount = await savedAlternatives.countDocuments({
+    const totalCount = await database.countDocuments('saved_alternatives', {
       userId: new ObjectId(req.user.userId)
     });
 
