@@ -54,12 +54,38 @@ const BetterContracts: React.FC = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [analyzingProgress, setAnalyzingProgress] = useState(0);
 
+  // FAB States for saved alternatives
+  const [savedAlternativesCount, setSavedAlternativesCount] = useState(0);
+  const [showFAB, setShowFAB] = useState(false);
+
   // ✅ AUTH CHECK (vereinfacht - nur redirect wenn nicht eingeloggt):
   useEffect(() => {
     if (!isLoading && !user) {
       navigate('/login?redirect=/better-contracts', { replace: true });
     }
   }, [user, isLoading, navigate]);
+
+  // Load saved alternatives count for FAB
+  useEffect(() => {
+    const fetchSavedAlternativesCount = async () => {
+      try {
+        const response = await fetch('/api/saved-alternatives/stats', {
+          credentials: 'include'
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setSavedAlternativesCount(data.totalSaved || 0);
+          setShowFAB(data.totalSaved > 0);
+        }
+      } catch (error) {
+        console.error('Error fetching saved alternatives count:', error);
+      }
+    };
+
+    if (user && !isLoading) {
+      fetchSavedAlternativesCount();
+    }
+  }, [user, isLoading]);
 
   useEffect(() => {
     if (loading) {
@@ -339,6 +365,17 @@ const BetterContracts: React.FC = () => {
     setFileName("");
     setResults(null);
     setError("");
+  };
+
+  // FAB scroll to saved alternatives
+  const scrollToSavedAlternatives = () => {
+    const savedSection = document.querySelector('.full-saved-alternatives');
+    if (savedSection) {
+      savedSection.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
   };
 
   return (
@@ -764,6 +801,22 @@ const BetterContracts: React.FC = () => {
 
           <SavedAlternativesFull />
         </div>
+
+        {/* Floating Action Button für gespeicherte Alternativen */}
+        {showFAB && (
+          <button
+            onClick={scrollToSavedAlternatives}
+            className="fab-saved-alternatives"
+            title={`Zu gespeicherten Alternativen (${savedAlternativesCount})`}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+            </svg>
+            {savedAlternativesCount > 0 && (
+              <span className="fab-badge">{savedAlternativesCount}</span>
+            )}
+          </button>
+        )}
 
       </div>
     </>
