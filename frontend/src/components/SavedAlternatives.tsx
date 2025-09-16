@@ -31,8 +31,6 @@ const SavedAlternatives: React.FC = () => {
   const [alternatives, setAlternatives] = useState<SavedAlternative[]>([]);
   const [stats, setStats] = useState<SavedAlternativesStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [filterType, setFilterType] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<'newest' | 'oldest' | 'price' | 'type'>('newest');
 
   useEffect(() => {
     fetchSavedAlternatives();
@@ -133,32 +131,12 @@ const SavedAlternatives: React.FC = () => {
     }
   };
 
-  // Filter and sort alternatives
-  const filteredAlternatives = alternatives
-    .filter(alt => filterType === 'all' || alt.contractType === filterType)
-    .sort((a, b) => {
-      switch (sortBy) {
-        case 'newest':
-          return new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime();
-        case 'oldest':
-          return new Date(a.savedAt).getTime() - new Date(b.savedAt).getTime();
-        case 'price': {
-          const priceA = a.monthlyPrice || 0;
-          const priceB = b.monthlyPrice || 0;
-          return priceA - priceB;
-        }
-        case 'type':
-          return a.contractType.localeCompare(b.contractType);
-        default:
-          return 0;
-      }
-    });
+  // Sort alternatives by newest first and show only first 3 in dashboard
+  const sortedAlternatives = alternatives
+    .sort((a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime());
 
   // Show only first 3 alternatives in dashboard
-  const displayedAlternatives = filteredAlternatives.slice(0, 3);
-
-  // Get unique contract types for filter
-  const contractTypes = Array.from(new Set(alternatives.map(alt => alt.contractType)));
+  const displayedAlternatives = sortedAlternatives.slice(0, 3);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -285,16 +263,16 @@ const SavedAlternatives: React.FC = () => {
             ))}
           </div>
 
-          {filteredAlternatives.length > 3 && (
+          {sortedAlternatives.length > 3 && (
             <div className="show-more-container">
               <p className="alternatives-count">
-                {filteredAlternatives.length - 3} weitere Alternativen verfügbar
+                {sortedAlternatives.length - 3} weitere Alternativen verfügbar
               </p>
               <button
                 className="btn-primary"
                 onClick={() => window.location.href = '/saved-alternatives'}
               >
-                Alle {filteredAlternatives.length} Alternativen anzeigen
+                Alle {sortedAlternatives.length} Alternativen anzeigen
               </button>
             </div>
           )}
