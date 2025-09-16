@@ -722,7 +722,15 @@ export default function Dashboard() {
         </div>
 
         {/* 🔖 Gespeicherte Alternativen Sektion */}
-        <SavedAlternatives />
+        <div className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <div className={styles.headerContent}>
+              <h2>🔖 Gespeicherte Alternativen</h2>
+              <p>Ihre gemerkten Vertragsalternativen</p>
+            </div>
+          </div>
+          <SavedAlternatives />
+        </div>
 
         {/* 🆕 Legal Pulse Overview - KOMPLETT HELL */}
         <div className={styles.section}>

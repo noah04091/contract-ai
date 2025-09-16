@@ -154,6 +154,9 @@ const SavedAlternatives: React.FC = () => {
       }
     });
 
+  // Show only first 3 alternatives in dashboard
+  const displayedAlternatives = filteredAlternatives.slice(0, 3);
+
   // Get unique contract types for filter
   const contractTypes = Array.from(new Set(alternatives.map(alt => alt.contractType)));
 
@@ -178,23 +181,19 @@ const SavedAlternatives: React.FC = () => {
   }
 
   return (
-    <div className="saved-alternatives">
-      <div className="saved-alternatives-header">
-        <h2>🔖 Gespeicherte Alternativen</h2>
-
-        {stats && (
-          <div className="stats-summary">
-            <div className="stat-item">
-              <span className="stat-number">{stats.totalSaved}</span>
-              <span className="stat-label">Gespeichert</span>
-            </div>
-            <div className="stat-item">
-              <span className="stat-number">{stats.byContractType.length}</span>
-              <span className="stat-label">Kategorien</span>
-            </div>
+    <div className="saved-alternatives-content">
+      {stats && (
+        <div className="stats-summary">
+          <div className="stat-item">
+            <span className="stat-number">{stats.totalSaved}</span>
+            <span className="stat-label">Gespeichert</span>
           </div>
-        )}
-      </div>
+          <div className="stat-item">
+            <span className="stat-number">{stats.byContractType.length}</span>
+            <span className="stat-label">Kategorien</span>
+          </div>
+        </div>
+      )}
 
       {alternatives.length === 0 ? (
         <div className="empty-state">
@@ -210,38 +209,8 @@ const SavedAlternatives: React.FC = () => {
         </div>
       ) : (
         <>
-          <div className="controls">
-            <div className="filter-group">
-              <label>Filter:</label>
-              <select
-                value={filterType}
-                onChange={(e) => setFilterType(e.target.value)}
-                className="filter-select"
-              >
-                <option value="all">Alle Kategorien</option>
-                {contractTypes.map(type => (
-                  <option key={type} value={type}>{type}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="sort-group">
-              <label>Sortieren:</label>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as 'newest' | 'oldest' | 'price' | 'type')}
-                className="sort-select"
-              >
-                <option value="newest">Neueste zuerst</option>
-                <option value="oldest">Älteste zuerst</option>
-                <option value="price">Nach Preis</option>
-                <option value="type">Nach Kategorie</option>
-              </select>
-            </div>
-          </div>
-
           <div className="alternatives-grid">
-            {filteredAlternatives.map((alternative) => (
+            {displayedAlternatives.map((alternative) => (
               <div key={alternative._id} className="alternative-card">
                 <div className="card-header">
                   <h3 className="alternative-title">{alternative.title}</h3>
@@ -315,6 +284,20 @@ const SavedAlternatives: React.FC = () => {
               </div>
             ))}
           </div>
+
+          {filteredAlternatives.length > 3 && (
+            <div className="show-more-container">
+              <p className="alternatives-count">
+                {filteredAlternatives.length - 3} weitere Alternativen verfügbar
+              </p>
+              <button
+                className="btn-primary"
+                onClick={() => window.location.href = '/saved-alternatives'}
+              >
+                Alle {filteredAlternatives.length} Alternativen anzeigen
+              </button>
+            </div>
+          )}
         </>
       )}
     </div>
