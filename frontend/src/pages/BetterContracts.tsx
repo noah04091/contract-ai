@@ -109,7 +109,7 @@ const BetterContracts: React.FC = () => {
   if (isLoading) {
     return (
       <div className="contract-page">
-        <div className={`contract-container ${step === 3 ? 'has-results' : ''}`}>
+        <div className="contract-container">
           <div style={{ textAlign: 'center', padding: '2rem' }}>
             <div className="spinner"></div>
             <p>Lade Nutzerdaten...</p>
@@ -382,7 +382,7 @@ const BetterContracts: React.FC = () => {
     <>
       <Helmet>
         <title>Bessere Vertragsalternativen finden | Contract AI</title>
-        <meta name="description" content="Finde automatisch bessere Alternativen zu deinen bestehenden Verträgen. Spare Geld, verbessere Leistungen — mit Contract AI Better Contracts." />
+        <meta name="description" content="Finde automatisch bessere Alternativen zu deinen bestehenden Verträgen. Spare Geld, verbessere Leistungen – mit Contract AI Better Contracts." />
         <meta name="keywords" content="bessere Verträge, Vertragsalternativen, Verträge vergleichen, Contract AI Better Contracts" />
         <link rel="canonical" href="https://www.contract-ai.de/better-contracts" />
         {/* Open Graph / Facebook */}
@@ -404,7 +404,8 @@ const BetterContracts: React.FC = () => {
           <div className="contract-page-shape shape-2"></div>
         </div>
         
-        <div className="contract-container">
+        {/* WICHTIG: Dynamische Container-Breite für Step 3 */}
+        <div className={`contract-container ${step === 3 && results ? 'has-results' : ''}`} style={step === 3 && results ? { maxWidth: '1200px' } : {}}>
           <div className="contract-header">
             <div className="contract-icon">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -785,7 +786,7 @@ const BetterContracts: React.FC = () => {
           )}
         </div>
 
-        {/* 🔖 Meine gespeicherten Alternativen - Seiten-Sektion */}
+        {/* 📖 Meine gespeicherten Alternativen - Seiten-Sektion */}
         <div className="contract-container">
           <div className="contract-header">
             <div className="contract-icon">
