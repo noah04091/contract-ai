@@ -109,7 +109,7 @@ const BetterContracts: React.FC = () => {
   if (isLoading) {
     return (
       <div className="contract-page">
-        <div className="contract-container">
+        <div className={`contract-container ${step === 3 ? 'has-results' : ''}`}>
           <div style={{ textAlign: 'center', padding: '2rem' }}>
             <div className="spinner"></div>
             <p>Lade Nutzerdaten...</p>

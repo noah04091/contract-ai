@@ -54,6 +54,12 @@
     position: relative;
     z-index: 1;
   }
+
+  /* WICHTIG: Breiterer Container für Results */
+  .contract-container.has-results,
+  .results-step .contract-container {
+    max-width: 1200px !important;
+  }
   
   .contract-header {
     text-align: center;
@@ -498,7 +504,7 @@
     font-weight: 500;
   }
   
-  /* Results Section */
+  /* Results Section - WICHTIG: Ohne Einschränkungen */
   .results-container {
     display: flex;
     flex-direction: column;
@@ -641,13 +647,24 @@
     font-style: italic;
   }
   
-  /* Results Step Container */
+  /* Results Step Container - WICHTIG: Volle Breite */
   .results-step {
     padding: 0;
     background: none;
     border: none;
     box-shadow: none;
     min-height: 400px;
+    width: 100%;
+    max-width: none !important;
+  }
+
+  /* Wenn Step 3 aktiv ist, Container breiter machen */
+  .step:nth-child(3).active ~ .contract-step-container,
+  .contract-step-container.results-step {
+    max-width: 100%;
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
   }
   
   /* Step Actions */
@@ -660,6 +677,9 @@
     background: white;
     border-radius: 16px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
   }
   
   /* Retry Button in Error Message */
@@ -822,88 +842,7 @@
     }
   }
 
-  /* 📁 ZUSÄTZLICHE KLASSEN für deine bestehende ContractPages.css */
-
-/* Search Input Container */
-.search-input-container {
-  margin-bottom: 1.5rem;
-}
-
-.search-input-container label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-  color: #374151;
-  font-size: 0.875rem;
-}
-
-.search-input-container input {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  color: #374151;
-  background: white;
-  transition: all 0.2s ease;
-}
-
-.search-input-container input:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.input-help {
-  margin-top: 0.375rem;
-  font-size: 0.75rem;
-  color: #6b7280;
-  font-style: italic;
-}
-
-/* Results Step Container */
-.results-step {
-  padding: 0;
-  background: none;
-  border: none;
-  box-shadow: none;
-}
-
-/* Step Actions */
-.step-actions {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  margin-top: 2rem;
-  padding: 1.5rem;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-/* Retry Button in Error Message */
-.retry-button {
-  margin-left: 1rem;
-  padding: 0.375rem 0.75rem;
-  background: #3b82f6;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.retry-button:hover:not(:disabled) {
-  background: #2563eb;
-  transform: translateY(-1px);
-}
-
-.retry-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
+/* 🎯 ZUSÄTZLICHE KLASSEN für deine bestehende ContractPages.css */
 
 /* Enhanced Progress States */
 .analyzing-progress .analyzing-text {
