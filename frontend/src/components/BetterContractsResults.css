@@ -151,10 +151,7 @@
   flex-direction: column;
   gap: 0.75rem; /* Kompakter Abstand */
   margin-bottom: 2rem;
-  width: 100%;
-  max-width: 800px; /* Maximale Breite für die Kartenliste */
-  margin-left: auto;
-  margin-right: auto;
+  width: 100%; /* Volle Breite */
 }
 
 .alternative-card {
@@ -164,7 +161,7 @@
   position: relative;
   transition: all 0.3s ease;
   border: 1px solid #e5e7eb; /* Dezenterer Border */
-  width: 100%;
+  width: 100%; /* Volle verfügbare Breite nutzen */
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* Dezenterer Schatten */
 }
 
