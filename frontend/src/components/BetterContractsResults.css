@@ -147,25 +147,25 @@
 
 /* ========== ALTERNATIVES STACK - KOMPAKTE VERSION ========== */
 .alternatives-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-  gap: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem; /* Kompakter Abstand */
   margin-bottom: 2rem;
   width: 100%;
-  justify-content: center;
+  max-width: 800px; /* Maximale Breite für die Kartenliste */
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .alternative-card {
   background: white; /* Vereinfacht zu reinem Weiß */
   border-radius: 12px; /* Reduziert von 20px */
-  padding: 1.25rem; /* Reduziert von 1.5rem */
+  padding: 1rem; /* Noch kompakter */
   position: relative;
   transition: all 0.3s ease;
   border: 1px solid #e5e7eb; /* Dezenterer Border */
   width: 100%;
-  max-width: 400px; /* Maximale Breite wie SavedAlternatives */
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* Dezenterer Schatten */
-  justify-self: center; /* Zentriert die Karten im Grid */
 }
 
 .alternative-card:hover {
