@@ -137,12 +137,6 @@ const SavedAlternatives: React.FC = () => {
         <button
           className="dashboard-view-all-btn"
           onClick={() => window.location.href = '/better-contracts'}
-          style={{
-            position: 'absolute',
-            top: '-110px',  // JETZT WIRKLICH auf Augenhöhe mit der Überschrift!
-            right: '0px',
-            zIndex: 1000
-          }}
         >
           {sortedAlternatives.length > 5 
             ? `Alle ${sortedAlternatives.length} Alternativen in Better Contracts verwalten`
