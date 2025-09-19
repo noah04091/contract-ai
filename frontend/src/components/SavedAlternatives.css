@@ -1,25 +1,29 @@
 /* SavedAlternatives.css - MIT DASHBOARD PREFIX FÜR TRENNUNG */
 
 .saved-alternatives-content {
-  /* No background/padding - now handled by Dashboard .section */
-  position: relative; /* Füge eine Property hinzu damit es kein leeres Ruleset ist */
-  padding: 0; /* Explizit kein Padding */
-  margin: 0; /* Kein Margin */
-  width: 100%; /* Volle Breite */
+  /* Volle Breite erzwingen */
+  position: relative;
+  padding: 0 !important;
+  margin: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  display: block !important;
 }
 
-/* Dashboard Section Header - wie bei anderen Sektionen */
+/* Dashboard Section Header - mit CSS Grid für perfekte Positionierung */
 .dashboard-section-header {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
   margin-bottom: 1.5rem;
   width: 100%;
+  gap: 2rem;
 }
 
 .dashboard-stats-row {
   display: flex;
   gap: 2rem;
+  grid-column: 1;
 }
 
 .dashboard-stat-item {
@@ -41,9 +45,10 @@
   font-weight: 400;
 }
 
-/* Button oben rechts mit Flexbox statt absolute */
+/* Button in Grid Column 3 (ganz rechts) */
 .dashboard-view-all-btn {
-  margin-left: auto; /* Schiebt den Button nach rechts */
+  grid-column: 3;
+  justify-self: end; /* Innerhalb der Grid-Zelle rechts ausrichten */
   background: #3b82f6;
   color: white;
   border: none;
@@ -57,7 +62,6 @@
   align-items: center;
   gap: 0.5rem;
   white-space: nowrap;
-  flex-shrink: 0; /* Verhindert dass Button schrumpft */
 }
 
 .dashboard-view-all-btn:hover {
@@ -66,9 +70,23 @@
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
-/* Alte Stats ausblenden */
-.stats-summary {
-  display: none; /* Wird durch dashboard-section-header ersetzt */
+/* DEFINITIVE FIX - Parent Container Override */
+.section > .saved-alternatives-content,
+.dashboard-section > .saved-alternatives-content,
+[class*="section"] > .saved-alternatives-content {
+  padding: 0 !important;
+  margin: 0 !important;
+  max-width: 100% !important;
+  width: 100% !important;
+}
+
+/* Falls der Header in einem Container mit Padding ist */
+.saved-alternatives-content .dashboard-section-header {
+  margin-left: calc(-1 * var(--section-padding, 0px));
+  margin-right: calc(-1 * var(--section-padding, 0px));
+  padding-left: var(--section-padding, 0px);
+  padding-right: var(--section-padding, 0px);
+  width: calc(100% + 2 * var(--section-padding, 0px));
 }
 
 .saved-alternatives-loading {
@@ -558,15 +576,4 @@
   .dashboard-alternative-card {
     padding: 16px;
   }
-}
-/* OVERRIDE FÜR MAXIMALE RECHTS-POSITIONIERUNG */
-.dashboard-section-header {
-  display: flex !important;
-  width: 100% !important;
-  justify-content: space-between !important;
-}
-
-.dashboard-view-all-btn {
-  margin-left: auto !important;
-  float: right !important;
 }
