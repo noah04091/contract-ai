@@ -146,14 +146,15 @@ const SavedAlternatives: React.FC = () => {
             </div>
           </div>
           
-          {sortedAlternatives.length > 5 && (
-            <button
-              className="dashboard-view-all-btn"
-              onClick={() => window.location.href = '/better-contracts'}
-            >
-              Alle {sortedAlternatives.length} Alternativen in Better Contracts verwalten
-            </button>
-          )}
+          {/* Button IMMER anzeigen für konsistente Navigation */}
+          <button
+            className="dashboard-view-all-btn"
+            onClick={() => window.location.href = '/better-contracts'}
+          >
+            {sortedAlternatives.length > 5 
+              ? `Alle ${sortedAlternatives.length} Alternativen in Better Contracts verwalten`
+              : 'In Better Contracts verwalten'}
+          </button>
         </div>
       )}
 
@@ -209,10 +210,11 @@ const SavedAlternatives: React.FC = () => {
             ))}
           </div>
 
+          {/* Nur zeigen wenn es mehr Alternativen gibt als angezeigt werden */}
           {sortedAlternatives.length > 5 && (
             <div className="dashboard-more-info">
               <span className="dashboard-more-count">
-                {sortedAlternatives.length - 5} weitere Alternative{sortedAlternatives.length - 5 > 1 ? 'n' : ''} verfügbar
+                + {sortedAlternatives.length - 5} weitere Alternative{sortedAlternatives.length - 5 > 1 ? 'n' : ''}
               </span>
             </div>
           )}
