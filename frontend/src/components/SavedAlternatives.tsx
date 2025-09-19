@@ -155,34 +155,34 @@ const SavedAlternatives: React.FC = () => {
         </div>
       ) : (
         <>
-          <div className="alternatives-grid">
+          <div className="dashboard-alternatives-grid">
             {displayedAlternatives.map((alternative) => (
-              <div key={alternative._id} className="alternative-card">
-                <div className="compact-card-content">
-                  <div className="compact-header">
-                    <h3 className="compact-title">{alternative.title}</h3>
-                    <span className="contract-type-badge">{alternative.contractType}</span>
+              <div key={alternative._id} className="dashboard-alternative-card">
+                <div className="dashboard-compact-content">
+                  <div className="dashboard-compact-header">
+                    <h3 className="dashboard-compact-title">{alternative.title}</h3>
+                    <span className="dashboard-contract-type-badge">{alternative.contractType}</span>
                   </div>
 
-                  <div className="compact-info">
-                    <span className="provider-text">von {alternative.provider}</span>
+                  <div className="dashboard-compact-info">
+                    <span className="dashboard-provider-text">von {alternative.provider}</span>
                     {alternative.monthlyPrice && (
-                      <span className="compact-price">{alternative.monthlyPrice}€/Monat</span>
+                      <span className="dashboard-compact-price">{alternative.monthlyPrice}€/Monat</span>
                     )}
                   </div>
 
-                  <div className="compact-actions">
+                  <div className="dashboard-compact-actions">
                     <a
                       href={alternative.link}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="compact-visit-btn"
+                      className="dashboard-compact-visit-btn"
                     >
                       Anbieter besuchen
                     </a>
                     <button
                       onClick={() => handleDelete(alternative._id)}
-                      className="compact-delete-btn"
+                      className="dashboard-compact-delete-btn"
                       title="Löschen"
                     >
                       🗑️

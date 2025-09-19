@@ -1,7 +1,8 @@
-/* SavedAlternatives.css */
+/* SavedAlternatives.css - MIT DASHBOARD PREFIX FÜR TRENNUNG */
 
 .saved-alternatives-content {
   /* No background/padding - now handled by Dashboard .section */
+  position: relative; /* Füge eine Property hinzu damit es kein leeres Ruleset ist */
 }
 
 /* Stats moved to top of content */
@@ -120,14 +121,16 @@
   font-size: 0.875rem;
 }
 
-.alternatives-grid {
+/* DASHBOARD PREFIX FÜR ALTERNATIVES GRID */
+.dashboard-alternatives-grid {
   display: flex;
   flex-wrap: wrap;
   gap: 16px;
   justify-content: flex-start;
 }
 
-.alternative-card {
+/* DASHBOARD PREFIX FÜR ALTERNATIVE CARD */
+.dashboard-alternative-card {
   background: white;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
@@ -141,17 +144,18 @@
   flex-shrink: 0;
 }
 
-.alternative-card:hover {
+.dashboard-alternative-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
 }
 
-/* Compact Card Content */
-.compact-card-content {
+/* Compact Card Content - MIT DASHBOARD PREFIX */
+.dashboard-compact-content {
   /* All content in single container, no extra spacing */
+  width: 100%; /* Füge eine Property hinzu damit es kein leeres Ruleset ist */
 }
 
-.compact-header {
+.dashboard-compact-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -159,7 +163,7 @@
   gap: 12px;
 }
 
-.compact-title {
+.dashboard-compact-title {
   margin: 0;
   font-size: 16px;
   font-weight: 600;
@@ -171,10 +175,11 @@
   text-overflow: ellipsis;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2; /* Standard-Property für bessere Kompatibilität */
   -webkit-box-orient: vertical;
 }
 
-.contract-type-badge {
+.dashboard-contract-type-badge {
   background: #dbeafe;
   color: #1e40af;
   padding: 4px 8px;
@@ -185,7 +190,7 @@
   flex-shrink: 0;
 }
 
-.compact-info {
+.dashboard-compact-info {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -193,7 +198,7 @@
   gap: 12px;
 }
 
-.provider-text {
+.dashboard-provider-text {
   color: #6b7280;
   font-size: 14px;
   flex: 1;
@@ -203,7 +208,7 @@
   white-space: nowrap;
 }
 
-.compact-price {
+.dashboard-compact-price {
   font-size: 14px;
   font-weight: 600;
   color: #059669;
@@ -211,14 +216,14 @@
   flex-shrink: 0;
 }
 
-.compact-actions {
+.dashboard-compact-actions {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 12px;
 }
 
-.compact-visit-btn {
+.dashboard-compact-visit-btn {
   background: #3b82f6;
   color: white;
   text-decoration: none;
@@ -231,13 +236,13 @@
   text-align: center;
 }
 
-.compact-visit-btn:hover {
+.dashboard-compact-visit-btn:hover {
   background: #2563eb;
   text-decoration: none;
   color: white;
 }
 
-.compact-delete-btn {
+.dashboard-compact-delete-btn {
   background: #fef2f2;
   border: 1px solid #fecaca;
   color: #dc2626;
@@ -248,11 +253,12 @@
   flex-shrink: 0;
 }
 
-.compact-delete-btn:hover {
+.dashboard-compact-delete-btn:hover {
   background: #fee2e2;
   border-color: #fca5a5;
 }
 
+/* ALTE KLASSEN BEHALTEN FÜR KOMPATIBILITÄT */
 .card-header {
   padding: 1.5rem 1.5rem 1rem;
   display: flex;
@@ -424,8 +430,22 @@
     gap: 1rem;
   }
 
-  .alternatives-grid {
+  .dashboard-alternatives-grid {
     grid-template-columns: 1fr;
+  }
+
+  .dashboard-compact-header {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: stretch;
+  }
+
+  .dashboard-compact-actions {
+    justify-content: space-between;
+  }
+
+  .dashboard-compact-info {
+    gap: 0.5rem;
   }
 
   .card-header {
