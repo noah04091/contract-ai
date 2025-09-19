@@ -79,7 +79,7 @@
 .saved-alternatives-content {
   position: relative !important;
   padding: 0 !important;
-  padding-top: 30px !important; /* Genug Platz für Button */
+  padding-top: 10px !important; /* Weniger Padding, da Button jetzt höher ist */
   margin: 0 !important;
   width: 100% !important;
   max-width: 100% !important;

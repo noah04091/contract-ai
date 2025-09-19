@@ -139,7 +139,7 @@ const SavedAlternatives: React.FC = () => {
           onClick={() => window.location.href = '/better-contracts'}
           style={{
             position: 'absolute',
-            top: '0px',
+            top: '-70px',  // HIER! Jetzt auf Augenhöhe mit der Überschrift
             right: '0px',
             zIndex: 1000
           }}
