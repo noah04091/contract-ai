@@ -10,13 +10,18 @@
   display: block !important;
 }
 
-/* Dashboard Section Header - mit CSS Grid für perfekte Positionierung */
+/* Dashboard Section Header - mit negativem Margin um Parent-Padding auszugleichen */
 .dashboard-section-header {
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
   margin-bottom: 1.5rem;
-  width: 100%;
+  /* WICHTIG: Negative margins um das Padding des Parent-Containers auszugleichen */
+  margin-left: -20px;
+  margin-right: -20px;
+  padding-left: 20px;
+  padding-right: 20px;
+  width: calc(100% + 40px);
   gap: 2rem;
 }
 
@@ -70,23 +75,39 @@
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
-/* DEFINITIVE FIX - Parent Container Override */
-.section > .saved-alternatives-content,
-.dashboard-section > .saved-alternatives-content,
-[class*="section"] > .saved-alternatives-content {
-  padding: 0 !important;
-  margin: 0 !important;
-  max-width: 100% !important;
-  width: 100% !important;
+/* ALTERNATIV: Button mit absoluter Positionierung für maximale Kontrolle */
+[class*="section"] {
+  position: relative !important; /* Macht section zum positioned ancestor */
 }
 
-/* Falls der Header in einem Container mit Padding ist */
-.saved-alternatives-content .dashboard-section-header {
-  margin-left: calc(-1 * var(--section-padding, 0px));
-  margin-right: calc(-1 * var(--section-padding, 0px));
-  padding-left: var(--section-padding, 0px);
-  padding-right: var(--section-padding, 0px);
-  width: calc(100% + 2 * var(--section-padding, 0px));
+.dashboard-section-header {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  width: 100%;
+  gap: 2rem;
+}
+
+/* Button absolut zum section Container positionieren */
+.dashboard-view-all-btn {
+  position: absolute !important;
+  top: 0;
+  right: 0; /* Ganz rechts im section Container */
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 0.625rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+  z-index: 10;
 }
 
 .saved-alternatives-loading {
