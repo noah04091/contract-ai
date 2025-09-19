@@ -54,11 +54,11 @@
   font-weight: 400;
 }
 
-/* NUCLEAR OPTION - Button mit VIEL negativem right */
+/* FINALE LÖSUNG - Button nach rechts UND nach oben */
 .saved-alternatives-content .dashboard-view-all-btn {
   position: absolute !important;
-  top: 0 !important;
-  right: -60px !important; /* MASSIV nach rechts raus aus dem Container */
+  top: -60px !important; /* NACH OBEN aus dem Container raus */
+  right: -60px !important; /* NACH RECHTS aus dem Container raus */
   background: #3b82f6 !important;
   color: white !important;
   border: none !important;
@@ -72,19 +72,20 @@
   align-items: center !important;
   gap: 0.5rem !important;
   white-space: nowrap !important;
-  z-index: 9999 !important; /* Maximum z-index */
+  z-index: 9999 !important;
 }
 
-/* Overflow sichtbar machen damit Button nicht abgeschnitten wird */
+/* Container braucht genug Platz oben */
 .saved-alternatives-content {
   position: relative !important;
   padding: 0 !important;
+  padding-top: 20px !important; /* Platz für den Button */
   margin: 0 !important;
   width: 100% !important;
   max-width: 100% !important;
   display: block !important;
   min-height: 200px;
-  overflow: visible !important; /* WICHTIG: Button darf nicht abgeschnitten werden */
+  overflow: visible !important;
 }
 
 /* Parent Container auch overflow visible */
