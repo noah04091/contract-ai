@@ -132,38 +132,38 @@ const SavedAlternatives: React.FC = () => {
 
   return (
     <div className="saved-alternatives-content">
-      {/* Header mit Stats links */}
+      {/* Button GANZ OBEN mit absolute positioning */}
       {alternatives.length > 0 && (
-        <>
-          <div className="dashboard-section-header">
-            <div className="dashboard-stats-row">
-              <div className="dashboard-stat-item">
-                <span className="dashboard-stat-number">{stats?.totalSaved || 0}</span>
-                <span className="dashboard-stat-label">Gespeichert</span>
-              </div>
-              <div className="dashboard-stat-item">
-                <span className="dashboard-stat-number">{stats?.byContractType.length || 0}</span>
-                <span className="dashboard-stat-label">Kategorien</span>
-              </div>
+        <button
+          className="dashboard-view-all-btn"
+          onClick={() => window.location.href = '/better-contracts'}
+          style={{
+            position: 'absolute',
+            top: '0px',
+            right: '0px',
+            zIndex: 1000
+          }}
+        >
+          {sortedAlternatives.length > 5 
+            ? `Alle ${sortedAlternatives.length} Alternativen in Better Contracts verwalten`
+            : 'In Better Contracts verwalten'}
+        </button>
+      )}
+
+      {/* Header nur mit Stats, OHNE Button */}
+      {alternatives.length > 0 && (
+        <div className="dashboard-section-header">
+          <div className="dashboard-stats-row">
+            <div className="dashboard-stat-item">
+              <span className="dashboard-stat-number">{stats?.totalSaved || 0}</span>
+              <span className="dashboard-stat-label">Gespeichert</span>
+            </div>
+            <div className="dashboard-stat-item">
+              <span className="dashboard-stat-number">{stats?.byContractType.length || 0}</span>
+              <span className="dashboard-stat-label">Kategorien</span>
             </div>
           </div>
-          
-          {/* Button SEPARAT mit inline styles für absolute Kontrolle */}
-          <button
-            className="dashboard-view-all-btn"
-            onClick={() => window.location.href = '/better-contracts'}
-            style={{
-              position: 'absolute',
-              top: '0px',
-              right: '0px',
-              zIndex: 100
-            }}
-          >
-            {sortedAlternatives.length > 5 
-              ? `Alle ${sortedAlternatives.length} Alternativen in Better Contracts verwalten`
-              : 'In Better Contracts verwalten'}
-          </button>
-        </>
+        </div>
       )}
 
       {alternatives.length === 0 ? (

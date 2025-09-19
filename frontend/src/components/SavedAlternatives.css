@@ -10,21 +10,29 @@
   display: block !important;
 }
 
-/* Dashboard Section Header - RESET auf normale Grid-Lösung */
+/* FORCE das Parent-Element position: relative zu sein */
+.saved-alternatives-content {
+  position: relative !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  display: block !important;
+  min-height: 200px; /* Damit absolute Button sichtbar bleibt */
+}
+
+/* Dashboard Section Header - OHNE Button im Grid */
 .dashboard-section-header {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
+  display: flex;
   align-items: center;
   margin-bottom: 1.5rem;
   width: 100%;
   gap: 2rem;
-  position: relative;
 }
 
 .dashboard-stats-row {
   display: flex;
   gap: 2rem;
-  grid-column: 1;
 }
 
 .dashboard-stat-item {
@@ -46,13 +54,11 @@
   font-weight: 400;
 }
 
-/* Button mit MAXIMALER Spezifität und !important überall */
-.saved-alternatives-content .dashboard-section-header .dashboard-view-all-btn,
-div.dashboard-section-header button.dashboard-view-all-btn {
-  grid-column: 3 !important;
-  justify-self: end !important;
-  margin-left: auto !important;
-  position: relative !important;
+/* Button ABSOLUT zum saved-alternatives-content Container */
+.saved-alternatives-content .dashboard-view-all-btn {
+  position: absolute !important;
+  top: 0 !important;
+  right: 0 !important;
   background: #3b82f6 !important;
   color: white !important;
   border: none !important;
@@ -66,10 +72,10 @@ div.dashboard-section-header button.dashboard-view-all-btn {
   align-items: center !important;
   gap: 0.5rem !important;
   white-space: nowrap !important;
-  z-index: 10 !important;
+  z-index: 1000 !important; /* Sehr hoch damit er über allem ist */
 }
 
-.dashboard-view-all-btn:hover {
+.saved-alternatives-content .dashboard-view-all-btn:hover {
   background: #2563eb !important;
   transform: translateY(-1px) !important;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3) !important;
