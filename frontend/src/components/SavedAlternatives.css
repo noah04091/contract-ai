@@ -54,11 +54,11 @@
   font-weight: 400;
 }
 
-/* NUCLEAR OPTION - Button mit negativem right um aus Container rauszugehen */
+/* NUCLEAR OPTION - Button mit VIEL negativem right */
 .saved-alternatives-content .dashboard-view-all-btn {
   position: absolute !important;
   top: 0 !important;
-  right: -20px !important; /* NEGATIV um aus dem Container rauszugehen */
+  right: -60px !important; /* MASSIV nach rechts raus aus dem Container */
   background: #3b82f6 !important;
   color: white !important;
   border: none !important;
@@ -72,15 +72,24 @@
   align-items: center !important;
   gap: 0.5rem !important;
   white-space: nowrap !important;
-  z-index: 1000 !important;
+  z-index: 9999 !important; /* Maximum z-index */
 }
 
-/* Alternative: Mit transform verschieben */
-@media screen {
-  .saved-alternatives-content .dashboard-view-all-btn {
-    right: 0 !important;
-    transform: translateX(20px) !important; /* Nach rechts aus dem Container schieben */
-  }
+/* Overflow sichtbar machen damit Button nicht abgeschnitten wird */
+.saved-alternatives-content {
+  position: relative !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  display: block !important;
+  min-height: 200px;
+  overflow: visible !important; /* WICHTIG: Button darf nicht abgeschnitten werden */
+}
+
+/* Parent Container auch overflow visible */
+[class*="section"] {
+  overflow: visible !important;
 }
 
 .saved-alternatives-content .dashboard-view-all-btn:hover {
