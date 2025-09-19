@@ -14,8 +14,7 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
-  position: relative;
-  padding-right: 0; /* Kein padding rechts damit Button ganz außen ist */
+  width: 100%;
 }
 
 .dashboard-stats-row {
@@ -39,14 +38,12 @@
 .dashboard-stat-label {
   font-size: 0.875rem;
   color: #64748b;
-  font-weight: 400; /* Nicht mehr fett */
+  font-weight: 400;
 }
 
-/* Button oben rechts wie bei anderen Dashboard-Sektionen */
+/* Button oben rechts mit Flexbox statt absolute */
 .dashboard-view-all-btn {
-  position: absolute;
-  top: -5px; /* Leicht nach oben für bessere Ausrichtung */
-  right: 0; /* Ganz rechts */
+  margin-left: auto; /* Schiebt den Button nach rechts */
   background: #3b82f6;
   color: white;
   border: none;
@@ -60,7 +57,7 @@
   align-items: center;
   gap: 0.5rem;
   white-space: nowrap;
-  z-index: 10; /* Sicherstellen dass Button über anderen Elementen ist */
+  flex-shrink: 0; /* Verhindert dass Button schrumpft */
 }
 
 .dashboard-view-all-btn:hover {

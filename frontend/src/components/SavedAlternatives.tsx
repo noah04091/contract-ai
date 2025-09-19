@@ -146,7 +146,7 @@ const SavedAlternatives: React.FC = () => {
             </div>
           </div>
           
-          {/* Button IMMER anzeigen für konsistente Navigation */}
+          {/* Button direkt daneben, nicht mehr conditional */}
           <button
             className="dashboard-view-all-btn"
             onClick={() => window.location.href = '/better-contracts'}
