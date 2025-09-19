@@ -128,16 +128,28 @@ const SavedAlternatives: React.FC = () => {
 
   return (
     <div className="saved-alternatives-content">
-      {stats && (
-        <div className="stats-summary">
-          <div className="stat-item">
-            <span className="stat-number">{stats.totalSaved}</span>
-            <span className="stat-label">Gespeichert</span>
+      {/* Header mit Button oben rechts wie bei anderen Sektionen */}
+      {alternatives.length > 0 && (
+        <div className="dashboard-section-header">
+          <div className="dashboard-stats-row">
+            <div className="dashboard-stat-item">
+              <span className="dashboard-stat-number">{stats?.totalSaved || 0}</span>
+              <span className="dashboard-stat-label">Gespeichert</span>
+            </div>
+            <div className="dashboard-stat-item">
+              <span className="dashboard-stat-number">{stats?.byContractType.length || 0}</span>
+              <span className="dashboard-stat-label">Kategorien</span>
+            </div>
           </div>
-          <div className="stat-item">
-            <span className="stat-number">{stats.byContractType.length}</span>
-            <span className="stat-label">Kategorien</span>
-          </div>
+          
+          {sortedAlternatives.length > 3 && (
+            <button
+              className="dashboard-view-all-btn"
+              onClick={() => window.location.href = '/better-contracts'}
+            >
+              Alle {sortedAlternatives.length} Alternativen in Better Contracts verwalten
+            </button>
+          )}
         </div>
       )}
 
@@ -194,16 +206,10 @@ const SavedAlternatives: React.FC = () => {
           </div>
 
           {sortedAlternatives.length > 3 && (
-            <div className="show-more-container">
-              <p className="alternatives-count">
+            <div className="dashboard-more-info">
+              <span className="dashboard-more-count">
                 {sortedAlternatives.length - 3} weitere Alternativen verfügbar
-              </p>
-              <button
-                className="btn-primary"
-                onClick={() => window.location.href = '/better-contracts'}
-              >
-                Alle {sortedAlternatives.length} Alternativen in Better Contracts verwalten
-              </button>
+              </span>
             </div>
           )}
         </>
