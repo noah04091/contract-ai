@@ -54,11 +54,11 @@
   font-weight: 400;
 }
 
-/* Button ABSOLUT zum saved-alternatives-content Container */
+/* NUCLEAR OPTION - Button mit negativem right um aus Container rauszugehen */
 .saved-alternatives-content .dashboard-view-all-btn {
   position: absolute !important;
   top: 0 !important;
-  right: 0 !important;
+  right: -20px !important; /* NEGATIV um aus dem Container rauszugehen */
   background: #3b82f6 !important;
   color: white !important;
   border: none !important;
@@ -72,7 +72,15 @@
   align-items: center !important;
   gap: 0.5rem !important;
   white-space: nowrap !important;
-  z-index: 1000 !important; /* Sehr hoch damit er über allem ist */
+  z-index: 1000 !important;
+}
+
+/* Alternative: Mit transform verschieben */
+@media screen {
+  .saved-alternatives-content .dashboard-view-all-btn {
+    right: 0 !important;
+    transform: translateX(20px) !important; /* Nach rechts aus dem Container schieben */
+  }
 }
 
 .saved-alternatives-content .dashboard-view-all-btn:hover {
