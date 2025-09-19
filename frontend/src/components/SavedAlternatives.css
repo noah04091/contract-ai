@@ -10,19 +10,15 @@
   display: block !important;
 }
 
-/* Dashboard Section Header - mit negativem Margin um Parent-Padding auszugleichen */
+/* Dashboard Section Header - RESET auf normale Grid-Lösung */
 .dashboard-section-header {
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
   margin-bottom: 1.5rem;
-  /* WICHTIG: Negative margins um das Padding des Parent-Containers auszugleichen */
-  margin-left: -20px;
-  margin-right: -20px;
-  padding-left: 20px;
-  padding-right: 20px;
-  width: calc(100% + 40px);
+  width: 100%;
   gap: 2rem;
+  position: relative;
 }
 
 .dashboard-stats-row {
@@ -50,29 +46,33 @@
   font-weight: 400;
 }
 
-/* Button in Grid Column 3 (ganz rechts) */
-.dashboard-view-all-btn {
-  grid-column: 3;
-  justify-self: end; /* Innerhalb der Grid-Zelle rechts ausrichten */
-  background: #3b82f6;
-  color: white;
-  border: none;
-  padding: 0.625rem 1.25rem;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  white-space: nowrap;
+/* Button mit MAXIMALER Spezifität und !important überall */
+.saved-alternatives-content .dashboard-section-header .dashboard-view-all-btn,
+div.dashboard-section-header button.dashboard-view-all-btn {
+  grid-column: 3 !important;
+  justify-self: end !important;
+  margin-left: auto !important;
+  position: relative !important;
+  background: #3b82f6 !important;
+  color: white !important;
+  border: none !important;
+  padding: 0.625rem 1.25rem !important;
+  border-radius: 8px !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: all 0.2s !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  white-space: nowrap !important;
+  z-index: 10 !important;
 }
 
 .dashboard-view-all-btn:hover {
-  background: #2563eb;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  background: #2563eb !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3) !important;
 }
 
 /* ALTERNATIV: Button mit absoluter Positionierung für maximale Kontrolle */
