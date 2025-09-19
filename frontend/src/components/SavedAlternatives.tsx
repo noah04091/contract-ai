@@ -109,12 +109,16 @@ const SavedAlternatives: React.FC = () => {
   };
 
 
-  // Sort alternatives by newest first and show only first 3 in dashboard
+  // Sort alternatives by newest first
   const sortedAlternatives = alternatives
     .sort((a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime());
 
-  // Show only first 3 alternatives in dashboard
-  const displayedAlternatives = sortedAlternatives.slice(0, 3);
+  // Show up to 5 alternatives in dashboard (oder so viele wie horizontal passen)
+  const displayedAlternatives = sortedAlternatives.slice(0, 5);
+  
+  // DEBUG - Entferne das später wieder
+  console.log('Total alternatives:', sortedAlternatives.length);
+  console.log('Displayed alternatives:', displayedAlternatives.length);
 
 
   if (loading) {
@@ -142,7 +146,7 @@ const SavedAlternatives: React.FC = () => {
             </div>
           </div>
           
-          {sortedAlternatives.length > 3 && (
+          {sortedAlternatives.length > 5 && (
             <button
               className="dashboard-view-all-btn"
               onClick={() => window.location.href = '/better-contracts'}
@@ -205,10 +209,10 @@ const SavedAlternatives: React.FC = () => {
             ))}
           </div>
 
-          {sortedAlternatives.length > 3 && (
+          {sortedAlternatives.length > 5 && (
             <div className="dashboard-more-info">
               <span className="dashboard-more-count">
-                {sortedAlternatives.length - 3} weitere Alternativen verfügbar
+                {sortedAlternatives.length - 5} weitere Alternative{sortedAlternatives.length - 5 > 1 ? 'n' : ''} verfügbar
               </span>
             </div>
           )}
