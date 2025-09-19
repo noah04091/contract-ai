@@ -57,7 +57,7 @@
 /* PERFEKTE POSITIONIERUNG - Button oben rechts IM Container */
 .saved-alternatives-content .dashboard-view-all-btn {
   position: absolute !important;
-  top: -110px !important; /* JETZT ENDLICH AUF AUGENHÖHE MIT DER ÜBERSCHRIFT! */
+  top: -75px !important; /* JETZT EXAKT AUF AUGENHÖHE MIT "GESPEICHERTE ALTERNATIVEN" */
   right: 0 !important; /* Rechts IM Container, nicht außerhalb */
   background: #3b82f6 !important;
   color: white !important;
