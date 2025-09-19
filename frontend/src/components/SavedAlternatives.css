@@ -559,3 +559,14 @@
     padding: 16px;
   }
 }
+/* OVERRIDE FÜR MAXIMALE RECHTS-POSITIONIERUNG */
+.dashboard-section-header {
+  display: flex !important;
+  width: 100% !important;
+  justify-content: space-between !important;
+}
+
+.dashboard-view-all-btn {
+  margin-left: auto !important;
+  float: right !important;
+}
