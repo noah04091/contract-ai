@@ -3,6 +3,9 @@
 .saved-alternatives-content {
   /* No background/padding - now handled by Dashboard .section */
   position: relative; /* Füge eine Property hinzu damit es kein leeres Ruleset ist */
+  padding: 0; /* Explizit kein Padding */
+  margin: 0; /* Kein Margin */
+  width: 100%; /* Volle Breite */
 }
 
 /* Dashboard Section Header - wie bei anderen Sektionen */
@@ -12,6 +15,7 @@
   align-items: center;
   margin-bottom: 1.5rem;
   position: relative;
+  padding-right: 0; /* Kein padding rechts damit Button ganz außen ist */
 }
 
 .dashboard-stats-row {
@@ -41,8 +45,8 @@
 /* Button oben rechts wie bei anderen Dashboard-Sektionen */
 .dashboard-view-all-btn {
   position: absolute;
-  top: 0;
-  right: 0;
+  top: -5px; /* Leicht nach oben für bessere Ausrichtung */
+  right: 0; /* Ganz rechts */
   background: #3b82f6;
   color: white;
   border: none;
@@ -56,6 +60,7 @@
   align-items: center;
   gap: 0.5rem;
   white-space: nowrap;
+  z-index: 10; /* Sicherstellen dass Button über anderen Elementen ist */
 }
 
 .dashboard-view-all-btn:hover {
