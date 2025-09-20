@@ -981,158 +981,160 @@ router.post("/", async (req, res) => {
 
     console.log(`🚀 POINT 7: Search completed`);
 
-    // 🔴🔴🔴 UNIVERSELLE STRENGE FILTERUNG 🔴🔴🔴
+    // 🔴🔴🔴 UNIVERSELLE STRENGE FILTERUNG - VERSION 2.0 🔴🔴🔴
     console.log(`🔍 Starte UNIVERSELLE strenge Filterung für Typ: ${detectedType}`);
+    console.log(`📊 Anzahl Ergebnisse VOR Filterung: ${organicResults.length}`);
     
-    // Definiere erlaubte und verbotene Domains basierend auf Vertragstyp
-    const filterRules = {
-      'rechtsschutzversicherung': {
-        required: ['rechtsschutz'],
-        allowed: ['check24.de', 'verivox.de', 'tarifcheck.de', 'finanztip.de', 'test.de', 
-                  'adam-riese.de', 'arag.de', 'roland-rechtsschutz.de', 'advocard.de',
-                  'versicherung', 'rechtsschutz'],
-        forbidden: ['dsl', 'internet', 'handy', 'mobilfunk', 'strom', 'gas', 'kfz', 
-                   'auto', 'idealo', 'amazon', 'ebay', 'otto', 'mediamarkt']
+    // Debug: Zeige die ersten 3 Titel
+    organicResults.slice(0, 3).forEach((r, i) => {
+      console.log(`   ${i+1}. ${r.title}`);
+    });
+    
+    // 🔴 SCHRITT 1: Erkenne den Versicherungstyp präzise
+    let filterType = 'unknown';
+    const textLower = cleanContractText.toLowerCase();
+    
+    // Prüfe explizit auf Versicherungstypen
+    if (textLower.includes('rechtsschutz') || detectedType.includes('rechtsschutz')) {
+      filterType = 'rechtsschutz';
+    } else if (textLower.includes('haftpflicht') || detectedType.includes('haftpflicht')) {
+      filterType = 'haftpflicht';
+    } else if ((textLower.includes('kfz') || textLower.includes('auto')) && textLower.includes('versicherung')) {
+      filterType = 'kfz';
+    } else if (textLower.includes('hausrat') || detectedType.includes('hausrat')) {
+      filterType = 'hausrat';
+    } else if (textLower.includes('berufsunfähig') || detectedType.includes('berufsunfähig')) {
+      filterType = 'berufsunfaehigkeit';
+    } else if (textLower.includes('strom') || detectedType.includes('strom')) {
+      filterType = 'strom';
+    } else if (textLower.includes('gas') || detectedType.includes('gas')) {
+      filterType = 'gas';
+    } else if (textLower.includes('dsl') || textLower.includes('internet')) {
+      filterType = 'dsl';
+    } else if (textLower.includes('handy') || textLower.includes('mobilfunk')) {
+      filterType = 'mobilfunk';
+    }
+    
+    console.log(`🎯 Erkannter Filter-Typ: ${filterType}`);
+    
+    // 🔴 SCHRITT 2: STRIKTE FILTER-REGELN
+    const strictFilters = {
+      'rechtsschutz': {
+        mustInclude: ['rechtsschutz'],
+        canInclude: ['versicherung', 'anwalt', 'recht', 'klage', 'gericht', 'arag', 'roland', 'advocard', 'adam', 'riese'],
+        mustNotInclude: ['dsl', 'internet', 'handy', 'mobilfunk', 'strom', 'gas', 'kfz', 'auto', 
+                         'idealo', 'amazon', 'ebay', 'otto', 'mediamarkt', 'saturn', 'conrad',
+                         'telekom', 'vodafone', 'o2', '1&1', '1und1', 'chip.de',
+                         'haftpflicht', 'hausrat', 'berufsunfähig', 'kranken', 'leben']
       },
-      'haftpflichtversicherung': {
-        required: ['haftpflicht'],
-        allowed: ['check24.de', 'verivox.de', 'tarifcheck.de', 'finanztip.de', 'test.de',
-                  'huk.de', 'allianz.de', 'axa.de', 'ergo.de', 'versicherung', 'haftpflicht'],
-        forbidden: ['dsl', 'internet', 'handy', 'mobilfunk', 'strom', 'gas', 'kfz',
-                   'rechtsschutz', 'hausrat', 'idealo', 'amazon', 'ebay']
+      'haftpflicht': {
+        mustInclude: ['haftpflicht'],
+        canInclude: ['versicherung', 'privat', 'schaden', 'huk', 'allianz', 'axa', 'ergo'],
+        mustNotInclude: ['dsl', 'internet', 'handy', 'rechtsschutz', 'kfz', 'auto', 'idealo',
+                         'telekom', 'vodafone', 'hausrat', 'berufsunfähig']
       },
       'kfz': {
-        required: ['kfz', 'auto'],
-        allowed: ['check24.de', 'verivox.de', 'tarifcheck.de', 'huk.de', 'allianz.de',
-                  'kfz', 'auto', 'versicherung'],
-        forbidden: ['dsl', 'internet', 'handy', 'rechtsschutz', 'haftpflicht', 'hausrat',
-                   'idealo', 'amazon', 'ebay']
+        mustInclude: ['kfz', 'auto'],
+        canInclude: ['versicherung', 'kasko', 'haftpflicht', 'fahrzeug', 'pkw'],
+        mustNotInclude: ['dsl', 'internet', 'handy', 'rechtsschutz', 'hausrat', 'idealo']
       },
-      'hausratversicherung': {
-        required: ['hausrat'],
-        allowed: ['check24.de', 'verivox.de', 'tarifcheck.de', 'versicherung', 'hausrat'],
-        forbidden: ['dsl', 'internet', 'handy', 'kfz', 'auto', 'rechtsschutz', 'idealo']
-      },
-      'strom': {
-        required: ['strom', 'energie'],
-        allowed: ['check24.de', 'verivox.de', 'stromvergleich', 'stromanbieter'],
-        forbidden: ['versicherung', 'handy', 'dsl', 'kfz', 'hausrat']
-      },
-      'gas': {
-        required: ['gas'],
-        allowed: ['check24.de', 'verivox.de', 'gasvergleich', 'gasanbieter'],
-        forbidden: ['versicherung', 'handy', 'dsl', 'kfz', 'strom']
-      },
-      'dsl': {
-        required: ['dsl', 'internet'],
-        allowed: ['check24.de', 'verivox.de', 'telekom', 'vodafone', '1und1', 'o2'],
-        forbidden: ['versicherung', 'handy', 'strom', 'gas', 'kfz']
-      },
-      'mobilfunk': {
-        required: ['handy', 'mobilfunk', 'tarif'],
-        allowed: ['check24.de', 'verivox.de', 'telekom', 'vodafone', 'o2'],
-        forbidden: ['versicherung', 'dsl', 'strom', 'gas', 'kfz']
+      'default': {
+        mustInclude: [],
+        canInclude: ['vergleich', 'tarif', 'günstig'],
+        mustNotInclude: []
       }
     };
     
-    // Basis-Regel für unbekannte Typen
-    const defaultRule = {
-      required: [],
-      allowed: ['check24.de', 'verivox.de', 'tarifcheck.de'],
-      forbidden: []
-    };
+    const activeFilter = strictFilters[filterType] || strictFilters['default'];
+    console.log(`📋 Aktiver Filter:`, activeFilter);
     
-    const rules = filterRules[detectedType] || defaultRule;
-    
-    // 🔴 STRENGE FILTERUNG
-    const filteredResults = organicResults.filter(result => {
-      const title = result.title?.toLowerCase() || '';
-      const snippet = result.snippet?.toLowerCase() || '';
-      const url = result.link?.toLowerCase() || '';
+    // 🔴 SCHRITT 3: AGGRESSIVE FILTERUNG
+    let filteredResults = organicResults.filter((result, index) => {
+      const title = (result.title || '').toLowerCase();
+      const snippet = (result.snippet || '').toLowerCase();
+      const url = (result.link || '').toLowerCase();
       const combined = `${title} ${snippet} ${url}`;
       
-      // SCHRITT 1: Prüfe ob VERBOTENE Keywords enthalten sind
-      const hasForbidden = rules.forbidden.some(forbidden => 
-        combined.includes(forbidden.toLowerCase())
-      );
-      
-      if (hasForbidden) {
-        console.log(`❌ BLOCKIERT (verbotenes Keyword): ${result.title}`);
-        return false;
+      // Debug für erste 5 Ergebnisse
+      if (index < 5) {
+        console.log(`\n🔍 Prüfe Ergebnis ${index + 1}: ${result.title}`);
       }
       
-      // SCHRITT 2: Prüfe ob ERFORDERLICHE Keywords enthalten sind
-      if (rules.required.length > 0) {
-        const hasRequired = rules.required.some(required => 
-          combined.includes(required.toLowerCase())
-        );
+      // REGEL 1: MUSS verbotene Wörter NICHT enthalten
+      for (const forbidden of activeFilter.mustNotInclude) {
+        if (combined.includes(forbidden)) {
+          console.log(`   ❌ BLOCKIERT wegen verbotenem Wort: "${forbidden}"`);
+          return false;
+        }
+      }
+      
+      // REGEL 2: MUSS erforderliche Wörter enthalten (wenn definiert)
+      if (activeFilter.mustInclude.length > 0) {
+        let hasRequired = false;
+        for (const required of activeFilter.mustInclude) {
+          if (combined.includes(required)) {
+            hasRequired = true;
+            if (index < 5) console.log(`   ✅ Enthält erforderliches Wort: "${required}"`);
+            break;
+          }
+        }
         
         if (!hasRequired) {
-          // Prüfe ob es eine erlaubte Domain ist
-          const isAllowedDomain = rules.allowed.some(allowed => 
-            url.includes(allowed.toLowerCase())
-          );
+          // Prüfe ob es wenigstens ein erlaubtes Wort enthält
+          let hasAllowed = false;
+          for (const allowed of activeFilter.canInclude) {
+            if (combined.includes(allowed)) {
+              hasAllowed = true;
+              break;
+            }
+          }
           
-          if (!isAllowedDomain) {
-            console.log(`❌ BLOCKIERT (fehlendes Keyword): ${result.title}`);
+          if (!hasAllowed) {
+            console.log(`   ❌ BLOCKIERT: Enthält kein erforderliches Keyword`);
             return false;
           }
         }
       }
       
-      // SCHRITT 3: Zusätzliche Versicherungs-Filterung
-      if (detectedType.includes('versicherung')) {
-        // Bei Versicherungen müssen die Ergebnisse WIRKLICH relevant sein
-        const isInsuranceRelated = 
-          combined.includes('versicherung') ||
-          combined.includes('tarif') ||
-          combined.includes('vergleich') ||
-          rules.allowed.some(allowed => url.includes(allowed));
-        
-        if (!isInsuranceRelated) {
-          console.log(`❌ BLOCKIERT (nicht versicherungsrelevant): ${result.title}`);
-          return false;
-        }
+      // REGEL 3: Spezialprüfung für bekannte irrelevante Seiten
+      const blacklistedDomains = ['idealo.de', 'chip.de', 'mydealz.de', 'preisvergleich.de'];
+      if (blacklistedDomains.some(domain => url.includes(domain))) {
+        console.log(`   ❌ BLOCKIERT: Blacklisted Domain`);
+        return false;
       }
       
-      console.log(`✅ ERLAUBT: ${result.title}`);
+      if (index < 5) console.log(`   ✅ ERLAUBT`);
       return true;
     });
     
-    console.log(`🔴 FILTERUNG ABGESCHLOSSEN:`);
+    console.log(`\n🔴 FILTERUNG ABGESCHLOSSEN:`);
     console.log(`   Vorher: ${organicResults.length} Ergebnisse`);
     console.log(`   Nachher: ${filteredResults.length} Ergebnisse`);
     
+    // 🔴 SCHRITT 4: Wenn zu wenige Ergebnisse, füge sichere Fallbacks hinzu
+    if (filteredResults.length < 3 && filterType === 'rechtsschutz') {
+      console.log(`⚠️ Zu wenige Ergebnisse - füge Rechtsschutz-Fallbacks hinzu`);
+      
+      const fallbackResults = [
+        {
+          title: "Rechtsschutzversicherung Vergleich 2024 - Finanztip",
+          link: "https://www.finanztip.de/rechtsschutzversicherung/",
+          snippet: "Die besten Rechtsschutzversicherungen im Vergleich. Sparen Sie bis zu 50% bei Ihrer Rechtsschutzversicherung.",
+          position: 99
+        },
+        {
+          title: "ARAG Rechtsschutzversicherung - Testsieger",
+          link: "https://www.arag.de/rechtsschutzversicherung/",
+          snippet: "ARAG Rechtsschutz - Mehrfacher Testsieger bei Stiftung Warentest. Jetzt online abschließen.",
+          position: 98
+        }
+      ];
+      
+      filteredResults = [...filteredResults, ...fallbackResults];
+    }
+    
     // Überschreibe die organicResults mit gefilterten
     organicResults = filteredResults;
-    
-    // Falls zu wenige Ergebnisse, füge Mock-Daten hinzu
-    if (organicResults.length < 3 && detectedType.includes('versicherung')) {
-      console.log(`⚠️ Zu wenige Ergebnisse - füge relevante Fallback-Daten hinzu`);
-      
-      const fallbackResults = {
-        'rechtsschutzversicherung': [
-          {
-            title: "Rechtsschutzversicherung Vergleich 2024",
-            link: "https://www.finanztip.de/rechtsschutzversicherung/",
-            snippet: "Vergleichen Sie Rechtsschutzversicherungen und sparen Sie bis zu 50%",
-            position: 99
-          }
-        ],
-        'haftpflichtversicherung': [
-          {
-            title: "Haftpflichtversicherung Vergleich 2024",
-            link: "https://www.finanztip.de/haftpflichtversicherung/",
-            snippet: "Die besten Haftpflichtversicherungen im Test",
-            position: 99
-          }
-        ]
-      };
-      
-      if (fallbackResults[detectedType]) {
-        organicResults.push(...fallbackResults[detectedType]);
-      }
-    }
 
     // 🆕 PARTNER-INTEGRATION MIT STRENGER VALIDIERUNG
     console.log(`🤝 Starting STRICT Partner Integration...`);
