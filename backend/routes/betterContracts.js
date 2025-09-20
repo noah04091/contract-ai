@@ -602,7 +602,7 @@ async function extractTarifcheckContent(url, $, bodyText) {
   };
 }
 
-// 🆕 Enhanced Website-Inhalt extrahieren mit Portal-spezifischer Logik
+// 🆕 Enhanced Website-Inhalt extrahieren mit BESSERER Provider-Erkennung
 async function extractWebContent(url) {
   try {
     console.log(`📄 Extrahiere Inhalt von: ${url}`);
@@ -632,15 +632,80 @@ async function extractWebContent(url) {
     const $ = cheerio.load(response.data);
     const bodyText = $('body').text().replace(/\s+/g, ' ').slice(0, 2000);
 
+    // 🔴 VERBESSERTE Provider-Erkennung
+    let provider = 'Unknown';
+    let betterDescription = '';
+    
+    // Extrahiere Provider aus URL oder Seiten-Content
+    if (url.includes('check24.de')) {
+      provider = 'CHECK24';
+      betterDescription = 'Deutschlands größtes Vergleichsportal mit über 300 Tarifen im Vergleich.';
+    } else if (url.includes('verivox.de')) {
+      provider = 'Verivox';
+      betterDescription = 'TÜV-geprüftes Vergleichsportal mit Best-Preis-Garantie.';
+    } else if (url.includes('tarifcheck.de')) {
+      provider = 'TarifCheck';
+      betterDescription = 'Unabhängiger Versicherungsvergleich mit Expertenberatung.';
+    } else if (url.includes('finanztip.de')) {
+      provider = 'Finanztip';
+      betterDescription = 'Gemeinnützige Verbraucher-Redaktion mit unabhängigen Empfehlungen.';
+    } else if (url.includes('test.de') || url.includes('stiftung-warentest')) {
+      provider = 'Stiftung Warentest';
+      betterDescription = 'Unabhängige Testberichte und Vergleiche von Deutschlands bekanntester Testorganisation.';
+    } else if (url.includes('arag.de')) {
+      provider = 'ARAG';
+      betterDescription = 'Europas größter Rechtsschutzversicherer mit über 85 Jahren Erfahrung.';
+    } else if (url.includes('roland-rechtsschutz')) {
+      provider = 'ROLAND';
+      betterDescription = 'Spezialist für Rechtsschutzversicherungen seit 1957.';
+    } else if (url.includes('adam-riese')) {
+      provider = 'Adam Riese';
+      betterDescription = 'Digitaler Versicherer mit flexiblen Online-Tarifen.';
+    } else if (url.includes('huk.de') || url.includes('huk24')) {
+      provider = 'HUK-COBURG';
+      betterDescription = 'Deutschlands größter Kfz-Versicherer mit günstigen Tarifen.';
+    } else if (url.includes('allianz')) {
+      provider = 'Allianz';
+      betterDescription = 'Weltgrößter Versicherungskonzern mit umfassendem Schutz.';
+    } else if (url.includes('axa.de')) {
+      provider = 'AXA';
+      betterDescription = 'Internationale Versicherungsgruppe mit maßgeschneiderten Lösungen.';
+    } else if (url.includes('ergo.de')) {
+      provider = 'ERGO';
+      betterDescription = 'Die Versicherung Ihres Vertrauens - Teil der Munich Re Gruppe.';
+    } else if (url.includes('cosmosdirekt')) {
+      provider = 'CosmosDirekt';
+      betterDescription = 'Deutschlands führender Online-Versicherer mit günstigen Direkttarifen.';
+    } else if (url.includes('generali')) {
+      provider = 'Generali';
+      betterDescription = 'Einer der größten Erstversicherer weltweit.';
+    } else {
+      // Versuche Provider aus Title oder Meta-Tags zu extrahieren
+      const siteTitle = $('title').text();
+      const metaAuthor = $('meta[name="author"]').attr('content');
+      const ogSiteName = $('meta[property="og:site_name"]').attr('content');
+      
+      provider = ogSiteName || metaAuthor || siteTitle.split('|')[0].split('-')[0].trim() || 'Versicherungsportal';
+      
+      // Säubere den Provider-Namen
+      provider = provider.replace(/GmbH|AG|SE|&Co|KG|e\.V\./gi, '').trim();
+      if (provider.length > 30) {
+        provider = provider.substring(0, 30).trim();
+      }
+    }
+
     // Portal-spezifische Extraktion
-    let specialData = { prices: [], features: [], provider: 'Unknown' };
+    let specialData = { prices: [], features: [], provider: provider };
 
     if (url.includes('check24')) {
       specialData = await extractCheck24Content(url, $, bodyText);
+      specialData.provider = 'CHECK24';
     } else if (url.includes('verivox')) {
       specialData = await extractVerivoxContent(url, $, bodyText);
+      specialData.provider = 'Verivox';
     } else if (url.includes('tarifcheck')) {
       specialData = await extractTarifcheckContent(url, $, bodyText);
+      specialData.provider = 'TarifCheck';
     }
 
     // Fallback: Generische Preis-Extraktion
@@ -651,16 +716,18 @@ async function extractWebContent(url) {
 
     const title = $('title').text() || $('h1').first().text() || 'Unbekannter Titel';
     const description = $('meta[name="description"]').attr('content') ||
-                       $('meta[property="og:description"]').attr('content') || '';
+                       $('meta[property="og:description"]').attr('content') || 
+                       betterDescription || '';
 
-    // Enhanced Keywords für bessere Relevanz
+    // 🔴 VERBESSERTE Relevante Informationen extrahieren
     const keywords = [
       'laufzeit', 'monatlich', 'jährlich', 'kündigung', 'tarif', 'flat', 'unlimited',
       'grundgebühr', 'einmalig', 'anschluss', 'wechsel', 'bonus', 'rabatt', 'aktion',
-      'mindestvertragslaufzeit', 'kündigungsfrist', 'bereitstellung', 'versand'
+      'mindestvertragslaufzeit', 'kündigungsfrist', 'bereitstellung', 'versand',
+      'testsieger', 'empfehlung', 'auszeichnung', 'bewertung', 'note'
     ];
 
-    let relevantInfo = '';
+    let relevantInfo = betterDescription ? betterDescription + ' ' : '';
     keywords.forEach(keyword => {
       const regex = new RegExp(`.{0,100}${keyword}.{0,100}`, 'gi');
       const matches = bodyText.match(regex);
@@ -669,13 +736,24 @@ async function extractWebContent(url) {
       }
     });
 
+    // 🔴 Extrahiere Bewertungen und Auszeichnungen
+    const ratingMatch = bodyText.match(/(\d[,.]?\d)\s*(sterne|punkte|note)/i);
+    const testsiegerMatch = bodyText.match(/(testsieger|sehr gut|ausgezeichnet|empfehlung)/i);
+    
+    if (ratingMatch) {
+      relevantInfo += ` Bewertung: ${ratingMatch[0]}. `;
+    }
+    if (testsiegerMatch) {
+      relevantInfo += ` ${testsiegerMatch[0]}. `;
+    }
+
     return {
       url,
       title: title.slice(0, 120),
-      description: description.slice(0, 250),
+      description: description.slice(0, 250) || relevantInfo.slice(0, 250),
       prices: specialData.prices,
       features: specialData.features || [],
-      provider: specialData.provider,
+      provider: specialData.provider || provider,
       relevantInfo: relevantInfo.slice(0, 600),
       success: true,
       isSpecialPortal: url.includes('check24') || url.includes('verivox') || url.includes('tarifcheck')
@@ -684,24 +762,23 @@ async function extractWebContent(url) {
   } catch (error) {
     console.warn(`❌ Fehler bei ${url}:`, error.message);
 
-    // Enhanced Error Info
-    const errorDetails = {
-      message: error.message,
-      code: error.code,
-      status: error.response?.status,
-      isTimeout: error.code === 'ECONNABORTED'
-    };
+    // 🔴 Auch bei Fehler: Versuche Provider aus URL zu ermitteln
+    let fallbackProvider = 'Anbieter';
+    if (url.includes('check24')) fallbackProvider = 'CHECK24';
+    else if (url.includes('verivox')) fallbackProvider = 'Verivox';
+    else if (url.includes('tarifcheck')) fallbackProvider = 'TarifCheck';
+    else if (url.includes('finanztip')) fallbackProvider = 'Finanztip';
 
     return {
       url,
-      title: 'Nicht verfügbar',
-      description: `Fehler: ${error.message}`,
+      title: 'Seite momentan nicht erreichbar',
+      description: `Bitte besuchen Sie die Webseite direkt für aktuelle Informationen.`,
       prices: [],
       features: [],
-      provider: 'Unknown',
+      provider: fallbackProvider,
       relevantInfo: '',
       success: false,
-      error: errorDetails
+      error: error.message
     };
   }
 }
@@ -979,6 +1056,55 @@ router.post("/", async (req, res) => {
       organicResults = [];
     }
 
+    // 🔴🔴🔴 SOFORT-FILTERUNG DIREKT NACH DER SUCHE 🔴🔴🔴
+    console.log(`🚨 AGGRESSIVE SOFORT-FILTERUNG für: ${detectedType}`);
+    
+    // Prüfe ob es eine Versicherung ist
+    const isInsurance = detectedType.toLowerCase().includes('versicherung') || 
+                       detectedType.toLowerCase().includes('rechtsschutz') ||
+                       detectedType.toLowerCase().includes('haftpflicht') ||
+                       detectedType.toLowerCase().includes('hausrat');
+    
+    if (isInsurance && organicResults.length > 0) {
+      console.log(`🔴 VERSICHERUNGS-FILTER AKTIV!`);
+      
+      // BRUTALE Filterung für Versicherungen
+      organicResults = organicResults.filter((result, idx) => {
+        const text = `${result.title} ${result.snippet} ${result.link}`.toLowerCase();
+        
+        // Liste von SOFORT-BLOCKIER-WÖRTERN
+        const instantBlockWords = ['idealo', 'mydealz', 'chip.de', 'dsl', 'internet', 
+                                  'handy', 'mobilfunk', 'telekom', 'vodafone', 'o2', 
+                                  '1und1', '1&1', 'mediamarkt', 'saturn', 'otto.de',
+                                  'amazon', 'ebay', 'preisvergleich.de'];
+        
+        // Prüfe ob ein Blockier-Wort enthalten ist
+        for (const blockWord of instantBlockWords) {
+          if (text.includes(blockWord)) {
+            console.log(`🚫 INSTANT-BLOCK [${idx}]: ${result.title} (wegen: ${blockWord})`);
+            return false; // BLOCKIERT!
+          }
+        }
+        
+        // Bei Rechtsschutz: MUSS "rechtsschutz" enthalten oder von bekannter Seite sein
+        if (detectedType.includes('rechtsschutz')) {
+          const hasRechtsschutz = text.includes('rechtsschutz');
+          const isAllowedSite = text.includes('check24') || text.includes('verivox') || 
+                                text.includes('tarifcheck') || text.includes('finanztip');
+          
+          if (!hasRechtsschutz && !isAllowedSite) {
+            console.log(`🚫 KEIN RECHTSSCHUTZ [${idx}]: ${result.title}`);
+            return false;
+          }
+        }
+        
+        console.log(`✅ OK [${idx}]: ${result.title}`);
+        return true; // ERLAUBT
+      });
+      
+      console.log(`🔴 Nach AGGRESSIVER Filterung: ${organicResults.length} Ergebnisse`);
+    }
+
     console.log(`🚀 POINT 7: Search completed`);
 
     // 🔴🔴🔴 UNIVERSELLE STRENGE FILTERUNG - VERSION 2.0 🔴🔴🔴
@@ -1111,22 +1237,45 @@ router.post("/", async (req, res) => {
     console.log(`   Vorher: ${organicResults.length} Ergebnisse`);
     console.log(`   Nachher: ${filteredResults.length} Ergebnisse`);
     
-    // 🔴 SCHRITT 4: Wenn zu wenige Ergebnisse, füge sichere Fallbacks hinzu
+    // 🔴 SCHRITT 4: Wenn zu wenige Ergebnisse, füge PROFESSIONELLE Fallbacks hinzu
     if (filteredResults.length < 3 && filterType === 'rechtsschutz') {
       console.log(`⚠️ Zu wenige Ergebnisse - füge Rechtsschutz-Fallbacks hinzu`);
       
       const fallbackResults = [
         {
-          title: "Rechtsschutzversicherung Vergleich 2024 - Finanztip",
+          title: "Finanztip - Rechtsschutzversicherung Ratgeber 2024",
           link: "https://www.finanztip.de/rechtsschutzversicherung/",
-          snippet: "Die besten Rechtsschutzversicherungen im Vergleich. Sparen Sie bis zu 50% bei Ihrer Rechtsschutzversicherung.",
-          position: 99
+          snippet: "Unabhängiger Ratgeber der gemeinnützigen Finanztip-Stiftung. Erfahren Sie, welche Rechtsschutzversicherung wirklich sinnvoll ist und worauf Sie beim Abschluss achten müssen.",
+          position: 99,
+          provider: 'Finanztip'
         },
         {
-          title: "ARAG Rechtsschutzversicherung - Testsieger",
+          title: "ARAG SE - Rechtsschutz vom Marktführer",
           link: "https://www.arag.de/rechtsschutzversicherung/",
-          snippet: "ARAG Rechtsschutz - Mehrfacher Testsieger bei Stiftung Warentest. Jetzt online abschließen.",
-          position: 98
+          snippet: "ARAG - Europas größter Rechtsschutzversicherer. Mehrfacher Testsieger mit über 85 Jahren Erfahrung. Flexible Tarife mit oder ohne Selbstbeteiligung.",
+          position: 98,
+          provider: 'ARAG'
+        }
+      ];
+      
+      filteredResults = [...filteredResults, ...fallbackResults];
+    } else if (filteredResults.length < 3 && filterType === 'haftpflicht') {
+      console.log(`⚠️ Zu wenige Ergebnisse - füge Haftpflicht-Fallbacks hinzu`);
+      
+      const fallbackResults = [
+        {
+          title: "HUK-COBURG - Haftpflichtversicherung Testsieger",
+          link: "https://www.huk.de/haftpflichtversicherung/",
+          snippet: "Deutschlands Versicherer im Bausparen. Haftpflichtschutz ab 2,87€ monatlich mit Deckungssummen bis 50 Mio. Euro.",
+          position: 99,
+          provider: 'HUK-COBURG'
+        },
+        {
+          title: "Allianz - Privathaftpflicht mit Bestnoten",
+          link: "https://www.allianz.de/haftpflichtversicherung/",
+          snippet: "Die Allianz Haftpflichtversicherung schützt Sie weltweit. Flexible Tarife für Singles, Paare und Familien mit ausgezeichnetem Service.",
+          position: 98,
+          provider: 'Allianz'
         }
       ];
       

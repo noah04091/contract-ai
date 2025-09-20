@@ -783,7 +783,7 @@ function findBestPartnerCategory(keywords, contractType) {
   }
 }
 
-// 🆕 VERBESSERTE Helper-Funktion mit Error Handling
+// 🆕 VERBESSERTE Helper-Funktion mit professionelleren Beschreibungen
 function generatePartnerOffers(category, extractedData = {}) {
   try {
     const mapping = partnerMappings[category];
@@ -794,51 +794,80 @@ function generatePartnerOffers(category, extractedData = {}) {
     
     const offers = [];
     
-    // Check24/TarifCheck Angebot erstellen
+    // 🔴 VERBESSERTE Beschreibungen basierend auf Kategorie
+    const categoryDescriptions = {
+      'rechtsschutz': {
+        title: 'Rechtsschutzversicherung Vergleich',
+        snippet: 'Finden Sie die beste Rechtsschutzversicherung aus über 100 Tarifen. Durchschnittliche Ersparnis: 40% gegenüber Direktabschluss.',
+        features: [
+          '✔ Über 100 spezialisierte Rechtsschutz-Tarife',
+          '✔ Inklusive Verkehrs-, Privat- und Berufsrechtsschutz',
+          '✔ Selbstbeteiligung flexibel wählbar',
+          '✔ Sofortiger Online-Abschluss möglich'
+        ]
+      },
+      'haftpflicht': {
+        title: 'Haftpflichtversicherung Vergleich', 
+        snippet: 'Privathaftpflicht ab 2,50€ monatlich. Vergleichen Sie alle Top-Anbieter und sparen Sie bis zu 65%.',
+        features: [
+          '✔ Deckungssummen bis 50 Mio. Euro',
+          '✔ Weltweiter Schutz inklusive',
+          '✔ Schlüsselverlust mitversichert',
+          '✔ Familientarife verfügbar'
+        ]
+      },
+      'kfzversicherung': {
+        title: 'KFZ-Versicherung Vergleich',
+        snippet: 'Bis zu 850€ jährlich sparen. Vergleichen Sie über 330 Tarife der führenden Autoversicherer.',
+        features: [
+          '✔ Über 330 KFZ-Tarife im Vergleich',
+          '✔ Werkstattbindung optional',
+          '✔ Kaskoversicherung inklusive',
+          '✔ Schadenfreiheitsklasse übertragbar'
+        ]
+      },
+      'hausrat': {
+        title: 'Hausratversicherung Vergleich',
+        snippet: 'Schützen Sie Ihr Hab und Gut ab 2€ monatlich. Top-Tarife mit Elementarschutz.',
+        features: [
+          '✔ Neuwerterstattung garantiert',
+          '✔ Elementarschäden versicherbar',
+          '✔ Fahrraddiebstahl inklusive',
+          '✔ Glasbruch mitversichert'
+        ]
+      }
+    };
+    
+    const defaultDesc = {
+      title: `${mapping.name} Vergleich`,
+      snippet: `Vergleichen Sie die besten ${mapping.name}-Angebote und sparen Sie Geld.`,
+      features: [
+        '✔ Große Anbieterauswahl',
+        '✔ Transparenter Vergleich',
+        '✔ Kostenlos & unverbindlich',
+        '✔ TÜV-geprüfter Service'
+      ]
+    };
+    
+    const desc = categoryDescriptions[category] || defaultDesc;
+    
+    // Check24/TarifCheck Angebot erstellen mit besseren Texten
     if (mapping.widgets && mapping.widgets.fullCalculator) {
+      const providerName = mapping.provider === 'check24' ? 'CHECK24' : 'TarifCheck';
+      
       offers.push({
         source: 'partner',
-        provider: mapping.provider,
-        title: `${mapping.name} - Jetzt vergleichen`,
-        snippet: `Vergleichen Sie hunderte Anbieter und sparen Sie bis zu mehrere hundert Euro im Jahr`,
+        provider: providerName,
+        title: `${providerName} - ${desc.title}`,
+        snippet: desc.snippet,
         link: '#partner-widget',
-        price: extractedData.price || 'Preis ermitteln',
-        prices: [extractedData.price || 'Preis ermitteln'],
-        features: [
-          '✔ Über 100 Anbieter im Vergleich',
-          '✔ TÜV-geprüfter Service',
-          '✔ Kostenlos & unverbindlich',
-          '✔ Bonus-Aktionen verfügbar'
-        ],
-        relevantInfo: 'Vergleichsportal mit vielen Anbietern und Tarifen',
+        price: extractedData.price || 'Individueller Preis',
+        prices: [extractedData.price || 'Preis nach Angaben'],
+        features: desc.features,
+        relevantInfo: `${providerName} ist Deutschlands führendes Vergleichsportal mit Bestpreis-Garantie.`,
         widget: mapping.widgets.fullCalculator,
         directLink: mapping.widgets.directLink || null,
         scoreBonus: mapping.scoreBonus || 10,
-        isVerified: true,
-        hasDetailedData: true,
-        isPriorityPortal: true,
-        category: category
-      });
-    }
-    
-    // Quick Calculator als Alternative
-    if (mapping.widgets && mapping.widgets.quickCalculator) {
-      offers.push({
-        source: 'partner',
-        provider: mapping.provider,
-        title: `${mapping.name} - Schnell-Check`,
-        snippet: 'Schnelle Übersicht über verfügbare Tarife',
-        link: '#partner-widget-quick',
-        price: 'Preis prüfen',
-        prices: ['Preis prüfen'],
-        features: [
-          '✔ Schnelle Eingabe',
-          '✔ Sofortige Ergebnisse',
-          '✔ Unverbindlich'
-        ],
-        relevantInfo: 'Schneller Vergleich verfügbar',
-        widget: mapping.widgets.quickCalculator,
-        scoreBonus: (mapping.scoreBonus || 10) - 5,
         isVerified: true,
         hasDetailedData: true,
         isPriorityPortal: true,
