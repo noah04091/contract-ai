@@ -1,5 +1,5 @@
-// 📁 backend/routes/betterContracts.js  
-// ERWEITERTE VERSION MIT PARTNER-INTEGRATION
+// 📋 backend/routes/betterContracts.js  
+// ERWEITERTE VERSION MIT STRENGEM PARTNER-MATCHING
 
 const express = require("express");
 const router = express.Router();
@@ -700,21 +700,105 @@ async function extractWebContent(url) {
   }
 }
 
-// 🆕 NEUE FUNKTION: Partner-Integration Helper
+// 🔴🔴🔴 WICHTIGSTE ÄNDERUNG: STRENGE PARTNER-VALIDIERUNG 🔴🔴🔴
 function integratePartnerResults(organicResults, detectedType, contractText) {
+  console.log(`🔍 STRENGE Partner-Integration gestartet...`);
+  console.log(`📋 Erkannter Typ: ${detectedType}`);
+  
   // Extract keywords für Partner-Matching
   const keywords = [];
   const textLower = contractText.toLowerCase();
   
   // Extract relevant keywords from contract
   const relevantTerms = textLower.match(/\b\w+\b/g) || [];
-  keywords.push(...relevantTerms.filter(term => term.length > 3).slice(0, 10));
+  keywords.push(...relevantTerms.filter(term => term.length > 3).slice(0, 20));
   
-  // Find best matching partner category
-  const partnerCategory = findBestPartnerCategory(keywords, detectedType);
+  // 🔴 STRENGES MATCHING: Explizite Typ-Extraktion
+  const explicitTypes = {
+    'rechtsschutz': /rechtsschutz/i,
+    'haftpflicht': /(?<!kfz.{0,20})haftpflicht(?!.*kfz)/i, // Haftpflicht aber nicht KFZ-Haftpflicht
+    'kfz': /kfz|auto(?:versicherung)?|fahrzeug/i,
+    'hausrat': /hausrat/i,
+    'wohngebäude': /wohngebäude|gebäudeversicherung/i,
+    'berufsunfähigkeit': /berufsunfähig/i,
+    'kranken': /kranken(?:versicherung|kasse)|pkv/i,
+    'leben': /lebensversicherung/i,
+    'unfall': /unfallversicherung/i,
+    'tierhalter': /tier(?:halter)?.*haftpflicht|hunde.*haftpflicht/i,
+    'strom': /strom(?:anbieter|tarif|vertrag)/i,
+    'gas': /gas(?:anbieter|tarif|vertrag)/i,
+    'dsl': /dsl|internet(?:anschluss|tarif)/i,
+    'mobilfunk': /mobilfunk|handy(?:tarif|vertrag)/i,
+    'kredit': /kredit|darlehen/i,
+    'girokonto': /girokonto|banking/i
+  };
+  
+  // 🔴 SCHRITT 1: Expliziten Vertragstyp finden
+  let explicitContractType = null;
+  for (const [type, regex] of Object.entries(explicitTypes)) {
+    if (regex.test(contractText)) {
+      explicitContractType = type;
+      console.log(`✅ EXPLIZITER TYP ERKANNT: ${type}`);
+      break;
+    }
+  }
+  
+  // 🔴 SCHRITT 2: Partner-Kategorie nur bei EXAKTER Übereinstimmung
+  let partnerCategory = null;
+  
+  if (explicitContractType) {
+    // Suche nur nach der EXAKTEN Kategorie
+    partnerCategory = findBestPartnerCategory(keywords, explicitContractType);
+    
+    // 🔴 ZUSÄTZLICHE VALIDIERUNG: Prüfe ob gefundene Kategorie zum Typ passt
+    if (partnerCategory) {
+      const categoryKey = partnerCategory.category;
+      
+      // Mapping von erkanntem Typ zu erlaubten Kategorien
+      const allowedMappings = {
+        'rechtsschutz': ['rechtsschutz'],
+        'haftpflicht': ['haftpflicht'],
+        'kfz': ['kfzversicherung', 'motorrad'],
+        'hausrat': ['hausrat'],
+        'wohngebäude': ['wohngebaeude'],
+        'berufsunfähigkeit': ['berufsunfaehigkeit'],
+        'kranken': ['pkv', 'pkvBeamte', 'krankenzusatz'],
+        'leben': ['leben', 'risikoleben'],
+        'unfall': ['unfall'],
+        'tierhalter': ['tierhalter', 'hundekranken'],
+        'strom': ['strom', 'oekostrom'],
+        'gas': ['gas'],
+        'dsl': ['dsl'],
+        'mobilfunk': ['mobilfunk'],
+        'kredit': ['kredit'],
+        'girokonto': ['girokonto']
+      };
+      
+      const allowedCategories = allowedMappings[explicitContractType] || [];
+      
+      if (!allowedCategories.includes(categoryKey)) {
+        console.log(`❌ KATEGORIE-VALIDIERUNG FEHLGESCHLAGEN!`);
+        console.log(`   Typ: ${explicitContractType}`);
+        console.log(`   Gefundene Kategorie: ${categoryKey}`);
+        console.log(`   Erlaubte Kategorien: ${allowedCategories.join(', ')}`);
+        console.log(`🚫 BLOCKIERE falsche Partner-Zuordnung!`);
+        
+        partnerCategory = null; // RESET - keine Partner-Widgets!
+      } else {
+        console.log(`✅ Kategorie-Validierung erfolgreich: ${categoryKey} passt zu ${explicitContractType}`);
+      }
+      
+      // 🔴 ZUSÄTZLICHER SCORE-CHECK
+      if (partnerCategory && partnerCategory.matchScore < 50) {
+        console.log(`⚠️ Score zu niedrig (${partnerCategory.matchScore} < 50) - keine Partner-Widgets`);
+        partnerCategory = null;
+      }
+    }
+  }
   
   if (!partnerCategory) {
-    console.log('🔍 Keine passende Partner-Kategorie gefunden');
+    console.log('🔍 KEINE passende Partner-Kategorie gefunden oder Validierung fehlgeschlagen');
+    console.log('✅ Das ist RICHTIG so - lieber keine Widgets als falsche!');
     return { 
       combinedResults: organicResults,
       partnerCategory: null,
@@ -722,7 +806,7 @@ function integratePartnerResults(organicResults, detectedType, contractText) {
     };
   }
   
-  console.log(`✅ Partner-Kategorie gefunden: ${partnerCategory.name} (Score: ${partnerCategory.matchScore})`);
+  console.log(`✅ VALIDIERTE Partner-Kategorie: ${partnerCategory.name} (Score: ${partnerCategory.matchScore})`);
   
   // Generate partner offers
   const partnerOffers = generatePartnerOffers(partnerCategory.category, {
@@ -785,7 +869,7 @@ router.post("/", async (req, res) => {
 
     // 🆕 STEP 3: Erweiterte Input-Validierung
     const { contractText, searchQuery } = req.body;
-    console.log(`🔍 Input - ContractText Length: ${contractText?.length || 0}, SearchQuery: "${searchQuery || 'empty'}"`);
+    console.log(`📝 Input - ContractText Length: ${contractText?.length || 0}, SearchQuery: "${searchQuery || 'empty'}"`);
 
     const validation = validateInput(contractText, searchQuery);
     console.log(`🔍 Validation Result: ${validation.isValid ? 'VALID' : 'INVALID'}`);
@@ -930,8 +1014,8 @@ router.post("/", async (req, res) => {
       console.log(`🥇 After insurance filtering: ${insuranceResults.length} insurance results, ${otherResults.length} other results`);
     }
 
-    // 🆕 PARTNER-INTEGRATION
-    console.log(`🤝 Starting Partner Integration...`);
+    // 🆕 PARTNER-INTEGRATION MIT STRENGER VALIDIERUNG
+    console.log(`🤝 Starting STRICT Partner Integration...`);
     const { combinedResults, partnerCategory, partnerOffers } = integratePartnerResults(
       organicResults,
       detectedType,

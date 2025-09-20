@@ -1,5 +1,5 @@
 // backend/config/partnerMappings.js
-// ERWEITERTE VERSION MIT FEHLERBEHANDLUNG
+// ERWEITERTE VERSION MIT STRENGSTER VALIDIERUNG
 
 const PARTNER_ID = process.env.CHECK24_PARTNER_ID || '1157688';
 const TARIFCHECK_ID = process.env.TARIFCHECK_PARTNER_ID || '193010';
@@ -588,64 +588,195 @@ const partnerMappings = {
   }
 };
 
-// 🆕 VERBESSERTE Helper-Funktion mit Error Handling
+// 🔴🔴🔴 STRENGSTE VALIDIERUNG - UNIVERSELLE LÖSUNG 🔴🔴🔴
 function findBestPartnerCategory(keywords, contractType) {
   try {
-    let bestMatch = null;
-    let bestScore = 0;
+    console.log('🔍 STRENGE Partner-Kategorie-Suche gestartet');
+    console.log('📋 Input:', { keywords: keywords?.slice(0, 5), contractType });
     
     // Input-Validierung
     if (!keywords || !Array.isArray(keywords)) {
       console.warn('⚠️ findBestPartnerCategory: Invalid keywords input');
-      keywords = [];
+      return null;
     }
     
     const keywordsLower = keywords.map(k => String(k).toLowerCase());
     const typeLower = String(contractType || '').toLowerCase();
     
-    // Debug Logging
-    console.log('🔍 Partner-Suche:', {
-      keywords: keywordsLower.slice(0, 5),
-      contractType: typeLower
-    });
+    // 🔴 SCHRITT 1: Explizite Typ-Zuordnung (STRENG)
+    const explicitTypeMapping = {
+      // Versicherungen (STRENG getrennt)
+      'rechtsschutz': 'rechtsschutz',
+      'rechtsschutzversicherung': 'rechtsschutz',
+      'haftpflicht': 'haftpflicht',
+      'haftpflichtversicherung': 'haftpflicht',
+      'privathaftpflicht': 'haftpflicht',
+      'kfz': 'kfzversicherung',
+      'kfzversicherung': 'kfzversicherung',
+      'autoversicherung': 'kfzversicherung',
+      'hausrat': 'hausrat',
+      'hausratversicherung': 'hausrat',
+      'wohngebäude': 'wohngebaeude',
+      'wohngebäudeversicherung': 'wohngebaeude',
+      'berufsunfähigkeit': 'berufsunfaehigkeit',
+      'berufsunfähigkeitsversicherung': 'berufsunfaehigkeit',
+      'krankenversicherung': 'pkv',
+      'pkv': 'pkv',
+      'lebensversicherung': 'leben',
+      'leben': 'leben',
+      'risikoleben': 'risikoleben',
+      'unfallversicherung': 'unfall',
+      'unfall': 'unfall',
+      'tierhalter': 'tierhalter',
+      'tierhalterhaftpflicht': 'tierhalter',
+      
+      // Energie
+      'strom': 'strom',
+      'stromvertrag': 'strom',
+      'stromtarif': 'strom',
+      'ökostrom': 'oekostrom',
+      'gas': 'gas',
+      'gasvertrag': 'gas',
+      'gastarif': 'gas',
+      
+      // Telekommunikation
+      'dsl': 'dsl',
+      'internet': 'dsl',
+      'internetvertrag': 'dsl',
+      'handy': 'mobilfunk',
+      'mobilfunk': 'mobilfunk',
+      'handyvertrag': 'mobilfunk',
+      
+      // Finanzen
+      'kredit': 'kredit',
+      'darlehen': 'kredit',
+      'girokonto': 'girokonto',
+      'konto': 'girokonto',
+      'kreditkarte': 'kreditkarte'
+    };
     
-    for (const [key, mapping] of Object.entries(partnerMappings)) {
-      let score = 0;
-      
-      // Exact type match
-      if (typeLower === key) {
-        score += 50;
-      }
-      
-      // Keyword matching
+    // 🔴 Direkte Typ-Zuordnung basierend auf contractType
+    let matchedCategory = null;
+    if (explicitTypeMapping[typeLower]) {
+      matchedCategory = explicitTypeMapping[typeLower];
+      console.log(`✅ Direkte Zuordnung über contractType: ${typeLower} → ${matchedCategory}`);
+    }
+    
+    // 🔴 SCHRITT 2: Keyword-Analyse nur als Fallback
+    if (!matchedCategory) {
+      // Suche nach expliziten Keywords im Text
       for (const keyword of keywordsLower) {
-        if (mapping.keywords.some(mk => mk.includes(keyword) || keyword.includes(mk))) {
-          score += 10;
+        if (explicitTypeMapping[keyword]) {
+          matchedCategory = explicitTypeMapping[keyword];
+          console.log(`✅ Keyword-Zuordnung: ${keyword} → ${matchedCategory}`);
+          break;
+        }
+      }
+    }
+    
+    // 🔴 SCHRITT 3: Score-basierte Suche nur wenn keine explizite Zuordnung
+    let bestMatch = null;
+    let bestScore = 0;
+    
+    if (!matchedCategory) {
+      console.log('⚠️ Keine explizite Zuordnung gefunden - verwende Score-System');
+      
+      for (const [key, mapping] of Object.entries(partnerMappings)) {
+        let score = 0;
+        
+        // Keyword matching
+        for (const keyword of keywordsLower) {
+          for (const mappingKeyword of mapping.keywords) {
+            const mkLower = mappingKeyword.toLowerCase();
+            if (keyword.includes(mkLower) || mkLower.includes(keyword)) {
+              score += 10;
+            }
+          }
+        }
+        
+        // Type matching
+        if (typeLower === key) {
+          score += 100; // Sehr hoher Bonus für exakte Übereinstimmung
+        }
+        
+        // Category type matching
+        if (mapping.type && typeLower.includes(mapping.type)) {
+          score += 20;
+        }
+        
+        // Score bonus
+        score += mapping.scoreBonus || 0;
+        
+        if (score > bestScore) {
+          bestScore = score;
+          bestMatch = { category: key, ...mapping, matchScore: score };
         }
       }
       
-      // Category type matching
-      if (typeLower && mapping.type && mapping.type.includes(typeLower)) {
-        score += 20;
+      // 🔴 STRENGE VALIDIERUNG: Minimum Score 50
+      if (bestScore < 50) {
+        console.log(`❌ Score zu niedrig (${bestScore} < 50) - KEINE Partner-Widgets`);
+        return null;
       }
       
-      if (score > bestScore) {
-        bestScore = score;
-        bestMatch = { category: key, ...mapping, matchScore: score };
+      matchedCategory = bestMatch?.category;
+    } else {
+      // Hole die Mapping-Daten für die explizit gefundene Kategorie
+      if (partnerMappings[matchedCategory]) {
+        bestMatch = {
+          category: matchedCategory,
+          ...partnerMappings[matchedCategory],
+          matchScore: 100 // Hoher Score für explizite Zuordnung
+        };
+        bestScore = 100;
       }
     }
     
-    if (bestMatch) {
-      console.log('✅ Partner gefunden:', {
-        category: bestMatch.category,
-        provider: bestMatch.provider,
-        score: bestMatch.matchScore
-      });
-    } else {
-      console.log('❌ Kein passender Partner gefunden');
+    // 🔴 SCHRITT 4: Zusätzliche Validierung für Versicherungen
+    if (matchedCategory && partnerMappings[matchedCategory]?.type === 'versicherung') {
+      // Prüfe auf Konflikte
+      const versicherungsKonflikte = {
+        'rechtsschutz': ['kfz', 'haftpflicht', 'hausrat', 'leben'],
+        'haftpflicht': ['kfz', 'rechtsschutz', 'tierhalter'],
+        'kfzversicherung': ['rechtsschutz', 'haftpflicht', 'hausrat'],
+        'hausrat': ['kfz', 'rechtsschutz', 'wohngebäude']
+      };
+      
+      const konflikte = versicherungsKonflikte[matchedCategory] || [];
+      
+      // Prüfe ob Konflikt-Keywords vorhanden sind
+      for (const konflikt of konflikte) {
+        const konfliktKeywords = partnerMappings[konflikt]?.keywords || [];
+        const hasKonflikt = konfliktKeywords.some(kw => 
+          keywordsLower.some(k => k.includes(kw))
+        );
+        
+        if (hasKonflikt && !keywordsLower.some(k => 
+          partnerMappings[matchedCategory].keywords.some(mk => k.includes(mk))
+        )) {
+          console.log(`❌ KONFLIKT erkannt: ${matchedCategory} vs ${konflikt}`);
+          console.log(`🚫 BLOCKIERE unsichere Zuordnung`);
+          return null;
+        }
+      }
     }
     
+    // 🔴 FINALE VALIDIERUNG
+    if (!bestMatch) {
+      console.log('❌ Keine passende Partner-Kategorie gefunden');
+      return null;
+    }
+    
+    console.log(`✅ VALIDIERTE Partner-Kategorie: ${bestMatch.category}`);
+    console.log(`📊 Match-Details:`, {
+      category: bestMatch.category,
+      provider: bestMatch.provider,
+      score: bestMatch.matchScore,
+      type: bestMatch.type
+    });
+    
     return bestMatch;
+    
   } catch (error) {
     console.error('❌ Fehler in findBestPartnerCategory:', error);
     return null;
@@ -674,10 +805,10 @@ function generatePartnerOffers(category, extractedData = {}) {
         price: extractedData.price || 'Preis ermitteln',
         prices: [extractedData.price || 'Preis ermitteln'],
         features: [
-          '✓ Über 100 Anbieter im Vergleich',
-          '✓ TÜV-geprüfter Service',
-          '✓ Kostenlos & unverbindlich',
-          '✓ Bonus-Aktionen verfügbar'
+          '✔ Über 100 Anbieter im Vergleich',
+          '✔ TÜV-geprüfter Service',
+          '✔ Kostenlos & unverbindlich',
+          '✔ Bonus-Aktionen verfügbar'
         ],
         relevantInfo: 'Vergleichsportal mit vielen Anbietern und Tarifen',
         widget: mapping.widgets.fullCalculator,
@@ -701,9 +832,9 @@ function generatePartnerOffers(category, extractedData = {}) {
         price: 'Preis prüfen',
         prices: ['Preis prüfen'],
         features: [
-          '✓ Schnelle Eingabe',
-          '✓ Sofortige Ergebnisse',
-          '✓ Unverbindlich'
+          '✔ Schnelle Eingabe',
+          '✔ Sofortige Ergebnisse',
+          '✔ Unverbindlich'
         ],
         relevantInfo: 'Schneller Vergleich verfügbar',
         widget: mapping.widgets.quickCalculator,
@@ -734,15 +865,17 @@ function testPartnerMappings() {
   
   // Test mit Beispiel-Keywords
   const testCases = [
-    { keywords: ['haftpflicht', 'versicherung'], type: 'versicherung' },
-    { keywords: ['strom', 'energie'], type: 'energie' },
-    { keywords: ['kredit', 'darlehen'], type: 'finanzen' }
+    { keywords: ['rechtsschutz', 'versicherung'], type: 'rechtsschutz' },
+    { keywords: ['haftpflicht', 'versicherung'], type: 'haftpflicht' },
+    { keywords: ['kfz', 'auto', 'versicherung'], type: 'kfz' },
+    { keywords: ['strom', 'energie'], type: 'strom' },
+    { keywords: ['kredit', 'darlehen'], type: 'kredit' }
   ];
   
   testCases.forEach(test => {
     const result = findBestPartnerCategory(test.keywords, test.type);
-    console.log(`\nTest: ${test.keywords.join(', ')}`);
-    console.log(`Result: ${result ? result.category : 'NOT FOUND'}`);
+    console.log(`\nTest: ${test.type} - ${test.keywords.join(', ')}`);
+    console.log(`Result: ${result ? result.category + ' (Score: ' + result.matchScore + ')' : 'NOT FOUND (richtig so!)'}`);
   });
 }
 
