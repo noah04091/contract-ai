@@ -258,12 +258,13 @@ function analyzeContractContext(contractText) {
   return context;
 }
 
-// 🆕 Erweiterte Search Query Generation mit Contract Context Analysis
+// 🆕 Erweiterte Search Query Generation mit SPEZIFISCHEN Queries
 function generateEnhancedSearchQueries(detectedType, contractText) {
   // 🔍 Analyze contract content for specific context
   const contractContext = analyzeContractContext(contractText);
   console.log(`📊 Contract Context:`, contractContext);
 
+  // 🔴 VERBESSERTE SPEZIFISCHE QUERIES
   const baseQueries = {
     "handy": [
       "günstige handytarife ohne vertrag 2024",
@@ -295,35 +296,40 @@ function generateEnhancedSearchQueries(detectedType, contractText) {
       "versicherungstarife wechsel 2024"
     ],
     "rechtsschutzversicherung": [
-      "rechtsschutzversicherung vergleich check24",
-      "rechtsschutz versicherung günstig deutschland",
-      "rechtsschutz tarife vergleich 2024",
-      "rechtsschutzversicherung wechsel bonus"
+      "rechtsschutzversicherung vergleich check24 2024",
+      "günstige rechtsschutzversicherung adam riese alternative",
+      "rechtsschutzversicherung tarifvergleich verivox",
+      "beste rechtsschutzversicherung stiftung warentest"
     ],
     "haftpflichtversicherung": [
-      "haftpflichtversicherung vergleich check24",
-      "privathaftpflicht versicherung günstig",
-      "haftpflicht tarife vergleich deutschland"
+      "privathaftpflichtversicherung vergleich check24 2024",
+      "günstige haftpflichtversicherung adam riese alternative",
+      "haftpflichtversicherung tarifvergleich verivox",
+      "beste privathaftpflicht stiftung warentest"
     ],
     "hausratversicherung": [
-      "hausratversicherung vergleich günstig",
-      "hausrat versicherung check24",
-      "wohngebäudeversicherung vergleich"
+      "hausratversicherung vergleich check24 2024",
+      "günstige hausratversicherung tarifvergleich",
+      "hausrat versicherung verivox vergleich",
+      "beste hausratversicherung stiftung warentest"
     ],
     "berufsunfähigkeitsversicherung": [
-      "berufsunfähigkeitsversicherung vergleich",
-      "bu versicherung günstig check24",
-      "berufsunfähigkeit tarife vergleich"
+      "berufsunfähigkeitsversicherung vergleich 2024",
+      "bu versicherung check24 tarifvergleich",
+      "günstige berufsunfähigkeit alternative",
+      "beste bu versicherung stiftung warentest"
     ],
     "krankenversicherung": [
-      "private krankenversicherung vergleich",
-      "krankenkasse wechsel bonus 2024",
-      "gesetzliche krankenversicherung vergleich"
+      "private krankenversicherung vergleich check24",
+      "pkv tarifvergleich verivox 2024",
+      "gesetzliche krankenversicherung wechsel",
+      "beste krankenkasse stiftung warentest"
     ],
     "lebensversicherung": [
-      "lebensversicherung vergleich check24",
-      "kapitallebensversicherung alternativen",
-      "risikolebensversicherung günstig"
+      "lebensversicherung vergleich check24 2024",
+      "kapitallebensversicherung alternativen finanztip",
+      "risikolebensversicherung günstig vergleich",
+      "lebensversicherung kündigen oder behalten"
     ],
     "kfz": [
       "kfz versicherung vergleich günstig",
@@ -975,43 +981,157 @@ router.post("/", async (req, res) => {
 
     console.log(`🚀 POINT 7: Search completed`);
 
-    // 🆕 Intelligent Result Filtering for Insurance Contracts
-    if (contractContext.category === 'Versicherung' && organicResults.length > 0) {
-      console.log(`🥇 Applying insurance-specific filtering to ${organicResults.length} results`);
-
-      // Priority insurance domains
-      const insuranceDomains = [
-        'check24.de', 'verivox.de', 'tarifcheck.de', 'finanzcheck.de',
-        'cosmosdirekt.de', 'huk.de', 'allianz.de', 'axa.de', 'ergo.de',
-        'generali.de', 'zurich.de', 'debeka.de', 'signal-iduna.de',
-        'versicherung.net', 'versicherungsvergleich.de'
-      ];
-
-      // Filter out irrelevant domains for insurance contracts
-      const irrelevantDomains = [
-        'idealo.de', 'amazon.de', 'ebay.de', 'otto.de',
-        'telekom.de', 'vodafone.de', 'o2.de', '1und1.de',
-        'saturn.de', 'mediamarkt.de', 'alternate.de'
-      ];
-
-      // Separate results into insurance-relevant and others
-      const insuranceResults = organicResults.filter(result => {
-        const domain = result.link.toLowerCase();
-        return insuranceDomains.some(insDomain => domain.includes(insDomain)) ||
-               result.title.toLowerCase().includes('versicherung') ||
-               result.snippet.toLowerCase().includes('versicherung');
-      });
-
-      const otherResults = organicResults.filter(result => {
-        const domain = result.link.toLowerCase();
-        return !irrelevantDomains.some(badDomain => domain.includes(badDomain)) &&
-               !insuranceResults.some(insResult => insResult.link === result.link);
-      });
-
-      // Prioritize insurance results
-      organicResults = [...insuranceResults, ...otherResults];
-
-      console.log(`🥇 After insurance filtering: ${insuranceResults.length} insurance results, ${otherResults.length} other results`);
+    // 🔴🔴🔴 UNIVERSELLE STRENGE FILTERUNG 🔴🔴🔴
+    console.log(`🔍 Starte UNIVERSELLE strenge Filterung für Typ: ${detectedType}`);
+    
+    // Definiere erlaubte und verbotene Domains basierend auf Vertragstyp
+    const filterRules = {
+      'rechtsschutzversicherung': {
+        required: ['rechtsschutz'],
+        allowed: ['check24.de', 'verivox.de', 'tarifcheck.de', 'finanztip.de', 'test.de', 
+                  'adam-riese.de', 'arag.de', 'roland-rechtsschutz.de', 'advocard.de',
+                  'versicherung', 'rechtsschutz'],
+        forbidden: ['dsl', 'internet', 'handy', 'mobilfunk', 'strom', 'gas', 'kfz', 
+                   'auto', 'idealo', 'amazon', 'ebay', 'otto', 'mediamarkt']
+      },
+      'haftpflichtversicherung': {
+        required: ['haftpflicht'],
+        allowed: ['check24.de', 'verivox.de', 'tarifcheck.de', 'finanztip.de', 'test.de',
+                  'huk.de', 'allianz.de', 'axa.de', 'ergo.de', 'versicherung', 'haftpflicht'],
+        forbidden: ['dsl', 'internet', 'handy', 'mobilfunk', 'strom', 'gas', 'kfz',
+                   'rechtsschutz', 'hausrat', 'idealo', 'amazon', 'ebay']
+      },
+      'kfz': {
+        required: ['kfz', 'auto'],
+        allowed: ['check24.de', 'verivox.de', 'tarifcheck.de', 'huk.de', 'allianz.de',
+                  'kfz', 'auto', 'versicherung'],
+        forbidden: ['dsl', 'internet', 'handy', 'rechtsschutz', 'haftpflicht', 'hausrat',
+                   'idealo', 'amazon', 'ebay']
+      },
+      'hausratversicherung': {
+        required: ['hausrat'],
+        allowed: ['check24.de', 'verivox.de', 'tarifcheck.de', 'versicherung', 'hausrat'],
+        forbidden: ['dsl', 'internet', 'handy', 'kfz', 'auto', 'rechtsschutz', 'idealo']
+      },
+      'strom': {
+        required: ['strom', 'energie'],
+        allowed: ['check24.de', 'verivox.de', 'stromvergleich', 'stromanbieter'],
+        forbidden: ['versicherung', 'handy', 'dsl', 'kfz', 'hausrat']
+      },
+      'gas': {
+        required: ['gas'],
+        allowed: ['check24.de', 'verivox.de', 'gasvergleich', 'gasanbieter'],
+        forbidden: ['versicherung', 'handy', 'dsl', 'kfz', 'strom']
+      },
+      'dsl': {
+        required: ['dsl', 'internet'],
+        allowed: ['check24.de', 'verivox.de', 'telekom', 'vodafone', '1und1', 'o2'],
+        forbidden: ['versicherung', 'handy', 'strom', 'gas', 'kfz']
+      },
+      'mobilfunk': {
+        required: ['handy', 'mobilfunk', 'tarif'],
+        allowed: ['check24.de', 'verivox.de', 'telekom', 'vodafone', 'o2'],
+        forbidden: ['versicherung', 'dsl', 'strom', 'gas', 'kfz']
+      }
+    };
+    
+    // Basis-Regel für unbekannte Typen
+    const defaultRule = {
+      required: [],
+      allowed: ['check24.de', 'verivox.de', 'tarifcheck.de'],
+      forbidden: []
+    };
+    
+    const rules = filterRules[detectedType] || defaultRule;
+    
+    // 🔴 STRENGE FILTERUNG
+    const filteredResults = organicResults.filter(result => {
+      const title = result.title?.toLowerCase() || '';
+      const snippet = result.snippet?.toLowerCase() || '';
+      const url = result.link?.toLowerCase() || '';
+      const combined = `${title} ${snippet} ${url}`;
+      
+      // SCHRITT 1: Prüfe ob VERBOTENE Keywords enthalten sind
+      const hasForbidden = rules.forbidden.some(forbidden => 
+        combined.includes(forbidden.toLowerCase())
+      );
+      
+      if (hasForbidden) {
+        console.log(`❌ BLOCKIERT (verbotenes Keyword): ${result.title}`);
+        return false;
+      }
+      
+      // SCHRITT 2: Prüfe ob ERFORDERLICHE Keywords enthalten sind
+      if (rules.required.length > 0) {
+        const hasRequired = rules.required.some(required => 
+          combined.includes(required.toLowerCase())
+        );
+        
+        if (!hasRequired) {
+          // Prüfe ob es eine erlaubte Domain ist
+          const isAllowedDomain = rules.allowed.some(allowed => 
+            url.includes(allowed.toLowerCase())
+          );
+          
+          if (!isAllowedDomain) {
+            console.log(`❌ BLOCKIERT (fehlendes Keyword): ${result.title}`);
+            return false;
+          }
+        }
+      }
+      
+      // SCHRITT 3: Zusätzliche Versicherungs-Filterung
+      if (detectedType.includes('versicherung')) {
+        // Bei Versicherungen müssen die Ergebnisse WIRKLICH relevant sein
+        const isInsuranceRelated = 
+          combined.includes('versicherung') ||
+          combined.includes('tarif') ||
+          combined.includes('vergleich') ||
+          rules.allowed.some(allowed => url.includes(allowed));
+        
+        if (!isInsuranceRelated) {
+          console.log(`❌ BLOCKIERT (nicht versicherungsrelevant): ${result.title}`);
+          return false;
+        }
+      }
+      
+      console.log(`✅ ERLAUBT: ${result.title}`);
+      return true;
+    });
+    
+    console.log(`🔴 FILTERUNG ABGESCHLOSSEN:`);
+    console.log(`   Vorher: ${organicResults.length} Ergebnisse`);
+    console.log(`   Nachher: ${filteredResults.length} Ergebnisse`);
+    
+    // Überschreibe die organicResults mit gefilterten
+    organicResults = filteredResults;
+    
+    // Falls zu wenige Ergebnisse, füge Mock-Daten hinzu
+    if (organicResults.length < 3 && detectedType.includes('versicherung')) {
+      console.log(`⚠️ Zu wenige Ergebnisse - füge relevante Fallback-Daten hinzu`);
+      
+      const fallbackResults = {
+        'rechtsschutzversicherung': [
+          {
+            title: "Rechtsschutzversicherung Vergleich 2024",
+            link: "https://www.finanztip.de/rechtsschutzversicherung/",
+            snippet: "Vergleichen Sie Rechtsschutzversicherungen und sparen Sie bis zu 50%",
+            position: 99
+          }
+        ],
+        'haftpflichtversicherung': [
+          {
+            title: "Haftpflichtversicherung Vergleich 2024",
+            link: "https://www.finanztip.de/haftpflichtversicherung/",
+            snippet: "Die besten Haftpflichtversicherungen im Test",
+            position: 99
+          }
+        ]
+      };
+      
+      if (fallbackResults[detectedType]) {
+        organicResults.push(...fallbackResults[detectedType]);
+      }
     }
 
     // 🆕 PARTNER-INTEGRATION MIT STRENGER VALIDIERUNG
