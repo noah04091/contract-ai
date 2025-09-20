@@ -15,6 +15,7 @@
     "@aws-sdk/s3-request-presigner": "^3.837.0",
     "@sparticuz/chromium": "^138.0.2",
     "aws-sdk": "^2.1692.0",
+    "axios": "^1.12.2",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^3.0.2",
     "cheerio": "^1.1.0",

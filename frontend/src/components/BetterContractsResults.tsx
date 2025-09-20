@@ -1,6 +1,7 @@
 // 📁 src/components/BetterContractsResults.tsx
+// ERWEITERTE VERSION MIT PARTNER-INTEGRATION
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import './BetterContractsResults.css';
 
 interface Alternative {
@@ -14,6 +15,22 @@ interface Alternative {
   monthlyPrice?: number | null;
   provider?: string;
   features?: string[];
+  // 🆕 Partner-spezifische Felder
+  source?: 'serp' | 'partner';
+  widget?: any;
+  directLink?: string;
+  isVerified?: boolean;
+  category?: string;
+  isPriorityPortal?: boolean;
+}
+
+// 🆕 Partner Category Interface
+interface PartnerCategory {
+  category: string;
+  name: string;
+  provider: string;
+  type: string;
+  matchScore?: number;
 }
 
 interface ResultsProps {
@@ -24,6 +41,9 @@ interface ResultsProps {
   contractType: string;
   loading?: boolean;
   fromCache?: boolean;
+  // 🆕 Partner-spezifische Props
+  partnerCategory?: PartnerCategory | null;
+  partnerOffers?: Alternative[];
 }
 
 type SortOption = 'price' | 'relevance' | 'features';
@@ -35,12 +55,79 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
   currentPrice,
   contractType,
   loading = false,
-  fromCache = false
+  fromCache = false,
+  partnerCategory = null,
+  partnerOffers = []
 }) => {
   const [sortBy, setSortBy] = useState<SortOption>('relevance');
   const [showAllAlternatives, setShowAllAlternatives] = useState(false);
   const [savingStates, setSavingStates] = useState<Record<string, boolean>>({});
   const [savedStates, setSavedStates] = useState<Record<string, boolean>>({});
+  
+  // 🆕 Partner Widget States
+  const [selectedWidget, setSelectedWidget] = useState<Alternative | null>(null);
+  const [widgetLoading, setWidgetLoading] = useState(false);
+  const widgetContainerRef = useRef<HTMLDivElement>(null);
+
+  // 🆕 Load Widget Scripts
+  const loadWidgetScript = (widget: any) => {
+    if (!widget || !widget.html) return;
+    
+    // Parse HTML um Script-URLs zu extrahieren
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(widget.html, 'text/html');
+    const scripts = doc.querySelectorAll('script[src]');
+    const links = doc.querySelectorAll('link[rel="stylesheet"]');
+    
+    // CSS laden
+    links.forEach((link: any) => {
+      const existingLink = document.querySelector(`link[href="${link.href}"]`);
+      if (!existingLink) {
+        const newLink = document.createElement('link');
+        newLink.rel = 'stylesheet';
+        newLink.type = 'text/css';
+        newLink.href = link.href;
+        document.head.appendChild(newLink);
+      }
+    });
+    
+    // Scripts laden
+    scripts.forEach((script: any) => {
+      const existingScript = document.querySelector(`script[src="${script.src}"]`);
+      if (!existingScript) {
+        const newScript = document.createElement('script');
+        newScript.src = script.src;
+        newScript.async = true;
+        document.body.appendChild(newScript);
+      }
+    });
+  };
+
+  // 🆕 Open Widget Modal
+  const openWidgetModal = (alternative: Alternative) => {
+    if (alternative.widget) {
+      setSelectedWidget(alternative);
+      setWidgetLoading(true);
+      
+      // Load scripts after a short delay to ensure modal is rendered
+      setTimeout(() => {
+        loadWidgetScript(alternative.widget);
+        setWidgetLoading(false);
+      }, 100);
+    } else if (alternative.directLink) {
+      // Direkt zum Partner-Link
+      window.open(alternative.directLink, '_blank');
+    } else if (alternative.link && alternative.link !== '#partner-widget') {
+      // Normaler externer Link
+      window.open(alternative.link, '_blank');
+    }
+  };
+
+  // 🆕 Close Widget Modal
+  const closeWidgetModal = () => {
+    setSelectedWidget(null);
+    setWidgetLoading(false);
+  };
 
   // 💾 Save alternative function
   const handleSaveAlternative = async (alternative: Alternative & { monthlyPrice?: number | null; provider?: string; features?: string[] }) => {
@@ -71,7 +158,11 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
           contractType,
           relevantInfo: alternative.relevantInfo,
           hasDetailedData: alternative.hasDetailedData,
-          monthlyPrice: alternative.monthlyPrice
+          monthlyPrice: alternative.monthlyPrice,
+          // 🆕 Partner-spezifische Daten
+          source: alternative.source || 'serp',
+          isPartner: alternative.source === 'partner',
+          category: alternative.category
         }),
       });
 
@@ -134,8 +225,8 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
     return {
       ...alt,
       monthlyPrice: extractedPrice,
-      provider: alt.title.split(' ')[0] || 'Anbieter',
-      features: alt.relevantInfo ? alt.relevantInfo.split('.').filter(f => f.length > 10).slice(0, 3) : []
+      provider: alt.provider || alt.title.split(' ')[0] || 'Anbieter',
+      features: alt.features || (alt.relevantInfo ? alt.relevantInfo.split('.').filter(f => f.length > 10).slice(0, 3) : [])
     };
   });
 
@@ -151,12 +242,15 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
         return (b.features?.length || 0) - (a.features?.length || 0);
       }
       default: {
+        // 🆕 Partner results get priority in relevance sorting
+        if (a.source === 'partner' && b.source !== 'partner') return -1;
+        if (a.source !== 'partner' && b.source === 'partner') return 1;
         return b.hasDetailedData ? 1 : -1;
       }
     }
   });
 
-  const displayedAlternatives = showAllAlternatives ? sortedAlternatives : sortedAlternatives.slice(0, 3);
+  const displayedAlternatives = showAllAlternatives ? sortedAlternatives : sortedAlternatives.slice(0, 5); // 🆕 Show 5 by default instead of 3
 
   const formatAnalysis = (analysisText: string) => {
     return analysisText.split('\n').map((line, index) => {
@@ -215,6 +309,15 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
             <span className="summary-label">Gefundene Alternativen:</span>
             <span className="summary-value">{alternatives.length}</span>
           </div>
+          {/* 🆕 Partner Category Badge */}
+          {partnerCategory && (
+            <div className="summary-item">
+              <span className="summary-label">Vergleichsportal:</span>
+              <span className="summary-value partner-badge">
+                {partnerCategory.provider === 'check24' ? 'CHECK24' : 'TarifCheck'} verfügbar
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -240,9 +343,27 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
           const savings = alternative.monthlyPrice && alternative.monthlyPrice < currentPrice 
             ? currentPrice - alternative.monthlyPrice 
             : null;
+          
+          // 🆕 Check if this is a partner result
+          const isPartner = alternative.source === 'partner';
+          const hasWidget = isPartner && alternative.widget;
 
           return (
-            <div key={index} className={`alternative-card ${alternative.hasDetailedData ? 'detailed' : 'basic'}`}>
+            <div 
+              key={index} 
+              className={`alternative-card ${alternative.hasDetailedData ? 'detailed' : 'basic'} ${isPartner ? 'partner-card' : ''}`}
+            >
+              {/* 🆕 Partner Badge */}
+              {isPartner && (
+                <div className="partner-indicator">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                  </svg>
+                  {alternative.provider === 'check24' ? 'CHECK24' : 
+                   alternative.provider === 'tarifcheck' ? 'TarifCheck' : 'Partner'}
+                </div>
+              )}
+
               {/* Recommendation Badge */}
               {index === 0 && (
                 <div className="recommendation-badge best">
@@ -262,11 +383,17 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
               {/* Card Header */}
               <div className="card-header">
                 <div className="provider-info">
-                  <div className="provider-avatar">
+                  <div className={`provider-avatar ${isPartner ? 'partner' : ''}`}>
                     {alternative.provider?.charAt(0).toUpperCase() || '?'}
                   </div>
                   <div className="provider-details">
-                    <h3 className="provider-name">{alternative.provider}</h3>
+                    <h3 className="provider-name">
+                      {alternative.provider}
+                      {/* 🆕 Verified Badge for Partner Results */}
+                      {alternative.isVerified && (
+                        <span className="verified-badge">✓</span>
+                      )}
+                    </h3>
                     <p className="offer-title">{alternative.title.slice(0, 60)}...</p>
                   </div>
                 </div>
@@ -310,19 +437,34 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
 
               {/* Card Actions */}
               <div className="card-actions">
-                <a 
-                  href={alternative.link} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="action-button primary"
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                    <polyline points="15,3 21,3 21,9"/>
-                    <line x1="10" y1="14" x2="21" y2="3"/>
-                  </svg>
-                  Zum Anbieter
-                </a>
+                {/* 🆕 Widget Button for Partner Results */}
+                {hasWidget ? (
+                  <button 
+                    onClick={() => openWidgetModal(alternative)}
+                    className="action-button primary partner"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                      <line x1="9" y1="9" x2="15" y2="15"/>
+                      <line x1="15" y1="9" x2="9" y2="15"/>
+                    </svg>
+                    Jetzt vergleichen
+                  </button>
+                ) : (
+                  <a 
+                    href={alternative.link} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="action-button primary"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                      <polyline points="15,3 21,3 21,9"/>
+                      <line x1="10" y1="14" x2="21" y2="3"/>
+                    </svg>
+                    Zum Anbieter
+                  </a>
+                )}
                 
                 <button
                   className={`action-button ${savedStates[alternative.link] ? 'saved' : 'secondary'}`}
@@ -386,7 +528,7 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
       </div>
 
       {/* Show More Button */}
-      {alternatives.length > 3 && (
+      {alternatives.length > 5 && (
         <div className="show-more-section">
           <button 
             className="show-more-button"
@@ -436,6 +578,15 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
             {enhancedAlternatives.filter(a => a.hasDetailedData).length} von {alternatives.length} mit Details
           </span>
         </div>
+        {/* 🆕 Partner Info */}
+        {partnerOffers && partnerOffers.length > 0 && (
+          <div className="meta-item">
+            <span className="meta-label">Partner-Angebote:</span>
+            <span className="meta-value">
+              {partnerOffers.length} Vergleichsportal{partnerOffers.length > 1 ? 'e' : ''} verfügbar
+            </span>
+          </div>
+        )}
         {fromCache && (
           <div className="meta-item">
             <span className="meta-label">Cache:</span>
@@ -443,6 +594,47 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
           </div>
         )}
       </div>
+
+      {/* 🆕 Partner Widget Modal */}
+      {selectedWidget && (
+        <div className="widget-modal-overlay" onClick={closeWidgetModal}>
+          <div className="widget-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="widget-modal-header">
+              <h2>
+                {selectedWidget.provider === 'check24' && '📊 CHECK24 Vergleichsrechner'}
+                {selectedWidget.provider === 'tarifcheck' && '📋 TarifCheck Vergleichsrechner'}
+                {!selectedWidget.provider && '🔍 Vergleichsrechner'}
+              </h2>
+              <button className="close-button" onClick={closeWidgetModal}>×</button>
+            </div>
+            
+            {widgetLoading ? (
+              <div className="widget-modal-loading">
+                <div className="spinner-large"></div>
+                <p>Lade Vergleichsrechner...</p>
+              </div>
+            ) : (
+              <div 
+                className="widget-modal-content"
+                ref={widgetContainerRef}
+                dangerouslySetInnerHTML={{ __html: selectedWidget.widget?.html || '' }}
+              />
+            )}
+            
+            <div className="widget-modal-footer">
+              <p className="disclaimer">
+                * Wir erhalten eine Provision bei erfolgreicher Vermittlung.
+                Dies hat keinen Einfluss auf Ihre Preise.
+              </p>
+              {selectedWidget.category && (
+                <p className="widget-category">
+                  Kategorie: {selectedWidget.category}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

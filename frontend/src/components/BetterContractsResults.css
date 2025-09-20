@@ -1,4 +1,5 @@
 /* 🎯 src/styles/BetterContractsResults.css */
+/* ERWEITERTE VERSION MIT PARTNER-INTEGRATION */
 
 .results-container {
   /* GEÄNDERT: Kein max-width und padding mehr - wird vom parent container gehandhabt */
@@ -107,6 +108,17 @@
   color: #1e293b;
 }
 
+/* 🆕 Partner Badge in Summary */
+.summary-value.partner-badge {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  display: inline-block;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
 /* ========== FILTERS ========== */
 .results-filters {
   background: white;
@@ -179,6 +191,43 @@
   border-left: 3px solid #10b981;
 }
 
+/* 🆕 Partner Card Styling */
+.alternative-card.partner-card {
+  background: linear-gradient(to right, #f0fdf4 0%, white 100%);
+  border: 2px solid #10b981;
+  position: relative;
+  overflow: hidden;
+}
+
+.alternative-card.partner-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(to bottom, #10b981, #059669);
+}
+
+/* 🆕 Partner Indicator */
+.partner-indicator {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  padding: 0.25rem 0.625rem;
+  border-radius: 6px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 /* ========== BADGES - KOMPAKTER ========== */
 .recommendation-badge {
   position: absolute;
@@ -241,6 +290,12 @@
   flex-shrink: 0;
 }
 
+/* 🆕 Partner Avatar */
+.provider-avatar.partner {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
+}
+
 .provider-details {
   flex: 1;
   min-width: 0;
@@ -255,6 +310,19 @@
   align-items: center;
   gap: 0.5rem;
   flex-wrap: wrap;
+}
+
+/* 🆕 Verified Badge */
+.verified-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #10b981;
+  color: white;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  font-size: 0.7rem;
 }
 
 .offer-title {
@@ -383,9 +451,21 @@
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
 }
 
+/* 🆕 Partner Button Style */
+.action-button.primary.partner {
+  background: linear-gradient(135deg, #10b981, #059669);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.action-button.primary.partner:hover {
+  background: linear-gradient(135deg, #059669, #047857);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
 .action-button.primary:hover {
   background: #2563eb;
-  transform: translateY(-1px);
+  transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
@@ -580,6 +660,157 @@
   text-align: right;
 }
 
+/* ========== 🆕 PARTNER WIDGET MODAL ========== */
+.widget-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 20px;
+  animation: fadeIn 0.3s ease;
+}
+
+.widget-modal {
+  background: white;
+  border-radius: 16px;
+  max-width: 1200px;
+  width: 100%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease;
+}
+
+.widget-modal-header {
+  padding: 20px 25px;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border-radius: 16px 16px 0 0;
+}
+
+.widget-modal-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.close-button {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  font-size: 28px;
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.close-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: rotate(90deg);
+}
+
+.widget-modal-loading {
+  padding: 60px 20px;
+  text-align: center;
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.widget-modal-loading .spinner-large {
+  margin-bottom: 20px;
+}
+
+.widget-modal-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  min-height: 400px;
+  background: #f8f9fa;
+}
+
+/* Check24/TarifCheck iFrame Styles */
+.widget-modal-content iframe {
+  width: 100% !important;
+  min-height: 600px;
+  border: none;
+  background: white;
+  border-radius: 8px;
+}
+
+/* Check24 spezifische Anpassungen */
+.widget-modal-content #c24pp-power-iframe,
+.widget-modal-content #c24pp-gas-iframe,
+.widget-modal-content #c24pp-dsl-iframe,
+.widget-modal-content #c24pp-mobileservice-iframe,
+.widget-modal-content #c24pp-package-iframe,
+.widget-modal-content #c24pp-rentalcar-iframe,
+.widget-modal-content [id^="c24pp-"][id$="-iframe"] {
+  width: 100% !important;
+  min-height: 700px;
+}
+
+/* TarifCheck spezifische Anpassungen */
+.widget-modal-content #tcpp-iframe-kfz,
+.widget-modal-content #tcpp-iframe-solar,
+.widget-modal-content #tcpp-iframe-kredit,
+.widget-modal-content [id^="tcpp-iframe-"] {
+  width: 100% !important;
+  min-height: 650px;
+}
+
+/* Quick Calculator Widgets */
+.widget-modal-content [id^="c24pp-"][id$="-widget"],
+.widget-modal-content [id^="tcpp-widget-"] {
+  margin: 0 auto;
+  max-width: 400px;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.widget-modal-footer {
+  padding: 15px 25px;
+  border-top: 1px solid #e0e0e0;
+  background: #f8f9fa;
+  border-radius: 0 0 16px 16px;
+}
+
+.disclaimer {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #666;
+  font-style: italic;
+}
+
+.widget-category {
+  margin: 5px 0 0 0;
+  font-size: 0.8rem;
+  color: #888;
+}
+
 /* ========== ZUSÄTZLICHE SICHERHEIT FÜR VOLLE BREITE ========== */
 .contract-step-container.results-step > .results-container {
   padding: 0 !important;
@@ -642,6 +873,29 @@
   .meta-value {
     text-align: left;
   }
+  
+  /* 🆕 Widget Modal Mobile */
+  .widget-modal {
+    max-width: 100%;
+    margin: 10px;
+    max-height: 95vh;
+  }
+  
+  .widget-modal-content {
+    padding: 10px;
+    overflow-x: auto;
+  }
+  
+  /* Mobile: iFrames horizontal scrollbar erlauben */
+  .widget-modal-content iframe,
+  .widget-modal-content [id*="iframe"] {
+    min-width: 900px; /* Check24 Mindestbreite beibehalten */
+  }
+  
+  .partner-indicator {
+    font-size: 0.6rem;
+    padding: 0.2rem 0.5rem;
+  }
 }
 
 @media (max-width: 480px) {
@@ -667,6 +921,14 @@
     padding: 0.5rem 0.75rem;
     font-size: 0.75rem;
   }
+  
+  .widget-modal-header h2 {
+    font-size: 1.2rem;
+  }
+  
+  .widget-modal-header {
+    padding: 15px;
+  }
 }
 
 /* ========== ANIMATIONS ========== */
@@ -676,6 +938,26 @@
   }
   to {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
@@ -701,3 +983,5 @@
 .alternative-card:nth-child(4) { animation-delay: 0.2s; }
 .alternative-card:nth-child(5) { animation-delay: 0.25s; }
 .alternative-card:nth-child(6) { animation-delay: 0.3s; }
+.alternative-card:nth-child(7) { animation-delay: 0.35s; }
+.alternative-card:nth-child(8) { animation-delay: 0.4s; }

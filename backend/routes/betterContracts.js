@@ -1,5 +1,5 @@
 // 📁 backend/routes/betterContracts.js  
-// STEP 3: Verbesserte Validierung & Rate Limiting
+// ERWEITERTE VERSION MIT PARTNER-INTEGRATION
 
 const express = require("express");
 const router = express.Router();
@@ -10,6 +10,13 @@ const cheerio = require("cheerio");
 // 🔧 FORCE reload environment variables for this module
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
+
+// 🆕 Partner Mappings Import
+const { 
+  findBestPartnerCategory, 
+  generatePartnerOffers,
+  partnerMappings 
+} = require('../config/partnerMappings');
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 let SERP_API_KEY = process.env.SERP_API_KEY;
@@ -353,7 +360,7 @@ function generateEnhancedSearchQueries(detectedType, contractText) {
 
   // 1. PRIORITY: Insurance-specific context detection
   if (contractContext.category === 'Versicherung' || contractContext.service && contractContext.service.includes('versicherung')) {
-    console.log(`🏥 Insurance contract detected: ${contractContext.service || 'generic insurance'}`);
+    console.log(`🥇 Insurance contract detected: ${contractContext.service || 'generic insurance'}`);
 
     // Get specific insurance queries
     const insuranceType = contractContext.service || detectedType.toLowerCase();
@@ -566,7 +573,7 @@ async function extractVerivoxContent(url, $, bodyText) {
   return {
     prices: prices.slice(0, 8),
     features: features.slice(0, 5),
-    provider: bodyText.match(/(E\\.ON|Vattenfall|EnBW|RWE|Check24)/gi)?.[0] || 'Unknown'
+    provider: bodyText.match(/(E\.ON|Vattenfall|EnBW|RWE|Check24)/gi)?.[0] || 'Unknown'
   };
 }
 
@@ -693,7 +700,65 @@ async function extractWebContent(url) {
   }
 }
 
-// 🚀 HAUPTROUTE mit verbesserter Validierung
+// 🆕 NEUE FUNKTION: Partner-Integration Helper
+function integratePartnerResults(organicResults, detectedType, contractText) {
+  // Extract keywords für Partner-Matching
+  const keywords = [];
+  const textLower = contractText.toLowerCase();
+  
+  // Extract relevant keywords from contract
+  const relevantTerms = textLower.match(/\b\w+\b/g) || [];
+  keywords.push(...relevantTerms.filter(term => term.length > 3).slice(0, 10));
+  
+  // Find best matching partner category
+  const partnerCategory = findBestPartnerCategory(keywords, detectedType);
+  
+  if (!partnerCategory) {
+    console.log('🔍 Keine passende Partner-Kategorie gefunden');
+    return { 
+      combinedResults: organicResults,
+      partnerCategory: null,
+      partnerOffers: []
+    };
+  }
+  
+  console.log(`✅ Partner-Kategorie gefunden: ${partnerCategory.name} (Score: ${partnerCategory.matchScore})`);
+  
+  // Generate partner offers
+  const partnerOffers = generatePartnerOffers(partnerCategory.category, {
+    price: contractText.match(/(\d+[\.,]?\d*)\s*(€|EUR)/)?.[1]
+  });
+  
+  // Combine results
+  const combinedResults = [];
+  
+  // Add partner offers at strategic positions
+  if (partnerOffers.length > 0) {
+    // Add best partner offer at position 1
+    combinedResults.push(partnerOffers[0]);
+    
+    // Add first 2 organic results
+    combinedResults.push(...organicResults.slice(0, 2));
+    
+    // Add second partner offer if available at position 4
+    if (partnerOffers[1]) {
+      combinedResults.push(partnerOffers[1]);
+    }
+    
+    // Add remaining organic results
+    combinedResults.push(...organicResults.slice(2));
+  } else {
+    combinedResults.push(...organicResults);
+  }
+  
+  return {
+    combinedResults,
+    partnerCategory,
+    partnerOffers
+  };
+}
+
+// 🚀 HAUPTROUTE mit verbesserter Validierung UND PARTNER-INTEGRATION
 router.post("/", async (req, res) => {
   console.log(`🚀 START better-contracts Route - ${new Date().toISOString()}`);
 
@@ -720,7 +785,7 @@ router.post("/", async (req, res) => {
 
     // 🆕 STEP 3: Erweiterte Input-Validierung
     const { contractText, searchQuery } = req.body;
-    console.log(`📝 Input - ContractText Length: ${contractText?.length || 0}, SearchQuery: "${searchQuery || 'empty'}"`);
+    console.log(`🔍 Input - ContractText Length: ${contractText?.length || 0}, SearchQuery: "${searchQuery || 'empty'}"`);
 
     const validation = validateInput(contractText, searchQuery);
     console.log(`🔍 Validation Result: ${validation.isValid ? 'VALID' : 'INVALID'}`);
@@ -828,7 +893,7 @@ router.post("/", async (req, res) => {
 
     // 🆕 Intelligent Result Filtering for Insurance Contracts
     if (contractContext.category === 'Versicherung' && organicResults.length > 0) {
-      console.log(`🏥 Applying insurance-specific filtering to ${organicResults.length} results`);
+      console.log(`🥇 Applying insurance-specific filtering to ${organicResults.length} results`);
 
       // Priority insurance domains
       const insuranceDomains = [
@@ -862,11 +927,19 @@ router.post("/", async (req, res) => {
       // Prioritize insurance results
       organicResults = [...insuranceResults, ...otherResults];
 
-      console.log(`🏥 After insurance filtering: ${insuranceResults.length} insurance results, ${otherResults.length} other results`);
+      console.log(`🥇 After insurance filtering: ${insuranceResults.length} insurance results, ${otherResults.length} other results`);
     }
 
+    // 🆕 PARTNER-INTEGRATION
+    console.log(`🤝 Starting Partner Integration...`);
+    const { combinedResults, partnerCategory, partnerOffers } = integratePartnerResults(
+      organicResults,
+      detectedType,
+      cleanContractText
+    );
+    
     // 🆕 Enhanced Debug Info
-    if (organicResults.length === 0) {
+    if (combinedResults.length === 0) {
       console.log(`❌ Multi-Search Problem - Keine Ergebnisse gefunden`);
       console.log(`🔍 Versuchte Queries:`, enhancedQueries.slice(0, 3));
 
@@ -918,9 +991,12 @@ router.post("/", async (req, res) => {
           alternatives: mockResults,
           searchQuery: enhancedQueries[0],
           contractType: detectedType,
+          partnerCategory: partnerCategory,
+          partnerOffers: partnerOffers,
           performance: {
             totalAlternatives: mockResults.length,
             detailedExtractions: mockResults.length,
+            partnerOffersCount: partnerOffers.length,
             timestamp: new Date().toISOString(),
             warning: "DEMO MODE: SERP API nicht verfügbar - Mock-Daten verwendet"
           },
@@ -943,14 +1019,17 @@ router.post("/", async (req, res) => {
       });
     }
     
-    console.log(`📊 ${organicResults.length} Suchergebnisse gefunden`);
+    console.log(`📊 ${combinedResults.length} Gesamtergebnisse (inkl. ${partnerOffers.length} Partner-Angebote)`);
 
     // 🆕 Enhanced Content Extraktion mit Priorisierung
     // Priorisiere Vergleichsportale und extrahiere mehr URLs
     const priorityUrls = [];
     const regularUrls = [];
 
-    organicResults.slice(0, 8).forEach(result => {
+    // Only extract from organic (non-partner) results
+    const organicResultsToExtract = combinedResults.filter(r => r.source !== 'partner');
+
+    organicResultsToExtract.slice(0, 8).forEach(result => {
       const url = result.link;
       if (url.includes('check24') || url.includes('verivox') || url.includes('tarifcheck') ||
           url.includes('idealo') || url.includes('billiger.de')) {
@@ -995,8 +1074,17 @@ router.post("/", async (req, res) => {
 
     console.log(`✅ ${successfulExtractions.length} erfolgreich, ${failedExtractions} fehlgeschlagen`);
 
-    // 🆕 Enhanced Data Kombinierung mit mehr Details
-    const enrichedResults = organicResults.slice(0, 8).map((result, index) => {
+    // 🆕 Enhanced Data Kombinierung mit mehr Details (INCLUDING PARTNER RESULTS)
+    const enrichedResults = combinedResults.slice(0, 10).map((result, index) => {
+      // Partner results already have all needed data
+      if (result.source === 'partner') {
+        return {
+          ...result,
+          position: index + 1
+        };
+      }
+      
+      // Enrich organic results with extracted data
       const extracted = successfulExtractions.find(ext => ext.url === result.link);
 
       return {
@@ -1010,12 +1098,13 @@ router.post("/", async (req, res) => {
         hasDetailedData: !!extracted,
         isPriorityPortal: extracted?.isSpecialPortal || false,
         position: result.position || index + 1,
-        extractionError: extracted?.error || null
+        extractionError: extracted?.error || null,
+        source: 'serp'
       };
     });
 
     // 🆕 Fallback wenn keine erfolgreichen Extraktionen
-    if (successfulExtractions.length === 0) {
+    if (successfulExtractions.length === 0 && partnerOffers.length === 0) {
       console.log(`⚠️ Keine Website-Inhalte extrahiert - verwende nur Suchergebnisse`);
 
       // Verwende nur die Suchergebnisse ohne detaillierte Daten
@@ -1030,7 +1119,8 @@ router.post("/", async (req, res) => {
         hasDetailedData: false,
         isPriorityPortal: false,
         position: index + 1,
-        extractionError: 'Content extraction failed'
+        extractionError: 'Content extraction failed',
+        source: 'serp'
       }));
 
       return res.json({
@@ -1038,9 +1128,12 @@ router.post("/", async (req, res) => {
         alternatives: fallbackResults,
         searchQuery: enhancedQueries[0],
         contractType: detectedType,
+        partnerCategory: partnerCategory,
+        partnerOffers: [],
         performance: {
           totalAlternatives: fallbackResults.length,
           detailedExtractions: 0,
+          partnerOffersCount: 0,
           timestamp: new Date().toISOString(),
           warning: "Limited data extraction"
         },
@@ -1048,10 +1141,13 @@ router.post("/", async (req, res) => {
       });
     }
     
-    // GPT-Analyse
+    // GPT-Analyse (ERWEITERT UM PARTNER-HINWEISE)
     const systemPrompt = `Du bist ein professioneller Vertragsanalyst. Analysiere den gegebenen Vertrag und vergleiche ihn mit gefundenen Alternativen.
 
-WICHTIG: Nutze die extrahierten Preise und Vertragsinformationen für eine genaue Analyse.
+WICHTIG: 
+- Nutze die extrahierten Preise und Vertragsinformationen für eine genaue Analyse.
+- Berücksichtige sowohl Partner-Angebote als auch organische Suchergebnisse.
+- Partner-Angebote (Check24, TarifCheck) bieten oft umfassende Vergleiche.
 
 ANTWORTE IN DIESEM FORMAT:
 ## 📊 Zusammenfassung
@@ -1076,12 +1172,18 @@ ${enrichedResults.map((result, i) => `
 ${i + 1}. ${result.title}
    URL: ${result.link}
    Kurzbeschreibung: ${result.snippet}
+   ${result.source === 'partner' ? '⭐ PARTNER-ANGEBOT: Umfassender Vergleich verfügbar' : ''}
    ${result.hasDetailedData ? `
    Gefundene Preise: ${result.prices.join(', ') || 'Keine Preise gefunden'}
    Vertragsinformationen: ${result.relevantInfo}` : '(Keine detaillierten Daten verfügbar)'}
 `).join('\n')}
 
-Bitte analysiere diese Alternativen und gib eine fundierte Empfehlung.`;
+${partnerCategory ? `
+**VERFÜGBARE VERGLEICHSPORTALE:**
+${partnerCategory.name} über ${partnerCategory.provider === 'check24' ? 'CHECK24' : 'TarifCheck'}
+` : ''}
+
+Bitte analysiere diese Alternativen und gib eine fundierte Empfehlung. Berücksichtige besonders die Partner-Angebote, da diese oft die besten Vergleichsmöglichkeiten bieten.`;
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4o",
@@ -1095,13 +1197,17 @@ Bitte analysiere diese Alternativen und gib eine fundierte Empfehlung.`;
 
     const analysis = completion.choices[0].message.content;
     
-    // Ergebnis strukturieren
+    // Ergebnis strukturieren (MIT PARTNER-INFO)
     const result = {
       analysis,
       alternatives: enrichedResults,
       searchQuery: cleanSearchQuery,
+      partnerCategory: partnerCategory,
+      partnerOffers: partnerOffers,
       performance: {
-        totalAlternatives: organicResults.length,
+        totalAlternatives: combinedResults.length,
+        organicResults: organicResults.length,
+        partnerOffersCount: partnerOffers.length,
         detailedExtractions: successfulExtractions.length,
         timestamp: new Date().toISOString(),
         processingTimeMs: Date.now() - Date.now() // Placeholder
@@ -1112,7 +1218,7 @@ Bitte analysiere diese Alternativen und gib eine fundierte Empfehlung.`;
     saveToCache(cacheKey, result);
     console.log(`💾 Ergebnis im Cache gespeichert (Key: ${cacheKey})`);
     
-    console.log(`✅ Vertragsvergleich abgeschlossen - ${enrichedResults.length} Alternativen analysiert`);
+    console.log(`✅ Vertragsvergleich abgeschlossen - ${enrichedResults.length} Alternativen analysiert (inkl. ${partnerOffers.length} Partner)`);
     
     return res.json({
       ...result,
@@ -1223,5 +1329,71 @@ router.get("/rate-limit/:ip?", (req, res) => {
       Math.ceil((RATE_LIMIT_WINDOW - (now - Math.min(...recentRequests))) / 1000) : 0
   });
 });
+
+// 🆕 PARTNER WIDGET ENDPOINTS
+router.get("/partner-widget/:category", (req, res) => {
+  const { category } = req.params;
+  const { type } = req.query; // 'full' oder 'quick'
+  
+  const mapping = partnerMappings[category];
+  
+  if (!mapping) {
+    return res.status(404).json({ error: 'Kategorie nicht gefunden' });
+  }
+  
+  const widgetType = type === 'quick' ? 'quickCalculator' : 'fullCalculator';
+  const widget = mapping.widgets[widgetType];
+  
+  if (!widget) {
+    return res.status(404).json({ error: 'Widget nicht verfügbar' });
+  }
+  
+  res.json({
+    success: true,
+    category: category,
+    provider: mapping.provider,
+    name: mapping.name,
+    widget: widget,
+    impressum: getImpressumText(mapping.provider)
+  });
+});
+
+// Helper: Impressum-Text für Partner
+function getImpressumText(provider) {
+  if (provider === 'check24') {
+    return `<p><strong>CHECK24.net Partnerprogramm</strong></p><p>Wir nehmen am CHECK24.net Partnerprogramm teil. Auf unseren Seiten werden iFrame-Buchungsmasken und andere Werbemittel eingebunden, an denen wir über Transaktionen, zum Beispiel durch Leads und Sales, eine Werbekostenerstattung erhalten können.</p><p>Weitere Informationen zur Datennutzung durch CHECK24.net erhalten Sie in der Datenschutzerklärung von <a href="https://www.check24.net" target="_blank">CHECK24.net</a>.</p>`;
+  } else if (provider === 'tarifcheck') {
+    return `<p><strong>TarifCheck.de Partnerprogramm</strong></p><p>Wir nehmen am TarifCheck.de Partnerprogramm teil. Auf unseren Seiten werden Vergleichsrechner und andere Werbemittel eingebunden, an denen wir über erfolgreiche Vermittlungen eine Provision erhalten können.</p><p>Weitere Informationen zur Datennutzung durch TarifCheck.de erhalten Sie in der Datenschutzerklärung von <a href="https://www.tarifcheck.de" target="_blank">TarifCheck.de</a>.</p>`;
+  }
+  return '';
+}
+
+// Route: Verfügbare Partner-Kategorien
+router.get("/partner-categories", (req, res) => {
+  const categories = Object.keys(partnerMappings).map(key => ({
+    key: key,
+    name: partnerMappings[key].name,
+    provider: partnerMappings[key].provider,
+    type: partnerMappings[key].type
+  }));
+  
+  res.json({
+    success: true,
+    categories: categories,
+    grouped: groupCategoriesByType(categories)
+  });
+});
+
+// Helper: Kategorien gruppieren
+function groupCategoriesByType(categories) {
+  const grouped = {};
+  categories.forEach(cat => {
+    if (!grouped[cat.type]) {
+      grouped[cat.type] = [];
+    }
+    grouped[cat.type].push(cat);
+  });
+  return grouped;
+}
 
 module.exports = router;
