@@ -1144,7 +1144,7 @@ router.post("/", async (req, res) => {
     let filterType = 'unknown';
     const textLower = cleanContractText.toLowerCase();
     
-    // Prüfe explizit auf Versicherungstypen
+    // Prüfe explizit auf bekannte Vertragstypen
     if (textLower.includes('rechtsschutz') || detectedType.includes('rechtsschutz')) {
       filterType = 'rechtsschutz';
     } else if (textLower.includes('haftpflicht') || detectedType.includes('haftpflicht')) {
@@ -1155,19 +1155,46 @@ router.post("/", async (req, res) => {
       filterType = 'hausrat';
     } else if (textLower.includes('berufsunfähig') || detectedType.includes('berufsunfähig')) {
       filterType = 'berufsunfaehigkeit';
-    } else if (textLower.includes('strom') || detectedType.includes('strom')) {
+    } else if (textLower.includes('kranken') && textLower.includes('versicherung')) {
+      filterType = 'krankenversicherung';
+    } else if (textLower.includes('leben') && textLower.includes('versicherung')) {
+      filterType = 'lebensversicherung';
+    } else if (textLower.includes('wohngebäude')) {
+      filterType = 'wohngebaeude';
+    } else if (textLower.includes('unfall') && textLower.includes('versicherung')) {
+      filterType = 'unfallversicherung';
+    } else if (textLower.includes('strom')) {
       filterType = 'strom';
-    } else if (textLower.includes('gas') || detectedType.includes('gas')) {
+    } else if (textLower.includes('gas') && !textLower.includes('versicherung')) {
       filterType = 'gas';
     } else if (textLower.includes('dsl') || textLower.includes('internet')) {
       filterType = 'dsl';
     } else if (textLower.includes('handy') || textLower.includes('mobilfunk')) {
       filterType = 'mobilfunk';
+    } else if (textLower.includes('fitness') || textLower.includes('gym') || textLower.includes('mcfit')) {
+      filterType = 'fitness';
+    } else if (textLower.includes('netflix') || textLower.includes('spotify') || 
+               textLower.includes('disney') || textLower.includes('streaming')) {
+      filterType = 'streaming';
+    } else if (textLower.includes('kredit') || textLower.includes('darlehen')) {
+      filterType = 'kredit';
+    } else if (textLower.includes('girokonto') || textLower.includes('banking')) {
+      filterType = 'girokonto';
+    } else if (textLower.includes('hosting') || textLower.includes('webspace') || 
+               textLower.includes('server')) {
+      filterType = 'hosting';
+    } else if (textLower.includes('adobe') || textLower.includes('microsoft') || 
+               textLower.includes('office') || textLower.includes('software')) {
+      filterType = 'software';
+    } else {
+      // UNIVERSELLER FALLBACK für unbekannte Verträge
+      filterType = 'universal';
+      console.log(`⚠️ Unbekannter Vertragstyp - verwende universelle Filterung`);
     }
     
     console.log(`🎯 Erkannter Filter-Typ: ${filterType}`);
     
-    // 🔴 SCHRITT 2: STRIKTE FILTER-REGELN
+    // 🔴 SCHRITT 2: STRIKTE FILTER-REGELN (erweitert für ALLE Vertragstypen)
     const strictFilters = {
       'rechtsschutz': {
         mustInclude: ['rechtsschutz'],
@@ -1188,6 +1215,62 @@ router.post("/", async (req, res) => {
         canInclude: ['versicherung', 'kasko', 'haftpflicht', 'fahrzeug', 'pkw'],
         mustNotInclude: ['dsl', 'internet', 'handy', 'rechtsschutz', 'hausrat', 'idealo']
       },
+      'fitness': {
+        mustInclude: ['fitness', 'gym', 'sport', 'training'],
+        canInclude: ['mcfit', 'fitx', 'clever', 'urban', 'john', 'studio', 'mitglied'],
+        mustNotInclude: ['versicherung', 'dsl', 'internet', 'handy', 'strom']
+      },
+      'streaming': {
+        mustInclude: ['streaming', 'netflix', 'spotify', 'disney', 'prime', 'video', 'musik'],
+        canInclude: ['abo', 'subscription', 'entertainment', 'filme', 'serien'],
+        mustNotInclude: ['versicherung', 'dsl', 'kfz', 'fitness']
+      },
+      'software': {
+        mustInclude: ['software', 'adobe', 'microsoft', 'office', 'cloud', 'saas'],
+        canInclude: ['lizenz', 'subscription', 'creative', '365', 'workspace'],
+        mustNotInclude: ['versicherung', 'fitness', 'streaming']
+      },
+      'hosting': {
+        mustInclude: ['hosting', 'webspace', 'server', 'domain'],
+        canInclude: ['strato', 'ionos', '1und1', 'all-inkl', 'hetzner', 'website'],
+        mustNotInclude: ['versicherung', 'fitness', 'streaming']
+      },
+      'strom': {
+        mustInclude: ['strom', 'energie', 'kwh'],
+        canInclude: ['eon', 'vattenfall', 'enbw', 'stadtwerke', 'ökostrom'],
+        mustNotInclude: ['versicherung', 'dsl', 'handy', 'gas']
+      },
+      'gas': {
+        mustInclude: ['gas', 'erdgas'],
+        canInclude: ['eon', 'vattenfall', 'stadtwerke', 'energie'],
+        mustNotInclude: ['versicherung', 'dsl', 'handy', 'strom']
+      },
+      'dsl': {
+        mustInclude: ['dsl', 'internet', 'breitband'],
+        canInclude: ['telekom', 'vodafone', '1und1', 'o2', 'mbit', 'glasfaser'],
+        mustNotInclude: ['versicherung', 'fitness', 'streaming']
+      },
+      'mobilfunk': {
+        mustInclude: ['handy', 'mobilfunk', 'smartphone'],
+        canInclude: ['telekom', 'vodafone', 'o2', 'tarif', 'prepaid', 'vertrag'],
+        mustNotInclude: ['versicherung', 'dsl', 'fitness']
+      },
+      'kredit': {
+        mustInclude: ['kredit', 'darlehen', 'finanzierung'],
+        canInclude: ['bank', 'zinsen', 'rate', 'sparkasse', 'ing', 'dkb'],
+        mustNotInclude: ['versicherung', 'dsl', 'handy']
+      },
+      'girokonto': {
+        mustInclude: ['girokonto', 'konto', 'banking'],
+        canInclude: ['bank', 'sparkasse', 'ing', 'dkb', 'comdirect', 'n26'],
+        mustNotInclude: ['versicherung', 'kredit', 'dsl']
+      },
+      'universal': {
+        // Für unbekannte Verträge: Sehr lockere Regeln
+        mustInclude: [],
+        canInclude: ['vergleich', 'anbieter', 'alternative', 'wechsel', 'günstig', 'sparen'],
+        mustNotInclude: ['porn', 'casino', 'betting', 'adult'] // Nur illegale/unerwünschte Inhalte blockieren
+      },
       'default': {
         mustInclude: [],
         canInclude: ['vergleich', 'tarif', 'günstig'],
@@ -1195,7 +1278,7 @@ router.post("/", async (req, res) => {
       }
     };
     
-    const activeFilter = strictFilters[filterType] || strictFilters['default'];
+    const activeFilter = strictFilters[filterType] || strictFilters['universal'];
     console.log(`📋 Aktiver Filter:`, activeFilter);
     
     // 🔴 SCHRITT 3: AGGRESSIVE FILTERUNG mit BLOG-BLOCKIERUNG
@@ -1281,33 +1364,120 @@ router.post("/", async (req, res) => {
         return false;
       }
       
-      // 🔴 NEU: POSITIV-LISTE für Versicherungen - NUR diese sind erlaubt
-      if (filterType.includes('versicherung') || filterType === 'rechtsschutz' || 
-          filterType === 'haftpflicht' || filterType === 'kfz' || filterType === 'hausrat') {
-        
-        const allowedInsuranceDomains = [
-          // Vergleichsportale
+      // 🔴 NEU: UNIVERSELLE POSITIV-LISTE - Je nach Vertragstyp
+      const allowedDomainsByType = {
+        // Versicherungen
+        'versicherung': [
           'check24.de', 'verivox.de', 'tarifcheck.de', 'financescout24.de',
-          'toptarif.de', 'nafi-auto.de', 'dieversicherer.de',
-          
-          // Direkte Versicherer
-          'huk.de', 'huk24.de', 'huk-coburg.de', 'allianz.de', 'axa.de', 
-          'ergo.de', 'generali.de', 'zurich.de', 'cosmosdirekt.de',
-          'hannoversche.de', 'signal-iduna.de', 'debeka.de', 'gothaer.de',
-          'arag.de', 'roland-rechtsschutz.de', 'advocard.de', 'adam-riese.de',
-          'friday.de', 'nexible.de', 'getsafe.de', 'luko.de', 'wefox.de',
-          'bavariadirekt.de', 'vgh.de', 'lvm.de', 'provinzial.de',
-          'versicherungskammer.de', 'nuernberger.de', 'continentale.de',
-          
-          // Verbraucher-Portale (nur diese!)
-          'finanztip.de', 'test.de', 'stiftung-warentest.de', 'finanzfluss.de',
-          'verbraucherzentrale.de', 'biallo.de'
+          'huk.de', 'allianz.de', 'axa.de', 'ergo.de', 'cosmosdirekt.de',
+          'arag.de', 'roland-rechtsschutz.de', 'adam-riese.de', 'friday.de',
+          'getsafe.de', 'nexible.de', 'luko.de', 'wefox.de', 'finanzfluss.de'
+        ],
+        // Energie
+        'energie': [
+          'check24.de', 'verivox.de', 'stromauskunft.de', 'toptarif.de',
+          'eon.de', 'vattenfall.de', 'enbw.de', 'rwe.de', 'stadtwerke',
+          'lichtblick.de', 'naturstrom.de', 'greenpeace-energy.de',
+          'tibber.com', 'octopusenergy.de'
+        ],
+        // Telekommunikation
+        'telekom': [
+          'check24.de', 'verivox.de', 'dslweb.de', 'toptarif.de',
+          'telekom.de', 'vodafone.de', 'o2online.de', '1und1.de',
+          'congstar.de', 'klarmobil.de', 'mobilcom-debitel.de'
+        ],
+        // Fitness
+        'fitness': [
+          'fitnessstudio-vergleich.de', 'studiovergleich.de',
+          'mcfit.com', 'fitx.de', 'clever-fit.com', 'fitness-first.de',
+          'johnreed.fitness', 'urban-sports-club.com', 'eversports.de',
+          'fitogram.de', 'gympass.com'
+        ],
+        // Streaming
+        'streaming': [
+          'netflix.com', 'spotify.com', 'disneyplus.com', 'amazon.de/prime',
+          'apple.com', 'dazn.com', 'skyticket.de', 'joyn.de', 'tvnow.de',
+          'justwatch.com', 'werstreamt.es'
+        ],
+        // Software
+        'software': [
+          'adobe.com', 'microsoft.com', 'office.com', 'google.com/workspace',
+          'dropbox.com', 'slack.com', 'zoom.us', 'notion.so', 'canva.com',
+          'alternativeto.net', 'capterra.de', 'getapp.de', 'g2.com'
+        ],
+        // Banking/Kredit
+        'banking': [
+          'check24.de', 'verivox.de', 'smava.de', 'finanzcheck.de',
+          'ing.de', 'dkb.de', 'comdirect.de', 'n26.com', 'sparkasse.de',
+          'commerzbank.de', 'deutschebank.de', 'consorsbank.de'
+        ],
+        // Hosting
+        'hosting': [
+          'ionos.de', 'strato.de', 'all-inkl.com', 'hetzner.de',
+          'netcup.de', 'webgo.de', 'domainfactory.de', 'mittwald.de',
+          'hosteurope.de', 'alfahosting.de'
+        ]
+      };
+      
+      // Bestimme welche Domain-Liste zu verwenden ist
+      let allowedDomains = [];
+      
+      if (filterType.includes('rechtsschutz') || filterType.includes('haftpflicht') || 
+          filterType.includes('kfz') || filterType.includes('hausrat')) {
+        allowedDomains = allowedDomainsByType['versicherung'];
+      } else if (filterType === 'strom' || filterType === 'gas') {
+        allowedDomains = allowedDomainsByType['energie'];
+      } else if (filterType === 'dsl' || filterType === 'mobilfunk') {
+        allowedDomains = allowedDomainsByType['telekom'];
+      } else if (filterType === 'fitness') {
+        allowedDomains = allowedDomainsByType['fitness'];
+      } else if (filterType === 'streaming') {
+        allowedDomains = allowedDomainsByType['streaming'];
+      } else if (filterType === 'software') {
+        allowedDomains = allowedDomainsByType['software'];
+      } else if (filterType === 'kredit' || filterType === 'girokonto') {
+        allowedDomains = allowedDomainsByType['banking'];
+      } else if (filterType === 'hosting') {
+        allowedDomains = allowedDomainsByType['hosting'];
+      } else if (filterType === 'universal') {
+        // Bei unbekannten Verträgen: Erlaube die wichtigsten Vergleichsportale
+        allowedDomains = [
+          'check24.de', 'verivox.de', 'tarifcheck.de', 'idealo.de',
+          'preisvergleich.de', 'billiger.de', 'guenstiger.de',
+          'testberichte.de', 'testsieger.de', 'finanzfluss.de'
         ];
-        
-        const isDomainAllowed = allowedInsuranceDomains.some(domain => url.includes(domain));
+      }
+      
+      // Anwenden der Domain-Filter NUR bei bekannten Kategorien
+      if (filterType !== 'universal' && allowedDomains.length > 0) {
+        const isDomainAllowed = allowedDomains.some(domain => url.includes(domain));
         
         if (!isDomainAllowed) {
-          console.log(`   ❌ BLOCKIERT: Nicht in Versicherungs-Whitelist`);
+          console.log(`   ❌ BLOCKIERT: Nicht in Whitelist für ${filterType}`);
+          return false;
+        }
+      }
+      
+      // 🔴 ZUSÄTZLICHE PRÜFUNG: Blockiere auch erlaubte Domains wenn es Blog-Artikel sind
+      const blogIndicators = [
+        '/artikel/', '/blog/', '/news/', '/magazin/', '/ratgeber/',
+        '/tipps/', '/guide/', '/beitrag/', '/post/', '/aktuelles/',
+        'stiftung-warentest', 'test.de', 'finanztip.de'
+      ];
+      
+      const isBlogArticle = blogIndicators.some(indicator => url.includes(indicator));
+      if (isBlogArticle) {
+        console.log(`   ❌ BLOCKIERT: Blog/Artikel-Indikator gefunden`);
+        return false;
+      }
+      
+      // 🔴 TITEL-PRÜFUNG: Blockiere wenn Titel nach Artikel klingt
+      if (title.includes('im vergleich') && !title.includes('vergleichen')) {
+        // "Versicherungen im Vergleich" = OK (Vergleichstool)
+        // "Die besten X im Vergleich" = NICHT OK (Artikel)
+        if (title.includes('die besten') || title.includes('top ') || 
+            title.includes('testsieger') || title.includes('empfehlung')) {
+          console.log(`   ❌ BLOCKIERT: Artikel-Titel erkannt`);
           return false;
         }
       }
@@ -1316,9 +1486,68 @@ router.post("/", async (req, res) => {
       return true;
     });
     
-    console.log(`\n🔴 FILTERUNG ABGESCHLOSSEN:`);
-    console.log(`   Vorher: ${organicResults.length} Ergebnisse`);
-    console.log(`   Nachher: ${filteredResults.length} Ergebnisse`);
+    // 🔴🔴🔴 DEDUPLIZIERUNG - Nur ein Eintrag pro Provider! 🔴🔴🔴
+    console.log(`🧹 Starte Deduplizierung...`);
+    
+    const seenProviders = new Set();
+    const deduplicatedResults = [];
+    
+    for (const result of filteredResults) {
+      // Extrahiere Provider aus URL
+      const url = (result.link || '').toLowerCase();
+      let providerKey = '';
+      
+      // Identifiziere Provider
+      if (url.includes('check24')) providerKey = 'check24';
+      else if (url.includes('verivox')) providerKey = 'verivox';
+      else if (url.includes('tarifcheck')) providerKey = 'tarifcheck';
+      else if (url.includes('finanztip')) providerKey = 'finanztip';
+      else if (url.includes('test.de') || url.includes('stiftung-warentest')) providerKey = 'stiftungwarentest';
+      else if (url.includes('finanzfluss')) providerKey = 'finanzfluss';
+      else if (url.includes('arag')) providerKey = 'arag';
+      else if (url.includes('huk')) providerKey = 'huk';
+      else if (url.includes('allianz')) providerKey = 'allianz';
+      else if (url.includes('cosmosdirekt')) providerKey = 'cosmosdirekt';
+      else providerKey = url; // Für unbekannte: nutze komplette URL
+      
+      // Prüfe ob Provider schon vorhanden
+      if (!seenProviders.has(providerKey)) {
+        seenProviders.add(providerKey);
+        
+        // Bei Vergleichsportalen: Bevorzuge spezifische über generische Links
+        const title = (result.title || '').toLowerCase();
+        const isSpecific = title.includes(filterType) || title.includes('haftpflicht') || 
+                          title.includes('rechtsschutz') || title.includes('hausrat') ||
+                          title.includes('kfz');
+        
+        // Wenn wir schon einen generischen Link haben und jetzt einen spezifischen finden
+        const existingIndex = deduplicatedResults.findIndex(r => {
+          const rUrl = (r.link || '').toLowerCase();
+          return (rUrl.includes(providerKey));
+        });
+        
+        if (existingIndex >= 0 && isSpecific) {
+          // Ersetze generischen durch spezifischen
+          const existingTitle = (deduplicatedResults[existingIndex].title || '').toLowerCase();
+          const existingIsGeneric = existingTitle.includes('versicherungsvergleich') || 
+                                   existingTitle.includes('versicherungen im vergleich');
+          
+          if (existingIsGeneric) {
+            console.log(`   🔄 Ersetze generischen ${providerKey} Link durch spezifischen`);
+            deduplicatedResults[existingIndex] = result;
+            continue;
+          }
+        }
+        
+        deduplicatedResults.push(result);
+        console.log(`   ✅ ${providerKey} hinzugefügt`);
+      } else {
+        console.log(`   ⏭️ ${providerKey} übersprungen (Duplikat)`);
+      }
+    }
+    
+    console.log(`🧹 Deduplizierung abgeschlossen: ${filteredResults.length} → ${deduplicatedResults.length}`);
+    filteredResults = deduplicatedResults;
     
     // 🔴 SCHRITT 4: Wenn zu wenige Ergebnisse, füge PROFESSIONELLE Fallbacks hinzu
     if (filteredResults.length < 3 && filterType === 'rechtsschutz') {
@@ -1326,43 +1555,59 @@ router.post("/", async (req, res) => {
       
       const fallbackResults = [
         {
-          title: "Finanztip - Rechtsschutzversicherung Ratgeber 2024",
-          link: "https://www.finanztip.de/rechtsschutzversicherung/",
-          snippet: "Unabhängiger Ratgeber der gemeinnützigen Finanztip-Stiftung. Erfahren Sie, welche Rechtsschutzversicherung wirklich sinnvoll ist und worauf Sie beim Abschluss achten müssen.",
-          position: 99,
-          provider: 'Finanztip'
-        },
-        {
-          title: "ARAG SE - Rechtsschutz vom Marktführer",
+          title: "ARAG SE - Rechtsschutz direkt vom Marktführer",
           link: "https://www.arag.de/rechtsschutzversicherung/",
           snippet: "ARAG - Europas größter Rechtsschutzversicherer. Mehrfacher Testsieger mit über 85 Jahren Erfahrung. Flexible Tarife mit oder ohne Selbstbeteiligung.",
           position: 98,
           provider: 'ARAG'
+        },
+        {
+          title: "ROLAND Rechtsschutz - Spezialist seit 1957",
+          link: "https://www.roland-rechtsschutz.de/",
+          snippet: "ROLAND Rechtsschutzversicherung - Ihr Spezialist für Rechtsschutz. Schnelle Hilfe im Rechtsfall mit 24/7 Hotline.",
+          position: 99,
+          provider: 'ROLAND'
         }
       ];
       
-      filteredResults = [...filteredResults, ...fallbackResults];
+      // Nur hinzufügen wenn nicht schon vorhanden
+      for (const fallback of fallbackResults) {
+        const alreadyExists = filteredResults.some(r => 
+          r.link?.includes('arag.de') || r.link?.includes('roland-rechtsschutz')
+        );
+        if (!alreadyExists) {
+          filteredResults.push(fallback);
+        }
+      }
     } else if (filteredResults.length < 3 && filterType === 'haftpflicht') {
       console.log(`⚠️ Zu wenige Ergebnisse - füge Haftpflicht-Fallbacks hinzu`);
       
       const fallbackResults = [
         {
-          title: "HUK-COBURG - Haftpflichtversicherung Testsieger",
+          title: "HUK-COBURG - Haftpflicht direkt vom Testsieger",
           link: "https://www.huk.de/haftpflichtversicherung/",
           snippet: "Deutschlands Versicherer im Bausparen. Haftpflichtschutz ab 2,87€ monatlich mit Deckungssummen bis 50 Mio. Euro.",
-          position: 99,
+          position: 98,
           provider: 'HUK-COBURG'
         },
         {
-          title: "Allianz - Privathaftpflicht mit Bestnoten",
+          title: "Allianz - Privathaftpflicht online abschließen",
           link: "https://www.allianz.de/haftpflichtversicherung/",
           snippet: "Die Allianz Haftpflichtversicherung schützt Sie weltweit. Flexible Tarife für Singles, Paare und Familien mit ausgezeichnetem Service.",
-          position: 98,
+          position: 99,
           provider: 'Allianz'
         }
       ];
       
-      filteredResults = [...filteredResults, ...fallbackResults];
+      // Nur hinzufügen wenn nicht schon vorhanden
+      for (const fallback of fallbackResults) {
+        const alreadyExists = filteredResults.some(r => 
+          r.link?.includes('huk.de') || r.link?.includes('allianz.de')
+        );
+        if (!alreadyExists) {
+          filteredResults.push(fallback);
+        }
+      }
     }
     
     // Überschreibe die organicResults mit gefilterten
