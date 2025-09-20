@@ -17,6 +17,16 @@ const { MongoClient, ObjectId } = require("mongodb");
 const cron = require("node-cron");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
+// 🆕 OPTIONAL: Helmet für erweiterte Security
+let helmet;
+try {
+  helmet = require("helmet");
+  console.log("✅ Helmet Security Module geladen");
+} catch (err) {
+  console.warn("⚠️ Helmet nicht installiert - verwende manuelle Security Headers");
+  helmet = null;
+}
+
 const verifyToken = require("./middleware/verifyToken");
 const createCheckSubscription = require("./middleware/checkSubscription");
 
@@ -53,6 +63,7 @@ const ALLOWED_ORIGINS = [
   "https://contract-ai.de",
   "https://www.contract-ai.de",
   "http://localhost:3000",
+  "http://localhost:5173", // Vite Development
 ];
 
 const API_BASE_URL = process.env.API_BASE_URL || (
@@ -95,6 +106,18 @@ app.use(cors({
   credentials: true,
 }));
 app.use(cookieParser());
+
+// 🆕 HELMET SECURITY (falls installiert)
+if (helmet) {
+  app.use(helmet({
+    contentSecurityPolicy: false, // Wir setzen CSP im HTML
+    crossOriginEmbedderPolicy: false, // Erlaubt Partner iFrames
+    frameguard: {
+      action: 'sameorigin' // Erlaubt eigene iFrames
+    }
+  }));
+  console.log("✅ Helmet Security aktiviert");
+}
 
 // 🆕 FIX: Erhöhtes JSON-Limit für große HTML-Inhalte mit Logos
 app.use(express.json({ limit: '50mb' }));
@@ -140,6 +163,33 @@ app.use((req, res, next) => {
   }
   res.header("Access-Control-Allow-Credentials", "true");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+  next();
+});
+
+// 🆕 PARTNER WIDGET SECURITY HEADERS
+app.use((req, res, next) => {
+  // Partner Widget Headers für iFrames
+  const origin = req.headers.origin;
+
+  // Erlaubt iFrames von Partner-Domains
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+
+  // CSP Header für Server-Responses (ergänzend zum HTML Meta-Tag)
+  res.setHeader('Content-Security-Policy-Report-Only',
+    "frame-ancestors 'self' https://*.check24.de https://*.tarifcheck.de;"
+  );
+
+  // Weitere Security Headers
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+
+  // Permissions Policy
+  res.setHeader('Permissions-Policy',
+    'geolocation=(), microphone=(), camera=(), payment=()'
+  );
+
+  console.log(`🔒 Security Headers gesetzt für: ${req.path}`);
   next();
 });
 
@@ -865,7 +915,18 @@ const connectDB = async () => {
           oneClickCancel: "✅ Direkt aus Calendar oder E-Mail"
         },
         s3Status: s3Status,
-        message: "🎉 PFAD-CHAOS BEHOBEN + CALENDAR INTEGRATION ACTIVE + 50MB LIMIT!"
+        partnerIntegration: {
+          check24PartnerId: process.env.CHECK24_PARTNER_ID || 'NOT SET',
+          tarifcheckPartnerId: process.env.TARIFCHECK_PARTNER_ID || 'NOT SET',
+          widgetSecurity: 'CSP configured for partner domains',
+          allowedPartnerDomains: [
+            '*.check24.de',
+            '*.tarifcheck.de',
+            'files.check24.net',
+            'form.partner-versicherung.de'
+          ]
+        },
+        message: "🎉 PFAD-CHAOS BEHOBEN + CALENDAR INTEGRATION ACTIVE + 50MB LIMIT + PARTNER SECURITY!"
       });
     });
 

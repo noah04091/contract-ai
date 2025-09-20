@@ -1,8 +1,18 @@
 // backend/config/partnerMappings.js
-// Neue Datei für Partner-Integration
+// ERWEITERTE VERSION MIT FEHLERBEHANDLUNG
 
 const PARTNER_ID = process.env.CHECK24_PARTNER_ID || '1157688';
 const TARIFCHECK_ID = process.env.TARIFCHECK_PARTNER_ID || '193010';
+
+// 🆕 Debug Logging für Partner IDs
+console.log('🔧 Partner IDs geladen:', {
+  CHECK24: PARTNER_ID,
+  TARIFCHECK: TARIFCHECK_ID,
+  FROM_ENV: {
+    CHECK24: process.env.CHECK24_PARTNER_ID ? 'YES' : 'NO',
+    TARIFCHECK: process.env.TARIFCHECK_PARTNER_ID ? 'YES' : 'NO'
+  }
+});
 
 const partnerMappings = {
   // ========== CHECK24 ENERGIE ==========
@@ -210,7 +220,7 @@ const partnerMappings = {
     provider: 'tarifcheck',
     type: 'versicherung',
     name: 'Haftpflichtversicherung',
-    keywords: ['haftpflicht', 'privathaftpflicht', 'versicherung', 'schaden'],
+    keywords: ['haftpflicht', 'privathaftpflicht', 'versicherung', 'schaden', 'bavaria', 'bavariadirekt'],
     widgets: {
       fullCalculator: {
         html: `<div style="width: 100%" id="tcpp-iframe-phv"></div><script src="https://form.partner-versicherung.de/widgets/${TARIFCHECK_ID}/tcpp-iframe-phv/phv-iframe.js"></script>`,
@@ -578,107 +588,168 @@ const partnerMappings = {
   }
 };
 
-// Helper-Funktion zum Finden der besten Partner-Kategorie
+// 🆕 VERBESSERTE Helper-Funktion mit Error Handling
 function findBestPartnerCategory(keywords, contractType) {
-  let bestMatch = null;
-  let bestScore = 0;
-  
-  const keywordsLower = keywords.map(k => k.toLowerCase());
-  const typeLower = contractType?.toLowerCase() || '';
-  
-  for (const [key, mapping] of Object.entries(partnerMappings)) {
-    let score = 0;
+  try {
+    let bestMatch = null;
+    let bestScore = 0;
     
-    // Exact type match
-    if (typeLower === key) {
-      score += 50;
+    // Input-Validierung
+    if (!keywords || !Array.isArray(keywords)) {
+      console.warn('⚠️ findBestPartnerCategory: Invalid keywords input');
+      keywords = [];
     }
     
-    // Keyword matching
-    for (const keyword of keywordsLower) {
-      if (mapping.keywords.some(mk => mk.includes(keyword) || keyword.includes(mk))) {
-        score += 10;
+    const keywordsLower = keywords.map(k => String(k).toLowerCase());
+    const typeLower = String(contractType || '').toLowerCase();
+    
+    // Debug Logging
+    console.log('🔍 Partner-Suche:', {
+      keywords: keywordsLower.slice(0, 5),
+      contractType: typeLower
+    });
+    
+    for (const [key, mapping] of Object.entries(partnerMappings)) {
+      let score = 0;
+      
+      // Exact type match
+      if (typeLower === key) {
+        score += 50;
+      }
+      
+      // Keyword matching
+      for (const keyword of keywordsLower) {
+        if (mapping.keywords.some(mk => mk.includes(keyword) || keyword.includes(mk))) {
+          score += 10;
+        }
+      }
+      
+      // Category type matching
+      if (typeLower && mapping.type && mapping.type.includes(typeLower)) {
+        score += 20;
+      }
+      
+      if (score > bestScore) {
+        bestScore = score;
+        bestMatch = { category: key, ...mapping, matchScore: score };
       }
     }
     
-    // Category type matching
-    if (typeLower && mapping.type && mapping.type.includes(typeLower)) {
-      score += 20;
+    if (bestMatch) {
+      console.log('✅ Partner gefunden:', {
+        category: bestMatch.category,
+        provider: bestMatch.provider,
+        score: bestMatch.matchScore
+      });
+    } else {
+      console.log('❌ Kein passender Partner gefunden');
     }
     
-    if (score > bestScore) {
-      bestScore = score;
-      bestMatch = { category: key, ...mapping, matchScore: score };
-    }
+    return bestMatch;
+  } catch (error) {
+    console.error('❌ Fehler in findBestPartnerCategory:', error);
+    return null;
   }
-  
-  return bestMatch;
 }
 
-// Helper-Funktion zum Generieren von Partner-Angeboten
+// 🆕 VERBESSERTE Helper-Funktion mit Error Handling
 function generatePartnerOffers(category, extractedData = {}) {
-  const mapping = partnerMappings[category];
-  if (!mapping) return [];
-  
-  const offers = [];
-  
-  // Check24/TarifCheck Angebot erstellen
-  if (mapping.widgets.fullCalculator) {
-    offers.push({
-      source: 'partner',
-      provider: mapping.provider,
-      title: `${mapping.name} - Jetzt vergleichen`,
-      snippet: `Vergleichen Sie hunderte Anbieter und sparen Sie bis zu mehrere hundert Euro im Jahr`,
-      link: '#partner-widget',
-      price: extractedData.price || 'Preis ermitteln',
-      prices: [extractedData.price || 'Preis ermitteln'],
-      features: [
-        '✓ Über 100 Anbieter im Vergleich',
-        '✓ TÜV-geprüfter Service',
-        '✓ Kostenlos & unverbindlich',
-        '✓ Bonus-Aktionen verfügbar'
-      ],
-      relevantInfo: 'Vergleichsportal mit vielen Anbietern und Tarifen',
-      widget: mapping.widgets.fullCalculator,
-      directLink: mapping.widgets.directLink || null,
-      scoreBonus: mapping.scoreBonus || 10,
-      isVerified: true,
-      hasDetailedData: true,
-      isPriorityPortal: true,
-      category: category
-    });
+  try {
+    const mapping = partnerMappings[category];
+    if (!mapping) {
+      console.warn(`⚠️ Keine Partner-Kategorie gefunden: ${category}`);
+      return [];
+    }
+    
+    const offers = [];
+    
+    // Check24/TarifCheck Angebot erstellen
+    if (mapping.widgets && mapping.widgets.fullCalculator) {
+      offers.push({
+        source: 'partner',
+        provider: mapping.provider,
+        title: `${mapping.name} - Jetzt vergleichen`,
+        snippet: `Vergleichen Sie hunderte Anbieter und sparen Sie bis zu mehrere hundert Euro im Jahr`,
+        link: '#partner-widget',
+        price: extractedData.price || 'Preis ermitteln',
+        prices: [extractedData.price || 'Preis ermitteln'],
+        features: [
+          '✓ Über 100 Anbieter im Vergleich',
+          '✓ TÜV-geprüfter Service',
+          '✓ Kostenlos & unverbindlich',
+          '✓ Bonus-Aktionen verfügbar'
+        ],
+        relevantInfo: 'Vergleichsportal mit vielen Anbietern und Tarifen',
+        widget: mapping.widgets.fullCalculator,
+        directLink: mapping.widgets.directLink || null,
+        scoreBonus: mapping.scoreBonus || 10,
+        isVerified: true,
+        hasDetailedData: true,
+        isPriorityPortal: true,
+        category: category
+      });
+    }
+    
+    // Quick Calculator als Alternative
+    if (mapping.widgets && mapping.widgets.quickCalculator) {
+      offers.push({
+        source: 'partner',
+        provider: mapping.provider,
+        title: `${mapping.name} - Schnell-Check`,
+        snippet: 'Schnelle Übersicht über verfügbare Tarife',
+        link: '#partner-widget-quick',
+        price: 'Preis prüfen',
+        prices: ['Preis prüfen'],
+        features: [
+          '✓ Schnelle Eingabe',
+          '✓ Sofortige Ergebnisse',
+          '✓ Unverbindlich'
+        ],
+        relevantInfo: 'Schneller Vergleich verfügbar',
+        widget: mapping.widgets.quickCalculator,
+        scoreBonus: (mapping.scoreBonus || 10) - 5,
+        isVerified: true,
+        hasDetailedData: true,
+        isPriorityPortal: true,
+        category: category
+      });
+    }
+    
+    console.log(`✅ ${offers.length} Partner-Angebote generiert für: ${category}`);
+    return offers;
+    
+  } catch (error) {
+    console.error('❌ Fehler in generatePartnerOffers:', error);
+    return [];
   }
-  
-  // Quick Calculator als Alternative
-  if (mapping.widgets.quickCalculator) {
-    offers.push({
-      source: 'partner',
-      provider: mapping.provider,
-      title: `${mapping.name} - Schnell-Check`,
-      snippet: 'Schnelle Übersicht über verfügbare Tarife',
-      link: '#partner-widget-quick',
-      price: 'Preis prüfen',
-      prices: ['Preis prüfen'],
-      features: [
-        '✓ Schnelle Eingabe',
-        '✓ Sofortige Ergebnisse',
-        '✓ Unverbindlich'
-      ],
-      relevantInfo: 'Schneller Vergleich verfügbar',
-      widget: mapping.widgets.quickCalculator,
-      scoreBonus: (mapping.scoreBonus || 10) - 5,
-      isVerified: true,
-      hasDetailedData: true,
-      isPriorityPortal: true,
-      category: category
-    });
-  }
-  
-  return offers;
 }
 
+// 🆕 TEST FUNCTION für Debug
+function testPartnerMappings() {
+  console.log('🧪 PARTNER MAPPINGS TEST');
+  console.log('========================');
+  console.log(`Total Categories: ${Object.keys(partnerMappings).length}`);
+  console.log(`CHECK24 Partner ID: ${PARTNER_ID}`);
+  console.log(`TARIFCHECK Partner ID: ${TARIFCHECK_ID}`);
+  
+  // Test mit Beispiel-Keywords
+  const testCases = [
+    { keywords: ['haftpflicht', 'versicherung'], type: 'versicherung' },
+    { keywords: ['strom', 'energie'], type: 'energie' },
+    { keywords: ['kredit', 'darlehen'], type: 'finanzen' }
+  ];
+  
+  testCases.forEach(test => {
+    const result = findBestPartnerCategory(test.keywords, test.type);
+    console.log(`\nTest: ${test.keywords.join(', ')}`);
+    console.log(`Result: ${result ? result.category : 'NOT FOUND'}`);
+  });
+}
+
+// Export
 module.exports = {
   partnerMappings,
   findBestPartnerCategory,
-  generatePartnerOffers
+  generatePartnerOffers,
+  testPartnerMappings // 🆕 Für Debug
 };
