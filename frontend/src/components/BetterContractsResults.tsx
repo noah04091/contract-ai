@@ -4,6 +4,13 @@
 import React, { useState, useRef } from "react";
 import './BetterContractsResults.css';
 
+// Widget Type Definition
+interface WidgetData {
+  html: string;
+  minWidth?: number;
+  type?: string;
+}
+
 interface Alternative {
   title: string;
   link: string;
@@ -17,7 +24,7 @@ interface Alternative {
   features?: string[];
   // 🆕 Partner-spezifische Felder
   source?: 'serp' | 'partner';
-  widget?: any;
+  widget?: WidgetData;
   directLink?: string;
   isVerified?: boolean;
   category?: string;
@@ -70,7 +77,7 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
   const widgetContainerRef = useRef<HTMLDivElement>(null);
 
   // 🆕 Load Widget Scripts
-  const loadWidgetScript = (widget: any) => {
+  const loadWidgetScript = (widget: WidgetData) => {
     if (!widget || !widget.html) return;
     
     // Parse HTML um Script-URLs zu extrahieren
@@ -80,23 +87,25 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
     const links = doc.querySelectorAll('link[rel="stylesheet"]');
     
     // CSS laden
-    links.forEach((link: any) => {
-      const existingLink = document.querySelector(`link[href="${link.href}"]`);
+    links.forEach((link) => {
+      const linkElement = link as HTMLLinkElement;
+      const existingLink = document.querySelector(`link[href="${linkElement.href}"]`);
       if (!existingLink) {
         const newLink = document.createElement('link');
         newLink.rel = 'stylesheet';
         newLink.type = 'text/css';
-        newLink.href = link.href;
+        newLink.href = linkElement.href;
         document.head.appendChild(newLink);
       }
     });
     
     // Scripts laden
-    scripts.forEach((script: any) => {
-      const existingScript = document.querySelector(`script[src="${script.src}"]`);
+    scripts.forEach((script) => {
+      const scriptElement = script as HTMLScriptElement;
+      const existingScript = document.querySelector(`script[src="${scriptElement.src}"]`);
       if (!existingScript) {
         const newScript = document.createElement('script');
-        newScript.src = script.src;
+        newScript.src = scriptElement.src;
         newScript.async = true;
         document.body.appendChild(newScript);
       }
@@ -111,7 +120,9 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
       
       // Load scripts after a short delay to ensure modal is rendered
       setTimeout(() => {
-        loadWidgetScript(alternative.widget);
+        if (alternative.widget) { // Type guard to ensure widget is defined
+          loadWidgetScript(alternative.widget);
+        }
         setWidgetLoading(false);
       }, 100);
     } else if (alternative.directLink) {
@@ -130,7 +141,7 @@ const BetterContractsResults: React.FC<ResultsProps> = ({
   };
 
   // 💾 Save alternative function
-  const handleSaveAlternative = async (alternative: Alternative & { monthlyPrice?: number | null; provider?: string; features?: string[] }) => {
+  const handleSaveAlternative = async (alternative: Alternative) => {
     const alternativeKey = alternative.link;
 
     if (savedStates[alternativeKey]) {
