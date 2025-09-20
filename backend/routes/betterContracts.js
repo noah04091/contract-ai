@@ -633,65 +633,89 @@ async function extractWebContent(url) {
     const bodyText = $('body').text().replace(/\s+/g, ' ').slice(0, 2000);
 
     // 🔴 VERBESSERTE Provider-Erkennung
-    let provider = 'Unknown';
+    let provider = 'Anbieter';
     let betterDescription = '';
     
     // Extrahiere Provider aus URL oder Seiten-Content
     if (url.includes('check24.de')) {
       provider = 'CHECK24';
-      betterDescription = 'Deutschlands größtes Vergleichsportal mit über 300 Tarifen im Vergleich.';
+      betterDescription = 'Deutschlands größtes Vergleichsportal. Über 300 Tarife im direkten Vergleich mit Best-Preis-Garantie.';
     } else if (url.includes('verivox.de')) {
       provider = 'Verivox';
-      betterDescription = 'TÜV-geprüftes Vergleichsportal mit Best-Preis-Garantie.';
+      betterDescription = 'TÜV-geprüftes Vergleichsportal. Transparent, unabhängig und kostenlos.';
     } else if (url.includes('tarifcheck.de')) {
       provider = 'TarifCheck';
-      betterDescription = 'Unabhängiger Versicherungsvergleich mit Expertenberatung.';
+      betterDescription = 'Unabhängiger Versicherungsvergleich mit persönlicher Expertenberatung.';
     } else if (url.includes('finanztip.de')) {
       provider = 'Finanztip';
-      betterDescription = 'Gemeinnützige Verbraucher-Redaktion mit unabhängigen Empfehlungen.';
+      betterDescription = 'Gemeinnützige Verbraucher-Redaktion. 100% werbefrei und unabhängig.';
     } else if (url.includes('test.de') || url.includes('stiftung-warentest')) {
       provider = 'Stiftung Warentest';
-      betterDescription = 'Unabhängige Testberichte und Vergleiche von Deutschlands bekanntester Testorganisation.';
+      betterDescription = 'Deutschlands bekannteste Testorganisation. Objektive Tests seit 1964.';
+    } else if (url.includes('finanzfluss.de')) {
+      provider = 'Finanzfluss';
+      betterDescription = 'Unabhängige Finanzbildung. Transparente Vergleiche ohne versteckte Provisionen.';
+    } else if (url.includes('financescout24')) {
+      provider = 'FinanceScout24';
+      betterDescription = 'Versicherungsvergleich mit über 250 Tarifen von mehr als 70 Anbietern.';
+    } else if (url.includes('toptarif.de')) {
+      provider = 'TopTarif';
+      betterDescription = 'Vergleichsportal für Versicherungen, Energie und Finanzen.';
     } else if (url.includes('arag.de')) {
       provider = 'ARAG';
-      betterDescription = 'Europas größter Rechtsschutzversicherer mit über 85 Jahren Erfahrung.';
+      betterDescription = 'Europas größter Rechtsschutzversicherer. Direkt beim Spezialisten abschließen.';
     } else if (url.includes('roland-rechtsschutz')) {
       provider = 'ROLAND';
-      betterDescription = 'Spezialist für Rechtsschutzversicherungen seit 1957.';
+      betterDescription = 'Rechtsschutz-Spezialist seit 1957. Schnelle Hilfe im Rechtsfall.';
     } else if (url.includes('adam-riese')) {
       provider = 'Adam Riese';
-      betterDescription = 'Digitaler Versicherer mit flexiblen Online-Tarifen.';
-    } else if (url.includes('huk.de') || url.includes('huk24')) {
+      betterDescription = 'Digitaler Versicherer der Württembergischen. Flexibel und transparent.';
+    } else if (url.includes('huk.de') || url.includes('huk24') || url.includes('huk-coburg')) {
       provider = 'HUK-COBURG';
-      betterDescription = 'Deutschlands größter Kfz-Versicherer mit günstigen Tarifen.';
+      betterDescription = 'Deutschlands Versicherer im Bausparen. Faire Preise, starke Leistungen.';
     } else if (url.includes('allianz')) {
       provider = 'Allianz';
-      betterDescription = 'Weltgrößter Versicherungskonzern mit umfassendem Schutz.';
+      betterDescription = 'Weltgrößter Versicherer. Umfassender Schutz mit persönlicher Beratung.';
     } else if (url.includes('axa.de')) {
       provider = 'AXA';
-      betterDescription = 'Internationale Versicherungsgruppe mit maßgeschneiderten Lösungen.';
+      betterDescription = 'Internationale Versicherungsgruppe. Von Krankenakte bis Lebensschutz.';
     } else if (url.includes('ergo.de')) {
       provider = 'ERGO';
-      betterDescription = 'Die Versicherung Ihres Vertrauens - Teil der Munich Re Gruppe.';
+      betterDescription = 'Die Versicherung an Ihrer Seite. Teil der Munich Re Gruppe.';
     } else if (url.includes('cosmosdirekt')) {
       provider = 'CosmosDirekt';
-      betterDescription = 'Deutschlands führender Online-Versicherer mit günstigen Direkttarifen.';
+      betterDescription = 'Deutschlands führender Online-Versicherer. Direkt abschließen und sparen.';
     } else if (url.includes('generali')) {
       provider = 'Generali';
-      betterDescription = 'Einer der größten Erstversicherer weltweit.';
+      betterDescription = 'Traditionsversicherer seit 1831. Einer der größten Erstversicherer weltweit.';
+    } else if (url.includes('friday')) {
+      provider = 'Friday';
+      betterDescription = 'Digitaler Versicherer. Minutenschneller Abschluss per App.';
+    } else if (url.includes('getsafe')) {
+      provider = 'GetSafe';
+      betterDescription = 'Neo-Versicherer. Komplett digital mit Schadenregulierung per App.';
+    } else if (url.includes('nexible')) {
+      provider = 'Nexible';
+      betterDescription = 'Die digitale Kfz-Versicherung der Allianz. Günstig und flexibel.';
+    } else if (url.includes('bavariadirekt')) {
+      provider = 'BavariaDirekt';
+      betterDescription = 'Online-Versicherer der Sparkassen. Regional verwurzelt, digital unterwegs.';
     } else {
       // Versuche Provider aus Title oder Meta-Tags zu extrahieren
       const siteTitle = $('title').text();
       const metaAuthor = $('meta[name="author"]').attr('content');
       const ogSiteName = $('meta[property="og:site_name"]').attr('content');
       
-      provider = ogSiteName || metaAuthor || siteTitle.split('|')[0].split('-')[0].trim() || 'Versicherungsportal';
+      provider = ogSiteName || metaAuthor || siteTitle.split('|')[0].split('-')[0].trim() || 'Versicherungsanbieter';
       
       // Säubere den Provider-Namen
-      provider = provider.replace(/GmbH|AG|SE|&Co|KG|e\.V\./gi, '').trim();
-      if (provider.length > 30) {
-        provider = provider.substring(0, 30).trim();
+      provider = provider.replace(/GmbH|AG|SE|&Co|KG|e\.V\.|Versicherung/gi, '').trim();
+      if (provider.length > 25) {
+        provider = provider.substring(0, 25).trim();
       }
+      
+      // Generische Beschreibung für unbekannte Anbieter
+      betterDescription = 'Versicherungsanbieter mit Online-Abschluss-Möglichkeit.';
     }
 
     // Portal-spezifische Extraktion
@@ -1174,7 +1198,7 @@ router.post("/", async (req, res) => {
     const activeFilter = strictFilters[filterType] || strictFilters['default'];
     console.log(`📋 Aktiver Filter:`, activeFilter);
     
-    // 🔴 SCHRITT 3: AGGRESSIVE FILTERUNG
+    // 🔴 SCHRITT 3: AGGRESSIVE FILTERUNG mit BLOG-BLOCKIERUNG
     let filteredResults = organicResults.filter((result, index) => {
       const title = (result.title || '').toLowerCase();
       const snippet = (result.snippet || '').toLowerCase();
@@ -1184,6 +1208,34 @@ router.post("/", async (req, res) => {
       // Debug für erste 5 Ergebnisse
       if (index < 5) {
         console.log(`\n🔍 Prüfe Ergebnis ${index + 1}: ${result.title}`);
+      }
+      
+      // 🔴 NEU: BLOCKIERE BLOG-SEITEN UND NEWS-PORTALE
+      const blogAndNewsBlocklist = [
+        'handelsblatt.com', 'spiegel.de', 'focus.de', 'welt.de', 'zeit.de',
+        'faz.net', 'sueddeutsche.de', 'bild.de', 'stern.de', 't-online.de',
+        'n-tv.de', 'tagesschau.de', 'heise.de', 'golem.de', 'chip.de',
+        'computerbild.de', 'giga.de', 'netzwelt.de', 'pcwelt.de',
+        'wordpress.com', 'blogspot.com', 'medium.com', 'forbes.com',
+        'businessinsider.de', 'wirtschaftswoche.de', 'manager-magazin.de',
+        'capital.de', 'gruenderszene.de', 'deutsche-startups.de',
+        'versicherungsbote.de', 'versicherungsjournal.de', 'pfefferminzia.de',
+        'mydealz.de', 'gutscheinsammler.de', 'sparwelt.de', 'reddit.com'
+      ];
+      
+      // Prüfe ob es eine Blog/News-Seite ist
+      const isBlogOrNews = blogAndNewsBlocklist.some(domain => url.includes(domain));
+      if (isBlogOrNews) {
+        console.log(`   ❌ BLOCKIERT: Blog/News-Seite`);
+        return false;
+      }
+      
+      // Prüfe ob "blog", "artikel", "news", "test", "ratgeber" im URL-Pfad
+      if (url.includes('/blog/') || url.includes('/artikel/') || 
+          url.includes('/news/') || url.includes('/magazin/') ||
+          url.includes('/ratgeber/') && !url.includes('finanztip')) {
+        console.log(`   ❌ BLOCKIERT: Blog/Artikel-Pfad erkannt`);
+        return false;
       }
       
       // REGEL 1: MUSS verbotene Wörter NICHT enthalten
@@ -1223,10 +1275,41 @@ router.post("/", async (req, res) => {
       }
       
       // REGEL 3: Spezialprüfung für bekannte irrelevante Seiten
-      const blacklistedDomains = ['idealo.de', 'chip.de', 'mydealz.de', 'preisvergleich.de'];
+      const blacklistedDomains = ['idealo.de', 'preisvergleich.de', 'guenstiger.de', 'billiger.de'];
       if (blacklistedDomains.some(domain => url.includes(domain))) {
         console.log(`   ❌ BLOCKIERT: Blacklisted Domain`);
         return false;
+      }
+      
+      // 🔴 NEU: POSITIV-LISTE für Versicherungen - NUR diese sind erlaubt
+      if (filterType.includes('versicherung') || filterType === 'rechtsschutz' || 
+          filterType === 'haftpflicht' || filterType === 'kfz' || filterType === 'hausrat') {
+        
+        const allowedInsuranceDomains = [
+          // Vergleichsportale
+          'check24.de', 'verivox.de', 'tarifcheck.de', 'financescout24.de',
+          'toptarif.de', 'nafi-auto.de', 'dieversicherer.de',
+          
+          // Direkte Versicherer
+          'huk.de', 'huk24.de', 'huk-coburg.de', 'allianz.de', 'axa.de', 
+          'ergo.de', 'generali.de', 'zurich.de', 'cosmosdirekt.de',
+          'hannoversche.de', 'signal-iduna.de', 'debeka.de', 'gothaer.de',
+          'arag.de', 'roland-rechtsschutz.de', 'advocard.de', 'adam-riese.de',
+          'friday.de', 'nexible.de', 'getsafe.de', 'luko.de', 'wefox.de',
+          'bavariadirekt.de', 'vgh.de', 'lvm.de', 'provinzial.de',
+          'versicherungskammer.de', 'nuernberger.de', 'continentale.de',
+          
+          // Verbraucher-Portale (nur diese!)
+          'finanztip.de', 'test.de', 'stiftung-warentest.de', 'finanzfluss.de',
+          'verbraucherzentrale.de', 'biallo.de'
+        ];
+        
+        const isDomainAllowed = allowedInsuranceDomains.some(domain => url.includes(domain));
+        
+        if (!isDomainAllowed) {
+          console.log(`   ❌ BLOCKIERT: Nicht in Versicherungs-Whitelist`);
+          return false;
+        }
       }
       
       if (index < 5) console.log(`   ✅ ERLAUBT`);
