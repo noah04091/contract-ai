@@ -297,15 +297,15 @@ function generateEnhancedSearchQueries(detectedType, contractText) {
     ],
     "rechtsschutzversicherung": [
       "rechtsschutzversicherung vergleich check24 2024",
-      "günstige rechtsschutzversicherung adam riese alternative",
-      "rechtsschutzversicherung tarifvergleich verivox",
-      "beste rechtsschutzversicherung stiftung warentest"
+      "rechtsschutzversicherung verivox testsieger",
+      "arag rechtsschutzversicherung direkt abschließen",
+      "roland rechtsschutz online tarife"
     ],
     "haftpflichtversicherung": [
-      "privathaftpflichtversicherung vergleich check24 2024",
-      "günstige haftpflichtversicherung adam riese alternative",
-      "haftpflichtversicherung tarifvergleich verivox",
-      "beste privathaftpflicht stiftung warentest"
+      "haftpflichtversicherung vergleich check24 2024",
+      "haftpflichtversicherung verivox testsieger",
+      "huk coburg haftpflicht direkt abschließen",
+      "allianz privathaftpflicht online tarife"
     ],
     "hausratversicherung": [
       "hausratversicherung vergleich check24 2024",
@@ -1512,18 +1512,48 @@ router.post("/", async (req, res) => {
 
     console.log(`✅ ${successfulExtractions.length} erfolgreich, ${failedExtractions} fehlgeschlagen`);
 
-    // 🆕 Enhanced Data Kombinierung mit mehr Details (INCLUDING PARTNER RESULTS)
+    // 🆕 Enhanced Data Kombinierung mit VERBESSERTER SORTIERUNG
     const enrichedResults = combinedResults.slice(0, 10).map((result, index) => {
       // Partner results already have all needed data
       if (result.source === 'partner') {
         return {
           ...result,
-          position: index + 1
+          position: index + 1,
+          sortPriority: 1 // Höchste Priorität für Partner-Widgets
         };
       }
       
       // Enrich organic results with extracted data
       const extracted = successfulExtractions.find(ext => ext.url === result.link);
+      
+      // Bestimme Sort-Priorität basierend auf Provider-Typ
+      let sortPriority = 5; // Standard-Priorität
+      const url = result.link?.toLowerCase() || '';
+      
+      // Direkte Versicherer bekommen höhere Priorität
+      if (url.includes('arag.de') || url.includes('roland-rechtsschutz') || 
+          url.includes('huk.de') || url.includes('allianz.de') || 
+          url.includes('axa.de') || url.includes('cosmosdirekt') ||
+          url.includes('adam-riese') || url.includes('friday')) {
+        sortPriority = 2; // Direkte Versicherer
+      }
+      // Spezialisierte Vergleichsportale
+      else if ((url.includes('check24') || url.includes('verivox') || 
+                url.includes('tarifcheck')) && 
+               (result.title?.toLowerCase().includes(detectedType) || 
+                result.snippet?.toLowerCase().includes(detectedType))) {
+        sortPriority = 3; // Spezialisierte Vergleiche
+      }
+      // Allgemeine Vergleichsportale
+      else if (url.includes('check24') || url.includes('verivox') || 
+               url.includes('tarifcheck')) {
+        sortPriority = 4; // Generische Vergleiche
+      }
+      // Ratgeber-Seiten
+      else if (url.includes('finanztip') || url.includes('test.de') || 
+               url.includes('stiftung-warentest')) {
+        sortPriority = 6; // Ratgeber
+      }
 
       return {
         title: result.title,
@@ -1537,9 +1567,23 @@ router.post("/", async (req, res) => {
         isPriorityPortal: extracted?.isSpecialPortal || false,
         position: result.position || index + 1,
         extractionError: extracted?.error || null,
-        source: 'serp'
+        source: 'serp',
+        sortPriority: sortPriority
       };
     });
+    
+    // SORTIERE die Ergebnisse nach Priorität
+    enrichedResults.sort((a, b) => {
+      // Erst nach Priorität sortieren
+      if (a.sortPriority !== b.sortPriority) {
+        return a.sortPriority - b.sortPriority;
+      }
+      // Bei gleicher Priorität: Position beibehalten
+      return a.position - b.position;
+    });
+    
+    console.log(`📊 Sortierte Ergebnisse nach Relevanz:`, 
+      enrichedResults.slice(0, 5).map(r => `${r.provider} (Prio: ${r.sortPriority})`));
 
     // 🆕 Fallback wenn keine erfolgreichen Extraktionen
     if (successfulExtractions.length === 0 && partnerOffers.length === 0) {

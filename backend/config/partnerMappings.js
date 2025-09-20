@@ -804,7 +804,8 @@ function generatePartnerOffers(category, extractedData = {}) {
           '✔ Inklusive Verkehrs-, Privat- und Berufsrechtsschutz',
           '✔ Selbstbeteiligung flexibel wählbar',
           '✔ Sofortiger Online-Abschluss möglich'
-        ]
+        ],
+        priceRange: ['Ab 8€/Monat', 'Ab 12€/Monat', 'Ab 20€/Monat']
       },
       'haftpflicht': {
         title: 'Haftpflichtversicherung Vergleich', 
@@ -814,7 +815,8 @@ function generatePartnerOffers(category, extractedData = {}) {
           '✔ Weltweiter Schutz inklusive',
           '✔ Schlüsselverlust mitversichert',
           '✔ Familientarife verfügbar'
-        ]
+        ],
+        priceRange: ['Ab 2,50€/Monat', 'Ab 4€/Monat', 'Ab 7€/Monat']
       },
       'kfzversicherung': {
         title: 'KFZ-Versicherung Vergleich',
@@ -824,7 +826,8 @@ function generatePartnerOffers(category, extractedData = {}) {
           '✔ Werkstattbindung optional',
           '✔ Kaskoversicherung inklusive',
           '✔ Schadenfreiheitsklasse übertragbar'
-        ]
+        ],
+        priceRange: ['Ab 19€/Monat', 'Ab 35€/Monat', 'Ab 60€/Monat']
       },
       'hausrat': {
         title: 'Hausratversicherung Vergleich',
@@ -834,7 +837,8 @@ function generatePartnerOffers(category, extractedData = {}) {
           '✔ Elementarschäden versicherbar',
           '✔ Fahrraddiebstahl inklusive',
           '✔ Glasbruch mitversichert'
-        ]
+        ],
+        priceRange: ['Ab 2€/Monat', 'Ab 4€/Monat', 'Ab 8€/Monat']
       }
     };
     
@@ -846,7 +850,8 @@ function generatePartnerOffers(category, extractedData = {}) {
         '✔ Transparenter Vergleich',
         '✔ Kostenlos & unverbindlich',
         '✔ TÜV-geprüfter Service'
-      ]
+      ],
+      priceRange: ['Ab 10€/Monat', 'Ab 20€/Monat', 'Ab 30€/Monat']
     };
     
     const desc = categoryDescriptions[category] || defaultDesc;
@@ -861,8 +866,8 @@ function generatePartnerOffers(category, extractedData = {}) {
         title: `${providerName} - ${desc.title}`,
         snippet: desc.snippet,
         link: '#partner-widget',
-        price: extractedData.price || 'Individueller Preis',
-        prices: [extractedData.price || 'Preis nach Angaben'],
+        price: extractedData.price || desc.priceRange[0],
+        prices: extractedData.prices?.length > 0 ? extractedData.prices : desc.priceRange,
         features: desc.features,
         relevantInfo: `${providerName} ist Deutschlands führendes Vergleichsportal mit Bestpreis-Garantie.`,
         widget: mapping.widgets.fullCalculator,
