@@ -1,5 +1,5 @@
 // 📋 backend/routes/betterContracts.js  
-// ERWEITERTE VERSION MIT STRENGEM PARTNER-MATCHING
+// ERWEITERTE VERSION MIT STRENGEM PARTNER-MATCHING UND STROM-FIXES
 
 const express = require("express");
 const router = express.Router();
@@ -118,7 +118,7 @@ function validateInput(contractText, searchQuery) {
     }
     
     // Prüfen ob es überhaupt wie ein Vertrag aussieht
-    const contractKeywords = ['vertrag', 'tarif', 'laufzeit', 'monatlich', 'kündig', 'bedingung', 'agb', 'preis', '€', 'euro'];
+    const contractKeywords = ['vertrag', 'tarif', 'laufzeit', 'monatlich', 'kündig', 'bedingung', 'agb', 'preis', '€', 'euro', 'strom', 'gas', 'kwh'];
     const hasContractKeywords = contractKeywords.some(keyword => 
       contractText.toLowerCase().includes(keyword)
     );
@@ -206,7 +206,12 @@ function analyzeContractContext(contractText) {
     'netflix': 'Streaming',
     'spotify': 'Streaming',
     'amazon': 'Streaming/Shopping',
-    'apple': 'Software/Streaming'
+    'apple': 'Software/Streaming',
+    'eon': 'Energie',
+    'vattenfall': 'Energie',
+    'enbw': 'Energie',
+    'rwe': 'Energie',
+    'stadtwerke': 'Energie'
   };
 
   for (const [provider, category] of Object.entries(providers)) {
@@ -264,7 +269,7 @@ function generateEnhancedSearchQueries(detectedType, contractText) {
   const contractContext = analyzeContractContext(contractText);
   console.log(`📊 Contract Context:`, contractContext);
 
-  // 🔴 VERBESSERTE SPEZIFISCHE QUERIES
+  // 🔴 VERBESSERTE SPEZIFISCHE QUERIES MIT STROM-FIX
   const baseQueries = {
     "handy": [
       "günstige handytarife ohne vertrag 2024",
@@ -283,13 +288,20 @@ function generateEnhancedSearchQueries(detectedType, contractText) {
       "internet flatrate ohne drosselung vergleich"
     ],
     "strom": [
-      "stromanbieter wechsel bonus 2024",
-      "günstiger strom vergleich deutschland",
-      "ökostrom tarife günstig vergleich"
+      "stromanbieter wechsel 2024 deutschland",
+      "günstiger strom vergleich check24 verivox",
+      "ökostrom tarife günstig vergleich",
+      "stromvergleich testsieger 2024",
+      "stromtarife vergleich bonus",
+      "stromanbieter wechsel prämie",
+      "billig strom anbieter deutschland",
+      "strompreise 2024 vergleich"
     ],
     "gas": [
       "gasanbieter vergleich günstig deutschland",
-      "gas tarife wechsel bonus 2024"
+      "gas tarife wechsel bonus 2024",
+      "erdgas anbieter wechsel check24",
+      "gasvergleich verivox testsieger"
     ],
     "versicherung": [
       "versicherung vergleich günstig deutschland",
@@ -429,6 +441,9 @@ function generateEnhancedSearchQueries(detectedType, contractText) {
         const insuranceType = contractContext.service || 'versicherung';
         enhancedQueries.push(`${insuranceType} unter ${Math.floor(price)}€ monatlich`);
         enhancedQueries.push(`günstige ${insuranceType} unter ${Math.floor(price * 0.8)}€`);
+      } else if (contractContext.category === 'Energie') {
+        enhancedQueries.push(`stromtarife unter ${Math.floor(price)}€ monatlich`);
+        enhancedQueries.push(`günstiger strom unter ${Math.floor(price * 0.8)}€`);
       } else if (contractContext.category.includes('AI')) {
         enhancedQueries.push(`AI tools unter ${Math.floor(price)}€ monatlich`);
         enhancedQueries.push(`chatbot software unter ${Math.floor(price * 0.7)}€`);
@@ -448,6 +463,12 @@ function generateEnhancedSearchQueries(detectedType, contractText) {
           "versicherung vergleich check24 deutschland",
           "günstige versicherung online vergleich",
           "versicherung anbieter wechsel bonus 2024"
+        );
+      } else if (contractContext.category === 'Energie') {
+        enhancedQueries.push(
+          "stromvergleich check24 verivox",
+          "energie anbieter wechsel 2024",
+          "günstige strom gas tarife deutschland"
         );
       } else {
         enhancedQueries.push(
@@ -661,6 +682,9 @@ async function extractWebContent(url) {
     } else if (url.includes('toptarif.de')) {
       provider = 'TopTarif';
       betterDescription = 'Vergleichsportal für Versicherungen, Energie und Finanzen.';
+    } else if (url.includes('stromauskunft.de')) {
+      provider = 'Stromauskunft';
+      betterDescription = 'Unabhängiges Stromvergleichsportal mit aktuellen Tarifen und Wechselservice.';
     } else if (url.includes('arag.de')) {
       provider = 'ARAG';
       betterDescription = 'Europas größter Rechtsschutzversicherer. Direkt beim Spezialisten abschließen.';
@@ -807,23 +831,70 @@ async function extractWebContent(url) {
   }
 }
 
-// 🔴🔴🔴 WICHTIGSTE ÄNDERUNG: STRENGE PARTNER-VALIDIERUNG 🔴🔴🔴
+// 🔴🔴🔴 WICHTIGSTE ÄNDERUNG: STRENGE PARTNER-VALIDIERUNG MIT STROM-FIX 🔴🔴🔴
 function integratePartnerResults(organicResults, detectedType, contractText) {
   console.log(`🔍 STRENGE Partner-Integration gestartet...`);
   console.log(`📋 Erkannter Typ: ${detectedType}`);
   
-  // Extract keywords für Partner-Matching
-  const keywords = [];
+  // 🚨 PRIORITÄT: Partner-Check für Energie-Verträge
   const textLower = contractText.toLowerCase();
+  let partnerCategory = null;
   
-  // Extract relevant keywords from contract
+  // SOFORT-CHECK für Energie-Verträge
+  if (detectedType === 'strom' || detectedType === 'gas' || 
+      textLower.includes('strom') || textLower.includes('kwh') ||
+      textLower.includes('energie') || textLower.includes('stadtwerke') ||
+      textLower.includes('vattenfall') || textLower.includes('eon') ||
+      textLower.includes('gas') || textLower.includes('erdgas')) {
+    
+    console.log(`⚡ ENERGIE-VERTRAG ERKANNT - Forciere Partner-Widget!`);
+    
+    // Direkte Zuweisung ohne Score-Validierung für Energie
+    if (detectedType === 'strom' || textLower.includes('strom') || 
+        textLower.includes('kwh') || textLower.includes('energie')) {
+      partnerCategory = {
+        category: 'strom',
+        ...partnerMappings['strom'],
+        matchScore: 100
+      };
+      console.log(`✅ STROM Partner-Widget wird GARANTIERT angezeigt!`);
+    } else if (detectedType === 'gas' || textLower.includes('gas') || 
+               textLower.includes('erdgas')) {
+      partnerCategory = {
+        category: 'gas',
+        ...partnerMappings['gas'],
+        matchScore: 100
+      };
+      console.log(`✅ GAS Partner-Widget wird GARANTIERT angezeigt!`);
+    }
+    
+    // Generiere Partner-Angebote SOFORT
+    const partnerOffers = generatePartnerOffers(partnerCategory.category, {
+      price: contractText.match(/(\d+[\.,]?\d*)\s*(€|EUR)/)?.[1]
+    });
+    
+    // Partner-Widget IMMER an Position 1
+    const combinedResults = [
+      ...partnerOffers, // Partner zuerst
+      ...organicResults // Dann organische Ergebnisse
+    ];
+    
+    return {
+      combinedResults,
+      partnerCategory,
+      partnerOffers
+    };
+  }
+  
+  // Extract keywords für Partner-Matching (nur für NICHT-Energie)
+  const keywords = [];
   const relevantTerms = textLower.match(/\b\w+\b/g) || [];
   keywords.push(...relevantTerms.filter(term => term.length > 3).slice(0, 20));
   
   // 🔴 STRENGES MATCHING: Explizite Typ-Extraktion
   const explicitTypes = {
     'rechtsschutz': /rechtsschutz/i,
-    'haftpflicht': /(?<!kfz.{0,20})haftpflicht(?!.*kfz)/i, // Haftpflicht aber nicht KFZ-Haftpflicht
+    'haftpflicht': /(?<!kfz.{0,20})haftpflicht(?!.*kfz)/i,
     'kfz': /kfz|auto(?:versicherung)?|fahrzeug/i,
     'hausrat': /hausrat/i,
     'wohngebäude': /wohngebäude|gebäudeversicherung/i,
@@ -832,8 +903,8 @@ function integratePartnerResults(organicResults, detectedType, contractText) {
     'leben': /lebensversicherung/i,
     'unfall': /unfallversicherung/i,
     'tierhalter': /tier(?:halter)?.*haftpflicht|hunde.*haftpflicht/i,
-    'strom': /strom(?:anbieter|tarif|vertrag)/i,
-    'gas': /gas(?:anbieter|tarif|vertrag)/i,
+    'strom': /strom|energie|kwh|stadtwerke|stromanbieter|stromtarif|stromvertrag|eon|vattenfall|enbw|rwe/i,
+    'gas': /gas|erdgas|gasanbieter|gastarif|gasvertrag/i,
     'dsl': /dsl|internet(?:anschluss|tarif)/i,
     'mobilfunk': /mobilfunk|handy(?:tarif|vertrag)/i,
     'kredit': /kredit|darlehen/i,
@@ -851,8 +922,6 @@ function integratePartnerResults(organicResults, detectedType, contractText) {
   }
   
   // 🔴 SCHRITT 2: Partner-Kategorie nur bei EXAKTER Übereinstimmung
-  let partnerCategory = null;
-  
   if (explicitContractType) {
     // Suche nur nach der EXAKTEN Kategorie
     partnerCategory = findBestPartnerCategory(keywords, explicitContractType);
@@ -959,7 +1028,7 @@ router.post("/", async (req, res) => {
 
     // 🆕 STEP 3: Rate Limiting prüfen
     const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
-    console.log(`🌐 Client IP: ${clientIP}`);
+    console.log(`🌍 Client IP: ${clientIP}`);
     
     console.log(`✅ Rate Limit Check passed`);
 
@@ -976,7 +1045,7 @@ router.post("/", async (req, res) => {
 
     // 🆕 STEP 3: Erweiterte Input-Validierung
     const { contractText, searchQuery } = req.body;
-    console.log(`📝 Input - ContractText Length: ${contractText?.length || 0}, SearchQuery: "${searchQuery || 'empty'}"`);
+    console.log(`🔍 Input - ContractText Length: ${contractText?.length || 0}, SearchQuery: "${searchQuery || 'empty'}"`);
 
     const validation = validateInput(contractText, searchQuery);
     console.log(`🔍 Validation Result: ${validation.isValid ? 'VALID' : 'INVALID'}`);
@@ -1032,11 +1101,20 @@ router.post("/", async (req, res) => {
         messages: [
           {
             role: "system",
-            content: "Du bist ein Experte für Vertragsanalyse. Erkenne den Typ des gegebenen Vertrags. Antworte nur mit einem der folgenden Begriffe: handy, mobilfunk, internet, strom, gas, versicherung, kfz, fitness, streaming, bank, kredit, hosting, software, ai, saas, unbekannt. Besondere Aufmerksamkeit für: Anthropic/Claude = ai, OpenAI/ChatGPT = ai, Software-Abos = software, Web-Services = saas"
+            content: `Du bist ein Experte für Vertragsanalyse. Erkenne den Typ des gegebenen Vertrags. 
+            Antworte nur mit einem der folgenden Begriffe: 
+            - Versicherungen: rechtsschutz, haftpflicht, kfz, hausrat, wohngebäude, berufsunfähigkeit, krankenversicherung, lebensversicherung, unfallversicherung
+            - Energie: strom, gas, ökostrom
+            - Telekom: dsl, internet, mobilfunk, handy
+            - Finanzen: kredit, girokonto, kreditkarte, baufinanzierung
+            - Sonstige: fitness, streaming, hosting, software, ai, saas, solar, unbekannt
+            
+            WICHTIG: Bei Strom/Energie IMMER "strom" oder "gas" zurückgeben!
+            Besondere Aufmerksamkeit für: Anthropic/Claude = ai, OpenAI/ChatGPT = ai, Software-Abos = software, Web-Services = saas`
           },
           {
             role: "user",
-            content: `Analysiere diesen Vertrag und erkenne den Typ. Achte besonders auf Anbieter wie Anthropic, OpenAI, oder Software-Services:\n\n${cleanContractText.slice(0, 1000)}`
+            content: `Analysiere diesen Vertrag und erkenne den Typ. Achte besonders auf Anbieter wie Anthropic, OpenAI, Software-Services oder Energie-Verträge:\n\n${cleanContractText.slice(0, 1000)}`
           }
         ],
         temperature: 0.1,
@@ -1131,7 +1209,7 @@ router.post("/", async (req, res) => {
 
     console.log(`🚀 POINT 7: Search completed`);
 
-    // 🔴🔴🔴 UNIVERSELLE STRENGE FILTERUNG - VERSION 2.0 🔴🔴🔴
+    // 🔴🔴🔴 UNIVERSELLE STRENGE FILTERUNG - VERSION 2.0 MIT STROM-FIX 🔴🔴🔴
     console.log(`🔍 Starte UNIVERSELLE strenge Filterung für Typ: ${detectedType}`);
     console.log(`📊 Anzahl Ergebnisse VOR Filterung: ${organicResults.length}`);
     
@@ -1163,7 +1241,7 @@ router.post("/", async (req, res) => {
       filterType = 'wohngebaeude';
     } else if (textLower.includes('unfall') && textLower.includes('versicherung')) {
       filterType = 'unfallversicherung';
-    } else if (textLower.includes('strom')) {
+    } else if (textLower.includes('strom') || detectedType === 'strom') {
       filterType = 'strom';
     } else if (textLower.includes('gas') && !textLower.includes('versicherung')) {
       filterType = 'gas';
@@ -1194,7 +1272,7 @@ router.post("/", async (req, res) => {
     
     console.log(`🎯 Erkannter Filter-Typ: ${filterType}`);
     
-    // 🔴 SCHRITT 2: STRIKTE FILTER-REGELN (erweitert für ALLE Vertragstypen)
+    // 🔴 SCHRITT 2: STRIKTE FILTER-REGELN MIT STROM-FIX (erweitert für ALLE Vertragstypen)
     const strictFilters = {
       'rechtsschutz': {
         mustInclude: ['rechtsschutz'],
@@ -1215,6 +1293,16 @@ router.post("/", async (req, res) => {
         canInclude: ['versicherung', 'kasko', 'haftpflicht', 'fahrzeug', 'pkw'],
         mustNotInclude: ['dsl', 'internet', 'handy', 'rechtsschutz', 'hausrat', 'idealo']
       },
+      'strom': {
+        mustInclude: [], // KEINE Pflicht-Keywords für bessere Ergebnisse
+        canInclude: ['strom', 'energie', 'kwh', 'tarif', 'anbieter', 'eon', 'vattenfall', 'enbw', 'stadtwerke', 'ökostrom', 'wechsel', 'vergleich', 'stromauskunft', 'toptarif'],
+        mustNotInclude: ['versicherung', 'fitness', 'streaming', 'handy', 'mobilfunk', 'kfz', 'haftpflicht'] // Nur echte Konflikte blockieren
+      },
+      'gas': {
+        mustInclude: [], // Lockere Filterung auch für Gas
+        canInclude: ['gas', 'erdgas', 'energie', 'tarif', 'anbieter', 'eon', 'vattenfall', 'stadtwerke', 'wechsel', 'vergleich'],
+        mustNotInclude: ['versicherung', 'fitness', 'streaming', 'handy', 'mobilfunk', 'strom']
+      },
       'fitness': {
         mustInclude: ['fitness', 'gym', 'sport', 'training'],
         canInclude: ['mcfit', 'fitx', 'clever', 'urban', 'john', 'studio', 'mitglied'],
@@ -1234,16 +1322,6 @@ router.post("/", async (req, res) => {
         mustInclude: ['hosting', 'webspace', 'server', 'domain'],
         canInclude: ['strato', 'ionos', '1und1', 'all-inkl', 'hetzner', 'website'],
         mustNotInclude: ['versicherung', 'fitness', 'streaming']
-      },
-      'strom': {
-        mustInclude: ['strom', 'energie', 'kwh'],
-        canInclude: ['eon', 'vattenfall', 'enbw', 'stadtwerke', 'ökostrom'],
-        mustNotInclude: ['versicherung', 'dsl', 'handy', 'gas']
-      },
-      'gas': {
-        mustInclude: ['gas', 'erdgas'],
-        canInclude: ['eon', 'vattenfall', 'stadtwerke', 'energie'],
-        mustNotInclude: ['versicherung', 'dsl', 'handy', 'strom']
       },
       'dsl': {
         mustInclude: ['dsl', 'internet', 'breitband'],
@@ -1293,7 +1371,7 @@ router.post("/", async (req, res) => {
         console.log(`\n🔍 Prüfe Ergebnis ${index + 1}: ${result.title}`);
       }
       
-      // 🔴 NEU: BLOCKIERE BLOG-SEITEN UND NEWS-PORTALE
+      // 🔴 NEU: BLOCKIERE BLOG-SEITEN UND NEWS-PORTALE (MIT ENERGIE-AUSNAHMEN)
       const blogAndNewsBlocklist = [
         'handelsblatt.com', 'spiegel.de', 'focus.de', 'welt.de', 'zeit.de',
         'faz.net', 'sueddeutsche.de', 'bild.de', 'stern.de', 't-online.de',
@@ -1306,17 +1384,23 @@ router.post("/", async (req, res) => {
         'mydealz.de', 'gutscheinsammler.de', 'sparwelt.de', 'reddit.com'
       ];
       
-      // Prüfe ob es eine Blog/News-Seite ist
+      // Ausnahmen für Energie-Vergleichsseiten
+      const energyExceptions = ['stromauskunft.de', 'verivox.de/strom', 'check24.de/strom', 
+                               'verivox.de/gas', 'check24.de/gas', 'toptarif.de', 
+                               'wechselpiraten.de', 'stromvergleich.de'];
+      const isEnergyException = energyExceptions.some(exception => url.includes(exception));
+      
+      // Prüfe ob es eine Blog/News-Seite ist (aber erlaube Energie-Ausnahmen)
       const isBlogOrNews = blogAndNewsBlocklist.some(domain => url.includes(domain));
-      if (isBlogOrNews) {
+      if (isBlogOrNews && !isEnergyException) {
         console.log(`   ❌ BLOCKIERT: Blog/News-Seite`);
         return false;
       }
       
       // Prüfe ob "blog", "artikel", "news", "test", "ratgeber" im URL-Pfad
-      if (url.includes('/blog/') || url.includes('/artikel/') || 
+      if ((url.includes('/blog/') || url.includes('/artikel/') || 
           url.includes('/news/') || url.includes('/magazin/') ||
-          url.includes('/ratgeber/') && !url.includes('finanztip')) {
+          url.includes('/ratgeber/')) && !url.includes('finanztip') && !isEnergyException) {
         console.log(`   ❌ BLOCKIERT: Blog/Artikel-Pfad erkannt`);
         return false;
       }
@@ -1359,7 +1443,7 @@ router.post("/", async (req, res) => {
       
       // REGEL 3: Spezialprüfung für bekannte irrelevante Seiten
       const blacklistedDomains = ['idealo.de', 'preisvergleich.de', 'guenstiger.de', 'billiger.de'];
-      if (blacklistedDomains.some(domain => url.includes(domain))) {
+      if (blacklistedDomains.some(domain => url.includes(domain)) && filterType !== 'universal' && filterType !== 'strom' && filterType !== 'gas') {
         console.log(`   ❌ BLOCKIERT: Blacklisted Domain`);
         return false;
       }
@@ -1373,12 +1457,13 @@ router.post("/", async (req, res) => {
           'arag.de', 'roland-rechtsschutz.de', 'adam-riese.de', 'friday.de',
           'getsafe.de', 'nexible.de', 'luko.de', 'wefox.de', 'finanzfluss.de'
         ],
-        // Energie
+        // Energie (ERWEITERT für Strom/Gas)
         'energie': [
           'check24.de', 'verivox.de', 'stromauskunft.de', 'toptarif.de',
           'eon.de', 'vattenfall.de', 'enbw.de', 'rwe.de', 'stadtwerke',
           'lichtblick.de', 'naturstrom.de', 'greenpeace-energy.de',
-          'tibber.com', 'octopusenergy.de'
+          'tibber.com', 'octopusenergy.de', 'stromvergleich.de',
+          'wechselpiraten.de', 'stromtipp.de', 'energieverbraucherportal.de'
         ],
         // Telekommunikation
         'telekom': [
@@ -1448,8 +1533,8 @@ router.post("/", async (req, res) => {
         ];
       }
       
-      // Anwenden der Domain-Filter NUR bei bekannten Kategorien
-      if (filterType !== 'universal' && allowedDomains.length > 0) {
+      // Anwenden der Domain-Filter NUR bei bekannten Kategorien (NICHT bei Energie!)
+      if (filterType !== 'universal' && filterType !== 'strom' && filterType !== 'gas' && allowedDomains.length > 0) {
         const isDomainAllowed = allowedDomains.some(domain => url.includes(domain));
         
         if (!isDomainAllowed) {
@@ -1458,21 +1543,23 @@ router.post("/", async (req, res) => {
         }
       }
       
-      // 🔴 ZUSÄTZLICHE PRÜFUNG: Blockiere auch erlaubte Domains wenn es Blog-Artikel sind
-      const blogIndicators = [
-        '/artikel/', '/blog/', '/news/', '/magazin/', '/ratgeber/',
-        '/tipps/', '/guide/', '/beitrag/', '/post/', '/aktuelles/',
-        'stiftung-warentest', 'test.de', 'finanztip.de'
-      ];
-      
-      const isBlogArticle = blogIndicators.some(indicator => url.includes(indicator));
-      if (isBlogArticle) {
-        console.log(`   ❌ BLOCKIERT: Blog/Artikel-Indikator gefunden`);
-        return false;
+      // 🔴 ZUSÄTZLICHE PRÜFUNG: Blockiere auch erlaubte Domains wenn es Blog-Artikel sind (NICHT für Energie)
+      if (filterType !== 'strom' && filterType !== 'gas') {
+        const blogIndicators = [
+          '/artikel/', '/blog/', '/news/', '/magazin/', '/ratgeber/',
+          '/tipps/', '/guide/', '/beitrag/', '/post/', '/aktuelles/',
+          'stiftung-warentest', 'test.de', 'finanztip.de'
+        ];
+        
+        const isBlogArticle = blogIndicators.some(indicator => url.includes(indicator));
+        if (isBlogArticle) {
+          console.log(`   ❌ BLOCKIERT: Blog/Artikel-Indikator gefunden`);
+          return false;
+        }
       }
       
-      // 🔴 TITEL-PRÜFUNG: Blockiere wenn Titel nach Artikel klingt
-      if (title.includes('im vergleich') && !title.includes('vergleichen')) {
+      // 🔴 TITEL-PRÜFUNG: Blockiere wenn Titel nach Artikel klingt (NICHT für Energie)
+      if (filterType !== 'strom' && filterType !== 'gas' && title.includes('im vergleich') && !title.includes('vergleichen')) {
         // "Versicherungen im Vergleich" = OK (Vergleichstool)
         // "Die besten X im Vergleich" = NICHT OK (Artikel)
         if (title.includes('die besten') || title.includes('top ') || 
@@ -1504,6 +1591,8 @@ router.post("/", async (req, res) => {
       else if (url.includes('finanztip')) providerKey = 'finanztip';
       else if (url.includes('test.de') || url.includes('stiftung-warentest')) providerKey = 'stiftungwarentest';
       else if (url.includes('finanzfluss')) providerKey = 'finanzfluss';
+      else if (url.includes('stromauskunft')) providerKey = 'stromauskunft';
+      else if (url.includes('toptarif')) providerKey = 'toptarif';
       else if (url.includes('arag')) providerKey = 'arag';
       else if (url.includes('huk')) providerKey = 'huk';
       else if (url.includes('allianz')) providerKey = 'allianz';
@@ -1518,7 +1607,7 @@ router.post("/", async (req, res) => {
         const title = (result.title || '').toLowerCase();
         const isSpecific = title.includes(filterType) || title.includes('haftpflicht') || 
                           title.includes('rechtsschutz') || title.includes('hausrat') ||
-                          title.includes('kfz');
+                          title.includes('kfz') || title.includes('strom') || title.includes('gas');
         
         // Wenn wir schon einen generischen Link haben und jetzt einen spezifischen finden
         const existingIndex = deduplicatedResults.findIndex(r => {
@@ -1530,7 +1619,8 @@ router.post("/", async (req, res) => {
           // Ersetze generischen durch spezifischen
           const existingTitle = (deduplicatedResults[existingIndex].title || '').toLowerCase();
           const existingIsGeneric = existingTitle.includes('versicherungsvergleich') || 
-                                   existingTitle.includes('versicherungen im vergleich');
+                                   existingTitle.includes('versicherungen im vergleich') ||
+                                   existingTitle.includes('vergleich');
           
           if (existingIsGeneric) {
             console.log(`   🔄 Ersetze generischen ${providerKey} Link durch spezifischen`);
@@ -1542,7 +1632,7 @@ router.post("/", async (req, res) => {
         deduplicatedResults.push(result);
         console.log(`   ✅ ${providerKey} hinzugefügt`);
       } else {
-        console.log(`   ⏭️ ${providerKey} übersprungen (Duplikat)`);
+        console.log(`   ⭕ ${providerKey} übersprungen (Duplikat)`);
       }
     }
     
@@ -1603,6 +1693,35 @@ router.post("/", async (req, res) => {
       for (const fallback of fallbackResults) {
         const alreadyExists = filteredResults.some(r => 
           r.link?.includes('huk.de') || r.link?.includes('allianz.de')
+        );
+        if (!alreadyExists) {
+          filteredResults.push(fallback);
+        }
+      }
+    } else if (filteredResults.length < 3 && filterType === 'strom') {
+      console.log(`⚠️ Zu wenige Ergebnisse - füge Strom-Fallbacks hinzu`);
+      
+      const fallbackResults = [
+        {
+          title: "CHECK24 - Stromvergleich 2024",
+          link: "https://www.check24.de/strom/",
+          snippet: "Stromvergleich beim Testsieger. Über 1.000 Stromanbieter im Vergleich. Bis zu 850€ sparen mit Sofortbonus.",
+          position: 98,
+          provider: 'CHECK24'
+        },
+        {
+          title: "Verivox - Stromtarife vergleichen",
+          link: "https://www.verivox.de/strom/",
+          snippet: "TÜV-geprüfter Stromvergleich. Günstige Tarife mit Preisgarantie. Einfacher Wechsel in 5 Minuten.",
+          position: 99,
+          provider: 'Verivox'
+        }
+      ];
+      
+      // Nur hinzufügen wenn nicht schon vorhanden
+      for (const fallback of fallbackResults) {
+        const alreadyExists = filteredResults.some(r => 
+          r.link?.includes('check24.de/strom') || r.link?.includes('verivox.de/strom')
         );
         if (!alreadyExists) {
           filteredResults.push(fallback);
