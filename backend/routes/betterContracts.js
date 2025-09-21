@@ -1,5 +1,5 @@
 // 📋 backend/routes/betterContracts.js  
-// ERWEITERTE VERSION MIT STRENGEM PARTNER-MATCHING UND STROM-FIXES
+// ERWEITERTE VERSION MIT STRENGEM PARTNER-MATCHING UND INTELLIGENTER PREISERKENNUNG
 
 const express = require("express");
 const router = express.Router();
@@ -623,7 +623,7 @@ async function extractTarifcheckContent(url, $, bodyText) {
   };
 }
 
-// 🆕 Enhanced Website-Inhalt extrahieren mit BESSERER Provider-Erkennung
+// 🔴🔴🔴 VERBESSERTE Website-Inhalt extrahieren mit INTELLIGENTER PREISERKENNUNG 🔴🔴🔴
 async function extractWebContent(url) {
   try {
     console.log(`📄 Extrahiere Inhalt von: ${url}`);
@@ -651,7 +651,7 @@ async function extractWebContent(url) {
     });
 
     const $ = cheerio.load(response.data);
-    const bodyText = $('body').text().replace(/\s+/g, ' ').slice(0, 2000);
+    const bodyText = $('body').text().replace(/\s+/g, ' ').slice(0, 3000); // Mehr Text für bessere Analyse
 
     // 🔴 VERBESSERTE Provider-Erkennung
     let provider = 'Anbieter';
@@ -673,6 +673,12 @@ async function extractWebContent(url) {
     } else if (url.includes('test.de') || url.includes('stiftung-warentest')) {
       provider = 'Stiftung Warentest';
       betterDescription = 'Deutschlands bekannteste Testorganisation. Objektive Tests seit 1964.';
+    } else if (url.includes('preisvergleich.de')) {
+      provider = 'PREISVERGLEICH.de';
+      betterDescription = 'Unabhängiges Vergleichsportal mit Preisgarantie.';
+    } else if (url.includes('strom-gas24.de')) {
+      provider = 'strom-gas24.de';
+      betterDescription = 'Energie-Vergleichsportal mit aktuellen Tarifen.';
     } else if (url.includes('finanzfluss.de')) {
       provider = 'Finanzfluss';
       betterDescription = 'Unabhängige Finanzbildung. Transparente Vergleiche ohne versteckte Provisionen.';
@@ -730,7 +736,7 @@ async function extractWebContent(url) {
       const metaAuthor = $('meta[name="author"]').attr('content');
       const ogSiteName = $('meta[property="og:site_name"]').attr('content');
       
-      provider = ogSiteName || metaAuthor || siteTitle.split('|')[0].split('-')[0].trim() || 'Versicherungsanbieter';
+      provider = ogSiteName || metaAuthor || siteTitle.split('|')[0].split('-')[0].trim() || 'Anbieter';
       
       // Säubere den Provider-Namen
       provider = provider.replace(/GmbH|AG|SE|&Co|KG|e\.V\.|Versicherung/gi, '').trim();
@@ -739,28 +745,138 @@ async function extractWebContent(url) {
       }
       
       // Generische Beschreibung für unbekannte Anbieter
-      betterDescription = 'Versicherungsanbieter mit Online-Abschluss-Möglichkeit.';
+      betterDescription = 'Online-Vergleichsportal für bessere Tarife.';
     }
 
-    // Portal-spezifische Extraktion
-    let specialData = { prices: [], features: [], provider: provider };
-
-    if (url.includes('check24')) {
-      specialData = await extractCheck24Content(url, $, bodyText);
-      specialData.provider = 'CHECK24';
-    } else if (url.includes('verivox')) {
-      specialData = await extractVerivoxContent(url, $, bodyText);
-      specialData.provider = 'Verivox';
-    } else if (url.includes('tarifcheck')) {
-      specialData = await extractTarifcheckContent(url, $, bodyText);
-      specialData.provider = 'TarifCheck';
+    // 🔴🔴🔴 NEUE INTELLIGENTE PREIS-EXTRAKTION 🔴🔴🔴
+    const prices = [];
+    const savings = [];
+    const features = [];
+    
+    // Definiere Patterns für verschiedene Preis-Typen
+    const patterns = {
+      // ECHTE PREISE (was man zahlt)
+      monthlyPrice: [
+        /ab\s+(\d+[,.]?\d*)\s*€(?:\s*\/?\s*(?:pro\s+)?monat(?:lich)?)?/gi,
+        /(\d+[,.]?\d*)\s*€\s*(?:pro\s+)?monat(?:lich)?/gi,
+        /monatlich(?:er)?\s+(?:ab\s+)?(\d+[,.]?\d*)\s*€/gi,
+        /mtl\.\s*(\d+[,.]?\d*)\s*€/gi,
+        /(\d+[,.]?\d*)\s*€\/mtl/gi,
+        /grundpreis:?\s*(\d+[,.]?\d*)\s*€/gi,
+        /arbeitspreis:?\s*(\d+[,.]?\d*)\s*cent/gi
+      ],
+      yearlyPrice: [
+        /(\d+[,.]?\d*)\s*€\s*(?:pro\s+)?jahr/gi,
+        /jährlich(?:er)?\s+(?:ab\s+)?(\d+[,.]?\d*)\s*€/gi,
+        /(\d+[,.]?\d*)\s*€\s*p\.?\s*a\.?/gi,
+        /(\d+[,.]?\d*)\s*€\/jahr/gi
+      ],
+      // ERSPARNISSE (was man sparen kann)
+      savingsAmount: [
+        /(?:spare(?:n)?|ersparnis|einspar(?:en)?|spar(?:en)?)\s+(?:bis\s+zu\s+)?(\d+[,.]?\d*)\s*€/gi,
+        /bis\s+zu\s+(\d+[,.]?\d*)\s*€\s+(?:spare|ersparnis|günstiger|weniger)/gi,
+        /(\d+[,.]?\d*)\s*€\s+(?:ersparnis|einsparung|sparpotenzial|bonus|prämie|cashback)/gi,
+        /bonus:?\s*(?:bis\s+zu\s+)?(\d+[,.]?\d*)\s*€/gi,
+        /prämie:?\s*(?:bis\s+zu\s+)?(\d+[,.]?\d*)\s*€/gi,
+        /wechselbonus:?\s*(?:bis\s+zu\s+)?(\d+[,.]?\d*)\s*€/gi,
+        /neukundenbonus:?\s*(?:bis\s+zu\s+)?(\d+[,.]?\d*)\s*€/gi,
+        /sofortbonus:?\s*(?:bis\s+zu\s+)?(\d+[,.]?\d*)\s*€/gi
+      ]
+    };
+    
+    // Extrahiere ECHTE PREISE
+    patterns.monthlyPrice.forEach(pattern => {
+      const matches = bodyText.matchAll(pattern);
+      for (const match of matches) {
+        const price = match[1].replace(',', '.');
+        const priceNum = parseFloat(price);
+        // Plausibilitätsprüfung für Monatspreise
+        if (priceNum > 0 && priceNum < 500) { // Strompreise über 500€/Monat sind unwahrscheinlich
+          prices.push(`${priceNum.toFixed(2)}€/Monat`);
+        }
+      }
+    });
+    
+    patterns.yearlyPrice.forEach(pattern => {
+      const matches = bodyText.matchAll(pattern);
+      for (const match of matches) {
+        const price = match[1].replace(',', '.');
+        const priceNum = parseFloat(price);
+        // Plausibilitätsprüfung für Jahrespreise
+        if (priceNum > 50 && priceNum < 6000) { // Plausible Jahrespreise
+          const monthlyEquivalent = (priceNum / 12).toFixed(2);
+          prices.push(`${priceNum.toFixed(2)}€/Jahr (${monthlyEquivalent}€/Monat)`);
+        }
+      }
+    });
+    
+    // Extrahiere ERSPARNISSE (NICHT als Preise!)
+    patterns.savingsAmount.forEach(pattern => {
+      const matches = bodyText.matchAll(pattern);
+      for (const match of matches) {
+        const saving = match[1].replace(',', '.');
+        const savingNum = parseFloat(saving);
+        if (savingNum > 0 && savingNum < 10000) { // Plausible Ersparnisse
+          savings.push(`Bis zu ${savingNum.toFixed(0)}€ Ersparnis`);
+        }
+      }
+    });
+    
+    // Wenn keine echten Preise gefunden, suche nach Preis-Ranges
+    if (prices.length === 0) {
+      const rangePattern = /tarife?\s+(?:ab|von)\s+(\d+[,.]?\d*)\s*(?:bis|[-–])\s*(\d+[,.]?\d*)\s*€/gi;
+      const rangeMatches = bodyText.matchAll(rangePattern);
+      for (const match of rangeMatches) {
+        const min = parseFloat(match[1].replace(',', '.'));
+        const max = parseFloat(match[2].replace(',', '.'));
+        if (min > 0 && min < 500 && max > min && max < 1000) {
+          prices.push(`${min.toFixed(2)}€ - ${max.toFixed(2)}€/Monat`);
+        }
+      }
     }
-
-    // Fallback: Generische Preis-Extraktion
-    if (specialData.prices.length === 0) {
-      const priceTexts = bodyText.match(/\d+[,.]?\d*\s*(€|EUR|euro)/gi) || [];
-      specialData.prices = priceTexts.slice(0, 8);
+    
+    // Portal-spezifische Extraktion für CHECK24/Verivox
+    if (url.includes('check24') || url.includes('verivox') || url.includes('tarifcheck')) {
+      // Spezielle Selektoren für Vergleichsportale
+      $('.price-value, .monthly-price, .tariff-price, [data-price], .result-price').each((i, el) => {
+        const priceText = $(el).text().trim();
+        const priceMatch = priceText.match(/(\d+[,.]?\d*)\s*€/);
+        if (priceMatch && prices.length < 5) {
+          const price = parseFloat(priceMatch[1].replace(',', '.'));
+          if (price > 0 && price < 500) {
+            prices.push(`${price.toFixed(2)}€/Monat`);
+          }
+        }
+      });
     }
+    
+    // Features extrahieren (verbessert)
+    $('.feature-list li, .tariff-details li, .comparison-feature, .benefit-item').each((i, el) => {
+      const feature = $(el).text().trim();
+      if (feature.length > 5 && feature.length < 100 && features.length < 8) {
+        features.push(feature);
+      }
+    });
+    
+    // Wenn immer noch keine Features, extrahiere aus Text
+    if (features.length === 0) {
+      const featureKeywords = [
+        'preisgarantie', 'ökostrom', 'klimaneutral', 'wechselbonus',
+        'sofortbonus', 'neukundenbonus', 'keine grundgebühr',
+        'monatlich kündbar', 'testsieger', 'tüv-geprüft'
+      ];
+      
+      featureKeywords.forEach(keyword => {
+        if (bodyText.toLowerCase().includes(keyword) && features.length < 5) {
+          features.push(keyword.charAt(0).toUpperCase() + keyword.slice(1));
+        }
+      });
+    }
+    
+    // Deduplizierung
+    const uniquePrices = [...new Set(prices)].slice(0, 5);
+    const uniqueSavings = [...new Set(savings)].slice(0, 3);
+    const uniqueFeatures = [...new Set(features)].slice(0, 5);
 
     const title = $('title').text() || $('h1').first().text() || 'Unbekannter Titel';
     const description = $('meta[name="description"]').attr('content') ||
@@ -768,40 +884,35 @@ async function extractWebContent(url) {
                        betterDescription || '';
 
     // 🔴 VERBESSERTE Relevante Informationen extrahieren
-    const keywords = [
-      'laufzeit', 'monatlich', 'jährlich', 'kündigung', 'tarif', 'flat', 'unlimited',
-      'grundgebühr', 'einmalig', 'anschluss', 'wechsel', 'bonus', 'rabatt', 'aktion',
-      'mindestvertragslaufzeit', 'kündigungsfrist', 'bereitstellung', 'versand',
-      'testsieger', 'empfehlung', 'auszeichnung', 'bewertung', 'note'
-    ];
-
     let relevantInfo = betterDescription ? betterDescription + ' ' : '';
-    keywords.forEach(keyword => {
-      const regex = new RegExp(`.{0,100}${keyword}.{0,100}`, 'gi');
-      const matches = bodyText.match(regex);
-      if (matches) {
-        relevantInfo += matches.slice(0, 2).join(' ') + ' ';
-      }
-    });
-
-    // 🔴 Extrahiere Bewertungen und Auszeichnungen
+    
+    // Füge Ersparnisse zur relevanten Info hinzu (aber NICHT als Preise!)
+    if (uniqueSavings.length > 0) {
+      relevantInfo += ' ' + uniqueSavings.join('. ') + '.';
+    }
+    
+    // Extrahiere Bewertungen und Auszeichnungen
     const ratingMatch = bodyText.match(/(\d[,.]?\d)\s*(sterne|punkte|note)/i);
     const testsiegerMatch = bodyText.match(/(testsieger|sehr gut|ausgezeichnet|empfehlung)/i);
     
     if (ratingMatch) {
-      relevantInfo += ` Bewertung: ${ratingMatch[0]}. `;
+      relevantInfo += ` Bewertung: ${ratingMatch[0]}.`;
     }
     if (testsiegerMatch) {
-      relevantInfo += ` ${testsiegerMatch[0]}. `;
+      relevantInfo += ` ${testsiegerMatch[0]}.`;
     }
+
+    console.log(`💰 Extrahierte Preise für ${provider}:`, uniquePrices);
+    console.log(`💸 Extrahierte Ersparnisse für ${provider}:`, uniqueSavings);
 
     return {
       url,
       title: title.slice(0, 120),
       description: description.slice(0, 250) || relevantInfo.slice(0, 250),
-      prices: specialData.prices,
-      features: specialData.features || [],
-      provider: specialData.provider || provider,
+      prices: uniquePrices, // NUR echte Preise, KEINE Ersparnisse
+      savings: uniqueSavings, // Ersparnisse separat
+      features: uniqueFeatures,
+      provider: provider,
       relevantInfo: relevantInfo.slice(0, 600),
       success: true,
       isSpecialPortal: url.includes('check24') || url.includes('verivox') || url.includes('tarifcheck')
@@ -816,12 +927,15 @@ async function extractWebContent(url) {
     else if (url.includes('verivox')) fallbackProvider = 'Verivox';
     else if (url.includes('tarifcheck')) fallbackProvider = 'TarifCheck';
     else if (url.includes('finanztip')) fallbackProvider = 'Finanztip';
+    else if (url.includes('preisvergleich')) fallbackProvider = 'PREISVERGLEICH.de';
+    else if (url.includes('strom-gas24')) fallbackProvider = 'strom-gas24.de';
 
     return {
       url,
       title: 'Seite momentan nicht erreichbar',
       description: `Bitte besuchen Sie die Webseite direkt für aktuelle Informationen.`,
       prices: [],
+      savings: [],
       features: [],
       provider: fallbackProvider,
       relevantInfo: '',
@@ -1463,7 +1577,8 @@ router.post("/", async (req, res) => {
           'eon.de', 'vattenfall.de', 'enbw.de', 'rwe.de', 'stadtwerke',
           'lichtblick.de', 'naturstrom.de', 'greenpeace-energy.de',
           'tibber.com', 'octopusenergy.de', 'stromvergleich.de',
-          'wechselpiraten.de', 'stromtipp.de', 'energieverbraucherportal.de'
+          'wechselpiraten.de', 'stromtipp.de', 'energieverbraucherportal.de',
+          'preisvergleich.de', 'strom-gas24.de', 'billiger.de'
         ],
         // Telekommunikation
         'telekom': [
@@ -1593,6 +1708,8 @@ router.post("/", async (req, res) => {
       else if (url.includes('finanzfluss')) providerKey = 'finanzfluss';
       else if (url.includes('stromauskunft')) providerKey = 'stromauskunft';
       else if (url.includes('toptarif')) providerKey = 'toptarif';
+      else if (url.includes('preisvergleich')) providerKey = 'preisvergleich';
+      else if (url.includes('strom-gas24')) providerKey = 'strom-gas24';
       else if (url.includes('arag')) providerKey = 'arag';
       else if (url.includes('huk')) providerKey = 'huk';
       else if (url.includes('allianz')) providerKey = 'allianz';
@@ -1876,7 +1993,7 @@ router.post("/", async (req, res) => {
 
     console.log(`✅ ${successfulExtractions.length} erfolgreich, ${failedExtractions} fehlgeschlagen`);
 
-    // 🆕 Enhanced Data Kombinierung mit VERBESSERTER SORTIERUNG
+    // 🆕 Enhanced Data Kombinierung mit VERBESSERTER SORTIERUNG UND PREISERKENNUNG
     const enrichedResults = combinedResults.slice(0, 10).map((result, index) => {
       // Partner results already have all needed data
       if (result.source === 'partner') {
@@ -1923,7 +2040,8 @@ router.post("/", async (req, res) => {
         title: result.title,
         link: result.link,
         snippet: result.snippet,
-        prices: extracted?.prices || [],
+        prices: extracted?.prices || [], // NUR echte Preise, KEINE Ersparnisse
+        savings: extracted?.savings || [], // Ersparnisse separat
         features: extracted?.features || [],
         provider: extracted?.provider || 'Unknown',
         relevantInfo: extracted?.relevantInfo || '',
@@ -1959,6 +2077,7 @@ router.post("/", async (req, res) => {
         link: result.link,
         snippet: result.snippet,
         prices: [],
+        savings: [],
         features: [],
         provider: 'Unknown',
         relevantInfo: result.snippet || '',
@@ -1992,6 +2111,9 @@ router.post("/", async (req, res) => {
 
 WICHTIG: 
 - Nutze die extrahierten Preise und Vertragsinformationen für eine genaue Analyse.
+- Die "prices" Arrays enthalten NUR echte Preise (was man zahlt).
+- Die "savings" Arrays enthalten Ersparnisse/Boni (was man sparen kann).
+- Verwechsle NIEMALS Ersparnisse mit Preisen!
 - Berücksichtige sowohl Partner-Angebote als auch organische Suchergebnisse.
 - Partner-Angebote (Check24, TarifCheck) bieten oft umfassende Vergleiche.
 
@@ -2008,7 +2130,7 @@ ANTWORTE IN DIESEM FORMAT:
 [Klare Handlungsempfehlung mit Begründung]
 
 ## 💰 Potenzielle Ersparnis
-[Geschätzte monatliche/jährliche Ersparnis]`;
+[Geschätzte monatliche/jährliche Ersparnis basierend auf echten Preisen, nicht auf Ersparnisangaben]`;
 
     const userPrompt = `**AKTUELLER VERTRAG:**
 ${cleanContractText}
@@ -2020,7 +2142,9 @@ ${i + 1}. ${result.title}
    Kurzbeschreibung: ${result.snippet}
    ${result.source === 'partner' ? '⭐ PARTNER-ANGEBOT: Umfassender Vergleich verfügbar' : ''}
    ${result.hasDetailedData ? `
-   Gefundene Preise: ${result.prices.join(', ') || 'Keine Preise gefunden'}
+   Gefundene ECHTE PREISE: ${result.prices?.join(', ') || 'Keine Preise gefunden'}
+   ERSPARNISSE/BONI: ${result.savings?.join(', ') || 'Keine Angaben'}
+   Features: ${result.features?.join(', ') || 'Keine Features gefunden'}
    Vertragsinformationen: ${result.relevantInfo}` : '(Keine detaillierten Daten verfügbar)'}
 `).join('\n')}
 
@@ -2028,6 +2152,9 @@ ${partnerCategory ? `
 **VERFÜGBARE VERGLEICHSPORTALE:**
 ${partnerCategory.name} über ${partnerCategory.provider === 'check24' ? 'CHECK24' : 'TarifCheck'}
 ` : ''}
+
+WICHTIG: Basiere deine Analyse auf den ECHTEN PREISEN (prices Array), nicht auf den Ersparnisangaben (savings Array)!
+Die Ersparnisse sind nur Marketingangaben darüber, was man maximal sparen könnte.
 
 Bitte analysiere diese Alternativen und gib eine fundierte Empfehlung. Berücksichtige besonders die Partner-Angebote, da diese oft die besten Vergleichsmöglichkeiten bieten.`;
 
