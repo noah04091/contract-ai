@@ -526,6 +526,341 @@ const partnerMappings = {
     scoreBonus: 10
   },
 
+  // ========== ERWEITERTE KATEGORIEN - SOFTWARE & DIGITAL ==========
+  microsoft365: {
+    provider: 'affiliate',
+    type: 'software',
+    name: 'Microsoft 365 Alternativen',
+    keywords: ['microsoft', 'office', '365', 'word', 'excel', 'powerpoint', 'teams', 'outlook'],
+    directLinks: [
+      'https://www.google.com/workspace/',
+      'https://www.libreoffice.org/',
+      'https://onlyoffice.com/'
+    ],
+    scoreBonus: 8
+  },
+
+  adobe: {
+    provider: 'affiliate',
+    type: 'software',
+    name: 'Adobe Creative Cloud Alternativen',
+    keywords: ['adobe', 'photoshop', 'illustrator', 'indesign', 'creative', 'cloud', 'cc'],
+    directLinks: [
+      'https://www.canva.com/',
+      'https://www.figma.com/',
+      'https://affinity.serif.com/'
+    ],
+    scoreBonus: 8
+  },
+
+  dropbox: {
+    provider: 'affiliate',
+    type: 'software',
+    name: 'Cloud-Speicher Alternativen',
+    keywords: ['dropbox', 'cloud', 'speicher', 'sync', 'backup', 'drive'],
+    directLinks: [
+      'https://drive.google.com/',
+      'https://onedrive.live.com/',
+      'https://www.icloud.com/'
+    ],
+    scoreBonus: 6
+  },
+
+  zoom: {
+    provider: 'affiliate',
+    type: 'software',
+    name: 'Videokonferenz Alternativen',
+    keywords: ['zoom', 'teams', 'skype', 'videokonferenz', 'meeting', 'webinar'],
+    directLinks: [
+      'https://meet.google.com/',
+      'https://www.microsoft.com/teams/',
+      'https://jitsi.org/'
+    ],
+    scoreBonus: 6
+  },
+
+  vpn: {
+    provider: 'affiliate',
+    type: 'software',
+    name: 'VPN Dienste',
+    keywords: ['vpn', 'virtual', 'private', 'network', 'nordvpn', 'expressvpn', 'surfshark'],
+    directLinks: [
+      'https://nordvpn.com/',
+      'https://www.expressvpn.com/',
+      'https://surfshark.com/'
+    ],
+    scoreBonus: 8
+  },
+
+  antivirus: {
+    provider: 'affiliate',
+    type: 'software',
+    name: 'Antivirus Software',
+    keywords: ['antivirus', 'norton', 'mcafee', 'kaspersky', 'bitdefender', 'avast', 'security'],
+    directLinks: [
+      'https://www.norton.com/',
+      'https://www.bitdefender.com/',
+      'https://www.kaspersky.com/'
+    ],
+    scoreBonus: 8
+  },
+
+  // ========== MITGLIEDSCHAFTEN & ABOS ==========
+  adac: {
+    provider: 'affiliate',
+    type: 'mitgliedschaft',
+    name: 'ADAC Alternative',
+    keywords: ['adac', 'automobilclub', 'pannenhilfe', 'mitgliedschaft', 'abschleppdienst'],
+    directLinks: [
+      'https://www.avd.de/',
+      'https://www.ace-online.de/',
+      'https://www.bavc.de/'
+    ],
+    scoreBonus: 8
+  },
+
+  verein: {
+    provider: 'affiliate',
+    type: 'mitgliedschaft',
+    name: 'Vereinsmitgliedschaft',
+    keywords: ['verein', 'club', 'mitgliedschaft', 'beitrag', 'sportverein', 'fitnessstudio'],
+    directLinks: [
+      'https://www.vereinswelt.de/',
+      'https://www.vereinsmeier.de/'
+    ],
+    scoreBonus: 5
+  },
+
+  // ========== MEDIEN & UNTERHALTUNG ==========
+  zeitschrift: {
+    provider: 'affiliate',
+    type: 'medien',
+    name: 'Zeitschriften-Abo',
+    keywords: ['zeitschrift', 'magazin', 'abo', 'abonnement', 'stern', 'spiegel', 'focus'],
+    directLinks: [
+      'https://www.united-kiosk.de/',
+      'https://www.readly.com/',
+      'https://www.pressreader.com/'
+    ],
+    scoreBonus: 6
+  },
+
+  audible: {
+    provider: 'affiliate',
+    type: 'medien',
+    name: 'Hörbuch Dienste',
+    keywords: ['audible', 'hörbuch', 'audiobook', 'hörspiel', 'podcast'],
+    directLinks: [
+      'https://www.bookbeat.com/',
+      'https://www.nextory.de/',
+      'https://www.storytel.com/'
+    ],
+    scoreBonus: 6
+  },
+
+  // ========== BILDUNG & LERNEN ==========
+  duolingo: {
+    provider: 'affiliate',
+    type: 'bildung',
+    name: 'Sprachlern-Apps',
+    keywords: ['duolingo', 'babbel', 'rosetta', 'sprache', 'lernen', 'englisch', 'französisch'],
+    directLinks: [
+      'https://www.babbel.com/',
+      'https://www.rosettastone.com/',
+      'https://www.lingoda.com/'
+    ],
+    scoreBonus: 6
+  },
+
+  udemy: {
+    provider: 'affiliate',
+    type: 'bildung',
+    name: 'Online-Kurse',
+    keywords: ['udemy', 'coursera', 'skillshare', 'kurs', 'weiterbildung', 'online', 'lernen'],
+    directLinks: [
+      'https://www.coursera.org/',
+      'https://www.skillshare.com/',
+      'https://www.edx.org/'
+    ],
+    scoreBonus: 6
+  },
+
+  // ========== GAMING ==========
+  xbox: {
+    provider: 'affiliate',
+    type: 'gaming',
+    name: 'Gaming Subscriptions',
+    keywords: ['xbox', 'gamepass', 'playstation', 'plus', 'nintendo', 'switch', 'gaming'],
+    directLinks: [
+      'https://www.playstation.com/plus/',
+      'https://www.nintendo.com/switch/',
+      'https://store.steampowered.com/'
+    ],
+    scoreBonus: 6
+  },
+
+  // ========== DATING & LIFESTYLE ==========
+  dating: {
+    provider: 'affiliate',
+    type: 'lifestyle',
+    name: 'Dating Apps',
+    keywords: ['tinder', 'bumble', 'parship', 'elitepartner', 'dating', 'lovoo', 'badoo'],
+    directLinks: [
+      'https://www.parship.de/',
+      'https://www.elitepartner.de/',
+      'https://www.lovescout24.de/'
+    ],
+    scoreBonus: 6
+  },
+
+  // ========== SMART HOME ==========
+  smarthome: {
+    provider: 'affiliate',
+    type: 'smart_home',
+    name: 'Smart Home Systeme',
+    keywords: ['alexa', 'google', 'home', 'smart', 'homematic', 'philips', 'hue', 'nest'],
+    directLinks: [
+      'https://www.amazon.de/alexa/',
+      'https://store.google.com/category/connected_home',
+      'https://www.philips.de/hue'
+    ],
+    scoreBonus: 6
+  },
+
+  // ========== LOKALE DIENSTE ==========
+  stadtwerke: {
+    provider: 'local',
+    type: 'energie',
+    name: 'Lokale Stadtwerke',
+    keywords: ['stadtwerke', 'regional', 'lokal', 'energie', 'wasser', 'fernwärme'],
+    scoreBonus: 10,
+    locationDependent: true
+  },
+
+  oepnv: {
+    provider: 'local',
+    type: 'transport',
+    name: 'ÖPNV Tickets',
+    keywords: ['öpnv', 'nahverkehr', 'monatskarte', 'jahresticket', 'vbb', 'mvg', 'hvv'],
+    scoreBonus: 8,
+    locationDependent: true
+  },
+
+  carsharing: {
+    provider: 'local',
+    type: 'transport',
+    name: 'Carsharing',
+    keywords: ['carsharing', 'car2go', 'drivenow', 'flinkster', 'cambio', 'stadtmobil'],
+    scoreBonus: 8,
+    locationDependent: true
+  },
+
+  // ========== SPEZIALVERSICHERUNGEN ==========
+  drohne: {
+    provider: 'tarifcheck',
+    type: 'versicherung',
+    name: 'Drohnenversicherung',
+    keywords: ['drohne', 'drone', 'uav', 'luftfahrt', 'haftpflicht', 'kasko'],
+    scoreBonus: 8
+  },
+
+  ebike: {
+    provider: 'tarifcheck',
+    type: 'versicherung',
+    name: 'E-Bike Versicherung',
+    keywords: ['ebike', 'e-bike', 'pedelec', 'elektrofahrrad', 'fahrrad', 'diebstahl'],
+    scoreBonus: 8
+  },
+
+  fahrrad: {
+    provider: 'tarifcheck',
+    type: 'versicherung',
+    name: 'Fahrradversicherung',
+    keywords: ['fahrrad', 'bike', 'mountainbike', 'rennrad', 'diebstahl', 'kasko'],
+    scoreBonus: 6
+  },
+
+  // ========== BUSINESS & FREELANCER ==========
+  projektmanagement: {
+    provider: 'affiliate',
+    type: 'business',
+    name: 'Projektmanagement Tools',
+    keywords: ['asana', 'trello', 'monday', 'jira', 'notion', 'clickup', 'basecamp'],
+    directLinks: [
+      'https://asana.com/',
+      'https://trello.com/',
+      'https://monday.com/'
+    ],
+    scoreBonus: 6
+  },
+
+  buchhaltung: {
+    provider: 'affiliate',
+    type: 'business',
+    name: 'Buchhaltungssoftware',
+    keywords: ['sevdesk', 'lexware', 'datev', 'buchhaltung', 'invoicing', 'rechnung'],
+    directLinks: [
+      'https://sevdesk.de/',
+      'https://www.lexware.de/',
+      'https://www.fastbill.com/'
+    ],
+    scoreBonus: 8
+  },
+
+  // ========== MOBILITÄT ==========
+  ebikeabo: {
+    provider: 'affiliate',
+    type: 'mobilität',
+    name: 'E-Bike Abo',
+    keywords: ['ebike', 'abo', 'lease', 'miete', 'grover', 'swapfiets'],
+    directLinks: [
+      'https://swapfiets.de/',
+      'https://www.grover.com/',
+      'https://www.bike-leasing-service.de/'
+    ],
+    scoreBonus: 6
+  },
+
+  tankkarte: {
+    provider: 'affiliate',
+    type: 'mobilität',
+    name: 'Tankkarten',
+    keywords: ['tankkarte', 'fuel', 'benzin', 'diesel', 'shell', 'aral', 'esso'],
+    directLinks: [
+      'https://www.shell.de/tankkarten/',
+      'https://www.aral.de/tankkarten/',
+      'https://www.total.de/tankkarten/'
+    ],
+    scoreBonus: 6
+  },
+
+  // ========== WELLNESS & GESUNDHEIT ==========
+  fitnessapp: {
+    provider: 'affiliate',
+    type: 'wellness',
+    name: 'Fitness Apps',
+    keywords: ['fitness', 'app', 'freeletics', 'seven', 'nike', 'training', 'workout'],
+    directLinks: [
+      'https://www.freeletics.com/',
+      'https://www.nike.com/training/',
+      'https://www.adidas.com/training/'
+    ],
+    scoreBonus: 5
+  },
+
+  meditation: {
+    provider: 'affiliate',
+    type: 'wellness',
+    name: 'Meditations Apps',
+    keywords: ['meditation', 'headspace', 'calm', 'mindfulness', 'entspannung', 'achtsamkeit'],
+    directLinks: [
+      'https://www.headspace.com/',
+      'https://www.calm.com/',
+      'https://www.7mind.de/'
+    ],
+    scoreBonus: 5
+  },
+
   kreditkarte: {
     provider: 'tarifcheck',
     type: 'finanzen',
