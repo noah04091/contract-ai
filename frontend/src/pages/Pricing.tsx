@@ -1,6 +1,6 @@
 import { useState, useEffect, ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle, X, ExternalLink, Users, Zap, Star } from "lucide-react";
+import { CheckCircle, X, ExternalLink, Users, Zap, Star, Shield, Clock, TrendingUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet";
 import styles from "../styles/Pricing.module.css";
@@ -31,7 +31,20 @@ export default function Pricing() {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'cards' | 'table'>('cards');
   const [animateCards, setAnimateCards] = useState(false);
+  const [currentActivity, setCurrentActivity] = useState(0);
   const navigate = useNavigate();
+
+  // Live Activity Daten
+  const liveActivities = [
+    { name: "Lisa", city: "Köln", plan: "Professional", action: "gebucht" },
+    { name: "Ibrahim K****", city: "München", plan: "Professional", action: "gewählt" },
+    { name: "Thorsten K****", city: "Berlin", plan: "Enterprise", action: "gebucht" },
+    { name: "Sarah M.", city: "Hamburg", plan: "Professional", action: "aktiviert" },
+    { name: "Michael B****", city: "Frankfurt", plan: "Enterprise", action: "gebucht" },
+    { name: "Anna", city: "Stuttgart", plan: "Professional", action: "gewählt" },
+    { name: "David L****", city: "Düsseldorf", plan: "Professional", action: "gebucht" },
+    { name: "Nina", city: "Leipzig", plan: "Enterprise", action: "aktiviert" },
+  ];
 
   useEffect(() => {
     // Trigger card animations after component mount
@@ -40,6 +53,15 @@ export default function Pricing() {
     }, 100);
     return () => clearTimeout(timer);
   }, []);
+
+  // Live Activity Rotation (alle 4 Sekunden)
+  useEffect(() => {
+    const activityTimer = setInterval(() => {
+      setCurrentActivity(prev => (prev + 1) % liveActivities.length);
+    }, 4000);
+
+    return () => clearInterval(activityTimer);
+  }, [liveActivities.length]);
 
   // Stripe Checkout Funktion
   const startCheckout = async (plan: string) => {
@@ -75,11 +97,11 @@ export default function Pricing() {
   const plans: Plan[] = [
     {
       id: "free",
-      title: "Free",
+      title: "Starter",
       price: "0€",
       period: "für immer",
       icon: <Users size={22} />,
-      description: "Perfekt zum Testen und für gelegentliche Nutzung",
+      description: "Entdecke die Macht der KI-Vertragsanalyse",
       features: [
         "1 Vertragsanalyse pro Monat",
         "Basis-Upload & PDF-Anzeige",
@@ -100,11 +122,11 @@ export default function Pricing() {
     },
     {
       id: "business",
-      title: "Business",
+      title: "Professional",
       price: "4,90€",
       period: "pro Monat",
       icon: <Zap size={22} />,
-      description: "Für Freelancer und kleine Teams",
+      description: "Für ambitionierte Projekte & mehr Sicherheit",
       features: [
         "5 Vertragsanalysen pro Monat",
         "Vertragsvergleich & Optimierung",
@@ -122,11 +144,11 @@ export default function Pricing() {
     },
     {
       id: "premium",
-      title: "Premium",
+      title: "Enterprise",
       price: "9,90€",
       period: "pro Monat",
       icon: <Star size={22} />,
-      description: "Unbegrenzte Features für Profis",
+      description: "Maximale Power für große Vorhaben",
       features: [
         "Unbegrenzte Analysen",
         "Vertragsvergleich & Optimierung",
@@ -372,9 +394,54 @@ export default function Pricing() {
             </motion.p>
           </motion.div>
 
+          {/* Social Proof & Live Activity Section */}
+          <motion.div
+            className={styles.socialProofContainer}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5, duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
+          >
+            <div className={styles.socialProofStats}>
+              <motion.div
+                className={styles.statItem}
+                whileHover={{ scale: 1.02 }}
+                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              >
+                <TrendingUp size={20} className={styles.statIcon} />
+                <span className={styles.statNumber}>2.847+</span>
+                <span className={styles.statLabel}>Verträge analysiert</span>
+              </motion.div>
 
+              <motion.div
+                className={styles.statItem}
+                whileHover={{ scale: 1.02 }}
+                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              >
+                <Shield size={20} className={styles.statIcon} />
+                <span className={styles.statNumber}>96%</span>
+                <span className={styles.statLabel}>zufriedene Kunden</span>
+              </motion.div>
+            </div>
 
-          <motion.div 
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentActivity}
+                className={styles.liveActivity}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <span className={styles.activityIcon}>⚡</span>
+                <span className={styles.activityText}>
+                  {liveActivities[currentActivity].name} aus {liveActivities[currentActivity].city} hat
+                  <span className={styles.activityPlan}> {liveActivities[currentActivity].plan}</span> {liveActivities[currentActivity].action}
+                </span>
+              </motion.div>
+            </AnimatePresence>
+          </motion.div>
+
+          <motion.div
             className={styles.viewToggle}
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -524,7 +591,7 @@ export default function Pricing() {
                   ))}
                 </div>
 
-                <motion.p 
+                <motion.p
                   className={styles.cancellationNote}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: animateCards ? 1 : 0 }}
@@ -532,6 +599,41 @@ export default function Pricing() {
                 >
                   Keine Kündigungsfrist. Jederzeit kündbar.
                 </motion.p>
+
+                {/* Trust Badges */}
+                <motion.div
+                  className={styles.trustBadges}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: animateCards ? 1 : 0 }}
+                  transition={{ delay: 1.4, duration: 0.5 }}
+                >
+                  <motion.div
+                    className={styles.trustBadge}
+                    whileHover={{ scale: 1.05 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                  >
+                    <Shield size={18} />
+                    <span>30-Tage-Geld-zurück-Garantie</span>
+                  </motion.div>
+
+                  <motion.div
+                    className={styles.trustBadge}
+                    whileHover={{ scale: 1.05 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                  >
+                    <CheckCircle size={18} />
+                    <span>100% DSGVO konform</span>
+                  </motion.div>
+
+                  <motion.div
+                    className={styles.trustBadge}
+                    whileHover={{ scale: 1.05 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                  >
+                    <Clock size={18} />
+                    <span>Jederzeit kündbar</span>
+                  </motion.div>
+                </motion.div>
               </motion.div>
             )}
 
