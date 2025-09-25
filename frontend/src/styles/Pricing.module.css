@@ -10,7 +10,7 @@
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding: 7rem 1.5rem 4rem; /* Top Padding für Fixed Info Bar */
+  padding: 4rem 1.5rem; /* Normal Padding - keine Fixed Bar mehr */
   overflow: hidden;
   position: relative;
 }
@@ -597,13 +597,11 @@
   min-width: 200px;
 }
 
-/* Fixed Info Bar under Navigation - Mit Gradient Fade */
+/* Static Info Bar under Navigation - Mit Gradient Fade */
 .topInfoBar {
-  position: fixed;
-  top: 70px; /* Direkt unter der Navigation */
-  left: 0;
-  right: 0;
-  z-index: 999; /* Unter Navigation aber über Content */
+  position: relative;
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.95));
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -611,6 +609,8 @@
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
   overflow: hidden;
   padding: 0;
+  margin-bottom: 3rem;
+  margin-top: -1px; /* Eliminiert Gap zur Navigation */
 }
 
 /* Gradient Fade Container */
@@ -771,7 +771,7 @@
   }
 
   .topInfoBar {
-    top: 65px; /* Mobile Navigation ist niedriger */
+    margin-top: -1px; /* Gap schließen */
   }
 
   .infoItems {
@@ -785,7 +785,7 @@
   }
 
   .pageWrapper {
-    padding: 6.5rem 1rem 4rem;
+    padding: 3.5rem 1rem 4rem;
   }
 
   .trustBadges {
@@ -824,7 +824,7 @@
   }
 
   .topInfoBar {
-    top: 60px; /* Noch niedriger auf sehr kleinen Screens */
+    margin-top: -1px; /* Gap schließen */
   }
 
   .infoItems {
@@ -839,7 +839,7 @@
   }
 
   .pageWrapper {
-    padding: 6rem 0.8rem 2.5rem;
+    padding: 2.5rem 0.8rem;
   }
 
   .trustBadges {
