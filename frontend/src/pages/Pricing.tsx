@@ -397,14 +397,45 @@ export default function Pricing() {
           background: "linear-gradient(135deg, #f5f7fb 0%, #eef2f6 25%, #eff4f9 50%, #edf1f5 75%, #f0f4f8 100%)",
         }}
       >
+        {/* Info Bar GANZ OBEN - Direkt unter Navigation */}
+        <motion.div
+          className={styles.topInfoBar}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.4, duration: 0.5 }}
+        >
+          <div className={styles.infoItems}>
+            <span className={styles.infoItem}>
+              📈 <strong>2.847+</strong> analysierte Verträge
+            </span>
+            <span className={styles.infoDivider}>•</span>
+            <span className={styles.infoItem}>
+              🛡️ <strong>96%</strong> zufrieden
+            </span>
+            <span className={styles.infoDivider}>•</span>
+            <AnimatePresence mode="wait">
+              <motion.span
+                key={currentActivity}
+                className={styles.infoLive}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                ⚡ <strong>{liveActivities[currentActivity].name}</strong> aus {liveActivities[currentActivity].city} hat {liveActivities[currentActivity].plan} {liveActivities[currentActivity].action}
+              </motion.span>
+            </AnimatePresence>
+          </div>
+        </motion.div>
+
         <div className={styles.container}>
-          <motion.div 
+          <motion.div
             className={styles.header}
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
           >
-            <motion.h1 
+            <motion.h1
               className={styles.title}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -412,7 +443,7 @@ export default function Pricing() {
             >
               Wähle dein Paket
             </motion.h1>
-            <motion.p 
+            <motion.p
               className={styles.subtitle}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -420,37 +451,6 @@ export default function Pricing() {
             >
               Finde den perfekten Plan für deine Vertragsmanagement-Bedürfnisse
             </motion.p>
-          </motion.div>
-
-          {/* Minimal Top Info Bar - Dezent & nicht ablenkend */}
-          <motion.div
-            className={styles.topInfoBar}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4, duration: 0.5 }}
-          >
-            <div className={styles.infoItems}>
-              <span className={styles.infoItem}>
-                📈 <strong>2.847+</strong> analysierte Verträge
-              </span>
-              <span className={styles.infoDivider}>•</span>
-              <span className={styles.infoItem}>
-                🛡️ <strong>96%</strong> zufrieden
-              </span>
-              <span className={styles.infoDivider}>•</span>
-              <AnimatePresence mode="wait">
-                <motion.span
-                  key={currentActivity}
-                  className={styles.infoLive}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  ⚡ <strong>{liveActivities[currentActivity].name}</strong> aus {liveActivities[currentActivity].city} hat {liveActivities[currentActivity].plan} {liveActivities[currentActivity].action}
-                </motion.span>
-              </AnimatePresence>
-            </div>
           </motion.div>
 
           <motion.div

@@ -33,6 +33,7 @@
   color: #1d1d1f;
   position: relative;
   z-index: 2;
+  margin-top: 4rem; /* Platz für die Info Bar oben */
 }
 
 /* Header Styling */
@@ -597,11 +598,13 @@
   min-width: 200px;
 }
 
-/* Static Info Bar under Navigation - Mit Gradient Fade */
+/* Info Bar GANZ OBEN - Direkt unter Navigation */
 .topInfoBar {
-  position: relative;
-  width: 100vw;
-  margin-left: calc(-50vw + 50%);
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.95));
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -609,8 +612,7 @@
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
   overflow: hidden;
   padding: 0;
-  margin-bottom: 3rem;
-  margin-top: -1px; /* Eliminiert Gap zur Navigation */
+  margin: 0;
 }
 
 /* Gradient Fade Container */
