@@ -34,16 +34,38 @@ export default function Pricing() {
   const [currentActivity, setCurrentActivity] = useState(0);
   const navigate = useNavigate();
 
-  // Live Activity Daten
+  // Live Activity Daten - Viel mehr Variation!
   const liveActivities = [
     { name: "Lisa", city: "Köln", plan: "Professional", action: "gebucht" },
-    { name: "Ibrahim K****", city: "München", plan: "Professional", action: "gewählt" },
-    { name: "Thorsten K****", city: "Berlin", plan: "Enterprise", action: "gebucht" },
-    { name: "Sarah M.", city: "Hamburg", plan: "Professional", action: "aktiviert" },
-    { name: "Michael B****", city: "Frankfurt", plan: "Enterprise", action: "gebucht" },
-    { name: "Anna", city: "Stuttgart", plan: "Professional", action: "gewählt" },
-    { name: "David L****", city: "Düsseldorf", plan: "Professional", action: "gebucht" },
-    { name: "Nina", city: "Leipzig", plan: "Enterprise", action: "aktiviert" },
+    { name: "Max M****", city: "München", plan: "Enterprise", action: "gebucht" },
+    { name: "Sarah", city: "Hamburg", plan: "Professional", action: "verlängert" },
+    { name: "Jonas K****", city: "Berlin", plan: "Professional", action: "gewählt" },
+    { name: "Anna", city: "Stuttgart", plan: "Enterprise", action: "aktiviert" },
+    { name: "Thomas B****", city: "Frankfurt", plan: "Professional", action: "gebucht" },
+    { name: "Nina", city: "Leipzig", plan: "Enterprise", action: "gewählt" },
+    { name: "Kevin S****", city: "Düsseldorf", plan: "Professional", action: "gebucht" },
+    { name: "Maria", city: "Nürnberg", plan: "Enterprise", action: "aktiviert" },
+    { name: "Stefan W****", city: "Dresden", plan: "Professional", action: "gewählt" },
+    { name: "Julia", city: "Hannover", plan: "Enterprise", action: "gebucht" },
+    { name: "Markus F****", city: "Dortmund", plan: "Professional", action: "verlängert" },
+    { name: "Laura", city: "Essen", plan: "Professional", action: "gebucht" },
+    { name: "Daniel R****", city: "Bremen", plan: "Enterprise", action: "gewählt" },
+    { name: "Sabine", city: "Wiesbaden", plan: "Professional", action: "aktiviert" },
+    { name: "Oliver G****", city: "Mainz", plan: "Enterprise", action: "gebucht" },
+    { name: "Christina", city: "Karlsruhe", plan: "Professional", action: "gewählt" },
+    { name: "Patrick L****", city: "Mannheim", plan: "Enterprise", action: "verlängert" },
+    { name: "Jennifer", city: "Augsburg", plan: "Professional", action: "gebucht" },
+    { name: "Tim H****", city: "Bonn", plan: "Enterprise", action: "aktiviert" },
+    { name: "Claudia", city: "Münster", plan: "Professional", action: "gewählt" },
+    { name: "Alexander P****", city: "Aachen", plan: "Enterprise", action: "gebucht" },
+    { name: "Vanessa", city: "Kiel", plan: "Professional", action: "verlängert" },
+    { name: "Sebastian T****", city: "Erfurt", plan: "Enterprise", action: "gewählt" },
+    { name: "Michelle", city: "Rostock", plan: "Professional", action: "gebucht" },
+    { name: "Florian N****", city: "Magdeburg", plan: "Enterprise", action: "aktiviert" },
+    { name: "Stephanie", city: "Freiburg", plan: "Professional", action: "gewählt" },
+    { name: "Benjamin K****", city: "Regensburg", plan: "Enterprise", action: "gebucht" },
+    { name: "Melanie", city: "Heidelberg", plan: "Professional", action: "verlängert" },
+    { name: "Matthias D****", city: "Würzburg", plan: "Enterprise", action: "aktiviert" },
   ];
 
   useEffect(() => {
@@ -54,14 +76,20 @@ export default function Pricing() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Live Activity Rotation (alle 4 Sekunden)
+  // Live Activity Rotation (alle 12 Sekunden mit Random-Shuffle)
   useEffect(() => {
     const activityTimer = setInterval(() => {
-      setCurrentActivity(prev => (prev + 1) % liveActivities.length);
-    }, 4000);
+      // Random Aktivität wählen (aber nicht dieselbe wie vorher)
+      let newActivity;
+      do {
+        newActivity = Math.floor(Math.random() * liveActivities.length);
+      } while (newActivity === currentActivity && liveActivities.length > 1);
+
+      setCurrentActivity(newActivity);
+    }, 12000);
 
     return () => clearInterval(activityTimer);
-  }, [liveActivities.length]);
+  }, [currentActivity, liveActivities.length]);
 
   // Stripe Checkout Funktion
   const startCheckout = async (plan: string) => {
@@ -115,7 +143,7 @@ export default function Pricing() {
       ],
       color: "#0080FF",
       button: {
-        text: "Kostenlos starten",
+        text: "Kostenlos testen",
         action: () => navigate("/register"),
         variant: "outline" as const
       }
@@ -137,7 +165,7 @@ export default function Pricing() {
       color: "#2D7FF9",
       popular: true,
       button: {
-        text: "Business starten",
+        text: "Jetzt Professional sichern",
         action: () => startCheckout('business'),
         variant: "filled" as const
       }
@@ -159,7 +187,7 @@ export default function Pricing() {
       ],
       color: "#0062E0",
       button: {
-        text: "Premium aktivieren",
+        text: "Enterprise freischalten",
         action: () => startCheckout('premium'),
         variant: "gradient" as const,
         icon: <ExternalLink size={16} />
@@ -394,51 +422,54 @@ export default function Pricing() {
             </motion.p>
           </motion.div>
 
-          {/* Social Proof & Live Activity Section */}
+          {/* Floating Social Proof Banner - Top Fixed */}
           <motion.div
-            className={styles.socialProofContainer}
-            initial={{ opacity: 0, y: 20 }}
+            className={styles.floatingBanner}
+            initial={{ opacity: 0, y: -50 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5, duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
           >
-            <div className={styles.socialProofStats}>
-              <motion.div
-                className={styles.statItem}
-                whileHover={{ scale: 1.02 }}
-                transition={{ type: "spring", stiffness: 400, damping: 30 }}
-              >
-                <TrendingUp size={20} className={styles.statIcon} />
-                <span className={styles.statNumber}>2.847+</span>
-                <span className={styles.statLabel}>Verträge analysiert</span>
-              </motion.div>
+            <div className={styles.bannerContent}>
+              <div className={styles.socialStats}>
+                <motion.div
+                  className={styles.statBadge}
+                  whileHover={{ scale: 1.05 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                >
+                  <TrendingUp size={16} />
+                  <span><strong>2.847+</strong> Verträge analysiert</span>
+                </motion.div>
 
-              <motion.div
-                className={styles.statItem}
-                whileHover={{ scale: 1.02 }}
-                transition={{ type: "spring", stiffness: 400, damping: 30 }}
-              >
-                <Shield size={20} className={styles.statIcon} />
-                <span className={styles.statNumber}>96%</span>
-                <span className={styles.statLabel}>zufriedene Kunden</span>
-              </motion.div>
+                <motion.div
+                  className={styles.statBadge}
+                  whileHover={{ scale: 1.05 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                >
+                  <Shield size={16} />
+                  <span><strong>96%</strong> zufriedene Kunden</span>
+                </motion.div>
+              </div>
+
+              <div className={styles.bannerSeparator}></div>
+
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentActivity}
+                  className={styles.liveNotification}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{ duration: 0.4 }}
+                >
+                  <span className={styles.notificationPulse}>🔥</span>
+                  <span className={styles.notificationText}>
+                    <strong>{liveActivities[currentActivity].name}</strong> aus {liveActivities[currentActivity].city} hat
+                    <span className={styles.notificationPlan}> {liveActivities[currentActivity].plan}</span> {liveActivities[currentActivity].action}
+                  </span>
+                  <span className={styles.notificationTime}>vor {Math.floor(Math.random() * 5) + 1} Min</span>
+                </motion.div>
+              </AnimatePresence>
             </div>
-
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={currentActivity}
-                className={styles.liveActivity}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.3 }}
-              >
-                <span className={styles.activityIcon}>⚡</span>
-                <span className={styles.activityText}>
-                  {liveActivities[currentActivity].name} aus {liveActivities[currentActivity].city} hat
-                  <span className={styles.activityPlan}> {liveActivities[currentActivity].plan}</span> {liveActivities[currentActivity].action}
-                </span>
-              </motion.div>
-            </AnimatePresence>
           </motion.div>
 
           <motion.div

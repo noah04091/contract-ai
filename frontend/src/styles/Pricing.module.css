@@ -597,80 +597,141 @@
   min-width: 200px;
 }
 
-/* Social Proof & Live Activity */
-.socialProofContainer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-radius: 16px;
-  padding: 1.5rem 2rem;
+/* Floating Banner - Modern & Eye-catching */
+.floatingBanner {
+  position: sticky;
+  top: 2rem;
+  z-index: 50;
   margin-bottom: 3rem;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.04),
-    0 2px 8px rgba(0, 0, 0, 0.02),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.8);
+  margin-top: 1rem;
 }
 
-.socialProofStats {
-  display: flex;
-  gap: 2.5rem;
-}
-
-.statItem {
+.bannerContent {
   display: flex;
   align-items: center;
-  gap: 0.7rem;
-  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif;
+  justify-content: space-between;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.95));
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border-radius: 18px;
+  padding: 1rem 2rem;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.06),
+    0 4px 12px rgba(0, 0, 0, 0.03),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.9);
+  position: relative;
+  overflow: hidden;
 }
 
-.statIcon {
+.bannerContent::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(52, 199, 89, 0), rgba(52, 199, 89, 0.3), rgba(52, 199, 89, 0));
+}
+
+.socialStats {
+  display: flex;
+  gap: 2rem;
+}
+
+.statBadge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 0.9rem;
+  color: #1d1d1f;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.statBadge:hover {
+  background: rgba(255, 255, 255, 0.9);
+  transform: translateY(-1px);
+}
+
+.statBadge svg {
   color: #34c759;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
 }
 
-.statNumber {
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: #1d1d1f;
-  letter-spacing: -0.02em;
+.bannerSeparator {
+  width: 1px;
+  height: 32px;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.05));
+  margin: 0 1rem;
 }
 
-.statLabel {
-  font-size: 0.95rem;
-  color: #6e6e73;
-  font-weight: 500;
-}
-
-.liveActivity {
+.liveNotification {
   display: flex;
   align-items: center;
-  gap: 0.7rem;
-  background: rgba(52, 199, 89, 0.1);
+  gap: 0.8rem;
+  background: linear-gradient(135deg, rgba(255, 87, 51, 0.08), rgba(255, 69, 0, 0.06));
   padding: 0.8rem 1.2rem;
   border-radius: 12px;
-  border: 1px solid rgba(52, 199, 89, 0.2);
+  border: 1px solid rgba(255, 87, 51, 0.15);
   font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif;
+  position: relative;
+  overflow: hidden;
 }
 
-.activityIcon {
+.liveNotification::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+.notificationPulse {
   font-size: 1rem;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+  animation: pulse 2s infinite;
+  filter: drop-shadow(0 0 3px rgba(255, 69, 0, 0.3));
 }
 
-.activityText {
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.1); }
+}
+
+.notificationText {
   font-size: 0.9rem;
   color: #1d1d1f;
   font-weight: 500;
   line-height: 1.3;
 }
 
-.activityPlan {
+.notificationPlan {
   font-weight: 600;
-  color: #0071e3;
+  color: #ff5733;
+  background: rgba(255, 87, 51, 0.1);
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.notificationTime {
+  font-size: 0.8rem;
+  color: #6e6e73;
+  font-style: italic;
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 /* Trust Badges */
@@ -748,14 +809,28 @@
     transform: scale(1.02);
   }
 
-  .socialProofContainer {
+  .floatingBanner {
+    position: relative;
+    top: 0;
+    margin-bottom: 2rem;
+  }
+
+  .bannerContent {
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
     text-align: center;
   }
 
-  .socialProofStats {
+  .socialStats {
     justify-content: center;
+    gap: 1rem;
+  }
+
+  .bannerSeparator {
+    width: 60%;
+    height: 1px;
+    margin: 0.5rem auto;
   }
 
   .trustBadges {
