@@ -1,6 +1,6 @@
 import { useState, useEffect, ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle, X, ExternalLink, Users, Zap, Star, Shield, Clock, TrendingUp } from "lucide-react";
+import { CheckCircle, X, ExternalLink, Users, Zap, Star, Shield, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet";
 import styles from "../styles/Pricing.module.css";
@@ -422,52 +422,33 @@ export default function Pricing() {
             </motion.p>
           </motion.div>
 
-          {/* Floating Social Proof Banner - Top Fixed */}
+          {/* Minimal Top Info Bar - Dezent & nicht ablenkend */}
           <motion.div
-            className={styles.floatingBanner}
-            initial={{ opacity: 0, y: -50 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5, duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
+            className={styles.topInfoBar}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4, duration: 0.5 }}
           >
-            <div className={styles.bannerContent}>
-              <div className={styles.socialStats}>
-                <motion.div
-                  className={styles.statBadge}
-                  whileHover={{ scale: 1.05 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                >
-                  <TrendingUp size={16} />
-                  <span><strong>2.847+</strong> Verträge analysiert</span>
-                </motion.div>
-
-                <motion.div
-                  className={styles.statBadge}
-                  whileHover={{ scale: 1.05 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                >
-                  <Shield size={16} />
-                  <span><strong>96%</strong> zufriedene Kunden</span>
-                </motion.div>
-              </div>
-
-              <div className={styles.bannerSeparator}></div>
-
+            <div className={styles.infoItems}>
+              <span className={styles.infoItem}>
+                📈 <strong>2.847+</strong> analysierte Verträge
+              </span>
+              <span className={styles.infoDivider}>•</span>
+              <span className={styles.infoItem}>
+                🛡️ <strong>96%</strong> zufrieden
+              </span>
+              <span className={styles.infoDivider}>•</span>
               <AnimatePresence mode="wait">
-                <motion.div
+                <motion.span
                   key={currentActivity}
-                  className={styles.liveNotification}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ duration: 0.4 }}
+                  className={styles.infoLive}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3 }}
                 >
-                  <span className={styles.notificationPulse}>🔥</span>
-                  <span className={styles.notificationText}>
-                    <strong>{liveActivities[currentActivity].name}</strong> aus {liveActivities[currentActivity].city} hat
-                    <span className={styles.notificationPlan}> {liveActivities[currentActivity].plan}</span> {liveActivities[currentActivity].action}
-                  </span>
-                  <span className={styles.notificationTime}>vor {Math.floor(Math.random() * 5) + 1} Min</span>
-                </motion.div>
+                  ⚡ <strong>{liveActivities[currentActivity].name}</strong> aus {liveActivities[currentActivity].city} hat {liveActivities[currentActivity].plan} {liveActivities[currentActivity].action}
+                </motion.span>
               </AnimatePresence>
             </div>
           </motion.div>

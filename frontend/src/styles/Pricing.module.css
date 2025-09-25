@@ -597,141 +597,72 @@
   min-width: 200px;
 }
 
-/* Floating Banner - Modern & Eye-catching */
-.floatingBanner {
-  position: sticky;
-  top: 2rem;
-  z-index: 50;
-  margin-bottom: 3rem;
-  margin-top: 1rem;
-}
-
-.bannerContent {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.95));
-  backdrop-filter: blur(25px);
-  -webkit-backdrop-filter: blur(25px);
-  border-radius: 18px;
-  padding: 1rem 2rem;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  box-shadow:
-    0 12px 40px rgba(0, 0, 0, 0.06),
-    0 4px 12px rgba(0, 0, 0, 0.03),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.9);
+/* Minimal Top Info Bar - Dezent & Clean */
+.topInfoBar {
+  text-align: center;
+  margin-bottom: 2.5rem;
+  padding: 0.8rem 1rem;
+  background: rgba(248, 250, 252, 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 8px;
+  border: 1px solid rgba(235, 235, 245, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
   position: relative;
   overflow: hidden;
 }
 
-.bannerContent::before {
+.topInfoBar::before {
   content: '';
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, rgba(52, 199, 89, 0), rgba(52, 199, 89, 0.3), rgba(52, 199, 89, 0));
+  background: linear-gradient(90deg, rgba(52, 199, 89, 0), rgba(52, 199, 89, 0.2), rgba(52, 199, 89, 0));
 }
 
-.socialStats {
-  display: flex;
-  gap: 2rem;
-}
-
-.statBadge {
+.infoItems {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: center;
+  gap: 1rem;
   font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
+  color: #6e6e73;
+  flex-wrap: wrap;
+}
+
+.infoItem {
   color: #1d1d1f;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
-  padding: 0.4rem 0.8rem;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.6);
-}
-
-.statBadge:hover {
-  background: rgba(255, 255, 255, 0.9);
-  transform: translateY(-1px);
-}
-
-.statBadge svg {
-  color: #34c759;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
-}
-
-.bannerSeparator {
-  width: 1px;
-  height: 32px;
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.05));
-  margin: 0 1rem;
-}
-
-.liveNotification {
+  font-weight: 400;
   display: flex;
   align-items: center;
-  gap: 0.8rem;
-  background: linear-gradient(135deg, rgba(255, 87, 51, 0.08), rgba(255, 69, 0, 0.06));
-  padding: 0.8rem 1.2rem;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 87, 51, 0.15);
-  font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif;
-  position: relative;
-  overflow: hidden;
+  gap: 0.3rem;
 }
 
-.liveNotification::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  animation: shimmer 3s infinite;
+.infoItem strong {
+  font-weight: 600;
+  color: #0071e3;
 }
 
-@keyframes shimmer {
-  0% { left: -100%; }
-  100% { left: 100%; }
-}
-
-.notificationPulse {
-  font-size: 1rem;
-  animation: pulse 2s infinite;
-  filter: drop-shadow(0 0 3px rgba(255, 69, 0, 0.3));
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.8; transform: scale(1.1); }
-}
-
-.notificationText {
+.infoDivider {
+  color: #d1d1d6;
+  font-weight: 300;
   font-size: 0.9rem;
-  color: #1d1d1f;
-  font-weight: 500;
-  line-height: 1.3;
 }
 
-.notificationPlan {
+.infoLive {
+  color: #1d1d1f;
+  font-weight: 400;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.infoLive strong {
   font-weight: 600;
   color: #ff5733;
-  background: rgba(255, 87, 51, 0.1);
-  padding: 0.1rem 0.4rem;
-  border-radius: 4px;
-  font-size: 0.85rem;
-}
-
-.notificationTime {
-  font-size: 0.8rem;
-  color: #6e6e73;
-  font-style: italic;
-  margin-left: auto;
-  flex-shrink: 0;
 }
 
 /* Trust Badges */
@@ -809,28 +740,18 @@
     transform: scale(1.02);
   }
 
-  .floatingBanner {
-    position: relative;
-    top: 0;
+  .topInfoBar {
     margin-bottom: 2rem;
+    padding: 0.7rem 1rem;
   }
 
-  .bannerContent {
-    flex-direction: column;
-    gap: 1rem;
-    padding: 1rem 1.5rem;
-    text-align: center;
+  .infoItems {
+    gap: 0.8rem;
+    font-size: 0.8rem;
   }
 
-  .socialStats {
-    justify-content: center;
-    gap: 1rem;
-  }
-
-  .bannerSeparator {
-    width: 60%;
-    height: 1px;
-    margin: 0.5rem auto;
+  .infoDivider {
+    display: none;
   }
 
   .trustBadges {
@@ -868,29 +789,19 @@
     padding: 0 1rem;
   }
 
-  .socialProofContainer {
-    padding: 1.2rem 1.5rem;
-    margin-bottom: 2rem;
+  .topInfoBar {
+    padding: 0.6rem 0.8rem;
+    margin-bottom: 1.5rem;
   }
 
-  .socialProofStats {
-    gap: 1.5rem;
+  .infoItems {
+    flex-direction: column;
+    gap: 0.4rem;
+    font-size: 0.75rem;
   }
 
-  .statNumber {
-    font-size: 1.1rem;
-  }
-
-  .statLabel {
-    font-size: 0.85rem;
-  }
-
-  .liveActivity {
-    padding: 0.7rem 1rem;
-  }
-
-  .activityText {
-    font-size: 0.85rem;
+  .infoLive {
+    text-align: center;
   }
 
   .trustBadges {
