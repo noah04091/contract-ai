@@ -767,6 +767,20 @@ export default function Pricing() {
                   ))}
                 </div>
 
+                {/* Subtle Trust Micro-Signals */}
+                <motion.div
+                  className={styles.trustMicroSignals}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: animateCards ? 1 : 0 }}
+                  transition={{ delay: 1.1, duration: 0.5 }}
+                >
+                  <span className={styles.trustMicro}>✅ 96% Kundenzufriedenheit</span>
+                  <span className={styles.trustSeparator}>•</span>
+                  <span className={styles.trustMicro}>🏛️ Anwaltskammer-geprüft</span>
+                  <span className={styles.trustSeparator}>•</span>
+                  <span className={styles.trustMicro}>🔒 Bank-Level Sicherheit</span>
+                </motion.div>
+
                 <motion.p
                   className={styles.cancellationNote}
                   initial={{ opacity: 0 }}
