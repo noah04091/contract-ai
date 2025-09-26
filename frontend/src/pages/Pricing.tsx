@@ -209,15 +209,15 @@ export default function Pricing() {
       title: "Business",
       pricing: {
         monthly: {
-          original: "25€",
+          original: "29€",
           discounted: "19€",
-          discount: "24%"
+          discount: "33%"
         },
         yearly: {
-          original: "300€",
-          discounted: "171€",
-          discount: "43%",
-          yearlyNote: "3 Monate gratis"
+          original: "348€",
+          discounted: "190€",
+          discount: "45%",
+          yearlyNote: "10 Monate zahlen, 12 bekommen"
         }
       },
       icon: <Zap size={22} />,
@@ -243,15 +243,15 @@ export default function Pricing() {
       title: "Enterprise",
       pricing: {
         monthly: {
-          original: "40€",
-          discounted: "30€",
+          original: "39€",
+          discounted: "29€",
           discount: "25%"
         },
         yearly: {
-          original: "480€",
-          discounted: "270€",
-          discount: "44%",
-          yearlyNote: "3 Monate gratis"
+          original: "468€",
+          discounted: "290€",
+          discount: "38%",
+          yearlyNote: "10 Monate zahlen, 12 bekommen"
         }
       },
       icon: <Star size={22} />,
