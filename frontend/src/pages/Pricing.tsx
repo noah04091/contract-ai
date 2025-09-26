@@ -16,8 +16,19 @@ interface PlanButton {
 interface Plan {
   id: string;
   title: string;
-  price: string;
-  period: string;
+  pricing: {
+    monthly: {
+      original: string;
+      discounted: string;
+      discount: string;
+    };
+    yearly: {
+      original: string;
+      discounted: string;
+      discount: string;
+      yearlyNote: string;
+    };
+  };
   icon: ReactNode;
   description: string;
   features: string[];
@@ -25,11 +36,6 @@ interface Plan {
   color: string;
   popular?: boolean;
   button: PlanButton;
-  valueStack?: {
-    totalValue: number;
-    savings: number;
-    items: { name: string; value: number; unit: string }[];
-  };
 }
 
 export default function Pricing() {
@@ -38,13 +44,19 @@ export default function Pricing() {
   const [animateCards, setAnimateCards] = useState(false);
   const [currentActivity, setCurrentActivity] = useState(0);
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
   const navigate = useNavigate();
 
-  // Urgency & Scarcity Daten
+  // Urgency & Scarcity Daten - Recurring 14-Tage Zyklen
   const urgencyData = {
-    endsAt: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 Tage
+    getNextCycleEnd: () => {
+      const cycleLength = 14 * 24 * 60 * 60 * 1000; // 14 Tage in Millisekunden
+      const currentTime = Date.now();
+      const cycleStart = Math.floor(currentTime / cycleLength) * cycleLength;
+      return new Date(cycleStart + cycleLength);
+    },
     remainingSpots: 47,
-    discountPercent: 30,
+    discountPercent: 25,
     message: "Früher-Zugang Aktion"
   };
 
@@ -81,11 +93,12 @@ export default function Pricing() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Countdown Timer für Urgency
+  // Countdown Timer für Urgency - Recurring 14-Tage Zyklen
   useEffect(() => {
     const calculateTimeLeft = () => {
       const now = new Date().getTime();
-      const distance = urgencyData.endsAt.getTime() - now;
+      const nextCycleEnd = urgencyData.getNextCycleEnd().getTime();
+      const distance = nextCycleEnd - now;
 
       if (distance > 0) {
         setTimeLeft({
@@ -94,6 +107,16 @@ export default function Pricing() {
           minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
           seconds: Math.floor((distance % (1000 * 60)) / 1000),
         });
+      } else {
+        // Fallback: Wenn Timer abgelaufen, neuen Zyklus starten
+        const newCycleEnd = urgencyData.getNextCycleEnd().getTime();
+        const newDistance = newCycleEnd - now;
+        setTimeLeft({
+          days: Math.floor(newDistance / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((newDistance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+          minutes: Math.floor((newDistance % (1000 * 60 * 60)) / (1000 * 60)),
+          seconds: Math.floor((newDistance % (1000 * 60)) / 1000),
+        });
       }
     };
 
@@ -101,7 +124,7 @@ export default function Pricing() {
     const timer = setInterval(calculateTimeLeft, 1000);
 
     return () => clearInterval(timer);
-  }, [urgencyData.endsAt]);
+  }, []);
 
   // Testimonial Rotation (alle 8 Sekunden)
   useEffect(() => {
@@ -147,8 +170,19 @@ export default function Pricing() {
     {
       id: "free",
       title: "Starter",
-      price: "0€",
-      period: "für immer kostenlos",
+      pricing: {
+        monthly: {
+          original: "0€",
+          discounted: "0€",
+          discount: ""
+        },
+        yearly: {
+          original: "0€",
+          discounted: "0€",
+          discount: "",
+          yearlyNote: "für immer kostenlos"
+        }
+      },
       icon: <Users size={22} />,
       description: "Entdecke die Macht der KI-Vertragsanalyse",
       features: [
@@ -173,8 +207,19 @@ export default function Pricing() {
     {
       id: "business",
       title: "Business",
-      price: "19€",
-      period: "pro Monat",
+      pricing: {
+        monthly: {
+          original: "25€",
+          discounted: "19€",
+          discount: "24%"
+        },
+        yearly: {
+          original: "300€",
+          discounted: "171€",
+          discount: "43%",
+          yearlyNote: "3 Monate gratis"
+        }
+      },
       icon: <Zap size={22} />,
       description: "Die goldene Mitte für Professionals & Kanzleien",
       features: [
@@ -187,15 +232,6 @@ export default function Pricing() {
       ],
       color: "#2D7FF9",
       popular: true,
-      valueStack: {
-        totalValue: 847,
-        savings: 828,
-        items: [
-          { name: "15 KI-Analysen", value: 450, unit: "à 30€ Anwaltsstunde" },
-          { name: "Risiko-Prävention", value: 197, unit: "durchschnittl. Schadenersparnis" },
-          { name: "Zeitersparnis", value: 200, unit: "12h/Monat à 50€ Stundensatz" }
-        ]
-      },
       button: {
         text: "🔥 Meinen Business-Platz sichern - 60 Tage risikofrei",
         action: () => startCheckout('business'),
@@ -205,8 +241,19 @@ export default function Pricing() {
     {
       id: "premium",
       title: "Enterprise",
-      price: "49€",
-      period: "pro Monat",
+      pricing: {
+        monthly: {
+          original: "40€",
+          discounted: "30€",
+          discount: "25%"
+        },
+        yearly: {
+          original: "480€",
+          discounted: "270€",
+          discount: "44%",
+          yearlyNote: "3 Monate gratis"
+        }
+      },
       icon: <Star size={22} />,
       description: "Maximale Power für Teams & Großkanzleien",
       features: [
@@ -219,16 +266,6 @@ export default function Pricing() {
         "API-Zugang für Integration",
       ],
       color: "#0062E0",
-      valueStack: {
-        totalValue: 2847,
-        savings: 2798,
-        items: [
-          { name: "Unbegr. KI-Analysen", value: 1500, unit: "50+ Analysen à 30€" },
-          { name: "KI-Vertragserstellung", value: 800, unit: "20 Verträge à 40€/Stunde" },
-          { name: "Team-Lizenz (10 User)", value: 400, unit: "Einzellizenzen würden 400€ kosten" },
-          { name: "Dedicated Support", value: 147, unit: "Premium-Support-Paket" }
-        ]
-      },
       button: {
         text: "🏆 Enterprise freischalten - Nie wieder Vertragsrisiken",
         action: () => startCheckout('premium'),
@@ -518,6 +555,30 @@ export default function Pricing() {
             </button>
           </motion.div>
 
+          {/* Billing Period Toggle */}
+          <motion.div
+            className={styles.billingToggle}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.9, duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
+          >
+            <div className={styles.billingOptions}>
+              <button
+                className={`${styles.billingButton} ${billingPeriod === 'monthly' ? styles.activeBilling : ''}`}
+                onClick={() => setBillingPeriod('monthly')}
+              >
+                Monatlich
+              </button>
+              <button
+                className={`${styles.billingButton} ${billingPeriod === 'yearly' ? styles.activeBilling : ''}`}
+                onClick={() => setBillingPeriod('yearly')}
+              >
+                Jährlich
+                <span className={styles.yearlyBadge}>3 Monate gratis</span>
+              </button>
+            </div>
+          </motion.div>
+
           {/* Urgency Banner */}
           <motion.div
             className={styles.urgencyBanner}
@@ -620,35 +681,36 @@ export default function Pricing() {
                           <p className={styles.planDescription}>{plan.description}</p>
                           
                           <div className={styles.priceContainer}>
+                            {/* Sale Badge */}
+                            {plan.pricing[billingPeriod].discount && (
+                              <div className={styles.saleBadge}>
+                                {plan.pricing[billingPeriod].discount} RABATT
+                              </div>
+                            )}
+
+                            {/* Original Price (crossed out) */}
+                            {plan.pricing[billingPeriod].original !== plan.pricing[billingPeriod].discounted && (
+                              <span className={styles.originalPrice}>
+                                {plan.pricing[billingPeriod].original}
+                              </span>
+                            )}
+
+                            {/* Discounted Price */}
                             <p className={styles.price} style={{ color: plan.popular ? plan.color : undefined }}>
-                              {plan.price}
+                              {plan.pricing[billingPeriod].discounted}
                             </p>
-                            <span className={styles.period}>{plan.period}</span>
+
+                            <div className={styles.period}>
+                              <span>{billingPeriod === 'yearly' ? 'pro Jahr' : 'pro Monat'}</span>
+                              {billingPeriod === 'yearly' && plan.pricing.yearly.yearlyNote && (
+                                <>
+                                  <br />
+                                  <span className={styles.yearlyNote}>({plan.pricing.yearly.yearlyNote})</span>
+                                </>
+                              )}
+                            </div>
                           </div>
                         </div>
-
-                        {/* Value Stack */}
-                        {plan.valueStack && (
-                          <motion.div
-                            className={styles.valueStack}
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={animateCards ? { opacity: 1, height: "auto" } : { opacity: 0, height: 0 }}
-                            transition={{ delay: index * 0.15 + 0.8, duration: 0.6 }}
-                          >
-                            <div className={styles.valueHeader}>
-                              <span className={styles.totalValue}>Gesamtwert: {plan.valueStack.totalValue}€</span>
-                              <span className={styles.savings}>Du sparst: {plan.valueStack.savings}€</span>
-                            </div>
-                            <div className={styles.valueItems}>
-                              {plan.valueStack.items.map((item, i) => (
-                                <div key={i} className={styles.valueItem}>
-                                  <span className={styles.valueName}>{item.name}</span>
-                                  <span className={styles.valueAmount}>{item.value}€</span>
-                                </div>
-                              ))}
-                            </div>
-                          </motion.div>
-                        )}
 
                         <div className={styles.divider}></div>
 
