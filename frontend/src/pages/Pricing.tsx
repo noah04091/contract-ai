@@ -240,9 +240,10 @@ export default function Pricing() {
   // Stripe Checkout Funktion
   const startCheckout = async (plan: string) => {
     setLoading(true);
+    let res: Response | undefined;
 
     try {
-      const res = await fetch("/api/stripe/create-checkout-session", {
+      res = await fetch("/api/stripe/create-checkout-session", {
         method: "POST",
         credentials: "include",
         headers: {
