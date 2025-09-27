@@ -1591,25 +1591,31 @@
     max-width: 300px !important; /* Maximale Breite begrenzen */
   }
 
-  /* Fix 3: Trust-Bar ULTRA-KOMPAKT - Eine Zeile only */
+  /* Fix 3: SCROLLENDER MARQUEE BANNER für Mobile */
   .topInfoBar {
-    padding: 0.3rem 0 !important; /* Minimal Padding */
+    padding: 0.3rem 0 !important;
+    overflow: hidden !important; /* Verstecke überlaufenden Content */
+    position: relative !important;
   }
 
   .infoItems {
-    flex-direction: row !important; /* Alles horizontal */
-    justify-content: center !important;
+    display: flex !important;
     align-items: center !important;
-    gap: 0.6rem !important;
-    font-size: 0.65rem !important; /* Noch kleiner */
-    padding: 0.3rem 0.5rem !important; /* Minimal Padding */
-    flex-wrap: nowrap !important; /* KEIN Wrap - alles in einer Zeile */
-    overflow-x: auto !important; /* Falls zu lang, dann scroll */
+    gap: 2rem !important; /* Mehr Gap für bessere Lesbarkeit */
+    font-size: 0.65rem !important;
+    padding: 0.3rem 0 !important;
     white-space: nowrap !important;
+
+    /* MARQUEE ANIMATION - Scrollt von rechts nach links */
+    animation: marqueeScroll 25s linear infinite !important;
+    will-change: transform !important;
+
+    /* Content duplizieren für seamless loop */
+    min-width: 200% !important;
   }
 
   .infoItem {
-    flex-shrink: 0 !important; /* Items nicht schrumpfen */
+    flex-shrink: 0 !important;
     white-space: nowrap !important;
   }
 
@@ -1617,14 +1623,23 @@
     display: inline !important;
     color: #d1d1d6 !important;
     font-size: 0.5rem !important;
+    margin: 0 0.5rem !important;
   }
 
   .infoTestimonial {
-    font-size: 0.6rem !important; /* Noch kleiner */
-    max-width: 120px !important; /* Viel schmaler */
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    flex-shrink: 1 !important; /* Darf schrumpfen wenn nötig */
+    font-size: 0.6rem !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+  }
+}
+
+/* MARQUEE SCROLL ANIMATION - Smooth seamless loop */
+@keyframes marqueeScroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%); /* Nur zur Hälfte, da Content dupliziert ist */
   }
 }
 
