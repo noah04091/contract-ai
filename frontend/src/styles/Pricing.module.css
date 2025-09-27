@@ -1292,7 +1292,7 @@
   }
 }
 
-/* Mobile Horizontal Swipe Cards mit Peek-Effekt */
+/* Mobile Horizontal Swipe Cards mit ECHTEM Peek-Effekt */
 @media (max-width: 767px) {
   .plans {
     flex-direction: row;
@@ -1303,8 +1303,8 @@
     scroll-behavior: smooth;
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
-    gap: 1rem;
-    padding: 0 3rem;
+    gap: 0.8rem;
+    padding: 0 10% 0 10%; /* 10% links/rechts für Peek-Effekt */
     margin-bottom: 2rem;
 
     /* Hide scrollbar but keep functionality */
@@ -1317,21 +1317,19 @@
   }
 
   .cardWrapper {
-    flex: 0 0 240px;
-    width: 240px;
+    flex: 0 0 80%; /* 80% Breite = 20% für Peek-Effekt */
+    width: 80%;
     max-width: none;
     margin-bottom: 0;
     scroll-snap-align: center;
     scroll-snap-stop: always;
   }
 
-  /* Peek-Effekt: Bessere Sichtbarkeit der Nachbar-Cards */
-  .cardWrapper:first-child {
-    margin-left: -1.5rem;
-  }
-
+  /* Entferne die alten margin-left/right */
+  .cardWrapper:first-child,
   .cardWrapper:last-child {
-    margin-right: -1.5rem;
+    margin-left: 0;
+    margin-right: 0;
   }
 
   .popularCard {
@@ -1395,7 +1393,7 @@
 
   .container {
     padding: 0;
-    margin-top: 5rem; /* Mehr Platz für Social Proof Bar */
+    margin-top: 6rem; /* Mehr Platz für Social Proof Bar */
   }
 
   .title {
@@ -1409,6 +1407,7 @@
 
   .topInfoBar {
     margin-top: -1px;
+    padding-bottom: 1.5rem; /* Mehr Abstand nach unten */
   }
 
   .infoItems {
