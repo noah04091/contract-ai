@@ -1609,7 +1609,7 @@
     flex-wrap: nowrap !important; /* KEIN Wrap */
 
     /* SEAMLESS MARQUEE ANIMATION */
-    animation: seamlessMarquee 30s linear infinite !important;
+    animation: seamlessMarquee 15s linear infinite !important;
   }
 
   .infoItem {
