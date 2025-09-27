@@ -559,10 +559,11 @@ export default function Pricing() {
               🛡️ <strong>96%</strong> zufrieden
             </span>
             <span className={styles.infoDivider}>•</span>
+            {/* Desktop: Animiertes Testimonial */}
             <AnimatePresence mode="wait">
               <motion.span
                 key={currentActivity}
-                className={styles.infoTestimonial}
+                className={`${styles.infoTestimonial} ${styles.desktopTestimonial}`}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
@@ -571,6 +572,11 @@ export default function Pricing() {
                 🎯 <strong>{testimonials[currentActivity].name}</strong>: „{testimonials[currentActivity].metric}"
               </motion.span>
             </AnimatePresence>
+
+            {/* Mobile: Statisches Testimonial für smooth Marquee */}
+            <span className={`${styles.infoTestimonial} ${styles.mobileMarqueeOnly}`}>
+              🎯 <strong>Dr. Sarah Weber</strong>: „2-3h/Tag gespart"
+            </span>
 
             {/* Dupliziertes Set für seamless loop - NUR MOBILE */}
             <span className={`${styles.infoDivider} ${styles.mobileMarqueeOnly}`}>•</span>
@@ -583,7 +589,7 @@ export default function Pricing() {
             </span>
             <span className={`${styles.infoDivider} ${styles.mobileMarqueeOnly}`}>•</span>
             <span className={`${styles.infoTestimonial} ${styles.mobileMarqueeOnly}`}>
-              🎯 <strong>{testimonials[currentActivity].name}</strong>: „{testimonials[currentActivity].metric}"
+              🎯 <strong>Dr. Sarah Weber</strong>: „2-3h/Tag gespart"
             </span>
           </div>
         </motion.div>

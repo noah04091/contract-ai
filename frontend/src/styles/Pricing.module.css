@@ -1578,11 +1578,21 @@
   display: none !important;
 }
 
+/* Desktop Testimonial sichtbar, Mobile Testimonial versteckt */
+.desktopTestimonial {
+  display: inline !important;
+}
+
 /* EMERGENCY FIX - MOBILE PROBLEMS - GANZ AM ENDE */
 @media (max-width: 767px) {
   /* Zeige duplizierte Content nur auf Mobile */
   .mobileMarqueeOnly {
     display: inline !important;
+  }
+
+  /* Verstecke Desktop Testimonial auf Mobile */
+  .desktopTestimonial {
+    display: none !important;
   }
   /* Fix 1: Header-Spacing mit Force */
   .container {
@@ -1618,7 +1628,7 @@
     flex-wrap: nowrap !important; /* KEIN Wrap */
 
     /* SEAMLESS MARQUEE ANIMATION */
-    animation: seamlessMarquee 15s linear infinite !important;
+    animation: seamlessMarquee 12s linear infinite !important;
   }
 
   .infoItem {
