@@ -1573,6 +1573,25 @@
   }
 }
 
+/* EMERGENCY FIX - MOBILE PROBLEMS - GANZ AM ENDE */
+@media (max-width: 767px) {
+  /* Fix 1: Header-Spacing mit Force */
+  .container {
+    padding-top: 80px !important; /* Force mehr Platz oben */
+  }
+
+  /* Fix 2: Peek-Effekt mit Force */
+  .plans {
+    margin: 0 -20px !important; /* Erweitere Scroll-Bereich */
+    padding: 0 30px !important; /* Zeige Cards an den Seiten */
+  }
+
+  .cardWrapper {
+    flex: 0 0 calc(100% - 60px) !important; /* Card-Breite anpassen */
+    max-width: 300px !important; /* Maximale Breite begrenzen */
+  }
+}
+
 /* Apple-specific Animations */
 @keyframes subtle-float {
   0% {
