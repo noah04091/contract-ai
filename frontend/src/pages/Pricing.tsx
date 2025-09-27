@@ -535,19 +535,55 @@ export default function Pricing() {
             </motion.p>
           </motion.div>
 
+          {/* Urgency Banner - Direkt unter Social Proof */}
+          <motion.div
+            className={styles.urgencyBanner}
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.6, duration: 0.6 }}
+          >
+            <div className={styles.urgencyContent}>
+              <div className={styles.urgencyText}>
+                <span className={styles.urgencyTitle}>🔥 {urgencyData.message} – 47 von 100 Plätzen vergeben</span>
+                <span className={styles.urgencySubtitle}>⏳ {urgencyData.discountPercent}% endet in:</span>
+              </div>
+              <div className={styles.countdown}>
+                <div className={styles.countdownItem}>
+                  <span className={styles.countdownNumber}>{timeLeft.days}</span>
+                  <span className={styles.countdownLabel}>Tage</span>
+                </div>
+                <span className={styles.countdownSeparator}>:</span>
+                <div className={styles.countdownItem}>
+                  <span className={styles.countdownNumber}>{String(timeLeft.hours).padStart(2, '0')}</span>
+                  <span className={styles.countdownLabel}>Std</span>
+                </div>
+                <span className={styles.countdownSeparator}>:</span>
+                <div className={styles.countdownItem}>
+                  <span className={styles.countdownNumber}>{String(timeLeft.minutes).padStart(2, '0')}</span>
+                  <span className={styles.countdownLabel}>Min</span>
+                </div>
+                <span className={styles.countdownSeparator}>:</span>
+                <div className={styles.countdownItem}>
+                  <span className={styles.countdownNumber}>{String(timeLeft.seconds).padStart(2, '0')}</span>
+                  <span className={styles.countdownLabel}>Sek</span>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
           <motion.div
             className={styles.viewToggle}
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.7, duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
           >
-            <button 
+            <button
               className={`${styles.toggleButton} ${activeTab === 'cards' ? styles.activeToggle : ''}`}
               onClick={() => setActiveTab('cards')}
             >
               Pläne
             </button>
-            <button 
+            <button
               className={`${styles.toggleButton} ${activeTab === 'table' ? styles.activeToggle : ''}`}
               onClick={() => setActiveTab('table')}
             >
@@ -576,42 +612,6 @@ export default function Pricing() {
                 Jährlich
                 <span className={styles.yearlyBadge}>3 Monate gratis</span>
               </button>
-            </div>
-          </motion.div>
-
-          {/* Urgency Banner */}
-          <motion.div
-            className={styles.urgencyBanner}
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 1.2, duration: 0.6 }}
-          >
-            <div className={styles.urgencyContent}>
-              <div className={styles.urgencyText}>
-                <span className={styles.urgencyTitle}>🔥 {urgencyData.message} – 47 von 100 Plätzen vergeben</span>
-                <span className={styles.urgencySubtitle}>⏳ {urgencyData.discountPercent}% endet in:</span>
-              </div>
-              <div className={styles.countdown}>
-                <div className={styles.countdownItem}>
-                  <span className={styles.countdownNumber}>{timeLeft.days}</span>
-                  <span className={styles.countdownLabel}>Tage</span>
-                </div>
-                <span className={styles.countdownSeparator}>:</span>
-                <div className={styles.countdownItem}>
-                  <span className={styles.countdownNumber}>{String(timeLeft.hours).padStart(2, '0')}</span>
-                  <span className={styles.countdownLabel}>Std</span>
-                </div>
-                <span className={styles.countdownSeparator}>:</span>
-                <div className={styles.countdownItem}>
-                  <span className={styles.countdownNumber}>{String(timeLeft.minutes).padStart(2, '0')}</span>
-                  <span className={styles.countdownLabel}>Min</span>
-                </div>
-                <span className={styles.countdownSeparator}>:</span>
-                <div className={styles.countdownItem}>
-                  <span className={styles.countdownNumber}>{String(timeLeft.seconds).padStart(2, '0')}</span>
-                  <span className={styles.countdownLabel}>Sek</span>
-                </div>
-              </div>
             </div>
           </motion.div>
 
