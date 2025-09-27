@@ -1599,11 +1599,14 @@
 
   .infoItems {
     display: flex !important;
+    flex-direction: row !important; /* FORCE horizontal */
+    justify-content: flex-start !important;
     align-items: center !important;
     gap: 3rem !important;
     font-size: 0.65rem !important;
     padding: 0.3rem 0 !important;
     white-space: nowrap !important;
+    flex-wrap: nowrap !important; /* KEIN Wrap */
 
     /* EINFACHE MARQUEE ANIMATION */
     animation: simpleMarquee 20s linear infinite !important;
@@ -1618,12 +1621,26 @@
     display: inline !important;
     color: #d1d1d6 !important;
     font-size: 0.5rem !important;
+    margin: 0 0.8rem !important;
   }
 
   .infoTestimonial {
     font-size: 0.6rem !important;
     white-space: nowrap !important;
     flex-shrink: 0 !important;
+    display: inline !important; /* Force inline */
+  }
+
+  /* FORCE alle Items horizontal */
+  .infoItem,
+  .infoTestimonial,
+  .infoDivider {
+    float: none !important;
+    clear: none !important;
+    width: auto !important;
+    height: auto !important;
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
   }
 }
 
