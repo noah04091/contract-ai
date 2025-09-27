@@ -1626,6 +1626,7 @@
     text-overflow: ellipsis !important;
     flex-shrink: 1 !important;
   }
+}
 
 /* Apple-specific Animations */
 @keyframes subtle-float {
