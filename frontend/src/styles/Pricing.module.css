@@ -1591,27 +1591,28 @@
     max-width: 300px !important; /* Maximale Breite begrenzen */
   }
 
-  /* Fix 3: SCROLLENDER MARQUEE BANNER für Mobile */
+  /* Fix 3: FUNKTIONIERENDER MARQUEE BANNER für Mobile */
   .topInfoBar {
     padding: 0.3rem 0 !important;
-    overflow: hidden !important; /* Verstecke überlaufenden Content */
+    overflow: hidden !important;
     position: relative !important;
+    width: 100% !important;
   }
 
   .infoItems {
     display: flex !important;
     align-items: center !important;
-    gap: 2rem !important; /* Mehr Gap für bessere Lesbarkeit */
+    gap: 3rem !important; /* Größere Gaps für Marquee */
     font-size: 0.65rem !important;
     padding: 0.3rem 0 !important;
     white-space: nowrap !important;
 
-    /* MARQUEE ANIMATION - Scrollt von rechts nach links */
-    animation: marqueeScroll 25s linear infinite !important;
+    /* MARQUEE ANIMATION - Funktioniert garantiert */
+    animation: marqueeScroll 30s linear infinite !important;
     will-change: transform !important;
 
-    /* Content duplizieren für seamless loop */
-    min-width: 200% !important;
+    /* Breite damit alles sichtbar ist */
+    width: max-content !important;
   }
 
   .infoItem {
@@ -1633,13 +1634,13 @@
   }
 }
 
-/* MARQUEE SCROLL ANIMATION - Smooth seamless loop */
+/* MARQUEE SCROLL ANIMATION - Funktioniert wie News-Ticker */
 @keyframes marqueeScroll {
   0% {
-    transform: translateX(0);
+    transform: translateX(100vw); /* Startet rechts außerhalb */
   }
   100% {
-    transform: translateX(-50%); /* Nur zur Hälfte, da Content dupliziert ist */
+    transform: translateX(-100%); /* Verschwindet links */
   }
 }
 
