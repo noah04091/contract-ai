@@ -19,17 +19,31 @@ client.connect().then(() => {
 });
 
 router.post("/create-checkout-session", verifyToken, async (req, res) => {
-  const { plan } = req.body;
+  const { plan, billing = 'monthly' } = req.body; // billing: 'monthly' oder 'yearly'
   const email = req.user.email;
 
   const priceIdMap = {
-    business: process.env.STRIPE_BUSINESS_PRICE_ID,
-    premium: process.env.STRIPE_PREMIUM_PRICE_ID,
+    // Monatliche Preise
+    'business-monthly': process.env.STRIPE_BUSINESS_MONTHLY_PRICE_ID,
+    'premium-monthly': process.env.STRIPE_PREMIUM_MONTHLY_PRICE_ID,
+
+    // Jährliche Preise
+    'business-yearly': process.env.STRIPE_BUSINESS_YEARLY_PRICE_ID,
+    'premium-yearly': process.env.STRIPE_PREMIUM_YEARLY_PRICE_ID,
+
+    // Backwards compatibility für alte Buttons
+    'business': process.env.STRIPE_BUSINESS_MONTHLY_PRICE_ID || process.env.STRIPE_BUSINESS_PRICE_ID,
+    'premium': process.env.STRIPE_PREMIUM_MONTHLY_PRICE_ID || process.env.STRIPE_PREMIUM_PRICE_ID,
   };
 
-  const selectedPriceId = priceIdMap[plan];
+  const priceKey = `${plan}-${billing}`;
+  const selectedPriceId = priceIdMap[priceKey] || priceIdMap[plan];
+
   if (!selectedPriceId) {
-    return res.status(400).json({ message: "Ungültiger Plan angegeben." });
+    return res.status(400).json({
+      message: "Ungültiger Plan oder Billing-Zyklus angegeben.",
+      debug: { plan, billing, priceKey, availableKeys: Object.keys(priceIdMap) }
+    });
   }
 
   try {

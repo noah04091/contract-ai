@@ -248,7 +248,10 @@ export default function Pricing() {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ plan })
+        body: JSON.stringify({
+          plan,
+          billing: billingPeriod
+        })
       });
 
       const data: { url?: string; message?: string } = await res.json();
