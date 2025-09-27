@@ -1290,6 +1290,94 @@
   .popularCard {
     transform: scale(1.02);
   }
+}
+
+/* Mobile Horizontal Swipe Cards */
+@media (max-width: 767px) {
+  .plans {
+    flex-direction: row;
+    align-items: stretch;
+    justify-content: flex-start;
+    overflow-x: auto;
+    overflow-y: visible;
+    scroll-behavior: smooth;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    gap: 1.5rem;
+    padding: 0 1.5rem;
+    margin-bottom: 2rem;
+
+    /* Hide scrollbar but keep functionality */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .plans::-webkit-scrollbar {
+    display: none;
+  }
+
+  .cardWrapper {
+    flex: 0 0 280px;
+    width: 280px;
+    max-width: none;
+    margin-bottom: 0;
+    scroll-snap-align: center;
+    scroll-snap-stop: always;
+  }
+
+  .popularCard {
+    transform: none;
+  }
+
+  /* Mobile Swipe Indicators */
+  .mobileSwipeIndicators {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .swipeHint {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #6e6e73;
+    font-size: 0.8rem;
+    font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif;
+    opacity: 0.8;
+  }
+
+  .swipeHint svg {
+    color: #0071e3;
+  }
+
+  .dotIndicators {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+  }
+
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+  }
+
+  .activeDot {
+    background: #0071e3;
+    transform: scale(1.2);
+  }
+}
+
+/* Hide mobile indicators on desktop */
+@media (min-width: 768px) {
+  .mobileSwipeIndicators {
+    display: none;
+  }
+}
 
   .topInfoBar {
     margin-top: -1px; /* Gap schließen */

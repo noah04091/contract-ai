@@ -45,6 +45,7 @@ export default function Pricing() {
   const [currentActivity, setCurrentActivity] = useState(0);
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
+  const [showSwipeHint, setShowSwipeHint] = useState(true);
   const navigate = useNavigate();
 
   // Urgency & Scarcity Daten - Recurring 14-Tage Zyklen
@@ -829,6 +830,35 @@ export default function Pricing() {
                       </motion.div>
                     </motion.div>
                   ))}
+                </div>
+
+                {/* Mobile Swipe Indicators */}
+                <div className={styles.mobileSwipeIndicators}>
+                  {/* Swipe Hint Arrow */}
+                  {showSwipeHint && (
+                    <motion.div
+                      className={styles.swipeHint}
+                      initial={{ opacity: 1, x: 0 }}
+                      animate={{ x: [0, 8, 0] }}
+                      transition={{ duration: 1.5, repeat: 2, ease: "easeInOut" }}
+                      onAnimationComplete={() => setShowSwipeHint(false)}
+                    >
+                      <span>Wischen für mehr</span>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                        <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </motion.div>
+                  )}
+
+                  {/* Dot Indicators */}
+                  <div className={styles.dotIndicators}>
+                    {plans.map((_, index) => (
+                      <div
+                        key={index}
+                        className={`${styles.dot} ${index === 1 ? styles.activeDot : ''}`}
+                      />
+                    ))}
+                  </div>
                 </div>
 
                 {/* Clean Trust Section - Direkt unter Cards */}
