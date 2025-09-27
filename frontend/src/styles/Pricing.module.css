@@ -1379,41 +1379,6 @@
   }
 }
 
-  .topInfoBar {
-    margin-top: -1px; /* Gap schließen */
-  }
-
-  .infoItems {
-    gap: 0.8rem;
-    font-size: 0.8rem;
-    padding: 0.7rem 1.5rem;
-  }
-
-  .infoDivider {
-    display: none;
-  }
-
-  .pageWrapper {
-    padding: 3.5rem 1rem 4rem;
-  }
-
-  .trustBadges {
-    gap: 1rem;
-  }
-
-  .actionButtons {
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-    gap: 1rem;
-  }
-
-  .actionButtons button {
-    width: 100%;
-    max-width: 280px;
-  }
-}
-
 @media (max-width: 768px) {
   .pageWrapper {
     padding: 2.5rem 1rem;
