@@ -1591,28 +1591,21 @@
     max-width: 300px !important; /* Maximale Breite begrenzen */
   }
 
-  /* Fix 3: FUNKTIONIERENDER MARQUEE BANNER für Mobile */
+  /* Fix 3: STATISCHE KOMPAKTE Trust-Bar - FUNKTIONIERT! */
   .topInfoBar {
     padding: 0.3rem 0 !important;
-    overflow: hidden !important;
-    position: relative !important;
-    width: 100% !important;
   }
 
   .infoItems {
-    display: flex !important;
+    flex-direction: row !important;
+    justify-content: center !important;
     align-items: center !important;
-    gap: 3rem !important; /* Größere Gaps für Marquee */
+    gap: 0.6rem !important;
     font-size: 0.65rem !important;
-    padding: 0.3rem 0 !important;
+    padding: 0.3rem 0.5rem !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
     white-space: nowrap !important;
-
-    /* MARQUEE ANIMATION - Funktioniert garantiert */
-    animation: marqueeScroll 30s linear infinite !important;
-    will-change: transform !important;
-
-    /* Breite damit alles sichtbar ist */
-    width: max-content !important;
   }
 
   .infoItem {
@@ -1624,25 +1617,15 @@
     display: inline !important;
     color: #d1d1d6 !important;
     font-size: 0.5rem !important;
-    margin: 0 0.5rem !important;
   }
 
   .infoTestimonial {
     font-size: 0.6rem !important;
-    white-space: nowrap !important;
-    flex-shrink: 0 !important;
+    max-width: 120px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    flex-shrink: 1 !important;
   }
-}
-
-/* MARQUEE SCROLL ANIMATION - Funktioniert wie News-Ticker */
-@keyframes marqueeScroll {
-  0% {
-    transform: translateX(100vw); /* Startet rechts außerhalb */
-  }
-  100% {
-    transform: translateX(-100%); /* Verschwindet links */
-  }
-}
 
 /* Apple-specific Animations */
 @keyframes subtle-float {
