@@ -769,75 +769,46 @@ export default function Pricing() {
                   ))}
                 </div>
 
-                {/* Subtle Trust Micro-Signals */}
+                {/* Clean Trust Section - Direkt unter Cards */}
                 <motion.div
-                  className={styles.trustMicroSignals}
+                  className={styles.cleanTrustSection}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: animateCards ? 1 : 0 }}
                   transition={{ delay: 1.1, duration: 0.5 }}
                 >
-                  <span className={styles.trustMicro}>✅ 96% Kundenzufriedenheit</span>
-                  <span className={styles.trustSeparator}>•</span>
-                  <span className={styles.trustMicro}>🏛️ Anwaltskammer-geprüft</span>
-                  <span className={styles.trustSeparator}>•</span>
-                  <span className={styles.trustMicro}>🔒 Bank-Level Sicherheit</span>
-                </motion.div>
+                  {/* Cancellation Note */}
+                  <p className={styles.cancellationNote}>
+                    Keine Kündigungsfrist. Jederzeit kündbar.
+                  </p>
 
-                <motion.p
-                  className={styles.cancellationNote}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: animateCards ? 1 : 0 }}
-                  transition={{ delay: 1.2, duration: 0.5 }}
-                >
-                  Keine Kündigungsfrist. Jederzeit kündbar.
-                </motion.p>
-
-                {/* Advanced Trust Signals */}
-                <motion.div
-                  className={styles.trustSection}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: animateCards ? 1 : 0 }}
-                  transition={{ delay: 1.4, duration: 0.5 }}
-                >
-                  {/* Primary Trust Badges */}
-                  <div className={styles.trustBadges}>
+                  {/* Three Green Trust Badges */}
+                  <div className={styles.greenTrustBadges}>
                     <motion.div
-                      className={styles.trustBadge}
+                      className={styles.greenTrustBadge}
                       whileHover={{ scale: 1.05 }}
                       transition={{ type: "spring", stiffness: 400, damping: 30 }}
                     >
-                      <Shield size={18} />
+                      <Shield size={16} />
                       <span>60-Tage-Geld-zurück-Garantie</span>
                     </motion.div>
 
                     <motion.div
-                      className={styles.trustBadge}
+                      className={styles.greenTrustBadge}
                       whileHover={{ scale: 1.05 }}
                       transition={{ type: "spring", stiffness: 400, damping: 30 }}
                     >
-                      <CheckCircle size={18} />
+                      <CheckCircle size={16} />
                       <span>TÜV-zertifiziert & DSGVO konform</span>
                     </motion.div>
 
                     <motion.div
-                      className={styles.trustBadge}
+                      className={styles.greenTrustBadge}
                       whileHover={{ scale: 1.05 }}
                       transition={{ type: "spring", stiffness: 400, damping: 30 }}
                     >
-                      <Clock size={18} />
+                      <Clock size={16} />
                       <span>99,9% Uptime-Garantie</span>
                     </motion.div>
-                  </div>
-
-                  {/* Security & Compliance Strip */}
-                  <div className={styles.securityStrip}>
-                    <span className={styles.securityItem}>🏛️ Anwaltskammer-geprüft</span>
-                    <span className={styles.securitySeparator}>•</span>
-                    <span className={styles.securityItem}>🔒 Bank-Level Verschlüsselung</span>
-                    <span className={styles.securitySeparator}>•</span>
-                    <span className={styles.securityItem}>⭐ 4.8/5 auf Trustpilot (2.847 Bewertungen)</span>
-                    <span className={styles.securitySeparator}>•</span>
-                    <span className={styles.securityItem}>🚀 30-Sekunden-Setup</span>
                   </div>
                 </motion.div>
               </motion.div>
