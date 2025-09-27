@@ -199,6 +199,43 @@ export default function Pricing() {
     return () => clearInterval(testimonialTimer);
   }, [testimonials.length]);
 
+  // Smooth Marquee Animation für Mobile
+  useEffect(() => {
+    let animationId: number;
+    let position = 0;
+    const speed = 0.5; // Pixel per frame
+
+    const animate = () => {
+      const marqueeElement = document.querySelector(`.${styles.infoItems}`) as HTMLElement;
+
+      if (marqueeElement && window.innerWidth <= 767) {
+        const contentWidth = marqueeElement.scrollWidth;
+
+        position -= speed;
+
+        // Reset position when fully scrolled (seamless loop)
+        if (Math.abs(position) >= contentWidth / 2) {
+          position = 0;
+        }
+
+        marqueeElement.style.transform = `translateX(${position}px)`;
+      }
+
+      animationId = requestAnimationFrame(animate);
+    };
+
+    // Nur auf Mobile starten
+    if (window.innerWidth <= 767) {
+      animate();
+    }
+
+    return () => {
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+      }
+    };
+  }, []);
+
   // Stripe Checkout Funktion
   const startCheckout = async (plan: string) => {
     setLoading(true);
@@ -578,7 +615,31 @@ export default function Pricing() {
               🎯 <strong>Dr. Sarah Weber</strong>: „2-3h/Tag gespart"
             </span>
 
-            {/* 2. Wiederholung für seamless loop */}
+            {/* Multiple Wiederholungen für echten endlos loop */}
+            <span className={`${styles.infoDivider} ${styles.mobileMarqueeOnly}`}>•</span>
+            <span className={`${styles.infoItem} ${styles.mobileMarqueeOnly}`}>
+              📈 <strong>2.847+</strong> analysierte Verträge
+            </span>
+            <span className={`${styles.infoDivider} ${styles.mobileMarqueeOnly}`}>•</span>
+            <span className={`${styles.infoItem} ${styles.mobileMarqueeOnly}`}>
+              🛡️ <strong>96%</strong> zufrieden
+            </span>
+            <span className={`${styles.infoDivider} ${styles.mobileMarqueeOnly}`}>•</span>
+            <span className={`${styles.infoTestimonial} ${styles.mobileMarqueeOnly}`}>
+              🎯 <strong>Dr. Sarah Weber</strong>: „2-3h/Tag gespart"
+            </span>
+            <span className={`${styles.infoDivider} ${styles.mobileMarqueeOnly}`}>•</span>
+            <span className={`${styles.infoItem} ${styles.mobileMarqueeOnly}`}>
+              📈 <strong>2.847+</strong> analysierte Verträge
+            </span>
+            <span className={`${styles.infoDivider} ${styles.mobileMarqueeOnly}`}>•</span>
+            <span className={`${styles.infoItem} ${styles.mobileMarqueeOnly}`}>
+              🛡️ <strong>96%</strong> zufrieden
+            </span>
+            <span className={`${styles.infoDivider} ${styles.mobileMarqueeOnly}`}>•</span>
+            <span className={`${styles.infoTestimonial} ${styles.mobileMarqueeOnly}`}>
+              🎯 <strong>Dr. Sarah Weber</strong>: „2-3h/Tag gespart"
+            </span>
             <span className={`${styles.infoDivider} ${styles.mobileMarqueeOnly}`}>•</span>
             <span className={`${styles.infoItem} ${styles.mobileMarqueeOnly}`}>
               📈 <strong>2.847+</strong> analysierte Verträge
