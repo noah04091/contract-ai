@@ -588,27 +588,29 @@ export default function Pricing() {
           >
             <div className={styles.urgencyContent}>
               <div className={styles.urgencyText}>
-                <span className={styles.urgencyTitle}>🔥 {urgencyData.message}</span>
-                <span>•</span>
-                <span>47 von 100 Plätzen vergeben</span>
-                <span>•</span>
-                <span className={styles.urgencySubtitle}>{urgencyData.discountPercent}% endet in:</span>
+                <span className={styles.urgencyTitle}>🔥 {urgencyData.message} – 47 von 100 Plätzen vergeben</span>
+                <span className={styles.urgencySubtitle}>⏳ {urgencyData.discountPercent}% endet in:</span>
               </div>
               <div className={styles.countdown}>
-                <span className={styles.countdownItem}>
+                <div className={styles.countdownItem}>
                   <span className={styles.countdownNumber}>{timeLeft.days}</span>
-                  <span className={styles.countdownLabel}>T</span>
-                </span>
+                  <span className={styles.countdownLabel}>Tage</span>
+                </div>
                 <span className={styles.countdownSeparator}>:</span>
-                <span className={styles.countdownItem}>
+                <div className={styles.countdownItem}>
                   <span className={styles.countdownNumber}>{String(timeLeft.hours).padStart(2, '0')}</span>
-                  <span className={styles.countdownLabel}>H</span>
-                </span>
+                  <span className={styles.countdownLabel}>Std</span>
+                </div>
                 <span className={styles.countdownSeparator}>:</span>
-                <span className={styles.countdownItem}>
+                <div className={styles.countdownItem}>
                   <span className={styles.countdownNumber}>{String(timeLeft.minutes).padStart(2, '0')}</span>
-                  <span className={styles.countdownLabel}>M</span>
-                </span>
+                  <span className={styles.countdownLabel}>Min</span>
+                </div>
+                <span className={styles.countdownSeparator}>:</span>
+                <div className={styles.countdownItem}>
+                  <span className={styles.countdownNumber}>{String(timeLeft.seconds).padStart(2, '0')}</span>
+                  <span className={styles.countdownLabel}>Sek</span>
+                </div>
               </div>
             </div>
           </motion.div>
