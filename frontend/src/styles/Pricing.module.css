@@ -1573,8 +1573,17 @@
   }
 }
 
+/* Verstecke duplizierte Content auf Desktop */
+.mobileMarqueeOnly {
+  display: none !important;
+}
+
 /* EMERGENCY FIX - MOBILE PROBLEMS - GANZ AM ENDE */
 @media (max-width: 767px) {
+  /* Zeige duplizierte Content nur auf Mobile */
+  .mobileMarqueeOnly {
+    display: inline !important;
+  }
   /* Fix 1: Header-Spacing mit Force */
   .container {
     padding-top: 60px !important; /* Weniger Platz da Trust-Bar kleiner wird */

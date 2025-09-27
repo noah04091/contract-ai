@@ -572,17 +572,17 @@ export default function Pricing() {
               </motion.span>
             </AnimatePresence>
 
-            {/* Dupliziertes Set für seamless loop */}
-            <span className={styles.infoDivider}>•</span>
-            <span className={styles.infoItem}>
+            {/* Dupliziertes Set für seamless loop - NUR MOBILE */}
+            <span className={`${styles.infoDivider} ${styles.mobileMarqueeOnly}`}>•</span>
+            <span className={`${styles.infoItem} ${styles.mobileMarqueeOnly}`}>
               📈 <strong>2.847+</strong> analysierte Verträge
             </span>
-            <span className={styles.infoDivider}>•</span>
-            <span className={styles.infoItem}>
+            <span className={`${styles.infoDivider} ${styles.mobileMarqueeOnly}`}>•</span>
+            <span className={`${styles.infoItem} ${styles.mobileMarqueeOnly}`}>
               🛡️ <strong>96%</strong> zufrieden
             </span>
-            <span className={styles.infoDivider}>•</span>
-            <span className={styles.infoTestimonial}>
+            <span className={`${styles.infoDivider} ${styles.mobileMarqueeOnly}`}>•</span>
+            <span className={`${styles.infoTestimonial} ${styles.mobileMarqueeOnly}`}>
               🎯 <strong>{testimonials[currentActivity].name}</strong>: „{testimonials[currentActivity].metric}"
             </span>
           </div>
