@@ -1591,21 +1591,22 @@
     max-width: 300px !important; /* Maximale Breite begrenzen */
   }
 
-  /* Fix 3: STATISCHE KOMPAKTE Trust-Bar - FUNKTIONIERT! */
+  /* Fix 3: EINFACHER MARQUEE - Läuft wie Fließband */
   .topInfoBar {
     padding: 0.3rem 0 !important;
+    overflow: hidden !important;
   }
 
   .infoItems {
-    flex-direction: row !important;
-    justify-content: center !important;
+    display: flex !important;
     align-items: center !important;
-    gap: 0.6rem !important;
+    gap: 3rem !important;
     font-size: 0.65rem !important;
-    padding: 0.3rem 0.5rem !important;
-    flex-wrap: nowrap !important;
-    overflow-x: auto !important;
+    padding: 0.3rem 0 !important;
     white-space: nowrap !important;
+
+    /* EINFACHE MARQUEE ANIMATION */
+    animation: simpleMarquee 20s linear infinite !important;
   }
 
   .infoItem {
@@ -1621,10 +1622,18 @@
 
   .infoTestimonial {
     font-size: 0.6rem !important;
-    max-width: 120px !important;
-    overflow: hidden !important;
-    text-overflow: ellipsis !important;
-    flex-shrink: 1 !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+  }
+}
+
+/* EINFACHE MARQUEE ANIMATION - Von rechts nach links */
+@keyframes simpleMarquee {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(-100%);
   }
 }
 
