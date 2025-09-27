@@ -65,23 +65,86 @@ export default function Pricing() {
     {
       name: "Dr. Sarah Weber",
       company: "Weber Rechtsanwälte",
-      quote: "Spart mir 15 Stunden Vertragsanalyse pro Woche",
-      metric: "15h/Woche gespart",
-      action: "nutzt Contract AI seit 8 Monaten"
+      quote: "Spare täglich 2-3h bei Vertragsanalysen",
+      metric: "⏱️ 2-3h/Tag gespart",
+      action: "nutzt seit 8 Monaten"
     },
     {
       name: "Michael Schmidt",
       company: "Schmidt & Partner GmbH",
-      quote: "Haben 23% weniger Vertragsrisiken seit Contract AI",
-      metric: "23% weniger Risiken",
-      action: "hat Business-Plan verlängert"
+      quote: "Übersehe keine kritischen Klauseln mehr",
+      metric: "⚖️ Mehr Rechtssicherheit",
+      action: "hat Business verlängert"
     },
     {
       name: "Lisa Müller",
       company: "StartUp Legal München",
-      quote: "Contract AI hat uns vor einem 50k€ Schadenfall bewahrt",
-      metric: "50.000€ gespart",
-      action: "empfiehlt Contract AI aktiv weiter"
+      quote: "Perfekt für schnelle Ersteinschätzungen",
+      metric: "⚡ 2x schneller",
+      action: "empfiehlt Contract AI"
+    },
+    {
+      name: "Thomas Klein",
+      company: "Klein Consulting",
+      quote: "Finde kritische Klauseln 3x schneller",
+      metric: "🔍 Weniger Nachverhandlungen",
+      action: "nutzt täglich"
+    },
+    {
+      name: "Nina Hoffmann",
+      company: "Hoffmann Legal Services",
+      quote: "Mandanten lieben die schnellen Analysen",
+      metric: "😀 Zufriedenere Mandanten",
+      action: "nutzt Enterprise"
+    },
+    {
+      name: "Andreas Berger",
+      company: "Berger & Kollegen",
+      quote: "Endlich Übersicht bei komplexen Verträgen",
+      metric: "📂 Bessere Organisation",
+      action: "ganzes Team nutzt es"
+    },
+    {
+      name: "Julia Richter",
+      company: "Richter Rechtsberatung",
+      quote: "Spare viel Zeit bei Standardverträgen",
+      metric: "⏱️ Effizienter im Alltag",
+      action: "nutzt seit 6 Monaten"
+    },
+    {
+      name: "Martin Fischer",
+      company: "Fischer Legal Group",
+      quote: "Risiken & Chancen sofort erkennbar",
+      metric: "📊 Klarere Einschätzungen",
+      action: "empfiehlt Business-Plan"
+    },
+    {
+      name: "Petra Krause",
+      company: "Krause Wirtschaftsrecht",
+      quote: "Spare 30% der Zeit für Risikoanalyse",
+      metric: "💰 Niedrigere Kosten",
+      action: "nutzt seit Start"
+    },
+    {
+      name: "David Scholz",
+      company: "Scholz Legal Tech",
+      quote: "Konkurrenzfähig durch schnelle Angebote",
+      metric: "🚀 Wettbewerbsvorteil",
+      action: "wechselte zu Enterprise"
+    },
+    {
+      name: "Sabine Mayer",
+      company: "Mayer Vertragsrecht",
+      quote: "Weniger Haftungsrisiken dank KI-Check",
+      metric: "🛡️ Reduzierte Risiken",
+      action: "empfiehlt Kollegen"
+    },
+    {
+      name: "Robert Lange",
+      company: "Lange & Associates",
+      quote: "Günstiger als externe Anwaltsstunden",
+      metric: "💶 Kostenersparnis",
+      action: "hat Team erweitert"
     }
   ];
 
