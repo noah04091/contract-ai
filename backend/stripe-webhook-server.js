@@ -108,12 +108,24 @@ async function processStripeEvent(event, usersCollection, invoicesCollection) {
     const priceId = subscription.items.data[0]?.price?.id;
 
     const priceMap = {
+      // Neue monatliche und jährliche Price IDs
+      [process.env.STRIPE_BUSINESS_MONTHLY_PRICE_ID]: "business",
+      [process.env.STRIPE_BUSINESS_YEARLY_PRICE_ID]: "business",
+      [process.env.STRIPE_PREMIUM_MONTHLY_PRICE_ID]: "premium",
+      [process.env.STRIPE_PREMIUM_YEARLY_PRICE_ID]: "premium",
+      // Fallback zu alten IDs für Backwards Compatibility
       [process.env.STRIPE_BUSINESS_PRICE_ID]: "business",
       [process.env.STRIPE_PREMIUM_PRICE_ID]: "premium",
     };
 
     const plan = priceMap[priceId] || "unknown";
-    console.log(`📊 Abo-Daten:`, { plan, email, customerId: stripeCustomerId });
+    console.log(`📊 Abo-Daten:`, {
+      plan,
+      email,
+      customerId: stripeCustomerId,
+      priceId,
+      mappedCorrectly: plan !== "unknown"
+    });
 
     const user = await usersCollection.findOne(
       stripeCustomerId ? { stripeCustomerId } : { email }
@@ -286,7 +298,7 @@ async function processStripeEvent(event, usersCollection, invoicesCollection) {
   }
 }
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.WEBHOOK_PORT || 3333;
 server.listen(PORT, () => {
   console.log(`🚀 Stripe Webhook-Server läuft auf Port ${PORT}`);
 });

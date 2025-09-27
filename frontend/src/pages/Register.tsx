@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import "../styles/AppleAuth.css";
 
 export default function Register() {
@@ -20,6 +20,11 @@ export default function Register() {
   
   const containerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // URL-Parameter auslesen
+  const fromPricing = searchParams.get('from') === 'pricing';
+  const selectedPlan = searchParams.get('plan');
 
   // ✅ E-Mail-Verification senden
   const sendVerificationEmail = async (emailToVerify: string) => {
@@ -191,9 +196,11 @@ export default function Register() {
           {showEmailVerification ? "E-Mail bestätigen" : "Konto erstellen"}
         </h1>
         <p className="apple-auth-subtitle">
-          {showEmailVerification 
-            ? `Wir haben eine Bestätigungs-E-Mail an ${email} gesendet. Klicken Sie auf den Link in der E-Mail, um Ihr Konto zu aktivieren.`
-            : "Erstellen Sie ein Konto, um Contract AI nutzen zu können"
+          {showEmailVerification
+            ? `Wir haben eine Bestätigungs-E-Mail an ${email} gesendet. Klicken Sie auf den Link in der E-Mail, um Ihr Konto zu aktivieren.${fromPricing && selectedPlan ? ` Danach können Sie Ihr ${selectedPlan}-Abo abschließen.` : ''}`
+            : fromPricing && selectedPlan
+              ? `Erstellen Sie ein Konto, um das ${selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1)}-Abo zu kaufen`
+              : "Erstellen Sie ein Konto, um Contract AI nutzen zu können"
           }
         </p>
         
@@ -457,11 +464,18 @@ export default function Register() {
         {!showEmailVerification && (
           <div className="apple-auth-links">
             <p>
-              Bereits ein Konto? 
+              Bereits ein Konto?
               <span className="apple-link" onClick={() => navigate("/login")}>
                 Anmelden
               </span>
             </p>
+            {fromPricing && (
+              <p>
+                <span className="apple-link" onClick={() => navigate("/pricing")}>
+                  ← Zurück zur Preisübersicht
+                </span>
+              </p>
+            )}
           </div>
         )}
       </div>

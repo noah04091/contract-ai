@@ -264,8 +264,15 @@ export default function Pricing() {
       window.location.href = data.url;
     } catch (error) {
       const err = error as Error;
-      alert("❌ Fehler beim Checkout: " + err.message);
-      navigate("/dashboard?status=error");
+
+      // Prüfe ob es ein Authentifizierungsfehler ist (401/403)
+      if (res && (res.status === 401 || res.status === 403)) {
+        alert("Um ein Abo zu kaufen, müssen Sie sich zuerst registrieren. Sie werden zur Registrierung weitergeleitet.");
+        navigate("/register?from=pricing&plan=" + plan);
+      } else {
+        alert("❌ Fehler beim Checkout: " + err.message);
+        navigate("/dashboard?status=error");
+      }
     } finally {
       setLoading(false);
     }
