@@ -1608,8 +1608,8 @@
     white-space: nowrap !important;
     flex-wrap: nowrap !important; /* KEIN Wrap */
 
-    /* EINFACHE MARQUEE ANIMATION */
-    animation: simpleMarquee 20s linear infinite !important;
+    /* SEAMLESS MARQUEE ANIMATION */
+    animation: seamlessMarquee 30s linear infinite !important;
   }
 
   .infoItem {
@@ -1644,13 +1644,13 @@
   }
 }
 
-/* EINFACHE MARQUEE ANIMATION - Von rechts nach links */
-@keyframes simpleMarquee {
+/* SEAMLESS MARQUEE ANIMATION - Kontinuierlich ohne Stopp */
+@keyframes seamlessMarquee {
   0% {
-    transform: translateX(100%);
+    transform: translateX(0);
   }
   100% {
-    transform: translateX(-100%);
+    transform: translateX(-50%); /* Nur zur Hälfte, da Content dupliziert */
   }
 }
 

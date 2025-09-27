@@ -550,6 +550,7 @@ export default function Pricing() {
           transition={{ delay: 0.4, duration: 0.5 }}
         >
           <div className={styles.infoItems}>
+            {/* Erstes Set für seamless loop */}
             <span className={styles.infoItem}>
               📈 <strong>2.847+</strong> analysierte Verträge
             </span>
@@ -570,6 +571,20 @@ export default function Pricing() {
                 🎯 <strong>{testimonials[currentActivity].name}</strong>: „{testimonials[currentActivity].metric}"
               </motion.span>
             </AnimatePresence>
+
+            {/* Dupliziertes Set für seamless loop */}
+            <span className={styles.infoDivider}>•</span>
+            <span className={styles.infoItem}>
+              📈 <strong>2.847+</strong> analysierte Verträge
+            </span>
+            <span className={styles.infoDivider}>•</span>
+            <span className={styles.infoItem}>
+              🛡️ <strong>96%</strong> zufrieden
+            </span>
+            <span className={styles.infoDivider}>•</span>
+            <span className={styles.infoTestimonial}>
+              🎯 <strong>{testimonials[currentActivity].name}</strong>: „{testimonials[currentActivity].metric}"
+            </span>
           </div>
         </motion.div>
 
