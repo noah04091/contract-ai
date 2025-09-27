@@ -1,6 +1,6 @@
 import { useState, useEffect, ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle, X, ExternalLink, Users, Zap, Star, Shield, Clock } from "lucide-react";
+import { CheckCircle, X, Users, Zap, Star, Shield, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet";
 import styles from "../styles/Pricing.module.css";
@@ -199,7 +199,7 @@ export default function Pricing() {
       ],
       color: "#0080FF",
       button: {
-        text: "🚀 Jetzt kostenlos testen",
+        text: "Kostenlos starten",
         action: () => navigate("/register"),
         variant: "outline" as const
       }
@@ -233,7 +233,7 @@ export default function Pricing() {
       color: "#2D7FF9",
       popular: true,
       button: {
-        text: "🔥 Meinen Business-Platz sichern - 60 Tage risikofrei",
+        text: "Business wählen",
         action: () => startCheckout('business'),
         variant: "filled" as const
       }
@@ -267,10 +267,9 @@ export default function Pricing() {
       ],
       color: "#0062E0",
       button: {
-        text: "🏆 Enterprise freischalten - Nie wieder Vertragsrisiken",
+        text: "Enterprise wählen",
         action: () => startCheckout('premium'),
-        variant: "gradient" as const,
-        icon: <ExternalLink size={16} />
+        variant: "gradient" as const
       }
     },
   ];
@@ -903,7 +902,7 @@ export default function Pricing() {
                           <span>Lade Stripe...</span>
                         </>
                       ) : (
-                        "🔥 Business sichern (60 Tage risikofrei)"
+                        "Business wählen"
                       )}
                     </motion.button>
 
@@ -926,7 +925,7 @@ export default function Pricing() {
                           <span>Lade Stripe...</span>
                         </>
                       ) : (
-                        "🏆 Enterprise freischalten (Unlimited Power)"
+                        "Enterprise wählen"
                       )}
                     </motion.button>
                   </div>
