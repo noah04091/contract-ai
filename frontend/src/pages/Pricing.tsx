@@ -578,7 +578,7 @@ export default function Pricing() {
               🎯 <strong>Dr. Sarah Weber</strong>: „2-3h/Tag gespart"
             </span>
 
-            {/* Dupliziertes Set für seamless loop - NUR MOBILE */}
+            {/* 2. Wiederholung für seamless loop */}
             <span className={`${styles.infoDivider} ${styles.mobileMarqueeOnly}`}>•</span>
             <span className={`${styles.infoItem} ${styles.mobileMarqueeOnly}`}>
               📈 <strong>2.847+</strong> analysierte Verträge
@@ -591,6 +591,7 @@ export default function Pricing() {
             <span className={`${styles.infoTestimonial} ${styles.mobileMarqueeOnly}`}>
               🎯 <strong>Dr. Sarah Weber</strong>: „2-3h/Tag gespart"
             </span>
+
           </div>
         </motion.div>
 
