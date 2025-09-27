@@ -1596,7 +1596,7 @@
   }
   /* Fix 1: Header-Spacing mit Force */
   .container {
-    padding-top: 60px !important; /* Weniger Platz da Trust-Bar kleiner wird */
+    padding-top: 30px !important; /* Optimal spacing mit kleinerer Trust-Bar */
   }
 
   /* Fix 2: Peek-Effekt mit Force */

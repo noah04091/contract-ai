@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle, X, Users, Zap, Star, Shield, Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet";
+import Footer from "../components/Footer";
 import styles from "../styles/Pricing.module.css";
 
 // Typdefinitionen
@@ -1128,6 +1129,7 @@ export default function Pricing() {
           </AnimatePresence>
         </div>
       </motion.div>
+      <Footer />
     </>
   );
 }
