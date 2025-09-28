@@ -157,7 +157,9 @@ async function processStripeEvent(event, usersCollection, invoicesCollection) {
     // Payment Confirmation E-Mail nur beim invoice.paid Event senden
     if (eventType === "invoice.paid") {
       try {
-        const amount = (session.amount_paid / 100).toFixed(2);
+        // Bei invoice.paid ist session die Invoice - verwende total oder amount_paid
+        const invoiceAmount = session.total || session.amount_paid || 0;
+        const amount = (invoiceAmount / 100).toFixed(2);
         const paymentDate = new Date(session.created * 1000).toLocaleDateString("de-DE");
 
         await sendEmail({
