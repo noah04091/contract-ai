@@ -107,7 +107,10 @@ export default function Register() {
       if (res.ok) {
         // ✅ Nach erfolgreichem Register → E-Mail-Verification senden
         console.log("✅ Registrierung erfolgreich, sende Verification-E-Mail...");
-        
+
+        // ⏱️ Kurzer Delay um sicherzustellen, dass User in DB gespeichert ist
+        await new Promise(resolve => setTimeout(resolve, 1000));
+
         const emailResult = await sendVerificationEmail(email);
         
         if (emailResult.success) {
