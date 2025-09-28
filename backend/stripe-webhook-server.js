@@ -13,7 +13,92 @@ const generateInvoicePdf = require('./utils/generateInvoicePdf');
 const generateInvoiceNumber = require('./utils/generateInvoiceNumber');
 
 const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
-let pendingEvents = [];
+
+// Event Idempotency Repository
+const eventsRepo = {
+  async has(eventId) {
+    const client = new MongoClient(MONGO_URI);
+    try {
+      await client.connect();
+      const db = client.db("contract_ai");
+      const result = await db.collection("stripe_events").findOne({ _id: eventId });
+      return !!result;
+    } finally {
+      await client.close();
+    }
+  },
+  async mark(eventId) {
+    const client = new MongoClient(MONGO_URI);
+    try {
+      await client.connect();
+      const db = client.db("contract_ai");
+      await db.collection("stripe_events").updateOne(
+        { _id: eventId },
+        { $setOnInsert: { createdAt: new Date() } },
+        { upsert: true }
+      );
+    } finally {
+      await client.close();
+    }
+  }
+};
+
+// Payment Email Anti-Duplicate Repository
+const mailsRepo = {
+  async hasInvoiceMail(invoiceId) {
+    const client = new MongoClient(MONGO_URI);
+    try {
+      await client.connect();
+      const db = client.db("contract_ai");
+      const result = await db.collection("sent_payment_emails").findOne({ _id: invoiceId });
+      return !!result;
+    } finally {
+      await client.close();
+    }
+  },
+  async markInvoiceMail(invoiceId) {
+    const client = new MongoClient(MONGO_URI);
+    try {
+      await client.connect();
+      const db = client.db("contract_ai");
+      await db.collection("sent_payment_emails").updateOne(
+        { _id: invoiceId },
+        { $setOnInsert: { sentAt: new Date() } },
+        { upsert: true }
+      );
+    } finally {
+      await client.close();
+    }
+  }
+};
+
+// Helper: Plan Name von Stripe Invoice Line extrahieren
+function resolvePlanName(line) {
+  const desc = line?.description || ''; // z.B. "1 × Enterprise (at €29.00 / month)"
+  if (desc.includes("Enterprise")) return "Enterprise";
+  if (desc.includes("Business")) return "Business";
+  if (desc.includes("Starter")) return "Starter";
+  if (desc.includes("Premium")) return "Premium";
+  return "Premium"; // Fallback
+}
+
+// Payment Email Template
+function paymentTemplate({ amount, date, plan, accountUrl, invoicesUrl, zeroText }) {
+  return generateEmailTemplate({
+    title: "Zahlung erfolgreich!",
+    body: `
+      <p>✅ Deine Zahlung wurde erfolgreich verarbeitet.</p>
+      <p>💰 Deine Zahlung vom <strong>${date}</strong> über <strong>€${amount}</strong> für dein <strong>${plan}</strong>-Abo wurde erfolgreich verarbeitet.</p>
+      ${zeroText ? `<p>${zeroText}</p>` : ""}
+      <p>📄 Die Rechnung erhältst du separat per E-Mail. Du findest alle Rechnungen auch in deinem Account unter „Profil".</p>
+    `,
+    preheader: "Deine Zahlung wurde erfolgreich verarbeitet.",
+    cta: {
+      text: "Zum Dashboard",
+      url: accountUrl
+    }
+  });
+}
 
 const server = http.createServer((req, res) => {
   if (req.method === 'POST' && req.url === '/stripe/webhook') {
@@ -48,11 +133,30 @@ const server = http.createServer((req, res) => {
         }
 
         console.log(`✅ Webhook validiert: ${event.type}`);
+
+        // ACK-first: Sofort 200 senden, dann async verarbeiten
         res.statusCode = 200;
         res.end('Webhook Received');
 
-        pendingEvents.push(event);
-        processEvents().catch(err => console.error("Fehler bei Ereignisverarbeitung:", err));
+        // Idempotenz + Fire-and-forget: Async processing ohne Blockierung
+        setImmediate(async () => {
+          try {
+            // Event-Idempotenz: nur einmal verarbeiten
+            const alreadyProcessed = await eventsRepo.has(event.id);
+            if (alreadyProcessed) {
+              console.log(`🔄 Event ${event.type} (${event.id}) bereits verarbeitet, überspringe`);
+              return;
+            }
+
+            // Event als verarbeitet markieren
+            await eventsRepo.mark(event.id);
+
+            // Event verarbeiten
+            await handleStripeEvent(event);
+          } catch (err) {
+            console.error(`❌ Fehler bei Event-Verarbeitung ${event.type}:`, err);
+          }
+        });
 
       } catch (err) {
         console.error('❌ Allgemeiner Fehler:', err);
@@ -66,30 +170,85 @@ const server = http.createServer((req, res) => {
   }
 });
 
-async function processEvents() {
-  if (pendingEvents.length === 0) return;
+// Neue Event Handler nach ChatGPT's Plan
+async function handleStripeEvent(event) {
+  console.log(`🔄 Verarbeite Event: ${event.type}`);
 
-  try {
-    const client = new MongoClient(MONGO_URI);
-    await client.connect();
-    const db = client.db("contract_ai");
-    const usersCollection = db.collection("users");
-    const invoicesCollection = db.collection("invoices");
+  switch (event.type) {
+    case "invoice.paid": {
+      const invoice = event.data.object; // Stripe Invoice
 
-    console.log(`⚙️ Verarbeite ${pendingEvents.length} Stripe-Events...`);
-
-    for (const event of [...pendingEvents]) {
-      try {
-        await processStripeEvent(event, usersCollection, invoicesCollection);
-        pendingEvents = pendingEvents.filter(e => e.id !== event.id);
-      } catch (err) {
-        console.error(`❌ Fehler bei Verarbeitung von Event ${event.type}:`, err);
+      // Anti-Duplikat: nur einmal pro invoice.id
+      if (await mailsRepo.hasInvoiceMail(invoice.id)) {
+        console.log(`📧 Payment Email für Invoice ${invoice.id} bereits gesendet, überspringe`);
+        return;
       }
+
+      // Betrag und Datum extrahieren
+      const amount = (invoice.amount_paid / 100).toFixed(2); // "0.00" Format
+      const paidAt = invoice.status_transitions?.paid_at
+        ? new Date(invoice.status_transitions.paid_at * 1000).toLocaleDateString("de-DE")
+        : new Date().toLocaleDateString("de-DE");
+
+      // Plan aus Invoice Line extrahieren
+      const line = invoice.lines?.data?.[0];
+      const plan = resolvePlanName(line);
+
+      const customerEmail = invoice.customer_email;
+      const isZero = (invoice.amount_paid || 0) === 0;
+
+      // Policy: 0,00 € – keine Payment-Mail bei Gutscheinen
+      const SEND_ZERO_EURO = false;
+      if (isZero && !SEND_ZERO_EURO) {
+        console.log(`💰 Invoice ${invoice.id} ist €0.00 (Gutschein), überspringe Payment Email`);
+        await mailsRepo.markInvoiceMail(invoice.id);
+        return;
+      }
+
+      // Payment Confirmation Email senden
+      try {
+        await sendEmail({
+          to: customerEmail,
+          subject: `💳 Zahlung bestätigt - €${amount} für dein ${plan}-Abo`,
+          html: paymentTemplate({
+            amount,
+            date: paidAt,
+            plan,
+            accountUrl: "https://contract-ai.de/dashboard",
+            invoicesUrl: "https://contract-ai.de/profile",
+            zeroText: isZero ? "Gutschein angewendet – Gesamt 0,00 €" : null
+          })
+        });
+
+        console.log(`💳 Payment Confirmation Email gesendet an ${customerEmail} für €${amount}`);
+        await mailsRepo.markInvoiceMail(invoice.id);
+      } catch (err) {
+        console.error(`❌ Fehler beim Senden der Payment Email:`, err);
+        // Nicht als versendet markieren, damit Retry möglich ist
+      }
+
+      return;
     }
 
-    await client.close();
-  } catch (err) {
-    console.error("❌ MongoDB-Verbindungsfehler:", err);
+    case "checkout.session.completed": {
+      // Weiterhin die bestehende Welcome + Invoice Logik nutzen
+      const client = new MongoClient(MONGO_URI);
+      try {
+        await client.connect();
+        const db = client.db("contract_ai");
+        const usersCollection = db.collection("users");
+        const invoicesCollection = db.collection("invoices");
+
+        await processStripeEvent(event, usersCollection, invoicesCollection);
+      } finally {
+        await client.close();
+      }
+      return;
+    }
+
+    default:
+      console.log(`ℹ️ Event ${event.type} nicht behandelt`);
+      return;
   }
 }
 
@@ -153,39 +312,6 @@ async function processStripeEvent(event, usersCollection, invoicesCollection) {
     );
 
     console.log(`✅ User ${email || user.email} auf ${plan} aktualisiert`);
-
-    // Payment Confirmation E-Mail nur beim invoice.paid Event senden
-    if (eventType === "invoice.paid") {
-      console.log(`💳 Verarbeite invoice.paid Event für ${email}`);
-      try {
-        // Bei invoice.paid ist session die Invoice - verwende total oder amount_paid
-        const invoiceAmount = session.total || session.amount_paid || 0;
-        const amount = (invoiceAmount / 100).toFixed(2);
-        const paymentDate = new Date(session.created * 1000).toLocaleDateString("de-DE");
-
-        await sendEmail({
-          to: email,
-          subject: `💳 Zahlung bestätigt - €${amount} für ${plan}-Abo`,
-          html: generateEmailTemplate({
-            title: "Zahlung erfolgreich!",
-            body: `
-              <p>✅ Deine Zahlung wurde erfolgreich verarbeitet.</p>
-              <p>💰 Deine Zahlung vom ${paymentDate} über €${amount} für dein ${plan.charAt(0).toUpperCase() + plan.slice(1)}-Abo wurde erfolgreich verarbeitet.</p>
-              <p>📄 Deine Rechnung erhältst du separat per E-Mail.</p>
-              <p>📋 Alle Rechnungen findest du auch in deinem Account unter dem Profil.</p>
-            `,
-            preheader: "Deine Zahlung wurde erfolgreich verarbeitet.",
-            cta: {
-              text: "Zum Dashboard",
-              url: "https://contract-ai.de/dashboard"
-            }
-          })
-        });
-        console.log(`💳 Payment Confirmation E-Mail gesendet an ${email}`);
-      } catch (err) {
-        console.error(`❌ Fehler beim Senden der Payment Confirmation E-Mail:`, err);
-      }
-    }
 
     // Willkommensmail nur beim checkout.session.completed Event senden
     if (eventType === "checkout.session.completed") {
