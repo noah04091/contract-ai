@@ -8,43 +8,64 @@ const router = express.Router();
 // E-Mail-Templates und Utilities importieren
 const sendEmailHtml = require("../utils/sendEmailHtml");
 const generateEmailTemplate = require("../utils/emailTemplate");
+const { normalizeEmail } = require("../utils/normalizeEmail");
 
 module.exports = function(db) {
   const usersCollection = db.collection("users");
 
-  // ✅ 1. VERIFICATION E-MAIL SENDEN
+  // ✅ 1. VERIFICATION E-MAIL SENDEN - IDEMPOTENT mit Cooldown
   router.post("/send-verification", async (req, res) => {
-    try {
-      const { email } = req.body;
+    const COOLDOWN_MS = 60_000; // 60 Sekunden Cooldown
 
-      if (!email) {
+    try {
+      const { email: rawEmail } = req.body;
+
+      if (!rawEmail) {
         return res.status(400).json({ message: "E-Mail ist erforderlich" });
       }
 
+      const email = normalizeEmail(rawEmail);
+
       // User in DB finden
-      const user = await usersCollection.findOne({ email: email.toLowerCase() });
-      
+      const user = await usersCollection.findOne({ email });
+
       if (!user) {
+        console.error(`❌ send-verification: User nicht gefunden - rawEmail: ${rawEmail}, normalizedEmail: ${email}`);
         return res.status(404).json({ message: "User nicht gefunden" });
       }
 
       // Prüfen ob bereits verifiziert
       if (user.verified === true) {
-        return res.status(400).json({ message: "User ist bereits verifiziert" });
+        return res.json({ status: "already_verified", message: "User ist bereits verifiziert" });
+      }
+
+      // Cooldown prüfen - Idempotenz für wiederholte Calls
+      const now = Date.now();
+      if (user.lastVerificationSentAt) {
+        const timeSinceLastSent = now - new Date(user.lastVerificationSentAt).getTime();
+        if (timeSinceLastSent < COOLDOWN_MS) {
+          console.log(`✅ send-verification: Cooldown aktiv für ${email} - ${Math.ceil((COOLDOWN_MS - timeSinceLastSent) / 1000)}s verbleibend`);
+          return res.json({
+            status: "already_sent_recently",
+            message: "E-Mail wurde kürzlich gesendet",
+            retryAfter: Math.ceil((COOLDOWN_MS - timeSinceLastSent) / 1000)
+          });
+        }
       }
 
       // Neuen Verification-Token generieren
       const verificationToken = crypto.randomBytes(32).toString('hex');
       const tokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h gültig
 
-      // Token in DB speichern
+      // Token in DB speichern + Cooldown-Timestamp setzen
       await usersCollection.updateOne(
-        { email: email.toLowerCase() },
-        { 
-          $set: { 
+        { email },
+        {
+          $set: {
             verificationToken,
             verificationTokenExpiry: tokenExpiry,
-            tokenUpdatedAt: new Date()
+            tokenUpdatedAt: new Date(),
+            lastVerificationSentAt: new Date(now)
           }
         }
       );
@@ -177,8 +198,9 @@ module.exports = function(db) {
       await sendEmailHtml(email, "Contract AI - E-Mail-Adresse bestätigen", emailHtml);
 
       console.log(`✅ Verification-E-Mail gesendet an: ${email}`);
-      
-      res.json({ 
+
+      res.json({
+        status: "queued",
         message: "Bestätigungs-E-Mail wurde gesendet",
         email: email,
         tokenExpiry: tokenExpiry

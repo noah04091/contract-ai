@@ -26,31 +26,61 @@ export default function Register() {
   const fromPricing = searchParams.get('from') === 'pricing';
   const selectedPlan = searchParams.get('plan');
 
-  // ✅ E-Mail-Verification senden
-  const sendVerificationEmail = async (emailToVerify: string) => {
-    try {
-      const response = await fetch("/api/email-verification/send-verification", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ email: emailToVerify }),
-      });
+  // ✅ E-Mail-Verification senden mit Retry-Logic
+  const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-      const data = await response.json();
-      
-      if (response.ok) {
-        console.log("✅ Verification-E-Mail gesendet:", data);
-        return { success: true, message: data.message };
-      } else {
-        console.error("❌ Fehler beim E-Mail-Versand:", data);
-        return { success: false, message: data.message || "Fehler beim Senden der E-Mail" };
+  const sendVerificationEmail = async (emailToVerify: string) => {
+    // Kleiner Puffer nach Registration
+    await sleep(400);
+
+    const attempts = [0, 300, 800, 1500]; // sofort + 3 Retries mit exponential backoff
+
+    for (let i = 0; i < attempts.length; i++) {
+      if (attempts[i]) {
+        console.log(`⏳ Retry ${i}/${attempts.length - 1} nach ${attempts[i]}ms...`);
+        await sleep(attempts[i]);
       }
-    } catch (error) {
-      console.error("❌ Network error beim E-Mail-Versand:", error);
-      return { success: false, message: "Verbindung fehlgeschlagen" };
+
+      try {
+        const response = await fetch("/api/email-verification/send-verification", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({ email: emailToVerify }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          // Erfolg oder idempotente Responses (kein Fehler)
+          if (data.status === "queued" || data.status === "already_sent_recently" || data.status === "already_verified") {
+            console.log(`✅ E-Mail-Verifikation: ${data.status} -`, data);
+            return { success: true, message: data.message };
+          }
+        }
+
+        // Bei 4xx/5xx Fehlern: letzter Versuch = echten Fehler zurückgeben
+        if (i === attempts.length - 1) {
+          console.error("❌ Finaler Fehler beim E-Mail-Versand:", data);
+          return { success: false, message: data.message || "Fehler beim Senden der E-Mail" };
+        }
+
+        console.warn(`⚠️ Versuch ${i + 1} fehlgeschlagen (${response.status}), retry...`);
+
+      } catch (err) {
+        // Netzwerk-Fehler: letzter Versuch = echten Fehler zurückgeben
+        if (i === attempts.length - 1) {
+          console.error("❌ Finaler Netzwerk-Fehler beim E-Mail-Versand:", err);
+          return { success: false, message: "Verbindung fehlgeschlagen" };
+        }
+
+        console.warn(`⚠️ Netzwerk-Fehler bei Versuch ${i + 1}, retry...`, err);
+      }
     }
+
+    return { success: false, message: "Alle Versuche fehlgeschlagen" };
   };
 
   // ✅ Resend E-Mail mit Cooldown

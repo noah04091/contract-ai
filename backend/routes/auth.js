@@ -7,6 +7,7 @@ const crypto = require("crypto");
 const { ObjectId } = require("mongodb");
 const verifyToken = require("../middleware/verifyToken");
 const sendEmail = require("../utils/sendEmail");
+const { normalizeEmail } = require("../utils/normalizeEmail");
 require("dotenv").config();
 
 // 🔐 Konfiguration
@@ -38,9 +39,11 @@ module.exports = (db) => {
 
 // ✅ Registrierung - ERWEITERT mit Double-Opt-In
 router.post("/register", async (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password)
+  const { email: rawEmail, password } = req.body;
+  if (!rawEmail || !password)
     return res.status(400).json({ message: "❌ E-Mail und Passwort erforderlich" });
+
+  const email = normalizeEmail(rawEmail);
 
   try {
     const existing = await usersCollection.findOne({ email });
@@ -93,9 +96,11 @@ router.post("/register", async (req, res) => {
 
 // ✅ Login - ERWEITERT mit Double-Opt-In Check
 router.post("/login", async (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password)
+  const { email: rawEmail, password } = req.body;
+  if (!rawEmail || !password)
     return res.status(400).json({ message: "❌ E-Mail und Passwort erforderlich" });
+
+  const email = normalizeEmail(rawEmail);
 
   try {
     const user = await usersCollection.findOne({ email });
@@ -261,9 +266,11 @@ router.delete("/delete", verifyToken, async (req, res) => {
 
 // 📩 Passwort vergessen
 router.post("/forgot-password", async (req, res) => {
-  const { email } = req.body;
-  if (!email)
+  const { email: rawEmail } = req.body;
+  if (!rawEmail)
     return res.status(400).json({ message: "❌ E-Mail ist erforderlich" });
+
+  const email = normalizeEmail(rawEmail);
 
   try {
     const user = await usersCollection.findOne({ email });
