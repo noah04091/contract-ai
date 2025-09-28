@@ -154,6 +154,36 @@ async function processStripeEvent(event, usersCollection, invoicesCollection) {
 
     console.log(`✅ User ${email || user.email} auf ${plan} aktualisiert`);
 
+    // Payment Confirmation E-Mail nur beim invoice.paid Event senden
+    if (eventType === "invoice.paid") {
+      try {
+        const amount = (session.amount_paid / 100).toFixed(2);
+        const paymentDate = new Date(session.created * 1000).toLocaleDateString("de-DE");
+
+        await sendEmail({
+          to: email,
+          subject: `💳 Zahlung bestätigt - €${amount} für ${plan}-Abo`,
+          html: generateEmailTemplate({
+            title: "Zahlung erfolgreich!",
+            body: `
+              <p>✅ Deine Zahlung wurde erfolgreich verarbeitet.</p>
+              <p>💰 Deine Zahlung vom ${paymentDate} über €${amount} für dein ${plan.charAt(0).toUpperCase() + plan.slice(1)}-Abo wurde erfolgreich verarbeitet.</p>
+              <p>📄 Deine Rechnung erhältst du separat per E-Mail.</p>
+              <p>📋 Alle Rechnungen findest du auch in deinem Account unter dem Profil.</p>
+            `,
+            preheader: "Deine Zahlung wurde erfolgreich verarbeitet.",
+            cta: {
+              text: "Zum Dashboard",
+              url: "https://contract-ai.de/dashboard"
+            }
+          })
+        });
+        console.log(`💳 Payment Confirmation E-Mail gesendet an ${email}`);
+      } catch (err) {
+        console.error(`❌ Fehler beim Senden der Payment Confirmation E-Mail:`, err);
+      }
+    }
+
     // Willkommensmail nur beim checkout.session.completed Event senden
     if (eventType === "checkout.session.completed") {
       await sendEmail({
