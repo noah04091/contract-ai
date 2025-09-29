@@ -417,8 +417,8 @@
 /* Card Styling */
 .cardWrapper {
   flex: 1;
-  min-width: 280px;
-  max-width: 385px;
+  min-width: 320px;
+  max-width: 420px;
   perspective: 1500px;
   position: relative;
 }
@@ -444,6 +444,16 @@
   -webkit-backdrop-filter: blur(20px);
 }
 
+/* Hover-Effekt für alle Karten */
+.card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow:
+    0 25px 70px rgba(0, 0, 0, 0.1),
+    0 12px 35px rgba(0, 0, 0, 0.06),
+    0 0 0 1px rgba(255, 255, 255, 1) inset;
+  border-color: rgba(0, 113, 227, 0.2);
+}
+
 .card::before {
   content: '';
   position: absolute;
@@ -458,12 +468,22 @@
 .popularCard {
   background: rgba(255, 255, 255, 1);
   border: 1px solid rgba(0, 113, 227, 0.15);
-  box-shadow: 
-    0 20px 50px rgba(0, 113, 227, 0.12), 
+  box-shadow:
+    0 20px 50px rgba(0, 113, 227, 0.12),
     0 10px 30px rgba(0, 0, 0, 0.03),
     0 0 0 1px rgba(255, 255, 255, 0.7) inset;
   transform: translateY(-5px) scale(1.02);
   z-index: 2;
+}
+
+/* Spezielle Hover-Effekte für popularCard */
+.popularCard:hover {
+  transform: translateY(-12px) scale(1.04);
+  box-shadow:
+    0 30px 80px rgba(0, 113, 227, 0.2),
+    0 15px 40px rgba(0, 0, 0, 0.06),
+    0 0 0 1px rgba(0, 113, 227, 0.3) inset;
+  border-color: rgba(0, 113, 227, 0.3);
 }
 
 .popularBadge {
@@ -515,6 +535,14 @@
   background: linear-gradient(to bottom, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0));
   opacity: 0.8;
   pointer-events: none;
+}
+
+/* Icon Hover-Effekt wenn Karte gehovered wird */
+.card:hover .iconWrapper {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow:
+    0 6px 20px rgba(0, 0, 0, 0.08),
+    inset 0 0 0 1px rgba(255, 255, 255, 1);
 }
 
 .planTitle {
@@ -1283,12 +1311,21 @@
 
   .cardWrapper {
     width: 100%;
-    max-width: 480px;
+    max-width: 520px;
     margin-bottom: 2rem;
   }
 
   .popularCard {
     transform: scale(1.02);
+  }
+
+  /* Hover-Effekte auf Tablets beibehalten */
+  .card:hover {
+    transform: translateY(-6px) scale(1.02);
+  }
+
+  .popularCard:hover {
+    transform: translateY(-10px) scale(1.03);
   }
 }
 
