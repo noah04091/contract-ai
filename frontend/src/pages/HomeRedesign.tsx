@@ -1017,10 +1017,15 @@ const HomeRedesign = () => {
               <div className="pricing-plan standard reveal-card" style={{"--animation-order": 0} as React.CSSProperties}>
                 <div className="plan-header">
                   <div className="plan-name">Starter</div>
-                  <div className="plan-price">
-                    <span className="currency">€</span>
-                    <span className="amount">0</span>
-                    <span className="period"></span>
+                  <div className="plan-price-container">
+                    {/* Invisible placeholder für Alignment */}
+                    <div className="plan-sale-badge" style={{visibility: 'hidden'}}>PLACEHOLDER</div>
+                    <span className="plan-original-price" style={{visibility: 'hidden'}}>0€</span>
+                    <div className="plan-price">
+                      <span className="currency">€</span>
+                      <span className="amount">0</span>
+                      <span className="period"></span>
+                    </div>
                   </div>
                   <div className="plan-billing">für immer kostenlos</div>
                 </div>
