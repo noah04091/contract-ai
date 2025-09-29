@@ -1066,12 +1066,9 @@ const HomeRedesign = () => {
                 <div className="plan-badge">Beliebt</div>
                 <div className="plan-header">
                   <div className="plan-name">Business</div>
-                  <div className="plan-price-wrapper">
-                    <div className="plan-price-badge">33% RABATT</div>
-                    <div className="plan-price-original">
-                      <span className="currency">€</span>
-                      <span className="amount">29</span>
-                    </div>
+                  <div className="plan-price-container">
+                    <div className="plan-sale-badge">33% RABATT</div>
+                    <span className="plan-original-price">29€</span>
                     <div className="plan-price">
                       <span className="currency">€</span>
                       <span className="amount">19</span>
@@ -1120,12 +1117,9 @@ const HomeRedesign = () => {
               <div className="pricing-plan enterprise reveal-card" style={{"--animation-order": 2} as React.CSSProperties}>
                 <div className="plan-header">
                   <div className="plan-name">Enterprise</div>
-                  <div className="plan-price-wrapper">
-                    <div className="plan-price-badge">25% RABATT</div>
-                    <div className="plan-price-original">
-                      <span className="currency">€</span>
-                      <span className="amount">39</span>
-                    </div>
+                  <div className="plan-price-container">
+                    <div className="plan-sale-badge">25% RABATT</div>
+                    <span className="plan-original-price">39€</span>
                     <div className="plan-price">
                       <span className="currency">€</span>
                       <span className="amount">29</span>
