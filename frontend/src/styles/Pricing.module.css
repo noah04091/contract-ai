@@ -404,12 +404,15 @@
   width: 100%;
   position: relative;
   padding: 0 2rem;
+  overflow: visible; /* Schatten sichtbar machen */
 }
 
 /* More spacing on desktop between heading and cards */
 @media (min-width: 768px) {
   .plansContainer {
     margin-top: 4rem;
+    padding-top: 2rem; /* Mehr Raum oben für Schatten */
+    padding-bottom: 3rem; /* Mehr Raum unten für Schatten */
   }
 }
 
@@ -419,6 +422,7 @@
   justify-content: center;
   margin-bottom: 5rem;
   perspective: 2000px;
+  overflow: visible; /* Schatten sichtbar machen */
 }
 
 /* Card Styling */
@@ -428,6 +432,7 @@
   max-width: 420px;
   perspective: 1500px;
   position: relative;
+  margin: 1rem 0; /* Margin für Schatten-Space */
 }
 
 
