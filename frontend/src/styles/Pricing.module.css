@@ -1345,7 +1345,7 @@
 
   .plans {
     flex-direction: row;
-    align-items: stretch;
+    align-items: flex-start; /* flex-start statt stretch für besseren Schatten */
     justify-content: flex-start;
     overflow-x: auto !important;
     overflow-y: visible !important; /* Schatten oben/unten sichtbar */
@@ -1354,10 +1354,10 @@
     scroll-snap-type: x proximity; /* proximity statt mandatory = weniger aggressiv */
     -webkit-overflow-scrolling: touch;
     gap: 1rem;
-    padding: 4rem 5% !important; /* MEHR Padding oben/unten erzwingen */
+    padding: 4rem 5% 6rem 5% !important; /* NOCH mehr Padding unten (6rem) */
     margin: 0;
     touch-action: pan-x pan-y; /* Erlaubt vertikales Scrollen */
-    min-height: 650px; /* Genug Höhe für Karten + Schatten */
+    min-height: 700px; /* Mehr Höhe */
 
     /* Hide scrollbar but keep functionality */
     scrollbar-width: none;
@@ -1372,14 +1372,18 @@
     flex: 0 0 85%; /* 85% Breite für besseren Peek-Effekt */
     width: 85%;
     max-width: none;
-    margin: 2rem 0 !important; /* Extra Margin oben/unten für Schatten-Space */
+    margin: 2rem 0 3rem 0 !important; /* MEHR Margin unten (3rem) für Schatten-Space */
     scroll-snap-align: center;
     scroll-snap-stop: normal; /* normal statt always = weniger strikt */
   }
 
   /* Card selbst braucht auch Platz für Schatten */
   .card {
-    margin: 1rem 0 !important; /* Extra Margin für Schatten */
+    margin: 1rem 0 2rem 0 !important; /* MEHR Margin unten (2rem) für Schatten */
+    box-shadow:
+      0 20px 60px rgba(0, 0, 0, 0.06),
+      0 8px 25px rgba(0, 0, 0, 0.04),
+      0 0 0 1px rgba(255, 255, 255, 0.8) inset !important; /* Schatten erzwingen */
   }
 
   /* Entferne die alten margin-left/right */
