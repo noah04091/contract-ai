@@ -1064,17 +1064,19 @@ const HomeRedesign = () => {
 
               <div className="pricing-plan premium reveal-card" style={{"--animation-order": 1} as React.CSSProperties}>
                 <div className="plan-badge">Beliebt</div>
-                {/* Sale Badge + Original Price in Ecke */}
-                <div className="plan-sale-corner">
-                  <div className="plan-sale-badge">33% RABATT</div>
-                  <span className="plan-original-price">29€</span>
-                </div>
                 <div className="plan-header">
                   <div className="plan-name">Business</div>
-                  <div className="plan-price">
-                    <span className="currency">€</span>
-                    <span className="amount">19</span>
-                    <span className="period">/Monat</span>
+                  {/* Rabatt und alter Preis kompakt über dem Hauptpreis */}
+                  <div className="plan-price-wrapper">
+                    <div className="plan-discount-info">
+                      <span className="plan-sale-badge-inline">33% RABATT</span>
+                      <span className="plan-original-price-inline">29€</span>
+                    </div>
+                    <div className="plan-price">
+                      <span className="currency">€</span>
+                      <span className="amount">19</span>
+                      <span className="period">/Monat</span>
+                    </div>
                   </div>
                   <div className="plan-billing">Die goldene Mitte für Professionals & Kanzleien</div>
                 </div>
@@ -1116,17 +1118,19 @@ const HomeRedesign = () => {
               </div>
 
               <div className="pricing-plan enterprise reveal-card" style={{"--animation-order": 2} as React.CSSProperties}>
-                {/* Sale Badge + Original Price in Ecke */}
-                <div className="plan-sale-corner">
-                  <div className="plan-sale-badge">25% RABATT</div>
-                  <span className="plan-original-price">39€</span>
-                </div>
                 <div className="plan-header">
                   <div className="plan-name">Enterprise</div>
-                  <div className="plan-price">
-                    <span className="currency">€</span>
-                    <span className="amount">29</span>
-                    <span className="period">/Monat</span>
+                  {/* Rabatt und alter Preis kompakt über dem Hauptpreis */}
+                  <div className="plan-price-wrapper">
+                    <div className="plan-discount-info">
+                      <span className="plan-sale-badge-inline">25% RABATT</span>
+                      <span className="plan-original-price-inline">39€</span>
+                    </div>
+                    <div className="plan-price">
+                      <span className="currency">€</span>
+                      <span className="amount">29</span>
+                      <span className="period">/Monat</span>
+                    </div>
                   </div>
                   <div className="plan-billing">Maximale Power für Teams & Großkanzleien</div>
                 </div>

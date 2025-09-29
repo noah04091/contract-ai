@@ -2951,67 +2951,62 @@ a[href*="kontakt"]:hover,
   color: transparent;
 }
 
-/* Sale Corner - Rechts oben in der Karte */
-.plan-sale-corner {
-  position: absolute;
-  top: 20px;
-  right: 20px;
+/* Price Wrapper - enthält Discount Info + Preis */
+.plan-price-wrapper {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  gap: 0.4rem;
-  z-index: 5;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 1rem 0;
 }
 
-/* Sale Badge */
-.plan-sale-badge {
+/* Discount Info - Badge + durchgestrichener Preis in einer Zeile */
+.plan-discount-info {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  justify-content: center;
+}
+
+/* Sale Badge Inline */
+.plan-sale-badge-inline {
   background: linear-gradient(135deg, #ff3b30, #ff6b35);
   color: white;
   font-size: 0.65rem;
   font-weight: 700;
-  padding: 0.35rem 0.75rem;
+  padding: 0.3rem 0.7rem;
   border-radius: 20px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  box-shadow: 0 4px 12px rgba(255, 59, 48, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  box-shadow: 0 3px 10px rgba(255, 59, 48, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3);
   font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif;
   white-space: nowrap;
-  animation: pulse-sale 2s ease-in-out infinite;
 }
 
-@keyframes pulse-sale {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
-  }
-}
-
-/* Original Price (durchgestrichen) */
-.plan-original-price {
-  font-size: 0.95rem;
+/* Original Price Inline (durchgestrichen) */
+.plan-original-price-inline {
+  font-size: 1rem;
   color: #86868b;
   text-decoration: line-through;
   font-weight: 600;
   font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif;
-  opacity: 0.75;
+  opacity: 0.7;
 }
 
-/* Mobile Anpassungen für Sale Corner */
+/* Mobile Anpassungen */
 @media (max-width: 768px) {
-  .plan-sale-corner {
-    top: 15px;
-    right: 15px;
+  .plan-discount-info {
+    flex-direction: column;
+    gap: 0.3rem;
   }
 
-  .plan-sale-badge {
+  .plan-sale-badge-inline {
     font-size: 0.6rem;
-    padding: 0.3rem 0.65rem;
+    padding: 0.25rem 0.6rem;
   }
 
-  .plan-original-price {
-    font-size: 0.85rem;
+  .plan-original-price-inline {
+    font-size: 0.9rem;
   }
 }
 
