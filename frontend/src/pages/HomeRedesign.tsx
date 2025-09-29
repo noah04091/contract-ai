@@ -1016,111 +1016,123 @@ const HomeRedesign = () => {
             <div className="pricing-plans">
               <div className="pricing-plan standard reveal-card" style={{"--animation-order": 0} as React.CSSProperties}>
                 <div className="plan-header">
-                  <div className="plan-name">Free</div>
+                  <div className="plan-name">Starter</div>
                   <div className="plan-price">
                     <span className="currency">€</span>
                     <span className="amount">0</span>
                     <span className="period"></span>
                   </div>
-                  <div className="plan-billing">für immer</div>
+                  <div className="plan-billing">für immer kostenlos</div>
                 </div>
                 <ul className="plan-features">
                   <li>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <polyline points="20 6 9 17 4 12"></polyline>
                     </svg>
-                    Perfekt zum Testen
+                    3 Vertragsanalysen kostenlos
                   </li>
                   <li>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <polyline points="20 6 9 17 4 12"></polyline>
                     </svg>
-                    Für gelegentliche Nutzung
+                    Basis-Upload & PDF-Anzeige
                   </li>
                   <li>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <polyline points="20 6 9 17 4 12"></polyline>
                     </svg>
-                    Grundfunktionen
+                    KI-Zusammenfassung & Risiko-Score
+                  </li>
+                  <li>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    Community Support
                   </li>
                   <li className="unavailable">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <line x1="18" y1="6" x2="6" y2="18"></line>
                       <line x1="6" y1="6" x2="18" y2="18"></line>
                     </svg>
-                    Erweiterte Funktionen
-                  </li>
-                  <li className="unavailable">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <line x1="18" y1="6" x2="6" y2="18"></line>
-                      <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                    Unbegrenzte Analysen
+                    Keine Optimierung oder Vergleich
                   </li>
                 </ul>
                 <Link to="/register?plan=free" className="plan-cta">
-                  Free wählen
+                  Kostenlos starten
                 </Link>
               </div>
-              
+
               <div className="pricing-plan premium reveal-card" style={{"--animation-order": 1} as React.CSSProperties}>
                 <div className="plan-badge">Beliebt</div>
                 <div className="plan-header">
                   <div className="plan-name">Business</div>
-                  <div className="plan-price">
-                    <span className="currency">€</span>
-                    <span className="amount">4,90</span>
-                    <span className="period">/Monat</span>
+                  <div className="plan-price-wrapper">
+                    <div className="plan-price-badge">33% RABATT</div>
+                    <div className="plan-price-original">
+                      <span className="currency">€</span>
+                      <span className="amount">29</span>
+                    </div>
+                    <div className="plan-price">
+                      <span className="currency">€</span>
+                      <span className="amount">19</span>
+                      <span className="period">/Monat</span>
+                    </div>
                   </div>
-                  <div className="plan-billing">Für Freelancer und kleine Teams</div>
+                  <div className="plan-billing">Die goldene Mitte für Professionals & Kanzleien</div>
                 </div>
                 <ul className="plan-features">
                   <li>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <polyline points="20 6 9 17 4 12"></polyline>
                     </svg>
-                    Bis zu 50 Vertragsanalysen
+                    15 Vertragsanalysen pro Monat
                   </li>
                   <li>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <polyline points="20 6 9 17 4 12"></polyline>
                     </svg>
-                    Fristenerkennung & Benachrichtigungen
+                    Vertragsvergleich & KI-Optimierung
                   </li>
                   <li>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <polyline points="20 6 9 17 4 12"></polyline>
                     </svg>
-                    Basisoptimierung
+                    Intelligenter KI-Chat zum Vertrag
                   </li>
                   <li>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <polyline points="20 6 9 17 4 12"></polyline>
                     </svg>
-                    Vertragsvergleich
+                    Automatische Deadline-Erinnerungen
                   </li>
-                  <li className="unavailable">
+                  <li>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <line x1="18" y1="6" x2="6" y2="18"></line>
-                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                      <polyline points="20 6 9 17 4 12"></polyline>
                     </svg>
-                    Unbegrenzte Analysen
+                    Priority Support (24h Response)
                   </li>
                 </ul>
                 <Link to="/register?plan=business" className="plan-cta premium-cta">
                   Business wählen
                 </Link>
               </div>
-              
+
               <div className="pricing-plan enterprise reveal-card" style={{"--animation-order": 2} as React.CSSProperties}>
                 <div className="plan-header">
-                  <div className="plan-name">Premium</div>
-                  <div className="plan-price">
-                    <span className="currency">€</span>
-                    <span className="amount">9,90</span>
-                    <span className="period">/Monat</span>
+                  <div className="plan-name">Enterprise</div>
+                  <div className="plan-price-wrapper">
+                    <div className="plan-price-badge">25% RABATT</div>
+                    <div className="plan-price-original">
+                      <span className="currency">€</span>
+                      <span className="amount">39</span>
+                    </div>
+                    <div className="plan-price">
+                      <span className="currency">€</span>
+                      <span className="amount">29</span>
+                      <span className="period">/Monat</span>
+                    </div>
                   </div>
-                  <div className="plan-billing">Unbegrenzte Features für Profis</div>
+                  <div className="plan-billing">Maximale Power für Teams & Großkanzleien</div>
                 </div>
                 <ul className="plan-features">
                   <li>
@@ -1133,29 +1145,35 @@ const HomeRedesign = () => {
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <polyline points="20 6 9 17 4 12"></polyline>
                     </svg>
-                    Erweiterte Fristenverwaltung
+                    Erweiterte Vertragsoptimierung
                   </li>
                   <li>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <polyline points="20 6 9 17 4 12"></polyline>
                     </svg>
-                    Erweiterte Optimierung
+                    KI-Vertragserstellung & Templates
                   </li>
                   <li>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <polyline points="20 6 9 17 4 12"></polyline>
                     </svg>
-                    Vertragsvergleich & -generator
+                    White-Label PDF-Export
                   </li>
                   <li>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <polyline points="20 6 9 17 4 12"></polyline>
                     </svg>
-                    Prioritäts-Support
+                    Team-Management (bis 10 User)
+                  </li>
+                  <li>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    Dedicated Account Manager
                   </li>
                 </ul>
                 <Link to="/register?plan=premium" className="plan-cta enterprise-cta">
-                  Premium wählen
+                  Enterprise wählen
                 </Link>
               </div>
             </div>
