@@ -1337,6 +1337,7 @@
     margin-left: calc(-50vw + 50%);
     margin-right: calc(-50vw + 50%);
     padding: 0;
+    overflow: visible; /* Wichtig: Overflow auf visible für Schatten */
   }
 
   .plans {
@@ -1344,12 +1345,12 @@
     align-items: stretch;
     justify-content: flex-start;
     overflow-x: auto;
-    overflow-y: visible;
+    overflow-y: visible; /* Schatten oben/unten sichtbar */
     scroll-behavior: smooth;
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
     gap: 1rem;
-    padding: 0 5% 1rem 5%; /* 5% Padding für Peek-Effekt */
+    padding: 2rem 5% 3rem 5%; /* Mehr Padding oben/unten für Schatten */
     margin-bottom: 2rem;
 
     /* Hide scrollbar but keep functionality */
