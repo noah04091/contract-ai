@@ -1331,6 +1331,14 @@
 
 /* Mobile Horizontal Swipe Cards mit ECHTEM Peek-Effekt */
 @media (max-width: 767px) {
+  /* Plans Container bricht aus dem Container aus */
+  .plansContainer {
+    width: 100vw;
+    margin-left: calc(-50vw + 50%);
+    margin-right: calc(-50vw + 50%);
+    padding: 0;
+  }
+
   .plans {
     flex-direction: row;
     align-items: stretch;
@@ -1340,8 +1348,8 @@
     scroll-behavior: smooth;
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
-    gap: 0.8rem;
-    padding: 0 10% 0 10%; /* 10% links/rechts für Peek-Effekt */
+    gap: 1rem;
+    padding: 0 5% 1rem 5%; /* 5% Padding für Peek-Effekt */
     margin-bottom: 2rem;
 
     /* Hide scrollbar but keep functionality */
@@ -1354,8 +1362,8 @@
   }
 
   .cardWrapper {
-    flex: 0 0 80%; /* 80% Breite = 20% für Peek-Effekt */
-    width: 80%;
+    flex: 0 0 85%; /* 85% Breite für besseren Peek-Effekt */
+    width: 85%;
     max-width: none;
     margin-bottom: 0;
     scroll-snap-align: center;
