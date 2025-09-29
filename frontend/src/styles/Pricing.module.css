@@ -1336,10 +1336,11 @@
     width: 100vw;
     margin-left: calc(-50vw + 50%);
     margin-right: calc(-50vw + 50%);
-    padding: 0;
-    overflow: visible; /* Wichtig: Overflow auf visible für Schatten */
-    margin-top: 3rem; /* Extra Space oben */
-    margin-bottom: 3rem; /* Extra Space unten */
+    padding: 5rem 0; /* VIEL mehr Padding oben/unten für Schatten */
+    overflow: visible !important; /* Wichtig: Overflow auf visible für Schatten */
+    margin-top: 0;
+    margin-bottom: 0;
+    min-height: 100px; /* Mindesthöhe garantieren */
   }
 
   .plans {
@@ -1347,13 +1348,13 @@
     align-items: stretch;
     justify-content: flex-start;
     overflow-x: auto;
-    overflow-y: visible; /* Schatten oben/unten sichtbar */
+    overflow-y: visible !important; /* Schatten oben/unten sichtbar */
     scroll-behavior: smooth;
     scroll-snap-type: x proximity; /* proximity statt mandatory = weniger aggressiv */
     -webkit-overflow-scrolling: touch;
     gap: 1rem;
-    padding: 3rem 5% 4rem 5%; /* Noch mehr Padding oben/unten */
-    margin-bottom: 0;
+    padding: 0 5%; /* NUR seitliches Padding, oben/unten kommt vom Container */
+    margin: 0;
     touch-action: pan-x pan-y; /* Erlaubt vertikales Scrollen */
 
     /* Hide scrollbar but keep functionality */
