@@ -406,6 +406,13 @@
   padding: 0 2rem;
 }
 
+/* More spacing on desktop between heading and cards */
+@media (min-width: 768px) {
+  .plansContainer {
+    margin-top: 4rem;
+  }
+}
+
 .plans {
   display: flex;
   gap: 2.5rem;

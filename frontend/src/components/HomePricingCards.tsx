@@ -50,7 +50,7 @@ export default function HomePricingCards() {
       ],
       limitations: null,
       color: "#2D7FF9",
-      buttonText: "Business wählen",
+      buttonText: "Zum Angebot",
       buttonLink: "/pricing",
       buttonVariant: "filled" as const,
       popular: true
@@ -75,7 +75,7 @@ export default function HomePricingCards() {
       ],
       limitations: null,
       color: "#0062E0",
-      buttonText: "Enterprise wählen",
+      buttonText: "Zum Angebot",
       buttonLink: "/pricing",
       buttonVariant: "gradient" as const,
       popular: false
