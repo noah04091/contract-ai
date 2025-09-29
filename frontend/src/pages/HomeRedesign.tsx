@@ -1062,7 +1062,7 @@ const HomeRedesign = () => {
                     Keine Optimierung oder Vergleich
                   </li>
                 </ul>
-                <Link to="/register?plan=free" className="plan-cta">
+                <Link to="/register" className="plan-cta">
                   Kostenlos starten
                 </Link>
               </div>
@@ -1114,7 +1114,7 @@ const HomeRedesign = () => {
                     Priority Support (24h Response)
                   </li>
                 </ul>
-                <Link to="/register?plan=business" className="plan-cta premium-cta">
+                <Link to="/pricing" className="plan-cta premium-cta">
                   Business wählen
                 </Link>
               </div>
@@ -1171,7 +1171,7 @@ const HomeRedesign = () => {
                     Dedicated Account Manager
                   </li>
                 </ul>
-                <Link to="/register?plan=premium" className="plan-cta enterprise-cta">
+                <Link to="/pricing" className="plan-cta enterprise-cta">
                   Enterprise wählen
                 </Link>
               </div>
