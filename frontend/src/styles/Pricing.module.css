@@ -1375,11 +1375,15 @@
     margin: 2rem 0 3rem 0 !important; /* MEHR Margin unten (3rem) für Schatten-Space */
     scroll-snap-align: center;
     scroll-snap-stop: normal; /* normal statt always = weniger strikt */
+    display: flex !important;
+    flex-direction: column !important;
   }
 
   /* Card selbst braucht auch Platz für Schatten */
   .card {
     margin: 1rem 0 2rem 0 !important; /* MEHR Margin unten (2rem) für Schatten */
+    height: 100% !important; /* Gleiche Höhe für alle Karten */
+    min-height: 600px !important; /* Mindesthöhe */
     box-shadow:
       0 20px 60px rgba(0, 0, 0, 0.06),
       0 8px 25px rgba(0, 0, 0, 0.04),
