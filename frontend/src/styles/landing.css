@@ -2951,38 +2951,68 @@ a[href*="kontakt"]:hover,
   color: transparent;
 }
 
-/* Preis-Container für neue Preisstruktur */
-.plan-price-container {
+/* Sale Corner - Rechts oben in der Karte */
+.plan-sale-corner {
+  position: absolute;
+  top: 20px;
+  right: 20px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 1rem 0;
-  position: relative;
+  align-items: flex-end;
+  gap: 0.4rem;
+  z-index: 5;
 }
 
 /* Sale Badge */
 .plan-sale-badge {
   background: linear-gradient(135deg, #ff3b30, #ff6b35);
   color: white;
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 700;
-  padding: 0.3rem 0.8rem;
+  padding: 0.35rem 0.75rem;
   border-radius: 20px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   box-shadow: 0 4px 12px rgba(255, 59, 48, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3);
   font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif;
+  white-space: nowrap;
+  animation: pulse-sale 2s ease-in-out infinite;
+}
+
+@keyframes pulse-sale {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
 }
 
 /* Original Price (durchgestrichen) */
 .plan-original-price {
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   color: #86868b;
   text-decoration: line-through;
-  font-weight: 500;
+  font-weight: 600;
   font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif;
-  opacity: 0.8;
+  opacity: 0.75;
+}
+
+/* Mobile Anpassungen für Sale Corner */
+@media (max-width: 768px) {
+  .plan-sale-corner {
+    top: 15px;
+    right: 15px;
+  }
+
+  .plan-sale-badge {
+    font-size: 0.6rem;
+    padding: 0.3rem 0.65rem;
+  }
+
+  .plan-original-price {
+    font-size: 0.85rem;
+  }
 }
 
 .plan-price {

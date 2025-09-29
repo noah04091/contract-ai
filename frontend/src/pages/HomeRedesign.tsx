@@ -1017,15 +1017,10 @@ const HomeRedesign = () => {
               <div className="pricing-plan standard reveal-card" style={{"--animation-order": 0} as React.CSSProperties}>
                 <div className="plan-header">
                   <div className="plan-name">Starter</div>
-                  <div className="plan-price-container">
-                    {/* Invisible placeholder für Alignment */}
-                    <div className="plan-sale-badge" style={{visibility: 'hidden'}}>PLACEHOLDER</div>
-                    <span className="plan-original-price" style={{visibility: 'hidden'}}>0€</span>
-                    <div className="plan-price">
-                      <span className="currency">€</span>
-                      <span className="amount">0</span>
-                      <span className="period"></span>
-                    </div>
+                  <div className="plan-price">
+                    <span className="currency">€</span>
+                    <span className="amount">0</span>
+                    <span className="period"></span>
                   </div>
                   <div className="plan-billing">für immer kostenlos</div>
                 </div>
@@ -1069,16 +1064,17 @@ const HomeRedesign = () => {
 
               <div className="pricing-plan premium reveal-card" style={{"--animation-order": 1} as React.CSSProperties}>
                 <div className="plan-badge">Beliebt</div>
+                {/* Sale Badge + Original Price in Ecke */}
+                <div className="plan-sale-corner">
+                  <div className="plan-sale-badge">33% RABATT</div>
+                  <span className="plan-original-price">29€</span>
+                </div>
                 <div className="plan-header">
                   <div className="plan-name">Business</div>
-                  <div className="plan-price-container">
-                    <div className="plan-sale-badge">33% RABATT</div>
-                    <span className="plan-original-price">29€</span>
-                    <div className="plan-price">
-                      <span className="currency">€</span>
-                      <span className="amount">19</span>
-                      <span className="period">/Monat</span>
-                    </div>
+                  <div className="plan-price">
+                    <span className="currency">€</span>
+                    <span className="amount">19</span>
+                    <span className="period">/Monat</span>
                   </div>
                   <div className="plan-billing">Die goldene Mitte für Professionals & Kanzleien</div>
                 </div>
@@ -1120,16 +1116,17 @@ const HomeRedesign = () => {
               </div>
 
               <div className="pricing-plan enterprise reveal-card" style={{"--animation-order": 2} as React.CSSProperties}>
+                {/* Sale Badge + Original Price in Ecke */}
+                <div className="plan-sale-corner">
+                  <div className="plan-sale-badge">25% RABATT</div>
+                  <span className="plan-original-price">39€</span>
+                </div>
                 <div className="plan-header">
                   <div className="plan-name">Enterprise</div>
-                  <div className="plan-price-container">
-                    <div className="plan-sale-badge">25% RABATT</div>
-                    <span className="plan-original-price">39€</span>
-                    <div className="plan-price">
-                      <span className="currency">€</span>
-                      <span className="amount">29</span>
-                      <span className="period">/Monat</span>
-                    </div>
+                  <div className="plan-price">
+                    <span className="currency">€</span>
+                    <span className="amount">29</span>
+                    <span className="period">/Monat</span>
                   </div>
                   <div className="plan-billing">Maximale Power für Teams & Großkanzleien</div>
                 </div>
