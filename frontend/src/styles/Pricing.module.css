@@ -1372,18 +1372,22 @@
     flex: 0 0 85%; /* 85% Breite für besseren Peek-Effekt */
     width: 85%;
     max-width: none;
-    height: auto; /* Auto height */
     margin: 2rem 0 3rem 0 !important; /* MEHR Margin unten (3rem) für Schatten-Space */
     scroll-snap-align: center;
     scroll-snap-stop: normal; /* normal statt always = weniger strikt */
+    display: flex !important;
+    align-self: stretch !important;
   }
 
-  /* Card selbst - ALLE gleiche feste Höhe */
+  /* Card selbst - voller Inhalt sichtbar, stretch für gleiche Höhe */
   .card {
     margin: 1rem 0 2rem 0 !important; /* MEHR Margin unten (2rem) für Schatten */
-    height: 650px !important; /* FESTE Höhe für alle Karten */
-    min-height: 650px !important;
-    max-height: 650px !important;
+    height: auto !important; /* Auto height - kein Abschneiden */
+    min-height: 0 !important; /* Keine Mindesthöhe */
+    max-height: none !important; /* Keine Maxhöhe */
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 !important; /* Nimmt volle Höhe des Wrappers */
     box-shadow:
       0 20px 60px rgba(0, 0, 0, 0.06),
       0 8px 25px rgba(0, 0, 0, 0.04),
