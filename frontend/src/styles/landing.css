@@ -4099,3 +4099,16 @@ main,
   stroke: currentColor !important;
   fill: none !important;
 }
+
+/* Mobile Fix: Schatten der Pricing Cards nicht abschneiden */
+@media (max-width: 767px) {
+  .pricing-section {
+    overflow: visible !important;
+    padding-top: 80px;
+    padding-bottom: 80px;
+  }
+
+  .pricing-bg {
+    overflow: hidden; /* Nur der Background darf overflow: hidden haben */
+  }
+}
