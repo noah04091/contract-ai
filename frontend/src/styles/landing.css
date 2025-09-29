@@ -4104,11 +4104,17 @@ main,
 @media (max-width: 767px) {
   .pricing-section {
     overflow: visible !important;
-    padding-top: 80px;
-    padding-bottom: 80px;
+    padding-top: 100px !important;
+    padding-bottom: 100px !important;
   }
 
   .pricing-bg {
     overflow: hidden; /* Nur der Background darf overflow: hidden haben */
+  }
+
+  /* Section Container mehr Platz geben */
+  .pricing-section .section-container {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
   }
 }

@@ -1338,6 +1338,8 @@
     margin-right: calc(-50vw + 50%);
     padding: 0;
     overflow: visible; /* Wichtig: Overflow auf visible für Schatten */
+    margin-top: 3rem; /* Extra Space oben */
+    margin-bottom: 3rem; /* Extra Space unten */
   }
 
   .plans {
@@ -1347,11 +1349,12 @@
     overflow-x: auto;
     overflow-y: visible; /* Schatten oben/unten sichtbar */
     scroll-behavior: smooth;
-    scroll-snap-type: x mandatory;
+    scroll-snap-type: x proximity; /* proximity statt mandatory = weniger aggressiv */
     -webkit-overflow-scrolling: touch;
     gap: 1rem;
-    padding: 2rem 5% 3rem 5%; /* Mehr Padding oben/unten für Schatten */
-    margin-bottom: 2rem;
+    padding: 3rem 5% 4rem 5%; /* Noch mehr Padding oben/unten */
+    margin-bottom: 0;
+    touch-action: pan-x pan-y; /* Erlaubt vertikales Scrollen */
 
     /* Hide scrollbar but keep functionality */
     scrollbar-width: none;
@@ -1368,7 +1371,7 @@
     max-width: none;
     margin-bottom: 0;
     scroll-snap-align: center;
-    scroll-snap-stop: always;
+    scroll-snap-stop: normal; /* normal statt always = weniger strikt */
   }
 
   /* Entferne die alten margin-left/right */
