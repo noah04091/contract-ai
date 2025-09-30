@@ -1088,12 +1088,18 @@ const connectDB = async () => {
 
         console.log(`📧 [INTERNAL API] Webhook Email Request: ${subject} → ${to}`);
 
+        // Base64 Attachments zu Buffer konvertieren
+        const processedAttachments = (attachments || []).map(att => ({
+          filename: att.filename,
+          content: att.encoding === 'base64' ? Buffer.from(att.content, 'base64') : att.content
+        }));
+
         await transporter.sendMail({
           from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
           to,
           subject,
           html,
-          attachments: attachments || [],
+          attachments: processedAttachments,
         });
 
         console.log(`✅ [INTERNAL API] Email gesendet: ${subject} → ${to}`);

@@ -9,11 +9,18 @@ const { MongoClient, ObjectId } = require('mongodb');
 // EMAIL über Main Server API (funktioniert!)
 const sendEmail = async ({ to, subject, html, attachments = [] }) => {
   try {
+    // PDF Attachments zu Base64 konvertieren für API Transport
+    const processedAttachments = attachments.map(att => ({
+      filename: att.filename,
+      content: att.content instanceof Buffer ? att.content.toString('base64') : att.content,
+      encoding: 'base64'
+    }));
+
     const emailData = {
       to,
       subject,
       html,
-      attachments: attachments || []
+      attachments: processedAttachments
     };
 
     const response = await fetch('https://api.contract-ai.de/api/internal/send-email', {
