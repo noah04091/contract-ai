@@ -77,22 +77,23 @@ function resolvePlanName(line) {
   const desc = line?.description || ''; // z.B. "1 × Enterprise (at €29.00 / month)"
   if (desc.includes("Enterprise")) return "Enterprise";
   if (desc.includes("Business")) return "Business";
-  if (desc.includes("Starter")) return "Starter";
-  if (desc.includes("Premium")) return "Premium";
-  return "Premium"; // Fallback
+  if (desc.includes("Startup")) return "Startup";
+  return "Business"; // Fallback
 }
 
 // Payment Email Template
 function paymentTemplate({ amount, date, plan, accountUrl, invoicesUrl, zeroText }) {
   return generateEmailTemplate({
-    title: "Zahlung erfolgreich!",
+    title: "Zahlungsbestätigung - Vielen Dank!",
     body: `
-      <p>✅ Deine Zahlung wurde erfolgreich verarbeitet.</p>
-      <p>💰 Deine Zahlung vom <strong>${date}</strong> über <strong>€${amount}</strong> für dein <strong>${plan}</strong>-Abo wurde erfolgreich verarbeitet.</p>
-      ${zeroText ? `<p>${zeroText}</p>` : ""}
-      <p>📄 Die Rechnung erhältst du separat per E-Mail. Du findest alle Rechnungen auch in deinem Account unter „Profil".</p>
+      <p>✅ <strong>Vielen Dank! Ihr Einkauf war erfolgreich.</strong></p>
+      <p>💰 €${amount} für Ihr <strong>${plan}-Abo</strong> wurde erfolgreich verarbeitet</p>
+      <p>📅 Zahlung vom ${date}</p>
+      ${zeroText ? `<p>🎁 ${zeroText}</p>` : ""}
+      <p>📄 Ihre Rechnung erhalten Sie separat per E-Mail.</p>
+      <p>📋 Alle Rechnungen finden Sie auch in Ihrem Profil unter „Rechnungen".</p>
     `,
-    preheader: "Deine Zahlung wurde erfolgreich verarbeitet.",
+    preheader: "Zahlungsbestätigung - Vielen Dank für Ihren Einkauf!",
     cta: {
       text: "Zum Dashboard",
       url: accountUrl
@@ -209,7 +210,7 @@ async function handleStripeEvent(event) {
       try {
         await sendEmail({
           to: customerEmail,
-          subject: `💳 Zahlung bestätigt - €${amount} für dein ${plan}-Abo`,
+          subject: `💳 Zahlungsbestätigung - Vielen Dank für Ihren Einkauf!`,
           html: paymentTemplate({
             amount,
             date: paidAt,
@@ -315,22 +316,28 @@ async function processStripeEvent(event, usersCollection, invoicesCollection) {
 
     // Willkommensmail nur beim checkout.session.completed Event senden
     if (eventType === "checkout.session.completed") {
-      await sendEmail({
-        to: email,
-        subject: "✅ Dein Abo ist aktiv – Willkommen bei Contract AI!",
-        html: generateEmailTemplate({
-          title: "Willkommen bei Contract AI!",
-          body: `
-            <p>Dein ${plan}-Abo wurde erfolgreich aktiviert.</p>
-            <p>Du kannst ab sofort alle Premium-Funktionen nutzen.</p>
-          `,
-          preheader: "Dein Contract AI-Abo ist jetzt aktiv.",
-          cta: {
-            text: "Zum Dashboard",
-            url: "https://contract-ai.de/dashboard"
-          }
-        })
-      });
+      try {
+        await sendEmail({
+          to: email,
+          subject: "✅ Dein Abo ist aktiv – Willkommen bei Contract AI!",
+          html: generateEmailTemplate({
+            title: "Willkommen bei Contract AI!",
+            body: `
+              <p>Dein ${plan}-Abo wurde erfolgreich aktiviert.</p>
+              <p>Du kannst ab sofort alle Premium-Funktionen nutzen.</p>
+            `,
+            preheader: "Dein Contract AI-Abo ist jetzt aktiv.",
+            cta: {
+              text: "Zum Dashboard",
+              url: "https://contract-ai.de/dashboard"
+            }
+          })
+        });
+        console.log(`✅ Welcome-E-Mail gesendet an ${email}`);
+      } catch (err) {
+        console.log(`⚠️ Welcome-E-Mail fehlgeschlagen (fahre fort):`, err.message);
+        // Handler läuft weiter - kein Crash für andere Events!
+      }
     }
 
     // Letzte gespeicherte Rechnungsnummer aus der DB holen
