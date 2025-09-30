@@ -6,27 +6,34 @@ const http = require('http');
 const { Buffer } = require('buffer');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { MongoClient, ObjectId } = require('mongodb');
-// DIREKTE SMTP KONFIGURATION (wie server.js)
-const nodemailer = require("nodemailer");
-const EMAIL_CONFIG = {
-  host: process.env.EMAIL_HOST,
-  port: Number(process.env.EMAIL_PORT),
-  secure: false,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-};
-const emailTransporter = nodemailer.createTransport(EMAIL_CONFIG);
-
+// EMAIL über Main Server API (funktioniert!)
 const sendEmail = async ({ to, subject, html, attachments = [] }) => {
-  await emailTransporter.sendMail({
-    from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
-    to,
-    subject,
-    html,
-    attachments,
-  });
+  try {
+    const emailData = {
+      to,
+      subject,
+      html,
+      attachments: attachments || []
+    };
+
+    const response = await fetch('https://api.contract-ai.de/api/internal/send-email', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Internal-Secret': process.env.INTERNAL_API_SECRET || 'webhook-to-main-server'
+      },
+      body: JSON.stringify(emailData)
+    });
+
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.status}`);
+    }
+
+    console.log(`✅ Email gesendet via Main Server API: ${subject} → ${to}`);
+  } catch (error) {
+    console.error(`❌ Email API Fehler:`, error.message);
+    throw error;
+  }
 };
 const generateEmailTemplate = require('./utils/emailTemplate');
 const generateInvoicePdf = require('./utils/generateInvoicePdf');

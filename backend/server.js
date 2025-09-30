@@ -1075,6 +1075,35 @@ const connectDB = async () => {
       console.error("❌ Cron Jobs konnten nicht gestartet werden:", err);
     }
 
+    // Internal Email API für Webhook Server
+    app.post('/api/internal/send-email', async (req, res) => {
+      try {
+        const { to, subject, html, attachments } = req.body;
+
+        // Security Check
+        const secret = req.headers['x-internal-secret'];
+        if (secret !== 'webhook-to-main-server') {
+          return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        console.log(`📧 [INTERNAL API] Webhook Email Request: ${subject} → ${to}`);
+
+        await transporter.sendMail({
+          from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
+          to,
+          subject,
+          html,
+          attachments: attachments || [],
+        });
+
+        console.log(`✅ [INTERNAL API] Email gesendet: ${subject} → ${to}`);
+        res.json({ success: true, message: 'Email sent' });
+      } catch (error) {
+        console.error(`❌ [INTERNAL API] Email Error:`, error.message);
+        res.status(500).json({ error: error.message });
+      }
+    });
+
     const PORT = process.env.PORT || 5000;
     app.listen(PORT, () => {
       console.log(`🚀 Server läuft auf Port ${PORT}`);
