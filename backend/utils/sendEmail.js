@@ -1,68 +1,72 @@
 // 📁 backend/utils/sendEmail.js
-const Mailgun = require('mailgun.js');
-const formData = require('form-data');
+const nodemailer = require("nodemailer");
 
-// Mailgun API Client (bypassed SMTP-Probleme)
-let mg = null;
+// Email-Warteschlange für sequenzielle Verarbeitung
+let emailQueue = [];
+let isProcessingQueue = false;
 
-const getMailgunClient = () => {
-  if (!mg) {
-    const mailgun = new Mailgun(formData);
-    mg = mailgun.client({
-      username: 'api',
-      key: process.env.EMAIL_PASS, // Das ist der API-Key
-      url: 'https://api.eu.mailgun.net' // EU-Region
-    });
+// Delay zwischen Emails um SMTP-Overload zu vermeiden
+const EMAIL_DELAY_MS = 2000; // 2 Sekunden zwischen Emails
+
+const processEmailQueue = async () => {
+  if (isProcessingQueue || emailQueue.length === 0) return;
+
+  isProcessingQueue = true;
+  console.log(`📧 [EMAIL QUEUE] Starte Verarbeitung von ${emailQueue.length} Emails`);
+
+  while (emailQueue.length > 0) {
+    const emailTask = emailQueue.shift();
+    try {
+      await sendEmailImmediate(emailTask.emailData);
+      console.log(`✅ [EMAIL QUEUE] Email gesendet an ${emailTask.emailData.to}`);
+    } catch (error) {
+      console.error(`❌ [EMAIL QUEUE] Fehler:`, error.message);
+    }
+
+    // Delay zwischen Emails
+    if (emailQueue.length > 0) {
+      await new Promise(resolve => setTimeout(resolve, EMAIL_DELAY_MS));
+    }
   }
-  return mg;
+
+  isProcessingQueue = false;
+  console.log(`✅ [EMAIL QUEUE] Alle Emails verarbeitet`);
+};
+
+const sendEmailImmediate = async ({ to, subject, html, attachments = [] }) => {
+  const transporter = nodemailer.createTransport({
+    host: process.env.EMAIL_HOST,
+    port: parseInt(process.env.EMAIL_PORT || 587),
+    secure: process.env.EMAIL_SECURE === "true",
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+    // Optimierte Timeouts
+    connectionTimeout: 20000,
+    socketTimeout: 20000,
+    greetingTimeout: 15000,
+  });
+
+  await transporter.sendMail({
+    from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
+    to,
+    subject,
+    html,
+    attachments,
+  });
 };
 
 const sendEmail = async ({ to, subject, html, attachments = [] }) => {
-  try {
-    const mg = getMailgunClient();
+  // Email zur Warteschlange hinzufügen
+  emailQueue.push({
+    emailData: { to, subject, html, attachments }
+  });
 
-    // Domain aus EMAIL_USER extrahieren (postmaster@mail.contract-ai.de → mail.contract-ai.de)
-    const domain = process.env.EMAIL_USER.split('@')[1];
+  console.log(`📧 [EMAIL QUEUE] Email hinzugefügt: ${subject} → ${to} (Queue: ${emailQueue.length})`);
 
-    const emailData = {
-      from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
-      to,
-      subject,
-      html,
-    };
-
-    // Attachments hinzufügen falls vorhanden
-    if (attachments && attachments.length > 0) {
-      emailData.attachment = attachments.map(att => ({
-        filename: att.filename,
-        data: att.content
-      }));
-    }
-
-    console.log(`📧 [MAILGUN API] Sende Email:`, {
-      domain,
-      to,
-      subject,
-      from: emailData.from,
-      hasAttachments: attachments.length > 0
-    });
-
-    const result = await mg.messages.create(domain, emailData);
-
-    console.log(`✅ [MAILGUN API] Email erfolgreich gesendet:`, {
-      id: result.id,
-      message: result.message
-    });
-
-    return result;
-  } catch (error) {
-    console.error(`❌ [MAILGUN API] Fehler beim Senden:`, {
-      error: error.message,
-      status: error.status,
-      details: error.details || 'Keine Details'
-    });
-    throw error;
-  }
+  // Queue-Verarbeitung starten (falls nicht bereits aktiv)
+  setImmediate(() => processEmailQueue());
 };
 
 module.exports = sendEmail;
