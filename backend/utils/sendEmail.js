@@ -18,27 +18,51 @@ const getMailgunClient = () => {
 };
 
 const sendEmail = async ({ to, subject, html, attachments = [] }) => {
-  const mg = getMailgunClient();
+  try {
+    const mg = getMailgunClient();
 
-  // Domain aus EMAIL_USER extrahieren (postmaster@mail.contract-ai.de → mail.contract-ai.de)
-  const domain = process.env.EMAIL_USER.split('@')[1];
+    // Domain aus EMAIL_USER extrahieren (postmaster@mail.contract-ai.de → mail.contract-ai.de)
+    const domain = process.env.EMAIL_USER.split('@')[1];
 
-  const emailData = {
-    from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
-    to,
-    subject,
-    html,
-  };
+    const emailData = {
+      from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
+      to,
+      subject,
+      html,
+    };
 
-  // Attachments hinzufügen falls vorhanden
-  if (attachments && attachments.length > 0) {
-    emailData.attachment = attachments.map(att => ({
-      filename: att.filename,
-      data: att.content
-    }));
+    // Attachments hinzufügen falls vorhanden
+    if (attachments && attachments.length > 0) {
+      emailData.attachment = attachments.map(att => ({
+        filename: att.filename,
+        data: att.content
+      }));
+    }
+
+    console.log(`📧 [MAILGUN API] Sende Email:`, {
+      domain,
+      to,
+      subject,
+      from: emailData.from,
+      hasAttachments: attachments.length > 0
+    });
+
+    const result = await mg.messages.create(domain, emailData);
+
+    console.log(`✅ [MAILGUN API] Email erfolgreich gesendet:`, {
+      id: result.id,
+      message: result.message
+    });
+
+    return result;
+  } catch (error) {
+    console.error(`❌ [MAILGUN API] Fehler beim Senden:`, {
+      error: error.message,
+      status: error.status,
+      details: error.details || 'Keine Details'
+    });
+    throw error;
   }
-
-  await mg.messages.create(domain, emailData);
 };
 
 module.exports = sendEmail;
