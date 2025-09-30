@@ -206,27 +206,29 @@ async function handleStripeEvent(event) {
         return;
       }
 
-      // Payment Confirmation Email senden
-      try {
-        await sendEmail({
-          to: customerEmail,
-          subject: `💳 Zahlungsbestätigung - Vielen Dank für Ihren Einkauf!`,
-          html: paymentTemplate({
-            amount,
-            date: paidAt,
-            plan,
-            accountUrl: "https://contract-ai.de/dashboard",
-            invoicesUrl: "https://contract-ai.de/profile",
-            zeroText: isZero ? "Gutschein angewendet – Gesamt 0,00 €" : null
-          })
-        });
+      // Payment Confirmation Email senden (Fire-and-Forget)
+      setImmediate(async () => {
+        try {
+          await sendEmail({
+            to: customerEmail,
+            subject: `💳 Zahlungsbestätigung - Vielen Dank für Ihren Einkauf!`,
+            html: paymentTemplate({
+              amount,
+              date: paidAt,
+              plan,
+              accountUrl: "https://contract-ai.de/dashboard",
+              invoicesUrl: "https://contract-ai.de/profile",
+              zeroText: isZero ? "Gutschein angewendet – Gesamt 0,00 €" : null
+            })
+          });
 
-        console.log(`💳 Payment Confirmation Email gesendet an ${customerEmail} für €${amount}`);
-        await mailsRepo.markInvoiceMail(invoice.id);
-      } catch (err) {
-        console.error(`❌ Fehler beim Senden der Payment Email:`, err);
-        // Nicht als versendet markieren, damit Retry möglich ist
-      }
+          console.log(`💳 Payment Confirmation Email gesendet an ${customerEmail} für €${amount}`);
+          await mailsRepo.markInvoiceMail(invoice.id);
+        } catch (err) {
+          console.error(`❌ Fehler beim Senden der Payment Email:`, err);
+          // Nicht als versendet markieren, damit Retry möglich ist
+        }
+      });
 
       return;
     }
@@ -348,7 +350,9 @@ async function processStripeEvent(event, usersCollection, invoicesCollection) {
       .toArray();
     
     // Extrahiere die Nummer aus der letzten Rechnungsnummer oder starte bei 0
-    const latestNumber = latestInvoice.length ? parseInt(latestInvoice[0].invoiceNumber?.split("-")[2]) || 0 : 0;
+    const latestNumber = latestInvoice.length && latestInvoice[0].invoiceNumber && typeof latestInvoice[0].invoiceNumber === 'string'
+      ? parseInt(latestInvoice[0].invoiceNumber.split("-")[2]) || 0
+      : 0;
     
     // Generiere neue strukturierte Rechnungsnummer
     const invoiceNumber = generateInvoiceNumber(latestNumber);
