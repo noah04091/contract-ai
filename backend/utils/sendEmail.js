@@ -34,18 +34,16 @@ const processEmailQueue = async () => {
 };
 
 const sendEmailImmediate = async ({ to, subject, html, attachments = [] }) => {
+  // EXAKT dieselbe Config wie server.js (die funktioniert!)
   const transporter = nodemailer.createTransport({
     host: process.env.EMAIL_HOST,
-    port: parseInt(process.env.EMAIL_PORT || 587),
-    secure: process.env.EMAIL_SECURE === "true",
+    port: Number(process.env.EMAIL_PORT),
+    secure: false, // ← Wie server.js, nicht process.env.EMAIL_SECURE
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
     },
-    // Optimierte Timeouts
-    connectionTimeout: 20000,
-    socketTimeout: 20000,
-    greetingTimeout: 15000,
+    // KEINE Timeouts - wie server.js
   });
 
   await transporter.sendMail({
