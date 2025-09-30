@@ -6,7 +6,28 @@ const http = require('http');
 const { Buffer } = require('buffer');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { MongoClient, ObjectId } = require('mongodb');
-const sendEmail = require('./utils/sendEmail');
+// DIREKTE SMTP KONFIGURATION (wie server.js)
+const nodemailer = require("nodemailer");
+const EMAIL_CONFIG = {
+  host: process.env.EMAIL_HOST,
+  port: Number(process.env.EMAIL_PORT),
+  secure: false,
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+};
+const emailTransporter = nodemailer.createTransporter(EMAIL_CONFIG);
+
+const sendEmail = async ({ to, subject, html, attachments = [] }) => {
+  await emailTransporter.sendMail({
+    from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
+    to,
+    subject,
+    html,
+    attachments,
+  });
+};
 const generateEmailTemplate = require('./utils/emailTemplate');
 const generateInvoicePdf = require('./utils/generateInvoicePdf');
 // Importiere die neue Funktion
