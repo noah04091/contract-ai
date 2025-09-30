@@ -17,7 +17,7 @@ const EMAIL_CONFIG = {
     pass: process.env.EMAIL_PASS,
   },
 };
-const emailTransporter = nodemailer.createTransporter(EMAIL_CONFIG);
+const emailTransporter = nodemailer.createTransport(EMAIL_CONFIG);
 
 const sendEmail = async ({ to, subject, html, attachments = [] }) => {
   await emailTransporter.sendMail({
