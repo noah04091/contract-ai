@@ -301,6 +301,19 @@ async function processStripeEvent(event, usersCollection, invoicesCollection) {
     const stripeSubscriptionId = session.subscription;
     const email = session.customer_email || session.customer_details?.email || null;
 
+    // 🆕 Checkout-Session komplett laden für custom_fields und billing_address
+    let fullSession = null;
+    if (eventType === "checkout.session.completed") {
+      try {
+        fullSession = await stripe.checkout.sessions.retrieve(session.id, {
+          expand: ['customer_details']
+        });
+        console.log(`✅ Vollständige Checkout-Session geladen: ${session.id}`);
+      } catch (err) {
+        console.error(`❌ Fehler beim Laden der Session:`, err);
+      }
+    }
+
     const subscription = await stripe.subscriptions.retrieve(stripeSubscriptionId);
     const priceId = subscription.items.data[0]?.price?.id;
 
@@ -350,6 +363,46 @@ async function processStripeEvent(event, usersCollection, invoicesCollection) {
     );
 
     console.log(`✅ User ${email || user.email} auf ${plan} aktualisiert`);
+
+    // 🆕 Stripe Customer mit Checkout-Daten aktualisieren (nur bei checkout.session.completed)
+    if (eventType === "checkout.session.completed" && fullSession) {
+      try {
+        const updateData = {
+          name: fullSession.customer_details?.name || undefined,
+          email: fullSession.customer_details?.email || email,
+        };
+
+        // Billing address hinzufügen falls vorhanden
+        if (fullSession.customer_details?.address) {
+          updateData.address = fullSession.customer_details.address;
+        }
+
+        // Custom fields in metadata speichern
+        if (fullSession.custom_fields && fullSession.custom_fields.length > 0) {
+          updateData.metadata = {};
+          fullSession.custom_fields.forEach(field => {
+            if (field.key === 'company_name' && field.text?.value) {
+              updateData.metadata.company_name = field.text.value;
+            }
+            if (field.key === 'tax_id' && field.text?.value) {
+              updateData.metadata.tax_id = field.text.value;
+            }
+          });
+        }
+
+        // Stripe Customer aktualisieren
+        await stripe.customers.update(stripeCustomerId, updateData);
+
+        console.log(`✅ Stripe Customer ${stripeCustomerId} mit Checkout-Daten aktualisiert:`, {
+          name: updateData.name,
+          address: updateData.address ? 'ja' : 'nein',
+          company: updateData.metadata?.company_name || 'nicht angegeben',
+          taxId: updateData.metadata?.tax_id || 'nicht angegeben'
+        });
+      } catch (err) {
+        console.error(`❌ Fehler beim Update des Stripe Customers:`, err);
+      }
+    }
 
     // Willkommensmail nur beim checkout.session.completed Event senden
     if (eventType === "checkout.session.completed") {
