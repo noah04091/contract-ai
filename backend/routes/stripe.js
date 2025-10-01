@@ -91,8 +91,8 @@ router.post("/create-checkout-session", verifyToken, async (req, res) => {
         {
           key: 'company_name',
           label: {
-            type: 'text',
-            text: 'Firmenname (optional)'
+            type: 'custom',
+            custom: 'Firmenname (optional)'
           },
           type: 'text',
           optional: true
@@ -100,8 +100,8 @@ router.post("/create-checkout-session", verifyToken, async (req, res) => {
         {
           key: 'tax_id',
           label: {
-            type: 'text',
-            text: 'Steuernummer / USt-ID (optional)'
+            type: 'custom',
+            custom: 'Steuernummer / USt-ID (optional)'
           },
           type: 'text',
           optional: true
