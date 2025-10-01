@@ -1,27 +1,82 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from "react-helmet";
 import styles from "../styles/Success.module.css";
+import { fetchUserData, UserData } from '../utils/fetchUserData';
 
 const Success: React.FC = () => {
-  // Setze Seitentitel
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [subscriptionActive, setSubscriptionActive] = useState(false);
+  const [planName, setPlanName] = useState<string>('');
+
+  // Subscription Status Polling
   useEffect(() => {
+    let pollCount = 0;
+    const maxPolls = 30; // Max 1 Minute polling
+
+    const checkSubscriptionStatus = async () => {
+      try {
+        const data = await fetchUserData();
+        setUserData(data);
+
+        // Check if subscription is active and not free
+        if (data.subscriptionActive && data.subscriptionPlan !== 'free') {
+          setSubscriptionActive(true);
+          setPlanName(data.subscriptionPlan === 'business' ? 'Business' : 'Enterprise');
+          setIsLoading(false);
+          console.log(`✅ Subscription aktiviert: ${data.subscriptionPlan}`);
+          return true; // Stop polling
+        }
+
+        pollCount++;
+        console.log(`🔄 Polling subscription status... (${pollCount}/${maxPolls})`);
+
+        if (pollCount >= maxPolls) {
+          setIsLoading(false);
+          console.log('⚠️ Max polling attempts reached');
+          return true; // Stop polling
+        }
+
+        return false; // Continue polling
+      } catch (error) {
+        console.error('❌ Error checking subscription status:', error);
+        pollCount++;
+        return pollCount >= maxPolls;
+      }
+    };
+
+    // Initial check
+    checkSubscriptionStatus().then(shouldStop => {
+      if (!shouldStop) {
+        // Start polling every 2 seconds
+        const interval = setInterval(async () => {
+          const shouldStop = await checkSubscriptionStatus();
+          if (shouldStop) {
+            clearInterval(interval);
+          }
+        }, 2000);
+
+        return () => clearInterval(interval);
+      }
+    });
+
     document.title = 'Bezahlung erfolgreich | Contract AI';
-    
+
     // Animation beim Laden der Seite
     const timer = setTimeout(() => {
       const successIcon = document.querySelector(`.${styles.successIcon}`);
       const successContent = document.querySelector(`.${styles.successContent}`);
-      
+
       if (successIcon) {
         successIcon.classList.add(styles.animate);
       }
-      
+
       if (successContent) {
         successContent.classList.add(styles.animate);
       }
     }, 100);
-    
+
     return () => clearTimeout(timer);
   }, []);
 
@@ -53,23 +108,52 @@ const Success: React.FC = () => {
           
           <div className={styles.successContent}>
             <h1 className={styles.title}>Bezahlung erfolgreich</h1>
-            
+
             <p className={styles.message}>
-              Vielen Dank für Ihr Abonnement bei Contract AI. 
-              Ihre Zahlung wurde erfolgreich verarbeitet und Ihr Konto wurde aktiviert.
+              Vielen Dank für Ihr Abonnement bei Contract AI.
+              Ihre Zahlung wurde erfolgreich verarbeitet{subscriptionActive ? ' und Ihr Konto wurde aktiviert' : ''}.
             </p>
-            
+
             <div className={styles.detailsContainer}>
               <div className={styles.detailItem}>
                 <span className={styles.detailLabel}>Status</span>
-                <span className={styles.detailValue}>Aktiv</span>
+                <span className={styles.detailValue}>
+                  {isLoading ? (
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span className={styles.spinner}>⏳</span>
+                      Wird aktiviert...
+                    </span>
+                  ) : subscriptionActive ? (
+                    <span style={{ color: '#22c55e' }}>✅ Aktiv</span>
+                  ) : (
+                    <span style={{ color: '#f59e0b' }}>⏳ Aktivierung läuft...</span>
+                  )}
+                </span>
               </div>
-              
+
+              <div className={styles.detailItem}>
+                <span className={styles.detailLabel}>Plan</span>
+                <span className={styles.detailValue}>
+                  {isLoading ? (
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span className={styles.spinner}>⏳</span>
+                      Laden...
+                    </span>
+                  ) : planName ? (
+                    <span style={{ color: '#3b82f6', fontWeight: 'bold' }}>{planName}</span>
+                  ) : (
+                    'Wird geladen...'
+                  )}
+                </span>
+              </div>
+
               <div className={styles.detailItem}>
                 <span className={styles.detailLabel}>Zugang</span>
-                <span className={styles.detailValue}>Sofort</span>
+                <span className={styles.detailValue}>
+                  {subscriptionActive ? 'Sofort verfügbar' : 'Nach Aktivierung'}
+                </span>
               </div>
-              
+
               <div className={styles.detailItem}>
                 <span className={styles.detailLabel}>Bestätigung</span>
                 <span className={styles.detailValue}>Per E-Mail gesendet</span>
