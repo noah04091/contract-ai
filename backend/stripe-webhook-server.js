@@ -449,41 +449,47 @@ async function processStripeEvent(event, usersCollection, invoicesCollection) {
     const invoiceDate = new Date().toLocaleDateString("de-DE");
     const customerName = user?.name || email;
 
-    // Download Stripe invoice PDF
-    let pdfBuffer = null;
-    try {
-      // Get invoice from session
-      const invoice = await stripe.invoices.retrieve(session.invoice);
+    // 🆕 Checkout-Daten für vollständige Rechnung extrahieren
+    let customerAddress = null;
+    let companyName = null;
+    let taxId = null;
 
-      if (invoice.invoice_pdf) {
-        // Download the PDF from Stripe
-        const response = await fetch(invoice.invoice_pdf);
-        if (response.ok) {
-          const arrayBuffer = await response.arrayBuffer();
-          pdfBuffer = Buffer.from(arrayBuffer);
-          console.log(`✅ Stripe-Rechnung PDF heruntergeladen: ${invoice.id}`);
-        } else {
-          console.warn(`⚠️ Stripe PDF Download fehlgeschlagen: ${response.status}`);
-        }
-      } else {
-        console.warn(`⚠️ Keine PDF URL in Stripe Invoice: ${invoice.id}`);
+    if (fullSession) {
+      // Adresse aus Customer Details
+      customerAddress = fullSession.customer_details?.address || null;
+
+      // Custom Fields auslesen
+      if (fullSession.custom_fields) {
+        fullSession.custom_fields.forEach(field => {
+          if (field.key === 'company_name' && field.text?.value) {
+            companyName = field.text.value;
+          }
+          if (field.key === 'tax_id' && field.text?.value) {
+            taxId = field.text.value;
+          }
+        });
       }
-    } catch (err) {
-      console.error(`❌ Fehler beim Download der Stripe-Rechnung:`, err);
     }
 
-    // Fallback: Eigene PDF generieren falls Stripe PDF nicht verfügbar
-    if (!pdfBuffer) {
-      console.log(`🔄 Fallback: Generiere eigene PDF-Rechnung`);
-      pdfBuffer = await generateInvoicePdf({
-        customerName,
-        email,
-        plan,
-        amount,
-        invoiceDate,
-        invoiceNumber
-      });
-    }
+    // Eigene vollständige PDF generieren mit allen Daten
+    const pdfBuffer = await generateInvoicePdf({
+      customerName,
+      email,
+      plan,
+      amount,
+      invoiceDate,
+      invoiceNumber,
+      customerAddress,
+      companyName,
+      taxId
+    });
+
+    console.log(`✅ Vollständige Rechnung generiert mit:`, {
+      name: customerName || 'nicht angegeben',
+      address: customerAddress ? 'ja' : 'nein',
+      company: companyName || 'nicht angegeben',
+      taxId: taxId || 'nicht angegeben'
+    });
 
     await sendEmail({
       to: email,

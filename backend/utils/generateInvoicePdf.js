@@ -1,7 +1,7 @@
 const PDFDocument = require("pdfkit");
 const path = require("path");
 
-function generateInvoicePdf({ customerName, email, plan, amount, invoiceDate, invoiceNumber }) {
+function generateInvoicePdf({ customerName, email, plan, amount, invoiceDate, invoiceNumber, customerAddress, companyName, taxId }) {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ margin: 50 });
     const buffers = [];
@@ -34,10 +34,40 @@ function generateInvoicePdf({ customerName, email, plan, amount, invoiceDate, in
     // Rechnungsempfänger
     doc
       .fontSize(12)
-      .text(`Rechnung an:`, { underline: true })
-      .text(customerName || email)
-      .text(email)
-      .moveDown();
+      .text(`Rechnung an:`, { underline: true });
+
+    // Firmenname falls vorhanden
+    if (companyName) {
+      doc.text(companyName);
+    }
+
+    // Name falls vorhanden
+    if (customerName) {
+      doc.text(customerName);
+    }
+
+    // E-Mail
+    doc.text(email);
+
+    // Adresse falls vorhanden
+    if (customerAddress) {
+      if (customerAddress.line1) doc.text(customerAddress.line1);
+      if (customerAddress.line2) doc.text(customerAddress.line2);
+
+      let cityLine = '';
+      if (customerAddress.postal_code) cityLine += customerAddress.postal_code + ' ';
+      if (customerAddress.city) cityLine += customerAddress.city;
+      if (cityLine) doc.text(cityLine);
+
+      if (customerAddress.country) doc.text(customerAddress.country);
+    }
+
+    // Steuer-ID falls vorhanden
+    if (taxId) {
+      doc.text(`USt-IdNr.: ${taxId}`);
+    }
+
+    doc.moveDown();
 
     // Rechnungsdetails
     doc
