@@ -396,14 +396,41 @@ async function processStripeEvent(event, usersCollection, invoicesCollection) {
     const invoiceDate = new Date().toLocaleDateString("de-DE");
     const customerName = user?.name || email;
 
-    const pdfBuffer = await generateInvoicePdf({
-      customerName,
-      email,
-      plan,
-      amount,
-      invoiceDate,
-      invoiceNumber
-    });
+    // Download Stripe invoice PDF
+    let pdfBuffer = null;
+    try {
+      // Get invoice from session
+      const invoice = await stripe.invoices.retrieve(session.invoice);
+
+      if (invoice.invoice_pdf) {
+        // Download the PDF from Stripe
+        const response = await fetch(invoice.invoice_pdf);
+        if (response.ok) {
+          const arrayBuffer = await response.arrayBuffer();
+          pdfBuffer = Buffer.from(arrayBuffer);
+          console.log(`✅ Stripe-Rechnung PDF heruntergeladen: ${invoice.id}`);
+        } else {
+          console.warn(`⚠️ Stripe PDF Download fehlgeschlagen: ${response.status}`);
+        }
+      } else {
+        console.warn(`⚠️ Keine PDF URL in Stripe Invoice: ${invoice.id}`);
+      }
+    } catch (err) {
+      console.error(`❌ Fehler beim Download der Stripe-Rechnung:`, err);
+    }
+
+    // Fallback: Eigene PDF generieren falls Stripe PDF nicht verfügbar
+    if (!pdfBuffer) {
+      console.log(`🔄 Fallback: Generiere eigene PDF-Rechnung`);
+      pdfBuffer = await generateInvoicePdf({
+        customerName,
+        email,
+        plan,
+        amount,
+        invoiceDate,
+        invoiceNumber
+      });
+    }
 
     await sendEmail({
       to: email,
