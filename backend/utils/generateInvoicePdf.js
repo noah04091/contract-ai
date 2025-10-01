@@ -63,13 +63,13 @@ function generateInvoicePdf({ customerName, email, plan, amount, invoiceDate, in
     doc.fillColor(darkGray)
        .fontSize(11)
        .font('Helvetica')
-       .text('Contract AI UG (haftungsbeschränkt)', 50, currentY + 25)
-       .text('Richard-Oberle-Weg 27', 50, currentY + 40)
-       .text('76448 Durmersheim', 50, currentY + 55)
-       .text('Deutschland', 50, currentY + 70)
-       .text('Steuernummer: 36/146/1136', 50, currentY + 85)
-       .text('USt-IdNr.: DE123456789', 50, currentY + 100)
-       .text('Geschäftsführer: Noah Liebold', 50, currentY + 115);
+       .text('Contract AI', 50, currentY + 25)
+       .text('Inhaber: Noah Liebold', 50, currentY + 40)
+       .text('Richard-Oberle-Weg 27', 50, currentY + 55)
+       .text('76448 Durmersheim', 50, currentY + 70)
+       .text('Deutschland', 50, currentY + 85)
+       .text('Steuernummer: 3928246507', 50, currentY + 100)
+       .text('USt-IdNr.: DE361461136', 50, currentY + 115);
 
     // Rechnungsempfänger Box (rechts)
     doc.fillColor(darkGray)
@@ -135,8 +135,8 @@ function generateInvoicePdf({ customerName, email, plan, amount, invoiceDate, in
        .fontSize(10)
        .text(`E-Mail: ${email}`, 320, recipientY);
 
-    // Linie unter den Adressblöcken (mehr Platz für erweiterte Absender-Info)
-    currentY = Math.max(currentY + 155, recipientY + 30);
+    // Linie unter den Adressblöcken (angepasst für Kleinunternehmer-Layout)
+    currentY = Math.max(currentY + 150, recipientY + 30);
     doc.strokeColor(backgroundColor)
        .lineWidth(2)
        .moveTo(50, currentY)
@@ -257,9 +257,9 @@ function generateInvoicePdf({ customerName, email, plan, amount, invoiceDate, in
     doc.fillColor(lightGray)
        .fontSize(9)
        .font('Helvetica')
-       .text('Contract AI UG (haftungsbeschränkt) • Richard-Oberle-Weg 27 • 76448 Durmersheim • Deutschland', 50, footerTop + 15, { align: 'center', width: 495 })
-       .text('Steuernummer: 36/146/1136 • USt-IdNr.: DE123456789 • Geschäftsführer: Noah Liebold', 50, footerTop + 30, { align: 'center', width: 495 })
-       .text('E-Mail: support@contract-ai.de • Diese Rechnung wurde elektronisch erstellt und ist ohne Unterschrift gültig.', 50, footerTop + 45, { align: 'center', width: 495 });
+       .text('Contract AI • Inhaber: Noah Liebold • Richard-Oberle-Weg 27 • 76448 Durmersheim • Deutschland', 50, footerTop + 15, { align: 'center', width: 495 })
+       .text('Steuernummer: 3928246507 • USt-IdNr.: DE361461136 • Registergericht: Amtsgericht Mannheim', 50, footerTop + 30, { align: 'center', width: 495 })
+       .text('E-Mail: info@contract-ai.de • Diese Rechnung wurde elektronisch erstellt und ist ohne Unterschrift gültig.', 50, footerTop + 45, { align: 'center', width: 495 });
 
     doc.end();
   });
