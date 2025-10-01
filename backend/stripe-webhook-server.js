@@ -481,7 +481,8 @@ async function processStripeEvent(event, usersCollection, invoicesCollection) {
       invoiceNumber,
       customerAddress,
       companyName,
-      taxId
+      taxId,
+      subscriptionId: stripeSubscriptionId
     });
 
     console.log(`✅ Vollständige Rechnung generiert mit:`, {

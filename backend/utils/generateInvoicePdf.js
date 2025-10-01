@@ -1,7 +1,7 @@
 const PDFDocument = require("pdfkit");
 const path = require("path");
 
-function generateInvoicePdf({ customerName, email, plan, amount, invoiceDate, invoiceNumber, customerAddress, companyName, taxId }) {
+function generateInvoicePdf({ customerName, email, plan, amount, invoiceDate, invoiceNumber, customerAddress, companyName, taxId, subscriptionId }) {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({
       margin: 0,
@@ -17,13 +17,14 @@ function generateInvoicePdf({ customerName, email, plan, amount, invoiceDate, in
 
     // Farben definieren
     const primaryBlue = '#0071e3';
+    const lightBlue = '#4a9eff'; // Helleres Blau für besseren Logo-Kontrast
     const darkGray = '#1d1d1f';
     const lightGray = '#86868b';
     const backgroundColor = '#f5f5f7';
 
-    // Header Bereich mit blauem Hintergrund
+    // Header Bereich mit hellerem blauem Hintergrund für Logo-Kontrast
     doc.rect(0, 0, doc.page.width, 120)
-       .fill(primaryBlue);
+       .fill(lightBlue);
 
     // Logo einfügen (weiß auf blauem Hintergrund)
     try {
@@ -38,17 +39,17 @@ function generateInvoicePdf({ customerName, email, plan, amount, invoiceDate, in
          .text('CONTRACT AI', 50, 50);
     }
 
-    // Rechnung Titel (rechts im Header)
+    // Rechnung Titel (rechts im Header) - breitere Box für bessere Formatierung
     doc.fillColor('white')
        .fontSize(28)
        .font('Helvetica-Bold')
-       .text('RECHNUNG', 400, 40, { align: 'right', width: 150 });
+       .text('RECHNUNG', 350, 40, { align: 'right', width: 200 });
 
     doc.fillColor('white')
        .fontSize(12)
        .font('Helvetica')
-       .text(`Rechnungsnummer: ${invoiceNumber}`, 400, 75, { align: 'right', width: 150 })
-       .text(`Datum: ${invoiceDate}`, 400, 92, { align: 'right', width: 150 });
+       .text(`Rechnungsnummer: ${invoiceNumber}`, 350, 75, { align: 'right', width: 200 })
+       .text(`Datum: ${invoiceDate}`, 350, 92, { align: 'right', width: 200 });
 
     // Hauptinhalt beginnt nach Header
     let currentY = 160;
@@ -66,8 +67,9 @@ function generateInvoicePdf({ customerName, email, plan, amount, invoiceDate, in
        .text('Richard-Oberle-Weg 27', 50, currentY + 40)
        .text('76448 Durmersheim', 50, currentY + 55)
        .text('Deutschland', 50, currentY + 70)
-       .text('Steuernummer: 36/543/98765', 50, currentY + 85)
-       .text('Geschäftsführer: Noah Liebold', 50, currentY + 100);
+       .text('Steuernummer: 36/146/1136', 50, currentY + 85)
+       .text('USt-IdNr.: DE123456789', 50, currentY + 100)
+       .text('Geschäftsführer: Noah Liebold', 50, currentY + 115);
 
     // Rechnungsempfänger Box (rechts)
     doc.fillColor(darkGray)
@@ -117,19 +119,24 @@ function generateInvoicePdf({ customerName, email, plan, amount, invoiceDate, in
       }
     }
 
-    doc.fillColor(lightGray)
-       .fontSize(10)
-       .text(email, 320, recipientY);
-    recipientY += 15;
-
     if (taxId) {
+      // USt-ID mit korrektem Format (inkl. Ländercode falls nicht vorhanden)
+      let formattedTaxId = taxId;
+      if (taxId && !taxId.startsWith('DE') && taxId.length > 2) {
+        formattedTaxId = `DE${taxId}`;
+      }
       doc.fillColor(darkGray)
          .fontSize(10)
-         .text(`USt-IdNr.: ${taxId}`, 320, recipientY);
+         .text(`USt-IdNr.: ${formattedTaxId}`, 320, recipientY);
+      recipientY += 15;
     }
 
-    // Linie unter den Adressblöcken
-    currentY = Math.max(currentY + 140, recipientY + 30);
+    doc.fillColor(lightGray)
+       .fontSize(10)
+       .text(`E-Mail: ${email}`, 320, recipientY);
+
+    // Linie unter den Adressblöcken (mehr Platz für erweiterte Absender-Info)
+    currentY = Math.max(currentY + 155, recipientY + 30);
     doc.strokeColor(backgroundColor)
        .lineWidth(2)
        .moveTo(50, currentY)
@@ -161,12 +168,13 @@ function generateInvoicePdf({ customerName, email, plan, amount, invoiceDate, in
        .fontSize(12)
        .font('Helvetica-Bold')
        .text('Beschreibung', tableLeft + 15, tableTop + 15)
-       .text('Zeitraum', tableLeft + 280, tableTop + 15)
-       .text('Betrag', tableLeft + 400, tableTop + 15);
+       .text('Leistungszeitraum', tableLeft + 280, tableTop + 15)
+       .text('Betrag', tableLeft + 420, tableTop + 15);
 
-    // Tabellen-Inhalt
+    // Tabellen-Inhalt - höhere Zeile für mehr Informationen
     const itemTop = tableTop + rowHeight;
-    doc.rect(tableLeft, itemTop, tableWidth, rowHeight)
+    const itemHeight = 60; // Höhere Zeile für Subscription-ID
+    doc.rect(tableLeft, itemTop, tableWidth, itemHeight)
        .fill('white')
        .stroke(backgroundColor);
 
@@ -174,15 +182,32 @@ function generateInvoicePdf({ customerName, email, plan, amount, invoiceDate, in
     const steuer = amount - netto;
     const planDisplayName = plan.charAt(0).toUpperCase() + plan.slice(1);
 
+    // Leistungszeitraum berechnen (aktueller Monat)
+    const now = new Date();
+    const startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const periodText = `${startDate.toLocaleDateString('de-DE')} – ${endDate.toLocaleDateString('de-DE')}`;
+
+    doc.fillColor(darkGray)
+       .fontSize(11)
+       .font('Helvetica-Bold')
+       .text(`${planDisplayName}-Abo – SaaS Lizenz`, tableLeft + 15, itemTop + 12);
+
+    if (subscriptionId) {
+      doc.fillColor(lightGray)
+         .fontSize(9)
+         .font('Helvetica')
+         .text(`Subscription-ID: ${subscriptionId}`, tableLeft + 15, itemTop + 28);
+    }
+
     doc.fillColor(darkGray)
        .fontSize(11)
        .font('Helvetica')
-       .text(`${planDisplayName} Abo - SaaS Lizenz`, tableLeft + 15, itemTop + 15)
-       .text('1 Monat', tableLeft + 280, itemTop + 15)
-       .text(`€${netto.toFixed(2)}`, tableLeft + 400, itemTop + 15);
+       .text(periodText, tableLeft + 280, itemTop + 20)
+       .text(`€${netto.toFixed(2)}`, tableLeft + 420, itemTop + 20);
 
     // Summen-Bereich
-    const summaryTop = itemTop + rowHeight + 20;
+    const summaryTop = itemTop + itemHeight + 20;
     const summaryLeft = tableLeft + 300;
 
     doc.fillColor(lightGray)
@@ -232,9 +257,9 @@ function generateInvoicePdf({ customerName, email, plan, amount, invoiceDate, in
     doc.fillColor(lightGray)
        .fontSize(9)
        .font('Helvetica')
-       .text('Contract AI UG (haftungsbeschränkt) • Richard-Oberle-Weg 27 • 76448 Durmersheim • Deutschland', 50, footerTop + 20, { align: 'center', width: 495 })
-       .text('Steuernummer: 36/543/98765 • Geschäftsführer: Noah Liebold', 50, footerTop + 35, { align: 'center', width: 495 })
-       .text('Diese Rechnung wurde elektronisch erstellt und ist ohne Unterschrift gültig.', 50, footerTop + 50, { align: 'center', width: 495 });
+       .text('Contract AI UG (haftungsbeschränkt) • Richard-Oberle-Weg 27 • 76448 Durmersheim • Deutschland', 50, footerTop + 15, { align: 'center', width: 495 })
+       .text('Steuernummer: 36/146/1136 • USt-IdNr.: DE123456789 • Geschäftsführer: Noah Liebold', 50, footerTop + 30, { align: 'center', width: 495 })
+       .text('E-Mail: support@contract-ai.de • Diese Rechnung wurde elektronisch erstellt und ist ohne Unterschrift gültig.', 50, footerTop + 45, { align: 'center', width: 495 });
 
     doc.end();
   });
