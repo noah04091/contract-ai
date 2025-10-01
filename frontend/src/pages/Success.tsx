@@ -2,10 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Helmet } from "react-helmet";
 import styles from "../styles/Success.module.css";
-import { fetchUserData, UserData } from '../utils/fetchUserData';
+import { fetchUserData } from '../utils/fetchUserData';
 
 const Success: React.FC = () => {
-  const [userData, setUserData] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [subscriptionActive, setSubscriptionActive] = useState(false);
   const [planName, setPlanName] = useState<string>('');
@@ -18,7 +17,6 @@ const Success: React.FC = () => {
     const checkSubscriptionStatus = async () => {
       try {
         const data = await fetchUserData();
-        setUserData(data);
 
         // Check if subscription is active and not free
         if (data.subscriptionActive && data.subscriptionPlan !== 'free') {
