@@ -84,6 +84,29 @@ router.post("/create-checkout-session", verifyToken, async (req, res) => {
       subscription_data: {
         metadata: { userId: user._id.toString() },
       },
+      // ✅ KMU-freundliche Rechnungsadresse (verpflichtend)
+      billing_address_collection: 'required',
+      // ✅ Firmenname und Steuernummer (optional für KMUs)
+      custom_fields: [
+        {
+          key: 'company_name',
+          label: {
+            type: 'text',
+            text: 'Firmenname (optional)'
+          },
+          type: 'text',
+          optional: true
+        },
+        {
+          key: 'tax_id',
+          label: {
+            type: 'text',
+            text: 'Steuernummer / USt-ID (optional)'
+          },
+          type: 'text',
+          optional: true
+        }
+      ],
       success_url: "https://contract-ai.de/success",
       cancel_url: "https://contract-ai.de/pricing?canceled=true",
     });
