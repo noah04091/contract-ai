@@ -631,7 +631,6 @@ export default function Chat() {
         {!isPremium && (
           <UnifiedPremiumNotice
             featureName="Der Vertrags-Chat"
-            description="Chatte direkt mit deinen Verträgen und stelle spezifische Fragen. Mit einem Premium-Abonnement kannst du unbegrenzt Verträge analysieren und bekommst Zugang zu erweiterten KI-Funktionen."
           />
         )}
 

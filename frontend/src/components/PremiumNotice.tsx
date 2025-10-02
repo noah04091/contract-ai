@@ -31,8 +31,7 @@ export default function PremiumNotice() {
 
   return (
     <UnifiedPremiumNotice
-      title="Premium erforderlich"
-      description="Diese Funktion ist nur mit aktivem Premium-Abo verfügbar. Mit einem Premium-Abonnement kannst du unbegrenzt Verträge analysieren und bekommst Zugang zu erweiterten KI-Funktionen."
+      featureName="Diese Funktion"
     />
   );
 }

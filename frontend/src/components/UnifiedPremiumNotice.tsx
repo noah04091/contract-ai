@@ -1,25 +1,16 @@
 import { motion } from "framer-motion";
-import { Sparkles, Crown, Zap } from "lucide-react";
+import { Crown, ArrowRight } from "lucide-react";
 import styles from "./UnifiedPremiumNotice.module.css";
 
 interface UnifiedPremiumNoticeProps {
-  title?: string;
-  description?: string;
   featureName?: string;
   className?: string;
 }
 
 export default function UnifiedPremiumNotice({
-  title = "Premium-Funktion",
-  description,
-  featureName,
+  featureName = "Diese Funktion",
   className = ""
 }: UnifiedPremiumNoticeProps) {
-  const defaultDescription = featureName
-    ? `${featureName} ist eine Premium-Funktion. Mit einem Premium-Abonnement kannst du unbegrenzt Verträge analysieren und bekommst Zugang zu erweiterten KI-Funktionen.`
-    : "Mit einem Premium-Abonnement kannst du unbegrenzt Verträge analysieren und bekommst Zugang zu erweiterten KI-Funktionen.";
-
-  const finalDescription = description || defaultDescription;
 
   return (
     <motion.div
@@ -28,29 +19,30 @@ export default function UnifiedPremiumNotice({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <div className={styles.premiumIcon}>
-        <Crown size={32} />
-      </div>
-      <div className={styles.premiumContent}>
-        <h3 className={styles.premiumTitle}>{title}</h3>
-        <p className={styles.premiumDescription}>
-          {finalDescription}
-        </p>
-        <motion.button
-          className={styles.upgradeButton}
-          onClick={() => window.location.href = '/pricing'}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          transition={{ type: "spring", stiffness: 400, damping: 17 }}
-        >
-          <Zap size={16} />
-          Jetzt upgraden
-        </motion.button>
-      </div>
       <div className={styles.premiumBadge}>
-        <Sparkles size={16} />
+        <Crown size={18} />
         <span>Premium</span>
       </div>
+
+      <div className={styles.premiumContent}>
+        <h3 className={styles.premiumTitle}>
+          🚀 {featureName} ist nur einen Klick entfernt
+        </h3>
+        <p className={styles.premiumSubtitle}>
+          Schalte alle Profi-Features frei und analysiere unbegrenzt Verträge
+        </p>
+      </div>
+
+      <motion.button
+        className={styles.upgradeButton}
+        onClick={() => window.location.href = '/pricing'}
+        whileHover={{ scale: 1.05, boxShadow: "0 8px 25px rgba(0, 113, 227, 0.4)" }}
+        whileTap={{ scale: 0.98 }}
+        transition={{ type: "spring", stiffness: 400, damping: 17 }}
+      >
+        <span>Jetzt Premium holen</span>
+        <ArrowRight size={18} />
+      </motion.button>
     </motion.div>
   );
 }

@@ -4,6 +4,7 @@ import { useAuth } from "../hooks/useAuth";
 import { Helmet } from "react-helmet";
 import BetterContractsResults from "../components/BetterContractsResults";
 import SavedAlternativesFull from "../components/SavedAlternativesFull";
+import UnifiedPremiumNotice from "../components/UnifiedPremiumNotice";
 import "../styles/ContractPages.css";
 
 interface ApiResponse {
@@ -440,54 +441,11 @@ const BetterContracts: React.FC = () => {
             </p>
           </div>
 
-          {/* ✅ Premium Notice wie in Chat.tsx */}
+          {/* Premium Notice */}
           {!isPremium && (
-            <div style={{
-              background: '#f8f9fa',
-              border: '1px solid #e9ecef',
-              borderRadius: '12px',
-              padding: '2rem',
-              margin: '2rem 0',
-              textAlign: 'center'
-            }}>
-              <div style={{
-                width: '60px',
-                height: '60px',
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto 1rem',
-                color: 'white',
-                fontSize: '1.5rem'
-              }}>
-                ⭐
-              </div>
-              <h3 style={{ marginBottom: '1rem', color: '#333' }}>Premium-Funktion</h3>
-              <p style={{ color: '#666', marginBottom: '1.5rem', lineHeight: '1.6' }}>
-                Mit einem Premium-Abonnement kannst du unbegrenzt Vertragsalternativen 
-                finden und sparst bares Geld durch bessere Angebote.
-              </p>
-              <button 
-                onClick={() => navigate('/pricing')}
-                style={{
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  color: 'white',
-                  border: 'none',
-                  padding: '12px 24px',
-                  borderRadius: '8px',
-                  fontSize: '1rem',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  transition: 'transform 0.2s'
-                }}
-                onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-                onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-              >
-                Upgrade auf Premium
-              </button>
-            </div>
+            <UnifiedPremiumNotice
+              featureName="Bessere Vertragsalternativen"
+            />
           )}
 
           <div className="contract-progress-steps">

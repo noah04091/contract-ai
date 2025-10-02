@@ -1436,7 +1436,7 @@ Konfidenz: ${opt.confidence}%\n`
           {!isPremium && (
             <UnifiedPremiumNotice
               featureName="Der Vertragsoptimierer"
-              description="Optimiere deine Verträge mit KI-gestützter Analyse und erhalte konkrete Verbesserungsvorschläge. Mit einem Premium-Abonnement kannst du unbegrenzt Verträge analysieren und bekommst Zugang zu erweiterten KI-Funktionen."
+              
             />
           )}
 

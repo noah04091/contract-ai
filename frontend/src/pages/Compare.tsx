@@ -48,7 +48,6 @@ const PremiumNotice: React.FC<PremiumNoticeProps> = ({ className }) => {
   return (
     <UnifiedPremiumNotice
       featureName="Der Vertragsvergleich"
-      description="Vergleiche zwei Verträge direkt miteinander und identifiziere wichtige Unterschiede. Mit einem Premium-Abonnement kannst du unbegrenzt Verträge analysieren und bekommst Zugang zu erweiterten KI-Funktionen."
       className={className}
     />
   );

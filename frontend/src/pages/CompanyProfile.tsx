@@ -247,7 +247,6 @@ export default function CompanyProfile() {
       <div className={styles.upgradeNotice}>
         <UnifiedPremiumNotice
           featureName="Das Firmenprofil"
-          description="Speichere deine Unternehmensdaten für automatisch ausgefüllte Verträge und professionelle Dokumentvorlagen. Mit einem Premium-Abonnement kannst du unbegrenzt Verträge erstellen und verwalten."
         />
       </div>
     );

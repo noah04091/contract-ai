@@ -1437,7 +1437,6 @@ export default function Generate() {
           {!isPremium && (
             <UnifiedPremiumNotice
               featureName="Die KI-Vertragserstellung"
-              description="Erstelle professionelle Verträge in wenigen Minuten mit KI-Unterstützung. Mit einem Premium-Abonnement kannst du unbegrenzt Verträge generieren und bekommst Zugang zu erweiterten Vorlagen."
             />
           )}
 
