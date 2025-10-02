@@ -1787,22 +1787,22 @@ input:checked + .slider:before {
 
 .usageSection {
   text-align: center;
-  margin: 32px auto;
+  margin: 16px auto 48px auto;
   max-width: 600px;
   padding: 0 24px;
 }
 
 .usageTitle {
-  font-size: 24px;
-  font-weight: 600;
-  color: #1d1d1f;
-  margin: 0 0 8px 0;
+  font-size: 20px;
+  font-weight: 500;
+  color: #3a3a3c;
+  margin: 0 0 6px 0;
 }
 
 .usageSubtitle {
-  font-size: 16px;
+  font-size: 14px;
   color: #86868b;
-  margin: 0 0 24px 0;
+  margin: 0 0 20px 0;
 }
 
 .limitProgress {
