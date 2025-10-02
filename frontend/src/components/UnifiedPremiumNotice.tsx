@@ -29,7 +29,7 @@ export default function UnifiedPremiumNotice({
           {featureName} ist nur einen Klick entfernt
         </h3>
         <p className={styles.premiumSubtitle}>
-          Schalten Sie alle Profi-Features frei und analysieren Sie unbegrenzt Verträge
+          Schalten Sie alle Profi-Features frei
         </p>
       </div>
 
