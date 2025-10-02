@@ -559,7 +559,7 @@ export default function Dashboard() {
           </div>
           <button 
             className={`${styles.actionButton} ${styles.upgradeButton}`}
-            onClick={() => navigate('/upgrade')}
+            onClick={() => navigate('/pricing')}
           >
             Jetzt upgraden
           </button>

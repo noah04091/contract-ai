@@ -1,12 +1,13 @@
 import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet";
-import { 
-  FileText, Download, ArrowRight, CheckCircle, AlertCircle, 
+import {
+  FileText, Download, ArrowRight, CheckCircle, AlertCircle,
   RefreshCw, Upload, Info, PlusCircle, MinusCircle,
   Users, Briefcase, Building, Zap, Scale, AlertTriangle,
   Eye, EyeOff, Star, Award, ThumbsUp, ThumbsDown
 } from "lucide-react";
+import UnifiedPremiumNotice from "../components/UnifiedPremiumNotice";
 
 // Enhanced types for better comparison structure
 interface ComparisonDifference {
@@ -45,28 +46,11 @@ interface PremiumNoticeProps {
 
 const PremiumNotice: React.FC<PremiumNoticeProps> = ({ className }) => {
   return (
-    <motion.div 
-      className={`premium-notice ${className || ''}`}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
-    >
-      <div className="premium-icon">✨</div>
-      <div className="premium-content">
-        <h3>Premium-Funktion</h3>
-        <p>
-          Der Vertragsvergleich ist eine Premium-Funktion.
-          Upgrade jetzt, um Verträge zu vergleichen und bessere Konditionen zu identifizieren.
-        </p>
-        <motion.button 
-          className="upgrade-button"
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          Jetzt upgraden
-        </motion.button>
-      </div>
-    </motion.div>
+    <UnifiedPremiumNotice
+      featureName="Der Vertragsvergleich"
+      description="Vergleiche zwei Verträge direkt miteinander und identifiziere wichtige Unterschiede. Mit einem Premium-Abonnement kannst du unbegrenzt Verträge analysieren und bekommst Zugang zu erweiterten KI-Funktionen."
+      className={className}
+    />
   );
 };
 
@@ -1044,61 +1028,6 @@ export default function EnhancedCompare() {
             to {
               transform: rotate(360deg);
             }
-          }
-
-          .premium-notice {
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(20px);
-            border-radius: 16px;
-            padding: 1.5rem 2rem;
-            margin-bottom: 2.5rem;
-            display: flex;
-            align-items: center;
-            gap: 1.5rem;
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
-            max-width: 800px;
-            margin-left: auto;
-            margin-right: auto;
-          }
-
-          .premium-icon {
-            font-size: 2.5rem;
-            color: #FFD700;
-          }
-
-          .premium-content {
-            flex: 1;
-          }
-
-          .premium-content h3 {
-            font-size: 1.3rem;
-            font-weight: 600;
-            margin: 0 0 0.8rem;
-            color: #1d1d1f;
-          }
-
-          .premium-content p {
-            font-size: 1rem;
-            color: #6e6e73;
-            margin: 0 0 1.2rem;
-            line-height: 1.5;
-          }
-
-          .upgrade-button {
-            background-color: #0071e3;
-            color: white;
-            border: none;
-            padding: 0.7rem 1.5rem;
-            border-radius: 20px;
-            font-size: 0.95rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s ease;
-          }
-
-          .upgrade-button:hover {
-            background-color: #005bb5;
           }
 
           .profile-selector {

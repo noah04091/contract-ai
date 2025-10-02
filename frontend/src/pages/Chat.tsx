@@ -2,6 +2,7 @@ import { useEffect, useState, useRef, useCallback, useMemo, useLayoutEffect } fr
 import { Helmet } from "react-helmet";
 import styles from "../styles/ContractChat.module.css";
 import { useAuth } from "../context/AuthContext";
+import UnifiedPremiumNotice from "../components/UnifiedPremiumNotice";
 
 interface Message {
   id: string;
@@ -628,18 +629,10 @@ export default function Chat() {
         )}
 
         {!isPremium && (
-          <div className={styles.premiumNotice}>
-            <div className={styles.premiumNoticeContent}>
-              <h3>Premium-Funktion</h3>
-              <p>
-                Mit einem Premium-Abonnement kannst du unbegrenzt Verträge analysieren 
-                und bekommst Zugang zu erweiterten KI-Funktionen.
-              </p>
-              <button className={styles.upgradeButton}>
-                Upgrade auf Premium
-              </button>
-            </div>
-          </div>
+          <UnifiedPremiumNotice
+            featureName="Der Vertrags-Chat"
+            description="Chatte direkt mit deinen Verträgen und stelle spezifische Fragen. Mit einem Premium-Abonnement kannst du unbegrenzt Verträge analysieren und bekommst Zugang zu erweiterten KI-Funktionen."
+          />
         )}
 
         <div className={styles.chatContainer}>

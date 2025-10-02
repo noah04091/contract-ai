@@ -3,7 +3,7 @@ import React, { useRef, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet";
-import { 
+import {
   CheckCircle, Clipboard, Save, FileText, Check, Download,
   ArrowRight, ArrowLeft, Sparkles, Edit3, Building,
   Eye, PenTool, RefreshCw, Zap, BookOpen, Star, TrendingUp
@@ -11,6 +11,7 @@ import {
 import styles from "../styles/Generate.module.css";
 import { toast } from 'react-toastify';
 import { useAuth } from "../context/AuthContext";
+import UnifiedPremiumNotice from "../components/UnifiedPremiumNotice";
 
 // Types
 interface FormDataType {
@@ -511,34 +512,6 @@ const CONTRACT_TEMPLATES: ContractTemplate[] = [
   }
 ];
 
-// Premium Notice Component
-const PremiumNotice: React.FC<{ onUpgradeClick: () => void }> = ({ onUpgradeClick }) => (
-  <motion.div 
-    className={styles.premiumNotice}
-    initial={{ opacity: 0, scale: 0.9 }}
-    animate={{ opacity: 1, scale: 1 }}
-    transition={{ duration: 0.5 }}
-  >
-    <div className={styles.premiumContent}>
-      <div className={styles.premiumIcon}>
-        <Sparkles size={24} />
-      </div>
-      <div className={styles.premiumText}>
-        <h3>Premium-Feature</h3>
-        <p>KI-Vertragsgenerierung erfordert ein Premium-Abo</p>
-      </div>
-      <motion.button 
-        className={styles.upgradeButton}
-        onClick={onUpgradeClick}
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
-      >
-        <Zap size={16} />
-        Jetzt upgraden
-      </motion.button>
-    </div>
-  </motion.div>
-);
 
 // Template Library Component
 const TemplateLibrary: React.FC<{
@@ -1397,9 +1370,6 @@ export default function Generate() {
     }
   };
 
-  const handleUpgradeClick = () => {
-    navigate('/upgrade');
-  };
 
   // Loading State
   if (isLoading) {
@@ -1464,7 +1434,12 @@ export default function Generate() {
 
         <div className={styles.generatorContent}>
           {/* Premium Notice */}
-          {!isPremium && <PremiumNotice onUpgradeClick={handleUpgradeClick} />}
+          {!isPremium && (
+            <UnifiedPremiumNotice
+              featureName="Die KI-Vertragserstellung"
+              description="Erstelle professionelle Verträge in wenigen Minuten mit KI-Unterstützung. Mit einem Premium-Abonnement kannst du unbegrenzt Verträge generieren und bekommst Zugang zu erweiterten Vorlagen."
+            />
+          )}
 
           {/* Main Content */}
           <div className={`${styles.contentGrid} ${showPreview ? styles.withPreview : ''}`}>

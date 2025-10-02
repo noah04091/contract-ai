@@ -38,7 +38,7 @@ import {
 } from "lucide-react";
 
 // Components
-import LegendaryPremiumNotice from "../components/LegendaryPremiumNotice";
+import UnifiedPremiumNotice from "../components/UnifiedPremiumNotice";
 import ContractHealthDashboard from "../components/ContractHealthDashboard";
 
 // Types für revolutionäre Features
@@ -1434,7 +1434,10 @@ Konfidenz: ${opt.confidence}%\n`
 
           {/* Premium Notice */}
           {!isPremium && (
-            <LegendaryPremiumNotice onUpgrade={() => window.location.href = '/upgrade'} />
+            <UnifiedPremiumNotice
+              featureName="Der Vertragsoptimierer"
+              description="Optimiere deine Verträge mit KI-gestützter Analyse und erhalte konkrete Verbesserungsvorschläge. Mit einem Premium-Abonnement kannst du unbegrenzt Verträge analysieren und bekommst Zugang zu erweiterten KI-Funktionen."
+            />
           )}
 
           {/* Upload Area */}

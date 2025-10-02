@@ -11,6 +11,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import styles from '../styles/CompanyProfile.module.css';
+import UnifiedPremiumNotice from '../components/UnifiedPremiumNotice';
 
 interface CompanyProfileData {
   _id?: string;
@@ -78,7 +79,7 @@ export default function CompanyProfile() {
     if (!user || isLoading) return;
     
     if (!isPremium) {
-      navigate('/upgrade');
+      navigate('/pricing');
       return;
     }
 
@@ -244,17 +245,10 @@ export default function CompanyProfile() {
   if (!isPremium) {
     return (
       <div className={styles.upgradeNotice}>
-        <Sparkles size={48} />
-        <h2>Premium-Feature</h2>
-        <p>Firmenprofil ist nur für Premium-Nutzer verfügbar</p>
-        <motion.button
-          className={styles.upgradeButton}
-          onClick={() => navigate('/upgrade')}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          Jetzt upgraden
-        </motion.button>
+        <UnifiedPremiumNotice
+          featureName="Das Firmenprofil"
+          description="Speichere deine Unternehmensdaten für automatisch ausgefüllte Verträge und professionelle Dokumentvorlagen. Mit einem Premium-Abonnement kannst du unbegrenzt Verträge erstellen und verwalten."
+        />
       </div>
     );
   }
