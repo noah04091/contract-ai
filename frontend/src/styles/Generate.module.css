@@ -1780,3 +1780,125 @@ input:checked + .slider:before {
     font-size: 0.8rem;
   }
 }
+
+/* ===================================
+   📊 USAGE TRACKER STYLES (BUSINESS PLAN)
+   =================================== */
+
+.usageTracker {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 12px;
+  padding: 20px;
+  margin: 24px auto;
+  max-width: 600px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.usageContent {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.usageInfo h3 {
+  margin: 0 0 4px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1d1d1f;
+}
+
+.usageInfo p {
+  margin: 0;
+  font-size: 16px;
+  color: #86868b;
+}
+
+.usageProgress {
+  width: 100%;
+  height: 8px;
+  background: #f2f2f7;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.usageBar {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  background: linear-gradient(90deg, #30d158, #34c759);
+  position: relative;
+}
+
+.usageBar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.usageDetails {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  color: #86868b;
+}
+
+.limitReached {
+  color: #ff3b30 !important;
+  font-weight: 600;
+}
+
+/* ===================================
+   🔒 LOCKED STYLES (FREE PLAN)
+   =================================== */
+
+.locked {
+  opacity: 0.6;
+  pointer-events: none;
+  position: relative;
+}
+
+.locked::after {
+  content: '🔒';
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  font-size: 16px;
+  opacity: 0.7;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .usageTracker {
+    margin: 16px;
+    padding: 16px;
+  }
+
+  .usageInfo h3 {
+    font-size: 16px;
+  }
+
+  .usageInfo p {
+    font-size: 14px;
+  }
+
+  .usageDetails {
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+  }
+}
