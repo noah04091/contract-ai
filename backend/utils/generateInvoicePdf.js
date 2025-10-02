@@ -22,30 +22,27 @@ function generateInvoicePdf({ customerName, email, plan, amount, invoiceDate, in
     const lightGray = '#86868b';
     const backgroundColor = '#f5f5f7';
 
-    // Header Bereich mit hellerem blauem Hintergrund für Logo-Kontrast
-    doc.rect(0, 0, doc.page.width, 120)
-       .fill(lightBlue);
-
-    // Logo einfügen (weiß auf blauem Hintergrund)
+    // Cleaner weißer Header
+    // Logo einfügen
     try {
       const logoPath = path.join(__dirname, "../assets/logo-contractai.png");
       doc.image(logoPath, 50, 25, { width: 180 });
     } catch (err) {
       console.warn("⚠️ Logo konnte nicht geladen werden:", err.message);
       // Fallback: Text-Logo
-      doc.fillColor('white')
+      doc.fillColor(darkGray)
          .fontSize(24)
          .font('Helvetica-Bold')
          .text('CONTRACT AI', 50, 50);
     }
 
-    // Rechnung Titel (rechts im Header) - breitere Box für bessere Formatierung
-    doc.fillColor('white')
+    // Rechnung Titel (rechts im header) - schwarze Schrift
+    doc.fillColor(darkGray)
        .fontSize(28)
        .font('Helvetica-Bold')
        .text('RECHNUNG', 350, 40, { align: 'right', width: 200 });
 
-    doc.fillColor('white')
+    doc.fillColor(darkGray)
        .fontSize(12)
        .font('Helvetica')
        .text(`Rechnungsnummer: ${invoiceNumber}`, 350, 75, { align: 'right', width: 200 })
@@ -131,6 +128,7 @@ function generateInvoicePdf({ customerName, email, plan, amount, invoiceDate, in
       recipientY += 15;
     }
 
+    // Nur eine E-Mail am Ende in grau
     doc.fillColor(lightGray)
        .fontSize(10)
        .text(`E-Mail: ${email}`, 320, recipientY);
@@ -171,9 +169,9 @@ function generateInvoicePdf({ customerName, email, plan, amount, invoiceDate, in
        .text('Leistungszeitraum', tableLeft + 280, tableTop + 15)
        .text('Betrag', tableLeft + 420, tableTop + 15);
 
-    // Tabellen-Inhalt - höhere Zeile für mehr Informationen
+    // Tabellen-Inhalt - normale Zeilenhöhe
     const itemTop = tableTop + rowHeight;
-    const itemHeight = 60; // Höhere Zeile für Subscription-ID
+    const itemHeight = 40; // Normale Zeilenhöhe ohne Subscription-ID
     doc.rect(tableLeft, itemTop, tableWidth, itemHeight)
        .fill('white')
        .stroke(backgroundColor);
@@ -191,14 +189,7 @@ function generateInvoicePdf({ customerName, email, plan, amount, invoiceDate, in
     doc.fillColor(darkGray)
        .fontSize(11)
        .font('Helvetica-Bold')
-       .text(`${planDisplayName}-Abo – SaaS Lizenz`, tableLeft + 15, itemTop + 12);
-
-    if (subscriptionId) {
-      doc.fillColor(lightGray)
-         .fontSize(9)
-         .font('Helvetica')
-         .text(`Subscription-ID: ${subscriptionId}`, tableLeft + 15, itemTop + 28);
-    }
+       .text(`${planDisplayName}-Abo – SaaS Lizenz`, tableLeft + 15, itemTop + 20);
 
     doc.fillColor(darkGray)
        .fontSize(11)
