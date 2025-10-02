@@ -10,14 +10,16 @@ require("dotenv").config();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
 
-// 🛢️ MongoDB-Verbindung für User-Daten
+// 🛢️ MongoDB-Verbindung für User-Daten und Invoices
 let usersCollection;
+let invoicesCollection;
 const client = new MongoClient(MONGO_URI);
 client.connect()
   .then(() => {
     const db = client.db("contract_ai");
     usersCollection = db.collection("users");
-    console.log("✅ Invoices-Route: MongoDB verbunden (für User-Daten)");
+    invoicesCollection = db.collection("invoices");
+    console.log("✅ Invoices-Route: MongoDB verbunden (für User-Daten und Custom Invoices)");
   })
   .catch(err => {
     console.error("❌ MongoDB-Verbindung fehlgeschlagen:", err.message);
@@ -138,14 +140,35 @@ router.get("/download/:invoiceNumber", verifyToken, async (req, res) => {
 
     console.log(`✅ Rechnung gefunden: ID=${invoice.id}, Number=${invoice.number}`);
 
-    // 4. Direkter Link zu Stripe's PDF
+    // 4. Erst versuchen, unsere custom PDF aus MongoDB zu finden
+    try {
+      const customInvoice = await invoicesCollection.findOne({
+        customerEmail: req.user.email,
+        invoiceNumber: invoiceNumber
+      });
+
+      if (customInvoice && customInvoice.file) {
+        console.log(`✅ Custom PDF gefunden für Rechnung ${invoiceNumber}`);
+
+        // Custom PDF als Download senden
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="Rechnung-${invoiceNumber}.pdf"`);
+
+        // PDF Buffer direkt senden
+        return res.send(customInvoice.file);
+      }
+    } catch (dbError) {
+      console.warn(`⚠️ Fehler beim Laden der Custom PDF: ${dbError.message}`);
+    }
+
+    // 5. Fallback zu Stripe PDF (falls Custom PDF nicht gefunden)
     if (invoice.invoice_pdf) {
-      console.log(`✅ Weiterleitung zu Stripe PDF für Rechnung ${invoiceNumber}`);
+      console.log(`🔄 Fallback zu Stripe PDF für Rechnung ${invoiceNumber}`);
       res.redirect(302, invoice.invoice_pdf);
     } else {
       console.error(`❌ Kein PDF verfügbar für Rechnung ${invoiceNumber}`);
-      return res.status(404).json({ 
-        message: "PDF nicht verfügbar für diese Rechnung" 
+      return res.status(404).json({
+        message: "PDF nicht verfügbar für diese Rechnung"
       });
     }
 
