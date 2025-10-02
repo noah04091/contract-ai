@@ -1508,15 +1508,21 @@ export default function Generate() {
 
           {/* Usage Display for Business Users - Simple like Contracts page */}
           {userPlan === 'business' && usageData && (
-            <div className={styles.limitProgress}>
-              <div className={styles.limitText}>
-                {usageData.contractsGenerated} von {usageData.monthlyLimit} Verträgen verwendet
-              </div>
-              <div className={styles.limitBar}>
-                <div
-                  className={styles.limitBarFill}
-                  style={{ width: `${Math.min((usageData.contractsGenerated / usageData.monthlyLimit) * 100, 100)}%` }}
-                />
+            <div className={styles.usageSection}>
+              <h2 className={styles.usageTitle}>Verträge erstellen & verwalten</h2>
+              <p className={styles.usageSubtitle}>
+                Verträge mit KI erstellen ({usageData.contractsGenerated}/{usageData.monthlyLimit} Verträge)
+              </p>
+              <div className={styles.limitProgress}>
+                <div className={styles.limitText}>
+                  {usageData.contractsGenerated} von {usageData.monthlyLimit} Verträgen verwendet
+                </div>
+                <div className={styles.limitBar}>
+                  <div
+                    className={styles.limitBarFill}
+                    style={{ width: `${Math.min((usageData.contractsGenerated / usageData.monthlyLimit) * 100, 100)}%` }}
+                  />
+                </div>
               </div>
             </div>
           )}
