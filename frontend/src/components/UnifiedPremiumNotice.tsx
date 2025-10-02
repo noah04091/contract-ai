@@ -26,10 +26,10 @@ export default function UnifiedPremiumNotice({
 
       <div className={styles.premiumContent}>
         <h3 className={styles.premiumTitle}>
-          🚀 {featureName} ist nur einen Klick entfernt
+          {featureName} ist nur einen Klick entfernt
         </h3>
         <p className={styles.premiumSubtitle}>
-          Schalte alle Profi-Features frei und analysiere unbegrenzt Verträge
+          Schalten Sie alle Profi-Features frei und analysieren Sie unbegrenzt Verträge
         </p>
       </div>
 
