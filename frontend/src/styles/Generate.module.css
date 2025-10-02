@@ -1836,6 +1836,72 @@ input:checked + .slider:before {
 }
 
 /* ===================================
+   💡 UPGRADE NOTICES
+   =================================== */
+
+.upgradeNotice,
+.limitReachedNotice {
+  margin-top: 12px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.upgradeNotice {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border: 1px solid #f59e0b;
+  color: #92400e;
+}
+
+.limitReachedNotice {
+  background: linear-gradient(135deg, #fee2e2, #fecaca);
+  border: 1px solid #ef4444;
+  color: #dc2626;
+}
+
+.upgradeLink {
+  background: linear-gradient(135deg, #f97316, #ea580c);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.upgradeLink:hover {
+  background: linear-gradient(135deg, #ea580c, #dc2626);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+}
+
+.upgradeLink:active {
+  transform: translateY(0);
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .upgradeNotice,
+  .limitReachedNotice {
+    flex-direction: column;
+    text-align: center;
+    gap: 8px;
+  }
+
+  .upgradeLink {
+    width: 100%;
+    padding: 8px 16px;
+  }
+}
+
+/* ===================================
    🔒 LOCKED STYLES (FREE PLAN)
    =================================== */
 

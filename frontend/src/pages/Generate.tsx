@@ -1523,6 +1523,42 @@ export default function Generate() {
                     style={{ width: `${Math.min((usageData.contractsGenerated / usageData.monthlyLimit) * 100, 100)}%` }}
                   />
                 </div>
+
+                {/* Upgrade Notice when approaching limit */}
+                {usageData.contractsGenerated >= 8 && usageData.contractsGenerated < usageData.monthlyLimit && (
+                  <motion.div
+                    className={styles.upgradeNotice}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <span>Mehr Verträge erstellen?</span>
+                    <button
+                      className={styles.upgradeLink}
+                      onClick={() => window.location.href = '/pricing'}
+                    >
+                      Upgrade auf Enterprise
+                    </button>
+                  </motion.div>
+                )}
+
+                {/* Limit reached notice */}
+                {usageData.contractsGenerated >= usageData.monthlyLimit && (
+                  <motion.div
+                    className={styles.limitReachedNotice}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <span>Monatslimit erreicht!</span>
+                    <button
+                      className={styles.upgradeLink}
+                      onClick={() => window.location.href = '/pricing'}
+                    >
+                      Upgrade auf Enterprise
+                    </button>
+                  </motion.div>
+                )}
               </div>
             </div>
           )}
