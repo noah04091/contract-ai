@@ -581,11 +581,24 @@ export default function Generate() {
 
   // Auth Context
   const { user, isLoading } = useAuth();
-  const isPremium = true; // Temporär für Testing
+
+  // Real subscription check
+  const isPremium = user?.subscriptionActive === true && (
+    user?.subscriptionPlan === 'business' ||
+    user?.subscriptionPlan === 'premium'
+  );
+  const userPlan = user?.subscriptionPlan || 'free';
 
   // State Management
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedType, setSelectedType] = useState<ContractType | null>(null);
+
+  // Usage tracking for Business plan
+  const [usageData, setUsageData] = useState<{
+    contractsGenerated: number;
+    monthlyLimit: number;
+    resetDate: string;
+  } | null>(null);
   const [formData, setFormData] = useState<FormDataType>({});
   const [contractText, setContractText] = useState<string>("");
   const [generatedHTML, setGeneratedHTML] = useState<string>("");
@@ -620,12 +633,15 @@ export default function Generate() {
   const contractRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // Load Company Profile on mount
+  // Load Company Profile and Usage Data on mount
   useEffect(() => {
     if (isPremium && !isLoading && user) {
       loadCompanyProfile();
     }
-  }, [isPremium, isLoading, user]);
+    if (userPlan === 'business' && !isLoading && user) {
+      loadUsageData();
+    }
+  }, [isPremium, userPlan, isLoading, user]);
 
   // Auto-activate company profile when loaded
   useEffect(() => {
@@ -648,13 +664,39 @@ export default function Generate() {
       });
 
       const data = await response.json();
-      
+
       if (data.success && data.profile) {
         setCompanyProfile(data.profile);
         console.log('✅ Firmenprofil geladen:', data.profile.companyName);
       }
     } catch (error) {
       console.error('❌ Fehler beim Laden des Firmenprofils:', error);
+    }
+  };
+
+  const loadUsageData = async () => {
+    try {
+      // For now, use localStorage simulation
+      // TODO: Replace with actual API call when backend supports it
+      const now = new Date();
+      const currentMonth = `${now.getFullYear()}-${now.getMonth() + 1}`;
+      const storageKey = `contract_generation_${user?.email}_${currentMonth}`;
+
+      const stored = localStorage.getItem(storageKey);
+      const contractsGenerated = stored ? parseInt(stored) : 0;
+
+      // Calculate next month reset date
+      const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+      setUsageData({
+        contractsGenerated,
+        monthlyLimit: 10,
+        resetDate: nextMonth.toLocaleDateString('de-DE')
+      });
+
+      console.log('✅ Usage Data geladen:', { contractsGenerated, limit: 10 });
+    } catch (error) {
+      console.error('❌ Fehler beim Laden der Usage-Daten:', error);
     }
   };
 
@@ -904,7 +946,15 @@ export default function Generate() {
   };
 
   const handleGenerate = async () => {
-    if (!selectedType || !isPremium) return;
+    if (!selectedType || userPlan === 'free') return;
+
+    // Check Business plan limits
+    if (userPlan === 'business' && usageData) {
+      if (usageData.contractsGenerated >= usageData.monthlyLimit) {
+        toast.error(`🚫 Monatslimit erreicht! Sie haben bereits ${usageData.monthlyLimit} Verträge erstellt. Limit erneuert sich am ${usageData.resetDate}.`);
+        return;
+      }
+    }
 
     setLoading(true);
     setContractText("");
@@ -941,7 +991,23 @@ export default function Generate() {
       
       setCurrentStep(3);
       setShowPreview(true);
-      
+
+      // Update usage tracking for Business plan
+      if (userPlan === 'business' && usageData && user?.email) {
+        const now = new Date();
+        const currentMonth = `${now.getFullYear()}-${now.getMonth() + 1}`;
+        const storageKey = `contract_generation_${user.email}_${currentMonth}`;
+        const newCount = usageData.contractsGenerated + 1;
+
+        localStorage.setItem(storageKey, newCount.toString());
+        setUsageData({
+          ...usageData,
+          contractsGenerated: newCount
+        });
+
+        console.log(`✅ Business Usage aktualisiert: ${newCount}/${usageData.monthlyLimit}`);
+      }
+
       console.log("✅ Vertrag generiert mit HTML-Support:", {
         hasHTML: !!data.contractHTML,
         htmlLength: data.contractHTML?.length || 0,
@@ -1433,11 +1499,43 @@ export default function Generate() {
         </motion.header>
 
         <div className={styles.generatorContent}>
-          {/* Premium Notice */}
-          {!isPremium && (
+          {/* Premium Notice for Free Users */}
+          {userPlan === 'free' && (
             <UnifiedPremiumNotice
               featureName="Die KI-Vertragserstellung"
             />
+          )}
+
+          {/* Usage Display for Business Users */}
+          {userPlan === 'business' && usageData && (
+            <motion.div
+              className={styles.usageTracker}
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className={styles.usageContent}>
+                <div className={styles.usageInfo}>
+                  <h3>Monatliche Vertragserstellung</h3>
+                  <p>{usageData.contractsGenerated} von {usageData.monthlyLimit} Verträgen verwendet</p>
+                </div>
+                <div className={styles.usageProgress}>
+                  <div
+                    className={styles.usageBar}
+                    style={{
+                      width: `${(usageData.contractsGenerated / usageData.monthlyLimit) * 100}%`,
+                      backgroundColor: usageData.contractsGenerated >= usageData.monthlyLimit ? '#ef4444' : '#10b981'
+                    }}
+                  />
+                </div>
+                <div className={styles.usageDetails}>
+                  <span>Limit erneuert sich am {usageData.resetDate}</span>
+                  {usageData.contractsGenerated >= usageData.monthlyLimit && (
+                    <span className={styles.limitReached}>Monatslimit erreicht</span>
+                  )}
+                </div>
+              </div>
+            </motion.div>
           )}
 
           {/* Main Content */}
@@ -1467,11 +1565,18 @@ export default function Generate() {
                       {CONTRACT_TYPES.map((type) => (
                         <motion.button
                           key={type.id}
-                          className={`${styles.contractTypeCard} ${selectedType?.id === type.id ? styles.selected : ''}`}
-                          onClick={() => handleTypeSelect(type)}
-                          disabled={!isPremium}
-                          whileHover={isPremium ? { scale: 1.02, y: -4 } : {}}
-                          whileTap={isPremium ? { scale: 0.98 } : {}}
+                          className={`${styles.contractTypeCard} ${selectedType?.id === type.id ? styles.selected : ''} ${userPlan === 'free' ? styles.locked : ''}`}
+                          onClick={() => {
+                            if (userPlan === 'free') {
+                              // Free users: show upgrade notice
+                              toast.info('🔒 Vertragserstellung nur mit Business/Premium verfügbar');
+                              return;
+                            }
+                            handleTypeSelect(type);
+                          }}
+                          disabled={false} // Allow clicks for toast messages
+                          whileHover={userPlan !== 'free' ? { scale: 1.02, y: -4 } : { scale: 1.01 }}
+                          whileTap={userPlan !== 'free' ? { scale: 0.98 } : {}}
                           transition={{ duration: 0.2 }}
                         >
                           {type.isNew && (
@@ -1631,7 +1736,7 @@ export default function Generate() {
                             value={formData.title || ''}
                             onChange={(e) => handleInputChange('title', e.target.value)}
                             placeholder="z.B. Freelancer-Vertrag für Webentwicklung"
-                            disabled={!isPremium}
+                            disabled={userPlan === 'free'}
                           />
                         </div>
 
@@ -1666,14 +1771,14 @@ export default function Generate() {
                                         value={formData[field.name] || ''}
                                         onChange={(e) => handleInputChange(field.name, e.target.value)}
                                         placeholder={field.placeholder}
-                                        disabled={!isPremium}
+                                        disabled={userPlan === 'free'}
                                       />
                                     ) : field.type === 'select' ? (
                                       <select
                                         id={field.name}
                                         value={formData[field.name] || ''}
                                         onChange={(e) => handleInputChange(field.name, e.target.value)}
-                                        disabled={!isPremium}
+                                        disabled={userPlan === 'free'}
                                         className={!formData[field.name] ? styles.placeholder : ''}
                                       >
                                         <option value="">{field.placeholder}</option>
@@ -1690,7 +1795,7 @@ export default function Generate() {
                                         value={formData[field.name] || ''}
                                         onChange={(e) => handleInputChange(field.name, e.target.value)}
                                         placeholder={field.placeholder}
-                                        disabled={!isPremium}
+                                        disabled={userPlan === 'free'}
                                       />
                                     )}
                                     
@@ -1711,9 +1816,9 @@ export default function Generate() {
                         type="button"
                         className={styles.generateButton}
                         onClick={handleGenerate}
-                        disabled={loading || !isPremium || !isStepComplete(2)}
-                        whileHover={isPremium && isStepComplete(2) ? { scale: 1.02 } : {}}
-                        whileTap={isPremium && isStepComplete(2) ? { scale: 0.98 } : {}}
+                        disabled={loading || userPlan === 'free' || !isStepComplete(2)}
+                        whileHover={userPlan !== 'free' && isStepComplete(2) ? { scale: 1.02 } : {}}
+                        whileTap={userPlan !== 'free' && isStepComplete(2) ? { scale: 0.98 } : {}}
                       >
                         {loading ? (
                           <>
