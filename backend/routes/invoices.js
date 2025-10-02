@@ -20,6 +20,7 @@ client.connect()
     usersCollection = db.collection("users");
     invoicesCollection = db.collection("invoices");
     console.log("✅ Invoices-Route: MongoDB verbunden (für User-Daten und Custom Invoices)");
+    console.log("📄 Invoices Collection erfolgreich initialisiert für Custom PDFs");
   })
   .catch(err => {
     console.error("❌ MongoDB-Verbindung fehlgeschlagen:", err.message);
@@ -142,13 +143,26 @@ router.get("/download/:invoiceNumber", verifyToken, async (req, res) => {
 
     // 4. Erst versuchen, unsere custom PDF aus MongoDB zu finden
     try {
+      console.log(`🔍 Suche Custom PDF: Email=${req.user.email}, InvoiceNumber=${invoiceNumber}`);
+
       const customInvoice = await invoicesCollection.findOne({
         customerEmail: req.user.email,
         invoiceNumber: invoiceNumber
       });
 
+      console.log(`📋 Custom Invoice gefunden: ${customInvoice ? 'JA' : 'NEIN'}`);
+
+      if (customInvoice) {
+        console.log(`📄 Custom Invoice Details:`, {
+          invoiceNumber: customInvoice.invoiceNumber,
+          customerEmail: customInvoice.customerEmail,
+          hasFile: customInvoice.file ? 'JA' : 'NEIN',
+          fileSize: customInvoice.file ? customInvoice.file.length : 0
+        });
+      }
+
       if (customInvoice && customInvoice.file) {
-        console.log(`✅ Custom PDF gefunden für Rechnung ${invoiceNumber}`);
+        console.log(`✅ Custom PDF wird gesendet für Rechnung ${invoiceNumber}`);
 
         // Custom PDF als Download senden
         res.setHeader('Content-Type', 'application/pdf');
@@ -156,6 +170,8 @@ router.get("/download/:invoiceNumber", verifyToken, async (req, res) => {
 
         // PDF Buffer direkt senden
         return res.send(customInvoice.file);
+      } else {
+        console.log(`❌ Keine Custom PDF gefunden, verwende Stripe Fallback`);
       }
     } catch (dbError) {
       console.warn(`⚠️ Fehler beim Laden der Custom PDF: ${dbError.message}`);

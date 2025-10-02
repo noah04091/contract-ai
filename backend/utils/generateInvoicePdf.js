@@ -111,7 +111,17 @@ function generateInvoicePdf({ customerName, email, plan, amount, invoiceDate, in
       }
 
       if (customerAddress.country) {
-        doc.text(customerAddress.country, 320, recipientY);
+        // Ländercode zu vollständigem Namen umwandeln
+        let countryName = customerAddress.country;
+        if (customerAddress.country === 'DE') {
+          countryName = 'Deutschland';
+        } else if (customerAddress.country === 'AT') {
+          countryName = 'Österreich';
+        } else if (customerAddress.country === 'CH') {
+          countryName = 'Schweiz';
+        }
+
+        doc.text(countryName, 320, recipientY);
         recipientY += 15;
       }
     }
