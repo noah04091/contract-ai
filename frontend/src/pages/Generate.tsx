@@ -6,7 +6,7 @@ import { Helmet } from "react-helmet";
 import {
   CheckCircle, Clipboard, Save, FileText, Check, Download,
   ArrowRight, ArrowLeft, Sparkles, Edit3, Building,
-  Eye, PenTool, RefreshCw, Zap, BookOpen, Star, TrendingUp
+  Eye, PenTool, RefreshCw, BookOpen, Star, TrendingUp
 } from "lucide-react";
 import styles from "../styles/Generate.module.css";
 import { toast } from 'react-toastify';
