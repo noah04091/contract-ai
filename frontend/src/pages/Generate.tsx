@@ -1506,36 +1506,19 @@ export default function Generate() {
             />
           )}
 
-          {/* Usage Display for Business Users */}
+          {/* Usage Display for Business Users - Simple like Contracts page */}
           {userPlan === 'business' && usageData && (
-            <motion.div
-              className={styles.usageTracker}
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <div className={styles.usageContent}>
-                <div className={styles.usageInfo}>
-                  <h3>Monatliche Vertragserstellung</h3>
-                  <p>{usageData.contractsGenerated} von {usageData.monthlyLimit} Verträgen verwendet</p>
-                </div>
-                <div className={styles.usageProgress}>
-                  <div
-                    className={styles.usageBar}
-                    style={{
-                      width: `${(usageData.contractsGenerated / usageData.monthlyLimit) * 100}%`,
-                      backgroundColor: usageData.contractsGenerated >= usageData.monthlyLimit ? '#ef4444' : '#10b981'
-                    }}
-                  />
-                </div>
-                <div className={styles.usageDetails}>
-                  <span>Limit erneuert sich am {usageData.resetDate}</span>
-                  {usageData.contractsGenerated >= usageData.monthlyLimit && (
-                    <span className={styles.limitReached}>Monatslimit erreicht</span>
-                  )}
-                </div>
+            <div className={styles.limitProgress}>
+              <div className={styles.limitText}>
+                {usageData.contractsGenerated} von {usageData.monthlyLimit} Verträgen verwendet
               </div>
-            </motion.div>
+              <div className={styles.limitBar}>
+                <div
+                  className={styles.limitBarFill}
+                  style={{ width: `${Math.min((usageData.contractsGenerated / usageData.monthlyLimit) * 100, 100)}%` }}
+                />
+              </div>
+            </div>
           )}
 
           {/* Main Content */}
