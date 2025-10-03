@@ -463,6 +463,11 @@ const HomeRedesign = () => {
 
         {/* Features Section - Erweitert auf 6 Cards */}
         <section className="features-section" ref={(el) => registerSection('features', el)}>
+          <div className="floating-shapes">
+            <div className="floating-shape floating-shape-1"></div>
+            <div className="floating-shape floating-shape-2"></div>
+            <div className="floating-shape floating-shape-3 triangle"></div>
+          </div>
           <div className="section-container">
             <div className="section-title">
               <div className="section-title-decoration">
@@ -708,6 +713,11 @@ const HomeRedesign = () => {
 
         {/* Extended Showcase Section with 6 New Features */}
         <section className="showcase-section" ref={(el) => registerSection('showcase', el)}>
+          <div className="floating-shapes">
+            <div className="floating-shape floating-shape-4"></div>
+            <div className="floating-shape floating-shape-5 wave"></div>
+            <div className="floating-shape floating-shape-6"></div>
+          </div>
           <div className="showcase-bg">
             <div className="showcase-shape shape-1"></div>
             <div className="showcase-shape shape-2"></div>

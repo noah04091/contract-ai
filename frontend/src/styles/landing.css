@@ -27,6 +27,244 @@ html {
   z-index: 1;
 }
 
+/* === FLOATING DESIGN ELEMENTS === */
+.floating-shapes {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.floating-shape {
+  position: absolute;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(61, 124, 243, 0.08), rgba(99, 102, 241, 0.04));
+  backdrop-filter: blur(40px);
+  animation: floatAnimation 20s ease-in-out infinite;
+}
+
+.floating-shape.triangle {
+  width: 0;
+  height: 0;
+  border-radius: 0;
+  background: transparent;
+  border-left: 30px solid transparent;
+  border-right: 30px solid transparent;
+  border-bottom: 52px solid rgba(61, 124, 243, 0.06);
+  filter: blur(8px);
+  animation: floatTriangle 25s ease-in-out infinite;
+}
+
+.floating-shape.wave {
+  width: 200px;
+  height: 40px;
+  border-radius: 50px;
+  background: linear-gradient(90deg, rgba(61, 124, 243, 0.04), rgba(139, 92, 246, 0.06));
+  animation: floatWave 30s ease-in-out infinite;
+}
+
+/* Floating shape variants */
+.floating-shape-1 {
+  width: 120px;
+  height: 120px;
+  top: 15%;
+  left: 8%;
+  animation-delay: -2s;
+}
+
+.floating-shape-2 {
+  width: 80px;
+  height: 80px;
+  top: 25%;
+  right: 12%;
+  animation-delay: -8s;
+}
+
+.floating-shape-3 {
+  width: 60px;
+  height: 60px;
+  top: 45%;
+  left: 15%;
+  animation-delay: -15s;
+}
+
+.floating-shape-4 {
+  width: 100px;
+  height: 100px;
+  top: 65%;
+  right: 8%;
+  animation-delay: -5s;
+}
+
+.floating-shape-5 {
+  top: 35%;
+  right: 25%;
+  animation-delay: -12s;
+}
+
+.floating-shape-6 {
+  top: 55%;
+  left: 25%;
+  animation-delay: -18s;
+}
+
+/* Float Animations */
+@keyframes floatAnimation {
+  0%, 100% {
+    transform: translateY(0px) translateX(0px) rotate(0deg);
+    opacity: 0.6;
+  }
+  25% {
+    transform: translateY(-20px) translateX(10px) rotate(90deg);
+    opacity: 0.8;
+  }
+  50% {
+    transform: translateY(-40px) translateX(-5px) rotate(180deg);
+    opacity: 0.4;
+  }
+  75% {
+    transform: translateY(-10px) translateX(-15px) rotate(270deg);
+    opacity: 0.7;
+  }
+}
+
+@keyframes floatTriangle {
+  0%, 100% {
+    transform: translateY(0px) translateX(0px) rotate(0deg);
+    opacity: 0.5;
+  }
+  33% {
+    transform: translateY(-30px) translateX(20px) rotate(120deg);
+    opacity: 0.8;
+  }
+  66% {
+    transform: translateY(-15px) translateX(-10px) rotate(240deg);
+    opacity: 0.3;
+  }
+}
+
+@keyframes floatWave {
+  0%, 100% {
+    transform: translateY(0px) translateX(0px) scaleX(1);
+    opacity: 0.4;
+  }
+  50% {
+    transform: translateY(-25px) translateX(15px) scaleX(1.2);
+    opacity: 0.7;
+  }
+}
+
+/* === PARALLAX & SCROLL EFFECTS === */
+.parallax-element {
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+
+.sophisticated-logo-animation {
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+
+/* Logo subtle float animation */
+@keyframes logoFloat {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+.sophisticated-logo-animation {
+  animation: logoFloat 6s ease-in-out infinite;
+}
+
+.sophisticated-logo-animation:hover {
+  transform: scale(1.05) translateY(-5px);
+  filter: drop-shadow(0 8px 25px rgba(61, 124, 243, 0.2));
+}
+
+/* === COLOR ACCENTS & HIGHLIGHTS === */
+.section-title-decoration span {
+  background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+  box-shadow: 0 2px 8px rgba(61, 124, 243, 0.3);
+}
+
+.feature-link {
+  color: var(--primary-color);
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.feature-link::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+  transition: width 0.3s ease;
+}
+
+.feature-link:hover::after {
+  width: 100%;
+}
+
+.feature-link:hover {
+  color: var(--primary-dark);
+  transform: translateX(3px);
+}
+
+/* Trust Icons Color Enhancement */
+.trust-icon {
+  transition: all 0.3s ease;
+  filter: grayscale(0.2);
+}
+
+.trust-item:hover .trust-icon {
+  filter: grayscale(0) saturate(1.2);
+}
+
+/* Section Title Enhancements */
+.section-title h2 {
+  position: relative;
+}
+
+.section-title h2::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+  border-radius: 2px;
+  opacity: 0.7;
+}
+
+/* CTA Button Enhancements */
+.sophisticated-cta-button {
+  position: relative;
+  overflow: hidden;
+}
+
+.sophisticated-cta-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.6s ease;
+}
+
+.sophisticated-cta-button:hover::before {
+  left: 100%;
+}
+
 /* FIX: Prevent horizontal overflow */
 html, body {
   width: 100%;
@@ -1564,8 +1802,14 @@ a {
 }
 
 .trust-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(61, 124, 243, 0.12), 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: rgba(61, 124, 243, 0.15);
+}
+
+.trust-item:hover .trust-icon {
+  transform: scale(1.1);
+  filter: brightness(1.2);
 }
 
 .trust-icon {
@@ -1622,10 +1866,19 @@ a {
 }
 
 .feature-card:hover {
-  transform: translateY(-10px) scale(1.02);
-  box-shadow: var(--shadow-lg);
-  border-color: transparent;
+  transform: translateY(-12px) scale(1.03);
+  box-shadow: 0 20px 40px rgba(61, 124, 243, 0.15), 0 8px 20px rgba(0, 0, 0, 0.1);
+  border-color: rgba(61, 124, 243, 0.1);
   z-index: 1;
+}
+
+.feature-card:hover .feature-icon-wrapper {
+  transform: translateY(-3px) rotate(5deg);
+  background: linear-gradient(135deg, rgba(61, 124, 243, 0.1), rgba(99, 102, 241, 0.05));
+}
+
+.feature-card:hover h3 {
+  color: var(--primary-color);
 }
 
 /* === FEATURE ICON WRAPPER - OHNE WEISSEN KREIS === */
