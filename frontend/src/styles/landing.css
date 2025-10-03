@@ -3451,13 +3451,8 @@ a[href*="kontakt"]:hover,
 
 /* === CTA SECTION === */
 .cta-section {
-  background: linear-gradient(135deg,
-    rgba(255, 255, 255, 1) 0%,
-    rgba(248, 250, 255, 0.95) 20%,
-    rgba(61, 124, 243, 0.85) 60%,
-    rgba(61, 124, 243, 1) 100%
-  );
-  color: white;
+  background: #ffffff;
+  color: #1a1a1a;
   padding: 120px 20px;
   text-align: center;
   position: relative;
