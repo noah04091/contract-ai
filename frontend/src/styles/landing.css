@@ -337,12 +337,7 @@ a {
 }
 
 .section-title-decoration {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 20px;
-  order: 1;
+  display: none;
 }
 
 .section-title-decoration span {
@@ -1630,7 +1625,7 @@ a {
 
 .sophisticated-scroll-indicator {
   position: absolute;
-  bottom: 40px;
+  bottom: 80px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 10;
@@ -1874,7 +1869,6 @@ a {
 
 .feature-card:hover .feature-icon-wrapper {
   transform: translateY(-3px) rotate(5deg);
-  background: linear-gradient(135deg, rgba(61, 124, 243, 0.1), rgba(99, 102, 241, 0.05));
 }
 
 .feature-card:hover h3 {
@@ -3457,11 +3451,11 @@ a[href*="kontakt"]:hover,
 
 /* === CTA SECTION === */
 .cta-section {
-  background: linear-gradient(180deg,
-    rgba(248, 250, 255, 0.5) 0%,
-    rgba(61, 124, 243, 0.8) 25%,
-    rgba(90, 66, 239, 0.9) 75%,
-    rgba(90, 66, 239, 1) 100%
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(248, 250, 255, 0.95) 20%,
+    rgba(61, 124, 243, 0.85) 60%,
+    rgba(61, 124, 243, 1) 100%
   );
   color: white;
   padding: 120px 20px;
