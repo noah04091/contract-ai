@@ -3451,7 +3451,7 @@ a[href*="kontakt"]:hover,
 
 /* === CTA SECTION === */
 .cta-section {
-  background: #ffffff;
+  background: linear-gradient(180deg, #ffffff 0%, #f0f7ff 50%, #dbeafe 100%);
   color: #1a1a1a;
   padding: 120px 20px;
   text-align: center;
@@ -3462,17 +3462,9 @@ a[href*="kontakt"]:hover,
   margin-top: -2px;
 }
 
-/* === CTA CARD STYLING === */
 .cta-section .section-container {
   max-width: 800px;
   margin: 0 auto;
-  background: #ffffff;
-  border-radius: 20px;
-  padding: 60px 50px;
-  box-shadow:
-    0 8px 30px rgba(0, 0, 0, 0.06),
-    0 20px 60px rgba(0, 0, 0, 0.04);
-  border: 1px solid rgba(0, 0, 0, 0.03);
   position: relative;
   z-index: 2;
 }
@@ -3590,26 +3582,29 @@ a[href*="kontakt"]:hover,
   justify-content: center;
 }
 
-/* === CTA TRUST LINE === */
+/* === CTA TRUST LINE (Button Pills) === */
 .cta-trust-line {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 12px;
   flex-wrap: wrap;
-  margin-top: 32px;
-  padding-top: 24px;
-  border-top: 1px solid #f3f4f6;
+  margin-top: 40px;
 }
 
 .cta-trust-line .trust-item {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 14px;
-  color: #6b7280;
+  font-size: 13px;
+  color: #374151;
   font-weight: 500;
   white-space: nowrap;
+  background: rgba(255, 255, 255, 0.7);
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
 }
 
 .cta-trust-line .trust-item svg {
@@ -3618,8 +3613,7 @@ a[href*="kontakt"]:hover,
 }
 
 .cta-trust-line .trust-separator {
-  color: #d1d5db;
-  font-weight: 300;
+  display: none;
 }
 
 /* === MOBILE STICKY CTA === */
