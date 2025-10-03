@@ -3587,25 +3587,26 @@ a[href*="kontakt"]:hover,
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 12px;
   flex-wrap: nowrap;
-  margin-top: 40px;
+  margin-top: 32px;
 }
 
 .cta-trust-line .trust-item {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 11px;
-  color: #374151;
+  font-size: 12px;
+  color: #6b7280;
   font-weight: 500;
   white-space: nowrap;
-  background: rgba(255, 255, 255, 0.7);
-  padding: 6px 12px;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(10px);
+  background: #f7f7f7;
+  padding: 4px 8px;
+  border-radius: 9999px;
+  border: 1px solid #e5e7eb;
   flex-shrink: 0;
+  width: auto;
+  min-width: auto;
 }
 
 .cta-trust-line .trust-item svg {
