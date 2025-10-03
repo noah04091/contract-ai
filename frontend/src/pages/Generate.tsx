@@ -1506,6 +1506,43 @@ export default function Generate() {
             />
           )}
 
+          {/* Company Profile Tip Banner - only show if no profile exists */}
+          {userPlan !== 'free' && !companyProfile && (
+            <motion.div
+              className={styles.companyProfileTip}
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className={styles.tipContent}>
+                <span className={styles.tipIcon}>💡</span>
+                <div className={styles.tipText}>
+                  <strong>Tipp:</strong> Firmenprofil anlegen für automatische Daten
+                </div>
+                <div className={styles.tipActions}>
+                  <button
+                    className={styles.tipButton}
+                    onClick={() => window.location.href = '/company-profile'}
+                  >
+                    Firmenprofil einrichten
+                  </button>
+                  <button
+                    className={styles.tipDismiss}
+                    onClick={() => {
+                      // Hide tip for this session
+                      const tipElement = document.querySelector(`.${styles.companyProfileTip}`);
+                      if (tipElement) {
+                        (tipElement as HTMLElement).style.display = 'none';
+                      }
+                    }}
+                  >
+                    Später
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
           {/* Usage Display for Business Users - Simple like Contracts page */}
           {userPlan === 'business' && usageData && (
             <div className={styles.usageSection}>
