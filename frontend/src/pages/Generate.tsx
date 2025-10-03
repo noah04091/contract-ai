@@ -643,6 +643,14 @@ export default function Generate() {
     }
   }, [isPremium, userPlan, isLoading, user]);
 
+  // Check if user has dismissed the company profile tip
+  const [tipDismissed, setTipDismissed] = useState(() => {
+    return localStorage.getItem('companyProfileTipDismissed') === 'true';
+  });
+
+  // Should show company profile tip?
+  const shouldShowProfileTip = userPlan !== 'free' && !companyProfile && !tipDismissed;
+
   // Auto-activate company profile when loaded
   useEffect(() => {
     if (companyProfile && !useCompanyProfile) {
@@ -1506,8 +1514,8 @@ export default function Generate() {
             />
           )}
 
-          {/* Company Profile Tip Banner - only show if no profile exists */}
-          {userPlan !== 'free' && !companyProfile && (
+          {/* Company Profile Tip Banner - only show if no profile exists and not dismissed */}
+          {shouldShowProfileTip && (
             <motion.div
               className={styles.companyProfileTip}
               initial={{ opacity: 0, y: -10 }}
@@ -1529,11 +1537,9 @@ export default function Generate() {
                   <button
                     className={styles.tipDismiss}
                     onClick={() => {
-                      // Hide tip for this session
-                      const tipElement = document.querySelector(`.${styles.companyProfileTip}`);
-                      if (tipElement) {
-                        (tipElement as HTMLElement).style.display = 'none';
-                      }
+                      // Permanently dismiss the tip
+                      localStorage.setItem('companyProfileTipDismissed', 'true');
+                      setTipDismissed(true);
                     }}
                   >
                     Später
