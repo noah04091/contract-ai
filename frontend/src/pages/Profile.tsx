@@ -313,6 +313,36 @@ export default function Profile() {
                 </div>
               </div>
 
+              {/* Company Profile Section for Business/Premium users */}
+              {user?.subscriptionActive && (user.subscriptionPlan === 'business' || user.subscriptionPlan === 'premium') && (
+                <motion.div
+                  className={styles.companyProfileSection}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.5 }}
+                >
+                  <div className={styles.companyProfileContent}>
+                    <FileText size={24} className={styles.companyProfileIcon} />
+                    <div>
+                      <h3 className={styles.companyProfileTitle}>Firmenprofil</h3>
+                      <p className={styles.companyProfileDescription}>
+                        Richten Sie Ihr Firmenprofil ein für automatische Daten in generierten Verträgen.
+                      </p>
+                    </div>
+                  </div>
+                  <motion.button
+                    className={styles.companyProfileButton}
+                    onClick={() => window.location.href = '/company-profile'}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                  >
+                    <span className={styles.companyProfileButtonIcon}>🏢</span>
+                    <span>Firmenprofil anlegen</span>
+                  </motion.button>
+                </motion.div>
+              )}
+
               {!user.subscriptionActive && (
                 <motion.div 
                   className={styles.upgradeSection}
