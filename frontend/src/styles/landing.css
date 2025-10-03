@@ -1765,8 +1765,8 @@ a {
   background: linear-gradient(180deg,
     rgba(248, 250, 255, 0.6) 0%,
     rgba(248, 250, 255, 0.4) 30%,
-    rgba(255, 255, 255, 0.95) 70%,
-    rgba(255, 255, 255, 1) 100%
+    rgba(249, 250, 251, 0.9) 70%,
+    rgba(249, 250, 251, 1) 100%
   );
   padding: 40px 20px;
   position: relative;
@@ -1829,10 +1829,10 @@ a {
 .features-section {
   padding: 120px 20px;
   background: linear-gradient(180deg,
-    rgba(255, 255, 255, 1) 0%,
+    rgba(249, 250, 251, 1) 0%,
     rgba(255, 255, 255, 0.98) 30%,
-    rgba(249, 251, 255, 0.85) 70%,
-    rgba(248, 250, 255, 0.7) 100%
+    rgba(255, 255, 255, 0.95) 70%,
+    rgba(255, 255, 255, 1) 100%
   );
   position: relative;
   overflow: hidden;
@@ -2031,10 +2031,10 @@ a {
 /* === CONTRACTS MANAGEMENT SECTION === */
 .contracts-management {
   background: linear-gradient(180deg,
-    rgba(248, 250, 255, 0.7) 0%,
-    rgba(249, 251, 255, 0.5) 30%,
-    rgba(250, 252, 255, 0.3) 70%,
-    rgba(255, 255, 255, 0.95) 100%
+    rgba(255, 255, 255, 1) 0%,
+    rgba(248, 249, 250, 0.7) 30%,
+    rgba(248, 249, 250, 0.8) 70%,
+    rgba(248, 249, 250, 1) 100%
   );
   padding: 120px 20px;
   position: relative;
@@ -2415,10 +2415,10 @@ a {
 /* === SHOWCASE SECTION === */
 .showcase-section {
   background: linear-gradient(180deg,
-    rgba(255, 255, 255, 0.95) 0%,
-    rgba(248, 250, 255, 0.5) 30%,
-    rgba(245, 248, 255, 0.3) 70%,
-    rgba(248, 250, 255, 0.6) 100%
+    rgba(248, 249, 250, 1) 0%,
+    rgba(255, 255, 255, 0.8) 30%,
+    rgba(255, 255, 255, 0.9) 70%,
+    rgba(255, 255, 255, 1) 100%
   );
   padding: 120px 20px;
   position: relative;
@@ -2676,10 +2676,10 @@ a {
 /* === TESTIMONIALS SECTION === */
 .testimonials-section {
   background: linear-gradient(180deg,
-    rgba(248, 250, 255, 0.6) 0%,
-    rgba(250, 252, 255, 0.4) 30%,
-    rgba(252, 254, 255, 0.2) 70%,
-    rgba(255, 255, 255, 0.95) 100%
+    rgba(255, 255, 255, 1) 0%,
+    rgba(247, 248, 249, 0.6) 30%,
+    rgba(247, 248, 249, 0.8) 70%,
+    rgba(247, 248, 249, 1) 100%
   );
   padding: 120px 20px;
   position: relative;
@@ -3049,10 +3049,10 @@ a {
 /* === PRICING SECTION === */
 .pricing-section {
   background: linear-gradient(180deg,
-    rgba(255, 255, 255, 0.95) 0%,
-    rgba(248, 250, 255, 0.4) 30%,
-    rgba(245, 248, 255, 0.2) 70%,
-    rgba(248, 250, 255, 0.5) 100%
+    rgba(247, 248, 249, 1) 0%,
+    rgba(255, 255, 255, 0.7) 30%,
+    rgba(255, 255, 255, 0.9) 70%,
+    rgba(255, 255, 255, 1) 100%
   );
   padding: 120px 20px;
   position: relative;
