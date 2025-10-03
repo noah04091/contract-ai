@@ -6,6 +6,27 @@
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
+/* === SMOOTH SCROLL & PROFESSIONAL TRANSITIONS === */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Global gradient transition effects */
+.section-container {
+  position: relative;
+}
+
+.section-container::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(248, 250, 255, 0.5) 50%, transparent 100%);
+  z-index: 1;
+}
+
 /* FIX: Prevent horizontal overflow */
 html, body {
   width: 100%;
@@ -824,18 +845,20 @@ a {
 
 /* Main Hero Container */
 .sophisticated-hero {
-  background: 
+  background:
     radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.08), transparent 50%),
     radial-gradient(circle at 80% 20%, rgba(255, 177, 153, 0.06), transparent 50%),
     radial-gradient(circle at 40% 40%, rgba(99, 102, 241, 0.04), transparent 50%),
-    linear-gradient(135deg, 
-      rgba(247, 250, 255, 0.95) 0%, 
+    linear-gradient(180deg,
+      rgba(247, 250, 255, 0.95) 0%,
       rgba(255, 255, 255, 0.98) 40%,
-      rgba(248, 251, 255, 0.95) 100%
+      rgba(248, 251, 255, 0.95) 70%,
+      rgba(248, 250, 255, 0.8) 90%,
+      rgba(248, 250, 255, 0.6) 100%
     );
   color: #1d1d1f;
   position: relative;
-  padding: 0 20px 140px;
+  padding: 0 20px 0px;
   margin: 0 !important;
   text-align: center;
   overflow: hidden;
@@ -1501,13 +1524,18 @@ a {
 
 /* === TRUSTBAR SECTION === */
 .trustbar-section {
-  background: linear-gradient(135deg, #f8faff 0%, #ffffff 100%);
+  background: linear-gradient(180deg,
+    rgba(248, 250, 255, 0.6) 0%,
+    rgba(248, 250, 255, 0.4) 30%,
+    rgba(255, 255, 255, 0.95) 70%,
+    rgba(255, 255, 255, 1) 100%
+  );
   padding: 40px 20px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   position: relative;
   z-index: 3;
   width: 100%;
   box-sizing: border-box;
+  margin-top: -2px;
 }
 
 .trustbar {
@@ -1556,11 +1584,17 @@ a {
 /* === FEATURES SECTION === */
 .features-section {
   padding: 120px 20px;
-  background-color: white;
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, 1) 0%,
+    rgba(255, 255, 255, 0.98) 30%,
+    rgba(249, 251, 255, 0.85) 70%,
+    rgba(248, 250, 255, 0.7) 100%
+  );
   position: relative;
   overflow: hidden;
   width: 100%;
   box-sizing: border-box;
+  margin-top: -2px;
 }
 
 /* GEÄNDERT: Grid von 4 auf 3 Spalten für 6 Cards */
@@ -1743,10 +1777,16 @@ a {
 
 /* === CONTRACTS MANAGEMENT SECTION === */
 .contracts-management {
-  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  background: linear-gradient(180deg,
+    rgba(248, 250, 255, 0.7) 0%,
+    rgba(249, 251, 255, 0.5) 30%,
+    rgba(250, 252, 255, 0.3) 70%,
+    rgba(255, 255, 255, 0.95) 100%
+  );
   padding: 120px 20px;
   position: relative;
   overflow: hidden;
+  margin-top: -2px;
 }
 
 .contracts-management::before {
@@ -2121,12 +2161,18 @@ a {
 
 /* === SHOWCASE SECTION === */
 .showcase-section {
-  background-color: var(--bg-color);
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(248, 250, 255, 0.5) 30%,
+    rgba(245, 248, 255, 0.3) 70%,
+    rgba(248, 250, 255, 0.6) 100%
+  );
   padding: 120px 20px;
   position: relative;
   overflow: hidden;
   width: 100%;
   box-sizing: border-box;
+  margin-top: -2px;
 }
 
 .showcase-bg {
@@ -2376,11 +2422,17 @@ a {
 
 /* === TESTIMONIALS SECTION === */
 .testimonials-section {
-  background-color: var(--bg-color);
+  background: linear-gradient(180deg,
+    rgba(248, 250, 255, 0.6) 0%,
+    rgba(250, 252, 255, 0.4) 30%,
+    rgba(252, 254, 255, 0.2) 70%,
+    rgba(255, 255, 255, 0.95) 100%
+  );
   padding: 120px 20px;
   position: relative;
   width: 100%;
   box-sizing: border-box;
+  margin-top: -2px;
 }
 
 .testimonials-slider {
@@ -2743,16 +2795,16 @@ a {
 
 /* === PRICING SECTION === */
 .pricing-section {
-  background-color: white;
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(248, 250, 255, 0.4) 30%,
+    rgba(245, 248, 255, 0.2) 70%,
+    rgba(248, 250, 255, 0.5) 100%
+  );
   padding: 120px 20px;
   position: relative;
   overflow: hidden;
-  background-image: linear-gradient(to bottom, 
-    rgba(245, 245, 247, 0.5) 0%, 
-    rgba(255, 255, 255, 1) 15%,
-    rgba(255, 255, 255, 1) 85%,
-    rgba(245, 245, 247, 0.5) 100%
-  );
+  margin-top: -2px;
   width: 100%;
   box-sizing: border-box;
 }
@@ -3152,7 +3204,12 @@ a[href*="kontakt"]:hover,
 
 /* === CTA SECTION === */
 .cta-section {
-  background: linear-gradient(135deg, #3d7cf3 0%, #5a42ef 100%);
+  background: linear-gradient(180deg,
+    rgba(248, 250, 255, 0.5) 0%,
+    rgba(61, 124, 243, 0.8) 25%,
+    rgba(90, 66, 239, 0.9) 75%,
+    rgba(90, 66, 239, 1) 100%
+  );
   color: white;
   padding: 120px 20px;
   text-align: center;
@@ -3160,6 +3217,7 @@ a[href*="kontakt"]:hover,
   overflow: hidden;
   width: 100%;
   box-sizing: border-box;
+  margin-top: -2px;
 }
 
 .cta-bg {
