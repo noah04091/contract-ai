@@ -218,9 +218,9 @@ export default function Navbar() {
                 )}
                 {user && user.subscriptionActive && (
                   <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                    <Link to="/premium" className={`${styles.navLink} ${location.pathname === "/premium" ? styles.activeNavLink : ""}`}>
-                      <span className={styles.navLinkIcon}>🔒</span>
-                      <span className={styles.navLinkText}>Premium</span>
+                    <Link to="/generate" className={`${styles.navLink} ${location.pathname === "/generate" ? styles.activeNavLink : ""}`}>
+                      <span className={styles.navLinkIcon}>⚡</span>
+                      <span className={styles.navLinkText}>Generator</span>
                     </Link>
                   </motion.div>
                 )}
@@ -682,9 +682,9 @@ export default function Navbar() {
                     </Link>
                   )}
                   {user && user.subscriptionActive && (
-                    <Link to="/premium" className={`${styles.mobileNavLink} ${location.pathname === "/premium" ? styles.activeMobileNavLink : ""}`}>
-                      <span className={styles.mobileNavIcon}>🔒</span>
-                      <span>Premium</span>
+                    <Link to="/generate" className={`${styles.mobileNavLink} ${location.pathname === "/generate" ? styles.activeMobileNavLink : ""}`}>
+                      <span className={styles.mobileNavIcon}>⚡</span>
+                      <span>Generator</span>
                     </Link>
                   )}
                   {user && (
