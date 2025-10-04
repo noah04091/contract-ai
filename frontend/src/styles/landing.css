@@ -2944,42 +2944,72 @@ a {
   }
 }
 
-/* === MOBILE FIXES FÜR TESTIMONIAL KREISE + SCHATTEN-SPACE === */
+/* === MOBILE FIXES: Edge-to-Edge wie Pricing Cards === */
 @media (max-width: 768px) {
+  /* Section: Nur vertikales Padding, KEIN horizontales Padding */
   .testimonials-section {
-    padding: 60px 15px 80px 15px; /* Mehr Padding unten für Schatten */
+    padding: 60px 0 80px 0 !important; /* Edge-to-Edge */
   }
 
+  /* Slider: Volle Breite, kein Gap für Nav-Buttons auf Mobile */
   .slider-container {
-    gap: 10px;
-    margin-bottom: 2rem; /* Extra Margin für Schatten-Space */
+    gap: 0;
+    margin-bottom: 2rem;
+    padding: 0 !important; /* Kein Padding */
   }
 
+  /* Nav Buttons verstecken auf Mobile (optional, oder kleiner machen) */
   .slider-nav {
-    width: 40px;
-    height: 40px;
+    display: none; /* Verstecke Buttons auf Mobile für echten Edge-to-Edge */
   }
 
+  /* Slider Track: Volle Breite, horizontal scrollbar */
   .slider-track {
-    padding-right: 0;
-    padding-bottom: 2rem; /* Padding unten für Schatten */
+    width: 100vw !important; /* Volle Viewport-Breite */
+    padding: 2rem 0 3rem 0 !important; /* Nur vertikal für Schatten-Space */
+    overflow-x: scroll;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    display: flex !important;
+    gap: 0 !important;
   }
 
+  /* Testimonial Slide: 85% Breite für Peek-Effekt */
   .testimonial-slide {
-    padding: 0 10px;
-    margin-bottom: 2rem; /* Margin unten für Schatten-Space */
+    flex: 0 0 85% !important;
+    width: 85% !important;
+    max-width: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    scroll-snap-align: center;
+    display: flex !important;
   }
 
+  /* Erste Karte: Margin links für Abstand vom Rand */
+  .testimonial-slide:first-child {
+    margin-left: 7.5% !important; /* Zentriert die erste Karte */
+  }
+
+  /* Letzte Karte: Margin rechts für Abstand vom Rand */
+  .testimonial-slide:last-child {
+    margin-right: 7.5% !important;
+  }
+
+  /* Testimonial Card: Schatten-Space */
   .testimonial-card {
-    margin-bottom: 1rem !important; /* Schatten-Space wie bei Pricing Cards */
+    margin: 1rem 0.5rem 2rem 0.5rem !important; /* Schatten-Space wie Pricing Cards */
     box-shadow:
       0 20px 60px rgba(0, 0, 0, 0.06),
       0 8px 25px rgba(0, 0, 0, 0.04),
       0 0 0 1px rgba(255, 255, 255, 0.8) inset !important;
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
   }
 
   .testimonial-content {
     padding: 20px;
+    flex: 1;
   }
 
   .testimonial-text {
