@@ -1625,17 +1625,17 @@ a {
 
 .sophisticated-scroll-indicator {
   position: absolute;
-  bottom: 140px; /* Höher gesetzt: 80px → 140px für Desktop */
+  bottom: 110px; /* Desktop: Im Zwischenraum zwischen Trust-Hint und Buttons */
   left: 50%;
   transform: translateX(-50%);
   z-index: 10;
   opacity: 0.6;
 }
 
-/* Mobile: Noch höher für bessere Sichtbarkeit */
+/* Mobile: Höher für Zwischenraum zwischen Trust-Hint und Buttons */
 @media (max-width: 768px) {
   .sophisticated-scroll-indicator {
-    bottom: 160px; /* Auf Mobile noch höher für mehr Abstand zu Buttons */
+    bottom: 180px; /* Mobile: Mehr Abstand, raus aus den Buttons */
   }
 }
 
