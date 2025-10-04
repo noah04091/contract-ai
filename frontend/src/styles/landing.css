@@ -1625,11 +1625,18 @@ a {
 
 .sophisticated-scroll-indicator {
   position: absolute;
-  bottom: 80px;
+  bottom: 140px; /* Höher gesetzt: 80px → 140px für Desktop */
   left: 50%;
   transform: translateX(-50%);
   z-index: 10;
   opacity: 0.6;
+}
+
+/* Mobile: Noch höher für bessere Sichtbarkeit */
+@media (max-width: 768px) {
+  .sophisticated-scroll-indicator {
+    bottom: 160px; /* Auf Mobile noch höher für mehr Abstand zu Buttons */
+  }
 }
 
 .sophisticated-scroll-chevron {
@@ -2675,11 +2682,12 @@ a {
     rgba(247, 248, 249, 0.8) 70%,
     rgba(247, 248, 249, 1) 100%
   );
-  padding: 120px 20px;
+  padding: 120px 20px 150px 20px; /* Mehr Padding unten für Schatten */
   position: relative;
   width: 100%;
   box-sizing: border-box;
   margin-top: -2px;
+  overflow: visible; /* WICHTIG: Schatten nicht abschneiden */
 }
 
 .testimonials-slider {
@@ -2687,6 +2695,7 @@ a {
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
+  overflow: visible; /* WICHTIG: Schatten nicht abschneiden */
 }
 
 .slider-container {
@@ -2695,6 +2704,8 @@ a {
   align-items: center;
   gap: 20px;
   width: 100%;
+  padding: 2rem 0; /* Vertikales Padding für Schatten-Space */
+  overflow: visible; /* WICHTIG: Schatten nicht abschneiden */
 }
 
 .slider-nav {
@@ -2731,13 +2742,14 @@ a {
 .slider-track {
   display: flex;
   overflow-x: auto;
+  overflow-y: visible; /* WICHTIG: Vertikale Schatten nicht abschneiden */
   scroll-behavior: smooth;
   scroll-snap-type: x mandatory;
   gap: 0;
   width: 100%;
-  padding-right: 40px;
+  padding: 2rem 40px 2rem 0; /* Mehr Padding für Schatten-Space */
   box-sizing: border-box;
-  
+
   /* Hide scrollbar but keep functionality */
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -2753,7 +2765,8 @@ a {
   scroll-snap-align: start;
   padding: 0 15px;
   box-sizing: border-box;
-  
+  margin: 1rem 0; /* Margin oben/unten für Schatten-Space */
+
   /* Mobile: 100% width */
   width: 100%;
 }
