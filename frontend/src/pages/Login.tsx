@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { Helmet } from "react-helmet";
 import { useAuth } from "../hooks/useAuth";;
 import "../styles/AppleAuth.css";
 
@@ -293,14 +294,21 @@ export default function Login() {
   }, [navigate, refetchUser]);
 
   return (
-    <div className="apple-auth-container" ref={containerRef}>
-      <div className="apple-bg">
-        <div className="shape shape-1"></div>
-        <div className="shape shape-2"></div>
-        <div className="shape shape-3"></div>
-      </div>
-      
-      <div className="apple-auth-card">
+    <>
+      <Helmet>
+        <title>Login | Contract AI</title>
+        <meta name="robots" content="noindex, nofollow" />
+        <meta name="description" content="Melde dich bei Contract AI an und verwalte deine Verträge intelligent mit KI." />
+      </Helmet>
+
+      <div className="apple-auth-container" ref={containerRef}>
+        <div className="apple-bg">
+          <div className="shape shape-1"></div>
+          <div className="shape shape-2"></div>
+          <div className="shape shape-3"></div>
+        </div>
+
+        <div className="apple-auth-card">
         <div className="apple-logo">
           <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -561,6 +569,7 @@ export default function Login() {
           </button>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }

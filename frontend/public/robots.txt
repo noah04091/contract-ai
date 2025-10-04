@@ -1,30 +1,36 @@
 # robots.txt für contract-ai.de
+# Professional SEO Configuration
+
 User-agent: *
 Allow: /
 
-# Private/Account-Bereiche und App-Only-Routen ausschließen
+# 🔒 Private/geschützte Bereiche (Login-required)
 Disallow: /dashboard
 Disallow: /contracts
 Disallow: /optimizer
+Disallow: /me
 Disallow: /profile
 Disallow: /compare
-Disallow: /calendar-view
+Disallow: /calendar
 Disallow: /chat
-Disallow: /legalpulse          # (interner Bereich)
+Disallow: /legalpulse
 Disallow: /upgrade
 Disallow: /subscribe
 Disallow: /generate
-Disallow: /company              # falls vorhanden
-Disallow: /contract-details     # falls vorhanden
+Disallow: /company-profile
+Disallow: /better-contracts
 
-# Auth/Transaktionsseiten nicht indexieren (räumt "Gecrawlt – nicht indexiert" auf)
-Disallow: /login
-Disallow: /register
-Disallow: /forgot-password
-Disallow: /reset-password
-Disallow: /verify-success
-Disallow: /success
-Disallow: /cancel
-
-# Sitemap-Hinweis
+# 🗺️ Sitemap
 Sitemap: https://www.contract-ai.de/sitemap.xml
+
+# 🤖 Spezielle Bot-Konfiguration
+User-agent: Googlebot
+Allow: /
+
+User-agent: Googlebot-Image
+Allow: /assets/
+Allow: /*.png$
+Allow: /*.jpg$
+Allow: /*.jpeg$
+Allow: /*.webp$
+Allow: /*.svg$

@@ -26,6 +26,7 @@ import Success from "./pages/Success";
 import HelpCenter from "./pages/HelpCenter";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
+import NotFound from "./pages/NotFound"; // ✅ 404 Page für bessere SEO
 
 // 🌟 Feature-Landingpages
 import Vertragsanalyse from "./pages/features/Vertragsanalyse";
@@ -157,6 +158,9 @@ function AppWithLoader() {
             <Route path="/subscribe" element={<RequireAuth><Subscribe /></RequireAuth>} />
             <Route path="/upgrade" element={<RequireAuth><Upgrade /></RequireAuth>} />
             <Route path="/better-contracts" element={<RequireAuth><BetterContracts /></RequireAuth>} />
+
+            {/* ✅ 404 Catch-All Route (muss am Ende stehen) */}
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
         <CookieConsentBanner />

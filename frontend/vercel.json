@@ -1,5 +1,32 @@
 {
   "version": 2,
+  "redirects": [
+    {
+      "source": "/features/optimierer",
+      "destination": "/features/optimierung",
+      "permanent": true
+    },
+    {
+      "source": "/features/fristenkalender",
+      "destination": "/features/fristen",
+      "permanent": true
+    },
+    {
+      "source": "/features/legal-pulse",
+      "destination": "/features/legalpulse",
+      "permanent": true
+    },
+    {
+      "source": "/help-center",
+      "destination": "/hilfe",
+      "permanent": true
+    },
+    {
+      "source": "/calendar-view",
+      "destination": "/calendar",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
       "source": "/api/:path*",
