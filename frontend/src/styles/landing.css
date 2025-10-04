@@ -2933,25 +2933,47 @@ a {
   }
 }
 
-/* Desktop: 33.33% width (3 per view) + GLEICHE HÖHE */
+/* Desktop: Grid Layout - ALLE Cards sichtbar, KEIN Slider */
 @media (min-width: 1025px) {
-  .testimonial-slide {
-    width: 33.333%;
-    display: flex;
+  /* Verstecke Slider-Navigation auf Desktop */
+  .slider-nav {
+    display: none !important;
   }
-  
+
+  /* Verstecke Slider-Dots auf Desktop */
+  .slider-dots {
+    display: none !important;
+  }
+
+  /* Slider Track wird zum Grid Container */
   .slider-track {
-    padding-right: 60px;
-    align-items: stretch;
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr); /* 4 Testimonials nebeneinander */
+    gap: 30px;
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+    scroll-snap-type: none !important;
+    padding: 2rem 0 !important; /* Nur vertikal, KEIN horizontales Padding */
+    margin: 0 !important; /* Kein negativer Margin */
   }
-  
+
+  /* Slides werden zu Grid Items */
+  .testimonial-slide {
+    width: 100% !important;
+    padding: 0 !important; /* Kein Padding - Grid gap regelt Abstand */
+    margin: 0 !important;
+    display: flex !important;
+    scroll-snap-align: none !important;
+  }
+
   .testimonial-card {
     min-height: 320px;
     display: flex;
     flex-direction: column;
     height: 100%;
+    width: 100%;
   }
-  
+
   .testimonial-content {
     display: flex;
     flex-direction: column;
