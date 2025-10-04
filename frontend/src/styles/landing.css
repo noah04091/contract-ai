@@ -1635,7 +1635,7 @@ a {
 /* Mobile: Höher für Zwischenraum zwischen Trust-Hint und Buttons */
 @media (max-width: 768px) {
   .sophisticated-scroll-indicator {
-    bottom: 180px; /* Mobile: Mehr Abstand, raus aus den Buttons */
+    bottom: 220px; /* Mobile: Noch höher - im Zwischenraum zwischen Trust-Hint und Button */
   }
 }
 
