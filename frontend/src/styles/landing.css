@@ -2693,8 +2693,10 @@ a {
 .testimonials-slider {
   position: relative;
   width: 100%;
-  max-width: 1200px;
+  max-width: 1300px; /* Breiter für mehr Schatten-Space */
   margin: 0 auto;
+  padding: 0 40px; /* Horizontales Padding für seitliche Schatten */
+  box-sizing: border-box;
   overflow: visible; /* WICHTIG: Schatten nicht abschneiden */
 }
 
@@ -2747,7 +2749,8 @@ a {
   scroll-snap-type: x mandatory;
   gap: 0;
   width: 100%;
-  padding: 2rem 40px 2rem 0; /* Mehr Padding für Schatten-Space */
+  padding: 2rem 60px 2rem 60px; /* MEHR Padding links/rechts für seitliche Schatten */
+  margin: 0 -60px; /* Negativer Margin zum Ausgleich - Cards bleiben zentriert */
   box-sizing: border-box;
 
   /* Hide scrollbar but keep functionality */
@@ -2763,7 +2766,7 @@ a {
 .testimonial-slide {
   flex: 0 0 auto;
   scroll-snap-align: start;
-  padding: 0 15px;
+  padding: 0 20px; /* MEHR Padding für seitliche Schatten (15px → 20px) */
   box-sizing: border-box;
   margin: 1rem 0; /* Margin oben/unten für Schatten-Space */
 
