@@ -115,6 +115,20 @@ const TestimonialsSlider = () => {
     scrollToSlide(newIndex);
   };
 
+  // Sync dots when user swipes manually
+  const handleScroll = () => {
+    if (!sliderRef.current) return;
+
+    const slideWidth = sliderRef.current.offsetWidth / itemsPerView;
+    const scrollLeft = sliderRef.current.scrollLeft;
+    const calculatedIndex = Math.round(scrollLeft / slideWidth);
+
+    // Only update if index actually changed to avoid unnecessary re-renders
+    if (calculatedIndex !== currentIndex) {
+      setCurrentIndex(calculatedIndex);
+    }
+  };
+
   const maxIndex = Math.max(0, testimonials.length - itemsPerView);
 
   return (
@@ -131,9 +145,10 @@ const TestimonialsSlider = () => {
           </svg>
         </button>
 
-        <div 
+        <div
           ref={sliderRef}
           className="slider-track"
+          onScroll={handleScroll}
         >
           {testimonials.map((testimonial) => (
             <div key={testimonial.id} className="testimonial-slide">
