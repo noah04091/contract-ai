@@ -3,7 +3,7 @@ import { useEffect } from "react";
 
 interface StructuredDataProps {
   type: "Organization" | "WebSite" | "SoftwareApplication" | "Article" | "FAQPage";
-  data?: Record<string, any>;
+  data?: Record<string, unknown>;
 }
 
 /**
@@ -21,7 +21,7 @@ export default function StructuredData({ type, data }: StructuredDataProps) {
     script.id = `structured-data-${type}`;
     script.type = "application/ld+json";
 
-    let structuredData: Record<string, any> = {};
+    let structuredData: Record<string, unknown> = {};
 
     switch (type) {
       case "Organization":
