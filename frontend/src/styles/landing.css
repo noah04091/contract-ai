@@ -3843,42 +3843,108 @@ a[href*="kontakt"]:hover,
   justify-content: center;
 }
 
-/* === CTA TRUST LINE (Button Pills) === */
+/* === CTA TRUST LINE (Minimalist Design) === */
 .cta-trust-line {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  flex-wrap: nowrap;
+  gap: 20px;
+  flex-wrap: wrap;
   margin-top: 32px;
+  padding: 0 20px;
 }
 
 .cta-trust-line .trust-item {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  color: #6b7280;
+  gap: 6px;
+  font-size: 13px;
+  color: #4b5563;
   font-weight: 500;
   white-space: nowrap;
-  background: #f7f7f7;
-  padding: 4px 8px;
-  border-radius: 9999px;
-  border: 1px solid #e5e7eb;
+  background: transparent;
+  padding: 0;
+  border: none;
+  border-radius: 0;
   flex-shrink: 0;
   width: auto;
   min-width: auto;
+  transition: all 0.2s ease;
+}
+
+.cta-trust-line .trust-item:hover {
+  color: #1f2937;
+  transform: translateY(-1px);
 }
 
 .cta-trust-line .trust-item svg {
   color: #10b981;
   flex-shrink: 0;
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
 }
 
 .cta-trust-line .trust-separator {
-  display: none;
+  display: inline-block;
+  color: #d1d5db;
+  font-size: 14px;
+  font-weight: 300;
+}
+
+/* Mobile Trust Line Responsive */
+@media (max-width: 768px) {
+  .cta-trust-line {
+    gap: 16px;
+    margin-top: 28px;
+  }
+
+  .cta-trust-line .trust-item {
+    font-size: 12px;
+    gap: 5px;
+  }
+
+  .cta-trust-line .trust-item svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .cta-trust-line .trust-separator {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 640px) {
+  .cta-trust-line {
+    gap: 14px;
+    margin-top: 24px;
+  }
+
+  .cta-trust-line .trust-item {
+    font-size: 11.5px;
+    gap: 4px;
+  }
+
+  .cta-trust-line .trust-item svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .cta-trust-line {
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 20px;
+    padding: 0 16px;
+  }
+
+  .cta-trust-line .trust-item {
+    font-size: 11px;
+  }
+
+  .cta-trust-line .trust-separator {
+    display: none;
+  }
 }
 
 /* === MOBILE STICKY CTA === */
