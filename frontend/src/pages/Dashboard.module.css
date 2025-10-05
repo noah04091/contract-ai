@@ -834,8 +834,29 @@
 /* 📱 Mobile: Tabelle als horizontaler Scroll */
 @media (max-width: 768px) {
   .tableWrapper {
-    overflow-x: scroll;
+    overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+    /* Scrollbar sichtbar machen auf Mobile */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+  }
+
+  .tableWrapper::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  .tableWrapper::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 4px;
+  }
+
+  .tableWrapper::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+  }
+
+  .tableWrapper::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.3);
   }
 
   .contractTable {
