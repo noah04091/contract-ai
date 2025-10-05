@@ -822,28 +822,28 @@
   .results-container {
     padding: 1rem;
   }
-  
+
   .alternatives-grid {
     grid-template-columns: 1fr;
     gap: 0.75rem;
   }
-  
+
   .alternative-card {
     padding: 1rem;
   }
-  
+
   .results-header {
     padding: 1.5rem;
   }
-  
+
   .results-title {
     font-size: 1.75rem;
   }
-  
+
   .card-header {
     flex-wrap: wrap;
   }
-  
+
   .price-display {
     width: 100%;
     text-align: left;
@@ -851,83 +851,128 @@
     padding-top: 0.5rem;
     border-top: 1px solid #f3f4f6;
   }
-  
+
   .card-actions {
     flex-direction: column;
   }
-  
+
   .features-list {
     grid-template-columns: 1fr;
   }
-  
+
   .results-meta {
     grid-template-columns: 1fr;
   }
-  
+
   .meta-item {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.25rem;
   }
-  
+
   .meta-value {
     text-align: left;
   }
-  
+
   /* 🆕 Widget Modal Mobile */
   .widget-modal {
     max-width: 100%;
     margin: 10px;
     max-height: 95vh;
   }
-  
+
   .widget-modal-content {
     padding: 10px;
     overflow-x: auto;
   }
-  
+
   /* Mobile: iFrames horizontal scrollbar erlauben */
   .widget-modal-content iframe,
   .widget-modal-content [id*="iframe"] {
     min-width: 900px; /* Check24 Mindestbreite beibehalten */
   }
-  
+
   .partner-indicator {
     font-size: 0.6rem;
     padding: 0.2rem 0.5rem;
   }
+
+  .action-button {
+    min-height: 44px;
+  }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 640px) {
+  .results-header {
+    padding: 1.25rem;
+  }
+
+  .results-title {
+    font-size: 1.5rem;
+  }
+
   .alternative-card {
     padding: 0.875rem;
   }
-  
+
+  .summary-label {
+    font-size: 0.8125rem;
+  }
+
+  .filter-select {
+    min-width: auto;
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .results-header {
+    padding: 1rem;
+    border-radius: 16px;
+  }
+
+  .results-title {
+    font-size: 1.25rem;
+  }
+
+  .alternative-card {
+    padding: 0.75rem;
+  }
+
   .provider-avatar {
     width: 36px;
     height: 36px;
     font-size: 0.875rem;
   }
-  
+
   .provider-name {
     font-size: 0.9375rem;
   }
-  
+
+  .offer-title {
+    font-size: 0.75rem;
+  }
+
   .price-amount {
     font-size: 1.125rem;
   }
-  
+
   .action-button {
     padding: 0.5rem 0.75rem;
     font-size: 0.75rem;
   }
-  
+
   .widget-modal-header h2 {
     font-size: 1.2rem;
   }
-  
+
   .widget-modal-header {
     padding: 15px;
+  }
+
+  .results-summary {
+    grid-template-columns: 1fr;
+    gap: 1rem;
   }
 }
 

@@ -1518,7 +1518,8 @@ a {
   position: relative;
   overflow: hidden;
   min-width: 200px;
-  height: 60px;
+  min-height: 60px;
+  height: auto;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
@@ -1636,6 +1637,23 @@ a {
 @media (max-width: 768px) {
   .sophisticated-scroll-indicator {
     bottom: 220px; /* Mobile: Noch höher - im Zwischenraum zwischen Trust-Hint und Button */
+  }
+}
+
+@media (max-width: 640px) {
+  .sophisticated-scroll-indicator {
+    bottom: 200px;
+  }
+}
+
+@media (max-width: 480px) {
+  .sophisticated-scroll-indicator {
+    bottom: 180px;
+  }
+
+  .sophisticated-scroll-chevron {
+    width: 20px;
+    height: 20px;
   }
 }
 
@@ -3629,6 +3647,7 @@ a[href*="kontakt"]:hover,
   transition: all 0.2s ease;
   position: relative;
   min-width: 160px;
+  min-height: 48px;
   white-space: nowrap;
   border: none;
   cursor: pointer;
@@ -3931,11 +3950,148 @@ a[href*="kontakt"]:hover,
     gap: 15px;
     margin-top: 15px;
   }
-  
+
   .trust-badge {
     height: 100px !important;
     min-height: 100px !important;
     max-width: 125px !important;
+  }
+}
+
+/* === FOOTER MOBILE OPTIMIZATIONS === */
+@media (max-width: 768px) {
+  .footer {
+    padding: 60px 20px 30px;
+  }
+
+  .footer-top {
+    gap: 50px;
+    margin-bottom: 50px;
+  }
+
+  .footer-columns {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 40px;
+  }
+
+  .footer-logo {
+    min-width: 100%;
+  }
+
+  .footer-column ul li {
+    margin-bottom: 12px;
+  }
+
+  .footer-column ul li a {
+    font-size: 14px;
+    padding: 4px 0;
+    display: inline-block;
+  }
+
+  .footer-bottom {
+    padding-top: 30px;
+  }
+}
+
+@media (max-width: 640px) {
+  .footer {
+    padding: 50px 20px 25px;
+  }
+
+  .footer-top {
+    gap: 40px;
+    margin-bottom: 40px;
+  }
+
+  .footer-columns {
+    grid-template-columns: 1fr;
+    gap: 35px;
+  }
+
+  .footer-column h4 {
+    font-size: 15px;
+    margin-bottom: 16px;
+  }
+
+  .footer-column ul li {
+    margin-bottom: 10px;
+  }
+
+  .footer-column ul li a {
+    font-size: 14px;
+    padding: 6px 0;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+
+  .footer-bottom {
+    padding-top: 25px;
+    gap: 15px;
+  }
+
+  .copyright {
+    font-size: 13px;
+    text-align: center;
+  }
+
+  .social-links {
+    gap: 16px;
+  }
+
+  .social-link {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+@media (max-width: 480px) {
+  .footer {
+    padding: 40px 16px 20px;
+  }
+
+  .footer-top {
+    gap: 30px;
+    margin-bottom: 30px;
+  }
+
+  .footer-logo img {
+    height: 32px;
+    margin-bottom: 16px;
+  }
+
+  .company-description {
+    font-size: 14px;
+    line-height: 1.5;
+    margin-top: 16px;
+  }
+
+  .footer-columns {
+    gap: 30px;
+  }
+
+  .footer-column h4 {
+    font-size: 14px;
+    margin-bottom: 14px;
+  }
+
+  .footer-column ul li {
+    margin-bottom: 8px;
+  }
+
+  .footer-column ul li a {
+    font-size: 14px;
+    padding: 8px 0;
+    min-height: 44px;
+  }
+
+  .footer-bottom {
+    padding-top: 20px;
+    gap: 12px;
+  }
+
+  .copyright {
+    font-size: 12px;
   }
 }
 
@@ -4075,36 +4231,36 @@ a[href*="kontakt"]:hover,
   .navbar {
     height: 60px;
   }
-  
+
   .sophisticated-hero::before {
     top: -60px;
     height: 60px;
   }
-  
+
   .sophisticated-hero-content {
     padding-top: 60px;
   }
-  
+
   .mobile-menu-btn {
     display: flex;
   }
-  
+
   .nav-center {
     display: none;
   }
-  
+
   .nav-container {
     justify-content: space-between;
   }
-  
+
   .nav-left, .nav-right {
     flex: 1;
   }
-  
+
   .nav-right {
     justify-content: flex-end;
   }
-  
+
   .nav-links {
     position: fixed;
     top: 0;
@@ -4120,18 +4276,18 @@ a[href*="kontakt"]:hover,
     transition: right 0.3s ease-in-out;
     box-shadow: -5px 0 30px rgba(0, 0, 0, 0.1);
   }
-  
+
   .nav-links.mobile-open {
     right: 0;
     z-index: 1050;
   }
-  
+
   .nav-links li {
     margin: 15px 0;
     height: auto;
     width: 100%;
   }
-  
+
   .nav-link {
     font-size: 18px;
     padding: 10px 0;
@@ -4139,139 +4295,511 @@ a[href*="kontakt"]:hover,
     display: flex;
     justify-content: flex-start;
   }
-  
+
   .nav-link::after {
     display: none;
   }
-  
+
   .auth-buttons {
     flex-direction: column;
     width: 100%;
     gap: 15px;
   }
-  
+
   .auth-buttons .login-button,
   .auth-buttons .primary-button,
   .auth-buttons .profile-button {
     width: 100%;
     justify-content: center;
   }
-  
+
   .hamburger-menu {
     display: flex;
   }
-  
+
   .mobile-menu-btn {
     margin-left: 10px;
   }
-  
+
   .section-title h2 {
     font-size: 32px;
   }
-  
+
   .section-title p {
     font-size: 16px;
   }
-  
+
   .feature-card {
     padding: 30px 20px;
   }
-  
+
   .features-grid {
     grid-template-columns: 1fr;
+    gap: 20px;
   }
-  
+
   .cta-section h2 {
     font-size: 32px;
   }
-  
+
   .cta-section p {
     font-size: 18px;
   }
-  
+
   .cta-buttons {
     flex-direction: column !important;
     width: 100% !important;
     max-width: 300px !important;
     margin: 0 auto !important;
   }
-  
+
+  .cta-button {
+    min-height: 44px !important;
+  }
+
   .footer-bottom {
     flex-direction: column;
     gap: 20px;
   }
-  
+
   .sidebar {
     width: 90%;
   }
-  
+
   .trustbar-section {
     padding: 30px 20px;
   }
-  
+
   .trust-item {
     padding: 12px 16px;
   }
-  
+
   .trust-text {
     font-size: 13px;
   }
-  
-  /* Sophisticated Mobile Styles */
+
+  /* Sophisticated Mobile Styles - Hero Section */
   .sophisticated-hero {
     padding-bottom: 80px;
     min-height: 90vh;
   }
-  
+
   .sophisticated-hero-headline {
-    font-size: 3.2rem;
-    margin-bottom: 35px;
+    font-size: 2.5rem;
+    margin-bottom: 25px;
     line-height: 1.1;
   }
-  
+
   .sophisticated-hero-subheadline {
-    font-size: 1.3rem;
-    margin-bottom: 30px;
+    font-size: 1.1rem;
+    margin-bottom: 25px;
     padding: 0 10px;
   }
-  
+
   .sophisticated-hero-trust-hint {
-    padding: 16px 28px;
+    padding: 14px 24px;
     margin: 0 20px;
   }
-  
+
   .trust-hint-text {
-    font-size: 15px;
+    font-size: 14px;
   }
-  
+
   .sophisticated-auth-cta {
     flex-direction: column;
     gap: 16px;
     width: 100%;
   }
-  
+
   .sophisticated-cta-button {
     width: 100%;
     max-width: 280px;
     padding: 18px 36px;
-    height: 56px;
+    min-height: 52px;
+    height: auto;
     font-size: 1rem;
   }
-  
+
   .sophisticated-hero-text-container {
-    margin-bottom: 50px;
+    margin-bottom: 40px;
   }
-  
+
   .sophisticated-hero-cta {
-    margin-top: 50px;
+    margin-top: 40px;
   }
-  
+
   .sophisticated-logo-hero {
-    margin-bottom: 50px;
+    margin-bottom: 40px;
   }
-  
+
   .sophisticated-logo-hero img {
+    height: 70px;
+  }
+
+  /* Background Shapes - Kleinere Größen für mobile */
+  .floating-shape-1 {
+    width: 80px;
     height: 80px;
+  }
+
+  .floating-shape-2 {
+    width: 60px;
+    height: 60px;
+  }
+
+  .floating-shape-3 {
+    width: 40px;
+    height: 40px;
+  }
+
+  .floating-shape-4 {
+    width: 70px;
+    height: 70px;
+  }
+
+  .glass-orb-1 {
+    width: 80px;
+    height: 80px;
+  }
+
+  .glass-orb-2 {
+    width: 60px;
+    height: 60px;
+  }
+
+  .glass-orb-3 {
+    width: 120px;
+    height: 120px;
+  }
+
+  .glass-orb-4 {
+    width: 40px;
+    height: 40px;
+  }
+
+  .glass-orb-5 {
+    width: 100px;
+    height: 100px;
+  }
+
+  /* Testimonials - besseres Mobile Layout */
+  .testimonials-slider {
+    padding: 0 20px;
+  }
+
+  .slider-container {
+    gap: 10px;
+    padding: 1rem 0;
+  }
+
+  .slider-nav {
+    width: 40px;
+    height: 40px;
+  }
+
+  .slider-track {
+    padding: 1rem 20px;
+    margin: 0 -20px;
+  }
+
+  .testimonial-slide {
+    padding: 0 10px;
+  }
+
+  .testimonial-content {
+    padding: 24px;
+  }
+
+  .testimonial-text {
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  /* Mobile Sticky CTA - Touch-optimiert */
+  .mobile-sticky-cta {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .mobile-cta-button {
+    min-height: 48px;
+    min-width: 48px;
+  }
+}
+
+/* === MOBILE BREAKPOINT 640px === */
+@media (max-width: 640px) {
+  .section-title h2 {
+    font-size: 28px;
+  }
+
+  .section-title p {
+    font-size: 15px;
+  }
+
+  .sophisticated-hero-headline {
+    font-size: 2.2rem;
+  }
+
+  .sophisticated-hero-subheadline {
+    font-size: 1.05rem;
+  }
+
+  /* Feature Cards noch kompakter */
+  .feature-card {
+    padding: 25px 18px;
+  }
+
+  .feature-card h3 {
+    font-size: 18px;
+  }
+
+  .feature-card p {
+    font-size: 14px;
+  }
+
+  /* Background Shapes weiter reduzieren */
+  .floating-shape-1,
+  .floating-shape-2,
+  .floating-shape-3,
+  .floating-shape-4 {
+    opacity: 0.6;
+  }
+
+  .glass-orb-3 {
+    width: 100px;
+    height: 100px;
+  }
+
+  /* Testimonials kompakter */
+  .testimonial-content {
+    padding: 20px;
+  }
+
+  .testimonial-text {
+    font-size: 14px;
+  }
+
+  .author-name {
+    font-size: 14px;
+  }
+
+  .author-role {
+    font-size: 12px;
+  }
+
+  /* Contracts Management */
+  .cm-text h2 {
+    font-size: 26px;
+  }
+
+  .cm-subtext {
+    font-size: 15px;
+  }
+
+  .cm-bullets li {
+    padding: 14px 18px;
+  }
+
+  .cm-bullets li span {
+    font-size: 14px;
+  }
+
+  /* Showcase Section */
+  .showcase-content h3 {
+    font-size: 26px;
+  }
+
+  .showcase-content p {
+    font-size: 15px;
+  }
+}
+
+/* === MOBILE BREAKPOINT 480px === */
+@media (max-width: 480px) {
+  .section-title h2 {
+    font-size: 24px;
+  }
+
+  .section-title p {
+    font-size: 14px;
+  }
+
+  .sophisticated-hero-headline {
+    font-size: 1.9rem;
+    margin-bottom: 20px;
+  }
+
+  .sophisticated-hero-subheadline {
+    font-size: 0.95rem;
+    margin-bottom: 20px;
+  }
+
+  .sophisticated-logo-hero img {
+    height: 60px;
+  }
+
+  .sophisticated-hero-trust-hint {
+    padding: 12px 20px;
+    margin: 0 10px;
+  }
+
+  .trust-hint-text {
+    font-size: 13px;
+  }
+
+  .sophisticated-cta-button {
+    max-width: 260px;
+    padding: 16px 28px;
+    min-height: 48px;
+    font-size: 0.95rem;
+  }
+
+  /* Background Shapes auf mobile verstecken oder stark reduzieren */
+  .floating-shape-5,
+  .floating-shape-6 {
+    display: none;
+  }
+
+  .glass-orb-1 {
+    width: 60px;
+    height: 60px;
+  }
+
+  .glass-orb-2 {
+    width: 50px;
+    height: 50px;
+  }
+
+  .glass-orb-3 {
+    width: 80px;
+    height: 80px;
+  }
+
+  .glass-orb-4 {
+    display: none;
+  }
+
+  .glass-orb-5 {
+    width: 80px;
+    height: 80px;
+  }
+
+  /* Light Rays reduzieren */
+  .light-ray-1,
+  .light-ray-2 {
+    opacity: 0.15;
+  }
+
+  /* Feature Cards */
+  .feature-card {
+    padding: 20px 15px;
+  }
+
+  .feature-icon-wrapper {
+    width: 50px;
+    height: 50px;
+  }
+
+  .feature-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* Testimonials minimalistisch */
+  .slider-nav {
+    width: 36px;
+    height: 36px;
+  }
+
+  .slider-nav svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .testimonial-content {
+    padding: 18px;
+  }
+
+  .testimonial-text {
+    font-size: 13px;
+  }
+
+  .quote-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .author-avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 13px;
+  }
+
+  /* CTA Section */
+  .cta-section h2 {
+    font-size: 26px;
+  }
+
+  .cta-section p {
+    font-size: 16px;
+  }
+
+  .cta-button {
+    min-height: 44px !important;
+    padding: 10px 18px !important;
+    font-size: 14px !important;
+  }
+
+  /* Mobile CTA Bar */
+  .mobile-cta-content {
+    padding: 14px 18px;
+  }
+
+  .mobile-cta-title {
+    font-size: 15px;
+  }
+
+  .mobile-cta-button {
+    width: 44px;
+    height: 44px;
+  }
+
+  /* Contracts Management */
+  .cm-text h2 {
+    font-size: 24px;
+  }
+
+  .cm-subtext {
+    font-size: 14px;
+  }
+
+  .cm-bullets li {
+    padding: 12px 16px;
+  }
+
+  .cm-bullets li span {
+    font-size: 13px;
+  }
+
+  .cm-btn-primary {
+    min-height: 44px;
+  }
+
+  /* Showcase Section */
+  .showcase-content h3 {
+    font-size: 22px;
+  }
+
+  .showcase-content p {
+    font-size: 14px;
+  }
+
+  .showcase-items {
+    gap: 60px;
+  }
+
+  .showcase-item {
+    gap: 25px;
   }
 }
 
@@ -4280,23 +4808,23 @@ a[href*="kontakt"]:hover,
     top: -60px;
     height: 60px;
   }
-  
+
   .sophisticated-hero-content {
     padding-top: 60px;
   }
-  
+
   .showcase-content h3 {
     font-size: 24px;
   }
-  
+
   .showcase-item {
     gap: 30px;
   }
-  
+
   .showcase-items {
     gap: 80px;
   }
-  
+
   .nav-container {
     padding: 0 1rem;
   }

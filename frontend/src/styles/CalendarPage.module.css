@@ -1,31 +1,40 @@
-.container {
-    padding: 2rem;
-    background-color: #1a1a1a;
-    color: white;
-    border-radius: 10px;
-    max-width: 700px;
-    margin: 2rem auto;
-    box-shadow: 0 0 10px rgba(0, 255, 255, 0.1);
-  }
-  
-  h2 {
-    text-align: center;
-    color: #00e5ff;
-    margin-bottom: 2rem;
-  }
-  
-  .calendar {
-    background-color: white;
-    border-radius: 10px;
+.calendarContainer {
+  padding: 2rem;
+}
+
+.calendarContainer h1 {
+  margin-bottom: 1rem;
+  font-size: 1.8rem;
+}
+
+/* Mobile Breakpoints */
+@media (max-width: 768px) {
+  .calendarContainer {
     padding: 1rem;
-    color: black;
   }
-  
-  .dateInfo {
-    margin-top: 2rem;
-    padding: 1rem;
-    border-left: 5px solid #00e5ff;
-    background-color: #2a2a2a;
-    border-radius: 5px;
+
+  .calendarContainer h1 {
+    font-size: 1.5rem;
   }
-  
+}
+
+@media (max-width: 640px) {
+  .calendarContainer {
+    padding: 0.75rem;
+  }
+
+  .calendarContainer h1 {
+    font-size: 1.3rem;
+    margin-bottom: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .calendarContainer {
+    padding: 0.5rem;
+  }
+
+  .calendarContainer h1 {
+    font-size: 1.2rem;
+  }
+}

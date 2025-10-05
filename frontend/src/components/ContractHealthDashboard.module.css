@@ -155,27 +155,97 @@
   .dashboard {
     padding: 1.5rem;
   }
-  
+
   .header {
     flex-direction: column;
     align-items: flex-start;
     gap: 1rem;
   }
-  
+
   .scoreSection {
     text-align: left;
   }
-  
+
   .score {
     font-size: 2.5rem;
   }
-  
+
   .categories {
     grid-template-columns: 1fr;
+    gap: 0.875rem;
   }
-  
+
   .simulationBanner {
     flex-direction: column;
     text-align: center;
+  }
+}
+
+@media (max-width: 640px) {
+  .dashboard {
+    padding: 1.25rem;
+  }
+
+  .title {
+    font-size: 1.2rem;
+  }
+
+  .score {
+    font-size: 2.25rem;
+  }
+
+  .categories {
+    gap: 0.75rem;
+  }
+
+  .categoryCard {
+    padding: 0.875rem;
+  }
+
+  .categoryName {
+    font-size: 0.8125rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard {
+    padding: 1rem;
+    border-radius: 16px;
+  }
+
+  .title {
+    font-size: 1.125rem;
+  }
+
+  .subtitle {
+    font-size: 0.85rem;
+  }
+
+  .score {
+    font-size: 2rem;
+  }
+
+  .scoreLabel {
+    font-size: 0.85rem;
+  }
+
+  .categoryCard {
+    padding: 0.75rem;
+  }
+
+  .categoryName {
+    font-size: 0.75rem;
+  }
+
+  .categoryScore {
+    font-size: 1rem;
+  }
+
+  .simulationTitle {
+    font-size: 0.9rem;
+  }
+
+  .simulationSubtitle {
+    font-size: 0.8rem;
   }
 }

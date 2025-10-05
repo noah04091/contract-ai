@@ -1304,12 +1304,45 @@
 }
 
 /* Responsive Styles */
+
+/* Tablet - 1024px */
+@media (max-width: 1024px) {
+  .pageWrapper {
+    padding: 3rem 1.5rem;
+  }
+
+  .container {
+    margin-top: 3rem;
+  }
+
+  .title {
+    font-size: 3rem;
+  }
+
+  .subtitle {
+    font-size: 1.2rem;
+  }
+
+  .plans {
+    padding: 0 1rem;
+    gap: 1.5rem;
+  }
+
+  .cardsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .card {
+    padding: 2.5rem;
+  }
+}
+
 @media (max-width: 1100px) {
   .plans {
     padding: 0 1rem;
     gap: 1.5rem;
   }
-  
+
   .title {
     font-size: 3rem;
   }
@@ -1467,6 +1500,7 @@
   }
 }
 
+/* Small Tablet - 768px */
 @media (max-width: 768px) {
   .pageWrapper {
     padding: 2.5rem 1rem;
@@ -1474,21 +1508,70 @@
 
   .container {
     padding: 0;
-    margin-top: 6rem; /* Mehr Platz für Social Proof Bar */
+    margin-top: 5rem;
   }
 
   .title {
-    font-size: 2.6rem;
+    font-size: 2.8rem;
+  }
+
+  .subtitle {
+    font-size: 1.15rem;
+    padding: 0 1rem;
+  }
+
+  .urgencyContent {
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 1.8rem 1.5rem;
+  }
+
+  .card {
+    padding: 2rem;
+  }
+
+  .cardHeader {
+    padding: 2.5rem 2rem 1.5rem;
+  }
+
+  .cardContent {
+    padding: 1.5rem 2rem;
+  }
+
+  .buttonBox {
+    padding: 0.8rem 2rem 2.5rem;
+  }
+
+  .btnOutline,
+  .btnFilled,
+  .btnGradient {
+    min-height: 44px; /* Touch target */
+    padding: 1.2rem 2rem;
+  }
+}
+
+/* Mobile - 640px */
+@media (max-width: 640px) {
+  .pageWrapper {
+    padding: 2rem 1rem;
+  }
+
+  .container {
+    margin-top: 4rem;
+  }
+
+  .title {
+    font-size: 2.5rem;
   }
 
   .subtitle {
     font-size: 1.1rem;
-    padding: 0 1rem;
+    padding: 0 0.5rem;
   }
 
   .topInfoBar {
     margin-top: -1px;
-    padding-bottom: 1.5rem; /* Mehr Abstand nach unten */
+    padding-bottom: 1.5rem;
   }
 
   .infoItems {
@@ -1531,10 +1614,6 @@
 
   .countdownLabel {
     font-size: 0.6rem;
-  }
-
-  .pageWrapper {
-    padding: 2.5rem 0.8rem;
   }
 
   /* Mobile Green Trust Badges */
@@ -1585,71 +1664,126 @@
   .featureTable {
     min-width: 700px;
   }
+
+  .billingButton {
+    padding: 0.9rem 1.5rem;
+    font-size: 1rem;
+  }
+
+  .btnOutline,
+  .btnFilled,
+  .btnGradient {
+    min-height: 44px; /* Touch target */
+    font-size: 0.95rem;
+  }
 }
 
+/* Small Mobile - 480px */
 @media (max-width: 480px) {
   .pageWrapper {
-    padding: 1.8rem 0.8rem;
+    padding: 1.5rem 0.8rem;
   }
 
   .container {
-    margin-top: 7rem; /* Noch mehr Platz für kleinere Screens */
+    margin-top: 3rem;
   }
 
   .header {
-    margin-bottom: 2.5rem;
+    margin-bottom: 2rem;
   }
 
   .title {
-    font-size: 2.4rem;
+    font-size: 2rem;
+  }
+
+  .subtitle {
+    font-size: 1rem;
+    padding: 0 0.5rem;
   }
 
   .topInfoBar {
-    padding-bottom: 2rem; /* Mehr Abstand auf sehr kleinen Screens */
+    padding-bottom: 2rem;
   }
 
   /* Peek Cards für sehr kleine Screens */
   .plans {
-    padding: 0 8% 0 8%; /* Etwas weniger Peek auf sehr kleinen Screens */
+    padding: 0 8% 0 8%;
   }
 
   .cardWrapper {
-    flex: 0 0 84%; /* Etwas breiter auf sehr kleinen Screens */
+    flex: 0 0 84%;
     width: 84%;
   }
-  
-  .subtitle {
-    font-size: 1rem;
-  }
-  
+
   .viewToggle {
     width: 90%;
     max-width: 320px;
     margin-bottom: 2.5rem;
   }
-  
+
   .toggleButton {
     flex: 1;
     padding: 0.75rem 1rem;
+    font-size: 0.9rem;
   }
-  
+
+  .billingButton {
+    padding: 0.8rem 1.2rem;
+    font-size: 0.95rem;
+  }
+
   .price {
     font-size: 2.7rem;
   }
-  
+
   .cardHeader {
     padding: 1.8rem 1.5rem 1rem;
   }
-  
+
   .cardContent {
     padding: 1rem 1.5rem;
   }
-  
+
   .buttonBox {
     padding: 0.5rem 1.5rem 1.8rem;
   }
-  
-  .features li, .limitations li {
+
+  .features li,
+  .limitations li {
+    font-size: 0.95rem;
+  }
+
+  .btnOutline,
+  .btnFilled,
+  .btnGradient {
+    min-height: 44px; /* Touch target */
+    padding: 1rem 1.5rem;
+    font-size: 0.9rem;
+  }
+
+  .urgencyContent {
+    padding: 1.2rem 0.8rem;
+    clip-path: none; /* Entferne clip-path auf kleinen Screens */
+  }
+
+  .urgencyTitle {
+    font-size: 0.95rem;
+  }
+
+  .urgencySubtitle {
+    font-size: 0.8rem;
+  }
+
+  .greenTrustBadge {
+    padding: 0.6rem 1rem;
+    font-size: 0.75rem;
+  }
+
+  .planTitle {
+    font-size: 1.6rem;
+  }
+
+  .planDescription {
     font-size: 0.95rem;
   }
 }

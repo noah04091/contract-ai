@@ -632,47 +632,121 @@
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
+@media (max-width: 640px) {
   .modal {
-    max-width: 100%;
-    max-height: 100vh;
-    border-radius: 0;
+    max-width: 95vw;
   }
-  
+
+  .header {
+    padding: 1rem;
+  }
+
   .headerTitle {
     flex-direction: column;
     align-items: flex-start;
   }
-  
-  .providerBadge {
-    font-size: 12px;
-    padding: 5px 10px;
+
+  .headerTitle h2 {
+    font-size: 1.2rem;
   }
-  
+
+  .headerTitle p {
+    font-size: 0.85rem;
+  }
+
+  .iconWrapper {
+    width: 44px;
+    height: 44px;
+  }
+
+  .providerBadge {
+    font-size: 0.8rem;
+    padding: 6px 10px;
+  }
+
+  .closeBtn {
+    width: 44px;
+    height: 44px;
+  }
+
+  .content {
+    padding: 1rem;
+  }
+
+  .formSection {
+    padding: 1rem;
+  }
+
   .formGrid {
     grid-template-columns: 1fr;
   }
-  
+
   .sendMethodGrid {
     grid-template-columns: 1fr;
   }
-  
+
+  .radioContent {
+    padding: 12px;
+    min-height: 44px;
+  }
+
   .actions {
     flex-direction: column;
   }
-  
+
   .cancelBtn,
   .secondaryBtn,
   .primaryBtn {
     width: 100%;
     justify-content: center;
+    min-height: 44px;
   }
-  
+
   .providerInfo {
-    padding: 12px;
+    padding: 0.875rem;
   }
-  
+
   .providerDetails {
-    font-size: 13px;
+    font-size: 0.85rem;
+  }
+
+  .letterPreview {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .modal {
+    max-width: 100vw;
+    border-radius: 16px;
+  }
+
+  .header {
+    padding: 0.875rem;
+  }
+
+  .headerTitle h2 {
+    font-size: 1.1rem;
+  }
+
+  .content {
+    padding: 0.875rem;
+  }
+
+  .formSection {
+    padding: 0.875rem;
+  }
+
+  .formSection h3 {
+    font-size: 0.95rem;
+  }
+
+  .letterPreview {
+    padding: 0.875rem;
+    max-height: 300px;
+  }
+
+  .letterPreview pre {
+    font-size: 0.85rem;
   }
 }

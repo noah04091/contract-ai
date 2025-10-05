@@ -369,4 +369,60 @@
     width: 24px;
     height: 24px;
   }
+
+  .viewAllButton,
+  .actionButton,
+  .createButton {
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 640px) {
+  .generatedSection {
+    padding: 12px;
+  }
+
+  .headerText h2 {
+    font-size: 16px;
+  }
+
+  .contractsGrid {
+    gap: 10px;
+  }
+
+  .contractCard {
+    padding: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .generatedSection {
+    border-radius: 12px;
+  }
+
+  .headerIcon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .headerIcon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .headerText h2 {
+    font-size: 15px;
+  }
+
+  .headerText p {
+    font-size: 13px;
+  }
+
+  .contractCard {
+    padding: 12px;
+  }
+
+  .contractName {
+    font-size: 15px;
+  }
 }

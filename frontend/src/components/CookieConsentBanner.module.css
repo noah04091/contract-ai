@@ -362,56 +362,200 @@
 }
 
 /* Responsive Design - Mobile First */
+@media (max-width: 768px) {
+  .banner {
+    bottom: 20px;
+    width: calc(100vw - 40px);
+    max-width: none;
+    border-radius: 14px;
+  }
+
+  .content {
+    padding: 22px 18px 18px;
+  }
+
+  .title {
+    font-size: 20px;
+    margin-bottom: 14px;
+  }
+
+  .description {
+    font-size: 15px;
+    margin-bottom: 10px;
+  }
+
+  .privacyLink {
+    font-size: 12px;
+    margin-bottom: 22px;
+  }
+
+  .settings {
+    padding: 18px;
+    margin: 18px 0 26px 0;
+  }
+
+  .buttons {
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 26px;
+  }
+
+  .button {
+    padding: 14px 18px;
+    font-size: 15px;
+    min-height: 50px;
+    min-width: 100%;
+    width: 100%;
+  }
+
+  .buttonLink {
+    padding: 14px 16px;
+    font-size: 15px;
+    margin-top: 14px;
+    display: block;
+    text-align: center;
+    width: 100%;
+  }
+}
+
 @media (max-width: 640px) {
   .banner {
     bottom: 16px;
     width: calc(100vw - 32px);
     max-width: none;
-    border-radius: 16px;
+    border-radius: 14px;
   }
-  
+
   .content {
-    padding: 24px 20px 20px;
+    padding: 20px 16px 16px;
   }
-  
+
   .title {
-    font-size: 20px;
+    font-size: 19px;
     margin-bottom: 12px;
   }
-  
+
   .description {
     font-size: 14px;
     margin-bottom: 10px;
   }
-  
+
   .privacyLink {
     font-size: 12px;
     margin-bottom: 20px;
   }
-  
+
   .settings {
     padding: 16px;
     margin: 16px 0 24px 0;
   }
-  
+
+  .categoryName {
+    font-size: 14px;
+  }
+
+  .categoryDescription {
+    font-size: 12px;
+    padding-left: 28px;
+  }
+
   .buttons {
+    flex-direction: column;
     gap: 10px;
     margin-top: 24px;
   }
-  
+
   .button {
-    padding: 14px 18px;
-    font-size: 15px;
+    padding: 14px 16px;
+    font-size: 14px;
     min-height: 48px;
-    min-width: 140px;
+    min-width: 100%;
+    width: 100%;
   }
-  
+
   .buttonLink {
     padding: 12px 16px;
-    font-size: 15px;
+    font-size: 14px;
     margin-top: 12px;
     display: block;
     text-align: center;
+    width: 100%;
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 480px) {
+  .banner {
+    bottom: 12px;
+    width: calc(100vw - 24px);
+    border-radius: 12px;
+  }
+
+  .content {
+    padding: 18px 14px 14px;
+  }
+
+  .title {
+    font-size: 18px;
+    margin-bottom: 10px;
+  }
+
+  .description {
+    font-size: 13px;
+    margin-bottom: 8px;
+    line-height: 1.4;
+  }
+
+  .privacyLink {
+    font-size: 11px;
+    margin-bottom: 18px;
+  }
+
+  .settings {
+    padding: 14px;
+    margin: 14px 0 20px 0;
+  }
+
+  .cookieCategory {
+    margin-bottom: 16px;
+  }
+
+  .categoryName {
+    font-size: 13px;
+  }
+
+  .categoryDescription {
+    font-size: 11px;
+    padding-left: 26px;
+  }
+
+  .checkbox {
+    width: 16px;
+    height: 16px;
+  }
+
+  .buttons {
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 20px;
+  }
+
+  .button {
+    padding: 14px 16px;
+    font-size: 14px;
+    min-height: 48px;
+    min-width: 100%;
+    width: 100%;
+  }
+
+  .buttonLink {
+    padding: 12px 14px;
+    font-size: 14px;
+    margin-top: 10px;
+    display: block;
+    text-align: center;
+    width: 100%;
+    min-height: 44px;
   }
 }
 

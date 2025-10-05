@@ -635,12 +635,49 @@
 }
 
 /* Small Mobile */
+@media (max-width: 640px) {
+  .dashboard-alternatives-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .dashboard-alternative-card {
+    padding: 16px;
+  }
+
+  .dashboard-compact-title {
+    font-size: 15px;
+  }
+
+  .dashboard-compact-visit-btn,
+  .dashboard-compact-delete-btn {
+    min-height: 44px;
+  }
+}
+
 @media (max-width: 480px) {
   .dashboard-alternatives-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .dashboard-alternative-card {
-    padding: 16px;
+    padding: 14px;
+  }
+
+  .dashboard-compact-title {
+    font-size: 14px;
+  }
+
+  .dashboard-provider-text {
+    font-size: 13px;
+  }
+
+  .dashboard-compact-price {
+    font-size: 13px;
+  }
+
+  .dashboard-compact-visit-btn {
+    font-size: 13px;
+    padding: 7px 14px;
   }
 }

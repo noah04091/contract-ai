@@ -449,38 +449,210 @@
     .apple-auth-card {
       padding: 30px 20px;
     }
-    
+
     .apple-auth-title {
       font-size: 24px;
     }
-    
+
     .apple-auth-subtitle {
       font-size: 14px;
       margin-bottom: 30px;
     }
   }
-  
+
+  /* Mobile Optimization: 640px */
+  @media (max-width: 640px) {
+    .apple-auth-card {
+      padding: 28px 18px;
+    }
+
+    .apple-logo svg {
+      width: 44px;
+      height: 44px;
+    }
+
+    .apple-input-container input {
+      min-height: 44px;
+      height: 44px;
+    }
+
+    .apple-auth-button {
+      min-height: 44px;
+      height: 50px;
+    }
+
+    /* Verification Steps - Stack Vertical on Mobile */
+    .verification-steps .step-indicator {
+      flex-direction: column !important;
+      gap: 12px !important;
+    }
+
+    .verification-steps .step-line {
+      width: 2px !important;
+      height: 20px !important;
+    }
+  }
+
   @media (max-width: 480px) {
     .apple-auth-container {
       padding: 15px;
     }
-    
+
+    .apple-auth-card {
+      padding: 24px 16px;
+    }
+
     .apple-auth-title {
       font-size: 22px;
     }
-    
+
+    .apple-logo svg {
+      width: 40px;
+      height: 40px;
+    }
+
     .apple-input-container {
       padding: 0 12px;
     }
-    
+
     .apple-input-container input {
+      min-height: 44px;
       height: 44px;
       font-size: 15px;
     }
-    
+
+    .apple-auth-button {
+      min-height: 44px;
+      font-size: 15px;
+    }
+
     .apple-notification {
       left: 20px;
       right: 20px;
       max-width: calc(100% - 40px);
+    }
+
+    /* Verification Steps - More Compact */
+    .verification-steps {
+      margin: 20px 0 !important;
+    }
+  }
+
+  /* Mobile Optimization: 375px and below */
+  @media (max-width: 375px) {
+    .apple-auth-container {
+      padding: 12px;
+    }
+
+    .apple-auth-card {
+      padding: 20px 14px;
+      border-radius: 16px;
+    }
+
+    .apple-logo {
+      margin-bottom: 16px;
+    }
+
+    .apple-logo svg {
+      width: 36px;
+      height: 36px;
+    }
+
+    .apple-auth-title {
+      font-size: 20px;
+      margin-bottom: 6px;
+    }
+
+    .apple-auth-subtitle {
+      font-size: 13px;
+      margin-bottom: 24px;
+    }
+
+    .apple-auth-form {
+      gap: 18px;
+    }
+
+    .apple-input-container input {
+      min-height: 44px;
+      height: 44px;
+      font-size: 14px;
+    }
+
+    .apple-auth-button {
+      min-height: 44px;
+      height: 46px;
+      font-size: 14px;
+      gap: 8px;
+    }
+
+    .apple-auth-button svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* Verification Icon - Smaller */
+    .verification-mail-icon svg,
+    .verification-icon > div {
+      width: 64px !important;
+      height: 64px !important;
+    }
+
+    .verification-mail-icon svg {
+      width: 64px;
+      height: 64px;
+    }
+
+    /* Email Badge - Smaller */
+    .verified-email-badge {
+      padding: 10px 16px !important;
+      font-size: 13px !important;
+    }
+
+    /* Verification Steps - Extra Compact */
+    .verification-steps .step-item span {
+      font-size: 12px !important;
+    }
+
+    .verification-steps .step-number {
+      width: 26px !important;
+      height: 26px !important;
+      font-size: 12px !important;
+    }
+
+    /* Verification Actions */
+    .verification-actions {
+      margin: 20px 0 !important;
+    }
+
+    .verification-actions button {
+      font-size: 14px;
+    }
+
+    /* Verification Tip */
+    .verification-tip {
+      padding: 12px !important;
+      font-size: 13px !important;
+    }
+
+    .verification-tip p {
+      font-size: 13px !important;
+    }
+
+    /* Auth Links */
+    .apple-auth-links {
+      margin-top: 24px;
+      gap: 12px;
+    }
+
+    .apple-auth-links p {
+      font-size: 13px;
+    }
+
+    /* Notification */
+    .apple-notification {
+      left: 12px;
+      right: 12px;
+      max-width: calc(100% - 24px);
+      padding: 14px;
     }
   }

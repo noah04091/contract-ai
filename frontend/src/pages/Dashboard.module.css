@@ -35,6 +35,19 @@
   padding: 2rem;
 }
 
+/* 📱 Mobile: Padding reduzieren */
+@media (max-width: 640px) {
+  .dashboardContainer {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboardContainer {
+    padding: 0.75rem;
+  }
+}
+
 .dashboardHeader {
   display: flex;
   justify-content: space-between;
@@ -47,6 +60,19 @@
   font-weight: 600;
   color: var(--text-primary);
   margin: 0;
+}
+
+/* 📱 Mobile: H1 kleiner */
+@media (max-width: 640px) {
+  .dashboardHeader h1 {
+    font-size: 1.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboardHeader h1 {
+    font-size: 1.5rem;
+  }
 }
 
 .userInfoContainer {
@@ -178,6 +204,21 @@
   margin-bottom: 2rem;
 }
 
+/* 📱 Mobile: Kleinere minmax für bessere 2-Spalten-Ansicht */
+@media (max-width: 640px) {
+  .metricsGrid {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .metricsGrid {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.75rem;
+  }
+}
+
 .metricCard {
   background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
   border-radius: 16px;
@@ -187,6 +228,21 @@
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+}
+
+/* 📱 Mobile: Padding & Border-Radius reduzieren */
+@media (max-width: 640px) {
+  .metricCard {
+    padding: 1rem;
+    border-radius: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .metricCard {
+    padding: 0.875rem;
+    border-radius: 10px;
+  }
 }
 
 .metricCard::before {
@@ -297,6 +353,19 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+/* 📱 Mobile: Kleinere Metric Values */
+@media (max-width: 640px) {
+  .metricValue {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .metricValue {
+    font-size: 1.75rem;
+  }
 }
 
 .metricLabel {
@@ -451,6 +520,14 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 16px;
+}
+
+/* 📱 Mobile: 1-Spalten Layout für Legal Pulse */
+@media (max-width: 768px) {
+  .legalPulseGrid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
 }
 
 /* Legal Pulse Karten - KOMPLETT HELL! */
@@ -754,6 +831,30 @@
   overflow-x: auto;
 }
 
+/* 📱 Mobile: Tabelle als horizontaler Scroll */
+@media (max-width: 768px) {
+  .tableWrapper {
+    overflow-x: scroll;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .contractTable {
+    min-width: 800px;
+  }
+}
+
+@media (max-width: 640px) {
+  .contractTable {
+    min-width: 700px;
+    font-size: 0.875rem;
+  }
+
+  .contractTable th,
+  .contractTable td {
+    padding: 0.75rem 0.5rem;
+  }
+}
+
 .contractTable {
   width: 100%;
   border-collapse: collapse;
@@ -997,6 +1098,28 @@
   flex-direction: column;
 }
 
+/* 📱 Mobile: Modal responsive */
+@media (max-width: 640px) {
+  .modalContent {
+    max-width: 95vw;
+    margin: 0 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .modalContent {
+    max-width: 100vw;
+    margin: 0;
+    border-radius: 0;
+  }
+
+  .modalHeader,
+  .modalBody,
+  .modalFooter {
+    padding: 1rem;
+  }
+}
+
 .modalHeader {
   display: flex;
   justify-content: space-between;
@@ -1196,6 +1319,26 @@
   gap: 16px;
 }
 
+/* 📱 Mobile: Section Header responsive */
+@media (max-width: 640px) {
+  .sectionHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .sectionHeader h2 {
+    font-size: 1.25rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .sectionHeader h2 {
+    font-size: 1.125rem !important;
+  }
+}
+
 .headerContent h2 {
   font-size: 1.5rem;
   font-weight: 700;
@@ -1351,6 +1494,15 @@
   flex-wrap: wrap;
 }
 
+/* 📱 Mobile: Action Buttons stapeln */
+@media (max-width: 640px) {
+  .actionButtonsNew {
+    flex-direction: column;
+    gap: 0.375rem;
+    width: 100%;
+  }
+}
+
 .actionBtn {
   display: flex;
   align-items: center;
@@ -1365,6 +1517,16 @@
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
+}
+
+/* 📱 Mobile: Größere Touch Targets für Action Buttons */
+@media (max-width: 640px) {
+  .actionBtn {
+    justify-content: center;
+    padding: 0.625rem 1rem;
+    font-size: 0.8125rem;
+    min-height: 44px;
+  }
 }
 
 .actionBtn svg {
@@ -1484,6 +1646,21 @@
   gap: 1rem;
 }
 
+/* 📱 Mobile: Bessere Quick Actions Darstellung */
+@media (max-width: 640px) {
+  .quickActionsGrid {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .quickActionsGrid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+}
+
 .quickActionCard {
   display: flex;
   align-items: center;
@@ -1564,6 +1741,21 @@
   margin-bottom: 2rem;
 }
 
+/* 📱 Mobile: Analytics Grid responsive */
+@media (max-width: 1024px) {
+  .analyticsGrid {
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.25rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .analyticsGrid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
 .analyticsCard {
   background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
   border-radius: 16px;
@@ -1626,6 +1818,19 @@
   border-radius: 12px;
   padding: 1rem;
   border: 1px solid rgba(241, 245, 249, 0.8);
+}
+
+/* 📱 Mobile: Kleinere Chart Container */
+@media (max-width: 768px) {
+  .chartContainer {
+    padding: 0.75rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .chartContainer {
+    padding: 0.5rem;
+  }
 }
 
 .chartLegend {
