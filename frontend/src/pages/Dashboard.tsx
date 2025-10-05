@@ -890,106 +890,195 @@ export default function Dashboard() {
                 <p>Daten werden geladen...</p>
               </div>
             ) : priorityContracts.length > 0 ? (
-              <div className={styles.tableWrapper}>
-                <table className={styles.contractTable}>
-                  <thead>
-                    <tr>
-                      <th>Kategorie</th>
-                      <th>Name</th>
-                      <th>Laufzeit</th>
-                      <th>Ablaufdatum</th>
-                      <th>Status</th>
-                      <th>Aktionen</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {priorityContracts.map((contract) => {
-                      const category = getContractCategory(contract);
-                      const categoryInfo = getCategoryInfo(category);
-                      
-                      return (
-                        <tr 
-                          key={contract._id} 
-                          className={styles.contractRow}
-                          onClick={() => navigate(`/contracts/${contract._id}`)}
-                        >
-                          <td>
-                            <div className={styles.categoryCell}>
-                              <span 
-                                className={styles.categoryIcon}
-                                style={{ color: categoryInfo.color }}
-                              >
-                                {categoryInfo.icon}
-                              </span>
-                              <span 
-                                className={styles.categoryLabel}
-                                style={{ color: categoryInfo.color }}
-                              >
-                                {categoryInfo.label}
-                              </span>
-                            </div>
-                          </td>
-                          <td className={styles.nameCell}>
-                            <div className={styles.contractNameCell}>
-                              <span className={styles.contractName}>{contract.name || "—"}</span>
+              <>
+                {/* 🖥️ Desktop Table */}
+                <div className={styles.tableWrapper}>
+                  <table className={styles.contractTable}>
+                    <thead>
+                      <tr>
+                        <th>Kategorie</th>
+                        <th>Name</th>
+                        <th>Laufzeit</th>
+                        <th>Ablaufdatum</th>
+                        <th>Status</th>
+                        <th>Aktionen</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {priorityContracts.map((contract) => {
+                        const category = getContractCategory(contract);
+                        const categoryInfo = getCategoryInfo(category);
+
+                        return (
+                          <tr
+                            key={contract._id}
+                            className={styles.contractRow}
+                            onClick={() => navigate(`/contracts/${contract._id}`)}
+                          >
+                            <td>
+                              <div className={styles.categoryCell}>
+                                <span
+                                  className={styles.categoryIcon}
+                                  style={{ color: categoryInfo.color }}
+                                >
+                                  {categoryInfo.icon}
+                                </span>
+                                <span
+                                  className={styles.categoryLabel}
+                                  style={{ color: categoryInfo.color }}
+                                >
+                                  {categoryInfo.label}
+                                </span>
+                              </div>
+                            </td>
+                            <td className={styles.nameCell}>
+                              <div className={styles.contractNameCell}>
+                                <span className={styles.contractName}>{contract.name || "—"}</span>
+                                {contract.isGenerated && (
+                                  <span className={styles.generatedBadge}>✨ KI</span>
+                                )}
+                              </div>
+                            </td>
+                            <td>{contract.laufzeit || "—"}</td>
+                            <td>{contract.expiryDate || "—"}</td>
+                            <td>
+                              <div className={styles.statusCell}>
+                                <span className={`${styles.statusBadge} ${styles[contract.status?.toLowerCase().replace(' ', '') || 'unknown']}`}>
+                                  {contract.status || "Unbekannt"}
+                                </span>
+                              </div>
+                            </td>
+                            <td>
+                              <div className={styles.actionButtonsNew}>
+                                <button
+                                  className={`${styles.actionBtn} ${styles.reminderBtn} ${contract.reminder ? styles.active : ''}`}
+                                  onClick={(e) => toggleReminder(contract._id, e)}
+                                  title={contract.reminder ? "Erinnerung deaktivieren" : "Erinnerung aktivieren"}
+                                >
+                                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M18 8C18 6.4087 17.3679 4.88258 16.2426 3.75736C15.1174 2.63214 13.5913 2 12 2C10.4087 2 8.88258 2.63214 7.75736 3.75736C6.63214 4.88258 6 6.4087 6 8C6 15 3 17 3 17H21C21 17 18 15 18 8Z" stroke="currentColor" strokeWidth="1.5"/>
+                                  </svg>
+                                  <span>Reminder</span>
+                                </button>
+                                <button
+                                  className={`${styles.actionBtn} ${styles.calendarBtn}`}
+                                  onClick={(e) => handleExportICS(contract, e)}
+                                  title="Zum Kalender hinzufügen"
+                                >
+                                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M19 4H5C3.89543 4 3 4.89543 3 6V20C3 21.1046 3.89543 22 5 22H19C20.1046 22 21 21.1046 21 20V6C21 4.89543 20.1046 4 19 4Z" stroke="currentColor" strokeWidth="1.5"/>
+                                    <path d="M16 2V6" stroke="currentColor" strokeWidth="1.5"/>
+                                    <path d="M8 2V6" stroke="currentColor" strokeWidth="1.5"/>
+                                    <path d="M3 10H21" stroke="currentColor" strokeWidth="1.5"/>
+                                  </svg>
+                                  <span>Kalender</span>
+                                </button>
+                                <button
+                                  className={`${styles.actionBtn} ${styles.deleteBtn}`}
+                                  onClick={(e) => handleDelete(contract._id, e)}
+                                  title="Vertrag löschen"
+                                >
+                                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M3 6H5H21" stroke="currentColor" strokeWidth="1.5"/>
+                                    <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="currentColor" strokeWidth="1.5"/>
+                                  </svg>
+                                  <span>Löschen</span>
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* 📱 Mobile Card Layout */}
+                <div className={styles.mobileContractList}>
+                  {priorityContracts.map((contract) => {
+                    const category = getContractCategory(contract);
+                    const categoryInfo = getCategoryInfo(category);
+
+                    return (
+                      <div
+                        key={contract._id}
+                        className={styles.mobileContractCard}
+                        onClick={() => navigate(`/contracts/${contract._id}`)}
+                      >
+                        <div className={styles.mobileCardHeader}>
+                          <div className={styles.mobileCardTitle}>
+                            <div className={styles.mobileCardName}>
+                              {contract.name || "—"}
                               {contract.isGenerated && (
                                 <span className={styles.generatedBadge}>✨ KI</span>
                               )}
                             </div>
-                          </td>
-                          <td>{contract.laufzeit || "—"}</td>
-                          <td>{contract.expiryDate || "—"}</td>
-                          <td>
-                            <div className={styles.statusCell}>
-                              <span className={`${styles.statusBadge} ${styles[contract.status?.toLowerCase().replace(' ', '') || 'unknown']}`}>
-                                {contract.status || "Unbekannt"}
+                            <div className={styles.mobileCardCategory}>
+                              <span style={{ color: categoryInfo.color }}>
+                                {categoryInfo.icon}
+                              </span>
+                              <span style={{ color: categoryInfo.color }}>
+                                {categoryInfo.label}
                               </span>
                             </div>
-                          </td>
-                          <td>
-                            <div className={styles.actionButtonsNew}>
-                              <button 
-                                className={`${styles.actionBtn} ${styles.reminderBtn} ${contract.reminder ? styles.active : ''}`} 
-                                onClick={(e) => toggleReminder(contract._id, e)} 
-                                title={contract.reminder ? "Erinnerung deaktivieren" : "Erinnerung aktivieren"}
-                              >
-                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                  <path d="M18 8C18 6.4087 17.3679 4.88258 16.2426 3.75736C15.1174 2.63214 13.5913 2 12 2C10.4087 2 8.88258 2.63214 7.75736 3.75736C6.63214 4.88258 6 6.4087 6 8C6 15 3 17 3 17H21C21 17 18 15 18 8Z" stroke="currentColor" strokeWidth="1.5"/>
-                                </svg>
-                                <span>Reminder</span>
-                              </button>
-                              <button 
-                                className={`${styles.actionBtn} ${styles.calendarBtn}`} 
-                                onClick={(e) => handleExportICS(contract, e)} 
-                                title="Zum Kalender hinzufügen"
-                              >
-                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                  <path d="M19 4H5C3.89543 4 3 4.89543 3 6V20C3 21.1046 3.89543 22 5 22H19C20.1046 22 21 21.1046 21 20V6C21 4.89543 20.1046 4 19 4Z" stroke="currentColor" strokeWidth="1.5"/>
-                                  <path d="M16 2V6" stroke="currentColor" strokeWidth="1.5"/>
-                                  <path d="M8 2V6" stroke="currentColor" strokeWidth="1.5"/>
-                                  <path d="M3 10H21" stroke="currentColor" strokeWidth="1.5"/>
-                                </svg>
-                                <span>Kalender</span>
-                              </button>
-                              <button 
-                                className={`${styles.actionBtn} ${styles.deleteBtn}`} 
-                                onClick={(e) => handleDelete(contract._id, e)} 
-                                title="Vertrag löschen"
-                              >
-                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                  <path d="M3 6H5H21" stroke="currentColor" strokeWidth="1.5"/>
-                                  <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="currentColor" strokeWidth="1.5"/>
-                                </svg>
-                                <span>Löschen</span>
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                          </div>
+                          <span className={`${styles.statusBadge} ${styles[contract.status?.toLowerCase().replace(' ', '') || 'unknown']}`}>
+                            {contract.status || "Unbekannt"}
+                          </span>
+                        </div>
+
+                        <div className={styles.mobileCardDetails}>
+                          <div className={styles.mobileDetailRow}>
+                            <span className={styles.mobileDetailLabel}>Laufzeit</span>
+                            <span className={styles.mobileDetailValue}>{contract.laufzeit || "—"}</span>
+                          </div>
+                          <div className={styles.mobileDetailRow}>
+                            <span className={styles.mobileDetailLabel}>Ablaufdatum</span>
+                            <span className={styles.mobileDetailValue}>{contract.expiryDate || "—"}</span>
+                          </div>
+                        </div>
+
+                        <div className={styles.mobileCardActions}>
+                          <button
+                            className={`${styles.actionBtn} ${styles.reminderBtn} ${contract.reminder ? styles.active : ''}`}
+                            onClick={(e) => toggleReminder(contract._id, e)}
+                            title={contract.reminder ? "Erinnerung deaktivieren" : "Erinnerung aktivieren"}
+                          >
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M18 8C18 6.4087 17.3679 4.88258 16.2426 3.75736C15.1174 2.63214 13.5913 2 12 2C10.4087 2 8.88258 2.63214 7.75736 3.75736C6.63214 4.88258 6 6.4087 6 8C6 15 3 17 3 17H21C21 17 18 15 18 8Z" stroke="currentColor" strokeWidth="1.5"/>
+                            </svg>
+                            <span>Reminder</span>
+                          </button>
+                          <button
+                            className={`${styles.actionBtn} ${styles.calendarBtn}`}
+                            onClick={(e) => handleExportICS(contract, e)}
+                            title="Zum Kalender hinzufügen"
+                          >
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M19 4H5C3.89543 4 3 4.89543 3 6V20C3 21.1046 3.89543 22 5 22H19C20.1046 22 21 21.1046 21 20V6C21 4.89543 20.1046 4 19 4Z" stroke="currentColor" strokeWidth="1.5"/>
+                              <path d="M16 2V6" stroke="currentColor" strokeWidth="1.5"/>
+                              <path d="M8 2V6" stroke="currentColor" strokeWidth="1.5"/>
+                              <path d="M3 10H21" stroke="currentColor" strokeWidth="1.5"/>
+                            </svg>
+                            <span>Kalender</span>
+                          </button>
+                          <button
+                            className={`${styles.actionBtn} ${styles.deleteBtn}`}
+                            onClick={(e) => handleDelete(contract._id, e)}
+                            title="Vertrag löschen"
+                          >
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M3 6H5H21" stroke="currentColor" strokeWidth="1.5"/>
+                              <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="currentColor" strokeWidth="1.5"/>
+                            </svg>
+                            <span>Löschen</span>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
             ) : (
               <div className={styles.emptyState}>
                 <svg className={styles.emptyStateIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

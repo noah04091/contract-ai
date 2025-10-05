@@ -509,11 +509,7 @@
 
 /* Legal Pulse Container - HELL! */
 .legalPulseContainer {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
-  border-radius: 16px !important;
-  border: 1px solid #e2e8f0 !important;
-  overflow: hidden;
-  padding: 24px !important;
+  margin-bottom: 24px;
 }
 
 .legalPulseGrid {
@@ -733,33 +729,7 @@
   transform: translateX(2px);
 }
 
-/* Loading und Empty States für Legal Pulse - HELL! */
-.legalPulseContainer .loadingContainer {
-  padding: 60px 24px !important;
-  text-align: center;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
-  border-radius: 12px !important;
-}
-
-.legalPulseContainer .loadingSpinner {
-  width: 32px;
-  height: 32px;
-  margin: 0 auto 16px;
-}
-
-.legalPulseContainer .emptyState {
-  padding: 60px 24px !important;
-  text-align: center;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
-  border-radius: 12px !important;
-}
-
-.legalPulseContainer .emptyStateIcon {
-  width: 48px;
-  height: 48px;
-  margin: 0 auto 16px;
-  color: #9ca3af !important;
-}
+/* Loading und Empty States für Legal Pulse - entfernt (keine spezielle Styling nötig) */
 
 /* Dark Mode Überschreibung für Legal Pulse - HELL BLEIBT HELL! */
 @media (prefers-color-scheme: dark) {
@@ -790,9 +760,6 @@
     color: #64748b !important;
   }
 
-  .legalPulseContainer {
-    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
-  }
 }
 
 /* Micro-Animationen für Legal Pulse */
@@ -831,48 +798,171 @@
   overflow-x: auto;
 }
 
-/* 📱 Mobile: Tabelle als horizontaler Scroll */
+/* 📱 Mobile: Card-Layout statt Tabelle */
+.mobileContractList {
+  display: none;
+}
+
 @media (max-width: 768px) {
+  /* Tabelle ausblenden */
   .tableWrapper {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    /* Scrollbar sichtbar machen auf Mobile */
-    scrollbar-width: thin;
-    scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+    display: none;
   }
 
-  .tableWrapper::-webkit-scrollbar {
-    height: 8px;
+  /* Mobile Card List anzeigen */
+  .mobileContractList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
   }
 
-  .tableWrapper::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.05);
-    border-radius: 4px;
+  .mobileContractCard {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   }
 
-  .tableWrapper::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: 4px;
+  .mobileContractCard:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border-color: var(--primary-color);
   }
 
-  .tableWrapper::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 0, 0, 0.3);
+  .mobileCardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+    gap: 12px;
   }
 
-  .contractTable {
-    min-width: 800px;
+  .mobileCardTitle {
+    flex: 1;
+  }
+
+  .mobileCardName {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 1rem;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .mobileCardCategory {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.875rem;
+    margin-top: 4px;
+  }
+
+  .mobileCardDetails {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .mobileDetailRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.875rem;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .mobileDetailRow:last-child {
+    border-bottom: none;
+  }
+
+  .mobileDetailLabel {
+    color: var(--text-secondary);
+    font-weight: 500;
+    font-size: 0.8125rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .mobileDetailValue {
+    color: var(--text-primary);
+    font-weight: 500;
+  }
+
+  .mobileCardActions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-color);
+  }
+
+  .mobileCardActions button {
+    flex: 1;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
   }
 }
 
 @media (max-width: 640px) {
-  .contractTable {
-    min-width: 700px;
+  .mobileContractList {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .mobileContractCard {
+    padding: 14px;
+  }
+
+  .mobileCardName {
+    font-size: 0.9375rem;
+  }
+
+  .mobileDetailRow {
+    font-size: 0.8125rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .mobileContractList {
+    padding: 8px;
+    gap: 8px;
+  }
+
+  .mobileContractCard {
+    padding: 12px;
+    border-radius: 10px;
+  }
+
+  .mobileCardName {
     font-size: 0.875rem;
   }
 
-  .contractTable th,
-  .contractTable td {
-    padding: 0.75rem 0.5rem;
+  .mobileDetailLabel {
+    font-size: 0.75rem;
+  }
+
+  .mobileDetailRow {
+    font-size: 0.75rem;
+    padding: 6px 0;
+  }
+
+  .mobileCardActions button {
+    font-size: 0.8125rem;
+    padding: 7px 10px;
   }
 }
 
@@ -2373,9 +2463,6 @@
     color: #64748b !important;
   }
 
-  .legalPulseContainer {
-    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
-  }
 }
 
 /* Print Styles */

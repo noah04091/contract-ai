@@ -32,42 +32,51 @@ h2 {
 /* Mobile Breakpoints */
 @media (max-width: 768px) {
   .container {
-    margin: 1rem auto;
+    margin: 1rem;
     padding: 1.5rem;
+    max-width: calc(100vw - 32px);
   }
 
   h2 {
     font-size: 1.5rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.25rem;
   }
 
   .calendar {
-    padding: 0.75rem;
+    padding: 0.875rem;
+    border-radius: 8px;
   }
 
   .dateInfo {
     margin-top: 1.5rem;
-    padding: 0.75rem;
+    padding: 0.875rem;
+    border-radius: 8px;
   }
 }
 
 @media (max-width: 640px) {
   .container {
-    margin: 0.75rem auto;
-    padding: 1rem;
+    margin: 0.75rem;
+    padding: 1.25rem;
+    max-width: calc(100vw - 24px);
+    border-radius: 8px;
   }
 
   h2 {
     font-size: 1.3rem;
+    margin-bottom: 1.125rem;
   }
 
   .calendar {
-    padding: 0.5rem;
+    padding: 0.75rem;
+    border-radius: 8px;
   }
 
   .dateInfo {
-    padding: 0.5rem;
-    border-left-width: 3px;
+    margin-top: 1.25rem;
+    padding: 0.75rem;
+    border-left-width: 4px;
+    border-radius: 6px;
   }
 }
 
@@ -75,10 +84,24 @@ h2 {
   .container {
     margin: 0.5rem;
     padding: 1rem;
+    max-width: calc(100vw - 16px);
+    border-radius: 8px;
   }
 
   h2 {
-    font-size: 1.2rem;
+    font-size: 1.15rem;
     margin-bottom: 1rem;
+  }
+
+  .calendar {
+    padding: 0.625rem;
+    border-radius: 6px;
+  }
+
+  .dateInfo {
+    margin-top: 1rem;
+    padding: 0.625rem;
+    border-left-width: 3px;
+    font-size: 0.9rem;
   }
 }
