@@ -838,11 +838,12 @@
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: 12px;
-    gap: 12px;
+    gap: 8px;
   }
 
   .mobileCardTitle {
     flex: 1;
+    min-width: 0; /* Ermöglicht text-overflow */
   }
 
   .mobileCardName {
@@ -854,6 +855,13 @@
     align-items: center;
     gap: 8px;
     flex-wrap: wrap;
+    word-break: break-word;
+  }
+
+  /* Status Badge im Header - niemals schrumpfen */
+  .mobileCardHeader .statusBadge {
+    flex-shrink: 0;
+    white-space: nowrap;
   }
 
   .mobileCardCategory {
@@ -899,7 +907,7 @@
 
   .mobileCardActions {
     display: flex;
-    gap: 8px;
+    gap: 6px;
     margin-top: 12px;
     padding-top: 12px;
     border-top: 1px solid var(--border-color);
@@ -907,13 +915,27 @@
 
   .mobileCardActions button {
     flex: 1;
-    padding: 8px 12px;
+    padding: 8px 6px;
     border-radius: 8px;
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: 4px;
+    min-width: 0; /* Ermöglicht Schrumpfen */
+    overflow: hidden;
+  }
+
+  .mobileCardActions button svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+  }
+
+  .mobileCardActions button span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 
@@ -934,6 +956,17 @@
   .mobileDetailRow {
     font-size: 0.8125rem;
   }
+
+  .mobileCardActions button {
+    padding: 7px 5px;
+    font-size: 0.75rem;
+    gap: 3px;
+  }
+
+  .mobileCardActions button svg {
+    width: 14px;
+    height: 14px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -945,6 +978,10 @@
   .mobileContractCard {
     padding: 12px;
     border-radius: 10px;
+  }
+
+  .mobileCardHeader {
+    gap: 6px;
   }
 
   .mobileCardName {
@@ -960,9 +997,19 @@
     padding: 6px 0;
   }
 
+  .mobileCardActions {
+    gap: 4px;
+  }
+
   .mobileCardActions button {
-    font-size: 0.8125rem;
-    padding: 7px 10px;
+    font-size: 0.7rem;
+    padding: 6px 4px;
+    gap: 2px;
+  }
+
+  .mobileCardActions button svg {
+    width: 13px;
+    height: 13px;
   }
 }
 
