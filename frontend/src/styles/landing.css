@@ -1636,19 +1636,19 @@ a {
 /* Mobile: Höher für Zwischenraum zwischen Trust-Hint und Buttons */
 @media (max-width: 768px) {
   .sophisticated-scroll-indicator {
-    bottom: 220px; /* Mobile: Noch höher - im Zwischenraum zwischen Trust-Hint und Button */
+    bottom: 260px; /* Mobile: Höher - im Zwischenraum zwischen Trust-Hint und Buttons */
   }
 }
 
 @media (max-width: 640px) {
   .sophisticated-scroll-indicator {
-    bottom: 200px;
+    bottom: 240px;
   }
 }
 
 @media (max-width: 480px) {
   .sophisticated-scroll-indicator {
-    bottom: 180px;
+    bottom: 220px; /* Noch höher auf kleinen Screens */
   }
 
   .sophisticated-scroll-chevron {
@@ -3409,6 +3409,163 @@ a[href*="kontakt"]:hover,
 
   .plan-original-price-inline {
     font-size: 0.9rem;
+  }
+
+  /* Pricing Cards kleiner machen */
+  .pricing-plan {
+    padding: 30px 24px;
+    min-height: 480px;
+  }
+
+  .plan-header {
+    margin-bottom: 24px;
+    padding-bottom: 24px;
+  }
+
+  .plan-name {
+    font-size: 20px;
+    margin-bottom: 20px;
+  }
+
+  .amount {
+    font-size: 44px;
+  }
+
+  .currency {
+    font-size: 22px;
+    margin-top: 8px;
+  }
+
+  .period {
+    font-size: 15px;
+    margin-bottom: 5px;
+  }
+
+  .plan-features {
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .plan-features li {
+    font-size: 14px;
+  }
+
+  .plan-features li svg {
+    height: 18px;
+    width: 18px;
+    margin-right: 10px;
+  }
+}
+
+@media (max-width: 640px) {
+  /* Pricing Cards noch kleiner */
+  .pricing-plan {
+    padding: 26px 20px;
+    min-height: 450px;
+  }
+
+  .plan-header {
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+  }
+
+  .plan-name {
+    font-size: 19px;
+    margin-bottom: 18px;
+  }
+
+  .amount {
+    font-size: 40px;
+  }
+
+  .currency {
+    font-size: 20px;
+    margin-top: 7px;
+  }
+
+  .period {
+    font-size: 14px;
+  }
+
+  .plan-features {
+    gap: 11px;
+    margin-bottom: 22px;
+  }
+
+  .plan-features li {
+    font-size: 13px;
+  }
+
+  .plan-features li svg {
+    height: 17px;
+    width: 17px;
+    margin-right: 9px;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Pricing Cards am kleinsten */
+  .pricing-plan {
+    padding: 22px 18px;
+    min-height: 420px;
+  }
+
+  .plan-header {
+    margin-bottom: 18px;
+    padding-bottom: 18px;
+  }
+
+  .plan-name {
+    font-size: 18px;
+    margin-bottom: 16px;
+  }
+
+  .amount {
+    font-size: 36px;
+  }
+
+  .currency {
+    font-size: 18px;
+    margin-top: 6px;
+  }
+
+  .period {
+    font-size: 13px;
+  }
+
+  .plan-price {
+    height: 60px;
+    margin-bottom: 8px;
+  }
+
+  .plan-billing {
+    font-size: 13px;
+    margin-bottom: 8px;
+  }
+
+  .plan-features {
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .plan-features li {
+    font-size: 13px;
+    padding: 3px 0;
+  }
+
+  .plan-features li svg {
+    height: 16px;
+    width: 16px;
+    margin-right: 8px;
+  }
+
+  .enterprise-plan .individuell {
+    font-size: 42px;
+  }
+
+  .enterprise-plan .custom-price,
+  .custom-price-text {
+    font-size: 14px;
   }
 }
 
