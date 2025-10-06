@@ -444,6 +444,20 @@ const connectDB = async () => {
     }
 
     // ✅ 7. KI ANALYSIS & OPTIMIZATION - MIT /api PREFIX
+    // ✅ NEU: Upload-Route (ohne Analyse, kein Subscription-Check nötig)
+    try {
+      app.use("/api/upload", verifyToken, require("./routes/upload"));
+      console.log("✅ Upload-Route (ohne Analyse) geladen unter /api/upload");
+    } catch (err) {
+      console.error("❌ Fehler bei Upload-Route:", err);
+      app.post("/api/upload", verifyToken, (req, res) => {
+        res.status(503).json({
+          success: false,
+          message: "Upload-Service vorübergehend nicht verfügbar"
+        });
+      });
+    }
+
     try {
       app.use("/api/analyze", verifyToken, checkSubscription, require("./routes/analyze"));
       console.log("✅ Analyze-Route geladen unter /api/analyze");

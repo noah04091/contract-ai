@@ -594,6 +594,44 @@ export const uploadAndAnalyze = async (
 };
 
 /**
+ * 📤 NEU: Upload ohne Analyse (nur Speicherung)
+ */
+export const uploadOnly = async (
+  file: File,
+  onProgress?: (progress: number) => void
+): Promise<unknown> => {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  console.log(`📤 Upload Only: ${file.name} (${file.size} bytes)`);
+
+  if (onProgress) {
+    onProgress(10); // Start
+  }
+
+  try {
+    if (onProgress) onProgress(50); // Upload läuft
+
+    const result = await apiCall('/upload', {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (onProgress) onProgress(100); // Fertig
+
+    console.log("✅ Upload erfolgreich:", result);
+    return result;
+
+  } catch (error) {
+    if (onProgress) onProgress(0); // Reset bei Fehler
+
+    console.error("❌ Upload-Fehler:", error);
+    const errorMessage = getErrorMessage(error);
+    throw new Error(errorMessage);
+  }
+};
+
+/**
  * ⭐ NEU: Spezielle Funktion für File-Upload mit Optimierung - MIT RETRY & PROGRESS
  */
 export const uploadAndOptimize = async (
