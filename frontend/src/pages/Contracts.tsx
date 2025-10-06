@@ -867,16 +867,23 @@ export default function Contracts() {
 
     // Trigger normale Batch-Analyse für die pending files
     await startBatchAnalysis();
+
+    // ✅ Refresh nach Analyse
+    await fetchContracts();
+    setActiveSection('contracts');
   };
 
   // ✅ NEU: Skip-Aktion aus Success Modal
-  const handleSkipAnalysis = () => {
+  const handleSkipAnalysis = async () => {
     console.log("✓ User chose to skip analysis");
     setUploadSuccessModal({ show: false, uploadedContracts: [] });
 
     // Clear upload files und refresh contracts list
     clearAllUploadFiles();
-    fetchContracts();
+
+    // ✅ Wichtig: Warte auf fetchContracts, damit neue Verträge sichtbar werden
+    await fetchContracts();
+
     setActiveSection('contracts');
   };
 

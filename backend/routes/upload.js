@@ -122,7 +122,7 @@ const uploadToS3 = async (localFilePath, originalFilename, userId) => {
 router.post("/", verifyToken, uploadMiddleware.single("file"), async (req, res) => {
   const requestId = `UPLOAD-${Date.now()}`;
   console.log(`\n📤 [${requestId}] Upload-only request started`);
-  console.log(`👤 [${requestId}] User ID: ${req.userId}`);
+  console.log(`👤 [${requestId}] User ID: ${req.user.userId} (${req.user.email})`);
 
   try {
     if (!req.file) {
@@ -147,7 +147,7 @@ router.post("/", verifyToken, uploadMiddleware.single("file"), async (req, res) 
     if (S3_CONFIGURED && S3_AVAILABLE && s3Instance) {
       console.log(`📤 [${requestId}] Uploading to S3...`);
       try {
-        const s3Result = await uploadToS3(req.file.path, req.file.originalname, req.userId);
+        const s3Result = await uploadToS3(req.file.path, req.file.originalname, req.user.userId);
         storageInfo = {
           uploadType: "S3_UPLOAD",
           s3Key: s3Result.s3Key,
@@ -176,7 +176,7 @@ router.post("/", verifyToken, uploadMiddleware.single("file"), async (req, res) 
     // Erstelle Contract-Eintrag OHNE Analyse
     const contractData = {
       name: req.file.originalname,
-      userId: req.userId,
+      userId: new ObjectId(req.user.userId), // ✅ FIX: req.user.userId (von verifyToken)
       uploadedAt: new Date(),
       ...storageInfo,
       analyzed: false, // ✅ NEU: Flag für "nicht analysiert"
