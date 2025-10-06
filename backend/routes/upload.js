@@ -10,7 +10,7 @@ const verifyToken = require("../middleware/verifyToken");
 const router = express.Router();
 
 // ===== S3 INTEGRATION (AWS SDK v3) =====
-let S3Client, PutObjectCommand, HeadBucketCommand, multerS3, s3Instance;
+let S3Client, PutObjectCommand, HeadBucketCommand, s3Instance;
 let S3_AVAILABLE = false;
 let S3_CONFIGURED = false;
 
@@ -26,7 +26,6 @@ const initializeS3 = () => {
     }
 
     const { S3Client: _S3Client, PutObjectCommand: _PutObjectCommand, HeadBucketCommand: _HeadBucketCommand } = require("@aws-sdk/client-s3");
-    multerS3 = require("multer-s3");
     S3Client = _S3Client;
     PutObjectCommand = _PutObjectCommand;
     HeadBucketCommand = _HeadBucketCommand;
@@ -68,45 +67,53 @@ try {
   console.error(`❌ [UPLOAD] Error creating upload directory:`, err);
 }
 
-const createUploadMiddleware = () => {
-  if (S3_CONFIGURED && S3_AVAILABLE && s3Instance && multerS3) {
-    console.log("✅ [UPLOAD] Using S3 storage for uploads");
-    return multer({
-      storage: multerS3({
-        s3: s3Instance,
-        bucket: process.env.S3_BUCKET_NAME,
-        metadata: (req, file, cb) => {
-          cb(null, {
-            fieldName: file.fieldname,
-            uploadDate: new Date().toISOString(),
-            userId: req.userId || 'unknown'
-          });
-        },
-        key: (req, file, cb) => {
-          const filename = `contracts/${Date.now()}-${file.originalname}`;
-          console.log(`📤 [S3] Uploading to S3: ${filename}`);
-          cb(null, filename);
-        },
-      }),
-      limits: { fileSize: 50 * 1024 * 1024 }, // 50 MB limit
+// ✅ AWS SDK v3 compatible: Use disk storage first, then upload to S3 manually
+const uploadMiddleware = multer({
+  storage: multer.diskStorage({
+    destination: UPLOAD_PATH,
+    filename: (req, file, cb) => {
+      const filename = Date.now() + path.extname(file.originalname);
+      cb(null, filename);
+    },
+  }),
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50 MB limit
+});
+
+/**
+ * 🔄 Upload file to S3 using AWS SDK v3 native API
+ */
+const uploadToS3 = async (localFilePath, originalFilename, userId) => {
+  try {
+    const fileBuffer = await fs.readFile(localFilePath);
+    const s3Key = `contracts/${Date.now()}-${originalFilename}`;
+
+    const command = new PutObjectCommand({
+      Bucket: process.env.S3_BUCKET_NAME,
+      Key: s3Key,
+      Body: fileBuffer,
+      ContentType: 'application/pdf',
+      Metadata: {
+        uploadDate: new Date().toISOString(),
+        userId: userId || 'unknown',
+      },
     });
-  } else {
-    console.log("📁 [UPLOAD] Using LOCAL storage for uploads");
-    return multer({
-      storage: multer.diskStorage({
-        destination: UPLOAD_PATH,
-        filename: (req, file, cb) => {
-          const filename = Date.now() + path.extname(file.originalname);
-          console.log(`📁 [LOCAL] Saving locally: ${filename}`);
-          cb(null, filename);
-        },
-      }),
-      limits: { fileSize: 50 * 1024 * 1024 }, // 50 MB limit
-    });
+
+    await s3Instance.send(command);
+
+    const s3Location = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${s3Key}`;
+
+    console.log(`✅ [S3] Successfully uploaded to: ${s3Location}`);
+
+    return {
+      s3Key,
+      s3Location,
+      s3Bucket: process.env.S3_BUCKET_NAME,
+    };
+  } catch (error) {
+    console.error(`❌ [S3] Upload failed:`, error);
+    throw error;
   }
 };
-
-const uploadMiddleware = createUploadMiddleware();
 
 /**
  * 📤 POST / - Upload ohne Analyse
@@ -130,20 +137,39 @@ router.post("/", verifyToken, uploadMiddleware.single("file"), async (req, res) 
       originalname: req.file.originalname,
       size: req.file.size,
       mimetype: req.file.mimetype,
-      storageLocation: req.file.location || req.file.path
+      localPath: req.file.path
     });
 
-    // Bestimme Storage-Type und Location
-    const isS3Upload = !!req.file.location;
-    const storageInfo = isS3Upload ? {
-      uploadType: "S3_UPLOAD",
-      s3Key: req.file.key,
-      s3Location: req.file.location,
-      s3Bucket: process.env.S3_BUCKET_NAME
-    } : {
-      uploadType: "LOCAL_UPLOAD",
-      filePath: req.file.path
-    };
+    let storageInfo;
+    let cleanupLocalFile = false;
+
+    // ✅ Upload to S3 if configured, otherwise keep local
+    if (S3_CONFIGURED && S3_AVAILABLE && s3Instance) {
+      console.log(`📤 [${requestId}] Uploading to S3...`);
+      try {
+        const s3Result = await uploadToS3(req.file.path, req.file.originalname, req.userId);
+        storageInfo = {
+          uploadType: "S3_UPLOAD",
+          s3Key: s3Result.s3Key,
+          s3Location: s3Result.s3Location,
+          s3Bucket: s3Result.s3Bucket
+        };
+        cleanupLocalFile = true; // Delete local file after successful S3 upload
+        console.log(`✅ [${requestId}] S3 upload successful`);
+      } catch (s3Error) {
+        console.error(`❌ [${requestId}] S3 upload failed, falling back to local storage:`, s3Error.message);
+        storageInfo = {
+          uploadType: "LOCAL_UPLOAD",
+          filePath: req.file.path
+        };
+      }
+    } else {
+      console.log(`📁 [${requestId}] S3 not available, using local storage`);
+      storageInfo = {
+        uploadType: "LOCAL_UPLOAD",
+        filePath: req.file.path
+      };
+    }
 
     console.log(`💾 [${requestId}] Storage info:`, storageInfo);
 
@@ -166,6 +192,16 @@ router.post("/", verifyToken, uploadMiddleware.single("file"), async (req, res) 
 
     console.log(`✅ [${requestId}] Contract saved without analysis:`, result.insertedId);
 
+    // Cleanup local file if uploaded to S3
+    if (cleanupLocalFile) {
+      try {
+        await fs.unlink(req.file.path);
+        console.log(`🗑️ [${requestId}] Cleaned up local file after S3 upload`);
+      } catch (cleanupError) {
+        console.error(`⚠️ [${requestId}] Cleanup warning:`, cleanupError.message);
+      }
+    }
+
     // Response
     res.json({
       success: true,
@@ -185,7 +221,7 @@ router.post("/", verifyToken, uploadMiddleware.single("file"), async (req, res) 
     console.error(`❌ [${requestId}] Upload error:`, error);
 
     // Cleanup on error
-    if (req.file && req.file.path && !req.file.location) {
+    if (req.file && req.file.path) {
       try {
         await fs.unlink(req.file.path);
         console.log(`🗑️ [${requestId}] Cleaned up local file after error`);
