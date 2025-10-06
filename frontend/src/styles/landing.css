@@ -3932,10 +3932,11 @@ a[href*="kontakt"]:hover,
 
 @media (max-width: 480px) {
   .cta-trust-line {
-    flex-direction: column;
-    gap: 10px;
+    flex-direction: row;
+    gap: 8px;
     margin-top: 20px;
     padding: 0 16px;
+    justify-content: center;
   }
 
   .cta-trust-line .trust-item {
@@ -4570,14 +4571,17 @@ a[href*="kontakt"]:hover,
   }
 
   .cta-buttons {
-    flex-direction: column !important;
+    flex-direction: row !important;
     width: 100% !important;
-    max-width: 300px !important;
+    max-width: 100% !important;
     margin: 0 auto !important;
+    gap: 12px !important;
   }
 
   .cta-button {
     min-height: 44px !important;
+    flex: 1;
+    min-width: 0;
   }
 
   .footer-bottom {
