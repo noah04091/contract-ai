@@ -12,7 +12,8 @@ import styles from "../styles/Contracts.module.css";
 import ContractAnalysis from "../components/ContractAnalysis";
 import BatchAnalysisResults from "../components/BatchAnalysisResults"; // ✅ NEU: Import für Batch-Analyse
 import ContractDetailsView from "../components/ContractDetailsView";
-import { apiCall, uploadAndAnalyze } from "../utils/api";
+import UploadSuccessModal from "../components/UploadSuccessModal"; // ✅ NEU: Two-Step Upload Modal
+import { apiCall, uploadAndAnalyze, uploadOnly } from "../utils/api"; // ✅ NEU: uploadOnly hinzugefügt
 
 interface Contract {
   _id: string;
@@ -28,6 +29,7 @@ interface Contract {
   s3Location?: string;
   uploadType?: string;
   needsReupload?: boolean;
+  analyzed?: boolean; // ✅ NEU: Flag für Two-Step Upload Flow
 }
 
 // ✅ KORRIGIERT: Interface für Mehrfach-Upload
@@ -337,7 +339,16 @@ export default function Contracts() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('alle');
   const [dateFilter, setDateFilter] = useState<DateFilter>('alle');
   const [sortOrder, setSortOrder] = useState<SortOrder>('neueste');
-  
+
+  // ✅ NEU: Upload Success Modal State (für Two-Step Upload Flow)
+  const [uploadSuccessModal, setUploadSuccessModal] = useState<{
+    show: boolean;
+    uploadedContracts: Array<{ _id: string; name: string; uploadedAt: string }>;
+  }>({
+    show: false,
+    uploadedContracts: []
+  });
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // ✅ FIXED: PDF anzeigen Handler - jetzt als Wrapper für die extrahierte Funktion
@@ -767,14 +778,106 @@ export default function Contracts() {
   // ✅ NEU: Duplikat-Aktionen Handler
   const handleDuplicateAction = (fileItem: UploadFileItem) => {
     const existingContract = fileItem.duplicateInfo?.existingContract;
-    
+
     if (!existingContract) return; // ✅ Safety check
-    
+
     setDuplicateModal({
       show: true,
       fileItem,
       existingContract
     });
+  };
+
+  // ✅ NEU: Two-Step Upload Flow - Upload OHNE Analyse
+  const handleUploadOnly = async () => {
+    console.log("📤 Starting Upload-Only flow (no analysis)...");
+
+    const filesToUpload = uploadFiles.filter(f => f.status === 'pending');
+
+    if (filesToUpload.length === 0) {
+      console.log("⚠️ No files to upload");
+      return;
+    }
+
+    setIsAnalyzing(true); // Reuse existing loading state
+    const uploadedContracts: Array<{ _id: string; name: string; uploadedAt: string }> = [];
+
+    try {
+      for (const fileItem of filesToUpload) {
+        try {
+          // Update status
+          setUploadFiles(prev => prev.map(item =>
+            item.id === fileItem.id
+              ? { ...item, status: 'analyzing', progress: 50 }
+              : item
+          ));
+
+          console.log(`📤 Uploading (no analysis): ${fileItem.file.name}`);
+
+          // Upload ohne Analyse
+          const result = await uploadOnly(
+            fileItem.file,
+            (progress) => {
+              setUploadFiles(prev => prev.map(item =>
+                item.id === fileItem.id
+                  ? { ...item, progress }
+                  : item
+              ));
+            }
+          ) as { success: boolean; contractId: string; contract: { _id: string; name: string; uploadedAt: string } };
+
+          if (result?.success && result?.contract) {
+            setUploadFiles(prev => prev.map(item =>
+              item.id === fileItem.id
+                ? { ...item, status: 'completed', progress: 100 }
+                : item
+            ));
+
+            uploadedContracts.push(result.contract);
+            console.log(`✅ Upload successful (no analysis): ${fileItem.file.name}`);
+          }
+
+        } catch (error) {
+          console.error(`❌ Upload error for ${fileItem.file.name}:`, error);
+          setUploadFiles(prev => prev.map(item =>
+            item.id === fileItem.id
+              ? { ...item, status: 'error', progress: 0, error: error instanceof Error ? error.message : 'Upload failed' }
+              : item
+          ));
+        }
+      }
+
+      // Zeige Success Modal
+      if (uploadedContracts.length > 0) {
+        setUploadSuccessModal({
+          show: true,
+          uploadedContracts
+        });
+      }
+
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  // ✅ NEU: Analyse-Aktion aus Success Modal
+  const handleAnalyzeFromModal = async () => {
+    console.log("🔍 User chose to analyze uploaded contracts");
+    setUploadSuccessModal({ show: false, uploadedContracts: [] });
+
+    // Trigger normale Batch-Analyse für die pending files
+    await startBatchAnalysis();
+  };
+
+  // ✅ NEU: Skip-Aktion aus Success Modal
+  const handleSkipAnalysis = () => {
+    console.log("✓ User chose to skip analysis");
+    setUploadSuccessModal({ show: false, uploadedContracts: [] });
+
+    // Clear upload files und refresh contracts list
+    clearAllUploadFiles();
+    fetchContracts();
+    setActiveSection('contracts');
   };
 
   const handleViewExistingContract = () => {
@@ -1594,8 +1697,23 @@ export default function Contracts() {
                               </div>
                             </div>
                             <div className={styles.multiFileActions}>
+                              {/* ✅ NEU: Nur hochladen Button (ohne Analyse) */}
+                              {!isAnalyzing && uploadFiles.some(f => f.status === 'pending') && (
+                                <button
+                                  type="button"
+                                  className={styles.uploadOnlyButton}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    handleUploadOnly();
+                                  }}
+                                >
+                                  <Upload size={16} />
+                                  Nur hochladen
+                                </button>
+                              )}
                               {!isAnalyzing && uploadFiles.some(f => f.status === 'pending') && hasAnalysesLeft && (
-                                <button 
+                                <button
                                   type="button"
                                   className={styles.startAnalysisButton}
                                   onClick={(e) => {
@@ -1605,10 +1723,10 @@ export default function Contracts() {
                                   }}
                                 >
                                   <PlayCircle size={16} />
-                                  Analyse starten
+                                  Hochladen & Analysieren
                                 </button>
                               )}
-                              <button 
+                              <button
                                 type="button"
                                 className={styles.clearFilesButton}
                                 onClick={(e) => {
@@ -2153,6 +2271,17 @@ export default function Contracts() {
               onAnalyzeAnyway={handleAnalyzeAnywayFromDuplicate}
             />
           )}
+
+          {/* ✅ NEU: Upload Success Modal (Two-Step Upload Flow) */}
+          <UploadSuccessModal
+            isOpen={uploadSuccessModal.show}
+            onClose={() => setUploadSuccessModal({ show: false, uploadedContracts: [] })}
+            uploadedContracts={uploadSuccessModal.uploadedContracts}
+            onAnalyze={handleAnalyzeFromModal}
+            onSkip={handleSkipAnalysis}
+            analysisCount={userInfo.analysisCount}
+            analysisLimit={userInfo.analysisLimit}
+          />
         </motion.div>
       </div>
     </>
