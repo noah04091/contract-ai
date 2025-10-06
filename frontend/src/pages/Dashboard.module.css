@@ -1204,13 +1204,30 @@
   padding: 4rem 2rem;
 }
 
-/* Full-Page Loader */
-.fullPageLoader {
+/* Full-Page Loader Overlay with Blur */
+.fullPageLoaderOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 80vh;
-  width: 100%;
+  z-index: 9999;
+  animation: fadeIn 0.2s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .loaderContent {
@@ -1219,11 +1236,27 @@
   align-items: center;
   justify-content: center;
   gap: 1rem;
+  background: white;
+  padding: 2rem 3rem;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  animation: scaleIn 0.3s ease-out;
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .loadingText {
   font-size: 1rem;
-  color: #6b7280;
+  color: #374151;
   font-weight: 500;
   margin: 0;
 }

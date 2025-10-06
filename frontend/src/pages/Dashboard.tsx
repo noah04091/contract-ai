@@ -520,17 +520,17 @@ export default function Dashboard() {
         <meta name="twitter:image" content="https://contract-ai.de/og-image.jpg" />
       </Helmet>
 
-      {/* Full-Page Loading Spinner */}
-      {isLoading ? (
-        <div className={styles.fullPageLoader}>
+      {/* Full-Page Loading Overlay with Blur */}
+      {isLoading && (
+        <div className={styles.fullPageLoaderOverlay}>
           <div className={styles.loaderContent}>
             <div className={styles.loadingSpinner}></div>
             <p className={styles.loadingText}>Dashboard wird geladen...</p>
           </div>
         </div>
-      ) : (
-        <>
-          <div className={styles.dashboardHeader}>
+      )}
+
+      <div className={styles.dashboardHeader}>
         <h1>Vertragsübersicht</h1>
         
         {userEmail && (
@@ -1445,8 +1445,6 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-      )}
-        </>
       )}
     </div>
   );
