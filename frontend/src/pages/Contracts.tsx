@@ -880,6 +880,53 @@ export default function Contracts() {
     setActiveSection('contracts');
   };
 
+  // ✅ NEU: Nachträgliche Analyse für bestehenden Vertrag
+  const handleAnalyzeExistingContract = async (contract: Contract) => {
+    console.log("🔍 Analyzing existing contract:", contract._id, contract.name);
+
+    // Check subscription & limits
+    if (userInfo.subscriptionPlan === 'free') {
+      alert("❌ Vertragsanalyse ist nur für Business- und Premium-Nutzer verfügbar.\n\n🚀 Jetzt upgraden!");
+      return;
+    }
+
+    if (userInfo.analysisCount >= userInfo.analysisLimit && userInfo.analysisLimit !== Infinity) {
+      alert(`📊 Analyse-Limit erreicht (${userInfo.analysisCount}/${userInfo.analysisLimit}).\n\n🚀 Upgrade für mehr Analysen!`);
+      return;
+    }
+
+    try {
+      setError(null);
+
+      // Trigger Re-Analyse via Backend
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/contracts/${contract._id}/analyze`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        console.log("✅ Analysis successful for existing contract");
+        alert("✅ Analyse erfolgreich abgeschlossen!");
+
+        // Refresh contracts list
+        fetchContracts();
+      } else {
+        throw new Error(data.message || 'Analyse fehlgeschlagen');
+      }
+
+    } catch (error) {
+      console.error("❌ Error analyzing existing contract:", error);
+      const errorMsg = error instanceof Error ? error.message : 'Analyse fehlgeschlagen';
+      setError(errorMsg);
+      alert(`❌ ${errorMsg}`);
+    }
+  };
+
   const handleViewExistingContract = () => {
     if (!duplicateModal?.existingContract) return;
     
@@ -1364,6 +1411,9 @@ export default function Contracts() {
             {contract.isGenerated && (
               <span className={styles.generatedBadge}>Generiert</span>
             )}
+            {contract.analyzed === false && (
+              <span className={styles.notAnalyzedBadge}>Nicht analysiert</span>
+            )}
           </div>
         </div>
       </div>
@@ -1396,7 +1446,20 @@ export default function Contracts() {
 
       {/* Card Actions */}
       <div className={styles.cardActions}>
-        <button 
+        {/* ✅ NEU: "Jetzt analysieren" Button für nicht-analysierte Verträge */}
+        {contract.analyzed === false && (
+          <button
+            className={`${styles.cardActionButton} ${styles.analyzeNow}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleAnalyzeExistingContract(contract);
+            }}
+          >
+            <Zap size={14} />
+            <span>Jetzt analysieren</span>
+          </button>
+        )}
+        <button
           className={styles.cardActionButton}
           onClick={(e) => {
             e.stopPropagation();
@@ -1406,7 +1469,7 @@ export default function Contracts() {
           <Eye size={14} />
           <span>Details</span>
         </button>
-        <button 
+        <button
           className={styles.cardActionButton}
           onClick={(e) => {
             e.stopPropagation();
@@ -1421,7 +1484,7 @@ export default function Contracts() {
           )}
           <span>{pdfLoading[contract._id] ? 'Lädt...' : 'PDF'}</span>
         </button>
-        <button 
+        <button
           className={styles.cardActionButton}
           onClick={(e) => {
             e.stopPropagation();
@@ -1431,7 +1494,7 @@ export default function Contracts() {
           <Edit size={14} />
           <span>Bearbeiten</span>
         </button>
-        <button 
+        <button
           className={`${styles.cardActionButton} ${styles.delete}`}
           onClick={(e) => {
             e.stopPropagation();

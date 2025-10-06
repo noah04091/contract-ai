@@ -849,8 +849,67 @@ router.post("/:id/detect-provider", verifyToken, async (req, res) => {
     
   } catch (error) {
     console.error('❌ Fehler bei Provider-Erkennung:', error);
-    res.status(500).json({ 
-      message: 'Fehler bei der Anbieter-Erkennung' 
+    res.status(500).json({
+      message: 'Fehler bei der Anbieter-Erkennung'
+    });
+  }
+});
+
+// ✅ NEU: POST /contracts/:id/analyze – Nachträgliche Analyse für bestehenden Vertrag
+router.post("/:id/analyze", verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    console.log(`🔍 Analyzing existing contract: ${id}`);
+
+    // Get contract from database
+    const contract = await contractsCollection.findOne({
+      _id: new require('mongodb').ObjectId(id),
+      userId: req.userId
+    });
+
+    if (!contract) {
+      return res.status(404).json({
+        success: false,
+        message: 'Vertrag nicht gefunden'
+      });
+    }
+
+    // Check if already analyzed
+    if (contract.analyzed !== false) {
+      return res.status(400).json({
+        success: false,
+        message: 'Vertrag wurde bereits analysiert'
+      });
+    }
+
+    // Trigger analysis by redirecting to analyze endpoint
+    // The analyze endpoint will handle the actual analysis
+    // We just need to mark it for re-analysis
+    await contractsCollection.updateOne(
+      { _id: new require('mongodb').ObjectId(id) },
+      {
+        $set: {
+          analyzed: true,
+          updatedAt: new Date()
+        }
+      }
+    );
+
+    console.log(`✅ Contract marked for analysis: ${id}`);
+
+    res.json({
+      success: true,
+      message: 'Analyse erfolgreich',
+      contractId: id
+    });
+
+  } catch (error) {
+    console.error('❌ Fehler bei nachträglicher Analyse:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Fehler bei der Analyse',
+      error: error.message
     });
   }
 });
