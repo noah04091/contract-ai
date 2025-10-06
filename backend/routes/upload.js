@@ -178,6 +178,8 @@ router.post("/", verifyToken, uploadMiddleware.single("file"), async (req, res) 
       name: req.file.originalname,
       userId: new ObjectId(req.user.userId), // ✅ FIX: req.user.userId (von verifyToken)
       uploadedAt: new Date(),
+      createdAt: new Date(), // ✅ Für Sortierung in Liste
+      updatedAt: new Date(),
       ...storageInfo,
       analyzed: false, // ✅ NEU: Flag für "nicht analysiert"
       status: "Unbekannt",
