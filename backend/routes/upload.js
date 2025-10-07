@@ -1,4 +1,4 @@
-// 📤 backend/routes/upload.js - Upload ohne Analyse (nur Speicherung)
+// 📤 backend/routes/upload.js - Upload ohne Analyse (nur Speicherung) + Duplikats-Erkennung
 const express = require("express");
 const multer = require("multer");
 const fs = require("fs").promises;
@@ -8,6 +8,16 @@ const path = require("path");
 const verifyToken = require("../middleware/verifyToken");
 
 const router = express.Router();
+
+// ✅ Crypto für File-Hash
+let crypto;
+try {
+  crypto = require("crypto");
+  console.log("✅ [UPLOAD] Crypto module loaded");
+} catch (err) {
+  console.warn("⚠️ [UPLOAD] Crypto not available:", err.message);
+  crypto = null;
+}
 
 // ===== S3 INTEGRATION (AWS SDK v3) =====
 let S3Client, PutObjectCommand, HeadBucketCommand, s3Instance;
@@ -116,6 +126,43 @@ const uploadToS3 = async (localFilePath, originalFilename, userId) => {
 };
 
 /**
+ * 🔍 Calculate file hash for duplicate detection
+ */
+const calculateFileHash = (buffer) => {
+  if (!crypto) {
+    console.warn("⚠️ [UPLOAD] Crypto not available - using fallback hash");
+    return `fallback_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  }
+  try {
+    return crypto.createHash("sha256").update(buffer).digest("hex");
+  } catch (err) {
+    console.warn("⚠️ [UPLOAD] Hash calculation failed:", err.message);
+    return `fallback_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  }
+};
+
+/**
+ * 🔍 Check for duplicate contract
+ */
+const checkForDuplicate = async (fileHash, userId, contractsCollection) => {
+  if (!crypto) {
+    console.warn("⚠️ [UPLOAD] Duplicate check not available - skipping");
+    return null;
+  }
+
+  try {
+    const existingContract = await contractsCollection.findOne({
+      fileHash: fileHash,
+      userId: new ObjectId(userId)
+    });
+    return existingContract;
+  } catch (error) {
+    console.warn("⚠️ [UPLOAD] Duplicate check failed:", error.message);
+    return null;
+  }
+};
+
+/**
  * 📤 POST / - Upload ohne Analyse
  * Speichert Datei nur in S3/lokal, erstellt Contract-Eintrag OHNE Analyse
  */
@@ -173,6 +220,57 @@ router.post("/", verifyToken, uploadMiddleware.single("file"), async (req, res) 
 
     console.log(`💾 [${requestId}] Storage info:`, storageInfo);
 
+    // ✅ DUPLIKATS-PRÜFUNG: Berechne File-Hash und prüfe Duplikate
+    const contractsCollection = req.contractsCollection || req.app.locals.db.collection("contracts");
+    let fileHash = null;
+    let existingContract = null;
+
+    if (crypto) {
+      try {
+        const fileBuffer = await fs.readFile(req.file.path);
+        fileHash = calculateFileHash(fileBuffer);
+        console.log(`🔍 [${requestId}] File hash calculated: ${fileHash.substring(0, 12)}...`);
+
+        existingContract = await checkForDuplicate(fileHash, req.user.userId, contractsCollection);
+
+        if (existingContract) {
+          console.log(`📄 [${requestId}] DUPLICATE FOUND: ${existingContract._id}`);
+
+          // Cleanup local file
+          if (req.file && req.file.path) {
+            try {
+              await fs.unlink(req.file.path);
+              console.log(`🗑️ [${requestId}] Cleaned up local file after duplicate detection`);
+            } catch (cleanupError) {
+              console.error(`❌ [${requestId}] Cleanup error:`, cleanupError);
+            }
+          }
+
+          // ✅ Return duplicate response
+          return res.status(409).json({
+            success: false,
+            duplicate: true,
+            message: "📄 Dieser Vertrag wurde bereits hochgeladen",
+            error: "DUPLICATE_CONTRACT",
+            contractId: existingContract._id,
+            contractName: existingContract.name,
+            uploadedAt: existingContract.createdAt || existingContract.uploadedAt,
+            existingContract: {
+              _id: existingContract._id,
+              name: existingContract.name,
+              uploadedAt: existingContract.uploadedAt,
+              analyzed: existingContract.analyzed || false,
+              contractScore: existingContract.contractScore,
+              status: existingContract.status
+            }
+          });
+        }
+      } catch (hashError) {
+        console.warn(`⚠️ [${requestId}] Duplicate check failed:`, hashError.message);
+        // Continue without duplicate check
+      }
+    }
+
     // Erstelle Contract-Eintrag OHNE Analyse
     const contractData = {
       name: req.file.originalname,
@@ -185,7 +283,8 @@ router.post("/", verifyToken, uploadMiddleware.single("file"), async (req, res) 
       status: "Unbekannt",
       kuendigung: "Nicht analysiert",
       laufzeit: "Nicht analysiert",
-      expiryDate: null
+      expiryDate: null,
+      fileHash: fileHash // ✅ Save hash for future duplicate checks
     };
 
     // Save to database

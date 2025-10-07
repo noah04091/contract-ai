@@ -623,6 +623,13 @@ export const uploadOnly = async (
     return result;
 
   } catch (error) {
+    // ✅ Handle duplicate detection (409 Conflict)
+    if (error && typeof error === 'object' && 'status' in error && error.status === 409 && 'data' in error) {
+      if (onProgress) onProgress(100); // Mark as complete (duplicate found)
+      console.log("📄 Duplicate detected:", error.data);
+      return error.data; // Return duplicate info to frontend
+    }
+
     if (onProgress) onProgress(0); // Reset bei Fehler
 
     console.error("❌ Upload-Fehler:", error);
