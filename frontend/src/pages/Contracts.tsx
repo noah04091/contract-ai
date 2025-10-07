@@ -30,6 +30,13 @@ interface Contract {
   uploadType?: string;
   needsReupload?: boolean;
   analyzed?: boolean; // ✅ NEU: Flag für Two-Step Upload Flow
+  laufzeit?: string;
+  contractScore?: number;
+  summary?: string;
+  legalAssessment?: string;
+  suggestions?: string;
+  risiken?: string[];
+  optimierungen?: string[];
 }
 
 // ✅ KORRIGIERT: Interface für Mehrfach-Upload
@@ -930,31 +937,45 @@ export default function Contracts() {
           : item
       ));
 
-      // ✅ Refresh contracts first
+      // ✅ Refresh contracts to get updated data
       const updatedContracts = await fetchContracts();
 
-      // ✅ Single contract: Show analysis directly
-      if (contractIds.length === 1 && updatedContracts) {
-        const analyzedContract = updatedContracts.find((c: Contract) => c._id === contractIds[0]);
-        if (analyzedContract) {
-          console.log("📊 Opening analyzed contract:", analyzedContract.name);
-          setSelectedContract(analyzedContract);
-          setShowDetails(true);
-          setActiveSection('contracts');
+      // ✅ Update uploadFiles with analysis results
+      if (updatedContracts) {
+        setUploadFiles(prev => prev.map(item => {
+          const analyzedContract = updatedContracts.find((c: Contract) =>
+            contractIds.includes(c._id)
+          );
 
-          alert(`✅ Analyse erfolgreich abgeschlossen!\n\n${analyzedContract.name} wurde analysiert.`);
-        } else {
-          alert(`✅ ${contractIds.length} Vertrag erfolgreich analysiert!`);
-          setActiveSection('contracts');
-        }
-      } else {
-        // Multiple contracts: Show success and go to list
-        alert(`✅ ${contractIds.length} Verträge erfolgreich analysiert!`);
-        setActiveSection('contracts');
+          if (analyzedContract && item.status === 'completed') {
+            return {
+              ...item,
+              analyzed: true,
+              result: {
+                success: true,
+                contractScore: analyzedContract.contractScore,
+                summary: analyzedContract.summary,
+                legalAssessment: analyzedContract.legalAssessment,
+                suggestions: analyzedContract.suggestions,
+                analysisData: {
+                  kuendigung: analyzedContract.kuendigung,
+                  laufzeit: analyzedContract.laufzeit,
+                  status: analyzedContract.status,
+                  risiken: analyzedContract.risiken,
+                  optimierungen: analyzedContract.optimierungen
+                }
+              }
+            };
+          }
+
+          return item;
+        }));
       }
 
-      // Clear completed files
-      clearAllUploadFiles();
+      // ✅ BLEIBE auf Upload-Seite - BatchAnalysisResults zeigt automatisch ContractAnalysis
+      setActiveSection('upload');
+
+      console.log(`✅ ${contractIds.length} Vertrag${contractIds.length > 1 ? 'e' : ''} erfolgreich analysiert und auf Upload-Seite angezeigt`);
 
     } catch (error) {
       console.error("❌ Error during analysis:", error);
