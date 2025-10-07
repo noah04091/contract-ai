@@ -1006,6 +1006,8 @@ router.post("/:id/analyze", verifyToken, async (req, res) => {
 
     const fullTextContent = pdfData.text;
 
+    console.log(`📝 [${requestId}] Extracted text length: ${fullTextContent.length} characters`);
+
     // ===== GPT-4 ANALYSIS =====
     console.log(`🤖 [${requestId}] Starting GPT-4 analysis...`);
 
@@ -1090,7 +1092,10 @@ Antworte in folgendem JSON-Format:
       risiken: analysisResult.risiken || [],
       optimierungen: analysisResult.optimierungen || [],
       // ✅ CRITICAL: Auch im analysis-Objekt speichern (für ContractDetailsView)
-      analysis: analysisObject
+      analysis: analysisObject,
+      // ✅ CRITICAL: PDF-Text speichern (für "Inhalt"-Tab in ContractDetailsView)
+      content: fullTextContent.substring(0, 100000), // Max 100k chars
+      fullText: fullTextContent.substring(0, 100000)
     };
 
     await contractsCollection.updateOne(
