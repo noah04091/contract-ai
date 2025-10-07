@@ -2,10 +2,10 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet";
-import { 
-  FileText, RefreshCw, Upload, CheckCircle, AlertCircle, 
+import {
+  FileText, RefreshCw, Upload, CheckCircle, AlertCircle,
   Plus, Calendar, Clock, Trash2, Eye, Edit,
-  Search, X, Crown, Users, Loader, PlayCircle,
+  Search, X, Crown, Users, Loader,
   Lock, Zap, BarChart3, ExternalLink
 } from "lucide-react";
 import styles from "../styles/Contracts.module.css";
@@ -1767,11 +1767,11 @@ export default function Contracts() {
                               </div>
                             </div>
                             <div className={styles.multiFileActions}>
-                              {/* ✅ NEU: Nur hochladen Button (ohne Analyse) */}
+                              {/* ✅ Vereinfachter Upload Button - Modal entscheidet über Analyse */}
                               {!isAnalyzing && uploadFiles.some(f => f.status === 'pending') && (
                                 <button
                                   type="button"
-                                  className={styles.uploadOnlyButton}
+                                  className={styles.uploadButton}
                                   onClick={(e) => {
                                     e.preventDefault();
                                     e.stopPropagation();
@@ -1779,21 +1779,7 @@ export default function Contracts() {
                                   }}
                                 >
                                   <Upload size={16} />
-                                  Nur hochladen
-                                </button>
-                              )}
-                              {!isAnalyzing && uploadFiles.some(f => f.status === 'pending') && hasAnalysesLeft && (
-                                <button
-                                  type="button"
-                                  className={styles.startAnalysisButton}
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    startBatchAnalysis();
-                                  }}
-                                >
-                                  <PlayCircle size={16} />
-                                  Hochladen & Analysieren
+                                  Hochladen
                                 </button>
                               )}
                               <button

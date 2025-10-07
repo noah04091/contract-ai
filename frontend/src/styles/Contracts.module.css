@@ -698,8 +698,8 @@
   align-items: center;
 }
 
-/* ✅ NEU: Nur hochladen Button */
-.uploadOnlyButton {
+/* ✅ Vereinfachter Upload Button (ersetzt uploadOnlyButton & startAnalysisButton) */
+.multiFileActions .uploadButton {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -714,30 +714,10 @@
   transition: all 0.2s ease;
 }
 
-.uploadOnlyButton:hover {
+.multiFileActions .uploadButton:hover {
   background: linear-gradient(135deg, #2563eb, #1d4ed8);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-}
-
-.startAnalysisButton {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 16px;
-  background: linear-gradient(135deg, #10b981, #059669);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.startAnalysisButton:hover {
-  background: linear-gradient(135deg, #059669, #047857);
-  transform: translateY(-1px);
 }
 
 .clearFilesButton {
@@ -2034,7 +2014,7 @@
     gap: 6px;
   }
 
-  .startAnalysisButton,
+  .multiFileActions .uploadButton,
   .clearFilesButton {
     min-height: 44px;
     font-size: 0.85rem;
@@ -2218,7 +2198,7 @@
     min-height: 44px;
   }
 
-  .startAnalysisButton,
+  .multiFileActions .uploadButton,
   .clearFilesButton {
     min-height: 44px;
   }
@@ -2426,7 +2406,7 @@
     gap: 6px;
   }
 
-  .startAnalysisButton,
+  .multiFileActions .uploadButton,
   .clearFilesButton {
     justify-content: center;
     width: 100%;
