@@ -19,8 +19,10 @@
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
   max-width: 500px;
   width: 100%;
-  max-height: 80vh;
-  overflow: hidden;
+  max-height: 90vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 /* ✅ NEU: Legacy-Modal für alte Verträge */
@@ -39,10 +41,11 @@
   flex-direction: column;
   align-items: center;
   gap: 8px;
-  padding: 32px 24px 24px;
+  padding: 24px 24px 20px;
   border-bottom: 1px solid #e5e7eb;
   background: #f9fafb;
   position: relative;
+  flex-shrink: 0;
 }
 
 .modalHeader h3 {
@@ -99,7 +102,9 @@
 }
 
 .modalContent {
-  padding: 24px;
+  padding: 20px;
+  flex: 1;
+  overflow-y: auto;
 }
 
 .fileComparison {
@@ -204,9 +209,10 @@
 .modalActions {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 24px;
+  gap: 10px;
+  padding: 20px;
   background: white;
+  flex-shrink: 0;
 }
 
 .modalActionButton {
@@ -276,12 +282,12 @@
 .modalIconWrapper {
   display: flex;
   justify-content: center;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .modalIconBadge {
-  width: 64px;
-  height: 64px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
   display: flex;
@@ -306,16 +312,16 @@
 .fileComparisonGrid {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
-  gap: 16px;
+  gap: 12px;
   align-items: center;
-  margin: 24px 0;
+  margin: 20px 0 16px;
 }
 
 .fileCard {
   background: #f9fafb;
   border: 1px solid #e5e7eb;
   border-radius: 12px;
-  padding: 16px;
+  padding: 12px;
   transition: all 0.3s ease;
 }
 
@@ -415,7 +421,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 16px;
+  padding: 12px 14px;
   background: white;
   border: 2px solid #e5e7eb;
   border-radius: 12px;
@@ -433,8 +439,8 @@
 }
 
 .actionCardIcon {
-  width: 40px;
-  height: 40px;
+  width: 36px;
+  height: 36px;
   border-radius: 10px;
   display: flex;
   align-items: center;
