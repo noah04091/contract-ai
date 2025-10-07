@@ -906,20 +906,18 @@ export default function Contracts() {
             : item
         ));
 
-        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/contracts/${contractId}/analyze`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json'
+        try {
+          const data = await apiCall(`/contracts/${contractId}/analyze`, {
+            method: 'POST',
+          }) as { success: boolean; message?: string };
+
+          if (data.success) {
+            console.log(`✅ Analysis completed for ${contractId}`);
+          } else {
+            console.error(`❌ Analysis failed for ${contractId}:`, data.message);
           }
-        });
-
-        const data = await response.json();
-
-        if (!response.ok || !data.success) {
-          console.error(`❌ Analysis failed for ${contractId}:`, data.message);
-        } else {
-          console.log(`✅ Analysis completed for ${contractId}`);
+        } catch (error) {
+          console.error(`❌ Analysis failed for ${contractId}:`, error);
         }
       }
 

@@ -864,8 +864,8 @@ router.post("/:id/analyze", verifyToken, async (req, res) => {
 
     // Get contract from database
     const contract = await contractsCollection.findOne({
-      _id: new require('mongodb').ObjectId(id),
-      userId: req.userId
+      _id: new ObjectId(id),
+      userId: new ObjectId(req.user.userId)
     });
 
     if (!contract) {
@@ -887,7 +887,7 @@ router.post("/:id/analyze", verifyToken, async (req, res) => {
     // The analyze endpoint will handle the actual analysis
     // We just need to mark it for re-analysis
     await contractsCollection.updateOne(
-      { _id: new require('mongodb').ObjectId(id) },
+      { _id: new ObjectId(id) },
       {
         $set: {
           analyzed: true,
