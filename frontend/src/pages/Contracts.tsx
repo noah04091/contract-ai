@@ -6,7 +6,7 @@ import {
   FileText, RefreshCw, Upload, CheckCircle, AlertCircle,
   Plus, Calendar, Clock, Trash2, Eye, Edit,
   Search, X, Crown, Users, Loader,
-  Lock, Zap, BarChart3, ExternalLink
+  Lock, Zap, BarChart3, ExternalLink, ArrowRight
 } from "lucide-react";
 import styles from "../styles/Contracts.module.css";
 import ContractAnalysis from "../components/ContractAnalysis";
@@ -468,13 +468,13 @@ export default function Contracts() {
   );
 
   // ✅ NEU: Duplikat-Modal Komponente
-  const DuplicateModal = ({ 
-    fileItem, 
-    existingContract, 
-    onClose, 
-    onViewExisting, 
-    onReplaceFile, 
-    onAnalyzeAnyway 
+  const DuplicateModal = ({
+    fileItem,
+    existingContract,
+    onClose,
+    onViewExisting,
+    onReplaceFile,
+    onAnalyzeAnyway
   }: {
     fileItem: UploadFileItem;
     existingContract: Contract;
@@ -484,94 +484,139 @@ export default function Contracts() {
     onAnalyzeAnyway: () => void;
   }) => (
     <AnimatePresence>
-      <motion.div 
+      <motion.div
         className={styles.modalOverlay}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
       >
-        <motion.div 
+        <motion.div
           className={styles.duplicateModal}
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           onClick={(e) => e.stopPropagation()}
         >
+          {/* ✅ Modernisierter Header mit Badge */}
           <div className={styles.modalHeader}>
-            <div className={styles.modalIcon}>
-              <Users size={24} className={styles.duplicateIcon} />
+            <div className={styles.modalIconWrapper}>
+              <div className={styles.modalIconBadge}>
+                <AlertCircle size={28} className={styles.duplicateIcon} />
+              </div>
             </div>
-            <h3>Datei bereits vorhanden</h3>
-            <button 
+            <h3>Duplikat erkannt</h3>
+            <p className={styles.modalSubtitle}>Diese Datei existiert bereits in deiner Verwaltung</p>
+            <button
               className={styles.modalCloseButton}
               onClick={onClose}
+              aria-label="Schließen"
             >
               <X size={20} />
             </button>
           </div>
 
+          {/* ✅ Verbesserter File-Vergleich mit Card-Design */}
           <div className={styles.modalContent}>
-            <div className={styles.duplicateInfo}>
-              <div className={styles.duplicateDetails}>
-                <div className={styles.fileComparison}>
-                  <div className={styles.fileComparisonItem}>
-                    <div className={styles.fileComparisonLabel}>📄 Neue Datei</div>
-                    <div className={styles.fileComparisonName}>{fileItem.file.name}</div>
-                    <div className={styles.fileComparisonSize}>
-                      {(fileItem.file.size / 1024 / 1024).toFixed(2)} MB
-                    </div>
-                  </div>
-                  
-                  <div className={styles.duplicateArrow}>
-                    <Users size={20} />
-                  </div>
-                  
-                  <div className={styles.fileComparisonItem}>
-                    <div className={styles.fileComparisonLabel}>📁 Bereits vorhanden</div>
-                    <div className={styles.fileComparisonName}>
-                      {existingContract?.name || 'Unbenannt'}
-                    </div>
-                    <div className={styles.fileComparisonDate}>
-                      Hochgeladen: {existingContract?.createdAt ? formatDate(existingContract.createdAt) : '—'}
-                    </div>
+            <div className={styles.fileComparisonGrid}>
+              <motion.div
+                className={styles.fileCard}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 }}
+              >
+                <div className={styles.fileCardHeader}>
+                  <FileText size={20} className={styles.fileCardIcon} />
+                  <span className={styles.fileCardLabel}>Neue Datei</span>
+                </div>
+                <div className={styles.fileCardBody}>
+                  <div className={styles.fileCardName}>{fileItem.file.name}</div>
+                  <div className={styles.fileCardMeta}>
+                    {(fileItem.file.size / 1024 / 1024).toFixed(2)} MB
                   </div>
                 </div>
+              </motion.div>
+
+              <div className={styles.fileComparisonDivider}>
+                <div className={styles.fileComparisonArrow}>
+                  <ArrowRight size={20} />
+                </div>
               </div>
-              
-              <div className={styles.duplicateMessage}>
-                <p>
-                  Diese Datei wurde bereits hochgeladen und analysiert. 
-                  Was möchtest du tun?
-                </p>
-              </div>
+
+              <motion.div
+                className={`${styles.fileCard} ${styles.fileCardExisting}`}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                <div className={styles.fileCardHeader}>
+                  <CheckCircle size={20} className={styles.fileCardIcon} />
+                  <span className={styles.fileCardLabel}>Bereits vorhanden</span>
+                </div>
+                <div className={styles.fileCardBody}>
+                  <div className={styles.fileCardName}>
+                    {existingContract?.name || 'Unbenannt'}
+                  </div>
+                  <div className={styles.fileCardMeta}>
+                    {existingContract?.createdAt ? formatDate(existingContract.createdAt) : '—'}
+                    {existingContract?.analyzed && (
+                      <span className={styles.analyzedBadge}>
+                        <CheckCircle size={12} />
+                        Analysiert
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
             </div>
           </div>
 
+          {/* ✅ Modernisierte Action-Buttons mit Grid-Layout */}
           <div className={styles.modalActions}>
-            <button 
-              className={styles.modalActionButton}
+            <motion.button
+              className={`${styles.modalActionCard} ${styles.actionView}`}
               onClick={onViewExisting}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
-              <Eye size={16} />
-              <span>Vorhandene Datei anschauen</span>
-            </button>
-            
-            <button 
-              className={`${styles.modalActionButton} ${styles.primaryAction}`}
+              <div className={styles.actionCardIcon}>
+                <Eye size={20} />
+              </div>
+              <div className={styles.actionCardContent}>
+                <div className={styles.actionCardTitle}>Vertrag öffnen</div>
+                <div className={styles.actionCardDescription}>Details anzeigen</div>
+              </div>
+            </motion.button>
+
+            <motion.button
+              className={`${styles.modalActionCard} ${styles.actionAnalyze}`}
               onClick={onAnalyzeAnyway}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
-              <RefreshCw size={16} />
-              <span>Trotzdem neu analysieren</span>
-            </button>
-            
-            <button 
-              className={`${styles.modalActionButton} ${styles.warningAction}`}
+              <div className={styles.actionCardIcon}>
+                <RefreshCw size={20} />
+              </div>
+              <div className={styles.actionCardContent}>
+                <div className={styles.actionCardTitle}>Neu analysieren</div>
+                <div className={styles.actionCardDescription}>Erneute KI-Analyse</div>
+              </div>
+            </motion.button>
+
+            <motion.button
+              className={`${styles.modalActionCard} ${styles.actionReplace}`}
               onClick={onReplaceFile}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
-              <Upload size={16} />
-              <span>Datei ersetzen</span>
-            </button>
+              <div className={styles.actionCardIcon}>
+                <Upload size={20} />
+              </div>
+              <div className={styles.actionCardContent}>
+                <div className={styles.actionCardTitle}>Datei ersetzen</div>
+                <div className={styles.actionCardDescription}>Alte Datei überschreiben</div>
+              </div>
+            </motion.button>
           </div>
         </motion.div>
       </motion.div>
