@@ -362,36 +362,42 @@ export const apiCall = async (
           if (errorData?.message && typeof errorData.message === 'string') {
             errorMessage = errorData.message;
           }
-          
+
           // ✅ FIXED: Für 409 (Conflict/Duplikat) spezielle Behandlung mit vollständigen Daten
           if (response.status === 409) {
             console.log("🔄 409 Conflict erkannt - Duplikat-Daten:", errorData);
-            
+
             // ✅ CRITICAL: Korrekte Duplikat-Error-Struktur mit vollständigen Daten
-            const duplicateError: DuplicateError = { 
-              status: 409, 
-              duplicate: true, 
+            const duplicateError: DuplicateError = {
+              status: 409,
+              duplicate: true,
               data: errorData  // ✅ Vollständige Backend-Response-Daten
             };
+            console.log("🔄 Duplikat-Error erkannt in apiCall");
             throw duplicateError;
           }
-          
+
           // Prüfe ob Retry sinnvoll ist
           if (response.status >= 500 && response.status < 600) {
             shouldRetry = true;
           }
         } catch (parseError) {
-          // ✅ FIXED: Auch bei Parse-Fehlern 409 korrekt behandeln
+          // ✅ Re-throw duplicate errors (nicht als Parse-Fehler behandeln)
+          if (parseError && typeof parseError === 'object' && 'status' in parseError && parseError.status === 409) {
+            throw parseError;
+          }
+
+          // ✅ FIXED: Bei echten Parse-Fehlern UND 409 Fallback verwenden
           if (response.status === 409) {
-            console.log("🔄 409 Conflict ohne JSON - Fallback Duplikat-Error");
-            const duplicateError: DuplicateError = { 
-              status: 409, 
-              duplicate: true, 
+            console.log("🔄 409 Conflict - JSON Parse-Fehler - Fallback Duplikat-Error");
+            const duplicateError: DuplicateError = {
+              status: 409,
+              duplicate: true,
               data: { message: "Duplikat erkannt", duplicate: true }
             };
             throw duplicateError;
           }
-          
+
           console.warn("⚠️ Konnte JSON-Error nicht parsen:", parseError);
           shouldRetry = response.status >= 500;
         }
@@ -626,8 +632,9 @@ export const uploadOnly = async (
     // ✅ Handle duplicate detection (409 Conflict)
     if (error && typeof error === 'object' && 'status' in error && error.status === 409 && 'data' in error) {
       if (onProgress) onProgress(100); // Mark as complete (duplicate found)
-      console.log("📄 Duplicate detected:", error.data);
-      return error.data; // Return duplicate info to frontend
+      const duplicateData = (error as { data: Record<string, unknown> }).data;
+      console.log("📄 Duplicate detected in uploadOnly:", duplicateData);
+      return duplicateData; // Return duplicate info to frontend
     }
 
     if (onProgress) onProgress(0); // Reset bei Fehler
