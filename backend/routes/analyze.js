@@ -13,8 +13,8 @@ const { generateEventsForContract } = require("../services/calendarEvents"); // 
 
 const router = express.Router();
 
-// ===== S3 INTEGRATION (AWS SDK v3) - UNCHANGED =====
-let S3Client, HeadBucketCommand, GetObjectCommand, multerS3, s3Instance;
+// ===== S3 INTEGRATION (AWS SDK v3) =====
+let S3Client, PutObjectCommand, HeadBucketCommand, GetObjectCommand, s3Instance;
 let S3_AVAILABLE = false;
 let S3_CONFIGURED = false;
 let S3_CONFIG_ERROR = null;
@@ -25,34 +25,34 @@ let S3_CONFIG_ERROR = null;
  */
 const initializeS3 = () => {
   try {
-    console.log("🔧 [S3] Initializing S3 configuration (AWS SDK v3)...");
-    
+    console.log("🔧 [ANALYZE] Initializing S3 configuration (AWS SDK v3)...");
+
     // Check if all required environment variables are present
     const requiredEnvVars = [
-      'AWS_ACCESS_KEY_ID', 
-      'AWS_SECRET_ACCESS_KEY', 
-      'AWS_REGION', 
+      'AWS_ACCESS_KEY_ID',
+      'AWS_SECRET_ACCESS_KEY',
+      'AWS_REGION',
       'S3_BUCKET_NAME'
     ];
-    
+
     const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
-    
+
     if (missingVars.length > 0) {
       throw new Error(`Missing environment variables: ${missingVars.join(', ')}`);
     }
-    
-    // Try to load AWS SDK v3 and multer-s3
+
+    // Try to load AWS SDK v3 (NO multer-s3)
     try {
-      const { S3Client: _S3Client, HeadBucketCommand: _HeadBucketCommand, GetObjectCommand: _GetObjectCommand } = require("@aws-sdk/client-s3");
-      multerS3 = require("multer-s3");
+      const { S3Client: _S3Client, PutObjectCommand: _PutObjectCommand, HeadBucketCommand: _HeadBucketCommand, GetObjectCommand: _GetObjectCommand } = require("@aws-sdk/client-s3");
       S3Client = _S3Client;
+      PutObjectCommand = _PutObjectCommand;
       HeadBucketCommand = _HeadBucketCommand;
       GetObjectCommand = _GetObjectCommand;
-      console.log("✅ [S3] AWS SDK v3 and multer-s3 loaded successfully");
+      console.log("✅ [ANALYZE] AWS SDK v3 loaded successfully");
     } catch (importError) {
       throw new Error(`Failed to import S3 dependencies: ${importError.message}`);
     }
-    
+
     // Configure AWS S3 Client (v3 style)
     s3Instance = new S3Client({
       region: process.env.AWS_REGION,
@@ -61,27 +61,27 @@ const initializeS3 = () => {
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
       },
     });
-    
-    console.log("✅ [S3] AWS S3 Client v3 created successfully");
-    console.log(`✅ [S3] Region: ${process.env.AWS_REGION}`);
-    console.log(`✅ [S3] Bucket: ${process.env.S3_BUCKET_NAME}`);
-    
+
+    console.log("✅ [ANALYZE] AWS S3 Client v3 created successfully");
+    console.log(`✅ [ANALYZE] Region: ${process.env.AWS_REGION}`);
+    console.log(`✅ [ANALYZE] Bucket: ${process.env.S3_BUCKET_NAME}`);
+
     S3_CONFIGURED = true;
     S3_CONFIG_ERROR = null;
-    
+
     // Test S3 connectivity (async, don't block startup)
     testS3Connectivity();
-    
+
     return true;
-    
+
   } catch (error) {
-    console.error("❌ [S3] Configuration failed:", error.message);
+    console.error("❌ [ANALYZE] S3 Configuration failed:", error.message);
     S3_CONFIGURED = false;
     S3_AVAILABLE = false;
     S3_CONFIG_ERROR = error.message;
-    
+
     // Don't throw - fall back to local upload
-    console.log("🔄 [S3] Falling back to LOCAL_UPLOAD mode");
+    console.log("🔄 [ANALYZE] Falling back to LOCAL_UPLOAD mode");
     return false;
   }
 };
@@ -94,32 +94,32 @@ const testS3Connectivity = async () => {
   if (!S3_CONFIGURED || !s3Instance || !HeadBucketCommand) {
     return false;
   }
-  
+
   try {
-    console.log("🧪 [S3] Testing bucket connectivity...");
-    
+    console.log("🧪 [ANALYZE] Testing bucket connectivity...");
+
     // Test bucket access with SDK v3
-    const command = new HeadBucketCommand({ 
-      Bucket: process.env.S3_BUCKET_NAME 
+    const command = new HeadBucketCommand({
+      Bucket: process.env.S3_BUCKET_NAME
     });
-    
+
     await s3Instance.send(command);
-    
-    console.log("✅ [S3] Bucket connectivity test successful");
+
+    console.log("✅ [ANALYZE] Bucket connectivity test successful");
     S3_AVAILABLE = true;
     return true;
-    
+
   } catch (error) {
-    console.error("❌ [S3] Bucket connectivity test failed:", error.message);
+    console.error("❌ [ANALYZE] Bucket connectivity test failed:", error.message);
     S3_AVAILABLE = false;
-    
+
     // Log helpful error messages
     if (error.name === 'Forbidden' || error.$metadata?.httpStatusCode === 403) {
-      console.error("❌ [S3] Access denied - check IAM permissions");
+      console.error("❌ [ANALYZE] Access denied - check IAM permissions");
     } else if (error.name === 'NotFound' || error.$metadata?.httpStatusCode === 404) {
-      console.error("❌ [S3] Bucket not found - check bucket name and region");
+      console.error("❌ [ANALYZE] Bucket not found - check bucket name and region");
     }
-    
+
     return false;
   }
 };
@@ -143,74 +143,67 @@ try {
 }
 
 /**
- * 🔄 DYNAMIC MULTER CONFIGURATION (AWS SDK v3) - UNCHANGED
- * Uses S3 if available, falls back to local storage
+ * 🔄 MULTER CONFIGURATION (AWS SDK v3 Compatible)
+ * Always uses disk storage first, then manually uploads to S3
  */
 const createUploadMiddleware = () => {
-  // If S3 is configured and available, use S3 upload
-  if (S3_CONFIGURED && S3_AVAILABLE && s3Instance && multerS3) {
-    console.log("🚀 [UPLOAD] Using S3 upload configuration (AWS SDK v3)");
-    
-    return multer({
-      storage: multerS3({
-        s3: s3Instance,
-        bucket: process.env.S3_BUCKET_NAME,
-        acl: 'private', // Security: files are private by default
-        contentType: multerS3.AUTO_CONTENT_TYPE,
-        metadata: function (req, file, cb) {
-          cb(null, {
-            userId: req.user?.userId || 'unknown',
-            uploadedAt: new Date().toISOString(),
-            originalName: file.originalname
-          });
-        },
-        key: function (req, file, cb) {
-          // Create organized S3 key structure
-          const userId = req.user?.userId || 'anonymous';
-          const timestamp = Date.now();
-          const sanitizedFileName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
-          const key = `contracts/${userId}/${timestamp}_${sanitizedFileName}`;
-          
-          console.log(`📍 [S3] Generated S3 key: ${key}`);
-          cb(null, key);
-        }
-      }),
-      limits: { 
-        fileSize: 50 * 1024 * 1024 // 50MB limit
-      },
-      fileFilter: (req, file, cb) => {
-        // Only allow PDF files
-        if (file.mimetype === 'application/pdf') {
-          cb(null, true);
-        } else {
-          cb(new Error('Only PDF files are allowed'), false);
-        }
+  console.log("📄 [ANALYZE] Using disk storage configuration (manual S3 upload after)");
+
+  const storage = multer.diskStorage({
+    destination: UPLOAD_PATH,
+    filename: (req, file, cb) => {
+      const filename = Date.now() + path.extname(file.originalname);
+      console.log(`📁 [ANALYZE] Generated filename: ${filename}`);
+      cb(null, filename);
+    },
+  });
+
+  return multer({
+    storage,
+    limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit
+    fileFilter: (req, file, cb) => {
+      if (file.mimetype === 'application/pdf') {
+        cb(null, true);
+      } else {
+        cb(new Error('Only PDF files are allowed'), false);
       }
-    });
-  } else {
-    // Fall back to local disk storage
-    console.log("📄 [UPLOAD] Using LOCAL upload configuration (S3 not available)");
-    
-    const storage = multer.diskStorage({
-      destination: UPLOAD_PATH,
-      filename: (req, file, cb) => {
-        const filename = Date.now() + path.extname(file.originalname);
-        console.log(`📁 [LOCAL] Generated filename: ${filename}`);
-        cb(null, filename);
+    }
+  });
+};
+
+/**
+ * 🔄 Upload file to S3 using AWS SDK v3
+ */
+const uploadToS3 = async (localFilePath, originalFilename, userId) => {
+  try {
+    const fileBuffer = await fs.readFile(localFilePath);
+    const s3Key = `contracts/${Date.now()}-${originalFilename}`;
+
+    const command = new PutObjectCommand({
+      Bucket: process.env.S3_BUCKET_NAME,
+      Key: s3Key,
+      Body: fileBuffer,
+      ContentType: 'application/pdf',
+      Metadata: {
+        uploadDate: new Date().toISOString(),
+        userId: userId || 'unknown',
       },
     });
 
-    return multer({ 
-      storage,
-      limits: { fileSize: 50 * 1024 * 1024 }, // 50MB limit
-      fileFilter: (req, file, cb) => {
-        if (file.mimetype === 'application/pdf') {
-          cb(null, true);
-        } else {
-          cb(new Error('Only PDF files are allowed'), false);
-        }
-      }
-    });
+    await s3Instance.send(command);
+
+    const s3Location = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${s3Key}`;
+
+    console.log(`✅ [ANALYZE S3] Successfully uploaded to: ${s3Location}`);
+
+    return {
+      s3Key,
+      s3Location,
+      s3Bucket: process.env.S3_BUCKET_NAME,
+    };
+  } catch (error) {
+    console.error(`❌ [ANALYZE S3] Upload failed:`, error);
+    throw error;
   }
 };
 
@@ -1262,7 +1255,7 @@ const checkForDuplicate = async (fileHash, userId) => {
  * 💾 ENHANCED CONTRACT SAVING (S3 COMPATIBLE) - WITH PROVIDER DETECTION & AUTO-RENEWAL
  * Saves contract with appropriate upload info based on storage type
  */
-async function saveContractWithUpload(userId, analysisData, fileInfo, pdfText, uploadInfo, fileHash) {
+async function saveContractWithUpload(userId, analysisData, fileInfo, pdfText, storageInfo, fileHash) {
   try {
     const contract = {
       userId: new ObjectId(userId),
@@ -1299,32 +1292,32 @@ async function saveContractWithUpload(userId, analysisData, fileInfo, pdfText, u
       
       filename: fileInfo.filename || fileInfo.key,
       originalname: fileInfo.originalname,
-      filePath: uploadInfo.fileUrl,
+      filePath: storageInfo.fileUrl,
       mimetype: fileInfo.mimetype,
       size: fileInfo.size,
       fileHash: fileHash, // Add file hash for duplicate detection
       
-      uploadType: uploadInfo.uploadType,
+      uploadType: storageInfo.uploadType,
       
       // ✅ CRITICAL: Set s3Key at top level for frontend compatibility
-      ...(uploadInfo.s3Info && {
-        s3Key: uploadInfo.s3Info.key,
-        s3Bucket: uploadInfo.s3Info.bucket,
-        s3Location: uploadInfo.s3Info.location,
-        s3ETag: uploadInfo.s3Info.etag
+      ...(storageInfo.s3Info && {
+        s3Key: storageInfo.s3Info.key,
+        s3Bucket: storageInfo.s3Info.bucket,
+        s3Location: storageInfo.s3Info.location,
+        s3ETag: storageInfo.s3Info.etag
       }),
       
       extraRefs: {
-        uploadType: uploadInfo.uploadType,
-        ...(uploadInfo.s3Info && {
-          s3Bucket: uploadInfo.s3Info.bucket,
-          s3Key: uploadInfo.s3Info.key,
-          s3Location: uploadInfo.s3Info.location,
-          s3ETag: uploadInfo.s3Info.etag
+        uploadType: storageInfo.uploadType,
+        ...(storageInfo.s3Info && {
+          s3Bucket: storageInfo.s3Info.bucket,
+          s3Key: storageInfo.s3Info.key,
+          s3Location: storageInfo.s3Info.location,
+          s3ETag: storageInfo.s3Info.etag
         }),
-        ...(uploadInfo.localInfo && {
+        ...(storageInfo.localInfo && {
           uploadPath: UPLOAD_PATH,
-          serverPath: uploadInfo.localInfo.path
+          serverPath: storageInfo.localInfo.path
         }),
         analysisId: null
       },
@@ -1354,7 +1347,7 @@ async function saveContractWithUpload(userId, analysisData, fileInfo, pdfText, u
       filePath: contract.filePath,
       textLength: contract.fullText.length,
       s3Key: contract.s3Key || 'none',
-      s3Info: uploadInfo.s3Info ? 'present' : 'none',
+      s3Info: storageInfo.s3Info ? 'present' : 'none',
       provider: contract.provider?.displayName || 'none', // 📋 Provider log
       isAutoRenewal: contract.isAutoRenewal, // 🆕 AUTO-RENEWAL log
       laufzeit: contract.laufzeit || 'none', // 🆕 DURATION log
@@ -1486,28 +1479,78 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
     });
   }
 
-  // Get upload info to determine storage type
-  const uploadInfo = getUploadInfo(req.file);
-  
+  // ✅ Upload to S3 if configured
+  let storageInfo;
+  let cleanupLocalFile = false;
+
+  if (S3_CONFIGURED && S3_AVAILABLE && s3Instance && PutObjectCommand) {
+    console.log(`📤 [${requestId}] Uploading to S3...`);
+    try {
+      const s3Result = await uploadToS3(req.file.path, req.file.originalname, req.user.userId);
+      storageInfo = {
+        uploadType: "S3_UPLOAD",
+        s3Key: s3Result.s3Key,
+        s3Location: s3Result.s3Location,
+        s3Bucket: s3Result.s3Bucket,
+        s3Info: {
+          key: s3Result.s3Key,
+          location: s3Result.s3Location,
+          bucket: s3Result.s3Bucket
+        }
+      };
+      cleanupLocalFile = true;
+      console.log(`✅ [${requestId}] S3 upload successful`);
+    } catch (s3Error) {
+      console.error(`❌ [${requestId}] S3 upload failed, using local storage:`, s3Error.message);
+      storageInfo = {
+        uploadType: "LOCAL_UPLOAD",
+        filePath: req.file.path,
+        localInfo: {
+          filename: req.file.filename,
+          path: req.file.path
+        }
+      };
+    }
+  } else {
+    console.log(`📁 [${requestId}] S3 not available, using local storage`);
+    storageInfo = {
+      uploadType: "LOCAL_UPLOAD",
+      filePath: req.file.path,
+      localInfo: {
+        filename: req.file.filename,
+        path: req.file.path
+      }
+    };
+  }
+
   console.log(`📄 [${requestId}] File info:`, {
     filename: req.file.filename,
     originalname: req.file.originalname,
     mimetype: req.file.mimetype,
     size: req.file.size,
-    key: req.file.key,
-    location: req.file.location,
-    uploadType: uploadInfo.uploadType,
-    s3Key: uploadInfo.s3Info?.key || 'none'
+    uploadType: storageInfo.uploadType,
+    s3Key: storageInfo.s3Key || 'none'
   });
 
   try {
     const { analysisCollection, usersCollection: users, contractsCollection } = await getMongoCollections();
     console.log(`📊 [${requestId}] MongoDB collections available`);
-    
+
     const user = await users.findOne({ _id: new ObjectId(req.user.userId) });
 
     if (!user) {
       console.error(`❌ [${requestId}] User not found: ${req.user.userId}`);
+
+      // Cleanup on error
+      if (req.file && req.file.path && fsSync.existsSync(req.file.path)) {
+        try {
+          await fs.unlink(req.file.path);
+          console.log(`🗑️ [${requestId}] Cleaned up local file after error`);
+        } catch (cleanupError) {
+          console.error(`❌ [${requestId}] Cleanup error:`, cleanupError);
+        }
+      }
+
       return res.status(404).json({
         success: false,
         message: "❌ User not found.",
@@ -1526,6 +1569,17 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
 
     if (count >= limit) {
       console.warn(`⚠️ [${requestId}] Analysis limit reached for user ${req.user.userId}`);
+
+      // Cleanup on limit reached
+      if (req.file && req.file.path && fsSync.existsSync(req.file.path)) {
+        try {
+          await fs.unlink(req.file.path);
+          console.log(`🗑️ [${requestId}] Cleaned up local file after limit reached`);
+        } catch (cleanupError) {
+          console.error(`❌ [${requestId}] Cleanup error:`, cleanupError);
+        }
+      }
+
       return res.status(403).json({
         success: false,
         message: "❌ Analysis limit reached. Please upgrade package.",
@@ -1536,10 +1590,10 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       });
     }
 
-    console.log(`📄 [${requestId}] Reading uploaded file (${uploadInfo.uploadType})...`);
-    
-    // Use dynamic file reading based on upload type
-    const buffer = await readUploadedFile(req.file, requestId);
+    console.log(`📄 [${requestId}] Reading uploaded file from local disk...`);
+
+    // Read from local file (always stored locally first)
+    const buffer = await fs.readFile(req.file.path);
     console.log(`📄 [${requestId}] Buffer read: ${buffer.length} bytes`);
     
     const fileHash = calculateFileHash(buffer);
@@ -1685,8 +1739,8 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       qualityScore: Math.round(validationResult.qualityScore * 100),
       textLength: fullTextContent.length,
       pages: validationResult.metrics.pageCount,
-      uploadType: uploadInfo.uploadType,
-      s3Key: uploadInfo.s3Info?.key || 'none'
+      uploadType: storageInfo.uploadType,
+      s3Key: storageInfo.s3Info?.key || 'none'
     });
 
     // ✅ FIXED: Generate robust lawyer-level analysis prompt
@@ -1758,7 +1812,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       extractedText: fullTextContent,
       originalFileName: req.file.originalname,
       fileSize: buffer.length,
-      uploadType: uploadInfo.uploadType,
+      uploadType: storageInfo.uploadType,
       
       // 📋 NEUE FELDER HINZUFÜGEN:
       provider: extractedProvider,
@@ -1791,8 +1845,8 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       tokenOptimized: true,
       substantialContent: true,
       
-      ...(uploadInfo.s3Info && {
-        s3Info: uploadInfo.s3Info
+      ...(storageInfo.s3Info && {
+        s3Info: storageInfo.s3Info
       }),
       ...result,
     };
@@ -1807,7 +1861,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
     }
 
     try {
-      console.log(`💾 [${requestId}] Saving contract with FIXED deep lawyer-level analysis (${uploadInfo.uploadType})...`);
+      console.log(`💾 [${requestId}] Saving contract with FIXED deep lawyer-level analysis (${storageInfo.uploadType})...`);
 
       if (existingContract && req.body.forceReanalyze === 'true') {
         console.log(`📄 [${requestId}] Updating existing contract with FIXED deep lawyer-level analysis: ${existingContract._id}`);
@@ -1817,9 +1871,9 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           analysisId: inserted.insertedId,
           fullText: fullTextContent,
           content: fullTextContent,
-          filePath: uploadInfo.fileUrl,
+          filePath: storageInfo.fileUrl,
           filename: req.file.filename || req.file.key,
-          uploadType: uploadInfo.uploadType,
+          uploadType: storageInfo.uploadType,
           
           // 📋 Provider Detection Fields WITH AUTO-RENEWAL & DURATION
           provider: extractedProvider,
@@ -1864,27 +1918,27 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
         };
 
         // Add s3Key at top level if S3 upload
-        if (uploadInfo.s3Info) {
-          updateData.s3Key = uploadInfo.s3Info.key;
-          updateData.s3Bucket = uploadInfo.s3Info.bucket;
-          updateData.s3Location = uploadInfo.s3Info.location;
-          updateData.s3ETag = uploadInfo.s3Info.etag;
+        if (storageInfo.s3Info) {
+          updateData.s3Key = storageInfo.s3Info.key;
+          updateData.s3Bucket = storageInfo.s3Info.bucket;
+          updateData.s3Location = storageInfo.s3Info.location;
+          updateData.s3ETag = storageInfo.s3Info.etag;
         }
 
         updateData.extraRefs = {
-          uploadType: uploadInfo.uploadType,
+          uploadType: storageInfo.uploadType,
           analysisId: inserted.insertedId,
           documentType: validationResult.documentType,
           analysisStrategy: validationResult.strategy,
-          ...(uploadInfo.s3Info && {
-            s3Bucket: uploadInfo.s3Info.bucket,
-            s3Key: uploadInfo.s3Info.key,
-            s3Location: uploadInfo.s3Info.location,
-            s3ETag: uploadInfo.s3Info.etag
+          ...(storageInfo.s3Info && {
+            s3Bucket: storageInfo.s3Info.bucket,
+            s3Key: storageInfo.s3Info.key,
+            s3Location: storageInfo.s3Info.location,
+            s3ETag: storageInfo.s3Info.etag
           }),
-          ...(uploadInfo.localInfo && {
+          ...(storageInfo.localInfo && {
             uploadPath: UPLOAD_PATH,
-            serverPath: uploadInfo.localInfo.path
+            serverPath: storageInfo.localInfo.path
           }),
           extractionMethod: 'deep-lawyer-level-analysis-FIXED-v5',
           deepLawyerLevelAnalysis: true,
@@ -1955,7 +2009,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           contractAnalysisData,
           req.file,
           fullTextContent,
-          uploadInfo,
+          storageInfo,
           fileHash
         );
 
@@ -2032,8 +2086,8 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       success: true,
       message: `${validationResult.analysisMessage} auf höchstem Anwaltsniveau erfolgreich abgeschlossen`,
       requestId,
-      uploadType: uploadInfo.uploadType,
-      fileUrl: uploadInfo.fileUrl,
+      uploadType: storageInfo.uploadType,
+      fileUrl: storageInfo.fileUrl,
       
       // 📋 ALLE FELDER DIREKT IM ROOT (KEIN data OBJEKT!)
       provider: extractedProvider,
@@ -2086,8 +2140,8 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
         substantialContent: "true"
       },
       
-      ...(uploadInfo.s3Info && {
-        s3Info: uploadInfo.s3Info
+      ...(storageInfo.s3Info && {
+        s3Info: storageInfo.s3Info
       }),
       
       // ✅ WICHTIG: Result-Felder DIREKT im Root spreaden (kein data wrapper!)
@@ -2116,12 +2170,22 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       stack: error.stack?.substring(0, 500),
       userId: req.user?.userId,
       filename: req.file?.originalname,
-      uploadType: uploadInfo.uploadType
+      uploadType: storageInfo.uploadType
     });
-    
+
+    // Cleanup local file on error
+    if (req.file && req.file.path && fsSync.existsSync(req.file.path)) {
+      try {
+        await fs.unlink(req.file.path);
+        console.log(`🗑️ [${requestId}] Cleaned up local file after error`);
+      } catch (cleanupError) {
+        console.error(`❌ [${requestId}] Cleanup error:`, cleanupError);
+      }
+    }
+
     let errorMessage = "Error during deep lawyer-level analysis.";
     let errorCode = "ANALYSIS_ERROR";
-    
+
     if (error.message.includes("API Key")) {
       errorMessage = "AI service temporarily unavailable.";
       errorCode = "AI_SERVICE_ERROR";
@@ -2145,12 +2209,12 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       errorCode = "STORAGE_ERROR";
     }
 
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
       message: errorMessage,
       error: errorCode,
       requestId,
-      uploadType: uploadInfo.uploadType,
+      uploadType: storageInfo.uploadType,
       deepLawyerLevelAnalysis: true,
       lawyerLevelAnalysis: true,
       modelUsed: 'gpt-4-turbo',
@@ -2159,6 +2223,16 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       fixedVersion: 'v5',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
+  } finally {
+    // Final cleanup: Delete local file if S3 upload was successful
+    if (cleanupLocalFile && req.file && req.file.path && fsSync.existsSync(req.file.path)) {
+      try {
+        await fs.unlink(req.file.path);
+        console.log(`🗑️ [${requestId}] Cleaned up local file after successful S3 upload`);
+      } catch (cleanupError) {
+        console.error(`⚠️ [${requestId}] Final cleanup warning:`, cleanupError.message);
+      }
+    }
   }
 };
 

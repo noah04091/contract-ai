@@ -3,6 +3,11 @@ const express = require("express");
 const { MongoClient, ObjectId } = require("mongodb");
 const verifyToken = require("../middleware/verifyToken");
 const { onContractChange } = require("../services/calendarEvents");
+const pdfParse = require("pdf-parse");
+const fs = require("fs").promises;
+const fsSync = require("fs");
+const path = require("path");
+const { OpenAI } = require("openai");
 
 const router = express.Router();
 const mongoUri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
@@ -10,6 +15,35 @@ const client = new MongoClient(mongoUri);
 let contractsCollection;
 let analysisCollection;
 let eventsCollection; // ✅ NEU: Events Collection
+
+// ===== S3 INTEGRATION (AWS SDK v3) =====
+let S3Client, GetObjectCommand, s3Instance;
+let S3_AVAILABLE = false;
+
+try {
+  const { S3Client: _S3Client, GetObjectCommand: _GetObjectCommand } = require("@aws-sdk/client-s3");
+  S3Client = _S3Client;
+  GetObjectCommand = _GetObjectCommand;
+
+  s3Instance = new S3Client({
+    region: process.env.AWS_REGION,
+    credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    },
+  });
+
+  S3_AVAILABLE = true;
+  console.log("✅ [CONTRACTS] S3 configured successfully");
+} catch (error) {
+  console.error("❌ [CONTRACTS] S3 configuration failed:", error.message);
+  S3_AVAILABLE = false;
+}
+
+// ===== OPENAI SETUP =====
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
 
 // Provider Detection Functions - NEU
 const providerPatterns = {
@@ -857,10 +891,12 @@ router.post("/:id/detect-provider", verifyToken, async (req, res) => {
 
 // ✅ NEU: POST /contracts/:id/analyze – Nachträgliche Analyse für bestehenden Vertrag
 router.post("/:id/analyze", verifyToken, async (req, res) => {
+  const requestId = `ANALYZE-${Date.now()}`;
+  console.log(`\n🔍 [${requestId}] Deferred Analysis Request started`);
+
   try {
     const { id } = req.params;
-
-    console.log(`🔍 Analyzing existing contract: ${id}`);
+    console.log(`📄 [${requestId}] Contract ID: ${id}`);
 
     // Get contract from database
     const contract = await contractsCollection.findOne({
@@ -869,6 +905,7 @@ router.post("/:id/analyze", verifyToken, async (req, res) => {
     });
 
     if (!contract) {
+      console.log(`❌ [${requestId}] Contract not found`);
       return res.status(404).json({
         success: false,
         message: 'Vertrag nicht gefunden'
@@ -877,35 +914,192 @@ router.post("/:id/analyze", verifyToken, async (req, res) => {
 
     // Check if already analyzed
     if (contract.analyzed !== false) {
+      console.log(`⚠️ [${requestId}] Contract already analyzed`);
       return res.status(400).json({
         success: false,
         message: 'Vertrag wurde bereits analysiert'
       });
     }
 
-    // Trigger analysis by redirecting to analyze endpoint
-    // The analyze endpoint will handle the actual analysis
-    // We just need to mark it for re-analysis
+    console.log(`📁 [${requestId}] Contract found:`, {
+      name: contract.name,
+      uploadType: contract.uploadType,
+      s3Key: contract.s3Key || 'none',
+      filePath: contract.filePath || 'none'
+    });
+
+    // ===== READ PDF FILE =====
+    let buffer;
+
+    if (contract.s3Key && S3_AVAILABLE && s3Instance && GetObjectCommand) {
+      // Read from S3
+      console.log(`📖 [${requestId}] Reading PDF from S3: ${contract.s3Key}`);
+
+      try {
+        const command = new GetObjectCommand({
+          Bucket: process.env.S3_BUCKET_NAME,
+          Key: contract.s3Key
+        });
+
+        const response = await s3Instance.send(command);
+
+        // Convert stream to buffer
+        const chunks = [];
+        for await (const chunk of response.Body) {
+          chunks.push(chunk);
+        }
+        buffer = Buffer.concat(chunks);
+
+        console.log(`✅ [${requestId}] S3 file read: ${buffer.length} bytes`);
+      } catch (s3Error) {
+        console.error(`❌ [${requestId}] S3 read error:`, s3Error);
+        return res.status(500).json({
+          success: false,
+          message: 'Fehler beim Laden der Datei aus dem Speicher'
+        });
+      }
+    } else if (contract.filePath) {
+      // Read from local file
+      const localPath = path.join(__dirname, "..", "uploads", path.basename(contract.filePath));
+      console.log(`📖 [${requestId}] Reading PDF from local disk: ${localPath}`);
+
+      if (!fsSync.existsSync(localPath)) {
+        console.error(`❌ [${requestId}] Local file not found: ${localPath}`);
+        return res.status(404).json({
+          success: false,
+          message: 'Datei nicht gefunden. Bitte erneut hochladen.'
+        });
+      }
+
+      try {
+        buffer = await fs.readFile(localPath);
+        console.log(`✅ [${requestId}] Local file read: ${buffer.length} bytes`);
+      } catch (fileError) {
+        console.error(`❌ [${requestId}] File read error:`, fileError);
+        return res.status(500).json({
+          success: false,
+          message: 'Fehler beim Laden der Datei'
+        });
+      }
+    } else {
+      console.error(`❌ [${requestId}] No file path or S3 key found`);
+      return res.status(404).json({
+        success: false,
+        message: 'Keine Datei gefunden. Bitte erneut hochladen.'
+      });
+    }
+
+    // ===== PARSE PDF =====
+    console.log(`📖 [${requestId}] Parsing PDF content...`);
+    let pdfData;
+
+    try {
+      pdfData = await pdfParse(buffer);
+      console.log(`✅ [${requestId}] PDF parsed: ${pdfData.numpages} pages, ${pdfData.text.length} characters`);
+    } catch (parseError) {
+      console.error(`❌ [${requestId}] PDF parse error:`, parseError);
+      return res.status(400).json({
+        success: false,
+        message: 'PDF konnte nicht gelesen werden'
+      });
+    }
+
+    const fullTextContent = pdfData.text;
+
+    // ===== GPT-4 ANALYSIS =====
+    console.log(`🤖 [${requestId}] Starting GPT-4 analysis...`);
+
+    const analysisPrompt = `Du bist ein spezialisierter Rechtsanwalt für Vertragsrecht. Analysiere den folgenden Vertragstext SEHR DETAILLIERT und VOLLSTÄNDIG.
+
+VERTRAGSTEXT:
+${fullTextContent.substring(0, 50000)}
+
+Antworte in folgendem JSON-Format:
+{
+  "summary": "Ausführliche Zusammenfassung in 3-5 Sätzen",
+  "contractScore": <Zahl 0-100>,
+  "legalAssessment": "Ausführliche rechtliche Bewertung",
+  "suggestions": "Konkrete Verbesserungsvorschläge",
+  "kuendigung": "Kündigungsfrist (z.B. '3 Monate zum Vertragsende')",
+  "laufzeit": "Vertragslaufzeit (z.B. '24 Monate')",
+  "status": "Aktiv/Inaktiv/Unbekannt",
+  "risiken": ["Risiko 1", "Risiko 2"],
+  "optimierungen": ["Optimierung 1", "Optimierung 2"]
+}`;
+
+    let analysisResult;
+
+    try {
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4-turbo",
+        messages: [
+          { role: "system", content: "Du bist ein Rechtsanwalt. Antworte NUR mit validem JSON." },
+          { role: "user", content: analysisPrompt }
+        ],
+        temperature: 0.1,
+        max_tokens: 2000
+      });
+
+      const responseText = completion.choices[0].message.content;
+      console.log(`✅ [${requestId}] GPT-4 response received: ${responseText.length} chars`);
+
+      // Parse JSON from response
+      const jsonStart = responseText.indexOf("{");
+      const jsonEnd = responseText.lastIndexOf("}") + 1;
+      const jsonText = responseText.substring(jsonStart, jsonEnd);
+
+      analysisResult = JSON.parse(jsonText);
+      console.log(`✅ [${requestId}] Analysis parsed successfully`);
+
+    } catch (gptError) {
+      console.error(`❌ [${requestId}] GPT-4 analysis error:`, gptError);
+      return res.status(500).json({
+        success: false,
+        message: 'KI-Analyse fehlgeschlagen'
+      });
+    }
+
+    // ===== UPDATE CONTRACT IN DATABASE =====
+    console.log(`💾 [${requestId}] Saving analysis results...`);
+
+    const updateData = {
+      analyzed: true,
+      updatedAt: new Date(),
+      contractScore: analysisResult.contractScore || 0,
+      summary: analysisResult.summary || '',
+      legalAssessment: analysisResult.legalAssessment || '',
+      suggestions: analysisResult.suggestions || '',
+      kuendigung: analysisResult.kuendigung || 'Unbekannt',
+      laufzeit: analysisResult.laufzeit || 'Unbekannt',
+      status: analysisResult.status || 'Unbekannt',
+      risiken: analysisResult.risiken || [],
+      optimierungen: analysisResult.optimierungen || []
+    };
+
     await contractsCollection.updateOne(
       { _id: new ObjectId(id) },
-      {
-        $set: {
-          analyzed: true,
-          updatedAt: new Date()
-        }
-      }
+      { $set: updateData }
     );
 
-    console.log(`✅ Contract marked for analysis: ${id}`);
+    console.log(`✅ [${requestId}] Contract updated with analysis`);
+
+    // Trigger calendar event generation
+    try {
+      await onContractChange(id.toString(), contractsCollection, eventsCollection);
+      console.log(`📅 [${requestId}] Calendar events updated`);
+    } catch (calError) {
+      console.warn(`⚠️ [${requestId}] Calendar update warning:`, calError.message);
+    }
 
     res.json({
       success: true,
-      message: 'Analyse erfolgreich',
-      contractId: id
+      message: 'Analyse erfolgreich abgeschlossen',
+      contractId: id,
+      analysis: analysisResult
     });
 
   } catch (error) {
-    console.error('❌ Fehler bei nachträglicher Analyse:', error);
+    console.error(`❌ [${requestId}] Error in deferred analysis:`, error);
     res.status(500).json({
       success: false,
       message: 'Fehler bei der Analyse',
