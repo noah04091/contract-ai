@@ -57,6 +57,16 @@ interface AnalysisResult {
   };
 }
 
+// ✅ Interface für Upload-Only Response
+interface UploadOnlyResult {
+  success: boolean;
+  duplicate?: boolean;
+  contractId: string;
+  contract: { _id: string; name: string; uploadedAt: string };
+  existingContract?: Contract;
+  message?: string;
+}
+
 interface UploadFileItem {
   id: string;
   file: File;
@@ -844,14 +854,20 @@ export default function Contracts() {
                   : item
               ));
             }
-          ) as { success: boolean; duplicate?: boolean; contractId: string; contract: { _id: string; name: string; uploadedAt: string }; existingContract?: any };
+          ) as UploadOnlyResult;
 
           // ✅ Handle duplicate detection
           if (result?.duplicate && result?.existingContract) {
             console.log(`📄 Duplicate detected: ${fileItem.file.name}`);
+            const duplicateInfo: AnalysisResult = {
+              success: false,
+              duplicate: true,
+              existingContract: result.existingContract,
+              message: result.message
+            };
             setUploadFiles(prev => prev.map(item =>
               item.id === fileItem.id
-                ? { ...item, status: 'duplicate', progress: 100, duplicateInfo: result as any }
+                ? { ...item, status: 'duplicate', progress: 100, duplicateInfo }
                 : item
             ));
           } else if (result?.success && result?.contract) {
