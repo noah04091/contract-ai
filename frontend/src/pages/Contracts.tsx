@@ -53,8 +53,9 @@ interface AnalysisResult {
 interface UploadFileItem {
   id: string;
   file: File;
-  status: 'pending' | 'analyzing' | 'completed' | 'error' | 'duplicate';
+  status: 'pending' | 'uploading' | 'analyzing' | 'completed' | 'error' | 'duplicate';
   progress: number;
+  analyzed?: boolean; // ✅ Wurde analysiert (true) oder nur hochgeladen (false/undefined)?
   result?: AnalysisResult;
   error?: string;
   duplicateInfo?: AnalysisResult;
@@ -805,10 +806,10 @@ export default function Contracts() {
     try {
       for (const fileItem of filesToUpload) {
         try {
-          // Update status
+          // Update status - nur Upload, keine Analyse
           setUploadFiles(prev => prev.map(item =>
             item.id === fileItem.id
-              ? { ...item, status: 'analyzing', progress: 50 }
+              ? { ...item, status: 'uploading', progress: 50 }
               : item
           ));
 
@@ -820,7 +821,7 @@ export default function Contracts() {
             (progress) => {
               setUploadFiles(prev => prev.map(item =>
                 item.id === fileItem.id
-                  ? { ...item, progress }
+                  ? { ...item, status: 'uploading', progress }
                   : item
               ));
             }
@@ -863,14 +864,79 @@ export default function Contracts() {
   // ✅ NEU: Analyse-Aktion aus Success Modal
   const handleAnalyzeFromModal = async () => {
     console.log("🔍 User chose to analyze uploaded contracts");
+
+    const contractIds = uploadSuccessModal.uploadedContracts.map(c => c._id);
     setUploadSuccessModal({ show: false, uploadedContracts: [] });
 
-    // Trigger normale Batch-Analyse für die pending files
-    await startBatchAnalysis();
+    if (contractIds.length === 0) {
+      console.warn("⚠️ No contracts to analyze");
+      return;
+    }
 
-    // ✅ Refresh nach Analyse
-    await fetchContracts();
-    setActiveSection('contracts');
+    // Update UI: Setze Upload-Files auf "analyzing"
+    setUploadFiles(prev => prev.map(item =>
+      item.status === 'completed'
+        ? { ...item, status: 'analyzing', progress: 0 }
+        : item
+    ));
+
+    setIsAnalyzing(true);
+
+    try {
+      // Analysiere jeden hochgeladenen Vertrag
+      for (let i = 0; i < contractIds.length; i++) {
+        const contractId = contractIds[i];
+        console.log(`📊 Analyzing contract ${i + 1}/${contractIds.length}: ${contractId}`);
+
+        // Update progress
+        const progressPercent = Math.round(((i + 1) / contractIds.length) * 100);
+        setUploadFiles(prev => prev.map((item, idx) =>
+          item.status === 'analyzing' && idx === i
+            ? { ...item, progress: progressPercent }
+            : item
+        ));
+
+        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/contracts/${contractId}/analyze`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+          console.error(`❌ Analysis failed for ${contractId}:`, data.message);
+        } else {
+          console.log(`✅ Analysis completed for ${contractId}`);
+        }
+      }
+
+      // Alle erfolgreich - Status auf "completed" mit analyzed: true
+      setUploadFiles(prev => prev.map(item =>
+        item.status === 'analyzing'
+          ? { ...item, status: 'completed', progress: 100, analyzed: true }
+          : item
+      ));
+
+      alert(`✅ ${contractIds.length} Vertrag${contractIds.length > 1 ? 'e' : ''} erfolgreich analysiert!`);
+
+    } catch (error) {
+      console.error("❌ Error during analysis:", error);
+      alert("❌ Fehler bei der Analyse. Bitte versuche es erneut.");
+    } finally {
+      setIsAnalyzing(false);
+
+      // ✅ Refresh nach Analyse
+      await fetchContracts();
+      setActiveSection('contracts');
+
+      // Clear completed files nach kurzer Verzögerung
+      setTimeout(() => {
+        clearAllUploadFiles();
+      }, 2000);
+    }
   };
 
   // ✅ NEU: Skip-Aktion aus Success Modal
@@ -1046,9 +1112,9 @@ export default function Contracts() {
 
         // ✅ Erfolgreich
         if (result?.success) {
-          setUploadFiles(prev => prev.map(item => 
-            item.id === fileItem.id 
-              ? { ...item, status: 'completed', progress: 100, result }
+          setUploadFiles(prev => prev.map(item =>
+            item.id === fileItem.id
+              ? { ...item, status: 'completed', progress: 100, analyzed: true, result }
               : item
           ));
           console.log(`✅ Analyse erfolgreich: ${fileItem.file.name}`);
@@ -1334,11 +1400,13 @@ export default function Contracts() {
   const getUploadStatusText = (item: UploadFileItem) => {
     switch (item.status) {
       case 'pending':
-        return 'Wartet auf Analyse...';
+        return 'Bereit zum Hochladen';
+      case 'uploading':
+        return `Wird hochgeladen... ${item.progress}%`;
       case 'analyzing':
         return `Wird analysiert... ${item.progress}%`;
       case 'completed':
-        return 'Analyse abgeschlossen';
+        return item.analyzed ? 'Analyse abgeschlossen' : 'Hochgeladen';
       case 'duplicate':
         return (
           <div className={styles.duplicateStatus}>

@@ -11,8 +11,9 @@ import ContractAnalysis from "./ContractAnalysis";
 interface UploadFileItem {
   id: string;
   file: File;
-  status: 'pending' | 'analyzing' | 'completed' | 'error' | 'duplicate';
+  status: 'pending' | 'uploading' | 'analyzing' | 'completed' | 'error' | 'duplicate';
   progress: number;
+  analyzed?: boolean;
   result?: {
     success: boolean;
     contractScore?: number;
