@@ -689,9 +689,9 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
           </div>
           
           <div className={styles.actions}>
-            {/* ✅ CRITICAL FIX: Button-Logik für initialResult */}
+            {/* ✅ CRITICAL FIX: Button-Logik für initialResult - prüfe result ODER initialResult */}
             {!result && !analyzing && !initialResult && (
-              <motion.button 
+              <motion.button
                 className={styles.analyzeButton}
                 onClick={() => handleAnalyze(false)}
                 whileHover={{ scale: 1.02 }}
@@ -705,9 +705,9 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
               </motion.button>
             )}
 
-            {/* ✅ CRITICAL FIX: Re-Analyse Button wenn initialResult vorhanden */}
-            {initialResult && !analyzing && (
-              <motion.button 
+            {/* ✅ CRITICAL FIX: Re-Analyse Button wenn Analyse vorhanden (result ODER initialResult) */}
+            {(result || initialResult) && !analyzing && (
+              <motion.button
                 className={styles.reanalyzeButton}
                 onClick={() => handleAnalyze(true)}
                 whileHover={{ scale: 1.02 }}
