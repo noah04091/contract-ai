@@ -1062,9 +1062,7 @@ Antworte in folgendem JSON-Format:
     // ===== UPDATE CONTRACT IN DATABASE =====
     console.log(`💾 [${requestId}] Saving analysis results...`);
 
-    const updateData = {
-      analyzed: true,
-      updatedAt: new Date(),
+    const analysisObject = {
       contractScore: analysisResult.contractScore || 0,
       summary: analysisResult.summary || '',
       legalAssessment: analysisResult.legalAssessment || '',
@@ -1073,7 +1071,26 @@ Antworte in folgendem JSON-Format:
       laufzeit: analysisResult.laufzeit || 'Unbekannt',
       status: analysisResult.status || 'Unbekannt',
       risiken: analysisResult.risiken || [],
-      optimierungen: analysisResult.optimierungen || []
+      optimierungen: analysisResult.optimierungen || [],
+      lastAnalyzed: new Date(),
+      analysisDate: new Date()
+    };
+
+    const updateData = {
+      analyzed: true,
+      updatedAt: new Date(),
+      // ✅ Felder direkt im Contract (für Kompatibilität)
+      contractScore: analysisResult.contractScore || 0,
+      summary: analysisResult.summary || '',
+      legalAssessment: analysisResult.legalAssessment || '',
+      suggestions: analysisResult.suggestions || '',
+      kuendigung: analysisResult.kuendigung || 'Unbekannt',
+      laufzeit: analysisResult.laufzeit || 'Unbekannt',
+      status: analysisResult.status || 'Unbekannt',
+      risiken: analysisResult.risiken || [],
+      optimierungen: analysisResult.optimierungen || [],
+      // ✅ CRITICAL: Auch im analysis-Objekt speichern (für ContractDetailsView)
+      analysis: analysisObject
     };
 
     await contractsCollection.updateOne(
@@ -1081,7 +1098,7 @@ Antworte in folgendem JSON-Format:
       { $set: updateData }
     );
 
-    console.log(`✅ [${requestId}] Contract updated with analysis`);
+    console.log(`✅ [${requestId}] Contract updated with analysis (both direct fields and analysis object)`);
 
     // Trigger calendar event generation
     try {
