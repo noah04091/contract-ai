@@ -1851,9 +1851,15 @@ export default function Contracts() {
                     >
                       {/* ✅ Input-Element nur rendern wenn keine Dateien ausgewählt */}
                       {uploadFiles.length === 0 && (
-                        <input 
-                          type="file" 
+                        <input
+                          type="file"
                           onChange={handleMultipleFileChange}
+                          onClick={(e) => {
+                            // ✅ CRITICAL FIX: Reset value VOR Dialog-Öffnung
+                            // Verhindert Browser-Cache-Probleme beim erneuten Klick
+                            const target = e.target as HTMLInputElement;
+                            target.value = '';
+                          }}
                           className={styles.fileInput}
                           accept=".pdf,.doc,.docx"
                           multiple={canMultiUpload}
