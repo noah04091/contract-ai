@@ -712,23 +712,30 @@ export default function Contracts() {
   // ✅ KORRIGIERT: Mehrfach-Upload Handler mit Plan-Validierung + ANALYSE-FIX
   const handleMultipleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (!files || files.length === 0) return;
+    if (!files || files.length === 0) {
+      // ✅ Reset Input auch bei Abbruch
+      e.target.value = '';
+      return;
+    }
 
     // ✅ KORRIGIERT: Free-User Check
     if (userInfo.subscriptionPlan === 'free') {
       alert("❌ Vertragsanalyse ist nur für Business- und Premium-Nutzer verfügbar.\n\n🚀 Jetzt upgraden für Zugriff auf KI-Vertragsanalyse!");
+      e.target.value = ''; // ✅ Reset Input
       return;
     }
 
     // ✅ KORRIGIERT: Business vs Premium Check
     if (userInfo.subscriptionPlan === 'business' && files.length > 1) {
       alert("📊 Mehrere Verträge gleichzeitig analysieren ist nur für Premium-Nutzer verfügbar.\n\n👑 Upgrade auf Premium für Batch-Analyse!");
+      e.target.value = ''; // ✅ Reset Input
       return;
     }
 
     // ✅ KORRIGIERT: Analyse-Limit Check
     if (userInfo.analysisCount >= userInfo.analysisLimit && userInfo.analysisLimit !== Infinity) {
       alert(`📊 Analyse-Limit erreicht (${userInfo.analysisCount}/${userInfo.analysisLimit}).\n\n🚀 Upgrade dein Paket für mehr Analysen!`);
+      e.target.value = ''; // ✅ Reset Input
       return;
     }
 
@@ -741,16 +748,19 @@ export default function Contracts() {
     }));
 
     setUploadFiles(newUploadFiles);
-    
+
     // ✅ CRITICAL FIX: selectedFile für Single-Upload setzen
     if (files.length === 1) {
       setSelectedFile(files[0]); // ⭐ DAS FEHLTE!
       console.log("✅ selectedFile gesetzt für Single-Upload:", files[0].name);
     }
-    
+
     setActiveSection('upload');
 
     console.log(`✅ ${files.length} Dateien für Upload vorbereitet (${userInfo.subscriptionPlan})`);
+
+    // ✅ WICHTIG: Input resetten damit onChange beim nächsten Mal wieder feuert
+    e.target.value = '';
   };
 
   // ✅ KORRIGIERT: Normale Funktionen OHNE Event-Parameter
