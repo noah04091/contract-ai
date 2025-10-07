@@ -220,8 +220,10 @@ router.post("/", verifyToken, uploadMiddleware.single("file"), async (req, res) 
 
     console.log(`💾 [${requestId}] Storage info:`, storageInfo);
 
-    // ✅ DUPLIKATS-PRÜFUNG: Berechne File-Hash und prüfe Duplikate
+    // ✅ Get database collection
     const contractsCollection = req.contractsCollection || req.app.locals.db.collection("contracts");
+
+    // ✅ DUPLIKATS-PRÜFUNG: Berechne File-Hash und prüfe Duplikate
     let fileHash = null;
     let existingContract = null;
 
@@ -288,7 +290,6 @@ router.post("/", verifyToken, uploadMiddleware.single("file"), async (req, res) 
     };
 
     // Save to database
-    const contractsCollection = req.contractsCollection || req.app.locals.db.collection("contracts");
     const result = await contractsCollection.insertOne(contractData);
 
     console.log(`✅ [${requestId}] Contract saved without analysis:`, result.insertedId);
