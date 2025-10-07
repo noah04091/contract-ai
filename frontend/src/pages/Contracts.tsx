@@ -604,22 +604,24 @@ export default function Contracts() {
   };
 
   // ✅ Verbesserte fetchContracts mit apiCall
-  const fetchContracts = async () => {
+  const fetchContracts = async (): Promise<Contract[] | null> => {
     try {
       setLoading(true);
       setRefreshing(true);
-      
+
       const data = await apiCall("/contracts") as Contract[];
       setContracts(data);
       setFilteredContracts(data);
       setError(null);
-      
+
       console.log("✅ Verträge erfolgreich geladen:", data.length);
+      return data;
     } catch (err) {
       console.error("❌ Fehler beim Laden der Verträge:", err);
       setError("Die Verträge konnten nicht geladen werden. Bitte versuche es später erneut.");
       setContracts([]);
       setFilteredContracts([]);
+      return null;
     } finally {
       setLoading(false);
       setTimeout(() => setRefreshing(false), 600);
@@ -928,22 +930,40 @@ export default function Contracts() {
           : item
       ));
 
-      alert(`✅ ${contractIds.length} Vertrag${contractIds.length > 1 ? 'e' : ''} erfolgreich analysiert!`);
+      // ✅ Refresh contracts first
+      const updatedContracts = await fetchContracts();
+
+      // ✅ Single contract: Show analysis directly
+      if (contractIds.length === 1 && updatedContracts) {
+        const analyzedContract = updatedContracts.find((c: Contract) => c._id === contractIds[0]);
+        if (analyzedContract) {
+          console.log("📊 Opening analyzed contract:", analyzedContract.name);
+          setSelectedContract(analyzedContract);
+          setShowDetails(true);
+          setActiveSection('contracts');
+
+          alert(`✅ Analyse erfolgreich abgeschlossen!\n\n${analyzedContract.name} wurde analysiert.`);
+        } else {
+          alert(`✅ ${contractIds.length} Vertrag erfolgreich analysiert!`);
+          setActiveSection('contracts');
+        }
+      } else {
+        // Multiple contracts: Show success and go to list
+        alert(`✅ ${contractIds.length} Verträge erfolgreich analysiert!`);
+        setActiveSection('contracts');
+      }
+
+      // Clear completed files
+      clearAllUploadFiles();
 
     } catch (error) {
       console.error("❌ Error during analysis:", error);
       alert("❌ Fehler bei der Analyse. Bitte versuche es erneut.");
+
+      // On error: Stay on contracts view
+      setActiveSection('contracts');
     } finally {
       setIsAnalyzing(false);
-
-      // ✅ Refresh nach Analyse
-      await fetchContracts();
-      setActiveSection('contracts');
-
-      // Clear completed files nach kurzer Verzögerung
-      setTimeout(() => {
-        clearAllUploadFiles();
-      }, 2000);
     }
   };
 
