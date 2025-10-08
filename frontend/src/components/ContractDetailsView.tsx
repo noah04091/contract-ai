@@ -6,7 +6,7 @@ import {
   BarChart3, Copy, ExternalLink
 } from "lucide-react";
 import styles from "../styles/ContractDetailsView.module.css";
-import CostTracker from "./CostTracker"; // ✅ NEU: Cost Tracker statt Reminder
+import SmartContractInfo from "./SmartContractInfo"; // ✅ Smart Component: Cost/Payment Tracker
 import ContractShareModal from "./ContractShareModal"; // ✅ NEU: Import Share Modal
 import ContractEditModal from "./ContractEditModal"; // ✅ NEU: Import Edit Modal
 import AnalysisModal from "./AnalysisModal"; // ✅ NEU: Import Analysis Modal
@@ -760,8 +760,8 @@ export default function ContractDetailsView({
                   </div>
                 </div>
 
-                {/* ✨ NEU: Cost Tracker statt Einstellungen */}
-                <CostTracker contract={contract} />
+                {/* ✨ Smart Info: Cost Tracker (laufend) ODER Payment Tracker (einmalig) */}
+                <SmartContractInfo contract={contract} />
 
                 {contract.isGenerated && (
                   <div className={styles.section}>

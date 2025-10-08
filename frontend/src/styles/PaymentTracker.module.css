@@ -1,0 +1,364 @@
+/* ✨ PaymentTracker.module.css - Premium Payment Status Tracker Styling */
+
+.paymentTracker {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(5, 150, 105, 0.08) 100%);
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.paymentTracker:hover {
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+  border-color: #d1d5db;
+}
+
+/* Title */
+.title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin: 0 0 1rem 0;
+}
+
+.icon {
+  font-size: 1.2rem;
+}
+
+/* Auto-Detection Badge */
+.autoDetectedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.8rem;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  color: #92400e;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 20px;
+  margin-bottom: 1rem;
+}
+
+/* Amount Section */
+.amountSection {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #f3f4f6;
+  margin-bottom: 1rem;
+}
+
+.amountLabel {
+  font-size: 0.85rem;
+  color: #6e6e73;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.amountValue {
+  font-size: 1.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Status Toggle */
+.statusToggle {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.toggleBtn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1rem;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #6e6e73;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toggleBtn:hover:not(:disabled) {
+  border-color: #d1d5db;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.toggleBtn.active {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-color: #10b981;
+  color: white;
+}
+
+.toggleBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.toggleIcon {
+  font-size: 1.1rem;
+}
+
+/* Unpaid Section */
+.unpaidSection {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.warningBox {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-left: 4px solid #f59e0b;
+  border-radius: 8px;
+}
+
+.warningIcon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.warningBox strong {
+  display: block;
+  color: #92400e;
+  font-size: 1rem;
+  margin-bottom: 0.25rem;
+}
+
+.dueInfo {
+  margin: 0.5rem 0 0 0;
+  font-size: 0.85rem;
+}
+
+.due {
+  color: #92400e;
+  font-weight: 500;
+}
+
+.overdue {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+.reminderHint {
+  padding: 0.85rem;
+  background: #f9fafb;
+  border: 1px dashed #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: #6e6e73;
+  font-style: italic;
+  text-align: center;
+}
+
+/* Paid Section */
+.paidSection {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.successBox {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  border-left: 4px solid #10b981;
+  border-radius: 8px;
+}
+
+.successIcon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.successBox strong {
+  display: block;
+  color: #065f46;
+  font-size: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.datePickerWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 0.75rem;
+}
+
+.dateLabel {
+  font-size: 0.8rem;
+  color: #065f46;
+  font-weight: 600;
+}
+
+.datePicker {
+  padding: 0.6rem 0.8rem;
+  border: 1px solid #10b981;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  color: #065f46;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.datePicker:hover:not(:disabled) {
+  border-color: #059669;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.2);
+}
+
+.datePicker:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.paidInfo {
+  margin: 0.5rem 0 0 0;
+  font-size: 0.85rem;
+  color: #065f46;
+  font-weight: 500;
+}
+
+/* Document Info */
+.documentInfo {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.infoItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.infoLabel {
+  font-size: 0.7rem;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.infoValue {
+  font-size: 0.9rem;
+  color: #1d1d1f;
+  font-weight: 500;
+}
+
+/* Saving Indicator */
+.savingIndicator {
+  margin-top: 1rem;
+  padding: 0.6rem;
+  background: #dbeafe;
+  border: 1px solid #3b82f6;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 0.85rem;
+  color: #1e40af;
+  font-weight: 600;
+}
+
+/* ========================================
+   MOBILE RESPONSIVENESS
+   ======================================== */
+
+@media (max-width: 768px) {
+  .paymentTracker {
+    padding: 1.25rem;
+  }
+
+  .title {
+    font-size: 0.95rem;
+  }
+
+  .amountSection {
+    padding: 0.85rem;
+  }
+
+  .amountValue {
+    font-size: 1.3rem;
+  }
+
+  .statusToggle {
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  .toggleBtn {
+    width: 100%;
+    padding: 0.75rem;
+  }
+
+  .warningBox,
+  .successBox {
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 0.85rem;
+  }
+
+  .warningIcon,
+  .successIcon {
+    font-size: 1.3rem;
+  }
+
+  .documentInfo {
+    grid-template-columns: 1fr;
+    gap: 0.6rem;
+  }
+
+  .datePickerWrapper {
+    margin-top: 0.5rem;
+  }
+
+  .datePicker {
+    padding: 0.7rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .paymentTracker {
+    padding: 1rem;
+  }
+
+  .amountSection {
+    padding: 0.75rem;
+  }
+
+  .amountValue {
+    font-size: 1.2rem;
+  }
+
+  .toggleBtn {
+    font-size: 0.85rem;
+    padding: 0.65rem;
+  }
+
+  .autoDetectedBadge {
+    font-size: 0.7rem;
+    padding: 0.35rem 0.7rem;
+  }
+}

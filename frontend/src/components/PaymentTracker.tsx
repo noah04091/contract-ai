@@ -1,0 +1,226 @@
+// ✨ PaymentTracker.tsx - Smart Payment Status Tracker for One-Time Contracts
+import { useState, useMemo } from 'react';
+import styles from '../styles/PaymentTracker.module.css';
+
+interface Contract {
+  _id: string;
+  name: string;
+  amount?: number;
+  createdAt: string;
+  uploadedAt?: string;
+
+  // ✨ Payment Tracking Fields
+  contractType?: 'recurring' | 'one-time';
+  paymentStatus?: 'paid' | 'unpaid';
+  paymentDate?: string;
+  paymentDueDate?: string;
+  paymentAmount?: number;
+}
+
+interface PaymentTrackerProps {
+  contract: Contract;
+}
+
+export default function PaymentTracker({ contract }: PaymentTrackerProps) {
+  // State
+  const [isPaid, setIsPaid] = useState(contract.paymentStatus === 'paid');
+  const [paymentDate, setPaymentDate] = useState(contract.paymentDate || '');
+  const [isSaving, setIsSaving] = useState(false);
+
+  // 💰 Berechne Zahlungsinformationen
+  const paymentInfo = useMemo(() => {
+    const amount = contract.paymentAmount || contract.amount || 0;
+    const uploadDate = new Date(contract.createdAt || contract.uploadedAt || Date.now());
+    const dueDate = contract.paymentDueDate ? new Date(contract.paymentDueDate) : null;
+    const paidDate = paymentDate ? new Date(paymentDate) : null;
+
+    // Berechne Tage seit Upload
+    const now = new Date();
+    const daysSinceUpload = Math.floor((now.getTime() - uploadDate.getTime()) / (1000 * 60 * 60 * 24));
+
+    // Berechne Tage bis Fälligkeit
+    let daysUntilDue = null;
+    let isOverdue = false;
+    if (dueDate && !isPaid) {
+      daysUntilDue = Math.floor((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      isOverdue = daysUntilDue < 0;
+    }
+
+    return {
+      amount: amount.toFixed(2),
+      uploadDate: uploadDate.toLocaleDateString('de-DE'),
+      dueDate: dueDate?.toLocaleDateString('de-DE'),
+      paidDate: paidDate?.toLocaleDateString('de-DE'),
+      daysSinceUpload,
+      daysUntilDue,
+      isOverdue,
+      hasAutoDetection: contract.paymentStatus !== undefined
+    };
+  }, [contract, isPaid, paymentDate]);
+
+  // Toggle Payment Status
+  const handleToggle = async (newStatus: boolean) => {
+    setIsPaid(newStatus);
+    if (newStatus && !paymentDate) {
+      // Auto-fill mit heute
+      const today = new Date().toISOString().split('T')[0];
+      setPaymentDate(today);
+    }
+    await savePaymentStatus(newStatus);
+  };
+
+  // Save Payment Date
+  const handleDateChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newDate = e.target.value;
+    setPaymentDate(newDate);
+    await savePaymentStatus(isPaid, newDate);
+  };
+
+  // API Call zum Speichern
+  const savePaymentStatus = async (paid: boolean, date?: string) => {
+    setIsSaving(true);
+    try {
+      // TODO: API Call
+      console.log('💾 Saving payment status:', {
+        contractId: contract._id,
+        paymentStatus: paid ? 'paid' : 'unpaid',
+        paymentDate: date || paymentDate
+      });
+
+      // Simuliere API Call
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      console.log('✅ Payment status saved!');
+    } catch (error) {
+      console.error('❌ Error saving payment status:', error);
+      alert('Fehler beim Speichern. Bitte versuche es erneut.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div className={styles.paymentTracker}>
+      <h4 className={styles.title}>
+        <span className={styles.icon}>💳</span>
+        Zahlungs-Status
+      </h4>
+
+      {/* Auto-Detection Badge */}
+      {paymentInfo.hasAutoDetection && (
+        <div className={styles.autoDetectedBadge}>
+          🤖 Automatisch erkannt
+        </div>
+      )}
+
+      {/* Payment Amount */}
+      <div className={styles.amountSection}>
+        <span className={styles.amountLabel}>Betrag</span>
+        <strong className={styles.amountValue}>{paymentInfo.amount}€</strong>
+      </div>
+
+      {/* Status Toggle */}
+      <div className={styles.statusToggle}>
+        <button
+          className={`${styles.toggleBtn} ${!isPaid ? styles.active : ''}`}
+          onClick={() => handleToggle(false)}
+          disabled={isSaving}
+        >
+          <span className={styles.toggleIcon}>○</span>
+          Nicht bezahlt
+        </button>
+        <button
+          className={`${styles.toggleBtn} ${isPaid ? styles.active : ''}`}
+          onClick={() => handleToggle(true)}
+          disabled={isSaving}
+        >
+          <span className={styles.toggleIcon}>●</span>
+          Bezahlt
+        </button>
+      </div>
+
+      {/* Conditional Content based on Status */}
+      {!isPaid ? (
+        /* UNPAID STATE */
+        <div className={styles.unpaidSection}>
+          <div className={styles.warningBox}>
+            <span className={styles.warningIcon}>⚠️</span>
+            <div>
+              <strong>Offener Betrag: {paymentInfo.amount}€</strong>
+              {paymentInfo.dueDate && (
+                <p className={styles.dueInfo}>
+                  {paymentInfo.isOverdue ? (
+                    <span className={styles.overdue}>
+                      Überfällig seit {Math.abs(paymentInfo.daysUntilDue!)} Tagen!
+                    </span>
+                  ) : (
+                    <span className={styles.due}>
+                      Fällig am {paymentInfo.dueDate} ({paymentInfo.daysUntilDue} Tage)
+                    </span>
+                  )}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* TODO: Payment Reminder (Phase 2) */}
+          <div className={styles.reminderHint}>
+            💡 Tipp: Setze eine Zahlungserinnerung im Kalender
+          </div>
+        </div>
+      ) : (
+        /* PAID STATE */
+        <div className={styles.paidSection}>
+          <div className={styles.successBox}>
+            <span className={styles.successIcon}>✅</span>
+            <div>
+              <strong>Bezahlung abgeschlossen</strong>
+
+              {/* Payment Date Picker */}
+              <div className={styles.datePickerWrapper}>
+                <label htmlFor="paymentDate" className={styles.dateLabel}>
+                  Bezahlt am:
+                </label>
+                <input
+                  id="paymentDate"
+                  type="date"
+                  className={styles.datePicker}
+                  value={paymentDate}
+                  onChange={handleDateChange}
+                  disabled={isSaving}
+                />
+              </div>
+
+              {paymentDate && (
+                <p className={styles.paidInfo}>
+                  Status: Abgeschlossen am {paymentInfo.paidDate}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Document Info */}
+      <div className={styles.documentInfo}>
+        <div className={styles.infoItem}>
+          <span className={styles.infoLabel}>Hochgeladen</span>
+          <span className={styles.infoValue}>{paymentInfo.uploadDate}</span>
+        </div>
+        <div className={styles.infoItem}>
+          <span className={styles.infoLabel}>Typ</span>
+          <span className={styles.infoValue}>
+            {contract.contractType === 'one-time' ? 'Einmalvertrag' : 'Kaufvertrag'}
+          </span>
+        </div>
+      </div>
+
+      {/* Saving Indicator */}
+      {isSaving && (
+        <div className={styles.savingIndicator}>
+          💾 Speichern...
+        </div>
+      )}
+    </div>
+  );
+}
