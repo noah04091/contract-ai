@@ -461,6 +461,7 @@
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
   scrollbar-width: thin;
   scrollbar-color: #d1d5db #f9f9f9;
+  -webkit-overflow-scrolling: touch; /* ✅ iOS Momentum Scrolling */
 }
 
 .contentText::-webkit-scrollbar {
@@ -952,23 +953,24 @@
     height: 14px;
   }
   
-  /* ✅ OPTIMIERT: Weniger Padding für mehr Content-Platz */
+  /* ✅ PREMIUM: Native Page-Scroll mit Momentum */
   .content {
     padding: 0.75rem;
+    overflow-y: auto; /* Native Page-Scroll */
+    -webkit-overflow-scrolling: touch; /* iOS Momentum */
+    overscroll-behavior-y: contain; /* Bounce nur im Container */
+    scroll-behavior: smooth; /* Smooth Scrolling */
   }
 
-  /* ✅ Content-Tab: Maximale Höhe für bessere Lesbarkeit */
+  /* ✅ REVOLUTIONÄR: Native Page-Scroll statt Container-Scroll */
   .contentTab {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
+    display: block; /* Nicht flex - natürlicher Flow */
+    min-height: 100%;
   }
 
   .contentViewer {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
+    display: block; /* Natürlicher Document-Flow */
+    padding-bottom: 2rem; /* Platz am Ende */
   }
   
   /* ✅ OPTIMIERT: Kompaktere Sections */
@@ -1008,44 +1010,74 @@
     padding: 0 1rem 1rem;
   }
   
-  /* ✅ Content-Header: Kompakt auf Mobile */
+  /* ✅ PREMIUM: Content-Header kompakt & smooth */
   .contentHeader {
     margin-bottom: 1rem;
     padding-bottom: 0.75rem;
-    flex-wrap: wrap;
+    border-bottom: 1px solid #e8e8e8;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     gap: 0.75rem;
+    flex-wrap: wrap;
   }
 
   .contentHeader h3 {
-    font-size: 1rem;
+    font-size: 0.95rem;
+    font-weight: 600;
     flex: 1;
+    margin: 0;
   }
 
   .downloadBtn {
-    padding: 0.6rem 1rem;
-    font-size: 0.85rem;
+    padding: 0.55rem 0.9rem;
+    font-size: 0.8rem;
+    border-radius: 8px;
+    flex-shrink: 0;
   }
 
-  /* ✅ OPTIMIERT: Maximale Lesbarkeit und Höhe */
+  /* ✅ PREMIUM: Native-App-Style Content-Text */
   .contentText {
-    flex: 1;
-    max-height: none;
-    min-height: calc(100vh - 280px); /* Volle Höhe minus Header/Tabs/Margins */
-    font-size: 15px; /* Größer für bessere Lesbarkeit */
-    padding: 1rem;
-    line-height: 1.9; /* Mehr Luft zwischen Zeilen */
-    margin-bottom: 0;
-    letter-spacing: 0.01em; /* Leicht erhöhter Buchstabenabstand */
+    /* Kein flex mehr - natürlicher Block */
+    display: block;
+    max-height: none; /* Unbegrenzt scrollbar */
+    min-height: auto; /* Natürliche Höhe */
+    height: auto;
+    overflow-y: visible; /* Kein Container-Scroll! */
+
+    /* Typography - Professional */
+    font-size: 15.5px; /* Optimal für Mobile-Lesbarkeit */
+    line-height: 1.85; /* Perfekter Abstand */
+    letter-spacing: 0.015em; /* Subtil, aber spürbar */
+
+    /* Spacing */
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+
+    /* Styling */
+    background: #fafafa;
+    border: 1px solid #e8e8e8;
+    border-radius: 10px;
+
+    /* iOS-Style Scrolling */
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
   }
 
   .contentText p {
-    margin: 1em 0; /* Mehr Abstand zwischen Absätzen */
+    margin: 1.2em 0; /* Großzügiger Absatz-Abstand */
   }
 
   .contentText strong,
   .contentText b {
     font-weight: 600;
     color: #1a1a1a;
+  }
+
+  /* Optimale Lesbarkeit */
+  .contentText {
+    max-width: 100%; /* Volle Breite */
+    word-spacing: 0.05em; /* Subtiler Wort-Abstand */
   }
   
   .contentStats {
