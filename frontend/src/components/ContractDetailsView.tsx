@@ -89,6 +89,23 @@ export default function ContractDetailsView({
     setContract(initialContract);
   }, [initialContract]);
 
+  // ✅ Mobile: Body-Scroll blockieren wenn Modal offen ist
+  useEffect(() => {
+    if (show) {
+      // Nur auf Mobile (max-width: 768px)
+      const isMobile = window.innerWidth <= 768;
+      if (isMobile) {
+        document.body.style.overflow = 'hidden';
+      }
+    } else {
+      document.body.style.overflow = '';
+    }
+
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [show]);
+
   // ✅ BUG FIX 1: Edit-Modal automatisch öffnen wenn openEditModalDirectly=true
   useEffect(() => {
     if (show && openEditModalDirectly) {
