@@ -6,7 +6,7 @@ import {
   BarChart3, Copy, ExternalLink
 } from "lucide-react";
 import styles from "../styles/ContractDetailsView.module.css";
-import ReminderToggle from "./ReminderToggle";
+import CostTracker from "./CostTracker"; // ✅ NEU: Cost Tracker statt Reminder
 import ContractShareModal from "./ContractShareModal"; // ✅ NEU: Import Share Modal
 import ContractEditModal from "./ContractEditModal"; // ✅ NEU: Import Edit Modal
 import AnalysisModal from "./AnalysisModal"; // ✅ NEU: Import Analysis Modal
@@ -760,18 +760,8 @@ export default function ContractDetailsView({
                   </div>
                 </div>
 
-                <div className={styles.section}>
-                  <h3 className={styles.sectionTitle}>
-                    <AlertCircle size={18} />
-                    Einstellungen
-                  </h3>
-                  <div className={styles.settingsGrid}>
-                    <ReminderToggle
-                      contractId={contract._id}
-                      initialValue={contract.reminder || false}
-                    />
-                  </div>
-                </div>
+                {/* ✨ NEU: Cost Tracker statt Einstellungen */}
+                <CostTracker contract={contract} />
 
                 {contract.isGenerated && (
                   <div className={styles.section}>
