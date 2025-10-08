@@ -521,6 +521,11 @@ router.post("/", verifyToken, async (req, res) => {
       metadata: metadata || null,
       contractHTML: contractHTML || null,
       formData: formData || null,
+      // 💳 NEU: Payment Tracking Fields
+      paymentStatus: null,
+      paymentDate: null,
+      paymentDueDate: null,
+      paymentAmount: null,
       createdAt: new Date(),
       updatedAt: new Date(),
       legalPulse: {
@@ -828,6 +833,83 @@ router.post("/:id/regenerate-events", verifyToken, async (req, res) => {
     console.error('❌ Fehler beim Regenerieren der Events:', error);
     res.status(500).json({ 
       message: 'Fehler beim Regenerieren der Events' 
+    });
+  }
+});
+
+// 💳 NEU: PATCH /contracts/:id/payment – Payment Status Update
+router.patch("/:id/payment", verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { paymentStatus, paymentDate, paymentDueDate, paymentAmount } = req.body;
+
+    console.log("💳 Payment Status Update:", {
+      contractId: id,
+      paymentStatus,
+      paymentDate,
+      paymentDueDate,
+      paymentAmount
+    });
+
+    // Validate contract ownership
+    const contract = await contractsCollection.findOne({
+      _id: new ObjectId(id),
+      userId: new ObjectId(req.user.userId)
+    });
+
+    if (!contract) {
+      return res.status(404).json({
+        success: false,
+        message: "Vertrag nicht gefunden"
+      });
+    }
+
+    // Build update object (only update provided fields)
+    const updateData = {
+      updatedAt: new Date()
+    };
+
+    if (paymentStatus !== undefined) {
+      updateData.paymentStatus = paymentStatus;
+    }
+    if (paymentDate !== undefined) {
+      updateData.paymentDate = paymentDate;
+    }
+    if (paymentDueDate !== undefined) {
+      updateData.paymentDueDate = paymentDueDate;
+    }
+    if (paymentAmount !== undefined) {
+      updateData.paymentAmount = paymentAmount;
+    }
+
+    // Update contract
+    const result = await contractsCollection.updateOne(
+      {
+        _id: new ObjectId(id),
+        userId: new ObjectId(req.user.userId)
+      },
+      { $set: updateData }
+    );
+
+    if (result.modifiedCount === 0) {
+      console.log("⚠️ Payment Status nicht geändert (keine Änderungen)");
+    } else {
+      console.log("✅ Payment Status erfolgreich aktualisiert");
+    }
+
+    res.json({
+      success: true,
+      message: "Zahlungsstatus erfolgreich aktualisiert",
+      paymentStatus: updateData.paymentStatus || contract.paymentStatus,
+      paymentDate: updateData.paymentDate || contract.paymentDate
+    });
+
+  } catch (error) {
+    console.error('❌ Fehler beim Aktualisieren des Zahlungsstatus:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Fehler beim Aktualisieren des Zahlungsstatus',
+      error: error.message
     });
   }
 });

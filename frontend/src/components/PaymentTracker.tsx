@@ -80,20 +80,36 @@ export default function PaymentTracker({ contract }: PaymentTrackerProps) {
   const savePaymentStatus = async (paid: boolean, date?: string) => {
     setIsSaving(true);
     try {
-      // TODO: API Call
-      console.log('💾 Saving payment status:', {
-        contractId: contract._id,
-        paymentStatus: paid ? 'paid' : 'unpaid',
-        paymentDate: date || paymentDate
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Nicht angemeldet');
+      }
+
+      const response = await fetch(`/api/contracts/${contract._id}/payment`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          paymentStatus: paid ? 'paid' : 'unpaid',
+          paymentDate: date || paymentDate || null
+        })
       });
 
-      // Simuliere API Call
-      await new Promise(resolve => setTimeout(resolve, 500));
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Fehler beim Speichern');
+      }
 
-      console.log('✅ Payment status saved!');
+      const result = await response.json();
+      console.log('✅ Payment status saved:', result);
     } catch (error) {
       console.error('❌ Error saving payment status:', error);
       alert('Fehler beim Speichern. Bitte versuche es erneut.');
+      // Rollback state on error
+      setIsPaid(contract.paymentStatus === 'paid');
+      setPaymentDate(contract.paymentDate || '');
     } finally {
       setIsSaving(false);
     }
