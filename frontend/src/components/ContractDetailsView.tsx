@@ -66,22 +66,23 @@ interface ContractDetailsViewProps {
   onDelete?: (contractId: string, contractName: string) => void;
 }
 
-export default function ContractDetailsView({ 
-  contract: initialContract, 
-  onClose, 
-  show, 
+export default function ContractDetailsView({
+  contract: initialContract,
+  onClose,
+  show,
   openEditModalDirectly = false, // ✅ BUG FIX 1: Neue Prop mit Default-Wert
-  onEdit, 
-  onDelete 
+  onEdit,
+  onDelete
 }: ContractDetailsViewProps) {
   const [activeTab, setActiveTab] = useState<'overview' | 'content' | 'analysis'>('overview');
-  
+
   // ✅ NEU: State für die drei Modals
   const [showShareModal, setShowShareModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showAnalysisModal, setShowAnalysisModal] = useState(false); // ✅ NEU: Analysis Modal State
   const [contract, setContract] = useState<Contract>(initialContract); // ✅ NEU: Lokaler Contract State für Updates
   const [isAnalyzing, setIsAnalyzing] = useState(false); // ✅ NEU: Loading State für Analyse
+  const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false); // ✅ NEU: Für Collapsing Header auf Mobile
 
   // ✅ NEU: Update contract wenn sich initialContract ändert
   useEffect(() => {
@@ -115,6 +116,30 @@ export default function ContractDetailsView({
       document.removeEventListener('keydown', handleEscapeKey);
     };
   }, [show, onClose, showShareModal, showEditModal, showAnalysisModal]);
+
+  // ✅ NEU: Scroll-Handler für Collapsing Header (nur auf Mobile im Content-Tab)
+  useEffect(() => {
+    const handleScroll = (e: Event) => {
+      const target = e.target as HTMLElement;
+      if (target && activeTab === 'content') {
+        // Collapse header wenn mehr als 50px gescrollt wurde
+        setIsHeaderCollapsed(target.scrollTop > 50);
+      }
+    };
+
+    const contentElement = document.querySelector(`.${styles.content}`);
+    if (contentElement && activeTab === 'content') {
+      contentElement.addEventListener('scroll', handleScroll);
+      return () => contentElement.removeEventListener('scroll', handleScroll);
+    }
+  }, [activeTab]);
+
+  // ✅ Reset collapsed state when tab changes
+  useEffect(() => {
+    if (activeTab !== 'content') {
+      setIsHeaderCollapsed(false);
+    }
+  }, [activeTab]);
 
   // ✅ PERFORMANCE: Memoized formatDate function
   const formatDate = useMemo(() => {
@@ -486,7 +511,7 @@ export default function ContractDetailsView({
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className={styles.header}>
+          <div className={`${styles.header} ${isHeaderCollapsed ? styles.headerCollapsed : ''}`}>
             <div className={styles.headerTop}>
               <div className={styles.contractInfo}>
                 <div className={styles.contractIcon}>

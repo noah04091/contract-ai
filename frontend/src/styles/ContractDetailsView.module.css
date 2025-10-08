@@ -33,6 +33,25 @@
   position: sticky;
   top: 0;
   z-index: 10;
+  transition: all 0.3s ease;
+}
+
+/* ✅ Collapsed Header State (Mobile) */
+.headerCollapsed .headerTop {
+  padding: 0.75rem 1.5rem;
+}
+
+.headerCollapsed .contractName {
+  font-size: 1.1rem;
+}
+
+.headerCollapsed .contractIcon {
+  width: 36px;
+  height: 36px;
+}
+
+.headerCollapsed .statusBar {
+  display: none;
 }
 
 .headerTop {
@@ -809,9 +828,18 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
+  /* ✅ Mobile: Fullscreen statt Drawer */
+  .overlay {
+    justify-content: center;
+    align-items: center;
+  }
+
   .drawer {
     width: 100vw;
     max-width: 100vw;
+    height: 100vh;
+    max-height: 100vh;
+    border-radius: 0;
   }
   
   .headerTop {
@@ -860,7 +888,21 @@
   }
   
   .content {
-    padding: 1.5rem;
+    padding: 1rem;
+  }
+
+  /* ✅ Content-Tab: Maximale Höhe für bessere Lesbarkeit */
+  .contentTab {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .contentViewer {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
   }
   
   .section {
@@ -882,9 +924,33 @@
     padding: 0 1rem 1rem;
   }
   
+  /* ✅ Content-Header: Kompakt auf Mobile */
+  .contentHeader {
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .contentHeader h3 {
+    font-size: 1rem;
+    flex: 1;
+  }
+
+  .downloadBtn {
+    padding: 0.6rem 1rem;
+    font-size: 0.85rem;
+  }
+
+  /* ✅ WICHTIG: contentText nimmt maximalen Platz ein */
   .contentText {
-    max-height: 55vh;
-    font-size: 13px;
+    flex: 1;
+    max-height: none;
+    min-height: 0;
+    font-size: 14px;
+    padding: 1.25rem;
+    line-height: 1.8;
+    margin-bottom: 0;
   }
   
   .contentStats {
