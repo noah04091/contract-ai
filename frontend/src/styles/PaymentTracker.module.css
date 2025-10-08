@@ -71,6 +71,34 @@
   background-clip: text;
 }
 
+.amountInput {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #10b981;
+  border: 2px solid #d1fae5;
+  border-radius: 6px;
+  padding: 0.4rem 0.6rem;
+  text-align: right;
+  background: white;
+  transition: all 0.2s ease;
+  width: 140px;
+}
+
+.amountInput:hover:not(:disabled) {
+  border-color: #10b981;
+}
+
+.amountInput:focus {
+  outline: none;
+  border-color: #059669;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.amountInput:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* Status Toggle */
 .statusToggle {
   display: flex;
@@ -303,6 +331,12 @@
     font-size: 1.3rem;
   }
 
+  .amountInput {
+    font-size: 1.3rem;
+    width: 120px;
+    padding: 0.5rem;
+  }
+
   .statusToggle {
     flex-direction: column;
     gap: 0.6rem;
@@ -350,6 +384,12 @@
 
   .amountValue {
     font-size: 1.2rem;
+  }
+
+  .amountInput {
+    font-size: 1.2rem;
+    width: 110px;
+    padding: 0.45rem;
   }
 
   .toggleBtn {

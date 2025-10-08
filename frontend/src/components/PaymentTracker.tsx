@@ -25,11 +25,16 @@ export default function PaymentTracker({ contract }: PaymentTrackerProps) {
   // State
   const [isPaid, setIsPaid] = useState(contract.paymentStatus === 'paid');
   const [paymentDate, setPaymentDate] = useState(contract.paymentDate || '');
+  const [paymentAmount, setPaymentAmount] = useState(
+    contract.paymentAmount !== undefined && contract.paymentAmount !== null
+      ? contract.paymentAmount
+      : (contract.amount || 0)
+  );
   const [isSaving, setIsSaving] = useState(false);
 
   // 💰 Berechne Zahlungsinformationen
   const paymentInfo = useMemo(() => {
-    const amount = contract.paymentAmount || contract.amount || 0;
+    const amount = paymentAmount;
     const uploadDate = new Date(contract.createdAt || contract.uploadedAt || Date.now());
     const dueDate = contract.paymentDueDate ? new Date(contract.paymentDueDate) : null;
     const paidDate = paymentDate ? new Date(paymentDate) : null;
@@ -56,7 +61,7 @@ export default function PaymentTracker({ contract }: PaymentTrackerProps) {
       isOverdue,
       hasAutoDetection: contract.paymentStatus !== undefined
     };
-  }, [contract, isPaid, paymentDate]);
+  }, [contract, isPaid, paymentDate, paymentAmount]);
 
   // Toggle Payment Status
   const handleToggle = async (newStatus: boolean) => {
@@ -76,11 +81,18 @@ export default function PaymentTracker({ contract }: PaymentTrackerProps) {
     await savePaymentStatus(isPaid, newDate);
   };
 
+  // Save Payment Amount
+  const handleAmountChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newAmount = parseFloat(e.target.value) || 0;
+    setPaymentAmount(newAmount);
+    await savePaymentAmount(newAmount);
+  };
+
   // API Call zum Speichern
   const savePaymentStatus = async (paid: boolean, date?: string) => {
     setIsSaving(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('authToken') || localStorage.getItem('token');
       if (!token) {
         throw new Error('Nicht angemeldet');
       }
@@ -115,6 +127,47 @@ export default function PaymentTracker({ contract }: PaymentTrackerProps) {
     }
   };
 
+  // API Call zum Speichern des Betrags
+  const savePaymentAmount = async (amount: number) => {
+    setIsSaving(true);
+    try {
+      const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Nicht angemeldet');
+      }
+
+      const response = await fetch(`/api/contracts/${contract._id}/payment`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          paymentAmount: amount
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Fehler beim Speichern');
+      }
+
+      const result = await response.json();
+      console.log('✅ Payment amount saved:', result);
+    } catch (error) {
+      console.error('❌ Error saving payment amount:', error);
+      alert('Fehler beim Speichern des Betrags. Bitte versuche es erneut.');
+      // Rollback
+      setPaymentAmount(
+        contract.paymentAmount !== undefined && contract.paymentAmount !== null
+          ? contract.paymentAmount
+          : (contract.amount || 0)
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <div className={styles.paymentTracker}>
       <h4 className={styles.title}>
@@ -129,10 +182,18 @@ export default function PaymentTracker({ contract }: PaymentTrackerProps) {
         </div>
       )}
 
-      {/* Payment Amount */}
+      {/* Payment Amount - Editierbar */}
       <div className={styles.amountSection}>
         <span className={styles.amountLabel}>Betrag</span>
-        <strong className={styles.amountValue}>{paymentInfo.amount}€</strong>
+        <input
+          type="number"
+          className={styles.amountInput}
+          value={paymentAmount}
+          onChange={handleAmountChange}
+          disabled={isSaving}
+          step="0.01"
+          min="0"
+        />
       </div>
 
       {/* Status Toggle */}
