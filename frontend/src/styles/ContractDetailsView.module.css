@@ -828,18 +828,27 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  /* ✅ Mobile: Fullscreen statt Drawer */
+  /* ✅ Mobile: Komplette Seite statt Overlay - kein Hintergrund sichtbar */
   .overlay {
-    justify-content: center;
-    align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: white; /* Kein transparenter Hintergrund mehr */
+    backdrop-filter: none;
+    justify-content: stretch;
+    align-items: stretch;
+    z-index: 9999; /* Sehr hoch, damit nichts durchkommt */
   }
 
   .drawer {
-    width: 100vw;
-    max-width: 100vw;
-    height: 100vh;
-    max-height: 100vh;
+    width: 100%;
+    max-width: 100%;
+    height: 100%;
+    max-height: 100%;
     border-radius: 0;
+    box-shadow: none; /* Kein Shadow, da kein Overlay mehr */
   }
   
   /* ✅ OPTIMIERT: Kompakterer Header für mehr Content-Platz */

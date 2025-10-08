@@ -89,20 +89,47 @@ export default function ContractDetailsView({
     setContract(initialContract);
   }, [initialContract]);
 
-  // ✅ Mobile: Body-Scroll blockieren wenn Modal offen ist
+  // ✅ Mobile: Body-Scroll blockieren + Touch-Events isolieren
   useEffect(() => {
     if (show) {
       // Nur auf Mobile (max-width: 768px)
       const isMobile = window.innerWidth <= 768;
       if (isMobile) {
+        // Body komplett fixieren
         document.body.style.overflow = 'hidden';
+        document.body.style.position = 'fixed';
+        document.body.style.width = '100%';
+        document.body.style.height = '100%';
+
+        // Verhindert Touch-Scroll auf body
+        const preventScroll = (e: TouchEvent) => {
+          if (e.target === document.body) {
+            e.preventDefault();
+          }
+        };
+
+        document.body.addEventListener('touchmove', preventScroll, { passive: false });
+
+        return () => {
+          document.body.removeEventListener('touchmove', preventScroll);
+          document.body.style.overflow = '';
+          document.body.style.position = '';
+          document.body.style.width = '';
+          document.body.style.height = '';
+        };
       }
     } else {
       document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.height = '';
     }
 
     return () => {
       document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.height = '';
     };
   }, [show]);
 
@@ -510,20 +537,24 @@ export default function ContractDetailsView({
 
   if (!show) return null;
 
+  // ✅ Mobile: Kein onClick auf Overlay (nur Desktop)
+  const isMobile = window.innerWidth <= 768;
+  const handleOverlayClick = isMobile ? undefined : onClose;
+
   return (
     <AnimatePresence>
-      <motion.div 
+      <motion.div
         className={styles.overlay}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        onClick={onClose}
+        onClick={handleOverlayClick}
       >
-        <motion.div 
+        <motion.div
           className={styles.drawer}
-          initial={{ x: "100%" }}
-          animate={{ x: 0 }}
-          exit={{ x: "100%" }}
+          initial={isMobile ? { y: "100%" } : { x: "100%" }}
+          animate={isMobile ? { y: 0 } : { x: 0 }}
+          exit={isMobile ? { y: "100%" } : { x: "100%" }}
           transition={{ type: "spring", damping: 25, stiffness: 200 }}
           onClick={(e) => e.stopPropagation()}
         >
