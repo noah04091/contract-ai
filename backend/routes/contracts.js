@@ -1206,7 +1206,12 @@ Antworte in folgendem JSON-Format:
    - Konvertiere deutsche Schreibweise: "15.000,50" → 15000.50
 
 3. paymentStatus Erkennung (SEHR WICHTIG!):
-   - "paid" = wenn "bezahlt", "beglichen", "gezahlt", "überwiesen", "Lastschrift", "PayPal", "Kreditkarte" im Text
+   - "paid" = wenn folgende Begriffe im Text:
+     * "bezahlt", "beglichen", "gezahlt", "überwiesen", "erfolgt"
+     * ODER wenn eine Zahlungsmethode + Vergangenheit erwähnt wird:
+       "Lastschrift durchgeführt", "PayPal bezahlt", "Bar bezahlt",
+       "Kreditkarte belastet", "in bar beglichen", etc.
+     * ODER: "Zahlung erfolgt", "Online bezahlt", "Rechnung ausgeglichen"
    - "unpaid" = wenn "ausstehend", "offen", "fällig", "zu zahlen", "bitte überweisen" im Text
    - null = wenn unklar
 
@@ -1214,14 +1219,22 @@ Antworte in folgendem JSON-Format:
    - Suche nach "Zahlungsziel", "fällig am", "Zahlung bis", "Zahlungsfrist"
    - Format: YYYY-MM-DD (z.B. "2025-01-15")
 
-5. paymentMethod Erkennung (NEU!):
-   Suche nach Zahlungsmethoden im Text:
+5. paymentMethod Erkennung (NEU - UNIVERSELL!):
+   Suche nach JEDER Zahlungsmethode im Text und extrahiere sie:
+
+   Häufige Beispiele (aber nicht limitiert darauf!):
    - "PayPal" → "PayPal"
    - "Lastschrift", "SEPA", "Bankeinzug" → "Lastschrift"
-   - "Kreditkarte", "Visa", "Mastercard" → "Kreditkarte"
-   - "Überweisung", "IBAN" → "Überweisung"
-   - "Sofortüberweisung", "Klarna" → "Sofortüberweisung"
-   - null = wenn keine Zahlungsmethode gefunden
+   - "Kreditkarte", "Visa", "Mastercard", "Amex" → "Kreditkarte"
+   - "Überweisung", "Banküberweisung" → "Überweisung"
+   - "Sofortüberweisung", "Klarna", "Stripe" → extrahiere genau wie genannt
+   - "Barzahlung", "Bar bezahlt", "Cash", "in bar" → "Barzahlung"
+   - "Scheck", "Verrechnungsscheck" → "Scheck"
+   - "PayPal", "Apple Pay", "Google Pay" → extrahiere genau
+   - "Vorkasse", "Vorauskasse" → "Vorkasse"
+
+   WICHTIG: Sei flexibel! Wenn IRGENDEINE Zahlungsmethode erwähnt wird, extrahiere sie.
+   null = nur wenn KEINE Zahlungsmethode im gesamten Text gefunden wird
 
 6. paymentFrequency Erkennung (NEU!):
    Suche nach Zahlungsrhythmus im Text:
@@ -1235,13 +1248,21 @@ WICHTIG für Automatische Bezahlt-Erkennung:
   → paymentStatus: "paid" UND paymentMethod: "PayPal"/"Lastschrift"
 - Wenn Text "Online bezahlt" oder "Zahlung erfolgt" enthält
   → paymentStatus: "paid"
+- Sei flexibel und erkenne ALLE Varianten von "bezahlt + Methode"
 
-BEISPIELE:
+BEISPIELE (Betrag):
 - "Der Kaufpreis beträgt 15.000 EUR" → paymentAmount: 15000
 - "Gesamtbetrag: 1.234,56 Euro" → paymentAmount: 1234.56
 - "Summe: EUR 500,-" → paymentAmount: 500
+
+BEISPIELE (Bezahlt-Status):
 - "Bezahlt mit PayPal am 15.01.2025" → paymentStatus: "paid", paymentMethod: "PayPal"
-- "Lastschrift wurde durchgeführt" → paymentStatus: "paid", paymentMethod: "Lastschrift"`;
+- "Lastschrift wurde durchgeführt" → paymentStatus: "paid", paymentMethod: "Lastschrift"
+- "In bar beglichen" → paymentStatus: "paid", paymentMethod: "Barzahlung"
+- "Bar bezahlt" → paymentStatus: "paid", paymentMethod: "Barzahlung"
+- "Bezahlt mit Klarna" → paymentStatus: "paid", paymentMethod: "Klarna"
+- "Kreditkarte belastet" → paymentStatus: "paid", paymentMethod: "Kreditkarte"
+- "Vorkasse erhalten" → paymentStatus: "paid", paymentMethod: "Vorkasse"`;
 
     let analysisResult;
 
