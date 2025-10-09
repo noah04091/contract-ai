@@ -19,6 +19,7 @@ interface Contract {
 
 interface SmartContractInfoProps {
   contract: Contract;
+  onPaymentUpdate?: () => void; // Callback wenn Payment gespeichert wurde
 }
 
 /**
@@ -30,7 +31,7 @@ interface SmartContractInfoProps {
  * - Wenn kein contractType ABER amount vorhanden → CostTracker (Fallback für alte Daten)
  * - Sonst → PaymentTracker (Default für neue Uploads ohne Preis)
  */
-export default function SmartContractInfo({ contract }: SmartContractInfoProps) {
+export default function SmartContractInfo({ contract, onPaymentUpdate }: SmartContractInfoProps) {
   // 🧠 Intelligente Detection
   const isOneTimeContract = contract.contractType === 'one-time';
   const isRecurringContract = contract.contractType === 'recurring';
@@ -40,7 +41,7 @@ export default function SmartContractInfo({ contract }: SmartContractInfoProps) 
   if (isOneTimeContract) {
     // Einmalvertrag → Payment Tracker
     console.log('💳 Showing Payment Tracker (one-time contract)');
-    return <PaymentTracker contract={contract} />;
+    return <PaymentTracker contract={contract} onPaymentUpdate={onPaymentUpdate} />;
   }
 
   if (isRecurringContract || hasRecurringAmount) {
@@ -51,5 +52,5 @@ export default function SmartContractInfo({ contract }: SmartContractInfoProps) 
 
   // Default: Payment Tracker (für neue Uploads ohne Analyse)
   console.log('💳 Showing Payment Tracker (default - no type detected)');
-  return <PaymentTracker contract={contract} />;
+  return <PaymentTracker contract={contract} onPaymentUpdate={onPaymentUpdate} />;
 }

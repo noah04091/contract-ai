@@ -19,9 +19,10 @@ interface Contract {
 
 interface PaymentTrackerProps {
   contract: Contract;
+  onPaymentUpdate?: () => void; // Callback nach erfolgreichem Save
 }
 
-export default function PaymentTracker({ contract }: PaymentTrackerProps) {
+export default function PaymentTracker({ contract, onPaymentUpdate }: PaymentTrackerProps) {
   // State
   const [isPaid, setIsPaid] = useState(contract.paymentStatus === 'paid');
   const [paymentDate, setPaymentDate] = useState(contract.paymentDate || '');
@@ -31,6 +32,22 @@ export default function PaymentTracker({ contract }: PaymentTrackerProps) {
       : (contract.amount || 0)
   );
   const [isSaving, setIsSaving] = useState(false);
+
+  // Synchronisiere State mit Contract Props (wenn Contract neu geladen wird)
+  useEffect(() => {
+    setIsPaid(contract.paymentStatus === 'paid');
+  }, [contract.paymentStatus]);
+
+  useEffect(() => {
+    setPaymentDate(contract.paymentDate || '');
+  }, [contract.paymentDate]);
+
+  useEffect(() => {
+    const newAmount = contract.paymentAmount !== undefined && contract.paymentAmount !== null
+      ? contract.paymentAmount
+      : (contract.amount || 0);
+    setPaymentAmount(newAmount);
+  }, [contract.paymentAmount, contract.amount]);
 
   // 💰 Berechne Zahlungsinformationen
   const paymentInfo = useMemo(() => {
@@ -137,6 +154,11 @@ export default function PaymentTracker({ contract }: PaymentTrackerProps) {
 
       const result = await response.json();
       console.log('✅ Payment status saved:', result);
+
+      // Callback aufrufen um Parent zu informieren
+      if (onPaymentUpdate) {
+        onPaymentUpdate();
+      }
     } catch (error) {
       console.error('❌ Error saving payment status:', error);
       alert('Fehler beim Speichern. Bitte versuche es erneut.');
@@ -175,6 +197,11 @@ export default function PaymentTracker({ contract }: PaymentTrackerProps) {
 
       const result = await response.json();
       console.log('✅ Payment amount saved:', result);
+
+      // Callback aufrufen um Parent zu informieren
+      if (onPaymentUpdate) {
+        onPaymentUpdate();
+      }
     } catch (error) {
       console.error('❌ Error saving payment amount:', error);
       alert('Fehler beim Speichern des Betrags. Bitte versuche es erneut.');

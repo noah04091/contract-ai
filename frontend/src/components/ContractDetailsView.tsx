@@ -459,10 +459,39 @@ export default function ContractDetailsView({
   const handleContractUpdate = (updatedContract: Contract) => {
     console.log('✅ Contract updated:', updatedContract);
     setContract(updatedContract);
-    
+
     // Optional: Auch Parent Component über Update informieren
     if (onEdit) {
       onEdit(updatedContract._id);
+    }
+  };
+
+  // 💳 NEU: Payment Update Handler - lädt Contract neu aus DB
+  const handlePaymentUpdate = async () => {
+    try {
+      const token = localStorage.getItem('authToken') || localStorage.getItem('token');
+      if (!token) return;
+
+      console.log('🔄 Reloading contract after payment update...');
+
+      const response = await fetch(`/api/contracts/${contract._id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const updatedContract = await response.json();
+        console.log('✅ Contract reloaded:', updatedContract);
+        setContract(updatedContract);
+
+        // Parent auch informieren
+        if (onEdit) {
+          onEdit(updatedContract._id);
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error reloading contract:', error);
     }
   };
 
@@ -761,7 +790,10 @@ export default function ContractDetailsView({
                 </div>
 
                 {/* ✨ Smart Info: Cost Tracker (laufend) ODER Payment Tracker (einmalig) */}
-                <SmartContractInfo contract={contract} />
+                <SmartContractInfo
+                  contract={contract}
+                  onPaymentUpdate={handlePaymentUpdate}
+                />
 
                 {contract.isGenerated && (
                   <div className={styles.section}>
