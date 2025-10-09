@@ -1,5 +1,5 @@
 // ✨ PaymentTracker.tsx - Smart Payment Status Tracker for One-Time Contracts
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import styles from '../styles/PaymentTracker.module.css';
 
 interface Contract {
@@ -81,12 +81,33 @@ export default function PaymentTracker({ contract }: PaymentTrackerProps) {
     await savePaymentStatus(isPaid, newDate);
   };
 
-  // Save Payment Amount
-  const handleAmountChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Debounce Timer für Amount-Änderungen
+  const amountDebounceTimer = useRef<NodeJS.Timeout | null>(null);
+
+  // Handle Amount Input (nur State ändern, nicht sofort speichern)
+  const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newAmount = parseFloat(e.target.value) || 0;
     setPaymentAmount(newAmount);
-    await savePaymentAmount(newAmount);
+
+    // Clear existing timer
+    if (amountDebounceTimer.current) {
+      clearTimeout(amountDebounceTimer.current);
+    }
+
+    // Set new timer - speichere erst nach 1 Sekunde ohne Änderung
+    amountDebounceTimer.current = setTimeout(() => {
+      savePaymentAmount(newAmount);
+    }, 1000);
   };
+
+  // Cleanup debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (amountDebounceTimer.current) {
+        clearTimeout(amountDebounceTimer.current);
+      }
+    };
+  }, []);
 
   // API Call zum Speichern
   const savePaymentStatus = async (paid: boolean, date?: string) => {

@@ -1108,8 +1108,18 @@ Antworte in folgendem JSON-Format:
   "laufzeit": "Vertragslaufzeit (z.B. '24 Monate')",
   "status": "Aktiv/Inaktiv/Unbekannt",
   "risiken": ["Risiko 1", "Risiko 2"],
-  "optimierungen": ["Optimierung 1", "Optimierung 2"]
-}`;
+  "optimierungen": ["Optimierung 1", "Optimierung 2"],
+  "contractType": "recurring|one-time",
+  "paymentAmount": <Zahl oder null>,
+  "paymentStatus": "paid|unpaid|null",
+  "paymentDueDate": "YYYY-MM-DD oder null"
+}
+
+WICHTIG für Payment-Erkennung:
+- contractType: "one-time" wenn Kaufvertrag/Rechnung/einmalige Zahlung, "recurring" wenn Abo/monatlich
+- paymentAmount: Extrahiere den KAUFPREIS/RECHNUNGSBETRAG aus dem Text (nur die Zahl)
+- paymentStatus: "paid" wenn bezahlt/beglichen erwähnt, "unpaid" wenn offen/ausstehend, sonst null
+- paymentDueDate: Fälligkeitsdatum im Format YYYY-MM-DD wenn vorhanden`;
 
     let analysisResult;
 
@@ -1173,6 +1183,11 @@ Antworte in folgendem JSON-Format:
       status: analysisResult.status || 'Unbekannt',
       risiken: analysisResult.risiken || [],
       optimierungen: analysisResult.optimierungen || [],
+      // 💳 NEU: Payment Tracking Fields aus KI-Analyse
+      contractType: analysisResult.contractType || null,
+      paymentAmount: analysisResult.paymentAmount || null,
+      paymentStatus: analysisResult.paymentStatus || null,
+      paymentDueDate: analysisResult.paymentDueDate || null,
       // ✅ CRITICAL: Auch im analysis-Objekt speichern (für ContractDetailsView)
       analysis: analysisObject,
       // ✅ CRITICAL: PDF-Text speichern (für "Inhalt"-Tab in ContractDetailsView)
@@ -1186,6 +1201,16 @@ Antworte in folgendem JSON-Format:
     );
 
     console.log(`✅ [${requestId}] Contract updated with analysis (both direct fields and analysis object)`);
+
+    // 💳 Log Payment Detection
+    if (analysisResult.contractType || analysisResult.paymentAmount) {
+      console.log(`💳 [${requestId}] Payment Info detected:`, {
+        contractType: analysisResult.contractType,
+        paymentAmount: analysisResult.paymentAmount,
+        paymentStatus: analysisResult.paymentStatus,
+        paymentDueDate: analysisResult.paymentDueDate
+      });
+    }
 
     // Trigger calendar event generation
     try {
