@@ -37,6 +37,13 @@ interface Contract {
   suggestions?: string;
   risiken?: string[];
   optimierungen?: string[];
+  // 💳 Payment Tracking Fields
+  paymentMethod?: string;
+  paymentStatus?: 'paid' | 'unpaid';
+  paymentAmount?: number;
+  paymentFrequency?: 'monthly' | 'yearly' | 'weekly';
+  paymentDate?: string;
+  subscriptionStartDate?: string;
 }
 
 // ✅ KORRIGIERT: Interface für Mehrfach-Upload
@@ -777,12 +784,30 @@ export default function Contracts() {
   useEffect(() => {
     if (selectedContract && contracts.length > 0) {
       const updatedContract = contracts.find(c => c._id === selectedContract._id);
-      if (updatedContract && JSON.stringify(updatedContract) !== JSON.stringify(selectedContract)) {
-        console.log('🔄 Updating selectedContract with fresh data');
-        setSelectedContract(updatedContract);
+      if (updatedContract) {
+        // Prüfe ob sich wichtige Felder geändert haben
+        const hasChanges =
+          updatedContract.paymentMethod !== selectedContract.paymentMethod ||
+          updatedContract.paymentStatus !== selectedContract.paymentStatus ||
+          updatedContract.paymentAmount !== selectedContract.paymentAmount ||
+          updatedContract.paymentFrequency !== selectedContract.paymentFrequency;
+
+        if (hasChanges) {
+          console.log('🔄 Updating selectedContract with fresh payment data:', {
+            old: {
+              paymentMethod: selectedContract.paymentMethod,
+              paymentStatus: selectedContract.paymentStatus
+            },
+            new: {
+              paymentMethod: updatedContract.paymentMethod,
+              paymentStatus: updatedContract.paymentStatus
+            }
+          });
+          setSelectedContract(updatedContract);
+        }
       }
     }
-  }, [contracts]);
+  }, [contracts, selectedContract]);
 
   // ✅ KORRIGIERT: Mehrfach-Upload Handler mit Plan-Validierung + ANALYSE-FIX
   const handleMultipleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
