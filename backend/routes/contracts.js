@@ -1115,11 +1115,38 @@ Antworte in folgendem JSON-Format:
   "paymentDueDate": "YYYY-MM-DD oder null"
 }
 
-WICHTIG für Payment-Erkennung:
-- contractType: "one-time" wenn Kaufvertrag/Rechnung/einmalige Zahlung, "recurring" wenn Abo/monatlich
-- paymentAmount: Extrahiere den KAUFPREIS/RECHNUNGSBETRAG aus dem Text (nur die Zahl)
-- paymentStatus: "paid" wenn bezahlt/beglichen erwähnt, "unpaid" wenn offen/ausstehend, sonst null
-- paymentDueDate: Fälligkeitsdatum im Format YYYY-MM-DD wenn vorhanden`;
+🔍 KRITISCH WICHTIG - Payment-Erkennung (lies den KOMPLETTEN Text durch!):
+
+1. contractType Erkennung:
+   - "one-time" = Kaufvertrag, Rechnung, Einmalkauf, einmalige Zahlung, Kaufpreis
+   - "recurring" = Abo, monatliche Zahlung, Mitgliedschaft, Subscription, laufende Kosten
+
+2. paymentAmount Erkennung (SEHR WICHTIG!):
+   Suche nach folgenden Begriffen im GESAMTEN Text:
+   - "Kaufpreis", "Gesamtpreis", "Endbetrag", "Summe", "Betrag", "Preis"
+   - "Rechnungsbetrag", "Zahlbetrag", "Kaufsumme", "Verkaufspreis"
+   - "EUR", "Euro", "€", gefolgt von einer Zahl
+   - Zahlen mit Tausendertrennern: "15.000", "15000", "1.500,00"
+
+   WICHTIG:
+   - Extrahiere NUR die Zahl (z.B. 15000 statt "15.000 EUR")
+   - Ignoriere Anzahlungen/Raten - nimm den GESAMTBETRAG
+   - Bei mehreren Beträgen: nimm den HÖCHSTEN (meist der Gesamtpreis)
+   - Konvertiere deutsche Schreibweise: "15.000,50" → 15000.50
+
+3. paymentStatus Erkennung:
+   - "paid" = wenn "bezahlt", "beglichen", "gezahlt", "überwiesen" im Text
+   - "unpaid" = wenn "ausstehend", "offen", "fällig", "zu zahlen" im Text
+   - null = wenn unklar
+
+4. paymentDueDate Erkennung:
+   - Suche nach "Zahlungsziel", "fällig am", "Zahlung bis", "Zahlungsfrist"
+   - Format: YYYY-MM-DD (z.B. "2025-01-15")
+
+BEISPIELE:
+- "Der Kaufpreis beträgt 15.000 EUR" → paymentAmount: 15000
+- "Gesamtbetrag: 1.234,56 Euro" → paymentAmount: 1234.56
+- "Summe: EUR 500,-" → paymentAmount: 500`;
 
     let analysisResult;
 

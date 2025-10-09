@@ -42,67 +42,110 @@
   margin-bottom: 1rem;
 }
 
-/* Amount Section */
+/* Amount Section - Premium Design */
 .amountSection {
+  padding: 1.25rem;
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border-radius: 12px;
+  border: 2px solid #d1fae5;
+  margin-bottom: 1.25rem;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.08);
+  transition: all 0.3s ease;
+}
+
+.amountSection:hover {
+  border-color: #a7f3d0;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.12);
+}
+
+.amountWrapper {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem;
-  background: white;
-  border-radius: 8px;
-  border: 1px solid #f3f4f6;
-  margin-bottom: 1rem;
+  gap: 1rem;
 }
 
 .amountLabel {
-  font-size: 0.85rem;
-  color: #6e6e73;
-  font-weight: 500;
+  font-size: 0.8rem;
+  color: #065f46;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
 }
 
-.amountValue {
-  font-size: 1.5rem;
-  font-weight: 700;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+.amountInputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: white;
+  border-radius: 10px;
+  padding: 0.6rem 1rem;
+  border: 2px solid #10b981;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.15);
+  transition: all 0.2s ease;
+}
+
+.amountInputWrapper:hover {
+  border-color: #059669;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+  transform: translateY(-1px);
+}
+
+.amountInputWrapper:focus-within {
+  border-color: #047857;
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+  transform: translateY(-1px);
 }
 
 .amountInput {
-  font-size: 1.5rem;
-  font-weight: 700;
+  font-size: 1.8rem;
+  font-weight: 800;
   color: #10b981;
-  border: 2px solid #d1fae5;
-  border-radius: 6px;
-  padding: 0.4rem 0.6rem;
+  border: none;
+  background: transparent;
   text-align: right;
-  background: white;
-  transition: all 0.2s ease;
   width: 140px;
-}
-
-.amountInput:hover:not(:disabled) {
-  border-color: #10b981;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.5px;
 }
 
 .amountInput:focus {
   outline: none;
-  border-color: #059669;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
 }
 
 .amountInput:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
-/* Status Toggle */
+.amountInput::placeholder {
+  color: #d1fae5;
+  font-weight: 600;
+}
+
+/* Remove number input arrows */
+.amountInput::-webkit-outer-spin-button,
+.amountInput::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.amountInput[type=number] {
+  -moz-appearance: textfield;
+}
+
+.currencySymbol {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #10b981;
+  margin-left: 0.3rem;
+  pointer-events: none;
+}
+
+/* Status Toggle - Premium */
 .statusToggle {
   display: flex;
-  gap: 0.75rem;
+  gap: 0.85rem;
   margin-bottom: 1.25rem;
 }
 
@@ -111,37 +154,78 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  padding: 0.85rem 1rem;
+  gap: 0.6rem;
+  padding: 1rem 1.25rem;
   background: white;
   border: 2px solid #e5e7eb;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  font-weight: 600;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 700;
   color: #6e6e73;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.toggleBtn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 0;
 }
 
 .toggleBtn:hover:not(:disabled) {
-  border-color: #d1d5db;
-  transform: translateY(-2px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border-color: #10b981;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.2);
 }
 
 .toggleBtn.active {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   border-color: #10b981;
   color: white;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
+}
+
+.toggleBtn.active::before {
+  opacity: 1;
 }
 
 .toggleBtn:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
+  transform: none !important;
+}
+
+.toggleIcon,
+.toggleBtn span {
+  position: relative;
+  z-index: 1;
 }
 
 .toggleIcon {
-  font-size: 1.1rem;
+  font-size: 1.2rem;
+  transition: transform 0.3s ease;
+}
+
+.toggleBtn:hover:not(:disabled) .toggleIcon {
+  transform: scale(1.15);
+}
+
+.toggleBtn.active .toggleIcon {
+  animation: checkmark 0.5s ease;
+}
+
+@keyframes checkmark {
+  0% { transform: scale(0.8); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
 }
 
 /* Unpaid Section */
@@ -324,17 +408,27 @@
   }
 
   .amountSection {
-    padding: 0.85rem;
+    padding: 1rem;
   }
 
-  .amountValue {
-    font-size: 1.3rem;
+  .amountWrapper {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .amountInputWrapper {
+    width: 100%;
+    justify-content: space-between;
   }
 
   .amountInput {
-    font-size: 1.3rem;
-    width: 120px;
-    padding: 0.5rem;
+    font-size: 1.6rem;
+    width: 100%;
+  }
+
+  .currencySymbol {
+    font-size: 1.4rem;
   }
 
   .statusToggle {
@@ -379,17 +473,15 @@
   }
 
   .amountSection {
-    padding: 0.75rem;
-  }
-
-  .amountValue {
-    font-size: 1.2rem;
+    padding: 0.9rem;
   }
 
   .amountInput {
+    font-size: 1.4rem;
+  }
+
+  .currencySymbol {
     font-size: 1.2rem;
-    width: 110px;
-    padding: 0.45rem;
   }
 
   .toggleBtn {

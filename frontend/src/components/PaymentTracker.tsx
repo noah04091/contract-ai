@@ -203,18 +203,24 @@ export default function PaymentTracker({ contract }: PaymentTrackerProps) {
         </div>
       )}
 
-      {/* Payment Amount - Editierbar */}
+      {/* Payment Amount - Premium Editierbar */}
       <div className={styles.amountSection}>
-        <span className={styles.amountLabel}>Betrag</span>
-        <input
-          type="number"
-          className={styles.amountInput}
-          value={paymentAmount}
-          onChange={handleAmountChange}
-          disabled={isSaving}
-          step="0.01"
-          min="0"
-        />
+        <div className={styles.amountWrapper}>
+          <span className={styles.amountLabel}>Betrag</span>
+          <div className={styles.amountInputWrapper}>
+            <input
+              type="number"
+              className={styles.amountInput}
+              value={paymentAmount}
+              onChange={handleAmountChange}
+              disabled={isSaving}
+              step="0.01"
+              min="0"
+              placeholder="0.00"
+            />
+            <span className={styles.currencySymbol}>€</span>
+          </div>
+        </div>
       </div>
 
       {/* Status Toggle */}
