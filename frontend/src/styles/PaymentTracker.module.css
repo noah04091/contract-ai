@@ -1,15 +1,14 @@
 /* ✨ PaymentTracker.module.css - Premium Payment Status Tracker Styling */
 
 .paymentTracker {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(5, 150, 105, 0.08) 100%);
+  background: #fafafa;
   border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 1.5rem;
-  transition: all 0.3s ease;
+  border-radius: 10px;
+  padding: 1.25rem;
+  transition: all 0.2s ease;
 }
 
 .paymentTracker:hover {
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
   border-color: #d1d5db;
 }
 
@@ -18,44 +17,43 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 1rem;
+  font-size: 0.875rem;
   font-weight: 600;
   color: #1d1d1f;
   margin: 0 0 1rem 0;
 }
 
 .icon {
-  font-size: 1.2rem;
+  font-size: 1rem;
 }
 
 /* Auto-Detection Badge */
 .autoDetectedBadge {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.4rem 0.8rem;
-  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-  color: #92400e;
-  font-size: 0.75rem;
-  font-weight: 600;
-  border-radius: 20px;
-  margin-bottom: 1rem;
+  gap: 0.3rem;
+  padding: 0.25rem 0.6rem;
+  background: #f5f5f7;
+  color: #86868b;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  border-radius: 12px;
+  margin-bottom: 0.75rem;
+  border: 1px solid #e5e7eb;
 }
 
-/* Amount Section - Premium Design */
+/* Amount Section - Clean Apple Style */
 .amountSection {
-  padding: 1.25rem;
-  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-  border-radius: 12px;
-  border: 2px solid #d1fae5;
-  margin-bottom: 1.25rem;
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.08);
-  transition: all 0.3s ease;
+  padding: 1rem;
+  background: white;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  margin-bottom: 1rem;
+  transition: all 0.2s ease;
 }
 
 .amountSection:hover {
-  border-color: #a7f3d0;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.12);
+  border-color: #d1d5db;
 }
 
 .amountWrapper {
@@ -66,51 +64,41 @@
 }
 
 .amountLabel {
-  font-size: 0.8rem;
-  color: #065f46;
-  font-weight: 700;
+  font-size: 0.75rem;
+  color: #86868b;
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
 }
 
 .amountInputWrapper {
   position: relative;
   display: flex;
   align-items: center;
-  background: white;
-  border-radius: 10px;
-  padding: 0.6rem 1rem;
-  border: 2px solid #10b981;
-  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.15);
-  transition: all 0.2s ease;
-}
-
-.amountInputWrapper:hover {
-  border-color: #059669;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
-  transform: translateY(-1px);
-}
-
-.amountInputWrapper:focus-within {
-  border-color: #047857;
-  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
-  transform: translateY(-1px);
+  gap: 0.25rem;
 }
 
 .amountInput {
-  font-size: 1.8rem;
-  font-weight: 800;
-  color: #10b981;
+  font-size: 1.125rem;
+  font-weight: 400;
+  color: #1d1d1f;
   border: none;
   background: transparent;
   text-align: right;
-  width: 140px;
+  width: 120px;
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.5px;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  transition: background 0.2s ease;
+}
+
+.amountInput:hover {
+  background: #f5f5f7;
 }
 
 .amountInput:focus {
   outline: none;
+  background: #f5f5f7;
 }
 
 .amountInput:disabled {
@@ -119,8 +107,8 @@
 }
 
 .amountInput::placeholder {
-  color: #d1fae5;
-  font-weight: 600;
+  color: #c7c7cc;
+  font-weight: 400;
 }
 
 /* Remove number input arrows */
@@ -135,18 +123,17 @@
 }
 
 .currencySymbol {
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: #10b981;
-  margin-left: 0.3rem;
+  font-size: 1.125rem;
+  font-weight: 400;
+  color: #86868b;
   pointer-events: none;
 }
 
-/* Status Toggle - Premium */
+/* Status Toggle - Clean Minimal */
 .statusToggle {
   display: flex;
-  gap: 0.85rem;
-  margin-bottom: 1.25rem;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
 }
 
 .toggleBtn {
@@ -154,78 +141,36 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.6rem;
-  padding: 1rem 1.25rem;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
   background: white;
-  border: 2px solid #e5e7eb;
-  border-radius: 12px;
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: #6e6e73;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #1d1d1f;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
-}
-
-.toggleBtn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  z-index: 0;
+  transition: all 0.2s ease;
 }
 
 .toggleBtn:hover:not(:disabled) {
   border-color: #10b981;
-  transform: translateY(-3px);
-  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.2);
+  background: #f9fafb;
 }
 
 .toggleBtn.active {
+  background: #10b981;
   border-color: #10b981;
   color: white;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
-}
-
-.toggleBtn.active::before {
-  opacity: 1;
 }
 
 .toggleBtn:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
-  transform: none !important;
-}
-
-.toggleIcon,
-.toggleBtn span {
-  position: relative;
-  z-index: 1;
 }
 
 .toggleIcon {
-  font-size: 1.2rem;
-  transition: transform 0.3s ease;
-}
-
-.toggleBtn:hover:not(:disabled) .toggleIcon {
-  transform: scale(1.15);
-}
-
-.toggleBtn.active .toggleIcon {
-  animation: checkmark 0.5s ease;
-}
-
-@keyframes checkmark {
-  0% { transform: scale(0.8); }
-  50% { transform: scale(1.2); }
-  100% { transform: scale(1); }
+  font-size: 1rem;
 }
 
 /* Unpaid Section */
@@ -400,21 +345,21 @@
 
 @media (max-width: 768px) {
   .paymentTracker {
-    padding: 1.25rem;
+    padding: 1rem;
   }
 
   .title {
-    font-size: 0.95rem;
+    font-size: 0.875rem;
   }
 
   .amountSection {
-    padding: 1rem;
+    padding: 0.875rem;
   }
 
   .amountWrapper {
     flex-direction: column;
     align-items: flex-start;
-    gap: 0.75rem;
+    gap: 0.5rem;
   }
 
   .amountInputWrapper {
@@ -423,22 +368,22 @@
   }
 
   .amountInput {
-    font-size: 1.6rem;
+    font-size: 1.125rem;
     width: 100%;
   }
 
   .currencySymbol {
-    font-size: 1.4rem;
+    font-size: 1.125rem;
   }
 
   .statusToggle {
     flex-direction: column;
-    gap: 0.6rem;
+    gap: 0.5rem;
   }
 
   .toggleBtn {
     width: 100%;
-    padding: 0.75rem;
+    padding: 0.65rem;
   }
 
   .warningBox,
@@ -469,28 +414,28 @@
 
 @media (max-width: 480px) {
   .paymentTracker {
-    padding: 1rem;
+    padding: 0.875rem;
   }
 
   .amountSection {
-    padding: 0.9rem;
+    padding: 0.75rem;
   }
 
   .amountInput {
-    font-size: 1.4rem;
+    font-size: 1.125rem;
   }
 
   .currencySymbol {
-    font-size: 1.2rem;
+    font-size: 1.125rem;
   }
 
   .toggleBtn {
-    font-size: 0.85rem;
-    padding: 0.65rem;
+    font-size: 0.8125rem;
+    padding: 0.6rem;
   }
 
   .autoDetectedBadge {
-    font-size: 0.7rem;
-    padding: 0.35rem 0.7rem;
+    font-size: 0.625rem;
+    padding: 0.2rem 0.5rem;
   }
 }
