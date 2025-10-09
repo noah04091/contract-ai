@@ -773,6 +773,17 @@ export default function Contracts() {
     fetchContracts();
   }, []);
 
+  // ✅ FIX: Wenn contracts sich ändern und ein Contract ausgewählt ist, aktualisiere selectedContract
+  useEffect(() => {
+    if (selectedContract && contracts.length > 0) {
+      const updatedContract = contracts.find(c => c._id === selectedContract._id);
+      if (updatedContract && JSON.stringify(updatedContract) !== JSON.stringify(selectedContract)) {
+        console.log('🔄 Updating selectedContract with fresh data');
+        setSelectedContract(updatedContract);
+      }
+    }
+  }, [contracts]);
+
   // ✅ KORRIGIERT: Mehrfach-Upload Handler mit Plan-Validierung + ANALYSE-FIX
   const handleMultipleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -2490,9 +2501,16 @@ export default function Contracts() {
               }}
               show={showDetails}
               openEditModalDirectly={openEditModalDirectly} // ✅ NEU: Diese Prop wird das Edit-Modal direkt öffnen
-              onEdit={(contractId) => {
+              onEdit={async (contractId) => {
                 console.log("Contract updated:", contractId);
-                fetchContracts(); // ✅ Verträge neu laden nach Edit
+                const updatedContracts = await fetchContracts(); // ✅ Verträge neu laden nach Edit
+                // ✅ FIX: selectedContract auch mit neuen Daten aktualisieren
+                if (updatedContracts) {
+                  const updatedContract = updatedContracts.find((c: Contract) => c._id === contractId);
+                  if (updatedContract) {
+                    setSelectedContract(updatedContract);
+                  }
+                }
               }}
               onDelete={handleDeleteContract}
             />
