@@ -42,6 +42,48 @@
   border: 1px solid #e5e7eb;
 }
 
+/* Auto-Paid Info Banner - Clean Apple Style */
+.autoPaidBanner {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  border-left: 4px solid #10b981;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.autoPaidIcon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.autoPaidContent {
+  flex: 1;
+}
+
+.autoPaidContent strong {
+  display: block;
+  color: #065f46;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.autoPaidMethod {
+  margin: 0.25rem 0;
+  font-size: 0.875rem;
+  color: #047857;
+  font-weight: 500;
+}
+
+.autoPaidDate {
+  margin: 0.25rem 0;
+  font-size: 0.875rem;
+  color: #047857;
+  font-weight: 500;
+}
+
 /* Amount Section - Clean Apple Style */
 .amountSection {
   padding: 1rem;
@@ -387,14 +429,16 @@
   }
 
   .warningBox,
-  .successBox {
+  .successBox,
+  .autoPaidBanner {
     flex-direction: column;
     gap: 0.75rem;
     padding: 0.85rem;
   }
 
   .warningIcon,
-  .successIcon {
+  .successIcon,
+  .autoPaidIcon {
     font-size: 1.3rem;
   }
 

@@ -914,6 +914,75 @@ router.patch("/:id/payment", verifyToken, async (req, res) => {
   }
 });
 
+// 💰 NEU: PATCH /contracts/:id/costs – Cost Tracking Update
+router.patch("/:id/costs", verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { paymentFrequency, subscriptionStartDate } = req.body;
+
+    console.log("💰 Cost Tracking Update:", {
+      contractId: id,
+      paymentFrequency,
+      subscriptionStartDate
+    });
+
+    // Validate contract ownership
+    const contract = await contractsCollection.findOne({
+      _id: new ObjectId(id),
+      userId: new ObjectId(req.user.userId)
+    });
+
+    if (!contract) {
+      return res.status(404).json({
+        success: false,
+        message: "Vertrag nicht gefunden"
+      });
+    }
+
+    // Build update object (only update provided fields)
+    const updateData = {
+      updatedAt: new Date()
+    };
+
+    if (paymentFrequency !== undefined) {
+      updateData.paymentFrequency = paymentFrequency;
+    }
+    if (subscriptionStartDate !== undefined) {
+      updateData.subscriptionStartDate = subscriptionStartDate;
+    }
+
+    // Update contract
+    const result = await contractsCollection.updateOne(
+      {
+        _id: new ObjectId(id),
+        userId: new ObjectId(req.user.userId)
+      },
+      { $set: updateData }
+    );
+
+    if (result.modifiedCount === 0) {
+      console.log("⚠️ Cost Tracking nicht geändert (keine Änderungen)");
+    } else {
+      console.log("✅ Cost Tracking erfolgreich aktualisiert");
+    }
+
+    res.json({
+      success: true,
+      message: "Kostenübersicht erfolgreich aktualisiert",
+      paymentFrequency: updateData.paymentFrequency || contract.paymentFrequency,
+      subscriptionStartDate: updateData.subscriptionStartDate || contract.subscriptionStartDate
+    });
+
+  } catch (error) {
+    console.error('❌ Fehler beim Aktualisieren der Kostenübersicht:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Fehler beim Aktualisieren der Kostenübersicht',
+      error: error.message
+    });
+  }
+});
+
 // ✅ NEU: POST /contracts/:id/detect-provider – Provider für bestehenden Vertrag erkennen
 router.post("/:id/detect-provider", verifyToken, async (req, res) => {
   try {
@@ -1112,7 +1181,9 @@ Antworte in folgendem JSON-Format:
   "contractType": "recurring|one-time",
   "paymentAmount": <Zahl oder null>,
   "paymentStatus": "paid|unpaid|null",
-  "paymentDueDate": "YYYY-MM-DD oder null"
+  "paymentDueDate": "YYYY-MM-DD oder null",
+  "paymentMethod": "string oder null",
+  "paymentFrequency": "monthly|yearly|weekly|null"
 }
 
 🔍 KRITISCH WICHTIG - Payment-Erkennung (lies den KOMPLETTEN Text durch!):
@@ -1134,19 +1205,43 @@ Antworte in folgendem JSON-Format:
    - Bei mehreren Beträgen: nimm den HÖCHSTEN (meist der Gesamtpreis)
    - Konvertiere deutsche Schreibweise: "15.000,50" → 15000.50
 
-3. paymentStatus Erkennung:
-   - "paid" = wenn "bezahlt", "beglichen", "gezahlt", "überwiesen" im Text
-   - "unpaid" = wenn "ausstehend", "offen", "fällig", "zu zahlen" im Text
+3. paymentStatus Erkennung (SEHR WICHTIG!):
+   - "paid" = wenn "bezahlt", "beglichen", "gezahlt", "überwiesen", "Lastschrift", "PayPal", "Kreditkarte" im Text
+   - "unpaid" = wenn "ausstehend", "offen", "fällig", "zu zahlen", "bitte überweisen" im Text
    - null = wenn unklar
 
 4. paymentDueDate Erkennung:
    - Suche nach "Zahlungsziel", "fällig am", "Zahlung bis", "Zahlungsfrist"
    - Format: YYYY-MM-DD (z.B. "2025-01-15")
 
+5. paymentMethod Erkennung (NEU!):
+   Suche nach Zahlungsmethoden im Text:
+   - "PayPal" → "PayPal"
+   - "Lastschrift", "SEPA", "Bankeinzug" → "Lastschrift"
+   - "Kreditkarte", "Visa", "Mastercard" → "Kreditkarte"
+   - "Überweisung", "IBAN" → "Überweisung"
+   - "Sofortüberweisung", "Klarna" → "Sofortüberweisung"
+   - null = wenn keine Zahlungsmethode gefunden
+
+6. paymentFrequency Erkennung (NEU!):
+   Suche nach Zahlungsrhythmus im Text:
+   - "monatlich", "jeden Monat", "pro Monat", "monthly", "/Monat" → "monthly"
+   - "jährlich", "pro Jahr", "yearly", "annual", "/Jahr" → "yearly"
+   - "wöchentlich", "pro Woche", "weekly", "/Woche" → "weekly"
+   - null = wenn keine Frequenz gefunden
+
+WICHTIG für Automatische Bezahlt-Erkennung:
+- Wenn Text "Bezahlt mit PayPal" oder "Per Lastschrift bezahlt" enthält
+  → paymentStatus: "paid" UND paymentMethod: "PayPal"/"Lastschrift"
+- Wenn Text "Online bezahlt" oder "Zahlung erfolgt" enthält
+  → paymentStatus: "paid"
+
 BEISPIELE:
 - "Der Kaufpreis beträgt 15.000 EUR" → paymentAmount: 15000
 - "Gesamtbetrag: 1.234,56 Euro" → paymentAmount: 1234.56
-- "Summe: EUR 500,-" → paymentAmount: 500`;
+- "Summe: EUR 500,-" → paymentAmount: 500
+- "Bezahlt mit PayPal am 15.01.2025" → paymentStatus: "paid", paymentMethod: "PayPal"
+- "Lastschrift wurde durchgeführt" → paymentStatus: "paid", paymentMethod: "Lastschrift"`;
 
     let analysisResult;
 
@@ -1215,6 +1310,8 @@ BEISPIELE:
       paymentAmount: analysisResult.paymentAmount || null,
       paymentStatus: analysisResult.paymentStatus || null,
       paymentDueDate: analysisResult.paymentDueDate || null,
+      paymentMethod: analysisResult.paymentMethod || null,
+      paymentFrequency: analysisResult.paymentFrequency || null,
       // ✅ CRITICAL: Auch im analysis-Objekt speichern (für ContractDetailsView)
       analysis: analysisObject,
       // ✅ CRITICAL: PDF-Text speichern (für "Inhalt"-Tab in ContractDetailsView)

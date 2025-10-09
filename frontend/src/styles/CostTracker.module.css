@@ -28,6 +28,117 @@
   font-size: 1.2rem;
 }
 
+/* Frequency Section - Clean Minimal */
+.frequencySection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.frequencyLabel {
+  font-size: 0.75rem;
+  color: #86868b;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.frequencyToggle {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.frequencyBtn {
+  flex: 1;
+  padding: 0.65rem 0.75rem;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #1d1d1f;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.frequencyBtn:hover:not(:disabled) {
+  border-color: #667eea;
+  background: #f9fafb;
+}
+
+.frequencyBtn.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: #667eea;
+  color: white;
+}
+
+.frequencyBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Start Date Section - Clean Minimal */
+.startDateSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 0.85rem;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.startDateLabel {
+  font-size: 0.75rem;
+  color: #86868b;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.startDateInput {
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  color: #1d1d1f;
+  background: #fafafa;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.startDateInput:hover:not(:disabled) {
+  border-color: #667eea;
+  background: white;
+}
+
+.startDateInput:focus {
+  outline: none;
+  border-color: #667eea;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.startDateInput:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Saving Indicator */
+.savingIndicator {
+  margin-top: 1rem;
+  padding: 0.6rem;
+  background: #dbeafe;
+  border: 1px solid #3b82f6;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 0.85rem;
+  color: #1e40af;
+  font-weight: 600;
+}
+
 /* Cost Grid */
 .costGrid {
   display: grid;
@@ -134,6 +245,20 @@
   .title {
     font-size: 0.95rem;
     margin-bottom: 1rem;
+  }
+
+  .frequencyToggle {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .frequencyBtn {
+    width: 100%;
+    padding: 0.7rem;
+  }
+
+  .startDateSection {
+    padding: 0.75rem;
   }
 
   /* Mobile: Vertical statt Grid */

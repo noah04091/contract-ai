@@ -15,6 +15,7 @@ interface Contract {
   paymentDate?: string;
   paymentDueDate?: string;
   paymentAmount?: number;
+  paymentMethod?: string;
 }
 
 interface PaymentTrackerProps {
@@ -23,6 +24,9 @@ interface PaymentTrackerProps {
 }
 
 export default function PaymentTracker({ contract, onPaymentUpdate }: PaymentTrackerProps) {
+  // 🤖 Auto-Paid Detection: Wenn Status=paid UND paymentMethod vorhanden
+  const isAutoPaid = contract.paymentStatus === 'paid' && !!contract.paymentMethod;
+
   // State
   const [isPaid, setIsPaid] = useState(contract.paymentStatus === 'paid');
   const [paymentDate, setPaymentDate] = useState(contract.paymentDate || '');
@@ -250,28 +254,47 @@ export default function PaymentTracker({ contract, onPaymentUpdate }: PaymentTra
         </div>
       </div>
 
-      {/* Status Toggle */}
-      <div className={styles.statusToggle}>
-        <button
-          className={`${styles.toggleBtn} ${!isPaid ? styles.active : ''}`}
-          onClick={() => handleToggle(false)}
-          disabled={isSaving}
-        >
-          <span className={styles.toggleIcon}>○</span>
-          Nicht bezahlt
-        </button>
-        <button
-          className={`${styles.toggleBtn} ${isPaid ? styles.active : ''}`}
-          onClick={() => handleToggle(true)}
-          disabled={isSaving}
-        >
-          <span className={styles.toggleIcon}>●</span>
-          Bezahlt
-        </button>
-      </div>
+      {/* Status Toggle OR Auto-Paid Info Banner */}
+      {isAutoPaid ? (
+        /* AUTO-PAID INFO BANNER - Keine Interaktion nötig */
+        <div className={styles.autoPaidBanner}>
+          <span className={styles.autoPaidIcon}>✅</span>
+          <div className={styles.autoPaidContent}>
+            <strong>Bereits bezahlt</strong>
+            <p className={styles.autoPaidMethod}>
+              Zahlungsmethode: {contract.paymentMethod}
+            </p>
+            {paymentDate && (
+              <p className={styles.autoPaidDate}>
+                Bezahlt am: {new Date(paymentDate).toLocaleDateString('de-DE')}
+              </p>
+            )}
+          </div>
+        </div>
+      ) : (
+        /* NORMAL STATUS TOGGLE - Manuelle Verwaltung */
+        <div className={styles.statusToggle}>
+          <button
+            className={`${styles.toggleBtn} ${!isPaid ? styles.active : ''}`}
+            onClick={() => handleToggle(false)}
+            disabled={isSaving}
+          >
+            <span className={styles.toggleIcon}>○</span>
+            Nicht bezahlt
+          </button>
+          <button
+            className={`${styles.toggleBtn} ${isPaid ? styles.active : ''}`}
+            onClick={() => handleToggle(true)}
+            disabled={isSaving}
+          >
+            <span className={styles.toggleIcon}>●</span>
+            Bezahlt
+          </button>
+        </div>
+      )}
 
       {/* Conditional Content based on Status */}
-      {!isPaid ? (
+      {!isAutoPaid && !isPaid ? (
         /* UNPAID STATE */
         <div className={styles.unpaidSection}>
           <div className={styles.warningBox}>
@@ -299,8 +322,8 @@ export default function PaymentTracker({ contract, onPaymentUpdate }: PaymentTra
             💡 Tipp: Setze eine Zahlungserinnerung im Kalender
           </div>
         </div>
-      ) : (
-        /* PAID STATE */
+      ) : !isAutoPaid && isPaid ? (
+        /* PAID STATE - Nur bei manueller Verwaltung */
         <div className={styles.paidSection}>
           <div className={styles.successBox}>
             <span className={styles.successIcon}>✅</span>
@@ -330,7 +353,7 @@ export default function PaymentTracker({ contract, onPaymentUpdate }: PaymentTra
             </div>
           </div>
         </div>
-      )}
+      ) : null}
 
       {/* Document Info */}
       <div className={styles.documentInfo}>
