@@ -25,32 +25,39 @@ interface SmartContractInfoProps {
 /**
  * 🧠 Smart Component: Entscheidet automatisch welcher Tracker angezeigt wird
  *
- * LOGIK:
- * - Wenn contractType = 'one-time' → PaymentTracker
- * - Wenn contractType = 'recurring' → CostTracker
- * - Wenn kein contractType ABER amount vorhanden → CostTracker (Fallback für alte Daten)
- * - Sonst → PaymentTracker (Default für neue Uploads ohne Preis)
+ * NEUE LOGIK (Rechnung-First):
+ * 1. Filename enthält "Rechnung" → PaymentTracker
+ * 2. contractType = 'one-time' → PaymentTracker
+ * 3. contractType = 'recurring' → CostTracker
+ * 4. Default: PaymentTracker (sicherer für Rechnungen!)
  */
 export default function SmartContractInfo({ contract, onPaymentUpdate }: SmartContractInfoProps) {
   // 🧠 Intelligente Detection
+  const contractName = contract.name?.toLowerCase() || '';
+  const isInvoice = contractName.includes('rechnung') || contractName.includes('invoice');
   const isOneTimeContract = contract.contractType === 'one-time';
   const isRecurringContract = contract.contractType === 'recurring';
-  const hasRecurringAmount = contract.amount && contract.amount > 0 && !isOneTimeContract;
 
   // Decision Logic
+  // 1. Rechnung im Namen → immer Payment Tracker
+  if (isInvoice) {
+    console.log('💳 Showing Payment Tracker (invoice detected in name)');
+    return <PaymentTracker contract={contract} onPaymentUpdate={onPaymentUpdate} />;
+  }
+
+  // 2. Explizit als one-time markiert
   if (isOneTimeContract) {
-    // Einmalvertrag → Payment Tracker
     console.log('💳 Showing Payment Tracker (one-time contract)');
     return <PaymentTracker contract={contract} onPaymentUpdate={onPaymentUpdate} />;
   }
 
-  if (isRecurringContract || hasRecurringAmount) {
-    // Laufender Vertrag → Cost Tracker
+  // 3. NUR wenn explizit recurring → Cost Tracker
+  if (isRecurringContract) {
     console.log('💰 Showing Cost Tracker (recurring contract)');
     return <CostTracker contract={contract} />;
   }
 
-  // Default: Payment Tracker (für neue Uploads ohne Analyse)
-  console.log('💳 Showing Payment Tracker (default - no type detected)');
+  // 4. Default: Payment Tracker (sicherer für Rechnungen)
+  console.log('💳 Showing Payment Tracker (default - safer for invoices)');
   return <PaymentTracker contract={contract} onPaymentUpdate={onPaymentUpdate} />;
 }
