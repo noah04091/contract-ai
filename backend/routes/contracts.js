@@ -1213,10 +1213,12 @@ Antworte in folgendem JSON-Format:
 3. paymentStatus Erkennung (SEHR WICHTIG!):
    - "paid" = wenn folgende Begriffe im Text:
      * "bezahlt", "beglichen", "gezahlt", "überwiesen", "erfolgt"
+     * "FET", "fet", "bereits bezahlt", "Rechnung beglichen"
      * ODER wenn eine Zahlungsmethode + Vergangenheit erwähnt wird:
        "Lastschrift durchgeführt", "PayPal bezahlt", "Bar bezahlt",
        "Kreditkarte belastet", "in bar beglichen", etc.
      * ODER: "Zahlung erfolgt", "Online bezahlt", "Rechnung ausgeglichen"
+     * "abgeschlossen", "erledigt", "settled", "paid", "completed"
    - "unpaid" = wenn "ausstehend", "offen", "fällig", "zu zahlen", "bitte überweisen" im Text
    - null = wenn unklar
 

@@ -36,8 +36,15 @@ export default function SmartContractInfo({ contract, onPaymentUpdate }: SmartCo
   // 🧠 Intelligente Detection
   const contractName = contract.name?.toLowerCase() || '';
 
-  // Keyword Detection
-  const isInvoice = contractName.includes('rechnung') || contractName.includes('invoice');
+  // Keyword Detection - Erweitert für mehr Rechnungs-Formate
+  const invoiceKeywords = [
+    'rechnung', 'invoice',
+    're-', 're_', '_re', // RE-2024, email_RE, etc.
+    'beleg', 'quittung', 'receipt',
+    'zahlungsbeleg', 'kassenbeleg',
+    'gutschrift', 'stornorechnung'
+  ];
+  const isInvoice = invoiceKeywords.some(keyword => contractName.includes(keyword));
 
   // Recurring Keywords (sehr sichere Signale für Abo/Subscription)
   const recurringKeywords = [
