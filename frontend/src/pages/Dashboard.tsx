@@ -662,9 +662,12 @@ export default function Dashboard() {
       )}
 
       <div className={styles.dashboardContent}>
-        {/* 🆕 Metrics Cards Grid - jetzt anklickbar */}
+        {/* 🆕 Metrics Cards Grid - 6 Karten in logischer Reihenfolge */}
         <div className={styles.metricsGrid}>
-          <div 
+          {/* Reihe 1: Allgemeine Übersicht */}
+
+          {/* 1. Verträge insgesamt */}
+          <div
             className={`${styles.metricCard} ${styles.clickableCard}`}
             onClick={() => navigate('/contracts')}
           >
@@ -687,7 +690,66 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div 
+          {/* 2. Aktive Verträge */}
+          <div
+            className={`${styles.metricCard} ${styles.clickableCard}`}
+            onClick={() => navigate('/contracts?filter=active')}
+          >
+            <div className={styles.metricHeader}>
+              <div className={styles.metricIcon}>
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M9 12L11 14L15 10" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" strokeWidth="2"/>
+                </svg>
+              </div>
+              <div className={styles.metricHeaderActions}>
+                <span className={styles.metricTrend}>
+                  {countStatus("Aktiv") > 0 ? `${Math.round((countStatus("Aktiv") / contracts.length) * 100)}%` : '—'}
+                </span>
+                <InfoTooltip {...tooltipTexts.metricsActive} />
+              </div>
+            </div>
+            <div className={styles.metricValue}>
+              {isLoading ? "..." : countStatus("Aktiv")}
+            </div>
+            <div className={styles.metricLabel}>Aktive Verträge</div>
+            <div className={styles.metricSubtext}>
+              Derzeit gültig
+            </div>
+          </div>
+
+          {/* 3. Bald ablaufend */}
+          <div
+            className={`${styles.metricCard} ${styles.clickableCard}`}
+            onClick={() => navigate('/contracts?filter=expiring')}
+          >
+            <div className={styles.metricHeader}>
+              <div className={styles.metricIcon}>
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 9V13L15 15" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" strokeWidth="2"/>
+                </svg>
+              </div>
+              <div className={styles.metricHeaderActions}>
+                <span className={styles.metricTrend}>
+                  {countStatus("Bald ablaufend") > 0 ? '⚠️' : '✅'}
+                </span>
+                <InfoTooltip {...tooltipTexts.metricsExpiring} />
+              </div>
+            </div>
+            <div className={styles.metricValue}>
+              {isLoading ? "..." : countStatus("Bald ablaufend")}
+            </div>
+            <div className={styles.metricLabel}>Bald ablaufend</div>
+            <div className={styles.metricSubtext}>
+              Nächste 30 Tage
+            </div>
+          </div>
+
+          {/* Reihe 2: Spezifische Details */}
+
+          {/* 4. Mit Erinnerung */}
+          <div
             className={`${styles.metricCard} ${styles.clickableCard}`}
             onClick={() => navigate('/contracts?filter=reminder')}
           >
@@ -713,6 +775,7 @@ export default function Dashboard() {
             </div>
           </div>
 
+          {/* 5. Abo-Verträge (kombiniert mit Kosten) */}
           <div
             className={`${styles.metricCard} ${styles.clickableCard}`}
             onClick={() => navigate('/contracts?filter=subscriptions')}
@@ -739,36 +802,13 @@ export default function Dashboard() {
             </div>
             <div className={styles.metricLabel}>Abo-Verträge</div>
             <div className={styles.metricSubtext}>
-              {calculateYearlyCosts() > 0 ? `${calculateYearlyCosts().toLocaleString('de-DE')}€/Jahr` : 'Keine Abos'}
+              {calculateMonthlyCosts() > 0
+                ? `${calculateMonthlyCosts().toLocaleString('de-DE')}€/Monat · ${calculateYearlyCosts().toLocaleString('de-DE')}€/Jahr`
+                : 'Keine Abos'}
             </div>
           </div>
 
-          <div className={`${styles.metricCard} ${styles.clickableCard}`}>
-            <div className={styles.metricHeader}>
-              <div className={styles.metricIcon}>
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 2V22M17 5H9.5C8.57174 5 7.6815 5.36875 7.02513 6.02513C6.36875 6.6815 6 7.57174 6 8.5C6 9.42826 6.36875 10.3185 7.02513 10.9749C7.6815 11.6313 8.57174 12 9.5 12H14.5C15.4283 12 16.3185 12.3687 16.9749 13.0251C17.6313 13.6815 18 14.5717 18 15.5C18 16.4283 17.6313 17.3185 16.9749 17.9749C16.3185 18.6313 15.4283 19 14.5 19H6" stroke="currentColor" strokeWidth="2"/>
-                </svg>
-              </div>
-              <div className={styles.metricHeaderActions}>
-                <span className={styles.metricTrend}>
-                  {calculateMonthlyCosts() > 0 ? '/M' : '—'}
-                </span>
-                <InfoTooltip
-                  title="Laufende Kosten"
-                  content="Gesamte monatliche Kosten aller Abo-Verträge"
-                />
-              </div>
-            </div>
-            <div className={styles.metricValue}>
-              {isLoading ? "..." : (calculateMonthlyCosts() > 0 ? `${calculateMonthlyCosts().toLocaleString('de-DE')}€` : '0€')}
-            </div>
-            <div className={styles.metricLabel}>Laufende Kosten</div>
-            <div className={styles.metricSubtext}>
-              Pro Monat
-            </div>
-          </div>
-
+          {/* 6. Rechnungen */}
           <div
             className={`${styles.metricCard} ${styles.clickableCard}`}
             onClick={() => navigate('/contracts?filter=invoices')}
@@ -797,60 +837,6 @@ export default function Dashboard() {
             <div className={styles.metricLabel}>Rechnungen</div>
             <div className={styles.metricSubtext}>
               {countUnpaidInvoices() > 0 ? `${countUnpaidInvoices()} offen ⚠️` : 'Alle bezahlt ✅'}
-            </div>
-          </div>
-
-          <div 
-            className={`${styles.metricCard} ${styles.clickableCard}`}
-            onClick={() => navigate('/contracts?filter=active')}
-          >
-            <div className={styles.metricHeader}>
-              <div className={styles.metricIcon}>
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M9 12L11 14L15 10" stroke="currentColor" strokeWidth="2"/>
-                  <path d="M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" strokeWidth="2"/>
-                </svg>
-              </div>
-              <div className={styles.metricHeaderActions}>
-                <span className={styles.metricTrend}>
-                  {countStatus("Aktiv") > 0 ? `${Math.round((countStatus("Aktiv") / contracts.length) * 100)}%` : '—'}
-                </span>
-                <InfoTooltip {...tooltipTexts.metricsActive} />
-              </div>
-            </div>
-            <div className={styles.metricValue}>
-              {isLoading ? "..." : countStatus("Aktiv")}
-            </div>
-            <div className={styles.metricLabel}>Aktive Verträge</div>
-            <div className={styles.metricSubtext}>
-              Derzeit gültig
-            </div>
-          </div>
-
-          <div 
-            className={`${styles.metricCard} ${styles.clickableCard}`}
-            onClick={() => navigate('/contracts?filter=expiring')}
-          >
-            <div className={styles.metricHeader}>
-              <div className={styles.metricIcon}>
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 9V13L15 15" stroke="currentColor" strokeWidth="2"/>
-                  <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" strokeWidth="2"/>
-                </svg>
-              </div>
-              <div className={styles.metricHeaderActions}>
-                <span className={styles.metricTrend}>
-                  {countStatus("Bald ablaufend") > 0 ? '⚠️' : '✅'}
-                </span>
-                <InfoTooltip {...tooltipTexts.metricsExpiring} />
-              </div>
-            </div>
-            <div className={styles.metricValue}>
-              {isLoading ? "..." : countStatus("Bald ablaufend")}
-            </div>
-            <div className={styles.metricLabel}>Bald ablaufend</div>
-            <div className={styles.metricSubtext}>
-              Nächste 30 Tage
             </div>
           </div>
         </div>
