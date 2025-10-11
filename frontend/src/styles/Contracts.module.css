@@ -1746,6 +1746,11 @@
   text-overflow: ellipsis;
 }
 
+/* 📋 Override padding for checkbox header */
+.contractsTable th.checkboxColumn {
+  padding: 0.5rem 0.15rem !important;
+}
+
 .tableRow {
   border-bottom: 1px solid #f1f5f9;
   cursor: pointer;
@@ -1762,6 +1767,11 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* 📋 Override padding for checkbox column */
+.tableRow td.checkboxColumn {
+  padding: 0.5rem 0.15rem !important;
 }
 
 .contractName {
