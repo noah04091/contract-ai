@@ -70,8 +70,9 @@ export default function FolderModal({ isOpen, folder, onClose, onSave }: FolderM
         icon
       });
       onClose();
-    } catch (err: any) {
-      setError(err.message || 'Fehler beim Speichern');
+    } catch (err) {
+      const error = err as Error;
+      setError(error.message || 'Fehler beim Speichern');
     } finally {
       setIsSaving(false);
     }

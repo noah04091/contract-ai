@@ -548,11 +548,18 @@ export default function Contracts() {
   };
 
   // 🤖 Smart Folders Handlers
-  const handleFetchSmartSuggestions = async () => {
+  interface SmartFolderSuggestion {
+    name: string;
+    icon: string;
+    color: string;
+    contracts: Array<{ _id: string; name: string }>;
+  }
+
+  const handleFetchSmartSuggestions = async (): Promise<SmartFolderSuggestion[]> => {
     try {
-      const data: any = await apiCall('/folders/smart-suggest', {
+      const data = await apiCall('/folders/smart-suggest', {
         method: 'POST'
-      });
+      }) as { suggestions?: SmartFolderSuggestion[] };
 
       return data.suggestions || [];
     } catch (err) {
@@ -561,7 +568,7 @@ export default function Contracts() {
     }
   };
 
-  const handleConfirmSmartFolders = async (suggestions: any[]) => {
+  const handleConfirmSmartFolders = async (suggestions: SmartFolderSuggestion[]) => {
     try {
       await apiCall('/folders/smart-create', {
         method: 'POST',

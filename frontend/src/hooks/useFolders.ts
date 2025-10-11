@@ -44,8 +44,9 @@ export function useFolders(): UseFoldersReturn {
 
       const data = await response.json();
       setFolders(data);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      const error = err as Error;
+      setError(error.message);
       console.error('❌ Error fetching folders:', err);
     } finally {
       setIsLoading(false);
@@ -75,8 +76,9 @@ export function useFolders(): UseFoldersReturn {
       }
 
       await fetchFolders(); // Refresh list
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      const error = err as Error;
+      setError(error.message);
       console.error('❌ Error creating folder:', err);
       throw err;
     } finally {
@@ -107,8 +109,9 @@ export function useFolders(): UseFoldersReturn {
       }
 
       await fetchFolders(); // Refresh list
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      const error = err as Error;
+      setError(error.message);
       console.error('❌ Error updating folder:', err);
       throw err;
     } finally {
@@ -135,8 +138,9 @@ export function useFolders(): UseFoldersReturn {
       }
 
       await fetchFolders(); // Refresh list
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      const error = err as Error;
+      setError(error.message);
       console.error('❌ Error deleting folder:', err);
       throw err;
     } finally {
@@ -164,8 +168,9 @@ export function useFolders(): UseFoldersReturn {
       }
 
       await fetchFolders(); // Refresh counts
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      const error = err as Error;
+      setError(error.message);
       console.error('❌ Error moving contract:', err);
       throw err;
     }
@@ -191,8 +196,9 @@ export function useFolders(): UseFoldersReturn {
       }
 
       await fetchFolders(); // Refresh counts
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      const error = err as Error;
+      setError(error.message);
       console.error('❌ Error bulk moving contracts:', err);
       throw err;
     }

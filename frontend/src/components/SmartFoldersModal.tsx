@@ -45,8 +45,9 @@ export default function SmartFoldersModal({
     try {
       const data = await onFetchSuggestions();
       setSuggestions(data);
-    } catch (err: any) {
-      setError(err.message || 'Fehler beim Laden der Vorschläge');
+    } catch (err) {
+      const error = err as Error;
+      setError(error.message || 'Fehler beim Laden der Vorschläge');
     } finally {
       setIsLoading(false);
     }
@@ -59,8 +60,9 @@ export default function SmartFoldersModal({
     try {
       await onConfirm(suggestions);
       onClose();
-    } catch (err: any) {
-      setError(err.message || 'Fehler beim Erstellen der Ordner');
+    } catch (err) {
+      const error = err as Error;
+      setError(error.message || 'Fehler beim Erstellen der Ordner');
     } finally {
       setIsCreating(false);
     }
