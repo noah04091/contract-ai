@@ -6,7 +6,7 @@ import {
   FileText, RefreshCw, Upload, CheckCircle, AlertCircle,
   Plus, Calendar, Clock, Trash2, Eye, Edit,
   Search, X, Crown, Users, Loader,
-  Lock, Zap, BarChart3, ExternalLink, ArrowRight
+  Lock, Zap, BarChart3, ExternalLink, ArrowRight, Folder
 } from "lucide-react";
 import styles from "../styles/Contracts.module.css";
 import ContractAnalysis from "../components/ContractAnalysis";
@@ -15,6 +15,7 @@ import ContractDetailsView from "../components/ContractDetailsView";
 import UploadSuccessModal from "../components/UploadSuccessModal"; // ✅ NEU: Two-Step Upload Modal
 import FolderSidebar from "../components/FolderSidebar"; // 📁 Folder Sidebar
 import FolderModal from "../components/FolderModal"; // 📁 Folder Modal
+import SmartFoldersModal from "../components/SmartFoldersModal"; // 🤖 Smart Folders Modal
 import { apiCall, uploadAndAnalyze, uploadOnly } from "../utils/api"; // ✅ NEU: uploadOnly hinzugefügt
 import { useFolders } from "../hooks/useFolders"; // 📁 Folder Hook
 import type { FolderType } from "../components/FolderSidebar"; // 📁 Folder Type
@@ -392,12 +393,33 @@ export default function Contracts() {
     updateFolder,
     deleteFolder,
     setActiveFolder,
-    // moveContractToFolder // TODO: Use in dropdown
+    moveContractToFolder,
+    bulkMoveToFolder
   } = useFolders();
 
   // 📁 Folder Modal State
   const [folderModalOpen, setFolderModalOpen] = useState(false);
   const [editingFolder, setEditingFolder] = useState<FolderType | null>(null);
+  const [folderDropdownOpen, setFolderDropdownOpen] = useState<string | null>(null); // Track which contract's dropdown is open
+
+  // 📋 Bulk Selection State
+  const [selectedContracts, setSelectedContracts] = useState<string[]>([]);
+  const [bulkActionDropdownOpen, setBulkActionDropdownOpen] = useState(false);
+
+  // 🤖 Smart Folders Modal State
+  const [smartFoldersModalOpen, setSmartFoldersModalOpen] = useState(false);
+
+  // 📁 Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      if (folderDropdownOpen) {
+        setFolderDropdownOpen(null);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [folderDropdownOpen]);
 
   // ✅ FIXED: PDF anzeigen Handler - jetzt als Wrapper für die extrahierte Funktion
   const handleViewContractPDFWrapper = async (contract: Contract) => {
@@ -446,21 +468,115 @@ export default function Contracts() {
     await fetchContracts(); // Refresh to update counts
   };
 
-  // TODO: Wire up in UI (Move-to-Folder Dropdown)
-  /*
+  // 📁 Move Contract to Folder Handler
   const handleMoveToFolder = async (contractId: string, folderId: string | null) => {
     try {
       await moveContractToFolder(contractId, folderId);
       await fetchContracts(); // Refresh to show new folder assignment
+
+      // Success feedback
+      const folderName = folderId
+        ? folders.find(f => f._id === folderId)?.name || 'Ordner'
+        : 'Ohne Ordner';
+      console.log(`✅ Vertrag verschoben nach: ${folderName}`);
     } catch (err) {
       console.error('Error moving contract:', err);
-      setError('Fehler beim Verschieben des Vertrags');
+      alert('Fehler beim Verschieben des Vertrags');
     }
   };
-  */
 
   // Count unassigned contracts
   const unassignedCount = contracts.filter(c => !c.folderId).length;
+
+  // 📋 Bulk Selection Handlers
+  const toggleSelectContract = (contractId: string) => {
+    setSelectedContracts(prev =>
+      prev.includes(contractId)
+        ? prev.filter(id => id !== contractId)
+        : [...prev, contractId]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedContracts.length === filteredContracts.length) {
+      setSelectedContracts([]);
+    } else {
+      setSelectedContracts(filteredContracts.map(c => c._id));
+    }
+  };
+
+  const handleBulkMoveToFolder = async (folderId: string | null) => {
+    if (selectedContracts.length === 0) return;
+
+    try {
+      await bulkMoveToFolder(selectedContracts, folderId);
+      await fetchContracts();
+      setSelectedContracts([]);
+      setBulkActionDropdownOpen(false);
+
+      const folderName = folderId
+        ? folders.find(f => f._id === folderId)?.name || 'Ordner'
+        : 'Ohne Ordner';
+      console.log(`✅ ${selectedContracts.length} Verträge verschoben nach: ${folderName}`);
+    } catch (err) {
+      console.error('Error bulk moving contracts:', err);
+      alert('Fehler beim Verschieben der Verträge');
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedContracts.length === 0) return;
+
+    const confirmed = confirm(`${selectedContracts.length} Verträge wirklich löschen?`);
+    if (!confirmed) return;
+
+    try {
+      // Delete all selected contracts
+      await Promise.all(
+        selectedContracts.map(contractId =>
+          apiCall(`/contracts/${contractId}`, { method: 'DELETE' })
+        )
+      );
+
+      await fetchContracts();
+      setSelectedContracts([]);
+      console.log(`✅ ${selectedContracts.length} Verträge gelöscht`);
+    } catch (err) {
+      console.error('Error bulk deleting contracts:', err);
+      alert('Fehler beim Löschen der Verträge');
+    }
+  };
+
+  // 🤖 Smart Folders Handlers
+  const handleFetchSmartSuggestions = async () => {
+    try {
+      const data: any = await apiCall('/folders/smart-suggest', {
+        method: 'POST'
+      });
+
+      return data.suggestions || [];
+    } catch (err) {
+      console.error('Error fetching smart suggestions:', err);
+      throw err;
+    }
+  };
+
+  const handleConfirmSmartFolders = async (suggestions: any[]) => {
+    try {
+      await apiCall('/folders/smart-create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ suggestions })
+      });
+
+      await fetchFolders();
+      await fetchContracts();
+      console.log(`✅ ${suggestions.length} Smart Folders erstellt`);
+    } catch (err) {
+      console.error('Error creating smart folders:', err);
+      throw err;
+    }
+  };
 
   // ✅ NEU: Legacy-Modal Komponente
   const LegacyModal = ({ 
@@ -1855,6 +1971,7 @@ export default function Contracts() {
           onCreateFolder={handleCreateFolder}
           onEditFolder={handleEditFolder}
           onDeleteFolder={handleDeleteFolder}
+          onSmartFolders={() => setSmartFoldersModalOpen(true)}
           isLoading={foldersLoading}
         />
 
@@ -2455,6 +2572,14 @@ export default function Contracts() {
                       <table className={styles.contractsTable}>
                         <thead>
                           <tr>
+                            <th className={styles.checkboxColumn}>
+                              <input
+                                type="checkbox"
+                                checked={selectedContracts.length === filteredContracts.length && filteredContracts.length > 0}
+                                onChange={toggleSelectAll}
+                                className={styles.bulkCheckbox}
+                              />
+                            </th>
                             <th>Vertragsname</th>
                             <th>Kündigungsfrist</th>
                             <th>Ablaufdatum</th>
@@ -2466,7 +2591,7 @@ export default function Contracts() {
                         <tbody>
                           {filteredContracts.length === 0 ? (
                             <tr>
-                              <td colSpan={6} style={{ textAlign: 'center', padding: '60px 20px' }}>
+                              <td colSpan={7} style={{ textAlign: 'center', padding: '60px 20px' }}>
                                 <div style={{ color: '#6b7280' }}>
                                   <div style={{ fontSize: '48px', marginBottom: '16px' }}>📄</div>
                                   <h3 style={{ margin: '0 0 8px 0', color: '#374151' }}>
@@ -2499,14 +2624,25 @@ export default function Contracts() {
                               </td>
                             </tr>
                           ) : filteredContracts.map((contract) => (
-                            <motion.tr 
-                              key={contract._id} 
-                              className={styles.tableRow}
+                            <motion.tr
+                              key={contract._id}
+                              className={`${styles.tableRow} ${selectedContracts.includes(contract._id) ? styles.selectedRow : ''}`}
                               initial={{ opacity: 0, y: 10 }}
                               animate={{ opacity: 1, y: 0 }}
                               transition={{ duration: 0.3 }}
                               onClick={() => handleRowClick(contract)}
                             >
+                              <td
+                                className={styles.checkboxColumn}
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={selectedContracts.includes(contract._id)}
+                                  onChange={() => toggleSelectContract(contract._id)}
+                                  className={styles.bulkCheckbox}
+                                />
+                              </td>
                               <td>
                                 <div className={styles.contractName}>
                                   <div className={styles.contractIcon}>
@@ -2546,7 +2682,7 @@ export default function Contracts() {
                               </td>
                               <td>
                                 <div className={styles.actionButtons}>
-                                  <button 
+                                  <button
                                     className={styles.actionButton}
                                     onClick={(e) => {
                                       e.stopPropagation();
@@ -2556,7 +2692,7 @@ export default function Contracts() {
                                   >
                                     <Eye size={16} />
                                   </button>
-                                  <button 
+                                  <button
                                     className={styles.actionButton}
                                     onClick={(e) => {
                                       e.stopPropagation();
@@ -2571,7 +2707,7 @@ export default function Contracts() {
                                       <ExternalLink size={16} />
                                     )}
                                   </button>
-                                  <button 
+                                  <button
                                     className={styles.actionButton}
                                     onClick={(e) => {
                                       e.stopPropagation();
@@ -2581,7 +2717,70 @@ export default function Contracts() {
                                   >
                                     <Edit size={16} />
                                   </button>
-                                  <button 
+                                  {/* 📁 Folder Dropdown */}
+                                  <div
+                                    className={styles.folderDropdownWrapper}
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <button
+                                      className={`${styles.actionButton} ${folderDropdownOpen === contract._id ? styles.active : ''}`}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setFolderDropdownOpen(
+                                          folderDropdownOpen === contract._id ? null : contract._id
+                                        );
+                                      }}
+                                      title="In Ordner verschieben"
+                                    >
+                                      <Folder size={16} />
+                                    </button>
+                                    {folderDropdownOpen === contract._id && (
+                                      <div className={styles.folderDropdown}>
+                                        <div className={styles.folderDropdownHeader}>
+                                          In Ordner verschieben
+                                        </div>
+                                        <div className={styles.folderDropdownList}>
+                                          {/* Ohne Ordner Option */}
+                                          <button
+                                            className={`${styles.folderDropdownItem} ${!contract.folderId ? styles.selected : ''}`}
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleMoveToFolder(contract._id, null);
+                                              setFolderDropdownOpen(null);
+                                            }}
+                                          >
+                                            <span className={styles.folderIcon}>📂</span>
+                                            <span className={styles.folderName}>Ohne Ordner</span>
+                                          </button>
+
+                                          {/* Folder List */}
+                                          {folders.map((folder) => (
+                                            <button
+                                              key={folder._id}
+                                              className={`${styles.folderDropdownItem} ${contract.folderId === folder._id ? styles.selected : ''}`}
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleMoveToFolder(contract._id, folder._id);
+                                                setFolderDropdownOpen(null);
+                                              }}
+                                            >
+                                              <span
+                                                className={styles.folderIcon}
+                                                style={{ color: folder.color }}
+                                              >
+                                                {folder.icon}
+                                              </span>
+                                              <span className={styles.folderName}>{folder.name}</span>
+                                              {contract.folderId === folder._id && (
+                                                <CheckCircle size={14} className={styles.checkIcon} />
+                                              )}
+                                            </button>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                  <button
                                     className={`${styles.actionButton} ${styles.deleteButton}`}
                                     onClick={(e) => {
                                       e.stopPropagation();
@@ -2608,6 +2807,81 @@ export default function Contracts() {
                         />
                       ))}
                     </div>
+
+                    {/* 📋 Bulk Action Bar */}
+                    {selectedContracts.length > 0 && (
+                      <motion.div
+                        className={styles.bulkActionBar}
+                        initial={{ y: 100, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        exit={{ y: 100, opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <div className={styles.bulkActionInfo}>
+                          <CheckCircle size={20} />
+                          <span className={styles.bulkActionCount}>
+                            {selectedContracts.length} ausgewählt
+                          </span>
+                        </div>
+
+                        <div className={styles.bulkActionButtons}>
+                          {/* Move to Folder Dropdown */}
+                          <div className={styles.bulkDropdownWrapper}>
+                            <button
+                              className={styles.bulkActionButton}
+                              onClick={() => setBulkActionDropdownOpen(!bulkActionDropdownOpen)}
+                            >
+                              <Folder size={16} />
+                              In Ordner verschieben
+                            </button>
+                            {bulkActionDropdownOpen && (
+                              <div className={styles.bulkFolderDropdown}>
+                                <button
+                                  className={styles.bulkFolderItem}
+                                  onClick={() => handleBulkMoveToFolder(null)}
+                                >
+                                  <span className={styles.folderIcon}>📂</span>
+                                  <span>Ohne Ordner</span>
+                                </button>
+                                {folders.map((folder) => (
+                                  <button
+                                    key={folder._id}
+                                    className={styles.bulkFolderItem}
+                                    onClick={() => handleBulkMoveToFolder(folder._id)}
+                                  >
+                                    <span
+                                      className={styles.folderIcon}
+                                      style={{ color: folder.color }}
+                                    >
+                                      {folder.icon}
+                                    </span>
+                                    <span>{folder.name}</span>
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Delete Button */}
+                          <button
+                            className={`${styles.bulkActionButton} ${styles.bulkDeleteButton}`}
+                            onClick={handleBulkDelete}
+                          >
+                            <Trash2 size={16} />
+                            Löschen
+                          </button>
+
+                          {/* Cancel Button */}
+                          <button
+                            className={styles.bulkCancelButton}
+                            onClick={() => setSelectedContracts([])}
+                          >
+                            <X size={16} />
+                            Abbrechen
+                          </button>
+                        </div>
+                      </motion.div>
+                    )}
                   </>
                 )}
               </motion.div>
@@ -2683,6 +2957,14 @@ export default function Contracts() {
           setEditingFolder(null);
         }}
         onSave={handleFolderSave}
+      />
+
+      {/* 🤖 Smart Folders Modal */}
+      <SmartFoldersModal
+        isOpen={smartFoldersModalOpen}
+        onClose={() => setSmartFoldersModalOpen(false)}
+        onFetchSuggestions={handleFetchSmartSuggestions}
+        onConfirm={handleConfirmSmartFolders}
       />
     </>
   );

@@ -1,6 +1,6 @@
 // 📁 FolderSidebar.tsx - Folder Navigation Sidebar
 import { useState, useEffect } from 'react';
-import { Folder, Plus, Edit2, Trash2, MoreVertical } from 'lucide-react';
+import { Folder, Plus, Edit2, Trash2, MoreVertical, Sparkles } from 'lucide-react';
 import styles from '../styles/FolderSidebar.module.css';
 
 export interface FolderType {
@@ -21,6 +21,7 @@ interface FolderSidebarProps {
   onCreateFolder: () => void;
   onEditFolder: (folder: FolderType) => void;
   onDeleteFolder: (folder: FolderType) => void;
+  onSmartFolders?: () => void; // 🤖 Smart Folders Trigger
   isLoading?: boolean;
 }
 
@@ -33,6 +34,7 @@ export default function FolderSidebar({
   onCreateFolder,
   onEditFolder,
   onDeleteFolder,
+  onSmartFolders,
   isLoading = false
 }: FolderSidebarProps) {
   const [contextMenuFolder, setContextMenuFolder] = useState<string | null>(null);
@@ -158,6 +160,18 @@ export default function FolderSidebar({
             Ersten Ordner erstellen
           </button>
         </div>
+      )}
+
+      {/* 🤖 Smart Folders Button */}
+      {onSmartFolders && totalContracts > 0 && (
+        <button
+          className={styles.smartFoldersBtn}
+          onClick={onSmartFolders}
+          disabled={isLoading}
+        >
+          <Sparkles size={16} />
+          <span>Smart Folders</span>
+        </button>
       )}
     </div>
   );

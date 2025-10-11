@@ -1873,6 +1873,233 @@
   color: #b91c1c;
 }
 
+/* 📋 Bulk Selection Styles */
+.checkboxColumn {
+  width: 40px;
+  padding: 0.5rem !important;
+  text-align: center;
+}
+
+.bulkCheckbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #667eea;
+}
+
+.selectedRow {
+  background: #f0f4ff !important;
+}
+
+/* 📋 Bulk Action Bar */
+.bulkActionBar {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  z-index: 999;
+  min-width: 500px;
+}
+
+.bulkActionInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #667eea;
+  font-weight: 600;
+}
+
+.bulkActionCount {
+  font-size: 0.9375rem;
+}
+
+.bulkActionButtons {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.bulkDropdownWrapper {
+  position: relative;
+}
+
+.bulkActionButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.bulkActionButton:hover {
+  background: #5568d3;
+  transform: translateY(-1px);
+}
+
+.bulkDeleteButton {
+  background: #ef4444;
+}
+
+.bulkDeleteButton:hover {
+  background: #dc2626;
+}
+
+.bulkCancelButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  background: #f3f4f6;
+  color: #6b7280;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.bulkCancelButton:hover {
+  background: #e5e7eb;
+}
+
+.bulkFolderDropdown {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  min-width: 220px;
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 1000;
+}
+
+.bulkFolderItem {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: white;
+  border: none;
+  border-bottom: 1px solid #f3f4f6;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #1d1d1f;
+}
+
+.bulkFolderItem:last-child {
+  border-bottom: none;
+}
+
+.bulkFolderItem:hover {
+  background: #f9fafb;
+}
+
+/* 📁 Folder Dropdown Styles */
+.folderDropdownWrapper {
+  position: relative;
+}
+
+.actionButton.active {
+  background: #f3f4f6;
+  border-color: #667eea;
+  color: #667eea;
+}
+
+.folderDropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  min-width: 200px;
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.folderDropdownHeader {
+  padding: 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
+.folderDropdownList {
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.folderDropdownItem {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: white;
+  border: none;
+  border-bottom: 1px solid #f3f4f6;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.folderDropdownItem:last-child {
+  border-bottom: none;
+}
+
+.folderDropdownItem:hover {
+  background: #f9fafb;
+}
+
+.folderDropdownItem.selected {
+  background: #f0f4ff;
+  color: #667eea;
+}
+
+.folderDropdownItem .folderIcon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.folderDropdownItem .folderName {
+  flex: 1;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.folderDropdownItem .checkIcon {
+  color: #667eea;
+  flex-shrink: 0;
+}
+
 /* ✅ MOBILE CARDS - Zeigt Cards statt Tabelle auf mobilen Geräten */
 .mobileCardsContainer {
   display: none; /* Hidden by default, shown on mobile via media query */
