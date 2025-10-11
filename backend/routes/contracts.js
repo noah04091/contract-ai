@@ -1494,12 +1494,20 @@ router.patch("/:id/folder", verifyToken, async (req, res) => {
     const { folderId } = req.body; // Can be null to remove from folder
     const contractId = req.params.id;
 
+    // 🔍 DEBUG LOGGING
+    console.log("📄 Single Move Request:");
+    console.log("  - contractId:", contractId);
+    console.log("  - folderId:", folderId);
+    console.log("  - req.userId:", req.userId);
+
     if (!ObjectId.isValid(contractId)) {
+      console.log("❌ Invalid contract ID:", contractId);
       return res.status(400).json({ error: "Ungültige Vertrags-ID" });
     }
 
     // Validate folderId if provided
     if (folderId && !ObjectId.isValid(folderId)) {
+      console.log("❌ Invalid folder ID:", folderId);
       return res.status(400).json({ error: "Ungültige Ordner-ID" });
     }
 
@@ -1556,13 +1564,29 @@ router.patch("/bulk/folder", verifyToken, async (req, res) => {
   try {
     const { contractIds, folderId } = req.body;
 
+    // 🔍 DEBUG LOGGING
+    console.log("📋 Bulk Move Request:");
+    console.log("  - contractIds:", contractIds);
+    console.log("  - contractIds type:", typeof contractIds, Array.isArray(contractIds));
+    console.log("  - folderId:", folderId);
+    console.log("  - req.userId:", req.userId);
+
     if (!contractIds || !Array.isArray(contractIds) || contractIds.length === 0) {
+      console.log("❌ Validation failed: No contracts selected");
       return res.status(400).json({ error: "Keine Verträge ausgewählt" });
     }
 
     // Validate all contract IDs
-    const validIds = contractIds.filter(id => ObjectId.isValid(id));
+    const validIds = contractIds.filter(id => {
+      const isValid = ObjectId.isValid(id);
+      console.log(`  - Checking ID ${id}: ${isValid ? '✅' : '❌'}`);
+      return isValid;
+    });
+
+    console.log(`  - Valid IDs: ${validIds.length}/${contractIds.length}`);
+
     if (validIds.length === 0) {
+      console.log("❌ All IDs invalid!");
       return res.status(400).json({ error: "Ungültige Vertrags-IDs" });
     }
 
