@@ -10,7 +10,8 @@ interface Contract {
   uploadedAt?: string;
 
   // ✨ Payment Tracking Fields
-  contractType?: 'recurring' | 'one-time';
+  contractType?: 'recurring' | 'one-time' | null;
+  contractTypeConfidence?: 'high' | 'medium' | 'low';
   paymentStatus?: 'paid' | 'unpaid';
   paymentDate?: string;
   paymentDueDate?: string;

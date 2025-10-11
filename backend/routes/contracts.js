@@ -1183,7 +1183,8 @@ Antworte in folgendem JSON-Format:
   "status": "Aktiv/Inaktiv/Unbekannt",
   "risiken": ["Risiko 1", "Risiko 2"],
   "optimierungen": ["Optimierung 1", "Optimierung 2"],
-  "contractType": "recurring|one-time",
+  "contractType": "recurring|one-time|null",
+  "contractTypeConfidence": "high|medium|low",
   "paymentAmount": <Zahl oder null>,
   "paymentStatus": "paid|unpaid|null",
   "paymentDueDate": "YYYY-MM-DD oder null",
@@ -1191,11 +1192,41 @@ Antworte in folgendem JSON-Format:
   "paymentFrequency": "monthly|yearly|weekly|null"
 }
 
+WICHTIG - contractTypeConfidence Regeln:
+- "high" = 3+ klare Signale, sehr sicher (z.B. "Netflix Abo, monatlich, 9.99€/Monat")
+- "medium" = 2 Signale, wahrscheinlich richtig (z.B. "Mietvertrag, monatlich")
+- "low" = 1 Signal, unsicher (z.B. nur "monatlich" ohne Kontext)
+- Wenn contractType: null → contractTypeConfidence: "low"
+
 🔍 KRITISCH WICHTIG - Payment-Erkennung (lies den KOMPLETTEN Text durch!):
 
-1. contractType Erkennung:
-   - "one-time" = Kaufvertrag, Rechnung, Einmalkauf, einmalige Zahlung, Kaufpreis
-   - "recurring" = Abo, monatliche Zahlung, Mitgliedschaft, Subscription, laufende Kosten
+1. contractType Erkennung (PRÄZISE & KONSERVATIV!):
+
+   WICHTIG: Lieber null zurückgeben als falsch klassifizieren!
+
+   ✅ "recurring" NUR wenn MINDESTENS 2 der folgenden Signale zutreffen:
+   - Explizite Begriffe: "Abonnement", "Abo", "Subscription", "Mitgliedschaft"
+   - Zeitliche Wiederkehr: "monatlich", "jährlich", "wöchentlich", "pro Monat"
+   - Vertragslaufzeit: "Mindestlaufzeit", "Kündigungsfrist", "automatische Verlängerung"
+   - Spezifische Vertragstypen: "Mietvertrag", "Versicherung", "Leasing"
+   - Laufende Kosten: "monatliche Rate", "wiederkehrende Zahlung", "Jahresbeitrag"
+
+   ✅ "one-time" NUR wenn SEHR SICHER:
+   - Explizite Begriffe: "einmalig", "einmalige Zahlung", "Einmalzahlung"
+   - Kaufvertrag: "Kaufvertrag", "Kaufpreis", "Verkauf von"
+   - Werkvertrag: "Werkvertrag", "Dienstleistung gegen Einmalzahlung"
+   - UND KEINE Hinweise auf Wiederholung (keine "monatlich", "jährlich", etc.)
+
+   ⚠️ null (nicht setzen) wenn:
+   - Unsicher oder mehrdeutig
+   - Nur 1 schwaches Signal vorhanden
+   - Dokument ist Rechnung (egal ob dahinter Abo oder nicht!)
+   - Widersprüchliche Signale (z.B. "monatlich" UND "einmalige Zahlung")
+
+   WICHTIG bei Rechnungen:
+   - Wenn Dokument eine Rechnung ist → contractType: null
+   - Grund: Rechnung kann von Abo ODER Einmalkauf sein
+   - Frontend entscheidet basierend auf Dateiname
 
 2. paymentAmount Erkennung (SEHR WICHTIG!):
    Suche nach folgenden Begriffen im GESAMTEN Text:
@@ -1335,6 +1366,7 @@ BEISPIELE (Bezahlt-Status):
       optimierungen: analysisResult.optimierungen || [],
       // 💳 NEU: Payment Tracking Fields aus KI-Analyse
       contractType: analysisResult.contractType || null,
+      contractTypeConfidence: analysisResult.contractTypeConfidence || 'low',
       paymentAmount: analysisResult.paymentAmount || null,
       paymentStatus: analysisResult.paymentStatus || null,
       paymentDueDate: analysisResult.paymentDueDate || null,

@@ -10,7 +10,8 @@ interface Contract {
   uploadedAt?: string;
 
   // Payment Tracking
-  contractType?: 'recurring' | 'one-time';
+  contractType?: 'recurring' | 'one-time' | null;
+  contractTypeConfidence?: 'high' | 'medium' | 'low';
   paymentStatus?: 'paid' | 'unpaid';
   paymentDate?: string;
   paymentDueDate?: string;
@@ -85,15 +86,17 @@ export default function SmartContractInfo({ contract, onPaymentUpdate }: SmartCo
     );
   }
 
-  // 2. SEHR SICHER: Recurring + sichere Keywords → Nur Cost Tracker
-  if (isRecurringContract && hasRecurringKeyword) {
-    console.log('💰 Showing ONLY Cost Tracker (recurring + safe keyword detected)');
+  // 2. SEHR SICHER: Recurring + (Keywords ODER high confidence) → Nur Cost Tracker
+  const isHighConfidenceRecurring = contract.contractTypeConfidence === 'high';
+  if (isRecurringContract && (hasRecurringKeyword || isHighConfidenceRecurring)) {
+    console.log('💰 Showing ONLY Cost Tracker (recurring + safe keyword/high confidence)');
     return <CostTracker contract={contract} />;
   }
 
-  // 3. SEHR SICHER: One-Time + sichere Keywords → Nur Payment Tracker
-  if (isOneTimeContract && hasOneTimeKeyword) {
-    console.log('💳 Showing ONLY Payment Tracker (one-time + safe keyword detected)');
+  // 3. SEHR SICHER: One-Time + (Keywords ODER high confidence) → Nur Payment Tracker
+  const isHighConfidenceOneTime = contract.contractTypeConfidence === 'high';
+  if (isOneTimeContract && (hasOneTimeKeyword || isHighConfidenceOneTime)) {
+    console.log('💳 Showing ONLY Payment Tracker (one-time + safe keyword/high confidence)');
     return <PaymentTracker contract={contract} onPaymentUpdate={onPaymentUpdate} />;
   }
 

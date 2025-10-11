@@ -10,6 +10,8 @@ interface Contract {
   uploadedAt?: string;
 
   // 💰 Cost Tracking Fields
+  contractType?: 'recurring' | 'one-time' | null;
+  contractTypeConfidence?: 'high' | 'medium' | 'low';
   paymentFrequency?: 'monthly' | 'yearly' | 'weekly';
   subscriptionStartDate?: string;
   paymentAmount?: number;
