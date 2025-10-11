@@ -1504,7 +1504,7 @@ router.patch("/:id/folder", verifyToken, async (req, res) => {
     }
 
     await client.connect();
-    const db = client.db("vertragsai");
+    const db = client.db("contract_ai");
     const contracts = db.collection("contracts");
     const folders = db.collection("folders");
 
@@ -1572,7 +1572,7 @@ router.patch("/bulk/folder", verifyToken, async (req, res) => {
     }
 
     await client.connect();
-    const db = client.db("vertragsai");
+    const db = client.db("contract_ai");
     const contracts = db.collection("contracts");
     const folders = db.collection("folders");
 
