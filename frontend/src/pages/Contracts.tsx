@@ -2662,7 +2662,7 @@ export default function Contracts() {
                   <>
                     {/* ✅ DESKTOP/TABLET TABLE */}
                     <div className={styles.tableContainer}>
-                      <table className={styles.contractsTable}>
+                      <table className={`${styles.contractsTable} ${bulkSelectMode ? styles.withCheckboxes : ''}`}>
                         <thead>
                           <tr>
                             {/* 📋 Checkbox Column - only visible in bulk select mode */}

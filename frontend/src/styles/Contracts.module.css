@@ -1725,14 +1725,22 @@
   table-layout: fixed; /* ⭐ CRITICAL: Fixed layout für kontrollierte Breiten */
 }
 
-/* ✅ OPTIMIERTE Spaltenbreiten für Desktop (MIT Checkbox-Spalte) */
-.contractsTable thead th:nth-child(1) { width: 28px; } /* Checkbox - FIXED */
-.contractsTable thead th:nth-child(2) { width: 28%; } /* Vertragsname - etwas weniger */
-.contractsTable thead th:nth-child(3) { width: 14%; } /* Kündigungsfrist */
-.contractsTable thead th:nth-child(4) { width: 14%; } /* Ablaufdatum */
-.contractsTable thead th:nth-child(5) { width: 12%; } /* Status */
-.contractsTable thead th:nth-child(6) { width: 14%; } /* Upload-Datum */
-.contractsTable thead th:nth-child(7) { width: 12%; } /* Aktionen */
+/* ✅ Spaltenbreiten OHNE Checkbox-Spalte (Standard) */
+.contractsTable thead th:nth-child(1) { width: 30%; } /* Vertragsname */
+.contractsTable thead th:nth-child(2) { width: 15%; } /* Kündigungsfrist */
+.contractsTable thead th:nth-child(3) { width: 15%; } /* Ablaufdatum */
+.contractsTable thead th:nth-child(4) { width: 12%; } /* Status */
+.contractsTable thead th:nth-child(5) { width: 15%; } /* Upload-Datum */
+.contractsTable thead th:nth-child(6) { width: 13%; } /* Aktionen */
+
+/* ✅ Spaltenbreiten MIT Checkbox-Spalte (Bulk-Modus aktiv) */
+.contractsTable.withCheckboxes thead th:nth-child(1) { width: 28px; } /* Checkbox - FIXED */
+.contractsTable.withCheckboxes thead th:nth-child(2) { width: 30%; } /* Vertragsname - behält Größe */
+.contractsTable.withCheckboxes thead th:nth-child(3) { width: 15%; } /* Kündigungsfrist */
+.contractsTable.withCheckboxes thead th:nth-child(4) { width: 15%; } /* Ablaufdatum */
+.contractsTable.withCheckboxes thead th:nth-child(5) { width: 12%; } /* Status */
+.contractsTable.withCheckboxes thead th:nth-child(6) { width: 15%; } /* Upload-Datum */
+.contractsTable.withCheckboxes thead th:nth-child(7) { width: 13%; } /* Aktionen */
 
 .contractsTable th {
   background: #f8fafc;
