@@ -1439,12 +1439,51 @@
 .searchSection {
   flex: 1;
   min-width: 300px;
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+/* 📋 Bulk Select Toggle Button */
+.bulkSelectToggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 10px;
+  background: white;
+  color: #6b7280;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.bulkSelectToggle:hover {
+  border-color: #667eea;
+  background: #f9fafb;
+  color: #667eea;
+}
+
+.bulkSelectToggle.active {
+  border-color: #667eea;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.bulkSelectToggle.active:hover {
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+  transform: translateY(-1px);
 }
 
 .searchInputWrapper {
   position: relative;
   display: flex;
   align-items: center;
+  flex: 1;
 }
 
 .searchIcon {
@@ -2463,6 +2502,15 @@
   .searchSection {
     width: 100%;
     min-width: 100%;
+    flex-direction: column;
+  }
+
+  /* 📋 Mobile Bulk Select Toggle */
+  .bulkSelectToggle {
+    width: 100%;
+    justify-content: center;
+    padding: 0.875rem 1rem;
+    font-size: 0.9rem;
   }
 
   .filtersSection {

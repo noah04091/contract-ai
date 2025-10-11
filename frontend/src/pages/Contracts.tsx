@@ -6,7 +6,8 @@ import {
   FileText, RefreshCw, Upload, CheckCircle, AlertCircle,
   Plus, Calendar, Clock, Trash2, Eye, Edit,
   Search, X, Crown, Users, Loader,
-  Lock, Zap, BarChart3, ExternalLink, ArrowRight, Folder
+  Lock, Zap, BarChart3, ExternalLink, ArrowRight, Folder,
+  CheckSquare, Square
 } from "lucide-react";
 import styles from "../styles/Contracts.module.css";
 import ContractAnalysis from "../components/ContractAnalysis";
@@ -403,6 +404,7 @@ export default function Contracts() {
   const [folderDropdownOpen, setFolderDropdownOpen] = useState<string | null>(null); // Track which contract's dropdown is open
 
   // 📋 Bulk Selection State
+  const [bulkSelectMode, setBulkSelectMode] = useState(false); // Toggle für Checkbox-Sichtbarkeit
   const [selectedContracts, setSelectedContracts] = useState<string[]>([]);
   const [bulkActionDropdownOpen, setBulkActionDropdownOpen] = useState(false);
 
@@ -495,6 +497,15 @@ export default function Contracts() {
   const unassignedCount = contracts.filter(c => !c.folderId).length;
 
   // 📋 Bulk Selection Handlers
+  const toggleBulkSelectMode = () => {
+    setBulkSelectMode(prev => !prev);
+    // Reset selection when turning off
+    if (bulkSelectMode) {
+      setSelectedContracts([]);
+      setBulkActionDropdownOpen(false);
+    }
+  };
+
   const toggleSelectContract = (contractId: string) => {
     setSelectedContracts(prev =>
       prev.includes(contractId)
@@ -2498,17 +2509,29 @@ export default function Contracts() {
 
                 <div className={styles.filtersToolbar}>
                   <div className={styles.searchSection}>
+                    {/* 📋 Bulk Select Toggle Button */}
+                    <motion.button
+                      className={`${styles.bulkSelectToggle} ${bulkSelectMode ? styles.active : ''}`}
+                      onClick={toggleBulkSelectMode}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      title={bulkSelectMode ? "Auswahl beenden" : "Verträge auswählen"}
+                    >
+                      {bulkSelectMode ? <CheckSquare size={18} /> : <Square size={18} />}
+                      <span>{bulkSelectMode ? "Auswahl beenden" : "Auswählen"}</span>
+                    </motion.button>
+
                     <div className={styles.searchInputWrapper}>
                       <Search size={18} className={styles.searchIcon} />
-                      <input 
-                        type="text" 
-                        placeholder="Verträge durchsuchen..." 
+                      <input
+                        type="text"
+                        placeholder="Verträge durchsuchen..."
                         className={styles.searchInput}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                       />
                       {searchQuery && (
-                        <button 
+                        <button
                           className={styles.clearSearchButton}
                           onClick={() => setSearchQuery("")}
                         >
@@ -2642,14 +2665,17 @@ export default function Contracts() {
                       <table className={styles.contractsTable}>
                         <thead>
                           <tr>
-                            <th className={styles.checkboxColumn}>
-                              <input
-                                type="checkbox"
-                                checked={selectedContracts.length === filteredContracts.length && filteredContracts.length > 0}
-                                onChange={toggleSelectAll}
-                                className={styles.bulkCheckbox}
-                              />
-                            </th>
+                            {/* 📋 Checkbox Column - only visible in bulk select mode */}
+                            {bulkSelectMode && (
+                              <th className={styles.checkboxColumn}>
+                                <input
+                                  type="checkbox"
+                                  checked={selectedContracts.length === filteredContracts.length && filteredContracts.length > 0}
+                                  onChange={toggleSelectAll}
+                                  className={styles.bulkCheckbox}
+                                />
+                              </th>
+                            )}
                             <th>Vertragsname</th>
                             <th>Kündigungsfrist</th>
                             <th>Ablaufdatum</th>
@@ -2661,7 +2687,7 @@ export default function Contracts() {
                         <tbody>
                           {filteredContracts.length === 0 ? (
                             <tr>
-                              <td colSpan={7} style={{ textAlign: 'center', padding: '60px 20px' }}>
+                              <td colSpan={bulkSelectMode ? 7 : 6} style={{ textAlign: 'center', padding: '60px 20px' }}>
                                 <div style={{ color: '#6b7280' }}>
                                   <div style={{ fontSize: '48px', marginBottom: '16px' }}>📄</div>
                                   <h3 style={{ margin: '0 0 8px 0', color: '#374151' }}>
@@ -2702,17 +2728,20 @@ export default function Contracts() {
                               transition={{ duration: 0.3 }}
                               onClick={() => handleRowClick(contract)}
                             >
-                              <td
-                                className={styles.checkboxColumn}
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={selectedContracts.includes(contract._id)}
-                                  onChange={() => toggleSelectContract(contract._id)}
-                                  className={styles.bulkCheckbox}
-                                />
-                              </td>
+                              {/* 📋 Checkbox Cell - only visible in bulk select mode */}
+                              {bulkSelectMode && (
+                                <td
+                                  className={styles.checkboxColumn}
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedContracts.includes(contract._id)}
+                                    onChange={() => toggleSelectContract(contract._id)}
+                                    className={styles.bulkCheckbox}
+                                  />
+                                </td>
+                              )}
                               <td>
                                 <div className={styles.contractName}>
                                   <div className={styles.contractIcon}>
@@ -2878,8 +2907,8 @@ export default function Contracts() {
                       ))}
                     </div>
 
-                    {/* 📋 Bulk Action Bar */}
-                    {selectedContracts.length > 0 && (
+                    {/* 📋 Bulk Action Bar - only show in bulk select mode */}
+                    {bulkSelectMode && selectedContracts.length > 0 && (
                       <motion.div
                         className={styles.bulkActionBar}
                         initial={{ y: 100, opacity: 0 }}
