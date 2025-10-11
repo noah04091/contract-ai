@@ -1488,4 +1488,126 @@ BEISPIELE (Bezahlt-Status):
   }
 });
 
+// ✅ 📁 PATCH /api/contracts/:id/folder - Move contract to folder
+router.patch("/:id/folder", verifyToken, async (req, res) => {
+  try {
+    const { folderId } = req.body; // Can be null to remove from folder
+    const contractId = req.params.id;
+
+    if (!ObjectId.isValid(contractId)) {
+      return res.status(400).json({ error: "Ungültige Vertrags-ID" });
+    }
+
+    // Validate folderId if provided
+    if (folderId && !ObjectId.isValid(folderId)) {
+      return res.status(400).json({ error: "Ungültige Ordner-ID" });
+    }
+
+    await client.connect();
+    const db = client.db("vertragsai");
+    const contracts = db.collection("contracts");
+    const folders = db.collection("folders");
+
+    // Check if contract exists and belongs to user
+    const contract = await contracts.findOne({
+      _id: new ObjectId(contractId),
+      userId: new ObjectId(req.userId)
+    });
+
+    if (!contract) {
+      return res.status(404).json({ error: "Vertrag nicht gefunden" });
+    }
+
+    // If folderId provided, check if folder exists and belongs to user
+    if (folderId) {
+      const folder = await folders.findOne({
+        _id: new ObjectId(folderId),
+        userId: new ObjectId(req.userId)
+      });
+
+      if (!folder) {
+        return res.status(404).json({ error: "Ordner nicht gefunden" });
+      }
+    }
+
+    // Update contract
+    await contracts.updateOne(
+      { _id: new ObjectId(contractId) },
+      { $set: { folderId: folderId ? new ObjectId(folderId) : null } }
+    );
+
+    res.json({
+      success: true,
+      message: folderId
+        ? 'Vertrag in Ordner verschoben'
+        : 'Vertrag aus Ordner entfernt',
+      contractId,
+      folderId
+    });
+
+  } catch (error) {
+    console.error("❌ Error moving contract to folder:", error);
+    res.status(500).json({ error: "Fehler beim Verschieben des Vertrags" });
+  }
+});
+
+// ✅ 📁 PATCH /api/contracts/bulk/folder - Move multiple contracts to folder
+router.patch("/bulk/folder", verifyToken, async (req, res) => {
+  try {
+    const { contractIds, folderId } = req.body;
+
+    if (!contractIds || !Array.isArray(contractIds) || contractIds.length === 0) {
+      return res.status(400).json({ error: "Keine Verträge ausgewählt" });
+    }
+
+    // Validate all contract IDs
+    const validIds = contractIds.filter(id => ObjectId.isValid(id));
+    if (validIds.length === 0) {
+      return res.status(400).json({ error: "Ungültige Vertrags-IDs" });
+    }
+
+    // Validate folderId if provided
+    if (folderId && !ObjectId.isValid(folderId)) {
+      return res.status(400).json({ error: "Ungültige Ordner-ID" });
+    }
+
+    await client.connect();
+    const db = client.db("vertragsai");
+    const contracts = db.collection("contracts");
+    const folders = db.collection("folders");
+
+    // If folderId provided, check if folder exists and belongs to user
+    if (folderId) {
+      const folder = await folders.findOne({
+        _id: new ObjectId(folderId),
+        userId: new ObjectId(req.userId)
+      });
+
+      if (!folder) {
+        return res.status(404).json({ error: "Ordner nicht gefunden" });
+      }
+    }
+
+    // Update all contracts that belong to the user
+    const result = await contracts.updateMany(
+      {
+        _id: { $in: validIds.map(id => new ObjectId(id)) },
+        userId: new ObjectId(req.userId)
+      },
+      { $set: { folderId: folderId ? new ObjectId(folderId) : null } }
+    );
+
+    res.json({
+      success: true,
+      message: `${result.modifiedCount} Verträge ${folderId ? 'verschoben' : 'aus Ordner entfernt'}`,
+      modifiedCount: result.modifiedCount,
+      folderId
+    });
+
+  } catch (error) {
+    console.error("❌ Error moving contracts to folder:", error);
+    res.status(500).json({ error: "Fehler beim Verschieben der Verträge" });
+  }
+});
+
 module.exports = router;

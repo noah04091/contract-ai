@@ -10,7 +10,14 @@ const contractSchema = new mongoose.Schema({
   reminder: { type: Boolean, default: false },
   uploadedAt: { type: Date, default: Date.now },
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-  reminderLastSentAt: { type: Date }, // 🆕 neu hinzugefügt
+  reminderLastSentAt: { type: Date },
+
+  // 📁 Folder Organization
+  folderId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Folder",
+    default: null
+  }
 });
 
 module.exports = mongoose.model("Contract", contractSchema);

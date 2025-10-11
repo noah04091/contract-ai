@@ -639,6 +639,14 @@ const connectDB = async () => {
       console.error("❌ Fehler bei Contract-CRUD-Routen:", err);
     }
 
+    // ✅ 📁 FOLDERS - Ordner-Management
+    try {
+      app.use("/api/folders", require("./routes/folders"));
+      console.log("✅ Folders-Routen geladen unter /api/folders");
+    } catch (err) {
+      console.error("❌ Fehler bei Folders-Routen:", err);
+    }
+
     // ✅ 12. WEITERE ROUTEN - ALLE MIT /api PREFIX
     try {
       app.use("/api/compare", verifyToken, checkSubscription, require("./routes/compare"));
