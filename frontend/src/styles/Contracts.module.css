@@ -1747,8 +1747,9 @@
 }
 
 /* 📋 Override padding for checkbox header */
-.contractsTable th.checkboxColumn {
+.contractsTable thead th.checkboxColumn {
   padding: 0.5rem 0.25rem !important;
+  width: 28px;
 }
 
 .tableRow {
@@ -1770,8 +1771,9 @@
 }
 
 /* 📋 Override padding for checkbox column */
-.tableRow td.checkboxColumn {
+.contractsTable tbody td.checkboxColumn {
   padding: 0.5rem 0.25rem !important;
+  width: 28px;
 }
 
 .contractName {
@@ -2396,6 +2398,12 @@
   .contractsTable thead th,
   .contractsTable tbody td {
     padding: 0.5rem 0.375rem; /* ✅ Noch kompakter */
+  }
+
+  /* 📋 Override for checkbox column in tablet view */
+  .contractsTable thead th.checkboxColumn,
+  .contractsTable tbody td.checkboxColumn {
+    padding: 0.5rem 0.25rem !important;
   }
 
   /* ✅ Spaltenbreiten für Tablet angepasst */
