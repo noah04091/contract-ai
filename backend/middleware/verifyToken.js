@@ -40,6 +40,7 @@ module.exports = function (req, res, next) {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
+    req.userId = decoded.userId; // 📁 For Mongoose routes
     req.tokenSource = source;
     if (isDev) console.log(`✅ Authentifiziert via ${source} – ${decoded.email}`);
     next();
