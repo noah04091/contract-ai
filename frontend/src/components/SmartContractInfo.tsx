@@ -26,21 +26,47 @@ interface SmartContractInfoProps {
 /**
  * 🧠 Smart Component: Entscheidet automatisch welcher Tracker angezeigt wird
  *
- * NEUE LOGIK (mit doppeltem Tracker für Rechnungen):
- * 1. Filename enthält "Rechnung"/"Invoice" → BEIDE Tracker (Payment + Cost)
- * 2. contractType = 'one-time' → Nur PaymentTracker
- * 3. contractType = 'recurring' → Nur CostTracker
- * 4. Default: PaymentTracker (sicherer für Rechnungen!)
+ * SMART DEFAULT LOGIK (Stufe 1):
+ * 1. Rechnung/Invoice im Namen → BEIDE Tracker (Payment + Cost)
+ * 2. Recurring + sichere Keywords (Abo/Miete/etc) → NUR Cost Tracker
+ * 3. One-Time + sichere Keywords (Werk/Kauf) → NUR Payment Tracker
+ * 4. Default: BEIDE Tracker (sicherer Fallback!)
  */
 export default function SmartContractInfo({ contract, onPaymentUpdate }: SmartContractInfoProps) {
   // 🧠 Intelligente Detection
   const contractName = contract.name?.toLowerCase() || '';
+
+  // Keyword Detection
   const isInvoice = contractName.includes('rechnung') || contractName.includes('invoice');
+
+  // Recurring Keywords (sehr sichere Signale für Abo/Subscription)
+  const recurringKeywords = [
+    'abo', 'abonnement', 'subscription',
+    'netflix', 'spotify', 'disney', 'amazon prime',
+    'miet', 'miete', 'vermietung',
+    'versicherung', 'insurance',
+    'leasing', 'leasingvertrag',
+    'fitness', 'fitnessstudio', 'gym',
+    'handy', 'mobilfunk', 'telekom', 'vodafone', 'o2',
+    'internet', 'dsl', 'glasfaser',
+    'strom', 'gas', 'wasser', 'energie'
+  ];
+
+  // One-Time Keywords (sehr sichere Signale für einmalige Verträge)
+  const oneTimeKeywords = [
+    'werkvertrag', 'werk-vertrag',
+    'kaufvertrag', 'kauf-vertrag',
+    'dienstleistungsvertrag', 'service'
+  ];
+
+  const hasRecurringKeyword = recurringKeywords.some(keyword => contractName.includes(keyword));
+  const hasOneTimeKeyword = oneTimeKeywords.some(keyword => contractName.includes(keyword));
+
   const isOneTimeContract = contract.contractType === 'one-time';
   const isRecurringContract = contract.contractType === 'recurring';
 
   // Decision Logic
-  // 1. Rechnung im Namen → IMMER BEIDE Tracker (überschreibt contractType!)
+  // 1. Rechnung im Namen → IMMER BEIDE Tracker (überschreibt alles!)
   if (isInvoice) {
     console.log('💳💰 Showing BOTH Trackers (invoice detected in name)');
     return (
@@ -52,20 +78,28 @@ export default function SmartContractInfo({ contract, onPaymentUpdate }: SmartCo
     );
   }
 
-  // 2. Explizit als one-time markiert UND kein "Rechnung" im Namen
-  if (isOneTimeContract) {
-    console.log('💳 Showing Payment Tracker (one-time contract)');
-    return <PaymentTracker contract={contract} onPaymentUpdate={onPaymentUpdate} />;
-  }
-
-  // 3. Recurring contract OHNE "Rechnung" im Namen → nur Cost Tracker
-  if (isRecurringContract) {
-    console.log('💰 Showing Cost Tracker (recurring contract)');
+  // 2. SEHR SICHER: Recurring + sichere Keywords → Nur Cost Tracker
+  if (isRecurringContract && hasRecurringKeyword) {
+    console.log('💰 Showing ONLY Cost Tracker (recurring + safe keyword detected)');
     return <CostTracker contract={contract} />;
   }
 
-  // 4. Default: BEIDE Tracker (sicherer für Rechnungen die nicht erkannt wurden!)
-  console.log('💳💰 Showing BOTH Trackers (default - safer for undetected invoices)');
+  // 3. SEHR SICHER: One-Time + sichere Keywords → Nur Payment Tracker
+  if (isOneTimeContract && hasOneTimeKeyword) {
+    console.log('💳 Showing ONLY Payment Tracker (one-time + safe keyword detected)');
+    return <PaymentTracker contract={contract} onPaymentUpdate={onPaymentUpdate} />;
+  }
+
+  // 4. NUR Keywords ohne GPT-Typ → Auch nutzen (aber konservativ)
+  // 4a. Recurring Keywords SEHR stark (Netflix, Spotify, etc.)
+  const veryStrongRecurring = ['netflix', 'spotify', 'disney', 'amazon prime', 'mietvertrag', 'miet-vertrag'];
+  if (veryStrongRecurring.some(keyword => contractName.includes(keyword))) {
+    console.log('💰 Showing ONLY Cost Tracker (very strong recurring keyword)');
+    return <CostTracker contract={contract} />;
+  }
+
+  // 5. Default: BEIDE Tracker (sicherer Fallback!)
+  console.log('💳💰 Showing BOTH Trackers (default - safe fallback)');
   return (
     <>
       <PaymentTracker contract={contract} onPaymentUpdate={onPaymentUpdate} />
