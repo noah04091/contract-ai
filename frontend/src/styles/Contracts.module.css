@@ -1748,7 +1748,7 @@
 
 /* 📋 Override padding for checkbox header */
 .contractsTable th.checkboxColumn {
-  padding: 0.5rem 0.15rem !important;
+  padding: 0.5rem 0.25rem !important;
 }
 
 .tableRow {
@@ -1771,7 +1771,7 @@
 
 /* 📋 Override padding for checkbox column */
 .tableRow td.checkboxColumn {
-  padding: 0.5rem 0.15rem !important;
+  padding: 0.5rem 0.25rem !important;
 }
 
 .contractName {
@@ -1920,12 +1920,12 @@
 }
 
 /* 📋 Bulk Selection Styles */
-/* ✅ CHECKBOX COLUMN - Minimal spacing */
+/* ✅ CHECKBOX COLUMN - ULTRA minimal spacing */
 .checkboxColumn {
-  width: 36px;
-  max-width: 36px;
-  min-width: 36px;
-  padding: 0.5rem 0.15rem !important;
+  width: 28px;
+  max-width: 28px;
+  min-width: 28px;
+  padding: 0.5rem 0.25rem !important;
   text-align: center;
   vertical-align: middle;
 }
