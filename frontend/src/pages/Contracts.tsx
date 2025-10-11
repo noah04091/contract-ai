@@ -13,12 +13,12 @@ import ContractAnalysis from "../components/ContractAnalysis";
 import BatchAnalysisResults from "../components/BatchAnalysisResults"; // ✅ NEU: Import für Batch-Analyse
 import ContractDetailsView from "../components/ContractDetailsView";
 import UploadSuccessModal from "../components/UploadSuccessModal"; // ✅ NEU: Two-Step Upload Modal
-import FolderSidebar from "../components/FolderSidebar"; // 📁 Folder Sidebar
+import FolderBar from "../components/FolderBar"; // 📁 Folder Bar (Horizontal)
 import FolderModal from "../components/FolderModal"; // 📁 Folder Modal
 import SmartFoldersModal from "../components/SmartFoldersModal"; // 🤖 Smart Folders Modal
 import { apiCall, uploadAndAnalyze, uploadOnly } from "../utils/api"; // ✅ NEU: uploadOnly hinzugefügt
 import { useFolders } from "../hooks/useFolders"; // 📁 Folder Hook
-import type { FolderType } from "../components/FolderSidebar"; // 📁 Folder Type
+import type { FolderType } from "../components/FolderBar"; // 📁 Folder Type
 
 interface Contract {
   _id: string;
@@ -440,18 +440,24 @@ export default function Contracts() {
     setFolderModalOpen(true);
   };
 
-  const handleEditFolder = (folder: FolderType) => {
-    setEditingFolder(folder);
-    setFolderModalOpen(true);
+  const handleEditFolder = (folderId: string) => {
+    const folder = folders.find(f => f._id === folderId);
+    if (folder) {
+      setEditingFolder(folder);
+      setFolderModalOpen(true);
+    }
   };
 
-  const handleDeleteFolder = async (folder: FolderType) => {
+  const handleDeleteFolder = async (folderId: string) => {
+    const folder = folders.find(f => f._id === folderId);
+    if (!folder) return;
+
     if (!confirm(`Ordner "${folder.name}" wirklich löschen? Verträge werden in "Ohne Ordner" verschoben.`)) {
       return;
     }
 
     try {
-      await deleteFolder(folder._id);
+      await deleteFolder(folderId);
       await fetchContracts(); // Refresh contracts to update folderId
     } catch (err) {
       console.error('Error deleting folder:', err);
@@ -2025,20 +2031,6 @@ export default function Contracts() {
       </Helmet>
 
       <div className={styles.pageContainer}>
-        {/* 📁 Folder Sidebar */}
-        <FolderSidebar
-          folders={folders}
-          activeFolder={activeFolder}
-          totalContracts={contracts.length}
-          unassignedCount={unassignedCount}
-          onFolderClick={setActiveFolder}
-          onCreateFolder={handleCreateFolder}
-          onEditFolder={handleEditFolder}
-          onDeleteFolder={handleDeleteFolder}
-          onSmartFolders={() => setSmartFoldersModalOpen(true)}
-          isLoading={foldersLoading}
-        />
-
         <motion.div
           className={styles.container}
           initial={{ opacity: 0, y: 20 }}
@@ -2466,9 +2458,9 @@ export default function Contracts() {
                     </p>
                   </div>
                   <div className={styles.sectionActions}>
-                    <motion.button 
-                      className={styles.refreshButton} 
-                      onClick={fetchContracts} 
+                    <motion.button
+                      className={styles.refreshButton}
+                      onClick={fetchContracts}
                       aria-label="Aktualisieren"
                       disabled={refreshing}
                       animate={{ rotate: refreshing ? 360 : 0 }}
@@ -2476,7 +2468,7 @@ export default function Contracts() {
                     >
                       <RefreshCw size={16} />
                     </motion.button>
-                    <motion.button 
+                    <motion.button
                       className={`${styles.newContractButton} ${!canUpload ? styles.disabledButton : ''}`}
                       onClick={() => canUpload && setActiveSection('upload')}
                       whileHover={canUpload ? { scale: 1.02 } : {}}
@@ -2489,6 +2481,20 @@ export default function Contracts() {
                     </motion.button>
                   </div>
                 </div>
+
+                {/* 📁 Folder Bar - Horizontal Navigation */}
+                <FolderBar
+                  folders={folders}
+                  activeFolder={activeFolder}
+                  totalContracts={contracts.length}
+                  unassignedCount={unassignedCount}
+                  onFolderClick={setActiveFolder}
+                  onCreateFolder={handleCreateFolder}
+                  onEditFolder={handleEditFolder}
+                  onDeleteFolder={handleDeleteFolder}
+                  onSmartFolders={() => setSmartFoldersModalOpen(true)}
+                  isLoading={foldersLoading}
+                />
 
                 <div className={styles.filtersToolbar}>
                   <div className={styles.searchSection}>

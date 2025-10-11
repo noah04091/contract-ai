@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import styles from '../styles/FolderModal.module.css';
-import type { FolderType } from './FolderSidebar';
+import type { FolderType } from './FolderBar';
 
 interface FolderModalProps {
   isOpen: boolean;
