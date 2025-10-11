@@ -28,6 +28,11 @@ interface Contract {
   legalPulse?: {
     riskScore: number | null;
   };
+  // 💰 Payment & Cost Tracking
+  contractType?: 'recurring' | 'one-time' | null;
+  paymentAmount?: number;
+  paymentFrequency?: 'monthly' | 'yearly' | 'weekly';
+  paymentStatus?: 'paid' | 'unpaid';
 }
 
 interface UserData {
@@ -255,17 +260,79 @@ export default function Dashboard() {
     return contracts.filter((c) => c && c.reminder).length;
   };
 
-  const averageLaufzeit = () => {
-    const laufzeiten = contracts
-      .filter((c) => c && c.laufzeit && typeof c.laufzeit === 'string')
-      .map((c) => {
-        const match = c.laufzeit.match(/(\d+)\s*(Jahr|Monat)/i);
-        if (!match) return 0;
-        const num = parseInt(match[1]);
-        return match[2].toLowerCase().startsWith("jahr") ? num * 12 : num;
-      })
-      .filter((val) => val > 0);
-    return laufzeiten.length > 0 ? Math.round(laufzeiten.reduce((a, b) => a + b, 0) / laufzeiten.length) : 0;
+  // 📊 Durchschnittliche Laufzeit (nicht mehr verwendet, aber behalten für später)
+  // const averageLaufzeit = () => {
+  //   const laufzeiten = contracts
+  //     .filter((c) => c && c.laufzeit && typeof c.laufzeit === 'string')
+  //     .map((c) => {
+  //       const match = c.laufzeit.match(/(\d+)\s*(Jahr|Monat)/i);
+  //       if (!match) return 0;
+  //       const num = parseInt(match[1]);
+  //       return match[2].toLowerCase().startsWith("jahr") ? num * 12 : num;
+  //     })
+  //     .filter((val) => val > 0);
+  //   return laufzeiten.length > 0 ? Math.round(laufzeiten.reduce((a, b) => a + b, 0) / laufzeiten.length) : 0;
+  // };
+
+  // 💰 NEU: Abo-Verträge zählen
+  const countSubscriptions = () => {
+    return contracts.filter((c) => c && c.contractType === 'recurring').length;
+  };
+
+  // 💰 NEU: Monatliche Gesamtkosten berechnen
+  const calculateMonthlyCosts = () => {
+    const totalMonthly = contracts
+      .filter((c) => c && c.contractType === 'recurring' && c.paymentAmount)
+      .reduce((sum, c) => {
+        const amount = c.paymentAmount || 0;
+        const frequency = c.paymentFrequency;
+
+        if (frequency === 'monthly') {
+          return sum + amount;
+        } else if (frequency === 'yearly') {
+          return sum + (amount / 12);
+        } else if (frequency === 'weekly') {
+          return sum + ((amount * 52) / 12);
+        }
+        return sum;
+      }, 0);
+
+    return Math.round(totalMonthly * 100) / 100; // 2 Dezimalstellen
+  };
+
+  // 💰 NEU: Jährliche Gesamtkosten berechnen
+  const calculateYearlyCosts = () => {
+    return Math.round(calculateMonthlyCosts() * 12 * 100) / 100;
+  };
+
+  // 📄 NEU: Rechnungen zählen
+  const countInvoices = () => {
+    // Rechnungen = Dokumente mit "rechnung" oder "invoice" im Namen ODER contractType = one-time
+    return contracts.filter((c) => {
+      if (!c || !c.name) return false;
+      const name = c.name.toLowerCase();
+      return name.includes('rechnung') || name.includes('invoice') || c.contractType === 'one-time';
+    }).length;
+  };
+
+  // 📄 NEU: Bezahlte Rechnungen zählen
+  const countPaidInvoices = () => {
+    return contracts.filter((c) => {
+      if (!c || !c.name) return false;
+      const name = c.name.toLowerCase();
+      const isInvoice = name.includes('rechnung') || name.includes('invoice') || c.contractType === 'one-time';
+      return isInvoice && c.paymentStatus === 'paid';
+    }).length;
+  };
+
+  // 📄 NEU: Offene Rechnungen zählen
+  const countUnpaidInvoices = () => {
+    return contracts.filter((c) => {
+      if (!c || !c.name) return false;
+      const name = c.name.toLowerCase();
+      const isInvoice = name.includes('rechnung') || name.includes('invoice') || c.contractType === 'one-time';
+      return isInvoice && c.paymentStatus === 'unpaid';
+    }).length;
   };
 
   const getContractCategory = (contract: Contract) => {
@@ -646,24 +713,90 @@ export default function Dashboard() {
             </div>
           </div>
 
+          <div
+            className={`${styles.metricCard} ${styles.clickableCard}`}
+            onClick={() => navigate('/contracts?filter=subscriptions')}
+          >
+            <div className={styles.metricHeader}>
+              <div className={styles.metricIcon}>
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2Z" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M12 6V12L16 16" stroke="currentColor" strokeWidth="2"/>
+                </svg>
+              </div>
+              <div className={styles.metricHeaderActions}>
+                <span className={styles.metricTrend}>
+                  {calculateYearlyCosts() > 0 ? '💰' : '—'}
+                </span>
+                <InfoTooltip
+                  title="Abo-Verträge"
+                  content="Anzahl der wiederkehrenden Abo-Verträge mit monatlichen/jährlichen Kosten"
+                />
+              </div>
+            </div>
+            <div className={styles.metricValue}>
+              {isLoading ? "..." : countSubscriptions()}
+            </div>
+            <div className={styles.metricLabel}>Abo-Verträge</div>
+            <div className={styles.metricSubtext}>
+              {calculateYearlyCosts() > 0 ? `${calculateYearlyCosts().toLocaleString('de-DE')}€/Jahr` : 'Keine Abos'}
+            </div>
+          </div>
+
           <div className={`${styles.metricCard} ${styles.clickableCard}`}>
             <div className={styles.metricHeader}>
               <div className={styles.metricIcon}>
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
-                  <path d="M12 6V12L16 14" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M12 2V22M17 5H9.5C8.57174 5 7.6815 5.36875 7.02513 6.02513C6.36875 6.6815 6 7.57174 6 8.5C6 9.42826 6.36875 10.3185 7.02513 10.9749C7.6815 11.6313 8.57174 12 9.5 12H14.5C15.4283 12 16.3185 12.3687 16.9749 13.0251C17.6313 13.6815 18 14.5717 18 15.5C18 16.4283 17.6313 17.3185 16.9749 17.9749C16.3185 18.6313 15.4283 19 14.5 19H6" stroke="currentColor" strokeWidth="2"/>
                 </svg>
               </div>
               <div className={styles.metricHeaderActions}>
-                <span className={styles.metricTrend}>Ø</span>
+                <span className={styles.metricTrend}>
+                  {calculateMonthlyCosts() > 0 ? '/M' : '—'}
+                </span>
+                <InfoTooltip
+                  title="Laufende Kosten"
+                  content="Gesamte monatliche Kosten aller Abo-Verträge"
+                />
               </div>
             </div>
             <div className={styles.metricValue}>
-              {isLoading ? "..." : averageLaufzeit()}
+              {isLoading ? "..." : (calculateMonthlyCosts() > 0 ? `${calculateMonthlyCosts().toLocaleString('de-DE')}€` : '0€')}
             </div>
-            <div className={styles.metricLabel}>Monate Laufzeit</div>
+            <div className={styles.metricLabel}>Laufende Kosten</div>
             <div className={styles.metricSubtext}>
-              Durchschnittlich
+              Pro Monat
+            </div>
+          </div>
+
+          <div
+            className={`${styles.metricCard} ${styles.clickableCard}`}
+            onClick={() => navigate('/contracts?filter=invoices')}
+          >
+            <div className={styles.metricHeader}>
+              <div className={styles.metricIcon}>
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M14 2V8H20" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M16 13H8M16 17H8M10 9H8" stroke="currentColor" strokeWidth="2"/>
+                </svg>
+              </div>
+              <div className={styles.metricHeaderActions}>
+                <span className={styles.metricTrend}>
+                  {countUnpaidInvoices() > 0 ? '⚠️' : '✅'}
+                </span>
+                <InfoTooltip
+                  title="Rechnungen"
+                  content="Anzahl der Rechnungen (bezahlt/offen)"
+                />
+              </div>
+            </div>
+            <div className={styles.metricValue}>
+              {isLoading ? "..." : `${countPaidInvoices()}/${countInvoices()}`}
+            </div>
+            <div className={styles.metricLabel}>Rechnungen</div>
+            <div className={styles.metricSubtext}>
+              {countUnpaidInvoices() > 0 ? `${countUnpaidInvoices()} offen ⚠️` : 'Alle bezahlt ✅'}
             </div>
           </div>
 
