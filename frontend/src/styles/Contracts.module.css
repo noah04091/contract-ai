@@ -1140,9 +1140,13 @@
   min-height: 100vh;
   background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 100%);
   padding: 2rem 1rem;
+  display: flex;
+  gap: 0;
+  align-items: flex-start;
 }
 
 .container {
+  flex: 1;
   max-width: 1200px;
   margin: 0 auto;
 }

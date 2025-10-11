@@ -13,10 +13,11 @@ import ContractAnalysis from "../components/ContractAnalysis";
 import BatchAnalysisResults from "../components/BatchAnalysisResults"; // ✅ NEU: Import für Batch-Analyse
 import ContractDetailsView from "../components/ContractDetailsView";
 import UploadSuccessModal from "../components/UploadSuccessModal"; // ✅ NEU: Two-Step Upload Modal
-// import FolderSidebar from "../components/FolderSidebar"; // 📁 Folder Sidebar (TODO: Integrate in UI)
-// import FolderModal from "../components/FolderModal"; // 📁 Folder Modal (TODO: Integrate in UI)
+import FolderSidebar from "../components/FolderSidebar"; // 📁 Folder Sidebar
+import FolderModal from "../components/FolderModal"; // 📁 Folder Modal
 import { apiCall, uploadAndAnalyze, uploadOnly } from "../utils/api"; // ✅ NEU: uploadOnly hinzugefügt
 import { useFolders } from "../hooks/useFolders"; // 📁 Folder Hook
+import type { FolderType } from "../components/FolderSidebar"; // 📁 Folder Type
 
 interface Contract {
   _id: string;
@@ -383,20 +384,20 @@ export default function Contracts() {
 
   // 📁 Folder Management Hook
   const {
-    // folders,
+    folders,
     activeFolder,
-    // isLoading: foldersLoading,
+    isLoading: foldersLoading,
     fetchFolders,
-    // createFolder,
-    // updateFolder,
-    // deleteFolder,
-    // setActiveFolder,
-    // moveContractToFolder
+    createFolder,
+    updateFolder,
+    deleteFolder,
+    setActiveFolder,
+    // moveContractToFolder // TODO: Use in dropdown
   } = useFolders();
 
-  // 📁 Folder Modal State (TODO: Wire up in UI)
-  // const [folderModalOpen, setFolderModalOpen] = useState(false);
-  // const [editingFolder, setEditingFolder] = useState<any>(null);
+  // 📁 Folder Modal State
+  const [folderModalOpen, setFolderModalOpen] = useState(false);
+  const [editingFolder, setEditingFolder] = useState<FolderType | null>(null);
 
   // ✅ FIXED: PDF anzeigen Handler - jetzt als Wrapper für die extrahierte Funktion
   const handleViewContractPDFWrapper = async (contract: Contract) => {
@@ -410,6 +411,56 @@ export default function Contracts() {
     setShowDetails(true);
     setOpenEditModalDirectly(true); // ⭐ Das ist der neue State!
   };
+
+  // 📁 Folder Handler Functions
+  const handleCreateFolder = () => {
+    setEditingFolder(null);
+    setFolderModalOpen(true);
+  };
+
+  const handleEditFolder = (folder: FolderType) => {
+    setEditingFolder(folder);
+    setFolderModalOpen(true);
+  };
+
+  const handleDeleteFolder = async (folder: FolderType) => {
+    if (!confirm(`Ordner "${folder.name}" wirklich löschen? Verträge werden in "Ohne Ordner" verschoben.`)) {
+      return;
+    }
+
+    try {
+      await deleteFolder(folder._id);
+      await fetchContracts(); // Refresh contracts to update folderId
+    } catch (err) {
+      console.error('Error deleting folder:', err);
+      setError('Fehler beim Löschen des Ordners');
+    }
+  };
+
+  const handleFolderSave = async (data: { name: string; color: string; icon: string }) => {
+    if (editingFolder) {
+      await updateFolder(editingFolder._id, data);
+    } else {
+      await createFolder(data);
+    }
+    await fetchContracts(); // Refresh to update counts
+  };
+
+  // TODO: Wire up in UI (Move-to-Folder Dropdown)
+  /*
+  const handleMoveToFolder = async (contractId: string, folderId: string | null) => {
+    try {
+      await moveContractToFolder(contractId, folderId);
+      await fetchContracts(); // Refresh to show new folder assignment
+    } catch (err) {
+      console.error('Error moving contract:', err);
+      setError('Fehler beim Verschieben des Vertrags');
+    }
+  };
+  */
+
+  // Count unassigned contracts
+  const unassignedCount = contracts.filter(c => !c.folderId).length;
 
   // ✅ NEU: Legacy-Modal Komponente
   const LegacyModal = ({ 
@@ -1794,7 +1845,20 @@ export default function Contracts() {
       </Helmet>
 
       <div className={styles.pageContainer}>
-        <motion.div 
+        {/* 📁 Folder Sidebar */}
+        <FolderSidebar
+          folders={folders}
+          activeFolder={activeFolder}
+          totalContracts={contracts.length}
+          unassignedCount={unassignedCount}
+          onFolderClick={setActiveFolder}
+          onCreateFolder={handleCreateFolder}
+          onEditFolder={handleEditFolder}
+          onDeleteFolder={handleDeleteFolder}
+          isLoading={foldersLoading}
+        />
+
+        <motion.div
           className={styles.container}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -2609,6 +2673,17 @@ export default function Contracts() {
           />
         </motion.div>
       </div>
+
+      {/* 📁 Folder Modal */}
+      <FolderModal
+        isOpen={folderModalOpen}
+        folder={editingFolder}
+        onClose={() => {
+          setFolderModalOpen(false);
+          setEditingFolder(null);
+        }}
+        onSave={handleFolderSave}
+      />
     </>
   );
 }
