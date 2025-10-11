@@ -13,7 +13,10 @@ import ContractAnalysis from "../components/ContractAnalysis";
 import BatchAnalysisResults from "../components/BatchAnalysisResults"; // ✅ NEU: Import für Batch-Analyse
 import ContractDetailsView from "../components/ContractDetailsView";
 import UploadSuccessModal from "../components/UploadSuccessModal"; // ✅ NEU: Two-Step Upload Modal
+// import FolderSidebar from "../components/FolderSidebar"; // 📁 Folder Sidebar (TODO: Integrate in UI)
+// import FolderModal from "../components/FolderModal"; // 📁 Folder Modal (TODO: Integrate in UI)
 import { apiCall, uploadAndAnalyze, uploadOnly } from "../utils/api"; // ✅ NEU: uploadOnly hinzugefügt
+import { useFolders } from "../hooks/useFolders"; // 📁 Folder Hook
 
 interface Contract {
   _id: string;
@@ -44,6 +47,8 @@ interface Contract {
   paymentFrequency?: 'monthly' | 'yearly' | 'weekly';
   paymentDate?: string;
   subscriptionStartDate?: string;
+  // 📁 Folder Organization
+  folderId?: string;
 }
 
 // ✅ KORRIGIERT: Interface für Mehrfach-Upload
@@ -375,6 +380,23 @@ export default function Contracts() {
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 📁 Folder Management Hook
+  const {
+    // folders,
+    activeFolder,
+    // isLoading: foldersLoading,
+    fetchFolders,
+    // createFolder,
+    // updateFolder,
+    // deleteFolder,
+    // setActiveFolder,
+    // moveContractToFolder
+  } = useFolders();
+
+  // 📁 Folder Modal State (TODO: Wire up in UI)
+  // const [folderModalOpen, setFolderModalOpen] = useState(false);
+  // const [editingFolder, setEditingFolder] = useState<any>(null);
 
   // ✅ FIXED: PDF anzeigen Handler - jetzt als Wrapper für die extrahierte Funktion
   const handleViewContractPDFWrapper = async (contract: Contract) => {
@@ -729,6 +751,17 @@ export default function Contracts() {
       });
     }
 
+    // 📁 Folder-Filter
+    if (activeFolder !== null) {
+      if (activeFolder === 'unassigned') {
+        // Show only contracts without folder
+        filtered = filtered.filter(contract => !contract.folderId);
+      } else {
+        // Show only contracts in this folder
+        filtered = filtered.filter(contract => contract.folderId === activeFolder);
+      }
+    }
+
     // Datums-Filter
     if (dateFilter !== 'alle') {
       const now = new Date();
@@ -767,7 +800,7 @@ export default function Contracts() {
       });
 
     setFilteredContracts(filtered);
-  }, [contracts, searchQuery, statusFilter, dateFilter, sortOrder]);
+  }, [contracts, searchQuery, statusFilter, dateFilter, sortOrder, activeFolder]);
 
   // ✅ FIXED: Filter anwenden mit stabiler applyFilters-Referenz
   useEffect(() => {
@@ -778,6 +811,7 @@ export default function Contracts() {
   useEffect(() => {
     fetchUserInfo();
     fetchContracts();
+    fetchFolders(); // 📁 Load folders
   }, []);
 
   // ✅ FIX: Wenn contracts sich ändern und ein Contract ausgewählt ist, aktualisiere selectedContract
