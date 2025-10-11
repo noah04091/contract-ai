@@ -1,6 +1,7 @@
 // ✨ SmartContractInfo.tsx - Intelligent Switcher zwischen Cost Tracker & Payment Tracker
 import CostTracker from './CostTracker';
 import PaymentTracker from './PaymentTracker';
+import DocumentTypeSelector from './DocumentTypeSelector';
 
 interface Contract {
   _id: string;
@@ -12,6 +13,8 @@ interface Contract {
   // Payment Tracking
   contractType?: 'recurring' | 'one-time' | null;
   contractTypeConfidence?: 'high' | 'medium' | 'low';
+  documentTypeOverride?: 'auto' | 'invoice' | 'recurring' | 'one-time' | null;
+  manualOverride?: boolean;
   paymentStatus?: 'paid' | 'unpaid';
   paymentDate?: string;
   paymentDueDate?: string;
@@ -74,11 +77,49 @@ export default function SmartContractInfo({ contract, onPaymentUpdate }: SmartCo
   const isRecurringContract = contract.contractType === 'recurring';
 
   // Decision Logic
+  // 0. MANUAL OVERRIDE hat höchste Priorität!
+  if (contract.manualOverride && contract.documentTypeOverride) {
+    const override = contract.documentTypeOverride;
+
+    if (override === 'invoice') {
+      console.log('💳💰 Showing BOTH Trackers (manual override: invoice)');
+      return (
+        <>
+          <DocumentTypeSelector contract={contract} onTypeChange={onPaymentUpdate} />
+          <PaymentTracker contract={contract} onPaymentUpdate={onPaymentUpdate} />
+          <div style={{ marginTop: '1rem' }} />
+          <CostTracker contract={contract} />
+        </>
+      );
+    }
+
+    if (override === 'recurring') {
+      console.log('💰 Showing ONLY Cost Tracker (manual override: recurring)');
+      return (
+        <>
+          <DocumentTypeSelector contract={contract} onTypeChange={onPaymentUpdate} />
+          <CostTracker contract={contract} />
+        </>
+      );
+    }
+
+    if (override === 'one-time') {
+      console.log('💳 Showing ONLY Payment Tracker (manual override: one-time)');
+      return (
+        <>
+          <DocumentTypeSelector contract={contract} onTypeChange={onPaymentUpdate} />
+          <PaymentTracker contract={contract} onPaymentUpdate={onPaymentUpdate} />
+        </>
+      );
+    }
+  }
+
   // 1. Rechnung im Namen → IMMER BEIDE Tracker (überschreibt alles!)
   if (isInvoice) {
     console.log('💳💰 Showing BOTH Trackers (invoice detected in name)');
     return (
       <>
+        <DocumentTypeSelector contract={contract} onTypeChange={onPaymentUpdate} />
         <PaymentTracker contract={contract} onPaymentUpdate={onPaymentUpdate} />
         <div style={{ marginTop: '1rem' }} />
         <CostTracker contract={contract} />
@@ -90,14 +131,24 @@ export default function SmartContractInfo({ contract, onPaymentUpdate }: SmartCo
   const isHighConfidenceRecurring = contract.contractTypeConfidence === 'high';
   if (isRecurringContract && (hasRecurringKeyword || isHighConfidenceRecurring)) {
     console.log('💰 Showing ONLY Cost Tracker (recurring + safe keyword/high confidence)');
-    return <CostTracker contract={contract} />;
+    return (
+      <>
+        <DocumentTypeSelector contract={contract} onTypeChange={onPaymentUpdate} />
+        <CostTracker contract={contract} />
+      </>
+    );
   }
 
   // 3. SEHR SICHER: One-Time + (Keywords ODER high confidence) → Nur Payment Tracker
   const isHighConfidenceOneTime = contract.contractTypeConfidence === 'high';
   if (isOneTimeContract && (hasOneTimeKeyword || isHighConfidenceOneTime)) {
     console.log('💳 Showing ONLY Payment Tracker (one-time + safe keyword/high confidence)');
-    return <PaymentTracker contract={contract} onPaymentUpdate={onPaymentUpdate} />;
+    return (
+      <>
+        <DocumentTypeSelector contract={contract} onTypeChange={onPaymentUpdate} />
+        <PaymentTracker contract={contract} onPaymentUpdate={onPaymentUpdate} />
+      </>
+    );
   }
 
   // 4. NUR Keywords ohne GPT-Typ → Auch nutzen (aber konservativ)
@@ -105,13 +156,19 @@ export default function SmartContractInfo({ contract, onPaymentUpdate }: SmartCo
   const veryStrongRecurring = ['netflix', 'spotify', 'disney', 'amazon prime', 'mietvertrag', 'miet-vertrag'];
   if (veryStrongRecurring.some(keyword => contractName.includes(keyword))) {
     console.log('💰 Showing ONLY Cost Tracker (very strong recurring keyword)');
-    return <CostTracker contract={contract} />;
+    return (
+      <>
+        <DocumentTypeSelector contract={contract} onTypeChange={onPaymentUpdate} />
+        <CostTracker contract={contract} />
+      </>
+    );
   }
 
   // 5. Default: BEIDE Tracker (sicherer Fallback!)
   console.log('💳💰 Showing BOTH Trackers (default - safe fallback)');
   return (
     <>
+      <DocumentTypeSelector contract={contract} onTypeChange={onPaymentUpdate} />
       <PaymentTracker contract={contract} onPaymentUpdate={onPaymentUpdate} />
       <div style={{ marginTop: '1rem' }} />
       <CostTracker contract={contract} />

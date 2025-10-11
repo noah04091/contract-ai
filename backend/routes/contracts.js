@@ -988,6 +988,73 @@ router.patch("/:id/costs", verifyToken, async (req, res) => {
   }
 });
 
+// ✅ NEU: PATCH /contracts/:id/document-type – Manuelle Dokumenttyp-Überschreibung
+router.patch("/:id/document-type", verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { documentType, manualOverride } = req.body;
+
+    // Validierung
+    const validTypes = ['auto', 'invoice', 'recurring', 'one-time'];
+    if (!validTypes.includes(documentType)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Ungültiger Dokumenttyp. Erlaubt: auto, invoice, recurring, one-time'
+      });
+    }
+
+    const contract = await contractsCollection.findOne({
+      _id: new ObjectId(id),
+      userId: new ObjectId(req.user.userId)
+    });
+
+    if (!contract) {
+      return res.status(404).json({
+        success: false,
+        message: 'Vertrag nicht gefunden'
+      });
+    }
+
+    // Update Document Type
+    const updateData = {
+      documentTypeOverride: documentType,
+      manualOverride: manualOverride === true,
+      updatedAt: new Date()
+    };
+
+    // Bei "auto" → Zurück zu GPT-Erkennung
+    if (documentType === 'auto') {
+      updateData.documentTypeOverride = null;
+      updateData.manualOverride = false;
+    }
+
+    await contractsCollection.updateOne(
+      { _id: new ObjectId(id), userId: new ObjectId(req.user.userId) },
+      { $set: updateData }
+    );
+
+    // Fetch updated contract
+    const updatedContract = await contractsCollection.findOne({
+      _id: new ObjectId(id),
+      userId: new ObjectId(req.user.userId)
+    });
+
+    res.json({
+      success: true,
+      message: 'Dokumenttyp erfolgreich aktualisiert',
+      contract: updatedContract
+    });
+
+  } catch (error) {
+    console.error('❌ Fehler beim Aktualisieren des Dokumenttyps:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Fehler beim Aktualisieren',
+      error: error.message
+    });
+  }
+});
+
 // ✅ NEU: POST /contracts/:id/detect-provider – Provider für bestehenden Vertrag erkennen
 router.post("/:id/detect-provider", verifyToken, async (req, res) => {
   try {
