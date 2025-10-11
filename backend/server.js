@@ -14,6 +14,7 @@ const pdfParse = require("pdf-parse");
 const { OpenAI } = require("openai");
 const nodemailer = require("nodemailer");
 const { MongoClient, ObjectId } = require("mongodb");
+const mongoose = require("mongoose"); // 📁 Mongoose for Folder Models
 const cron = require("node-cron");
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
@@ -331,10 +332,19 @@ const connectDB = async () => {
     
     await client.connect();
     db = client.db("contract_ai");
-    
+
     const connectTime = Date.now() - startTime;
     console.log(`✅ MongoDB zentral verbunden in ${connectTime}ms!`);
-    
+
+    // 📁 Connect Mongoose for Folder Models
+    await mongoose.connect(MONGO_URI, {
+      dbName: "contract_ai",
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+    });
+    console.log("✅ Mongoose verbunden für Folder Models");
+
     return db;
   } catch (error) {
     console.error("❌ MongoDB-Verbindung fehlgeschlagen:", error);
