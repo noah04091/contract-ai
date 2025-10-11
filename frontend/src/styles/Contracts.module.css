@@ -1911,20 +1911,21 @@
 
 /* 📋 Bulk Selection Styles */
 .checkboxColumn {
-  width: 50px;
-  max-width: 50px;
-  min-width: 50px;
-  padding: 0.5rem 0.25rem !important;
+  width: 36px;
+  max-width: 36px;
+  min-width: 36px;
+  padding: 0.5rem 0.15rem !important;
   text-align: center;
   vertical-align: middle;
 }
 
 .bulkCheckbox {
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
   cursor: pointer;
   accent-color: #667eea;
   margin: 0;
+  padding: 0;
 }
 
 .selectedRow {
