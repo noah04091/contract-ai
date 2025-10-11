@@ -40,7 +40,7 @@ export default function SmartContractInfo({ contract, onPaymentUpdate }: SmartCo
   const isRecurringContract = contract.contractType === 'recurring';
 
   // Decision Logic
-  // 1. Rechnung im Namen → BEIDE Tracker (Payment Status + Kostenübersicht)
+  // 1. Rechnung im Namen → IMMER BEIDE Tracker (überschreibt contractType!)
   if (isInvoice) {
     console.log('💳💰 Showing BOTH Trackers (invoice detected in name)');
     return (
@@ -52,19 +52,25 @@ export default function SmartContractInfo({ contract, onPaymentUpdate }: SmartCo
     );
   }
 
-  // 2. Explizit als one-time markiert
+  // 2. Explizit als one-time markiert UND kein "Rechnung" im Namen
   if (isOneTimeContract) {
     console.log('💳 Showing Payment Tracker (one-time contract)');
     return <PaymentTracker contract={contract} onPaymentUpdate={onPaymentUpdate} />;
   }
 
-  // 3. NUR wenn explizit recurring → Cost Tracker
+  // 3. Recurring contract OHNE "Rechnung" im Namen → nur Cost Tracker
   if (isRecurringContract) {
     console.log('💰 Showing Cost Tracker (recurring contract)');
     return <CostTracker contract={contract} />;
   }
 
-  // 4. Default: Payment Tracker (sicherer für Rechnungen)
-  console.log('💳 Showing Payment Tracker (default - safer for invoices)');
-  return <PaymentTracker contract={contract} onPaymentUpdate={onPaymentUpdate} />;
+  // 4. Default: BEIDE Tracker (sicherer für Rechnungen die nicht erkannt wurden!)
+  console.log('💳💰 Showing BOTH Trackers (default - safer for undetected invoices)');
+  return (
+    <>
+      <PaymentTracker contract={contract} onPaymentUpdate={onPaymentUpdate} />
+      <div style={{ marginTop: '1rem' }} />
+      <CostTracker contract={contract} />
+    </>
+  );
 }
