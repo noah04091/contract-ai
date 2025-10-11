@@ -1931,6 +1931,63 @@ export default function Contracts() {
           <Edit size={14} />
           <span>Bearbeiten</span>
         </button>
+        {/* 📁 Mobile Folder Dropdown */}
+        <div
+          className={styles.mobileFolderWrapper}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            className={`${styles.cardActionButton} ${folderDropdownOpen === contract._id ? styles.active : ''}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              setFolderDropdownOpen(
+                folderDropdownOpen === contract._id ? null : contract._id
+              );
+            }}
+          >
+            <Folder size={14} />
+            <span>Ordner</span>
+          </button>
+          {folderDropdownOpen === contract._id && (
+            <div className={styles.mobileFolderDropdown}>
+              <div className={styles.mobileFolderHeader}>In Ordner verschieben</div>
+              <div className={styles.mobileFolderList}>
+                {/* Ohne Ordner */}
+                <button
+                  className={`${styles.mobileFolderItem} ${!contract.folderId ? styles.selected : ''}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleMoveToFolder(contract._id, null);
+                    setFolderDropdownOpen(null);
+                  }}
+                >
+                  <span className={styles.folderIcon}>📂</span>
+                  <span>Ohne Ordner</span>
+                </button>
+                {/* Folder List */}
+                {folders.map((folder) => (
+                  <button
+                    key={folder._id}
+                    className={`${styles.mobileFolderItem} ${contract.folderId === folder._id ? styles.selected : ''}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleMoveToFolder(contract._id, folder._id);
+                      setFolderDropdownOpen(null);
+                    }}
+                  >
+                    <span className={styles.folderIcon} style={{ color: folder.color }}>
+                      {folder.icon}
+                    </span>
+                    <span>{folder.name}</span>
+                    {contract.folderId === folder._id && (
+                      <CheckCircle size={12} className={styles.checkIcon} />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
         <button
           className={`${styles.cardActionButton} ${styles.delete}`}
           onClick={(e) => {
