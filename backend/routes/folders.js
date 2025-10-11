@@ -4,6 +4,11 @@ const router = express.Router();
 const Folder = require('../models/Folder');
 const Contract = require('../models/Contract');
 const verifyToken = require('../middleware/verifyToken');
+const OpenAI = require('openai');
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
 
 // ✅ GET /api/folders - Get all folders for user
 router.get('/', verifyToken, async (req, res) => {
@@ -143,95 +148,94 @@ router.delete('/:id', verifyToken, async (req, res) => {
 // ✅ POST /api/folders/smart-suggest - Suggest smart folders based on contracts
 router.post('/smart-suggest', verifyToken, async (req, res) => {
   try {
-    // Get all contracts without folder
+    // Get ALL contracts for analysis
     const contracts = await Contract.find({
-      userId: req.userId,
-      folderId: null
+      userId: req.userId
+    }).select('name contractType folderId');
+
+    if (contracts.length === 0) {
+      return res.json({ suggestions: [], totalContracts: 0, categorizedCount: 0 });
+    }
+
+    // Get existing folders to avoid duplicates
+    const existingFolders = await Folder.find({ userId: req.userId }).select('name');
+    const existingFolderNames = existingFolders.map(f => f.name.toLowerCase());
+
+    // Prepare contract list for OpenAI (limit to 100 for performance)
+    const contractSample = contracts.slice(0, 100).map(c => c.name);
+
+    // 🤖 OpenAI Smart Categorization
+    const prompt = `Analysiere diese ${contractSample.length} Vertragsnamen und schlage 3-5 sinnvolle Ordner-Kategorien vor.
+
+VERTRAGSNAMEN:
+${contractSample.join('\n')}
+
+BESTEHENDE ORDNER (nicht vorschlagen):
+${existingFolderNames.join(', ') || 'Keine'}
+
+ANFORDERUNGEN:
+- Vorschläge auf Deutsch
+- Maximal 5 Kategorien
+- Jede Kategorie sollte mindestens 3 Verträge enthalten
+- Passende Emojis als Icons
+- Sinnvolle Hex-Farben
+
+ANTWORT-FORMAT (NUR JSON, KEINE ERKLÄRUNGEN):
+{
+  "categories": [
+    {
+      "name": "Kategoriename",
+      "icon": "📁",
+      "color": "#667eea",
+      "keywords": ["keyword1", "keyword2"]
+    }
+  ]
+}`;
+
+    const aiResponse = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        { role: 'system', content: 'Du bist ein Experte für Vertragsorganisation. Antworte NUR mit validem JSON.' },
+        { role: 'user', content: prompt }
+      ],
+      temperature: 0.7,
+      max_tokens: 1000
     });
 
-    // Categorization logic
-    const categories = {
-      'Abo-Verträge': {
-        icon: '💰',
-        color: '#10b981',
-        contracts: []
-      },
-      'Rechnungen': {
-        icon: '📄',
-        color: '#3b82f6',
-        contracts: []
-      },
-      'Versicherungen': {
-        icon: '🛡️',
-        color: '#f59e0b',
-        contracts: []
-      },
-      'Mietverträge': {
-        icon: '🏠',
-        color: '#8b5cf6',
-        contracts: []
-      },
-      'Streaming & Abos': {
-        icon: '🎬',
-        color: '#ec4899',
-        contracts: []
-      }
-    };
+    const aiContent = aiResponse.choices[0].message.content.trim();
+    let aiCategories;
 
-    // Categorize contracts
-    contracts.forEach(contract => {
-      const name = contract.name?.toLowerCase() || '';
+    try {
+      // Extract JSON from response (in case GPT adds markdown)
+      const jsonMatch = aiContent.match(/\{[\s\S]*\}/);
+      aiCategories = JSON.parse(jsonMatch ? jsonMatch[0] : aiContent);
+    } catch (parseError) {
+      console.error('❌ Failed to parse OpenAI response:', aiContent);
+      // Fallback to keyword-based
+      throw new Error('KI-Antwort konnte nicht verarbeitet werden');
+    }
 
-      // Check for subscriptions/recurring
-      const recurringKeywords = ['abo', 'abonnement', 'subscription', 'netflix', 'spotify', 'disney', 'amazon prime'];
-      if (contract.contractType === 'recurring' || recurringKeywords.some(kw => name.includes(kw))) {
-        // Further categorize streaming services
-        const streamingKeywords = ['netflix', 'spotify', 'disney', 'amazon prime', 'youtube', 'twitch'];
-        if (streamingKeywords.some(kw => name.includes(kw))) {
-          categories['Streaming & Abos'].contracts.push(contract);
-        } else {
-          categories['Abo-Verträge'].contracts.push(contract);
-        }
-        return;
-      }
+    // Match contracts to AI categories
+    const categorizedSuggestions = aiCategories.categories.map(category => {
+      const matchedContracts = contracts.filter(contract => {
+        const name = contract.name?.toLowerCase() || '';
+        return category.keywords.some(kw => name.includes(kw.toLowerCase()));
+      });
 
-      // Check for invoices
-      const invoiceKeywords = ['rechnung', 'invoice', 're-', 're_', '_re'];
-      if (contract.contractType === 'one-time' || invoiceKeywords.some(kw => name.includes(kw))) {
-        categories['Rechnungen'].contracts.push(contract);
-        return;
-      }
-
-      // Check for insurance
-      const insuranceKeywords = ['versicherung', 'insurance', 'allianz', 'axa', 'huk'];
-      if (insuranceKeywords.some(kw => name.includes(kw))) {
-        categories['Versicherungen'].contracts.push(contract);
-        return;
-      }
-
-      // Check for rent
-      const rentKeywords = ['miet', 'miete', 'vermietung', 'wohnung', 'apartment'];
-      if (rentKeywords.some(kw => name.includes(kw))) {
-        categories['Mietverträge'].contracts.push(contract);
-        return;
-      }
-    });
-
-    // Filter out empty categories
-    const suggestions = Object.entries(categories)
-      .filter(([_, data]) => data.contracts.length > 0)
-      .map(([name, data]) => ({
-        name,
-        icon: data.icon,
-        color: data.color,
-        contractCount: data.contracts.length,
-        contractIds: data.contracts.map(c => c._id)
-      }));
+      return {
+        name: category.name,
+        icon: category.icon,
+        color: category.color,
+        contractCount: matchedContracts.length,
+        contractIds: matchedContracts.map(c => c._id),
+        contracts: matchedContracts
+      };
+    }).filter(cat => cat.contractCount >= 3); // Only suggest categories with 3+ contracts
 
     res.json({
-      suggestions,
+      suggestions: categorizedSuggestions,
       totalContracts: contracts.length,
-      categorizedCount: suggestions.reduce((sum, s) => sum + s.contractCount, 0)
+      categorizedCount: categorizedSuggestions.reduce((sum, s) => sum + s.contractCount, 0)
     });
   } catch (error) {
     console.error('❌ Error generating smart folder suggestions:', error);
@@ -242,9 +246,9 @@ router.post('/smart-suggest', verifyToken, async (req, res) => {
 // ✅ POST /api/folders/smart-create - Create smart folders and assign contracts
 router.post('/smart-create', verifyToken, async (req, res) => {
   try {
-    const { folders } = req.body; // Array of { name, icon, color, contractIds }
+    const { suggestions } = req.body; // Array of SmartFolderSuggestion
 
-    if (!folders || !Array.isArray(folders)) {
+    if (!suggestions || !Array.isArray(suggestions)) {
       return res.status(400).json({ error: 'Ungültiges Format' });
     }
 
@@ -257,25 +261,27 @@ router.post('/smart-create', verifyToken, async (req, res) => {
 
     let currentOrder = lastFolder ? lastFolder.order + 1 : 0;
 
-    for (const folderData of folders) {
+    for (const suggestion of suggestions) {
       // Create folder
       const folder = new Folder({
-        name: folderData.name,
-        color: folderData.color,
-        icon: folderData.icon,
+        name: suggestion.name,
+        color: suggestion.color,
+        icon: suggestion.icon,
         order: currentOrder++,
         userId: req.userId
       });
 
       await folder.save();
 
-      // Assign contracts to folder
-      if (folderData.contractIds && folderData.contractIds.length > 0) {
+      // Assign contracts to folder (extract IDs from contracts array)
+      const contractIds = suggestion.contracts.map(c => c._id);
+
+      if (contractIds && contractIds.length > 0) {
         await Contract.updateMany(
           {
-            _id: { $in: folderData.contractIds },
-            userId: req.userId,
-            folderId: null // Only move contracts that don't have a folder yet
+            _id: { $in: contractIds },
+            userId: req.userId
+            // REMOVED: folderId: null - Allow reassignment if user wants
           },
           { $set: { folderId: folder._id } }
         );
@@ -283,7 +289,7 @@ router.post('/smart-create', verifyToken, async (req, res) => {
 
       createdFolders.push({
         ...folder.toObject(),
-        contractCount: folderData.contractIds?.length || 0
+        contractCount: contractIds.length
       });
     }
 
