@@ -105,8 +105,13 @@ export default function CostTracker({ contract, onCostUpdate }: CostTrackerProps
   const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newDate = e.target.value;
     setStartDate(newDate);
-    // Speichern ohne await - verhindert Kalender-Schließen
-    saveCostData({ subscriptionStartDate: newDate });
+  };
+
+  // Handle Start Date Blur (nur beim Verlassen speichern)
+  const handleStartDateBlur = () => {
+    if (startDate !== contract.subscriptionStartDate) {
+      saveCostData({ subscriptionStartDate: startDate });
+    }
   };
 
   // Handle Base Amount Change
@@ -232,6 +237,7 @@ export default function CostTracker({ contract, onCostUpdate }: CostTrackerProps
           className={styles.startDateInput}
           value={startDate}
           onChange={handleStartDateChange}
+          onBlur={handleStartDateBlur}
           disabled={isSaving}
           placeholder="Wähle Start-Datum"
         />

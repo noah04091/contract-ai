@@ -1,15 +1,14 @@
-/* ✨ CostTracker.module.css - Premium Cost Overview Styling */
+/* ✨ CostTracker.module.css - Clean Minimal Cost Overview Styling */
 
 .costTracker {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
+  background: #fafafa;
   border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 1.5rem;
-  transition: all 0.3s ease;
+  border-radius: 10px;
+  padding: 1.25rem;
+  transition: all 0.2s ease;
 }
 
 .costTracker:hover {
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
   border-color: #d1d5db;
 }
 
@@ -18,14 +17,14 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-size: 1rem;
+  font-size: 0.875rem;
   font-weight: 600;
   color: #1d1d1f;
-  margin: 0 0 1.25rem 0;
+  margin: 0 0 1rem 0;
 }
 
 .icon {
-  font-size: 1.2rem;
+  font-size: 1rem;
 }
 
 /* Frequency Section - Clean Minimal */
@@ -68,7 +67,7 @@
 }
 
 .frequencyBtn.active {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #667eea;
   border-color: #667eea;
   color: white;
 }
@@ -248,10 +247,6 @@
   font-size: 1.15rem;
   font-weight: 700;
   color: #667eea;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
 
 /* Compare Button */
@@ -262,7 +257,7 @@
   justify-content: center;
   gap: 0.5rem;
   padding: 0.85rem 1.25rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #667eea;
   color: white;
   border: none;
   border-radius: 8px;
@@ -270,17 +265,15 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
 }
 
 .compareBtn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+  background: #5568d3;
+  transform: translateY(-1px);
 }
 
 .compareBtn:active {
   transform: translateY(0);
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
 }
 
 .arrow {
