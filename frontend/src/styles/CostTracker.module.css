@@ -78,6 +78,78 @@
   cursor: not-allowed;
 }
 
+/* Base Amount Section - Editierbar */
+.baseAmountSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 0.85rem;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.baseAmountLabel {
+  font-size: 0.75rem;
+  color: #86868b;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.baseAmountInputWrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.baseAmountInput {
+  flex: 1;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 1rem;
+  color: #1d1d1f;
+  background: #fafafa;
+  transition: all 0.2s ease;
+  font-variant-numeric: tabular-nums;
+}
+
+.baseAmountInput:hover:not(:disabled) {
+  border-color: #667eea;
+  background: white;
+}
+
+.baseAmountInput:focus {
+  outline: none;
+  border-color: #667eea;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.baseAmountInput:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Remove number input arrows */
+.baseAmountInput::-webkit-outer-spin-button,
+.baseAmountInput::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.baseAmountInput[type=number] {
+  -moz-appearance: textfield;
+}
+
+.currencySymbol {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #86868b;
+}
+
 /* Start Date Section - Clean Minimal */
 .startDateSection {
   display: flex;

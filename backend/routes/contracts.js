@@ -918,12 +918,13 @@ router.patch("/:id/payment", verifyToken, async (req, res) => {
 router.patch("/:id/costs", verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
-    const { paymentFrequency, subscriptionStartDate } = req.body;
+    const { paymentFrequency, subscriptionStartDate, baseAmount } = req.body;
 
     console.log("💰 Cost Tracking Update:", {
       contractId: id,
       paymentFrequency,
-      subscriptionStartDate
+      subscriptionStartDate,
+      baseAmount
     });
 
     // Validate contract ownership
@@ -949,6 +950,10 @@ router.patch("/:id/costs", verifyToken, async (req, res) => {
     }
     if (subscriptionStartDate !== undefined) {
       updateData.subscriptionStartDate = subscriptionStartDate;
+    }
+    if (baseAmount !== undefined) {
+      // Speichere baseAmount als paymentAmount
+      updateData.paymentAmount = baseAmount;
     }
 
     // Update contract

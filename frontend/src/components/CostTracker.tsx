@@ -12,6 +12,7 @@ interface Contract {
   // 💰 Cost Tracking Fields
   paymentFrequency?: 'monthly' | 'yearly' | 'weekly';
   subscriptionStartDate?: string;
+  paymentAmount?: number;
 }
 
 interface CostTrackerProps {
@@ -25,6 +26,9 @@ export default function CostTracker({ contract, onCostUpdate }: CostTrackerProps
     contract.paymentFrequency || 'monthly'
   );
   const [startDate, setStartDate] = useState(contract.subscriptionStartDate || '');
+  const [baseAmount, setBaseAmount] = useState(
+    contract.paymentAmount || contract.amount || 0
+  );
   const [isSaving, setIsSaving] = useState(false);
 
   // Synchronisiere State mit Contract Props
@@ -36,11 +40,14 @@ export default function CostTracker({ contract, onCostUpdate }: CostTrackerProps
     setStartDate(contract.subscriptionStartDate || '');
   }, [contract.subscriptionStartDate]);
 
+  useEffect(() => {
+    const newAmount = contract.paymentAmount || contract.amount || 0;
+    setBaseAmount(newAmount);
+  }, [contract.paymentAmount, contract.amount]);
+
   // 💰 Berechne Kosten basierend auf Frequenz
   const costs = useMemo(() => {
-    const baseAmount = contract.amount || 0;
-
-    // Berechne basierend auf Frequenz
+    // ✅ Nutze baseAmount aus State (editierbar!)
     let monthlyPrice = 0;
     let yearlyPrice = 0;
 
@@ -79,12 +86,12 @@ export default function CostTracker({ contract, onCostUpdate }: CostTrackerProps
     }
 
     return {
-      monthly: monthlyPrice.toFixed(2),
-      yearly: yearlyPrice.toFixed(2),
-      total: totalCost.toFixed(2),
+      monthly: monthlyPrice,
+      yearly: yearlyPrice,
+      total: totalCost,
       months: monthsSinceStart
     };
-  }, [contract.amount, frequency, startDate, contract.createdAt, contract.uploadedAt]);
+  }, [baseAmount, frequency, startDate, contract.createdAt, contract.uploadedAt]);
 
   // Handle Frequency Change
   const handleFrequencyChange = async (newFrequency: 'monthly' | 'yearly' | 'weekly') => {
@@ -93,14 +100,26 @@ export default function CostTracker({ contract, onCostUpdate }: CostTrackerProps
   };
 
   // Handle Start Date Change
-  const handleStartDateChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newDate = e.target.value;
     setStartDate(newDate);
-    await saveCostData({ subscriptionStartDate: newDate });
+    // Speichern ohne await - verhindert Kalender-Schließen
+    saveCostData({ subscriptionStartDate: newDate });
+  };
+
+  // Handle Base Amount Change
+  const handleBaseAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newAmount = parseFloat(e.target.value) || 0;
+    setBaseAmount(newAmount);
+  };
+
+  // Handle Base Amount Blur (nur beim Verlassen des Felds speichern)
+  const handleBaseAmountBlur = () => {
+    saveCostData({ baseAmount });
   };
 
   // API Call zum Speichern
-  const saveCostData = async (data: { paymentFrequency?: string; subscriptionStartDate?: string }) => {
+  const saveCostData = async (data: { paymentFrequency?: string; subscriptionStartDate?: string; baseAmount?: number }) => {
     setIsSaving(true);
     try {
       const token = localStorage.getItem('authToken') || localStorage.getItem('token');
@@ -181,6 +200,25 @@ export default function CostTracker({ contract, onCostUpdate }: CostTrackerProps
         </div>
       </div>
 
+      {/* Base Amount Input */}
+      <div className={styles.baseAmountSection}>
+        <span className={styles.baseAmountLabel}>Basisbetrag ({frequency === 'monthly' ? 'pro Monat' : frequency === 'yearly' ? 'pro Jahr' : 'pro Woche'})</span>
+        <div className={styles.baseAmountInputWrapper}>
+          <input
+            type="number"
+            className={styles.baseAmountInput}
+            value={baseAmount}
+            onChange={handleBaseAmountChange}
+            onBlur={handleBaseAmountBlur}
+            disabled={isSaving}
+            step="0.01"
+            min="0"
+            placeholder="0.00"
+          />
+          <span className={styles.currencySymbol}>€</span>
+        </div>
+      </div>
+
       {/* Abo-Start-Datum */}
       <div className={styles.startDateSection}>
         <label htmlFor="subscriptionStart" className={styles.startDateLabel}>
@@ -200,19 +238,19 @@ export default function CostTracker({ contract, onCostUpdate }: CostTrackerProps
       <div className={styles.costGrid}>
         <div className={styles.costItem}>
           <span className={styles.costLabel}>Monatlich</span>
-          <strong className={styles.costValue}>{costs.monthly}€</strong>
+          <strong className={styles.costValue}>{costs.monthly.toFixed(2)}€</strong>
         </div>
 
         <div className={styles.costItem}>
           <span className={styles.costLabel}>Jährlich</span>
-          <strong className={styles.costValue}>{costs.yearly}€</strong>
+          <strong className={styles.costValue}>{costs.yearly.toFixed(2)}€</strong>
         </div>
 
         <div className={styles.costItem}>
           <span className={styles.costLabel}>
             {startDate ? `Seit Abo-Start (${costs.months}M)` : `Seit Upload (${costs.months}M)`}
           </span>
-          <strong className={styles.costValue}>{costs.total}€</strong>
+          <strong className={styles.costValue}>{costs.total.toFixed(2)}€</strong>
         </div>
       </div>
 
