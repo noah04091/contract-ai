@@ -1,5 +1,5 @@
 // 🤖 SmartFoldersModal.tsx - AI Folder Suggestions Modal
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Sparkles, Folder, Loader } from 'lucide-react';
 import styles from '../styles/SmartFoldersModal.module.css';
 
@@ -32,11 +32,11 @@ export default function SmartFoldersModal({
   const [error, setError] = useState<string | null>(null);
 
   // Fetch suggestions when modal opens
-  useState(() => {
+  useEffect(() => {
     if (isOpen && suggestions.length === 0) {
       handleFetchSuggestions();
     }
-  });
+  }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleFetchSuggestions = async () => {
     setIsLoading(true);
