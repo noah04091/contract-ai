@@ -1,6 +1,7 @@
 // 📁 routes/folders.js - Folder Management Routes
 const express = require('express');
 const router = express.Router();
+const { ObjectId } = require('mongodb');
 const Folder = require('../models/Folder');
 const Contract = require('../models/Contract');
 const verifyToken = require('../middleware/verifyToken');
@@ -31,8 +32,10 @@ router.get('/', verifyToken, async (req, res) => {
     );
 
     // Get unassignedOrder from User profile
-    const User = require('../models/User');
-    const user = await User.findById(req.userId).select('unassignedFolderOrder');
+    const user = await req.usersCollection.findOne(
+      { _id: new ObjectId(req.userId) },
+      { projection: { unassignedFolderOrder: 1 } }
+    );
     const unassignedOrder = user?.unassignedFolderOrder !== undefined ? user.unassignedFolderOrder : 9999;
 
     res.json({
@@ -106,9 +109,8 @@ router.patch('/reorder', verifyToken, async (req, res) => {
 
     // Update unassignedOrder in User profile (if provided)
     if (unassignedOrder !== null && unassignedOrder !== undefined) {
-      const User = require('../models/User');
-      await User.updateOne(
-        { _id: req.userId },
+      await req.usersCollection.updateOne(
+        { _id: new ObjectId(req.userId) },
         { $set: { unassignedFolderOrder: unassignedOrder } }
       );
     }
