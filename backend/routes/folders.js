@@ -148,12 +148,17 @@ router.delete('/:id', verifyToken, async (req, res) => {
 // ✅ POST /api/folders/smart-suggest - Suggest smart folders based on contracts
 router.post('/smart-suggest', verifyToken, async (req, res) => {
   try {
+    console.log('🤖 Smart Folders: Starting analysis for user', req.userId);
+
     // Get ALL contracts for analysis
     const contracts = await Contract.find({
       userId: req.userId
     }).select('name contractType folderId');
 
+    console.log(`📊 Found ${contracts.length} contracts to analyze`);
+
     if (contracts.length === 0) {
+      console.log('⚠️ No contracts found, returning empty suggestions');
       return res.json({ suggestions: [], totalContracts: 0, categorizedCount: 0 });
     }
 
@@ -161,8 +166,12 @@ router.post('/smart-suggest', verifyToken, async (req, res) => {
     const existingFolders = await Folder.find({ userId: req.userId }).select('name');
     const existingFolderNames = existingFolders.map(f => f.name.toLowerCase());
 
+    console.log(`📁 Existing folders: ${existingFolderNames.join(', ') || 'None'}`);
+
     // Prepare contract list for OpenAI (limit to 100 for performance)
     const contractSample = contracts.slice(0, 100).map(c => c.name);
+
+    console.log(`🎯 Sending ${contractSample.length} contracts to OpenAI for categorization...`);
 
     // 🤖 OpenAI Smart Categorization
     const prompt = `Analysiere diese ${contractSample.length} Vertragsnamen und schlage 3-5 sinnvolle Ordner-Kategorien vor.
@@ -203,12 +212,15 @@ ANTWORT-FORMAT (NUR JSON, KEINE ERKLÄRUNGEN):
     });
 
     const aiContent = aiResponse.choices[0].message.content.trim();
+    console.log('🤖 OpenAI Response:', aiContent.substring(0, 200) + '...');
+
     let aiCategories;
 
     try {
       // Extract JSON from response (in case GPT adds markdown)
       const jsonMatch = aiContent.match(/\{[\s\S]*\}/);
       aiCategories = JSON.parse(jsonMatch ? jsonMatch[0] : aiContent);
+      console.log(`✅ Parsed ${aiCategories.categories?.length || 0} AI categories`);
     } catch (parseError) {
       console.error('❌ Failed to parse OpenAI response:', aiContent);
       // Fallback to keyword-based
@@ -222,6 +234,8 @@ ANTWORT-FORMAT (NUR JSON, KEINE ERKLÄRUNGEN):
         return category.keywords.some(kw => name.includes(kw.toLowerCase()));
       });
 
+      console.log(`📂 Category "${category.name}": ${matchedContracts.length} contracts matched`);
+
       return {
         name: category.name,
         icon: category.icon,
@@ -231,6 +245,8 @@ ANTWORT-FORMAT (NUR JSON, KEINE ERKLÄRUNGEN):
         contracts: matchedContracts
       };
     }).filter(cat => cat.contractCount >= 3); // Only suggest categories with 3+ contracts
+
+    console.log(`✅ Returning ${categorizedSuggestions.length} suggestions (filtered for 3+ contracts)`);
 
     res.json({
       suggestions: categorizedSuggestions,
