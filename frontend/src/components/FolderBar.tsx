@@ -104,11 +104,9 @@ export default function FolderBar({
 
         {/* User Folders */}
         {folders.map((folder) => (
-          <motion.div
+          <div
             key={folder._id}
             className={styles.folderChipWrapper}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
           >
             <button
               className={`${styles.folderChip} ${activeFolder === folder._id ? styles.active : ''}`}
@@ -162,7 +160,7 @@ export default function FolderBar({
                 </motion.div>
               )}
             </AnimatePresence>
-          </motion.div>
+          </div>
         ))}
 
         {/* Divider */}
