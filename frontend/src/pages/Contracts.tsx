@@ -467,6 +467,28 @@ export default function Contracts() {
     }
   };
 
+  const handleReorderFolders = async (reorderedFolders: FolderType[]) => {
+    try {
+      // Update order in backend
+      await apiCall('/folders/reorder', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          folders: reorderedFolders.map((folder, index) => ({
+            _id: folder._id,
+            order: index
+          }))
+        })
+      });
+
+      await fetchFolders(); // Refresh to get updated order from server
+    } catch (err) {
+      console.error('Error reordering folders:', err);
+      setError('Fehler beim Sortieren der Ordner');
+      await fetchFolders(); // Revert to server state on error
+    }
+  };
+
   const handleFolderSave = async (data: { name: string; color: string; icon: string }) => {
     if (editingFolder) {
       await updateFolder(editingFolder._id, data);
@@ -2503,6 +2525,7 @@ export default function Contracts() {
                   onCreateFolder={handleCreateFolder}
                   onEditFolder={handleEditFolder}
                   onDeleteFolder={handleDeleteFolder}
+                  onReorderFolders={handleReorderFolders}
                   onSmartFolders={() => setSmartFoldersModalOpen(true)}
                   isLoading={foldersLoading}
                 />

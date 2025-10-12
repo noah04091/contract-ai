@@ -145,6 +145,35 @@ router.delete('/:id', verifyToken, async (req, res) => {
   }
 });
 
+// ✅ PATCH /api/folders/reorder - Reorder folders (Drag & Drop)
+router.patch('/reorder', verifyToken, async (req, res) => {
+  try {
+    const { folders } = req.body; // Array of { _id, order }
+
+    if (!folders || !Array.isArray(folders)) {
+      return res.status(400).json({ error: 'Ungültiges Format' });
+    }
+
+    // Update all folders with new order
+    const updatePromises = folders.map(({ _id, order }) =>
+      Folder.updateOne(
+        { _id, userId: req.userId },
+        { $set: { order } }
+      )
+    );
+
+    await Promise.all(updatePromises);
+
+    res.json({
+      message: 'Ordner-Reihenfolge erfolgreich aktualisiert',
+      updatedCount: folders.length
+    });
+  } catch (error) {
+    console.error('❌ Error reordering folders:', error);
+    res.status(500).json({ error: 'Fehler beim Sortieren der Ordner' });
+  }
+});
+
 // ✅ POST /api/folders/smart-suggest - Suggest smart folders based on contracts
 router.post('/smart-suggest', verifyToken, async (req, res) => {
   try {
