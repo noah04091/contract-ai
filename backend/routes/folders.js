@@ -30,7 +30,15 @@ router.get('/', verifyToken, async (req, res) => {
       })
     );
 
-    res.json(foldersWithCounts);
+    // Get unassignedOrder from User profile
+    const User = require('../models/User');
+    const user = await User.findById(req.userId).select('unassignedFolderOrder');
+    const unassignedOrder = user?.unassignedFolderOrder !== undefined ? user.unassignedFolderOrder : 9999;
+
+    res.json({
+      folders: foldersWithCounts,
+      unassignedOrder
+    });
   } catch (error) {
     console.error('❌ Error fetching folders:', error);
     res.status(500).json({ error: 'Fehler beim Laden der Ordner' });
@@ -80,7 +88,7 @@ router.post('/', verifyToken, async (req, res) => {
 // WICHTIG: Muss VOR /:id stehen, sonst matched Express "reorder" als ID!
 router.patch('/reorder', verifyToken, async (req, res) => {
   try {
-    const { folders } = req.body; // Array of { _id, order }
+    const { folders, unassignedOrder } = req.body; // Array of { _id, order } + unassignedOrder
 
     if (!folders || !Array.isArray(folders)) {
       return res.status(400).json({ error: 'Ungültiges Format' });
@@ -95,6 +103,15 @@ router.patch('/reorder', verifyToken, async (req, res) => {
     );
 
     await Promise.all(updatePromises);
+
+    // Update unassignedOrder in User profile (if provided)
+    if (unassignedOrder !== null && unassignedOrder !== undefined) {
+      const User = require('../models/User');
+      await User.updateOne(
+        { _id: req.userId },
+        { $set: { unassignedFolderOrder: unassignedOrder } }
+      );
+    }
 
     res.json({
       message: 'Ordner-Reihenfolge erfolgreich aktualisiert',

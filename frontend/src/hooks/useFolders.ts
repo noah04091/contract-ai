@@ -1,12 +1,13 @@
 // 📁 useFolders.ts - Custom Hook for Folder Management
 import { useState, useCallback } from 'react';
-import type { FolderType } from '../components/FolderSidebar';
+import type { FolderType } from '../components/FolderBar';
 
 interface UseFoldersReturn {
   folders: FolderType[];
   activeFolder: string | null;
   isLoading: boolean;
   error: string | null;
+  unassignedOrder: number;
   fetchFolders: () => Promise<void>;
   createFolder: (data: { name: string; color: string; icon: string }) => Promise<void>;
   updateFolder: (id: string, data: { name: string; color: string; icon: string }) => Promise<void>;
@@ -21,6 +22,7 @@ export function useFolders(): UseFoldersReturn {
   const [activeFolder, setActiveFolder] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [unassignedOrder, setUnassignedOrder] = useState<number>(9999);
 
   const getToken = () => {
     return localStorage.getItem('authToken') || localStorage.getItem('token');
@@ -43,7 +45,15 @@ export function useFolders(): UseFoldersReturn {
       }
 
       const data = await response.json();
-      setFolders(data);
+
+      // Handle new response format with folders + unassignedOrder
+      if (data.folders && Array.isArray(data.folders)) {
+        setFolders(data.folders);
+        setUnassignedOrder(data.unassignedOrder !== undefined ? data.unassignedOrder : 9999);
+      } else {
+        // Fallback for old format (just array of folders)
+        setFolders(data);
+      }
     } catch (err) {
       const error = err as Error;
       setError(error.message);
@@ -209,6 +219,7 @@ export function useFolders(): UseFoldersReturn {
     activeFolder,
     isLoading,
     error,
+    unassignedOrder,
     fetchFolders,
     createFolder,
     updateFolder,

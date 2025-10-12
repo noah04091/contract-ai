@@ -1,7 +1,7 @@
 // 📁 src/components/FolderBar.tsx - Horizontal Folder Navigation Bar with Drag & Drop
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Folder, Plus, FolderOpen, Sparkles, MoreVertical, Edit2, Trash2, GripVertical } from 'lucide-react';
+import { Plus, FolderOpen, Sparkles, MoreVertical, Edit2, Trash2, GripVertical } from 'lucide-react';
 import {
   DndContext,
   closestCenter,
@@ -77,6 +77,8 @@ function SortableFolderChip({
     opacity: isDragging ? 0.5 : 1,
   };
 
+  const isUnassigned = folder._id === 'unassigned';
+
   return (
     <div
       ref={setNodeRef}
@@ -84,12 +86,12 @@ function SortableFolderChip({
       className={styles.folderChipWrapper}
     >
       <button
-        className={`${styles.folderChip} ${isActive ? styles.active : ''} ${isDragging ? styles.dragging : ''}`}
+        className={`${styles.folderChip} ${isActive ? styles.active : ''} ${isDragging ? styles.dragging : ''} ${isUnassigned ? styles.unassignedChip : ''}`}
         style={{
           '--folder-color': folder.color,
         } as React.CSSProperties}
         onClick={onClick}
-        onContextMenu={onContextMenu}
+        onContextMenu={isUnassigned ? undefined : onContextMenu}
       >
         {/* Drag Handle */}
         <div
@@ -105,40 +107,44 @@ function SortableFolderChip({
         <span className={styles.chipLabel}>{folder.name}</span>
         <span className={styles.chipCount}>{folder.contractCount || 0}</span>
 
-        {/* More Button */}
-        <button
-          className={styles.moreButton}
-          onClick={(e) => {
-            e.stopPropagation();
-            onContextMenu(e);
-          }}
-        >
-          <MoreVertical size={14} />
-        </button>
+        {/* More Button - nur für echte Ordner */}
+        {!isUnassigned && (
+          <button
+            className={styles.moreButton}
+            onClick={(e) => {
+              e.stopPropagation();
+              onContextMenu(e);
+            }}
+          >
+            <MoreVertical size={14} />
+          </button>
+        )}
       </button>
 
-      {/* Context Menu */}
-      <AnimatePresence>
-        {contextMenuOpen && (
-          <motion.div
-            className={styles.contextMenu}
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.15 }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button className={styles.contextMenuItem} onClick={onEdit}>
-              <Edit2 size={14} />
-              <span>Bearbeiten</span>
-            </button>
-            <button className={`${styles.contextMenuItem} ${styles.danger}`} onClick={onDelete}>
-              <Trash2 size={14} />
-              <span>Löschen</span>
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Context Menu - nur für echte Ordner */}
+      {!isUnassigned && (
+        <AnimatePresence>
+          {contextMenuOpen && (
+            <motion.div
+              className={styles.contextMenu}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.15 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button className={styles.contextMenuItem} onClick={onEdit}>
+                <Edit2 size={14} />
+                <span>Bearbeiten</span>
+              </button>
+              <button className={`${styles.contextMenuItem} ${styles.danger}`} onClick={onDelete}>
+                <Trash2 size={14} />
+                <span>Löschen</span>
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      )}
     </div>
   );
 }
@@ -147,7 +153,6 @@ export default function FolderBar({
   folders,
   activeFolder,
   totalContracts,
-  unassignedCount,
   onFolderClick,
   onCreateFolder,
   onEditFolder,
@@ -240,7 +245,7 @@ export default function FolderBar({
           <span className={styles.chipCount}>{totalContracts}</span>
         </button>
 
-        {/* SORTABLE User Folders + "Ohne Ordner" */}
+        {/* SORTABLE User Folders (inkl. "Ohne Ordner" als virtuelles Folder) */}
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
@@ -250,25 +255,12 @@ export default function FolderBar({
             items={localFolders.map(f => f._id)}
             strategy={horizontalListSortingStrategy}
           >
-            {/* Ohne Ordner als erstes sortierbar Item */}
-            {unassignedCount > 0 && (
-              <button
-                className={`${styles.folderChip} ${styles.unassignedChip} ${activeFolder === 'unassigned' ? styles.active : ''}`}
-                onClick={() => onFolderClick('unassigned')}
-              >
-                <Folder size={16} className={styles.chipIcon} />
-                <span className={styles.chipLabel}>Ohne Ordner</span>
-                <span className={styles.chipCount}>{unassignedCount}</span>
-              </button>
-            )}
-
-            {/* User Folders - SORTABLE */}
             {localFolders.map((folder) => (
               <SortableFolderChip
                 key={folder._id}
                 folder={folder}
                 isActive={activeFolder === folder._id}
-                onClick={() => onFolderClick(folder._id)}
+                onClick={() => onFolderClick(folder._id === 'unassigned' ? 'unassigned' : folder._id)}
                 onContextMenu={(e) => handleContextMenu(e, folder)}
                 onEdit={(e) => handleEdit(e, folder._id)}
                 onDelete={(e) => handleDelete(e, folder._id)}

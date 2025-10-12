@@ -389,6 +389,7 @@ export default function Contracts() {
     folders,
     activeFolder,
     isLoading: foldersLoading,
+    unassignedOrder,
     fetchFolders,
     createFolder,
     updateFolder,
@@ -469,15 +470,20 @@ export default function Contracts() {
 
   const handleReorderFolders = async (reorderedFolders: FolderType[]) => {
     try {
-      // Update order in backend
+      // Separate real folders from "unassigned" virtual folder
+      const realFolders = reorderedFolders.filter(f => f._id !== 'unassigned');
+      const unassignedFolder = reorderedFolders.find(f => f._id === 'unassigned');
+
+      // Update order in backend for real folders
       await apiCall('/folders/reorder', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          folders: reorderedFolders.map((folder, index) => ({
+          folders: realFolders.map((folder, index) => ({
             _id: folder._id,
             order: index
-          }))
+          })),
+          unassignedOrder: unassignedFolder ? reorderedFolders.indexOf(unassignedFolder) : null
         })
       });
 
@@ -517,6 +523,22 @@ export default function Contracts() {
 
   // Count unassigned contracts
   const unassignedCount = contracts.filter(c => !c.folderId).length;
+
+  // Create virtual "Ohne Ordner" folder and merge with real folders
+  const foldersWithUnassigned = [...folders];
+  if (unassignedCount > 0) {
+    const unassignedFolder: FolderType = {
+      _id: 'unassigned',
+      name: 'Ohne Ordner',
+      icon: '📁',
+      color: '#fbbf24',
+      contractCount: unassignedCount,
+      order: unassignedOrder // Use saved order from user profile
+    };
+    foldersWithUnassigned.push(unassignedFolder);
+  }
+  // Sort by order
+  foldersWithUnassigned.sort((a, b) => (a.order || 0) - (b.order || 0));
 
   // 📋 Bulk Selection Handlers
   const toggleBulkSelectMode = () => {
@@ -2517,10 +2539,10 @@ export default function Contracts() {
 
                 {/* 📁 Folder Bar - Horizontal Navigation */}
                 <FolderBar
-                  folders={folders}
+                  folders={foldersWithUnassigned}
                   activeFolder={activeFolder}
                   totalContracts={contracts.length}
-                  unassignedCount={unassignedCount}
+                  unassignedCount={0}
                   onFolderClick={setActiveFolder}
                   onCreateFolder={handleCreateFolder}
                   onEditFolder={handleEditFolder}
