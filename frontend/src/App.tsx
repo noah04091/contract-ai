@@ -1,58 +1,61 @@
 // 📄 src/App.tsx
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 import Navbar from "./components/Navbar";
 import RequireAuth from "./components/RequireAuth";
 import PageLoader from "./components/PageLoader";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { AuthProvider } from "./context/AuthContext";
 import CookieConsentBanner from "./components/CookieConsentBanner";
-import ScrollToTop from "./components/ScrollToTop"; // ✅ NEU: ScrollToTop Component
+import ScrollToTop from "./components/ScrollToTop";
 
-// 🔓 Öffentliche Seiten
+// 🚀 PERFORMANCE: Lazy Loading für alle Seiten (Code Splitting)
+// Homepage und Login werden sofort geladen (kritische Seiten)
 import HomeRedesign from "./pages/HomeRedesign";
 import Login from "./pages/Login";
-import Register from "./pages/Register";
-import VerifySuccess from "./pages/VerifySuccess"; // ✅ NEU: E-Mail-Bestätigung Success Page
-import Pricing from "./pages/Pricing";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
-import Impressum from "./pages/Impressum";
-import Datenschutz from "./pages/Datenschutz";
-import AGB from "./pages/AGB";
-import About from "./pages/About";
-import Press from "./pages/Press";
-import Success from "./pages/Success";
-import HelpCenter from "./pages/HelpCenter";
-import Blog from "./pages/Blog";
-import BlogPost from "./pages/BlogPost";
-import NotFound from "./pages/NotFound"; // ✅ 404 Page für bessere SEO
 
-// 🌟 Feature-Landingpages
-import Vertragsanalyse from "./pages/features/Vertragsanalyse";
-import Optimierung from "./pages/features/Optimierung";
-import Fristen from "./pages/features/Fristen";
-import Vergleich from "./pages/features/Vergleich";
-import GeneratorPage from "./pages/features/Generator";
-import LegalPulsePage from "./pages/features/LegalPulse";
+// 🔓 Öffentliche Seiten - Lazy Loading
+const Register = lazy(() => import("./pages/Register"));
+const VerifySuccess = lazy(() => import("./pages/VerifySuccess"));
+const Pricing = lazy(() => import("./pages/Pricing"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const Impressum = lazy(() => import("./pages/Impressum"));
+const Datenschutz = lazy(() => import("./pages/Datenschutz"));
+const AGB = lazy(() => import("./pages/AGB"));
+const About = lazy(() => import("./pages/About"));
+const Press = lazy(() => import("./pages/Press"));
+const Success = lazy(() => import("./pages/Success"));
+const HelpCenter = lazy(() => import("./pages/HelpCenter"));
+const Blog = lazy(() => import("./pages/Blog"));
+const BlogPost = lazy(() => import("./pages/BlogPost"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
-// 🔒 Geschützte Seiten
-import Dashboard from "./pages/Dashboard";
-import Contracts from "./pages/Contracts";
-import ContractDetails from "./pages/ContractDetails";
-import EditContract from "./pages/EditContract";
-import Profile from "./pages/Profile";
-import CalendarView from "./pages/CalendarView";
-import Cancel from "./pages/Cancel"; // ✅ NEU: Cancel Page
-import Optimizer from "./pages/Optimizer"; // ✅ Legendäre KI-Vertragsoptimierung
-import Compare from "./pages/Compare";
-import Chat from "./pages/Chat";
-import Generate from "./pages/Generate";
-import CompanyProfile from "./pages/CompanyProfile";
-import Subscribe from "./pages/Subscribe";
-import Upgrade from "./pages/Upgrade";
-import BetterContracts from "./pages/BetterContracts";
-import LegalPulse from "./pages/LegalPulse";
+// 🌟 Feature-Landingpages - Lazy Loading
+const Vertragsanalyse = lazy(() => import("./pages/features/Vertragsanalyse"));
+const Optimierung = lazy(() => import("./pages/features/Optimierung"));
+const Fristen = lazy(() => import("./pages/features/Fristen"));
+const Vergleich = lazy(() => import("./pages/features/Vergleich"));
+const GeneratorPage = lazy(() => import("./pages/features/Generator"));
+const LegalPulsePage = lazy(() => import("./pages/features/LegalPulse"));
+
+// 🔒 Geschützte Seiten - Lazy Loading
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Contracts = lazy(() => import("./pages/Contracts"));
+const ContractDetails = lazy(() => import("./pages/ContractDetails"));
+const EditContract = lazy(() => import("./pages/EditContract"));
+const Profile = lazy(() => import("./pages/Profile"));
+const CalendarView = lazy(() => import("./pages/CalendarView"));
+const Cancel = lazy(() => import("./pages/Cancel"));
+const Optimizer = lazy(() => import("./pages/Optimizer"));
+const Compare = lazy(() => import("./pages/Compare"));
+const Chat = lazy(() => import("./pages/Chat"));
+const Generate = lazy(() => import("./pages/Generate"));
+const CompanyProfile = lazy(() => import("./pages/CompanyProfile"));
+const Subscribe = lazy(() => import("./pages/Subscribe"));
+const Upgrade = lazy(() => import("./pages/Upgrade"));
+const BetterContracts = lazy(() => import("./pages/BetterContracts"));
+const LegalPulse = lazy(() => import("./pages/LegalPulse"));
 
 function AppWithLoader() {
   const location = useLocation();
@@ -95,12 +98,13 @@ function AppWithLoader() {
 
   return (
     <ErrorBoundary>
-      <ScrollToTop /> {/* ✅ NEU: Scrollt bei Seitenwechsel automatisch nach oben */}
+      <ScrollToTop />
       <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
         {loading && <PageLoader />}
         <Navbar />
         <main style={{ flex: 1, paddingTop: "60px" }}>
-          <Routes>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
             {/* 🔓 Öffentliche Seiten */}
             <Route path="/" element={<HomeRedesign />} />
             <Route path="/login" element={<Login />} />
@@ -161,7 +165,8 @@ function AppWithLoader() {
 
             {/* ✅ 404 Catch-All Route (muss am Ende stehen) */}
             <Route path="*" element={<NotFound />} />
-          </Routes>
+            </Routes>
+          </Suspense>
         </main>
         <CookieConsentBanner />
       </div>

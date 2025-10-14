@@ -60,5 +60,22 @@ export default defineConfig({
     sourcemap: false,
     minify: "esbuild",
     chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // 🚀 React Core - Wird auf jeder Seite benötigt
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+
+          // 🎨 UI & Animation - Große Libraries
+          'ui-vendor': ['framer-motion', 'lucide-react', 'react-toastify'],
+
+          // 📄 PDF Generation - Nur für Generate & ContractDetails
+          'pdf-vendor': ['html2pdf.js', 'jspdf', 'html2canvas'],
+
+          // 🔐 Auth & Utils
+          'utils-vendor': ['axios', 'jwt-decode'],
+        },
+      },
+    },
   },
 });
