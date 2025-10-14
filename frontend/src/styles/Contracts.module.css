@@ -2610,12 +2610,14 @@
 
   /* 📋 Bulk Action Bar - Mobile Responsive (nicht abgeschnitten) */
   .bulkActionBar {
-    min-width: auto;
+    min-width: 0;
     width: calc(100% - 2rem);
-    max-width: 500px;
+    max-width: 90vw;
     padding: 0.875rem 1rem;
     gap: 1rem;
     bottom: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
   }
 
   .bulkActionInfo {
