@@ -6,6 +6,9 @@ import RequireAuth from "./components/RequireAuth";
 import PageLoader from "./components/PageLoader";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { AuthProvider } from "./context/AuthContext";
+import { ToastProvider } from "./context/ToastContext";
+import { ToastContainer } from "./components/Toast";
+import { useToast } from "./context/ToastContext";
 import CookieConsentBanner from "./components/CookieConsentBanner";
 import ScrollToTop from "./components/ScrollToTop";
 
@@ -60,6 +63,7 @@ const LegalPulse = lazy(() => import("./pages/LegalPulse"));
 function AppWithLoader() {
   const location = useLocation();
   const [loading, setLoading] = useState(false);
+  const { toasts, removeToast } = useToast();
 
   // 🛡️ DOM Error Handler für removeChild-Fehler
   useEffect(() => {
@@ -169,6 +173,7 @@ function AppWithLoader() {
           </Suspense>
         </main>
         <CookieConsentBanner />
+        <ToastContainer toasts={toasts} onRemove={removeToast} />
       </div>
     </ErrorBoundary>
   );
@@ -178,7 +183,9 @@ export default function App() {
   return (
     <Router>
       <AuthProvider>
-        <AppWithLoader />
+        <ToastProvider>
+          <AppWithLoader />
+        </ToastProvider>
       </AuthProvider>
     </Router>
   );

@@ -1,0 +1,328 @@
+/* 🚨 ErrorDisplay.module.css - Inline Error Display Styles */
+
+/* Main error display container */
+.errorDisplay {
+  display: flex;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 8px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+
+.errorIcon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-start;
+  padding-top: 2px;
+  color: #dc2626;
+}
+
+.errorContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.errorTitle {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  margin: 0 0 4px 0;
+  color: #991b1b;
+}
+
+.errorMessage {
+  font-size: 0.875rem;
+  margin: 0;
+  line-height: 1.5;
+  color: #7f1d1d;
+}
+
+.errorActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.errorButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.retryButton {
+  background: #dc2626;
+  color: white;
+}
+
+.retryButton:hover {
+  background: #b91c1c;
+  transform: translateY(-1px);
+}
+
+.dismissButton {
+  background: white;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.dismissButton:hover {
+  background: #fee2e2;
+  transform: translateY(-1px);
+}
+
+/* Variant: Inline (default) */
+.inline {
+  /* Default styles already applied above */
+}
+
+/* Variant: Card (elevated with shadow) */
+.card {
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  background: white;
+  border: 1px solid #fecaca;
+}
+
+.card .errorIcon {
+  background: #fef2f2;
+  padding: 8px;
+  border-radius: 8px;
+}
+
+/* Variant: Banner (full-width, less padding) */
+.banner {
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+  padding: 12px 24px;
+}
+
+/* Compact error alert */
+.errorAlert {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  color: #991b1b;
+  margin-bottom: 12px;
+}
+
+.errorAlert svg {
+  flex-shrink: 0;
+  color: #dc2626;
+}
+
+.alertClose {
+  margin-left: auto;
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: #991b1b;
+  display: flex;
+  align-items: center;
+  border-radius: 4px;
+  transition: background 0.15s ease;
+}
+
+.alertClose:hover {
+  background: #fee2e2;
+}
+
+/* Empty state error */
+.emptyStateError {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+  min-height: 300px;
+}
+
+.emptyStateIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #fef2f2;
+  color: #dc2626;
+  margin-bottom: 24px;
+}
+
+.emptyStateTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 12px 0;
+}
+
+.emptyStateMessage {
+  font-size: 0.9375rem;
+  color: #6b7280;
+  margin: 0 0 24px 0;
+  max-width: 400px;
+  line-height: 1.6;
+}
+
+.emptyStateButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: #dc2626;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.emptyStateButton:hover {
+  background: #b91c1c;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .errorDisplay {
+    background: #7f1d1d;
+    border-color: #991b1b;
+    color: #fecaca;
+  }
+
+  .errorIcon {
+    color: #fca5a5;
+  }
+
+  .errorTitle {
+    color: #fecaca;
+  }
+
+  .errorMessage {
+    color: #fca5a5;
+  }
+
+  .dismissButton {
+    background: #991b1b;
+    color: #fecaca;
+    border-color: #b91c1c;
+  }
+
+  .dismissButton:hover {
+    background: #b91c1c;
+  }
+
+  .card {
+    background: #1f2937;
+    border-color: #991b1b;
+  }
+
+  .card .errorIcon {
+    background: #7f1d1d;
+  }
+
+  .errorAlert {
+    background: #7f1d1d;
+    border-color: #991b1b;
+    color: #fecaca;
+  }
+
+  .alertClose {
+    color: #fecaca;
+  }
+
+  .alertClose:hover {
+    background: #991b1b;
+  }
+
+  .emptyStateError {
+    color: #f9fafb;
+  }
+
+  .emptyStateIcon {
+    background: #7f1d1d;
+    color: #fca5a5;
+  }
+
+  .emptyStateTitle {
+    color: #f9fafb;
+  }
+
+  .emptyStateMessage {
+    color: #d1d5db;
+  }
+}
+
+/* Mobile responsive */
+@media (max-width: 640px) {
+  .errorDisplay {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .errorTitle {
+    font-size: 0.875rem;
+  }
+
+  .errorMessage {
+    font-size: 0.8125rem;
+  }
+
+  .errorActions {
+    margin-top: 10px;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .errorButton {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .banner {
+    padding: 10px 16px;
+  }
+
+  .emptyStateError {
+    padding: 32px 16px;
+    min-height: 250px;
+  }
+
+  .emptyStateIcon {
+    width: 64px;
+    height: 64px;
+  }
+
+  .emptyStateIcon svg {
+    width: 32px;
+    height: 32px;
+  }
+
+  .emptyStateTitle {
+    font-size: 1.125rem;
+  }
+
+  .emptyStateMessage {
+    font-size: 0.875rem;
+  }
+}
