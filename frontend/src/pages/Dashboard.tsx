@@ -8,10 +8,11 @@ import { tooltipTexts } from "../utils/tooltipTexts";
 import { generateICS } from "../utils/icsGenerator";
 import Notification from "../components/Notification";
 import { Helmet } from "react-helmet-async";
-import { 
+import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Line, Area, AreaChart 
+  PieChart, Pie, Cell, Line, Area, AreaChart
 } from 'recharts';
+import DashboardSkeleton from "../components/DashboardSkeleton"; // 💀 Skeleton Loader
 
 interface Contract {
   _id: string;
@@ -587,16 +588,6 @@ export default function Dashboard() {
         <meta name="twitter:image" content="https://contract-ai.de/og-image.jpg" />
       </Helmet>
 
-      {/* Full-Page Loading Overlay with Blur */}
-      {isLoading && (
-        <div className={styles.fullPageLoaderOverlay}>
-          <div className={styles.loaderContent}>
-            <div className={styles.loadingSpinner}></div>
-            <p className={styles.loadingText}>Dashboard wird geladen...</p>
-          </div>
-        </div>
-      )}
-
       <div className={styles.dashboardHeader}>
         <h1>Vertragsübersicht</h1>
         
@@ -661,6 +652,10 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* Dashboard Content or Skeleton */}
+      {isLoading ? (
+        <DashboardSkeleton />
+      ) : (
       <div className={styles.dashboardContent}>
         {/* 🆕 Metrics Cards Grid - 6 Karten in logischer Reihenfolge */}
         <div className={styles.metricsGrid}>
@@ -1472,6 +1467,7 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+      )}
 
       {/* Modal bleibt gleich */}
       {showModal && (

@@ -20,6 +20,7 @@ import SmartFoldersModal from "../components/SmartFoldersModal"; // 🤖 Smart F
 import { apiCall, uploadAndAnalyze, uploadOnly } from "../utils/api"; // ✅ NEU: uploadOnly hinzugefügt
 import { useFolders } from "../hooks/useFolders"; // 📁 Folder Hook
 import type { FolderType } from "../components/FolderBar"; // 📁 Folder Type
+import ContractsSkeleton, { ContractsCardsSkeleton } from "../components/ContractsSkeleton"; // 💀 Skeleton Loader
 
 interface Contract {
   _id: string;
@@ -2673,10 +2674,12 @@ export default function Contracts() {
                 )}
 
                 {loading && !refreshing ? (
-                  <div className={styles.loadingContainer}>
-                    <div className={styles.loadingSpinner}></div>
-                    <p>Verträge werden geladen...</p>
-                  </div>
+                  <>
+                    {/* Desktop Table Skeleton */}
+                    <ContractsSkeleton rows={5} />
+                    {/* Mobile Cards Skeleton */}
+                    <ContractsCardsSkeleton cards={3} />
+                  </>
                 ) : errorMessage ? (
                   <div className={styles.errorContainer}>
                     <AlertCircle size={40} className={styles.errorIcon} />
