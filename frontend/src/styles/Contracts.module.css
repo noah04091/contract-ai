@@ -2239,50 +2239,6 @@
   flex-shrink: 0;
 }
 
-/* 📋 Mobile Button Container - nur auf Mobile sichtbar */
-.mobileButtonContainer {
-  display: none; /* Hidden on Desktop */
-  padding: 0 0 1rem 0;
-}
-
-/* 📋 Mobile Bulk Select Button - kompakter für Mobile */
-.bulkSelectToggleMobile {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  padding: 0.65rem 1rem;
-  border: 2px solid #e5e7eb;
-  border-radius: 8px;
-  background: white;
-  color: #6b7280;
-  font-size: 0.85rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-  width: fit-content;
-  margin: 0 auto;
-}
-
-.bulkSelectToggleMobile:hover {
-  border-color: #667eea;
-  background: #f9fafb;
-  color: #667eea;
-}
-
-.bulkSelectToggleMobile.active {
-  border-color: #667eea;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  box-shadow: 0 3px 10px rgba(102, 126, 234, 0.3);
-}
-
-.bulkSelectToggleMobile.active:hover {
-  box-shadow: 0 4px 14px rgba(102, 126, 234, 0.4);
-  transform: translateY(-1px);
-}
-
 /* ✅ MOBILE CARDS - Zeigt Cards statt Tabelle auf mobilen Geräten */
 .mobileCardsContainer {
   display: none; /* Hidden by default, shown on mobile via media query */
@@ -2603,12 +2559,21 @@
   .searchSection {
     width: 100%;
     min-width: 100%;
-    flex-direction: column;
+    flex-direction: row; /* Keep horizontal layout */
+    gap: 0.5rem;
   }
 
-  /* 📋 DESKTOP Bulk Select Toggle in searchSection - HIDE on Mobile */
+  /* 📋 Mobile Bulk Select Toggle - kompakter Button neben Suchleiste */
   .bulkSelectToggle {
-    display: none !important;
+    flex-shrink: 0;
+    padding: 0.65rem 0.875rem;
+    font-size: 0.8rem;
+    gap: 0.375rem;
+    border-radius: 8px;
+  }
+
+  .bulkSelectToggle span {
+    display: none; /* Text verstecken, nur Icon anzeigen */
   }
 
   .filtersSection {
@@ -2643,9 +2608,29 @@
     height: 36px;
   }
 
-  /* 📋 SHOW Mobile Button Container on Mobile */
-  .mobileButtonContainer {
-    display: block !important;
+  /* 📋 Bulk Action Bar - Mobile Responsive (nicht abgeschnitten) */
+  .bulkActionBar {
+    min-width: auto;
+    width: calc(100% - 2rem);
+    max-width: 500px;
+    padding: 0.875rem 1rem;
+    gap: 1rem;
+    bottom: 1rem;
+  }
+
+  .bulkActionInfo {
+    font-size: 0.85rem;
+  }
+
+  .bulkActionButtons {
+    gap: 0.5rem;
+  }
+
+  .bulkActionButton,
+  .bulkDeleteButton,
+  .bulkCancelButton {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
   }
 
   /* HIDE TABLE, SHOW CARDS on Mobile */

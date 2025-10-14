@@ -2725,20 +2725,6 @@ export default function Contracts() {
                 ) : (
                   // ✅ RESPONSIVE CONTAINER - Zeigt Tabelle UND Mobile Cards
                   <>
-                    {/* 📋 MOBILE: Bulk Select Button über Verträgen */}
-                    <div className={styles.mobileButtonContainer}>
-                      <motion.button
-                        className={`${styles.bulkSelectToggleMobile} ${bulkSelectMode ? styles.active : ''}`}
-                        onClick={toggleBulkSelectMode}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        title={bulkSelectMode ? "Auswahl beenden" : "Verträge auswählen"}
-                      >
-                        {bulkSelectMode ? <CheckSquare size={16} /> : <Square size={16} />}
-                        <span>{bulkSelectMode ? "Auswahl beenden" : "Auswählen"}</span>
-                      </motion.button>
-                    </div>
-
                     {/* ✅ DESKTOP/TABLET TABLE */}
                     <div className={styles.tableContainer}>
                       <table className={`${styles.contractsTable} ${bulkSelectMode ? styles.withCheckboxes : ''}`}>
