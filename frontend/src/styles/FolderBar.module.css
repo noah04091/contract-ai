@@ -145,6 +145,17 @@
 .folderChip.dragging {
   opacity: 0.5;
   cursor: grabbing;
+  transform: scale(1.05) rotate(2deg); /* Visuelles Feedback */
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  z-index: 100;
+}
+
+/* Mobile: Stärkeres Drag-Feedback */
+@media (max-width: 768px) {
+  .folderChip.dragging {
+    transform: scale(1.08) rotate(3deg);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+  }
 }
 
 /* More Button */
@@ -299,38 +310,82 @@
     gap: 0.5rem;
     padding: 0.75rem 0;
     -webkit-overflow-scrolling: touch;
+    /* Größere Touch-freundliche Scrollbar */
+    scrollbar-width: auto;
+  }
+
+  .scrollContainer::-webkit-scrollbar {
+    height: 10px; /* Größer für besseres Touch-Feedback */
+  }
+
+  .scrollContainer::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.5) 0%, rgba(118, 75, 162, 0.5) 100%);
+    border-radius: 5px;
   }
 
   .folderChip {
-    padding: 0.5rem 0.75rem;
+    padding: 0.6rem 0.875rem; /* Etwas größer für Touch */
     font-size: 0.8125rem;
+    /* Touch-freundlicher Tap-Bereich */
+    min-height: 44px; /* Apple Human Interface Guidelines */
   }
 
   .chipLabel {
-    max-width: 120px;
+    max-width: 100px; /* Kompakter auf kleinen Screens */
   }
 
   .chipCount {
-    min-width: 20px;
-    height: 20px;
+    min-width: 22px;
+    height: 22px;
     font-size: 0.7rem;
   }
 
-  /* Always show more button on mobile */
+  /* ✅ WICHTIG: Drag Handle auf Mobile verstecken (Touch = kein Grab) */
+  .dragHandle {
+    display: none !important;
+  }
+
+  /* ✅ Touch-freundlicher More Button (größer für Finger) */
   .moreButton {
     display: flex;
-    width: 20px;
-    height: 20px;
+    width: 32px; /* Größer: 44x44px Touch Target */
+    height: 32px;
+    margin-left: 0.5rem;
+  }
+
+  .moreButton svg {
+    width: 18px;
+    height: 18px;
   }
 
   /* Mobile-friendly context menu */
   .contextMenu {
-    min-width: 140px;
+    min-width: 160px;
+    /* Sicherstellen dass es immer im Viewport ist */
+    left: auto !important;
+    right: 1rem !important;
   }
 
   .contextMenuItem {
-    padding: 0.75rem;
-    font-size: 0.8125rem;
+    padding: 1rem 0.875rem; /* Größer für Touch */
+    font-size: 0.875rem;
+    min-height: 48px; /* Touch-friendly */
+  }
+
+  /* Touch-Feedback für Chips */
+  .folderChip:active {
+    transform: scale(0.98);
+    background: #f1f5f9;
+  }
+
+  .folderChip.active:active {
+    transform: scale(0.98);
+  }
+
+  /* Divider etwas kleiner auf Mobile */
+  .divider {
+    height: 28px;
+    margin: 0 0.25rem;
   }
 }
 

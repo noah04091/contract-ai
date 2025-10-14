@@ -178,11 +178,15 @@ export default function FolderBar({
     }
   }, [contextMenu]);
 
-  // Drag & Drop sensors
+  // Drag & Drop sensors with mobile optimization
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8, // 8px movement required before drag starts
+        // 🎯 Mobile-optimiert: Mehr Bewegung nötig, um accidental drags zu vermeiden
+        distance: window.innerWidth <= 768 ? 15 : 8,
+        // 📱 Touch: Längerer Press bevor Drag startet (verhindert scroll-conflicts)
+        delay: window.innerWidth <= 768 ? 200 : 0,
+        tolerance: 5,
       },
     }),
     useSensor(KeyboardSensor, {
