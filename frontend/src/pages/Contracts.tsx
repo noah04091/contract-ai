@@ -1961,12 +1961,12 @@ export default function Contracts() {
         </div>
       </div>
 
-      {/* Card Actions */}
+      {/* Card Actions - ✅ NEU: Optimierte Hierarchie */}
       <div className={styles.cardActions}>
-        {/* ✅ NEU: "Jetzt analysieren" Button für nicht-analysierte Verträge */}
+        {/* ✅ PRIMÄRE AKTION: "Jetzt analysieren" Button für nicht-analysierte Verträge */}
         {contract.analyzed === false && (
           <button
-            className={`${styles.cardActionButton} ${styles.analyzeNow}`}
+            className={`${styles.cardActionButton} ${styles.analyzeNow} ${styles.primaryAction}`}
             onClick={(e) => {
               e.stopPropagation();
               handleAnalyzeExistingContract(contract);
@@ -1976,16 +1976,20 @@ export default function Contracts() {
             <span>Jetzt analysieren</span>
           </button>
         )}
+
+        {/* ✅ PRIMÄRE AKTION: Details (volle Breite, prominent) */}
         <button
-          className={styles.cardActionButton}
+          className={`${styles.cardActionButton} ${styles.primaryAction}`}
           onClick={(e) => {
             e.stopPropagation();
             handleRowClick(contract);
           }}
         >
-          <Eye size={14} />
+          <Eye size={16} />
           <span>Details</span>
         </button>
+
+        {/* ✅ SEKUNDÄRE AKTIONEN: 2x2 Grid */}
         <button
           className={styles.cardActionButton}
           onClick={(e) => {
@@ -2005,12 +2009,13 @@ export default function Contracts() {
           className={styles.cardActionButton}
           onClick={(e) => {
             e.stopPropagation();
-            handleEditContract(contract); // ✅ BUG FIX 1: Echte Edit-Funktion!
+            handleEditContract(contract);
           }}
         >
           <Edit size={14} />
           <span>Bearbeiten</span>
         </button>
+
         {/* 📁 Mobile Folder Dropdown */}
         <div
           className={styles.mobileFolderWrapper}
@@ -2068,8 +2073,10 @@ export default function Contracts() {
             </div>
           )}
         </div>
+
+        {/* ✅ DESTRUKTIVE AKTION: Löschen (dezent, outline-only) */}
         <button
-          className={`${styles.cardActionButton} ${styles.delete}`}
+          className={`${styles.cardActionButton} ${styles.deleteAction}`}
           onClick={(e) => {
             e.stopPropagation();
             handleDeleteContract(contract._id, contract.name);
