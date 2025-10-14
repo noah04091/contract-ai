@@ -1887,34 +1887,53 @@ export default function Contracts() {
   const hasAnalysesLeft = userInfo.analysisLimit === Infinity || userInfo.analysisCount < userInfo.analysisLimit;
 
   // ✅ RESPONSIVE: Mobile Card Component
-  const MobileContractCard = ({ contract }: { contract: Contract }) => (
-    <motion.div 
-      className={styles.contractCard}
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      onClick={() => handleRowClick(contract)}
-    >
-      {/* Card Header */}
-      <div className={styles.cardHeader}>
-        <div className={styles.cardIcon}>
-          <FileText size={20} />
-        </div>
-        <div className={styles.cardTitle}>
-          <h3 className={styles.cardFileName}>{contract.name}</h3>
-          <div className={styles.cardStatus}>
-            <span className={`${styles.statusBadge} ${getStatusColor(contract.status)}`}>
-              {contract.status}
-            </span>
-            {contract.isGenerated && (
-              <span className={styles.generatedBadge}>Generiert</span>
-            )}
-            {contract.analyzed === false && (
-              <span className={styles.notAnalyzedBadge}>Nicht analysiert</span>
-            )}
+  const MobileContractCard = ({ contract }: { contract: Contract }) => {
+    const isSelected = selectedContracts.includes(contract._id);
+
+    return (
+      <motion.div
+        className={styles.contractCard}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        onClick={() => handleRowClick(contract)}
+      >
+        {/* Card Header */}
+        <div className={styles.cardHeader}>
+          {/* 📋 Bulk Select Checkbox (nur wenn bulkSelectMode aktiv) */}
+          {bulkSelectMode && (
+            <div
+              className={styles.cardCheckbox}
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleSelectContract(contract._id);
+              }}
+            >
+              {isSelected ? (
+                <CheckSquare size={22} className={styles.checkboxChecked} />
+              ) : (
+                <Square size={22} className={styles.checkboxUnchecked} />
+              )}
+            </div>
+          )}
+          <div className={styles.cardIcon}>
+            <FileText size={20} />
+          </div>
+          <div className={styles.cardTitle}>
+            <h3 className={styles.cardFileName}>{contract.name}</h3>
+            <div className={styles.cardStatus}>
+              <span className={`${styles.statusBadge} ${getStatusColor(contract.status)}`}>
+                {contract.status}
+              </span>
+              {contract.isGenerated && (
+                <span className={styles.generatedBadge}>Generiert</span>
+              )}
+              {contract.analyzed === false && (
+                <span className={styles.notAnalyzedBadge}>Nicht analysiert</span>
+              )}
+            </div>
           </div>
         </div>
-      </div>
 
       {/* Card Details Grid */}
       <div className={styles.cardDetails}>
@@ -2061,7 +2080,8 @@ export default function Contracts() {
         </button>
       </div>
     </motion.div>
-  );
+    );
+  };
 
   return (
     <>
@@ -2705,6 +2725,20 @@ export default function Contracts() {
                 ) : (
                   // ✅ RESPONSIVE CONTAINER - Zeigt Tabelle UND Mobile Cards
                   <>
+                    {/* 📋 MOBILE: Bulk Select Button über Verträgen */}
+                    <div className={styles.mobileButtonContainer}>
+                      <motion.button
+                        className={`${styles.bulkSelectToggleMobile} ${bulkSelectMode ? styles.active : ''}`}
+                        onClick={toggleBulkSelectMode}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        title={bulkSelectMode ? "Auswahl beenden" : "Verträge auswählen"}
+                      >
+                        {bulkSelectMode ? <CheckSquare size={16} /> : <Square size={16} />}
+                        <span>{bulkSelectMode ? "Auswahl beenden" : "Auswählen"}</span>
+                      </motion.button>
+                    </div>
+
                     {/* ✅ DESKTOP/TABLET TABLE */}
                     <div className={styles.tableContainer}>
                       <table className={`${styles.contractsTable} ${bulkSelectMode ? styles.withCheckboxes : ''}`}>

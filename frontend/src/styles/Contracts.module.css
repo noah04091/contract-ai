@@ -2239,6 +2239,50 @@
   flex-shrink: 0;
 }
 
+/* 📋 Mobile Button Container - nur auf Mobile sichtbar */
+.mobileButtonContainer {
+  display: none; /* Hidden on Desktop */
+  padding: 0 0 1rem 0;
+}
+
+/* 📋 Mobile Bulk Select Button - kompakter für Mobile */
+.bulkSelectToggleMobile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.65rem 1rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  background: white;
+  color: #6b7280;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  width: fit-content;
+  margin: 0 auto;
+}
+
+.bulkSelectToggleMobile:hover {
+  border-color: #667eea;
+  background: #f9fafb;
+  color: #667eea;
+}
+
+.bulkSelectToggleMobile.active {
+  border-color: #667eea;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 3px 10px rgba(102, 126, 234, 0.3);
+}
+
+.bulkSelectToggleMobile.active:hover {
+  box-shadow: 0 4px 14px rgba(102, 126, 234, 0.4);
+  transform: translateY(-1px);
+}
+
 /* ✅ MOBILE CARDS - Zeigt Cards statt Tabelle auf mobilen Geräten */
 .mobileCardsContainer {
   display: none; /* Hidden by default, shown on mobile via media query */
@@ -2265,6 +2309,30 @@
   align-items: flex-start;
   gap: 0.75rem;
   margin-bottom: 1rem;
+}
+
+/* 📋 Mobile Card Checkbox (nur für Bulk Select) */
+.cardCheckbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0.25rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.cardCheckbox:hover {
+  background: #f3f4f6;
+}
+
+.checkboxUnchecked {
+  color: #9ca3af;
+  transition: color 0.2s ease;
+}
+
+.checkboxChecked {
+  color: #667eea;
 }
 
 .cardIcon {
@@ -2538,12 +2606,9 @@
     flex-direction: column;
   }
 
-  /* 📋 Mobile Bulk Select Toggle */
+  /* 📋 DESKTOP Bulk Select Toggle in searchSection - HIDE on Mobile */
   .bulkSelectToggle {
-    width: 100%;
-    justify-content: center;
-    padding: 0.875rem 1rem;
-    font-size: 0.9rem;
+    display: none !important;
   }
 
   .filtersSection {
@@ -2576,6 +2641,11 @@
   .refreshButton {
     width: 36px;
     height: 36px;
+  }
+
+  /* 📋 SHOW Mobile Button Container on Mobile */
+  .mobileButtonContainer {
+    display: block !important;
   }
 
   /* HIDE TABLE, SHOW CARDS on Mobile */
