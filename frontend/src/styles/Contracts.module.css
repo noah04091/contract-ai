@@ -2651,13 +2651,15 @@
     min-width: fit-content;
   }
 
-  /* 📁 Folder Dropdown auf Mobile - ZENTRIERT statt links */
+  /* 📁 Folder Dropdown auf Mobile - ZENTRIERT mit FIXED positioning */
   .bulkFolderDropdown {
+    position: fixed !important; /* Fixed statt absolute für Viewport-Zentrierung */
+    bottom: 7rem !important; /* Über der Bulk Action Bar */
     left: 50% !important;
     right: auto !important;
     transform: translateX(-50%);
-    max-width: calc(100vw - 4rem); /* Verhindert Overflow */
-    min-width: max(220px, 60vw); /* Mindestens 60% der Viewport-Breite */
+    max-width: calc(100vw - 3rem); /* Verhindert Overflow */
+    min-width: max(240px, 70vw); /* Breiter für bessere Lesbarkeit */
   }
 
   /* HIDE TABLE, SHOW CARDS on Mobile */
