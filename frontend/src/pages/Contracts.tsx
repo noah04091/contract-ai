@@ -1961,12 +1961,12 @@ export default function Contracts() {
         </div>
       </div>
 
-      {/* Card Actions - ✅ NEU: Optimierte Hierarchie */}
+      {/* Card Actions - ✅ 2x2 Grid: Alle Buttons gleich groß */}
       <div className={styles.cardActions}>
-        {/* ✅ PRIMÄRE AKTION: "Jetzt analysieren" Button für nicht-analysierte Verträge */}
+        {/* ✅ Sonderfall: "Jetzt analysieren" für nicht-analysierte Verträge (volle Breite) */}
         {contract.analyzed === false && (
           <button
-            className={`${styles.cardActionButton} ${styles.analyzeNow} ${styles.primaryAction}`}
+            className={`${styles.cardActionButton} ${styles.analyzeNow} ${styles.fullWidthAction}`}
             onClick={(e) => {
               e.stopPropagation();
               handleAnalyzeExistingContract(contract);
@@ -1977,19 +1977,7 @@ export default function Contracts() {
           </button>
         )}
 
-        {/* ✅ PRIMÄRE AKTION: Details (volle Breite, prominent) */}
-        <button
-          className={`${styles.cardActionButton} ${styles.primaryAction}`}
-          onClick={(e) => {
-            e.stopPropagation();
-            handleRowClick(contract);
-          }}
-        >
-          <Eye size={16} />
-          <span>Details</span>
-        </button>
-
-        {/* ✅ SEKUNDÄRE AKTIONEN: 2x2 Grid */}
+        {/* ✅ 2x2 Grid: PDF, Bearbeiten, Ordner, Löschen */}
         <button
           className={styles.cardActionButton}
           onClick={(e) => {

@@ -2395,26 +2395,8 @@
   cursor: not-allowed;
 }
 
-/* ✅ NEU: Primäre Aktion (Details) - Volle Breite, blauer Gradient */
-.cardActionButton.primaryAction {
-  flex: 1 1 100%; /* ✅ Volle Breite */
-  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
-  border-color: #3b82f6;
-  color: white;
-  font-weight: 600;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
-}
-
-.cardActionButton.primaryAction:hover {
-  background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
-  border-color: #2563eb;
-  color: white;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
-}
-
-/* ✅ NEU: "Jetzt analysieren" Button - Premium Gradient (volle Breite) */
-.cardActionButton.analyzeNow {
+/* ✅ NEU: Full-Width Action ("Jetzt analysieren") - Volle Breite, grüner Gradient */
+.cardActionButton.fullWidthAction {
   flex: 1 1 100%; /* ✅ Volle Breite */
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   border-color: #10b981;
@@ -2423,7 +2405,7 @@
   box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
 }
 
-.cardActionButton.analyzeNow:hover {
+.cardActionButton.fullWidthAction:hover {
   background: linear-gradient(135deg, #059669 0%, #047857 100%);
   border-color: #059669;
   color: white;
@@ -2431,17 +2413,20 @@
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
 
-/* ✅ NEU: Destruktive Aktion (Löschen) - Dezent, nur Outline */
-.cardActionButton.deleteAction {
-  background: white; /* ✅ Kein roter Hintergrund! */
-  border-color: #fca5a5;
-  color: #dc2626;
+/* ✅ Folder Wrapper muss auch flex: 1 1 calc(50% - 0.25rem) für 2x2 Grid */
+.mobileFolderWrapper {
+  flex: 1 1 calc(50% - 0.25rem); /* ✅ Gleiche Größe wie andere Buttons */
+  display: flex;
+  position: relative; /* ✅ Für Dropdown-Positionierung */
 }
 
-.cardActionButton.deleteAction:hover {
-  background: #fef2f2; /* ✅ Leicht rosa beim Hover */
-  border-color: #f87171;
-  color: #b91c1c;
+.mobileFolderWrapper button {
+  flex: 1; /* ✅ Button nimmt volle Breite des Wrappers ein */
+}
+
+/* ✅ Löschen-Button - jetzt NORMAL gestylt wie andere Buttons (kein rotes Outline mehr) */
+.cardActionButton.deleteAction {
+  /* Keine besonderen Styles - einfach normaler Button wie die anderen */
 }
 
 /* ✅ RESPONSIVE BREAKPOINTS */
