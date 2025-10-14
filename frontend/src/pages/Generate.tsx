@@ -1293,13 +1293,13 @@ export default function Generate() {
           await new Promise(resolve => setTimeout(resolve, 500));
 
           const opt = {
-            margin: [10, 10, 10, 10],
+            margin: [10, 10, 10, 10] as [number, number, number, number],
             filename: `${contractData.contractType || 'vertrag'}_${new Date().toLocaleDateString('de-DE').replace(/\./g, '-')}.pdf`,
-            image: { 
-              type: 'jpeg', 
-              quality: 0.98 
+            image: {
+              type: 'jpeg' as 'jpeg',
+              quality: 0.98
             },
-            html2canvas: { 
+            html2canvas: {
               scale: 2,
               useCORS: true,
               logging: false,
@@ -1307,10 +1307,10 @@ export default function Generate() {
               windowWidth: 794,
               windowHeight: 1123
             },
-            jsPDF: { 
-              unit: 'mm', 
-              format: 'a4', 
-              orientation: 'portrait',
+            jsPDF: {
+              unit: 'mm',
+              format: 'a4',
+              orientation: 'portrait' as 'portrait',
               compress: false
             },
             pagebreak: { 
@@ -1362,16 +1362,16 @@ export default function Generate() {
           const opt = {
             margin: 15,
             filename: `${contractData.contractType || 'vertrag'}_${new Date().toLocaleDateString('de-DE').replace(/\./g, '-')}_text.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { 
-              scale: 2, 
+            image: { type: 'jpeg' as 'jpeg', quality: 0.98 },
+            html2canvas: {
+              scale: 2,
               backgroundColor: '#ffffff',
               logging: false
             },
-            jsPDF: { 
-              unit: 'mm', 
-              format: 'a4', 
-              orientation: 'portrait' 
+            jsPDF: {
+              unit: 'mm',
+              format: 'a4',
+              orientation: 'portrait' as 'portrait'
             }
           };
           

@@ -691,11 +691,11 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
         
         // 🎨 PDF-OPTIONEN - PROFESSIONAL GRADE (OHNE PROBLEMATISCHE METHODEN)
         const enhancedPdfOptions = {
-          margin: contract.contentHTML ? [5, 5, 5, 5] : [10, 10, 10, 10],
+          margin: contract.contentHTML ? [5, 5, 5, 5] as [number, number, number, number] : [10, 10, 10, 10] as [number, number, number, number],
           filename: `${contract.name.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`,
-          image: { 
-            type: 'jpeg', 
-            quality: 0.98 
+          image: {
+            type: 'jpeg' as 'jpeg',
+            quality: 0.98
           },
           html2canvas: { 
             scale: 2, 
@@ -709,10 +709,10 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
             windowWidth: 794,
             windowHeight: 1123
           },
-          jsPDF: { 
-            unit: 'mm', 
-            format: 'a4', 
-            orientation: 'portrait',
+          jsPDF: {
+            unit: 'mm',
+            format: 'a4',
+            orientation: 'portrait' as 'portrait',
             compress: true,
             precision: 16,
             putOnlyUsedFonts: true,
@@ -770,11 +770,11 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
             const simplePdfOptions = {
               margin: 15,
               filename: `${contract.name}_${new Date().toISOString().split('T')[0]}.pdf`,
-              image: { type: 'jpeg', quality: 0.95 },
+              image: { type: 'jpeg' as 'jpeg', quality: 0.95 },
               html2canvas: { scale: 1.5 },
-              jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+              jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as 'portrait' }
             };
-            
+
             await html2pdf().set(simplePdfOptions).from(pdfContent).save();
             toast.warning("⚠️ PDF mit reduzierter Qualität exportiert");
           } catch (fallbackError) {

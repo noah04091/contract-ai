@@ -24,7 +24,7 @@
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "helmet": "^8.1.0",
-    "html-pdf-node": "^1.0.8",
+    "html-pdf-node": "^1.0.7",
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.15.0",
     "mongoose": "^8.16.1",
@@ -35,7 +35,7 @@
     "openai": "^4.89.0",
     "pdf-parse": "^1.1.1",
     "pdfkit": "^0.17.1",
-    "puppeteer-core": "^21.11.0",
+    "puppeteer-core": "^24.24.1",
     "qrcode": "^1.5.4",
     "stripe": "^18.0.0"
   }
