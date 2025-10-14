@@ -7,8 +7,10 @@ import PageLoader from "./components/PageLoader";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { AuthProvider } from "./context/AuthContext";
 import { ToastProvider } from "./context/ToastContext";
+import { AnnouncerProvider } from "./components/ScreenReaderAnnouncer";
 import { ToastContainer } from "./components/Toast";
 import { useToast } from "./context/ToastContext";
+import SkipNavigation from "./components/SkipNavigation";
 import CookieConsentBanner from "./components/CookieConsentBanner";
 import ScrollToTop from "./components/ScrollToTop";
 
@@ -102,11 +104,12 @@ function AppWithLoader() {
 
   return (
     <ErrorBoundary>
+      <SkipNavigation />
       <ScrollToTop />
       <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
         {loading && <PageLoader />}
         <Navbar />
-        <main style={{ flex: 1, paddingTop: "60px" }}>
+        <main id="main-content" style={{ flex: 1, paddingTop: "60px" }}>
           <Suspense fallback={<PageLoader />}>
             <Routes>
             {/* 🔓 Öffentliche Seiten */}
@@ -184,7 +187,9 @@ export default function App() {
     <Router>
       <AuthProvider>
         <ToastProvider>
-          <AppWithLoader />
+          <AnnouncerProvider>
+            <AppWithLoader />
+          </AnnouncerProvider>
         </ToastProvider>
       </AuthProvider>
     </Router>

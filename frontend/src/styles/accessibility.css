@@ -1,0 +1,329 @@
+/* ♿ src/styles/accessibility.css - Global Accessibility Styles */
+
+/* ========================================
+   Focus Visible Indicators
+   ======================================== */
+
+/* Default focus styles for all interactive elements */
+*:focus {
+  outline: none;
+}
+
+*:focus-visible {
+  outline: 3px solid #3b82f6;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Enhanced focus for buttons */
+button:focus-visible,
+a:focus-visible {
+  outline: 3px solid #3b82f6;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+/* Focus for inputs and form elements */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 0;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* ========================================
+   Screen Reader Only Content
+   ======================================== */
+
+.sr-only {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.sr-only-focusable:focus {
+  position: static;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  clip: auto;
+  clip-path: none;
+  white-space: normal;
+}
+
+/* ========================================
+   Reduced Motion Support
+   ======================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ========================================
+   High Contrast Mode Support
+   ======================================== */
+
+@media (prefers-contrast: high) {
+  /* Ensure all borders are visible */
+  button,
+  input,
+  select,
+  textarea {
+    border: 2px solid currentColor;
+  }
+
+  /* Make focus indicators more visible */
+  *:focus-visible {
+    outline-width: 4px;
+    outline-offset: 4px;
+  }
+
+  /* Ensure sufficient color contrast */
+  a {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+  }
+}
+
+/* ========================================
+   Dark Mode Accessibility
+   ======================================== */
+
+@media (prefers-color-scheme: dark) {
+  /* Adjust focus colors for dark mode */
+  *:focus-visible {
+    outline-color: #60a5fa;
+  }
+
+  button:focus-visible,
+  a:focus-visible {
+    outline-color: #60a5fa;
+    box-shadow: 0 0 0 4px rgba(96, 165, 250, 0.2);
+  }
+
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline-color: #60a5fa;
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
+  }
+}
+
+/* ========================================
+   Keyboard Navigation Helpers
+   ======================================== */
+
+/* Style for elements that become focusable temporarily */
+[tabindex="-1"]:focus {
+  outline: none;
+}
+
+/* Ensure buttons and links are clearly clickable */
+button,
+a {
+  cursor: pointer;
+}
+
+button:disabled,
+a[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* ========================================
+   ARIA States
+   ======================================== */
+
+/* Invalid input styling */
+[aria-invalid="true"] {
+  border-color: #dc2626;
+  outline-color: #dc2626;
+}
+
+[aria-invalid="true"]:focus-visible {
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.2);
+}
+
+/* Required field indicator */
+[aria-required="true"]::after,
+[required]::after {
+  content: " *";
+  color: #dc2626;
+  font-weight: bold;
+  margin-left: 2px;
+}
+
+/* Hidden content that should be invisible but still accessible */
+[aria-hidden="true"] {
+  display: none;
+}
+
+/* Disabled state */
+[aria-disabled="true"] {
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+/* ========================================
+   Skip Links
+   ======================================== */
+
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: 0;
+  background: #3b82f6;
+  color: white;
+  padding: 8px 16px;
+  text-decoration: none;
+  z-index: 100000;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/* ========================================
+   Focus Trap Indicators
+   ======================================== */
+
+/* Dim background when modal/dialog is open */
+body.focus-trap-active {
+  overflow: hidden;
+}
+
+body.focus-trap-active::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 9998;
+  pointer-events: none;
+}
+
+/* ========================================
+   Touch Target Sizes (WCAG 2.5.5)
+   ======================================== */
+
+/* Ensure minimum 44x44px touch targets on mobile */
+@media (max-width: 768px) {
+  button,
+  a,
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* Exception for inline text links */
+  p a,
+  span a,
+  li a {
+    min-width: auto;
+    min-height: auto;
+  }
+}
+
+/* ========================================
+   Text Selection
+   ======================================== */
+
+/* Ensure text selection is visible */
+::selection {
+  background-color: #3b82f6;
+  color: white;
+}
+
+::-moz-selection {
+  background-color: #3b82f6;
+  color: white;
+}
+
+/* ========================================
+   Landmarks and Headings
+   ======================================== */
+
+/* Visually distinguish main content */
+main {
+  outline: 0;
+}
+
+main:focus {
+  outline: none;
+}
+
+/* ========================================
+   Loading and Busy States
+   ======================================== */
+
+/* Indicate busy state for screen readers */
+[aria-busy="true"] {
+  position: relative;
+}
+
+[aria-busy="true"]::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.7);
+  cursor: wait;
+}
+
+@media (prefers-color-scheme: dark) {
+  [aria-busy="true"]::after {
+    background: rgba(0, 0, 0, 0.7);
+  }
+}
+
+/* ========================================
+   Print Styles
+   ======================================== */
+
+@media print {
+  /* Hide non-essential elements when printing */
+  nav,
+  .skip-link,
+  button:not(.print-visible),
+  [role="banner"],
+  [role="navigation"],
+  [role="complementary"] {
+    display: none;
+  }
+
+  /* Ensure good contrast for printing */
+  * {
+    background: white !important;
+    color: black !important;
+  }
+
+  /* Show link URLs in print */
+  a[href]::after {
+    content: " (" attr(href) ")";
+  }
+
+  a[href^="#"]::after,
+  a[href^="javascript:"]::after {
+    content: "";
+  }
+}
