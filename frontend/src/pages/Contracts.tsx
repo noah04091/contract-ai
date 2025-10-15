@@ -53,6 +53,9 @@ interface Contract {
   subscriptionStartDate?: string;
   // 📁 Folder Organization
   folderId?: string;
+  // ✉️ Digital Signature (NEU)
+  signatureStatus?: 'draft' | 'sent' | 'signed' | 'completed';
+  signatureEnvelopeId?: string;
 }
 
 // ✅ KORRIGIERT: Interface für Mehrfach-Upload
@@ -1926,6 +1929,18 @@ export default function Contracts() {
               <span className={`${styles.statusBadge} ${getStatusColor(contract.status)}`}>
                 {contract.status}
               </span>
+              {/* ✉️ NEU: Signatur-Status Chip */}
+              {contract.signatureStatus && (
+                <span
+                  className={`${styles.statusBadge} ${styles.signatureBadge}`}
+                  title="Digital Signature Status"
+                >
+                  📝 {contract.signatureStatus === 'draft' && 'Entwurf'}
+                  {contract.signatureStatus === 'sent' && 'Gesendet'}
+                  {contract.signatureStatus === 'signed' && 'Signiert'}
+                  {contract.signatureStatus === 'completed' && 'Abgeschlossen'}
+                </span>
+              )}
               {contract.isGenerated && (
                 <span className={styles.generatedBadge}>Generiert</span>
               )}
@@ -2836,6 +2851,18 @@ export default function Contracts() {
                                 <span className={`${styles.statusBadge} ${getStatusColor(contract.status)}`}>
                                   {contract.status}
                                 </span>
+                                {/* ✉️ NEU: Signatur-Status Chip */}
+                                {contract.signatureStatus && (
+                                  <span
+                                    className={`${styles.statusBadge} ${styles.signatureBadge}`}
+                                    title="Digital Signature Status"
+                                  >
+                                    📝 {contract.signatureStatus === 'draft' && 'Entwurf'}
+                                    {contract.signatureStatus === 'sent' && 'Gesendet'}
+                                    {contract.signatureStatus === 'signed' && 'Signiert'}
+                                    {contract.signatureStatus === 'completed' && 'Abgeschlossen'}
+                                  </span>
+                                )}
                               </td>
                               <td>
                                 <span className={styles.uploadDate}>

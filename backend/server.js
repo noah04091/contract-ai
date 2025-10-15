@@ -657,6 +657,22 @@ const connectDB = async () => {
       console.error("❌ Fehler bei Folders-Routen:", err);
     }
 
+    // ✅ ✉️ ENVELOPE ROUTES - Digital Signature Workflow
+    try {
+      const envelopeRoutes = require("./routes/envelopes");
+
+      // Public routes (no auth required)
+      app.get("/api/sign/:token", envelopeRoutes);
+      app.post("/api/sign/:token/submit", envelopeRoutes);
+
+      // Authenticated routes
+      app.use("/api/envelopes", verifyToken, envelopeRoutes);
+
+      console.log("✅ Envelope-Routen geladen unter /api/envelopes & /api/sign/:token");
+    } catch (err) {
+      console.error("❌ Fehler bei Envelope-Routen:", err);
+    }
+
     // ✅ 12. WEITERE ROUTEN - ALLE MIT /api PREFIX
     try {
       app.use("/api/compare", verifyToken, checkSubscription, require("./routes/compare"));

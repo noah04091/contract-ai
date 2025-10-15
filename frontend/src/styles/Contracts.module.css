@@ -1882,6 +1882,16 @@
   color: #475569;
 }
 
+/* ✉️ NEU: Signature Badge - Digitale Signatur Status */
+.signatureBadge {
+  background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+  color: #0369a1;
+  border: 1px solid #7dd3fc;
+  font-size: 0.7rem;
+  padding: 0.15rem 0.4rem;
+  margin-left: 0.375rem;
+}
+
 .uploadDate {
   color: #6b7280;
   font-size: 0.8rem; /* ✅ Kleinere Schrift */

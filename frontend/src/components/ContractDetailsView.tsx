@@ -1,15 +1,16 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  X, FileText, Calendar, Clock, AlertCircle, CheckCircle, 
+import {
+  X, FileText, Calendar, Clock, AlertCircle, CheckCircle,
   Info, Eye, Download, Share2, Edit, Trash2, Star,
-  BarChart3, Copy, ExternalLink
+  BarChart3, Copy, ExternalLink, PenTool
 } from "lucide-react";
 import styles from "../styles/ContractDetailsView.module.css";
 import SmartContractInfo from "./SmartContractInfo"; // ✅ Smart Component: Cost/Payment Tracker
 import ContractShareModal from "./ContractShareModal"; // ✅ NEU: Import Share Modal
 import ContractEditModal from "./ContractEditModal"; // ✅ NEU: Import Edit Modal
 import AnalysisModal from "./AnalysisModal"; // ✅ NEU: Import Analysis Modal
+import SignatureModal from "./SignatureModal"; // ✉️ NEU: Import Signature Modal
 // ✅ getContractFileUrl nicht mehr benötigt - Mobile-freundliche PDF-Logik verwendet direkte API-Aufrufe
 
 interface Contract {
@@ -76,10 +77,11 @@ export default function ContractDetailsView({
 }: ContractDetailsViewProps) {
   const [activeTab, setActiveTab] = useState<'overview' | 'content' | 'analysis'>('overview');
 
-  // ✅ NEU: State für die drei Modals
+  // ✅ NEU: State für die vier Modals
   const [showShareModal, setShowShareModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showAnalysisModal, setShowAnalysisModal] = useState(false); // ✅ NEU: Analysis Modal State
+  const [showSignatureModal, setShowSignatureModal] = useState(false); // ✉️ NEU: Signature Modal State
   const [contract, setContract] = useState<Contract>(initialContract); // ✅ NEU: Lokaler Contract State für Updates
   const [isAnalyzing, setIsAnalyzing] = useState(false); // ✅ NEU: Loading State für Analyse
   const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false); // ✅ NEU: Für Collapsing Header auf Mobile
@@ -146,7 +148,7 @@ export default function ContractDetailsView({
     const handleEscapeKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && show) {
         // Prüfe ob Sub-Modals offen sind - diese haben Priorität
-        if (!showShareModal && !showEditModal && !showAnalysisModal) {
+        if (!showShareModal && !showEditModal && !showAnalysisModal && !showSignatureModal) {
           onClose();
         }
       }
@@ -159,7 +161,7 @@ export default function ContractDetailsView({
     return () => {
       document.removeEventListener('keydown', handleEscapeKey);
     };
-  }, [show, onClose, showShareModal, showEditModal, showAnalysisModal]);
+  }, [show, onClose, showShareModal, showEditModal, showAnalysisModal, showSignatureModal]);
 
   // ✅ NEU: Scroll-Handler für Collapsing Header (nur auf Mobile im Content-Tab)
   useEffect(() => {
@@ -455,6 +457,12 @@ export default function ContractDetailsView({
     setShowEditModal(true);
   };
 
+  // ✉️ NEU: Signature Handler - Zur Signatur senden
+  const handleSendToSignature = () => {
+    console.log('📝 Opening signature modal for contract:', contract._id);
+    setShowSignatureModal(true);
+  };
+
   // ✅ NEU: Update-Handler für Edit-Modal
   const handleContractUpdate = (updatedContract: Contract) => {
     console.log('✅ Contract updated:', updatedContract);
@@ -621,15 +629,26 @@ export default function ContractDetailsView({
                 </button>
                 
                 {/* ✅ UPDATED: Edit Button mit Funktionalität */}
-                <button 
+                <button
                   className={styles.actionBtn}
                   onClick={handleEdit}
                   title="Bearbeiten"
                 >
                   <Edit size={18} />
                 </button>
-                
-                <button 
+
+                {/* ✉️ NEU: Signature Button - Zur Signatur senden */}
+                {contract.s3Key && !contract.needsReupload && (
+                  <button
+                    className={styles.actionBtn}
+                    onClick={handleSendToSignature}
+                    title="Zur Signatur senden"
+                  >
+                    <PenTool size={18} />
+                  </button>
+                )}
+
+                <button
                   className={`${styles.actionBtn} ${styles.deleteBtn}`}
                   onClick={handleDelete}
                   title="Löschen"
@@ -1094,6 +1113,15 @@ export default function ContractDetailsView({
           show={showEditModal}
           onClose={() => setShowEditModal(false)}
           onUpdate={handleContractUpdate}
+        />
+
+        {/* ✉️ NEU: Signature Modal */}
+        <SignatureModal
+          show={showSignatureModal}
+          onClose={() => setShowSignatureModal(false)}
+          contractId={contract._id}
+          contractName={contract.name}
+          contractS3Key={contract.s3Key || ""} {/* ✉️ S3 Key für Envelope */}
         />
       </motion.div>
     </AnimatePresence>

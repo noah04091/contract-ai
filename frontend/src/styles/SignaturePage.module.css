@@ -1,0 +1,322 @@
+/* ✉️ SignaturePage - Public Signature View */
+
+.container {
+  min-height: calc(100vh - 60px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+
+.card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  max-width: 600px;
+  width: 100%;
+  padding: 2rem;
+}
+
+/* Header */
+.header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.headerIcon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 1rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin: 0 0 0.5rem 0;
+}
+
+.subtitle {
+  font-size: 1rem;
+  color: #6e6e73;
+  margin: 0;
+}
+
+/* Message */
+.message {
+  background: #f8f9fa;
+  border-left: 4px solid #667eea;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.message p {
+  margin: 0;
+  color: #1d1d1f;
+  line-height: 1.6;
+}
+
+/* Signer Info */
+.signerInfo {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.infoRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #6e6e73;
+  margin-bottom: 0.5rem;
+}
+
+.infoRow:last-child {
+  margin-bottom: 0;
+}
+
+.infoRow svg {
+  flex-shrink: 0;
+}
+
+/* Signature Section */
+.signatureSection {
+  margin-bottom: 1.5rem;
+}
+
+.sectionTitle {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin: 0 0 0.25rem 0;
+}
+
+.sectionSubtitle {
+  font-size: 0.875rem;
+  color: #6e6e73;
+  margin: 0 0 1rem 0;
+}
+
+.signatureInput {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  border: 2px solid #d2d2d7;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.signatureInput:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.signatureInput:disabled {
+  background: #f8f9fa;
+  cursor: not-allowed;
+}
+
+.signaturePreview {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px dashed #d2d2d7;
+}
+
+.previewLabel {
+  font-size: 0.875rem;
+  color: #6e6e73;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.previewSignature {
+  font-family: 'Brush Script MT', cursive;
+  font-size: 1.5rem;
+  color: #1d1d1f;
+  font-style: italic;
+  min-height: 2rem;
+}
+
+/* Submit Button */
+.submitBtn {
+  width: 100%;
+  padding: 1rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.submitBtn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.submitBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Footer */
+.footer {
+  margin-top: 1.5rem;
+  text-align: center;
+}
+
+.footerText {
+  font-size: 0.875rem;
+  color: #86868b;
+  margin: 0;
+}
+
+/* Loading State */
+.loader {
+  text-align: center;
+  color: #6e6e73;
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #e5e5e5;
+  border-top: 4px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Success Card */
+.successCard {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  max-width: 500px;
+  width: 100%;
+  padding: 3rem 2rem;
+  text-align: center;
+}
+
+.successIcon {
+  color: #34c759;
+  margin-bottom: 1rem;
+}
+
+.successCard h2 {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin: 0 0 0.5rem 0;
+}
+
+.successCard p {
+  font-size: 1rem;
+  color: #6e6e73;
+  margin: 0 0 0.5rem 0;
+}
+
+.successSubtext {
+  font-size: 0.875rem;
+  color: #86868b;
+}
+
+/* Error Card */
+.errorCard {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  max-width: 500px;
+  width: 100%;
+  padding: 3rem 2rem;
+  text-align: center;
+}
+
+.errorIcon {
+  color: #ff3b30;
+  margin-bottom: 1rem;
+}
+
+.errorCard h2 {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin: 0 0 0.5rem 0;
+}
+
+.errorCard p {
+  font-size: 1rem;
+  color: #6e6e73;
+  margin: 0;
+}
+
+/* Info Card */
+.infoCard {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  max-width: 500px;
+  width: 100%;
+  padding: 3rem 2rem;
+  text-align: center;
+}
+
+.infoIcon {
+  color: #007aff;
+  margin-bottom: 1rem;
+}
+
+.infoCard h2 {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #1d1d1f;
+  margin: 0 0 0.5rem 0;
+}
+
+.infoCard p {
+  font-size: 1rem;
+  color: #6e6e73;
+  margin: 0;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+
+  .card,
+  .successCard,
+  .errorCard,
+  .infoCard {
+    padding: 1.5rem;
+  }
+
+  .title {
+    font-size: 1.5rem;
+  }
+
+  .previewSignature {
+    font-size: 1.25rem;
+  }
+}

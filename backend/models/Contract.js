@@ -17,6 +17,18 @@ const contractSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Folder",
     default: null
+  },
+
+  // ✉️ Digital Signature Integration
+  signatureEnvelopeId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Envelope",
+    default: null
+  },
+  signatureStatus: {
+    type: String,
+    enum: ["draft", "sent", "signed", "completed"],
+    default: null
   }
 });
 

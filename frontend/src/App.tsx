@@ -22,6 +22,7 @@ import Login from "./pages/Login";
 // 🔓 Öffentliche Seiten - Lazy Loading
 const Register = lazy(() => import("./pages/Register"));
 const VerifySuccess = lazy(() => import("./pages/VerifySuccess"));
+const SignaturePage = lazy(() => import("./pages/SignaturePage")); // ✉️ NEU: Public Signature Page
 const Pricing = lazy(() => import("./pages/Pricing"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
@@ -61,6 +62,7 @@ const Subscribe = lazy(() => import("./pages/Subscribe"));
 const Upgrade = lazy(() => import("./pages/Upgrade"));
 const BetterContracts = lazy(() => import("./pages/BetterContracts"));
 const LegalPulse = lazy(() => import("./pages/LegalPulse"));
+const Envelopes = lazy(() => import("./pages/Envelopes")); // ✉️ NEU: Digital Signature Dashboard
 
 function AppWithLoader() {
   const location = useLocation();
@@ -117,6 +119,7 @@ function AppWithLoader() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/verify-success" element={<VerifySuccess />} /> {/* ✅ NEU: E-Mail bestätigt Seite */}
+            <Route path="/sign/:token" element={<SignaturePage />} /> {/* ✉️ NEU: Public Signature Page */}
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/about" element={<About />} />
             <Route path="/press" element={<Press />} />
@@ -149,6 +152,10 @@ function AppWithLoader() {
             } />
             <Route path="/contracts/:id" element={<RequireAuth><ContractDetails /></RequireAuth>} />
             <Route path="/contracts/:id/edit" element={<RequireAuth><EditContract /></RequireAuth>} />
+
+            {/* ✉️ NEU: Digital Signature Dashboard */}
+            <Route path="/envelopes" element={<RequireAuth><Envelopes /></RequireAuth>} />
+
             <Route path="/me" element={<RequireAuth><Profile /></RequireAuth>} />
             <Route path="/calendar" element={<RequireAuth><CalendarView /></RequireAuth>} />
             

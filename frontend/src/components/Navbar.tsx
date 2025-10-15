@@ -799,6 +799,12 @@ export default function Navbar() {
                       </Link>
                     </li>
                     <li>
+                      <Link to="/envelopes" className={styles.sidebarLink} onClick={() => setSidebarOpen(false)}>
+                        <span className={styles.sidebarIcon}>✉️</span>
+                        Signaturen
+                      </Link>
+                    </li>
+                    <li>
                       <Link to="/calendar" className={styles.sidebarLink} onClick={() => setSidebarOpen(false)}>
                         <span className={styles.sidebarIcon}>🗓️</span>
                         Kalender
