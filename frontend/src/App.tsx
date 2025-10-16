@@ -15,9 +15,10 @@ import CookieConsentBanner from "./components/CookieConsentBanner";
 import ScrollToTop from "./components/ScrollToTop";
 
 // 🚀 PERFORMANCE: Lazy Loading für alle Seiten (Code Splitting)
-// Homepage und Login werden sofort geladen (kritische Seiten)
+// Homepage, Login und Contracts werden sofort geladen (kritische Seiten)
 import HomeRedesign from "./pages/HomeRedesign";
 import Login from "./pages/Login";
+import Contracts from "./pages/Contracts"; // 🔧 FIX: Direct import verhindert CSS-Preload-Fehler
 
 // 🔓 Öffentliche Seiten - Lazy Loading
 const Register = lazy(() => import("./pages/Register"));
@@ -47,7 +48,7 @@ const LegalPulsePage = lazy(() => import("./pages/features/LegalPulse"));
 
 // 🔒 Geschützte Seiten - Lazy Loading
 const Dashboard = lazy(() => import("./pages/Dashboard"));
-const Contracts = lazy(() => import("./pages/Contracts"));
+// Contracts wird direkt importiert (siehe oben) - verhindert CSS-Preload-Fehler
 const ContractDetails = lazy(() => import("./pages/ContractDetails"));
 const EditContract = lazy(() => import("./pages/EditContract"));
 const Profile = lazy(() => import("./pages/Profile"));
@@ -143,13 +144,7 @@ function AppWithLoader() {
 
             {/* 🔒 Geschützte Seiten */}
             <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
-            <Route path="/contracts" element={
-              <RequireAuth>
-                <ErrorBoundary>
-                  <Contracts />
-                </ErrorBoundary>
-              </RequireAuth>
-            } />
+            <Route path="/contracts" element={<RequireAuth><Contracts /></RequireAuth>} />
             <Route path="/contracts/:id" element={<RequireAuth><ContractDetails /></RequireAuth>} />
             <Route path="/contracts/:id/edit" element={<RequireAuth><EditContract /></RequireAuth>} />
 
