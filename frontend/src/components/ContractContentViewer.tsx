@@ -694,7 +694,7 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
           margin: contract.contentHTML ? [5, 5, 5, 5] as [number, number, number, number] : [10, 10, 10, 10] as [number, number, number, number],
           filename: `${contract.name.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`,
           image: {
-            type: 'jpeg' as 'jpeg',
+            type: 'jpeg' as const,
             quality: 0.98
           },
           html2canvas: { 
@@ -712,7 +712,7 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
           jsPDF: {
             unit: 'mm',
             format: 'a4',
-            orientation: 'portrait' as 'portrait',
+            orientation: 'portrait' as const,
             compress: true,
             precision: 16,
             putOnlyUsedFonts: true,
@@ -770,9 +770,9 @@ const ContractContentViewer: React.FC<ContractContentViewerProps> = ({ contract 
             const simplePdfOptions = {
               margin: 15,
               filename: `${contract.name}_${new Date().toISOString().split('T')[0]}.pdf`,
-              image: { type: 'jpeg' as 'jpeg', quality: 0.95 },
+              image: { type: 'jpeg' as const, quality: 0.95 },
               html2canvas: { scale: 1.5 },
-              jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as 'portrait' }
+              jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as const }
             };
 
             await html2pdf().set(simplePdfOptions).from(pdfContent).save();

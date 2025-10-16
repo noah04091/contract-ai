@@ -1296,7 +1296,7 @@ export default function Generate() {
             margin: [10, 10, 10, 10] as [number, number, number, number],
             filename: `${contractData.contractType || 'vertrag'}_${new Date().toLocaleDateString('de-DE').replace(/\./g, '-')}.pdf`,
             image: {
-              type: 'jpeg' as 'jpeg',
+              type: 'jpeg' as const,
               quality: 0.98
             },
             html2canvas: {
@@ -1310,7 +1310,7 @@ export default function Generate() {
             jsPDF: {
               unit: 'mm',
               format: 'a4',
-              orientation: 'portrait' as 'portrait',
+              orientation: 'portrait' as const,
               compress: false
             },
             pagebreak: { 
@@ -1362,7 +1362,7 @@ export default function Generate() {
           const opt = {
             margin: 15,
             filename: `${contractData.contractType || 'vertrag'}_${new Date().toLocaleDateString('de-DE').replace(/\./g, '-')}_text.pdf`,
-            image: { type: 'jpeg' as 'jpeg', quality: 0.98 },
+            image: { type: 'jpeg' as const, quality: 0.98 },
             html2canvas: {
               scale: 2,
               backgroundColor: '#ffffff',
@@ -1371,7 +1371,7 @@ export default function Generate() {
             jsPDF: {
               unit: 'mm',
               format: 'a4',
-              orientation: 'portrait' as 'portrait'
+              orientation: 'portrait' as const
             }
           };
           
