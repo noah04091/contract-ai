@@ -41,7 +41,7 @@ class ErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('🚨 ErrorBoundary caught an error:', error);
     console.error('📊 Error Info:', errorInfo);
-    
+
     this.setState({
       error,
       errorInfo,
@@ -51,6 +51,12 @@ class ErrorBoundary extends Component<Props, State> {
     // 🔄 Auto-Recovery für DOM-Fehler (wie unser removeChild Problem)
     if (error.name === 'NotFoundError' || error.message.includes('removeChild')) {
       console.log('🔧 Auto-Recovery für DOM-Fehler gestartet...');
+      this.autoRecover();
+    }
+
+    // 🔄 Auto-Recovery für CSS-Preload-Fehler (benign errors - CSS lädt via link tags)
+    if (error.message.includes('Unable to preload CSS') || error.message.includes('preload')) {
+      console.log('🔧 Auto-Recovery für CSS-Preload-Fehler gestartet...');
       this.autoRecover();
     }
 
