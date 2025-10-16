@@ -7,7 +7,6 @@ import {
   XCircle,
   Send,
   Copy,
-  MoreVertical,
   User,
   FileText,
   Calendar,

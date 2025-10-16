@@ -1116,12 +1116,13 @@ export default function ContractDetailsView({
         />
 
         {/* ✉️ NEU: Signature Modal */}
+        {/* ✉️ Signature Modal - S3 Key für Envelope */}
         <SignatureModal
           show={showSignatureModal}
           onClose={() => setShowSignatureModal(false)}
           contractId={contract._id}
           contractName={contract.name}
-          contractS3Key={contract.s3Key || ""} {/* ✉️ S3 Key für Envelope */}
+          contractS3Key={contract.s3Key || ""}
         />
       </motion.div>
     </AnimatePresence>
