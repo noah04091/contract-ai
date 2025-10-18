@@ -15,7 +15,7 @@ const signerSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ["sender", "recipient", "signer"],
+    enum: ["sender", "recipient", "signer", "Signer"], // ✅ Backward compatibility
     default: "signer",
     trim: true
   },
