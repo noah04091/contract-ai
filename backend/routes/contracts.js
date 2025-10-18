@@ -373,14 +373,14 @@ async function enrichContractWithAnalysis(contract) {
     
     // ✅ NEU: Calendar Events hinzufügen
     const events = await eventsCollection
-      .find({ 
+      .find({
         contractId: contract._id,
         status: { $ne: "dismissed" }
       })
       .sort({ date: 1 })
       .limit(5)
       .toArray();
-    
+
     if (events.length > 0) {
       contract.upcomingEvents = events.map(e => ({
         id: e._id,
@@ -391,7 +391,37 @@ async function enrichContractWithAnalysis(contract) {
         status: e.status
       }));
     }
-    
+
+    // 🆕 Envelope/Signature Data enrichment
+    try {
+      const Envelope = require("../models/Envelope");
+      const envelope = await Envelope.findOne({ contractId: contract._id })
+        .sort({ createdAt: -1 }) // Get latest envelope
+        .lean();
+
+      if (envelope) {
+        const signersTotal = envelope.signers?.length || 0;
+        const signersSigned = envelope.signers?.filter(s => s.status === 'SIGNED').length || 0;
+
+        contract.envelope = {
+          _id: envelope._id,
+          signatureStatus: envelope.status, // DRAFT, SENT, SIGNED, COMPLETED, etc.
+          signersTotal,
+          signersSigned,
+          s3KeySealed: envelope.s3KeySealed || null,
+          completedAt: envelope.completedAt || null,
+          expiresAt: envelope.expiresAt || null
+        };
+
+        // Legacy compatibility: keep signatureStatus at root level
+        contract.signatureStatus = envelope.status;
+        contract.signatureEnvelopeId = envelope._id;
+      }
+    } catch (envelopeErr) {
+      console.warn("⚠️ Could not load envelope data:", envelopeErr.message);
+      // Don't fail the whole request if envelope loading fails
+    }
+
     return contract;
   } catch (err) {
     console.error("❌ Fehler beim Laden der Analyse/Events:", err.message);
