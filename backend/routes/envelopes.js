@@ -8,6 +8,7 @@ const sendEmail = require("../services/mailer");
 const { sealPdf } = require("../services/pdfSealing"); // ✉️ PDF-Sealing Service
 const Envelope = require("../models/Envelope");
 const Contract = require("../models/Contract");
+const User = require("../models/User"); // 🆕 Für Sequential Signing
 
 const router = express.Router();
 
@@ -1194,7 +1195,6 @@ router.post("/sign/:token/submit", signatureSubmitLimiter, async (req, res) => {
         console.log(`📧 Sequential mode: Notifying next signer (order ${nextSigner.order}): ${nextSigner.email}`);
 
         // Get owner info for email
-        const User = require("../models/User");
         const owner = await User.findById(envelope.ownerId);
         const ownerEmail = owner?.email || "Contract AI";
 
