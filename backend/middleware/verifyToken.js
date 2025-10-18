@@ -32,7 +32,7 @@ module.exports = function (req, res, next) {
 
   // ❌ Kein Token gefunden
   if (!token) {
-    if (isDev) console.warn("❌ Kein Auth-Token gefunden (Cookie, Header, Query)");
+    console.warn("❌ Kein Auth-Token gefunden (Cookie, Header, Query) - Request:", req.originalUrl);
     return res.status(401).json({ message: "Nicht autorisiert – bitte einloggen." });
   }
 
