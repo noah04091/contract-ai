@@ -1,6 +1,7 @@
 // 📁 backend/routes/envelopes.js - Digital Signature Envelope Routes
 const express = require("express");
 const mongoose = require("mongoose");
+const { ObjectId } = require("mongodb"); // 🆕 For user queries
 const crypto = require("crypto");
 const rateLimit = require("express-rate-limit");
 const verifyToken = require("../middleware/verifyToken");
@@ -8,7 +9,6 @@ const sendEmail = require("../services/mailer");
 const { sealPdf } = require("../services/pdfSealing"); // ✉️ PDF-Sealing Service
 const Envelope = require("../models/Envelope");
 const Contract = require("../models/Contract");
-const User = require("../models/User"); // 🆕 Für Sequential Signing
 
 const router = express.Router();
 
@@ -1194,8 +1194,8 @@ router.post("/sign/:token/submit", signatureSubmitLimiter, async (req, res) => {
       if (nextSigner) {
         console.log(`📧 Sequential mode: Notifying next signer (order ${nextSigner.order}): ${nextSigner.email}`);
 
-        // Get owner info for email
-        const owner = await User.findById(envelope.ownerId);
+        // Get owner info for email (using MongoDB native driver)
+        const owner = await req.db.collection("users").findOne({ _id: new ObjectId(envelope.ownerId) });
         const ownerEmail = owner?.email || "Contract AI";
 
         // Send invitation to next signer
