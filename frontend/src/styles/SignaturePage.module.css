@@ -286,6 +286,7 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
+  margin-bottom: 0.75rem;
 }
 
 .submitBtn:hover:not(:disabled) {
@@ -294,6 +295,31 @@
 }
 
 .submitBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Decline Button */
+.declineBtn {
+  width: 100%;
+  padding: 0.875rem;
+  background: transparent;
+  color: #ff3b30;
+  border: 1.5px solid #ff3b30;
+  border-radius: 8px;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.declineBtn:hover:not(:disabled) {
+  background: #fff5f4;
+  transform: translateY(-1px);
+}
+
+.declineBtn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   transform: none;

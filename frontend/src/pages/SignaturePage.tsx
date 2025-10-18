@@ -42,11 +42,70 @@ export default function SignaturePage() {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [declined, setDeclined] = useState(false);
   const [signatureFields, setSignatureFields] = useState<SignatureField[]>([]);
   const [numPages, setNumPages] = useState<number>(0);
   const [sealedPdfUrl, setSealedPdfUrl] = useState<string | null>(null);
 
   const sigPadRef = useRef<SignatureCanvas>(null);
+
+  // ✅ Restore signature from sessionStorage on mount
+  useEffect(() => {
+    if (!token) return;
+
+    const storageKey = `signature_backup_${token}`;
+    const savedSignature = sessionStorage.getItem(storageKey);
+
+    if (savedSignature && sigPadRef.current) {
+      try {
+        sigPadRef.current.fromDataURL(savedSignature);
+        console.log("✅ Restored signature from sessionStorage");
+      } catch (err) {
+        console.error("❌ Failed to restore signature:", err);
+        sessionStorage.removeItem(storageKey);
+      }
+    }
+  }, [token]);
+
+  // ✅ Auto-refresh presigned PDF URL (expires after 90min)
+  useEffect(() => {
+    if (!token || !envelope?.pdfUrl) return;
+
+    const refreshPdfUrl = async () => {
+      try {
+        console.log("🔄 Refreshing presigned PDF URL...");
+
+        const response = await fetch(`/api/sign/${token}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json"
+          }
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.envelope?.pdfUrl) {
+          setEnvelope(prev => prev ? { ...prev, pdfUrl: data.envelope.pdfUrl } : null);
+          console.log("✅ PDF URL refreshed successfully");
+        }
+      } catch (err) {
+        console.error("❌ Failed to refresh PDF URL:", err);
+      }
+    };
+
+    // Refresh every 50-60 min (with ±5 min jitter to prevent all users refreshing simultaneously)
+    const baseInterval = 55 * 60 * 1000; // 55 minutes
+    const jitter = (Math.random() - 0.5) * 10 * 60 * 1000; // ±5 minutes
+    const interval = baseInterval + jitter;
+
+    console.log(`⏱️ PDF URL will refresh in ${Math.round(interval / 60000)} minutes`);
+
+    const refreshInterval = setInterval(refreshPdfUrl, interval);
+
+    return () => {
+      clearInterval(refreshInterval);
+    };
+  }, [token, envelope?.pdfUrl]);
 
   // Load envelope data
   useEffect(() => {
@@ -122,6 +181,10 @@ export default function SignaturePage() {
       // Get signature as base64 PNG
       const signatureDataURL = sigPadRef.current.toDataURL("image/png");
 
+      // ✅ Save to sessionStorage as backup (in case of network error)
+      const storageKey = `signature_backup_${token}`;
+      sessionStorage.setItem(storageKey, signatureDataURL);
+
       // Create signatures array with all fields
       const signatures = signatureFields.map(field => ({
         fieldId: field._id,
@@ -153,11 +216,61 @@ export default function SignaturePage() {
         setSealedPdfUrl(data.envelope.sealedPdfUrl);
       }
 
+      // ✅ Clear sessionStorage after successful submit
+      sessionStorage.removeItem(storageKey);
+      console.log("✅ Cleared signature backup from sessionStorage");
+
       setSuccess(true);
     } catch (err) {
       console.error("❌ Error submitting signature:", err);
       const errorMessage = err instanceof Error ? err.message : "Unbekannter Fehler";
       alert(`Fehler beim Einreichen der Signatur:\n\n${errorMessage}`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDecline = async () => {
+    if (!token) {
+      alert("Kein Token vorhanden");
+      return;
+    }
+
+    const reason = prompt("Warum lehnen Sie die Signaturanfrage ab? (Optional)");
+
+    // User cancelled prompt
+    if (reason === null) {
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      console.log("❌ Declining signature for token:", token);
+
+      const response = await fetch(`/api/sign/${token}/decline`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          reason: reason || undefined
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Fehler beim Ablehnen der Signatur");
+      }
+
+      console.log("✅ Signature declined successfully:", data);
+
+      setDeclined(true);
+    } catch (err) {
+      console.error("❌ Error declining signature:", err);
+      const errorMessage = err instanceof Error ? err.message : "Unbekannter Fehler";
+      alert(`Fehler beim Ablehnen der Signatur:\n\n${errorMessage}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -221,6 +334,27 @@ export default function SignaturePage() {
               Signiertes Dokument herunterladen
             </a>
           )}
+        </motion.div>
+      </div>
+    );
+  }
+
+  // Declined State
+  if (declined) {
+    return (
+      <div className={styles.container}>
+        <motion.div
+          className={styles.infoCard}
+          initial={{ scale: 0.95, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.3 }}
+        >
+          <AlertCircle size={64} className={styles.errorIcon} />
+          <h2>Signatur abgelehnt</h2>
+          <p>Sie haben die Signaturanfrage abgelehnt.</p>
+          <p className={styles.successSubtext}>
+            Der Vertragsinhaber wurde benachrichtigt.
+          </p>
         </motion.div>
       </div>
     );
@@ -395,6 +529,16 @@ export default function SignaturePage() {
               disabled={isSubmitting}
             >
               {isSubmitting ? "Wird eingereicht..." : "Jetzt signieren"}
+            </button>
+
+            {/* Decline Button */}
+            <button
+              className={styles.declineBtn}
+              onClick={handleDecline}
+              disabled={isSubmitting}
+              type="button"
+            >
+              Ablehnen
             </button>
 
             {/* Footer */}
