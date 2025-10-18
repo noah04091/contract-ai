@@ -1227,6 +1227,43 @@ router.post("/sign/:token/submit", signatureSubmitLimiter, async (req, res) => {
       envelope.status = 'SIGNED';
     }
 
+    // 🆕 ALWAYS seal PDF after EVERY signature (not just final one)
+    // This allows signers to download partial PDFs with their signature
+    try {
+      console.log('🔒 Starting automatic PDF sealing...');
+      const result = await sealPdf(envelope);
+
+      // ✅ Store sealed PDF location + integrity hashes
+      envelope.s3KeySealed = result.sealedS3Key;
+      envelope.pdfHashOriginal = result.pdfHashOriginal;
+      envelope.pdfHashFinal = result.pdfHashFinal;
+
+      await envelope.addAuditEvent('PDF_SEALED', {
+        userId: null,
+        email: null,
+        ip: getClientIP(req),
+        userAgent: req.headers['user-agent'],
+        details: {
+          s3KeySealed: result.sealedS3Key,
+          pdfHashOriginal: result.pdfHashOriginal,
+          pdfHashFinal: result.pdfHashFinal,
+          signedCount: envelope.signers.filter(s => s.status === 'SIGNED').length,
+          totalSigners: envelope.signers.length
+        }
+      });
+      console.log(`✅ PDF sealed successfully: ${result.sealedS3Key}`);
+    } catch (sealError) {
+      console.error('⚠️ PDF sealing failed:', sealError.message);
+      // Don't fail the whole request if sealing fails
+      await envelope.addAuditEvent('PDF_SEALING_FAILED', {
+        userId: null,
+        email: null,
+        ip: getClientIP(req),
+        userAgent: req.headers['user-agent'],
+        details: { error: sealError.message }
+      });
+    }
+
     // Check if all signers have signed
     if (envelope.allSigned()) {
       envelope.status = 'COMPLETED';
@@ -1244,7 +1281,7 @@ router.post("/sign/:token/submit", signatureSubmitLimiter, async (req, res) => {
 
       console.log(`🎉 All signers completed! Envelope: ${envelope.title}`);
 
-      // ✉️ BUG FIX 2: Update Contract status to 'completed'
+      // ✉️ Update Contract status to 'completed'
       if (envelope.contractId) {
         try {
           await Contract.findByIdAndUpdate(
@@ -1257,62 +1294,20 @@ router.post("/sign/:token/submit", signatureSubmitLimiter, async (req, res) => {
         }
       }
 
-      // ✉️ Trigger PDF sealing
+      // 🆕 Send completion notification to ALL signers (not just owner)
       try {
-        console.log('🔒 Starting automatic PDF sealing...');
-        const result = await sealPdf(envelope);
+        console.log('📧 Sending completion notifications to all signers...');
 
-        // ✅ Store sealed PDF location + integrity hashes
-        envelope.s3KeySealed = result.sealedS3Key;
-        envelope.pdfHashOriginal = result.pdfHashOriginal;
-        envelope.pdfHashFinal = result.pdfHashFinal;
-
-        await envelope.addAuditEvent('PDF_SEALED', {
-          userId: null,
-          email: null,
-          ip: getClientIP(req),
-          userAgent: req.headers['user-agent'],
-          details: {
-            s3KeySealed: result.sealedS3Key,
-            pdfHashOriginal: result.pdfHashOriginal,
-            pdfHashFinal: result.pdfHashFinal
+        for (const envSigner of envelope.signers) {
+          try {
+            await sendCompletionNotification(envelope, envSigner.email);
+            console.log(`✅ Completion email sent to: ${envSigner.email}`);
+          } catch (emailError) {
+            console.error(`❌ Failed to send completion email to ${envSigner.email}:`, emailError.message);
           }
-        });
-        console.log(`✅ PDF sealed successfully: ${result.sealedS3Key}`);
-      } catch (sealError) {
-        console.error('⚠️ PDF sealing failed:', sealError.message);
-        // Don't fail the whole request if sealing fails
-        await envelope.addAuditEvent('PDF_SEALING_FAILED', {
-          userId: null,
-          email: null,
-          ip: getClientIP(req),
-          userAgent: req.headers['user-agent'],
-          details: { error: sealError.message }
-        });
-      }
-
-      // Send completion notification to owner
-      // Access users collection directly via MongoDB
-      try {
-        const { MongoClient, ObjectId } = require("mongodb");
-        const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
-        const client = new MongoClient(MONGO_URI);
-        await client.connect();
-        const db = client.db("contract_ai");
-        const usersCollection = db.collection("users");
-
-        const owner = await usersCollection.findOne(
-          { _id: new ObjectId(envelope.ownerId) },
-          { projection: { email: 1 } }
-        );
-
-        await client.close();
-
-        if (owner && owner.email) {
-          await sendCompletionNotification(envelope, owner.email);
         }
-      } catch (userError) {
-        console.error("⚠️ Could not send completion notification:", userError.message);
+      } catch (notificationError) {
+        console.error("⚠️ Could not send completion notifications:", notificationError.message);
       }
     }
 

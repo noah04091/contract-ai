@@ -48,6 +48,7 @@ export default function SignaturePage() {
   const [sealedPdfUrl, setSealedPdfUrl] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string>("");
   const [successDetails, setSuccessDetails] = useState<string | null>(null);
+  const [allSigned, setAllSigned] = useState<boolean>(false);
 
   const sigPadRef = useRef<SignatureCanvas>(null);
 
@@ -226,6 +227,11 @@ export default function SignaturePage() {
         setSealedPdfUrl(data.envelope.sealedPdfUrl);
       }
 
+      // Save allSigned status for download button text
+      if (data.envelope?.allSigned !== undefined) {
+        setAllSigned(data.envelope.allSigned);
+      }
+
       // ✅ Clear sessionStorage after successful submit
       sessionStorage.removeItem(storageKey);
       console.log("✅ Cleared signature backup from sessionStorage");
@@ -342,8 +348,10 @@ export default function SignaturePage() {
               download
               className={styles.downloadBtn}
             >
-              <FileText size={20} />
-              Signiertes Dokument herunterladen
+              <Download size={20} />
+              {allSigned
+                ? "Vollständig signiertes Dokument herunterladen"
+                : "Dokument mit Ihrer Signatur herunterladen"}
             </a>
           )}
         </motion.div>
