@@ -14,6 +14,7 @@ import ContractAnalysis from "../components/ContractAnalysis";
 import BatchAnalysisResults from "../components/BatchAnalysisResults"; // ✅ NEU: Import für Batch-Analyse
 import ContractDetailsView from "../components/ContractDetailsView";
 import UploadSuccessModal from "../components/UploadSuccessModal"; // ✅ NEU: Two-Step Upload Modal
+import ContractDetailModal from "../components/ContractDetailModal"; // 🎨 Contract Detail Modal
 import FolderBar from "../components/FolderBar"; // 📁 Folder Bar (Horizontal)
 import FolderModal from "../components/FolderModal"; // 📁 Folder Modal
 import SmartFoldersModal from "../components/SmartFoldersModal"; // 🤖 Smart Folders Modal
@@ -209,6 +210,9 @@ export default function Contracts() {
 
   // 🤖 Smart Folders Modal State
   const [smartFoldersModalOpen, setSmartFoldersModalOpen] = useState(false);
+
+  // 🎨 Contract Detail Modal State
+  const [selectedEnvelopeId, setSelectedEnvelopeId] = useState<string | null>(null);
 
   // 📁 Close dropdown when clicking outside
   useEffect(() => {
@@ -1747,8 +1751,20 @@ export default function Contracts() {
         return null;
     }
 
+    // Make badge clickable if envelope exists
+    const envelopeId = envelope?._id || contract.signatureEnvelopeId;
+
     return (
-      <span className={className} title={`Signaturstatus: ${text}`}>
+      <span
+        className={`${className} ${envelopeId ? styles.signatureBadgeClickable : ''}`}
+        title={envelopeId ? `${text} - Klicken für Details` : `Signaturstatus: ${text}`}
+        onClick={(e) => {
+          if (envelopeId) {
+            e.stopPropagation();
+            setSelectedEnvelopeId(envelopeId);
+          }
+        }}
+      >
         {icon} {text}
       </span>
     );
@@ -3097,6 +3113,14 @@ export default function Contracts() {
         onFetchSuggestions={handleFetchSmartSuggestions}
         onConfirm={handleConfirmSmartFolders}
       />
+
+      {/* 🎨 Contract Detail Modal */}
+      {selectedEnvelopeId && (
+        <ContractDetailModal
+          envelopeId={selectedEnvelopeId}
+          onClose={() => setSelectedEnvelopeId(null)}
+        />
+      )}
     </>
   );
 }

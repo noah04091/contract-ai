@@ -441,7 +441,7 @@ router.get("/envelopes/:id", verifyToken, async (req, res) => {
       _id: id,
       ownerId: req.user.userId
     })
-    .populate('contractId', 'name status')
+    .populate('contractId', 'name status uploadDate s3Key')
     .lean();
 
     if (!envelope) {
@@ -451,11 +451,36 @@ router.get("/envelopes/:id", verifyToken, async (req, res) => {
       });
     }
 
-    console.log(`✅ Loaded envelope: ${envelope.title}`);
+    console.log(`✅ Loaded envelope details: ${envelope.title}`);
+
+    // 🆕 Enrich response with computed fields
+    const signersTotal = envelope.signers?.length || 0;
+    const signersSigned = envelope.signers?.filter(s => s.status === 'SIGNED').length || 0;
+    const signersDeclined = envelope.signers?.filter(s => s.status === 'DECLINED').length || 0;
+    const signersPending = signersTotal - signersSigned - signersDeclined;
+
+    // 🆕 Calculate progress percentage
+    const progressPercentage = signersTotal > 0
+      ? Math.round((signersSigned / signersTotal) * 100)
+      : 0;
+
+    // 🆕 Add enriched data
+    const enrichedEnvelope = {
+      ...envelope,
+      stats: {
+        signersTotal,
+        signersSigned,
+        signersDeclined,
+        signersPending,
+        progressPercentage
+      },
+      // Keep audit trail for timeline display
+      auditTrail: envelope.auditTrail || []
+    };
 
     res.json({
       success: true,
-      envelope
+      envelope: enrichedEnvelope
     });
 
   } catch (error) {

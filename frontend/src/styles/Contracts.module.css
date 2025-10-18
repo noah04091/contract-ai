@@ -1935,6 +1935,18 @@
   border: 1px solid #d1d5db;
 }
 
+/* 🖱️ Clickable signature badge */
+.signatureBadgeClickable {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.signatureBadgeClickable:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  filter: brightness(1.05);
+}
+
 .uploadDate {
   color: #6b7280;
   font-size: 0.8rem; /* ✅ Kleinere Schrift */
