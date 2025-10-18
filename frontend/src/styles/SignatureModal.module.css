@@ -90,6 +90,108 @@
   margin: 0 0 0.75rem 0;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* 🆕 Radio Group for Signature Mode */
+.radioGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.radioOption {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  border: 2px solid #e5e5e5;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: white;
+}
+
+.radioOption:hover {
+  border-color: #007aff;
+  background: rgba(0, 122, 255, 0.02);
+}
+
+.radioOption:has(.radio:checked) {
+  border-color: #007aff;
+  background: rgba(0, 122, 255, 0.05);
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+}
+
+.radio {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  cursor: pointer;
+  flex-shrink: 0;
+  accent-color: #007aff;
+}
+
+.radioLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.radioTitle {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #1d1d1f;
+}
+
+.radioSubtitle {
+  font-size: 0.8125rem;
+  color: #6e6e73;
+  line-height: 1.4;
+}
+
+/* 🆕 Dropdown for Signing Order */
+.dropdownWrapper {
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e5e5e5;
+}
+
+.dropdownLabel {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #1d1d1f;
+  white-space: nowrap;
+}
+
+.dropdown {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d2d2d7;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  background: white;
+  color: #1d1d1f;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dropdown:focus {
+  outline: none;
+  border-color: #007aff;
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+}
+
+.dropdown:hover {
+  border-color: #007aff;
 }
 
 /* Add Signer Form */

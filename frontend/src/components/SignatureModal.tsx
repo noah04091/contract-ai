@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Plus, Mail, User, Trash2, Send } from "lucide-react";
+import { X, Plus, Mail, User, Trash2, Send, Users } from "lucide-react";
 import styles from "../styles/SignatureModal.module.css";
 
 interface Signer {
@@ -16,6 +16,9 @@ interface SignatureModalProps {
   contractS3Key: string; // ✉️ NEU: S3 Key des Vertrags
 }
 
+type SignatureMode = "RECIPIENT_ONLY" | "BOTH_PARTIES";
+type SigningOrder = "SENDER_FIRST" | "RECIPIENT_FIRST";
+
 export default function SignatureModal({
   show,
   onClose,
@@ -28,6 +31,41 @@ export default function SignatureModal({
   const [currentName, setCurrentName] = useState("");
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // 🆕 Multi-Signer Settings
+  const [signatureMode, setSignatureMode] = useState<SignatureMode>("RECIPIENT_ONLY");
+  const [signingOrder, setSigningOrder] = useState<SigningOrder>("RECIPIENT_FIRST");
+  const [currentUser, setCurrentUser] = useState<{ name: string; email: string } | null>(null);
+
+  // Load current user info
+  useEffect(() => {
+    const loadUserInfo = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await fetch("/api/auth/me", {
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          credentials: "include"
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setCurrentUser({
+            name: data.user?.name || "Sie",
+            email: data.user?.email || ""
+          });
+        }
+      } catch (err) {
+        console.error("Failed to load user info:", err);
+      }
+    };
+
+    if (show) {
+      loadUserInfo();
+    }
+  }, [show]);
 
   const handleAddSigner = () => {
     if (!currentEmail || !currentName) {
@@ -63,20 +101,82 @@ export default function SignatureModal({
       return;
     }
 
+    if (signatureMode === "BOTH_PARTIES" && !currentUser) {
+      alert("Benutzerdaten konnten nicht geladen werden");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
       const token = localStorage.getItem("token");
 
+      // 🆕 Build final signers array with roles and order
+      let finalSigners: Array<{
+        email: string;
+        name: string;
+        role: string;
+        order: number;
+      }> = [];
+
+      if (signatureMode === "BOTH_PARTIES" && currentUser) {
+        // Beide Seiten signieren
+        if (signingOrder === "SENDER_FIRST") {
+          // Owner signiert zuerst (order: 1), dann Recipients (order: 2+)
+          finalSigners.push({
+            email: currentUser.email,
+            name: currentUser.name,
+            role: "sender",
+            order: 1
+          });
+
+          signers.forEach((signer, index) => {
+            finalSigners.push({
+              email: signer.email,
+              name: signer.name,
+              role: "recipient",
+              order: index + 2
+            });
+          });
+        } else {
+          // Recipients signieren zuerst (order: 1+), dann Owner (order: last)
+          signers.forEach((signer, index) => {
+            finalSigners.push({
+              email: signer.email,
+              name: signer.name,
+              role: "recipient",
+              order: index + 1
+            });
+          });
+
+          finalSigners.push({
+            email: currentUser.email,
+            name: currentUser.name,
+            role: "sender",
+            order: signers.length + 1
+          });
+        }
+      } else {
+        // Nur Recipients signieren (default behavior)
+        finalSigners = signers.map((signer, index) => ({
+          email: signer.email,
+          name: signer.name,
+          role: "recipient",
+          order: index + 1
+        }));
+      }
+
       console.log("📤 Creating envelope for signature:", {
         contractId,
         contractName,
-        signers,
+        signatureMode,
+        signingOrder,
+        finalSigners,
         message
       });
 
       // ✉️ Erstelle Signaturfelder (ein Feld pro Signer auf letzter Seite)
-      const signatureFields = signers.map((signer, index) => ({
+      const signatureFields = finalSigners.map((signer, index) => ({
         assigneeEmail: signer.email,
         type: "signature",
         required: true,
@@ -100,10 +200,8 @@ export default function SignatureModal({
           title: contractName,
           message: message || "",
           s3Key: contractS3Key, // ✉️ NEU: S3 Key
-          signers: signers.map(signer => ({
-            email: signer.email,
-            name: signer.name
-          })),
+          signingMode: signatureMode === "BOTH_PARTIES" ? "SEQUENTIAL" : "SINGLE",
+          signers: finalSigners,
           signatureFields // ✉️ NEU: Signatur-Felder
         })
       });
@@ -194,6 +292,66 @@ export default function SignatureModal({
 
           {/* Content */}
           <div className={styles.content}>
+            {/* 🆕 Signature Settings */}
+            <div className={styles.section}>
+              <h3 className={styles.sectionTitle}>
+                <Users size={18} />
+                Signatur-Einstellungen
+              </h3>
+
+              {/* Radio Buttons: Nur Empfänger vs Beide Seiten */}
+              <div className={styles.radioGroup}>
+                <label className={styles.radioOption}>
+                  <input
+                    type="radio"
+                    name="signatureMode"
+                    value="RECIPIENT_ONLY"
+                    checked={signatureMode === "RECIPIENT_ONLY"}
+                    onChange={() => setSignatureMode("RECIPIENT_ONLY")}
+                    className={styles.radio}
+                  />
+                  <div className={styles.radioLabel}>
+                    <span className={styles.radioTitle}>Nur Empfänger signiert</span>
+                    <span className={styles.radioSubtitle}>
+                      Nur die hinzugefügten Empfänger müssen signieren
+                    </span>
+                  </div>
+                </label>
+
+                <label className={styles.radioOption}>
+                  <input
+                    type="radio"
+                    name="signatureMode"
+                    value="BOTH_PARTIES"
+                    checked={signatureMode === "BOTH_PARTIES"}
+                    onChange={() => setSignatureMode("BOTH_PARTIES")}
+                    className={styles.radio}
+                  />
+                  <div className={styles.radioLabel}>
+                    <span className={styles.radioTitle}>Beide Seiten signieren</span>
+                    <span className={styles.radioSubtitle}>
+                      Sie und die Empfänger müssen signieren
+                    </span>
+                  </div>
+                </label>
+              </div>
+
+              {/* Signing Order Dropdown (nur bei BOTH_PARTIES) */}
+              {signatureMode === "BOTH_PARTIES" && (
+                <div className={styles.dropdownWrapper}>
+                  <label className={styles.dropdownLabel}>Reihenfolge:</label>
+                  <select
+                    value={signingOrder}
+                    onChange={(e) => setSigningOrder(e.target.value as SigningOrder)}
+                    className={styles.dropdown}
+                  >
+                    <option value="RECIPIENT_FIRST">Empfänger signiert zuerst</option>
+                    <option value="SENDER_FIRST">Ich signiere zuerst</option>
+                  </select>
+                </div>
+              )}
+            </div>
+
             {/* Add Signer Form */}
             <div className={styles.section}>
               <h3 className={styles.sectionTitle}>Empfänger hinzufügen</h3>

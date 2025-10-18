@@ -197,10 +197,15 @@ router.post("/envelopes", verifyToken, async (req, res) => {
       s3Key,
       signers,
       signatureFields,
+      signingMode = "SINGLE", // 🆕 SINGLE | SEQUENTIAL | PARALLEL
       expiresInDays = 14
     } = req.body;
 
-    console.log("✉️ Creating new envelope:", { title, signersCount: signers?.length });
+    console.log("✉️ Creating new envelope:", {
+      title,
+      signersCount: signers?.length,
+      signingMode
+    });
 
     // Validation
     if (!title || !s3Key) {
@@ -278,7 +283,8 @@ router.post("/envelopes", verifyToken, async (req, res) => {
       s3Key,
       s3KeySealed: null,
       pdfHash: null,
-      status: "DRAFT",
+      status: "DRAFT", // Will be updated to AWAITING_SIGNER_X when sent
+      signingMode, // 🆕 SINGLE | SEQUENTIAL | PARALLEL
       signers: enrichedSigners,
       signatureFields: signatureFields.map(field => ({
         ...field,
@@ -294,7 +300,8 @@ router.post("/envelopes", verifyToken, async (req, res) => {
         userAgent: req.headers['user-agent'] || 'unknown',
         details: {
           signersCount: enrichedSigners.length,
-          fieldsCount: signatureFields.length
+          fieldsCount: signatureFields.length,
+          signingMode // 🆕 Log signing mode
         }
       }]
     });
@@ -477,26 +484,48 @@ router.post("/envelopes/:id/send", verifyToken, async (req, res) => {
       });
     }
 
-    console.log(`📤 Sending invitations for envelope: ${envelope.title}`);
+    console.log(`📤 Sending invitations for envelope: ${envelope.title} (Mode: ${envelope.signingMode})`);
 
-    // Send invitations to all signers
+    // 🆕 Determine which signers to notify based on signing mode
+    let signersToNotify = [];
+
+    if (envelope.signingMode === 'SEQUENTIAL') {
+      // Only notify the first signer (lowest order number)
+      const sortedSigners = envelope.signers.sort((a, b) => a.order - b.order);
+      signersToNotify = [sortedSigners[0]];
+      console.log(`📧 Sequential mode: Notifying only first signer (order ${sortedSigners[0].order}): ${sortedSigners[0].email}`);
+    } else {
+      // SINGLE or PARALLEL: Notify all signers
+      signersToNotify = envelope.signers;
+      console.log(`📧 ${envelope.signingMode} mode: Notifying all ${envelope.signers.length} signers`);
+    }
+
+    // Send invitations
     const sendResults = await Promise.allSettled(
-      envelope.signers.map(signer =>
+      signersToNotify.map(signer =>
         sendSignatureInvitation(signer, envelope, req.user.email)
       )
     );
 
     const successCount = sendResults.filter(r => r.status === 'fulfilled' && r.value).length;
-    const failedCount = envelope.signers.length - successCount;
+    const failedCount = signersToNotify.length - successCount;
 
-    // Update envelope status
-    envelope.status = 'SENT';
+    // 🆕 Update envelope status based on signing mode
+    if (envelope.signingMode === 'SEQUENTIAL') {
+      envelope.status = 'AWAITING_SIGNER_1';
+    } else {
+      envelope.status = 'SENT';
+    }
+
     await envelope.addAuditEvent('SENT', {
       userId: req.user.userId,
       email: req.user.email,
       ip: getClientIP(req),
       userAgent: req.headers['user-agent'],
       details: {
+        signingMode: envelope.signingMode,
+        totalSigners: envelope.signers.length,
+        notifiedSigners: signersToNotify.length,
         successCount,
         failedCount
       }
@@ -1154,6 +1183,49 @@ router.post("/sign/:token/submit", signatureSubmitLimiter, async (req, res) => {
         signaturesCount: updatedCount
       }
     });
+
+    // 🆕 SEQUENTIAL SIGNING LOGIC: Notify next signer
+    if (envelope.signingMode === 'SEQUENTIAL' && !envelope.allSigned()) {
+      // Find next unsigned signer by order
+      const sortedSigners = envelope.signers.sort((a, b) => a.order - b.order);
+      const nextSigner = sortedSigners.find(s => s.status === 'PENDING');
+
+      if (nextSigner) {
+        console.log(`📧 Sequential mode: Notifying next signer (order ${nextSigner.order}): ${nextSigner.email}`);
+
+        // Get owner info for email
+        const User = require("../models/User");
+        const owner = await User.findById(envelope.ownerId);
+        const ownerEmail = owner?.email || "Contract AI";
+
+        // Send invitation to next signer
+        try {
+          await sendSignatureInvitation(nextSigner, envelope, ownerEmail);
+
+          // Update status to AWAITING_SIGNER_X
+          envelope.status = `AWAITING_SIGNER_${nextSigner.order}`;
+
+          await envelope.addAuditEvent('SENT', {
+            userId: null,
+            email: nextSigner.email,
+            ip: getClientIP(req),
+            userAgent: req.headers['user-agent'],
+            details: {
+              reason: 'Sequential signing - next signer notified',
+              signerOrder: nextSigner.order
+            }
+          });
+
+          console.log(`✅ Next signer notified: ${nextSigner.email} (order ${nextSigner.order})`);
+        } catch (emailError) {
+          console.error(`❌ Failed to notify next signer:`, emailError);
+          // Don't fail the request, just log the error
+        }
+      }
+    } else if (envelope.status === 'SENT' || envelope.status.startsWith('AWAITING_SIGNER_')) {
+      // Non-sequential mode: Just update status to SIGNED
+      envelope.status = 'SIGNED';
+    }
 
     // Check if all signers have signed
     if (envelope.allSigned()) {
