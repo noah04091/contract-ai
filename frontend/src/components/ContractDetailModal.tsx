@@ -24,7 +24,9 @@ interface AuditEvent {
     email?: string;
     ip?: string;
     reason?: string;
-    [key: string]: any;
+    signedCount?: number;
+    totalSigners?: number;
+    [key: string]: string | number | boolean | undefined;
   };
 }
 
