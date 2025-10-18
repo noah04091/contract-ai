@@ -7,6 +7,7 @@ const rateLimit = require("express-rate-limit");
 const verifyToken = require("../middleware/verifyToken");
 const sendEmail = require("../services/mailer");
 const { sealPdf } = require("../services/pdfSealing"); // ✉️ PDF-Sealing Service
+const { generateSignedUrl } = require("../services/fileStorage"); // 🆕 For S3 download links
 const Envelope = require("../models/Envelope");
 const Contract = require("../models/Contract");
 
@@ -153,8 +154,22 @@ ${process.env.FRONTEND_URL || 'http://localhost:5173'}
 /**
  * Send completion notification to owner
  */
-async function sendCompletionNotification(envelope, ownerEmail) {
+async function sendCompletionNotification(envelope, recipientEmail) {
   const subject = `✅ Dokument vollständig signiert: ${envelope.title}`;
+
+  // 🆕 Generate direct download link for signed PDF (valid 24 hours)
+  let downloadLink = "Dashboard: " + (process.env.FRONTEND_URL || 'http://localhost:5173') + '/contracts';
+
+  if (envelope.s3KeySealed) {
+    try {
+      const signedUrl = await generateSignedUrl(envelope.s3KeySealed, 86400); // 24 hours
+      const pdfUrl = typeof signedUrl === 'string' ? signedUrl : signedUrl.url || signedUrl;
+      downloadLink = pdfUrl;
+      console.log(`✅ Generated download link for completion email: ${pdfUrl.substring(0, 80)}...`);
+    } catch (err) {
+      console.warn(`⚠️ Could not generate download link, using dashboard fallback:`, err.message);
+    }
+  }
 
   const text = `
 Hallo,
@@ -167,16 +182,18 @@ Signiert am: ${new Date().toLocaleString('de-DE')}
 Unterzeichner:
 ${envelope.signers.map(s => `  - ${s.name} (${s.email}) - Signiert am ${new Date(s.signedAt).toLocaleString('de-DE')}`).join('\n')}
 
-Sie können das signierte Dokument in Ihrem Dashboard herunterladen:
-${process.env.FRONTEND_URL || 'http://localhost:5173'}/contracts
+📥 Signiertes Dokument herunterladen:
+${downloadLink}
+
+${envelope.s3KeySealed ? '(Dieser Link ist 24 Stunden gültig)' : ''}
 
 Mit freundlichen Grüßen
 Ihr Contract AI Team
 `;
 
   try {
-    await sendEmail(ownerEmail, subject, text);
-    console.log(`✉️ Completion notification sent to: ${ownerEmail}`);
+    await sendEmail(recipientEmail, subject, text);
+    console.log(`✉️ Completion notification sent to: ${recipientEmail}`);
     return true;
   } catch (error) {
     console.error(`❌ Failed to send completion notification:`, error);
