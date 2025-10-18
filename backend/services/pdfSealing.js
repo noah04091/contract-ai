@@ -2,6 +2,7 @@
 const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
 const { S3Client, GetObjectCommand, PutObjectCommand } = require('@aws-sdk/client-s3');
 const { Readable } = require('stream');
+const { calculatePdfHash } = require('../utils/pdfHash');
 
 // S3 Client initialisieren
 const s3Client = new S3Client({
@@ -217,16 +218,53 @@ async function addAuditTrailPage(pdfDoc, envelope) {
       color: rgb(0.5, 0.5, 0.5)
     });
 
+    // PDF-Hashes für Integrität
+    if (envelope.pdfHashOriginal) {
+      auditPage.drawText(`Original PDF Hash (SHA-256):`, {
+        x: 50,
+        y: height - 110,
+        size: 8,
+        font: fontBold,
+        color: rgb(0.3, 0.3, 0.3)
+      });
+
+      auditPage.drawText(envelope.pdfHashOriginal, {
+        x: 50,
+        y: height - 122,
+        size: 7,
+        font: font,
+        color: rgb(0.5, 0.5, 0.5)
+      });
+    }
+
+    if (envelope.pdfHashFinal) {
+      auditPage.drawText(`Sealed PDF Hash (SHA-256):`, {
+        x: 50,
+        y: height - 138,
+        size: 8,
+        font: fontBold,
+        color: rgb(0.3, 0.3, 0.3)
+      });
+
+      auditPage.drawText(envelope.pdfHashFinal, {
+        x: 50,
+        y: height - 150,
+        size: 7,
+        font: font,
+        color: rgb(0.5, 0.5, 0.5)
+      });
+    }
+
     // Linie
     auditPage.drawLine({
-      start: { x: 50, y: height - 105 },
-      end: { x: width - 50, y: height - 105 },
+      start: { x: 50, y: height - 165 },
+      end: { x: width - 50, y: height - 165 },
       thickness: 1,
       color: rgb(0.7, 0.7, 0.7)
     });
 
     // Audit Events
-    let yPosition = height - 130;
+    let yPosition = height - 190; // Mehr Platz für Hashes
     const lineHeight = 40;
 
     for (let i = 0; i < envelope.audit.length && yPosition > 80; i++) {
@@ -321,26 +359,38 @@ async function sealPdf(envelope) {
     // 1. Original PDF von S3 laden
     const originalPdfBytes = await loadPdfFromS3(envelope.s3Key);
 
-    // 2. PDF mit pdf-lib öffnen
+    // 2. Hash des Original-PDFs berechnen (vor Signatur-Embedding)
+    const originalHash = calculatePdfHash(originalPdfBytes);
+    console.log(`🔐 Original PDF Hash: ${originalHash.substring(0, 16)}...`);
+
+    // 3. PDF mit pdf-lib öffnen
     const pdfDoc = await PDFDocument.load(originalPdfBytes);
 
-    // 3. Signatur-Bilder auf letzter Seite hinzufügen
+    // 4. Signatur-Bilder auf letzter Seite hinzufügen
     await addSignatureBoxes(pdfDoc, envelope.signers, envelope.signatureFields);
 
-    // 4. Audit Trail Seite am Ende hinzufügen
+    // 5. Audit Trail Seite am Ende hinzufügen
     await addAuditTrailPage(pdfDoc, envelope);
 
-    // 5. PDF serialisieren
+    // 6. PDF serialisieren
     const sealedPdfBytes = await pdfDoc.save();
 
     console.log(`✅ PDF sealed successfully: ${sealedPdfBytes.length} bytes`);
 
-    // 6. Zu S3 hochladen
+    // 7. Hash des versiegelten PDFs berechnen (nach Signatur-Embedding)
+    const finalHash = calculatePdfHash(sealedPdfBytes);
+    console.log(`🔐 Sealed PDF Hash: ${finalHash.substring(0, 16)}...`);
+
+    // 8. Zu S3 hochladen
     const sealedS3Key = await uploadPdfToS3(sealedPdfBytes, envelope.s3Key);
 
     console.log(`🎉 PDF sealing complete: ${sealedS3Key}`);
 
-    return sealedS3Key;
+    return {
+      sealedS3Key,
+      pdfHashOriginal: originalHash,
+      pdfHashFinal: finalHash
+    };
   } catch (error) {
     console.error('❌ Error sealing PDF:', error);
     throw new Error(`PDF-Sealing fehlgeschlagen: ${error.message}`);

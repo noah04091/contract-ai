@@ -15,7 +15,8 @@ const signerSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    default: "Signer",
+    enum: ["sender", "recipient", "signer"],
+    default: "signer",
     trim: true
   },
   order: {
@@ -24,12 +25,21 @@ const signerSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["PENDING", "SIGNED"],
+    enum: ["PENDING", "SIGNED", "DECLINED"],
     default: "PENDING"
   },
   signedAt: {
     type: Date,
     default: null
+  },
+  declinedAt: {
+    type: Date,
+    default: null
+  },
+  declineReason: {
+    type: String,
+    default: null,
+    trim: true
   },
   ip: {
     type: String,
@@ -48,6 +58,15 @@ const signerSchema = new mongoose.Schema({
   tokenExpires: {
     type: Date,
     required: true
+  },
+  tokenInvalidated: {
+    type: Boolean,
+    default: false
+  },
+  authMethod: {
+    type: String,
+    enum: ["EMAIL_LINK", "OTP", "SSO"],
+    default: "EMAIL_LINK"
   }
 }, { _id: false });
 
@@ -109,13 +128,15 @@ const auditEventSchema = new mongoose.Schema({
       "SENT",
       "OPENED",
       "SIGNED",
+      "DECLINED",
       "COMPLETED",
       "VOIDED",
       "EXPIRED",
       "REMINDER_SENT",
       "LINK_COPIED",
-      "PDF_SEALED",           // ✉️ NEU: PDF wurde versiegelt
-      "PDF_SEALING_FAILED"    // ✉️ NEU: PDF-Sealing fehlgeschlagen
+      "DELIVERY_FAILED",
+      "PDF_SEALED",
+      "PDF_SEALING_FAILED"
     ]
   },
   timestamp: {
@@ -177,13 +198,60 @@ const envelopeSchema = new mongoose.Schema({
     type: String,
     default: null // Signed/sealed PDF in S3
   },
-  pdfHash: {
+  pdfHashOriginal: {
     type: String,
-    default: null // SHA-256 hash for document integrity
+    default: null // SHA-256 hash of original PDF (before signatures)
+  },
+  pdfHashFinal: {
+    type: String,
+    default: null // SHA-256 hash of sealed PDF (after signatures)
+  },
+  signatureLevel: {
+    type: String,
+    enum: ["EES", "QES"],
+    default: "EES"
+  },
+  documentType: {
+    type: String,
+    default: null // 'contract', 'invoice', 'nda', etc. (from classifier)
+  },
+  classifierConfidence: {
+    type: Number,
+    min: 0,
+    max: 1,
+    default: null // 0-1 confidence score from classifier
+  },
+  requiresQESFlag: {
+    type: Boolean,
+    default: false // True if document likely requires QES
+  },
+  userAcknowledgedQESWarning: {
+    type: Boolean,
+    default: false // User confirmed QES warning
+  },
+  signingMode: {
+    type: String,
+    enum: ["SINGLE", "SEQUENTIAL", "PARALLEL"],
+    default: "SINGLE"
+  },
+  revocationToken: {
+    type: String,
+    default: null // Token for voiding envelope
   },
   status: {
     type: String,
-    enum: ["DRAFT", "SENT", "SIGNED", "COMPLETED", "EXPIRED", "VOIDED"],
+    enum: [
+      "DRAFT",
+      "SENT",
+      "AWAITING_SIGNER_1",
+      "AWAITING_SIGNER_2",
+      "SIGNED",
+      "COMPLETED",
+      "DECLINED",
+      "DELIVERY_FAILED",
+      "EXPIRED",
+      "VOIDED"
+    ],
     default: "DRAFT",
     index: true
   },
