@@ -1330,15 +1330,41 @@ router.post("/sign/:token/submit", signatureSubmitLimiter, async (req, res) => {
       }
     }
 
+    // 🆕 Dynamic success message based on context
+    let message = "✅ Signatur erfolgreich übermittelt!";
+    let details = null;
+
+    if (envelope.allSigned()) {
+      // All signatures completed
+      message = "✅ Signatur erfolgreich übermittelt! Das Dokument ist vollständig signiert.";
+
+      // Only notify about owner notification if signer is NOT the owner
+      if (signer.role !== 'sender') {
+        details = "Der Vertragsinhaber wurde benachrichtigt.";
+      }
+    } else {
+      // More signatures pending
+      if (envelope.signingMode === 'SEQUENTIAL') {
+        message = "✅ Signatur erfolgreich übermittelt!";
+        details = "Der nächste Unterzeichner wurde benachrichtigt.";
+      } else {
+        message = "✅ Signatur erfolgreich übermittelt!";
+        details = signer.role === 'sender'
+          ? "Alle Empfänger wurden benachrichtigt."
+          : "Der Vertragsinhaber wurde benachrichtigt.";
+      }
+    }
+
     res.json({
       success: true,
-      message: "Signatur erfolgreich übermittelt",
+      message,
+      details, // 🆕 Additional context-aware info
       envelope: {
         _id: envelope._id,
         status: envelope.status,
         allSigned: envelope.allSigned(),
         completedAt: envelope.completedAt,
-        sealedPdfUrl // 📄 NEU: Download-URL für signiertes PDF
+        sealedPdfUrl // 📄 Download-URL für signiertes PDF
       }
     });
 

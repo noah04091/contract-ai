@@ -46,6 +46,8 @@ export default function SignaturePage() {
   const [signatureFields, setSignatureFields] = useState<SignatureField[]>([]);
   const [numPages, setNumPages] = useState<number>(0);
   const [sealedPdfUrl, setSealedPdfUrl] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string>("");
+  const [successDetails, setSuccessDetails] = useState<string | null>(null);
 
   const sigPadRef = useRef<SignatureCanvas>(null);
 
@@ -211,6 +213,14 @@ export default function SignaturePage() {
 
       console.log("✅ Signature submitted successfully:", data);
 
+      // Save success message and details
+      if (data.message) {
+        setSuccessMessage(data.message);
+      }
+      if (data.details) {
+        setSuccessDetails(data.details);
+      }
+
       // Save sealed PDF URL for download
       if (data.envelope?.sealedPdfUrl) {
         setSealedPdfUrl(data.envelope.sealedPdfUrl);
@@ -317,11 +327,13 @@ export default function SignaturePage() {
           transition={{ duration: 0.3 }}
         >
           <CheckCircle size={64} className={styles.successIcon} />
-          <h2>Erfolgreich signiert!</h2>
+          <h2>{successMessage || "Erfolgreich signiert!"}</h2>
           <p>Ihre Signatur wurde erfolgreich eingereicht.</p>
-          <p className={styles.successSubtext}>
-            Der Vertragsinhaber wurde benachrichtigt.
-          </p>
+          {successDetails && (
+            <p className={styles.successSubtext}>
+              {successDetails}
+            </p>
+          )}
 
           {/* Download Button for Sealed PDF */}
           {sealedPdfUrl && (
