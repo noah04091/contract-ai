@@ -142,6 +142,17 @@
   color: #ff453a;
 }
 
+/* 🎨 Signature Details Button - Blue highlight for signature info */
+.signatureDetailsBtn {
+  background: rgba(0, 122, 255, 0.1);
+  color: #007aff;
+}
+
+.signatureDetailsBtn:hover {
+  background: rgba(0, 122, 255, 0.2);
+  color: #0051d5;
+}
+
 .closeBtn {
   width: 36px;
   height: 36px;

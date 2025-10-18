@@ -55,6 +55,17 @@ interface Contract {
     recommendations?: string[];
     analysisDate?: string;
   };
+  // ✉️ Signature/Envelope Felder
+  signatureStatus?: string;
+  signatureEnvelopeId?: string;
+  envelope?: {
+    _id: string;
+    signatureStatus: string;
+    signersTotal?: number;
+    signersSigned?: number;
+    s3KeySealed?: string | null;
+    completedAt?: string | null;
+  };
 }
 
 // ✅ BUG FIX 1: Interface erweitert um openEditModalDirectly Prop
@@ -65,6 +76,7 @@ interface ContractDetailsViewProps {
   openEditModalDirectly?: boolean; // ✅ NEU: Öffnet Edit-Modal direkt
   onEdit?: (contractId: string) => void;
   onDelete?: (contractId: string, contractName: string) => void;
+  onOpenSignatureDetails?: (envelopeId: string) => void; // 🎨 NEU: Signaturdetails öffnen
 }
 
 export default function ContractDetailsView({
@@ -73,7 +85,8 @@ export default function ContractDetailsView({
   show,
   openEditModalDirectly = false, // ✅ BUG FIX 1: Neue Prop mit Default-Wert
   onEdit,
-  onDelete
+  onDelete,
+  onOpenSignatureDetails
 }: ContractDetailsViewProps) {
   const [activeTab, setActiveTab] = useState<'overview' | 'content' | 'analysis'>('overview');
 
@@ -638,13 +651,29 @@ export default function ContractDetailsView({
                 </button>
 
                 {/* ✉️ NEU: Signature Button - Zur Signatur senden */}
-                {contract.s3Key && !contract.needsReupload && (
+                {contract.s3Key && !contract.needsReupload && !contract.envelope && (
                   <button
                     className={styles.actionBtn}
                     onClick={handleSendToSignature}
                     title="Zur Signatur senden"
                   >
                     <PenTool size={18} />
+                  </button>
+                )}
+
+                {/* 🎨 NEU: Signaturdetails anzeigen - Nur wenn Envelope existiert */}
+                {(contract.envelope || contract.signatureEnvelopeId) && onOpenSignatureDetails && (
+                  <button
+                    className={`${styles.actionBtn} ${styles.signatureDetailsBtn}`}
+                    onClick={() => {
+                      const envelopeId = contract.envelope?._id || contract.signatureEnvelopeId;
+                      if (envelopeId) {
+                        onOpenSignatureDetails(envelopeId);
+                      }
+                    }}
+                    title="Signaturdetails anzeigen"
+                  >
+                    <FileText size={18} />
                   </button>
                 )}
 
