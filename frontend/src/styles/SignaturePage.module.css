@@ -1,20 +1,117 @@
-/* ✉️ SignaturePage - Public Signature View */
+/* ✉️ SignaturePage - Public Signature View with PDF Preview */
 
 .container {
-  min-height: calc(100vh - 60px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem 1rem;
+  min-height: 100vh;
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  padding: 2rem;
 }
 
-.card {
+/* Split Layout - PDF left, Signature right */
+.splitLayout {
+  display: grid;
+  grid-template-columns: 1fr 500px;
+  gap: 2rem;
+  max-width: 1600px;
+  margin: 0 auto;
+  align-items: start;
+}
+
+/* ===== LEFT SIDE - PDF PREVIEW ===== */
+.pdfSection {
   background: white;
   border-radius: 16px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-  max-width: 600px;
-  width: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 600px;
+  max-height: calc(100vh - 4rem);
+}
+
+.pdfHeader {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.pdfHeader h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.pdfViewer {
+  flex: 1;
+  overflow-y: auto;
+  padding: 2rem;
+  background: #f8f9fa;
+}
+
+.pdfViewer > div {
+  /* react-pdf Document wrapper */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.pdfViewer canvas {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+}
+
+.pdfInfo {
+  text-align: center;
+  padding: 1rem;
+  background: white;
+  border-top: 1px solid #e5e5e5;
+  color: #6e6e73;
+  font-size: 0.875rem;
+}
+
+.pdfInfo p {
+  margin: 0;
+}
+
+.pdfLoading {
+  text-align: center;
+  padding: 3rem;
+  color: #6e6e73;
+}
+
+.pdfError {
+  text-align: center;
+  padding: 3rem;
+  color: #ff3b30;
+}
+
+.pdfError p {
+  margin: 0.5rem 0 0 0;
+}
+
+.pdfPlaceholder {
+  text-align: center;
+  padding: 3rem;
+  color: #86868b;
+}
+
+.pdfPlaceholder p {
+  margin: 1rem 0 0 0;
+}
+
+/* ===== RIGHT SIDE - SIGNATURE FORM ===== */
+.signatureSection {
+  position: sticky;
+  top: 2rem;
+}
+
+.signatureCard {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
   padding: 2rem;
 }
 
@@ -37,16 +134,17 @@
 }
 
 .title {
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   font-weight: 600;
   color: #1d1d1f;
   margin: 0 0 0.5rem 0;
 }
 
 .subtitle {
-  font-size: 1rem;
+  font-size: 0.875rem;
   color: #6e6e73;
   margin: 0;
+  word-break: break-word;
 }
 
 /* Message */
@@ -62,6 +160,7 @@
   margin: 0;
   color: #1d1d1f;
   line-height: 1.6;
+  font-size: 0.875rem;
 }
 
 /* Signer Info */
@@ -78,6 +177,7 @@
   gap: 0.75rem;
   color: #6e6e73;
   margin-bottom: 0.5rem;
+  font-size: 0.875rem;
 }
 
 .infoRow:last-child {
@@ -88,16 +188,23 @@
   flex-shrink: 0;
 }
 
-/* Signature Section */
-.signatureSection {
+/* Canvas Signature */
+.canvasContainer {
   margin-bottom: 1.5rem;
 }
 
+.canvasHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
 .sectionTitle {
-  font-size: 1.125rem;
+  font-size: 1rem;
   font-weight: 600;
   color: #1d1d1f;
-  margin: 0 0 0.25rem 0;
+  margin: 0;
 }
 
 .sectionSubtitle {
@@ -106,47 +213,38 @@
   margin: 0 0 1rem 0;
 }
 
-.signatureInput {
-  width: 100%;
-  padding: 0.875rem 1rem;
-  border: 2px solid #d2d2d7;
-  border-radius: 8px;
-  font-size: 1rem;
+.clearBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: transparent;
+  border: 1px solid #d2d2d7;
+  border-radius: 6px;
+  color: #6e6e73;
+  font-size: 0.875rem;
+  cursor: pointer;
   transition: all 0.2s ease;
 }
 
-.signatureInput:focus {
-  outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+.clearBtn:hover {
+  background: #f8f9fa;
+  border-color: #ff3b30;
+  color: #ff3b30;
 }
 
-.signatureInput:disabled {
-  background: #f8f9fa;
-  cursor: not-allowed;
-}
-
-.signaturePreview {
-  margin-top: 1rem;
-  padding: 1rem;
-  background: #f8f9fa;
+.canvasWrapper {
+  border: 2px solid #d2d2d7;
   border-radius: 8px;
-  border: 1px dashed #d2d2d7;
+  overflow: hidden;
+  background: white;
 }
 
-.previewLabel {
-  font-size: 0.875rem;
-  color: #6e6e73;
-  display: block;
-  margin-bottom: 0.5rem;
-}
-
-.previewSignature {
-  font-family: 'Brush Script MT', cursive;
-  font-size: 1.5rem;
-  color: #1d1d1f;
-  font-style: italic;
-  min-height: 2rem;
+.signatureCanvas {
+  width: 100% !important;
+  height: 200px !important;
+  cursor: crosshair;
+  touch-action: none;
 }
 
 /* Submit Button */
@@ -181,15 +279,17 @@
 }
 
 .footerText {
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   color: #86868b;
   margin: 0;
+  line-height: 1.4;
 }
 
-/* Loading State */
+/* ===== STATUS CARDS (Loading, Success, Error, Info) ===== */
 .loader {
   text-align: center;
   color: #6e6e73;
+  padding: 3rem;
 }
 
 .spinner {
@@ -207,13 +307,15 @@
   100% { transform: rotate(360deg); }
 }
 
-/* Success Card */
-.successCard {
+.successCard,
+.errorCard,
+.infoCard {
   background: white;
   border-radius: 16px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
   max-width: 500px;
   width: 100%;
+  margin: 0 auto;
   padding: 3rem 2rem;
   text-align: center;
 }
@@ -223,14 +325,28 @@
   margin-bottom: 1rem;
 }
 
-.successCard h2 {
+.errorIcon {
+  color: #ff3b30;
+  margin-bottom: 1rem;
+}
+
+.infoIcon {
+  color: #007aff;
+  margin-bottom: 1rem;
+}
+
+.successCard h2,
+.errorCard h2,
+.infoCard h2 {
   font-size: 1.75rem;
   font-weight: 600;
   color: #1d1d1f;
   margin: 0 0 0.5rem 0;
 }
 
-.successCard p {
+.successCard p,
+.errorCard p,
+.infoCard p {
   font-size: 1rem;
   color: #6e6e73;
   margin: 0 0 0.5rem 0;
@@ -241,82 +357,67 @@
   color: #86868b;
 }
 
-/* Error Card */
-.errorCard {
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-  max-width: 500px;
-  width: 100%;
-  padding: 3rem 2rem;
-  text-align: center;
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 1200px) {
+  .splitLayout {
+    grid-template-columns: 1fr 450px;
+    gap: 1.5rem;
+  }
 }
 
-.errorIcon {
-  color: #ff3b30;
-  margin-bottom: 1rem;
+@media (max-width: 992px) {
+  .splitLayout {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .pdfSection {
+    max-height: 500px;
+  }
+
+  .signatureSection {
+    position: static;
+  }
 }
 
-.errorCard h2 {
-  font-size: 1.75rem;
-  font-weight: 600;
-  color: #1d1d1f;
-  margin: 0 0 0.5rem 0;
-}
-
-.errorCard p {
-  font-size: 1rem;
-  color: #6e6e73;
-  margin: 0;
-}
-
-/* Info Card */
-.infoCard {
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-  max-width: 500px;
-  width: 100%;
-  padding: 3rem 2rem;
-  text-align: center;
-}
-
-.infoIcon {
-  color: #007aff;
-  margin-bottom: 1rem;
-}
-
-.infoCard h2 {
-  font-size: 1.75rem;
-  font-weight: 600;
-  color: #1d1d1f;
-  margin: 0 0 0.5rem 0;
-}
-
-.infoCard p {
-  font-size: 1rem;
-  color: #6e6e73;
-  margin: 0;
-}
-
-/* Mobile Responsive */
 @media (max-width: 768px) {
   .container {
     padding: 1rem;
   }
 
-  .card,
+  .signatureCard,
   .successCard,
   .errorCard,
   .infoCard {
     padding: 1.5rem;
   }
 
-  .title {
-    font-size: 1.5rem;
+  .pdfSection {
+    max-height: 400px;
   }
 
-  .previewSignature {
+  .pdfViewer {
+    padding: 1rem;
+  }
+
+  .title {
     font-size: 1.25rem;
+  }
+
+  .signatureCanvas {
+    height: 150px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .canvasHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .clearBtn {
+    width: 100%;
+    justify-content: center;
   }
 }

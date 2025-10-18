@@ -886,6 +886,18 @@ router.get("/sign/:token", async (req, res) => {
       field => field.assigneeEmail === signer.email
     );
 
+    // 📄 Generate presigned URL for PDF preview
+    let pdfUrl = null;
+    if (envelope.s3Key) {
+      try {
+        const { generateSignedUrl } = require("../services/fileStorage");
+        pdfUrl = await generateSignedUrl(envelope.s3Key);
+        console.log(`✅ Generated presigned PDF URL for: ${envelope.s3Key}`);
+      } catch (error) {
+        console.error(`❌ Failed to generate presigned URL:`, error);
+      }
+    }
+
     res.json({
       success: true,
       envelope: {
@@ -893,6 +905,7 @@ router.get("/sign/:token", async (req, res) => {
         title: envelope.title,
         message: envelope.message,
         s3Key: envelope.s3Key,
+        pdfUrl, // 📄 NEU: Presigned URL für PDF-Vorschau
         expiresAt: envelope.expiresAt
       },
       signer: {

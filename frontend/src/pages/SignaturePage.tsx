@@ -1,8 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { FileText, User, Mail, CheckCircle, AlertCircle, Clock } from "lucide-react";
+import { FileText, User, Mail, CheckCircle, AlertCircle, Clock, Trash2, PenTool } from "lucide-react";
+import SignatureCanvas from "react-signature-canvas";
+import { Document, Page, pdfjs } from "react-pdf";
 import styles from "../styles/SignaturePage.module.css";
+import "react-pdf/dist/Page/AnnotationLayer.css";
+import "react-pdf/dist/Page/TextLayer.css";
+
+// Configure PDF.js worker
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 interface SignerInfo {
   email: string;
@@ -23,6 +30,7 @@ interface EnvelopeData {
   title: string;
   message: string;
   s3Key: string;
+  pdfUrl: string;
   expiresAt: string;
 }
 
@@ -30,12 +38,15 @@ export default function SignaturePage() {
   const { token } = useParams<{ token: string }>();
   const [loading, setLoading] = useState(true);
   const [envelope, setEnvelope] = useState<EnvelopeData | null>(null);
-  const [signer, setSigner] = useState<SignerInfo | null>(null); // ✉️ FIX: Separate signer state
+  const [signer, setSigner] = useState<SignerInfo | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [signatureData, setSignatureData] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [signatureFields, setSignatureFields] = useState<SignatureField[]>([]); // ✉️ NEU: Signatur-Felder State
+  const [signatureFields, setSignatureFields] = useState<SignatureField[]>([]);
+  const [numPages, setNumPages] = useState<number>(0);
+  const [pageNumber, setPageNumber] = useState<number>(1);
+
+  const sigPadRef = useRef<SignatureCanvas>(null);
 
   // Load envelope data
   useEffect(() => {
@@ -64,7 +75,6 @@ export default function SignaturePage() {
 
         console.log("✅ Envelope loaded:", data);
 
-        // ✉️ FIX: Separate envelope, signer, signatureFields
         setEnvelope(data.envelope);
         setSigner(data.signer);
 
@@ -84,13 +94,13 @@ export default function SignaturePage() {
     loadEnvelope();
   }, [token]);
 
-  const handleSignatureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSignatureData(e.target.value);
+  const clearSignature = () => {
+    sigPadRef.current?.clear();
   };
 
   const handleSubmit = async () => {
-    if (!signatureData.trim()) {
-      alert("Bitte geben Sie Ihren Namen als Signatur ein");
+    if (!sigPadRef.current || sigPadRef.current.isEmpty()) {
+      alert("Bitte zeichnen Sie Ihre Signatur");
       return;
     }
 
@@ -99,7 +109,6 @@ export default function SignaturePage() {
       return;
     }
 
-    // ✉️ Prüfe ob Signatur-Felder vorhanden sind
     if (!signatureFields || signatureFields.length === 0) {
       alert("Keine Signatur-Felder gefunden. Bitte kontaktieren Sie den Absender.");
       return;
@@ -110,13 +119,16 @@ export default function SignaturePage() {
     try {
       console.log("📝 Submitting signature for token:", token);
 
-      // ✉️ NEU: Erstelle signatures Array mit allen Feldern
+      // Get signature as base64 PNG
+      const signatureDataURL = sigPadRef.current.toDataURL("image/png");
+
+      // Create signatures array with all fields
       const signatures = signatureFields.map(field => ({
         fieldId: field._id,
-        value: signatureData // Base64 oder Text-Signatur
+        value: signatureDataURL // Base64 PNG image
       }));
 
-      console.log(`✅ Prepared ${signatures.length} signatures:`, signatures);
+      console.log(`✅ Prepared ${signatures.length} signatures`);
 
       const response = await fetch(`/api/sign/${token}/submit`, {
         method: "POST",
@@ -124,7 +136,7 @@ export default function SignaturePage() {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          signatures // ✉️ NEU: Korrektes Format
+          signatures
         })
       });
 
@@ -144,6 +156,11 @@ export default function SignaturePage() {
       setIsSubmitting(false);
     }
   };
+
+  function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
+    setNumPages(numPages);
+    console.log(`📄 PDF loaded with ${numPages} pages`);
+  }
 
   // Loading State
   if (loading) {
@@ -218,83 +235,147 @@ export default function SignaturePage() {
     );
   }
 
-  // Main Signature View
+  // Main Signature View with PDF Preview
   return (
     <div className={styles.container}>
-      <motion.div
-        className={styles.card}
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.3 }}
-      >
-        {/* Header */}
-        <div className={styles.header}>
-          <div className={styles.headerIcon}>
-            <FileText size={32} />
+      <div className={styles.splitLayout}>
+        {/* Left Side - PDF Preview */}
+        <div className={styles.pdfSection}>
+          <div className={styles.pdfHeader}>
+            <FileText size={24} />
+            <h2>Dokument</h2>
           </div>
-          <h1 className={styles.title}>Signaturanfrage</h1>
-          <p className={styles.subtitle}>{envelope.title}</p>
+
+          {envelope.pdfUrl ? (
+            <div className={styles.pdfViewer}>
+              <Document
+                file={envelope.pdfUrl}
+                onLoadSuccess={onDocumentLoadSuccess}
+                loading={
+                  <div className={styles.pdfLoading}>
+                    <div className={styles.spinner}></div>
+                    <p>PDF wird geladen...</p>
+                  </div>
+                }
+                error={
+                  <div className={styles.pdfError}>
+                    <AlertCircle size={32} />
+                    <p>PDF konnte nicht geladen werden</p>
+                  </div>
+                }
+              >
+                {Array.from(new Array(numPages), (el, index) => (
+                  <Page
+                    key={`page_${index + 1}`}
+                    pageNumber={index + 1}
+                    renderTextLayer={true}
+                    renderAnnotationLayer={true}
+                    width={Math.min(window.innerWidth * 0.45, 600)}
+                  />
+                ))}
+              </Document>
+
+              {numPages > 0 && (
+                <div className={styles.pdfInfo}>
+                  <p>{numPages} {numPages === 1 ? 'Seite' : 'Seiten'}</p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className={styles.pdfPlaceholder}>
+              <FileText size={48} />
+              <p>Keine PDF-Vorschau verfügbar</p>
+            </div>
+          )}
         </div>
 
-        {/* Message */}
-        {envelope.message && (
-          <div className={styles.message}>
-            <p>{envelope.message}</p>
-          </div>
-        )}
-
-        {/* Signer Info */}
-        {signer && (
-          <div className={styles.signerInfo}>
-            <div className={styles.infoRow}>
-              <User size={18} />
-              <span>{signer.name}</span>
-            </div>
-            <div className={styles.infoRow}>
-              <Mail size={18} />
-              <span>{signer.email}</span>
-            </div>
-          </div>
-        )}
-
-        {/* Signature Input */}
+        {/* Right Side - Signature Form */}
         <div className={styles.signatureSection}>
-          <h3 className={styles.sectionTitle}>Ihre Signatur</h3>
-          <p className={styles.sectionSubtitle}>
-            Geben Sie Ihren vollständigen Namen ein
-          </p>
-          <input
-            type="text"
-            className={styles.signatureInput}
-            placeholder="Max Mustermann"
-            value={signatureData}
-            onChange={handleSignatureChange}
-            disabled={isSubmitting}
-          />
-          <div className={styles.signaturePreview}>
-            <span className={styles.previewLabel}>Vorschau:</span>
-            <div className={styles.previewSignature}>
-              {signatureData || "Ihre Signatur erscheint hier"}
+          <motion.div
+            className={styles.signatureCard}
+            initial={{ x: 20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ duration: 0.3 }}
+          >
+            {/* Header */}
+            <div className={styles.header}>
+              <div className={styles.headerIcon}>
+                <PenTool size={32} />
+              </div>
+              <h1 className={styles.title}>Signaturanfrage</h1>
+              <p className={styles.subtitle}>{envelope.title}</p>
             </div>
-          </div>
-        </div>
 
-        {/* Submit Button */}
-        <button
-          className={styles.submitBtn}
-          onClick={handleSubmit}
-          disabled={!signatureData.trim() || isSubmitting}
-        >
-          {isSubmitting ? "Wird eingereicht..." : "Jetzt signieren"}
-        </button>
+            {/* Message */}
+            {envelope.message && (
+              <div className={styles.message}>
+                <p>{envelope.message}</p>
+              </div>
+            )}
 
-        {/* Footer */}
-        <div className={styles.footer}>
-          <p className={styles.footerText}>
-            Durch das Signieren bestätigen Sie die Richtigkeit Ihrer Angaben.
-          </p>
+            {/* Signer Info */}
+            {signer && (
+              <div className={styles.signerInfo}>
+                <div className={styles.infoRow}>
+                  <User size={18} />
+                  <span>{signer.name}</span>
+                </div>
+                <div className={styles.infoRow}>
+                  <Mail size={18} />
+                  <span>{signer.email}</span>
+                </div>
+              </div>
+            )}
+
+            {/* Canvas Signature */}
+            <div className={styles.canvasContainer}>
+              <div className={styles.canvasHeader}>
+                <h3 className={styles.sectionTitle}>Ihre Signatur</h3>
+                <button
+                  className={styles.clearBtn}
+                  onClick={clearSignature}
+                  type="button"
+                >
+                  <Trash2 size={16} />
+                  Löschen
+                </button>
+              </div>
+              <p className={styles.sectionSubtitle}>
+                Zeichnen Sie Ihre Signatur mit Maus oder Finger
+              </p>
+
+              <div className={styles.canvasWrapper}>
+                <SignatureCanvas
+                  ref={sigPadRef}
+                  canvasProps={{
+                    className: styles.signatureCanvas
+                  }}
+                  backgroundColor="#ffffff"
+                  penColor="#000000"
+                  minWidth={1}
+                  maxWidth={2.5}
+                />
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <button
+              className={styles.submitBtn}
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Wird eingereicht..." : "Jetzt signieren"}
+            </button>
+
+            {/* Footer */}
+            <div className={styles.footer}>
+              <p className={styles.footerText}>
+                Durch das Signieren bestätigen Sie die Richtigkeit Ihrer Angaben.
+              </p>
+            </div>
+          </motion.div>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }
