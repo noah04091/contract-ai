@@ -80,7 +80,7 @@ export default function SignatureModal({
         assigneeEmail: signer.email,
         type: "signature",
         required: true,
-        page: 0, // Last page (wird im Backend interpretiert)
+        page: 1, // 🔧 FIX: PDF-Seiten beginnen bei 1 (nicht 0)
         x: 50,
         y: 150 + (index * 100), // Vertikaler Abstand
         width: 250,
