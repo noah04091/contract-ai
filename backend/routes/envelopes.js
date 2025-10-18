@@ -109,7 +109,7 @@ Ihr Contract AI Team
 /**
  * POST /api/envelopes - Create new envelope
  */
-router.post("/", verifyToken, async (req, res) => {
+router.post("/envelopes", verifyToken, async (req, res) => {
   try {
     const {
       contractId,
@@ -266,7 +266,7 @@ router.post("/", verifyToken, async (req, res) => {
 /**
  * GET /api/envelopes - Get all envelopes for user
  */
-router.get("/", verifyToken, async (req, res) => {
+router.get("/envelopes", verifyToken, async (req, res) => {
   try {
     const { status, limit = 50, offset = 0 } = req.query;
 
@@ -322,7 +322,7 @@ router.get("/", verifyToken, async (req, res) => {
 /**
  * GET /api/envelopes/:id - Get single envelope details
  */
-router.get("/:id", verifyToken, async (req, res) => {
+router.get("/envelopes/:id", verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -367,7 +367,7 @@ router.get("/:id", verifyToken, async (req, res) => {
 /**
  * POST /api/envelopes/:id/send - Send invitations to signers
  */
-router.post("/:id/send", verifyToken, async (req, res) => {
+router.post("/envelopes/:id/send", verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -462,7 +462,7 @@ router.post("/:id/send", verifyToken, async (req, res) => {
 /**
  * POST /api/envelopes/:id/remind - Remind ALL pending signers (no specific email needed)
  */
-router.post("/:id/remind", verifyToken, async (req, res) => {
+router.post("/envelopes/:id/remind", verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -550,7 +550,7 @@ router.post("/:id/remind", verifyToken, async (req, res) => {
 /**
  * POST /api/envelopes/:id/resend - Resend invitation reminder to SPECIFIC signer
  */
-router.post("/:id/resend", verifyToken, async (req, res) => {
+router.post("/envelopes/:id/resend", verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
     const { signerEmail } = req.body;
@@ -635,7 +635,7 @@ router.post("/:id/resend", verifyToken, async (req, res) => {
 /**
  * POST /api/envelopes/:id/seal - Manually seal PDF (COMPLETED envelopes only)
  */
-router.post("/:id/seal", verifyToken, async (req, res) => {
+router.post("/envelopes/:id/seal", verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -729,7 +729,7 @@ router.post("/:id/seal", verifyToken, async (req, res) => {
 /**
  * POST /api/envelopes/:id/void - Cancel/void envelope
  */
-router.post("/:id/void", verifyToken, async (req, res) => {
+router.post("/envelopes/:id/void", verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
     const { reason } = req.body;

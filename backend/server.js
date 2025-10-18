@@ -661,12 +661,10 @@ const connectDB = async () => {
     try {
       const envelopeRoutes = require("./routes/envelopes");
 
-      // Public routes (no auth required)
-      app.get("/api/sign/:token", envelopeRoutes);
-      app.post("/api/sign/:token/submit", envelopeRoutes);
-
-      // Authenticated routes
-      app.use("/api/envelopes", verifyToken, envelopeRoutes);
+      // 🔧 FIX: Mount router once - routes define full paths internally
+      // Public routes: /api/sign/:token (no auth required)
+      // Authenticated routes: /api/envelopes/* (verifyToken in route definitions)
+      app.use("/api", envelopeRoutes);
 
       console.log("✅ Envelope-Routen geladen unter /api/envelopes & /api/sign/:token");
     } catch (err) {
