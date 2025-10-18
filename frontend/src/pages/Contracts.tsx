@@ -1702,7 +1702,7 @@ export default function Contracts() {
 
       case "SIGNED":
       case "AWAITING_SIGNER_1":
-      case "AWAITING_SIGNER_2":
+      case "AWAITING_SIGNER_2": {
         icon = "✍️";
         const signersSigned = envelope?.signersSigned || 0;
         const signersTotal = envelope?.signersTotal || 0;
@@ -1711,6 +1711,7 @@ export default function Contracts() {
           : "Teilweise signiert";
         className = `${styles.signatureBadge} ${styles.signaturePartial}`;
         break;
+      }
 
       case "SENT":
         icon = "⏳";
