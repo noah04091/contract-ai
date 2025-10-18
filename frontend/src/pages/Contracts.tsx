@@ -438,11 +438,6 @@ export default function Contracts() {
     return () => document.removeEventListener('click', handleClickOutside);
   }, [folderDropdownOpen]);
 
-  // ✅ FIXED: PDF anzeigen Handler - jetzt als Wrapper für die extrahierte Funktion
-  const handleViewContractPDFWrapper = async (contract: Contract) => {
-    await handleViewContractPDF(contract, setPdfLoading, setError, setLegacyModal);
-  };
-
   // ✅ BUG FIX 1: NEUE Edit-Schnellaktion Handler-Funktion
   const handleEditContract = (contract: Contract) => {
     console.log('✏️ Edit-Schnellaktion für Contract:', contract._id, contract.name);
