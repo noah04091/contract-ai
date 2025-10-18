@@ -31,6 +31,43 @@ function getClientIP(req) {
 }
 
 /**
+ * Validate signature data (Base64, Size, Empty Check)
+ */
+function validateSignature(signatureValue) {
+  // Check if signature exists
+  if (!signatureValue || typeof signatureValue !== 'string') {
+    return { valid: false, error: 'Signatur fehlt oder ist ungültig' };
+  }
+
+  // Check if it's a valid Base64 PNG
+  if (!signatureValue.startsWith('data:image/png;base64,')) {
+    return { valid: false, error: 'Signatur muss ein PNG-Bild sein' };
+  }
+
+  // Extract Base64 data (remove prefix)
+  const base64Data = signatureValue.replace(/^data:image\/png;base64,/, '');
+
+  // Check if Base64 is valid
+  try {
+    const buffer = Buffer.from(base64Data, 'base64');
+
+    // Check size (max 1MB = 1048576 bytes)
+    if (buffer.length > 1048576) {
+      return { valid: false, error: 'Signatur ist zu groß (max 1MB)' };
+    }
+
+    // Check if canvas is not empty (PNG has minimum size)
+    if (buffer.length < 1000) {
+      return { valid: false, error: 'Bitte zeichnen Sie eine Signatur' };
+    }
+
+    return { valid: true };
+  } catch (err) {
+    return { valid: false, error: 'Ungültiges Signatur-Format' };
+  }
+}
+
+/**
  * Send signature invitation email
  */
 async function sendSignatureInvitation(signer, envelope, ownerEmail) {
@@ -836,6 +873,15 @@ router.get("/sign/:token", async (req, res) => {
       });
     }
 
+    // ✅ Check if token was invalidated (security)
+    if (signer.tokenInvalidated) {
+      return res.status(410).json({
+        success: false,
+        message: "Signature-Link wurde invalidiert",
+        invalidated: true
+      });
+    }
+
     // Check if already signed
     if (signer.status === 'SIGNED') {
       return res.status(200).json({
@@ -971,11 +1017,31 @@ router.post("/sign/:token/submit", async (req, res) => {
       });
     }
 
-    // Check if already signed
+    // ✅ IDEMPOTENZ: Wenn bereits signiert, gib Success zurück
     if (signer.status === 'SIGNED') {
-      return res.status(400).json({
-        success: false,
-        message: "Sie haben bereits signiert"
+      console.log(`⚠️ Signature already exists for ${signer.email} (idempotent request)`);
+
+      // Generate presigned URL for sealed PDF if available
+      let sealedPdfUrl = null;
+      if (envelope.s3KeySealed) {
+        try {
+          const { generateSignedUrl } = require("../services/fileStorage");
+          sealedPdfUrl = await generateSignedUrl(envelope.s3KeySealed);
+        } catch (error) {
+          console.error(`❌ Failed to generate sealed PDF URL:`, error);
+        }
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "Bereits signiert",
+        envelope: {
+          _id: envelope._id,
+          status: envelope.status,
+          allSigned: envelope.allSigned(),
+          completedAt: envelope.completedAt,
+          sealedPdfUrl
+        }
       });
     }
 
@@ -988,6 +1054,17 @@ router.post("/sign/:token/submit", async (req, res) => {
     }
 
     console.log(`✅ Processing ${signatures.length} signatures for: ${signer.email}`);
+
+    // ✅ VALIDATE SIGNATURES
+    for (const sig of signatures) {
+      const validation = validateSignature(sig.value);
+      if (!validation.valid) {
+        return res.status(400).json({
+          success: false,
+          message: validation.error
+        });
+      }
+    }
 
     // Update signature fields
     const now = new Date();
@@ -1015,6 +1092,10 @@ router.post("/sign/:token/submit", async (req, res) => {
     signer.signedAt = now;
     signer.ip = getClientIP(req);
     signer.userAgent = req.headers['user-agent'] || 'unknown';
+
+    // ✅ Invalidate token immediately after signing (security)
+    signer.tokenInvalidated = true;
+    console.log(`🔐 Token invalidated for: ${signer.email}`);
 
     // Check if envelope status should be updated
     if (envelope.status === 'SENT') {
@@ -1065,16 +1146,25 @@ router.post("/sign/:token/submit", async (req, res) => {
       // ✉️ Trigger PDF sealing
       try {
         console.log('🔒 Starting automatic PDF sealing...');
-        const sealedS3Key = await sealPdf(envelope);
-        envelope.s3KeySealed = sealedS3Key;
+        const result = await sealPdf(envelope);
+
+        // ✅ Store sealed PDF location + integrity hashes
+        envelope.s3KeySealed = result.sealedS3Key;
+        envelope.pdfHashOriginal = result.pdfHashOriginal;
+        envelope.pdfHashFinal = result.pdfHashFinal;
+
         await envelope.addAuditEvent('PDF_SEALED', {
           userId: null,
           email: null,
           ip: getClientIP(req),
           userAgent: req.headers['user-agent'],
-          details: { s3KeySealed: sealedS3Key }
+          details: {
+            s3KeySealed: result.sealedS3Key,
+            pdfHashOriginal: result.pdfHashOriginal,
+            pdfHashFinal: result.pdfHashFinal
+          }
         });
-        console.log(`✅ PDF sealed successfully: ${sealedS3Key}`);
+        console.log(`✅ PDF sealed successfully: ${result.sealedS3Key}`);
       } catch (sealError) {
         console.error('⚠️ PDF sealing failed:', sealError.message);
         // Don't fail the whole request if sealing fails
