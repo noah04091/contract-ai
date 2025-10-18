@@ -85,11 +85,11 @@ function formatDate(date) {
 }
 
 /**
- * Fügt Signatur-Box auf der letzten Seite hinzu
+ * Fügt tatsächliche Signatur-Bilder auf der letzten Seite hinzu
  */
-async function addSignatureBoxes(pdfDoc, signers) {
+async function addSignatureBoxes(pdfDoc, signers, signatureFields) {
   try {
-    console.log(`📝 Adding signature boxes for ${signers.length} signers`);
+    console.log(`📝 Adding signature images for ${signers.length} signers`);
 
     const pages = pdfDoc.getPages();
     const lastPage = pages[pages.length - 1];
@@ -98,95 +98,83 @@ async function addSignatureBoxes(pdfDoc, signers) {
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-    // Startposition für Signatur-Boxen (unten auf der letzten Seite)
-    let yPosition = 150; // Von unten
-    const boxWidth = 250;
-    const boxHeight = 80;
-    const padding = 10;
+    // Startposition für Signaturen (unten auf der letzten Seite)
+    let yPosition = 100; // Von unten
+    const signatureWidth = 200;
+    const signatureHeight = 60;
+    const spacing = 15;
 
-    // Überschrift
-    lastPage.drawText('Digitale Signaturen', {
-      x: 50,
-      y: yPosition + (signers.length * (boxHeight + 15)) + 30,
-      size: 14,
-      font: fontBold,
-      color: rgb(0.2, 0.2, 0.2)
-    });
-
-    // Für jeden Signer eine Box zeichnen
+    // Für jeden Signer die Signatur zeichnen
     for (let i = 0; i < signers.length; i++) {
       const signer = signers[i];
-      const boxY = yPosition + (i * (boxHeight + 15));
+      const sigY = yPosition + (i * (signatureHeight + spacing + 30)); // Extra space for text
 
-      // Box-Rahmen
-      lastPage.drawRectangle({
-        x: 50,
-        y: boxY,
-        width: boxWidth,
-        height: boxHeight,
-        borderColor: rgb(0.7, 0.7, 0.7),
-        borderWidth: 1.5
-      });
+      // Finde das Signatur-Feld für diesen Signer
+      const signatureField = signatureFields.find(
+        field => field.assigneeEmail.toLowerCase() === signer.email.toLowerCase() && field.value
+      );
 
-      // Signer Name (fett)
-      lastPage.drawText(signer.name, {
-        x: 60,
-        y: boxY + boxHeight - 20,
-        size: 11,
-        font: fontBold,
-        color: rgb(0.2, 0.2, 0.2)
-      });
+      if (signer.signedAt && signatureField && signatureField.value) {
+        try {
+          // Base64 PNG dekodieren (entferne "data:image/png;base64," prefix)
+          const base64Data = signatureField.value.replace(/^data:image\/png;base64,/, '');
+          const imageBytes = Buffer.from(base64Data, 'base64');
 
-      // Email
-      lastPage.drawText(signer.email, {
-        x: 60,
-        y: boxY + boxHeight - 38,
-        size: 9,
-        font: font,
-        color: rgb(0.4, 0.4, 0.4)
-      });
+          // PNG in PDF einbetten
+          const signatureImage = await pdfDoc.embedPng(imageBytes);
 
-      // Rolle
-      lastPage.drawText(`Rolle: ${signer.role}`, {
-        x: 60,
-        y: boxY + boxHeight - 53,
-        size: 9,
-        font: font,
-        color: rgb(0.4, 0.4, 0.4)
-      });
+          // Signatur-Bild zeichnen
+          lastPage.drawImage(signatureImage, {
+            x: 50,
+            y: sigY + 25,
+            width: signatureWidth,
+            height: signatureHeight
+          });
 
-      // Signiert am
-      if (signer.signedAt) {
-        lastPage.drawText(`Signiert: ${formatDate(signer.signedAt)}`, {
-          x: 60,
-          y: boxY + 12,
-          size: 8,
+          console.log(`✅ Embedded signature image for ${signer.email}`);
+        } catch (imageError) {
+          console.error(`❌ Failed to embed signature image for ${signer.email}:`, imageError);
+          // Fallback: Zeige Signatur-Text wenn Bild fehlschlägt
+          lastPage.drawText(`${signer.name}`, {
+            x: 50,
+            y: sigY + 50,
+            size: 16,
+            font: fontBold,
+            color: rgb(0, 0.31, 0.62)
+          });
+        }
+
+        // Text unter der Signatur
+        lastPage.drawText(`Signiert am: ${formatDate(signer.signedAt)}`, {
+          x: 50,
+          y: sigY + 10,
+          size: 9,
           font: font,
-          color: rgb(0.13, 0.55, 0.13) // Grün
+          color: rgb(0.3, 0.3, 0.3)
         });
 
-        // Signatur (kursiv simuliert mit normalem Font)
-        lastPage.drawText(`${signer.name}`, {
-          x: 60,
-          y: boxY + 28,
-          size: 14,
-          font: fontBold,
-          color: rgb(0, 0.31, 0.62) // Blau für Signatur
+        lastPage.drawText(`Von: ${signer.email}`, {
+          x: 50,
+          y: sigY - 5,
+          size: 9,
+          font: font,
+          color: rgb(0.4, 0.4, 0.4)
         });
       } else {
-        lastPage.drawText('Status: Ausstehend', {
-          x: 60,
-          y: boxY + 12,
-          size: 8,
+        // Ausstehende Signatur
+        lastPage.drawText(`${signer.name} - Status: Ausstehend`, {
+          x: 50,
+          y: sigY + 40,
+          size: 10,
           font: font,
           color: rgb(0.8, 0.4, 0) // Orange
         });
       }
     }
 
-    console.log('✅ Signature boxes added');
+    console.log('✅ Signature images added to last page');
   } catch (error) {
-    console.error('❌ Error adding signature boxes:', error);
+    console.error('❌ Error adding signature images:', error);
     throw error;
   }
 }
@@ -336,10 +324,10 @@ async function sealPdf(envelope) {
     // 2. PDF mit pdf-lib öffnen
     const pdfDoc = await PDFDocument.load(originalPdfBytes);
 
-    // 3. Signatur-Boxen hinzufügen
-    await addSignatureBoxes(pdfDoc, envelope.signers);
+    // 3. Signatur-Bilder auf letzter Seite hinzufügen
+    await addSignatureBoxes(pdfDoc, envelope.signers, envelope.signatureFields);
 
-    // 4. Audit Trail Seite hinzufügen
+    // 4. Audit Trail Seite am Ende hinzufügen
     await addAuditTrailPage(pdfDoc, envelope);
 
     // 5. PDF serialisieren
