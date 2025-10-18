@@ -54,8 +54,18 @@ interface Contract {
   // 📁 Folder Organization
   folderId?: string;
   // ✉️ Digital Signature (NEU)
-  signatureStatus?: 'draft' | 'sent' | 'signed' | 'completed';
+  signatureStatus?: string;
   signatureEnvelopeId?: string;
+  // 🆕 Envelope enrichment data
+  envelope?: {
+    _id: string;
+    signatureStatus: string;
+    signersTotal: number;
+    signersSigned: number;
+    s3KeySealed: string | null;
+    completedAt: string | null;
+    expiresAt: string | null;
+  };
 }
 
 // ✅ KORRIGIERT: Interface für Mehrfach-Upload
@@ -1786,7 +1796,7 @@ export default function Contracts() {
 
   const formatDate = (dateString: string): string => {
     if (!dateString) return "—";
-    
+
     try {
       const date = new Date(dateString);
       return date.toLocaleDateString("de-DE", {
@@ -1797,6 +1807,80 @@ export default function Contracts() {
     } catch {
       return dateString;
     }
+  };
+
+  // 🆕 Smart Signature Badge Renderer
+  const renderSignatureBadge = (contract: Contract) => {
+    if (!contract.envelope && !contract.signatureStatus) return null;
+
+    const envelope = contract.envelope;
+    const status = envelope?.signatureStatus || contract.signatureStatus;
+
+    // Map backend status to UI display
+    let icon = "📝";
+    let text = "";
+    let className = styles.signatureBadge;
+
+    switch (status?.toUpperCase()) {
+      case "COMPLETED":
+        icon = "✅";
+        text = envelope?.completedAt
+          ? `Vollständig signiert • ${formatDate(envelope.completedAt)}`
+          : "Vollständig signiert";
+        className = `${styles.signatureBadge} ${styles.signatureCompleted}`;
+        break;
+
+      case "SIGNED":
+      case "AWAITING_SIGNER_1":
+      case "AWAITING_SIGNER_2":
+        icon = "✍️";
+        const signersSigned = envelope?.signersSigned || 0;
+        const signersTotal = envelope?.signersTotal || 0;
+        text = signersSigned > 0 && signersTotal > 0
+          ? `Teilweise signiert (${signersSigned}/${signersTotal})`
+          : "Teilweise signiert";
+        className = `${styles.signatureBadge} ${styles.signaturePartial}`;
+        break;
+
+      case "SENT":
+        icon = "⏳";
+        text = "Ausstehend";
+        className = `${styles.signatureBadge} ${styles.signaturePending}`;
+        break;
+
+      case "DRAFT":
+        icon = "📝";
+        text = "Entwurf";
+        className = `${styles.signatureBadge} ${styles.signatureDraft}`;
+        break;
+
+      case "DECLINED":
+        icon = "❌";
+        text = "Abgelehnt";
+        className = `${styles.signatureBadge} ${styles.signatureDeclined}`;
+        break;
+
+      case "EXPIRED":
+        icon = "⏰";
+        text = "Abgelaufen";
+        className = `${styles.signatureBadge} ${styles.signatureExpired}`;
+        break;
+
+      case "VOIDED":
+        icon = "🚫";
+        text = "Widerrufen";
+        className = `${styles.signatureBadge} ${styles.signatureVoided}`;
+        break;
+
+      default:
+        return null;
+    }
+
+    return (
+      <span className={className} title={`Signaturstatus: ${text}`}>
+        {icon} {text}
+      </span>
+    );
   };
 
   const activateFileInput = () => {
@@ -1929,18 +2013,8 @@ export default function Contracts() {
               <span className={`${styles.statusBadge} ${getStatusColor(contract.status)}`}>
                 {contract.status}
               </span>
-              {/* ✉️ NEU: Signatur-Status Chip */}
-              {contract.signatureStatus && (
-                <span
-                  className={`${styles.statusBadge} ${styles.signatureBadge}`}
-                  title="Digital Signature Status"
-                >
-                  📝 {contract.signatureStatus === 'draft' && 'Entwurf'}
-                  {contract.signatureStatus === 'sent' && 'Gesendet'}
-                  {contract.signatureStatus === 'signed' && 'Signiert'}
-                  {contract.signatureStatus === 'completed' && 'Abgeschlossen'}
-                </span>
-              )}
+              {/* 🆕 Smart Signature Status Badge */}
+              {renderSignatureBadge(contract)}
               {contract.isGenerated && (
                 <span className={styles.generatedBadge}>Generiert</span>
               )}
@@ -2851,18 +2925,8 @@ export default function Contracts() {
                                 <span className={`${styles.statusBadge} ${getStatusColor(contract.status)}`}>
                                   {contract.status}
                                 </span>
-                                {/* ✉️ NEU: Signatur-Status Chip */}
-                                {contract.signatureStatus && (
-                                  <span
-                                    className={`${styles.statusBadge} ${styles.signatureBadge}`}
-                                    title="Digital Signature Status"
-                                  >
-                                    📝 {contract.signatureStatus === 'draft' && 'Entwurf'}
-                                    {contract.signatureStatus === 'sent' && 'Gesendet'}
-                                    {contract.signatureStatus === 'signed' && 'Signiert'}
-                                    {contract.signatureStatus === 'completed' && 'Abgeschlossen'}
-                                  </span>
-                                )}
+                                {/* 🆕 Smart Signature Status Badge */}
+                                {renderSignatureBadge(contract)}
                               </td>
                               <td>
                                 <span className={styles.uploadDate}>
