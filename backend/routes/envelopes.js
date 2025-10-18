@@ -2,6 +2,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const crypto = require("crypto");
+const rateLimit = require("express-rate-limit");
 const verifyToken = require("../middleware/verifyToken");
 const sendEmail = require("../services/mailer");
 const { sealPdf } = require("../services/pdfSealing"); // ✉️ PDF-Sealing Service
@@ -9,6 +10,47 @@ const Envelope = require("../models/Envelope");
 const Contract = require("../models/Contract");
 
 const router = express.Router();
+
+// ===== RATE LIMITERS =====
+
+/**
+ * Rate limiter for signature submission (prevents spam/abuse)
+ * 5 attempts per 15 minutes per IP
+ */
+const signatureSubmitLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // Max 5 requests per window
+  message: 'Zu viele Signaturversuche. Bitte warten Sie 15 Minuten.',
+  standardHeaders: true,
+  legacyHeaders: false,
+  // Use IP address as key
+  keyGenerator: (req) => {
+    return req.headers['x-forwarded-for']?.split(',')[0] ||
+           req.headers['x-real-ip'] ||
+           req.connection.remoteAddress ||
+           req.socket.remoteAddress ||
+           'unknown';
+  }
+});
+
+/**
+ * Rate limiter for signature decline (prevents spam)
+ * 3 attempts per 15 minutes per IP
+ */
+const signatureDeclineLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 3,
+  message: 'Zu viele Ablehnungsversuche. Bitte warten Sie 15 Minuten.',
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    return req.headers['x-forwarded-for']?.split(',')[0] ||
+           req.headers['x-real-ip'] ||
+           req.connection.remoteAddress ||
+           req.socket.remoteAddress ||
+           'unknown';
+  }
+});
 
 // ===== UTILITY FUNCTIONS =====
 
@@ -975,7 +1017,7 @@ router.get("/sign/:token", async (req, res) => {
 /**
  * POST /api/sign/:token/submit - Submit signature (public)
  */
-router.post("/sign/:token/submit", async (req, res) => {
+router.post("/sign/:token/submit", signatureSubmitLimiter, async (req, res) => {
   try {
     const { token } = req.params;
     const { signatures } = req.body; // Array of { fieldId, value (base64) }
@@ -1233,6 +1275,125 @@ router.post("/sign/:token/submit", async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Fehler beim Übermitteln der Signatur",
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/sign/:token/decline - Decline signature request (public)
+ */
+router.post("/sign/:token/decline", signatureDeclineLimiter, async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { reason } = req.body; // Optional decline reason
+
+    console.log(`❌ Declining signature for token: ${token.substring(0, 10)}...`);
+
+    // Find envelope
+    const envelope = await Envelope.findBySignerToken(token);
+
+    if (!envelope) {
+      return res.status(404).json({
+        success: false,
+        message: "Signature-Link nicht gefunden"
+      });
+    }
+
+    // Find signer
+    const signer = envelope.getSignerByToken(token);
+
+    if (!signer) {
+      return res.status(404).json({
+        success: false,
+        message: "Unterzeichner nicht gefunden"
+      });
+    }
+
+    // Check token expiration
+    if (new Date() > new Date(signer.tokenExpires)) {
+      return res.status(410).json({
+        success: false,
+        message: "Signature-Link ist abgelaufen"
+      });
+    }
+
+    // Check if token was invalidated
+    if (signer.tokenInvalidated) {
+      return res.status(410).json({
+        success: false,
+        message: "Signature-Link wurde invalidiert"
+      });
+    }
+
+    // ✅ IDEMPOTENZ: Wenn bereits declined, gib Success zurück
+    if (signer.status === 'DECLINED') {
+      console.log(`⚠️ Already declined by ${signer.email} (idempotent request)`);
+      return res.status(200).json({
+        success: true,
+        message: "Bereits abgelehnt",
+        envelope: {
+          _id: envelope._id,
+          status: envelope.status
+        }
+      });
+    }
+
+    // Check if already signed (can't decline after signing)
+    if (signer.status === 'SIGNED') {
+      return res.status(400).json({
+        success: false,
+        message: "Sie haben bereits signiert - Ablehnung nicht möglich"
+      });
+    }
+
+    // Update signer status
+    const now = new Date();
+    signer.status = 'DECLINED';
+    signer.declinedAt = now;
+    signer.declineReason = reason || null;
+    signer.ip = getClientIP(req);
+    signer.userAgent = req.headers['user-agent'] || 'unknown';
+
+    // ✅ Invalidate token after decline (security)
+    signer.tokenInvalidated = true;
+
+    // Update envelope status
+    if (envelope.status === 'SENT' || envelope.status === 'AWAITING_SIGNER_1' || envelope.status === 'AWAITING_SIGNER_2') {
+      envelope.status = 'DECLINED';
+    }
+
+    // Add audit event
+    await envelope.addAuditEvent('DECLINED', {
+      userId: null,
+      email: signer.email,
+      ip: signer.ip,
+      userAgent: signer.userAgent,
+      details: {
+        reason: reason || 'Kein Grund angegeben'
+      }
+    });
+
+    await envelope.save();
+
+    console.log(`✅ Signature declined by: ${signer.email}`);
+
+    // TODO: Send notification to owner (später in Email-Templates)
+
+    res.json({
+      success: true,
+      message: "Signaturanfrage abgelehnt",
+      envelope: {
+        _id: envelope._id,
+        status: envelope.status
+      }
+    });
+
+  } catch (error) {
+    console.error("❌ Error declining signature:", error);
+    res.status(500).json({
+      success: false,
+      message: "Fehler beim Ablehnen der Signatur",
       error: error.message
     });
   }
