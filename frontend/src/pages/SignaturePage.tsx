@@ -44,7 +44,6 @@ export default function SignaturePage() {
   const [success, setSuccess] = useState(false);
   const [signatureFields, setSignatureFields] = useState<SignatureField[]>([]);
   const [numPages, setNumPages] = useState<number>(0);
-  const [pageNumber, setPageNumber] = useState<number>(1);
 
   const sigPadRef = useRef<SignatureCanvas>(null);
 
@@ -264,7 +263,7 @@ export default function SignaturePage() {
                   </div>
                 }
               >
-                {Array.from(new Array(numPages), (el, index) => (
+                {Array.from(new Array(numPages), (_, index) => (
                   <Page
                     key={`page_${index + 1}`}
                     pageNumber={index + 1}
