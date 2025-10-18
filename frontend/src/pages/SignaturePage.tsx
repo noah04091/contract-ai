@@ -44,6 +44,7 @@ export default function SignaturePage() {
   const [success, setSuccess] = useState(false);
   const [signatureFields, setSignatureFields] = useState<SignatureField[]>([]);
   const [numPages, setNumPages] = useState<number>(0);
+  const [sealedPdfUrl, setSealedPdfUrl] = useState<string | null>(null);
 
   const sigPadRef = useRef<SignatureCanvas>(null);
 
@@ -146,6 +147,12 @@ export default function SignaturePage() {
       }
 
       console.log("✅ Signature submitted successfully:", data);
+
+      // Save sealed PDF URL for download
+      if (data.envelope?.sealedPdfUrl) {
+        setSealedPdfUrl(data.envelope.sealedPdfUrl);
+      }
+
       setSuccess(true);
     } catch (err) {
       console.error("❌ Error submitting signature:", err);
@@ -202,6 +209,18 @@ export default function SignaturePage() {
           <p className={styles.successSubtext}>
             Der Vertragsinhaber wurde benachrichtigt.
           </p>
+
+          {/* Download Button for Sealed PDF */}
+          {sealedPdfUrl && (
+            <a
+              href={sealedPdfUrl}
+              download
+              className={styles.downloadBtn}
+            >
+              <FileText size={20} />
+              Signiertes Dokument herunterladen
+            </a>
+          )}
         </motion.div>
       </div>
     );

@@ -1114,6 +1114,18 @@ router.post("/sign/:token/submit", async (req, res) => {
 
     console.log(`✅ Signature submitted successfully by: ${signer.email}`);
 
+    // 📄 Generate presigned URL for sealed PDF download
+    let sealedPdfUrl = null;
+    if (envelope.s3KeySealed) {
+      try {
+        const { generateSignedUrl } = require("../services/fileStorage");
+        sealedPdfUrl = await generateSignedUrl(envelope.s3KeySealed);
+        console.log(`✅ Generated download URL for sealed PDF`);
+      } catch (error) {
+        console.error(`❌ Failed to generate sealed PDF URL:`, error);
+      }
+    }
+
     res.json({
       success: true,
       message: "Signatur erfolgreich übermittelt",
@@ -1121,7 +1133,8 @@ router.post("/sign/:token/submit", async (req, res) => {
         _id: envelope._id,
         status: envelope.status,
         allSigned: envelope.allSigned(),
-        completedAt: envelope.completedAt
+        completedAt: envelope.completedAt,
+        sealedPdfUrl // 📄 NEU: Download-URL für signiertes PDF
       }
     });
 
