@@ -451,6 +451,97 @@ export default function Contracts() {
     setOpenEditModalDirectly(true); // ⭐ Das ist der neue State!
   };
 
+  // 🆕 Smart PDF Opener - Opens signed PDF if available, otherwise original
+  const openSmartPDF = async (contract: Contract, preferSigned: boolean = true) => {
+    setPdfLoading(prev => ({ ...prev, [contract._id]: true }));
+
+    // Open temp window immediately (popup blocker workaround)
+    let tempWindow: Window | null = null;
+
+    try {
+      const token = localStorage.getItem('token');
+
+      // Check if we should try to open signed PDF
+      const hasSignedPDF = contract.envelope?.s3KeySealed && contract.envelope?.signatureStatus === 'COMPLETED';
+
+      tempWindow = window.open('', '_blank');
+      if (tempWindow) {
+        tempWindow.document.write(`
+          <html>
+            <head>
+              <title>Lade ${contract.name}...</title>
+              <style>
+                body {
+                  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                  display: flex;
+                  justify-content: center;
+                  align-items: center;
+                  height: 100vh;
+                  margin: 0;
+                  background: #f5f5f7;
+                  color: #1d1d1f;
+                }
+                .loader { text-align: center; }
+                .spinner {
+                  width: 40px;
+                  height: 40px;
+                  border: 3px solid #e5e5e5;
+                  border-top: 3px solid #007aff;
+                  border-radius: 50%;
+                  animation: spin 1s linear infinite;
+                  margin: 0 auto 20px;
+                }
+                @keyframes spin {
+                  0% { transform: rotate(0deg); }
+                  100% { transform: rotate(360deg); }
+                }
+              </style>
+            </head>
+            <body>
+              <div class="loader">
+                <div class="spinner"></div>
+                <h2>${hasSignedPDF && preferSigned ? 'Signiertes PDF' : 'PDF'} wird geladen...</h2>
+              </div>
+            </body>
+          </html>
+        `);
+      }
+
+      // Build URL with smart type parameter
+      const typeParam = (hasSignedPDF && preferSigned) ? '&type=signed' : '';
+      const url = `/api/s3/view?contractId=${contract._id}${typeParam}`;
+
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
+      });
+
+      const data = await response.json();
+
+      if (response.ok && (data.url || data.fileUrl)) {
+        const pdfUrl = data.url || data.fileUrl;
+        console.log(`✅ ${hasSignedPDF && preferSigned ? 'Signed' : 'Original'} PDF URL fetched:`, pdfUrl);
+
+        if (tempWindow && !tempWindow.closed) {
+          tempWindow.location.href = pdfUrl;
+        } else {
+          window.open(pdfUrl, '_blank', 'noopener,noreferrer');
+        }
+      } else {
+        throw new Error(data.error || 'Failed to load PDF');
+      }
+    } catch (error) {
+      console.error('❌ Error opening PDF:', error);
+      if (tempWindow) tempWindow.close();
+      setError(error instanceof Error ? error.message : 'Fehler beim Öffnen des PDFs');
+    } finally {
+      setPdfLoading(prev => ({ ...prev, [contract._id]: false }));
+    }
+  };
+
   // 📁 Folder Handler Functions
   const handleCreateFolder = () => {
     setEditingFolder(null);
@@ -2067,21 +2158,28 @@ export default function Contracts() {
           </button>
         )}
 
-        {/* ✅ 2x2 Grid: PDF, Bearbeiten, Ordner, Löschen */}
+        {/* 🆕 Smart PDF Button - Signed or Original */}
         <button
           className={styles.cardActionButton}
           onClick={(e) => {
             e.stopPropagation();
-            handleViewContractPDFWrapper(contract);
+            openSmartPDF(contract, true); // preferSigned=true
           }}
           disabled={pdfLoading[contract._id]}
+          title={contract.envelope?.s3KeySealed ? 'Signiertes PDF öffnen' : 'PDF öffnen'}
         >
           {pdfLoading[contract._id] ? (
             <Loader size={14} className={styles.loadingIcon} />
           ) : (
             <ExternalLink size={14} />
           )}
-          <span>{pdfLoading[contract._id] ? 'Lädt...' : 'PDF'}</span>
+          <span>
+            {pdfLoading[contract._id]
+              ? 'Lädt...'
+              : contract.envelope?.s3KeySealed
+                ? '📥 Signiert'
+                : 'PDF'}
+          </span>
         </button>
         <button
           className={styles.cardActionButton}
@@ -2949,9 +3047,9 @@ export default function Contracts() {
                                     className={styles.actionButton}
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      handleViewContractPDFWrapper(contract);
+                                      openSmartPDF(contract, true);
                                     }}
-                                    title="PDF anzeigen"
+                                    title={contract.envelope?.s3KeySealed ? 'Signiertes PDF öffnen' : 'PDF öffnen'}
                                     disabled={pdfLoading[contract._id]}
                                   >
                                     {pdfLoading[contract._id] ? (

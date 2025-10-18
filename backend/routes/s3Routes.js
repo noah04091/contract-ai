@@ -5,12 +5,12 @@ const { generateSignedUrl } = require("../services/fileStorage");
 const verifyToken = require("../middleware/verifyToken");
 const Contract = require("../models/Contract"); // Für refresh route
 
-// @route   GET /api/s3/view?file=... ODER ?contractId=... ODER ?key=...
+// @route   GET /api/s3/view?file=... ODER ?contractId=... ODER ?key=... [&type=signed|original]
 // @desc    Get a signed URL to view the file from S3
 // @access  Private
 router.get("/view", verifyToken, async (req, res) => {
   try {
-    const { file, contractId, key } = req.query;
+    const { file, contractId, key, type } = req.query; // 🆕 Added type parameter
     
     // ✅ CHATGPT FIX: Für direkten key-Zugriff OHNE MongoDB (löst Timeout-Problem)
     if (key && !contractId && !file) {
@@ -46,20 +46,45 @@ router.get("/view", verifyToken, async (req, res) => {
 
     // Wenn contractId gegeben, hole s3Key aus Datenbank
     if (contractId && !file) {
-      const contract = await Contract.findOne({ 
-        _id: contractId, 
-        userId: req.user.id 
+      const contract = await Contract.findOne({
+        _id: contractId,
+        userId: req.user.id
       });
-      
+
       if (!contract) {
         return res.status(404).json({ error: "Contract not found" });
       }
-      
+
       contractData = contract;
-      s3Key = contract.s3Key;
-      
+
+      // 🆕 Smart PDF selection: signed vs original
+      if (type === 'signed') {
+        // Try to get sealed PDF from envelope
+        try {
+          const Envelope = require("../models/Envelope");
+          const envelope = await Envelope.findOne({ contractId: contract._id })
+            .sort({ createdAt: -1 }) // Latest envelope
+            .lean();
+
+          if (envelope?.s3KeySealed) {
+            s3Key = envelope.s3KeySealed;
+            console.log(`📥 Serving signed PDF: ${s3Key}`);
+          } else {
+            // Fallback to original if no sealed PDF available
+            s3Key = contract.s3Key;
+            console.log(`⚠️ No sealed PDF available, falling back to original: ${s3Key}`);
+          }
+        } catch (envelopeErr) {
+          console.warn("⚠️ Could not load envelope, using original PDF:", envelopeErr.message);
+          s3Key = contract.s3Key;
+        }
+      } else {
+        // Default or type=original → use original PDF
+        s3Key = contract.s3Key;
+      }
+
       if (!s3Key) {
-        return res.status(404).json({ 
+        return res.status(404).json({
           error: "This contract was uploaded before S3 integration",
           suggestion: "Please re-upload this contract",
           contractTitle: contract.title,
