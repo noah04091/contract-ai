@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { FileText, User, Mail, CheckCircle, AlertCircle, Clock, Trash2, PenTool } from "lucide-react";
+import { FileText, User, Mail, CheckCircle, AlertCircle, Clock, Trash2, PenTool, Download } from "lucide-react";
 import SignatureCanvas from "react-signature-canvas";
 import { Document, Page, pdfjs } from "react-pdf";
 import styles from "../styles/SignaturePage.module.css";
@@ -260,8 +260,20 @@ export default function SignaturePage() {
         {/* Left Side - PDF Preview */}
         <div className={styles.pdfSection}>
           <div className={styles.pdfHeader}>
-            <FileText size={24} />
-            <h2>Dokument</h2>
+            <div className={styles.pdfHeaderLeft}>
+              <FileText size={24} />
+              <h2>Dokument</h2>
+            </div>
+            {envelope.pdfUrl && (
+              <a
+                href={envelope.pdfUrl}
+                download={envelope.title}
+                className={styles.pdfDownloadBtn}
+              >
+                <Download size={18} />
+                Download
+              </a>
+            )}
           </div>
 
           {envelope.pdfUrl ? (
