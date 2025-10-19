@@ -714,7 +714,7 @@ const HomeRedesign = () => {
                 </div>
               </div>
               <div className="cm-visual" aria-hidden="true">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="100%" height="100%">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
                   <defs>
                     <linearGradient id="cm-gradient-1" x1="0%" y1="0%" x2="100%" y2="100%">
                       <stop offset="0%" stopColor="#3d7cf3" stopOpacity="0.1"/>
@@ -1079,7 +1079,7 @@ const HomeRedesign = () => {
                     </div>
                     <div className="image-container">
                       {/* SVG Placeholder for Signature Feature - 16:9 aspect ratio like real images */}
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" style={{background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)'}}>
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" style={{background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)', minHeight: '100%', objectFit: 'cover'}}>
                         <defs>
                           <linearGradient id="sig-gradient-1" x1="0%" y1="0%" x2="100%" y2="100%">
                             <stop offset="0%" stopColor="#14b8a6" stopOpacity="0.1"/>
