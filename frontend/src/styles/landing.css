@@ -3100,19 +3100,25 @@ a {
     padding: 0 !important; /* Kein Padding */
   }
 
-  /* Dots SEHR klein auf Mobile */
-  .slider-dots {
-    margin-top: 20px;
-    gap: 4px;
+  /* Dots SEHR klein auf Mobile - Maximum Spezifität */
+  .testimonials-slider .slider-dots {
+    margin-top: 20px !important;
+    gap: 4px !important;
   }
 
-  .slider-dot {
+  .testimonials-slider .slider-dot {
     width: 4px !important;
     height: 4px !important;
+    min-width: 4px !important;
+    min-height: 4px !important;
+    max-width: 4px !important;
+    max-height: 4px !important;
   }
 
-  .slider-dot.active {
+  .testimonials-slider .slider-dot.active {
     transform: scale(1.5) !important;
+    width: 4px !important;
+    height: 4px !important;
   }
 
   /* Nav Buttons verstecken auf Mobile (optional, oder kleiner machen) */
@@ -3156,9 +3162,9 @@ a {
     margin-right: 5% !important;
   }
 
-  /* Testimonial Card: Schatten-Space */
+  /* Testimonial Card: Minimale Margins für Edge-to-Edge */
   .testimonial-card {
-    margin: 1rem 0.5rem 2rem 0.5rem !important; /* Schatten-Space wie Pricing Cards */
+    margin: 1rem 0 2rem 0 !important; /* Nur oben/unten Margin, KEIN seitlicher Margin! */
     box-shadow:
       0 20px 60px rgba(0, 0, 0, 0.06),
       0 8px 25px rgba(0, 0, 0, 0.04),
@@ -3209,18 +3215,24 @@ a {
     -webkit-transform: none !important;
   }
   
-  .slider-dots {
-    margin-top: 20px;
-    gap: 4px;
+  .testimonials-slider .slider-dots {
+    margin-top: 20px !important;
+    gap: 4px !important;
   }
 
-  .slider-dot {
+  .testimonials-slider .slider-dot {
     width: 4px !important;
     height: 4px !important;
+    min-width: 4px !important;
+    min-height: 4px !important;
+    max-width: 4px !important;
+    max-height: 4px !important;
   }
 
-  .slider-dot.active {
+  .testimonials-slider .slider-dot.active {
     transform: scale(1.5) !important; /* Etwas größer bei aktiv */
+    width: 4px !important;
+    height: 4px !important;
   }
 }
 
