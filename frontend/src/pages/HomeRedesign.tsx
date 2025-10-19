@@ -200,12 +200,15 @@ const TestimonialsSlider = () => {
 
   const nextSlide = () => {
     const maxIndex = Math.max(0, testimonials.length - itemsPerView);
-    const newIndex = Math.min(currentIndex + 1, maxIndex);
+    // Loop: Bei letzter Slide → springe zu erster Slide
+    const newIndex = currentIndex >= maxIndex ? 0 : currentIndex + 1;
     scrollToSlide(newIndex);
   };
 
   const prevSlide = () => {
-    const newIndex = Math.max(currentIndex - 1, 0);
+    const maxIndex = Math.max(0, testimonials.length - itemsPerView);
+    // Loop: Bei erster Slide → springe zu letzter Slide
+    const newIndex = currentIndex <= 0 ? maxIndex : currentIndex - 1;
     scrollToSlide(newIndex);
   };
 
@@ -240,10 +243,9 @@ const TestimonialsSlider = () => {
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        <button 
-          className="slider-nav slider-prev" 
+        <button
+          className="slider-nav slider-prev"
           onClick={prevSlide}
-          disabled={currentIndex === 0}
           aria-label="Vorheriges Testimonial"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -282,10 +284,9 @@ const TestimonialsSlider = () => {
           ))}
         </div>
 
-        <button 
-          className="slider-nav slider-next" 
+        <button
+          className="slider-nav slider-next"
           onClick={nextSlide}
-          disabled={currentIndex >= maxIndex}
           aria-label="Nächstes Testimonial"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
