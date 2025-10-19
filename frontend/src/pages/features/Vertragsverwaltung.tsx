@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import { useAuth } from "../../hooks/useAuth";
 import styles from "../../styles/FeaturePage.module.css";
 import Footer from "../../components/Footer";
-import { FolderOpen, Search, CheckCircle, Clock } from "lucide-react";
+import { FolderOpen, CheckCircle, Clock } from "lucide-react";
 
 const Vertragsverwaltung: React.FC = () => {
   const { user } = useAuth();

@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import { useAuth } from "../../hooks/useAuth";
 import styles from "../../styles/FeaturePage.module.css";
 import Footer from "../../components/Footer";
-import { PenTool, Shield, CheckCircle, Mail } from "lucide-react";
+import { PenTool, CheckCircle, Mail } from "lucide-react";
 
 const DigitaleSignatur: React.FC = () => {
   const { user } = useAuth();
