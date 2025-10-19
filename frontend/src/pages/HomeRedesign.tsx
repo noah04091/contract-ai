@@ -633,7 +633,7 @@ const HomeRedesign = () => {
                 </div>
                 <h3>Digitale Signatur</h3>
                 <p>Verträge rechtssicher digital signieren lassen – mit Audit Trail, E-Mail-Benachrichtigung & versiegeltem PDF.</p>
-                <Link to="/dashboard" className="feature-link">
+                <Link to="/features/digitalesignatur" className="feature-link">
                   Mehr erfahren
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M5 12h14"></path>
@@ -653,7 +653,7 @@ const HomeRedesign = () => {
                 </div>
                 <h3>Vertragsverwaltung</h3>
                 <p>Alle Verträge zentral verwalten, Ordner organisieren & mit intelligenter Suche sofort finden.</p>
-                <Link to="/contracts" className="feature-link">
+                <Link to="/features/vertragsverwaltung" className="feature-link">
                   Mehr erfahren
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M5 12h14"></path>
@@ -1060,7 +1060,7 @@ const HomeRedesign = () => {
                     <li>Echtzeit-Status-Tracking mit Audit Trail</li>
                     <li>Versiegeltes & rechtssicheres PDF</li>
                   </ul>
-                  <Link to="/dashboard" className="showcase-link">
+                  <Link to="/features/digitalesignatur" className="showcase-link">
                     Zur digitalen Signatur
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M5 12h14"></path>
