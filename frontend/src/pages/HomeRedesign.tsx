@@ -31,6 +31,7 @@ declare global {
 // Testimonials Slider Component
 const TestimonialsSlider = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
   const sliderRef = useRef<HTMLDivElement>(null);
 
   const testimonials = [
@@ -106,7 +107,7 @@ const TestimonialsSlider = () => {
     const handleResize = () => {
       const newItemsPerView = getItemsPerView();
       setItemsPerView(newItemsPerView);
-      
+
       // Reset current index if out of bounds
       const maxIndex = Math.max(0, testimonials.length - newItemsPerView);
       if (currentIndex > maxIndex) {
@@ -117,6 +118,35 @@ const TestimonialsSlider = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [currentIndex, testimonials.length]);
+
+  // Auto-advance slider every 5 seconds (pause on hover)
+  useEffect(() => {
+    if (isHovered) return;
+
+    const interval = setInterval(() => {
+      const maxIdx = Math.max(0, testimonials.length - itemsPerView);
+      setCurrentIndex((prev) => {
+        const next = prev + 1;
+        // Loop back to start when reaching the end
+        return next > maxIdx ? 0 : next;
+      });
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [isHovered, itemsPerView, testimonials.length]);
+
+  // Sync slider position when currentIndex changes
+  useEffect(() => {
+    if (!sliderRef.current) return;
+
+    const slideWidth = sliderRef.current.offsetWidth / itemsPerView;
+    const scrollLeft = currentIndex * slideWidth;
+
+    sliderRef.current.scrollTo({
+      left: scrollLeft,
+      behavior: 'smooth'
+    });
+  }, [currentIndex, itemsPerView]);
 
   const scrollToSlide = (index: number) => {
     if (!sliderRef.current) return;
@@ -161,7 +191,11 @@ const TestimonialsSlider = () => {
 
   return (
     <div className="testimonials-slider">
-      <div className="slider-container">
+      <div
+        className="slider-container"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
         <button 
           className="slider-nav slider-prev" 
           onClick={prevSlide}
