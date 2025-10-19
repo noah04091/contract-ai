@@ -3100,19 +3100,19 @@ a {
     padding: 0 !important; /* Kein Padding */
   }
 
-  /* Dots viel kleiner auf Mobile */
+  /* Dots SEHR klein auf Mobile */
   .slider-dots {
-    margin-top: 24px;
-    gap: 6px;
+    margin-top: 20px;
+    gap: 4px;
   }
 
   .slider-dot {
-    width: 6px;
-    height: 6px;
+    width: 4px !important;
+    height: 4px !important;
   }
 
   .slider-dot.active {
-    transform: scale(1.3) !important;
+    transform: scale(1.5) !important;
   }
 
   /* Nav Buttons verstecken auf Mobile (optional, oder kleiner machen) */
@@ -3135,10 +3135,10 @@ a {
     mask-image: none !important;
   }
 
-  /* Testimonial Slide: 85% Breite für Peek-Effekt */
+  /* Testimonial Slide: 90% Breite für weniger Peek, mehr Edge-to-Edge */
   .testimonial-slide {
-    flex: 0 0 85% !important;
-    width: 85% !important;
+    flex: 0 0 90% !important;
+    width: 90% !important;
     max-width: none !important;
     padding: 0 !important;
     margin: 0 !important;
@@ -3146,14 +3146,14 @@ a {
     display: flex !important;
   }
 
-  /* Erste Karte: Margin links für Abstand vom Rand */
+  /* Erste Karte: Kleiner Margin links */
   .testimonial-slide:first-child {
-    margin-left: 7.5% !important; /* Zentriert die erste Karte */
+    margin-left: 5% !important; /* Weniger Abstand = mehr Edge-to-Edge */
   }
 
-  /* Letzte Karte: Margin rechts für Abstand vom Rand */
+  /* Letzte Karte: Kleiner Margin rechts */
   .testimonial-slide:last-child {
-    margin-right: 7.5% !important;
+    margin-right: 5% !important;
   }
 
   /* Testimonial Card: Schatten-Space */
@@ -3210,17 +3210,17 @@ a {
   }
   
   .slider-dots {
-    margin-top: 30px;
-    gap: 6px;
+    margin-top: 20px;
+    gap: 4px;
   }
 
   .slider-dot {
-    width: 6px;
-    height: 6px;
+    width: 4px !important;
+    height: 4px !important;
   }
 
   .slider-dot.active {
-    transform: scale(1.3) !important; /* Etwas größer bei aktiv */
+    transform: scale(1.5) !important; /* Etwas größer bei aktiv */
   }
 }
 
