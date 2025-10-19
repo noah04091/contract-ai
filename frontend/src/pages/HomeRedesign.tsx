@@ -713,10 +713,61 @@ const HomeRedesign = () => {
                   </Link>
                 </div>
               </div>
-              <div className="cm-visual" aria-hidden="true" style={{background: 'magenta', minHeight: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '10px solid yellow'}}>
-                <div style={{background: '#0066FF', color: 'white', padding: '60px', fontSize: '32px', fontWeight: 'bold', borderRadius: '12px'}}>
-                  TEST - SEHEN SIE MICH?
-                </div>
+              <div className="cm-visual" aria-hidden="true">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="100%" height="auto">
+                  {/* Hintergrund Gradient - deutlich sichtbar */}
+                  <defs>
+                    <linearGradient id="cm-bg-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#e0f2fe" />
+                      <stop offset="100%" stopColor="#ddd6fe" />
+                    </linearGradient>
+                  </defs>
+
+                  {/* Background */}
+                  <rect x="0" y="0" width="400" height="300" fill="url(#cm-bg-gradient)"/>
+
+                  {/* Dekorative Kreise - kräftige Farben */}
+                  <circle cx="200" cy="150" r="100" fill="#bfdbfe" opacity="0.6"/>
+                  <circle cx="280" cy="100" r="60" fill="#c4b5fd" opacity="0.5"/>
+
+                  {/* Haupt-Ordner Icon */}
+                  <g transform="translate(140, 90)">
+                    {/* Ordner Körper */}
+                    <rect x="0" y="25" width="120" height="85" rx="8" fill="#3b82f6"/>
+                    {/* Ordner Tab */}
+                    <path d="M0 25 L0 15 Q0 10 5 10 L35 10 L45 20 L115 20 Q120 20 120 25" fill="#60a5fa"/>
+
+                    {/* 3 Dokumente im Ordner */}
+                    <rect x="20" y="45" width="24" height="32" rx="3" fill="#ffffff"/>
+                    <rect x="48" y="50" width="24" height="32" rx="3" fill="#f0f9ff"/>
+                    <rect x="76" y="55" width="24" height="32" rx="3" fill="#dbeafe"/>
+
+                    {/* Linien auf Dokumenten */}
+                    <line x1="24" y1="52" x2="40" y2="52" stroke="#3b82f6" strokeWidth="1.5"/>
+                    <line x1="24" y1="58" x2="40" y2="58" stroke="#3b82f6" strokeWidth="1.5"/>
+                    <line x1="24" y1="64" x2="40" y2="64" stroke="#3b82f6" strokeWidth="1.5"/>
+                  </g>
+
+                  {/* Floating Icons */}
+                  {/* Lupe/Such-Icon */}
+                  <g transform="translate(280, 190)">
+                    <circle cx="18" cy="18" r="14" fill="none" stroke="#3b82f6" strokeWidth="4"/>
+                    <line x1="28" y1="28" x2="38" y2="38" stroke="#3b82f6" strokeWidth="4" strokeLinecap="round"/>
+                  </g>
+
+                  {/* Schloss-Icon für Sicherheit */}
+                  <g transform="translate(90, 150)">
+                    <rect x="0" y="12" width="28" height="22" rx="4" fill="#10b981"/>
+                    <path d="M7 12 L7 7 Q7 0 14 0 Q21 0 21 7 L21 12" fill="none" stroke="#10b981" strokeWidth="3"/>
+                    <circle cx="14" cy="20" r="3" fill="#ffffff"/>
+                  </g>
+
+                  {/* Dekorative kleine Kreise */}
+                  <circle cx="110" cy="70" r="5" fill="#f472b6"/>
+                  <circle cx="330" cy="120" r="4" fill="#10b981"/>
+                  <circle cx="300" cy="240" r="6" fill="#fb923c"/>
+                  <circle cx="90" cy="220" r="4" fill="#a855f7"/>
+                </svg>
               </div>
             </div>
           </div>
