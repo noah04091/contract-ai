@@ -621,6 +621,46 @@ const HomeRedesign = () => {
                   </svg>
                 </Link>
               </div>
+
+              {/* Digitale Signatur Card */}
+              <div className="feature-card reveal-card" style={{"--animation-order": 6} as React.CSSProperties}>
+                <div className="feature-icon-wrapper teal">
+                  <div className="feature-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M3 15v4c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2v-4M17 8l-5-5-5 5M12 3v12"></path>
+                    </svg>
+                  </div>
+                </div>
+                <h3>Digitale Signatur</h3>
+                <p>Verträge rechtssicher digital signieren lassen – mit Audit Trail, E-Mail-Benachrichtigung & versiegeltem PDF.</p>
+                <Link to="/dashboard" className="feature-link">
+                  Mehr erfahren
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 12h14"></path>
+                    <path d="m12 5 7 7-7 7"></path>
+                  </svg>
+                </Link>
+              </div>
+
+              {/* Vertragsverwaltung Card */}
+              <div className="feature-card reveal-card" style={{"--animation-order": 7} as React.CSSProperties}>
+                <div className="feature-icon-wrapper yellow">
+                  <div className="feature-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                  </div>
+                </div>
+                <h3>Vertragsverwaltung</h3>
+                <p>Alle Verträge zentral verwalten, Ordner organisieren & mit intelligenter Suche sofort finden.</p>
+                <Link to="/contracts" className="feature-link">
+                  Mehr erfahren
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 12h14"></path>
+                    <path d="m12 5 7 7-7 7"></path>
+                  </svg>
+                </Link>
+              </div>
             </div>
           </div>
         </section>
@@ -998,6 +1038,89 @@ const HomeRedesign = () => {
                     </div>
                     <div className="image-container">
                       <img src={legalPulseImg} alt="Legal Pulse Frühwarnsystem" />
+                      <div className="image-shine"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* New Feature 7: Digitale Signatur */}
+              <div className="showcase-item reveal-block">
+                <div className="showcase-content">
+                  <div className="showcase-label teal-label">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M3 15v4c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2v-4M17 8l-5-5-5 5M12 3v12"></path>
+                    </svg>
+                    Rechtssicher
+                  </div>
+                  <h3>Digitale Signatur: Verträge rechtssicher signieren lassen</h3>
+                  <p>Versenden Sie Verträge zur digitalen Unterschrift, verfolgen Sie den Status in Echtzeit und erhalten Sie versiegelte PDFs mit vollständigem Audit Trail.</p>
+                  <ul className="feature-list">
+                    <li>E-Mail-Benachrichtigung an Unterzeichner</li>
+                    <li>Echtzeit-Status-Tracking mit Audit Trail</li>
+                    <li>Versiegeltes & rechtssicheres PDF</li>
+                  </ul>
+                  <Link to="/dashboard" className="showcase-link">
+                    Zur digitalen Signatur
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M5 12h14"></path>
+                      <path d="m12 5 7 7-7 7"></path>
+                    </svg>
+                  </Link>
+                </div>
+                <div className="showcase-image">
+                  <div className="image-mac-frame">
+                    <div className="image-mac-topbar">
+                      <div className="image-mac-buttons">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                      </div>
+                    </div>
+                    <div className="image-container">
+                      {/* SVG Placeholder for Signature Feature */}
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="100%" height="100%" style={{background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)'}}>
+                        <defs>
+                          <linearGradient id="sig-gradient-1" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor="#14b8a6" stopOpacity="0.1"/>
+                            <stop offset="100%" stopColor="#0d9488" stopOpacity="0.2"/>
+                          </linearGradient>
+                        </defs>
+
+                        {/* Background circles */}
+                        <circle cx="400" cy="300" r="180" fill="url(#sig-gradient-1)" opacity="0.3"/>
+                        <circle cx="500" cy="200" r="120" fill="url(#sig-gradient-1)" opacity="0.2"/>
+
+                        {/* Document icon */}
+                        <g transform="translate(300, 200)">
+                          <rect x="0" y="0" width="200" height="260" rx="12" fill="white" stroke="#14b8a6" strokeWidth="3" opacity="0.9"/>
+
+                          {/* Document lines */}
+                          <line x1="30" y1="40" x2="170" y2="40" stroke="#cbd5e1" strokeWidth="3"/>
+                          <line x1="30" y1="70" x2="170" y2="70" stroke="#cbd5e1" strokeWidth="3"/>
+                          <line x1="30" y1="100" x2="140" y2="100" stroke="#cbd5e1" strokeWidth="3"/>
+
+                          {/* Signature line */}
+                          <path d="M 40 180 Q 80 160, 120 180 T 180 180" stroke="#14b8a6" strokeWidth="4" fill="none" strokeLinecap="round"/>
+
+                          {/* Checkmark */}
+                          <circle cx="170" cy="40" r="15" fill="#10b981" opacity="0.9"/>
+                          <path d="M 163 40 L 168 45 L 177 33" stroke="white" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                        </g>
+
+                        {/* Floating elements */}
+                        <g opacity="0.5">
+                          <circle cx="200" cy="150" r="6" fill="#14b8a6"/>
+                          <circle cx="620" cy="220" r="5" fill="#0d9488"/>
+                          <circle cx="180" cy="450" r="4" fill="#10b981"/>
+                        </g>
+
+                        {/* Email notification icon */}
+                        <g transform="translate(550, 380)" opacity="0.7">
+                          <rect x="0" y="0" width="60" height="45" rx="6" fill="#14b8a6"/>
+                          <path d="M 0 0 L 30 25 L 60 0" stroke="white" strokeWidth="3" fill="none" strokeLinecap="round"/>
+                        </g>
+                      </svg>
                       <div className="image-shine"></div>
                     </div>
                   </div>

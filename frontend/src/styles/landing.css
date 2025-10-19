@@ -1943,6 +1943,16 @@ a {
   box-shadow: 0 10px 15px rgba(255, 71, 87, 0.2);
 }
 
+.feature-icon-wrapper.teal {
+  background: linear-gradient(135deg, #14b8a6, #0d9488);
+  box-shadow: 0 10px 15px rgba(20, 184, 166, 0.2);
+}
+
+.feature-icon-wrapper.yellow {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  box-shadow: 0 10px 15px rgba(251, 191, 36, 0.2);
+}
+
 .feature-icon {
   color: white;
   line-height: 0;
