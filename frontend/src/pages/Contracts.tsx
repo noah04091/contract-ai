@@ -12,9 +12,9 @@ import {
 import styles from "../styles/Contracts.module.css";
 import ContractAnalysis from "../components/ContractAnalysis";
 import BatchAnalysisResults from "../components/BatchAnalysisResults"; // ✅ NEU: Import für Batch-Analyse
-import ContractDetailsView from "../components/ContractDetailsView";
+import NewContractDetailsModal from "../components/NewContractDetailsModal"; // 🎨 NEW: Professional Contract Details Modal
 import UploadSuccessModal from "../components/UploadSuccessModal"; // ✅ NEU: Two-Step Upload Modal
-import ContractDetailModal from "../components/ContractDetailModal"; // 🎨 Contract Detail Modal
+import ContractDetailModal from "../components/ContractDetailModal"; // 🎨 Contract Detail Modal (Signatures)
 import FolderBar from "../components/FolderBar"; // 📁 Folder Bar (Horizontal)
 import FolderModal from "../components/FolderModal"; // 📁 Folder Modal
 import SmartFoldersModal from "../components/SmartFoldersModal"; // 🤖 Smart Folders Modal
@@ -3035,15 +3035,14 @@ export default function Contracts() {
             )}
           </AnimatePresence>
 
-          {/* ✅ BUG FIX 1: Erweiterte ContractDetailsView mit openEditModalDirectly Prop */}
-          {selectedContract && (
-            <ContractDetailsView
+          {/* 🎨 NEW: Professional Contract Details Modal */}
+          {selectedContract && showDetails && (
+            <NewContractDetailsModal
               contract={selectedContract}
               onClose={() => {
                 setShowDetails(false);
                 setOpenEditModalDirectly(false); // ✅ Reset beim Schließen
               }}
-              show={showDetails}
               openEditModalDirectly={openEditModalDirectly} // ✅ NEU: Diese Prop wird das Edit-Modal direkt öffnen
               onEdit={async (contractId) => {
                 console.log("Contract updated:", contractId);
