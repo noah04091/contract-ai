@@ -10,32 +10,42 @@ const Contract = require("../models/Contract"); // Für refresh route
 // @access  Private
 router.get("/view", verifyToken, async (req, res) => {
   try {
-    const { file, contractId, key, type } = req.query; // 🆕 Added type parameter
-    
+    const { file, contractId, key, type } = req.query;
+
+    console.log("🔍 S3 View Request:", {
+      file,
+      contractId,
+      key,
+      type,
+      userId: req.user?.userId || req.user?.id,
+      userObject: req.user
+    });
+
     // ✅ CHATGPT FIX: Für direkten key-Zugriff OHNE MongoDB (löst Timeout-Problem)
     if (key && !contractId && !file) {
       console.log("🔍 S3 View aufgerufen mit key:", key);
       console.log("⏰ Starte S3-Zugriff...");
-      
+
       try {
         // Generiere Signed URL (24 Stunden) - DIREKT zu S3, KEIN MONGODB!
         const signedUrlResult = await generateSignedUrl(key, 86400); // 24 Stunden - AWAIT HINZUGEFÜGT!
-        
+
         // Falls generateSignedUrl ein Objekt zurückgibt, extrahiere die URL
         const signedUrl = typeof signedUrlResult === 'string' ? signedUrlResult : signedUrlResult.url || signedUrlResult;
-        
+
         console.log("✅ Generated signed URL:", signedUrl, "Type:", typeof signedUrl);
-        
+
         return res.json({ url: signedUrl });
       } catch (err) {
         console.error("❌ S3 Error:", err);
         return res.status(500).json({ error: "S3-Fehler" });
       }
     }
-    
+
     // ✅ ORIGINAL LOGIC: Für Backward Compatibility beibehalten
     if (!file && !contractId) {
-      return res.status(400).json({ 
+      console.log("❌ No parameters provided");
+      return res.status(400).json({
         error: "No file, contractId, or key provided",
         usage: "Use ?file=s3key or ?contractId=mongoId or ?key=s3key"
       });
@@ -46,10 +56,20 @@ router.get("/view", verifyToken, async (req, res) => {
 
     // Wenn contractId gegeben, hole s3Key aus Datenbank
     if (contractId && !file) {
+      console.log("📄 Searching for contract:", contractId, "userId:", req.user.userId || req.user.id);
+
       const contract = await Contract.findOne({
         _id: contractId,
         userId: req.user.userId || req.user.id
       });
+
+      console.log("📄 Contract found:", contract ? "YES" : "NO", contract ? {
+        _id: contract._id,
+        name: contract.name || contract.title,
+        s3Key: contract.s3Key,
+        uploadType: contract.uploadType,
+        needsReupload: contract.needsReupload
+      } : null);
 
       if (!contract) {
         return res.status(404).json({ error: "Contract not found" });
