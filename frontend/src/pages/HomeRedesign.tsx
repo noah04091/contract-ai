@@ -714,8 +714,21 @@ const HomeRedesign = () => {
                   </Link>
                 </div>
               </div>
-              <div className="cm-visual" aria-hidden="true">
-                <img src={dashboardImg} alt="Contract AI Dashboard - Vertragsverwaltung" />
+              <div className="cm-visual" style={{background: '#f0f0f0', padding: '20px'}}>
+                <img
+                  src={dashboardImg}
+                  alt="Contract AI Dashboard - Vertragsverwaltung"
+                  style={{
+                    width: '100%',
+                    maxWidth: '100%',
+                    height: 'auto',
+                    display: 'block',
+                    opacity: '1',
+                    visibility: 'visible',
+                    borderRadius: '12px',
+                    boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
+                  }}
+                />
               </div>
             </div>
           </div>
