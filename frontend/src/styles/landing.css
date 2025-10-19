@@ -2232,11 +2232,14 @@ a {
   transform: translateX(4px);
 }
 
+.cm-visual img,
 .cm-visual svg {
   width: 100%;
   max-width: 100%;
   height: auto;
   display: block;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
 }
 
 /* Responsive Design - Mobile */

@@ -14,6 +14,7 @@ import generatorImg from "../assets/Generator.png";
 import legalPulseImg from "../assets/Legal Pulse.png";
 import optimierungImg from "../assets/Optimierung.png";
 import vergleichImg from "../assets/Vergleich.png";
+import dashboardImg from "../assets/screenshot-dashboard.png";
 import dsgvoBadge from "../assets/dsgvo-badge.png";
 import trustpilotBadge from "../assets/trustpilot-badge.png";
 
@@ -714,53 +715,7 @@ const HomeRedesign = () => {
                 </div>
               </div>
               <div className="cm-visual" aria-hidden="true">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
-                  <defs>
-                    <linearGradient id="cm-gradient-1" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#3d7cf3" stopOpacity="0.1"/>
-                      <stop offset="100%" stopColor="#5c7eea" stopOpacity="0.3"/>
-                    </linearGradient>
-                    <linearGradient id="cm-gradient-2" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#4e20e4" stopOpacity="0.1"/>
-                      <stop offset="100%" stopColor="#8a4fff" stopOpacity="0.2"/>
-                    </linearGradient>
-                  </defs>
-                  
-                  {/* Background circles */}
-                  <circle cx="200" cy="150" r="120" fill="url(#cm-gradient-1)" opacity="0.4"/>
-                  <circle cx="250" cy="100" r="80" fill="url(#cm-gradient-2)" opacity="0.3"/>
-                  
-                  {/* Main folder icon */}
-                  <g transform="translate(150, 100)">
-                    <rect x="0" y="20" width="100" height="70" rx="8" fill="#3d7cf3" opacity="0.9"/>
-                    <path d="M0 20 L0 12 Q0 8 4 8 L30 8 L38 16 L96 16 Q100 16 100 20" fill="#5c7eea" opacity="0.9"/>
-                    
-                    {/* Document icons inside folder */}
-                    <rect x="15" y="35" width="20" height="25" rx="2" fill="white" opacity="0.9"/>
-                    <rect x="40" y="40" width="20" height="25" rx="2" fill="white" opacity="0.7"/>
-                    <rect x="65" y="45" width="20" height="25" rx="2" fill="white" opacity="0.5"/>
-                  </g>
-                  
-                  {/* Floating elements */}
-                  <g opacity="0.6">
-                    <circle cx="120" cy="80" r="4" fill="#f85ebd"/>
-                    <circle cx="320" cy="120" r="3" fill="#2ed573"/>
-                    <circle cx="280" cy="220" r="5" fill="#ff8c41"/>
-                    <circle cx="100" cy="200" r="3" fill="#8a4fff"/>
-                  </g>
-                  
-                  {/* Search icon */}
-                  <g transform="translate(270, 180)" opacity="0.7">
-                    <circle cx="15" cy="15" r="12" fill="none" stroke="#3d7cf3" strokeWidth="3"/>
-                    <line x1="24" y1="24" x2="32" y2="32" stroke="#3d7cf3" strokeWidth="3" strokeLinecap="round"/>
-                  </g>
-                  
-                  {/* Lock icon for security */}
-                  <g transform="translate(100, 140)" opacity="0.6">
-                    <rect x="0" y="10" width="24" height="18" rx="3" fill="#2ed573"/>
-                    <path d="M6 10 L6 6 Q6 0 12 0 Q18 0 18 6 L18 10" fill="none" stroke="#2ed573" strokeWidth="2"/>
-                  </g>
-                </svg>
+                <img src={dashboardImg} alt="Contract AI Dashboard - Vertragsverwaltung" />
               </div>
             </div>
           </div>
@@ -1078,8 +1033,8 @@ const HomeRedesign = () => {
                       </div>
                     </div>
                     <div className="image-container">
-                      {/* SVG Placeholder for Signature Feature - 16:9 aspect ratio like real images */}
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" style={{background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)', minHeight: '100%', objectFit: 'cover'}}>
+                      {/* SVG Placeholder for Signature Feature - 16:9 aspect ratio, zoomed in */}
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="200 100 1520 855" preserveAspectRatio="xMidYMid slice" style={{background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)'}}>
                         <defs>
                           <linearGradient id="sig-gradient-1" x1="0%" y1="0%" x2="100%" y2="100%">
                             <stop offset="0%" stopColor="#14b8a6" stopOpacity="0.1"/>
