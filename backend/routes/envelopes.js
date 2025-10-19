@@ -472,12 +472,20 @@ router.get("/envelopes/:id", verifyToken, async (req, res) => {
       ? Math.round((signersSigned / signersTotal) * 100)
       : 0;
 
-    // Process audit trail
-    const filteredAudit = (envelope.audit || []).filter(event => event && event.action);
+    // Process audit trail - Transform 'event' field to 'action' for frontend compatibility
+    const transformedAudit = (envelope.audit || [])
+      .filter(evt => evt && (evt.action || evt.event))  // Accept both field names
+      .map(evt => ({
+        ...evt,
+        action: evt.action || evt.event,  // Use 'action' if exists, otherwise use 'event'
+        timestamp: evt.timestamp,
+        details: evt.details || {}
+      }));
+
     console.log(`🔍 Audit Filter Result:`, {
       before: envelope.audit?.length || 0,
-      after: filteredAudit.length,
-      filtered: filteredAudit
+      after: transformedAudit.length,
+      transformed: transformedAudit
     });
 
     // 🆕 Add enriched data
@@ -491,8 +499,8 @@ router.get("/envelopes/:id", verifyToken, async (req, res) => {
         progressPercentage
       },
       // ✅ FIX: Keep audit trail for timeline display (field is 'audit' in model, not 'auditTrail')
-      // Filter out invalid events (undefined or missing action field)
-      auditTrail: filteredAudit
+      // Transform 'event' field to 'action' for frontend compatibility
+      auditTrail: transformedAudit
     };
 
     res.json({
