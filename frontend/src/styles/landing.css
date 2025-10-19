@@ -1094,7 +1094,7 @@ a {
   padding: 0 20px 0px;
   margin: 0 !important;
   text-align: center;
-  overflow: hidden;
+  /* overflow: hidden entfernt - Lichteffekte können fließen */
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -1793,7 +1793,7 @@ a {
   z-index: 3;
   width: 100%;
   box-sizing: border-box;
-  margin-top: -2px;
+  margin-top: 0; /* Fließender Übergang statt -2px */
 }
 
 .trustbar {
@@ -1855,10 +1855,10 @@ a {
     rgba(255, 255, 255, 1) 100%
   );
   position: relative;
-  overflow: hidden;
+  /* overflow: hidden entfernt - Lichteffekte können fließen */
   width: 100%;
   box-sizing: border-box;
-  margin-top: -2px;
+  margin-top: 0; /* Fließender Übergang statt -2px */
 }
 
 /* Feature Grid: 4 Spalten für 8 Cards (4-4 Layout auf Desktop) */
@@ -2067,8 +2067,8 @@ a {
   );
   padding: 120px 20px;
   position: relative;
-  overflow: hidden;
-  margin-top: -2px;
+  /* overflow: hidden entfernt - Lichteffekte können fließen */
+  margin-top: 0; /* Fließender Übergang statt -2px */
 }
 
 .contracts-management::before {
@@ -2502,10 +2502,10 @@ a {
   );
   padding: 120px 20px;
   position: relative;
-  overflow: hidden;
+  /* overflow: hidden entfernt - Lichteffekte können fließen */
   width: 100%;
   box-sizing: border-box;
-  margin-top: -2px;
+  margin-top: 0; /* Fließender Übergang statt -2px */
 }
 
 .showcase-bg {
@@ -2767,7 +2767,7 @@ a {
   position: relative;
   width: 100%;
   box-sizing: border-box;
-  margin-top: -2px;
+  margin-top: 0; /* Fließender Übergang statt -2px */
   overflow: visible; /* WICHTIG: Schatten nicht abschneiden */
 }
 
@@ -3216,8 +3216,8 @@ a {
   );
   padding: 120px 20px;
   position: relative;
-  overflow: hidden;
-  margin-top: -2px;
+  /* overflow: hidden entfernt - Lichteffekte können fließen */
+  margin-top: 0; /* Fließender Übergang statt -2px */
   width: 100%;
   box-sizing: border-box;
 }
@@ -3779,10 +3779,10 @@ a[href*="kontakt"]:hover,
   padding: 120px 20px;
   text-align: center;
   position: relative;
-  overflow: hidden;
+  /* overflow: hidden entfernt - Lichteffekte können fließen */
   width: 100%;
   box-sizing: border-box;
-  margin-top: -2px;
+  margin-top: 0; /* Fließender Übergang statt -2px */
 }
 
 .cta-section .section-container {
