@@ -2816,13 +2816,11 @@ export default function Contracts() {
                                 </div>
                               </td>
                               <td>
-                                <div className={styles.statusStack}>
-                                  <span className={`${styles.statusBadge} ${getStatusColor(contract.status)}`}>
-                                    {contract.status}
-                                  </span>
-                                  {/* 🆕 Smart Signature Status Badge */}
-                                  {renderSignatureBadge(contract)}
-                                </div>
+                                <span className={`${styles.statusBadge} ${getStatusColor(contract.status)}`}>
+                                  {contract.status}
+                                </span>
+                                {/* 🆕 Smart Signature Status Badge */}
+                                {renderSignatureBadge(contract)}
                               </td>
                               <td>
                                 <span className={styles.uploadDate}>
