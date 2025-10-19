@@ -15,6 +15,7 @@ import legalPulseImg from "../assets/Legal Pulse.png";
 import optimierungImg from "../assets/Optimierung.png";
 import vergleichImg from "../assets/Vergleich.png";
 import dsgvoBadge from "../assets/dsgvo-badge.png";
+import dashboardImg from "../assets/screenshot-dashboard.png";
 import trustpilotBadge from "../assets/trustpilot-badge.png";
 
 
@@ -714,35 +715,7 @@ const HomeRedesign = () => {
                 </div>
               </div>
               <div className="cm-visual" aria-hidden="true">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="100%" height="auto" style={{background: 'linear-gradient(135deg, #dbeafe 0%, #e9d5ff 100%)'}}>
-                  <rect x="0" y="0" width="400" height="300" fill="#e0f2fe"/>
-
-                  <circle cx="200" cy="150" r="100" fill="#93c5fd" opacity="0.5"/>
-                  <circle cx="280" cy="100" r="60" fill="#c4b5fd" opacity="0.6"/>
-
-                  <rect x="140" y="115" width="120" height="85" rx="8" fill="#2563eb"/>
-                  <path d="M140 115 L140 105 Q140 100 145 100 L175 100 L185 110 L255 110 Q260 110 260 115" fill="#3b82f6"/>
-
-                  <rect x="160" y="135" width="24" height="32" rx="3" fill="#ffffff"/>
-                  <rect x="188" y="140" width="24" height="32" rx="3" fill="#f0f9ff"/>
-                  <rect x="216" y="145" width="24" height="32" rx="3" fill="#dbeafe"/>
-
-                  <line x1="164" y1="142" x2="180" y2="142" stroke="#2563eb" strokeWidth="2"/>
-                  <line x1="164" y1="148" x2="180" y2="148" stroke="#2563eb" strokeWidth="2"/>
-                  <line x1="164" y1="154" x2="180" y2="154" stroke="#2563eb" strokeWidth="2"/>
-
-                  <circle cx="298" cy="208" r="14" fill="none" stroke="#2563eb" strokeWidth="4"/>
-                  <line x1="308" y1="218" x2="318" y2="228" stroke="#2563eb" strokeWidth="4" strokeLinecap="round"/>
-
-                  <rect x="90" y="162" width="28" height="22" rx="4" fill="#059669"/>
-                  <path d="M97 162 L97 157 Q97 150 104 150 Q111 150 111 157 L111 162" fill="none" stroke="#059669" strokeWidth="3"/>
-                  <circle cx="104" cy="170" r="3" fill="#ffffff"/>
-
-                  <circle cx="110" cy="70" r="6" fill="#ec4899"/>
-                  <circle cx="330" cy="120" r="5" fill="#10b981"/>
-                  <circle cx="300" cy="240" r="7" fill="#f97316"/>
-                  <circle cx="90" cy="220" r="5" fill="#a855f7"/>
-                </svg>
+                <img src={dashboardImg} alt="Contract AI Dashboard - Vertragsverwaltung" />
               </div>
             </div>
           </div>
