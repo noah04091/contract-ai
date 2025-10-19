@@ -714,59 +714,34 @@ const HomeRedesign = () => {
                 </div>
               </div>
               <div className="cm-visual" aria-hidden="true">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="100%" height="auto">
-                  {/* Hintergrund Gradient - deutlich sichtbar */}
-                  <defs>
-                    <linearGradient id="cm-bg-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#e0f2fe" />
-                      <stop offset="100%" stopColor="#ddd6fe" />
-                    </linearGradient>
-                  </defs>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="100%" height="auto" style={{background: 'linear-gradient(135deg, #dbeafe 0%, #e9d5ff 100%)'}}>
+                  <rect x="0" y="0" width="400" height="300" fill="#e0f2fe"/>
 
-                  {/* Background */}
-                  <rect x="0" y="0" width="400" height="300" fill="url(#cm-bg-gradient)"/>
+                  <circle cx="200" cy="150" r="100" fill="#93c5fd" opacity="0.5"/>
+                  <circle cx="280" cy="100" r="60" fill="#c4b5fd" opacity="0.6"/>
 
-                  {/* Dekorative Kreise - kräftige Farben */}
-                  <circle cx="200" cy="150" r="100" fill="#bfdbfe" opacity="0.6"/>
-                  <circle cx="280" cy="100" r="60" fill="#c4b5fd" opacity="0.5"/>
+                  <rect x="140" y="115" width="120" height="85" rx="8" fill="#2563eb"/>
+                  <path d="M140 115 L140 105 Q140 100 145 100 L175 100 L185 110 L255 110 Q260 110 260 115" fill="#3b82f6"/>
 
-                  {/* Haupt-Ordner Icon */}
-                  <g transform="translate(140, 90)">
-                    {/* Ordner Körper */}
-                    <rect x="0" y="25" width="120" height="85" rx="8" fill="#3b82f6"/>
-                    {/* Ordner Tab */}
-                    <path d="M0 25 L0 15 Q0 10 5 10 L35 10 L45 20 L115 20 Q120 20 120 25" fill="#60a5fa"/>
+                  <rect x="160" y="135" width="24" height="32" rx="3" fill="#ffffff"/>
+                  <rect x="188" y="140" width="24" height="32" rx="3" fill="#f0f9ff"/>
+                  <rect x="216" y="145" width="24" height="32" rx="3" fill="#dbeafe"/>
 
-                    {/* 3 Dokumente im Ordner */}
-                    <rect x="20" y="45" width="24" height="32" rx="3" fill="#ffffff"/>
-                    <rect x="48" y="50" width="24" height="32" rx="3" fill="#f0f9ff"/>
-                    <rect x="76" y="55" width="24" height="32" rx="3" fill="#dbeafe"/>
+                  <line x1="164" y1="142" x2="180" y2="142" stroke="#2563eb" strokeWidth="2"/>
+                  <line x1="164" y1="148" x2="180" y2="148" stroke="#2563eb" strokeWidth="2"/>
+                  <line x1="164" y1="154" x2="180" y2="154" stroke="#2563eb" strokeWidth="2"/>
 
-                    {/* Linien auf Dokumenten */}
-                    <line x1="24" y1="52" x2="40" y2="52" stroke="#3b82f6" strokeWidth="1.5"/>
-                    <line x1="24" y1="58" x2="40" y2="58" stroke="#3b82f6" strokeWidth="1.5"/>
-                    <line x1="24" y1="64" x2="40" y2="64" stroke="#3b82f6" strokeWidth="1.5"/>
-                  </g>
+                  <circle cx="298" cy="208" r="14" fill="none" stroke="#2563eb" strokeWidth="4"/>
+                  <line x1="308" y1="218" x2="318" y2="228" stroke="#2563eb" strokeWidth="4" strokeLinecap="round"/>
 
-                  {/* Floating Icons */}
-                  {/* Lupe/Such-Icon */}
-                  <g transform="translate(280, 190)">
-                    <circle cx="18" cy="18" r="14" fill="none" stroke="#3b82f6" strokeWidth="4"/>
-                    <line x1="28" y1="28" x2="38" y2="38" stroke="#3b82f6" strokeWidth="4" strokeLinecap="round"/>
-                  </g>
+                  <rect x="90" y="162" width="28" height="22" rx="4" fill="#059669"/>
+                  <path d="M97 162 L97 157 Q97 150 104 150 Q111 150 111 157 L111 162" fill="none" stroke="#059669" strokeWidth="3"/>
+                  <circle cx="104" cy="170" r="3" fill="#ffffff"/>
 
-                  {/* Schloss-Icon für Sicherheit */}
-                  <g transform="translate(90, 150)">
-                    <rect x="0" y="12" width="28" height="22" rx="4" fill="#10b981"/>
-                    <path d="M7 12 L7 7 Q7 0 14 0 Q21 0 21 7 L21 12" fill="none" stroke="#10b981" strokeWidth="3"/>
-                    <circle cx="14" cy="20" r="3" fill="#ffffff"/>
-                  </g>
-
-                  {/* Dekorative kleine Kreise */}
-                  <circle cx="110" cy="70" r="5" fill="#f472b6"/>
-                  <circle cx="330" cy="120" r="4" fill="#10b981"/>
-                  <circle cx="300" cy="240" r="6" fill="#fb923c"/>
-                  <circle cx="90" cy="220" r="4" fill="#a855f7"/>
+                  <circle cx="110" cy="70" r="6" fill="#ec4899"/>
+                  <circle cx="330" cy="120" r="5" fill="#10b981"/>
+                  <circle cx="300" cy="240" r="7" fill="#f97316"/>
+                  <circle cx="90" cy="220" r="5" fill="#a855f7"/>
                 </svg>
               </div>
             </div>
