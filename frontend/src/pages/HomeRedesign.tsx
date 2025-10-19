@@ -1083,7 +1083,7 @@ const HomeRedesign = () => {
                       </div>
                     </div>
                     <div className="image-container">
-                      {/* SVG Placeholder for Signature Feature - 16:9 aspect ratio, zoomed in */}
+                      {/* SVG für Digitale Signatur - zeigt klar Unterschriften-Prozess */}
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" preserveAspectRatio="xMidYMid meet" style={{background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)'}}>
                         <defs>
                           <linearGradient id="sig-gradient-1" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -1092,39 +1092,71 @@ const HomeRedesign = () => {
                           </linearGradient>
                         </defs>
 
-                        {/* Background circles */}
                         <circle cx="400" cy="300" r="180" fill="url(#sig-gradient-1)" opacity="0.3"/>
                         <circle cx="500" cy="200" r="120" fill="url(#sig-gradient-1)" opacity="0.2"/>
 
-                        {/* Document icon */}
-                        <g transform="translate(300, 200)">
-                          <rect x="0" y="0" width="200" height="260" rx="12" fill="white" stroke="#14b8a6" strokeWidth="3" opacity="0.9"/>
+                        {/* Vertragsdokument */}
+                        <g transform="translate(250, 80)">
+                          <rect x="0" y="0" width="300" height="360" rx="12" fill="white" stroke="#14b8a6" strokeWidth="3" opacity="0.95"/>
 
-                          {/* Document lines */}
-                          <line x1="30" y1="40" x2="170" y2="40" stroke="#cbd5e1" strokeWidth="3"/>
-                          <line x1="30" y1="70" x2="170" y2="70" stroke="#cbd5e1" strokeWidth="3"/>
-                          <line x1="30" y1="100" x2="140" y2="100" stroke="#cbd5e1" strokeWidth="3"/>
+                          {/* Vertrags-Header */}
+                          <text x="150" y="35" fontSize="18" fill="#14b8a6" fontWeight="bold" textAnchor="middle">VERTRAG</text>
+                          <line x1="30" y1="50" x2="270" y2="50" stroke="#e2e8f0" strokeWidth="2"/>
 
-                          {/* Signature line */}
-                          <path d="M 40 180 Q 80 160, 120 180 T 180 180" stroke="#14b8a6" strokeWidth="4" fill="none" strokeLinecap="round"/>
+                          {/* Vertragstext-Linien */}
+                          <line x1="30" y1="75" x2="270" y2="75" stroke="#cbd5e1" strokeWidth="2"/>
+                          <line x1="30" y1="95" x2="270" y2="95" stroke="#cbd5e1" strokeWidth="2"/>
+                          <line x1="30" y1="115" x2="240" y2="115" stroke="#cbd5e1" strokeWidth="2"/>
+                          <line x1="30" y1="135" x2="270" y2="135" stroke="#cbd5e1" strokeWidth="2"/>
 
-                          {/* Checkmark */}
-                          <circle cx="170" cy="40" r="15" fill="#10b981" opacity="0.9"/>
-                          <path d="M 163 40 L 168 45 L 177 33" stroke="white" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+                          {/* UNTERSCHRIFTEN BEREICH 1 */}
+                          <rect x="20" y="170" width="260" height="75" rx="8" fill="#f0fdfa" stroke="#14b8a6" strokeWidth="2" strokeDasharray="5,5"/>
+
+                          <text x="30" y="190" fontSize="11" fill="#64748b" fontWeight="500">UNTERSCHRIFT:</text>
+
+                          {/* Realistische Handschrift-Signatur */}
+                          <path d="M 40 210 Q 55 200, 70 210 T 100 205 Q 115 200, 130 215 Q 140 225, 150 215 T 170 220"
+                                stroke="#14b8a6" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+
+                          {/* Datum unter Signatur */}
+                          <text x="40" y="235" fontSize="9" fill="#94a3b8">15.01.2025</text>
+
+                          {/* Grüner Checkmark Badge */}
+                          <circle cx="245" cy="207" r="18" fill="#10b981"/>
+                          <path d="M 238 207 L 243 212 L 252 200" stroke="white" strokeWidth="3" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+
+                          {/* UNTERSCHRIFTEN BEREICH 2 */}
+                          <rect x="20" y="265" width="260" height="75" rx="8" fill="#fefce8" stroke="#f59e0b" strokeWidth="2" strokeDasharray="5,5"/>
+
+                          <text x="30" y="285" fontSize="11" fill="#64748b" fontWeight="500">UNTERSCHRIFT:</text>
+
+                          {/* Gestrichelte Linie = noch nicht unterschrieben */}
+                          <line x1="40" y1="305" x2="170" y2="305" stroke="#cbd5e1" strokeWidth="2" strokeDasharray="4,4"/>
+
+                          {/* Gelber Pending Badge */}
+                          <circle cx="245" cy="302" r="18" fill="#f59e0b"/>
+                          <text x="245" y="308" fontSize="20" fill="white" fontWeight="bold" textAnchor="middle">!</text>
                         </g>
 
-                        {/* Floating elements */}
-                        <g opacity="0.5">
-                          <circle cx="200" cy="150" r="6" fill="#14b8a6"/>
-                          <circle cx="620" cy="220" r="5" fill="#0d9488"/>
-                          <circle cx="180" cy="450" r="4" fill="#10b981"/>
+                        {/* Stift-Icon (Schreib-Tool) */}
+                        <g transform="translate(580, 120)">
+                          <rect x="0" y="20" width="8" height="45" rx="2" fill="#14b8a6" transform="rotate(-45 4 42)"/>
+                          <polygon points="0,20 8,20 4,10" fill="#0d9488"/>
+                          <circle cx="4" cy="8" r="3" fill="#fbbf24"/>
                         </g>
 
-                        {/* Email notification icon */}
-                        <g transform="translate(550, 380)" opacity="0.7">
-                          <rect x="0" y="0" width="60" height="45" rx="6" fill="#14b8a6"/>
-                          <path d="M 0 0 L 30 25 L 60 0" stroke="white" strokeWidth="3" fill="none" strokeLinecap="round"/>
+                        {/* E-Mail Benachrichtigung Icon */}
+                        <g transform="translate(100, 350)">
+                          <rect x="0" y="0" width="70" height="50" rx="6" fill="#14b8a6" opacity="0.9"/>
+                          <path d="M 0 0 L 35 28 L 70 0" stroke="white" strokeWidth="3.5" fill="none" strokeLinecap="round"/>
+                          <circle cx="60" cy="10" r="8" fill="#ef4444"/>
+                          <text x="60" y="14" fontSize="10" fill="white" fontWeight="bold" textAnchor="middle">1</text>
                         </g>
+
+                        {/* Dekorative Punkte */}
+                        <circle cx="150" cy="100" r="5" fill="#14b8a6" opacity="0.4"/>
+                        <circle cx="680" cy="250" r="6" fill="#10b981" opacity="0.4"/>
+                        <circle cx="120" cy="300" r="4" fill="#0d9488" opacity="0.4"/>
                       </svg>
                       <div className="image-shine"></div>
                     </div>
