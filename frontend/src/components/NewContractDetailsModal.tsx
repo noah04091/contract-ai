@@ -1091,26 +1091,14 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
             }}>
               {/* PDF Tab Actions */}
               {activeTab === 'pdf' && pdfUrl && (
-                <>
-                  <button
-                    onClick={handleOpenPdfInNewTab}
-                    className={styles.tabActionButton}
-                    title="In neuem Tab öffnen"
-                  >
-                    <Eye size={16} />
-                    <span>In neuem Tab öffnen</span>
-                  </button>
-                  <a
-                    href={pdfUrl}
-                    download={contract.name}
-                    className={styles.tabActionButton}
-                    title="PDF herunterladen"
-                    style={{ textDecoration: 'none' }}
-                  >
-                    <Download size={16} />
-                    <span>Herunterladen</span>
-                  </a>
-                </>
+                <button
+                  onClick={handleOpenPdfInNewTab}
+                  className={styles.tabActionButton}
+                  title="In neuem Tab öffnen"
+                >
+                  <Eye size={16} />
+                  <span>In neuem Tab öffnen</span>
+                </button>
               )}
 
               {/* Analysis Tab Actions */}
