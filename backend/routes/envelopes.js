@@ -474,8 +474,8 @@ router.get("/envelopes/:id", verifyToken, async (req, res) => {
         signersPending,
         progressPercentage
       },
-      // Keep audit trail for timeline display
-      auditTrail: envelope.auditTrail || []
+      // ✅ FIX: Keep audit trail for timeline display (field is 'audit' in model, not 'auditTrail')
+      auditTrail: envelope.audit || []
     };
 
     res.json({
