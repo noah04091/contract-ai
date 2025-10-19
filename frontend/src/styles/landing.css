@@ -2283,14 +2283,15 @@ a {
   .contracts-management {
     padding: 80px 20px;
   }
-  
+
   .contracts-management::before {
     width: 400px;
     height: 400px;
     right: -200px;
   }
-  
+
   .cm-grid {
+    grid-template-columns: 1fr;
     gap: 32px;
   }
   
@@ -2356,6 +2357,7 @@ a {
   }
   
   .cm-grid {
+    grid-template-columns: 1fr;
     gap: 24px;
   }
   
