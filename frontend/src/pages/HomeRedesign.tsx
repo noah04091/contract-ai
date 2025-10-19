@@ -714,7 +714,7 @@ const HomeRedesign = () => {
                 </div>
               </div>
               <div className="cm-visual" aria-hidden="true">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" style={{background: 'linear-gradient(135deg, #f8faff 0%, #eef2ff 100%)'}}>
                   <defs>
                     <linearGradient id="cm-gradient-1" x1="0%" y1="0%" x2="100%" y2="100%">
                       <stop offset="0%" stopColor="#3d7cf3" stopOpacity="0.1"/>
