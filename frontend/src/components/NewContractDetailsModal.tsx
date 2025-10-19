@@ -554,41 +554,6 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
 
     return (
       <div className={styles.tabContent}>
-        {/* Action Buttons - Top */}
-        <div style={{
-          display: 'flex',
-          gap: '12px',
-          marginBottom: '1.5rem',
-          flexWrap: 'wrap'
-        }}>
-          <button
-            onClick={handleOpenPdfInNewTab}
-            className={styles.downloadButton}
-            style={{
-              display: 'inline-flex',
-              padding: '10px 20px',
-              fontSize: '0.9375rem'
-            }}
-          >
-            <Eye size={18} />
-            <span>In neuem Tab öffnen</span>
-          </button>
-          <a
-            href={pdfUrl}
-            download={contract.name}
-            className={styles.downloadButton}
-            style={{
-              display: 'inline-flex',
-              padding: '10px 20px',
-              fontSize: '0.9375rem',
-              textDecoration: 'none'
-            }}
-          >
-            <Download size={18} />
-            <span>PDF herunterladen</span>
-          </a>
-        </div>
-
         {/* PDF Preview */}
         <div className={styles.pdfViewerContainer}>
           <iframe
@@ -656,18 +621,6 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
 
     return (
       <div className={styles.tabContent}>
-        {/* Download Button */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1.5rem' }}>
-          <button
-            className={styles.downloadButton}
-            onClick={handleDownloadAnalysisPDF}
-            style={{ padding: '10px 20px', fontSize: '0.9375rem' }}
-          >
-            <Download size={18} />
-            <span>Analyse als PDF herunterladen</span>
-          </button>
-        </div>
-
         {/* Contract Score */}
         {hasScore && (
           <div className={styles.section}>
@@ -1089,42 +1042,89 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
 
           {/* Tab Navigation */}
           <div className={styles.tabNav}>
-            <button
-              className={`${styles.tabButton} ${activeTab === 'overview' ? styles.tabActive : ''}`}
-              onClick={() => setActiveTab('overview')}
-            >
-              <FileText size={18} />
-              <span>Übersicht</span>
-            </button>
-            <button
-              className={`${styles.tabButton} ${activeTab === 'pdf' ? styles.tabActive : ''}`}
-              onClick={() => setActiveTab('pdf')}
-              disabled={!contract.s3Key}
-            >
-              <Eye size={18} />
-              <span>PDF</span>
-              {!contract.s3Key && <span className={styles.tabDisabled}>(nicht verfügbar)</span>}
-            </button>
-            <button
-              className={`${styles.tabButton} ${activeTab === 'analysis' ? styles.tabActive : ''}`}
-              onClick={() => setActiveTab('analysis')}
-              disabled={!contract.analysis && !contract.legalPulse}
-            >
-              <BarChart3 size={18} />
-              <span>Analyse</span>
-              {!contract.analysis && !contract.legalPulse && (
-                <span className={styles.tabDisabled}>(nicht verfügbar)</span>
-              )}
-            </button>
-            {(contract.envelope || contract.signatureEnvelopeId) && (
+            {/* Tab Buttons - Left */}
+            <div style={{ display: 'flex', gap: '4px', flex: 1 }}>
               <button
-                className={`${styles.tabButton} ${activeTab === 'signature' ? styles.tabActive : ''}`}
-                onClick={() => setActiveTab('signature')}
+                className={`${styles.tabButton} ${activeTab === 'overview' ? styles.tabActive : ''}`}
+                onClick={() => setActiveTab('overview')}
               >
-                <PenTool size={18} />
-                <span>Signierprozess</span>
+                <FileText size={18} />
+                <span>Übersicht</span>
               </button>
-            )}
+              <button
+                className={`${styles.tabButton} ${activeTab === 'pdf' ? styles.tabActive : ''}`}
+                onClick={() => setActiveTab('pdf')}
+                disabled={!contract.s3Key}
+              >
+                <Eye size={18} />
+                <span>PDF</span>
+                {!contract.s3Key && <span className={styles.tabDisabled}>(nicht verfügbar)</span>}
+              </button>
+              <button
+                className={`${styles.tabButton} ${activeTab === 'analysis' ? styles.tabActive : ''}`}
+                onClick={() => setActiveTab('analysis')}
+                disabled={!contract.analysis && !contract.legalPulse}
+              >
+                <BarChart3 size={18} />
+                <span>Analyse</span>
+                {!contract.analysis && !contract.legalPulse && (
+                  <span className={styles.tabDisabled}>(nicht verfügbar)</span>
+                )}
+              </button>
+              {(contract.envelope || contract.signatureEnvelopeId) && (
+                <button
+                  className={`${styles.tabButton} ${activeTab === 'signature' ? styles.tabActive : ''}`}
+                  onClick={() => setActiveTab('signature')}
+                >
+                  <PenTool size={18} />
+                  <span>Signierprozess</span>
+                </button>
+              )}
+            </div>
+
+            {/* Tab Actions - Right (context-sensitive) */}
+            <div style={{
+              display: 'flex',
+              gap: '8px',
+              alignItems: 'center',
+              paddingRight: '8px'
+            }}>
+              {/* PDF Tab Actions */}
+              {activeTab === 'pdf' && pdfUrl && (
+                <>
+                  <button
+                    onClick={handleOpenPdfInNewTab}
+                    className={styles.tabActionButton}
+                    title="In neuem Tab öffnen"
+                  >
+                    <Eye size={16} />
+                    <span>In neuem Tab öffnen</span>
+                  </button>
+                  <a
+                    href={pdfUrl}
+                    download={contract.name}
+                    className={styles.tabActionButton}
+                    title="PDF herunterladen"
+                    style={{ textDecoration: 'none' }}
+                  >
+                    <Download size={16} />
+                    <span>Herunterladen</span>
+                  </a>
+                </>
+              )}
+
+              {/* Analysis Tab Actions */}
+              {activeTab === 'analysis' && (contract.analysis || contract.legalPulse) && (
+                <button
+                  onClick={handleDownloadAnalysisPDF}
+                  className={styles.tabActionButton}
+                  title="Analyse als PDF herunterladen"
+                >
+                  <Download size={16} />
+                  <span>Analyse-PDF</span>
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Tab Content */}
