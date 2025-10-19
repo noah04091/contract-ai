@@ -1665,4 +1665,243 @@ router.patch("/:id/folder", verifyToken, async (req, res) => {
   }
 });
 
+// ✅ NEU: GET /contracts/:id/analysis-report – Analyse als PDF herunterladen
+router.get("/:id/analysis-report", verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Get contract from database
+    const contract = await contractsCollection.findOne({
+      _id: new ObjectId(id),
+      userId: new ObjectId(req.user.userId)
+    });
+
+    if (!contract) {
+      return res.status(404).json({
+        success: false,
+        message: 'Vertrag nicht gefunden'
+      });
+    }
+
+    // Get analysis data
+    let analysis = null;
+
+    if (contract.analysisId) {
+      analysis = await analysisCollection.findOne({
+        _id: new ObjectId(contract.analysisId)
+      });
+    }
+
+    // Fallback to embedded analysis
+    if (!analysis && contract.analysis) {
+      analysis = contract.analysis;
+    }
+
+    // Check if analysis exists
+    if (!analysis && !contract.summary) {
+      return res.status(404).json({
+        success: false,
+        message: 'Keine Analyse gefunden für diesen Vertrag'
+      });
+    }
+
+    // Create analysis object from available data
+    const analysisData = {
+      contractScore: analysis?.contractScore || contract.contractScore || 0,
+      summary: analysis?.summary || contract.summary || '',
+      legalAssessment: analysis?.legalAssessment || contract.legalAssessment || '',
+      comparison: analysis?.comparison || contract.comparison || '',
+      suggestions: analysis?.suggestions || contract.suggestions || '',
+      risiken: analysis?.risiken || contract.risiken || [],
+      optimierungen: analysis?.optimierungen || contract.optimierungen || []
+    };
+
+    console.log("📄 Generating PDF analysis report for:", contract.name);
+
+    // Import PDFKit
+    const PDFDocument = require('pdfkit');
+
+    // Create PDF document
+    const doc = new PDFDocument({ size: 'A4', margin: 50 });
+
+    // Set response headers
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${contract.name}_Analyse.pdf"`);
+
+    // Pipe PDF to response
+    doc.pipe(res);
+
+    // PDF Header
+    doc.fontSize(24)
+       .fillColor('#3b82f6')
+       .text('Vertragsanalyse', { align: 'center' })
+       .moveDown(0.5);
+
+    doc.fontSize(14)
+       .fillColor('#6b7280')
+       .text(contract.name, { align: 'center' })
+       .moveDown(1);
+
+    // Contract Score Section
+    doc.fontSize(16)
+       .fillColor('#111827')
+       .text('Vertragsbewertung', { underline: true })
+       .moveDown(0.5);
+
+    doc.fontSize(12)
+       .fillColor('#374151')
+       .text(`Score: ${analysisData.contractScore}/100`, { indent: 20 })
+       .moveDown(1);
+
+    // Summary Section
+    if (analysisData.summary) {
+      doc.fontSize(16)
+         .fillColor('#111827')
+         .text('Zusammenfassung', { underline: true })
+         .moveDown(0.5);
+
+      doc.fontSize(11)
+         .fillColor('#374151')
+         .text(analysisData.summary, {
+           align: 'justify',
+           indent: 20,
+           lineGap: 5
+         })
+         .moveDown(1);
+    }
+
+    // Legal Assessment Section
+    if (analysisData.legalAssessment) {
+      doc.fontSize(16)
+         .fillColor('#111827')
+         .text('Rechtliche Bewertung', { underline: true })
+         .moveDown(0.5);
+
+      doc.fontSize(11)
+         .fillColor('#374151')
+         .text(analysisData.legalAssessment, {
+           align: 'justify',
+           indent: 20,
+           lineGap: 5
+         })
+         .moveDown(1);
+    }
+
+    // Comparison Section
+    if (analysisData.comparison) {
+      // Check if we need a new page
+      if (doc.y > 650) {
+        doc.addPage();
+      }
+
+      doc.fontSize(16)
+         .fillColor('#111827')
+         .text('Vergleich & Analyse', { underline: true })
+         .moveDown(0.5);
+
+      doc.fontSize(11)
+         .fillColor('#374151')
+         .text(analysisData.comparison, {
+           align: 'justify',
+           indent: 20,
+           lineGap: 5
+         })
+         .moveDown(1);
+    }
+
+    // Risks Section
+    if (analysisData.risiken && analysisData.risiken.length > 0) {
+      // Check if we need a new page
+      if (doc.y > 650) {
+        doc.addPage();
+      }
+
+      doc.fontSize(16)
+         .fillColor('#111827')
+         .text('Risiken', { underline: true })
+         .moveDown(0.5);
+
+      analysisData.risiken.forEach((risk, index) => {
+        doc.fontSize(11)
+           .fillColor('#374151')
+           .text(`${index + 1}. ${risk}`, {
+             indent: 20,
+             lineGap: 3
+           });
+      });
+
+      doc.moveDown(1);
+    }
+
+    // Suggestions/Recommendations Section
+    if (analysisData.suggestions) {
+      // Check if we need a new page
+      if (doc.y > 650) {
+        doc.addPage();
+      }
+
+      doc.fontSize(16)
+         .fillColor('#111827')
+         .text('Empfehlungen', { underline: true })
+         .moveDown(0.5);
+
+      doc.fontSize(11)
+         .fillColor('#374151')
+         .text(analysisData.suggestions, {
+           align: 'justify',
+           indent: 20,
+           lineGap: 5
+         })
+         .moveDown(1);
+    }
+
+    // Optimizations Section
+    if (analysisData.optimierungen && analysisData.optimierungen.length > 0) {
+      // Check if we need a new page
+      if (doc.y > 650) {
+        doc.addPage();
+      }
+
+      doc.fontSize(16)
+         .fillColor('#111827')
+         .text('Optimierungen', { underline: true })
+         .moveDown(0.5);
+
+      analysisData.optimierungen.forEach((opt, index) => {
+        doc.fontSize(11)
+           .fillColor('#374151')
+           .text(`${index + 1}. ${opt}`, {
+             indent: 20,
+             lineGap: 3
+           });
+      });
+
+      doc.moveDown(1);
+    }
+
+    // Footer
+    doc.fontSize(9)
+       .fillColor('#9ca3af')
+       .text(
+         `Erstellt am ${new Date().toLocaleDateString('de-DE')} | Contract AI`,
+         50,
+         doc.page.height - 50,
+         { align: 'center' }
+       );
+
+    // Finalize PDF
+    doc.end();
+
+    console.log("✅ PDF analysis report generated successfully");
+
+  } catch (error) {
+    console.error('❌ Fehler beim Generieren des Analyse-Reports:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Fehler beim Generieren des Analyse-Reports',
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;
