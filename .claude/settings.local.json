@@ -11,7 +11,13 @@
       "Bash(npm run build:*)",
       "Bash(node:*)",
       "Bash(npm audit fix:*)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "Bash(netstat -ano)",
+      "Bash(findstr \"5173\")",
+      "Bash(tasklist)",
+      "Bash(findstr \"node\")",
+      "Bash(findstr \"FRONTEND_URL\" .env)",
+      "Bash(npx vite-node -e \"import { createRequire } from ''module''; const require = createRequire(import.meta.url); const pdfjs = require.resolve(''pdfjs-dist/build/pdf.worker.min.mjs''); console.log(pdfjs)\")"
     ],
     "deny": [],
     "ask": []

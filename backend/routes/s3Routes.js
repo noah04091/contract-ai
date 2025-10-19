@@ -48,7 +48,7 @@ router.get("/view", verifyToken, async (req, res) => {
     if (contractId && !file) {
       const contract = await Contract.findOne({
         _id: contractId,
-        userId: req.user.id
+        userId: req.user.userId || req.user.id
       });
 
       if (!contract) {
@@ -135,9 +135,9 @@ router.post("/refresh", verifyToken, async (req, res) => {
     let keyToUse = s3Key;
     
     if (contractId && !s3Key) {
-      const contract = await Contract.findOne({ 
-        _id: contractId, 
-        userId: req.user.id 
+      const contract = await Contract.findOne({
+        _id: contractId,
+        userId: req.user.userId || req.user.id
       });
       
       if (!contract?.s3Key) {

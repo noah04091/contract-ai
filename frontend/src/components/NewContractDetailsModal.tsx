@@ -494,6 +494,13 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
     </div>
   );
 
+  // Open PDF in new tab
+  const handleOpenPdfInNewTab = () => {
+    if (pdfUrl) {
+      window.open(pdfUrl, '_blank');
+    }
+  };
+
   // Render PDF Tab
   const renderPdfTab = () => {
     if (contract.needsReupload) {
@@ -514,6 +521,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
           <div className={styles.emptyState}>
             <FileText size={64} />
             <p>Kein PDF verfügbar</p>
+            <span className={styles.hint}>Für generierte Verträge ist kein PDF verfügbar.</span>
           </div>
         </div>
       );
@@ -536,6 +544,9 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
           <div className={styles.emptyState}>
             <AlertCircle size={64} />
             <p>Fehler beim Laden des PDFs</p>
+            <span className={styles.hint}>
+              Das PDF konnte nicht geladen werden. Bitte versuchen Sie es später erneut.
+            </span>
           </div>
         </div>
       );
@@ -543,18 +554,49 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
 
     return (
       <div className={styles.tabContent}>
+        {/* Action Buttons - Top */}
+        <div style={{
+          display: 'flex',
+          gap: '12px',
+          marginBottom: '1.5rem',
+          flexWrap: 'wrap'
+        }}>
+          <button
+            onClick={handleOpenPdfInNewTab}
+            className={styles.downloadButton}
+            style={{
+              display: 'inline-flex',
+              padding: '10px 20px',
+              fontSize: '0.9375rem'
+            }}
+          >
+            <Eye size={18} />
+            <span>In neuem Tab öffnen</span>
+          </button>
+          <a
+            href={pdfUrl}
+            download={contract.name}
+            className={styles.downloadButton}
+            style={{
+              display: 'inline-flex',
+              padding: '10px 20px',
+              fontSize: '0.9375rem',
+              textDecoration: 'none'
+            }}
+          >
+            <Download size={18} />
+            <span>PDF herunterladen</span>
+          </a>
+        </div>
+
+        {/* PDF Preview */}
         <div className={styles.pdfViewerContainer}>
           <iframe
             src={pdfUrl}
             className={styles.pdfViewer}
             title="Contract PDF"
+            style={{ border: '1px solid #e5e7eb', borderRadius: '8px' }}
           />
-          <div className={styles.pdfActions}>
-            <a href={pdfUrl} download className={styles.downloadButton}>
-              <Download size={20} />
-              PDF herunterladen
-            </a>
-          </div>
         </div>
       </div>
     );
