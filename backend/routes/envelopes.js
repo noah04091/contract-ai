@@ -453,14 +453,6 @@ router.get("/envelopes/:id", verifyToken, async (req, res) => {
 
     console.log(`✅ Loaded envelope details: ${envelope.title}`);
 
-    // 🔍 DEBUG: Check audit field
-    console.log(`🔍 Audit Debug:`, {
-      hasAudit: !!envelope.audit,
-      auditLength: envelope.audit?.length || 0,
-      auditRaw: envelope.audit,
-      firstEvent: envelope.audit?.[0]
-    });
-
     // 🆕 Enrich response with computed fields
     const signersTotal = envelope.signers?.length || 0;
     const signersSigned = envelope.signers?.filter(s => s.status === 'SIGNED').length || 0;
@@ -481,12 +473,6 @@ router.get("/envelopes/:id", verifyToken, async (req, res) => {
         timestamp: evt.timestamp,
         details: evt.details || {}
       }));
-
-    console.log(`🔍 Audit Filter Result:`, {
-      before: envelope.audit?.length || 0,
-      after: transformedAudit.length,
-      transformed: transformedAudit
-    });
 
     // 🆕 Add enriched data
     const enrichedEnvelope = {
