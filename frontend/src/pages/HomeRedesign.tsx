@@ -33,6 +33,7 @@ const TestimonialsSlider = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const sliderRef = useRef<HTMLDivElement>(null);
+  const isProgrammaticScroll = useRef(false); // Flag to prevent handleScroll conflicts
 
   const testimonials = [
     {
@@ -119,33 +120,68 @@ const TestimonialsSlider = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, [currentIndex, testimonials.length]);
 
-  // Auto-advance slider every 5 seconds (pause on hover)
+  // Auto-advance slider every 2 seconds (pause on hover) - Testing
   useEffect(() => {
-    if (isHovered) return;
+    console.log('🔄 Auto-advance effect running. isHovered:', isHovered, 'itemsPerView:', itemsPerView);
+
+    if (isHovered) {
+      console.log('⏸️ Auto-advance paused (hovered)');
+      return;
+    }
 
     const interval = setInterval(() => {
       const maxIdx = Math.max(0, testimonials.length - itemsPerView);
+      console.log('⏱️ Interval fired! currentIndex will change. maxIdx:', maxIdx);
+
       setCurrentIndex((prev) => {
         const next = prev + 1;
-        // Loop back to start when reaching the end
-        return next > maxIdx ? 0 : next;
+        const newIndex = next > maxIdx ? 0 : next;
+        console.log('📊 Index change:', prev, '->', newIndex);
+        return newIndex;
       });
-    }, 5000);
+    }, 2000);
 
-    return () => clearInterval(interval);
+    return () => {
+      console.log('🧹 Cleaning up interval');
+      clearInterval(interval);
+    };
   }, [isHovered, itemsPerView, testimonials.length]);
 
   // Sync slider position when currentIndex changes
   useEffect(() => {
-    if (!sliderRef.current) return;
+    console.log('🎯 Sync effect triggered. currentIndex:', currentIndex, 'sliderRef exists:', !!sliderRef.current);
+
+    if (!sliderRef.current) {
+      console.log('❌ sliderRef.current is null!');
+      return;
+    }
 
     const slideWidth = sliderRef.current.offsetWidth / itemsPerView;
     const scrollLeft = currentIndex * slideWidth;
+
+    console.log('📏 Calculated scroll:', {
+      containerWidth: sliderRef.current.offsetWidth,
+      itemsPerView,
+      slideWidth,
+      currentIndex,
+      scrollLeft
+    });
+
+    // Set flag to prevent handleScroll from interfering
+    isProgrammaticScroll.current = true;
 
     sliderRef.current.scrollTo({
       left: scrollLeft,
       behavior: 'smooth'
     });
+
+    console.log('✅ Scroll command sent!');
+
+    // Reset flag after scroll animation completes (smooth scroll takes ~300-500ms)
+    setTimeout(() => {
+      isProgrammaticScroll.current = false;
+      console.log('🏁 Programmatic scroll complete, handleScroll re-enabled');
+    }, 600);
   }, [currentIndex, itemsPerView]);
 
   const scrollToSlide = (index: number) => {
@@ -175,11 +211,19 @@ const TestimonialsSlider = () => {
 
   // Sync dots when user swipes manually
   const handleScroll = () => {
+    // Ignore scroll events during programmatic scrolling
+    if (isProgrammaticScroll.current) {
+      console.log('🚫 handleScroll ignored (programmatic scroll in progress)');
+      return;
+    }
+
     if (!sliderRef.current) return;
 
     const slideWidth = sliderRef.current.offsetWidth / itemsPerView;
     const scrollLeft = sliderRef.current.scrollLeft;
     const calculatedIndex = Math.round(scrollLeft / slideWidth);
+
+    console.log('👆 Manual scroll detected. Calculated index:', calculatedIndex);
 
     // Only update if index actually changed to avoid unnecessary re-renders
     if (calculatedIndex !== currentIndex) {

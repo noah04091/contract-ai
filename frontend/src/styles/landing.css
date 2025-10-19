@@ -3014,37 +3014,39 @@ a {
   }
 }
 
-/* Desktop: Grid Layout - ALLE Cards sichtbar, KEIN Slider */
+/* Desktop: Slider mit 3 sichtbaren Cards */
 @media (min-width: 1025px) {
-  /* Verstecke Slider-Navigation auf Desktop */
+  /* Zeige Slider-Navigation auf Desktop */
   .slider-nav {
-    display: none !important;
+    display: flex !important;
   }
 
-  /* Verstecke Slider-Dots auf Desktop */
+  /* Zeige Slider-Dots auf Desktop */
   .slider-dots {
-    display: none !important;
+    display: flex !important;
   }
 
-  /* Slider Track wird zum Grid Container */
+  /* Slider Track bleibt Flex Container für echtes Scrolling */
   .slider-track {
-    display: grid !important;
-    grid-template-columns: repeat(4, 1fr); /* 4 Testimonials nebeneinander */
-    gap: 30px;
-    overflow-x: visible !important;
+    display: flex !important;
+    overflow-x: auto !important; /* Scrolling aktiviert */
     overflow-y: visible !important;
-    scroll-snap-type: none !important;
-    padding: 2rem 0 !important; /* Nur vertikal, KEIN horizontales Padding */
-    margin: 0 !important; /* Kein negativer Margin */
+    scroll-snap-type: x mandatory !important;
+    scroll-behavior: smooth !important;
+    gap: 20px;
+    padding: 2rem 20px !important;
+    margin: 0 !important;
   }
 
-  /* Slides werden zu Grid Items */
+  /* Jede Slide zeigt genau 1/3 der Container-Breite (3 Testimonials sichtbar) */
   .testimonial-slide {
-    width: 100% !important;
-    padding: 0 !important; /* Kein Padding - Grid gap regelt Abstand */
+    flex: 0 0 calc(33.333% - 14px) !important; /* 3 visible, gap berücksichtigt */
+    width: calc(33.333% - 14px) !important;
+    min-width: calc(33.333% - 14px) !important;
+    padding: 0 !important;
     margin: 0 !important;
     display: flex !important;
-    scroll-snap-align: none !important;
+    scroll-snap-align: start !important;
   }
 
   .testimonial-card {
