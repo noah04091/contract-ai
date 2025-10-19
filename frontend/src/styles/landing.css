@@ -3026,6 +3026,37 @@ a {
     display: flex !important;
   }
 
+  /* Slider Container mit Fade-Overlays für sanften Übergang */
+  .slider-container {
+    padding: 2rem 0 3rem 0 !important; /* Mehr Padding unten für Schatten */
+  }
+
+  /* Fade-Overlay Links */
+  .slider-container::before {
+    content: '';
+    position: absolute;
+    left: 60px; /* Nach den Nav-Buttons */
+    top: 0;
+    bottom: 0;
+    width: 80px;
+    background: linear-gradient(to right, var(--bg-color), transparent);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* Fade-Overlay Rechts */
+  .slider-container::after {
+    content: '';
+    position: absolute;
+    right: 60px; /* Vor den Nav-Buttons */
+    top: 0;
+    bottom: 0;
+    width: 80px;
+    background: linear-gradient(to left, var(--bg-color), transparent);
+    pointer-events: none;
+    z-index: 1;
+  }
+
   /* Slider Track bleibt Flex Container für echtes Scrolling */
   .slider-track {
     display: flex !important;
@@ -3034,7 +3065,7 @@ a {
     scroll-snap-type: x mandatory !important;
     scroll-behavior: smooth !important;
     gap: 20px;
-    padding: 2rem 20px !important;
+    padding: 2rem 20px 3rem 20px !important; /* Mehr padding-bottom für Schatten */
     margin: 0 !important;
   }
 
@@ -3044,7 +3075,7 @@ a {
     width: calc(33.333% - 14px) !important;
     min-width: calc(33.333% - 14px) !important;
     padding: 0 !important;
-    margin: 0 !important;
+    margin: 0 0 1rem 0 !important; /* Margin unten für Schatten-Space */
     display: flex !important;
     scroll-snap-align: start !important;
   }
