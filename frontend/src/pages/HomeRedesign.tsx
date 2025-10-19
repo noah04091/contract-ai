@@ -718,10 +718,11 @@ const HomeRedesign = () => {
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 500 400"
                   style={{
-                    width: '100%',
+                    width: '120%',
                     height: 'auto',
                     display: 'block',
-                    background: 'transparent'
+                    background: 'transparent',
+                    transform: 'translateX(-10%)'
                   }}
                 >
                   <defs>
@@ -734,11 +735,11 @@ const HomeRedesign = () => {
                     </filter>
                   </defs>
 
-                  <circle cx="130" cy="90" r="8" fill="#ec4899" opacity="0.6"/>
-                  <circle cx="400" cy="150" r="6" fill="#10b981" opacity="0.6"/>
-                  <circle cx="370" cy="320" r="9" fill="#f97316" opacity="0.6"/>
-                  <circle cx="110" cy="290" r="7" fill="#a855f7" opacity="0.6"/>
-                  <circle cx="420" cy="250" r="5" fill="#3b82f6" opacity="0.6"/>
+                  <circle cx="130" cy="90" r="8" fill="#ec4899" opacity="0.6" className="floating-dot floating-dot-1"/>
+                  <circle cx="400" cy="150" r="6" fill="#10b981" opacity="0.6" className="floating-dot floating-dot-2"/>
+                  <circle cx="370" cy="320" r="9" fill="#f97316" opacity="0.6" className="floating-dot floating-dot-3"/>
+                  <circle cx="110" cy="290" r="7" fill="#a855f7" opacity="0.6" className="floating-dot floating-dot-4"/>
+                  <circle cx="420" cy="250" r="5" fill="#3b82f6" opacity="0.6" className="floating-dot floating-dot-5"/>
 
                   <g transform="translate(175, 120)" filter="url(#shadow-v2)">
                     <rect x="0" y="30" width="150" height="110" rx="10" fill="url(#folder-gradient-v2)"/>

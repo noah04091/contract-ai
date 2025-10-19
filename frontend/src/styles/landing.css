@@ -2240,6 +2240,48 @@ a {
   display: block;
 }
 
+/* Animierte bunte Punkte */
+@keyframes float-and-pulse {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateY(-15px) scale(1.2);
+    opacity: 0.8;
+  }
+}
+
+.floating-dot {
+  animation: float-and-pulse 4s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.floating-dot-1 {
+  animation-duration: 3.5s;
+  animation-delay: 0s;
+}
+
+.floating-dot-2 {
+  animation-duration: 4.2s;
+  animation-delay: 0.5s;
+}
+
+.floating-dot-3 {
+  animation-duration: 3.8s;
+  animation-delay: 1s;
+}
+
+.floating-dot-4 {
+  animation-duration: 4.5s;
+  animation-delay: 1.5s;
+}
+
+.floating-dot-5 {
+  animation-duration: 3.2s;
+  animation-delay: 0.8s;
+}
+
 /* Responsive Design - Mobile */
 @media (max-width: 767px) {
   .cm-grid {
