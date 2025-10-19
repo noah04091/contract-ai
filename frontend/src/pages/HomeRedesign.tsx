@@ -713,16 +713,10 @@ const HomeRedesign = () => {
                   </Link>
                 </div>
               </div>
-              <div className="cm-visual" aria-hidden="true">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
-                  {/* Ultra-visible test SVG - blue background with white text and colored circles */}
-                  <rect x="0" y="0" width="400" height="300" fill="#0066FF"/>
-                  <text x="200" y="150" fontSize="48" fill="white" textAnchor="middle" dominantBaseline="middle" fontWeight="bold">TEST SVG</text>
-                  <circle cx="50" cy="50" r="30" fill="#FF0000"/>
-                  <circle cx="350" cy="50" r="30" fill="#00FF00"/>
-                  <circle cx="50" cy="250" r="30" fill="#FFFF00"/>
-                  <circle cx="350" cy="250" r="30" fill="#FF00FF"/>
-                </svg>
+              <div className="cm-visual" aria-hidden="true" style={{background: 'magenta', minHeight: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '10px solid yellow'}}>
+                <div style={{background: '#0066FF', color: 'white', padding: '60px', fontSize: '32px', fontWeight: 'bold', borderRadius: '12px'}}>
+                  TEST - SEHEN SIE MICH?
+                </div>
               </div>
             </div>
           </div>
