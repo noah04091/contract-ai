@@ -1084,7 +1084,7 @@ const HomeRedesign = () => {
                     </div>
                     <div className="image-container">
                       {/* SVG Placeholder for Signature Feature - 16:9 aspect ratio, zoomed in */}
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="200 100 1520 855" preserveAspectRatio="xMidYMid slice" style={{background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)'}}>
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" preserveAspectRatio="xMidYMid meet" style={{background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)'}}>
                         <defs>
                           <linearGradient id="sig-gradient-1" x1="0%" y1="0%" x2="100%" y2="100%">
                             <stop offset="0%" stopColor="#14b8a6" stopOpacity="0.1"/>
