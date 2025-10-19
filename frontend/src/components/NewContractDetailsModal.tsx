@@ -1,6 +1,6 @@
 // 🎨 New Contract Details Modal - Professional contract viewer
 import React, { useState, useEffect } from 'react';
-import { X, FileText, BarChart3, Share2, Edit, Trash2, PenTool, Eye, Download, AlertCircle, CheckCircle, Clock, Users, XCircle } from 'lucide-react';
+import { X, FileText, BarChart3, Share2, Edit, Trash2, PenTool, Eye, Download, AlertCircle, CheckCircle, Clock, XCircle } from 'lucide-react';
 import styles from './ContractDetailModal.module.css'; // Reuse signature modal styles
 import SmartContractInfo from './SmartContractInfo';
 import ContractShareModal from './ContractShareModal';
@@ -131,7 +131,6 @@ interface NewContractDetailsModalProps {
 }
 
 type TabType = 'overview' | 'pdf' | 'analysis' | 'signature';
-type SignatureSubTabType = 'overview' | 'original' | 'signed' | 'history';
 
 const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
   contract: initialContract,
@@ -152,7 +151,6 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
   const [showSignatureModal, setShowSignatureModal] = useState(false);
 
   // Signature tab state
-  const [signatureSubTab, setSignatureSubTab] = useState<SignatureSubTabType>('overview');
   const [envelope, setEnvelope] = useState<EnvelopeDetails | null>(null);
   const [envelopeLoading, setEnvelopeLoading] = useState(false);
   const [envelopeError, setEnvelopeError] = useState<string | null>(null);
@@ -657,7 +655,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
     );
   };
 
-  // Render Signature Tab with nested sub-tabs
+  // Render Signature Tab - Clean scrollable sections (no sub-tabs)
   const renderSignatureTab = () => {
     if (envelopeLoading) {
       return (
@@ -703,11 +701,23 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
       );
     };
 
-    // Render signature overview sub-tab
-    const renderSignatureOverview = () => (
+    const eventIcons: Record<string, string> = {
+      CREATED: '📝',
+      SENT: '📤',
+      VIEWED: '👀',
+      SIGNED: '✍️',
+      DECLINED: '❌',
+      PDF_SEALED: '🔒',
+      COMPLETED: '✅',
+      EXPIRED: '⏰',
+      VOIDED: '🚫'
+    };
+
+    return (
       <div className={styles.tabContent}>
+        {/* Signatur-Details Section */}
         <div className={styles.section}>
-          <h3>📋 Vertragsdetails</h3>
+          <h3>📋 Signatur-Details</h3>
           <div className={styles.detailsGrid}>
             <div className={styles.detailItem}>
               <span className={styles.label}>Titel:</span>
@@ -747,13 +757,14 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
           </div>
 
           {envelope.message && (
-            <div className={styles.messageBox}>
+            <div className={styles.messageBox} style={{ marginTop: '1rem' }}>
               <strong>Nachricht an Unterzeichner:</strong>
               <p>{envelope.message}</p>
             </div>
           )}
         </div>
 
+        {/* Fortschritt Section */}
         <div className={styles.section}>
           <h3>📊 Signatur-Fortschritt</h3>
           <div className={styles.progressContainer}>
@@ -770,6 +781,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
           </div>
         </div>
 
+        {/* Unterzeichner Section */}
         <div className={styles.section}>
           <h3>👥 Unterzeichner ({envelope.signers.length})</h3>
           <div className={styles.signersGrid}>
@@ -808,141 +820,111 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
             ))}
           </div>
         </div>
-      </div>
-    );
 
-    // Render PDF viewer sub-tab
-    const renderSignaturePdfTab = (url: string | null, type: 'original' | 'signed') => {
-      if (!url) {
-        return (
-          <div className={styles.tabContent}>
-            <div className={styles.emptyState}>
-              <FileText size={64} />
-              <p>{type === 'signed' ? 'Kein signiertes PDF verfügbar' : 'PDF nicht gefunden'}</p>
-              {type === 'signed' && envelope.status !== 'COMPLETED' && (
-                <span className={styles.hint}>Das signierte PDF wird erstellt, sobald alle Parteien signiert haben.</span>
-              )}
-            </div>
-          </div>
-        );
-      }
+        {/* PDF-Dokumente Section */}
+        <div className={styles.section}>
+          <h3>📄 PDF-Dokumente</h3>
 
-      return (
-        <div className={styles.tabContent}>
-          <div className={styles.pdfViewerContainer}>
-            <iframe
-              src={url}
-              className={styles.pdfViewer}
-              title={`${type === 'signed' ? 'Signiertes' : 'Original'} PDF`}
-            />
-            <div className={styles.pdfActions}>
-              <a href={url} download className={styles.downloadButton}>
-                📥 {type === 'signed' ? 'Signiertes PDF' : 'Original PDF'} herunterladen
-              </a>
-            </div>
-          </div>
-        </div>
-      );
-    };
-
-    // Render history timeline sub-tab
-    const renderSignatureHistoryTab = () => {
-      const eventIcons: Record<string, string> = {
-        CREATED: '📝',
-        SENT: '📤',
-        VIEWED: '👀',
-        SIGNED: '✍️',
-        DECLINED: '❌',
-        PDF_SEALED: '🔒',
-        COMPLETED: '✅',
-        EXPIRED: '⏰',
-        VOIDED: '🚫'
-      };
-
-      return (
-        <div className={styles.tabContent}>
-          <div className={styles.section}>
-            <h3>📅 Signatur-Historie</h3>
-            <div className={styles.timeline}>
-              {envelope.auditTrail && envelope.auditTrail.length > 0 ? (
-                envelope.auditTrail.map((event, index) => (
-                  <div key={index} className={styles.timelineItem}>
-                    <div className={styles.timelineIcon}>
-                      {eventIcons[event.action] || '📌'}
-                    </div>
-                    <div className={styles.timelineContent}>
-                      <div className={styles.timelineHeader}>
-                        <strong>{event.action.replace(/_/g, ' ')}</strong>
-                        <span className={styles.timelineTimestamp}>{formatDateTime(event.timestamp)}</span>
-                      </div>
-                      {event.details && (
-                        <div className={styles.timelineDetails}>
-                          {event.details.email && <p>👤 {event.details.email}</p>}
-                          {event.details.ip && <p>🌐 IP: {event.details.ip}</p>}
-                          {event.details.reason && <p>💬 {event.details.reason}</p>}
-                          {event.details.signedCount !== undefined && (
-                            <p>📊 {event.details.signedCount}/{event.details.totalSigners} Unterzeichner</p>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className={styles.emptyState}>
-                  <Clock size={64} />
-                  <p>Keine Historie verfügbar</p>
+          {/* Original PDF */}
+          <div style={{ marginBottom: '2rem' }}>
+            <h4 style={{ fontSize: '0.95rem', fontWeight: 600, marginBottom: '0.75rem', color: '#4b5563' }}>
+              📄 Original PDF
+            </h4>
+            {originalPdfUrl ? (
+              <div>
+                <div className={styles.pdfViewerContainer} style={{ maxHeight: '400px' }}>
+                  <iframe
+                    src={originalPdfUrl}
+                    className={styles.pdfViewer}
+                    title="Original PDF"
+                    style={{ height: '400px' }}
+                  />
                 </div>
-              )}
-            </div>
+                <div className={styles.pdfActions} style={{ marginTop: '0.75rem' }}>
+                  <a href={originalPdfUrl} download className={styles.downloadButton}>
+                    <Download size={16} />
+                    Original PDF herunterladen
+                  </a>
+                </div>
+              </div>
+            ) : (
+              <div className={styles.messageBox} style={{ textAlign: 'center', padding: '2rem', background: '#f9fafb' }}>
+                <FileText size={32} style={{ margin: '0 auto 0.5rem', opacity: 0.5 }} />
+                <p style={{ margin: 0, color: '#6b7280' }}>Original PDF nicht verfügbar</p>
+              </div>
+            )}
+          </div>
+
+          {/* Signiertes PDF */}
+          <div>
+            <h4 style={{ fontSize: '0.95rem', fontWeight: 600, marginBottom: '0.75rem', color: '#4b5563' }}>
+              ✍️ Signiertes PDF
+            </h4>
+            {signedPdfUrl ? (
+              <div>
+                <div className={styles.pdfViewerContainer} style={{ maxHeight: '400px' }}>
+                  <iframe
+                    src={signedPdfUrl}
+                    className={styles.pdfViewer}
+                    title="Signiertes PDF"
+                    style={{ height: '400px' }}
+                  />
+                </div>
+                <div className={styles.pdfActions} style={{ marginTop: '0.75rem' }}>
+                  <a href={signedPdfUrl} download className={styles.downloadButton}>
+                    <Download size={16} />
+                    Signiertes PDF herunterladen
+                  </a>
+                </div>
+              </div>
+            ) : (
+              <div className={styles.messageBox} style={{ textAlign: 'center', padding: '2rem', background: '#f9fafb' }}>
+                <CheckCircle size={32} style={{ margin: '0 auto 0.5rem', opacity: 0.5 }} />
+                <p style={{ margin: 0, color: '#6b7280' }}>
+                  {envelope.status !== 'COMPLETED'
+                    ? 'Das signierte PDF wird erstellt, sobald alle Parteien signiert haben.'
+                    : 'Signiertes PDF nicht verfügbar'}
+                </p>
+              </div>
+            )}
           </div>
         </div>
-      );
-    };
 
-    // Main signature tab with nested sub-tabs
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-        {/* Signature Sub-Tab Navigation */}
-        <div className={styles.tabNav} style={{ borderTop: '1px solid #e5e7eb', marginTop: '0' }}>
-          <button
-            className={`${styles.tabButton} ${signatureSubTab === 'overview' ? styles.tabActive : ''}`}
-            onClick={() => setSignatureSubTab('overview')}
-          >
-            <Users size={18} />
-            <span>Übersicht</span>
-          </button>
-          <button
-            className={`${styles.tabButton} ${signatureSubTab === 'original' ? styles.tabActive : ''}`}
-            onClick={() => setSignatureSubTab('original')}
-          >
-            <FileText size={18} />
-            <span>Original PDF</span>
-          </button>
-          <button
-            className={`${styles.tabButton} ${signatureSubTab === 'signed' ? styles.tabActive : ''}`}
-            onClick={() => setSignatureSubTab('signed')}
-            disabled={!envelope.s3KeySealed}
-          >
-            <CheckCircle size={18} />
-            <span>Signiertes PDF</span>
-            {!envelope.s3KeySealed && <span className={styles.tabDisabled}>(nicht verfügbar)</span>}
-          </button>
-          <button
-            className={`${styles.tabButton} ${signatureSubTab === 'history' ? styles.tabActive : ''}`}
-            onClick={() => setSignatureSubTab('history')}
-          >
-            <Clock size={18} />
-            <span>Historie</span>
-          </button>
-        </div>
-
-        {/* Signature Sub-Tab Content */}
-        <div style={{ flex: 1, overflow: 'auto' }}>
-          {signatureSubTab === 'overview' && renderSignatureOverview()}
-          {signatureSubTab === 'original' && renderSignaturePdfTab(originalPdfUrl, 'original')}
-          {signatureSubTab === 'signed' && renderSignaturePdfTab(signedPdfUrl, 'signed')}
-          {signatureSubTab === 'history' && renderSignatureHistoryTab()}
+        {/* Historie Section */}
+        <div className={styles.section}>
+          <h3>📅 Signatur-Historie</h3>
+          <div className={styles.timeline}>
+            {envelope.auditTrail && envelope.auditTrail.length > 0 ? (
+              envelope.auditTrail.map((event, index) => (
+                <div key={index} className={styles.timelineItem}>
+                  <div className={styles.timelineIcon}>
+                    {eventIcons[event.action] || '📌'}
+                  </div>
+                  <div className={styles.timelineContent}>
+                    <div className={styles.timelineHeader}>
+                      <strong>{event.action.replace(/_/g, ' ')}</strong>
+                      <span className={styles.timelineTimestamp}>{formatDateTime(event.timestamp)}</span>
+                    </div>
+                    {event.details && (
+                      <div className={styles.timelineDetails}>
+                        {event.details.email && <p>👤 {event.details.email}</p>}
+                        {event.details.ip && <p>🌐 IP: {event.details.ip}</p>}
+                        {event.details.reason && <p>💬 {event.details.reason}</p>}
+                        {event.details.signedCount !== undefined && (
+                          <p>📊 {event.details.signedCount}/{event.details.totalSigners} Unterzeichner</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className={styles.emptyState}>
+                <Clock size={64} />
+                <p>Keine Historie verfügbar</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     );
