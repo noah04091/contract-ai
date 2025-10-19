@@ -530,33 +530,30 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
       </div>
 
       {/* Sub-Modals */}
-      {showShareModal && (
-        <ContractShareModal
-          contract={contract}
-          onClose={() => setShowShareModal(false)}
-        />
-      )}
+      <ContractShareModal
+        contract={contract}
+        onClose={() => setShowShareModal(false)}
+        show={showShareModal}
+      />
 
-      {showEditModal && (
-        <ContractEditModal
-          contract={contract}
-          onClose={() => setShowEditModal(false)}
-          onSave={async (updatedContract) => {
-            setContract(updatedContract);
-            if (onEdit) onEdit(updatedContract._id);
-            setShowEditModal(false);
-          }}
-        />
-      )}
+      <ContractEditModal
+        contract={contract}
+        onClose={() => setShowEditModal(false)}
+        onUpdate={(updatedContract: Contract) => {
+          setContract(updatedContract);
+          if (onEdit) onEdit(updatedContract._id);
+          setShowEditModal(false);
+        }}
+        show={showEditModal}
+      />
 
-      {showSignatureModal && (
+      {contract.s3Key && (
         <SignatureModal
-          contract={contract}
+          show={showSignatureModal}
           onClose={() => setShowSignatureModal(false)}
-          onSuccess={() => {
-            setShowSignatureModal(false);
-            if (onEdit) onEdit(contract._id);
-          }}
+          contractId={contract._id}
+          contractName={contract.name}
+          contractS3Key={contract.s3Key}
         />
       )}
     </>
