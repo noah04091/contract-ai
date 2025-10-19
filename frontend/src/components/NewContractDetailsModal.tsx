@@ -560,6 +560,37 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
     );
   };
 
+  // Download Analysis as PDF
+  const handleDownloadAnalysisPDF = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/contracts/${contract._id}/analysis-report`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        throw new Error('Fehler beim Generieren des Analyse-Reports');
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${contract.name}_Analyse.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading analysis PDF:', error);
+      alert('Fehler beim Herunterladen des Analyse-Reports');
+    }
+  };
+
   // Render Analysis Tab
   const renderAnalysisTab = () => {
     const analysis = contract.analysis;
@@ -583,6 +614,18 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
 
     return (
       <div className={styles.tabContent}>
+        {/* Download Button */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1.5rem' }}>
+          <button
+            className={styles.downloadButton}
+            onClick={handleDownloadAnalysisPDF}
+            style={{ padding: '10px 20px', fontSize: '0.9375rem' }}
+          >
+            <Download size={18} />
+            <span>Analyse als PDF herunterladen</span>
+          </button>
+        </div>
+
         {/* Contract Score */}
         {hasScore && (
           <div className={styles.section}>
@@ -618,6 +661,16 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
             <h3>⚖️ Rechtliche Bewertung</h3>
             <div className={styles.messageBox}>
               <p>{analysis.legalAssessment}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Comparison */}
+        {analysis?.comparison && (
+          <div className={styles.section}>
+            <h3>🔍 Vergleich & Analyse</h3>
+            <div className={styles.messageBox}>
+              <p>{analysis.comparison}</p>
             </div>
           </div>
         )}
