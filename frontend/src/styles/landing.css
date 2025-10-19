@@ -3100,25 +3100,25 @@ a {
     padding: 0 !important; /* Kein Padding */
   }
 
-  /* Dots SEHR klein auf Mobile - Maximum Spezifität */
+  /* Dots optimal auf Mobile - 6px */
   .testimonials-slider .slider-dots {
     margin-top: 20px !important;
-    gap: 4px !important;
+    gap: 6px !important;
   }
 
   .testimonials-slider .slider-dot {
-    width: 4px !important;
-    height: 4px !important;
-    min-width: 4px !important;
-    min-height: 4px !important;
-    max-width: 4px !important;
-    max-height: 4px !important;
+    width: 6px !important;
+    height: 6px !important;
+    min-width: 6px !important;
+    min-height: 6px !important;
+    max-width: 6px !important;
+    max-height: 6px !important;
   }
 
   .testimonials-slider .slider-dot.active {
-    transform: scale(1.5) !important;
-    width: 4px !important;
-    height: 4px !important;
+    transform: scale(1.3) !important;
+    width: 6px !important;
+    height: 6px !important;
   }
 
   /* Nav Buttons verstecken auf Mobile (optional, oder kleiner machen) */
@@ -3141,10 +3141,10 @@ a {
     mask-image: none !important;
   }
 
-  /* Testimonial Slide: 90% Breite für weniger Peek, mehr Edge-to-Edge */
+  /* Testimonial Slide: 95% Breite für maximales Edge-to-Edge */
   .testimonial-slide {
-    flex: 0 0 90% !important;
-    width: 90% !important;
+    flex: 0 0 95% !important;
+    width: 95% !important;
     max-width: none !important;
     padding: 0 !important;
     margin: 0 !important;
@@ -3152,14 +3152,14 @@ a {
     display: flex !important;
   }
 
-  /* Erste Karte: Kleiner Margin links */
+  /* Erste Karte: Minimaler Margin links (2.5%) */
   .testimonial-slide:first-child {
-    margin-left: 5% !important; /* Weniger Abstand = mehr Edge-to-Edge */
+    margin-left: 2.5% !important; /* Fast am Rand */
   }
 
-  /* Letzte Karte: Kleiner Margin rechts */
+  /* Letzte Karte: Minimaler Margin rechts (2.5%) */
   .testimonial-slide:last-child {
-    margin-right: 5% !important;
+    margin-right: 2.5% !important; /* Fast am Rand */
   }
 
   /* Testimonial Card: Minimale Margins für Edge-to-Edge */
@@ -3217,22 +3217,22 @@ a {
   
   .testimonials-slider .slider-dots {
     margin-top: 20px !important;
-    gap: 4px !important;
+    gap: 6px !important;
   }
 
   .testimonials-slider .slider-dot {
-    width: 4px !important;
-    height: 4px !important;
-    min-width: 4px !important;
-    min-height: 4px !important;
-    max-width: 4px !important;
-    max-height: 4px !important;
+    width: 6px !important;
+    height: 6px !important;
+    min-width: 6px !important;
+    min-height: 6px !important;
+    max-width: 6px !important;
+    max-height: 6px !important;
   }
 
   .testimonials-slider .slider-dot.active {
-    transform: scale(1.5) !important; /* Etwas größer bei aktiv */
-    width: 4px !important;
-    height: 4px !important;
+    transform: scale(1.3) !important; /* Etwas größer bei aktiv */
+    width: 6px !important;
+    height: 6px !important;
   }
 }
 
