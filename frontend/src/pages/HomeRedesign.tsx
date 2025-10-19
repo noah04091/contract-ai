@@ -713,104 +713,56 @@ const HomeRedesign = () => {
                   </Link>
                 </div>
               </div>
-              <div className="cm-visual">
+              <div className="cm-visual" style={{background: 'transparent', padding: '0'}}>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 600 450"
+                  viewBox="0 0 500 400"
                   style={{
                     width: '100%',
                     height: 'auto',
-                    display: 'block'
+                    display: 'block',
+                    background: 'transparent'
                   }}
                 >
                   <defs>
-                    <linearGradient id="folder-main-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <linearGradient id="folder-gradient-v2" x1="0%" y1="0%" x2="0%" y2="100%">
                       <stop offset="0%" style={{stopColor: '#3b82f6', stopOpacity: 1}} />
-                      <stop offset="100%" style={{stopColor: '#1d4ed8', stopOpacity: 1}} />
+                      <stop offset="100%" style={{stopColor: '#2563eb', stopOpacity: 1}} />
                     </linearGradient>
-                    <linearGradient id="folder-small-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" style={{stopColor: '#60a5fa', stopOpacity: 1}} />
-                      <stop offset="100%" style={{stopColor: '#3b82f6', stopOpacity: 1}} />
-                    </linearGradient>
-                    <linearGradient id="cloud-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" style={{stopColor: '#93c5fd', stopOpacity: 1}} />
-                      <stop offset="100%" style={{stopColor: '#3b82f6', stopOpacity: 1}} />
-                    </linearGradient>
-                    <filter id="shadow">
-                      <feDropShadow dx="0" dy="4" stdDeviation="8" floodOpacity="0.15"/>
+                    <filter id="shadow-v2">
+                      <feDropShadow dx="0" dy="4" stdDeviation="6" floodOpacity="0.12"/>
                     </filter>
                   </defs>
 
-                  <circle cx="150" cy="100" r="10" fill="#ec4899" opacity="0.6"/>
-                  <circle cx="480" cy="180" r="8" fill="#10b981" opacity="0.6"/>
-                  <circle cx="450" cy="350" r="12" fill="#f97316" opacity="0.6"/>
-                  <circle cx="120" cy="340" r="9" fill="#a855f7" opacity="0.6"/>
-                  <circle cx="510" cy="280" r="7" fill="#3b82f6" opacity="0.6"/>
-                  <circle cx="90" cy="200" r="6" fill="#f472b6" opacity="0.6"/>
+                  <circle cx="130" cy="90" r="8" fill="#ec4899" opacity="0.6"/>
+                  <circle cx="400" cy="150" r="6" fill="#10b981" opacity="0.6"/>
+                  <circle cx="370" cy="320" r="9" fill="#f97316" opacity="0.6"/>
+                  <circle cx="110" cy="290" r="7" fill="#a855f7" opacity="0.6"/>
+                  <circle cx="420" cy="250" r="5" fill="#3b82f6" opacity="0.6"/>
 
-                  <g transform="translate(70, 60)" filter="url(#shadow)">
-                    <rect x="0" y="25" width="140" height="95" rx="8" fill="url(#folder-small-gradient)"/>
-                    <path d="M0 25 L0 15 Q0 10 5 10 L38 10 L48 20 L135 20 Q140 20 140 25" fill="#93c5fd"/>
-                    <rect x="15" y="45" width="22" height="30" rx="3" fill="#ffffff" opacity="0.9"/>
-                    <rect x="42" y="50" width="22" height="30" rx="3" fill="#f0f9ff" opacity="0.85"/>
-                    <rect x="69" y="55" width="22" height="30" rx="3" fill="#dbeafe" opacity="0.8"/>
-                    <line x1="19" y1="53" x2="33" y2="53" stroke="#3b82f6" strokeWidth="2"/>
-                    <line x1="19" y1="59" x2="33" y2="59" stroke="#3b82f6" strokeWidth="2"/>
-                    <line x1="19" y1="65" x2="30" y2="65" stroke="#3b82f6" strokeWidth="2" opacity="0.6"/>
+                  <g transform="translate(175, 120)" filter="url(#shadow-v2)">
+                    <rect x="0" y="30" width="150" height="110" rx="10" fill="url(#folder-gradient-v2)"/>
+                    <path d="M0 30 L0 18 Q0 12 6 12 L45 12 L57 24 L144 24 Q150 24 150 30" fill="#60a5fa"/>
+
+                    <rect x="25" y="60" width="30" height="40" rx="4" fill="#ffffff" opacity="0.95"/>
+                    <rect x="60" y="65" width="30" height="40" rx="4" fill="#f0f9ff" opacity="0.9"/>
+                    <rect x="95" y="70" width="30" height="40" rx="4" fill="#dbeafe" opacity="0.85"/>
+
+                    <line x1="30" y1="70" x2="50" y2="70" stroke="#2563eb" strokeWidth="2.5"/>
+                    <line x1="30" y1="78" x2="50" y2="78" stroke="#2563eb" strokeWidth="2.5"/>
+                    <line x1="30" y1="86" x2="50" y2="86" stroke="#2563eb" strokeWidth="2.5"/>
+                    <line x1="30" y1="94" x2="45" y2="94" stroke="#2563eb" strokeWidth="2.5" opacity="0.6"/>
                   </g>
 
-                  <g transform="translate(200, 140)" filter="url(#shadow)">
-                    <rect x="0" y="35" width="180" height="130" rx="12" fill="url(#folder-main-gradient)"/>
-                    <path d="M0 35 L0 20 Q0 12 8 12 L55 12 L70 27 L172 27 Q180 27 180 35" fill="#60a5fa"/>
-
-                    <rect x="20" y="65" width="35" height="48" rx="4" fill="#ffffff" opacity="0.95"/>
-                    <rect x="62" y="70" width="35" height="48" rx="4" fill="#f0f9ff" opacity="0.9"/>
-                    <rect x="104" y="75" width="35" height="48" rx="4" fill="#dbeafe" opacity="0.85"/>
-                    <rect x="146" y="80" width="18" height="38" rx="3" fill="#e0f2fe" opacity="0.75"/>
-
-                    <line x1="26" y1="75" x2="49" y2="75" stroke="#1d4ed8" strokeWidth="2.5"/>
-                    <line x1="26" y1="83" x2="49" y2="83" stroke="#1d4ed8" strokeWidth="2.5"/>
-                    <line x1="26" y1="91" x2="49" y2="91" stroke="#1d4ed8" strokeWidth="2.5"/>
-                    <line x1="26" y1="99" x2="44" y2="99" stroke="#1d4ed8" strokeWidth="2.5" opacity="0.6"/>
-
-                    <rect x="25" y="130" width="16" height="8" rx="4" fill="#10b981"/>
-                    <rect x="45" y="130" width="20" height="8" rx="4" fill="#f59e0b"/>
-                    <rect x="69" y="130" width="18" height="8" rx="4" fill="#8b5cf6"/>
+                  <g transform="translate(360, 250)" filter="url(#shadow-v2)">
+                    <circle cx="20" cy="20" r="18" fill="none" stroke="#2563eb" strokeWidth="5"/>
+                    <line x1="32" y1="32" x2="45" y2="45" stroke="#2563eb" strokeWidth="5" strokeLinecap="round"/>
                   </g>
 
-                  <g transform="translate(420, 90)" filter="url(#shadow)">
-                    <rect x="0" y="20" width="120" height="80" rx="7" fill="url(#folder-small-gradient)"/>
-                    <path d="M0 20 L0 12 Q0 8 4 8 L32 8 L40 16 L116 16 Q120 16 120 20" fill="#93c5fd"/>
-                    <rect x="12" y="35" width="20" height="26" rx="3" fill="#ffffff" opacity="0.9"/>
-                    <rect x="36" y="38" width="20" height="26" rx="3" fill="#f0f9ff" opacity="0.85"/>
-                    <rect x="60" y="41" width="20" height="26" rx="3" fill="#dbeafe" opacity="0.8"/>
-                    <line x1="16" y1="42" x2="28" y2="42" stroke="#3b82f6" strokeWidth="1.8"/>
-                    <line x1="16" y1="48" x2="28" y2="48" stroke="#3b82f6" strokeWidth="1.8"/>
-                    <line x1="16" y1="54" x2="25" y2="54" stroke="#3b82f6" strokeWidth="1.8" opacity="0.6"/>
-                  </g>
-
-                  <g transform="translate(440, 240)" filter="url(#shadow)">
-                    <ellipse cx="50" cy="25" rx="50" ry="25" fill="url(#cloud-gradient)" opacity="0.9"/>
-                    <ellipse cx="30" cy="30" rx="35" ry="22" fill="#93c5fd" opacity="0.8"/>
-                    <ellipse cx="70" cy="32" rx="30" ry="20" fill="#60a5fa" opacity="0.85"/>
-                    <circle cx="50" cy="28" r="8" fill="#ffffff" opacity="0.4"/>
-                  </g>
-
-                  <g transform="translate(90, 300)" filter="url(#shadow)">
-                    <circle cx="22" cy="22" r="20" fill="none" stroke="#3b82f6" strokeWidth="5"/>
-                    <line x1="36" y1="36" x2="50" y2="50" stroke="#3b82f6" strokeWidth="5" strokeLinecap="round"/>
-                  </g>
-
-                  <g transform="translate(480, 180)">
-                    <rect x="0" y="15" width="38" height="30" rx="6" fill="#10b981" filter="url(#shadow)"/>
-                    <path d="M10 15 L10 8 Q10 0 19 0 Q28 0 28 8 L28 15" fill="none" stroke="#10b981" strokeWidth="4.5"/>
-                    <circle cx="19" cy="27" r="4.5" fill="#ffffff"/>
-                  </g>
-
-                  <g transform="translate(320, 320)">
-                    <rect x="0" y="0" width="60" height="8" rx="4" fill="#3b82f6" opacity="0.7"/>
-                    <rect x="0" y="12" width="80" height="8" rx="4" fill="#3b82f6" opacity="0.5"/>
-                    <rect x="0" y="24" width="50" height="8" rx="4" fill="#3b82f6" opacity="0.6"/>
+                  <g transform="translate(100, 200)" filter="url(#shadow-v2)">
+                    <rect x="0" y="15" width="35" height="28" rx="5" fill="#10b981"/>
+                    <path d="M9 15 L9 9 Q9 0 17.5 0 Q26 0 26 9 L26 15" fill="none" stroke="#10b981" strokeWidth="4"/>
+                    <circle cx="17.5" cy="26" r="4" fill="#ffffff"/>
                   </g>
                 </svg>
               </div>
