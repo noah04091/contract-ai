@@ -15,7 +15,6 @@ import legalPulseImg from "../assets/Legal Pulse.png";
 import optimierungImg from "../assets/Optimierung.png";
 import vergleichImg from "../assets/Vergleich.png";
 import dsgvoBadge from "../assets/dsgvo-badge.png";
-import dashboardImg from "../assets/screenshot-dashboard.png";
 import trustpilotBadge from "../assets/trustpilot-badge.png";
 
 
@@ -714,21 +713,65 @@ const HomeRedesign = () => {
                   </Link>
                 </div>
               </div>
-              <div className="cm-visual" style={{background: '#f0f0f0', padding: '20px'}}>
-                <img
-                  src={dashboardImg}
-                  alt="Contract AI Dashboard - Vertragsverwaltung"
+              <div className="cm-visual">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 500 400"
                   style={{
                     width: '100%',
-                    maxWidth: '100%',
                     height: 'auto',
                     display: 'block',
-                    opacity: '1',
-                    visibility: 'visible',
                     borderRadius: '12px',
-                    boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
+                    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15)'
                   }}
-                />
+                >
+                  <defs>
+                    <linearGradient id="bg-gradient-cm" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" style={{stopColor: '#dbeafe', stopOpacity: 1}} />
+                      <stop offset="100%" style={{stopColor: '#e9d5ff', stopOpacity: 1}} />
+                    </linearGradient>
+                    <linearGradient id="folder-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" style={{stopColor: '#3b82f6', stopOpacity: 1}} />
+                      <stop offset="100%" style={{stopColor: '#2563eb', stopOpacity: 1}} />
+                    </linearGradient>
+                  </defs>
+
+                  <rect width="500" height="400" fill="url(#bg-gradient-cm)"/>
+
+                  <circle cx="250" cy="200" r="120" fill="#93c5fd" opacity="0.4"/>
+                  <circle cx="350" cy="130" r="80" fill="#c4b5fd" opacity="0.4"/>
+
+                  <g transform="translate(175, 120)">
+                    <rect x="0" y="30" width="150" height="110" rx="10" fill="url(#folder-gradient)"/>
+                    <path d="M0 30 L0 18 Q0 12 6 12 L45 12 L57 24 L144 24 Q150 24 150 30" fill="#60a5fa"/>
+
+                    <rect x="25" y="60" width="30" height="40" rx="4" fill="#ffffff" opacity="0.95"/>
+                    <rect x="60" y="65" width="30" height="40" rx="4" fill="#f0f9ff" opacity="0.9"/>
+                    <rect x="95" y="70" width="30" height="40" rx="4" fill="#dbeafe" opacity="0.85"/>
+
+                    <line x1="30" y1="70" x2="50" y2="70" stroke="#2563eb" strokeWidth="2.5"/>
+                    <line x1="30" y1="78" x2="50" y2="78" stroke="#2563eb" strokeWidth="2.5"/>
+                    <line x1="30" y1="86" x2="50" y2="86" stroke="#2563eb" strokeWidth="2.5"/>
+                    <line x1="30" y1="94" x2="45" y2="94" stroke="#2563eb" strokeWidth="2.5" opacity="0.6"/>
+                  </g>
+
+                  <g transform="translate(360, 250)">
+                    <circle cx="20" cy="20" r="18" fill="none" stroke="#2563eb" strokeWidth="5"/>
+                    <line x1="32" y1="32" x2="45" y2="45" stroke="#2563eb" strokeWidth="5" strokeLinecap="round"/>
+                  </g>
+
+                  <g transform="translate(100, 200)">
+                    <rect x="0" y="15" width="35" height="28" rx="5" fill="#10b981"/>
+                    <path d="M9 15 L9 9 Q9 0 17.5 0 Q26 0 26 9 L26 15" fill="none" stroke="#10b981" strokeWidth="4"/>
+                    <circle cx="17.5" cy="26" r="4" fill="#ffffff"/>
+                  </g>
+
+                  <circle cx="130" cy="90" r="8" fill="#ec4899"/>
+                  <circle cx="400" cy="150" r="6" fill="#10b981"/>
+                  <circle cx="370" cy="320" r="9" fill="#f97316"/>
+                  <circle cx="110" cy="290" r="7" fill="#a855f7"/>
+                  <circle cx="420" cy="250" r="5" fill="#3b82f6"/>
+                </svg>
               </div>
             </div>
           </div>
