@@ -475,7 +475,8 @@ router.get("/envelopes/:id", verifyToken, async (req, res) => {
         progressPercentage
       },
       // ✅ FIX: Keep audit trail for timeline display (field is 'audit' in model, not 'auditTrail')
-      auditTrail: envelope.audit || []
+      // Filter out invalid events (undefined or missing action field)
+      auditTrail: (envelope.audit || []).filter(event => event && event.action)
     };
 
     res.json({
