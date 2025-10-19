@@ -3056,10 +3056,6 @@ export default function Contracts() {
                 }
               }}
               onDelete={handleDeleteContract}
-              onOpenSignatureDetails={(envelopeId) => {
-                setShowDetails(false); // Close contract details view
-                setSelectedEnvelopeId(envelopeId); // Open signature details modal
-              }}
             />
           )}
 

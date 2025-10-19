@@ -1,11 +1,73 @@
 // 🎨 New Contract Details Modal - Professional contract viewer
 import React, { useState, useEffect } from 'react';
-import { X, FileText, BarChart3, Share2, Edit, Trash2, PenTool, Eye, Download, AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import { X, FileText, BarChart3, Share2, Edit, Trash2, PenTool, Eye, Download, AlertCircle, CheckCircle, Clock, Users, XCircle } from 'lucide-react';
 import styles from './ContractDetailModal.module.css'; // Reuse signature modal styles
 import SmartContractInfo from './SmartContractInfo';
 import ContractShareModal from './ContractShareModal';
 import ContractEditModal from './ContractEditModal';
 import SignatureModal from './SignatureModal';
+
+// Signature-related interfaces
+interface Signer {
+  _id: string;
+  name: string;
+  email: string;
+  role: string;
+  status: string;
+  order: number;
+  signedAt?: string;
+  declinedAt?: string;
+  declineReason?: string;
+  ip?: string;
+}
+
+interface AuditEvent {
+  action: string;
+  timestamp: string;
+  details?: {
+    userId?: string;
+    email?: string;
+    ip?: string;
+    reason?: string;
+    signedCount?: number;
+    totalSigners?: number;
+    [key: string]: string | number | boolean | undefined;
+  };
+}
+
+interface ContractInfo {
+  _id: string;
+  name: string;
+  status: string;
+  uploadDate: string;
+  s3Key: string;
+}
+
+interface EnvelopeDetails {
+  _id: string;
+  title: string;
+  message?: string;
+  status: string;
+  signingMode: string;
+  createdAt: string;
+  sentAt?: string;
+  completedAt?: string;
+  expiresAt: string;
+  s3Key: string;
+  s3KeySealed?: string;
+  pdfHashOriginal?: string;
+  pdfHashFinal?: string;
+  signers: Signer[];
+  auditTrail: AuditEvent[];
+  contractId: ContractInfo;
+  stats: {
+    signersTotal: number;
+    signersSigned: number;
+    signersDeclined: number;
+    signersPending: number;
+    progressPercentage: number;
+  };
+}
 
 interface Contract {
   _id: string;
@@ -66,18 +128,17 @@ interface NewContractDetailsModalProps {
   openEditModalDirectly?: boolean;
   onEdit?: (contractId: string) => void;
   onDelete?: (contractId: string, contractName: string) => void;
-  onOpenSignatureDetails?: (envelopeId: string) => void;
 }
 
-type TabType = 'overview' | 'pdf' | 'analysis';
+type TabType = 'overview' | 'pdf' | 'analysis' | 'signature';
+type SignatureSubTabType = 'overview' | 'original' | 'signed' | 'history';
 
 const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
   contract: initialContract,
   onClose,
   openEditModalDirectly = false,
   onEdit,
-  onDelete,
-  onOpenSignatureDetails
+  onDelete
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [contract, setContract] = useState<Contract>(initialContract);
@@ -89,6 +150,14 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
   const [showShareModal, setShowShareModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(openEditModalDirectly);
   const [showSignatureModal, setShowSignatureModal] = useState(false);
+
+  // Signature tab state
+  const [signatureSubTab, setSignatureSubTab] = useState<SignatureSubTabType>('overview');
+  const [envelope, setEnvelope] = useState<EnvelopeDetails | null>(null);
+  const [envelopeLoading, setEnvelopeLoading] = useState(false);
+  const [envelopeError, setEnvelopeError] = useState<string | null>(null);
+  const [originalPdfUrl, setOriginalPdfUrl] = useState<string | null>(null);
+  const [signedPdfUrl, setSignedPdfUrl] = useState<string | null>(null);
 
   // Update contract when prop changes
   useEffect(() => {
@@ -110,6 +179,13 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
       loadPdfUrl();
     }
   }, [activeTab, contract.s3Key]);
+
+  // Load envelope details when signature tab is opened
+  useEffect(() => {
+    if (activeTab === 'signature' && (contract.envelope || contract.signatureEnvelopeId) && !envelope && !envelopeLoading) {
+      loadEnvelope();
+    }
+  }, [activeTab, contract.envelope, contract.signatureEnvelopeId]);
 
   const loadPdfUrl = async () => {
     if (!contract.s3Key || contract.needsReupload) return;
@@ -136,6 +212,66 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
     }
   };
 
+  const loadEnvelope = async () => {
+    const envelopeId = contract.envelope?._id || contract.signatureEnvelopeId;
+    if (!envelopeId) return;
+
+    setEnvelopeLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+
+      const response = await fetch(`/api/envelopes/${envelopeId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        throw new Error('Fehler beim Laden der Signatur-Details');
+      }
+
+      const data = await response.json();
+      setEnvelope(data.envelope);
+
+      // Load PDF URLs
+      if (data.envelope.contractId?.s3Key) {
+        const pdfResponse = await fetch(`/api/s3/view?contractId=${data.envelope.contractId._id}&type=original`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
+        });
+        const pdfData = await pdfResponse.json();
+        if (pdfData.fileUrl || pdfData.url) {
+          setOriginalPdfUrl(pdfData.fileUrl || pdfData.url);
+        }
+      }
+
+      if (data.envelope.s3KeySealed) {
+        const signedResponse = await fetch(`/api/s3/view?contractId=${data.envelope.contractId._id}&type=signed`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include'
+        });
+        const signedData = await signedResponse.json();
+        if (signedData.fileUrl || signedData.url) {
+          setSignedPdfUrl(signedData.fileUrl || signedData.url);
+        }
+      }
+
+    } catch (err) {
+      console.error('❌ Error loading envelope:', err);
+      setEnvelopeError(err instanceof Error ? err.message : 'Fehler beim Laden');
+    } finally {
+      setEnvelopeLoading(false);
+    }
+  };
+
   // Format date helper
   const formatDate = (dateString: string) => {
     if (!dateString) return 'N/A';
@@ -143,6 +279,18 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
       year: 'numeric',
       month: 'long',
       day: 'numeric'
+    });
+  };
+
+  // Format date with time (for signatures)
+  const formatDateTime = (dateString: string) => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString('de-DE', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
     });
   };
 
@@ -174,13 +322,6 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
     }
   };
   const handleSendToSignature = () => setShowSignatureModal(true);
-  const handleOpenSignatureDetails = () => {
-    const envelopeId = contract.envelope?._id || contract.signatureEnvelopeId;
-    if (envelopeId && onOpenSignatureDetails) {
-      onClose();
-      onOpenSignatureDetails(envelopeId);
-    }
-  };
 
   // Download content as TXT
   const handleDownloadContent = () => {
@@ -516,6 +657,297 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
     );
   };
 
+  // Render Signature Tab with nested sub-tabs
+  const renderSignatureTab = () => {
+    if (envelopeLoading) {
+      return (
+        <div className={styles.tabContent}>
+          <div className={styles.loadingContainer}>
+            <div className={styles.spinner}></div>
+            <p>Lade Signatur-Details...</p>
+          </div>
+        </div>
+      );
+    }
+
+    if (envelopeError || !envelope) {
+      return (
+        <div className={styles.tabContent}>
+          <div className={styles.emptyState}>
+            <AlertCircle size={64} />
+            <p>{envelopeError || 'Signatur-Details nicht gefunden'}</p>
+          </div>
+        </div>
+      );
+    }
+
+    // Render signature status badge
+    const renderSignatureStatusBadge = () => {
+      const statusMap: Record<string, { icon: React.ReactNode; className: string; text: string }> = {
+        COMPLETED: { icon: <CheckCircle size={16} />, className: styles.statusCompleted, text: 'Vollständig signiert' },
+        SENT: { icon: <Clock size={16} />, className: styles.statusSent, text: 'Ausstehend' },
+        AWAITING_SIGNER_1: { icon: <Clock size={16} />, className: styles.statusSent, text: 'Wartet auf Unterzeichner 1' },
+        AWAITING_SIGNER_2: { icon: <Clock size={16} />, className: styles.statusSent, text: 'Wartet auf Unterzeichner 2' },
+        DECLINED: { icon: <XCircle size={16} />, className: styles.statusDeclined, text: 'Abgelehnt' },
+        DRAFT: { icon: <FileText size={16} />, className: styles.statusDraft, text: 'Entwurf' },
+        EXPIRED: { icon: <AlertCircle size={16} />, className: styles.statusExpired, text: 'Abgelaufen' },
+      };
+
+      const status = statusMap[envelope.status] || statusMap.DRAFT;
+
+      return (
+        <div className={`${styles.statusBadge} ${status.className}`}>
+          {status.icon}
+          <span>{status.text}</span>
+        </div>
+      );
+    };
+
+    // Render signature overview sub-tab
+    const renderSignatureOverview = () => (
+      <div className={styles.tabContent}>
+        <div className={styles.section}>
+          <h3>📋 Vertragsdetails</h3>
+          <div className={styles.detailsGrid}>
+            <div className={styles.detailItem}>
+              <span className={styles.label}>Titel:</span>
+              <span className={styles.value}>{envelope.title}</span>
+            </div>
+            <div className={styles.detailItem}>
+              <span className={styles.label}>Status:</span>
+              <span className={styles.value}>{renderSignatureStatusBadge()}</span>
+            </div>
+            <div className={styles.detailItem}>
+              <span className={styles.label}>Signaturmodus:</span>
+              <span className={styles.value}>
+                {envelope.signingMode === 'SEQUENTIAL' ? '📝 Sequenziell' :
+                 envelope.signingMode === 'PARALLEL' ? '🔄 Parallel' : '✍️ Einzeln'}
+              </span>
+            </div>
+            <div className={styles.detailItem}>
+              <span className={styles.label}>Erstellt am:</span>
+              <span className={styles.value}>{formatDateTime(envelope.createdAt)}</span>
+            </div>
+            {envelope.sentAt && (
+              <div className={styles.detailItem}>
+                <span className={styles.label}>Versendet am:</span>
+                <span className={styles.value}>{formatDateTime(envelope.sentAt)}</span>
+              </div>
+            )}
+            {envelope.completedAt && (
+              <div className={styles.detailItem}>
+                <span className={styles.label}>Abgeschlossen am:</span>
+                <span className={styles.value}>{formatDateTime(envelope.completedAt)}</span>
+              </div>
+            )}
+            <div className={styles.detailItem}>
+              <span className={styles.label}>Gültig bis:</span>
+              <span className={styles.value}>{formatDateTime(envelope.expiresAt)}</span>
+            </div>
+          </div>
+
+          {envelope.message && (
+            <div className={styles.messageBox}>
+              <strong>Nachricht an Unterzeichner:</strong>
+              <p>{envelope.message}</p>
+            </div>
+          )}
+        </div>
+
+        <div className={styles.section}>
+          <h3>📊 Signatur-Fortschritt</h3>
+          <div className={styles.progressContainer}>
+            <div className={styles.progressBar}>
+              <div
+                className={styles.progressFill}
+                style={{ width: `${envelope.stats.progressPercentage}%` }}
+              ></div>
+            </div>
+            <div className={styles.progressStats}>
+              <span>✅ {envelope.stats.signersSigned} von {envelope.stats.signersTotal} signiert</span>
+              <span>{envelope.stats.progressPercentage}%</span>
+            </div>
+          </div>
+        </div>
+
+        <div className={styles.section}>
+          <h3>👥 Unterzeichner ({envelope.signers.length})</h3>
+          <div className={styles.signersGrid}>
+            {envelope.signers.map((signer) => (
+              <div key={signer._id} className={styles.signerCard}>
+                <div className={styles.signerHeader}>
+                  <div className={styles.signerInfo}>
+                    <strong>{signer.name}</strong>
+                    <span className={styles.signerEmail}>{signer.email}</span>
+                  </div>
+                  <div className={`${styles.signerStatus} ${styles[`status${signer.status}`]}`}>
+                    {signer.status === 'SIGNED' && <CheckCircle size={16} />}
+                    {signer.status === 'DECLINED' && <XCircle size={16} />}
+                    {signer.status === 'PENDING' && <Clock size={16} />}
+                    <span>{signer.status === 'SIGNED' ? 'Signiert' : signer.status === 'DECLINED' ? 'Abgelehnt' : 'Ausstehend'}</span>
+                  </div>
+                </div>
+                <div className={styles.signerDetails}>
+                  <span className={styles.signerRole}>{signer.role === 'sender' ? '📤 Absender' : '📥 Empfänger'}</span>
+                  {envelope.signingMode === 'SEQUENTIAL' && (
+                    <span className={styles.signerOrder}>Reihenfolge: {signer.order}</span>
+                  )}
+                </div>
+                {signer.signedAt && (
+                  <div className={styles.signerTimestamp}>
+                    ✅ Signiert am: {formatDateTime(signer.signedAt)}
+                  </div>
+                )}
+                {signer.declinedAt && (
+                  <div className={styles.signerTimestamp}>
+                    ❌ Abgelehnt am: {formatDateTime(signer.declinedAt)}
+                    {signer.declineReason && <p className={styles.declineReason}>Grund: {signer.declineReason}</p>}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+
+    // Render PDF viewer sub-tab
+    const renderSignaturePdfTab = (url: string | null, type: 'original' | 'signed') => {
+      if (!url) {
+        return (
+          <div className={styles.tabContent}>
+            <div className={styles.emptyState}>
+              <FileText size={64} />
+              <p>{type === 'signed' ? 'Kein signiertes PDF verfügbar' : 'PDF nicht gefunden'}</p>
+              {type === 'signed' && envelope.status !== 'COMPLETED' && (
+                <span className={styles.hint}>Das signierte PDF wird erstellt, sobald alle Parteien signiert haben.</span>
+              )}
+            </div>
+          </div>
+        );
+      }
+
+      return (
+        <div className={styles.tabContent}>
+          <div className={styles.pdfViewerContainer}>
+            <iframe
+              src={url}
+              className={styles.pdfViewer}
+              title={`${type === 'signed' ? 'Signiertes' : 'Original'} PDF`}
+            />
+            <div className={styles.pdfActions}>
+              <a href={url} download className={styles.downloadButton}>
+                📥 {type === 'signed' ? 'Signiertes PDF' : 'Original PDF'} herunterladen
+              </a>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    // Render history timeline sub-tab
+    const renderSignatureHistoryTab = () => {
+      const eventIcons: Record<string, string> = {
+        CREATED: '📝',
+        SENT: '📤',
+        VIEWED: '👀',
+        SIGNED: '✍️',
+        DECLINED: '❌',
+        PDF_SEALED: '🔒',
+        COMPLETED: '✅',
+        EXPIRED: '⏰',
+        VOIDED: '🚫'
+      };
+
+      return (
+        <div className={styles.tabContent}>
+          <div className={styles.section}>
+            <h3>📅 Signatur-Historie</h3>
+            <div className={styles.timeline}>
+              {envelope.auditTrail && envelope.auditTrail.length > 0 ? (
+                envelope.auditTrail.map((event, index) => (
+                  <div key={index} className={styles.timelineItem}>
+                    <div className={styles.timelineIcon}>
+                      {eventIcons[event.action] || '📌'}
+                    </div>
+                    <div className={styles.timelineContent}>
+                      <div className={styles.timelineHeader}>
+                        <strong>{event.action.replace(/_/g, ' ')}</strong>
+                        <span className={styles.timelineTimestamp}>{formatDateTime(event.timestamp)}</span>
+                      </div>
+                      {event.details && (
+                        <div className={styles.timelineDetails}>
+                          {event.details.email && <p>👤 {event.details.email}</p>}
+                          {event.details.ip && <p>🌐 IP: {event.details.ip}</p>}
+                          {event.details.reason && <p>💬 {event.details.reason}</p>}
+                          {event.details.signedCount !== undefined && (
+                            <p>📊 {event.details.signedCount}/{event.details.totalSigners} Unterzeichner</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className={styles.emptyState}>
+                  <Clock size={64} />
+                  <p>Keine Historie verfügbar</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    // Main signature tab with nested sub-tabs
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        {/* Signature Sub-Tab Navigation */}
+        <div className={styles.tabNav} style={{ borderTop: '1px solid #e5e7eb', marginTop: '0' }}>
+          <button
+            className={`${styles.tabButton} ${signatureSubTab === 'overview' ? styles.tabActive : ''}`}
+            onClick={() => setSignatureSubTab('overview')}
+          >
+            <Users size={18} />
+            <span>Übersicht</span>
+          </button>
+          <button
+            className={`${styles.tabButton} ${signatureSubTab === 'original' ? styles.tabActive : ''}`}
+            onClick={() => setSignatureSubTab('original')}
+          >
+            <FileText size={18} />
+            <span>Original PDF</span>
+          </button>
+          <button
+            className={`${styles.tabButton} ${signatureSubTab === 'signed' ? styles.tabActive : ''}`}
+            onClick={() => setSignatureSubTab('signed')}
+            disabled={!envelope.s3KeySealed}
+          >
+            <CheckCircle size={18} />
+            <span>Signiertes PDF</span>
+            {!envelope.s3KeySealed && <span className={styles.tabDisabled}>(nicht verfügbar)</span>}
+          </button>
+          <button
+            className={`${styles.tabButton} ${signatureSubTab === 'history' ? styles.tabActive : ''}`}
+            onClick={() => setSignatureSubTab('history')}
+          >
+            <Clock size={18} />
+            <span>Historie</span>
+          </button>
+        </div>
+
+        {/* Signature Sub-Tab Content */}
+        <div style={{ flex: 1, overflow: 'auto' }}>
+          {signatureSubTab === 'overview' && renderSignatureOverview()}
+          {signatureSubTab === 'original' && renderSignaturePdfTab(originalPdfUrl, 'original')}
+          {signatureSubTab === 'signed' && renderSignaturePdfTab(signedPdfUrl, 'signed')}
+          {signatureSubTab === 'history' && renderSignatureHistoryTab()}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
       <div className={styles.modalOverlay} onClick={onClose}>
@@ -559,17 +991,6 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
                   title="Zur Signatur senden"
                 >
                   <PenTool size={18} />
-                </button>
-              )}
-
-              {/* Signature Details */}
-              {(contract.envelope || contract.signatureEnvelopeId) && onOpenSignatureDetails && (
-                <button
-                  className={`${styles.actionBtn} ${styles.signatureDetailsBtn}`}
-                  onClick={handleOpenSignatureDetails}
-                  title="Signaturdetails anzeigen"
-                >
-                  <Eye size={18} />
                 </button>
               )}
 
@@ -618,6 +1039,15 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
                 <span className={styles.tabDisabled}>(nicht verfügbar)</span>
               )}
             </button>
+            {(contract.envelope || contract.signatureEnvelopeId) && (
+              <button
+                className={`${styles.tabButton} ${activeTab === 'signature' ? styles.tabActive : ''}`}
+                onClick={() => setActiveTab('signature')}
+              >
+                <PenTool size={18} />
+                <span>Signierprozess</span>
+              </button>
+            )}
           </div>
 
           {/* Tab Content */}
@@ -625,6 +1055,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
             {activeTab === 'overview' && renderOverviewTab()}
             {activeTab === 'pdf' && renderPdfTab()}
             {activeTab === 'analysis' && renderAnalysisTab()}
+            {activeTab === 'signature' && renderSignatureTab()}
           </div>
         </div>
       </div>
