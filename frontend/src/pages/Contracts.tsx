@@ -1693,12 +1693,14 @@ export default function Contracts() {
     // Map backend status to UI display
     let icon = "📝";
     let text = "";
+    let tooltipText = ""; // ✅ Vollständige Info für Tooltip
     let className = styles.signatureBadge;
 
     switch (status?.toUpperCase()) {
       case "COMPLETED":
         icon = "✅";
-        text = envelope?.completedAt
+        text = "Signiert"; // ✅ Kompakt: "Vollständig signiert" → "Signiert"
+        tooltipText = envelope?.completedAt
           ? `Vollständig signiert • ${formatDate(envelope.completedAt)}`
           : "Vollständig signiert";
         className = `${styles.signatureBadge} ${styles.signatureCompleted}`;
@@ -1711,7 +1713,10 @@ export default function Contracts() {
         const signersSigned = envelope?.signersSigned || 0;
         const signersTotal = envelope?.signersTotal || 0;
         text = signersSigned > 0 && signersTotal > 0
-          ? `Teilweise signiert (${signersSigned}/${signersTotal})`
+          ? `${signersSigned}/${signersTotal}` // ✅ Super kompakt: nur "2/3"
+          : "Teilw."; // ✅ Verkürzt
+        tooltipText = signersSigned > 0 && signersTotal > 0
+          ? `Teilweise signiert: ${signersSigned} von ${signersTotal} Signaturen`
           : "Teilweise signiert";
         className = `${styles.signatureBadge} ${styles.signaturePartial}`;
         break;
@@ -1719,31 +1724,36 @@ export default function Contracts() {
 
       case "SENT":
         icon = "⏳";
-        text = "Ausstehend";
+        text = "Pending"; // ✅ Kürzer
+        tooltipText = "Ausstehend - Wartet auf Signaturen";
         className = `${styles.signatureBadge} ${styles.signaturePending}`;
         break;
 
       case "DRAFT":
         icon = "📝";
         text = "Entwurf";
+        tooltipText = "Entwurf - Noch nicht versendet";
         className = `${styles.signatureBadge} ${styles.signatureDraft}`;
         break;
 
       case "DECLINED":
         icon = "❌";
         text = "Abgelehnt";
+        tooltipText = "Signatur wurde abgelehnt";
         className = `${styles.signatureBadge} ${styles.signatureDeclined}`;
         break;
 
       case "EXPIRED":
         icon = "⏰";
         text = "Abgelaufen";
+        tooltipText = "Signierfrist abgelaufen";
         className = `${styles.signatureBadge} ${styles.signatureExpired}`;
         break;
 
       case "VOIDED":
         icon = "🚫";
         text = "Widerrufen";
+        tooltipText = "Signierprozess wurde widerrufen";
         className = `${styles.signatureBadge} ${styles.signatureVoided}`;
         break;
 
@@ -1753,11 +1763,12 @@ export default function Contracts() {
 
     // Make badge clickable if envelope exists
     const envelopeId = envelope?._id || contract.signatureEnvelopeId;
+    const finalTooltip = envelopeId ? `${tooltipText} • Klicken für Details` : tooltipText;
 
     return (
       <span
         className={`${className} ${envelopeId ? styles.signatureBadgeClickable : ''}`}
-        title={envelopeId ? `${text} - Klicken für Details` : `Signaturstatus: ${text}`}
+        title={finalTooltip}
         onClick={(e) => {
           if (envelopeId) {
             e.stopPropagation();

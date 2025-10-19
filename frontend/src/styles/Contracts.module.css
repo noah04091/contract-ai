@@ -1882,14 +1882,21 @@
   color: #475569;
 }
 
-/* ✉️ NEU: Signature Badge - Digitale Signatur Status */
+/* ✉️ NEU: Signature Badge - Digitale Signatur Status - KOMPAKT */
 .signatureBadge {
   background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
   color: #0369a1;
   border: 1px solid #7dd3fc;
-  font-size: 0.7rem;
-  padding: 0.15rem 0.4rem;
-  margin-left: 0.375rem;
+  font-size: 0.65rem; /* ✅ Noch kleiner: 0.7rem → 0.65rem */
+  padding: 0.15rem 0.35rem; /* ✅ Weniger padding */
+  margin-left: 0.25rem; /* ✅ Weniger margin */
+  border-radius: 4px; /* ✅ Kleinerer radius */
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem; /* ✅ Weniger gap zwischen Icon und Text */
+  white-space: nowrap;
+  font-weight: 500;
+  line-height: 1;
 }
 
 /* 🆕 Smart Signature Badge States */
