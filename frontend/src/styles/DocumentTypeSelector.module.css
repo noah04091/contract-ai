@@ -84,7 +84,7 @@
 }
 
 .select {
-  width: 100%;
+  max-width: 280px;
   padding: 0.65rem 0.85rem;
   background: white;
   border: 1px solid #e5e7eb;

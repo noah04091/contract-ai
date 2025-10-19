@@ -83,6 +83,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
   const [contract, setContract] = useState<Contract>(initialContract);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [contentExpanded, setContentExpanded] = useState(false);
 
   // Modals
   const [showShareModal, setShowShareModal] = useState(false);
@@ -181,6 +182,20 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
     }
   };
 
+  // Download content as TXT
+  const handleDownloadContent = () => {
+    const textContent = contract.extractedText || contract.fullText || contract.content || '';
+    const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${contract.name}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   // Render Overview Tab
   const renderOverviewTab = () => (
     <div className={styles.tabContent}>
@@ -243,12 +258,97 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
         </div>
       )}
 
-      {/* Content Preview */}
-      {contract.content && (
+      {/* Content */}
+      {(contract.extractedText || contract.fullText || contract.content) && (
         <div className={styles.section}>
-          <h3>📄 Vertragsinhalt (Auszug)</h3>
-          <div className={styles.messageBox}>
-            <p>{contract.content.substring(0, 500)}{contract.content.length > 500 ? '...' : ''}</p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <h3>📄 Vertragsinhalt</h3>
+            <button
+              className={styles.downloadButton}
+              onClick={handleDownloadContent}
+              style={{ padding: '8px 16px', fontSize: '0.875rem' }}
+            >
+              <Download size={16} />
+              <span>Als TXT herunterladen</span>
+            </button>
+          </div>
+
+          <div className={styles.messageBox} style={{ maxHeight: contentExpanded ? 'none' : '200px', overflow: 'hidden', position: 'relative' }}>
+            <p style={{ whiteSpace: 'pre-wrap', margin: 0 }}>
+              {contract.extractedText || contract.fullText || contract.content}
+            </p>
+            {!contentExpanded && (contract.extractedText || contract.fullText || contract.content || '').length > 500 && (
+              <div style={{
+                position: 'absolute',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                height: '60px',
+                background: 'linear-gradient(transparent, white)',
+                display: 'flex',
+                alignItems: 'flex-end',
+                justifyContent: 'center',
+                paddingBottom: '8px'
+              }}>
+                <button
+                  onClick={() => setContentExpanded(true)}
+                  style={{
+                    background: '#3b82f6',
+                    color: 'white',
+                    border: 'none',
+                    padding: '6px 16px',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '0.875rem',
+                    fontWeight: 500
+                  }}
+                >
+                  Mehr anzeigen
+                </button>
+              </div>
+            )}
+          </div>
+
+          {contentExpanded && (
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '12px' }}>
+              <button
+                onClick={() => setContentExpanded(false)}
+                style={{
+                  background: '#f3f4f6',
+                  color: '#6b7280',
+                  border: 'none',
+                  padding: '6px 16px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '0.875rem',
+                  fontWeight: 500
+                }}
+              >
+                Weniger anzeigen
+              </button>
+            </div>
+          )}
+
+          {/* Statistics */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginTop: '16px', padding: '16px', background: '#f9fafb', borderRadius: '8px' }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '4px' }}>Zeichen</div>
+              <div style={{ fontSize: '1.25rem', fontWeight: 600, color: '#111827' }}>
+                {(contract.extractedText || contract.fullText || contract.content || '').length.toLocaleString()}
+              </div>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '4px' }}>Wörter</div>
+              <div style={{ fontSize: '1.25rem', fontWeight: 600, color: '#111827' }}>
+                {(contract.extractedText || contract.fullText || contract.content || '').split(/\s+/).filter(w => w.length > 0).length.toLocaleString()}
+              </div>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '4px' }}>Absätze</div>
+              <div style={{ fontSize: '1.25rem', fontWeight: 600, color: '#111827' }}>
+                {(contract.extractedText || contract.fullText || contract.content || '').split(/\n\s*\n/).filter(p => p.trim().length > 0).length.toLocaleString()}
+              </div>
+            </div>
           </div>
         </div>
       )}
