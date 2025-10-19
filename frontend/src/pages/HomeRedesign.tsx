@@ -61,6 +61,34 @@ const TestimonialsSlider = () => {
       author: "Daniel R.",
       role: "Startup-Gründer",
       avatar: "DR"
+    },
+    {
+      id: 5,
+      text: "Hab mit Contract AI meinen Lieferantenvertrag gecheckt und dabei ne versteckte Preisklausel gefunden. Hätte mich locker 2.400€ mehr pro Jahr gekostet. Krass!",
+      author: "Thomas W.",
+      role: "Inhaber, Malerbetrieb Würzburg",
+      avatar: "TW"
+    },
+    {
+      id: 6,
+      text: "Bei uns im Team nutzen jetzt alle Contract AI für Freelancer-Verträge. Spart uns echt Zeit und die Rechtsabteilung freut sich auch.",
+      author: "Julia S.",
+      role: "Projektmanagerin, Digital Agency Hamburg",
+      avatar: "JS"
+    },
+    {
+      id: 7,
+      text: "Mein Fitnessstudio-Abo lief automatisch weiter, obwohl ich umgezogen bin. Contract AI hat mein Sonderkündigungsrecht erkannt — 360€ zurückbekommen!",
+      author: "Kevin B.",
+      role: "Student, BWL",
+      avatar: "KB"
+    },
+    {
+      id: 8,
+      text: "Als Steuerberaterin muss ich oft Verträge prüfen. Contract AI ist mittlerweile fester Teil meines Workflows. Die Risiko-Analyse ist top.",
+      author: "Dr. Anna P.",
+      role: "Steuerberaterin, Kanzlei München",
+      avatar: "AP"
     }
   ];
 
