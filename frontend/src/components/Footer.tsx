@@ -37,6 +37,8 @@ const Footer: React.FC = () => {
                 <li><Link to="/features/vergleich">Vergleich</Link></li>
                 <li><Link to="/features/generator">Generator</Link></li>
                 <li><Link to="/features/legalpulse">Legal Pulse</Link></li>
+                <li><Link to="/features/vertragsverwaltung">Vertragsverwaltung</Link></li>
+                <li><Link to="/features/digitalesignatur">Digitale Signatur</Link></li>
               </ul>
             </div>
             
