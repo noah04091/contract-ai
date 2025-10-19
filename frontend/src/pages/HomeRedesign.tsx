@@ -1313,6 +1313,8 @@ const HomeRedesign = () => {
                     <li><Link to="/compare">Vergleich</Link></li>
                     <li><Link to="/generate">Generator</Link></li>
                     <li><Link to="/legalpulse">Legal Pulse</Link></li>
+                    <li><Link to="/features/digitalesignatur">Digitale Signatur</Link></li>
+                    <li><Link to="/features/vertragsverwaltung">Vertragsverwaltung</Link></li>
                   </ul>
                 </div>
                 
