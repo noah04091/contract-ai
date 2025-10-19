@@ -1861,10 +1861,10 @@ a {
   margin-top: -2px;
 }
 
-/* GEÄNDERT: Grid von 4 auf 3 Spalten für 6 Cards */
+/* Feature Grid: 4 Spalten für 8 Cards (4-4 Layout auf Desktop) */
 .features-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 30px;
   width: 100%;
   box-sizing: border-box;
