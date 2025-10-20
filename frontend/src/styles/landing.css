@@ -3145,7 +3145,7 @@ a {
   /* Slider Track: Horizontales Scrollen nur im Slider */
   .slider-track {
     width: 100%;
-    padding: 2rem 0.75rem 3rem 0.75rem !important; /* Minimales Padding für Ein-/Auslauf */
+    padding: 2rem 0 3rem 0.75rem !important; /* Nur links Padding, rechts 0 für Edge-to-Edge */
     overflow-x: auto;
     overflow-y: hidden;
     scroll-snap-type: x mandatory;
@@ -3184,13 +3184,14 @@ a {
     overflow-x: hidden !important;
   }
 
-  /* Keine speziellen Margins für erste/letzte Karte */
+  /* Erste Karte: Kein extra Margin */
   .testimonial-slide:first-child {
     margin-left: 0 !important;
   }
 
+  /* Letzte Karte: 0.75rem Margin rechts für Auslauf */
   .testimonial-slide:last-child {
-    margin-right: 0 !important;
+    margin-right: 0.75rem !important;
   }
 
   /* Testimonial Card: Margins für Schatten-Space */
