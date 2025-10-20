@@ -3142,17 +3142,17 @@ a {
     display: none; /* Verstecke Buttons auf Mobile für echten Edge-to-Edge */
   }
 
-  /* Slider Track: Horizontales Scrollen nur im Slider */
+  /* Slider Track: EXAKT wie Pricing Cards! */
   .slider-track {
     width: 100%;
-    padding: 2rem 0.75rem 3rem 0.75rem !important; /* Symmetrisches Padding */
+    padding: 2rem 5% 3rem 5% !important; /* 5% Padding links/rechts - wie Pricing! */
     overflow-x: auto;
     overflow-y: hidden;
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
     scroll-behavior: smooth;
     display: flex !important;
-    gap: 0.75rem !important; /* Kleiner Spalt für Peek-Effekt */
+    gap: 1rem !important; /* 1rem Gap */
 
     /* WICHTIG: Mask-Image entfernen für Mobile - bis zum Rand */
     -webkit-mask-image: none !important;
@@ -3167,21 +3167,14 @@ a {
     display: none;
   }
 
-  /* Extra Platz am Ende damit letzte Karte komplett raussliden kann */
-  .slider-track::after {
-    content: '';
-    flex: 0 0 15vw; /* 15vw extra Space am Ende */
-    height: 1px;
-  }
-
-  /* Testimonial Slide: 85vw für Peek-Effekt */
+  /* Testimonial Slide: EXAKT wie Pricing Cards! */
   .testimonial-slide {
-    flex: 0 0 85vw !important; /* 85% Viewport = 15% der nächsten Karte sichtbar */
-    width: 85vw !important;
-    max-width: 85vw !important;
+    flex: 0 0 85% !important; /* 85% Breite - wie Pricing */
+    width: 85% !important;
+    max-width: none !important;
+    margin: 2rem 0 3rem 0 !important; /* NUR vertikale Margins - wie Pricing! */
     padding: 0 !important;
-    margin: 0 !important;
-    scroll-snap-align: start; /* Snap zum Start der Karte */
+    scroll-snap-align: center; /* center - wie Pricing */
     display: flex !important;
     box-sizing: border-box !important;
   }
@@ -3191,19 +3184,16 @@ a {
     overflow-x: hidden !important;
   }
 
-  /* Erste Karte: Kein extra Margin */
-  .testimonial-slide:first-child {
-    margin-left: 0 !important;
-  }
-
-  /* Letzte Karte: Kein extra Margin (::after regelt den Space) */
+  /* KEINE speziellen Margins für erste/letzte Karte - wie Pricing! */
+  .testimonial-slide:first-child,
   .testimonial-slide:last-child {
+    margin-left: 0 !important;
     margin-right: 0 !important;
   }
 
-  /* Testimonial Card: NUR vertikale Margins für Edge-to-Edge */
+  /* Testimonial Card: NUR vertikale Margins - wie Pricing! */
   .testimonial-card {
-    margin: 1rem 0 2rem 0 !important; /* NUR oben/unten Margins, seitlich 0 für Edge-to-Edge */
+    margin: 1rem 0 2rem 0 !important; /* EXAKT wie Pricing Cards! */
     box-shadow:
       0 20px 60px rgba(0, 0, 0, 0.06),
       0 8px 25px rgba(0, 0, 0, 0.04),
