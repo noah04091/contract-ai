@@ -3115,9 +3115,9 @@ a {
     padding: 0 !important;
   }
 
-  /* Dots optimal sichtbar auf Mobile - 8px, näher an Karten */
+  /* Dots optimal sichtbar auf Mobile - 8px, sehr nah an Karten */
   .testimonials-slider .slider-dots {
-    margin-top: 10px !important;
+    margin-top: 5px !important;
     gap: 8px !important;
   }
 
