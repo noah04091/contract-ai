@@ -3141,10 +3141,10 @@ a {
     display: none; /* Verstecke Buttons auf Mobile für echten Edge-to-Edge */
   }
 
-  /* Slider Track: EXAKT wie Pricing Cards! */
+  /* Slider Track: Padding-bottom reduziert für Dots näher */
   .slider-track {
     width: 100%;
-    padding: 4rem 5% 6rem 5% !important; /* 5% Padding - EXAKT wie Pricing! */
+    padding: 4rem 5% 1rem 5% !important; /* padding-bottom: 1rem (statt 6rem!) */
     overflow-x: auto !important;
     overflow-y: visible !important;
     scroll-snap-type: x proximity; /* proximity statt mandatory - wie Pricing! */
