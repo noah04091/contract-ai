@@ -3167,6 +3167,13 @@ a {
     display: none;
   }
 
+  /* WICHTIG: Spacer am Ende für rechten Edge-to-Edge! */
+  .slider-track::after {
+    content: '';
+    flex: 0 0 92.5vw !important; /* 92.5vw = 85vw Karte + 7.5vw Auslauf */
+    height: 1px;
+  }
+
   /* Testimonial Slide: 85vw Breite */
   .testimonial-slide {
     flex: 0 0 85vw !important;
@@ -3174,7 +3181,7 @@ a {
     max-width: 85vw !important;
     margin: 2rem 0 3rem 0 !important; /* NUR vertikale Margins */
     padding: 0 !important;
-    scroll-snap-align: center;
+    scroll-snap-align: start !important; /* START statt center - DAS ist der Trick! */
     display: flex !important;
     box-sizing: border-box !important;
   }
@@ -3189,9 +3196,9 @@ a {
     margin-left: 7.5vw !important; /* 7.5vw = (100vw - 85vw) / 2 */
   }
 
-  /* LETZTE Karte: Margin rechts für Auslauf */
+  /* LETZTE Karte: KEIN margin-right (::after regelt das!) */
   .testimonial-slide:last-child {
-    margin-right: 7.5vw !important; /* Symmetrisch zu links! */
+    margin-right: 0 !important;
   }
 
   /* Testimonial Card: NUR vertikale Margins - wie Pricing! */
