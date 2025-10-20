@@ -3026,9 +3026,10 @@ a {
     display: flex !important;
   }
 
-  /* Slider Container mit mehr Platz */
+  /* Slider Container: Größerer Gap für Nav-Buttons außerhalb der Karten */
   .slider-container {
     padding: 2rem 0 3rem 0 !important; /* Mehr Padding unten für Schatten */
+    gap: 40px !important; /* Größerer Abstand - Buttons weiter außen */
   }
 
   /* Slider Track mit echtem Fade-Out via Mask */
