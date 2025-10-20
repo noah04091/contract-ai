@@ -3194,9 +3194,9 @@ a {
     margin-right: 0.75rem !important;
   }
 
-  /* Testimonial Card: Margins für Schatten-Space */
+  /* Testimonial Card: NUR vertikale Margins für Edge-to-Edge */
   .testimonial-card {
-    margin: 1rem 0.5rem 2rem 0.5rem !important; /* Kleine seitliche Margins für Schatten */
+    margin: 1rem 0 2rem 0 !important; /* NUR oben/unten Margins, seitlich 0 für Edge-to-Edge */
     box-shadow:
       0 20px 60px rgba(0, 0, 0, 0.06),
       0 8px 25px rgba(0, 0, 0, 0.04),
