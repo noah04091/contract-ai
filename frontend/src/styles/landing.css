@@ -3145,7 +3145,7 @@ a {
   /* Slider Track: Horizontales Scrollen nur im Slider */
   .slider-track {
     width: 100%;
-    padding: 2rem 0 3rem 0.75rem !important; /* Nur links Padding, rechts 0 für Edge-to-Edge */
+    padding: 2rem 0.75rem 3rem 0.75rem !important; /* Symmetrisches Padding */
     overflow-x: auto;
     overflow-y: hidden;
     scroll-snap-type: x mandatory;
@@ -3165,6 +3165,13 @@ a {
 
   .slider-track::-webkit-scrollbar {
     display: none;
+  }
+
+  /* Extra Platz am Ende damit letzte Karte komplett raussliden kann */
+  .slider-track::after {
+    content: '';
+    flex: 0 0 15vw; /* 15vw extra Space am Ende */
+    height: 1px;
   }
 
   /* Testimonial Slide: 85vw für Peek-Effekt */
@@ -3189,9 +3196,9 @@ a {
     margin-left: 0 !important;
   }
 
-  /* Letzte Karte: 0.75rem Margin rechts für Auslauf */
+  /* Letzte Karte: Kein extra Margin (::after regelt den Space) */
   .testimonial-slide:last-child {
-    margin-right: 0.75rem !important;
+    margin-right: 0 !important;
   }
 
   /* Testimonial Card: NUR vertikale Margins für Edge-to-Edge */
