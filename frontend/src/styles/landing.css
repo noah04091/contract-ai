@@ -3043,19 +3043,19 @@ a {
     padding: 2rem 60px 3rem 60px !important; /* Mehr Padding für sanften Übergang */
     margin: 0 -60px !important; /* Negativer Margin für volle Breite */
 
-    /* Echtes Fade-Out mit Mask - macht Karten transparent an den Rändern */
+    /* Subtiles Fade-Out mit Mask - sanfter Übergang zum Hintergrund */
     -webkit-mask-image: linear-gradient(
       to right,
       transparent 0%,
-      black 150px,
-      black calc(100% - 150px),
+      black 100px,
+      black calc(100% - 100px),
       transparent 100%
     );
     mask-image: linear-gradient(
       to right,
       transparent 0%,
-      black 150px,
-      black calc(100% - 150px),
+      black 100px,
+      black calc(100% - 100px),
       transparent 100%
     );
   }
