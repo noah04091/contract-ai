@@ -3086,18 +3086,34 @@ a {
   }
 }
 
-/* === MOBILE FIXES: Edge-to-Edge wie Pricing Cards === */
+/* === MOBILE FIXES: Edge-to-Edge mit Full-Bleed === */
 @media (max-width: 768px) {
   /* Section: Nur vertikales Padding, KEIN horizontales Padding */
   .testimonials-section {
-    padding: 60px 0 80px 0 !important; /* Edge-to-Edge */
+    padding: 60px 0 80px 0 !important;
   }
 
-  /* Slider: Volle Breite, kein Gap für Nav-Buttons auf Mobile */
+  /* BRUTAL RESET: Alle Container-Paddings in der Section deaktivieren */
+  .testimonials-section .section-container {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  /* FULL-BLEED: Slider bricht aus Container raus (echte 100vw) */
+  .testimonials-slider {
+    width: 100vw !important;
+    margin-left: 50% !important;
+    transform: translateX(-50%) !important;
+    /* iOS Safe Area Support */
+    padding-left: env(safe-area-inset-left) !important;
+    padding-right: env(safe-area-inset-right) !important;
+  }
+
+  /* Slider Container: Kein zusätzliches Padding */
   .slider-container {
     gap: 0;
     margin-bottom: 2rem;
-    padding: 0 !important; /* Kein Padding */
+    padding: 0 !important;
   }
 
   /* Dots optimal sichtbar auf Mobile - 8px */
@@ -3126,16 +3142,17 @@ a {
     display: none; /* Verstecke Buttons auf Mobile für echten Edge-to-Edge */
   }
 
-  /* Slider Track: Volle Breite mit Peek-Effekt */
+  /* Slider Track: Horizontales Scrollen nur im Slider */
   .slider-track {
-    width: 100vw !important;
-    padding: 2rem 1rem 3rem 1rem !important; /* Horizontales Padding für Peek-Effekt */
+    width: 100%;
+    padding: 2rem 0.75rem 3rem 0.75rem !important; /* Minimales Padding für Ein-/Auslauf */
     overflow-x: auto;
+    overflow-y: hidden;
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
     scroll-behavior: smooth;
     display: flex !important;
-    gap: 1rem !important; /* Gap zwischen Karten für Peek-Effekt */
+    gap: 0.75rem !important; /* Kleiner Spalt für Peek-Effekt */
 
     /* WICHTIG: Mask-Image entfernen für Mobile - bis zum Rand */
     -webkit-mask-image: none !important;
@@ -3150,9 +3167,9 @@ a {
     display: none;
   }
 
-  /* Testimonial Slide: 85vw für Peek-Effekt (15% der nächsten Karte sichtbar) */
+  /* Testimonial Slide: 85vw für Peek-Effekt */
   .testimonial-slide {
-    flex: 0 0 85vw !important; /* 85% = zeigt Teile der nächsten Karte */
+    flex: 0 0 85vw !important; /* 85% Viewport = 15% der nächsten Karte sichtbar */
     width: 85vw !important;
     max-width: 85vw !important;
     padding: 0 !important;
@@ -3160,6 +3177,11 @@ a {
     scroll-snap-align: start; /* Snap zum Start der Karte */
     display: flex !important;
     box-sizing: border-box !important;
+  }
+
+  /* Verhindere horizontales Scrollen des ganzen Dokuments */
+  html, body {
+    overflow-x: hidden !important;
   }
 
   /* Keine speziellen Margins für erste/letzte Karte */
