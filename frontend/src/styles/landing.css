@@ -3100,6 +3100,11 @@ a {
     padding-right: 0 !important;
   }
 
+  /* ÜBERSCHRIFT NÄHER an Karten */
+  .testimonials-section .section-title {
+    margin-bottom: 30px !important; /* Reduziert von 60px auf 30px */
+  }
+
   /* Slider Container: Kein Transform, kein Full-Bleed - EINFACH! */
   .testimonials-slider {
     width: 100% !important;
@@ -3115,25 +3120,25 @@ a {
     padding: 0 !important;
   }
 
-  /* Dots größer und NOCH NÄHER unter Karten */
+  /* Dots NOCH GRÖSSER und NOCH NÄHER unter Karten */
   .testimonials-slider .slider-dots {
-    margin-top: -20px !important; /* Starkes negatives Margin - rückt Dots HOCH */
+    margin-top: -30px !important; /* NOCH stärkeres negatives Margin - von -20px auf -30px */
     gap: 12px !important;
   }
 
   .testimonials-slider .slider-dot {
-    width: 12px !important;
-    height: 12px !important;
-    min-width: 12px !important;
-    min-height: 12px !important;
-    max-width: 12px !important;
-    max-height: 12px !important;
+    width: 14px !important; /* GRÖSSER: von 12px auf 14px */
+    height: 14px !important;
+    min-width: 14px !important;
+    min-height: 14px !important;
+    max-width: 14px !important;
+    max-height: 14px !important;
   }
 
   .testimonials-slider .slider-dot.active {
     transform: scale(1.3) !important;
-    width: 12px !important;
-    height: 12px !important;
+    width: 14px !important;
+    height: 14px !important;
   }
 
   /* Nav Buttons verstecken auf Mobile (optional, oder kleiner machen) */
@@ -3141,10 +3146,10 @@ a {
     display: none; /* Verstecke Buttons auf Mobile für echten Edge-to-Edge */
   }
 
-  /* Slider Track: Minimales padding-bottom für Dots näher */
+  /* Slider Track: NOCH weniger padding-bottom für Dots näher */
   .slider-track {
     width: 100%;
-    padding: 4rem 5% 0.5rem 5% !important; /* padding-bottom: 0.5rem (minimal!) */
+    padding: 4rem 5% 0.25rem 5% !important; /* padding-bottom: 0.25rem (NOCH minimaler!) */
     overflow-x: auto !important;
     overflow-y: visible !important;
     scroll-snap-type: x proximity; /* proximity statt mandatory - wie Pricing! */
