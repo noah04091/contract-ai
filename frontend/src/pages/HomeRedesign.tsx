@@ -120,7 +120,7 @@ const TestimonialsSlider = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, [currentIndex, testimonials.length]);
 
-  // Auto-advance slider every 2 seconds (pause on hover) - Testing
+  // Auto-advance slider (pause on hover) - Mobile langsamer als Desktop
   useEffect(() => {
     console.log('🔄 Auto-advance effect running. isHovered:', isHovered, 'itemsPerView:', itemsPerView);
 
@@ -128,6 +128,9 @@ const TestimonialsSlider = () => {
       console.log('⏸️ Auto-advance paused (hovered)');
       return;
     }
+
+    // Mobile (1 Karte): 5 Sekunden | Desktop (3+ Karten): 2 Sekunden
+    const intervalDuration = itemsPerView === 1 ? 5000 : 2000;
 
     const interval = setInterval(() => {
       const maxIdx = Math.max(0, testimonials.length - itemsPerView);
@@ -139,7 +142,7 @@ const TestimonialsSlider = () => {
         console.log('📊 Index change:', prev, '->', newIndex);
         return newIndex;
       });
-    }, 2000);
+    }, intervalDuration);
 
     return () => {
       console.log('🧹 Cleaning up interval');
