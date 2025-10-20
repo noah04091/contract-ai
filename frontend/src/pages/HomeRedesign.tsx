@@ -245,6 +245,8 @@ const TestimonialsSlider = () => {
         className="slider-container"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
+        onTouchStart={() => setIsHovered(true)}
+        onTouchEnd={() => setIsHovered(false)}
       >
         <button
           className="slider-nav slider-prev"
