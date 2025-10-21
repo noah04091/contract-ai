@@ -34,12 +34,14 @@ import {
   Loader2,
   Minimize2,
   Settings,
-  ArrowRight
+  ArrowRight,
+  Lightbulb
 } from "lucide-react";
 
 // Components
 import UnifiedPremiumNotice from "../components/UnifiedPremiumNotice";
 import ContractHealthDashboard from "../components/ContractHealthDashboard";
+import SimpleExplanationPopup from "../components/SimpleExplanationPopup";
 
 // Types für revolutionäre Features
 import { 
@@ -799,7 +801,13 @@ export default function Optimizer() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [selectedOptimizations, setSelectedOptimizations] = useState<Set<string>>(new Set());
-  
+
+  // 🧠 PHASE 1: Simple Explanation Popup State
+  const [explanationPopup, setExplanationPopup] = useState<{
+    show: boolean;
+    optimization: OptimizationSuggestion | null;
+  }>({ show: false, optimization: null });
+
   // ✅ ORIGINAL: Refs
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pitchButtonRef = useRef<HTMLButtonElement>(null);
@@ -2031,6 +2039,17 @@ Konfidenz: ${opt.confidence}%\n`
                         </div>
                       </div>
 
+                      {/* 🧠 PHASE 1: Einfach erklärt Button */}
+                      <motion.button
+                        onClick={() => setExplanationPopup({ show: true, optimization })}
+                        className="absolute top-4 right-16 p-2 bg-white rounded-lg hover:bg-gradient-to-r hover:from-orange-50 hover:to-orange-100 shadow-sm border border-orange-200"
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        title="Einfach erklärt"
+                      >
+                        <Lightbulb className="w-4 h-4" style={{ color: '#FF9500' }} />
+                      </motion.button>
+
                       {/* Copy Button */}
                       <motion.button
                         onClick={() => {
@@ -2052,6 +2071,17 @@ Konfidenz: ${opt.confidence}%\n`
           </AnimatePresence>
         </motion.div>
       </div>
+
+      {/* 🧠 PHASE 1: Simple Explanation Popup */}
+      {explanationPopup.show && explanationPopup.optimization && (
+        <SimpleExplanationPopup
+          category={explanationPopup.optimization.category}
+          originalText={explanationPopup.optimization.original}
+          improvedText={explanationPopup.optimization.improved}
+          reasoning={explanationPopup.optimization.reasoning}
+          onClose={() => setExplanationPopup({ show: false, optimization: null })}
+        />
+      )}
     </>
   );
 }
