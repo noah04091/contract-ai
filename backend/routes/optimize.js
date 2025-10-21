@@ -2004,33 +2004,34 @@ VERTRAG (Auszug):
 ${truncatedText}
 """
 
-🎯 ANFORDERUNGEN AN JEDE OPTIMIERUNG:
+🎯 KRITISCHE ANFORDERUNGEN:
 
-1. VOLLSTÄNDIGE JURISTISCHE KLAUSELN (min. 400 Zeichen):
-   - Komplette §-Struktur mit Absätzen (1), (2), (3)...
-   - Keine Abkürzungen oder Auslassungen
-   - Direkt copy-paste-fähig in einen Vertrag
+1. ❌ NIEMALS Platzhalter verwenden wie:
+   - "[einsetzen]", "[ORT]", "[Datum]", "[XXX]"
+   - "Siehe Vertrag", "Analyse erforderlich"
+   - Stattdessen: KONKRETE, FERTIGE Klauseln!
 
-2. PROFESSIONELLE RECHTSSPRACHE:
-   - Verwende Fachterminologie (nicht "unklar" → "auslegungsbedürftig")
-   - Zitiere konkrete Paragraphen (§ 311 Abs. 1 BGB)
-   - Nenne relevante Rechtsprechung (BGH, BAG mit Az. und Datum)
+2. ✅ KONKRETE BEISPIELE (SO MUSS ES AUSSEHEN):
 
-3. RECHTLICHE BEGRÜNDUNG:
-   - Mindestens 2-3 Sätze juristische Argumentation
-   - Verweis auf aktuelle Rechtsprechung (2022-2024)
-   - Nennung der Rechtsfolgen bei Nichtbeachtung
+   BEISPIEL für fehlende Klausel:
+   {
+     "originalText": "FEHLT - Diese Pflichtklausel ist nicht vorhanden",
+     "improvedText": "§ 20 Salvatorische Klausel\\n\\n(1) Sollten einzelne Bestimmungen dieses Vertrages unwirksam sein oder werden, wird hierdurch die Wirksamkeit der übrigen Bestimmungen nicht berührt.\\n\\n(2) Die Parteien verpflichten sich, anstelle einer unwirksamen Bestimmung eine dieser möglichst nahekommende wirksame Regelung zu treffen.\\n\\n(3) Das Gleiche gilt für etwaige Vertragslücken.",
+     "legalReasoning": "Nach § 139 BGB führt die Teilnichtigkeit grundsätzlich zur Gesamtnichtigkeit des Vertrags, sofern nicht anzunehmen ist, dass dieser auch ohne den nichtigen Teil vorgenommen worden wäre. Eine salvatorische Klausel verhindert diese Rechtsfolge und sichert die Fortgeltung wirksamer Vertragsteile. Dies entspricht der ständigen Rechtsprechung des BGH (z.B. Urt. v. 12.05.2021 - VIII ZR 68/20). Ohne diese Klausel droht bei Unwirksamkeit einer Einzelbestimmung die Nichtigkeit des gesamten Vertragsverhältnisses mit erheblichen wirtschaftlichen Folgen."
+   }
 
-4. REALISTISCHE BENCHMARKS:
-   - Prozentangaben mit Quelle (z.B. "87% laut BRAK-Studie 2023")
-   - Branchenübliche Standards
-   - Konkrete Schadenssummen oder Risiken
+   BEISPIEL für vorhandene problematische Klausel:
+   {
+     "originalText": "Der Vertrag kann jederzeit ohne Angabe von Gründen gekündigt werden.",
+     "improvedText": "§ 15 Ordentliche Kündigung\\n\\n(1) Beide Vertragsparteien können diesen Vertrag mit einer Frist von drei Monaten zum Quartalsende ordentlich kündigen.\\n\\n(2) Die Kündigung bedarf zu ihrer Wirksamkeit der Schriftform gemäß § 126 BGB. Eine Kündigung per E-Mail genügt nicht den Anforderungen der Schriftform.\\n\\n(3) Das Recht zur außerordentlichen Kündigung aus wichtigem Grund bleibt hiervon unberührt.",
+     "legalReasoning": "Die Formulierung 'jederzeit kündbar' ist rechtlich bedenklich, da sie keine konkrete Kündigungsfrist enthält und somit auslegungsbedürftig ist. Nach § 620 Abs. 2 BGB bedarf die ordentliche Kündigung von Dauerschuldverhältnissen einer angemessenen Frist. Die Rechtsprechung fordert klare, eindeutige Kündigungsfristen zur Vermeidung von Rechtsstreitigkeiten (BAG, Urt. v. 18.11.2020 - 6 AZR 145/19). Eine Frist von drei Monaten zum Quartalsende entspricht der branchenüblichen Praxis und bietet beiden Parteien Planungssicherheit."
+   }
 
 OUTPUT FORMAT (EXAKT EINHALTEN):
 {
   "meta": {
     "type": "${contractType}",
-    "confidence": [85-100],
+    "confidence": 90,
     "jurisdiction": "${contractInfo.jurisdiction || 'DE'}",
     "language": "${contractInfo.language || 'de'}",
     "isAmendment": ${contractInfo.isAmendment || false},
@@ -2038,43 +2039,43 @@ OUTPUT FORMAT (EXAKT EINHALTEN):
   },
   "categories": [
     {
-      "tag": "[kategorie_tag]",
-      "label": "[Anzeigename der Kategorie]",
+      "tag": "kuendigung",
+      "label": "Kündigung & Laufzeit",
       "present": true,
       "issues": [
         {
-          "id": "[unique_id]",
-          "summary": "[Präzise Problembeschreibung in 1-2 Sätzen]",
-          "originalText": "[Exakter Auszug aus dem Vertrag oder 'FEHLT - Diese Pflichtklausel ist nicht vorhanden']",
-          "improvedText": "§ [X] [Überschrift]\\n\\n(1) [Hauptregelung mit allen Details]\\n\\n(2) [Ausnahmen und Präzisierungen]\\n\\n(3) [Verfahrensregelungen]\\n\\n(4) [Rechtsfolgen]\\n\\n(5) [Übergangsbestimmungen falls relevant]",
-          "legalReasoning": "Nach § [XXX] BGB i.V.m. § [YYY] [Gesetz] gilt [Rechtsgrundlage]. Die Rechtsprechung fordert [Anforderung] (BGH, Urteil vom [Datum] - [Az.]: '[Leitsatz]'). Bei Nichtbeachtung droht [Rechtsfolge]. Dies entspricht der h.M. in der Literatur (Palandt/[Bearbeiter], § [XXX] Rn. [YY]).",
-          "risk": [1-10],
-          "impact": [1-10],
-          "confidence": [85-100],
-          "difficulty": "Einfach|Mittel|Komplex",
-          "benchmark": "[Konkrete Statistik], z.B. '92% der professionellen Verträge enthalten diese Klausel (IHK-Studie 2023)'"
+          "id": "k1",
+          "summary": "Keine salvatorische Klausel vorhanden - Gefahr der Gesamtnichtigkeit",
+          "originalText": "FEHLT - Diese Pflichtklausel ist nicht vorhanden",
+          "improvedText": "§ 20 Salvatorische Klausel\\n\\n(1) Sollten einzelne Bestimmungen dieses Vertrages unwirksam sein oder werden, wird hierdurch die Wirksamkeit der übrigen Bestimmungen nicht berührt.\\n\\n(2) Die Parteien verpflichten sich, anstelle einer unwirksamen Bestimmung eine dieser möglichst nahekommende wirksame Regelung zu treffen.\\n\\n(3) Das Gleiche gilt für etwaige Vertragslücken.",
+          "legalReasoning": "Nach § 139 BGB führt die Teilnichtigkeit grundsätzlich zur Gesamtnichtigkeit des Vertrags. Eine salvatorische Klausel verhindert diese Rechtsfolge und entspricht der ständigen BGH-Rechtsprechung (Urt. v. 12.05.2021 - VIII ZR 68/20). Ohne diese Klausel droht bei Unwirksamkeit einer Einzelbestimmung die Nichtigkeit des gesamten Vertragsverhältnisses.",
+          "risk": 8,
+          "impact": 7,
+          "confidence": 95,
+          "difficulty": "Einfach",
+          "benchmark": "98% aller professionellen Verträge enthalten eine salvatorische Klausel zur Risikominimierung"
         }
       ]
     }
   ],
   "score": {
-    "health": [0-100]
+    "health": 65
   },
   "summary": {
-    "redFlags": [Anzahl kritischer Probleme],
-    "quickWins": [Anzahl einfacher Verbesserungen],
-    "totalIssues": [Gesamtzahl],
-    "criticalLegalRisks": [Anzahl rechtlicher Risiken],
-    "complianceIssues": [Anzahl Compliance-Probleme]
+    "redFlags": 2,
+    "quickWins": 3,
+    "totalIssues": 8,
+    "criticalLegalRisks": 2,
+    "complianceIssues": 1
   }
 }
 
-⚠️ KRITISCHE REGELN:
-1. JEDE improvedText MUSS mindestens 400 Zeichen lang sein
-2. KEINE Platzhalter wie "[...]" oder "[einsetzen]" 
-3. JEDE legalReasoning MUSS konkrete Gesetze UND Rechtsprechung zitieren
-4. NUR die relevantesten Probleme für DIESEN spezifischen Vertragstyp
-5. Kategorien müssen zur Vertragsart passen (z.B. keine "Miete" bei Arbeitsvertrag)
+⚠️ ABSOLUTE PFLICHT-REGELN:
+1. ✅ JEDE "improvedText" enthält FERTIGE, VOLLSTÄNDIGE Klauseln (min. 300 Zeichen)
+2. ✅ JEDE "legalReasoning" nennt KONKRETE Gesetze (§ XXX BGB) UND Rechtsprechung (BGH/BAG mit Datum)
+3. ✅ "originalText" ist entweder der EXAKTE Vertragstext ODER "FEHLT - Diese Pflichtklausel ist nicht vorhanden"
+4. ❌ NIEMALS Platzhalter wie [ORT], [Datum], [einsetzen], [XXX], "Siehe Vertrag"
+5. ✅ NUR die 5-8 wichtigsten Probleme für DIESEN Vertragstyp
 
 BEGINNE JETZT MIT DER ANALYSE!`;
 };
