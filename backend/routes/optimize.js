@@ -2288,10 +2288,8 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
       contractTypeInfo
     );
 
-    // ⚡ OPTIMIERT: Schnelleres Modell für bessere Performance
-    const modelToUse = contractText.length > 10000 || contractTypeInfo.type === 'sonstiges'
-      ? "gpt-4o-mini"  // 5x schneller & 90% billiger! Für lange oder unbekannte Verträge
-      : "gpt-4o-mini"; // Für Standard-Verträge - schnell & präzise
+    // 🔥 PERFECTION MODE: GPT-4o für maximale Qualität & Konsistenz
+    const modelToUse = "gpt-4o"; // Premium-Modell für PERFEKTE Analysen - befolgt Regeln zuverlässig!
 
     console.log(`🤖 [${requestId}] KI-Modell: ${modelToUse} für ${contractTypeInfo.type}`);
 
