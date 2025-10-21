@@ -2004,27 +2004,45 @@ VERTRAG (Auszug):
 ${truncatedText}
 """
 
-🎯 KRITISCHE ANFORDERUNGEN:
+🔥 ABSOLUTE VERBOTE (NIEMALS VERWENDEN):
+❌ "siehe Vereinbarung"
+❌ "siehe Vertrag"
+❌ "[ORT]", "[Datum]", "[einsetzen]", "[XXX]"
+❌ "Analyse erforderlich"
+❌ Generische Überschriften wie "Klarheit & Präzision" ohne spezifischen Kontext
 
-1. ❌ NIEMALS Platzhalter verwenden wie:
-   - "[einsetzen]", "[ORT]", "[Datum]", "[XXX]"
-   - "Siehe Vertrag", "Analyse erforderlich"
-   - Stattdessen: KONKRETE, FERTIGE Klauseln!
+🎯 PFLICHT-ANFORDERUNGEN:
 
-2. ✅ KONKRETE BEISPIELE (SO MUSS ES AUSSEHEN):
+1. ✅ KONKRETE, SPEZIFISCHE ÜBERSCHRIFTEN (summary):
+   - SCHLECHT: "Klarheit & Präzision" (zu generisch!)
+   - GUT: "Salvatorische Klausel fehlt - Vertrag kann komplett ungültig werden"
+   - GUT: "Kündigungsfrist fehlt - Rechtsunsicherheit bei Vertragsende"
+   - GUT: "Unklare Gewährleistung - Ansprüche nicht durchsetzbar"
 
-   BEISPIEL für fehlende Klausel:
+2. ✅ USER-FREUNDLICHE BEGRÜNDUNGEN (legalReasoning):
+   - NICHT: "Nach § 311 BGB ist für die Wirksamkeit von Verträgen eine Einigung..."
+   - SONDERN: "Ohne salvatorische Klausel wird bei einer einzigen ungültigen Klausel automatisch der GESAMTE Vertrag ungültig (§ 139 BGB). Das bedeutet: Null Rechtsschutz! Die BGH-Rechtsprechung (Urt. v. 12.05.2021 - VIII ZR 68/20) fordert diese Klausel in allen professionellen Verträgen."
+
+3. ✅ KEINE DUPLIKATE:
+   - Jede Optimierung muss ein EINZIGARTIGES Problem adressieren
+   - Nicht 2x "Salvatorische Klausel" oder 3x "Allgemeine Bestimmungen"
+
+4. ✅ KONKRETE BEISPIELE (SO MUSS ES AUSSEHEN):
+
+   BEISPIEL 1 - Fehlende Klausel:
    {
+     "summary": "Salvatorische Klausel fehlt - Gefahr der Gesamtnichtigkeit",
      "originalText": "FEHLT - Diese Pflichtklausel ist nicht vorhanden",
      "improvedText": "§ 20 Salvatorische Klausel\\n\\n(1) Sollten einzelne Bestimmungen dieses Vertrages unwirksam sein oder werden, wird hierdurch die Wirksamkeit der übrigen Bestimmungen nicht berührt.\\n\\n(2) Die Parteien verpflichten sich, anstelle einer unwirksamen Bestimmung eine dieser möglichst nahekommende wirksame Regelung zu treffen.\\n\\n(3) Das Gleiche gilt für etwaige Vertragslücken.",
-     "legalReasoning": "Nach § 139 BGB führt die Teilnichtigkeit grundsätzlich zur Gesamtnichtigkeit des Vertrags, sofern nicht anzunehmen ist, dass dieser auch ohne den nichtigen Teil vorgenommen worden wäre. Eine salvatorische Klausel verhindert diese Rechtsfolge und sichert die Fortgeltung wirksamer Vertragsteile. Dies entspricht der ständigen Rechtsprechung des BGH (z.B. Urt. v. 12.05.2021 - VIII ZR 68/20). Ohne diese Klausel droht bei Unwirksamkeit einer Einzelbestimmung die Nichtigkeit des gesamten Vertragsverhältnisses mit erheblichen wirtschaftlichen Folgen."
+     "legalReasoning": "Ohne salvatorische Klausel wird bei einer einzigen ungültigen Klausel automatisch der GESAMTE Vertrag unwirksam (§ 139 BGB). Das bedeutet: Null Rechtsschutz! Beispiel: Eine AGB-Klausel ist unwirksam → Gesamter Vertrag nichtig → Sie haben keine vertragliche Grundlage mehr. Die BGH-Rechtsprechung (Urt. v. 12.05.2021 - VIII ZR 68/20) fordert diese Sicherungsklausel in allen professionellen Verträgen. 98% aller Kanzlei-Verträge haben sie."
    }
 
-   BEISPIEL für vorhandene problematische Klausel:
+   BEISPIEL 2 - Vorhandene problematische Klausel:
    {
+     "summary": "Kündigungsfrist fehlt - Rechtsunsicherheit bei Vertragsbeendigung",
      "originalText": "Der Vertrag kann jederzeit ohne Angabe von Gründen gekündigt werden.",
      "improvedText": "§ 15 Ordentliche Kündigung\\n\\n(1) Beide Vertragsparteien können diesen Vertrag mit einer Frist von drei Monaten zum Quartalsende ordentlich kündigen.\\n\\n(2) Die Kündigung bedarf zu ihrer Wirksamkeit der Schriftform gemäß § 126 BGB. Eine Kündigung per E-Mail genügt nicht den Anforderungen der Schriftform.\\n\\n(3) Das Recht zur außerordentlichen Kündigung aus wichtigem Grund bleibt hiervon unberührt.",
-     "legalReasoning": "Die Formulierung 'jederzeit kündbar' ist rechtlich bedenklich, da sie keine konkrete Kündigungsfrist enthält und somit auslegungsbedürftig ist. Nach § 620 Abs. 2 BGB bedarf die ordentliche Kündigung von Dauerschuldverhältnissen einer angemessenen Frist. Die Rechtsprechung fordert klare, eindeutige Kündigungsfristen zur Vermeidung von Rechtsstreitigkeiten (BAG, Urt. v. 18.11.2020 - 6 AZR 145/19). Eine Frist von drei Monaten zum Quartalsende entspricht der branchenüblichen Praxis und bietet beiden Parteien Planungssicherheit."
+     "legalReasoning": "'Jederzeit kündbar' bedeutet: Sie könnten morgen auf der Straße stehen ODER jahrelang feststecken - niemand weiß es! Nach § 620 Abs. 2 BGB brauchen Verträge klare Fristen. Ohne diese Klarheit gibt es Streit vor Gericht. Die BAG-Rechtsprechung (Urt. v. 18.11.2020 - 6 AZR 145/19) zeigt: Unklare Fristen führen zu teuren Prozessen. Die optimierte 3-Monats-Frist ist branchenüblich und gibt beiden Seiten Planungssicherheit."
    }
 
 OUTPUT FORMAT (EXAKT EINHALTEN):
@@ -2044,16 +2062,16 @@ OUTPUT FORMAT (EXAKT EINHALTEN):
       "present": true,
       "issues": [
         {
-          "id": "k1",
-          "summary": "Keine salvatorische Klausel vorhanden - Gefahr der Gesamtnichtigkeit",
+          "id": "k1_salva",
+          "summary": "Salvatorische Klausel fehlt - Vertrag kann komplett ungültig werden",
           "originalText": "FEHLT - Diese Pflichtklausel ist nicht vorhanden",
           "improvedText": "§ 20 Salvatorische Klausel\\n\\n(1) Sollten einzelne Bestimmungen dieses Vertrages unwirksam sein oder werden, wird hierdurch die Wirksamkeit der übrigen Bestimmungen nicht berührt.\\n\\n(2) Die Parteien verpflichten sich, anstelle einer unwirksamen Bestimmung eine dieser möglichst nahekommende wirksame Regelung zu treffen.\\n\\n(3) Das Gleiche gilt für etwaige Vertragslücken.",
-          "legalReasoning": "Nach § 139 BGB führt die Teilnichtigkeit grundsätzlich zur Gesamtnichtigkeit des Vertrags. Eine salvatorische Klausel verhindert diese Rechtsfolge und entspricht der ständigen BGH-Rechtsprechung (Urt. v. 12.05.2021 - VIII ZR 68/20). Ohne diese Klausel droht bei Unwirksamkeit einer Einzelbestimmung die Nichtigkeit des gesamten Vertragsverhältnisses.",
+          "legalReasoning": "Ohne salvatorische Klausel wird bei einer einzigen ungültigen Klausel automatisch der GESAMTE Vertrag unwirksam (§ 139 BGB). Das bedeutet: Null Rechtsschutz! Beispiel: Eine AGB-Klausel ist unwirksam → Gesamter Vertrag nichtig → Sie haben keine vertragliche Grundlage mehr. Die BGH-Rechtsprechung (Urt. v. 12.05.2021 - VIII ZR 68/20) fordert diese Sicherungsklausel in allen professionellen Verträgen.",
           "risk": 8,
           "impact": 7,
           "confidence": 95,
           "difficulty": "Einfach",
-          "benchmark": "98% aller professionellen Verträge enthalten eine salvatorische Klausel zur Risikominimierung"
+          "benchmark": "98% aller professionellen Verträge enthalten diese Sicherungsklausel"
         }
       ]
     }
@@ -2070,14 +2088,35 @@ OUTPUT FORMAT (EXAKT EINHALTEN):
   }
 }
 
-⚠️ ABSOLUTE PFLICHT-REGELN:
-1. ✅ JEDE "improvedText" enthält FERTIGE, VOLLSTÄNDIGE Klauseln (min. 300 Zeichen)
-2. ✅ JEDE "legalReasoning" nennt KONKRETE Gesetze (§ XXX BGB) UND Rechtsprechung (BGH/BAG mit Datum)
-3. ✅ "originalText" ist entweder der EXAKTE Vertragstext ODER "FEHLT - Diese Pflichtklausel ist nicht vorhanden"
-4. ❌ NIEMALS Platzhalter wie [ORT], [Datum], [einsetzen], [XXX], "Siehe Vertrag"
-5. ✅ NUR die 5-8 wichtigsten Probleme für DIESEN Vertragstyp
+⚠️ ABSOLUTE PFLICHT-REGELN (100% EINHALTEN):
 
-BEGINNE JETZT MIT DER ANALYSE!`;
+1. ✅ JEDE "summary" ist SPEZIFISCH und beschreibt das konkrete Problem:
+   - "Salvatorische Klausel fehlt - Vertrag kann komplett ungültig werden"
+   - "Kündigungsfrist unklar - Rechtsunsicherheit bei Vertragsende"
+   - NIEMALS nur "Klarheit & Präzision" oder generische Kategorien!
+
+2. ✅ JEDE "legalReasoning" in LAIENSPRACHE mit konkreten Folgen:
+   - Erkläre WAS passiert wenn das Problem nicht gelöst wird
+   - Nutze Beispiele: "Beispiel: X passiert → Y ist die Folge"
+   - Dann erst: Gesetz (§ XXX BGB) + Rechtsprechung (BGH/BAG mit Datum)
+
+3. ✅ JEDE "improvedText" ist FERTIG und KONKRET (min. 300 Zeichen):
+   - NIEMALS "siehe Vereinbarung", "siehe Vertrag", "[ORT]", "[Datum]"
+   - Konkrete Orte/Daten nur wenn im Original-Vertrag vorhanden
+   - Sonst: Allgemeine Formulierung wie "am Sitz des Auftragnehmers"
+
+4. ✅ "originalText" ist EXAKTER Vertragstext ODER "FEHLT - Diese Pflichtklausel ist nicht vorhanden"
+   - NIEMALS "Siehe Vertrag - Analyse erforderlich"
+
+5. ✅ KEINE DUPLIKATE - Jede Optimierung adressiert ein EINZIGARTIGES Problem
+   - Nicht 2x "Salvatorische Klausel" oder 2x "Allgemeine Bestimmungen"
+
+6. ✅ NUR die 5-8 WICHTIGSTEN Probleme für DIESEN Vertragstyp
+   - Fokus auf tatsächliche Risiken, nicht auf Nice-to-have
+
+7. ✅ Einzigartige IDs: "k1_salva", "k2_kuend", "k3_haft" (niemals "k1", "k1", "k1")
+
+BEGINNE JETZT MIT DER PERFEKTEN ANALYSE!`;
 };
 
 // 🚀 HAUPTROUTE: Universelle KI-Vertragsoptimierung mit Enhanced Security & Performance

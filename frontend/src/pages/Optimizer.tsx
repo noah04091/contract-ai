@@ -1988,13 +1988,24 @@ Konfidenz: ${opt.confidence}%\n`
 
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <h4 className="text-lg font-bold">
+                          {/* 🎯 NEUE HEADLINE - Konkrete Beschreibung statt generischer Kategorie */}
+                          <h3 className="text-xl font-bold text-gray-900 mb-2 leading-tight">
+                            {optimization.summary ||
+                              (optimization.category === 'termination' ? 'Kündigung & Laufzeit' :
+                               optimization.category === 'liability' ? 'Haftung & Risiko' :
+                               optimization.category === 'payment' ? 'Vergütung & Zahlung' :
+                               optimization.category === 'compliance' ? 'Compliance & DSGVO' : 'Klarheit & Präzision')}
+                          </h3>
+
+                          <div className="flex items-center gap-3 mb-2 flex-wrap">
+                            {/* Kategorie als kleiner Tag */}
+                            <span className="text-xs font-medium text-gray-500 px-2 py-0.5 rounded bg-gray-100">
                               {optimization.category === 'termination' ? 'Kündigung & Laufzeit' :
                                optimization.category === 'liability' ? 'Haftung & Risiko' :
                                optimization.category === 'payment' ? 'Vergütung & Zahlung' :
                                optimization.category === 'compliance' ? 'Compliance & DSGVO' : 'Klarheit & Präzision'}
-                            </h4>
+                            </span>
+
                             <span className={`px-2.5 py-1 text-xs rounded-full font-semibold ${
                               optimization.priority === 'critical' ? 'bg-red-100 text-red-700' :
                               optimization.priority === 'high' ? 'bg-orange-100 text-orange-700' :
@@ -2017,7 +2028,7 @@ Konfidenz: ${opt.confidence}%\n`
                                '🔴 Professionelle Hilfe empfohlen'}
                             </span>
                           </div>
-                          
+
                           <div className="flex gap-4 text-sm text-gray-600 font-medium">
                             <span>KI: {optimization.confidence}%</span>
                             <span>Risiko: {optimization.legalRisk}/10</span>
