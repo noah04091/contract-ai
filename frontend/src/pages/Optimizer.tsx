@@ -489,15 +489,15 @@ const expandOptimizationClause = (optimization: OptimizationSuggestion, contract
       ...optimization,
       improved: template
         .replace(/\[X\]/g, Math.floor(Math.random() * 20 + 1).toString())
-        .replace(/\[BETRAG\]/g, 'siehe Vereinbarung')
-        .replace(/\[DATUM\]/g, 'siehe Vereinbarung')
-        .replace(/\[ORT\]/g, 'siehe Vereinbarung')
+        .replace(/\[BETRAG\]/g, 'EUR [individuell vereinbart]')
+        .replace(/\[DATUM\]/g, 'zum nächsten zulässigen Termin')
+        .replace(/\[ORT\]/g, 'am Sitz des Auftragnehmers')
         .replace(/\[FRIST\]/g, '3 Monate')
         .replace(/\[TAGE\]/g, '30')
         .replace(/\[KONTODATEN\]/g, 'werden separat mitgeteilt')
-        .replace(/\[LIEFERADRESSE\]/g, 'siehe Bestellung')
-        .replace(/\[BETRAG IN WORTEN\]/g, 'siehe oben')
-        .replace(/\[RATENVEREINBARUNG\]/g, 'nach Vereinbarung')
+        .replace(/\[LIEFERADRESSE\]/g, 'an die vertraglich vereinbarte Lieferadresse')
+        .replace(/\[BETRAG IN WORTEN\]/g, 'gemäß Vereinbarung')
+        .replace(/\[RATENVEREINBARUNG\]/g, 'gemäß separater Zahlungsvereinbarung')
     };
   }
   
