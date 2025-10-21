@@ -39,7 +39,10 @@ import {
   Lightbulb,
   Zap,
   Code2,
-  AlignLeft
+  AlignLeft,
+  Shield,
+  TrendingUp,
+  AlertTriangle
 } from "lucide-react";
 
 // Components
@@ -2149,6 +2152,106 @@ Konfidenz: ${opt.confidence}%\n`
                             </div>
                           </div>
                         )}
+                      </div>
+
+                      {/* 🎯 PHASE 1 - FEATURE 4: Impact-Vorschau */}
+                      <div className="mt-4 p-4 rounded-xl border border-gray-200" style={{ background: 'linear-gradient(135deg, rgba(0, 122, 255, 0.03) 0%, rgba(175, 82, 222, 0.03) 100%)' }}>
+                        <h5 className="text-xs font-bold text-gray-700 mb-3 flex items-center gap-2">
+                          <TrendingUp className="w-4 h-4" style={{ color: '#007AFF' }} />
+                          AUSWIRKUNGEN DIESER OPTIMIERUNG
+                        </h5>
+
+                        <div className="space-y-3">
+                          {/* Rechtsschutz Level */}
+                          <div>
+                            <div className="flex items-center justify-between mb-1.5">
+                              <div className="flex items-center gap-2">
+                                <Shield className="w-3.5 h-3.5" style={{ color: '#34C759' }} />
+                                <span className="text-xs font-semibold text-gray-700">Rechtsschutz</span>
+                              </div>
+                              <span className="text-xs font-bold" style={{ color: '#34C759' }}>
+                                {optimization.legalRisk <= 3 ? 'Stark' : optimization.legalRisk <= 6 ? 'Mittel' : 'Schwach'}
+                                {' → '}
+                                <span style={{ color: '#34C759' }}>Stark</span>
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                <div
+                                  className="h-full rounded-full transition-all duration-500"
+                                  style={{
+                                    width: `${Math.max(20, 100 - optimization.legalRisk * 10)}%`,
+                                    background: optimization.legalRisk >= 7 ? '#FF3B30' : optimization.legalRisk >= 4 ? '#FF9500' : '#34C759'
+                                  }}
+                                />
+                              </div>
+                              <div className="text-xs text-gray-400">→</div>
+                              <div className="flex-1 h-2 bg-gradient-to-r from-green-400 to-green-500 rounded-full" />
+                            </div>
+                          </div>
+
+                          {/* Verhandlungsposition */}
+                          <div>
+                            <div className="flex items-center justify-between mb-1.5">
+                              <div className="flex items-center gap-2">
+                                <TrendingUp className="w-3.5 h-3.5" style={{ color: '#007AFF' }} />
+                                <span className="text-xs font-semibold text-gray-700">Verhandlungsposition</span>
+                              </div>
+                              <span className="text-xs font-bold" style={{ color: '#007AFF' }}>
+                                {optimization.businessImpact <= 3 ? 'Ungünstig' : optimization.businessImpact <= 7 ? 'Neutral' : 'Vorteilhaft'}
+                                {' → '}
+                                <span style={{ color: '#007AFF' }}>Vorteilhaft</span>
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                <div
+                                  className="h-full rounded-full transition-all duration-500"
+                                  style={{
+                                    width: `${Math.max(20, optimization.businessImpact * 10)}%`,
+                                    background: optimization.businessImpact >= 7 ? '#34C759' : optimization.businessImpact >= 4 ? '#FF9500' : '#FF3B30'
+                                  }}
+                                />
+                              </div>
+                              <div className="text-xs text-gray-400">→</div>
+                              <div className="flex-1 h-2 bg-gradient-to-r from-blue-400 to-blue-500 rounded-full" />
+                            </div>
+                          </div>
+
+                          {/* Risiko-Reduktion */}
+                          <div>
+                            <div className="flex items-center justify-between mb-1.5">
+                              <div className="flex items-center gap-2">
+                                <AlertTriangle className="w-3.5 h-3.5" style={{ color: '#FF9500' }} />
+                                <span className="text-xs font-semibold text-gray-700">Risiko-Level</span>
+                              </div>
+                              <span className="text-xs font-bold" style={{ color: '#FF3B30' }}>
+                                {optimization.legalRisk >= 7 ? 'Hoch' : optimization.legalRisk >= 4 ? 'Mittel' : 'Niedrig'}
+                                {' → '}
+                                <span style={{ color: '#34C759' }}>Niedrig</span>
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                <div
+                                  className="h-full rounded-full transition-all duration-500"
+                                  style={{
+                                    width: `${Math.max(20, optimization.legalRisk * 10)}%`,
+                                    background: optimization.legalRisk >= 7 ? '#FF3B30' : optimization.legalRisk >= 4 ? '#FF9500' : '#34C759'
+                                  }}
+                                />
+                              </div>
+                              <div className="text-xs text-gray-400">→</div>
+                              <div className="flex-1 h-2 bg-gradient-to-r from-green-400 to-green-500 rounded-full" />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="mt-3 pt-3 border-t border-gray-200">
+                          <p className="text-xs text-gray-600">
+                            <strong>💡 Nutzen:</strong> {optimization.marketBenchmark}
+                          </p>
+                        </div>
                       </div>
 
                       {/* Additional Info */}
