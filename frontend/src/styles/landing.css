@@ -3100,9 +3100,9 @@ a {
     padding-right: 0 !important;
   }
 
-  /* ÜBERSCHRIFT NÄHER an Karten */
+  /* ÜBERSCHRIFT NOCH NÄHER an Karten */
   .testimonials-section .section-title {
-    margin-bottom: 30px !important; /* Reduziert von 60px auf 30px */
+    margin-bottom: 20px !important; /* Reduziert von 30px auf 20px */
   }
 
   /* Slider Container: Kein Transform, kein Full-Bleed - EINFACH! */
@@ -5435,6 +5435,11 @@ main,
 
   .pricing-bg {
     overflow: hidden; /* Nur der Background darf overflow: hidden haben */
+  }
+
+  /* ÜBERSCHRIFT NÄHER an Pricing Cards */
+  .pricing-section .section-title {
+    margin-bottom: 20px !important; /* Reduziert von 60px auf 20px */
   }
 
   /* Section Container mehr Platz geben */
