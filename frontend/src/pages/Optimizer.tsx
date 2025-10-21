@@ -1861,7 +1861,7 @@ Konfidenz: ${opt.confidence}%\n`
                       }}
                     >
                       <Zap className="w-4 h-4" />
-                      {showQuickWinsFirst ? '✅ Quick Wins zuerst' : 'Quick Wins zuerst'}
+                      {showQuickWinsFirst ? '✅ Einfache zuerst' : 'Einfache zuerst'}
                     </button>
                     
                     <div className={styles.dropdownGroup}>
@@ -2004,9 +2004,9 @@ Konfidenz: ${opt.confidence}%\n`
                               optimization.implementationDifficulty === 'medium' ? 'bg-yellow-50 text-yellow-700 border border-yellow-200' :
                               'bg-red-50 text-red-700 border border-red-200'
                             }`}>
-                              {optimization.implementationDifficulty === 'easy' ? '🟢 Quick Win (5-10 Min.)' :
-                               optimization.implementationDifficulty === 'medium' ? '🟡 Standard (30-60 Min.)' :
-                               '🔴 Komplex (Anwalt nötig)'}
+                              {optimization.implementationDifficulty === 'easy' ? '🟢 Einfach umsetzbar' :
+                               optimization.implementationDifficulty === 'medium' ? '🟡 Mittlerer Aufwand' :
+                               '🔴 Professionelle Hilfe empfohlen'}
                             </span>
                           </div>
                           
