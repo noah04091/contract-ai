@@ -913,7 +913,8 @@ const generateDynamicCategories = (contractText, contractType) => {
  * Entfernt ALLE Platzhalter, Duplikate und generiert fehlende Daten
  */
 const applyUltimateQualityLayer = (result, requestId) => {
-  console.log(`🔥 [${requestId}] ULTIMATE QUALITY CHECK gestartet...`);
+  console.log(`\n\n🔥🔥🔥 [${ requestId}] ULTIMATE QUALITY CHECK gestartet... 🔥🔥🔥`);
+  console.log(`🔥 [${requestId}] Input categories:`, JSON.stringify(result.categories.map(c => ({ tag: c.tag, issueCount: c.issues.length })), null, 2));
 
   let issuesFixed = 0;
   let duplicatesRemoved = 0;
@@ -945,9 +946,13 @@ const applyUltimateQualityLayer = (result, requestId) => {
       let modified = false;
 
       // 1. ENTFERNE PLATZHALTER aus improvedText
+      console.log(`🔍 [${requestId}] Checking issue ${issue.id}, summary="${issue.summary}", improvedText length=${issue.improvedText?.length || 0}`);
+
       FORBIDDEN_PLACEHOLDERS.forEach(placeholder => {
         if (issue.improvedText && issue.improvedText.includes(placeholder)) {
-          console.log(`⚠️ [${requestId}] PLATZHALTER gefunden: "${placeholder}" in issue ${issue.id}`);
+          console.log(`⚠️⚠️⚠️ [${requestId}] PLATZHALTER GEFUNDEN: "${placeholder}" in issue ${issue.id}`);
+          console.log(`   Before: ${issue.improvedText.substring(0, 200)}`);
+
           // Ersetze durch generische aber korrekte Formulierung
           issue.improvedText = issue.improvedText
             .replace(/siehe Vereinbarung/gi, 'am vereinbarten Ort')
@@ -960,6 +965,7 @@ const applyUltimateQualityLayer = (result, requestId) => {
             .replace(/siehe oben/gi, 'wie bereits dargestellt')
             .replace(/wie vereinbart/gi, 'gemäß den vertraglichen Vereinbarungen');
 
+          console.log(`   After: ${issue.improvedText.substring(0, 200)}`);
           placeholdersRemoved++;
           modified = true;
         }
