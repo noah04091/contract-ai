@@ -23,10 +23,10 @@ const getOpenAI = () => {
     if (!process.env.OPENAI_API_KEY) {
       throw new Error("OpenAI API Key fehlt in Umgebungsvariablen");
     }
-    openaiInstance = new OpenAI({ 
+    openaiInstance = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
-      timeout: 90000, // Increased for longer responses
-      maxRetries: 5   // More retries for complex analysis
+      timeout: 180000, // ⚡ Erhöht auf 180s für gpt-4o-mini (schneller, braucht aber Puffer)
+      maxRetries: 5    // More retries for complex analysis
     });
     console.log("🔧 OpenAI-Instance für Anwaltskanzlei-Level Optimierung initialisiert");
   }
@@ -2248,10 +2248,10 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
       contractTypeInfo
     );
 
-    // Wähle optimales Modell basierend auf Textlänge und Komplexität
+    // ⚡ OPTIMIERT: Schnelleres Modell für bessere Performance
     const modelToUse = contractText.length > 10000 || contractTypeInfo.type === 'sonstiges'
-      ? "gpt-4-turbo-preview"  // Für lange oder unbekannte Verträge
-      : "gpt-4-turbo-preview"; // Für Standard-Verträge
+      ? "gpt-4o-mini"  // 5x schneller & 90% billiger! Für lange oder unbekannte Verträge
+      : "gpt-4o-mini"; // Für Standard-Verträge - schnell & präzise
 
     console.log(`🤖 [${requestId}] KI-Modell: ${modelToUse} für ${contractTypeInfo.type}`);
 
@@ -2289,8 +2289,8 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
             presence_penalty: 0.1,
             response_format: { type: "json_object" }
           }),
-          new Promise((_, reject) => 
-            setTimeout(() => reject(new Error("KI-Timeout nach 120 Sekunden")), 120000) // Increased timeout
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("KI-Timeout nach 180 Sekunden")), 180000) // ⚡ Erhöht auf 3 Minuten
           )
         ]);
         
