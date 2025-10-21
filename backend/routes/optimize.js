@@ -2616,17 +2616,18 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
       }
     );
 
-    // 🔍 ULTIMATE DEBUG: Log first 3 issues to verify quality (v2.0 - Build Limit Fixed)
-    console.log(`\n\n🔍🔍🔍 [${requestId}] FINAL RESPONSE DEBUG (Build ${Date.now()}):`);
-    normalizedResult.categories.slice(0, 3).forEach(cat => {
-      cat.issues.slice(0, 2).forEach(issue => {
-        console.log(`\n📋 Issue: ${issue.id}`);
-        console.log(`   Summary: "${issue.summary}"`);
-        console.log(`   ImprovedText (first 200 chars): "${issue.improvedText?.substring(0, 200)}"`);
-        console.log(`   Contains "siehe Vereinbarung"? ${issue.improvedText?.includes('siehe Vereinbarung') ? '❌ YES!' : '✅ NO'}`);
+    // 🔍 ULTIMATE DEBUG: Log ALL issues to find placeholder source (v3.0 - ALL ISSUES)
+    console.log(`\n\n🔍🔍🔍 [${requestId}] FINAL RESPONSE DEBUG - SHOWING ALL ISSUES:`);
+    normalizedResult.categories.forEach((cat, catIndex) => {
+      console.log(`\n📂 Category ${catIndex + 1}/${normalizedResult.categories.length}: ${cat.tag} (${cat.issues.length} issues)`);
+      cat.issues.forEach((issue, issueIndex) => {
+        console.log(`\n  📋 Issue ${issueIndex + 1}: ${issue.id}`);
+        console.log(`     Summary: "${issue.summary}"`);
+        console.log(`     ImprovedText (first 200 chars): "${issue.improvedText?.substring(0, 200)}"`);
+        console.log(`     Contains "siehe Vereinbarung"? ${issue.improvedText?.includes('siehe Vereinbarung') ? '❌❌❌ YES!' : '✅ NO'}`);
       });
     });
-    console.log(`\n🔍🔍🔍 END DEBUG\n\n`);
+    console.log(`\n🔍🔍🔍 END DEBUG - Total ${normalizedResult.summary.totalIssues} issues checked\n\n`);
 
     // Sende erfolgreiche Antwort
     res.json({
