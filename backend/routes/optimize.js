@@ -2616,8 +2616,8 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
       }
     );
 
-    // 🔍 ULTIMATE DEBUG: Log first 3 issues to verify quality
-    console.log(`\n\n🔍🔍🔍 [${requestId}] FINAL RESPONSE DEBUG:`);
+    // 🔍 ULTIMATE DEBUG: Log first 3 issues to verify quality (v2.0 - Build Limit Fixed)
+    console.log(`\n\n🔍🔍🔍 [${requestId}] FINAL RESPONSE DEBUG (Build ${Date.now()}):`);
     normalizedResult.categories.slice(0, 3).forEach(cat => {
       cat.issues.slice(0, 2).forEach(issue => {
         console.log(`\n📋 Issue: ${issue.id}`);
