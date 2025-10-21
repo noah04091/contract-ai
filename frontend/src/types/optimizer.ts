@@ -4,6 +4,7 @@ export interface OptimizationSuggestion {
   category: 'termination' | 'liability' | 'payment' | 'clarity' | 'compliance';
   priority: 'critical' | 'high' | 'medium' | 'low';
   confidence: number; // AI confidence 0-100
+  summary?: string; // Konkrete Headline statt generischer Kategorie
   original: string;
   improved: string;
   reasoning: string;
