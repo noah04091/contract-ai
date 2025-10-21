@@ -35,7 +35,8 @@ import {
   Minimize2,
   Settings,
   ArrowRight,
-  Lightbulb
+  Lightbulb,
+  Zap
 } from "lucide-react";
 
 // Components
@@ -808,6 +809,9 @@ export default function Optimizer() {
     optimization: OptimizationSuggestion | null;
   }>({ show: false, optimization: null });
 
+  // 🎯 PHASE 1 - FEATURE 2: Quick Win Sort State
+  const [showQuickWinsFirst, setShowQuickWinsFirst] = useState(false);
+
   // ✅ ORIGINAL: Refs
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pitchButtonRef = useRef<HTMLButtonElement>(null);
@@ -1312,9 +1316,22 @@ Konfidenz: ${opt.confidence}%\n`
 
   // ✅ ORIGINAL: Filter optimizations with Memoization
   const filteredOptimizations = useMemo(() => {
-    if (selectedCategory === 'all') return optimizations;
-    return optimizations.filter(opt => opt.category === selectedCategory);
-  }, [optimizations, selectedCategory]);
+    let filtered = selectedCategory === 'all'
+      ? optimizations
+      : optimizations.filter(opt => opt.category === selectedCategory);
+
+    // 🎯 PHASE 1 - FEATURE 2: Quick Wins zuerst sortieren
+    if (showQuickWinsFirst) {
+      const difficultyOrder = { 'easy': 0, 'medium': 1, 'complex': 2 };
+      filtered = [...filtered].sort((a, b) => {
+        const orderA = difficultyOrder[a.implementationDifficulty as keyof typeof difficultyOrder] ?? 3;
+        const orderB = difficultyOrder[b.implementationDifficulty as keyof typeof difficultyOrder] ?? 3;
+        return orderA - orderB;
+      });
+    }
+
+    return filtered;
+  }, [optimizations, selectedCategory, showQuickWinsFirst]);
 
   // 🚀 SIMPLIFIED: Statistics
   const statistics = useMemo(() => {
@@ -1832,6 +1849,20 @@ Konfidenz: ${opt.confidence}%\n`
                       <Settings className="w-4 h-4" />
                       {showAdvancedView ? 'Einfache Ansicht' : 'Einzelne auswählen'}
                     </button>
+
+                    {/* 🎯 PHASE 1 - FEATURE 2: Quick Wins Sort Button */}
+                    <button
+                      onClick={() => setShowQuickWinsFirst(!showQuickWinsFirst)}
+                      className={styles.secondaryButton}
+                      style={{
+                        background: showQuickWinsFirst ? '#007AFF' : 'white',
+                        color: showQuickWinsFirst ? 'white' : '#1d1d1f',
+                        borderColor: showQuickWinsFirst ? '#007AFF' : '#d1d1d6'
+                      }}
+                    >
+                      <Zap className="w-4 h-4" />
+                      {showQuickWinsFirst ? '✅ Quick Wins zuerst' : 'Quick Wins zuerst'}
+                    </button>
                     
                     <div className={styles.dropdownGroup}>
                       <button
@@ -1965,6 +1996,17 @@ Konfidenz: ${opt.confidence}%\n`
                               {optimization.priority === 'critical' ? 'Kritisch' :
                                optimization.priority === 'high' ? 'Hoch' :
                                optimization.priority === 'medium' ? 'Mittel' : 'Niedrig'}
+                            </span>
+
+                            {/* 🎯 PHASE 1 - FEATURE 2: Difficulty Badge */}
+                            <span className={`px-2.5 py-1 text-xs rounded-full font-semibold flex items-center gap-1 ${
+                              optimization.implementationDifficulty === 'easy' ? 'bg-green-50 text-green-700 border border-green-200' :
+                              optimization.implementationDifficulty === 'medium' ? 'bg-yellow-50 text-yellow-700 border border-yellow-200' :
+                              'bg-red-50 text-red-700 border border-red-200'
+                            }`}>
+                              {optimization.implementationDifficulty === 'easy' ? '🟢 Quick Win (5-10 Min.)' :
+                               optimization.implementationDifficulty === 'medium' ? '🟡 Standard (30-60 Min.)' :
+                               '🔴 Komplex (Anwalt nötig)'}
                             </span>
                           </div>
                           
