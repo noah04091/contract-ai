@@ -909,6 +909,126 @@ const generateDynamicCategories = (contractText, contractType) => {
 };
 
 /**
+ * 🔥 ULTIMATE QUALITY LAYER - Aggressive Fehlerbereinigung
+ * Entfernt ALLE Platzhalter, Duplikate und generiert fehlende Daten
+ */
+const applyUltimateQualityLayer = (result, requestId) => {
+  console.log(`🔥 [${requestId}] ULTIMATE QUALITY CHECK gestartet...`);
+
+  let issuesFixed = 0;
+  let duplicatesRemoved = 0;
+  let placeholdersRemoved = 0;
+
+  // VERBOTENE PLATZHALTER
+  const FORBIDDEN_PLACEHOLDERS = [
+    'siehe Vereinbarung',
+    'siehe Vertrag',
+    '[ORT]',
+    '[Datum]',
+    '[XXX]',
+    '[einsetzen]',
+    'Analyse erforderlich',
+    'siehe oben',
+    'wie vereinbart'
+  ];
+
+  // Duplikate-Tracking
+  const seenSummaries = new Set();
+  const seenImprovedTexts = new Set();
+
+  // Durchlaufe alle Kategorien und Issues
+  result.categories = result.categories.map(category => {
+    const cleanedIssues = [];
+
+    category.issues.forEach(issue => {
+      let isValid = true;
+      let modified = false;
+
+      // 1. ENTFERNE PLATZHALTER aus improvedText
+      FORBIDDEN_PLACEHOLDERS.forEach(placeholder => {
+        if (issue.improvedText && issue.improvedText.includes(placeholder)) {
+          console.log(`⚠️ [${requestId}] PLATZHALTER gefunden: "${placeholder}" in issue ${issue.id}`);
+          // Ersetze durch generische aber korrekte Formulierung
+          issue.improvedText = issue.improvedText
+            .replace(/siehe Vereinbarung/gi, 'am vereinbarten Ort')
+            .replace(/siehe Vertrag/gi, 'gemäß den Vertragsbestimmungen')
+            .replace(/\[ORT\]/gi, 'am Sitz des Auftragnehmers')
+            .replace(/\[Datum\]/gi, 'zum vereinbarten Zeitpunkt')
+            .replace(/\[XXX\]/gi, '')
+            .replace(/\[einsetzen\]/gi, '')
+            .replace(/Analyse erforderlich/gi, '')
+            .replace(/siehe oben/gi, 'wie bereits dargestellt')
+            .replace(/wie vereinbart/gi, 'gemäß den vertraglichen Vereinbarungen');
+
+          placeholdersRemoved++;
+          modified = true;
+        }
+      });
+
+      // 2. GENERIERE FEHLENDE SUMMARY
+      if (!issue.summary || issue.summary.trim() === '' || issue.summary === 'Klarheit & Präzision') {
+        // Auto-generate aus legalReasoning oder improvedText
+        const firstSentence = (issue.legalReasoning || issue.improvedText || '')
+          .split('.')[0]
+          .substring(0, 60)
+          .trim();
+
+        issue.summary = firstSentence || 'Rechtliche Optimierung erforderlich';
+        console.log(`✅ [${requestId}] Summary generiert für issue ${issue.id}: "${issue.summary}"`);
+        modified = true;
+      }
+
+      // 3. PRÜFE AUF DUPLIKATE (summary UND improvedText)
+      const summaryKey = issue.summary.toLowerCase().trim();
+      const improvedTextKey = (issue.improvedText || '').substring(0, 100).toLowerCase().trim();
+
+      if (seenSummaries.has(summaryKey) || seenImprovedTexts.has(improvedTextKey)) {
+        console.log(`🗑️ [${requestId}] DUPLIKAT entfernt: "${issue.summary}"`);
+        duplicatesRemoved++;
+        isValid = false;
+      } else {
+        seenSummaries.add(summaryKey);
+        if (improvedTextKey) seenImprovedTexts.add(improvedTextKey);
+      }
+
+      // 4. VALIDIERE MINDESTLÄNGEN
+      if (issue.improvedText && issue.improvedText.length < 100) {
+        console.log(`⚠️ [${requestId}] ImprovedText zu kurz (${issue.improvedText.length} Zeichen) in issue ${issue.id}`);
+        // Zu kurz → verwerfen
+        isValid = false;
+      }
+
+      if (modified) {
+        issuesFixed++;
+      }
+
+      if (isValid) {
+        cleanedIssues.push(issue);
+      }
+    });
+
+    return {
+      ...category,
+      issues: cleanedIssues
+    };
+  });
+
+  // Entferne leere Kategorien
+  result.categories = result.categories.filter(cat => cat.issues.length > 0);
+
+  // Update Summary
+  result.summary.totalIssues = result.categories.reduce((sum, cat) => sum + cat.issues.length, 0);
+
+  console.log(`✅ [${requestId}] QUALITY CHECK abgeschlossen:`);
+  console.log(`   - ${issuesFixed} Issues gefixt`);
+  console.log(`   - ${duplicatesRemoved} Duplikate entfernt`);
+  console.log(`   - ${placeholdersRemoved} Platzhalter ersetzt`);
+  console.log(`   - ${result.summary.totalIssues} Issues übrig`);
+
+  return result;
+};
+
+/**
  * Normalisiert und validiert AI-Output zu strukturiertem Format
  * Stellt sicher, dass alle Optimierungen vollständige juristische Klauseln enthalten
  */
@@ -2004,12 +2124,19 @@ VERTRAG (Auszug):
 ${truncatedText}
 """
 
-🔥 ABSOLUTE VERBOTE (NIEMALS VERWENDEN):
-❌ "siehe Vereinbarung"
-❌ "siehe Vertrag"
-❌ "[ORT]", "[Datum]", "[einsetzen]", "[XXX]"
-❌ "Analyse erforderlich"
-❌ Generische Überschriften wie "Klarheit & Präzision" ohne spezifischen Kontext
+🔥🔥🔥 ABSOLUTES VERBOT - WIRD AUTOMATISCH GELÖSCHT! 🔥🔥🔥
+
+DIESE WÖRTER/PHRASEN SIND ZU 100% VERBOTEN:
+❌ "siehe Vereinbarung" → Wird gelöscht!
+❌ "siehe Vertrag" → Wird gelöscht!
+❌ "[ORT]" / "[Datum]" / "[XXX]" / "[einsetzen]" → Wird gelöscht!
+❌ "Analyse erforderlich" → Wird gelöscht!
+❌ "siehe oben" / "wie vereinbart" → Wird gelöscht!
+❌ summary = "Klarheit & Präzision" → Wird gelöscht!
+
+⚠️ JEDE Optimierung mit diesen Wörtern wird automatisch verworfen oder korrigiert!
+⚠️ Dein Output wird durch einen Quality-Check gefiltert!
+⚠️ Nur perfekte Issues bleiben übrig!
 
 🎯 PFLICHT-ANFORDERUNGEN:
 
@@ -2088,35 +2215,45 @@ OUTPUT FORMAT (EXAKT EINHALTEN):
   }
 }
 
-⚠️ ABSOLUTE PFLICHT-REGELN (100% EINHALTEN):
+⚠️ ABSOLUTE PFLICHT-REGELN (WERDEN AUTOMATISCH GEPRÜFT):
 
-1. ✅ JEDE "summary" ist SPEZIFISCH und beschreibt das konkrete Problem:
-   - "Salvatorische Klausel fehlt - Vertrag kann komplett ungültig werden"
-   - "Kündigungsfrist unklar - Rechtsunsicherheit bei Vertragsende"
-   - NIEMALS nur "Klarheit & Präzision" oder generische Kategorien!
+1. ✅ JEDE "summary" MUSS SPEZIFISCH SEIN (max 60 Zeichen):
+   ✅ GUT: "Salvatorische Klausel fehlt - Vertrag kann ungültig werden"
+   ✅ GUT: "Kündigungsfrist unklar - Rechtsunsicherheit"
+   ❌ SCHLECHT: "Klarheit & Präzision" → WIRD GELÖSCHT!
+   ❌ SCHLECHT: Leere summary → WIRD GELÖSCHT!
 
-2. ✅ JEDE "legalReasoning" in LAIENSPRACHE mit konkreten Folgen:
-   - Erkläre WAS passiert wenn das Problem nicht gelöst wird
-   - Nutze Beispiele: "Beispiel: X passiert → Y ist die Folge"
-   - Dann erst: Gesetz (§ XXX BGB) + Rechtsprechung (BGH/BAG mit Datum)
+2. ✅ JEDE "legalReasoning" in EINFACHER SPRACHE (100-300 Zeichen):
+   - Start: WAS passiert wenn nicht gefixt? (Beispiel!)
+   - Dann: Gesetz (§ XXX BGB) + Rechtsprechung
+   - Keine Fachbegriffe ohne Erklärung!
 
-3. ✅ JEDE "improvedText" ist FERTIG und KONKRET (min. 300 Zeichen):
-   - NIEMALS "siehe Vereinbarung", "siehe Vertrag", "[ORT]", "[Datum]"
-   - Konkrete Orte/Daten nur wenn im Original-Vertrag vorhanden
-   - Sonst: Allgemeine Formulierung wie "am Sitz des Auftragnehmers"
+3. ✅ JEDE "improvedText" IST VOLLSTÄNDIG (min. 300 Zeichen):
+   - Verwende: "am Sitz des Auftragnehmers" statt "[ORT]"
+   - Verwende: "zum vereinbarten Zeitpunkt" statt "[Datum]"
+   - Verwende: "gemäß den Vertragsbestimmungen" statt "siehe Vertrag"
+   ❌ VERBOTEN: "[...]", "siehe Vereinbarung", Platzhalter
 
-4. ✅ "originalText" ist EXAKTER Vertragstext ODER "FEHLT - Diese Pflichtklausel ist nicht vorhanden"
-   - NIEMALS "Siehe Vertrag - Analyse erforderlich"
+4. ✅ "originalText" = EXAKTER Text ODER "FEHLT - Diese Pflichtklausel ist nicht vorhanden"
+   ❌ NIEMALS: "Siehe Vertrag", "Analyse erforderlich"
 
-5. ✅ KEINE DUPLIKATE - Jede Optimierung adressiert ein EINZIGARTIGES Problem
-   - Nicht 2x "Salvatorische Klausel" oder 2x "Allgemeine Bestimmungen"
+5. ✅ ABSOLUT KEINE DUPLIKATE:
+   - Jede summary muss EINZIGARTIG sein
+   - Jede improvedText muss UNTERSCHIEDLICH sein
+   - Duplikate werden automatisch gelöscht!
 
-6. ✅ NUR die 5-8 WICHTIGSTEN Probleme für DIESEN Vertragstyp
-   - Fokus auf tatsächliche Risiken, nicht auf Nice-to-have
+6. ✅ NUR 5-8 WICHTIGSTE Probleme:
+   - Fokus auf echte Risiken
+   - Keine repetitiven Issues
 
-7. ✅ Einzigartige IDs: "k1_salva", "k2_kuend", "k3_haft" (niemals "k1", "k1", "k1")
+7. ✅ EINDEUTIGE IDs: "clarity_1", "kuend_2", "haft_3"
+   - Niemals "k1", "k1", "k1"!
 
-BEGINNE JETZT MIT DER PERFEKTEN ANALYSE!`;
+⚡ WICHTIG: Dein Output wird durch QUALITY CHECK gefiltert!
+⚡ Issues mit Platzhaltern werden automatisch korrigiert oder gelöscht!
+⚡ Duplikate werden automatisch entfernt!
+
+BEGINNE JETZT MIT DER ULTRA-PRÄZISEN ANALYSE!`;
 };
 
 // 🚀 HAUPTROUTE: Universelle KI-Vertragsoptimierung mit Enhanced Security & Performance
@@ -2353,7 +2490,10 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
     }
     
     // 🚀 STAGE 5: Normalisierung und Qualitätssicherung
-    const normalizedResult = normalizeAndValidateOutput(aiOutput, contractTypeInfo.type);
+    let normalizedResult = normalizeAndValidateOutput(aiOutput, contractTypeInfo.type);
+
+    // 🔥 STAGE 5.5: ULTIMATE QUALITY LAYER - Aggressive Fehlerbereinigung
+    normalizedResult = applyUltimateQualityLayer(normalizedResult, requestId);
     
     // 🚀 STAGE 6: Anreicherung mit generierten professionellen Klauseln
     let enhancedIssueCount = 0;
