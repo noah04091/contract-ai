@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import ReactDOM from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import ReactDiffViewer from 'react-diff-viewer-continued';
 import { 
   Upload, 
   AlertCircle, 
@@ -36,7 +37,9 @@ import {
   Settings,
   ArrowRight,
   Lightbulb,
-  Zap
+  Zap,
+  Code2,
+  AlignLeft
 } from "lucide-react";
 
 // Components
@@ -811,6 +814,9 @@ export default function Optimizer() {
 
   // 🎯 PHASE 1 - FEATURE 2: Quick Win Sort State
   const [showQuickWinsFirst, setShowQuickWinsFirst] = useState(false);
+
+  // 🎯 PHASE 1 - FEATURE 3: Visual Diff View State
+  const [diffViewEnabled, setDiffViewEnabled] = useState<Map<string, boolean>>(new Map());
 
   // ✅ ORIGINAL: Refs
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -2034,9 +2040,88 @@ Konfidenz: ${opt.confidence}%\n`
                         </div>
                       </div>
 
+                      {/* 🎯 PHASE 1 - FEATURE 3: Toggle between Reasoning and Diff View */}
+                      <div className="flex gap-2 mb-3">
+                        <button
+                          onClick={() => {
+                            const newMap = new Map(diffViewEnabled);
+                            newMap.set(optimization.id, false);
+                            setDiffViewEnabled(newMap);
+                          }}
+                          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                            !diffViewEnabled.get(optimization.id)
+                              ? 'bg-blue-500 text-white shadow-md'
+                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          }`}
+                        >
+                          <AlignLeft className="w-3.5 h-3.5" />
+                          Begründung
+                        </button>
+                        <button
+                          onClick={() => {
+                            const newMap = new Map(diffViewEnabled);
+                            newMap.set(optimization.id, true);
+                            setDiffViewEnabled(newMap);
+                          }}
+                          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                            diffViewEnabled.get(optimization.id)
+                              ? 'bg-blue-500 text-white shadow-md'
+                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          }`}
+                        >
+                          <Code2 className="w-3.5 h-3.5" />
+                          Diff-Ansicht
+                        </button>
+                      </div>
+
                       {/* Content */}
                       <div className="p-3 rounded-lg" style={{ background: 'rgba(142, 142, 147, 0.08)' }}>
-                        <p className="text-sm mb-3">{optimization.reasoning}</p>
+                        {/* Show Reasoning or Diff based on toggle */}
+                        {!diffViewEnabled.get(optimization.id) ? (
+                          <p className="text-sm mb-3">{optimization.reasoning}</p>
+                        ) : (
+                          <div className="text-xs" style={{
+                            background: 'white',
+                            borderRadius: '8px',
+                            overflow: 'hidden',
+                            border: '1px solid rgba(0, 0, 0, 0.1)'
+                          }}>
+                            <ReactDiffViewer
+                              oldValue={optimization.original === "FEHLT" || optimization.original.includes("FEHLT")
+                                ? "⚠️ Diese Klausel fehlt komplett in Ihrem Vertrag"
+                                : optimization.original}
+                              newValue={optimization.improved}
+                              splitView={false}
+                              hideLineNumbers={true}
+                              showDiffOnly={false}
+                              useDarkTheme={false}
+                              styles={{
+                                variables: {
+                                  light: {
+                                    diffViewerBackground: '#ffffff',
+                                    addedBackground: '#e6ffed',
+                                    addedColor: '#24292e',
+                                    removedBackground: '#ffeef0',
+                                    removedColor: '#24292e',
+                                    wordAddedBackground: '#acf2bd',
+                                    wordRemovedBackground: '#fdb8c0',
+                                    addedGutterBackground: '#cdffd8',
+                                    removedGutterBackground: '#ffdce0',
+                                    gutterBackground: '#f6f8fa',
+                                    gutterBackgroundDark: '#f0f0f0',
+                                    highlightBackground: '#fffbdd',
+                                    highlightGutterBackground: '#fff5b1',
+                                  }
+                                },
+                                line: {
+                                  fontSize: '12px',
+                                  lineHeight: '20px',
+                                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                                }
+                              }}
+                            />
+                          </div>
+                        )}
                         {showAdvancedView && (
                           <div className="mt-3 pt-3 border-t border-gray-200">
                             {optimization.original === "FEHLT" || optimization.original.includes("FEHLT") ? (
