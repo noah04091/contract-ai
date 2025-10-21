@@ -2616,8 +2616,20 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
       }
     );
 
+    // 🔍 ULTIMATE DEBUG: Log first 3 issues to verify quality
+    console.log(`\n\n🔍🔍🔍 [${requestId}] FINAL RESPONSE DEBUG:`);
+    normalizedResult.categories.slice(0, 3).forEach(cat => {
+      cat.issues.slice(0, 2).forEach(issue => {
+        console.log(`\n📋 Issue: ${issue.id}`);
+        console.log(`   Summary: "${issue.summary}"`);
+        console.log(`   ImprovedText (first 200 chars): "${issue.improvedText?.substring(0, 200)}"`);
+        console.log(`   Contains "siehe Vereinbarung"? ${issue.improvedText?.includes('siehe Vereinbarung') ? '❌ YES!' : '✅ NO'}`);
+      });
+    });
+    console.log(`\n🔍🔍🔍 END DEBUG\n\n`);
+
     // Sende erfolgreiche Antwort
-    res.json({ 
+    res.json({
       success: true,
       message: "✅ ULTIMATIVE Anwaltskanzlei-Niveau Vertragsoptimierung erfolgreich",
       requestId,
