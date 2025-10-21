@@ -2552,7 +2552,11 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
         }
       }
     });
-    
+
+    // 🔥 STAGE 6.5: ULTIMATE QUALITY LAYER NOCHMAL - Für generierte Template-Klauseln
+    console.log(`🔥 [${requestId}] Running Quality Layer AGAIN after template generation...`);
+    normalizedResult = applyUltimateQualityLayer(normalizedResult, requestId);
+
     // 🚀 STAGE 7: Finale Health-Score-Berechnung
     const healthScore = calculateHealthScore(gapAnalysis.gaps, normalizedResult.categories.flatMap(c => c.issues));
     normalizedResult.score.health = healthScore;
