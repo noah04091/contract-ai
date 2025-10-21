@@ -2043,7 +2043,7 @@ Konfidenz: ${opt.confidence}%\n`
                         </div>
                       </div>
 
-                      {/* 🎯 PHASE 1 - FEATURE 3: Toggle between Reasoning and Diff View */}
+                      {/* 🎯 PHASE 1 - FEATURE 3: Toggle between Reasoning and Before/After View */}
                       <div className="flex gap-2 mb-3">
                         <button
                           onClick={() => {
@@ -2058,7 +2058,7 @@ Konfidenz: ${opt.confidence}%\n`
                           }`}
                         >
                           <AlignLeft className="w-3.5 h-3.5" />
-                          Begründung
+                          💬 Warum optimieren?
                         </button>
                         <button
                           onClick={() => {
@@ -2073,56 +2073,82 @@ Konfidenz: ${opt.confidence}%\n`
                           }`}
                         >
                           <Code2 className="w-3.5 h-3.5" />
-                          Diff-Ansicht
+                          📄 Vorher → Nachher
                         </button>
                       </div>
 
                       {/* Content */}
                       <div className="p-3 rounded-lg" style={{ background: 'rgba(142, 142, 147, 0.08)' }}>
-                        {/* Show Reasoning or Diff based on toggle */}
+                        {/* Show Reasoning or Before/After based on toggle */}
                         {!diffViewEnabled.get(optimization.id) ? (
-                          <p className="text-sm mb-3">{optimization.reasoning}</p>
+                          /* WARUM OPTIMIEREN? - Die KI-Begründung */
+                          <div>
+                            <div className="flex items-center gap-2 mb-2">
+                              <AlignLeft className="w-4 h-4" style={{ color: '#007AFF' }} />
+                              <span className="text-xs font-bold text-gray-700">WARUM IST DAS WICHTIG?</span>
+                            </div>
+                            <p className="text-sm text-gray-700 leading-relaxed">{optimization.reasoning}</p>
+                          </div>
                         ) : (
-                          <div className="text-xs" style={{
-                            background: 'white',
-                            borderRadius: '8px',
-                            overflow: 'hidden',
-                            border: '1px solid rgba(0, 0, 0, 0.1)'
-                          }}>
-                            <ReactDiffViewer
-                              oldValue={optimization.original === "FEHLT" || optimization.original.includes("FEHLT")
-                                ? "⚠️ Diese Klausel fehlt komplett in Ihrem Vertrag"
-                                : optimization.original}
-                              newValue={optimization.improved}
-                              splitView={false}
-                              hideLineNumbers={true}
-                              showDiffOnly={false}
-                              useDarkTheme={false}
-                              styles={{
-                                variables: {
-                                  light: {
-                                    diffViewerBackground: '#ffffff',
-                                    addedBackground: '#e6ffed',
-                                    addedColor: '#24292e',
-                                    removedBackground: '#ffeef0',
-                                    removedColor: '#24292e',
-                                    wordAddedBackground: '#acf2bd',
-                                    wordRemovedBackground: '#fdb8c0',
-                                    addedGutterBackground: '#cdffd8',
-                                    removedGutterBackground: '#ffdce0',
-                                    gutterBackground: '#f6f8fa',
-                                    gutterBackgroundDark: '#f0f0f0',
-                                    highlightBackground: '#fffbdd',
-                                    highlightGutterBackground: '#fff5b1',
-                                  }
-                                },
-                                line: {
-                                  fontSize: '12px',
-                                  lineHeight: '20px',
-                                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-                                }
-                              }}
-                            />
+                          /* VORHER → NACHHER - Klausel-Vergleich */
+                          <div className="space-y-3">
+                            <div className="text-center">
+                              <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold" style={{ background: 'rgba(0, 122, 255, 0.1)', color: '#007AFF' }}>
+                                <Code2 className="w-3.5 h-3.5" />
+                                WAS WIRD KONKRET GEÄNDERT?
+                              </span>
+                            </div>
+
+                            {/* VORHER Box */}
+                            <div className="rounded-lg border-2 border-red-200" style={{ background: 'rgba(255, 59, 48, 0.05)' }}>
+                              <div className="px-3 py-2 border-b border-red-200" style={{ background: 'rgba(255, 59, 48, 0.1)' }}>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs font-bold text-red-700">❌ VORHER (Aktuell in Ihrem Vertrag)</span>
+                                </div>
+                              </div>
+                              <div className="p-3">
+                                {optimization.original === "FEHLT" || optimization.original.includes("FEHLT") ? (
+                                  <div className="flex items-start gap-2">
+                                    <AlertTriangle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+                                    <div>
+                                      <p className="text-sm font-bold text-red-700">Diese Klausel fehlt komplett!</p>
+                                      <p className="text-xs text-gray-600 mt-1">In Ihrem aktuellen Vertrag ist dieser wichtige Absatz nicht vorhanden.</p>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+                                    {optimization.original.length > 300 ? optimization.original.substring(0, 300) + '...' : optimization.original}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Pfeil */}
+                            <div className="flex justify-center">
+                              <div className="px-4 py-2 rounded-full" style={{ background: 'linear-gradient(135deg, #007AFF 0%, #34C759 100%)', color: 'white' }}>
+                                <span className="text-xs font-bold">⬇️ WIRD ERSETZT DURCH</span>
+                              </div>
+                            </div>
+
+                            {/* NACHHER Box */}
+                            <div className="rounded-lg border-2 border-green-200" style={{ background: 'rgba(52, 199, 89, 0.05)' }}>
+                              <div className="px-3 py-2 border-b border-green-200" style={{ background: 'rgba(52, 199, 89, 0.1)' }}>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs font-bold text-green-700">✅ NACHHER (Optimierte Version)</span>
+                                </div>
+                              </div>
+                              <div className="p-3">
+                                <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap font-medium">
+                                  {optimization.improved.length > 500 ? optimization.improved.substring(0, 500) + '...' : optimization.improved}
+                                </p>
+                                {optimization.improved.length > 500 && (
+                                  <p className="text-xs text-blue-600 mt-2 flex items-center gap-1">
+                                    <Shield className="w-3 h-3" />
+                                    Vollständige juristische Klausel wird im PDF-Vertrag generiert
+                                  </p>
+                                )}
+                              </div>
+                            </div>
                           </div>
                         )}
                         {showAdvancedView && (
