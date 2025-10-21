@@ -2,7 +2,6 @@
 import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import ReactDOM from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import ReactDiffViewer from 'react-diff-viewer-continued';
 import { 
   Upload, 
   AlertCircle, 
