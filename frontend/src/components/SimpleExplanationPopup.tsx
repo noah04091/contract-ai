@@ -1,3 +1,4 @@
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Lightbulb, BookOpen, Scale } from 'lucide-react';
 import { useState } from 'react';
@@ -17,7 +18,7 @@ const SIMPLE_EXPLANATIONS: Record<string, {
   whatIs: string;
   whyImportant: string;
   example: string;
-  icon: JSX.Element;
+  icon: React.ReactElement;
 }> = {
   termination: {
     title: "Kündigungsregelungen",
