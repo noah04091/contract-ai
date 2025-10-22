@@ -4,7 +4,58 @@
  */
 
 /**
- * Normalisiert String für Similarity-Vergleich
+ * 🔥 CHATGPT-FIX: Stoppwörter für Kanonisierung
+ */
+const STOP_WORDS = new Set([
+  'pflichtklausel', 'klausel', 'fehlt', 'regelung', 'notwendig',
+  'erforderlich', 'fehlend', 'missing', 'clause', 'required'
+]);
+
+/**
+ * 🔥 CHATGPT-FIX: Kanonische Normalisierung für Dedupe
+ * - Entfernt Stoppwörter
+ * - Mapped Synonyme auf Kernbegriffe
+ * - Normalisiert "Pflichtklausel fehlt: X" → "X"
+ */
+function canonical(s = '') {
+  return s
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s:]/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .replace(/^pflichtklausel\s*fehlt\s*:\s*/, '')   // "Pflichtklausel fehlt: X" → "X"
+    .replace(/(datenschutz|dsgvo)/g, 'data_protection')
+    .replace(/(arbeitsort|einsatzort)/g, 'workplace')
+    .replace(/(kündigung|kündigungsfrist|vertragsbeendigung)/g, 'termination')
+    .replace(/(haftung|gewährleistung)/g, 'liability')
+    .split(' ')
+    .filter(w => w && !STOP_WORDS.has(w))
+    .join(' ')
+    .trim();
+}
+
+/**
+ * 🔥 CHATGPT-FIX: Prüft ob Issue "FEHLT" signalisiert
+ */
+function isMissingFlag(issue) {
+  const o = (issue.originalText || issue.original || '').trim();
+  return o === '' ||
+         o === 'FEHLT' ||
+         /^fehl|^nicht vorhanden|^diese.*fehlt/i.test(o);
+}
+
+/**
+ * 🔥 CHATGPT-FIX: Jaccard Similarity (präziser als Token-Overlap)
+ */
+function jaccard(a, b) {
+  const A = new Set(a.split(' ').filter(Boolean));
+  const B = new Set(b.split(' ').filter(Boolean));
+  const inter = [...A].filter(x => B.has(x)).length;
+  const union = A.size + B.size - inter;
+  return union > 0 ? inter / union : 0;
+}
+
+/**
+ * Normalisiert String für Similarity-Vergleich (Legacy-Support)
  */
 function norm(s = '') {
   return s
@@ -15,7 +66,7 @@ function norm(s = '') {
 }
 
 /**
- * Berechnet Token-Overlap Similarity (0-1)
+ * Berechnet Token-Overlap Similarity (0-1) (Legacy-Support)
  */
 function sim(a, b) {
   const A = new Set(norm(a).split(' '));
@@ -25,12 +76,13 @@ function sim(a, b) {
 }
 
 /**
- * 🔥 DEDUPE-LAYER: Entfernt Duplikate basierend auf Kategorie + Title-Similarity
+ * 🔥 CHATGPT-IMPROVED DEDUPE: Semantisch intelligente Duplikaterkennung
  *
  * Merge-Strategie:
- * - Höchste Severity behalten
- * - Längste/beste Reasoning behalten
- * - LegalReferences zusammenführen
+ * - Kanonische Normalisierung (Stoppwörter, Synonyme)
+ * - Jaccard Similarity (präziser als Token-Overlap)
+ * - Niedrigerer Threshold für "FEHLT" Issues (0.3 statt 0.6)
+ * - Höchste Severity + längste Reasoning behalten
  *
  * @param {Array} issues - Array von Issue-Objekten
  * @returns {Array} - Deduplizierte Issues
@@ -38,39 +90,44 @@ function sim(a, b) {
 function dedupeIssues(issues) {
   if (!Array.isArray(issues) || issues.length === 0) return [];
 
+  const out = [];
   const seen = [];
 
   for (const it of issues) {
-    const keyCat = it.category || 'general';
+    const cat = (it.category || 'general').toLowerCase();
     const title = it.title || it.summary || '';
-    const textFlag = (norm(it.originalText || '') === '' ? 'MISSING' : 'HAS');
+    const canTitle = canonical(title);
+    const miss = isMissingFlag(it) ? 'M' : 'H';
 
-    // Suche nach Duplikat in bereits gesehenen Issues
-    const dup = seen.find(s => {
-      const sameCategory = (s.category || 'general') === keyCat;
-      const sTitle = s.title || s.summary || '';
+    // Suche nach semantischem Duplikat
+    const dupIndex = seen.findIndex(s => {
+      const sameCategory = s.cat === cat;
+      if (!sameCategory) return false;
 
-      // Fall 1: Beide haben MISSING originalText + ähnlicher Titel
-      if (textFlag === 'MISSING' && norm(s.originalText || '') === '') {
-        return sameCategory && sim(sTitle, title) > 0.6;
-      }
+      const canSTitle = canonical(s.title);
 
-      // Fall 2: Titel + Summary stark ähnlich
-      const titleSimScore = sim(`${sTitle} ${s.summary || ''}`, `${title} ${it.summary || ''}`);
-      return sameCategory && titleSimScore > 0.75;
+      // CHATGPT-FIX: Niedrigerer Threshold für "FEHLT" Issues
+      const threshold = (s.miss === 'M' && miss === 'M') ? 0.3 : 0.6;
+      const similarity = jaccard(canSTitle, canTitle);
+
+      return similarity >= threshold;
     });
 
-    if (!dup) {
-      // Kein Duplikat gefunden → hinzufügen
-      seen.push(it);
+    if (dupIndex === -1) {
+      // Kein Duplikat → hinzufügen
+      seen.push({ cat, miss, title });
+      out.push(it);
     } else {
       // Duplikat gefunden → Merge
-      console.log(`🔄 Dedupe: Merging "${title}" into existing finding`);
+      const dup = out[dupIndex];
+      console.log(`🔄 Dedupe: Merging "${title}" into "${dup.title || dup.summary}"`);
 
       // Höchste Severity behalten
-      if ((it.severity || it.risk || 0) > (dup.severity || dup.risk || 0)) {
-        dup.severity = it.severity || it.risk;
-        dup.risk = it.severity || it.risk;
+      const itSeverity = it.severity || it.risk || 0;
+      const dupSeverity = dup.severity || dup.risk || 0;
+      if (itSeverity > dupSeverity) {
+        dup.severity = itSeverity;
+        dup.risk = itSeverity;
       }
 
       // Längeres Legal Reasoning behalten
@@ -78,30 +135,29 @@ function dedupeIssues(issues) {
         dup.legalReasoning = it.legalReasoning;
       }
 
-      // Längerer/besserer improvedText behalten
+      // Längeren/besseren improvedText behalten
       if ((it.improvedText || '').length > (dup.improvedText || '').length) {
         dup.improvedText = it.improvedText;
       }
 
-      // Sources zusammenführen
+      // Sources & LegalReferences zusammenführen
       const dupSources = dup.sources || [dup.source || 'unknown'];
       const itSources = it.sources || [it.source || 'unknown'];
       dup.sources = [...new Set([...dupSources, ...itSources])];
 
-      // LegalReferences zusammenführen
       const dupRefs = dup.legalReferences || [];
       const itRefs = it.legalReferences || [];
       dup.legalReferences = [...new Set([...dupRefs, ...itRefs])];
 
-      // Confidence: Durchschnitt oder höchster Wert
+      // Confidence: Maximum
       if (it.confidence && dup.confidence) {
         dup.confidence = Math.max(it.confidence, dup.confidence);
       }
     }
   }
 
-  console.log(`✅ Dedupe: ${issues.length} → ${seen.length} findings (removed ${issues.length - seen.length} duplicates)`);
-  return seen;
+  console.log(`✅ Smart-Dedupe: ${issues.length} → ${out.length} findings (removed ${issues.length - out.length} duplicates)`);
+  return out;
 }
 
 /**
@@ -181,11 +237,62 @@ function applyMinimumStandards(issues) {
   });
 }
 
+/**
+ * 🔥 CHATGPT-FIX: Post-Processing Sanitizer
+ * Entfernt willkürliche Zahlen, §-Überschriften, falsche Rollenbegriffe, Pseudo-Statistiken
+ *
+ * SCHUTZMA NAHMEN:
+ * 1. § nur am Zeilenanfang entfernen (nicht § 623 BGB im Text!)
+ * 2. Stunden nur kontextsensitiv (nicht wenn BGB/% folgt)
+ * 3. Term-Mapping nur für Arbeitsrecht
+ * 4. Pseudo-Statistiken raus, echte Quellen behalten
+ */
+function sanitizeImprovedText(text = '', contractType = '') {
+  if (!text) return text;
+
+  let t = text;
+
+  // 1. § ÜBERSCHRIFTEN entfernen (nur Zeilenanfang, NICHT "§ 623 BGB" im Text!)
+  // CHATGPT-SCHUTZ: Nur wenn kein BGB/DSGVO/ArbGG folgt
+  t = t.replace(/^(?:§|\u00A7)\s*\d+\s+(?=[A-ZÄÖÜa-zäöü])/gm, '');
+
+  // 2. WILLKÜRLICHE STUNDEN → Platzhalter
+  // CHATGPT-SCHUTZ: Nur wenn in den nächsten 20 Zeichen kein BGB/DSGVO/% vorkommt
+  t = t.replace(/(\b\d{1,3})\s*(Stunden|Std\.?)(?![^]{0,20}\b(BGB|DSGVO|ArbZG|%|€)\b)/gi, '[X] Stunden');
+
+  // 3. TERM-MAPPING für Arbeitsrecht
+  // CHATGPT-SCHUTZ: Nur für Arbeitsverträge, mit Wortgrenzen
+  if ((contractType || '').toLowerCase().includes('arbeit')) {
+    t = t.replace(/\bAuftraggeber\b/g, 'Arbeitgeber')
+         .replace(/\bAuftragnehmer\b/g, 'Arbeitnehmer');
+  }
+
+  // 4. PSEUDO-STATISTIKEN entfernen
+  // CHATGPT-SCHUTZ: Nur Prozent-Claims mit "BRAK/Quelle/Studie", echte BGH/BAG bleiben!
+  t = t.replace(/\b(?:8\d|9\d|100)%[^.\n]*?(?:BRAK|Quelle|Studie|Erhebung)[^.\n]*\.?/gi, 'branchenübliche Praxis');
+
+  return t.trim();
+}
+
+/**
+ * 🔥 CHATGPT-FIX: Sanitizer für Summary/Benchmark (leichter)
+ */
+function sanitizeText(text = '') {
+  if (!text) return text;
+
+  // Entferne Pseudo-Prozente aus Summaries/Benchmarks
+  return text.replace(/\b(?:8\d|9\d|100)%.*?(?:BRAK|Erhebung|Studie)[^.\n]*\.?/gi, 'branchenüblich');
+}
+
 module.exports = {
   dedupeIssues,
   ensureCategory,
   cleanPlaceholders,
   applyMinimumStandards,
+  sanitizeImprovedText,
+  sanitizeText,
   norm,
-  sim
+  sim,
+  canonical,
+  jaccard
 };

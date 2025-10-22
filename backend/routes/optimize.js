@@ -13,8 +13,8 @@ const verifyToken = require("../middleware/verifyToken");
 const { ObjectId } = require("mongodb");
 const { smartRateLimiter, uploadLimiter, generalLimiter } = require("../middleware/rateLimiter");
 const { runBaselineRules } = require("../services/optimizer/rules");
-// 🔥 FIX 4: Imports cleanen - applyMinimumStandards nicht genutzt
-const { dedupeIssues, ensureCategory } = require("../services/optimizer/quality");
+// 🔥 FIX 4+: Quality Layer imports (mit Sanitizer)
+const { dedupeIssues, ensureCategory, sanitizeImprovedText, sanitizeText } = require("../services/optimizer/quality");
 
 const router = express.Router();
 const upload = multer({ dest: "uploads/" });
@@ -915,13 +915,14 @@ const generateDynamicCategories = (contractText, contractType) => {
  * 🔥 ULTIMATE QUALITY LAYER - Aggressive Fehlerbereinigung
  * Entfernt ALLE Platzhalter, Duplikate und generiert fehlende Daten
  */
-const applyUltimateQualityLayer = (result, requestId) => {
+const applyUltimateQualityLayer = (result, requestId, contractType = 'sonstiges') => {
   console.log(`\n\n🔥🔥🔥 [${ requestId}] ULTIMATE QUALITY CHECK gestartet... 🔥🔥🔥`);
   console.log(`🔥 [${requestId}] Input categories:`, JSON.stringify(result.categories.map(c => ({ tag: c.tag, issueCount: c.issues.length })), null, 2));
 
   let issuesFixed = 0;
   let duplicatesRemoved = 0;
   let placeholdersRemoved = 0;
+  let sanitized = 0;
 
   // VERBOTENE PLATZHALTER
   const FORBIDDEN_PLACEHOLDERS = [
@@ -999,6 +1000,21 @@ const applyUltimateQualityLayer = (result, requestId) => {
     issues = dedupeIssues(issues);
     duplicatesRemoved += (beforeDedupe - issues.length);
 
+    // 🔥 CHATGPT-FIX: SANITIZER nach Dedupe anwenden
+    issues = issues.map(issue => {
+      if (issue.improvedText) {
+        issue.improvedText = sanitizeImprovedText(issue.improvedText, contractType);
+        sanitized++;
+      }
+      if (issue.summary) {
+        issue.summary = sanitizeText(issue.summary);
+      }
+      if (issue.benchmark) {
+        issue.benchmark = sanitizeText(issue.benchmark);
+      }
+      return issue;
+    });
+
     return {
       ...category,
       issues: issues
@@ -1015,6 +1031,7 @@ const applyUltimateQualityLayer = (result, requestId) => {
   console.log(`   - ${issuesFixed} Issues gefixt`);
   console.log(`   - ${duplicatesRemoved} Duplikate entfernt`);
   console.log(`   - ${placeholdersRemoved} Platzhalter ersetzt`);
+  console.log(`   - ${sanitized} Issues sanitized (§-Überschriften, Zahlen, Rollenbegriffe, Pseudo-%)`);
   console.log(`   - ${result.summary.totalIssues} Issues übrig`);
 
   return result;
@@ -2711,7 +2728,7 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
     let normalizedResult = normalizeAndValidateOutput(aiOutput, contractTypeInfo.type);
 
     // 🔥 STAGE 5.5: ULTIMATE QUALITY LAYER - Aggressive Fehlerbereinigung
-    normalizedResult = applyUltimateQualityLayer(normalizedResult, requestId);
+    normalizedResult = applyUltimateQualityLayer(normalizedResult, requestId, contractTypeInfo.type);
     
     // 🚀 STAGE 6: Anreicherung mit generierten professionellen Klauseln
     let enhancedIssueCount = 0;
@@ -2767,7 +2784,7 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
 
     // 🔥 STAGE 6.5: ULTIMATE QUALITY LAYER NOCHMAL - Für generierte Template-Klauseln
     console.log(`🔥 [${requestId}] Running Quality Layer AGAIN after template generation...`);
-    normalizedResult = applyUltimateQualityLayer(normalizedResult, requestId);
+    normalizedResult = applyUltimateQualityLayer(normalizedResult, requestId, contractTypeInfo.type);
 
     // 🔥 STAGE 6.7: TOP-UP-PASS - Garantiere Minimum 6-8 Findings
     console.log(`🎯 [${requestId}] Checking if Top-Up needed...`);
