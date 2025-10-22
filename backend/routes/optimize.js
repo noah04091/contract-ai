@@ -12,6 +12,7 @@ const { OpenAI } = require("openai");
 const verifyToken = require("../middleware/verifyToken");
 const { ObjectId } = require("mongodb");
 const { smartRateLimiter, uploadLimiter, generalLimiter } = require("../middleware/rateLimiter");
+const { runBaselineRules } = require("./services/optimizer/rules");
 
 const router = express.Router();
 const upload = multer({ dest: "uploads/" });
@@ -2482,19 +2483,90 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
       } catch (error) {
         retryCount++;
         console.warn(`⚠️ [${requestId}] KI-Versuch ${retryCount}/${maxRetries} fehlgeschlagen:`, error.message);
-        
+
         if (retryCount >= maxRetries) {
-          throw error;
+          console.log(`🔄 [${requestId}] GPT-4o failed after ${maxRetries} retries. Trying FALLBACK 1: GPT-4o-mini...`);
+
+          // 🔥 FALLBACK 1: GPT-4o-mini (schneller, billiger, fast immer erfolgreich)
+          try {
+            completion = await Promise.race([
+              openai.chat.completions.create({
+                model: "gpt-4o-mini",
+                messages: [
+                  {
+                    role: "system",
+                    content: `Du bist ein Fachanwalt für Vertragsrecht. Analysiere den Vertrag und gib JSON zurück mit 6-8 konkreten Optimierungen. NIEMALS Platzhalter wie "siehe Vereinbarung"!`
+                  },
+                  { role: "user", content: optimizedPrompt }
+                ],
+                temperature: 0.2,
+                max_tokens: 3000,
+                response_format: { type: "json_object" }
+              }),
+              new Promise((_, reject) =>
+                setTimeout(() => reject(new Error("Mini-Timeout nach 120 Sekunden")), 120000)
+              )
+            ]);
+            console.log(`✅ [${requestId}] FALLBACK 1 successful: GPT-4o-mini responded`);
+          } catch (miniFallbackError) {
+            console.warn(`⚠️ [${requestId}] FALLBACK 1 failed. Using FALLBACK 2: Deterministic Rule Engine...`);
+            // FALLBACK 2 wird unten gehandled
+          }
         }
-        
+
         // Error already logged, exponential backoff handled above
       }
     }
 
-    const aiOutput = completion?.choices?.[0]?.message?.content || "";
-    
-    if (!aiOutput) {
-      throw new Error("KI konnte keine Optimierungen generieren");
+    let aiOutput = completion?.choices?.[0]?.message?.content || "";
+
+    // 🔥 FALLBACK 2: Deterministic Rule Engine (wenn beide GPT-Modelle fehlschlagen)
+    if (!aiOutput || aiOutput.trim().length < 50) {
+      console.log(`🔧 [${requestId}] No valid GPT output. Using FALLBACK 2: Deterministic Rule Engine...`);
+
+      // Laufe Baseline-Rules
+      const ruleFindings = runBaselineRules(contractText, contractTypeInfo.type);
+
+      console.log(`✅ [${requestId}] Rule Engine found ${ruleFindings.length} issues`);
+
+      // Erstelle minimale Response-Struktur mit Rule-Findings
+      const ruleBasedResponse = {
+        meta: {
+          type: contractTypeInfo.type,
+          confidence: 85,
+          jurisdiction: contractTypeInfo.jurisdiction || 'DE',
+          language: contractTypeInfo.language || 'de',
+          fallbackUsed: 'deterministic_rules'
+        },
+        categories: [],
+        score: { health: 60 },
+        summary: {
+          redFlags: ruleFindings.filter(f => f.risk >= 8).length,
+          quickWins: ruleFindings.filter(f => f.difficulty === 'Einfach').length,
+          totalIssues: ruleFindings.length
+        }
+      };
+
+      // Gruppiere Findings nach Kategorie
+      const categoryMap = new Map();
+      ruleFindings.forEach(finding => {
+        if (!categoryMap.has(finding.category)) {
+          categoryMap.set(finding.category, []);
+        }
+        categoryMap.get(finding.category).push(finding);
+      });
+
+      categoryMap.forEach((issues, categoryTag) => {
+        ruleBasedResponse.categories.push({
+          tag: categoryTag,
+          label: getCategoryLabel(categoryTag),
+          present: false, // Rules detect missing stuff
+          issues: issues
+        });
+      });
+
+      // Setze aiOutput zu JSON-String der Rule-Response
+      aiOutput = JSON.stringify(ruleBasedResponse);
     }
     
     // 🚀 STAGE 5: Normalisierung und Qualitätssicherung
