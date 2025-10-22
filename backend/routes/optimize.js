@@ -13,6 +13,7 @@ const verifyToken = require("../middleware/verifyToken");
 const { ObjectId } = require("mongodb");
 const { smartRateLimiter, uploadLimiter, generalLimiter } = require("../middleware/rateLimiter");
 const { runBaselineRules } = require("../services/optimizer/rules");
+const { dedupeIssues, applyMinimumStandards, ensureCategory } = require("../services/optimizer/quality");
 
 const router = express.Router();
 const upload = multer({ dest: "uploads/" });
@@ -934,31 +935,23 @@ const applyUltimateQualityLayer = (result, requestId) => {
     'wie vereinbart'
   ];
 
-  // Duplikate-Tracking
-  const seenSummaries = new Set();
-  const seenImprovedTexts = new Set();
-
   // Durchlaufe alle Kategorien und Issues
   result.categories = result.categories.map(category => {
-    const cleanedIssues = [];
+    let issues = category.issues || [];
 
-    category.issues.forEach(issue => {
-      let isValid = true;
+    issues = issues.map(issue => {
       let modified = false;
 
       // 1. ENTFERNE PLATZHALTER aus improvedText
-      console.log(`🔍 [${requestId}] Checking issue ${issue.id}, summary="${issue.summary}", improvedText length=${issue.improvedText?.length || 0}`);
-
       FORBIDDEN_PLACEHOLDERS.forEach(placeholder => {
         if (issue.improvedText && issue.improvedText.includes(placeholder)) {
-          console.log(`⚠️⚠️⚠️ [${requestId}] PLATZHALTER GEFUNDEN: "${placeholder}" in issue ${issue.id}`);
-          console.log(`   Before: ${issue.improvedText.substring(0, 200)}`);
+          console.log(`⚠️ [${requestId}] Platzhalter "${placeholder}" entfernt in issue ${issue.id}`);
 
           // Ersetze durch generische aber korrekte Formulierung
           issue.improvedText = issue.improvedText
-            .replace(/siehe Vereinbarung/gi, 'am vereinbarten Ort')
+            .replace(/siehe Vereinbarung/gi, 'individuell zu vereinbaren')
             .replace(/siehe Vertrag/gi, 'gemäß den Vertragsbestimmungen')
-            .replace(/\[ORT\]/gi, 'am Sitz des Auftragnehmers')
+            .replace(/\[ORT\]/gi, 'am Sitz der leistenden Partei')
             .replace(/\[Datum\]/gi, 'zum vereinbarten Zeitpunkt')
             .replace(/\[XXX\]/gi, '')
             .replace(/\[einsetzen\]/gi, '')
@@ -966,13 +959,12 @@ const applyUltimateQualityLayer = (result, requestId) => {
             .replace(/siehe oben/gi, 'wie bereits dargestellt')
             .replace(/wie vereinbart/gi, 'gemäß den vertraglichen Vereinbarungen');
 
-          console.log(`   After: ${issue.improvedText.substring(0, 200)}`);
           placeholdersRemoved++;
           modified = true;
         }
       });
 
-      // 2. GENERIERE FEHLENDE SUMMARY
+      // 2. GENERIERE FEHLENDE SUMMARY (max 60 Zeichen)
       if (!issue.summary || issue.summary.trim() === '' || issue.summary === 'Klarheit & Präzision') {
         // Auto-generate aus legalReasoning oder improvedText
         const firstSentence = (issue.legalReasoning || issue.improvedText || '')
@@ -981,42 +973,34 @@ const applyUltimateQualityLayer = (result, requestId) => {
           .trim();
 
         issue.summary = firstSentence || 'Rechtliche Optimierung erforderlich';
-        console.log(`✅ [${requestId}] Summary generiert für issue ${issue.id}: "${issue.summary}"`);
+        console.log(`✅ [${requestId}] Summary generiert: "${issue.summary}"`);
         modified = true;
       }
 
-      // 3. PRÜFE AUF DUPLIKATE (summary UND improvedText)
-      const summaryKey = issue.summary.toLowerCase().trim();
-      const improvedTextKey = (issue.improvedText || '').substring(0, 100).toLowerCase().trim();
-
-      if (seenSummaries.has(summaryKey) || seenImprovedTexts.has(improvedTextKey)) {
-        console.log(`🗑️ [${requestId}] DUPLIKAT entfernt: "${issue.summary}"`);
-        duplicatesRemoved++;
-        isValid = false;
-      } else {
-        seenSummaries.add(summaryKey);
-        if (improvedTextKey) seenImprovedTexts.add(improvedTextKey);
-      }
-
-      // 4. VALIDIERE MINDESTLÄNGEN
+      // 3. VALIDIERE MINDESTLÄNGEN
       if (issue.improvedText && issue.improvedText.length < 100) {
-        console.log(`⚠️ [${requestId}] ImprovedText zu kurz (${issue.improvedText.length} Zeichen) in issue ${issue.id}`);
-        // Zu kurz → verwerfen
-        isValid = false;
+        console.log(`⚠️ [${requestId}] ImprovedText zu kurz (${issue.improvedText.length} Zeichen) → verworfen`);
+        return null; // Markiere zum Löschen
       }
+
+      // 4. VALIDIERE KATEGORIE
+      ensureCategory(issue);
 
       if (modified) {
         issuesFixed++;
       }
 
-      if (isValid) {
-        cleanedIssues.push(issue);
-      }
-    });
+      return issue;
+    }).filter(issue => issue !== null); // Entferne ungültige
+
+    // 🔥 NEUE DEDUPE-LOGIK: Token-basiert + Similarity
+    const beforeDedupe = issues.length;
+    issues = dedupeIssues(issues);
+    duplicatesRemoved += (beforeDedupe - issues.length);
 
     return {
       ...category,
-      issues: cleanedIssues
+      issues: issues
     };
   });
 
@@ -1909,6 +1893,131 @@ const generateProfessionalClauses = (contractType, gaps, language = 'de') => {
 };
 
 /**
+ * 🔥 TOP-UP-PASS: Garantiert Minimum 6-8 Findings
+ * Wenn nach Dedupe < 6 Findings übrig sind, holt GPT-4o-mini gezielt fehlende Bereiche nach
+ */
+const topUpFindingsIfNeeded = async (normalizedResult, contractText, contractType, openai, requestId) => {
+  // Zähle alle Issues über alle Kategorien
+  const totalIssues = normalizedResult.categories.reduce((sum, cat) => sum + (cat.issues?.length || 0), 0);
+
+  console.log(`🎯 [${requestId}] Top-Up-Pass: ${totalIssues} Findings vorhanden`);
+
+  // Wenn genug Findings vorhanden, nichts tun
+  if (totalIssues >= 6) {
+    console.log(`✅ [${requestId}] Ausreichend Findings (${totalIssues} ≥ 6) - kein Top-Up nötig`);
+    return normalizedResult;
+  }
+
+  console.log(`🔄 [${requestId}] Zu wenig Findings (${totalIssues} < 6) - starte Top-Up-Pass...`);
+
+  // Finde fehlende Kategorien
+  const allCategoryTags = ['data_protection', 'termination', 'payment', 'liability', 'confidentiality', 'jurisdiction', 'formalities', 'ip_rights', 'working_time', 'workplace'];
+  const presentCats = new Set(normalizedResult.categories.map(c => c.tag));
+  const missing = allCategoryTags.filter(t => !presentCats.has(t));
+
+  if (missing.length === 0) {
+    console.log(`⚠️ [${requestId}] Keine fehlenden Kategorien mehr verfügbar`);
+    return normalizedResult;
+  }
+
+  console.log(`📋 [${requestId}] Fehlende Kategorien: ${missing.join(', ')}`);
+
+  // Gezielter Mini-Call für fehlende Bereiche
+  const topUpPrompt = `Du bist Fachanwalt für ${contractType}.
+
+AUFGABE: Ergänze NUR die fehlenden Bereiche: ${missing.join(', ')}.
+Pro Bereich max. 2 konkrete Optimierungen.
+
+STRENGE REGELN:
+- KEINE Platzhalter wie "siehe Vereinbarung", "[BETRAG]", "[ORT]"
+- KEINE erfundenen Zahlen oder §-Nummern
+- Für Arbeitsverträge: "Arbeitgeber/Arbeitnehmer" (NICHT "Auftraggeber/Auftragnehmer")
+- Jedes Issue braucht: title (max 60 Zeichen), severity (1-5), originalText (or "FEHLT"), improvedText (vollständige Klausel), legalReasoning (mit korrekten Normen), legalReferences[]
+
+JSON-Format:
+{
+  "categories": [
+    {
+      "tag": "data_protection",
+      "label": "Datenschutz",
+      "issues": [
+        {
+          "title": "Kurze Headline",
+          "severity": 7,
+          "originalText": "FEHLT",
+          "improvedText": "Vollständige professionelle Klausel ohne Platzhalter",
+          "legalReasoning": "Mit § XYZ BGB...",
+          "legalReferences": ["§ 13 DSGVO", "Art. 6 DSGVO"]
+        }
+      ]
+    }
+  ]
+}
+
+=== VERTRAGSTEXT ===
+${contractText.substring(0, 30000)}`;
+
+  try {
+    const completion = await Promise.race([
+      openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        response_format: { type: "json_object" },
+        temperature: 0.1,
+        max_tokens: 1800,
+        messages: [
+          { role: 'system', content: 'Gib strikt gültiges JSON nach Schema zurück. KEINE Platzhalter!' },
+          { role: 'user', content: topUpPrompt }
+        ]
+      }),
+      new Promise((_, reject) => setTimeout(() => reject(new Error("Top-Up Timeout")), 60000))
+    ]);
+
+    const addOutput = completion.choices?.[0]?.message?.content;
+    if (!addOutput) {
+      console.warn(`⚠️ [${requestId}] Top-Up-Pass: Kein Output von GPT-4o-mini`);
+      return normalizedResult;
+    }
+
+    const parsed = JSON.parse(addOutput);
+    const additionalCategories = parsed.categories || [];
+
+    console.log(`✅ [${requestId}] Top-Up-Pass: ${additionalCategories.length} zusätzliche Kategorien erhalten`);
+
+    // Merge neue Kategorien
+    additionalCategories.forEach(newCat => {
+      const existing = normalizedResult.categories.find(c => c.tag === newCat.tag);
+      if (existing) {
+        // Merge issues
+        const newIssues = (newCat.issues || []).filter(ni => {
+          return !existing.issues.some(ei => ei.title === ni.title || ei.summary === ni.summary);
+        });
+        existing.issues.push(...newIssues);
+      } else {
+        // Neue Kategorie hinzufügen
+        normalizedResult.categories.push(newCat);
+      }
+    });
+
+    // Dedupe nochmal über ALLE Kategorien
+    normalizedResult.categories = normalizedResult.categories.map(cat => ({
+      ...cat,
+      issues: dedupeIssues(cat.issues || [])
+    }));
+
+    // Update summary
+    const newTotal = normalizedResult.categories.reduce((sum, cat) => sum + (cat.issues?.length || 0), 0);
+    normalizedResult.summary.totalIssues = newTotal;
+
+    console.log(`🎯 [${requestId}] Top-Up abgeschlossen: ${totalIssues} → ${newTotal} Findings`);
+
+  } catch (error) {
+    console.error(`⚠️ [${requestId}] Top-Up-Pass fehlgeschlagen:`, error.message);
+  }
+
+  return normalizedResult;
+};
+
+/**
  * Hilfsfunktion: Kategorie-Label Mapping
  */
 const getCategoryLabel = (category) => {
@@ -2146,6 +2255,16 @@ DIESE WÖRTER/PHRASEN SIND ZU 100% VERBOTEN:
 ⚠️ JEDE Optimierung mit diesen Wörtern wird automatisch verworfen oder korrigiert!
 ⚠️ Dein Output wird durch einen Quality-Check gefiltert!
 ⚠️ Nur perfekte Issues bleiben übrig!
+
+🔥 ABSOLUTES VERBOT: KEINE ERFUNDENEN ZAHLEN / §-NUMMERN!
+❌ NIEMALS "§ 9 Arbeitszeit: (1) Die wöchentliche Arbeitszeit beträgt 9 Stunden" (WILLKÜRLICH!)
+❌ NIEMALS "§ 12 Arbeitsort: (1) Der Arbeitsort ist [...]" + willkürliche Paragraph-Nummerierung
+✅ STATTDESSEN: Keine Konkret-Werte wenn Original-Vertrag sie nicht hat
+✅ GUT: "Die wöchentliche Arbeitszeit ist vertraglich festzulegen" (OHNE erfundene Stunden)
+✅ GUT: "Der Arbeitsort wird bei Vertragsschluss bestimmt" (OHNE willkürliche §-Nummer)
+
+🔥 ROLLENBEZEICHNUNGEN FÜR ${contractType.toUpperCase()}:
+${contractType === 'arbeitsvertrag' || contractType.includes('arbeit') ? '✅ "Arbeitgeber" und "Arbeitnehmer" (NICHT "Auftraggeber/Auftragnehmer"!)' : '✅ Neutral: "Vertragspartei" oder vertragstyp-spezifisch'}
 
 🎯 PFLICHT-ANFORDERUNGEN:
 
@@ -2640,6 +2759,10 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
     // 🔥 STAGE 6.5: ULTIMATE QUALITY LAYER NOCHMAL - Für generierte Template-Klauseln
     console.log(`🔥 [${requestId}] Running Quality Layer AGAIN after template generation...`);
     normalizedResult = applyUltimateQualityLayer(normalizedResult, requestId);
+
+    // 🔥 STAGE 6.7: TOP-UP-PASS - Garantiere Minimum 6-8 Findings
+    console.log(`🎯 [${requestId}] Checking if Top-Up needed...`);
+    normalizedResult = await topUpFindingsIfNeeded(normalizedResult, contractText, contractTypeInfo.type, openai, requestId);
 
     // 🚀 STAGE 7: Finale Health-Score-Berechnung
     const healthScore = calculateHealthScore(gapAnalysis.gaps, normalizedResult.categories.flatMap(c => c.issues));

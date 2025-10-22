@@ -22,21 +22,21 @@ const BASELINE_RULES = [
 
 (1) Dieser Vertrag wird geschlossen zwischen:
 
-Partei 1 (nachfolgend "Auftraggeber"):
+Vertragspartei 1:
 [Vollständiger Name]
 [Straße und Hausnummer]
 [PLZ und Ort]
 
 und
 
-Partei 2 (nachfolgend "Auftragnehmer"):
+Vertragspartei 2:
 [Vollständiger Name]
 [Straße und Hausnummer]
 [PLZ und Ort]
 
 (2) Die Parteien werden im Folgenden einzeln als "Partei" und gemeinsam als "Parteien" bezeichnet.`,
     legalReasoning: 'Nach § 126 BGB müssen Vertragsparteien eindeutig bestimmbar sein. Ohne vollständige Angaben (Name, Anschrift) kann der Vertrag im Streitfall unwirksam sein. BGH-Rechtsprechung (Urt. v. 15.01.2020 - XII ZR 23/19) fordert: Parteien müssen so bestimmt sein, dass keine Verwechslung möglich ist.',
-    benchmark: '100% aller professionellen Verträge enthalten vollständige Parteienangaben'
+    benchmark: 'Branchenübliche Standardklausel in professionellen Verträgen'
   },
 
   {
@@ -49,17 +49,17 @@ Partei 2 (nachfolgend "Auftragnehmer"):
     },
     severity: 7,
     category: 'termination',
-    improvedText: `§ X Ordentliche Kündigung
+    improvedText: `Kündigung
 
-(1) Beide Vertragsparteien können diesen Vertrag mit einer Frist von drei Monaten zum Ende eines Kalendermonats ordentlich kündigen.
+(1) Die ordentliche Kündigungsfrist richtet sich nach den gesetzlichen Bestimmungen (insbesondere § 622 BGB für Arbeitsverträge), sofern keine günstigere tarifliche oder betriebliche Regelung Anwendung findet.
 
-(2) Die Kündigung bedarf zu ihrer Wirksamkeit der Schriftform gemäß § 126 BGB. Eine Kündigung per E-Mail genügt nicht den Anforderungen der Schriftform.
+(2) Jede Kündigung bedarf zu ihrer Wirksamkeit der Schriftform nach § 623 BGB (für Arbeitsverträge) bzw. § 126 BGB (für sonstige Verträge). Eine Kündigung per E-Mail oder Textform genügt nicht.
 
 (3) Das Recht zur außerordentlichen Kündigung aus wichtigem Grund bleibt hiervon unberührt.
 
 (4) Nach Ausspruch der Kündigung sind beide Parteien verpflichtet, bei der ordnungsgemäßen Abwicklung des Vertragsverhältnisses mitzuwirken.`,
-    legalReasoning: 'Ohne klare Kündigungsfristen droht Rechtsunsicherheit bei Vertragsbeendigung. Nach § 620 Abs. 2 BGB können unbefristete Dauerschuldverhältnisse jederzeit gekündigt werden - was zu unerwarteter Vertragsbeendigung führen kann. BAG-Rechtsprechung (Urt. v. 18.11.2020 - 6 AZR 145/19): Unklare Fristen führen zu teuren Prozessen. 3-Monats-Frist ist branchenüblich und gibt Planungssicherheit.',
-    benchmark: '94% aller professionellen Verträge enthalten klare Kündigungsfristen'
+    legalReasoning: 'Ohne klare Kündigungsfristen droht Rechtsunsicherheit bei Vertragsbeendigung. Nach § 620 Abs. 2 BGB können unbefristete Dauerschuldverhältnisse jederzeit gekündigt werden - was zu unerwarteter Vertragsbeendigung führen kann. § 622 BGB regelt gesetzliche Kündigungsfristen, § 623 BGB schreibt Schriftform für Arbeitsverträge vor. BAG-Rechtsprechung (Urt. v. 18.11.2020 - 6 AZR 145/19): Unklare Fristen führen zu teuren Prozessen.',
+    benchmark: 'Branchenüblicher Standard in professionellen Verträgen'
   },
 
   {
@@ -86,7 +86,7 @@ Partei 2 (nachfolgend "Auftragnehmer"):
 
 (4) Die gesetzliche Haftung für zugesicherte Eigenschaften bleibt unberührt.`,
     legalReasoning: 'Ohne Haftungsbegrenzung riskieren Sie UNBEGRENZTE Schadensersatzforderungen - selbst bei kleinen Fehlern! Nach § 276 BGB haftet jede Partei für Vorsatz und Fahrlässigkeit. BGH-Rechtsprechung (Urt. v. 22.10.2019 - KZR 39/19) erlaubt Haftungsausschluss für leichte Fahrlässigkeit. Professionelle Verträge begrenzen Haftung auf vorhersehbare Schäden - schützt beide Seiten.',
-    benchmark: '98% aller professionellen B2B-Verträge enthalten Haftungsbegrenzungen'
+    benchmark: 'Branchenüblicher Standard in professionellen B2B-Verträgen'
   },
 
   {
@@ -112,7 +112,7 @@ Partei 2 (nachfolgend "Auftragnehmer"):
 
 (5) Ein Zurückbehaltungsrecht kann nur wegen Gegenansprüchen aus demselben Vertragsverhältnis geltend gemacht werden.`,
     legalReasoning: 'Unklare Zahlungsfristen führen zu Liquiditätsproblemen und Streit. Nach § 286 BGB kommt Schuldner ohne Mahnung in Verzug, wenn Zahlungstermin kalendermäßig bestimmt ist. Mit klarer 14-Tage-Frist: automatischer Verzug ohne Mahnung. Das spart Zeit und Kosten. Branchenstandard: 14-30 Tage Zahlungsziel.',
-    benchmark: '91% aller B2B-Verträge definieren klare Zahlungsfristen (14-30 Tage)'
+    benchmark: 'Gängige Praxis in professionellen B2B-Verträgen (14-30 Tage Zahlungsziel)'
   },
 
   {
@@ -154,11 +154,11 @@ Partei 2 (nachfolgend "Auftragnehmer"):
 
 (1) Auf diesen Vertrag findet ausschließlich das Recht der Bundesrepublik Deutschland Anwendung. Die Anwendung des UN-Kaufrechts (CISG) wird ausdrücklich ausgeschlossen.
 
-(2) Ausschließlicher Gerichtsstand für alle Streitigkeiten aus oder im Zusammenhang mit diesem Vertrag ist [Stadt des Auftragnehmers], soweit gesetzlich zulässig.
+(2) Ausschließlicher Gerichtsstand für alle Streitigkeiten aus oder im Zusammenhang mit diesem Vertrag ist [Ort, an dem die Hauptleistung erbracht wird], soweit gesetzlich zulässig.
 
-(3) Erfüllungsort für alle Leistungen ist [Stadt des Auftragnehmers], soweit nicht anders vereinbart.`,
+(3) Erfüllungsort für alle Leistungen ist am Sitz der leistenden Partei, soweit nicht anders vereinbart.`,
     legalReasoning: 'Ohne Gerichtsstandsvereinbarung können Sie gezwungen werden, am Wohnsitz der Gegenpartei zu klagen - das kann teuer werden! Nach § 38 ZPO ist Gerichtsstandsvereinbarung für Kaufleute zulässig. Vorteil: Heimvorteil bei Rechtsstreit, keine Reisekosten, vertraute Richter. Rechtswahl sichert Rechtsklarheit (kein unbekanntes ausländisches Recht).',
-    benchmark: '89% aller überregionalen Verträge enthalten Gerichtsstandsvereinbarung'
+    benchmark: 'Branchenüblich in überregionalen Verträgen'
   },
 
   {
@@ -177,8 +177,8 @@ Partei 2 (nachfolgend "Auftragnehmer"):
 (2) Die Parteien verpflichten sich für diesen Fall, die unwirksame, undurchführbare oder fehlende Bestimmung durch eine wirksame und durchführbare Bestimmung zu ersetzen, die dem wirtschaftlichen Zweck der unwirksamen, undurchführbaren oder fehlenden Bestimmung und der Interessenlage der Parteien am nächsten kommt.
 
 (3) Das Gleiche gilt für etwaige Regelungslücken.`,
-    legalReasoning: 'Ohne salvatorische Klausel gilt § 139 BGB: Wenn EINE Klausel unwirksam ist, wird der GESAMTE Vertrag nichtig! Beispiel: AGB-Klausel ist unwirksam → kompletter Vertrag ungültig → NULL Rechtsschutz! BGH-Rechtsprechung (Urt. v. 12.05.2021 - VIII ZR 68/20) fordert salvatorische Klausel in professionellen Verträgen. 98% aller Anwaltsverträge haben sie - aus gutem Grund!',
-    benchmark: '98% aller professionellen Verträge enthalten eine salvatorische Klausel'
+    legalReasoning: 'Ohne salvatorische Klausel gilt § 139 BGB: Wenn EINE Klausel unwirksam ist, wird der GESAMTE Vertrag nichtig! Beispiel: AGB-Klausel ist unwirksam → kompletter Vertrag ungültig → NULL Rechtsschutz! BGH-Rechtsprechung (Urt. v. 12.05.2021 - VIII ZR 68/20) betont die Bedeutung salvatorischer Klauseln für die Vertragssicherheit.',
+    benchmark: 'Gängiger Standard in professionellen Verträgen'
   },
 
   {
@@ -199,7 +199,7 @@ Partei 2 (nachfolgend "Auftragnehmer"):
 
 (3) Mündliche Nebenabreden wurden nicht getroffen.`,
     legalReasoning: 'Ohne Schriftformklausel sind mündliche Änderungen wirksam - das führt zu "er hat gesagt / sie hat gesagt"-Streit! § 126 BGB: Schriftform erfordert Unterschrift. Mit dieser Klausel: Änderungen NUR schriftlich gültig. WhatsApp/E-Mail reicht NICHT. Das schützt vor ungewollten Vertragsänderungen und Beweisproblemen vor Gericht.',
-    benchmark: '85% professioneller Verträge enthalten Schriftformerfordernis für Änderungen'
+    benchmark: 'Übliche Praxis in professionellen Verträgen'
   }
 ];
 
