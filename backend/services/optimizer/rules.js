@@ -214,6 +214,10 @@ function runBaselineRules(contractText, contractType = 'sonstiges') {
       const isIssue = rule.check(contractText);
 
       if (isIssue) {
+        // Extrahiere rechtliche Referenzen aus legalReasoning
+        const legalRefs = rule.legalReasoning.match(/§\s*\d+[a-z]?\s+[A-Z]+/g) || [];
+        const caseRefs = rule.legalReasoning.match(/BGH|BAG|LAG|OLG|BVerfG.*?Urt\.\s+v\.\s+[\d.]+/g) || [];
+
         findings.push({
           id: `rule_${rule.id}_${Date.now()}`,
           summary: rule.name,
@@ -225,6 +229,7 @@ function runBaselineRules(contractText, contractType = 'sonstiges') {
           confidence: 90, // Rule-based = hohe Confidence
           difficulty: rule.severity >= 8 ? 'Mittel' : 'Einfach',
           benchmark: rule.benchmark,
+          legalReferences: [...legalRefs, ...caseRefs],
           category: rule.category,
           source: 'deterministic_rule_engine'
         });
@@ -235,6 +240,26 @@ function runBaselineRules(contractText, contractType = 'sonstiges') {
   });
 
   return findings;
+}
+
+/**
+ * Mappt Category-Tags zu benutzerfreundlichen Labels
+ */
+function getCategoryLabel(tag) {
+  const map = {
+    payment: "Vergütung & Zahlung",
+    liability: "Haftung & Gewährleistung",
+    termination: "Kündigung & Laufzeit",
+    confidentiality: "Vertraulichkeit",
+    data_protection: "Datenschutz (DSGVO)",
+    compliance: "Compliance & Datenschutz",
+    jurisdiction: "Rechtswahl & Gerichtsstand",
+    formalities: "Schriftform & Formalien",
+    clarity: "Klarheit & Eindeutigkeit",
+    ip_rights: "Nutzungsrechte & IP",
+    general: "Allgemeine Bestimmungen"
+  };
+  return map[tag] || "Allgemeine Vertragsoptimierung";
 }
 
 module.exports = {

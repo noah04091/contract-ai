@@ -12,7 +12,7 @@ const { OpenAI } = require("openai");
 const verifyToken = require("../middleware/verifyToken");
 const { ObjectId } = require("mongodb");
 const { smartRateLimiter, uploadLimiter, generalLimiter } = require("../middleware/rateLimiter");
-const { runBaselineRules } = require("./services/optimizer/rules");
+const { runBaselineRules } = require("../services/optimizer/rules");
 
 const router = express.Router();
 const upload = multer({ dest: "uploads/" });
@@ -2520,9 +2520,19 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
 
     let aiOutput = completion?.choices?.[0]?.message?.content || "";
 
+    // 🔥 Safe JSON Parse Helper
+    const safeJsonParse = (str) => {
+      try {
+        return JSON.parse(str);
+      } catch (e) {
+        return null;
+      }
+    };
+
     // 🔥 FALLBACK 2: Deterministic Rule Engine (wenn beide GPT-Modelle fehlschlagen)
-    if (!aiOutput || aiOutput.trim().length < 50) {
-      console.log(`🔧 [${requestId}] No valid GPT output. Using FALLBACK 2: Deterministic Rule Engine...`);
+    const parsedOutput = safeJsonParse(aiOutput);
+    if (!parsedOutput) {
+      console.log(`🔧 [${requestId}] No valid JSON from GPT. Using FALLBACK 2: Deterministic Rule Engine...`);
 
       // Laufe Baseline-Rules
       const ruleFindings = runBaselineRules(contractText, contractTypeInfo.type);
