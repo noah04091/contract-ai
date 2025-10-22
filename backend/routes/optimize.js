@@ -477,6 +477,33 @@ const PROFESSIONAL_CLAUSE_TEMPLATES = {
 (5) Die Regelungen zu Mehrarbeit und deren Vergütung gemäß § [X] dieses Vertrages gelten entsprechend.`
   },
   
+  arbeitsort: {
+    standard: `§ [X] Arbeitsort und Einsatzort
+
+(1) Der Arbeitnehmer wird am Standort des Arbeitgebers in [ORT, STRASSE] beschäftigt.
+
+(2) Der Arbeitgeber ist berechtigt, den Arbeitnehmer nach billigem Ermessen gemäß § 106 GewO auch an einem anderen Ort einzusetzen, soweit dies für den Arbeitnehmer zumutbar ist. Eine Versetzung an einen anderen Ort bedarf der vorherigen schriftlichen Mitteilung mit einer Ankündigungsfrist von mindestens vier Wochen.
+
+(3) Bei einer dauerhaften Versetzung an einen Ort, der mehr als [50] Kilometer vom bisherigen Arbeitsort entfernt liegt, hat der Arbeitnehmer ein Sonderkündigungsrecht mit einer Frist von [vier Wochen] zum Monatsende.
+
+(4) Soweit betriebliche Gründe es erfordern und dies dem Arbeitnehmer zumutbar ist, kann der Arbeitgeber den Arbeitnehmer vorübergehend (bis zu [X] Monate pro Kalenderjahr) an anderen Standorten im In- und Ausland einsetzen.
+
+(5) Mobile Arbeit / Homeoffice:
+   a) Der Arbeitnehmer ist nach Abstimmung mit dem Arbeitgeber berechtigt, seine Arbeitsleistung auch von zu Hause (Homeoffice) oder an einem anderen geeigneten Ort (Mobile Arbeit) zu erbringen.
+   b) Die konkrete Ausgestaltung (Anzahl der Tage, technische Ausstattung, Erreichbarkeit) wird in einer gesonderten Vereinbarung geregelt.
+   c) Der Arbeitgeber kann die Homeoffice-/Mobile-Arbeit aus wichtigem betrieblichen Grund mit einer Frist von [zwei Wochen] widerrufen.`,
+
+    mobil: `§ [X] Arbeitsort und Mobile Arbeit
+
+(1) Arbeitsort ist grundsätzlich [ORT]. Der Arbeitgeber ist berechtigt, nach billigem Ermessen einen anderen Einsatzort im Umkreis von [X] km zu bestimmen, soweit dies dem Arbeitnehmer zumutbar ist.
+
+(2) Der Arbeitnehmer ist verpflichtet, seine Arbeitsleistung auch an wechselnden Einsatzorten, insbesondere bei Kunden, zu erbringen, soweit dies betrieblich erforderlich und zumutbar ist.
+
+(3) Bei Einsätzen, die eine Abwesenheit von mehr als [3] Tagen erfordern, ist der Arbeitgeber verpflichtet, dem Arbeitnehmer die angemessenen Reise- und Übernachtungskosten zu erstatten.
+
+(4) Die konkrete Ausgestaltung mobiler Arbeit (Homeoffice, Remote-Arbeit) erfolgt nach Maßgabe der betrieblichen Möglichkeiten in Abstimmung mit dem Arbeitgeber.`
+  },
+
   verguetung: {
     umfassend: `§ [X] Vergütung und Vergütungsbestandteile
 
@@ -924,6 +951,40 @@ const applyUltimateQualityLayer = (result, requestId, contractType = 'sonstiges'
   let placeholdersRemoved = 0;
   let sanitized = 0;
   let sanitizerStats = { roleTerms: 0, pseudoStats: 0, paragraphHeaders: 0, arbitraryHours: 0 };
+
+  // 🔥 CHATGPT-FIX: Normalisiere Category-Tags (nicht nur issue.category!)
+  // Mapped "datenschutz" → "data_protection", "arbeitsort" → "workplace", etc.
+  const categoryTagMapping = {
+    'datenschutz': 'data_protection',
+    'kuendigung': 'termination',
+    'arbeitsort': 'workplace',
+    'arbeitszeit': 'working_time',
+    'verguetung': 'payment',
+    'haftung': 'liability',
+    'geheimhaltung': 'confidentiality',
+    'gerichtsstand': 'jurisdiction',
+    'schriftform': 'formalities'
+  };
+
+  // Normalisiere alle Category-Tags
+  result.categories.forEach(cat => {
+    if (categoryTagMapping[cat.tag]) {
+      console.log(`🔄 [${requestId}] Normalizing category tag: "${cat.tag}" → "${categoryTagMapping[cat.tag]}"`);
+      cat.tag = categoryTagMapping[cat.tag];
+    }
+  });
+
+  // Merge Kategorien mit gleichem Tag nach Normalisierung
+  const mergedCategories = {};
+  result.categories.forEach(cat => {
+    if (!mergedCategories[cat.tag]) {
+      mergedCategories[cat.tag] = { ...cat, issues: [...(cat.issues || [])] };
+    } else {
+      // Merge issues
+      mergedCategories[cat.tag].issues.push(...(cat.issues || []));
+    }
+  });
+  result.categories = Object.values(mergedCategories);
 
   // VERBOTENE PLATZHALTER
   const FORBIDDEN_PLACEHOLDERS = [
@@ -1906,16 +1967,42 @@ const generateProfessionalClauses = (contractType, gaps, language = 'de') => {
           } else if (contractType.includes('miet')) {
             clauseTemplate = PROFESSIONAL_CLAUSE_TEMPLATES.miete_nebenkosten.detailliert;
           }
-        } else if (category === 'compliance' || category === 'datenschutz_vertraulichkeit') {
+        } else if (category === 'compliance' || category === 'datenschutz_vertraulichkeit' || category === 'data_protection') {
           clauseTemplate = PROFESSIONAL_CLAUSE_TEMPLATES.datenschutz.dsgvo_konform;
         } else if (category === 'clarity' || category === 'formalities') {
           clauseTemplate = PROFESSIONAL_CLAUSE_TEMPLATES.schriftform.standard;
+        } else if (category === 'workplace') {
+          clauseTemplate = PROFESSIONAL_CLAUSE_TEMPLATES.arbeitsort.standard;
+        } else if (category === 'working_time') {
+          clauseTemplate = PROFESSIONAL_CLAUSE_TEMPLATES.arbeitszeit.vollzeit;
         }
       }
-      
-      // Ultimate Fallback
+
+      // 🔥 CHATGPT-FIX: Intelligenter Ultimate Fallback
+      // Statt IMMER Salvatorische Klausel: Versuche clause-name zu mappen
       if (!clauseTemplate) {
-        clauseTemplate = PROFESSIONAL_CLAUSE_TEMPLATES.salvatorisch.erweitert;
+        const clauseName = gap.clause || '';
+
+        // Clause-Name basiertes Mapping
+        if (/arbeitsort|einsatzort|workplace/i.test(clauseName)) {
+          clauseTemplate = PROFESSIONAL_CLAUSE_TEMPLATES.arbeitsort.standard;
+        } else if (/arbeitszeit|working.*time/i.test(clauseName)) {
+          clauseTemplate = PROFESSIONAL_CLAUSE_TEMPLATES.arbeitszeit.vollzeit;
+        } else if (/verg[üu]tung|gehalt|payment|compensation/i.test(clauseName)) {
+          clauseTemplate = PROFESSIONAL_CLAUSE_TEMPLATES.verguetung.umfassend;
+        } else if (/k[üu]ndigung|termination/i.test(clauseName)) {
+          clauseTemplate = PROFESSIONAL_CLAUSE_TEMPLATES.kuendigung.ordentlich_ausserordentlich;
+        } else if (/datenschutz|dsgvo|data.*protection/i.test(clauseName)) {
+          clauseTemplate = PROFESSIONAL_CLAUSE_TEMPLATES.datenschutz.dsgvo_konform;
+        } else if (/haftung|liability/i.test(clauseName)) {
+          clauseTemplate = PROFESSIONAL_CLAUSE_TEMPLATES.haftung.ausgewogen;
+        } else if (/schriftform|formalities/i.test(clauseName)) {
+          clauseTemplate = PROFESSIONAL_CLAUSE_TEMPLATES.schriftform.standard;
+        } else {
+          // Letzter Fallback: Salvatorische Klausel
+          console.warn(`⚠️ No specific template found for clause "${clauseName}" (category: ${gap.category}) - using Salvatorische Klausel as ultimate fallback`);
+          clauseTemplate = PROFESSIONAL_CLAUSE_TEMPLATES.salvatorisch.erweitert;
+        }
       }
       
       clauses[gap.clause] = cleanText(clauseTemplate);
