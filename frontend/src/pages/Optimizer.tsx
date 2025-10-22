@@ -601,6 +601,7 @@ const parseOptimizationResult = (data: OptimizationResult, fileName: string): Op
           category: mappedCategory,
           priority: issue.risk >= 8 ? 'critical' : issue.risk >= 6 ? 'high' : issue.risk >= 4 ? 'medium' : 'low',
           confidence: issue.confidence,
+          summary: issue.summary,  // 🔥 FIX: Summary vom Backend übernehmen!
           original: issue.originalText,
           improved: issue.improvedText,
           reasoning: issue.legalReasoning,
