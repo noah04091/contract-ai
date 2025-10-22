@@ -49,6 +49,32 @@ Vertragspartei 2:
     },
     severity: 7,
     category: 'termination',
+    // 🔥 CHATGPT-FIX: Dynamische Templates je nach Vertragstyp
+    getImprovedText: (contractType) => {
+      const isArbeitsvertrag = (contractType || '').toLowerCase().includes('arbeit');
+
+      if (isArbeitsvertrag) {
+        return `Kündigung
+
+(1) Die ordentliche Kündigungsfrist richtet sich nach den gesetzlichen Bestimmungen des § 622 BGB, sofern keine günstigere tarifliche oder betriebliche Regelung Anwendung findet.
+
+(2) Jede Kündigung bedarf zu ihrer Wirksamkeit der Schriftform nach § 623 BGB. Eine Kündigung per E-Mail oder Textform genügt nicht.
+
+(3) Das Recht zur außerordentlichen Kündigung aus wichtigem Grund gemäß § 626 BGB bleibt hiervon unberührt.
+
+(4) Nach Ausspruch der Kündigung sind Arbeitgeber und Arbeitnehmer verpflichtet, bei der ordnungsgemäßen Abwicklung des Arbeitsverhältnisses mitzuwirken.`;
+      } else {
+        return `Kündigung
+
+(1) Die ordentliche Kündigungsfrist beträgt drei Monate zum Quartalsende, sofern vertraglich keine abweichende Regelung vereinbart ist.
+
+(2) Jede Kündigung bedarf zu ihrer Wirksamkeit der Schriftform nach § 126 BGB. Eine Kündigung per E-Mail oder Textform genügt nicht.
+
+(3) Das Recht zur außerordentlichen Kündigung aus wichtigem Grund bleibt hiervon unberührt.
+
+(4) Nach Ausspruch der Kündigung sind beide Parteien verpflichtet, bei der ordnungsgemäßen Abwicklung des Vertragsverhältnisses mitzuwirken.`;
+      }
+    },
     improvedText: `Kündigung
 
 (1) Die ordentliche Kündigungsfrist richtet sich nach den gesetzlichen Bestimmungen (insbesondere § 622 BGB für Arbeitsverträge), sofern keine günstigere tarifliche oder betriebliche Regelung Anwendung findet.
@@ -57,7 +83,7 @@ Vertragspartei 2:
 
 (3) Das Recht zur außerordentlichen Kündigung aus wichtigem Grund bleibt hiervon unberührt.
 
-(4) Nach Ausspruch der Kündigung sind beide Parteien verpflichtet, bei der ordnungsgemäßen Abwicklung des Vertragsverhältnisses mitzuwirken.`,
+(4) Nach Ausspruch der Kündigung sind beide Parteien verpflichtet, bei der ordnungsgemäßen Abwicklung des Vertragsverhältnisses mitzuwirken.`, // Fallback für Kompatibilität
     legalReasoning: 'Ohne klare Kündigungsfristen droht Rechtsunsicherheit bei Vertragsbeendigung. Nach § 620 Abs. 2 BGB können unbefristete Dauerschuldverhältnisse jederzeit gekündigt werden - was zu unerwarteter Vertragsbeendigung führen kann. § 622 BGB regelt gesetzliche Kündigungsfristen, § 623 BGB schreibt Schriftform für Arbeitsverträge vor. BAG-Rechtsprechung (Urt. v. 18.11.2020 - 6 AZR 145/19): Unklare Fristen führen zu teuren Prozessen.',
     benchmark: 'Branchenüblicher Standard in professionellen Verträgen'
   },
@@ -224,11 +250,16 @@ function runBaselineRules(contractText, contractType = 'sonstiges') {
         const legalRefs = rule.legalReasoning.match(/§\s*\d+[a-z]?\s+[A-Z]+/g) || [];
         const caseRefs = rule.legalReasoning.match(/BGH|BAG|LAG|OLG|BVerfG.*?Urt\.\s+v\.\s+[\d.]+/g) || [];
 
+        // 🔥 CHATGPT-FIX: Nutze dynamisches Template wenn vorhanden
+        const improvedText = rule.getImprovedText
+          ? rule.getImprovedText(contractType)
+          : rule.improvedText;
+
         findings.push({
           id: `rule_${rule.id}_${Date.now()}`,
           summary: rule.name,
           originalText: 'FEHLT - Diese wichtige Regelung ist nicht im Vertrag vorhanden',
-          improvedText: rule.improvedText,
+          improvedText: improvedText,
           legalReasoning: rule.legalReasoning,
           risk: rule.severity,
           impact: Math.max(5, rule.severity - 1),

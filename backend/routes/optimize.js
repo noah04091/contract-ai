@@ -2870,10 +2870,85 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
 
     console.log(`🤖 [${requestId}] KI-Modell: ${modelToUse} für ${contractTypeInfo.type}`);
 
+    // 🔥 CHATGPT-FIX: Striktes JSON-Schema erzwingt valides JSON von GPT-4o
+    const strictJsonSchema = {
+      type: "json_schema",
+      json_schema: {
+        name: "ContractOptimization",
+        schema: {
+          type: "object",
+          properties: {
+            meta: {
+              type: "object",
+              properties: {
+                type: { type: "string" },
+                confidence: { type: "number" },
+                jurisdiction: { type: "string" },
+                language: { type: "string" },
+                isAmendment: { type: "boolean" },
+                parentType: { type: ["string", "null"] }
+              },
+              required: ["type", "confidence", "jurisdiction", "language", "isAmendment"]
+            },
+            categories: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  tag: { type: "string" },
+                  label: { type: "string" },
+                  present: { type: "boolean" },
+                  issues: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        id: { type: "string" },
+                        summary: { type: "string" },
+                        originalText: { type: "string" },
+                        improvedText: { type: "string" },
+                        legalReasoning: { type: "string" },
+                        risk: { type: "number" },
+                        impact: { type: "number" },
+                        confidence: { type: "number" },
+                        difficulty: { type: "string" },
+                        benchmark: { type: "string" }
+                      },
+                      required: ["id", "summary", "originalText", "improvedText", "legalReasoning"]
+                    }
+                  }
+                },
+                required: ["tag", "issues"]
+              }
+            },
+            score: {
+              type: "object",
+              properties: {
+                health: { type: "number" }
+              },
+              required: ["health"]
+            },
+            summary: {
+              type: "object",
+              properties: {
+                redFlags: { type: "number" },
+                quickWins: { type: "number" },
+                totalIssues: { type: "number" },
+                criticalLegalRisks: { type: "number" },
+                complianceIssues: { type: "number" }
+              },
+              required: ["totalIssues"]
+            }
+          },
+          required: ["meta", "categories"]
+        }
+      }
+    };
+
     let completion;
     let retryCount = 0;
     const maxRetries = 3;
-    
+
     while (retryCount < maxRetries) {
       try {
         // Exponential backoff for retries
@@ -2882,18 +2957,18 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
           console.log(`⏳ [${requestId}] Waiting ${backoffDelay}ms before retry ${retryCount}...`);
           await new Promise(resolve => setTimeout(resolve, backoffDelay));
         }
-        
+
         completion = await Promise.race([
           openai.chat.completions.create({
             model: modelToUse,
             messages: [
-              { 
-                role: "system", 
-                content: `Du bist ein hochspezialisierter Fachanwalt für ${contractTypeInfo.type} mit 20+ Jahren Erfahrung in Großkanzleien. 
+              {
+                role: "system",
+                content: `Du bist ein hochspezialisierter Fachanwalt für ${contractTypeInfo.type} mit 20+ Jahren Erfahrung in Großkanzleien.
                          Du kennst alle relevanten Gesetze (${(contractTypeInfo.legalFramework || ['BGB']).join(', ')}) und aktuelle Rechtsprechung.
                          ${contractTypeInfo.isAmendment ? 'Spezialisierung: Vertragsänderungen und Nachträge.' : ''}
                          Deine Antworten sind IMMER vollständige juristische Klauseln im JSON-Format.
-                         Du verwendest NIEMALS Platzhalter oder Abkürzungen.` 
+                         Du verwendest NIEMALS Platzhalter oder Abkürzungen.`
               },
               { role: "user", content: optimizedPrompt }
             ],
@@ -2902,7 +2977,7 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
             top_p: 0.95,
             frequency_penalty: 0.2, // Vermeidet Wiederholungen
             presence_penalty: 0.1,
-            response_format: { type: "json_object" }
+            response_format: strictJsonSchema // 🔥 Striktes Schema statt json_object
           }),
           new Promise((_, reject) =>
             setTimeout(() => reject(new Error("KI-Timeout nach 300 Sekunden")), 300000) // 🔥 Erhöht auf 5 Minuten für GPT-4o
@@ -2932,7 +3007,7 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
                 ],
                 temperature: 0.2,
                 max_tokens: 3000,
-                response_format: { type: "json_object" }
+                response_format: strictJsonSchema // 🔥 Gleiches striktes Schema wie GPT-4o
               }),
               new Promise((_, reject) =>
                 setTimeout(() => reject(new Error("Mini-Timeout nach 120 Sekunden")), 120000)
