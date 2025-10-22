@@ -3033,6 +3033,53 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
       }
     );
 
+    // 🔥 CHATGPT FIX B: GLOBALER SANITIZER-PASS (finale Sicherung)
+    // Falls früher ein Pfad verfehlt wurde - letzte Chance vor Response
+    console.log(`\n🧹🧹🧹 [${requestId}] FINAL GLOBAL SANITIZER PASS - Applying to all ${normalizedResult.summary.totalIssues} issues`);
+    console.log(`🔍 [${requestId}] Contract Type for sanitizer: "${contractTypeInfo.type}"`);
+    const globalSanitizerStats = { roleTerms: 0, pseudoStats: 0, paragraphHeaders: 0, arbitraryHours: 0 };
+    let globalSanitized = 0;
+
+    normalizedResult.categories.forEach(cat => {
+      cat.issues.forEach(issue => {
+        // Sanitize improvedText (🔥 CHATGPT FIX C: contractType überall übergeben!)
+        if (issue.improvedText) {
+          const result = sanitizeImprovedText(issue.improvedText, contractTypeInfo.type);
+          if (result.text !== issue.improvedText) {
+            issue.improvedText = result.text;
+            globalSanitizerStats.roleTerms += result.stats.roleTerms;
+            globalSanitizerStats.pseudoStats += result.stats.pseudoStats;
+            globalSanitizerStats.paragraphHeaders += result.stats.paragraphHeaders;
+            globalSanitizerStats.arbitraryHours += result.stats.arbitraryHours;
+            if (result.stats.roleTerms || result.stats.pseudoStats || result.stats.paragraphHeaders || result.stats.arbitraryHours) {
+              globalSanitized++;
+            }
+          }
+        }
+
+        // Sanitize text fields
+        if (issue.summary) {
+          const before = issue.summary;
+          issue.summary = sanitizeText(issue.summary);
+          if (before !== issue.summary) globalSanitized++;
+        }
+        if (issue.benchmark) {
+          issue.benchmark = sanitizeText(issue.benchmark);
+        }
+        if (issue.legalReasoning) {
+          issue.legalReasoning = sanitizeText(issue.legalReasoning);
+        }
+      });
+    });
+
+    console.log(`✅ [${requestId}] FINAL GLOBAL SANITIZER: ${globalSanitized} issues processed, Stats:`, globalSanitizerStats);
+    if (globalSanitizerStats.arbitraryHours > 0) {
+      console.warn(`⚠️⚠️⚠️ [${requestId}] GLOBAL SANITIZER caught ${globalSanitizerStats.arbitraryHours} arbitrary hours in final pass!`);
+    }
+    if (globalSanitizerStats.roleTerms > 0) {
+      console.warn(`⚠️⚠️⚠️ [${requestId}] GLOBAL SANITIZER caught ${globalSanitizerStats.roleTerms} wrong role terms in final pass!`);
+    }
+
     // 🔍 ULTIMATE DEBUG: Log ALL issues to find placeholder source (v3.0 - ALL ISSUES)
     console.log(`\n\n🔍🔍🔍 [${requestId}] FINAL RESPONSE DEBUG - SHOWING ALL ISSUES:`);
     normalizedResult.categories.forEach((cat, catIndex) => {
