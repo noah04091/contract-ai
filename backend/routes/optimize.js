@@ -2608,8 +2608,10 @@ ${contractType === 'arbeitsvertrag' || contractType.includes('arbeit') ? '✅ "A
    {
      "summary": "Kündigungsfrist fehlt - Rechtsunsicherheit bei Vertragsbeendigung",
      "originalText": "Der Vertrag kann jederzeit ohne Angabe von Gründen gekündigt werden.",
-     "improvedText": "§ 15 Ordentliche Kündigung\\n\\n(1) Beide Vertragsparteien können diesen Vertrag mit einer Frist von drei Monaten zum Quartalsende ordentlich kündigen.\\n\\n(2) Die Kündigung bedarf zu ihrer Wirksamkeit der Schriftform gemäß § 126 BGB. Eine Kündigung per E-Mail genügt nicht den Anforderungen der Schriftform.\\n\\n(3) Das Recht zur außerordentlichen Kündigung aus wichtigem Grund bleibt hiervon unberührt.",
-     "legalReasoning": "'Jederzeit kündbar' bedeutet: Sie könnten morgen auf der Straße stehen ODER jahrelang feststecken - niemand weiß es! Nach § 620 Abs. 2 BGB brauchen Verträge klare Fristen. Ohne diese Klarheit gibt es Streit vor Gericht. Die BAG-Rechtsprechung (Urt. v. 18.11.2020 - 6 AZR 145/19) zeigt: Unklare Fristen führen zu teuren Prozessen. Die optimierte 3-Monats-Frist ist branchenüblich und gibt beiden Seiten Planungssicherheit."
+     "improvedText": "${contractType === 'arbeitsvertrag' || contractType.includes('arbeit') ?
+       '§ 15 Ordentliche Kündigung\\n\\n(1) Die ordentliche Kündigungsfrist richtet sich nach den gesetzlichen Bestimmungen des § 622 BGB.\\n\\n(2) Jede Kündigung bedarf zu ihrer Wirksamkeit der Schriftform nach § 623 BGB. Eine Kündigung per E-Mail oder Textform genügt nicht.\\n\\n(3) Das Recht zur außerordentlichen Kündigung aus wichtigem Grund gemäß § 626 BGB bleibt hiervon unberührt.' :
+       '§ 15 Ordentliche Kündigung\\n\\n(1) Beide Vertragsparteien können diesen Vertrag mit einer Frist von drei Monaten zum Quartalsende ordentlich kündigen.\\n\\n(2) Die Kündigung bedarf zu ihrer Wirksamkeit der Schriftform gemäß § 126 BGB. Eine Kündigung per E-Mail genügt nicht den Anforderungen der Schriftform.\\n\\n(3) Das Recht zur außerordentlichen Kündigung aus wichtigem Grund bleibt hiervon unberührt.'}",
+     "legalReasoning": "'Jederzeit kündbar' bedeutet: Sie könnten morgen auf der Straße stehen ODER jahrelang feststecken - niemand weiß es! Nach § 620 Abs. 2 BGB brauchen Verträge klare Fristen. Ohne diese Klarheit gibt es Streit vor Gericht. Die BAG-Rechtsprechung (Urt. v. 18.11.2020 - 6 AZR 145/19) zeigt: Unklare Fristen führen zu teuren Prozessen. ${contractType === 'arbeitsvertrag' || contractType.includes('arbeit') ? 'Die gesetzliche Kündigungsfrist nach § 622 BGB staffelt sich nach Betriebszugehörigkeit und schützt Arbeitnehmer.' : 'Die optimierte 3-Monats-Frist ist branchenüblich und gibt beiden Seiten Planungssicherheit.'}"
    }
 
 OUTPUT FORMAT (EXAKT EINHALTEN):
@@ -3026,17 +3028,25 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
 
     let aiOutput = completion?.choices?.[0]?.message?.content || "";
 
+    // 🔍 DEBUG: Log GPT Response
+    console.log(`📥 [${requestId}] GPT-4o Response received: ${aiOutput ? `${aiOutput.length} chars` : 'EMPTY'}`);
+    if (aiOutput) {
+      console.log(`📄 [${requestId}] First 300 chars of GPT output: ${aiOutput.substring(0, 300)}`);
+    }
+
     // 🔥 Safe JSON Parse Helper
     const safeJsonParse = (str) => {
       try {
         return JSON.parse(str);
       } catch (e) {
+        console.error(`⚠️ [${requestId}] JSON Parse Error: ${e.message}`);
         return null;
       }
     };
 
     // 🔥 FALLBACK 2: Deterministic Rule Engine (wenn beide GPT-Modelle fehlschlagen)
     const parsedOutput = safeJsonParse(aiOutput);
+    console.log(`🔍 [${requestId}] Parsed output: ${parsedOutput ? 'SUCCESS' : 'FAILED'}`);
     if (!parsedOutput) {
       console.log(`🔧 [${requestId}] No valid JSON from GPT. Using FALLBACK 2: Deterministic Rule Engine...`);
 

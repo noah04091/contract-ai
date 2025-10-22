@@ -259,6 +259,16 @@ function cleanPlaceholders(text) {
     /siehe\s+oben/gi,
     /\[TBD\]/gi,
     /\[TODO\]/gi,
+    /\[ORT(?:,\s*STRASSE)?\]/gi,         // [ORT] oder [ORT, STRASSE]
+    /\[STRASSE\]/gi,                      // [STRASSE]
+    /\[Datum\]/gi,                        // [Datum]
+    /\[PLZ\]/gi,                          // [PLZ]
+    /\[XXX\]/gi,                          // [XXX]
+    /\[einsetzen\]/gi,                    // [einsetzen]
+    /\[Betrag\]/gi,                       // [Betrag]
+    /\[Anzahl\]/gi,                       // [Anzahl]
+    /\[Name\]/gi,                         // [Name]
+    /\[Vollständiger\s+Name\]/gi,        // [Vollständiger Name]
     /XXX/g
   ];
 
