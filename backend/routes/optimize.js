@@ -25,8 +25,8 @@ const getOpenAI = () => {
     }
     openaiInstance = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
-      timeout: 180000, // ⚡ Erhöht auf 180s für gpt-4o-mini (schneller, braucht aber Puffer)
-      maxRetries: 5    // More retries for complex analysis
+      timeout: 300000, // 🔥 Erhöht auf 300s (5min) für gpt-4o mit langen Verträgen
+      maxRetries: 3    // Reduce retries (with 5min timeout, retries take too long)
     });
     console.log("🔧 OpenAI-Instance für Anwaltskanzlei-Level Optimierung initialisiert");
   }
@@ -1483,18 +1483,20 @@ const detectContractType = async (text, fileName = '') => {
   const lowerText = text.toLowerCase();
   const lowerFileName = fileName.toLowerCase();
   
-  // Prüfe auf Amendments/Änderungen ZUERST
-  const amendmentIndicators = [
-    'änderung', 'änderungsvereinbarung', 'ergänzung', 'nachtrag', 
-    'anpassung', 'zusatzvereinbarung', 'modifikation', 'amendment',
-    'addendum', 'supplement', 'modification', 'adjustment',
-    'erhöhung', 'reduzierung', 'verlängerung', 'verkürzung'
+  // 🔥 FIX: Prüfe auf Amendments/Änderungen - STRENGER!
+  // NUR als Amendment erkennen wenn EINDEUTIG eine Änderung ist
+  const strongAmendmentIndicators = [
+    'änderungsvereinbarung', 'nachtrag', 'zusatzvereinbarung',
+    'amendment', 'addendum', 'supplement',
+    'änderung zum', 'ergänzung zum', 'anpassung des vertrages vom',
+    'änderung des vertrages', 'vertragsergänzung', 'vertragsnachtrag'
   ];
-  
+
   let isAmendment = false;
   let parentContractType = null;
-  
-  for (const indicator of amendmentIndicators) {
+
+  // ✅ NUR als Amendment erkennen wenn KLARE Indikatoren vorhanden sind
+  for (const indicator of strongAmendmentIndicators) {
     if (lowerText.includes(indicator) || lowerFileName.includes(indicator)) {
       isAmendment = true;
       
@@ -2471,7 +2473,7 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
             response_format: { type: "json_object" }
           }),
           new Promise((_, reject) =>
-            setTimeout(() => reject(new Error("KI-Timeout nach 180 Sekunden")), 180000) // ⚡ Erhöht auf 3 Minuten
+            setTimeout(() => reject(new Error("KI-Timeout nach 300 Sekunden")), 300000) // 🔥 Erhöht auf 5 Minuten für GPT-4o
           )
         ]);
         
