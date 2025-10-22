@@ -246,32 +246,50 @@ function applyMinimumStandards(issues) {
  * 2. Stunden nur kontextsensitiv (nicht wenn BGB/% folgt)
  * 3. Term-Mapping nur für Arbeitsrecht
  * 4. Pseudo-Statistiken raus, echte Quellen behalten
+ *
+ * REIHENFOLGE (ChatGPT-Empfehlung):
+ * - Erst Inhalts-Cleanup (Rollen/Prozent) → minimiert False Positives
+ * - Dann Struktur-Cleanup (§/Stunden)
+ *
+ * @returns {object} { text, stats: { roleTerms, pseudoStats, paragraphHeaders, arbitraryHours } }
  */
 function sanitizeImprovedText(text = '', contractType = '') {
-  if (!text) return text;
+  if (!text) return { text: '', stats: { roleTerms: 0, pseudoStats: 0, paragraphHeaders: 0, arbitraryHours: 0 } };
 
   let t = text;
+  const stats = { roleTerms: 0, pseudoStats: 0, paragraphHeaders: 0, arbitraryHours: 0 };
 
-  // 1. § ÜBERSCHRIFTEN entfernen (nur Zeilenanfang, NICHT "§ 623 BGB" im Text!)
-  // CHATGPT-SCHUTZ: Nur wenn kein BGB/DSGVO/ArbGG folgt
-  t = t.replace(/^(?:§|\u00A7)\s*\d+\s+(?=[A-ZÄÖÜa-zäöü])/gm, '');
-
-  // 2. WILLKÜRLICHE STUNDEN → Platzhalter
-  // CHATGPT-SCHUTZ: Nur wenn in den nächsten 20 Zeichen kein BGB/DSGVO/% vorkommt
-  t = t.replace(/(\b\d{1,3})\s*(Stunden|Std\.?)(?![^]{0,20}\b(BGB|DSGVO|ArbZG|%|€)\b)/gi, '[X] Stunden');
-
-  // 3. TERM-MAPPING für Arbeitsrecht
+  // 1. TERM-MAPPING für Arbeitsrecht (ZUERST, für sauberen Kontext)
   // CHATGPT-SCHUTZ: Nur für Arbeitsverträge, mit Wortgrenzen
   if ((contractType || '').toLowerCase().includes('arbeit')) {
+    const before = t;
     t = t.replace(/\bAuftraggeber\b/g, 'Arbeitgeber')
          .replace(/\bAuftragnehmer\b/g, 'Arbeitnehmer');
+    if (t !== before) stats.roleTerms++;
   }
 
-  // 4. PSEUDO-STATISTIKEN entfernen
+  // 2. PSEUDO-STATISTIKEN entfernen (ZWEITES, bereinigt Inhalte)
   // CHATGPT-SCHUTZ: Nur Prozent-Claims mit "BRAK/Quelle/Studie", echte BGH/BAG bleiben!
-  t = t.replace(/\b(?:8\d|9\d|100)%[^.\n]*?(?:BRAK|Quelle|Studie|Erhebung)[^.\n]*\.?/gi, 'branchenübliche Praxis');
+  const pseudoRegex = /\b(?:8\d|9\d|100)%[^.\n]*?(?:BRAK|Quelle|Studie|Erhebung)[^.\n]*\.?/gi;
+  const pseudoMatches = t.match(pseudoRegex);
+  if (pseudoMatches) stats.pseudoStats = pseudoMatches.length;
+  t = t.replace(pseudoRegex, 'branchenübliche Praxis');
 
-  return t.trim();
+  // 3. § ÜBERSCHRIFTEN entfernen (DRITTES, strukturelle Bereinigung)
+  // CHATGPT-SCHUTZ: Nur am Zeilenanfang, NICHT "§ 623 BGB" im Text!
+  const headerRegex = /^(?:§|\u00A7)\s*\d+\s+(?=[A-ZÄÖÜa-zäöü])/gm;
+  const headerMatches = t.match(headerRegex);
+  if (headerMatches) stats.paragraphHeaders = headerMatches.length;
+  t = t.replace(headerRegex, '');
+
+  // 4. WILLKÜRLICHE STUNDEN → Platzhalter (LETZTES, präzise Ersetzung)
+  // CHATGPT-SCHUTZ: Nur wenn in den nächsten 20 Zeichen kein BGB/DSGVO/% vorkommt
+  const hoursRegex = /(\b\d{1,3})\s*(Stunden|Std\.?)(?![^]{0,20}\b(BGB|DSGVO|ArbZG|%|€)\b)/gi;
+  const hoursMatches = t.match(hoursRegex);
+  if (hoursMatches) stats.arbitraryHours = hoursMatches.length;
+  t = t.replace(hoursRegex, '[X] Stunden');
+
+  return { text: t.trim(), stats };
 }
 
 /**

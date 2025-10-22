@@ -923,6 +923,7 @@ const applyUltimateQualityLayer = (result, requestId, contractType = 'sonstiges'
   let duplicatesRemoved = 0;
   let placeholdersRemoved = 0;
   let sanitized = 0;
+  let sanitizerStats = { roleTerms: 0, pseudoStats: 0, paragraphHeaders: 0, arbitraryHours: 0 };
 
   // VERBOTENE PLATZHALTER
   const FORBIDDEN_PLACEHOLDERS = [
@@ -1003,8 +1004,18 @@ const applyUltimateQualityLayer = (result, requestId, contractType = 'sonstiges'
     // 🔥 CHATGPT-FIX: SANITIZER nach Dedupe anwenden
     issues = issues.map(issue => {
       if (issue.improvedText) {
-        issue.improvedText = sanitizeImprovedText(issue.improvedText, contractType);
-        sanitized++;
+        const result = sanitizeImprovedText(issue.improvedText, contractType);
+        issue.improvedText = result.text;
+
+        // Akkumuliere Stats
+        sanitizerStats.roleTerms += result.stats.roleTerms;
+        sanitizerStats.pseudoStats += result.stats.pseudoStats;
+        sanitizerStats.paragraphHeaders += result.stats.paragraphHeaders;
+        sanitizerStats.arbitraryHours += result.stats.arbitraryHours;
+
+        if (result.stats.roleTerms || result.stats.pseudoStats || result.stats.paragraphHeaders || result.stats.arbitraryHours) {
+          sanitized++;
+        }
       }
       if (issue.summary) {
         issue.summary = sanitizeText(issue.summary);
@@ -1031,7 +1042,11 @@ const applyUltimateQualityLayer = (result, requestId, contractType = 'sonstiges'
   console.log(`   - ${issuesFixed} Issues gefixt`);
   console.log(`   - ${duplicatesRemoved} Duplikate entfernt`);
   console.log(`   - ${placeholdersRemoved} Platzhalter ersetzt`);
-  console.log(`   - ${sanitized} Issues sanitized (§-Überschriften, Zahlen, Rollenbegriffe, Pseudo-%)`);
+  console.log(`   - ${sanitized} Issues sanitized:`);
+  console.log(`     • ${sanitizerStats.roleTerms} Rollen-Terms (Auftraggeber→Arbeitgeber)`);
+  console.log(`     • ${sanitizerStats.pseudoStats} Pseudo-Statistiken entfernt`);
+  console.log(`     • ${sanitizerStats.paragraphHeaders} §-Überschriften entfernt`);
+  console.log(`     • ${sanitizerStats.arbitraryHours} willkürliche Stunden ersetzt`);
   console.log(`   - ${result.summary.totalIssues} Issues übrig`);
 
   return result;
