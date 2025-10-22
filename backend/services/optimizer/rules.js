@@ -129,14 +129,14 @@ Vertragspartei 2:
 
 (1) Die Parteien verpflichten sich zur Einhaltung der geltenden Datenschutzbestimmungen, insbesondere der Datenschutz-Grundverordnung (DSGVO) und des Bundesdatenschutzgesetzes (BDSG).
 
-(2) Soweit eine Partei im Rahmen dieses Vertrages personenbezogene Daten verarbeitet, erfolgt dies ausschließlich zur Vertragserfüllung gemäß Art. 6 Abs. 1 lit. b DSGVO.
+(2) Soweit eine Partei im Rahmen dieses Vertrages personenbezogene Daten verarbeitet, erfolgt dies ausschließlich zur Vertragserfüllung gemäß Art. 6 Abs. 1 lit. b DSGVO. Bei Arbeitsverträgen gilt zusätzlich § 26 BDSG (Datenverarbeitung für Zwecke des Beschäftigungsverhältnisses).
 
 (3) Jede Partei verpflichtet sich, geeignete technische und organisatorische Maßnahmen gemäß Art. 32 DSGVO zu treffen, um ein dem Risiko angemessenes Schutzniveau zu gewährleisten.
 
 (4) Die Parteien werden sich gegenseitig unverzüglich über Datenschutzverletzungen gemäß Art. 33, 34 DSGVO informieren.
 
 (5) Bei Beendigung des Vertrags sind personenbezogene Daten zu löschen oder zurückzugeben, soweit keine gesetzliche Aufbewahrungspflicht besteht.`,
-    legalReasoning: 'DSGVO-Verstöße können Bußgelder bis zu 20 Mio. EUR oder 4% des Jahresumsatzes kosten (Art. 83 DSGVO)! Ohne Datenschutzklausel droht: Behördliche Prüfung, Schadenersatzforderungen Betroffener, Imageschaden. Jeder Vertrag der personenbezogene Daten berührt MUSS DSGVO-konform sein. Art. 6 DSGVO fordert Rechtsgrundlage für Verarbeitung.',
+    legalReasoning: 'DSGVO-Verstöße können Bußgelder bis zu 20 Mio. EUR oder 4% des Jahresumsatzes kosten (Art. 83 DSGVO)! Ohne Datenschutzklausel droht: Behördliche Prüfung, Schadenersatzforderungen Betroffener, Imageschaden. Jeder Vertrag der personenbezogene Daten berührt MUSS DSGVO-konform sein. Art. 6 DSGVO fordert Rechtsgrundlage für Verarbeitung. Bei Arbeitsverträgen ist § 26 BDSG zentral für die Verarbeitung von Beschäftigtendaten.',
     benchmark: '100% DSGVO-konformer Verträge enthalten Datenschutzklauseln (gesetzlich verpflichtend)'
   },
 
@@ -211,6 +211,12 @@ function runBaselineRules(contractText, contractType = 'sonstiges') {
 
   BASELINE_RULES.forEach(rule => {
     try {
+      // 🔥 FIX 1: Gerichtsstandsvereinbarung bei Arbeitsverträgen UNZULÄSSIG (§ 48 ArbGG)
+      if (rule.id === 'jurisdiction_missing' && (contractType || '').toLowerCase().includes('arbeit')) {
+        console.log(`⚖️ Skipping jurisdiction rule for Arbeitsvertrag (§ 48 ArbGG: Gerichtsstandsvereinbarung unzulässig)`);
+        return; // Skip this rule
+      }
+
       const isIssue = rule.check(contractText);
 
       if (isIssue) {

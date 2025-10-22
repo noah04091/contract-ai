@@ -13,7 +13,8 @@ const verifyToken = require("../middleware/verifyToken");
 const { ObjectId } = require("mongodb");
 const { smartRateLimiter, uploadLimiter, generalLimiter } = require("../middleware/rateLimiter");
 const { runBaselineRules } = require("../services/optimizer/rules");
-const { dedupeIssues, applyMinimumStandards, ensureCategory } = require("../services/optimizer/quality");
+// 🔥 FIX 4: Imports cleanen - applyMinimumStandards nicht genutzt
+const { dedupeIssues, ensureCategory } = require("../services/optimizer/quality");
 
 const router = express.Router();
 const upload = multer({ dest: "uploads/" });
@@ -1978,8 +1979,16 @@ ${contractText.substring(0, 30000)}`;
       return normalizedResult;
     }
 
-    const parsed = JSON.parse(addOutput);
-    const additionalCategories = parsed.categories || [];
+    // 🔥 FIX 3: JSON-Parsing absichern gegen Crash
+    let parsed;
+    try {
+      parsed = JSON.parse(addOutput);
+    } catch (parseError) {
+      console.error(`⚠️ [${requestId}] Top-Up-Pass: JSON-Parsing failed`, parseError.message);
+      return normalizedResult; // Fallback: Gib bisherige Ergebnisse zurück
+    }
+
+    const additionalCategories = parsed?.categories || [];
 
     console.log(`✅ [${requestId}] Top-Up-Pass: ${additionalCategories.length} zusätzliche Kategorien erhalten`);
 
