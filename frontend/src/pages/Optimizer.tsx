@@ -265,9 +265,10 @@ const CONTRACT_TYPE_INFO = {
 // LÖSUNG (JETZT):
 // Backend hat die Kontrolle über alle Templates, Frontend zeigt nur an!
 // Backend-Templates enthalten: § 623 BGB (Arbeitsvertrag), § 26 BDSG (Datenschutz), etc.
-const expandOptimizationClause = (optimization: OptimizationSuggestion, _contractType: string = 'standard'): OptimizationSuggestion => {
+const expandOptimizationClause = (optimization: OptimizationSuggestion): OptimizationSuggestion => {
   // 🔥 FRONTEND-TEMPLATES DEAKTIVIERT
   // Backend liefert jetzt fertige, sanitized Templates (§ 623 BGB, § 26 BDSG, etc.)
+  // Parameter 'contractType' entfernt - wird nicht mehr benötigt
   return optimization;
 };
 
@@ -313,10 +314,10 @@ const DropdownPortal: React.FC<{
   );
 };
 
-// ✅ ORIGINAL + ENHANCED: Parse function with revolutionary features  
+// ✅ ORIGINAL + ENHANCED: Parse function with revolutionary features
 const parseOptimizationResult = (data: OptimizationResult, fileName: string): OptimizationSuggestion[] => {
-  const contractType = data.meta?.type || 'standard';
-  
+  // contractType entfernt - expandOptimizationClause() benötigt es nicht mehr (Backend hat Kontrolle)
+
   // 🚀 NEW: Handle structured response from revolutionary backend
   if (data.categories && Array.isArray(data.categories)) {
     const suggestions: OptimizationSuggestion[] = [];
@@ -364,8 +365,8 @@ const parseOptimizationResult = (data: OptimizationResult, fileName: string): Op
           relatedClauses: [`Kategorie: ${category.label}`, `Priorität: ${issue.risk >= 8 ? 'kritisch' : 'hoch'}`]
         };
         
-        // ERWEITERE kurze oder fehlende Klauseln mit professionellem Content
-        suggestion = expandOptimizationClause(suggestion, contractType);
+        // ERWEITERE kurze oder fehlende Klauseln mit professionellem Content (DEAKTIVIERT - Backend hat Kontrolle)
+        suggestion = expandOptimizationClause(suggestion);
         
         suggestions.push(suggestion);
       });
@@ -457,8 +458,8 @@ const parseOptimizationResult = (data: OptimizationResult, fileName: string): Op
       relatedClauses: [`Bezug zu ${category}`, `Priorität: ${priority}`]
     };
     
-    // ERWEITERE kurze Klauseln
-    optimization = expandOptimizationClause(optimization, contractType);
+    // ERWEITERE kurze Klauseln (DEAKTIVIERT - Backend hat Kontrolle)
+    optimization = expandOptimizationClause(optimization);
     
     optimizations.push(optimization);
   });
