@@ -359,6 +359,9 @@ function sanitizeImprovedText(text = '', contractType = '') {
   if (hoursMatches) stats.arbitraryHours = hoursMatches.length;
   t = t.replace(hoursRegex, '[X] Stunden');
 
+  // 5. PLATZHALTER ENTFERNEN ([ORT, STRASSE], [Datum], etc.)
+  t = cleanPlaceholders(t);
+
   return { text: t.trim(), stats };
 }
 

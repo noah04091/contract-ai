@@ -2276,6 +2276,18 @@ ${contractText.substring(0, 30000)}`;
 
     // Merge neue Kategorien
     additionalCategories.forEach(newCat => {
+      // 🔥 FIX: Normalize issues - map "title" to "summary" if missing
+      newCat.issues = (newCat.issues || []).map(issue => {
+        if (!issue.summary && issue.title) {
+          issue.summary = issue.title;
+        }
+        // Ensure id exists
+        if (!issue.id) {
+          issue.id = `topup_${newCat.tag}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        }
+        return issue;
+      });
+
       const existing = normalizedResult.categories.find(c => c.tag === newCat.tag);
       if (existing) {
         // Merge issues
