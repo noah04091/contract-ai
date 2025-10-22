@@ -898,13 +898,18 @@ export default function Optimizer() {
 
     try {
       console.log("🚀 Starting contract optimization...");
-      
+
       // Simulate progress
       const progressInterval = setInterval(() => {
         setAnalysisProgress(prev => Math.min(prev + 10, 90));
       }, 500);
-      
-      const res = await fetch("/api/optimize", {
+
+      // 🔥 FIX: Direct API call to bypass Vercel's 60s timeout
+      const API_URL = import.meta.env.PROD
+        ? "https://api.contract-ai.de/api/optimize"  // Production: Direct to backend
+        : "/api/optimize";                            // Development: Use Vite proxy
+
+      const res = await fetch(API_URL, {
         method: "POST",
         credentials: "include",
         body: formData,
