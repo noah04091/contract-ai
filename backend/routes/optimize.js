@@ -373,6 +373,21 @@ const PROFESSIONAL_CLAUSE_TEMPLATES = {
   },
   
   datenschutz: {
+    // 🔥 CHATGPT FIX E: Arbeitsverträge brauchen § 26 BDSG explizit!
+    arbeitsvertrag: `§ [X] Datenschutz und Beschäftigtendaten
+
+(1) Der Arbeitgeber verpflichtet sich zur Einhaltung der Bestimmungen der EU-Datenschutz-Grundverordnung (DSGVO), des Bundesdatenschutzgesetzes (BDSG) sowie aller weiteren anwendbaren datenschutzrechtlichen Vorschriften.
+
+(2) Personenbezogene Daten des Arbeitnehmers werden ausschließlich zur Durchführung dieses Arbeitsverhältnisses und zur Erfüllung gesetzlicher Pflichten verarbeitet. Die Rechtsgrundlage ist Art. 6 Abs. 1 lit. b) DSGVO i.V.m. § 26 BDSG (Datenverarbeitung für Zwecke des Beschäftigungsverhältnisses) sowie Art. 88 DSGVO (Öffnungsklausel für spezifische Verarbeitungssituationen im Beschäftigungskontext).
+
+(3) Der Arbeitgeber ist berechtigt, personenbezogene Daten des Arbeitnehmers zu erheben, zu verarbeiten und zu nutzen, soweit dies für die Entscheidung über die Begründung des Arbeitsverhältnisses, für dessen Durchführung oder zur Beendigung erforderlich ist (§ 26 Abs. 1 BDSG).
+
+(4) Besondere Kategorien personenbezogener Daten (Art. 9 DSGVO) werden nur verarbeitet, soweit dies nach § 26 Abs. 3 BDSG zulässig ist, insbesondere zur Ausübung von Rechten aus dem Arbeitsrecht.
+
+(5) Der Arbeitnehmer wird über die Datenverarbeitung gemäß Art. 13 DSGVO informiert und hat die Rechte aus Art. 15-22 DSGVO (Auskunft, Berichtigung, Löschung, Einschränkung, Datenportabilität, Widerspruch).
+
+(6) Bei Beendigung des Arbeitsverhältnisses werden personenbezogene Daten gelöscht, soweit keine gesetzliche Aufbewahrungspflicht besteht (z.B. steuerrechtliche oder sozialversicherungsrechtliche Aufbewahrungsfristen).`,
+
     dsgvo_konform: `§ [X] Datenschutz und Vertraulichkeit
 
 (1) Die Vertragsparteien verpflichten sich, bei der Vertragserfüllung die Bestimmungen der EU-Datenschutz-Grundverordnung (DSGVO), des Bundesdatenschutzgesetzes (BDSG) sowie aller weiteren anwendbaren datenschutzrechtlichen Vorschriften einzuhalten.
@@ -410,6 +425,29 @@ const PROFESSIONAL_CLAUSE_TEMPLATES = {
   },
   
   kuendigung: {
+    // 🔥 CHATGPT FIX D: Arbeitsverträge brauchen § 623 BGB (Schriftformzwang)!
+    arbeitsvertrag: `§ [X] Kündigung und Vertragsbeendigung
+
+(1) Ordentliche Kündigung
+   a) Beide Vertragsparteien können dieses Arbeitsverhältnis unter Einhaltung der gesetzlichen oder vereinbarten Kündigungsfristen ordentlich kündigen.
+   b) Es gelten die gesetzlichen Kündigungsfristen nach § 622 BGB, soweit nicht längere Fristen vereinbart sind.
+   c) Die Kündigungsfrist für den Arbeitgeber verlängert sich nach § 622 Abs. 2 BGB mit zunehmender Beschäftigungsdauer.
+
+(2) Außerordentliche Kündigung
+   a) Das Recht zur außerordentlichen fristlosen Kündigung aus wichtigem Grund gemäß § 626 BGB bleibt unberührt.
+   b) Die außerordentliche Kündigung ist nur innerhalb von zwei Wochen ab Kenntnis der maßgebenden Tatsachen zulässig (§ 626 Abs. 2 BGB).
+   c) Vor Ausspruch einer außerordentlichen Kündigung ist in der Regel eine Abmahnung erforderlich, es sei denn, eine Fortsetzung des Arbeitsverhältnisses ist unzumutbar.
+
+(3) Form der Kündigung
+   a) Jede Kündigung muss zu ihrer Wirksamkeit schriftlich erfolgen (§ 623 BGB). Die elektronische Form ist ausgeschlossen.
+   b) Die Kündigung muss von der kündigenden Partei eigenhändig unterschrieben sein.
+   c) Eine Kündigung per E-Mail, Fax oder SMS ist unwirksam.
+
+(4) Rechtsfolgen der Beendigung
+   a) Bei Beendigung des Arbeitsverhältnisses sind alle überlassenen Arbeitsmittel, Unterlagen und Daten unverzüglich zurückzugeben.
+   b) Resturlaub ist abzugelten, sofern er nicht mehr genommen werden kann.
+   c) Der Arbeitgeber stellt ein qualifiziertes Arbeitszeugnis gemäß § 630 BGB aus.`,
+
     ordentlich_ausserordentlich: `§ [X] Kündigung und Vertragsbeendigung
 
 (1) Ordentliche Kündigung
@@ -1958,7 +1996,12 @@ const generateProfessionalClauses = (contractType, gaps, language = 'de') => {
       if (!clauseTemplate) {
         const category = gap.category;
         if (category === 'termination' || category === 'kuendigung_beendigung') {
-          clauseTemplate = PROFESSIONAL_CLAUSE_TEMPLATES.kuendigung.ordentlich_ausserordentlich;
+          // 🔥 CHATGPT FIX D: § 623 BGB für Arbeitsverträge!
+          if (contractType === 'arbeitsvertrag' || contractType.includes('arbeit')) {
+            clauseTemplate = PROFESSIONAL_CLAUSE_TEMPLATES.kuendigung.arbeitsvertrag;
+          } else {
+            clauseTemplate = PROFESSIONAL_CLAUSE_TEMPLATES.kuendigung.ordentlich_ausserordentlich;
+          }
         } else if (category === 'liability' || category === 'haftung_gewaehrleistung') {
           clauseTemplate = PROFESSIONAL_CLAUSE_TEMPLATES.haftung.ausgewogen;
         } else if (category === 'payment' || category === 'verguetung_zahlung') {
@@ -1968,7 +2011,12 @@ const generateProfessionalClauses = (contractType, gaps, language = 'de') => {
             clauseTemplate = PROFESSIONAL_CLAUSE_TEMPLATES.miete_nebenkosten.detailliert;
           }
         } else if (category === 'compliance' || category === 'datenschutz_vertraulichkeit' || category === 'data_protection') {
-          clauseTemplate = PROFESSIONAL_CLAUSE_TEMPLATES.datenschutz.dsgvo_konform;
+          // 🔥 CHATGPT FIX E: § 26 BDSG für Arbeitsverträge!
+          if (contractType === 'arbeitsvertrag' || contractType.includes('arbeit')) {
+            clauseTemplate = PROFESSIONAL_CLAUSE_TEMPLATES.datenschutz.arbeitsvertrag;
+          } else {
+            clauseTemplate = PROFESSIONAL_CLAUSE_TEMPLATES.datenschutz.dsgvo_konform;
+          }
         } else if (category === 'clarity' || category === 'formalities') {
           clauseTemplate = PROFESSIONAL_CLAUSE_TEMPLATES.schriftform.standard;
         } else if (category === 'workplace') {
@@ -1991,9 +2039,19 @@ const generateProfessionalClauses = (contractType, gaps, language = 'de') => {
         } else if (/verg[üu]tung|gehalt|payment|compensation/i.test(clauseName)) {
           clauseTemplate = PROFESSIONAL_CLAUSE_TEMPLATES.verguetung.umfassend;
         } else if (/k[üu]ndigung|termination/i.test(clauseName)) {
-          clauseTemplate = PROFESSIONAL_CLAUSE_TEMPLATES.kuendigung.ordentlich_ausserordentlich;
+          // 🔥 CHATGPT FIX D: § 623 BGB für Arbeitsverträge!
+          if (contractType === 'arbeitsvertrag' || contractType.includes('arbeit')) {
+            clauseTemplate = PROFESSIONAL_CLAUSE_TEMPLATES.kuendigung.arbeitsvertrag;
+          } else {
+            clauseTemplate = PROFESSIONAL_CLAUSE_TEMPLATES.kuendigung.ordentlich_ausserordentlich;
+          }
         } else if (/datenschutz|dsgvo|data.*protection/i.test(clauseName)) {
-          clauseTemplate = PROFESSIONAL_CLAUSE_TEMPLATES.datenschutz.dsgvo_konform;
+          // 🔥 CHATGPT FIX E: § 26 BDSG für Arbeitsverträge!
+          if (contractType === 'arbeitsvertrag' || contractType.includes('arbeit')) {
+            clauseTemplate = PROFESSIONAL_CLAUSE_TEMPLATES.datenschutz.arbeitsvertrag;
+          } else {
+            clauseTemplate = PROFESSIONAL_CLAUSE_TEMPLATES.datenschutz.dsgvo_konform;
+          }
         } else if (/haftung|liability/i.test(clauseName)) {
           clauseTemplate = PROFESSIONAL_CLAUSE_TEMPLATES.haftung.ausgewogen;
         } else if (/schriftform|formalities/i.test(clauseName)) {

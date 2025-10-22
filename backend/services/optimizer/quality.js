@@ -55,6 +55,27 @@ function jaccard(a, b) {
 }
 
 /**
+ * 🔥 CHATGPT FIX A: Kanonischer Category-Key für FEHLT-Issues
+ * Extrahiert aus Title + Category einen eindeutigen Key für Cross-Category-Dedupe
+ */
+function canonicalCategory(canTitle, category) {
+  // Prüfe welche Kategorie im Title erwähnt wird
+  if (/data.*protection|datenschutz|dsgvo/i.test(canTitle)) return 'data_protection';
+  if (/termination|k[üu]ndigung|beendigung/i.test(canTitle)) return 'termination';
+  if (/workplace|arbeitsort|einsatzort/i.test(canTitle)) return 'workplace';
+  if (/working.*time|arbeitszeit/i.test(canTitle)) return 'working_time';
+  if (/payment|verg[üu]tung|gehalt/i.test(canTitle)) return 'payment';
+  if (/liability|haftung/i.test(canTitle)) return 'liability';
+  if (/confidentiality|geheimhaltung|vertraulich/i.test(canTitle)) return 'confidentiality';
+  if (/jurisdiction|gerichtsstand|rechtswahl/i.test(canTitle)) return 'jurisdiction';
+  if (/formalities|schriftform/i.test(canTitle)) return 'formalities';
+  if (/ip.*rights|nutzungsrecht|urheberrecht/i.test(canTitle)) return 'ip_rights';
+
+  // Fallback: verwende die bereits normalisierte Category
+  return category;
+}
+
+/**
  * Normalisiert String für Similarity-Vergleich (Legacy-Support)
  */
 function norm(s = '') {
@@ -82,6 +103,7 @@ function sim(a, b) {
  * - Kanonische Normalisierung (Stoppwörter, Synonyme)
  * - Jaccard Similarity (präziser als Token-Overlap)
  * - Niedrigerer Threshold für "FEHLT" Issues (0.3 statt 0.6)
+ * - CHATGPT FIX A: Missing-Key für Cross-Category-Duplikate
  * - Höchste Severity + längste Reasoning behalten
  *
  * @param {Array} issues - Array von Issue-Objekten
@@ -99,8 +121,17 @@ function dedupeIssues(issues) {
     const canTitle = canonical(title);
     const miss = isMissingFlag(it) ? 'M' : 'H';
 
+    // 🔥 CHATGPT FIX A: Missing-Key für Cross-Category FEHLT-Duplikate
+    // Wenn beide "FEHLT" sind + gleicher kanonischer Kategorie-Begriff → Duplikat!
+    const missingKey = (miss === 'M') ? canonicalCategory(canTitle, cat) : null;
+
     // Suche nach semantischem Duplikat
     const dupIndex = seen.findIndex(s => {
+      // CHATGPT FIX A: Prüfe Missing-Key zuerst (härter als Similarity)
+      if (missingKey && s.missingKey && missingKey === s.missingKey) {
+        return true; // Cross-Category FEHLT-Duplikat gefunden!
+      }
+
       const sameCategory = s.cat === cat;
       if (!sameCategory) return false;
 
@@ -115,7 +146,7 @@ function dedupeIssues(issues) {
 
     if (dupIndex === -1) {
       // Kein Duplikat → hinzufügen
-      seen.push({ cat, miss, title });
+      seen.push({ cat, miss, title, missingKey });
       out.push(it);
     } else {
       // Duplikat gefunden → Merge
@@ -323,12 +354,19 @@ function sanitizeImprovedText(text = '', contractType = '') {
 
 /**
  * 🔥 CHATGPT-FIX: Sanitizer für Summary/Benchmark (leichter)
+ * CHATGPT FIX F: Breiteres Pattern für Pseudo-Statistiken
  */
 function sanitizeText(text = '') {
   if (!text) return text;
 
-  // Entferne Pseudo-Prozente aus Summaries/Benchmarks
-  return text.replace(/\b(?:8\d|9\d|100)%.*?(?:BRAK|Erhebung|Studie)[^.\n]*\.?/gi, 'branchenüblich');
+  // Pattern 1: Prozent mit expliziter Quelle (BRAK/Studie/Erhebung)
+  let cleaned = text.replace(/\b(?:8\d|9\d|100)%[^.\n]*?(?:BRAK|Erhebung|Studie|Quelle)[^.\n]*\.?/gi, 'branchenüblich');
+
+  // 🔥 CHATGPT FIX F: Pattern 2: "X% aller/der Verträge/professionellen ... enthalten"
+  // Ohne explizite Quelle → auch Pseudo-Statistik!
+  cleaned = cleaned.replace(/\b(?:\d{2,3})%\s+(?:aller|der)\s+(?:professionellen\s+)?(?:Verträge|verträge)[^.]*?(?:enthalten|haben|nutzen|beinhalten)[^.]*\.?/gi, 'branchenüblich');
+
+  return cleaned;
 }
 
 module.exports = {
