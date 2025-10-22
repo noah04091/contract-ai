@@ -2055,7 +2055,9 @@ const normalizeAndMergeCategoryTags = (result, requestId) => {
     'geheimhaltung': 'confidentiality',
     'gerichtsstand': 'jurisdiction',
     'schriftform': 'formalities',
-    'general': 'clarity' // Map general → clarity um "general" zu vermeiden
+    'general': 'clarity', // Map general → clarity um "general" zu vermeiden
+    'compliance': 'data_protection', // 🔥 FIX: Rule Engine gibt "compliance" für Datenschutz zurück
+    'data_protection': 'data_protection' // Idempotent
   };
 
   // Normalisiere alle Category-Tags
