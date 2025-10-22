@@ -1935,6 +1935,12 @@ const topUpFindingsIfNeeded = async (normalizedResult, contractText, contractTyp
 
   console.log(`🎯 [${requestId}] Top-Up-Pass: ${totalIssues} Findings vorhanden`);
 
+  // 🔥 CHATGPT-FIX: Hartes Cap bei 10 Issues (verhindert UI-Overload)
+  if (totalIssues >= 10) {
+    console.log(`⚠️ [${requestId}] Hartes Cap erreicht (${totalIssues} ≥ 10) - kein Top-Up mehr`);
+    return normalizedResult;
+  }
+
   // Wenn genug Findings vorhanden, nichts tun
   if (totalIssues >= 6) {
     console.log(`✅ [${requestId}] Ausreichend Findings (${totalIssues} ≥ 6) - kein Top-Up nötig`);
@@ -2021,6 +2027,7 @@ ${contractText.substring(0, 30000)}`;
     }
 
     const additionalCategories = parsed?.categories || [];
+    let topupAdded = 0; // 🔥 CHATGPT-FIX: Telemetrie für Top-Up
 
     console.log(`✅ [${requestId}] Top-Up-Pass: ${additionalCategories.length} zusätzliche Kategorien erhalten`);
 
@@ -2032,9 +2039,11 @@ ${contractText.substring(0, 30000)}`;
         const newIssues = (newCat.issues || []).filter(ni => {
           return !existing.issues.some(ei => ei.title === ni.title || ei.summary === ni.summary);
         });
+        topupAdded += newIssues.length;
         existing.issues.push(...newIssues);
       } else {
         // Neue Kategorie hinzufügen
+        topupAdded += (newCat.issues || []).length;
         normalizedResult.categories.push(newCat);
       }
     });
@@ -2046,10 +2055,25 @@ ${contractText.substring(0, 30000)}`;
     }));
 
     // Update summary
-    const newTotal = normalizedResult.categories.reduce((sum, cat) => sum + (cat.issues?.length || 0), 0);
+    let newTotal = normalizedResult.categories.reduce((sum, cat) => sum + (cat.issues?.length || 0), 0);
+
+    // 🔥 CHATGPT-FIX: Hartes Cap bei 10 Issues - Trim falls zu viele
+    if (newTotal > 10) {
+      console.log(`⚠️ [${requestId}] Cap-Enforcement: ${newTotal} Issues → trim auf 10`);
+      let kept = 0;
+      normalizedResult.categories = normalizedResult.categories.map(cat => {
+        if (kept >= 10) return { ...cat, issues: [] };
+        const canKeep = Math.min(cat.issues.length, 10 - kept);
+        kept += canKeep;
+        return { ...cat, issues: cat.issues.slice(0, canKeep) };
+      }).filter(cat => cat.issues.length > 0);
+      newTotal = 10;
+    }
+
     normalizedResult.summary.totalIssues = newTotal;
 
     console.log(`🎯 [${requestId}] Top-Up abgeschlossen: ${totalIssues} → ${newTotal} Findings`);
+    console.log(`   - ${topupAdded} neue Issues vom Top-Up hinzugefügt (vor Dedupe)`);
 
   } catch (error) {
     console.error(`⚠️ [${requestId}] Top-Up-Pass fehlgeschlagen:`, error.message);

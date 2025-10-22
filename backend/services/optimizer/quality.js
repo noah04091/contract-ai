@@ -161,7 +161,8 @@ function dedupeIssues(issues) {
 }
 
 /**
- * Validiert und korrigiert Issue-Kategorien
+ * 🔥 CHATGPT-FIX: Validiert und korrigiert Issue-Kategorien
+ * Normalisiert Kategorien basierend auf Title-Keywords (verhindert Cross-Category-Duplikate)
  */
 function ensureCategory(issue) {
   const validCategories = new Set([
@@ -179,7 +180,35 @@ function ensureCategory(issue) {
     'compliance'
   ]);
 
-  if (!issue.category || !validCategories.has(issue.category)) {
+  // CHATGPT-FIX: Category-Normalisierung basierend auf Title-Keywords
+  // Verhindert dass "Datenschutzklausel fehlt" in "clarity" landet statt "data_protection"
+  const title = (issue.title || issue.summary || '').toLowerCase();
+  const summary = (issue.summary || '').toLowerCase();
+  const combined = `${title} ${summary}`;
+
+  // Keyword-basiertes Remapping (nur wenn aktuell "clarity" oder "compliance")
+  if (issue.category === 'clarity' || issue.category === 'compliance' || !validCategories.has(issue.category)) {
+    if (/datenschutz|dsgvo|personenbezogen|art\.\s*\d+\s*dsgvo/i.test(combined)) {
+      issue.category = 'data_protection';
+    } else if (/k[üu]ndigung|k[üu]ndigungsfrist|beendigung|§\s*62[0-3]\s*bgb/i.test(combined)) {
+      issue.category = 'termination';
+    } else if (/arbeitsort|einsatzort|t[äa]tigkeitsort/i.test(combined)) {
+      issue.category = 'workplace';
+    } else if (/arbeitszeit|wochenarbeitszeit|arbzg/i.test(combined)) {
+      issue.category = 'working_time';
+    } else if (/gehalt|verg[üu]tung|lohn|bezahlung|zahlungsbedingung/i.test(combined)) {
+      issue.category = 'payment';
+    } else if (/haftung|gew[äa]hrleistung|§\s*276\s*bgb/i.test(combined)) {
+      issue.category = 'liability';
+    } else if (/geheimhaltung|vertraulich|confidential/i.test(combined)) {
+      issue.category = 'confidentiality';
+    } else if (/gerichtsstand|rechtswahl|jurisdiction/i.test(combined)) {
+      issue.category = 'jurisdiction';
+    }
+  }
+
+  // Fallback für invalide Kategorien
+  if (!validCategories.has(issue.category)) {
     console.warn(`⚠️ Invalid category "${issue.category}" → falling back to "clarity"`);
     issue.category = 'clarity';
   }
