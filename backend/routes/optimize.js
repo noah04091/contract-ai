@@ -990,39 +990,8 @@ const applyUltimateQualityLayer = (result, requestId, contractType = 'sonstiges'
   let sanitized = 0;
   let sanitizerStats = { roleTerms: 0, pseudoStats: 0, paragraphHeaders: 0, arbitraryHours: 0 };
 
-  // 🔥 CHATGPT-FIX: Normalisiere Category-Tags (nicht nur issue.category!)
-  // Mapped "datenschutz" → "data_protection", "arbeitsort" → "workplace", etc.
-  const categoryTagMapping = {
-    'datenschutz': 'data_protection',
-    'kuendigung': 'termination',
-    'arbeitsort': 'workplace',
-    'arbeitszeit': 'working_time',
-    'verguetung': 'payment',
-    'haftung': 'liability',
-    'geheimhaltung': 'confidentiality',
-    'gerichtsstand': 'jurisdiction',
-    'schriftform': 'formalities'
-  };
-
-  // Normalisiere alle Category-Tags
-  result.categories.forEach(cat => {
-    if (categoryTagMapping[cat.tag]) {
-      console.log(`🔄 [${requestId}] Normalizing category tag: "${cat.tag}" → "${categoryTagMapping[cat.tag]}"`);
-      cat.tag = categoryTagMapping[cat.tag];
-    }
-  });
-
-  // Merge Kategorien mit gleichem Tag nach Normalisierung
-  const mergedCategories = {};
-  result.categories.forEach(cat => {
-    if (!mergedCategories[cat.tag]) {
-      mergedCategories[cat.tag] = { ...cat, issues: [...(cat.issues || [])] };
-    } else {
-      // Merge issues
-      mergedCategories[cat.tag].issues.push(...(cat.issues || []));
-    }
-  });
-  result.categories = Object.values(mergedCategories);
+  // 🔥 CHATGPT-FIX: Tag-Normalisierung + Category-Merge (IMMER am Anfang!)
+  result = normalizeAndMergeCategoryTags(result, requestId);
 
   // VERBOTENE PLATZHALTER
   const FORBIDDEN_PLACEHOLDERS = [
@@ -2071,8 +2040,97 @@ const generateProfessionalClauses = (contractType, gaps, language = 'de') => {
 };
 
 /**
+ * 🔥 CHATGPT-FIX: Tag-Normalisierung + Category-Merge
+ * Normalisiert deutsche/englische Category-Tags und merged Kategorien mit gleichem Tag
+ * WICHTIG: MUSS in JEDEM Quality-Pass laufen (nicht nur einmal!)
+ */
+const normalizeAndMergeCategoryTags = (result, requestId) => {
+  const categoryTagMapping = {
+    'datenschutz': 'data_protection',
+    'kuendigung': 'termination',
+    'arbeitsort': 'workplace',
+    'arbeitszeit': 'working_time',
+    'verguetung': 'payment',
+    'haftung': 'liability',
+    'geheimhaltung': 'confidentiality',
+    'gerichtsstand': 'jurisdiction',
+    'schriftform': 'formalities',
+    'general': 'clarity' // Map general → clarity um "general" zu vermeiden
+  };
+
+  // Normalisiere alle Category-Tags
+  result.categories.forEach(cat => {
+    if (categoryTagMapping[cat.tag]) {
+      console.log(`🔄 [${requestId}] Normalizing category tag: "${cat.tag}" → "${categoryTagMapping[cat.tag]}"`);
+      cat.tag = categoryTagMapping[cat.tag];
+    }
+
+    // Normalisiere auch issue.category falls vorhanden
+    (cat.issues || []).forEach(issue => {
+      if (issue.category && categoryTagMapping[issue.category]) {
+        issue.category = categoryTagMapping[issue.category];
+      }
+    });
+  });
+
+  // Merge Kategorien mit gleichem Tag nach Normalisierung
+  const mergedCategories = {};
+  result.categories.forEach(cat => {
+    if (!mergedCategories[cat.tag]) {
+      mergedCategories[cat.tag] = { ...cat, issues: [...(cat.issues || [])] };
+    } else {
+      // Merge issues von gleicher Kategorie
+      console.log(`🔀 [${requestId}] Merging category "${cat.tag}" (had ${mergedCategories[cat.tag].issues.length} issues, adding ${cat.issues?.length || 0})`);
+      mergedCategories[cat.tag].issues.push(...(cat.issues || []));
+    }
+  });
+
+  result.categories = Object.values(mergedCategories);
+  return result;
+};
+
+/**
+ * 🔥 CHATGPT-FIX: Safe JSON Parser für Top-Up
+ * Versucht JSON zu parsen mit mehreren Fallback-Strategien
+ */
+const tryTrimJson = (jsonString) => {
+  // Versuch 1: Normales Parsing
+  try {
+    return { ok: true, data: JSON.parse(jsonString) };
+  } catch {}
+
+  // Versuch 2: Trim bis zur letzten }
+  const lastBrace = jsonString.lastIndexOf('}');
+  if (lastBrace > 0) {
+    try {
+      const trimmed = jsonString.slice(0, lastBrace + 1);
+      return { ok: true, data: JSON.parse(trimmed) };
+    } catch {}
+  }
+
+  // Versuch 3: Extract from code fence (```json ... ```)
+  const codeFenceMatch = jsonString.match(/```json\s*([\s\S]*?)```/i);
+  if (codeFenceMatch) {
+    try {
+      return { ok: true, data: JSON.parse(codeFenceMatch[1].trim()) };
+    } catch {}
+  }
+
+  // Versuch 4: Find JSON object with regex
+  const jsonMatch = jsonString.match(/\{[\s\S]*\}/);
+  if (jsonMatch) {
+    try {
+      return { ok: true, data: JSON.parse(jsonMatch[0]) };
+    } catch {}
+  }
+
+  return { ok: false, data: null };
+};
+
+/**
  * 🔥 TOP-UP-PASS: Garantiert Minimum 6-8 Findings
  * Wenn nach Dedupe < 6 Findings übrig sind, holt GPT-4o-mini gezielt fehlende Bereiche nach
+ * CHATGPT-FIX: Mit Safe-Parse und Retry-Strategie
  */
 const topUpFindingsIfNeeded = async (normalizedResult, contractText, contractType, openai, requestId) => {
   // Zähle alle Issues über alle Kategorien
@@ -2162,13 +2220,51 @@ ${contractText.substring(0, 30000)}`;
       return normalizedResult;
     }
 
-    // 🔥 FIX 3: JSON-Parsing absichern gegen Crash
-    let parsed;
-    try {
-      parsed = JSON.parse(addOutput);
-    } catch (parseError) {
-      console.error(`⚠️ [${requestId}] Top-Up-Pass: JSON-Parsing failed`, parseError.message);
-      return normalizedResult; // Fallback: Gib bisherige Ergebnisse zurück
+    // 🔥 CHATGPT-FIX: Safe JSON Parsing mit tryTrimJson()
+    const parseResult = tryTrimJson(addOutput);
+    if (!parseResult.ok) {
+      console.error(`⚠️ [${requestId}] Top-Up-Pass: JSON-Parsing failed trotz tryTrimJson(). Output (first 200 chars):`, addOutput.substring(0, 200));
+
+      // 🔥 RETRY mit weniger Kategorien (nur die ersten 3)
+      if (missing.length > 3) {
+        console.log(`🔄 [${requestId}] Retry Top-Up mit nur 3 Kategorien statt ${missing.length}...`);
+        const fewerMissing = missing.slice(0, 3);
+        const retryPrompt = topUpPrompt.replace(missing.join(', '), fewerMissing.join(', '));
+
+        try {
+          const retryCompletion = await openai.chat.completions.create({
+            model: "gpt-4o-mini",
+            response_format: { type: "json_object" },
+            temperature: 0.1,
+            max_tokens: 1200, // Weniger tokens für weniger Kategorien
+            messages: [
+              { role: 'system', content: 'Gib strikt gültiges JSON nach Schema zurück. KEINE Platzhalter!' },
+              { role: 'user', content: retryPrompt }
+            ]
+          });
+
+          const retryOutput = retryCompletion.choices?.[0]?.message?.content;
+          if (retryOutput) {
+            const retryParseResult = tryTrimJson(retryOutput);
+            if (retryParseResult.ok) {
+              console.log(`✅ [${requestId}] Retry erfolgreich!`);
+              parsed = retryParseResult.data;
+            } else {
+              console.warn(`⚠️ [${requestId}] Retry fehlgeschlagen - gebe bisherige Ergebnisse zurück`);
+              return normalizedResult;
+            }
+          } else {
+            return normalizedResult;
+          }
+        } catch (retryError) {
+          console.error(`⚠️ [${requestId}] Retry-Fehler:`, retryError.message);
+          return normalizedResult;
+        }
+      } else {
+        return normalizedResult; // Keine Retry möglich, gebe bisherige Ergebnisse zurück
+      }
+    } else {
+      parsed = parseResult.data;
     }
 
     const additionalCategories = parsed?.categories || [];
@@ -2223,6 +2319,10 @@ ${contractText.substring(0, 30000)}`;
   } catch (error) {
     console.error(`⚠️ [${requestId}] Top-Up-Pass fehlgeschlagen:`, error.message);
   }
+
+  // 🔥 CHATGPT-FIX: Tag-Normalisierung auch NACH Top-Up!
+  // GPT-4o-mini könnte deutsche Tags zurückgeben ("datenschutz", "kuendigung", etc.)
+  normalizedResult = normalizeAndMergeCategoryTags(normalizedResult, requestId);
 
   return normalizedResult;
 };
