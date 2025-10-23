@@ -459,5 +459,6 @@ module.exports = {
   norm,
   sim,
   canonical,
-  jaccard
+  jaccard,
+  isTextMatchingCategory // 🔥 FIX v3.1: Export for Content-Mismatch Guard in optimize.js
 };

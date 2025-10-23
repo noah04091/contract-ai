@@ -13,8 +13,8 @@ const verifyToken = require("../middleware/verifyToken");
 const { ObjectId } = require("mongodb");
 const { smartRateLimiter, uploadLimiter, generalLimiter } = require("../middleware/rateLimiter");
 const { runBaselineRules } = require("../services/optimizer/rules");
-// 🔥 FIX 4+: Quality Layer imports (mit Sanitizer)
-const { dedupeIssues, ensureCategory, sanitizeImprovedText, sanitizeText, sanitizeBenchmark, cleanPlaceholders } = require("../services/optimizer/quality");
+// 🔥 FIX 4+: Quality Layer imports (mit Sanitizer + Content-Mismatch Guard)
+const { dedupeIssues, ensureCategory, sanitizeImprovedText, sanitizeText, sanitizeBenchmark, cleanPlaceholders, isTextMatchingCategory } = require("../services/optimizer/quality");
 
 const router = express.Router();
 const upload = multer({ dest: "uploads/" });
@@ -988,6 +988,7 @@ const applyUltimateQualityLayer = (result, requestId, contractType = 'sonstiges'
   let duplicatesRemoved = 0;
   let placeholdersRemoved = 0;
   let sanitized = 0;
+  let contentMismatchDropped = 0; // 🔥 FIX v3.1: Track Content-Mismatch Guard drops
   let sanitizerStats = { roleTerms: 0, pseudoStats: 0, paragraphHeaders: 0, arbitraryHours: 0 };
 
   // 🔥 CHATGPT-FIX: Tag-Normalisierung + Category-Merge (IMMER am Anfang!)
@@ -1057,6 +1058,14 @@ const applyUltimateQualityLayer = (result, requestId, contractType = 'sonstiges'
       // 4. VALIDIERE KATEGORIE
       ensureCategory(issue);
 
+      // 🔥 FIX v3.1 (ChatGPT): Content-Mismatch Guard - NACH Category-Validation, VOR Dedupe
+      const textToCheck = issue.improvedText || issue.originalText || '';
+      if (!isTextMatchingCategory(issue.category, textToCheck)) {
+        console.warn(`⚠️ [${requestId}] Category/Content mismatch: "${issue.category}" but text about "${textToCheck.substring(0, 50)}..." → dropping issue`);
+        contentMismatchDropped++;
+        return null; // Issue droppen
+      }
+
       if (modified) {
         issuesFixed++;
       }
@@ -1109,6 +1118,7 @@ const applyUltimateQualityLayer = (result, requestId, contractType = 'sonstiges'
   console.log(`✅ [${requestId}] QUALITY CHECK abgeschlossen:`);
   console.log(`   - ${issuesFixed} Issues gefixt`);
   console.log(`   - ${duplicatesRemoved} Duplikate entfernt`);
+  console.log(`   - ${contentMismatchDropped} Content-Mismatch-Issues entfernt`);
   console.log(`   - ${placeholdersRemoved} Platzhalter ersetzt`);
   console.log(`   - ${sanitized} Issues sanitized:`);
   console.log(`     • ${sanitizerStats.roleTerms} Rollen-Terms (Auftraggeber→Arbeitgeber)`);
