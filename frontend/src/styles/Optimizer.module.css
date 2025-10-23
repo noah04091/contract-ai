@@ -945,3 +945,158 @@ html {
   background: rgba(0, 122, 255, 0.2);
   color: var(--text-primary);
 }
+
+/* ✨ ANALYSIS PROGRESS - CLEAN APPLE MINIMALIST */
+.analysisProgress {
+  background: var(--bg-primary);
+  border-radius: 16px;
+  border: 1px solid #E5E5E7;
+  padding: 32px;
+  max-width: 800px;
+  margin: 0 auto 32px;
+}
+
+.analysisProgressHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.analysisProgressTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 4px;
+  letter-spacing: -0.01em;
+}
+
+.analysisProgressSubtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.analysisProgressPercentage {
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.analysisProgressBar {
+  width: 100%;
+  height: 4px;
+  background: #E5E5E7;
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 32px;
+}
+
+.analysisProgressBarFill {
+  height: 100%;
+  background: var(--apple-blue);
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.analysisStepsList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.analysisStep {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: background 0.3s ease;
+}
+
+.analysisStep.active {
+  background: #F5F5F7;
+}
+
+.analysisStepIndicator {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.analysisStepIndicator.completed {
+  background: var(--apple-green);
+  color: white;
+}
+
+.analysisStepIndicator.current {
+  background: var(--apple-blue);
+  color: white;
+}
+
+.analysisStepIndicator.pending {
+  background: #E5E5E7;
+  color: var(--text-secondary);
+}
+
+.analysisStepLabel {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.analysisStepLabel.completed {
+  color: var(--apple-green);
+}
+
+.analysisStepLabel.current {
+  color: var(--text-primary);
+}
+
+.analysisStepLabel.pending {
+  color: var(--text-secondary);
+}
+
+.analysisStepDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--apple-blue);
+}
+
+.analysisProgressMessage {
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #F5F5F7;
+}
+
+/* ✨ RESPONSIVE PROGRESS */
+@media (max-width: 768px) {
+  .analysisProgress {
+    padding: 24px 16px;
+  }
+
+  .analysisProgressHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .analysisProgressPercentage {
+    font-size: 18px;
+  }
+
+  .analysisStepLabel {
+    font-size: 13px;
+  }
+}
