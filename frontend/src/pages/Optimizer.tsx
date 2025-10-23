@@ -824,13 +824,6 @@ export default function Optimizer() {
 
       showToast(`✅ ${parsedOptimizations.length} Optimierungen gefunden!`, 'success');
     }
-
-  } catch (error) {
-    // This shouldn't normally be reached due to inner try-catch, but just in case
-    const err = error as Error;
-    console.error("❌ Unexpected error:", err);
-    setError(err.message);
-    showToast(err.message, 'error');
   } finally {
       setLoading(false);
       setIsAnalyzing(false);
