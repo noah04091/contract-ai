@@ -1458,7 +1458,6 @@ Konfidenz: ${opt.confidence}%\n`
                 {ANALYSIS_STEPS.map((step, index) => {
                   const isCompleted = currentStep > step.id;
                   const isCurrent = currentStep === step.id;
-                  const isPending = currentStep < step.id;
 
                   return (
                     <div key={step.id} className="flex flex-col items-center flex-1">
