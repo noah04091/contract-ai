@@ -14,7 +14,7 @@ const { ObjectId } = require("mongodb");
 const { smartRateLimiter, uploadLimiter, generalLimiter } = require("../middleware/rateLimiter");
 const { runBaselineRules } = require("../services/optimizer/rules");
 // 🔥 FIX 4+: Quality Layer imports (mit Sanitizer)
-const { dedupeIssues, ensureCategory, sanitizeImprovedText, sanitizeText } = require("../services/optimizer/quality");
+const { dedupeIssues, ensureCategory, sanitizeImprovedText, sanitizeText, sanitizeBenchmark, cleanPlaceholders } = require("../services/optimizer/quality");
 
 const router = express.Router();
 const upload = multer({ dest: "uploads/" });
@@ -3305,32 +3305,30 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
 
     normalizedResult.categories.forEach(cat => {
       cat.issues.forEach(issue => {
+        globalSanitized++; // 🔥 FIX v3: Count EVERY issue, not just changed ones
+
         // Sanitize improvedText (🔥 CHATGPT FIX C: contractType überall übergeben!)
         if (issue.improvedText) {
           const result = sanitizeImprovedText(issue.improvedText, contractTypeInfo.type);
-          if (result.text !== issue.improvedText) {
-            issue.improvedText = result.text;
-            globalSanitizerStats.roleTerms += result.stats.roleTerms;
-            globalSanitizerStats.pseudoStats += result.stats.pseudoStats;
-            globalSanitizerStats.paragraphHeaders += result.stats.paragraphHeaders;
-            globalSanitizerStats.arbitraryHours += result.stats.arbitraryHours;
-            if (result.stats.roleTerms || result.stats.pseudoStats || result.stats.paragraphHeaders || result.stats.arbitraryHours) {
-              globalSanitized++;
-            }
-          }
+          issue.improvedText = result.text;
+          globalSanitizerStats.roleTerms += result.stats.roleTerms;
+          globalSanitizerStats.pseudoStats += result.stats.pseudoStats;
+          globalSanitizerStats.paragraphHeaders += result.stats.paragraphHeaders;
+          globalSanitizerStats.arbitraryHours += result.stats.arbitraryHours;
         }
 
-        // Sanitize text fields
+        // 🔥 FIX v3 (ChatGPT): Sanitize ALL text fields with proper functions
         if (issue.summary) {
-          const before = issue.summary;
           issue.summary = sanitizeText(issue.summary);
-          if (before !== issue.summary) globalSanitized++;
         }
         if (issue.benchmark) {
-          issue.benchmark = sanitizeText(issue.benchmark);
+          issue.benchmark = sanitizeBenchmark(issue.benchmark); // Use sanitizeBenchmark, not sanitizeText!
         }
         if (issue.legalReasoning) {
           issue.legalReasoning = sanitizeText(issue.legalReasoning);
+        }
+        if (issue.originalText) {
+          issue.originalText = cleanPlaceholders(issue.originalText);
         }
       });
     });

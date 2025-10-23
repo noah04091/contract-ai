@@ -208,7 +208,13 @@ function ensureCategory(issue) {
     'working_time',
     'workplace',
     'clarity',
-    'compliance'
+    'compliance',
+    // 🔥 FIX v3 (ChatGPT): Kaufvertrag-spezifische Kategorien
+    'purchase_item',
+    'delivery',
+    'risk_transfer',
+    'ownership',
+    'warranty'
   ]);
 
   // CHATGPT-FIX: Category-Normalisierung basierend auf Title-Keywords
@@ -229,12 +235,23 @@ function ensureCategory(issue) {
       issue.category = 'working_time';
     } else if (/gehalt|verg[üu]tung|lohn|bezahlung|zahlungsbedingung/i.test(combined)) {
       issue.category = 'payment';
-    } else if (/haftung|gew[äa]hrleistung|§\s*276\s*bgb/i.test(combined)) {
+    } else if (/gew[äa]hrleistung|§\s*434|§\s*475|sachmangel/i.test(combined)) {
+      issue.category = 'warranty';
+    } else if (/haftung|§\s*276\s*bgb/i.test(combined)) {
       issue.category = 'liability';
     } else if (/geheimhaltung|vertraulich|confidential/i.test(combined)) {
       issue.category = 'confidentiality';
     } else if (/gerichtsstand|rechtswahl|jurisdiction/i.test(combined)) {
       issue.category = 'jurisdiction';
+    // 🔥 FIX v3 (ChatGPT): Kaufvertrag-spezifische Keywords
+    } else if (/kaufgegenstand|fahrzeug|fahrgestellnummer/i.test(combined)) {
+      issue.category = 'purchase_item';
+    } else if (/lieferung|abholung|erfüllungsort|§\s*269/i.test(combined)) {
+      issue.category = 'delivery';
+    } else if (/gefahrübergang|§\s*446|§\s*447|übergabe/i.test(combined)) {
+      issue.category = 'risk_transfer';
+    } else if (/eigentumsvorbehalt|§\s*449/i.test(combined)) {
+      issue.category = 'ownership';
     }
   }
 
@@ -245,6 +262,23 @@ function ensureCategory(issue) {
   }
 
   return issue;
+}
+
+/**
+ * 🔥 FIX v3 (ChatGPT): Content-Mismatch Guard
+ * Prüft ob der Text zur Kategorie passt (verhindert z.B. Schriftform unter delivery)
+ */
+function isTextMatchingCategory(category, text = '') {
+  const mustContain = {
+    purchase_item: /(kaufgegenstand|fahrzeug|fahrgestellnummer|modell|baujahr)/i,
+    delivery: /(lieferung|abholung|erfüllungsort|bereitstellung|§\s*269)/i,
+    risk_transfer: /(gefahrübergang|§\s*446|§\s*447|übergabe|versendung)/i,
+    ownership: /(eigentumsvorbehalt|§\s*449)/i,
+    warranty: /(gewährleistung|§\s*434|§\s*475|sachmangel|frist|ausschluss)/i
+  };
+
+  const rx = mustContain[category];
+  return rx ? rx.test(text) : true; // Wenn keine Regel existiert, akzeptieren
 }
 
 /**
@@ -303,13 +337,21 @@ function applyMinimumStandards(issues) {
     // Validate category
     ensureCategory(issue);
 
+    // 🔥 FIX v3 (ChatGPT): Content-Mismatch Guard
+    // Prüfe ob Text zur Kategorie passt, sonst droppe Issue
+    const textToCheck = issue.improvedText || issue.originalText || '';
+    if (!isTextMatchingCategory(issue.category, textToCheck)) {
+      console.warn(`⚠️ Category/Content mismatch: "${issue.category}" but text about "${textToCheck.substring(0, 50)}..." → dropping issue`);
+      return null; // Issue droppen
+    }
+
     // Ensure minimum length for improved text
     if (issue.improvedText && issue.improvedText.length < 50 && !issue.improvedText.includes('§')) {
       console.warn(`⚠️ Issue "${issue.summary}" has very short improvedText (<50 chars)`);
     }
 
     return issue;
-  });
+  }).filter(Boolean); // Filter out null (dropped issues from Content-Mismatch Guard)
 }
 
 /**
@@ -386,10 +428,10 @@ function sanitizeBenchmark(text = '') {
   // Pattern 2: 50-89% pauschal → "branchenüblich"
   t = t.replace(/\b([5-8]\d)%\b/g, 'branchenüblich');
 
-  // Pattern 3: Sätze wie "X% der ... Verträge ... (spezifizieren|regeln|enthalten|...)"
-  // ERWEITERT um: spezifizieren, regeln, sehen.*vor, führen.*an
+  // Pattern 3: Sätze wie "X% der|aller ... Verträge ... (spezifizieren|regeln|enthalten|...)"
+  // 🔥 FIX v3 (ChatGPT): "aller" hinzugefügt (90% aller Verträge ...)
   t = t.replace(
-    /\b\d{2,3}%\s+der\s+[^.]{0,80}?(verträge|vereinbarungen|kaufverträge)[^.]{0,80}?\b(enthalten|haben|nutzen|beinhalten|spezifizieren|regeln|sehen.*vor|führen.*an)\b[^.]*\./gi,
+    /\b\d{2,3}%\s+(der|aller)\s+[^.]{0,120}?\b(verträge|vereinbarungen|kaufverträge|verbraucherrechtlichen)[^.]{0,120}?\b(enthalten|haben|nutzen|beinhalten|spezifizieren|regeln|sehen\s+.*\s+vor|führen.*an|berücksichtigen)\b[^.]*\./gi,
     'branchenüblich.'
   );
 
