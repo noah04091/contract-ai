@@ -13,8 +13,8 @@ const verifyToken = require("../middleware/verifyToken");
 const { ObjectId } = require("mongodb");
 const { smartRateLimiter, uploadLimiter, generalLimiter } = require("../middleware/rateLimiter");
 const { runBaselineRules } = require("../services/optimizer/rules");
-// 🔥 FIX 4+: Quality Layer imports (mit Sanitizer + Content-Mismatch Guard)
-const { dedupeIssues, ensureCategory, sanitizeImprovedText, sanitizeText, sanitizeBenchmark, cleanPlaceholders, isTextMatchingCategory } = require("../services/optimizer/quality");
+// 🔥 FIX 4+: Quality Layer imports (mit Sanitizer + Content-Mismatch Guard + Context-Aware Benchmarks)
+const { dedupeIssues, ensureCategory, sanitizeImprovedText, sanitizeText, sanitizeBenchmark, cleanPlaceholders, isTextMatchingCategory, generateContextAwareBenchmark } = require("../services/optimizer/quality");
 
 const router = express.Router();
 const upload = multer({ dest: "uploads/" });
@@ -3366,6 +3366,11 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
         }
         if (issue.benchmark) {
           issue.benchmark = sanitizeBenchmark(issue.benchmark); // Use sanitizeBenchmark, not sanitizeText!
+
+          // 🔥 ENHANCEMENT v5: Replace generic "branchenüblich." with Context-Aware Benchmarks
+          if (issue.benchmark === 'branchenüblich.' || issue.benchmark.includes('Basierend auf')) {
+            issue.benchmark = generateContextAwareBenchmark(issue.category, contractTypeInfo.type);
+          }
         }
         if (issue.legalReasoning) {
           issue.legalReasoning = sanitizeText(issue.legalReasoning);
