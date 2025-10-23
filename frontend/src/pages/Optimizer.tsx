@@ -756,10 +756,26 @@ export default function Optimizer() {
         useStreamingEndpoint = false;
         setProgressMessage('Verwende Standard-Modus...');
 
-        // Simulate progress for regular endpoint
+        // 🎯 Simulate progress AND steps for regular endpoint
+        let currentProgress = 0;
         const progressInterval = setInterval(() => {
-          setAnalysisProgress(prev => Math.min(prev + 8, 90));
-        }, 800);
+          currentProgress = Math.min(currentProgress + 12, 95);
+          setAnalysisProgress(currentProgress);
+          setCurrentStep(getCurrentStepFromProgress(currentProgress));
+
+          // Update message based on progress
+          if (currentProgress < 20) {
+            setProgressMessage('📄 Extrahiere Text aus PDF...');
+          } else if (currentProgress < 40) {
+            setProgressMessage('🎯 Erkenne Vertragstyp...');
+          } else if (currentProgress < 55) {
+            setProgressMessage('⚖️ Analysiere juristische Lücken...');
+          } else if (currentProgress < 85) {
+            setProgressMessage('🤖 KI-Analyse läuft...');
+          } else {
+            setProgressMessage('🔬 Qualitäts-Checks...');
+          }
+        }, 600); // Faster updates (600ms instead of 800ms)
 
         const REGULAR_URL = import.meta.env.PROD
           ? "https://api.contract-ai.de/api/optimize"
@@ -773,7 +789,8 @@ export default function Optimizer() {
 
         clearInterval(progressInterval);
         setAnalysisProgress(100);
-        setProgressMessage('Fertig!');
+        setCurrentStep(5); // Last step
+        setProgressMessage('✅ Fertig!');
 
         const data = await res.json();
 
