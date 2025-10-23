@@ -1482,38 +1482,84 @@ Konfidenz: ${opt.confidence}%\n`
             {optimizations.length > 0 && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                 
-                {/* Contract Type Card */}
+                {/* Contract Type Card - Premium Design */}
                 {optimizationResult?.meta && (
-                  <motion.div 
-                    className={styles.card}
+                  <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, ease: [0.2, 0.8, 0.2, 1] }}
                     style={{
-                      background: `linear-gradient(135deg, ${CONTRACT_TYPE_INFO[optimizationResult.meta.type as keyof typeof CONTRACT_TYPE_INFO]?.color || '#8E8E93'}15 0%, transparent 100%)`,
-                      borderColor: CONTRACT_TYPE_INFO[optimizationResult.meta.type as keyof typeof CONTRACT_TYPE_INFO]?.color || '#8E8E93'
+                      background: '#FFFFFF',
+                      border: '1px solid rgba(0, 0, 0, 0.08)',
+                      borderRadius: '16px',
+                      padding: '32px',
+                      marginBottom: '16px',
+                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)'
                     }}
                   >
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        {CONTRACT_TYPE_INFO[optimizationResult.meta.type as keyof typeof CONTRACT_TYPE_INFO]?.icon}
+                      <div className="flex items-center gap-4">
+                        <div
+                          style={{
+                            width: '56px',
+                            height: '56px',
+                            borderRadius: '12px',
+                            background: `${CONTRACT_TYPE_INFO[optimizationResult.meta.type as keyof typeof CONTRACT_TYPE_INFO]?.color || '#007AFF'}15`,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '28px'
+                          }}
+                        >
+                          {CONTRACT_TYPE_INFO[optimizationResult.meta.type as keyof typeof CONTRACT_TYPE_INFO]?.icon}
+                        </div>
                         <div>
-                          <h3 className="text-xl font-bold">
+                          <h3
+                            style={{
+                              fontSize: '20px',
+                              fontWeight: 600,
+                              color: '#1D1D1F',
+                              marginBottom: '8px',
+                              letterSpacing: '-0.02em'
+                            }}
+                          >
                             {CONTRACT_TYPE_INFO[optimizationResult.meta.type as keyof typeof CONTRACT_TYPE_INFO]?.name || 'Vertrag'} erkannt
                           </h3>
-                          <div className="flex gap-4 text-sm text-gray-600 mt-1">
-                            <span>📊 Konfidenz: {optimizationResult.meta.confidence}%</span>
-                            <span>⚖️ {optimizationResult.meta.jurisdiction}</span>
-                            <span>🌍 {optimizationResult.meta.language === 'de' ? 'Deutsch' : 'Englisch'}</span>
-                            {optimizationResult.meta.gapsFound && <span>🔍 {optimizationResult.meta.gapsFound} Lücken</span>}
+                          <div style={{ display: 'flex', gap: '16px', fontSize: '14px', color: '#86868B' }}>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <span style={{ fontSize: '16px' }}>📊</span> {optimizationResult.meta.confidence}%
+                            </span>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <span style={{ fontSize: '16px' }}>⚖️</span> {optimizationResult.meta.jurisdiction}
+                            </span>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <span style={{ fontSize: '16px' }}>🌍</span> {optimizationResult.meta.language === 'de' ? 'Deutsch' : 'Englisch'}
+                            </span>
+                            {optimizationResult.meta.gapsFound && (
+                              <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <span style={{ fontSize: '16px' }}>🔍</span> {optimizationResult.meta.gapsFound} Lücken
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>
                       {optimizationResult.score && (
-                        <div className="text-right">
-                          <div className="text-3xl font-bold" style={{ color: CONTRACT_TYPE_INFO[optimizationResult.meta.type as keyof typeof CONTRACT_TYPE_INFO]?.color }}>
+                        <div style={{ textAlign: 'right' }}>
+                          <div
+                            style={{
+                              fontSize: '40px',
+                              fontWeight: 700,
+                              color: CONTRACT_TYPE_INFO[optimizationResult.meta.type as keyof typeof CONTRACT_TYPE_INFO]?.color || '#007AFF',
+                              lineHeight: 1,
+                              marginBottom: '8px',
+                              letterSpacing: '-0.03em'
+                            }}
+                          >
                             {optimizationResult.score.health}
                           </div>
-                          <div className="text-sm text-gray-600">Health Score</div>
+                          <div style={{ fontSize: '13px', color: '#86868B', fontWeight: 500 }}>
+                            Health Score
+                          </div>
                         </div>
                       )}
                     </div>
@@ -1529,123 +1575,218 @@ Konfidenz: ${opt.confidence}%\n`
                   />
                 )}
 
-                {/* Statistics Dashboard - SIMPLIFIED */}
+                {/* Statistics Dashboard - Premium Design */}
                 {statistics && showStatistics && (
-                  <motion.div 
-                    className={styles.card}
+                  <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, ease: [0.2, 0.8, 0.2, 1], delay: 0.1 }}
+                    style={{
+                      background: '#FFFFFF',
+                      border: '1px solid rgba(0, 0, 0, 0.08)',
+                      borderRadius: '16px',
+                      padding: '32px',
+                      marginBottom: '16px',
+                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)'
+                    }}
                   >
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-bold flex items-center gap-2">
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
+                      <h3 style={{ fontSize: '18px', fontWeight: 600, color: '#1D1D1F', display: 'flex', alignItems: 'center', gap: '8px', letterSpacing: '-0.01em' }}>
                         <BarChart3 className="w-5 h-5" style={{ color: '#007AFF' }} />
                         Analyse-Dashboard
                       </h3>
                       <button
                         onClick={() => setShowStatistics(false)}
-                        className="text-gray-500 hover:text-gray-700 p-1 rounded-lg hover:bg-gray-100 transition-all"
+                        style={{
+                          color: '#86868B',
+                          background: 'transparent',
+                          border: 'none',
+                          padding: '6px',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = '#F5F5F7';
+                          e.currentTarget.style.color = '#1D1D1F';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'transparent';
+                          e.currentTarget.style.color = '#86868B';
+                        }}
                       >
                         <Minimize2 className="w-5 h-5" />
                       </button>
                     </div>
-                    
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                      <motion.div 
-                        className="text-center p-3 rounded-xl cursor-pointer"
-                        style={{ background: 'rgba(255, 59, 48, 0.1)' }}
-                        whileHover={{ scale: 1.05 }}
-                        onClick={() => setSelectedCategory('all')}
-                      >
-                        <div className="text-2xl font-bold" style={{ color: '#FF3B30' }}>{statistics.criticalCount}</div>
-                        <div className="text-xs text-gray-600 font-medium">Kritisch</div>
-                      </motion.div>
-                      <motion.div 
-                        className="text-center p-3 rounded-xl"
-                        style={{ background: 'rgba(255, 149, 0, 0.1)' }}
-                        whileHover={{ scale: 1.05 }}
-                      >
-                        <div className="text-2xl font-bold" style={{ color: '#FF9500' }}>{statistics.highCount}</div>
-                        <div className="text-xs text-gray-600 font-medium">Hoch</div>
-                      </motion.div>
-                      <motion.div 
-                        className="text-center p-3 rounded-xl"
-                        style={{ background: 'rgba(255, 204, 0, 0.1)' }}
-                        whileHover={{ scale: 1.05 }}
-                      >
-                        <div className="text-2xl font-bold" style={{ color: '#FFCC00' }}>{statistics.mediumCount}</div>
-                        <div className="text-xs text-gray-600 font-medium">Mittel</div>
-                      </motion.div>
-                      <motion.div 
-                        className="text-center p-3 rounded-xl"
-                        style={{ background: 'rgba(52, 199, 89, 0.1)' }}
-                        whileHover={{ scale: 1.05 }}
-                      >
-                        <div className="text-2xl font-bold" style={{ color: '#34C759' }}>{statistics.lowCount}</div>
-                        <div className="text-xs text-gray-600 font-medium">Niedrig</div>
-                      </motion.div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px', marginBottom: '20px' }}>
+                      {[
+                        { label: 'Kritisch', count: statistics.criticalCount, color: '#FF3B30' },
+                        { label: 'Hoch', count: statistics.highCount, color: '#FF9500' },
+                        { label: 'Mittel', count: statistics.mediumCount, color: '#FFCC00' },
+                        { label: 'Niedrig', count: statistics.lowCount, color: '#34C759' }
+                      ].map((item, idx) => (
+                        <motion.div
+                          key={item.label}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.15 + idx * 0.05 }}
+                          whileHover={{ scale: 1.03 }}
+                          onClick={() => setSelectedCategory('all')}
+                          style={{
+                            textAlign: 'center',
+                            padding: '20px 16px',
+                            borderRadius: '12px',
+                            background: '#F5F5F7',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = '#E8E8ED';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = '#F5F5F7';
+                          }}
+                        >
+                          <div style={{ fontSize: '32px', fontWeight: 700, color: item.color, lineHeight: 1, marginBottom: '8px', letterSpacing: '-0.02em' }}>
+                            {item.count}
+                          </div>
+                          <div style={{ fontSize: '13px', color: '#86868B', fontWeight: 500 }}>
+                            {item.label}
+                          </div>
+                        </motion.div>
+                      ))}
                     </div>
-                    
-                    <div className="grid grid-cols-3 gap-4">
-                      <div className="text-center p-2 rounded-lg" style={{ background: 'rgba(0, 122, 255, 0.05)' }}>
-                        <div className="text-sm text-gray-600">Ø Risiko</div>
-                        <div className="text-lg font-bold" style={{ color: statistics.avgRisk >= 7 ? '#FF3B30' : statistics.avgRisk >= 5 ? '#FF9500' : '#34C759' }}>{statistics.avgRisk}/10</div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+                      <div style={{ textAlign: 'center', padding: '16px', borderRadius: '10px', background: '#F5F5F7' }}>
+                        <div style={{ fontSize: '12px', color: '#86868B', marginBottom: '6px', fontWeight: 500 }}>Ø Risiko</div>
+                        <div style={{ fontSize: '22px', fontWeight: 700, color: statistics.avgRisk >= 7 ? '#FF3B30' : statistics.avgRisk >= 5 ? '#FF9500' : '#34C759', letterSpacing: '-0.02em' }}>
+                          {statistics.avgRisk}<span style={{ fontSize: '14px', fontWeight: 500, color: '#86868B' }}>/10</span>
+                        </div>
                       </div>
-                      <div className="text-center p-2 rounded-lg" style={{ background: 'rgba(0, 122, 255, 0.05)' }}>
-                        <div className="text-sm text-gray-600">Ø Impact</div>
-                        <div className="text-lg font-bold" style={{ color: '#007AFF' }}>{statistics.avgImpact}/10</div>
+                      <div style={{ textAlign: 'center', padding: '16px', borderRadius: '10px', background: '#F5F5F7' }}>
+                        <div style={{ fontSize: '12px', color: '#86868B', marginBottom: '6px', fontWeight: 500 }}>Ø Impact</div>
+                        <div style={{ fontSize: '22px', fontWeight: 700, color: '#007AFF', letterSpacing: '-0.02em' }}>
+                          {statistics.avgImpact}<span style={{ fontSize: '14px', fontWeight: 500, color: '#86868B' }}>/10</span>
+                        </div>
                       </div>
-                      <div className="text-center p-2 rounded-lg" style={{ background: 'rgba(0, 122, 255, 0.05)' }}>
-                        <div className="text-sm text-gray-600">KI-Konfidenz</div>
-                        <div className="text-lg font-bold" style={{ color: statistics.avgConfidence >= 85 ? '#34C759' : statistics.avgConfidence >= 70 ? '#FF9500' : '#FF3B30' }}>{statistics.avgConfidence}%</div>
+                      <div style={{ textAlign: 'center', padding: '16px', borderRadius: '10px', background: '#F5F5F7' }}>
+                        <div style={{ fontSize: '12px', color: '#86868B', marginBottom: '6px', fontWeight: 500 }}>KI-Konfidenz</div>
+                        <div style={{ fontSize: '22px', fontWeight: 700, color: statistics.avgConfidence >= 85 ? '#34C759' : statistics.avgConfidence >= 70 ? '#FF9500' : '#FF3B30', letterSpacing: '-0.02em' }}>
+                          {statistics.avgConfidence}<span style={{ fontSize: '14px', fontWeight: 500, color: '#86868B' }}>%</span>
+                        </div>
                       </div>
                     </div>
                   </motion.div>
                 )}
 
-                {/* MAIN ACTION - MACH MEINEN VERTRAG BESSER! */}
-                <motion.div 
-                  className={styles.card}
+                {/* MAIN ACTION - Premium CTA */}
+                <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  style={{ 
-                    background: 'linear-gradient(135deg, rgba(175, 82, 222, 0.05) 0%, rgba(255, 55, 95, 0.05) 100%)',
-                    borderColor: '#AF52DE'
+                  transition={{ duration: 0.4, ease: [0.2, 0.8, 0.2, 1], delay: 0.2 }}
+                  style={{
+                    background: '#FFFFFF',
+                    border: '1px solid rgba(0, 0, 0, 0.08)',
+                    borderRadius: '16px',
+                    padding: '48px 32px',
+                    marginBottom: '16px',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+                    textAlign: 'center'
                   }}
                 >
-                  <div className="text-center">
-                    <h3 className="text-2xl font-bold mb-2">
-                      ✨ Dein Vertrag wurde analysiert
-                    </h3>
-                    <p className="text-gray-600 mb-6">
-                      {optimizations.length} kritische Optimierungen identifiziert – Erstelle jetzt deinen rechtssicheren Vertrag
-                    </p>
-                    
-                    <button
-                      onClick={handleGenerateOptimizedContract}
-                      disabled={isGeneratingContract || !file || optimizations.length === 0}
-                      className={styles.bigGenerateButton}
-                    >
-                      {isGeneratingContract ? (
-                        <>
-                          <div className={styles.spinner}></div>
-                          Dein Vertrag wird verbessert...
-                        </>
-                      ) : (
-                        <>
-                          <Wand2 className="w-6 h-6" />
-                          ⚡ Optimierten Vertrag generieren
-                        </>
-                      )}
-                    </button>
-                    
-                    {showAdvancedView && (
-                      <p className="text-sm text-gray-500 mt-4">
-                        {selectedOptimizations.size > 0 
-                          ? `${selectedOptimizations.size} von ${optimizations.length} ausgewählt`
-                          : 'Alle Optimierungen werden angewendet'}
-                      </p>
+                  <motion.div
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 0.3, delay: 0.3 }}
+                    style={{
+                      fontSize: '48px',
+                      marginBottom: '16px'
+                    }}
+                  >
+                    ✨
+                  </motion.div>
+                  <h3
+                    style={{
+                      fontSize: '28px',
+                      fontWeight: 700,
+                      color: '#1D1D1F',
+                      marginBottom: '12px',
+                      letterSpacing: '-0.02em'
+                    }}
+                  >
+                    Dein Vertrag wurde analysiert
+                  </h3>
+                  <p
+                    style={{
+                      fontSize: '16px',
+                      color: '#86868B',
+                      marginBottom: '32px',
+                      maxWidth: '600px',
+                      margin: '0 auto 32px'
+                    }}
+                  >
+                    <strong style={{ color: '#1D1D1F' }}>{optimizations.length} Optimierungen</strong> identifiziert – Erstelle jetzt deinen rechtssicheren Vertrag
+                  </p>
+
+                  <button
+                    onClick={handleGenerateOptimizedContract}
+                    disabled={isGeneratingContract || !file || optimizations.length === 0}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '12px',
+                      padding: '18px 40px',
+                      borderRadius: '12px',
+                      fontSize: '17px',
+                      fontWeight: 600,
+                      background: isGeneratingContract || !file || optimizations.length === 0
+                        ? '#C7C7CC'
+                        : 'linear-gradient(135deg, #007AFF 0%, #5856D6 100%)',
+                      color: 'white',
+                      border: 'none',
+                      cursor: isGeneratingContract || !file || optimizations.length === 0 ? 'not-allowed' : 'pointer',
+                      transition: 'all 0.2s ease',
+                      boxShadow: isGeneratingContract || !file || optimizations.length === 0
+                        ? 'none'
+                        : '0 4px 16px rgba(0, 122, 255, 0.3)',
+                      letterSpacing: '-0.01em'
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isGeneratingContract && file && optimizations.length > 0) {
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                        e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 122, 255, 0.4)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = isGeneratingContract || !file || optimizations.length === 0
+                        ? 'none'
+                        : '0 4px 16px rgba(0, 122, 255, 0.3)';
+                    }}
+                  >
+                    {isGeneratingContract ? (
+                      <>
+                        <div className={styles.spinner}></div>
+                        Dein Vertrag wird verbessert...
+                      </>
+                    ) : (
+                      <>
+                        <Wand2 className="w-6 h-6" />
+                        Optimierten Vertrag generieren
+                      </>
                     )}
-                  </div>
+                  </button>
+
+                  {showAdvancedView && (
+                    <p style={{ fontSize: '13px', color: '#86868B', marginTop: '16px' }}>
+                      {selectedOptimizations.size > 0
+                        ? `${selectedOptimizations.size} von ${optimizations.length} ausgewählt`
+                        : 'Alle Optimierungen werden angewendet'}
+                    </p>
+                  )}
                 </motion.div>
 
                 {/* Category Filter - Apple Style */}
