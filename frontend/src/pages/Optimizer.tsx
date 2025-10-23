@@ -1453,232 +1453,133 @@ Konfidenz: ${opt.confidence}%\n`
             </motion.div>
           </motion.div>
 
-          {/* 🎨 PREMIUM Analysis Progress - Apple/Microsoft Level Design */}
+          {/* ✨ Clean Analysis Progress - Apple-Style Minimalist Design */}
           {isAnalyzing && (
             <motion.div
-              className="relative overflow-hidden"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               style={{
-                background: 'linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,249,250,0.98) 100%)',
-                backdropFilter: 'blur(20px)',
-                borderRadius: '24px',
-                border: '1px solid rgba(0, 122, 255, 0.1)',
-                boxShadow: '0 20px 60px rgba(0, 122, 255, 0.08), 0 8px 24px rgba(0, 0, 0, 0.04)',
-                padding: '32px'
+                background: '#FFFFFF',
+                borderRadius: '16px',
+                border: '1px solid #E5E5E7',
+                padding: '32px',
+                maxWidth: '800px',
+                margin: '0 auto'
               }}
             >
-              {/* Premium Glow Effect */}
-              <div
-                className="absolute inset-0 pointer-events-none"
-                style={{
-                  background: 'radial-gradient(circle at 50% 0%, rgba(0, 122, 255, 0.06) 0%, transparent 60%)',
-                  borderRadius: '24px'
-                }}
-              />
-
-              {/* Header */}
-              <div className="flex items-center justify-between mb-8 relative z-10">
-                <div className="flex items-center gap-4">
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                    style={{
-                      background: 'linear-gradient(135deg, #007AFF 0%, #5856D6 50%, #AF52DE 100%)',
-                      borderRadius: '12px',
-                      padding: '10px',
-                      boxShadow: '0 4px 16px rgba(0, 122, 255, 0.25)'
-                    }}
-                  >
-                    <Sparkles className="w-5 h-5" style={{ color: 'white' }} />
-                  </motion.div>
-                  <div>
-                    <h3 className="font-semibold text-lg" style={{ color: '#1D1D1F' }}>
-                      KI-Analyse läuft
-                    </h3>
-                    <p className="text-sm" style={{ color: '#86868B' }}>
-                      Ihre Dokumente werden analysiert
-                    </p>
-                  </div>
+              {/* Minimalist Header */}
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="font-semibold text-base" style={{ color: '#1D1D1F', marginBottom: '4px' }}>
+                    Analyse läuft
+                  </h3>
+                  <p className="text-sm" style={{ color: '#86868B' }}>
+                    Dokument wird verarbeitet
+                  </p>
                 </div>
-                <motion.div
-                  className="text-2xl font-bold"
-                  style={{
-                    background: 'linear-gradient(135deg, #007AFF 0%, #AF52DE 100%)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text'
-                  }}
-                  animate={{ opacity: [0.7, 1, 0.7] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                >
+                <div className="text-xl font-medium" style={{ color: '#86868B' }}>
                   {analysisProgress}%
-                </motion.div>
-              </div>
-
-              {/* 🎯 PREMIUM VISUAL STEPS */}
-              <div className="relative mb-8">
-                {/* Connector Background Line */}
-                <div
-                  className="absolute top-8 left-0 right-0 h-1"
-                  style={{
-                    background: 'linear-gradient(90deg, rgba(0,122,255,0.1) 0%, rgba(175,82,222,0.1) 100%)',
-                    borderRadius: '4px',
-                    marginLeft: '48px',
-                    marginRight: '48px'
-                  }}
-                />
-
-                {/* Active Progress Line */}
-                <motion.div
-                  className="absolute top-8 left-0 h-1"
-                  style={{
-                    background: 'linear-gradient(90deg, #007AFF 0%, #5856D6 50%, #AF52DE 100%)',
-                    borderRadius: '4px',
-                    marginLeft: '48px',
-                    boxShadow: '0 0 20px rgba(0, 122, 255, 0.4)'
-                  }}
-                  initial={{ width: 0 }}
-                  animate={{
-                    width: `calc(${(currentStep / (ANALYSIS_STEPS.length - 1)) * 100}% - 48px)`
-                  }}
-                  transition={{ duration: 0.6, ease: "easeOut" }}
-                />
-
-                <div className="flex items-start justify-between relative z-10">
-                  {ANALYSIS_STEPS.map((step) => {
-                    const isCompleted = currentStep > step.id;
-                    const isCurrent = currentStep === step.id;
-
-                    return (
-                      <div key={step.id} className="flex flex-col items-center" style={{ width: '96px' }}>
-                        {/* Premium Step Icon */}
-                        <motion.div
-                          className="relative mb-3"
-                          initial={{ scale: 0.8, opacity: 0 }}
-                          animate={{
-                            scale: isCurrent ? [1, 1.08, 1] : 1,
-                            opacity: 1
-                          }}
-                          transition={{
-                            scale: { duration: 1.5, repeat: isCurrent ? Infinity : 0 },
-                            opacity: { duration: 0.3 }
-                          }}
-                        >
-                          {/* Glow Effect for Current Step */}
-                          {isCurrent && (
-                            <motion.div
-                              className="absolute inset-0 rounded-full"
-                              style={{
-                                background: 'radial-gradient(circle, rgba(0, 122, 255, 0.3) 0%, transparent 70%)',
-                                filter: 'blur(12px)',
-                                transform: 'scale(1.5)'
-                              }}
-                              animate={{ opacity: [0.4, 0.8, 0.4] }}
-                              transition={{ duration: 2, repeat: Infinity }}
-                            />
-                          )}
-
-                          {/* Icon Circle */}
-                          <motion.div
-                            className="relative w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold"
-                            style={{
-                              background: isCompleted
-                                ? 'linear-gradient(135deg, #34C759 0%, #30D158 100%)'
-                                : isCurrent
-                                ? 'linear-gradient(135deg, #007AFF 0%, #5856D6 100%)'
-                                : 'linear-gradient(135deg, #F5F5F7 0%, #E8E8ED 100%)',
-                              color: isCompleted || isCurrent ? 'white' : '#C7C7CC',
-                              boxShadow: isCompleted
-                                ? '0 8px 24px rgba(52, 199, 89, 0.25)'
-                                : isCurrent
-                                ? '0 8px 24px rgba(0, 122, 255, 0.3)'
-                                : '0 4px 12px rgba(0, 0, 0, 0.06)',
-                              border: isCurrent ? '3px solid rgba(255, 255, 255, 0.8)' : 'none'
-                            }}
-                          >
-                            {isCompleted ? (
-                              <motion.div
-                                initial={{ scale: 0 }}
-                                animate={{ scale: 1 }}
-                                transition={{ type: "spring", stiffness: 200, damping: 15 }}
-                              >
-                                ✓
-                              </motion.div>
-                            ) : (
-                              step.icon
-                            )}
-                          </motion.div>
-                        </motion.div>
-
-                        {/* Step Label */}
-                        <motion.span
-                          className="text-xs font-semibold text-center leading-tight"
-                          style={{
-                            color: isCompleted
-                              ? '#34C759'
-                              : isCurrent
-                              ? '#007AFF'
-                              : '#86868B',
-                            letterSpacing: '-0.01em'
-                          }}
-                          animate={{
-                            scale: isCurrent ? [1, 1.05, 1] : 1
-                          }}
-                          transition={{ duration: 2, repeat: isCurrent ? Infinity : 0 }}
-                        >
-                          {step.label}
-                        </motion.span>
-                      </div>
-                    );
-                  })}
                 </div>
               </div>
 
-              {/* Premium Progress Bar */}
-              <div className="relative mb-6">
+              {/* Clean Progress Bar */}
+              <div className="mb-8">
                 <div
                   className="w-full rounded-full overflow-hidden"
                   style={{
-                    height: '8px',
-                    background: 'linear-gradient(90deg, rgba(0,122,255,0.08) 0%, rgba(175,82,222,0.08) 100%)'
+                    height: '4px',
+                    background: '#E5E5E7'
                   }}
                 >
                   <motion.div
-                    className="h-full relative"
+                    className="h-full"
                     style={{
-                      background: 'linear-gradient(90deg, #007AFF 0%, #5856D6 50%, #AF52DE 100%)',
-                      boxShadow: '0 0 20px rgba(0, 122, 255, 0.4)'
+                      background: '#007AFF'
                     }}
                     initial={{ width: 0 }}
                     animate={{ width: `${analysisProgress}%` }}
-                    transition={{ duration: 0.5, ease: "easeOut" }}
-                  >
-                    {/* Shimmer Effect */}
-                    <motion.div
-                      className="absolute inset-0"
-                      style={{
-                        background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%)',
-                        backgroundSize: '200% 100%'
-                      }}
-                      animate={{ backgroundPosition: ['200% 0%', '-200% 0%'] }}
-                      transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
-                    />
-                  </motion.div>
+                    transition={{ duration: 0.4, ease: "easeOut" }}
+                  />
                 </div>
               </div>
 
-              {/* Progress Message */}
-              <motion.div
-                className="text-center text-sm font-medium"
-                style={{ color: '#86868B', letterSpacing: '-0.01em' }}
-                key={progressMessage}
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                {progressMessage || 'Starte Analyse...'}
-              </motion.div>
+              {/* Simple Steps */}
+              <div className="space-y-3">
+                {ANALYSIS_STEPS.map((step) => {
+                  const isCompleted = currentStep > step.id;
+                  const isCurrent = currentStep === step.id;
+
+                  return (
+                    <div
+                      key={step.id}
+                      className="flex items-center gap-3 py-2 px-3 rounded-lg transition-all duration-300"
+                      style={{
+                        background: isCurrent ? '#F5F5F7' : 'transparent'
+                      }}
+                    >
+                      {/* Simple Status Indicator */}
+                      <div
+                        className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium transition-all duration-300"
+                        style={{
+                          background: isCompleted
+                            ? '#34C759'
+                            : isCurrent
+                            ? '#007AFF'
+                            : '#E5E5E7',
+                          color: isCompleted || isCurrent ? '#FFFFFF' : '#86868B'
+                        }}
+                      >
+                        {isCompleted ? '✓' : step.id + 1}
+                      </div>
+
+                      {/* Step Label */}
+                      <span
+                        className="text-sm font-medium flex-1"
+                        style={{
+                          color: isCompleted
+                            ? '#34C759'
+                            : isCurrent
+                            ? '#1D1D1F'
+                            : '#86868B'
+                        }}
+                      >
+                        {step.label}
+                      </span>
+
+                      {/* Current Step Indicator */}
+                      {isCurrent && (
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          style={{
+                            width: '6px',
+                            height: '6px',
+                            borderRadius: '50%',
+                            background: '#007AFF'
+                          }}
+                        />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Simple Message */}
+              {progressMessage && (
+                <motion.div
+                  className="text-center text-sm mt-6 pt-6"
+                  style={{
+                    color: '#86868B',
+                    borderTop: '1px solid #F5F5F7'
+                  }}
+                  key={progressMessage}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {progressMessage}
+                </motion.div>
+              )}
             </motion.div>
           )}
 
