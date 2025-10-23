@@ -734,7 +734,7 @@ export default function Optimizer() {
       });
 
       // Store all data
-      setAnalysisData(finalResult);
+      setAnalysisData(finalResult as AnalysisData);
       setOptimizationResult(finalResult);
 
       if (finalResult.originalText) {
