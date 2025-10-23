@@ -31,7 +31,6 @@ import {
   Package,
   Calculator,
   Cloud,
-  Loader2,
   Minimize2,
   Settings,
   ArrowRight,
@@ -1547,7 +1546,7 @@ Konfidenz: ${opt.confidence}%\n`
                 />
 
                 <div className="flex items-start justify-between relative z-10">
-                  {ANALYSIS_STEPS.map((step, index) => {
+                  {ANALYSIS_STEPS.map((step) => {
                     const isCompleted = currentStep > step.id;
                     const isCurrent = currentStep === step.id;
 
