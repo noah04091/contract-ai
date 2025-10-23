@@ -3521,6 +3521,559 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
   }
 });
 
+// 🚀 STREAMING ENDPOINT mit Echtzeit-Progress-Updates
+router.post("/stream", verifyToken, uploadLimiter, smartRateLimiter, upload.single("file"), async (req, res) => {
+  const requestId = `opt_stream_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+  console.log(`🚀 [${requestId}] STREAMING OPTIMIZATION started:`, {
+    hasFile: !!req.file,
+    userId: req.user?.userId,
+    filename: req.file?.originalname,
+    fileSize: req.file?.size
+  });
+
+  // Set up SSE headers
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+    'Access-Control-Allow-Origin': '*',
+    'X-Request-ID': requestId
+  });
+
+  const sendProgress = (progress, message, data = {}) => {
+    const payload = {
+      requestId,
+      progress,
+      message,
+      timestamp: new Date().toISOString(),
+      ...data
+    };
+    res.write(`data: ${JSON.stringify(payload)}\n\n`);
+    console.log(`📡 [${requestId}] ${progress}%: ${message}`);
+  };
+
+  const sendError = (error, code = 'OPTIMIZATION_ERROR') => {
+    const payload = {
+      requestId,
+      error: true,
+      code,
+      message: error,
+      timestamp: new Date().toISOString()
+    };
+    res.write(`data: ${JSON.stringify(payload)}\n\n`);
+    res.end();
+    console.error(`❌ [${requestId}] ${code}: ${error}`);
+  };
+
+  const sendComplete = (result) => {
+    const payload = {
+      requestId,
+      complete: true,
+      result,
+      timestamp: new Date().toISOString()
+    };
+    res.write(`data: ${JSON.stringify(payload)}\n\n`);
+    res.end();
+    console.log(`✅ [${requestId}] Optimization completed`);
+  };
+
+  let tempFilePath = null;
+
+  try {
+    sendProgress(2, "🔍 Validiere Datei...");
+
+    // Security: File validation
+    if (!req.file) {
+      return sendError("Keine Datei hochgeladen.", "FILE_MISSING");
+    }
+
+    // Security: File size limit (max 10MB)
+    const MAX_FILE_SIZE = 10 * 1024 * 1024;
+    if (req.file.size > MAX_FILE_SIZE) {
+      if (req.file.path && fsSync.existsSync(req.file.path)) {
+        fsSync.unlinkSync(req.file.path);
+      }
+      return sendError("Datei zu groß (max. 10MB).", "FILE_TOO_LARGE");
+    }
+
+    // Security: File type validation
+    const allowedMimeTypes = ['application/pdf', 'application/x-pdf'];
+    if (!allowedMimeTypes.includes(req.file.mimetype)) {
+      if (req.file.path && fsSync.existsSync(req.file.path)) {
+        fsSync.unlinkSync(req.file.path);
+      }
+      return sendError("Nur PDF-Dateien erlaubt.", "INVALID_FILE_TYPE");
+    }
+
+    sendProgress(5, "✅ Datei validiert - PDF erkannt");
+    tempFilePath = req.file.path;
+
+    sendProgress(8, "🔐 Prüfe Benutzer-Limits...");
+
+    // Database access
+    const optimizationCollection = req.db.collection("optimizations");
+    const usersCollection = req.db.collection("users");
+
+    const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
+    if (!user) {
+      return sendError("Benutzer nicht gefunden.", "USER_NOT_FOUND");
+    }
+
+    // Plan limits check
+    const plan = user.subscriptionPlan || "free";
+    const optimizationCount = user.optimizationCount ?? 0;
+
+    let limit = 0;
+    if (plan === "business") limit = 50;
+    if (plan === "premium") limit = Infinity;
+
+    if (optimizationCount >= limit) {
+      return sendError(
+        plan === "free"
+          ? "KI-Vertragsoptimierung ist ein Premium-Feature."
+          : "Optimierung-Limit erreicht.",
+        "LIMIT_EXCEEDED"
+      );
+    }
+
+    sendProgress(12, `✅ Zugriff gewährt - ${plan.toUpperCase()} Plan`);
+    sendProgress(15, "📄 Extrahiere Text aus PDF...");
+
+    // PDF text extraction
+    let buffer;
+    try {
+      const stats = await fs.stat(tempFilePath);
+      if (stats.size > 5 * 1024 * 1024) {
+        sendProgress(16, "📚 Große Datei erkannt - verwende Stream-Processing...");
+      }
+      buffer = await fs.readFile(tempFilePath);
+    } catch (fileError) {
+      return sendError(`Datei konnte nicht gelesen werden: ${fileError.message}`, "FILE_READ_ERROR");
+    }
+
+    let parsed;
+    try {
+      parsed = await pdfParse(buffer, {
+        max: 0,
+        version: 'v2.0.550'
+      });
+      buffer = null; // Clear from memory
+    } catch (pdfError) {
+      return sendError(`PDF-Verarbeitung fehlgeschlagen: ${pdfError.message}`, "PDF_PARSE_ERROR");
+    }
+
+    const contractText = parsed.text || '';
+    if (!contractText.trim() || contractText.length < 100) {
+      return sendError("PDF enthält keinen ausreichenden lesbaren Text.", "INSUFFICIENT_TEXT");
+    }
+
+    sendProgress(22, `✅ ${contractText.length.toLocaleString()} Zeichen extrahiert`);
+
+    // STAGE 1: Contract type detection
+    sendProgress(25, "🎯 Erkenne Vertragstyp...");
+    const contractTypeInfo = await detectContractType(contractText, req.file.originalname);
+
+    const typeLabel = contractTypeInfo.type === 'kaufvertrag' ? 'Kaufvertrag' :
+                     contractTypeInfo.type === 'arbeitsvertrag' ? 'Arbeitsvertrag' :
+                     contractTypeInfo.type === 'mietvertrag' ? 'Mietvertrag' :
+                     contractTypeInfo.type === 'dienstleistungsvertrag' ? 'Dienstleistungsvertrag' :
+                     contractTypeInfo.type;
+
+    sendProgress(30, `✅ ${typeLabel} erkannt (${contractTypeInfo.confidence}% Sicherheit)`, {
+      contractType: contractTypeInfo.type,
+      confidence: contractTypeInfo.confidence,
+      jurisdiction: contractTypeInfo.jurisdiction
+    });
+
+    // STAGE 2: Gap analysis
+    sendProgress(35, "⚖️ Analysiere juristische Lücken...");
+    const gapAnalysis = analyzeContractGaps(
+      contractText,
+      contractTypeInfo.type,
+      contractTypeInfo.detectedClauses
+    );
+
+    const criticalGaps = gapAnalysis.gaps.filter(g => g.severity === 'critical').length;
+    sendProgress(42, `✅ ${gapAnalysis.gaps.length} Lücken gefunden (${criticalGaps} kritisch)`, {
+      totalGaps: gapAnalysis.gaps.length,
+      criticalGaps
+    });
+
+    // STAGE 3: Generate professional clauses
+    sendProgress(45, "📜 Generiere professionelle Klauseln...");
+    const generatedClauses = generateProfessionalClauses(
+      contractTypeInfo.type,
+      gapAnalysis.gaps,
+      contractTypeInfo.language
+    );
+    sendProgress(50, `✅ ${Object.keys(generatedClauses).length} Klauseln vorbereitet`);
+
+    // STAGE 4: AI analysis
+    sendProgress(55, "🤖 Starte KI-Analyse mit GPT-4o...");
+    const openai = getOpenAI();
+
+    const optimizedPrompt = createOptimizedPrompt(
+      contractText,
+      contractTypeInfo.type,
+      gapAnalysis.gaps,
+      req.file.originalname,
+      contractTypeInfo
+    );
+
+    const modelToUse = "gpt-4o";
+    sendProgress(58, `🧠 Verwende ${modelToUse} für maximale Präzision...`);
+
+    // Strict JSON schema
+    const strictJsonSchema = {
+      type: "json_schema",
+      json_schema: {
+        name: "ContractOptimization",
+        schema: {
+          type: "object",
+          properties: {
+            meta: {
+              type: "object",
+              properties: {
+                type: { type: "string" },
+                confidence: { type: "number" },
+                jurisdiction: { type: "string" },
+                language: { type: "string" },
+                isAmendment: { type: "boolean" },
+                parentType: { type: ["string", "null"] }
+              },
+              required: ["type", "confidence", "jurisdiction", "language", "isAmendment"]
+            },
+            categories: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  tag: { type: "string" },
+                  label: { type: "string" },
+                  issues: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        summary: { type: "string" },
+                        originalText: { type: "string" },
+                        improvedText: { type: "string" },
+                        legalReasoning: { type: "string" },
+                        risk: { type: "number" },
+                        impact: { type: "number" },
+                        confidence: { type: "number" },
+                        difficulty: { type: "string" },
+                        benchmark: { type: "string" },
+                        legalReferences: { type: "array", items: { type: "string" } }
+                      },
+                      required: ["summary", "improvedText", "legalReasoning", "risk", "impact", "confidence", "difficulty"]
+                    }
+                  }
+                },
+                required: ["tag", "label", "issues"]
+              }
+            },
+            score: {
+              type: "object",
+              properties: { health: { type: "number" } },
+              required: ["health"]
+            }
+          },
+          required: ["meta", "categories", "score"]
+        }
+      }
+    };
+
+    sendProgress(62, "⏳ Warte auf KI-Antwort (kann bis zu 2 Min. dauern)...");
+
+    // GPT-4o call with retry logic
+    let completion = null;
+    const maxRetries = 2;
+    let retryCount = 0;
+
+    while (retryCount < maxRetries && !completion) {
+      try {
+        if (retryCount > 0) {
+          sendProgress(65 + (retryCount * 5), `🔄 Wiederholungsversuch ${retryCount}/${maxRetries}...`);
+        }
+
+        completion = await Promise.race([
+          openai.chat.completions.create({
+            model: modelToUse,
+            messages: [
+              {
+                role: "system",
+                content: `Du bist ein Fachanwalt für Vertragsrecht. Analysiere den Vertrag und gib JSON zurück mit 6-8 konkreten Optimierungen. NIEMALS Platzhalter wie "siehe Vereinbarung"!`
+              },
+              { role: "user", content: optimizedPrompt }
+            ],
+            temperature: 0.2,
+            max_tokens: 4000,
+            response_format: strictJsonSchema
+          }),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error("KI-Timeout nach 300 Sekunden")), 300000)
+          )
+        ]);
+
+        sendProgress(75, "✅ KI-Antwort erhalten - verarbeite Ergebnisse...");
+        break;
+
+      } catch (error) {
+        retryCount++;
+        if (retryCount >= maxRetries) {
+          sendProgress(70, "⚠️ GPT-4o nicht verfügbar - verwende GPT-4o-mini Fallback...");
+
+          try {
+            completion = await Promise.race([
+              openai.chat.completions.create({
+                model: "gpt-4o-mini",
+                messages: [
+                  {
+                    role: "system",
+                    content: `Du bist ein Fachanwalt für Vertragsrecht. Analysiere den Vertrag und gib JSON zurück mit 6-8 konkreten Optimierungen. NIEMALS Platzhalter wie "siehe Vereinbarung"!`
+                  },
+                  { role: "user", content: optimizedPrompt }
+                ],
+                temperature: 0.2,
+                max_tokens: 3000,
+                response_format: strictJsonSchema
+              }),
+              new Promise((_, reject) =>
+                setTimeout(() => reject(new Error("Mini-Timeout nach 120 Sekunden")), 120000)
+              )
+            ]);
+            sendProgress(75, "✅ Fallback erfolgreich - Mini-Modell antwortet");
+          } catch (miniFallbackError) {
+            sendProgress(72, "⚠️ KI-Modelle nicht verfügbar - verwende Rule Engine...");
+          }
+        }
+      }
+    }
+
+    let aiOutput = completion?.choices?.[0]?.message?.content || "";
+
+    const safeJsonParse = (str) => {
+      try {
+        return JSON.parse(str);
+      } catch (e) {
+        return null;
+      }
+    };
+
+    sendProgress(78, "🔍 Parse KI-Response...");
+    let parsedOutput = safeJsonParse(aiOutput);
+
+    // FALLBACK 2: Rule Engine
+    if (!parsedOutput) {
+      sendProgress(80, "🔧 Verwende Deterministic Rule Engine...");
+      const ruleFindings = runBaselineRules(contractText, contractTypeInfo.type);
+
+      const ruleBasedResponse = {
+        meta: {
+          type: contractTypeInfo.type,
+          confidence: 85,
+          jurisdiction: contractTypeInfo.jurisdiction || 'DE',
+          language: contractTypeInfo.language || 'de',
+          fallbackUsed: 'deterministic_rules'
+        },
+        categories: [],
+        score: { health: 60 },
+        summary: {
+          redFlags: ruleFindings.filter(f => f.risk >= 8).length,
+          quickWins: ruleFindings.filter(f => f.difficulty === 'Einfach').length,
+          totalIssues: ruleFindings.length
+        }
+      };
+
+      const categoryMap = new Map();
+      ruleFindings.forEach(finding => {
+        if (!categoryMap.has(finding.category)) {
+          categoryMap.set(finding.category, []);
+        }
+        categoryMap.get(finding.category).push(finding);
+      });
+
+      categoryMap.forEach((issues, category) => {
+        ruleBasedResponse.categories.push({
+          tag: category,
+          label: category.charAt(0).toUpperCase() + category.slice(1),
+          issues
+        });
+      });
+
+      parsedOutput = ruleBasedResponse;
+      sendProgress(82, `✅ ${ruleFindings.length} Issues via Rule Engine gefunden`);
+    }
+
+    // STAGE 5: Quality checks and normalization
+    sendProgress(85, "🔬 Qualitäts-Checks und Normalisierung...");
+
+    const normalizedResult = await normalizeAndValidateOutput(
+      parsedOutput,
+      contractText,
+      contractTypeInfo,
+      gapAnalysis,
+      generatedClauses,
+      requestId
+    );
+
+    sendProgress(90, "🛡️ Wende Ultimate Quality Layer an...");
+
+    const { cleanedCategories, stats } = await applyUltimateQualityLayer(
+      normalizedResult.categories,
+      contractTypeInfo,
+      requestId
+    );
+
+    normalizedResult.categories = cleanedCategories;
+    sendProgress(92, `✅ ${stats.placeholdersRemoved} Platzhalter entfernt, ${stats.duplicatesRemoved} Duplikate eliminiert`);
+
+    // Top-Up Pass if needed
+    const currentIssueCount = normalizedResult.categories.reduce((sum, cat) => sum + cat.issues.length, 0);
+
+    if (currentIssueCount < 6) {
+      sendProgress(94, "➕ Ergänze fehlende Kategorien (Top-Up Pass)...");
+      await topUpFindingsIfNeeded(
+        normalizedResult.categories,
+        contractText,
+        contractTypeInfo,
+        gapAnalysis,
+        generatedClauses,
+        requestId,
+        openai
+      );
+      const newCount = normalizedResult.categories.reduce((sum, cat) => sum + cat.issues.length, 0);
+      sendProgress(96, `✅ ${newCount - currentIssueCount} zusätzliche Issues hinzugefügt`);
+    }
+
+    // Final global sanitizer
+    sendProgress(97, "✨ Finale Bereinigung...");
+
+    let globalSanitized = 0;
+    const globalSanitizerStats = {
+      roleTerms: 0,
+      pseudoStats: 0,
+      paragraphHeaders: 0,
+      arbitraryHours: 0
+    };
+
+    normalizedResult.categories.forEach(cat => {
+      cat.issues.forEach(issue => {
+        globalSanitized++;
+
+        if (issue.improvedText) {
+          const result = sanitizeImprovedText(issue.improvedText, contractTypeInfo.type);
+          issue.improvedText = result.text;
+          globalSanitizerStats.roleTerms += result.stats.roleTerms;
+          globalSanitizerStats.pseudoStats += result.stats.pseudoStats;
+          globalSanitizerStats.paragraphHeaders += result.stats.paragraphHeaders;
+          globalSanitizerStats.arbitraryHours += result.stats.arbitraryHours;
+        }
+
+        if (issue.summary) {
+          issue.summary = sanitizeText(issue.summary);
+        }
+        if (issue.benchmark) {
+          issue.benchmark = sanitizeBenchmark(issue.benchmark);
+
+          // Context-aware benchmarks
+          if (issue.benchmark === 'branchenüblich.' || issue.benchmark.includes('Basierend auf')) {
+            issue.benchmark = generateContextAwareBenchmark(issue.category, contractTypeInfo.type);
+          }
+        }
+        if (issue.legalReasoning) {
+          issue.legalReasoning = sanitizeText(issue.legalReasoning);
+        }
+        if (issue.originalText) {
+          issue.originalText = cleanPlaceholders(issue.originalText);
+        }
+      });
+    });
+
+    sendProgress(98, `✅ ${globalSanitized} Issues finalisiert`);
+
+    // Update user count
+    await usersCollection.updateOne(
+      { _id: new ObjectId(req.user.userId) },
+      { $inc: { optimizationCount: 1 } }
+    );
+
+    sendProgress(99, "💾 Speichere Ergebnisse...");
+
+    // Prepare final result
+    const finalResult = {
+      success: true,
+      message: "✅ ULTIMATIVE Anwaltskanzlei-Niveau Vertragsoptimierung erfolgreich",
+      requestId,
+      ...normalizedResult,
+      originalText: contractText.substring(0, 1500),
+      usage: {
+        count: optimizationCount + 1,
+        limit: limit,
+        plan: plan
+      },
+      performance: {
+        processingTimeMs: Date.now() - parseInt(requestId.split('_')[2]),
+        textLength: contractText.length,
+        optimizationsFound: normalizedResult.summary.totalIssues
+      }
+    };
+
+    sendProgress(100, "🎉 Optimierung abgeschlossen!");
+    sendComplete(finalResult);
+
+  } catch (error) {
+    const errorDetails = {
+      requestId,
+      errorType: error.name || 'UnknownError',
+      errorMessage: error.message?.substring(0, 200),
+      userId: req.user?.userId,
+      fileName: req.file?.originalname?.replace(/[^a-zA-Z0-9.-]/g, ''),
+      fileSize: req.file?.size,
+      timestamp: new Date().toISOString()
+    };
+
+    console.error(`❌ [${requestId}] Streaming optimization error:`, errorDetails);
+
+    let errorMessage = "Fehler bei der Vertragsoptimierung.";
+    let errorCode = "OPTIMIZATION_ERROR";
+
+    if (error.message?.includes("Keine Datei")) {
+      errorMessage = "Keine Datei hochgeladen.";
+      errorCode = "FILE_MISSING";
+    } else if (error.message?.includes("PDF")) {
+      errorMessage = "PDF konnte nicht verarbeitet werden.";
+      errorCode = "PDF_PROCESSING_ERROR";
+    } else if (error.message?.includes("Token") || error.message?.includes("Rate limit")) {
+      errorMessage = "KI-Service temporär überlastet.";
+      errorCode = "AI_RATE_LIMIT";
+    } else if (error.message?.includes("Timeout")) {
+      errorMessage = "Analyse dauerte zu lange.";
+      errorCode = "TIMEOUT";
+    }
+
+    sendError(errorMessage, errorCode);
+
+  } finally {
+    // Cleanup
+    if (tempFilePath) {
+      fs.access(tempFilePath)
+        .then(() => fs.unlink(tempFilePath))
+        .then(() => console.log(`🧹 [${requestId}] Temp file cleaned up`))
+        .catch(err => {
+          if (err.code !== 'ENOENT') {
+            console.warn(`⚠️ [${requestId}] Cleanup warning: ${err.message}`);
+          }
+        });
+    }
+
+    const processingTime = Date.now() - parseInt(requestId.split('_')[2]);
+    console.log(`📈 [${requestId}] Streaming request completed in ${processingTime}ms`);
+  }
+});
+
 // 🚀 ZUSÄTZLICHE ROUTES
 
 /**
