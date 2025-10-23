@@ -675,7 +675,7 @@ export default function Optimizer() {
         throw new Error("No response body");
       }
 
-      let finalResult: any = null;
+      let finalResult: OptimizationResult | null = null;
 
       // Read SSE stream
       while (true) {
@@ -711,7 +711,7 @@ export default function Optimizer() {
                 setProgressMessage(data.message || '');
                 console.log(`📡 ${data.progress}%: ${data.message}`);
               }
-            } catch (parseError) {
+            } catch {
               console.warn("Failed to parse SSE data:", line);
             }
           }
