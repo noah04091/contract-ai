@@ -252,6 +252,26 @@ const CONTRACT_TYPE_INFO = {
   }
 };
 
+// 🎯 VISUAL PROGRESS STEPS - Zeigt Nutzer transparente Analyse-Phasen
+const ANALYSIS_STEPS = [
+  { id: 0, label: 'PDF Upload', icon: '📄', progressRange: [0, 15] },
+  { id: 1, label: 'Vertragstyp', icon: '🎯', progressRange: [16, 35] },
+  { id: 2, label: 'Lücken-Analyse', icon: '⚖️', progressRange: [36, 50] },
+  { id: 3, label: 'KI-Optimierung', icon: '🤖', progressRange: [51, 80] },
+  { id: 4, label: 'Qualitäts-Check', icon: '🔬', progressRange: [81, 98] },
+  { id: 5, label: 'Fertig', icon: '✅', progressRange: [99, 100] }
+];
+
+// Helper: Determine current step based on progress
+const getCurrentStepFromProgress = (progress: number): number => {
+  for (const step of ANALYSIS_STEPS) {
+    if (progress >= step.progressRange[0] && progress <= step.progressRange[1]) {
+      return step.id;
+    }
+  }
+  return 0; // Default to first step
+};
+
 // 🚀 UNIVERSAL: Klausel-Vervollständigung für ALLE Vertragstypen
 // 🔥 DEAKTIVIERT: Backend liefert jetzt professionelle Templates mit § 623 BGB, § 26 BDSG, etc.
 // Frontend soll NICHTS mehr überschreiben, um Backend-Sanitizer und Contract-Type-spezifische Templates zu respektieren!
@@ -558,6 +578,7 @@ export default function Optimizer() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [progressMessage, setProgressMessage] = useState('');
+  const [currentStep, setCurrentStep] = useState(0);
   const [selectedOptimizations, setSelectedOptimizations] = useState<Set<string>>(new Set());
 
   // 🧠 PHASE 1: Simple Explanation Popup State
@@ -649,22 +670,25 @@ export default function Optimizer() {
     const formData = new FormData();
     formData.append("file", file);
 
+    let finalResult: OptimizationResult | null = null;
+    let useStreamingEndpoint = true;
+
     try {
       console.log("🚀 Starting contract optimization with streaming...");
 
-      // 🔥 Use streaming endpoint for real-time progress
-      const API_URL = import.meta.env.PROD
-        ? "https://api.contract-ai.de/api/optimize/stream"  // Production: Streaming endpoint
-        : "/api/optimize/stream";                            // Development: Vite proxy
+      // 🔥 TRY Streaming endpoint for real-time progress
+      const STREAM_URL = import.meta.env.PROD
+        ? "https://api.contract-ai.de/api/optimize/stream"
+        : "/api/optimize/stream";
 
-      const response = await fetch(API_URL, {
+      const response = await fetch(STREAM_URL, {
         method: "POST",
         credentials: "include",
         body: formData,
       });
 
       if (!response.ok) {
-        throw new Error(`Server Error: ${response.status}`);
+        throw new Error(`Streaming endpoint error: ${response.status}`);
       }
 
       // Set up SSE reader
@@ -672,10 +696,8 @@ export default function Optimizer() {
       const decoder = new TextDecoder();
 
       if (!reader) {
-        throw new Error("No response body");
+        throw new Error("No response body from streaming endpoint");
       }
-
-      let finalResult: OptimizationResult | null = null;
 
       // Read SSE stream
       while (true) {
@@ -708,6 +730,7 @@ export default function Optimizer() {
               // Handle progress update
               if (data.progress !== undefined) {
                 setAnalysisProgress(data.progress);
+                setCurrentStep(getCurrentStepFromProgress(data.progress));
                 setProgressMessage(data.message || '');
                 console.log(`📡 ${data.progress}%: ${data.message}`);
               }
@@ -719,18 +742,69 @@ export default function Optimizer() {
       }
 
       if (!finalResult) {
-        throw new Error("Keine Antwort vom Server");
+        throw new Error("Keine vollständige Antwort vom Streaming-Endpoint");
       }
 
-      if (!finalResult.success) {
-        throw new Error(finalResult.message || "Optimierung fehlgeschlagen");
-      }
+    } catch (streamError) {
+      // 🔥 FALLBACK: Use regular endpoint if streaming fails
+      const err = streamError as Error;
+      console.warn("⚠️ Streaming failed:", err.message);
+      console.log("🔄 Falling back to regular optimization endpoint...");
 
+      useStreamingEndpoint = false;
+      setProgressMessage('Verwende Standard-Modus...');
+
+      try {
+        // Simulate progress for regular endpoint
+        const progressInterval = setInterval(() => {
+          setAnalysisProgress(prev => Math.min(prev + 8, 90));
+        }, 800);
+
+        const REGULAR_URL = import.meta.env.PROD
+          ? "https://api.contract-ai.de/api/optimize"
+          : "/api/optimize";
+
+        const res = await fetch(REGULAR_URL, {
+          method: "POST",
+          credentials: "include",
+          body: formData,
+        });
+
+        clearInterval(progressInterval);
+        setAnalysisProgress(100);
+        setProgressMessage('Fertig!');
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.message || `Server Error: ${res.status}`);
+        }
+
+        if (!data.success) {
+          throw new Error(data.message || "Optimierung fehlgeschlagen");
+        }
+
+        finalResult = data;
+        console.log("✅ Fallback successful - regular endpoint responded");
+
+      } catch (fallbackError) {
+        // Both endpoints failed
+        const fallbackErr = fallbackError as Error;
+        console.error("❌ Both streaming and regular endpoints failed:", fallbackErr);
+        setError(fallbackErr.message);
+        showToast(fallbackErr.message, 'error');
+        return; // Exit early
+      }
+    }
+
+    // Process results (works for both streaming and fallback)
+    if (finalResult && finalResult.success) {
       console.log("✅ Response:", {
         hasCategories: !!finalResult.categories,
         hasMeta: !!finalResult.meta,
         contractType: finalResult.meta?.type,
-        totalIssues: finalResult.summary?.totalIssues
+        totalIssues: finalResult.summary?.totalIssues,
+        usedStreaming: useStreamingEndpoint
       });
 
       // Store all data
@@ -749,18 +823,21 @@ export default function Optimizer() {
       setContractScore(calculatedScore);
 
       showToast(`✅ ${parsedOptimizations.length} Optimierungen gefunden!`, 'success');
+    }
 
-    } catch (error) {
-      const err = error as Error;
-      console.error("❌ Optimierung-Fehler:", err);
-      setError(err.message);
-      showToast(err.message, 'error');
-    } finally {
+  } catch (error) {
+    // This shouldn't normally be reached due to inner try-catch, but just in case
+    const err = error as Error;
+    console.error("❌ Unexpected error:", err);
+    setError(err.message);
+    showToast(err.message, 'error');
+  } finally {
       setLoading(false);
       setIsAnalyzing(false);
       setTimeout(() => {
         setAnalysisProgress(0);
         setProgressMessage('');
+        setCurrentStep(0);
       }, 1000);
     }
   };
@@ -1369,23 +1446,79 @@ Konfidenz: ${opt.confidence}%\n`
             </motion.div>
           </motion.div>
 
-          {/* Analysis Progress - Enhanced */}
+          {/* Analysis Progress - Enhanced with Visual Steps */}
           {isAnalyzing && (
-            <motion.div 
+            <motion.div
               className={styles.card}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               style={{ borderColor: '#007AFF', background: 'linear-gradient(135deg, rgba(0, 122, 255, 0.03) 0%, rgba(175, 82, 222, 0.03) 100%)' }}
             >
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <Loader2 className="animate-spin w-5 h-5" style={{ color: '#007AFF' }} />
                   <span className="font-semibold">Rechtliche Analyse läuft...</span>
                 </div>
                 <span className="text-sm font-medium" style={{ color: '#007AFF' }}>{analysisProgress}%</span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                <motion.div 
+
+              {/* 🎯 VISUAL PROGRESS STEPS */}
+              <div className="flex items-center justify-between mb-4 gap-2">
+                {ANALYSIS_STEPS.map((step, index) => {
+                  const isCompleted = currentStep > step.id;
+                  const isCurrent = currentStep === step.id;
+                  const isPending = currentStep < step.id;
+
+                  return (
+                    <div key={step.id} className="flex flex-col items-center flex-1">
+                      {/* Step Icon */}
+                      <motion.div
+                        className="w-12 h-12 rounded-full flex items-center justify-center text-lg font-semibold mb-1"
+                        style={{
+                          background: isCompleted ? 'linear-gradient(135deg, #30D158 0%, #28B84C 100%)' :
+                                     isCurrent ? 'linear-gradient(135deg, #007AFF 0%, #AF52DE 100%)' :
+                                     '#E5E5EA',
+                          color: isCompleted || isCurrent ? 'white' : '#8E8E93',
+                          border: isCurrent ? '2px solid #007AFF' : 'none'
+                        }}
+                        animate={isCurrent ? { scale: [1, 1.05, 1] } : {}}
+                        transition={{ duration: 1.5, repeat: Infinity }}
+                      >
+                        {isCompleted ? '✓' : step.icon}
+                      </motion.div>
+
+                      {/* Step Label */}
+                      <span
+                        className="text-xs font-medium text-center"
+                        style={{
+                          color: isCompleted ? '#30D158' :
+                                 isCurrent ? '#007AFF' :
+                                 '#8E8E93'
+                        }}
+                      >
+                        {step.label}
+                      </span>
+
+                      {/* Connector Line (except for last step) */}
+                      {index < ANALYSIS_STEPS.length - 1 && (
+                        <div
+                          className="absolute h-0.5 top-6"
+                          style={{
+                            left: `calc(${(index + 0.5) / ANALYSIS_STEPS.length * 100}% + 24px)`,
+                            width: `calc(${100 / ANALYSIS_STEPS.length}% - 48px)`,
+                            background: isCompleted ? '#30D158' : '#E5E5EA',
+                            zIndex: -1
+                          }}
+                        />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Progress Bar */}
+              <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden mb-3">
+                <motion.div
                   className="h-3 rounded-full"
                   style={{ background: 'linear-gradient(90deg, #007AFF 0%, #AF52DE 100%)' }}
                   initial={{ width: 0 }}
@@ -1393,7 +1526,9 @@ Konfidenz: ${opt.confidence}%\n`
                   transition={{ duration: 0.5, ease: "easeInOut" }}
                 />
               </div>
-              <div className="mt-3 text-sm text-gray-600 min-h-[20px]">
+
+              {/* Progress Message */}
+              <div className="text-sm text-gray-600 min-h-[20px]">
                 {progressMessage || 'Starte Analyse...'}
               </div>
             </motion.div>
