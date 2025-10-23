@@ -295,9 +295,9 @@ function applyMinimumStandards(issues) {
       issue.improvedText = cleanPlaceholders(issue.improvedText);
     }
 
-    // 🔥 FIX: Sanitize benchmark to remove pseudo-statistics
+    // 🔥 FIX v2: Robuster Benchmark-Sanitizer (ChatGPT's version)
     if (issue.benchmark) {
-      issue.benchmark = sanitizeText(issue.benchmark);
+      issue.benchmark = sanitizeBenchmark(issue.benchmark);
     }
 
     // Validate category
@@ -371,20 +371,39 @@ function sanitizeImprovedText(text = '', contractType = '') {
 }
 
 /**
- * 🔥 CHATGPT-FIX: Sanitizer für Summary/Benchmark (leichter)
- * CHATGPT FIX F: Breiteres Pattern für Pseudo-Statistiken
+ * 🔥 CHATGPT-FIX v2: Robuster Benchmark-Sanitizer
+ * Entfernt ALL Pseudo-Statistiken inkl. spezifizieren, regeln, etc.
+ * Weichzeichnet Superlative (immer, stets, grundsätzlich)
  */
-function sanitizeText(text = '') {
+function sanitizeBenchmark(text = '') {
   if (!text) return text;
 
-  // Pattern 1: Prozent mit expliziter Quelle (BRAK/Studie/Erhebung)
-  let cleaned = text.replace(/\b(?:8\d|9\d|100)%[^.\n]*?(?:BRAK|Erhebung|Studie|Quelle)[^.\n]*\.?/gi, 'branchenüblich');
+  let t = String(text);
 
-  // 🔥 CHATGPT FIX F: Pattern 2: "X% aller/der Verträge/professionellen ... enthalten"
-  // Ohne explizite Quelle → auch Pseudo-Statistik!
-  cleaned = cleaned.replace(/\b(?:\d{2,3})%\s+(?:aller|der)\s+(?:professionellen\s+)?(?:Verträge|verträge)[^.]*?(?:enthalten|haben|nutzen|beinhalten)[^.]*\.?/gi, 'branchenüblich');
+  // Pattern 1: 90-100% pauschal → "branchenüblich"
+  t = t.replace(/\b(9\d|100)%\b/g, 'branchenüblich');
 
-  return cleaned;
+  // Pattern 2: 50-89% pauschal → "branchenüblich"
+  t = t.replace(/\b([5-8]\d)%\b/g, 'branchenüblich');
+
+  // Pattern 3: Sätze wie "X% der ... Verträge ... (spezifizieren|regeln|enthalten|...)"
+  // ERWEITERT um: spezifizieren, regeln, sehen.*vor, führen.*an
+  t = t.replace(
+    /\b\d{2,3}%\s+der\s+[^.]{0,80}?(verträge|vereinbarungen|kaufverträge)[^.]{0,80}?\b(enthalten|haben|nutzen|beinhalten|spezifizieren|regeln|sehen.*vor|führen.*an)\b[^.]*\./gi,
+    'branchenüblich.'
+  );
+
+  // Pattern 4: Superlative/Absolutismen weichzeichnen
+  t = t.replace(/\b(immer|stets|grundsätzlich|zu\s*100%)\b/gi, 'in der Regel');
+
+  return t.trim();
+}
+
+/**
+ * @deprecated Use sanitizeBenchmark() instead - kept for backwards compatibility
+ */
+function sanitizeText(text = '') {
+  return sanitizeBenchmark(text);
 }
 
 module.exports = {
@@ -393,7 +412,8 @@ module.exports = {
   cleanPlaceholders,
   applyMinimumStandards,
   sanitizeImprovedText,
-  sanitizeText,
+  sanitizeBenchmark,
+  sanitizeText, // deprecated, kept for backwards compatibility
   norm,
   sim,
   canonical,

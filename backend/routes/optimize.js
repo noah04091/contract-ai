@@ -2044,11 +2044,48 @@ const generateProfessionalClauses = (contractType, gaps, language = 'de') => {
 };
 
 /**
+ * 🔥 CHATGPT-FIX v2: Defensive Tag-Normalisierung (3-Tier Fix)
+ * Verhindert "undefined category" Warnungen an allen Eintrittsstellen
+ * @param {string|undefined} tag - Category tag to normalize
+ * @returns {string} Normalized tag (never undefined/null)
+ */
+const normalizeTag = (tag) => {
+  const t = (tag ?? '').toString().trim().toLowerCase();
+  if (!t || t === 'undefined' || t === 'null') return 'clarity';
+
+  const categoryTagMapping = {
+    // Arbeitsrecht
+    'datenschutz': 'data_protection',
+    'kuendigung': 'termination',
+    'arbeitsort': 'workplace',
+    'arbeitszeit': 'working_time',
+    'verguetung': 'payment',
+    // Allgemein
+    'haftung': 'liability',
+    'geheimhaltung': 'confidentiality',
+    'verschwiegenheit': 'confidentiality',
+    'gerichtsstand': 'jurisdiction',
+    'schriftform': 'formalities',
+    'general': 'clarity',
+    'compliance': 'data_protection',
+    'data_protection': 'data_protection',
+    // Kaufvertrag
+    'kaufgegenstand': 'purchase_item',
+    'lieferung': 'delivery',
+    'gefahruebergang': 'risk_transfer',
+    'eigentumsvorbehalt': 'ownership'
+  };
+
+  return categoryTagMapping[t] || t;
+};
+
+/**
  * 🔥 CHATGPT-FIX: Tag-Normalisierung + Category-Merge
  * Normalisiert deutsche/englische Category-Tags und merged Kategorien mit gleichem Tag
  * WICHTIG: MUSS in JEDEM Quality-Pass laufen (nicht nur einmal!)
  */
 const normalizeAndMergeCategoryTags = (result, requestId) => {
+  // Use new normalizeTag() function for consistency
   const categoryTagMapping = {
     'datenschutz': 'data_protection',
     'kuendigung': 'termination',
@@ -2286,11 +2323,13 @@ ${contractText.substring(0, 30000)}`;
 
     // Merge neue Kategorien
     additionalCategories.forEach(newCat => {
-      // 🔥 FIX: Normalize issues - map "title" to "summary" if missing
+      // 🔥 FIX v2: Normalize issues - map "title" to "summary" if missing + enforce category
       newCat.issues = (newCat.issues || []).map(issue => {
         if (!issue.summary && issue.title) {
           issue.summary = issue.title;
         }
+        // 🔥 FIX v2 (ChatGPT): Enforce category to prevent "undefined" warnings
+        issue.category = normalizeTag(issue.category || newCat.tag || issue.tag || '');
         // Ensure id exists
         if (!issue.id) {
           issue.id = `topup_${newCat.tag}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -3120,6 +3159,20 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
     
     // 🚀 STAGE 5: Normalisierung und Qualitätssicherung
     let normalizedResult = normalizeAndValidateOutput(aiOutput, contractTypeInfo.type);
+
+    // 🔥 STAGE 5.1: Category Repair Pass (ChatGPT v2 - 3-Tier Fix)
+    // Enforce category auf ALLEN Issues nach dem Parse, BEVOR Quality Layer
+    for (const cat of normalizedResult.categories ?? []) {
+      cat.tag = normalizeTag(cat.tag);
+      for (const iss of cat.issues ?? []) {
+        const oldCategory = iss.category;
+        iss.category = normalizeTag(iss.category || cat.tag);
+        // Logging für Debugging (nur wenn category fehlt)
+        if (!oldCategory) {
+          console.warn(`[${requestId}] Missing category on issue id=${iss.id ?? 'n/a'} in tag=${cat.tag ?? 'n/a'} → enforced to "${iss.category}"`);
+        }
+      }
+    }
 
     // 🔥 STAGE 5.5: ULTIMATE QUALITY LAYER - Aggressive Fehlerbereinigung
     normalizedResult = applyUltimateQualityLayer(normalizedResult, requestId, contractTypeInfo.type);
