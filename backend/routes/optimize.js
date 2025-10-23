@@ -2344,6 +2344,21 @@ ${contractText.substring(0, 30000)}`;
         if (!issue.id) {
           issue.id = `topup_${newCat.tag}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         }
+
+        // 🔥 FIX v4 (Noah/Claude): Set default metadata for Top-Up issues
+        if (!issue.confidence || issue.confidence === 0) {
+          issue.confidence = 85; // Reasonable default für Top-Up Pass
+        }
+        if (!issue.risk || issue.risk === 0) {
+          issue.risk = 5; // Medium risk (1-10 scale)
+        }
+        if (!issue.impact || issue.impact === 0) {
+          issue.impact = 5; // Medium impact (1-10 scale)
+        }
+        if (!issue.difficulty) {
+          issue.difficulty = 'Komplex'; // Top-Up issues need review
+        }
+
         return issue;
       });
 
