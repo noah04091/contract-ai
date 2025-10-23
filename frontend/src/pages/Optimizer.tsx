@@ -557,6 +557,7 @@ export default function Optimizer() {
   const [showStatistics, setShowStatistics] = useState(true);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
+  const [progressMessage, setProgressMessage] = useState('');
   const [selectedOptimizations, setSelectedOptimizations] = useState<Set<string>>(new Set());
 
   // 🧠 PHASE 1: Simple Explanation Popup State
@@ -631,7 +632,7 @@ export default function Optimizer() {
     }
   }, [showPitchMenu, showExportMenu]);
 
-  // 🚀 REVOLUTIONARY: Enhanced Upload Handler
+  // 🚀 REVOLUTIONARY: Enhanced Upload Handler with SSE Progress
   const handleUpload = async () => {
     if (!file || !isPremium) return;
 
@@ -643,66 +644,112 @@ export default function Optimizer() {
     setOptimizationResult(null);
     setIsAnalyzing(true);
     setAnalysisProgress(0);
+    setProgressMessage('Starte Analyse...');
 
     const formData = new FormData();
     formData.append("file", file);
 
     try {
-      console.log("🚀 Starting contract optimization...");
+      console.log("🚀 Starting contract optimization with streaming...");
 
-      // Simulate progress
-      const progressInterval = setInterval(() => {
-        setAnalysisProgress(prev => Math.min(prev + 10, 90));
-      }, 500);
-
-      // 🔥 FIX: Direct API call to bypass Vercel's 60s timeout
+      // 🔥 Use streaming endpoint for real-time progress
       const API_URL = import.meta.env.PROD
-        ? "https://api.contract-ai.de/api/optimize"  // Production: Direct to backend
-        : "/api/optimize";                            // Development: Use Vite proxy
+        ? "https://api.contract-ai.de/api/optimize/stream"  // Production: Streaming endpoint
+        : "/api/optimize/stream";                            // Development: Vite proxy
 
-      const res = await fetch(API_URL, {
+      const response = await fetch(API_URL, {
         method: "POST",
         credentials: "include",
         body: formData,
       });
 
-      clearInterval(progressInterval);
-      setAnalysisProgress(100);
-
-      const data = await res.json();
-      
-      if (!res.ok) {
-        throw new Error(data.message || `Server Error: ${res.status}`);
+      if (!response.ok) {
+        throw new Error(`Server Error: ${response.status}`);
       }
 
-      if (!data.success) {
-        throw new Error(data.message || "Optimierung fehlgeschlagen");
+      // Set up SSE reader
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+
+      if (!reader) {
+        throw new Error("No response body");
+      }
+
+      let finalResult: any = null;
+
+      // Read SSE stream
+      while (true) {
+        const { done, value } = await reader.read();
+
+        if (done) break;
+
+        // Decode chunk
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.substring(6));
+
+              // Handle error
+              if (data.error) {
+                throw new Error(data.message || "Optimierung fehlgeschlagen");
+              }
+
+              // Handle completion
+              if (data.complete) {
+                finalResult = data.result;
+                setAnalysisProgress(100);
+                setProgressMessage('Fertig!');
+                break;
+              }
+
+              // Handle progress update
+              if (data.progress !== undefined) {
+                setAnalysisProgress(data.progress);
+                setProgressMessage(data.message || '');
+                console.log(`📡 ${data.progress}%: ${data.message}`);
+              }
+            } catch (parseError) {
+              console.warn("Failed to parse SSE data:", line);
+            }
+          }
+        }
+      }
+
+      if (!finalResult) {
+        throw new Error("Keine Antwort vom Server");
+      }
+
+      if (!finalResult.success) {
+        throw new Error(finalResult.message || "Optimierung fehlgeschlagen");
       }
 
       console.log("✅ Response:", {
-        hasCategories: !!data.categories,
-        hasMeta: !!data.meta,
-        contractType: data.meta?.type,
-        totalIssues: data.summary?.totalIssues
+        hasCategories: !!finalResult.categories,
+        hasMeta: !!finalResult.meta,
+        contractType: finalResult.meta?.type,
+        totalIssues: finalResult.summary?.totalIssues
       });
 
       // Store all data
-      setAnalysisData(data);
-      setOptimizationResult(data);
-      
-      if (data.originalText) {
-        setOriginalContractText(data.originalText);
+      setAnalysisData(finalResult);
+      setOptimizationResult(finalResult);
+
+      if (finalResult.originalText) {
+        setOriginalContractText(finalResult.originalText);
       }
 
       // Parse optimizations
-      const parsedOptimizations = parseOptimizationResult(data, file.name);
+      const parsedOptimizations = parseOptimizationResult(finalResult, file.name);
       const calculatedScore = calculateContractScore(parsedOptimizations);
-      
+
       setOptimizations(parsedOptimizations);
       setContractScore(calculatedScore);
-      
+
       showToast(`✅ ${parsedOptimizations.length} Optimierungen gefunden!`, 'success');
-      
+
     } catch (error) {
       const err = error as Error;
       console.error("❌ Optimierung-Fehler:", err);
@@ -711,7 +758,10 @@ export default function Optimizer() {
     } finally {
       setLoading(false);
       setIsAnalyzing(false);
-      setTimeout(() => setAnalysisProgress(0), 1000);
+      setTimeout(() => {
+        setAnalysisProgress(0);
+        setProgressMessage('');
+      }, 1000);
     }
   };
 
@@ -1343,11 +1393,8 @@ Konfidenz: ${opt.confidence}%\n`
                   transition={{ duration: 0.5, ease: "easeInOut" }}
                 />
               </div>
-              <div className="mt-3 text-sm text-gray-600">
-                {analysisProgress < 30 ? '🔍 Vertrag wird eingelesen...' :
-                 analysisProgress < 60 ? '🧠 KI analysiert Klauseln...' :
-                 analysisProgress < 90 ? '⚖️ Juristische Prüfung...' :
-                 '✅ Finalisierung...'}
+              <div className="mt-3 text-sm text-gray-600 min-h-[20px]">
+                {progressMessage || 'Starte Analyse...'}
               </div>
             </motion.div>
           )}
