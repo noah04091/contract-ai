@@ -2345,9 +2345,27 @@ ${contractText.substring(0, 30000)}`;
           issue.id = `topup_${newCat.tag}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         }
 
-        // 🔥 FIX v4 (Noah/Claude): Set default metadata for Top-Up issues
+        // 🔥 FIX v5 (Smart Confidence): Dynamische Berechnung statt pauschaler 85%
         if (!issue.confidence || issue.confidence === 0) {
-          issue.confidence = 85; // Reasonable default für Top-Up Pass
+          let baseConfidence = 82; // Start niedriger
+
+          // +3% wenn Legal References vorhanden
+          if (issue.legalReferences && issue.legalReferences.length > 0) {
+            baseConfidence += 3;
+          }
+
+          // +2% wenn improvedText ausführlich (>150 Zeichen)
+          if (issue.improvedText && issue.improvedText.length > 150) {
+            baseConfidence += 2;
+          }
+
+          // +2% wenn legalReasoning vorhanden und >100 Zeichen
+          if (issue.legalReasoning && issue.legalReasoning.length > 100) {
+            baseConfidence += 2;
+          }
+
+          // Cap bei 89% (Top-Up sollte nie höher als GPT-4o-Hauptpass sein)
+          issue.confidence = Math.min(89, baseConfidence);
         }
         if (!issue.risk || issue.risk === 0) {
           issue.risk = 5; // Medium risk (1-10 scale)
