@@ -674,87 +674,88 @@ export default function Optimizer() {
     let useStreamingEndpoint = true;
 
     try {
-      console.log("🚀 Starting contract optimization with streaming...");
+      // Inner try: Streaming endpoint
+      try {
+        console.log("🚀 Starting contract optimization with streaming...");
 
-      // 🔥 TRY Streaming endpoint for real-time progress
-      const STREAM_URL = import.meta.env.PROD
-        ? "https://api.contract-ai.de/api/optimize/stream"
-        : "/api/optimize/stream";
+        // 🔥 TRY Streaming endpoint for real-time progress
+        const STREAM_URL = import.meta.env.PROD
+          ? "https://api.contract-ai.de/api/optimize/stream"
+          : "/api/optimize/stream";
 
-      const response = await fetch(STREAM_URL, {
-        method: "POST",
-        credentials: "include",
-        body: formData,
-      });
+        const response = await fetch(STREAM_URL, {
+          method: "POST",
+          credentials: "include",
+          body: formData,
+        });
 
-      if (!response.ok) {
-        throw new Error(`Streaming endpoint error: ${response.status}`);
-      }
+        if (!response.ok) {
+          throw new Error(`Streaming endpoint error: ${response.status}`);
+        }
 
-      // Set up SSE reader
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
+        // Set up SSE reader
+        const reader = response.body?.getReader();
+        const decoder = new TextDecoder();
 
-      if (!reader) {
-        throw new Error("No response body from streaming endpoint");
-      }
+        if (!reader) {
+          throw new Error("No response body from streaming endpoint");
+        }
 
-      // Read SSE stream
-      while (true) {
-        const { done, value } = await reader.read();
+        // Read SSE stream
+        while (true) {
+          const { done, value } = await reader.read();
 
-        if (done) break;
+          if (done) break;
 
-        // Decode chunk
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split('\n');
+          // Decode chunk
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split('\n');
 
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            try {
-              const data = JSON.parse(line.substring(6));
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              try {
+                const data = JSON.parse(line.substring(6));
 
-              // Handle error
-              if (data.error) {
-                throw new Error(data.message || "Optimierung fehlgeschlagen");
+                // Handle error
+                if (data.error) {
+                  throw new Error(data.message || "Optimierung fehlgeschlagen");
+                }
+
+                // Handle completion
+                if (data.complete) {
+                  finalResult = data.result;
+                  setAnalysisProgress(100);
+                  setProgressMessage('Fertig!');
+                  break;
+                }
+
+                // Handle progress update
+                if (data.progress !== undefined) {
+                  setAnalysisProgress(data.progress);
+                  setCurrentStep(getCurrentStepFromProgress(data.progress));
+                  setProgressMessage(data.message || '');
+                  console.log(`📡 ${data.progress}%: ${data.message}`);
+                }
+              } catch {
+                console.warn("Failed to parse SSE data:", line);
               }
-
-              // Handle completion
-              if (data.complete) {
-                finalResult = data.result;
-                setAnalysisProgress(100);
-                setProgressMessage('Fertig!');
-                break;
-              }
-
-              // Handle progress update
-              if (data.progress !== undefined) {
-                setAnalysisProgress(data.progress);
-                setCurrentStep(getCurrentStepFromProgress(data.progress));
-                setProgressMessage(data.message || '');
-                console.log(`📡 ${data.progress}%: ${data.message}`);
-              }
-            } catch {
-              console.warn("Failed to parse SSE data:", line);
             }
           }
         }
-      }
 
-      if (!finalResult) {
-        throw new Error("Keine vollständige Antwort vom Streaming-Endpoint");
-      }
+        if (!finalResult) {
+          throw new Error("Keine vollständige Antwort vom Streaming-Endpoint");
+        }
 
-    } catch (streamError) {
-      // 🔥 FALLBACK: Use regular endpoint if streaming fails
-      const err = streamError as Error;
-      console.warn("⚠️ Streaming failed:", err.message);
-      console.log("🔄 Falling back to regular optimization endpoint...");
+      } catch (streamError) {
+        // 🔥 FALLBACK: Use regular endpoint if streaming fails
+        const err = streamError as Error;
+        console.warn("⚠️ Streaming failed:", err.message);
+        console.log("🔄 Falling back to regular optimization endpoint...");
 
-      useStreamingEndpoint = false;
-      setProgressMessage('Verwende Standard-Modus...');
+        useStreamingEndpoint = false;
+        setProgressMessage('Verwende Standard-Modus...');
 
-      try {
         // Simulate progress for regular endpoint
         const progressInterval = setInterval(() => {
           setAnalysisProgress(prev => Math.min(prev + 8, 90));
@@ -786,45 +787,42 @@ export default function Optimizer() {
 
         finalResult = data;
         console.log("✅ Fallback successful - regular endpoint responded");
-
-      } catch (fallbackError) {
-        // Both endpoints failed
-        const fallbackErr = fallbackError as Error;
-        console.error("❌ Both streaming and regular endpoints failed:", fallbackErr);
-        setError(fallbackErr.message);
-        showToast(fallbackErr.message, 'error');
-        return; // Exit early
-      }
-    }
-
-    // Process results (works for both streaming and fallback)
-    if (finalResult && finalResult.success) {
-      console.log("✅ Response:", {
-        hasCategories: !!finalResult.categories,
-        hasMeta: !!finalResult.meta,
-        contractType: finalResult.meta?.type,
-        totalIssues: finalResult.summary?.totalIssues,
-        usedStreaming: useStreamingEndpoint
-      });
-
-      // Store all data
-      setAnalysisData(finalResult as AnalysisData);
-      setOptimizationResult(finalResult);
-
-      if (finalResult.originalText) {
-        setOriginalContractText(finalResult.originalText);
       }
 
-      // Parse optimizations
-      const parsedOptimizations = parseOptimizationResult(finalResult, file.name);
-      const calculatedScore = calculateContractScore(parsedOptimizations);
+      // Process results (works for both streaming and fallback)
+      if (finalResult && finalResult.success) {
+        console.log("✅ Response:", {
+          hasCategories: !!finalResult.categories,
+          hasMeta: !!finalResult.meta,
+          contractType: finalResult.meta?.type,
+          totalIssues: finalResult.summary?.totalIssues,
+          usedStreaming: useStreamingEndpoint
+        });
 
-      setOptimizations(parsedOptimizations);
-      setContractScore(calculatedScore);
+        // Store all data
+        setAnalysisData(finalResult as AnalysisData);
+        setOptimizationResult(finalResult);
 
-      showToast(`✅ ${parsedOptimizations.length} Optimierungen gefunden!`, 'success');
-    }
-  } finally {
+        if (finalResult.originalText) {
+          setOriginalContractText(finalResult.originalText);
+        }
+
+        // Parse optimizations
+        const parsedOptimizations = parseOptimizationResult(finalResult, file.name);
+        const calculatedScore = calculateContractScore(parsedOptimizations);
+
+        setOptimizations(parsedOptimizations);
+        setContractScore(calculatedScore);
+
+        showToast(`✅ ${parsedOptimizations.length} Optimierungen gefunden!`, 'success');
+      }
+    } catch (error) {
+      // Outer catch: Handles any unexpected errors
+      const err = error as Error;
+      console.error("❌ Unexpected error:", err);
+      setError(err.message);
+      showToast(err.message, 'error');
+    } finally {
       setLoading(false);
       setIsAnalyzing(false);
       setTimeout(() => {
