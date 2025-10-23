@@ -1786,9 +1786,9 @@ Konfidenz: ${opt.confidence}%\n`
                           </div>
 
                           <div className="flex gap-4 text-sm text-gray-600 font-medium">
-                            <span>KI: {optimization.confidence}%</span>
-                            <span>Risiko: {optimization.legalRisk}/10</span>
-                            <span>Impact: {optimization.businessImpact}/10</span>
+                            <span>KI: {optimization.confidence || 85}%</span>
+                            <span>Risiko: {optimization.legalRisk || 5}/10</span>
+                            <span>Impact: {optimization.businessImpact || 5}/10</span>
                             <span>{optimization.estimatedSavings}</span>
                           </div>
                         </div>
@@ -1972,8 +1972,8 @@ Konfidenz: ${opt.confidence}%\n`
                                 <div
                                   className="h-full rounded-full transition-all duration-500"
                                   style={{
-                                    width: `${Math.max(20, 100 - optimization.legalRisk * 10)}%`,
-                                    background: optimization.legalRisk >= 7 ? '#FF3B30' : optimization.legalRisk >= 4 ? '#FF9500' : '#34C759'
+                                    width: `${Math.max(20, 100 - (optimization.legalRisk || 5) * 10)}%`,
+                                    background: (optimization.legalRisk || 5) >= 7 ? '#FF3B30' : (optimization.legalRisk || 5) >= 4 ? '#FF9500' : '#34C759'
                                   }}
                                 />
                               </div>
@@ -1990,7 +1990,7 @@ Konfidenz: ${opt.confidence}%\n`
                                 <span className="text-xs font-semibold text-gray-700">Verhandlungsposition</span>
                               </div>
                               <span className="text-xs font-bold" style={{ color: '#007AFF' }}>
-                                {optimization.businessImpact <= 3 ? 'Ungünstig' : optimization.businessImpact <= 7 ? 'Neutral' : 'Vorteilhaft'}
+                                {(optimization.businessImpact || 5) <= 3 ? 'Ungünstig' : (optimization.businessImpact || 5) <= 7 ? 'Neutral' : 'Vorteilhaft'}
                                 {' → '}
                                 <span style={{ color: '#007AFF' }}>Vorteilhaft</span>
                               </span>
@@ -2000,8 +2000,8 @@ Konfidenz: ${opt.confidence}%\n`
                                 <div
                                   className="h-full rounded-full transition-all duration-500"
                                   style={{
-                                    width: `${Math.max(20, optimization.businessImpact * 10)}%`,
-                                    background: optimization.businessImpact >= 7 ? '#34C759' : optimization.businessImpact >= 4 ? '#FF9500' : '#FF3B30'
+                                    width: `${Math.max(20, (optimization.businessImpact || 5) * 10)}%`,
+                                    background: (optimization.businessImpact || 5) >= 7 ? '#34C759' : (optimization.businessImpact || 5) >= 4 ? '#FF9500' : '#FF3B30'
                                   }}
                                 />
                               </div>
@@ -2018,7 +2018,7 @@ Konfidenz: ${opt.confidence}%\n`
                                 <span className="text-xs font-semibold text-gray-700">Risiko-Level</span>
                               </div>
                               <span className="text-xs font-bold" style={{ color: '#FF3B30' }}>
-                                {optimization.legalRisk >= 7 ? 'Hoch' : optimization.legalRisk >= 4 ? 'Mittel' : 'Niedrig'}
+                                {(optimization.legalRisk || 5) >= 7 ? 'Hoch' : (optimization.legalRisk || 5) >= 4 ? 'Mittel' : 'Niedrig'}
                                 {' → '}
                                 <span style={{ color: '#34C759' }}>Niedrig</span>
                               </span>
@@ -2028,8 +2028,8 @@ Konfidenz: ${opt.confidence}%\n`
                                 <div
                                   className="h-full rounded-full transition-all duration-500"
                                   style={{
-                                    width: `${Math.max(20, optimization.legalRisk * 10)}%`,
-                                    background: optimization.legalRisk >= 7 ? '#FF3B30' : optimization.legalRisk >= 4 ? '#FF9500' : '#34C759'
+                                    width: `${Math.max(20, (optimization.legalRisk || 5) * 10)}%`,
+                                    background: (optimization.legalRisk || 5) >= 7 ? '#FF3B30' : (optimization.legalRisk || 5) >= 4 ? '#FF9500' : '#34C759'
                                   }}
                                 />
                               </div>
