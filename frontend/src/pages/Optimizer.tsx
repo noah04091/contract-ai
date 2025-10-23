@@ -47,12 +47,16 @@ import {
 import UnifiedPremiumNotice from "../components/UnifiedPremiumNotice";
 import ContractHealthDashboard from "../components/ContractHealthDashboard";
 import SimpleExplanationPopup from "../components/SimpleExplanationPopup";
+import AnalysisProgressComponent from "../components/AnalysisProgress";
 
 // Types für revolutionäre Features
-import { 
-  OptimizationSuggestion, 
+import {
+  OptimizationSuggestion,
   ContractHealthScore
 } from "../types/optimizer";
+
+// Utils
+import { mapLegacyToProgress } from "../utils/analysisAdapter";
 
 // Styles
 import styles from "../styles/Optimizer.module.css";
@@ -251,25 +255,8 @@ const CONTRACT_TYPE_INFO = {
   }
 };
 
-// 🎯 VISUAL PROGRESS STEPS - Zeigt Nutzer transparente Analyse-Phasen
-const ANALYSIS_STEPS = [
-  { id: 0, label: 'PDF Upload', icon: '📄', progressRange: [0, 15] },
-  { id: 1, label: 'Vertragstyp', icon: '🎯', progressRange: [16, 35] },
-  { id: 2, label: 'Lücken-Analyse', icon: '⚖️', progressRange: [36, 50] },
-  { id: 3, label: 'KI-Optimierung', icon: '🤖', progressRange: [51, 80] },
-  { id: 4, label: 'Qualitäts-Check', icon: '🔬', progressRange: [81, 98] },
-  { id: 5, label: 'Fertig', icon: '✅', progressRange: [99, 100] }
-];
-
-// Helper: Determine current step based on progress
-const getCurrentStepFromProgress = (progress: number): number => {
-  for (const step of ANALYSIS_STEPS) {
-    if (progress >= step.progressRange[0] && progress <= step.progressRange[1]) {
-      return step.id;
-    }
-  }
-  return 0; // Default to first step
-};
+// Note: Visual progress steps are now handled by AnalysisProgressComponent
+// with automatic step detection via mapLegacyToProgress adapter
 
 // 🚀 UNIVERSAL: Klausel-Vervollständigung für ALLE Vertragstypen
 // 🔥 DEAKTIVIERT: Backend liefert jetzt professionelle Templates mit § 623 BGB, § 26 BDSG, etc.
@@ -576,8 +563,6 @@ export default function Optimizer() {
   const [showStatistics, setShowStatistics] = useState(true);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
-  const [progressMessage, setProgressMessage] = useState('');
-  const [currentStep, setCurrentStep] = useState(0);
   const [selectedOptimizations, setSelectedOptimizations] = useState<Set<string>>(new Set());
 
   // 🧠 PHASE 1: Simple Explanation Popup State
@@ -664,7 +649,6 @@ export default function Optimizer() {
     setOptimizationResult(null);
     setIsAnalyzing(true);
     setAnalysisProgress(0);
-    setProgressMessage('Starte Analyse...');
 
     const formData = new FormData();
     formData.append("file", file);
@@ -724,16 +708,13 @@ export default function Optimizer() {
                 if (data.complete) {
                   finalResult = data.result;
                   setAnalysisProgress(100);
-                  setProgressMessage('Fertig!');
                   break;
                 }
 
                 // Handle progress update
                 if (data.progress !== undefined) {
                   setAnalysisProgress(data.progress);
-                  setCurrentStep(getCurrentStepFromProgress(data.progress));
-                  setProgressMessage(data.message || '');
-                  console.log(`📡 ${data.progress}%: ${data.message}`);
+                  console.log(`📡 ${data.progress}%: ${data.message || ''}`);
                 }
               } catch {
                 console.warn("Failed to parse SSE data:", line);
@@ -753,27 +734,12 @@ export default function Optimizer() {
         console.log("🔄 Falling back to regular optimization endpoint...");
 
         useStreamingEndpoint = false;
-        setProgressMessage('Verwende Standard-Modus...');
 
-        // 🎯 Simulate progress AND steps for regular endpoint
+        // 🎯 Simulate progress for regular endpoint
         let currentProgress = 0;
         const progressInterval = setInterval(() => {
           currentProgress = Math.min(currentProgress + 12, 95);
           setAnalysisProgress(currentProgress);
-          setCurrentStep(getCurrentStepFromProgress(currentProgress));
-
-          // Update message based on progress
-          if (currentProgress < 20) {
-            setProgressMessage('📄 Extrahiere Text aus PDF...');
-          } else if (currentProgress < 40) {
-            setProgressMessage('🎯 Erkenne Vertragstyp...');
-          } else if (currentProgress < 55) {
-            setProgressMessage('⚖️ Analysiere juristische Lücken...');
-          } else if (currentProgress < 85) {
-            setProgressMessage('🤖 KI-Analyse läuft...');
-          } else {
-            setProgressMessage('🔬 Qualitäts-Checks...');
-          }
         }, 600); // Faster updates (600ms instead of 800ms)
 
         const REGULAR_URL = import.meta.env.PROD
@@ -788,8 +754,6 @@ export default function Optimizer() {
 
         clearInterval(progressInterval);
         setAnalysisProgress(100);
-        setCurrentStep(5); // Last step
-        setProgressMessage('✅ Fertig!');
 
         const data = await res.json();
 
@@ -843,8 +807,6 @@ export default function Optimizer() {
       setIsAnalyzing(false);
       setTimeout(() => {
         setAnalysisProgress(0);
-        setProgressMessage('');
-        setCurrentStep(0);
       }, 1000);
     }
   };
@@ -1453,134 +1415,14 @@ Konfidenz: ${opt.confidence}%\n`
             </motion.div>
           </motion.div>
 
-          {/* ✨ Clean Analysis Progress - Apple-Style Minimalist Design */}
+          {/* 🎨 Premium Analysis Progress - Apple/Microsoft Level */}
           {isAnalyzing && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              style={{
-                background: '#FFFFFF',
-                borderRadius: '16px',
-                border: '1px solid #E5E5E7',
-                padding: '32px',
-                maxWidth: '800px',
-                margin: '0 auto'
-              }}
-            >
-              {/* Minimalist Header */}
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h3 className="font-semibold text-base" style={{ color: '#1D1D1F', marginBottom: '4px' }}>
-                    Analyse läuft
-                  </h3>
-                  <p className="text-sm" style={{ color: '#86868B' }}>
-                    Dokument wird verarbeitet
-                  </p>
-                </div>
-                <div className="text-xl font-medium" style={{ color: '#86868B' }}>
-                  {analysisProgress}%
-                </div>
-              </div>
-
-              {/* Clean Progress Bar */}
-              <div className="mb-8">
-                <div
-                  className="w-full rounded-full overflow-hidden"
-                  style={{
-                    height: '4px',
-                    background: '#E5E5E7'
-                  }}
-                >
-                  <motion.div
-                    className="h-full"
-                    style={{
-                      background: '#007AFF'
-                    }}
-                    initial={{ width: 0 }}
-                    animate={{ width: `${analysisProgress}%` }}
-                    transition={{ duration: 0.4, ease: "easeOut" }}
-                  />
-                </div>
-              </div>
-
-              {/* Simple Steps */}
-              <div className="space-y-3">
-                {ANALYSIS_STEPS.map((step) => {
-                  const isCompleted = currentStep > step.id;
-                  const isCurrent = currentStep === step.id;
-
-                  return (
-                    <div
-                      key={step.id}
-                      className="flex items-center gap-3 py-2 px-3 rounded-lg transition-all duration-300"
-                      style={{
-                        background: isCurrent ? '#F5F5F7' : 'transparent'
-                      }}
-                    >
-                      {/* Simple Status Indicator */}
-                      <div
-                        className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium transition-all duration-300"
-                        style={{
-                          background: isCompleted
-                            ? '#34C759'
-                            : isCurrent
-                            ? '#007AFF'
-                            : '#E5E5E7',
-                          color: isCompleted || isCurrent ? '#FFFFFF' : '#86868B'
-                        }}
-                      >
-                        {isCompleted ? '✓' : step.id + 1}
-                      </div>
-
-                      {/* Step Label */}
-                      <span
-                        className="text-sm font-medium flex-1"
-                        style={{
-                          color: isCompleted
-                            ? '#34C759'
-                            : isCurrent
-                            ? '#1D1D1F'
-                            : '#86868B'
-                        }}
-                      >
-                        {step.label}
-                      </span>
-
-                      {/* Current Step Indicator */}
-                      {isCurrent && (
-                        <motion.div
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          style={{
-                            width: '6px',
-                            height: '6px',
-                            borderRadius: '50%',
-                            background: '#007AFF'
-                          }}
-                        />
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Simple Message */}
-              {progressMessage && (
-                <motion.div
-                  className="text-center text-sm mt-6 pt-6"
-                  style={{
-                    color: '#86868B',
-                    borderTop: '1px solid #F5F5F7'
-                  }}
-                  key={progressMessage}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  {progressMessage}
-                </motion.div>
-              )}
-            </motion.div>
+            <AnalysisProgressComponent
+              progress={mapLegacyToProgress({
+                progress: analysisProgress,
+                stage: undefined // Will be auto-detected from progress percentage
+              })}
+            />
           )}
 
           {/* Error Message */}

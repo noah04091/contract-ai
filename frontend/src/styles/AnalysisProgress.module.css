@@ -1,0 +1,389 @@
+/* 📁 src/styles/AnalysisProgress.module.css - Premium Analysis Progress */
+
+/* Container */
+.container {
+  background: var(--bg-primary, #ffffff);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 16px;
+  padding: 32px;
+  max-width: 800px;
+  margin: 0 auto;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  gap: 24px;
+}
+
+.title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary, #1D1D1F);
+  margin: 0 0 6px 0;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: var(--text-secondary, #86868B);
+  margin: 0;
+}
+
+.percentageContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.percentage {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--apple-blue, #007AFF);
+  letter-spacing: -0.03em;
+  line-height: 1;
+  display: block;
+}
+
+.eta {
+  font-size: 12px;
+  color: var(--text-secondary, #86868B);
+  font-weight: 500;
+}
+
+/* Progress Bar */
+.progressBarContainer {
+  margin-bottom: 32px;
+}
+
+.progressBarTrack {
+  width: 100%;
+  height: 6px;
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progressBarFill {
+  height: 100%;
+  background: linear-gradient(90deg, #007AFF 0%, #5856D6 100%);
+  border-radius: 3px;
+  position: relative;
+}
+
+/* Steps List */
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Individual Step */
+.step {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  transition: background 0.2s ease;
+  position: relative;
+}
+
+.step.active {
+  background: rgba(0, 122, 255, 0.05);
+}
+
+.step.error {
+  background: rgba(255, 59, 48, 0.05);
+}
+
+.step.warn {
+  background: rgba(255, 204, 0, 0.05);
+}
+
+/* Step Indicator */
+.stepIndicator {
+  position: relative;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  font-size: 14px;
+}
+
+/* Status-specific indicator styles */
+.step.done .stepIndicator {
+  background: #34C759;
+  color: white;
+}
+
+.step.active .stepIndicator {
+  background: #007AFF;
+  color: white;
+}
+
+.step.queued .stepIndicator {
+  background: #E5E5E7;
+  color: #86868B;
+}
+
+.step.error .stepIndicator {
+  background: #FF3B30;
+  color: white;
+}
+
+.step.warn .stepIndicator {
+  background: #FFCC00;
+  color: #1D1D1F;
+}
+
+/* Check Icon */
+.checkIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Active Pulse Animation */
+.activePulse {
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  background: #007AFF;
+  z-index: -1;
+}
+
+/* Step Content */
+.stepContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.stepHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.stepLabel {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-primary, #1D1D1F);
+  letter-spacing: -0.01em;
+}
+
+.step.queued .stepLabel {
+  color: var(--text-secondary, #86868B);
+}
+
+.step.done .stepLabel {
+  color: #34C759;
+}
+
+.duration {
+  font-size: 12px;
+  color: var(--text-secondary, #86868B);
+  font-weight: 500;
+  margin-left: auto;
+}
+
+.warningBadge {
+  font-size: 11px;
+  font-weight: 600;
+  color: #B8860B;
+  background: rgba(255, 204, 0, 0.15);
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-left: auto;
+}
+
+.stepSubtext {
+  font-size: 13px;
+  color: var(--text-secondary, #86868B);
+  display: block;
+  margin-top: 2px;
+}
+
+/* Error Container */
+.errorContainer {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 59, 48, 0.2);
+}
+
+.errorMessage {
+  font-size: 13px;
+  color: #FF3B30;
+  margin: 0 0 8px 0;
+  line-height: 1.4;
+}
+
+.errorActions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.logLink,
+.retryButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.logLink {
+  color: #007AFF;
+  background: rgba(0, 122, 255, 0.08);
+  border: 1px solid rgba(0, 122, 255, 0.2);
+}
+
+.logLink:hover {
+  background: rgba(0, 122, 255, 0.15);
+  transform: translateY(-1px);
+}
+
+.retryButton {
+  color: #FF3B30;
+  background: rgba(255, 59, 48, 0.08);
+  border: 1px solid rgba(255, 59, 48, 0.2);
+}
+
+.retryButton:hover {
+  background: rgba(255, 59, 48, 0.15);
+  transform: translateY(-1px);
+}
+
+.retryButton:focus-visible,
+.logLink:focus-visible {
+  outline: 2px solid #007AFF;
+  outline-offset: 2px;
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .container {
+    background: #1C1C1E;
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .title {
+    color: #F5F5F7;
+  }
+
+  .subtitle,
+  .eta,
+  .stepSubtext,
+  .duration {
+    color: #98989D;
+  }
+
+  .progressBarTrack {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .step.active {
+    background: rgba(0, 122, 255, 0.15);
+  }
+
+  .step.error {
+    background: rgba(255, 59, 48, 0.15);
+  }
+
+  .step.warn {
+    background: rgba(255, 204, 0, 0.15);
+  }
+
+  .step.queued .stepIndicator {
+    background: #2C2C2E;
+    color: #98989D;
+  }
+
+  .stepLabel {
+    color: #F5F5F7;
+  }
+
+  .step.queued .stepLabel {
+    color: #98989D;
+  }
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .container {
+    padding: 24px 20px;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .percentageContainer {
+    align-items: flex-start;
+  }
+
+  .percentage {
+    font-size: 28px;
+  }
+
+  .title {
+    font-size: 18px;
+  }
+
+  .subtitle {
+    font-size: 13px;
+  }
+
+  .step {
+    padding: 10px 12px;
+  }
+
+  .stepLabel {
+    font-size: 14px;
+  }
+
+  .errorActions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .logLink,
+  .retryButton {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Accessibility: High Contrast Mode */
+@media (prefers-contrast: high) {
+  .container {
+    border: 2px solid currentColor;
+  }
+
+  .step {
+    border: 1px solid rgba(0, 0, 0, 0.2);
+  }
+
+  .progressBarTrack {
+    border: 1px solid currentColor;
+  }
+}
