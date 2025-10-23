@@ -2,8 +2,8 @@
 
 /* Container */
 .container {
-  background: var(--bg-primary, #ffffff);
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  background: #ffffff !important;
+  border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 16px;
   padding: 32px;
   max-width: 800px;
@@ -23,14 +23,14 @@
 .title {
   font-size: 20px;
   font-weight: 600;
-  color: var(--text-primary, #1D1D1F);
+  color: #1D1D1F !important;
   margin: 0 0 6px 0;
   letter-spacing: -0.02em;
 }
 
 .subtitle {
   font-size: 14px;
-  color: var(--text-secondary, #86868B);
+  color: #86868B !important;
   margin: 0;
 }
 
@@ -179,16 +179,16 @@
 .stepLabel {
   font-size: 15px;
   font-weight: 500;
-  color: var(--text-primary, #1D1D1F);
+  color: #1D1D1F !important;
   letter-spacing: -0.01em;
 }
 
 .step.queued .stepLabel {
-  color: var(--text-secondary, #86868B);
+  color: #86868B !important;
 }
 
 .step.done .stepLabel {
-  color: #34C759;
+  color: #34C759 !important;
 }
 
 .duration {
@@ -275,54 +275,6 @@
 .logLink:focus-visible {
   outline: 2px solid #007AFF;
   outline-offset: 2px;
-}
-
-/* Dark Mode Support */
-@media (prefers-color-scheme: dark) {
-  .container {
-    background: #1C1C1E;
-    border-color: rgba(255, 255, 255, 0.1);
-  }
-
-  .title {
-    color: #F5F5F7;
-  }
-
-  .subtitle,
-  .eta,
-  .stepSubtext,
-  .duration {
-    color: #98989D;
-  }
-
-  .progressBarTrack {
-    background: rgba(255, 255, 255, 0.1);
-  }
-
-  .step.active {
-    background: rgba(0, 122, 255, 0.15);
-  }
-
-  .step.error {
-    background: rgba(255, 59, 48, 0.15);
-  }
-
-  .step.warn {
-    background: rgba(255, 204, 0, 0.15);
-  }
-
-  .step.queued .stepIndicator {
-    background: #2C2C2E;
-    color: #98989D;
-  }
-
-  .stepLabel {
-    color: #F5F5F7;
-  }
-
-  .step.queued .stepLabel {
-    color: #98989D;
-  }
 }
 
 /* Responsive */
