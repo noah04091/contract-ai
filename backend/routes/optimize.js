@@ -2026,13 +2026,17 @@ const generateProfessionalClauses = (contractType, gaps, language = 'de') => {
         } else if (/schriftform|formalities/i.test(clauseName)) {
           clauseTemplate = PROFESSIONAL_CLAUSE_TEMPLATES.schriftform.standard;
         } else {
-          // Letzter Fallback: Salvatorische Klausel
-          console.warn(`⚠️ No specific template found for clause "${clauseName}" (category: ${gap.category}) - using Salvatorische Klausel as ultimate fallback`);
-          clauseTemplate = PROFESSIONAL_CLAUSE_TEMPLATES.salvatorisch.erweitert;
+          // 🔥 FIX: Skip statt Generic Fallback
+          // Keine Template gefunden → Issue wird nicht erstellt (vermeidet verwirrende Funde)
+          console.warn(`⚠️ No specific template found for clause "${clauseName}" (category: ${gap.category}) - skipping instead of generic fallback`);
+          clauseTemplate = null;
         }
       }
-      
-      clauses[gap.clause] = cleanText(clauseTemplate);
+
+      // Nur hinzufügen wenn Template gefunden wurde
+      if (clauseTemplate) {
+        clauses[gap.clause] = cleanText(clauseTemplate);
+      }
     }
   });
   
@@ -2053,11 +2057,17 @@ const normalizeAndMergeCategoryTags = (result, requestId) => {
     'verguetung': 'payment',
     'haftung': 'liability',
     'geheimhaltung': 'confidentiality',
+    'verschwiegenheit': 'confidentiality',
     'gerichtsstand': 'jurisdiction',
     'schriftform': 'formalities',
     'general': 'clarity', // Map general → clarity um "general" zu vermeiden
     'compliance': 'data_protection', // 🔥 FIX: Rule Engine gibt "compliance" für Datenschutz zurück
-    'data_protection': 'data_protection' // Idempotent
+    'data_protection': 'data_protection', // Idempotent
+    // 🔥 FIX: Kaufvertrag-spezifische Kategorien
+    'kaufgegenstand': 'purchase_item',
+    'lieferung': 'delivery',
+    'gefahruebergang': 'risk_transfer',
+    'eigentumsvorbehalt': 'ownership'
   };
 
   // Normalisiere alle Category-Tags
@@ -2922,13 +2932,14 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
                         originalText: { type: "string" },
                         improvedText: { type: "string" },
                         legalReasoning: { type: "string" },
+                        category: { type: "string" },
                         risk: { type: "number" },
                         impact: { type: "number" },
                         confidence: { type: "number" },
                         difficulty: { type: "string" },
                         benchmark: { type: "string" }
                       },
-                      required: ["id", "summary", "originalText", "improvedText", "legalReasoning"]
+                      required: ["id", "summary", "originalText", "improvedText", "legalReasoning", "category"]
                     }
                   }
                 },

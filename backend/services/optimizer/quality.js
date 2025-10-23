@@ -295,6 +295,11 @@ function applyMinimumStandards(issues) {
       issue.improvedText = cleanPlaceholders(issue.improvedText);
     }
 
+    // 🔥 FIX: Sanitize benchmark to remove pseudo-statistics
+    if (issue.benchmark) {
+      issue.benchmark = sanitizeText(issue.benchmark);
+    }
+
     // Validate category
     ensureCategory(issue);
 
