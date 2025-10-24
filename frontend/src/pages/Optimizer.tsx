@@ -1285,8 +1285,9 @@ Konfidenz: ${opt.confidence}%\n`
             margin: highlightedText ? '0' : undefined,
             padding: highlightedText ? '48px 0 48px 0' : undefined
           }}
-          onClick={() => {
-            if (highlightedText) {
+          onClick={(e) => {
+            // Nur schließen wenn direkt auf den Container geklickt wurde (nicht auf Buttons/Cards)
+            if (highlightedText && e.target === e.currentTarget) {
               setHighlightedText(null);
             }
           }}
@@ -2741,6 +2742,7 @@ Konfidenz: ${opt.confidence}%\n`
                         {/* Im Dokument anzeigen Button */}
                         <motion.button
                           onClick={() => {
+                            // Setze Suchtext für PDF-Highlighting
                             setHighlightedText(optimization.original);
                             // Smooth scroll zur PDF-Vorschau
                             setTimeout(() => {
