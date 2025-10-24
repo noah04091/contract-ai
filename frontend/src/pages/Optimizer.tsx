@@ -1461,7 +1461,14 @@ Konfidenz: ${opt.confidence}%\n`
           {/* Results Section */}
           <AnimatePresence>
             {optimizations.length > 0 && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                style={{
+                  marginRight: optimizationResult && file ? '46%' : '0',
+                  transition: 'margin-right 0.3s ease'
+                }}
+              >
                 
                 {/* Contract Type Card - Simplified */}
                 {optimizationResult?.meta && (
@@ -2819,18 +2826,26 @@ Konfidenz: ${opt.confidence}%\n`
         </motion.div>
       </div>
 
-      {/* 📄 PDF Document Viewer Section */}
+      {/* 📄 PDF Document Viewer Section - FIXED RIGHT SIDE */}
       {optimizationResult && file && (
         <motion.div
           ref={pdfViewerRef}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.2 }}
+          initial={{ opacity: 0, x: 100 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5, ease: [0.2, 0.8, 0.2, 1] }}
           style={{
-            marginTop: '40px',
-            padding: '0 20px',
-            maxWidth: '1400px',
-            margin: '40px auto 0'
+            position: 'fixed',
+            top: '100px',
+            right: '20px',
+            width: '42%',
+            maxWidth: '600px',
+            height: 'calc(100vh - 120px)',
+            overflowY: 'auto',
+            zIndex: 10,
+            background: '#FFFFFF',
+            borderRadius: '16px',
+            boxShadow: '0 4px 24px rgba(0, 0, 0, 0.12)',
+            padding: '20px'
           }}
         >
           <div style={{
