@@ -1275,11 +1275,16 @@ Konfidenz: ${opt.confidence}%\n`
       <div className={styles.optimizer}>
         <div className={styles.backgroundGradient}></div>
 
-        <motion.div 
+        <motion.div
           className={styles.container}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.8 }}
+          onClick={() => {
+            if (highlightedText) {
+              setHighlightedText(null);
+            }
+          }}
         >
           {/* Header */}
           <motion.div 
@@ -1465,8 +1470,8 @@ Konfidenz: ${opt.confidence}%\n`
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 style={{
-                  marginRight: optimizationResult && file ? '46%' : '0',
-                  transition: 'margin-right 0.3s ease'
+                  marginRight: highlightedText ? '50%' : '0',
+                  transition: 'margin-right 0.5s cubic-bezier(0.2, 0.8, 0.2, 1)'
                 }}
               >
                 
@@ -2826,28 +2831,62 @@ Konfidenz: ${opt.confidence}%\n`
         </motion.div>
       </div>
 
-      {/* 📄 PDF Document Viewer Section - FIXED RIGHT SIDE */}
-      {optimizationResult && file && (
-        <motion.div
-          ref={pdfViewerRef}
-          initial={{ opacity: 0, x: 100 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, ease: [0.2, 0.8, 0.2, 1] }}
-          style={{
-            position: 'fixed',
-            top: '100px',
-            right: '20px',
-            width: '42%',
-            maxWidth: '600px',
-            height: 'calc(100vh - 120px)',
-            overflowY: 'auto',
-            zIndex: 10,
-            background: '#FFFFFF',
-            borderRadius: '16px',
-            boxShadow: '0 4px 24px rgba(0, 0, 0, 0.12)',
-            padding: '20px'
-          }}
-        >
+      {/* 📄 PDF Document Viewer Section - SLIDE-IN RIGHT PANEL */}
+      <AnimatePresence>
+        {highlightedText && optimizationResult && file && (
+          <motion.div
+            ref={pdfViewerRef}
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ duration: 0.4, ease: [0.2, 0.8, 0.2, 1] }}
+            style={{
+              position: 'fixed',
+              top: '0',
+              right: '0',
+              width: '50%',
+              height: '100vh',
+              overflowY: 'auto',
+              zIndex: 999,
+              background: '#FFFFFF',
+              boxShadow: '-4px 0 24px rgba(0, 0, 0, 0.15)',
+              padding: '80px 32px 32px 32px'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close Button */}
+            <button
+              onClick={() => setHighlightedText(null)}
+              style={{
+                position: 'absolute',
+                top: '24px',
+                right: '24px',
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
+                border: '1px solid rgba(0, 0, 0, 0.1)',
+                background: '#FFFFFF',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '20px',
+                transition: 'all 0.2s ease',
+                zIndex: 10
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#F5F5F7';
+                e.currentTarget.style.transform = 'scale(1.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = '#FFFFFF';
+                e.currentTarget.style.transform = 'scale(1)';
+              }}
+              aria-label="PDF schließen"
+            >
+              ✕
+            </button>
+
           <div style={{
             marginBottom: '24px',
             textAlign: 'center'
@@ -2875,7 +2914,8 @@ Konfidenz: ${opt.confidence}%\n`
             highlightText={highlightedText}
           />
         </motion.div>
-      )}
+        )}
+      </AnimatePresence>
 
       {/* 🧠 PHASE 1: Simple Explanation Popup */}
       {explanationPopup.show && explanationPopup.optimization && (
