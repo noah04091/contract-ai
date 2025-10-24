@@ -2018,20 +2018,32 @@ Konfidenz: ${opt.confidence}%\n`
                   </motion.div>
                 </DropdownPortal>
 
-                {/* Optimization Cards - SIMPLIFIED */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-semibold px-2">
+                {/* Optimization Cards - Premium Design */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <h3 style={{
+                    fontSize: '19px',
+                    fontWeight: 600,
+                    color: '#1D1D1F',
+                    letterSpacing: '-0.02em',
+                    marginBottom: '8px'
+                  }}>
                     {showAdvancedView ? 'Wähle die gewünschten Optimierungen aus:' : 'Gefundene Optimierungen:'}
                   </h3>
                   {filteredOptimizations.map((optimization, index) => (
                     <motion.div
                       key={optimization.id}
-                      className={styles.card}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
+                      transition={{ delay: index * 0.05, duration: 0.4, ease: [0.2, 0.8, 0.2, 1] }}
                       style={{
-                        opacity: selectedOptimizations.has(optimization.id) ? 1 : (showAdvancedView ? 0.7 : 1)
+                        background: '#FFFFFF',
+                        border: '1px solid rgba(0, 0, 0, 0.08)',
+                        borderRadius: '16px',
+                        padding: '24px',
+                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+                        position: 'relative',
+                        opacity: selectedOptimizations.has(optimization.id) ? 1 : (showAdvancedView ? 0.7 : 1),
+                        transition: 'opacity 0.2s ease'
                       }}
                     >
                       {/* Priority Indicator */}
@@ -2051,10 +2063,17 @@ Konfidenz: ${opt.confidence}%\n`
                           : 'linear-gradient(90deg, #34C759 0%, #2EB150 100%)'
                       }}></div>
 
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex-1">
-                          {/* 🎯 NEUE HEADLINE - Konkrete Beschreibung statt generischer Kategorie */}
-                          <h3 className="text-xl font-bold text-gray-900 mb-2 leading-tight">
+                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '20px' }}>
+                        <div style={{ flex: 1 }}>
+                          {/* Title */}
+                          <h3 style={{
+                            fontSize: '18px',
+                            fontWeight: 700,
+                            color: '#1D1D1F',
+                            marginBottom: '12px',
+                            lineHeight: '1.3',
+                            letterSpacing: '-0.02em'
+                          }}>
                             {optimization.summary ||
                               (optimization.category === 'termination' ? 'Kündigung & Laufzeit' :
                                optimization.category === 'liability' ? 'Haftung & Risiko' :
@@ -2062,39 +2081,69 @@ Konfidenz: ${opt.confidence}%\n`
                                optimization.category === 'compliance' ? 'Compliance & DSGVO' : 'Klarheit & Präzision')}
                           </h3>
 
-                          <div className="flex items-center gap-3 mb-2 flex-wrap">
-                            {/* Kategorie als kleiner Tag */}
-                            <span className="text-xs font-medium text-gray-500 px-2 py-0.5 rounded bg-gray-100">
+                          {/* Badges */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', flexWrap: 'wrap' }}>
+                            {/* Category Tag */}
+                            <span style={{
+                              fontSize: '11px',
+                              fontWeight: 600,
+                              color: '#86868B',
+                              padding: '4px 10px',
+                              borderRadius: '8px',
+                              background: '#F5F5F7',
+                              letterSpacing: '0.01em',
+                              textTransform: 'uppercase'
+                            }}>
                               {optimization.category === 'termination' ? 'Kündigung & Laufzeit' :
                                optimization.category === 'liability' ? 'Haftung & Risiko' :
                                optimization.category === 'payment' ? 'Vergütung & Zahlung' :
                                optimization.category === 'compliance' ? 'Compliance & DSGVO' : 'Klarheit & Präzision'}
                             </span>
 
-                            <span className={`px-2.5 py-1 text-xs rounded-full font-semibold ${
-                              optimization.priority === 'critical' ? 'bg-red-100 text-red-700' :
-                              optimization.priority === 'high' ? 'bg-orange-100 text-orange-700' :
-                              optimization.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
-                              'bg-green-100 text-green-700'
-                            }`}>
+                            {/* Priority Badge */}
+                            <span style={{
+                              padding: '4px 12px',
+                              fontSize: '12px',
+                              borderRadius: '10px',
+                              fontWeight: 600,
+                              background: optimization.priority === 'critical' ? 'rgba(255, 59, 48, 0.12)' :
+                                         optimization.priority === 'high' ? 'rgba(255, 149, 0, 0.12)' :
+                                         optimization.priority === 'medium' ? 'rgba(255, 204, 0, 0.12)' :
+                                         'rgba(52, 199, 89, 0.12)',
+                              color: optimization.priority === 'critical' ? '#FF3B30' :
+                                    optimization.priority === 'high' ? '#FF9500' :
+                                    optimization.priority === 'medium' ? '#FFCC00' :
+                                    '#34C759'
+                            }}>
                               {optimization.priority === 'critical' ? 'Kritisch' :
                                optimization.priority === 'high' ? 'Hoch' :
                                optimization.priority === 'medium' ? 'Mittel' : 'Niedrig'}
                             </span>
 
-                            {/* 🎯 PHASE 1 - FEATURE 2: Difficulty Badge */}
-                            <span className={`px-2.5 py-1 text-xs rounded-full font-semibold flex items-center gap-1 ${
-                              optimization.implementationDifficulty === 'easy' ? 'bg-green-50 text-green-700 border border-green-200' :
-                              optimization.implementationDifficulty === 'medium' ? 'bg-yellow-50 text-yellow-700 border border-yellow-200' :
-                              'bg-red-50 text-red-700 border border-red-200'
-                            }`}>
+                            {/* Difficulty Badge */}
+                            <span style={{
+                              padding: '4px 12px',
+                              fontSize: '12px',
+                              borderRadius: '10px',
+                              fontWeight: 600,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              background: optimization.implementationDifficulty === 'easy' ? 'rgba(52, 199, 89, 0.12)' :
+                                         optimization.implementationDifficulty === 'medium' ? 'rgba(255, 204, 0, 0.12)' :
+                                         'rgba(255, 59, 48, 0.12)',
+                              color: optimization.implementationDifficulty === 'easy' ? '#34C759' :
+                                    optimization.implementationDifficulty === 'medium' ? '#FFCC00' :
+                                    '#FF3B30'
+                            }}>
                               {optimization.implementationDifficulty === 'easy' ? '🟢 Einfach umsetzbar' :
                                optimization.implementationDifficulty === 'medium' ? '🟡 Mittlerer Aufwand' :
-                               '🔴 Professionelle Hilfe empfohlen'}
+                               '🔴 Professionelle Hilfe'}
                             </span>
                           </div>
 
-                          <div className="flex gap-4 text-sm text-gray-600 font-medium">
+                          {/* Meta Info */}
+                          <div style={{ display: 'flex', gap: '16px', fontSize: '13px', color: '#86868B', fontWeight: 500 }}>
                             <span>KI: {optimization.confidence || 85}%</span>
                             <span>Risiko: {optimization.legalRisk || 5}/10</span>
                             <span>Impact: {optimization.businessImpact || 5}/10</span>
@@ -2118,21 +2167,31 @@ Konfidenz: ${opt.confidence}%\n`
                         </div>
                       </div>
 
-                      {/* 🎯 PHASE 1 - FEATURE 3: Toggle between Reasoning and Before/After View */}
-                      <div className="flex gap-2 mb-3">
+                      {/* Toggle Tabs */}
+                      <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
                         <button
                           onClick={() => {
                             const newMap = new Map(diffViewEnabled);
                             newMap.set(optimization.id, false);
                             setDiffViewEnabled(newMap);
                           }}
-                          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                            !diffViewEnabled.get(optimization.id)
-                              ? 'bg-blue-500 text-white shadow-md'
-                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                          }`}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '8px 14px',
+                            borderRadius: '10px',
+                            fontSize: '13px',
+                            fontWeight: !diffViewEnabled.get(optimization.id) ? 600 : 500,
+                            border: !diffViewEnabled.get(optimization.id) ? '1.5px solid #007AFF' : '1px solid rgba(0, 0, 0, 0.1)',
+                            background: !diffViewEnabled.get(optimization.id) ? 'rgba(0, 122, 255, 0.08)' : '#FFFFFF',
+                            color: !diffViewEnabled.get(optimization.id) ? '#007AFF' : '#86868B',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)',
+                            boxShadow: !diffViewEnabled.get(optimization.id) ? '0 2px 8px rgba(0, 122, 255, 0.15)' : '0 1px 3px rgba(0, 0, 0, 0.04)'
+                          }}
                         >
-                          <AlignLeft className="w-3.5 h-3.5" />
+                          <AlignLeft size={14} />
                           💬 Warum optimieren?
                         </button>
                         <button
@@ -2141,13 +2200,23 @@ Konfidenz: ${opt.confidence}%\n`
                             newMap.set(optimization.id, true);
                             setDiffViewEnabled(newMap);
                           }}
-                          className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                            diffViewEnabled.get(optimization.id)
-                              ? 'bg-blue-500 text-white shadow-md'
-                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                          }`}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '8px 14px',
+                            borderRadius: '10px',
+                            fontSize: '13px',
+                            fontWeight: diffViewEnabled.get(optimization.id) ? 600 : 500,
+                            border: diffViewEnabled.get(optimization.id) ? '1.5px solid #007AFF' : '1px solid rgba(0, 0, 0, 0.1)',
+                            background: diffViewEnabled.get(optimization.id) ? 'rgba(0, 122, 255, 0.08)' : '#FFFFFF',
+                            color: diffViewEnabled.get(optimization.id) ? '#007AFF' : '#86868B',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)',
+                            boxShadow: diffViewEnabled.get(optimization.id) ? '0 2px 8px rgba(0, 122, 255, 0.15)' : '0 1px 3px rgba(0, 0, 0, 0.04)'
+                          }}
                         >
-                          <Code2 className="w-3.5 h-3.5" />
+                          <Code2 size={14} />
                           📄 Vorher → Nachher
                         </button>
                       </div>
