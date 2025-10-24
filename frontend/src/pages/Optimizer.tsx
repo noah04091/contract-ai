@@ -2,11 +2,11 @@
 import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import ReactDOM from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Upload, 
-  AlertCircle, 
-  RefreshCw, 
-  FileText, 
+import {
+  Upload,
+  AlertCircle,
+  RefreshCw,
+  FileText,
   Filter,
   Download,
   Mail,
@@ -24,7 +24,6 @@ import {
   Sparkles,
   Target,
   BarChart3,
-  Layers,
   FileSignature,
   Briefcase,
   Home,
@@ -32,7 +31,6 @@ import {
   Calculator,
   Cloud,
   Minimize2,
-  Settings,
   ArrowRight,
   Lightbulb,
   Zap,
@@ -1833,6 +1831,32 @@ Konfidenz: ${opt.confidence}%\n`
                     alignItems: 'center'
                   }}
                 >
+                  {/* Checkbox-Modus Toggle */}
+                  <motion.button
+                    onClick={() => setShowAdvancedView(!showAdvancedView)}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '10px 16px',
+                      borderRadius: '12px',
+                      border: showAdvancedView ? '1.5px solid #007AFF' : '1px solid rgba(0, 0, 0, 0.1)',
+                      background: showAdvancedView ? 'rgba(0, 122, 255, 0.08)' : '#FFFFFF',
+                      color: showAdvancedView ? '#007AFF' : '#1D1D1F',
+                      fontSize: '14px',
+                      fontWeight: showAdvancedView ? 600 : 500,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)',
+                      letterSpacing: '-0.01em',
+                      boxShadow: showAdvancedView ? '0 2px 8px rgba(0, 122, 255, 0.15)' : '0 1px 3px rgba(0, 0, 0, 0.04)'
+                    }}
+                  >
+                    <CheckCircle2 size={16} />
+                    {showAdvancedView ? 'Alle anwenden' : 'Nur ausgewählte'}
+                  </motion.button>
+
                   <motion.button
                     onClick={() => setShowQuickWinsFirst(!showQuickWinsFirst)}
                     whileHover={{ scale: 1.02 }}
