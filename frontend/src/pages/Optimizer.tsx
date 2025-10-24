@@ -583,6 +583,7 @@ export default function Optimizer() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pitchButtonRef = useRef<HTMLButtonElement>(null);
   const exportButtonRef = useRef<HTMLButtonElement>(null);
+  const pdfViewerRef = useRef<HTMLDivElement>(null); // Ref für PDF-Vorschau Section
 
   // ✅ ORIGINAL: Load Premium Status
   useEffect(() => {
@@ -2720,7 +2721,13 @@ Konfidenz: ${opt.confidence}%\n`
                         <motion.button
                           onClick={() => {
                             setHighlightedText(optimization.original);
-                            // Scroll zur PDF-Vorschau wird automatisch vom PDFDocumentViewer gehandelt
+                            // Smooth scroll zur PDF-Vorschau
+                            setTimeout(() => {
+                              pdfViewerRef.current?.scrollIntoView({
+                                behavior: 'smooth',
+                                block: 'start'
+                              });
+                            }, 100);
                           }}
                           style={{
                             display: 'flex',
@@ -2815,6 +2822,7 @@ Konfidenz: ${opt.confidence}%\n`
       {/* 📄 PDF Document Viewer Section */}
       {optimizationResult && file && (
         <motion.div
+          ref={pdfViewerRef}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.2 }}

@@ -243,6 +243,71 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
         </div>
       </div>
 
+      {/* Highlight-Anzeige wenn Text gesucht wird */}
+      {highlightText && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          exit={{ opacity: 0, height: 0 }}
+          style={{
+            background: 'linear-gradient(135deg, rgba(255, 204, 0, 0.15) 0%, rgba(255, 149, 0, 0.15) 100%)',
+            border: '2px solid #FFCC00',
+            borderLeft: '4px solid #FF9500',
+            padding: '16px 20px',
+            margin: '0 20px',
+            borderRadius: '0 0 12px 12px',
+            boxShadow: '0 4px 12px rgba(255, 149, 0, 0.2)'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+            <div style={{
+              background: '#FFCC00',
+              borderRadius: '50%',
+              padding: '6px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0
+            }}>
+              <FileText size={16} style={{ color: '#1D1D1F' }} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{
+                fontSize: '13px',
+                fontWeight: 700,
+                color: '#1D1D1F',
+                marginBottom: '6px',
+                letterSpacing: '-0.01em'
+              }}>
+                🔍 Gesuchte Stelle im Dokument:
+              </div>
+              <div style={{
+                fontSize: '12px',
+                color: '#1D1D1F',
+                lineHeight: '1.5',
+                background: 'rgba(255, 255, 255, 0.7)',
+                padding: '8px 12px',
+                borderRadius: '8px',
+                fontFamily: 'monospace',
+                maxHeight: '80px',
+                overflowY: 'auto',
+                border: '1px solid rgba(255, 149, 0, 0.3)'
+              }}>
+                {highlightText}
+              </div>
+              <div style={{
+                fontSize: '11px',
+                color: '#86868B',
+                marginTop: '8px',
+                fontStyle: 'italic'
+              }}>
+                💡 Tipp: Scrolle durch das PDF um die Stelle zu finden
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       {/* PDF Content */}
       <div style={{
         padding: '20px',
