@@ -375,7 +375,7 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
             pageNumber={pageNumber}
             scale={scale}
             renderTextLayer={showTextLayer}
-            renderAnnotationLayer={true}
+            renderAnnotationLayer={false}
             loading={
               <div style={{
                 width: '595px',
@@ -394,11 +394,19 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
         </Document>
       </div>
 
-      {/* Loading Spinner Animation */}
+      {/* Loading Spinner Animation + TextLayer Styling */}
       <style>{`
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
+        }
+
+        /* TextLayer: Schwarzer Text statt weiß */
+        .react-pdf__Page__textContent {
+          color: #000000 !important;
+        }
+        .react-pdf__Page__textContent span {
+          color: #000000 !important;
         }
       `}</style>
     </motion.div>
