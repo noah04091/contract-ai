@@ -1120,59 +1120,37 @@ Konfidenz: ${opt.confidence}%\n`
       {
         id: 'all',
         name: 'Alle Optimierungen',
-        icon: <Layers className="w-5 h-5" />,
-        gradient: 'linear-gradient(135deg, #007AFF 0%, #AF52DE 100%)',
+        icon: '📋',
         count: optimizations.length
       }
     ];
-    
-    if (optimizationResult?.categories) {
-      optimizationResult.categories.forEach((category: RevolutionaryCategory) => {
-        if (category.issues.length > 0) {
-          cats.push({
-            id: category.tag,
-            name: category.label,
-            icon: <FileText className="w-5 h-5" />,
-            gradient: 'linear-gradient(135deg, #5856D6 0%, #4840C0 100%)',
-            count: category.issues.length
-          });
-        }
+
+    // ALWAYS use actual opt.category values from optimizations
+    const categoryMap = new Map<string, number>();
+    optimizations.forEach(opt => {
+      categoryMap.set(opt.category, (categoryMap.get(opt.category) || 0) + 1);
+    });
+
+    const categoryConfig = {
+      'termination': { name: 'Kündigung & Laufzeit', icon: '⏱️' },
+      'liability': { name: 'Haftung & Risiko', icon: '⚖️' },
+      'payment': { name: 'Vergütung & Zahlung', icon: '💰' },
+      'clarity': { name: 'Klarheit & Präzision', icon: '✍️' },
+      'compliance': { name: 'Compliance & DSGVO', icon: '🔒' }
+    };
+
+    categoryMap.forEach((count, cat) => {
+      const config = categoryConfig[cat as keyof typeof categoryConfig];
+      cats.push({
+        id: cat,
+        name: config?.name || cat,
+        icon: config?.icon || '📄',
+        count
       });
-    } else {
-      // Fallback to original categories
-      const categoryMap = new Map<string, number>();
-      optimizations.forEach(opt => {
-        categoryMap.set(opt.category, (categoryMap.get(opt.category) || 0) + 1);
-      });
-      
-      const categoryGradients = {
-        'termination': 'linear-gradient(135deg, #FF9500 0%, #FF7A00 100%)',
-        'liability': 'linear-gradient(135deg, #FF3B30 0%, #E5302A 100%)',
-        'payment': 'linear-gradient(135deg, #34C759 0%, #2EB150 100%)',
-        'clarity': 'linear-gradient(135deg, #5AC8FA 0%, #40B8F0 100%)',
-        'compliance': 'linear-gradient(135deg, #AF52DE 0%, #9B42C8 100%)'
-      };
-      
-      categoryMap.forEach((count, cat) => {
-        const labels = {
-          'termination': 'Kündigung',
-          'liability': 'Haftung',
-          'payment': 'Zahlung',
-          'clarity': 'Klarheit',
-          'compliance': 'Compliance'
-        };
-        cats.push({
-          id: cat,
-          name: labels[cat as keyof typeof labels] || cat,
-          icon: <FileText className="w-5 h-5" />,
-          gradient: categoryGradients[cat as keyof typeof categoryGradients] || 'linear-gradient(135deg, #8E8E93 0%, #636366 100%)',
-          count
-        });
-      });
-    }
-    
+    });
+
     return cats;
-  }, [optimizations, optimizationResult]);
+  }, [optimizations]);
 
   // ✅ ORIGINAL: Filter optimizations with Memoization
   const filteredOptimizations = useMemo(() => {
@@ -1816,17 +1794,18 @@ Konfidenz: ${opt.confidence}%\n`
                             boxShadow: isActive ? '0 2px 8px rgba(0, 122, 255, 0.15)' : '0 1px 3px rgba(0, 0, 0, 0.04)'
                           }}
                         >
-                          <span style={{ fontSize: '16px' }}>{category.icon}</span>
-                          {category.name}
+                          <span style={{ fontSize: '18px' }}>{category.icon}</span>
+                          <span>{category.name}</span>
                           <span style={{
-                            padding: '2px 8px',
-                            borderRadius: '8px',
+                            padding: '3px 9px',
+                            borderRadius: '10px',
                             background: isActive ? '#007AFF' : '#F5F5F7',
                             color: isActive ? '#FFFFFF' : '#86868B',
                             fontSize: '12px',
-                            fontWeight: 600,
-                            minWidth: '24px',
-                            textAlign: 'center'
+                            fontWeight: 700,
+                            minWidth: '22px',
+                            textAlign: 'center',
+                            lineHeight: '1'
                           }}>
                             {category.count}
                           </span>
@@ -1854,31 +1833,6 @@ Konfidenz: ${opt.confidence}%\n`
                     alignItems: 'center'
                   }}
                 >
-                  <motion.button
-                    onClick={() => setShowAdvancedView(!showAdvancedView)}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      padding: '10px 16px',
-                      borderRadius: '12px',
-                      border: '1px solid rgba(0, 0, 0, 0.1)',
-                      background: '#FFFFFF',
-                      color: '#1D1D1F',
-                      fontSize: '14px',
-                      fontWeight: 500,
-                      cursor: 'pointer',
-                      transition: 'all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)',
-                      letterSpacing: '-0.01em',
-                      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)'
-                    }}
-                  >
-                    <Settings size={16} />
-                    {showAdvancedView ? 'Einfache Ansicht' : 'Einzelne auswählen'}
-                  </motion.button>
-
                   <motion.button
                     onClick={() => setShowQuickWinsFirst(!showQuickWinsFirst)}
                     whileHover={{ scale: 1.02 }}
@@ -1967,22 +1921,53 @@ Konfidenz: ${opt.confidence}%\n`
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     data-portal-dropdown
-                    className="p-4 min-w-[280px]"
+                    style={{
+                      background: '#FFFFFF',
+                      border: '1px solid rgba(0, 0, 0, 0.08)',
+                      borderRadius: '12px',
+                      padding: '16px',
+                      minWidth: '280px',
+                      boxShadow: '0 4px 16px rgba(0, 0, 0, 0.12)'
+                    }}
                   >
-                    <h5 className="font-semibold mb-3">Pitch-Stil wählen:</h5>
+                    <h5 style={{
+                      fontSize: '15px',
+                      fontWeight: 600,
+                      color: '#1D1D1F',
+                      marginBottom: '12px',
+                      letterSpacing: '-0.01em'
+                    }}>
+                      Pitch-Stil wählen:
+                    </h5>
                     {pitchStyles.map(style => (
                       <motion.button
                         key={style.id}
                         onClick={() => generatePitch(style.id)}
-                        className="w-full p-3 mb-2 rounded-lg flex items-center gap-3"
                         whileHover={{ x: 4 }}
+                        style={{
+                          width: '100%',
+                          padding: '12px',
+                          marginBottom: '8px',
+                          borderRadius: '10px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '12px',
+                          background: '#F5F5F7',
+                          border: '1px solid transparent',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease'
+                        }}
                       >
-                        {style.icon}
-                        <div className="text-left">
-                          <div className="font-semibold">{style.name}</div>
-                          <div className="text-sm text-gray-600">{style.description}</div>
+                        <span style={{ fontSize: '20px' }}>{style.icon}</span>
+                        <div style={{ textAlign: 'left', flex: 1 }}>
+                          <div style={{ fontWeight: 600, fontSize: '14px', color: '#1D1D1F', marginBottom: '2px' }}>
+                            {style.name}
+                          </div>
+                          <div style={{ fontSize: '12px', color: '#86868B' }}>
+                            {style.description}
+                          </div>
                         </div>
-                        <ArrowRight className="w-4 h-4 ml-auto text-gray-400" />
+                        <ArrowRight size={16} style={{ color: '#86868B', marginLeft: 'auto' }} />
                       </motion.button>
                     ))}
                   </motion.div>
@@ -1993,26 +1978,73 @@ Konfidenz: ${opt.confidence}%\n`
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     data-portal-dropdown
-                    className="p-4 min-w-[300px]"
+                    style={{
+                      background: '#FFFFFF',
+                      border: '1px solid rgba(0, 0, 0, 0.08)',
+                      borderRadius: '12px',
+                      padding: '16px',
+                      minWidth: '300px',
+                      boxShadow: '0 4px 16px rgba(0, 0, 0, 0.12)'
+                    }}
                   >
-                    <h5 className="font-semibold mb-3">Export-Format:</h5>
+                    <h5 style={{
+                      fontSize: '15px',
+                      fontWeight: 600,
+                      color: '#1D1D1F',
+                      marginBottom: '12px',
+                      letterSpacing: '-0.01em'
+                    }}>
+                      Export-Format:
+                    </h5>
                     {exportOptions.map(option => (
                       <motion.button
                         key={option.id}
                         onClick={() => handleExport()}
                         disabled={option.premium && !isPremium}
-                        className="w-full p-3 mb-2 rounded-lg flex items-center gap-3 disabled:opacity-50"
                         whileHover={!option.premium || isPremium ? { x: 4 } : undefined}
+                        style={{
+                          width: '100%',
+                          padding: '12px',
+                          marginBottom: '8px',
+                          borderRadius: '10px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '12px',
+                          background: '#F5F5F7',
+                          border: '1px solid transparent',
+                          cursor: option.premium && !isPremium ? 'not-allowed' : 'pointer',
+                          opacity: option.premium && !isPremium ? 0.5 : 1,
+                          transition: 'all 0.2s ease'
+                        }}
                       >
-                        {option.icon}
-                        <div className="text-left flex-1">
-                          <div className="font-semibold flex items-center gap-2">
+                        <span style={{ fontSize: '20px' }}>{option.icon}</span>
+                        <div style={{ textAlign: 'left', flex: 1 }}>
+                          <div style={{
+                            fontWeight: 600,
+                            fontSize: '14px',
+                            color: '#1D1D1F',
+                            marginBottom: '2px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px'
+                          }}>
                             {option.name}
-                            {option.premium && <Lock className="w-3 h-3" />}
+                            {option.premium && <Lock size={12} style={{ color: '#86868B' }} />}
                           </div>
-                          <div className="text-sm text-gray-600">{option.description}</div>
+                          <div style={{ fontSize: '12px', color: '#86868B' }}>
+                            {option.description}
+                          </div>
                         </div>
-                        <span className="text-xs bg-gray-100 px-2 py-1 rounded font-medium">{option.format}</span>
+                        <span style={{
+                          fontSize: '11px',
+                          background: '#E5E5E7',
+                          padding: '4px 8px',
+                          borderRadius: '6px',
+                          fontWeight: 600,
+                          color: '#1D1D1F'
+                        }}>
+                          {option.format}
+                        </span>
                       </motion.button>
                     ))}
                   </motion.div>
