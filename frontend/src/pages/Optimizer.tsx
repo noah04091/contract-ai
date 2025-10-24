@@ -2278,45 +2278,102 @@ Konfidenz: ${opt.confidence}%\n`
                       </div>
 
                       {/* Content */}
-                      <div className="p-3 rounded-lg" style={{ background: 'rgba(142, 142, 147, 0.08)' }}>
+                      <div style={{
+                        background: '#F5F5F7',
+                        borderRadius: '12px',
+                        padding: '20px',
+                        marginBottom: '12px'
+                      }}>
                         {/* Show Reasoning or Before/After based on toggle */}
                         {!diffViewEnabled.get(optimization.id) ? (
                           /* WARUM OPTIMIEREN? - Die KI-Begründung */
                           <div>
-                            <div className="flex items-center gap-2 mb-2">
-                              <AlignLeft className="w-4 h-4" style={{ color: '#007AFF' }} />
-                              <span className="text-xs font-bold text-gray-700">WARUM IST DAS WICHTIG?</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                              <AlignLeft size={16} style={{ color: '#007AFF' }} />
+                              <span style={{
+                                fontSize: '12px',
+                                fontWeight: 700,
+                                color: '#1D1D1F',
+                                letterSpacing: '0.5px',
+                                textTransform: 'uppercase'
+                              }}>
+                                Warum ist das wichtig?
+                              </span>
                             </div>
-                            <p className="text-sm text-gray-700 leading-relaxed">{optimization.reasoning}</p>
+                            <p style={{
+                              fontSize: '14px',
+                              color: '#1D1D1F',
+                              lineHeight: '1.6',
+                              margin: 0
+                            }}>
+                              {optimization.reasoning}
+                            </p>
                           </div>
                         ) : (
                           /* VORHER → NACHHER - Klausel-Vergleich */
-                          <div className="space-y-3">
-                            <div className="text-center">
-                              <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold" style={{ background: 'rgba(0, 122, 255, 0.1)', color: '#007AFF' }}>
-                                <Code2 className="w-3.5 h-3.5" />
-                                WAS WIRD KONKRET GEÄNDERT?
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                            <div style={{ textAlign: 'center' }}>
+                              <span style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                padding: '8px 16px',
+                                borderRadius: '20px',
+                                background: 'rgba(0, 122, 255, 0.1)',
+                                color: '#007AFF',
+                                fontSize: '12px',
+                                fontWeight: 700,
+                                letterSpacing: '0.5px',
+                                textTransform: 'uppercase'
+                              }}>
+                                <Code2 size={14} />
+                                Was wird konkret geändert?
                               </span>
                             </div>
 
                             {/* VORHER Box */}
-                            <div className="rounded-lg border-2 border-red-200" style={{ background: 'rgba(255, 59, 48, 0.05)' }}>
-                              <div className="px-3 py-2 border-b border-red-200" style={{ background: 'rgba(255, 59, 48, 0.1)' }}>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-xs font-bold text-red-700">❌ VORHER (Aktuell in Ihrem Vertrag)</span>
-                                </div>
+                            <div style={{
+                              borderRadius: '12px',
+                              border: '2px solid rgba(255, 59, 48, 0.3)',
+                              background: 'rgba(255, 59, 48, 0.05)',
+                              overflow: 'hidden'
+                            }}>
+                              <div style={{
+                                padding: '12px 16px',
+                                borderBottom: '1px solid rgba(255, 59, 48, 0.2)',
+                                background: 'rgba(255, 59, 48, 0.1)'
+                              }}>
+                                <span style={{
+                                  fontSize: '12px',
+                                  fontWeight: 700,
+                                  color: '#FF3B30',
+                                  letterSpacing: '0.3px',
+                                  textTransform: 'uppercase'
+                                }}>
+                                  ❌ Vorher (Aktuell in Ihrem Vertrag)
+                                </span>
                               </div>
-                              <div className="p-3">
+                              <div style={{ padding: '16px' }}>
                                 {optimization.original === "FEHLT" || optimization.original.includes("FEHLT") ? (
-                                  <div className="flex items-start gap-2">
-                                    <AlertTriangle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+                                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                                    <AlertTriangle size={16} style={{ color: '#FF3B30', marginTop: '2px', flexShrink: 0 }} />
                                     <div>
-                                      <p className="text-sm font-bold text-red-700">Diese Klausel fehlt komplett!</p>
-                                      <p className="text-xs text-gray-600 mt-1">In Ihrem aktuellen Vertrag ist dieser wichtige Absatz nicht vorhanden.</p>
+                                      <p style={{ fontSize: '14px', fontWeight: 600, color: '#FF3B30', margin: '0 0 4px 0' }}>
+                                        Diese Klausel fehlt komplett!
+                                      </p>
+                                      <p style={{ fontSize: '13px', color: '#86868B', margin: 0 }}>
+                                        In Ihrem aktuellen Vertrag ist dieser wichtige Absatz nicht vorhanden.
+                                      </p>
                                     </div>
                                   </div>
                                 ) : (
-                                  <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+                                  <p style={{
+                                    fontSize: '14px',
+                                    color: '#1D1D1F',
+                                    lineHeight: '1.6',
+                                    margin: 0,
+                                    whiteSpace: 'pre-wrap'
+                                  }}>
                                     {optimization.original.length > 300 ? optimization.original.substring(0, 300) + '...' : optimization.original}
                                   </p>
                                 )}
@@ -2324,26 +2381,68 @@ Konfidenz: ${opt.confidence}%\n`
                             </div>
 
                             {/* Pfeil */}
-                            <div className="flex justify-center">
-                              <div className="px-4 py-2 rounded-full" style={{ background: 'linear-gradient(135deg, #007AFF 0%, #34C759 100%)', color: 'white' }}>
-                                <span className="text-xs font-bold">⬇️ WIRD ERSETZT DURCH</span>
+                            <div style={{ display: 'flex', justifyContent: 'center' }}>
+                              <div style={{
+                                padding: '10px 20px',
+                                borderRadius: '20px',
+                                background: 'linear-gradient(135deg, #007AFF 0%, #34C759 100%)',
+                                color: 'white'
+                              }}>
+                                <span style={{
+                                  fontSize: '12px',
+                                  fontWeight: 700,
+                                  letterSpacing: '0.5px',
+                                  textTransform: 'uppercase'
+                                }}>
+                                  ⬇️ Wird ersetzt durch
+                                </span>
                               </div>
                             </div>
 
                             {/* NACHHER Box */}
-                            <div className="rounded-lg border-2 border-green-200" style={{ background: 'rgba(52, 199, 89, 0.05)' }}>
-                              <div className="px-3 py-2 border-b border-green-200" style={{ background: 'rgba(52, 199, 89, 0.1)' }}>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-xs font-bold text-green-700">✅ NACHHER (Optimierte Version)</span>
-                                </div>
+                            <div style={{
+                              borderRadius: '12px',
+                              border: '2px solid rgba(52, 199, 89, 0.3)',
+                              background: 'rgba(52, 199, 89, 0.05)',
+                              overflow: 'hidden'
+                            }}>
+                              <div style={{
+                                padding: '12px 16px',
+                                borderBottom: '1px solid rgba(52, 199, 89, 0.2)',
+                                background: 'rgba(52, 199, 89, 0.1)'
+                              }}>
+                                <span style={{
+                                  fontSize: '12px',
+                                  fontWeight: 700,
+                                  color: '#34C759',
+                                  letterSpacing: '0.3px',
+                                  textTransform: 'uppercase'
+                                }}>
+                                  ✅ Nachher (Optimierte Version)
+                                </span>
                               </div>
-                              <div className="p-3">
-                                <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap font-medium">
+                              <div style={{ padding: '16px' }}>
+                                <p style={{
+                                  fontSize: '14px',
+                                  color: '#1D1D1F',
+                                  lineHeight: '1.6',
+                                  margin: 0,
+                                  fontWeight: 500,
+                                  whiteSpace: 'pre-wrap'
+                                }}>
                                   {optimization.improved.length > 500 ? optimization.improved.substring(0, 500) + '...' : optimization.improved}
                                 </p>
                                 {optimization.improved.length > 500 && (
-                                  <p className="text-xs text-blue-600 mt-2 flex items-center gap-1">
-                                    <Shield className="w-3 h-3" />
+                                  <p style={{
+                                    fontSize: '12px',
+                                    color: '#007AFF',
+                                    marginTop: '12px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    margin: '12px 0 0 0'
+                                  }}>
+                                    <Shield size={14} />
                                     Vollständige juristische Klausel wird im PDF-Vertrag generiert
                                   </p>
                                 )}
@@ -2380,144 +2479,295 @@ Konfidenz: ${opt.confidence}%\n`
                         )}
                       </div>
 
-                      {/* 🎯 PHASE 1 - FEATURE 4: Impact-Vorschau */}
-                      <div className="mt-4 p-4 rounded-xl border border-gray-200" style={{ background: 'linear-gradient(135deg, rgba(0, 122, 255, 0.03) 0%, rgba(175, 82, 222, 0.03) 100%)' }}>
-                        <h5 className="text-xs font-bold text-gray-700 mb-3 flex items-center gap-2">
-                          <TrendingUp className="w-4 h-4" style={{ color: '#007AFF' }} />
-                          AUSWIRKUNGEN DIESER OPTIMIERUNG
+                      {/* Impact-Vorschau */}
+                      <div style={{
+                        marginTop: '12px',
+                        padding: '20px',
+                        borderRadius: '12px',
+                        border: '1px solid rgba(0, 0, 0, 0.08)',
+                        background: '#FFFFFF'
+                      }}>
+                        <h5 style={{
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          color: '#1D1D1F',
+                          marginBottom: '16px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          letterSpacing: '0.5px',
+                          textTransform: 'uppercase'
+                        }}>
+                          <TrendingUp size={16} style={{ color: '#007AFF' }} />
+                          Auswirkungen dieser Optimierung
                         </h5>
 
-                        <div className="space-y-3">
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                           {/* Rechtsschutz Level */}
                           <div>
-                            <div className="flex items-center justify-between mb-1.5">
-                              <div className="flex items-center gap-2">
-                                <Shield className="w-3.5 h-3.5" style={{ color: '#34C759' }} />
-                                <span className="text-xs font-semibold text-gray-700">Rechtsschutz</span>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <Shield size={14} style={{ color: '#34C759' }} />
+                                <span style={{ fontSize: '13px', fontWeight: 600, color: '#1D1D1F' }}>
+                                  Rechtsschutz
+                                </span>
                               </div>
-                              <span className="text-xs font-bold" style={{ color: '#34C759' }}>
-                                {optimization.legalRisk <= 3 ? 'Stark' : optimization.legalRisk <= 6 ? 'Mittel' : 'Schwach'}
-                                {' → '}
+                              <span style={{ fontSize: '12px', fontWeight: 600 }}>
+                                <span style={{ color: '#86868B' }}>
+                                  {optimization.legalRisk <= 3 ? 'Stark' : optimization.legalRisk <= 6 ? 'Mittel' : 'Schwach'}
+                                </span>
+                                <span style={{ color: '#86868B', margin: '0 4px' }}>→</span>
                                 <span style={{ color: '#34C759' }}>Stark</span>
                               </span>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                                <div
-                                  className="h-full rounded-full transition-all duration-500"
-                                  style={{
-                                    width: `${Math.max(20, 100 - (optimization.legalRisk || 5) * 10)}%`,
-                                    background: (optimization.legalRisk || 5) >= 7 ? '#FF3B30' : (optimization.legalRisk || 5) >= 4 ? '#FF9500' : '#34C759'
-                                  }}
-                                />
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <div style={{ flex: 1, height: '6px', background: '#E5E5E7', borderRadius: '3px', overflow: 'hidden' }}>
+                                <div style={{
+                                  height: '100%',
+                                  borderRadius: '3px',
+                                  transition: 'all 0.5s ease',
+                                  width: `${Math.max(20, 100 - (optimization.legalRisk || 5) * 10)}%`,
+                                  background: (optimization.legalRisk || 5) >= 7 ? '#FF3B30' : (optimization.legalRisk || 5) >= 4 ? '#FF9500' : '#34C759'
+                                }} />
                               </div>
-                              <div className="text-xs text-gray-400">→</div>
-                              <div className="flex-1 h-2 bg-gradient-to-r from-green-400 to-green-500 rounded-full" />
+                              <span style={{ fontSize: '12px', color: '#86868B' }}>→</span>
+                              <div style={{
+                                flex: 1,
+                                height: '6px',
+                                background: 'linear-gradient(90deg, #34C759 0%, #2EB150 100%)',
+                                borderRadius: '3px'
+                              }} />
                             </div>
                           </div>
 
                           {/* Verhandlungsposition */}
                           <div>
-                            <div className="flex items-center justify-between mb-1.5">
-                              <div className="flex items-center gap-2">
-                                <TrendingUp className="w-3.5 h-3.5" style={{ color: '#007AFF' }} />
-                                <span className="text-xs font-semibold text-gray-700">Verhandlungsposition</span>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <TrendingUp size={14} style={{ color: '#007AFF' }} />
+                                <span style={{ fontSize: '13px', fontWeight: 600, color: '#1D1D1F' }}>
+                                  Verhandlungsposition
+                                </span>
                               </div>
-                              <span className="text-xs font-bold" style={{ color: '#007AFF' }}>
-                                {(optimization.businessImpact || 5) <= 3 ? 'Ungünstig' : (optimization.businessImpact || 5) <= 7 ? 'Neutral' : 'Vorteilhaft'}
-                                {' → '}
+                              <span style={{ fontSize: '12px', fontWeight: 600 }}>
+                                <span style={{ color: '#86868B' }}>
+                                  {(optimization.businessImpact || 5) <= 3 ? 'Ungünstig' : (optimization.businessImpact || 5) <= 7 ? 'Neutral' : 'Vorteilhaft'}
+                                </span>
+                                <span style={{ color: '#86868B', margin: '0 4px' }}>→</span>
                                 <span style={{ color: '#007AFF' }}>Vorteilhaft</span>
                               </span>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                                <div
-                                  className="h-full rounded-full transition-all duration-500"
-                                  style={{
-                                    width: `${Math.max(20, (optimization.businessImpact || 5) * 10)}%`,
-                                    background: (optimization.businessImpact || 5) >= 7 ? '#34C759' : (optimization.businessImpact || 5) >= 4 ? '#FF9500' : '#FF3B30'
-                                  }}
-                                />
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <div style={{ flex: 1, height: '6px', background: '#E5E5E7', borderRadius: '3px', overflow: 'hidden' }}>
+                                <div style={{
+                                  height: '100%',
+                                  borderRadius: '3px',
+                                  transition: 'all 0.5s ease',
+                                  width: `${Math.max(20, (optimization.businessImpact || 5) * 10)}%`,
+                                  background: (optimization.businessImpact || 5) >= 7 ? '#34C759' : (optimization.businessImpact || 5) >= 4 ? '#FF9500' : '#FF3B30'
+                                }} />
                               </div>
-                              <div className="text-xs text-gray-400">→</div>
-                              <div className="flex-1 h-2 bg-gradient-to-r from-blue-400 to-blue-500 rounded-full" />
+                              <span style={{ fontSize: '12px', color: '#86868B' }}>→</span>
+                              <div style={{
+                                flex: 1,
+                                height: '6px',
+                                background: 'linear-gradient(90deg, #007AFF 0%, #5856D6 100%)',
+                                borderRadius: '3px'
+                              }} />
                             </div>
                           </div>
 
                           {/* Risiko-Reduktion */}
                           <div>
-                            <div className="flex items-center justify-between mb-1.5">
-                              <div className="flex items-center gap-2">
-                                <AlertTriangle className="w-3.5 h-3.5" style={{ color: '#FF9500' }} />
-                                <span className="text-xs font-semibold text-gray-700">Risiko-Level</span>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <AlertTriangle size={14} style={{ color: '#FF9500' }} />
+                                <span style={{ fontSize: '13px', fontWeight: 600, color: '#1D1D1F' }}>
+                                  Risiko-Level
+                                </span>
                               </div>
-                              <span className="text-xs font-bold" style={{ color: '#FF3B30' }}>
-                                {(optimization.legalRisk || 5) >= 7 ? 'Hoch' : (optimization.legalRisk || 5) >= 4 ? 'Mittel' : 'Niedrig'}
-                                {' → '}
+                              <span style={{ fontSize: '12px', fontWeight: 600 }}>
+                                <span style={{ color: (optimization.legalRisk || 5) >= 7 ? '#FF3B30' : '#86868B' }}>
+                                  {(optimization.legalRisk || 5) >= 7 ? 'Hoch' : (optimization.legalRisk || 5) >= 4 ? 'Mittel' : 'Niedrig'}
+                                </span>
+                                <span style={{ color: '#86868B', margin: '0 4px' }}>→</span>
                                 <span style={{ color: '#34C759' }}>Niedrig</span>
                               </span>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                                <div
-                                  className="h-full rounded-full transition-all duration-500"
-                                  style={{
-                                    width: `${Math.max(20, (optimization.legalRisk || 5) * 10)}%`,
-                                    background: (optimization.legalRisk || 5) >= 7 ? '#FF3B30' : (optimization.legalRisk || 5) >= 4 ? '#FF9500' : '#34C759'
-                                  }}
-                                />
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <div style={{ flex: 1, height: '6px', background: '#E5E5E7', borderRadius: '3px', overflow: 'hidden' }}>
+                                <div style={{
+                                  height: '100%',
+                                  borderRadius: '3px',
+                                  transition: 'all 0.5s ease',
+                                  width: `${Math.max(20, (optimization.legalRisk || 5) * 10)}%`,
+                                  background: (optimization.legalRisk || 5) >= 7 ? '#FF3B30' : (optimization.legalRisk || 5) >= 4 ? '#FF9500' : '#34C759'
+                                }} />
                               </div>
-                              <div className="text-xs text-gray-400">→</div>
-                              <div className="flex-1 h-2 bg-gradient-to-r from-green-400 to-green-500 rounded-full" />
+                              <span style={{ fontSize: '12px', color: '#86868B' }}>→</span>
+                              <div style={{
+                                flex: 1,
+                                height: '6px',
+                                background: 'linear-gradient(90deg, #34C759 0%, #2EB150 100%)',
+                                borderRadius: '3px'
+                              }} />
                             </div>
                           </div>
                         </div>
 
-                        <div className="mt-3 pt-3 border-t border-gray-200">
-                          <p className="text-xs text-gray-600">
-                            <strong>💡 Nutzen:</strong> {optimization.marketBenchmark}
-                          </p>
+                        {/* Nutzen Footer */}
+                        <div style={{
+                          marginTop: '16px',
+                          paddingTop: '16px',
+                          borderTop: '1px solid rgba(0, 0, 0, 0.08)'
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                            <span style={{
+                              fontSize: '12px',
+                              fontWeight: 700,
+                              color: '#FF9500',
+                              letterSpacing: '0.3px'
+                            }}>
+                              💡 Nutzen:
+                            </span>
+                            <span style={{
+                              fontSize: '12px',
+                              color: '#1D1D1F',
+                              lineHeight: '1.5',
+                              flex: 1
+                            }}>
+                              {optimization.marketBenchmark}
+                            </span>
+                          </div>
                         </div>
                       </div>
 
-                      {/* Additional Info */}
-                      <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                        <div>
-                          <span className="text-gray-600">Benchmark:</span>
-                          <span className="ml-2 font-medium">{optimization.marketBenchmark}</span>
+                      {/* Benchmark & Umsetzung Info Grid */}
+                      <div style={{
+                        marginTop: '16px',
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                        gap: '12px'
+                      }}>
+                        <div style={{
+                          background: '#F5F5F7',
+                          borderRadius: '10px',
+                          padding: '12px 16px',
+                          border: '1px solid rgba(0, 0, 0, 0.06)'
+                        }}>
+                          <div style={{
+                            fontSize: '11px',
+                            fontWeight: 600,
+                            color: '#86868B',
+                            letterSpacing: '0.5px',
+                            textTransform: 'uppercase',
+                            marginBottom: '4px'
+                          }}>
+                            Benchmark
+                          </div>
+                          <div style={{
+                            fontSize: '13px',
+                            fontWeight: 600,
+                            color: '#1D1D1F',
+                            letterSpacing: '-0.01em'
+                          }}>
+                            {optimization.marketBenchmark}
+                          </div>
                         </div>
-                        <div>
-                          <span className="text-gray-600">Umsetzung:</span>
-                          <span className="ml-2 font-medium">
+                        <div style={{
+                          background: '#F5F5F7',
+                          borderRadius: '10px',
+                          padding: '12px 16px',
+                          border: '1px solid rgba(0, 0, 0, 0.06)'
+                        }}>
+                          <div style={{
+                            fontSize: '11px',
+                            fontWeight: 600,
+                            color: '#86868B',
+                            letterSpacing: '0.5px',
+                            textTransform: 'uppercase',
+                            marginBottom: '4px'
+                          }}>
+                            Umsetzung
+                          </div>
+                          <div style={{
+                            fontSize: '13px',
+                            fontWeight: 600,
+                            color: optimization.implementationDifficulty === 'easy' ? '#34C759' :
+                                   optimization.implementationDifficulty === 'medium' ? '#FF9500' : '#FF3B30',
+                            letterSpacing: '-0.01em'
+                          }}>
                             {optimization.implementationDifficulty === 'easy' ? 'Einfach' :
                              optimization.implementationDifficulty === 'medium' ? 'Mittel' : 'Komplex'}
-                          </span>
+                          </div>
                         </div>
                       </div>
 
-                      {/* 🧠 PHASE 1: Einfach erklärt Button */}
-                      <motion.button
-                        onClick={() => setExplanationPopup({ show: true, optimization })}
-                        className="absolute top-4 right-16 p-2 bg-white rounded-lg hover:bg-gradient-to-r hover:from-orange-50 hover:to-orange-100 shadow-sm border border-orange-200"
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        title="Einfach erklärt"
-                      >
-                        <Lightbulb className="w-4 h-4" style={{ color: '#FF9500' }} />
-                      </motion.button>
+                      {/* Action Buttons */}
+                      <div style={{
+                        marginTop: '20px',
+                        paddingTop: '20px',
+                        borderTop: '1px solid rgba(0, 0, 0, 0.08)',
+                        display: 'flex',
+                        gap: '12px',
+                        justifyContent: 'flex-end'
+                      }}>
+                        {/* Einfach erklärt Button */}
+                        <motion.button
+                          onClick={() => setExplanationPopup({ show: true, optimization })}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            padding: '10px 16px',
+                            borderRadius: '12px',
+                            border: '1.5px solid #FF9500',
+                            background: 'linear-gradient(135deg, rgba(255, 149, 0, 0.08) 0%, rgba(255, 149, 0, 0.12) 100%)',
+                            color: '#FF9500',
+                            fontSize: '14px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            transition: 'all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)',
+                            letterSpacing: '-0.01em',
+                            boxShadow: '0 2px 8px rgba(255, 149, 0, 0.15)'
+                          }}
+                          whileHover={{ scale: 1.02, boxShadow: '0 4px 12px rgba(255, 149, 0, 0.25)' }}
+                          whileTap={{ scale: 0.98 }}
+                          title="Einfach erklärt"
+                        >
+                          <Lightbulb size={16} />
+                          Einfach erklärt
+                        </motion.button>
 
-                      {/* Copy Button */}
-                      <motion.button
-                        onClick={() => {
-                          navigator.clipboard.writeText(`${optimization.improved}\n\nBegründung: ${optimization.reasoning}`);
-                          showToast("✅ Kopiert!", 'success');
-                        }}
-                        className="absolute top-4 right-4 p-2 bg-white rounded-lg hover:bg-gray-100 shadow-sm"
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                      >
-                        <Copy className="w-4 h-4" />
-                      </motion.button>
+                        {/* Kopieren Button */}
+                        <motion.button
+                          onClick={() => {
+                            navigator.clipboard.writeText(`${optimization.improved}\n\nBegründung: ${optimization.reasoning}`);
+                            showToast("✅ Kopiert!", 'success');
+                          }}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            padding: '10px 16px',
+                            borderRadius: '12px',
+                            border: '1px solid rgba(0, 0, 0, 0.1)',
+                            background: '#FFFFFF',
+                            color: '#1D1D1F',
+                            fontSize: '14px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            transition: 'all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)',
+                            letterSpacing: '-0.01em',
+                            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)'
+                          }}
+                          whileHover={{ scale: 1.02, boxShadow: '0 2px 8px rgba(0, 0, 0, 0.12)' }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          <Copy size={16} />
+                          Kopieren
+                        </motion.button>
+                      </div>
                     </motion.div>
                   ))}
                 </div>
