@@ -43,7 +43,7 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
     }
   }, [highlightText]);
 
-  // Apply yellow highlighting to text spans in TextLayer
+  // Apply yellow highlighting to text spans in TextLayer (mit Keyword-Support)
   useEffect(() => {
     if (!highlightText || !foundOnPage || !showTextLayer) return;
 
@@ -63,12 +63,23 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
         // Finde alle spans im TextLayer
         const spans = textLayer.querySelectorAll('span');
         const searchLower = highlightText.toLowerCase().trim();
+
+        // Extrahiere Keywords für Highlighting
+        const stopwords = ['der', 'die', 'das', 'den', 'dem', 'des', 'ein', 'eine', 'einer', 'eines', 'und', 'oder', 'aber', 'ist', 'wird', 'werden', 'sich', 'am', 'im', 'zum', 'zur', 'bis', 'von', 'mit', 'für', 'als'];
+        const keywords = searchLower
+          .split(/[\s,.:;!?()]+/)
+          .filter(word => word.length > 3 && !stopwords.includes(word));
+
         let highlightedCount = 0;
 
         spans.forEach((span) => {
           const spanText = span.textContent?.toLowerCase() || '';
-          // Prüfe ob dieser span den Suchtext enthält
-          if (spanText.includes(searchLower)) {
+
+          // Highlighte wenn exakter Text oder Keywords gefunden
+          const shouldHighlight = spanText.includes(searchLower) ||
+                                 keywords.some(keyword => spanText.includes(keyword));
+
+          if (shouldHighlight) {
             span.classList.add('pdf-highlight');
             highlightedCount++;
           }
@@ -93,7 +104,7 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
     console.error('❌ PDF Lade-Fehler:', error);
   };
 
-  // Suche Text im PDF und highlighte ihn
+  // 🔍 Fuzzy Search: Suche Text im PDF mit Keyword-Matching
   const searchAndHighlight = async (searchText: string) => {
     if (!searchText || !pdfDocumentRef.current) {
       console.log('⚠️ Kein PDF oder kein Suchtext');
@@ -108,35 +119,80 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
       const pdf = pdfDocumentRef.current;
       const searchLower = searchText.toLowerCase().trim();
 
-      // Durchsuche alle Seiten
+      // Stopwords die ignoriert werden (deutsche Füllwörter)
+      const stopwords = ['der', 'die', 'das', 'den', 'dem', 'des', 'ein', 'eine', 'einer', 'eines', 'und', 'oder', 'aber', 'ist', 'wird', 'werden', 'sich', 'am', 'im', 'zum', 'zur', 'bis', 'von', 'mit', 'für', 'als'];
+
+      // Extrahiere Keywords aus Suchtext (Wörter > 3 Buchstaben, keine Stopwords)
+      const keywords = searchLower
+        .split(/[\s,.:;!?()]+/)
+        .filter(word => word.length > 3 && !stopwords.includes(word));
+
+      console.log(`📋 Keywords für Suche:`, keywords);
+
+      // Erster Versuch: Exakte Suche
       for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
         const page = await pdf.getPage(pageNum);
         const textContent = await page.getTextContent();
-
-        // Extrahiere Text von dieser Seite
         const pageText = textContent.items
           .map((item) => ('str' in item ? item.str : ''))
           .join(' ')
           .toLowerCase();
 
-        // Prüfe ob Suchtext auf dieser Seite ist
         if (pageText.includes(searchLower)) {
-          console.log(`✅ Text gefunden auf Seite ${pageNum}`);
+          console.log(`✅ Exakter Text gefunden auf Seite ${pageNum}`);
           setFoundOnPage(pageNum);
           setPageNumber(pageNum);
-          setShowTextLayer(true); // TextLayer aktivieren für Highlighting
+          setShowTextLayer(true);
           setIsSearching(false);
-
-          // Scroll zum Container
           if (containerRef.current) {
             containerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
           }
-          return; // Erste Fundstelle reicht
+          return;
         }
       }
 
+      // Zweiter Versuch: Fuzzy Keyword-Search
+      let bestMatch: { pageNum: number; score: number } | null = null;
+
+      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+        const page = await pdf.getPage(pageNum);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items
+          .map((item) => ('str' in item ? item.str : ''))
+          .join(' ')
+          .toLowerCase();
+
+        // Zähle wie viele Keywords auf dieser Seite vorkommen
+        let matchCount = 0;
+        keywords.forEach(keyword => {
+          if (pageText.includes(keyword)) {
+            matchCount++;
+          }
+        });
+
+        // Beste Seite merken (mindestens 2 Keywords oder 50% der Keywords)
+        const requiredMatches = Math.max(2, Math.ceil(keywords.length * 0.5));
+        if (matchCount >= requiredMatches) {
+          if (!bestMatch || matchCount > bestMatch.score) {
+            bestMatch = { pageNum, score: matchCount };
+          }
+        }
+      }
+
+      if (bestMatch) {
+        console.log(`✅ Fuzzy Match gefunden auf Seite ${bestMatch.pageNum} (${bestMatch.score}/${keywords.length} Keywords)`);
+        setFoundOnPage(bestMatch.pageNum);
+        setPageNumber(bestMatch.pageNum);
+        setShowTextLayer(true);
+        setIsSearching(false);
+        if (containerRef.current) {
+          containerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        return;
+      }
+
       // Nichts gefunden
-      console.log('❌ Text nicht gefunden im PDF');
+      console.log('❌ Text nicht gefunden im PDF (auch nicht mit Fuzzy Search)');
       setIsSearching(false);
     } catch (error) {
       console.error('❌ Fehler beim Suchen:', error);
