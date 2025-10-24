@@ -343,7 +343,6 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
       <div style={{
         padding: '20px',
         background: '#F5F5F7',
-        minHeight: '400px',
         maxHeight: '800px',
         overflowY: 'auto',
         display: 'flex',

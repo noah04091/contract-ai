@@ -1280,6 +1280,11 @@ Konfidenz: ${opt.confidence}%\n`
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.8 }}
+          style={{
+            maxWidth: highlightedText ? 'none' : undefined,
+            margin: highlightedText ? '0' : undefined,
+            padding: highlightedText ? '48px 0 48px 0' : undefined
+          }}
           onClick={() => {
             if (highlightedText) {
               setHighlightedText(null);
