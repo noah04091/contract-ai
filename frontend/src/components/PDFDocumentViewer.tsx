@@ -42,6 +42,46 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
     }
   }, [highlightText]);
 
+  // Apply yellow highlighting to text spans in TextLayer
+  useEffect(() => {
+    if (!highlightText || !foundOnPage || !showTextLayer) return;
+
+    // Warte bis TextLayer gerendert ist
+    const timeoutId = setTimeout(() => {
+      try {
+        const textLayer = document.querySelector('.react-pdf__Page__textContent');
+        if (!textLayer) {
+          console.log('⚠️ TextLayer nicht gefunden im DOM');
+          return;
+        }
+
+        // Entferne alte Highlights
+        const oldHighlights = textLayer.querySelectorAll('.pdf-highlight');
+        oldHighlights.forEach(el => el.classList.remove('pdf-highlight'));
+
+        // Finde alle spans im TextLayer
+        const spans = textLayer.querySelectorAll('span');
+        const searchLower = highlightText.toLowerCase().trim();
+        let highlightedCount = 0;
+
+        spans.forEach((span) => {
+          const spanText = span.textContent?.toLowerCase() || '';
+          // Prüfe ob dieser span den Suchtext enthält
+          if (spanText.includes(searchLower)) {
+            span.classList.add('pdf-highlight');
+            highlightedCount++;
+          }
+        });
+
+        console.log(`✨ ${highlightedCount} Text-Spans hervorgehoben`);
+      } catch (error) {
+        console.error('❌ Fehler beim Highlighting:', error);
+      }
+    }, 500); // 500ms warten
+
+    return () => clearTimeout(timeoutId);
+  }, [highlightText, foundOnPage, showTextLayer]);
+
   const onDocumentLoadSuccess = (pdf: any) => {
     setNumPages(pdf.numPages);
     pdfDocumentRef.current = pdf; // Speichere PDF-Dokument für Text-Suche
@@ -83,6 +123,7 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
           console.log(`✅ Text gefunden auf Seite ${pageNum}`);
           setFoundOnPage(pageNum);
           setPageNumber(pageNum);
+          setShowTextLayer(true); // TextLayer aktivieren für Highlighting
           setIsSearching(false);
 
           // Scroll zum Container
@@ -443,6 +484,14 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
         }
         .react-pdf__Page__textContent span {
           color: #000000 !important;
+        }
+
+        /* Text-Highlighting: Gelber Hintergrund */
+        .react-pdf__Page__textContent span.pdf-highlight {
+          background-color: #FFEB3B !important;
+          border-radius: 2px !important;
+          padding: 2px 0 !important;
+          box-shadow: 0 0 0 2px #FFEB3B !important;
         }
       `}</style>
     </motion.div>
