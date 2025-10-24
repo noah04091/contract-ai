@@ -1471,7 +1471,11 @@ Konfidenz: ${opt.confidence}%\n`
                 animate={{ opacity: 1 }}
                 style={{
                   marginRight: highlightedText ? '50%' : '0',
-                  transition: 'margin-right 0.5s cubic-bezier(0.2, 0.8, 0.2, 1)'
+                  maxWidth: highlightedText ? 'none' : '1400px',
+                  marginLeft: highlightedText ? '0' : 'auto',
+                  paddingLeft: highlightedText ? '20px' : '0',
+                  paddingRight: highlightedText ? '0' : '0',
+                  transition: 'all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1)'
                 }}
               >
                 
