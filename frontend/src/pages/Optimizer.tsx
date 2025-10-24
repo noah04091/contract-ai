@@ -1752,80 +1752,212 @@ Konfidenz: ${opt.confidence}%\n`
                   )}
                 </motion.div>
 
-                {/* Category Filter - Apple Style */}
-                <motion.div className={styles.card}>
-                  <div className={styles.cardHeader}>
-                    <Filter size={20} />
-                    <span className={styles.cardTitle}>Dynamische Kategorien</span>
-                    <span className={styles.categoryCount}>
+                {/* Category Filter - Premium Design */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, ease: [0.2, 0.8, 0.2, 1], delay: 0.2 }}
+                  style={{
+                    background: '#FFFFFF',
+                    border: '1px solid rgba(0, 0, 0, 0.08)',
+                    borderRadius: '16px',
+                    padding: '24px',
+                    marginBottom: '16px',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+                    <Filter size={20} style={{ color: '#007AFF' }} />
+                    <h3 style={{
+                      fontSize: '17px',
+                      fontWeight: 600,
+                      color: '#1D1D1F',
+                      margin: 0,
+                      letterSpacing: '-0.01em',
+                      flex: 1
+                    }}>
+                      Dynamische Kategorien
+                    </h3>
+                    <span style={{ fontSize: '14px', color: '#86868B', fontWeight: 500 }}>
                       {filteredOptimizations.length} Optimierungen
                     </span>
                   </div>
-                  
-                  <div className={styles.buttonGroup}>
-                    {dynamicCategories.map(category => (
-                      <button
-                        key={category.id}
-                        onClick={() => setSelectedCategory(category.id)}
-                        className={`${styles.categoryButton} ${selectedCategory === category.id ? styles.categoryButtonActive : ''}`}
-                        data-category={category.id}
-                      >
-                        {category.icon}
-                        {category.name}
-                        <span className={styles.categoryBadge}>
-                          {category.count}
-                        </span>
-                      </button>
-                    ))}
+
+                  <div style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: '8px'
+                  }}>
+                    {dynamicCategories.map((category, idx) => {
+                      const isActive = selectedCategory === category.id;
+                      return (
+                        <motion.button
+                          key={category.id}
+                          onClick={() => setSelectedCategory(category.id)}
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ delay: 0.25 + idx * 0.04, duration: 0.2 }}
+                          whileHover={{ scale: 1.03 }}
+                          whileTap={{ scale: 0.97 }}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            padding: '10px 16px',
+                            borderRadius: '12px',
+                            border: isActive ? '1.5px solid #007AFF' : '1px solid rgba(0, 0, 0, 0.1)',
+                            background: isActive ? 'rgba(0, 122, 255, 0.08)' : '#FFFFFF',
+                            color: isActive ? '#007AFF' : '#1D1D1F',
+                            fontSize: '14px',
+                            fontWeight: isActive ? 600 : 500,
+                            cursor: 'pointer',
+                            transition: 'all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)',
+                            letterSpacing: '-0.01em',
+                            boxShadow: isActive ? '0 2px 8px rgba(0, 122, 255, 0.15)' : '0 1px 3px rgba(0, 0, 0, 0.04)'
+                          }}
+                        >
+                          <span style={{ fontSize: '16px' }}>{category.icon}</span>
+                          {category.name}
+                          <span style={{
+                            padding: '2px 8px',
+                            borderRadius: '8px',
+                            background: isActive ? '#007AFF' : '#F5F5F7',
+                            color: isActive ? '#FFFFFF' : '#86868B',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            minWidth: '24px',
+                            textAlign: 'center'
+                          }}>
+                            {category.count}
+                          </span>
+                        </motion.button>
+                      );
+                    })}
                   </div>
                 </motion.div>
 
-                {/* Additional Options - SIMPLIFIED */}
-                <motion.div className={styles.card}>
-                  <div className={styles.controlPanel}>
-                    <button
-                      onClick={() => setShowAdvancedView(!showAdvancedView)}
-                      className={styles.secondaryButton}
-                    >
-                      <Settings className="w-4 h-4" />
-                      {showAdvancedView ? 'Einfache Ansicht' : 'Einzelne auswählen'}
-                    </button>
+                {/* Control Panel - Premium Design */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, ease: [0.2, 0.8, 0.2, 1], delay: 0.25 }}
+                  style={{
+                    background: '#FFFFFF',
+                    border: '1px solid rgba(0, 0, 0, 0.08)',
+                    borderRadius: '16px',
+                    padding: '20px 24px',
+                    marginBottom: '16px',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: '8px',
+                    alignItems: 'center'
+                  }}
+                >
+                  <motion.button
+                    onClick={() => setShowAdvancedView(!showAdvancedView)}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '10px 16px',
+                      borderRadius: '12px',
+                      border: '1px solid rgba(0, 0, 0, 0.1)',
+                      background: '#FFFFFF',
+                      color: '#1D1D1F',
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)',
+                      letterSpacing: '-0.01em',
+                      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)'
+                    }}
+                  >
+                    <Settings size={16} />
+                    {showAdvancedView ? 'Einfache Ansicht' : 'Einzelne auswählen'}
+                  </motion.button>
 
-                    {/* 🎯 PHASE 1 - FEATURE 2: Quick Wins Sort Button */}
-                    <button
-                      onClick={() => setShowQuickWinsFirst(!showQuickWinsFirst)}
-                      className={styles.secondaryButton}
+                  <motion.button
+                    onClick={() => setShowQuickWinsFirst(!showQuickWinsFirst)}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '10px 16px',
+                      borderRadius: '12px',
+                      border: showQuickWinsFirst ? '1.5px solid #007AFF' : '1px solid rgba(0, 0, 0, 0.1)',
+                      background: showQuickWinsFirst ? '#007AFF' : '#FFFFFF',
+                      color: showQuickWinsFirst ? '#FFFFFF' : '#1D1D1F',
+                      fontSize: '14px',
+                      fontWeight: showQuickWinsFirst ? 600 : 500,
+                      cursor: 'pointer',
+                      transition: 'all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)',
+                      letterSpacing: '-0.01em',
+                      boxShadow: showQuickWinsFirst ? '0 2px 8px rgba(0, 122, 255, 0.25)' : '0 1px 3px rgba(0, 0, 0, 0.04)'
+                    }}
+                  >
+                    <Zap size={16} />
+                    {showQuickWinsFirst ? '✅ Einfache zuerst' : 'Einfache zuerst'}
+                  </motion.button>
+
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <motion.button
+                      ref={pitchButtonRef}
+                      onClick={() => setShowPitchMenu(!showPitchMenu)}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
                       style={{
-                        background: showQuickWinsFirst ? '#007AFF' : 'white',
-                        color: showQuickWinsFirst ? 'white' : '#1d1d1f',
-                        borderColor: showQuickWinsFirst ? '#007AFF' : '#d1d1d6'
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '10px 16px',
+                        borderRadius: '12px',
+                        border: '1px solid rgba(0, 0, 0, 0.1)',
+                        background: '#FFFFFF',
+                        color: '#1D1D1F',
+                        fontSize: '14px',
+                        fontWeight: 500,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)',
+                        letterSpacing: '-0.01em',
+                        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)'
                       }}
                     >
-                      <Zap className="w-4 h-4" />
-                      {showQuickWinsFirst ? '✅ Einfache zuerst' : 'Einfache zuerst'}
-                    </button>
-                    
-                    <div className={styles.dropdownGroup}>
-                      <button
-                        ref={pitchButtonRef}
-                        onClick={() => setShowPitchMenu(!showPitchMenu)}
-                        className={styles.secondaryButton}
-                      >
-                        <Mail className="w-4 h-4" />
-                        Pitch
-                        {showPitchMenu ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                      </button>
-                      
-                      <button
-                        ref={exportButtonRef}
-                        onClick={() => setShowExportMenu(!showExportMenu)}
-                        className={styles.secondaryButton}
-                      >
-                        <Download className="w-4 h-4" />
-                        Export
-                        {showExportMenu ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                      </button>
-                    </div>
+                      <Mail size={16} />
+                      Pitch
+                      {showPitchMenu ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                    </motion.button>
+
+                    <motion.button
+                      ref={exportButtonRef}
+                      onClick={() => setShowExportMenu(!showExportMenu)}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '10px 16px',
+                        borderRadius: '12px',
+                        border: '1px solid rgba(0, 0, 0, 0.1)',
+                        background: '#FFFFFF',
+                        color: '#1D1D1F',
+                        fontSize: '14px',
+                        fontWeight: 500,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)',
+                        letterSpacing: '-0.01em',
+                        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)'
+                      }}
+                    >
+                      <Download size={16} />
+                      Export
+                      {showExportMenu ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                    </motion.button>
                   </div>
                 </motion.div>
 
