@@ -535,16 +535,18 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
           100% { transform: rotate(360deg); }
         }
 
-        /* TextLayer: Schwarzer Text statt weiß */
+        /* TextLayer: TRANSPARENT (nur Highlights sichtbar!) */
         .react-pdf__Page__textContent {
-          color: #000000 !important;
+          color: transparent !important;
+          /* Erlaubt Textauswahl, aber Text ist unsichtbar */
         }
         .react-pdf__Page__textContent span {
-          color: #000000 !important;
+          color: transparent !important;
         }
 
-        /* Text-Highlighting: Gelber Hintergrund */
+        /* Text-Highlighting: Gelber Hintergrund mit schwarzem Text */
         .react-pdf__Page__textContent span.pdf-highlight {
+          color: #000000 !important; /* NUR gehighlighteter Text ist sichtbar */
           background-color: #FFEB3B !important;
           border-radius: 2px !important;
           padding: 2px 0 !important;
