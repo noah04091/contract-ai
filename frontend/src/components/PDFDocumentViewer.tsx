@@ -3,6 +3,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
+import type { PDFDocumentProxy } from 'pdfjs-dist';
 import { motion } from 'framer-motion';
 import { FileText, ZoomIn, ZoomOut, ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -27,7 +28,7 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
   const [foundOnPage, setFoundOnPage] = useState<number | null>(null); // Seite wo Text gefunden wurde
   const containerRef = useRef<HTMLDivElement>(null);
   const highlightRef = useRef<string | null>(null);
-  const pdfDocumentRef = useRef<any>(null); // Referenz zum geladenen PDF-Dokument
+  const pdfDocumentRef = useRef<PDFDocumentProxy | null>(null); // Referenz zum geladenen PDF-Dokument
 
   // Reset when file changes
   useEffect(() => {
@@ -82,7 +83,7 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
     return () => clearTimeout(timeoutId);
   }, [highlightText, foundOnPage, showTextLayer]);
 
-  const onDocumentLoadSuccess = (pdf: any) => {
+  const onDocumentLoadSuccess = (pdf: PDFDocumentProxy) => {
     setNumPages(pdf.numPages);
     pdfDocumentRef.current = pdf; // Speichere PDF-Dokument für Text-Suche
     console.log(`📄 PDF geladen: ${pdf.numPages} Seiten`);
@@ -114,7 +115,7 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
 
         // Extrahiere Text von dieser Seite
         const pageText = textContent.items
-          .map((item: any) => item.str)
+          .map((item) => ('str' in item ? item.str : ''))
           .join(' ')
           .toLowerCase();
 
