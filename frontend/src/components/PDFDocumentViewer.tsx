@@ -23,8 +23,11 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [scale, setScale] = useState<number>(1.2);
   const [showTextLayer, setShowTextLayer] = useState<boolean>(false); // Toggle für TextLayer
+  const [isSearching, setIsSearching] = useState<boolean>(false); // Suche läuft
+  const [foundOnPage, setFoundOnPage] = useState<number | null>(null); // Seite wo Text gefunden wurde
   const containerRef = useRef<HTMLDivElement>(null);
   const highlightRef = useRef<string | null>(null);
+  const pdfDocumentRef = useRef<any>(null); // Referenz zum geladenen PDF-Dokument
 
   // Reset when file changes
   useEffect(() => {
@@ -39,9 +42,10 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
     }
   }, [highlightText]);
 
-  const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
-    setNumPages(numPages);
-    console.log(`📄 PDF geladen: ${numPages} Seiten`);
+  const onDocumentLoadSuccess = (pdf: any) => {
+    setNumPages(pdf.numPages);
+    pdfDocumentRef.current = pdf; // Speichere PDF-Dokument für Text-Suche
+    console.log(`📄 PDF geladen: ${pdf.numPages} Seiten`);
   };
 
   const onDocumentLoadError = (error: Error) => {
@@ -50,19 +54,51 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
 
   // Suche Text im PDF und highlighte ihn
   const searchAndHighlight = async (searchText: string) => {
-    if (!file || !searchText) return;
+    if (!searchText || !pdfDocumentRef.current) {
+      console.log('⚠️ Kein PDF oder kein Suchtext');
+      return;
+    }
+
+    setIsSearching(true);
+    setFoundOnPage(null);
 
     try {
-      // TODO: Implementiere Text-Suche und Highlighting
-      // Das machen wir in Phase 2
       console.log('🔍 Suche nach:', searchText);
+      const pdf = pdfDocumentRef.current;
+      const searchLower = searchText.toLowerCase().trim();
 
-      // Für jetzt: Scroll zum Container
-      if (containerRef.current) {
-        containerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      // Durchsuche alle Seiten
+      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+        const page = await pdf.getPage(pageNum);
+        const textContent = await page.getTextContent();
+
+        // Extrahiere Text von dieser Seite
+        const pageText = textContent.items
+          .map((item: any) => item.str)
+          .join(' ')
+          .toLowerCase();
+
+        // Prüfe ob Suchtext auf dieser Seite ist
+        if (pageText.includes(searchLower)) {
+          console.log(`✅ Text gefunden auf Seite ${pageNum}`);
+          setFoundOnPage(pageNum);
+          setPageNumber(pageNum);
+          setIsSearching(false);
+
+          // Scroll zum Container
+          if (containerRef.current) {
+            containerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+          return; // Erste Fundstelle reicht
+        }
       }
+
+      // Nichts gefunden
+      console.log('❌ Text nicht gefunden im PDF');
+      setIsSearching(false);
     } catch (error) {
-      console.error('Fehler beim Suchen:', error);
+      console.error('❌ Fehler beim Suchen:', error);
+      setIsSearching(false);
     }
   };
 
@@ -131,13 +167,13 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
             <span style={{
               fontSize: '11px',
               fontWeight: 600,
-              color: '#FF9500',
-              background: 'rgba(255, 149, 0, 0.1)',
+              color: isSearching ? '#007AFF' : foundOnPage ? '#34C759' : '#FF9500',
+              background: isSearching ? 'rgba(0, 122, 255, 0.1)' : foundOnPage ? 'rgba(52, 199, 89, 0.1)' : 'rgba(255, 149, 0, 0.1)',
               padding: '4px 8px',
               borderRadius: '6px',
               letterSpacing: '0.3px'
             }}>
-              📍 Stelle markiert
+              {isSearching ? '🔍 Suche läuft...' : foundOnPage ? `✅ Gefunden auf Seite ${foundOnPage}` : '📍 Stelle markiert'}
             </span>
           )}
         </div>
