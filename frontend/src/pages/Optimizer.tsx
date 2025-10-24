@@ -46,6 +46,7 @@ import UnifiedPremiumNotice from "../components/UnifiedPremiumNotice";
 import ContractHealthDashboard from "../components/ContractHealthDashboard";
 import SimpleExplanationPopup from "../components/SimpleExplanationPopup";
 import AnalysisProgressComponent from "../components/AnalysisProgress";
+import PDFDocumentViewer from "../components/PDFDocumentViewer";
 
 // Types für revolutionäre Features
 import {
@@ -562,6 +563,9 @@ export default function Optimizer() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [selectedOptimizations, setSelectedOptimizations] = useState<Set<string>>(new Set());
+
+  // 📄 PDF Document Viewer State
+  const [highlightedText, setHighlightedText] = useState<string | null>(null); // wird in Phase 3 genutzt
 
   // 🧠 PHASE 1: Simple Explanation Popup State
   const [explanationPopup, setExplanationPopup] = useState<{
@@ -2712,6 +2716,36 @@ Konfidenz: ${opt.confidence}%\n`
                         gap: '12px',
                         justifyContent: 'flex-end'
                       }}>
+                        {/* Im Dokument anzeigen Button */}
+                        <motion.button
+                          onClick={() => {
+                            setHighlightedText(optimization.original);
+                            // Scroll zur PDF-Vorschau wird automatisch vom PDFDocumentViewer gehandelt
+                          }}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            padding: '10px 16px',
+                            borderRadius: '12px',
+                            border: '1.5px solid #007AFF',
+                            background: 'linear-gradient(135deg, rgba(0, 122, 255, 0.08) 0%, rgba(0, 122, 255, 0.12) 100%)',
+                            color: '#007AFF',
+                            fontSize: '14px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            transition: 'all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)',
+                            letterSpacing: '-0.01em',
+                            boxShadow: '0 2px 8px rgba(0, 122, 255, 0.15)'
+                          }}
+                          whileHover={{ scale: 1.02, boxShadow: '0 4px 12px rgba(0, 122, 255, 0.25)' }}
+                          whileTap={{ scale: 0.98 }}
+                          title="Im Dokument anzeigen"
+                        >
+                          <FileText size={16} />
+                          Im Dokument anzeigen
+                        </motion.button>
+
                         {/* Einfach erklärt Button */}
                         <motion.button
                           onClick={() => setExplanationPopup({ show: true, optimization })}
@@ -2777,6 +2811,48 @@ Konfidenz: ${opt.confidence}%\n`
           </AnimatePresence>
         </motion.div>
       </div>
+
+      {/* 📄 PDF Document Viewer Section */}
+      {optimizationResult && file && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.2 }}
+          style={{
+            marginTop: '40px',
+            padding: '0 20px',
+            maxWidth: '1400px',
+            margin: '40px auto 0'
+          }}
+        >
+          <div style={{
+            marginBottom: '24px',
+            textAlign: 'center'
+          }}>
+            <h2 style={{
+              fontSize: '24px',
+              fontWeight: 700,
+              color: '#1D1D1F',
+              marginBottom: '8px',
+              letterSpacing: '-0.02em'
+            }}>
+              📄 Original-Dokument
+            </h2>
+            <p style={{
+              fontSize: '14px',
+              color: '#86868B',
+              margin: 0
+            }}>
+              Klicke auf "Im Dokument anzeigen" um zur entsprechenden Stelle zu springen
+            </p>
+          </div>
+
+          <PDFDocumentViewer
+            file={file}
+            highlightText={highlightedText}
+          />
+        </motion.div>
+      )}
 
       {/* 🧠 PHASE 1: Simple Explanation Popup */}
       {explanationPopup.show && explanationPopup.optimization && (
