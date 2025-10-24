@@ -1482,7 +1482,7 @@ Konfidenz: ${opt.confidence}%\n`
             {optimizations.length > 0 && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                 
-                {/* Contract Type Card - Premium Design */}
+                {/* Contract Type Card - Simplified */}
                 {optimizationResult?.meta && (
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -1492,77 +1492,40 @@ Konfidenz: ${opt.confidence}%\n`
                       background: '#FFFFFF',
                       border: '1px solid rgba(0, 0, 0, 0.08)',
                       borderRadius: '16px',
-                      padding: '32px',
+                      padding: '20px 24px',
                       marginBottom: '16px',
-                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)'
+                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '16px'
                     }}
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div
-                          style={{
-                            width: '56px',
-                            height: '56px',
-                            borderRadius: '12px',
-                            background: `${CONTRACT_TYPE_INFO[optimizationResult.meta.type as keyof typeof CONTRACT_TYPE_INFO]?.color || '#007AFF'}15`,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontSize: '28px'
-                          }}
-                        >
-                          {CONTRACT_TYPE_INFO[optimizationResult.meta.type as keyof typeof CONTRACT_TYPE_INFO]?.icon}
-                        </div>
-                        <div>
-                          <h3
-                            style={{
-                              fontSize: '20px',
-                              fontWeight: 600,
-                              color: '#1D1D1F',
-                              marginBottom: '8px',
-                              letterSpacing: '-0.02em'
-                            }}
-                          >
-                            {CONTRACT_TYPE_INFO[optimizationResult.meta.type as keyof typeof CONTRACT_TYPE_INFO]?.name || 'Vertrag'} erkannt
-                          </h3>
-                          <div style={{ display: 'flex', gap: '16px', fontSize: '14px', color: '#86868B' }}>
-                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                              <span style={{ fontSize: '16px' }}>📊</span> {optimizationResult.meta.confidence}%
-                            </span>
-                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                              <span style={{ fontSize: '16px' }}>⚖️</span> {optimizationResult.meta.jurisdiction}
-                            </span>
-                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                              <span style={{ fontSize: '16px' }}>🌍</span> {optimizationResult.meta.language === 'de' ? 'Deutsch' : 'Englisch'}
-                            </span>
-                            {optimizationResult.meta.gapsFound && (
-                              <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                <span style={{ fontSize: '16px' }}>🔍</span> {optimizationResult.meta.gapsFound} Lücken
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                      {optimizationResult.score && (
-                        <div style={{ textAlign: 'right' }}>
-                          <div
-                            style={{
-                              fontSize: '40px',
-                              fontWeight: 700,
-                              color: CONTRACT_TYPE_INFO[optimizationResult.meta.type as keyof typeof CONTRACT_TYPE_INFO]?.color || '#007AFF',
-                              lineHeight: 1,
-                              marginBottom: '8px',
-                              letterSpacing: '-0.03em'
-                            }}
-                          >
-                            {optimizationResult.score.health}
-                          </div>
-                          <div style={{ fontSize: '13px', color: '#86868B', fontWeight: 500 }}>
-                            Health Score
-                          </div>
-                        </div>
-                      )}
+                    <div
+                      style={{
+                        width: '48px',
+                        height: '48px',
+                        borderRadius: '12px',
+                        background: `${CONTRACT_TYPE_INFO[optimizationResult.meta.type as keyof typeof CONTRACT_TYPE_INFO]?.color || '#007AFF'}15`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '24px',
+                        flexShrink: 0
+                      }}
+                    >
+                      {CONTRACT_TYPE_INFO[optimizationResult.meta.type as keyof typeof CONTRACT_TYPE_INFO]?.icon}
                     </div>
+                    <h3
+                      style={{
+                        fontSize: '17px',
+                        fontWeight: 600,
+                        color: '#1D1D1F',
+                        margin: 0,
+                        letterSpacing: '-0.01em'
+                      }}
+                    >
+                      {CONTRACT_TYPE_INFO[optimizationResult.meta.type as keyof typeof CONTRACT_TYPE_INFO]?.name || 'Vertrag'} erkannt
+                    </h3>
                   </motion.div>
                 )}
 
