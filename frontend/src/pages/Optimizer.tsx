@@ -534,6 +534,24 @@ const calculateContractScore = (optimizations: OptimizationSuggestion[]): Contra
   };
 };
 
+// ✅ Helper: Prüft ob originalText ein echter PDF-Text ist (nicht "FEHLT" oder Platzhalter)
+const isValidPdfText = (text: string | undefined): boolean => {
+  if (!text || text.trim().length < 20) return false;
+
+  const invalidTexts = [
+    'FEHLT',
+    'fehlt',
+    'nicht vorhanden',
+    'Siehe Vertrag',
+    'Analyse erforderlich',
+    'Diese Klausel ist nicht vorhanden',
+    'Diese Pflichtklausel ist nicht vorhanden',
+    'Diese wichtige Regelung ist nicht im Vertrag vorhanden'
+  ];
+
+  return !invalidTexts.some(invalid => text.includes(invalid));
+};
+
 export default function Optimizer() {
   // ✅ ORIGINAL: Core states
   const [file, setFile] = useState<File | null>(null);
@@ -2739,42 +2757,44 @@ Konfidenz: ${opt.confidence}%\n`
                         gap: '12px',
                         justifyContent: 'flex-end'
                       }}>
-                        {/* Im Dokument anzeigen Button */}
-                        <motion.button
-                          onClick={() => {
-                            // Setze Suchtext für PDF-Highlighting
-                            setHighlightedText(optimization.original);
-                            // Smooth scroll zur PDF-Vorschau
-                            setTimeout(() => {
-                              pdfViewerRef.current?.scrollIntoView({
-                                behavior: 'smooth',
-                                block: 'start'
-                              });
-                            }, 100);
-                          }}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            padding: '10px 16px',
-                            borderRadius: '12px',
-                            border: '1.5px solid #007AFF',
-                            background: 'linear-gradient(135deg, rgba(0, 122, 255, 0.08) 0%, rgba(0, 122, 255, 0.12) 100%)',
-                            color: '#007AFF',
-                            fontSize: '14px',
-                            fontWeight: 600,
-                            cursor: 'pointer',
-                            transition: 'all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)',
-                            letterSpacing: '-0.01em',
-                            boxShadow: '0 2px 8px rgba(0, 122, 255, 0.15)'
-                          }}
-                          whileHover={{ scale: 1.02, boxShadow: '0 4px 12px rgba(0, 122, 255, 0.25)' }}
-                          whileTap={{ scale: 0.98 }}
-                          title="Im Dokument anzeigen"
-                        >
-                          <FileText size={16} />
-                          Im Dokument anzeigen
-                        </motion.button>
+                        {/* Im Dokument anzeigen Button - nur für echten PDF-Text */}
+                        {isValidPdfText(optimization.original) && (
+                          <motion.button
+                            onClick={() => {
+                              // Setze Suchtext für PDF-Highlighting
+                              setHighlightedText(optimization.original);
+                              // Smooth scroll zur PDF-Vorschau
+                              setTimeout(() => {
+                                pdfViewerRef.current?.scrollIntoView({
+                                  behavior: 'smooth',
+                                  block: 'start'
+                                });
+                              }, 100);
+                            }}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              padding: '10px 16px',
+                              borderRadius: '12px',
+                              border: '1.5px solid #007AFF',
+                              background: 'linear-gradient(135deg, rgba(0, 122, 255, 0.08) 0%, rgba(0, 122, 255, 0.12) 100%)',
+                              color: '#007AFF',
+                              fontSize: '14px',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                              transition: 'all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)',
+                              letterSpacing: '-0.01em',
+                              boxShadow: '0 2px 8px rgba(0, 122, 255, 0.15)'
+                            }}
+                            whileHover={{ scale: 1.02, boxShadow: '0 4px 12px rgba(0, 122, 255, 0.25)' }}
+                            whileTap={{ scale: 0.98 }}
+                            title="Im Dokument anzeigen"
+                          >
+                            <FileText size={16} />
+                            Im Dokument anzeigen
+                          </motion.button>
+                        )}
 
                         {/* Einfach erklärt Button */}
                         <motion.button
