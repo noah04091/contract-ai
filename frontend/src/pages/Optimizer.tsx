@@ -80,6 +80,23 @@ interface CompanyProfile {
   logoKey?: string;
 }
 
+interface GenerateFormData {
+  title: string;
+  type: string;
+  parties?: unknown;
+  amounts?: unknown;
+  duration?: string;
+  termination?: string;
+  optimizations?: Array<{
+    original: string;
+    improved: string;
+    category: string;
+    reasoning: string;
+  }>;
+  originalContent?: string;
+  [key: string]: unknown;
+}
+
 interface ContractMeta {
   type: string;
   confidence?: number;
@@ -913,7 +930,7 @@ export default function Optimizer() {
 
     try {
       // 1. Sammle Original-Daten basierend auf Checkboxen
-      const formData: any = {
+      const formData: GenerateFormData = {
         title: file.name.replace(/\.pdf$/i, ''),
         type: 'custom', // oder basierend auf analysisData
       };
