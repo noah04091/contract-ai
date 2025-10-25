@@ -3366,7 +3366,7 @@ router.post("/pdf", verifyToken, async (req, res) => {
       
       console.log("✅ PDF erfolgreich generiert, Größe:", Math.round(pdfBuffer.length / 1024), "KB");
       
-      // Sende PDF als Response
+      // Sende PDF als Response - mit .end() für Binary Data
       res.set({
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="${contract.name || 'Vertrag'}_${new Date().toISOString().split('T')[0]}.pdf"`,
@@ -3375,8 +3375,9 @@ router.post("/pdf", verifyToken, async (req, res) => {
         'Pragma': 'no-cache',
         'Expires': '0'
       });
-      
-      res.send(pdfBuffer);
+
+      // ✅ FIX: Verwende .end() statt .send() für Binary PDF Data
+      res.end(pdfBuffer, 'binary');
       
     } catch (pageError) {
       console.error("❌ Fehler bei der PDF-Generierung:", pageError);
