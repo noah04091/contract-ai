@@ -773,8 +773,8 @@ const generateOptimizedPDF = async (contractData, optimizedText, appliedChanges,
 // 🎯 MAIN ROUTES - All Original Routes Enhanced
 // ==========================================
 
-// ✅ MAIN ROUTE: Generate Optimized Contract - POST /:contractId/generate-optimized
-router.post("/:contractId/generate-optimized", async (req, res) => {
+// ✅ MAIN ROUTE: Generate Optimized Contract - POST /:contractId/generate
+router.post("/:contractId/generate", async (req, res) => {
   const requestId = `gen_opt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   console.log(`🪄 [${requestId}] Revolutionary Smart Contract Generation:`, {
     contractId: req.params.contractId,
@@ -1140,7 +1140,7 @@ router.post("/:contractId/generate-optimized", async (req, res) => {
 });
 
 // ✅ ORIGINAL: Streaming Route
-router.post("/:contractId/generate-optimized-stream", async (req, res) => {
+router.post("/:contractId/generate-stream", async (req, res) => {
   const requestId = `stream_gen_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   
   console.log(`🚀 [${requestId}] Streaming Contract Generation started:`, {
