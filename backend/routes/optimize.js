@@ -3488,7 +3488,12 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
           userId: req.user.userId,
           name: req.file.originalname || "Analysierter Vertrag",
           content: contractText,
+          kuendigung: "Unbekannt", // ✅ Basis-Felder für Contracts-Kompatibilität
+          laufzeit: "Unbekannt",
+          expiryDate: null,
           uploadedAt: new Date(),
+          createdAt: new Date(), // ✅ FIX: Für Sortierung in GET /contracts
+          updatedAt: new Date(),
           status: "Aktiv",
           analyzed: true,
           isOptimized: true, // 🎯 Badge-Flag für "Optimiert"
@@ -4045,7 +4050,7 @@ router.post("/stream", verifyToken, uploadLimiter, smartRateLimiter, upload.sing
     // STAGE 5: Quality checks and normalization
     sendProgress(85, "🔬 Qualitäts-Checks und Normalisierung...");
 
-    const normalizedResult = await normalizeAndValidateOutput(
+    let normalizedResult = await normalizeAndValidateOutput( // ✅ FIX: let statt const (wird später reassigned)
       parsedOutput,
       contractText,
       contractTypeInfo,
