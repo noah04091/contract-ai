@@ -1000,8 +1000,30 @@ export default function Optimizer() {
         throw new Error(errorData.message || 'Fehler beim Generieren');
       }
 
-      // 7. Lade das generierte PDF herunter
-      const blob = await response.blob();
+      // 7. Parse JSON Response um contractId zu bekommen
+      const data = await response.json();
+      if (!data.contractId) {
+        throw new Error('Keine Contract ID erhalten');
+      }
+
+      console.log('✅ Vertrag erstellt, generiere PDF mit ID:', data.contractId);
+
+      // 8. Generiere PDF mit Puppeteer
+      const pdfResponse = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/generate/pdf`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contractId: data.contractId
+        })
+      });
+
+      if (!pdfResponse.ok) {
+        throw new Error('PDF-Generierung fehlgeschlagen');
+      }
+
+      // 9. Lade das generierte PDF herunter
+      const blob = await pdfResponse.blob();
       const downloadUrl = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;
