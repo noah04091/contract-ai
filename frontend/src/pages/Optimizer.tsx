@@ -982,8 +982,8 @@ export default function Optimizer() {
         }
       }
 
-      // 6. Erstelle neuen Vertrag über /api/generate
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/generate`, {
+      // 6. Erstelle neuen Vertrag über /api/contracts/generate
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/generate`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
