@@ -16,6 +16,9 @@ const { runBaselineRules } = require("../services/optimizer/rules");
 // 🔥 FIX 4+: Quality Layer imports (mit Sanitizer + Content-Mismatch Guard + Context-Aware Benchmarks)
 const { dedupeIssues, ensureCategory, sanitizeImprovedText, sanitizeText, sanitizeBenchmark, cleanPlaceholders, isTextMatchingCategory, generateContextAwareBenchmark } = require("../services/optimizer/quality");
 
+// 🆕 S3 SDK für PDF-Upload
+const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
+
 const router = express.Router();
 const upload = multer({ dest: "uploads/" });
 
@@ -35,6 +38,21 @@ let contractsCollection, db;
   }
 })();
 
+// 🆕 S3 Client Setup
+let s3Instance = null;
+try {
+  s3Instance = new S3Client({
+    region: process.env.AWS_REGION,
+    credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    },
+  });
+  console.log("✅ Optimize.js: S3 Client initialisiert für PDF-Upload!");
+} catch (err) {
+  console.error("❌ Optimize.js S3 Init Fehler:", err);
+}
+
 // ✅ SINGLETON OpenAI-Instance with retry logic and fallback
 let openaiInstance = null;
 const getOpenAI = () => {
@@ -50,6 +68,41 @@ const getOpenAI = () => {
     console.log("🔧 OpenAI-Instance für Anwaltskanzlei-Level Optimierung initialisiert");
   }
   return openaiInstance;
+};
+
+// 🆕 Upload PDF to S3
+const uploadToS3 = async (localFilePath, originalFilename, userId) => {
+  try {
+    const fileBuffer = await fs.readFile(localFilePath);
+    const s3Key = `contracts/${Date.now()}-${originalFilename}`;
+
+    const command = new PutObjectCommand({
+      Bucket: process.env.S3_BUCKET_NAME,
+      Key: s3Key,
+      Body: fileBuffer,
+      ContentType: 'application/pdf',
+      Metadata: {
+        uploadDate: new Date().toISOString(),
+        userId: userId || 'unknown',
+        source: 'optimizer'
+      },
+    });
+
+    await s3Instance.send(command);
+
+    const s3Location = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${s3Key}`;
+
+    console.log(`✅ [S3-Optimizer] Successfully uploaded to: ${s3Location}`);
+
+    return {
+      s3Key,
+      s3Location,
+      s3Bucket: process.env.S3_BUCKET_NAME,
+    };
+  } catch (error) {
+    console.error(`❌ [S3-Optimizer] Upload failed:`, error);
+    throw error;
+  }
 };
 
 // 🚀 ULTIMATIVE VERTRAGSTYPEN-DATENBANK (100+ Typen mit juristischer Präzision)
@@ -3420,8 +3473,17 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
 
     // 🔥 NEU: Speichere Contract automatisch in Contracts-Verwaltung
     let savedContractId = null;
-    if (contractsCollection && db) {
+    if (contractsCollection && db && s3Instance) {
       try {
+        // 🆕 Upload PDF to S3 first
+        let s3Data = null;
+        try {
+          s3Data = await uploadToS3(req.file.path, req.file.originalname, req.user.userId);
+          console.log(`✅ [${requestId}] PDF uploaded to S3:`, s3Data.s3Key);
+        } catch (s3Error) {
+          console.error(`⚠️ [${requestId}] S3 Upload failed (continuing without PDF):`, s3Error.message);
+        }
+
         const contractToSave = {
           userId: req.user.userId,
           name: req.file.originalname || "Analysierter Vertrag",
@@ -3431,6 +3493,12 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
           analyzed: true,
           isOptimized: true, // 🎯 Badge-Flag für "Optimiert"
           sourceType: "optimizer", // Wo kam es her
+          // 🆕 S3 Fields
+          ...(s3Data && {
+            s3Key: s3Data.s3Key,
+            s3Location: s3Data.s3Location,
+            s3Bucket: s3Data.s3Bucket
+          }),
           analysisData: {
             healthScore: normalizedResult.meta?.healthScore || normalizedResult.summary?.healthScore || 0,
             totalIssues: normalizedResult.summary.totalIssues,
@@ -3459,7 +3527,8 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
         console.log(`📁 [${requestId}] Contract automatisch gespeichert in Contracts-Verwaltung:`, {
           contractId: savedContractId,
           name: contractToSave.name,
-          isOptimized: true
+          isOptimized: true,
+          hasS3Pdf: !!s3Data
         });
       } catch (saveError) {
         console.error(`⚠️ [${requestId}] Fehler beim Speichern in Contracts (nicht kritisch):`, saveError.message);
