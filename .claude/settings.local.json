@@ -1,25 +1,7 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git add:*)",
-      "Bash(git commit:*)",
-      "Bash(node server.js)",
-      "Bash(npm run dev:*)",
-      "Bash(curl:*)",
-      "Bash(git push:*)",
-      "Bash(npm install:*)",
-      "Bash(npm run build:*)",
-      "Bash(node:*)",
-      "Bash(npm audit fix:*)",
-      "Bash(git log:*)",
-      "Bash(netstat -ano)",
-      "Bash(findstr \"5173\")",
-      "Bash(tasklist)",
-      "Bash(findstr \"node\")",
-      "Bash(findstr \"FRONTEND_URL\" .env)",
-      "Bash(npx vite-node -e \"import { createRequire } from ''module''; const require = createRequire(import.meta.url); const pdfjs = require.resolve(''pdfjs-dist/build/pdf.worker.min.mjs''); console.log(pdfjs)\")",
-      "Bash(Dein Output wird durch Quality-Check gefiltert!)",
-      "Bash(Issues mit Platzhaltern werden gelöscht!\"\n\n   ✅ Klare Konsequenzen genannt\n   ✅ Beispiele für richtige Formulierungen\n   ✅ Max 60 Zeichen für summary erzwungen\n   ✅ Duplikat-Warnung verstärkt\n\n3. Integration in Pipeline:\n   STAGE 5: normalizeAndValidateOutput (wie vorher)\n   STAGE 5.5: applyUltimateQualityLayer (NEU!) 🔥\n   STAGE 6: Anreicherung (wie vorher)\n\nErwartete Verbesserung:\n❌ VORHER: 20-30% Fehlerrate (Platzhalter, Duplikate, keine summary)\n✅ JETZT: <5% Fehlerrate (Auto-Korrektur!)\n\nTest-Szenarien abgedeckt:\n✅ \"siehe Vereinbarung\" → Ersetzt\n✅ 2x \"Salvatorische Klausel\" → Duplikat entfernt\n✅ Keine summary → Auto-generiert\n✅ Zu kurze Klausel → Verworfen\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
+      "Bash(find C:UserslieboDocumentscontract-aibackend -name \"*.js\" -type f -exec grep -l \"router.post.*generate\" {} ;)"
     ],
     "deny": [],
     "ask": []

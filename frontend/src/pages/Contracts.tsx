@@ -807,12 +807,14 @@ export default function Contracts() {
   // ✅ KORRIGIERT: User-Info laden mit 3-Stufen-Preismodell
   const fetchUserInfo = async () => {
     try {
-      const response = await apiCall("/auth/me") as { 
-        user: { 
-          subscriptionPlan: string; 
+      const response = await apiCall("/auth/me") as {
+        user: {
+          subscriptionPlan: string;
           isPremium: boolean;
           analysisCount: number;
-        } 
+          emailInboxAddress?: string | null;
+          emailInboxEnabled?: boolean;
+        }
       };
       
       const plan = response.user?.subscriptionPlan as 'free' | 'business' | 'premium' || 'free';

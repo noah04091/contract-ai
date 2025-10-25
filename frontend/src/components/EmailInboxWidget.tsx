@@ -40,7 +40,9 @@ export default function EmailInboxWidget({
 
     setLoading(true);
     try {
-      const response = await apiCall("/api/auth/email-inbox/regenerate", "POST");
+      const response = await apiCall("/api/auth/email-inbox/regenerate", {
+        method: "POST"
+      }) as { emailInboxAddress: string };
       console.log("✅ Neue Adresse generiert:", response.emailInboxAddress);
       onUpdate(); // User-Daten neu laden
     } catch (error) {
@@ -55,7 +57,10 @@ export default function EmailInboxWidget({
   const handleToggle = async (enabled: boolean) => {
     setLoading(true);
     try {
-      await apiCall("/api/auth/email-inbox/toggle", "PUT", { enabled });
+      await apiCall("/api/auth/email-inbox/toggle", {
+        method: "PUT",
+        body: JSON.stringify({ enabled })
+      });
       console.log(`✅ Inbox ${enabled ? 'aktiviert' : 'deaktiviert'}`);
       onUpdate(); // User-Daten neu laden
     } catch (error) {
