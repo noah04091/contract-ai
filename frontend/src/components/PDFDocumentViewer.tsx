@@ -4,8 +4,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
-import { motion } from 'framer-motion';
-import { FileText, ZoomIn, ZoomOut, ChevronLeft, ChevronRight } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FileText, ZoomIn, ZoomOut, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 
@@ -28,6 +28,7 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
   const [showTextLayer, setShowTextLayer] = useState<boolean>(false); // Toggle für TextLayer
   const [isSearching, setIsSearching] = useState<boolean>(false); // Suche läuft
   const [foundOnPage, setFoundOnPage] = useState<number | null>(null); // Seite wo Text gefunden wurde
+  const [isTextSnippetOpen, setIsTextSnippetOpen] = useState<boolean>(false); // Dropdown für Text-Snippet
   const containerRef = useRef<HTMLDivElement>(null);
   const highlightRef = useRef<string | null>(null);
   const pdfDocumentRef = useRef<PDFDocumentProxy | null>(null); // Referenz zum geladenen PDF-Dokument
@@ -262,17 +263,38 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
             Dokument-Vorschau
           </span>
           {highlightText && (
-            <span style={{
-              fontSize: '11px',
-              fontWeight: 600,
-              color: isSearching ? '#007AFF' : foundOnPage ? '#34C759' : '#FF9500',
-              background: isSearching ? 'rgba(0, 122, 255, 0.1)' : foundOnPage ? 'rgba(52, 199, 89, 0.1)' : 'rgba(255, 149, 0, 0.1)',
-              padding: '4px 8px',
-              borderRadius: '6px',
-              letterSpacing: '0.3px'
-            }}>
+            <button
+              onClick={() => setIsTextSnippetOpen(!isTextSnippetOpen)}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.15)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+              style={{
+                fontSize: '11px',
+                fontWeight: 600,
+                color: isSearching ? '#007AFF' : foundOnPage ? '#34C759' : '#FF9500',
+                background: isSearching ? 'rgba(0, 122, 255, 0.1)' : foundOnPage ? 'rgba(52, 199, 89, 0.1)' : 'rgba(255, 149, 0, 0.1)',
+                padding: '4px 8px',
+                borderRadius: '6px',
+                letterSpacing: '0.3px',
+                border: 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                transition: 'all 0.2s'
+              }}
+              title="Klicken um gesuchten Text anzuzeigen"
+            >
               {isSearching ? '🔍 Suche läuft...' : foundOnPage ? `✅ Gefunden auf Seite ${foundOnPage}` : '📍 Stelle markiert'}
-            </span>
+              {!isSearching && (
+                isTextSnippetOpen ? <ChevronUp size={12} /> : <ChevronDown size={12} />
+              )}
+            </button>
           )}
         </div>
 
@@ -408,70 +430,74 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
         </div>
       </div>
 
-      {/* Highlight-Anzeige wenn Text gesucht wird */}
-      {highlightText && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
-          exit={{ opacity: 0, height: 0 }}
-          style={{
-            background: 'linear-gradient(135deg, rgba(255, 204, 0, 0.15) 0%, rgba(255, 149, 0, 0.15) 100%)',
-            border: '2px solid #FFCC00',
-            borderLeft: '4px solid #FF9500',
-            padding: '16px 20px',
-            margin: '0 20px',
-            borderRadius: '0 0 12px 12px',
-            boxShadow: '0 4px 12px rgba(255, 149, 0, 0.2)'
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-            <div style={{
-              background: '#FFCC00',
-              borderRadius: '50%',
-              padding: '6px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0
-            }}>
-              <FileText size={16} style={{ color: '#1D1D1F' }} />
+      {/* Highlight-Anzeige wenn Text gesucht wird (Dropdown) */}
+      <AnimatePresence>
+        {highlightText && isTextSnippetOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            style={{
+              background: 'linear-gradient(135deg, rgba(255, 204, 0, 0.15) 0%, rgba(255, 149, 0, 0.15) 100%)',
+              border: '2px solid #FFCC00',
+              borderLeft: '4px solid #FF9500',
+              padding: '16px 20px',
+              margin: '0 20px',
+              borderRadius: '0 0 12px 12px',
+              boxShadow: '0 4px 12px rgba(255, 149, 0, 0.2)',
+              overflow: 'hidden'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+              <div style={{
+                background: '#FFCC00',
+                borderRadius: '50%',
+                padding: '6px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0
+              }}>
+                <FileText size={16} style={{ color: '#1D1D1F' }} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  color: '#1D1D1F',
+                  marginBottom: '6px',
+                  letterSpacing: '-0.01em'
+                }}>
+                  🔍 Gesuchte Stelle im Dokument:
+                </div>
+                <div style={{
+                  fontSize: '12px',
+                  color: '#1D1D1F',
+                  lineHeight: '1.5',
+                  background: 'rgba(255, 255, 255, 0.7)',
+                  padding: '8px 12px',
+                  borderRadius: '8px',
+                  fontFamily: 'monospace',
+                  maxHeight: '80px',
+                  overflowY: 'auto',
+                  border: '1px solid rgba(255, 149, 0, 0.3)'
+                }}>
+                  {highlightText}
+                </div>
+                <div style={{
+                  fontSize: '11px',
+                  color: '#86868B',
+                  marginTop: '8px',
+                  fontStyle: 'italic'
+                }}>
+                  💡 Tipp: Scrolle durch das PDF um die Stelle zu finden
+                </div>
+              </div>
             </div>
-            <div style={{ flex: 1 }}>
-              <div style={{
-                fontSize: '13px',
-                fontWeight: 700,
-                color: '#1D1D1F',
-                marginBottom: '6px',
-                letterSpacing: '-0.01em'
-              }}>
-                🔍 Gesuchte Stelle im Dokument:
-              </div>
-              <div style={{
-                fontSize: '12px',
-                color: '#1D1D1F',
-                lineHeight: '1.5',
-                background: 'rgba(255, 255, 255, 0.7)',
-                padding: '8px 12px',
-                borderRadius: '8px',
-                fontFamily: 'monospace',
-                maxHeight: '80px',
-                overflowY: 'auto',
-                border: '1px solid rgba(255, 149, 0, 0.3)'
-              }}>
-                {highlightText}
-              </div>
-              <div style={{
-                fontSize: '11px',
-                color: '#86868B',
-                marginTop: '8px',
-                fontStyle: 'italic'
-              }}>
-                💡 Tipp: Scrolle durch das PDF um die Stelle zu finden
-              </div>
-            </div>
-          </div>
-        </motion.div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* PDF Content */}
       <div style={{
