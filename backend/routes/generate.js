@@ -3231,7 +3231,7 @@ router.post("/pdf", verifyToken, async (req, res) => {
       }
       
       // Zusätzliche Wartezeit für komplexe Layouts
-      await page.waitForTimeout(2000);
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
       // Injiziere zusätzliches CSS für bessere Print-Darstellung
       await page.addStyleTag({
