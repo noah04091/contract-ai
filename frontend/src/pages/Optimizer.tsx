@@ -61,6 +61,25 @@ import { mapLegacyToProgress } from "../utils/analysisAdapter";
 import styles from "../styles/Optimizer.module.css";
 
 // 🚀 REVOLUTIONARY: Enhanced Types with backwards compatibility
+interface CompanyProfile {
+  _id: string;
+  companyName: string;
+  legalForm?: string;
+  street?: string;
+  postalCode?: string;
+  city?: string;
+  country?: string;
+  vatId?: string;
+  tradeRegister?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  bankName?: string;
+  iban?: string;
+  bic?: string;
+  logoUrl?: string;
+  logoKey?: string;
+}
+
 interface ContractMeta {
   type: string;
   confidence?: number;
@@ -605,7 +624,7 @@ export default function Optimizer() {
     includeDurations: true,
     includeClauses: true
   });
-  const [companyProfiles, setCompanyProfiles] = useState<any[]>([]);
+  const [companyProfiles, setCompanyProfiles] = useState<CompanyProfile[]>([]);
   const [selectedProfile, setSelectedProfile] = useState<string | null>(null);
   const [loadingProfiles, setLoadingProfiles] = useState(false);
 
