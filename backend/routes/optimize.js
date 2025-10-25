@@ -10,7 +10,7 @@ const fsSync = require("fs");
 const path = require("path");
 const { OpenAI } = require("openai");
 const verifyToken = require("../middleware/verifyToken");
-const { ObjectId } = require("mongodb");
+const { ObjectId, MongoClient } = require("mongodb");
 const { smartRateLimiter, uploadLimiter, generalLimiter } = require("../middleware/rateLimiter");
 const { runBaselineRules } = require("../services/optimizer/rules");
 // 🔥 FIX 4+: Quality Layer imports (mit Sanitizer + Content-Mismatch Guard + Context-Aware Benchmarks)
@@ -18,6 +18,22 @@ const { dedupeIssues, ensureCategory, sanitizeImprovedText, sanitizeText, saniti
 
 const router = express.Router();
 const upload = multer({ dest: "uploads/" });
+
+// 🔥 MongoDB Setup für Contract-Speicherung
+const mongoUri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
+const client = new MongoClient(mongoUri);
+let contractsCollection, db;
+
+(async () => {
+  try {
+    await client.connect();
+    db = client.db("contract_ai");
+    contractsCollection = db.collection("contracts");
+    console.log("✅ Optimize.js: MongoDB verbunden für Contract-Speicherung!");
+  } catch (err) {
+    console.error("❌ Optimize.js MongoDB Fehler:", err);
+  }
+})();
 
 // ✅ SINGLETON OpenAI-Instance with retry logic and fallback
 let openaiInstance = null;
@@ -3402,11 +3418,61 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
     });
     console.log(`\n🔍🔍🔍 END DEBUG - Total ${normalizedResult.summary.totalIssues} issues checked\n\n`);
 
+    // 🔥 NEU: Speichere Contract automatisch in Contracts-Verwaltung
+    let savedContractId = null;
+    if (contractsCollection && db) {
+      try {
+        const contractToSave = {
+          userId: req.user.userId,
+          name: req.file.originalname || "Analysierter Vertrag",
+          content: contractText,
+          uploadedAt: new Date(),
+          status: "Aktiv",
+          analyzed: true,
+          isOptimized: true, // 🎯 Badge-Flag für "Optimiert"
+          sourceType: "optimizer", // Wo kam es her
+          analysisData: {
+            healthScore: normalizedResult.meta?.healthScore || normalizedResult.summary?.healthScore || 0,
+            totalIssues: normalizedResult.summary.totalIssues,
+            criticalRisks: normalizedResult.summary.criticalRisks || 0,
+            contractType: normalizedResult.meta?.type || "unbekannt",
+            categories: normalizedResult.categories.map(cat => ({
+              tag: cat.tag,
+              label: cat.label,
+              issueCount: cat.issues.length
+            }))
+          },
+          optimizations: normalizedResult.categories.flatMap(cat =>
+            cat.issues.map(issue => ({
+              category: cat.tag,
+              summary: issue.summary,
+              original: issue.originalText,
+              improved: issue.improvedText,
+              severity: issue.severity,
+              reasoning: issue.reasoning
+            }))
+          )
+        };
+
+        const result = await contractsCollection.insertOne(contractToSave);
+        savedContractId = result.insertedId;
+        console.log(`📁 [${requestId}] Contract automatisch gespeichert in Contracts-Verwaltung:`, {
+          contractId: savedContractId,
+          name: contractToSave.name,
+          isOptimized: true
+        });
+      } catch (saveError) {
+        console.error(`⚠️ [${requestId}] Fehler beim Speichern in Contracts (nicht kritisch):`, saveError.message);
+        // Nicht kritisch - Optimierung war trotzdem erfolgreich
+      }
+    }
+
     // Sende erfolgreiche Antwort
     res.json({
       success: true,
       message: "✅ ULTIMATIVE Anwaltskanzlei-Niveau Vertragsoptimierung erfolgreich",
       requestId,
+      contractId: savedContractId, // 🆕 Für Frontend-Navigation
       ...normalizedResult,
       originalText: contractText.substring(0, 1500), // Etwas mehr für Frontend
       usage: {

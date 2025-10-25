@@ -1916,6 +1916,9 @@ export default function Contracts() {
               {contract.isGenerated && (
                 <span className={styles.generatedBadge}>Generiert</span>
               )}
+              {contract.isOptimized && (
+                <span className={styles.optimizedBadge}>Optimiert</span>
+              )}
               {contract.analyzed === false && (
                 <span className={styles.notAnalyzedBadge}>Nicht analysiert</span>
               )}
@@ -2806,9 +2809,14 @@ export default function Contracts() {
                                   </div>
                                   <div>
                                     <span className={styles.contractNameText}>{contract.name}</span>
-                                    {contract.isGenerated && (
+                                    {(contract.isGenerated || contract.isOptimized) && (
                                       <div className={styles.contractBadges}>
-                                        <span className={styles.generatedBadge}>Generiert</span>
+                                        {contract.isGenerated && (
+                                          <span className={styles.generatedBadge}>Generiert</span>
+                                        )}
+                                        {contract.isOptimized && (
+                                          <span className={styles.optimizedBadge}>Optimiert</span>
+                                        )}
                                       </div>
                                     )}
                                   </div>
