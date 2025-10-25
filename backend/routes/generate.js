@@ -2730,7 +2730,37 @@ Füge alle relevanten Klauseln ein, inklusive:
         break;
 
       case "custom":
-        userPrompt = `Erstelle einen professionellen Vertrag mit dem Titel: ${formData.title}
+        // 🔥 NEU: Prüfe, ob Optimierungen vorhanden sind (vom Optimizer)
+        const hasOptimizations = formData.optimizations && Array.isArray(formData.optimizations) && formData.optimizations.length > 0;
+
+        let optimizationsSection = "";
+        if (hasOptimizations) {
+          console.log(`🎯 OPTIMIERTER VERTRAG: ${formData.optimizations.length} Optimierungen werden angewendet`);
+
+          optimizationsSection = `
+
+🔥 WICHTIG: DIESER VERTRAG SOLL OPTIMIERT WERDEN!
+Wende die folgenden ${formData.optimizations.length} professionellen Verbesserungen an:
+
+`;
+          formData.optimizations.forEach((opt, index) => {
+            optimizationsSection += `${index + 1}. ${opt.category ? `[${opt.category}]` : ''} ${opt.summary || opt.title || 'Optimierung'}
+   Original-Problem: ${opt.original || opt.originalText || 'Siehe Originalvertrag'}
+   Verbesserte Klausel: ${opt.improved || opt.improvedText || opt.suggestion || 'Rechtssichere Klausel erforderlich'}
+   Begründung: ${opt.reasoning || opt.explanation || 'Rechtliche Verbesserung'}
+
+`;
+          });
+
+          optimizationsSection += `
+✅ ANWEISUNG: Baue ALLE oben genannten Optimierungen in den Vertrag ein!
+- Verwende die "Verbesserte Klausel" für jeden Punkt
+- Formuliere rechtssicher und professionell
+- Füge alle Standard-Klauseln hinzu, die noch fehlen
+`;
+        }
+
+        userPrompt = `Erstelle einen professionellen${hasOptimizations ? ', OPTIMIERTEN' : ''} Vertrag mit dem Titel: ${formData.title}
 
 VERTRAGSART: ${formData.contractType || "Individueller Vertrag"}
 
@@ -2738,12 +2768,13 @@ PARTEIEN:
 ${formData.parties || "Partei A und Partei B mit vollständigen Angaben"}
 
 VERTRAGSINHALTE:
-${formData.details || "Detaillierte Beschreibung des Vertragsgegenstands"}
+${formData.details || formData.originalContent || "Detaillierte Beschreibung des Vertragsgegenstands"}
 
 BESONDERE VEREINBARUNGEN:
 ${formData.specialTerms || "Keine besonderen Vereinbarungen"}
+${optimizationsSection}
 
-Strukturiere den Vertrag professionell mit mindestens 10-12 Paragraphen und allen notwendigen rechtlichen Klauseln.`;
+Strukturiere den Vertrag professionell mit mindestens 10-12 Paragraphen und allen notwendigen rechtlichen Klauseln.${hasOptimizations ? '\n\n⚠️ WICHTIG: Berücksichtige ALLE oben genannten Optimierungen im Vertragstext!' : ''}`;
         break;
 
       default:
@@ -2754,11 +2785,35 @@ Strukturiere den Vertrag professionell mit mindestens 10-12 Paragraphen und alle
     console.log("🚀 Starte GPT-4 Vertragsgenerierung...");
     console.log("📝 Vertragstyp:", type);
     console.log("🎨 Design-Variante:", designVariant);
-    
+
+    // 🔥 NEU: Erweitere System-Prompt für optimierte Verträge
+    const hasOptimizations = formData.optimizations && Array.isArray(formData.optimizations) && formData.optimizations.length > 0;
+    let finalSystemPrompt = systemPrompt;
+
+    if (hasOptimizations) {
+      finalSystemPrompt += `\n\n🔥 SPEZIELLE ANWEISUNG FÜR OPTIMIERTE VERTRÄGE:
+Du erstellst einen OPTIMIERTEN Vertrag. Der User hat bereits einen Vertrag analysiert und Optimierungsvorschläge erhalten.
+Im User-Prompt findest du die Liste der Optimierungen mit:
+- Original-Problem (was war falsch)
+- Verbesserte Klausel (wie es sein sollte)
+- Begründung
+
+DEINE AUFGABE:
+1. Erstelle den Vertrag MIT ALLEN diesen Optimierungen
+2. Verwende die "Verbesserte Klausel" aus jeder Optimierung
+3. Integriere sie nahtlos in die entsprechenden Paragraphen
+4. Stelle sicher, dass der Vertrag rechtlich wasserdicht ist
+5. Füge KEINE Optimierungen hinzu, die nicht in der Liste stehen
+
+Dies ist KEIN Standard-Vertrag - dies ist ein PREMIUM-OPTIMIERTER Vertrag!`;
+
+      console.log(`🎯 Optimierter Vertrag: ${formData.optimizations.length} Verbesserungen werden eingebaut`);
+    }
+
     const completion = await openai.chat.completions.create({
       model: "gpt-4",
       messages: [
-        { role: "system", content: systemPrompt },
+        { role: "system", content: finalSystemPrompt },
         { role: "user", content: userPrompt }
       ],
       temperature: 0.3,
