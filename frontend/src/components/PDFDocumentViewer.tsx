@@ -45,7 +45,7 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
 
   // Apply yellow highlighting to text spans in TextLayer (mit Keyword-Support)
   useEffect(() => {
-    if (!highlightText || !foundOnPage || !showTextLayer) return;
+    if (!highlightText || !foundOnPage) return;
 
     // Warte bis TextLayer gerendert ist
     const timeoutId = setTimeout(() => {
@@ -92,7 +92,7 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
     }, 500); // 500ms warten
 
     return () => clearTimeout(timeoutId);
-  }, [highlightText, foundOnPage, showTextLayer]);
+  }, [highlightText, foundOnPage]);
 
   const onDocumentLoadSuccess = (pdf: PDFDocumentProxy) => {
     setNumPages(pdf.numPages);
@@ -142,7 +142,6 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
           console.log(`✅ Exakter Text gefunden auf Seite ${pageNum}`);
           setFoundOnPage(pageNum);
           setPageNumber(pageNum);
-          setShowTextLayer(true);
           setIsSearching(false);
           if (containerRef.current) {
             containerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -183,7 +182,6 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
         console.log(`✅ Fuzzy Match gefunden auf Seite ${bestMatch.pageNum} (${bestMatch.score}/${keywords.length} Keywords)`);
         setFoundOnPage(bestMatch.pageNum);
         setPageNumber(bestMatch.pageNum);
-        setShowTextLayer(true);
         setIsSearching(false);
         if (containerRef.current) {
           containerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -508,7 +506,7 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
           <Page
             pageNumber={pageNumber}
             scale={scale}
-            renderTextLayer={showTextLayer}
+            renderTextLayer={true}
             renderAnnotationLayer={false}
             loading={
               <div style={{
@@ -535,13 +533,31 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
           100% { transform: rotate(360deg); }
         }
 
-        /* TextLayer: TRANSPARENT (nur Highlights sichtbar!) */
-        .react-pdf__Page__textContent {
-          color: transparent !important;
-          /* Erlaubt Textauswahl, aber Text ist unsichtbar */
+        /* TextLayer: Als Overlay ÜBER dem PDF positionieren */
+        .react-pdf__Page {
+          position: relative !important;
         }
+
+        .react-pdf__Page__textContent {
+          position: absolute !important;
+          top: 0 !important;
+          left: 0 !important;
+          width: 100% !important;
+          height: 100% !important;
+          color: transparent !important;
+          /* Text ist unsichtbar, liegt aber ÜBER dem PDF für Highlighting */
+          pointer-events: none !important; /* Klicks gehen durch zum PDF */
+        }
+
         .react-pdf__Page__textContent span {
           color: transparent !important;
+          pointer-events: auto !important; /* Spans können geklickt werden */
+        }
+
+        /* "Text anzeigen" Button: Zeigt den Text schwarz an */
+        .react-pdf__Page__textContent.show-text span {
+          color: #000000 !important;
+          background-color: rgba(255, 255, 255, 0.8) !important;
         }
 
         /* Text-Highlighting: Gelber Hintergrund mit schwarzem Text */
