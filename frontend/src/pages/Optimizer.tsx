@@ -597,6 +597,18 @@ export default function Optimizer() {
   // 🎯 PHASE 1 - FEATURE 3: Visual Diff View State
   const [diffViewEnabled, setDiffViewEnabled] = useState<Map<string, boolean>>(new Map());
 
+  // 🎯 NEUE FEATURE: Optimierten Vertrag generieren Modal
+  const [showGenerateModal, setShowGenerateModal] = useState(false);
+  const [generateOptions, setGenerateOptions] = useState({
+    includeParties: true,
+    includeAmounts: true,
+    includeDurations: true,
+    includeClauses: true
+  });
+  const [companyProfiles, setCompanyProfiles] = useState<any[]>([]);
+  const [selectedProfile, setSelectedProfile] = useState<string | null>(null);
+  const [loadingProfiles, setLoadingProfiles] = useState(false);
+
   // ✅ ORIGINAL: Refs
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pitchButtonRef = useRef<HTMLButtonElement>(null);
@@ -837,6 +849,35 @@ export default function Optimizer() {
     setToast({ message, type });
     setTimeout(() => setToast(null), 4000);
   }, []);
+
+  // 🎯 NEUE FEATURE: Firmenprofile laden
+  const loadCompanyProfiles = useCallback(async () => {
+    try {
+      setLoadingProfiles(true);
+      const response = await fetch('/api/company-profile/me', {
+        credentials: 'include'
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.profile) {
+          // Wir haben nur ein Profil pro User, packen wir es in ein Array
+          setCompanyProfiles([data.profile]);
+          setSelectedProfile(data.profile._id);
+        }
+      }
+    } catch (error) {
+      console.error('❌ Fehler beim Laden der Firmenprofile:', error);
+    } finally {
+      setLoadingProfiles(false);
+    }
+  }, []);
+
+  // 🎯 NEUE FEATURE: Modal öffnen und Profile laden
+  const openGenerateModal = useCallback(() => {
+    setShowGenerateModal(true);
+    loadCompanyProfiles();
+  }, [loadCompanyProfiles]);
 
   // ✅ SIMPLIFIED: Smart Contract Generator
   const handleGenerateOptimizedContract = useCallback(async () => {
@@ -1715,7 +1756,7 @@ Konfidenz: ${opt.confidence}%\n`
                   </p>
 
                   <button
-                    onClick={handleGenerateOptimizedContract}
+                    onClick={openGenerateModal}
                     disabled={isGeneratingContract || !file || optimizations.length === 0}
                     style={{
                       display: 'inline-flex',
@@ -2945,6 +2986,259 @@ Konfidenz: ${opt.confidence}%\n`
             highlightText={highlightedText}
           />
         </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 🎯 NEUE FEATURE: Optimierten Vertrag generieren Modal */}
+      <AnimatePresence>
+        {showGenerateModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0, 0, 0, 0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 10000,
+              padding: '20px'
+            }}
+            onClick={() => setShowGenerateModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 20 }}
+              transition={{ duration: 0.2 }}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                background: '#FFFFFF',
+                borderRadius: '20px',
+                padding: '32px',
+                maxWidth: '560px',
+                width: '100%',
+                boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+                maxHeight: '90vh',
+                overflowY: 'auto'
+              }}
+            >
+              {/* Header */}
+              <div style={{ marginBottom: '24px' }}>
+                <h2 style={{
+                  fontSize: '24px',
+                  fontWeight: 700,
+                  color: '#1D1D1F',
+                  margin: '0 0 8px 0',
+                  letterSpacing: '-0.02em'
+                }}>
+                  📄 Optimierten Vertrag erstellen
+                </h2>
+                <p style={{
+                  fontSize: '15px',
+                  color: '#86868B',
+                  margin: 0
+                }}>
+                  Wähle die Optionen für deinen neuen Vertrag
+                </p>
+              </div>
+
+              {/* Übernahme-Optionen */}
+              <div style={{ marginBottom: '24px' }}>
+                <h3 style={{
+                  fontSize: '16px',
+                  fontWeight: 600,
+                  color: '#1D1D1F',
+                  margin: '0 0 12px 0'
+                }}>
+                  Was soll übernommen werden?
+                </h3>
+
+                {[
+                  { key: 'includeParties', label: 'Vertragsparteien (Namen, Adressen)', icon: '👥' },
+                  { key: 'includeAmounts', label: 'Beträge und Zahlen', icon: '💰' },
+                  { key: 'includeDurations', label: 'Laufzeiten und Kündigungsfristen', icon: '📅' },
+                  { key: 'includeClauses', label: 'Alle Original-Klauseln', icon: '📋' }
+                ].map(option => (
+                  <label
+                    key={option.key}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      padding: '12px',
+                      borderRadius: '10px',
+                      cursor: 'pointer',
+                      marginBottom: '8px',
+                      background: generateOptions[option.key as keyof typeof generateOptions] ? 'rgba(0, 122, 255, 0.08)' : '#F5F5F7',
+                      border: `2px solid ${generateOptions[option.key as keyof typeof generateOptions] ? '#007AFF' : 'transparent'}`,
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={generateOptions[option.key as keyof typeof generateOptions]}
+                      onChange={(e) => setGenerateOptions(prev => ({
+                        ...prev,
+                        [option.key]: e.target.checked
+                      }))}
+                      style={{
+                        width: '20px',
+                        height: '20px',
+                        cursor: 'pointer'
+                      }}
+                    />
+                    <span style={{ fontSize: '18px' }}>{option.icon}</span>
+                    <span style={{
+                      fontSize: '15px',
+                      fontWeight: 500,
+                      color: '#1D1D1F',
+                      flex: 1
+                    }}>
+                      {option.label}
+                    </span>
+                  </label>
+                ))}
+              </div>
+
+              {/* Firmenprofil */}
+              <div style={{ marginBottom: '32px' }}>
+                <h3 style={{
+                  fontSize: '16px',
+                  fontWeight: 600,
+                  color: '#1D1D1F',
+                  margin: '0 0 12px 0'
+                }}>
+                  Firmenprofil
+                </h3>
+
+                {loadingProfiles ? (
+                  <div style={{
+                    padding: '16px',
+                    background: '#F5F5F7',
+                    borderRadius: '10px',
+                    textAlign: 'center',
+                    color: '#86868B'
+                  }}>
+                    Lade Profile...
+                  </div>
+                ) : companyProfiles.length > 0 ? (
+                  <select
+                    value={selectedProfile || ''}
+                    onChange={(e) => setSelectedProfile(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '14px 16px',
+                      borderRadius: '10px',
+                      border: '2px solid #E5E5E7',
+                      fontSize: '15px',
+                      fontWeight: 500,
+                      color: '#1D1D1F',
+                      background: '#FFFFFF',
+                      cursor: 'pointer',
+                      outline: 'none'
+                    }}
+                  >
+                    {companyProfiles.map(profile => (
+                      <option key={profile._id} value={profile._id}>
+                        {profile.companyName}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <div style={{
+                    padding: '16px',
+                    background: 'rgba(255, 204, 0, 0.1)',
+                    borderRadius: '10px',
+                    border: '1px solid rgba(255, 204, 0, 0.3)'
+                  }}>
+                    <p style={{
+                      fontSize: '14px',
+                      color: '#1D1D1F',
+                      margin: '0 0 12px 0'
+                    }}>
+                      Noch kein Firmenprofil vorhanden
+                    </p>
+                    <button
+                      onClick={() => window.location.href = '/company-profile'}
+                      style={{
+                        padding: '8px 16px',
+                        borderRadius: '8px',
+                        border: 'none',
+                        background: '#FFCC00',
+                        color: '#1D1D1F',
+                        fontSize: '14px',
+                        fontWeight: 600,
+                        cursor: 'pointer'
+                      }}
+                    >
+                      + Firmenprofil anlegen
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Buttons */}
+              <div style={{
+                display: 'flex',
+                gap: '12px',
+                justifyContent: 'flex-end'
+              }}>
+                <button
+                  onClick={() => setShowGenerateModal(false)}
+                  style={{
+                    padding: '14px 24px',
+                    borderRadius: '10px',
+                    border: '2px solid #E5E5E7',
+                    background: '#FFFFFF',
+                    color: '#1D1D1F',
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  Abbrechen
+                </button>
+                <button
+                  onClick={() => {
+                    setShowGenerateModal(false);
+                    handleGenerateOptimizedContract();
+                  }}
+                  disabled={isGeneratingContract}
+                  style={{
+                    padding: '14px 24px',
+                    borderRadius: '10px',
+                    border: 'none',
+                    background: isGeneratingContract ? '#C7C7CC' : 'linear-gradient(135deg, #007AFF 0%, #5856D6 100%)',
+                    color: '#FFFFFF',
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    cursor: isGeneratingContract ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.2s',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  {isGeneratingContract ? (
+                    <>
+                      <div className={styles.spinner}></div>
+                      Erstelle Vertrag...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles size={18} />
+                      Vertrag erstellen
+                    </>
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
 
