@@ -889,7 +889,7 @@ export default function Optimizer() {
   const loadCompanyProfiles = useCallback(async () => {
     try {
       setLoadingProfiles(true);
-      const response = await fetch('/api/company-profile/me', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/company-profile/me`, {
         credentials: 'include'
       });
 
@@ -983,7 +983,7 @@ export default function Optimizer() {
       }
 
       // 6. Erstelle neuen Vertrag über /api/generate
-      const response = await fetch('/api/generate', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/generate`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
