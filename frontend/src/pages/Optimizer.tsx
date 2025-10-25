@@ -1038,7 +1038,6 @@ export default function Optimizer() {
     setSelectedCategory('all');
     setShowExportMenu(false);
     setShowPitchMenu(false);
-    setContractId(null);
     setIsGeneratingContract(false);
     setOriginalContractText('');
     setAnalysisData(null);
