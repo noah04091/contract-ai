@@ -25,7 +25,6 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
   const [numPages, setNumPages] = useState<number>(0);
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [scale, setScale] = useState<number>(1.2);
-  const [showTextLayer, setShowTextLayer] = useState<boolean>(false); // Toggle für TextLayer
   const [isSearching, setIsSearching] = useState<boolean>(false); // Suche läuft
   const [foundOnPage, setFoundOnPage] = useState<number | null>(null); // Seite wo Text gefunden wurde
   const [isTextSnippetOpen, setIsTextSnippetOpen] = useState<boolean>(false); // Dropdown für Text-Snippet
@@ -397,36 +396,6 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
           >
             <ChevronRight size={16} style={{ color: pageNumber >= numPages ? '#C7C7CC' : '#1D1D1F' }} />
           </button>
-
-          {/* Divider */}
-          <div style={{
-            width: '1px',
-            height: '24px',
-            background: 'rgba(0, 0, 0, 0.1)',
-            margin: '0 4px'
-          }} />
-
-          {/* Text Layer Toggle */}
-          <button
-            onClick={() => setShowTextLayer(!showTextLayer)}
-            style={{
-              padding: '6px 12px',
-              border: `1.5px solid ${showTextLayer ? '#007AFF' : 'rgba(0, 0, 0, 0.1)'}`,
-              borderRadius: '8px',
-              background: showTextLayer ? 'rgba(0, 122, 255, 0.08)' : '#FFFFFF',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              transition: 'all 0.2s',
-              fontSize: '12px',
-              fontWeight: showTextLayer ? 600 : 500,
-              color: showTextLayer ? '#007AFF' : '#1D1D1F'
-            }}
-            title={showTextLayer ? 'Text ausblenden' : 'Text anzeigen'}
-          >
-            📝 Text
-          </button>
         </div>
       </div>
 
@@ -565,12 +534,6 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
         .react-pdf__Page__textContent span {
           color: transparent !important;
           background: transparent !important;
-        }
-
-        /* "Text anzeigen" Button: Zeigt den Text schwarz an */
-        .react-pdf__Page__textContent.show-text span {
-          color: #000000 !important;
-          background-color: rgba(255, 255, 255, 0.8) !important;
         }
 
         /* Text-Highlighting: Gelber Hintergrund mit schwarzem Text */
