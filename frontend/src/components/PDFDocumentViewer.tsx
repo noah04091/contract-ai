@@ -6,6 +6,8 @@ import { Document, Page, pdfjs } from 'react-pdf';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
 import { motion } from 'framer-motion';
 import { FileText, ZoomIn, ZoomOut, ChevronLeft, ChevronRight } from 'lucide-react';
+import 'react-pdf/dist/Page/AnnotationLayer.css';
+import 'react-pdf/dist/Page/TextLayer.css';
 
 // PDF.js Worker Setup
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
@@ -533,25 +535,10 @@ export const PDFDocumentViewer: React.FC<PDFDocumentViewerProps> = ({
           100% { transform: rotate(360deg); }
         }
 
-        /* TextLayer: Als Overlay ÜBER dem PDF positionieren */
-        .react-pdf__Page {
-          position: relative !important;
-        }
-
-        .react-pdf__Page__textContent {
-          position: absolute !important;
-          top: 0 !important;
-          left: 0 !important;
-          width: 100% !important;
-          height: 100% !important;
-          color: transparent !important;
-          /* Text ist unsichtbar, liegt aber ÜBER dem PDF für Highlighting */
-          pointer-events: none !important; /* Klicks gehen durch zum PDF */
-        }
-
+        /* TextLayer: Text unsichtbar machen (react-pdf CSS übernimmt Positionierung) */
         .react-pdf__Page__textContent span {
           color: transparent !important;
-          pointer-events: auto !important; /* Spans können geklickt werden */
+          background: transparent !important;
         }
 
         /* "Text anzeigen" Button: Zeigt den Text schwarz an */
