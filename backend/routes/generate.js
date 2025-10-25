@@ -2733,34 +2733,50 @@ Füge alle relevanten Klauseln ein, inklusive:
         // 🔥 NEU: Prüfe, ob Optimierungen vorhanden sind (vom Optimizer)
         const hasOptimizations = formData.optimizations && Array.isArray(formData.optimizations) && formData.optimizations.length > 0;
 
-        let optimizationsSection = "";
+        // 🔥 UNTERSCHIEDLICHE PROMPTS: Mit vs. Ohne Optimierungen
         if (hasOptimizations) {
           console.log(`🎯 OPTIMIERTER VERTRAG: ${formData.optimizations.length} Optimierungen werden angewendet`);
 
-          optimizationsSection = `
+          // FÜR OPTIMIERTE VERTRÄGE: Original als Basis nehmen!
+          userPrompt = `Du bekommst einen ORIGINAL-VERTRAG, der bereits analysiert wurde. Deine Aufgabe ist es, diesen Vertrag zu OPTIMIEREN (nicht neu zu schreiben!).
 
-🔥 WICHTIG: DIESER VERTRAG SOLL OPTIMIERT WERDEN!
-Wende die folgenden ${formData.optimizations.length} professionellen Verbesserungen an:
+📄 ORIGINAL-VERTRAG (VOLLTEXT):
+================================
+${formData.originalContent || formData.details || 'Kein Originaltext verfügbar'}
+================================
+
+🎯 DEINE AUFGABE:
+1. Nimm den obigen ORIGINAL-VERTRAG als BASIS
+2. BEHALTE alle guten Teile, Details, Formulierungen, spezifische Angaben
+3. BEHALTE die Struktur und Reihenfolge der Paragraphen
+4. ERSETZE oder ERGÄNZE nur die folgenden ${formData.optimizations.length} problematischen Stellen:
 
 `;
-          formData.optimizations.forEach((opt, index) => {
-            optimizationsSection += `${index + 1}. ${opt.category ? `[${opt.category}]` : ''} ${opt.summary || opt.title || 'Optimierung'}
-   Original-Problem: ${opt.original || opt.originalText || 'Siehe Originalvertrag'}
-   Verbesserte Klausel: ${opt.improved || opt.improvedText || opt.suggestion || 'Rechtssichere Klausel erforderlich'}
-   Begründung: ${opt.reasoning || opt.explanation || 'Rechtliche Verbesserung'}
 
+          formData.optimizations.forEach((opt, index) => {
+            userPrompt += `
+${index + 1}. 🔧 ${opt.category ? `[${opt.category.toUpperCase()}]` : ''} ${opt.summary || opt.title || 'Optimierung'}
+   ❌ PROBLEM im Original: ${opt.original || opt.originalText || 'Fehlt oder unvollständig'}
+   ✅ ERSETZE/ERGÄNZE mit: ${opt.improved || opt.improvedText || opt.suggestion || 'Rechtssichere Klausel'}
+   💡 Begründung: ${opt.reasoning || opt.explanation || 'Rechtliche Verbesserung'}
 `;
           });
 
-          optimizationsSection += `
-✅ ANWEISUNG: Baue ALLE oben genannten Optimierungen in den Vertrag ein!
-- Verwende die "Verbesserte Klausel" für jeden Punkt
-- Formuliere rechtssicher und professionell
-- Füge alle Standard-Klauseln hinzu, die noch fehlen
-`;
-        }
+          userPrompt += `
 
-        userPrompt = `Erstelle einen professionellen${hasOptimizations ? ', OPTIMIERTEN' : ''} Vertrag mit dem Titel: ${formData.title}
+⚠️ KRITISCHE REGELN:
+- Behalte ALLE Details aus dem Original (Namen, Adressen, Beträge, Daten, spezifische Beschreibungen)
+- Behalte die STRUKTUR (Paragraphen-Reihenfolge)
+- Ändere NUR die oben genannten ${formData.optimizations.length} problematischen Stellen
+- Füge die verbesserten Klauseln an den richtigen Stellen ein oder ergänze sie
+- Verwende die gleiche formale Sprache wie im Original
+- Falls ein Paragraph komplett fehlt (z.B. Kündigung), füge ihn hinzu
+
+✅ ERGEBNIS: Ein Vertrag der dem Original sehr ähnlich ist, aber die ${formData.optimizations.length} Schwachstellen behoben hat!`;
+
+        } else {
+          // FÜR NEUE VERTRÄGE: Komplett neu generieren
+          userPrompt = `Erstelle einen professionellen Vertrag mit dem Titel: ${formData.title}
 
 VERTRAGSART: ${formData.contractType || "Individueller Vertrag"}
 
@@ -2772,9 +2788,9 @@ ${formData.details || formData.originalContent || "Detaillierte Beschreibung des
 
 BESONDERE VEREINBARUNGEN:
 ${formData.specialTerms || "Keine besonderen Vereinbarungen"}
-${optimizationsSection}
 
-Strukturiere den Vertrag professionell mit mindestens 10-12 Paragraphen und allen notwendigen rechtlichen Klauseln.${hasOptimizations ? '\n\n⚠️ WICHTIG: Berücksichtige ALLE oben genannten Optimierungen im Vertragstext!' : ''}`;
+Strukturiere den Vertrag professionell mit mindestens 10-12 Paragraphen und allen notwendigen rechtlichen Klauseln.`;
+        }
         break;
 
       default:
@@ -2787,27 +2803,35 @@ Strukturiere den Vertrag professionell mit mindestens 10-12 Paragraphen und alle
     console.log("🎨 Design-Variante:", designVariant);
 
     // 🔥 NEU: Erweitere System-Prompt für optimierte Verträge
-    const hasOptimizations = formData.optimizations && Array.isArray(formData.optimizations) && formData.optimizations.length > 0;
+    const hasOptimizationsInSystemPrompt = formData.optimizations && Array.isArray(formData.optimizations) && formData.optimizations.length > 0;
     let finalSystemPrompt = systemPrompt;
 
-    if (hasOptimizations) {
-      finalSystemPrompt += `\n\n🔥 SPEZIELLE ANWEISUNG FÜR OPTIMIERTE VERTRÄGE:
-Du erstellst einen OPTIMIERTEN Vertrag. Der User hat bereits einen Vertrag analysiert und Optimierungsvorschläge erhalten.
-Im User-Prompt findest du die Liste der Optimierungen mit:
-- Original-Problem (was war falsch)
-- Verbesserte Klausel (wie es sein sollte)
-- Begründung
+    if (hasOptimizationsInSystemPrompt) {
+      finalSystemPrompt = `Du bist ein Experte für deutsches Vertragsrecht und optimierst bestehende Verträge.
 
-DEINE AUFGABE:
-1. Erstelle den Vertrag MIT ALLEN diesen Optimierungen
-2. Verwende die "Verbesserte Klausel" aus jeder Optimierung
-3. Integriere sie nahtlos in die entsprechenden Paragraphen
-4. Stelle sicher, dass der Vertrag rechtlich wasserdicht ist
-5. Füge KEINE Optimierungen hinzu, die nicht in der Liste stehen
+🎯 SPEZIELLE AUFGABE: VERTRAG OPTIMIEREN (NICHT NEU SCHREIBEN!)
 
-Dies ist KEIN Standard-Vertrag - dies ist ein PREMIUM-OPTIMIERTER Vertrag!`;
+Du bekommst einen ORIGINAL-VERTRAG mit spezifischen Schwachstellen. Deine Aufgabe ist es, den Vertrag zu VERBESSERN, nicht neu zu erstellen.
 
-      console.log(`🎯 Optimierter Vertrag: ${formData.optimizations.length} Verbesserungen werden eingebaut`);
+ABSOLUT KRITISCHE REGELN:
+1. BEHALTE den Original-Vertrag als Basis - du machst nur gezielte Verbesserungen!
+2. BEHALTE alle Details: Namen, Adressen, Beträge, Daten, spezifische Beschreibungen
+3. BEHALTE die Struktur und Paragraphen-Reihenfolge des Originals
+4. ÄNDERE NUR die spezifischen Probleme, die im User-Prompt aufgelistet sind
+5. FÜGE fehlende Paragraphen hinzu (z.B. Kündigung, Haftung), aber ohne bestehende zu entfernen
+6. Verwende EXAKT die gleiche formale Sprache und Tonalität wie im Original
+7. KEIN HTML, KEIN MARKDOWN - nur reiner Text
+8. Kopiere gute Klauseln 1:1 aus dem Original, ändere sie nicht!
+
+PROZESS:
+1. Lies den Original-Vertrag komplett durch
+2. Identifiziere die problematischen Stellen
+3. Ersetze/Ergänze NUR diese Stellen mit den verbesserten Klauseln
+4. Behalte den Rest des Vertrags UNVERÄNDERT
+
+DAS IST KEIN "Vertrag neu schreiben" - DAS IST "Vertrag gezielt verbessern"!`;
+
+      console.log(`🎯 OPTIMIERUNGS-MODUS: ${formData.optimizations.length} gezielte Verbesserungen am Original-Vertrag`);
     }
 
     const completion = await openai.chat.completions.create({
