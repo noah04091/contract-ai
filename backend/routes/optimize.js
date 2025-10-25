@@ -3514,8 +3514,8 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
             cat.issues.map(issue => ({
               category: cat.tag,
               summary: issue.summary,
-              original: issue.originalText,
-              improved: issue.improvedText,
+              original: issue.originalText || issue.original, // ✅ Frontend-kompatibel
+              improved: issue.improvedText || issue.improved, // ✅ Frontend-kompatibel
               severity: issue.severity,
               reasoning: issue.reasoning
             }))
