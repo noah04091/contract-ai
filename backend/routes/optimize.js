@@ -3987,14 +3987,10 @@ router.post("/stream", verifyToken, uploadLimiter, smartRateLimiter, upload.sing
 
     sendProgress(90, "🛡️ Wende Ultimate Quality Layer an...");
 
-    const { cleanedCategories, stats } = await applyUltimateQualityLayer(
-      normalizedResult.categories,
-      contractTypeInfo,
-      requestId
-    );
+    // 🔥 FIX: Pass full normalizedResult object, not just categories
+    normalizedResult = applyUltimateQualityLayer(normalizedResult, requestId, contractTypeInfo.type);
 
-    normalizedResult.categories = cleanedCategories;
-    sendProgress(92, `✅ ${stats.placeholdersRemoved} Platzhalter entfernt, ${stats.duplicatesRemoved} Duplikate eliminiert`);
+    sendProgress(92, `✅ Quality-Checks abgeschlossen`);
 
     // Top-Up Pass if needed
     const currentIssueCount = normalizedResult.categories.reduce((sum, cat) => sum + cat.issues.length, 0);
