@@ -15,10 +15,11 @@ import CookieConsentBanner from "./components/CookieConsentBanner";
 import ScrollToTop from "./components/ScrollToTop";
 
 // 🚀 PERFORMANCE: Lazy Loading für alle Seiten (Code Splitting)
-// Homepage, Login und Contracts werden sofort geladen (kritische Seiten)
+// Homepage, Login, Contracts und Profile werden sofort geladen (kritische Seiten)
 import HomeRedesign from "./pages/HomeRedesign";
 import Login from "./pages/Login";
 import Contracts from "./pages/Contracts"; // 🔧 FIX: Direct import verhindert CSS-Preload-Fehler
+import Profile from "./pages/Profile"; // 🔧 FIX: Direct import verhindert CSS-Preload-Fehler
 
 // 🔓 Öffentliche Seiten - Lazy Loading
 const Register = lazy(() => import("./pages/Register"));
@@ -50,10 +51,9 @@ const DigitaleSignatur = lazy(() => import("./pages/features/DigitaleSignatur"))
 
 // 🔒 Geschützte Seiten - Lazy Loading
 const Dashboard = lazy(() => import("./pages/Dashboard"));
-// Contracts wird direkt importiert (siehe oben) - verhindert CSS-Preload-Fehler
+// Contracts und Profile werden direkt importiert (siehe oben) - verhindert CSS-Preload-Fehler
 const ContractDetails = lazy(() => import("./pages/ContractDetails"));
 const EditContract = lazy(() => import("./pages/EditContract"));
-const Profile = lazy(() => import("./pages/Profile"));
 const CalendarView = lazy(() => import("./pages/CalendarView"));
 const Cancel = lazy(() => import("./pages/Cancel"));
 const Optimizer = lazy(() => import("./pages/Optimizer"));
