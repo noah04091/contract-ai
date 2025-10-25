@@ -2,12 +2,14 @@
 const express = require("express");
 const { MongoClient, ObjectId } = require("mongodb");
 const verifyToken = require("../middleware/verifyToken");
+const verifyEmailImportKey = require("../middleware/verifyEmailImportKey"); // 🔒 E-Mail-Import Security
 const { onContractChange } = require("../services/calendarEvents");
 const pdfParse = require("pdf-parse");
 const fs = require("fs").promises;
 const fsSync = require("fs");
 const path = require("path");
 const { OpenAI } = require("openai");
+const { validateAttachment, generateIdempotencyKey } = require("../utils/emailImportSecurity"); // 🔒 Security Utils
 
 const router = express.Router();
 const mongoUri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
@@ -1899,6 +1901,209 @@ router.get("/:id/analysis-report", verifyToken, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Fehler beim Generieren des Analyse-Reports',
+      error: error.message
+    });
+  }
+});
+
+// ===== 📧 E-MAIL-IMPORT ENDPOINT (SECURED) =====
+
+/**
+ * 🔒 GESICHERTER Endpoint für E-Mail-Import via Lambda
+ * Middleware: verifyEmailImportKey (API-Key + IP-Allowlist)
+ */
+router.post("/email-import", verifyEmailImportKey, async (req, res) => {
+  try {
+    const {
+      recipientEmail,  // z.B. "u_123abc.def456@upload.contract-ai.de"
+      senderEmail,     // Absender
+      subject,         // Betreff
+      bodyText,        // E-Mail Text
+      attachments,     // Array von { filename, contentType, data: base64 }
+      messageId        // SES Message ID (für Idempotenz)
+    } = req.body;
+
+    console.log("📧 E-Mail-Import empfangen:", {
+      recipientEmail,
+      senderEmail,
+      subject,
+      attachmentCount: attachments?.length || 0,
+      messageId
+    });
+
+    // Validierung
+    if (!recipientEmail || !senderEmail || !messageId) {
+      return res.status(400).json({
+        success: false,
+        message: "Fehlende Pflichtfelder: recipientEmail, senderEmail, messageId"
+      });
+    }
+
+    // 1. User anhand E-Mail-Adresse finden
+    const db = client.db("contract-ai");
+    const usersCollection = db.collection("users");
+    const contractsCollection = db.collection("contracts");
+
+    const user = await usersCollection.findOne({
+      emailInboxAddress: recipientEmail,
+      emailInboxEnabled: true
+    });
+
+    if (!user) {
+      console.warn("⚠️ User nicht gefunden oder Inbox deaktiviert:", recipientEmail);
+      return res.status(404).json({
+        success: false,
+        message: "User nicht gefunden oder Inbox deaktiviert"
+      });
+    }
+
+    // 2. Attachments validieren und filtern
+    if (!attachments || attachments.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Keine Anhänge gefunden"
+      });
+    }
+
+    const validAttachments = [];
+    const errors = [];
+
+    for (const attachment of attachments) {
+      const validation = validateAttachment(attachment, 15); // Max 15 MB
+
+      if (validation.valid) {
+        validAttachments.push({
+          ...attachment,
+          sanitizedFilename: validation.sanitizedFilename,
+          detectedMimeType: validation.detectedMimeType,
+          buffer: validation.buffer,
+          sizeMB: validation.sizeMB
+        });
+      } else {
+        errors.push({
+          filename: attachment.filename,
+          error: validation.error
+        });
+        console.warn(`⚠️ Attachment abgelehnt: ${attachment.filename} - ${validation.error}`);
+      }
+    }
+
+    if (validAttachments.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Keine gültigen PDF-Anhänge (max 15 MB)",
+        errors
+      });
+    }
+
+    const importedContracts = [];
+
+    // 3. Jeden validen Anhang verarbeiten
+    for (const attachment of validAttachments) {
+      const { buffer, sanitizedFilename, detectedMimeType, sizeMB } = attachment;
+
+      // 🔒 Idempotenz: Check ob dieser Anhang schon importiert wurde
+      const idempotencyKey = generateIdempotencyKey(messageId, buffer);
+
+      const existingContract = await contractsCollection.findOne({
+        'emailImport.idempotencyKey': idempotencyKey
+      });
+
+      if (existingContract) {
+        console.log(`ℹ️ Contract bereits importiert (idempotent): ${sanitizedFilename}`);
+        importedContracts.push({
+          contractId: existingContract._id,
+          filename: sanitizedFilename,
+          duplicate: true
+        });
+        continue; // Skip, aber als erfolgreich zählen
+      }
+
+      // S3-Upload vorbereiten
+      const timestamp = Date.now();
+      const s3Key = `contracts/${user._id}/${timestamp}_${sanitizedFilename}`;
+
+      try {
+        // Upload zu S3
+        if (!S3_AVAILABLE) {
+          throw new Error("S3 nicht verfügbar");
+        }
+
+        const { PutObjectCommand } = require("@aws-sdk/client-s3");
+
+        const uploadCommand = new PutObjectCommand({
+          Bucket: process.env.S3_BUCKET_NAME,
+          Key: s3Key,
+          Body: buffer,
+          ContentType: detectedMimeType,
+          // 🔒 Server-side Encryption
+          ServerSideEncryption: 'AES256'
+        });
+
+        await s3Instance.send(uploadCommand);
+
+        console.log(`✅ S3-Upload erfolgreich: ${s3Key}`);
+
+        // Contract-Dokument erstellen
+        const newContract = {
+          userId: user._id,
+          name: sanitizedFilename.replace('.pdf', ''),
+          s3Key: s3Key,
+          s3Bucket: process.env.S3_BUCKET_NAME,
+          uploadType: 'EMAIL_IMPORT',
+          analyzed: false, // Wird später analysiert
+          uploadedAt: new Date(),
+          createdAt: new Date(),
+          notes: `Per E-Mail importiert von ${senderEmail}\n\nBetreff: ${subject || '(kein Betreff)'}\n\n${bodyText || ''}`.trim(),
+          // 📧 E-Mail-Metadaten
+          emailImport: {
+            messageId: messageId,
+            idempotencyKey: idempotencyKey, // 🔒 Für Deduplizierung
+            sender: senderEmail,
+            subject: subject || null,
+            receivedAt: new Date(),
+            fileSize: `${sizeMB} MB`
+          }
+        };
+
+        const result = await contractsCollection.insertOne(newContract);
+
+        importedContracts.push({
+          contractId: result.insertedId,
+          filename: sanitizedFilename,
+          duplicate: false
+        });
+
+        console.log(`✅ Contract erstellt: ${result.insertedId}`);
+
+      } catch (uploadError) {
+        console.error(`❌ Fehler beim Upload von ${sanitizedFilename}:`, uploadError);
+        errors.push({
+          filename: sanitizedFilename,
+          error: `Upload fehlgeschlagen: ${uploadError.message}`
+        });
+      }
+    }
+
+    // Response
+    const successCount = importedContracts.filter(c => !c.duplicate).length;
+    const duplicateCount = importedContracts.filter(c => c.duplicate).length;
+
+    res.json({
+      success: true,
+      message: `${successCount} neue Verträge importiert${duplicateCount > 0 ? `, ${duplicateCount} Duplikate übersprungen` : ''}`,
+      imported: successCount,
+      duplicates: duplicateCount,
+      total: importedContracts.length,
+      contracts: importedContracts,
+      errors: errors.length > 0 ? errors : undefined
+    });
+
+  } catch (error) {
+    console.error("❌ E-Mail-Import Fehler:", error);
+    res.status(500).json({
+      success: false,
+      message: "Fehler beim E-Mail-Import",
       error: error.message
     });
   }

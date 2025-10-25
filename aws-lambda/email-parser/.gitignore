@@ -1,0 +1,21 @@
+# Node
+node_modules/
+package-lock.json
+
+# Build artifacts
+function.zip
+*.zip
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo

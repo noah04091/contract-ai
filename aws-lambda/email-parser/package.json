@@ -1,0 +1,24 @@
+{
+  "name": "contract-ai-email-parser",
+  "version": "1.0.0",
+  "description": "AWS Lambda function for parsing SES emails and importing contracts",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "package": "zip -r function.zip index.js node_modules package.json"
+  },
+  "keywords": [
+    "aws",
+    "lambda",
+    "ses",
+    "email",
+    "contract"
+  ],
+  "author": "Contract AI",
+  "license": "ISC",
+  "dependencies": {
+    "aws-sdk": "^2.1400.0",
+    "mailparser": "^3.6.5",
+    "axios": "^1.6.2"
+  }
+}

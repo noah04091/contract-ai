@@ -52,7 +52,13 @@ router.post("/register", async (req, res) => {
     const hashed = await bcrypt.hash(password, PASSWORD_SALT_ROUNDS);
     
     // ✅ ERWEITERTE User-Erstellung mit allen notwendigen Feldern
+    // 🔒 E-MAIL INBOX: Sichere Upload-Adresse generieren
+    const userId = new ObjectId();
+    const randomSuffix = crypto.randomBytes(8).toString('hex'); // 16 chars, nicht erratbar
+    const emailInboxAddress = `u_${userId.toString()}.${randomSuffix}@upload.contract-ai.de`;
+
     const newUser = {
+      _id: userId, // ✅ Explizit setzen, damit wir es für E-Mail-Adresse nutzen können
       email,
       password: hashed,
       verified: false, // ⭐ NEU: Double-Opt-In Status
@@ -69,7 +75,11 @@ router.post("/register", async (req, res) => {
       updatedAt: new Date(),
       // 🔔 NOTIFICATION SETTINGS
       emailNotifications: true,
-      contractReminders: true
+      contractReminders: true,
+      // 📧 E-MAIL INBOX für Contract-Import
+      emailInboxAddress: emailInboxAddress,
+      emailInboxEnabled: true, // User kann Feature aktivieren/deaktivieren
+      emailInboxAddressCreatedAt: new Date()
     };
 
     await usersCollection.insertOne(newUser);
@@ -177,7 +187,7 @@ router.get("/me", verifyToken, async (req, res) => {
       subscriptionStatus: status,
       subscriptionActive,
       isPremium: plan === "premium",
-      isBusiness: plan === "business", 
+      isBusiness: plan === "business",
       isFree: plan === "free",
       // ⭐ ANALYSE INFO
       analysisCount,
@@ -188,7 +198,11 @@ router.get("/me", verifyToken, async (req, res) => {
       // 📅 ACCOUNT INFO
       createdAt: user.createdAt,
       emailNotifications: user.emailNotifications ?? true,
-      contractReminders: user.contractReminders ?? true
+      contractReminders: user.contractReminders ?? true,
+      // 📧 E-MAIL INBOX INFO (NEU)
+      emailInboxAddress: user.emailInboxAddress || null,
+      emailInboxEnabled: user.emailInboxEnabled ?? true,
+      emailInboxAddressCreatedAt: user.emailInboxAddressCreatedAt || null
     };
 
     console.log("✅ User-Info erfolgreich geladen:", {
@@ -373,8 +387,8 @@ router.get("/migrate-users", async (req, res) => {
   try {
     const result = await usersCollection.updateMany(
       { verified: { $exists: false } },
-      { 
-        $set: { 
+      {
+        $set: {
           verified: true,
           optimizationCount: 0,
           analysisCount: { $ifNull: ["$analysisCount", 0] },
@@ -387,9 +401,9 @@ router.get("/migrate-users", async (req, res) => {
         }
       }
     );
-    
+
     console.log(`✅ ${result.modifiedCount} User erfolgreich migriert (via GET)`);
-    res.json({ 
+    res.json({
       message: `✅ ${result.modifiedCount} User erfolgreich migriert`,
       modifiedCount: result.modifiedCount,
       success: true
@@ -397,5 +411,95 @@ router.get("/migrate-users", async (req, res) => {
   } catch (err) {
     console.error("❌ Fehler bei User-Migration:", err);
     res.status(500).json({ message: "Fehler bei User-Migration" });
+  }
+});
+
+// ===== 📧 E-MAIL INBOX MANAGEMENT =====
+
+// 🔄 E-Mail Inbox aktivieren/deaktivieren
+router.put("/email-inbox/toggle", verifyToken, async (req, res) => {
+  try {
+    const { enabled } = req.body;
+
+    if (typeof enabled !== 'boolean') {
+      return res.status(400).json({ message: "❌ 'enabled' muss ein Boolean sein" });
+    }
+
+    const result = await usersCollection.updateOne(
+      { _id: new ObjectId(req.user.userId) },
+      {
+        $set: {
+          emailInboxEnabled: enabled,
+          updatedAt: new Date()
+        }
+      }
+    );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ message: "❌ Benutzer nicht gefunden" });
+    }
+
+    console.log(`✅ E-Mail Inbox ${enabled ? 'aktiviert' : 'deaktiviert'} für User:`, req.user.userId);
+
+    res.json({
+      message: `✅ E-Mail Inbox ${enabled ? 'aktiviert' : 'deaktiviert'}`,
+      emailInboxEnabled: enabled
+    });
+  } catch (err) {
+    console.error("❌ Fehler beim Toggle der E-Mail Inbox:", err);
+    res.status(500).json({ message: "Serverfehler beim Toggle" });
+  }
+});
+
+// 🔁 E-Mail Inbox Adresse regenerieren
+router.post("/email-inbox/regenerate", verifyToken, async (req, res) => {
+  try {
+    const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
+
+    if (!user) {
+      return res.status(404).json({ message: "❌ Benutzer nicht gefunden" });
+    }
+
+    // Neue sichere Adresse generieren
+    const randomSuffix = crypto.randomBytes(8).toString('hex');
+    const newEmailInboxAddress = `u_${user._id.toString()}.${randomSuffix}@upload.contract-ai.de`;
+
+    // ✅ Alte Adresse archivieren (für Audit-Log)
+    const oldAddress = user.emailInboxAddress;
+
+    const result = await usersCollection.updateOne(
+      { _id: user._id },
+      {
+        $set: {
+          emailInboxAddress: newEmailInboxAddress,
+          emailInboxAddressCreatedAt: new Date(),
+          updatedAt: new Date()
+        },
+        // Optional: Alte Adressen in Array speichern für Audit
+        $push: {
+          emailInboxAddressHistory: {
+            address: oldAddress,
+            disabledAt: new Date()
+          }
+        }
+      }
+    );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ message: "❌ Benutzer nicht gefunden" });
+    }
+
+    console.log(`✅ E-Mail Inbox Adresse regeneriert für User:`, req.user.userId);
+    console.log(`   Alt: ${oldAddress}`);
+    console.log(`   Neu: ${newEmailInboxAddress}`);
+
+    res.json({
+      message: "✅ Neue E-Mail-Adresse generiert",
+      emailInboxAddress: newEmailInboxAddress,
+      oldAddress: oldAddress
+    });
+  } catch (err) {
+    console.error("❌ Fehler beim Regenerieren der E-Mail Inbox Adresse:", err);
+    res.status(500).json({ message: "Serverfehler beim Regenerieren" });
   }
 });

@@ -19,6 +19,7 @@ import ContractDetailModal from "../components/ContractDetailModal"; // 🎨 Con
 import FolderBar from "../components/FolderBar"; // 📁 Folder Bar (Horizontal)
 import FolderModal from "../components/FolderModal"; // 📁 Folder Modal
 import SmartFoldersModal from "../components/SmartFoldersModal"; // 🤖 Smart Folders Modal
+import EmailInboxWidget from "../components/EmailInboxWidget"; // 📧 E-Mail-Upload Feature
 import { apiCall, uploadAndAnalyze, uploadOnly } from "../utils/api"; // ✅ NEU: uploadOnly hinzugefügt
 import { useFolders } from "../hooks/useFolders"; // 📁 Folder Hook
 import type { FolderType } from "../components/FolderBar"; // 📁 Folder Type
@@ -125,6 +126,9 @@ interface UserInfo {
   isPremium: boolean;
   analysisCount: number;
   analysisLimit: number;
+  // 📧 E-Mail-Inbox Feature
+  emailInboxAddress?: string | null;
+  emailInboxEnabled?: boolean;
 }
 
 // ✅ Erweiterte Filter-Typen
@@ -825,11 +829,14 @@ export default function Contracts() {
         subscriptionPlan: plan,
         isPremium,
         analysisCount,
-        analysisLimit
+        analysisLimit,
+        // 📧 E-Mail-Inbox Feature
+        emailInboxAddress: response.user?.emailInboxAddress || null,
+        emailInboxEnabled: response.user?.emailInboxEnabled ?? true
       };
-      
+
       setUserInfo(newUserInfo);
-      
+
       console.log("✅ User-Info geladen:", newUserInfo);
     } catch (err) {
       console.warn("⚠️ User-Info konnte nicht geladen werden:", err);
@@ -2183,6 +2190,15 @@ export default function Contracts() {
               </div>
             )}
           </div>
+
+          {/* 📧 E-Mail-Upload Widget */}
+          {userInfo.emailInboxAddress && (
+            <EmailInboxWidget
+              emailInboxAddress={userInfo.emailInboxAddress}
+              emailInboxEnabled={userInfo.emailInboxEnabled ?? true}
+              onUpdate={fetchUserInfo}
+            />
+          )}
 
           {/* Tabs */}
           <div className={styles.tabsContainer}>

@@ -1,0 +1,198 @@
+/* 📁 frontend/src/components/EmailInboxWidget.module.css */
+
+.widget {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  padding: 20px;
+  color: white;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  transition: all 0.3s ease;
+}
+
+.widget:hover {
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+}
+
+.widget.disabled {
+  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+  opacity: 0.85;
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.icon {
+  flex-shrink: 0;
+}
+
+.title {
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.disabledBadge {
+  background: rgba(239, 68, 68, 0.3);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.helpButton {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 6px;
+  padding: 6px 8px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.helpButton:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.helpButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Description */
+.description {
+  font-size: 14px;
+  opacity: 0.9;
+  margin-bottom: 12px;
+  line-height: 1.4;
+}
+
+/* Address Box */
+.addressBox {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.address {
+  font-family: 'Courier New', Monaco, monospace;
+  font-size: 13px;
+  font-weight: 600;
+  flex: 1;
+  word-break: break-all;
+  min-width: 200px;
+}
+
+.controls {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.controlButton {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 6px;
+  padding: 8px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.controlButton:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.05);
+}
+
+.controlButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.controlButton.success {
+  background: rgba(16, 185, 129, 0.4);
+}
+
+.controlButton.active {
+  background: rgba(16, 185, 129, 0.3);
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.5);
+}
+
+.controlButton.inactive {
+  background: rgba(239, 68, 68, 0.3);
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.5);
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Warning */
+.warningText {
+  margin-top: 12px;
+  font-size: 13px;
+  padding: 8px 12px;
+  background: rgba(245, 158, 11, 0.2);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .widget {
+    padding: 16px;
+  }
+
+  .addressBox {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .address {
+    font-size: 11px;
+    text-align: center;
+    min-width: unset;
+  }
+
+  .controls {
+    justify-content: center;
+  }
+
+  .title {
+    font-size: 14px;
+  }
+
+  .description {
+    font-size: 13px;
+  }
+}
