@@ -1,5 +1,6 @@
 // 📁 src/pages/Contracts.tsx - JSX FIXED: Motion Button closing tag korrigiert + ANALYSE-ANZEIGE GEFIXT + RESPONSIVE + DUPLIKATSERKENNUNG + S3-INTEGRATION + BATCH-ANALYSE-ANZEIGE + PDF-SCHNELLAKTION MOBILE-FIX + EDIT-SCHNELLAKTION REPARIERT
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet";
 import {
@@ -32,6 +33,16 @@ interface Contract {
   createdAt: string;
   content?: string;
   isGenerated?: boolean;
+  isOptimized?: boolean; // ✅ NEU: Flag für Optimizer-Uploads
+  sourceType?: string; // ✅ NEU: "optimizer", "generate", etc.
+  optimizations?: Array<{
+    category: string;
+    summary: string;
+    original: string;
+    improved: string;
+    severity?: string;
+    reasoning?: string;
+  }>; // ✅ NEU: Optimierungsdaten vom Optimizer
   s3Key?: string; // ✅ NEU: S3-Schlüssel für Cloud-Dateien
   s3Bucket?: string;
   s3Location?: string;
@@ -125,6 +136,9 @@ type SortOrder = 'neueste' | 'älteste' | 'name_az' | 'name_za';
 
 // ✅ MOBILE-FIX: PDF-Schnellaktion mit "Temporäres Tab sofort öffnen" Methode (Mobile-freundlich)
 export default function Contracts() {
+  // ✅ Navigation state handling
+  const location = useLocation();
+
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [filteredContracts, setFilteredContracts] = useState<Contract[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -171,6 +185,7 @@ export default function Contracts() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('alle');
   const [dateFilter, setDateFilter] = useState<DateFilter>('alle');
   const [sortOrder, setSortOrder] = useState<SortOrder>('neueste');
+  const [sourceFilter, setSourceFilter] = useState<'alle' | 'generated' | 'optimized'>('alle'); // 🆕 Quelle-Filter
 
   // ✅ NEU: Upload Success Modal State (für Two-Step Upload Flow)
   const [uploadSuccessModal, setUploadSuccessModal] = useState<{
@@ -213,6 +228,16 @@ export default function Contracts() {
 
   // 🎨 Contract Detail Modal State
   const [selectedEnvelopeId, setSelectedEnvelopeId] = useState<string | null>(null);
+
+  // 🆕 Handle navigation state from Optimizer page
+  useEffect(() => {
+    const state = location.state as { sourceFilter?: 'alle' | 'generated' | 'optimized' };
+    if (state?.sourceFilter) {
+      setSourceFilter(state.sourceFilter);
+      // Clear the state to avoid re-triggering on re-renders
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
 
   // 📁 Close dropdown when clicking outside
   useEffect(() => {
@@ -906,6 +931,15 @@ export default function Contracts() {
       });
     }
 
+    // 🆕 Quelle-Filter (Generiert / Optimiert)
+    if (sourceFilter !== 'alle') {
+      if (sourceFilter === 'generated') {
+        filtered = filtered.filter(contract => contract.isGenerated === true);
+      } else if (sourceFilter === 'optimized') {
+        filtered = filtered.filter(contract => contract.isOptimized === true);
+      }
+    }
+
     // Sortierung
     filtered.sort((a, b) => {
       switch (sortOrder) {
@@ -923,7 +957,7 @@ export default function Contracts() {
       });
 
     setFilteredContracts(filtered);
-  }, [contracts, searchQuery, statusFilter, dateFilter, sortOrder, activeFolder]);
+  }, [contracts, searchQuery, statusFilter, dateFilter, sortOrder, sourceFilter, activeFolder]);
 
   // ✅ FIXED: Filter anwenden mit stabiler applyFilters-Referenz
   useEffect(() => {
@@ -2597,6 +2631,28 @@ export default function Contracts() {
                         </button>
                       )}
                     </div>
+                  </div>
+
+                  {/* 🆕 Source Filter Tabs */}
+                  <div className={styles.sourceFilterTabs}>
+                    <button
+                      className={`${styles.sourceTab} ${sourceFilter === 'alle' ? styles.activeTab : ''}`}
+                      onClick={() => setSourceFilter('alle')}
+                    >
+                      Alle
+                    </button>
+                    <button
+                      className={`${styles.sourceTab} ${sourceFilter === 'generated' ? styles.activeTab : ''}`}
+                      onClick={() => setSourceFilter('generated')}
+                    >
+                      Generiert
+                    </button>
+                    <button
+                      className={`${styles.sourceTab} ${sourceFilter === 'optimized' ? styles.activeTab : ''}`}
+                      onClick={() => setSourceFilter('optimized')}
+                    >
+                      Optimiert
+                    </button>
                   </div>
 
                   <div className={styles.filtersSection}>

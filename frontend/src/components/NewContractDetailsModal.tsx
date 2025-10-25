@@ -89,6 +89,16 @@ interface Contract {
   s3Location?: string;
   uploadType?: string;
   needsReupload?: boolean;
+  isOptimized?: boolean;
+  sourceType?: string;
+  optimizations?: Array<{
+    category: string;
+    summary: string;
+    original: string;
+    improved: string;
+    severity?: string;
+    reasoning?: string;
+  }>;
   analysis?: {
     summary?: string;
     legalAssessment?: string;
@@ -130,7 +140,7 @@ interface NewContractDetailsModalProps {
   onDelete?: (contractId: string, contractName: string) => void;
 }
 
-type TabType = 'overview' | 'pdf' | 'analysis' | 'signature';
+type TabType = 'overview' | 'pdf' | 'analysis' | 'optimizations' | 'signature';
 
 const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
   contract: initialContract,
@@ -703,6 +713,100 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
     );
   };
 
+  // 🆕 Render Optimizations Tab
+  const renderOptimizationsTab = () => {
+    const optimizations = contract.optimizations;
+
+    if (!optimizations || optimizations.length === 0) {
+      return (
+        <div className={styles.tabContent}>
+          <div className={styles.emptyState}>
+            <CheckCircle size={64} />
+            <p>Keine Optimierungen verfügbar</p>
+            <span className={styles.hint}>Dieser Vertrag wurde nicht optimiert.</span>
+          </div>
+        </div>
+      );
+    }
+
+    // Category badge colors
+    const getCategoryColor = (category: string) => {
+      const colors: Record<string, string> = {
+        'RECHTLICHE LÜCKEN': '#dc2626',
+        'UNKLARE FORMULIERUNGEN': '#d97706',
+        'FEHLENDE KLAUSELN': '#ea580c',
+        'RISIKO-MINIMIERUNG': '#7c3aed',
+        'FORMALE FEHLER': '#0891b2',
+      };
+      return colors[category] || '#6b7280';
+    };
+
+    return (
+      <div className={styles.tabContent}>
+        <div className={styles.section}>
+          <h3>✨ Vorgenommene Optimierungen</h3>
+          <p className={styles.hint}>
+            {optimizations.length} Optimierung{optimizations.length !== 1 ? 'en' : ''} wurden am Originalvertrag vorgenommen:
+          </p>
+        </div>
+
+        <div className={styles.optimizationsList}>
+          {optimizations.map((opt, index) => (
+            <div key={index} className={styles.optimizationCard}>
+              <div className={styles.optimizationHeader}>
+                <div
+                  className={styles.categoryBadge}
+                  style={{ background: getCategoryColor(opt.category) }}
+                >
+                  {opt.category}
+                </div>
+                <span className={styles.optimizationNumber}>#{index + 1}</span>
+              </div>
+
+              <h4 className={styles.optimizationSummary}>{opt.summary}</h4>
+
+              {opt.original && (
+                <div className={styles.optimizationSection}>
+                  <div className={styles.optimizationLabel}>
+                    <XCircle size={16} color="#dc2626" />
+                    <strong>Ursprüngliches Problem:</strong>
+                  </div>
+                  <div className={styles.optimizationOriginal}>
+                    {opt.original}
+                  </div>
+                </div>
+              )}
+
+              {opt.improved && (
+                <div className={styles.optimizationSection}>
+                  <div className={styles.optimizationLabel}>
+                    <CheckCircle size={16} color="#16a34a" />
+                    <strong>Verbesserte Klausel:</strong>
+                  </div>
+                  <div className={styles.optimizationImproved}>
+                    {opt.improved}
+                  </div>
+                </div>
+              )}
+
+              {opt.reasoning && (
+                <div className={styles.optimizationSection}>
+                  <div className={styles.optimizationLabel}>
+                    <AlertCircle size={16} color="#7c3aed" />
+                    <strong>Begründung:</strong>
+                  </div>
+                  <div className={styles.optimizationReasoning}>
+                    {opt.reasoning}
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   // Render Signature Tab - Clean scrollable sections (no sub-tabs)
   const renderSignatureTab = () => {
     if (envelopeLoading) {
@@ -1071,6 +1175,15 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
                   <span className={styles.tabDisabled}>(nicht verfügbar)</span>
                 )}
               </button>
+              {contract.isOptimized && contract.optimizations && contract.optimizations.length > 0 && (
+                <button
+                  className={`${styles.tabButton} ${activeTab === 'optimizations' ? styles.tabActive : ''}`}
+                  onClick={() => setActiveTab('optimizations')}
+                >
+                  <CheckCircle size={18} />
+                  <span>Optimierungen</span>
+                </button>
+              )}
               {(contract.envelope || contract.signatureEnvelopeId) && (
                 <button
                   className={`${styles.tabButton} ${activeTab === 'signature' ? styles.tabActive : ''}`}
@@ -1120,6 +1233,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
             {activeTab === 'overview' && renderOverviewTab()}
             {activeTab === 'pdf' && renderPdfTab()}
             {activeTab === 'analysis' && renderAnalysisTab()}
+            {activeTab === 'optimizations' && renderOptimizationsTab()}
             {activeTab === 'signature' && renderSignatureTab()}
           </div>
         </div>

@@ -744,6 +744,118 @@
     height: 32px;
     font-size: 1rem;
   }
+
+  .optimizationCard {
+    padding: 16px;
+  }
+}
+
+/* ========================================
+   OPTIMIZATIONS TAB STYLES
+   ======================================== */
+
+.optimizationsList {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.optimizationCard {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.2s ease;
+}
+
+.optimizationCard:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: #d1d5db;
+}
+
+.optimizationHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.categoryBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 6px;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.optimizationNumber {
+  font-size: 0.875rem;
+  color: #9ca3af;
+  font-weight: 600;
+}
+
+.optimizationSummary {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 16px 0;
+  line-height: 1.5;
+}
+
+.optimizationSection {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #f3f4f6;
+}
+
+.optimizationSection:first-of-type {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.optimizationLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.optimizationOriginal {
+  background: #fef2f2;
+  border-left: 3px solid #dc2626;
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  color: #991b1b;
+  line-height: 1.6;
+}
+
+.optimizationImproved {
+  background: #f0fdf4;
+  border-left: 3px solid #16a34a;
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  color: #166534;
+  line-height: 1.6;
+}
+
+.optimizationReasoning {
+  background: #faf5ff;
+  border-left: 3px solid #7c3aed;
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  color: #5b21b6;
+  line-height: 1.6;
 }
 
 /* ========================================

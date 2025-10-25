@@ -1,6 +1,7 @@
 // 📁 src/pages/Optimizer.tsx - APPLE DESIGN REVOLUTION ✨
 import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import ReactDOM from "react-dom";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Upload,
@@ -22,6 +23,7 @@ import {
   ChevronDown,
   ChevronUp,
   Sparkles,
+  FolderOpen,
   Target,
   BarChart3,
   FileSignature,
@@ -589,6 +591,9 @@ const isValidPdfText = (text: string | undefined): boolean => {
 };
 
 export default function Optimizer() {
+  // ✅ Navigation
+  const navigate = useNavigate();
+
   // ✅ ORIGINAL: Core states
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
@@ -1505,6 +1510,32 @@ Konfidenz: ${opt.confidence}%\n`
                 </motion.button>
               )}
             </motion.div>
+
+            {/* 🆕 CTA: View Optimized Contracts */}
+            {!file && !isAnalyzing && optimizations.length === 0 && isPremium && (
+              <motion.div
+                className={styles.ctaSection}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                <motion.button
+                  className={styles.ctaButton}
+                  onClick={() => {
+                    // Navigate to Contracts page and set filter to 'optimized'
+                    navigate('/contracts', { state: { sourceFilter: 'optimized' } });
+                  }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <FolderOpen size={20} />
+                  <span>Alle optimierten Verträge anzeigen</span>
+                </motion.button>
+                <p className={styles.ctaHint}>
+                  Bereits optimierte Verträge in Ihrer Verwaltung anzeigen
+                </p>
+              </motion.div>
+            )}
           </motion.div>
 
           {/* 🎨 Premium Analysis Progress - Apple/Microsoft Level */}

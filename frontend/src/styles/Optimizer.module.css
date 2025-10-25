@@ -1099,4 +1099,61 @@ html {
   .analysisStepLabel {
     font-size: 13px;
   }
+
+  .ctaSection {
+    padding: 20px;
+  }
+
+  .ctaButton {
+    font-size: 14px;
+    padding: 12px 20px;
+  }
+}
+
+/* ========================================
+   🆕 CTA SECTION STYLES
+   ======================================== */
+
+.ctaSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 32px 24px;
+  margin-top: 24px;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+  border: 1px solid rgba(102, 126, 234, 0.15);
+  border-radius: 16px;
+}
+
+.ctaButton {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 28px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.ctaButton:hover {
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+  transform: translateY(-2px);
+}
+
+.ctaButton:active {
+  transform: translateY(0);
+}
+
+.ctaHint {
+  font-size: 13px;
+  color: #6b7280;
+  text-align: center;
+  margin: 0;
 }
