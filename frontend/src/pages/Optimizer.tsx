@@ -898,6 +898,125 @@ export default function Optimizer() {
     loadCompanyProfiles();
   }, [loadCompanyProfiles]);
 
+  // 🚀 NEUE FUNKTION: Professionellen Vertrag aus Optimizer-Daten erstellen
+  const handleCreateOptimizedContract = useCallback(async () => {
+    if (!file || !analysisData) {
+      showToast("❌ Keine Vertragsdaten verfügbar", 'error');
+      return;
+    }
+
+    if (isGeneratingContract) {
+      return;
+    }
+
+    setIsGeneratingContract(true);
+    showToast("🚀 Erstelle professionellen Vertrag mit Optimierungen...", 'info');
+
+    try {
+      // 1. Sammle Original-Daten basierend auf Checkboxen
+      const formData: any = {
+        title: file.name.replace(/\.pdf$/i, ''),
+        type: 'custom', // oder basierend auf analysisData
+      };
+
+      // 2. Parteien hinzufügen (wenn checkbox aktiv)
+      if (generateOptions.includeParties && analysisData) {
+        // Extrahiere Parteien aus analysisData
+        if (analysisData.parties) {
+          formData.parties = analysisData.parties;
+        }
+      }
+
+      // 3. Beträge hinzufügen (wenn checkbox aktiv)
+      if (generateOptions.includeAmounts && analysisData) {
+        if (analysisData.amounts || analysisData.betrag) {
+          formData.amounts = analysisData.amounts || analysisData.betrag;
+        }
+      }
+
+      // 4. Laufzeiten hinzufügen (wenn checkbox aktiv)
+      if (generateOptions.includeDurations && analysisData) {
+        if (analysisData.laufzeit) {
+          formData.duration = analysisData.laufzeit;
+        }
+        if (analysisData.kuendigung) {
+          formData.termination = analysisData.kuendigung;
+        }
+      }
+
+      // 5. Klauseln hinzufügen (wenn checkbox aktiv)
+      if (generateOptions.includeClauses) {
+        // Sammle alle Optimierungen
+        const selectedOpts = showAdvancedView
+          ? optimizations.filter(opt => selectedOptimizations.has(opt.id))
+          : optimizations.filter(opt => opt.priority === 'high' || opt.priority === 'critical');
+
+        if (selectedOpts.length > 0) {
+          formData.optimizations = selectedOpts.map(opt => ({
+            original: opt.original,
+            improved: opt.improved,
+            category: opt.category,
+            reasoning: opt.reasoning
+          }));
+        }
+
+        // Füge auch Original-Vertragstext hinzu für Kontext
+        if (originalContractText) {
+          formData.originalContent = originalContractText;
+        }
+      }
+
+      // 6. Erstelle neuen Vertrag über /api/generate
+      const response = await fetch('/api/generate', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: formData.type,
+          formData: formData,
+          useCompanyProfile: !!selectedProfile,
+          designVariant: 'executive'
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Fehler beim Generieren');
+      }
+
+      // 7. Lade das generierte PDF herunter
+      const blob = await response.blob();
+      const downloadUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `Optimiert_${file.name.replace('.pdf', '')}_${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(downloadUrl);
+
+      showToast(`✅ Professioneller Vertrag erfolgreich erstellt!`, 'success');
+
+    } catch (error) {
+      const err = error as Error;
+      console.error("❌ Fehler beim Erstellen:", err);
+      showToast(err.message || 'Fehler beim Erstellen des Vertrags', 'error');
+    } finally {
+      setIsGeneratingContract(false);
+    }
+  }, [
+    file,
+    analysisData,
+    generateOptions,
+    selectedProfile,
+    optimizations,
+    showAdvancedView,
+    selectedOptimizations,
+    originalContractText,
+    isGeneratingContract,
+    showToast
+  ]);
+
   // ✅ SIMPLIFIED: Smart Contract Generator
   const handleGenerateOptimizedContract = useCallback(async () => {
     if (!file || optimizations.length === 0) {
@@ -3225,7 +3344,7 @@ Konfidenz: ${opt.confidence}%\n`
                 <button
                   onClick={() => {
                     setShowGenerateModal(false);
-                    handleGenerateOptimizedContract();
+                    handleCreateOptimizedContract();
                   }}
                   disabled={isGeneratingContract}
                   style={{
