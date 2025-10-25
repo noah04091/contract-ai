@@ -3485,7 +3485,7 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
         }
 
         const contractToSave = {
-          userId: req.user.userId,
+          userId: new ObjectId(req.user.userId), // ✅ FIX: ObjectId für MongoDB-Query-Kompatibilität
           name: req.file.originalname || "Analysierter Vertrag",
           content: contractText,
           kuendigung: "Unbekannt", // ✅ Basis-Felder für Contracts-Kompatibilität
