@@ -587,9 +587,8 @@ export default function Optimizer() {
   const [showPitchMenu, setShowPitchMenu] = useState(false);
   const [selectedPitchStyle] = useState<string>('business');
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
-  
+
   // ✅ ORIGINAL: Smart Contract Generator States
-  const [contractId, setContractId] = useState<string | null>(null);
   const [isGeneratingContract, setIsGeneratingContract] = useState(false);
   const [originalContractText, setOriginalContractText] = useState<string>('');
   const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
