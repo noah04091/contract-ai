@@ -968,7 +968,7 @@ const HomeRedesign = () => {
               </div>
 
               <div className="cm-text">
-                <h2 id="email-upload-title" className="reveal-text">📧 Automatischer E-Mail-Upload — Verträge per E-Mail hochladen</h2>
+                <h2 id="email-upload-title" className="reveal-text">Automatischer E-Mail-Upload — Verträge per E-Mail hochladen</h2>
                 <p className="cm-subtext reveal-text">Leiten Sie E-Mails mit Vertragsanhängen einfach an Ihre persönliche Contract AI E-Mail-Adresse weiter. Das System erkennt PDF-Dateien automatisch, lädt sie hoch und analysiert sie — vollautomatisch und ohne manuelle Eingabe.</p>
                 <ul className="cm-bullets reveal-block">
                   <li>
