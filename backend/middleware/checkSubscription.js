@@ -6,6 +6,12 @@ const { ObjectId } = require("mongodb");
 // Diese Funktion wird vom Server mit gegebenem DB-Handle aufgerufen
 module.exports = function createCheckSubscription(usersCollection) {
   return async function checkSubscription(req, res, next) {
+    // ✅ SKIP Subscription-Check für E-Mail-Import (nutzt API-Key stattdessen)
+    if (req.originalUrl.includes('/api/contracts/email-import')) {
+      console.log('⏩ E-Mail-Import Route: Subscription-Check übersprungen (nutzt API-Key)');
+      return next();
+    }
+
     const userId = req.user?.userId;
 
     if (!userId) {
