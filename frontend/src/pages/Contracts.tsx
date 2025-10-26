@@ -1963,7 +1963,7 @@ export default function Contracts() {
                 <span className={styles.optimizedBadge}>Optimiert</span>
               )}
               {contract.uploadType === 'EMAIL_IMPORT' && (
-                <span className={styles.emailImportBadge}>📧 Per Email importiert</span>
+                <span className={styles.emailImportBadge}>Per Email</span>
               )}
               {contract.analyzed === false && (
                 <span className={styles.notAnalyzedBadge}>Nicht analysiert</span>
@@ -2918,13 +2918,16 @@ export default function Contracts() {
                                   </div>
                                   <div>
                                     <span className={styles.contractNameText}>{contract.name}</span>
-                                    {(contract.isGenerated || contract.isOptimized) && (
+                                    {(contract.isGenerated || contract.isOptimized || contract.uploadType === 'EMAIL_IMPORT') && (
                                       <div className={styles.contractBadges}>
                                         {contract.isGenerated && (
                                           <span className={styles.generatedBadge}>Generiert</span>
                                         )}
                                         {contract.isOptimized && (
                                           <span className={styles.optimizedBadge}>Optimiert</span>
+                                        )}
+                                        {contract.uploadType === 'EMAIL_IMPORT' && (
+                                          <span className={styles.emailImportBadge}>Per Email</span>
                                         )}
                                       </div>
                                     )}
