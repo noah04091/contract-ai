@@ -48,6 +48,7 @@ const GeneratorPage = lazy(() => import("./pages/features/Generator"));
 const LegalPulsePage = lazy(() => import("./pages/features/LegalPulse"));
 const Vertragsverwaltung = lazy(() => import("./pages/features/Vertragsverwaltung"));
 const DigitaleSignatur = lazy(() => import("./pages/features/DigitaleSignatur"));
+const EmailUpload = lazy(() => import("./pages/features/EmailUpload"));
 
 // 🔒 Geschützte Seiten - Lazy Loading
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -145,6 +146,7 @@ function AppWithLoader() {
             <Route path="/features/legalpulse" element={<LegalPulsePage />} />
             <Route path="/features/vertragsverwaltung" element={<Vertragsverwaltung />} />
             <Route path="/features/digitalesignatur" element={<DigitaleSignatur />} />
+            <Route path="/features/email-upload" element={<EmailUpload />} />
 
             {/* 🔒 Geschützte Seiten */}
             <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />

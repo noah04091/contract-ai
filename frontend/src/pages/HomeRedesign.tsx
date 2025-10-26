@@ -1001,8 +1001,8 @@ const HomeRedesign = () => {
                   </li>
                 </ul>
                 <div className="cm-cta reveal-text">
-                  <Link to="/register" className="cm-btn-primary" data-track="cta-email-upload">
-                    Jetzt E-Mail-Adresse erhalten
+                  <Link to="/features/email-upload" className="cm-btn-primary" data-track="cta-email-upload">
+                    Mehr erfahren
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M5 12h14"></path>
                       <path d="m12 5 7 7-7 7"></path>
