@@ -1972,7 +1972,53 @@ router.post("/email-import", verifyEmailImportKey, async (req, res) => {
       });
     }
 
-    // 2. Attachments validieren und filtern
+    // 2. Rate Limiting Check basierend auf Subscription Plan
+    const rateLimits = {
+      free: { limit: 1, window: 3600000 },      // 1 Email pro Stunde
+      premium: { limit: 10, window: 3600000 },  // 10 Emails pro Stunde
+      business: { limit: 20, window: 3600000 }  // 20 Emails pro Stunde
+    };
+
+    const userPlan = user.subscriptionPlan || 'free';
+    const rateLimit = rateLimits[userPlan] || rateLimits.free;
+
+    // Email-Import History initialisieren falls nicht vorhanden
+    if (!user.emailImportHistory) {
+      user.emailImportHistory = [];
+    }
+
+    // Nur Imports der letzten Stunde zählen (Sliding Window)
+    const oneHourAgo = Date.now() - rateLimit.window;
+    const recentImports = user.emailImportHistory.filter(
+      (entry) => new Date(entry.timestamp).getTime() > oneHourAgo
+    );
+
+    console.log(`🔍 Rate Limit Check: User ${user.email} (${userPlan}) hat ${recentImports.length}/${rateLimit.limit} Emails in der letzten Stunde importiert`);
+
+    // Rate Limit überschritten?
+    if (recentImports.length >= rateLimit.limit) {
+      console.warn(`⚠️ Rate Limit erreicht für User ${user.email}: ${recentImports.length}/${rateLimit.limit}`);
+
+      return res.status(429).json({
+        success: false,
+        message: `Rate Limit erreicht: Maximal ${rateLimit.limit} Email-Imports pro Stunde für ${userPlan}-Plan`,
+        rateLimitInfo: {
+          plan: userPlan,
+          limit: rateLimit.limit,
+          current: recentImports.length,
+          resetIn: Math.ceil((new Date(recentImports[0].timestamp).getTime() + rateLimit.window - Date.now()) / 60000) // Minuten bis Reset
+        }
+      });
+    }
+
+    // Import zur History hinzufügen (wird später nach erfolgreichem Upload gespeichert)
+    const importEntry = {
+      timestamp: new Date(),
+      messageId: messageId,
+      senderEmail: senderEmail
+    };
+
+    // 3. Attachments validieren und filtern
     if (!attachments || attachments.length === 0) {
       return res.status(400).json({
         success: false,
@@ -2103,6 +2149,22 @@ router.post("/email-import", verifyEmailImportKey, async (req, res) => {
     // Response
     const successCount = importedContracts.filter(c => !c.duplicate).length;
     const duplicateCount = importedContracts.filter(c => c.duplicate).length;
+
+    // ✅ Rate Limiting: Import zur History hinzufügen (nur bei Erfolg)
+    if (successCount > 0) {
+      await usersCollection.updateOne(
+        { _id: user._id },
+        {
+          $push: {
+            emailImportHistory: {
+              $each: [importEntry],
+              $slice: -100  // Maximal 100 Einträge behalten (automatisches Cleanup)
+            }
+          }
+        }
+      );
+      console.log(`✅ Email-Import zur History hinzugefügt für User ${user.email}`);
+    }
 
     res.json({
       success: true,
