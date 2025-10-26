@@ -1535,7 +1535,7 @@
 }
 
 .sourceTab {
-  padding: 0.5rem 0.875rem;
+  padding: 0.5rem 1rem;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   background: white;
@@ -1545,11 +1545,9 @@
   cursor: pointer;
   transition: all 0.2s ease;
   height: 38px;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
-  box-sizing: border-box;
-  line-height: 1.5;
 }
 
 .sourceTab:hover {
@@ -1593,11 +1591,8 @@
   transition: all 0.2s ease;
   min-width: 140px;
   height: 38px;
-  box-sizing: border-box;
-  line-height: 1.5;
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
+  display: flex;
+  align-items: center;
 }
 
 .quickFilter:hover {
