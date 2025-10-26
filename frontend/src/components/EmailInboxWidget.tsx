@@ -40,7 +40,7 @@ export default function EmailInboxWidget({
 
     setLoading(true);
     try {
-      const response = await apiCall("/api/auth/email-inbox/regenerate", {
+      const response = await apiCall("/auth/email-inbox/regenerate", {
         method: "POST"
       }) as { emailInboxAddress: string };
       console.log("✅ Neue Adresse generiert:", response.emailInboxAddress);
@@ -57,7 +57,7 @@ export default function EmailInboxWidget({
   const handleToggle = async (enabled: boolean) => {
     setLoading(true);
     try {
-      await apiCall("/api/auth/email-inbox/toggle", {
+      await apiCall("/auth/email-inbox/toggle", {
         method: "PUT",
         body: JSON.stringify({ enabled })
       });
