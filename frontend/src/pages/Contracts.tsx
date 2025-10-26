@@ -8,7 +8,7 @@ import {
   Plus, Calendar, Clock, Trash2, Eye, Edit,
   Search, X, Crown, Users, Loader,
   Lock, Zap, BarChart3, ExternalLink, ArrowRight, Folder,
-  CheckSquare, Square
+  CheckSquare, Square, Mail
 } from "lucide-react";
 import styles from "../styles/Contracts.module.css";
 import ContractAnalysis from "../components/ContractAnalysis";
@@ -151,7 +151,7 @@ export default function Contracts() {
   const [loading, setLoading] = useState(true);
   const [errorMessage, setError] = useState<string | null>(null);
   const [dragActive, setDragActive] = useState(false);
-  const [activeSection, setActiveSection] = useState<'upload' | 'contracts'>('contracts');
+  const [activeSection, setActiveSection] = useState<'upload' | 'contracts' | 'email-upload'>('contracts');
   const [refreshing, setRefreshing] = useState(false);
   
   // ✅ BUG FIX 1: Neuer State für Edit-Modal direkt öffnen
@@ -2196,15 +2196,6 @@ export default function Contracts() {
             )}
           </div>
 
-          {/* 📧 E-Mail-Upload Widget */}
-          {userInfo.emailInboxAddress && (
-            <EmailInboxWidget
-              emailInboxAddress={userInfo.emailInboxAddress}
-              emailInboxEnabled={userInfo.emailInboxEnabled ?? true}
-              onUpdate={fetchUserInfo}
-            />
-          )}
-
           {/* Tabs */}
           <div className={styles.tabsContainer}>
             <button 
@@ -2237,6 +2228,17 @@ export default function Contracts() {
                 <Lock size={14} className={styles.lockIcon} />
               )}
             </button>
+
+            {/* 📧 NEU: Email-Upload Tab */}
+            {userInfo.emailInboxAddress && (
+              <button
+                className={`${styles.tabButton} ${activeSection === 'email-upload' ? styles.activeTab : ''}`}
+                onClick={() => setActiveSection('email-upload')}
+              >
+                <Mail size={18} />
+                <span>Email-Upload</span>
+              </button>
+            )}
           </div>
 
           <AnimatePresence mode="wait" initial={false}>
@@ -2561,6 +2563,36 @@ export default function Contracts() {
                     )}
                   </>
                 )}
+              </motion.div>
+            )}
+
+            {/* 📧 NEU: Email-Upload Sektion */}
+            {activeSection === 'email-upload' && userInfo.emailInboxAddress && (
+              <motion.div
+                key="email-upload-section"
+                className={styles.section}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className={styles.sectionHeader}>
+                  <div>
+                    <h2 className={styles.sectionTitle}>
+                      <Mail size={24} />
+                      Email-Upload
+                    </h2>
+                    <p className={styles.sectionDescription}>
+                      Leite Emails mit Verträgen an deine persönliche Email-Adresse weiter
+                    </p>
+                  </div>
+                </div>
+
+                <EmailInboxWidget
+                  emailInboxAddress={userInfo.emailInboxAddress}
+                  emailInboxEnabled={userInfo.emailInboxEnabled ?? true}
+                  onUpdate={fetchUserInfo}
+                />
               </motion.div>
             )}
 
