@@ -2104,6 +2104,15 @@ a {
   justify-content: center;
 }
 
+/* Spiegelverkehrte Grid-Version (Visual links, Text rechts) */
+.cm-grid-reverse .cm-text {
+  order: 2;
+}
+
+.cm-grid-reverse .cm-visual {
+  order: 1;
+}
+
 .cm-text h2 {
   font-size: 42px;
   font-weight: 700;

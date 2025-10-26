@@ -889,6 +889,131 @@ const HomeRedesign = () => {
           </div>
         </section>
 
+        {/* Email Upload Section - Spiegelverkehrt */}
+        <section className="contracts-management" aria-labelledby="email-upload-title">
+          <div className="section-container">
+            <div className="cm-grid cm-grid-reverse">
+              <div className="cm-visual" style={{background: 'transparent', padding: '0'}}>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 500 400"
+                  style={{
+                    width: '120%',
+                    height: 'auto',
+                    display: 'block',
+                    background: 'transparent',
+                    transform: 'translateX(10%)'
+                  }}
+                >
+                  <defs>
+                    <linearGradient id="email-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" style={{stopColor: '#667eea', stopOpacity: 1}} />
+                      <stop offset="100%" style={{stopColor: '#764ba2', stopOpacity: 1}} />
+                    </linearGradient>
+                    <filter id="shadow-email">
+                      <feDropShadow dx="0" dy="4" stdDeviation="6" floodOpacity="0.12"/>
+                    </filter>
+                  </defs>
+
+                  {/* Floating dots */}
+                  <circle cx="100" cy="80" r="7" fill="#667eea" opacity="0.6" className="floating-dot floating-dot-1"/>
+                  <circle cx="420" cy="120" r="8" fill="#764ba2" opacity="0.6" className="floating-dot floating-dot-2"/>
+                  <circle cx="380" cy="300" r="6" fill="#10b981" opacity="0.6" className="floating-dot floating-dot-3"/>
+                  <circle cx="90" cy="280" r="9" fill="#f59e0b" opacity="0.6" className="floating-dot floating-dot-4"/>
+
+                  {/* Email Envelope */}
+                  <g transform="translate(150, 100)" filter="url(#shadow-email)">
+                    {/* Envelope body */}
+                    <rect x="0" y="40" width="200" height="140" rx="12" fill="url(#email-gradient)"/>
+
+                    {/* Envelope flap (closed) */}
+                    <path d="M0 40 L100 120 L200 40" fill="#8b5cf6" opacity="0.9"/>
+                    <path d="M0 40 L100 120 L200 40 L200 52 L100 132 L0 52 Z" fill="url(#email-gradient)" opacity="0.95"/>
+
+                    {/* Email lines inside */}
+                    <line x1="40" y1="100" x2="160" y2="100" stroke="#ffffff" strokeWidth="3" opacity="0.7"/>
+                    <line x1="40" y1="120" x2="140" y2="120" stroke="#ffffff" strokeWidth="3" opacity="0.7"/>
+                    <line x1="40" y1="140" x2="120" y2="140" stroke="#ffffff" strokeWidth="3" opacity="0.7"/>
+                  </g>
+
+                  {/* Upload arrow icon */}
+                  <g transform="translate(330, 180)" filter="url(#shadow-email)">
+                    <circle cx="25" cy="25" r="25" fill="#10b981"/>
+                    <path d="M25 15 L25 35 M25 15 L18 22 M25 15 L32 22"
+                          stroke="#ffffff"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          fill="none"/>
+                  </g>
+
+                  {/* PDF document icon */}
+                  <g transform="translate(110, 240)" filter="url(#shadow-email)">
+                    <rect x="0" y="0" width="45" height="55" rx="4" fill="#ef4444"/>
+                    <path d="M45 0 L45 15 L30 0 Z" fill="#dc2626"/>
+                    <text x="22.5" y="38" fontSize="14" fontWeight="bold" fill="#ffffff" textAnchor="middle">PDF</text>
+                  </g>
+
+                  {/* Checkmark badge */}
+                  <g transform="translate(360, 90)">
+                    <circle cx="15" cy="15" r="15" fill="#10b981"/>
+                    <path d="M8 15 L13 20 L22 11"
+                          stroke="#ffffff"
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          fill="none"/>
+                  </g>
+                </svg>
+              </div>
+
+              <div className="cm-text">
+                <h2 id="email-upload-title" className="reveal-text">📧 Automatischer E-Mail-Upload — Verträge per E-Mail hochladen</h2>
+                <p className="cm-subtext reveal-text">Leiten Sie E-Mails mit Vertragsanhängen einfach an Ihre persönliche Contract AI E-Mail-Adresse weiter. Das System erkennt PDF-Dateien automatisch, lädt sie hoch und analysiert sie — ohne dass Sie sich einloggen müssen.</p>
+                <ul className="cm-bullets reveal-block">
+                  <li>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21.5 12H16c-.7 2-2 3-4 3s-3.3-1-4-3H2.5"></path>
+                      <path d="M5.5 5.1L2 12v6c0 1.1.9 2 2 2h16a2 2 0 002-2v-6l-3.4-6.9A2 2 0 0016.8 4H7.2a2 2 0 00-1.8 1.1z"></path>
+                    </svg>
+                    <span><strong>Keine manuelle Eingabe:</strong> Einfach E-Mail weiterleiten</span>
+                  </li>
+                  <li>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"></path>
+                      <polyline points="7 10 12 15 17 10"></polyline>
+                      <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    <span><strong>Automatische Erkennung:</strong> PDFs werden sofort verarbeitet</span>
+                  </li>
+                  <li>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                      <path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"></path>
+                    </svg>
+                    <span><strong>Funktioniert überall:</strong> Von jedem E-Mail-Postfach</span>
+                  </li>
+                  <li>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                    </svg>
+                    <span><strong>Sofort im Dashboard:</strong> Verträge erscheinen automatisch</span>
+                  </li>
+                </ul>
+                <div className="cm-cta reveal-text">
+                  <Link to="/register" className="cm-btn-primary" data-track="cta-email-upload">
+                    Jetzt E-Mail-Adresse erhalten
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M5 12h14"></path>
+                      <path d="m12 5 7 7-7 7"></path>
+                    </svg>
+                  </Link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Extended Showcase Section with 6 New Features */}
         <section className="showcase-section" ref={(el) => registerSection('showcase', el)}>
           <div className="floating-shapes">
