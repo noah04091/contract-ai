@@ -2,6 +2,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Mail, ArrowRight, CheckCircle, Copy, RefreshCw, Power } from "lucide-react";
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import styles from "./EmailTutorialModal.module.css";
 
 interface EmailTutorialModalProps {
@@ -34,7 +35,7 @@ export default function EmailTutorialModal({
     }
   };
 
-  return (
+  return createPortal(
     <AnimatePresence>
       {show && (
         <>
@@ -168,6 +169,7 @@ export default function EmailTutorialModal({
           </motion.div>
         </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }
