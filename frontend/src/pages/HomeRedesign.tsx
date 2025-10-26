@@ -921,19 +921,27 @@ const HomeRedesign = () => {
                   <circle cx="380" cy="300" r="6" fill="#10b981" opacity="0.6" className="floating-dot floating-dot-3"/>
                   <circle cx="90" cy="280" r="9" fill="#f59e0b" opacity="0.6" className="floating-dot floating-dot-4"/>
 
-                  {/* Email Envelope */}
+                  {/* Email Envelope - OPEN */}
                   <g transform="translate(150, 100)" filter="url(#shadow-email)">
                     {/* Envelope body */}
-                    <rect x="0" y="40" width="200" height="140" rx="12" fill="url(#email-gradient)"/>
+                    <rect x="0" y="60" width="200" height="120" rx="12" fill="url(#email-gradient)"/>
 
-                    {/* Envelope flap (closed) */}
-                    <path d="M0 40 L100 120 L200 40" fill="#8b5cf6" opacity="0.9"/>
-                    <path d="M0 40 L100 120 L200 40 L200 52 L100 132 L0 52 Z" fill="url(#email-gradient)" opacity="0.95"/>
+                    {/* Offene Klappe (nach hinten) */}
+                    <path d="M0 60 L100 0 L200 60" fill="#9333ea" opacity="0.8"/>
 
-                    {/* Email lines inside */}
-                    <line x1="40" y1="100" x2="160" y2="100" stroke="#ffffff" strokeWidth="3" opacity="0.7"/>
-                    <line x1="40" y1="120" x2="140" y2="120" stroke="#ffffff" strokeWidth="3" opacity="0.7"/>
-                    <line x1="40" y1="140" x2="120" y2="140" stroke="#ffffff" strokeWidth="3" opacity="0.7"/>
+                    {/* Brief/Dokument das rausschaut (weiß) */}
+                    <rect x="20" y="20" width="160" height="100" rx="6" fill="#ffffff"/>
+
+                    {/* Textzeilen auf dem sichtbaren Dokument */}
+                    <line x1="40" y1="45" x2="160" y2="45" stroke="#667eea" strokeWidth="3" opacity="0.6"/>
+                    <line x1="40" y1="60" x2="140" y2="60" stroke="#667eea" strokeWidth="3" opacity="0.6"/>
+                    <line x1="40" y1="75" x2="120" y2="75" stroke="#667eea" strokeWidth="3" opacity="0.6"/>
+                    <line x1="40" y1="90" x2="150" y2="90" stroke="#667eea" strokeWidth="3" opacity="0.6"/>
+
+                    {/* Vordere Umschlag-Kanten (überlappen das Dokument leicht) */}
+                    <path d="M0 60 L100 120 L200 60" fill="url(#email-gradient)" opacity="0.95"/>
+                    <line x1="0" y1="60" x2="100" y2="120" stroke="#764ba2" strokeWidth="2" opacity="0.5"/>
+                    <line x1="200" y1="60" x2="100" y2="120" stroke="#764ba2" strokeWidth="2" opacity="0.5"/>
                   </g>
 
                   {/* Upload arrow icon */}
