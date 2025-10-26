@@ -13,8 +13,12 @@ const ALLOWED_IPS = (process.env.EMAIL_IMPORT_ALLOWED_IPS || '').split(',').filt
  * Middleware: API-Key + Optional IP-Allowlist Check
  */
 function verifyEmailImportKey(req, res, next) {
+  console.log('🔐 verifyEmailImportKey aufgerufen für:', req.originalUrl);
+  console.log('🔑 EMAIL_IMPORT_API_KEY aus env:', EMAIL_IMPORT_API_KEY ? `${EMAIL_IMPORT_API_KEY.substring(0, 10)}...` : 'UNDEFINED!');
+
   // 1. API-Key Check
   const apiKey = req.headers['x-internal-key'];
+  console.log('🔑 Empfangener API-Key:', apiKey ? `${apiKey.substring(0, 10)}...` : 'KEINER!');
 
   if (!apiKey) {
     console.warn('⚠️ E-Mail-Import: Kein API-Key im Header');
@@ -26,7 +30,8 @@ function verifyEmailImportKey(req, res, next) {
 
   if (apiKey !== EMAIL_IMPORT_API_KEY) {
     console.warn('⚠️ E-Mail-Import: Ungültiger API-Key', {
-      provided: apiKey.substring(0, 10) + '...',
+      provided: apiKey ? apiKey.substring(0, 10) + '...' : 'null',
+      expected: EMAIL_IMPORT_API_KEY ? EMAIL_IMPORT_API_KEY.substring(0, 10) + '...' : 'UNDEFINED',
       ip: req.ip || req.connection.remoteAddress
     });
     return res.status(401).json({
