@@ -1944,13 +1944,28 @@ router.post("/email-import", verifyEmailImportKey, async (req, res) => {
     const usersCollection = db.collection("users");
     const contractsCollection = db.collection("contracts");
 
+    // 🔍 DEBUG: Detaillierte Logs
+    console.log("🔍 Suche User mit:", {
+      emailInboxAddress: recipientEmail,
+      emailInboxEnabled: true
+    });
+
     const user = await usersCollection.findOne({
       emailInboxAddress: recipientEmail,
       emailInboxEnabled: true
     });
 
+    console.log("🔍 User gefunden:", user ? `✅ ${user.email}` : "❌ NICHT GEFUNDEN");
+
     if (!user) {
+      // 🔍 Erweiterte Fehlersuche: Gibt es den User mit dieser Adresse OHNE emailInboxEnabled?
+      const userWithoutEnabled = await usersCollection.findOne({
+        emailInboxAddress: recipientEmail
+      });
+
       console.warn("⚠️ User nicht gefunden oder Inbox deaktiviert:", recipientEmail);
+      console.warn("🔍 User mit Adresse (ohne enabled-Check):", userWithoutEnabled ? `✅ ${userWithoutEnabled.email} (enabled: ${userWithoutEnabled.emailInboxEnabled})` : "❌ NICHT GEFUNDEN");
+
       return res.status(404).json({
         success: false,
         message: "User nicht gefunden oder Inbox deaktiviert"
