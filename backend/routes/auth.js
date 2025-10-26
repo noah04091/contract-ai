@@ -504,6 +504,29 @@ router.post("/email-inbox/regenerate", verifyToken, async (req, res) => {
   }
 });
 
+// ✅ DEBUG: Check user's emailInboxAddress in DB
+router.get("/debug-email-inbox/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.json({
+      userId: user._id,
+      email: user.email,
+      emailInboxAddress: user.emailInboxAddress,
+      emailInboxEnabled: user.emailInboxEnabled,
+      emailInboxAddressCreatedAt: user.emailInboxAddressCreatedAt
+    });
+  } catch (err) {
+    console.error("❌ Debug error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ✅ ADMIN: Migrate all users without emailInboxAddress (NO AUTH REQUIRED for first-time setup)
 router.post("/migrate-all-email-inboxes", async (req, res) => {
   try {
