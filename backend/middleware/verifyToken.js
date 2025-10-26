@@ -2,6 +2,12 @@
 const jwt = require("jsonwebtoken");
 
 module.exports = function (req, res, next) {
+  // ✅ SKIP JWT-Check für E-Mail-Import (nutzt API-Key stattdessen)
+  if (req.originalUrl.includes('/api/contracts/email-import')) {
+    console.log('⏩ E-Mail-Import Route: JWT-Check übersprungen (nutzt API-Key)');
+    return next();
+  }
+
   const isDev = process.env.NODE_ENV !== "production";
   if (isDev) {
     console.log("🔍 Auth-Check:", req.originalUrl);

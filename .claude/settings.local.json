@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(powershell -Command \"Compress-Archive -Path index.js,node_modules,package.json -DestinationPath function.zip -Force\")"
+      "Bash(powershell -Command \"Compress-Archive -Path index.js,node_modules,package.json -DestinationPath function.zip -Force\")",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push)"
     ],
     "deny": [],
     "ask": []
