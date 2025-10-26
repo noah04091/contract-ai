@@ -517,6 +517,16 @@ const connectDB = async () => {
       });
     }
 
+    // ✅ 📧 E-MAIL-IMPORT ROUTE (ZUERST! Vor allen anderen /api/contracts Routes)
+    // Muss VOR checkSubscription kommen, da kein JWT vorhanden ist
+    try {
+      const contractsRouterForEmail = require("./routes/contracts");
+      app.post("/api/contracts/email-import", contractsRouterForEmail);
+      console.log("✅ E-Mail-Import-Route geladen unter /api/contracts/email-import (API-Key only, no JWT)");
+    } catch (err) {
+      console.error("❌ Fehler bei E-Mail-Import-Route:", err);
+    }
+
     // ✅ 9. SMART CONTRACT GENERATOR - SAUBERER ROUTER MOUNT
     try {
       const optimizedContractRouter = require("./routes/optimizedContract");
