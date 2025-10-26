@@ -1544,6 +1544,10 @@
   color: #6b7280;
   cursor: pointer;
   transition: all 0.2s ease;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .sourceTab:hover {
@@ -1586,6 +1590,9 @@
   cursor: pointer;
   transition: all 0.2s ease;
   min-width: 140px;
+  height: 38px;
+  display: flex;
+  align-items: center;
 }
 
 .quickFilter:hover {
