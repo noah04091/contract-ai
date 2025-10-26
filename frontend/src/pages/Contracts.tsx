@@ -192,6 +192,7 @@ export default function Contracts() {
   const [sortOrder, setSortOrder] = useState<SortOrder>('neueste');
   const [sourceFilter, setSourceFilter] = useState<'alle' | 'generated' | 'optimized'>('alle'); // 🆕 Quelle-Filter
   const [uploadTypeFilter, setUploadTypeFilter] = useState<UploadTypeFilter>('alle'); // ✅ NEU: Upload-Typ Filter
+  const [displayLimit, setDisplayLimit] = useState<number>(50); // ✅ NEU: Pagination - zeige initial 50 Contracts
 
   // ✅ NEU: Upload Success Modal State (für Two-Step Upload Flow)
   const [uploadSuccessModal, setUploadSuccessModal] = useState<{
@@ -984,6 +985,11 @@ export default function Contracts() {
     applyFilters();
   }, [applyFilters]);
 
+  // ✅ NEU: Reset displayLimit when filters/search change
+  useEffect(() => {
+    setDisplayLimit(50);
+  }, [searchQuery, statusFilter, dateFilter, uploadTypeFilter, sourceFilter]);
+
   // ✅ Initial Load
   useEffect(() => {
     fetchUserInfo();
@@ -1709,6 +1715,7 @@ export default function Contracts() {
     setDateFilter('alle');
     setUploadTypeFilter('alle'); // ✅ NEU
     setSortOrder('neueste');
+    setDisplayLimit(50); // ✅ NEU: Reset display limit
   };
 
   const getStatusColor = (status: string): string => {
@@ -1927,6 +1934,10 @@ export default function Contracts() {
   const canUpload = userInfo.subscriptionPlan !== 'free';
   const canMultiUpload = userInfo.subscriptionPlan === 'premium';
   const hasAnalysesLeft = userInfo.analysisLimit === Infinity || userInfo.analysisCount < userInfo.analysisLimit;
+
+  // ✅ NEU: Pagination - Nur N Contracts anzeigen
+  const displayedContracts = filteredContracts.slice(0, displayLimit);
+  const hasMore = filteredContracts.length > displayLimit;
 
   // ✅ RESPONSIVE: Mobile Card Component
   const MobileContractCard = ({ contract }: { contract: Contract }) => {
@@ -2924,7 +2935,7 @@ export default function Contracts() {
                                 </div>
                               </td>
                             </tr>
-                          ) : filteredContracts.map((contract) => (
+                          ) : displayedContracts.map((contract) => (
                             <motion.tr
                               key={contract._id}
                               className={`${styles.tableRow} ${selectedContracts.includes(contract._id) ? styles.selectedRow : ''}`}
@@ -3120,13 +3131,42 @@ export default function Contracts() {
 
                     {/* ✅ MOBILE CARDS - Automatically shown on mobile via CSS */}
                     <div className={styles.mobileCardsContainer}>
-                      {filteredContracts.map((contract) => (
+                      {displayedContracts.map((contract) => (
                         <MobileContractCard
                           key={`mobile-${contract._id}`}
                           contract={contract}
                         />
                       ))}
                     </div>
+
+                    {/* ✅ NEU: Load More Button */}
+                    {hasMore && (
+                      <div style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '12px',
+                        padding: '32px 0',
+                        borderTop: '1px solid #e5e7eb'
+                      }}>
+                        <div style={{
+                          fontSize: '14px',
+                          color: '#6b7280',
+                          fontWeight: 500
+                        }}>
+                          Zeige {displayedContracts.length} von {filteredContracts.length} Verträgen
+                        </div>
+                        <motion.button
+                          className={styles.loadMoreButton}
+                          onClick={() => setDisplayLimit(prev => prev + 50)}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          <ArrowRight size={16} />
+                          <span>Weitere 50 laden</span>
+                        </motion.button>
+                      </div>
+                    )}
 
                     {/* 📋 Bulk Action Bar - only show in bulk select mode */}
                     {bulkSelectMode && selectedContracts.length > 0 && (
