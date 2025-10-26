@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import { useAuth } from "../../hooks/useAuth";
 import styles from "../../styles/FeaturePage.module.css";
 import Footer from "../../components/Footer";
-import { Mail, CheckCircle, Shield } from "lucide-react";
+import { Mail, CheckCircle } from "lucide-react";
 
 const EmailUpload: React.FC = () => {
   const { user } = useAuth();
