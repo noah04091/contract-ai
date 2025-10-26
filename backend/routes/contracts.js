@@ -10,6 +10,7 @@ const fsSync = require("fs");
 const path = require("path");
 const { OpenAI } = require("openai");
 const { validateAttachment, generateIdempotencyKey } = require("../utils/emailImportSecurity"); // 🔒 Security Utils
+const nodemailer = require("nodemailer"); // 📧 Email Service
 
 const router = express.Router();
 const mongoUri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
@@ -41,6 +42,18 @@ try {
   console.error("❌ [CONTRACTS] S3 configuration failed:", error.message);
   S3_AVAILABLE = false;
 }
+
+// ===== EMAIL TRANSPORTER =====
+const EMAIL_CONFIG = {
+  host: process.env.EMAIL_HOST,
+  port: Number(process.env.EMAIL_PORT),
+  secure: false,
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+};
+const emailTransporter = nodemailer.createTransport(EMAIL_CONFIG);
 
 // ===== OPENAI SETUP =====
 const openai = new OpenAI({
@@ -1998,6 +2011,96 @@ router.post("/email-import", verifyEmailImportKey, async (req, res) => {
     // Rate Limit überschritten?
     if (recentImports.length >= rateLimit.limit) {
       console.warn(`⚠️ Rate Limit erreicht für User ${user.email}: ${recentImports.length}/${rateLimit.limit}`);
+
+      // 📧 Email-Benachrichtigung senden (nur 1x pro Stunde = Spam-Schutz)
+      const lastEmailSent = user.lastRateLimitEmailSent ? new Date(user.lastRateLimitEmailSent).getTime() : 0;
+      const shouldSendEmail = Date.now() - lastEmailSent > rateLimit.window; // Nur wenn letzte Email > 1h her
+
+      if (shouldSendEmail) {
+        try {
+          const upgradeUrl = userPlan === 'free'
+            ? 'https://www.contract-ai.de/subscribe?plan=premium'
+            : 'https://www.contract-ai.de/subscribe?plan=business';
+
+          const planUpgradeName = userPlan === 'free' ? 'Premium' : 'Business';
+          const nextPlanLimit = userPlan === 'free' ? 10 : 20;
+
+          const emailHtml = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="UTF-8">
+              <style>
+                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+                .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+                .alert-box { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; }
+                .cta-button { display: inline-block; background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+                .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #666; }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <div class="header">
+                  <h1>⚠️ Email-Upload Limit erreicht</h1>
+                </div>
+                <div class="content">
+                  <p>Hallo,</p>
+
+                  <div class="alert-box">
+                    <strong>Ihr Email-Upload Limit wurde erreicht</strong><br>
+                    Sie haben das Limit von <strong>${rateLimit.limit} Email${rateLimit.limit > 1 ? 's' : ''} pro Stunde</strong> für Ihren <strong>${userPlan.toUpperCase()}</strong>-Plan erreicht.
+                  </div>
+
+                  <p>Sie können derzeit keine weiteren Verträge per Email hochladen.</p>
+
+                  <h3>🚀 Upgraden Sie für mehr Uploads:</h3>
+                  <ul>
+                    <li><strong>${planUpgradeName}-Plan:</strong> Bis zu ${nextPlanLimit} Emails pro Stunde</li>
+                    <li>Alle Premium-Features</li>
+                    <li>Prioritäts-Support</li>
+                  </ul>
+
+                  <center>
+                    <a href="${upgradeUrl}" class="cta-button">Jetzt auf ${planUpgradeName} upgraden →</a>
+                  </center>
+
+                  <p style="margin-top: 30px; font-size: 14px; color: #666;">
+                    <strong>Tipp:</strong> Ihr Email-Limit wird automatisch in <strong>${Math.ceil((new Date(recentImports[0].timestamp).getTime() + rateLimit.window - Date.now()) / 60000)} Minuten</strong> zurückgesetzt.
+                  </p>
+
+                  <div class="footer">
+                    <p>Contract AI - Intelligente Vertragsanalyse<br>
+                    <a href="https://www.contract-ai.de">www.contract-ai.de</a></p>
+                  </div>
+                </div>
+              </div>
+            </body>
+            </html>
+          `;
+
+          await emailTransporter.sendMail({
+            from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
+            to: user.email,
+            subject: "⚠️ Email-Upload Limit erreicht - Jetzt upgraden",
+            html: emailHtml
+          });
+
+          // Timestamp speichern (async, ohne auf Erfolg zu warten)
+          usersCollection.updateOne(
+            { _id: user._id },
+            { $set: { lastRateLimitEmailSent: new Date() } }
+          ).catch(err => console.error("❌ Fehler beim Speichern von lastRateLimitEmailSent:", err));
+
+          console.log(`✅ Rate-Limit Email gesendet an ${user.email}`);
+        } catch (emailError) {
+          console.error(`❌ Fehler beim Senden der Rate-Limit Email:`, emailError.message);
+          // Fehler nicht nach außen werfen - Rate Limit Response soll trotzdem gesendet werden
+        }
+      } else {
+        console.log(`ℹ️ Rate-Limit Email wurde bereits gesendet (vor ${Math.round((Date.now() - lastEmailSent) / 60000)} Min)`);
+      }
 
       return res.status(429).json({
         success: false,
