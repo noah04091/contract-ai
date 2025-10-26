@@ -1940,7 +1940,7 @@ router.post("/email-import", verifyEmailImportKey, async (req, res) => {
     }
 
     // 1. User anhand E-Mail-Adresse finden
-    const db = client.db("contract-ai");
+    const db = client.db("contract_ai");  // ✅ FIX: Korrekter DB-Name (Unterstrich statt Bindestrich)
     const usersCollection = db.collection("users");
     const contractsCollection = db.collection("contracts");
 
