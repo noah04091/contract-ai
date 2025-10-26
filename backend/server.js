@@ -641,10 +641,20 @@ const connectDB = async () => {
       console.error("❌ Fehler bei S3 Migration Routes:", err);
     }
 
-    // ✅ 11. ALLGEMEINE CONTRACT CRUD - NACH SPEZIFISCHEN ROUTEN
+    // ✅ 📧 E-MAIL-IMPORT (OHNE JWT, nur API-Key - MUSS VOR verifyToken kommen!)
+    try {
+      // Mounten des contracts-Routers OHNE verifyToken, aber NUR für /email-import
+      const contractsRouterForEmail = require("./routes/contracts");
+      app.use("/api/contracts", contractsRouterForEmail);
+      console.log("✅ E-Mail-Import-Route geladen unter /api/contracts/email-import (API-Key only)");
+    } catch (err) {
+      console.error("❌ Fehler bei E-Mail-Import-Route:", err);
+    }
+
+    // ✅ 11. ALLGEMEINE CONTRACT CRUD (MIT JWT - kommt NACH email-import)
     try {
       app.use("/api/contracts", verifyToken, require("./routes/contracts"));
-      console.log("✅ Contracts CRUD-Routen geladen unter /api/contracts");
+      console.log("✅ Contracts CRUD-Routen geladen unter /api/contracts (JWT protected)");
     } catch (err) {
       console.error("❌ Fehler bei Contract-CRUD-Routen:", err);
     }

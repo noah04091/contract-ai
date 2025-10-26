@@ -33,7 +33,7 @@ exports.handler = async (event) => {
 
     const record = event.Records[0];
 
-    // Unterscheide zwischen SNS (SES→SNS→Lambda) und direktem S3-Event
+    // Unterscheide zwischen SNS (SES→SNS→Lambda), direktem SES-Event und S3-Event
     let sesNotification;
     let s3Key;
 
@@ -43,6 +43,12 @@ exports.handler = async (event) => {
       sesNotification = snsMessage;
       const messageId = snsMessage.mail.messageId;
       s3Key = `emails/${messageId}`;
+    } else if (record.eventSource === 'aws:ses') {
+      // ✅ Direkter SES-Trigger (SES Receipt Rule → Lambda)
+      sesNotification = record.ses;
+      const messageId = record.ses.mail.messageId;
+      s3Key = `emails/${messageId}`;
+      console.log('✅ SES-Event erkannt, messageId:', messageId);
     } else if (record.eventSource === 's3') {
       // Direktes S3-Event (alternative Setup-Methode)
       s3Key = decodeURIComponent(record.s3.object.key.replace(/\+/g, ' '));

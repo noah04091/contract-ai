@@ -1,7 +1,7 @@
 {
   "permissions": {
     "allow": [
-      "Bash(find C:UserslieboDocumentscontract-aibackend -name \"*.js\" -type f -exec grep -l \"router.post.*generate\" {} ;)"
+      "Bash(powershell -Command \"Compress-Archive -Path index.js,node_modules,package.json -DestinationPath function.zip -Force\")"
     ],
     "deny": [],
     "ask": []
