@@ -969,7 +969,7 @@ const HomeRedesign = () => {
 
               <div className="cm-text">
                 <h2 id="email-upload-title" className="reveal-text">📧 Automatischer E-Mail-Upload — Verträge per E-Mail hochladen</h2>
-                <p className="cm-subtext reveal-text">Leiten Sie E-Mails mit Vertragsanhängen einfach an Ihre persönliche Contract AI E-Mail-Adresse weiter. Das System erkennt PDF-Dateien automatisch, lädt sie hoch und analysiert sie — ohne dass Sie sich einloggen müssen.</p>
+                <p className="cm-subtext reveal-text">Leiten Sie E-Mails mit Vertragsanhängen einfach an Ihre persönliche Contract AI E-Mail-Adresse weiter. Das System erkennt PDF-Dateien automatisch, lädt sie hoch und analysiert sie — vollautomatisch und ohne manuelle Eingabe.</p>
                 <ul className="cm-bullets reveal-block">
                   <li>
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
