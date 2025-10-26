@@ -2118,8 +2118,8 @@ a {
   background: linear-gradient(180deg,
     rgba(248, 249, 250, 1) 0%,
     rgba(248, 249, 250, 0.8) 30%,
-    rgba(248, 249, 250, 0.7) 70%,
-    rgba(255, 255, 255, 1) 100%
+    rgba(255, 255, 255, 0.9) 70%,
+    rgba(248, 249, 250, 1) 100%
   );
   padding: 120px 20px;
   position: relative;
@@ -2544,13 +2544,32 @@ a {
   .cm-text h2 {
     font-size: 24px;
   }
-  
+
   .cm-bullets li {
     padding: 10px 14px;
   }
-  
+
   .cm-bullets li span {
     font-size: 13px;
+  }
+}
+
+/* Responsive Margins für fließende Übergänge */
+@media (min-width: 1024px) {
+  .showcase-section {
+    margin-top: -120px;
+  }
+}
+
+@media (max-width: 768px) {
+  .showcase-section {
+    margin-top: -40px;
+  }
+}
+
+@media (max-width: 480px) {
+  .showcase-section {
+    margin-top: -30px;
   }
 }
 
@@ -2567,7 +2586,7 @@ a {
   /* overflow: hidden entfernt - Lichteffekte können fließen */
   width: 100%;
   box-sizing: border-box;
-  margin-top: 0; /* Fließender Übergang statt -2px */
+  margin-top: -80px; /* Fließender Übergang zur Email-Upload Sektion */
 }
 
 .showcase-bg {
