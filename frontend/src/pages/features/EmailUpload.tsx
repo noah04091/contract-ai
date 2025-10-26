@@ -30,10 +30,10 @@ const EmailUpload: React.FC = () => {
       },
       {
         "@type": "Question",
-        "name": "Muss ich mich einloggen, um Verträge per E-Mail hochzuladen?",
+        "name": "Wie funktioniert der E-Mail-Upload?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Nein, Sie müssen sich nicht einloggen. Senden Sie einfach eine E-Mail mit PDF-Anhang an Ihre persönliche Contract AI E-Mail-Adresse. Die Verträge erscheinen automatisch in Ihrem Dashboard."
+          "text": "Nach der Registrierung erhalten Sie eine persönliche E-Mail-Adresse. Leiten Sie einfach E-Mails mit PDF-Anhängen dorthin weiter. Das System erkennt die PDFs automatisch und lädt sie in Ihr Dashboard hoch – ohne manuelle Eingabe."
         }
       },
       {
@@ -51,7 +51,7 @@ const EmailUpload: React.FC = () => {
     <>
       <Helmet>
         <title>Automatischer E-Mail-Upload - Verträge per E-Mail hochladen | Contract AI</title>
-        <meta name="description" content="📧 Laden Sie Verträge per E-Mail hoch – ohne Login! Einfach weiterleiten, automatisch verarbeiten. DSGVO-konform, sicher, von überall. Jetzt testen!" />
+        <meta name="description" content="📧 Laden Sie Verträge per E-Mail hoch – vollautomatisch! Einfach weiterleiten, automatisch verarbeiten. DSGVO-konform, sicher, von überall. Jetzt testen!" />
         <meta name="keywords" content="E-Mail Upload, Vertrag hochladen, automatischer Upload, E-Mail Weiterleitung, Contract AI, DSGVO, LegalTech" />
 
         <link rel="canonical" href="https://www.contract-ai.de/features/email-upload" />
@@ -59,7 +59,7 @@ const EmailUpload: React.FC = () => {
 
         {/* Open Graph */}
         <meta property="og:title" content="Automatischer E-Mail-Upload - Verträge per E-Mail hochladen" />
-        <meta property="og:description" content="📧 Verträge per E-Mail hochladen – ohne Login! Automatisch verarbeitet und sicher gespeichert. Jetzt testen!" />
+        <meta property="og:description" content="📧 Verträge per E-Mail hochladen – vollautomatisch! Einfach weiterleiten, automatisch verarbeitet und sicher gespeichert. Jetzt testen!" />
         <meta property="og:type" content="website" />
 
         {/* Schema.org FAQ Data */}
@@ -76,10 +76,10 @@ const EmailUpload: React.FC = () => {
             <Mail size={64} />
           </div>
           <h1 className={styles.heroTitle}>
-            Verträge per E-Mail hochladen – <span className={styles.heroTitleHighlight}>ohne Login</span>
+            Verträge per E-Mail hochladen – <span className={styles.heroTitleHighlight}>vollautomatisch</span>
           </h1>
           <p className={styles.heroSubtitle}>
-            Leiten Sie E-Mails mit Vertragsanhängen einfach an Ihre persönliche Contract AI E-Mail-Adresse weiter. Das System erkennt PDFs automatisch, lädt sie hoch und analysiert sie – ohne dass Sie sich einloggen müssen.
+            Leiten Sie E-Mails mit Vertragsanhängen einfach an Ihre persönliche Contract AI E-Mail-Adresse weiter. Das System erkennt PDFs automatisch, lädt sie hoch und analysiert sie – ohne manuelle Eingabe.
           </p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginTop: '24px', justifyContent: 'center' }}>
             <Link to={target} className={styles.ctaButton} style={{ fontSize: '18px', padding: '16px 32px' }} aria-label="Jetzt E-Mail-Adresse erhalten">
@@ -131,7 +131,7 @@ const EmailUpload: React.FC = () => {
                   <CheckCircle size={20} />
                 </div>
                 <p className={styles.funktionText}>
-                  Mit Contract AI leiten Sie E-Mails einfach an Ihre persönliche E-Mail-Adresse weiter. Das System erkennt PDF-Anhänge automatisch, lädt sie hoch, analysiert sie und speichert sie sicher in Ihrem Dashboard – ohne dass Sie sich einloggen oder irgendetwas manuell tun müssen.
+                  Mit Contract AI leiten Sie E-Mails einfach an Ihre persönliche E-Mail-Adresse weiter. Das System erkennt PDF-Anhänge automatisch, lädt sie hoch, analysiert sie und speichert sie sicher in Ihrem Dashboard – ohne manuelle Eingabe.
                 </p>
               </div>
             </div>
@@ -196,8 +196,8 @@ const EmailUpload: React.FC = () => {
               <h2 className={styles.sectionTitle}>Funktionen im Überblick</h2>
               <div className={styles.vorteileGrid}>
                 <div className={styles.vorteilCard}>
-                  <h3 className={styles.vorteilTitle}>Kein Login nötig</h3>
-                  <p className={styles.vorteilText}>Sie müssen sich nicht einloggen. Einfach E-Mail weiterleiten – das System erledigt den Rest automatisch.</p>
+                  <h3 className={styles.vorteilTitle}>Keine manuelle Eingabe</h3>
+                  <p className={styles.vorteilText}>Kein mühsames Herunterladen und Hochladen. Einfach E-Mail weiterleiten – das System erledigt den Rest automatisch.</p>
                 </div>
                 <div className={styles.vorteilCard}>
                   <h3 className={styles.vorteilTitle}>Automatische PDF-Erkennung</h3>
