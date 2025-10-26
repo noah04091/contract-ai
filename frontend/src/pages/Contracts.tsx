@@ -2800,6 +2800,8 @@ export default function Contracts() {
                       <span>Erneut versuchen</span>
                     </motion.button>
                   </div>
+                ) : loading ? (
+                  <ContractsCardsSkeleton />
                 ) : filteredContracts.length === 0 ? (
                   <div className={styles.emptyState}>
                     <FileText size={64} className={styles.emptyIcon} />
@@ -2809,13 +2811,13 @@ export default function Contracts() {
                     <p>
                       {activeFiltersCount() > 0 || searchQuery
                         ? "Probiere andere Suchbegriffe oder Filter-Einstellungen."
-                        : canUpload 
+                        : canUpload
                           ? "Lade deinen ersten Vertrag hoch, um ihn hier zu sehen."
                           : "Upgrade auf Business oder Premium für Vertragsanalyse."
                       }
                     </p>
                     {(!activeFiltersCount() && !searchQuery) && (
-                      <motion.button 
+                      <motion.button
                         className={`${styles.uploadButton} ${!canUpload ? styles.upgradeButton : ''}`}
                         onClick={() => canUpload ? setActiveSection('upload') : window.location.href = '/pricing'}
                         whileHover={{ scale: 1.02 }}
