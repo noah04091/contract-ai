@@ -503,3 +503,73 @@ router.post("/email-inbox/regenerate", verifyToken, async (req, res) => {
     res.status(500).json({ message: "Serverfehler beim Regenerieren" });
   }
 });
+
+// ✅ ADMIN: Migrate all users without emailInboxAddress
+router.post("/migrate-all-email-inboxes", async (req, res) => {
+  try {
+    console.log("🔄 Migration gestartet: E-Mail-Inbox für alle User...");
+
+    const usersWithoutInbox = await usersCollection.find({
+      $or: [
+        { emailInboxAddress: { $exists: false } },
+        { emailInboxAddress: null },
+        { emailInboxAddress: '' }
+      ]
+    }).toArray();
+
+    console.log(`📊 Gefundene User ohne Email-Inbox: ${usersWithoutInbox.length}`);
+
+    if (usersWithoutInbox.length === 0) {
+      return res.json({
+        success: true,
+        message: "✅ Alle User haben bereits eine Email-Inbox-Adresse",
+        migrated: 0
+      });
+    }
+
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (const user of usersWithoutInbox) {
+      try {
+        const randomSuffix = crypto.randomBytes(8).toString('hex');
+        const emailInboxAddress = `u_${user._id.toString()}.${randomSuffix}@upload.contract-ai.de`;
+
+        await usersCollection.updateOne(
+          { _id: user._id },
+          {
+            $set: {
+              emailInboxAddress: emailInboxAddress,
+              emailInboxEnabled: true,
+              emailInboxAddressCreatedAt: new Date(),
+              updatedAt: new Date()
+            }
+          }
+        );
+
+        console.log(`✅ ${user.email} → ${emailInboxAddress}`);
+        successCount++;
+
+      } catch (error) {
+        console.error(`❌ Fehler bei ${user.email}:`, error.message);
+        errorCount++;
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `✅ Migration abgeschlossen: ${successCount} erfolgreich, ${errorCount} Fehler`,
+      migrated: successCount,
+      errors: errorCount
+    });
+
+  } catch (err) {
+    console.error("❌ Fehler bei Migration:", err);
+    res.status(500).json({
+      success: false,
+      message: "Serverfehler bei Migration"
+    });
+  }
+});
+
+module.exports = router;
