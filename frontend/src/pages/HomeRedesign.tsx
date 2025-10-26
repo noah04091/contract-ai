@@ -890,7 +890,7 @@ const HomeRedesign = () => {
         </section>
 
         {/* Email Upload Section - Spiegelverkehrt */}
-        <section className="contracts-management" aria-labelledby="email-upload-title">
+        <section className="email-upload-section" aria-labelledby="email-upload-title">
           <div className="section-container">
             <div className="cm-grid cm-grid-reverse">
               <div className="cm-visual" style={{background: 'transparent', padding: '0'}}>

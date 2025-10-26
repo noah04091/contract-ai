@@ -2113,6 +2113,31 @@ a {
   order: 1;
 }
 
+/* === EMAIL UPLOAD SECTION - Fließender Übergang === */
+.email-upload-section {
+  background: linear-gradient(180deg,
+    rgba(248, 249, 250, 1) 0%,
+    rgba(248, 249, 250, 0.8) 30%,
+    rgba(248, 249, 250, 0.7) 70%,
+    rgba(255, 255, 255, 1) 100%
+  );
+  padding: 120px 20px;
+  position: relative;
+  margin-top: -80px; /* Fließender Übergang zur oberen Sektion */
+}
+
+.email-upload-section::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -10%;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(102, 126, 234, 0.05) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
 .cm-text h2 {
   font-size: 42px;
   font-weight: 700;
@@ -2312,19 +2337,24 @@ a {
   .contracts-management {
     padding: 160px 20px;
   }
-  
+
+  .email-upload-section {
+    padding: 160px 20px;
+    margin-top: -120px; /* Größerer Overlap auf Desktop */
+  }
+
   .cm-text h2 {
     font-size: 48px;
   }
-  
+
   .cm-subtext {
     font-size: 20px;
   }
-  
+
   .cm-bullets li {
     padding: 24px 32px;
   }
-  
+
   .cm-bullets li span {
     font-size: 17px;
   }
@@ -2340,6 +2370,17 @@ a {
     width: 400px;
     height: 400px;
     right: -200px;
+  }
+
+  .email-upload-section {
+    padding: 80px 20px;
+    margin-top: -40px; /* Kleinerer Overlap auf Mobile */
+  }
+
+  .email-upload-section::before {
+    width: 400px;
+    height: 400px;
+    left: -200px;
   }
 
   .cm-grid {
@@ -2400,11 +2441,23 @@ a {
   .contracts-management {
     padding: 64px 16px;
   }
-  
+
   .contracts-management::before {
     width: 300px;
     height: 300px;
     right: -150px;
+    top: -30%;
+  }
+
+  .email-upload-section {
+    padding: 64px 16px;
+    margin-top: -30px; /* Noch kleinerer Overlap auf kleinsten Screens */
+  }
+
+  .email-upload-section::before {
+    width: 300px;
+    height: 300px;
+    left: -150px;
     top: -30%;
   }
   
