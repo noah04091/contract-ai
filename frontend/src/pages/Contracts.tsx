@@ -1962,6 +1962,9 @@ export default function Contracts() {
               {contract.isOptimized && (
                 <span className={styles.optimizedBadge}>Optimiert</span>
               )}
+              {contract.uploadType === 'EMAIL_IMPORT' && (
+                <span className={styles.emailImportBadge}>📧 Per Email importiert</span>
+              )}
               {contract.analyzed === false && (
                 <span className={styles.notAnalyzedBadge}>Nicht analysiert</span>
               )}

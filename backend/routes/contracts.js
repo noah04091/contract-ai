@@ -2484,6 +2484,366 @@ router.post("/email-import", verifyEmailImportKey, async (req, res) => {
         }
       );
       console.log(`✅ Email-Import zur History hinzugefügt für User ${user.email}`);
+
+      // 📧 Success-Email senden
+      try {
+        const successContracts = importedContracts.filter(c => !c.duplicate);
+        const contractsList = successContracts.map(c => `<li><strong>${c.filename}</strong></li>`).join('');
+
+        const successEmailHtml = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+                line-height: 1.6;
+                color: #1a202c;
+                background-color: #f7fafc;
+              }
+              .email-wrapper { background-color: #f7fafc; padding: 40px 20px; }
+              .container {
+                max-width: 600px;
+                margin: 0 auto;
+                background: white;
+                border-radius: 12px;
+                overflow: hidden;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+              }
+              .header {
+                background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+                color: white;
+                padding: 40px 30px;
+                text-align: center;
+              }
+              .header h1 {
+                font-size: 28px;
+                font-weight: 700;
+                margin-bottom: 10px;
+              }
+              .header p {
+                font-size: 16px;
+                opacity: 0.95;
+                margin: 0;
+              }
+              .content {
+                padding: 40px 30px;
+                background: white;
+              }
+              .success-box {
+                background: #d1fae5;
+                border-left: 4px solid #10b981;
+                padding: 20px;
+                margin: 24px 0;
+                border-radius: 6px;
+              }
+              .success-box strong {
+                color: #065f46;
+                display: block;
+                margin-bottom: 8px;
+                font-size: 16px;
+              }
+              .contracts-list {
+                background: #f8f9fa;
+                padding: 20px;
+                border-radius: 8px;
+                margin: 20px 0;
+              }
+              .contracts-list h3 {
+                font-size: 16px;
+                color: #1a202c;
+                margin-bottom: 12px;
+              }
+              .contracts-list ul {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+              }
+              .contracts-list li {
+                padding: 8px 0;
+                border-bottom: 1px solid #e2e8f0;
+                color: #475569;
+                padding-left: 24px;
+                position: relative;
+              }
+              .contracts-list li:before {
+                content: "📄";
+                position: absolute;
+                left: 0;
+              }
+              .contracts-list li:last-child {
+                border-bottom: none;
+              }
+              .cta-button {
+                display: inline-block;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white !important;
+                padding: 14px 32px;
+                text-decoration: none;
+                border-radius: 8px;
+                font-weight: 600;
+                font-size: 15px;
+                margin-top: 24px;
+                box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+              }
+              .info-box {
+                background: #eff6ff;
+                border-left: 4px solid #3b82f6;
+                padding: 16px;
+                margin: 24px 0;
+                border-radius: 6px;
+                font-size: 14px;
+                color: #1e40af;
+              }
+              .footer {
+                text-align: center;
+                padding: 32px 30px;
+                background: #f8f9fa;
+                border-top: 1px solid #e2e8f0;
+                font-size: 13px;
+                color: #64748b;
+              }
+              .footer a {
+                color: #667eea;
+                text-decoration: none;
+                font-weight: 500;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="email-wrapper">
+              <div class="container">
+                <div class="header">
+                  <h1>✅ Import erfolgreich</h1>
+                  <p>Ihre Verträge wurden erfolgreich hochgeladen</p>
+                </div>
+
+                <div class="content">
+                  <div class="success-box">
+                    <strong>Erfolgreich importiert!</strong>
+                    <p>${successCount} ${successCount === 1 ? 'Vertrag wurde' : 'Verträge wurden'} per Email importiert und ${duplicateCount > 0 ? `${duplicateCount} ${duplicateCount === 1 ? 'Duplikat wurde' : 'Duplikate wurden'} übersprungen` : 'stehen bereit zur Analyse'}.</p>
+                  </div>
+
+                  <div class="contracts-list">
+                    <h3>📄 Importierte Verträge:</h3>
+                    <ul>
+                      ${contractsList}
+                    </ul>
+                  </div>
+
+                  <div class="info-box">
+                    <strong>💡 Nächster Schritt:</strong> Öffnen Sie Ihr Dashboard und starten Sie die KI-Analyse für detaillierte Einblicke.
+                  </div>
+
+                  <center>
+                    <a href="https://www.contract-ai.de/contracts" class="cta-button">Zum Dashboard →</a>
+                  </center>
+                </div>
+
+                <div class="footer">
+                  <p><strong>Contract AI</strong> – Intelligente Vertragsanalyse</p>
+                  <p><a href="https://www.contract-ai.de">www.contract-ai.de</a> · <a href="https://www.contract-ai.de/support">Support</a></p>
+                </div>
+              </div>
+            </div>
+          </body>
+          </html>
+        `;
+
+        await emailTransporter.sendMail({
+          from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
+          to: user.email,
+          subject: `✅ ${successCount} ${successCount === 1 ? 'Vertrag' : 'Verträge'} erfolgreich importiert`,
+          html: successEmailHtml
+        });
+
+        console.log(`✅ Success-Email gesendet an ${user.email}`);
+      } catch (emailError) {
+        console.error(`❌ Fehler beim Senden der Success-Email:`, emailError.message);
+        // Fehler nicht nach außen werfen - Import war erfolgreich
+      }
+    }
+
+    // 📧 Error-Email senden wenn Fehler aufgetreten sind
+    if (errors.length > 0 && successCount === 0) {
+      try {
+        const errorsList = errors.map(e => `<li><strong>${e.filename}:</strong> ${e.error}</li>`).join('');
+
+        const errorEmailHtml = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+                line-height: 1.6;
+                color: #1a202c;
+                background-color: #f7fafc;
+              }
+              .email-wrapper { background-color: #f7fafc; padding: 40px 20px; }
+              .container {
+                max-width: 600px;
+                margin: 0 auto;
+                background: white;
+                border-radius: 12px;
+                overflow: hidden;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+              }
+              .header {
+                background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+                color: white;
+                padding: 40px 30px;
+                text-align: center;
+              }
+              .header h1 {
+                font-size: 28px;
+                font-weight: 700;
+                margin-bottom: 10px;
+              }
+              .header p {
+                font-size: 16px;
+                opacity: 0.95;
+                margin: 0;
+              }
+              .content {
+                padding: 40px 30px;
+                background: white;
+              }
+              .error-box {
+                background: #fee;
+                border-left: 4px solid #ef4444;
+                padding: 20px;
+                margin: 24px 0;
+                border-radius: 6px;
+              }
+              .error-box strong {
+                color: #991b1b;
+                display: block;
+                margin-bottom: 8px;
+                font-size: 16px;
+              }
+              .errors-list {
+                background: #f8f9fa;
+                padding: 20px;
+                border-radius: 8px;
+                margin: 20px 0;
+              }
+              .errors-list h3 {
+                font-size: 16px;
+                color: #1a202c;
+                margin-bottom: 12px;
+              }
+              .errors-list ul {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+              }
+              .errors-list li {
+                padding: 8px 0;
+                border-bottom: 1px solid #e2e8f0;
+                color: #dc2626;
+                font-size: 14px;
+              }
+              .errors-list li:last-child {
+                border-bottom: none;
+              }
+              .info-box {
+                background: #eff6ff;
+                border-left: 4px solid #3b82f6;
+                padding: 16px;
+                margin: 24px 0;
+                border-radius: 6px;
+                font-size: 14px;
+                color: #1e40af;
+              }
+              .cta-button {
+                display: inline-block;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white !important;
+                padding: 14px 32px;
+                text-decoration: none;
+                border-radius: 8px;
+                font-weight: 600;
+                font-size: 15px;
+                margin-top: 24px;
+                box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+              }
+              .footer {
+                text-align: center;
+                padding: 32px 30px;
+                background: #f8f9fa;
+                border-top: 1px solid #e2e8f0;
+                font-size: 13px;
+                color: #64748b;
+              }
+              .footer a {
+                color: #667eea;
+                text-decoration: none;
+                font-weight: 500;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="email-wrapper">
+              <div class="container">
+                <div class="header">
+                  <h1>⚠️ Import fehlgeschlagen</h1>
+                  <p>Einige Dateien konnten nicht verarbeitet werden</p>
+                </div>
+
+                <div class="content">
+                  <div class="error-box">
+                    <strong>Fehler beim Email-Import</strong>
+                    <p>${errors.length} ${errors.length === 1 ? 'Datei konnte' : 'Dateien konnten'} nicht verarbeitet werden. Bitte überprüfen Sie die Dateien und versuchen Sie es erneut.</p>
+                  </div>
+
+                  <div class="errors-list">
+                    <h3>❌ Fehlgeschlagene Dateien:</h3>
+                    <ul>
+                      ${errorsList}
+                    </ul>
+                  </div>
+
+                  <div class="info-box">
+                    <strong>💡 Häufige Ursachen:</strong><br>
+                    • Datei ist kein PDF oder beschädigt<br>
+                    • Datei ist zu groß (max. 15 MB)<br>
+                    • Datei ist passwortgeschützt<br>
+                    • Ungültiger Dateiname
+                  </div>
+
+                  <center>
+                    <a href="https://www.contract-ai.de/contracts" class="cta-button">Verträge manuell hochladen →</a>
+                  </center>
+                </div>
+
+                <div class="footer">
+                  <p><strong>Contract AI</strong> – Intelligente Vertragsanalyse</p>
+                  <p><a href="https://www.contract-ai.de">www.contract-ai.de</a> · <a href="https://www.contract-ai.de/support">Support</a></p>
+                </div>
+              </div>
+            </div>
+          </body>
+          </html>
+        `;
+
+        await emailTransporter.sendMail({
+          from: process.env.EMAIL_FROM || "Contract AI <no-reply@contract-ai.de>",
+          to: user.email,
+          subject: `⚠️ Email-Import fehlgeschlagen: ${errors.length} ${errors.length === 1 ? 'Datei' : 'Dateien'}`,
+          html: errorEmailHtml
+        });
+
+        console.log(`📧 Error-Email gesendet an ${user.email}`);
+      } catch (emailError) {
+        console.error(`❌ Fehler beim Senden der Error-Email:`, emailError.message);
+      }
     }
 
     res.json({
