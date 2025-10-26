@@ -48,13 +48,15 @@ export default function EmailTutorialModal({
             onClick={onClose}
           />
 
-          {/* Modal */}
-          <motion.div
-            className={styles.modal}
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-          >
+          {/* Modal Wrapper - für Zentrierung */}
+          <div className={styles.modalWrapper}>
+            <motion.div
+              className={styles.modal}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.2 }}
+            >
             <button className={styles.closeButton} onClick={onClose} aria-label="Close modal">
               <X size={20} />
             </button>
@@ -166,7 +168,8 @@ export default function EmailTutorialModal({
                 Verstanden!
               </button>
             </div>
-          </motion.div>
+            </motion.div>
+          </div>
         </>
       )}
     </AnimatePresence>,
