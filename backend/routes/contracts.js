@@ -2030,49 +2030,266 @@ router.post("/email-import", verifyEmailImportKey, async (req, res) => {
             <html>
             <head>
               <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
               <style>
-                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-                .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
-                .alert-box { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; }
-                .cta-button { display: inline-block; background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; }
-                .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #666; }
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                body {
+                  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+                  line-height: 1.6;
+                  color: #1a202c;
+                  background-color: #f7fafc;
+                }
+                .email-wrapper { background-color: #f7fafc; padding: 40px 20px; }
+                .container {
+                  max-width: 600px;
+                  margin: 0 auto;
+                  background: white;
+                  border-radius: 12px;
+                  overflow: hidden;
+                  box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+                }
+                .header {
+                  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                  color: white;
+                  padding: 40px 30px;
+                  text-align: center;
+                }
+                .header h1 {
+                  font-size: 28px;
+                  font-weight: 700;
+                  margin-bottom: 10px;
+                  letter-spacing: -0.5px;
+                }
+                .header p {
+                  font-size: 16px;
+                  opacity: 0.95;
+                  margin: 0;
+                }
+                .content {
+                  padding: 40px 30px;
+                  background: white;
+                }
+                .greeting {
+                  font-size: 18px;
+                  color: #2d3748;
+                  margin-bottom: 24px;
+                  font-weight: 500;
+                }
+                .alert-box {
+                  background: #fef5e7;
+                  border-left: 4px solid #f59e0b;
+                  padding: 20px;
+                  margin: 24px 0;
+                  border-radius: 6px;
+                }
+                .alert-box strong {
+                  color: #b45309;
+                  display: block;
+                  margin-bottom: 8px;
+                  font-size: 16px;
+                }
+                .alert-box p {
+                  color: #78350f;
+                  margin: 0;
+                  font-size: 14px;
+                }
+                .section-title {
+                  font-size: 20px;
+                  font-weight: 600;
+                  color: #1a202c;
+                  margin: 32px 0 20px 0;
+                  text-align: center;
+                }
+                .plans-container {
+                  display: table;
+                  width: 100%;
+                  margin: 24px 0;
+                  border-collapse: collapse;
+                }
+                .plan-card {
+                  display: table-cell;
+                  background: #f8f9fa;
+                  padding: 24px 20px;
+                  border: 2px solid #e2e8f0;
+                  border-radius: 8px;
+                  text-align: center;
+                  vertical-align: top;
+                  width: 50%;
+                }
+                .plan-card:first-child {
+                  margin-right: 12px;
+                }
+                .plan-card.featured {
+                  background: linear-gradient(135deg, #f0f4ff 0%, #e8ecff 100%);
+                  border: 2px solid #667eea;
+                  position: relative;
+                }
+                .plan-badge {
+                  background: #667eea;
+                  color: white;
+                  padding: 4px 12px;
+                  border-radius: 12px;
+                  font-size: 11px;
+                  font-weight: 600;
+                  text-transform: uppercase;
+                  letter-spacing: 0.5px;
+                  display: inline-block;
+                  margin-bottom: 12px;
+                }
+                .plan-name {
+                  font-size: 20px;
+                  font-weight: 700;
+                  color: #1a202c;
+                  margin-bottom: 12px;
+                }
+                .plan-limit {
+                  font-size: 32px;
+                  font-weight: 800;
+                  color: #667eea;
+                  margin-bottom: 4px;
+                }
+                .plan-limit-text {
+                  font-size: 13px;
+                  color: #64748b;
+                  margin-bottom: 16px;
+                }
+                .plan-features {
+                  list-style: none;
+                  padding: 0;
+                  margin: 16px 0;
+                  text-align: left;
+                }
+                .plan-features li {
+                  font-size: 13px;
+                  color: #475569;
+                  margin-bottom: 8px;
+                  padding-left: 20px;
+                  position: relative;
+                }
+                .plan-features li:before {
+                  content: "✓";
+                  color: #10b981;
+                  font-weight: bold;
+                  position: absolute;
+                  left: 0;
+                }
+                .cta-button {
+                  display: inline-block;
+                  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                  color: white !important;
+                  padding: 14px 32px;
+                  text-decoration: none;
+                  border-radius: 8px;
+                  font-weight: 600;
+                  font-size: 15px;
+                  margin-top: 24px;
+                  transition: transform 0.2s;
+                  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+                }
+                .cta-secondary {
+                  background: white;
+                  color: #667eea !important;
+                  border: 2px solid #667eea;
+                  box-shadow: none;
+                }
+                .info-box {
+                  background: #eff6ff;
+                  border-left: 4px solid #3b82f6;
+                  padding: 16px;
+                  margin: 24px 0;
+                  border-radius: 6px;
+                }
+                .info-box p {
+                  margin: 0;
+                  font-size: 14px;
+                  color: #1e40af;
+                }
+                .footer {
+                  text-align: center;
+                  padding: 32px 30px;
+                  background: #f8f9fa;
+                  border-top: 1px solid #e2e8f0;
+                }
+                .footer p {
+                  font-size: 13px;
+                  color: #64748b;
+                  margin: 4px 0;
+                }
+                .footer a {
+                  color: #667eea;
+                  text-decoration: none;
+                  font-weight: 500;
+                }
               </style>
             </head>
             <body>
-              <div class="container">
-                <div class="header">
-                  <h1>⚠️ Email-Upload Limit erreicht</h1>
-                </div>
-                <div class="content">
-                  <p>Hallo,</p>
-
-                  <div class="alert-box">
-                    <strong>Ihr Email-Upload Limit wurde erreicht</strong><br>
-                    Sie haben das Limit von <strong>${rateLimit.limit} Email${rateLimit.limit > 1 ? 's' : ''} pro Stunde</strong> für Ihren <strong>${userPlan.toUpperCase()}</strong>-Plan erreicht.
+              <div class="email-wrapper">
+                <div class="container">
+                  <div class="header">
+                    <h1>⚠️ Upload-Limit erreicht</h1>
+                    <p>Erweitern Sie Ihre Möglichkeiten mit einem Upgrade</p>
                   </div>
 
-                  <p>Sie können derzeit keine weiteren Verträge per Email hochladen.</p>
+                  <div class="content">
+                    <p class="greeting">Guten Tag,</p>
 
-                  <h3>🚀 Upgraden Sie für mehr Uploads:</h3>
-                  <ul>
-                    <li><strong>${planUpgradeName}-Plan:</strong> Bis zu ${nextPlanLimit} Emails pro Stunde</li>
-                    <li>Alle Premium-Features</li>
-                    <li>Prioritäts-Support</li>
-                  </ul>
+                    <div class="alert-box">
+                      <strong>Ihr Email-Upload Limit wurde erreicht</strong>
+                      <p>Sie haben das Limit von <strong>${rateLimit.limit} ${rateLimit.limit === 1 ? 'Email' : 'Emails'} pro Stunde</strong> für Ihren <strong>${userPlan.charAt(0).toUpperCase() + userPlan.slice(1)}</strong>-Plan erreicht. Weitere Uploads sind derzeit nicht möglich.</p>
+                    </div>
 
-                  <center>
-                    <a href="${upgradeUrl}" class="cta-button">Jetzt auf ${planUpgradeName} upgraden →</a>
-                  </center>
+                    <h2 class="section-title">🚀 Upgraden Sie für mehr Uploads</h2>
 
-                  <p style="margin-top: 30px; font-size: 14px; color: #666;">
-                    <strong>Tipp:</strong> Ihr Email-Limit wird automatisch in <strong>${Math.ceil((new Date(recentImports[0].timestamp).getTime() + rateLimit.window - Date.now()) / 60000)} Minuten</strong> zurückgesetzt.
-                  </p>
+                    <table class="plans-container">
+                      <tr>
+                        <td style="width: 48%; padding-right: 6px;">
+                          <div class="plan-card">
+                            <div class="plan-name">Premium</div>
+                            <div class="plan-limit">10</div>
+                            <div class="plan-limit-text">Emails pro Stunde</div>
+                            <ul class="plan-features">
+                              <li>KI-Vertragsanalyse</li>
+                              <li>Optimierungsvorschläge</li>
+                              <li>Email-Upload</li>
+                              <li>Prioritäts-Support</li>
+                            </ul>
+                            <center>
+                              <a href="https://www.contract-ai.de/subscribe?plan=premium" class="cta-button ${userPlan === 'free' ? '' : 'cta-secondary'}">
+                                ${userPlan === 'free' ? 'Jetzt upgraden →' : 'Details ansehen'}
+                              </a>
+                            </center>
+                          </div>
+                        </td>
+                        <td style="width: 48%; padding-left: 6px;">
+                          <div class="plan-card ${userPlan === 'premium' || userPlan === 'free' ? 'featured' : ''}">
+                            ${userPlan !== 'business' ? '<div class="plan-badge">Empfohlen</div>' : ''}
+                            <div class="plan-name">Business</div>
+                            <div class="plan-limit">20</div>
+                            <div class="plan-limit-text">Emails pro Stunde</div>
+                            <ul class="plan-features">
+                              <li>Alle Premium-Features</li>
+                              <li>Team-Verwaltung</li>
+                              <li>API-Zugang</li>
+                              <li>Dedizierter Support</li>
+                            </ul>
+                            <center>
+                              <a href="https://www.contract-ai.de/subscribe?plan=business" class="cta-button">
+                                ${userPlan === 'business' ? 'Aktueller Plan' : 'Jetzt upgraden →'}
+                              </a>
+                            </center>
+                          </div>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <div class="info-box">
+                      <p><strong>💡 Hinweis:</strong> Ihr Email-Limit wird automatisch in <strong>${Math.ceil((new Date(recentImports[0].timestamp).getTime() + rateLimit.window - Date.now()) / 60000)} Minuten</strong> zurückgesetzt.</p>
+                    </div>
+                  </div>
 
                   <div class="footer">
-                    <p>Contract AI - Intelligente Vertragsanalyse<br>
-                    <a href="https://www.contract-ai.de">www.contract-ai.de</a></p>
+                    <p><strong>Contract AI</strong> – Intelligente Vertragsanalyse</p>
+                    <p><a href="https://www.contract-ai.de">www.contract-ai.de</a> · <a href="https://www.contract-ai.de/support">Support</a></p>
                   </div>
                 </div>
               </div>
