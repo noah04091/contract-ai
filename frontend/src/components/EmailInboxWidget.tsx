@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import styles from "./EmailInboxWidget.module.css";
 import EmailTutorialModal from "./EmailTutorialModal";
 import { apiCall } from "../utils/api";
+import { useToast } from "../context/ToastContext";
 
 interface EmailInboxWidgetProps {
   emailInboxAddress: string | null;
@@ -22,6 +23,7 @@ export default function EmailInboxWidget({
   const [showTutorial, setShowTutorial] = useState(false);
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
+  const { success } = useToast();
 
   // Copy to Clipboard
   const handleCopy = () => {
@@ -29,6 +31,9 @@ export default function EmailInboxWidget({
       navigator.clipboard.writeText(emailInboxAddress);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+
+      // ✅ Spezifischer Toast mit klarer Handlungsaufforderung
+      success("📧 Email-Adresse kopiert! Leite jetzt deine Verträge weiter.", 4000);
     }
   };
 
