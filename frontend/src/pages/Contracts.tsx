@@ -1,5 +1,5 @@
 // 📁 src/pages/Contracts.tsx - JSX FIXED: Motion Button closing tag korrigiert + ANALYSE-ANZEIGE GEFIXT + RESPONSIVE + DUPLIKATSERKENNUNG + S3-INTEGRATION + BATCH-ANALYSE-ANZEIGE + PDF-SCHNELLAKTION MOBILE-FIX + EDIT-SCHNELLAKTION REPARIERT
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet";
@@ -210,6 +210,7 @@ export default function Contracts() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null); // ✅ Ref für Infinite Scroll Sentinel
+  const userInfoCacheRef = useRef<{ data: UserInfo | null; timestamp: number }>({ data: null, timestamp: 0 }); // ✅ Cache für User-Info
 
   // 📁 Folder Management Hook
   const {
@@ -813,9 +814,20 @@ export default function Contracts() {
     </AnimatePresence>
   );
 
-  // ✅ KORRIGIERT: User-Info laden mit 3-Stufen-Preismodell
-  const fetchUserInfo = async () => {
+  // ✅ KORRIGIERT: User-Info laden mit 3-Stufen-Preismodell & Caching
+  const fetchUserInfo = async (force: boolean = false) => {
     try {
+      // ✅ Cache-Check: Nur alle 30 Sekunden neu laden (außer force=true)
+      const now = Date.now();
+      const cacheAge = now - userInfoCacheRef.current.timestamp;
+      const CACHE_DURATION = 30000; // 30 Sekunden
+
+      if (!force && userInfoCacheRef.current.data && cacheAge < CACHE_DURATION) {
+        console.log('📦 User-Info aus Cache geladen (Alter:', Math.round(cacheAge / 1000), 'Sekunden)');
+        setUserInfo(userInfoCacheRef.current.data);
+        return;
+      }
+
       const response = await apiCall("/auth/me") as {
         user: {
           subscriptionPlan: string;
@@ -825,17 +837,17 @@ export default function Contracts() {
           emailInboxEnabled?: boolean;
         }
       };
-      
+
       const plan = response.user?.subscriptionPlan as 'free' | 'business' | 'premium' || 'free';
       const isPremium = response.user?.isPremium || plan === 'premium';
       const analysisCount = response.user?.analysisCount || 0;
-      
+
       // ✅ KORRIGIERT: Limits nach 3-Stufen-Modell
       let analysisLimit = 0;
       if (plan === 'free') analysisLimit = 0;        // ❌ Keine Analysen
       else if (plan === 'business') analysisLimit = 50;  // 📊 50 pro Monat
       else if (plan === 'premium') analysisLimit = Infinity; // ♾️ Unbegrenzt
-      
+
       const newUserInfo: UserInfo = {
         subscriptionPlan: plan,
         isPremium,
@@ -846,9 +858,15 @@ export default function Contracts() {
         emailInboxEnabled: response.user?.emailInboxEnabled ?? true
       };
 
+      // ✅ Cache aktualisieren
+      userInfoCacheRef.current = {
+        data: newUserInfo,
+        timestamp: now
+      };
+
       setUserInfo(newUserInfo);
 
-      console.log("✅ User-Info geladen:", newUserInfo);
+      console.log("✅ User-Info vom Server geladen:", newUserInfo);
     } catch (err) {
       console.warn("⚠️ User-Info konnte nicht geladen werden:", err);
       setUserInfo({
@@ -860,14 +878,29 @@ export default function Contracts() {
     }
   };
 
-  // ✅ Verbesserte fetchContracts mit Pagination (Infinite Scroll)
+  // ✅ Verbesserte fetchContracts mit Pagination & Filtern (Infinite Scroll)
   const fetchContracts = async (): Promise<Contract[] | null> => {
     try {
       setLoading(true);
       setRefreshing(true);
 
-      // ✅ NEU: Pagination mit limit=50 für ersten Load
-      const response = await apiCall("/contracts?limit=50&skip=0") as {
+      // ✅ NEU: Filter-Parameter ans Backend senden
+      const params = new URLSearchParams({
+        limit: '50',
+        skip: '0',
+        search: searchQuery,
+        status: statusFilter,
+        dateFilter: dateFilter,
+        sort: sortOrder,
+        source: sourceFilter
+      });
+
+      // ✅ Folder-Filter
+      if (activeFolder !== null) {
+        params.append('folderId', activeFolder);
+      }
+
+      const response = await apiCall(`/contracts?${params.toString()}`) as {
         contracts: Contract[];
         pagination: {
           total: number;
@@ -878,7 +911,7 @@ export default function Contracts() {
       };
 
       setContracts(response.contracts);
-      setFilteredContracts(response.contracts);
+      setFilteredContracts(response.contracts); // Wird jetzt vom Backend gefiltert
       setError(null);
 
       // ✅ Pagination-Info speichern
@@ -902,7 +935,7 @@ export default function Contracts() {
     }
   };
 
-  // ✅ NEU: Load More Contracts für Infinite Scroll
+  // ✅ NEU: Load More Contracts für Infinite Scroll (mit Filtern)
   const loadMoreContracts = async () => {
     // Verhindere doppeltes Laden oder Laden wenn keine weiteren verfügbar
     if (loadingMore || !paginationInfo.hasMore) {
@@ -914,7 +947,24 @@ export default function Contracts() {
 
       // ✅ Nächste Seite: currentSkip + 50
       const nextSkip = paginationInfo.currentSkip + 50;
-      const response = await apiCall(`/contracts?limit=50&skip=${nextSkip}`) as {
+
+      // ✅ WICHTIG: Gleiche Filter wie bei fetchContracts verwenden!
+      const params = new URLSearchParams({
+        limit: '50',
+        skip: nextSkip.toString(),
+        search: searchQuery,
+        status: statusFilter,
+        dateFilter: dateFilter,
+        sort: sortOrder,
+        source: sourceFilter
+      });
+
+      // ✅ Folder-Filter
+      if (activeFolder !== null) {
+        params.append('folderId', activeFolder);
+      }
+
+      const response = await apiCall(`/contracts?${params.toString()}`) as {
         contracts: Contract[];
         pagination: {
           total: number;
@@ -944,102 +994,21 @@ export default function Contracts() {
     }
   };
 
-  // ✅ FIXED: applyFilters mit useCallback für stabile Referenz
-  const applyFilters = useCallback(() => {
-    let filtered = [...contracts];
-
-    // Text-Suche - FIXED: Sichere .toLowerCase() Aufrufe
-    if (searchQuery.trim()) {
-      filtered = filtered.filter(contract => 
-        (contract.name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-        (contract.status?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
-        (contract.kuendigung?.toLowerCase() || '').includes(searchQuery.toLowerCase())
-      );
-    }
-
-    // Status-Filter
-    if (statusFilter !== 'alle') {
-      filtered = filtered.filter(contract => {
-        const status = (contract.status?.toLowerCase() || '');
-        switch (statusFilter) {
-          case 'aktiv':
-            return status === 'aktiv' || status === 'gültig';
-          case 'bald_ablaufend':
-            return status === 'läuft ab' || status === 'bald fällig';
-          case 'abgelaufen':
-            return status === 'abgelaufen' || status === 'beendet';
-          case 'gekündigt':
-            return status === 'gekündigt';
-          default:
-            return true;
-        }
-      });
-    }
-
-    // 📁 Folder-Filter
-    if (activeFolder !== null) {
-      if (activeFolder === 'unassigned') {
-        // Show only contracts without folder
-        filtered = filtered.filter(contract => !contract.folderId);
-      } else {
-        // Show only contracts in this folder
-        filtered = filtered.filter(contract => contract.folderId === activeFolder);
-      }
-    }
-
-    // Datums-Filter
-    if (dateFilter !== 'alle') {
-      const now = new Date();
-      filtered = filtered.filter(contract => {
-        const createdDate = new Date(contract.createdAt);
-        const diffTime = now.getTime() - createdDate.getTime();
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-        switch (dateFilter) {
-          case 'letzte_7_tage':
-            return diffDays <= 7;
-          case 'letzte_30_tage':
-            return diffDays <= 30;
-          case 'letztes_jahr':
-            return diffDays <= 365;
-          default:
-            return true;
-        }
-      });
-    }
-
-    // 🆕 Quelle-Filter (Generiert / Optimiert)
-    if (sourceFilter !== 'alle') {
-      if (sourceFilter === 'generated') {
-        filtered = filtered.filter(contract => contract.isGenerated === true);
-      } else if (sourceFilter === 'optimized') {
-        filtered = filtered.filter(contract => contract.isOptimized === true);
-      }
-    }
-
-    // Sortierung
-    filtered.sort((a, b) => {
-      switch (sortOrder) {
-        case 'neueste':
-          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-        case 'älteste':
-          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-        case 'name_az':
-          return (a.name || '').localeCompare(b.name || '');
-        case 'name_za':
-          return (b.name || '').localeCompare(a.name || '');
-        default:
-          return 0;
-        }
-      });
-
-    setFilteredContracts(filtered);
-  }, [contracts, searchQuery, statusFilter, dateFilter, sortOrder, sourceFilter, activeFolder]);
-
-  // ✅ FIXED: Filter anwenden mit stabiler applyFilters-Referenz
+  // ✅ NEU: Bei Filter-Änderung Contracts neu laden (Backend filtert jetzt!)
   useEffect(() => {
-    applyFilters();
-  }, [applyFilters]);
+    // Verhindere doppeltes Laden beim Initial Mount
+    if (contracts.length === 0 && !loading) {
+      return;
+    }
+
+    // Debounce für Search-Query (nicht bei jedem Tastendruck neu laden)
+    const debounceTimer = setTimeout(() => {
+      console.log('🔄 Filter geändert, lade Contracts neu...');
+      fetchContracts();
+    }, searchQuery ? 500 : 0); // 500ms Debounce für Search, sofort für andere Filter
+
+    return () => clearTimeout(debounceTimer);
+  }, [searchQuery, statusFilter, dateFilter, sortOrder, sourceFilter, activeFolder]);
 
   // ✅ Initial Load
   useEffect(() => {
@@ -1628,9 +1597,9 @@ export default function Contracts() {
 
     setIsAnalyzing(false);
     
-    // ✅ User-Info und Verträge neu laden
+    // ✅ User-Info und Verträge neu laden (force=true weil analysisCount sich geändert hat)
     setTimeout(() => {
-      fetchUserInfo();
+      fetchUserInfo(true);
       fetchContracts();
     }, 1000);
 
@@ -1684,8 +1653,8 @@ export default function Contracts() {
         ));
       }
 
-      // ✅ User-Info aktualisieren
-      fetchUserInfo();
+      // ✅ User-Info aktualisieren (force=true weil analysisCount sich geändert hat)
+      fetchUserInfo(true);
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unbekannter Fehler';
@@ -2698,7 +2667,7 @@ export default function Contracts() {
                 <EmailInboxWidget
                   emailInboxAddress={userInfo.emailInboxAddress}
                   emailInboxEnabled={userInfo.emailInboxEnabled ?? true}
-                  onUpdate={fetchUserInfo}
+                  onUpdate={() => fetchUserInfo(true)}
                 />
               </motion.div>
             )}

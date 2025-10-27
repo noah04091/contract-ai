@@ -451,15 +451,108 @@ router.get("/", verifyToken, async (req, res) => {
     const limit = parseInt(req.query.limit) || 0; // 0 = keine Limitierung (Backward-Compatible!)
     const skip = parseInt(req.query.skip) || 0;
 
-    // ✅ Total Count für Frontend (wie viele Contracts gibt es insgesamt?)
-    const totalCount = await contractsCollection.countDocuments({
-      userId: new ObjectId(req.user.userId)
-    });
+    // ✅ NEU: Filter-Parameter
+    const searchQuery = req.query.search || '';
+    const statusFilter = req.query.status || 'alle';
+    const dateFilter = req.query.dateFilter || 'alle';
+    const sortOrder = req.query.sort || 'neueste';
+    const sourceFilter = req.query.source || 'alle';
+    const folderId = req.query.folderId || null;
 
-    // ✅ MongoDB Query mit optionalem limit & skip
+    // ✅ MongoDB Filter-Objekt aufbauen
+    const mongoFilter = { userId: new ObjectId(req.user.userId) };
+
+    // 🔍 Text-Suche (name, status, kuendigung)
+    if (searchQuery.trim()) {
+      mongoFilter.$or = [
+        { name: { $regex: searchQuery, $options: 'i' } },
+        { status: { $regex: searchQuery, $options: 'i' } },
+        { kuendigung: { $regex: searchQuery, $options: 'i' } }
+      ];
+    }
+
+    // 📊 Status-Filter
+    if (statusFilter !== 'alle') {
+      switch (statusFilter) {
+        case 'aktiv':
+          mongoFilter.status = { $in: ['aktiv', 'Aktiv', 'gültig', 'Gültig'] };
+          break;
+        case 'bald_ablaufend':
+          mongoFilter.status = { $in: ['läuft ab', 'Läuft ab', 'bald fällig', 'Bald fällig'] };
+          break;
+        case 'abgelaufen':
+          mongoFilter.status = { $in: ['abgelaufen', 'Abgelaufen', 'beendet', 'Beendet'] };
+          break;
+        case 'gekündigt':
+          mongoFilter.status = { $in: ['gekündigt', 'Gekündigt'] };
+          break;
+      }
+    }
+
+    // 📅 Datums-Filter
+    if (dateFilter !== 'alle') {
+      const now = new Date();
+      let dateThreshold;
+
+      switch (dateFilter) {
+        case 'letzte_7_tage':
+          dateThreshold = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          break;
+        case 'letzte_30_tage':
+          dateThreshold = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+          break;
+        case 'letztes_jahr':
+          dateThreshold = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+          break;
+      }
+
+      if (dateThreshold) {
+        mongoFilter.createdAt = { $gte: dateThreshold };
+      }
+    }
+
+    // 🏷️ Quelle-Filter (generated / optimized)
+    if (sourceFilter === 'generated') {
+      mongoFilter.isGenerated = true;
+    } else if (sourceFilter === 'optimized') {
+      mongoFilter.isOptimized = true;
+    }
+
+    // 📁 Folder-Filter
+    if (folderId) {
+      if (folderId === 'unassigned') {
+        mongoFilter.folderId = { $exists: false };
+      } else {
+        mongoFilter.folderId = folderId;
+      }
+    }
+
+    // ✅ Total Count MIT den gleichen Filtern
+    const totalCount = await contractsCollection.countDocuments(mongoFilter);
+
+    // 🔄 Sortierung
+    let sortOptions = {};
+    switch (sortOrder) {
+      case 'neueste':
+        sortOptions = { createdAt: -1 };
+        break;
+      case 'älteste':
+        sortOptions = { createdAt: 1 };
+        break;
+      case 'name_az':
+        sortOptions = { name: 1 };
+        break;
+      case 'name_za':
+        sortOptions = { name: -1 };
+        break;
+      default:
+        sortOptions = { createdAt: -1 };
+    }
+
+    // ✅ MongoDB Query mit Filtern, Sortierung & Pagination
     let query = contractsCollection
-      .find({ userId: new ObjectId(req.user.userId) })
-      .sort({ createdAt: -1 });
+      .find(mongoFilter)
+      .sort(sortOptions);
 
     if (limit > 0) {
       query = query.skip(skip).limit(limit);
@@ -471,7 +564,7 @@ router.get("/", verifyToken, async (req, res) => {
       contracts.map(contract => enrichContractWithAnalysis(contract))
     );
 
-    console.log(`📦 ${enrichedContracts.length} von ${totalCount} Verträgen geladen (skip: ${skip}, limit: ${limit || 'alle'})`);
+    console.log(`📦 ${enrichedContracts.length} von ${totalCount} Verträgen geladen (skip: ${skip}, limit: ${limit || 'alle'}, Filter: ${searchQuery ? 'Search' : ''}${statusFilter !== 'alle' ? ' Status' : ''}${dateFilter !== 'alle' ? ' Date' : ''})`);
 
     // ✅ Response mit Pagination-Info
     res.json({
