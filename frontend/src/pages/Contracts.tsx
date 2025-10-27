@@ -2716,7 +2716,7 @@ export default function Contracts() {
                   <div>
                     <h2>Deine Verträge</h2>
                     <p className={styles.contractsCount}>
-                      {loading ? "Lade..." : `${filteredContracts.length} von ${contracts.length} Verträgen`}
+                      {loading ? "Lade..." : `${contracts.length} von ${paginationInfo.total} Verträgen`}
                     </p>
                   </div>
                   <div className={styles.sectionActions}>
