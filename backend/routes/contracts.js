@@ -523,7 +523,8 @@ router.get("/", verifyToken, async (req, res) => {
       if (folderId === 'unassigned') {
         mongoFilter.folderId = { $exists: false };
       } else {
-        mongoFilter.folderId = folderId;
+        // ✅ FIX: folderId als ObjectId konvertieren (wird in DB als ObjectId gespeichert!)
+        mongoFilter.folderId = new ObjectId(folderId);
       }
     }
 
