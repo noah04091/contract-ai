@@ -1,5 +1,5 @@
 // 📁 useFolders.ts - Custom Hook for Folder Management
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import type { FolderType } from '../components/FolderBar';
 
 interface UseFoldersReturn {
@@ -8,7 +8,7 @@ interface UseFoldersReturn {
   isLoading: boolean;
   error: string | null;
   unassignedOrder: number;
-  fetchFolders: () => Promise<void>;
+  fetchFolders: (force?: boolean) => Promise<void>;
   createFolder: (data: { name: string; color: string; icon: string }) => Promise<void>;
   updateFolder: (id: string, data: { name: string; color: string; icon: string }) => Promise<void>;
   deleteFolder: (id: string) => Promise<void>;
@@ -24,11 +24,34 @@ export function useFolders(): UseFoldersReturn {
   const [error, setError] = useState<string | null>(null);
   const [unassignedOrder, setUnassignedOrder] = useState<number>(9999);
 
+  // ✅ Cache für Folder-Daten (30 Sekunden)
+  const folderCacheRef = useRef<{
+    folders: FolderType[];
+    unassignedOrder: number;
+    timestamp: number
+  }>({
+    folders: [],
+    unassignedOrder: 9999,
+    timestamp: 0
+  });
+
   const getToken = () => {
     return localStorage.getItem('authToken') || localStorage.getItem('token');
   };
 
-  const fetchFolders = useCallback(async () => {
+  const fetchFolders = useCallback(async (force: boolean = false) => {
+    // ✅ Cache-Check: Nur alle 30 Sekunden neu laden (außer force=true)
+    const now = Date.now();
+    const cacheAge = now - folderCacheRef.current.timestamp;
+    const CACHE_DURATION = 30000; // 30 Sekunden
+
+    if (!force && folderCacheRef.current.folders.length > 0 && cacheAge < CACHE_DURATION) {
+      console.log('📁 Folders aus Cache geladen (Alter:', Math.round(cacheAge / 1000), 'Sekunden)');
+      setFolders(folderCacheRef.current.folders);
+      setUnassignedOrder(folderCacheRef.current.unassignedOrder);
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
@@ -48,11 +71,26 @@ export function useFolders(): UseFoldersReturn {
 
       // Handle new response format with folders + unassignedOrder
       if (data.folders && Array.isArray(data.folders)) {
+        // ✅ Cache aktualisieren
+        folderCacheRef.current = {
+          folders: data.folders,
+          unassignedOrder: data.unassignedOrder !== undefined ? data.unassignedOrder : 9999,
+          timestamp: now
+        };
+
         setFolders(data.folders);
         setUnassignedOrder(data.unassignedOrder !== undefined ? data.unassignedOrder : 9999);
+        console.log('✅ Folders vom Server geladen (', data.folders.length, 'Ordner)');
       } else {
         // Fallback for old format (just array of folders)
+        folderCacheRef.current = {
+          folders: data,
+          unassignedOrder: 9999,
+          timestamp: now
+        };
+
         setFolders(data);
+        console.log('✅ Folders vom Server geladen (Legacy Format)');
       }
     } catch (err) {
       const error = err as Error;
@@ -85,7 +123,7 @@ export function useFolders(): UseFoldersReturn {
         throw new Error(errorData.error || 'Fehler beim Erstellen');
       }
 
-      await fetchFolders(); // Refresh list
+      await fetchFolders(true); // ✅ Force refresh nach Erstellung
     } catch (err) {
       const error = err as Error;
       setError(error.message);
@@ -118,7 +156,7 @@ export function useFolders(): UseFoldersReturn {
         throw new Error(errorData.error || 'Fehler beim Aktualisieren');
       }
 
-      await fetchFolders(); // Refresh list
+      await fetchFolders(true); // ✅ Force refresh nach Update
     } catch (err) {
       const error = err as Error;
       setError(error.message);
@@ -147,7 +185,7 @@ export function useFolders(): UseFoldersReturn {
         throw new Error(errorData.error || 'Fehler beim Löschen');
       }
 
-      await fetchFolders(); // Refresh list
+      await fetchFolders(true); // ✅ Force refresh nach Löschung
     } catch (err) {
       const error = err as Error;
       setError(error.message);
@@ -177,7 +215,7 @@ export function useFolders(): UseFoldersReturn {
         throw new Error(errorData.error || 'Fehler beim Verschieben');
       }
 
-      await fetchFolders(); // Refresh counts
+      await fetchFolders(true); // ✅ Force refresh nach Verschieben (Counts aktualisieren)
     } catch (err) {
       const error = err as Error;
       setError(error.message);
@@ -205,7 +243,7 @@ export function useFolders(): UseFoldersReturn {
         throw new Error(errorData.error || 'Fehler beim Verschieben');
       }
 
-      await fetchFolders(); // Refresh counts
+      await fetchFolders(true); // ✅ Force refresh nach Bulk-Verschieben
     } catch (err) {
       const error = err as Error;
       setError(error.message);

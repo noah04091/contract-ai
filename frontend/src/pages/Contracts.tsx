@@ -211,6 +211,7 @@ export default function Contracts() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null); // ✅ Ref für Infinite Scroll Sentinel
   const userInfoCacheRef = useRef<{ data: UserInfo | null; timestamp: number }>({ data: null, timestamp: 0 }); // ✅ Cache für User-Info
+  const isFirstMountRef = useRef(true); // ✅ Flag um First Mount zu erkennen (verhindert doppelten API-Call)
 
   // 📁 Folder Management Hook
   const {
@@ -414,11 +415,11 @@ export default function Contracts() {
         })
       });
 
-      await fetchFolders(); // Refresh to get updated order from server
+      await fetchFolders(true); // ✅ Force refresh nach Reorder
     } catch (err) {
       console.error('Error reordering folders:', err);
       setError('Fehler beim Sortieren der Ordner');
-      await fetchFolders(); // Revert to server state on error
+      await fetchFolders(true); // ✅ Force revert auf Server-State
     }
   };
 
@@ -564,7 +565,7 @@ export default function Contracts() {
         body: JSON.stringify({ suggestions })
       });
 
-      await fetchFolders();
+      await fetchFolders(true); // ✅ Force refresh nach Smart Folder Erstellung
       await fetchContracts();
       console.log(`✅ ${suggestions.length} Smart Folders erstellt`);
     } catch (err) {
@@ -996,8 +997,9 @@ export default function Contracts() {
 
   // ✅ NEU: Bei Filter-Änderung Contracts neu laden (Backend filtert jetzt!)
   useEffect(() => {
-    // Verhindere doppeltes Laden beim Initial Mount
-    if (contracts.length === 0 && !loading) {
+    // Überspringe First Mount (Initial Load useEffect übernimmt das)
+    if (isFirstMountRef.current) {
+      isFirstMountRef.current = false;
       return;
     }
 
@@ -1754,6 +1756,8 @@ export default function Contracts() {
     let count = 0;
     if (statusFilter !== 'alle') count++;
     if (dateFilter !== 'alle') count++;
+    if (sourceFilter !== 'alle') count++; // ✅ Quelle-Filter
+    if (activeFolder !== null) count++; // ✅ Folder-Filter
     return count;
   };
 
@@ -1762,7 +1766,9 @@ export default function Contracts() {
     setSearchQuery("");
     setStatusFilter('alle');
     setDateFilter('alle');
+    setSourceFilter('alle'); // ✅ Quelle zurücksetzen
     setSortOrder('neueste');
+    setActiveFolder(null); // ✅ Folder zurücksetzen
   };
 
   const getStatusColor = (status: string): string => {
@@ -2892,7 +2898,18 @@ export default function Contracts() {
                           : "Upgrade auf Business oder Premium für Vertragsanalyse."
                       }
                     </p>
-                    {(!activeFiltersCount() && !searchQuery) && (
+                    {(activeFiltersCount() > 0 || searchQuery) ? (
+                      <motion.button
+                        className={styles.uploadButton}
+                        onClick={clearAllFilters}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        style={{ backgroundColor: '#ef4444' }}
+                      >
+                        <X size={16} />
+                        <span>Filter zurücksetzen</span>
+                      </motion.button>
+                    ) : (
                       <motion.button
                         className={`${styles.uploadButton} ${!canUpload ? styles.upgradeButton : ''}`}
                         onClick={() => canUpload ? setActiveSection('upload') : window.location.href = '/pricing'}
@@ -2938,15 +2955,34 @@ export default function Contracts() {
                                 <div style={{ color: '#6b7280' }}>
                                   <div style={{ fontSize: '48px', marginBottom: '16px' }}>📄</div>
                                   <h3 style={{ margin: '0 0 8px 0', color: '#374151' }}>
-                                    {searchQuery ? 'Keine passenden Verträge gefunden' : 'Keine Verträge vorhanden'}
+                                    {activeFiltersCount() > 0 || searchQuery ? 'Keine Ergebnisse gefunden' : 'Keine Verträge vorhanden'}
                                   </h3>
                                   <p style={{ margin: '0', fontSize: '14px' }}>
-                                    {searchQuery 
-                                      ? `Kein Vertrag entspricht "${searchQuery}". Versuche andere Suchbegriffe.`
-                                      : 'Lade deinen ersten Vertrag hoch, um loszulegen.'
+                                    {activeFiltersCount() > 0 || searchQuery
+                                      ? 'Probiere andere Suchbegriffe oder Filter-Einstellungen.'
+                                      : canUpload
+                                        ? 'Lade deinen ersten Vertrag hoch, um ihn hier zu sehen.'
+                                        : 'Upgrade auf Business oder Premium für Vertragsanalyse.'
                                     }
                                   </p>
-                                  {!searchQuery && (
+                                  {activeFiltersCount() > 0 || searchQuery ? (
+                                    <button
+                                      style={{
+                                        marginTop: '16px',
+                                        padding: '8px 16px',
+                                        backgroundColor: '#ef4444',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '6px',
+                                        cursor: 'pointer',
+                                        fontWeight: 500
+                                      }}
+                                      onClick={clearAllFilters}
+                                    >
+                                      <X size={16} style={{ marginRight: '8px', verticalAlign: 'middle' }} />
+                                      Filter zurücksetzen
+                                    </button>
+                                  ) : !searchQuery && canUpload && (
                                     <button 
                                       style={{
                                         marginTop: '16px',

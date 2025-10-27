@@ -4,7 +4,11 @@
       "Bash(powershell -Command \"Compress-Archive -Path index.js,node_modules,package.json -DestinationPath function.zip -Force\")",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git push)"
+      "Bash(git push)",
+      "Bash(npm run build:*)",
+      "Bash(git revert:*)",
+      "Bash(node -c:*)",
+      "Bash(node create-contract-indexes.js:*)"
     ],
     "deny": [],
     "ask": []
