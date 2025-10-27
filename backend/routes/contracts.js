@@ -447,17 +447,42 @@ async function enrichContractWithAnalysis(contract) {
 // GET /contracts – alle Verträge mit Events
 router.get("/", verifyToken, async (req, res) => {
   try {
-    const contracts = await contractsCollection
+    // ✅ Pagination: limit & skip aus Query-Parametern (optional, fallback auf ALLE)
+    const limit = parseInt(req.query.limit) || 0; // 0 = keine Limitierung (Backward-Compatible!)
+    const skip = parseInt(req.query.skip) || 0;
+
+    // ✅ Total Count für Frontend (wie viele Contracts gibt es insgesamt?)
+    const totalCount = await contractsCollection.countDocuments({
+      userId: new ObjectId(req.user.userId)
+    });
+
+    // ✅ MongoDB Query mit optionalem limit & skip
+    let query = contractsCollection
       .find({ userId: new ObjectId(req.user.userId) })
-      .sort({ createdAt: -1 })
-      .toArray();
+      .sort({ createdAt: -1 });
+
+    if (limit > 0) {
+      query = query.skip(skip).limit(limit);
+    }
+
+    const contracts = await query.toArray();
 
     const enrichedContracts = await Promise.all(
       contracts.map(contract => enrichContractWithAnalysis(contract))
     );
 
-    console.log(`📦 ${enrichedContracts.length} Verträge geladen (mit Analyse & Events)`);
-    res.json(enrichedContracts);
+    console.log(`📦 ${enrichedContracts.length} von ${totalCount} Verträgen geladen (skip: ${skip}, limit: ${limit || 'alle'})`);
+
+    // ✅ Response mit Pagination-Info
+    res.json({
+      contracts: enrichedContracts,
+      pagination: {
+        total: totalCount,
+        limit: limit || totalCount,
+        skip: skip,
+        hasMore: skip + enrichedContracts.length < totalCount
+      }
+    });
   } catch (err) {
     console.error("❌ Fehler beim Laden der Verträge:", err.message);
     res.status(500).json({ message: "Fehler beim Abrufen der Verträge." });

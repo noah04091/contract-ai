@@ -190,7 +190,14 @@ export default function Contracts() {
   const [dateFilter, setDateFilter] = useState<DateFilter>('alle');
   const [sortOrder, setSortOrder] = useState<SortOrder>('neueste');
   const [sourceFilter, setSourceFilter] = useState<'alle' | 'generated' | 'optimized'>('alle'); // 🆕 Quelle-Filter
-  const [displayLimit, setDisplayLimit] = useState<number>(50); // ✅ NEU: Pagination - zeige initial 50 Contracts
+
+  // ✅ NEU: Infinite Scroll Pagination State
+  const [paginationInfo, setPaginationInfo] = useState({
+    total: 0,
+    hasMore: false,
+    currentSkip: 0
+  });
+  const [loadingMore, setLoadingMore] = useState(false); // Loading für "Weitere laden"
 
   // ✅ NEU: Upload Success Modal State (für Two-Step Upload Flow)
   const [uploadSuccessModal, setUploadSuccessModal] = useState<{
@@ -202,6 +209,7 @@ export default function Contracts() {
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const loadMoreRef = useRef<HTMLDivElement>(null); // ✅ Ref für Infinite Scroll Sentinel
 
   // 📁 Folder Management Hook
   const {
@@ -852,19 +860,36 @@ export default function Contracts() {
     }
   };
 
-  // ✅ Verbesserte fetchContracts mit apiCall
+  // ✅ Verbesserte fetchContracts mit Pagination (Infinite Scroll)
   const fetchContracts = async (): Promise<Contract[] | null> => {
     try {
       setLoading(true);
       setRefreshing(true);
 
-      const data = await apiCall("/contracts") as Contract[];
-      setContracts(data);
-      setFilteredContracts(data);
+      // ✅ NEU: Pagination mit limit=50 für ersten Load
+      const response = await apiCall("/contracts?limit=50&skip=0") as {
+        contracts: Contract[];
+        pagination: {
+          total: number;
+          limit: number;
+          skip: number;
+          hasMore: boolean;
+        };
+      };
+
+      setContracts(response.contracts);
+      setFilteredContracts(response.contracts);
       setError(null);
 
-      console.log("✅ Verträge erfolgreich geladen:", data.length);
-      return data;
+      // ✅ Pagination-Info speichern
+      setPaginationInfo({
+        total: response.pagination.total,
+        hasMore: response.pagination.hasMore,
+        currentSkip: response.pagination.skip
+      });
+
+      console.log(`✅ Verträge geladen: ${response.contracts.length} von ${response.pagination.total} (hasMore: ${response.pagination.hasMore})`);
+      return response.contracts;
     } catch (err) {
       console.error("❌ Fehler beim Laden der Verträge:", err);
       setError("Die Verträge konnten nicht geladen werden. Bitte versuche es später erneut.");
@@ -874,6 +899,48 @@ export default function Contracts() {
     } finally {
       setLoading(false);
       setTimeout(() => setRefreshing(false), 600);
+    }
+  };
+
+  // ✅ NEU: Load More Contracts für Infinite Scroll
+  const loadMoreContracts = async () => {
+    // Verhindere doppeltes Laden oder Laden wenn keine weiteren verfügbar
+    if (loadingMore || !paginationInfo.hasMore) {
+      return;
+    }
+
+    try {
+      setLoadingMore(true);
+
+      // ✅ Nächste Seite: currentSkip + 50
+      const nextSkip = paginationInfo.currentSkip + 50;
+      const response = await apiCall(`/contracts?limit=50&skip=${nextSkip}`) as {
+        contracts: Contract[];
+        pagination: {
+          total: number;
+          limit: number;
+          skip: number;
+          hasMore: boolean;
+        };
+      };
+
+      // ✅ WICHTIG: Append (nicht replace!)
+      setContracts(prev => [...prev, ...response.contracts]);
+      setFilteredContracts(prev => [...prev, ...response.contracts]);
+
+      // ✅ Pagination-Info aktualisieren
+      setPaginationInfo({
+        total: response.pagination.total,
+        hasMore: response.pagination.hasMore,
+        currentSkip: response.pagination.skip
+      });
+
+      console.log(`✅ Weitere Verträge geladen: ${response.contracts.length} (insgesamt: ${contracts.length + response.contracts.length} von ${response.pagination.total})`);
+    } catch (err) {
+      console.error("❌ Fehler beim Nachladen der Verträge:", err);
+      // Fehler nicht als kritisch behandeln - User kann manuell neu laden
+    } finally {
+      setLoadingMore(false);
     }
   };
 
@@ -974,17 +1041,42 @@ export default function Contracts() {
     applyFilters();
   }, [applyFilters]);
 
-  // ✅ NEU: Reset displayLimit when filters/search change
-  useEffect(() => {
-    setDisplayLimit(50);
-  }, [searchQuery, statusFilter, dateFilter, sourceFilter]);
-
   // ✅ Initial Load
   useEffect(() => {
     fetchUserInfo();
     fetchContracts();
     fetchFolders(); // 📁 Load folders
   }, []);
+
+  // ✅ NEU: Infinite Scroll - IntersectionObserver für automatisches Nachladen
+  useEffect(() => {
+    // Nur aktivieren wenn noch mehr Verträge verfügbar sind
+    if (!loadMoreRef.current || !paginationInfo.hasMore || loadingMore) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        // Wenn Sentinel Element sichtbar wird -> Nachladen triggern
+        if (entries[0].isIntersecting && paginationInfo.hasMore && !loadingMore) {
+          console.log('📜 Infinite Scroll: Bottom erreicht, lade weitere Contracts...');
+          loadMoreContracts();
+        }
+      },
+      {
+        root: null, // viewport
+        rootMargin: '200px', // 200px vor Ende triggern (smooth loading)
+        threshold: 0.1 // Mindestens 10% sichtbar
+      }
+    );
+
+    observer.observe(loadMoreRef.current);
+
+    // Cleanup
+    return () => {
+      observer.disconnect();
+    };
+  }, [paginationInfo.hasMore, loadingMore]); // Re-run wenn sich hasMore oder loadingMore ändern
 
   // ✅ FIX: Wenn contracts sich ändern und ein Contract ausgewählt ist, aktualisiere selectedContract
   useEffect(() => {
@@ -1702,7 +1794,6 @@ export default function Contracts() {
     setStatusFilter('alle');
     setDateFilter('alle');
     setSortOrder('neueste');
-    setDisplayLimit(50); // ✅ NEU: Reset display limit
   };
 
   const getStatusColor = (status: string): string => {
@@ -1922,9 +2013,8 @@ export default function Contracts() {
   const canMultiUpload = userInfo.subscriptionPlan === 'premium';
   const hasAnalysesLeft = userInfo.analysisLimit === Infinity || userInfo.analysisCount < userInfo.analysisLimit;
 
-  // ✅ NEU: Pagination - Nur N Contracts anzeigen
-  const displayedContracts = filteredContracts.slice(0, displayLimit);
-  const hasMore = filteredContracts.length > displayLimit;
+  // ✅ Infinite Scroll: Zeige alle geladenen Contracts (keine Frontend-Slice mehr)
+  const displayedContracts = filteredContracts;
 
   // ✅ RESPONSIVE: Mobile Card Component
   const MobileContractCard = ({ contract }: { contract: Contract }) => {
@@ -3111,32 +3201,39 @@ export default function Contracts() {
                       ))}
                     </div>
 
-                    {/* ✅ NEU: Load More Button */}
-                    {hasMore && (
-                      <div style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: '12px',
-                        padding: '32px 0',
-                        borderTop: '1px solid #e5e7eb'
-                      }}>
-                        <div style={{
-                          fontSize: '14px',
-                          color: '#6b7280',
-                          fontWeight: 500
-                        }}>
-                          Zeige {displayedContracts.length} von {filteredContracts.length} Verträgen
-                        </div>
-                        <motion.button
-                          className={styles.loadMoreButton}
-                          onClick={() => setDisplayLimit(prev => prev + 50)}
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                        >
-                          <ArrowRight size={16} />
-                          <span>Weitere 50 laden</span>
-                        </motion.button>
+                    {/* ✅ NEU: Infinite Scroll Loading Indicator & Sentinel */}
+                    {paginationInfo.hasMore && (
+                      <div
+                        ref={loadMoreRef}
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          gap: '12px',
+                          padding: '32px 0',
+                          borderTop: '1px solid #e5e7eb'
+                        }}
+                      >
+                        {loadingMore ? (
+                          <>
+                            <Loader size={24} className="spin" style={{ color: '#6b7280' }} />
+                            <div style={{
+                              fontSize: '14px',
+                              color: '#6b7280',
+                              fontWeight: 500
+                            }}>
+                              Lädt weitere Verträge...
+                            </div>
+                          </>
+                        ) : (
+                          <div style={{
+                            fontSize: '14px',
+                            color: '#6b7280',
+                            fontWeight: 500
+                          }}>
+                            {contracts.length} von {paginationInfo.total} Verträgen geladen
+                          </div>
+                        )}
                       </div>
                     )}
 
