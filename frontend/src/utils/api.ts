@@ -812,11 +812,13 @@ export const saveContract = async (contractData: {
 };
 
 /**
- * ⭐ VERBESSERT: Contracts abrufen mit Fehlerbehandlung
+ * ⭐ VERBESSERT: Contracts abrufen mit Fehlerbehandlung und Pagination
+ * @deprecated Verwende stattdessen direkt apiCall mit limit/skip Parametern
  */
 export const getContracts = async (): Promise<unknown> => {
   try {
-    return await apiCall('/contracts');
+    // ✅ Default: Lade nur erste 50 Contracts für Performance
+    return await apiCall('/contracts?limit=50&skip=0');
   } catch (error) {
     console.error("❌ Fehler beim Abrufen der Verträge:", error);
     throw error;
@@ -849,10 +851,12 @@ export const getContractDetails = async (contractId: string): Promise<unknown> =
 
 /**
  * ⭐ NEU: Alle Verträge eines Users abrufen (für Duplikat-Check im Frontend)
+ * @deprecated Verwende stattdessen direkt apiCall mit limit/skip Parametern
  */
 export const getUserContracts = async (): Promise<unknown> => {
   try {
-    return await apiCall('/contracts');
+    // ✅ Default: Lade nur erste 50 Contracts für Performance
+    return await apiCall('/contracts?limit=50&skip=0');
   } catch (error) {
     console.error("❌ Fehler beim Abrufen der User-Verträge:", error);
     throw error;
