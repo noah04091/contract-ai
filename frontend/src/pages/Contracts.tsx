@@ -135,7 +135,6 @@ interface UserInfo {
 type StatusFilter = 'alle' | 'aktiv' | 'bald_ablaufend' | 'abgelaufen' | 'gekündigt';
 type DateFilter = 'alle' | 'letzte_7_tage' | 'letzte_30_tage' | 'letztes_jahr';
 type SortOrder = 'neueste' | 'älteste' | 'name_az' | 'name_za';
-type UploadTypeFilter = 'alle' | 'email' | 'manual'; // ✅ NEU: Upload-Typ Filter
 
 // ✅ NEU: S3-Integration - Utility-Funktionen direkt in der Komponente
 
@@ -191,7 +190,6 @@ export default function Contracts() {
   const [dateFilter, setDateFilter] = useState<DateFilter>('alle');
   const [sortOrder, setSortOrder] = useState<SortOrder>('neueste');
   const [sourceFilter, setSourceFilter] = useState<'alle' | 'generated' | 'optimized'>('alle'); // 🆕 Quelle-Filter
-  const [uploadTypeFilter, setUploadTypeFilter] = useState<UploadTypeFilter>('alle'); // ✅ NEU: Upload-Typ Filter
   const [displayLimit, setDisplayLimit] = useState<number>(50); // ✅ NEU: Pagination - zeige initial 50 Contracts
 
   // ✅ NEU: Upload Success Modal State (für Two-Step Upload Flow)
@@ -952,15 +950,6 @@ export default function Contracts() {
       }
     }
 
-    // ✅ NEU: Upload-Typ Filter (Email / Manuell)
-    if (uploadTypeFilter !== 'alle') {
-      if (uploadTypeFilter === 'email') {
-        filtered = filtered.filter(contract => contract.uploadType === 'EMAIL_IMPORT');
-      } else if (uploadTypeFilter === 'manual') {
-        filtered = filtered.filter(contract => !contract.uploadType || contract.uploadType !== 'EMAIL_IMPORT');
-      }
-    }
-
     // Sortierung
     filtered.sort((a, b) => {
       switch (sortOrder) {
@@ -978,7 +967,7 @@ export default function Contracts() {
       });
 
     setFilteredContracts(filtered);
-  }, [contracts, searchQuery, statusFilter, dateFilter, sortOrder, sourceFilter, uploadTypeFilter, activeFolder]);
+  }, [contracts, searchQuery, statusFilter, dateFilter, sortOrder, sourceFilter, activeFolder]);
 
   // ✅ FIXED: Filter anwenden mit stabiler applyFilters-Referenz
   useEffect(() => {
@@ -988,7 +977,7 @@ export default function Contracts() {
   // ✅ NEU: Reset displayLimit when filters/search change
   useEffect(() => {
     setDisplayLimit(50);
-  }, [searchQuery, statusFilter, dateFilter, uploadTypeFilter, sourceFilter]);
+  }, [searchQuery, statusFilter, dateFilter, sourceFilter]);
 
   // ✅ Initial Load
   useEffect(() => {
@@ -1704,7 +1693,6 @@ export default function Contracts() {
     let count = 0;
     if (statusFilter !== 'alle') count++;
     if (dateFilter !== 'alle') count++;
-    if (uploadTypeFilter !== 'alle') count++; // ✅ NEU
     return count;
   };
 
@@ -1713,7 +1701,6 @@ export default function Contracts() {
     setSearchQuery("");
     setStatusFilter('alle');
     setDateFilter('alle');
-    setUploadTypeFilter('alle'); // ✅ NEU
     setSortOrder('neueste');
     setDisplayLimit(50); // ✅ NEU: Reset display limit
   };
@@ -2764,16 +2751,6 @@ export default function Contracts() {
                       </select>
 
                       <select
-                        value={uploadTypeFilter}
-                        onChange={(e) => setUploadTypeFilter(e.target.value as UploadTypeFilter)}
-                        className={styles.quickFilter}
-                      >
-                        <option value="alle">Alle Upload-Arten</option>
-                        <option value="email">📧 Per Email</option>
-                        <option value="manual">📤 Manuell</option>
-                      </select>
-
-                      <select
                         value={sortOrder}
                         onChange={(e) => setSortOrder(e.target.value as SortOrder)}
                         className={styles.quickFilter}
@@ -2813,11 +2790,6 @@ export default function Contracts() {
                         )}
                         {dateFilter !== 'alle' && (
                           <span className={styles.activeFilter}>Zeitraum: {dateFilter.replace('_', ' ')}</span>
-                        )}
-                        {uploadTypeFilter !== 'alle' && (
-                          <span className={styles.activeFilter}>
-                            Upload: {uploadTypeFilter === 'email' ? '📧 Per Email' : '📤 Manuell'}
-                          </span>
                         )}
                       </div>
                     )}
