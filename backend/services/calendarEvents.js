@@ -127,7 +127,7 @@ async function generateEventsForContract(db, contract) {
       // 2. Letzter Kündigungstag
       if (noticePeriodDays > 0) {
         const lastCancelDate = new Date(expiryDate);
-        lastCancelDate.setDate(lastCancelDate.getDate() - 1); // Tag vor Ablauf
+        lastCancelDate.setDate(lastCancelDate.getDate() - noticePeriodDays); // Letzter Tag der Kündigungsfrist
         
         if (lastCancelDate > now) {
           events.push({
