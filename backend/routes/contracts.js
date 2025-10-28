@@ -11,6 +11,7 @@ const path = require("path");
 const { OpenAI } = require("openai");
 const { validateAttachment, generateIdempotencyKey } = require("../utils/emailImportSecurity"); // 🔒 Security Utils
 const nodemailer = require("nodemailer"); // 📧 Email Service
+const contractAnalyzer = require("../services/contractAnalyzer"); // 🤖 ULTRA-INTELLIGENT Contract Analyzer v10
 
 const router = express.Router();
 const mongoUri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
@@ -1395,6 +1396,62 @@ router.post("/:id/analyze", verifyToken, async (req, res) => {
 
     console.log(`📝 [${requestId}] Extracted text length: ${fullTextContent.length} characters`);
 
+    // ===== 🆕 CONTRACT ANALYZER (v10) =====
+    console.log(`🤖 [${requestId}] Running CONTRACT ANALYZER v10...`);
+
+    let extractedProvider = null;
+    let extractedContractNumber = null;
+    let extractedCustomerNumber = null;
+    let extractedEndDate = null;
+    let extractedCancellationPeriod = null;
+    let extractedIsAutoRenewal = null;
+    let extractedContractDuration = null;
+    let extractedStartDate = null;
+    let extractedEndDateConfidence = 0;
+    let extractedStartDateConfidence = 0;
+    let extractedAutoRenewalConfidence = 50;
+    let extractedDataSource = null;
+    let providerAnalysis = null;
+
+    try {
+      providerAnalysis = await contractAnalyzer.analyzeContract(
+        fullTextContent,
+        contract.name
+      );
+
+      if (providerAnalysis.success && providerAnalysis.data) {
+        extractedProvider = providerAnalysis.data.provider;
+        extractedContractNumber = providerAnalysis.data.contractNumber;
+        extractedCustomerNumber = providerAnalysis.data.customerNumber;
+        extractedStartDate = providerAnalysis.data.startDate;
+        extractedEndDate = providerAnalysis.data.endDate;
+        extractedContractDuration = providerAnalysis.data.contractDuration;
+        extractedCancellationPeriod = providerAnalysis.data.cancellationPeriod;
+        extractedIsAutoRenewal = providerAnalysis.data.isAutoRenewal || false;
+        extractedEndDateConfidence = providerAnalysis.data.endDateConfidence || 0;
+        extractedStartDateConfidence = providerAnalysis.data.startDateConfidence || 0;
+        extractedAutoRenewalConfidence = providerAnalysis.data.autoRenewalConfidence || 50;
+        extractedDataSource = providerAnalysis.data.dataSource;
+
+        console.log(`✅ [${requestId}] Contract Analyzer Results:`, {
+          provider: extractedProvider?.displayName || 'Nicht erkannt',
+          contractNumber: extractedContractNumber || 'Nicht gefunden',
+          startDate: extractedStartDate || 'Nicht gefunden',
+          endDate: extractedEndDate || 'Nicht gefunden',
+          endDateConfidence: `${extractedEndDateConfidence}%`,
+          dataSource: extractedDataSource,
+          cancellationPeriod: extractedCancellationPeriod ?
+            `${extractedCancellationPeriod.value} ${extractedCancellationPeriod.unit}` : 'Nicht gefunden',
+          isAutoRenewal: extractedIsAutoRenewal,
+          contractType: providerAnalysis.data.contractType
+        });
+      } else {
+        console.warn(`⚠️ [${requestId}] Contract Analyzer failed:`, providerAnalysis.error);
+      }
+    } catch (analyzerError) {
+      console.error(`❌ [${requestId}] Contract Analyzer error:`, analyzerError.message);
+    }
+
     // ===== GPT-4 ANALYSIS =====
     console.log(`🤖 [${requestId}] Starting GPT-4 analysis...`);
 
@@ -1607,7 +1664,34 @@ BEISPIELE (Bezahlt-Status):
       analysis: analysisObject,
       // ✅ CRITICAL: PDF-Text speichern (für "Inhalt"-Tab in ContractDetailsView)
       content: fullTextContent.substring(0, 100000), // Max 100k chars
-      fullText: fullTextContent.substring(0, 100000)
+      fullText: fullTextContent.substring(0, 100000),
+
+      // 🆕 CONTRACT ANALYZER v10 - Extracted Data with Confidence Scores
+      ...(extractedProvider && {
+        provider: extractedProvider.displayName || extractedProvider.name,
+        providerConfidence: extractedProvider.confidence
+      }),
+      ...(extractedContractNumber && { contractNumber: extractedContractNumber }),
+      ...(extractedCustomerNumber && { customerNumber: extractedCustomerNumber }),
+      ...(extractedStartDate && {
+        startDate: extractedStartDate,
+        startDateConfidence: extractedStartDateConfidence
+      }),
+      ...(extractedEndDate && {
+        expiryDate: extractedEndDate, // ⚡ CRITICAL für Calendar Events!
+        expiryDateConfidence: extractedEndDateConfidence,
+        dataSource: extractedDataSource
+      }),
+      ...(extractedCancellationPeriod && {
+        cancellationPeriod: extractedCancellationPeriod
+      }),
+      ...(extractedContractDuration && {
+        contractDuration: extractedContractDuration
+      }),
+      ...(extractedIsAutoRenewal !== null && {
+        isAutoRenewal: extractedIsAutoRenewal,
+        autoRenewalConfidence: extractedAutoRenewalConfidence
+      })
     };
 
     await contractsCollection.updateOne(
