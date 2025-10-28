@@ -1711,12 +1711,20 @@ BEISPIELE (Bezahlt-Status):
       });
     }
 
-    // Trigger calendar event generation
+    // 🆕 FIXED: Trigger calendar event generation mit korrektem Contract-Objekt
     try {
-      await onContractChange(id.toString(), contractsCollection, eventsCollection);
-      console.log(`📅 [${requestId}] Calendar events updated`);
+      // Hole das AKTUALISIERTE Contract-Objekt aus der DB
+      const updatedContract = await contractsCollection.findOne({ _id: new ObjectId(id) });
+
+      if (updatedContract) {
+        console.log(`📅 [${requestId}] Triggering calendar event generation with updated contract data`);
+        await onContractChange(client.db("contract_ai"), updatedContract, "update");
+        console.log(`📅 [${requestId}] Calendar events updated successfully`);
+      } else {
+        console.warn(`⚠️ [${requestId}] Could not find updated contract for calendar events`);
+      }
     } catch (calError) {
-      console.warn(`⚠️ [${requestId}] Calendar update warning:`, calError.message);
+      console.error(`❌ [${requestId}] Calendar update error:`, calError.message);
     }
 
     res.json({
