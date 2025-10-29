@@ -1950,7 +1950,7 @@ export default function CalendarPage() {
                   tileContent={tileContent}
                   view={view}
                   onViewChange={({ view: newView }) => setView(newView as "month" | "year")}
-                  showNeighboringMonth={false}
+                  showNeighboringMonth={true}
                   minDetail="year"
                   locale="de-DE"
                   calendarType="iso8601"
