@@ -3164,8 +3164,14 @@ router.patch("/:id/reminder-settings", async (req, res) => {
     const { reminderDays } = req.body;
     const userId = new ObjectId(req.user.userId);
 
+    console.log(`🔔 [ReminderSettings] PATCH /:id/reminder-settings called`);
+    console.log(`🔔 [ReminderSettings] Contract ID: ${id}`);
+    console.log(`🔔 [ReminderSettings] User ID: ${userId}`);
+    console.log(`🔔 [ReminderSettings] Reminder Days:`, reminderDays);
+
     // Validate reminderDays
     if (!Array.isArray(reminderDays)) {
+      console.error(`❌ [ReminderSettings] reminderDays is not an array:`, typeof reminderDays);
       return res.status(400).json({
         success: false,
         error: "reminderDays muss ein Array sein"
@@ -3210,9 +3216,11 @@ router.patch("/:id/reminder-settings", async (req, res) => {
     });
 
     // Generate new events with updated reminder settings
+    console.log(`🔔 [ReminderSettings] Generating events for contract...`);
     const events = await generateEventsForContract(req.db, result);
+    console.log(`🔔 [ReminderSettings] Generated ${events.length} events`);
 
-    console.log(`✅ Reminder-Settings aktualisiert für Contract ${id}: ${reminderDays.length} Reminder`);
+    console.log(`✅ Reminder-Settings aktualisiert für Contract ${id}: ${reminderDays.length} Reminder, ${events.length} Events generiert`);
 
     res.json({
       success: true,
