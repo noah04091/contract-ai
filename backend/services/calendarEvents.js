@@ -358,6 +358,47 @@ async function generateEventsForContract(db, contract) {
           updatedAt: new Date()
         });
       }
+
+      // 🔔 7. Custom Reminder Events (User-defined)
+      if (contract.reminderDays && Array.isArray(contract.reminderDays) && contract.reminderDays.length > 0) {
+        console.log(`🔔 Generiere ${contract.reminderDays.length} Custom Reminders für "${contract.name}"`);
+
+        for (const days of contract.reminderDays) {
+          const tempReminderDate = new Date(expiryDate);
+          tempReminderDate.setDate(tempReminderDate.getDate() - days);
+          const customReminderDate = createLocalDate(tempReminderDate);
+
+          // Nur zukünftige Reminders erstellen
+          if (customReminderDate > now) {
+            const severity = days <= 7 ? "critical" : days <= 30 ? "warning" : "info";
+
+            events.push({
+              userId: contract.userId,
+              contractId: contract._id,
+              type: "CUSTOM_REMINDER",
+              title: `🔔 Erinnerung: ${contract.name} läuft in ${days} Tagen ab`,
+              description: `"${contract.name}" läuft in ${days} Tagen ab (am ${expiryDate.toLocaleDateString('de-DE')}).${isAutoRenewal ? ' Dieser Vertrag verlängert sich automatisch, falls nicht gekündigt!' : ' Jetzt handeln!'}`,
+              date: customReminderDate,
+              severity: severity,
+              status: "scheduled",
+              confidence: confidence,
+              dataSource: dataSource,
+              isEstimated: isEstimated,
+              metadata: {
+                provider: contract.provider,
+                daysUntilExpiry: days,
+                expiryDate: expiryDate,
+                suggestedAction: "review",
+                contractName: contract.name,
+                isAutoRenewal,
+                customReminder: true
+              },
+              createdAt: new Date(),
+              updatedAt: new Date()
+            });
+          }
+        }
+      }
     } else if (!expiryDate) {
       // 🔧 FIX: Log wenn keine Daten vorhanden
       console.log(`⚠️ Keine Ablaufdaten für "${contract.name}" gefunden. Events können nicht generiert werden.`);

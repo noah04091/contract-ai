@@ -3157,4 +3157,78 @@ router.get("/:id/status-history", verifyToken, async (req, res) => {
   }
 });
 
+// 🔔 PATCH /api/contracts/:id/reminder-settings - Update reminder settings for a contract
+router.patch("/:id/reminder-settings", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reminderDays } = req.body;
+    const userId = new ObjectId(req.user.userId);
+
+    // Validate reminderDays
+    if (!Array.isArray(reminderDays)) {
+      return res.status(400).json({
+        success: false,
+        error: "reminderDays muss ein Array sein"
+      });
+    }
+
+    // Validate all values are positive integers
+    const validDays = reminderDays.every(day => Number.isInteger(day) && day > 0);
+    if (!validDays) {
+      return res.status(400).json({
+        success: false,
+        error: "Alle Reminder-Tage müssen positive Ganzzahlen sein"
+      });
+    }
+
+    // Update contract
+    const result = await req.db.collection("contracts").findOneAndUpdate(
+      { _id: new ObjectId(id), userId },
+      {
+        $set: {
+          reminderDays: reminderDays.sort((a, b) => a - b), // Sort ascending
+          updatedAt: new Date()
+        }
+      },
+      { returnDocument: "after" }
+    );
+
+    if (!result) {
+      return res.status(404).json({
+        success: false,
+        error: "Vertrag nicht gefunden"
+      });
+    }
+
+    // Regenerate calendar events for this contract
+    const { generateEventsForContract } = require("../services/calendarEvents");
+
+    // Delete old events for this contract
+    await req.db.collection("contract_events").deleteMany({
+      contractId: new ObjectId(id),
+      userId
+    });
+
+    // Generate new events with updated reminder settings
+    const events = await generateEventsForContract(req.db, result);
+
+    console.log(`✅ Reminder-Settings aktualisiert für Contract ${id}: ${reminderDays.length} Reminder`);
+
+    res.json({
+      success: true,
+      message: "Reminder-Einstellungen aktualisiert",
+      reminderDays,
+      eventsGenerated: events.length
+    });
+
+  } catch (error) {
+    console.error("❌ Fehler beim Aktualisieren der Reminder-Settings:", error);
+    res.status(500).json({
+      success: false,
+      error: "Fehler beim Aktualisieren der Einstellungen",
+      details: error.message
+    });
+  }
+});
+
 module.exports = router;

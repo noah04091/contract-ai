@@ -20,6 +20,7 @@ import FolderBar from "../components/FolderBar"; // 📁 Folder Bar (Horizontal)
 import FolderModal from "../components/FolderModal"; // 📁 Folder Modal
 import SmartFoldersModal from "../components/SmartFoldersModal"; // 🤖 Smart Folders Modal
 import EmailInboxWidget from "../components/EmailInboxWidget"; // 📧 E-Mail-Upload Feature
+import ReminderSettingsModal from "../components/ReminderSettingsModal"; // 🔔 Reminder Settings Modal
 import { apiCall, uploadAndAnalyze, uploadOnly } from "../utils/api"; // ✅ NEU: uploadOnly hinzugefügt
 import { useFolders } from "../hooks/useFolders"; // 📁 Folder Hook
 import type { FolderType } from "../components/FolderBar"; // 📁 Folder Type
@@ -206,6 +207,15 @@ export default function Contracts() {
   }>({
     show: false,
     uploadedContracts: []
+  });
+
+  // 🔔 NEU: Reminder Settings Modal State
+  const [reminderSettingsModal, setReminderSettingsModal] = useState<{
+    show: boolean;
+    contract: Contract | null;
+  }>({
+    show: false,
+    contract: null
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -3115,6 +3125,17 @@ export default function Contracts() {
                                   >
                                     <Edit size={16} />
                                   </button>
+                                  {/* 🔔 Reminder Settings Button */}
+                                  <button
+                                    className={styles.actionButton}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setReminderSettingsModal({ show: true, contract });
+                                    }}
+                                    title="Erinnerungen einrichten"
+                                  >
+                                    <Bell size={16} />
+                                  </button>
                                   {/* 📁 Folder Dropdown */}
                                   <div
                                     className={styles.folderDropdownWrapper}
@@ -3405,6 +3426,21 @@ export default function Contracts() {
         <ContractDetailModal
           envelopeId={selectedEnvelopeId}
           onClose={() => setSelectedEnvelopeId(null)}
+        />
+      )}
+
+      {/* 🔔 Reminder Settings Modal */}
+      {reminderSettingsModal.show && reminderSettingsModal.contract && (
+        <ReminderSettingsModal
+          contractId={reminderSettingsModal.contract._id}
+          contractName={reminderSettingsModal.contract.name}
+          currentReminderDays={(reminderSettingsModal.contract as any).reminderDays || []}
+          expiryDate={reminderSettingsModal.contract.expiryDate}
+          onClose={() => setReminderSettingsModal({ show: false, contract: null })}
+          onSuccess={(reminderDays) => {
+            console.log('✅ Reminder settings saved:', reminderDays);
+            fetchContracts(); // Refresh contracts
+          }}
         />
       )}
     </>
