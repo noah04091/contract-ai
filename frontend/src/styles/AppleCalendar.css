@@ -2650,7 +2650,7 @@
   display: inline !important;
   text-decoration: none !important;
   color: inherit !important;
-  opacity: 1 !important;
+  opacity: 1; /* Basiswert – wird nur für Nachbar-Tage überschrieben */
 }
 
 /* Gegen alle versehentlichen Hides der Inhalte */
@@ -2661,14 +2661,19 @@
 }
 
 /* ===== Outlook-Style: Nachbar-Monats-Tage dezenter darstellen ===== */
+/* NUR die Zahl dimmen, nicht die ganze Kachel (Events/Badges bleiben voll sichtbar) */
 .calendar-premium .react-calendar__month-view__days__day--neighboringMonth {
-  opacity: 0.45 !important;       /* "blass", aber gut lesbar */
-  filter: saturate(80%);          /* leicht weniger Sättigung */
+  filter: saturate(85%); /* optional, sehr leicht weniger Sättigung */
 }
 
-/* Bei Hover/Fokus weiterhin nutzbar & erkennbar */
-.calendar-premium .react-calendar__month-view__days__day--neighboringMonth:where(:hover, :focus) {
-  opacity: 0.65 !important;
+/* Nur die Datums-Zahl (im <abbr>) "blass" färben */
+.calendar-premium .react-calendar__month-view__days__day--neighboringMonth abbr {
+  opacity: 0.55 !important;
+}
+
+/* Bei Hover/Fokus bleibt Interaktion klar sichtbar */
+.calendar-premium .react-calendar__month-view__days__day--neighboringMonth:where(:hover, :focus) abbr {
+  opacity: 0.75 !important;
 }
 
 /* Heute hervorheben */
@@ -2677,14 +2682,16 @@
   border-radius: 10px;
 }
 
-/* Optional: Event-Badges in Nachbar-Tagen bleiben sichtbar */
-.calendar-premium .react-calendar__month-view__days__day--neighboringMonth .event-badge {
-  opacity: 0.9 !important;        /* Events weiterhin gut sichtbar */
+/* Dark Mode: Nachbar-Zahlen etwas weniger blass */
+@media (prefers-color-scheme: dark) {
+  .calendar-premium .react-calendar__month-view__days__day--neighboringMonth abbr {
+    opacity: 0.65 !important;
+  }
 }
 
-/* Optional (Zugänglichkeit): bei hohem Kontrast nicht zu transparent werden */
+/* High Contrast Mode: Nachbar-Zahlen besser lesbar */
 @media (prefers-contrast: more) {
-  .calendar-premium .react-calendar__month-view__days__day--neighboringMonth {
-    opacity: 0.6 !important;
+  .calendar-premium .react-calendar__month-view__days__day--neighboringMonth abbr {
+    opacity: 0.8 !important;
   }
 }
