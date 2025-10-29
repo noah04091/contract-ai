@@ -41,18 +41,25 @@ export default function UpcomingDeadlinesWidget({ className }: UpcomingDeadlines
       setError(null);
 
       const token = localStorage.getItem('token');
+      console.log('🔍 [UpcomingDeadlines] Fetching upcoming events...');
+
       const response = await axios.get<{ success: boolean; events?: UpcomingEvent[] }>('/api/calendar/upcoming', {
         headers: { Authorization: `Bearer ${token}` },
         params: { days: 30 }
       });
 
+      console.log('✅ [UpcomingDeadlines] Response:', response.data);
+
       if (response.data.success && Array.isArray(response.data.events)) {
+        console.log('📅 [UpcomingDeadlines] Found', response.data.events.length, 'events');
         setEvents(response.data.events);
       } else {
+        console.warn('⚠️ [UpcomingDeadlines] No events or invalid format');
         setEvents([]);
       }
     } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
-      console.error('Error fetching upcoming deadlines:', err);
+      console.error('❌ [UpcomingDeadlines] Error fetching upcoming deadlines:', err);
+      console.error('❌ [UpcomingDeadlines] Error details:', err.response?.data || err.message);
       setError(null); // Stille Fehler - zeige Widget nicht an
       setEvents([]);
     } finally {
