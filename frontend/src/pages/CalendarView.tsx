@@ -553,7 +553,11 @@ function StatsDetailModal({ isOpen, onClose, title, events, onEventClick }: Stat
                           <motion.div
                             whileHover={{ scale: 1.02, x: 5 }}
                             whileTap={{ scale: 0.98 }}
-                            onClick={() => onEventClick(event)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              console.log('Event clicked:', event.contractName);
+                              onEventClick(event);
+                            }}
                             style={{
                               background: '#ffffff',
                               border: `1px solid ${getSeverityColor(event.severity)}30`,
