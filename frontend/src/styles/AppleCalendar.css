@@ -2659,8 +2659,3 @@
   visibility: visible !important;
   opacity: 1 !important;
 }
-
-/* Optional: Debug - Sonntage rot umranden */
-.calendar-premium .react-calendar__month-view__days__day:nth-child(7n) {
-  outline: 1px dashed rgba(255,0,0,0.4);
-}
