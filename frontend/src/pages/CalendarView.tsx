@@ -4,9 +4,9 @@ import { Helmet } from "react-helmet";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  AlertCircle, 
-  X, 
+import {
+  AlertCircle,
+  X,
   ChevronRight,
   ChevronLeft,
   Zap,
@@ -24,7 +24,11 @@ import {
   Sparkles,
   Target,
   BarChart3,
-  ArrowRight
+  ArrowRight,
+  Edit3,
+  Save,
+  Trash2,
+  Plus
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -89,9 +93,10 @@ interface QuickActionsProps {
   event: CalendarEvent;
   onAction: (action: string, eventId: string) => void;
   onClose: () => void;
+  onEdit: (event: CalendarEvent) => void;
 }
 
-function QuickActionsModal({ event, onAction, onClose }: QuickActionsProps) {
+function QuickActionsModal({ event, onAction, onClose, onEdit }: QuickActionsProps) {
   const navigate = useNavigate();
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
@@ -251,7 +256,7 @@ function QuickActionsModal({ event, onAction, onClose }: QuickActionsProps) {
 
           <div className="modal-actions-grid">
             {/* NEU: Vertrag anzeigen Button - prominent platziert */}
-            <motion.button 
+            <motion.button
               className="action-btn-premium view-contract"
               onClick={handleViewContract}
               whileHover={{ scale: 1.02 }}
@@ -261,6 +266,21 @@ function QuickActionsModal({ event, onAction, onClose }: QuickActionsProps) {
               <FileText size={18} />
               <span>📄 Vertrag anzeigen</span>
               <ArrowRight size={16} className="action-arrow" />
+            </motion.button>
+
+            {/* ✨ NEU: Event bearbeiten Button */}
+            <motion.button
+              className="action-btn-premium secondary"
+              onClick={() => {
+                onEdit(event);
+                onClose();
+              }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              style={{ gridColumn: '1 / -1' }}
+            >
+              <Edit3 size={18} />
+              <span>Event bearbeiten</span>
             </motion.button>
 
             {event.metadata?.suggestedAction === "cancel" && (
@@ -343,6 +363,297 @@ const getEventTypeIcon = (type: string) => {
   }
 };
 
+// ✨ EVENT EDIT MODAL - Vollständige Event-Bearbeitung
+interface EventEditModalProps {
+  event: CalendarEvent;
+  onSave: (updatedEvent: Partial<CalendarEvent>) => void;
+  onDelete: (eventId: string) => void;
+  onClose: () => void;
+}
+
+function EventEditModal({ event, onSave, onDelete, onClose }: EventEditModalProps) {
+  const [title, setTitle] = useState(event.title);
+  const [description, setDescription] = useState(event.description);
+  const [date, setDate] = useState(event.date.split('T')[0]); // YYYY-MM-DD
+  const [time, setTime] = useState(() => {
+    const d = new Date(event.date);
+    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  });
+  const [severity, setSeverity] = useState(event.severity);
+  const [notes, setNotes] = useState(event.metadata?.notes || '');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  const handleSave = () => {
+    const [hours, minutes] = time.split(':');
+    const updatedDate = new Date(date);
+    updatedDate.setHours(parseInt(hours), parseInt(minutes));
+
+    onSave({
+      id: event.id,
+      title,
+      description,
+      date: updatedDate.toISOString(),
+      severity,
+      notes
+    });
+  };
+
+  const handleDelete = () => {
+    onDelete(event.id);
+  };
+
+  return (
+    <motion.div
+      className="modal-overlay"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+    >
+      <motion.div
+        className="event-edit-modal"
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: 'white',
+          borderRadius: '16px',
+          padding: '24px',
+          maxWidth: '500px',
+          width: '90%',
+          maxHeight: '80vh',
+          overflowY: 'auto',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+        }}
+      >
+        {/* Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+          <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 600 }}>
+            <Edit3 size={20} style={{ display: 'inline', marginRight: '8px', verticalAlign: 'middle' }} />
+            Event bearbeiten
+          </h2>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>
+            <X size={24} />
+          </button>
+        </div>
+
+        {/* Form */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {/* Title */}
+          <div>
+            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500 }}>
+              Titel
+            </label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: '1px solid #e0e0e0',
+                borderRadius: '8px',
+                fontSize: '14px'
+              }}
+            />
+          </div>
+
+          {/* Description */}
+          <div>
+            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500 }}>
+              Beschreibung
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: '1px solid #e0e0e0',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontFamily: 'inherit'
+              }}
+            />
+          </div>
+
+          {/* Date & Time */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div>
+              <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500 }}>
+                Datum
+              </label>
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  border: '1px solid #e0e0e0',
+                  borderRadius: '8px',
+                  fontSize: '14px'
+                }}
+              />
+            </div>
+            <div>
+              <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500 }}>
+                Uhrzeit
+              </label>
+              <input
+                type="time"
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  border: '1px solid #e0e0e0',
+                  borderRadius: '8px',
+                  fontSize: '14px'
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Severity */}
+          <div>
+            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500 }}>
+              Priorität
+            </label>
+            <select
+              value={severity}
+              onChange={(e) => setSeverity(e.target.value as "info" | "warning" | "critical")}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: '1px solid #e0e0e0',
+                borderRadius: '8px',
+                fontSize: '14px',
+                background: 'white'
+              }}
+            >
+              <option value="info">Info (🟢)</option>
+              <option value="warning">Warnung (🟡)</option>
+              <option value="critical">Kritisch (🔴)</option>
+            </select>
+          </div>
+
+          {/* Notes */}
+          <div>
+            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500 }}>
+              Notizen
+            </label>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={2}
+              placeholder="Persönliche Notizen..."
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: '1px solid #e0e0e0',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontFamily: 'inherit'
+              }}
+            />
+          </div>
+
+          {/* Actions */}
+          <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
+            <button
+              onClick={handleSave}
+              style={{
+                flex: 1,
+                padding: '12px',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px'
+              }}
+            >
+              <Save size={16} />
+              Speichern
+            </button>
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              style={{
+                padding: '12px',
+                background: '#fee',
+                color: '#c33',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontWeight: 600,
+                cursor: 'pointer'
+              }}
+            >
+              <Trash2 size={16} />
+            </button>
+          </div>
+
+          {/* Delete Confirmation */}
+          {showDeleteConfirm && (
+            <div style={{
+              padding: '12px',
+              background: '#fee',
+              borderRadius: '8px',
+              border: '1px solid #fcc'
+            }}>
+              <p style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#c33' }}>
+                Event wirklich löschen?
+              </p>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  onClick={handleDelete}
+                  style={{
+                    flex: 1,
+                    padding: '8px',
+                    background: '#c33',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Ja, löschen
+                </button>
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  style={{
+                    flex: 1,
+                    padding: '8px',
+                    background: 'white',
+                    color: '#666',
+                    border: '1px solid #ddd',
+                    borderRadius: '6px',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  Abbrechen
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 export default function CalendarView() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [filteredEvents, setFilteredEvents] = useState<CalendarEvent[]>([]);
@@ -359,6 +670,8 @@ export default function CalendarView() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [isTablet, setIsTablet] = useState(window.innerWidth >= 768 && window.innerWidth < 1024);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
 
   const EVENTS_PER_PAGE = isMobile ? 3 : 5;
 
@@ -466,10 +779,10 @@ export default function CalendarView() {
   // Handle Quick Actions
   const handleQuickAction = async (action: string, eventId: string) => {
     try {
-      const token = localStorage.getItem("token") || 
-                    localStorage.getItem("authToken") || 
+      const token = localStorage.getItem("token") ||
+                    localStorage.getItem("authToken") ||
                     localStorage.getItem("jwtToken");
-      
+
       const headers: Record<string, string> = {};
       if (token) {
         headers.Authorization = `Bearer ${token}`;
@@ -483,7 +796,7 @@ export default function CalendarView() {
           headers,
           withCredentials: true
         });
-        
+
         alert('Erinnerung um 7 Tage verschoben');
         await fetchEvents();
         setShowQuickActions(false);
@@ -495,7 +808,7 @@ export default function CalendarView() {
           headers,
           withCredentials: true
         });
-        
+
         alert('Erinnerung verworfen');
         await fetchEvents();
         setShowQuickActions(false);
@@ -504,6 +817,66 @@ export default function CalendarView() {
     } catch (err) {
       console.error("Fehler bei Quick Action:", err);
       alert("Aktion konnte nicht ausgeführt werden.");
+    }
+  };
+
+  // Handle Event Save (Edit)
+  const handleEventSave = async (updatedEvent: Partial<CalendarEvent>) => {
+    try {
+      const token = localStorage.getItem("token") ||
+                    localStorage.getItem("authToken") ||
+                    localStorage.getItem("jwtToken");
+
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      await axios.patch(`/api/calendar/events/${updatedEvent.id}`, {
+        title: updatedEvent.title,
+        description: updatedEvent.description,
+        date: updatedEvent.date,
+        severity: updatedEvent.severity,
+        notes: updatedEvent.notes
+      }, {
+        headers,
+        withCredentials: true
+      });
+
+      alert('Event erfolgreich aktualisiert!');
+      await fetchEvents();
+      setShowEditModal(false);
+      setEditingEvent(null);
+    } catch (err) {
+      console.error("Fehler beim Speichern des Events:", err);
+      alert("Event konnte nicht gespeichert werden.");
+    }
+  };
+
+  // Handle Event Delete
+  const handleEventDelete = async (eventId: string) => {
+    try {
+      const token = localStorage.getItem("token") ||
+                    localStorage.getItem("authToken") ||
+                    localStorage.getItem("jwtToken");
+
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      await axios.delete(`/api/calendar/events/${eventId}`, {
+        headers,
+        withCredentials: true
+      });
+
+      alert('Event erfolgreich gelöscht!');
+      await fetchEvents();
+      setShowEditModal(false);
+      setEditingEvent(null);
+    } catch (err) {
+      console.error("Fehler beim Löschen des Events:", err);
+      alert("Event konnte nicht gelöscht werden.");
     }
   };
 
@@ -1068,9 +1441,24 @@ export default function CalendarView() {
             <QuickActionsModal
               event={selectedEvent}
               onAction={handleQuickAction}
+              onEdit={(event) => {
+                setEditingEvent(event);
+                setShowEditModal(true);
+              }}
               onClose={() => {
                 setShowQuickActions(false);
                 setSelectedEvent(null);
+              }}
+            />
+          )}
+          {showEditModal && editingEvent && (
+            <EventEditModal
+              event={editingEvent}
+              onSave={handleEventSave}
+              onDelete={handleEventDelete}
+              onClose={() => {
+                setShowEditModal(false);
+                setEditingEvent(null);
               }}
             />
           )}
