@@ -391,12 +391,15 @@ export default function Dashboard() {
         
         const userDataResponse = await userResponse.json();
         const contractsData = await contractsResponse.json();
-        
+
         setUserEmail(userDataResponse.email);
         setUserData(userDataResponse);
-        setContracts(contractsData);
-        
-        const priorityList = calculatePriorityContracts(contractsData);
+
+        // Ensure contractsData is an array
+        const contractsArray = Array.isArray(contractsData) ? contractsData : [];
+        setContracts(contractsArray);
+
+        const priorityList = calculatePriorityContracts(contractsArray);
         setPriorityContracts(priorityList);
         
       } catch (err) {
