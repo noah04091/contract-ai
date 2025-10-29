@@ -275,9 +275,10 @@ async function generateEventsForContract(db, contract) {
       }
       
       // 5. Jährliches Review (für langfristige Verträge)
-      const oneYearFromCreation = new Date(createdDate);
-      oneYearFromCreation.setFullYear(oneYearFromCreation.getFullYear() + 1);
-      
+      const tempReviewDate = new Date(createdDate);
+      tempReviewDate.setFullYear(tempReviewDate.getFullYear() + 1);
+      const oneYearFromCreation = createLocalDate(tempReviewDate);
+
       if (oneYearFromCreation > now && oneYearFromCreation < expiryDate) {
         events.push({
           userId: contract.userId,
@@ -302,13 +303,14 @@ async function generateEventsForContract(db, contract) {
       
       // 6. Vertragsablauf
       if (expiryDate > now) {
+        const contractExpiryDate = createLocalDate(expiryDate);
         events.push({
           userId: contract.userId,
           contractId: contract._id,
           type: "CONTRACT_EXPIRY",
           title: `📋 Vertrag ${isAutoRenewal ? 'verlängert sich' : 'läuft ab'}: ${contract.name}`,
           description: `"${contract.name}" ${isAutoRenewal ? 'verlängert sich heute automatisch, falls nicht gekündigt' : 'läuft heute ab'}.`,
-          date: expiryDate,
+          date: contractExpiryDate,
           severity: isAutoRenewal ? "warning" : "info",
           status: "scheduled",
           metadata: {
@@ -328,12 +330,18 @@ async function generateEventsForContract(db, contract) {
     
     // Speichere Events in DB (update or insert)
     if (events.length > 0) {
+      // 🔍 DEBUG: Log event data BEFORE saving to DB
+      console.log(`🔍 DEBUG: Speichere ${events.length} Events:`);
+      events.forEach((e, idx) => {
+        console.log(`  Event ${idx + 1}: ${e.type} - Datum: ${e.date.toISOString()} (Local: ${e.date})`);
+      });
+
       // Lösche alte Events für diesen Vertrag
       await db.collection("contract_events").deleteMany({
         contractId: contract._id,
         status: "scheduled" // Nur geplante Events löschen, nicht bereits bearbeitete
       });
-      
+
       // Füge neue Events ein
       const result = await db.collection("contract_events").insertMany(events);
       console.log(`✅ ${result.insertedCount} Events für Vertrag "${contract.name}" generiert${isAutoRenewal ? ' (Auto-Renewal)' : ''}`);
