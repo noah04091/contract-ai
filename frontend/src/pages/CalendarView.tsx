@@ -32,8 +32,6 @@ import {
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../styles/AppleCalendar.css";
-import CalendarWeekView from "../components/CalendarWeekView";
-import CalendarDayView from "../components/CalendarDayView";
 
 // Type for provider
 type ProviderType = string | {
@@ -383,12 +381,6 @@ const getEventTypeIcon = (type: string) => {
       return <TrendingUp size={14} />;
     case 'AUTO_RENEWAL':
       return <RefreshCw size={14} />;
-    case 'RECURRING_PAYMENT':
-      return <BarChart3 size={14} />;
-    case 'PAYMENT_REMINDER':
-      return <Bell size={14} />;
-    case 'CUSTOM_REMINDER':
-      return <BellOff size={14} />;
     case 'REVIEW':
       return <Shield size={14} />;
     default:
@@ -707,14 +699,6 @@ function EventEditModal({ event, onSave, onDelete, onClose }: EventEditModalProp
   );
 }
 
-// Helper: Get start of week (Monday)
-function getWeekStart(date: Date): Date {
-  const d = new Date(date);
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
-  return new Date(d.setDate(diff));
-}
-
 export default function CalendarView() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [filteredEvents, setFilteredEvents] = useState<CalendarEvent[]>([]);
@@ -722,9 +706,7 @@ export default function CalendarView() {
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [view, setView] = useState<"month" | "week" | "day">("month");
-  const [currentWeekStart, setCurrentWeekStart] = useState<Date>(getWeekStart(new Date()));
-  const [currentDayDate, setCurrentDayDate] = useState<Date>(new Date());
+  const [view, setView] = useState<"month" | "year">("month");
   const [filterSeverity, setFilterSeverity] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all");
   const [filterProvider, setFilterProvider] = useState<string>("all"); // ✅ Provider filter
@@ -1051,32 +1033,6 @@ export default function CalendarView() {
     }
   };
 
-  // Week View Navigation
-  const handlePrevWeek = () => {
-    const newStart = new Date(currentWeekStart);
-    newStart.setDate(newStart.getDate() - 7);
-    setCurrentWeekStart(newStart);
-  };
-
-  const handleNextWeek = () => {
-    const newStart = new Date(currentWeekStart);
-    newStart.setDate(newStart.getDate() + 7);
-    setCurrentWeekStart(newStart);
-  };
-
-  // Day View Navigation
-  const handlePrevDay = () => {
-    const newDate = new Date(currentDayDate);
-    newDate.setDate(newDate.getDate() - 1);
-    setCurrentDayDate(newDate);
-  };
-
-  const handleNextDay = () => {
-    const newDate = new Date(currentDayDate);
-    newDate.setDate(newDate.getDate() + 1);
-    setCurrentDayDate(newDate);
-  };
-
   const getUpcomingCriticalEvents = () => {
     const now = new Date();
     const future = new Date();
@@ -1215,9 +1171,6 @@ export default function CalendarView() {
                   <option value="LAST_CANCEL_DAY">Letzte Chance</option>
                   <option value="PRICE_INCREASE">Preiserhöhung</option>
                   <option value="AUTO_RENEWAL">Verlängerung</option>
-                  <option value="RECURRING_PAYMENT">Zahlungen</option>
-                  <option value="PAYMENT_REMINDER">Zahlungserinnerung</option>
-                  <option value="CUSTOM_REMINDER">Erinnerungen</option>
                   <option value="REVIEW">Review</option>
                 </select>
               </div>
@@ -1287,9 +1240,6 @@ export default function CalendarView() {
                     <option value="LAST_CANCEL_DAY">Letzte Chance</option>
                     <option value="PRICE_INCREASE">Preiserhöhung</option>
                     <option value="AUTO_RENEWAL">Verlängerung</option>
-                    <option value="RECURRING_PAYMENT">Zahlungen</option>
-                    <option value="PAYMENT_REMINDER">Zahlungserinnerung</option>
-                    <option value="CUSTOM_REMINDER">Erinnerungen</option>
                     <option value="REVIEW">Review</option>
                   </select>
                 </div>
@@ -1406,92 +1356,33 @@ export default function CalendarView() {
               </div>
             ) : (
               <>
-                {/* View Toggle Buttons */}
-                <div className="view-toggle-buttons">
-                  <button
-                    className={`view-toggle-btn ${view === 'month' ? 'active' : ''}`}
-                    onClick={() => setView('month')}
-                  >
-                    <CalendarIconLucide size={16} />
-                    <span className="view-toggle-text">Monat</span>
-                  </button>
-                  <button
-                    className={`view-toggle-btn ${view === 'week' ? 'active' : ''}`}
-                    onClick={() => setView('week')}
-                  >
-                    <BarChart3 size={16} />
-                    <span className="view-toggle-text">Woche</span>
-                  </button>
-                  <button
-                    className={`view-toggle-btn ${view === 'day' ? 'active' : ''}`}
-                    onClick={() => setView('day')}
-                  >
-                    <Clock size={16} />
-                    <span className="view-toggle-text">Tag</span>
-                  </button>
+                <Calendar 
+                  onChange={handleDateClick}
+                  value={selectedDate || new Date()}
+                  tileClassName={tileClassName}
+                  tileContent={tileContent}
+                  view={view}
+                  onViewChange={({ view: newView }) => setView(newView as "month" | "year")}
+                  showNeighboringMonth={false}
+                  minDetail="year"
+                  locale="de-DE"
+                  className="calendar-premium"
+                />
+                
+                <div className="calendar-legend-premium">
+                  <div className="legend-item">
+                    <div className="legend-dot critical"></div>
+                    <span>Kritisch</span>
+                  </div>
+                  <div className="legend-item">
+                    <div className="legend-dot warning"></div>
+                    <span>Warnung</span>
+                  </div>
+                  <div className="legend-item">
+                    <div className="legend-dot info"></div>
+                    <span>Info</span>
+                  </div>
                 </div>
-
-                {/* Conditional View Rendering */}
-                {view === 'month' && (
-                  <>
-                    <Calendar
-                      onChange={handleDateClick}
-                      value={selectedDate || new Date()}
-                      tileClassName={tileClassName}
-                      tileContent={tileContent}
-                      view="month"
-                      showNeighboringMonth={false}
-                      minDetail="year"
-                      locale="de-DE"
-                      className="calendar-premium"
-                    />
-
-                    <div className="calendar-legend-premium">
-                      <div className="legend-item">
-                        <div className="legend-dot critical"></div>
-                        <span>Kritisch</span>
-                      </div>
-                      <div className="legend-item">
-                        <div className="legend-dot warning"></div>
-                        <span>Warnung</span>
-                      </div>
-                      <div className="legend-item">
-                        <div className="legend-dot info"></div>
-                        <span>Info</span>
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                {view === 'week' && (
-                  <CalendarWeekView
-                    weekStart={currentWeekStart}
-                    events={filteredEvents}
-                    onDateClick={(date) => {
-                      setCurrentDayDate(date);
-                      setView('day');
-                    }}
-                    onEventClick={(event) => {
-                      setSelectedEvent(event);
-                      setShowQuickActions(true);
-                    }}
-                    onPrevWeek={handlePrevWeek}
-                    onNextWeek={handleNextWeek}
-                  />
-                )}
-
-                {view === 'day' && (
-                  <CalendarDayView
-                    date={currentDayDate}
-                    events={filteredEvents}
-                    onEventClick={(event) => {
-                      setSelectedEvent(event);
-                      setShowQuickActions(true);
-                    }}
-                    onPrevDay={handlePrevDay}
-                    onNextDay={handleNextDay}
-                  />
-                )}
               </>
             )}
           </motion.div>
