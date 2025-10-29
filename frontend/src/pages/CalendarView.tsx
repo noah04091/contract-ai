@@ -4,10 +4,10 @@ import { Helmet } from "react-helmet";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  AlertCircle, 
-  Clock, 
-  X, 
+import {
+  AlertCircle,
+  Clock,
+  X,
   ChevronRight,
   ChevronLeft,
   Zap,
@@ -24,7 +24,8 @@ import {
   Sparkles,
   Target,
   BarChart3,
-  ArrowRight
+  ArrowRight,
+  Edit3
 } from "lucide-react";
 import axios from "axios";
 import "../styles/AppleCalendar.css";
@@ -270,7 +271,7 @@ function QuickActionsModal({ event, onAction, onClose }: QuickActionsProps) {
               <span>Vergleichen</span>
             </motion.button>
             
-            <motion.button 
+            <motion.button
               className="action-btn-premium secondary"
               onClick={() => onAction("optimize", event.id)}
               whileHover={{ scale: 1.02 }}
@@ -279,8 +280,18 @@ function QuickActionsModal({ event, onAction, onClose }: QuickActionsProps) {
               <RefreshCw size={18} />
               <span>Optimieren</span>
             </motion.button>
-            
-            <motion.button 
+
+            <motion.button
+              className="action-btn-premium secondary"
+              onClick={() => onAction("edit", event.id)}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <Edit3 size={18} />
+              <span>Bearbeiten</span>
+            </motion.button>
+
+            <motion.button
               className="action-btn-premium ghost"
               onClick={() => onAction("snooze", event.id)}
               whileHover={{ scale: 1.02 }}
@@ -555,7 +566,6 @@ function StatsDetailModal({ isOpen, onClose, title, events, onEventClick }: Stat
                             whileTap={{ scale: 0.98 }}
                             onClick={(e) => {
                               e.stopPropagation();
-                              console.log('Event clicked:', event.contractName);
                               onEventClick(event);
                             }}
                             style={{
