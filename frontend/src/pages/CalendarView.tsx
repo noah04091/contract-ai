@@ -696,6 +696,7 @@ export default function CalendarView() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
+  const [showArchived, setShowArchived] = useState(true); // ✅ Archive mode toggle
 
   const EVENTS_PER_PAGE = isMobile ? 3 : 5;
 
@@ -759,17 +760,23 @@ export default function CalendarView() {
   // Filter events
   useEffect(() => {
     let filtered = [...events];
-    
+
+    // ✅ Archive mode filter
+    if (!showArchived) {
+      const now = new Date();
+      filtered = filtered.filter(e => new Date(e.date) >= now);
+    }
+
     if (filterSeverity !== "all") {
       filtered = filtered.filter(e => e.severity === filterSeverity);
     }
-    
+
     if (filterType !== "all") {
       filtered = filtered.filter(e => e.type === filterType);
     }
-    
+
     setFilteredEvents(filtered);
-  }, [events, filterSeverity, filterType]);
+  }, [events, filterSeverity, filterType, showArchived]);
 
   // Regenerate all events
   const handleRegenerateEvents = async () => {
@@ -1116,7 +1123,7 @@ export default function CalendarView() {
                 </select>
               </div>
               
-              <motion.button 
+              <motion.button
                 className={`refresh-btn-premium ${refreshing ? 'refreshing' : ''}`}
                 onClick={handleRegenerateEvents}
                 disabled={refreshing}
@@ -1125,6 +1132,42 @@ export default function CalendarView() {
               >
                 <RefreshCw size={16} className={refreshing ? "spinning" : ""} />
                 <span>{refreshing ? "Aktualisiere..." : "Events neu generieren"}</span>
+              </motion.button>
+
+              {/* ✅ Archive Mode Toggle */}
+              <motion.button
+                className={`archive-toggle-btn ${!showArchived ? 'active' : ''}`}
+                onClick={() => setShowArchived(!showArchived)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '10px 16px',
+                  background: !showArchived ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#f3f4f6',
+                  color: !showArchived ? 'white' : '#6b7280',
+                  border: 'none',
+                  borderRadius: '12px',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+                title={showArchived ? "Vergangene Events ausblenden" : "Alle Events anzeigen"}
+              >
+                {!showArchived ? <BellOff size={16} /> : <Bell size={16} />}
+                <span>{!showArchived ? "Archiv aus" : "Archiv an"}</span>
+                {!showArchived && (
+                  <span style={{
+                    padding: '2px 6px',
+                    background: 'rgba(255,255,255,0.2)',
+                    borderRadius: '6px',
+                    fontSize: '12px'
+                  }}>
+                    {events.length - filteredEvents.length} versteckt
+                  </span>
+                )}
               </motion.button>
             </div>
           )}
@@ -1168,13 +1211,38 @@ export default function CalendarView() {
                   </select>
                 </div>
                 
-                <button 
+                <button
                   className="mobile-refresh-btn"
                   onClick={handleRegenerateEvents}
                   disabled={refreshing}
                 >
                   <RefreshCw size={16} className={refreshing ? "spinning" : ""} />
                   {refreshing ? "Aktualisiere..." : "Events generieren"}
+                </button>
+
+                {/* ✅ Archive Toggle */}
+                <button
+                  className="mobile-archive-btn"
+                  onClick={() => setShowArchived(!showArchived)}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    background: !showArchived ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#f3f4f6',
+                    color: !showArchived ? 'white' : '#6b7280',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  {!showArchived ? <BellOff size={16} /> : <Bell size={16} />}
+                  {!showArchived ? "Archiv aus" : "Archiv an"}
+                  {!showArchived && <span>({events.length - filteredEvents.length})</span>}
                 </button>
               </div>
             </motion.div>
