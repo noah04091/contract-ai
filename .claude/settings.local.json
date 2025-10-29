@@ -8,7 +8,13 @@
       "Bash(npm run build:*)",
       "Bash(git revert:*)",
       "Bash(node -c:*)",
-      "Bash(node create-contract-indexes.js:*)"
+      "Bash(node create-contract-indexes.js:*)",
+      "Bash(node create-status-indexes.js:*)",
+      "Bash(node:*)",
+      "Bash(git restore:*)",
+      "Bash(git push:*)",
+      "Bash(npm run dev:*)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []

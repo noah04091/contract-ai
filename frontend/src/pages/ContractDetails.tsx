@@ -5,6 +5,7 @@ import styles from "../styles/ContractDetails.module.css";
 import { generateICS } from "../utils/icsGenerator";
 import Notification from "../components/Notification";
 import ContractContentViewer from "../components/ContractContentViewer";
+import ReminderSettingsModal from "../components/ReminderSettingsModal";
 
 interface Contract {
   _id: string;
@@ -51,6 +52,7 @@ export default function ContractDetails() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [showReminderModal, setShowReminderModal] = useState(false);
 
   useEffect(() => {
     const fetchContract = async () => {
@@ -477,12 +479,33 @@ export default function ContractDetails() {
                 </label>
                 <span>Erinnerung {contract.reminder ? "aktiviert" : "deaktiviert"}</span>
               </div>
-              
+
               {contract.reminderLastSentAt && (
                 <div className={styles.reminderInfo}>
                   <span>Letzte Erinnerung gesendet: {formatDate(contract.reminderLastSentAt)}</span>
                 </div>
               )}
+
+              <button
+                className={styles.reminderButton}
+                onClick={() => setShowReminderModal(true)}
+                style={{
+                  marginTop: '12px',
+                  padding: '8px 16px',
+                  background: '#6366f1',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  transition: 'background 0.2s'
+                }}
+                onMouseOver={(e) => e.currentTarget.style.background = '#4f46e5'}
+                onMouseOut={(e) => e.currentTarget.style.background = '#6366f1'}
+              >
+                📅 Custom Reminders verwalten
+              </button>
             </div>
           </div>
 
@@ -598,6 +621,20 @@ export default function ContractDetails() {
             message={notification.message}
             type={notification.type}
             onClose={() => setNotification(null)}
+          />
+        )}
+
+        {/* Reminder Settings Modal */}
+        {showReminderModal && contract && (
+          <ReminderSettingsModal
+            contractId={contract._id}
+            contractName={contract.name}
+            onClose={() => setShowReminderModal(false)}
+            onSuccess={(reminderDays: number[]) => {
+              console.log('Custom reminders saved:', reminderDays);
+              setNotification({ message: 'Custom Reminders erfolgreich gespeichert!', type: 'success' });
+              setShowReminderModal(false);
+            }}
           />
         )}
       </div>
