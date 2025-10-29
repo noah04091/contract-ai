@@ -305,8 +305,8 @@ function QuickActionsModal({ event, onAction, onClose, onEdit, navigate, onOpenS
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
-              <BellOff size={18} />
-              <span>Später</span>
+              <Clock size={18} />
+              <span>Erinnern</span>
             </motion.button>
           </div>
         </div>
@@ -623,6 +623,8 @@ interface SnoozeDialogProps {
 function SnoozeDialog({ event, onSnooze, onClose }: SnoozeDialogProps) {
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customDays, setCustomDays] = useState("");
+  const [selectedDate, setSelectedDate] = useState("");
+  const [inputMode, setInputMode] = useState<"days" | "date">("days");
 
   const handlePresetSnooze = (days: number) => {
     onSnooze(days);
@@ -635,12 +637,35 @@ function SnoozeDialog({ event, onSnooze, onClose }: SnoozeDialogProps) {
   };
 
   const handleCustomSnooze = () => {
-    const days = parseInt(customDays);
-    if (days > 0) {
-      onSnooze(days);
-      onClose();
+    if (inputMode === "days") {
+      const days = parseInt(customDays);
+      if (days > 0) {
+        onSnooze(days);
+        onClose();
+      } else {
+        alert("Bitte geben Sie eine gültige Anzahl von Tagen ein.");
+      }
     } else {
-      alert("Bitte geben Sie eine gültige Anzahl von Tagen ein.");
+      // Date mode
+      if (!selectedDate) {
+        alert("Bitte wählen Sie ein Datum aus.");
+        return;
+      }
+
+      const targetDate = new Date(selectedDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Reset time to midnight for accurate day calculation
+
+      const diffTime = targetDate.getTime() - today.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays <= 0) {
+        alert("Bitte wählen Sie ein Datum in der Zukunft.");
+        return;
+      }
+
+      onSnooze(diffDays);
+      onClose();
     }
   };
 
@@ -740,25 +765,92 @@ function SnoozeDialog({ event, onSnooze, onClose }: SnoozeDialogProps) {
               exit={{ opacity: 0, height: 0 }}
               style={{ marginBottom: "12px" }}
             >
+              {/* Toggle zwischen Tage und Datum */}
+              <div style={{
+                display: "flex",
+                gap: "8px",
+                marginBottom: "12px",
+                padding: "4px",
+                background: "#f3f4f6",
+                borderRadius: "8px"
+              }}>
+                <button
+                  onClick={() => setInputMode("days")}
+                  style={{
+                    flex: 1,
+                    padding: "8px 16px",
+                    border: "none",
+                    borderRadius: "6px",
+                    background: inputMode === "days" ? "#0071e3" : "transparent",
+                    color: inputMode === "days" ? "white" : "#6b7280",
+                    fontWeight: inputMode === "days" ? "600" : "400",
+                    cursor: "pointer",
+                    transition: "all 0.2s"
+                  }}
+                >
+                  Anzahl Tage
+                </button>
+                <button
+                  onClick={() => setInputMode("date")}
+                  style={{
+                    flex: 1,
+                    padding: "8px 16px",
+                    border: "none",
+                    borderRadius: "6px",
+                    background: inputMode === "date" ? "#0071e3" : "transparent",
+                    color: inputMode === "date" ? "white" : "#6b7280",
+                    fontWeight: inputMode === "date" ? "600" : "400",
+                    cursor: "pointer",
+                    transition: "all 0.2s"
+                  }}
+                >
+                  Datum wählen
+                </button>
+              </div>
+
               <div className="form-group">
-                <label>Anzahl Tage</label>
-                <div style={{ display: "flex", gap: "8px" }}>
-                  <input
-                    type="number"
-                    min="1"
-                    value={customDays}
-                    onChange={(e) => setCustomDays(e.target.value)}
-                    placeholder="z.B. 15"
-                    style={{ flex: 1 }}
-                  />
-                  <button
-                    className="btn-primary"
-                    onClick={handleCustomSnooze}
-                    style={{ padding: "10px 20px", whiteSpace: "nowrap" }}
-                  >
-                    Bestätigen
-                  </button>
-                </div>
+                {inputMode === "days" ? (
+                  <>
+                    <label>Anzahl Tage</label>
+                    <div style={{ display: "flex", gap: "8px" }}>
+                      <input
+                        type="number"
+                        min="1"
+                        value={customDays}
+                        onChange={(e) => setCustomDays(e.target.value)}
+                        placeholder="z.B. 15"
+                        style={{ flex: 1 }}
+                      />
+                      <button
+                        className="btn-primary"
+                        onClick={handleCustomSnooze}
+                        style={{ padding: "10px 20px", whiteSpace: "nowrap" }}
+                      >
+                        Bestätigen
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <label>Datum auswählen</label>
+                    <div style={{ display: "flex", gap: "8px" }}>
+                      <input
+                        type="date"
+                        value={selectedDate}
+                        onChange={(e) => setSelectedDate(e.target.value)}
+                        min={new Date().toISOString().split('T')[0]}
+                        style={{ flex: 1 }}
+                      />
+                      <button
+                        className="btn-primary"
+                        onClick={handleCustomSnooze}
+                        style={{ padding: "10px 20px", whiteSpace: "nowrap" }}
+                      >
+                        Bestätigen
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             </motion.div>
           )}
