@@ -27,8 +27,7 @@ import {
   ArrowRight,
   Edit3,
   Save,
-  Trash2,
-  Plus
+  Trash2
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -69,6 +68,7 @@ interface CalendarEvent {
   confidence?: number; // ✅ Confidence score (0-100)
   dataSource?: string; // ✅ 'extracted', 'calculated', 'estimated'
   isEstimated?: boolean; // ✅ Flag for low confidence data
+  notes?: string; // ✅ User notes
   metadata?: {
     provider?: ProviderType;
     noticePeriodDays?: number;
@@ -77,6 +77,7 @@ interface CalendarEvent {
     daysLeft?: number;
     daysUntilWindow?: number;
     contractName?: string;
+    notes?: string;
   };
   provider?: ProviderType;
   amount?: number;
@@ -404,7 +405,7 @@ function EventEditModal({ event, onSave, onDelete, onClose }: EventEditModalProp
     return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
   });
   const [severity, setSeverity] = useState(event.severity);
-  const [notes, setNotes] = useState(event.metadata?.notes || '');
+  const [notes, setNotes] = useState(event.notes || event.metadata?.notes || '');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const handleSave = () => {
