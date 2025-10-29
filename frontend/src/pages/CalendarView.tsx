@@ -414,13 +414,15 @@ function StatsDetailModal({ isOpen, onClose, title, events }: StatsDetailModalPr
           <div style={{
             padding: isMobile ? '20px' : '30px',
             borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
-            background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(147, 51, 234, 0.05))',
+            background: '#ffffff',
+            backgroundImage: 'linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(147, 51, 234, 0.08))',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
             position: 'sticky',
             top: 0,
-            zIndex: 10
+            zIndex: 10,
+            backdropFilter: 'blur(10px)'
           }}>
             <div>
               <h2 style={{
