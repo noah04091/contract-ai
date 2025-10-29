@@ -257,9 +257,52 @@
   backdrop-filter: blur(20px);
   border-radius: 24px;
   padding: 24px;
-  box-shadow: 
+  box-shadow:
     0 20px 40px rgba(0, 0, 0, 0.1),
     0 0 0 1px rgba(255, 255, 255, 0.8) inset;
+}
+
+/* View Toggle Buttons */
+.view-toggle-buttons {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding: 6px;
+  background: #f3f4f6;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.view-toggle-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.view-toggle-btn:hover {
+  background: rgba(99, 102, 241, 0.1);
+  color: #6366f1;
+}
+
+.view-toggle-btn.active {
+  background: white;
+  color: #6366f1;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.view-toggle-btn svg {
+  flex-shrink: 0;
 }
 
 .calendar-premium {
@@ -2351,9 +2394,28 @@
   .feature-item {
     padding: 10px;
   }
-  
+
   .feature-item span {
     font-size: 12px;
+  }
+
+  /* View Toggle Buttons - Mobile */
+  .view-toggle-buttons {
+    padding: 4px;
+    gap: 6px;
+  }
+
+  .view-toggle-btn {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  .view-toggle-btn span {
+    display: none;
+  }
+
+  .view-toggle-btn svg {
+    margin: 0;
   }
 }
 

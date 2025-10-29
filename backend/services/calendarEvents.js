@@ -399,7 +399,17 @@ async function generateEventsForContract(db, contract) {
           }
         }
       }
-    } else if (!expiryDate) {
+    }
+
+    // 💰 8. Recurring Payment Events (Wiederkehrende Zahlungen)
+    if (contract.paymentFrequency && contract.amount) {
+      console.log(`💰 Generiere Recurring Payment Events für "${contract.name}" (${contract.paymentFrequency})`);
+
+      const recurringEvents = generateRecurringPaymentEvents(contract, now, confidence, dataSource, isEstimated);
+      events.push(...recurringEvents);
+    }
+
+    if (!expiryDate && !contract.paymentFrequency) {
       // 🔧 FIX: Log wenn keine Daten vorhanden
       console.log(`⚠️ Keine Ablaufdaten für "${contract.name}" gefunden. Events können nicht generiert werden.`);
     }
@@ -487,6 +497,181 @@ function calculateNewExpiryDate(currentExpiry, renewMonths) {
   const newDate = new Date(currentExpiry);
   newDate.setMonth(newDate.getMonth() + renewMonths);
   return newDate;
+}
+
+/**
+ * Generiert wiederkehrende Zahlungs-Events für Abonnements
+ * Erstellt Events für die nächsten 12 Monate basierend auf paymentFrequency
+ */
+function generateRecurringPaymentEvents(contract, now, confidence, dataSource, isEstimated) {
+  const events = [];
+  const paymentFrequency = contract.paymentFrequency?.toLowerCase();
+  const amount = contract.amount || contract.paymentAmount;
+
+  if (!paymentFrequency || !amount) return events;
+
+  // Bestimme Startdatum für Zahlungs-Events
+  let startDate = contract.subscriptionStartDate
+    ? new Date(contract.subscriptionStartDate)
+    : contract.createdAt
+      ? new Date(contract.createdAt)
+      : now;
+
+  // Wenn das Startdatum in der Vergangenheit liegt, finde das nächste zukünftige Zahlungsdatum
+  if (startDate < now) {
+    startDate = calculateNextPaymentDate(startDate, now, paymentFrequency);
+  }
+
+  // Generiere Events für die nächsten 12 Monate
+  const endDate = new Date(now);
+  endDate.setMonth(endDate.getMonth() + 12);
+
+  let currentPaymentDate = new Date(startDate);
+  let paymentCount = 0;
+  const maxPayments = 50; // Sicherheitslimit
+
+  while (currentPaymentDate <= endDate && paymentCount < maxPayments) {
+    // Nur zukünftige Events erstellen
+    if (currentPaymentDate > now) {
+      const paymentDate = createLocalDate(currentPaymentDate);
+      const daysUntilPayment = Math.ceil((paymentDate - now) / (1000 * 60 * 60 * 24));
+
+      // Bestimme Severity basierend auf Nähe
+      const severity = daysUntilPayment <= 3 ? "warning" : "info";
+
+      events.push({
+        userId: contract.userId,
+        contractId: contract._id,
+        type: "RECURRING_PAYMENT",
+        title: `💳 Zahlung fällig: ${contract.name}`,
+        description: `${getPaymentFrequencyText(paymentFrequency)} Zahlung von ${amount.toFixed(2)}€ für "${contract.name}" wird heute fällig.`,
+        date: paymentDate,
+        severity: severity,
+        status: "scheduled",
+        confidence: confidence,
+        dataSource: dataSource,
+        isEstimated: isEstimated,
+        metadata: {
+          provider: contract.provider,
+          amount: amount,
+          paymentFrequency: paymentFrequency,
+          suggestedAction: "review",
+          contractName: contract.name,
+          isRecurring: true,
+          paymentNumber: paymentCount + 1
+        },
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+
+      // Reminder 3 Tage vorher (nur für höhere Beträge)
+      if (amount >= 50 && daysUntilPayment > 3) {
+        const tempReminderDate = new Date(paymentDate);
+        tempReminderDate.setDate(tempReminderDate.getDate() - 3);
+        const reminderDate = createLocalDate(tempReminderDate);
+
+        if (reminderDate > now) {
+          events.push({
+            userId: contract.userId,
+            contractId: contract._id,
+            type: "PAYMENT_REMINDER",
+            title: `🔔 Zahlung in 3 Tagen: ${contract.name}`,
+            description: `In 3 Tagen wird eine Zahlung von ${amount.toFixed(2)}€ für "${contract.name}" fällig.`,
+            date: reminderDate,
+            severity: "info",
+            status: "scheduled",
+            confidence: confidence,
+            dataSource: dataSource,
+            isEstimated: isEstimated,
+            metadata: {
+              provider: contract.provider,
+              amount: amount,
+              daysUntilPayment: 3,
+              suggestedAction: "prepare",
+              contractName: contract.name,
+              isRecurring: true
+            },
+            createdAt: new Date(),
+            updatedAt: new Date()
+          });
+        }
+      }
+    }
+
+    // Berechne nächstes Zahlungsdatum
+    currentPaymentDate = getNextPaymentDate(currentPaymentDate, paymentFrequency);
+    paymentCount++;
+  }
+
+  return events;
+}
+
+/**
+ * Berechnet das nächste Zahlungsdatum basierend auf Frequenz
+ */
+function getNextPaymentDate(currentDate, frequency) {
+  const nextDate = new Date(currentDate);
+
+  switch (frequency) {
+    case 'weekly':
+      nextDate.setDate(nextDate.getDate() + 7);
+      break;
+    case 'biweekly':
+      nextDate.setDate(nextDate.getDate() + 14);
+      break;
+    case 'monthly':
+      nextDate.setMonth(nextDate.getMonth() + 1);
+      break;
+    case 'quarterly':
+      nextDate.setMonth(nextDate.getMonth() + 3);
+      break;
+    case 'semiannually':
+      nextDate.setMonth(nextDate.getMonth() + 6);
+      break;
+    case 'yearly':
+    case 'annually':
+      nextDate.setFullYear(nextDate.getFullYear() + 1);
+      break;
+    default:
+      // Default to monthly
+      nextDate.setMonth(nextDate.getMonth() + 1);
+  }
+
+  return nextDate;
+}
+
+/**
+ * Findet das nächste zukünftige Zahlungsdatum ausgehend von einem vergangenen Startdatum
+ */
+function calculateNextPaymentDate(startDate, now, frequency) {
+  let nextDate = new Date(startDate);
+  const maxIterations = 1000; // Sicherheitslimit
+  let iterations = 0;
+
+  // Iteriere bis wir ein zukünftiges Datum haben
+  while (nextDate <= now && iterations < maxIterations) {
+    nextDate = getNextPaymentDate(nextDate, frequency);
+    iterations++;
+  }
+
+  return nextDate;
+}
+
+/**
+ * Gibt einen lesbaren Text für die Zahlungsfrequenz zurück
+ */
+function getPaymentFrequencyText(frequency) {
+  const texts = {
+    'weekly': 'Wöchentliche',
+    'biweekly': 'Zweiwöchentliche',
+    'monthly': 'Monatliche',
+    'quarterly': 'Vierteljährliche',
+    'semiannually': 'Halbjährliche',
+    'yearly': 'Jährliche',
+    'annually': 'Jährliche'
+  };
+
+  return texts[frequency] || 'Regelmäßige';
 }
 
 /**
