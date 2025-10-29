@@ -49,7 +49,7 @@ export default function UpcomingDeadlinesWidget({ className }: UpcomingDeadlines
       if (response.data.success) {
         setEvents(response.data.events || []);
       }
-    } catch (err) {
+    } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
       console.error('Error fetching upcoming deadlines:', err);
       setError('Fehler beim Laden der Termine');
     } finally {
