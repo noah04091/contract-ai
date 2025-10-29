@@ -66,12 +66,20 @@ async function generateEventsForContract(db, contract) {
     
     const autoRenewMonths = contract.autoRenewMonths || 12;
     
+    // 🎯 Extract confidence data from contract
+    const confidence = contract.endDateConfidence || contract.startDateConfidence || 100; // Default to 100 if not available
+    const dataSource = contract.dataSource || 'unknown';
+    const isEstimated = dataSource === 'estimated' || dataSource === 'calculated' || confidence < 60;
+
     // 📊 DEBUG LOG
     console.log(`📊 Event Generation für "${contract.name}":`, {
       expiryDate: expiryDate?.toISOString(),
       noticePeriodDays,
       autoRenewMonths,
       isAutoRenewal,
+      confidence: `${confidence}%`,
+      dataSource,
+      isEstimated,
       provider: contract.provider?.displayName || contract.provider || 'Unbekannt'
     });
     
@@ -95,6 +103,9 @@ async function generateEventsForContract(db, contract) {
             date: cancelWindowDate,
             severity: "info",
             status: "scheduled",
+            confidence: confidence, // ✅ Add confidence
+            dataSource: dataSource, // ✅ Add data source
+            isEstimated: isEstimated, // ✅ Add estimation flag
             metadata: {
               provider: contract.provider,
               noticePeriodDays,
@@ -122,6 +133,9 @@ async function generateEventsForContract(db, contract) {
               date: reminderDate,
               severity: "info",
               status: "scheduled",
+              confidence: confidence,
+              dataSource: dataSource,
+              isEstimated: isEstimated,
               metadata: {
                 provider: contract.provider,
                 daysUntilWindow: 30,
@@ -152,6 +166,9 @@ async function generateEventsForContract(db, contract) {
             date: lastCancelDate,
             severity: "critical",
             status: "scheduled",
+            confidence: confidence,
+            dataSource: dataSource,
+            isEstimated: isEstimated,
             metadata: {
               provider: contract.provider,
               autoRenewMonths,
@@ -180,6 +197,9 @@ async function generateEventsForContract(db, contract) {
               date: warningDate,
               severity: "warning",
               status: "scheduled",
+              confidence: confidence,
+              dataSource: dataSource,
+              isEstimated: isEstimated,
               metadata: {
                 provider: contract.provider,
                 daysLeft: 7,
@@ -206,6 +226,9 @@ async function generateEventsForContract(db, contract) {
           date: renewalDate,
           severity: isAutoRenewal ? "critical" : "warning",
           status: "scheduled",
+          confidence: confidence,
+          dataSource: dataSource,
+          isEstimated: isEstimated,
           metadata: {
             provider: contract.provider,
             autoRenewMonths,
@@ -233,6 +256,9 @@ async function generateEventsForContract(db, contract) {
             date: priceIncreaseDate,
             severity: "warning",
             status: "scheduled",
+            confidence: confidence,
+            dataSource: dataSource,
+            isEstimated: isEstimated,
             metadata: {
               provider: contract.provider,
               oldPrice: contract.amount,
@@ -260,6 +286,9 @@ async function generateEventsForContract(db, contract) {
               date: priceWarningDate,
               severity: "info",
               status: "scheduled",
+              confidence: confidence,
+              dataSource: dataSource,
+              isEstimated: isEstimated,
               metadata: {
                 provider: contract.provider,
                 daysUntilIncrease: 30,
@@ -289,6 +318,9 @@ async function generateEventsForContract(db, contract) {
           date: oneYearFromCreation,
           severity: "info",
           status: "scheduled",
+          confidence: confidence,
+          dataSource: dataSource,
+          isEstimated: isEstimated,
           metadata: {
             provider: contract.provider,
             contractAge: "1 Jahr",
@@ -313,6 +345,9 @@ async function generateEventsForContract(db, contract) {
           date: contractExpiryDate,
           severity: isAutoRenewal ? "warning" : "info",
           status: "scheduled",
+          confidence: confidence,
+          dataSource: dataSource,
+          isEstimated: isEstimated,
           metadata: {
             provider: contract.provider,
             suggestedAction: isAutoRenewal ? "check" : "archive",
