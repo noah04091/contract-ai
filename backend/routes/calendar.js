@@ -366,8 +366,8 @@ router.get("/upcoming", verifyToken, async (req, res) => {
           $match: {
             userId,
             date: { $gte: now, $lte: future },
-            status: { $in: ["scheduled", "notified"] },
-            severity: { $in: ["warning", "critical"] }
+            status: { $in: ["scheduled", "notified"] }
+            // Show all severities: info, warning, critical
           }
         },
         {
