@@ -14,7 +14,10 @@
       "Bash(git restore:*)",
       "Bash(git push:*)",
       "Bash(npm run dev:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(curl:*)",
+      "Read(//c/Users/liebo/Documents/**)",
+      "Bash(git log:*)"
     ],
     "deny": [],
     "ask": []

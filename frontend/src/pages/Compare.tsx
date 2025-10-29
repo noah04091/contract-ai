@@ -406,9 +406,10 @@ export default function EnhancedCompare() {
   // ✅ NEW: Load contract from URL parameter
   useEffect(() => {
     const contractId = searchParams.get('contractId');
-    if (contractId && isPremium) {
+    if (contractId && isPremium && !file1) {
       const loadContractFromUrl = async () => {
         try {
+          // Step 1: Get contract metadata
           const res = await fetch(`/api/contracts/${contractId}`, {
             credentials: "include"
           });
@@ -419,8 +420,32 @@ export default function EnhancedCompare() {
           const contract = data.contract || data;
 
           setPreloadedContractName(contract.name || contract.fileName || "Unbekannter Vertrag");
+
+          // Step 2: Get presigned URL to download PDF
+          const viewRes = await fetch(`/api/s3/view?contractId=${contractId}`, {
+            credentials: "include"
+          });
+
+          if (!viewRes.ok) throw new Error("PDF konnte nicht abgerufen werden");
+
+          const viewData = await viewRes.json();
+          const pdfUrl = viewData.url;
+
+          // Step 3: Download PDF as blob
+          const pdfRes = await fetch(pdfUrl);
+          if (!pdfRes.ok) throw new Error("PDF-Download fehlgeschlagen");
+
+          const blob = await pdfRes.blob();
+
+          // Step 4: Convert blob to File object
+          const fileName = contract.fileName || contract.name || "vertrag.pdf";
+          const file = new File([blob], fileName, { type: "application/pdf" });
+
+          // Step 5: Set as file1
+          setFile1(file);
+
           setNotification({
-            message: `Vertrag "${contract.name || contract.fileName}" wurde vorgeladen`,
+            message: `Vertrag "${contract.name || contract.fileName}" wurde geladen`,
             type: "success"
           });
 
@@ -437,7 +462,7 @@ export default function EnhancedCompare() {
 
       loadContractFromUrl();
     }
-  }, [searchParams, isPremium]);
+  }, [searchParams, isPremium, file1]);
 
   useEffect(() => {
     if (result && resultRef.current) {

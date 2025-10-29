@@ -266,6 +266,26 @@ export default function Contracts() {
     }
   }, [location]);
 
+  // ✅ NEW: Handle "view" URL parameter to open contract details
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const contractIdToView = params.get('view');
+
+    if (contractIdToView && contracts.length > 0) {
+      const contractToOpen = contracts.find(c => c._id === contractIdToView);
+
+      if (contractToOpen) {
+        setSelectedContract(contractToOpen);
+        setShowDetails(true);
+
+        // Remove the view parameter from URL to avoid reopening on refresh
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.delete('view');
+        window.history.replaceState({}, document.title, newUrl.pathname + newUrl.search);
+      }
+    }
+  }, [location.search, contracts]);
+
   // 📁 Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = () => {

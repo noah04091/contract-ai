@@ -675,9 +675,10 @@ export default function Optimizer() {
 
   // ✅ NEW: Load contract from URL parameter
   useEffect(() => {
-    if (contractId && isPremium) {
+    if (contractId && isPremium && !file) {
       const loadContractFromUrl = async () => {
         try {
+          // Step 1: Get contract metadata
           const res = await fetch(`/api/contracts/${contractId}`, {
             credentials: "include"
           });
@@ -688,8 +689,32 @@ export default function Optimizer() {
           const contract = data.contract || data;
 
           setPreloadedContractName(contract.name || contract.fileName || "Unbekannter Vertrag");
+
+          // Step 2: Get presigned URL to download PDF
+          const viewRes = await fetch(`/api/s3/view?contractId=${contractId}`, {
+            credentials: "include"
+          });
+
+          if (!viewRes.ok) throw new Error("PDF konnte nicht abgerufen werden");
+
+          const viewData = await viewRes.json();
+          const pdfUrl = viewData.url;
+
+          // Step 3: Download PDF as blob
+          const pdfRes = await fetch(pdfUrl);
+          if (!pdfRes.ok) throw new Error("PDF-Download fehlgeschlagen");
+
+          const blob = await pdfRes.blob();
+
+          // Step 4: Convert blob to File object
+          const fileName = contract.fileName || contract.name || "vertrag.pdf";
+          const fileObj = new File([blob], fileName, { type: "application/pdf" });
+
+          // Step 5: Set as file
+          setFile(fileObj);
+
           setToast({
-            message: `Vertrag "${contract.name || contract.fileName}" wurde vorgeladen`,
+            message: `Vertrag "${contract.name || contract.fileName}" wurde geladen`,
             type: "success"
           });
 
@@ -706,7 +731,7 @@ export default function Optimizer() {
 
       loadContractFromUrl();
     }
-  }, [contractId, isPremium]);
+  }, [contractId, isPremium, file]);
 
   // ✅ ORIGINAL: Contract Score Update
   useEffect(() => {
