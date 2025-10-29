@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import styles from './ReminderSettingsModal.module.css';
@@ -99,7 +99,7 @@ export default function ReminderSettingsModal({
       setError(null);
 
       const token = localStorage.getItem('token');
-      const response = await axios.patch(
+      const response = await axios.patch<{ success: boolean; message?: string }>(
         `/api/contracts/${contractId}/reminder-settings`,
         { reminderDays },
         { headers: { Authorization: `Bearer ${token}` } }

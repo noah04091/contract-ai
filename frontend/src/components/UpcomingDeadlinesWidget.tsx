@@ -41,7 +41,7 @@ export default function UpcomingDeadlinesWidget({ className }: UpcomingDeadlines
       setError(null);
 
       const token = localStorage.getItem('token');
-      const response = await axios.get('/api/calendar/upcoming', {
+      const response = await axios.get<{ success: boolean; events?: UpcomingEvent[] }>('/api/calendar/upcoming', {
         headers: { Authorization: `Bearer ${token}` },
         params: { days: 30 }
       });

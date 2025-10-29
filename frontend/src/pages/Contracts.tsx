@@ -8,7 +8,7 @@ import {
   Plus, Calendar, Clock, Trash2, Eye, Edit,
   Search, X, Crown, Users, Loader,
   Lock, Zap, BarChart3, ExternalLink, ArrowRight, Folder,
-  CheckSquare, Square, Mail
+  CheckSquare, Square, Mail, Bell
 } from "lucide-react";
 import styles from "../styles/Contracts.module.css";
 import ContractAnalysis from "../components/ContractAnalysis";
