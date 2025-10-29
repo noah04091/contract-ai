@@ -1,5 +1,6 @@
 // src/pages/CalendarView.tsx
 import { useEffect, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
@@ -94,9 +95,10 @@ interface QuickActionsProps {
   onAction: (action: string, eventId: string) => void;
   onClose: () => void;
   onEdit: (event: CalendarEvent) => void;
+  navigate: (path: string) => void;
 }
 
-function QuickActionsModal({ event, onAction, onClose, onEdit }: QuickActionsProps) {
+function QuickActionsModal({ event, onAction, onClose, onEdit, navigate }: QuickActionsProps) {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {
@@ -266,19 +268,19 @@ function QuickActionsModal({ event, onAction, onClose, onEdit }: QuickActionsPro
               </motion.button>
             )}
             
-            <motion.button 
+            <motion.button
               className="action-btn-premium secondary"
-              onClick={() => onAction("compare", event.id)}
+              onClick={() => { navigate(`/compare?contractId=${event.contractId}`); onClose(); }}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
               <TrendingUp size={18} />
               <span>Vergleichen</span>
             </motion.button>
-            
+
             <motion.button
               className="action-btn-premium secondary"
-              onClick={() => onAction("optimize", event.id)}
+              onClick={() => { navigate(`/optimize/${event.contractId}`); onClose(); }}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
@@ -997,6 +999,7 @@ const getEventTypeIcon = (type: string) => {
 };
 
 export default function CalendarPage() {
+  const navigate = useNavigate();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [filteredEvents, setFilteredEvents] = useState<CalendarEvent[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -1834,6 +1837,7 @@ export default function CalendarPage() {
               event={selectedEvent}
               onAction={handleQuickAction}
               onEdit={handleEditEvent}
+              navigate={navigate}
               onClose={() => {
                 setShowQuickActions(false);
                 setSelectedEvent(null);
