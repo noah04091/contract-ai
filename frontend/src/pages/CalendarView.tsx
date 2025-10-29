@@ -688,6 +688,7 @@ export default function CalendarView() {
   const [view, setView] = useState<"month" | "year">("month");
   const [filterSeverity, setFilterSeverity] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all");
+  const [filterProvider, setFilterProvider] = useState<string>("all"); // ✅ Provider filter
   const [showQuickActions, setShowQuickActions] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [urgentEventsPage, setUrgentEventsPage] = useState(0);
@@ -775,8 +776,16 @@ export default function CalendarView() {
       filtered = filtered.filter(e => e.type === filterType);
     }
 
+    // ✅ Provider filter
+    if (filterProvider !== "all") {
+      filtered = filtered.filter(e => {
+        const providerName = getProviderName(e.provider || e.metadata?.provider);
+        return providerName.toLowerCase().includes(filterProvider.toLowerCase());
+      });
+    }
+
     setFilteredEvents(filtered);
-  }, [events, filterSeverity, filterType, showArchived]);
+  }, [events, filterSeverity, filterType, filterProvider, showArchived]);
 
   // Regenerate all events
   const handleRegenerateEvents = async () => {
@@ -1045,6 +1054,20 @@ export default function CalendarView() {
 
   const stats = getStatistics();
 
+  // Get unique providers for filter dropdown
+  const getUniqueProviders = () => {
+    const providers = new Set<string>();
+    events.forEach(e => {
+      const providerName = getProviderName(e.provider || e.metadata?.provider);
+      if (providerName && providerName !== 'Unbekannt') {
+        providers.add(providerName);
+      }
+    });
+    return Array.from(providers).sort();
+  };
+
+  const uniqueProviders = getUniqueProviders();
+
   // Paginated urgent events
   const urgentEvents = getUpcomingCriticalEvents();
   const totalPages = Math.ceil(urgentEvents.length / EVENTS_PER_PAGE);
@@ -1109,8 +1132,8 @@ export default function CalendarView() {
               
               <div className="filter-group-premium">
                 <FileText size={16} />
-                <select 
-                  value={filterType} 
+                <select
+                  value={filterType}
                   onChange={(e) => setFilterType(e.target.value)}
                   className="filter-select-premium"
                 >
@@ -1122,7 +1145,24 @@ export default function CalendarView() {
                   <option value="REVIEW">Review</option>
                 </select>
               </div>
-              
+
+              {/* ✅ Provider Filter */}
+              {uniqueProviders.length > 0 && (
+                <div className="filter-group-premium">
+                  <Shield size={16} />
+                  <select
+                    value={filterProvider}
+                    onChange={(e) => setFilterProvider(e.target.value)}
+                    className="filter-select-premium"
+                  >
+                    <option value="all">Alle Anbieter</option>
+                    {uniqueProviders.map(provider => (
+                      <option key={provider} value={provider}>{provider}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               <motion.button
                 className={`refresh-btn-premium ${refreshing ? 'refreshing' : ''}`}
                 onClick={handleRegenerateEvents}
@@ -1198,8 +1238,8 @@ export default function CalendarView() {
                 
                 <div className="mobile-filter-group">
                   <label>Ereignistyp</label>
-                  <select 
-                    value={filterType} 
+                  <select
+                    value={filterType}
                     onChange={(e) => setFilterType(e.target.value)}
                   >
                     <option value="all">Alle</option>
@@ -1210,7 +1250,23 @@ export default function CalendarView() {
                     <option value="REVIEW">Review</option>
                   </select>
                 </div>
-                
+
+                {/* ✅ Provider Filter */}
+                {uniqueProviders.length > 0 && (
+                  <div className="mobile-filter-group">
+                    <label>Anbieter</label>
+                    <select
+                      value={filterProvider}
+                      onChange={(e) => setFilterProvider(e.target.value)}
+                    >
+                      <option value="all">Alle</option>
+                      {uniqueProviders.map(provider => (
+                        <option key={provider} value={provider}>{provider}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
                 <button
                   className="mobile-refresh-btn"
                   onClick={handleRegenerateEvents}
