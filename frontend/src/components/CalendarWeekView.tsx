@@ -12,7 +12,7 @@ interface CalendarEvent {
   type: string;
   severity: "info" | "warning" | "critical";
   status: string;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
 }
 
 interface CalendarWeekViewProps {
