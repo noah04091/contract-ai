@@ -328,6 +328,7 @@
 
 .calendar-premium .react-calendar__month-view__weekdays abbr {
   text-decoration: none;
+  white-space: nowrap; /* Verhindert Umbruch bei sehr kleinen Screens */
 }
 
 .calendar-premium .react-calendar__tile {
