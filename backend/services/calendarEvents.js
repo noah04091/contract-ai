@@ -2,6 +2,16 @@
 const { ObjectId } = require("mongodb");
 
 /**
+ * Helper: Erstellt ein Datum in lokaler Timezone (Deutschland/Europa)
+ * Verhindert Timezone-Shifts bei der Anzeige im Kalender
+ */
+function createLocalDate(dateString) {
+  const d = new Date(dateString);
+  // Setze auf Mitternacht in Europa/Berlin Timezone
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12, 0, 0, 0);
+}
+
+/**
  * Generiert automatisch Kalenderereignisse basierend auf Vertragsdaten
  * NEU: Unterstützt Auto-Renewal für "alte" aber aktive Verträge
  */
@@ -70,9 +80,10 @@ async function generateEventsForContract(db, contract) {
       
       // 1. Kündigungsfenster öffnet
       if (noticePeriodDays > 0) {
-        const cancelWindowDate = new Date(expiryDate);
-        cancelWindowDate.setDate(cancelWindowDate.getDate() - noticePeriodDays);
-        
+        const tempDate = new Date(expiryDate);
+        tempDate.setDate(tempDate.getDate() - noticePeriodDays);
+        const cancelWindowDate = createLocalDate(tempDate);
+
         // Nur zukünftige Events erstellen
         if (cancelWindowDate > now) {
           events.push({
@@ -97,9 +108,10 @@ async function generateEventsForContract(db, contract) {
           });
           
           // Reminder 30 Tage vorher
-          const reminderDate = new Date(cancelWindowDate);
-          reminderDate.setDate(reminderDate.getDate() - 30);
-          
+          const tempReminderDate = new Date(cancelWindowDate);
+          tempReminderDate.setDate(tempReminderDate.getDate() - 30);
+          const reminderDate = createLocalDate(tempReminderDate);
+
           if (reminderDate > now) {
             events.push({
               userId: contract.userId,
@@ -126,9 +138,10 @@ async function generateEventsForContract(db, contract) {
       
       // 2. Letzter Kündigungstag
       if (noticePeriodDays > 0) {
-        const lastCancelDate = new Date(expiryDate);
-        lastCancelDate.setDate(lastCancelDate.getDate() - noticePeriodDays); // Letzter Tag der Kündigungsfrist
-        
+        const tempLastDate = new Date(expiryDate);
+        tempLastDate.setDate(tempLastDate.getDate() - noticePeriodDays); // Letzter Tag der Kündigungsfrist
+        const lastCancelDate = createLocalDate(tempLastDate);
+
         if (lastCancelDate > now) {
           events.push({
             userId: contract.userId,
@@ -153,9 +166,10 @@ async function generateEventsForContract(db, contract) {
           });
           
           // Warnung 7 Tage vorher
-          const warningDate = new Date(lastCancelDate);
-          warningDate.setDate(warningDate.getDate() - 7);
-          
+          const tempWarningDate = new Date(lastCancelDate);
+          tempWarningDate.setDate(tempWarningDate.getDate() - 7);
+          const warningDate = createLocalDate(tempWarningDate);
+
           if (warningDate > now) {
             events.push({
               userId: contract.userId,
@@ -182,13 +196,14 @@ async function generateEventsForContract(db, contract) {
       
       // 3. Automatische Verlängerung
       if (expiryDate > now) {
+        const renewalDate = createLocalDate(expiryDate);
         events.push({
           userId: contract.userId,
           contractId: contract._id,
           type: "AUTO_RENEWAL",
           title: `🔄 ${isAutoRenewal ? 'Automatische' : 'Mögliche'} Verlängerung: ${contract.name}`,
           description: `"${contract.name}" ${isAutoRenewal ? 'verlängert sich heute automatisch' : 'könnte sich heute verlängern'} um ${autoRenewMonths} Monate, falls nicht gekündigt wurde.`,
-          date: expiryDate,
+          date: renewalDate,
           severity: isAutoRenewal ? "critical" : "warning",
           status: "scheduled",
           metadata: {
@@ -206,8 +221,8 @@ async function generateEventsForContract(db, contract) {
       
       // 4. Preissteigerung (falls erkannt)
       if (contract.priceIncreaseDate) {
-        const priceIncreaseDate = new Date(contract.priceIncreaseDate);
-        
+        const priceIncreaseDate = createLocalDate(contract.priceIncreaseDate);
+
         if (priceIncreaseDate > now) {
           events.push({
             userId: contract.userId,
@@ -231,9 +246,10 @@ async function generateEventsForContract(db, contract) {
           });
           
           // Vorwarnung 30 Tage vorher
-          const priceWarningDate = new Date(priceIncreaseDate);
-          priceWarningDate.setDate(priceWarningDate.getDate() - 30);
-          
+          const tempPriceWarningDate = new Date(priceIncreaseDate);
+          tempPriceWarningDate.setDate(tempPriceWarningDate.getDate() - 30);
+          const priceWarningDate = createLocalDate(tempPriceWarningDate);
+
           if (priceWarningDate > now) {
             events.push({
               userId: contract.userId,
