@@ -150,12 +150,12 @@ router.post("/regenerate-all", verifyToken, async (req, res) => {
 
 // Ergänze in backend/routes/calendar.js die PATCH Route für Event-Updates:
 
-// PATCH /api/calendar/events/:eventId - Event-Status aktualisieren
+// PATCH /api/calendar/events/:eventId - Event aktualisieren (ERWEITERT für Manual Edit)
 router.patch("/events/:eventId", verifyToken, async (req, res) => {
   try {
     const eventId = new ObjectId(req.params.eventId);
     const userId = new ObjectId(req.user.userId);
-    const { status, notes, snoozeDays } = req.body;
+    const { status, notes, snoozeDays, date, title, description, type, severity } = req.body;
     
     // Verify event ownership
     const event = await req.db.collection("contract_events").findOne({
@@ -171,13 +171,13 @@ router.patch("/events/:eventId", verifyToken, async (req, res) => {
     }
     
     // Update event
-    const updateData = { 
-      updatedAt: new Date() 
+    const updateData = {
+      updatedAt: new Date()
     };
-    
+
     if (status) {
       updateData.status = status;
-      
+
       // Handle snooze
       if (status === 'snoozed' && snoozeDays) {
         const newDate = new Date(event.date);
@@ -186,7 +186,16 @@ router.patch("/events/:eventId", verifyToken, async (req, res) => {
         updateData.snoozedUntil = newDate;
       }
     }
-    
+
+    // ✅ NEW: Allow manual editing of all fields
+    if (date !== undefined) {
+      updateData.date = new Date(date);
+      updateData.manuallyEdited = true; // Mark as manually edited
+    }
+    if (title !== undefined) updateData.title = title;
+    if (description !== undefined) updateData.description = description;
+    if (type !== undefined) updateData.type = type;
+    if (severity !== undefined) updateData.severity = severity;
     if (notes !== undefined) updateData.notes = notes;
     
     await req.db.collection("contract_events").updateOne(
@@ -214,9 +223,110 @@ router.patch("/events/:eventId", verifyToken, async (req, res) => {
     
   } catch (error) {
     console.error("❌ Error updating event:", error);
-    res.status(500).json({ 
-      success: false, 
-      error: "Fehler beim Aktualisieren des Ereignisses" 
+    res.status(500).json({
+      success: false,
+      error: "Fehler beim Aktualisieren des Ereignisses"
+    });
+  }
+});
+
+// POST /api/calendar/events - Neues manuelles Event erstellen
+router.post("/events", verifyToken, async (req, res) => {
+  try {
+    const userId = new ObjectId(req.user.userId);
+    const { contractId, title, description, date, type, severity, notes } = req.body;
+
+    // Validate required fields
+    if (!contractId || !title || !date) {
+      return res.status(400).json({
+        success: false,
+        error: "ContractId, Titel und Datum sind erforderlich"
+      });
+    }
+
+    // Verify contract ownership
+    const contract = await req.db.collection("contracts").findOne({
+      _id: new ObjectId(contractId),
+      userId
+    });
+
+    if (!contract) {
+      return res.status(404).json({
+        success: false,
+        error: "Vertrag nicht gefunden"
+      });
+    }
+
+    // Create new event
+    const newEvent = {
+      userId,
+      contractId: new ObjectId(contractId),
+      contractName: contract.name,
+      title,
+      description: description || '',
+      date: new Date(date),
+      type: type || 'CUSTOM',
+      severity: severity || 'info',
+      status: 'scheduled',
+      notes: notes || '',
+      manuallyCreated: true,
+      metadata: {
+        contractName: contract.name,
+        provider: contract.provider
+      },
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    const result = await req.db.collection("contract_events").insertOne(newEvent);
+
+    res.json({
+      success: true,
+      message: "Event erfolgreich erstellt",
+      event: { ...newEvent, _id: result.insertedId }
+    });
+
+  } catch (error) {
+    console.error("❌ Error creating event:", error);
+    res.status(500).json({
+      success: false,
+      error: "Fehler beim Erstellen des Events"
+    });
+  }
+});
+
+// DELETE /api/calendar/events/:eventId - Event löschen
+router.delete("/events/:eventId", verifyToken, async (req, res) => {
+  try {
+    const eventId = new ObjectId(req.params.eventId);
+    const userId = new ObjectId(req.user.userId);
+
+    // Verify event ownership
+    const event = await req.db.collection("contract_events").findOne({
+      _id: eventId,
+      userId
+    });
+
+    if (!event) {
+      return res.status(404).json({
+        success: false,
+        error: "Ereignis nicht gefunden"
+      });
+    }
+
+    // Delete event
+    await req.db.collection("contract_events").deleteOne({ _id: eventId });
+
+    res.json({
+      success: true,
+      message: "Event gelöscht"
+    });
+
+  } catch (error) {
+    console.error("❌ Error deleting event:", error);
+    res.status(500).json({
+      success: false,
+      error: "Fehler beim Löschen des Events"
     });
   }
 });
