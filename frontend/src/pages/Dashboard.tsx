@@ -13,7 +13,7 @@ import {
   PieChart, Pie, Cell, Line, Area, AreaChart
 } from 'recharts';
 import DashboardSkeleton from "../components/DashboardSkeleton"; // 💀 Skeleton Loader
-// import UpcomingDeadlinesWidget from "../components/UpcomingDeadlinesWidget"; // 📅 Upcoming Deadlines Widget - Temporarily disabled
+import UpcomingDeadlinesWidget from "../components/UpcomingDeadlinesWidget"; // 📅 Upcoming Deadlines Widget
 
 interface Contract {
   _id: string;
@@ -395,8 +395,10 @@ export default function Dashboard() {
         setUserEmail(userDataResponse.email);
         setUserData(userDataResponse);
 
-        // Ensure contractsData is an array
-        const contractsArray = Array.isArray(contractsData) ? contractsData : [];
+        // Handle both old format (array) and new format (object with contracts property)
+        const contractsArray = Array.isArray(contractsData)
+          ? contractsData
+          : (contractsData.contracts || []);
         setContracts(contractsArray);
 
         const priorityList = calculatePriorityContracts(contractsArray);
@@ -989,8 +991,8 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* 📅 Upcoming Deadlines Widget - Temporarily disabled for debugging */}
-        {/* <UpcomingDeadlinesWidget /> */}
+        {/* 📅 Upcoming Deadlines Widget */}
+        <UpcomingDeadlinesWidget />
 
         {/* Priority Verträge Sektion */}
         <div className={styles.priorityContractsSection}>
