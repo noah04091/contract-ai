@@ -1576,6 +1576,12 @@ export default function CalendarPage() {
     );
   };
 
+  // Format weekday names (Mo, Di, Mi, Do, Fr, Sa, So)
+  const formatShortWeekday = (_locale: string | undefined, date: Date) => {
+    const weekdays = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+    return weekdays[date.getDay()];
+  };
+
   const handleDateClick = (value: Value) => {
     if (value instanceof Date) {
       setSelectedDate(value);
@@ -1953,7 +1959,8 @@ export default function CalendarPage() {
                   showNeighboringMonth={true}
                   minDetail="year"
                   locale="de-DE"
-                  calendarType="iso8601"
+                  calendarType="gregory"
+                  formatShortWeekday={formatShortWeekday}
                   className="calendar-premium"
                 />
                 
