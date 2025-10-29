@@ -708,18 +708,22 @@ export default function CalendarPage() {
   const fetchEvents = useCallback(async () => {
     setLoading(true);
     setError("");
-    
+
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        console.warn("Kein Token gefunden");
-        setError("Bitte melden Sie sich an.");
-        setLoading(false);
-        return;
+      const token = localStorage.getItem("token") ||
+                    localStorage.getItem("authToken") ||
+                    localStorage.getItem("jwtToken") ||
+                    localStorage.getItem("accessToken") ||
+                    sessionStorage.getItem("token") ||
+                    sessionStorage.getItem("authToken");
+
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
       }
 
       const response = await axios.get<ApiResponse<CalendarEvent>>("/api/calendar/events", {
-        headers: { Authorization: `Bearer ${token}` },
+        headers,
         params: {
           from: new Date().toISOString(),
           to: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
@@ -767,9 +771,15 @@ export default function CalendarPage() {
   // Regenerate all events
   const handleRegenerateEvents = async () => {
     setRefreshing(true);
-    
+
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("token") ||
+                    localStorage.getItem("authToken") ||
+                    localStorage.getItem("jwtToken") ||
+                    localStorage.getItem("accessToken") ||
+                    sessionStorage.getItem("token") ||
+                    sessionStorage.getItem("authToken");
+
       await axios.post("/api/calendar/regenerate-all", {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -787,7 +797,13 @@ export default function CalendarPage() {
   // Handle Quick Actions
   const handleQuickAction = async (action: string, eventId: string) => {
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("token") ||
+                    localStorage.getItem("authToken") ||
+                    localStorage.getItem("jwtToken") ||
+                    localStorage.getItem("accessToken") ||
+                    sessionStorage.getItem("token") ||
+                    sessionStorage.getItem("authToken");
+
       const response = await axios.post<ApiResponse<CalendarEvent>>("/api/calendar/quick-action", {
         eventId,
         action,
