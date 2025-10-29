@@ -2628,3 +2628,39 @@
     font-size: 24px;
   }
 }
+
+/* ===== Contract AI Calendar hard-fixes (de/EU) ===== */
+
+/* Immer 7 Spalten im Monatsraster */
+.calendar-premium .react-calendar__month-view__days {
+  display: grid !important;
+  grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+  gap: 0.25rem;
+}
+
+/* Falls irgendwo fälschlich die 7. Spalte beeinflusst wird */
+.calendar-premium .react-calendar__month-view__days__day:nth-child(7n) {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Stellen sicher, dass die Ziffern sichtbar sind */
+.calendar-premium .react-calendar__tile abbr {
+  display: inline !important;
+  text-decoration: none !important;
+  color: inherit !important;
+  opacity: 1 !important;
+}
+
+/* Gegen alle versehentlichen Hides der Inhalte */
+.calendar-premium .react-calendar__tile,
+.calendar-premium .react-calendar__month-view__days__day {
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Optional: Debug - Sonntage rot umranden */
+.calendar-premium .react-calendar__month-view__days__day:nth-child(7n) {
+  outline: 1px dashed rgba(255,0,0,0.4);
+}
