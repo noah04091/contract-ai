@@ -1582,6 +1582,11 @@ export default function CalendarPage() {
     return weekdays[date.getDay()];
   };
 
+  // Format day number - ensure all days show their number
+  const formatDay = (_locale: string | undefined, date: Date) => {
+    return date.getDate().toString();
+  };
+
   const handleDateClick = (value: Value) => {
     if (value instanceof Date) {
       setSelectedDate(value);
@@ -1961,6 +1966,7 @@ export default function CalendarPage() {
                   minDetail="year"
                   calendarType="iso8601"
                   formatShortWeekday={formatShortWeekday}
+                  formatDay={formatDay}
                   className="calendar-premium"
                 />
                 
