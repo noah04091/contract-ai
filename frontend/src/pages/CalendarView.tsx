@@ -468,11 +468,11 @@ function EventEditModal({ event, onSave, onDelete, onClose }: EventEditModalProp
       >
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-          <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 600 }}>
+          <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 600, color: '#1f2937' }}>
             <Edit3 size={20} style={{ display: 'inline', marginRight: '8px', verticalAlign: 'middle' }} />
             Event bearbeiten
           </h2>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: '#6b7280' }}>
             <X size={24} />
           </button>
         </div>
@@ -481,7 +481,7 @@ function EventEditModal({ event, onSave, onDelete, onClose }: EventEditModalProp
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {/* Title */}
           <div>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500 }}>
+            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500, color: '#374151' }}>
               Titel
             </label>
             <input
@@ -493,14 +493,15 @@ function EventEditModal({ event, onSave, onDelete, onClose }: EventEditModalProp
                 padding: '10px 12px',
                 border: '1px solid #e0e0e0',
                 borderRadius: '8px',
-                fontSize: '14px'
+                fontSize: '14px',
+                color: '#1f2937'
               }}
             />
           </div>
 
           {/* Description */}
           <div>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500 }}>
+            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500, color: '#374151' }}>
               Beschreibung
             </label>
             <textarea
@@ -513,7 +514,8 @@ function EventEditModal({ event, onSave, onDelete, onClose }: EventEditModalProp
                 border: '1px solid #e0e0e0',
                 borderRadius: '8px',
                 fontSize: '14px',
-                fontFamily: 'inherit'
+                fontFamily: 'inherit',
+                color: '#1f2937'
               }}
             />
           </div>
@@ -521,7 +523,7 @@ function EventEditModal({ event, onSave, onDelete, onClose }: EventEditModalProp
           {/* Date & Time */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <div>
-              <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500 }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500, color: '#374151' }}>
                 Datum
               </label>
               <input
@@ -533,12 +535,13 @@ function EventEditModal({ event, onSave, onDelete, onClose }: EventEditModalProp
                   padding: '10px 12px',
                   border: '1px solid #e0e0e0',
                   borderRadius: '8px',
-                  fontSize: '14px'
+                  fontSize: '14px',
+                  color: '#1f2937'
                 }}
               />
             </div>
             <div>
-              <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500 }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500, color: '#374151' }}>
                 Uhrzeit
               </label>
               <input
@@ -550,7 +553,8 @@ function EventEditModal({ event, onSave, onDelete, onClose }: EventEditModalProp
                   padding: '10px 12px',
                   border: '1px solid #e0e0e0',
                   borderRadius: '8px',
-                  fontSize: '14px'
+                  fontSize: '14px',
+                  color: '#1f2937'
                 }}
               />
             </div>
@@ -558,7 +562,7 @@ function EventEditModal({ event, onSave, onDelete, onClose }: EventEditModalProp
 
           {/* Severity */}
           <div>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500 }}>
+            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500, color: '#374151' }}>
               Priorität
             </label>
             <select
@@ -570,7 +574,8 @@ function EventEditModal({ event, onSave, onDelete, onClose }: EventEditModalProp
                 border: '1px solid #e0e0e0',
                 borderRadius: '8px',
                 fontSize: '14px',
-                background: 'white'
+                background: 'white',
+                color: '#1f2937'
               }}
             >
               <option value="info">Info (🟢)</option>
@@ -581,7 +586,7 @@ function EventEditModal({ event, onSave, onDelete, onClose }: EventEditModalProp
 
           {/* Notes */}
           <div>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500 }}>
+            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500, color: '#374151' }}>
               Notizen
             </label>
             <textarea
@@ -595,7 +600,8 @@ function EventEditModal({ event, onSave, onDelete, onClose }: EventEditModalProp
                 border: '1px solid #e0e0e0',
                 borderRadius: '8px',
                 fontSize: '14px',
-                fontFamily: 'inherit'
+                fontFamily: 'inherit',
+                color: '#1f2937'
               }}
             />
           </div>
@@ -644,11 +650,11 @@ function EventEditModal({ event, onSave, onDelete, onClose }: EventEditModalProp
           {showDeleteConfirm && (
             <div style={{
               padding: '12px',
-              background: '#fee',
+              background: '#fee2e2',
               borderRadius: '8px',
-              border: '1px solid #fcc'
+              border: '1px solid #fca5a5'
             }}>
-              <p style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#c33' }}>
+              <p style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#991b1b', fontWeight: 600 }}>
                 Event wirklich löschen?
               </p>
               <div style={{ display: 'flex', gap: '8px' }}>
