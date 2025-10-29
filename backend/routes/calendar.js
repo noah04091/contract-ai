@@ -342,24 +342,6 @@ router.get("/upcoming", verifyToken, async (req, res) => {
     const future = new Date();
     future.setDate(future.getDate() + parseInt(days));
 
-    console.log(`📅 [Upcoming] Fetching events for user ${userId}`);
-    console.log(`📅 [Upcoming] Date range: ${now.toISOString()} to ${future.toISOString()}`);
-
-    // First, check ALL events for this user
-    const allEvents = await req.db.collection("contract_events")
-      .find({ userId })
-      .limit(5)
-      .toArray();
-    console.log(`📅 [Upcoming] Total events for user: ${allEvents.length}`);
-    if (allEvents.length > 0) {
-      console.log(`📅 [Upcoming] Sample event:`, {
-        type: allEvents[0].type,
-        date: allEvents[0].date,
-        status: allEvents[0].status,
-        severity: allEvents[0].severity
-      });
-    }
-
     const events = await req.db.collection("contract_events")
       .aggregate([
         {
@@ -384,8 +366,6 @@ router.get("/upcoming", verifyToken, async (req, res) => {
       ])
       .toArray();
 
-    console.log(`📅 [Upcoming] Filtered events: ${events.length}`);
-    
     res.json({
       success: true,
       events: events.map(e => ({
