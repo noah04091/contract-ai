@@ -144,7 +144,7 @@ test.describe('Calendar View - Spezifische Monate', () => {
     // await page.click('button:has-text("Feb")');
 
     // Prüfe, dass 29. Februar existiert
-    const feb29Tile = await page.$('abbr[aria-label*="29. Februar 2024"]');
+    // const feb29Tile = await page.$('abbr[aria-label*="29. Februar 2024"]');
 
     // In Schaltjahren sollte 29. Februar existieren
     // expect(feb29Tile).not.toBeNull();
