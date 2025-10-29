@@ -509,24 +509,31 @@ router.post("/quick-action", verifyToken, async (req, res) => {
         // Dismiss event
         await req.db.collection("contract_events").updateOne(
           { _id: event._id },
-          { 
-            $set: { 
+          {
+            $set: {
               status: "dismissed",
               dismissedAt: new Date(),
               updatedAt: new Date()
-            } 
+            }
           }
         );
-        
-        result = { 
-          message: "Erinnerung verworfen" 
+
+        result = {
+          message: "Erinnerung verworfen"
         };
         break;
-        
+
+      case "edit":
+        // Open contract edit page
+        result = {
+          redirect: `/contracts?view=${event.contractId}`
+        };
+        break;
+
       default:
-        return res.status(400).json({ 
-          success: false, 
-          error: "Unbekannte Aktion" 
+        return res.status(400).json({
+          success: false,
+          error: "Unbekannte Aktion"
         });
     }
     
