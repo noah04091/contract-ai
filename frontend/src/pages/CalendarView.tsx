@@ -280,7 +280,7 @@ function QuickActionsModal({ event, onAction, onClose, onEdit }: QuickActionsPro
           )}
 
           <div className="modal-actions-grid">
-            {/* NEU: Vertrag anzeigen Button - prominent platziert */}
+            {/* Vertrag anzeigen Button - prominent platziert */}
             <motion.button
               className="action-btn-premium view-contract"
               onClick={handleViewContract}
@@ -293,23 +293,8 @@ function QuickActionsModal({ event, onAction, onClose, onEdit }: QuickActionsPro
               <ArrowRight size={16} className="action-arrow" />
             </motion.button>
 
-            {/* ✨ NEU: Event bearbeiten Button */}
-            <motion.button
-              className="action-btn-premium secondary"
-              onClick={() => {
-                onEdit(event);
-                onClose();
-              }}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              style={{ gridColumn: '1 / -1' }}
-            >
-              <Edit3 size={18} />
-              <span>Event bearbeiten</span>
-            </motion.button>
-
             {event.metadata?.suggestedAction === "cancel" && (
-              <motion.button 
+              <motion.button
                 className="action-btn-premium primary"
                 onClick={handleCancel}
                 whileHover={{ scale: 1.02 }}
@@ -321,8 +306,9 @@ function QuickActionsModal({ event, onAction, onClose, onEdit }: QuickActionsPro
                 <ArrowRight size={16} className="action-arrow" />
               </motion.button>
             )}
-            
-            <motion.button 
+
+            {/* Kleine Buttons unten */}
+            <motion.button
               className="action-btn-premium secondary"
               onClick={handleCompare}
               whileHover={{ scale: 1.02 }}
@@ -331,8 +317,8 @@ function QuickActionsModal({ event, onAction, onClose, onEdit }: QuickActionsPro
               <TrendingUp size={18} />
               <span>Vergleichen</span>
             </motion.button>
-            
-            <motion.button 
+
+            <motion.button
               className="action-btn-premium secondary"
               onClick={handleOptimize}
               whileHover={{ scale: 1.02 }}
@@ -341,8 +327,8 @@ function QuickActionsModal({ event, onAction, onClose, onEdit }: QuickActionsPro
               <RefreshCw size={18} />
               <span>Optimieren</span>
             </motion.button>
-            
-            <motion.button 
+
+            <motion.button
               className="action-btn-premium ghost"
               onClick={() => onAction("snooze", event.id)}
               whileHover={{ scale: 1.02 }}
@@ -350,6 +336,20 @@ function QuickActionsModal({ event, onAction, onClose, onEdit }: QuickActionsPro
             >
               <BellOff size={18} />
               <span>Später</span>
+            </motion.button>
+
+            {/* ✨ Event bearbeiten Button - jetzt bei den kleinen Buttons */}
+            <motion.button
+              className="action-btn-premium ghost"
+              onClick={() => {
+                onEdit(event);
+                onClose();
+              }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <Edit3 size={18} />
+              <span>Bearbeiten</span>
             </motion.button>
           </div>
         </div>
@@ -434,22 +434,36 @@ function EventEditModal({ event, onSave, onDelete, onClose }: EventEditModalProp
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       onClick={onClose}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        background: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 9999,
+        padding: '20px'
+      }}
     >
       <motion.div
         className="event-edit-modal"
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
+        initial={{ scale: 0.9, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.9, opacity: 0, y: 20 }}
         onClick={(e) => e.stopPropagation()}
         style={{
           background: 'white',
           borderRadius: '16px',
           padding: '24px',
           maxWidth: '500px',
-          width: '90%',
-          maxHeight: '80vh',
+          width: '100%',
+          maxHeight: '90vh',
           overflowY: 'auto',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+          boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+          position: 'relative'
         }}
       >
         {/* Header */}
