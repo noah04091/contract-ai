@@ -1,6 +1,7 @@
 // 📁 backend/routes/calendar.js
 const express = require("express");
 const { ObjectId } = require("mongodb");
+const jwt = require("jsonwebtoken");
 const verifyToken = require("../middleware/verifyToken");
 const { generateEventsForContract, regenerateAllEvents } = require("../services/calendarEvents");
 const { generateICSFeed } = require("../utils/icsGenerator");

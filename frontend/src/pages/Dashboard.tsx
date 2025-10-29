@@ -13,6 +13,7 @@ import {
   PieChart, Pie, Cell, Line, Area, AreaChart
 } from 'recharts';
 import DashboardSkeleton from "../components/DashboardSkeleton"; // 💀 Skeleton Loader
+import UpcomingDeadlinesWidget from "../components/UpcomingDeadlinesWidget"; // 📅 Upcoming Deadlines Widget
 
 interface Contract {
   _id: string;
@@ -984,6 +985,9 @@ export default function Dashboard() {
             )}
           </div>
         </div>
+
+        {/* 📅 Upcoming Deadlines Widget */}
+        <UpcomingDeadlinesWidget />
 
         {/* Priority Verträge Sektion */}
         <div className={styles.priorityContractsSection}>
