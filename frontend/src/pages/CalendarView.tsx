@@ -1943,7 +1943,7 @@ export default function CalendarPage() {
               </div>
             ) : (
               <>
-                <Calendar 
+                <Calendar
                   onChange={handleDateClick}
                   value={selectedDate || new Date()}
                   tileClassName={tileClassName}
@@ -1953,6 +1953,7 @@ export default function CalendarPage() {
                   showNeighboringMonth={false}
                   minDetail="year"
                   locale="de-DE"
+                  calendarType="iso8601"
                   className="calendar-premium"
                 />
                 
