@@ -2659,3 +2659,32 @@
   visibility: visible !important;
   opacity: 1 !important;
 }
+
+/* ===== Outlook-Style: Nachbar-Monats-Tage dezenter darstellen ===== */
+.calendar-premium .react-calendar__month-view__days__day--neighboringMonth {
+  opacity: 0.45 !important;       /* "blass", aber gut lesbar */
+  filter: saturate(80%);          /* leicht weniger Sättigung */
+}
+
+/* Bei Hover/Fokus weiterhin nutzbar & erkennbar */
+.calendar-premium .react-calendar__month-view__days__day--neighboringMonth:where(:hover, :focus) {
+  opacity: 0.65 !important;
+}
+
+/* Heute hervorheben */
+.calendar-premium .react-calendar__tile--now {
+  outline: 2px solid rgba(0,0,0,0.15);
+  border-radius: 10px;
+}
+
+/* Optional: Event-Badges in Nachbar-Tagen bleiben sichtbar */
+.calendar-premium .react-calendar__month-view__days__day--neighboringMonth .event-badge {
+  opacity: 0.9 !important;        /* Events weiterhin gut sichtbar */
+}
+
+/* Optional (Zugänglichkeit): bei hohem Kontrast nicht zu transparent werden */
+@media (prefers-contrast: more) {
+  .calendar-premium .react-calendar__month-view__days__day--neighboringMonth {
+    opacity: 0.6 !important;
+  }
+}
