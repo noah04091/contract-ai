@@ -1058,6 +1058,18 @@ const connectDB = async () => {
         }
       });
 
+      // 🧠 NEU: Smart Status Updater (täglich um 1 Uhr nachts)
+      cron.schedule("0 1 * * *", async () => {
+        console.log("🧠 Starte Smart Status Update für alle Verträge...");
+        try {
+          const { updateContractStatuses } = require("./services/smartStatusUpdater");
+          const result = await updateContractStatuses(db);
+          console.log(`✅ Smart Status Update abgeschlossen:`, result);
+        } catch (error) {
+          console.error("❌ Smart Status Update Cron Error:", error);
+        }
+      });
+
       // ✅ CALENDAR: Event-Generierung für neue Verträge (täglich um 2 Uhr nachts)
       cron.schedule("0 2 * * *", async () => {
         console.log("🔄 Starte tägliche Event-Generierung für neue Verträge...");

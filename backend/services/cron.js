@@ -2,7 +2,8 @@
 const { MongoClient, ObjectId } = require("mongodb");
 require("dotenv").config();
 const sendEmail = require("./mailer");
-const { checkAndSendNotifications } = require("./calendarNotifier"); // NEU
+const { checkAndSendNotifications } = require("./calendarNotifier");
+const { updateContractStatuses } = require("./smartStatusUpdater"); // 🧠 NEU
 
 const client = new MongoClient(process.env.MONGO_URI);
 
@@ -52,11 +53,11 @@ async function checkCalendarEventsAndSendNotifications() {
   try {
     await client.connect();
     const db = client.db("contract_ai");
-    
+
     console.log("📅 Prüfe Calendar Events für Benachrichtigungen...");
     const sentCount = await checkAndSendNotifications(db);
     console.log(`✅ ${sentCount} Calendar-Benachrichtigungen versendet`);
-    
+
   } catch (err) {
     console.error("❌ Fehler im Calendar-Cronjob:", err);
   } finally {
@@ -64,8 +65,26 @@ async function checkCalendarEventsAndSendNotifications() {
   }
 }
 
-// EXPORTIERE BEIDE FUNKTIONEN
+// 🧠 NEU: Smart Status Updater - Täglich ausführen
+async function updateAllContractStatuses() {
+  try {
+    await client.connect();
+    const db = client.db("contract_ai");
+
+    console.log("🧠 Smart Status Update wird ausgeführt...");
+    const result = await updateContractStatuses(db);
+    console.log(`✅ Status-Update abgeschlossen:`, result);
+
+  } catch (err) {
+    console.error("❌ Fehler beim Smart Status Update:", err);
+  } finally {
+    await client.close();
+  }
+}
+
+// EXPORTIERE ALLE FUNKTIONEN
 module.exports = {
   checkContractsAndSendReminders,
-  checkCalendarEventsAndSendNotifications
+  checkCalendarEventsAndSendNotifications,
+  updateAllContractStatuses // 🧠 NEU
 };

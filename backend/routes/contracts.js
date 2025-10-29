@@ -3077,4 +3077,84 @@ router.post("/email-import", verifyEmailImportKey, async (req, res) => {
   }
 });
 
+// 🧠 PATCH /api/contracts/:id/status - Manueller Status-Update
+router.patch("/:id/status", verifyToken, async (req, res) => {
+  try {
+    const contractId = req.params.id;
+    const userId = req.user.userId;
+    const { status, notes } = req.body;
+
+    if (!status) {
+      return res.status(400).json({
+        success: false,
+        message: "Status ist erforderlich"
+      });
+    }
+
+    // Validiere Status
+    const validStatuses = ['aktiv', 'bald_ablaufend', 'abgelaufen', 'gekündigt'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Ungültiger Status. Erlaubt: ${validStatuses.join(', ')}`
+      });
+    }
+
+    const { updateContractStatus } = require("../services/smartStatusUpdater");
+    const result = await updateContractStatus(
+      req.db,
+      contractId,
+      userId,
+      status,
+      'manual',
+      notes || 'Manuell durch User geändert'
+    );
+
+    res.json({
+      success: true,
+      message: `Status erfolgreich aktualisiert: ${result.oldStatus} → ${result.newStatus}`,
+      oldStatus: result.oldStatus,
+      newStatus: result.newStatus
+    });
+
+  } catch (error) {
+    console.error("❌ Fehler beim Status-Update:", error);
+    res.status(500).json({
+      success: false,
+      message: "Fehler beim Aktualisieren des Status",
+      error: error.message
+    });
+  }
+});
+
+// 📊 GET /api/contracts/:id/status-history - Status-Historie abrufen
+router.get("/:id/status-history", verifyToken, async (req, res) => {
+  try {
+    const contractId = req.params.id;
+    const userId = req.user.userId;
+
+    const { getStatusHistory } = require("../services/smartStatusUpdater");
+    const history = await getStatusHistory(req.db, contractId, userId);
+
+    res.json({
+      success: true,
+      history: history.map(h => ({
+        oldStatus: h.oldStatus,
+        newStatus: h.newStatus,
+        reason: h.reason,
+        notes: h.notes,
+        timestamp: h.timestamp
+      }))
+    });
+
+  } catch (error) {
+    console.error("❌ Fehler beim Abrufen der Status-History:", error);
+    res.status(500).json({
+      success: false,
+      message: "Fehler beim Abrufen der Status-Historie",
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;

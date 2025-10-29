@@ -4,6 +4,7 @@ const { ObjectId } = require("mongodb");
 const verifyToken = require("../middleware/verifyToken");
 const nodemailer = require("nodemailer");
 const generateEmailTemplate = require("../utils/emailTemplate");
+const { logStatusChange } = require("../services/smartStatusUpdater"); // 🧠 NEU
 
 const router = express.Router();
 
@@ -67,24 +68,40 @@ router.post("/send", verifyToken, async (req, res) => {
         // Update status
         await req.db.collection("cancellations").updateOne(
           { _id: cancellationId },
-          { 
-            $set: { 
+          {
+            $set: {
               status: "sent",
               sentAt: new Date()
-            } 
+            }
           }
         );
-        
-        // Update contract status
+
+        // 🧠 Update contract status mit Smart Status Tracking
+        const contract = await req.db.collection("contracts").findOne({ _id: new ObjectId(contractId) });
+        const oldStatus = contract?.status || 'aktiv';
+
         await req.db.collection("contracts").updateOne(
           { _id: new ObjectId(contractId) },
-          { 
-            $set: { 
-              status: "Gekündigt",
+          {
+            $set: {
+              status: "gekündigt", // 🎯 Lowercase für Konsistenz
+              statusUpdatedAt: new Date(),
               cancellationId: cancellationId,
-              cancellationDate: new Date()
-            } 
+              cancellationDate: new Date(),
+              updatedAt: new Date()
+            }
           }
+        );
+
+        // 📊 Status-History speichern
+        await logStatusChange(
+          req.db.collection("contract_status_history"),
+          new ObjectId(contractId),
+          userId,
+          oldStatus,
+          "gekündigt",
+          "cancellation",
+          `Vertrag über Contract AI Portal gekündigt und E-Mail an ${provider || 'Anbieter'} versendet`
         );
         
         // Update related calendar events
