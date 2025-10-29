@@ -46,12 +46,15 @@ export default function UpcomingDeadlinesWidget({ className }: UpcomingDeadlines
         params: { days: 30 }
       });
 
-      if (response.data.success) {
-        setEvents(response.data.events || []);
+      if (response.data.success && Array.isArray(response.data.events)) {
+        setEvents(response.data.events);
+      } else {
+        setEvents([]);
       }
     } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
       console.error('Error fetching upcoming deadlines:', err);
-      setError('Fehler beim Laden der Termine');
+      setError(null); // Stille Fehler - zeige Widget nicht an
+      setEvents([]);
     } finally {
       setIsLoading(false);
     }
