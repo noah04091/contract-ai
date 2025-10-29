@@ -1962,7 +1962,7 @@ export default function CalendarPage() {
                   view={view}
                   onViewChange={({ view: newView }) => setView(newView as "month" | "year")}
                   showNeighboringMonth={true}
-                  showFixedNumberOfWeeks={true}
+                  showFixedNumberOfWeeks={false}
                   minDetail="year"
                   calendarType="iso8601"
                   formatShortWeekday={formatShortWeekday}
