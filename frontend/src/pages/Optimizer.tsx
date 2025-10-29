@@ -1,7 +1,7 @@
 // 📁 src/pages/Optimizer.tsx - APPLE DESIGN REVOLUTION ✨
 import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import ReactDOM from "react-dom";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Upload,
@@ -591,8 +591,9 @@ const isValidPdfText = (text: string | undefined): boolean => {
 };
 
 export default function Optimizer() {
-  // ✅ Navigation
+  // ✅ Navigation & Params
   const navigate = useNavigate();
+  const { contractId } = useParams<{ contractId?: string }>();
 
   // ✅ ORIGINAL: Core states
   const [file, setFile] = useState<File | null>(null);
@@ -603,6 +604,7 @@ export default function Optimizer() {
   const [dragActive, setDragActive] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [contractScore, setContractScore] = useState<ContractHealthScore | null>(null);
+  const [preloadedContractName, setPreloadedContractName] = useState<string | null>(null);
   
   // ✅ ORIGINAL: Export & Pitch States + Portal Refs
   const [showExportMenu, setShowExportMenu] = useState(false);
@@ -670,6 +672,41 @@ export default function Optimizer() {
     };
     fetchPremiumStatus();
   }, []);
+
+  // ✅ NEW: Load contract from URL parameter
+  useEffect(() => {
+    if (contractId && isPremium) {
+      const loadContractFromUrl = async () => {
+        try {
+          const res = await fetch(`/api/contracts/${contractId}`, {
+            credentials: "include"
+          });
+
+          if (!res.ok) throw new Error("Vertrag konnte nicht geladen werden");
+
+          const data = await res.json();
+          const contract = data.contract || data;
+
+          setPreloadedContractName(contract.name || contract.fileName || "Unbekannter Vertrag");
+          setToast({
+            message: `Vertrag "${contract.name || contract.fileName}" wurde vorgeladen`,
+            type: "success"
+          });
+
+          // Auto-dismiss toast after 3 seconds
+          setTimeout(() => setToast(null), 3000);
+        } catch (error) {
+          console.error("❌ Error loading contract from URL:", error);
+          setToast({
+            message: "Vertrag konnte nicht geladen werden",
+            type: "error"
+          });
+        }
+      };
+
+      loadContractFromUrl();
+    }
+  }, [contractId, isPremium]);
 
   // ✅ ORIGINAL: Contract Score Update
   useEffect(() => {
@@ -1418,8 +1455,33 @@ Konfidenz: ${opt.confidence}%\n`
           {!isPremium && (
             <UnifiedPremiumNotice
               featureName="Der Vertragsoptimierer"
-              
+
             />
+          )}
+
+          {/* Preloaded Contract Indicator */}
+          {preloadedContractName && (
+            <motion.div
+              style={{
+                background: 'rgba(0, 113, 227, 0.1)',
+                border: '1px solid rgba(0, 113, 227, 0.3)',
+                borderRadius: '12px',
+                padding: '1rem 1.5rem',
+                marginBottom: '1.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.8rem'
+              }}
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Lightbulb size={20} style={{ color: '#0071e3', flexShrink: 0 }} />
+              <div style={{ flex: 1 }}>
+                <strong style={{ color: '#0071e3' }}>Vertrag vorgeladen:</strong>
+                <span style={{ color: '#1d1d1f', marginLeft: '0.5rem' }}>{preloadedContractName}</span>
+              </div>
+            </motion.div>
           )}
 
           {/* Upload Area */}

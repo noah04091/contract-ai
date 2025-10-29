@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet";
 import {
@@ -320,6 +321,7 @@ const DifferenceView: React.FC<{
 
 // Main Enhanced Compare Component
 export default function EnhancedCompare() {
+  const [searchParams] = useSearchParams();
   const [file1, setFile1] = useState<File | null>(null);
   const [file2, setFile2] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
@@ -333,6 +335,7 @@ export default function EnhancedCompare() {
     differences: true,
     recommendation: true
   });
+  const [preloadedContractName, setPreloadedContractName] = useState<string | null>(null);
 
   const resultRef = useRef<HTMLDivElement>(null);
   const file1InputRef = useRef<HTMLInputElement>(null);
@@ -348,24 +351,24 @@ export default function EnhancedCompare() {
     const fetchStatus = async () => {
       try {
         console.log("🚀 Starting auth check...");
-        
+
         const res = await fetch("/api/auth/me", {
           credentials: "include",
           signal: controller.signal,
         });
 
         console.log("📡 Response status:", res.status, res.statusText);
-        
+
         if (!res.ok) throw new Error("Nicht authentifiziert");
 
         const data = await res.json();
-        
+
         // 🎯 ULTRA-DETAILED DEBUG:
         console.log("🔍 RAW API DATA:", JSON.stringify(data, null, 2));
-        
+
         const userData = data.user || data;
         console.log("👤 USER DATA:", JSON.stringify(userData, null, 2));
-        
+
         const tests = {
           "userData.isPremium": userData.isPremium,
           "userData.subscriptionPlan": userData.subscriptionPlan,
@@ -374,21 +377,21 @@ export default function EnhancedCompare() {
           "data.user?.subscriptionPlan": data.user?.subscriptionPlan,
           "data.isPremium": data.isPremium
         };
-        
+
         console.log("🧪 ALL TESTS:", tests);
-        
+
         // Simple logic:
-        const hasPremium = 
-          userData.isPremium === true || 
-          userData.subscriptionPlan === "premium" || 
+        const hasPremium =
+          userData.isPremium === true ||
+          userData.subscriptionPlan === "premium" ||
           userData.subscriptionPlan === "business" ||
           userData.subscriptionActive === true;
-        
+
         console.log("🎯 FINAL PREMIUM STATUS:", hasPremium);
         console.log("🎯 SETTING isPremium to:", hasPremium);
-        
+
         setIsPremium(hasPremium);
-        
+
       } catch (err) {
         if (err instanceof DOMException && err.name === "AbortError") return;
         console.error("❌ Auth check error:", err);
@@ -399,6 +402,42 @@ export default function EnhancedCompare() {
     fetchStatus();
     return () => controller.abort();
   }, []);
+
+  // ✅ NEW: Load contract from URL parameter
+  useEffect(() => {
+    const contractId = searchParams.get('contractId');
+    if (contractId && isPremium) {
+      const loadContractFromUrl = async () => {
+        try {
+          const res = await fetch(`/api/contracts/${contractId}`, {
+            credentials: "include"
+          });
+
+          if (!res.ok) throw new Error("Vertrag konnte nicht geladen werden");
+
+          const data = await res.json();
+          const contract = data.contract || data;
+
+          setPreloadedContractName(contract.name || contract.fileName || "Unbekannter Vertrag");
+          setNotification({
+            message: `Vertrag "${contract.name || contract.fileName}" wurde vorgeladen`,
+            type: "success"
+          });
+
+          // Auto-dismiss notification after 3 seconds
+          setTimeout(() => setNotification(null), 3000);
+        } catch (error) {
+          console.error("❌ Error loading contract from URL:", error);
+          setNotification({
+            message: "Vertrag konnte nicht geladen werden",
+            type: "error"
+          });
+        }
+      };
+
+      loadContractFromUrl();
+    }
+  }, [searchParams, isPremium]);
 
   useEffect(() => {
     if (result && resultRef.current) {
@@ -577,7 +616,31 @@ export default function EnhancedCompare() {
             onProfileChange={setUserProfile}
           />
 
-          <motion.div 
+          {preloadedContractName && (
+            <motion.div
+              style={{
+                background: 'rgba(0, 113, 227, 0.1)',
+                border: '1px solid rgba(0, 113, 227, 0.3)',
+                borderRadius: '12px',
+                padding: '1rem 1.5rem',
+                marginBottom: '2rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.8rem'
+              }}
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Info size={20} style={{ color: '#0071e3', flexShrink: 0 }} />
+              <div style={{ flex: 1 }}>
+                <strong style={{ color: '#0071e3' }}>Vertrag vorgeladen:</strong>
+                <span style={{ color: '#1d1d1f', marginLeft: '0.5rem' }}>{preloadedContractName}</span>
+              </div>
+            </motion.div>
+          )}
+
+          <motion.div
             style={{ marginBottom: '3rem' }}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
