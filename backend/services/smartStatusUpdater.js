@@ -1,6 +1,6 @@
 // 🧠 services/smartStatusUpdater.js - Intelligenter Status-Lifecycle Manager
 const { ObjectId } = require("mongodb");
-const { sendStatusChangeNotification } = require("./statusNotifier"); // 📧 NEU
+const { queueNotification } = require("./notificationQueue"); // 📬 Queue statt direkter Versand
 
 /**
  * 🎯 SMART STATUS UPDATE - Automatische Vertragsstatus-Verwaltung
@@ -74,11 +74,18 @@ async function updateContractStatuses(db) {
           oldStatus, 'aktiv', 'auto_renewal',
           `Automatisch verlängert bis ${newExpiryDate.toLocaleDateString('de-DE')}`);
 
-        // 📧 Notification senden
-        await sendStatusChangeNotification(db, contract._id, contract.userId, oldStatus, 'aktiv', {
-          autoRenewed: true,
-          oldExpiryDate: expiryDate,
-          newExpiryDate: newExpiryDate
+        // 📬 Notification in Queue
+        await queueNotification(db, {
+          userId: contract.userId,
+          contractId: contract._id,
+          type: 'auto_renewed',
+          oldStatus: oldStatus,
+          newStatus: 'aktiv',
+          metadata: {
+            oldExpiryDate: expiryDate,
+            newExpiryDate: newExpiryDate,
+            autoRenewMonths: autoRenewMonths
+          }
         });
 
         updated.auto_renewed++;
@@ -122,10 +129,17 @@ async function updateContractStatuses(db) {
           oldStatus, newStatus, 'automatic',
           `Status automatisch aktualisiert (${daysUntilExpiry} Tage bis Ablauf)`);
 
-        // 📧 Notification senden
-        await sendStatusChangeNotification(db, contract._id, contract.userId, oldStatus, newStatus, {
-          daysLeft: daysUntilExpiry,
-          expiryDate: expiryDate
+        // 📬 Notification in Queue
+        await queueNotification(db, {
+          userId: contract.userId,
+          contractId: contract._id,
+          type: newStatus, // 'bald_ablaufend' oder 'abgelaufen'
+          oldStatus: oldStatus,
+          newStatus: newStatus,
+          metadata: {
+            daysLeft: daysUntilExpiry,
+            expiryDate: expiryDate
+          }
         });
       }
     }

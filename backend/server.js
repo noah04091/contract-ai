@@ -1070,6 +1070,18 @@ const connectDB = async () => {
         }
       });
 
+      // 📤 NEU: Notification Queue Sender (täglich um 9 Uhr morgens)
+      cron.schedule("0 9 * * *", async () => {
+        console.log("📤 Starte Notification Queue Verarbeitung...");
+        try {
+          const { processNotificationQueue } = require("./services/notificationSender");
+          const result = await processNotificationQueue(db);
+          console.log(`✅ Notification Queue abgeschlossen:`, result);
+        } catch (error) {
+          console.error("❌ Notification Queue Cron Error:", error);
+        }
+      });
+
       // ✅ CALENDAR: Event-Generierung für neue Verträge (täglich um 2 Uhr nachts)
       cron.schedule("0 2 * * *", async () => {
         console.log("🔄 Starte tägliche Event-Generierung für neue Verträge...");
