@@ -509,8 +509,12 @@ export default function CalendarView() {
 
   // Modern calendar tile styling
   const tileClassName = ({ date }: { date: Date }) => {
-    const dateString = date.toISOString().split('T')[0];
-    const dayEvents = filteredEvents.filter(e => 
+    // ✅ FIX: Use local date format to avoid timezone shift
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const dateString = `${year}-${month}-${day}`;
+    const dayEvents = filteredEvents.filter(e =>
       e.date && e.date.split('T')[0] === dateString
     );
     
@@ -525,8 +529,12 @@ export default function CalendarView() {
   };
 
   const tileContent = ({ date }: { date: Date }) => {
-    const dateString = date.toISOString().split('T')[0];
-    const dayEvents = filteredEvents.filter(e => 
+    // ✅ FIX: Use local date format to avoid timezone shift
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const dateString = `${year}-${month}-${day}`;
+    const dayEvents = filteredEvents.filter(e =>
       e.date && e.date.split('T')[0] === dateString
     );
     
@@ -561,9 +569,13 @@ export default function CalendarView() {
   const handleDateClick = (value: Value) => {
     if (value instanceof Date) {
       setSelectedDate(value);
-      
-      const dateString = value.toISOString().split('T')[0];
-      const dayEvents = filteredEvents.filter(e => 
+
+      // ✅ FIX: Use local date format to avoid timezone shift
+      const year = value.getFullYear();
+      const month = String(value.getMonth() + 1).padStart(2, '0');
+      const day = String(value.getDate()).padStart(2, '0');
+      const dateString = `${year}-${month}-${day}`;
+      const dayEvents = filteredEvents.filter(e =>
         e.date && e.date.split('T')[0] === dateString
       );
       
