@@ -302,9 +302,10 @@ interface StatsDetailModalProps {
   onClose: () => void;
   title: string;
   events: CalendarEvent[];
+  onEventClick: (event: CalendarEvent) => void;
 }
 
-function StatsDetailModal({ isOpen, onClose, title, events }: StatsDetailModalProps) {
+function StatsDetailModal({ isOpen, onClose, title, events, onEventClick }: StatsDetailModalProps) {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {
@@ -551,6 +552,8 @@ function StatsDetailModal({ isOpen, onClose, title, events }: StatsDetailModalPr
                           {/* Event Card */}
                           <motion.div
                             whileHover={{ scale: 1.02, x: 5 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => onEventClick(event)}
                             style={{
                               background: '#ffffff',
                               border: `1px solid ${getSeverityColor(event.severity)}30`,
@@ -1474,6 +1477,11 @@ export default function CalendarPage() {
           onClose={() => setShowStatsModal(false)}
           title={getStatsModalTitle()}
           events={getFilteredStatsEvents()}
+          onEventClick={(event) => {
+            setShowStatsModal(false);
+            setSelectedEvent(event);
+            setShowQuickActions(true);
+          }}
         />
       </div>
     </>
