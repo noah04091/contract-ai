@@ -96,9 +96,10 @@ interface QuickActionsProps {
   onClose: () => void;
   onEdit: (event: CalendarEvent) => void;
   navigate: (path: string) => void;
+  onOpenSnooze: (event: CalendarEvent) => void;
 }
 
-function QuickActionsModal({ event, onAction, onClose, onEdit, navigate }: QuickActionsProps) {
+function QuickActionsModal({ event, onAction, onClose, onEdit, navigate, onOpenSnooze }: QuickActionsProps) {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {
@@ -300,7 +301,7 @@ function QuickActionsModal({ event, onAction, onClose, onEdit, navigate }: Quick
 
             <motion.button
               className="action-btn-premium ghost"
-              onClick={() => onAction("snooze", event.id)}
+              onClick={() => { onOpenSnooze(event); onClose(); }}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
@@ -606,6 +607,177 @@ function EventEditModal({ event, onSave, onDelete, onClose }: EventEditModalProp
               </div>
             </div>
           )}
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+// Snooze Dialog Modal Component
+interface SnoozeDialogProps {
+  event: CalendarEvent;
+  onSnooze: (days: number | "disable") => void;
+  onClose: () => void;
+}
+
+function SnoozeDialog({ event, onSnooze, onClose }: SnoozeDialogProps) {
+  const [showCustomInput, setShowCustomInput] = useState(false);
+  const [customDays, setCustomDays] = useState("");
+
+  const handlePresetSnooze = (days: number) => {
+    onSnooze(days);
+    onClose();
+  };
+
+  const handleDisableNotification = () => {
+    onSnooze("disable");
+    onClose();
+  };
+
+  const handleCustomSnooze = () => {
+    const days = parseInt(customDays);
+    if (days > 0) {
+      onSnooze(days);
+      onClose();
+    } else {
+      alert("Bitte geben Sie eine gültige Anzahl von Tagen ein.");
+    }
+  };
+
+  return (
+    <motion.div
+      className="modal-overlay"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+      style={{ zIndex: 1003 }}
+    >
+      <motion.div
+        className="event-edit-modal"
+        initial={{ scale: 0.9, y: 20 }}
+        animate={{ scale: 1, y: 0 }}
+        exit={{ scale: 0.9, y: 20 }}
+        onClick={(e) => e.stopPropagation()}
+        style={{ maxWidth: "500px" }}
+      >
+        <div className="modal-header">
+          <h3>
+            <BellOff size={20} style={{ marginRight: "8px" }} />
+            Erinnerung verschieben
+          </h3>
+          <button className="modal-close-btn" onClick={onClose}>
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="modal-body">
+          <p style={{ marginBottom: "20px", color: "#6b7280", fontSize: "14px" }}>
+            Wann möchten Sie an "{event.title}" erinnert werden?
+          </p>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "12px", marginBottom: "16px" }}>
+            <motion.button
+              className="action-btn-premium secondary"
+              onClick={() => handlePresetSnooze(7)}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "16px" }}
+            >
+              <Clock size={20} />
+              <span style={{ marginTop: "8px", fontWeight: "600" }}>7 Tage</span>
+            </motion.button>
+
+            <motion.button
+              className="action-btn-premium secondary"
+              onClick={() => handlePresetSnooze(14)}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "16px" }}
+            >
+              <Clock size={20} />
+              <span style={{ marginTop: "8px", fontWeight: "600" }}>14 Tage</span>
+            </motion.button>
+
+            <motion.button
+              className="action-btn-premium secondary"
+              onClick={() => handlePresetSnooze(30)}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "16px" }}
+            >
+              <Clock size={20} />
+              <span style={{ marginTop: "8px", fontWeight: "600" }}>1 Monat</span>
+            </motion.button>
+
+            <motion.button
+              className="action-btn-premium secondary"
+              onClick={() => handlePresetSnooze(365)}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "16px" }}
+            >
+              <Clock size={20} />
+              <span style={{ marginTop: "8px", fontWeight: "600" }}>1 Jahr</span>
+            </motion.button>
+          </div>
+
+          <motion.button
+            className="action-btn-premium secondary"
+            onClick={() => setShowCustomInput(!showCustomInput)}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            style={{ width: "100%", marginBottom: "12px", justifyContent: "center" }}
+          >
+            <Edit3 size={18} />
+            <span>Individuell festlegen</span>
+          </motion.button>
+
+          {showCustomInput && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              style={{ marginBottom: "12px" }}
+            >
+              <div className="form-group">
+                <label>Anzahl Tage</label>
+                <div style={{ display: "flex", gap: "8px" }}>
+                  <input
+                    type="number"
+                    min="1"
+                    value={customDays}
+                    onChange={(e) => setCustomDays(e.target.value)}
+                    placeholder="z.B. 15"
+                    style={{ flex: 1 }}
+                  />
+                  <button
+                    className="btn-primary"
+                    onClick={handleCustomSnooze}
+                    style={{ padding: "10px 20px", whiteSpace: "nowrap" }}
+                  >
+                    Bestätigen
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          <motion.button
+            className="action-btn-premium ghost"
+            onClick={handleDisableNotification}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            style={{
+              width: "100%",
+              justifyContent: "center",
+              borderColor: "rgba(239, 68, 68, 0.3)",
+              color: "#ef4444"
+            }}
+          >
+            <BellOff size={18} />
+            <span>Benachrichtigung ausschalten</span>
+          </motion.button>
         </div>
       </motion.div>
     </motion.div>
@@ -1019,6 +1191,8 @@ export default function CalendarPage() {
   const [selectedStatFilter, setSelectedStatFilter] = useState<"total" | "critical" | "thisMonth" | "notified">("total");
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
+  const [showSnoozeDialog, setShowSnoozeDialog] = useState(false);
+  const [snoozeEvent, setSnoozeEvent] = useState<CalendarEvent | null>(null);
 
   const EVENTS_PER_PAGE = isMobile ? 3 : 5;
 
@@ -1128,6 +1302,48 @@ export default function CalendarPage() {
     } catch (error) {
       console.error("Fehler beim Löschen:", error);
       alert("Event konnte nicht gelöscht werden.");
+    }
+  };
+
+  const handleSnooze = async (days: number | "disable") => {
+    if (!snoozeEvent) return;
+
+    try {
+      const token = localStorage.getItem("token") ||
+                    localStorage.getItem("authToken") ||
+                    localStorage.getItem("jwtToken") ||
+                    localStorage.getItem("accessToken") ||
+                    sessionStorage.getItem("token") ||
+                    sessionStorage.getItem("authToken");
+
+      if (days === "disable") {
+        // Benachrichtigung ausschalten = Event als dismissed markieren
+        await axios.patch(`/api/calendar/events/${snoozeEvent.id}`, {
+          status: "dismissed"
+        }, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        alert("Benachrichtigung wurde ausgeschaltet.");
+      } else {
+        // Snooze mit Tagen
+        await axios.post("/api/calendar/quick-action", {
+          eventId: snoozeEvent.id,
+          action: "snooze",
+          data: { days }
+        }, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        alert(`Erinnerung um ${days} Tage verschoben.`);
+      }
+
+      await fetchEvents();
+      setShowSnoozeDialog(false);
+      setSnoozeEvent(null);
+      setShowQuickActions(false);
+      setSelectedEvent(null);
+    } catch (error) {
+      console.error("Fehler beim Snoozen:", error);
+      alert("Aktion konnte nicht ausgeführt werden.");
     }
   };
 
@@ -1838,6 +2054,10 @@ export default function CalendarPage() {
               onAction={handleQuickAction}
               onEdit={handleEditEvent}
               navigate={navigate}
+              onOpenSnooze={(event) => {
+                setSnoozeEvent(event);
+                setShowSnoozeDialog(true);
+              }}
               onClose={() => {
                 setShowQuickActions(false);
                 setSelectedEvent(null);
@@ -1854,6 +2074,17 @@ export default function CalendarPage() {
             onClose={() => {
               setShowEditModal(false);
               setEditingEvent(null);
+            }}
+          />
+        )}
+
+        {showSnoozeDialog && snoozeEvent && (
+          <SnoozeDialog
+            event={snoozeEvent}
+            onSnooze={handleSnooze}
+            onClose={() => {
+              setShowSnoozeDialog(false);
+              setSnoozeEvent(null);
             }}
           />
         )}
