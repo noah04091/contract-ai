@@ -1091,7 +1091,7 @@ export default function CalendarPage() {
                     sessionStorage.getItem("token") ||
                     sessionStorage.getItem("authToken");
 
-      await axios.put(`/api/calendar/events/${updatedEvent.id}`, updatedEvent, {
+      await axios.patch(`/api/calendar/events/${updatedEvent.id}`, updatedEvent, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
