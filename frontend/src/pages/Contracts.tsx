@@ -80,6 +80,8 @@ interface Contract {
     completedAt: string | null;
     expiresAt: string | null;
   };
+  // 🔔 Reminder Settings (NEU)
+  reminderDays?: number[];
 }
 
 // ✅ KORRIGIERT: Interface für Mehrfach-Upload
@@ -3434,7 +3436,7 @@ export default function Contracts() {
         <ReminderSettingsModal
           contractId={reminderSettingsModal.contract._id}
           contractName={reminderSettingsModal.contract.name}
-          currentReminderDays={(reminderSettingsModal.contract as any).reminderDays || []}
+          currentReminderDays={reminderSettingsModal.contract.reminderDays || []}
           expiryDate={reminderSettingsModal.contract.expiryDate}
           onClose={() => setReminderSettingsModal({ show: false, contract: null })}
           onSuccess={(reminderDays) => {

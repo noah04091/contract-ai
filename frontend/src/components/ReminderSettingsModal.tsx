@@ -109,9 +109,12 @@ export default function ReminderSettingsModal({
         onSuccess?.(reminderDays);
         onClose();
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error saving reminder settings:', err);
-      setError(err.response?.data?.error || 'Fehler beim Speichern der Einstellungen');
+      const errorMessage = axios.isAxiosError(err) && err.response?.data?.error
+        ? err.response.data.error
+        : 'Fehler beim Speichern der Einstellungen';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
