@@ -66,6 +66,9 @@ interface CalendarEvent {
   type: string;
   severity: "info" | "warning" | "critical";
   status: string;
+  confidence?: number; // ✅ Confidence score (0-100)
+  dataSource?: string; // ✅ 'extracted', 'calculated', 'estimated'
+  isEstimated?: boolean; // ✅ Flag for low confidence data
   metadata?: {
     provider?: ProviderType;
     noticePeriodDays?: number;
@@ -253,6 +256,27 @@ function QuickActionsModal({ event, onAction, onClose, onEdit }: QuickActionsPro
               </div>
             </div>
           </div>
+
+          {/* ⚠️ Confidence Warning */}
+          {event.isEstimated && (event.confidence || 0) < 60 && (
+            <div style={{
+              background: 'linear-gradient(135deg, #fef3c7, #fde68a)',
+              border: '1px solid #f59e0b',
+              borderRadius: '12px',
+              padding: '12px 16px',
+              marginTop: '16px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px'
+            }}>
+              <AlertTriangle size={20} style={{ color: '#f59e0b', flexShrink: 0 }} />
+              <div style={{ fontSize: '13px', lineHeight: '1.4', color: '#92400e' }}>
+                <strong>Geschätztes Datum</strong>
+                <br />
+                Dieses Datum wurde automatisch geschätzt (Konfidenz: {event.confidence}%). Bitte prüfen Sie den Originalvertrag!
+              </div>
+            </div>
+          )}
 
           <div className="modal-actions-grid">
             {/* NEU: Vertrag anzeigen Button - prominent platziert */}
@@ -1329,9 +1353,29 @@ export default function CalendarView() {
                         <div className="event-type-badge">
                           {getEventTypeIcon(event.type)}
                         </div>
-                        <span className={`days-badge-premium ${daysInfo.urgent ? 'urgent' : ''}`}>
-                          {daysInfo.text}
-                        </span>
+                        <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                          {event.isEstimated && (event.confidence || 0) < 60 && (
+                            <span
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                padding: '2px 6px',
+                                background: '#fef3c7',
+                                color: '#92400e',
+                                borderRadius: '4px',
+                                fontSize: '11px',
+                                fontWeight: 600,
+                                gap: '2px'
+                              }}
+                              title={`Geschätzt - Konfidenz: ${event.confidence}%`}
+                            >
+                              ⚠️ Geschätzt
+                            </span>
+                          )}
+                          <span className={`days-badge-premium ${daysInfo.urgent ? 'urgent' : ''}`}>
+                            {daysInfo.text}
+                          </span>
+                        </div>
                       </div>
                       <h4 className="event-card-title">{formattedName}</h4>
                       <p className="event-card-description">{event.title}</p>
