@@ -4,9 +4,10 @@ import { Helmet } from "react-helmet";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  AlertCircle,
-  X,
+import { 
+  AlertCircle, 
+  Clock, 
+  X, 
   ChevronRight,
   ChevronLeft,
   Zap,
@@ -17,19 +18,14 @@ import {
   RefreshCw,
   Filter,
   Calendar as CalendarIconLucide,
-  Clock,
   Shield,
   AlertTriangle,
   Info,
   Sparkles,
   Target,
   BarChart3,
-  ArrowRight,
-  Edit3,
-  Save,
-  Trash2
+  ArrowRight
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../styles/AppleCalendar.css";
 
@@ -65,10 +61,6 @@ interface CalendarEvent {
   type: string;
   severity: "info" | "warning" | "critical";
   status: string;
-  confidence?: number; // ✅ Confidence score (0-100)
-  dataSource?: string; // ✅ 'extracted', 'calculated', 'estimated'
-  isEstimated?: boolean; // ✅ Flag for low confidence data
-  notes?: string; // ✅ User notes
   metadata?: {
     provider?: ProviderType;
     noticePeriodDays?: number;
@@ -77,7 +69,6 @@ interface CalendarEvent {
     daysLeft?: number;
     daysUntilWindow?: number;
     contractName?: string;
-    notes?: string;
   };
   provider?: ProviderType;
   amount?: number;
@@ -97,11 +88,9 @@ interface QuickActionsProps {
   event: CalendarEvent;
   onAction: (action: string, eventId: string) => void;
   onClose: () => void;
-  onEdit: (event: CalendarEvent) => void;
 }
 
-function QuickActionsModal({ event, onAction, onClose, onEdit }: QuickActionsProps) {
-  const navigate = useNavigate();
+function QuickActionsModal({ event, onAction, onClose }: QuickActionsProps) {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {
@@ -110,25 +99,10 @@ function QuickActionsModal({ event, onAction, onClose, onEdit }: QuickActionsPro
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const handleCancel = () => {
-    navigate(`/cancel/${event.contractId}`);
-    onClose();
-  };
-
-  const handleCompare = () => {
-    navigate(`/better-contracts?contractId=${event.contractId}`);
-    onClose();
-  };
-
-  const handleOptimize = () => {
-    navigate(`/optimizer?contractId=${event.contractId}`);
-    onClose();
-  };
-
-  // NEU: Vertrag anzeigen Handler
+  // Vertrag anzeigen Handler
   const handleViewContract = () => {
     // Navigate to contracts page with contract details open
-    navigate(`/contracts?view=${event.contractId}`);
+    window.location.href = `/contracts?view=${event.contractId}`;
     onClose();
   };
 
@@ -258,30 +232,9 @@ function QuickActionsModal({ event, onAction, onClose, onEdit }: QuickActionsPro
             </div>
           </div>
 
-          {/* ⚠️ Confidence Warning */}
-          {event.isEstimated && (event.confidence || 0) < 60 && (
-            <div style={{
-              background: 'linear-gradient(135deg, #fef3c7, #fde68a)',
-              border: '1px solid #f59e0b',
-              borderRadius: '12px',
-              padding: '12px 16px',
-              marginTop: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px'
-            }}>
-              <AlertTriangle size={20} style={{ color: '#f59e0b', flexShrink: 0 }} />
-              <div style={{ fontSize: '13px', lineHeight: '1.4', color: '#92400e' }}>
-                <strong>Geschätztes Datum</strong>
-                <br />
-                Dieses Datum wurde automatisch geschätzt (Konfidenz: {event.confidence}%). Bitte prüfen Sie den Originalvertrag!
-              </div>
-            </div>
-          )}
-
           <div className="modal-actions-grid">
             {/* Vertrag anzeigen Button - prominent platziert */}
-            <motion.button
+            <motion.button 
               className="action-btn-premium view-contract"
               onClick={handleViewContract}
               whileHover={{ scale: 1.02 }}
@@ -294,9 +247,9 @@ function QuickActionsModal({ event, onAction, onClose, onEdit }: QuickActionsPro
             </motion.button>
 
             {event.metadata?.suggestedAction === "cancel" && (
-              <motion.button
+              <motion.button 
                 className="action-btn-premium primary"
-                onClick={handleCancel}
+                onClick={() => onAction("cancel", event.id)}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 style={{ gridColumn: '1 / -1' }}
@@ -306,29 +259,28 @@ function QuickActionsModal({ event, onAction, onClose, onEdit }: QuickActionsPro
                 <ArrowRight size={16} className="action-arrow" />
               </motion.button>
             )}
-
-            {/* Kleine Buttons unten */}
-            <motion.button
+            
+            <motion.button 
               className="action-btn-premium secondary"
-              onClick={handleCompare}
+              onClick={() => onAction("compare", event.id)}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
               <TrendingUp size={18} />
               <span>Vergleichen</span>
             </motion.button>
-
-            <motion.button
+            
+            <motion.button 
               className="action-btn-premium secondary"
-              onClick={handleOptimize}
+              onClick={() => onAction("optimize", event.id)}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
             >
               <RefreshCw size={18} />
               <span>Optimieren</span>
             </motion.button>
-
-            <motion.button
+            
+            <motion.button 
               className="action-btn-premium ghost"
               onClick={() => onAction("snooze", event.id)}
               whileHover={{ scale: 1.02 }}
@@ -337,24 +289,358 @@ function QuickActionsModal({ event, onAction, onClose, onEdit }: QuickActionsPro
               <BellOff size={18} />
               <span>Später</span>
             </motion.button>
-
-            {/* ✨ Event bearbeiten Button - jetzt bei den kleinen Buttons */}
-            <motion.button
-              className="action-btn-premium ghost"
-              onClick={() => {
-                onEdit(event);
-                onClose();
-              }}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <Edit3 size={18} />
-              <span>Bearbeiten</span>
-            </motion.button>
           </div>
         </div>
       </motion.div>
     </motion.div>
+  );
+}
+
+// Stats Detail Modal - Timeline View
+interface StatsDetailModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  events: CalendarEvent[];
+}
+
+function StatsDetailModal({ isOpen, onClose, title, events }: StatsDetailModalProps) {
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  if (!isOpen) return null;
+
+  // Sort events by date (ascending)
+  const sortedEvents = [...events].sort((a, b) =>
+    new Date(a.date).getTime() - new Date(b.date).getTime()
+  );
+
+  // Group events by month
+  const eventsByMonth = sortedEvents.reduce((acc, event) => {
+    const eventDate = new Date(event.date);
+    const monthKey = `${eventDate.getFullYear()}-${String(eventDate.getMonth() + 1).padStart(2, '0')}`;
+    const monthLabel = eventDate.toLocaleDateString('de-DE', {
+      month: 'long',
+      year: 'numeric'
+    });
+
+    if (!acc[monthKey]) {
+      acc[monthKey] = {
+        label: monthLabel,
+        events: []
+      };
+    }
+
+    acc[monthKey].events.push(event);
+    return acc;
+  }, {} as Record<string, { label: string; events: CalendarEvent[] }>);
+
+  const getSeverityIcon = (severity: string) => {
+    switch (severity) {
+      case 'critical':
+        return <AlertCircle size={18} style={{ color: '#ef4444' }} />;
+      case 'warning':
+        return <AlertTriangle size={18} style={{ color: '#f59e0b' }} />;
+      default:
+        return <Info size={18} style={{ color: '#3b82f6' }} />;
+    }
+  };
+
+  const getSeverityColor = (severity: string) => {
+    switch (severity) {
+      case 'critical': return '#ef4444';
+      case 'warning': return '#f59e0b';
+      default: return '#3b82f6';
+    }
+  };
+
+  const formatEventDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('de-DE', {
+      weekday: 'short',
+      day: '2-digit',
+      month: 'short'
+    });
+  };
+
+  const getDaysUntil = (dateString: string) => {
+    const now = new Date();
+    const eventDate = new Date(dateString);
+    const diffTime = eventDate.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return 'Heute';
+    if (diffDays === 1) return 'Morgen';
+    if (diffDays < 0) return `Vor ${Math.abs(diffDays)} Tagen`;
+    return `In ${diffDays} Tagen`;
+  };
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        className="quick-actions-overlay"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+        style={{
+          padding: isMobile ? '20px' : '40px',
+          zIndex: 1001
+        }}
+      >
+        <motion.div
+          className="stats-detail-modal premium-modal"
+          initial={{ scale: 0.95, opacity: 0, y: 20 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.95, opacity: 0, y: 20 }}
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            maxWidth: isMobile ? '100%' : '800px',
+            width: isMobile ? 'calc(100% - 40px)' : '800px',
+            maxHeight: isMobile ? '90vh' : '80vh',
+            overflowY: 'auto',
+            background: '#ffffff',
+            borderRadius: '20px',
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.15)',
+            padding: 0
+          }}
+        >
+          {/* Header */}
+          <div style={{
+            padding: isMobile ? '20px' : '30px',
+            borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
+            background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(147, 51, 234, 0.05))',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            position: 'sticky',
+            top: 0,
+            zIndex: 10
+          }}>
+            <div>
+              <h2 style={{
+                margin: 0,
+                fontSize: isMobile ? '20px' : '24px',
+                fontWeight: '700',
+                color: '#1f2937'
+              }}>
+                {title}
+              </h2>
+              <p style={{
+                margin: '5px 0 0 0',
+                fontSize: '14px',
+                color: '#6b7280'
+              }}>
+                {events.length} {events.length === 1 ? 'Ereignis' : 'Ereignisse'}
+              </p>
+            </div>
+            <motion.button
+              onClick={onClose}
+              whileHover={{ scale: 1.1, rotate: 90 }}
+              whileTap={{ scale: 0.9 }}
+              style={{
+                background: 'rgba(0, 0, 0, 0.05)',
+                border: 'none',
+                borderRadius: '50%',
+                width: '36px',
+                height: '36px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              <X size={20} />
+            </motion.button>
+          </div>
+
+          {/* Timeline Content */}
+          <div style={{
+            padding: isMobile ? '20px' : '30px'
+          }}>
+            {events.length === 0 ? (
+              <div style={{
+                textAlign: 'center',
+                padding: '60px 20px',
+                color: '#9ca3af'
+              }}>
+                <Sparkles size={48} style={{ marginBottom: '16px', opacity: 0.5 }} />
+                <p style={{ fontSize: '16px', fontWeight: '500' }}>
+                  Keine Ereignisse gefunden
+                </p>
+              </div>
+            ) : (
+              <div className="timeline-container">
+                {Object.entries(eventsByMonth).map(([monthKey, { label, events: monthEvents }]) => (
+                  <div key={monthKey} style={{ marginBottom: '40px' }}>
+                    {/* Month Header */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      marginBottom: '20px'
+                    }}>
+                      <div style={{
+                        flex: 1,
+                        height: '1px',
+                        background: 'linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.1), transparent)'
+                      }} />
+                      <h3 style={{
+                        margin: 0,
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        color: '#6b7280',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.05em'
+                      }}>
+                        {label}
+                      </h3>
+                      <div style={{
+                        flex: 1,
+                        height: '1px',
+                        background: 'linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.1), transparent)'
+                      }} />
+                    </div>
+
+                    {/* Events in this month */}
+                    <div style={{ position: 'relative', paddingLeft: isMobile ? '20px' : '30px' }}>
+                      {/* Timeline line */}
+                      <div style={{
+                        position: 'absolute',
+                        left: '0',
+                        top: '20px',
+                        bottom: '20px',
+                        width: '2px',
+                        background: 'linear-gradient(180deg, rgba(59, 130, 246, 0.3), rgba(147, 51, 234, 0.3))'
+                      }} />
+
+                      {monthEvents.map((event, index) => (
+                        <motion.div
+                          key={event.id}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: index * 0.05 }}
+                          style={{
+                            position: 'relative',
+                            marginBottom: '20px',
+                            paddingLeft: '25px'
+                          }}
+                        >
+                          {/* Timeline dot */}
+                          <div style={{
+                            position: 'absolute',
+                            left: '-7px',
+                            top: '20px',
+                            width: '16px',
+                            height: '16px',
+                            borderRadius: '50%',
+                            background: getSeverityColor(event.severity),
+                            border: '3px solid #ffffff',
+                            boxShadow: `0 0 0 1px ${getSeverityColor(event.severity)}40`,
+                            zIndex: 1
+                          }} />
+
+                          {/* Event Card */}
+                          <motion.div
+                            whileHover={{ scale: 1.02, x: 5 }}
+                            style={{
+                              background: '#ffffff',
+                              border: `1px solid ${getSeverityColor(event.severity)}30`,
+                              borderRadius: '12px',
+                              padding: isMobile ? '16px' : '20px',
+                              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s'
+                            }}
+                          >
+                            {/* Header */}
+                            <div style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'flex-start',
+                              gap: '12px',
+                              marginBottom: '12px'
+                            }}>
+                              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                {getSeverityIcon(event.severity)}
+                                <span style={{
+                                  fontSize: '14px',
+                                  fontWeight: '600',
+                                  color: getSeverityColor(event.severity),
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.05em'
+                                }}>
+                                  {event.severity === 'critical' ? 'Kritisch' :
+                                   event.severity === 'warning' ? 'Warnung' : 'Info'}
+                                </span>
+                              </div>
+                              <span style={{
+                                fontSize: '12px',
+                                fontWeight: '500',
+                                color: '#9ca3af',
+                                whiteSpace: 'nowrap'
+                              }}>
+                                {getDaysUntil(event.date)}
+                              </span>
+                            </div>
+
+                            {/* Title */}
+                            <h4 style={{
+                              margin: '0 0 8px 0',
+                              fontSize: isMobile ? '15px' : '16px',
+                              fontWeight: '600',
+                              color: '#1f2937'
+                            }}>
+                              {event.contractName}
+                            </h4>
+
+                            {/* Description */}
+                            <p style={{
+                              margin: '0 0 12px 0',
+                              fontSize: '14px',
+                              color: '#6b7280',
+                              lineHeight: '1.5'
+                            }}>
+                              {event.title}
+                            </p>
+
+                            {/* Footer */}
+                            <div style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '12px',
+                              fontSize: '13px',
+                              color: '#9ca3af'
+                            }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <CalendarIconLucide size={14} />
+                                {formatEventDate(event.date)}
+                              </div>
+                              {event.metadata?.provider && (
+                                <>
+                                  <span>•</span>
+                                  <span>{getProviderName(event.metadata.provider)}</span>
+                                </>
+                              )}
+                            </div>
+                          </motion.div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   );
 }
 
@@ -388,318 +674,7 @@ const getEventTypeIcon = (type: string) => {
   }
 };
 
-// ✨ EVENT EDIT MODAL - Vollständige Event-Bearbeitung
-interface EventEditModalProps {
-  event: CalendarEvent;
-  onSave: (updatedEvent: Partial<CalendarEvent>) => void;
-  onDelete: (eventId: string) => void;
-  onClose: () => void;
-}
-
-function EventEditModal({ event, onSave, onDelete, onClose }: EventEditModalProps) {
-  const [title, setTitle] = useState(event.title);
-  const [description, setDescription] = useState(event.description);
-  const [date, setDate] = useState(event.date.split('T')[0]); // YYYY-MM-DD
-  const [time, setTime] = useState(() => {
-    const d = new Date(event.date);
-    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-  });
-  const [severity, setSeverity] = useState(event.severity);
-  const [notes, setNotes] = useState(event.notes || event.metadata?.notes || '');
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-
-  const handleSave = () => {
-    const [hours, minutes] = time.split(':');
-    const updatedDate = new Date(date);
-    updatedDate.setHours(parseInt(hours), parseInt(minutes));
-
-    onSave({
-      id: event.id,
-      title,
-      description,
-      date: updatedDate.toISOString(),
-      severity,
-      notes
-    });
-  };
-
-  const handleDelete = () => {
-    onDelete(event.id);
-  };
-
-  return (
-    <motion.div
-      className="modal-overlay"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      onClick={onClose}
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: 'rgba(0, 0, 0, 0.5)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 9999,
-        padding: '20px'
-      }}
-    >
-      <motion.div
-        className="event-edit-modal"
-        initial={{ scale: 0.9, opacity: 0, y: 20 }}
-        animate={{ scale: 1, opacity: 1, y: 0 }}
-        exit={{ scale: 0.9, opacity: 0, y: 20 }}
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          background: 'white',
-          borderRadius: '16px',
-          padding: '24px',
-          maxWidth: '500px',
-          width: '100%',
-          maxHeight: '90vh',
-          overflowY: 'auto',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
-          position: 'relative'
-        }}
-      >
-        {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-          <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 600, color: '#1f2937' }}>
-            <Edit3 size={20} style={{ display: 'inline', marginRight: '8px', verticalAlign: 'middle' }} />
-            Event bearbeiten
-          </h2>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: '#6b7280' }}>
-            <X size={24} />
-          </button>
-        </div>
-
-        {/* Form */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {/* Title */}
-          <div>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500, color: '#374151' }}>
-              Titel
-            </label>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                border: '1px solid #e0e0e0',
-                borderRadius: '8px',
-                fontSize: '14px',
-                color: '#1f2937'
-              }}
-            />
-          </div>
-
-          {/* Description */}
-          <div>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500, color: '#374151' }}>
-              Beschreibung
-            </label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={3}
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                border: '1px solid #e0e0e0',
-                borderRadius: '8px',
-                fontSize: '14px',
-                fontFamily: 'inherit',
-                color: '#1f2937'
-              }}
-            />
-          </div>
-
-          {/* Date & Time */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-            <div>
-              <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500, color: '#374151' }}>
-                Datum
-              </label>
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  border: '1px solid #e0e0e0',
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  color: '#1f2937'
-                }}
-              />
-            </div>
-            <div>
-              <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500, color: '#374151' }}>
-                Uhrzeit
-              </label>
-              <input
-                type="time"
-                value={time}
-                onChange={(e) => setTime(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '10px 12px',
-                  border: '1px solid #e0e0e0',
-                  borderRadius: '8px',
-                  fontSize: '14px',
-                  color: '#1f2937'
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Severity */}
-          <div>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500, color: '#374151' }}>
-              Priorität
-            </label>
-            <select
-              value={severity}
-              onChange={(e) => setSeverity(e.target.value as "info" | "warning" | "critical")}
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                border: '1px solid #e0e0e0',
-                borderRadius: '8px',
-                fontSize: '14px',
-                background: 'white',
-                color: '#1f2937'
-              }}
-            >
-              <option value="info">Info (🟢)</option>
-              <option value="warning">Warnung (🟡)</option>
-              <option value="critical">Kritisch (🔴)</option>
-            </select>
-          </div>
-
-          {/* Notes */}
-          <div>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 500, color: '#374151' }}>
-              Notizen
-            </label>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={2}
-              placeholder="Persönliche Notizen..."
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                border: '1px solid #e0e0e0',
-                borderRadius: '8px',
-                fontSize: '14px',
-                fontFamily: 'inherit',
-                color: '#1f2937'
-              }}
-            />
-          </div>
-
-          {/* Actions */}
-          <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
-            <button
-              onClick={handleSave}
-              style={{
-                flex: 1,
-                padding: '12px',
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '14px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px'
-              }}
-            >
-              <Save size={16} />
-              Speichern
-            </button>
-            <button
-              onClick={() => setShowDeleteConfirm(true)}
-              style={{
-                padding: '12px',
-                background: '#fee',
-                color: '#c33',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '14px',
-                fontWeight: 600,
-                cursor: 'pointer'
-              }}
-            >
-              <Trash2 size={16} />
-            </button>
-          </div>
-
-          {/* Delete Confirmation */}
-          {showDeleteConfirm && (
-            <div style={{
-              padding: '12px',
-              background: '#fee2e2',
-              borderRadius: '8px',
-              border: '1px solid #fca5a5'
-            }}>
-              <p style={{ margin: '0 0 12px 0', fontSize: '14px', color: '#991b1b', fontWeight: 600 }}>
-                Event wirklich löschen?
-              </p>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button
-                  onClick={handleDelete}
-                  style={{
-                    flex: 1,
-                    padding: '8px',
-                    background: '#c33',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    cursor: 'pointer'
-                  }}
-                >
-                  Ja, löschen
-                </button>
-                <button
-                  onClick={() => setShowDeleteConfirm(false)}
-                  style={{
-                    flex: 1,
-                    padding: '8px',
-                    background: 'white',
-                    color: '#666',
-                    border: '1px solid #ddd',
-                    borderRadius: '6px',
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    cursor: 'pointer'
-                  }}
-                >
-                  Abbrechen
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      </motion.div>
-    </motion.div>
-  );
-}
-
-export default function CalendarView() {
+export default function CalendarPage() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [filteredEvents, setFilteredEvents] = useState<CalendarEvent[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -709,15 +684,14 @@ export default function CalendarView() {
   const [view, setView] = useState<"month" | "year">("month");
   const [filterSeverity, setFilterSeverity] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all");
-  const [filterProvider, setFilterProvider] = useState<string>("all"); // ✅ Provider filter
   const [showQuickActions, setShowQuickActions] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [urgentEventsPage, setUrgentEventsPage] = useState(0);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [isTablet, setIsTablet] = useState(window.innerWidth >= 768 && window.innerWidth < 1024);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
+  const [showStatsModal, setShowStatsModal] = useState(false);
+  const [selectedStatFilter, setSelectedStatFilter] = useState<"total" | "critical" | "thisMonth" | "notified">("total");
 
   const EVENTS_PER_PAGE = isMobile ? 3 : 5;
 
@@ -736,32 +710,23 @@ export default function CalendarView() {
     setError("");
     
     try {
-      const token = localStorage.getItem("token") || 
-                    localStorage.getItem("authToken") || 
-                    localStorage.getItem("jwtToken") ||
-                    localStorage.getItem("accessToken") ||
-                    sessionStorage.getItem("token") ||
-                    sessionStorage.getItem("authToken");
-      
-      const headers: Record<string, string> = {};
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.warn("Kein Token gefunden");
+        setError("Bitte melden Sie sich an.");
+        setLoading(false);
+        return;
       }
-      
-      // 🎯 Lade nur relevante Events: Heute + nächste 12 Monate
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const oneYearFromNow = new Date(today);
-      oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
 
       const response = await axios.get<ApiResponse<CalendarEvent>>("/api/calendar/events", {
-        headers,
-        withCredentials: true,
+        headers: { Authorization: `Bearer ${token}` },
         params: {
-          from: today.toISOString(),
-          to: oneYearFromNow.toISOString()
+          from: new Date().toISOString(),
+          to: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
         }
       });
+
+      console.log("Calendar Events Response:", response.data);
 
       if (response.data.success && response.data.events) {
         setEvents(response.data.events);
@@ -787,52 +752,26 @@ export default function CalendarView() {
   // Filter events
   useEffect(() => {
     let filtered = [...events];
-
-    // 🎯 Automatisch nur zukünftige Events anzeigen (kein Toggle nötig)
-    const now = new Date();
-    now.setHours(0, 0, 0, 0); // Start of today
-    filtered = filtered.filter(e => {
-      const eventDate = new Date(e.date);
-      eventDate.setHours(0, 0, 0, 0);
-      return eventDate >= now; // Only show today and future
-    });
-
+    
     if (filterSeverity !== "all") {
       filtered = filtered.filter(e => e.severity === filterSeverity);
     }
-
+    
     if (filterType !== "all") {
       filtered = filtered.filter(e => e.type === filterType);
     }
-
-    // Provider filter
-    if (filterProvider !== "all") {
-      filtered = filtered.filter(e => {
-        const providerName = getProviderName(e.provider || e.metadata?.provider);
-        return providerName.toLowerCase().includes(filterProvider.toLowerCase());
-      });
-    }
-
+    
     setFilteredEvents(filtered);
-  }, [events, filterSeverity, filterType, filterProvider]);
+  }, [events, filterSeverity, filterType]);
 
   // Regenerate all events
   const handleRegenerateEvents = async () => {
     setRefreshing(true);
     
     try {
-      const token = localStorage.getItem("token") || 
-                    localStorage.getItem("authToken") || 
-                    localStorage.getItem("jwtToken");
-      
-      const headers: Record<string, string> = {};
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
-      
+      const token = localStorage.getItem("token");
       await axios.post("/api/calendar/regenerate-all", {}, {
-        headers,
-        withCredentials: true
+        headers: { Authorization: `Bearer ${token}` }
       });
       
       await fetchEvents();
@@ -848,104 +787,31 @@ export default function CalendarView() {
   // Handle Quick Actions
   const handleQuickAction = async (action: string, eventId: string) => {
     try {
-      const token = localStorage.getItem("token") ||
-                    localStorage.getItem("authToken") ||
-                    localStorage.getItem("jwtToken");
+      const token = localStorage.getItem("token");
+      const response = await axios.post<ApiResponse<CalendarEvent>>("/api/calendar/quick-action", {
+        eventId,
+        action,
+        data: action === "snooze" ? { days: 7 } : {}
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
-      const headers: Record<string, string> = {};
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
-
-      if (action === "snooze") {
-        await axios.patch(`/api/calendar/events/${eventId}`, {
-          status: 'snoozed',
-          snoozeDays: 7
-        }, {
-          headers,
-          withCredentials: true
-        });
-
-        alert('Erinnerung um 7 Tage verschoben');
-        await fetchEvents();
-        setShowQuickActions(false);
-        setSelectedEvent(null);
-      } else if (action === "dismiss") {
-        await axios.patch(`/api/calendar/events/${eventId}`, {
-          status: 'dismissed'
-        }, {
-          headers,
-          withCredentials: true
-        });
-
-        alert('Erinnerung verworfen');
-        await fetchEvents();
-        setShowQuickActions(false);
-        setSelectedEvent(null);
+      if (response.data.success) {
+        if (response.data.result?.redirect) {
+          window.location.href = response.data.result.redirect;
+        } else {
+          await fetchEvents();
+          setShowQuickActions(false);
+          setSelectedEvent(null);
+          
+          if (response.data.result?.message) {
+            alert(response.data.result.message);
+          }
+        }
       }
     } catch (err) {
       console.error("Fehler bei Quick Action:", err);
       alert("Aktion konnte nicht ausgeführt werden.");
-    }
-  };
-
-  // Handle Event Save (Edit)
-  const handleEventSave = async (updatedEvent: Partial<CalendarEvent>) => {
-    try {
-      const token = localStorage.getItem("token") ||
-                    localStorage.getItem("authToken") ||
-                    localStorage.getItem("jwtToken");
-
-      const headers: Record<string, string> = {};
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
-
-      await axios.patch(`/api/calendar/events/${updatedEvent.id}`, {
-        title: updatedEvent.title,
-        description: updatedEvent.description,
-        date: updatedEvent.date,
-        severity: updatedEvent.severity,
-        notes: updatedEvent.notes
-      }, {
-        headers,
-        withCredentials: true
-      });
-
-      alert('Event erfolgreich aktualisiert!');
-      await fetchEvents();
-      setShowEditModal(false);
-      setEditingEvent(null);
-    } catch (err) {
-      console.error("Fehler beim Speichern des Events:", err);
-      alert("Event konnte nicht gespeichert werden.");
-    }
-  };
-
-  // Handle Event Delete
-  const handleEventDelete = async (eventId: string) => {
-    try {
-      const token = localStorage.getItem("token") ||
-                    localStorage.getItem("authToken") ||
-                    localStorage.getItem("jwtToken");
-
-      const headers: Record<string, string> = {};
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
-
-      await axios.delete(`/api/calendar/events/${eventId}`, {
-        headers,
-        withCredentials: true
-      });
-
-      alert('Event erfolgreich gelöscht!');
-      await fetchEvents();
-      setShowEditModal(false);
-      setEditingEvent(null);
-    } catch (err) {
-      console.error("Fehler beim Löschen des Events:", err);
-      alert("Event konnte nicht gelöscht werden.");
     }
   };
 
@@ -1066,12 +932,12 @@ export default function CalendarView() {
     const now = new Date();
     const thisMonth = filteredEvents.filter(e => {
       const eventDate = new Date(e.date);
-      return eventDate.getMonth() === now.getMonth() && 
+      return eventDate.getMonth() === now.getMonth() &&
              eventDate.getFullYear() === now.getFullYear();
     });
-    
+
     const overdue = filteredEvents.filter(e => new Date(e.date) < now);
-    
+
     return {
       total: events.length,
       critical: events.filter(e => e.severity === "critical").length,
@@ -1083,19 +949,47 @@ export default function CalendarView() {
 
   const stats = getStatistics();
 
-  // Get unique providers for filter dropdown
-  const getUniqueProviders = () => {
-    const providers = new Set<string>();
-    events.forEach(e => {
-      const providerName = getProviderName(e.provider || e.metadata?.provider);
-      if (providerName && providerName !== 'Unbekannt') {
-        providers.add(providerName);
-      }
-    });
-    return Array.from(providers).sort();
+  // Handle Stats Card Click - Open Modal with filtered events
+  const handleStatsCardClick = (filterType: "total" | "critical" | "thisMonth" | "notified") => {
+    setSelectedStatFilter(filterType);
+    setShowStatsModal(true);
   };
 
-  const uniqueProviders = getUniqueProviders();
+  // Get filtered events for stats modal
+  const getFilteredStatsEvents = () => {
+    const now = new Date();
+
+    switch (selectedStatFilter) {
+      case "critical":
+        return events.filter(e => e.severity === "critical");
+      case "thisMonth":
+        return events.filter(e => {
+          const eventDate = new Date(e.date);
+          return eventDate.getMonth() === now.getMonth() &&
+                 eventDate.getFullYear() === now.getFullYear();
+        });
+      case "notified":
+        return events.filter(e => e.status === "notified");
+      case "total":
+      default:
+        return events;
+    }
+  };
+
+  // Get title for stats modal
+  const getStatsModalTitle = () => {
+    switch (selectedStatFilter) {
+      case "critical":
+        return "Kritische Ereignisse";
+      case "thisMonth":
+        return "Ereignisse diesen Monat";
+      case "notified":
+        return "Benachrichtigte Ereignisse";
+      case "total":
+      default:
+        return "Alle Ereignisse";
+    }
+  };
 
   // Paginated urgent events
   const urgentEvents = getUpcomingCriticalEvents();
@@ -1161,8 +1055,8 @@ export default function CalendarView() {
               
               <div className="filter-group-premium">
                 <FileText size={16} />
-                <select
-                  value={filterType}
+                <select 
+                  value={filterType} 
                   onChange={(e) => setFilterType(e.target.value)}
                   className="filter-select-premium"
                 >
@@ -1174,25 +1068,8 @@ export default function CalendarView() {
                   <option value="REVIEW">Review</option>
                 </select>
               </div>
-
-              {/* ✅ Provider Filter */}
-              {uniqueProviders.length > 0 && (
-                <div className="filter-group-premium">
-                  <Shield size={16} />
-                  <select
-                    value={filterProvider}
-                    onChange={(e) => setFilterProvider(e.target.value)}
-                    className="filter-select-premium"
-                  >
-                    <option value="all">Alle Anbieter</option>
-                    {uniqueProviders.map(provider => (
-                      <option key={provider} value={provider}>{provider}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              <motion.button
+              
+              <motion.button 
                 className={`refresh-btn-premium ${refreshing ? 'refreshing' : ''}`}
                 onClick={handleRegenerateEvents}
                 disabled={refreshing}
@@ -1231,8 +1108,8 @@ export default function CalendarView() {
                 
                 <div className="mobile-filter-group">
                   <label>Ereignistyp</label>
-                  <select
-                    value={filterType}
+                  <select 
+                    value={filterType} 
                     onChange={(e) => setFilterType(e.target.value)}
                   >
                     <option value="all">Alle</option>
@@ -1243,24 +1120,8 @@ export default function CalendarView() {
                     <option value="REVIEW">Review</option>
                   </select>
                 </div>
-
-                {/* ✅ Provider Filter */}
-                {uniqueProviders.length > 0 && (
-                  <div className="mobile-filter-group">
-                    <label>Anbieter</label>
-                    <select
-                      value={filterProvider}
-                      onChange={(e) => setFilterProvider(e.target.value)}
-                    >
-                      <option value="all">Alle</option>
-                      {uniqueProviders.map(provider => (
-                        <option key={provider} value={provider}>{provider}</option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-
-                <button
+                
+                <button 
                   className="mobile-refresh-btn"
                   onClick={handleRegenerateEvents}
                   disabled={refreshing}
@@ -1283,9 +1144,12 @@ export default function CalendarView() {
             transition={{ delay: 0.1 }}
           >
             <div className="stats-grid-premium">
-              <motion.div 
+              <motion.div
                 className="stat-card-premium total"
                 whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => handleStatsCardClick("total")}
+                style={{ cursor: 'pointer' }}
               >
                 <div className="stat-icon-wrapper">
                   <BarChart3 size={24} />
@@ -1294,11 +1158,17 @@ export default function CalendarView() {
                   <div className="stat-value">{stats.total}</div>
                   <div className="stat-label">Ereignisse gesamt</div>
                 </div>
+                <div className="stat-card-arrow">
+                  <ArrowRight size={16} />
+                </div>
               </motion.div>
-              
-              <motion.div 
+
+              <motion.div
                 className="stat-card-premium critical"
                 whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => handleStatsCardClick("critical")}
+                style={{ cursor: 'pointer' }}
               >
                 <div className="stat-icon-wrapper">
                   <AlertCircle size={24} />
@@ -1307,11 +1177,17 @@ export default function CalendarView() {
                   <div className="stat-value">{stats.critical}</div>
                   <div className="stat-label">Kritisch</div>
                 </div>
+                <div className="stat-card-arrow">
+                  <ArrowRight size={16} />
+                </div>
               </motion.div>
-              
-              <motion.div 
+
+              <motion.div
                 className="stat-card-premium warning"
                 whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => handleStatsCardClick("thisMonth")}
+                style={{ cursor: 'pointer' }}
               >
                 <div className="stat-icon-wrapper">
                   <Clock size={24} />
@@ -1320,11 +1196,17 @@ export default function CalendarView() {
                   <div className="stat-value">{stats.thisMonth}</div>
                   <div className="stat-label">Diesen Monat</div>
                 </div>
+                <div className="stat-card-arrow">
+                  <ArrowRight size={16} />
+                </div>
               </motion.div>
-              
-              <motion.div 
+
+              <motion.div
                 className="stat-card-premium info"
                 whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => handleStatsCardClick("notified")}
+                style={{ cursor: 'pointer' }}
               >
                 <div className="stat-icon-wrapper">
                   <Bell size={24} />
@@ -1332,6 +1214,9 @@ export default function CalendarView() {
                 <div className="stat-content">
                   <div className="stat-value">{stats.notified}</div>
                   <div className="stat-label">Benachrichtigt</div>
+                </div>
+                <div className="stat-card-arrow">
+                  <ArrowRight size={16} />
                 </div>
               </motion.div>
             </div>
@@ -1445,29 +1330,9 @@ export default function CalendarView() {
                         <div className="event-type-badge">
                           {getEventTypeIcon(event.type)}
                         </div>
-                        <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                          {event.isEstimated && (event.confidence || 0) < 60 && (
-                            <span
-                              style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                padding: '2px 6px',
-                                background: '#fef3c7',
-                                color: '#92400e',
-                                borderRadius: '4px',
-                                fontSize: '11px',
-                                fontWeight: 600,
-                                gap: '2px'
-                              }}
-                              title={`Geschätzt - Konfidenz: ${event.confidence}%`}
-                            >
-                              ⚠️ Geschätzt
-                            </span>
-                          )}
-                          <span className={`days-badge-premium ${daysInfo.urgent ? 'urgent' : ''}`}>
-                            {daysInfo.text}
-                          </span>
-                        </div>
+                        <span className={`days-badge-premium ${daysInfo.urgent ? 'urgent' : ''}`}>
+                          {daysInfo.text}
+                        </span>
                       </div>
                       <h4 className="event-card-title">{formattedName}</h4>
                       <p className="event-card-description">{event.title}</p>
@@ -1577,28 +1442,21 @@ export default function CalendarView() {
             <QuickActionsModal
               event={selectedEvent}
               onAction={handleQuickAction}
-              onEdit={(event) => {
-                setEditingEvent(event);
-                setShowEditModal(true);
-              }}
               onClose={() => {
                 setShowQuickActions(false);
                 setSelectedEvent(null);
               }}
             />
           )}
-          {showEditModal && editingEvent && (
-            <EventEditModal
-              event={editingEvent}
-              onSave={handleEventSave}
-              onDelete={handleEventDelete}
-              onClose={() => {
-                setShowEditModal(false);
-                setEditingEvent(null);
-              }}
-            />
-          )}
         </AnimatePresence>
+
+        {/* Stats Detail Modal */}
+        <StatsDetailModal
+          isOpen={showStatsModal}
+          onClose={() => setShowStatsModal(false)}
+          title={getStatsModalTitle()}
+          events={getFilteredStatsEvents()}
+        />
       </div>
     </>
   );
