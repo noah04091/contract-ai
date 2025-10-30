@@ -1926,14 +1926,18 @@ export default function CalendarPage() {
             </div>
             
             {paginatedEvents.length > 0 ? (
-              <div className="urgent-events-grid">
+              <div className={`urgent-events-grid ${
+                paginatedEvents.length <= 3 ? 'event-density-low' :
+                paginatedEvents.length <= 5 ? 'event-density-medium' :
+                'event-density-high'
+              }`}>
                 {paginatedEvents.map((event, index) => {
                   const daysInfo = getDaysRemaining(event.date);
                   const formattedName = formatContractName(event.contractName);
-                  
+
                   return (
-                    <motion.div 
-                      key={event.id} 
+                    <motion.div
+                      key={event.id}
                       className={`event-card-premium severity-${event.severity}`}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
