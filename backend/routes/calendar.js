@@ -576,7 +576,7 @@ async function triggerCancellation(db, contractId, userId) {
     
     return {
       cancellationId: cancellation.insertedId,
-      redirect: `/cancel/${cancellation.insertedId}`
+      redirect: `/cancel/${contractId}`
     };
     
   } catch (error) {
