@@ -1693,23 +1693,19 @@ export default function CalendarPage() {
       </Helmet>
       
       <div className="calendar-page-premium">
-        {/* Premium Header */}
-        <motion.header 
-          className="calendar-header-premium"
+        {/* Page Title - Apple Style (outside box, centered) */}
+        <motion.div
+          className="calendar-page-title"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="header-main">
-            <div className="header-icon-wrapper">
-              <CalendarIconLucide size={32} />
-            </div>
-            <div className="header-text">
-              <h1>Intelligenter Vertragskalender</h1>
-              <p>Automatische Erinnerungen • 1-Klick-Kündigung • KI-Optimierung</p>
-            </div>
+          <div className="title-icon">
+            <CalendarIconLucide size={36} />
           </div>
-        </motion.header>
+          <h1>Intelligenter Vertragskalender</h1>
+          <p>Automatische Erinnerungen • 1-Klick-Kündigung • KI-Optimierung</p>
+        </motion.div>
 
         {/* Main Content Grid */}
         <div className={`calendar-grid-premium ${isMobile ? 'mobile' : isTablet ? 'tablet' : 'desktop'}`}>
