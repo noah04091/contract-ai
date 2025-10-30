@@ -1589,15 +1589,17 @@ export default function CalendarPage() {
     const now = new Date();
     const future = new Date();
     future.setDate(future.getDate() + 30);
-    
-    return filteredEvents
+
+    // WICHTIG: Verwende `events` statt `filteredEvents`
+    // "Dringende Ereignisse" sollen IMMER angezeigt werden, unabhängig von Filtern!
+    // Zeige ALLE Events in den nächsten 30 Tagen (critical, warning, info)
+    return events
       .filter(e => {
         const eventDate = new Date(e.date);
-        return eventDate >= now && 
-               eventDate <= future && 
-               (e.severity === "critical" || e.severity === "warning");
+        return eventDate >= now && eventDate <= future;
       })
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .slice(0, 10); // Maximal 10 Events anzeigen
   };
 
   const getDaysRemaining = (date: string) => {
