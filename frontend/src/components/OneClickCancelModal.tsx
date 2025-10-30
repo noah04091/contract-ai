@@ -596,15 +596,23 @@ ${formData.customerName}
             )}
 
             {step === "preview" && (
-              <motion.div 
+              <motion.div
                 className={styles.previewStep}
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
               >
                 <h3>Kündigungsschreiben - Vorschau</h3>
-                
+                <p className={styles.editHint}>
+                  💡 Sie können den Text noch bearbeiten, bevor Sie ihn versenden
+                </p>
+
                 <div className={styles.letterPreview}>
-                  <pre>{cancellationLetter}</pre>
+                  <textarea
+                    value={cancellationLetter}
+                    onChange={(e) => setCancellationLetter(e.target.value)}
+                    className={styles.editablePreview}
+                    rows={25}
+                  />
                 </div>
 
                 {error && (
