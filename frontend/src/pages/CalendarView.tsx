@@ -1274,11 +1274,9 @@ export default function CalendarPage() {
   const [filterSeverity, setFilterSeverity] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all");
   const [showQuickActions, setShowQuickActions] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
   const [urgentEventsPage, setUrgentEventsPage] = useState(0);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [isTablet, setIsTablet] = useState(window.innerWidth >= 768 && window.innerWidth < 1024);
-  const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showStatsModal, setShowStatsModal] = useState(false);
   const [selectedStatFilter, setSelectedStatFilter] = useState<"total" | "critical" | "thisMonth" | "notified">("total");
   const [showEditModal, setShowEditModal] = useState(false);
@@ -1455,31 +1453,6 @@ export default function CalendarPage() {
   }, [events, filterSeverity, filterType]);
 
   // Regenerate all events
-  const handleRegenerateEvents = async () => {
-    setRefreshing(true);
-
-    try {
-      const token = localStorage.getItem("token") ||
-                    localStorage.getItem("authToken") ||
-                    localStorage.getItem("jwtToken") ||
-                    localStorage.getItem("accessToken") ||
-                    sessionStorage.getItem("token") ||
-                    sessionStorage.getItem("authToken");
-
-      await axios.post("/api/calendar/regenerate-all", {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      await fetchEvents();
-      alert("Events wurden erfolgreich regeneriert!");
-    } catch (err) {
-      console.error("Fehler beim Regenerieren der Events:", err);
-      alert("Events konnten nicht regeneriert werden.");
-    } finally {
-      setRefreshing(false);
-    }
-  };
-
   // Handle Quick Actions
   const handleQuickAction = async (action: string, eventId: string) => {
     try {
@@ -1727,125 +1700,16 @@ export default function CalendarPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="header-content">
-            <div className="header-main">
-              <div className="header-icon-wrapper">
-                <CalendarIconLucide size={32} />
-              </div>
-              <div className="header-text">
-                <h1>Intelligenter Vertragskalender</h1>
-                <p>Automatische Erinnerungen • 1-Klick-Kündigung • KI-Optimierung</p>
-              </div>
+          <div className="header-main">
+            <div className="header-icon-wrapper">
+              <CalendarIconLucide size={32} />
             </div>
-            
-            {/* Mobile Menu Toggle */}
-            {isMobile && (
-              <button 
-                className="mobile-menu-toggle"
-                onClick={() => setShowMobileMenu(!showMobileMenu)}
-              >
-                <Filter size={24} />
-              </button>
-            )}
+            <div className="header-text">
+              <h1>Intelligenter Vertragskalender</h1>
+              <p>Automatische Erinnerungen • 1-Klick-Kündigung • KI-Optimierung</p>
+            </div>
           </div>
-
-          {/* Filter Bar - Desktop & Tablet */}
-          {!isMobile && (
-            <div className="filter-bar-premium">
-              <div className="filter-group-premium">
-                <Filter size={16} />
-                <select 
-                  value={filterSeverity} 
-                  onChange={(e) => setFilterSeverity(e.target.value)}
-                  className="filter-select-premium"
-                >
-                  <option value="all">Alle Dringlichkeiten</option>
-                  <option value="critical">Kritisch</option>
-                  <option value="warning">Warnung</option>
-                  <option value="info">Info</option>
-                </select>
-              </div>
-              
-              <div className="filter-group-premium">
-                <FileText size={16} />
-                <select 
-                  value={filterType} 
-                  onChange={(e) => setFilterType(e.target.value)}
-                  className="filter-select-premium"
-                >
-                  <option value="all">Alle Ereignisse</option>
-                  <option value="CANCEL_WINDOW_OPEN">Kündigungsfenster</option>
-                  <option value="LAST_CANCEL_DAY">Letzte Chance</option>
-                  <option value="PRICE_INCREASE">Preiserhöhung</option>
-                  <option value="AUTO_RENEWAL">Verlängerung</option>
-                  <option value="REVIEW">Review</option>
-                </select>
-              </div>
-              
-              <motion.button 
-                className={`refresh-btn-premium ${refreshing ? 'refreshing' : ''}`}
-                onClick={handleRegenerateEvents}
-                disabled={refreshing}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <RefreshCw size={16} className={refreshing ? "spinning" : ""} />
-                <span>{refreshing ? "Aktualisiere..." : "Events neu generieren"}</span>
-              </motion.button>
-            </div>
-          )}
         </motion.header>
-
-        {/* Mobile Filter Menu */}
-        <AnimatePresence>
-          {isMobile && showMobileMenu && (
-            <motion.div 
-              className="mobile-filter-menu"
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-            >
-              <div className="mobile-filter-content">
-                <div className="mobile-filter-group">
-                  <label>Dringlichkeit</label>
-                  <select 
-                    value={filterSeverity} 
-                    onChange={(e) => setFilterSeverity(e.target.value)}
-                  >
-                    <option value="all">Alle</option>
-                    <option value="critical">Kritisch</option>
-                    <option value="warning">Warnung</option>
-                    <option value="info">Info</option>
-                  </select>
-                </div>
-                
-                <div className="mobile-filter-group">
-                  <label>Ereignistyp</label>
-                  <select 
-                    value={filterType} 
-                    onChange={(e) => setFilterType(e.target.value)}
-                  >
-                    <option value="all">Alle</option>
-                    <option value="CANCEL_WINDOW_OPEN">Kündigungsfenster</option>
-                    <option value="LAST_CANCEL_DAY">Letzte Chance</option>
-                    <option value="PRICE_INCREASE">Preiserhöhung</option>
-                    <option value="AUTO_RENEWAL">Verlängerung</option>
-                    <option value="REVIEW">Review</option>
-                  </select>
-                </div>
-                
-                <button 
-                  className="mobile-refresh-btn"
-                  onClick={handleRegenerateEvents}
-                  disabled={refreshing}
-                >
-                  <RefreshCw size={16} className={refreshing ? "spinning" : ""} />
-                  {refreshing ? "Aktualisiere..." : "Events generieren"}
-                </button>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
 
         {/* Main Content Grid */}
         <div className={`calendar-grid-premium ${isMobile ? 'mobile' : isTablet ? 'tablet' : 'desktop'}`}>
@@ -1932,6 +1796,46 @@ export default function CalendarPage() {
                   <ArrowRight size={16} />
                 </div>
               </motion.div>
+            </div>
+          </motion.div>
+
+          {/* Filter Section - Below Stats */}
+          <motion.div
+            className="filter-section-premium"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+          >
+            <div className="filter-grid-premium">
+              <div className="filter-group-compact">
+                <Filter size={16} />
+                <select
+                  value={filterSeverity}
+                  onChange={(e) => setFilterSeverity(e.target.value)}
+                  className="filter-select-compact"
+                >
+                  <option value="all">🔍 Alle Dringlichkeiten</option>
+                  <option value="critical">🔴 Kritisch</option>
+                  <option value="warning">🟠 Warnung</option>
+                  <option value="info">🔵 Info</option>
+                </select>
+              </div>
+
+              <div className="filter-group-compact">
+                <FileText size={16} />
+                <select
+                  value={filterType}
+                  onChange={(e) => setFilterType(e.target.value)}
+                  className="filter-select-compact"
+                >
+                  <option value="all">📋 Alle Ereignisse</option>
+                  <option value="CANCEL_WINDOW_OPEN">🚪 Kündigungsfenster</option>
+                  <option value="LAST_CANCEL_DAY">⏰ Letzte Chance</option>
+                  <option value="PRICE_INCREASE">💰 Preiserhöhung</option>
+                  <option value="AUTO_RENEWAL">🔄 Verlängerung</option>
+                  <option value="REVIEW">📝 Review</option>
+                </select>
+              </div>
             </div>
           </motion.div>
 
