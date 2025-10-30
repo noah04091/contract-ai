@@ -181,6 +181,7 @@
   padding: 0 20px 20px;
   max-width: 1400px;
   margin: 0 auto;
+  align-items: start; /* Grid-Items wachsen nicht mit - kein weißer Leerraum! */
 }
 
 .calendar-grid-premium.desktop {
@@ -690,9 +691,10 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  /* Dynamische Höhe: Passt sich der Anzahl der Events an (1-5 Events) */
-  /* Kein festes max-height mehr - Box wächst mit Content */
-  padding-right: 4px;
+  /* Feste Max-Höhe: Zeigt ~4 Events perfekt, scrollt bei mehr */
+  max-height: 420px;
+  overflow-y: auto;
+  padding-right: 8px;
 }
 
 .urgent-events-grid::-webkit-scrollbar {
