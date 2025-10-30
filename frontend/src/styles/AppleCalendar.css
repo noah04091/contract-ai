@@ -691,10 +691,13 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  /* Feste Max-Höhe: Zeigt ~4 Events perfekt, scrollt bei mehr */
-  max-height: 420px;
+  /* Min-Height: Auch bei 1-3 Events sieht's proportional gut aus */
+  min-height: 350px;
+  /* Max-Height: Bei 5+ Events smooth scrolling */
+  max-height: 550px;
   overflow-y: auto;
   padding-right: 8px;
+  transition: all 0.3s ease;
 }
 
 .urgent-events-grid::-webkit-scrollbar {
@@ -848,7 +851,12 @@
 
 /* No Events State */
 .no-events-premium {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   text-align: center;
+  min-height: 350px;
   padding: 60px 20px;
   color: #9ca3af;
   background: linear-gradient(135deg, rgba(99, 102, 241, 0.02), rgba(139, 92, 246, 0.02));
@@ -2731,6 +2739,17 @@
 
   .calendar-page-title p {
     font-size: 14px;
+  }
+
+  /* Urgent Events Grid - Mobile angepasst */
+  .urgent-events-grid {
+    min-height: 250px;
+    max-height: 400px;
+  }
+
+  .no-events-premium {
+    min-height: 250px;
+    padding: 40px 20px;
   }
 }
 
