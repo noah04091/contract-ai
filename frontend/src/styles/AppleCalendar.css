@@ -690,9 +690,9 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  max-height: 450px;
-  overflow-y: auto;
-  padding-right: 8px;
+  /* Dynamische Höhe: Passt sich der Anzahl der Events an (1-5 Events) */
+  /* Kein festes max-height mehr - Box wächst mit Content */
+  padding-right: 4px;
 }
 
 .urgent-events-grid::-webkit-scrollbar {
