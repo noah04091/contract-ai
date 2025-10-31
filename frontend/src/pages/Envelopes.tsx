@@ -16,6 +16,7 @@ import {
   Eye
 } from "lucide-react";
 import styles from "../styles/Envelopes.module.css";
+import PDFViewer from "../components/PDFViewer";
 
 interface Signer {
   email: string;
@@ -51,8 +52,10 @@ export default function Envelopes() {
   const [error, setError] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<FilterTab>("all");
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [selectedEnvelope, setSelectedEnvelope] = useState<Envelope | null>(null);
+  const [showPDFViewer, setShowPDFViewer] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [loadingPdf, setLoadingPdf] = useState(false);
 
   // Responsive handler
   useEffect(() => {
@@ -295,7 +298,6 @@ export default function Envelopes() {
   };
 
   // Format date and time
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const formatDateTime = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleString("de-DE", {
@@ -305,6 +307,43 @@ export default function Envelopes() {
       hour: "2-digit",
       minute: "2-digit"
     });
+  };
+
+  // Load PDF URL from backend
+  const handleViewPDF = async (envelope: Envelope) => {
+    if (!envelope.s3Key) {
+      alert("Keine PDF-Datei verfügbar");
+      return;
+    }
+
+    try {
+      setLoadingPdf(true);
+      const token = localStorage.getItem("token");
+
+      const response = await fetch(`/api/s3/download-url?key=${encodeURIComponent(envelope.s3Key)}`, {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        credentials: "include"
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Fehler beim Laden der PDF-URL");
+      }
+
+      setPdfUrl(data.url);
+      setShowPDFViewer(true);
+    } catch (err) {
+      console.error("❌ Error loading PDF URL:", err);
+      const errorMessage = err instanceof Error ? err.message : "Unbekannter Fehler";
+      alert(`❌ Fehler: ${errorMessage}`);
+    } finally {
+      setLoadingPdf(false);
+    }
   };
 
   // Loading state
@@ -676,11 +715,17 @@ export default function Envelopes() {
                     <FileText size={18} />
                     Dokument
                   </h3>
-                  <div className={styles.documentPreview}>
+                  <div
+                    className={styles.documentPreview}
+                    onClick={() => handleViewPDF(selectedEnvelope)}
+                    style={{ cursor: loadingPdf ? "wait" : "pointer" }}
+                  >
                     <Eye size={48} className={styles.documentIcon} />
                     <strong>{selectedEnvelope.title}</strong>
                     <p>
-                      Klicken Sie auf "Dokument ansehen", um die PDF-Vorschau zu öffnen
+                      {loadingPdf
+                        ? "PDF wird geladen..."
+                        : "Klicken Sie hier, um die PDF-Vorschau zu öffnen"}
                     </p>
                   </div>
                 </div>
@@ -814,6 +859,19 @@ export default function Envelopes() {
           </>
         )}
       </AnimatePresence>
+
+      {/* PDF Viewer Modal */}
+      {showPDFViewer && pdfUrl && selectedEnvelope && (
+        <PDFViewer
+          pdfUrl={pdfUrl}
+          title={selectedEnvelope.title}
+          signers={selectedEnvelope.signers}
+          onClose={() => {
+            setShowPDFViewer(false);
+            setPdfUrl(null);
+          }}
+        />
+      )}
     </div>
   );
 }
