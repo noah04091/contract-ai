@@ -596,15 +596,98 @@
   margin: 0 auto;
 }
 
-/* Company Profile Toggle - BESTEHEND */
+/* Company Profile Toggle - PROFESSIONAL */
 .companyProfileToggle {
   background: rgba(248, 250, 252, 0.5);
   border: 1px solid rgba(0, 0, 0, 0.05);
   border-radius: 14px;
-  padding: 1.25rem;
+  padding: 1.5rem;
   margin-bottom: 2rem;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 26px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #d1d1d6;
+  transition: 0.3s;
+  border-radius: 26px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.switch input:checked + .slider {
+  background-color: #30d158;
+}
+
+.switch input:checked + .slider:before {
+  transform: translateX(22px);
+}
+
+.profilePreview {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.profilePreview img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  flex-shrink: 0;
+}
+
+.profileInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.profileInfo strong {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1d1d1f;
+}
+
+.profileInfo span {
+  font-size: 13px;
+  color: #86868b;
 }
 
 .formFieldsGrid {
@@ -628,6 +711,63 @@
   margin-bottom: 0;
 }
 
+/* Remove card styling for formGroup inside fieldGroup */
+.fieldGroup .formGroup {
+  margin-bottom: 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* Form Group Labels */
+.formGroup label {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 500;
+  color: #1d1d1f;
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.01em;
+}
+
+/* Form Group Inputs */
+.formGroup input,
+.formGroup textarea,
+.formGroup select {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+  font-size: 15px;
+  color: #1d1d1f;
+  transition: all 0.2s cubic-bezier(0.28, 0.44, 0.49, 1);
+  font-family: inherit;
+}
+
+.formGroup input:focus,
+.formGroup textarea:focus,
+.formGroup select:focus {
+  outline: none;
+  border-color: #0a84ff;
+  box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.08);
+}
+
+.formGroup input::placeholder,
+.formGroup textarea::placeholder,
+.formGroup select::placeholder {
+  color: #86868b;
+}
+
+.formGroup textarea {
+  resize: vertical;
+  min-height: 100px;
+  line-height: 1.5;
+}
+
 .groupTitle {
   display: flex;
   align-items: center;
@@ -646,6 +786,43 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 1.25rem;
+}
+
+/* Field Group Styling (for Käufer, etc.) */
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2.5rem;
+  padding-bottom: 2.5rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.fieldGroup:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.groupHeader {
+  margin: 0 0 1.25rem 0;
+  font-size: 17px;
+  font-weight: 600;
+  color: #1d1d1f;
+  letter-spacing: -0.02em;
+}
+
+.groupFields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.25rem;
+}
+
+.optionalBadge {
+  margin-left: 0.5rem;
+  font-size: 12px;
+  font-weight: 400;
+  color: #86868b;
 }
 
 .formField {
@@ -1843,8 +2020,13 @@
     border-bottom: 1px solid rgba(0, 0, 0, 0.06);
   }
 
+  /* Step Header bei Step 1 bleibt mittig, bei Step 3 linksbündig */
+  .stepContent:first-child .stepHeader {
+    text-align: center;
+  }
+
   .stepHeader {
-    text-align: left;
+    text-align: center;
     padding-bottom: 1.5rem;
     margin-bottom: 2rem;
   }
@@ -1872,5 +2054,50 @@
 
   .actionButton {
     justify-content: center;
+  }
+
+  /* Contract Form - Full Width auf Desktop */
+  .contractForm {
+    max-width: 100%;
+    margin: 0;
+  }
+
+  /* Form Grid - 2 Spalten auf Desktop */
+  .formGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+
+  /* Spanning Fields (wie Vertragstitel) über volle Breite */
+  .formGroup.spanning {
+    grid-column: 1 / -1;
+  }
+
+  /* Company Profile Toggle volle Breite */
+  .companyProfileToggle {
+    padding: 2rem;
+  }
+
+  /* Design Variant Selector professioneller */
+  .designVariantSelector {
+    padding: 2rem;
+  }
+
+  /* Field Group - Full Width auf Desktop */
+  .fieldGroup {
+    margin-bottom: 3rem;
+    padding-bottom: 3rem;
+  }
+
+  /* Group Fields - 2 Spalten auf Desktop */
+  .groupFields {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+
+  /* Group Header größer auf Desktop */
+  .groupHeader {
+    font-size: 18px;
+    margin-bottom: 1.5rem;
   }
 }
