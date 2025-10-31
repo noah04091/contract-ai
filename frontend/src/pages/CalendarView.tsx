@@ -2276,8 +2276,11 @@ export default function CalendarPage() {
                                       sessionStorage.getItem("token") ||
                                       sessionStorage.getItem("authToken");
 
-                        // Kombiniere Datum mit Zeit
-                        const dateTimeString = `${selectedEmptyDate.toISOString().split('T')[0]}T${newEvent.time}:00`;
+                        // Kombiniere Datum mit Zeit (WICHTIG: Local Time verwenden, nicht UTC!)
+                        const year = selectedEmptyDate.getFullYear();
+                        const month = String(selectedEmptyDate.getMonth() + 1).padStart(2, '0');
+                        const day = String(selectedEmptyDate.getDate()).padStart(2, '0');
+                        const dateTimeString = `${year}-${month}-${day}T${newEvent.time}:00`;
 
                         await axios.post('/api/calendar/events', {
                           contractId: newEvent.contractId,

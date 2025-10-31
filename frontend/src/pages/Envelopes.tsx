@@ -69,6 +69,10 @@ export default function Envelopes() {
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [refreshCountdown, setRefreshCountdown] = useState(30);
+  const [showSignerEdit, setShowSignerEdit] = useState(false);
+  const [editingSigner, setEditingSigner] = useState<{ signer: Signer; index: number } | null>(null);
+  const [newSignerEmail, setNewSignerEmail] = useState("");
+  const [newSignerName, setNewSignerName] = useState("");
 
   // Responsive handler
   useEffect(() => {
@@ -548,6 +552,84 @@ export default function Envelopes() {
     link.click();
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
+  };
+
+  // Open signer edit modal
+  const handleEditSigner = (signer: Signer, index: number) => {
+    setEditingSigner({ signer, index });
+    setNewSignerEmail(signer.email);
+    setNewSignerName(signer.name);
+    setShowSignerEdit(true);
+  };
+
+  // Update signer information
+  const handleUpdateSigner = async () => {
+    if (!selectedEnvelope || !editingSigner) return;
+
+    if (!newSignerEmail || !newSignerName) {
+      toast.error("Bitte Name und E-Mail eingeben");
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+
+      const response = await fetch(`/api/envelopes/${selectedEnvelope._id}/signer/${editingSigner.index}`, {
+        method: "PATCH",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          email: newSignerEmail,
+          name: newSignerName
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Fehler beim Aktualisieren");
+      }
+
+      toast.success("Unterzeichner aktualisiert!");
+      setShowSignerEdit(false);
+      setEditingSigner(null);
+      loadEnvelopes(false);
+    } catch (err) {
+      console.error("❌ Error updating signer:", err);
+      const errorMessage = err instanceof Error ? err.message : "Unbekannter Fehler";
+      toast.error(`Fehler: ${errorMessage}`);
+    }
+  };
+
+  // Remind individual signer
+  const handleRemindIndividual = async (envelopeId: string, signerEmail: string) => {
+    try {
+      const token = localStorage.getItem("token");
+
+      const response = await fetch(`/api/envelopes/${envelopeId}/remind-individual`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        credentials: "include",
+        body: JSON.stringify({ email: signerEmail })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Fehler beim Senden der Erinnerung");
+      }
+
+      toast.success(`Erinnerung an ${signerEmail} versendet!`);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Unbekannter Fehler";
+      toast.error(`Fehler: ${errorMessage}`);
+    }
   };
 
   // Loading state
