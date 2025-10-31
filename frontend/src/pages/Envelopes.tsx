@@ -482,7 +482,7 @@ export default function Envelopes() {
       setLoadingPdf(true);
       const token = localStorage.getItem("token");
 
-      const response = await fetch(`/api/s3/download-url?key=${encodeURIComponent(s3Key)}`, {
+      const response = await fetch(`/api/s3/view?key=${encodeURIComponent(s3Key)}`, {
         method: "GET",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -549,7 +549,7 @@ export default function Envelopes() {
     try {
       const token = localStorage.getItem("token");
 
-      const response = await fetch(`/api/s3/download-url?key=${encodeURIComponent(s3Key)}`, {
+      const response = await fetch(`/api/s3/view?key=${encodeURIComponent(s3Key)}`, {
         method: "GET",
         headers: {
           "Authorization": `Bearer ${token}`,
