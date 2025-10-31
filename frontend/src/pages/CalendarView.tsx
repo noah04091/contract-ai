@@ -1375,16 +1375,17 @@ export default function CalendarPage() {
       }
 
       console.log("📋 Fetching contracts for dropdown...");
-      const response = await axios.get<{ success: boolean; contracts: ContractType[] }>("/api/contracts", { headers });
+      const response = await axios.get<{ success?: boolean; contracts: ContractType[] }>("/api/contracts", { headers });
 
       console.log("📋 Contracts API Response:", response.data);
       console.log("📋 Number of contracts:", response.data?.contracts?.length || 0);
 
-      if (response.data.success && response.data.contracts) {
+      // API returns either {success: true, contracts: [...]} or {contracts: [...], pagination: {...}}
+      if (response.data.contracts && Array.isArray(response.data.contracts)) {
         setUserContracts(response.data.contracts);
         console.log("✅ Contracts set to state:", response.data.contracts.length);
       } else {
-        console.warn("⚠️ No contracts in response or success=false");
+        console.warn("⚠️ No contracts array found in response");
       }
     } catch (err) {
       console.error("❌ Fehler beim Laden der Verträge:", err);
