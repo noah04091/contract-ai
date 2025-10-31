@@ -1199,7 +1199,10 @@ export default function Envelopes() {
                               {envelope.s3Key && (
                                 <button
                                   className={styles.actionBtnSmall}
-                                  onClick={() => handleViewPDF(envelope, false)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleViewPDF(envelope, false);
+                                  }}
                                   title="Original-PDF anzeigen"
                                 >
                                   <FileText size={14} />
@@ -1209,7 +1212,10 @@ export default function Envelopes() {
                               {envelope.s3KeySealed && (
                                 <button
                                   className={styles.actionBtnSmall}
-                                  onClick={() => handleViewPDF(envelope, true)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleViewPDF(envelope, true);
+                                  }}
                                   title="Signierte PDF herunterladen"
                                 >
                                   <FileDown size={14} />
@@ -1226,7 +1232,10 @@ export default function Envelopes() {
                                   <button
                                     key={idx}
                                     className={styles.actionBtnSmall}
-                                    onClick={() => handleCopyLink(signer.token)}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleCopyLink(signer.token);
+                                    }}
                                     title="Link kopieren"
                                   >
                                     <Copy size={14} />
@@ -1237,7 +1246,10 @@ export default function Envelopes() {
                                 <>
                                   <button
                                     className={styles.actionBtnSmall}
-                                    onClick={() => handleRemind(envelope._id)}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleRemind(envelope._id);
+                                    }}
                                     title="Erinnerung senden"
                                   >
                                     <Send size={14} />
@@ -1245,7 +1257,10 @@ export default function Envelopes() {
                                   </button>
                                   <button
                                     className={`${styles.actionBtnSmall} ${styles.actionBtnDanger}`}
-                                    onClick={() => handleCancel(envelope._id)}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleCancel(envelope._id);
+                                    }}
                                     title="Stornieren"
                                   >
                                     <XCircle size={14} />
@@ -1370,7 +1385,10 @@ export default function Envelopes() {
                                   {envelope.s3Key && (
                                     <button
                                       className={styles.actionBtn}
-                                      onClick={() => handleViewPDF(envelope, false)}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleViewPDF(envelope, false);
+                                      }}
                                       title="Original-PDF anzeigen"
                                     >
                                       <FileText size={14} />
@@ -1379,7 +1397,10 @@ export default function Envelopes() {
                                   {envelope.s3KeySealed && (
                                     <button
                                       className={styles.actionBtn}
-                                      onClick={() => handleViewPDF(envelope, true)}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleViewPDF(envelope, true);
+                                      }}
                                       title="Signierte PDF herunterladen"
                                     >
                                       <FileDown size={14} />
@@ -1395,7 +1416,10 @@ export default function Envelopes() {
                                       <button
                                         key={idx}
                                         className={styles.actionBtn}
-                                        onClick={() => handleCopyLink(signer.token)}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleCopyLink(signer.token);
+                                        }}
                                         title={`Link kopieren für ${signer.name}`}
                                       >
                                         <Copy size={14} />
@@ -1405,14 +1429,20 @@ export default function Envelopes() {
                                     <>
                                       <button
                                         className={styles.actionBtn}
-                                        onClick={() => handleRemind(envelope._id)}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleRemind(envelope._id);
+                                        }}
                                         title="Erinnerung senden"
                                       >
                                         <Send size={14} />
                                       </button>
                                       <button
                                         className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
-                                        onClick={() => handleCancel(envelope._id)}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleCancel(envelope._id);
+                                        }}
                                         title="Stornieren"
                                       >
                                         <XCircle size={14} />
