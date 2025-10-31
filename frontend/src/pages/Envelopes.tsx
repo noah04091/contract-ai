@@ -1174,9 +1174,25 @@ export default function Envelopes() {
                               {envelope.title}
                             </h3>
                           </div>
-                          <span className={`${styles.statusBadge} ${getStatusColor(envelope.status)}`}>
-                            {getStatusLabel(envelope.status)}
-                          </span>
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                            <span className={`${styles.statusBadge} ${getStatusColor(envelope.status)}`}>
+                              {getStatusLabel(envelope.status)}
+                            </span>
+                            {/* ✅ COMPLETED: Zeige Abschluss-Datum beim Status */}
+                            {(envelope.status === "COMPLETED" || envelope.status === "SIGNED") && envelope.completedAt && (
+                              <span style={{
+                                color: '#10b981',
+                                fontSize: '0.75rem',
+                                fontWeight: 600,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px'
+                              }}>
+                                <CheckCircle size={12} />
+                                {formatDate(envelope.completedAt)}
+                              </span>
+                            )}
+                          </div>
                         </div>
 
                         {/* Progress Bar */}
@@ -1214,17 +1230,6 @@ export default function Envelopes() {
                               {formatDate(envelope.createdAt)}
                             </span>
                           </div>
-
-                          {/* ✅ COMPLETED: Zeige Abschluss-Datum */}
-                          {(envelope.status === "COMPLETED" || envelope.status === "SIGNED") && envelope.completedAt && (
-                            <div className={styles.cardRow}>
-                              <CheckCircle size={14} style={{ color: '#10b981' }} />
-                              <span className={styles.cardLabel}>Abgeschlossen:</span>
-                              <span className={styles.cardValue} style={{ color: '#10b981', fontWeight: 600 }}>
-                                {formatDate(envelope.completedAt)}
-                              </span>
-                            </div>
-                          )}
 
                           {envelope.expiresAt && (
                             <div className={styles.cardRow}>
@@ -1283,10 +1288,10 @@ export default function Envelopes() {
                                       e.stopPropagation();
                                       handleCopyLink(signer.token);
                                     }}
-                                    title="Link kopieren"
+                                    title={`Link kopieren für ${signer.name}`}
                                   >
                                     <Copy size={14} />
-                                    Link ({signer.name})
+                                    Link
                                   </button>
                                 ))}
                               {envelope.status === "SENT" && (
@@ -1311,7 +1316,7 @@ export default function Envelopes() {
                                     title="Stornieren"
                                   >
                                     <XCircle size={14} />
-                                    Stornieren
+                                    Stop
                                   </button>
                                 </>
                               )}
