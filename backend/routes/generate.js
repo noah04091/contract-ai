@@ -389,12 +389,13 @@ const generateInitialsLogo = (initials, color = '#1a1a1a') => {
 };
 
 // 🎨 ENTERPRISE HTML-FORMATIERUNG FÜR ABSOLUT PROFESSIONELLE VERTRÄGE - VOLLSTÄNDIGE VERSION
-const formatContractToHTML = async (contractText, companyProfile, contractType, designVariant = 'executive', isDraft = false) => {
+const formatContractToHTML = async (contractText, companyProfile, contractType, designVariant = 'executive', isDraft = false, parties = null) => {
   console.log("🚀 Starte ENTERPRISE HTML-Formatierung für:", contractType);
   console.log('🎨 Design-Variante:', designVariant);
   console.log('📄 Vertragstyp:', contractType);
   console.log('🏢 Company Profile vorhanden:', !!companyProfile);
   console.log('📝 Entwurf-Modus:', isDraft);
+  console.log('👥 Parties Data:', parties);
   
   // 🔍 DEBUG: Company Profile Details
   if (companyProfile) {
@@ -1933,11 +1934,11 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
       </div>
       
       <div style="font-weight: bold; margin-bottom: 6mm;">und</div>
-      
+
       <div style="margin-bottom: 10mm;">
-        <div style="font-weight: bold;">Naomi Baba</div>
-        <div>Beispielstraße 2</div>
-        <div>54321 Hamburg</div>
+        <div style="font-weight: bold;">${parties?.buyer || parties?.buyerName || 'Max Mustermann'}</div>
+        ${parties?.buyerAddress ? `<div>${parties.buyerAddress}</div>` : '<div>Musterstraße 123</div>'}
+        ${parties?.buyerCity ? `<div>${parties.buyerCity}</div>` : '<div>12345 Beispielstadt</div>'}
         <div style="font-style: italic; margin-top: 3mm;">– nachfolgend "Käufer" genannt –</div>
       </div>
     </div>
@@ -3155,11 +3156,12 @@ router.post("/pdf", verifyToken, async (req, res) => {
       const isDraft = contract.status === 'Entwurf' || contract.formData?.isDraft;
       
       htmlContent = await formatContractToHTML(
-        contract.content, 
-        companyProfile, 
+        contract.content,
+        companyProfile,
         contract.contractType || contract.metadata?.contractType || 'vertrag',
         contract.designVariant || contract.metadata?.designVariant || 'executive',
-        isDraft
+        isDraft,
+        contract.metadata?.parties || contract.parties || null
       );
       
       // HTML für nächstes Mal speichern

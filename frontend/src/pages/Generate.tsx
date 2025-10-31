@@ -6,7 +6,8 @@ import { Helmet } from "react-helmet";
 import {
   CheckCircle, Clipboard, Save, FileText, Check, Download,
   ArrowRight, ArrowLeft, Sparkles, Edit3, Building,
-  Eye, PenTool, RefreshCw, BookOpen, Star, TrendingUp
+  Eye, PenTool, RefreshCw, BookOpen, Star, TrendingUp,
+  Users, ChevronDown
 } from "lucide-react";
 import styles from "../styles/Generate.module.css";
 import { toast } from 'react-toastify';
@@ -634,6 +635,12 @@ export default function Generate() {
     contractDetails: {}
   });
 
+  // 👥 NEW: Editable Party Data States
+  const [buyerName, setBuyerName] = useState<string>('');
+  const [buyerAddress, setBuyerAddress] = useState<string>('');
+  const [buyerCity, setBuyerCity] = useState<string>('');
+  const [showPartyDataPanel, setShowPartyDataPanel] = useState<boolean>(false);
+
   // Refs
   // const contractRef = useRef<HTMLDivElement>(null); // ❌ Not used anymore (replaced with textarea)
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -669,6 +676,15 @@ export default function Generate() {
     // Clean old contract IDs from localStorage to prevent conflicts
     localStorage.removeItem('lastGeneratedContractId');
   }, []);
+
+  // 👥 Load buyer data from contractData.parties
+  useEffect(() => {
+    if (contractData.parties) {
+      setBuyerName(contractData.parties.buyer || contractData.parties.buyerName || '');
+      setBuyerAddress(contractData.parties.buyerAddress || '');
+      setBuyerCity(contractData.parties.buyerCity || '');
+    }
+  }, [contractData.parties]);
 
   const loadCompanyProfile = async () => {
     try {
@@ -1064,7 +1080,14 @@ export default function Generate() {
         isGenerated: true,
         metadata: {
           contractType: contractData.contractType,
-          parties: contractData.parties,
+          parties: {
+            ...contractData.parties,
+            // ✅ Include updated buyer data from form
+            buyer: buyerName || contractData.parties?.buyer,
+            buyerName: buyerName || contractData.parties?.buyerName,
+            buyerAddress: buyerAddress || contractData.parties?.buyerAddress,
+            buyerCity: buyerCity || contractData.parties?.buyerCity
+          },
           contractDetails: contractData.contractDetails,
           hasLogo: !!(useCompanyProfile && companyProfile?.logoUrl),
           generatedAt: new Date().toISOString()
@@ -1469,7 +1492,14 @@ export default function Generate() {
             isGenerated: true,
             metadata: {
               contractType: contractData.contractType,
-              parties: contractData.parties,
+              parties: {
+                ...contractData.parties,
+                // ✅ Include updated buyer data from form
+                buyer: buyerName || contractData.parties?.buyer,
+                buyerName: buyerName || contractData.parties?.buyerName,
+                buyerAddress: buyerAddress || contractData.parties?.buyerAddress,
+                buyerCity: buyerCity || contractData.parties?.buyerCity
+              },
               contractDetails: contractData.contractDetails,
               hasLogo: !!(useCompanyProfile && companyProfile?.logoUrl),
               generatedAt: new Date().toISOString()
@@ -2208,6 +2238,89 @@ export default function Generate() {
                     >
                       ×
                     </button>
+                  </div>
+
+                  {/* 👥 NEW: Collapsible Vertragsdaten Panel */}
+                  <div className={styles.partyDataPanel}>
+                    <button
+                      className={styles.partyDataToggle}
+                      onClick={() => setShowPartyDataPanel(!showPartyDataPanel)}
+                    >
+                      <Users size={18} />
+                      <span>Vertragsdaten</span>
+                      <ChevronDown
+                        size={18}
+                        style={{
+                          transform: showPartyDataPanel ? 'rotate(180deg)' : 'rotate(0)',
+                          transition: 'transform 0.2s ease'
+                        }}
+                      />
+                    </button>
+
+                    {showPartyDataPanel && (
+                      <motion.div
+                        className={styles.partyDataContent}
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                      >
+                        <div className={styles.partySection}>
+                          <h4>Verkäufer</h4>
+                          <div className={styles.partyInfo}>
+                            <p className={styles.companyName}>
+                              {companyProfile?.companyName || 'Ihr Unternehmen'}
+                            </p>
+                            <p className={styles.infoText}>
+                              (vollständige Angaben aus Ihrem Firmenprofil)
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className={styles.partySection}>
+                          <h4>Käufer</h4>
+                          <div className={styles.inputGroup}>
+                            <label>Name</label>
+                            <input
+                              type="text"
+                              value={buyerName}
+                              onChange={(e) => {
+                                setBuyerName(e.target.value);
+                                setPdfPreviewUrl(null); // Reset PDF
+                                setSaved(false);
+                              }}
+                              placeholder="z.B. Max Mustermann"
+                            />
+                          </div>
+                          <div className={styles.inputGroup}>
+                            <label>Adresse</label>
+                            <input
+                              type="text"
+                              value={buyerAddress}
+                              onChange={(e) => {
+                                setBuyerAddress(e.target.value);
+                                setPdfPreviewUrl(null);
+                                setSaved(false);
+                              }}
+                              placeholder="z.B. Musterstraße 123"
+                            />
+                          </div>
+                          <div className={styles.inputGroup}>
+                            <label>PLZ & Ort</label>
+                            <input
+                              type="text"
+                              value={buyerCity}
+                              onChange={(e) => {
+                                setBuyerCity(e.target.value);
+                                setPdfPreviewUrl(null);
+                                setSaved(false);
+                              }}
+                              placeholder="z.B. 12345 Berlin"
+                            />
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
                   </div>
 
                   {/* 📄 NEW: TAB Navigation */}
