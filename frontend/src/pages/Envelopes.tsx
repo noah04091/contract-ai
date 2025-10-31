@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Mail,
@@ -20,6 +20,8 @@ import {
   FileDown,
   RefreshCw
 } from "lucide-react";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import styles from "../styles/Envelopes.module.css";
 import PDFViewer from "../components/PDFViewer";
 import { QRCodeCanvas } from "qrcode.react";
@@ -64,6 +66,9 @@ export default function Envelopes() {
   const [loadingPdf, setLoadingPdf] = useState(false);
   const [showQRCode, setShowQRCode] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const [autoRefresh, setAutoRefresh] = useState(false);
+  const [refreshCountdown, setRefreshCountdown] = useState(30);
 
   // Responsive handler
   useEffect(() => {
@@ -77,12 +82,12 @@ export default function Envelopes() {
 
   // Load envelopes from API
   useEffect(() => {
-    loadEnvelopes();
+    loadEnvelopes(true);
   }, []);
 
-  const loadEnvelopes = async () => {
+  const loadEnvelopes = useCallback(async (isInitial: boolean = false) => {
     try {
-      setLoading(true);
+      if (isInitial) setLoading(true);
       const token = localStorage.getItem("token");
 
       const response = await fetch("/api/envelopes", {
@@ -100,15 +105,88 @@ export default function Envelopes() {
         throw new Error(data.error || "Fehler beim Laden der Signaturanfragen");
       }
 
+      const newEnvelopes = data.envelopes || [];
+
+      // Check for status changes and show notifications
+      if (!isInitial && envelopes.length > 0) {
+        newEnvelopes.forEach((newEnv: Envelope) => {
+          const oldEnv = envelopes.find(e => e._id === newEnv._id);
+          if (oldEnv) {
+            // Status changed
+            if (oldEnv.status !== newEnv.status) {
+              if (newEnv.status === "COMPLETED") {
+                toast.success(`🎉 "${newEnv.title}" wurde vollständig signiert!`, {
+                  position: "top-right",
+                  autoClose: 5000,
+                });
+              } else if (newEnv.status === "SIGNED") {
+                toast.info(`✍️ Neue Unterschrift bei "${newEnv.title}"`, {
+                  position: "top-right",
+                  autoClose: 4000,
+                });
+              }
+            }
+
+            // Check for new signatures
+            const oldSigned = oldEnv.signers.filter(s => s.status === "SIGNED").length;
+            const newSigned = newEnv.signers.filter(s => s.status === "SIGNED").length;
+            if (newSigned > oldSigned) {
+              const newSigner = newEnv.signers.find(
+                s => s.status === "SIGNED" && !oldEnv.signers.find(o => o.email === s.email && o.status === "SIGNED")
+              );
+              if (newSigner) {
+                toast.success(`✓ ${newSigner.name} hat "${newEnv.title}" signiert!`, {
+                  position: "top-right",
+                  autoClose: 4000,
+                });
+              }
+            }
+          }
+        });
+      }
+
       console.log("✅ Envelopes loaded:", data);
-      setEnvelopes(data.envelopes || []);
+      setEnvelopes(newEnvelopes);
+      setLastUpdated(new Date());
+
+      // Update selected envelope if it's currently open
+      if (selectedEnvelope) {
+        const updated = newEnvelopes.find((e: Envelope) => e._id === selectedEnvelope._id);
+        if (updated) {
+          setSelectedEnvelope(updated);
+        }
+      }
     } catch (err) {
       console.error("❌ Error loading envelopes:", err);
       const errorMessage = err instanceof Error ? err.message : "Unbekannter Fehler";
-      setError(errorMessage);
+      if (isInitial) setError(errorMessage);
     } finally {
-      setLoading(false);
+      if (isInitial) setLoading(false);
     }
+  }, [envelopes, selectedEnvelope]);
+
+  // Auto-refresh timer
+  useEffect(() => {
+    if (!autoRefresh) return;
+
+    const interval = setInterval(() => {
+      setRefreshCountdown((prev) => {
+        if (prev <= 1) {
+          loadEnvelopes(false);
+          return 30;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [autoRefresh, loadEnvelopes]);
+
+  // Manual refresh
+  const handleManualRefresh = () => {
+    loadEnvelopes(false);
+    setRefreshCountdown(30);
+    toast.info("Aktualisiert!", { autoClose: 2000 });
   };
 
   // Filter envelopes based on active tab
@@ -227,6 +305,26 @@ export default function Envelopes() {
     const signed = signers.filter(s => s.status === "SIGNED").length;
     const total = signers.length;
     return `${signed}/${total}`;
+  };
+
+  // Get progress percentage
+  const getProgressPercentage = (signers: Signer[]) => {
+    const signed = signers.filter(s => s.status === "SIGNED").length;
+    const total = signers.length;
+    return total > 0 ? (signed / total) * 100 : 0;
+  };
+
+  // Format relative time
+  const getRelativeTime = (date: Date) => {
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const seconds = Math.floor(diff / 1000);
+    const minutes = Math.floor(seconds / 60);
+
+    if (seconds < 60) return "Gerade eben";
+    if (minutes === 1) return "Vor 1 Minute";
+    if (minutes < 60) return `Vor ${minutes} Minuten`;
+    return formatDateTime(date.toString());
   };
 
   // Generate timeline events for drawer
@@ -472,7 +570,7 @@ export default function Envelopes() {
           <AlertCircle size={48} className={styles.errorIcon} />
           <h2>Fehler beim Laden</h2>
           <p>{error}</p>
-          <button className={styles.retryBtn} onClick={loadEnvelopes}>
+          <button className={styles.retryBtn} onClick={() => loadEnvelopes(true)}>
             Erneut versuchen
           </button>
         </div>
@@ -493,6 +591,28 @@ export default function Envelopes() {
                 Verwalten Sie Ihre digitalen Signaturen
               </p>
             </div>
+          </div>
+          <div className={styles.headerActions}>
+            <div className={styles.lastUpdated}>
+              <Clock size={14} />
+              <span>Zuletzt aktualisiert: {getRelativeTime(lastUpdated)}</span>
+            </div>
+            <button
+              className={`${styles.refreshBtn} ${autoRefresh ? styles.refreshBtnActive : ""}`}
+              onClick={() => setAutoRefresh(!autoRefresh)}
+              title={autoRefresh ? "Auto-Refresh deaktivieren" : "Auto-Refresh aktivieren"}
+            >
+              <Activity size={16} />
+              {autoRefresh ? `Auto (${refreshCountdown}s)` : "Auto-Refresh"}
+            </button>
+            <button
+              className={styles.refreshBtn}
+              onClick={handleManualRefresh}
+              title="Jetzt aktualisieren"
+            >
+              <RefreshCw size={16} />
+              Aktualisieren
+            </button>
           </div>
         </div>
 
@@ -564,6 +684,24 @@ export default function Envelopes() {
                             {getStatusLabel(envelope.status)}
                           </span>
                         </div>
+
+                        {/* Progress Bar */}
+                        {envelope.status === "SENT" && (
+                          <div className={styles.progressBarContainer}>
+                            <div className={styles.progressBarLabel}>
+                              <span>Signatur-Fortschritt</span>
+                              <span>{getSignerProgress(envelope.signers)}</span>
+                            </div>
+                            <div className={styles.progressBar}>
+                              <motion.div
+                                className={styles.progressBarFill}
+                                initial={{ width: 0 }}
+                                animate={{ width: `${getProgressPercentage(envelope.signers)}%` }}
+                                transition={{ duration: 0.5, ease: "easeOut" }}
+                              />
+                            </div>
+                          </div>
+                        )}
 
                         {/* Card Body */}
                         <div className={styles.cardBody}>
@@ -1078,6 +1216,20 @@ export default function Envelopes() {
           </>
         )}
       </AnimatePresence>
+
+      {/* Toast Container for Notifications */}
+      <ToastContainer
+        position="top-right"
+        autoClose={4000}
+        hideProgressBar={false}
+        newestOnTop={true}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
     </div>
   );
 }
