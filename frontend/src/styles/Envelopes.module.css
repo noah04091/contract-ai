@@ -796,7 +796,7 @@
 .timeline::before {
   content: '';
   position: absolute;
-  left: 0.5rem;
+  left: 1rem; /* Mittig durch die Punkte */
   top: 0.75rem;
   bottom: 0.75rem;
   width: 2px;
@@ -1124,16 +1124,27 @@
   flex-shrink: 0;
 }
 
+/* ===== MODAL OVERLAY (für QR-Code, Edit, etc.) ===== */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 2000;
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* ===== QR CODE MODAL ===== */
 .qrCodeModal {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  position: relative; /* Relativ zum modalOverlay */
   background: white;
   border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  z-index: 2001;
   max-width: 450px;
   width: 90%;
   overflow: hidden;
@@ -1228,8 +1239,13 @@
     padding: 0.75rem 0.875rem;
   }
 
+  .modalOverlay {
+    padding: 1rem;
+  }
+
   .qrCodeModal {
-    max-width: 95%;
+    max-width: 100%;
+    width: 100%;
   }
 
   .qrCodeContent {

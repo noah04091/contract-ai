@@ -1734,20 +1734,20 @@ export default function Envelopes() {
       {/* QR Code Modal */}
       <AnimatePresence>
         {showQRCode && (
-          <>
-            <motion.div
-              className={styles.drawerOverlay}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowQRCode(false)}
-            />
+          <motion.div
+            className={styles.modalOverlay}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowQRCode(false)}
+          >
             <motion.div
               className={styles.qrCodeModal}
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
               transition={{ duration: 0.2 }}
+              onClick={(e) => e.stopPropagation()}
             >
               <div className={styles.qrCodeHeader}>
                 <h3>QR-Code für mobile Signatur</h3>
@@ -1773,27 +1773,27 @@ export default function Envelopes() {
                 </div>
               </div>
             </motion.div>
-          </>
+          </motion.div>
         )}
       </AnimatePresence>
 
       {/* Edit Signer Modal */}
       <AnimatePresence>
         {showSignerEdit && editingSigner && (
-          <>
-            <motion.div
-              className={styles.drawerOverlay}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowSignerEdit(false)}
-            />
+          <motion.div
+            className={styles.modalOverlay}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowSignerEdit(false)}
+          >
             <motion.div
               className={styles.qrCodeModal}
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
               transition={{ duration: 0.2 }}
+              onClick={(e) => e.stopPropagation()}
             >
               <div className={styles.qrCodeHeader}>
                 <h3>Unterzeichner bearbeiten</h3>
@@ -1841,7 +1841,7 @@ export default function Envelopes() {
                 </div>
               </div>
             </motion.div>
-          </>
+          </motion.div>
         )}
       </AnimatePresence>
 
