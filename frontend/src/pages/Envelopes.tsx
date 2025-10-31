@@ -432,8 +432,12 @@ export default function Envelopes() {
 
   // Load PDF URL from backend
   const handleViewPDF = async (envelope: Envelope) => {
+    console.log("📄 Envelope Data:", envelope);
+    console.log("📄 s3Key:", envelope.s3Key);
+
     if (!envelope.s3Key) {
-      alert("Keine PDF-Datei verfügbar");
+      toast.error("Keine PDF-Datei verfügbar. Das Dokument wurde möglicherweise nicht hochgeladen.");
+      console.error("❌ Kein s3Key gefunden für Envelope:", envelope._id);
       return;
     }
 
