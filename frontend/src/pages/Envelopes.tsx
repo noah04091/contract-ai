@@ -21,7 +21,11 @@ import {
   RefreshCw,
   Edit,
   Save,
-  StickyNote
+  StickyNote,
+  CheckSquare,
+  Square,
+  Trash2,
+  FileSpreadsheet
 } from "lucide-react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -79,6 +83,7 @@ export default function Envelopes() {
   const [newSignerName, setNewSignerName] = useState("");
   const [internalNote, setInternalNote] = useState("");
   const [savingNote, setSavingNote] = useState(false);
+  const [selectedEnvelopeIds, setSelectedEnvelopeIds] = useState<string[]>([]);
 
   // Responsive handler
   useEffect(() => {
@@ -691,6 +696,137 @@ export default function Envelopes() {
     }
   };
 
+  // Batch Actions
+  const handleSelectEnvelope = (id: string) => {
+    setSelectedEnvelopeIds(prev =>
+      prev.includes(id) ? prev.filter(eid => eid !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectAll = () => {
+    setSelectedEnvelopeIds(filteredEnvelopes.map(env => env._id));
+  };
+
+  const handleDeselectAll = () => {
+    setSelectedEnvelopeIds([]);
+  };
+
+  const handleBatchRemind = async () => {
+    const selectedEnvs = envelopes.filter(env => selectedEnvelopeIds.includes(env._id));
+    const pendingEnvs = selectedEnvs.filter(env => env.status === "SENT" || env.status === "SIGNED");
+
+    if (pendingEnvs.length === 0) {
+      toast.warning("Keine ausstehenden Signaturanfragen ausgewählt");
+      return;
+    }
+
+    if (!confirm(`Möchten Sie ${pendingEnvs.length} Erinnerungen versenden?`)) {
+      return;
+    }
+
+    let success = 0;
+    let failed = 0;
+
+    for (const env of pendingEnvs) {
+      try {
+        await handleRemind(env._id);
+        success++;
+      } catch {
+        failed++;
+      }
+    }
+
+    toast.success(`${success} Erinnerungen versendet${failed > 0 ? `, ${failed} fehlgeschlagen` : ""}`);
+    handleDeselectAll();
+  };
+
+  const handleBatchDownload = async () => {
+    if (selectedEnvelopeIds.length === 0) return;
+
+    toast.info(`Download von ${selectedEnvelopeIds.length} PDFs wird gestartet...`);
+
+    for (const envId of selectedEnvelopeIds) {
+      const env = envelopes.find(e => e._id === envId);
+      if (env) {
+        await handleDownloadPDF(env, false);
+        // Small delay to avoid overwhelming the browser
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+    }
+
+    toast.success("Downloads abgeschlossen!");
+    handleDeselectAll();
+  };
+
+  const handleBatchExport = () => {
+    if (selectedEnvelopeIds.length === 0) return;
+
+    const selectedEnvs = envelopes.filter(env => selectedEnvelopeIds.includes(env._id));
+
+    // Create CSV content
+    let csv = "Titel,Status,Empfänger,Signiert,Erstellt,Läuft ab\n";
+
+    selectedEnvs.forEach(env => {
+      const signedCount = env.signers.filter(s => s.status === "SIGNED").length;
+      const totalCount = env.signers.length;
+      const recipientsText = env.signers.map(s => s.name).join("; ");
+
+      csv += `"${env.title}","${getStatusLabel(env.status)}","${recipientsText}","${signedCount}/${totalCount}","${formatDate(env.createdAt)}","${env.expiresAt ? formatDate(env.expiresAt) : "-"}"\n`;
+    });
+
+    // Download as CSV
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `Envelopes_Export_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+
+    toast.success(`${selectedEnvelopeIds.length} Einträge exportiert!`);
+    handleDeselectAll();
+  };
+
+  const handleBatchDelete = async () => {
+    if (selectedEnvelopeIds.length === 0) return;
+
+    if (!confirm(`Möchten Sie ${selectedEnvelopeIds.length} Signaturanfragen wirklich stornieren?`)) {
+      return;
+    }
+
+    let success = 0;
+    let failed = 0;
+
+    for (const envId of selectedEnvelopeIds) {
+      try {
+        const token = localStorage.getItem("token");
+
+        const response = await fetch(`/api/envelopes/${envId}/void`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          credentials: "include"
+        });
+
+        if (response.ok) {
+          success++;
+        } else {
+          failed++;
+        }
+      } catch {
+        failed++;
+      }
+    }
+
+    toast.success(`${success} storniert${failed > 0 ? `, ${failed} fehlgeschlagen` : ""}`);
+    handleDeselectAll();
+    loadEnvelopes(false);
+  };
+
   // Loading state
   if (loading) {
     return (
@@ -789,6 +925,69 @@ export default function Envelopes() {
           </button>
         </div>
 
+        {/* Batch Actions Bar */}
+        <AnimatePresence>
+          {selectedEnvelopeIds.length > 0 && (
+            <motion.div
+              className={styles.batchActionsBar}
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              <div className={styles.batchActionsContent}>
+                <div className={styles.batchSelectionInfo}>
+                  <CheckSquare size={20} className={styles.batchIcon} />
+                  <span className={styles.batchCount}>
+                    {selectedEnvelopeIds.length} ausgewählt
+                  </span>
+                  <button
+                    className={styles.batchDeselectBtn}
+                    onClick={handleDeselectAll}
+                    title="Auswahl aufheben"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+                <div className={styles.batchActions}>
+                  <button
+                    className={styles.batchActionBtn}
+                    onClick={handleBatchRemind}
+                    title="Erinnerungen versenden"
+                  >
+                    <Send size={16} />
+                    Erinnern
+                  </button>
+                  <button
+                    className={styles.batchActionBtn}
+                    onClick={handleBatchDownload}
+                    title="Alle herunterladen"
+                  >
+                    <Download size={16} />
+                    Download
+                  </button>
+                  <button
+                    className={styles.batchActionBtn}
+                    onClick={handleBatchExport}
+                    title="Als CSV exportieren"
+                  >
+                    <FileSpreadsheet size={16} />
+                    Export CSV
+                  </button>
+                  <button
+                    className={`${styles.batchActionBtn} ${styles.batchActionBtnDanger}`}
+                    onClick={handleBatchDelete}
+                    title="Ausgewählte stornieren"
+                  >
+                    <Trash2 size={16} />
+                    Stornieren
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Content Section */}
         <div className={styles.section}>
           {filteredEnvelopes.length === 0 ? (
@@ -806,6 +1005,25 @@ export default function Envelopes() {
               {/* Mobile View - Cards */}
               {isMobile && (
                 <div className={styles.cardsContainer}>
+                  {/* Select All Button for Mobile */}
+                  <div className={styles.mobileSelectAll}>
+                    <button
+                      className={styles.selectAllBtn}
+                      onClick={selectedEnvelopeIds.length === filteredEnvelopes.length ? handleDeselectAll : handleSelectAll}
+                    >
+                      {selectedEnvelopeIds.length === filteredEnvelopes.length ? (
+                        <>
+                          <CheckSquare size={18} />
+                          Alle abwählen
+                        </>
+                      ) : (
+                        <>
+                          <Square size={18} />
+                          Alle auswählen
+                        </>
+                      )}
+                    </button>
+                  </div>
                   <AnimatePresence>
                     {filteredEnvelopes.map((envelope) => (
                       <motion.div
@@ -815,12 +1033,32 @@ export default function Envelopes() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -20 }}
                         transition={{ duration: 0.2 }}
-                        onClick={() => setSelectedEnvelope(envelope)}
-                        style={{ cursor: "pointer" }}
                       >
                         {/* Card Header */}
                         <div className={styles.cardHeader}>
-                          <h3 className={styles.cardTitle}>{envelope.title}</h3>
+                          <div className={styles.cardHeaderLeft}>
+                            <button
+                              className={styles.cardCheckbox}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleSelectEnvelope(envelope._id);
+                              }}
+                              aria-label="Envelope auswählen"
+                            >
+                              {selectedEnvelopeIds.includes(envelope._id) ? (
+                                <CheckSquare size={20} className={styles.checkboxChecked} />
+                              ) : (
+                                <Square size={20} className={styles.checkboxUnchecked} />
+                              )}
+                            </button>
+                            <h3
+                              className={styles.cardTitle}
+                              onClick={() => setSelectedEnvelope(envelope)}
+                              style={{ cursor: "pointer" }}
+                            >
+                              {envelope.title}
+                            </h3>
+                          </div>
                           <span className={`${styles.statusBadge} ${getStatusColor(envelope.status)}`}>
                             {getStatusLabel(envelope.status)}
                           </span>
@@ -919,6 +1157,19 @@ export default function Envelopes() {
                   <table className={styles.table}>
                     <thead>
                       <tr>
+                        <th style={{ width: "50px" }}>
+                          <button
+                            className={styles.tableCheckbox}
+                            onClick={selectedEnvelopeIds.length === filteredEnvelopes.length ? handleDeselectAll : handleSelectAll}
+                            title={selectedEnvelopeIds.length === filteredEnvelopes.length ? "Alle abwählen" : "Alle auswählen"}
+                          >
+                            {selectedEnvelopeIds.length === filteredEnvelopes.length ? (
+                              <CheckSquare size={18} className={styles.checkboxChecked} />
+                            ) : (
+                              <Square size={18} className={styles.checkboxUnchecked} />
+                            )}
+                          </button>
+                        </th>
                         <th>Titel</th>
                         <th>Empfänger</th>
                         <th>Status</th>
@@ -935,16 +1186,37 @@ export default function Envelopes() {
                           animate={{ opacity: 1 }}
                           exit={{ opacity: 0 }}
                           transition={{ duration: 0.2 }}
-                          onClick={() => setSelectedEnvelope(envelope)}
-                          style={{ cursor: "pointer" }}
+                          className={selectedEnvelopeIds.includes(envelope._id) ? styles.rowSelected : ""}
                         >
-                          <td>
+                          <td onClick={(e) => e.stopPropagation()}>
+                            <button
+                              className={styles.tableCheckbox}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleSelectEnvelope(envelope._id);
+                              }}
+                              aria-label="Envelope auswählen"
+                            >
+                              {selectedEnvelopeIds.includes(envelope._id) ? (
+                                <CheckSquare size={18} className={styles.checkboxChecked} />
+                              ) : (
+                                <Square size={18} className={styles.checkboxUnchecked} />
+                              )}
+                            </button>
+                          </td>
+                          <td
+                            onClick={() => setSelectedEnvelope(envelope)}
+                            style={{ cursor: "pointer" }}
+                          >
                             <div className={styles.titleCell}>
                               <FileText size={16} className={styles.fileIcon} />
                               <span>{envelope.title}</span>
                             </div>
                           </td>
-                          <td>
+                          <td
+                            onClick={() => setSelectedEnvelope(envelope)}
+                            style={{ cursor: "pointer" }}
+                          >
                             <div className={styles.signersCell}>
                               {envelope.signers.map((signer, idx) => (
                                 <div key={idx} className={styles.signerRow}>
@@ -958,16 +1230,27 @@ export default function Envelopes() {
                               ))}
                             </div>
                           </td>
-                          <td>
+                          <td
+                            onClick={() => setSelectedEnvelope(envelope)}
+                            style={{ cursor: "pointer" }}
+                          >
                             <span className={`${styles.statusBadge} ${getStatusColor(envelope.status)}`}>
                               {getStatusLabel(envelope.status)}
                             </span>
                           </td>
-                          <td>{formatDate(envelope.createdAt)}</td>
-                          <td>
+                          <td
+                            onClick={() => setSelectedEnvelope(envelope)}
+                            style={{ cursor: "pointer" }}
+                          >
+                            {formatDate(envelope.createdAt)}
+                          </td>
+                          <td
+                            onClick={() => setSelectedEnvelope(envelope)}
+                            style={{ cursor: "pointer" }}
+                          >
                             {envelope.expiresAt ? formatDate(envelope.expiresAt) : "-"}
                           </td>
-                          <td>
+                          <td onClick={(e) => e.stopPropagation()}>
                             <div className={styles.actionsCell}>
                               {envelope.signers.map((signer, idx) => (
                                 <button

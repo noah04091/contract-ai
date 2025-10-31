@@ -1349,3 +1349,196 @@
     opacity: 1;
   }
 }
+
+/* ===== BATCH ACTIONS ===== */
+.batchActionsBar {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+  overflow: hidden;
+}
+
+.batchActionsContent {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.batchSelectionInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: white;
+}
+
+.batchIcon {
+  flex-shrink: 0;
+}
+
+.batchCount {
+  font-size: 1rem;
+  font-weight: 600;
+  color: white;
+}
+
+.batchDeselectBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.batchDeselectBtn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+.batchActions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.batchActionBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  background: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1d1d1f;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.batchActionBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.batchActionBtnDanger {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  color: white;
+}
+
+.batchActionBtnDanger:hover {
+  background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+}
+
+/* Checkboxes */
+.tableCheckbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  transition: all 0.2s ease;
+  border-radius: 4px;
+}
+
+.tableCheckbox:hover {
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.checkboxChecked {
+  color: #3b82f6;
+}
+
+.checkboxUnchecked {
+  color: #9ca3af;
+}
+
+.cardCheckbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.2s ease;
+}
+
+.rowSelected {
+  background: rgba(59, 130, 246, 0.05) !important;
+}
+
+/* Mobile Select All */
+.mobileSelectAll {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.75rem;
+}
+
+.selectAllBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #6e6e73;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.selectAllBtn:hover {
+  border-color: #3b82f6;
+  color: #3b82f6;
+  background: #f0f9ff;
+}
+
+.cardHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+/* Responsive Batch Actions */
+@media (max-width: 768px) {
+  .batchActionsBar {
+    padding: 1rem;
+  }
+
+  .batchActionsContent {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .batchActions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .batchActionBtn {
+    flex: 1;
+    justify-content: center;
+    min-width: 0;
+  }
+
+  .batchSelectionInfo {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
