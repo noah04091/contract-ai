@@ -697,6 +697,8 @@
   .actionBtnSmall {
     font-size: 0.75rem;
     padding: 0.4rem 0.6rem;
+    flex-shrink: 0; /* ✅ FIX: Auch in Mobile View */
+    white-space: nowrap; /* ✅ FIX: Auch in Mobile View */
   }
 }
 
