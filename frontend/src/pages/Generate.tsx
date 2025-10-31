@@ -2077,7 +2077,7 @@ export default function Generate() {
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                       >
-                        {copied ? <CheckCircle size={24} /> : <Clipboard size={24} />}
+                        {copied ? <CheckCircle size={16} /> : <Clipboard size={16} />}
                         <span>{copied ? "Kopiert!" : "Text kopieren"}</span>
                       </motion.button>
 
@@ -2087,7 +2087,7 @@ export default function Generate() {
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                       >
-                        {saved ? <CheckCircle size={24} /> : <Save size={24} />}
+                        {saved ? <CheckCircle size={16} /> : <Save size={16} />}
                         <span>{saved ? "Gespeichert!" : "Vertrag speichern"}</span>
                       </motion.button>
 
@@ -2106,7 +2106,7 @@ export default function Generate() {
                           </>
                         ) : (
                           <>
-                            <Download size={24} />
+                            <Download size={16} />
                             <span>Als PDF herunterladen</span>
                           </>
                         )}
@@ -2127,16 +2127,16 @@ export default function Generate() {
                     {/* Digital Signature */}
                     <div className={styles.signatureSection}>
                       <h3>
-                        <PenTool size={22} />
+                        <PenTool size={18} />
                         Digitale Unterschrift (optional)
                       </h3>
                       
                       <div className={styles.signatureCanvasContainer}>
-                        <canvas
+                        <canvas 
                           ref={canvasRef}
                           className={`${styles.signatureCanvas} ${isDrawing ? styles.drawing : ''}`}
-                          width={1000}
-                          height={300}
+                          width={800}
+                          height={200}
                           onClick={handleCanvasClick}
                           onMouseDown={handleCanvasMouseDown}
                           onMouseMove={handleCanvasMouseMove}
@@ -2151,7 +2151,7 @@ export default function Generate() {
                             userSelect: 'none',
                             display: 'block',
                             width: '100%',
-                            height: '300px'
+                            height: '200px'
                           }}
                         />
                         <div className={styles.canvasOverlay}>
@@ -2175,7 +2175,7 @@ export default function Generate() {
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                         >
-                          <RefreshCw size={20} />
+                          <RefreshCw size={16} />
                           <span>Neu zeichnen</span>
                         </motion.button>
 
@@ -2185,7 +2185,7 @@ export default function Generate() {
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                         >
-                          <Check size={20} />
+                          <Check size={16} />
                           <span>Unterschrift verwenden</span>
                         </motion.button>
                       </div>
@@ -2209,7 +2209,7 @@ export default function Generate() {
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                     >
-                      <ArrowLeft size={20} />
+                      <ArrowLeft size={16} />
                       <span>Neuen Vertrag erstellen</span>
                     </motion.button>
                   </motion.div>
@@ -2229,7 +2229,7 @@ export default function Generate() {
                 >
                   <div className={styles.previewHeader}>
                     <h3>
-                      <Eye size={22} />
+                      <Eye size={18} />
                       Vertragsvorschau
                     </h3>
                     <button
@@ -2246,10 +2246,10 @@ export default function Generate() {
                       className={styles.partyDataToggle}
                       onClick={() => setShowPartyDataPanel(!showPartyDataPanel)}
                     >
-                      <Users size={22} />
+                      <Users size={18} />
                       <span>Vertragsdaten</span>
                       <ChevronDown
-                        size={22}
+                        size={18}
                         style={{
                           transform: showPartyDataPanel ? 'rotate(180deg)' : 'rotate(0)',
                           transition: 'transform 0.2s ease'
@@ -2329,7 +2329,7 @@ export default function Generate() {
                       className={`${styles.tabButton} ${activeTab === 'text' ? styles.active : ''}`}
                       onClick={() => setActiveTab('text')}
                     >
-                      <Edit3 size={20} />
+                      <Edit3 size={16} />
                       <span>Text bearbeiten</span>
                     </button>
                     <button
@@ -2341,7 +2341,7 @@ export default function Generate() {
                         }
                       }}
                     >
-                      <FileText size={20} />
+                      <FileText size={16} />
                       <span>PDF-Vorschau</span>
                       {isGeneratingPreview && <div className={styles.smallSpinner}></div>}
                     </button>
