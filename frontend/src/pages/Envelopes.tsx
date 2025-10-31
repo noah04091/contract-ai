@@ -13,10 +13,16 @@ import {
   AlertCircle,
   X,
   Activity,
-  Eye
+  Eye,
+  Download,
+  Share2,
+  QrCode,
+  FileDown,
+  RefreshCw
 } from "lucide-react";
 import styles from "../styles/Envelopes.module.css";
 import PDFViewer from "../components/PDFViewer";
+import { QRCodeCanvas } from "qrcode.react";
 
 interface Signer {
   email: string;
@@ -56,6 +62,8 @@ export default function Envelopes() {
   const [showPDFViewer, setShowPDFViewer] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [loadingPdf, setLoadingPdf] = useState(false);
+  const [showQRCode, setShowQRCode] = useState(false);
+  const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
 
   // Responsive handler
   useEffect(() => {
@@ -344,6 +352,104 @@ export default function Envelopes() {
     } finally {
       setLoadingPdf(false);
     }
+  };
+
+  // Download PDF
+  const handleDownloadPDF = async (envelope: Envelope, signed: boolean = false) => {
+    const s3Key = signed ? envelope.s3KeySealed : envelope.s3Key;
+
+    if (!s3Key) {
+      alert(signed ? "Kein signiertes Dokument verfügbar" : "Keine PDF-Datei verfügbar");
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+
+      const response = await fetch(`/api/s3/download-url?key=${encodeURIComponent(s3Key)}`, {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        credentials: "include"
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Fehler beim Laden der PDF-URL");
+      }
+
+      // Download file
+      const pdfResponse = await fetch(data.url);
+      const blob = await pdfResponse.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${envelope.title}${signed ? "_signiert" : ""}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("❌ Error downloading PDF:", err);
+      const errorMessage = err instanceof Error ? err.message : "Unbekannter Fehler";
+      alert(`❌ Fehler: ${errorMessage}`);
+    }
+  };
+
+  // Duplicate envelope
+  const handleDuplicate = (envelope: Envelope) => {
+    if (confirm(`Möchten Sie "${envelope.title}" als Vorlage duplizieren?`)) {
+      // TODO: Navigate to create envelope page with pre-filled data
+      alert("Duplizieren-Feature wird demnächst implementiert!");
+    }
+  };
+
+  // Generate QR Code
+  const handleGenerateQRCode = (signer: Signer) => {
+    const signUrl = `${window.location.origin}/sign/${signer.token}`;
+    setQrCodeUrl(signUrl);
+    setShowQRCode(true);
+  };
+
+  // Export Audit Log
+  const handleExportAuditLog = (envelope: Envelope) => {
+    const events = generateTimelineEvents(envelope);
+
+    let auditLog = `Audit-Log für: ${envelope.title}\n`;
+    auditLog += `Erstellt am: ${formatDateTime(envelope.createdAt)}\n`;
+    auditLog += `Status: ${getStatusLabel(envelope.status)}\n\n`;
+    auditLog += `=== AKTIVITÄTSVERLAUF ===\n\n`;
+
+    events.forEach((event, idx) => {
+      auditLog += `${idx + 1}. ${event.title}\n`;
+      auditLog += `   ${event.description}\n`;
+      auditLog += `   Zeitpunkt: ${formatDateTime(event.time)}\n\n`;
+    });
+
+    auditLog += `=== UNTERZEICHNER ===\n\n`;
+    envelope.signers.forEach((signer, idx) => {
+      auditLog += `${idx + 1}. ${signer.name} (${signer.email})\n`;
+      auditLog += `   Rolle: ${signer.role}\n`;
+      auditLog += `   Status: ${signer.status === "SIGNED" ? "Signiert" : "Ausstehend"}\n`;
+      if (signer.signedAt) {
+        auditLog += `   Signiert am: ${formatDateTime(signer.signedAt)}\n`;
+      }
+      auditLog += `\n`;
+    });
+
+    // Download as text file
+    const blob = new Blob([auditLog], { type: "text/plain" });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `Audit-Log_${envelope.title}_${new Date().toISOString().split('T')[0]}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
   };
 
   // Loading state
@@ -665,6 +771,50 @@ export default function Envelopes() {
 
               {/* Content */}
               <div className={styles.drawerContent}>
+                {/* Quick Actions */}
+                <div className={styles.drawerSection}>
+                  <h3 className={styles.sectionTitle}>
+                    <Share2 size={18} />
+                    Schnellaktionen
+                  </h3>
+                  <div className={styles.actionGrid}>
+                    <button
+                      className={styles.quickActionBtn}
+                      onClick={() => handleDownloadPDF(selectedEnvelope, false)}
+                      title="Original-PDF herunterladen"
+                    >
+                      <Download size={20} />
+                      <span>Original herunterladen</span>
+                    </button>
+                    {selectedEnvelope.s3KeySealed && (
+                      <button
+                        className={styles.quickActionBtn}
+                        onClick={() => handleDownloadPDF(selectedEnvelope, true)}
+                        title="Signiertes PDF herunterladen"
+                      >
+                        <FileDown size={20} />
+                        <span>Signiert herunterladen</span>
+                      </button>
+                    )}
+                    <button
+                      className={styles.quickActionBtn}
+                      onClick={() => handleDuplicate(selectedEnvelope)}
+                      title="Als Vorlage duplizieren"
+                    >
+                      <RefreshCw size={20} />
+                      <span>Duplizieren</span>
+                    </button>
+                    <button
+                      className={styles.quickActionBtn}
+                      onClick={() => handleExportAuditLog(selectedEnvelope)}
+                      title="Audit-Log exportieren"
+                    >
+                      <FileDown size={20} />
+                      <span>Audit-Log</span>
+                    </button>
+                  </div>
+                </div>
+
                 {/* Info Grid */}
                 <div className={styles.drawerSection}>
                   <div className={styles.infoGrid}>
@@ -811,6 +961,16 @@ export default function Envelopes() {
                               className={styles.actionBtnSmall}
                               onClick={(e) => {
                                 e.stopPropagation();
+                                handleGenerateQRCode(signer);
+                              }}
+                            >
+                              <QrCode size={14} />
+                              QR-Code
+                            </button>
+                            <button
+                              className={styles.actionBtnSmall}
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 handleRemind(selectedEnvelope._id);
                               }}
                             >
@@ -872,6 +1032,52 @@ export default function Envelopes() {
           }}
         />
       )}
+
+      {/* QR Code Modal */}
+      <AnimatePresence>
+        {showQRCode && (
+          <>
+            <motion.div
+              className={styles.drawerOverlay}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowQRCode(false)}
+            />
+            <motion.div
+              className={styles.qrCodeModal}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.2 }}
+            >
+              <div className={styles.qrCodeHeader}>
+                <h3>QR-Code für mobile Signatur</h3>
+                <button
+                  className={styles.closeBtn}
+                  onClick={() => setShowQRCode(false)}
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              <div className={styles.qrCodeContent}>
+                <QRCodeCanvas
+                  value={qrCodeUrl}
+                  size={256}
+                  level="H"
+                  includeMargin={true}
+                />
+                <p className={styles.qrCodeText}>
+                  Scannen Sie diesen QR-Code mit Ihrem Smartphone, um das Dokument mobil zu signieren.
+                </p>
+                <div className={styles.qrCodeUrl}>
+                  <code>{qrCodeUrl}</code>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

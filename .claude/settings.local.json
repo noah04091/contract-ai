@@ -22,7 +22,8 @@
       "Bash(nul)",
       "Bash(ping:*)",
       "Bash(timeout /t 3 /nobreak)",
-      "Bash(git pull:*)"
+      "Bash(git pull:*)",
+      "Bash(npm install:*)"
     ],
     "deny": [],
     "ask": []
