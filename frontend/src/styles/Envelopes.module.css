@@ -284,10 +284,26 @@
 
 .cardActions {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap; /* ✅ FIX: Verhindert Umbruch in neue Zeile */
   gap: 0.5rem;
   padding-top: 0.75rem;
   border-top: 1px solid #f3f4f6;
+  overflow-x: auto; /* ✅ FIX: Ermöglicht horizontales Scrollen falls nötig */
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling auf iOS */
+}
+
+/* Hide scrollbar but keep functionality */
+.cardActions::-webkit-scrollbar {
+  height: 4px;
+}
+
+.cardActions::-webkit-scrollbar-thumb {
+  background: #e5e7eb;
+  border-radius: 4px;
+}
+
+.cardActions::-webkit-scrollbar-thumb:hover {
+  background: #d1d5db;
 }
 
 /* ===== DESKTOP VIEW - TABLE ===== */
@@ -462,6 +478,8 @@
   color: #6e6e73;
   cursor: pointer;
   transition: all 0.2s ease;
+  flex-shrink: 0; /* ✅ FIX: Verhindert dass Buttons zusammengequetscht werden */
+  white-space: nowrap; /* ✅ FIX: Text bricht nicht um */
 }
 
 .actionBtnSmall:hover {
