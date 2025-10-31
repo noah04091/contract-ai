@@ -1192,35 +1192,67 @@ export default function Envelopes() {
 
                         {/* Card Actions */}
                         <div className={styles.cardActions}>
-                          {envelope.signers.map((signer, idx) => (
-                            <button
-                              key={idx}
-                              className={styles.actionBtnSmall}
-                              onClick={() => handleCopyLink(signer.token)}
-                              title="Link kopieren"
-                            >
-                              <Copy size={14} />
-                              Link ({signer.name})
-                            </button>
-                          ))}
-                          {envelope.status === "SENT" && (
+                          {/* ✅ FIX: Different actions for completed vs. pending envelopes */}
+                          {(envelope.status === "COMPLETED" || envelope.status === "SIGNED") ? (
                             <>
-                              <button
-                                className={styles.actionBtnSmall}
-                                onClick={() => handleRemind(envelope._id)}
-                                title="Erinnerung senden"
-                              >
-                                <Send size={14} />
-                                Erinnern
-                              </button>
-                              <button
-                                className={`${styles.actionBtnSmall} ${styles.actionBtnDanger}`}
-                                onClick={() => handleCancel(envelope._id)}
-                                title="Stornieren"
-                              >
-                                <XCircle size={14} />
-                                Stornieren
-                              </button>
+                              {/* Abgeschlossen: PDF-Buttons */}
+                              {envelope.s3Key && (
+                                <button
+                                  className={styles.actionBtnSmall}
+                                  onClick={() => handleViewPDF(envelope, false)}
+                                  title="Original-PDF anzeigen"
+                                >
+                                  <FileText size={14} />
+                                  Original-PDF
+                                </button>
+                              )}
+                              {envelope.s3KeySealed && (
+                                <button
+                                  className={styles.actionBtnSmall}
+                                  onClick={() => handleViewPDF(envelope, true)}
+                                  title="Signierte PDF herunterladen"
+                                >
+                                  <FileDown size={14} />
+                                  Signierte PDF
+                                </button>
+                              )}
+                            </>
+                          ) : (
+                            <>
+                              {/* Ausstehend: Link-Buttons für PENDING signers */}
+                              {envelope.signers
+                                .filter(signer => signer.status === "PENDING")
+                                .map((signer, idx) => (
+                                  <button
+                                    key={idx}
+                                    className={styles.actionBtnSmall}
+                                    onClick={() => handleCopyLink(signer.token)}
+                                    title="Link kopieren"
+                                  >
+                                    <Copy size={14} />
+                                    Link ({signer.name})
+                                  </button>
+                                ))}
+                              {envelope.status === "SENT" && (
+                                <>
+                                  <button
+                                    className={styles.actionBtnSmall}
+                                    onClick={() => handleRemind(envelope._id)}
+                                    title="Erinnerung senden"
+                                  >
+                                    <Send size={14} />
+                                    Erinnern
+                                  </button>
+                                  <button
+                                    className={`${styles.actionBtnSmall} ${styles.actionBtnDanger}`}
+                                    onClick={() => handleCancel(envelope._id)}
+                                    title="Stornieren"
+                                  >
+                                    <XCircle size={14} />
+                                    Stornieren
+                                  </button>
+                                </>
+                              )}
                             </>
                           )}
                         </div>
@@ -1331,32 +1363,62 @@ export default function Envelopes() {
                           </td>
                           <td onClick={(e) => e.stopPropagation()}>
                             <div className={styles.actionsCell}>
-                              {envelope.signers.map((signer, idx) => (
-                                <button
-                                  key={idx}
-                                  className={styles.actionBtn}
-                                  onClick={() => handleCopyLink(signer.token)}
-                                  title={`Link kopieren für ${signer.name}`}
-                                >
-                                  <Copy size={14} />
-                                </button>
-                              ))}
-                              {envelope.status === "SENT" && (
+                              {/* ✅ FIX: Different actions for completed vs. pending envelopes */}
+                              {(envelope.status === "COMPLETED" || envelope.status === "SIGNED") ? (
                                 <>
-                                  <button
-                                    className={styles.actionBtn}
-                                    onClick={() => handleRemind(envelope._id)}
-                                    title="Erinnerung senden"
-                                  >
-                                    <Send size={14} />
-                                  </button>
-                                  <button
-                                    className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
-                                    onClick={() => handleCancel(envelope._id)}
-                                    title="Stornieren"
-                                  >
-                                    <XCircle size={14} />
-                                  </button>
+                                  {/* Abgeschlossen: PDF-Buttons */}
+                                  {envelope.s3Key && (
+                                    <button
+                                      className={styles.actionBtn}
+                                      onClick={() => handleViewPDF(envelope, false)}
+                                      title="Original-PDF anzeigen"
+                                    >
+                                      <FileText size={14} />
+                                    </button>
+                                  )}
+                                  {envelope.s3KeySealed && (
+                                    <button
+                                      className={styles.actionBtn}
+                                      onClick={() => handleViewPDF(envelope, true)}
+                                      title="Signierte PDF herunterladen"
+                                    >
+                                      <FileDown size={14} />
+                                    </button>
+                                  )}
+                                </>
+                              ) : (
+                                <>
+                                  {/* Ausstehend: Link-Buttons für PENDING signers */}
+                                  {envelope.signers
+                                    .filter(signer => signer.status === "PENDING")
+                                    .map((signer, idx) => (
+                                      <button
+                                        key={idx}
+                                        className={styles.actionBtn}
+                                        onClick={() => handleCopyLink(signer.token)}
+                                        title={`Link kopieren für ${signer.name}`}
+                                      >
+                                        <Copy size={14} />
+                                      </button>
+                                    ))}
+                                  {envelope.status === "SENT" && (
+                                    <>
+                                      <button
+                                        className={styles.actionBtn}
+                                        onClick={() => handleRemind(envelope._id)}
+                                        title="Erinnerung senden"
+                                      >
+                                        <Send size={14} />
+                                      </button>
+                                      <button
+                                        className={`${styles.actionBtn} ${styles.actionBtnDanger}`}
+                                        onClick={() => handleCancel(envelope._id)}
+                                        title="Stornieren"
+                                      >
+                                        <XCircle size={14} />
+                                      </button>
+                                    </>
+                                  )}
                                 </>
                               )}
                             </div>
