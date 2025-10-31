@@ -84,8 +84,6 @@ export default function Envelopes() {
   const [showQRCode, setShowQRCode] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
-  const [autoRefresh, setAutoRefresh] = useState(false);
-  const [refreshCountdown, setRefreshCountdown] = useState(30);
   const [showSignerEdit, setShowSignerEdit] = useState(false);
   const [editingSigner, setEditingSigner] = useState<{ signer: Signer; index: number } | null>(null);
   const [newSignerEmail, setNewSignerEmail] = useState("");
@@ -189,27 +187,9 @@ export default function Envelopes() {
     }
   }, [envelopes, selectedEnvelope]);
 
-  // Auto-refresh timer
-  useEffect(() => {
-    if (!autoRefresh) return;
-
-    const interval = setInterval(() => {
-      setRefreshCountdown((prev) => {
-        if (prev <= 1) {
-          loadEnvelopes(false);
-          return 30;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [autoRefresh, loadEnvelopes]);
-
   // Manual refresh
   const handleManualRefresh = () => {
     loadEnvelopes(false);
-    setRefreshCountdown(30);
     toast.info("Aktualisiert!", { autoClose: 2000 });
   };
 
@@ -1016,14 +996,6 @@ export default function Envelopes() {
               <Clock size={14} />
               <span>Zuletzt aktualisiert: {getRelativeTime(lastUpdated)}</span>
             </div>
-            <button
-              className={`${styles.refreshBtn} ${autoRefresh ? styles.refreshBtnActive : ""}`}
-              onClick={() => setAutoRefresh(!autoRefresh)}
-              title={autoRefresh ? "Auto-Refresh deaktivieren" : "Auto-Refresh aktivieren"}
-            >
-              <Activity size={16} />
-              {autoRefresh ? `Auto (${refreshCountdown}s)` : "Auto-Refresh"}
-            </button>
             <button
               className={styles.refreshBtn}
               onClick={handleManualRefresh}
