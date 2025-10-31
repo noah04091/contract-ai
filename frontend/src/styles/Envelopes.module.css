@@ -1280,3 +1280,72 @@
 .saveBtn:active {
   transform: translateY(0);
 }
+
+/* ===== INTERNAL NOTES ===== */
+.noteContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.noteTextarea {
+  width: 100%;
+  min-height: 120px;
+  padding: 1rem;
+  font-size: 0.95rem;
+  font-family: inherit;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  background: #f9fafb;
+  color: #1d1d1f;
+  resize: vertical;
+  transition: all 0.2s ease;
+  line-height: 1.6;
+}
+
+.noteTextarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.noteTextarea::placeholder {
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.noteFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+  color: #6e6e73;
+}
+
+.charCount {
+  font-weight: 600;
+  color: #9ca3af;
+}
+
+.noteHint {
+  color: #10b981;
+  font-weight: 500;
+}
+
+.savingIndicator {
+  margin-left: 0.5rem;
+  font-size: 0.75rem;
+  color: #3b82f6;
+  font-weight: 500;
+  animation: fadeInOut 1.5s ease-in-out infinite;
+}
+
+@keyframes fadeInOut {
+  0%, 100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}

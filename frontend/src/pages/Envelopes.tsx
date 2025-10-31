@@ -20,7 +20,8 @@ import {
   FileDown,
   RefreshCw,
   Edit,
-  Save
+  Save,
+  StickyNote
 } from "lucide-react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -52,6 +53,7 @@ interface Envelope {
   createdAt: string;
   updatedAt: string;
   expiresAt?: string;
+  internalNote?: string;
 }
 
 type FilterTab = "all" | "sent" | "signed" | "completed";
@@ -75,6 +77,8 @@ export default function Envelopes() {
   const [editingSigner, setEditingSigner] = useState<{ signer: Signer; index: number } | null>(null);
   const [newSignerEmail, setNewSignerEmail] = useState("");
   const [newSignerName, setNewSignerName] = useState("");
+  const [internalNote, setInternalNote] = useState("");
+  const [savingNote, setSavingNote] = useState(false);
 
   // Responsive handler
   useEffect(() => {
@@ -631,6 +635,59 @@ export default function Envelopes() {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Unbekannter Fehler";
       toast.error(`Fehler: ${errorMessage}`);
+    }
+  };
+
+  // Load internal note when drawer opens
+  useEffect(() => {
+    if (selectedEnvelope) {
+      setInternalNote(selectedEnvelope.internalNote || "");
+    }
+  }, [selectedEnvelope]);
+
+  // Save internal note (debounced)
+  useEffect(() => {
+    if (!selectedEnvelope) return;
+
+    const timeoutId = setTimeout(() => {
+      if (internalNote !== (selectedEnvelope.internalNote || "")) {
+        handleSaveNote();
+      }
+    }, 1000); // Auto-save after 1 second of inactivity
+
+    return () => clearTimeout(timeoutId);
+  }, [internalNote, selectedEnvelope]);
+
+  // Save note to backend
+  const handleSaveNote = async () => {
+    if (!selectedEnvelope) return;
+
+    try {
+      setSavingNote(true);
+      const token = localStorage.getItem("token");
+
+      const response = await fetch(`/api/envelopes/${selectedEnvelope._id}/note`, {
+        method: "PATCH",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        credentials: "include",
+        body: JSON.stringify({ internalNote })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Fehler beim Speichern");
+      }
+
+      // Update selected envelope
+      setSelectedEnvelope({ ...selectedEnvelope, internalNote });
+    } catch (err) {
+      console.error("❌ Error saving note:", err);
+    } finally {
+      setSavingNote(false);
     }
   };
 
@@ -1245,6 +1302,32 @@ export default function Envelopes() {
                         </div>
                       </div>
                     ))}
+                  </div>
+                </div>
+
+                {/* Internal Notes */}
+                <div className={styles.drawerSection}>
+                  <h3 className={styles.sectionTitle}>
+                    <StickyNote size={18} />
+                    Interne Notizen
+                    {savingNote && <span className={styles.savingIndicator}>Speichern...</span>}
+                  </h3>
+                  <div className={styles.noteContainer}>
+                    <textarea
+                      className={styles.noteTextarea}
+                      placeholder="Interne Notizen (nicht sichtbar für Unterzeichner)..."
+                      value={internalNote}
+                      onChange={(e) => setInternalNote(e.target.value.slice(0, 500))}
+                      maxLength={500}
+                    />
+                    <div className={styles.noteFooter}>
+                      <span className={styles.charCount}>
+                        {internalNote.length} / 500 Zeichen
+                      </span>
+                      <span className={styles.noteHint}>
+                        💡 Automatisch gespeichert
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
