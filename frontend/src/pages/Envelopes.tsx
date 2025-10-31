@@ -1178,7 +1178,7 @@ export default function Envelopes() {
                             <span className={`${styles.statusBadge} ${getStatusColor(envelope.status)}`}>
                               {getStatusLabel(envelope.status)}
                             </span>
-                            {/* ✅ COMPLETED: Zeige Abschluss-Datum beim Status */}
+                            {/* ✅ COMPLETED: Zeige Abschluss-Datum beim Status (rechts unter Badge) */}
                             {(envelope.status === "COMPLETED" || envelope.status === "SIGNED") && envelope.completedAt && (
                               <span style={{
                                 color: '#10b981',
