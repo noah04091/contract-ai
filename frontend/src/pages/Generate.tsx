@@ -609,6 +609,11 @@ export default function Generate() {
   const [signatureURL, setSignatureURL] = useState<string | null>(null);
   const [isDrawing, setIsDrawing] = useState<boolean>(false);
   const [showPreview, setShowPreview] = useState<boolean>(false);
+
+  // 📄 NEW: PDF Preview States
+  const [activeTab, setActiveTab] = useState<'text' | 'pdf'>('text');
+  const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
+  const [isGeneratingPreview, setIsGeneratingPreview] = useState<boolean>(false);
   const [showTemplates, setShowTemplates] = useState<boolean>(false);
   
   // 🔴 FIX 2: Loading State für PDF-Button
@@ -630,7 +635,7 @@ export default function Generate() {
   });
 
   // Refs
-  const contractRef = useRef<HTMLDivElement>(null);
+  // const contractRef = useRef<HTMLDivElement>(null); // ❌ Not used anymore (replaced with textarea)
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Load Company Profile and Usage Data on mount
@@ -1411,6 +1416,81 @@ export default function Generate() {
     }
   };
 
+  // 📄 NEW: Generate PDF Preview (ohne Download)
+  const generatePDFPreview = async () => {
+    if (isGeneratingPreview || pdfPreviewUrl) return; // Nur einmal generieren
+
+    setIsGeneratingPreview(true);
+
+    try {
+      console.log("🔍 Generiere PDF-Vorschau...");
+
+      // Contract ID sicherstellen
+      let contractId = savedContractId;
+
+      // Wenn noch nicht gespeichert, automatisch speichern
+      if (!contractId && contractText) {
+        console.log("📝 Speichere Vertrag automatisch vor PDF-Vorschau...");
+
+        try {
+          const saveRes = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: `${contractData.contractType || 'Vertrag'} - ${new Date().toLocaleDateString('de-DE')}`,
+              content: contractText,
+              htmlContent: generatedHTML,
+              isGenerated: true,
+              metadata: {
+                contractType: contractData.contractType,
+                parties: contractData.parties,
+                contractDetails: contractData.contractDetails,
+                hasLogo: !!(useCompanyProfile && companyProfile?.logoUrl),
+                generatedAt: new Date().toISOString()
+              }
+            })
+          });
+
+          const saveData = await saveRes.json();
+          if (saveRes.ok && saveData.contractId) {
+            contractId = saveData.contractId;
+            setSavedContractId(saveData.contractId);
+            setSaved(true);
+            console.log("✅ Vertrag automatisch gespeichert:", saveData.contractId);
+            await new Promise(resolve => setTimeout(resolve, 1500));
+          }
+        } catch (saveError) {
+          console.error("❌ Fehler beim automatischen Speichern:", saveError);
+        }
+      }
+
+      // PDF generieren mit Puppeteer
+      if (contractId) {
+        const response = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/generate/pdf`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contractId: contractId })
+        });
+
+        if (response.ok) {
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          setPdfPreviewUrl(url);
+          console.log("✅ PDF-Vorschau erstellt");
+        } else {
+          throw new Error('PDF-Vorschau konnte nicht erstellt werden');
+        }
+      }
+    } catch (error) {
+      console.error("❌ Fehler bei PDF-Vorschau:", error);
+      toast.error("❌ PDF-Vorschau konnte nicht erstellt werden");
+    } finally {
+      setIsGeneratingPreview(false);
+    }
+  };
+
   const saveSignature = () => {
     const canvas = canvasRef.current;
     if (canvas) {
@@ -2066,10 +2146,10 @@ export default function Generate() {
               </AnimatePresence>
             </motion.div>
 
-            {/* Right Panel - Preview */}
+            {/* Right Panel - Preview with Tabs */}
             <AnimatePresence>
               {showPreview && contractText && (
-                <motion.div 
+                <motion.div
                   className={styles.previewPanel}
                   initial={{ opacity: 0, x: 20, width: 0 }}
                   animate={{ opacity: 1, x: 0, width: "auto" }}
@@ -2081,30 +2161,82 @@ export default function Generate() {
                       <Eye size={18} />
                       Vertragsvorschau
                     </h3>
-                    <button 
+                    <button
                       className={styles.closePreview}
                       onClick={() => setShowPreview(false)}
                     >
                       ×
                     </button>
                   </div>
-                  
-                  <div className={styles.previewContainer}>
-                    <div 
-                      ref={contractRef}
-                      className={styles.contractContent}
-                      dangerouslySetInnerHTML={{ 
-                        __html: contractText.replace(/\n/g, '<br/>') 
+
+                  {/* 📄 NEW: TAB Navigation */}
+                  <div className={styles.tabNavigation}>
+                    <button
+                      className={`${styles.tabButton} ${activeTab === 'text' ? styles.active : ''}`}
+                      onClick={() => setActiveTab('text')}
+                    >
+                      <Edit3 size={16} />
+                      <span>Text bearbeiten</span>
+                    </button>
+                    <button
+                      className={`${styles.tabButton} ${activeTab === 'pdf' ? styles.active : ''}`}
+                      onClick={() => {
+                        setActiveTab('pdf');
+                        if (!pdfPreviewUrl && !isGeneratingPreview) {
+                          generatePDFPreview();
+                        }
                       }}
-                    />
-                    
-                    {signatureURL && (
-                      <div className={styles.signatureInPreview}>
-                        <div className={styles.signatureLabel}>Digitale Unterschrift:</div>
-                        <img src={signatureURL} alt="Unterschrift" />
-                        <div className={styles.signatureDate}>
-                          Unterschrieben am {new Date().toLocaleString('de-DE')}
-                        </div>
+                    >
+                      <FileText size={16} />
+                      <span>PDF-Vorschau</span>
+                      {isGeneratingPreview && <div className={styles.smallSpinner}></div>}
+                    </button>
+                  </div>
+
+                  <div className={styles.previewContainer}>
+                    {/* Text Editor Tab */}
+                    {activeTab === 'text' && (
+                      <div className={styles.textEditorTab}>
+                        <textarea
+                          className={styles.contractTextarea}
+                          value={contractText}
+                          onChange={(e) => setContractText(e.target.value)}
+                          placeholder="Vertrag text..."
+                        />
+                        {signatureURL && (
+                          <div className={styles.signatureInPreview}>
+                            <div className={styles.signatureLabel}>Digitale Unterschrift:</div>
+                            <img src={signatureURL} alt="Unterschrift" />
+                            <div className={styles.signatureDate}>
+                              Unterschrieben am {new Date().toLocaleString('de-DE')}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* PDF Preview Tab */}
+                    {activeTab === 'pdf' && (
+                      <div className={styles.pdfPreviewTab}>
+                        {isGeneratingPreview ? (
+                          <div className={styles.pdfLoading}>
+                            <div className={styles.loadingSpinner}></div>
+                            <p>PDF wird generiert...</p>
+                          </div>
+                        ) : pdfPreviewUrl ? (
+                          <iframe
+                            src={pdfPreviewUrl}
+                            className={styles.pdfIframe}
+                            title="PDF Vorschau"
+                          />
+                        ) : (
+                          <div className={styles.pdfError}>
+                            <p>❌ PDF konnte nicht geladen werden</p>
+                            <button onClick={generatePDFPreview} className={styles.retryButton}>
+                              Erneut versuchen
+                            </button>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
