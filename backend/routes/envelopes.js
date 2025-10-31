@@ -8,6 +8,7 @@ const verifyToken = require("../middleware/verifyToken");
 const sendEmail = require("../services/mailer");
 const { sealPdf } = require("../services/pdfSealing"); // ✉️ PDF-Sealing Service
 const { generateSignedUrl } = require("../services/fileStorage"); // 🆕 For S3 download links
+const { generateEventsForEnvelope, markEnvelopeAsCompleted, deleteEnvelopeEvents } = require("../services/envelopeCalendarEvents"); // 📅 Calendar Integration
 const Envelope = require("../models/Envelope");
 const Contract = require("../models/Contract");
 
@@ -603,6 +604,15 @@ router.post("/envelopes/:id/send", verifyToken, async (req, res) => {
       }
     }
 
+    // 📅 KILLER FEATURE: Auto-create calendar events for signature lifecycle
+    try {
+      await generateEventsForEnvelope(req.db, envelope);
+      console.log(`📅 Calendar events created for envelope: ${envelope.title}`);
+    } catch (calendarError) {
+      console.error('⚠️ Could not create calendar events:', calendarError.message);
+      // Don't block envelope sending if calendar creation fails
+    }
+
     res.json({
       success: true,
       message: `Einladungen an ${successCount} von ${envelope.signers.length} Unterzeichnern gesendet`,
@@ -996,6 +1006,15 @@ router.post("/envelopes/:id/void", verifyToken, async (req, res) => {
       userAgent: req.headers['user-agent'],
       details: { reason: envelope.voidReason }
     });
+
+    // 📅 KILLER FEATURE: Delete calendar events when envelope is voided
+    try {
+      await deleteEnvelopeEvents(req.db, envelope._id);
+      console.log(`📅 Calendar events deleted for voided envelope`);
+    } catch (calendarError) {
+      console.error('⚠️ Could not delete calendar events:', calendarError.message);
+      // Don't block voiding if calendar deletion fails
+    }
 
     console.log(`✅ Envelope voided: ${envelope._id}`);
 
@@ -1406,6 +1425,15 @@ router.post("/sign/:token/submit", signatureSubmitLimiter, async (req, res) => {
         } catch (contractUpdateError) {
           console.error('⚠️ Could not update contract status:', contractUpdateError.message);
         }
+      }
+
+      // 📅 KILLER FEATURE: Mark envelope as completed in calendar
+      try {
+        await markEnvelopeAsCompleted(req.db, envelope);
+        console.log(`📅 Calendar events updated: Envelope marked as completed`);
+      } catch (calendarError) {
+        console.error('⚠️ Could not update calendar events:', calendarError.message);
+        // Don't block completion if calendar update fails
       }
 
       // 🆕 Send completion notification to ALL signers (not just owner)

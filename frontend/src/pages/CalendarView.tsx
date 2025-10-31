@@ -66,7 +66,9 @@ type Value = ValuePiece | [ValuePiece, ValuePiece];
 
 interface CalendarEvent {
   id: string;
-  contractId: string;
+  contractId?: string; // ✅ Optional for envelope events
+  envelopeId?: string; // 📅 NEW: For signature events
+  sourceType?: "CONTRACT" | "ENVELOPE"; // 📅 NEW: Event source type
   contractName: string;
   title: string;
   description: string;
@@ -84,6 +86,10 @@ interface CalendarEvent {
     daysUntilWindow?: number;
     contractName?: string;
     notes?: string;
+    envelopeId?: string; // 📅 NEW
+    envelopeTitle?: string; // 📅 NEW
+    pendingSigners?: number; // 📅 NEW
+    totalSigners?: number; // 📅 NEW
   };
   provider?: ProviderType;
   amount?: number;
@@ -145,17 +151,43 @@ function QuickActionsModal({ event, onAction, onClose, onEdit, navigate, onOpenS
     });
   };
 
+  // 📅 KILLER FEATURE: Check if this is an envelope event
+  const isEnvelopeEvent = event.sourceType === "ENVELOPE" || !!event.envelopeId || event.type.includes("SIGNATURE");
+  const isCompletedSignature = event.type === "SIGNATURE_COMPLETED";
+
   const getSeverityStyle = () => {
+    // 📅 ENVELOPE EVENTS: Different color scheme
+    if (isEnvelopeEvent) {
+      if (isCompletedSignature) {
+        // Green for completed signatures
+        return {
+          color: '#10b981',
+          icon: <Shield size={20} />,
+          bg: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.05))',
+          borderColor: 'rgba(16, 185, 129, 0.2)'
+        };
+      } else {
+        // Orange for pending signatures
+        return {
+          color: '#f97316',
+          icon: <Bell size={20} />,
+          bg: 'linear-gradient(135deg, rgba(249, 115, 22, 0.1), rgba(249, 115, 22, 0.05))',
+          borderColor: 'rgba(249, 115, 22, 0.2)'
+        };
+      }
+    }
+
+    // CONTRACT EVENTS: Original color scheme
     switch(event.severity) {
       case 'critical':
-        return { 
-          color: '#ef4444', 
-          icon: <AlertCircle size={20} />, 
+        return {
+          color: '#ef4444',
+          icon: <AlertCircle size={20} />,
           bg: 'linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05))',
           borderColor: 'rgba(239, 68, 68, 0.2)'
         };
       case 'warning':
-        return { 
+        return {
           color: '#f59e0b', 
           icon: <AlertTriangle size={20} />, 
           bg: 'linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.05))',
@@ -251,72 +283,122 @@ function QuickActionsModal({ event, onAction, onClose, onEdit, navigate, onOpenS
           </div>
 
           <div className="modal-actions-grid">
-            {/* Vertrag anzeigen Button - prominent platziert */}
-            <motion.button 
-              className="action-btn-premium view-contract"
-              onClick={handleViewContract}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              style={{ gridColumn: '1 / -1' }}
-            >
-              <FileText size={18} />
-              <span>📄 Vertrag anzeigen</span>
-              <ArrowRight size={16} className="action-arrow" />
-            </motion.button>
+            {/* 📅 KILLER FEATURE: Different actions for envelope vs contract events */}
+            {isEnvelopeEvent ? (
+              <>
+                {/* ENVELOPE EVENTS: View Signature Button */}
+                <motion.button
+                  className="action-btn-premium view-contract"
+                  onClick={() => {
+                    const envelopeId = event.envelopeId || event.metadata?.envelopeId;
+                    window.location.href = `/envelopes?view=${envelopeId}`;
+                    onClose();
+                  }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  style={{ gridColumn: '1 / -1' }}
+                >
+                  <FileText size={18} />
+                  <span>✍️ Signaturanfrage anzeigen</span>
+                  <ArrowRight size={16} className="action-arrow" />
+                </motion.button>
 
-            {event.metadata?.suggestedAction === "cancel" && (
-              <motion.button 
-                className="action-btn-premium primary"
-                onClick={() => onAction("cancel", event.id)}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                style={{ gridColumn: '1 / -1' }}
-              >
-                <Zap size={18} />
-                <span>Jetzt kündigen</span>
-                <ArrowRight size={16} className="action-arrow" />
-              </motion.button>
+                {!isCompletedSignature && (
+                  <motion.button
+                    className="action-btn-premium secondary"
+                    onClick={() => {
+                      // TODO: Implement reminder functionality
+                      alert("Erinnerung wird versendet!");
+                      onClose();
+                    }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <Bell size={18} />
+                    <span>Erinnerung senden</span>
+                  </motion.button>
+                )}
+
+                <motion.button
+                  className="action-btn-premium ghost"
+                  onClick={() => { onOpenSnooze(event); onClose(); }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Clock size={18} />
+                  <span>Später erinnern</span>
+                </motion.button>
+              </>
+            ) : (
+              <>
+                {/* CONTRACT EVENTS: Original actions */}
+                <motion.button
+                  className="action-btn-premium view-contract"
+                  onClick={handleViewContract}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  style={{ gridColumn: '1 / -1' }}
+                >
+                  <FileText size={18} />
+                  <span>📄 Vertrag anzeigen</span>
+                  <ArrowRight size={16} className="action-arrow" />
+                </motion.button>
+
+                {event.metadata?.suggestedAction === "cancel" && (
+                  <motion.button
+                    className="action-btn-premium primary"
+                    onClick={() => onAction("cancel", event.id)}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    style={{ gridColumn: '1 / -1' }}
+                  >
+                    <Zap size={18} />
+                    <span>Jetzt kündigen</span>
+                    <ArrowRight size={16} className="action-arrow" />
+                  </motion.button>
+                )}
+
+                <motion.button
+                  className="action-btn-premium secondary"
+                  onClick={() => { navigate(`/compare?contractId=${event.contractId}`); onClose(); }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <TrendingUp size={18} />
+                  <span>Vergleichen</span>
+                </motion.button>
+
+                <motion.button
+                  className="action-btn-premium secondary"
+                  onClick={() => { navigate(`/optimize/${event.contractId}`); onClose(); }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <RefreshCw size={18} />
+                  <span>Optimieren</span>
+                </motion.button>
+
+                <motion.button
+                  className="action-btn-premium secondary"
+                  onClick={() => { onEdit(event); onClose(); }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Edit3 size={18} />
+                  <span>Bearbeiten</span>
+                </motion.button>
+
+                <motion.button
+                  className="action-btn-premium ghost"
+                  onClick={() => { onOpenSnooze(event); onClose(); }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Clock size={18} />
+                  <span>Erinnern</span>
+                </motion.button>
+              </>
             )}
-            
-            <motion.button
-              className="action-btn-premium secondary"
-              onClick={() => { navigate(`/compare?contractId=${event.contractId}`); onClose(); }}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <TrendingUp size={18} />
-              <span>Vergleichen</span>
-            </motion.button>
-
-            <motion.button
-              className="action-btn-premium secondary"
-              onClick={() => { navigate(`/optimize/${event.contractId}`); onClose(); }}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <RefreshCw size={18} />
-              <span>Optimieren</span>
-            </motion.button>
-
-            <motion.button
-              className="action-btn-premium secondary"
-              onClick={() => { onEdit(event); onClose(); }}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <Edit3 size={18} />
-              <span>Bearbeiten</span>
-            </motion.button>
-
-            <motion.button
-              className="action-btn-premium ghost"
-              onClick={() => { onOpenSnooze(event); onClose(); }}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <Clock size={18} />
-              <span>Erinnern</span>
-            </motion.button>
           </div>
         </div>
       </motion.div>
@@ -941,8 +1023,17 @@ function StatsDetailModal({ isOpen, onClose, title, events, onEventClick }: Stat
     }
   };
 
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
+  const getSeverityColor = (event: CalendarEvent) => {
+    // 📅 KILLER FEATURE: Check for envelope events first
+    const isEnvelopeEvent = event.sourceType === "ENVELOPE" || !!event.envelopeId || event.type.includes("SIGNATURE");
+    const isCompletedSignature = event.type === "SIGNATURE_COMPLETED";
+
+    if (isEnvelopeEvent) {
+      return isCompletedSignature ? '#10b981' : '#f97316'; // Green for completed, Orange for pending
+    }
+
+    // Contract events: original color scheme
+    switch (event.severity) {
       case 'critical': return '#ef4444';
       case 'warning': return '#f59e0b';
       default: return '#3b82f6';
@@ -1132,9 +1223,9 @@ function StatsDetailModal({ isOpen, onClose, title, events, onEventClick }: Stat
                             width: '16px',
                             height: '16px',
                             borderRadius: '50%',
-                            background: getSeverityColor(event.severity),
+                            background: getSeverityColor(event),
                             border: '3px solid #ffffff',
-                            boxShadow: `0 0 0 1px ${getSeverityColor(event.severity)}40`,
+                            boxShadow: `0 0 0 1px ${getSeverityColor(event)}40`,
                             zIndex: 1
                           }} />
 
@@ -1148,7 +1239,7 @@ function StatsDetailModal({ isOpen, onClose, title, events, onEventClick }: Stat
                             }}
                             style={{
                               background: '#ffffff',
-                              border: `1px solid ${getSeverityColor(event.severity)}30`,
+                              border: `1px solid ${getSeverityColor(event)}30`,
                               borderRadius: '12px',
                               padding: isMobile ? '16px' : '20px',
                               boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
@@ -1169,7 +1260,7 @@ function StatsDetailModal({ isOpen, onClose, title, events, onEventClick }: Stat
                                 <span style={{
                                   fontSize: '14px',
                                   fontWeight: '600',
-                                  color: getSeverityColor(event.severity),
+                                  color: getSeverityColor(event),
                                   textTransform: 'uppercase',
                                   letterSpacing: '0.05em'
                                 }}>
