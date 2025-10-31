@@ -1294,6 +1294,9 @@ export default function CalendarPage() {
   const [selectedEmptyDate, setSelectedEmptyDate] = useState<Date | null>(null);
   const [showEventForm, setShowEventForm] = useState(false);
   const [userContracts, setUserContracts] = useState<ContractType[]>([]);
+  const [contractSearchQuery, setContractSearchQuery] = useState('');
+  const [showContractDropdown, setShowContractDropdown] = useState(false);
+  const [isNoContract, setIsNoContract] = useState(false);
   const [newEvent, setNewEvent] = useState({
     contractId: '',
     title: '',
@@ -1396,6 +1399,21 @@ export default function CalendarPage() {
     fetchEvents();
     fetchContracts();
   }, [fetchEvents, fetchContracts]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.form-group') || target.closest('button[type="submit"]')) {
+        setShowContractDropdown(false);
+      }
+    };
+
+    if (showContractDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showContractDropdown]);
 
   const handleEditEvent = (event: CalendarEvent) => {
     setEditingEvent(event);
@@ -2283,6 +2301,9 @@ export default function CalendarPage() {
                           severity: 'info',
                           time: '12:00'
                         });
+                        setContractSearchQuery('');
+                        setShowContractDropdown(false);
+                        setIsNoContract(false);
                         await fetchEvents();
                       } catch (error) {
                         console.error('Fehler beim Erstellen des Events:', error);
@@ -2290,48 +2311,193 @@ export default function CalendarPage() {
                       }
                     }}>
 
-                      {/* DEBUG INFO - Remove after fixing */}
-                      <div style={{
-                        padding: '10px',
-                        background: '#fff3cd',
-                        border: '1px solid #ffc107',
-                        borderRadius: '4px',
-                        marginBottom: '15px',
-                        fontSize: '13px'
-                      }}>
-                        <strong>🔍 Debug Info:</strong>
-                        <div>Verträge geladen: {userContracts.length}</div>
-                        {userContracts.length === 0 && (
-                          <div style={{ color: '#d32f2f', marginTop: '5px' }}>
-                            ⚠️ Keine Verträge gefunden! API-Problem oder Auth-Token fehlt?
-                          </div>
-                        )}
-                        {userContracts.length > 0 && (
-                          <div style={{ color: '#2e7d32', marginTop: '5px' }}>
-                            ✅ {userContracts.length} Verträge verfügbar
-                          </div>
-                        )}
-                      </div>
+                      {/* Searchable Contract Selector */}
+                      <div className="form-group" style={{ position: 'relative' }}>
+                        <label>Vertrag auswählen {!isNoContract && '*'}</label>
 
-                      <div className="form-group">
-                        <label>Vertrag auswählen *</label>
-                        <select
-                          value={newEvent.contractId}
-                          onChange={(e) => setNewEvent({...newEvent, contractId: e.target.value})}
-                          required
-                          className="form-select"
-                        >
-                          <option value="">-- Vertrag wählen --</option>
-                          {userContracts.map(contract => {
-                            const displayName = contract.name ||
-                              (typeof contract.provider === 'string' ? contract.provider : 'Unbekannter Vertrag');
-                            return (
-                              <option key={contract._id} value={contract._id}>
-                                {displayName}
-                              </option>
-                            );
-                          })}
-                        </select>
+                        {/* Checkbox für "Keine Vertrag - Individuelle Erinnerung" */}
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          marginBottom: '10px',
+                          padding: '8px',
+                          background: '#f8f9fa',
+                          borderRadius: '4px'
+                        }}>
+                          <input
+                            type="checkbox"
+                            id="no-contract-checkbox"
+                            checked={isNoContract}
+                            onChange={(e) => {
+                              setIsNoContract(e.target.checked);
+                              if (e.target.checked) {
+                                setNewEvent({...newEvent, contractId: 'NO_CONTRACT'});
+                                setContractSearchQuery('Individuelle Erinnerung (kein Vertrag)');
+                                setShowContractDropdown(false);
+                              } else {
+                                setNewEvent({...newEvent, contractId: ''});
+                                setContractSearchQuery('');
+                              }
+                            }}
+                            style={{ cursor: 'pointer' }}
+                          />
+                          <label
+                            htmlFor="no-contract-checkbox"
+                            style={{
+                              margin: 0,
+                              cursor: 'pointer',
+                              fontSize: '14px',
+                              color: '#495057'
+                            }}
+                          >
+                            📝 Individuelle Erinnerung (kein Vertrag)
+                          </label>
+                        </div>
+
+                        {/* Searchable Input */}
+                        <div style={{ position: 'relative' }}>
+                          <input
+                            type="text"
+                            className="form-input"
+                            placeholder={isNoContract ? "Individuelle Erinnerung" : "Vertrag suchen... (z.B. 'Hausrat', 'Telekom')"}
+                            value={contractSearchQuery}
+                            onChange={(e) => {
+                              setContractSearchQuery(e.target.value);
+                              setShowContractDropdown(true);
+                              if (!isNoContract) {
+                                setNewEvent({...newEvent, contractId: ''});
+                              }
+                            }}
+                            onFocus={() => !isNoContract && setShowContractDropdown(true)}
+                            disabled={isNoContract}
+                            style={{
+                              paddingRight: '35px',
+                              opacity: isNoContract ? 0.6 : 1,
+                              cursor: isNoContract ? 'not-allowed' : 'text'
+                            }}
+                          />
+                          {contractSearchQuery && !isNoContract && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setContractSearchQuery('');
+                                setNewEvent({...newEvent, contractId: ''});
+                              }}
+                              style={{
+                                position: 'absolute',
+                                right: '10px',
+                                top: '50%',
+                                transform: 'translateY(-50%)',
+                                background: 'none',
+                                border: 'none',
+                                fontSize: '18px',
+                                color: '#999',
+                                cursor: 'pointer',
+                                padding: '0 5px'
+                              }}
+                            >
+                              ×
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Dropdown Results */}
+                        {showContractDropdown && !isNoContract && (
+                          <div style={{
+                            position: 'absolute',
+                            top: '100%',
+                            left: 0,
+                            right: 0,
+                            maxHeight: '250px',
+                            overflowY: 'auto',
+                            background: 'white',
+                            border: '1px solid #ddd',
+                            borderRadius: '4px',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                            zIndex: 1000,
+                            marginTop: '4px'
+                          }}>
+                            {(() => {
+                              const filtered = userContracts.filter(contract => {
+                                const searchLower = contractSearchQuery.toLowerCase();
+                                const name = contract.name?.toLowerCase() || '';
+                                const provider = typeof contract.provider === 'string'
+                                  ? contract.provider.toLowerCase()
+                                  : '';
+                                return name.includes(searchLower) || provider.includes(searchLower);
+                              });
+
+                              if (filtered.length === 0) {
+                                return (
+                                  <div style={{
+                                    padding: '12px',
+                                    textAlign: 'center',
+                                    color: '#999',
+                                    fontSize: '14px'
+                                  }}>
+                                    🔍 Keine Verträge gefunden
+                                  </div>
+                                );
+                              }
+
+                              return filtered.map(contract => {
+                                const displayName = contract.name ||
+                                  (typeof contract.provider === 'string' ? contract.provider : 'Unbekannter Vertrag');
+                                const isSelected = newEvent.contractId === contract._id;
+
+                                return (
+                                  <div
+                                    key={contract._id}
+                                    onClick={() => {
+                                      setNewEvent({...newEvent, contractId: contract._id});
+                                      setContractSearchQuery(displayName);
+                                      setShowContractDropdown(false);
+                                    }}
+                                    style={{
+                                      padding: '10px 12px',
+                                      cursor: 'pointer',
+                                      borderBottom: '1px solid #f0f0f0',
+                                      background: isSelected ? '#e3f2fd' : 'white',
+                                      transition: 'background 0.2s'
+                                    }}
+                                    onMouseEnter={(e) => {
+                                      if (!isSelected) {
+                                        e.currentTarget.style.background = '#f8f9fa';
+                                      }
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      if (!isSelected) {
+                                        e.currentTarget.style.background = 'white';
+                                      }
+                                    }}
+                                  >
+                                    <div style={{ fontWeight: 500, fontSize: '14px' }}>
+                                      {displayName}
+                                    </div>
+                                    {contract.provider && typeof contract.provider === 'string' && contract.name && (
+                                      <div style={{ fontSize: '12px', color: '#666', marginTop: '2px' }}>
+                                        {contract.provider}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              });
+                            })()}
+                          </div>
+                        )}
+
+                        {/* Hilfsmeldung */}
+                        {!isNoContract && (
+                          <small style={{
+                            display: 'block',
+                            marginTop: '6px',
+                            color: '#666',
+                            fontSize: '12px'
+                          }}>
+                            💡 Tipp: Tippe um zu suchen, oder aktiviere "Individuelle Erinnerung" für Events ohne Vertrag
+                          </small>
+                        )}
                       </div>
 
                       <div className="form-group">

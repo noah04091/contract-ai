@@ -238,31 +238,45 @@ router.post("/events", verifyToken, async (req, res) => {
     const { contractId, title, description, date, type, severity, notes } = req.body;
 
     // Validate required fields
-    if (!contractId || !title || !date) {
+    if (!title || !date) {
       return res.status(400).json({
         success: false,
-        error: "ContractId, Titel und Datum sind erforderlich"
+        error: "Titel und Datum sind erforderlich"
       });
     }
 
-    // Verify contract ownership
-    const contract = await req.db.collection("contracts").findOne({
-      _id: new ObjectId(contractId),
-      userId
-    });
+    let contract = null;
+    let eventContractId = null;
+    let contractName = "Individuelle Erinnerung";
+    let metadata = {};
 
-    if (!contract) {
-      return res.status(404).json({
-        success: false,
-        error: "Vertrag nicht gefunden"
+    // If contractId is provided and not 'NO_CONTRACT', verify contract ownership
+    if (contractId && contractId !== 'NO_CONTRACT') {
+      contract = await req.db.collection("contracts").findOne({
+        _id: new ObjectId(contractId),
+        userId
       });
+
+      if (!contract) {
+        return res.status(404).json({
+          success: false,
+          error: "Vertrag nicht gefunden"
+        });
+      }
+
+      eventContractId = new ObjectId(contractId);
+      contractName = contract.name;
+      metadata = {
+        contractName: contract.name,
+        provider: contract.provider
+      };
     }
 
     // Create new event
     const newEvent = {
       userId,
-      contractId: new ObjectId(contractId),
-      contractName: contract.name,
+      ...(eventContractId && { contractId: eventContractId }),
+      contractName,
       title,
       description: description || '',
       date: new Date(date),
@@ -271,10 +285,8 @@ router.post("/events", verifyToken, async (req, res) => {
       status: 'scheduled',
       notes: notes || '',
       manuallyCreated: true,
-      metadata: {
-        contractName: contract.name,
-        provider: contract.provider
-      },
+      isIndividualReminder: !eventContractId,
+      metadata,
       createdAt: new Date(),
       updatedAt: new Date()
     };
