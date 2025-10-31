@@ -750,7 +750,7 @@ export default function Envelopes() {
           "Content-Type": "application/json"
         },
         credentials: "include",
-        body: JSON.stringify({ internalNote })
+        body: JSON.stringify({ note: internalNote }) // ✅ FIX: Backend expects "note", not "internalNote"
       });
 
       const data = await response.json();
@@ -761,6 +761,13 @@ export default function Envelopes() {
 
       // Update selected envelope
       setSelectedEnvelope({ ...selectedEnvelope, internalNote });
+
+      // ✅ FIX: Also update the envelope in the list so it persists when reopening
+      setEnvelopes(prev => prev.map(env =>
+        env._id === selectedEnvelope._id
+          ? { ...env, internalNote }
+          : env
+      ));
     } catch (err) {
       console.error("❌ Error saving note:", err);
     } finally {
