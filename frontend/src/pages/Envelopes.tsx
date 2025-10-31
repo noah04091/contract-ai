@@ -44,6 +44,13 @@ interface Signer {
   tokenExpires: string;
 }
 
+interface Contract {
+  _id?: string;
+  s3Key?: string;
+  title?: string;
+  status?: string;
+}
+
 interface Envelope {
   _id: string;
   ownerId: string;
@@ -58,11 +65,7 @@ interface Envelope {
   updatedAt: string;
   expiresAt?: string;
   internalNote?: string;
-  contract?: {
-    _id?: string;
-    s3Key?: string;
-    [key: string]: any;
-  };
+  contract?: Contract;
 }
 
 type FilterTab = "all" | "sent" | "signed" | "completed";
@@ -348,7 +351,6 @@ export default function Envelopes() {
   };
 
   // Generate timeline events for drawer
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const generateTimelineEvents = (envelope: Envelope) => {
     const events = [];
 
@@ -442,7 +444,7 @@ export default function Envelopes() {
     console.log("📄 contract:", envelope.contract);
 
     // Try to get s3Key from envelope first, then from contract as fallback
-    const s3Key = envelope.s3Key || (envelope.contract as any)?.s3Key;
+    const s3Key = envelope.s3Key || envelope.contract?.s3Key;
     console.log("📄 Resolved s3Key:", s3Key);
 
     if (!s3Key) {
@@ -488,7 +490,7 @@ export default function Envelopes() {
 
     // Fallback to contract.s3Key if envelope.s3Key is not available
     if (!s3Key && !signed) {
-      s3Key = (envelope.contract as any)?.s3Key;
+      s3Key = envelope.contract?.s3Key;
     }
 
     if (!s3Key) {
