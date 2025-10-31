@@ -1283,6 +1283,8 @@ export default function CalendarPage() {
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
   const [showSnoozeDialog, setShowSnoozeDialog] = useState(false);
   const [snoozeEvent, setSnoozeEvent] = useState<CalendarEvent | null>(null);
+  const [showCreateEventModal, setShowCreateEventModal] = useState(false);
+  const [selectedEmptyDate, setSelectedEmptyDate] = useState<Date | null>(null);
 
   const EVENTS_PER_PAGE = isMobile ? 3 : 5;
 
@@ -1572,13 +1574,17 @@ export default function CalendarPage() {
       const dayEvents = filteredEvents.filter(e =>
         e.date && e.date.split('T')[0] === dateString
       );
-      
+
       if (dayEvents.length === 1) {
         setSelectedEvent(dayEvents[0]);
         setShowQuickActions(true);
       } else if (dayEvents.length > 1) {
         setSelectedEvent(dayEvents[0]);
         setShowQuickActions(true);
+      } else {
+        // 📝 NEU: Tag ohne Event -> Modal für Ereignis-Erstellung öffnen
+        setSelectedEmptyDate(value);
+        setShowCreateEventModal(true);
       }
     } else if (Array.isArray(value) && value[0] instanceof Date) {
       setSelectedDate(value[0]);
@@ -2099,6 +2105,81 @@ export default function CalendarPage() {
               setSnoozeEvent(null);
             }}
           />
+        )}
+
+        {/* Create Event Modal - für leere Tage */}
+        {showCreateEventModal && selectedEmptyDate && (
+          <motion.div
+            className="modal-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowCreateEventModal(false)}
+          >
+            <motion.div
+              className="create-event-modal"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="modal-header">
+                <h3>📅 Ereignis erstellen</h3>
+                <button
+                  className="close-btn"
+                  onClick={() => setShowCreateEventModal(false)}
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="modal-content">
+                <p className="modal-date-display">
+                  {selectedEmptyDate.toLocaleDateString('de-DE', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })}
+                </p>
+
+                <p className="modal-description">
+                  Möchten Sie für dieses Datum ein Ereignis erstellen?
+                </p>
+
+                <div className="create-event-options">
+                  <button
+                    className="option-btn primary"
+                    onClick={() => {
+                      // TODO: Öffne Event-Erstellungs-Formular
+                      setShowCreateEventModal(false);
+                      alert('Event-Erstellung folgt in nächstem Schritt!');
+                    }}
+                  >
+                    <span className="option-icon">📝</span>
+                    <div className="option-text">
+                      <strong>Ereignis direkt erstellen</strong>
+                      <small>Termin, Erinnerung oder Notiz anlegen</small>
+                    </div>
+                  </button>
+
+                  <button
+                    className="option-btn secondary"
+                    onClick={() => {
+                      setShowCreateEventModal(false);
+                      navigate('/contracts');
+                    }}
+                  >
+                    <span className="option-icon">📄</span>
+                    <div className="option-text">
+                      <strong>Vertrag hochladen</strong>
+                      <small>Neuen Vertrag hinzufügen und analysieren</small>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
 
         {/* Stats Detail Modal */}
