@@ -64,6 +64,7 @@ interface Envelope {
   createdAt: string;
   updatedAt: string;
   expiresAt?: string;
+  completedAt?: string; // ✅ FIX: TypeScript error - Property completedAt
   internalNote?: string;
   contract?: Contract;
 }
