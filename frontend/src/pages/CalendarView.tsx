@@ -1285,6 +1285,16 @@ export default function CalendarPage() {
   const [snoozeEvent, setSnoozeEvent] = useState<CalendarEvent | null>(null);
   const [showCreateEventModal, setShowCreateEventModal] = useState(false);
   const [selectedEmptyDate, setSelectedEmptyDate] = useState<Date | null>(null);
+  const [showEventForm, setShowEventForm] = useState(false);
+  const [userContracts, setUserContracts] = useState<any[]>([]);
+  const [newEvent, setNewEvent] = useState({
+    contractId: '',
+    title: '',
+    description: '',
+    type: 'CUSTOM',
+    severity: 'info',
+    time: '12:00'
+  });
 
   const EVENTS_PER_PAGE = isMobile ? 3 : 5;
 
@@ -1342,9 +1352,35 @@ export default function CalendarPage() {
     }
   }, []);
 
+  // Fetch User Contracts for Dropdown
+  const fetchContracts = useCallback(async () => {
+    try {
+      const token = localStorage.getItem("token") ||
+                    localStorage.getItem("authToken") ||
+                    localStorage.getItem("jwtToken") ||
+                    localStorage.getItem("accessToken") ||
+                    sessionStorage.getItem("token") ||
+                    sessionStorage.getItem("authToken");
+
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      const response = await axios.get<{ success: boolean; contracts: any[] }>("/api/contracts", { headers });
+
+      if (response.data.success && response.data.contracts) {
+        setUserContracts(response.data.contracts);
+      }
+    } catch (err) {
+      console.error("Fehler beim Laden der Verträge:", err);
+    }
+  }, []);
+
   useEffect(() => {
     fetchEvents();
-  }, [fetchEvents]);
+    fetchContracts();
+  }, [fetchEvents, fetchContracts]);
 
   const handleEditEvent = (event: CalendarEvent) => {
     setEditingEvent(event);
@@ -2114,7 +2150,10 @@ export default function CalendarPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={() => setShowCreateEventModal(false)}
+            onClick={() => {
+              setShowCreateEventModal(false);
+              setShowEventForm(false);
+            }}
           >
             <motion.div
               className="create-event-modal"
@@ -2127,33 +2166,36 @@ export default function CalendarPage() {
                 <h3>📅 Ereignis erstellen</h3>
                 <button
                   className="close-btn"
-                  onClick={() => setShowCreateEventModal(false)}
+                  onClick={() => {
+                    setShowCreateEventModal(false);
+                    setShowEventForm(false);
+                  }}
                 >
                   ✕
                 </button>
               </div>
 
               <div className="modal-content">
-                <p className="modal-date-display">
-                  {selectedEmptyDate.toLocaleDateString('de-DE', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })}
-                </p>
+                {!showEventForm ? (
+                  <>
+                    <p className="modal-date-display">
+                      {selectedEmptyDate.toLocaleDateString('de-DE', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </p>
 
-                <p className="modal-description">
-                  Möchten Sie für dieses Datum ein Ereignis erstellen?
-                </p>
+                    <p className="modal-description">
+                      Möchten Sie für dieses Datum ein Ereignis erstellen?
+                    </p>
 
-                <div className="create-event-options">
+                    <div className="create-event-options">
                   <button
                     className="option-btn primary"
                     onClick={() => {
-                      // TODO: Öffne Event-Erstellungs-Formular
-                      setShowCreateEventModal(false);
-                      alert('Event-Erstellung folgt in nächstem Schritt!');
+                      setShowEventForm(true);
                     }}
                   >
                     <span className="option-icon">📝</span>
@@ -2177,6 +2219,159 @@ export default function CalendarPage() {
                     </div>
                   </button>
                 </div>
+                  </>
+                ) : (
+                  <>
+                    {/* Event-Erstellungs-Formular */}
+                    <p className="modal-date-display">
+                      {selectedEmptyDate.toLocaleDateString('de-DE', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </p>
+
+                    <form className="event-form" onSubmit={async (e) => {
+                      e.preventDefault();
+
+                      try {
+                        const token = localStorage.getItem("token") ||
+                                      localStorage.getItem("authToken") ||
+                                      localStorage.getItem("jwtToken") ||
+                                      localStorage.getItem("accessToken") ||
+                                      sessionStorage.getItem("token") ||
+                                      sessionStorage.getItem("authToken");
+
+                        // Kombiniere Datum mit Zeit
+                        const dateTimeString = `${selectedEmptyDate.toISOString().split('T')[0]}T${newEvent.time}:00`;
+
+                        await axios.post('/api/calendar/events', {
+                          contractId: newEvent.contractId,
+                          title: newEvent.title,
+                          description: newEvent.description,
+                          date: dateTimeString,
+                          type: newEvent.type,
+                          severity: newEvent.severity
+                        }, {
+                          headers: { Authorization: `Bearer ${token}` }
+                        });
+
+                        // Erfolgreich! Modal schließen und Events neu laden
+                        setShowCreateEventModal(false);
+                        setShowEventForm(false);
+                        setNewEvent({
+                          contractId: '',
+                          title: '',
+                          description: '',
+                          type: 'CUSTOM',
+                          severity: 'info',
+                          time: '12:00'
+                        });
+                        await fetchEvents();
+                      } catch (error) {
+                        console.error('Fehler beim Erstellen des Events:', error);
+                        alert('Fehler beim Erstellen des Ereignisses. Bitte versuchen Sie es erneut.');
+                      }
+                    }}>
+
+                      <div className="form-group">
+                        <label>Vertrag auswählen *</label>
+                        <select
+                          value={newEvent.contractId}
+                          onChange={(e) => setNewEvent({...newEvent, contractId: e.target.value})}
+                          required
+                          className="form-select"
+                        >
+                          <option value="">-- Vertrag wählen --</option>
+                          {userContracts.map(contract => (
+                            <option key={contract._id} value={contract._id}>
+                              {contract.name || contract.provider}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="form-group">
+                        <label>Titel *</label>
+                        <input
+                          type="text"
+                          value={newEvent.title}
+                          onChange={(e) => setNewEvent({...newEvent, title: e.target.value})}
+                          placeholder="z.B. Kundenservice anrufen"
+                          required
+                          className="form-input"
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label>Beschreibung (optional)</label>
+                        <textarea
+                          value={newEvent.description}
+                          onChange={(e) => setNewEvent({...newEvent, description: e.target.value})}
+                          placeholder="Details zur Erinnerung..."
+                          rows={3}
+                          className="form-textarea"
+                        />
+                      </div>
+
+                      <div className="form-row">
+                        <div className="form-group">
+                          <label>Uhrzeit</label>
+                          <input
+                            type="time"
+                            value={newEvent.time}
+                            onChange={(e) => setNewEvent({...newEvent, time: e.target.value})}
+                            className="form-input"
+                          />
+                        </div>
+
+                        <div className="form-group">
+                          <label>Typ</label>
+                          <select
+                            value={newEvent.type}
+                            onChange={(e) => setNewEvent({...newEvent, type: e.target.value})}
+                            className="form-select"
+                          >
+                            <option value="CUSTOM">Benutzerdefiniert</option>
+                            <option value="REVIEW">Review</option>
+                            <option value="REMINDER">Erinnerung</option>
+                            <option value="DEADLINE">Frist</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="form-group">
+                        <label>Priorität</label>
+                        <select
+                          value={newEvent.severity}
+                          onChange={(e) => setNewEvent({...newEvent, severity: e.target.value})}
+                          className="form-select"
+                        >
+                          <option value="info">ℹ️ Info</option>
+                          <option value="warning">⚠️ Wichtig</option>
+                          <option value="critical">🔴 Dringend</option>
+                        </select>
+                      </div>
+
+                      <div className="form-actions">
+                        <button
+                          type="button"
+                          onClick={() => setShowEventForm(false)}
+                          className="btn-secondary"
+                        >
+                          Zurück
+                        </button>
+                        <button
+                          type="submit"
+                          className="btn-primary"
+                        >
+                          Ereignis erstellen
+                        </button>
+                      </div>
+                    </form>
+                  </>
+                )}
               </div>
             </motion.div>
           </motion.div>
