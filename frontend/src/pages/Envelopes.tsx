@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import jsPDF from "jspdf";
 import styles from "../styles/Envelopes.module.css";
 import PDFViewer from "../components/PDFViewer";
 import { QRCodeCanvas } from "qrcode.react";
@@ -601,42 +602,102 @@ export default function Envelopes() {
     setShowQRCode(true);
   };
 
-  // Export Audit Log
+  // Export Audit Log as PDF
   const handleExportAuditLog = (envelope: Envelope) => {
     const events = generateTimelineEvents(envelope);
+    const doc = new jsPDF();
 
-    let auditLog = `Audit-Log für: ${envelope.title}\n`;
-    auditLog += `Erstellt am: ${formatDateTime(envelope.createdAt)}\n`;
-    auditLog += `Status: ${getStatusLabel(envelope.status)}\n\n`;
-    auditLog += `=== AKTIVITÄTSVERLAUF ===\n\n`;
+    // Header
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    doc.text("Audit-Log", 105, 20, { align: "center" });
+
+    // Document Info
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+    doc.text(`Dokument: ${envelope.title}`, 20, 35);
+    doc.text(`Erstellt am: ${formatDateTime(envelope.createdAt)}`, 20, 42);
+    doc.text(`Status: ${getStatusLabel(envelope.status)}`, 20, 49);
+
+    // Timeline Section
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text("Aktivitätsverlauf", 20, 65);
+
+    let yPosition = 75;
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
 
     events.forEach((event, idx) => {
-      auditLog += `${idx + 1}. ${event.title}\n`;
-      auditLog += `   ${event.description}\n`;
-      auditLog += `   Zeitpunkt: ${formatDateTime(event.time)}\n\n`;
-    });
-
-    auditLog += `=== UNTERZEICHNER ===\n\n`;
-    envelope.signers.forEach((signer, idx) => {
-      auditLog += `${idx + 1}. ${signer.name} (${signer.email})\n`;
-      auditLog += `   Rolle: ${signer.role}\n`;
-      auditLog += `   Status: ${signer.status === "SIGNED" ? "Signiert" : "Ausstehend"}\n`;
-      if (signer.signedAt) {
-        auditLog += `   Signiert am: ${formatDateTime(signer.signedAt)}\n`;
+      if (yPosition > 270) {
+        doc.addPage();
+        yPosition = 20;
       }
-      auditLog += `\n`;
+
+      doc.setFont("helvetica", "bold");
+      doc.text(`${idx + 1}. ${event.title}`, 20, yPosition);
+      yPosition += 6;
+
+      doc.setFont("helvetica", "normal");
+      doc.text(`   ${event.description}`, 20, yPosition);
+      yPosition += 6;
+      doc.text(`   Zeitpunkt: ${formatDateTime(event.time)}`, 20, yPosition);
+      yPosition += 10;
     });
 
-    // Download as text file
-    const blob = new Blob([auditLog], { type: "text/plain" });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `Audit-Log_${envelope.title}_${new Date().toISOString().split('T')[0]}.txt`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
+    // Signers Section
+    if (yPosition > 240) {
+      doc.addPage();
+      yPosition = 20;
+    }
+
+    yPosition += 10;
+    doc.setFontSize(14);
+    doc.setFont("helvetica", "bold");
+    doc.text("Unterzeichner", 20, yPosition);
+    yPosition += 10;
+
+    doc.setFontSize(10);
+    envelope.signers.forEach((signer, idx) => {
+      if (yPosition > 270) {
+        doc.addPage();
+        yPosition = 20;
+      }
+
+      doc.setFont("helvetica", "bold");
+      doc.text(`${idx + 1}. ${signer.name}`, 20, yPosition);
+      yPosition += 6;
+
+      doc.setFont("helvetica", "normal");
+      doc.text(`   E-Mail: ${signer.email}`, 20, yPosition);
+      yPosition += 6;
+      doc.text(`   Rolle: ${signer.role}`, 20, yPosition);
+      yPosition += 6;
+      doc.text(`   Status: ${signer.status === "SIGNED" ? "✓ Signiert" : "○ Ausstehend"}`, 20, yPosition);
+      yPosition += 6;
+      if (signer.signedAt) {
+        doc.text(`   Signiert am: ${formatDateTime(signer.signedAt)}`, 20, yPosition);
+        yPosition += 6;
+      }
+      yPosition += 5;
+    });
+
+    // Footer
+    const pageCount = doc.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.text(
+        `Seite ${i} von ${pageCount} | Generiert am ${new Date().toLocaleString("de-DE")}`,
+        105,
+        290,
+        { align: "center" }
+      );
+    }
+
+    // Download PDF
+    doc.save(`Audit-Log_${envelope.title}_${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
   // Open signer edit modal
