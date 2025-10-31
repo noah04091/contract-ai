@@ -274,6 +274,11 @@ const envelopeSchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  internalNote: {
+    type: String,
+    default: null,
+    maxlength: 500
+  },
   audit: [auditEventSchema],
   createdAt: {
     type: Date,

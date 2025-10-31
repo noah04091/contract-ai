@@ -399,8 +399,11 @@ router.get("/envelopes", verifyToken, async (req, res) => {
         _id: env._id,
         title: env.title,
         status: env.status,
-        contract: env.contractId,
+        contract: env.contractId, // Populated contract object mit _id und name
         signers: env.signers, // ✉️ BUG FIX 4: Vollständiges signers Array senden
+        s3Key: env.s3Key, // ✉️ Original PDF
+        s3KeySealed: env.s3KeySealed, // ✉️ Signiertes PDF
+        internalNote: env.internalNote, // ✉️ Interne Notizen
         createdAt: env.createdAt,
         expiresAt: env.expiresAt,
         completedAt: env.completedAt

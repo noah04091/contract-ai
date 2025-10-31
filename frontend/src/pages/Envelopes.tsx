@@ -107,15 +107,6 @@ export default function Envelopes() {
     loadEnvelopes(true);
   }, []);
 
-  // Debug: Log selected envelope data
-  useEffect(() => {
-    if (selectedEnvelope) {
-      console.log("🔍 Envelope Status:", selectedEnvelope.status);
-      console.log("🔍 s3KeySealed:", selectedEnvelope.s3KeySealed);
-      console.log("🔍 Full Envelope:", selectedEnvelope);
-    }
-  }, [selectedEnvelope]);
-
   const loadEnvelopes = useCallback(async (isInitial: boolean = false) => {
     try {
       if (isInitial) setLoading(true);
