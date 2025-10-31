@@ -892,6 +892,64 @@ router.post("/envelopes/:id/seal", verifyToken, async (req, res) => {
 });
 
 /**
+ * PATCH /api/envelopes/:id/note - Update internal note
+ */
+router.patch("/envelopes/:id/note", verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { note } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Ungültige Envelope-ID"
+      });
+    }
+
+    const envelope = await Envelope.findOne({
+      _id: id,
+      ownerId: req.user.userId
+    });
+
+    if (!envelope) {
+      return res.status(404).json({
+        success: false,
+        message: "Envelope nicht gefunden"
+      });
+    }
+
+    // Validate note length (max 500 chars per model)
+    if (note && note.length > 500) {
+      return res.status(400).json({
+        success: false,
+        message: "Notiz zu lang (max 500 Zeichen)"
+      });
+    }
+
+    console.log(`📝 Updating internal note for envelope: ${envelope.title}`);
+
+    envelope.internalNote = note || null;
+    await envelope.save();
+
+    console.log(`✅ Internal note updated for envelope: ${envelope._id}`);
+
+    res.json({
+      success: true,
+      message: "Notiz gespeichert",
+      internalNote: envelope.internalNote
+    });
+
+  } catch (error) {
+    console.error("❌ Error updating note:", error);
+    res.status(500).json({
+      success: false,
+      message: "Fehler beim Speichern der Notiz",
+      error: error.message
+    });
+  }
+});
+
+/**
  * POST /api/envelopes/:id/void - Cancel/void envelope
  */
 router.post("/envelopes/:id/void", verifyToken, async (req, res) => {
