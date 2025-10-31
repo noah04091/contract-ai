@@ -18,7 +18,9 @@ import {
   Share2,
   QrCode,
   FileDown,
-  RefreshCw
+  RefreshCw,
+  Edit,
+  Save
 } from "lucide-react";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -1171,11 +1173,22 @@ export default function Envelopes() {
                               className={styles.actionBtnSmall}
                               onClick={(e) => {
                                 e.stopPropagation();
+                                handleEditSigner(signer, idx);
+                              }}
+                              title="Unterzeichner bearbeiten"
+                            >
+                              <Edit size={14} />
+                              Bearbeiten
+                            </button>
+                            <button
+                              className={styles.actionBtnSmall}
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 handleCopyLink(signer.token);
                               }}
                             >
                               <Copy size={14} />
-                              Link kopieren
+                              Link
                             </button>
                             <button
                               className={styles.actionBtnSmall}
@@ -1185,13 +1198,13 @@ export default function Envelopes() {
                               }}
                             >
                               <QrCode size={14} />
-                              QR-Code
+                              QR
                             </button>
                             <button
                               className={styles.actionBtnSmall}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleRemind(selectedEnvelope._id);
+                                handleRemindIndividual(selectedEnvelope._id, signer.email);
                               }}
                             >
                               <Send size={14} />
@@ -1292,6 +1305,74 @@ export default function Envelopes() {
                 </p>
                 <div className={styles.qrCodeUrl}>
                   <code>{qrCodeUrl}</code>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Edit Signer Modal */}
+      <AnimatePresence>
+        {showSignerEdit && editingSigner && (
+          <>
+            <motion.div
+              className={styles.drawerOverlay}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowSignerEdit(false)}
+            />
+            <motion.div
+              className={styles.qrCodeModal}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              transition={{ duration: 0.2 }}
+            >
+              <div className={styles.qrCodeHeader}>
+                <h3>Unterzeichner bearbeiten</h3>
+                <button
+                  className={styles.closeBtn}
+                  onClick={() => setShowSignerEdit(false)}
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              <div className={styles.qrCodeContent}>
+                <div className={styles.editForm}>
+                  <div className={styles.formGroup}>
+                    <label htmlFor="signerName">Name</label>
+                    <input
+                      id="signerName"
+                      type="text"
+                      value={newSignerName}
+                      onChange={(e) => setNewSignerName(e.target.value)}
+                      placeholder="Name des Unterzeichners"
+                      className={styles.formInput}
+                    />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label htmlFor="signerEmail">E-Mail</label>
+                    <input
+                      id="signerEmail"
+                      type="email"
+                      value={newSignerEmail}
+                      onChange={(e) => setNewSignerEmail(e.target.value)}
+                      placeholder="email@beispiel.de"
+                      className={styles.formInput}
+                    />
+                  </div>
+                  <p className={styles.editWarning}>
+                    ⚠️ Achtung: Wenn Sie die E-Mail-Adresse ändern, wird ein neuer Link generiert und an die neue Adresse gesendet.
+                  </p>
+                  <button
+                    className={styles.saveBtn}
+                    onClick={handleUpdateSigner}
+                  >
+                    <Save size={18} />
+                    Änderungen speichern
+                  </button>
                 </div>
               </div>
             </motion.div>
