@@ -1409,31 +1409,31 @@ export default function Envelopes() {
                             onClick={() => setSelectedEnvelope(envelope)}
                             style={{ cursor: "pointer" }}
                           >
-                            <span className={`${styles.statusBadge} ${getStatusColor(envelope.status)}`}>
-                              {getStatusLabel(envelope.status)}
-                            </span>
-                          </td>
-                          <td
-                            onClick={() => setSelectedEnvelope(envelope)}
-                            style={{ cursor: "pointer" }}
-                          >
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                              <span>{formatDate(envelope.createdAt)}</span>
-                              {/* ✅ COMPLETED: Zeige Abschluss-Datum */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                              <span className={`${styles.statusBadge} ${getStatusColor(envelope.status)}`}>
+                                {getStatusLabel(envelope.status)}
+                              </span>
+                              {/* ✅ COMPLETED: Zeige Abschluss-Datum unter Status Badge */}
                               {(envelope.status === "COMPLETED" || envelope.status === "SIGNED") && envelope.completedAt && (
                                 <span style={{
                                   color: '#10b981',
-                                  fontSize: '0.85rem',
+                                  fontSize: '0.8rem',
                                   fontWeight: 600,
                                   display: 'flex',
                                   alignItems: 'center',
                                   gap: '4px'
                                 }}>
                                   <CheckCircle size={12} />
-                                  Abgeschlossen: {formatDate(envelope.completedAt)}
+                                  {formatDate(envelope.completedAt)}
                                 </span>
                               )}
                             </div>
+                          </td>
+                          <td
+                            onClick={() => setSelectedEnvelope(envelope)}
+                            style={{ cursor: "pointer" }}
+                          >
+                            {formatDate(envelope.createdAt)}
                           </td>
                           <td
                             onClick={() => setSelectedEnvelope(envelope)}

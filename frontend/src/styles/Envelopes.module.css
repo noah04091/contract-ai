@@ -390,8 +390,9 @@
 
 .actionsCell {
   display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
+  gap: 0.375rem; /* ✅ FIX: Kleinere Gap für mehr Platz */
+  flex-wrap: nowrap; /* ✅ FIX: Verhindert Umbruch in neue Zeile */
+  align-items: center;
 }
 
 /* ===== STATUS BADGES ===== */
@@ -455,6 +456,7 @@
   color: #6e6e73;
   cursor: pointer;
   transition: all 0.2s ease;
+  flex-shrink: 0; /* ✅ FIX: Verhindert dass Buttons zusammengequetscht werden */
 }
 
 .actionBtn:hover {
