@@ -50,7 +50,7 @@ interface Envelope {
   contractId?: string;
   title: string;
   message: string;
-  s3Key: string;
+  s3Key?: string;
   s3KeySealed?: string;
   status: "DRAFT" | "SENT" | "SIGNED" | "COMPLETED" | "EXPIRED" | "VOIDED";
   signers: Signer[];
@@ -58,6 +58,11 @@ interface Envelope {
   updatedAt: string;
   expiresAt?: string;
   internalNote?: string;
+  contract?: {
+    _id?: string;
+    s3Key?: string;
+    [key: string]: any;
+  };
 }
 
 type FilterTab = "all" | "sent" | "signed" | "completed";
@@ -434,8 +439,13 @@ export default function Envelopes() {
   const handleViewPDF = async (envelope: Envelope) => {
     console.log("📄 Envelope Data:", envelope);
     console.log("📄 s3Key:", envelope.s3Key);
+    console.log("📄 contract:", envelope.contract);
 
-    if (!envelope.s3Key) {
+    // Try to get s3Key from envelope first, then from contract as fallback
+    const s3Key = envelope.s3Key || (envelope.contract as any)?.s3Key;
+    console.log("📄 Resolved s3Key:", s3Key);
+
+    if (!s3Key) {
       toast.error("Keine PDF-Datei verfügbar. Das Dokument wurde möglicherweise nicht hochgeladen.");
       console.error("❌ Kein s3Key gefunden für Envelope:", envelope._id);
       return;
@@ -445,7 +455,7 @@ export default function Envelopes() {
       setLoadingPdf(true);
       const token = localStorage.getItem("token");
 
-      const response = await fetch(`/api/s3/download-url?key=${encodeURIComponent(envelope.s3Key)}`, {
+      const response = await fetch(`/api/s3/download-url?key=${encodeURIComponent(s3Key)}`, {
         method: "GET",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -473,10 +483,16 @@ export default function Envelopes() {
 
   // Download PDF
   const handleDownloadPDF = async (envelope: Envelope, signed: boolean = false) => {
-    const s3Key = signed ? envelope.s3KeySealed : envelope.s3Key;
+    // Try to get s3Key from envelope first, then from contract as fallback
+    let s3Key = signed ? envelope.s3KeySealed : envelope.s3Key;
+
+    // Fallback to contract.s3Key if envelope.s3Key is not available
+    if (!s3Key && !signed) {
+      s3Key = (envelope.contract as any)?.s3Key;
+    }
 
     if (!s3Key) {
-      alert(signed ? "Kein signiertes Dokument verfügbar" : "Keine PDF-Datei verfügbar");
+      toast.error(signed ? "Kein signiertes Dokument verfügbar" : "Keine PDF-Datei verfügbar");
       return;
     }
 
