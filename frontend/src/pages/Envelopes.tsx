@@ -448,11 +448,12 @@ export default function Envelopes() {
     console.log("📄 Resolved s3Key (from envelope):", s3Key);
 
     // If no s3Key but we have a contractId, load the full contract
-    if (!s3Key && envelope.contractId) {
-      console.log("🔍 Lade Contract separat:", envelope.contractId);
+    const contractId = envelope.contractId || envelope.contract?._id;
+    if (!s3Key && contractId) {
+      console.log("🔍 Lade Contract separat:", contractId);
       try {
         const token = localStorage.getItem("token");
-        const contractResponse = await fetch(`/api/contracts/${envelope.contractId}`, {
+        const contractResponse = await fetch(`/api/contracts/${contractId}`, {
           method: "GET",
           headers: {
             "Authorization": `Bearer ${token}`,
@@ -518,10 +519,11 @@ export default function Envelopes() {
     }
 
     // If no s3Key but we have a contractId, load the full contract
-    if (!s3Key && !signed && envelope.contractId) {
+    const contractId = envelope.contractId || envelope.contract?._id;
+    if (!s3Key && !signed && contractId) {
       try {
         const token = localStorage.getItem("token");
-        const contractResponse = await fetch(`/api/contracts/${envelope.contractId}`, {
+        const contractResponse = await fetch(`/api/contracts/${contractId}`, {
           method: "GET",
           headers: {
             "Authorization": `Bearer ${token}`,
