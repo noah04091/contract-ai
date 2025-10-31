@@ -323,7 +323,7 @@
 }
 
 .table th {
-  padding: 1rem;
+  padding: 1rem 0.85rem; /* ✅ FIX: Kompakteres Padding wie bei td */
   text-align: left;
   font-size: 0.875rem;
   font-weight: 600;
@@ -342,7 +342,7 @@
 }
 
 .table td {
-  padding: 1.25rem 1rem; /* ✅ FIX: Mehr vertikales Padding für luftigeres Layout */
+  padding: 1rem 0.85rem; /* ✅ FIX: Kompakteres Padding für engeres Layout */
   font-size: 0.95rem;
   color: #1d1d1f;
   vertical-align: top;
@@ -351,7 +351,7 @@
 .titleCell {
   display: flex;
   align-items: flex-start; /* ✅ FIX: Bei zweizeiligem Text oben ausrichten */
-  gap: 0.75rem;
+  gap: 0.6rem; /* ✅ FIX: Kleinerer Abstand zwischen Icon und Titel */
   font-weight: 500;
 }
 
@@ -397,7 +397,7 @@
 
 .actionsCell {
   display: flex;
-  gap: 0.375rem; /* ✅ FIX: Kleinere Gap für mehr Platz */
+  gap: 0.3rem; /* ✅ FIX: Noch kleinere Gap für kompaktere Buttons */
   flex-wrap: nowrap; /* ✅ FIX: Verhindert Umbruch in neue Zeile */
   align-items: center;
 }

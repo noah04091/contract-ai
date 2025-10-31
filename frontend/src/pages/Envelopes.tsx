@@ -1332,7 +1332,7 @@ export default function Envelopes() {
                   <table className={styles.table}>
                     <thead>
                       <tr>
-                        <th style={{ width: "50px" }}>
+                        <th style={{ width: "42px" }}>
                           <button
                             className={styles.tableCheckbox}
                             onClick={selectedEnvelopeIds.length === filteredEnvelopes.length ? handleDeselectAll : handleSelectAll}
@@ -1345,12 +1345,12 @@ export default function Envelopes() {
                             )}
                           </button>
                         </th>
-                        <th style={{ width: "30%" }}>Titel</th>
+                        <th style={{ width: "32%" }}>Titel</th>
                         <th style={{ width: "18%" }}>Empfänger</th>
                         <th style={{ width: "12%" }}>Status</th>
                         <th style={{ width: "10%" }}>Erstellt</th>
                         <th style={{ width: "10%" }}>Läuft ab</th>
-                        <th style={{ width: "14%" }}>Aktionen</th>
+                        <th style={{ width: "12%" }}>Aktionen</th>
                       </tr>
                     </thead>
                     <tbody>
