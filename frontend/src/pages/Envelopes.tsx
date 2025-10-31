@@ -1277,46 +1277,43 @@ export default function Envelopes() {
                             </>
                           ) : (
                             <>
-                              {/* Ausstehend: Link-Buttons für PENDING signers */}
+                              {/* Ausstehend: Link-Buttons für PENDING signers - NUR ICONS */}
                               {envelope.signers
                                 .filter(signer => signer.status === "PENDING")
                                 .map((signer, idx) => (
                                   <button
                                     key={idx}
-                                    className={styles.actionBtnSmall}
+                                    className={styles.actionBtnIcon}
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       handleCopyLink(signer.token);
                                     }}
                                     title={`Link kopieren für ${signer.name}`}
                                   >
-                                    <Copy size={14} />
-                                    Link
+                                    <Copy size={16} />
                                   </button>
                                 ))}
                               {envelope.status === "SENT" && (
                                 <>
                                   <button
-                                    className={styles.actionBtnSmall}
+                                    className={styles.actionBtnIcon}
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       handleRemind(envelope._id);
                                     }}
                                     title="Erinnerung senden"
                                   >
-                                    <Send size={14} />
-                                    Erinnern
+                                    <Send size={16} />
                                   </button>
                                   <button
-                                    className={`${styles.actionBtnSmall} ${styles.actionBtnDanger}`}
+                                    className={`${styles.actionBtnIcon} ${styles.actionBtnDanger}`}
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       handleCancel(envelope._id);
                                     }}
                                     title="Stornieren"
                                   >
-                                    <XCircle size={14} />
-                                    Stop
+                                    <XCircle size={16} />
                                   </button>
                                 </>
                               )}
