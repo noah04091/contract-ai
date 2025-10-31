@@ -342,7 +342,7 @@
 }
 
 .table td {
-  padding: 1rem;
+  padding: 1.25rem 1rem; /* ✅ FIX: Mehr vertikales Padding für luftigeres Layout */
   font-size: 0.95rem;
   color: #1d1d1f;
   vertical-align: top;
@@ -350,16 +350,14 @@
 
 .titleCell {
   display: flex;
-  align-items: center;
+  align-items: flex-start; /* ✅ FIX: Bei zweizeiligem Text oben ausrichten */
   gap: 0.75rem;
   font-weight: 500;
-  overflow: hidden; /* ✅ FIX: Lange Titel begrenzen */
 }
 
 .titleCell span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  word-break: break-word; /* ✅ FIX: Lange Titel umbrechen statt abschneiden */
+  line-height: 1.4;
 }
 
 .fileIcon {
@@ -383,10 +381,8 @@
 .signerName {
   color: #1d1d1f;
   font-weight: 500;
-  overflow: hidden; /* ✅ FIX: Lange Namen begrenzen */
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 150px; /* ✅ FIX: Maximale Breite für Namen */
+  word-break: break-word; /* ✅ FIX: Lange Namen umbrechen statt abschneiden */
+  line-height: 1.4;
 }
 
 .signerStatus {

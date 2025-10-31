@@ -1345,12 +1345,12 @@ export default function Envelopes() {
                             )}
                           </button>
                         </th>
-                        <th style={{ width: "22%" }}>Titel</th>
-                        <th style={{ width: "18%" }}>Empfänger</th>
-                        <th style={{ width: "14%" }}>Status</th>
+                        <th style={{ width: "16%" }}>Titel</th>
+                        <th style={{ width: "20%" }}>Empfänger</th>
+                        <th style={{ width: "15%" }}>Status</th>
                         <th style={{ width: "12%" }}>Erstellt</th>
                         <th style={{ width: "12%" }}>Läuft ab</th>
-                        <th style={{ width: "18%" }}>Aktionen</th>
+                        <th style={{ width: "19%" }}>Aktionen</th>
                       </tr>
                     </thead>
                     <tbody>
