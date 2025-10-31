@@ -28,6 +28,8 @@ import {
   ArrowRight,
   Edit3,
   Save,
+  FileEdit,
+  RotateCw,
   Trash2
 } from "lucide-react";
 import axios from "axios";
@@ -1285,7 +1287,7 @@ export default function CalendarPage() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [isTablet, setIsTablet] = useState(window.innerWidth >= 768 && window.innerWidth < 1024);
   const [showStatsModal, setShowStatsModal] = useState(false);
-  const [selectedStatFilter, setSelectedStatFilter] = useState<"total" | "critical" | "thisMonth" | "notified">("total");
+  const [selectedStatFilter, setSelectedStatFilter] = useState<"total" | "critical" | "cancellable" | "autoRenewal">("total");
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
   const [showSnoozeDialog, setShowSnoozeDialog] = useState(false);
@@ -1693,27 +1695,44 @@ export default function CalendarPage() {
   // Calculate statistics
   const getStatistics = () => {
     const now = new Date();
-    const thisMonth = filteredEvents.filter(e => {
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + 60); // Nächste 60 Tage
+
+    // Kündigbare Verträge - Events mit Kündigungsfrist in naher Zukunft
+    const cancellable = events.filter(e => {
       const eventDate = new Date(e.date);
-      return eventDate.getMonth() === now.getMonth() &&
-             eventDate.getFullYear() === now.getFullYear();
+      const isFuture = eventDate >= now && eventDate <= futureDate;
+      const isCancellationType = e.type === "CANCELLATION_DEADLINE" ||
+                                  e.type === "CANCELLATION" ||
+                                  e.title?.toLowerCase().includes("kündigung") ||
+                                  e.title?.toLowerCase().includes("kündigbar");
+      return isFuture && isCancellationType;
     });
 
-    const overdue = filteredEvents.filter(e => new Date(e.date) < now);
+    // Auto-Verlängerung - Verträge die sich bald automatisch verlängern
+    const autoRenewal = events.filter(e => {
+      const eventDate = new Date(e.date);
+      const isFuture = eventDate >= now && eventDate <= futureDate;
+      const isRenewalType = e.type === "AUTO_RENEWAL" ||
+                            e.type === "CONTRACT_RENEWAL" ||
+                            e.type === "RENEWAL" ||
+                            e.title?.toLowerCase().includes("verlängerung") ||
+                            e.title?.toLowerCase().includes("automatisch");
+      return isFuture && isRenewalType;
+    });
 
     return {
       total: events.length,
       critical: events.filter(e => e.severity === "critical").length,
-      thisMonth: thisMonth.length,
-      overdue: overdue.length,
-      notified: events.filter(e => e.status === "notified").length
+      cancellable: cancellable.length,
+      autoRenewal: autoRenewal.length
     };
   };
 
   const stats = getStatistics();
 
   // Handle Stats Card Click - Open Modal with filtered events
-  const handleStatsCardClick = (filterType: "total" | "critical" | "thisMonth" | "notified") => {
+  const handleStatsCardClick = (filterType: "total" | "critical" | "cancellable" | "autoRenewal") => {
     setSelectedStatFilter(filterType);
     setShowStatsModal(true);
   };
@@ -1721,18 +1740,33 @@ export default function CalendarPage() {
   // Get filtered events for stats modal
   const getFilteredStatsEvents = () => {
     const now = new Date();
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + 60);
 
     switch (selectedStatFilter) {
       case "critical":
         return events.filter(e => e.severity === "critical");
-      case "thisMonth":
+      case "cancellable":
         return events.filter(e => {
           const eventDate = new Date(e.date);
-          return eventDate.getMonth() === now.getMonth() &&
-                 eventDate.getFullYear() === now.getFullYear();
+          const isFuture = eventDate >= now && eventDate <= futureDate;
+          const isCancellationType = e.type === "CANCELLATION_DEADLINE" ||
+                                      e.type === "CANCELLATION" ||
+                                      e.title?.toLowerCase().includes("kündigung") ||
+                                      e.title?.toLowerCase().includes("kündigbar");
+          return isFuture && isCancellationType;
         });
-      case "notified":
-        return events.filter(e => e.status === "notified");
+      case "autoRenewal":
+        return events.filter(e => {
+          const eventDate = new Date(e.date);
+          const isFuture = eventDate >= now && eventDate <= futureDate;
+          const isRenewalType = e.type === "AUTO_RENEWAL" ||
+                                e.type === "CONTRACT_RENEWAL" ||
+                                e.type === "RENEWAL" ||
+                                e.title?.toLowerCase().includes("verlängerung") ||
+                                e.title?.toLowerCase().includes("automatisch");
+          return isFuture && isRenewalType;
+        });
       case "total":
       default:
         return events;
@@ -1744,10 +1778,10 @@ export default function CalendarPage() {
     switch (selectedStatFilter) {
       case "critical":
         return "Kritische Ereignisse";
-      case "thisMonth":
-        return "Ereignisse diesen Monat";
-      case "notified":
-        return "Benachrichtigte Ereignisse";
+      case "cancellable":
+        return "📅 Kündigbare Verträge";
+      case "autoRenewal":
+        return "🔄 Auto-Verlängerung";
       case "total":
       default:
         return "Alle Ereignisse";
@@ -1836,15 +1870,15 @@ export default function CalendarPage() {
                 className="stat-card-premium warning"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => handleStatsCardClick("thisMonth")}
+                onClick={() => handleStatsCardClick("cancellable")}
                 style={{ cursor: 'pointer' }}
               >
                 <div className="stat-icon-wrapper">
-                  <Clock size={24} />
+                  <FileEdit size={24} />
                 </div>
                 <div className="stat-content">
-                  <div className="stat-value">{stats.thisMonth}</div>
-                  <div className="stat-label">Diesen Monat</div>
+                  <div className="stat-value">{stats.cancellable}</div>
+                  <div className="stat-label">📅 Kündigbar</div>
                 </div>
                 <div className="stat-card-arrow">
                   <ArrowRight size={16} />
@@ -1855,15 +1889,15 @@ export default function CalendarPage() {
                 className="stat-card-premium info"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => handleStatsCardClick("notified")}
+                onClick={() => handleStatsCardClick("autoRenewal")}
                 style={{ cursor: 'pointer' }}
               >
                 <div className="stat-icon-wrapper">
-                  <Bell size={24} />
+                  <RotateCw size={24} />
                 </div>
                 <div className="stat-content">
-                  <div className="stat-value">{stats.notified}</div>
-                  <div className="stat-label">Benachrichtigt</div>
+                  <div className="stat-value">{stats.autoRenewal}</div>
+                  <div className="stat-label">🔄 Auto-Verlängerung</div>
                 </div>
                 <div className="stat-card-arrow">
                   <ArrowRight size={16} />
