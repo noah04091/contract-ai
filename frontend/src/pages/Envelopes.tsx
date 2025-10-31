@@ -78,6 +78,7 @@ export default function Envelopes() {
   const [selectedEnvelope, setSelectedEnvelope] = useState<Envelope | null>(null);
   const [showPDFViewer, setShowPDFViewer] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [pdfTitle, setPdfTitle] = useState<string>("");
   const [loadingPdf, setLoadingPdf] = useState(false);
   const [showQRCode, setShowQRCode] = useState(false);
   const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
@@ -500,6 +501,7 @@ export default function Envelopes() {
       }
 
       setPdfUrl(data.url);
+      setPdfTitle(signed ? `${envelope.title} (Signiert)` : envelope.title);
       setShowPDFViewer(true);
     } catch (err) {
       console.error("❌ Error loading PDF URL:", err);
@@ -1191,7 +1193,7 @@ export default function Envelopes() {
                         </div>
 
                         {/* Card Actions */}
-                        <div className={styles.cardActions}>
+                        <div className={styles.cardActions} onClick={(e) => e.stopPropagation()}>
                           {/* ✅ FIX: Different actions for completed vs. pending envelopes */}
                           {(envelope.status === "COMPLETED" || envelope.status === "SIGNED") ? (
                             <>
@@ -1819,13 +1821,14 @@ export default function Envelopes() {
       </AnimatePresence>
 
       {/* PDF Viewer Modal */}
-      {showPDFViewer && pdfUrl && selectedEnvelope && (
+      {showPDFViewer && pdfUrl && (
         <PDFViewer
           pdfUrl={pdfUrl}
-          title={selectedEnvelope.title}
+          title={pdfTitle}
           onClose={() => {
             setShowPDFViewer(false);
             setPdfUrl(null);
+            setPdfTitle("");
           }}
         />
       )}
