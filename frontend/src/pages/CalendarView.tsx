@@ -2459,7 +2459,8 @@ export default function CalendarPage() {
                                       cursor: 'pointer',
                                       borderBottom: '1px solid #f0f0f0',
                                       background: isSelected ? '#e3f2fd' : 'white',
-                                      transition: 'background 0.2s'
+                                      transition: 'background 0.2s',
+                                      color: '#333'
                                     }}
                                     onMouseEnter={(e) => {
                                       if (!isSelected) {
@@ -2472,7 +2473,7 @@ export default function CalendarPage() {
                                       }
                                     }}
                                   >
-                                    <div style={{ fontWeight: 500, fontSize: '14px' }}>
+                                    <div style={{ fontWeight: 500, fontSize: '14px', color: '#212529' }}>
                                       {displayName}
                                     </div>
                                     {contract.provider && typeof contract.provider === 'string' && contract.name && (

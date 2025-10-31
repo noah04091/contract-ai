@@ -2961,10 +2961,11 @@
   background: white;
   border-radius: 20px;
   padding: 0;
-  max-width: 500px;
+  max-width: 650px;
   width: 90%;
-  max-height: 80vh;
-  overflow: hidden;
+  max-height: 90vh;
+  overflow-y: auto;
+  overflow-x: hidden;
   box-shadow:
     0 20px 60px rgba(0, 0, 0, 0.15),
     0 0 0 1px rgba(0, 0, 0, 0.05);
@@ -3092,6 +3093,7 @@
 @media (max-width: 480px) {
   .create-event-modal {
     max-width: 95%;
+    max-height: 95vh;
     border-radius: 16px;
   }
 
