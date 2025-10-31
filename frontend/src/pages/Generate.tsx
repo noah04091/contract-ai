@@ -1057,25 +1057,36 @@ export default function Generate() {
         ? `${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/${savedContractId}`
         : `${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts`;
 
+      // ✅ Lösche gecachtes HTML bei Updates, damit PDF neu generiert wird
+      const bodyData: any = {
+        name: `${contractData.contractType || 'Vertrag'} - ${new Date().toLocaleDateString('de-DE')}`,
+        content: contractText || '',
+        isGenerated: true,
+        metadata: {
+          contractType: contractData.contractType,
+          parties: contractData.parties,
+          contractDetails: contractData.contractDetails,
+          hasLogo: !!(useCompanyProfile && companyProfile?.logoUrl),
+          generatedAt: new Date().toISOString()
+        }
+      };
+
+      // Bei Updates: Lösche HTML Cache, damit neu generiert wird
+      if (isUpdate) {
+        bodyData.htmlContent = null;
+        bodyData.contractHTML = null;
+      } else {
+        // Bei CREATE: Sende Original HTML
+        bodyData.htmlContent = generatedHTML || undefined;
+      }
+
       const res = await fetch(url, {
         method: isUpdate ? 'PUT' : 'POST',
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          name: `${contractData.contractType || 'Vertrag'} - ${new Date().toLocaleDateString('de-DE')}`,
-          content: contractText || '',
-          htmlContent: generatedHTML || undefined,
-          isGenerated: true,
-          metadata: {
-            contractType: contractData.contractType,
-            parties: contractData.parties,
-            contractDetails: contractData.contractDetails,
-            hasLogo: !!(useCompanyProfile && companyProfile?.logoUrl),
-            generatedAt: new Date().toISOString()
-          }
-        })
+        body: JSON.stringify(bodyData)
       });
 
       const data = await res.json();
@@ -1451,23 +1462,33 @@ export default function Generate() {
             ? `${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/${contractId}`
             : `${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts`;
 
+          // ✅ Lösche gecachtes HTML bei Updates, damit PDF neu generiert wird
+          const bodyData: any = {
+            name: `${contractData.contractType || 'Vertrag'} - ${new Date().toLocaleDateString('de-DE')}`,
+            content: contractText,
+            isGenerated: true,
+            metadata: {
+              contractType: contractData.contractType,
+              parties: contractData.parties,
+              contractDetails: contractData.contractDetails,
+              hasLogo: !!(useCompanyProfile && companyProfile?.logoUrl),
+              generatedAt: new Date().toISOString()
+            }
+          };
+
+          // Bei Updates: Lösche HTML Cache
+          if (isUpdate) {
+            bodyData.htmlContent = null;
+            bodyData.contractHTML = null;
+          } else {
+            bodyData.htmlContent = generatedHTML;
+          }
+
           const saveRes = await fetch(url, {
             method: isUpdate ? 'PUT' : 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              name: `${contractData.contractType || 'Vertrag'} - ${new Date().toLocaleDateString('de-DE')}`,
-              content: contractText,
-              htmlContent: generatedHTML,
-              isGenerated: true,
-              metadata: {
-                contractType: contractData.contractType,
-                parties: contractData.parties,
-                contractDetails: contractData.contractDetails,
-                hasLogo: !!(useCompanyProfile && companyProfile?.logoUrl),
-                generatedAt: new Date().toISOString()
-              }
-            })
+            body: JSON.stringify(bodyData)
           });
 
           const saveData = await saveRes.json();
