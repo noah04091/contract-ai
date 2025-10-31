@@ -29,9 +29,9 @@
 }
 
 .headerContent {
-  max-width: 980px;
+  max-width: 1600px;
   margin: 0 auto;
-  padding: 0 1.5rem;
+  padding: 0 2.5rem;
 }
 
 .headerText {
@@ -43,8 +43,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.75rem;
-  font-size: 2.25rem;
+  gap: 1rem;
+  font-size: 3rem;
   font-weight: 600;
   margin: 0;
   background: linear-gradient(135deg, #07c 0%, #0a84ff 100%);
@@ -55,9 +55,9 @@
 }
 
 .headerText p {
-  font-size: 1.125rem;
+  font-size: 1.375rem;
   color: #86868b;
-  margin: 0.5rem 0 0 0;
+  margin: 0.75rem 0 0 0;
   font-weight: 400;
 }
 
@@ -217,22 +217,22 @@
 }
 
 .stepHeader {
-  margin-bottom: 1.5rem;
+  margin-bottom: 2.5rem;
   text-align: center;
 }
 
 .stepHeader h2 {
-  font-size: 24px;
+  font-size: 38px;
   font-weight: 600;
   color: #1d1d1f;
-  margin: 0 0 0.5rem 0;
+  margin: 0 0 1rem 0;
   letter-spacing: -0.025em;
 }
 
 .stepHeader p {
   color: #86868b;
   margin: 0;
-  font-size: 16px;
+  font-size: 20px;
 }
 
 .backButton {
@@ -840,37 +840,42 @@ input:checked + .slider:before {
   box-shadow: none;
 }
 
-/* Action Buttons - BESTEHEND */
+/* Action Buttons - ENHANCED FOR LARGER UI */
 .actionButtons {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 2rem;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .actionButton {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.25rem;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1.25rem 2rem;
   background: rgba(250, 250, 250, 0.8);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  border-radius: 980px;
+  border: 1.5px solid rgba(0, 0, 0, 0.06);
+  border-radius: 14px;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.28, 0.44, 0.49, 1);
-  font-weight: 500;
+  font-weight: 600;
   color: #1d1d1f;
-  font-size: 14px;
+  font-size: 17px;
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
 }
 
 .actionButton:hover {
   background: #f5f5f7;
-  border-color: rgba(10, 132, 255, 0.2);
+  border-color: rgba(10, 132, 255, 0.3);
   color: #0a84ff;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
 }
 
 .actionButton.primary {
@@ -882,7 +887,7 @@ input:checked + .slider:before {
 .actionButton.primary:hover {
   background: linear-gradient(145deg, #0071e3 0%, #0062c3 100%);
   color: white;
-  box-shadow: 0 2px 8px rgba(0, 113, 227, 0.3);
+  box-shadow: 0 6px 24px rgba(0, 113, 227, 0.4);
 }
 
 .actionButton.success {
@@ -896,23 +901,27 @@ input:checked + .slider:before {
   box-shadow: 0 2px 8px rgba(48, 209, 88, 0.15);
 }
 
-/* Signature Section - BESTEHEND & VERBESSERT */
+/* Signature Section - ENHANCED FOR LARGER UI */
 .signatureSection {
   background: rgba(248, 250, 252, 0.5);
-  border-radius: 14px;
-  padding: 1.5rem;
-  margin: 1.5rem 0;
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 18px;
+  padding: 2.5rem;
+  margin: 2.5rem 0;
+  border: 1.5px solid rgba(0, 0, 0, 0.06);
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
 }
 
 .signatureSection h3 {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin: 0 0 1rem 0;
+  gap: 0.75rem;
+  margin: 0 0 1.5rem 0;
   color: #1d1d1f;
   font-weight: 600;
-  font-size: 17px;
+  font-size: 22px;
 }
 
 .signatureCanvasContainer {
@@ -934,7 +943,7 @@ input:checked + .slider:before {
 .signatureCanvas {
   display: block;
   width: 100%;
-  height: 200px;
+  height: 300px;
   cursor: crosshair !important;
   transition: all 0.3s cubic-bezier(0.28, 0.44, 0.49, 1);
   background: white;
@@ -1002,8 +1011,8 @@ input:checked + .slider:before {
 
 .signatureControls {
   display: flex;
-  gap: 1rem;
-  margin-top: 1rem;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
   flex-wrap: wrap;
   justify-content: center;
 }
@@ -1011,17 +1020,18 @@ input:checked + .slider:before {
 .signatureButton {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.25rem;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  border-radius: 980px;
+  gap: 0.75rem;
+  padding: 1rem 1.75rem;
+  border: 1.5px solid rgba(0, 0, 0, 0.06);
+  border-radius: 12px;
   background: rgba(250, 250, 250, 0.8);
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.28, 0.44, 0.49, 1);
-  font-weight: 500;
-  font-size: 14px;
+  font-weight: 600;
+  font-size: 16px;
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
 }
 
 .signatureButton.secondary {
@@ -1042,36 +1052,40 @@ input:checked + .slider:before {
 
 .signatureButton.primary:hover {
   background: linear-gradient(145deg, #0071e3 0%, #0062c3 100%);
-  box-shadow: 0 2px 8px rgba(0, 113, 227, 0.3);
+  box-shadow: 0 6px 20px rgba(0, 113, 227, 0.4);
 }
 
 .signatureButton:hover {
-  transform: translateY(-1px);
+  transform: translateY(-2px);
 }
 
 .backToStartButton {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
+  gap: 0.75rem;
+  padding: 1.25rem 2rem;
   background: rgba(250, 250, 250, 0.8);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  border-radius: 980px;
+  border: 1.5px solid rgba(0, 0, 0, 0.06);
+  border-radius: 14px;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.28, 0.44, 0.49, 1);
-  margin-top: 2rem;
+  margin-top: 3rem;
   color: #86868b;
-  font-weight: 500;
-  width: 100%;
+  font-weight: 600;
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
   justify-content: center;
-  font-size: 15px;
+  font-size: 17px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
 }
 
 .backToStartButton:hover {
   background: #f5f5f7;
-  border-color: rgba(10, 132, 255, 0.2);
+  border-color: rgba(10, 132, 255, 0.3);
   color: #0a84ff;
-  transform: translateX(-2px);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
 }
 
 /* Preview Panel - BESTEHEND */
@@ -1093,8 +1107,8 @@ input:checked + .slider:before {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  padding: 1.5rem 2rem;
+  border-bottom: 1.5px solid rgba(0, 0, 0, 0.06);
   background: rgba(245, 245, 247, 0.5);
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
@@ -1103,11 +1117,11 @@ input:checked + .slider:before {
 .previewHeader h3 {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.75rem;
   margin: 0;
   color: #1d1d1f;
   font-weight: 600;
-  font-size: 17px;
+  font-size: 20px;
 }
 
 .closePreview {
@@ -2017,38 +2031,42 @@ input:checked + .slider:before {
 /* ===== 📄 NEW: TAB NAVIGATION ===== */
 .tabNavigation {
   display: flex;
-  gap: 0.5rem;
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
+  gap: 1rem;
+  padding: 1.5rem 2rem;
+  border-bottom: 1.5px solid #e5e7eb;
   background: #f9fafb;
 }
 
 .tabButton {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.25rem;
+  gap: 0.75rem;
+  padding: 1rem 1.75rem;
   background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  font-weight: 500;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
   color: #6e6e73;
   cursor: pointer;
   transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .tabButton:hover {
   background: #f9fafb;
   border-color: #3b82f6;
   color: #3b82f6;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
 }
 
 .tabButton.active {
   background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   border-color: #3b82f6;
   color: white;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+  transform: translateY(-1px);
 }
 
 .smallSpinner {
@@ -2147,11 +2165,11 @@ input:checked + .slider:before {
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 1rem 1.5rem;
+  gap: 1rem;
+  padding: 1.25rem 2rem;
   background: transparent;
   border: none;
-  font-size: 0.95rem;
+  font-size: 17px;
   font-weight: 600;
   color: #1d1d1f;
   cursor: pointer;
@@ -2163,13 +2181,13 @@ input:checked + .slider:before {
 }
 
 .partyDataContent {
-  padding: 1rem 1.5rem 1.5rem;
+  padding: 1.5rem 2rem 2rem;
   background: white;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1.5px solid #e5e7eb;
 }
 
 .partySection {
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
 }
 
 .partySection:last-child {
@@ -2223,19 +2241,20 @@ input:checked + .slider:before {
 
 .inputGroup input {
   width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  font-size: 0.95rem;
+  padding: 1rem 1.25rem;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 16px;
   color: #1d1d1f;
   background: white;
   transition: all 0.2s ease;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.02);
 }
 
 .inputGroup input:focus {
   outline: none;
   border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
 }
 
 .inputGroup input::placeholder {
