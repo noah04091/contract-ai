@@ -3,8 +3,6 @@ import { Document, Page, pdfjs } from "react-pdf";
 import { X, ZoomIn, ZoomOut, Download, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import styles from "../styles/PDFViewer.module.css";
-import "react-pdf/dist/esm/Page/AnnotationLayer.css";
-import "react-pdf/dist/esm/Page/TextLayer.css";
 
 // Configure PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
@@ -143,8 +141,8 @@ export default function PDFViewer({ pdfUrl, title, signers, onClose }: PDFViewer
                 <Page
                   pageNumber={pageNumber}
                   scale={scale}
-                  renderTextLayer={true}
-                  renderAnnotationLayer={true}
+                  renderTextLayer={false}
+                  renderAnnotationLayer={false}
                   className={styles.page}
                 />
               </Document>
