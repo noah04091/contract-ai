@@ -41,6 +41,13 @@ type ProviderType = string | {
   extractedFromText?: boolean;
 } | null | undefined;
 
+// Type for Contract (for dropdown selection)
+interface ContractType {
+  _id: string;
+  name?: string;
+  provider?: string | Record<string, unknown>;
+}
+
 // Helper function to safely get provider name
 const getProviderName = (provider: ProviderType): string => {
   if (!provider) return 'Unbekannt';
@@ -1286,7 +1293,7 @@ export default function CalendarPage() {
   const [showCreateEventModal, setShowCreateEventModal] = useState(false);
   const [selectedEmptyDate, setSelectedEmptyDate] = useState<Date | null>(null);
   const [showEventForm, setShowEventForm] = useState(false);
-  const [userContracts, setUserContracts] = useState<any[]>([]);
+  const [userContracts, setUserContracts] = useState<ContractType[]>([]);
   const [newEvent, setNewEvent] = useState({
     contractId: '',
     title: '',
@@ -1367,7 +1374,7 @@ export default function CalendarPage() {
         headers.Authorization = `Bearer ${token}`;
       }
 
-      const response = await axios.get<{ success: boolean; contracts: any[] }>("/api/contracts", { headers });
+      const response = await axios.get<{ success: boolean; contracts: ContractType[] }>("/api/contracts", { headers });
 
       if (response.data.success && response.data.contracts) {
         setUserContracts(response.data.contracts);
@@ -2284,11 +2291,15 @@ export default function CalendarPage() {
                           className="form-select"
                         >
                           <option value="">-- Vertrag wählen --</option>
-                          {userContracts.map(contract => (
-                            <option key={contract._id} value={contract._id}>
-                              {contract.name || contract.provider}
-                            </option>
-                          ))}
+                          {userContracts.map(contract => {
+                            const displayName = contract.name ||
+                              (typeof contract.provider === 'string' ? contract.provider : 'Unbekannter Vertrag');
+                            return (
+                              <option key={contract._id} value={contract._id}>
+                                {displayName}
+                              </option>
+                            );
+                          })}
                         </select>
                       </div>
 

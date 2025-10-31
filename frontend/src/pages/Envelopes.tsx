@@ -10,7 +10,10 @@ import {
   User,
   FileText,
   Calendar,
-  AlertCircle
+  AlertCircle,
+  X,
+  Activity,
+  Eye
 } from "lucide-react";
 import styles from "../styles/Envelopes.module.css";
 
@@ -48,6 +51,8 @@ export default function Envelopes() {
   const [error, setError] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<FilterTab>("all");
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [selectedEnvelope, setSelectedEnvelope] = useState<Envelope | null>(null);
 
   // Responsive handler
   useEffect(() => {
@@ -213,6 +218,95 @@ export default function Envelopes() {
     return `${signed}/${total}`;
   };
 
+  // Generate timeline events for drawer
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const generateTimelineEvents = (envelope: Envelope) => {
+    const events = [];
+
+    // Envelope created
+    events.push({
+      type: "completed",
+      title: "Signaturanfrage erstellt",
+      description: `Dokument "${envelope.title}" wurde hochgeladen und vorbereitet`,
+      time: envelope.createdAt
+    });
+
+    // Envelope sent
+    if (envelope.status !== "DRAFT") {
+      events.push({
+        type: "completed",
+        title: "Versandt an Empfänger",
+        description: `E-Mail wurde an ${envelope.signers.length} Empfänger versendet`,
+        time: envelope.createdAt
+      });
+    }
+
+    // Signer activities
+    envelope.signers.forEach(signer => {
+      if (signer.status === "SIGNED" && signer.signedAt) {
+        events.push({
+          type: "completed",
+          title: `Unterschrift von ${signer.name}`,
+          description: `${signer.email} hat das Dokument unterschrieben`,
+          time: signer.signedAt
+        });
+      } else if (envelope.status === "SENT") {
+        events.push({
+          type: "pending",
+          title: `Warte auf ${signer.name}`,
+          description: `${signer.email} hat noch nicht unterschrieben`,
+          time: signer.tokenExpires
+        });
+      }
+    });
+
+    // Envelope completed
+    if (envelope.status === "COMPLETED") {
+      events.push({
+        type: "completed",
+        title: "Vollständig abgeschlossen",
+        description: "Alle Unterschriften wurden gesammelt",
+        time: envelope.updatedAt
+      });
+    }
+
+    // Envelope expired
+    if (envelope.status === "EXPIRED") {
+      events.push({
+        type: "completed",
+        title: "Abgelaufen",
+        description: "Die Signaturanfrage ist abgelaufen",
+        time: envelope.expiresAt || envelope.updatedAt
+      });
+    }
+
+    // Envelope voided
+    if (envelope.status === "VOIDED") {
+      events.push({
+        type: "completed",
+        title: "Storniert",
+        description: "Die Signaturanfrage wurde storniert",
+        time: envelope.updatedAt
+      });
+    }
+
+    // Sort by time (newest first)
+    return events.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+  };
+
+  // Format date and time
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const formatDateTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleString("de-DE", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+  };
+
   // Loading state
   if (loading) {
     return (
@@ -315,6 +409,8 @@ export default function Envelopes() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -20 }}
                         transition={{ duration: 0.2 }}
+                        onClick={() => setSelectedEnvelope(envelope)}
+                        style={{ cursor: "pointer" }}
                       >
                         {/* Card Header */}
                         <div className={styles.cardHeader}>
@@ -415,6 +511,8 @@ export default function Envelopes() {
                           animate={{ opacity: 1 }}
                           exit={{ opacity: 0 }}
                           transition={{ duration: 0.2 }}
+                          onClick={() => setSelectedEnvelope(envelope)}
+                          style={{ cursor: "pointer" }}
                         >
                           <td>
                             <div className={styles.titleCell}>
@@ -487,6 +585,235 @@ export default function Envelopes() {
           )}
         </div>
       </div>
+
+      {/* Detail Drawer */}
+      <AnimatePresence>
+        {selectedEnvelope && (
+          <>
+            {/* Overlay */}
+            <motion.div
+              className={styles.drawerOverlay}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSelectedEnvelope(null)}
+            />
+
+            {/* Drawer */}
+            <motion.div
+              className={styles.drawer}
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            >
+              {/* Header */}
+              <div className={styles.drawerHeader}>
+                <div className={styles.drawerTitle}>
+                  <h2>{selectedEnvelope.title}</h2>
+                  <p className={styles.drawerSubtitle}>
+                    Signaturanfrage-Details
+                  </p>
+                </div>
+                <button
+                  className={styles.closeBtn}
+                  onClick={() => setSelectedEnvelope(null)}
+                  aria-label="Schließen"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              {/* Content */}
+              <div className={styles.drawerContent}>
+                {/* Info Grid */}
+                <div className={styles.drawerSection}>
+                  <div className={styles.infoGrid}>
+                    <div className={styles.infoCard}>
+                      <p className={styles.infoLabel}>
+                        <FileText size={14} />
+                        Status
+                      </p>
+                      <p className={styles.infoValue}>
+                        {getStatusLabel(selectedEnvelope.status)}
+                      </p>
+                    </div>
+                    <div className={styles.infoCard}>
+                      <p className={styles.infoLabel}>
+                        <User size={14} />
+                        Empfänger
+                      </p>
+                      <p className={styles.infoValue}>
+                        {getSignerProgress(selectedEnvelope.signers)} signiert
+                      </p>
+                    </div>
+                    <div className={styles.infoCard}>
+                      <p className={styles.infoLabel}>
+                        <Calendar size={14} />
+                        Erstellt
+                      </p>
+                      <p className={styles.infoValue}>
+                        {formatDate(selectedEnvelope.createdAt)}
+                      </p>
+                    </div>
+                    <div className={styles.infoCard}>
+                      <p className={styles.infoLabel}>
+                        <Clock size={14} />
+                        Läuft ab
+                      </p>
+                      <p className={styles.infoValue}>
+                        {selectedEnvelope.expiresAt
+                          ? formatDate(selectedEnvelope.expiresAt)
+                          : "Kein Ablaufdatum"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Document Preview */}
+                <div className={styles.drawerSection}>
+                  <h3 className={styles.sectionTitle}>
+                    <FileText size={18} />
+                    Dokument
+                  </h3>
+                  <div className={styles.documentPreview}>
+                    <Eye size={48} className={styles.documentIcon} />
+                    <strong>{selectedEnvelope.title}</strong>
+                    <p>
+                      Klicken Sie auf "Dokument ansehen", um die PDF-Vorschau zu öffnen
+                    </p>
+                  </div>
+                </div>
+
+                {/* Signer Details */}
+                <div className={styles.drawerSection}>
+                  <h3 className={styles.sectionTitle}>
+                    <User size={18} />
+                    Unterzeichner ({selectedEnvelope.signers.length})
+                  </h3>
+                  <div className={styles.signerDetailsList}>
+                    {selectedEnvelope.signers.map((signer, idx) => (
+                      <div
+                        key={idx}
+                        className={`${styles.signerDetailCard} ${
+                          signer.status === "SIGNED" ? styles.signed : styles.pending
+                        }`}
+                      >
+                        <div className={styles.signerHeader}>
+                          <div className={styles.signerInfo}>
+                            <h4 className={styles.signerName}>{signer.name}</h4>
+                            <p className={styles.signerEmail}>{signer.email}</p>
+                          </div>
+                          <span
+                            className={`${styles.signerBadge} ${
+                              signer.status === "SIGNED"
+                                ? styles.signed
+                                : styles.pending
+                            }`}
+                          >
+                            {signer.status === "SIGNED" ? (
+                              <>
+                                <CheckCircle size={14} />
+                                Signiert
+                              </>
+                            ) : (
+                              <>
+                                <Clock size={14} />
+                                Ausstehend
+                              </>
+                            )}
+                          </span>
+                        </div>
+                        <div className={styles.signerMeta}>
+                          <div className={styles.signerMetaRow}>
+                            <User size={14} />
+                            <span>Rolle: {signer.role}</span>
+                          </div>
+                          <div className={styles.signerMetaRow}>
+                            <Calendar size={14} />
+                            <span>Reihenfolge: #{signer.order}</span>
+                          </div>
+                          {signer.status === "SIGNED" && signer.signedAt && (
+                            <div className={styles.signerMetaRow}>
+                              <CheckCircle size={14} />
+                              <span>
+                                Signiert am: {formatDateTime(signer.signedAt)}
+                              </span>
+                            </div>
+                          )}
+                          {signer.status === "PENDING" && (
+                            <div className={styles.signerMetaRow}>
+                              <Clock size={14} />
+                              <span>
+                                Link läuft ab: {formatDateTime(signer.tokenExpires)}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        {signer.status === "PENDING" && (
+                          <div className={styles.signerActions}>
+                            <button
+                              className={styles.actionBtnSmall}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleCopyLink(signer.token);
+                              }}
+                            >
+                              <Copy size={14} />
+                              Link kopieren
+                            </button>
+                            <button
+                              className={styles.actionBtnSmall}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRemind(selectedEnvelope._id);
+                              }}
+                            >
+                              <Send size={14} />
+                              Erinnern
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Timeline */}
+                <div className={styles.drawerSection}>
+                  <h3 className={styles.sectionTitle}>
+                    <Activity size={18} />
+                    Aktivitätsverlauf
+                  </h3>
+                  <div className={styles.timeline}>
+                    {generateTimelineEvents(selectedEnvelope).map((event, idx) => (
+                      <div
+                        key={idx}
+                        className={`${styles.timelineItem} ${
+                          event.type === "completed"
+                            ? styles.completed
+                            : styles.pending
+                        }`}
+                      >
+                        <div className={styles.timelineContent}>
+                          <h4 className={styles.timelineTitle}>{event.title}</h4>
+                          <p className={styles.timelineDescription}>
+                            {event.description}
+                          </p>
+                          <p className={styles.timelineTime}>
+                            <Clock size={12} />
+                            {formatDateTime(event.time)}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
