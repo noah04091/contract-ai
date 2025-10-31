@@ -1374,13 +1374,20 @@ export default function CalendarPage() {
         headers.Authorization = `Bearer ${token}`;
       }
 
+      console.log("📋 Fetching contracts for dropdown...");
       const response = await axios.get<{ success: boolean; contracts: ContractType[] }>("/api/contracts", { headers });
+
+      console.log("📋 Contracts API Response:", response.data);
+      console.log("📋 Number of contracts:", response.data?.contracts?.length || 0);
 
       if (response.data.success && response.data.contracts) {
         setUserContracts(response.data.contracts);
+        console.log("✅ Contracts set to state:", response.data.contracts.length);
+      } else {
+        console.warn("⚠️ No contracts in response or success=false");
       }
     } catch (err) {
-      console.error("Fehler beim Laden der Verträge:", err);
+      console.error("❌ Fehler beim Laden der Verträge:", err);
     }
   }, []);
 
@@ -2281,6 +2288,29 @@ export default function CalendarPage() {
                         alert('Fehler beim Erstellen des Ereignisses. Bitte versuchen Sie es erneut.');
                       }
                     }}>
+
+                      {/* DEBUG INFO - Remove after fixing */}
+                      <div style={{
+                        padding: '10px',
+                        background: '#fff3cd',
+                        border: '1px solid #ffc107',
+                        borderRadius: '4px',
+                        marginBottom: '15px',
+                        fontSize: '13px'
+                      }}>
+                        <strong>🔍 Debug Info:</strong>
+                        <div>Verträge geladen: {userContracts.length}</div>
+                        {userContracts.length === 0 && (
+                          <div style={{ color: '#d32f2f', marginTop: '5px' }}>
+                            ⚠️ Keine Verträge gefunden! API-Problem oder Auth-Token fehlt?
+                          </div>
+                        )}
+                        {userContracts.length > 0 && (
+                          <div style={{ color: '#2e7d32', marginTop: '5px' }}>
+                            ✅ {userContracts.length} Verträge verfügbar
+                          </div>
+                        )}
+                      </div>
 
                       <div className="form-group">
                         <label>Vertrag auswählen *</label>
