@@ -1048,10 +1048,17 @@ export default function Generate() {
 
   const handleSave = async () => {
     try {
-      console.log("📤 Speichere Vertrag...");
-      
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts`, {
-        method: 'POST',
+      // ✅ UPDATE wenn bereits gespeichert, CREATE wenn neu
+      const isUpdate = !!savedContractId;
+
+      console.log(isUpdate ? "📤 Aktualisiere Vertrag..." : "📤 Speichere Vertrag...");
+
+      const url = isUpdate
+        ? `${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/${savedContractId}`
+        : `${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts`;
+
+      const res = await fetch(url, {
+        method: isUpdate ? 'PUT' : 'POST',
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json'
@@ -1072,42 +1079,48 @@ export default function Generate() {
       });
 
       const data = await res.json();
-      
-      if (res.ok && data.contractId) {
-        console.log("✅ Vertrag gespeichert:", data);
-        
-        setSavedContractId(data.contractId);
+
+      if (res.ok) {
+        const contractId = data.contractId || savedContractId;
+        console.log(isUpdate ? "✅ Vertrag aktualisiert:" : "✅ Vertrag gespeichert:", contractId);
+
+        if (!savedContractId) {
+          setSavedContractId(contractId);
+        }
         setSaved(true);
-        
-        toast.success("✅ Vertrag erfolgreich gespeichert!", {
+
+        toast.success(isUpdate ? "✅ Änderungen gespeichert!" : "✅ Vertrag erfolgreich gespeichert!", {
           autoClose: 3000,
           position: 'top-center',
         });
-        
-        setTimeout(() => {
-          toast.info(
-            <div className="flex gap-2">
-              <button
-                onClick={() => navigate('/dashboard')}
-                className="px-2 py-1 bg-blue-600 text-white rounded text-xs"
-              >
-                Dashboard
-              </button>
-              <button
-                onClick={() => navigate(`/contracts/${data.contractId}`)}
-                className="px-2 py-1 bg-green-600 text-white rounded text-xs"
-              >
-                Ansehen
-              </button>
-            </div>,
-            {
-              autoClose: 5000,
-              position: 'top-center',
-              closeButton: true
-            }
-          );
-        }, 100);
-        
+
+        // Nur bei erstem Speichern die Navigation-Buttons zeigen
+        if (!isUpdate && contractId) {
+          setTimeout(() => {
+            toast.info(
+              <div className="flex gap-2">
+                <button
+                  onClick={() => navigate('/dashboard')}
+                  className="px-2 py-1 bg-blue-600 text-white rounded text-xs"
+                >
+                  Dashboard
+                </button>
+                <button
+                  onClick={() => navigate(`/contracts/${contractId}`)}
+                  className="px-2 py-1 bg-green-600 text-white rounded text-xs"
+                >
+                  Ansehen
+                </button>
+              </div>,
+              {
+                autoClose: 5000,
+                position: 'top-center',
+                closeButton: true
+              }
+            );
+          }, 100);
+        }
+
       } else {
         throw new Error(data.error || 'Speichern fehlgeschlagen');
       }
@@ -1418,7 +1431,7 @@ export default function Generate() {
 
   // 📄 NEW: Generate PDF Preview (ohne Download)
   const generatePDFPreview = async () => {
-    if (isGeneratingPreview || pdfPreviewUrl) return; // Nur einmal generieren
+    if (isGeneratingPreview) return; // Verhindere Mehrfachklicks
 
     setIsGeneratingPreview(true);
 
@@ -1428,13 +1441,18 @@ export default function Generate() {
       // Contract ID sicherstellen
       let contractId = savedContractId;
 
-      // Wenn noch nicht gespeichert, automatisch speichern
-      if (!contractId && contractText) {
-        console.log("📝 Speichere Vertrag automatisch vor PDF-Vorschau...");
+      // ✅ Immer speichern/aktualisieren vor PDF-Generierung (um Text-Änderungen zu übernehmen)
+      if (contractText) {
+        const isUpdate = !!contractId;
+        console.log(isUpdate ? "📝 Aktualisiere Vertrag vor PDF-Vorschau..." : "📝 Speichere Vertrag vor PDF-Vorschau...");
 
         try {
-          const saveRes = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts`, {
-            method: 'POST',
+          const url = isUpdate
+            ? `${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/${contractId}`
+            : `${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts`;
+
+          const saveRes = await fetch(url, {
+            method: isUpdate ? 'PUT' : 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -1453,15 +1471,17 @@ export default function Generate() {
           });
 
           const saveData = await saveRes.json();
-          if (saveRes.ok && saveData.contractId) {
-            contractId = saveData.contractId;
-            setSavedContractId(saveData.contractId);
+          if (saveRes.ok) {
+            if (!contractId && saveData.contractId) {
+              contractId = saveData.contractId;
+              setSavedContractId(saveData.contractId);
+            }
             setSaved(true);
-            console.log("✅ Vertrag automatisch gespeichert:", saveData.contractId);
-            await new Promise(resolve => setTimeout(resolve, 1500));
+            console.log(isUpdate ? "✅ Vertrag aktualisiert" : "✅ Vertrag gespeichert:", contractId);
+            await new Promise(resolve => setTimeout(resolve, 500));
           }
         } catch (saveError) {
-          console.error("❌ Fehler beim automatischen Speichern:", saveError);
+          console.error("❌ Fehler beim Speichern/Aktualisieren:", saveError);
         }
       }
 
@@ -2200,7 +2220,14 @@ export default function Generate() {
                         <textarea
                           className={styles.contractTextarea}
                           value={contractText}
-                          onChange={(e) => setContractText(e.target.value)}
+                          onChange={(e) => {
+                            setContractText(e.target.value);
+                            // ✅ PDF-Vorschau zurücksetzen bei Text-Änderungen
+                            if (pdfPreviewUrl) {
+                              setPdfPreviewUrl(null);
+                            }
+                            setSaved(false); // Mark as unsaved
+                          }}
                           placeholder="Vertrag text..."
                         />
                         {signatureURL && (
