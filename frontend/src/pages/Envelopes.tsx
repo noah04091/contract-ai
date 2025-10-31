@@ -1214,6 +1214,17 @@ export default function Envelopes() {
                             </span>
                           </div>
 
+                          {/* ✅ COMPLETED: Zeige Abschluss-Datum */}
+                          {(envelope.status === "COMPLETED" || envelope.status === "SIGNED") && envelope.completedAt && (
+                            <div className={styles.cardRow}>
+                              <CheckCircle size={14} style={{ color: '#10b981' }} />
+                              <span className={styles.cardLabel}>Abgeschlossen:</span>
+                              <span className={styles.cardValue} style={{ color: '#10b981', fontWeight: 600 }}>
+                                {formatDate(envelope.completedAt)}
+                              </span>
+                            </div>
+                          )}
+
                           {envelope.expiresAt && (
                             <div className={styles.cardRow}>
                               <Clock size={14} />
@@ -1403,7 +1414,23 @@ export default function Envelopes() {
                             onClick={() => setSelectedEnvelope(envelope)}
                             style={{ cursor: "pointer" }}
                           >
-                            {formatDate(envelope.createdAt)}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                              <span>{formatDate(envelope.createdAt)}</span>
+                              {/* ✅ COMPLETED: Zeige Abschluss-Datum */}
+                              {(envelope.status === "COMPLETED" || envelope.status === "SIGNED") && envelope.completedAt && (
+                                <span style={{
+                                  color: '#10b981',
+                                  fontSize: '0.85rem',
+                                  fontWeight: 600,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '4px'
+                                }}>
+                                  <CheckCircle size={12} />
+                                  Abgeschlossen: {formatDate(envelope.completedAt)}
+                                </span>
+                              )}
+                            </div>
                           </td>
                           <td
                             onClick={() => setSelectedEnvelope(envelope)}
