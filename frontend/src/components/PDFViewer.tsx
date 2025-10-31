@@ -7,23 +7,13 @@ import styles from "../styles/PDFViewer.module.css";
 // Configure PDF.js worker - Use unpkg.com (allowed in CSP)
 pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
-interface Signer {
-  email: string;
-  name: string;
-  role: string;
-  order: number;
-  status: "PENDING" | "SIGNED";
-  signedAt?: string;
-}
-
 interface PDFViewerProps {
   pdfUrl: string;
   title: string;
-  signers: Signer[];
   onClose: () => void;
 }
 
-export default function PDFViewer({ pdfUrl, title, signers, onClose }: PDFViewerProps) {
+export default function PDFViewer({ pdfUrl, title, onClose }: PDFViewerProps) {
   const [numPages, setNumPages] = useState<number | null>(null);
   const [pageNumber, setPageNumber] = useState(1);
   const [scale, setScale] = useState(1.0);
@@ -146,38 +136,6 @@ export default function PDFViewer({ pdfUrl, title, signers, onClose }: PDFViewer
                   className={styles.page}
                 />
               </Document>
-
-              {/* Signature Markers - Positioned on last page */}
-              {numPages && pageNumber === numPages && (
-                <div className={styles.signatureMarkers}>
-                  {signers.map((signer, idx) => {
-                    const yOffset = 150 + idx * 100; // Vertically stack signatures
-                    return (
-                      <div
-                        key={idx}
-                        className={`${styles.signatureMarker} ${
-                          signer.status === "SIGNED" ? styles.signed : styles.pending
-                        }`}
-                        style={{
-                          top: `${yOffset}px`,
-                          left: "50%",
-                          transform: "translateX(-50%)",
-                        }}
-                      >
-                        <div className={styles.markerContent}>
-                          <span className={styles.markerLabel}>
-                            {signer.status === "SIGNED" ? "✓" : "○"}
-                          </span>
-                          <div className={styles.markerInfo}>
-                            <strong>{signer.name}</strong>
-                            <span>{signer.role}</span>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
             </div>
           </div>
 
@@ -205,21 +163,6 @@ export default function PDFViewer({ pdfUrl, title, signers, onClose }: PDFViewer
               </button>
             </div>
           )}
-
-          {/* Signer Legend */}
-          <div className={styles.legend}>
-            <h4>Signatur-Legende:</h4>
-            <div className={styles.legendItems}>
-              <div className={styles.legendItem}>
-                <span className={`${styles.legendDot} ${styles.signed}`}></span>
-                <span>Signiert</span>
-              </div>
-              <div className={styles.legendItem}>
-                <span className={`${styles.legendDot} ${styles.pending}`}></span>
-                <span>Ausstehend</span>
-              </div>
-            </div>
-          </div>
         </motion.div>
       </div>
     </AnimatePresence>

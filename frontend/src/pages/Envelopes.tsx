@@ -13,7 +13,6 @@ import {
   AlertCircle,
   X,
   Activity,
-  Eye,
   Download,
   Share2,
   QrCode,
@@ -438,18 +437,21 @@ export default function Envelopes() {
   };
 
   // Load PDF URL from backend
-  const handleViewPDF = async (envelope: Envelope) => {
+  const handleViewPDF = async (envelope: Envelope, signed: boolean = false) => {
     console.log("📄 Envelope Data:", envelope);
-    console.log("📄 s3Key:", envelope.s3Key);
-    console.log("📄 contract:", envelope.contract);
+    console.log("📄 Loading signed:", signed);
 
-    // Try to get s3Key from envelope first, then from contract as fallback
-    let s3Key = envelope.s3Key || envelope.contract?.s3Key;
-    console.log("📄 Resolved s3Key (from envelope):", s3Key);
+    // Choose between signed or original document
+    let s3Key = signed ? envelope.s3KeySealed : envelope.s3Key;
+
+    // Fallback to contract s3Key if original is not available
+    if (!s3Key && !signed) {
+      s3Key = envelope.contract?.s3Key;
+    }
 
     // If no s3Key but we have a contractId, load the full contract
     const contractId = envelope.contractId || envelope.contract?._id;
-    if (!s3Key && contractId) {
+    if (!s3Key && !signed && contractId) {
       console.log("🔍 Lade Contract separat:", contractId);
       try {
         const token = localStorage.getItem("token");
@@ -473,7 +475,7 @@ export default function Envelopes() {
     }
 
     if (!s3Key) {
-      toast.error("Keine PDF-Datei verfügbar. Das Dokument wurde möglicherweise nicht hochgeladen.");
+      toast.error(signed ? "Kein signiertes Dokument verfügbar" : "Keine PDF-Datei verfügbar");
       console.error("❌ Kein s3Key gefunden für Envelope:", envelope._id);
       return;
     }
@@ -502,7 +504,7 @@ export default function Envelopes() {
     } catch (err) {
       console.error("❌ Error loading PDF URL:", err);
       const errorMessage = err instanceof Error ? err.message : "Unbekannter Fehler";
-      alert(`❌ Fehler: ${errorMessage}`);
+      toast.error(`Fehler: ${errorMessage}`);
     } finally {
       setLoadingPdf(false);
     }
@@ -1495,20 +1497,48 @@ export default function Envelopes() {
                 <div className={styles.drawerSection}>
                   <h3 className={styles.sectionTitle}>
                     <FileText size={18} />
-                    Dokument
+                    Dokumente
                   </h3>
-                  <div
-                    className={styles.documentPreview}
-                    onClick={() => handleViewPDF(selectedEnvelope)}
-                    style={{ cursor: loadingPdf ? "wait" : "pointer" }}
-                  >
-                    <Eye size={48} className={styles.documentIcon} />
-                    <strong>{selectedEnvelope.title}</strong>
-                    <p>
-                      {loadingPdf
-                        ? "PDF wird geladen..."
-                        : "Klicken Sie hier, um die PDF-Vorschau zu öffnen"}
-                    </p>
+                  <div className={styles.documentButtons}>
+                    {/* Original PDF Button */}
+                    <button
+                      className={styles.documentButton}
+                      onClick={() => handleViewPDF(selectedEnvelope)}
+                      disabled={loadingPdf}
+                    >
+                      <FileText size={20} />
+                      <div className={styles.documentButtonContent}>
+                        <strong>Original-PDF</strong>
+                        <span>Ursprüngliches Dokument</span>
+                      </div>
+                    </button>
+
+                    {/* Signed PDF Button */}
+                    {selectedEnvelope.status === "COMPLETED" && selectedEnvelope.s3KeySealed ? (
+                      <button
+                        className={`${styles.documentButton} ${styles.signedDocument}`}
+                        onClick={() => handleViewPDF(selectedEnvelope, true)}
+                        disabled={loadingPdf}
+                      >
+                        <CheckCircle size={20} />
+                        <div className={styles.documentButtonContent}>
+                          <strong>Signiertes Dokument</strong>
+                          <span>Mit Unterschriften</span>
+                        </div>
+                      </button>
+                    ) : (
+                      <button
+                        className={`${styles.documentButton} ${styles.disabledDocument}`}
+                        disabled
+                        title="Signiertes Dokument ist noch nicht verfügbar"
+                      >
+                        <Clock size={20} />
+                        <div className={styles.documentButtonContent}>
+                          <strong>Signiertes Dokument</strong>
+                          <span>Noch nicht verfügbar</span>
+                        </div>
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -1694,7 +1724,6 @@ export default function Envelopes() {
         <PDFViewer
           pdfUrl={pdfUrl}
           title={selectedEnvelope.title}
-          signers={selectedEnvelope.signers}
           onClose={() => {
             setShowPDFViewer(false);
             setPdfUrl(null);
