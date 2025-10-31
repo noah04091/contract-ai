@@ -1702,8 +1702,11 @@ export default function CalendarPage() {
     const cancellable = events.filter(e => {
       const eventDate = new Date(e.date);
       const isFuture = eventDate >= now && eventDate <= futureDate;
-      const isCancellationType = e.type === "CANCELLATION_DEADLINE" ||
-                                  e.type === "CANCELLATION" ||
+      // ✅ Backend generiert diese Event-Types für Kündigungen
+      const isCancellationType = e.type === "CANCEL_WINDOW_OPEN" ||
+                                  e.type === "CANCEL_REMINDER" ||
+                                  e.type === "LAST_CANCEL_DAY" ||
+                                  e.type === "CANCEL_WARNING" ||
                                   e.title?.toLowerCase().includes("kündigung") ||
                                   e.title?.toLowerCase().includes("kündigbar");
       return isFuture && isCancellationType;
@@ -1713,11 +1716,12 @@ export default function CalendarPage() {
     const autoRenewal = events.filter(e => {
       const eventDate = new Date(e.date);
       const isFuture = eventDate >= now && eventDate <= futureDate;
+      // ✅ Backend generiert AUTO_RENEWAL und CONTRACT_EXPIRY (mit isAutoRenewal)
       const isRenewalType = e.type === "AUTO_RENEWAL" ||
-                            e.type === "CONTRACT_RENEWAL" ||
-                            e.type === "RENEWAL" ||
+                            e.type === "CONTRACT_EXPIRY" ||
                             e.title?.toLowerCase().includes("verlängerung") ||
-                            e.title?.toLowerCase().includes("automatisch");
+                            e.title?.toLowerCase().includes("automatisch") ||
+                            e.description?.toLowerCase().includes("verlängert sich");
       return isFuture && isRenewalType;
     });
 
@@ -1750,8 +1754,10 @@ export default function CalendarPage() {
         return events.filter(e => {
           const eventDate = new Date(e.date);
           const isFuture = eventDate >= now && eventDate <= futureDate;
-          const isCancellationType = e.type === "CANCELLATION_DEADLINE" ||
-                                      e.type === "CANCELLATION" ||
+          const isCancellationType = e.type === "CANCEL_WINDOW_OPEN" ||
+                                      e.type === "CANCEL_REMINDER" ||
+                                      e.type === "LAST_CANCEL_DAY" ||
+                                      e.type === "CANCEL_WARNING" ||
                                       e.title?.toLowerCase().includes("kündigung") ||
                                       e.title?.toLowerCase().includes("kündigbar");
           return isFuture && isCancellationType;
@@ -1761,10 +1767,10 @@ export default function CalendarPage() {
           const eventDate = new Date(e.date);
           const isFuture = eventDate >= now && eventDate <= futureDate;
           const isRenewalType = e.type === "AUTO_RENEWAL" ||
-                                e.type === "CONTRACT_RENEWAL" ||
-                                e.type === "RENEWAL" ||
+                                e.type === "CONTRACT_EXPIRY" ||
                                 e.title?.toLowerCase().includes("verlängerung") ||
-                                e.title?.toLowerCase().includes("automatisch");
+                                e.title?.toLowerCase().includes("automatisch") ||
+                                e.description?.toLowerCase().includes("verlängert sich");
           return isFuture && isRenewalType;
         });
       case "total":
