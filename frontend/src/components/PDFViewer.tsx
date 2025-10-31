@@ -4,8 +4,8 @@ import { X, ZoomIn, ZoomOut, Download, ChevronLeft, ChevronRight } from "lucide-
 import { motion, AnimatePresence } from "framer-motion";
 import styles from "../styles/PDFViewer.module.css";
 
-// Configure PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+// Configure PDF.js worker - Use unpkg.com (allowed in CSP)
+pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 interface Signer {
   email: string;
