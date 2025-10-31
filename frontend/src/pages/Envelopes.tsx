@@ -444,8 +444,32 @@ export default function Envelopes() {
     console.log("📄 contract:", envelope.contract);
 
     // Try to get s3Key from envelope first, then from contract as fallback
-    const s3Key = envelope.s3Key || envelope.contract?.s3Key;
-    console.log("📄 Resolved s3Key:", s3Key);
+    let s3Key = envelope.s3Key || envelope.contract?.s3Key;
+    console.log("📄 Resolved s3Key (from envelope):", s3Key);
+
+    // If no s3Key but we have a contractId, load the full contract
+    if (!s3Key && envelope.contractId) {
+      console.log("🔍 Lade Contract separat:", envelope.contractId);
+      try {
+        const token = localStorage.getItem("token");
+        const contractResponse = await fetch(`/api/contracts/${envelope.contractId}`, {
+          method: "GET",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          credentials: "include"
+        });
+
+        if (contractResponse.ok) {
+          const contractData = await contractResponse.json();
+          s3Key = contractData.s3Key;
+          console.log("✅ Contract geladen, s3Key:", s3Key);
+        }
+      } catch (err) {
+        console.error("❌ Fehler beim Laden des Contracts:", err);
+      }
+    }
 
     if (!s3Key) {
       toast.error("Keine PDF-Datei verfügbar. Das Dokument wurde möglicherweise nicht hochgeladen.");
@@ -491,6 +515,28 @@ export default function Envelopes() {
     // Fallback to contract.s3Key if envelope.s3Key is not available
     if (!s3Key && !signed) {
       s3Key = envelope.contract?.s3Key;
+    }
+
+    // If no s3Key but we have a contractId, load the full contract
+    if (!s3Key && !signed && envelope.contractId) {
+      try {
+        const token = localStorage.getItem("token");
+        const contractResponse = await fetch(`/api/contracts/${envelope.contractId}`, {
+          method: "GET",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          },
+          credentials: "include"
+        });
+
+        if (contractResponse.ok) {
+          const contractData = await contractResponse.json();
+          s3Key = contractData.s3Key;
+        }
+      } catch (err) {
+        console.error("❌ Fehler beim Laden des Contracts:", err);
+      }
     }
 
     if (!s3Key) {
