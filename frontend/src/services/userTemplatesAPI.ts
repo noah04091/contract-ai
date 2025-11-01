@@ -23,7 +23,7 @@ export interface CreateTemplateRequest {
  * Alle User Templates abrufen
  */
 export async function fetchUserTemplates(): Promise<UserTemplate[]> {
-  const response = await fetch(`${API_BASE_URL}/api/user-templates`, {
+  const response = await fetch(`${API_BASE_URL}/user-templates`, {
     method: 'GET',
     credentials: 'include',
     headers: {
@@ -44,7 +44,7 @@ export async function fetchUserTemplates(): Promise<UserTemplate[]> {
  * Templates nach Vertragstyp filtern
  */
 export async function fetchTemplatesByType(contractType: string): Promise<UserTemplate[]> {
-  const response = await fetch(`${API_BASE_URL}/api/user-templates/by-type/${contractType}`, {
+  const response = await fetch(`${API_BASE_URL}/user-templates/by-type/${contractType}`, {
     method: 'GET',
     credentials: 'include',
     headers: {
@@ -65,7 +65,7 @@ export async function fetchTemplatesByType(contractType: string): Promise<UserTe
  * Neues Template erstellen
  */
 export async function createUserTemplate(templateData: CreateTemplateRequest): Promise<UserTemplate> {
-  const response = await fetch(`${API_BASE_URL}/api/user-templates`, {
+  const response = await fetch(`${API_BASE_URL}/user-templates`, {
     method: 'POST',
     credentials: 'include',
     headers: {
@@ -90,7 +90,7 @@ export async function updateUserTemplate(
   templateId: string,
   updates: Partial<CreateTemplateRequest>
 ): Promise<UserTemplate> {
-  const response = await fetch(`${API_BASE_URL}/api/user-templates/${templateId}`, {
+  const response = await fetch(`${API_BASE_URL}/user-templates/${templateId}`, {
     method: 'PUT',
     credentials: 'include',
     headers: {
@@ -112,7 +112,7 @@ export async function updateUserTemplate(
  * Template löschen
  */
 export async function deleteUserTemplate(templateId: string): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/api/user-templates/${templateId}`, {
+  const response = await fetch(`${API_BASE_URL}/user-templates/${templateId}`, {
     method: 'DELETE',
     credentials: 'include',
     headers: {
