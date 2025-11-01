@@ -2186,9 +2186,9 @@ export default function CalendarPage() {
             transition={{ delay: 0.3 }}
           >
             <div className="section-header-premium">
-              <div className="section-title">
+              <div className="section-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <AlertCircle size={20} className="section-icon" />
-                <h3>Dringende Ereignisse</h3>
+                <h3 style={{ margin: 0 }}>Dringende Ereignisse</h3>
               </div>
               {urgentEvents.length > EVENTS_PER_PAGE && (
                 <div className="pagination-controls">
