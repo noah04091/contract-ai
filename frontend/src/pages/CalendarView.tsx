@@ -112,9 +112,15 @@ interface QuickActionsProps {
   onEdit: (event: CalendarEvent) => void;
   navigate: (path: string) => void;
   onOpenSnooze: (event: CalendarEvent) => void;
+  // 🆕 Navigation zwischen mehreren Events
+  showNavigation?: boolean;
+  currentIndex?: number;
+  totalEvents?: number;
+  onNavigatePrev?: () => void;
+  onNavigateNext?: () => void;
 }
 
-function QuickActionsModal({ event, onAction, onClose, onEdit, navigate, onOpenSnooze }: QuickActionsProps) {
+function QuickActionsModal({ event, onAction, onClose, onEdit, navigate, onOpenSnooze, showNavigation, currentIndex, totalEvents, onNavigatePrev, onNavigateNext }: QuickActionsProps) {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {
@@ -241,6 +247,73 @@ function QuickActionsModal({ event, onAction, onClose, onEdit, navigate, onOpenS
             <div className="modal-header-text">
               <h3>{event.metadata?.contractName || event.contractName}</h3>
               <p>{event.title}</p>
+              {/* 🆕 Navigation für mehrere Events */}
+              {showNavigation && totalEvents && totalEvents > 1 && (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  marginTop: '8px',
+                  fontSize: '12px',
+                  color: '#6b7280'
+                }}>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onNavigatePrev?.();
+                    }}
+                    style={{
+                      background: 'rgba(255,255,255,0.9)',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '6px',
+                      padding: '4px 8px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'white';
+                      e.currentTarget.style.borderColor = '#3b82f6';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'rgba(255,255,255,0.9)';
+                      e.currentTarget.style.borderColor = '#e5e7eb';
+                    }}
+                  >
+                    <ChevronLeft size={14} />
+                  </button>
+                  <span style={{ fontWeight: '500' }}>
+                    {(currentIndex ?? 0) + 1} / {totalEvents}
+                  </span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onNavigateNext?.();
+                    }}
+                    style={{
+                      background: 'rgba(255,255,255,0.9)',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '6px',
+                      padding: '4px 8px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'white';
+                      e.currentTarget.style.borderColor = '#3b82f6';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'rgba(255,255,255,0.9)';
+                      e.currentTarget.style.borderColor = '#e5e7eb';
+                    }}
+                  >
+                    <ChevronRight size={14} />
+                  </button>
+                </div>
+              )}
             </div>
           </div>
           <button className="modal-close-btn" onClick={onClose}>
@@ -1390,6 +1463,10 @@ export default function CalendarPage() {
   const [contractSearchQuery, setContractSearchQuery] = useState('');
   const [showContractDropdown, setShowContractDropdown] = useState(false);
   const [isNoContract, setIsNoContract] = useState(false);
+  // 🆕 Multi-Event Handling für Tage mit mehreren Events
+  const [dayEvents, setDayEvents] = useState<CalendarEvent[]>([]);
+  const [currentEventIndex, setCurrentEventIndex] = useState(0);
+  const [showDayEventsModal, setShowDayEventsModal] = useState(false);
   const [newEvent, setNewEvent] = useState({
     contractId: '',
     title: '',
@@ -1733,16 +1810,21 @@ export default function CalendarPage() {
       const month = String(value.getMonth() + 1).padStart(2, '0');
       const day = String(value.getDate()).padStart(2, '0');
       const dateString = `${year}-${month}-${day}`;
-      const dayEvents = filteredEvents.filter(e =>
+      const eventsOnDay = filteredEvents.filter(e =>
         e.date && e.date.split('T')[0] === dateString
       );
 
-      if (dayEvents.length === 1) {
-        setSelectedEvent(dayEvents[0]);
+      if (eventsOnDay.length === 1) {
+        // Ein Event -> direkt Detail-Modal öffnen
+        setSelectedEvent(eventsOnDay[0]);
+        setDayEvents([eventsOnDay[0]]);
+        setCurrentEventIndex(0);
         setShowQuickActions(true);
-      } else if (dayEvents.length > 1) {
-        setSelectedEvent(dayEvents[0]);
-        setShowQuickActions(true);
+      } else if (eventsOnDay.length > 1) {
+        // 🆕 Mehrere Events -> Erst Event-Liste zeigen
+        setDayEvents(eventsOnDay);
+        setCurrentEventIndex(0);
+        setShowDayEventsModal(true);
       } else {
         // 📝 NEU: Tag ohne Event -> Modal für Ereignis-Erstellung öffnen
         setSelectedEmptyDate(value);
@@ -2280,6 +2362,20 @@ export default function CalendarPage() {
                 setShowQuickActions(false);
                 setSelectedEvent(null);
               }}
+              // 🆕 Navigation zwischen mehreren Events
+              showNavigation={dayEvents.length > 1}
+              currentIndex={currentEventIndex}
+              totalEvents={dayEvents.length}
+              onNavigatePrev={() => {
+                const newIndex = (currentEventIndex - 1 + dayEvents.length) % dayEvents.length;
+                setCurrentEventIndex(newIndex);
+                setSelectedEvent(dayEvents[newIndex]);
+              }}
+              onNavigateNext={() => {
+                const newIndex = (currentEventIndex + 1) % dayEvents.length;
+                setCurrentEventIndex(newIndex);
+                setSelectedEvent(dayEvents[newIndex]);
+              }}
             />
           )}
         </AnimatePresence>
@@ -2715,6 +2811,158 @@ export default function CalendarPage() {
                     </form>
                   </>
                 )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {/* 🆕 Day Events Modal - Liste aller Events an einem Tag */}
+        {showDayEventsModal && (
+          <motion.div
+            className="modal-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowDayEventsModal(false)}
+          >
+            <motion.div
+              className="modal-content-modern"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                maxWidth: '600px',
+                maxHeight: '80vh',
+                overflowY: 'auto'
+              }}
+            >
+              <div style={{ padding: '24px' }}>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '20px'
+                }}>
+                  <h3 style={{ margin: 0, fontSize: '20px', fontWeight: '600' }}>
+                    📅 {dayEvents.length} Ereignisse am {selectedDate?.toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' })}
+                  </h3>
+                  <button
+                    onClick={() => setShowDayEventsModal(false)}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      fontSize: '24px',
+                      cursor: 'pointer',
+                      padding: '0',
+                      color: '#666'
+                    }}
+                  >
+                    ×
+                  </button>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {dayEvents.map((event, index) => {
+                    const severityColors = {
+                      critical: '#ef4444',
+                      warning: '#f59e0b',
+                      info: '#3b82f6'
+                    };
+
+                    return (
+                      <div
+                        key={event.id}
+                        onClick={() => {
+                          setSelectedEvent(event);
+                          setCurrentEventIndex(index);
+                          setShowDayEventsModal(false);
+                          setShowQuickActions(true);
+                        }}
+                        style={{
+                          padding: '16px',
+                          borderRadius: '12px',
+                          border: '1px solid #e5e7eb',
+                          background: 'white',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.borderColor = severityColors[event.severity as keyof typeof severityColors];
+                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.borderColor = '#e5e7eb';
+                          e.currentTarget.style.boxShadow = 'none';
+                        }}
+                      >
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          gap: '12px'
+                        }}>
+                          {/* Severity Indicator */}
+                          <div
+                            style={{
+                              width: '4px',
+                              height: '100%',
+                              minHeight: '40px',
+                              borderRadius: '4px',
+                              background: severityColors[event.severity as keyof typeof severityColors]
+                            }}
+                          />
+
+                          <div style={{ flex: 1 }}>
+                            {/* Contract Name */}
+                            <div style={{
+                              fontSize: '14px',
+                              fontWeight: '600',
+                              color: '#1f2937',
+                              marginBottom: '4px'
+                            }}>
+                              {event.contractName || 'Individuelle Erinnerung'}
+                            </div>
+
+                            {/* Event Title */}
+                            <div style={{
+                              fontSize: '13px',
+                              color: '#6b7280',
+                              marginBottom: '8px'
+                            }}>
+                              {event.title}
+                            </div>
+
+                            {/* Metadata */}
+                            <div style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              fontSize: '12px',
+                              color: '#9ca3af'
+                            }}>
+                              <span style={{
+                                padding: '2px 8px',
+                                borderRadius: '6px',
+                                background: event.severity === 'critical' ? '#fef2f2' :
+                                           event.severity === 'warning' ? '#fffbeb' : '#eff6ff',
+                                color: severityColors[event.severity as keyof typeof severityColors]
+                              }}>
+                                {event.severity === 'critical' ? '🔴 Dringend' :
+                                 event.severity === 'warning' ? '⚠️ Wichtig' : 'ℹ️ Info'}
+                              </span>
+                              {event.metadata?.provider && (
+                                <span>• {getProviderName(event.metadata.provider)}</span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Arrow */}
+                          <ChevronRight size={20} color="#9ca3af" />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </motion.div>
           </motion.div>
