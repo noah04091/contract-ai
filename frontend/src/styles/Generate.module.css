@@ -1,23 +1,26 @@
 /* =================================
-   📱 APPLE-STYLE CONTRACT GENERATOR - ENHANCED VERSION
+   💎 PROFESSIONAL SAAS FORM DESIGN
+   Apple / Linear / Notion Style
    ================================= */
 
-/* Base Styles - BESTEHEND */
+/* =================================
+   1. BASE & LAYOUT
+   ================================= */
+
 .contractGenerator {
   min-height: 100vh;
   background: #F7F8FA;
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
-  color: #1d1d1f;
-  line-height: 1.47059;
-  letter-spacing: -0.022em;
-  font-size: 17px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+  color: #0B1324;
+  line-height: 1.6;
+  font-size: 15px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Header Section - BESTEHEND */
+/* Header Section */
 .generatorHeader {
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(25px);
   -webkit-backdrop-filter: blur(25px);
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.05);
@@ -47,7 +50,7 @@
   font-size: 2.25rem;
   font-weight: 600;
   margin: 0;
-  background: linear-gradient(135deg, #07c 0%, #0a84ff 100%);
+  background: linear-gradient(135deg, #2E6CF6 0%, #1E53D8 100%);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -56,12 +59,12 @@
 
 .headerText p {
   font-size: 1.125rem;
-  color: #86868b;
+  color: #667085;
   margin: 0.5rem 0 0 0;
   font-weight: 400;
 }
 
-/* Progress Steps - NUMBERED STEPPER WITH CONNECTING LINES */
+/* Progress Steps */
 .progressSteps {
   display: flex;
   justify-content: center;
@@ -72,7 +75,6 @@
   margin: 0 auto;
 }
 
-/* Step Wrapper - Contains circle and label */
 .stepWrapper {
   display: flex;
   flex-direction: column;
@@ -81,7 +83,6 @@
   position: relative;
 }
 
-/* Step Circle - Numbered circle design */
 .stepCircle {
   width: 48px;
   height: 48px;
@@ -96,76 +97,68 @@
   z-index: 2;
 }
 
-/* Step Number inside circle */
 .stepNumber {
   font-size: 18px;
   font-weight: 600;
   line-height: 1;
 }
 
-/* Step Label below circle */
 .stepLabel {
   font-size: 13px;
   font-weight: 500;
-  color: #86868b;
+  color: #667085;
   transition: all 0.3s cubic-bezier(0.28, 0.44, 0.49, 1);
   text-align: center;
   white-space: nowrap;
 }
 
 .stepLabelActive {
-  color: #0a84ff;
+  color: #2E6CF6;
   font-weight: 600;
 }
 
-/* UPCOMING STEP - Outlined/Hollow */
 .stepUpcoming {
   background: white;
-  border: 2px solid #E6E9EF;
-  color: #86868b;
+  border: 2px solid #E5E7EB;
+  color: #667085;
 }
 
 .stepUpcoming:hover {
   border-color: #D1D1D6;
 }
 
-/* ACTIVE STEP - Filled Blue */
 .stepActive {
-  background: #0a84ff;
-  border: 2px solid #0a84ff;
+  background: #2E6CF6;
+  border: 2px solid #2E6CF6;
   color: white;
-  box-shadow: 0 2px 8px rgba(10, 132, 255, 0.25);
+  box-shadow: 0 2px 8px rgba(46, 108, 246, 0.25);
 }
 
-/* COMPLETED STEP - Filled Blue with Checkmark */
 .stepCompleted {
-  background: #0a84ff;
-  border: 2px solid #0a84ff;
+  background: #2E6CF6;
+  border: 2px solid #2E6CF6;
   color: white;
 }
 
-/* Connecting Line between steps */
 .stepLine {
   flex: 1;
   height: 2px;
-  background: #E6E9EF;
+  background: #E5E7EB;
   position: relative;
   margin: 0 0.5rem;
-  margin-bottom: 2rem; /* Align with circles */
+  margin-bottom: 2rem;
 }
 
-/* Animated fill for completed connections */
 .stepLineFill {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: #0a84ff;
+  background: #2E6CF6;
   transform-origin: left;
 }
 
-/* Progress Bar - Thin animated bar showing overall progress */
 .progressBarContainer {
   width: 100%;
   height: 3px;
@@ -177,12 +170,12 @@
 
 .progressBarFill {
   height: 100%;
-  background: linear-gradient(90deg, #0a84ff 0%, #0066cc 100%);
+  background: linear-gradient(90deg, #2E6CF6 0%, #1E53D8 100%);
   border-radius: 2px;
-  box-shadow: 0 0 8px rgba(10, 132, 255, 0.4);
+  box-shadow: 0 0 8px rgba(46, 108, 246, 0.4);
 }
 
-/* Step Header with Buttons - Integrated Navigation */
+/* Step Header with Buttons */
 .stepHeaderContent {
   position: relative;
   width: 100%;
@@ -194,7 +187,6 @@
   flex: 1;
 }
 
-/* Header Buttons - Compact & Elegant */
 .headerButton {
   display: flex;
   align-items: center;
@@ -209,11 +201,10 @@
   white-space: nowrap;
 }
 
-/* Secondary Button (Zurück) */
 .secondaryButton {
   background: white;
-  border: 1.5px solid #E6E9EF;
-  color: #1d1d1f;
+  border: 1.5px solid #E5E7EB;
+  color: #0B1324;
   position: absolute;
   left: 0;
   top: 0;
@@ -225,20 +216,19 @@
   transform: translateY(-1px);
 }
 
-/* Primary Button (Weiter/Erstellen) */
 .primaryButton {
-  background: linear-gradient(135deg, #0a84ff 0%, #0066cc 100%);
+  background: linear-gradient(135deg, #2E6CF6 0%, #1E53D8 100%);
   border: none;
   color: white;
-  box-shadow: 0 2px 8px rgba(10, 132, 255, 0.25);
+  box-shadow: 0 2px 8px rgba(46, 108, 246, 0.25);
   position: absolute;
   right: 0;
   top: 0;
 }
 
 .primaryButton:hover:not(.disabled) {
-  background: linear-gradient(135deg, #0077ed 0%, #0055b3 100%);
-  box-shadow: 0 4px 16px rgba(10, 132, 255, 0.35);
+  background: linear-gradient(135deg, #1E53D8 0%, #1643B8 100%);
+  box-shadow: 0 4px 16px rgba(46, 108, 246, 0.35);
   transform: translateY(-1px);
 }
 
@@ -249,40 +239,21 @@
   transform: none;
 }
 
-/* Optional Badge - Pill-style badge for optional fields */
-.optionalBadge {
-  display: inline-block;
-  margin-left: 0.5rem;
-  padding: 0.25rem 0.625rem;
-  background: rgba(142, 142, 147, 0.1);
-  border: 1px solid rgba(142, 142, 147, 0.2);
-  border-radius: 100px;
-  font-size: 11px;
-  font-weight: 600;
-  color: #8E8E93;
-  text-transform: lowercase;
-  letter-spacing: 0.02em;
-  vertical-align: middle;
-  transition: all 0.2s cubic-bezier(0.28, 0.44, 0.49, 1);
-}
+/* =================================
+   2. MAIN CONTENT - PROFESSIONAL
+   ================================= */
 
-.optionalBadge:hover {
-  background: rgba(142, 142, 147, 0.15);
-  border-color: rgba(142, 142, 147, 0.3);
-}
-
-/* Main Content - BESTEHEND */
 .generatorContent {
   max-width: 1100px;
   margin: 0 auto;
-  padding: 2rem 1.5rem 3rem;
+  padding: 2rem 1.5rem 8rem;
 }
 
-/* Premium Notice - BESTEHEND */
+/* Premium Notice */
 .premiumNotice {
   background: linear-gradient(145deg, #fff7ec 0%, #fff3e0 100%);
   border: 1px solid rgba(255, 159, 10, 0.2);
-  border-radius: 14px;
+  border-radius: 12px;
   padding: 1.25rem;
   margin-bottom: 2rem;
   box-shadow: 0 2px 14px rgba(0, 0, 0, 0.03);
@@ -307,12 +278,12 @@
   margin: 0 0 0.25rem 0;
   font-size: 17px;
   font-weight: 600;
-  color: #1d1d1f;
+  color: #0B1324;
 }
 
 .premiumText p {
   margin: 0;
-  color: #86868b;
+  color: #667085;
   font-size: 14px;
 }
 
@@ -337,7 +308,425 @@
   transform: scale(1.02);
 }
 
-/* Content Grid - BESTEHEND */
+/* =================================
+   3. FORM CONTAINER - WHITE CARD
+   ================================= */
+
+/* Central Form Grid - Professional White Card */
+.formGrid {
+  max-width: 1100px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  padding: 3rem 2rem;
+}
+
+/* =================================
+   4. TITLE HEADER SECTION
+   ================================= */
+
+/* Statischer Titel - Nicht als Input! */
+.formTitleHeader {
+  text-align: center;
+  padding-bottom: 2.5rem;
+  margin-bottom: 3rem;
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.formTitleHeader h2 {
+  margin: 0 0 0.5rem 0;
+  font-size: 22px;
+  font-weight: 600;
+  color: #0B1324;
+  letter-spacing: -0.02em;
+}
+
+.formTitleHeader p {
+  margin: 0;
+  font-size: 14px;
+  color: #667085;
+}
+
+/* Vertragstitel as Input Field (wenn doch als Input) */
+.formGroup.spanning {
+  max-width: 100%;
+  margin: 0 0 3rem 0;
+  padding-bottom: 2.5rem;
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.formGroup.spanning label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: #667085;
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.formGroup.spanning input {
+  width: 100%;
+  max-width: 700px;
+  margin: 0 auto;
+  display: block;
+  font-size: 20px;
+  font-weight: 600;
+  padding: 0.875rem 1rem;
+  min-height: 50px;
+  text-align: center;
+  background: #F9FAFB;
+  border: none;
+  border-radius: 10px;
+  color: #0B1324;
+  transition: all 0.2s cubic-bezier(0.28, 0.44, 0.49, 1);
+}
+
+.formGroup.spanning input:hover {
+  background: #F3F4F6;
+}
+
+.formGroup.spanning input:focus {
+  outline: 2px solid #2E6CF6;
+  outline-offset: 0;
+  background: white;
+}
+
+.formGroup.spanning input::placeholder {
+  color: #98A2B3;
+  font-weight: 500;
+}
+
+/* =================================
+   5. SECTION STRUCTURE
+   ================================= */
+
+/* Field Group - Section Container */
+.fieldGroup {
+  margin-bottom: 3rem;
+  padding-bottom: 3rem;
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.fieldGroup:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-bottom: 0;
+}
+
+/* Section Header - 18px semibold mit Linie */
+.groupHeader {
+  margin: 0 0 1.5rem 0;
+  padding-bottom: 1rem;
+  font-size: 18px;
+  font-weight: 600;
+  color: #0B1324;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+  position: relative;
+  display: inline-block;
+}
+
+.groupHeader::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 50%;
+  height: 1px;
+  background: #E5E7EB;
+}
+
+/* =================================
+   6. GRID & INPUTS - CORE
+   ================================= */
+
+/* Two-Column Grid (Desktop) */
+.groupFields {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+}
+
+/* Form Group - Input Container */
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Labels - 13px medium #667085 */
+.formGroup label {
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 500;
+  color: #667085;
+  margin-bottom: 0;
+  letter-spacing: -0.01em;
+  line-height: 1.4;
+}
+
+/* Optional Badge */
+.optionalBadge {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.125rem 0.5rem;
+  background: rgba(142, 142, 147, 0.1);
+  border: 1px solid rgba(142, 142, 147, 0.2);
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #667085;
+  text-transform: lowercase;
+}
+
+/* Input Fields - Professional Flat Design */
+.formGroup input,
+.formGroup select {
+  width: 100%;
+  min-width: 420px;
+  padding: 0.875rem 1rem;
+  background: #F9FAFB;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #0B1324;
+  transition: all 0.2s cubic-bezier(0.28, 0.44, 0.49, 1);
+  font-family: inherit;
+  box-shadow: none;
+  min-height: 50px;
+}
+
+.formGroup textarea {
+  width: 100%;
+  min-width: 420px;
+  padding: 0.875rem 1rem;
+  background: #F9FAFB;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #0B1324;
+  transition: all 0.2s cubic-bezier(0.28, 0.44, 0.49, 1);
+  font-family: inherit;
+  box-shadow: none;
+  min-height: 120px;
+  resize: vertical;
+}
+
+/* Hover States */
+.formGroup input:hover,
+.formGroup textarea:hover,
+.formGroup select:hover {
+  background: #F3F4F6;
+}
+
+/* Focus States - 2px #2E6CF6 Outline */
+.formGroup input:focus,
+.formGroup textarea:focus,
+.formGroup select:focus {
+  outline: 2px solid #2E6CF6;
+  outline-offset: 0;
+  background: white;
+  box-shadow: none;
+}
+
+/* Placeholder */
+.formGroup input::placeholder,
+.formGroup textarea::placeholder,
+.formGroup select::placeholder {
+  color: #98A2B3;
+}
+
+/* Input with Suffix (€ Symbol) */
+.inputWithSuffix {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.inputWithSuffixField {
+  padding-right: 3.5rem !important;
+}
+
+.inputSuffix {
+  position: absolute;
+  right: 1.25rem;
+  font-size: 15px;
+  font-weight: 600;
+  color: #667085;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Validation States */
+.fieldError {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-top: 0.5rem;
+  font-size: 13px;
+  font-weight: 500;
+  color: #ff3b30;
+  line-height: 1.4;
+}
+
+.fieldError::before {
+  content: "⚠";
+  font-size: 14px;
+}
+
+.fieldSuccess {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-top: 0.5rem;
+  font-size: 13px;
+  font-weight: 500;
+  color: #34c759;
+  line-height: 1.4;
+}
+
+.fieldSuccess::before {
+  content: "✓";
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.fieldHelper {
+  margin-top: 0.5rem;
+  font-size: 13px;
+  font-weight: 400;
+  color: #667085;
+  line-height: 1.4;
+}
+
+/* Input Error State */
+.formGroup input.inputError,
+.formGroup textarea.inputError,
+.formGroup select.inputError {
+  background: rgba(255, 59, 48, 0.05);
+}
+
+.formGroup input.inputError:focus,
+.formGroup textarea.inputError:focus,
+.formGroup select.inputError:focus {
+  background: white;
+  outline: 2px solid #ff3b30;
+}
+
+/* Input Success State */
+.formGroup input.inputSuccess,
+.formGroup textarea.inputSuccess,
+.formGroup select.inputSuccess {
+  background: rgba(52, 199, 89, 0.05);
+}
+
+.formGroup input.inputSuccess:focus,
+.formGroup textarea.inputSuccess:focus,
+.formGroup select.inputSuccess:focus {
+  background: white;
+  outline: 2px solid #34c759;
+}
+
+/* =================================
+   7. STICKY BOTTOM BAR - CTA
+   ================================= */
+
+.stickyBottomBar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  border-top: 1px solid #E5E7EB;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.06);
+  padding: 1.5rem 2rem;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.stickyBottomBarContent {
+  max-width: 1100px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.bottomBarInfo {
+  flex: 1;
+  text-align: left;
+}
+
+.bottomBarInfo p {
+  margin: 0;
+  font-size: 14px;
+  color: #667085;
+}
+
+/* CTA Button - Larger & Prominent */
+.generateButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1.125rem 2.25rem;
+  background: #2E6CF6;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  min-height: 56px;
+  transition: all 0.3s cubic-bezier(0.28, 0.44, 0.49, 1);
+  box-shadow: 0 2px 8px rgba(46, 108, 246, 0.2);
+  white-space: nowrap;
+}
+
+.generateButton:hover:not(:disabled) {
+  background: #1E53D8;
+  box-shadow: 0 5px 15px rgba(46, 108, 246, 0.3);
+  transform: translateY(-1px);
+}
+
+.generateButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* =================================
+   8. TYPOGRAPHY & COLORS
+   ================================= */
+
+.groupTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 1rem 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #0B1324;
+}
+
+.groupIcon {
+  color: #2E6CF6;
+}
+
+/* =================================
+   9. CONTRACT TYPE SELECTION
+   ================================= */
+
 .contentGrid {
   display: grid;
   grid-template-columns: 1fr;
@@ -349,15 +738,11 @@
   grid-template-columns: 1fr 1fr;
 }
 
-/* Form Panel - BESTEHEND */
 .formPanel {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  border-radius: 14px;
-  padding: 1.5rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  background: transparent;
+  border: none;
+  padding: 0;
+  box-shadow: none;
 }
 
 .stepContent {
@@ -374,13 +759,13 @@
 .stepHeader h2 {
   font-size: 24px;
   font-weight: 600;
-  color: #1d1d1f;
+  color: #0B1324;
   margin: 0 0 0.5rem 0;
   letter-spacing: -0.025em;
 }
 
 .stepHeader p {
-  color: #86868b;
+  color: #667085;
   margin: 0;
   font-size: 16px;
 }
@@ -391,9 +776,9 @@
   gap: 0.5rem;
   padding: 0.5rem 1rem;
   background: rgba(250, 250, 250, 0.8);
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  border: 1px solid #E5E7EB;
   border-radius: 980px;
-  color: #86868b;
+  color: #667085;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.28, 0.44, 0.49, 1);
   margin-bottom: 1rem;
@@ -403,12 +788,11 @@
 
 .backButton:hover {
   background: #f5f5f7;
-  border-color: rgba(10, 132, 255, 0.2);
-  color: #0a84ff;
+  border-color: rgba(46, 108, 246, 0.2);
+  color: #2E6CF6;
   transform: translateX(-2px);
 }
 
-/* Contract Types Grid - BESTEHEND */
 .contractTypesGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -418,11 +802,9 @@
 
 .contractTypeCard {
   position: relative;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
   padding: 1.5rem;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.28, 0.44, 0.49, 1);
@@ -437,11 +819,12 @@
   background: white;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
   transform: translateY(-4px);
+  border-color: #2E6CF6;
 }
 
 .contractTypeCard.selected {
-  border-color: #0a84ff;
-  box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.1);
+  border-color: #2E6CF6;
+  box-shadow: 0 0 0 3px rgba(46, 108, 246, 0.1);
   background: white;
 }
 
@@ -475,13 +858,13 @@
   margin: 0 0 0.25rem 0;
   font-size: 16px;
   font-weight: 600;
-  color: #1d1d1f;
+  color: #0B1324;
 }
 
 .cardText p {
   margin: 0;
   font-size: 13px;
-  color: #86868b;
+  color: #667085;
   line-height: 1.5;
 }
 
@@ -500,7 +883,7 @@
   background: rgba(0, 0, 0, 0.04);
   border-radius: 6px;
   font-size: 11px;
-  color: #6e6e73;
+  color: #667085;
   font-weight: 500;
 }
 
@@ -537,25 +920,23 @@
   gap: 3px;
 }
 
-/* Form Styles - BESTEHEND */
-.contractForm {
-  max-width: 1100px;
-  margin: 0 auto;
+/* =================================
+   10. COMPANY PROFILE & DESIGN SELECTOR
+   ================================= */
+
+.companyProfileToggle {
   background: white;
+  border: 1px solid #E5E7EB;
   border-radius: 12px;
   padding: 2rem;
+  margin: 0 auto 2rem;
+  max-width: 1100px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  transition: all 0.2s cubic-bezier(0.28, 0.44, 0.49, 1);
 }
 
-/* Company Profile Toggle - BESTEHEND */
-.companyProfileToggle {
-  background: rgba(248, 250, 252, 0.5);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  border-radius: 14px;
-  padding: 1.25rem;
-  margin-bottom: 2rem;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+.companyProfileToggle:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .toggleHeader {
@@ -573,7 +954,7 @@
 }
 
 .toggleInfo svg {
-  color: #0a84ff;
+  color: #2E6CF6;
   flex-shrink: 0;
 }
 
@@ -581,26 +962,26 @@
   margin: 0 0 0.25rem 0;
   font-size: 15px;
   font-weight: 600;
-  color: #1d1d1f;
+  color: #0B1324;
 }
 
 .toggleInfo p {
   margin: 0;
   font-size: 13px;
-  color: #86868b;
+  color: #667085;
 }
 
 .toggleText h4 {
   margin: 0 0 0.25rem 0;
   font-size: 15px;
   font-weight: 600;
-  color: #1d1d1f;
+  color: #0B1324;
 }
 
 .toggleText p {
   margin: 0;
   font-size: 13px;
-  color: #86868b;
+  color: #667085;
 }
 
 .toggleSwitch {
@@ -632,165 +1013,6 @@
 
 .toggleSwitch.active .toggleKnob {
   transform: translateX(20px);
-}
-
-.templateSection {
-  margin-bottom: 2.5rem;
-}
-
-.templateHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  margin-bottom: 1.25rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.templateHeader h3 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 600;
-  color: #1d1d1f;
-  flex: 1;
-}
-
-.templateHeader svg {
-  color: #0a84ff;
-}
-
-.templateCount {
-  background: rgba(10, 132, 255, 0.1);
-  color: #0a84ff;
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.templateLibrary {
-  max-width: 1100px;
-  margin: 0 auto 2rem;
-  background: white;
-  border-radius: 12px;
-  padding: 2rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-}
-
-.templateGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 1rem;
-  justify-content: center;
-}
-
-.templateCard {
-  background: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  border-radius: 12px;
-  padding: 1rem;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.28, 0.44, 0.49, 1);
-  position: relative;
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-}
-
-.templateCard:hover {
-  background: white;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  transform: translateY(-2px);
-}
-
-.templateCard.locked {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.templateCard.locked:hover {
-  transform: none;
-  box-shadow: none;
-}
-
-.templateIcon {
-  font-size: 1.5rem;
-  flex-shrink: 0;
-}
-
-.templateInfo {
-  flex: 1;
-}
-
-.templateInfo h4 {
-  margin: 0 0 0.25rem 0;
-  font-size: 14px;
-  font-weight: 600;
-  color: #1d1d1f;
-}
-
-.templateInfo p {
-  margin: 0 0 0.5rem 0;
-  font-size: 12px;
-  color: #86868b;
-  line-height: 1.4;
-}
-
-.templateTags {
-  display: flex;
-  gap: 0.25rem;
-  flex-wrap: wrap;
-}
-
-.tag {
-  background: rgba(0, 0, 0, 0.04);
-  color: #6e6e73;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 10px;
-  font-weight: 500;
-}
-
-.premiumBadge {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: linear-gradient(135deg, #ffd700, #ffed4e);
-  color: #1d1d1f;
-  padding: 3px 6px;
-  border-radius: 6px;
-  font-size: 9px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 2px;
-}
-
-/* Form Styles - BESTEHEND */
-.contractForm {
-  max-width: 1100px;
-  margin: 0 auto;
-  background: white;
-  border-radius: 12px;
-  padding: 2rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-}
-
-/* Company Profile Toggle - WHITE CARD */
-.companyProfileToggle {
-  background: white;
-  border: none;
-  border-radius: 12px;
-  padding: 2rem;
-  margin: 0 auto 2rem;
-  max-width: 850px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-  transition: all 0.2s cubic-bezier(0.28, 0.44, 0.49, 1);
-}
-
-.companyProfileToggle:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .switch {
@@ -845,9 +1067,9 @@
   gap: 1rem;
   margin-top: 1rem;
   padding: 1rem;
-  background: white;
+  background: #F9FAFB;
   border-radius: 10px;
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  border: 1px solid #E5E7EB;
 }
 
 .profilePreview img {
@@ -855,7 +1077,7 @@
   height: 48px;
   object-fit: contain;
   border-radius: 8px;
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  border: 1px solid #E5E7EB;
   flex-shrink: 0;
 }
 
@@ -868,22 +1090,21 @@
 .profileInfo strong {
   font-size: 15px;
   font-weight: 600;
-  color: #1d1d1f;
+  color: #0B1324;
 }
 
 .profileInfo span {
   font-size: 13px;
-  color: #86868b;
+  color: #667085;
 }
 
-/* Design Variant Selector - WHITE CARD */
 .designVariantSelector {
   background: white;
-  border: none;
+  border: 1px solid #E5E7EB;
   border-radius: 12px;
   padding: 2rem;
   margin: 0 auto 2rem;
-  max-width: 850px;
+  max-width: 1100px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   transition: all 0.2s cubic-bezier(0.28, 0.44, 0.49, 1);
 }
@@ -903,7 +1124,7 @@
 }
 
 .selectorInfo svg {
-  color: #0a84ff;
+  color: #2E6CF6;
   flex-shrink: 0;
 }
 
@@ -911,13 +1132,13 @@
   margin: 0 0 0.25rem 0;
   font-size: 15px;
   font-weight: 600;
-  color: #1d1d1f;
+  color: #0B1324;
 }
 
 .selectorInfo p {
   margin: 0;
   font-size: 13px;
-  color: #86868b;
+  color: #667085;
 }
 
 .designOptions {
@@ -932,22 +1153,22 @@
   gap: 1rem;
   padding: 1rem;
   background: white;
-  border: 2px solid rgba(0, 0, 0, 0.06);
+  border: 2px solid #E5E7EB;
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.28, 0.44, 0.49, 1);
 }
 
 .designOption:hover {
-  border-color: rgba(10, 132, 255, 0.3);
+  border-color: rgba(46, 108, 246, 0.3);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .designOption.active {
-  border-color: #0a84ff;
-  background: rgba(10, 132, 255, 0.03);
-  box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.1);
+  border-color: #2E6CF6;
+  background: rgba(46, 108, 246, 0.03);
+  box-shadow: 0 0 0 3px rgba(46, 108, 246, 0.1);
 }
 
 .designPreview {
@@ -957,7 +1178,7 @@
   overflow: hidden;
   flex-shrink: 0;
   background: white;
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  border: 1px solid #E5E7EB;
 }
 
 .executivePreview {
@@ -990,7 +1211,7 @@
 .modernPreview {
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #0a84ff 0%, #5ac8fa 100%);
+  background: linear-gradient(135deg, #2E6CF6 0%, #5ac8fa 100%);
   position: relative;
 }
 
@@ -1053,528 +1274,346 @@
 .designDetails strong {
   font-size: 15px;
   font-weight: 600;
-  color: #1d1d1f;
+  color: #0B1324;
 }
 
 .designDetails span {
   font-size: 13px;
-  color: #86868b;
+  color: #667085;
   line-height: 1.4;
 }
 
-.formFieldsGrid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.5rem;
-  margin-top: 1.5rem;
+/* =================================
+   11. TEMPLATES & LIBRARIES
+   ================================= */
+
+.templateSection {
+  margin-bottom: 2.5rem;
 }
 
-.formGroup {
-  margin-bottom: 2rem;
-  padding: 1.25rem;
-  background: rgba(248, 250, 252, 0.5);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  border-radius: 12px;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-
-.formGroup:last-child {
-  margin-bottom: 0;
-}
-
-/* Remove card styling for formGroup inside fieldGroup */
-.fieldGroup .formGroup {
-  margin-bottom: 0;
-  padding: 0;
-  background: transparent;
-  border: none;
-  border-radius: 0;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-}
-
-/* Form Group Labels */
-.formGroup label {
+.templateHeader {
   display: flex;
   align-items: center;
-  font-size: 13px;
-  font-weight: 500;
-  color: #1d1d1f;
-  margin-bottom: 0.625rem;
-  letter-spacing: -0.01em;
-  line-height: 1.4;
-}
-
-/* Form Group Inputs - Flat Design (Notion/Linear Style) */
-.formGroup input,
-.formGroup select {
-  width: 100%;
-  padding: 0.875rem 1rem;
-  background: #F9FAFB;
-  border: none;
-  border-radius: 10px;
-  font-size: 15px;
-  line-height: 1.5;
-  color: #1d1d1f;
-  transition: all 0.2s cubic-bezier(0.28, 0.44, 0.49, 1);
-  font-family: inherit;
-  box-shadow: none;
-  min-height: 52px;
-}
-
-.formGroup textarea {
-  width: 100%;
-  padding: 0.875rem 1rem;
-  background: #F9FAFB;
-  border: none;
-  border-radius: 10px;
-  font-size: 15px;
-  line-height: 1.6;
-  color: #1d1d1f;
-  transition: all 0.2s cubic-bezier(0.28, 0.44, 0.49, 1);
-  font-family: inherit;
-  box-shadow: none;
-}
-
-.formGroup input:hover,
-.formGroup textarea:hover,
-.formGroup select:hover {
-  background: #F3F4F6;
-}
-
-.formGroup input:focus,
-.formGroup textarea:focus,
-.formGroup select:focus {
-  outline: none;
-  background: white;
-  box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.12);
-}
-
-.formGroup input::placeholder,
-.formGroup textarea::placeholder,
-.formGroup select::placeholder {
-  color: #86868b;
-}
-
-.formGroup textarea {
-  resize: vertical;
-  min-height: 130px;
-  line-height: 1.6;
-}
-
-/* Input with Suffix (€ Symbol) */
-.inputWithSuffix {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.inputWithSuffixField {
-  padding-right: 3.5rem !important;
-}
-
-.inputSuffix {
-  position: absolute;
-  right: 1.25rem;
-  font-size: 15px;
-  font-weight: 600;
-  color: #86868b;
-  pointer-events: none;
-  user-select: none;
-}
-
-/* Validation States */
-.fieldError {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  margin-top: 0.5rem;
-  font-size: 13px;
-  font-weight: 500;
-  color: #ff3b30;
-  line-height: 1.4;
-}
-
-.fieldError::before {
-  content: "⚠";
-  font-size: 14px;
-}
-
-.fieldSuccess {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  margin-top: 0.5rem;
-  font-size: 13px;
-  font-weight: 500;
-  color: #34c759;
-  line-height: 1.4;
-}
-
-.fieldSuccess::before {
-  content: "✓";
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.fieldHelper {
-  margin-top: 0.5rem;
-  font-size: 13px;
-  font-weight: 400;
-  color: #86868b;
-  line-height: 1.4;
-}
-
-/* Input Error State - Flat Design */
-.formGroup input.inputError,
-.formGroup textarea.inputError,
-.formGroup select.inputError {
-  background: rgba(255, 59, 48, 0.05);
-}
-
-.formGroup input.inputError:focus,
-.formGroup textarea.inputError:focus,
-.formGroup select.inputError:focus {
-  background: white;
-  box-shadow: 0 0 0 3px rgba(255, 59, 48, 0.15);
-}
-
-/* Input Success State - Flat Design */
-.formGroup input.inputSuccess,
-.formGroup textarea.inputSuccess,
-.formGroup select.inputSuccess {
-  background: rgba(52, 199, 89, 0.05);
-}
-
-.formGroup input.inputSuccess:focus,
-.formGroup textarea.inputSuccess:focus,
-.formGroup select.inputSuccess:focus {
-  background: white;
-  box-shadow: 0 0 0 3px rgba(52, 199, 89, 0.15);
-}
-
-.groupTitle {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 0 0 1rem 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: #1d1d1f;
-}
-
-.groupIcon {
-  color: #0a84ff;
-}
-
-/* Form Grid - Zentrale Card */
-.formGrid {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  max-width: 900px;
-  margin: 0 auto;
-  background: white;
-  border-radius: 16px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-  padding: 3rem;
-}
-
-/* Field Group Styling - Sections innerhalb der Card */
-.fieldGroup {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  margin: 0;
-  padding: 2.5rem 0;
-  border-bottom: 2px solid rgba(0, 0, 0, 0.06);
-}
-
-.fieldGroup:first-of-type {
-  padding-top: 0;
-}
-
-.fieldGroup:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
-}
-
-.groupHeader {
-  margin: 0 0 2rem 0;
-  padding-bottom: 0;
-  font-size: 18px;
-  font-weight: 700;
-  color: #1d1d1f;
-  letter-spacing: -0.02em;
-  line-height: 1.3;
-  border: none;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.groupHeader::before {
-  content: "";
-  width: 4px;
-  height: 24px;
-  background: linear-gradient(180deg, #0a84ff 0%, #0071e3 100%);
-  border-radius: 2px;
-}
-
-.groupFields {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  max-width: 720px;
-  margin: 0 auto;
-}
-
-/* Vertragstitel - Hero Section */
-.formGroup.spanning {
-  max-width: 100%;
-  margin: 0 auto 3rem;
-  text-align: center;
-  background: linear-gradient(135deg, #F7F9FF 0%, #F0F4FF 100%);
-  padding: 3rem 2rem;
-  border-radius: 16px;
-  border: 1px solid rgba(10, 132, 255, 0.08);
-  box-shadow: 0 2px 8px rgba(10, 132, 255, 0.04);
-}
-
-.formGroup.spanning label {
-  display: block;
-  font-size: 11px;
-  font-weight: 700;
-  color: #6B7280;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  margin-bottom: 1rem;
-}
-
-.formGroup.spanning input {
-  font-size: 32px;
-  font-weight: 700;
-  padding: 0.5rem 1.5rem;
-  min-height: auto;
-  text-align: center;
-  background: transparent;
-  border: none;
-  color: #1d1d1f;
-  letter-spacing: -0.03em;
-  width: 100%;
-  max-width: 700px;
-  margin: 0 auto;
-  display: block;
-}
-
-.formGroup.spanning input:hover {
-  background: rgba(255, 255, 255, 0.6);
-  border-radius: 10px;
-}
-
-.formGroup.spanning input:focus {
-  background: white;
-  border-radius: 10px;
-  box-shadow: 0 0 0 4px rgba(10, 132, 255, 0.15);
-}
-
-.formGroup.spanning input::placeholder {
-  color: #9CA3AF;
-  font-weight: 600;
-}
-
-.optionalBadge {
-  margin-left: 0.5rem;
-  font-size: 12px;
-  font-weight: 400;
-  color: #86868b;
-}
-
-.formField {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.formField label {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 14px;
-  font-weight: 500;
-  color: #1d1d1f;
-}
-
-.required {
-  color: #ff3b30;
-  font-weight: 600;
-}
-
-.formField input,
-.formField textarea,
-.formField select {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  background: white;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
-  font-size: 15px;
-  color: #1d1d1f;
-  transition: all 0.2s cubic-bezier(0.28, 0.44, 0.49, 1);
-  font-family: inherit;
-}
-
-.formField input:focus,
-.formField textarea:focus,
-.formField select:focus {
-  outline: none;
-  border-color: #0a84ff;
-  box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.1);
-}
-
-.formField input::placeholder,
-.formField textarea::placeholder {
-  color: #86868b;
-}
-
-.formField textarea {
-  resize: vertical;
-  min-height: 100px;
-  line-height: 1.5;
-}
-
-.validationError {
-  font-size: 12px;
-  color: #ff3b30;
-  margin-top: 0.25rem;
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.fieldHint {
-  font-size: 12px;
-  color: #86868b;
-  margin-top: 0.25rem;
-}
-
-.generateButton {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   gap: 0.75rem;
-  width: 100%;
-  max-width: 600px;
-  margin: 3rem auto 2rem;
-  padding: 1.375rem 2.75rem;
-  background: linear-gradient(145deg, #0a84ff 0%, #0071e3 100%);
-  color: white;
-  border: none;
-  border-radius: 14px;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.templateHeader h3 {
+  margin: 0;
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 600;
+  color: #0B1324;
+  flex: 1;
+}
+
+.templateHeader svg {
+  color: #2E6CF6;
+}
+
+.templateCount {
+  background: rgba(46, 108, 246, 0.1);
+  color: #2E6CF6;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.templateLibrary {
+  max-width: 1100px;
+  margin: 0 auto 2rem;
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.templateGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem;
+  justify-content: center;
+}
+
+.templateCard {
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  padding: 1rem;
   cursor: pointer;
-  min-height: 64px;
   transition: all 0.3s cubic-bezier(0.28, 0.44, 0.49, 1);
-  box-shadow: 0 2px 8px rgba(0, 113, 227, 0.2);
-  overflow: hidden;
   position: relative;
-  letter-spacing: -0.01em;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
 }
 
-.generateButton::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left 0.75s cubic-bezier(0.28, 0.44, 0.49, 1);
+.templateCard:hover {
+  background: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+  border-color: #2E6CF6;
 }
 
-.generateButton:hover:not(:disabled) {
-  transform: scale(1.02);
-  box-shadow: 0 5px 15px rgba(0, 113, 227, 0.3);
-  background: linear-gradient(145deg, #0071e3 0%, #0062c3 100%);
-}
-
-.generateButton:hover:not(:disabled)::before {
-  left: 100%;
-}
-
-.generateButton:disabled {
-  opacity: 0.5;
+.templateCard.locked {
+  opacity: 0.6;
   cursor: not-allowed;
+}
+
+.templateCard.locked:hover {
   transform: none;
   box-shadow: none;
 }
 
-/* Action Buttons - BESTEHEND */
-.actionButtons {
+.templateIcon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.templateInfo {
+  flex: 1;
+}
+
+.templateInfo h4 {
+  margin: 0 0 0.25rem 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0B1324;
+}
+
+.templateInfo p {
+  margin: 0 0 0.5rem 0;
+  font-size: 12px;
+  color: #667085;
+  line-height: 1.4;
+}
+
+.templateTags {
   display: flex;
-  gap: 1rem;
-  margin-bottom: 2rem;
+  gap: 0.25rem;
   flex-wrap: wrap;
 }
 
-.actionButton {
+.tag {
+  background: rgba(0, 0, 0, 0.04);
+  color: #667085;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.premiumBadge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: linear-gradient(135deg, #ffd700, #ffed4e);
+  color: #0B1324;
+  padding: 3px 6px;
+  border-radius: 6px;
+  font-size: 9px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* =================================
+   12. LOADING & ERROR STATES
+   ================================= */
+
+.loadingContainer {
+  min-height: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  padding: 3rem 1.5rem;
+}
+
+.loadingSpinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(46, 108, 246, 0.1);
+  border-top-color: #2E6CF6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.loadingSpinner.small {
+  width: 16px;
+  height: 16px;
+  border-width: 2px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loadingText {
+  font-size: 16px;
+  color: #667085;
+  text-align: center;
+  max-width: 300px;
+}
+
+.loadingText.large {
+  font-size: 18px;
+  font-weight: 500;
+  color: #0B1324;
+}
+
+.errorMessage {
+  background: rgba(255, 59, 48, 0.1);
+  border: 1px solid rgba(255, 59, 48, 0.2);
+  border-radius: 12px;
+  padding: 1rem;
+  margin: 1rem 0;
+  color: #ff3b30;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.errorMessage p {
+  margin: 0;
+  flex: 1;
+}
+
+/* =================================
+   13. PREVIEW PANEL
+   ================================= */
+
+.previewPanel {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  padding: 0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  max-height: calc(100vh - 200px);
+  display: flex;
+  flex-direction: column;
+}
+
+.previewHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #E5E7EB;
+  background: #F9FAFB;
+}
+
+.previewHeader h3 {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem 1.25rem;
-  background: rgba(250, 250, 250, 0.8);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  border-radius: 980px;
+  margin: 0;
+  color: #0B1324;
+  font-weight: 600;
+  font-size: 17px;
+}
+
+.closePreview {
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.28, 0.44, 0.49, 1);
-  font-weight: 500;
-  color: #1d1d1f;
-  font-size: 14px;
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
+  transition: all 0.2s cubic-bezier(0.28, 0.44, 0.49, 1);
+  font-size: 18px;
+  color: #667085;
+  padding: 0;
 }
 
-.actionButton:hover {
+.closePreview:hover {
   background: #f5f5f7;
-  border-color: rgba(10, 132, 255, 0.2);
-  color: #0a84ff;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  color: #0B1324;
+  transform: scale(1.05);
 }
 
-.actionButton.primary {
-  background: linear-gradient(145deg, #0a84ff 0%, #0071e3 100%);
-  color: white;
-  border-color: transparent;
+.previewContainer {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+  background: white;
 }
 
-.actionButton.primary:hover {
-  background: linear-gradient(145deg, #0071e3 0%, #0062c3 100%);
-  color: white;
-  box-shadow: 0 2px 8px rgba(0, 113, 227, 0.3);
+.contractPreview {
+  background: white;
+  border-radius: 8px;
+  padding: 2rem;
+  font-size: 14px;
+  line-height: 1.8;
+  color: #0B1324;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-.actionButton.success {
-  background: rgba(48, 209, 88, 0.1);
-  border-color: rgba(48, 209, 88, 0.2);
-  color: #30d158;
+.contractPreview h1 {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0 0 1.5rem 0;
+  color: #0B1324;
+  text-align: center;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #2E6CF6;
 }
 
-.actionButton.success:hover {
-  background: rgba(48, 209, 88, 0.15);
-  box-shadow: 0 2px 8px rgba(48, 209, 88, 0.15);
+.contractPreview h2 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 2rem 0 1rem 0;
+  color: #0B1324;
 }
 
-/* Signature Section - BESTEHEND & VERBESSERT */
+.contractPreview h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 1.5rem 0 0.75rem 0;
+  color: #0B1324;
+}
+
+.contractPreview p {
+  margin: 0.75rem 0;
+  line-height: 1.8;
+}
+
+.contractPreview ul,
+.contractPreview ol {
+  margin: 0.75rem 0;
+  padding-left: 2rem;
+}
+
+.contractPreview li {
+  margin: 0.5rem 0;
+  line-height: 1.8;
+}
+
+.contractPreview strong {
+  font-weight: 600;
+  color: #0B1324;
+}
+
+/* =================================
+   14. SIGNATURE SECTION
+   ================================= */
+
 .signatureSection {
-  background: rgba(248, 250, 252, 0.5);
-  border-radius: 14px;
+  background: #F9FAFB;
+  border-radius: 12px;
   padding: 1.5rem;
   margin: 1.5rem 0;
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  border: 1px solid #E5E7EB;
 }
 
 .signatureSection h3 {
@@ -1582,7 +1621,7 @@
   align-items: center;
   gap: 0.5rem;
   margin: 0 0 1rem 0;
-  color: #1d1d1f;
+  color: #0B1324;
   font-weight: 600;
   font-size: 17px;
 }
@@ -1599,8 +1638,8 @@
 }
 
 .signatureCanvasContainer:hover {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: #2E6CF6;
+  box-shadow: 0 0 0 3px rgba(46, 108, 246, 0.1);
 }
 
 .signatureCanvas {
@@ -1678,36 +1717,34 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1.25rem;
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  border: 1px solid #E5E7EB;
   border-radius: 980px;
-  background: rgba(250, 250, 250, 0.8);
+  background: white;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.28, 0.44, 0.49, 1);
   font-weight: 500;
   font-size: 14px;
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
 }
 
 .signatureButton.secondary {
-  color: #86868b;
+  color: #667085;
 }
 
 .signatureButton.secondary:hover {
   background: #f5f5f7;
-  border-color: rgba(0, 0, 0, 0.1);
-  color: #1d1d1f;
+  border-color: #E5E7EB;
+  color: #0B1324;
 }
 
 .signatureButton.primary {
-  background: linear-gradient(145deg, #0a84ff 0%, #0071e3 100%);
+  background: linear-gradient(145deg, #2E6CF6 0%, #1E53D8 100%);
   border-color: transparent;
   color: white;
 }
 
 .signatureButton.primary:hover {
-  background: linear-gradient(145deg, #0071e3 0%, #0062c3 100%);
-  box-shadow: 0 2px 8px rgba(0, 113, 227, 0.3);
+  background: linear-gradient(145deg, #1E53D8 0%, #1643B8 100%);
+  box-shadow: 0 2px 8px rgba(46, 108, 246, 0.3);
 }
 
 .signatureButton:hover {
@@ -1719,13 +1756,13 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1.5rem;
-  background: rgba(250, 250, 250, 0.8);
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  background: white;
+  border: 1px solid #E5E7EB;
   border-radius: 980px;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.28, 0.44, 0.49, 1);
   margin-top: 2rem;
-  color: #86868b;
+  color: #667085;
   font-weight: 500;
   width: 100%;
   justify-content: center;
@@ -1734,474 +1771,90 @@
 
 .backToStartButton:hover {
   background: #f5f5f7;
-  border-color: rgba(10, 132, 255, 0.2);
-  color: #0a84ff;
+  border-color: rgba(46, 108, 246, 0.2);
+  color: #2E6CF6;
   transform: translateX(-2px);
 }
 
-/* Preview Panel - BESTEHEND */
-.previewPanel {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  border-radius: 14px;
-  padding: 0;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
-  overflow: hidden;
-  max-height: calc(100vh - 200px);
+/* =================================
+   15. ACTION BUTTONS
+   ================================= */
+
+.actionButtons {
   display: flex;
-  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
 }
 
-.previewHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-  background: rgba(245, 245, 247, 0.5);
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
-}
-
-.previewHeader h3 {
+.actionButton {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin: 0;
-  color: #1d1d1f;
-  font-weight: 600;
-  font-size: 17px;
-}
-
-.closePreview {
-  background: rgba(250, 250, 250, 0.8);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  border-radius: 50%;
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  padding: 0.75rem 1.25rem;
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 980px;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.28, 0.44, 0.49, 1);
-  font-size: 18px;
-  color: #86868b;
-  padding: 0;
-}
-
-.closePreview:hover {
-  background: #f5f5f7;
-  color: #1d1d1f;
-  transform: scale(1.05);
-}
-
-.previewContainer {
-  flex: 1;
-  overflow-y: auto;
-  padding: 1.5rem;
-  background: white;
-}
-
-.contractPreview {
-  background: white;
-  border-radius: 8px;
-  padding: 2rem;
-  font-size: 14px;
-  line-height: 1.8;
-  color: #1d1d1f;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-.contractPreview h1 {
-  font-size: 24px;
-  font-weight: 700;
-  margin: 0 0 1.5rem 0;
-  color: #1d1d1f;
-  text-align: center;
-  padding-bottom: 1rem;
-  border-bottom: 2px solid #0a84ff;
-}
-
-.contractPreview h2 {
-  font-size: 18px;
-  font-weight: 600;
-  margin: 2rem 0 1rem 0;
-  color: #1d1d1f;
-}
-
-.contractPreview h3 {
-  font-size: 16px;
-  font-weight: 600;
-  margin: 1.5rem 0 0.75rem 0;
-  color: #1d1d1f;
-}
-
-.contractPreview p {
-  margin: 0.75rem 0;
-  line-height: 1.8;
-}
-
-.contractPreview ul,
-.contractPreview ol {
-  margin: 0.75rem 0;
-  padding-left: 2rem;
-}
-
-.contractPreview li {
-  margin: 0.5rem 0;
-  line-height: 1.8;
-}
-
-.contractPreview strong {
-  font-weight: 600;
-  color: #1d1d1f;
-}
-
-/* Loading States - BESTEHEND */
-.loadingContainer {
-  min-height: 400px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1.5rem;
-  padding: 3rem 1.5rem;
-}
-
-.loadingSpinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid rgba(10, 132, 255, 0.1);
-  border-top-color: #0a84ff;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-.loadingSpinner.small {
-  width: 16px;
-  height: 16px;
-  border-width: 2px;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.loadingText {
-  font-size: 16px;
-  color: #86868b;
-  text-align: center;
-  max-width: 300px;
-}
-
-.loadingText.large {
-  font-size: 18px;
+  transition: all 0.3s cubic-bezier(0.28, 0.44, 0.49, 1);
   font-weight: 500;
-  color: #1d1d1f;
-}
-
-/* Error Message - BESTEHEND */
-.errorMessage {
-  background: rgba(255, 59, 48, 0.1);
-  border: 1px solid rgba(255, 59, 48, 0.2);
-  border-radius: 12px;
-  padding: 1rem;
-  margin: 1rem 0;
-  color: #ff3b30;
+  color: #0B1324;
   font-size: 14px;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
 }
 
-.errorMessage p {
-  margin: 0;
-  flex: 1;
+.actionButton:hover {
+  background: #f5f5f7;
+  border-color: rgba(46, 108, 246, 0.2);
+  color: #2E6CF6;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
-/* Print Styles - BESTEHEND */
-@media print {
-  body {
-    background: white;
-  }
-
-  .generatorHeader,
-  .progressSteps,
-  .backButton,
-  .generateButton,
-  .actionButtons,
-  .signatureControls {
-    display: none !important;
-  }
-
-  h2 {
-    page-break-after: avoid;
-  }
-
-  .section {
-    page-break-inside: avoid;
-  }
-
-  /* Professionelle Unterschrift */
-  .signatureSection {
-    page-break-inside: avoid;
-  }
-
-  .signaturePreview img {
-    max-height: 120px;
-    object-fit: contain;
-  }
-
-  @page {
-    margin: 2cm;
-  }
+.actionButton.primary {
+  background: linear-gradient(145deg, #2E6CF6 0%, #1E53D8 100%);
+  color: white;
+  border-color: transparent;
 }
 
-/* Responsive Media Queries - BESTEHEND */
-@media (max-width: 1024px) {
-  .contentGrid.withPreview {
-    grid-template-columns: 1fr;
-  }
-
-  .generatorContent {
-    padding: 1rem 1.5rem 2rem;
-  }
-
-  .templateGrid {
-    grid-template-columns: 1fr;
-  }
+.actionButton.primary:hover {
+  background: linear-gradient(145deg, #1E53D8 0%, #1643B8 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(46, 108, 246, 0.3);
 }
 
-@media (max-width: 768px) {
-  .headerContent {
-    padding: 0 1rem;
-  }
-
-  .generatorContent {
-    padding: 0 1rem 2rem;
-  }
-
-  .contractTypesGrid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-
-  .formGrid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-
-  .headerText h1 {
-    font-size: 24px;
-  }
-
-  .headerText p {
-    font-size: 16px;
-  }
-
-  .premiumContent {
-    flex-direction: column;
-    text-align: center;
-    gap: 1rem;
-  }
-
-  .upgradeButton {
-    width: 100%;
-    justify-content: center;
-  }
-
-  /* Mobile Stepper Adjustments */
-  .progressSteps {
-    padding: 1rem 0;
-    max-width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .stepCircle {
-    width: 40px;
-    height: 40px;
-    font-size: 16px;
-  }
-
-  .stepNumber {
-    font-size: 16px;
-  }
-
-  .stepLabel {
-    font-size: 11px;
-  }
-
-  .stepLine {
-    margin: 0 0.25rem;
-    margin-bottom: 1.5rem;
-  }
-
-  .progressBarContainer {
-    margin-top: 1rem;
-  }
-
-  /* Header Buttons Mobile */
-  .stepHeaderContent {
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .headerButton {
-    padding: 0.625rem 1rem;
-    font-size: 14px;
-    width: 100%;
-    justify-content: center;
-  }
-
-  .formField input,
-  .formField textarea,
-  .formField select {
-    font-size: 16px; /* Prevent zoom on iOS */
-  }
-
-  .previewPanel {
-    padding: 1rem;
-    border-radius: 14px;
-  }
-
-  .contractTypeCard {
-    width: 100%;
-    margin-bottom: 12px;
-  }
-
-  .signatureSection {
-    padding: 1rem;
-  }
-
-  .signatureCanvas {
-    height: 150px;
-  }
-
-  .actionButtons {
-    flex-direction: column;
-  }
-
-  .actionButton {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .backToStartButton {
-    padding: 0.75rem 1rem;
-  }
-
-  .contractGenerator {
-    padding-top: env(safe-area-inset-top);
-    padding-bottom: env(safe-area-inset-bottom);
-    padding-left: env(safe-area-inset-left);
-    padding-right: env(safe-area-inset-right);
-  }
-
-  .stepContent {
-    margin-top: 28px;
-  }
-
-  .signatureCanvasContainer {
-    margin: 1rem 0;
-    border-radius: 16px;
-  }
-
-  .canvasPlaceholder {
-    font-size: 16px;
-  }
+.actionButton.success {
+  background: rgba(48, 209, 88, 0.1);
+  border-color: rgba(48, 209, 88, 0.2);
+  color: #30d158;
 }
 
-/* Apple-Standard Touch Feedback - BESTEHEND */
-@media (hover: none) and (pointer: coarse) {
-  .contractTypeCard:active {
-    transform: scale(0.98);
-  }
-
-  .templateCard:active {
-    transform: scale(0.98);
-  }
-
-  .actionButton:active {
-    transform: scale(0.98);
-  }
-
-  .generateButton:active {
-    transform: scale(0.98);
-  }
+.actionButton.success:hover {
+  background: rgba(48, 209, 88, 0.15);
+  box-shadow: 0 2px 8px rgba(48, 209, 88, 0.15);
 }
 
-/* Fokus-Zustände für Accessibility - BESTEHEND */
-.contractTypeCard:focus-visible,
-.templateCard:focus-visible,
-.actionButton:focus-visible,
-.generateButton:focus-visible,
-.signatureButton:focus-visible,
-.backButton:focus-visible,
-.backToStartButton:focus-visible,
-.upgradeButton:focus-visible,
-.templateCard:focus-visible {
-  outline: 2px solid #0a84ff;
-  outline-offset: 2px;
-}
+/* =================================
+   16. USAGE & TIP BOXES
+   ================================= */
 
-/* Enhanced Canvas Focus - BESTEHEND */
-.signatureCanvas:focus {
-  outline: 2px solid #0a84ff;
-  outline-offset: 2px;
-}
-
-/* Barrierefreiheit */
-@media (prefers-contrast: high) {
-  .contractContent {
-    border: 2px solid #1d1d1f;
-  }
-
-  .contractTypeCard,
-  .templateCard {
-    border: 2px solid rgba(0, 0, 0, 0.15);
-  }
-
-  .actionButton,
-  .generateButton,
-  .signatureButton {
-    border: 2px solid rgba(0, 0, 0, 0.15);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-
-/* ===== 🆕 USAGE SECTION (Business Plan) ===== */
 .usageSection {
-  background: rgba(248, 250, 252, 0.5);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  border-radius: 14px;
+  background: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
   padding: 1.25rem;
   margin-bottom: 2rem;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
 }
 
 .usageTitle {
   font-size: 18px;
   font-weight: 600;
-  color: #1d1d1f;
+  color: #0B1324;
   margin: 0 0 0.5rem 0;
 }
 
 .usageSubtitle {
   font-size: 14px;
-  color: #86868b;
+  color: #667085;
   margin: 0 0 1rem 0;
 }
 
@@ -2211,7 +1864,7 @@
 
 .limitText {
   font-size: 13px;
-  color: #6e6e73;
+  color: #667085;
   margin-bottom: 0.5rem;
 }
 
@@ -2238,20 +1891,20 @@
 .upgradeNotice {
   margin-top: 1rem;
   padding: 0.75rem 1rem;
-  background: rgba(10, 132, 255, 0.1);
-  border: 1px solid rgba(10, 132, 255, 0.2);
+  background: rgba(46, 108, 246, 0.1);
+  border: 1px solid rgba(46, 108, 246, 0.2);
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
   font-size: 13px;
-  color: #0a84ff;
+  color: #2E6CF6;
 }
 
 .upgradeLink {
   padding: 0.4rem 0.75rem;
-  background: #0a84ff;
+  background: #2E6CF6;
   color: white;
   border: none;
   border-radius: 6px;
@@ -2263,7 +1916,7 @@
 }
 
 .upgradeLink:hover {
-  background: #0071e3;
+  background: #1E53D8;
   transform: scale(1.02);
 }
 
@@ -2290,14 +1943,13 @@
   background: #d32f2f;
 }
 
-/* ===== 🆕 TIP BOX (Companpy Profile Onboarding) ===== */
 .tipBox {
   background: linear-gradient(145deg, #e3f2ff 0%, #d6ebff 100%);
-  border: 1px solid rgba(10, 132, 255, 0.2);
-  border-radius: 14px;
+  border: 1px solid rgba(46, 108, 246, 0.2);
+  border-radius: 12px;
   padding: 1.25rem;
   margin-bottom: 2rem;
-  box-shadow: 0 2px 14px rgba(10, 132, 255, 0.08);
+  box-shadow: 0 2px 14px rgba(46, 108, 246, 0.08);
 }
 
 .tipContent {
@@ -2308,7 +1960,7 @@
 }
 
 .tipIcon {
-  color: #0a84ff;
+  color: #2E6CF6;
   flex-shrink: 0;
   margin-top: 2px;
 }
@@ -2321,13 +1973,13 @@
   margin: 0 0 0.25rem 0;
   font-size: 16px;
   font-weight: 600;
-  color: #1d1d1f;
+  color: #0B1324;
 }
 
 .tipText p {
   margin: 0;
   font-size: 14px;
-  color: #6e6e73;
+  color: #667085;
   line-height: 1.5;
 }
 
@@ -2342,7 +1994,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
-  background: #0a84ff;
+  background: #2E6CF6;
   color: white;
   border: none;
   border-radius: 980px;
@@ -2353,14 +2005,14 @@
 }
 
 .tipButton:hover {
-  background: #0071e3;
+  background: #1E53D8;
   transform: scale(1.02);
 }
 
 .tipDismiss {
   padding: 0.5rem 1rem;
   background: rgba(255, 255, 255, 0.9);
-  color: #6e6e73;
+  color: #667085;
   border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 980px;
   font-weight: 500;
@@ -2372,16 +2024,19 @@
 .tipDismiss:hover {
   background: white;
   border-color: rgba(0, 0, 0, 0.15);
-  color: #1d1d1f;
+  color: #0B1324;
 }
 
-/* ===== 📄 NEW: TAB NAVIGATION ===== */
+/* =================================
+   17. TAB NAVIGATION & PREVIEWS
+   ================================= */
+
 .tabNavigation {
   display: flex;
   gap: 0.5rem;
   padding: 1rem 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
-  background: #f9fafb;
+  border-bottom: 1px solid #E5E7EB;
+  background: #F9FAFB;
 }
 
 .tabButton {
@@ -2390,26 +2045,26 @@
   gap: 0.5rem;
   padding: 0.75rem 1.25rem;
   background: white;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #E5E7EB;
   border-radius: 8px;
   font-size: 0.95rem;
   font-weight: 500;
-  color: #6e6e73;
+  color: #667085;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .tabButton:hover {
-  background: #f9fafb;
-  border-color: #3b82f6;
-  color: #3b82f6;
+  background: #F9FAFB;
+  border-color: #2E6CF6;
+  color: #2E6CF6;
 }
 
 .tabButton.active {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  border-color: #3b82f6;
+  background: linear-gradient(135deg, #2E6CF6 0%, #1E53D8 100%);
+  border-color: #2E6CF6;
   color: white;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 12px rgba(46, 108, 246, 0.3);
 }
 
 .smallSpinner {
@@ -2433,7 +2088,7 @@
   font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
   font-size: 14px;
   line-height: 1.8;
-  color: #1d1d1f;
+  color: #0B1324;
   background: white;
   resize: vertical;
   outline: none;
@@ -2471,10 +2126,9 @@
   color: #ff3b30;
 }
 
-/* ===== 👥 PARTY DATA PANEL (EDITABLE VERTRAGSDATEN) ===== */
 .partyDataPanel {
-  border-bottom: 1px solid #e5e7eb;
-  background: #fafbfc;
+  border-bottom: 1px solid #E5E7EB;
+  background: #F9FAFB;
 }
 
 .partyDataToggle {
@@ -2487,7 +2141,7 @@
   border: none;
   font-size: 0.95rem;
   font-weight: 600;
-  color: #1d1d1f;
+  color: #0B1324;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -2499,7 +2153,7 @@
 .partyDataContent {
   padding: 1rem 1.5rem 1.5rem;
   background: white;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid #E5E7EB;
 }
 
 .partySection {
@@ -2513,27 +2167,27 @@
 .partySection h4 {
   font-size: 0.95rem;
   font-weight: 600;
-  color: #1d1d1f;
+  color: #0B1324;
   margin: 0 0 0.75rem 0;
 }
 
 .partyInfo {
-  background: #f9fafb;
+  background: #F9FAFB;
   padding: 0.75rem;
   border-radius: 8px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #E5E7EB;
 }
 
 .companyName {
   font-size: 0.95rem;
   font-weight: 600;
-  color: #1d1d1f;
+  color: #0B1324;
   margin: 0 0 0.25rem 0;
 }
 
 .infoText {
   font-size: 0.85rem;
-  color: #6e6e73;
+  color: #667085;
   font-style: italic;
   margin: 0;
 }
@@ -2550,159 +2204,336 @@
   display: block;
   font-size: 0.85rem;
   font-weight: 500;
-  color: #6e6e73;
+  color: #667085;
   margin-bottom: 0.4rem;
 }
 
 .inputGroup input {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid #e5e7eb;
+  border: 1px solid #E5E7EB;
   border-radius: 8px;
   font-size: 0.95rem;
-  color: #1d1d1f;
+  color: #0B1324;
   background: white;
   transition: all 0.2s ease;
 }
 
 .inputGroup input:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: #2E6CF6;
+  box-shadow: 0 0 0 3px rgba(46, 108, 246, 0.1);
 }
 
 .inputGroup input::placeholder {
-  color: #9ca3af;
+  color: #98A2B3;
 }
 
-/* ===== 🖥️ DESKTOP FULL-WIDTH PROFESSIONAL LAYOUT ===== */
-@media (min-width: 1024px) {
-  /* Header wird breiter */
-  .headerContent {
-    max-width: 100%;
-    padding: 0 3rem;
-  }
+/* =================================
+   18. FORM FIELD & VALIDATION
+   ================================= */
 
-  /* Main Content wird breiter */
+.formField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.formField label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 13px;
+  font-weight: 500;
+  color: #667085;
+}
+
+.required {
+  color: #ff3b30;
+  font-weight: 600;
+}
+
+.formField input,
+.formField textarea,
+.formField select {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  background: #F9FAFB;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  color: #0B1324;
+  transition: all 0.2s cubic-bezier(0.28, 0.44, 0.49, 1);
+  font-family: inherit;
+  min-height: 50px;
+}
+
+.formField input:focus,
+.formField textarea:focus,
+.formField select:focus {
+  outline: 2px solid #2E6CF6;
+  outline-offset: 0;
+  background: white;
+}
+
+.formField input::placeholder,
+.formField textarea::placeholder {
+  color: #98A2B3;
+}
+
+.formField textarea {
+  resize: vertical;
+  min-height: 120px;
+  line-height: 1.6;
+}
+
+.validationError {
+  font-size: 12px;
+  color: #ff3b30;
+  margin-top: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.fieldHint {
+  font-size: 12px;
+  color: #667085;
+  margin-top: 0.25rem;
+}
+
+/* =================================
+   19. RESPONSIVE - MOBILE
+   ================================= */
+
+@media (max-width: 768px) {
+  /* Content */
   .generatorContent {
-    max-width: 100%;
-    padding: 1rem 3rem 3rem;
+    padding: 1rem 1rem 10rem;
   }
 
-  /* Content Grid: 60% Content / 40% Preview */
-  .contentGrid.withPreview {
-    grid-template-columns: 1.5fr 1fr;
-    gap: 2.5rem;
+  /* Form Grid - Single Column on Mobile */
+  .formGrid {
+    padding: 2rem 1.5rem;
   }
 
-  /* Form Panel: Kein Card-Style mehr auf Desktop */
-  .formPanel {
-    background: transparent;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    border: none;
-    border-radius: 0;
-    padding: 0;
-    box-shadow: none;
+  .groupFields {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
   }
 
-  /* Step Content bekommt natürliches Padding */
-  .stepContent {
-    min-height: 500px;
-    padding: 2rem 0;
-    margin-top: 0;
+  /* Inputs responsive */
+  .formGroup input,
+  .formGroup select,
+  .formGroup textarea,
+  .formField input,
+  .formField textarea,
+  .formField select {
+    min-width: 100%;
+    font-size: 16px; /* Prevent zoom on iOS */
   }
 
-  /* Sections innerhalb bekommen subtile Borders */
-  .signatureSection,
-  .actionButtons,
-  .stepHeader {
-    padding-bottom: 2rem;
-    margin-bottom: 2rem;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  /* Section Header */
+  .groupHeader {
+    font-size: 16px;
   }
 
-  /* Step Header bei Step 1 bleibt mittig, bei Step 3 linksbündig */
-  .stepContent:first-child .stepHeader {
-    text-align: center;
+  /* Bottom Bar Mobile */
+  .stickyBottomBar {
+    padding: 1rem 1rem;
+    flex-direction: column;
+    align-items: stretch;
   }
 
-  .stepHeader {
-    text-align: center;
-    padding-bottom: 1.5rem;
-    margin-bottom: 2rem;
-  }
-
-  /* Preview Panel bleibt als Card aber sticky */
-  .previewPanel {
-    position: sticky;
-    top: 120px;
-    max-height: calc(100vh - 140px);
-  }
-
-  /* Signature Section wird voller Breite */
-  .signatureSection {
-    background: rgba(248, 250, 252, 0.3);
-    padding: 2rem;
-    margin: 2rem 0;
-  }
-
-  /* Action Buttons bekommen mehr Raum */
-  .actionButtons {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  .stickyBottomBarContent {
+    flex-direction: column;
     gap: 1rem;
   }
 
-  .actionButton {
+  .bottomBarInfo {
+    text-align: center;
+  }
+
+  .generateButton {
+    width: 100%;
+  }
+
+  /* Contract Types */
+  .contractTypesGrid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  /* Templates */
+  .templateGrid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Signature */
+  .signatureCanvas {
+    height: 150px;
+  }
+
+  /* Premium Content */
+  .premiumContent {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+
+  .upgradeButton {
+    width: 100%;
     justify-content: center;
   }
 
-  /* Contract Form - Full Width auf Desktop */
-  .contractForm {
+  /* Steps Mobile */
+  .progressSteps {
+    padding: 1rem 0;
     max-width: 100%;
-    margin: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
-  /* Form Grid - 2 Spalten auf Desktop */
-  .formGrid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1.5rem;
+  .stepCircle {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
   }
 
-  /* Spanning Fields (wie Vertragstitel) zentriert */
-  .formGroup.spanning {
-    grid-column: 1 / -1;
-    max-width: 850px;
-    margin: 0 auto 2rem;
+  .stepNumber {
+    font-size: 16px;
   }
 
-  /* Company Profile Toggle volle Breite */
-  .companyProfileToggle {
-    padding: 2rem;
+  .stepLabel {
+    font-size: 11px;
   }
 
-  /* Design Variant Selector professioneller */
-  .designVariantSelector {
-    padding: 2rem;
-  }
-
-  /* Field Group - Optimale Breite auf Desktop für bessere Lesbarkeit */
-  .fieldGroup {
-    margin: 0 auto 3rem;
-    padding-bottom: 3rem;
-    max-width: 1100px;
-  }
-
-  /* Group Fields - 2 Spalten auf Desktop */
-  .groupFields {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1.5rem;
-  }
-
-  /* Group Header größer auf Desktop */
-  .groupHeader {
-    font-size: 18px;
+  .stepLine {
+    margin: 0 0.25rem;
     margin-bottom: 1.5rem;
   }
+
+  .progressBarContainer {
+    margin-top: 1rem;
+  }
+}
+
+/* =================================
+   20. ACCESSIBILITY & PRINT
+   ================================= */
+
+@media print {
+  body {
+    background: white;
+  }
+
+  .generatorHeader,
+  .progressSteps,
+  .backButton,
+  .generateButton,
+  .stickyBottomBar,
+  .actionButtons,
+  .signatureControls {
+    display: none !important;
+  }
+
+  h2 {
+    page-break-after: avoid;
+  }
+
+  .signatureSection {
+    page-break-inside: avoid;
+  }
+
+  .signaturePreview img {
+    max-height: 120px;
+    object-fit: contain;
+  }
+
+  @page {
+    margin: 2cm;
+  }
+}
+
+@media (prefers-contrast: high) {
+  .formGrid {
+    border: 2px solid #0B1324;
+  }
+
+  .contractTypeCard,
+  .templateCard {
+    border: 2px solid rgba(0, 0, 0, 0.15);
+  }
+
+  .actionButton,
+  .generateButton,
+  .signatureButton {
+    border: 2px solid rgba(0, 0, 0, 0.15);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .contractTypeCard:active {
+    transform: scale(0.98);
+  }
+
+  .templateCard:active {
+    transform: scale(0.98);
+  }
+
+  .actionButton:active {
+    transform: scale(0.98);
+  }
+
+  .generateButton:active {
+    transform: scale(0.98);
+  }
+}
+
+/* Focus States - Accessibility */
+.contractTypeCard:focus-visible,
+.templateCard:focus-visible,
+.actionButton:focus-visible,
+.generateButton:focus-visible,
+.signatureButton:focus-visible,
+.backButton:focus-visible,
+.backToStartButton:focus-visible,
+.upgradeButton:focus-visible {
+  outline: 2px solid #2E6CF6;
+  outline-offset: 2px;
+}
+
+.signatureCanvas:focus {
+  outline: 2px solid #2E6CF6;
+  outline-offset: 2px;
+}
+
+/* =================================
+   21. CONTRACT FORM (LEGACY COMPATIBILITY)
+   ================================= */
+
+.contractForm {
+  max-width: 1100px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.formFieldsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
 }
