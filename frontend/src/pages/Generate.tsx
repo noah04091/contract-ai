@@ -2029,55 +2029,6 @@ export default function Generate() {
                           />
                         </div>
 
-                        {/* Käufer Information (Buyer Fields) */}
-                        <div className={styles.fieldGroup}>
-                          <h4 className={styles.groupHeader}>Käufer</h4>
-                          <div className={styles.groupFields}>
-                            <div className={styles.formGroup}>
-                              <label htmlFor="buyerName">
-                                Käufer Name
-                                <span className={styles.optionalBadge}>optional</span>
-                              </label>
-                              <input
-                                id="buyerName"
-                                type="text"
-                                value={formData.buyerName || ''}
-                                onChange={(e) => handleInputChange('buyerName', e.target.value)}
-                                placeholder="z.B. Max Mustermann"
-                                disabled={userPlan === 'free'}
-                              />
-                            </div>
-                            <div className={styles.formGroup}>
-                              <label htmlFor="buyerAddress">
-                                Käufer Adresse
-                                <span className={styles.optionalBadge}>optional</span>
-                              </label>
-                              <input
-                                id="buyerAddress"
-                                type="text"
-                                value={formData.buyerAddress || ''}
-                                onChange={(e) => handleInputChange('buyerAddress', e.target.value)}
-                                placeholder="z.B. Musterstraße 123"
-                                disabled={userPlan === 'free'}
-                              />
-                            </div>
-                            <div className={styles.formGroup}>
-                              <label htmlFor="buyerCity">
-                                Käufer PLZ & Ort
-                                <span className={styles.optionalBadge}>optional</span>
-                              </label>
-                              <input
-                                id="buyerCity"
-                                type="text"
-                                value={formData.buyerCity || ''}
-                                onChange={(e) => handleInputChange('buyerCity', e.target.value)}
-                                placeholder="z.B. 10115 Berlin"
-                                disabled={userPlan === 'free'}
-                              />
-                            </div>
-                          </div>
-                        </div>
-
                         {/* Dynamic Fields with Grouping */}
                         {(() => {
                           const groupedFields = selectedType.fields.reduce((groups, field) => {
