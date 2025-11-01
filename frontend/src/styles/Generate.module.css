@@ -2302,6 +2302,45 @@
   margin-top: 0.25rem;
 }
 
+/* Custom Requirements Section */
+.customRequirementsSection {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid #E5E7EB;
+}
+
+.customRequirementsTextarea {
+  width: 100%;
+  padding: 1rem;
+  background: #F9FAFB;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  color: #0B1324;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+  line-height: 1.6;
+  resize: vertical;
+  min-height: 140px;
+  transition: all 0.2s ease;
+}
+
+.customRequirementsTextarea:focus {
+  outline: 2px solid #2E6CF6;
+  outline-offset: 0;
+  background: white;
+  box-shadow: none;
+}
+
+.customRequirementsTextarea::placeholder {
+  color: #9CA3AF;
+}
+
+.customRequirementsTextarea:disabled {
+  background: #F3F4F6;
+  color: #9CA3AF;
+  cursor: not-allowed;
+}
+
 /* =================================
    19. RESPONSIVE - MOBILE
    ================================= */

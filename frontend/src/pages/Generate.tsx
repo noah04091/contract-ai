@@ -2140,6 +2140,28 @@ export default function Generate() {
                         })()}
                       </div>
 
+                      {/* Individuelles Freitextfeld für Vertragsanpassungen */}
+                      <div className={styles.customRequirementsSection}>
+                        <div className={styles.formGroup}>
+                          <label htmlFor="customRequirements">
+                            Individuelle Anpassungen & Wünsche
+                            <span className={styles.optionalBadge}>optional</span>
+                          </label>
+                          <textarea
+                            id="customRequirements"
+                            rows={6}
+                            value={formData.customRequirements || ''}
+                            onChange={(e) => handleInputChange('customRequirements', e.target.value)}
+                            placeholder="Beschreiben Sie hier individuelle Klauseln, Wünsche oder Anpassungen für Ihren Vertrag (z.B. besondere Zahlungsbedingungen, spezielle Kündigungsfristen, Home-Office-Regelungen, etc.)..."
+                            disabled={userPlan === 'free'}
+                            className={styles.customRequirementsTextarea}
+                          />
+                          <span className={styles.fieldHint}>
+                            💡 Diese Informationen werden von der KI berücksichtigt, um Ihren Vertrag individuell anzupassen.
+                          </span>
+                        </div>
+                      </div>
+
                       {/* Erstellen Button - Ganz unten nach allen Feldern */}
                       <motion.button
                         type="button"
