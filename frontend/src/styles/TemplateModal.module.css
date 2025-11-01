@@ -1,0 +1,304 @@
+/* ================================
+   TEMPLATE MODAL STYLING
+   Professional SaaS Design
+   ================================ */
+
+/* Overlay */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(11, 19, 36, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+/* Modal Content */
+.modalContent {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.modalHeader {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.headerIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #2E6CF6 0%, #1E53D8 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+}
+
+.modalHeader h2 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #0B1324;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.modalHeader p {
+  font-size: 14px;
+  color: #667085;
+  margin: 0.25rem 0 0 0;
+}
+
+.closeButton {
+  margin-left: auto;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: none;
+  background: #F9FAFB;
+  color: #667085;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.closeButton:hover:not(:disabled) {
+  background: #F3F4F6;
+  color: #0B1324;
+}
+
+.closeButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Body */
+.modalBody {
+  padding: 2rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.formGroup {
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+
+.formGroup:last-of-type {
+  margin-bottom: 0;
+}
+
+.formGroup label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: #0B1324;
+  margin-bottom: 0.5rem;
+}
+
+.optionalBadge {
+  font-size: 12px;
+  font-weight: 400;
+  color: #9CA3AF;
+  margin-left: 0.5rem;
+}
+
+.formGroup input,
+.formGroup textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: #F9FAFB;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  color: #0B1324;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+  transition: all 0.2s ease;
+}
+
+.formGroup input {
+  min-height: 48px;
+}
+
+.formGroup textarea {
+  resize: vertical;
+  min-height: 80px;
+  line-height: 1.5;
+}
+
+.formGroup input:focus,
+.formGroup textarea:focus {
+  outline: 2px solid #2E6CF6;
+  outline-offset: 0;
+  background: white;
+}
+
+.formGroup input:disabled,
+.formGroup textarea:disabled {
+  background: #F3F4F6;
+  color: #9CA3AF;
+  cursor: not-allowed;
+}
+
+.charCount {
+  position: absolute;
+  bottom: 0.5rem;
+  right: 1rem;
+  font-size: 11px;
+  color: #9CA3AF;
+  pointer-events: none;
+}
+
+.formGroup textarea + .charCount {
+  bottom: 0.75rem;
+}
+
+/* Info Box */
+.infoBox {
+  background: #F0F7FF;
+  border: 1px solid #DBEAFE;
+  border-radius: 10px;
+  padding: 1rem;
+  margin-top: 1.5rem;
+}
+
+.infoBox p {
+  font-size: 13px;
+  color: #0B1324;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Error Box */
+.errorBox {
+  background: #FEF2F2;
+  border: 1px solid #FECACA;
+  border-radius: 10px;
+  padding: 1rem;
+  margin-top: 1rem;
+  font-size: 13px;
+  color: #DC2626;
+}
+
+/* Footer */
+.modalFooter {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1.5rem 2rem;
+  border-top: 1px solid #E5E7EB;
+  background: #F9FAFB;
+}
+
+.cancelButton,
+.saveButton {
+  flex: 1;
+  padding: 0.875rem 1.5rem;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: none;
+  min-height: 48px;
+}
+
+.cancelButton {
+  background: white;
+  color: #667085;
+  border: 1px solid #E5E7EB;
+}
+
+.cancelButton:hover:not(:disabled) {
+  background: #F9FAFB;
+  color: #0B1324;
+}
+
+.saveButton {
+  background: #2E6CF6;
+  color: white;
+}
+
+.saveButton:hover:not(:disabled) {
+  background: #1E53D8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(46, 108, 246, 0.3);
+}
+
+.cancelButton:disabled,
+.saveButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Spinner */
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Mobile Responsive */
+@media (max-width: 600px) {
+  .modalContent {
+    max-width: 100%;
+    border-radius: 16px 16px 0 0;
+    align-self: flex-end;
+  }
+
+  .modalHeader {
+    padding: 1.25rem 1.5rem;
+  }
+
+  .modalHeader h2 {
+    font-size: 18px;
+  }
+
+  .modalBody {
+    padding: 1.5rem;
+  }
+
+  .modalFooter {
+    padding: 1.25rem 1.5rem;
+    flex-direction: column-reverse;
+  }
+
+  .cancelButton,
+  .saveButton {
+    width: 100%;
+  }
+}

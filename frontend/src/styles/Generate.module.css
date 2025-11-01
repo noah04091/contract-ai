@@ -1421,6 +1421,139 @@
   gap: 2px;
 }
 
+/* User Template Styles */
+.userTemplate {
+  border: 1px solid #2E6CF6 !important;
+  background: linear-gradient(135deg, rgba(46, 108, 246, 0.03) 0%, rgba(46, 108, 246, 0.01) 100%) !important;
+}
+
+.userTag {
+  background: #2E6CF6 !important;
+  color: white !important;
+}
+
+.deleteTemplateButton {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: rgba(220, 38, 38, 0.1);
+  color: #DC2626;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: all 0.2s ease;
+  z-index: 2;
+}
+
+.templateCard:hover .deleteTemplateButton {
+  opacity: 1;
+}
+
+.deleteTemplateButton:hover:not(:disabled) {
+  background: #DC2626;
+  color: white;
+  transform: scale(1.1);
+}
+
+.deleteTemplateButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.miniSpinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+/* Create Template Button */
+.createTemplateButton {
+  margin-top: 1.5rem;
+  padding: 1rem 1.5rem;
+  background: #2E6CF6;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.createTemplateButton:hover {
+  background: #1E53D8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(46, 108, 246, 0.3);
+}
+
+.createTemplateButtonInline {
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  background: white;
+  color: #2E6CF6;
+  border: 1px solid #2E6CF6;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.createTemplateButtonInline:hover {
+  background: rgba(46, 108, 246, 0.05);
+  transform: translateY(-1px);
+}
+
+/* Empty Templates State */
+.emptyTemplates {
+  text-align: center;
+  padding: 3rem 1.5rem;
+}
+
+.emptyIcon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 1.5rem;
+  border-radius: 50%;
+  background: rgba(102, 112, 133, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #667085;
+}
+
+.emptyTemplates h4 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #0B1324;
+  margin: 0 0 0.5rem 0;
+}
+
+.emptyTemplates p {
+  font-size: 14px;
+  color: #667085;
+  margin: 0 0 1.5rem 0;
+}
+
 /* =================================
    12. LOADING & ERROR STATES
    ================================= */

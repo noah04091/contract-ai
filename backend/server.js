@@ -733,6 +733,15 @@ const connectDB = async () => {
       console.error("❌ Fehler beim Laden der S3-Routen:", err);
     }
 
+    // ✅ 16. USER TEMPLATES ROUTES
+    try {
+      const userTemplatesRoutes = require("./routes/userTemplates")(db);
+      app.use("/api/user-templates", verifyToken, userTemplatesRoutes);
+      console.log("✅ User Templates Routen geladen unter /api/user-templates");
+    } catch (err) {
+      console.error("❌ Fehler beim Laden der User Templates Routen:", err);
+    }
+
     // ✅ 15. S3 LEGACY ROUTES
     if (generateSignedUrl) {
       app.get("/api/s3/view", verifyToken, (req, res) => {

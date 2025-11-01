@@ -6,13 +6,15 @@ import { Helmet } from "react-helmet";
 import {
   CheckCircle, Clipboard, Save, FileText, Check, Download,
   ArrowRight, ArrowLeft, Sparkles, Edit3, Building,
-  Eye, PenTool, RefreshCw, BookOpen, Star, TrendingUp,
-  Users, ChevronDown
+  Eye, PenTool, RefreshCw, TrendingUp, Users, ChevronDown
 } from "lucide-react";
 import styles from "../styles/Generate.module.css";
 import { toast } from 'react-toastify';
 import { useAuth } from "../context/AuthContext";
 import UnifiedPremiumNotice from "../components/UnifiedPremiumNotice";
+import CreateTemplateModal, { TemplateFormData } from "../components/CreateTemplateModal";
+import EnhancedTemplateLibrary from "../components/EnhancedTemplateLibrary";
+import { UserTemplate, createUserTemplate } from "../services/userTemplatesAPI";
 
 // Types
 interface FormDataType {
@@ -513,68 +515,7 @@ const CONTRACT_TEMPLATES: ContractTemplate[] = [
   }
 ];
 
-
-// Template Library Component
-const TemplateLibrary: React.FC<{
-  contractType: string;
-  onSelectTemplate: (template: ContractTemplate) => void;
-  isPremium: boolean;
-}> = ({ contractType, onSelectTemplate, isPremium }) => {
-  const relevantTemplates = CONTRACT_TEMPLATES.filter(t => t.contractType === contractType);
-  
-  if (relevantTemplates.length === 0) return null;
-  
-  return (
-    <motion.div 
-      className={styles.templateLibrary}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-    >
-      <div className={styles.templateHeader}>
-        <BookOpen size={20} />
-        <h3>Vorlagen-Bibliothek</h3>
-        <span className={styles.templateCount}>{relevantTemplates.length} Vorlagen</span>
-      </div>
-      
-      <div className={styles.templateGrid}>
-        {relevantTemplates.map((template) => (
-          <motion.div
-            key={template.id}
-            className={`${styles.templateCard} ${template.isPremium && !isPremium ? styles.locked : ''}`}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => {
-              if (!template.isPremium || isPremium) {
-                onSelectTemplate(template);
-                toast.success(`✅ Vorlage "${template.name}" geladen!`);
-              } else {
-                toast.warning('🔒 Diese Vorlage erfordert Premium');
-              }
-            }}
-          >
-            <div className={styles.templateIcon}>{template.icon}</div>
-            <div className={styles.templateInfo}>
-              <h4>{template.name}</h4>
-              <p>{template.description}</p>
-              <div className={styles.templateTags}>
-                {template.tags.map(tag => (
-                  <span key={tag} className={styles.tag}>{tag}</span>
-                ))}
-              </div>
-            </div>
-            {template.isPremium && (
-              <div className={styles.premiumBadge}>
-                <Star size={12} />
-                Premium
-              </div>
-            )}
-          </motion.div>
-        ))}
-      </div>
-    </motion.div>
-  );
-};
+// NOTE: Old TemplateLibrary Component removed - now using EnhancedTemplateLibrary
 
 export default function Generate() {
   // Navigation
@@ -616,7 +557,10 @@ export default function Generate() {
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
   const [isGeneratingPreview, setIsGeneratingPreview] = useState<boolean>(false);
   const [showTemplates, setShowTemplates] = useState<boolean>(false);
-  
+
+  // Template Modal State
+  const [isTemplateModalOpen, setIsTemplateModalOpen] = useState<boolean>(false);
+
   // 🔴 FIX 2: Loading State für PDF-Button
   const [isGeneratingPDF, setIsGeneratingPDF] = useState<boolean>(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
@@ -729,13 +673,35 @@ export default function Generate() {
     }
   };
 
-  const handleTemplateSelect = (template: ContractTemplate) => {
-    setFormData((prev: FormDataType) => ({
-      ...prev,
-      ...template.prefilled,
-      title: `${template.name} - ${new Date().toLocaleDateString()}`
-    }));
+  const handleTemplateSelect = (template: ContractTemplate | UserTemplate, isUserTemplate: boolean = false) => {
+    if (isUserTemplate) {
+      // User Template
+      const userTemplate = template as UserTemplate;
+      setFormData((prev: FormDataType) => ({
+        ...prev,
+        ...userTemplate.defaultValues,
+        title: `${userTemplate.name} - ${new Date().toLocaleDateString()}`
+      }));
+    } else {
+      // System Template
+      const systemTemplate = template as ContractTemplate;
+      setFormData((prev: FormDataType) => ({
+        ...prev,
+        ...systemTemplate.prefilled,
+        title: `${systemTemplate.name} - ${new Date().toLocaleDateString()}`
+      }));
+    }
     setShowTemplates(false);
+  };
+
+  const handleCreateTemplate = async (templateData: TemplateFormData) => {
+    try {
+      await createUserTemplate(templateData);
+      toast.success(`✅ Vorlage "${templateData.name}" erstellt`);
+    } catch (error: any) {
+      toast.error(error.message || 'Fehler beim Erstellen der Vorlage');
+      throw error; // Re-throw so modal knows about the error
+    }
   };
 
   const toggleCompanyProfile = (enabled: boolean) => {
@@ -1908,15 +1874,15 @@ export default function Generate() {
                       </div>
                     </div>
 
-                    {/* Template Library */}
+                    {/* Enhanced Template Library with User Templates */}
                     {showTemplates && (
-                      <div className={styles.templateLibrary}>
-                        <TemplateLibrary
-                          contractType={selectedType.id}
-                          onSelectTemplate={handleTemplateSelect}
-                          isPremium={isPremium}
-                        />
-                      </div>
+                      <EnhancedTemplateLibrary
+                        contractType={selectedType.id}
+                        systemTemplates={CONTRACT_TEMPLATES.filter(t => t.contractType === selectedType.id)}
+                        onSelectTemplate={handleTemplateSelect}
+                        onCreateTemplate={() => setIsTemplateModalOpen(true)}
+                        isPremium={isPremium}
+                      />
                     )}
 
                     <div className={styles.contractForm}>
@@ -2559,6 +2525,16 @@ export default function Generate() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Create Template Modal */}
+        <CreateTemplateModal
+          isOpen={isTemplateModalOpen}
+          onClose={() => setIsTemplateModalOpen(false)}
+          onSave={handleCreateTemplate}
+          contractType={selectedType?.id || ''}
+          contractTypeName={selectedType?.name || ''}
+          currentFormData={formData}
+        />
       </div>
     </>
   );
