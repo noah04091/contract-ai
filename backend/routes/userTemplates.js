@@ -4,7 +4,6 @@
 const express = require("express");
 const router = express.Router();
 const { ObjectId } = require("mongodb");
-const verifyToken = require("../middleware/verifyToken");
 
 // Collections
 let userTemplatesCollection;
@@ -17,10 +16,50 @@ module.exports = (db) => {
 };
 
 /**
+ * GET /api/user-templates/by-type/:contractType
+ * Templates nach Vertragstyp filtern
+ * WICHTIG: Muss VOR /:id Route stehen, da Express Routes in Reihenfolge matcht!
+ */
+router.get("/by-type/:contractType", async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { contractType } = req.params;
+
+    const templates = await userTemplatesCollection
+      .find({
+        userId: new ObjectId(userId),
+        contractType: contractType
+      })
+      .sort({ createdAt: -1 })
+      .toArray();
+
+    res.json({
+      success: true,
+      templates: templates.map(t => ({
+        id: t._id.toString(),
+        name: t.name,
+        description: t.description,
+        contractType: t.contractType,
+        defaultValues: t.defaultValues,
+        createdAt: t.createdAt,
+        updatedAt: t.updatedAt
+      }))
+    });
+
+  } catch (error) {
+    console.error("❌ Fehler beim Filtern der Templates:", error);
+    res.status(500).json({
+      success: false,
+      message: "Fehler beim Laden der Vorlagen"
+    });
+  }
+});
+
+/**
  * GET /api/user-templates
  * Liste aller Templates des angemeldeten Users
  */
-router.get("/", verifyToken, async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const userId = req.user.userId;
 
@@ -55,7 +94,7 @@ router.get("/", verifyToken, async (req, res) => {
  * GET /api/user-templates/:id
  * Einzelnes Template abrufen
  */
-router.get("/:id", verifyToken, async (req, res) => {
+router.get("/:id", async (req, res) => {
   try {
     const userId = req.user.userId;
     const templateId = req.params.id;
@@ -105,7 +144,7 @@ router.get("/:id", verifyToken, async (req, res) => {
  * POST /api/user-templates
  * Neues Template erstellen
  */
-router.post("/", verifyToken, async (req, res) => {
+router.post("/", async (req, res) => {
   try {
     const userId = req.user.userId;
     const { name, description, contractType, defaultValues } = req.body;
@@ -200,7 +239,7 @@ router.post("/", verifyToken, async (req, res) => {
  * PUT /api/user-templates/:id
  * Template aktualisieren
  */
-router.put("/:id", verifyToken, async (req, res) => {
+router.put("/:id", async (req, res) => {
   try {
     const userId = req.user.userId;
     const templateId = req.params.id;
@@ -302,7 +341,7 @@ router.put("/:id", verifyToken, async (req, res) => {
  * DELETE /api/user-templates/:id
  * Template löschen
  */
-router.delete("/:id", verifyToken, async (req, res) => {
+router.delete("/:id", async (req, res) => {
   try {
     const userId = req.user.userId;
     const templateId = req.params.id;
@@ -342,41 +381,3 @@ router.delete("/:id", verifyToken, async (req, res) => {
   }
 });
 
-/**
- * GET /api/user-templates/by-type/:contractType
- * Templates nach Vertragstyp filtern
- */
-router.get("/by-type/:contractType", verifyToken, async (req, res) => {
-  try {
-    const userId = req.user.userId;
-    const { contractType } = req.params;
-
-    const templates = await userTemplatesCollection
-      .find({
-        userId: new ObjectId(userId),
-        contractType: contractType
-      })
-      .sort({ createdAt: -1 })
-      .toArray();
-
-    res.json({
-      success: true,
-      templates: templates.map(t => ({
-        id: t._id.toString(),
-        name: t.name,
-        description: t.description,
-        contractType: t.contractType,
-        defaultValues: t.defaultValues,
-        createdAt: t.createdAt,
-        updatedAt: t.updatedAt
-      }))
-    });
-
-  } catch (error) {
-    console.error("❌ Fehler beim Filtern der Templates:", error);
-    res.status(500).json({
-      success: false,
-      message: "Fehler beim Laden der Vorlagen"
-    });
-  }
-});
