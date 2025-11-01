@@ -2186,9 +2186,24 @@ export default function CalendarPage() {
             transition={{ delay: 0.3 }}
           >
             <div className="section-header-premium">
-              <div className="section-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <AlertCircle size={20} className="section-icon" />
-                <h3 style={{ margin: 0 }}>Dringende Ereignisse</h3>
+              <div style={{
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: '8px',
+                margin: 0
+              }}>
+                <AlertCircle size={20} style={{
+                  flexShrink: 0,
+                  color: '#6366f1'
+                }} />
+                <h3 style={{
+                  margin: 0,
+                  fontSize: '18px',
+                  fontWeight: '700',
+                  color: '#111827',
+                  display: 'inline'
+                }}>Dringende Ereignisse</h3>
               </div>
               {urgentEvents.length > EVENTS_PER_PAGE && (
                 <div className="pagination-controls">
