@@ -1842,11 +1842,13 @@ export default function Generate() {
 
                     {/* Template Library */}
                     {showTemplates && (
-                      <TemplateLibrary 
-                        contractType={selectedType.id}
-                        onSelectTemplate={handleTemplateSelect}
-                        isPremium={isPremium}
-                      />
+                      <div className={styles.templateLibrary}>
+                        <TemplateLibrary
+                          contractType={selectedType.id}
+                          onSelectTemplate={handleTemplateSelect}
+                          isPremium={isPremium}
+                        />
+                      </div>
                     )}
 
                     <div className={styles.contractForm}>
