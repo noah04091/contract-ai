@@ -1820,8 +1820,26 @@ export default function Generate() {
                     className={styles.stepContent}
                   >
                     <div className={styles.stepHeader}>
-                      <h2>Welchen Vertrag möchten Sie erstellen?</h2>
-                      <p>Wählen Sie den passenden Vertragstyp aus unserer erweiterten Bibliothek</p>
+                      <div className={styles.stepHeaderContent}>
+                        <div>
+                          <h2>Welchen Vertrag möchten Sie erstellen?</h2>
+                          <p>Wählen Sie den passenden Vertragstyp aus unserer erweiterten Bibliothek</p>
+                        </div>
+                        <motion.button
+                          className={`${styles.headerButton} ${styles.primaryButton} ${!selectedType ? styles.disabled : ''}`}
+                          onClick={() => {
+                            if (selectedType) {
+                              setCurrentStep(2);
+                            }
+                          }}
+                          disabled={!selectedType || userPlan === 'free'}
+                          whileHover={selectedType && userPlan !== 'free' ? { scale: 1.02 } : {}}
+                          whileTap={selectedType && userPlan !== 'free' ? { scale: 0.98 } : {}}
+                        >
+                          <span>Weiter</span>
+                          <ArrowRight size={18} />
+                        </motion.button>
+                      </div>
                     </div>
 
                     <div className={styles.contractTypesGrid}>
@@ -1873,8 +1891,40 @@ export default function Generate() {
                     className={styles.stepContent}
                   >
                     <div className={styles.stepHeader}>
-                      <h2>{selectedType.name} erstellen</h2>
-                      <p>Füllen Sie die benötigten Informationen aus oder wählen Sie eine Vorlage</p>
+                      <div className={styles.stepHeaderContent}>
+                        <motion.button
+                          className={`${styles.headerButton} ${styles.secondaryButton}`}
+                          onClick={() => setCurrentStep(1)}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          <ArrowLeft size={18} />
+                          <span>Zurück</span>
+                        </motion.button>
+                        <div className={styles.stepHeaderText}>
+                          <h2>{selectedType.name} erstellen</h2>
+                          <p>Füllen Sie die benötigten Informationen aus oder wählen Sie eine Vorlage</p>
+                        </div>
+                        <motion.button
+                          className={`${styles.headerButton} ${styles.primaryButton} ${(!isStepComplete(2) || loading) ? styles.disabled : ''}`}
+                          onClick={handleGenerate}
+                          disabled={loading || userPlan === 'free' || !isStepComplete(2)}
+                          whileHover={userPlan !== 'free' && isStepComplete(2) && !loading ? { scale: 1.02 } : {}}
+                          whileTap={userPlan !== 'free' && isStepComplete(2) && !loading ? { scale: 0.98 } : {}}
+                        >
+                          {loading ? (
+                            <>
+                              <div className={`${styles.loadingSpinner} ${styles.small}`}></div>
+                              <span>Erstelle...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Sparkles size={18} />
+                              <span>Erstellen</span>
+                            </>
+                          )}
+                        </motion.button>
+                      </div>
                     </div>
 
                     {/* Template Library */}
@@ -2283,98 +2333,6 @@ export default function Generate() {
                 )}
               </AnimatePresence>
             </motion.div>
-
-            {/* Sticky Bottom CTA Bar */}
-            {currentStep >= 1 && currentStep <= 3 && (
-              <motion.div
-                className={styles.stickyBottomBar}
-                initial={{ y: 100, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.3, delay: 0.2 }}
-              >
-                <div className={styles.stickyBarContent}>
-                  {/* Zurück Button */}
-                  {currentStep > 1 && (
-                    <motion.button
-                      className={styles.stickyBackButton}
-                      onClick={() => setCurrentStep(currentStep - 1)}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <ArrowLeft size={18} />
-                      <span>Zurück</span>
-                    </motion.button>
-                  )}
-
-                  {/* Spacer for alignment when no back button */}
-                  {currentStep === 1 && <div></div>}
-
-                  {/* Weiter/Erstellen Button */}
-                  {currentStep === 1 && (
-                    <motion.button
-                      className={`${styles.stickyNextButton} ${!selectedType ? styles.disabled : ''}`}
-                      onClick={() => {
-                        if (selectedType) {
-                          setCurrentStep(2);
-                        }
-                      }}
-                      disabled={!selectedType || userPlan === 'free'}
-                      whileHover={selectedType && userPlan !== 'free' ? { scale: 1.02 } : {}}
-                      whileTap={selectedType && userPlan !== 'free' ? { scale: 0.98 } : {}}
-                    >
-                      <span>Weiter</span>
-                      <ArrowRight size={18} />
-                    </motion.button>
-                  )}
-
-                  {currentStep === 2 && (
-                    <motion.button
-                      className={`${styles.stickyNextButton} ${(!isStepComplete(2) || loading) ? styles.disabled : ''}`}
-                      onClick={handleGenerate}
-                      disabled={loading || userPlan === 'free' || !isStepComplete(2)}
-                      whileHover={userPlan !== 'free' && isStepComplete(2) && !loading ? { scale: 1.02 } : {}}
-                      whileTap={userPlan !== 'free' && isStepComplete(2) && !loading ? { scale: 0.98 } : {}}
-                    >
-                      {loading ? (
-                        <>
-                          <div className={`${styles.loadingSpinner} ${styles.small}`}></div>
-                          <span>KI erstellt Ihren Vertrag...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles size={18} />
-                          <span>Vertrag erstellen</span>
-                        </>
-                      )}
-                    </motion.button>
-                  )}
-
-                  {currentStep === 3 && (
-                    <motion.button
-                      className={styles.stickyNextButton}
-                      onClick={() => {
-                        setCurrentStep(1);
-                        setSelectedType(null);
-                        setFormData({});
-                        setContractText("");
-                        setGeneratedHTML("");
-                        setShowPreview(false);
-                        setSignatureURL(null);
-                        setSavedContractId(null);
-                        setSaved(false);
-                        setIsGeneratingPDF(false);
-                        setDownloadError(null);
-                      }}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <ArrowLeft size={18} />
-                      <span>Neuen Vertrag erstellen</span>
-                    </motion.button>
-                  )}
-                </div>
-              </motion.div>
-            )}
 
             {/* Right Panel - Preview with Tabs */}
             <AnimatePresence>
