@@ -11,14 +11,14 @@ interface CreateTemplateModalProps {
   onSave: (templateData: TemplateFormData) => Promise<void>;
   contractType: string;
   contractTypeName: string;
-  currentFormData: Record<string, any>;
+  currentFormData: Record<string, unknown>;
 }
 
 export interface TemplateFormData {
   name: string;
   description: string;
   contractType: string;
-  defaultValues: Record<string, any>;
+  defaultValues: Record<string, unknown>;
 }
 
 const CreateTemplateModal: React.FC<CreateTemplateModalProps> = ({
@@ -68,8 +68,8 @@ const CreateTemplateModal: React.FC<CreateTemplateModalProps> = ({
       setTemplateName('');
       setTemplateDescription('');
       onClose();
-    } catch (err: any) {
-      setError(err.message || 'Fehler beim Speichern der Vorlage');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Fehler beim Speichern der Vorlage');
     } finally {
       setIsSaving(false);
     }

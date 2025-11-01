@@ -7,7 +7,7 @@ export interface UserTemplate {
   name: string;
   description: string;
   contractType: string;
-  defaultValues: Record<string, any>;
+  defaultValues: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
 }
@@ -16,7 +16,7 @@ export interface CreateTemplateRequest {
   name: string;
   description: string;
   contractType: string;
-  defaultValues: Record<string, any>;
+  defaultValues: Record<string, unknown>;
 }
 
 /**

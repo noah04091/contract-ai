@@ -17,7 +17,7 @@ import EnhancedTemplateLibrary from "../components/EnhancedTemplateLibrary";
 import { UserTemplate, createUserTemplate } from "../services/userTemplatesAPI";
 
 // Types
-interface FormDataType {
+export interface FormDataType {
   title?: string;
   details?: string;
   [key: string]: string | undefined;
@@ -71,7 +71,7 @@ interface ContractType {
   }>;
 }
 
-interface ContractTemplate {
+export interface ContractTemplate {
   id: string;
   name: string;
   description: string;

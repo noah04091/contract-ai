@@ -6,17 +6,7 @@ import { BookOpen, Plus, Star, Trash2, AlertCircle } from 'lucide-react';
 import { toast } from 'react-toastify';
 import styles from '../styles/Generate.module.css';
 import { UserTemplate, fetchTemplatesByType, deleteUserTemplate } from '../services/userTemplatesAPI';
-
-interface ContractTemplate {
-  id: string;
-  name: string;
-  description: string;
-  contractType: string;
-  icon: string;
-  prefilled: Record<string, any>;
-  tags: string[];
-  isPremium?: boolean;
-}
+import { ContractTemplate } from '../pages/Generate';
 
 interface EnhancedTemplateLibraryProps {
   contractType: string;
@@ -49,7 +39,7 @@ const EnhancedTemplateLibrary: React.FC<EnhancedTemplateLibraryProps> = ({
     try {
       const templates = await fetchTemplatesByType(contractType);
       setUserTemplates(templates);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Fehler beim Laden der User Templates:', error);
       // Nicht toast.error hier, um UI nicht zu spammen
     } finally {
@@ -70,8 +60,8 @@ const EnhancedTemplateLibrary: React.FC<EnhancedTemplateLibraryProps> = ({
       setUserTemplates(prev => prev.filter(t => t.id !== templateId));
       toast.success(`Vorlage "${templateName}" gelöscht`);
       onUserTemplatesChange?.();
-    } catch (error: any) {
-      toast.error(error.message || 'Fehler beim Löschen der Vorlage');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Fehler beim Löschen der Vorlage');
     } finally {
       setIsDeletingId(null);
     }
