@@ -24,7 +24,8 @@
       "Bash(timeout /t 3 /nobreak)",
       "Bash(git pull:*)",
       "Bash(npm install:*)",
-      "Bash(npm run lint)"
+      "Bash(npm run lint)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []
