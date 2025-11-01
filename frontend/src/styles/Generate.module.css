@@ -182,11 +182,121 @@
   box-shadow: 0 0 8px rgba(10, 132, 255, 0.4);
 }
 
+/* Sticky Bottom CTA Bar - Professional fixed navigation */
+.stickyBottomBar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  border-top: 1px solid #E6E9EF;
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.08);
+  z-index: 100;
+  backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.stickyBarContent {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1.25rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Zurück Button - Secondary Style */
+.stickyBackButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.5rem;
+  background: white;
+  border: 1.5px solid #E6E9EF;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1d1d1f;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.28, 0.44, 0.49, 1);
+  font-family: inherit;
+}
+
+.stickyBackButton:hover {
+  background: #F7F8FA;
+  border-color: #D1D1D6;
+  transform: translateY(-1px);
+}
+
+.stickyBackButton:active {
+  transform: translateY(0);
+}
+
+/* Weiter/Erstellen Button - Primary Style */
+.stickyNextButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.75rem;
+  background: linear-gradient(135deg, #0a84ff 0%, #0066cc 100%);
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.28, 0.44, 0.49, 1);
+  font-family: inherit;
+  box-shadow: 0 2px 8px rgba(10, 132, 255, 0.25);
+  min-width: 180px;
+  justify-content: center;
+}
+
+.stickyNextButton:hover:not(.disabled) {
+  background: linear-gradient(135deg, #0077ed 0%, #0055b3 100%);
+  box-shadow: 0 4px 16px rgba(10, 132, 255, 0.35);
+  transform: translateY(-1px);
+}
+
+.stickyNextButton:active:not(.disabled) {
+  transform: translateY(0);
+}
+
+.stickyNextButton.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Optional Badge - Pill-style badge for optional fields */
+.optionalBadge {
+  display: inline-block;
+  margin-left: 0.5rem;
+  padding: 0.25rem 0.625rem;
+  background: rgba(142, 142, 147, 0.1);
+  border: 1px solid rgba(142, 142, 147, 0.2);
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #8E8E93;
+  text-transform: lowercase;
+  letter-spacing: 0.02em;
+  vertical-align: middle;
+  transition: all 0.2s cubic-bezier(0.28, 0.44, 0.49, 1);
+}
+
+.optionalBadge:hover {
+  background: rgba(142, 142, 147, 0.15);
+  border-color: rgba(142, 142, 147, 0.3);
+}
+
 /* Main Content - BESTEHEND */
 .generatorContent {
   max-width: 1100px;
   margin: 0 auto;
   padding: 2rem 1.5rem 3rem;
+  padding-bottom: 8rem; /* Space for sticky bottom bar */
 }
 
 /* Premium Notice - BESTEHEND */
@@ -1763,6 +1873,25 @@
 
   .progressBarContainer {
     margin-top: 1rem;
+  }
+
+  /* Sticky Bottom Bar Mobile */
+  .stickyBarContent {
+    padding: 1rem 1rem;
+    gap: 0.75rem;
+  }
+
+  .stickyBackButton {
+    padding: 0.75rem 1rem;
+    font-size: 14px;
+    min-width: auto;
+  }
+
+  .stickyNextButton {
+    padding: 0.75rem 1.25rem;
+    font-size: 14px;
+    min-width: 140px;
+    flex: 1;
   }
 
   .formField input,
