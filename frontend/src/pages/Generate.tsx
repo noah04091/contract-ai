@@ -2110,6 +2110,13 @@ export default function Generate() {
                                         onChange={(e) => handleInputChange(field.name, e.target.value)}
                                         placeholder={field.placeholder}
                                         disabled={userPlan === 'free'}
+                                        className={
+                                          field.validation && formData[field.name] && !validateField(field, formData[field.name] || '')
+                                            ? styles.inputError
+                                            : field.validation && formData[field.name] && validateField(field, formData[field.name] || '')
+                                            ? styles.inputSuccess
+                                            : ''
+                                        }
                                       />
                                     ) : field.type === 'select' ? (
                                       <select
@@ -2117,7 +2124,13 @@ export default function Generate() {
                                         value={formData[field.name] || ''}
                                         onChange={(e) => handleInputChange(field.name, e.target.value)}
                                         disabled={userPlan === 'free'}
-                                        className={!formData[field.name] ? styles.placeholder : ''}
+                                        className={`${!formData[field.name] ? styles.placeholder : ''} ${
+                                          field.validation && formData[field.name] && !validateField(field, formData[field.name] || '')
+                                            ? styles.inputError
+                                            : field.validation && formData[field.name] && validateField(field, formData[field.name] || '')
+                                            ? styles.inputSuccess
+                                            : ''
+                                        }`}
                                       >
                                         <option value="">{field.placeholder}</option>
                                         {field.options?.map((option) => (
@@ -2135,7 +2148,13 @@ export default function Generate() {
                                           onChange={(e) => handleInputChange(field.name, e.target.value)}
                                           placeholder={field.placeholder}
                                           disabled={userPlan === 'free'}
-                                          className={styles.inputWithSuffixField}
+                                          className={`${styles.inputWithSuffixField} ${
+                                            field.validation && formData[field.name] && !validateField(field, formData[field.name] || '')
+                                              ? styles.inputError
+                                              : field.validation && formData[field.name] && validateField(field, formData[field.name] || '')
+                                              ? styles.inputSuccess
+                                              : ''
+                                          }`}
                                         />
                                         <span className={styles.inputSuffix}>€</span>
                                       </div>
@@ -2147,6 +2166,13 @@ export default function Generate() {
                                         onChange={(e) => handleInputChange(field.name, e.target.value)}
                                         placeholder={field.placeholder}
                                         disabled={userPlan === 'free'}
+                                        className={
+                                          field.validation && formData[field.name] && !validateField(field, formData[field.name] || '')
+                                            ? styles.inputError
+                                            : field.validation && formData[field.name] && validateField(field, formData[field.name] || '')
+                                            ? styles.inputSuccess
+                                            : ''
+                                        }
                                       />
                                     )}
                                     

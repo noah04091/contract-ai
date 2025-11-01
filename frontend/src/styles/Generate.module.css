@@ -1169,6 +1169,78 @@
   user-select: none;
 }
 
+/* Validation States */
+.fieldError {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-top: 0.5rem;
+  font-size: 13px;
+  font-weight: 500;
+  color: #ff3b30;
+  line-height: 1.4;
+}
+
+.fieldError::before {
+  content: "⚠";
+  font-size: 14px;
+}
+
+.fieldSuccess {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-top: 0.5rem;
+  font-size: 13px;
+  font-weight: 500;
+  color: #34c759;
+  line-height: 1.4;
+}
+
+.fieldSuccess::before {
+  content: "✓";
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.fieldHelper {
+  margin-top: 0.5rem;
+  font-size: 13px;
+  font-weight: 400;
+  color: #86868b;
+  line-height: 1.4;
+}
+
+/* Input Error State */
+.formGroup input.inputError,
+.formGroup textarea.inputError,
+.formGroup select.inputError {
+  border-color: #ff3b30;
+  background: rgba(255, 59, 48, 0.03);
+}
+
+.formGroup input.inputError:focus,
+.formGroup textarea.inputError:focus,
+.formGroup select.inputError:focus {
+  border-color: #ff3b30;
+  box-shadow: 0 0 0 3px rgba(255, 59, 48, 0.1), 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+/* Input Success State */
+.formGroup input.inputSuccess,
+.formGroup textarea.inputSuccess,
+.formGroup select.inputSuccess {
+  border-color: #34c759;
+  background: rgba(52, 199, 89, 0.03);
+}
+
+.formGroup input.inputSuccess:focus,
+.formGroup textarea.inputSuccess:focus,
+.formGroup select.inputSuccess:focus {
+  border-color: #34c759;
+  box-shadow: 0 0 0 3px rgba(52, 199, 89, 0.1), 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
 .groupTitle {
   display: flex;
   align-items: center;
