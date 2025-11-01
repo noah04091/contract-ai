@@ -1638,21 +1638,65 @@ export default function Generate() {
             {/* Progress Steps */}
             <div className={styles.progressSteps}>
               {[
-                { num: 1, label: "Typ auswählen", icon: Clipboard },
-                { num: 2, label: "Details eingeben", icon: Edit3 },
-                { num: 3, label: "Vertrag erstellen", icon: Sparkles },
-                { num: 4, label: "Finalisieren", icon: CheckCircle }
-              ].map(({ num, label, icon: Icon }) => (
-                <div 
-                  key={num}
-                  className={`${styles.step} ${currentStep >= num ? styles.active : ''} ${isStepComplete(num) ? styles.completed : ''}`}
-                >
-                  <div className={styles.stepIndicator}>
-                    {isStepComplete(num) ? <Check size={16} /> : <Icon size={16} />}
-                  </div>
-                  <span>{label}</span>
-                </div>
+                { num: 1, label: "Typ auswählen" },
+                { num: 2, label: "Details eingeben" },
+                { num: 3, label: "Vertrag erstellen" },
+                { num: 4, label: "Finalisieren" }
+              ].map(({ num, label }, index, array) => (
+                <React.Fragment key={num}>
+                  <motion.div
+                    className={styles.stepWrapper}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1, duration: 0.3 }}
+                  >
+                    <div
+                      className={`${styles.stepCircle} ${
+                        currentStep === num ? styles.stepActive : ''
+                      } ${
+                        isStepComplete(num) ? styles.stepCompleted : ''
+                      } ${
+                        currentStep < num ? styles.stepUpcoming : ''
+                      }`}
+                    >
+                      {isStepComplete(num) ? (
+                        <Check size={18} strokeWidth={3} />
+                      ) : (
+                        <span className={styles.stepNumber}>{num}</span>
+                      )}
+                    </div>
+                    <span className={`${styles.stepLabel} ${
+                      currentStep === num ? styles.stepLabelActive : ''
+                    }`}>
+                      {label}
+                    </span>
+                  </motion.div>
+                  {index < array.length - 1 && (
+                    <div className={styles.stepLine}>
+                      <motion.div
+                        className={styles.stepLineFill}
+                        initial={{ scaleX: 0 }}
+                        animate={{
+                          scaleX: isStepComplete(num) ? 1 : 0
+                        }}
+                        transition={{ duration: 0.4, ease: "easeInOut" }}
+                      />
+                    </div>
+                  )}
+                </React.Fragment>
               ))}
+            </div>
+
+            {/* Progress Bar */}
+            <div className={styles.progressBarContainer}>
+              <motion.div
+                className={styles.progressBarFill}
+                initial={{ width: "0%" }}
+                animate={{
+                  width: `${((currentStep - 1) / 3) * 100}%`
+                }}
+                transition={{ duration: 0.5, ease: "easeInOut" }}
+              />
             </div>
           </div>
         </motion.header>
