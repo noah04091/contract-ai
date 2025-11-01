@@ -516,7 +516,7 @@
 }
 
 .templateLibrary {
-  max-width: 900px;
+  max-width: 1100px;
   margin: 0 auto 2rem;
 }
 
@@ -524,6 +524,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 1rem;
+  justify-content: center;
 }
 
 .templateCard {
@@ -623,7 +624,13 @@
   margin: 0 auto 2rem;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  max-width: 700px;
+  max-width: 850px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s cubic-bezier(0.28, 0.44, 0.49, 1);
+}
+
+.companyProfileToggle:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .switch {
@@ -718,7 +725,13 @@
   margin: 0 auto 2rem;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  max-width: 700px;
+  max-width: 850px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s cubic-bezier(0.28, 0.44, 0.49, 1);
+}
+
+.designVariantSelector:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .selectorHeader {
@@ -934,19 +947,26 @@
   letter-spacing: -0.01em;
 }
 
-/* Form Group Inputs */
+/* Form Group Inputs - Enhanced UX */
 .formGroup input,
 .formGroup textarea,
 .formGroup select {
   width: 100%;
-  padding: 0.875rem 1rem;
+  padding: 1rem 1.25rem;
   background: white;
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  border: 1.5px solid rgba(0, 0, 0, 0.08);
   border-radius: 10px;
   font-size: 15px;
   color: #1d1d1f;
   transition: all 0.2s cubic-bezier(0.28, 0.44, 0.49, 1);
   font-family: inherit;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.formGroup input:hover,
+.formGroup textarea:hover,
+.formGroup select:hover {
+  border-color: rgba(0, 0, 0, 0.12);
 }
 
 .formGroup input:focus,
@@ -954,7 +974,7 @@
 .formGroup select:focus {
   outline: none;
   border-color: #0a84ff;
-  box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.08);
+  box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
 }
 
 .formGroup input::placeholder,
@@ -997,7 +1017,7 @@
   margin: 0 auto 2.5rem;
   padding-bottom: 2.5rem;
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-  max-width: 900px;
+  max-width: 1100px;
 }
 
 .fieldGroup:last-child {
@@ -2273,7 +2293,7 @@
   /* Spanning Fields (wie Vertragstitel) zentriert */
   .formGroup.spanning {
     grid-column: 1 / -1;
-    max-width: 700px;
+    max-width: 850px;
     margin: 0 auto 2rem;
   }
 
@@ -2287,11 +2307,11 @@
     padding: 2rem;
   }
 
-  /* Field Group - Begrenzte Breite auf Desktop für bessere Lesbarkeit */
+  /* Field Group - Optimale Breite auf Desktop für bessere Lesbarkeit */
   .fieldGroup {
     margin: 0 auto 3rem;
     padding-bottom: 3rem;
-    max-width: 900px;
+    max-width: 1100px;
   }
 
   /* Group Fields - 2 Spalten auf Desktop */
