@@ -69,7 +69,7 @@ interface Envelope {
   contract?: Contract;
 }
 
-type FilterTab = "all" | "sent" | "signed" | "completed";
+type FilterTab = "all" | "open" | "completed";
 
 export default function Envelopes() {
   const [envelopes, setEnvelopes] = useState<Envelope[]>([]);
@@ -197,8 +197,8 @@ export default function Envelopes() {
   // Filter envelopes based on active tab
   const filteredEnvelopes = envelopes.filter(env => {
     if (activeFilter === "all") return true;
-    if (activeFilter === "sent") return env.status === "SENT";
-    if (activeFilter === "signed") return env.status === "SIGNED";
+    // "Offen" = Warte auf Signaturen (SENT oder SIGNED)
+    if (activeFilter === "open") return env.status === "SENT" || env.status === "SIGNED";
     if (activeFilter === "completed") return env.status === "COMPLETED";
     return true;
   });
@@ -1018,18 +1018,11 @@ export default function Envelopes() {
             Alle ({envelopes.length})
           </button>
           <button
-            className={`${styles.filterTab} ${activeFilter === "sent" ? styles.filterTabActive : ""}`}
-            onClick={() => setActiveFilter("sent")}
+            className={`${styles.filterTab} ${activeFilter === "open" ? styles.filterTabActive : ""}`}
+            onClick={() => setActiveFilter("open")}
           >
-            <Send size={16} />
-            Gesendet ({envelopes.filter(e => e.status === "SENT").length})
-          </button>
-          <button
-            className={`${styles.filterTab} ${activeFilter === "signed" ? styles.filterTabActive : ""}`}
-            onClick={() => setActiveFilter("signed")}
-          >
-            <CheckCircle size={16} />
-            Signiert ({envelopes.filter(e => e.status === "SIGNED").length})
+            <Clock size={16} />
+            Offen ({envelopes.filter(e => e.status === "SENT" || e.status === "SIGNED").length})
           </button>
           <button
             className={`${styles.filterTab} ${activeFilter === "completed" ? styles.filterTabActive : ""}`}
