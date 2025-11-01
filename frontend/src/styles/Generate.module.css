@@ -423,6 +423,19 @@
   flex-shrink: 0;
 }
 
+.toggleInfo h4 {
+  margin: 0 0 0.25rem 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1d1d1f;
+}
+
+.toggleInfo p {
+  margin: 0;
+  font-size: 13px;
+  color: #86868b;
+}
+
 .toggleText h4 {
   margin: 0 0 0.25rem 0;
   font-size: 15px;
@@ -605,6 +618,7 @@
   margin-bottom: 2rem;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  max-width: 700px;
 }
 
 .switch {
@@ -688,6 +702,188 @@
 .profileInfo span {
   font-size: 13px;
   color: #86868b;
+}
+
+/* Design Variant Selector - PROFESSIONAL */
+.designVariantSelector {
+  background: rgba(248, 250, 252, 0.5);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 14px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  max-width: 700px;
+}
+
+.selectorHeader {
+  margin-bottom: 1.5rem;
+}
+
+.selectorInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.selectorInfo svg {
+  color: #0a84ff;
+  flex-shrink: 0;
+}
+
+.selectorInfo h4 {
+  margin: 0 0 0.25rem 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1d1d1f;
+}
+
+.selectorInfo p {
+  margin: 0;
+  font-size: 13px;
+  color: #86868b;
+}
+
+.designOptions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+.designOption {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: white;
+  border: 2px solid rgba(0, 0, 0, 0.06);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.28, 0.44, 0.49, 1);
+}
+
+.designOption:hover {
+  border-color: rgba(10, 132, 255, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.designOption.active {
+  border-color: #0a84ff;
+  background: rgba(10, 132, 255, 0.03);
+  box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.1);
+}
+
+.designPreview {
+  width: 80px;
+  height: 60px;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: white;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.executivePreview {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #1d1d1f 0%, #3a3a3c 100%);
+  position: relative;
+}
+
+.executivePreview::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.executivePreview::after {
+  content: '';
+  position: absolute;
+  top: 14px;
+  left: 8px;
+  right: 8px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.modernPreview {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #0a84ff 0%, #5ac8fa 100%);
+  position: relative;
+}
+
+.modernPreview::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 2px;
+}
+
+.modernPreview::after {
+  content: '';
+  position: absolute;
+  top: 14px;
+  left: 8px;
+  right: 8px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.minimalPreview {
+  width: 100%;
+  height: 100%;
+  background: white;
+  position: relative;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.minimalPreview::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  height: 2px;
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.minimalPreview::after {
+  content: '';
+  position: absolute;
+  top: 14px;
+  left: 8px;
+  right: 8px;
+  height: 1px;
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.designDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.designDetails strong {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1d1d1f;
+}
+
+.designDetails span {
+  font-size: 13px;
+  color: #86868b;
+  line-height: 1.4;
 }
 
 .formFieldsGrid {
@@ -2071,6 +2267,7 @@
   /* Spanning Fields (wie Vertragstitel) über volle Breite */
   .formGroup.spanning {
     grid-column: 1 / -1;
+    max-width: 700px;
   }
 
   /* Company Profile Toggle volle Breite */
@@ -2083,10 +2280,11 @@
     padding: 2rem;
   }
 
-  /* Field Group - Full Width auf Desktop */
+  /* Field Group - Begrenzte Breite auf Desktop für bessere Lesbarkeit */
   .fieldGroup {
     margin-bottom: 3rem;
     padding-bottom: 3rem;
+    max-width: 900px;
   }
 
   /* Group Fields - 2 Spalten auf Desktop */
