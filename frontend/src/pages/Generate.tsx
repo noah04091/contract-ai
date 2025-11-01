@@ -2126,6 +2126,19 @@ export default function Generate() {
                                           </option>
                                         ))}
                                       </select>
+                                    ) : field.name === 'price' ? (
+                                      <div className={styles.inputWithSuffix}>
+                                        <input
+                                          id={field.name}
+                                          type="text"
+                                          value={formData[field.name] || ''}
+                                          onChange={(e) => handleInputChange(field.name, e.target.value)}
+                                          placeholder={field.placeholder}
+                                          disabled={userPlan === 'free'}
+                                          className={styles.inputWithSuffixField}
+                                        />
+                                        <span className={styles.inputSuffix}>€</span>
+                                      </div>
                                     ) : (
                                       <input
                                         id={field.name}

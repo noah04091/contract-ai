@@ -1147,6 +1147,27 @@
   line-height: 1.5;
 }
 
+/* Input with Suffix (€ Symbol) */
+.inputWithSuffix {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.inputWithSuffixField {
+  padding-right: 3.5rem !important;
+}
+
+.inputSuffix {
+  position: absolute;
+  right: 1.25rem;
+  font-size: 15px;
+  font-weight: 600;
+  color: #86868b;
+  pointer-events: none;
+  user-select: none;
+}
+
 .groupTitle {
   display: flex;
   align-items: center;
