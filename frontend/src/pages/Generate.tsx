@@ -2152,7 +2152,7 @@ export default function Generate() {
                             rows={6}
                             value={formData.customRequirements || ''}
                             onChange={(e) => handleInputChange('customRequirements', e.target.value)}
-                            placeholder="Beschreiben Sie hier individuelle Klauseln, Wünsche oder Anpassungen für Ihren Vertrag (z.B. besondere Zahlungsbedingungen, spezielle Kündigungsfristen, Home-Office-Regelungen, etc.)..."
+                            placeholder="Geben Sie hier zusätzliche Anforderungen, besondere Vereinbarungen oder individuelle Klauseln für Ihren Vertrag ein..."
                             disabled={userPlan === 'free'}
                             className={styles.customRequirementsTextarea}
                           />
