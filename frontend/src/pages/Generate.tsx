@@ -1901,29 +1901,10 @@ export default function Generate() {
                           <ArrowLeft size={18} />
                           <span>Zurück</span>
                         </motion.button>
-                        <div className={styles.stepHeaderText}>
+                        <div>
                           <h2>{selectedType.name} erstellen</h2>
                           <p>Füllen Sie die benötigten Informationen aus oder wählen Sie eine Vorlage</p>
                         </div>
-                        <motion.button
-                          className={`${styles.headerButton} ${styles.primaryButton} ${(!isStepComplete(2) || loading) ? styles.disabled : ''}`}
-                          onClick={handleGenerate}
-                          disabled={loading || userPlan === 'free' || !isStepComplete(2)}
-                          whileHover={userPlan !== 'free' && isStepComplete(2) && !loading ? { scale: 1.02 } : {}}
-                          whileTap={userPlan !== 'free' && isStepComplete(2) && !loading ? { scale: 0.98 } : {}}
-                        >
-                          {loading ? (
-                            <>
-                              <div className={`${styles.loadingSpinner} ${styles.small}`}></div>
-                              <span>Erstelle...</span>
-                            </>
-                          ) : (
-                            <>
-                              <Sparkles size={18} />
-                              <span>Erstellen</span>
-                            </>
-                          )}
-                        </motion.button>
                       </div>
                     </div>
 
@@ -2168,6 +2149,28 @@ export default function Generate() {
                           ));
                         })()}
                       </div>
+
+                      {/* Erstellen Button - Ganz unten nach allen Feldern */}
+                      <motion.button
+                        type="button"
+                        className={`${styles.generateButton} ${(!isStepComplete(2) || loading) ? styles.disabled : ''}`}
+                        onClick={handleGenerate}
+                        disabled={loading || userPlan === 'free' || !isStepComplete(2)}
+                        whileHover={userPlan !== 'free' && isStepComplete(2) && !loading ? { scale: 1.02 } : {}}
+                        whileTap={userPlan !== 'free' && isStepComplete(2) && !loading ? { scale: 0.98 } : {}}
+                      >
+                        {loading ? (
+                          <>
+                            <div className={`${styles.loadingSpinner} ${styles.small}`}></div>
+                            <span>KI erstellt Ihren Vertrag...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles size={18} />
+                            <span>Vertrag mit KI erstellen</span>
+                          </>
+                        )}
+                      </motion.button>
                     </div>
                   </motion.div>
                 )}
