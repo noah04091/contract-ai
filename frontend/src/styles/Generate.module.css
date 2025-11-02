@@ -1324,6 +1324,27 @@
   font-weight: 600;
 }
 
+.createTemplateIconButton {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: rgba(46, 108, 246, 0.1);
+  color: #2E6CF6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.createTemplateIconButton:hover {
+  background: #2E6CF6;
+  color: white;
+  transform: scale(1.05);
+}
+
 .templateLibrary {
   max-width: 1100px;
   margin: 0 auto 2rem;

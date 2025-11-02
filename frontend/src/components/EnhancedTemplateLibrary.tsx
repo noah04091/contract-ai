@@ -112,16 +112,14 @@ const EnhancedTemplateLibrary: React.FC<EnhancedTemplateLibraryProps> = ({
         <span className={styles.templateCount}>
           {totalTemplates} {totalTemplates === 1 ? 'Vorlage' : 'Vorlagen'}
         </span>
+        <button
+          className={styles.createTemplateIconButton}
+          onClick={onCreateTemplate}
+          title="Eigene Vorlage erstellen"
+        >
+          <Plus size={18} />
+        </button>
       </div>
-
-      {/* Create Template Button */}
-      <button
-        className={styles.createTemplateButtonInline}
-        onClick={onCreateTemplate}
-      >
-        <Plus size={16} />
-        <span>Eigene Vorlage erstellen</span>
-      </button>
 
       <div className={styles.templateGrid}>
         {/* User Templates Section */}
