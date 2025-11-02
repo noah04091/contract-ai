@@ -183,7 +183,11 @@
   overflow: auto;
   padding: 2rem;
   background: #F7F8FA;
+}
+
+.pdfPageWrapper {
   position: relative;
+  display: inline-block;
 }
 
 .pdfLoading,

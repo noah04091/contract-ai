@@ -355,8 +355,10 @@ export default function EnhancedSignatureModal({
 
   // Get all signers including current user if applicable
   const getAllSigners = (): Signer[] => {
-    const result: Signer[] = signers;
+    // IMPORTANT: Create a copy to avoid mutating original signers array
+    const result: Signer[] = [...signers];
 
+    // Only add current user if BOTH_PARTIES mode is selected
     if (signatureMode === "BOTH_PARTIES" && currentUser) {
       // Add current user with a unique color
       result.push({

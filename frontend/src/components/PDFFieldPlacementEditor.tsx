@@ -58,6 +58,7 @@ const PDFFieldPlacementEditor: React.FC<PDFFieldPlacementEditorProps> = ({
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 
   const pdfContainerRef = useRef<HTMLDivElement>(null);
+  const pdfPageWrapperRef = useRef<HTMLDivElement>(null);
   const [pdfDimensions, setPdfDimensions] = useState({ width: 0, height: 0 });
 
   // Update selected signer when signers change
@@ -109,11 +110,11 @@ const PDFFieldPlacementEditor: React.FC<PDFFieldPlacementEditorProps> = ({
   const handleFieldMouseDown = (e: React.MouseEvent, field: SignatureField) => {
     e.preventDefault();
 
-    if (!pdfContainerRef.current) return;
+    if (!pdfPageWrapperRef.current) return;
 
-    const containerRect = pdfContainerRef.current.getBoundingClientRect();
-    const mouseX = e.clientX - containerRect.left;
-    const mouseY = e.clientY - containerRect.top;
+    const pageRect = pdfPageWrapperRef.current.getBoundingClientRect();
+    const mouseX = e.clientX - pageRect.left;
+    const mouseY = e.clientY - pageRect.top;
 
     // Calculate offset from mouse to field's current position
     setDragOffset({
@@ -125,11 +126,11 @@ const PDFFieldPlacementEditor: React.FC<PDFFieldPlacementEditorProps> = ({
 
   // Drag field
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (!draggingField || !pdfContainerRef.current) return;
+    if (!draggingField || !pdfPageWrapperRef.current) return;
 
-    const containerRect = pdfContainerRef.current.getBoundingClientRect();
-    const newX = e.clientX - containerRect.left - dragOffset.x;
-    const newY = e.clientY - containerRect.top - dragOffset.y;
+    const pageRect = pdfPageWrapperRef.current.getBoundingClientRect();
+    const newX = e.clientX - pageRect.left - dragOffset.x;
+    const newY = e.clientY - pageRect.top - dragOffset.y;
 
     // Constrain to PDF bounds
     const field = fields.find(f => f.id === draggingField);
@@ -242,9 +243,6 @@ const PDFFieldPlacementEditor: React.FC<PDFFieldPlacementEditorProps> = ({
         <div
           ref={pdfContainerRef}
           className={styles.pdfContainer}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
         >
           <Document
             file={pdfUrl}
@@ -252,55 +250,64 @@ const PDFFieldPlacementEditor: React.FC<PDFFieldPlacementEditorProps> = ({
             loading={<div className={styles.pdfLoading}>PDF wird geladen...</div>}
             error={<div className={styles.pdfError}>Fehler beim Laden des PDFs</div>}
           >
-            <Page
-              pageNumber={currentPage}
-              width={800}
-              onLoadSuccess={onPageLoadSuccess}
-              renderTextLayer={false}
-              renderAnnotationLayer={false}
-            />
-          </Document>
+            {/* Wrapper for PDF Page + Overlay */}
+            <div
+              ref={pdfPageWrapperRef}
+              className={styles.pdfPageWrapper}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
+            >
+              <Page
+                pageNumber={currentPage}
+                width={800}
+                onLoadSuccess={onPageLoadSuccess}
+                renderTextLayer={false}
+                renderAnnotationLayer={false}
+              />
 
-          {/* Signature Fields Overlay */}
-          <div className={styles.fieldsOverlay}>
-            <AnimatePresence>
-              {currentPageFields.map(field => (
-                <motion.div
-                  key={field.id}
-                  className={`${styles.signatureField} ${draggingField === field.id ? styles.dragging : ''}`}
-                  style={{
-                    left: field.x,
-                    top: field.y,
-                    width: field.width,
-                    height: field.height,
-                    borderColor: getSignerColor(field.assigneeEmail),
-                    backgroundColor: `${getSignerColor(field.assigneeEmail)}15`,
-                  }}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  onMouseDown={e => handleFieldMouseDown(e, field)}
-                >
-                  <div className={styles.fieldLabel}>
-                    {field.label || field.type}
-                  </div>
-                  <div className={styles.fieldSigner}>
-                    {signers.find(s => s.email === field.assigneeEmail)?.name || field.assigneeEmail}
-                  </div>
-                  <button
-                    className={styles.deleteFieldButton}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteField(field.id);
-                    }}
-                    title="Feld löschen"
-                  >
-                    <Trash2 size={12} />
-                  </button>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </div>
+              {/* Signature Fields Overlay */}
+              <div className={styles.fieldsOverlay}>
+                <AnimatePresence>
+                  {currentPageFields.map(field => (
+                    <motion.div
+                      key={field.id}
+                      className={`${styles.signatureField} ${draggingField === field.id ? styles.dragging : ''}`}
+                      style={{
+                        left: field.x,
+                        top: field.y,
+                        width: field.width,
+                        height: field.height,
+                        borderColor: getSignerColor(field.assigneeEmail),
+                        backgroundColor: `${getSignerColor(field.assigneeEmail)}15`,
+                      }}
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      onMouseDown={e => handleFieldMouseDown(e, field)}
+                    >
+                      <div className={styles.fieldLabel}>
+                        {field.label || field.type}
+                      </div>
+                      <div className={styles.fieldSigner}>
+                        {signers.find(s => s.email === field.assigneeEmail)?.name || field.assigneeEmail}
+                      </div>
+                      <button
+                        className={styles.deleteFieldButton}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteField(field.id);
+                        }}
+                        title="Feld löschen"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
+            </div>
+          </Document>
         </div>
 
         {/* Field Count Info */}
