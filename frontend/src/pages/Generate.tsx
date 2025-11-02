@@ -560,6 +560,7 @@ export default function Generate() {
 
   // Template Modal State
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState<boolean>(false);
+  const [templateRefreshKey, setTemplateRefreshKey] = useState<number>(0);
 
   // 🔴 FIX 2: Loading State für PDF-Button
   const [isGeneratingPDF, setIsGeneratingPDF] = useState<boolean>(false);
@@ -698,6 +699,8 @@ export default function Generate() {
     try {
       await createUserTemplate(templateData);
       toast.success(`✅ Vorlage "${templateData.name}" erstellt`);
+      // Refresh template library to show new template
+      setTemplateRefreshKey(prev => prev + 1);
     } catch (error: any) {
       toast.error(error.message || 'Fehler beim Erstellen der Vorlage');
       throw error; // Re-throw so modal knows about the error
@@ -1877,6 +1880,7 @@ export default function Generate() {
                     {/* Enhanced Template Library with User Templates */}
                     {showTemplates && (
                       <EnhancedTemplateLibrary
+                        key={templateRefreshKey}
                         contractType={selectedType.id}
                         systemTemplates={CONTRACT_TEMPLATES.filter(t => t.contractType === selectedType.id)}
                         onSelectTemplate={handleTemplateSelect}
