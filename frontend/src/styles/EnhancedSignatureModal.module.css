@@ -168,6 +168,13 @@
   overflow-x: hidden;
 }
 
+/* Special: Step 2 (PDF Editor) needs different overflow handling */
+.stepContent:has(.pdfEditor) {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
 .placeholder {
   padding: 4rem 2rem;
   text-align: center;

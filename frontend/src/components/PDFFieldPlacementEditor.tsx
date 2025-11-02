@@ -166,7 +166,7 @@ const PDFFieldPlacementEditor: React.FC<PDFFieldPlacementEditorProps> = ({
   const currentPageFields = fields.filter(f => f.page === currentPage);
 
   return (
-    <div className={styles.editorContainer}>
+    <div className={`${styles.editorContainer} pdfEditor`}>
       {/* Toolbar */}
       <div className={styles.toolbar}>
         <div className={styles.toolbarSection}>
