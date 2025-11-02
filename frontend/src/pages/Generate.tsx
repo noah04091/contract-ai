@@ -1879,9 +1879,32 @@ export default function Generate() {
                     )}
 
                     <div className={styles.contractForm}>
-                      {/* Company Profile Toggle */}
+                      {/* Company Profile - Create or Toggle */}
+                      {isPremium && !companyProfile && (
+                        <motion.div
+                          className={styles.createProfilePrompt}
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3 }}
+                        >
+                          <div className={styles.promptContent}>
+                            <Building size={20} />
+                            <div>
+                              <h4>Firmenprofil erstellen</h4>
+                              <p>Speichern Sie Ihre Firmendaten und nutzen Sie sie in allen Verträgen</p>
+                            </div>
+                          </div>
+                          <button
+                            className={styles.createProfileButton}
+                            onClick={() => navigate('/company-profile')}
+                          >
+                            Jetzt erstellen
+                          </button>
+                        </motion.div>
+                      )}
+
                       {isPremium && companyProfile && (
-                        <motion.div 
+                        <motion.div
                           className={styles.companyProfileToggle}
                           initial={{ opacity: 0, y: -10 }}
                           animate={{ opacity: 1, y: 0 }}
