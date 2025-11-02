@@ -131,7 +131,7 @@ const CreateTemplateModal: React.FC<CreateTemplateModalProps> = ({
                     setTemplateName(e.target.value);
                     setError('');
                   }}
-                  placeholder="z.B. Mein Standard-Freelancer-Vertrag"
+                  placeholder="z.B. Meine Standard-Vorlage für Geschäftspartner"
                   maxLength={100}
                   disabled={isSaving}
                   autoFocus
@@ -150,7 +150,7 @@ const CreateTemplateModal: React.FC<CreateTemplateModalProps> = ({
                   id="templateDescription"
                   value={templateDescription}
                   onChange={(e) => setTemplateDescription(e.target.value)}
-                  placeholder="z.B. Für Webentwicklungs-Projekte mit monatlicher Abrechnung"
+                  placeholder="z.B. Für wiederkehrende Verträge mit gleichen Konditionen"
                   rows={3}
                   maxLength={500}
                   disabled={isSaving}
@@ -162,15 +162,15 @@ const CreateTemplateModal: React.FC<CreateTemplateModalProps> = ({
 
               <div className={styles.infoBox}>
                 <div className={styles.infoHeader}>
-                  <strong>⚠️ WICHTIG: So funktioniert's!</strong>
+                  <strong>💡 So funktioniert's:</strong>
                 </div>
                 <ol className={styles.infoSteps}>
-                  <li><strong>ZUERST</strong> das Formular unten ausfüllen (Vertragsgegenstand, Kaufpreis, etc.)</li>
-                  <li><strong>DANN</strong> auf "Vorlage erstellen" klicken</li>
-                  <li><strong>FERTIG!</strong> Alle ausgefüllten Felder werden gespeichert</li>
+                  <li><strong>Zuerst</strong> das Formular unten mit Ihren Daten ausfüllen</li>
+                  <li><strong>Dann</strong> auf "Vorlage erstellen" klicken und einen Namen eingeben</li>
+                  <li><strong>Fertig!</strong> Alle ausgefüllten Felder werden als Vorlage gespeichert</li>
                 </ol>
                 <p className={styles.infoFooter}>
-                  ✅ Später mit einem Klick alle Daten wiederherstellen!
+                  ✅ Später können Sie mit einem Klick alle Daten wiederherstellen!
                 </p>
               </div>
 

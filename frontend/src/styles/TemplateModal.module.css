@@ -176,8 +176,8 @@
 
 /* Info Box */
 .infoBox {
-  background: #FFF4E6;
-  border: 2px solid #FFB020;
+  background: #F0F9FF;
+  border: 1px solid #7DD3FC;
   border-radius: 10px;
   padding: 1.25rem;
   margin-top: 1.5rem;
@@ -216,7 +216,7 @@
 
 .infoFooter {
   font-size: 13px;
-  color: #059669;
+  color: #0284C7;
   margin: 0.75rem 0 0 0;
   font-weight: 500;
 }
