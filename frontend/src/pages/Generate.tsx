@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useRef, useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet";
 import {
   CheckCircle, Clipboard, Save, FileText, Check, Download,
   ArrowRight, ArrowLeft, Sparkles, Edit3, Building,
-  Eye, PenTool, RefreshCw, TrendingUp, Users, ChevronDown, Send
+  Eye, TrendingUp, Users, ChevronDown, Send
 } from "lucide-react";
 import styles from "../styles/Generate.module.css";
 import { toast } from 'react-toastify';
@@ -552,8 +552,6 @@ export default function Generate() {
   const [savedContractId, setSavedContractId] = useState<string | null>(null);
   const [contractS3Key, setContractS3Key] = useState<string | null>(null);
   const [showSignatureModal, setShowSignatureModal] = useState<boolean>(false);
-  const [signatureURL, setSignatureURL] = useState<string | null>(null);
-  const [isDrawing, setIsDrawing] = useState<boolean>(false);
   const [showPreview, setShowPreview] = useState<boolean>(false);
 
   // 📄 NEW: PDF Preview States
@@ -592,7 +590,6 @@ export default function Generate() {
 
   // Refs
   // const contractRef = useRef<HTMLDivElement>(null); // ❌ Not used anymore (replaced with textarea)
-  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Load Company Profile and Usage Data on mount
   useEffect(() => {
@@ -770,110 +767,6 @@ export default function Generate() {
     if (field.validation.max && value.length > field.validation.max) return false;
     
     return true;
-  };
-
-  // Canvas Functions
-  const handleCanvasMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    if (canvas.width !== 800) {
-      canvas.width = 800;
-      canvas.height = 200;
-      ctx.lineWidth = 3;
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-      ctx.strokeStyle = "#1d4ed8";
-    }
-
-    setIsDrawing(true);
-    
-    const rect = canvas.getBoundingClientRect();
-    const x = (e.clientX - rect.left) * (canvas.width / rect.width);
-    const y = (e.clientY - rect.top) * (canvas.height / rect.height);
-    
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-  };
-
-  const handleCanvasMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isDrawing) return;
-    
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext("2d");
-    if (!canvas || !ctx) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const x = (e.clientX - rect.left) * (canvas.width / rect.width);
-    const y = (e.clientY - rect.top) * (canvas.height / rect.height);
-    
-    ctx.lineTo(x, y);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-  };
-
-  const handleCanvasMouseUp = () => {
-    setIsDrawing(false);
-  };
-
-  const handleCanvasClick = () => {
-    console.log("🖊️ Canvas wurde geklickt!");
-  };
-
-  const handleCanvasTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
-    e.preventDefault();
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    if (canvas.width !== 800) {
-      canvas.width = 800;
-      canvas.height = 200;
-      ctx.lineWidth = 3;
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-      ctx.strokeStyle = "#1d4ed8";
-    }
-
-    setIsDrawing(true);
-    
-    const rect = canvas.getBoundingClientRect();
-    const touch = e.touches[0];
-    const x = (touch.clientX - rect.left) * (canvas.width / rect.width);
-    const y = (touch.clientY - rect.top) * (canvas.height / rect.height);
-    
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-  };
-
-  const handleCanvasTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => {
-    if (!isDrawing) return;
-    e.preventDefault();
-    
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext("2d");
-    if (!canvas || !ctx) return;
-
-    const rect = canvas.getBoundingClientRect();
-    const touch = e.touches[0];
-    const x = (touch.clientX - rect.left) * (canvas.width / rect.width);
-    const y = (touch.clientY - rect.top) * (canvas.height / rect.height);
-    
-    ctx.lineTo(x, y);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-  };
-
-  const handleCanvasTouchEnd = (e: React.TouchEvent<HTMLCanvasElement>) => {
-    e.preventDefault();
-    setIsDrawing(false);
   };
 
   const handleInputChange = (name: string, value: string) => {
@@ -1750,40 +1643,6 @@ export default function Generate() {
     }
   };
 
-  const saveSignature = () => {
-    const canvas = canvasRef.current;
-    if (canvas) {
-      const ctx = canvas.getContext("2d");
-      if (ctx) {
-        const blankCanvas = document.createElement('canvas');
-        blankCanvas.width = canvas.width;
-        blankCanvas.height = canvas.height;
-        
-        const canvasData = canvas.toDataURL();
-        const blankData = blankCanvas.toDataURL();
-        
-        if (canvasData === blankData) {
-          toast.warning("🖊️ Bitte zeichnen Sie zuerst eine Unterschrift!");
-          return;
-        }
-      }
-      
-      const dataURL = canvas.toDataURL("image/png");
-      setSignatureURL(dataURL);
-      toast.success("✅ Unterschrift wurde erfolgreich gespeichert!");
-    }
-  };
-
-  const clearSignature = () => {
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext("2d");
-    if (ctx && canvas) {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      setSignatureURL(null);
-    }
-  };
-
-
   // Loading State
   if (isLoading) {
     return (
@@ -2398,7 +2257,7 @@ export default function Generate() {
                   >
                     <div className={styles.stepHeader}>
                       <h2>Ihr Vertrag ist fertig!</h2>
-                      <p>Überprüfen Sie den Inhalt und fügen Sie optional eine Unterschrift hinzu</p>
+                      <p>Überprüfen Sie den Inhalt, speichern oder versenden Sie den Vertrag zur digitalen Signatur</p>
                     </div>
 
                     {/* Action Buttons */}
@@ -2480,73 +2339,6 @@ export default function Generate() {
                       </motion.div>
                     )}
 
-                    {/* Digital Signature */}
-                    <div className={styles.signatureSection}>
-                      <h3>
-                        <PenTool size={18} />
-                        Digitale Unterschrift (optional)
-                      </h3>
-                      
-                      <div className={styles.signatureCanvasContainer}>
-                        <canvas 
-                          ref={canvasRef}
-                          className={`${styles.signatureCanvas} ${isDrawing ? styles.drawing : ''}`}
-                          width={800}
-                          height={200}
-                          onClick={handleCanvasClick}
-                          onMouseDown={handleCanvasMouseDown}
-                          onMouseMove={handleCanvasMouseMove}
-                          onMouseUp={handleCanvasMouseUp}
-                          onMouseLeave={handleCanvasMouseUp}
-                          onTouchStart={handleCanvasTouchStart}
-                          onTouchMove={handleCanvasTouchMove}
-                          onTouchEnd={handleCanvasTouchEnd}
-                          style={{
-                            cursor: 'crosshair',
-                            touchAction: 'none',
-                            userSelect: 'none',
-                            display: 'block',
-                            width: '100%',
-                            height: '200px'
-                          }}
-                        />
-                        <div className={styles.canvasOverlay}>
-                          {!signatureURL && (
-                            <p className={styles.canvasPlaceholder}>
-                              Hier unterschreiben
-                            </p>
-                          )}
-                          {signatureURL && (
-                            <div className={styles.signaturePreview}>
-                              <img src={signatureURL} alt="Unterschrift" />
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className={styles.signatureControls}>
-                        <motion.button
-                          onClick={clearSignature}
-                          className={`${styles.signatureButton} ${styles.secondary}`}
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                        >
-                          <RefreshCw size={16} />
-                          <span>Neu zeichnen</span>
-                        </motion.button>
-
-                        <motion.button
-                          onClick={saveSignature}
-                          className={`${styles.signatureButton} ${styles.primary}`}
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                        >
-                          <Check size={16} />
-                          <span>Unterschrift verwenden</span>
-                        </motion.button>
-                      </div>
-                    </div>
-
                     <motion.button
                       className={styles.backToStartButton}
                       onClick={() => {
@@ -2556,7 +2348,6 @@ export default function Generate() {
                         setContractText("");
                         setGeneratedHTML("");
                         setShowPreview(false);
-                        setSignatureURL(null);
                         setSavedContractId(null);
                         setSaved(false);
                         setIsGeneratingPDF(false);
@@ -2720,15 +2511,6 @@ export default function Generate() {
                           }}
                           placeholder="Vertrag text..."
                         />
-                        {signatureURL && (
-                          <div className={styles.signatureInPreview}>
-                            <div className={styles.signatureLabel}>Digitale Unterschrift:</div>
-                            <img src={signatureURL} alt="Unterschrift" />
-                            <div className={styles.signatureDate}>
-                              Unterschrieben am {new Date().toLocaleString('de-DE')}
-                            </div>
-                          </div>
-                        )}
                       </div>
                     )}
 
