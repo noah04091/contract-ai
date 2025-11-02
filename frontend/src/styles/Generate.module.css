@@ -2071,6 +2071,42 @@
   box-shadow: 0 2px 8px rgba(48, 209, 88, 0.15);
 }
 
+/* NEW: Signature Button */
+.actionButton.signature {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: transparent;
+}
+
+.actionButton.signature:hover:not(:disabled) {
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.actionButton.signature:disabled {
+  background: #E5E7EB;
+  color: #9CA3AF;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.actionButton.signature:disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+/* Save Hint */
+.saveHint {
+  margin-top: 1rem;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, #FFF8E1 0%, #FFECB3 100%);
+  border-left: 4px solid #FFC107;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #856404;
+  line-height: 1.5;
+}
+
 /* =================================
    16. USAGE & TIP BOXES
    ================================= */

@@ -3231,4 +3231,100 @@ router.patch("/:id/reminder-settings", async (req, res) => {
   }
 });
 
+// ===== NEW: PDF Upload to S3 Endpoint =====
+// POST /contracts/:id/upload-pdf – Upload generated PDF to S3
+router.post("/:id/upload-pdf", verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { pdfBase64 } = req.body;
+
+    console.log(`📤 PDF Upload Request for Contract ${id}`);
+
+    if (!pdfBase64) {
+      return res.status(400).json({
+        success: false,
+        error: "PDF data is required"
+      });
+    }
+
+    // Verify contract ownership
+    const contract = await contractsCollection.findOne({
+      _id: new ObjectId(id),
+      userId: new ObjectId(req.user.userId)
+    });
+
+    if (!contract) {
+      return res.status(404).json({
+        success: false,
+        error: "Contract not found"
+      });
+    }
+
+    // Check if S3 is available
+    if (!S3_AVAILABLE) {
+      return res.status(503).json({
+        success: false,
+        error: "S3 storage is not available"
+      });
+    }
+
+    // Decode base64 PDF
+    const pdfBuffer = Buffer.from(pdfBase64, 'base64');
+
+    // Generate S3 key
+    const timestamp = Date.now();
+    const fileName = `${contract.name || 'contract'}-${timestamp}.pdf`.replace(/[^a-zA-Z0-9.-]/g, '-');
+    const s3Key = `contracts/${req.user.userId}/${fileName}`;
+
+    console.log(`📤 Uploading PDF to S3: ${s3Key}`);
+
+    // Upload to S3
+    const { PutObjectCommand } = require("@aws-sdk/client-s3");
+    const command = new PutObjectCommand({
+      Bucket: process.env.S3_BUCKET_NAME,
+      Key: s3Key,
+      Body: pdfBuffer,
+      ContentType: 'application/pdf',
+      Metadata: {
+        contractId: id,
+        userId: req.user.userId,
+        uploadDate: new Date().toISOString(),
+        source: 'generated'
+      }
+    });
+
+    await s3Instance.send(command);
+    console.log(`✅ PDF uploaded successfully: ${s3Key}`);
+
+    // Update contract with S3 key
+    await contractsCollection.updateOne(
+      { _id: new ObjectId(id) },
+      {
+        $set: {
+          s3Key: s3Key,
+          pdfUploaded: true,
+          pdfUploadedAt: new Date(),
+          updatedAt: new Date()
+        }
+      }
+    );
+
+    console.log(`✅ Contract ${id} updated with s3Key`);
+
+    res.json({
+      success: true,
+      s3Key: s3Key,
+      message: "PDF successfully uploaded to S3"
+    });
+
+  } catch (error) {
+    console.error("❌ Error uploading PDF to S3:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to upload PDF",
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
 module.exports = router;

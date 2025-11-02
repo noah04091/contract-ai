@@ -6,7 +6,7 @@ import { Helmet } from "react-helmet";
 import {
   CheckCircle, Clipboard, Save, FileText, Check, Download,
   ArrowRight, ArrowLeft, Sparkles, Edit3, Building,
-  Eye, PenTool, RefreshCw, TrendingUp, Users, ChevronDown
+  Eye, PenTool, RefreshCw, TrendingUp, Users, ChevronDown, Send
 } from "lucide-react";
 import styles from "../styles/Generate.module.css";
 import { toast } from 'react-toastify';
@@ -14,6 +14,7 @@ import { useAuth } from "../context/AuthContext";
 import UnifiedPremiumNotice from "../components/UnifiedPremiumNotice";
 import CreateTemplateModal, { TemplateFormData } from "../components/CreateTemplateModal";
 import EnhancedTemplateLibrary from "../components/EnhancedTemplateLibrary";
+import SignatureModal from "../components/SignatureModal";
 import { UserTemplate, createUserTemplate } from "../services/userTemplatesAPI";
 
 // Types
@@ -549,6 +550,8 @@ export default function Generate() {
   const [copied, setCopied] = useState<boolean>(false);
   const [saved, setSaved] = useState<boolean>(false);
   const [savedContractId, setSavedContractId] = useState<string | null>(null);
+  const [contractS3Key, setContractS3Key] = useState<string | null>(null);
+  const [showSignatureModal, setShowSignatureModal] = useState<boolean>(false);
   const [signatureURL, setSignatureURL] = useState<string | null>(null);
   const [isDrawing, setIsDrawing] = useState<boolean>(false);
   const [showPreview, setShowPreview] = useState<boolean>(false);
@@ -1433,6 +1436,221 @@ export default function Generate() {
     }
   };
 
+  // 🔐 NEW: Generate and Upload PDF to S3 for Signatures
+  const generateAndUploadPDF = async (): Promise<string | null> => {
+    try {
+      console.log("🚀 Starting PDF generation and upload to S3...");
+
+      // Check if contract is saved
+      if (!savedContractId) {
+        toast.error("Bitte speichern Sie den Vertrag zuerst", {
+          position: "top-right",
+          autoClose: 3000
+        });
+        return null;
+      }
+
+      // Try Puppeteer first (backend PDF generation)
+      if (savedContractId) {
+        console.log("🚀 Trying Puppeteer PDF generation...");
+
+        try {
+          const puppeteerUrl = `${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/generate/pdf`;
+
+          const response = await fetch(puppeteerUrl, {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              contractId: savedContractId
+            })
+          });
+
+          if (response.ok && response.headers.get('content-type')?.includes('application/pdf')) {
+            const blob = await response.blob();
+            console.log("✅ PDF Blob received:", blob.size, "bytes");
+
+            // Convert Blob to Base64
+            const base64 = await new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onloadend = () => {
+                const result = reader.result as string;
+                // Remove data:application/pdf;base64, prefix
+                const base64Data = result.split(',')[1];
+                resolve(base64Data);
+              };
+              reader.onerror = reject;
+              reader.readAsDataURL(blob);
+            });
+
+            console.log("✅ PDF converted to Base64:", base64.length, "chars");
+
+            // Upload to S3
+            const uploadResponse = await fetch(
+              `${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/${savedContractId}/upload-pdf`,
+              {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ pdfBase64: base64 })
+              }
+            );
+
+            const uploadData = await uploadResponse.json();
+
+            if (uploadResponse.ok && uploadData.s3Key) {
+              console.log("✅ PDF uploaded to S3:", uploadData.s3Key);
+              setContractS3Key(uploadData.s3Key);
+              return uploadData.s3Key;
+            } else {
+              console.error("❌ S3 upload failed:", uploadData.error);
+              throw new Error(uploadData.error || "S3 upload failed");
+            }
+          }
+        } catch (puppeteerError) {
+          console.warn("⚠️ Puppeteer failed, trying fallback:", puppeteerError);
+        }
+      }
+
+      // Fallback: html2pdf.js (client-side generation)
+      console.log("⚠️ Using html2pdf.js fallback...");
+
+      const html2pdfModule = await import('html2pdf.js');
+      const html2pdf = html2pdfModule.default;
+
+      if (!html2pdf || !generatedHTML) {
+        throw new Error("PDF generation not possible");
+      }
+
+      // Generate PDF as Blob
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = generatedHTML;
+      tempDiv.style.cssText = `
+        position: fixed;
+        left: -9999px;
+        top: 0;
+        width: 794px;
+        background: white;
+      `;
+      document.body.appendChild(tempDiv);
+
+      const opt = {
+        margin: [10, 10, 10, 10] as [number, number, number, number],
+        filename: 'temp.pdf',
+        image: { type: 'jpeg' as const, quality: 0.98 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: '#ffffff'
+        },
+        jsPDF: {
+          unit: 'mm',
+          format: 'a4',
+          orientation: 'portrait' as const
+        }
+      };
+
+      // Generate PDF as Blob (not save)
+      const pdfBlob = await html2pdf().set(opt).from(tempDiv).outputPdf('blob');
+      document.body.removeChild(tempDiv);
+
+      console.log("✅ PDF generated via html2pdf:", pdfBlob.size, "bytes");
+
+      // Convert to Base64
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const result = reader.result as string;
+          const base64Data = result.split(',')[1];
+          resolve(base64Data);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(pdfBlob);
+      });
+
+      // Upload to S3
+      const uploadResponse = await fetch(
+        `${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/${savedContractId}/upload-pdf`,
+        {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ pdfBase64: base64 })
+        }
+      );
+
+      const uploadData = await uploadResponse.json();
+
+      if (uploadResponse.ok && uploadData.s3Key) {
+        console.log("✅ PDF uploaded to S3:", uploadData.s3Key);
+        setContractS3Key(uploadData.s3Key);
+        return uploadData.s3Key;
+      } else {
+        throw new Error(uploadData.error || "S3 upload failed");
+      }
+
+    } catch (error) {
+      console.error("❌ Error generating/uploading PDF:", error);
+      toast.error("Fehler beim PDF-Upload. Bitte versuchen Sie es erneut.", {
+        position: "top-right",
+        autoClose: 5000
+      });
+      return null;
+    }
+  };
+
+  // 🔐 Handler for "Zur Signatur versenden" Button
+  const handleSendForSignature = async () => {
+    // Check if saved
+    if (!saved || !savedContractId) {
+      toast.error("Bitte speichern Sie den Vertrag zuerst", {
+        position: "top-right",
+        autoClose: 3000
+      });
+      return;
+    }
+
+    // Show loading toast
+    const loadingToast = toast.loading("PDF wird vorbereitet...", {
+      position: 'top-center'
+    });
+
+    try {
+      // Generate and upload PDF
+      const s3Key = await generateAndUploadPDF();
+
+      toast.dismiss(loadingToast);
+
+      if (s3Key) {
+        // Success! Open signature modal
+        setShowSignatureModal(true);
+        toast.success("Bereit zur Signatur!", {
+          position: "top-right",
+          autoClose: 2000
+        });
+      } else {
+        toast.error("PDF-Upload fehlgeschlagen. Bitte versuchen Sie es erneut.", {
+          position: "top-right",
+          autoClose: 5000
+        });
+      }
+    } catch (error) {
+      toast.dismiss(loadingToast);
+      console.error("Error in handleSendForSignature:", error);
+      toast.error("Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.", {
+        position: "top-right",
+        autoClose: 5000
+      });
+    }
+  };
+
   // 📄 NEW: Generate PDF Preview (ohne Download)
   const generatePDFPreview = async () => {
     if (isGeneratingPreview) return; // Verhindere Mehrfachklicks
@@ -2225,7 +2443,31 @@ export default function Generate() {
                           </>
                         )}
                       </motion.button>
+
+                      {/* NEW: Zur Signatur versenden Button */}
+                      <motion.button
+                        onClick={handleSendForSignature}
+                        disabled={!saved || !savedContractId}
+                        className={`${styles.actionButton} ${styles.signature}`}
+                        whileHover={saved ? { scale: 1.02 } : {}}
+                        whileTap={saved ? { scale: 0.98 } : {}}
+                        title={!saved ? "Bitte speichern Sie den Vertrag zuerst" : "Zur Signatur versenden"}
+                      >
+                        <Send size={16} />
+                        <span>Zur Signatur versenden</span>
+                      </motion.button>
                     </div>
+
+                    {/* Help Text */}
+                    {!saved && (
+                      <motion.div
+                        className={styles.saveHint}
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                      >
+                        💡 Tipp: Speichern Sie den Vertrag, um ihn zur digitalen Signatur zu versenden
+                      </motion.div>
+                    )}
                     
                     {/* Error Display */}
                     {downloadError && (
@@ -2551,6 +2793,17 @@ export default function Generate() {
           contractTypeName={selectedType?.name || ''}
           currentFormData={formData}
         />
+
+        {/* NEW: Signature Modal */}
+        {showSignatureModal && saved && contractS3Key && (
+          <SignatureModal
+            show={showSignatureModal}
+            onClose={() => setShowSignatureModal(false)}
+            contractId={savedContractId || ''}
+            contractName={formData.title || selectedType?.name || 'Vertrag'}
+            contractS3Key={contractS3Key}
+          />
+        )}
       </div>
     </>
   );
