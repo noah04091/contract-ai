@@ -1655,18 +1655,6 @@ export default function Generate() {
                 </React.Fragment>
               ))}
             </div>
-
-            {/* Progress Bar */}
-            <div className={styles.progressBarContainer}>
-              <motion.div
-                className={styles.progressBarFill}
-                initial={{ width: "0%" }}
-                animate={{
-                  width: `${((currentStep - 1) / 3) * 100}%`
-                }}
-                transition={{ duration: 0.5, ease: "easeInOut" }}
-              />
-            </div>
           </div>
         </motion.header>
 
