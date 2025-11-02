@@ -108,10 +108,17 @@ const PDFFieldPlacementEditor: React.FC<PDFFieldPlacementEditorProps> = ({
   // Start dragging field
   const handleFieldMouseDown = (e: React.MouseEvent, field: SignatureField) => {
     e.preventDefault();
-    const rect = (e.target as HTMLElement).getBoundingClientRect();
+
+    if (!pdfContainerRef.current) return;
+
+    const containerRect = pdfContainerRef.current.getBoundingClientRect();
+    const mouseX = e.clientX - containerRect.left;
+    const mouseY = e.clientY - containerRect.top;
+
+    // Calculate offset from mouse to field's current position
     setDragOffset({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
+      x: mouseX - field.x,
+      y: mouseY - field.y,
     });
     setDraggingField(field.id);
   };
