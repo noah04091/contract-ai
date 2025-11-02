@@ -609,13 +609,13 @@ export default function Generate() {
   // Should show company profile tip?
   const shouldShowProfileTip = userPlan !== 'free' && !companyProfile && !tipDismissed;
 
-  // Auto-activate company profile when loaded
+  // Auto-activate company profile when initially loaded (only once)
   useEffect(() => {
-    if (companyProfile && !useCompanyProfile) {
+    if (companyProfile) {
       setUseCompanyProfile(true);
-      console.log('✅ Company Profile automatisch aktiviert');
+      console.log('✅ Company Profile initial aktiviert');
     }
-  }, [companyProfile, useCompanyProfile]);
+  }, [companyProfile]); // Only depend on companyProfile, not useCompanyProfile!
 
   // Clean up localStorage on component mount
   useEffect(() => {
