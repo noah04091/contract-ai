@@ -1,0 +1,326 @@
+/* ====================================
+   PDF FIELD PLACEMENT EDITOR STYLING
+   DocuSign-Style Interface
+   ==================================== */
+
+.editorContainer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #F7F8FA;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* ====================================
+   TOOLBAR
+   ==================================== */
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1rem 1.5rem;
+  background: white;
+  border-bottom: 1px solid #E5E7EB;
+  flex-wrap: wrap;
+}
+
+.toolbarSection {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.toolbarLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: #667085;
+  white-space: nowrap;
+}
+
+.fieldTypeButtons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.fieldTypeButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: white;
+  border: 1.5px solid #E5E7EB;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #667085;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.fieldTypeButton:hover {
+  background: #F9FAFB;
+  border-color: #2E6CF6;
+  color: #2E6CF6;
+}
+
+.fieldTypeButton.active {
+  background: #2E6CF6;
+  border-color: #2E6CF6;
+  color: white;
+}
+
+.signerSelect {
+  padding: 0.5rem 1rem;
+  background: white;
+  border: 1.5px solid #E5E7EB;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #0B1324;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 200px;
+}
+
+.signerSelect:hover {
+  border-color: #2E6CF6;
+}
+
+.signerSelect:focus {
+  outline: none;
+  border-color: #2E6CF6;
+  box-shadow: 0 0 0 3px rgba(46, 108, 246, 0.1);
+}
+
+.addFieldButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.25rem;
+  background: linear-gradient(135deg, #2E6CF6 0%, #1E53D8 100%);
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-left: auto;
+}
+
+.addFieldButton:hover:not(:disabled) {
+  background: linear-gradient(135deg, #1E53D8 0%, #1643B8 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(46, 108, 246, 0.3);
+}
+
+.addFieldButton:disabled {
+  background: #E5E7EB;
+  color: #9CA3AF;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* ====================================
+   PDF VIEWER
+   ==================================== */
+
+.pdfViewerContainer {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.pageNav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 0.75rem;
+  background: white;
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.pageButton {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 6px;
+  font-size: 18px;
+  color: #667085;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pageButton:hover:not(:disabled) {
+  background: #F9FAFB;
+  border-color: #2E6CF6;
+  color: #2E6CF6;
+}
+
+.pageButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pageInfo {
+  font-size: 13px;
+  font-weight: 500;
+  color: #0B1324;
+}
+
+.pdfContainer {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  overflow: auto;
+  padding: 2rem;
+  background: #F7F8FA;
+  position: relative;
+}
+
+.pdfLoading,
+.pdfError {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 400px;
+  font-size: 14px;
+  color: #667085;
+}
+
+.pdfError {
+  color: #DC2626;
+}
+
+/* ====================================
+   SIGNATURE FIELDS OVERLAY
+   ==================================== */
+
+.fieldsOverlay {
+  position: absolute;
+  top: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.signatureField {
+  position: absolute;
+  border: 2px solid;
+  border-radius: 4px;
+  cursor: move;
+  pointer-events: all;
+  transition: box-shadow 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  font-size: 12px;
+  user-select: none;
+}
+
+.signatureField:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+}
+
+.signatureField.dragging {
+  opacity: 0.8;
+  cursor: grabbing;
+  z-index: 20;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+.fieldLabel {
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: inherit;
+  margin-bottom: 2px;
+}
+
+.fieldSigner {
+  font-size: 10px;
+  color: #667085;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.deleteFieldButton {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 20px;
+  height: 20px;
+  background: #DC2626;
+  border: 2px solid white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: all 0.2s ease;
+  color: white;
+}
+
+.signatureField:hover .deleteFieldButton {
+  opacity: 1;
+}
+
+.deleteFieldButton:hover {
+  background: #B91C1C;
+  transform: scale(1.1);
+}
+
+.fieldCount {
+  padding: 0.75rem 1.5rem;
+  background: white;
+  border-top: 1px solid #E5E7EB;
+  font-size: 13px;
+  color: #667085;
+  text-align: center;
+}
+
+/* ====================================
+   RESPONSIVE
+   ==================================== */
+
+@media (max-width: 768px) {
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .toolbarSection {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .fieldTypeButtons {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .addFieldButton {
+    margin-left: 0;
+  }
+
+  .pdfContainer {
+    padding: 1rem;
+  }
+}

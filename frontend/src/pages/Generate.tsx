@@ -14,7 +14,7 @@ import { useAuth } from "../context/AuthContext";
 import UnifiedPremiumNotice from "../components/UnifiedPremiumNotice";
 import CreateTemplateModal, { TemplateFormData } from "../components/CreateTemplateModal";
 import EnhancedTemplateLibrary from "../components/EnhancedTemplateLibrary";
-import SignatureModal from "../components/SignatureModal";
+import EnhancedSignatureModal from "../components/EnhancedSignatureModal";
 import { UserTemplate, createUserTemplate } from "../services/userTemplatesAPI";
 
 // Types
@@ -2794,9 +2794,9 @@ export default function Generate() {
           currentFormData={formData}
         />
 
-        {/* NEW: Signature Modal */}
+        {/* NEW: Enhanced Signature Modal */}
         {showSignatureModal && saved && contractS3Key && (
-          <SignatureModal
+          <EnhancedSignatureModal
             show={showSignatureModal}
             onClose={() => setShowSignatureModal(false)}
             contractId={savedContractId || ''}
