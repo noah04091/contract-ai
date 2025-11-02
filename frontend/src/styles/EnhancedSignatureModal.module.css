@@ -170,10 +170,11 @@
 
 /* Special: Step 2 (PDF Editor) needs different overflow handling */
 .stepContent:has(.pdfEditor) {
-  overflow: visible; /* ✅ FIXED: Allow PDF scrolling inside */
+  overflow: hidden; /* ✅ FIXED: Enables flexbox scroll logic - PDF scrolls inside! */
   display: flex;
   flex-direction: column;
   min-height: 0; /* Important: allows flex child to shrink and scroll */
+  height: 100%; /* Ensures full height for flex children */
 }
 
 .placeholder {
