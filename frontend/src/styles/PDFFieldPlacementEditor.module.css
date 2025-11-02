@@ -94,6 +94,47 @@
   box-shadow: 0 0 0 3px rgba(46, 108, 246, 0.1);
 }
 
+/* Zoom Controls */
+.zoomControls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.zoomButton {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border: 1.5px solid #E5E7EB;
+  border-radius: 6px;
+  color: #667085;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.zoomButton:hover:not(:disabled) {
+  background: #F9FAFB;
+  border-color: #2E6CF6;
+  color: #2E6CF6;
+}
+
+.zoomButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: #F9FAFB;
+}
+
+.zoomLevel {
+  font-size: 13px;
+  font-weight: 500;
+  color: #0B1324;
+  min-width: 45px;
+  text-align: center;
+}
+
 .addFieldButton {
   display: flex;
   align-items: center;

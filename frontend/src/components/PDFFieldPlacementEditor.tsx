@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { motion, AnimatePresence } from 'framer-motion';
-import { PenTool, Calendar, Type, FileSignature, Trash2, Plus } from 'lucide-react';
+import { PenTool, Calendar, Type, FileSignature, Trash2, Plus, ZoomIn, ZoomOut } from 'lucide-react';
 import styles from '../styles/PDFFieldPlacementEditor.module.css';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
@@ -56,6 +56,7 @@ const PDFFieldPlacementEditor: React.FC<PDFFieldPlacementEditorProps> = ({
   const [selectedSigner, setSelectedSigner] = useState<string>(signers[0]?.email || '');
   const [draggingField, setDraggingField] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [zoomLevel, setZoomLevel] = useState<number>(100); // Zoom in percentage (50%, 75%, 100%, 125%, 150%, 200%)
 
   const pdfContainerRef = useRef<HTMLDivElement>(null);
   const pdfPageWrapperRef = useRef<HTMLDivElement>(null);
@@ -156,6 +157,18 @@ const PDFFieldPlacementEditor: React.FC<PDFFieldPlacementEditorProps> = ({
     setDraggingField(null);
   };
 
+  // Zoom handlers
+  const handleZoomIn = () => {
+    setZoomLevel(prev => Math.min(prev + 25, 200)); // Max 200%
+  };
+
+  const handleZoomOut = () => {
+    setZoomLevel(prev => Math.max(prev - 25, 50)); // Min 50%
+  };
+
+  // Calculate PDF width based on zoom level
+  const pdfWidth = Math.round((1000 * zoomLevel) / 100);
+
   // Get signer color
   const getSignerColor = (email: string): string => {
     const signer = signers.find(s => s.email === email);
@@ -202,6 +215,29 @@ const PDFFieldPlacementEditor: React.FC<PDFFieldPlacementEditorProps> = ({
               </option>
             ))}
           </select>
+        </div>
+
+        <div className={styles.toolbarSection}>
+          <label className={styles.toolbarLabel}>Zoom:</label>
+          <div className={styles.zoomControls}>
+            <button
+              className={styles.zoomButton}
+              onClick={handleZoomOut}
+              disabled={zoomLevel <= 50}
+              title="Herauszoomen"
+            >
+              <ZoomOut size={16} />
+            </button>
+            <span className={styles.zoomLevel}>{zoomLevel}%</span>
+            <button
+              className={styles.zoomButton}
+              onClick={handleZoomIn}
+              disabled={zoomLevel >= 200}
+              title="Hineinzoomen"
+            >
+              <ZoomIn size={16} />
+            </button>
+          </div>
         </div>
 
         <button
@@ -260,7 +296,7 @@ const PDFFieldPlacementEditor: React.FC<PDFFieldPlacementEditorProps> = ({
             >
               <Page
                 pageNumber={currentPage}
-                width={1000}
+                width={pdfWidth}
                 onLoadSuccess={onPageLoadSuccess}
                 renderTextLayer={false}
                 renderAnnotationLayer={false}
