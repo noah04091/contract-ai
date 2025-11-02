@@ -161,9 +161,16 @@ const CreateTemplateModal: React.FC<CreateTemplateModalProps> = ({
               </div>
 
               <div className={styles.infoBox}>
-                <p>
-                  💡 Ihre aktuellen Formular-Eingaben werden als Standard-Werte
-                  in dieser Vorlage gespeichert.
+                <div className={styles.infoHeader}>
+                  <strong>⚠️ WICHTIG: So funktioniert's!</strong>
+                </div>
+                <ol className={styles.infoSteps}>
+                  <li><strong>ZUERST</strong> das Formular unten ausfüllen (Vertragsgegenstand, Kaufpreis, etc.)</li>
+                  <li><strong>DANN</strong> auf "Vorlage erstellen" klicken</li>
+                  <li><strong>FERTIG!</strong> Alle ausgefüllten Felder werden gespeichert</li>
+                </ol>
+                <p className={styles.infoFooter}>
+                  ✅ Später mit einem Klick alle Daten wiederherstellen!
                 </p>
               </div>
 

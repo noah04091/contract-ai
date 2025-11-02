@@ -176,11 +176,49 @@
 
 /* Info Box */
 .infoBox {
-  background: #F0F7FF;
-  border: 1px solid #DBEAFE;
+  background: #FFF4E6;
+  border: 2px solid #FFB020;
   border-radius: 10px;
-  padding: 1rem;
+  padding: 1.25rem;
   margin-top: 1.5rem;
+}
+
+.infoHeader {
+  font-size: 14px;
+  color: #0B1324;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.infoSteps {
+  margin: 0.75rem 0;
+  padding-left: 1.25rem;
+  list-style: decimal;
+}
+
+.infoSteps li {
+  font-size: 13px;
+  color: #374151;
+  line-height: 1.6;
+  margin-bottom: 0.5rem;
+}
+
+.infoSteps li:last-child {
+  margin-bottom: 0;
+}
+
+.infoSteps strong {
+  color: #0B1324;
+  font-weight: 600;
+}
+
+.infoFooter {
+  font-size: 13px;
+  color: #059669;
+  margin: 0.75rem 0 0 0;
+  font-weight: 500;
 }
 
 .infoBox p {
