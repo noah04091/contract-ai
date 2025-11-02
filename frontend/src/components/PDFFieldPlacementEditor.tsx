@@ -260,7 +260,7 @@ const PDFFieldPlacementEditor: React.FC<PDFFieldPlacementEditorProps> = ({
             >
               <Page
                 pageNumber={currentPage}
-                width={800}
+                width={1000}
                 onLoadSuccess={onPageLoadSuccess}
                 renderTextLayer={false}
                 renderAnnotationLayer={false}
