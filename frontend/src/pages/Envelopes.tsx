@@ -197,8 +197,8 @@ export default function Envelopes() {
   // Filter envelopes based on active tab
   const filteredEnvelopes = envelopes.filter(env => {
     if (activeFilter === "all") return true;
-    // "Offen" = Warte auf Signaturen (SENT oder SIGNED)
-    if (activeFilter === "open") return env.status === "SENT" || env.status === "SIGNED";
+    // "Offen" = Alle außer COMPLETED und VOIDED (inkl. DRAFT, AWAITING_SIGNER_X, SENT, SIGNED, DECLINED)
+    if (activeFilter === "open") return env.status !== "COMPLETED" && env.status !== "VOIDED";
     if (activeFilter === "completed") return env.status === "COMPLETED";
     return true;
   });
@@ -1022,7 +1022,7 @@ export default function Envelopes() {
             onClick={() => setActiveFilter("open")}
           >
             <Clock size={16} />
-            Offen ({envelopes.filter(e => e.status === "SENT" || e.status === "SIGNED").length})
+            Offen ({envelopes.filter(e => e.status !== "COMPLETED" && e.status !== "VOIDED").length})
           </button>
           <button
             className={`${styles.filterTab} ${activeFilter === "completed" ? styles.filterTabActive : ""}`}
