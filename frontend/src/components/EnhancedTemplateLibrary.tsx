@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { BookOpen, Plus, Star, Trash2, AlertCircle } from 'lucide-react';
+import { BookOpen, Plus, Star, Trash2 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import styles from '../styles/Generate.module.css';
 import { UserTemplate, fetchTemplatesByType, deleteUserTemplate } from '../services/userTemplatesAPI';
@@ -86,17 +86,13 @@ const EnhancedTemplateLibrary: React.FC<EnhancedTemplateLibraryProps> = ({
         </div>
 
         <div className={styles.emptyTemplates}>
-          <div className={styles.emptyIcon}>
-            <AlertCircle size={48} />
-          </div>
-          <h4>Keine Vorlagen verfügbar</h4>
-          <p>Es gibt noch keine vorgefertigten Vorlagen für diesen Vertragstyp.</p>
+          <p>Noch keine Vorlagen vorhanden.</p>
           <button
-            className={styles.createTemplateButton}
+            className={styles.createTemplateButtonSmall}
             onClick={onCreateTemplate}
           >
-            <Plus size={18} />
-            <span>Erste Vorlage erstellen</span>
+            <Plus size={14} />
+            <span>Vorlage erstellen</span>
           </button>
         </div>
       </motion.div>

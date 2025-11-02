@@ -1528,7 +1528,7 @@
 /* Empty Templates State */
 .emptyTemplates {
   text-align: center;
-  padding: 3rem 1.5rem;
+  padding: 1.5rem 1rem;
 }
 
 .emptyIcon {
@@ -1551,9 +1551,31 @@
 }
 
 .emptyTemplates p {
-  font-size: 14px;
+  font-size: 13px;
   color: #667085;
-  margin: 0 0 1.5rem 0;
+  margin: 0 0 0.75rem 0;
+}
+
+.createTemplateButtonSmall {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  padding: 0.5rem 1rem;
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #667085;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.createTemplateButtonSmall:hover {
+  background: #F9FAFB;
+  border-color: #2E6CF6;
+  color: #2E6CF6;
 }
 
 /* =================================
