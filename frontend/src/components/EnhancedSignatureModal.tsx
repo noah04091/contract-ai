@@ -1,7 +1,7 @@
 // 📝 EnhancedSignatureModal.tsx - Multi-Step Signature Modal with Field Placement
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Send, ArrowRight, ArrowLeft, CheckCircle, Plus, Mail, User, Trash2, Users } from "lucide-react";
+import { X, Send, ArrowRight, ArrowLeft, CheckCircle, Plus, Mail, User, Trash2, Users, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import PDFFieldPlacementEditor, { SignatureField, Signer } from "./PDFFieldPlacementEditor";
@@ -731,6 +731,32 @@ export default function EnhancedSignatureModal({
                 </button>
               )}
             </div>
+
+            {/* Professional Loading Overlay */}
+            <AnimatePresence>
+              {isSubmitting && (
+                <motion.div
+                  className={styles.loadingOverlay}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <div className={styles.loadingContent}>
+                    <div className={styles.loadingSpinner}>
+                      <Loader2 className={styles.spinnerIcon} size={48} />
+                    </div>
+                    <h3 className={styles.loadingTitle}>Vertrag wird erstellt...</h3>
+                    <p className={styles.loadingText}>
+                      Bitte warten Sie, während wir Ihre Signaturanfrage vorbereiten und versenden.
+                    </p>
+                    <div className={styles.loadingProgress}>
+                      <div className={styles.progressBar}></div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
         </div>
       )}

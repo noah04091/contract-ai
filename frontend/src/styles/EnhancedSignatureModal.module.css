@@ -717,3 +717,122 @@
     width: 100%;
   }
 }
+
+/* ====================================
+   PROFESSIONAL LOADING OVERLAY
+   ==================================== */
+
+.loadingOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  border-radius: 16px;
+}
+
+.loadingContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  max-width: 400px;
+  text-align: center;
+}
+
+.loadingSpinner {
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+
+.spinnerIcon {
+  color: #2E6CF6;
+  animation: spin 1s linear infinite;
+  filter: drop-shadow(0 4px 12px rgba(46, 108, 246, 0.3));
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loadingTitle {
+  font-size: 22px;
+  font-weight: 600;
+  color: #0B1324;
+  margin: 0 0 0.75rem 0;
+  letter-spacing: -0.02em;
+}
+
+.loadingText {
+  font-size: 14px;
+  color: #667085;
+  line-height: 1.6;
+  margin: 0 0 2rem 0;
+  max-width: 320px;
+}
+
+.loadingProgress {
+  width: 100%;
+  max-width: 280px;
+  height: 4px;
+  background: #E5E7EB;
+  border-radius: 999px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progressBar {
+  height: 100%;
+  background: linear-gradient(90deg, #2E6CF6 0%, #1E53D8 50%, #2E6CF6 100%);
+  background-size: 200% 100%;
+  border-radius: 999px;
+  animation: progressSlide 1.5s ease-in-out infinite;
+  box-shadow: 0 0 12px rgba(46, 108, 246, 0.4);
+}
+
+@keyframes progressSlide {
+  0% {
+    transform: translateX(-100%);
+    background-position: 0% 0%;
+  }
+  50% {
+    background-position: 100% 0%;
+  }
+  100% {
+    transform: translateX(100%);
+    background-position: 200% 0%;
+  }
+}
+
+/* Loading overlay responsive */
+@media (max-width: 768px) {
+  .loadingContent {
+    padding: 2rem 1.5rem;
+  }
+
+  .loadingTitle {
+    font-size: 20px;
+  }
+
+  .loadingText {
+    font-size: 13px;
+  }
+
+  .spinnerIcon {
+    width: 40px;
+    height: 40px;
+  }
+}
