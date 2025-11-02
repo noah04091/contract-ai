@@ -1,8 +1,7 @@
 // 📝 EnhancedSignatureModal.tsx - Multi-Step Signature Modal with Field Placement
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Send, ArrowRight, ArrowLeft, CheckCircle } from "lucide-react";
-// Note: Plus, Mail, User, Trash2, Users will be used in Step 1 & 3 implementation
+import { X, Send, ArrowRight, ArrowLeft, CheckCircle, Plus, Mail, User, Trash2, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import PDFFieldPlacementEditor, { SignatureField, Signer } from "./PDFFieldPlacementEditor";
@@ -20,8 +19,7 @@ type SignatureMode = "RECIPIENT_ONLY" | "BOTH_PARTIES";
 type SigningOrder = "SENDER_FIRST" | "RECIPIENT_FIRST";
 type Step = 1 | 2 | 3;
 
-// Predefined colors for signers (will be used in Step 1 implementation)
-/*
+// Predefined colors for signers
 const SIGNER_COLORS = [
   '#2E6CF6', // Blue
   '#10B981', // Green
@@ -30,7 +28,6 @@ const SIGNER_COLORS = [
   '#8B5CF6', // Purple
   '#EC4899', // Pink
 ];
-*/
 
 export default function EnhancedSignatureModal({
   show,
@@ -46,12 +43,13 @@ export default function EnhancedSignatureModal({
 
   // Signer management
   const [signers, setSigners] = useState<Array<{ email: string; name: string; color: string }>>([]);
-  // TODO: Add currentEmail, currentName state in Step 1 implementation
+  const [currentEmail, setCurrentEmail] = useState("");
+  const [currentName, setCurrentName] = useState("");
   const [message, setMessage] = useState("");
 
   // Settings
-  const [signatureMode] = useState<SignatureMode>("RECIPIENT_ONLY"); // Will be used in Step 1
-  const [signingOrder] = useState<SigningOrder>("RECIPIENT_FIRST"); // Will be used in Step 1
+  const [signatureMode, setSignatureMode] = useState<SignatureMode>("RECIPIENT_ONLY");
+  const [signingOrder, setSigningOrder] = useState<SigningOrder>("RECIPIENT_FIRST");
   const [currentUser, setCurrentUser] = useState<{ name: string; email: string } | null>(null);
 
   // Signature fields
@@ -125,7 +123,8 @@ export default function EnhancedSignatureModal({
     if (!show) {
       setCurrentStep(1);
       setSigners([]);
-      // currentEmail and currentName will be added in Step 1 implementation
+      setCurrentEmail("");
+      setCurrentName("");
       setMessage("");
       setSignatureFields([]);
       setPdfUrl(null);
@@ -133,9 +132,43 @@ export default function EnhancedSignatureModal({
     }
   }, [show]);
 
-  // TODO: Implement these in Step 1
-  // const handleAddSigner = () => { ... };
-  // const handleRemoveSigner = (index: number) => { ... };
+  const handleAddSigner = () => {
+    if (!currentEmail || !currentName) {
+      toast.warning("Bitte E-Mail und Name eingeben");
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(currentEmail)) {
+      toast.error("Bitte gültige E-Mail-Adresse eingeben");
+      return;
+    }
+
+    // Check for duplicates
+    if (signers.some(s => s.email.toLowerCase() === currentEmail.toLowerCase())) {
+      toast.warning("Diese E-Mail-Adresse wurde bereits hinzugefügt");
+      return;
+    }
+
+    // Assign color from SIGNER_COLORS (cycling through colors)
+    const color = SIGNER_COLORS[signers.length % SIGNER_COLORS.length];
+
+    setSigners([...signers, { email: currentEmail, name: currentName, color }]);
+    setCurrentEmail("");
+    setCurrentName("");
+  };
+
+  const handleRemoveSigner = (index: number) => {
+    setSigners(signers.filter((_, i) => i !== index));
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleAddSigner();
+    }
+  };
 
   const handleNextStep = () => {
     if (currentStep === 1) {
@@ -398,9 +431,139 @@ export default function EnhancedSignatureModal({
                     exit={{ opacity: 0, x: 20 }}
                     className={styles.stepContent}
                   >
-                    {/* Step 1 content from original modal */}
-                    {/* TODO: Copy content from SignatureModal.tsx */}
-                    <div className={styles.placeholder}>Step 1: Empfänger hinzufügen (wird implementiert)</div>
+                    <div className={styles.step1Container}>
+                      {/* Signature Settings */}
+                      <div className={styles.section}>
+                        <h3 className={styles.sectionTitle}>
+                          <Users size={18} />
+                          Signatur-Einstellungen
+                        </h3>
+
+                        {/* Radio Buttons: Nur Empfänger vs Beide Seiten */}
+                        <div className={styles.radioGroup}>
+                          <label className={styles.radioOption}>
+                            <input
+                              type="radio"
+                              name="signatureMode"
+                              value="RECIPIENT_ONLY"
+                              checked={signatureMode === "RECIPIENT_ONLY"}
+                              onChange={() => setSignatureMode("RECIPIENT_ONLY")}
+                              className={styles.radio}
+                            />
+                            <div className={styles.radioLabel}>
+                              <span className={styles.radioTitle}>Nur Empfänger signiert</span>
+                              <span className={styles.radioSubtitle}>
+                                Nur die hinzugefügten Empfänger müssen signieren
+                              </span>
+                            </div>
+                          </label>
+
+                          <label className={styles.radioOption}>
+                            <input
+                              type="radio"
+                              name="signatureMode"
+                              value="BOTH_PARTIES"
+                              checked={signatureMode === "BOTH_PARTIES"}
+                              onChange={() => setSignatureMode("BOTH_PARTIES")}
+                              className={styles.radio}
+                            />
+                            <div className={styles.radioLabel}>
+                              <span className={styles.radioTitle}>Beide Seiten signieren</span>
+                              <span className={styles.radioSubtitle}>
+                                Sie und die Empfänger müssen signieren
+                              </span>
+                            </div>
+                          </label>
+                        </div>
+
+                        {/* Signing Order Dropdown (nur bei BOTH_PARTIES) */}
+                        {signatureMode === "BOTH_PARTIES" && (
+                          <div className={styles.dropdownWrapper}>
+                            <label className={styles.dropdownLabel}>Reihenfolge:</label>
+                            <select
+                              value={signingOrder}
+                              onChange={(e) => setSigningOrder(e.target.value as SigningOrder)}
+                              className={styles.dropdown}
+                            >
+                              <option value="RECIPIENT_FIRST">Empfänger signiert zuerst</option>
+                              <option value="SENDER_FIRST">Ich signiere zuerst</option>
+                            </select>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Add Signer Form */}
+                      <div className={styles.section}>
+                        <h3 className={styles.sectionTitle}>Empfänger hinzufügen</h3>
+                        <div className={styles.addSignerForm}>
+                          <div className={styles.inputGroup}>
+                            <div className={styles.inputWrapper}>
+                              <Mail size={16} className={styles.inputIcon} />
+                              <input
+                                type="email"
+                                placeholder="E-Mail-Adresse"
+                                value={currentEmail}
+                                onChange={(e) => setCurrentEmail(e.target.value)}
+                                onKeyPress={handleKeyPress}
+                                className={styles.input}
+                              />
+                            </div>
+                            <div className={styles.inputWrapper}>
+                              <User size={16} className={styles.inputIcon} />
+                              <input
+                                type="text"
+                                placeholder="Name"
+                                value={currentName}
+                                onChange={(e) => setCurrentName(e.target.value)}
+                                onKeyPress={handleKeyPress}
+                                className={styles.input}
+                              />
+                            </div>
+                          </div>
+                          <button
+                            className={styles.addBtn}
+                            onClick={handleAddSigner}
+                            disabled={!currentEmail || !currentName}
+                          >
+                            <Plus size={16} />
+                            Hinzufügen
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Signers List */}
+                      {signers.length > 0 && (
+                        <div className={styles.section}>
+                          <h3 className={styles.sectionTitle}>
+                            Empfänger ({signers.length})
+                          </h3>
+                          <div className={styles.signersList}>
+                            {signers.map((signer, index) => (
+                              <div key={index} className={styles.signerItem}>
+                                <div className={styles.signerInfo}>
+                                  <div
+                                    className={styles.signerIcon}
+                                    style={{ backgroundColor: signer.color }}
+                                  >
+                                    <User size={14} />
+                                  </div>
+                                  <div className={styles.signerDetails}>
+                                    <span className={styles.signerName}>{signer.name}</span>
+                                    <span className={styles.signerEmail}>{signer.email}</span>
+                                  </div>
+                                </div>
+                                <button
+                                  className={styles.removeBtn}
+                                  onClick={() => handleRemoveSigner(index)}
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </motion.div>
                 )}
 
@@ -429,7 +592,91 @@ export default function EnhancedSignatureModal({
                     exit={{ opacity: 0, x: 20 }}
                     className={styles.stepContent}
                   >
-                    <div className={styles.placeholder}>Step 3: Review & Send (wird implementiert)</div>
+                    <div className={styles.step3Container}>
+                      {/* Summary Section */}
+                      <div className={styles.section}>
+                        <h3 className={styles.sectionTitle}>Zusammenfassung</h3>
+
+                        {/* Contract Info */}
+                        <div className={styles.summaryCard}>
+                          <div className={styles.summaryLabel}>Dokument:</div>
+                          <div className={styles.summaryValue}>{contractName}</div>
+                        </div>
+
+                        {/* Signers Info */}
+                        <div className={styles.summaryCard}>
+                          <div className={styles.summaryLabel}>Empfänger:</div>
+                          <div className={styles.summarySigners}>
+                            {getAllSigners().map((signer, index) => (
+                              <div key={index} className={styles.summarySignerItem}>
+                                <div
+                                  className={styles.summarySignerDot}
+                                  style={{ backgroundColor: signer.color }}
+                                />
+                                <span className={styles.summarySignerText}>
+                                  {signer.name} ({signer.email})
+                                </span>
+                                {signatureFields.filter(f => f.assigneeEmail === signer.email).length > 0 && (
+                                  <span className={styles.summaryFieldCount}>
+                                    {signatureFields.filter(f => f.assigneeEmail === signer.email).length} {signatureFields.filter(f => f.assigneeEmail === signer.email).length === 1 ? 'Feld' : 'Felder'}
+                                  </span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Signature Mode */}
+                        <div className={styles.summaryCard}>
+                          <div className={styles.summaryLabel}>Signatur-Modus:</div>
+                          <div className={styles.summaryValue}>
+                            {signatureMode === "BOTH_PARTIES"
+                              ? `Beide Seiten signieren (${signingOrder === "SENDER_FIRST" ? "Sie zuerst" : "Empfänger zuerst"})`
+                              : "Nur Empfänger signiert"
+                            }
+                          </div>
+                        </div>
+
+                        {/* Fields Count */}
+                        <div className={styles.summaryCard}>
+                          <div className={styles.summaryLabel}>Signatur-Felder:</div>
+                          <div className={styles.summaryValue}>
+                            {signatureFields.length} {signatureFields.length === 1 ? 'Feld' : 'Felder'} platziert
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Message Section */}
+                      <div className={styles.section}>
+                        <h3 className={styles.sectionTitle}>Nachricht (optional)</h3>
+                        <textarea
+                          className={styles.textarea}
+                          placeholder="Fügen Sie eine persönliche Nachricht für die Empfänger hinzu..."
+                          value={message}
+                          onChange={(e) => setMessage(e.target.value)}
+                          rows={4}
+                        />
+                      </div>
+
+                      {/* Warning if BOTH_PARTIES and current user has no fields */}
+                      {signatureMode === "BOTH_PARTIES" && currentUser &&
+                       signatureFields.filter(f => f.assigneeEmail === currentUser.email).length === 0 && (
+                        <div className={styles.warningBox}>
+                          <span className={styles.warningIcon}>⚠️</span>
+                          <div className={styles.warningText}>
+                            <strong>Hinweis:</strong> Sie haben "Beide Seiten signieren" gewählt, aber keine Signatur-Felder für sich selbst platziert.
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Success hint */}
+                      <div className={styles.successBox}>
+                        <span className={styles.successIcon}>✓</span>
+                        <div className={styles.successText}>
+                          Bereit zum Versenden! Die Empfänger erhalten E-Mail-Einladungen zum Signieren.
+                        </div>
+                      </div>
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>
