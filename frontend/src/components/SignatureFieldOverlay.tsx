@@ -81,12 +81,15 @@ export default function SignatureFieldOverlay({
   currentPage,
   fieldStates,
   activeFieldId,
-  pageWidth: _pageWidth, // Unused but kept in props for interface consistency
-  pageHeight: _pageHeight, // Unused but kept in props for interface consistency
+  pageWidth,
+  pageHeight,
   scale = 1.0,
   onFieldClick,
   signerColor = "#2E6CF6"
 }: SignatureFieldOverlayProps) {
+  // pageWidth and pageHeight are kept in the interface for consistency
+  void pageWidth;
+  void pageHeight;
   // Filter fields for current page
   const pageFields = fields.filter(field => field.page === currentPage);
 

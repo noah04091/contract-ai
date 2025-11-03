@@ -282,7 +282,7 @@ export default function EnhancedSignaturePage() {
     console.log(`📄 PDF loaded with ${numPages} pages`);
   }
 
-  function onPageLoadSuccess(page: any) {
+  function onPageLoadSuccess(page: { width: number; originalWidth: number; originalHeight: number }) {
     // Store page dimensions for field overlay calculations
     const { width, originalWidth, originalHeight } = page;
     setPdfPageDimensions({ width: originalWidth, height: originalHeight });
@@ -521,7 +521,7 @@ export default function EnhancedSignaturePage() {
 
       // Prepare signatures array from fieldStates
       const signatures = Object.entries(fieldStates)
-        .filter(([_, state]) => state.value)
+        .filter(([, state]) => state.value)
         .map(([fieldId, state]) => ({
           fieldId,
           value: state.value!

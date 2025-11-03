@@ -89,7 +89,7 @@ function validateDateString(dateStr: string): { valid: boolean; iso?: string; er
     return { valid: false, error: "Ungültiges Datum. Format: TT.MM.JJJJ" };
   }
 
-  const [_, day, month, year] = match;
+  const [, day, month, year] = match;
   const d = parseInt(day, 10);
   const m = parseInt(month, 10);
   const y = parseInt(year, 10);
@@ -294,7 +294,7 @@ export default function FieldInputModal({
           setIsValid(false);
           return;
         }
-      } catch (err) {
+      } catch {
         console.error("Invalid regex pattern:", field.extras.pattern);
       }
     }
@@ -322,7 +322,7 @@ export default function FieldInputModal({
   const renderContent = () => {
     switch (field.type) {
       case "signature":
-      case "initials":
+      case "initials": {
         const canvasWidth = field.type === "signature" ? 600 : 300;
         const canvasHeight = field.type === "signature" ? 180 : 120;
 
@@ -358,6 +358,7 @@ export default function FieldInputModal({
             </button>
           </div>
         );
+      }
 
       case "date":
         return (
@@ -388,7 +389,7 @@ export default function FieldInputModal({
           </div>
         );
 
-      case "text":
+      case "text": {
         const multiline = field.extras?.multiline || false;
 
         return (
@@ -422,6 +423,7 @@ export default function FieldInputModal({
             )}
           </div>
         );
+      }
 
       default:
         return null;

@@ -111,12 +111,14 @@ export default function FieldSidebar({
   fields,
   fieldStates,
   activeFieldId,
-  currentPage: _currentPage, // Unused but kept for potential future use
+  currentPage,
   onJumpToField,
   onNextField,
   onFinish,
   canFinish
 }: FieldSidebarProps) {
+  // currentPage is kept in the interface for potential future use
+  void currentPage;
   const grouped = groupFieldsByPage(fields);
   const pages = Array.from(grouped.keys()).sort((a, b) => a - b);
   const progress = calculateProgress(fields, fieldStates);
