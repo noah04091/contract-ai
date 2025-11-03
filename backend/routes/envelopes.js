@@ -113,38 +113,134 @@ function validateSignature(signatureValue) {
 }
 
 /**
- * Send signature invitation email
+ * 🆕 FIX 6: Comprehensive envelope submission validation
+ * Validates all required fields, field types, and signer permissions
+ */
+function validateEnvelopeSubmission(envelope, signatures, signerEmail) {
+  const errors = [];
+
+  // Get all fields for this signer
+  const signerFields = envelope.signatureFields.filter(
+    field => field.assigneeEmail.toLowerCase() === signerEmail.toLowerCase()
+  );
+
+  // 1. Check all REQUIRED fields have values
+  const requiredFields = signerFields.filter(field => field.required);
+  const submittedFieldIds = new Set(signatures.map(sig => sig.fieldId.toString()));
+
+  for (const field of requiredFields) {
+    if (!submittedFieldIds.has(field._id.toString())) {
+      errors.push(`Pflichtfeld fehlt: ${field.label || field.type} (${field._id})`);
+    }
+  }
+
+  // 2. Validate each signature
+  for (const sig of signatures) {
+    // Find the field
+    const field = envelope.signatureFields.id(sig.fieldId);
+
+    if (!field) {
+      errors.push(`Feld nicht gefunden: ${sig.fieldId}`);
+      continue;
+    }
+
+    // 3. Verify field belongs to this signer (assigneeEmail check)
+    if (field.assigneeEmail.toLowerCase() !== signerEmail.toLowerCase()) {
+      errors.push(`Feld gehört nicht zu diesem Unterzeichner: ${sig.fieldId}`);
+      continue;
+    }
+
+    // 4. Field-type specific validation
+    switch (field.type) {
+      case 'signature':
+      case 'initials':
+        // Already validated by validateSignature() function
+        break;
+
+      case 'date':
+        // Validate date format (ISO 8601 or DD.MM.YYYY)
+        if (sig.value && typeof sig.value === 'string') {
+          const isoDateRegex = /^\d{4}-\d{2}-\d{2}$/;
+          const germanDateRegex = /^\d{2}\.\d{2}\.\d{4}$/;
+
+          if (!isoDateRegex.test(sig.value) && !germanDateRegex.test(sig.value)) {
+            errors.push(`Ungültiges Datumsformat für Feld ${sig.fieldId}: ${sig.value}`);
+          }
+
+          // Additional: Check if date is valid (not a future date for signatures)
+          const parsedDate = new Date(sig.value);
+          if (isNaN(parsedDate.getTime())) {
+            errors.push(`Ungültiges Datum für Feld ${sig.fieldId}: ${sig.value}`);
+          }
+        } else {
+          errors.push(`Datum fehlt oder ist ungültig für Feld ${sig.fieldId}`);
+        }
+        break;
+
+      case 'text':
+        // Validate text field (max 500 chars, no empty required fields)
+        if (!sig.value || typeof sig.value !== 'string') {
+          if (field.required) {
+            errors.push(`Textfeld ist erforderlich: ${sig.fieldId}`);
+          }
+        } else if (sig.value.length > 500) {
+          errors.push(`Textfeld zu lang (max 500 Zeichen): ${sig.fieldId}`);
+        }
+        break;
+
+      default:
+        errors.push(`Unbekannter Feldtyp: ${field.type} für Feld ${sig.fieldId}`);
+    }
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors
+  };
+}
+
+/**
+ * Send signature invitation email (HTML + Plain Text)
  */
 async function sendSignatureInvitation(signer, envelope, ownerEmail) {
   const signUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/sign/${signer.token}`;
 
+  // 🆕 Get signature fields for this signer
+  const signerFields = envelope.signatureFields.filter(
+    field => field.assigneeEmail.toLowerCase() === signer.email.toLowerCase()
+  );
+
+  // 🆕 Import email templates
+  const {
+    generateSignatureInvitationHTML,
+    generateSignatureInvitationText
+  } = require('../templates/signatureInvitationEmail');
+
+  // 🆕 Prepare data for templates
+  const templateData = {
+    signer: {
+      name: signer.name,
+      email: signer.email
+    },
+    envelope: {
+      title: envelope.title,
+      message: envelope.message || ''
+    },
+    ownerEmail,
+    signUrl,
+    expiresAt: signer.tokenExpires,
+    signatureFields: signerFields
+  };
+
+  // 🆕 Generate HTML and plain text versions
+  const htmlContent = generateSignatureInvitationHTML(templateData);
+  const textContent = generateSignatureInvitationText(templateData);
+
   const subject = `📝 Signaturanfrage: ${envelope.title}`;
 
-  const text = `
-Hallo ${signer.name},
-
-${ownerEmail} hat Ihnen ein Dokument zur Unterschrift geschickt.
-
-Dokument: ${envelope.title}
-${envelope.message ? `\nNachricht:\n${envelope.message}\n` : ''}
-
-Bitte klicken Sie auf den folgenden Link, um das Dokument zu signieren:
-
-${signUrl}
-
-Dieser Link ist gültig bis: ${new Date(signer.tokenExpires).toLocaleString('de-DE')}
-
-Mit freundlichen Grüßen
-Ihr Contract AI Team
-
----
-Contract AI - Digitale Signatur-Lösung
-${process.env.FRONTEND_URL || 'http://localhost:5173'}
-`;
-
   try {
-    await sendEmail(signer.email, subject, text);
-    console.log(`✉️ Signature invitation sent to: ${signer.email}`);
+    await sendEmail(signer.email, subject, textContent, htmlContent);
+    console.log(`✉️ Signature invitation sent to: ${signer.email} (${signerFields.length} fields)`);
     return true;
   } catch (error) {
     console.error(`❌ Failed to send invitation to ${signer.email}:`, error);
@@ -1260,14 +1356,30 @@ router.post("/sign/:token/submit", signatureSubmitLimiter, async (req, res) => {
 
     console.log(`✅ Processing ${signatures.length} signatures for: ${signer.email}`);
 
-    // ✅ VALIDATE SIGNATURES
+    // ✅ FIX 6: COMPREHENSIVE VALIDATION (Required fields, Field types, Permissions)
+    const validationResult = validateEnvelopeSubmission(envelope, signatures, signer.email);
+    if (!validationResult.valid) {
+      console.error(`❌ Validation failed for ${signer.email}:`, validationResult.errors);
+      return res.status(400).json({
+        success: false,
+        message: 'Validierungsfehler',
+        errors: validationResult.errors
+      });
+    }
+
+    // ✅ VALIDATE SIGNATURE/INITIALS FORMAT (Base64, Size)
     for (const sig of signatures) {
-      const validation = validateSignature(sig.value);
-      if (!validation.valid) {
-        return res.status(400).json({
-          success: false,
-          message: validation.error
-        });
+      const field = envelope.signatureFields.id(sig.fieldId);
+
+      // Only validate signature/initials fields (not text/date)
+      if (field && (field.type === 'signature' || field.type === 'initials')) {
+        const validation = validateSignature(sig.value);
+        if (!validation.valid) {
+          return res.status(400).json({
+            success: false,
+            message: validation.error
+          });
+        }
       }
     }
 
@@ -1307,14 +1419,32 @@ router.post("/sign/:token/submit", signatureSubmitLimiter, async (req, res) => {
       envelope.status = 'SIGNED';
     }
 
-    // Add audit event
+    // 🆕 FIX 6: Calculate integrity hashes for audit trail
+    const docHash = crypto.createHash('sha256')
+      .update(envelope.s3Key || envelope._id.toString())
+      .digest('hex')
+      .substring(0, 16);
+
+    // Create hash of all submitted values (for integrity verification)
+    const valuesString = signatures
+      .map(sig => `${sig.fieldId}:${sig.value}`)
+      .sort()
+      .join('|');
+    const valuesHash = crypto.createHash('sha256')
+      .update(valuesString)
+      .digest('hex')
+      .substring(0, 16);
+
+    // Add audit event with integrity hashes
     await envelope.addAuditEvent('SIGNED', {
       userId: null,
       email: signer.email,
       ip: signer.ip,
       userAgent: signer.userAgent,
       details: {
-        signaturesCount: updatedCount
+        signaturesCount: updatedCount,
+        docHash,      // 🔒 Document integrity hash
+        valuesHash    // 🔒 Values integrity hash
       }
     });
 

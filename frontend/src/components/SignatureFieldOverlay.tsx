@@ -1,0 +1,187 @@
+// 📍 SignatureFieldOverlay.tsx - Interactive Field Overlays on PDF
+// Shows clickable field boxes with status (pending/active/completed)
+
+import { motion } from "framer-motion";
+import { PenTool, Calendar, Type, FileSignature, CheckCircle } from "lucide-react";
+import styles from "../styles/SignatureFieldOverlay.module.css";
+
+// ===== TYPES =====
+
+interface SignatureField {
+  _id: string;
+  type: "signature" | "initials" | "date" | "text";
+  page: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  label?: string;
+  required: boolean;
+  assigneeEmail: string;
+}
+
+interface FieldState {
+  value?: string;
+  status: "pending" | "active" | "completed" | "invalid";
+  error?: string | null;
+  updatedAt?: number;
+}
+
+interface SignatureFieldOverlayProps {
+  /** All signature fields for this signer */
+  fields: SignatureField[];
+
+  /** Current page number (1-indexed) */
+  currentPage: number;
+
+  /** Field states record */
+  fieldStates: Record<string, FieldState>;
+
+  /** Currently active field ID */
+  activeFieldId: string | null;
+
+  /** PDF page dimensions */
+  pageWidth: number;
+  pageHeight: number;
+
+  /** Zoom scale factor */
+  scale?: number;
+
+  /** Callback when field is clicked */
+  onFieldClick: (fieldId: string) => void;
+
+  /** Optional: Signer color for field borders */
+  signerColor?: string;
+}
+
+// Field type icons
+const FIELD_ICONS = {
+  signature: PenTool,
+  initials: FileSignature,
+  date: Calendar,
+  text: Type
+};
+
+// Field type labels
+const FIELD_LABELS = {
+  signature: "Signatur",
+  initials: "Initialen",
+  date: "Datum",
+  text: "Text"
+};
+
+/**
+ * SignatureFieldOverlay Component
+ *
+ * Renders interactive overlay boxes for signature fields on a PDF page.
+ * Shows field status (pending/active/completed) and allows clicking to edit.
+ */
+export default function SignatureFieldOverlay({
+  fields,
+  currentPage,
+  fieldStates,
+  activeFieldId,
+  pageWidth: _pageWidth, // Unused but kept in props for interface consistency
+  pageHeight: _pageHeight, // Unused but kept in props for interface consistency
+  scale = 1.0,
+  onFieldClick,
+  signerColor = "#2E6CF6"
+}: SignatureFieldOverlayProps) {
+  // Filter fields for current page
+  const pageFields = fields.filter(field => field.page === currentPage);
+
+  if (pageFields.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className={styles.overlayContainer}>
+      {pageFields.map(field => {
+        const fieldState = fieldStates[field._id];
+        const isCompleted = fieldState?.status === "completed";
+        const isActive = field._id === activeFieldId;
+
+        // Field status class
+        let statusClass = styles.statusPending;
+        if (isCompleted) statusClass = styles.statusCompleted;
+        if (isActive) statusClass = styles.statusActive;
+
+        // Icon component
+        const IconComponent = FIELD_ICONS[field.type];
+        const fieldLabel = field.label || FIELD_LABELS[field.type];
+
+        // Calculate scaled positions
+        const scaledX = field.x * scale;
+        const scaledY = field.y * scale;
+        const scaledWidth = field.width * scale;
+        const scaledHeight = field.height * scale;
+
+        return (
+          <motion.div
+            key={field._id}
+            className={`${styles.fieldOverlay} ${statusClass}`}
+            style={{
+              left: `${scaledX}px`,
+              top: `${scaledY}px`,
+              width: `${scaledWidth}px`,
+              height: `${scaledHeight}px`,
+              borderColor: signerColor
+            }}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.2 }}
+            onClick={() => onFieldClick(field._id)}
+            role="button"
+            tabIndex={0}
+            aria-label={`${fieldLabel} - ${isCompleted ? 'Ausgefüllt' : 'Ausstehend'}`}
+            data-testid={`overlay-field-${field._id}`}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onFieldClick(field._id);
+              }
+            }}
+          >
+            {/* Field Icon & Label */}
+            <div className={styles.fieldHeader}>
+              <IconComponent size={14} className={styles.fieldIcon} />
+              <span className={styles.fieldLabel}>
+                {fieldLabel}
+                {field.required && <span className={styles.requiredStar}>*</span>}
+              </span>
+            </div>
+
+            {/* Completed Checkmark */}
+            {isCompleted && (
+              <div className={styles.completedBadge}>
+                <CheckCircle size={20} />
+              </div>
+            )}
+
+            {/* Click Hint (only for pending fields) */}
+            {!isCompleted && !isActive && (
+              <div className={styles.clickHint}>
+                Klicken zum Ausfüllen
+              </div>
+            )}
+
+            {/* Active Pulse Animation */}
+            {isActive && (
+              <motion.div
+                className={styles.pulseBorder}
+                initial={{ scale: 1, opacity: 0.8 }}
+                animate={{ scale: 1.05, opacity: 0 }}
+                transition={{
+                  duration: 1.5,
+                  repeat: Infinity,
+                  ease: "easeOut"
+                }}
+                style={{ borderColor: signerColor }}
+              />
+            )}
+          </motion.div>
+        );
+      })}
+    </div>
+  );
+}

@@ -24,7 +24,13 @@ import Profile from "./pages/Profile"; // 🔧 FIX: Direct import verhindert CSS
 // 🔓 Öffentliche Seiten - Lazy Loading
 const Register = lazy(() => import("./pages/Register"));
 const VerifySuccess = lazy(() => import("./pages/VerifySuccess"));
-const SignaturePage = lazy(() => import("./pages/SignaturePage")); // ✉️ NEU: Public Signature Page
+
+// Feature Flag: Enhanced Signature UI
+const useEnhancedSignUI = import.meta.env.VITE_SIGN_UI_ENHANCED !== "false"; // Default true
+const SignaturePageComponent = useEnhancedSignUI
+  ? lazy(() => import("./pages/EnhancedSignaturePage")) // ✉️ DocuSign-style UI
+  : lazy(() => import("./pages/SignaturePage"));        // 🔙 Fallback to old UI
+
 const Pricing = lazy(() => import("./pages/Pricing"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
@@ -123,7 +129,7 @@ function AppWithLoader() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/verify-success" element={<VerifySuccess />} /> {/* ✅ NEU: E-Mail bestätigt Seite */}
-            <Route path="/sign/:token" element={<SignaturePage />} /> {/* ✉️ NEU: Public Signature Page */}
+            <Route path="/sign/:token" element={<SignaturePageComponent />} /> {/* ✉️ Signature Page (Feature-Flag controlled) */}
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/about" element={<About />} />
             <Route path="/press" element={<Press />} />

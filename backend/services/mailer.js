@@ -11,13 +11,27 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-async function sendEmail(to, subject, text) {
-  await transporter.sendMail({
-    from: `"Contract AI" <${process.env.EMAIL_USER}>`,
+/**
+ * Send email with optional HTML content
+ * @param {string} to - Recipient email
+ * @param {string} subject - Email subject
+ * @param {string} text - Plain text content
+ * @param {string} [html] - Optional HTML content
+ */
+async function sendEmail(to, subject, text, html = null) {
+  const mailOptions = {
+    from: `"Contract AI Signaturservice" <${process.env.EMAIL_USER}>`,
     to,
     subject,
     text,
-  });
+  };
+
+  // Add HTML if provided
+  if (html) {
+    mailOptions.html = html;
+  }
+
+  await transporter.sendMail(mailOptions);
 }
 
 module.exports = sendEmail;
