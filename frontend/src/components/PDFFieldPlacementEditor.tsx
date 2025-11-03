@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { motion, AnimatePresence } from 'framer-motion';
-import { PenTool, Calendar, Type, FileSignature, Trash2, Plus, ZoomIn, ZoomOut } from 'lucide-react';
+import { PenTool, Calendar, Type, FileSignature, Trash2, Plus, ZoomIn, ZoomOut, ExternalLink } from 'lucide-react';
 import styles from '../styles/PDFFieldPlacementEditor.module.css';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
@@ -166,6 +166,11 @@ const PDFFieldPlacementEditor: React.FC<PDFFieldPlacementEditorProps> = ({
     setZoomLevel(prev => Math.max(prev - 25, 50)); // Min 50%
   };
 
+  // Open PDF in new window
+  const handleOpenInNewWindow = () => {
+    window.open(pdfUrl, '_blank');
+  };
+
   // Calculate PDF width based on zoom level
   const pdfWidth = Math.round((1000 * zoomLevel) / 100);
 
@@ -215,29 +220,6 @@ const PDFFieldPlacementEditor: React.FC<PDFFieldPlacementEditorProps> = ({
               </option>
             ))}
           </select>
-        </div>
-
-        <div className={styles.toolbarSection}>
-          <label className={styles.toolbarLabel}>Zoom:</label>
-          <div className={styles.zoomControls}>
-            <button
-              className={styles.zoomButton}
-              onClick={handleZoomOut}
-              disabled={zoomLevel <= 50}
-              title="Herauszoomen"
-            >
-              <ZoomOut size={16} />
-            </button>
-            <span className={styles.zoomLevel}>{zoomLevel}%</span>
-            <button
-              className={styles.zoomButton}
-              onClick={handleZoomIn}
-              disabled={zoomLevel >= 200}
-              title="Hineinzoomen"
-            >
-              <ZoomIn size={16} />
-            </button>
-          </div>
         </div>
 
         <button
@@ -344,6 +326,37 @@ const PDFFieldPlacementEditor: React.FC<PDFFieldPlacementEditorProps> = ({
               </div>
             </div>
           </Document>
+
+          {/* Floating Controls */}
+          {/* Open in New Window Button - Top Right */}
+          <button
+            className={styles.floatingOpenButton}
+            onClick={handleOpenInNewWindow}
+            title="In neuem Fenster öffnen"
+          >
+            <ExternalLink size={18} />
+          </button>
+
+          {/* Floating Zoom Controls - Bottom Right */}
+          <div className={styles.floatingZoomControls}>
+            <button
+              className={styles.floatingZoomButton}
+              onClick={handleZoomIn}
+              disabled={zoomLevel >= 200}
+              title="Hineinzoomen"
+            >
+              <ZoomIn size={18} />
+            </button>
+            <div className={styles.floatingZoomLevel}>{zoomLevel}%</div>
+            <button
+              className={styles.floatingZoomButton}
+              onClick={handleZoomOut}
+              disabled={zoomLevel <= 50}
+              title="Herauszoomen"
+            >
+              <ZoomOut size={18} />
+            </button>
+          </div>
         </div>
 
         {/* Field Count Info */}

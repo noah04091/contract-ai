@@ -227,6 +227,7 @@
   padding: 2rem;
   background: #F7F8FA;
   min-height: 0; /* Important: allows flex child to scroll */
+  position: relative; /* ✅ For absolute positioning of floating buttons */
 }
 
 .pdfPageWrapper {
@@ -246,6 +247,88 @@
 
 .pdfError {
   color: #DC2626;
+}
+
+/* ====================================
+   FLOATING CONTROLS
+   ==================================== */
+
+/* Open in New Window Button - Top Right */
+.floatingOpenButton {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border: 1.5px solid #E5E7EB;
+  border-radius: 10px;
+  color: #667085;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  z-index: 100;
+}
+
+.floatingOpenButton:hover {
+  background: #2E6CF6;
+  border-color: #2E6CF6;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(46, 108, 246, 0.3);
+}
+
+/* Floating Zoom Controls - Bottom Right */
+.floatingZoomControls {
+  position: absolute;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background: white;
+  border: 1.5px solid #E5E7EB;
+  border-radius: 10px;
+  padding: 0.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  z-index: 100;
+}
+
+.floatingZoomButton {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border: 1px solid #E5E7EB;
+  border-radius: 6px;
+  color: #667085;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.floatingZoomButton:hover:not(:disabled) {
+  background: #F9FAFB;
+  border-color: #2E6CF6;
+  color: #2E6CF6;
+}
+
+.floatingZoomButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: #F9FAFB;
+}
+
+.floatingZoomLevel {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0B1324;
+  text-align: center;
+  padding: 0.25rem 0;
 }
 
 /* ====================================
