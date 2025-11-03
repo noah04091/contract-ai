@@ -6,7 +6,7 @@
 .editorContainer {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  flex: 1; /* ✅ FIXED: Use flex instead of height: 100% in flexbox parent! */
   min-height: 0; /* Important: allows flex child to shrink */
   background: #F7F8FA;
   border-radius: 12px;
