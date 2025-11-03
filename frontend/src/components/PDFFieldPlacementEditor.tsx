@@ -113,14 +113,15 @@ const PDFFieldPlacementEditor: React.FC<PDFFieldPlacementEditorProps> = ({
 
     if (!pdfPageWrapperRef.current) return;
 
+    const scaleFactor = zoomLevel / 100;
     const pageRect = pdfPageWrapperRef.current.getBoundingClientRect();
     const mouseX = e.clientX - pageRect.left;
     const mouseY = e.clientY - pageRect.top;
 
-    // Calculate offset from mouse to field's current position
+    // Calculate offset from mouse to field's current SCALED position
     setDragOffset({
-      x: mouseX - field.x,
-      y: mouseY - field.y,
+      x: mouseX - (field.x * scaleFactor),
+      y: mouseY - (field.y * scaleFactor),
     });
     setDraggingField(field.id);
   };
@@ -129,11 +130,16 @@ const PDFFieldPlacementEditor: React.FC<PDFFieldPlacementEditorProps> = ({
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!draggingField || !pdfPageWrapperRef.current) return;
 
+    const scaleFactor = zoomLevel / 100;
     const pageRect = pdfPageWrapperRef.current.getBoundingClientRect();
-    const newX = e.clientX - pageRect.left - dragOffset.x;
-    const newY = e.clientY - pageRect.top - dragOffset.y;
+    const mouseXScaled = e.clientX - pageRect.left;
+    const mouseYScaled = e.clientY - pageRect.top;
 
-    // Constrain to PDF bounds
+    // Convert screen coordinates back to logical PDF coordinates
+    const newX = (mouseXScaled - dragOffset.x) / scaleFactor;
+    const newY = (mouseYScaled - dragOffset.y) / scaleFactor;
+
+    // Constrain to PDF bounds (in logical coordinates)
     const field = fields.find(f => f.id === draggingField);
     if (!field) return;
 
@@ -173,6 +179,9 @@ const PDFFieldPlacementEditor: React.FC<PDFFieldPlacementEditorProps> = ({
 
   // Calculate PDF width based on zoom level
   const pdfWidth = Math.round((1000 * zoomLevel) / 100);
+
+  // Calculate scale factor for fields to match zoom level
+  const scaleFactor = zoomLevel / 100;
 
   // Get signer color
   const getSignerColor = (email: string): string => {
@@ -292,10 +301,10 @@ const PDFFieldPlacementEditor: React.FC<PDFFieldPlacementEditorProps> = ({
                       key={field.id}
                       className={`${styles.signatureField} ${draggingField === field.id ? styles.dragging : ''}`}
                       style={{
-                        left: field.x,
-                        top: field.y,
-                        width: field.width,
-                        height: field.height,
+                        left: field.x * scaleFactor,
+                        top: field.y * scaleFactor,
+                        width: field.width * scaleFactor,
+                        height: field.height * scaleFactor,
                         borderColor: getSignerColor(field.assigneeEmail),
                         backgroundColor: `${getSignerColor(field.assigneeEmail)}15`,
                       }}
