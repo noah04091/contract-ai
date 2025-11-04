@@ -117,7 +117,7 @@ const PDFFieldPlacementEditor: React.FC<PDFFieldPlacementEditorProps> = ({
     setPdfLoading(false);
   };
 
-  const onPageLoadSuccess = (page: any) => {
+  const onPageLoadSuccess = (page: { width: number; height: number; originalWidth?: number; originalHeight?: number }) => {
     const { width, height, originalWidth, originalHeight } = page;
 
     // Store rendered dimensions (for scale calculation)
