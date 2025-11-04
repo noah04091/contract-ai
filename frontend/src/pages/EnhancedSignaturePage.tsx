@@ -167,6 +167,17 @@ export default function EnhancedSignaturePage() {
     restoreFromSessionStorage();
   }, [token, signatureFields]);
 
+  // Lock body scroll when modal is open (prevents background scrolling)
+  useEffect(() => {
+    if (showInputModal) {
+      const previousOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = previousOverflow;
+      };
+    }
+  }, [showInputModal]);
+
   // ===== FUNCTIONS =====
 
   async function loadEnvelope() {
@@ -326,6 +337,32 @@ export default function EnhancedSignaturePage() {
     setActiveFieldId(null);
   }, []);
 
+  // Helper: Wait for overlay to render, then scroll to it (with retry logic)
+  const scrollToOverlayWhenReady = useCallback(async (fieldId: string, maxWait = 2000): Promise<boolean> => {
+    const start = performance.now();
+
+    while (performance.now() - start < maxWait) {
+      const el = pdfContainerRef.current?.querySelector(
+        `[data-overlay-id="${fieldId}"]`
+      ) as HTMLElement | null;
+
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.classList.add("scrollPulse");
+        setTimeout(() => el.classList.remove("scrollPulse"), 600);
+        setShowInputModal(true);
+        console.log(`🎯 Scrolled to field: ${fieldId}`);
+        return true;
+      }
+
+      // Wait 80ms before retry
+      await new Promise(resolve => setTimeout(resolve, 80));
+    }
+
+    console.warn(`⚠️ Overlay target not found in time: ${fieldId}`);
+    return false;
+  }, []);
+
   // Jump to field (scroll + focus + open modal)
   const handleJumpToField = useCallback((fieldId: string) => {
     const field = signatureFields.find(f => f._id === fieldId);
@@ -340,7 +377,7 @@ export default function EnhancedSignaturePage() {
     ) as HTMLElement | null;
 
     // If already on screen → scroll to it immediately
-    if (overlayEl && pdfContainerRef.current) {
+    if (overlayEl) {
       overlayEl.scrollIntoView({ behavior: "smooth", block: "center" });
       overlayEl.classList.add("scrollPulse");
       setTimeout(() => overlayEl.classList.remove("scrollPulse"), 600);
@@ -349,26 +386,14 @@ export default function EnhancedSignaturePage() {
       return;
     }
 
-    // If on different page → change page first, then scroll
+    // If on different page → change page first, then scroll with retry
     if (field.page !== currentPage) {
       setCurrentPage(field.page);
     }
 
-    // Wait for page render, then scroll to overlay
-    setTimeout(() => {
-      const el = pdfContainerRef.current?.querySelector(
-        `[data-overlay-id="${fieldId}"]`
-      ) as HTMLElement | null;
-
-      if (el && pdfContainerRef.current) {
-        el.scrollIntoView({ behavior: "smooth", block: "center" });
-        el.classList.add("scrollPulse");
-        setTimeout(() => el.classList.remove("scrollPulse"), 600);
-        setShowInputModal(true); // Open modal directly
-        console.log(`🎯 Jumped to field (new page): ${fieldId} on page ${field.page}`);
-      }
-    }, 150);
-  }, [signatureFields, currentPage]);
+    // Wait for page render with retry logic
+    scrollToOverlayWhenReady(fieldId);
+  }, [signatureFields, currentPage, scrollToOverlayWhenReady]);
 
   // Previous field navigation
   const handlePreviousField = useCallback(() => {

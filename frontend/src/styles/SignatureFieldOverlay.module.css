@@ -214,8 +214,8 @@
   }
 }
 
-/* Apply scroll pulse animation to any field when scrolled to */
-.fieldOverlay:global(.scrollPulse) {
+/* Apply scroll pulse animation to any element with scrollPulse class */
+:global(.scrollPulse) {
   animation: scrollPulse 0.6s ease-out;
 }
 
