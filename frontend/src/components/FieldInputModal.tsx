@@ -183,6 +183,47 @@ export default function FieldInputModal({
     return () => window.removeEventListener("keydown", handleEscape);
   }, [isOpen, onClose]);
 
+  // Make signature canvas DPI-aware for accurate touch/pen input
+  useEffect(() => {
+    if (!isOpen || !field || (field.type !== "signature" && field.type !== "initials")) return;
+    if (!sigPadRef.current) return;
+
+    // Wait for canvas to be mounted
+    const timer = setTimeout(() => {
+      const sigPad = sigPadRef.current;
+      if (!sigPad) return;
+
+      const canvas = sigPad.getCanvas();
+      if (!canvas) return;
+
+      // Get CSS dimensions
+      const rect = canvas.getBoundingClientRect();
+      const cssWidth = rect.width;
+      const cssHeight = rect.height;
+
+      // Get device pixel ratio (2x on Retina, 3x on some phones)
+      const dpr = Math.max(1, window.devicePixelRatio || 1);
+
+      // Set physical canvas buffer size based on DPI
+      canvas.width = Math.floor(cssWidth * dpr);
+      canvas.height = Math.floor(cssHeight * dpr);
+
+      // Scale the drawing context
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.scale(dpr, dpr);
+      }
+
+      // Set CSS size to maintain visual appearance
+      canvas.style.width = `${cssWidth}px`;
+      canvas.style.height = `${cssHeight}px`;
+
+      console.log(`📐 Canvas DPI-aware: ${cssWidth}x${cssHeight} CSS → ${canvas.width}x${canvas.height} physical (DPR: ${dpr})`);
+    }, 50);
+
+    return () => clearTimeout(timer);
+  }, [isOpen, field]);
+
   if (!isOpen || !field) return null;
 
   const IconComponent = FIELD_ICONS[field.type];
@@ -457,9 +498,9 @@ export default function FieldInputModal({
           <motion.div
             className={styles.modal}
             data-testid="field-modal"
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
             role="dialog"
             aria-modal="true"

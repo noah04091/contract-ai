@@ -4,6 +4,7 @@
 import { motion } from "framer-motion";
 import { PenTool, Calendar, Type, FileSignature, CheckCircle } from "lucide-react";
 import styles from "../styles/SignatureFieldOverlay.module.css";
+import { fromNormalized, type FieldDocCoords } from "../utils/fieldCoords";
 
 // ===== TYPES =====
 
@@ -11,10 +12,20 @@ interface SignatureField {
   _id: string;
   type: "signature" | "initials" | "date" | "text";
   page: number;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
+
+  // Legacy pixel coordinates (deprecated)
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+
+  // Normalized coordinates (preferred, 0-1 range)
+  nx?: number;
+  ny?: number;
+  nwidth?: number;
+  nheight?: number;
+  rotation?: 0 | 90 | 180 | 270;
+
   label?: string;
   required: boolean;
   assigneeEmail: string;
@@ -87,9 +98,6 @@ export default function SignatureFieldOverlay({
   onFieldClick,
   signerColor = "#2E6CF6"
 }: SignatureFieldOverlayProps) {
-  // pageWidth and pageHeight are kept in the interface for consistency
-  void pageWidth;
-  void pageHeight;
   // Filter fields for current page
   const pageFields = fields.filter(field => field.page === currentPage);
 
@@ -114,11 +122,33 @@ export default function SignatureFieldOverlay({
         const IconComponent = FIELD_ICONS[field.type];
         const fieldLabel = field.label || FIELD_LABELS[field.type];
 
-        // Calculate scaled positions
-        const scaledX = field.x * scale;
-        const scaledY = field.y * scale;
-        const scaledWidth = field.width * scale;
-        const scaledHeight = field.height * scale;
+        // Calculate pixel positions from normalized coordinates (if available)
+        let scaledX: number, scaledY: number, scaledWidth: number, scaledHeight: number;
+
+        if (field.nx !== undefined && field.ny !== undefined &&
+            field.nwidth !== undefined && field.nheight !== undefined) {
+          // ✅ Use normalized coordinates (stable across viewports)
+          const pixelCoords = fromNormalized(
+            { page: field.page, nx: field.nx, ny: field.ny, nwidth: field.nwidth, nheight: field.nheight },
+            pageWidth,
+            pageHeight
+          );
+          scaledX = pixelCoords.x * scale;
+          scaledY = pixelCoords.y * scale;
+          scaledWidth = pixelCoords.width * scale;
+          scaledHeight = pixelCoords.height * scale;
+        } else if (field.x !== undefined && field.y !== undefined &&
+                   field.width !== undefined && field.height !== undefined) {
+          // 🔄 Fallback to legacy pixel coordinates (deprecated)
+          scaledX = field.x * scale;
+          scaledY = field.y * scale;
+          scaledWidth = field.width * scale;
+          scaledHeight = field.height * scale;
+        } else {
+          // ⚠️ Invalid field data - skip rendering
+          console.error(`Field ${field._id} has invalid coordinate data`);
+          return null;
+        }
 
         return (
           <motion.div

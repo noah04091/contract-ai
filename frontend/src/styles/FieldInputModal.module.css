@@ -10,22 +10,23 @@
 .backdrop {
   position: fixed;
   inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   background: rgba(0, 0, 0, 0.5);
   z-index: 1000;
   backdrop-filter: blur(2px);
 }
 
 .modal {
-  position: relative;
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
   background: white;
   border-radius: 12px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
   z-index: 1001;
   width: min(92vw, 640px);
-  max-height: 90vh;
+  max-height: min(90vh, 720px);
+  overflow: auto;
   display: flex;
   flex-direction: column;
 }
@@ -148,10 +149,10 @@
 
 .signatureCanvas {
   display: block;
-  width: 100% !important;
-  height: auto !important;
   cursor: crosshair;
   touch-action: none;
+  /* Size is managed by DPI-aware useEffect in FieldInputModal.tsx */
+  /* DO NOT override width/height here - breaks DPI scaling */
 }
 
 .clearButton {
@@ -377,14 +378,14 @@
 }
 
 @media (max-width: 480px) {
-  .backdrop {
-    align-items: stretch;
-  }
-
   .modal {
     width: 100vw;
+    height: 100vh;
     max-height: 100vh;
     border-radius: 0;
+    left: 0;
+    top: 0;
+    transform: none; /* Remove centering transform on mobile */
   }
 
   .headerIcon {

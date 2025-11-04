@@ -34,6 +34,7 @@ interface PDFFieldPlacementEditorProps {
   signers: Signer[];
   fields: SignatureField[];
   onFieldsChange: (fields: SignatureField[]) => void;
+  onPdfDimensionsChange?: (dimensions: { width: number; height: number }) => void;
 }
 
 const FIELD_TYPES = [
@@ -48,6 +49,7 @@ const PDFFieldPlacementEditor: React.FC<PDFFieldPlacementEditorProps> = ({
   signers,
   fields,
   onFieldsChange,
+  onPdfDimensionsChange,
 }) => {
   const [numPages, setNumPages] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -77,6 +79,11 @@ const PDFFieldPlacementEditor: React.FC<PDFFieldPlacementEditorProps> = ({
   const onPageLoadSuccess = (page: { width: number; height: number }) => {
     const { width, height } = page;
     setPdfDimensions({ width, height });
+
+    // Notify parent component of PDF dimensions for coordinate normalization
+    if (onPdfDimensionsChange) {
+      onPdfDimensionsChange({ width, height });
+    }
   };
 
   // Add field to PDF

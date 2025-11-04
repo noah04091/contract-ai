@@ -77,26 +77,60 @@ const signatureFieldSchema = new mongoose.Schema({
     required: true,
     min: 1
   },
+
+  // 🔄 Legacy pixel coordinates (deprecated, kept for backward compatibility)
   x: {
     type: Number,
-    required: true,
+    required: false,  // Made optional for new normalized-only fields
     min: 0
   },
   y: {
     type: Number,
-    required: true,
+    required: false,  // Made optional for new normalized-only fields
     min: 0
   },
   width: {
     type: Number,
-    required: true,
-    min: 50
+    required: false,  // Made optional for new normalized-only fields
+    min: 0
   },
   height: {
     type: Number,
-    required: true,
-    min: 30
+    required: false,  // Made optional for new normalized-only fields
+    min: 0
   },
+
+  // ✅ Normalized coordinates (0-1 range, viewport-independent)
+  nx: {
+    type: Number,
+    required: false,  // Will become required after migration period
+    min: 0,
+    max: 1
+  },
+  ny: {
+    type: Number,
+    required: false,  // Will become required after migration period
+    min: 0,
+    max: 1
+  },
+  nwidth: {
+    type: Number,
+    required: false,  // Will become required after migration period
+    min: 0,
+    max: 1
+  },
+  nheight: {
+    type: Number,
+    required: false,  // Will become required after migration period
+    min: 0,
+    max: 1
+  },
+  rotation: {
+    type: Number,
+    enum: [0, 90, 180, 270],
+    default: 0
+  },
+
   type: {
     type: String,
     enum: ["signature", "initial", "date", "text"],

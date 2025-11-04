@@ -5,6 +5,7 @@ import { X, Send, ArrowRight, ArrowLeft, CheckCircle, Plus, Mail, User, Trash2, 
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import PDFFieldPlacementEditor, { SignatureField, Signer } from "./PDFFieldPlacementEditor";
+import { toNormalized } from "../utils/fieldCoords";
 import styles from "../styles/EnhancedSignatureModal.module.css";
 
 interface EnhancedSignatureModalProps {
@@ -54,6 +55,9 @@ export default function EnhancedSignatureModal({
 
   // Signature fields
   const [signatureFields, setSignatureFields] = useState<SignatureField[]>([]);
+
+  // PDF dimensions for coordinate normalization
+  const [pdfDimensions, setPdfDimensions] = useState<{ width: number; height: number } | null>(null);
 
   // PDF URL
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
@@ -271,19 +275,56 @@ export default function EnhancedSignatureModal({
       return;
     }
 
+    if (!pdfDimensions) {
+      toast.error("PDF-Dimensionen konnten nicht ermittelt werden");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
       const token = localStorage.getItem("token");
       const finalSigners = buildFinalSigners();
 
-      console.log("📤 Creating envelope with custom field placement:", {
+      // ✅ Convert pixel coordinates to normalized coordinates (0-1 range)
+      const normalizedFields = signatureFields.map(field => {
+        const normalized = toNormalized(
+          field.x,
+          field.y,
+          field.width,
+          field.height,
+          pdfDimensions.width,
+          pdfDimensions.height
+        );
+
+        return {
+          page: field.page,
+          type: field.type,
+          assigneeEmail: field.assigneeEmail,
+          required: field.required,
+          label: field.label,
+          // Normalized coordinates (preferred)
+          nx: normalized.nx,
+          ny: normalized.ny,
+          nwidth: normalized.nwidth,
+          nheight: normalized.nheight,
+          rotation: 0,
+          // Legacy pixel coordinates (for backward compatibility)
+          x: field.x,
+          y: field.y,
+          width: field.width,
+          height: field.height
+        };
+      });
+
+      console.log("📤 Creating envelope with normalized field coordinates:", {
         contractId,
         contractName,
         signatureMode,
         signingOrder,
         finalSigners,
-        signatureFields,
+        normalizedFields,
+        pdfDimensions,
         message
       });
 
@@ -300,7 +341,7 @@ export default function EnhancedSignatureModal({
           message: message,
           s3Key: contractS3Key,
           signers: finalSigners,
-          signatureFields: signatureFields,
+          signatureFields: normalizedFields,  // Send normalized coordinates
           signingMode: finalSigners.length > 1 ? "SEQUENTIAL" : "SINGLE"
         })
       });
@@ -582,6 +623,7 @@ export default function EnhancedSignatureModal({
                       signers={getAllSigners()}
                       fields={signatureFields}
                       onFieldsChange={setSignatureFields}
+                      onPdfDimensionsChange={setPdfDimensions}
                     />
                   </motion.div>
                 )}

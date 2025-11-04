@@ -98,18 +98,40 @@ function generateSignatureInvitationHTML(data) {
   <style>
     /* Reset & Base Styles */
     * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    /* Explicit Light Mode (Default) - Prevents client auto-inversion */
+    body, .email-wrapper {
+      background-color: #ffffff !important;
+      color: #0F172A !important;
+    }
+
     body {
       margin: 0;
       padding: 0;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
-      background-color: #f3f4f6;
-      color: #1f2937;
+    }
+
+    .email-container, .content-section, .document-card {
+      background-color: #ffffff !important;
+      color: #0F172A !important;
+    }
+
+    .button-primary {
+      background-color: #2E6CF6 !important;
+      color: #ffffff !important;
     }
 
     table { border-spacing: 0; border-collapse: collapse; width: 100%; }
     img { border: 0; display: block; outline: none; text-decoration: none; }
+
+    /* Prevent Outlook.com/Gmail from auto-inverting colors */
+    [data-ogsc] body,
+    [data-ogsc] .email-wrapper {
+      background-color: #ffffff !important;
+      color: #0F172A !important;
+    }
 
     /* Dark Mode Support - Apple Mail, iOS, Gmail iOS */
     @media (prefers-color-scheme: dark) {
