@@ -2323,7 +2323,7 @@ export default function Generate() {
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                       >
-                        💡 Tipp: Speichern Sie den Vertrag, um ihn zur digitalen Signatur zu versenden
+                        ⚡ Nächster Schritt: Speichern Sie den Vertrag, um ihn zur digitalen Signatur zu versenden
                       </motion.div>
                     )}
                     
