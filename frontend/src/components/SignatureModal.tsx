@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Plus, Mail, User, Trash2, Send, Users, ArrowRight } from "lucide-react";
+import { X, Plus, Mail, User, Trash2, Users, ArrowRight } from "lucide-react";
 import styles from "../styles/SignatureModal.module.css";
 
 interface Signer {
