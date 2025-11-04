@@ -139,12 +139,6 @@ const PDFFieldPlacementEditor: React.FC<PDFFieldPlacementEditorProps> = ({
         onPdfDimensionsChange({ width, height });
       }
     }
-
-    console.log('📐 PDF Dimensions loaded:', {
-      rendered: { width, height },
-      original: originalWidth && originalHeight ? { width: originalWidth, height: originalHeight } : { width, height },
-      zoomLevel
-    });
   };
 
   // Add field to PDF
@@ -226,24 +220,6 @@ const PDFFieldPlacementEditor: React.FC<PDFFieldPlacementEditorProps> = ({
 
     const constrainedX = Math.max(0, Math.min(rawX, maxX));
     const constrainedY = Math.max(0, Math.min(rawY, maxY));
-
-    // 🐛 DEBUG: Log constraint behavior (keeping until invisible wall is confirmed fixed)
-    console.log('🐛 Field Drag Debug (FIXED):', {
-      fieldType: field.type,
-      fieldLabel: field.label,
-      fieldWidth: field.width,
-      pdfOriginal: { width: pdfOriginal.width, height: pdfOriginal.height },
-      renderedWidth: renderedWidth,
-      scale: scale,
-      maxX: maxX,
-      maxY: maxY,
-      rawX: rawX,
-      rawY: rawY,
-      constrainedX: constrainedX,
-      constrainedY: constrainedY,
-      isHittingXBoundary: rawX > maxX || rawX < 0,
-      isHittingYBoundary: rawY > maxY || rawY < 0,
-    });
 
     // Update field position (in PDF coordinates)
     onFieldsChange(
