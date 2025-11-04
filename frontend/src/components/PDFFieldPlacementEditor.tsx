@@ -156,6 +156,25 @@ const PDFFieldPlacementEditor: React.FC<PDFFieldPlacementEditorProps> = ({
     const constrainedX = Math.max(0, Math.min(newX, maxX));
     const constrainedY = Math.max(0, Math.min(newY, maxY));
 
+    // 🐛 DEBUG: Log constraint behavior for invisible wall bug
+    console.log('🐛 Field Drag Debug:', {
+      fieldType: field.type,
+      fieldLabel: field.label,
+      fieldWidth: field.width,
+      pdfDimensions: { width: pdfDimensions.width, height: pdfDimensions.height },
+      maxX: maxX,
+      maxY: maxY,
+      newX: newX,
+      newY: newY,
+      constrainedX: constrainedX,
+      constrainedY: constrainedY,
+      isHittingXBoundary: newX > maxX || newX < 0,
+      isHittingYBoundary: newY > maxY || newY < 0,
+      mouseXScaled: mouseXScaled,
+      dragOffset: dragOffset,
+      scaleFactor: scaleFactor
+    });
+
     onFieldsChange(
       fields.map(f =>
         f.id === draggingField
