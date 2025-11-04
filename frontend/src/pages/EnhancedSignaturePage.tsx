@@ -326,7 +326,7 @@ export default function EnhancedSignaturePage() {
     setActiveFieldId(null);
   }, []);
 
-  // Jump to field (scroll + focus)
+  // Jump to field (scroll + focus + open modal)
   const handleJumpToField = useCallback((fieldId: string) => {
     const field = signatureFields.find(f => f._id === fieldId);
     if (!field) return;
@@ -334,39 +334,41 @@ export default function EnhancedSignaturePage() {
     // Set as active
     setActiveFieldId(fieldId);
 
-    // Navigate to page
-    setCurrentPage(field.page);
+    // Check if field overlay is already rendered (same page)
+    const overlayEl = pdfContainerRef.current?.querySelector(
+      `[data-overlay-id="${fieldId}"]`
+    ) as HTMLElement | null;
 
-    // Smooth scroll to field position
+    // If already on screen → scroll to it immediately
+    if (overlayEl && pdfContainerRef.current) {
+      overlayEl.scrollIntoView({ behavior: "smooth", block: "center" });
+      overlayEl.classList.add("scrollPulse");
+      setTimeout(() => overlayEl.classList.remove("scrollPulse"), 600);
+      setShowInputModal(true); // Open modal directly
+      console.log(`🎯 Jumped to field (same page): ${fieldId}`);
+      return;
+    }
+
+    // If on different page → change page first, then scroll
+    if (field.page !== currentPage) {
+      setCurrentPage(field.page);
+    }
+
+    // Wait for page render, then scroll to overlay
     setTimeout(() => {
-      if (pdfContainerRef.current) {
-        // Find the page container
-        const pageContainer = pdfContainerRef.current.querySelector(
-          `[data-page-number="${field.page}"]`
-        );
+      const el = pdfContainerRef.current?.querySelector(
+        `[data-overlay-id="${fieldId}"]`
+      ) as HTMLElement | null;
 
-        if (pageContainer) {
-          const containerRect = pdfContainerRef.current.getBoundingClientRect();
-          const pageRect = pageContainer.getBoundingClientRect();
-
-          // Calculate scroll position (center the field vertically)
-          const scrollTop =
-            pdfContainerRef.current.scrollTop +
-            pageRect.top -
-            containerRect.top +
-            field.y * pdfScale -
-            containerRect.height / 2;
-
-          pdfContainerRef.current.scrollTo({
-            top: scrollTop,
-            behavior: "smooth"
-          });
-        }
+      if (el && pdfContainerRef.current) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.classList.add("scrollPulse");
+        setTimeout(() => el.classList.remove("scrollPulse"), 600);
+        setShowInputModal(true); // Open modal directly
+        console.log(`🎯 Jumped to field (new page): ${fieldId} on page ${field.page}`);
       }
-    }, 100);
-
-    console.log(`🎯 Jumped to field: ${fieldId} on page ${field.page}`);
-  }, [signatureFields, pdfScale]);
+    }, 150);
+  }, [signatureFields, currentPage]);
 
   // Previous field navigation
   const handlePreviousField = useCallback(() => {

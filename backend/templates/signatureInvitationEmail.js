@@ -110,16 +110,37 @@ function generateSignatureInvitationHTML(data) {
     table { border-spacing: 0; border-collapse: collapse; width: 100%; }
     img { border: 0; display: block; outline: none; text-decoration: none; }
 
-    /* Dark Mode Support */
+    /* Dark Mode Support - Apple Mail, iOS, Gmail iOS */
     @media (prefers-color-scheme: dark) {
-      body { background-color: #1f2937 !important; color: #f9fafb !important; }
-      .email-container { background-color: #111827 !important; }
+      body { background-color: #0b0f17 !important; color: #e8eefc !important; }
+      .email-wrapper { background-color: #0b0f17 !important; }
+      .email-container { background-color: #121826 !important; }
       .email-header { background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%) !important; }
-      .content-section { background-color: #1f2937 !important; border-color: #374151 !important; }
-      .field-item { color: #f9fafb !important; }
-      .footer { background-color: #111827 !important; color: #9ca3af !important; }
+      .content-section { background-color: #121826 !important; border-color: #374151 !important; }
+      .greeting, .document-title, .fields-title, .field-item { color: #e8eefc !important; }
+      .main-text, .document-sender, .document-message { color: #b9c4d0 !important; }
+      .document-card { background-color: #1a2332 !important; border-color: #2d3748 !important; }
+      .info-box { background-color: #422006 !important; border-color: #78350f !important; }
+      .info-box-title { color: #fbbf24 !important; }
+      .info-box-text { color: #fcd34d !important; }
+      .footer { background-color: #0b0f17 !important; color: #9ca3af !important; }
+      .footer-text { color: #9ca3af !important; }
       .footer-link { color: #60a5fa !important; }
+      .fields-total { color: #b9c4d0 !important; border-color: #374151 !important; }
+      .fallback-link { color: #9ca3af !important; }
+      .fallback-link a { color: #60a5fa !important; }
     }
+
+    /* Outlook.com Dark Mode Support */
+    [data-ogsc] body { background-color: #0b0f17 !important; }
+    [data-ogsc] .email-wrapper { background-color: #0b0f17 !important; }
+    [data-ogsc] .email-container { background-color: #121826 !important; }
+    [data-ogsc] .content-section { background-color: #121826 !important; }
+    [data-ogsc] .greeting, [data-ogsc] .document-title, [data-ogsc] .fields-title, [data-ogsc] .field-item { color: #e8eefc !important; }
+    [data-ogsc] .main-text, [data-ogsc] .document-sender, [data-ogsc] .document-message { color: #b9c4d0 !important; }
+    [data-ogsc] .document-card { background-color: #1a2332 !important; }
+    [data-ogsc] .footer { background-color: #0b0f17 !important; }
+    [data-ogsc] .footer-link { color: #60a5fa !important; }
 
     /* Container */
     .email-wrapper {
@@ -340,39 +361,39 @@ function generateSignatureInvitationHTML(data) {
   </style>
 </head>
 
-<body>
-  <table role="presentation" class="email-wrapper">
+<body style="margin:0;padding:0;background-color:#f3f4f6;color:#1f2937;">
+  <table role="presentation" class="email-wrapper" width="100%" cellpadding="0" cellspacing="0" bgcolor="#f3f4f6" style="background-color:#f3f4f6;">
     <tr>
-      <td align="center">
+      <td align="center" style="padding:20px 0;">
         <!-- Main Container -->
-        <table role="presentation" class="email-container">
+        <table role="presentation" class="email-container" width="600" cellpadding="0" cellspacing="0" bgcolor="#ffffff" style="background-color:#ffffff;border-radius:12px;max-width:600px;">
 
           <!-- Header -->
           <tr>
-            <td class="email-header">
-              <div class="header-icon">📝</div>
-              <h1 class="header-title">Signaturanfrage</h1>
-              <p class="header-subtitle">Ein Dokument wartet auf Ihre Unterschrift</p>
+            <td class="email-header" bgcolor="#2E6CF6" style="background:linear-gradient(135deg, #2E6CF6 0%, #1E53D8 100%);padding:32px 24px;text-align:center;">
+              <div class="header-icon" style="font-size:48px;margin-bottom:12px;">📝</div>
+              <h1 class="header-title" style="font-size:24px;font-weight:600;color:#ffffff;margin:0 0 8px 0;">Signaturanfrage</h1>
+              <p class="header-subtitle" style="font-size:15px;color:rgba(255,255,255,0.9);margin:0;">Ein Dokument wartet auf Ihre Unterschrift</p>
             </td>
           </tr>
 
           <!-- Content -->
           <tr>
-            <td class="content-section">
-              <p class="greeting">Hallo ${signer.name},</p>
+            <td class="content-section" bgcolor="#ffffff" style="padding:32px 24px;background-color:#ffffff;">
+              <p class="greeting" style="font-size:16px;color:#1f2937;margin:0 0 16px 0;line-height:1.5;">Hallo ${signer.name},</p>
 
-              <p class="main-text">
+              <p class="main-text" style="font-size:15px;color:#4b5563;line-height:1.6;margin:0 0 24px 0;">
                 <strong>${ownerEmail}</strong> hat Ihnen ein Dokument zur Unterschrift geschickt.
               </p>
 
               <!-- Document Card -->
-              <table role="presentation" class="document-card">
+              <table role="presentation" class="document-card" width="100%" cellpadding="0" cellspacing="0" bgcolor="#f9fafb" style="background-color:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;">
                 <tr>
-                  <td>
-                    <h2 class="document-title">📄 ${envelope.title}</h2>
-                    <p class="document-sender">Absender: ${ownerEmail}</p>
+                  <td style="padding:20px;">
+                    <h2 class="document-title" style="font-size:18px;font-weight:600;color:#1f2937;margin:0 0 8px 0;">📄 ${envelope.title}</h2>
+                    <p class="document-sender" style="font-size:14px;color:#6b7280;margin:0 0 12px 0;">Absender: ${ownerEmail}</p>
                     ${envelope.message ? `
-                      <p class="document-message">
+                      <p class="document-message" style="font-size:14px;color:#4b5563;line-height:1.5;margin:0;padding:12px 0 0 0;border-top:1px solid #e5e7eb;">
                         <strong>💬 Nachricht:</strong><br>
                         ${envelope.message}
                       </p>

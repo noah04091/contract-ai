@@ -138,6 +138,7 @@ export default function SignatureFieldOverlay({
             tabIndex={0}
             aria-label={`${fieldLabel} - ${isCompleted ? 'Ausgefüllt' : 'Ausstehend'}`}
             data-testid={`overlay-field-${field._id}`}
+            data-overlay-id={field._id}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
@@ -159,6 +160,21 @@ export default function SignatureFieldOverlay({
               <div className={styles.completedBadge}>
                 <CheckCircle size={20} />
               </div>
+            )}
+
+            {/* Value Preview (for completed fields) */}
+            {isCompleted && value && (
+              field.type === 'signature' || field.type === 'initials' ? (
+                <img
+                  src={value}
+                  alt={`${FIELD_LABELS[field.type]} Vorschau`}
+                  className={styles.valueImage}
+                />
+              ) : (
+                <span className={styles.valueText} title={String(value)}>
+                  {String(value).length > 14 ? String(value).slice(0, 14) + '…' : String(value)}
+                </span>
+              )
             )}
 
             {/* Click Hint (only for pending fields) */}
