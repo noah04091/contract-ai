@@ -86,96 +86,141 @@ function formatDate(date) {
 }
 
 /**
- * Fügt tatsächliche Signatur-Bilder auf der letzten Seite hinzu
+ * Konvertiert normalisierte Koordinaten (0-1) in PDF-Koordinaten
+ * PDF-Koordinatensystem: Ursprung ist UNTEN LINKS (nicht oben links!)
  */
-async function addSignatureBoxes(pdfDoc, signers, signatureFields) {
+function normalizedToPdfCoords(nx, ny, nwidth, nheight, pageWidth, pageHeight) {
+  return {
+    x: nx * pageWidth,
+    y: pageHeight - (ny * pageHeight) - (nheight * pageHeight), // Flip Y-Achse
+    width: nwidth * pageWidth,
+    height: nheight * pageHeight
+  };
+}
+
+/**
+ * Rendert ALLE ausgefüllten Felder auf ihren platzierten Positionen
+ */
+async function renderSignatureFields(pdfDoc, signatureFields) {
   try {
-    console.log(`📝 Adding signature images for ${signers.length} signers`);
+    console.log(`📝 Rendering ${signatureFields.length} signature fields on their placed positions`);
 
     const pages = pdfDoc.getPages();
-    const lastPage = pages[pages.length - 1];
-    const { width, height } = lastPage.getSize();
-
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
     const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-    // Startposition für Signaturen (unten auf der letzten Seite)
-    let yPosition = 100; // Von unten
-    const signatureWidth = 200;
-    const signatureHeight = 60;
-    const spacing = 15;
+    let renderedCount = 0;
 
-    // Für jeden Signer die Signatur zeichnen
-    for (let i = 0; i < signers.length; i++) {
-      const signer = signers[i];
-      const sigY = yPosition + (i * (signatureHeight + spacing + 30)); // Extra space for text
+    for (const field of signatureFields) {
+      // Skip Felder ohne Wert (nicht ausgefüllt)
+      if (!field.value) {
+        console.log(`⏭️ Skipping empty field: ${field.type} on page ${field.page}`);
+        continue;
+      }
 
-      // Finde das Signatur-Feld für diesen Signer
-      const signatureField = signatureFields.find(
-        field => field.assigneeEmail.toLowerCase() === signer.email.toLowerCase() && field.value
-      );
+      // Seite holen (page ist 1-basiert, Array ist 0-basiert)
+      const pageIndex = field.page - 1;
+      if (pageIndex < 0 || pageIndex >= pages.length) {
+        console.warn(`⚠️ Invalid page ${field.page} for field, skipping`);
+        continue;
+      }
 
-      if (signer.signedAt && signatureField && signatureField.value) {
-        try {
-          // Base64 PNG dekodieren (entferne "data:image/png;base64," prefix)
-          const base64Data = signatureField.value.replace(/^data:image\/png;base64,/, '');
-          const imageBytes = Buffer.from(base64Data, 'base64');
+      const page = pages[pageIndex];
+      const { width: pageWidth, height: pageHeight } = page.getSize();
 
-          // PNG in PDF einbetten
-          const signatureImage = await pdfDoc.embedPng(imageBytes);
-
-          // Signatur-Bild zeichnen
-          lastPage.drawImage(signatureImage, {
-            x: 50,
-            y: sigY + 25,
-            width: signatureWidth,
-            height: signatureHeight
-          });
-
-          console.log(`✅ Embedded signature image for ${signer.email}`);
-        } catch (imageError) {
-          console.error(`❌ Failed to embed signature image for ${signer.email}:`, imageError);
-          // Fallback: Zeige Signatur-Text wenn Bild fehlschlägt
-          lastPage.drawText(`${signer.name}`, {
-            x: 50,
-            y: sigY + 50,
-            size: 16,
-            font: fontBold,
-            color: rgb(0, 0.31, 0.62)
-          });
-        }
-
-        // Text unter der Signatur
-        lastPage.drawText(`Signiert am: ${formatDate(signer.signedAt)}`, {
-          x: 50,
-          y: sigY + 10,
-          size: 9,
-          font: font,
-          color: rgb(0.3, 0.3, 0.3)
-        });
-
-        lastPage.drawText(`Von: ${signer.email}`, {
-          x: 50,
-          y: sigY - 5,
-          size: 9,
-          font: font,
-          color: rgb(0.4, 0.4, 0.4)
-        });
+      // Koordinaten bestimmen (verwende normalisierte wenn verfügbar, sonst pixel)
+      let coords;
+      if (field.nx !== undefined && field.ny !== undefined) {
+        // ✅ Verwende normalisierte Koordinaten
+        coords = normalizedToPdfCoords(
+          field.nx,
+          field.ny,
+          field.nwidth || 0.15,
+          field.nheight || 0.05,
+          pageWidth,
+          pageHeight
+        );
+      } else if (field.x !== undefined && field.y !== undefined) {
+        // 🔄 Fallback: Legacy pixel Koordinaten
+        coords = {
+          x: field.x,
+          y: pageHeight - field.y - field.height, // Flip Y-Achse
+          width: field.width,
+          height: field.height
+        };
       } else {
-        // Ausstehende Signatur
-        lastPage.drawText(`${signer.name} - Status: Ausstehend`, {
-          x: 50,
-          y: sigY + 40,
-          size: 10,
-          font: font,
-          color: rgb(0.8, 0.4, 0) // Orange
-        });
+        console.warn(`⚠️ Field has no coordinates, skipping`);
+        continue;
+      }
+
+      console.log(`📍 Rendering ${field.type} on page ${field.page} at (${Math.round(coords.x)}, ${Math.round(coords.y)})`);
+
+      // Feld basierend auf Typ rendern
+      switch (field.type) {
+        case 'signature':
+        case 'initial':
+          // Signatur/Initial als Bild rendern
+          try {
+            const base64Data = field.value.replace(/^data:image\/png;base64,/, '');
+            const imageBytes = Buffer.from(base64Data, 'base64');
+            const signatureImage = await pdfDoc.embedPng(imageBytes);
+
+            page.drawImage(signatureImage, {
+              x: coords.x,
+              y: coords.y,
+              width: coords.width,
+              height: coords.height
+            });
+
+            renderedCount++;
+            console.log(`✅ Rendered ${field.type} image`);
+          } catch (imageError) {
+            console.error(`❌ Failed to render ${field.type} image:`, imageError);
+            // Fallback: Text
+            page.drawText(field.value || '(Signatur)', {
+              x: coords.x + 5,
+              y: coords.y + (coords.height / 2),
+              size: Math.min(12, coords.height * 0.6),
+              font: fontBold,
+              color: rgb(0, 0.31, 0.62)
+            });
+          }
+          break;
+
+        case 'date':
+          // Datum als Text rendern
+          page.drawText(field.value || '', {
+            x: coords.x + 5,
+            y: coords.y + (coords.height / 2) - 3,
+            size: Math.min(12, coords.height * 0.6),
+            font: font,
+            color: rgb(0, 0, 0)
+          });
+          renderedCount++;
+          console.log(`✅ Rendered date text: "${field.value}"`);
+          break;
+
+        case 'text':
+          // Text rendern
+          page.drawText(field.value || '', {
+            x: coords.x + 5,
+            y: coords.y + (coords.height / 2) - 3,
+            size: Math.min(12, coords.height * 0.6),
+            font: font,
+            color: rgb(0, 0, 0)
+          });
+          renderedCount++;
+          console.log(`✅ Rendered text: "${field.value}"`);
+          break;
+
+        default:
+          console.warn(`⚠️ Unknown field type: ${field.type}`);
       }
     }
 
-    console.log('✅ Signature images added to last page');
+    console.log(`✅ Rendered ${renderedCount} fields on their placed positions`);
   } catch (error) {
-    console.error('❌ Error adding signature images:', error);
+    console.error('❌ Error rendering signature fields:', error);
     throw error;
   }
 }
@@ -366,8 +411,8 @@ async function sealPdf(envelope) {
     // 3. PDF mit pdf-lib öffnen
     const pdfDoc = await PDFDocument.load(originalPdfBytes);
 
-    // 4. Signatur-Bilder auf letzter Seite hinzufügen
-    await addSignatureBoxes(pdfDoc, envelope.signers, envelope.signatureFields);
+    // 4. ALLE Felder auf ihren platzierten Positionen rendern
+    await renderSignatureFields(pdfDoc, envelope.signatureFields);
 
     // 5. Audit Trail Seite am Ende hinzufügen
     await addAuditTrailPage(pdfDoc, envelope);
