@@ -632,6 +632,14 @@ export default function Generate() {
     }
   }, [contractData.parties]);
 
+  // 📄 Auto-load PDF preview when Step 3 is reached
+  useEffect(() => {
+    if (currentStep === 3 && contractText && !pdfPreviewUrl && !isGeneratingPreview) {
+      console.log('✅ Step 3 reached - auto-loading PDF preview');
+      generatePDFPreview();
+    }
+  }, [currentStep, contractText]);
+
   const loadCompanyProfile = async () => {
     try {
       const response = await fetch('/api/company-profile/me', {
@@ -2246,47 +2254,50 @@ export default function Generate() {
                   </motion.div>
                 )}
 
-                {/* Step 3: Generated Contract */}
+                {/* Step 3: Generated Contract - NEW CENTERED LAYOUT */}
                 {currentStep === 3 && (
                   <motion.div
                     key="step3"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    className={styles.stepContent}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    className={styles.step3Container}
                   >
-                    <div className={styles.stepHeader}>
+                    {/* Centered Header */}
+                    <div className={styles.step3Header}>
                       <h2>Ihr Vertrag ist fertig!</h2>
                       <p>Überprüfen Sie den Inhalt, speichern oder versenden Sie den Vertrag zur digitalen Signatur</p>
                     </div>
 
-                    {/* Action Buttons */}
-                    <div className={styles.actionButtons}>
+                    {/* Horizontal Action Buttons */}
+                    <div className={styles.step3ActionButtons}>
+                      {/* Text kopieren - Secondary */}
                       <motion.button
                         onClick={handleCopy}
-                        className={`${styles.actionButton} ${copied ? styles.success : ''}`}
+                        className={`${styles.step3ActionButton} ${copied ? styles.success : ''}`}
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                       >
-                        {copied ? <CheckCircle size={16} /> : <Clipboard size={16} />}
+                        {copied ? <CheckCircle size={18} /> : <Clipboard size={18} />}
                         <span>{copied ? "Kopiert!" : "Text kopieren"}</span>
                       </motion.button>
 
+                      {/* Speichern - Primary */}
                       <motion.button
                         onClick={handleSave}
-                        className={`${styles.actionButton} ${saved ? styles.success : ''}`}
+                        className={`${styles.step3ActionButton} ${styles.primary} ${saved ? styles.success : ''}`}
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                       >
-                        {saved ? <CheckCircle size={16} /> : <Save size={16} />}
+                        {saved ? <CheckCircle size={18} /> : <Save size={18} />}
                         <span>{saved ? "Gespeichert!" : "Vertrag speichern"}</span>
                       </motion.button>
 
-                      {/* 🔴 FIX 2: PDF-Button mit Loading-State */}
+                      {/* PDF herunterladen - Secondary */}
                       <motion.button
                         onClick={handleDownloadPDF}
                         disabled={isGeneratingPDF || !contractText}
-                        className={`${styles.actionButton} ${styles.primary} ${isGeneratingPDF ? styles.loading : ''}`}
+                        className={`${styles.step3ActionButton} ${isGeneratingPDF ? styles.loading : ''}`}
                         whileHover={!isGeneratingPDF ? { scale: 1.02 } : {}}
                         whileTap={!isGeneratingPDF ? { scale: 0.98 } : {}}
                       >
@@ -2297,22 +2308,22 @@ export default function Generate() {
                           </>
                         ) : (
                           <>
-                            <Download size={16} />
+                            <Download size={18} />
                             <span>Als PDF herunterladen</span>
                           </>
                         )}
                       </motion.button>
 
-                      {/* NEW: Zur Signatur versenden Button */}
+                      {/* Zur Signatur - Primary */}
                       <motion.button
                         onClick={handleSendForSignature}
                         disabled={!saved || !savedContractId}
-                        className={`${styles.actionButton} ${styles.signature}`}
+                        className={`${styles.step3ActionButton} ${styles.primary}`}
                         whileHover={saved ? { scale: 1.02 } : {}}
                         whileTap={saved ? { scale: 0.98 } : {}}
                         title={!saved ? "Bitte speichern Sie den Vertrag zuerst" : "Zur Signatur versenden"}
                       >
-                        <Send size={16} />
+                        <Send size={18} />
                         <span>Zur Signatur versenden</span>
                       </motion.button>
                     </div>
@@ -2327,10 +2338,10 @@ export default function Generate() {
                         ⚡ Nächster Schritt: Speichern Sie den Vertrag, um ihn zur digitalen Signatur zu versenden
                       </motion.div>
                     )}
-                    
+
                     {/* Error Display */}
                     {downloadError && (
-                      <motion.div 
+                      <motion.div
                         className={styles.errorMessage}
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -2339,6 +2350,63 @@ export default function Generate() {
                       </motion.div>
                     )}
 
+                    {/* Split View: Text Editor + PDF Preview */}
+                    <div className={styles.step3SplitView}>
+                      {/* Left: Text Editor */}
+                      <div className={styles.step3Panel}>
+                        <div className={styles.step3PanelHeader}>
+                          <Edit3 size={18} />
+                          <span>Text bearbeiten</span>
+                        </div>
+                        <div className={styles.step3PanelContent}>
+                          <textarea
+                            className={styles.step3TextEditor}
+                            value={contractText}
+                            onChange={(e) => {
+                              setContractText(e.target.value);
+                              // ✅ PDF-Vorschau zurücksetzen bei Text-Änderungen
+                              if (pdfPreviewUrl) {
+                                setPdfPreviewUrl(null);
+                              }
+                              setSaved(false); // Mark as unsaved
+                            }}
+                            placeholder="Vertragstext..."
+                          />
+                        </div>
+                      </div>
+
+                      {/* Right: PDF Preview */}
+                      <div className={styles.step3Panel}>
+                        <div className={styles.step3PanelHeader}>
+                          <FileText size={18} />
+                          <span>PDF-Vorschau</span>
+                          {isGeneratingPreview && <div className={styles.smallSpinner}></div>}
+                        </div>
+                        <div className={styles.step3PanelContent}>
+                          {isGeneratingPreview ? (
+                            <div className={styles.step3PdfLoading}>
+                              <div className={styles.loadingSpinner}></div>
+                              <p>PDF wird generiert...</p>
+                            </div>
+                          ) : pdfPreviewUrl ? (
+                            <iframe
+                              src={pdfPreviewUrl}
+                              className={styles.step3PdfPreview}
+                              title="PDF Vorschau"
+                            />
+                          ) : (
+                            <div className={styles.step3PdfError}>
+                              <p>❌ PDF konnte nicht geladen werden</p>
+                              <button onClick={generatePDFPreview} className={styles.retryButton}>
+                                Erneut versuchen
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Back to Start Button */}
                     <motion.button
                       className={styles.backToStartButton}
                       onClick={() => {
@@ -2352,9 +2420,12 @@ export default function Generate() {
                         setSaved(false);
                         setIsGeneratingPDF(false);
                         setDownloadError(null);
+                        setPdfPreviewUrl(null);
+                        setIsGeneratingPreview(false);
                       }}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
+                      style={{ marginTop: '2rem' }}
                     >
                       <ArrowLeft size={16} />
                       <span>Neuen Vertrag erstellen</span>
@@ -2363,102 +2434,6 @@ export default function Generate() {
                 )}
               </AnimatePresence>
             </motion.div>
-
-            {/* Right Panel - Preview with Tabs */}
-            <AnimatePresence>
-              {showPreview && contractText && (
-                <motion.div
-                  className={styles.previewPanel}
-                  initial={{ opacity: 0, x: 20, width: 0 }}
-                  animate={{ opacity: 1, x: 0, width: "auto" }}
-                  exit={{ opacity: 0, x: 20, width: 0 }}
-                  transition={{ duration: 0.4 }}
-                >
-                  <div className={styles.previewHeader}>
-                    <h3>
-                      <Eye size={18} />
-                      Vertragsvorschau
-                    </h3>
-                    <button
-                      className={styles.closePreview}
-                      onClick={() => setShowPreview(false)}
-                    >
-                      ×
-                    </button>
-                  </div>
-
-                  {/* 📄 NEW: TAB Navigation */}
-                  <div className={styles.tabNavigation}>
-                    <button
-                      className={`${styles.tabButton} ${activeTab === 'text' ? styles.active : ''}`}
-                      onClick={() => setActiveTab('text')}
-                    >
-                      <Edit3 size={16} />
-                      <span>Text bearbeiten</span>
-                    </button>
-                    <button
-                      className={`${styles.tabButton} ${activeTab === 'pdf' ? styles.active : ''}`}
-                      onClick={() => {
-                        setActiveTab('pdf');
-                        if (!pdfPreviewUrl && !isGeneratingPreview) {
-                          generatePDFPreview();
-                        }
-                      }}
-                    >
-                      <FileText size={16} />
-                      <span>PDF-Vorschau</span>
-                      {isGeneratingPreview && <div className={styles.smallSpinner}></div>}
-                    </button>
-                  </div>
-
-                  <div className={styles.previewContainer}>
-                    {/* Text Editor Tab */}
-                    {activeTab === 'text' && (
-                      <div className={styles.textEditorTab}>
-                        <textarea
-                          className={styles.contractTextarea}
-                          value={contractText}
-                          onChange={(e) => {
-                            setContractText(e.target.value);
-                            // ✅ PDF-Vorschau zurücksetzen bei Text-Änderungen
-                            if (pdfPreviewUrl) {
-                              setPdfPreviewUrl(null);
-                            }
-                            setSaved(false); // Mark as unsaved
-                          }}
-                          placeholder="Vertrag text..."
-                        />
-                      </div>
-                    )}
-
-                    {/* PDF Preview Tab */}
-                    {activeTab === 'pdf' && (
-                      <div className={styles.pdfPreviewTab}>
-                        {isGeneratingPreview ? (
-                          <div className={styles.pdfLoading}>
-                            <div className={styles.loadingSpinner}></div>
-                            <p>PDF wird generiert...</p>
-                          </div>
-                        ) : pdfPreviewUrl ? (
-                          <iframe
-                            src={pdfPreviewUrl}
-                            className={styles.pdfIframe}
-                            title="PDF Vorschau"
-                          />
-                        ) : (
-                          <div className={styles.pdfError}>
-                            <p>❌ PDF konnte nicht geladen werden</p>
-                            <button onClick={generatePDFPreview} className={styles.retryButton}>
-                              Erneut versuchen
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
           </div>
         </div>
 

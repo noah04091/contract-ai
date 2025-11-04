@@ -2187,6 +2187,227 @@
 }
 
 /* =================================
+   NEW: STEP 3 CENTERED LAYOUT
+   ================================= */
+
+/* Centered container for Step 3 */
+.step3Container {
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Centered header */
+.step3Header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.step3Header h2 {
+  font-size: 28px;
+  font-weight: 600;
+  color: #0B1324;
+  margin: 0 0 0.75rem 0;
+  letter-spacing: -0.025em;
+}
+
+.step3Header p {
+  color: #667085;
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+/* Horizontal action buttons */
+.step3ActionButtons {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.step3ActionButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1rem 1.5rem;
+  background: white;
+  border: 1.5px solid #E5E7EB;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.28, 0.44, 0.49, 1);
+  font-weight: 500;
+  color: #0B1324;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.step3ActionButton:hover:not(:disabled) {
+  background: #f5f5f7;
+  border-color: rgba(46, 108, 246, 0.3);
+  color: #2E6CF6;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Primary buttons (Speichern, Zur Signatur) */
+.step3ActionButton.primary {
+  background: linear-gradient(135deg, #2E6CF6 0%, #1E53D8 100%);
+  color: white;
+  border-color: transparent;
+  font-weight: 600;
+}
+
+.step3ActionButton.primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #1E53D8 0%, #1643B8 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(46, 108, 246, 0.3);
+  transform: translateY(-2px);
+}
+
+.step3ActionButton.primary:disabled {
+  background: #E5E7EB;
+  color: #9CA3AF;
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Success state */
+.step3ActionButton.success {
+  background: rgba(48, 209, 88, 0.1);
+  border-color: rgba(48, 209, 88, 0.3);
+  color: #30d158;
+}
+
+.step3ActionButton.success:hover {
+  background: rgba(48, 209, 88, 0.15);
+  box-shadow: 0 2px 8px rgba(48, 209, 88, 0.15);
+}
+
+/* Loading state */
+.step3ActionButton.loading {
+  opacity: 0.7;
+  cursor: wait;
+  pointer-events: none;
+}
+
+/* Split view for text editor and PDF preview */
+.step3SplitView {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-top: 2rem;
+  min-height: 600px;
+}
+
+.step3Panel {
+  background: white;
+  border: 1.5px solid #E5E7EB;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.step3PanelHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1rem 1.25rem;
+  background: #F9FAFB;
+  border-bottom: 1px solid #E5E7EB;
+  font-weight: 600;
+  color: #0B1324;
+  font-size: 15px;
+}
+
+.step3PanelContent {
+  flex: 1;
+  overflow: auto;
+  padding: 1.25rem;
+}
+
+/* Text editor */
+.step3TextEditor {
+  width: 100%;
+  height: 100%;
+  min-height: 500px;
+  border: none;
+  outline: none;
+  font-family: 'Söhne', 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 14px;
+  line-height: 1.8;
+  color: #0B1324;
+  resize: none;
+  padding: 0;
+}
+
+/* PDF preview */
+.step3PdfPreview {
+  width: 100%;
+  height: 100%;
+  min-height: 500px;
+  border: none;
+  background: #F9FAFB;
+}
+
+.step3PdfLoading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 1rem;
+  color: #667085;
+}
+
+.step3PdfError {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 1rem;
+  color: #DC2626;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .step3SplitView {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .step3ActionButtons {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .step3ActionButtons {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .step3ActionButton {
+    padding: 0.875rem 1.25rem;
+  }
+
+  .step3Header h2 {
+    font-size: 24px;
+  }
+
+  .step3Header p {
+    font-size: 14px;
+  }
+}
+
+/* =================================
    16. USAGE & TIP BOXES
    ================================= */
 
