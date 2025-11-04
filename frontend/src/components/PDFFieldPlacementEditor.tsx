@@ -105,10 +105,6 @@ const PDFFieldPlacementEditor: React.FC<PDFFieldPlacementEditorProps> = ({
   const [pdfOriginal, setPdfOriginal] = useState<{ width: number; height: number } | null>(null);
   const [renderedWidth, setRenderedWidth] = useState<number>(0);
 
-  // 🔄 DEPRECATED: This now stores rendered dimensions, not original
-  // Use pdfOriginal for bounds calculations!
-  const [pdfDimensions, setPdfDimensions] = useState({ width: 0, height: 0 });
-
   // Update selected signer when signers change
   useEffect(() => {
     if (signers.length > 0 && !selectedSigner) {
@@ -126,7 +122,6 @@ const PDFFieldPlacementEditor: React.FC<PDFFieldPlacementEditorProps> = ({
 
     // Store rendered dimensions (for scale calculation)
     setRenderedWidth(width);
-    setPdfDimensions({ width, height });
 
     // Store original PDF dimensions (viewport-independent, for bounds)
     if (originalWidth && originalHeight) {
