@@ -6,7 +6,7 @@ import { Helmet } from "react-helmet";
 import {
   CheckCircle, Clipboard, Save, FileText, Check, Download,
   ArrowRight, ArrowLeft, Sparkles, Edit3, Building,
-  Eye, TrendingUp, Send
+  TrendingUp, Send
 } from "lucide-react";
 import styles from "../styles/Generate.module.css";
 import { toast } from 'react-toastify';
@@ -556,7 +556,6 @@ export default function Generate() {
   const [showPreview, setShowPreview] = useState<boolean>(false);
 
   // 📄 NEW: PDF Preview States
-  const [activeTab, setActiveTab] = useState<'text' | 'pdf'>('text');
   const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
   const [isGeneratingPreview, setIsGeneratingPreview] = useState<boolean>(false);
   const [showTemplates, setShowTemplates] = useState<boolean>(false);
