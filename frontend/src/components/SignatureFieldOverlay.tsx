@@ -4,7 +4,7 @@
 import { motion } from "framer-motion";
 import { PenTool, Calendar, Type, FileSignature, CheckCircle } from "lucide-react";
 import styles from "../styles/SignatureFieldOverlay.module.css";
-import { fromNormalized, type FieldDocCoords } from "../utils/fieldCoords";
+import { fromNormalized } from "../utils/fieldCoords";
 
 // ===== TYPES =====
 
