@@ -10,6 +10,44 @@ import 'react-pdf/dist/Page/TextLayer.css';
 // Configure PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
+// ===== HELPER FUNCTIONS FOR COORDINATE CONVERSION =====
+
+/**
+ * Calculate scale factor from rendered to original PDF dimensions
+ */
+function getScale(renderedWidth: number, originalWidth: number): number {
+  if (!renderedWidth || !originalWidth) return 1;
+  return renderedWidth / originalWidth;
+}
+
+/**
+ * Convert client (mouse/touch) coordinates to PDF coordinates
+ * Accounts for zoom/scale and container offset
+ */
+function clientToPdfXY(
+  clientX: number,
+  clientY: number,
+  hostEl: HTMLElement,
+  renderedWidth: number,
+  originalWidth: number,
+  originalHeight: number
+): { xPdf: number; yPdf: number; scale: number } {
+  const rect = hostEl.getBoundingClientRect();
+
+  const xRendered = Math.max(0, Math.min(clientX - rect.left, rect.width));
+  const yRendered = Math.max(0, Math.min(clientY - rect.top, rect.height));
+
+  const scale = getScale(renderedWidth, originalWidth);
+  const xPdf = xRendered / (scale || 1);
+  const yPdf = yRendered / (scale || 1);
+
+  return {
+    xPdf: Math.max(0, Math.min(xPdf, originalWidth)),
+    yPdf: Math.max(0, Math.min(yPdf, originalHeight)),
+    scale
+  };
+}
+
 export interface SignatureField {
   id: string;
   type: 'signature' | 'initial' | 'date' | 'text';
@@ -62,6 +100,13 @@ const PDFFieldPlacementEditor: React.FC<PDFFieldPlacementEditorProps> = ({
 
   const pdfContainerRef = useRef<HTMLDivElement>(null);
   const pdfPageWrapperRef = useRef<HTMLDivElement>(null);
+
+  // ✅ NEW: Separate original PDF dimensions (viewport-independent) from rendered dimensions
+  const [pdfOriginal, setPdfOriginal] = useState<{ width: number; height: number } | null>(null);
+  const [renderedWidth, setRenderedWidth] = useState<number>(0);
+
+  // 🔄 DEPRECATED: This now stores rendered dimensions, not original
+  // Use pdfOriginal for bounds calculations!
   const [pdfDimensions, setPdfDimensions] = useState({ width: 0, height: 0 });
 
   // Update selected signer when signers change
@@ -76,14 +121,35 @@ const PDFFieldPlacementEditor: React.FC<PDFFieldPlacementEditorProps> = ({
     setPdfLoading(false);
   };
 
-  const onPageLoadSuccess = (page: { width: number; height: number }) => {
-    const { width, height } = page;
+  const onPageLoadSuccess = (page: any) => {
+    const { width, height, originalWidth, originalHeight } = page;
+
+    // Store rendered dimensions (for scale calculation)
+    setRenderedWidth(width);
     setPdfDimensions({ width, height });
 
-    // Notify parent component of PDF dimensions for coordinate normalization
-    if (onPdfDimensionsChange) {
-      onPdfDimensionsChange({ width, height });
+    // Store original PDF dimensions (viewport-independent, for bounds)
+    if (originalWidth && originalHeight) {
+      setPdfOriginal({ width: originalWidth, height: originalHeight });
+
+      // Notify parent with ORIGINAL dimensions for normalized coordinate calculations
+      if (onPdfDimensionsChange) {
+        onPdfDimensionsChange({ width: originalWidth, height: originalHeight });
+      }
+    } else {
+      // Fallback: if originalWidth/originalHeight not available, use rendered
+      setPdfOriginal({ width, height });
+
+      if (onPdfDimensionsChange) {
+        onPdfDimensionsChange({ width, height });
+      }
     }
+
+    console.log('📐 PDF Dimensions loaded:', {
+      rendered: { width, height },
+      original: originalWidth && originalHeight ? { width: originalWidth, height: originalHeight } : { width, height },
+      zoomLevel
+    });
   };
 
   // Add field to PDF
@@ -118,63 +184,73 @@ const PDFFieldPlacementEditor: React.FC<PDFFieldPlacementEditorProps> = ({
   const handleFieldMouseDown = (e: React.MouseEvent, field: SignatureField) => {
     e.preventDefault();
 
-    if (!pdfPageWrapperRef.current) return;
+    if (!pdfPageWrapperRef.current || !pdfOriginal) return;
 
-    const scaleFactor = zoomLevel / 100;
-    const pageRect = pdfPageWrapperRef.current.getBoundingClientRect();
-    const mouseX = e.clientX - pageRect.left;
-    const mouseY = e.clientY - pageRect.top;
+    // Convert client coordinates to PDF coordinates
+    const { xPdf, yPdf } = clientToPdfXY(
+      e.clientX,
+      e.clientY,
+      pdfPageWrapperRef.current,
+      renderedWidth,
+      pdfOriginal.width,
+      pdfOriginal.height
+    );
 
-    // Calculate offset from mouse to field's current SCALED position
+    // Calculate offset in PDF coordinates (not screen pixels!)
     setDragOffset({
-      x: mouseX - (field.x * scaleFactor),
-      y: mouseY - (field.y * scaleFactor),
+      x: xPdf - field.x,
+      y: yPdf - field.y,
     });
     setDraggingField(field.id);
   };
 
   // Drag field
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (!draggingField || !pdfPageWrapperRef.current) return;
+    if (!draggingField || !pdfPageWrapperRef.current || !pdfOriginal) return;
 
-    const scaleFactor = zoomLevel / 100;
-    const pageRect = pdfPageWrapperRef.current.getBoundingClientRect();
-    const mouseXScaled = e.clientX - pageRect.left;
-    const mouseYScaled = e.clientY - pageRect.top;
-
-    // Convert screen coordinates back to logical PDF coordinates
-    const newX = (mouseXScaled - dragOffset.x) / scaleFactor;
-    const newY = (mouseYScaled - dragOffset.y) / scaleFactor;
-
-    // Constrain to PDF bounds (in logical coordinates)
     const field = fields.find(f => f.id === draggingField);
     if (!field) return;
 
-    const maxX = pdfDimensions.width - field.width;
-    const maxY = pdfDimensions.height - field.height;
+    // Convert client coordinates to PDF coordinates
+    const { xPdf, yPdf, scale } = clientToPdfXY(
+      e.clientX,
+      e.clientY,
+      pdfPageWrapperRef.current,
+      renderedWidth,
+      pdfOriginal.width,
+      pdfOriginal.height
+    );
 
-    const constrainedX = Math.max(0, Math.min(newX, maxX));
-    const constrainedY = Math.max(0, Math.min(newY, maxY));
+    // Calculate raw target position in PDF coordinates
+    const rawX = xPdf - dragOffset.x;
+    const rawY = yPdf - dragOffset.y;
 
-    // 🐛 DEBUG: Log constraint behavior for invisible wall bug
-    console.log('🐛 Field Drag Debug:', {
+    // ✅ BOUNDS AGAINST ORIGINAL PDF DIMENSIONS (not rendered/zoomed dimensions!)
+    const maxX = pdfOriginal.width - field.width;
+    const maxY = pdfOriginal.height - field.height;
+
+    const constrainedX = Math.max(0, Math.min(rawX, maxX));
+    const constrainedY = Math.max(0, Math.min(rawY, maxY));
+
+    // 🐛 DEBUG: Log constraint behavior (keeping until invisible wall is confirmed fixed)
+    console.log('🐛 Field Drag Debug (FIXED):', {
       fieldType: field.type,
       fieldLabel: field.label,
       fieldWidth: field.width,
-      pdfDimensions: { width: pdfDimensions.width, height: pdfDimensions.height },
+      pdfOriginal: { width: pdfOriginal.width, height: pdfOriginal.height },
+      renderedWidth: renderedWidth,
+      scale: scale,
       maxX: maxX,
       maxY: maxY,
-      newX: newX,
-      newY: newY,
+      rawX: rawX,
+      rawY: rawY,
       constrainedX: constrainedX,
       constrainedY: constrainedY,
-      isHittingXBoundary: newX > maxX || newX < 0,
-      isHittingYBoundary: newY > maxY || newY < 0,
-      mouseXScaled: mouseXScaled,
-      dragOffset: dragOffset,
-      scaleFactor: scaleFactor
+      isHittingXBoundary: rawX > maxX || rawX < 0,
+      isHittingYBoundary: rawY > maxY || rawY < 0,
     });
 
+    // Update field position (in PDF coordinates)
     onFieldsChange(
       fields.map(f =>
         f.id === draggingField
@@ -206,8 +282,11 @@ const PDFFieldPlacementEditor: React.FC<PDFFieldPlacementEditorProps> = ({
   // Calculate PDF width based on zoom level
   const pdfWidth = Math.round((1000 * zoomLevel) / 100);
 
-  // Calculate scale factor for fields to match zoom level
-  const scaleFactor = zoomLevel / 100;
+  // ✅ Calculate ACTUAL scale factor from rendered to original PDF dimensions
+  // This accounts for zoom AND viewport changes
+  const scaleFactor = pdfOriginal && renderedWidth
+    ? getScale(renderedWidth, pdfOriginal.width)
+    : zoomLevel / 100; // Fallback during initialization
 
   // Get signer color
   const getSignerColor = (email: string): string => {
