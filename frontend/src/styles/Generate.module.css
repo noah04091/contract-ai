@@ -2195,6 +2195,7 @@
   max-width: 1400px;
   margin: 0 auto;
   width: 100%;
+  padding: 0 2rem;
 }
 
 /* Centered header */
@@ -2377,6 +2378,10 @@
 
 /* Responsive */
 @media (max-width: 1024px) {
+  .step3Container {
+    padding: 0 1.5rem;
+  }
+
   .step3SplitView {
     grid-template-columns: 1fr;
     gap: 1rem;
@@ -2389,6 +2394,10 @@
 }
 
 @media (max-width: 768px) {
+  .step3Container {
+    padding: 0 1rem;
+  }
+
   .step3ActionButtons {
     grid-template-columns: 1fr;
     gap: 0.75rem;
