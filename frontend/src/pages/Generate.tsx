@@ -247,7 +247,8 @@ const CONTRACT_TYPES: ContractType[] = [
       { name: 'seller', label: 'Verkäufer', type: 'text', placeholder: 'Name des Verkäufers', required: true },
       { name: 'buyer', label: 'Käufer', type: 'text', placeholder: 'Name des Käufers', required: true },
       { name: 'item', label: 'Verkaufsgegenstand', type: 'textarea', placeholder: 'Detaillierte Beschreibung der Ware/Dienstleistung', required: true },
-      { name: 'buyerAddressFull', label: 'Käuferadresse (optional)', type: 'text', placeholder: 'z.B. Musterstraße 123, 12345 Berlin', required: false },
+      { name: 'buyerAddress', label: 'Käuferstraße (optional)', type: 'text', placeholder: 'z.B. Musterstraße 123', required: false },
+      { name: 'buyerCity', label: 'Käufer-PLZ/Ort (optional)', type: 'text', placeholder: 'z.B. 12345 Berlin', required: false },
       { name: 'price', label: 'Kaufpreis', type: 'text', placeholder: 'z.B. 15.000€', required: true },
       { name: 'deliveryDate', label: 'Liefertermin', type: 'date', placeholder: '', required: true }
     ]
