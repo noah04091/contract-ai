@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Plus, Mail, User, Trash2, Send, Users } from "lucide-react";
+import { X, Plus, Mail, User, Trash2, Send, Users, ArrowRight } from "lucide-react";
 import styles from "../styles/SignatureModal.module.css";
 
 interface Signer {
@@ -26,6 +27,7 @@ export default function SignatureModal({
   contractName,
   contractS3Key
 }: SignatureModalProps) {
+  const navigate = useNavigate();
   const [signers, setSigners] = useState<Signer[]>([]);
   const [currentEmail, setCurrentEmail] = useState("");
   const [currentName, setCurrentName] = useState("");
@@ -175,19 +177,8 @@ export default function SignatureModal({
         message
       });
 
-      // ✉️ Erstelle Signaturfelder (ein Feld pro Signer auf letzter Seite)
-      const signatureFields = finalSigners.map((signer, index) => ({
-        assigneeEmail: signer.email,
-        type: "signature",
-        required: true,
-        page: 1, // 🔧 FIX: PDF-Seiten beginnen bei 1 (nicht 0)
-        x: 50,
-        y: 150 + (index * 100), // Vertikaler Abstand
-        width: 250,
-        height: 80
-      }));
-
-      // API-Call zum Backend: Envelope erstellen
+      // 🆕 NEUER WORKFLOW: Envelope ohne Felder erstellen → dann zum Field Placement Editor
+      // API-Call zum Backend: Envelope im DRAFT Status erstellen (ohne signatureFields)
       const response = await fetch("/api/envelopes", {
         method: "POST",
         headers: {
@@ -199,10 +190,10 @@ export default function SignatureModal({
           contractId,
           title: contractName,
           message: message || "",
-          s3Key: contractS3Key, // ✉️ NEU: S3 Key
+          s3Key: contractS3Key,
           signingMode: signatureMode === "BOTH_PARTIES" ? "SEQUENTIAL" : "SINGLE",
           signers: finalSigners,
-          signatureFields // ✉️ NEU: Signatur-Felder
+          signatureFields: [] // ✅ Leeres Array - Felder werden später im Editor platziert
         })
       });
 
@@ -212,38 +203,20 @@ export default function SignatureModal({
         throw new Error(data.error || "Fehler beim Erstellen der Signaturanfrage");
       }
 
-      console.log("✅ Envelope created successfully:", data);
+      console.log("✅ Envelope created successfully (DRAFT):", data);
 
       const envelopeId = data.envelope._id;
 
-      // ✉️ BUG FIX 3: Automatisch E-Mails versenden
-      console.log(`📧 Sending invitations for envelope: ${envelopeId}`);
+      // ✅ Navigiere zum Field Placement Editor (E-Mails werden NICHT automatisch gesendet)
+      console.log(`➡️ Navigating to field placement editor: ${envelopeId}`);
 
-      const sendResponse = await fetch(`/api/envelopes/${envelopeId}/send`, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json"
-        },
-        credentials: "include"
-      });
-
-      const sendData = await sendResponse.json();
-
-      if (!sendResponse.ok) {
-        console.error("❌ Failed to send invitations:", sendData.error);
-        alert(`⚠️ Envelope erstellt, aber E-Mail-Versand fehlgeschlagen:\n\n${sendData.error || "Unbekannter Fehler"}\n\nSie können die Einladungen später über das Envelopes Dashboard versenden.`);
-      } else {
-        console.log("✅ Invitations sent successfully:", sendData);
-
-        // Success feedback
-        alert(`✅ Signaturanfrage erfolgreich versendet!\n\nE-Mail-Einladungen wurden gesendet an:\n${signers.map(s => `- ${s.name} (${s.email})`).join("\n")}\n\n${sendData.message}`);
-      }
-
-      // Reset form and close
+      // Reset form and close modal
       setSigners([]);
       setMessage("");
       onClose();
+
+      // Navigate to field placement editor
+      navigate(`/signature/place-fields/${envelopeId}`);
     } catch (error) {
       console.error("❌ Error sending signature request:", error);
       const errorMessage = error instanceof Error ? error.message : "Unbekannter Fehler";
@@ -444,8 +417,8 @@ export default function SignatureModal({
               onClick={handleSubmit}
               disabled={signers.length === 0 || isSubmitting}
             >
-              <Send size={16} />
-              {isSubmitting ? "Wird gesendet..." : "Zur Signatur senden"}
+              <ArrowRight size={16} />
+              {isSubmitting ? "Erstelle Envelope..." : "Weiter zu Feld-Platzierung"}
             </button>
           </div>
         </motion.div>

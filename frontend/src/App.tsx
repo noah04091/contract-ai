@@ -73,6 +73,7 @@ const Upgrade = lazy(() => import("./pages/Upgrade"));
 const BetterContracts = lazy(() => import("./pages/BetterContracts"));
 const LegalPulse = lazy(() => import("./pages/LegalPulse"));
 const Envelopes = lazy(() => import("./pages/Envelopes")); // ✉️ NEU: Digital Signature Dashboard
+const PlaceSignatureFields = lazy(() => import("./pages/PlaceSignatureFields")); // ✉️ NEU: Field Placement Editor
 
 function AppWithLoader() {
   const location = useLocation();
@@ -162,6 +163,9 @@ function AppWithLoader() {
 
             {/* ✉️ NEU: Digital Signature Dashboard */}
             <Route path="/envelopes" element={<RequireAuth><Envelopes /></RequireAuth>} />
+
+            {/* ✉️ NEU: Field Placement Editor für Envelopes */}
+            <Route path="/signature/place-fields/:envelopeId" element={<RequireAuth><PlaceSignatureFields /></RequireAuth>} />
 
             <Route path="/me" element={<RequireAuth><Profile /></RequireAuth>} />
             <Route path="/calendar" element={<RequireAuth><CalendarView /></RequireAuth>} />

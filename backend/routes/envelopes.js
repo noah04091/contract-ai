@@ -337,10 +337,11 @@ router.post("/envelopes", verifyToken, async (req, res) => {
       });
     }
 
-    if (!signatureFields || !Array.isArray(signatureFields) || signatureFields.length === 0) {
+    // ✅ OPTIONAL: signatureFields kann leer sein (werden später im Field Placement Editor hinzugefügt)
+    if (!signatureFields || !Array.isArray(signatureFields)) {
       return res.status(400).json({
         success: false,
-        message: "Mindestens ein Signaturfeld erforderlich"
+        message: "signatureFields muss ein Array sein"
       });
     }
 
@@ -376,17 +377,19 @@ router.post("/envelopes", verifyToken, async (req, res) => {
       tokenExpires: expiresAt
     }));
 
-    // Validate signature fields assignments
-    const signerEmails = new Set(enrichedSigners.map(s => s.email));
-    const invalidFields = signatureFields.filter(
-      field => !signerEmails.has(field.assigneeEmail.toLowerCase())
-    );
+    // Validate signature fields assignments (nur wenn Felder vorhanden)
+    if (signatureFields.length > 0) {
+      const signerEmails = new Set(enrichedSigners.map(s => s.email));
+      const invalidFields = signatureFields.filter(
+        field => !signerEmails.has(field.assigneeEmail.toLowerCase())
+      );
 
-    if (invalidFields.length > 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Signaturfelder enthalten ungültige Unterzeichner-E-Mails"
-      });
+      if (invalidFields.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Signaturfelder enthalten ungültige Unterzeichner-E-Mails"
+        });
+      }
     }
 
     // Create envelope
@@ -1760,6 +1763,99 @@ router.post("/sign/:token/decline", signatureDeclineLimiter, async (req, res) =>
       success: false,
       message: "Fehler beim Ablehnen der Signatur",
       error: error.message
+    });
+  }
+});
+
+// ===================================================
+// UPDATE ENVELOPE (Signature Fields)
+// PUT /api/envelopes/:id
+// ===================================================
+router.put("/:id", requireAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { signatureFields } = req.body;
+
+    console.log(`📝 Updating envelope ${id} with ${signatureFields?.length || 0} fields`);
+
+    // Validate fields array
+    if (!signatureFields || !Array.isArray(signatureFields)) {
+      return res.status(400).json({
+        success: false,
+        error: "signatureFields muss ein Array sein"
+      });
+    }
+
+    // Find envelope and verify ownership
+    const envelope = await Envelope.findOne({
+      _id: id,
+      ownerId: req.user.userId
+    });
+
+    if (!envelope) {
+      return res.status(404).json({
+        success: false,
+        error: "Envelope nicht gefunden"
+      });
+    }
+
+    // Only allow updating DRAFT envelopes
+    if (envelope.status !== "DRAFT") {
+      return res.status(400).json({
+        success: false,
+        error: "Nur DRAFT Envelopes können bearbeitet werden"
+      });
+    }
+
+    // Validate field assignments (nur wenn Felder vorhanden)
+    if (signatureFields.length > 0) {
+      const signerEmails = new Set(envelope.signers.map(s => s.email));
+      const invalidFields = signatureFields.filter(
+        field => !signerEmails.has(field.assigneeEmail.toLowerCase())
+      );
+
+      if (invalidFields.length > 0) {
+        return res.status(400).json({
+          success: false,
+          error: "Signaturfelder enthalten ungültige Unterzeichner-E-Mails"
+        });
+      }
+    }
+
+    // Update signature fields
+    envelope.signatureFields = signatureFields.map(field => ({
+      ...field,
+      assigneeEmail: field.assigneeEmail.toLowerCase().trim()
+    }));
+
+    // Add audit event
+    envelope.audit.push({
+      event: "FIELDS_UPDATED",
+      timestamp: new Date(),
+      userId: req.user.userId,
+      email: req.user.email,
+      ip: getClientIP(req),
+      userAgent: req.headers['user-agent'] || 'unknown',
+      details: {
+        fieldsCount: signatureFields.length
+      }
+    });
+
+    await envelope.save();
+
+    console.log(`✅ Envelope updated successfully with ${signatureFields.length} fields`);
+
+    res.json({
+      success: true,
+      message: "Envelope erfolgreich aktualisiert",
+      envelope
+    });
+  } catch (error) {
+    console.error("❌ Error updating envelope:", error);
+    res.status(500).json({
+      success: false,
+      error: "Fehler beim Aktualisieren des Envelopes",
+      message: error.message
     });
   }
 });
