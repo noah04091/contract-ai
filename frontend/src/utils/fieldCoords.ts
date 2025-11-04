@@ -48,12 +48,34 @@ export function toNormalized(
   renderedWidth: number,
   renderedHeight: number
 ): Pick<FieldDocCoords, "nx" | "ny" | "nwidth" | "nheight"> {
-  return {
-    nx: xPx / renderedWidth,
-    ny: yPx / renderedHeight,
-    nwidth: wPx / renderedWidth,
-    nheight: hPx / renderedHeight,
-  };
+  // Safety check: prevent division by zero
+  if (renderedWidth <= 0 || renderedHeight <= 0) {
+    console.error('❌ Invalid PDF dimensions for normalization:', { renderedWidth, renderedHeight });
+    return { nx: 0, ny: 0, nwidth: 0, nheight: 0 };
+  }
+
+  // Calculate normalized values
+  let nx = xPx / renderedWidth;
+  let ny = yPx / renderedHeight;
+  let nwidth = wPx / renderedWidth;
+  let nheight = hPx / renderedHeight;
+
+  // Clamp values to valid range [0, 1]
+  nx = Math.max(0, Math.min(1, nx));
+  ny = Math.max(0, Math.min(1, ny));
+  nwidth = Math.max(0, Math.min(1, nwidth));
+  nheight = Math.max(0, Math.min(1, nheight));
+
+  // Warning if field was outside bounds
+  if (xPx < 0 || yPx < 0 || xPx + wPx > renderedWidth || yPx + hPx > renderedHeight) {
+    console.warn('⚠️ Field placed outside PDF bounds, clamped to valid range:', {
+      original: { x: xPx, y: yPx, w: wPx, h: hPx },
+      pageDims: { width: renderedWidth, height: renderedHeight },
+      normalized: { nx, ny, nwidth, nheight }
+    });
+  }
+
+  return { nx, ny, nwidth, nheight };
 }
 
 /**
