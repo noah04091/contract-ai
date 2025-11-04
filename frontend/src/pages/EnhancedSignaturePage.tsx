@@ -338,7 +338,7 @@ export default function EnhancedSignaturePage() {
   }, []);
 
   // Helper: Wait for overlay to render, then scroll to it (with retry logic)
-  const scrollToOverlayWhenReady = useCallback(async (fieldId: string, maxWait = 2000): Promise<boolean> => {
+  const scrollToOverlayWhenReady = useCallback(async (fieldId: string, maxWait = 2000, openModal: boolean = true): Promise<boolean> => {
     const start = performance.now();
 
     while (performance.now() - start < maxWait) {
@@ -350,8 +350,13 @@ export default function EnhancedSignaturePage() {
         el.scrollIntoView({ behavior: "smooth", block: "center" });
         el.classList.add("scrollPulse");
         setTimeout(() => el.classList.remove("scrollPulse"), 600);
-        setShowInputModal(true);
-        console.log(`🎯 Scrolled to field: ${fieldId}`);
+
+        // Only open modal if requested
+        if (openModal) {
+          setShowInputModal(true);
+        }
+
+        console.log(`🎯 Scrolled to field: ${fieldId}, openModal: ${openModal}`);
         return true;
       }
 
@@ -363,13 +368,15 @@ export default function EnhancedSignaturePage() {
     return false;
   }, []);
 
-  // Jump to field (scroll + focus + open modal)
-  const handleJumpToField = useCallback((fieldId: string) => {
+  // Jump to field (scroll + focus + optionally open modal)
+  const handleJumpToField = useCallback((fieldId: string, openModal: boolean = true) => {
     const field = signatureFields.find(f => f._id === fieldId);
     if (!field) return;
 
-    // Set as active
-    setActiveFieldId(fieldId);
+    // Set as active (only if opening modal)
+    if (openModal) {
+      setActiveFieldId(fieldId);
+    }
 
     // Check if field overlay is already rendered (same page)
     const overlayEl = pdfContainerRef.current?.querySelector(
@@ -381,8 +388,13 @@ export default function EnhancedSignaturePage() {
       overlayEl.scrollIntoView({ behavior: "smooth", block: "center" });
       overlayEl.classList.add("scrollPulse");
       setTimeout(() => overlayEl.classList.remove("scrollPulse"), 600);
-      setShowInputModal(true); // Open modal directly
-      console.log(`🎯 Jumped to field (same page): ${fieldId}`);
+
+      // Only open modal if requested
+      if (openModal) {
+        setShowInputModal(true);
+      }
+
+      console.log(`🎯 Jumped to field (same page): ${fieldId}, openModal: ${openModal}`);
       return;
     }
 
@@ -392,7 +404,7 @@ export default function EnhancedSignaturePage() {
     }
 
     // Wait for page render with retry logic
-    scrollToOverlayWhenReady(fieldId);
+    scrollToOverlayWhenReady(fieldId, 2000, openModal);
   }, [signatureFields, currentPage, scrollToOverlayWhenReady]);
 
   // Previous field navigation
@@ -427,7 +439,7 @@ export default function EnhancedSignaturePage() {
     });
 
     if (nextRequired) {
-      handleJumpToField(nextRequired._id);
+      handleJumpToField(nextRequired._id, false); // Don't auto-open modal for auto-navigation
       // Analytics: Track next field navigation
       analytics.trackNextField(envelope._id);
       return;
@@ -440,7 +452,7 @@ export default function EnhancedSignaturePage() {
     });
 
     if (nextOptional) {
-      handleJumpToField(nextOptional._id);
+      handleJumpToField(nextOptional._id, false); // Don't auto-open modal for auto-navigation
       // Analytics: Track next field navigation
       analytics.trackNextField(envelope._id);
       return;
