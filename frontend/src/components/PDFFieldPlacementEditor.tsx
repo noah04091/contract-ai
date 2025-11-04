@@ -201,7 +201,7 @@ const PDFFieldPlacementEditor: React.FC<PDFFieldPlacementEditorProps> = ({
     if (!field) return;
 
     // Convert client coordinates to PDF coordinates
-    const { xPdf, yPdf, scale } = clientToPdfXY(
+    const { xPdf, yPdf } = clientToPdfXY(
       e.clientX,
       e.clientY,
       pdfPageWrapperRef.current,
