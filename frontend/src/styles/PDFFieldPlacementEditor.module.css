@@ -255,7 +255,7 @@
 
 /* Open in New Window Button - Top Right */
 .floatingOpenButton {
-  position: absolute;
+  position: fixed; /* ✅ FIX: Changed from absolute to fixed so button stays visible while scrolling */
   top: 1.5rem;
   right: 1.5rem;
   width: 44px;
@@ -283,7 +283,7 @@
 
 /* Floating Zoom Controls - Bottom Right */
 .floatingZoomControls {
-  position: absolute;
+  position: fixed; /* ✅ FIX: Changed from absolute to fixed so buttons stay visible while scrolling */
   bottom: 1.5rem;
   right: 1.5rem;
   display: flex;
