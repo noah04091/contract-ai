@@ -103,6 +103,7 @@ export default function SignatureFieldOverlay({
         const fieldState = fieldStates[field._id];
         const isCompleted = fieldState?.status === "completed";
         const isActive = field._id === activeFieldId;
+        const value = fieldState?.value;
 
         // Field status class
         let statusClass = styles.statusPending;
