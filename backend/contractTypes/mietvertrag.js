@@ -30,23 +30,23 @@ module.exports = {
   // Diese dürfen NICHT erfunden werden!
   forbiddenTopics: [
     "Garten",
-    "Gartennutzung",
-    "Gartenfläche",
-    "Gartenpflege",
     "Haustiere",
-    "Tierhaltung",
-    "Haustier",
-    "Hund",
-    "Katze",
     "Balkon",
     "Terrasse",
-    "Balkonnutzung",
     "Stellplatz",
     "Parkplatz",
-    "Garagennutzung",
     "Einbauten",
     "Einbauküche",
     "Möblierung"
+  ],
+
+  // Synonyme für verbotene Themen (Format: "topic1|synonym1|synonym2")
+  // Wenn EINES der Synonyme erwähnt wird, gilt das Topic als erlaubt
+  forbiddenSynonyms: [
+    "Garten|Gartennutzung|Gartenfläche|Gartenpflege|Gartenanteil",
+    "Haustiere|Tierhaltung|Haustier|Hund|Katze|Haustier erlaubt",
+    "Balkon|Balkonnutzung|Balkonzugang",
+    "Stellplatz|Parkplatz|Garagennutzung|Pkw-Stellplatz|Tiefgarage"
   ],
 
   // Rechtliche Besonderheiten und Hinweise

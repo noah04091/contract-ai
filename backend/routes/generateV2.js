@@ -6,6 +6,9 @@
 const { OpenAI } = require("openai");
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
+// 🔐 Encryption für sichere Artefakt-Ablage
+const { encrypt, decrypt } = require("../security/encryption");
+
 // Feature-Flag aus .env
 const FEATURE_ENABLED = process.env.GENERATE_V2_META_PROMPT === 'true';
 
@@ -132,9 +135,10 @@ function normalizeText(text) {
  * Entfernt Topics, die in IRGENDWELCHEN Input-Feldern erwähnt werden
  * @param {Array<string>} forbiddenTopics - Originale forbidden topics
  * @param {Object} input - Alle Formulareingaben
+ * @param {Array<string>} forbiddenSynonyms - Optional: Synonyme für Forbidden Topics (Format: ["topic1|synonym1|synonym2", ...])
  * @returns {Array<string>} Gefilterte forbidden topics
  */
-function filterForbiddenTopics(forbiddenTopics, input) {
+function filterForbiddenTopics(forbiddenTopics, input, forbiddenSynonyms = []) {
   // Sammle ALLE Textwerte aus dem Input (rekursiv)
   const allInputTexts = [];
 
@@ -155,13 +159,38 @@ function filterForbiddenTopics(forbiddenTopics, input) {
   const filteredTopics = forbiddenTopics.filter(topic => {
     const normalizedTopic = normalizeText(topic);
 
-    // Wortgrenzen-basierte Prüfung mit Regex
-    // \b funktioniert nicht mit Umlauten, daher manuell
-    const regex = new RegExp(`\\b${normalizedTopic}\\b`, 'i');
+    // Wortgrenzen-basierte Prüfung mit Regex (inkl. Satzzeichen)
+    // (^|\\W) = Start oder Nicht-Wort-Zeichen (Leerzeichen, Satzzeichen)
+    // (\\W|$) = Nicht-Wort-Zeichen oder Ende
+    const escapedTopic = normalizedTopic.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`(^|\\W)${escapedTopic}(\\W|$)`, 'i');
 
-    // Auch teilstring-Match prüfen (z.B. "Gartennutzung" enthält "Garten")
-    const isExplicitlyMentioned = regex.test(normalizedInput) ||
-                                   normalizedInput.includes(normalizedTopic);
+    // Check 1: Regex-Match (mit Satzzeichen-Wortgrenzen)
+    let isExplicitlyMentioned = regex.test(normalizedInput);
+
+    // Check 2: Teilstring-Match (z.B. "Gartennutzung" enthält "Garten")
+    if (!isExplicitlyMentioned) {
+      isExplicitlyMentioned = normalizedInput.includes(normalizedTopic);
+    }
+
+    // Check 3: Synonyme prüfen (falls vorhanden)
+    if (!isExplicitlyMentioned && forbiddenSynonyms.length > 0) {
+      // Finde Synonymliste für dieses Topic
+      const synonymEntry = forbiddenSynonyms.find(entry => {
+        const parts = entry.split('|').map(normalizeText);
+        return parts.includes(normalizedTopic);
+      });
+
+      if (synonymEntry) {
+        const synonyms = synonymEntry.split('|').map(normalizeText);
+        // Prüfe alle Synonyme
+        isExplicitlyMentioned = synonyms.some(synonym => {
+          const escapedSynonym = synonym.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const synonymRegex = new RegExp(`(^|\\W)${escapedSynonym}(\\W|$)`, 'i');
+          return synonymRegex.test(normalizedInput) || normalizedInput.includes(synonym);
+        });
+      }
+    }
 
     // Topic BEHALTEN, wenn es NICHT erwähnt wurde
     return !isExplicitlyMentioned;
@@ -309,7 +338,11 @@ function buildPhase1UserPrompt(input, contractType, typeProfile) {
 
   // ===== INTELLIGENTE FILTERUNG: Forbidden Topics =====
   // Entferne Topics, die in IRGENDWELCHEN Input-Feldern erwähnt werden
-  const activeForbiddenTopics = filterForbiddenTopics(typeProfile.forbiddenTopics, input);
+  const activeForbiddenTopics = filterForbiddenTopics(
+    typeProfile.forbiddenTopics,
+    input,
+    typeProfile.forbiddenSynonyms || []
+  );
 
   if (activeForbiddenTopics.length < typeProfile.forbiddenTopics.length) {
     const removed = typeProfile.forbiddenTopics.length - activeForbiddenTopics.length;
@@ -691,9 +724,10 @@ function checkCurrencyFormat(text) {
  * @param {string} contractType - Vertragstyp
  * @param {string} userId - User ID
  * @param {Object} db - MongoDB Connection
+ * @param {string} runLabel - Optional: Label für Telemetrie/Staging-Runs (z.B. "staging-2025-11-05")
  * @returns {Promise<{contractText: string, artifacts: Object, generationDoc: Object}>}
  */
-async function generateContractV2(input, contractType, userId, db) {
+async function generateContractV2(input, contractType, userId, db, runLabel = null) {
   const overallStartTime = Date.now();
 
   console.log("🚀 V2 Zwei-Phasen-Generierung gestartet");
@@ -838,16 +872,46 @@ async function generateContractV2(input, contractType, userId, db) {
       featureFlag: true,
       version: "v2.1.0", // Version bump für Logging & Retry
       hybridScore: finalScore,
-      reviewRequired: reviewRequired
+      reviewRequired: reviewRequired,
+      runLabel: runLabel || null // Telemetrie-Label für Staging/Production-Runs
     }
   };
 
-  // In MongoDB speichern
+  // In MongoDB speichern (sanitiert + verschlüsselt)
   if (db) {
     try {
+      // 1. Sanitierte Metadaten in öffentlicher Collection
       const collection = db.collection('contract_generations');
-      await collection.insertOne(generationDoc);
-      console.log("✅ Generierung in MongoDB gespeichert");
+      const insertResult = await collection.insertOne(generationDoc);
+      const generationId = insertResult.insertedId;
+      console.log("✅ Generierung (sanitiert) in MongoDB gespeichert:", generationId);
+
+      // 2. Verschlüsselte Artefakte in sicherer Collection (Audit/Regeneration)
+      try {
+        const secureCollection = db.collection('contract_generation_secure');
+
+        // Verschlüsseln
+        const phase1PromptEncrypted = encrypt(phase1.generatedPrompt);
+        const contractTextEncrypted = encrypt(phase2.contractText);
+
+        const secureDoc = {
+          generationId: generationId, // Referenz auf öffentliches Dokument
+          userId: userId,
+          contractType: contractType,
+          phase1PromptEncrypted: phase1PromptEncrypted,
+          contractTextEncrypted: contractTextEncrypted,
+          createdAt: new Date(),
+          encryptionVersion: 'aes-256-gcm-v1'
+        };
+
+        await secureCollection.insertOne(secureDoc);
+        console.log("✅ Sichere Artefakte (verschlüsselt) gespeichert");
+
+      } catch (secureErr) {
+        console.error("⚠️ Sichere Artefakt-Speicherung fehlgeschlagen:", secureErr.message);
+        // Nicht critical - sanitierte Version ist gespeichert
+      }
+
     } catch (err) {
       console.error("⚠️ MongoDB Speicherung fehlgeschlagen:", err.message);
     }
