@@ -51,26 +51,32 @@ async function runPhase1_MetaPrompt(input, contractType, typeProfile) {
   console.log("👥 Rollen:", typeProfile.roles);
 
   // System-Instruction für Phase 1
-  const systemPrompt = `Du bist Fachanwalt für deutsches Vertragsrecht (BGB) mit 20+ Jahren Erfahrung.
+  const systemPrompt = `Du bist Prompt-Engineer und Fachanwalt für deutsches Vertragsrecht (BGB).
 
-Deine Aufgabe: Erzeuge ausschließlich einen optimalen Prompt-Text, mit dem du selbst in Phase 2 den Vertrag korrekt generierst.
+WICHTIG - PHASE 1 AUFGABE:
+Du schreibst JETZT NICHT den Vertrag selbst! Deine Aufgabe ist es, klare ANWEISUNGEN zu schreiben, die einem anderen KI-System (Phase 2) exakt erklären, WIE es den Vertrag erstellen soll.
 
-Wichtige Regeln:
-- Verwende EXAKT die korrekten Rollenbegriffe für diesen Vertragstyp: ${typeProfile.roles.A} und ${typeProfile.roles.B}
-- Füge KEINE Themen hinzu, die nicht in den Eingaben stehen
-- Verwende professionelle juristische Sprache
-- Nummerierte Paragraphen (§ 1, § 2, ...)
-- Deutsche Schreibweise (BGB-konform)
+Du erstellst einen META-PROMPT (Anleitung für Phase 2), NICHT den Vertrag selbst!
+
+BEISPIEL FÜR META-PROMPT:
+"Erstelle einen vollständigen Mietvertrag nach BGB zwischen Vermieter [Name] und Mieter [Name] mit folgenden Pflicht-Paragraphen: § 1 Mietgegenstand, § 2 Mietzeit, § 3 Miete und Nebenkosten... Verwende EXAKT die Begriffe 'Vermieter' und 'Mieter' (keine anderen Bezeichnungen). Die Wohnung ist 85 qm groß, 2. OG. Miete: 950€, Nebenkosten: 200€, Kaution: 2850€. Mietbeginn: 01.01.2025. Erwähne NICHT: Garten, Balkon, Stellplatz (außer explizit genannt). Individuelle Anforderungen: Haustiere nach Absprache erlaubt."
+
+REGELN FÜR DEINEN META-PROMPT:
+1. Beschreibe ALLE Eingabedaten präzise (Namen, Beträge, Daten)
+2. Liste ALLE Pflicht-Paragraphen auf: ${typeProfile.mustClauses.join(', ')}
+3. Definiere verbotene Themen (was NICHT erfunden werden darf)
+4. Verwende exakte Rollenbegriffe: ${typeProfile.roles.A} und ${typeProfile.roles.B}
+5. Integriere individuelle Anforderungen mit höchster Priorität
 
 Output-Format (strikt einhalten!):
 ===PROMPT===
-[VOLLSTÄNDIGER Prompt-Text für Phase 2]
+[Vollständiger META-PROMPT mit allen Anweisungen für Phase 2]
 ===SNAPSHOT===
 {
   "roles": {"A": "${typeProfile.roles.A}", "B": "${typeProfile.roles.B}"},
-  "mustClauses": [...],
-  "forbiddenTopics": [...],
-  "customRequirements": [...]
+  "mustClauses": ["§ 1 ...", "§ 2 ...", ...],
+  "forbiddenTopics": ["Thema1", "Thema2", ...],
+  "customRequirements": ["Anforderung1", "Anforderung2", ...]
 }`;
 
   // User-Prompt (Template mit Eingabedaten)
@@ -127,30 +133,55 @@ Output-Format (strikt einhalten!):
  * Baut User-Prompt für Phase 1 (Eingabedaten → Template)
  */
 function buildPhase1UserPrompt(input, contractType, typeProfile) {
-  let prompt = `VERTRAGSTYP: ${typeProfile.roles.A}/${typeProfile.roles.B}-Vertrag (DE, BGB)\n\n`;
-  prompt += `EINGABEN:\n`;
-  prompt += `- ${typeProfile.roles.A}: ${input.parteiA?.name || '[NAME FEHLT]'}\n`;
-  prompt += `- ${typeProfile.roles.B}: ${input.parteiB?.name || '[NAME FEHLT]'}\n`;
+  let prompt = `VERTRAGSTYP: ${typeProfile.roles.A}/${typeProfile.roles.B}-Vertrag (Deutsches BGB)\n\n`;
+
+  prompt += `ROLLEN (EXAKT verwenden!):\n`;
+  prompt += `- Partei A = "${typeProfile.roles.A}"\n`;
+  prompt += `- Partei B = "${typeProfile.roles.B}"\n\n`;
+
+  prompt += `EINGABEDATEN:\n`;
+  prompt += `- ${typeProfile.roles.A}: ${input.parteiA?.name || '[NAME FEHLT]'}`;
+  if (input.parteiA?.address) prompt += `, ${input.parteiA.address}`;
+  if (input.parteiA?.details) prompt += `, ${input.parteiA.details}`;
+  prompt += `\n`;
+
+  prompt += `- ${typeProfile.roles.B}: ${input.parteiB?.name || '[NAME FEHLT]'}`;
+  if (input.parteiB?.address) prompt += `, ${input.parteiB.address}`;
+  if (input.parteiB?.details) prompt += `, ${input.parteiB.details}`;
+  prompt += `\n\n`;
 
   // Vertragstyp-spezifische Felder (dynamisch)
+  prompt += `VERTRAGSDETAILS:\n`;
   Object.keys(input).forEach(key => {
     if (key !== 'parteiA' && key !== 'parteiB' && key !== 'title' && key !== 'customRequirements') {
       prompt += `- ${key}: ${input[key]}\n`;
     }
   });
 
-  if (input.customRequirements) {
-    prompt += `\nINDIVIDUELLE VEREINBARUNGEN:\n${input.customRequirements}\n`;
+  if (input.customRequirements && input.customRequirements.trim()) {
+    prompt += `\n⚠️ INDIVIDUELLE ANFORDERUNGEN (HÖCHSTE PRIORITÄT!):\n${input.customRequirements}\n`;
   }
 
-  prompt += `\nERWARTE:\n`;
-  prompt += `1) Optimalen Prompt-Text für die Vertragserstellung (Phase 2, juristische Sprache, §§, keine Platzhalter)\n`;
-  prompt += `2) Snapshot-Objekt mit: roles, mustClauses, forbiddenTopics, customRequirements\n\n`;
-  prompt += `REGELN:\n`;
-  prompt += `- Nur relevante Klauseln (aus: ${typeProfile.mustClauses.slice(0, 3).join(', ')}...)\n`;
-  prompt += `- Keine Themen erfinden, die nicht in Eingaben stehen!\n`;
-  prompt += `- Nummerierung § 1, § 2, ...\n`;
-  prompt += `- Sprache: Deutsch (BGB)\n`;
+  prompt += `\nPFLICHT-PARAGRAPHEN (alle einbauen!):\n`;
+  typeProfile.mustClauses.forEach(clause => {
+    prompt += `- ${clause}\n`;
+  });
+
+  prompt += `\nVERBOTENE THEMEN (NICHT erwähnen, außer in Eingaben!):\n`;
+  typeProfile.forbiddenTopics.forEach(topic => {
+    prompt += `- ${topic}\n`;
+  });
+
+  prompt += `\n📋 DEINE AUFGABE (PHASE 1):\n`;
+  prompt += `Erstelle einen META-PROMPT (Anleitung) für Phase 2, der EXAKT beschreibt, WIE der Vertrag erstellt werden soll.\n`;
+  prompt += `Generiere NICHT den Vertrag selbst! Nur Anweisungen!\n\n`;
+
+  prompt += `SNAPSHOT-ANFORDERUNG:\n`;
+  prompt += `Fülle das Snapshot-JSON mit:\n`;
+  prompt += `- "roles": {"A": "${typeProfile.roles.A}", "B": "${typeProfile.roles.B}"}\n`;
+  prompt += `- "mustClauses": [alle ${typeProfile.mustClauses.length} Pflicht-Paragraphen aus obiger Liste]\n`;
+  prompt += `- "forbiddenTopics": [${typeProfile.forbiddenTopics.length > 0 ? 'nur Themen aus obiger Liste, die NICHT in Eingaben erwähnt wurden' : '[]'}]\n`;
+  prompt += `- "customRequirements": [${input.customRequirements ? 'alle individuellen Anforderungen als Array' : '[]'}]\n`;
 
   return prompt;
 }
@@ -163,6 +194,9 @@ function parsePhase1Response(response) {
   const snapshotMatch = response.match(/===SNAPSHOT===\s*([\s\S]*?)$/);
 
   if (!promptMatch || !snapshotMatch) {
+    console.error("❌ Phase 1 Response Format-Fehler!");
+    console.error("Erwartetes Format:\n===PROMPT===\n[Prompt]\n===SNAPSHOT===\n[JSON]");
+    console.error("\nErhalten (first 1000 chars):\n", response.substring(0, 1000));
     throw new Error("Phase 1 Response hat nicht das erwartete Format (===PROMPT=== / ===SNAPSHOT=== fehlt)");
   }
 
@@ -535,7 +569,15 @@ async function generateContractV2(input, contractType, userId, db) {
   return {
     contractText: phase2.contractText,
     artifacts: {
-      phase1Prompt: phase1.generatedPrompt,
+      phase1: phase1,
+      phase2: {
+        contractText: phase2.contractText,
+        timingMs: phase2.timingMs,
+        model: phase2.model,
+        temperature: phase2.temperature,
+        tokenCount: phase2.tokenCount,
+        retries: phase2.retries
+      },
       selfCheck: selfCheck,
       validator: validator
     },
