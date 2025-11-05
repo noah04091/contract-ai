@@ -66,7 +66,7 @@ function generateSignatureInvitationHTML(data) {
 
       fieldSummaryHTML += `
         <tr>
-          <td style="padding: 8px 0; font-size: 15px; line-height: 1.5; color: #1f2937;">
+          <td class="field-item">
             ${icon} <strong>${count}×</strong> ${label} auf ${pageText}
           </td>
         </tr>

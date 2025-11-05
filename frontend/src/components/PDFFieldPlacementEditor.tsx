@@ -76,10 +76,10 @@ interface PDFFieldPlacementEditorProps {
 }
 
 const FIELD_TYPES = [
-  { type: 'signature' as const, label: 'Signatur', icon: PenTool, defaultSize: { width: 200, height: 60 } },
-  { type: 'initial' as const, label: 'Initial', icon: FileSignature, defaultSize: { width: 80, height: 40 } },
-  { type: 'date' as const, label: 'Datum', icon: Calendar, defaultSize: { width: 120, height: 40 } },
-  { type: 'text' as const, label: 'Text', icon: Type, defaultSize: { width: 150, height: 40 } },
+  { type: 'signature' as const, label: 'Signatur', icon: PenTool, defaultSize: { width: 120, height: 36 } },
+  { type: 'initial' as const, label: 'Initial', icon: FileSignature, defaultSize: { width: 48, height: 24 } },
+  { type: 'date' as const, label: 'Datum', icon: Calendar, defaultSize: { width: 72, height: 24 } },
+  { type: 'text' as const, label: 'Text', icon: Type, defaultSize: { width: 90, height: 24 } },
 ];
 
 const PDFFieldPlacementEditor: React.FC<PDFFieldPlacementEditorProps> = ({

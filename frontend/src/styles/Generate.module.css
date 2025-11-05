@@ -2192,7 +2192,7 @@
 
 /* Centered container for Step 3 */
 .step3Container {
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
   width: 100%;
   padding: 0 2rem;
@@ -2202,6 +2202,7 @@
 .step3Header {
   text-align: center;
   margin-bottom: 2rem;
+  width: 100%;
 }
 
 .step3Header h2 {
@@ -2225,6 +2226,7 @@
   grid-template-columns: repeat(4, 1fr);
   gap: 1rem;
   margin-bottom: 2rem;
+  width: 100%;
 }
 
 .step3ActionButton {
@@ -2302,6 +2304,7 @@
   gap: 1.5rem;
   margin-top: 2rem;
   min-height: 600px;
+  width: 100%;
 }
 
 .step3Panel {
