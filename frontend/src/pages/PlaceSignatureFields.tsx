@@ -72,7 +72,7 @@ export default function PlaceSignatureFields() {
         setFields(envelopeData.envelope.signatureFields || []);
 
         // 2. Get presigned PDF URL
-        const pdfRes = await fetch(`/api/s3/get-url?key=${encodeURIComponent(envelopeData.envelope.s3Key)}`, {
+        const pdfRes = await fetch(`/api/s3/view?key=${encodeURIComponent(envelopeData.envelope.s3Key)}`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -85,9 +85,9 @@ export default function PlaceSignatureFields() {
         }
 
         const pdfData = await pdfRes.json();
-        console.log('✅ PDF URL loaded:', pdfData.url);
+        console.log('✅ PDF URL loaded:', pdfData.url || pdfData.fileUrl);
 
-        setPdfUrl(pdfData.url);
+        setPdfUrl(pdfData.url || pdfData.fileUrl);
         setLoading(false);
       } catch (err) {
         console.error('❌ Error loading envelope:', err);
