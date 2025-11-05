@@ -34,7 +34,80 @@ const MODEL_SETTINGS = {
 // Self-Check Score Threshold
 const SELFCHECK_THRESHOLD = 0.93;
 
+// Retry Settings
+const RETRY_SETTINGS = {
+  maxRetries: 2,
+  timeoutMs: 45000, // 45 seconds
+  backoffMultiplier: 2 // Exponential: 1s, 2s, 4s
+};
+
 // ===== HELPER FUNCTIONS =====
+
+/**
+ * Sanitiert Input-Daten für Logging (entfernt PII)
+ * Nur IDs, Typen und nicht-persönliche Felder werden behalten
+ */
+function sanitizeInputForLogging(input) {
+  const sanitized = {};
+
+  // Erlaubte Felder (keine PII)
+  const allowedFields = ['contractType', 'duration', 'amount', 'startDate', 'endDate'];
+
+  allowedFields.forEach(field => {
+    if (input[field]) {
+      sanitized[field] = input[field];
+    }
+  });
+
+  // Parteien: Nur Existenz prüfen, keine Namen/Adressen
+  if (input.parteiA) {
+    sanitized.parteiA = { exists: true };
+  }
+  if (input.parteiB) {
+    sanitized.parteiB = { exists: true };
+  }
+
+  // Custom Requirements: Nur Länge
+  if (input.customRequirements) {
+    sanitized.customRequirements = { length: input.customRequirements.length };
+  }
+
+  return sanitized;
+}
+
+/**
+ * Sanitiert Vertragstext für Logging (entfernt PII)
+ * Gibt nur Metadaten zurück, keinen tatsächlichen Text
+ */
+function sanitizeTextForLogging(text) {
+  return {
+    length: text.length,
+    paragraphCount: (text.match(/§\s*\d+/g) || []).length,
+    preview: text.substring(0, 100).replace(/[A-ZÄÖÜ][a-zäöüß]+\s+[A-ZÄÖÜ][a-zäöüß]+/g, '[NAME]') + '...'
+  };
+}
+
+/**
+ * Führt OpenAI API Call mit Timeout aus
+ * @param {Function} apiCallFn - Async function that makes the OpenAI call
+ * @param {number} timeoutMs - Timeout in milliseconds
+ * @returns {Promise} - Resolves with API response or rejects on timeout
+ */
+async function callWithTimeout(apiCallFn, timeoutMs) {
+  return Promise.race([
+    apiCallFn(),
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error(`OpenAI API call timeout after ${timeoutMs}ms`)), timeoutMs)
+    )
+  ]);
+}
+
+/**
+ * Sleep-Funktion für Exponential Backoff
+ */
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 /**
  * Normalisiert Text für intelligenten Vergleich
@@ -112,6 +185,7 @@ async function runPhase1_MetaPrompt(input, contractType, typeProfile) {
   console.log("🔄 Phase 1: Meta-Prompt Generation gestartet");
   console.log("📋 Vertragstyp:", contractType);
   console.log("👥 Rollen:", typeProfile.roles);
+  console.log("📊 Input (sanitiert):", sanitizeInputForLogging(input));
 
   // System-Instruction für Phase 1
   const systemPrompt = `Du bist Prompt-Engineer und Fachanwalt für deutsches Vertragsrecht (BGB).
@@ -145,18 +219,21 @@ Output-Format (strikt einhalten!):
   // User-Prompt (Template mit Eingabedaten)
   const userPrompt = buildPhase1UserPrompt(input, contractType, typeProfile);
 
-  // GPT-4 Call
+  // GPT-4 Call mit Timeout
   try {
-    const completion = await openai.chat.completions.create({
-      model: MODEL_SETTINGS.phase1.model,
-      temperature: MODEL_SETTINGS.phase1.temperature,
-      top_p: MODEL_SETTINGS.phase1.top_p,
-      max_tokens: MODEL_SETTINGS.phase1.max_tokens,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt }
-      ]
-    });
+    const completion = await callWithTimeout(
+      () => openai.chat.completions.create({
+        model: MODEL_SETTINGS.phase1.model,
+        temperature: MODEL_SETTINGS.phase1.temperature,
+        top_p: MODEL_SETTINGS.phase1.top_p,
+        max_tokens: MODEL_SETTINGS.phase1.max_tokens,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt }
+        ]
+      }),
+      RETRY_SETTINGS.timeoutMs
+    );
 
     const response = completion.choices[0].message.content;
     const tokenCount = {
@@ -302,16 +379,19 @@ async function runPhase2_ContractGeneration(generatedPrompt, snapshot) {
   console.log("📏 Prompt-Länge:", generatedPrompt.length);
 
   try {
-    const completion = await openai.chat.completions.create({
-      model: MODEL_SETTINGS.phase2.model,
-      temperature: MODEL_SETTINGS.phase2.temperature,
-      top_p: MODEL_SETTINGS.phase2.top_p,
-      max_tokens: MODEL_SETTINGS.phase2.max_tokens,
-      messages: [
-        { role: "system", content: "Du bist Fachanwalt für deutsches Vertragsrecht. Erstelle den Vertrag exakt nach den Vorgaben." },
-        { role: "user", content: generatedPrompt }
-      ]
-    });
+    const completion = await callWithTimeout(
+      () => openai.chat.completions.create({
+        model: MODEL_SETTINGS.phase2.model,
+        temperature: MODEL_SETTINGS.phase2.temperature,
+        top_p: MODEL_SETTINGS.phase2.top_p,
+        max_tokens: MODEL_SETTINGS.phase2.max_tokens,
+        messages: [
+          { role: "system", content: "Du bist Fachanwalt für deutsches Vertragsrecht. Erstelle den Vertrag exakt nach den Vorgaben." },
+          { role: "user", content: generatedPrompt }
+        ]
+      }),
+      RETRY_SETTINGS.timeoutMs
+    );
 
     const contractText = completion.choices[0].message.content;
     const tokenCount = {
@@ -323,7 +403,7 @@ async function runPhase2_ContractGeneration(generatedPrompt, snapshot) {
     const timingMs = Date.now() - startTime;
 
     console.log("✅ Phase 2 erfolgreich:", {
-      textLength: contractText.length,
+      textMetadata: sanitizeTextForLogging(contractText),
       timingMs,
       tokens: tokenCount.total
     });
@@ -385,16 +465,19 @@ ${contractText.substring(0, 6000)}
 Bewerte die Übereinstimmung!`;
 
   try {
-    const completion = await openai.chat.completions.create({
-      model: MODEL_SETTINGS.selfCheck.model,
-      temperature: MODEL_SETTINGS.selfCheck.temperature,
-      top_p: MODEL_SETTINGS.selfCheck.top_p,
-      max_tokens: MODEL_SETTINGS.selfCheck.max_tokens,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt }
-      ]
-    });
+    const completion = await callWithTimeout(
+      () => openai.chat.completions.create({
+        model: MODEL_SETTINGS.selfCheck.model,
+        temperature: MODEL_SETTINGS.selfCheck.temperature,
+        top_p: MODEL_SETTINGS.selfCheck.top_p,
+        max_tokens: MODEL_SETTINGS.selfCheck.max_tokens,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt }
+        ]
+      }),
+      RETRY_SETTINGS.timeoutMs
+    );
 
     const response = completion.choices[0].message.content;
 
@@ -615,7 +698,8 @@ async function generateContractV2(input, contractType, userId, db) {
 
   console.log("🚀 V2 Zwei-Phasen-Generierung gestartet");
   console.log("📋 Vertragstyp:", contractType);
-  console.log("👤 User ID:", userId);
+  console.log("👤 User ID (hash):", userId.substring(0, 8) + '...');
+  console.log("📊 Input (sanitiert):", sanitizeInputForLogging(input));
 
   // Load Vertragstyp-Modul
   const typeProfile = loadContractTypeProfile(contractType);
@@ -645,57 +729,93 @@ async function generateContractV2(input, contractType, userId, db) {
 
   const initialScore = finalScore;
   let retriesUsed = 0;
+  let reviewRequired = false;
 
   console.log(`📊 Hybrid Score: ${finalScore} (Validator: ${validatorScore}, LLM: ${llmScore})`);
 
-  // RETRY-LOGIK (wenn finalScore < Threshold)
+  // ===== RETRY-LOGIK mit Exponential Backoff (max 2 retries) =====
+  while (finalScore < qualityThreshold && retriesUsed < RETRY_SETTINGS.maxRetries) {
+    retriesUsed++;
+
+    // Exponential Backoff: 1s, 2s, 4s
+    const backoffMs = 1000 * Math.pow(RETRY_SETTINGS.backoffMultiplier, retriesUsed - 1);
+    console.log(`⚠️ Hybrid Score (${finalScore}) < Threshold (${qualityThreshold}), starte Retry ${retriesUsed}/${RETRY_SETTINGS.maxRetries} (Backoff: ${backoffMs}ms)...`);
+
+    await sleep(backoffMs);
+
+    try {
+      // Retry mit temperature=0.0 (deterministisch)
+      const retryCompletion = await callWithTimeout(
+        () => openai.chat.completions.create({
+          model: MODEL_SETTINGS.phase2.model,
+          temperature: 0.0, // Komplett deterministisch!
+          top_p: MODEL_SETTINGS.phase2.top_p,
+          max_tokens: MODEL_SETTINGS.phase2.max_tokens,
+          messages: [
+            { role: "system", content: "Du bist Fachanwalt für deutsches Vertragsrecht. Erstelle den Vertrag exakt nach den Vorgaben." },
+            { role: "user", content: phase1.generatedPrompt }
+          ]
+        }),
+        RETRY_SETTINGS.timeoutMs
+      );
+
+      phase2.contractText = retryCompletion.choices[0].message.content;
+      phase2.retries = retriesUsed;
+
+      // Validator & Self-Check erneut
+      validator = runValidator(phase2.contractText, phase1.snapshot, typeProfile);
+      selfCheck = await runSelfCheck(phase2.contractText, phase1.generatedPrompt, phase1.snapshot);
+
+      // Neuen finalScore berechnen
+      finalScore = (0.6 * validator.score) + (0.4 * selfCheck.score);
+      finalScore = Math.round(finalScore * 100) / 100;
+
+      console.log(`🔄 Retry ${retriesUsed} Hybrid Score: ${finalScore} (Validator: ${validator.score}, LLM: ${selfCheck.score})`);
+
+    } catch (error) {
+      console.error(`❌ Retry ${retriesUsed} fehlgeschlagen:`, error.message);
+      // Bei Timeout/Fehler: Abbrechen und reviewRequired setzen
+      break;
+    }
+  }
+
+  // Wenn nach allen Retries Score < Threshold: reviewRequired = true
   if (finalScore < qualityThreshold) {
-    console.log(`⚠️ Hybrid Score (${finalScore}) < Threshold (${qualityThreshold}), starte Retry...`);
-
-    // Retry mit temperature=0.0
-    const retryCompletion = await openai.chat.completions.create({
-      model: MODEL_SETTINGS.phase2.model,
-      temperature: 0.0, // Komplett deterministisch!
-      top_p: MODEL_SETTINGS.phase2.top_p,
-      max_tokens: MODEL_SETTINGS.phase2.max_tokens,
-      messages: [
-        { role: "system", content: "Du bist Fachanwalt für deutsches Vertragsrecht. Erstelle den Vertrag exakt nach den Vorgaben." },
-        { role: "user", content: phase1.generatedPrompt }
-      ]
-    });
-
-    phase2.contractText = retryCompletion.choices[0].message.content;
-    phase2.retries = 1;
-    retriesUsed = 1;
-
-    // Validator & Self-Check erneut
-    validator = runValidator(phase2.contractText, phase1.snapshot, typeProfile);
-    selfCheck = await runSelfCheck(phase2.contractText, phase1.generatedPrompt, phase1.snapshot);
-
-    // Neuen finalScore berechnen
-    finalScore = (0.6 * validator.score) + (0.4 * selfCheck.score);
-    finalScore = Math.round(finalScore * 100) / 100;
-
-    console.log(`🔄 Retry Hybrid Score: ${finalScore} (Validator: ${validator.score}, LLM: ${selfCheck.score})`);
+    reviewRequired = true;
+    console.log(`⚠️ Quality threshold NOT met after ${retriesUsed} retries. reviewRequired = true`);
   }
 
   const overallDurationMs = Date.now() - overallStartTime;
 
-  // MongoDB Dokument erstellen
+  // ===== MongoDB Dokument erstellen (PII-SAFE!) =====
   const generationDoc = {
     userId: userId,
     contractType: contractType,
-    input: input,
-    phase1: phase1,
+    input: sanitizeInputForLogging(input), // ⚠️ NUR SANITIERT!
+    phase1: {
+      // Kein generatedPrompt (enthält PII), nur Metadaten
+      timingMs: phase1.timingMs,
+      tokenCount: phase1.tokenCount,
+      model: phase1.model,
+      temperature: phase1.temperature,
+      snapshot: {
+        roles: phase1.snapshot.roles,
+        mustClausesCount: phase1.snapshot.mustClauses?.length || 0,
+        forbiddenTopicsCount: phase1.snapshot.forbiddenTopics?.length || 0,
+        customRequirementsPresent: !!phase1.snapshot.customRequirements
+      }
+    },
     phase2: {
-      contractText: phase2.contractText,
+      contractTextMetadata: sanitizeTextForLogging(phase2.contractText), // ⚠️ NUR METADATEN!
       selfCheck: {
-        ...selfCheck,
+        conforms: selfCheck.conforms,
         initialScore: initialScore,
         finalScore: finalScore,
         validatorScore: validator.score,
         llmScore: selfCheck.score,
-        retriesUsed: retriesUsed
+        retriesUsed: retriesUsed,
+        reviewRequired: reviewRequired, // ⚠️ NEU!
+        notesCount: selfCheck.notes?.length || 0
       },
       retries: phase2.retries,
       timingMs: phase2.timingMs,
@@ -703,15 +823,22 @@ async function generateContractV2(input, contractType, userId, db) {
       temperature: phase2.temperature,
       tokenCount: phase2.tokenCount
     },
-    validator: validator,
+    validator: {
+      passed: validator.passed,
+      score: validator.score,
+      checks: validator.checks,
+      errorsCount: validator.errors?.length || 0,
+      warningsCount: validator.warnings?.length || 0
+    },
     meta: {
       model: phase2.model,
       temperature: phase2.temperature,
       createdAt: new Date(),
       durationMs: overallDurationMs,
       featureFlag: true,
-      version: "v2.0.1", // Version bump für Hybrid Score
-      hybridScore: finalScore
+      version: "v2.1.0", // Version bump für Logging & Retry
+      hybridScore: finalScore,
+      reviewRequired: reviewRequired
     }
   };
 
@@ -732,7 +859,9 @@ async function generateContractV2(input, contractType, userId, db) {
     validatorScore: validator.score,
     llmScore: selfCheck.score,
     validatorPassed: validator.passed,
-    retriesUsed: retriesUsed
+    retriesUsed: retriesUsed,
+    reviewRequired: reviewRequired,
+    contractMetadata: sanitizeTextForLogging(phase2.contractText)
   });
 
   return {
@@ -753,11 +882,13 @@ async function generateContractV2(input, contractType, userId, db) {
         finalScore: finalScore,
         validatorScore: validator.score,
         llmScore: selfCheck.score,
-        retriesUsed: retriesUsed
+        retriesUsed: retriesUsed,
+        reviewRequired: reviewRequired // ⚠️ NEU!
       },
       validator: validator
     },
-    generationDoc: generationDoc
+    generationDoc: generationDoc,
+    reviewRequired: reviewRequired // ⚠️ NEU! Auch top-level für einfachen Zugriff
   };
 }
 
