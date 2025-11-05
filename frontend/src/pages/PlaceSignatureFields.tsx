@@ -30,11 +30,11 @@ export default function PlaceSignatureFields() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Signer Colors (same as in Generate.tsx)
+  // Signer Colors (optimized for maximum contrast between first 2 colors)
   const SIGNER_COLORS = [
     '#2E6CF6', // Blue
+    '#F59E0B', // Orange (strong contrast to Blue!)
     '#10B981', // Green
-    '#F59E0B', // Orange
     '#EF4444', // Red
     '#8B5CF6', // Purple
     '#EC4899', // Pink

@@ -377,13 +377,13 @@
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: inherit;
+  color: #0B1324;
   margin-bottom: 2px;
 }
 
 .fieldSigner {
   font-size: 10px;
-  color: #667085;
+  color: #0B1324;
   text-align: center;
   overflow: hidden;
   text-overflow: ellipsis;
