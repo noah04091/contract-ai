@@ -167,8 +167,23 @@ function buildPhase1UserPrompt(input, contractType, typeProfile) {
     prompt += `- ${clause}\n`;
   });
 
-  prompt += `\nVERBOTENE THEMEN (NICHT erwähnen, außer in Eingaben!):\n`;
-  typeProfile.forbiddenTopics.forEach(topic => {
+  // Filter forbiddenTopics: Entferne Themen, die in customRequirements erwähnt werden
+  let activeForbiddenTopics = typeProfile.forbiddenTopics;
+  if (input.customRequirements) {
+    const customReqLower = input.customRequirements.toLowerCase();
+    activeForbiddenTopics = typeProfile.forbiddenTopics.filter(topic => {
+      const topicLower = topic.toLowerCase();
+      // Entferne Topic, wenn es in customRequirements erwähnt wird
+      return !customReqLower.includes(topicLower);
+    });
+
+    if (activeForbiddenTopics.length < typeProfile.forbiddenTopics.length) {
+      console.log(`📋 Filtered forbidden topics: ${typeProfile.forbiddenTopics.length} → ${activeForbiddenTopics.length} (customRequirements override)`);
+    }
+  }
+
+  prompt += `\nVERBOTENE THEMEN (NICHT erwähnen, außer explizit in Eingaben/Anforderungen genannt!):\n`;
+  activeForbiddenTopics.forEach(topic => {
     prompt += `- ${topic}\n`;
   });
 
@@ -180,7 +195,7 @@ function buildPhase1UserPrompt(input, contractType, typeProfile) {
   prompt += `Fülle das Snapshot-JSON mit:\n`;
   prompt += `- "roles": {"A": "${typeProfile.roles.A}", "B": "${typeProfile.roles.B}"}\n`;
   prompt += `- "mustClauses": [alle ${typeProfile.mustClauses.length} Pflicht-Paragraphen aus obiger Liste]\n`;
-  prompt += `- "forbiddenTopics": [${typeProfile.forbiddenTopics.length > 0 ? 'nur Themen aus obiger Liste, die NICHT in Eingaben erwähnt wurden' : '[]'}]\n`;
+  prompt += `- "forbiddenTopics": [${activeForbiddenTopics.length > 0 ? `genau diese ${activeForbiddenTopics.length} gefilterten Themen aus der "VERBOTENE THEMEN"-Liste oben` : '[]'}]\n`;
   prompt += `- "customRequirements": [${input.customRequirements ? 'alle individuellen Anforderungen als Array' : '[]'}]\n`;
 
   return prompt;
@@ -288,9 +303,11 @@ Vergleiche den Vertragstext mit den Vorgaben aus Phase 1.
 
 Prüfkriterien:
 1. Sind alle Must-Clauses vorhanden?
-2. Wurden Forbidden Topics vermieden?
+2. Wurden Forbidden Topics vermieden? (WICHTIG: Themen in customRequirements sind ERLAUBT, auch wenn sie normalerweise verboten wären!)
 3. Stimmen Rollenbezeichnungen exakt?
 4. Wurden keine nicht übergebenen Themen erfunden?
+
+WICHTIG: Wenn ein Thema in customRequirements erwähnt wird, ist es automatisch ERLAUBT, selbst wenn es in forbiddenTopics steht!
 
 Gib JSON zurück:
 {
