@@ -1771,7 +1771,7 @@ router.post("/sign/:token/decline", signatureDeclineLimiter, async (req, res) =>
 // UPDATE ENVELOPE (Signature Fields)
 // PUT /api/envelopes/:id
 // ===================================================
-router.put("/:id", verifyToken, async (req, res) => {
+router.put("/envelopes/:id", verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
     const { signatureFields } = req.body;
