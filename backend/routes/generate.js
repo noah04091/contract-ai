@@ -2798,6 +2798,19 @@ Strukturiere den Vertrag professionell mit mindestens 10-12 Paragraphen und alle
         return res.status(400).json({ message: "❌ Unbekannter Vertragstyp." });
     }
 
+    // ✅ WICHTIG: Individuelle Anpassungen & Wünsche hinzufügen (wenn vorhanden)
+    if (formData.customRequirements && formData.customRequirements.trim().length > 0) {
+      console.log("📋 Individuelle Anpassungen gefunden:", formData.customRequirements);
+      userPrompt += `
+
+⚠️ WICHTIG - INDIVIDUELLE ANPASSUNGEN & ZUSÄTZLICHE ANFORDERUNGEN:
+Der Nutzer hat folgende SPEZIELLE ANFORDERUNGEN, die ZWINGEND in den Vertrag eingebaut werden müssen:
+
+${formData.customRequirements}
+
+Diese individuellen Anforderungen haben HÖCHSTE PRIORITÄT und müssen in die entsprechenden Paragraphen des Vertrags integriert werden. Passe den Vertrag entsprechend an und stelle sicher, dass alle genannten Punkte berücksichtigt sind!`;
+    }
+
     // GPT-4 Generierung
     console.log("🚀 Starte GPT-4 Vertragsgenerierung...");
     console.log("📝 Vertragstyp:", type);
