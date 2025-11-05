@@ -170,7 +170,8 @@ const auditEventSchema = new mongoose.Schema({
       "LINK_COPIED",
       "DELIVERY_FAILED",
       "PDF_SEALED",
-      "PDF_SEALING_FAILED"
+      "PDF_SEALING_FAILED",
+      "FIELDS_UPDATED"
     ]
   },
   timestamp: {
