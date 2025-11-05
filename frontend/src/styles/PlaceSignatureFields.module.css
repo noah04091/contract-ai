@@ -73,6 +73,28 @@
   text-overflow: ellipsis;
 }
 
+.openButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: white;
+  border: 1.5px solid #E5E7EB;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #667085;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.openButton:hover {
+  background: #F9FAFB;
+  border-color: #2E6CF6;
+  color: #2E6CF6;
+}
+
 .sendButton {
   display: flex;
   align-items: center;
@@ -218,6 +240,17 @@
   }
 
   .backButton span {
+    display: none; /* Hide text on mobile */
+  }
+
+  .openButton {
+    padding: 0.75rem;
+    min-width: 44px;
+    min-height: 44px;
+    justify-content: center;
+  }
+
+  .openButton span {
     display: none; /* Hide text on mobile */
   }
 

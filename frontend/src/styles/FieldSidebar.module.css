@@ -359,6 +359,11 @@
     padding: 0.2rem 0.4rem;
   }
 
+  .footer {
+    flex-direction: row; /* Horizontal layout on mobile to save space */
+    gap: 0.5rem;
+  }
+
   .nextButton,
   .finishButton {
     padding: 0.625rem 1rem;

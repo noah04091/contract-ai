@@ -1,7 +1,7 @@
 // 📝 PlaceSignatureFields.tsx - Feld-Platzierung für bestehende Envelopes
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Send, Loader } from 'lucide-react';
+import { ArrowLeft, Send, Loader, ExternalLink } from 'lucide-react';
 import PDFFieldPlacementEditor, { SignatureField, Signer } from '../components/PDFFieldPlacementEditor';
 import styles from '../styles/PlaceSignatureFields.module.css';
 
@@ -234,6 +234,15 @@ export default function PlaceSignatureFields() {
           <h1 className={styles.title}>Signaturfelder platzieren</h1>
           <p className={styles.subtitle}>{envelope.title}</p>
         </div>
+
+        <button
+          className={styles.openButton}
+          onClick={() => window.open(pdfUrl, '_blank')}
+          title="PDF in neuem Fenster öffnen"
+        >
+          <ExternalLink size={16} />
+          <span className={styles.openButtonText}>In neuem Fenster öffnen</span>
+        </button>
 
         <button
           className={styles.sendButton}
