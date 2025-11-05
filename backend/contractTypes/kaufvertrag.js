@@ -8,6 +8,9 @@ module.exports = {
     B: "Käufer"
   },
 
+  // Qualitäts-Threshold für Hybrid Score (0-1)
+  qualityThreshold: 0.93,
+
   // Pflicht-Paragraphen (Must-Clauses) nach BGB Kaufrecht
   mustClauses: [
     "§ 1 Vertragsgegenstand",

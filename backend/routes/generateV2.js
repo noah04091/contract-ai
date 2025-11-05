@@ -34,6 +34,69 @@ const MODEL_SETTINGS = {
 // Self-Check Score Threshold
 const SELFCHECK_THRESHOLD = 0.93;
 
+// ===== HELPER FUNCTIONS =====
+
+/**
+ * Normalisiert Text für intelligenten Vergleich
+ * - Case-insensitive
+ * - Umlaute → ae/oe/ue/ss
+ * - Whitespace normalisieren
+ */
+function normalizeText(text) {
+  if (!text) return '';
+  return text
+    .toLowerCase()
+    .replace(/ä/g, 'ae')
+    .replace(/ö/g, 'oe')
+    .replace(/ü/g, 'ue')
+    .replace(/ß/g, 'ss')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Intelligente Filterung von Forbidden Topics
+ * Entfernt Topics, die in IRGENDWELCHEN Input-Feldern erwähnt werden
+ * @param {Array<string>} forbiddenTopics - Originale forbidden topics
+ * @param {Object} input - Alle Formulareingaben
+ * @returns {Array<string>} Gefilterte forbidden topics
+ */
+function filterForbiddenTopics(forbiddenTopics, input) {
+  // Sammle ALLE Textwerte aus dem Input (rekursiv)
+  const allInputTexts = [];
+
+  function extractTexts(obj) {
+    if (typeof obj === 'string') {
+      allInputTexts.push(obj);
+    } else if (typeof obj === 'object' && obj !== null) {
+      Object.values(obj).forEach(value => extractTexts(value));
+    }
+  }
+
+  extractTexts(input);
+
+  // Normalisiere alle Input-Texte
+  const normalizedInput = allInputTexts.map(normalizeText).join(' ');
+
+  // Filtere Topics: Behalte nur die, die NICHT im Input vorkommen
+  const filteredTopics = forbiddenTopics.filter(topic => {
+    const normalizedTopic = normalizeText(topic);
+
+    // Wortgrenzen-basierte Prüfung mit Regex
+    // \b funktioniert nicht mit Umlauten, daher manuell
+    const regex = new RegExp(`\\b${normalizedTopic}\\b`, 'i');
+
+    // Auch teilstring-Match prüfen (z.B. "Gartennutzung" enthält "Garten")
+    const isExplicitlyMentioned = regex.test(normalizedInput) ||
+                                   normalizedInput.includes(normalizedTopic);
+
+    // Topic BEHALTEN, wenn es NICHT erwähnt wurde
+    return !isExplicitlyMentioned;
+  });
+
+  return filteredTopics;
+}
+
 // ===== PHASE 1: META-PROMPT GENERATION =====
 
 /**
@@ -167,19 +230,13 @@ function buildPhase1UserPrompt(input, contractType, typeProfile) {
     prompt += `- ${clause}\n`;
   });
 
-  // Filter forbiddenTopics: Entferne Themen, die in customRequirements erwähnt werden
-  let activeForbiddenTopics = typeProfile.forbiddenTopics;
-  if (input.customRequirements) {
-    const customReqLower = input.customRequirements.toLowerCase();
-    activeForbiddenTopics = typeProfile.forbiddenTopics.filter(topic => {
-      const topicLower = topic.toLowerCase();
-      // Entferne Topic, wenn es in customRequirements erwähnt wird
-      return !customReqLower.includes(topicLower);
-    });
+  // ===== INTELLIGENTE FILTERUNG: Forbidden Topics =====
+  // Entferne Topics, die in IRGENDWELCHEN Input-Feldern erwähnt werden
+  const activeForbiddenTopics = filterForbiddenTopics(typeProfile.forbiddenTopics, input);
 
-    if (activeForbiddenTopics.length < typeProfile.forbiddenTopics.length) {
-      console.log(`📋 Filtered forbidden topics: ${typeProfile.forbiddenTopics.length} → ${activeForbiddenTopics.length} (customRequirements override)`);
-    }
+  if (activeForbiddenTopics.length < typeProfile.forbiddenTopics.length) {
+    const removed = typeProfile.forbiddenTopics.length - activeForbiddenTopics.length;
+    console.log(`📋 Intelligent filtering: ${typeProfile.forbiddenTopics.length} → ${activeForbiddenTopics.length} topics (-${removed} mentioned in input)`);
   }
 
   prompt += `\nVERBOTENE THEMEN (NICHT erwähnen, außer explizit in Eingaben/Anforderungen genannt!):\n`;
@@ -378,6 +435,7 @@ function runValidator(contractText, snapshot, typeProfile) {
 
   const checks = {
     rolesCorrect: checkRoles(contractText, typeProfile.roles),
+    mustClausesPresent: checkMustClauses(contractText, snapshot.mustClauses || []),
     paragraphsSequential: checkParagraphs(contractText),
     forbiddenTopicsAbsent: checkForbiddenTopics(contractText, snapshot.forbiddenTopics || []),
     dateFormatValid: checkDateFormat(contractText),
@@ -387,6 +445,7 @@ function runValidator(contractText, snapshot, typeProfile) {
   const warnings = [];
   const errors = [];
 
+  // Sammle errors und warnings
   Object.keys(checks).forEach(key => {
     if (!checks[key].passed) {
       if (checks[key].severity === 'error') {
@@ -397,16 +456,39 @@ function runValidator(contractText, snapshot, typeProfile) {
     }
   });
 
+  // ===== VALIDATOR SCORE (0-1) =====
+  // Gewichte: rolesCorrect (30%), mustClauses (40%), other (30%)
+  const weights = {
+    rolesCorrect: 0.30,
+    mustClausesPresent: 0.40,
+    paragraphsSequential: 0.10,
+    forbiddenTopicsAbsent: 0.10,
+    dateFormatValid: 0.05,
+    currencyFormatValid: 0.05
+  };
+
+  let validatorScore = 0;
+  Object.keys(checks).forEach(key => {
+    if (checks[key].passed) {
+      validatorScore += (weights[key] || 0);
+    }
+  });
+
+  // Score auf 2 Dezimalstellen runden
+  validatorScore = Math.round(validatorScore * 100) / 100;
+
   const passed = errors.length === 0;
 
   console.log("✅ Validator abgeschlossen:", {
     passed,
+    score: validatorScore,
     errorsCount: errors.length,
     warningsCount: warnings.length
   });
 
   return {
     passed,
+    score: validatorScore,
     checks: Object.keys(checks).reduce((acc, key) => {
       acc[key] = checks[key].passed;
       return acc;
@@ -430,6 +512,42 @@ function checkRoles(text, roles) {
         message: `Falsche Rolle gefunden: "${forbidden}" (erlaubt: ${allowedRoles.join(', ')})`
       };
     }
+  }
+
+  return { passed: true };
+}
+
+// Helper: Must-Clauses-Check (prüft ob alle Pflicht-Paragraphen vorhanden sind)
+function checkMustClauses(text, mustClauses) {
+  const missingClauses = [];
+
+  for (const clause of mustClauses) {
+    // Extrahiere Paragraph-Nummer und Titel (z.B. "§ 1 Mietgegenstand")
+    const match = clause.match(/§\s*(\d+)\s+(.+)/);
+    if (!match) continue;
+
+    const paragraphNum = match[1];
+    const clauseTitle = match[2];
+
+    // Prüfe ob Paragraph-Nummer vorhanden
+    const hasNumber = new RegExp(`§\\s*${paragraphNum}\\b`).test(text);
+
+    // Prüfe ob Titel vorhanden (mit Toleranz für Groß-/Kleinschreibung)
+    const normalizedTitle = normalizeText(clauseTitle);
+    const normalizedText = normalizeText(text);
+    const hasTitle = normalizedText.includes(normalizedTitle);
+
+    if (!hasNumber || !hasTitle) {
+      missingClauses.push(clause);
+    }
+  }
+
+  if (missingClauses.length > 0) {
+    return {
+      passed: false,
+      severity: 'error',
+      message: `Fehlende Must-Clauses: ${missingClauses.join(', ')}`
+    };
   }
 
   return { passed: true };
@@ -502,6 +620,10 @@ async function generateContractV2(input, contractType, userId, db) {
   // Load Vertragstyp-Modul
   const typeProfile = loadContractTypeProfile(contractType);
 
+  // Quality Threshold (aus typeProfile oder Fallback)
+  const qualityThreshold = typeProfile.qualityThreshold || SELFCHECK_THRESHOLD;
+  console.log(`🎯 Quality Threshold: ${qualityThreshold}`);
+
   // PHASE 1: Meta-Prompt Generation
   const phase1 = await runPhase1_MetaPrompt(input, contractType, typeProfile);
 
@@ -509,14 +631,26 @@ async function generateContractV2(input, contractType, userId, db) {
   let phase2 = await runPhase2_ContractGeneration(phase1.generatedPrompt, phase1.snapshot);
 
   // VALIDATOR (deterministisch)
-  const validator = runValidator(phase2.contractText, phase1.snapshot, typeProfile);
+  let validator = runValidator(phase2.contractText, phase1.snapshot, typeProfile);
 
   // SELF-CHECK (LLM-basiert)
   let selfCheck = await runSelfCheck(phase2.contractText, phase1.generatedPrompt, phase1.snapshot);
 
-  // RETRY-LOGIK (wenn Score < Threshold)
-  if (selfCheck.score < SELFCHECK_THRESHOLD) {
-    console.log(`⚠️ Self-Check Score (${selfCheck.score}) < Threshold (${SELFCHECK_THRESHOLD}), starte Retry...`);
+  // ===== HYBRIDER QUALITÄTS-SCORE =====
+  // finalScore = (0.6 * validatorScore) + (0.4 * llmScore)
+  const validatorScore = validator.score;
+  const llmScore = selfCheck.score;
+  let finalScore = (0.6 * validatorScore) + (0.4 * llmScore);
+  finalScore = Math.round(finalScore * 100) / 100;
+
+  const initialScore = finalScore;
+  let retriesUsed = 0;
+
+  console.log(`📊 Hybrid Score: ${finalScore} (Validator: ${validatorScore}, LLM: ${llmScore})`);
+
+  // RETRY-LOGIK (wenn finalScore < Threshold)
+  if (finalScore < qualityThreshold) {
+    console.log(`⚠️ Hybrid Score (${finalScore}) < Threshold (${qualityThreshold}), starte Retry...`);
 
     // Retry mit temperature=0.0
     const retryCompletion = await openai.chat.completions.create({
@@ -532,10 +666,17 @@ async function generateContractV2(input, contractType, userId, db) {
 
     phase2.contractText = retryCompletion.choices[0].message.content;
     phase2.retries = 1;
+    retriesUsed = 1;
 
-    // Self-Check erneut
+    // Validator & Self-Check erneut
+    validator = runValidator(phase2.contractText, phase1.snapshot, typeProfile);
     selfCheck = await runSelfCheck(phase2.contractText, phase1.generatedPrompt, phase1.snapshot);
-    console.log(`🔄 Retry Self-Check Score: ${selfCheck.score}`);
+
+    // Neuen finalScore berechnen
+    finalScore = (0.6 * validator.score) + (0.4 * selfCheck.score);
+    finalScore = Math.round(finalScore * 100) / 100;
+
+    console.log(`🔄 Retry Hybrid Score: ${finalScore} (Validator: ${validator.score}, LLM: ${selfCheck.score})`);
   }
 
   const overallDurationMs = Date.now() - overallStartTime;
@@ -548,7 +689,14 @@ async function generateContractV2(input, contractType, userId, db) {
     phase1: phase1,
     phase2: {
       contractText: phase2.contractText,
-      selfCheck: selfCheck,
+      selfCheck: {
+        ...selfCheck,
+        initialScore: initialScore,
+        finalScore: finalScore,
+        validatorScore: validator.score,
+        llmScore: selfCheck.score,
+        retriesUsed: retriesUsed
+      },
       retries: phase2.retries,
       timingMs: phase2.timingMs,
       model: phase2.model,
@@ -562,7 +710,8 @@ async function generateContractV2(input, contractType, userId, db) {
       createdAt: new Date(),
       durationMs: overallDurationMs,
       featureFlag: true,
-      version: "v2.0.0"
+      version: "v2.0.1", // Version bump für Hybrid Score
+      hybridScore: finalScore
     }
   };
 
@@ -579,8 +728,11 @@ async function generateContractV2(input, contractType, userId, db) {
 
   console.log("🎉 V2 Generierung abgeschlossen:", {
     durationMs: overallDurationMs,
-    selfCheckScore: selfCheck.score,
-    validatorPassed: validator.passed
+    hybridScore: finalScore,
+    validatorScore: validator.score,
+    llmScore: selfCheck.score,
+    validatorPassed: validator.passed,
+    retriesUsed: retriesUsed
   });
 
   return {
@@ -595,7 +747,14 @@ async function generateContractV2(input, contractType, userId, db) {
         tokenCount: phase2.tokenCount,
         retries: phase2.retries
       },
-      selfCheck: selfCheck,
+      selfCheck: {
+        ...selfCheck,
+        initialScore: initialScore,
+        finalScore: finalScore,
+        validatorScore: validator.score,
+        llmScore: selfCheck.score,
+        retriesUsed: retriesUsed
+      },
       validator: validator
     },
     generationDoc: generationDoc
