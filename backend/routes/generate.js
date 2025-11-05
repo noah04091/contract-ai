@@ -2062,12 +2062,107 @@ router.post("/", verifyToken, async (req, res) => {
     designVariant: req.body.designVariant,
     formDataKeys: Object.keys(req.body.formData || {})
   });
-  
+
   const { type, formData, useCompanyProfile = false, designVariant = 'executive' } = req.body;
 
   if (!type || !formData || !formData.title) {
     return res.status(400).json({ message: "❌ Fehlende Felder für Vertragserstellung." });
   }
+
+  // ===== FEATURE-FLAG: V2 META-PROMPT SYSTEM =====
+  const V2_ENABLED = process.env.GENERATE_V2_META_PROMPT === 'true';
+
+  if (V2_ENABLED) {
+    console.log("🆕 V2 Meta-Prompt System aktiviert - verwende Zwei-Phasen-Generierung");
+
+    try {
+      const generateV2 = require('./generateV2');
+
+      // V2 Flow ausführen
+      const result = await generateV2.generateContractV2(
+        formData,
+        type,
+        req.user.userId,
+        db
+      );
+
+      // HTML-Formatierung (wie bei V1)
+      let companyProfile = null;
+      if (db && useCompanyProfile) {
+        const usersCollection = db.collection("users");
+        const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
+        companyProfile = user?.companyProfile || null;
+      }
+
+      const formattedHTML = await formatContractToHTML(
+        result.contractText,
+        companyProfile,
+        type,
+        designVariant,
+        formData.isDraft || false,
+        null
+      );
+
+      // Speichern in contracts Collection (wie bei V1)
+      const contractsCollection = db.collection("contracts");
+      const contract = {
+        userId: new ObjectId(req.user.userId),
+        name: formData.title,
+        content: result.contractText,
+        contractHTML: formattedHTML,
+        laufzeit: formData.duration || "Generiert",
+        kuendigung: formData.termination || "Generiert",
+        expiryDate: formData.expiryDate || "",
+        status: formData.isDraft ? "Entwurf" : "Aktiv",
+        uploadedAt: new Date(),
+        isGenerated: true,
+        contractType: type,
+        hasCompanyProfile: !!companyProfile,
+        formData: formData,
+        designVariant: designVariant,
+        metadata: {
+          version: 'v2_meta_prompt',
+          generationId: result.generationDoc._id,
+          selfCheckScore: result.artifacts.selfCheck.score,
+          validatorPassed: result.artifacts.validator.passed,
+          generatedBy: 'GPT-4',
+          templateVersion: '2024.2'
+        }
+      };
+
+      const insertResult = await contractsCollection.insertOne(contract);
+
+      console.log("✅ V2 Generierung abgeschlossen:", {
+        contractId: insertResult.insertedId,
+        selfCheckScore: result.artifacts.selfCheck.score
+      });
+
+      return res.json({
+        success: true,
+        message: "✅ Vertrag erfolgreich generiert & gespeichert (V2).",
+        contractId: insertResult.insertedId,
+        contractText: result.contractText,
+        contractHTML: formattedHTML,
+        artifacts: result.artifacts,
+        metadata: {
+          contractType: type,
+          hasCompanyProfile: !!companyProfile,
+          version: 'v2_meta_prompt',
+          selfCheckScore: result.artifacts.selfCheck.score
+        }
+      });
+
+    } catch (error) {
+      console.error("❌ V2 Generierung fehlgeschlagen:", error.message);
+
+      // Fallback zu V1 bei V2-Fehler
+      console.log("⚠️ Fallback zu V1 System...");
+      // Weiter mit V1-Code unten
+    }
+  }
+
+  // ===== V1 SYSTEM (Legacy, unverändert) =====
+  console.log("📜 V1 Legacy System wird verwendet");
 
   try {
     // Company Profile laden - KRITISCHER FIX
