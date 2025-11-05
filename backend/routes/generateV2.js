@@ -768,7 +768,11 @@ function loadContractTypeProfile(contractType) {
   const typeMap = {
     'mietvertrag': '../contractTypes/mietvertrag',
     'freelancer': '../contractTypes/freelancer',
-    'kaufvertrag': '../contractTypes/kaufvertrag'
+    'kaufvertrag': '../contractTypes/kaufvertrag',
+    'arbeitsvertrag': '../contractTypes/arbeitsvertrag',
+    'nda': '../contractTypes/nda',
+    'werkvertrag': '../contractTypes/werkvertrag',
+    'lizenzvertrag': '../contractTypes/lizenzvertrag'
   };
 
   const modulePath = typeMap[contractType];
