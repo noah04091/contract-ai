@@ -1086,12 +1086,12 @@ a {
       rgba(247, 250, 255, 0.95) 0%,
       rgba(255, 255, 255, 0.98) 40%,
       rgba(248, 251, 255, 0.95) 70%,
-      rgba(248, 250, 255, 0.8) 90%,
-      rgba(248, 250, 255, 0.6) 100%
+      rgba(249, 250, 251, 0.9) 85%,
+      rgba(249, 250, 251, 1) 100%
     );
   color: #1d1d1f;
   position: relative;
-  padding: 0 20px 0px;
+  padding: 0 20px 60px;
   margin: 0 !important;
   text-align: center;
   /* overflow: hidden entfernt - Lichteffekte können fließen */
@@ -1806,18 +1806,16 @@ a {
 /* === TRUSTBAR SECTION === */
 .trustbar-section {
   background: linear-gradient(180deg,
-    rgba(248, 250, 255, 0.6) 0%,
-    rgba(248, 250, 255, 0.75) 15%,
-    rgba(248, 250, 255, 0.85) 30%,
-    rgba(249, 250, 251, 0.95) 60%,
+    rgba(249, 250, 251, 1) 0%,
+    rgba(249, 250, 251, 1) 40%,
     rgba(249, 250, 251, 1) 100%
   );
-  padding: 80px 20px 60px;
+  padding: 60px 20px 60px;
   position: relative;
   z-index: 3;
   width: 100%;
   box-sizing: border-box;
-  margin-top: -30px; /* Nahtloser Übergang mit Hero */
+  margin-top: -60px; /* Perfekter Übergang mit Hero */
 }
 
 .trustbar {
