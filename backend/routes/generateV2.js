@@ -40,7 +40,7 @@ const SELFCHECK_THRESHOLD = 0.93;
 // Retry Settings
 const RETRY_SETTINGS = {
   maxRetries: 2,
-  timeoutMs: 45000, // 45 seconds
+  timeoutMs: 90000, // 90 seconds (erhöht für komplexe Sonderklausel-Fälle)
   backoffMultiplier: 2 // Exponential: 1s, 2s, 4s
 };
 
@@ -302,19 +302,31 @@ Output-Format (strikt einhalten!):
  * Baut User-Prompt für Phase 1 (Eingabedaten → Template)
  */
 function buildPhase1UserPrompt(input, contractType, typeProfile) {
-  let prompt = `VERTRAGSTYP: ${typeProfile.roles.A}/${typeProfile.roles.B}-Vertrag (Deutsches BGB)\n\n`;
+  // 🆕 INDIVIDUELL: Rollen-Override aus Input (parteiA.role, parteiB.role, oder rolesA/rolesB)
+  let roleA = typeProfile.roles.A;
+  let roleB = typeProfile.roles.B;
+
+  if (contractType === 'individuell') {
+    if (input.parteiA?.role) roleA = input.parteiA.role;
+    else if (input.rolesA) roleA = input.rolesA;
+
+    if (input.parteiB?.role) roleB = input.parteiB.role;
+    else if (input.rolesB) roleB = input.rolesB;
+  }
+
+  let prompt = `VERTRAGSTYP: ${roleA}/${roleB}-Vertrag (Deutsches BGB)\n\n`;
 
   prompt += `ROLLEN (EXAKT verwenden!):\n`;
-  prompt += `- Partei A = "${typeProfile.roles.A}"\n`;
-  prompt += `- Partei B = "${typeProfile.roles.B}"\n\n`;
+  prompt += `- Partei A = "${roleA}"\n`;
+  prompt += `- Partei B = "${roleB}"\n\n`;
 
   prompt += `EINGABEDATEN:\n`;
-  prompt += `- ${typeProfile.roles.A}: ${input.parteiA?.name || '[NAME FEHLT]'}`;
+  prompt += `- ${roleA}: ${input.parteiA?.name || '[NAME FEHLT]'}`;
   if (input.parteiA?.address) prompt += `, ${input.parteiA.address}`;
   if (input.parteiA?.details) prompt += `, ${input.parteiA.details}`;
   prompt += `\n`;
 
-  prompt += `- ${typeProfile.roles.B}: ${input.parteiB?.name || '[NAME FEHLT]'}`;
+  prompt += `- ${roleB}: ${input.parteiB?.name || '[NAME FEHLT]'}`;
   if (input.parteiB?.address) prompt += `, ${input.parteiB.address}`;
   if (input.parteiB?.details) prompt += `, ${input.parteiB.details}`;
   prompt += `\n\n`;
@@ -322,7 +334,8 @@ function buildPhase1UserPrompt(input, contractType, typeProfile) {
   // Vertragstyp-spezifische Felder (dynamisch)
   prompt += `VERTRAGSDETAILS:\n`;
   Object.keys(input).forEach(key => {
-    if (key !== 'parteiA' && key !== 'parteiB' && key !== 'title' && key !== 'customRequirements') {
+    if (key !== 'parteiA' && key !== 'parteiB' && key !== 'title' && key !== 'customRequirements'
+        && key !== 'rolesA' && key !== 'rolesB' && key !== 'mustClauses' && key !== 'forbiddenTopics' && key !== 'forbiddenSynonyms') {
       prompt += `- ${key}: ${input[key]}\n`;
     }
   });
@@ -331,22 +344,51 @@ function buildPhase1UserPrompt(input, contractType, typeProfile) {
     prompt += `\n⚠️ INDIVIDUELLE ANFORDERUNGEN (HÖCHSTE PRIORITÄT!):\n${input.customRequirements}\n`;
   }
 
+  // 🆕 INDIVIDUELL: mustClauses-Override aus Input
+  let activeMustClauses = typeProfile.mustClauses;
+  if (contractType === 'individuell' && input.mustClauses && Array.isArray(input.mustClauses) && input.mustClauses.length > 0) {
+    activeMustClauses = input.mustClauses;
+    console.log(`📋 Individuell: Nutzer-definierte mustClauses (${activeMustClauses.length} Klauseln)`);
+  }
+
   prompt += `\nPFLICHT-PARAGRAPHEN (alle einbauen!):\n`;
-  typeProfile.mustClauses.forEach(clause => {
+  activeMustClauses.forEach(clause => {
     prompt += `- ${clause}\n`;
   });
 
+  // 🆕 INTEGRATION-GUIDANCE für robuste Umsetzung
+  prompt += `\nINTEGRATION DER ANFORDERUNGEN:\n`;
+  prompt += `- Jede individuelle Anforderung muss entweder als eigener Absatz ODER sauber in eine passende Pflichtklausel integriert werden.\n`;
+  prompt += `- Nummerierung konsistent halten (fehlt eine passende Klausel, füge sie als neuen § ein).\n`;
+  prompt += `- Bei zinsfreien Darlehen: § "Zinsregelung" oder "Zinsfreiheit" explizit aufnehmen.\n`;
+  prompt += `- Unklare Datumsangaben (z.B. "Juli 2025") in eindeutige Form bringen (TT.MM.JJJJ) oder klarstellend formulieren.\n`;
+  prompt += `- Vermeide Wiederholungen - integriere verwandte Inhalte in bestehende Paragraphen.\n`;
+
   // ===== INTELLIGENTE FILTERUNG: Forbidden Topics =====
+  // 🆕 INDIVIDUELL: forbiddenTopics/Synonyms-Override aus Input
+  let baseForbiddenTopics = typeProfile.forbiddenTopics;
+  let baseForbiddenSynonyms = typeProfile.forbiddenSynonyms || [];
+
+  if (contractType === 'individuell') {
+    if (input.forbiddenTopics && Array.isArray(input.forbiddenTopics)) {
+      baseForbiddenTopics = input.forbiddenTopics;
+      console.log(`📋 Individuell: Nutzer-definierte forbiddenTopics (${baseForbiddenTopics.length} Topics)`);
+    }
+    if (input.forbiddenSynonyms && Array.isArray(input.forbiddenSynonyms)) {
+      baseForbiddenSynonyms = input.forbiddenSynonyms;
+    }
+  }
+
   // Entferne Topics, die in IRGENDWELCHEN Input-Feldern erwähnt werden
   const activeForbiddenTopics = filterForbiddenTopics(
-    typeProfile.forbiddenTopics,
+    baseForbiddenTopics,
     input,
-    typeProfile.forbiddenSynonyms || []
+    baseForbiddenSynonyms
   );
 
-  if (activeForbiddenTopics.length < typeProfile.forbiddenTopics.length) {
-    const removed = typeProfile.forbiddenTopics.length - activeForbiddenTopics.length;
-    console.log(`📋 Intelligent filtering: ${typeProfile.forbiddenTopics.length} → ${activeForbiddenTopics.length} topics (-${removed} mentioned in input)`);
+  if (activeForbiddenTopics.length < baseForbiddenTopics.length) {
+    const removed = baseForbiddenTopics.length - activeForbiddenTopics.length;
+    console.log(`📋 Intelligent filtering: ${baseForbiddenTopics.length} → ${activeForbiddenTopics.length} topics (-${removed} mentioned in input)`);
   }
 
   prompt += `\nVERBOTENE THEMEN (NICHT erwähnen, außer explizit in Eingaben/Anforderungen genannt!):\n`;
@@ -360,8 +402,8 @@ function buildPhase1UserPrompt(input, contractType, typeProfile) {
 
   prompt += `SNAPSHOT-ANFORDERUNG:\n`;
   prompt += `Fülle das Snapshot-JSON mit:\n`;
-  prompt += `- "roles": {"A": "${typeProfile.roles.A}", "B": "${typeProfile.roles.B}"}\n`;
-  prompt += `- "mustClauses": [alle ${typeProfile.mustClauses.length} Pflicht-Paragraphen aus obiger Liste]\n`;
+  prompt += `- "roles": {"A": "${roleA}", "B": "${roleB}"}\n`;
+  prompt += `- "mustClauses": [alle ${activeMustClauses.length} Pflicht-Paragraphen aus obiger Liste]\n`;
   prompt += `- "forbiddenTopics": [${activeForbiddenTopics.length > 0 ? `genau diese ${activeForbiddenTopics.length} gefilterten Themen aus der "VERBOTENE THEMEN"-Liste oben` : '[]'}]\n`;
   prompt += `- "customRequirements": [${input.customRequirements ? 'alle individuellen Anforderungen als Array' : '[]'}]\n`;
 
@@ -537,6 +579,237 @@ Bewerte die Übereinstimmung!`;
   }
 }
 
+// ===== REPAIR-PASS: Ergänzt fehlende Pflichtklauseln =====
+
+/**
+ * Universeller Repair-Pass (Prompt 1)
+ * Ergänzt fehlende Must-Clauses, korrigiert Nummerierung, integriert Sonderwünsche
+ */
+async function runUniversalRepair(contractText, snapshot, phase1Input) {
+  const systemPrompt = `Du bist Jurist:in für deutsches Vertragsrecht (BGB). Du erhältst:
+- den vom System erzeugten Vertragstext (CURRENT_TEXT),
+- einen Snapshot mit Pflichtenliste (MUST_CLAUSES, inkl. Alternativtiteln mit "|"),
+- Rollenbezeichnungen (ROLES),
+- verbotene Themen (FORBIDDEN_TOPICS),
+- optionale Sonderanforderungen (CUSTOM_REQUIREMENTS),
+- Input-Zusammenfassung (INPUT_SUMMARY).
+
+Deine Aufgabe: "Repair-Pass" = fehlende Pflichtklauseln ergänzen und formale Mängel beheben, ohne Inhalte zu erfinden.
+
+HARTE REGELN
+1) MUSS jede Pflichtklausel aus MUST_CLAUSES abdecken. Alternativtitel sind gleichwertig; nutze genau einen passenden Titel pro Pflichtklausel.
+2) Nummerierung konsistent ab § 1 aufwärts; keine Nummer doppelt, keine Lücke.
+3) Keine verbotenen Themen erwähnen – außer sie stehen ausdrücklich in INPUT_SUMMARY oder CUSTOM_REQUIREMENTS.
+4) Keine Fakten erfinden. Wenn Daten unklar/fehlend sind, formuliere rechtssicher mit Platzhalter-Klammern: „[Datum eintragen]", „[Betrag eintragen]".
+5) CUSTOM_REQUIREMENTS entweder als eigener Absatz ODER sauber in die passende Pflichtklausel integrieren (keine Dopplungen).
+6) Stil: sachlich, präzise, deutsches Vertragsdeutsch.
+
+REPARATURSCHRITTE (Checkliste)
+- [ ] Prüfe MUST_CLAUSES gegen CURRENT_TEXT. Ergänze vollständig fehlende Klauseln.
+- [ ] Vereinheitliche Titel (einen Alternativtitel wählen), Nummerierung korrigieren.
+- [ ] Ersetze unklare Datumsangaben ("Juli 2025") durch klare Formate „TT.MM.JJJJ" oder belasse sie mit klarer Klarstellung („…spätestens zum [TT.MM.JJJJ]").
+- [ ] Integriere CUSTOM_REQUIREMENTS ohne Wiederholung.
+- [ ] Entferne Wiederholungen/Widersprüche.
+- [ ] Keine PII erfinden; nur übernehmen, was in INPUT_SUMMARY steht.
+
+AUSGABE
+Gib ausschließlich den finalen VERTRAGSTEXT zurück – ohne Erklärungen oder Listen.`;
+
+  const inputSummary = phase1Input ? buildInputSummary(phase1Input) : 'Keine zusätzlichen Angaben';
+
+  const userPrompt = `ROLES:
+${JSON.stringify(snapshot.roles, null, 2)}
+
+MUST_CLAUSES:
+${(snapshot.mustClauses || []).map(c => `- ${c}`).join('\n')}
+
+FORBIDDEN_TOPICS:
+${(snapshot.forbiddenTopics || []).map(t => `- ${t}`).join('\n')}
+
+CUSTOM_REQUIREMENTS:
+${(snapshot.customRequirements || []).join('\n') || 'Keine'}
+
+INPUT_SUMMARY:
+${inputSummary}
+
+CURRENT_TEXT:
+<<<
+${contractText}
+>>>`;
+
+  try {
+    const completion = await callWithTimeout(
+      () => openai.chat.completions.create({
+        model: 'gpt-4o',
+        temperature: 0.1,
+        max_tokens: 6000,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt }
+        ]
+      }),
+      RETRY_SETTINGS.timeoutMs
+    );
+
+    const repairedText = completion.choices[0].message.content.trim();
+    console.log("✅ Universal Repair abgeschlossen:", {
+      originalLength: contractText.length,
+      repairedLength: repairedText.length,
+      tokens: completion.usage.total_tokens
+    });
+
+    return repairedText;
+
+  } catch (error) {
+    console.error("❌ Universal Repair fehlgeschlagen:", error.message);
+    return contractText; // Fallback: Original-Text
+  }
+}
+
+/**
+ * Darlehen-Spezialisierung (Prompt 2)
+ * Erzwingt Zinsregelung/Zinsfreiheit-Klausel
+ */
+async function runDarlehenSpecialization(contractText, snapshot) {
+  const systemPrompt = `Zusatzinstruktion für Vertragstyp DARLEHEN, speziell Edge Cases:
+- Wenn Zinsfreiheit/„0 %" erkannt oder nahegelegt (in INPUT_SUMMARY oder CUSTOM_REQUIREMENTS), MUSS eine eigene Pflichtklausel „§ Zinsregelung" mit klarer Aussage zur Zinsfreiheit enthalten sein (z. B. „Das Darlehen ist zinsfrei. Es fallen keine laufenden Zinsen an.").
+- Rückzahlung konkretisieren: Tilgungsmodus (Raten/Einmalzahlung), Fälligkeitstermine, Plan. Falls Datum unklar: Platzhalter in eckigen Klammern „[TT.MM.JJJJ]" und klarstellende Formulierungen.
+- Sicherheiten, Kündigung, Verzug IMMER als eigenständige Paragraphen abbilden (gemäß MUST_CLAUSES/Alternativtiteln).
+- Keine verbotenen Themen.
+- Nummerierung lückenlos.
+
+Beziehe diese Zusatzregeln ein und gib nur den finalen Vertragstext aus.`;
+
+  const userPrompt = `MUST_CLAUSES:
+${(snapshot.mustClauses || []).map(c => `- ${c}`).join('\n')}
+
+CUSTOM_REQUIREMENTS:
+${(snapshot.customRequirements || []).join('\n') || 'Keine'}
+
+CURRENT_TEXT:
+<<<
+${contractText}
+>>>`;
+
+  try {
+    const completion = await callWithTimeout(
+      () => openai.chat.completions.create({
+        model: 'gpt-4o',
+        temperature: 0.1,
+        max_tokens: 6000,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt }
+        ]
+      }),
+      RETRY_SETTINGS.timeoutMs
+    );
+
+    const specialized = completion.choices[0].message.content.trim();
+    console.log("✅ Darlehen Specialization abgeschlossen:", {
+      tokens: completion.usage.total_tokens
+    });
+
+    return specialized;
+
+  } catch (error) {
+    console.error("❌ Darlehen Specialization fehlgeschlagen:", error.message);
+    return contractText; // Fallback
+  }
+}
+
+/**
+ * Individuell-Spezialisierung (Prompt 3)
+ * Sichert benutzerdefinierte mustClauses/Rollen
+ */
+async function runIndividuellSpecialization(contractText, snapshot) {
+  const systemPrompt = `Zusatzinstruktion für Vertragstyp INDIVIDUELL:
+- Verwende die Rollenbezeichnungen exakt wie in ROLES vorgegeben (auch wenn vom Standard abweichend).
+- MUST_CLAUSES können vom Nutzer überschrieben sein – behandle diese Liste als „maßgeblich". Für jede Klausel einen passenden Alternativtitel wählen (bei „|").
+- CUSTOM_REQUIREMENTS müssen entweder als eigener Paragraph ODER sauber in eine passende Pflichtklausel integriert sein (keine Dopplung).
+- Häufige Spezialfälle:
+  • IP/Urheberrechte: explizit regeln, wem Arbeitsergebnisse zustehen (Übertragung vs. Lizenz).
+  • Vertraulichkeit separat von Datenschutz halten.
+  • Kündigung & Laufzeit trennen/vereinheitlichen.
+- Nummerierung lückenlos. Keine verbotenen Themen.
+- Keine Erklärungen – nur finalen Vertragstext liefern.`;
+
+  const userPrompt = `ROLES:
+${JSON.stringify(snapshot.roles, null, 2)}
+
+MUST_CLAUSES:
+${(snapshot.mustClauses || []).map(c => `- ${c}`).join('\n')}
+
+CUSTOM_REQUIREMENTS:
+${(snapshot.customRequirements || []).join('\n') || 'Keine'}
+
+CURRENT_TEXT:
+<<<
+${contractText}
+>>>`;
+
+  try {
+    const completion = await callWithTimeout(
+      () => openai.chat.completions.create({
+        model: 'gpt-4o',
+        temperature: 0.1,
+        max_tokens: 6000,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt }
+        ]
+      }),
+      RETRY_SETTINGS.timeoutMs
+    );
+
+    const specialized = completion.choices[0].message.content.trim();
+    console.log("✅ Individuell Specialization abgeschlossen:", {
+      tokens: completion.usage.total_tokens
+    });
+
+    return specialized;
+
+  } catch (error) {
+    console.error("❌ Individuell Specialization fehlgeschlagen:", error.message);
+    return contractText; // Fallback
+  }
+}
+
+/**
+ * Orchestriert den Repair-Pass
+ * Führt universellen Repair durch, dann optional Spezialisierungen
+ */
+async function runRepairPass(contractText, snapshot, contractType, phase1Input) {
+  console.log("🔧 Repair-Pass gestartet für:", contractType);
+
+  const startTime = Date.now();
+
+  // 1) Universeller Repair (für alle Typen)
+  let repaired = await runUniversalRepair(contractText, snapshot, phase1Input);
+
+  // 2) Darlehen-Spezialisierung (nur wenn 0% Zins oder zinsfrei)
+  if (contractType === 'darlehen') {
+    const customReq = (snapshot.customRequirements || []).join(' ').toLowerCase();
+    const hasZeroInterest = /0\s*%|zinsfrei|zinslos/i.test(customReq);
+
+    if (hasZeroInterest) {
+      console.log("🔧 Darlehen Edge Case erkannt (0% Zins), starte Spezialisierung...");
+      repaired = await runDarlehenSpecialization(repaired, snapshot);
+    }
+  }
+
+  // 3) Individuell-Spezialisierung (immer bei individuell)
+  if (contractType === 'individuell') {
+    console.log("🔧 Individuell-Typ erkannt, starte Spezialisierung...");
+    repaired = await runIndividuellSpecialization(repaired, snapshot);
+  }
+
+  const duration = Date.now() - startTime;
+  console.log(`✅ Repair-Pass abgeschlossen in ${duration}ms`);
+
+  return repaired;
+}
+
 // ===== VALIDATOR (Deterministisch, JS-basiert) =====
 
 /**
@@ -634,8 +907,18 @@ function checkRoles(text, roles) {
 }
 
 // Helper: Must-Clauses-Check (prüft ob alle Pflicht-Paragraphen vorhanden sind)
+// V2.1: Fuzzy-Matching für robuste Validierung (Nummer ODER Titel reicht)
 function checkMustClauses(text, mustClauses) {
   const missingClauses = [];
+
+  // Helper: Fuzzy-Normalisierung für Titel
+  function fuzzyNormalizeTitle(title) {
+    return title
+      .toLowerCase()
+      .replace(/[:\-–—]/g, ' ')  // Doppelpunkte, Bindestriche entfernen
+      .replace(/\s+/g, ' ')       // Mehrfach-Spaces zu einem
+      .trim();
+  }
 
   for (const clause of mustClauses) {
     // Extrahiere Paragraph-Nummer und Titel (z.B. "§ 1 Mietgegenstand")
@@ -648,12 +931,24 @@ function checkMustClauses(text, mustClauses) {
     // Prüfe ob Paragraph-Nummer vorhanden
     const hasNumber = new RegExp(`§\\s*${paragraphNum}\\b`).test(text);
 
-    // Prüfe ob Titel vorhanden (mit Toleranz für Groß-/Kleinschreibung)
-    const normalizedTitle = normalizeText(clauseTitle);
-    const normalizedText = normalizeText(text);
-    const hasTitle = normalizedText.includes(normalizedTitle);
+    // Prüfe ob Titel vorhanden (mit Fuzzy-Matching und Alternativen)
+    let hasTitle = false;
 
-    if (!hasNumber || !hasTitle) {
+    // Unterstütze Alternativen mit | (z.B. "Haftung|Gewährleistung")
+    const titleVariants = clauseTitle.split('|').map(v => v.trim());
+
+    const fuzzyText = fuzzyNormalizeTitle(text);
+
+    for (const variant of titleVariants) {
+      const fuzzyVariant = fuzzyNormalizeTitle(variant);
+      if (fuzzyText.includes(fuzzyVariant)) {
+        hasTitle = true;
+        break;
+      }
+    }
+
+    // ✨ NEUE LOGIK: Nummer ODER Titel reicht (nicht beide erforderlich)
+    if (!hasNumber && !hasTitle) {
       missingClauses.push(clause);
     }
   }
@@ -704,10 +999,45 @@ function checkForbiddenTopics(text, forbiddenTopics) {
   return { passed: true };
 }
 
-// Helper: Datumsformat-Check (einfach)
+// Helper: Datumsformat-Check
+// V2.1: Erlaubt Monatsnamen (de/en) als WARNING statt ERROR
 function checkDateFormat(text) {
   const dates = text.match(/\b\d{4}-\d{2}-\d{2}\b/g);
+
+  // Monatsnamen (de/en) erkennen
+  const monthNames = [
+    'januar', 'februar', 'märz', 'april', 'mai', 'juni', 'juli', 'august',
+    'september', 'oktober', 'november', 'dezember',
+    'january', 'february', 'march', 'april', 'may', 'june', 'july', 'august',
+    'september', 'october', 'november', 'december'
+  ];
+
+  const textLower = text.toLowerCase();
+  const hasMonthNames = monthNames.some(month => textLower.includes(month));
+
+  if (hasMonthNames) {
+    // Monatsnamen gefunden → Warning, nicht Error
+    return {
+      passed: true,
+      severity: 'warning',
+      message: 'Datumsangabe enthält Monatsnamen (z.B. "Juli 2025") - besser: TT.MM.JJJJ'
+    };
+  }
+
   return { passed: true }; // Immer OK, nur Warning bei Fehlen
+}
+
+// Helper: Prüft ob Darlehen zinsfrei ist
+function isZeroInterest(snapshot) {
+  if (!snapshot || !snapshot.customRequirements) return false;
+
+  const customReq = (snapshot.customRequirements || '').toLowerCase();
+  const hasZeroInterest =
+    /0\s*%/.test(customReq) ||
+    /zinsfrei/i.test(customReq) ||
+    /zinslos/i.test(customReq);
+
+  return hasZeroInterest;
 }
 
 // Helper: Währungsformat-Check (einfach)
@@ -748,6 +1078,17 @@ async function generateContractV2(input, contractType, userId, db, runLabel = nu
   // PHASE 2: Contract Generation
   let phase2 = await runPhase2_ContractGeneration(phase1.generatedPrompt, phase1.snapshot);
 
+  // REPAIR-PASS (nur für individuell & darlehen zur Optimierung)
+  // Ergänzt fehlende Pflichtklauseln und behebt formale Mängel
+  if (contractType === 'individuell' || contractType === 'darlehen') {
+    phase2.contractText = await runRepairPass(
+      phase2.contractText,
+      phase1.snapshot,
+      contractType,
+      input
+    );
+  }
+
   // VALIDATOR (deterministisch)
   let validator = runValidator(phase2.contractText, phase1.snapshot, typeProfile);
 
@@ -755,10 +1096,11 @@ async function generateContractV2(input, contractType, userId, db, runLabel = nu
   let selfCheck = await runSelfCheck(phase2.contractText, phase1.generatedPrompt, phase1.snapshot);
 
   // ===== HYBRIDER QUALITÄTS-SCORE =====
-  // finalScore = (0.6 * validatorScore) + (0.4 * llmScore)
+  // finalScore = (0.7 * validatorScore) + (0.3 * llmScore)
+  // Gewichtung: Validator 70% (deterministisch, zuverlässig) + LLM 30% (subjektiv)
   const validatorScore = validator.score;
   const llmScore = selfCheck.score;
-  let finalScore = (0.6 * validatorScore) + (0.4 * llmScore);
+  let finalScore = (0.7 * validatorScore) + (0.3 * llmScore);
   finalScore = Math.round(finalScore * 100) / 100;
 
   const initialScore = finalScore;
@@ -796,12 +1138,22 @@ async function generateContractV2(input, contractType, userId, db, runLabel = nu
       phase2.contractText = retryCompletion.choices[0].message.content;
       phase2.retries = retriesUsed;
 
+      // REPAIR-PASS auch im Retry (nur für individuell & darlehen)
+      if (contractType === 'individuell' || contractType === 'darlehen') {
+        phase2.contractText = await runRepairPass(
+          phase2.contractText,
+          phase1.snapshot,
+          contractType,
+          input
+        );
+      }
+
       // Validator & Self-Check erneut
       validator = runValidator(phase2.contractText, phase1.snapshot, typeProfile);
       selfCheck = await runSelfCheck(phase2.contractText, phase1.generatedPrompt, phase1.snapshot);
 
-      // Neuen finalScore berechnen
-      finalScore = (0.6 * validator.score) + (0.4 * selfCheck.score);
+      // Neuen finalScore berechnen (70% Validator, 30% LLM)
+      finalScore = (0.7 * validator.score) + (0.3 * selfCheck.score);
       finalScore = Math.round(finalScore * 100) / 100;
 
       console.log(`🔄 Retry ${retriesUsed} Hybrid Score: ${finalScore} (Validator: ${validator.score}, LLM: ${selfCheck.score})`);
@@ -967,7 +1319,13 @@ function loadContractTypeProfile(contractType) {
     'arbeitsvertrag': '../contractTypes/arbeitsvertrag',
     'nda': '../contractTypes/nda',
     'werkvertrag': '../contractTypes/werkvertrag',
-    'lizenzvertrag': '../contractTypes/lizenzvertrag'
+    'lizenzvertrag': '../contractTypes/lizenzvertrag',
+    // 🆕 Neue Vertragstypen
+    'individuell': '../contractTypes/individuell',
+    'darlehen': '../contractTypes/darlehen',
+    'gesellschaft': '../contractTypes/gesellschaft',
+    'aufhebungsvertrag': '../contractTypes/aufhebungsvertrag',
+    'pacht': '../contractTypes/pacht'
   };
 
   const modulePath = typeMap[contractType];

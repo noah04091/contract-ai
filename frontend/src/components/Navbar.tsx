@@ -203,27 +203,17 @@ export default function Navbar() {
                   </Link>
                 </motion.div>
                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                  <Link to="/optimizer" className={`${styles.navLink} ${location.pathname === "/optimizer" ? styles.activeNavLink : ""}`}>
-                    <span className={styles.navLinkIcon}>🧠</span>
-                    <span className={styles.navLinkText}>Optimierer</span>
+                  <Link to="/calendar" className={`${styles.navLink} ${location.pathname === "/calendar" ? styles.activeNavLink : ""}`}>
+                    <span className={styles.navLinkIcon}>📅</span>
+                    <span className={styles.navLinkText}>Kalender</span>
                   </Link>
                 </motion.div>
-                {(!user || !user.subscriptionActive) && (
-                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                    <Link to="/pricing" className={`${styles.navLink} ${location.pathname === "/pricing" ? styles.activeNavLink : ""}`}>
-                      <span className={styles.navLinkIcon}>💰</span>
-                      <span className={styles.navLinkText}>Preise</span>
-                    </Link>
-                  </motion.div>
-                )}
-                {user && user.subscriptionActive && (
-                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                    <Link to="/generate" className={`${styles.navLink} ${location.pathname === "/generate" ? styles.activeNavLink : ""}`}>
-                      <span className={styles.navLinkIcon}>⚡</span>
-                      <span className={styles.navLinkText}>Generator</span>
-                    </Link>
-                  </motion.div>
-                )}
+                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                  <Link to="/legalpulse" className={`${styles.navLink} ${location.pathname === "/legalpulse" ? styles.activeNavLink : ""}`}>
+                    <span className={styles.navLinkIcon}>⚖️</span>
+                    <span className={styles.navLinkText}>Legal Pulse</span>
+                  </Link>
+                </motion.div>
               </motion.div>
             </div>
           )}
@@ -671,22 +661,14 @@ export default function Navbar() {
                     <span className={styles.mobileNavIcon}>📁</span>
                     <span>Verträge</span>
                   </Link>
-                  <Link to="/optimizer" className={`${styles.mobileNavLink} ${location.pathname === "/optimizer" ? styles.activeMobileNavLink : ""}`}>
-                    <span className={styles.mobileNavIcon}>🧠</span>
-                    <span>Optimierer</span>
+                  <Link to="/calendar" className={`${styles.mobileNavLink} ${location.pathname === "/calendar" ? styles.activeMobileNavLink : ""}`}>
+                    <span className={styles.mobileNavIcon}>📅</span>
+                    <span>Kalender</span>
                   </Link>
-                  {user && !user.subscriptionActive && (
-                    <Link to="/pricing" className={`${styles.mobileNavLink} ${location.pathname === "/pricing" ? styles.activeMobileNavLink : ""}`}>
-                      <span className={styles.mobileNavIcon}>💰</span>
-                      <span>Preise</span>
-                    </Link>
-                  )}
-                  {user && user.subscriptionActive && (
-                    <Link to="/generate" className={`${styles.mobileNavLink} ${location.pathname === "/generate" ? styles.activeMobileNavLink : ""}`}>
-                      <span className={styles.mobileNavIcon}>⚡</span>
-                      <span>Generator</span>
-                    </Link>
-                  )}
+                  <Link to="/legalpulse" className={`${styles.mobileNavLink} ${location.pathname === "/legalpulse" ? styles.activeMobileNavLink : ""}`}>
+                    <span className={styles.mobileNavIcon}>⚖️</span>
+                    <span>Legal Pulse</span>
+                  </Link>
                   {user && (
                     <>
                       <div className={styles.userInfo}>

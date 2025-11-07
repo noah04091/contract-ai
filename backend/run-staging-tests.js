@@ -1,19 +1,23 @@
 // 🧪 Automatisierte Staging-Tests für V2 System
-// Führt 21 Testfälle aus (7 Vertragstypen × 3 Varianten)
+// Führt 36 Testfälle aus (12 Vertragstypen × 3 Varianten)
+
+// WICHTIG: dotenv MUSS als erstes geladen werden, bevor andere Module geladen werden
+// da generateV2.js beim Import bereits den OpenAI Client instantiiert
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const { MongoClient } = require('mongodb');
 const { generateContractV2 } = require('./routes/generateV2');
 const { exec } = require('child_process');
 const { promisify } = require('util');
 const fs = require('fs').promises;
-require('dotenv').config();
 
 const execAsync = promisify(exec);
 
 // Konfiguration
 const DEFAULT_RUN_LABEL = 'staging-2025-11-05';
 const DEFAULT_CONCURRENCY = 3;
-const DEFAULT_TIMEOUT_MS = 60000; // 60s
+const DEFAULT_TIMEOUT_MS = 90000; // 90s (erhöht für komplexe Typen wie darlehen)
 const BATCH_PAUSE_MS = 1000; // 1s zwischen Batches
 
 // Test User ID (mock)
@@ -302,6 +306,232 @@ const TEST_CASES = {
         laufzeit: '5 Jahre' // Edge: Ohne "ab..."
       }
     }
+  ],
+
+  // 8. Individuell
+  individuell: [
+    {
+      variant: 'standard',
+      input: {
+        parteiA: { name: 'Tech Solutions AG', address: 'Innovationsweg 5, 10115 Berlin' },
+        parteiB: { name: 'Max Consultant', address: 'Beratungsstraße 10, 10115 Berlin' },
+        vertragsgegenstand: 'IT-Beratung und Projektmanagement',
+        vergütung: '120,00 EUR pro Stunde',
+        laufzeit: '01.01.2025 bis 31.12.2025',
+        customRequirements: ''
+      }
+    },
+    {
+      variant: 'sonderklausel',
+      input: {
+        parteiA: { name: 'Forschungsinstitut XY', address: 'Wissenschaftsplatz 3, 69115 Heidelberg', role: 'Auftraggeber' },
+        parteiB: { name: 'Dr. Sarah Expertin', address: 'Forscherweg 8, 69115 Heidelberg', role: 'Auftragnehmer' },
+        projektbeschreibung: 'Entwicklung eines KI-basierten Analysesystems',
+        vergütung: '150.000,00 EUR Gesamtprojektvergütung',
+        laufzeit: '6 Monate ab Vertragsschluss',
+        mustClauses: [
+          '§ 1 Projektgegenstand',
+          '§ 2 Leistungsumfang',
+          '§ 3 Vergütung und Abrechnung',
+          '§ 4 Projektdauer und Meilensteine',
+          '§ 5 Urheberrechte und IP',
+          '§ 6 Vertraulichkeit',
+          '§ 7 Haftung',
+          '§ 8 Kündigung',
+          '§ 9 Schlussbestimmungen'
+        ],
+        forbiddenTopics: [
+          'Automatische Verlängerung',
+          'Wettbewerbsverbot nach Vertragsende'
+        ],
+        customRequirements: 'Alle Rechte am entwickelten Code verbleiben beim Auftraggeber. Keine automatische Verlängerung. Kein Wettbewerbsverbot nach Projektende.'
+      }
+    },
+    {
+      variant: 'edge_case',
+      input: {
+        parteiA: { name: 'Startup ABC' }, // Edge: Fehlende Adresse
+        parteiB: { name: 'Freelancer Tom', address: 'Homeoffice Berlin' },
+        leistung: 'Marketing-Beratung',
+        vergütung: '5000', // Edge: Ohne Nachkommastellen, ohne EUR
+        laufzeit: 'flexibel' // Edge: Unklar
+      }
+    }
+  ],
+
+  // 9. Darlehen
+  darlehen: [
+    {
+      variant: 'standard',
+      input: {
+        parteiA: { name: 'Privatperson: Klaus Darlehensgeber', address: 'Sparkassenweg 5, 30159 Hannover' },
+        parteiB: { name: 'Maria Darlehensnehmerin', address: 'Schuldnerstraße 12, 30159 Hannover' },
+        darlehenssumme: '50.000,00 EUR',
+        zinssatz: '4,5% p.a.',
+        laufzeit: '5 Jahre',
+        rückzahlung: 'Monatliche Raten von 932,00 EUR',
+        fälligkeit: '01.12.2030',
+        customRequirements: ''
+      }
+    },
+    {
+      variant: 'sonderklausel',
+      input: {
+        parteiA: { name: 'Finanz GmbH', address: 'Kapitalplatz 20, 60311 Frankfurt' },
+        parteiB: { name: 'Immobilien Schmidt GmbH', address: 'Baustraße 15, 60311 Frankfurt' },
+        darlehenssumme: '250.000,00 EUR',
+        zinssatz: '3,8% p.a.',
+        laufzeit: '10 Jahre',
+        rückzahlung: 'Quartalsweise Tilgung',
+        fälligkeit: '01.01.2035',
+        customRequirements: 'Als Sicherheit wird eine Grundschuld über 300.000 EUR auf das Grundstück Baustraße 15 bestellt. Sondertilgungen bis 10% der Restschuld pro Jahr ohne Vorfälligkeitsentschädigung möglich.'
+      }
+    },
+    {
+      variant: 'edge_case',
+      input: {
+        parteiA: { name: 'Anna Darlehensgeber' }, // Edge: Fehlende Adresse
+        parteiB: { name: 'Tim Darlehensnehmer', address: 'Mieterweg 3, 01067 Dresden' },
+        darlehenssumme: '5000', // Edge: Ohne Nachkommastellen
+        zinssatz: '0%', // Edge: Zinsfrei
+        laufzeit: '6 Monate',
+        rückzahlung: 'Einmalzahlung bei Fälligkeit',
+        fälligkeit: 'Juli 2025' // Edge: Unklares Datum
+      }
+    }
+  ],
+
+  // 10. Gesellschaft
+  gesellschaft: [
+    {
+      variant: 'standard',
+      input: {
+        parteiA: { name: 'Max Mustermann', address: 'Gesellschafterstraße 1, 10115 Berlin' },
+        parteiB: { name: 'Maria Schmidt', address: 'Partnerweg 5, 10115 Berlin' },
+        firmenname: 'Mustermann & Schmidt GbR',
+        sitz: 'Berlin',
+        gegenstand: 'Unternehmensberatung und Coaching',
+        gründungsdatum: '01.01.2025',
+        dauer: 'unbefristet',
+        einlagen: 'Jeder Gesellschafter leistet 10.000 EUR Bareinlage',
+        gewinnverteilung: '50:50',
+        customRequirements: ''
+      }
+    },
+    {
+      variant: 'sonderklausel',
+      input: {
+        parteiA: { name: 'Peter Investor', address: 'Kapitalweg 20, 80331 München' },
+        parteiB: { name: 'Julia Gründerin', address: 'Startup-Allee 8, 80331 München' },
+        firmenname: 'TechStart GmbH',
+        sitz: 'München',
+        gegenstand: 'Softwareentwicklung und IT-Dienstleistungen',
+        stammkapital: '25.000,00 EUR',
+        gründungsdatum: '15.02.2025',
+        dauer: 'unbefristet',
+        einlagen: 'Investor: 15.000 EUR (60%), Gründerin: 10.000 EUR (40%)',
+        gewinnverteilung: '60:40 entsprechend Beteiligung',
+        customRequirements: 'Vinkulierungsklausel: Übertragung von Geschäftsanteilen bedarf der Zustimmung aller Gesellschafter. Vorkaufsrecht der verbleibenden Gesellschafter bei Anteilsverkauf.'
+      }
+    },
+    {
+      variant: 'edge_case',
+      input: {
+        parteiA: { name: 'Tom Freelancer' }, // Edge: Fehlende Adresse
+        parteiB: { name: 'Lisa Designer', address: 'Kreativweg 5, 50667 Köln' },
+        firmenname: 'Kreativ-Duo GbR',
+        sitz: 'Köln',
+        gegenstand: 'Design und Webentwicklung',
+        einlagen: 'Keine Bareinlagen', // Edge: Keine Einlagen
+        gewinnverteilung: '50:50' // Edge: Einfache Aufteilung
+      }
+    }
+  ],
+
+  // 11. Aufhebungsvertrag
+  aufhebungsvertrag: [
+    {
+      variant: 'standard',
+      input: {
+        parteiA: { name: 'Produktions GmbH', address: 'Industriestraße 30, 45127 Essen' },
+        parteiB: { name: 'Stefan Arbeitnehmer', address: 'Wohnweg 12, 45127 Essen' },
+        beendigungstermin: '31.03.2025',
+        freistellung: 'Unwiderrufliche Freistellung ab 01.02.2025',
+        urlaubsabgeltung: '10 Tage Resturlaub',
+        zeugnis: 'Qualifiziertes Arbeitszeugnis',
+        rückgabe: 'Laptop, Handy, Zugangskarte bis 31.01.2025',
+        customRequirements: ''
+      }
+    },
+    {
+      variant: 'sonderklausel',
+      input: {
+        parteiA: { name: 'IT Solutions AG', address: 'Softwarepark 7, 81829 München' },
+        parteiB: { name: 'Emma Entwicklerin', address: 'Codingstraße 4, 81829 München' },
+        beendigungstermin: '30.06.2025',
+        freistellung: 'Widerrufliche Freistellung ab 01.05.2025',
+        urlaubsabgeltung: '15 Tage Resturlaub + 5 Überstunden',
+        zeugnis: 'Qualifiziertes Arbeitszeugnis mit Note "sehr gut"',
+        rückgabe: 'Laptop, Handy, Firmenwagen, alle Zugangsdaten bis 30.04.2025',
+        customRequirements: 'Abfindungszahlung: 25.000 EUR brutto, zahlbar bis 15.07.2025. Wettbewerbsverbot für 6 Monate nach Austritt gegen monatliche Karenzentschädigung von 2.000 EUR.'
+      }
+    },
+    {
+      variant: 'edge_case',
+      input: {
+        parteiA: { name: 'Kleinbetrieb Schmidt', address: 'Handwerksweg 2, 99084 Erfurt' },
+        parteiB: { name: 'Paul Mitarbeiter' }, // Edge: Fehlende Adresse
+        beendigungstermin: '28.02.2025',
+        freistellung: 'Keine Freistellung',
+        zeugnis: 'Einfaches Arbeitszeugnis'
+        // Edge: Keine Abfindung, minimale Angaben
+      }
+    }
+  ],
+
+  // 12. Pacht
+  pacht: [
+    {
+      variant: 'standard',
+      input: {
+        parteiA: { name: 'Grundstücksbesitzer Klaus', address: 'Landweg 50, 82031 Grünwald' },
+        parteiB: { name: 'Landwirt Müller', address: 'Bauernhof 3, 82031 Grünwald' },
+        pachtgegenstand: 'Landwirtschaftliche Nutzfläche, 5 Hektar Ackerland',
+        pachtzweck: 'Anbau von Getreide und Kartoffeln',
+        pachtzins: '3.000,00 EUR jährlich',
+        nebenkosten: 'Keine',
+        pachtbeginn: '01.04.2025',
+        pachtdauer: '10 Jahre, befristet',
+        customRequirements: ''
+      }
+    },
+    {
+      variant: 'sonderklausel',
+      input: {
+        parteiA: { name: 'Immobilien AG', address: 'Geschäftsstraße 15, 22305 Hamburg' },
+        parteiB: { name: 'Gastro Betriebe GmbH', address: 'Restaurantweg 8, 22305 Hamburg' },
+        pachtgegenstand: 'Gastronomieräume, 200 qm Erdgeschoss + 50 qm Außenterrasse',
+        pachtzweck: 'Betrieb eines Restaurants mit Außengastronomie',
+        pachtzins: '4.500,00 EUR monatlich',
+        nebenkosten: '800,00 EUR monatlich (Heizung, Wasser, Müll)',
+        inventar: 'Komplette Gastronomieeinrichtung inkl. Küche',
+        pachtbeginn: '01.03.2025',
+        pachtdauer: '5 Jahre mit Option auf Verlängerung um 5 Jahre',
+        customRequirements: 'Öffnungszeiten: täglich 11:00-23:00 Uhr. Lärmschutzauflagen sind einzuhalten. Unterverpachtung ist nur mit schriftlicher Zustimmung erlaubt. Pächter trägt Instandhaltung von Inventar.'
+      }
+    },
+    {
+      variant: 'edge_case',
+      input: {
+        parteiA: { name: 'Anna Verpächterin' }, // Edge: Fehlende Adresse
+        parteiB: { name: 'Tim Pächter', address: 'Stadtweg 5, 01067 Dresden' },
+        pachtgegenstand: 'Gartenparzelle, 200 qm',
+        pachtzweck: 'Gemüseanbau',
+        pachtzins: '300', // Edge: Ohne Nachkommastellen, ohne Zeiteinheit
+        pachtbeginn: 'Frühling 2025', // Edge: Unklares Datum
+        pachtdauer: '1 Jahr' // Edge: Kurze Laufzeit
+      }
+    }
   ]
 };
 
@@ -359,12 +589,24 @@ async function runStagingTests(options = {}) {
       const batchPromises = batch.map(async (test) => {
         const startTime = Date.now();
 
+        // Dynamisches Timeout für komplexe Fälle
+        const hasLongCustomReq =
+          typeof test.input.customRequirements === 'string' &&
+          test.input.customRequirements.length > 80;
+
+        let effectiveTimeoutMs = timeoutMs;
+
+        // Sonderklausel-Varianten oder lange Anforderungen → 90s minimum
+        if (test.variant === 'sonderklausel' || hasLongCustomReq) {
+          effectiveTimeoutMs = Math.max(effectiveTimeoutMs, 90000);
+        }
+
         try {
-          // Timeout-Wrapper
+          // Timeout-Wrapper mit dynamischem Timeout
           const result = await Promise.race([
             generateContractV2(test.input, test.contractType, TEST_USER_ID, db, runLabel),
             new Promise((_, reject) =>
-              setTimeout(() => reject(new Error('TIMEOUT')), timeoutMs)
+              setTimeout(() => reject(new Error('TIMEOUT')), effectiveTimeoutMs)
             )
           ]);
 
@@ -395,13 +637,13 @@ async function runStagingTests(options = {}) {
 
           if (error.message === 'TIMEOUT') {
             timeouts++;
-            console.log(`   ⏱️  ${test.contractType} (${test.variant}): TIMEOUT after ${timeoutMs}ms`);
+            console.log(`   ⏱️  ${test.contractType} (${test.variant}): TIMEOUT after ${effectiveTimeoutMs}ms`);
 
             return {
               contractType: test.contractType,
               variant: test.variant,
               status: 'timeout',
-              durationMs: timeoutMs,
+              durationMs: effectiveTimeoutMs,
               error: 'Timeout exceeded'
             };
           } else {

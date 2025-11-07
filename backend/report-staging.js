@@ -1,8 +1,10 @@
 // 📊 Staging Report - V2 System Quality Analysis
 // Analysiert alle Generierungen mit spezifischem runLabel
 
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
+
 const { MongoClient } = require('mongodb');
-require('dotenv').config();
 
 const DEFAULT_RUN_LABEL = 'staging-2025-11-05';
 
