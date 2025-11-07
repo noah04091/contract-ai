@@ -479,16 +479,17 @@ const HomeRedesign = () => {
               {/* Headline with Glow Effect */}
               <div className="headline-glow-wrapper">
                 <h1 className="sophisticated-hero-headline sophisticated-fade-up">
-                  <span className="headline-line">Verträge verstehen.</span>
-                  <span className="headline-line">Risiken vermeiden.</span>
-                  <span className="headline-line">Freiheit gewinnen.</span>
+                  <span className="headline-line">Verträge im Griff.</span>
+                  <span className="headline-line">Kosten gespart.</span>
+                  <span className="headline-line">Zeit gewonnen.</span>
+                  <span className="headline-line platform-line">Alles in einer Plattform.</span>
                 </h1>
               </div>
-              
+
               {/* Subheadline with Glass Effect */}
               <div className="subheadline-glass-wrapper">
                 <p className="sophisticated-hero-subheadline sophisticated-fade-up-delay">
-                  Schluss mit stundenlangem Lesen. Komplexe Verträge werden endlich klar und verständlich.
+                  Contract AI automatisiert Ihr gesamtes Vertragsmanagement – von der KI-Analyse bis zur digitalen Signatur.
                 </p>
               </div>
               
