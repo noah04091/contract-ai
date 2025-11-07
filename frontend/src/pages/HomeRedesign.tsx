@@ -482,7 +482,6 @@ const HomeRedesign = () => {
                   <span className="headline-line">Verträge im Griff.</span>
                   <span className="headline-line">Kosten gespart.</span>
                   <span className="headline-line">Zeit gewonnen.</span>
-                  <span className="headline-line platform-line">Alles in einer Plattform.</span>
                 </h1>
               </div>
 
