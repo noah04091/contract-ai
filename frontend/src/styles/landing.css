@@ -1329,7 +1329,8 @@ a {
 .sophisticated-logo-hero {
   position: relative;
   z-index: 10;
-  margin-bottom: 50px;
+  margin-top: 60px;
+  margin-bottom: 60px;
 }
 
 .sophisticated-logo-hero img {
@@ -1347,6 +1348,7 @@ a {
   z-index: 10;
   max-width: 1000px;
   margin: 0 auto;
+  padding-top: 60px;
   width: 100%;
   box-sizing: border-box;
 }
@@ -1359,7 +1361,7 @@ a {
 /* Enhanced Headline with Glow */
 .headline-glow-wrapper {
   position: relative;
-  margin-bottom: 50px;
+  margin-bottom: 0;
 }
 
 .headline-glow-wrapper::before {

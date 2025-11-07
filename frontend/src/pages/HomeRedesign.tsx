@@ -469,20 +469,21 @@ const HomeRedesign = () => {
           
           {/* Content Glow Backdrop */}
           <div className="content-glow-backdrop"></div>
-          
-          <div className="sophisticated-logo-hero">
-            <img src={logoHeader} alt="Contract AI Logo" className="sophisticated-logo-animation" />
-          </div>
-          
+
           <div className="sophisticated-hero-content">
             <div className="sophisticated-hero-text-container">
-              {/* Headline with Glow Effect */}
+              {/* Headline with Glow Effect - JETZT ZUERST! */}
               <div className="headline-glow-wrapper">
                 <h1 className="sophisticated-hero-headline sophisticated-fade-up">
                   <span className="headline-line">Verträge im Griff.</span>
                   <span className="headline-line">Kosten gespart.</span>
                   <span className="headline-line">Zeit gewonnen.</span>
                 </h1>
+              </div>
+
+              {/* Logo in der Mitte - NEUER PLATZ! */}
+              <div className="sophisticated-logo-hero">
+                <img src={logoHeader} alt="Contract AI Logo" className="sophisticated-logo-animation" />
               </div>
 
               {/* Subheadline with Glass Effect */}
