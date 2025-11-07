@@ -1643,30 +1643,35 @@ a {
 /* === SOPHISTICATED SCROLL INDICATOR === */
 
 .sophisticated-scroll-indicator {
-  position: absolute;
-  bottom: 110px; /* Desktop: Im Zwischenraum zwischen Trust-Hint und Buttons */
-  left: 50%;
-  transform: translateX(-50%);
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 50px;
+  margin-bottom: 50px;
   z-index: 10;
   opacity: 0.6;
 }
 
-/* Mobile: Höher für Zwischenraum zwischen Trust-Hint und Buttons */
+/* Responsive Abstände für perfekte Zentrierung auf allen Geräten */
 @media (max-width: 768px) {
   .sophisticated-scroll-indicator {
-    bottom: 260px; /* Mobile: Höher - im Zwischenraum zwischen Trust-Hint und Buttons */
+    margin-top: 40px;
+    margin-bottom: 40px;
   }
 }
 
 @media (max-width: 640px) {
   .sophisticated-scroll-indicator {
-    bottom: 240px;
+    margin-top: 35px;
+    margin-bottom: 35px;
   }
 }
 
 @media (max-width: 480px) {
   .sophisticated-scroll-indicator {
-    bottom: 220px; /* Noch höher auf kleinen Screens */
+    margin-top: 30px;
+    margin-bottom: 30px;
   }
 
   .sophisticated-scroll-chevron {

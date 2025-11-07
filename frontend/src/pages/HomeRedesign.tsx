@@ -500,7 +500,12 @@ const HomeRedesign = () => {
                 </div>
               </div>
             </div>
-            
+
+            {/* Scroll Indicator - zentriert zwischen Trust Hint und Buttons */}
+            <div className="sophisticated-scroll-indicator">
+              <div className="sophisticated-scroll-chevron"></div>
+            </div>
+
             <div className="sophisticated-hero-cta sophisticated-fade-up-delay-3">
               {!user ? (
                 <div className="sophisticated-auth-cta">
@@ -557,10 +562,6 @@ const HomeRedesign = () => {
                 </div>
               )}
             </div>
-          </div>
-          
-          <div className="sophisticated-scroll-indicator">
-            <div className="sophisticated-scroll-chevron"></div>
           </div>
         </section>
 
