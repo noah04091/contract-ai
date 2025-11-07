@@ -191,19 +191,19 @@ export default function Navbar() {
             <div className={styles.navLinks}>
               <motion.div className={styles.navLinksInner}>
                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                  <Link to="/dashboard" className={`${styles.navLink} ${location.pathname === "/dashboard" ? styles.activeNavLink : ""}`}>
+                  <Link to={user ? "/dashboard" : "/"} className={`${styles.navLink} ${location.pathname === "/dashboard" ? styles.activeNavLink : ""}`}>
                     <span className={styles.navLinkIcon}>📊</span>
                     <span className={styles.navLinkText}>Dashboard</span>
                   </Link>
                 </motion.div>
                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                  <Link to="/contracts" className={`${styles.navLink} ${location.pathname === "/contracts" ? styles.activeNavLink : ""}`}>
+                  <Link to={user ? "/contracts" : "/features/vertragsverwaltung"} className={`${styles.navLink} ${location.pathname === "/contracts" ? styles.activeNavLink : ""}`}>
                     <span className={styles.navLinkIcon}>📁</span>
                     <span className={styles.navLinkText}>Verträge</span>
                   </Link>
                 </motion.div>
                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                  <Link to="/calendar" className={`${styles.navLink} ${location.pathname === "/calendar" ? styles.activeNavLink : ""}`}>
+                  <Link to={user ? "/calendar" : "/features/fristen"} className={`${styles.navLink} ${location.pathname === "/calendar" ? styles.activeNavLink : ""}`}>
                     <span className={styles.navLinkIcon}>📅</span>
                     <span className={styles.navLinkText}>Kalender</span>
                   </Link>
@@ -662,15 +662,15 @@ export default function Navbar() {
             >
               <div className={styles.mobileMenuInner}>
                 <div className={styles.mobileMenuLinks}>
-                  <Link to="/dashboard" className={`${styles.mobileNavLink} ${location.pathname === "/dashboard" ? styles.activeMobileNavLink : ""}`}>
+                  <Link to={user ? "/dashboard" : "/"} className={`${styles.mobileNavLink} ${location.pathname === "/dashboard" ? styles.activeMobileNavLink : ""}`}>
                     <span className={styles.mobileNavIcon}>📊</span>
                     <span>Dashboard</span>
                   </Link>
-                  <Link to="/contracts" className={`${styles.mobileNavLink} ${location.pathname === "/contracts" ? styles.activeMobileNavLink : ""}`}>
+                  <Link to={user ? "/contracts" : "/features/vertragsverwaltung"} className={`${styles.mobileNavLink} ${location.pathname === "/contracts" ? styles.activeMobileNavLink : ""}`}>
                     <span className={styles.mobileNavIcon}>📁</span>
                     <span>Verträge</span>
                   </Link>
-                  <Link to="/calendar" className={`${styles.mobileNavLink} ${location.pathname === "/calendar" ? styles.activeMobileNavLink : ""}`}>
+                  <Link to={user ? "/calendar" : "/features/fristen"} className={`${styles.mobileNavLink} ${location.pathname === "/calendar" ? styles.activeMobileNavLink : ""}`}>
                     <span className={styles.mobileNavIcon}>📅</span>
                     <span>Kalender</span>
                   </Link>
