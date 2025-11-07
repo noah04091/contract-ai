@@ -329,24 +329,8 @@ const HomeRedesign = () => {
     checkMobile();
     window.addEventListener('resize', checkMobile);
 
-    // Scroll event listener mit modifiziertem Parallax-Effekt
+    // Scroll event listener for reveal animations
     const handleScroll = () => {
-      const scrollPosition = window.scrollY;
-      
-      // WICHTIG: Deaktiviere den Parallax-Effekt vollständig, um den weißen Balken zu vermeiden
-      if (heroRef.current) {
-        // Behalt die Opazität bei, aber entferne die Transformation
-        const opacity = Math.max(1 - scrollPosition / 900, 0.2);
-        heroRef.current.style.opacity = opacity.toString();
-        
-        // Finde den hero-content und setze die Transformation auf 0
-        const heroContent = heroRef.current.querySelector('.hero-content');
-        if (heroContent) {
-          // Setze die Transformation auf 0, um keine Lücken zu verursachen
-          heroContent.setAttribute('style', 'transform: translateY(0)');
-        }
-      }
-      
       // Reveal animations based on scroll position
       document.querySelectorAll('.reveal-card, .reveal-block').forEach((element) => {
         const elementTop = element.getBoundingClientRect().top;
