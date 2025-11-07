@@ -208,12 +208,21 @@ export default function Navbar() {
                     <span className={styles.navLinkText}>Kalender</span>
                   </Link>
                 </motion.div>
-                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                  <Link to="/legalpulse" className={`${styles.navLink} ${location.pathname === "/legalpulse" ? styles.activeNavLink : ""}`}>
-                    <span className={styles.navLinkIcon}>⚖️</span>
-                    <span className={styles.navLinkText}>Legal Pulse</span>
-                  </Link>
-                </motion.div>
+                {!user ? (
+                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                    <Link to="/pricing" className={`${styles.navLink} ${location.pathname === "/pricing" ? styles.activeNavLink : ""}`}>
+                      <span className={styles.navLinkIcon}>💰</span>
+                      <span className={styles.navLinkText}>Preise</span>
+                    </Link>
+                  </motion.div>
+                ) : (
+                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                    <Link to="/legalpulse" className={`${styles.navLink} ${location.pathname === "/legalpulse" ? styles.activeNavLink : ""}`}>
+                      <span className={styles.navLinkIcon}>⚖️</span>
+                      <span className={styles.navLinkText}>Legal Pulse</span>
+                    </Link>
+                  </motion.div>
+                )}
               </motion.div>
             </div>
           )}
@@ -665,10 +674,17 @@ export default function Navbar() {
                     <span className={styles.mobileNavIcon}>📅</span>
                     <span>Kalender</span>
                   </Link>
-                  <Link to="/legalpulse" className={`${styles.mobileNavLink} ${location.pathname === "/legalpulse" ? styles.activeMobileNavLink : ""}`}>
-                    <span className={styles.mobileNavIcon}>⚖️</span>
-                    <span>Legal Pulse</span>
-                  </Link>
+                  {!user ? (
+                    <Link to="/pricing" className={`${styles.mobileNavLink} ${location.pathname === "/pricing" ? styles.activeMobileNavLink : ""}`}>
+                      <span className={styles.mobileNavIcon}>💰</span>
+                      <span>Preise</span>
+                    </Link>
+                  ) : (
+                    <Link to="/legalpulse" className={`${styles.mobileNavLink} ${location.pathname === "/legalpulse" ? styles.activeMobileNavLink : ""}`}>
+                      <span className={styles.mobileNavIcon}>⚖️</span>
+                      <span>Legal Pulse</span>
+                    </Link>
+                  )}
                   {user && (
                     <>
                       <div className={styles.userInfo}>
