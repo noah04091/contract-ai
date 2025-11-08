@@ -1582,7 +1582,7 @@ export default function Generate() {
         body: JSON.stringify({
           originalContract: contractText,
           improvements: improvements,
-          contractType: contractData.contractType || selectedContract
+          contractType: contractData.contractType || selectedType
         })
       });
 
