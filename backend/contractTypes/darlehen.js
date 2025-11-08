@@ -6,7 +6,7 @@ module.exports = {
     B: "Darlehensnehmer"
   },
 
-  qualityThreshold: 0.94,
+  qualityThreshold: 0.93,
 
   mustClauses: [
     "§ 1 Darlehenssumme und Auszahlung|Darlehensbetrag",

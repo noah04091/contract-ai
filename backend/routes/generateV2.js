@@ -582,6 +582,32 @@ Bewerte die Übereinstimmung!`;
 // ===== REPAIR-PASS: Ergänzt fehlende Pflichtklauseln =====
 
 /**
+ * Helper: Erstellt eine Zusammenfassung der Eingabedaten für Repair-Pass
+ */
+function buildInputSummary(input) {
+  const parts = [];
+
+  if (input.parteiA?.name) parts.push(`Partei A: ${input.parteiA.name}`);
+  if (input.parteiB?.name) parts.push(`Partei B: ${input.parteiB.name}`);
+
+  // Collect all non-party fields
+  const otherFields = Object.keys(input).filter(k =>
+    k !== 'parteiA' && k !== 'parteiB' && k !== 'customRequirements' && input[k]
+  );
+
+  otherFields.forEach(field => {
+    const value = input[field];
+    if (typeof value === 'string' && value.trim()) {
+      parts.push(`${field}: ${value}`);
+    } else if (typeof value === 'object' && value !== null) {
+      parts.push(`${field}: ${JSON.stringify(value)}`);
+    }
+  });
+
+  return parts.length > 0 ? parts.join('\n') : 'Keine zusätzlichen Angaben';
+}
+
+/**
  * Universeller Repair-Pass (Prompt 1)
  * Ergänzt fehlende Must-Clauses, korrigiert Nummerierung, integriert Sonderwünsche
  */
