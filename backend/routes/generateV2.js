@@ -225,14 +225,17 @@ Du schreibst JETZT NICHT den Vertrag selbst! Deine Aufgabe ist es, klare ANWEISU
 Du erstellst einen META-PROMPT (Anleitung für Phase 2), NICHT den Vertrag selbst!
 
 BEISPIEL FÜR META-PROMPT:
-"Erstelle einen vollständigen Mietvertrag nach BGB zwischen Vermieter [Name] und Mieter [Name] mit folgenden Pflicht-Paragraphen: § 1 Mietgegenstand, § 2 Mietzeit, § 3 Miete und Nebenkosten... Verwende EXAKT die Begriffe 'Vermieter' und 'Mieter' (keine anderen Bezeichnungen). Die Wohnung ist 85 qm groß, 2. OG. Miete: 950€, Nebenkosten: 200€, Kaution: 2850€. Mietbeginn: 01.01.2025. Erwähne NICHT: Garten, Balkon, Stellplatz (außer explizit genannt). Individuelle Anforderungen: Haustiere nach Absprache erlaubt."
+"Erstelle einen vollständigen, umfassenden Mietvertrag nach BGB zwischen Vermieter [Name] und Mieter [Name] mit PRÄAMBEL und folgenden Pflicht-Paragraphen: § 1 Mietgegenstand, § 2 Mietzeit, § 3 Miete und Nebenkosten... Verwende EXAKT die Begriffe 'Vermieter' und 'Mieter' (keine anderen Bezeichnungen). Verwende die ECHTEN NAMEN aus den Eingabedaten (KEINE Platzhalter wie [NAME]). Die Wohnung ist 85 qm groß, 2. OG. Miete: 950€, Nebenkosten: 200€, Kaution: 2850€. Mietbeginn: 01.01.2025. Erwähne NICHT: Garten, Balkon, Stellplatz (außer explizit genannt). Individuelle Anforderungen: Haustiere nach Absprache erlaubt. Der Vertrag soll professionell, detailliert und umfassend sein (mindestens 4000-5000 Zeichen)."
 
 REGELN FÜR DEINEN META-PROMPT:
-1. Beschreibe ALLE Eingabedaten präzise (Namen, Beträge, Daten)
+1. Beschreibe ALLE Eingabedaten präzise (Namen, Beträge, Daten) - verwende ECHTE NAMEN, KEINE Platzhalter wie [NAME]
 2. Liste ALLE Pflicht-Paragraphen auf: ${typeProfile.mustClauses.join(', ')}
 3. Definiere verbotene Themen (was NICHT erfunden werden darf)
 4. Verwende exakte Rollenbegriffe: ${typeProfile.roles.A} und ${typeProfile.roles.B}
 5. Integriere individuelle Anforderungen mit höchster Priorität
+6. WICHTIG: Fordere PRÄAMBEL mit vollständigen Vertragsparteien (Namen, Adressen)
+7. WICHTIG: Fordere umfassende, detaillierte Paragraphen (mindestens 4000-5000 Zeichen Gesamtlänge)
+8. WICHTIG: Betone professionellen, ausführlichen Stil - KEINE Kurzfassungen oder Minimalismus
 
 Output-Format (strikt einhalten!):
 ===PROMPT===
@@ -461,7 +464,21 @@ async function runPhase2_ContractGeneration(generatedPrompt, snapshot) {
         top_p: MODEL_SETTINGS.phase2.top_p,
         max_tokens: MODEL_SETTINGS.phase2.max_tokens,
         messages: [
-          { role: "system", content: "Du bist Fachanwalt für deutsches Vertragsrecht. Erstelle den Vertrag exakt nach den Vorgaben." },
+          { role: "system", content: `Du bist Fachanwalt für deutsches Vertragsrecht (BGB).
+
+WICHTIG - Deine Aufgabe:
+Du erstellst einen VOLLSTÄNDIGEN, PROFESSIONELLEN, UMFASSENDEN Vertrag nach deutschen Rechtsstandards.
+
+ANFORDERUNGEN AN DEN VERTRAG:
+1. PRÄAMBEL: Vollständige Nennung aller Vertragsparteien mit echten Namen und Adressen
+2. UMFANG: Mindestens 4000-5000 Zeichen für professionelle Qualität
+3. DETAILLIERT: Jeder Paragraph soll ausführlich und rechtssicher formuliert sein
+4. VOLLSTÄNDIG: Alle im Prompt genannten Pflicht-Paragraphen müssen enthalten sein
+5. ECHT: Verwende echte Namen aus den Vorgaben - NIEMALS Platzhalter wie [NAME]
+6. PROFESSIONELL: Juristisch korrekte Sprache, präzise Formulierungen
+7. KEINE ABKÜRZUNGEN: Schreibe ausführlich, nicht minimal
+
+Erstelle den Vertrag exakt nach den nachfolgenden Vorgaben.` },
           { role: "user", content: generatedPrompt }
         ]
       }),
@@ -622,13 +639,17 @@ async function runUniversalRepair(contractText, snapshot, phase1Input) {
 
 Deine Aufgabe: "Repair-Pass" = fehlende Pflichtklauseln ergänzen und formale Mängel beheben, ohne Inhalte zu erfinden.
 
+KRITISCH: AUSFÜHRLICHKEIT BEIBEHALTEN!
+Der Originaltext ist bereits umfassend und detailliert formuliert. Deine Aufgabe ist es NUR zu reparieren, NICHT zu kürzen!
+Behalte die LÄNGE und AUSFÜHRLICHKEIT des Originaltexts bei. Wenn Paragraphen bereits ausführlich sind, lasse sie so.
+
 HARTE REGELN
 1) MUSS jede Pflichtklausel aus MUST_CLAUSES abdecken. Alternativtitel sind gleichwertig; nutze genau einen passenden Titel pro Pflichtklausel.
 2) Nummerierung konsistent ab § 1 aufwärts; keine Nummer doppelt, keine Lücke.
 3) Keine verbotenen Themen erwähnen – außer sie stehen ausdrücklich in INPUT_SUMMARY oder CUSTOM_REQUIREMENTS.
 4) Keine Fakten erfinden. Wenn Daten unklar/fehlend sind, formuliere rechtssicher mit Platzhalter-Klammern: „[Datum eintragen]", „[Betrag eintragen]".
 5) CUSTOM_REQUIREMENTS entweder als eigener Absatz ODER sauber in die passende Pflichtklausel integrieren (keine Dopplungen).
-6) Stil: sachlich, präzise, deutsches Vertragsdeutsch.
+6) Stil: sachlich, präzise, deutsches Vertragsdeutsch - UMFASSEND und DETAILLIERT (nicht minimal!).
 
 REPARATURSCHRITTE (Checkliste)
 - [ ] Prüfe MUST_CLAUSES gegen CURRENT_TEXT. Ergänze vollständig fehlende Klauseln.
@@ -698,13 +719,18 @@ ${contractText}
  */
 async function runDarlehenSpecialization(contractText, snapshot) {
   const systemPrompt = `Zusatzinstruktion für Vertragstyp DARLEHEN, speziell Edge Cases:
+
+KRITISCH: AUSFÜHRLICHKEIT BEIBEHALTEN!
+Der Vertrag ist bereits umfassend formuliert. Repariere nur, kürze NICHT! Behalte die ausführlichen Formulierungen bei.
+
+SPEZIALISIERUNGSREGELN:
 - Wenn Zinsfreiheit/„0 %" erkannt oder nahegelegt (in INPUT_SUMMARY oder CUSTOM_REQUIREMENTS), MUSS eine eigene Pflichtklausel „§ Zinsregelung" mit klarer Aussage zur Zinsfreiheit enthalten sein (z. B. „Das Darlehen ist zinsfrei. Es fallen keine laufenden Zinsen an.").
 - Rückzahlung konkretisieren: Tilgungsmodus (Raten/Einmalzahlung), Fälligkeitstermine, Plan. Falls Datum unklar: Platzhalter in eckigen Klammern „[TT.MM.JJJJ]" und klarstellende Formulierungen.
 - Sicherheiten, Kündigung, Verzug IMMER als eigenständige Paragraphen abbilden (gemäß MUST_CLAUSES/Alternativtiteln).
 - Keine verbotenen Themen.
 - Nummerierung lückenlos.
 
-Beziehe diese Zusatzregeln ein und gib nur den finalen Vertragstext aus.`;
+Beziehe diese Zusatzregeln ein und gib nur den finalen Vertragstext aus. Behalte die Länge und Detailtiefe bei!`;
 
   const userPrompt = `MUST_CLAUSES:
 ${(snapshot.mustClauses || []).map(c => `- ${c}`).join('\n')}
@@ -750,6 +776,11 @@ ${contractText}
  */
 async function runIndividuellSpecialization(contractText, snapshot) {
   const systemPrompt = `Zusatzinstruktion für Vertragstyp INDIVIDUELL:
+
+KRITISCH: AUSFÜHRLICHKEIT BEIBEHALTEN!
+Der Vertrag ist bereits umfassend formuliert. Repariere nur, kürze NICHT! Behalte die ausführlichen Formulierungen bei.
+
+SPEZIALISIERUNGSREGELN:
 - Verwende die Rollenbezeichnungen exakt wie in ROLES vorgegeben (auch wenn vom Standard abweichend).
 - MUST_CLAUSES können vom Nutzer überschrieben sein – behandle diese Liste als „maßgeblich". Für jede Klausel einen passenden Alternativtitel wählen (bei „|").
 - CUSTOM_REQUIREMENTS müssen entweder als eigener Paragraph ODER sauber in eine passende Pflichtklausel integriert sein (keine Dopplung).
@@ -758,7 +789,7 @@ async function runIndividuellSpecialization(contractText, snapshot) {
   • Vertraulichkeit separat von Datenschutz halten.
   • Kündigung & Laufzeit trennen/vereinheitlichen.
 - Nummerierung lückenlos. Keine verbotenen Themen.
-- Keine Erklärungen – nur finalen Vertragstext liefern.`;
+- Keine Erklärungen – nur finalen Vertragstext liefern. Behalte die Länge und Detailtiefe bei!`;
 
   const userPrompt = `ROLES:
 ${JSON.stringify(snapshot.roles, null, 2)}
