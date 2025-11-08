@@ -365,7 +365,7 @@ const CONTRACT_TYPES: ContractType[] = [
     ]
   },
   {
-    id: 'custom',
+    id: 'individuell',
     name: 'Individueller Vertrag',
     description: 'Maßgeschneidert für Ihre Bedürfnisse',
     icon: '⚙️',
