@@ -480,6 +480,11 @@ ABSOLUT KRITISCHE REGELN:
    - Beispiel: Wenn kein Name angegeben wurde, schreibe "[Name des Verkäufers]" statt "Max Mustermann"
 5. Verwende professionelle juristische Sprache
 6. Jeder Paragraph muss detailliert ausformuliert sein (mindestens 3-4 Zeilen pro Absatz)
+7. KEINE UNTERSCHRIFTSLINIEN oder Unterschriftsblöcke - Der Vertrag endet nach § 10 SCHLUSSBESTIMMUNGEN
+   - Füge NIEMALS Zeilen wie "_______________" für Unterschriften hinzu
+   - Füge KEINE "Ort, Datum" Zeilen hinzu
+   - Füge KEINE Unterschriftsblöcke wie "(Unterschrift Verkäufer)" hinzu
+   - Es gibt ein separates Unterschriftenblatt!
 
 EXAKTE VERTRAGSSTRUKTUR (BITTE GENAU SO VERWENDEN):
 
