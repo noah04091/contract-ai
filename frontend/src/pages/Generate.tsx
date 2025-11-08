@@ -564,6 +564,11 @@ export default function Generate() {
   const [isTemplateModalOpen, setIsTemplateModalOpen] = useState<boolean>(false);
   const [templateRefreshKey, setTemplateRefreshKey] = useState<number>(0);
 
+  // 🔄 Contract Improvement States
+  const [improvements, setImprovements] = useState<string>("");
+  const [isImproving, setIsImproving] = useState<boolean>(false);
+  const [showImprovementSection, setShowImprovementSection] = useState<boolean>(false);
+
   // 🔴 FIX 2: Loading State für PDF-Button
   const [isGeneratingPDF, setIsGeneratingPDF] = useState<boolean>(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
@@ -1551,6 +1556,81 @@ export default function Generate() {
     }
   };
 
+  // 🔄 Handler for "Vertrag verbessern" (Contract Improvement)
+  const handleImproveContract = async () => {
+    if (!improvements.trim()) {
+      toast.error("Bitte geben Sie Verbesserungswünsche ein", {
+        position: "top-right",
+        autoClose: 3000
+      });
+      return;
+    }
+
+    setIsImproving(true);
+    const loadingToast = toast.loading("Vertrag wird verbessert...", {
+      position: 'top-center'
+    });
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'https://api.contract-ai.de'}/api/contracts/improve`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          originalContract: contractText,
+          improvements: improvements,
+          contractType: contractData.contractType || selectedContract
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.improvedContract) {
+        // Update contract text with improved version
+        setContractText(data.improvedContract);
+
+        // Reset improvement section
+        setImprovements("");
+        setShowImprovementSection(false);
+
+        // Reset PDF preview to regenerate with new text
+        setPdfPreviewUrl(null);
+
+        // Mark as unsaved
+        setSaved(false);
+
+        toast.update(loadingToast, {
+          render: "✅ Vertrag erfolgreich verbessert!",
+          type: "success",
+          isLoading: false,
+          autoClose: 3000
+        });
+
+        console.log('✅ Contract improved:', {
+          originalLength: contractText.length,
+          improvedLength: data.improvedContract.length,
+          tokensUsed: data.metadata?.tokensUsed
+        });
+
+      } else {
+        throw new Error(data.error || 'Verbesserung fehlgeschlagen');
+      }
+    } catch (error) {
+      console.error("Error improving contract:", error);
+      toast.update(loadingToast, {
+        render: "❌ Fehler bei der Verbesserung",
+        type: "error",
+        isLoading: false,
+        autoClose: 5000
+      });
+    } finally {
+      setIsImproving(false);
+    }
+  };
+
   // 📄 NEW: Generate PDF Preview (ohne Download)
   const generatePDFPreview = async () => {
     if (isGeneratingPreview) return; // Verhindere Mehrfachklicks
@@ -2348,6 +2428,86 @@ export default function Generate() {
                         <p>❌ {downloadError}</p>
                       </motion.div>
                     )}
+
+                    {/* 🔄 Contract Improvement Section */}
+                    <motion.div
+                      className={styles.improvementSection}
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.3 }}
+                    >
+                      {!showImprovementSection ? (
+                        <button
+                          className={styles.showImprovementButton}
+                          onClick={() => setShowImprovementSection(true)}
+                          disabled={isImproving}
+                        >
+                          <Edit3 size={18} />
+                          <span>Vertrag verbessern</span>
+                        </button>
+                      ) : (
+                        <motion.div
+                          className={styles.improvementForm}
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                        >
+                          <div className={styles.improvementFormHeader}>
+                            <Edit3 size={18} />
+                            <span>Vertrag verbessern</span>
+                            <button
+                              className={styles.closeImprovementButton}
+                              onClick={() => {
+                                setShowImprovementSection(false);
+                                setImprovements("");
+                              }}
+                              disabled={isImproving}
+                            >
+                              ✕
+                            </button>
+                          </div>
+
+                          <textarea
+                            className={styles.improvementTextarea}
+                            value={improvements}
+                            onChange={(e) => setImprovements(e.target.value)}
+                            placeholder="Geben Sie hier Ihre Verbesserungswünsche ein, z.B.:&#10;• Verkäufer sitzt in Berlin statt München&#10;• Käufer heißt Schmidt&#10;• Gewährleistung auf 2 Jahre erhöhen&#10;• Zahlungsfrist auf 30 Tage ändern"
+                            disabled={isImproving}
+                            rows={4}
+                          />
+
+                          <div className={styles.improvementActions}>
+                            <button
+                              className={styles.improvementCancelButton}
+                              onClick={() => {
+                                setShowImprovementSection(false);
+                                setImprovements("");
+                              }}
+                              disabled={isImproving}
+                            >
+                              Abbrechen
+                            </button>
+                            <button
+                              className={styles.improvementSubmitButton}
+                              onClick={handleImproveContract}
+                              disabled={isImproving || !improvements.trim()}
+                            >
+                              {isImproving ? (
+                                <>
+                                  <div className={styles.buttonSpinner}></div>
+                                  <span>Wird verbessert...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Edit3 size={18} />
+                                  <span>Vertrag verbessern</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        </motion.div>
+                      )}
+                    </motion.div>
 
                     {/* Split View: Text Editor + PDF Preview */}
                     <div className={styles.step3SplitView}>

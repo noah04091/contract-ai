@@ -650,6 +650,14 @@ const connectDB = async () => {
       console.error("❌ Fehler bei Contract-Routen:", err);
     }
 
+    // ✅ 🔄 CONTRACT IMPROVEMENT - Vertrag nachträglich verbessern
+    try {
+      app.use("/api/contracts", verifyToken, checkSubscription, require("./routes/improve"));
+      console.log("✅ Contract Improvement Route geladen unter /api/contracts/improve");
+    } catch (err) {
+      console.error("❌ Fehler bei Improvement-Route:", err);
+    }
+
     // ✅ 📁 FOLDERS - Ordner-Management
     try {
       app.use("/api/folders", require("./routes/folders"));
