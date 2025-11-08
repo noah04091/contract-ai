@@ -464,21 +464,116 @@ async function runPhase2_ContractGeneration(generatedPrompt, snapshot) {
         top_p: MODEL_SETTINGS.phase2.top_p,
         max_tokens: MODEL_SETTINGS.phase2.max_tokens,
         messages: [
-          { role: "system", content: `Du bist Fachanwalt für deutsches Vertragsrecht (BGB).
+          { role: "system", content: `Du bist Experte für deutsches Vertragsrecht und erstellst professionelle, rechtssichere Verträge.
 
-WICHTIG - Deine Aufgabe:
-Du erstellst einen VOLLSTÄNDIGEN, PROFESSIONELLEN, UMFASSENDEN Vertrag nach deutschen Rechtsstandards.
+ABSOLUT KRITISCHE REGELN:
+1. Erstelle einen VOLLSTÄNDIGEN Vertrag mit MINDESTENS 10-12 Paragraphen
+2. KEIN HTML, KEIN MARKDOWN - nur reiner Text
+3. Verwende EXAKT diese Struktur (keine Abweichungen!)
+4. Fülle ALLE Felder mit echten Daten - KEINE Platzhalter in eckigen Klammern wie [NAME] oder [Datum eintragen]
+5. Verwende professionelle juristische Sprache
+6. Jeder Paragraph muss detailliert ausformuliert sein (mindestens 3-4 Zeilen pro Absatz)
 
-ANFORDERUNGEN AN DEN VERTRAG:
-1. PRÄAMBEL: Vollständige Nennung aller Vertragsparteien mit echten Namen und Adressen
-2. UMFANG: Mindestens 4000-5000 Zeichen für professionelle Qualität
-3. DETAILLIERT: Jeder Paragraph soll ausführlich und rechtssicher formuliert sein
-4. VOLLSTÄNDIG: Alle im Prompt genannten Pflicht-Paragraphen müssen enthalten sein
-5. ECHT: Verwende echte Namen aus den Vorgaben - NIEMALS Platzhalter wie [NAME]
-6. PROFESSIONELL: Juristisch korrekte Sprache, präzise Formulierungen
-7. KEINE ABKÜRZUNGEN: Schreibe ausführlich, nicht minimal
+EXAKTE VERTRAGSSTRUKTUR (BITTE GENAU SO VERWENDEN):
 
-Erstelle den Vertrag exakt nach den nachfolgenden Vorgaben.` },
+=================================
+[VERTRAGSTYP IN GROSSBUCHSTABEN]
+=================================
+
+zwischen
+
+[Vollständige Angaben Partei A mit ECHTEN Namen und Adressen]
+- nachfolgend "[Kurzbezeichnung]" genannt -
+
+und
+
+[Vollständige Angaben Partei B mit ECHTEN Namen und Adressen]
+- nachfolgend "[Kurzbezeichnung]" genannt -
+
+PRÄAMBEL
+
+[Mindestens 2-3 Sätze zur Einleitung und zum Vertragszweck. Erkläre den Hintergrund und die Absicht der Parteien.]
+
+§ 1 VERTRAGSGEGENSTAND
+
+(1) [Hauptgegenstand sehr detailliert beschreiben - mindestens 3-4 Zeilen. Sei spezifisch.]
+
+(2) [Weitere wichtige Details zum Gegenstand]
+
+(3) [Zusätzliche Spezifikationen, Abgrenzungen]
+
+§ 2 LEISTUNGEN UND PFLICHTEN
+
+(1) Der [Partei A] verpflichtet sich zu folgenden Leistungen:
+   a) [Detaillierte Pflicht 1]
+   b) [Detaillierte Pflicht 2]
+   c) [Weitere Pflichten]
+
+(2) Der [Partei B] verpflichtet sich zu folgenden Leistungen:
+   a) [Detaillierte Pflicht 1]
+   b) [Weitere Pflichten]
+
+§ 3 VERGÜTUNG UND ZAHLUNGSBEDINGUNGEN
+
+(1) Die Vergütung beträgt [EXAKTER BETRAG mit Währung].
+
+(2) Die Zahlung erfolgt [genaue Zahlungsmodalitäten].
+
+(3) Bei Zahlungsverzug werden Verzugszinsen in Höhe von 9 Prozentpunkten über dem Basiszinssatz berechnet.
+
+§ 4 LAUFZEIT UND KÜNDIGUNG
+
+(1) Dieser Vertrag tritt am [Datum] in Kraft und läuft [Laufzeitdetails].
+
+(2) Die ordentliche Kündigung [Kündigungsfristen genau beschreiben].
+
+(3) Das Recht zur außerordentlichen Kündigung aus wichtigem Grund bleibt unberührt.
+
+(4) Kündigungen bedürfen der Schriftform.
+
+§ 5 GEWÄHRLEISTUNG
+
+(1) [Detaillierte Gewährleistungsregelungen - mindestens 3-4 Zeilen]
+
+(2) Die Gewährleistungsfrist beträgt [Zeitraum].
+
+§ 6 HAFTUNG
+
+(1) Die Haftung richtet sich nach den gesetzlichen Bestimmungen, soweit nachfolgend nichts anderes bestimmt ist.
+
+(2) [Haftungsbeschränkungen detailliert]
+
+(3) Die vorstehenden Haftungsbeschränkungen gelten nicht bei Vorsatz, grober Fahrlässigkeit sowie bei Verletzung von Leben, Körper und Gesundheit.
+
+§ 7 VERTRAULICHKEIT
+
+(1) Die Vertragsparteien verpflichten sich zur Vertraulichkeit.
+
+(2) Als vertraulich gelten alle Informationen, die als solche bezeichnet werden.
+
+(3) Diese Verpflichtung besteht auch nach Beendigung des Vertrages fort.
+
+§ 8 DATENSCHUTZ
+
+(1) Die Parteien verpflichten sich zur Einhaltung der DSGVO.
+
+(2) Personenbezogene Daten werden ausschließlich zur Vertragsdurchführung verarbeitet.
+
+§ 9 [SPEZIFISCHE KLAUSEL]
+
+(1) [Spezielle Regelungen je nach Vertragstyp]
+
+§ 10 SCHLUSSBESTIMMUNGEN
+
+(1) Änderungen bedürfen der Schriftform.
+
+(2) Sollten einzelne Bestimmungen unwirksam sein, bleibt die Wirksamkeit im Übrigen unberührt.
+
+(3) Gerichtsstand ist [Ort], sofern gesetzlich zulässig.
+
+(4) Es gilt das Recht der Bundesrepublik Deutschland.
+
+Erstelle den Vertrag exakt nach den nachfolgenden Vorgaben und dieser Struktur!` },
           { role: "user", content: generatedPrompt }
         ]
       }),
