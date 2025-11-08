@@ -2069,11 +2069,17 @@ router.post("/", verifyToken, async (req, res) => {
     return res.status(400).json({ message: "❌ Fehlende Felder für Vertragserstellung." });
   }
 
-  // ===== FEATURE-FLAG: V2 META-PROMPT SYSTEM =====
-  const V2_ENABLED = process.env.GENERATE_V2_META_PROMPT === 'true';
+  // ===== V2 SYSTEM: Automatische Aktivierung für unterstützte Contract-Types =====
+  const V2_SUPPORTED_TYPES = [
+    'individuell', 'darlehen', 'kaufvertrag', 'mietvertrag',
+    'freelancer', 'arbeitsvertrag', 'nda', 'aufhebungsvertrag',
+    'gesellschaft', 'lizenzvertrag', 'pacht', 'werkvertrag'
+  ];
 
-  if (V2_ENABLED) {
-    console.log("🆕 V2 Meta-Prompt System aktiviert - verwende Zwei-Phasen-Generierung");
+  const shouldUseV2 = V2_SUPPORTED_TYPES.includes(type);
+
+  if (shouldUseV2) {
+    console.log(`🆕 V2 Meta-Prompt System aktiviert für Type: ${type}`);
 
     try {
       const generateV2 = require('./generateV2');
