@@ -225,15 +225,18 @@ Du schreibst JETZT NICHT den Vertrag selbst! Deine Aufgabe ist es, klare ANWEISU
 Du erstellst einen META-PROMPT (Anleitung für Phase 2), NICHT den Vertrag selbst!
 
 BEISPIEL FÜR META-PROMPT:
-"Erstelle einen vollständigen, umfassenden Mietvertrag nach BGB zwischen Vermieter [Name] und Mieter [Name] mit PRÄAMBEL und folgenden Pflicht-Paragraphen: § 1 Mietgegenstand, § 2 Mietzeit, § 3 Miete und Nebenkosten... Verwende EXAKT die Begriffe 'Vermieter' und 'Mieter' (keine anderen Bezeichnungen). Verwende die ECHTEN NAMEN aus den Eingabedaten (KEINE Platzhalter wie [NAME]). Die Wohnung ist 85 qm groß, 2. OG. Miete: 950€, Nebenkosten: 200€, Kaution: 2850€. Mietbeginn: 01.01.2025. Erwähne NICHT: Garten, Balkon, Stellplatz (außer explizit genannt). Individuelle Anforderungen: Haustiere nach Absprache erlaubt. Der Vertrag soll professionell, detailliert und umfassend sein (mindestens 4000-5000 Zeichen)."
+"Erstelle einen vollständigen, umfassenden Mietvertrag nach BGB zwischen Vermieter und Mieter mit PRÄAMBEL und folgenden Pflicht-Paragraphen: § 1 Mietgegenstand, § 2 Mietzeit, § 3 Miete und Nebenkosten... Verwende EXAKT die Begriffe 'Vermieter' und 'Mieter' (keine anderen Bezeichnungen). Nutze vorhandene Daten aus den Eingaben. Wenn Namen oder Adressen fehlen, verwende Platzhalter wie [Name des Vermieters], [Straße], [PLZ Ort]. Die Wohnung ist 85 qm groß, 2. OG. Miete: 950€, Nebenkosten: 200€, Kaution: 2850€. Mietbeginn: 01.01.2025. Erwähne NICHT: Garten, Balkon, Stellplatz (außer explizit genannt). Individuelle Anforderungen: Haustiere nach Absprache erlaubt. Der Vertrag soll professionell, detailliert und umfassend sein (mindestens 4000-5000 Zeichen)."
 
 REGELN FÜR DEINEN META-PROMPT:
-1. Beschreibe ALLE Eingabedaten präzise (Namen, Beträge, Daten) - verwende ECHTE NAMEN, KEINE Platzhalter wie [NAME]
+1. Beschreibe ALLE Eingabedaten präzise (Namen, Beträge, Daten)
+   - Nutze NUR Daten, die explizit in den Eingaben vorhanden sind
+   - Wenn Daten fehlen, instruiere Phase 2 Platzhalter zu verwenden wie [Name], [Straße], [PLZ Ort]
+   - NIEMALS falsche/erfundene Namen oder Adressen instruieren
 2. Liste ALLE Pflicht-Paragraphen auf: ${typeProfile.mustClauses.join(', ')}
 3. Definiere verbotene Themen (was NICHT erfunden werden darf)
 4. Verwende exakte Rollenbegriffe: ${typeProfile.roles.A} und ${typeProfile.roles.B}
 5. Integriere individuelle Anforderungen mit höchster Priorität
-6. WICHTIG: Fordere PRÄAMBEL mit vollständigen Vertragsparteien (Namen, Adressen)
+6. WICHTIG: Fordere PRÄAMBEL mit vollständigen Vertragsparteien (aus Eingabedaten ODER Platzhalter)
 7. WICHTIG: Fordere umfassende, detaillierte Paragraphen (mindestens 4000-5000 Zeichen Gesamtlänge)
 8. WICHTIG: Betone professionellen, ausführlichen Stil - KEINE Kurzfassungen oder Minimalismus
 
@@ -470,7 +473,11 @@ ABSOLUT KRITISCHE REGELN:
 1. Erstelle einen VOLLSTÄNDIGEN Vertrag mit MINDESTENS 10-12 Paragraphen
 2. KEIN HTML, KEIN MARKDOWN - nur reiner Text
 3. Verwende EXAKT diese Struktur (keine Abweichungen!)
-4. Fülle ALLE Felder mit echten Daten - KEINE Platzhalter in eckigen Klammern wie [NAME] oder [Datum eintragen]
+4. WICHTIG - Umgang mit fehlenden Daten:
+   - Nutze NUR Daten, die im Prompt explizit angegeben sind
+   - Erfinde NIEMALS falsche Namen, Adressen oder andere Daten
+   - Wenn Daten fehlen, verwende Platzhalter in eckigen Klammern wie [Name], [Straße], [PLZ], [Ort]
+   - Beispiel: Wenn kein Name angegeben wurde, schreibe "[Name des Verkäufers]" statt "Max Mustermann"
 5. Verwende professionelle juristische Sprache
 6. Jeder Paragraph muss detailliert ausformuliert sein (mindestens 3-4 Zeilen pro Absatz)
 
@@ -482,12 +489,12 @@ EXAKTE VERTRAGSSTRUKTUR (BITTE GENAU SO VERWENDEN):
 
 zwischen
 
-[Vollständige Angaben Partei A mit ECHTEN Namen und Adressen]
+[Vollständige Angaben Partei A - nutze vorgegebene Daten ODER Platzhalter wie [Name], [Straße], [PLZ Ort]]
 - nachfolgend "[Kurzbezeichnung]" genannt -
 
 und
 
-[Vollständige Angaben Partei B mit ECHTEN Namen und Adressen]
+[Vollständige Angaben Partei B - nutze vorgegebene Daten ODER Platzhalter wie [Name], [Straße], [PLZ Ort]]
 - nachfolgend "[Kurzbezeichnung]" genannt -
 
 PRÄAMBEL
