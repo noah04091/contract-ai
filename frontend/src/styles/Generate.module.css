@@ -2205,7 +2205,7 @@
 .step3Header {
   text-align: center;
   margin-bottom: 2rem;
-  width: 100%;
+  max-width: 800px;
 }
 
 .step3Header h2 {
@@ -2229,7 +2229,7 @@
   grid-template-columns: repeat(4, 1fr);
   gap: 1rem;
   margin-bottom: 2rem;
-  width: 100%;
+  max-width: 1000px;
 }
 
 .step3ActionButton {
@@ -2502,6 +2502,7 @@
   margin-top: 2rem;
   min-height: 600px;
   width: 100%;
+  max-width: 1200px;
 }
 
 .step3Panel {
