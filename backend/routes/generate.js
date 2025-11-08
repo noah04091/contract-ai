@@ -1282,9 +1282,180 @@ const formatContractToHTML = async (contractText, companyProfile, contractType, 
     htmlContent += '</div></div>';
   }
 
-  // ❌ KEINE AUTOMATISCHE UNTERSCHRIFTSSEKTION - Es gibt ein separates fixes Unterschriftenblatt!
-  // Die Unterschriften werden über pdfSealing.js und das finale Unterschriftenblatt hinzugefügt
-  console.log('✅ Vertragsinhalt komplett - KEINE automatischen Unterschriftslinien (fixes Unterschriftenblatt vorhanden)');
+  // 🖋️ PROFESSIONELLE UNTERSCHRIFTSSEKTION - IMMER AM ENDE HINZUFÜGEN
+  console.log('🎯 *** FÜGE PROFESSIONELLE UNTERSCHRIFTSSEKTION HINZU (IMMER) ***');
+  // Unterschriften IMMER hinzufügen - nicht nur wenn inSignatureSection gesetzt
+  {
+    htmlContent += `
+      <!-- UNTERSCHRIFTSBEREICH - IMMER EIGENE SEITE -->
+      <div style="
+        page-break-before: always;
+        margin-top: 25mm;
+        padding: 0;
+        page-break-inside: avoid;
+      ">
+        <!-- Überschrift - dezent und professionell (kompakt) -->
+        <h2 style="
+          text-align: center;
+          font-family: ${theme.headingFont};
+          font-size: 12pt;
+          font-weight: 600;
+          color: ${theme.primary};
+          margin-bottom: 20mm;
+          letter-spacing: 0.5px;
+        ">Unterschriften der Vertragsparteien</h2>
+
+        <!-- Zweispaltiges Layout -->
+        <div style="
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 60px;
+          margin: 0 auto;
+          max-width: 100%;
+        ">
+          <!-- LINKE SPALTE: VERKÄUFER/PARTEI A -->
+          <div style="
+            padding: 20px;
+            min-height: 200px;
+          ">
+            <!-- Überschrift -->
+            <h3 style="
+              font-family: ${theme.fontFamily};
+              font-size: 10pt;
+              font-weight: 600;
+              color: ${theme.primary};
+              margin-bottom: 30px;
+              text-align: center;
+              text-transform: uppercase;
+            ">Verkäufer / Partei A</h3>
+
+            <!-- Ort und Datum - kompakt -->
+            <div style="margin-bottom: 10mm;">
+              <div style="
+                border-bottom: 1px solid #666;
+                height: 8mm;
+                margin-bottom: 2mm;
+              "></div>
+              <p style="
+                font-family: ${theme.fontFamily};
+                font-size: 9pt;
+                color: #666;
+                margin: 0;
+                text-align: left;
+              ">Ort, Datum</p>
+            </div>
+
+            <!-- Unterschriftslinie - kompakt aber professionell -->
+            <div style="margin-bottom: 10mm;">
+              <div style="
+                border-bottom: 2px solid #333;
+                height: 12mm;
+                margin-bottom: 3mm;
+                width: 100%;
+              "></div>
+              <p style="
+                font-family: ${theme.fontFamily};
+                font-size: 9pt;
+                color: #666;
+                text-align: left;
+                margin: 0;
+              ">(Unterschrift / Stempel)</p>
+            </div>
+
+            <!-- Name - kompakt und professionell -->
+            <div style="
+              padding-top: 8mm;
+              border-top: 1px dotted #ccc;
+            ">
+              <p style="
+                font-family: ${theme.fontFamily};
+                font-size: 10pt;
+                color: ${theme.text};
+                margin: 0 0 2mm 0;
+                font-weight: 600;
+              ">${companyProfile?.companyName || 'Verkäufer'}</p>
+              <p style="
+                font-family: ${theme.fontFamily};
+                font-size: 9pt;
+                color: #666;
+                margin: 0;
+              ">(Geschäftsführung)</p>
+            </div>
+          </div>
+
+          <!-- RECHTE SPALTE: KÄUFER/PARTEI B -->
+          <div style="
+            padding: 20px;
+            min-height: 200px;
+          ">
+            <!-- Überschrift -->
+            <h3 style="
+              font-family: ${theme.fontFamily};
+              font-size: 10pt;
+              font-weight: 600;
+              color: ${theme.primary};
+              margin-bottom: 30px;
+              text-align: center;
+              text-transform: uppercase;
+            ">Käufer / Partei B</h3>
+
+            <!-- Ort und Datum - identisch zur Verkäufer-Spalte (kompakt) -->
+            <div style="margin-bottom: 10mm;">
+              <div style="
+                border-bottom: 1px solid #666;
+                height: 8mm;
+                margin-bottom: 2mm;
+              "></div>
+              <p style="
+                font-family: ${theme.fontFamily};
+                font-size: 9pt;
+                color: #666;
+                margin: 0;
+                text-align: left;
+              ">Ort, Datum</p>
+            </div>
+
+            <!-- Unterschriftslinie - identisch zur Verkäufer-Spalte (kompakt) -->
+            <div style="margin-bottom: 10mm;">
+              <div style="
+                border-bottom: 2px solid #333;
+                height: 12mm;
+                margin-bottom: 3mm;
+                width: 100%;
+              "></div>
+              <p style="
+                font-family: ${theme.fontFamily};
+                font-size: 9pt;
+                color: #666;
+                text-align: left;
+                margin: 0;
+              ">(Unterschrift)</p>
+            </div>
+
+            <!-- Name - symmetrisch zur Verkäufer-Spalte -->
+            <div style="
+              padding-top: 8mm;
+              border-top: 1px dotted #ccc;
+            ">
+              <div style="
+                border-bottom: 1px solid #ccc;
+                height: 6mm;
+                margin-bottom: 2mm;
+              "></div>
+              <p style="
+                font-family: ${theme.fontFamily};
+                font-size: 9pt;
+                color: #666;
+                margin: 0;
+              ">(Name in Druckschrift)</p>
+            </div>
+          </div>
+        </div>
+
+
+      </div>
+    `;
+  } // Ende Unterschriftssektion - wird IMMER hinzugefügt
 
   // 🎨 VOLLSTÄNDIGES ENTERPRISE HTML-DOKUMENT
   const fullHTML = `
