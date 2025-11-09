@@ -61,6 +61,16 @@ interface RecommendationStatus {
   [key: string]: boolean;
 }
 
+interface ExternalSearchResult {
+  source: string;
+  title: string;
+  description?: string;
+  date?: string;
+  documentId?: string;
+  relevance?: number;
+  url?: string;
+}
+
 export default function LegalPulse() {
   const { contractId } = useParams();
   const navigate = useNavigate();
@@ -81,7 +91,7 @@ export default function LegalPulse() {
   const [externalSearchQuery, setExternalSearchQuery] = useState('');
   const [externalSearchSources, setExternalSearchSources] = useState<string[]>(['eulex', 'bundesanzeiger', 'govdata']);
   const [externalSearchArea, setExternalSearchArea] = useState('');
-  const [externalSearchResults, setExternalSearchResults] = useState<any[]>([]);
+  const [externalSearchResults, setExternalSearchResults] = useState<ExternalSearchResult[]>([]);
   const [isExternalSearchLoading, setIsExternalSearchLoading] = useState(false);
 
   // Enhanced Mock-Daten für Demo-Zwecke
@@ -1115,7 +1125,7 @@ export default function LegalPulse() {
                       if (data.success) {
                         setNotification({ message: "Test-Alert wurde gesendet!", type: "success" });
                       }
-                    } catch (error) {
+                    } catch {
                       setNotification({ message: "Fehler beim Senden", type: "error" });
                     }
                   }}
