@@ -23,8 +23,10 @@ router.get("/stream", verifyToken, async (req, res) => {
   res.setHeader('Connection', 'keep-alive');
   res.setHeader('X-Accel-Buffering', 'no'); // Disable buffering for nginx
 
-  // CORS headers if needed
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  // CORS headers for SSE with credentials
+  const origin = req.headers.origin || 'https://www.contract-ai.de';
+  res.setHeader('Access-Control-Allow-Origin', origin);
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
 
   // Send initial connection message
   const connectionId = Date.now().toString();
