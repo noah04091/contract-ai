@@ -747,6 +747,13 @@
   box-shadow: none;
 }
 
+/* NUR für Step 3: Zentriere den Inhalt */
+.formPanelCentered {
+  grid-column: 1 / -1; /* Geht über alle Grid-Spalten */
+  display: flex;
+  justify-content: center; /* Zentriert den Inhalt horizontal */
+}
+
 .stepContent {
   min-height: 400px;
   margin-top: 24px;

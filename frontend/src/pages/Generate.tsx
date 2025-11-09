@@ -1926,8 +1926,8 @@ export default function Generate() {
           {/* Main Content */}
           <div className={`${styles.contentGrid} ${showPreview ? styles.withPreview : ''}`}>
             {/* Left Panel - Forms */}
-            <motion.div 
-              className={styles.formPanel}
+            <motion.div
+              className={`${styles.formPanel} ${currentStep === 3 ? styles.formPanelCentered : ''}`}
               layout
               transition={{ duration: 0.3 }}
             >
