@@ -1,0 +1,303 @@
+
+================================================================================
+🧪 REPAIR-PASS TEST RUN - individuell & darlehen (DIRECT FUNCTION CALL)
+================================================================================
+📅 Run Label: staging-repair-pass-direct-2025-11-07
+🧪 Total Tests: 6
+
+✅ MongoDB verbunden
+
+
+🚀 Starte Test: individuell (standard)
+🚀 V2 Zwei-Phasen-Generierung gestartet
+📋 Vertragstyp: individuell
+👤 User ID (hash): 507f1f77...
+📊 Input (sanitiert): { parteiA: { exists: true }, parteiB: { exists: true } }
+🎯 Quality Threshold: 0.9
+🔄 Phase 1: Meta-Prompt Generation gestartet
+📋 Vertragstyp: individuell
+👥 Rollen: { A: 'Partei A', B: 'Partei B' }
+📊 Input (sanitiert): { parteiA: { exists: true }, parteiB: { exists: true } }
+✅ Phase 1 erfolgreich: {
+  promptLength: 1044,
+  snapshotKeys: [ 'roles', 'mustClauses', 'forbiddenTopics', 'customRequirements' ],
+  timingMs: 8577,
+  tokens: 1565
+}
+🔄 Phase 2: Contract Generation gestartet
+📏 Prompt-Länge: 1044
+✅ Phase 2 erfolgreich: {
+  textMetadata: {
+    length: 2947,
+    paragraphCount: 12,
+    preview: '**Vertrag**\n' +
+      '\n' +
+      'zwischen\n' +
+      '\n' +
+      'Partei A: [NAME], Hauptstraße 1, 10115 Berlin\n' +
+      '\n' +
+      'und\n' +
+      '\n' +
+      'Partei B: [NAME], Nebenst...'
+  },
+  timingMs: 12057,
+  tokens: 1002
+}
+🔧 Repair-Pass gestartet für: individuell
+   ❌ individuell (standard): buildInputSummary is not defined
+
+🚀 Starte Test: individuell (sonderklausel)
+🚀 V2 Zwei-Phasen-Generierung gestartet
+📋 Vertragstyp: individuell
+👤 User ID (hash): 507f1f77...
+📊 Input (sanitiert): {
+  parteiA: { exists: true },
+  parteiB: { exists: true },
+  customRequirements: { length: 227 }
+}
+🎯 Quality Threshold: 0.9
+🔄 Phase 1: Meta-Prompt Generation gestartet
+📋 Vertragstyp: individuell
+👥 Rollen: { A: 'Partei A', B: 'Partei B' }
+📊 Input (sanitiert): {
+  parteiA: { exists: true },
+  parteiB: { exists: true },
+  customRequirements: { length: 227 }
+}
+✅ Phase 1 erfolgreich: {
+  promptLength: 1527,
+  snapshotKeys: [ 'roles', 'mustClauses', 'forbiddenTopics', 'customRequirements' ],
+  timingMs: 14296,
+  tokens: 1910
+}
+🔄 Phase 2: Contract Generation gestartet
+📏 Prompt-Länge: 1527
+✅ Phase 2 erfolgreich: {
+  textMetadata: {
+    length: 3360,
+    paragraphCount: 10,
+    preview: '**Vertrag**\n' +
+      '\n' +
+      'zwischen\n' +
+      '\n' +
+      '**Partei A:**  \n' +
+      '[NAME]  \n' +
+      'Projektweg 10  \n' +
+      '50667 Köln  \n' +
+      '\n' +
+      'und\n' +
+      '\n' +
+      '**Partei B:**  \n' +
+      '[...'
+  },
+  timingMs: 20110,
+  tokens: 1248
+}
+🔧 Repair-Pass gestartet für: individuell
+   ❌ individuell (sonderklausel): buildInputSummary is not defined
+
+🚀 Starte Test: individuell (edge_case)
+🚀 V2 Zwei-Phasen-Generierung gestartet
+📋 Vertragstyp: individuell
+👤 User ID (hash): 507f1f77...
+📊 Input (sanitiert): {
+  parteiA: { exists: true },
+  parteiB: { exists: true },
+  customRequirements: { length: 51 }
+}
+🎯 Quality Threshold: 0.9
+🔄 Phase 1: Meta-Prompt Generation gestartet
+📋 Vertragstyp: individuell
+👥 Rollen: { A: 'Partei A', B: 'Partei B' }
+📊 Input (sanitiert): {
+  parteiA: { exists: true },
+  parteiB: { exists: true },
+  customRequirements: { length: 51 }
+}
+✅ Phase 1 erfolgreich: {
+  promptLength: 1052,
+  snapshotKeys: [ 'roles', 'mustClauses', 'forbiddenTopics', 'customRequirements' ],
+  timingMs: 11356,
+  tokens: 1738
+}
+🔄 Phase 2: Contract Generation gestartet
+📏 Prompt-Länge: 1052
+✅ Phase 2 erfolgreich: {
+  textMetadata: {
+    length: 3010,
+    paragraphCount: 11,
+    preview: '**Vertrag zwischen Partei A und Partei B**\n' +
+      '\n' +
+      'Zwischen\n' +
+      '\n' +
+      '**Partei A:**  \n' +
+      '[NAME]  \n' +
+      'Teststraße 1  \n' +
+      '12345 ...'
+  },
+  timingMs: 20827,
+  tokens: 1033
+}
+🔧 Repair-Pass gestartet für: individuell
+   ❌ individuell (edge_case): buildInputSummary is not defined
+
+🚀 Starte Test: darlehen (standard)
+🚀 V2 Zwei-Phasen-Generierung gestartet
+📋 Vertragstyp: darlehen
+👤 User ID (hash): 507f1f77...
+📊 Input (sanitiert): {
+  parteiA: { exists: true },
+  parteiB: { exists: true },
+  customRequirements: { length: 135 }
+}
+🎯 Quality Threshold: 0.94
+🔄 Phase 1: Meta-Prompt Generation gestartet
+📋 Vertragstyp: darlehen
+👥 Rollen: { A: 'Darlehensgeber', B: 'Darlehensnehmer' }
+📊 Input (sanitiert): {
+  parteiA: { exists: true },
+  parteiB: { exists: true },
+  customRequirements: { length: 135 }
+}
+✅ Phase 1 erfolgreich: {
+  promptLength: 1751,
+  snapshotKeys: [ 'roles', 'mustClauses', 'forbiddenTopics', 'customRequirements' ],
+  timingMs: 18082,
+  tokens: 2159
+}
+🔄 Phase 2: Contract Generation gestartet
+📏 Prompt-Länge: 1751
+✅ Phase 2 erfolgreich: {
+  textMetadata: {
+    length: 3252,
+    paragraphCount: 12,
+    preview: '**Darlehensvertrag**\n' +
+      '\n' +
+      'zwischen\n' +
+      '\n' +
+      '**Darlehensgeber:**  \n' +
+      '[NAME]  \n' +
+      'Bankstraße 10  \n' +
+      '60311 Frankfurt  \n' +
+      '\n' +
+      'un...'
+  },
+  timingMs: 19957,
+  tokens: 1341
+}
+🔧 Repair-Pass gestartet für: darlehen
+   ❌ darlehen (standard): buildInputSummary is not defined
+
+🚀 Starte Test: darlehen (sonderklausel)
+🚀 V2 Zwei-Phasen-Generierung gestartet
+📋 Vertragstyp: darlehen
+👤 User ID (hash): 507f1f77...
+📊 Input (sanitiert): {
+  parteiA: { exists: true },
+  parteiB: { exists: true },
+  customRequirements: { length: 184 }
+}
+🎯 Quality Threshold: 0.94
+🔄 Phase 1: Meta-Prompt Generation gestartet
+📋 Vertragstyp: darlehen
+👥 Rollen: { A: 'Darlehensgeber', B: 'Darlehensnehmer' }
+📊 Input (sanitiert): {
+  parteiA: { exists: true },
+  parteiB: { exists: true },
+  customRequirements: { length: 184 }
+}
+📋 Intelligent filtering: 3 → 2 topics (-1 mentioned in input)
+✅ Phase 1 erfolgreich: {
+  promptLength: 1713,
+  snapshotKeys: [ 'roles', 'mustClauses', 'forbiddenTopics', 'customRequirements' ],
+  timingMs: 16075,
+  tokens: 2173
+}
+🔄 Phase 2: Contract Generation gestartet
+📏 Prompt-Länge: 1713
+✅ Phase 2 erfolgreich: {
+  textMetadata: {
+    length: 3720,
+    paragraphCount: 11,
+    preview: '**Darlehensvertrag**\n' +
+      '\n' +
+      'zwischen\n' +
+      '\n' +
+      '**[NAME]H**, Kapitalstraße 1, 40213 Düsseldorf\n' +
+      '\n' +
+      '- im Folgend...'
+  },
+  timingMs: 22596,
+  tokens: 1438
+}
+🔧 Repair-Pass gestartet für: darlehen
+   ❌ darlehen (sonderklausel): buildInputSummary is not defined
+
+🚀 Starte Test: darlehen (edge_case)
+🚀 V2 Zwei-Phasen-Generierung gestartet
+📋 Vertragstyp: darlehen
+👤 User ID (hash): 507f1f77...
+📊 Input (sanitiert): {
+  parteiA: { exists: true },
+  parteiB: { exists: true },
+  customRequirements: { length: 206 }
+}
+🎯 Quality Threshold: 0.94
+🔄 Phase 1: Meta-Prompt Generation gestartet
+📋 Vertragstyp: darlehen
+👥 Rollen: { A: 'Darlehensgeber', B: 'Darlehensnehmer' }
+📊 Input (sanitiert): {
+  parteiA: { exists: true },
+  parteiB: { exists: true },
+  customRequirements: { length: 206 }
+}
+✅ Phase 1 erfolgreich: {
+  promptLength: 1693,
+  snapshotKeys: [ 'roles', 'mustClauses', 'forbiddenTopics', 'customRequirements' ],
+  timingMs: 19941,
+  tokens: 2139
+}
+🔄 Phase 2: Contract Generation gestartet
+📏 Prompt-Länge: 1693
+✅ Phase 2 erfolgreich: {
+  textMetadata: {
+    length: 3344,
+    paragraphCount: 10,
+    preview: '**Darlehensvertrag**\n' +
+      '\n' +
+      'zwischen\n' +
+      '\n' +
+      '**[NAME]**  \n' +
+      'Familienstraße 5,  \n' +
+      '30159 Hannover  \n' +
+      '\n' +
+      '- im Folg...'
+  },
+  timingMs: 14707,
+  tokens: 1296
+}
+🔧 Repair-Pass gestartet für: darlehen
+   ❌ darlehen (edge_case): buildInputSummary is not defined
+
+================================================================================
+📊 ZUSAMMENFASSUNG
+================================================================================
+
+Total: 6
+✅ Erfolgreich: 0
+❌ Fehlgeschlagen: 6
+
+
+❌ FEHLGESCHLAGENE TESTS:
+
+   individuell (standard): buildInputSummary is not defined
+   individuell (sonderklausel): buildInputSummary is not defined
+   individuell (edge_case): buildInputSummary is not defined
+   darlehen (standard): buildInputSummary is not defined
+   darlehen (sonderklausel): buildInputSummary is not defined
+   darlehen (edge_case): buildInputSummary is not defined
+
+================================================================================
+✅ Test-Run abgeschlossen!
+================================================================================
+

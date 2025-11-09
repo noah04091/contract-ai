@@ -1,0 +1,526 @@
+
+================================================================================
+🧪 REPAIR-PASS TEST RUN - individuell & darlehen (DIRECT FUNCTION CALL)
+================================================================================
+📅 Run Label: staging-repair-pass-direct-2025-11-07
+🧪 Total Tests: 6
+
+✅ MongoDB verbunden
+
+
+🚀 Starte Test: individuell (standard)
+🚀 V2 Zwei-Phasen-Generierung gestartet
+📋 Vertragstyp: individuell
+👤 User ID (hash): 507f1f77...
+📊 Input (sanitiert): { parteiA: { exists: true }, parteiB: { exists: true } }
+🎯 Quality Threshold: 0.9
+🔄 Phase 1: Meta-Prompt Generation gestartet
+📋 Vertragstyp: individuell
+👥 Rollen: { A: 'Partei A', B: 'Partei B' }
+📊 Input (sanitiert): { parteiA: { exists: true }, parteiB: { exists: true } }
+✅ Phase 1 erfolgreich: {
+  promptLength: 1026,
+  snapshotKeys: [ 'roles', 'mustClauses', 'forbiddenTopics', 'customRequirements' ],
+  timingMs: 9717,
+  tokens: 1562
+}
+🔄 Phase 2: Contract Generation gestartet
+📏 Prompt-Länge: 1026
+✅ Phase 2 erfolgreich: {
+  textMetadata: {
+    length: 3490,
+    paragraphCount: 10,
+    preview: '**Vertrag**\n' +
+      '\n' +
+      'zwischen\n' +
+      '\n' +
+      'Partei A: [NAME], Hauptstraße 1, 10115 Berlin\n' +
+      '\n' +
+      'und\n' +
+      '\n' +
+      'Partei B: [NAME], Nebenst...'
+  },
+  timingMs: 9711,
+  tokens: 1115
+}
+🔧 Repair-Pass gestartet für: individuell
+✅ Universal Repair abgeschlossen: { originalLength: 3490, repairedLength: 3490, tokens: 2283 }
+🔧 Individuell-Typ erkannt, starte Spezialisierung...
+✅ Individuell Specialization abgeschlossen: { tokens: 1961 }
+✅ Repair-Pass abgeschlossen in 12792ms
+🔍 Validator gestartet (deterministisch)
+✅ Validator abgeschlossen: { passed: true, score: 1, errorsCount: 0, warningsCount: 0 }
+🔍 Self-Check gestartet
+✅ Self-Check abgeschlossen: { conforms: false, score: 0.8, notesCount: 4 }
+📊 Hybrid Score: 0.94 (Validator: 1, LLM: 0.8)
+✅ Generierung (sanitiert) in MongoDB gespeichert: new ObjectId('690e07773af8b8273a9c2cac')
+✅ Sichere Artefakte (verschlüsselt) gespeichert
+🎉 V2 Generierung abgeschlossen: {
+  durationMs: 34879,
+  hybridScore: 0.94,
+  validatorScore: 1,
+  llmScore: 0.8,
+  validatorPassed: true,
+  retriesUsed: 0,
+  reviewRequired: false,
+  contractMetadata: {
+    length: 3490,
+    paragraphCount: 10,
+    preview: '**Vertrag**\n' +
+      '\n' +
+      'zwischen\n' +
+      '\n' +
+      'Partei A: [NAME], Hauptstraße 1, 10115 Berlin\n' +
+      '\n' +
+      'und\n' +
+      '\n' +
+      'Partei B: [NAME], Nebenst...'
+  }
+}
+   ❌ individuell (standard): Cannot read properties of undefined (reading 'toFixed')
+
+🚀 Starte Test: individuell (sonderklausel)
+🚀 V2 Zwei-Phasen-Generierung gestartet
+📋 Vertragstyp: individuell
+👤 User ID (hash): 507f1f77...
+📊 Input (sanitiert): {
+  parteiA: { exists: true },
+  parteiB: { exists: true },
+  customRequirements: { length: 227 }
+}
+🎯 Quality Threshold: 0.9
+🔄 Phase 1: Meta-Prompt Generation gestartet
+📋 Vertragstyp: individuell
+👥 Rollen: { A: 'Partei A', B: 'Partei B' }
+📊 Input (sanitiert): {
+  parteiA: { exists: true },
+  parteiB: { exists: true },
+  customRequirements: { length: 227 }
+}
+✅ Phase 1 erfolgreich: {
+  promptLength: 1206,
+  snapshotKeys: [ 'roles', 'mustClauses', 'forbiddenTopics', 'customRequirements' ],
+  timingMs: 14484,
+  tokens: 1728
+}
+🔄 Phase 2: Contract Generation gestartet
+📏 Prompt-Länge: 1206
+✅ Phase 2 erfolgreich: {
+  textMetadata: {
+    length: 2930,
+    paragraphCount: 11,
+    preview: '**Vertrag nach BGB**\n' +
+      '\n' +
+      'zwischen\n' +
+      '\n' +
+      'Partei A: [NAME], Projektweg 10, 50667 Köln\n' +
+      '\n' +
+      'und\n' +
+      '\n' +
+      'Partei B: [NAME], ...'
+  },
+  timingMs: 13371,
+  tokens: 1056
+}
+🔧 Repair-Pass gestartet für: individuell
+✅ Universal Repair abgeschlossen: { originalLength: 2930, repairedLength: 2930, tokens: 2140 }
+🔧 Individuell-Typ erkannt, starte Spezialisierung...
+✅ Individuell Specialization abgeschlossen: { tokens: 1779 }
+✅ Repair-Pass abgeschlossen in 9049ms
+🔍 Validator gestartet (deterministisch)
+✅ Validator abgeschlossen: { passed: true, score: 0.9, errorsCount: 0, warningsCount: 1 }
+🔍 Self-Check gestartet
+✅ Self-Check abgeschlossen: { conforms: true, score: 1, notesCount: 0 }
+📊 Hybrid Score: 0.93 (Validator: 0.9, LLM: 1)
+✅ Generierung (sanitiert) in MongoDB gespeichert: new ObjectId('690e079e3af8b8273a9c2cae')
+✅ Sichere Artefakte (verschlüsselt) gespeichert
+🎉 V2 Generierung abgeschlossen: {
+  durationMs: 38103,
+  hybridScore: 0.93,
+  validatorScore: 0.9,
+  llmScore: 1,
+  validatorPassed: true,
+  retriesUsed: 0,
+  reviewRequired: false,
+  contractMetadata: {
+    length: 2814,
+    paragraphCount: 11,
+    preview: '**Vertrag nach BGB**\n' +
+      '\n' +
+      'zwischen\n' +
+      '\n' +
+      'Partei A: [NAME], Projektweg 10, 50667 Köln\n' +
+      '\n' +
+      'und\n' +
+      '\n' +
+      'Partei B: [NAME], ...'
+  }
+}
+   ❌ individuell (sonderklausel): Cannot read properties of undefined (reading 'toFixed')
+
+🚀 Starte Test: individuell (edge_case)
+🚀 V2 Zwei-Phasen-Generierung gestartet
+📋 Vertragstyp: individuell
+👤 User ID (hash): 507f1f77...
+📊 Input (sanitiert): {
+  parteiA: { exists: true },
+  parteiB: { exists: true },
+  customRequirements: { length: 51 }
+}
+🎯 Quality Threshold: 0.9
+🔄 Phase 1: Meta-Prompt Generation gestartet
+📋 Vertragstyp: individuell
+👥 Rollen: { A: 'Partei A', B: 'Partei B' }
+📊 Input (sanitiert): {
+  parteiA: { exists: true },
+  parteiB: { exists: true },
+  customRequirements: { length: 51 }
+}
+✅ Phase 1 erfolgreich: {
+  promptLength: 1582,
+  snapshotKeys: [ 'roles', 'mustClauses', 'forbiddenTopics', 'customRequirements' ],
+  timingMs: 17586,
+  tokens: 1960
+}
+🔄 Phase 2: Contract Generation gestartet
+📏 Prompt-Länge: 1582
+✅ Phase 2 erfolgreich: {
+  textMetadata: {
+    length: 3242,
+    paragraphCount: 10,
+    preview: '**Vertrag zwischen Partei A und Partei B**\n' +
+      '\n' +
+      'zwischen\n' +
+      '\n' +
+      'Partei A: [NAME], Teststraße 1, 12345 Stadt\n' +
+      '\n' +
+      'u...'
+  },
+  timingMs: 13188,
+  tokens: 1210
+}
+🔧 Repair-Pass gestartet für: individuell
+✅ Universal Repair abgeschlossen: { originalLength: 3242, repairedLength: 3242, tokens: 2313 }
+🔧 Individuell-Typ erkannt, starte Spezialisierung...
+✅ Individuell Specialization abgeschlossen: { tokens: 1983 }
+✅ Repair-Pass abgeschlossen in 10288ms
+🔍 Validator gestartet (deterministisch)
+✅ Validator abgeschlossen: { passed: true, score: 1, errorsCount: 0, warningsCount: 0 }
+🔍 Self-Check gestartet
+✅ Self-Check abgeschlossen: { conforms: false, score: 0.8, notesCount: 5 }
+📊 Hybrid Score: 0.94 (Validator: 1, LLM: 0.8)
+✅ Generierung (sanitiert) in MongoDB gespeichert: new ObjectId('690e07cb3af8b8273a9c2cb0')
+✅ Sichere Artefakte (verschlüsselt) gespeichert
+🎉 V2 Generierung abgeschlossen: {
+  durationMs: 44588,
+  hybridScore: 0.94,
+  validatorScore: 1,
+  llmScore: 0.8,
+  validatorPassed: true,
+  retriesUsed: 0,
+  reviewRequired: false,
+  contractMetadata: {
+    length: 3206,
+    paragraphCount: 10,
+    preview: '**Vertrag zwischen Partei A und Partei B**\n' +
+      '\n' +
+      'zwischen\n' +
+      '\n' +
+      'Partei A: [NAME], Teststraße 1, 12345 Stadt\n' +
+      '\n' +
+      'u...'
+  }
+}
+   ❌ individuell (edge_case): Cannot read properties of undefined (reading 'toFixed')
+
+🚀 Starte Test: darlehen (standard)
+🚀 V2 Zwei-Phasen-Generierung gestartet
+📋 Vertragstyp: darlehen
+👤 User ID (hash): 507f1f77...
+📊 Input (sanitiert): {
+  parteiA: { exists: true },
+  parteiB: { exists: true },
+  customRequirements: { length: 135 }
+}
+🎯 Quality Threshold: 0.94
+🔄 Phase 1: Meta-Prompt Generation gestartet
+📋 Vertragstyp: darlehen
+👥 Rollen: { A: 'Darlehensgeber', B: 'Darlehensnehmer' }
+📊 Input (sanitiert): {
+  parteiA: { exists: true },
+  parteiB: { exists: true },
+  customRequirements: { length: 135 }
+}
+✅ Phase 1 erfolgreich: {
+  promptLength: 1649,
+  snapshotKeys: [ 'roles', 'mustClauses', 'forbiddenTopics', 'customRequirements' ],
+  timingMs: 16531,
+  tokens: 2147
+}
+🔄 Phase 2: Contract Generation gestartet
+📏 Prompt-Länge: 1649
+✅ Phase 2 erfolgreich: {
+  textMetadata: {
+    length: 2858,
+    paragraphCount: 12,
+    preview: '**Darlehensvertrag**\n' +
+      '\n' +
+      'zwischen\n' +
+      '\n' +
+      '**Darlehensgeber:** [NAME], Bankstraße 10, 60311 Frankfurt\n' +
+      '\n' +
+      'und\n' +
+      '\n' +
+      '**D...'
+  },
+  timingMs: 14805,
+  tokens: 1225
+}
+🔧 Repair-Pass gestartet für: darlehen
+✅ Universal Repair abgeschlossen: { originalLength: 2858, repairedLength: 2858, tokens: 2244 }
+✅ Repair-Pass abgeschlossen in 3348ms
+🔍 Validator gestartet (deterministisch)
+✅ Validator abgeschlossen: { passed: true, score: 0.9, errorsCount: 0, warningsCount: 1 }
+🔍 Self-Check gestartet
+✅ Self-Check abgeschlossen: { conforms: false, score: 0.8, notesCount: 5 }
+📊 Hybrid Score: 0.87 (Validator: 0.9, LLM: 0.8)
+⚠️ Hybrid Score (0.87) < Threshold (0.94), starte Retry 1/2 (Backoff: 1000ms)...
+🔧 Repair-Pass gestartet für: darlehen
+✅ Universal Repair abgeschlossen: { originalLength: 3058, repairedLength: 3058, tokens: 2339 }
+✅ Repair-Pass abgeschlossen in 3518ms
+🔍 Validator gestartet (deterministisch)
+✅ Validator abgeschlossen: { passed: true, score: 0.9, errorsCount: 0, warningsCount: 1 }
+🔍 Self-Check gestartet
+✅ Self-Check abgeschlossen: { conforms: true, score: 1, notesCount: 0 }
+🔄 Retry 1 Hybrid Score: 0.93 (Validator: 0.9, LLM: 1)
+⚠️ Hybrid Score (0.93) < Threshold (0.94), starte Retry 2/2 (Backoff: 2000ms)...
+🔧 Repair-Pass gestartet für: darlehen
+✅ Universal Repair abgeschlossen: { originalLength: 3512, repairedLength: 3512, tokens: 2559 }
+✅ Repair-Pass abgeschlossen in 6767ms
+🔍 Validator gestartet (deterministisch)
+✅ Validator abgeschlossen: { passed: true, score: 0.9, errorsCount: 0, warningsCount: 1 }
+🔍 Self-Check gestartet
+✅ Self-Check abgeschlossen: { conforms: true, score: 1, notesCount: 0 }
+🔄 Retry 2 Hybrid Score: 0.93 (Validator: 0.9, LLM: 1)
+⚠️ Quality threshold NOT met after 2 retries. reviewRequired = true
+✅ Generierung (sanitiert) in MongoDB gespeichert: new ObjectId('690e08253af8b8273a9c2cb2')
+✅ Sichere Artefakte (verschlüsselt) gespeichert
+🎉 V2 Generierung abgeschlossen: {
+  durationMs: 87957,
+  hybridScore: 0.93,
+  validatorScore: 0.9,
+  llmScore: 1,
+  validatorPassed: true,
+  retriesUsed: 2,
+  reviewRequired: true,
+  contractMetadata: {
+    length: 3512,
+    paragraphCount: 12,
+    preview: '**Darlehensvertrag**\n' +
+      '\n' +
+      'zwischen\n' +
+      '\n' +
+      '**Darlehensgeber:**  \n' +
+      '[NAME]  \n' +
+      'Bankstraße 10  \n' +
+      '60311 Frankfurt  \n' +
+      '\n' +
+      'un...'
+  }
+}
+   ❌ darlehen (standard): Cannot read properties of undefined (reading 'toFixed')
+
+🚀 Starte Test: darlehen (sonderklausel)
+🚀 V2 Zwei-Phasen-Generierung gestartet
+📋 Vertragstyp: darlehen
+👤 User ID (hash): 507f1f77...
+📊 Input (sanitiert): {
+  parteiA: { exists: true },
+  parteiB: { exists: true },
+  customRequirements: { length: 184 }
+}
+🎯 Quality Threshold: 0.94
+🔄 Phase 1: Meta-Prompt Generation gestartet
+📋 Vertragstyp: darlehen
+👥 Rollen: { A: 'Darlehensgeber', B: 'Darlehensnehmer' }
+📊 Input (sanitiert): {
+  parteiA: { exists: true },
+  parteiB: { exists: true },
+  customRequirements: { length: 184 }
+}
+📋 Intelligent filtering: 3 → 2 topics (-1 mentioned in input)
+✅ Phase 1 erfolgreich: {
+  promptLength: 1565,
+  snapshotKeys: [ 'roles', 'mustClauses', 'forbiddenTopics', 'customRequirements' ],
+  timingMs: 21108,
+  tokens: 2127
+}
+🔄 Phase 2: Contract Generation gestartet
+📏 Prompt-Länge: 1565
+✅ Phase 2 erfolgreich: {
+  textMetadata: {
+    length: 3862,
+    paragraphCount: 11,
+    preview: '**Darlehensvertrag**\n' +
+      '\n' +
+      'zwischen\n' +
+      '\n' +
+      '**[NAME]H**, Kapitalstraße 1, 40213 Düsseldorf\n' +
+      '\n' +
+      '- nachfolgen...'
+  },
+  timingMs: 11543,
+  tokens: 1439
+}
+🔧 Repair-Pass gestartet für: darlehen
+✅ Universal Repair abgeschlossen: { originalLength: 3862, repairedLength: 3862, tokens: 2763 }
+✅ Repair-Pass abgeschlossen in 5147ms
+🔍 Validator gestartet (deterministisch)
+✅ Validator abgeschlossen: { passed: true, score: 0.9, errorsCount: 0, warningsCount: 1 }
+🔍 Self-Check gestartet
+✅ Self-Check abgeschlossen: { conforms: true, score: 1, notesCount: 0 }
+📊 Hybrid Score: 0.93 (Validator: 0.9, LLM: 1)
+⚠️ Hybrid Score (0.93) < Threshold (0.94), starte Retry 1/2 (Backoff: 1000ms)...
+🔧 Repair-Pass gestartet für: darlehen
+✅ Universal Repair abgeschlossen: { originalLength: 4060, repairedLength: 4068, tokens: 2863 }
+✅ Repair-Pass abgeschlossen in 6838ms
+🔍 Validator gestartet (deterministisch)
+✅ Validator abgeschlossen: { passed: true, score: 0.9, errorsCount: 0, warningsCount: 1 }
+🔍 Self-Check gestartet
+✅ Self-Check abgeschlossen: { conforms: true, score: 1, notesCount: 0 }
+🔄 Retry 1 Hybrid Score: 0.93 (Validator: 0.9, LLM: 1)
+⚠️ Hybrid Score (0.93) < Threshold (0.94), starte Retry 2/2 (Backoff: 2000ms)...
+🔧 Repair-Pass gestartet für: darlehen
+✅ Universal Repair abgeschlossen: { originalLength: 3943, repairedLength: 3953, tokens: 2793 }
+✅ Repair-Pass abgeschlossen in 9089ms
+🔍 Validator gestartet (deterministisch)
+✅ Validator abgeschlossen: { passed: true, score: 0.9, errorsCount: 0, warningsCount: 1 }
+🔍 Self-Check gestartet
+✅ Self-Check abgeschlossen: { conforms: true, score: 1, notesCount: 0 }
+🔄 Retry 2 Hybrid Score: 0.93 (Validator: 0.9, LLM: 1)
+⚠️ Quality threshold NOT met after 2 retries. reviewRequired = true
+✅ Generierung (sanitiert) in MongoDB gespeichert: new ObjectId('690e087b3af8b8273a9c2cb4')
+✅ Sichere Artefakte (verschlüsselt) gespeichert
+🎉 V2 Generierung abgeschlossen: {
+  durationMs: 85516,
+  hybridScore: 0.93,
+  validatorScore: 0.9,
+  llmScore: 1,
+  validatorPassed: true,
+  retriesUsed: 2,
+  reviewRequired: true,
+  contractMetadata: {
+    length: 3953,
+    paragraphCount: 11,
+    preview: '**Darlehensvertrag**\n' +
+      '\n' +
+      'zwischen\n' +
+      '\n' +
+      '**[NAME]H**, Kapitalstraße 1, 40213 Düsseldorf\n' +
+      '\n' +
+      '- nachfolgen...'
+  }
+}
+   ❌ darlehen (sonderklausel): Cannot read properties of undefined (reading 'toFixed')
+
+🚀 Starte Test: darlehen (edge_case)
+🚀 V2 Zwei-Phasen-Generierung gestartet
+📋 Vertragstyp: darlehen
+👤 User ID (hash): 507f1f77...
+📊 Input (sanitiert): {
+  parteiA: { exists: true },
+  parteiB: { exists: true },
+  customRequirements: { length: 206 }
+}
+🎯 Quality Threshold: 0.94
+🔄 Phase 1: Meta-Prompt Generation gestartet
+📋 Vertragstyp: darlehen
+👥 Rollen: { A: 'Darlehensgeber', B: 'Darlehensnehmer' }
+📊 Input (sanitiert): {
+  parteiA: { exists: true },
+  parteiB: { exists: true },
+  customRequirements: { length: 206 }
+}
+✅ Phase 1 erfolgreich: {
+  promptLength: 1711,
+  snapshotKeys: [ 'roles', 'mustClauses', 'forbiddenTopics', 'customRequirements' ],
+  timingMs: 18991,
+  tokens: 2138
+}
+🔄 Phase 2: Contract Generation gestartet
+📏 Prompt-Länge: 1711
+✅ Phase 2 erfolgreich: {
+  textMetadata: {
+    length: 3210,
+    paragraphCount: 10,
+    preview: '**Darlehensvertrag**\n' +
+      '\n' +
+      'zwischen\n' +
+      '\n' +
+      '**[NAME]**  \n' +
+      'Familienstraße 5,  \n' +
+      '30159 Hannover  \n' +
+      '\n' +
+      '- nachfol...'
+  },
+  timingMs: 10830,
+  tokens: 1275
+}
+🔧 Repair-Pass gestartet für: darlehen
+✅ Universal Repair abgeschlossen: { originalLength: 3210, repairedLength: 3220, tokens: 2393 }
+🔧 Darlehen Edge Case erkannt (0% Zins), starte Spezialisierung...
+✅ Darlehen Specialization abgeschlossen: { tokens: 2054 }
+✅ Repair-Pass abgeschlossen in 10268ms
+🔍 Validator gestartet (deterministisch)
+✅ Validator abgeschlossen: { passed: true, score: 1, errorsCount: 0, warningsCount: 0 }
+🔍 Self-Check gestartet
+✅ Self-Check abgeschlossen: { conforms: false, score: 0.8, notesCount: 6 }
+📊 Hybrid Score: 0.94 (Validator: 1, LLM: 0.8)
+✅ Generierung (sanitiert) in MongoDB gespeichert: new ObjectId('690e08a83af8b8273a9c2cb6')
+✅ Sichere Artefakte (verschlüsselt) gespeichert
+🎉 V2 Generierung abgeschlossen: {
+  durationMs: 43308,
+  hybridScore: 0.94,
+  validatorScore: 1,
+  llmScore: 0.8,
+  validatorPassed: true,
+  retriesUsed: 0,
+  reviewRequired: false,
+  contractMetadata: {
+    length: 3221,
+    paragraphCount: 10,
+    preview: '**Darlehensvertrag**\n' +
+      '\n' +
+      'zwischen\n' +
+      '\n' +
+      '**[NAME]**  \n' +
+      'Familienstraße 5,  \n' +
+      '30159 Hannover  \n' +
+      '\n' +
+      '- nachfol...'
+  }
+}
+   ❌ darlehen (edge_case): Cannot read properties of undefined (reading 'toFixed')
+
+================================================================================
+📊 ZUSAMMENFASSUNG
+================================================================================
+
+Total: 6
+✅ Erfolgreich: 0
+❌ Fehlgeschlagen: 6
+
+
+❌ FEHLGESCHLAGENE TESTS:
+
+   individuell (standard): Cannot read properties of undefined (reading 'toFixed')
+   individuell (sonderklausel): Cannot read properties of undefined (reading 'toFixed')
+   individuell (edge_case): Cannot read properties of undefined (reading 'toFixed')
+   darlehen (standard): Cannot read properties of undefined (reading 'toFixed')
+   darlehen (sonderklausel): Cannot read properties of undefined (reading 'toFixed')
+   darlehen (edge_case): Cannot read properties of undefined (reading 'toFixed')
+
+================================================================================
+✅ Test-Run abgeschlossen!
+================================================================================
+

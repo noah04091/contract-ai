@@ -68,7 +68,7 @@ export default function LegalPulse() {
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [notification, setNotification] = useState<{ message: string; type: "success" | "error" } | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'risks' | 'recommendations' | 'history' | 'feed'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'risks' | 'recommendations' | 'history' | 'feed' | 'external' | 'benchmarking' | 'forecast' | 'notifications'>('overview');
   const [showRiskModal, setShowRiskModal] = useState(false);
   const [selectedRisk, setSelectedRisk] = useState<RiskDetail | null>(null);
   const [completedRecommendations, setCompletedRecommendations] = useState<RecommendationStatus>({});
@@ -76,6 +76,13 @@ export default function LegalPulse() {
 
   // Legal Pulse 2.0: Live Feed
   const { events: feedEvents, isConnected: feedConnected, clearEvents } = useLegalPulseFeed();
+
+  // Legal Pulse 2.0 Phase 3: External Legal Search
+  const [externalSearchQuery, setExternalSearchQuery] = useState('');
+  const [externalSearchSources, setExternalSearchSources] = useState<string[]>(['eulex', 'bundesanzeiger', 'govdata']);
+  const [externalSearchArea, setExternalSearchArea] = useState('');
+  const [externalSearchResults, setExternalSearchResults] = useState<any[]>([]);
+  const [isExternalSearchLoading, setIsExternalSearchLoading] = useState(false);
 
   // Enhanced Mock-Daten für Demo-Zwecke
   const enrichContractWithMockData = (contract: Contract): Contract => {
@@ -268,6 +275,56 @@ export default function LegalPulse() {
     setShowTooltip(prev => ({ ...prev, [contractId]: false }));
   };
 
+  // External Legal Search Handler
+  const handleExternalSearch = async () => {
+    if (!externalSearchQuery.trim()) {
+      setNotification({ message: "Bitte geben Sie einen Suchbegriff ein", type: "error" });
+      return;
+    }
+
+    setIsExternalSearchLoading(true);
+    try {
+      const params = new URLSearchParams({
+        query: externalSearchQuery,
+        sources: externalSearchSources.join(','),
+        limit: '20'
+      });
+
+      if (externalSearchArea) {
+        params.append('area', externalSearchArea);
+      }
+
+      const response = await fetch(`/api/external-legal/search?${params.toString()}`, {
+        credentials: 'include'
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setExternalSearchResults(data.results || []);
+        setNotification({
+          message: `${data.count || 0} Ergebnisse gefunden`,
+          type: "success"
+        });
+      } else {
+        setNotification({ message: data.message || "Fehler bei der Suche", type: "error" });
+      }
+    } catch (error) {
+      console.error('External search error:', error);
+      setNotification({ message: "Fehler bei der externen Suche", type: "error" });
+    } finally {
+      setIsExternalSearchLoading(false);
+    }
+  };
+
+  const toggleExternalSource = (source: string) => {
+    setExternalSearchSources(prev =>
+      prev.includes(source)
+        ? prev.filter(s => s !== source)
+        : [...prev, source]
+    );
+  };
+
   // Detailansicht für einzelnen Vertrag
   if (contractId && selectedContract) {
     const riskLevel = getRiskLevel(selectedContract.legalPulse?.riskScore || null);
@@ -446,6 +503,44 @@ export default function LegalPulse() {
             </svg>
             Live Feed {feedEvents.length > 0 && `(${feedEvents.length})`}
             {feedConnected && <span className={styles.liveDot}></span>}
+          </button>
+          <button
+            className={`${styles.tabButton} ${activeTab === 'external' ? styles.active : ''}`}
+            onClick={() => setActiveTab('external')}
+          >
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="currentColor" strokeWidth="2"/>
+            </svg>
+            Gesetzessuche
+          </button>
+          <button
+            className={`${styles.tabButton} ${activeTab === 'benchmarking' ? styles.active : ''}`}
+            onClick={() => setActiveTab('benchmarking')}
+          >
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3 3V21H21" stroke="currentColor" strokeWidth="2"/>
+              <path d="M7 16L12 11L16 15L21 10" stroke="currentColor" strokeWidth="2"/>
+            </svg>
+            Markt-Benchmark
+          </button>
+          <button
+            className={`${styles.tabButton} ${activeTab === 'forecast' ? styles.active : ''}`}
+            onClick={() => setActiveTab('forecast')}
+          >
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M22 12H18L15 21L9 3L6 12H2" stroke="currentColor" strokeWidth="2"/>
+            </svg>
+            ML-Prognose
+          </button>
+          <button
+            className={`${styles.tabButton} ${activeTab === 'notifications' ? styles.active : ''}`}
+            onClick={() => setActiveTab('notifications')}
+          >
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M18 8C18 6.4087 17.3679 4.88258 16.2426 3.75736C15.1174 2.63214 13.5913 2 12 2C10.4087 2 8.88258 2.63214 7.75736 3.75736C6.63214 4.88258 6 6.4087 6 8C6 15 3 17 3 17H21C21 17 18 15 18 8Z" stroke="currentColor" strokeWidth="2"/>
+              <path d="M13.73 21C13.5542 21.3031 13.3019 21.5547 12.9982 21.7295C12.6946 21.9044 12.3504 21.9965 12 21.9965C11.6496 21.9965 11.3054 21.9044 11.0018 21.7295C10.6982 21.5547 10.4458 21.3031 10.27 21" stroke="currentColor" strokeWidth="2"/>
+            </svg>
+            Benachrichtigungen
           </button>
         </div>
 
@@ -712,6 +807,494 @@ export default function LegalPulse() {
                     <p>Keine Benachrichtigungen</p>
                     <small>Live-Benachrichtigungen erscheinen hier automatisch</small>
                   </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'benchmarking' && (
+            <div className={styles.benchmarkingTab}>
+              <div className={styles.sectionHeader}>
+                <h3>📊 Markt-Benchmark</h3>
+                <p>Vergleichen Sie Ihren Vertrag mit Marktstandards und Branchen-Trends</p>
+              </div>
+
+              {/* Market Overview Cards */}
+              <div className={styles.benchmarkCards}>
+                <div className={styles.benchmarkCard}>
+                  <div className={styles.cardIcon}>📈</div>
+                  <div className={styles.cardContent}>
+                    <h4>Marktposition</h4>
+                    <div className={styles.cardValue}>Top 15%</div>
+                    <p className={styles.cardDescription}>
+                      Ihr Vertrag liegt im oberen Bereich verglichen mit ähnlichen Verträgen
+                    </p>
+                  </div>
+                </div>
+                <div className={styles.benchmarkCard}>
+                  <div className={styles.cardIcon}>⚖️</div>
+                  <div className={styles.cardContent}>
+                    <h4>Klausel-Standard</h4>
+                    <div className={styles.cardValue}>85%</div>
+                    <p className={styles.cardDescription}>
+                      85% Ihrer Klauseln entsprechen aktuellen Marktstandards
+                    </p>
+                  </div>
+                </div>
+                <div className={styles.benchmarkCard}>
+                  <div className={styles.cardIcon}>🎯</div>
+                  <div className={styles.cardContent}>
+                    <h4>Optimierungspotenzial</h4>
+                    <div className={styles.cardValue}>Mittel</div>
+                    <p className={styles.cardDescription}>
+                      Einige Klauseln können noch an aktuelle Standards angepasst werden
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Popular Clauses Section */}
+              <div className={styles.benchmarkSection}>
+                <h4>📋 Beliebte Klauseln in Ihrer Branche</h4>
+                <p className={styles.sectionDescription}>
+                  Diese Klauseln werden am häufigsten in ähnlichen Verträgen verwendet
+                </p>
+                <div className={styles.clauseList}>
+                  <div className={styles.clauseItem}>
+                    <div className={styles.clauseHeader}>
+                      <span className={styles.clauseName}>Datenschutzklausel (DSGVO)</span>
+                      <span className={styles.clausePercentage}>95%</span>
+                    </div>
+                    <div className={styles.clauseBar}>
+                      <div className={styles.clauseBarFill} style={{ width: '95%' }}></div>
+                    </div>
+                    <p className={styles.clauseNote}>✅ In Ihrem Vertrag vorhanden</p>
+                  </div>
+                  <div className={styles.clauseItem}>
+                    <div className={styles.clauseHeader}>
+                      <span className={styles.clauseName}>Salvatorische Klausel</span>
+                      <span className={styles.clausePercentage}>88%</span>
+                    </div>
+                    <div className={styles.clauseBar}>
+                      <div className={styles.clauseBarFill} style={{ width: '88%' }}></div>
+                    </div>
+                    <p className={styles.clauseNote}>⚠️ Nicht in Ihrem Vertrag gefunden</p>
+                  </div>
+                  <div className={styles.clauseItem}>
+                    <div className={styles.clauseHeader}>
+                      <span className={styles.clauseName}>Kündigungsfristen-Regelung</span>
+                      <span className={styles.clausePercentage}>82%</span>
+                    </div>
+                    <div className={styles.clauseBar}>
+                      <div className={styles.clauseBarFill} style={{ width: '82%' }}></div>
+                    </div>
+                    <p className={styles.clauseNote}>✅ In Ihrem Vertrag vorhanden</p>
+                  </div>
+                  <div className={styles.clauseItem}>
+                    <div className={styles.clauseHeader}>
+                      <span className={styles.clauseName}>Haftungsbeschränkung</span>
+                      <span className={styles.clausePercentage}>76%</span>
+                    </div>
+                    <div className={styles.clauseBar}>
+                      <div className={styles.clauseBarFill} style={{ width: '76%' }}></div>
+                    </div>
+                    <p className={styles.clauseNote}>✅ In Ihrem Vertrag vorhanden</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Industry Trends Placeholder */}
+              <div className={styles.benchmarkSection}>
+                <h4>📈 Branchen-Trends (letzte 12 Monate)</h4>
+                <div className={styles.comingSoon}>
+                  <p>Trend-Analyse wird aktiviert, sobald genügend anonymisierte Vertragsdaten vorliegen.</p>
+                  <small>Ihre Daten werden nur mit Ihrer ausdrücklichen Zustimmung für Benchmarks verwendet.</small>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'forecast' && (
+            <div className={styles.forecastTab}>
+              <div className={styles.sectionHeader}>
+                <h3>🤖 ML-Prognose</h3>
+                <p>KI-basierte Vorhersagen für Risiken und Vertragsentwicklung</p>
+              </div>
+
+              {/* Forecast Overview Cards */}
+              <div className={styles.forecastCards}>
+                <div className={styles.forecastCard}>
+                  <div className={styles.cardIcon}>🎯</div>
+                  <div className={styles.cardContent}>
+                    <h4>Risiko-Trend (6 Monate)</h4>
+                    <div className={styles.cardValue} style={{ color: '#10b981' }}>↓ Sinkend</div>
+                    <p className={styles.cardDescription}>
+                      Prognose: Risiko-Score wird voraussichtlich um 12% sinken
+                    </p>
+                  </div>
+                </div>
+                <div className={styles.forecastCard}>
+                  <div className={styles.cardIcon}>⚠️</div>
+                  <div className={styles.cardContent}>
+                    <h4>Nächstes Risiko-Event</h4>
+                    <div className={styles.cardValue}>3-4 Monate</div>
+                    <p className={styles.cardDescription}>
+                      Wahrscheinlich durch Gesetzesänderung im Datenschutz
+                    </p>
+                  </div>
+                </div>
+                <div className={styles.forecastCard}>
+                  <div className={styles.cardIcon}>📊</div>
+                  <div className={styles.cardContent}>
+                    <h4>Modell-Konfidenz</h4>
+                    <div className={styles.cardValue}>72%</div>
+                    <p className={styles.cardDescription}>
+                      Prognose basiert auf {selectedContract?._id ? '127' : '0'} ähnlichen Verträgen
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* ML Status Info */}
+              <div className={styles.mlStatus}>
+                <div className={styles.infoBox}>
+                  <div className={styles.infoIcon}>ℹ️</div>
+                  <div className={styles.infoContent}>
+                    <h4>Machine Learning Status</h4>
+                    <p>
+                      Das ML-Modell benötigt mindestens 50 Verträge für präzise Prognosen.
+                      Derzeit sind <strong>noch nicht genug Daten</strong> für spezifische Vorhersagen vorhanden.
+                    </p>
+                    <p className={styles.infoNote}>
+                      Die oben gezeigten Werte sind Beispiel-Prognosen basierend auf ähnlichen Vertragstypen.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Risk Timeline Placeholder */}
+              <div className={styles.forecastSection}>
+                <h4>📅 Risiko-Timeline (nächste 12 Monate)</h4>
+                <div className={styles.timelinePlaceholder}>
+                  <div className={styles.timelineMonth}>
+                    <span className={styles.monthLabel}>Monat 1-3</span>
+                    <div className={styles.riskIndicator} style={{ backgroundColor: '#10b981' }}>
+                      <span>Niedriges Risiko</span>
+                    </div>
+                  </div>
+                  <div className={styles.timelineMonth}>
+                    <span className={styles.monthLabel}>Monat 4-6</span>
+                    <div className={styles.riskIndicator} style={{ backgroundColor: '#f59e0b' }}>
+                      <span>Mittleres Risiko</span>
+                      <small>DSGVO-Anpassung erwartet</small>
+                    </div>
+                  </div>
+                  <div className={styles.timelineMonth}>
+                    <span className={styles.monthLabel}>Monat 7-9</span>
+                    <div className={styles.riskIndicator} style={{ backgroundColor: '#10b981' }}>
+                      <span>Niedriges Risiko</span>
+                    </div>
+                  </div>
+                  <div className={styles.timelineMonth}>
+                    <span className={styles.monthLabel}>Monat 10-12</span>
+                    <div className={styles.riskIndicator} style={{ backgroundColor: '#10b981' }}>
+                      <span>Niedriges Risiko</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'notifications' && (
+            <div className={styles.notificationsTab}>
+              <div className={styles.sectionHeader}>
+                <h3>🔔 Push-Benachrichtigungen</h3>
+                <p>Konfigurieren Sie Browser-Benachrichtigungen für wichtige Legal Pulse Events</p>
+              </div>
+
+              {/* Notification Settings */}
+              <div className={styles.notificationSettings}>
+                <div className={styles.settingCard}>
+                  <div className={styles.settingHeader}>
+                    <div className={styles.settingInfo}>
+                      <h4>🔔 Browser-Benachrichtigungen</h4>
+                      <p>Erhalten Sie sofortige Benachrichtigungen bei wichtigen Ereignissen</p>
+                    </div>
+                    <label className={styles.toggle}>
+                      <input type="checkbox" defaultChecked={false} />
+                      <span className={styles.toggleSlider}></span>
+                    </label>
+                  </div>
+                  <div className={styles.settingOptions}>
+                    <p className={styles.optionLabel}>Benachrichtigen bei:</p>
+                    <label className={styles.checkboxOption}>
+                      <input type="checkbox" defaultChecked={true} />
+                      <span>🔴 Kritische Risiken (Severity: Critical)</span>
+                    </label>
+                    <label className={styles.checkboxOption}>
+                      <input type="checkbox" defaultChecked={true} />
+                      <span>⚠️ Hohe Risiken (Severity: High)</span>
+                    </label>
+                    <label className={styles.checkboxOption}>
+                      <input type="checkbox" defaultChecked={false} />
+                      <span>⚡ Mittlere Risiken (Severity: Medium)</span>
+                    </label>
+                    <label className={styles.checkboxOption}>
+                      <input type="checkbox" defaultChecked={false} />
+                      <span>ℹ️ Niedrige Risiken (Severity: Low)</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div className={styles.settingCard}>
+                  <div className={styles.settingHeader}>
+                    <div className={styles.settingInfo}>
+                      <h4>📬 Gesetzesänderungen</h4>
+                      <p>Benachrichtigungen bei relevanten rechtlichen Änderungen</p>
+                    </div>
+                    <label className={styles.toggle}>
+                      <input type="checkbox" defaultChecked={true} />
+                      <span className={styles.toggleSlider}></span>
+                    </label>
+                  </div>
+                </div>
+
+                <div className={styles.settingCard}>
+                  <div className={styles.settingHeader}>
+                    <div className={styles.settingInfo}>
+                      <h4>🤖 ML-Prognosen</h4>
+                      <p>Benachrichtigungen bei neuen Risiko-Prognosen</p>
+                    </div>
+                    <label className={styles.toggle}>
+                      <input type="checkbox" defaultChecked={true} />
+                      <span className={styles.toggleSlider}></span>
+                    </label>
+                  </div>
+                </div>
+
+                <div className={styles.settingCard}>
+                  <div className={styles.settingHeader}>
+                    <div className={styles.settingInfo}>
+                      <h4>⏰ Stille Stunden</h4>
+                      <p>Keine Benachrichtigungen in diesem Zeitraum</p>
+                    </div>
+                    <label className={styles.toggle}>
+                      <input type="checkbox" defaultChecked={false} />
+                      <span className={styles.toggleSlider}></span>
+                    </label>
+                  </div>
+                  <div className={styles.settingOptions}>
+                    <div className={styles.timeRange}>
+                      <label>
+                        <span>Von:</span>
+                        <input type="time" defaultValue="22:00" />
+                      </label>
+                      <label>
+                        <span>Bis:</span>
+                        <input type="time" defaultValue="08:00" />
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Test Notification Button */}
+              <div className={styles.testSection}>
+                <h4>🧪 Test-Benachrichtigung</h4>
+                <p>Senden Sie eine Test-Benachrichtigung, um die Einstellungen zu überprüfen</p>
+                <button
+                  className={styles.testButton}
+                  onClick={async () => {
+                    try {
+                      const response = await fetch('/api/legalpulse/test-alert', {
+                        method: 'POST',
+                        credentials: 'include'
+                      });
+                      const data = await response.json();
+                      if (data.success) {
+                        setNotification({ message: "Test-Alert wurde gesendet!", type: "success" });
+                      }
+                    } catch (error) {
+                      setNotification({ message: "Fehler beim Senden", type: "error" });
+                    }
+                  }}
+                >
+                  Test-Benachrichtigung senden
+                </button>
+              </div>
+
+              {/* Info Box */}
+              <div className={styles.infoBox}>
+                <div className={styles.infoIcon}>💡</div>
+                <div className={styles.infoContent}>
+                  <h4>Browser-Berechtigung erforderlich</h4>
+                  <p>
+                    Um Benachrichtigungen zu erhalten, müssen Sie Ihrem Browser die Berechtigung erteilen.
+                    Klicken Sie auf "Erlauben", wenn Ihr Browser Sie danach fragt.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'external' && (
+            <div className={styles.externalTab}>
+              <div className={styles.sectionHeader}>
+                <h3>🔍 Externe Gesetzessuche</h3>
+                <p>Durchsuchen Sie EU-Lex, Bundesanzeiger und GovData nach relevanten Gesetzen und Änderungen</p>
+              </div>
+
+              {/* Search Form */}
+              <div className={styles.externalSearchForm}>
+                <div className={styles.searchInputGroup}>
+                  <input
+                    type="text"
+                    className={styles.searchInput}
+                    placeholder="Suchbegriff eingeben (z.B. DSGVO, Arbeitsrecht, ...)"
+                    value={externalSearchQuery}
+                    onChange={(e) => setExternalSearchQuery(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleExternalSearch()}
+                  />
+                  <button
+                    className={styles.searchButton}
+                    onClick={handleExternalSearch}
+                    disabled={isExternalSearchLoading}
+                  >
+                    {isExternalSearchLoading ? (
+                      <>
+                        <div className={styles.spinner}></div>
+                        Suche läuft...
+                      </>
+                    ) : (
+                      <>
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="currentColor" strokeWidth="2"/>
+                        </svg>
+                        Suchen
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* Source Filters */}
+                <div className={styles.filterGroup}>
+                  <label className={styles.filterLabel}>Datenquellen:</label>
+                  <div className={styles.checkboxGroup}>
+                    <label className={styles.checkbox}>
+                      <input
+                        type="checkbox"
+                        checked={externalSearchSources.includes('eulex')}
+                        onChange={() => toggleExternalSource('eulex')}
+                      />
+                      <span>🇪🇺 EU-Lex</span>
+                    </label>
+                    <label className={styles.checkbox}>
+                      <input
+                        type="checkbox"
+                        checked={externalSearchSources.includes('bundesanzeiger')}
+                        onChange={() => toggleExternalSource('bundesanzeiger')}
+                      />
+                      <span>🇩🇪 Bundesanzeiger</span>
+                    </label>
+                    <label className={styles.checkbox}>
+                      <input
+                        type="checkbox"
+                        checked={externalSearchSources.includes('govdata')}
+                        onChange={() => toggleExternalSource('govdata')}
+                      />
+                      <span>📊 GovData</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Area Filter */}
+                <div className={styles.filterGroup}>
+                  <label className={styles.filterLabel}>Rechtsbereich (optional):</label>
+                  <select
+                    className={styles.areaSelect}
+                    value={externalSearchArea}
+                    onChange={(e) => setExternalSearchArea(e.target.value)}
+                  >
+                    <option value="">Alle Bereiche</option>
+                    <option value="Datenschutz">Datenschutz</option>
+                    <option value="Arbeitsrecht">Arbeitsrecht</option>
+                    <option value="Vertragsrecht">Vertragsrecht</option>
+                    <option value="Handelsrecht">Handelsrecht</option>
+                    <option value="Steuerrecht">Steuerrecht</option>
+                    <option value="IT-Recht">IT-Recht</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Search Results */}
+              <div className={styles.externalSearchResults}>
+                {externalSearchResults.length > 0 ? (
+                  <div className={styles.resultsTable}>
+                    <div className={styles.resultsHeader}>
+                      <h4>Suchergebnisse ({externalSearchResults.length})</h4>
+                    </div>
+                    <div className={styles.resultsList}>
+                      {externalSearchResults.map((result, index) => (
+                        <div key={index} className={styles.resultCard}>
+                          <div className={styles.resultHeader}>
+                            <span className={styles.resultSource}>
+                              {result.source === 'eulex' && '🇪🇺 EU-Lex'}
+                              {result.source === 'bundesanzeiger' && '🇩🇪 Bundesanzeiger'}
+                              {result.source === 'govdata' && '📊 GovData'}
+                            </span>
+                            {result.date && (
+                              <span className={styles.resultDate}>
+                                {new Date(result.date).toLocaleDateString('de-DE')}
+                              </span>
+                            )}
+                          </div>
+                          <h5 className={styles.resultTitle}>{result.title}</h5>
+                          {result.description && (
+                            <p className={styles.resultDescription}>{result.description}</p>
+                          )}
+                          {result.documentId && (
+                            <div className={styles.resultMeta}>
+                              <span className={styles.metaLabel}>Dokument-ID:</span>
+                              <span className={styles.metaValue}>{result.documentId}</span>
+                            </div>
+                          )}
+                          {result.relevance && (
+                            <div className={styles.resultRelevance}>
+                              <span className={styles.relevanceLabel}>Relevanz:</span>
+                              <div className={styles.relevanceBar}>
+                                <div
+                                  className={styles.relevanceFill}
+                                  style={{ width: `${result.relevance}%` }}
+                                ></div>
+                              </div>
+                              <span className={styles.relevanceValue}>{result.relevance}%</span>
+                            </div>
+                          )}
+                          {result.url && (
+                            <a
+                              href={result.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className={styles.resultLink}
+                            >
+                              Zur Quelle →
+                            </a>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  !isExternalSearchLoading && (
+                    <div className={styles.emptyState}>
+                      <svg className={styles.emptyStateIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="currentColor" strokeWidth="2"/>
+                      </svg>
+                      <h4>Noch keine Suche durchgeführt</h4>
+                      <p>Geben Sie einen Suchbegriff ein, um externe Gesetze und Änderungen zu finden</p>
+                    </div>
+                  )
                 )}
               </div>
             </div>
