@@ -1,10 +1,10 @@
-/* Legal Pulse Seite - Apple-like Design */
+/* Legal Pulse Seite - Full-Screen Design */
 .legalPulseContainer {
   min-height: 100vh;
   background: #fafafa;
-  padding: 24px;
-  max-width: 1400px;
-  margin: 0 auto;
+  padding: 40px 60px;
+  width: 100%;
+  margin: 0;
 }
 
 /* ===== HERO SECTION ===== */
@@ -12,12 +12,15 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 80px 0 120px 0;
+  padding: 80px 60px 120px 60px;
   gap: 80px;
   background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
   border-radius: 24px;
   margin-bottom: 80px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  max-width: 1600px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .heroContent {
@@ -120,6 +123,9 @@
 /* ===== HEADER SECTION (Detail View) ===== */
 .headerSection {
   margin-bottom: 40px;
+  max-width: 1600px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .backButton {
@@ -186,6 +192,9 @@
 /* ===== SCORE SECTION ===== */
 .scoreSection {
   margin-bottom: 48px;
+  max-width: 1600px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .scoreCard {
@@ -342,6 +351,9 @@
   margin-bottom: 32px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   border: 1px solid #f1f5f9;
+  max-width: 1600px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .tabButton {
@@ -388,6 +400,9 @@
   border: 1px solid #f1f5f9;
   margin-bottom: 48px;
   animation: tabContentSlide 0.3s ease-out;
+  max-width: 1600px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 @keyframes tabContentSlide {
@@ -742,6 +757,9 @@
 /* ===== CONTRACTS SECTION ===== */
 .contractsSection {
   margin-bottom: 80px;
+  max-width: 1800px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .sectionHeader {
@@ -797,8 +815,10 @@
 
 .contractsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 32px;
+  max-width: 1800px;
+  margin: 0 auto;
 }
 
 .contractCard {
@@ -1297,12 +1317,22 @@
 }
 
 /* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 1400px) {
+  .legalPulseContainer {
+    padding: 30px 40px;
+  }
+}
+
 @media (max-width: 1200px) {
+  .legalPulseContainer {
+    padding: 24px 30px;
+  }
+
   .overviewGrid {
     grid-template-columns: 1fr;
     gap: 32px;
   }
-  
+
   .contractsGrid {
     grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
   }
@@ -1310,7 +1340,7 @@
 
 @media (max-width: 768px) {
   .legalPulseContainer {
-    padding: 16px;
+    padding: 20px;
   }
   
   .heroSection {
