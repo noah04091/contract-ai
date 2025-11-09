@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 
 interface PulseEvent {
   type: 'alert' | 'update' | 'connected' | 'test';
-  data?: any;
+  data?: Record<string, unknown>;
   message?: string;
   connectionId?: string;
   timestamp: string;
