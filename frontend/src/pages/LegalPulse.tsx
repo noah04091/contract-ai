@@ -94,6 +94,11 @@ export default function LegalPulse() {
   const [externalSearchResults, setExternalSearchResults] = useState<ExternalSearchResult[]>([]);
   const [isExternalSearchLoading, setIsExternalSearchLoading] = useState(false);
 
+  // Filter and Search State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [riskFilter, setRiskFilter] = useState<'all' | 'critical' | 'high' | 'medium' | 'low'>('all');
+  const [sortBy, setSortBy] = useState<'date' | 'name' | 'risk'>('date');
+
   // Enhanced Mock-Daten für Demo-Zwecke
   const enrichContractWithMockData = (contract: Contract): Contract => {
     const riskScore = contract.legalPulse?.riskScore || Math.floor(Math.random() * 100);
@@ -223,6 +228,58 @@ export default function LegalPulse() {
     if (score <= 30) return '#10b981';
     if (score <= 60) return '#f59e0b';
     return '#ef4444';
+  };
+
+  // Filter and Sort Contracts
+  const getFilteredAndSortedContracts = () => {
+    let filtered = [...contracts];
+
+    // Search filter
+    if (searchQuery.trim()) {
+      filtered = filtered.filter(contract =>
+        contract.name.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    // Risk level filter
+    if (riskFilter !== 'all') {
+      filtered = filtered.filter(contract => {
+        const score = contract.legalPulse?.riskScore;
+        if (score === null || score === undefined) return false;
+
+        switch(riskFilter) {
+          case 'low':
+            return score <= 30;
+          case 'medium':
+            return score > 30 && score <= 60;
+          case 'high':
+            return score > 60 && score <= 80;
+          case 'critical':
+            return score > 80;
+          default:
+            return true;
+        }
+      });
+    }
+
+    // Sort
+    filtered.sort((a, b) => {
+      switch(sortBy) {
+        case 'name':
+          return a.name.localeCompare(b.name);
+        case 'risk':
+          const aScore = a.legalPulse?.riskScore || 0;
+          const bScore = b.legalPulse?.riskScore || 0;
+          return bScore - aScore; // Highest risk first
+        case 'date':
+        default:
+          const aDate = new Date(a.legalPulse?.lastAnalysis || a.createdAt || 0);
+          const bDate = new Date(b.legalPulse?.lastAnalysis || b.createdAt || 0);
+          return bDate.getTime() - aDate.getTime(); // Most recent first
+      }
+    });
+
+    return filtered;
   };
 
   // Event Handlers
@@ -1495,6 +1552,108 @@ export default function LegalPulse() {
           </div>
         </div>
 
+        {/* Filter and Search Bar */}
+        {!isLoading && contracts.length > 0 && (
+          <div className={styles.filterSection}>
+            <div className={styles.filterBar}>
+              {/* Search Input */}
+              <div className={styles.searchBox}>
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={styles.searchIcon}>
+                  <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="currentColor" strokeWidth="2"/>
+                </svg>
+                <input
+                  type="text"
+                  placeholder="Verträge durchsuchen..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className={styles.searchInput}
+                />
+                {searchQuery && (
+                  <button
+                    className={styles.clearSearchButton}
+                    onClick={() => setSearchQuery('')}
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+
+              {/* Quick Filters */}
+              <div className={styles.quickFilters}>
+                <button
+                  className={`${styles.quickFilterButton} ${riskFilter === 'all' ? styles.active : ''}`}
+                  onClick={() => setRiskFilter('all')}
+                >
+                  Alle
+                </button>
+                <button
+                  className={`${styles.quickFilterButton} ${styles.critical} ${riskFilter === 'critical' ? styles.active : ''}`}
+                  onClick={() => setRiskFilter('critical')}
+                >
+                  🔴 Kritisch
+                </button>
+                <button
+                  className={`${styles.quickFilterButton} ${styles.high} ${riskFilter === 'high' ? styles.active : ''}`}
+                  onClick={() => setRiskFilter('high')}
+                >
+                  ⚠️ Hoch
+                </button>
+                <button
+                  className={`${styles.quickFilterButton} ${styles.medium} ${riskFilter === 'medium' ? styles.active : ''}`}
+                  onClick={() => setRiskFilter('medium')}
+                >
+                  ⚡ Mittel
+                </button>
+                <button
+                  className={`${styles.quickFilterButton} ${styles.low} ${riskFilter === 'low' ? styles.active : ''}`}
+                  onClick={() => setRiskFilter('low')}
+                >
+                  ✅ Niedrig
+                </button>
+              </div>
+
+              {/* Sort Dropdown */}
+              <div className={styles.sortBox}>
+                <label htmlFor="sort-select" className={styles.sortLabel}>
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={styles.sortIcon}>
+                    <path d="M3 6H21" stroke="currentColor" strokeWidth="2"/>
+                    <path d="M7 12H21" stroke="currentColor" strokeWidth="2"/>
+                    <path d="M11 18H21" stroke="currentColor" strokeWidth="2"/>
+                  </svg>
+                </label>
+                <select
+                  id="sort-select"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as 'date' | 'name' | 'risk')}
+                  className={styles.sortSelect}
+                >
+                  <option value="date">Neueste zuerst</option>
+                  <option value="risk">Höchstes Risiko zuerst</option>
+                  <option value="name">Name (A-Z)</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Results Count */}
+            <div className={styles.resultsInfo}>
+              <span className={styles.resultsCount}>
+                {getFilteredAndSortedContracts().length} von {contracts.length} Verträgen
+              </span>
+              {(searchQuery || riskFilter !== 'all') && (
+                <button
+                  className={styles.resetFiltersButton}
+                  onClick={() => {
+                    setSearchQuery('');
+                    setRiskFilter('all');
+                  }}
+                >
+                  Filter zurücksetzen
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
         {isLoading ? (
           <div className={styles.loadingContainer}>
             <div className={styles.loadingSpinner}></div>
@@ -1502,7 +1661,7 @@ export default function LegalPulse() {
           </div>
         ) : contracts.length > 0 ? (
           <div className={styles.contractsGrid}>
-            {contracts.map((contract) => {
+            {getFilteredAndSortedContracts().map((contract) => {
               const riskLevel = getRiskLevel(contract.legalPulse?.riskScore || null);
               return (
                 <div 
