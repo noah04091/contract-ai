@@ -79,7 +79,7 @@ export const usePushNotifications = (): UsePushNotificationsResult => {
     }
 
     try {
-      const notification = new Notification(options.title, {
+      const notificationOptions: NotificationOptions & { vibrate?: number[] } = {
         body: options.body,
         icon: options.icon || '/logo.png',
         badge: options.badge || '/badge.png',
@@ -87,8 +87,14 @@ export const usePushNotifications = (): UsePushNotificationsResult => {
         data: options.data || {},
         requireInteraction: options.requireInteraction || false,
         silent: options.silent || false,
-        vibrate: options.vibrate || [200, 100, 200]
-      });
+      };
+
+      // Add vibrate if supported (not all browsers/TypeScript defs support it)
+      if (options.vibrate && 'vibrate' in navigator) {
+        notificationOptions.vibrate = options.vibrate;
+      }
+
+      const notification = new Notification(options.title, notificationOptions);
 
       // Auto-close after 10 seconds
       setTimeout(() => {
