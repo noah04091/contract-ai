@@ -14,11 +14,12 @@
     "@aws-sdk/lib-storage": "^3.837.0",
     "@aws-sdk/s3-request-presigner": "^3.837.0",
     "@sparticuz/chromium": "^138.0.2",
+    "@tensorflow/tfjs-node": "^4.22.0",
     "aws-sdk": "^2.1692.0",
     "axios": "^1.12.2",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^3.0.2",
-    "cheerio": "^1.1.0",
+    "cheerio": "^1.1.2",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
@@ -39,6 +40,7 @@
     "pdfkit": "^0.17.1",
     "puppeteer-core": "^24.24.1",
     "qrcode": "^1.5.4",
-    "stripe": "^18.0.0"
+    "stripe": "^18.0.0",
+    "xml2js": "^0.6.2"
   }
 }

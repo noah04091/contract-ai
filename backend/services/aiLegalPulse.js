@@ -3,13 +3,18 @@ const { OpenAI } = require("openai");
 const fs = require("fs").promises;
 const pdfParse = require("pdf-parse");
 const path = require("path");
+const { getInstance: getLawEmbeddings } = require("./lawEmbeddings");
 
 class AILegalPulse {
   constructor() {
-    this.openai = new OpenAI({ 
-      apiKey: process.env.OPENAI_API_KEY 
+    this.openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY
     });
-    
+
+    // RAG Integration
+    this.lawEmbeddings = getLawEmbeddings();
+    this.useRAG = true; // Enable RAG by default
+
     // Legal analysis prompts
     this.prompts = {
       riskAnalysis: `Du bist ein erfahrener Rechtsanwalt, spezialisiert auf Vertragsrecht. 
@@ -81,9 +86,9 @@ Bewerte jede Compliance-Kategorie und gib konkrete Verbesserungsvorschläge.`
       const finalRiskScore = this.calculateFinalRiskScore(aiAnalysis, contract);
       
       // 5. Legal Pulse Objekt erstellen
-      const legalPulse = this.createLegalPulseResult(aiAnalysis, finalRiskScore);
-      
-      console.log(`✅ AI-Analyse abgeschlossen für ${contract.name} (Score: ${finalRiskScore})`);
+      const legalPulse = this.createLegalPulseResult(aiAnalysis, finalRiskScore, contract);
+
+      console.log(`✅ AI-Analyse abgeschlossen für ${contract.name} (Score: ${finalRiskScore}, Health: ${legalPulse.healthScore})`);
       return legalPulse;
       
     } catch (error) {
@@ -123,15 +128,29 @@ Bewerte jede Compliance-Kategorie und gib konkrete Verbesserungsvorschläge.`
     };
   }
 
-  // Haupt-AI-Analyse
+  // Haupt-AI-Analyse (Enhanced with RAG)
   async performAIAnalysis(contractText, contractInfo) {
     // Wenn kein Text verfügbar, nutze nur Basis-Informationen
     if (!contractText || contractText.length < 100) {
       return await this.analyzeBasicInfo(contractInfo);
     }
 
-    // Vollanalyse mit Vertragstext
-    return await this.analyzeFullContract(contractText, contractInfo);
+    // RAG: Query relevant law sections
+    let relevantLaws = [];
+    if (this.useRAG) {
+      try {
+        relevantLaws = await this.lawEmbeddings.queryRelevantSections({
+          text: contractText,
+          topK: 5
+        });
+        console.log(`[AI-LEGAL-PULSE] RAG: Found ${relevantLaws.length} relevant law sections`);
+      } catch (error) {
+        console.error('[AI-LEGAL-PULSE] RAG query failed, continuing without:', error);
+      }
+    }
+
+    // Vollanalyse mit Vertragstext + RAG-Kontext
+    return await this.analyzeFullContract(contractText, contractInfo, relevantLaws);
   }
 
   // Analyse nur mit Basis-Informationen
@@ -168,8 +187,20 @@ Basiere deine Analyse auf typischen Risiken für diese Art von Vertrag.`;
     }
   }
 
-  // Vollanalyse mit Vertragstext
-  async analyzeFullContract(contractText, contractInfo) {
+  // Vollanalyse mit Vertragstext (Enhanced with RAG)
+  async analyzeFullContract(contractText, contractInfo, relevantLaws = []) {
+    // Build RAG context
+    let ragContext = '';
+    if (relevantLaws.length > 0) {
+      ragContext = '\n\nRELEVANTE GESETZLICHE GRUNDLAGEN (aus Datenbank):\n';
+      relevantLaws.forEach((law, index) => {
+        ragContext += `\n${index + 1}. ${law.lawId} ${law.sectionId}: ${law.title}\n`;
+        ragContext += `   ${law.text.substring(0, 300)}...\n`;
+        ragContext += `   Quelle: ${law.sourceUrl}\n`;
+        ragContext += `   Relevanz: ${(law.relevance * 100).toFixed(1)}%\n`;
+      });
+    }
+
     const prompt = `Analysiere diesen Vertrag:
 
 VERTRAGSECKDATEN:
@@ -180,6 +211,7 @@ Status: ${contractInfo.status}
 
 VERTRAGSTEXT:
 ${contractText}
+${ragContext}
 
 ${this.prompts.riskAnalysis}`;
 
@@ -187,9 +219,9 @@ ${this.prompts.riskAnalysis}`;
       const response = await this.openai.chat.completions.create({
         model: "gpt-4",
         messages: [
-          { 
-            role: "system", 
-            content: "Du bist ein erfahrener Rechtsanwalt für deutsches Vertragsrecht. Analysiere den Vertrag professionell und objektiv." 
+          {
+            role: "system",
+            content: "Du bist ein erfahrener Rechtsanwalt für deutsches Vertragsrecht. Analysiere den Vertrag professionell und objektiv. Berücksichtige die bereitgestellten relevanten Gesetzesgrundlagen in deiner Analyse."
           },
           { role: "user", content: prompt }
         ],
@@ -276,10 +308,13 @@ ${this.prompts.riskAnalysis}`;
     return Math.round(riskScore);
   }
 
-  // Legal Pulse Result erstellen
-  createLegalPulseResult(aiAnalysis, finalRiskScore) {
-    return {
+  // Legal Pulse Result erstellen (Enhanced for 2.0)
+  createLegalPulseResult(aiAnalysis, finalRiskScore, contract = null) {
+    const healthScore = this.calculateHealthScore(finalRiskScore, contract);
+
+    const result = {
       riskScore: finalRiskScore,
+      healthScore: healthScore,
       summary: aiAnalysis.summary,
       lastChecked: new Date(),
       lawInsights: this.generateLawInsights(aiAnalysis),
@@ -290,6 +325,38 @@ ${this.prompts.riskAnalysis}`;
       analysisDate: new Date(),
       aiGenerated: true
     };
+
+    // Add to analysis history
+    if (!result.analysisHistory) {
+      result.analysisHistory = [];
+    }
+
+    result.analysisHistory.push({
+      date: new Date(),
+      riskScore: finalRiskScore,
+      healthScore: healthScore,
+      changes: ['Initial analysis completed'],
+      triggeredBy: 'periodic_scan'
+    });
+
+    return result;
+  }
+
+  // Calculate Health Score (Legal Pulse 2.0)
+  calculateHealthScore(riskScore, contract) {
+    // Base health = inverse of risk
+    let health = 100 - (riskScore * 0.5);
+
+    // Age penalty (if contract provided)
+    if (contract) {
+      const uploadDate = contract.uploadedAt || contract.createdAt || new Date();
+      const ageInDays = (new Date() - new Date(uploadDate)) / (1000 * 60 * 60 * 24);
+      const ageInYears = ageInDays / 365;
+      const agePenalty = Math.min(10, ageInYears * 2);
+      health -= agePenalty;
+    }
+
+    return Math.min(100, Math.max(0, Math.round(health)));
   }
 
   // Law Insights generieren

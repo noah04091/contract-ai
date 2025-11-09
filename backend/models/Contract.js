@@ -88,12 +88,54 @@ const contractSchema = new mongoose.Schema({
     default: null
   },
 
-  // Legal Pulse
+  // Legal Pulse 2.0
   legalPulse: {
-    riskScore: Number,
+    // Core Metrics
+    riskScore: { type: Number, default: 0, min: 0, max: 100 },
+    healthScore: { type: Number, default: 100, min: 0, max: 100 },
     riskSummary: String,
     lastChecked: Date,
-    lawInsights: [mongoose.Schema.Types.Mixed],
+
+    // Analysis History
+    analysisHistory: [{
+      date: { type: Date, default: Date.now },
+      riskScore: Number,
+      healthScore: Number,
+      changes: [String],
+      triggeredBy: {
+        type: String,
+        enum: ['law_change', 'periodic_scan', 'manual', 'init'],
+        default: 'periodic_scan'
+      }
+    }],
+
+    // Law Insights (Enhanced)
+    lawInsights: [{
+      law: String,                  // "DSGVO Art. 13"
+      sectionId: String,            // "Art.13(1)"
+      sourceUrl: String,            // Link to source
+      relevance: { type: Number, min: 0, max: 1 }, // Cosine similarity
+      lastUpdate: Date,
+      area: String                  // Rechtsgebiet
+    }],
+
+    // Market Benchmark (Placeholder for Phase 2)
+    marketBenchmark: {
+      percentile: Number,
+      avgScore: Number,
+      suggestion: String
+    },
+
+    // Predictive Alerts (Placeholder for Phase 2)
+    predictiveAlerts: [{
+      type: { type: String, enum: ['forecast', 'law_change', 'deadline', 'risk_increase'] },
+      probability: { type: Number, min: 0, max: 1 },
+      daysUntilImpact: Number,
+      description: String,
+      createdAt: { type: Date, default: Date.now }
+    }],
+
+    // Legacy fields (keep for backwards compatibility)
     marketSuggestions: [mongoose.Schema.Types.Mixed]
   }
 });

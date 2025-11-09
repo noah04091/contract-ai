@@ -3,9 +3,10 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { Helmet } from "react-helmet";
 import styles from "./LegalPulse.module.css";
 import Notification from "../components/Notification";
-import { 
+import { useLegalPulseFeed } from "../hooks/useLegalPulseFeed";
+import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  AreaChart, Area 
+  AreaChart, Area
 } from 'recharts';
 
 interface Contract {
@@ -22,11 +23,27 @@ interface Contract {
   createdAt?: string;
   legalPulse?: {
     riskScore: number | null;
+    healthScore?: number;
     lastAnalysis?: string;
+    lastChecked?: string;
     lastRecommendation?: string;
     topRisks?: string[];
     recommendations?: string[];
     scoreHistory?: Array<{date: string, score: number}>;
+    analysisHistory?: Array<{
+      date: string;
+      riskScore: number;
+      healthScore?: number;
+      changes: string[];
+      triggeredBy: string;
+    }>;
+    lawInsights?: Array<{
+      law: string;
+      sectionId: string;
+      sourceUrl?: string;
+      relevance?: number;
+      area?: string;
+    }>;
   };
 }
 
@@ -51,11 +68,14 @@ export default function LegalPulse() {
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [notification, setNotification] = useState<{ message: string; type: "success" | "error" } | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'risks' | 'recommendations' | 'history'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'risks' | 'recommendations' | 'history' | 'feed'>('overview');
   const [showRiskModal, setShowRiskModal] = useState(false);
   const [selectedRisk, setSelectedRisk] = useState<RiskDetail | null>(null);
   const [completedRecommendations, setCompletedRecommendations] = useState<RecommendationStatus>({});
   const [showTooltip, setShowTooltip] = useState<{ [key: string]: boolean }>({});
+
+  // Legal Pulse 2.0: Live Feed
+  const { events: feedEvents, isConnected: feedConnected, clearEvents } = useLegalPulseFeed();
 
   // Enhanced Mock-Daten für Demo-Zwecke
   const enrichContractWithMockData = (contract: Contract): Contract => {
@@ -302,7 +322,7 @@ export default function LegalPulse() {
               <h2>Risiko-Score</h2>
             </div>
             <div className={styles.scoreDisplay}>
-              <div 
+              <div
                 className={styles.scoreCircle}
                 style={{ '--score-color': riskLevel.color, '--score': selectedContract.legalPulse?.riskScore || 0 } as React.CSSProperties}
               >
@@ -313,7 +333,7 @@ export default function LegalPulse() {
               </div>
               <div className={styles.riskLevel}>
                 <span className={styles.riskIcon}>{riskLevel.icon}</span>
-                <span 
+                <span
                   className={styles.riskLabel}
                   style={{ color: riskLevel.color }}
                 >
@@ -321,6 +341,22 @@ export default function LegalPulse() {
                 </span>
               </div>
             </div>
+
+            {/* Health Score Badge */}
+            {selectedContract.legalPulse?.healthScore !== undefined && (
+              <div className={styles.healthScoreBadge}>
+                <span className={styles.healthLabel}>Legal Health:</span>
+                <span
+                  className={styles.healthValue}
+                  style={{
+                    color: selectedContract.legalPulse.healthScore >= 80 ? '#10b981' :
+                           selectedContract.legalPulse.healthScore >= 50 ? '#f59e0b' : '#ef4444'
+                  }}
+                >
+                  {selectedContract.legalPulse.healthScore}/100
+                </span>
+              </div>
+            )}
             
             {scoreHistory.length > 0 && (
               <div className={styles.scoreTrend}>
@@ -386,7 +422,7 @@ export default function LegalPulse() {
             </svg>
             Empfehlungen ({selectedContract.legalPulse?.recommendations?.length || 0})
           </button>
-          <button 
+          <button
             className={`${styles.tabButton} ${activeTab === 'history' ? styles.active : ''}`}
             onClick={() => setActiveTab('history')}
           >
@@ -395,6 +431,16 @@ export default function LegalPulse() {
               <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" strokeWidth="2"/>
             </svg>
             Historie
+          </button>
+          <button
+            className={`${styles.tabButton} ${activeTab === 'feed' ? styles.active : ''}`}
+            onClick={() => setActiveTab('feed')}
+          >
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" strokeWidth="2"/>
+            </svg>
+            Live Feed {feedEvents.length > 0 && `(${feedEvents.length})`}
+            {feedConnected && <span className={styles.liveDot}></span>}
           </button>
         </div>
 
@@ -590,6 +636,74 @@ export default function LegalPulse() {
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'feed' && (
+            <div className={styles.feedTab}>
+              <div className={styles.sectionHeader}>
+                <h3>⚡ Live Feed</h3>
+                <p>Echtzeit-Benachrichtigungen zu Gesetzesänderungen und Risiken</p>
+                <div className={styles.feedStatus}>
+                  <span className={feedConnected ? styles.statusConnected : styles.statusDisconnected}>
+                    {feedConnected ? '🟢 Verbunden' : '🔴 Nicht verbunden'}
+                  </span>
+                  {feedEvents.length > 0 && (
+                    <button className={styles.clearButton} onClick={clearEvents}>
+                      Alle löschen
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className={styles.feedList}>
+                {feedEvents.length > 0 ? (
+                  [...feedEvents].reverse().map((event, index) => (
+                    <div
+                      key={index}
+                      className={`${styles.feedEvent} ${styles[`type-${event.type}`]}`}
+                    >
+                      <div className={styles.feedEventHeader}>
+                        <span className={styles.feedEventType}>
+                          {event.type === 'alert' ? '⚠️' :
+                           event.type === 'connected' ? '✅' :
+                           event.type === 'test' ? '🧪' : '📢'}
+                          {' '}
+                          {event.type.toUpperCase()}
+                        </span>
+                        <span className={styles.feedEventTime}>
+                          {new Date(event.timestamp).toLocaleTimeString('de-DE')}
+                        </span>
+                      </div>
+
+                      {event.message && (
+                        <div className={styles.feedEventMessage}>{event.message}</div>
+                      )}
+
+                      {event.data && (
+                        <div className={styles.feedEventData}>
+                          <strong>{event.data.title || 'Keine Titel'}</strong>
+                          <p>{event.data.description || ''}</p>
+
+                          {event.data.actionUrl && (
+                            <button
+                              className={styles.feedActionButton}
+                              onClick={() => navigate(event.data.actionUrl)}
+                            >
+                              Zur Aktion
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <div className={styles.emptyState}>
+                    <p>Keine Benachrichtigungen</p>
+                    <small>Live-Benachrichtigungen erscheinen hier automatisch</small>
+                  </div>
+                )}
               </div>
             </div>
           )}

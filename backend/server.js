@@ -732,6 +732,69 @@ const connectDB = async () => {
       console.error("❌ Fehler bei Legal Pulse Routen:", err);
     }
 
+    // ✅ 14.1 LEGAL PULSE FEED (SSE)
+    try {
+      const legalPulseFeedRoutes = require("./routes/legalPulseFeed");
+      app.use("/api/legalpulse", legalPulseFeedRoutes);
+      console.log("✅ Legal Pulse Feed (SSE) geladen unter /api/legalpulse/stream");
+    } catch (err) {
+      console.error("❌ Fehler bei Legal Pulse Feed Routen:", err);
+    }
+
+    // ✅ 14.2 LEGAL PULSE NOTIFICATIONS (Phase 2)
+    try {
+      const pulseNotificationsRoutes = require("./routes/pulseNotifications");
+      app.use("/api/pulse-notifications", verifyToken, pulseNotificationsRoutes);
+      console.log("✅ Legal Pulse Notifications geladen unter /api/pulse-notifications");
+    } catch (err) {
+      console.error("❌ Fehler bei Legal Pulse Notifications:", err);
+    }
+
+    // ✅ 14.3 AUTOMATED ACTIONS (Phase 2)
+    try {
+      const automatedActionsRoutes = require("./routes/automatedActions");
+      app.use("/api/automated-actions", verifyToken, automatedActionsRoutes);
+      console.log("✅ Automated Actions geladen unter /api/automated-actions");
+    } catch (err) {
+      console.error("❌ Fehler bei Automated Actions:", err);
+    }
+
+    // ✅ 14.4 PREDICTIVE ANALYTICS & FORECAST (Phase 2)
+    try {
+      const predictiveRoutes = require("./routes/predictiveAnalytics");
+      app.use("/api/predictive", verifyToken, predictiveRoutes);
+      console.log("✅ Predictive Analytics geladen unter /api/predictive");
+    } catch (err) {
+      console.error("❌ Fehler bei Predictive Analytics:", err);
+    }
+
+    // ✅ 14.5 EXTERNAL LEGAL APIS (Phase 3)
+    try {
+      const externalLegalAPIsRoutes = require("./routes/externalLegalAPIs");
+      app.use("/api/external-legal", verifyToken, externalLegalAPIsRoutes);
+      console.log("✅ External Legal APIs geladen unter /api/external-legal");
+    } catch (err) {
+      console.error("❌ Fehler bei External Legal APIs:", err);
+    }
+
+    // ✅ 14.6 MARKET BENCHMARKING (Phase 3)
+    try {
+      const benchmarkingRoutes = require("./routes/benchmarking");
+      app.use("/api/benchmarking", verifyToken, benchmarkingRoutes);
+      console.log("✅ Market Benchmarking geladen unter /api/benchmarking");
+    } catch (err) {
+      console.error("❌ Fehler bei Market Benchmarking:", err);
+    }
+
+    // ✅ 14.7 ML FORECASTING API (Phase 3)
+    try {
+      const mlForecastingRoutes = require("./routes/mlForecasting");
+      app.use("/api/ml-forecast", verifyToken, mlForecastingRoutes);
+      console.log("✅ ML Forecasting API geladen unter /api/ml-forecast");
+    } catch (err) {
+      console.error("❌ Fehler bei ML Forecasting API:", err);
+    }
+
     // ✅ 15. S3 ROUTES
     try {
       const s3Routes = require("./routes/s3Routes");
