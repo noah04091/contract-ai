@@ -165,9 +165,14 @@ export default function LegalPulse() {
       try {
         const contractsResponse = await fetch("/api/contracts", { credentials: "include" });
         const contractsData = await contractsResponse.json();
-        
+
+        // Handle both array and object responses
+        const contractsArray = Array.isArray(contractsData)
+          ? contractsData
+          : (contractsData.contracts || []);
+
         // Enrich contracts with mock Legal Pulse data
-        const enrichedContracts = contractsData.map(enrichContractWithMockData);
+        const enrichedContracts = contractsArray.map(enrichContractWithMockData);
         setContracts(enrichedContracts);
         
         if (contractId) {

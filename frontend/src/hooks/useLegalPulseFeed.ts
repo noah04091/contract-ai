@@ -51,7 +51,24 @@ export function useLegalPulseFeed(): UseLegalPulseFeedReturn {
     }
 
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      // Determine API URL based on environment
+      const getApiUrl = () => {
+        // Try env variable first
+        if (import.meta.env.VITE_API_URL) {
+          return import.meta.env.VITE_API_URL;
+        }
+
+        // Auto-detect based on current hostname
+        const hostname = window.location.hostname;
+        if (hostname === 'localhost' || hostname === '127.0.0.1') {
+          return 'http://localhost:5000';
+        }
+
+        // Production: use api subdomain
+        return 'https://api.contract-ai.de';
+      };
+
+      const apiUrl = getApiUrl();
       const url = `${apiUrl}/api/legalpulse/stream`;
 
       console.log('[Legal Pulse Feed] Connecting to:', url);
