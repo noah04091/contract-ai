@@ -3,9 +3,17 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 
+interface PulseEventData {
+  title?: string;
+  description?: string;
+  actionUrl?: string;
+  severity?: string;
+  [key: string]: string | number | boolean | undefined;
+}
+
 interface PulseEvent {
   type: 'alert' | 'update' | 'connected' | 'test';
-  data?: Record<string, unknown>;
+  data?: PulseEventData;
   message?: string;
   connectionId?: string;
   timestamp: string;

@@ -3,13 +3,20 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
+interface NotificationData {
+  url?: string;
+  severity?: string;
+  timestamp?: string;
+  [key: string]: string | number | boolean | undefined;
+}
+
 interface PushNotificationOptions {
   title: string;
   body: string;
   icon?: string;
   badge?: string;
   tag?: string;
-  data?: Record<string, unknown>;
+  data?: NotificationData;
   requireInteraction?: boolean;
   silent?: boolean;
   vibrate?: number[];

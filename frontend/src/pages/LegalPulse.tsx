@@ -689,7 +689,11 @@ export default function LegalPulse() {
                           {event.data.actionUrl && (
                             <button
                               className={styles.feedActionButton}
-                              onClick={() => navigate(event.data.actionUrl)}
+                              onClick={() => {
+                                if (event.data?.actionUrl) {
+                                  navigate(event.data.actionUrl);
+                                }
+                              }}
                             >
                               Zur Aktion
                             </button>
