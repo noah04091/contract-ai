@@ -444,7 +444,7 @@ export default function LegalPulse() {
 
       // Send contract ID and any available storage info
       // Backend will handle both S3 and legacy local storage
-      const response = await fetch('/api/optimizer/start-from-legalpulse', {
+      const response = await fetch('/api/optimize/start-from-legalpulse', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

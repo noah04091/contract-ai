@@ -4607,4 +4607,50 @@ router.post("/start-from-legalpulse", verifyToken, async (req, res) => {
   }
 });
 
+/**
+ * 🆕 GET Optimizer Job Data
+ * GET /api/optimize/:jobId
+ * Lädt Optimizer-Job Daten für die Optimizer-Page
+ */
+router.get("/:jobId", verifyToken, async (req, res) => {
+  try {
+    const { jobId } = req.params;
+    const userId = req.user.userId;
+
+    console.log(`[LP-OPTIMIZER] Fetching job ${jobId} for user ${userId}`);
+
+    // Fetch job from optimizations collection
+    const optimizationCollection = db.collection("optimizations");
+    const job = await optimizationCollection.findOne({
+      _id: new ObjectId(jobId),
+      userId: userId
+    });
+
+    if (!job) {
+      return res.status(404).json({
+        success: false,
+        message: "Optimizer-Job nicht gefunden oder keine Berechtigung"
+      });
+    }
+
+    console.log(`[LP-OPTIMIZER] Job found:`, {
+      jobId: job._id,
+      contractId: job.contractId,
+      status: job.status,
+      hasLegalPulseContext: !!job.legalPulseContext,
+      storageType: job.sourceFile?.storageType
+    });
+
+    res.json(job);
+
+  } catch (error) {
+    console.error('[LP-OPTIMIZER] Error fetching job:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Fehler beim Laden des Optimizer-Jobs',
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;
