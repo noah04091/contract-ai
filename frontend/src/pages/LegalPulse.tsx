@@ -424,10 +424,29 @@ export default function LegalPulse() {
 
   // Legal Pulse → Optimizer Handoff
   const handleStartOptimizer = async () => {
-    if (!selectedContract) return;
+    if (!selectedContract) {
+      console.log('[LP-OPTIMIZER] Kein Vertrag ausgewählt');
+      return;
+    }
+
+    console.log('[LP-OPTIMIZER] Starting optimizer for contract:', selectedContract._id);
+    console.log('[LP-OPTIMIZER] S3 Key:', selectedContract.s3Key);
+    console.log('[LP-OPTIMIZER] S3 Location:', selectedContract.s3Location);
+
+    // Check if contract has S3 data
+    if (!selectedContract.s3Key || !selectedContract.s3Location) {
+      setNotification({
+        message: 'Dieser Vertrag hat keine S3-Daten. Bitte laden Sie den Vertrag erneut hoch.',
+        type: 'error'
+      });
+      console.error('[LP-OPTIMIZER] Contract missing S3 data');
+      return;
+    }
 
     setIsStartingOptimizer(true);
     try {
+      console.log('[LP-OPTIMIZER] Sending API request...');
+
       const response = await fetch('/api/optimizer/start-from-legalpulse', {
         method: 'POST',
         headers: {
@@ -443,12 +462,20 @@ export default function LegalPulse() {
         })
       });
 
+      console.log('[LP-OPTIMIZER] Response status:', response.status);
       const data = await response.json();
+      console.log('[LP-OPTIMIZER] Response data:', data);
 
       if (data.success && data.jobId) {
-        console.log('[LP-OPTIMIZER] Job created:', data.jobId);
+        console.log('[LP-OPTIMIZER] Job created successfully:', data.jobId);
+        setNotification({
+          message: 'Optimierung wird gestartet...',
+          type: 'success'
+        });
         // Navigate to optimizer page with jobId
-        navigate(`/optimizer/${data.jobId}`);
+        setTimeout(() => {
+          navigate(`/optimizer/${data.jobId}`);
+        }, 500);
       } else {
         setNotification({
           message: data.message || 'Fehler beim Starten der Optimierung',
@@ -503,7 +530,7 @@ export default function LegalPulse() {
             <button
               className={styles.optimizeButton}
               onClick={handleStartOptimizer}
-              disabled={isStartingOptimizer || !selectedContract.s3Key}
+              disabled={isStartingOptimizer}
             >
               {isStartingOptimizer ? (
                 <>
@@ -765,14 +792,15 @@ export default function LegalPulse() {
                       </svg>
                       Empfehlungen umsetzen
                     </button>
-                    <button 
+                    <button
                       className={`${styles.actionButton} ${styles.primaryAction}`}
-                      onClick={() => navigate('/optimizer')}
+                      onClick={handleStartOptimizer}
+                      disabled={isStartingOptimizer}
                     >
                       <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M12 2L15.09 8.26L22 9L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9L8.91 8.26L12 2Z" stroke="currentColor" strokeWidth="2"/>
                       </svg>
-                      Vertrag optimieren
+                      {isStartingOptimizer ? 'Wird gestartet...' : 'Vertrag optimieren'}
                     </button>
                   </div>
                 </div>
