@@ -747,6 +747,27 @@
 }
 
 /* ===== HISTORY TAB ===== */
+.chartLegend {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  font-size: 0.9rem;
+  color: #1e40af;
+  line-height: 1.4;
+}
+
+.legendIcon {
+  width: 20px;
+  height: 20px;
+  color: #3b82f6;
+  flex-shrink: 0;
+}
+
 .historyChart {
   background: #fafafa;
   border-radius: 12px;
@@ -847,7 +868,7 @@
 
 .searchInput {
   width: 100%;
-  padding: 14px 46px 14px 48px;
+  padding: 14px 46px 14px 52px;
   border: 2px solid #e5e7eb;
   border-radius: 12px;
   font-size: 0.95rem;
@@ -2058,6 +2079,44 @@
 .resultCard:hover {
   border-color: #3b82f6;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.loadMoreContainer {
+  padding: 24px;
+  display: flex;
+  justify-content: center;
+}
+
+.loadMoreButton {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 32px;
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.3);
+}
+
+.loadMoreButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+}
+
+.loadMoreButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.loadMoreButton svg {
+  width: 18px;
+  height: 18px;
 }
 
 .resultHeader {

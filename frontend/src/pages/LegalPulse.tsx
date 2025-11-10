@@ -93,6 +93,8 @@ export default function LegalPulse() {
   const [externalSearchArea, setExternalSearchArea] = useState('');
   const [externalSearchResults, setExternalSearchResults] = useState<ExternalSearchResult[]>([]);
   const [isExternalSearchLoading, setIsExternalSearchLoading] = useState(false);
+  const [externalSearchHasMore, setExternalSearchHasMore] = useState(false);
+  const [externalSearchOffset, setExternalSearchOffset] = useState(0);
 
   // Filter and Search State
   const [searchQuery, setSearchQuery] = useState('');
@@ -343,7 +345,7 @@ export default function LegalPulse() {
   };
 
   // External Legal Search Handler
-  const handleExternalSearch = async () => {
+  const handleExternalSearch = async (append = false) => {
     if (!externalSearchQuery.trim()) {
       setNotification({ message: "Bitte geben Sie einen Suchbegriff ein", type: "error" });
       return;
@@ -351,10 +353,12 @@ export default function LegalPulse() {
 
     setIsExternalSearchLoading(true);
     try {
+      const offset = append ? externalSearchOffset : 0;
       const params = new URLSearchParams({
         query: externalSearchQuery,
         sources: externalSearchSources.join(','),
-        limit: '20'
+        limit: '100',
+        offset: offset.toString()
       });
 
       if (externalSearchArea) {
@@ -368,11 +372,25 @@ export default function LegalPulse() {
       const data = await response.json();
 
       if (data.success) {
-        setExternalSearchResults(data.results || []);
-        setNotification({
-          message: `${data.count || 0} Ergebnisse gefunden`,
-          type: "success"
-        });
+        const newResults = data.results || [];
+
+        if (append) {
+          setExternalSearchResults(prev => [...prev, ...newResults]);
+        } else {
+          setExternalSearchResults(newResults);
+          setExternalSearchOffset(0);
+        }
+
+        // Check if there are more results
+        setExternalSearchHasMore(newResults.length === 100);
+        setExternalSearchOffset(append ? offset + newResults.length : newResults.length);
+
+        if (!append) {
+          setNotification({
+            message: `${newResults.length} Ergebnisse gefunden${newResults.length === 100 ? ' (mehr verfügbar)' : ''}`,
+            type: "success"
+          });
+        }
       } else {
         setNotification({ message: data.message || "Fehler bei der Suche", type: "error" });
       }
@@ -382,6 +400,10 @@ export default function LegalPulse() {
     } finally {
       setIsExternalSearchLoading(false);
     }
+  };
+
+  const handleLoadMoreResults = () => {
+    handleExternalSearch(true);
   };
 
   const toggleExternalSource = (source: string) => {
@@ -495,14 +517,14 @@ export default function LegalPulse() {
                     <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                     <XAxis dataKey="date" stroke="#64748b" fontSize={11} />
                     <YAxis stroke="#64748b" fontSize={11} domain={[0, 100]} />
-                    <Tooltip 
+                    <Tooltip
                       contentStyle={{
                         backgroundColor: '#ffffff',
                         border: '1px solid #e2e8f0',
                         borderRadius: '8px',
                         boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                       }}
-                      formatter={(value: number) => [`${value}/100`, 'Score']}
+                      formatter={(value: number) => [`${Number(value).toFixed(1)}/100`, 'Score']}
                     />
                     <Line 
                       type="monotone" 
@@ -777,6 +799,12 @@ export default function LegalPulse() {
                 <h3>📊 Analyse-Historie</h3>
                 <p>Entwicklung des Risiko-Scores über Zeit</p>
               </div>
+              <div className={styles.chartLegend}>
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={styles.legendIcon}>
+                  <path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" strokeWidth="2"/>
+                </svg>
+                <span>Zeitverlauf des Risiko-Scores (0–100); höher = riskanter</span>
+              </div>
               <div className={styles.historyContent}>
                 <div className={styles.historyChart}>
                   <ResponsiveContainer width="100%" height={300}>
@@ -784,14 +812,14 @@ export default function LegalPulse() {
                       <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                       <XAxis dataKey="date" stroke="#64748b" fontSize={12} />
                       <YAxis stroke="#64748b" fontSize={12} domain={[0, 100]} />
-                      <Tooltip 
+                      <Tooltip
                         contentStyle={{
                           backgroundColor: '#ffffff',
                           border: '1px solid #e2e8f0',
                           borderRadius: '8px',
                           boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                         }}
-                        formatter={(value: number) => [`${value}/100`, 'Risiko-Score']}
+                        formatter={(value: number) => [`${Number(value).toFixed(1)}/100`, 'Risiko-Score']}
                       />
                       <Area 
                         type="monotone" 
@@ -1076,8 +1104,8 @@ export default function LegalPulse() {
           {activeTab === 'notifications' && (
             <div className={styles.notificationsTab}>
               <div className={styles.sectionHeader}>
-                <h3>🔔 Push-Benachrichtigungen</h3>
-                <p>Konfigurieren Sie Browser-Benachrichtigungen für wichtige Legal Pulse Events</p>
+                <h3>📧 E-Mail-Benachrichtigungen</h3>
+                <p>Konfigurieren Sie E-Mail-Benachrichtigungen für wichtige Legal Pulse Events</p>
               </div>
 
               {/* Notification Settings */}
@@ -1085,11 +1113,11 @@ export default function LegalPulse() {
                 <div className={styles.settingCard}>
                   <div className={styles.settingHeader}>
                     <div className={styles.settingInfo}>
-                      <h4>🔔 Browser-Benachrichtigungen</h4>
-                      <p>Erhalten Sie sofortige Benachrichtigungen bei wichtigen Ereignissen</p>
+                      <h4>📧 E-Mail-Benachrichtigungen</h4>
+                      <p>Erhalten Sie E-Mails bei wichtigen Ereignissen</p>
                     </div>
                     <label className={styles.toggle}>
-                      <input type="checkbox" defaultChecked={false} />
+                      <input type="checkbox" defaultChecked={true} />
                       <span className={styles.toggleSlider}></span>
                     </label>
                   </div>
@@ -1195,10 +1223,10 @@ export default function LegalPulse() {
               <div className={styles.infoBox}>
                 <div className={styles.infoIcon}>💡</div>
                 <div className={styles.infoContent}>
-                  <h4>Browser-Berechtigung erforderlich</h4>
+                  <h4>E-Mail-Benachrichtigungen</h4>
                   <p>
-                    Um Benachrichtigungen zu erhalten, müssen Sie Ihrem Browser die Berechtigung erteilen.
-                    Klicken Sie auf "Erlauben", wenn Ihr Browser Sie danach fragt.
+                    Sie erhalten E-Mails an Ihre registrierte Adresse. Prüfen Sie auch Ihren Spam-Ordner.
+                    In-App-Benachrichtigungen (Live Feed) bleiben weiterhin aktiv.
                   </p>
                 </div>
               </div>
@@ -1225,7 +1253,7 @@ export default function LegalPulse() {
                   />
                   <button
                     className={styles.searchButton}
-                    onClick={handleExternalSearch}
+                    onClick={() => handleExternalSearch(false)}
                     disabled={isExternalSearchLoading}
                   >
                     {isExternalSearchLoading ? (
@@ -1351,6 +1379,31 @@ export default function LegalPulse() {
                         </div>
                       ))}
                     </div>
+
+                    {/* Load More Button */}
+                    {externalSearchHasMore && (
+                      <div className={styles.loadMoreContainer}>
+                        <button
+                          className={styles.loadMoreButton}
+                          onClick={handleLoadMoreResults}
+                          disabled={isExternalSearchLoading}
+                        >
+                          {isExternalSearchLoading ? (
+                            <>
+                              <div className={styles.spinner}></div>
+                              Lädt...
+                            </>
+                          ) : (
+                            <>
+                              Mehr laden
+                              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M19 9L12 16L5 9" stroke="currentColor" strokeWidth="2"/>
+                              </svg>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   !isExternalSearchLoading && (
