@@ -4609,10 +4609,10 @@ router.post("/start-from-legalpulse", verifyToken, async (req, res) => {
 
 /**
  * 🆕 GET Optimizer Job Data
- * GET /api/optimize/:jobId
+ * GET /api/optimize/job/:jobId
  * Lädt Optimizer-Job Daten für die Optimizer-Page
  */
-router.get("/:jobId", verifyToken, async (req, res) => {
+router.get("/job/:jobId", verifyToken, async (req, res) => {
   try {
     const { jobId } = req.params;
     const userId = req.user.userId;

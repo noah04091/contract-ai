@@ -689,7 +689,7 @@ export default function Optimizer() {
           console.log('[LP-OPTIMIZER] Loading job:', jobId);
 
           // Fetch job data
-          const jobRes = await fetch(`/api/optimize/${jobId}`, {
+          const jobRes = await fetch(`/api/optimize/job/${jobId}`, {
             credentials: "include"
           });
 
