@@ -269,15 +269,17 @@ export default function LegalPulse() {
       switch(sortBy) {
         case 'name':
           return a.name.localeCompare(b.name);
-        case 'risk':
+        case 'risk': {
           const aScore = a.legalPulse?.riskScore || 0;
           const bScore = b.legalPulse?.riskScore || 0;
           return bScore - aScore; // Highest risk first
+        }
         case 'date':
-        default:
+        default: {
           const aDate = new Date(a.legalPulse?.lastAnalysis || a.createdAt || 0);
           const bDate = new Date(b.legalPulse?.lastAnalysis || b.createdAt || 0);
           return bDate.getTime() - aDate.getTime(); // Most recent first
+        }
       }
     });
 
