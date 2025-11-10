@@ -4476,4 +4476,85 @@ router.get("/stats/summary", verifyToken, async (req, res) => {
   }
 });
 
+/**
+ * 🆕 Legal Pulse → Optimizer Handoff
+ * POST /api/optimizer/start-from-legalpulse
+ * Erstellt einen Optimizer-Job basierend auf Legal Pulse Erkenntnissen
+ */
+router.post("/start-from-legalpulse", verifyToken, async (req, res) => {
+  try {
+    const { contractId, s3Key, s3Location, risks, recommendations } = req.body;
+    const userId = req.user.userId;
+
+    console.log(`[LP-OPTIMIZER] Handoff request from user ${userId} for contract ${contractId}`);
+
+    // Validate required fields
+    if (!contractId || !s3Key || !s3Location) {
+      return res.status(400).json({
+        success: false,
+        message: "Fehlende erforderliche Felder: contractId, s3Key, s3Location"
+      });
+    }
+
+    // Verify contract exists and belongs to user
+    const contract = await contractsCollection.findOne({
+      _id: new ObjectId(contractId),
+      userId: userId
+    });
+
+    if (!contract) {
+      return res.status(404).json({
+        success: false,
+        message: "Vertrag nicht gefunden oder keine Berechtigung"
+      });
+    }
+
+    // Create unique job ID
+    const jobId = new ObjectId().toString();
+
+    // Create OptimizerJob document
+    const optimizerJob = {
+      _id: new ObjectId(jobId),
+      userId: userId,
+      contractId: new ObjectId(contractId),
+      contractName: contract.name || 'Unbenannter Vertrag',
+      sourceFile: {
+        s3Key: s3Key,
+        s3Location: s3Location,
+        s3Bucket: process.env.S3_BUCKET_NAME || 'contract-ai-uploads'
+      },
+      legalPulseContext: {
+        risks: risks || [],
+        recommendations: recommendations || [],
+        riskScore: contract.legalPulse?.riskScore || null,
+        complianceScore: contract.legalPulse?.complianceScore || null
+      },
+      status: 'pending',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    // Insert into optimizations collection
+    const optimizationCollection = db.collection("optimizations");
+    await optimizationCollection.insertOne(optimizerJob);
+
+    console.log(`✅ [LP-OPTIMIZER] Job created: ${jobId} for contract ${contractId}`);
+
+    res.json({
+      success: true,
+      jobId: jobId,
+      redirectUrl: `/optimizer/${jobId}`,
+      message: 'Optimizer-Job erfolgreich erstellt'
+    });
+
+  } catch (error) {
+    console.error('[LP-OPTIMIZER] Error creating job:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Fehler beim Erstellen des Optimizer-Jobs',
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;

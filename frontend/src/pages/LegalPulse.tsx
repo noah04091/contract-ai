@@ -18,6 +18,9 @@ interface Contract {
   status?: string;
   uploadedAt?: string;
   filePath?: string;
+  s3Key?: string;
+  s3Location?: string;
+  s3Bucket?: string;
   reminder?: boolean;
   isGenerated?: boolean;
   createdAt?: string;
@@ -100,6 +103,9 @@ export default function LegalPulse() {
   const [searchQuery, setSearchQuery] = useState('');
   const [riskFilter, setRiskFilter] = useState<'all' | 'critical' | 'high' | 'medium' | 'low'>('all');
   const [sortBy, setSortBy] = useState<'date' | 'name' | 'risk'>('date');
+
+  // Optimizer Integration
+  const [isStartingOptimizer, setIsStartingOptimizer] = useState(false);
 
   // Enhanced Mock-Daten für Demo-Zwecke
   const enrichContractWithMockData = (contract: Contract): Contract => {
@@ -416,6 +422,50 @@ export default function LegalPulse() {
     );
   };
 
+  // Legal Pulse → Optimizer Handoff
+  const handleStartOptimizer = async () => {
+    if (!selectedContract) return;
+
+    setIsStartingOptimizer(true);
+    try {
+      const response = await fetch('/api/optimizer/start-from-legalpulse', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          contractId: selectedContract._id,
+          s3Key: selectedContract.s3Key,
+          s3Location: selectedContract.s3Location,
+          risks: selectedContract.legalPulse?.topRisks || [],
+          recommendations: selectedContract.legalPulse?.recommendations || []
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.jobId) {
+        console.log('[LP-OPTIMIZER] Job created:', data.jobId);
+        // Navigate to optimizer page with jobId
+        navigate(`/optimizer/${data.jobId}`);
+      } else {
+        setNotification({
+          message: data.message || 'Fehler beim Starten der Optimierung',
+          type: 'error'
+        });
+      }
+    } catch (error) {
+      console.error('[LP-OPTIMIZER] Error:', error);
+      setNotification({
+        message: 'Fehler beim Starten der Optimierung',
+        type: 'error'
+      });
+    } finally {
+      setIsStartingOptimizer(false);
+    }
+  };
+
   // Detailansicht für einzelnen Vertrag
   if (contractId && selectedContract) {
     const riskLevel = getRiskLevel(selectedContract.legalPulse?.riskScore || null);
@@ -438,17 +488,39 @@ export default function LegalPulse() {
 
         {/* Header */}
         <div className={styles.headerSection}>
-          <button 
-            className={styles.backButton}
-            onClick={() => navigate('/legalpulse')}
-          >
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M19 12H5" stroke="currentColor" strokeWidth="2"/>
-              <path d="M12 19L5 12L12 5" stroke="currentColor" strokeWidth="2"/>
-            </svg>
-            Zurück zur Übersicht
-          </button>
-          
+          <div className={styles.headerTop}>
+            <button
+              className={styles.backButton}
+              onClick={() => navigate('/legalpulse')}
+            >
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M19 12H5" stroke="currentColor" strokeWidth="2"/>
+                <path d="M12 19L5 12L12 5" stroke="currentColor" strokeWidth="2"/>
+              </svg>
+              Zurück zur Übersicht
+            </button>
+
+            <button
+              className={styles.optimizeButton}
+              onClick={handleStartOptimizer}
+              disabled={isStartingOptimizer || !selectedContract.s3Key}
+            >
+              {isStartingOptimizer ? (
+                <>
+                  <div className={styles.spinner}></div>
+                  Wird gestartet...
+                </>
+              ) : (
+                <>
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M13 10V3L4 14h7v7l9-11h-7z" fill="currentColor"/>
+                  </svg>
+                  Vertrag optimieren
+                </>
+              )}
+            </button>
+          </div>
+
           <div className={styles.contractHeader}>
             <div className={styles.contractTitle}>
               <h1>{selectedContract.name}</h1>

@@ -128,6 +128,13 @@
   margin-right: auto;
 }
 
+.headerTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 32px;
+}
+
 .backButton {
   display: inline-flex;
   align-items: center;
@@ -141,7 +148,6 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
-  margin-bottom: 32px;
 }
 
 .backButton:hover {
@@ -152,6 +158,39 @@
 .backButton svg {
   width: 16px;
   height: 16px;
+}
+
+.optimizeButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 28px;
+  background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 14px rgba(139, 92, 246, 0.3);
+}
+
+.optimizeButton:hover:not(:disabled) {
+  background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+}
+
+.optimizeButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.optimizeButton svg {
+  width: 18px;
+  height: 18px;
 }
 
 .contractHeader {
