@@ -707,17 +707,36 @@ export default function Optimizer() {
           // Set contract name
           setPreloadedContractName(jobData.contractName || "Unbekannter Vertrag");
 
-          // Load PDF from S3
-          if (jobData.sourceFile && jobData.sourceFile.s3Location) {
-            // Get presigned URL
-            const viewRes = await fetch(`/api/s3/view?s3Key=${jobData.sourceFile.s3Key}`, {
-              credentials: "include"
-            });
+          // Load PDF based on storage type
+          if (jobData.sourceFile) {
+            let pdfUrl;
 
-            if (!viewRes.ok) throw new Error("PDF konnte nicht abgerufen werden");
+            // Handle both S3 and legacy local storage
+            if (jobData.sourceFile.storageType === 'LOCAL_LEGACY' && jobData.contractId) {
+              console.log('[LP-OPTIMIZER] Loading legacy contract from contractId:', jobData.contractId);
+              // Legacy local storage - use contractId
+              const viewRes = await fetch(`/api/s3/view?contractId=${jobData.contractId}`, {
+                credentials: "include"
+              });
 
-            const viewData = await viewRes.json();
-            const pdfUrl = viewData.url;
+              if (!viewRes.ok) throw new Error("PDF konnte nicht abgerufen werden");
+
+              const viewData = await viewRes.json();
+              pdfUrl = viewData.url;
+            } else if (jobData.sourceFile.s3Location) {
+              console.log('[LP-OPTIMIZER] Loading S3 contract from s3Key:', jobData.sourceFile.s3Key);
+              // Modern S3 storage
+              const viewRes = await fetch(`/api/s3/view?s3Key=${jobData.sourceFile.s3Key}`, {
+                credentials: "include"
+              });
+
+              if (!viewRes.ok) throw new Error("PDF konnte nicht abgerufen werden");
+
+              const viewData = await viewRes.json();
+              pdfUrl = viewData.url;
+            } else {
+              throw new Error("Keine gültige Datei-Quelle gefunden");
+            }
 
             // Download PDF as blob
             const pdfRes = await fetch(pdfUrl);

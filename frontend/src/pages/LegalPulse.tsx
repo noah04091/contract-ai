@@ -430,23 +430,20 @@ export default function LegalPulse() {
     }
 
     console.log('[LP-OPTIMIZER] Starting optimizer for contract:', selectedContract._id);
-    console.log('[LP-OPTIMIZER] S3 Key:', selectedContract.s3Key);
-    console.log('[LP-OPTIMIZER] S3 Location:', selectedContract.s3Location);
-
-    // Check if contract has S3 data
-    if (!selectedContract.s3Key || !selectedContract.s3Location) {
-      setNotification({
-        message: 'Dieser Vertrag hat keine S3-Daten. Bitte laden Sie den Vertrag erneut hoch.',
-        type: 'error'
-      });
-      console.error('[LP-OPTIMIZER] Contract missing S3 data');
-      return;
-    }
+    console.log('[LP-OPTIMIZER] Contract has S3 Key:', !!selectedContract.s3Key);
+    console.log('[LP-OPTIMIZER] Contract has filePath:', !!selectedContract.filePath);
+    console.log('[LP-OPTIMIZER] Full contract storage info:', {
+      s3Key: selectedContract.s3Key,
+      s3Location: selectedContract.s3Location,
+      filePath: selectedContract.filePath
+    });
 
     setIsStartingOptimizer(true);
     try {
       console.log('[LP-OPTIMIZER] Sending API request...');
 
+      // Send contract ID and any available storage info
+      // Backend will handle both S3 and legacy local storage
       const response = await fetch('/api/optimizer/start-from-legalpulse', {
         method: 'POST',
         headers: {
@@ -455,8 +452,8 @@ export default function LegalPulse() {
         credentials: 'include',
         body: JSON.stringify({
           contractId: selectedContract._id,
-          s3Key: selectedContract.s3Key,
-          s3Location: selectedContract.s3Location,
+          s3Key: selectedContract.s3Key, // May be undefined for legacy contracts
+          s3Location: selectedContract.s3Location, // May be undefined for legacy contracts
           risks: selectedContract.legalPulse?.topRisks || [],
           recommendations: selectedContract.legalPulse?.recommendations || []
         })

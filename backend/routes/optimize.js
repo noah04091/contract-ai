@@ -4509,10 +4509,10 @@ router.post("/start-from-legalpulse", verifyToken, async (req, res) => {
     console.log(`[LP-OPTIMIZER] Handoff request from user ${userId} for contract ${contractId}`);
 
     // Validate required fields
-    if (!contractId || !s3Key || !s3Location) {
+    if (!contractId) {
       return res.status(400).json({
         success: false,
-        message: "Fehlende erforderliche Felder: contractId, s3Key, s3Location"
+        message: "Fehlende erforderliche Felder: contractId"
       });
     }
 
@@ -4529,8 +4529,42 @@ router.post("/start-from-legalpulse", verifyToken, async (req, res) => {
       });
     }
 
+    console.log(`[LP-OPTIMIZER] Contract found:`, {
+      hasS3Key: !!contract.s3Key,
+      hasFilePath: !!contract.filePath,
+      s3Key: contract.s3Key,
+      filePath: contract.filePath
+    });
+
     // Create unique job ID
     const jobId = new ObjectId().toString();
+
+    // Determine source file location (support both S3 and legacy local storage)
+    let sourceFile;
+    if (contract.s3Key && contract.s3Location) {
+      // Modern S3 storage
+      sourceFile = {
+        s3Key: contract.s3Key,
+        s3Location: contract.s3Location,
+        s3Bucket: contract.s3Bucket || process.env.S3_BUCKET_NAME || 'contract-ai-uploads',
+        storageType: 'S3'
+      };
+      console.log(`[LP-OPTIMIZER] Using S3 storage: ${contract.s3Key}`);
+    } else if (contract.filePath) {
+      // Legacy local storage - store contractId for later retrieval via /api/s3/view
+      sourceFile = {
+        contractId: contractId,
+        filePath: contract.filePath,
+        storageType: 'LOCAL_LEGACY'
+      };
+      console.log(`[LP-OPTIMIZER] Using legacy local storage: ${contract.filePath}`);
+    } else {
+      console.error(`[LP-OPTIMIZER] Contract has no file storage information`);
+      return res.status(400).json({
+        success: false,
+        message: "Vertrag hat keine Datei-Informationen. Bitte laden Sie den Vertrag erneut hoch."
+      });
+    }
 
     // Create OptimizerJob document
     const optimizerJob = {
@@ -4538,11 +4572,7 @@ router.post("/start-from-legalpulse", verifyToken, async (req, res) => {
       userId: userId,
       contractId: new ObjectId(contractId),
       contractName: contract.name || 'Unbenannter Vertrag',
-      sourceFile: {
-        s3Key: s3Key,
-        s3Location: s3Location,
-        s3Bucket: process.env.S3_BUCKET_NAME || 'contract-ai-uploads'
-      },
+      sourceFile: sourceFile,
       legalPulseContext: {
         risks: risks || [],
         recommendations: recommendations || [],
