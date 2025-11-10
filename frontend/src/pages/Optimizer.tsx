@@ -726,7 +726,7 @@ export default function Optimizer() {
             } else if (jobData.sourceFile.s3Location) {
               console.log('[LP-OPTIMIZER] Loading S3 contract from s3Key:', jobData.sourceFile.s3Key);
               // Modern S3 storage
-              const viewRes = await fetch(`/api/s3/view?s3Key=${jobData.sourceFile.s3Key}`, {
+              const viewRes = await fetch(`/api/s3/view?key=${jobData.sourceFile.s3Key}`, {
                 credentials: "include"
               });
 
