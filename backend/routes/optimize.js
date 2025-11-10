@@ -4519,7 +4519,7 @@ router.post("/start-from-legalpulse", verifyToken, async (req, res) => {
     // Verify contract exists and belongs to user
     const contract = await contractsCollection.findOne({
       _id: new ObjectId(contractId),
-      userId: userId
+      userId: new ObjectId(userId)
     });
 
     if (!contract) {
@@ -4569,7 +4569,7 @@ router.post("/start-from-legalpulse", verifyToken, async (req, res) => {
     // Create OptimizerJob document
     const optimizerJob = {
       _id: new ObjectId(jobId),
-      userId: userId,
+      userId: new ObjectId(userId),
       contractId: new ObjectId(contractId),
       contractName: contract.name || 'Unbenannter Vertrag',
       sourceFile: sourceFile,
@@ -4623,7 +4623,7 @@ router.get("/:jobId", verifyToken, async (req, res) => {
     const optimizationCollection = db.collection("optimizations");
     const job = await optimizationCollection.findOne({
       _id: new ObjectId(jobId),
-      userId: userId
+      userId: new ObjectId(userId)
     });
 
     if (!job) {
