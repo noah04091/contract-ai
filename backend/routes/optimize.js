@@ -4355,12 +4355,27 @@ router.get("/history", verifyToken, async (req, res) => {
 router.get("/:requestId", verifyToken, async (req, res) => {
   try {
     const optimizationCollection = req.db.collection("optimizations");
-    
-    const optimization = await optimizationCollection.findOne({
-      requestId: req.params.requestId,
-      userId: req.user.userId
-    });
-    
+    const identifier = req.params.requestId;
+
+    // Try to find by requestId first (legacy), then by _id (new jobId from Legal Pulse)
+    let optimization;
+
+    // Check if identifier is a valid ObjectId
+    if (ObjectId.isValid(identifier) && identifier.length === 24) {
+      optimization = await optimizationCollection.findOne({
+        _id: new ObjectId(identifier),
+        userId: req.user.userId
+      });
+    }
+
+    // If not found, try by requestId (legacy)
+    if (!optimization) {
+      optimization = await optimizationCollection.findOne({
+        requestId: identifier,
+        userId: req.user.userId
+      });
+    }
+
     if (!optimization) {
       return res.status(404).json({
         success: false,
@@ -4368,11 +4383,16 @@ router.get("/:requestId", verifyToken, async (req, res) => {
         error: "NOT_FOUND"
       });
     }
-    
+
+    // Return optimization data with Legal Pulse context if available
     res.json({
       success: true,
       ...optimization.optimizationResult,
       contractName: optimization.contractName,
+      contractId: optimization.contractId,
+      sourceFile: optimization.sourceFile,
+      legalPulseContext: optimization.legalPulseContext,
+      status: optimization.status,
       createdAt: optimization.createdAt,
       metadata: optimization.metadata
     });

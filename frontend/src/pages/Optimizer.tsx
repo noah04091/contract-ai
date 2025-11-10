@@ -593,7 +593,7 @@ const isValidPdfText = (text: string | undefined): boolean => {
 export default function Optimizer() {
   // ✅ Navigation & Params
   const navigate = useNavigate();
-  const { contractId } = useParams<{ contractId?: string }>();
+  const { contractId, jobId } = useParams<{ contractId?: string; jobId?: string }>();
 
   // ✅ ORIGINAL: Core states
   const [file, setFile] = useState<File | null>(null);
@@ -605,6 +605,14 @@ export default function Optimizer() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [contractScore, setContractScore] = useState<ContractHealthScore | null>(null);
   const [preloadedContractName, setPreloadedContractName] = useState<string | null>(null);
+
+  // 🆕 Legal Pulse Context State
+  const [legalPulseContext, setLegalPulseContext] = useState<{
+    risks: string[];
+    recommendations: string[];
+    riskScore: number | null;
+    complianceScore: number | null;
+  } | null>(null);
   
   // ✅ ORIGINAL: Export & Pitch States + Portal Refs
   const [showExportMenu, setShowExportMenu] = useState(false);
@@ -672,6 +680,77 @@ export default function Optimizer() {
     };
     fetchPremiumStatus();
   }, []);
+
+  // 🆕 NEW: Load job from Legal Pulse handoff
+  useEffect(() => {
+    if (jobId && isPremium && !file) {
+      const loadJobFromLegalPulse = async () => {
+        try {
+          console.log('[LP-OPTIMIZER] Loading job:', jobId);
+
+          // Fetch job data
+          const jobRes = await fetch(`/api/optimizer/${jobId}`, {
+            credentials: "include"
+          });
+
+          if (!jobRes.ok) throw new Error("Job konnte nicht geladen werden");
+
+          const jobData = await jobRes.json();
+
+          console.log('[LP-OPTIMIZER] Job data:', jobData);
+
+          // Set Legal Pulse context if available
+          if (jobData.legalPulseContext) {
+            setLegalPulseContext(jobData.legalPulseContext);
+          }
+
+          // Set contract name
+          setPreloadedContractName(jobData.contractName || "Unbekannter Vertrag");
+
+          // Load PDF from S3
+          if (jobData.sourceFile && jobData.sourceFile.s3Location) {
+            // Get presigned URL
+            const viewRes = await fetch(`/api/s3/view?s3Key=${jobData.sourceFile.s3Key}`, {
+              credentials: "include"
+            });
+
+            if (!viewRes.ok) throw new Error("PDF konnte nicht abgerufen werden");
+
+            const viewData = await viewRes.json();
+            const pdfUrl = viewData.url;
+
+            // Download PDF as blob
+            const pdfRes = await fetch(pdfUrl);
+            if (!pdfRes.ok) throw new Error("PDF-Download fehlgeschlagen");
+
+            const blob = await pdfRes.blob();
+
+            // Convert blob to File object
+            const fileName = jobData.contractName || "vertrag.pdf";
+            const fileObj = new File([blob], fileName, { type: "application/pdf" });
+
+            setFile(fileObj);
+
+            // Auto-start optimization if status is pending
+            if (jobData.status === 'pending') {
+              console.log('[LP-OPTIMIZER] Auto-starting optimization...');
+              // Trigger optimization automatically
+              setTimeout(() => {
+                // We'll trigger handleUpload via the ref after file is set
+                // File is set above, so the user can click the button manually
+                // Or we can auto-trigger after a delay
+              }, 500);
+            }
+          }
+        } catch (error) {
+          console.error('[LP-OPTIMIZER] Error loading job:', error);
+          setError('Fehler beim Laden des Optimization-Jobs aus Legal Pulse');
+        }
+      };
+
+      loadJobFromLegalPulse();
+    }
+  }, [jobId, isPremium, file]);
 
   // ✅ NEW: Load contract from URL parameter
   useEffect(() => {
@@ -1505,6 +1584,157 @@ Konfidenz: ${opt.confidence}%\n`
               <div style={{ flex: 1 }}>
                 <strong style={{ color: '#0071e3' }}>Vertrag vorgeladen:</strong>
                 <span style={{ color: '#1d1d1f', marginLeft: '0.5rem' }}>{preloadedContractName}</span>
+              </div>
+            </motion.div>
+          )}
+
+          {/* 🆕 Legal Pulse Context Display */}
+          {legalPulseContext && (
+            <motion.div
+              style={{
+                background: 'linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)',
+                borderRadius: '16px',
+                padding: '2rem',
+                marginBottom: '2rem',
+                color: 'white',
+                boxShadow: '0 8px 24px rgba(139, 92, 246, 0.3)'
+              }}
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
+                <Zap size={28} style={{ color: '#fbbf24' }} />
+                <h3 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 700 }}>
+                  Legal Pulse Erkenntnisse
+                </h3>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
+                {/* Risk Score */}
+                {legalPulseContext.riskScore !== null && (
+                  <div style={{
+                    background: 'rgba(255, 255, 255, 0.15)',
+                    borderRadius: '12px',
+                    padding: '1.25rem',
+                    backdropFilter: 'blur(10px)'
+                  }}>
+                    <div style={{ fontSize: '0.9rem', opacity: 0.9, marginBottom: '0.5rem' }}>Risiko-Score</div>
+                    <div style={{ fontSize: '2rem', fontWeight: 700 }}>
+                      {legalPulseContext.riskScore}/100
+                    </div>
+                  </div>
+                )}
+
+                {/* Compliance Score */}
+                {legalPulseContext.complianceScore !== null && (
+                  <div style={{
+                    background: 'rgba(255, 255, 255, 0.15)',
+                    borderRadius: '12px',
+                    padding: '1.25rem',
+                    backdropFilter: 'blur(10px)'
+                  }}>
+                    <div style={{ fontSize: '0.9rem', opacity: 0.9, marginBottom: '0.5rem' }}>Compliance-Score</div>
+                    <div style={{ fontSize: '2rem', fontWeight: 700 }}>
+                      {legalPulseContext.complianceScore}/100
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Risks */}
+              {legalPulseContext.risks && legalPulseContext.risks.length > 0 && (
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    marginBottom: '1rem',
+                    fontSize: '1.1rem',
+                    fontWeight: 600
+                  }}>
+                    <AlertTriangle size={20} />
+                    Identifizierte Risiken ({legalPulseContext.risks.length})
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {legalPulseContext.risks.slice(0, 3).map((risk, index) => (
+                      <div
+                        key={index}
+                        style={{
+                          background: 'rgba(255, 255, 255, 0.1)',
+                          borderRadius: '8px',
+                          padding: '0.875rem 1rem',
+                          fontSize: '0.95rem',
+                          lineHeight: '1.5',
+                          borderLeft: '3px solid #fbbf24'
+                        }}
+                      >
+                        {risk}
+                      </div>
+                    ))}
+                    {legalPulseContext.risks.length > 3 && (
+                      <div style={{ fontSize: '0.9rem', opacity: 0.8, fontStyle: 'italic' }}>
+                        +{legalPulseContext.risks.length - 3} weitere Risiken
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Recommendations */}
+              {legalPulseContext.recommendations && legalPulseContext.recommendations.length > 0 && (
+                <div>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    marginBottom: '1rem',
+                    fontSize: '1.1rem',
+                    fontWeight: 600
+                  }}>
+                    <CheckCircle2 size={20} />
+                    Empfohlene Maßnahmen ({legalPulseContext.recommendations.length})
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {legalPulseContext.recommendations.slice(0, 3).map((recommendation, index) => (
+                      <div
+                        key={index}
+                        style={{
+                          background: 'rgba(255, 255, 255, 0.1)',
+                          borderRadius: '8px',
+                          padding: '0.875rem 1rem',
+                          fontSize: '0.95rem',
+                          lineHeight: '1.5',
+                          borderLeft: '3px solid #10b981'
+                        }}
+                      >
+                        {recommendation}
+                      </div>
+                    ))}
+                    {legalPulseContext.recommendations.length > 3 && (
+                      <div style={{ fontSize: '0.9rem', opacity: 0.8, fontStyle: 'italic' }}>
+                        +{legalPulseContext.recommendations.length - 3} weitere Empfehlungen
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div style={{
+                marginTop: '1.5rem',
+                padding: '1rem',
+                background: 'rgba(255, 255, 255, 0.1)',
+                borderRadius: '8px',
+                fontSize: '0.9rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem'
+              }}>
+                <Lightbulb size={18} style={{ flexShrink: 0 }} />
+                <span>
+                  Diese Erkenntnisse aus Legal Pulse werden in die Optimierung einbezogen und helfen dabei,
+                  gezielt die kritischsten Bereiche zu verbessern.
+                </span>
               </div>
             </motion.div>
           )}

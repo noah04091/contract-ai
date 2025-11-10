@@ -175,6 +175,7 @@ function AppWithLoader() {
             
             {/* ✨ KI-Vertragsoptimierung - Legendary Feature */}
             <Route path="/optimizer" element={<RequireAuth><Optimizer /></RequireAuth>} />
+            <Route path="/optimizer/:jobId" element={<RequireAuth><Optimizer /></RequireAuth>} />
             <Route path="/optimize/:contractId" element={<RequireAuth><Optimizer /></RequireAuth>} />
 
             {/* 🔍 Legal Pulse - Rechtliche Risikoanalyse */}
