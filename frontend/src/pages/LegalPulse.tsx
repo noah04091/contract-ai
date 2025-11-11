@@ -682,7 +682,15 @@ export default function LegalPulse() {
                         backgroundColor: '#ffffff',
                         border: '1px solid #e2e8f0',
                         borderRadius: '8px',
-                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                        color: '#1f2937'
+                      }}
+                      labelStyle={{
+                        color: '#1f2937',
+                        fontWeight: 600
+                      }}
+                      itemStyle={{
+                        color: '#1f2937'
                       }}
                       formatter={(value: number) => [`${Number(value).toFixed(1)}/100`, 'Score']}
                     />
@@ -978,7 +986,15 @@ export default function LegalPulse() {
                           backgroundColor: '#ffffff',
                           border: '1px solid #e2e8f0',
                           borderRadius: '8px',
-                          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                          color: '#1f2937'
+                        }}
+                        labelStyle={{
+                          color: '#1f2937',
+                          fontWeight: 600
+                        }}
+                        itemStyle={{
+                          color: '#1f2937'
                         }}
                         formatter={(value: number) => [`${Number(value).toFixed(1)}/100`, 'Risiko-Score']}
                       />
