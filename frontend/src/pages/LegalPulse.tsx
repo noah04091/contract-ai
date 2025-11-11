@@ -104,6 +104,15 @@ export default function LegalPulse() {
   const [riskFilter, setRiskFilter] = useState<'all' | 'critical' | 'high' | 'medium' | 'low'>('all');
   const [sortBy, setSortBy] = useState<'date' | 'name' | 'risk'>('date');
 
+  // Pagination State for Infinite Scroll
+  const [pagination, setPagination] = useState({
+    skip: 0,
+    limit: 20,
+    total: 0,
+    hasMore: true
+  });
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
   // Optimizer Integration
   const [isStartingOptimizer, setIsStartingOptimizer] = useState(false);
 
@@ -189,11 +198,13 @@ export default function LegalPulse() {
     };
   };
 
+  // Initial load with pagination
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        const contractsResponse = await fetch("/api/contracts", { credentials: "include" });
+        const url = `/api/contracts?limit=${pagination.limit}&skip=0`;
+        const contractsResponse = await fetch(url, { credentials: "include" });
         const contractsData = await contractsResponse.json();
 
         // Handle both array and object responses
@@ -201,10 +212,20 @@ export default function LegalPulse() {
           ? contractsData
           : (contractsData.contracts || []);
 
+        // Update pagination info
+        if (contractsData.pagination) {
+          setPagination({
+            skip: contractsData.pagination.skip + contractsArray.length,
+            limit: contractsData.pagination.limit,
+            total: contractsData.pagination.total,
+            hasMore: contractsData.pagination.hasMore
+          });
+        }
+
         // Enrich contracts with mock Legal Pulse data
         const enrichedContracts = contractsArray.map(enrichContractWithMockData);
         setContracts(enrichedContracts);
-        
+
         if (contractId) {
           const contract = enrichedContracts.find((c: Contract) => c._id === contractId);
           if (contract) {
@@ -220,9 +241,44 @@ export default function LegalPulse() {
         setIsLoading(false);
       }
     };
-    
+
     fetchData();
   }, [contractId]);
+
+  // Load more contracts (Infinite Scroll)
+  const loadMoreContracts = async () => {
+    if (isLoadingMore || !pagination.hasMore) return;
+
+    setIsLoadingMore(true);
+    try {
+      const url = `/api/contracts?limit=${pagination.limit}&skip=${pagination.skip}`;
+      const contractsResponse = await fetch(url, { credentials: "include" });
+      const contractsData = await contractsResponse.json();
+
+      const contractsArray = Array.isArray(contractsData)
+        ? contractsData
+        : (contractsData.contracts || []);
+
+      // Update pagination info
+      if (contractsData.pagination) {
+        setPagination({
+          skip: contractsData.pagination.skip + contractsArray.length,
+          limit: contractsData.pagination.limit,
+          total: contractsData.pagination.total,
+          hasMore: contractsData.pagination.hasMore
+        });
+      }
+
+      // Enrich and append new contracts
+      const enrichedContracts = contractsArray.map(enrichContractWithMockData);
+      setContracts(prev => [...prev, ...enrichedContracts]);
+    } catch (err) {
+      console.error("Error loading more contracts:", err);
+      setNotification({ message: "Fehler beim Laden weiterer Verträge", type: "error" });
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
 
   const getRiskLevel = (score: number | null) => {
     if (score === null || score === undefined) return { level: 'Unbekannt', color: '#6b7280', icon: '❓' };
@@ -1891,6 +1947,44 @@ export default function LegalPulse() {
                 </div>
               );
             })}
+
+            {/* Infinite Scroll Trigger & Load More Button */}
+            {pagination.hasMore && (
+              <div
+                ref={(node) => {
+                  if (node) {
+                    const observer = new IntersectionObserver(
+                      (entries) => {
+                        if (entries[0].isIntersecting && !isLoadingMore) {
+                          loadMoreContracts();
+                        }
+                      },
+                      { threshold: 0.1, rootMargin: '100px' }
+                    );
+                    observer.observe(node);
+                    return () => observer.disconnect();
+                  }
+                }}
+                className={styles.loadMoreContainer}
+              >
+                {isLoadingMore ? (
+                  <div className={styles.loadingMore}>
+                    <div className={styles.loadingSpinner}></div>
+                    <p>Lade weitere Verträge...</p>
+                  </div>
+                ) : (
+                  <button
+                    className={styles.loadMoreButton}
+                    onClick={loadMoreContracts}
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                    </svg>
+                    Mehr laden ({contracts.length} von {pagination.total})
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         ) : (
           <div className={styles.emptyState}>
