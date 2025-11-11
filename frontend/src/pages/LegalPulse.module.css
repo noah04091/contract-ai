@@ -884,6 +884,31 @@
 .filterSection {
   margin: 32px 0;
   animation: fadeIn 0.3s ease;
+  position: relative;
+}
+
+/* ✅ Subtile Lade-Anzeige während Filter/Suche */
+.filterLoadingIndicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: #1e40af;
+  margin-bottom: 12px;
+  animation: fadeIn 0.2s ease;
+}
+
+.miniSpinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #bfdbfe;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
 }
 
 .filterBar {

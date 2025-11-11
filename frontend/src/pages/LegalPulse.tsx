@@ -80,6 +80,7 @@ export default function LegalPulse() {
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isInitialLoading, setIsInitialLoading] = useState(true); // ✅ Separate state for initial load
   const [notification, setNotification] = useState<{ message: string; type: "success" | "error" } | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'risks' | 'recommendations' | 'history' | 'feed' | 'external' | 'benchmarking' | 'forecast' | 'notifications'>('overview');
   const [showRiskModal, setShowRiskModal] = useState(false);
@@ -113,7 +114,7 @@ export default function LegalPulse() {
   });
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const loadMoreRef = useRef<HTMLDivElement>(null); // ✅ Ref für IntersectionObserver
-  const isInitialLoadRef = useRef(true); // ✅ Track ob es der erste Load ist
+  const isFirstMountRef = useRef(true); // ✅ Skip first mount in filter useEffect
 
   // Optimizer Integration
   const [isStartingOptimizer, setIsStartingOptimizer] = useState(false);
@@ -202,10 +203,7 @@ export default function LegalPulse() {
 
   // ✅ Fetch Contracts mit Server-seitiger Filterung
   const fetchContracts = async () => {
-    // ✅ Nur beim ersten Load den Loading-State setzen, nicht bei Filter-Changes
-    if (isInitialLoadRef.current) {
-      setIsLoading(true);
-    }
+    setIsLoading(true);
     try {
       // ✅ Filter-Parameter ans Backend senden
       const params = new URLSearchParams({
@@ -250,10 +248,8 @@ export default function LegalPulse() {
       console.error("Error loading contracts:", err);
       setNotification({ message: "Fehler beim Laden der Daten", type: "error" });
     } finally {
-      if (isInitialLoadRef.current) {
-        setIsLoading(false);
-        isInitialLoadRef.current = false; // ✅ Nach erstem Load nicht mehr setzen
-      }
+      setIsLoading(false);
+      setIsInitialLoading(false); // ✅ Initial load is done
     }
   };
 
@@ -264,6 +260,12 @@ export default function LegalPulse() {
 
   // ✅ Reload bei Filter-Änderungen (mit Debouncing für Search)
   useEffect(() => {
+    // ✅ Überspringe First Mount (Initial Load useEffect übernimmt das)
+    if (isFirstMountRef.current) {
+      isFirstMountRef.current = false;
+      return;
+    }
+
     const debounceTimer = setTimeout(() => {
       console.log('🔄 Filter geändert, lade Contracts neu...');
       fetchContracts();
@@ -1768,14 +1770,22 @@ export default function LegalPulse() {
         </div>
 
         {/* Filter and Search Bar */}
-        {!isLoading && contracts.length > 0 && (
+        {!isInitialLoading && contracts.length > 0 && (
           <div className={styles.filterSection}>
+            {/* ✅ Subtile Lade-Anzeige während Filter/Suche (ohne Input zu unmounten) */}
+            {isLoading && (
+              <div className={styles.filterLoadingIndicator}>
+                <div className={styles.miniSpinner}></div>
+                <span>Suche läuft...</span>
+              </div>
+            )}
+
             <div className={styles.filterBar}>
               {/* Search Input */}
               <div className={styles.searchBox}>
                 <input
                   type="text"
-                  placeholder="🔍 Verträge durchsuchen..."
+                  placeholder="Verträge durchsuchen..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className={styles.searchInput}
@@ -1848,7 +1858,7 @@ export default function LegalPulse() {
           </div>
         )}
 
-        {isLoading ? (
+        {isInitialLoading ? (
           <div className={styles.loadingContainer}>
             <div className={styles.loadingSpinner}></div>
             <p>Lade Pulse-Analysen...</p>
