@@ -459,6 +459,7 @@ router.get("/", verifyToken, async (req, res) => {
     const sortOrder = req.query.sort || 'neueste';
     const sourceFilter = req.query.source || 'alle';
     const folderId = req.query.folderId || null;
+    const riskFilter = req.query.riskFilter || 'all'; // ✅ Legal Pulse: Risk Level Filter
 
     // ✅ MongoDB Filter-Objekt aufbauen
     const mongoFilter = { userId: new ObjectId(req.user.userId) };
@@ -529,6 +530,22 @@ router.get("/", verifyToken, async (req, res) => {
       }
     }
 
+    // 🎯 Legal Pulse: Risk Level Filter
+    if (riskFilter !== 'all') {
+      // Zugriff auf nested field: legalPulse.riskScore
+      switch (riskFilter) {
+        case 'low':
+          mongoFilter['legalPulse.riskScore'] = { $lte: 30, $ne: null };
+          break;
+        case 'medium':
+          mongoFilter['legalPulse.riskScore'] = { $gt: 30, $lte: 60 };
+          break;
+        case 'high':
+          mongoFilter['legalPulse.riskScore'] = { $gt: 60 };
+          break;
+      }
+    }
+
     // ✅ Total Count MIT den gleichen Filtern
     const totalCount = await contractsCollection.countDocuments(mongoFilter);
 
@@ -546,6 +563,18 @@ router.get("/", verifyToken, async (req, res) => {
         break;
       case 'name_za':
         sortOptions = { name: -1 };
+        break;
+      case 'risk':
+        // Legal Pulse: Höchstes Risiko zuerst
+        sortOptions = { 'legalPulse.riskScore': -1 };
+        break;
+      case 'name':
+        // Legal Pulse: Name A-Z
+        sortOptions = { name: 1 };
+        break;
+      case 'date':
+        // Legal Pulse: Neueste zuerst
+        sortOptions = { createdAt: -1 };
         break;
       default:
         sortOptions = { createdAt: -1 };

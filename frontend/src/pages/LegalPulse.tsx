@@ -198,60 +198,20 @@ export default function LegalPulse() {
     };
   };
 
-  // Initial load with pagination
-  useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        const url = `/api/contracts?limit=${pagination.limit}&skip=0`;
-        const contractsResponse = await fetch(url, { credentials: "include" });
-        const contractsData = await contractsResponse.json();
-
-        // Handle both array and object responses
-        const contractsArray = Array.isArray(contractsData)
-          ? contractsData
-          : (contractsData.contracts || []);
-
-        // Update pagination info
-        if (contractsData.pagination) {
-          setPagination({
-            skip: contractsData.pagination.skip + contractsArray.length,
-            limit: contractsData.pagination.limit,
-            total: contractsData.pagination.total,
-            hasMore: contractsData.pagination.hasMore
-          });
-        }
-
-        // Enrich contracts with mock Legal Pulse data
-        const enrichedContracts = contractsArray.map(enrichContractWithMockData);
-        setContracts(enrichedContracts);
-
-        if (contractId) {
-          const contract = enrichedContracts.find((c: Contract) => c._id === contractId);
-          if (contract) {
-            setSelectedContract(contract);
-          } else {
-            setNotification({ message: "Vertrag nicht gefunden", type: "error" });
-          }
-        }
-      } catch (err) {
-        console.error("Error loading contracts:", err);
-        setNotification({ message: "Fehler beim Laden der Daten", type: "error" });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [contractId]);
-
-  // Load more contracts (Infinite Scroll)
-  const loadMoreContracts = async () => {
-    if (isLoadingMore || !pagination.hasMore) return;
-
-    setIsLoadingMore(true);
+  // ✅ Fetch Contracts mit Server-seitiger Filterung
+  const fetchContracts = async () => {
+    setIsLoading(true);
     try {
-      const url = `/api/contracts?limit=${pagination.limit}&skip=${pagination.skip}`;
+      // ✅ Filter-Parameter ans Backend senden
+      const params = new URLSearchParams({
+        limit: pagination.limit.toString(),
+        skip: '0',
+        search: searchQuery,
+        riskFilter: riskFilter,
+        sort: sortBy
+      });
+
+      const url = `/api/contracts?${params}`;
       const contractsResponse = await fetch(url, { credentials: "include" });
       const contractsData = await contractsResponse.json();
 
@@ -262,11 +222,79 @@ export default function LegalPulse() {
       // Update pagination info
       if (contractsData.pagination) {
         setPagination({
-          skip: contractsData.pagination.skip + contractsArray.length,
+          skip: contractsArray.length, // Start bei 20 für nächsten Load
           limit: contractsData.pagination.limit,
           total: contractsData.pagination.total,
           hasMore: contractsData.pagination.hasMore
         });
+      }
+
+      // Enrich contracts with mock Legal Pulse data
+      const enrichedContracts = contractsArray.map(enrichContractWithMockData);
+      setContracts(enrichedContracts);
+
+      if (contractId) {
+        const contract = enrichedContracts.find((c: Contract) => c._id === contractId);
+        if (contract) {
+          setSelectedContract(contract);
+        } else {
+          setNotification({ message: "Vertrag nicht gefunden", type: "error" });
+        }
+      }
+    } catch (err) {
+      console.error("Error loading contracts:", err);
+      setNotification({ message: "Fehler beim Laden der Daten", type: "error" });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // ✅ Initial Load beim Mount
+  useEffect(() => {
+    fetchContracts();
+  }, [contractId]);
+
+  // ✅ Reload bei Filter-Änderungen (mit Debouncing für Search)
+  useEffect(() => {
+    const debounceTimer = setTimeout(() => {
+      console.log('🔄 Filter geändert, lade Contracts neu...');
+      fetchContracts();
+    }, searchQuery ? 500 : 0); // 500ms Debounce für Search
+
+    return () => clearTimeout(debounceTimer);
+  }, [searchQuery, riskFilter, sortBy]);
+
+  // ✅ Load more contracts (Infinite Scroll) mit Filtern
+  const loadMoreContracts = async () => {
+    if (isLoadingMore || !pagination.hasMore) return;
+
+    setIsLoadingMore(true);
+    try {
+      // ✅ Gleiche Filter wie bei fetchContracts verwenden!
+      const params = new URLSearchParams({
+        limit: pagination.limit.toString(),
+        skip: pagination.skip.toString(),
+        search: searchQuery,
+        riskFilter: riskFilter,
+        sort: sortBy
+      });
+
+      const url = `/api/contracts?${params}`;
+      const contractsResponse = await fetch(url, { credentials: "include" });
+      const contractsData = await contractsResponse.json();
+
+      const contractsArray = Array.isArray(contractsData)
+        ? contractsData
+        : (contractsData.contracts || []);
+
+      // Update pagination info
+      if (contractsData.pagination) {
+        setPagination(prev => ({
+          skip: prev.skip + contractsArray.length,
+          limit: contractsData.pagination.limit,
+          total: contractsData.pagination.total,
+          hasMore: contractsData.pagination.hasMore
+        }));
       }
 
       // Enrich and append new contracts
@@ -294,59 +322,7 @@ export default function LegalPulse() {
     return '#ef4444';
   };
 
-  // Filter and Sort Contracts
-  const getFilteredAndSortedContracts = () => {
-    let filtered = [...contracts];
-
-    // Search filter
-    if (searchQuery.trim()) {
-      filtered = filtered.filter(contract =>
-        contract.name.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-
-    // Risk level filter
-    if (riskFilter !== 'all') {
-      filtered = filtered.filter(contract => {
-        const score = contract.legalPulse?.riskScore;
-        if (score === null || score === undefined) return false;
-
-        switch(riskFilter) {
-          case 'low':
-            return score <= 30;
-          case 'medium':
-            return score > 30 && score <= 60;
-          case 'high':
-            return score > 60 && score <= 80;
-          case 'critical':
-            return score > 80;
-          default:
-            return true;
-        }
-      });
-    }
-
-    // Sort
-    filtered.sort((a, b) => {
-      switch(sortBy) {
-        case 'name':
-          return a.name.localeCompare(b.name);
-        case 'risk': {
-          const aScore = a.legalPulse?.riskScore || 0;
-          const bScore = b.legalPulse?.riskScore || 0;
-          return bScore - aScore; // Highest risk first
-        }
-        case 'date':
-        default: {
-          const aDate = new Date(a.legalPulse?.lastAnalysis || a.createdAt || 0);
-          const bDate = new Date(b.legalPulse?.lastAnalysis || b.createdAt || 0);
-          return bDate.getTime() - aDate.getTime(); // Most recent first
-        }
-      }
-    });
-
-    return filtered;
-  };
+  // ✅ Keine lokale Filterung mehr - Backend macht das jetzt!
 
   // Event Handlers
   const handleShowRiskDetails = (riskTitle: string) => {
@@ -1854,7 +1830,7 @@ export default function LegalPulse() {
           </div>
         ) : contracts.length > 0 ? (
           <div className={styles.contractsGrid}>
-            {getFilteredAndSortedContracts().map((contract) => {
+            {contracts.map((contract) => {
               const riskLevel = getRiskLevel(contract.legalPulse?.riskScore || null);
               return (
                 <div 
