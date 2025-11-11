@@ -1747,7 +1747,10 @@ export default function LegalPulse() {
       {/* Contracts Overview */}
       <div className={styles.contractsSection}>
         <div className={styles.sectionHeader}>
-          <h2>📋 Ihre Pulse-Analysen</h2>
+          <h2>
+            📋 Ihre Pulse-Analysen
+            <span className={styles.contractCount}>({pagination.total} Verträge)</span>
+          </h2>
           <p>Übersicht aller analysierten Verträge mit aktuellen Risiko-Scores</p>
           <div className={styles.headerActions}>
             <Link to="/contracts" className={styles.addContractButton}>
@@ -1840,24 +1843,6 @@ export default function LegalPulse() {
                   <option value="name">Name (A-Z)</option>
                 </select>
               </div>
-            </div>
-
-            {/* Results Count */}
-            <div className={styles.resultsInfo}>
-              <span className={styles.resultsCount}>
-                {getFilteredAndSortedContracts().length} von {contracts.length} Verträgen
-              </span>
-              {(searchQuery || riskFilter !== 'all') && (
-                <button
-                  className={styles.resetFiltersButton}
-                  onClick={() => {
-                    setSearchQuery('');
-                    setRiskFilter('all');
-                  }}
-                >
-                  Filter zurücksetzen
-                </button>
-              )}
             </div>
           </div>
         )}
