@@ -113,6 +113,7 @@ export default function LegalPulse() {
   });
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const loadMoreRef = useRef<HTMLDivElement>(null); // ✅ Ref für IntersectionObserver
+  const searchInputRef = useRef<HTMLInputElement>(null); // ✅ Ref für Search Input Focus
 
   // Optimizer Integration
   const [isStartingOptimizer, setIsStartingOptimizer] = useState(false);
@@ -257,9 +258,17 @@ export default function LegalPulse() {
 
   // ✅ Reload bei Filter-Änderungen (mit Debouncing für Search)
   useEffect(() => {
+    // ✅ Focus beibehalten beim Debouncing
+    const wasFocused = document.activeElement === searchInputRef.current;
+
     const debounceTimer = setTimeout(() => {
       console.log('🔄 Filter geändert, lade Contracts neu...');
-      fetchContracts();
+      fetchContracts().then(() => {
+        // ✅ Focus wiederherstellen nach Re-Render
+        if (wasFocused && searchInputRef.current) {
+          searchInputRef.current.focus();
+        }
+      });
     }, searchQuery ? 500 : 0); // 500ms Debounce für Search
 
     return () => clearTimeout(debounceTimer);
@@ -1770,6 +1779,7 @@ export default function LegalPulse() {
                   <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="currentColor" strokeWidth="2"/>
                 </svg>
                 <input
+                  ref={searchInputRef}
                   type="text"
                   placeholder="Verträge durchsuchen..."
                   value={searchQuery}
