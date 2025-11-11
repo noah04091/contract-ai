@@ -113,7 +113,7 @@ export default function LegalPulse() {
   });
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const loadMoreRef = useRef<HTMLDivElement>(null); // ✅ Ref für IntersectionObserver
-  const searchInputRef = useRef<HTMLInputElement>(null); // ✅ Ref für Search Input Focus
+  const isInitialLoadRef = useRef(true); // ✅ Track ob es der erste Load ist
 
   // Optimizer Integration
   const [isStartingOptimizer, setIsStartingOptimizer] = useState(false);
@@ -202,7 +202,10 @@ export default function LegalPulse() {
 
   // ✅ Fetch Contracts mit Server-seitiger Filterung
   const fetchContracts = async () => {
-    setIsLoading(true);
+    // ✅ Nur beim ersten Load den Loading-State setzen, nicht bei Filter-Changes
+    if (isInitialLoadRef.current) {
+      setIsLoading(true);
+    }
     try {
       // ✅ Filter-Parameter ans Backend senden
       const params = new URLSearchParams({
@@ -247,7 +250,10 @@ export default function LegalPulse() {
       console.error("Error loading contracts:", err);
       setNotification({ message: "Fehler beim Laden der Daten", type: "error" });
     } finally {
-      setIsLoading(false);
+      if (isInitialLoadRef.current) {
+        setIsLoading(false);
+        isInitialLoadRef.current = false; // ✅ Nach erstem Load nicht mehr setzen
+      }
     }
   };
 
@@ -258,17 +264,9 @@ export default function LegalPulse() {
 
   // ✅ Reload bei Filter-Änderungen (mit Debouncing für Search)
   useEffect(() => {
-    // ✅ Focus beibehalten beim Debouncing
-    const wasFocused = document.activeElement === searchInputRef.current;
-
     const debounceTimer = setTimeout(() => {
       console.log('🔄 Filter geändert, lade Contracts neu...');
-      fetchContracts().then(() => {
-        // ✅ Focus wiederherstellen nach Re-Render
-        if (wasFocused && searchInputRef.current) {
-          searchInputRef.current.focus();
-        }
-      });
+      fetchContracts();
     }, searchQuery ? 500 : 0); // 500ms Debounce für Search
 
     return () => clearTimeout(debounceTimer);
@@ -1775,13 +1773,9 @@ export default function LegalPulse() {
             <div className={styles.filterBar}>
               {/* Search Input */}
               <div className={styles.searchBox}>
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={styles.searchIcon}>
-                  <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="currentColor" strokeWidth="2"/>
-                </svg>
                 <input
-                  ref={searchInputRef}
                   type="text"
-                  placeholder="Verträge durchsuchen..."
+                  placeholder="🔍 Verträge durchsuchen..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className={styles.searchInput}

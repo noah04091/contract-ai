@@ -901,20 +901,9 @@
   min-width: 280px;
 }
 
-.searchIcon {
-  position: absolute;
-  left: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 20px;
-  height: 20px;
-  color: #9ca3af;
-  pointer-events: none;
-}
-
 .searchInput {
   width: 100%;
-  padding: 14px 46px 14px 60px; /* ✅ Mehr Platz für Lupe-Icon */
+  padding: 14px 46px 14px 16px; /* ✅ Normal padding - kein Icon mehr */
   border: 2px solid #e5e7eb;
   border-radius: 12px;
   font-size: 0.95rem;
