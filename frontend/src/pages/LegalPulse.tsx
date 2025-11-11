@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Helmet } from "react-helmet";
 import styles from "./LegalPulse.module.css";
@@ -112,6 +112,7 @@ export default function LegalPulse() {
     hasMore: true
   });
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const loadMoreRef = useRef<HTMLDivElement>(null); // ✅ Ref für IntersectionObserver
 
   // Optimizer Integration
   const [isStartingOptimizer, setIsStartingOptimizer] = useState(false);
@@ -263,6 +264,26 @@ export default function LegalPulse() {
 
     return () => clearTimeout(debounceTimer);
   }, [searchQuery, riskFilter, sortBy]);
+
+  // ✅ IntersectionObserver für Infinite Scroll
+  useEffect(() => {
+    if (!loadMoreRef.current || !pagination.hasMore || isLoadingMore) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !isLoadingMore && pagination.hasMore) {
+          loadMoreContracts();
+        }
+      },
+      { threshold: 0.1, rootMargin: '100px' }
+    );
+
+    observer.observe(loadMoreRef.current);
+
+    return () => observer.disconnect();
+  }, [pagination.hasMore, isLoadingMore, pagination.skip]); // Re-run wenn sich pagination ändert
 
   // ✅ Load more contracts (Infinite Scroll) mit Filtern
   const loadMoreContracts = async () => {
@@ -1912,20 +1933,7 @@ export default function LegalPulse() {
             {/* Infinite Scroll Trigger & Load More Button */}
             {pagination.hasMore && (
               <div
-                ref={(node) => {
-                  if (node) {
-                    const observer = new IntersectionObserver(
-                      (entries) => {
-                        if (entries[0].isIntersecting && !isLoadingMore) {
-                          loadMoreContracts();
-                        }
-                      },
-                      { threshold: 0.1, rootMargin: '100px' }
-                    );
-                    observer.observe(node);
-                    return () => observer.disconnect();
-                  }
-                }}
+                ref={loadMoreRef}
                 className={styles.loadMoreContainer}
               >
                 {isLoadingMore ? (
