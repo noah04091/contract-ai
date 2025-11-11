@@ -1770,7 +1770,7 @@ export default function LegalPulse() {
         </div>
 
         {/* Filter and Search Bar */}
-        {!isInitialLoading && contracts.length > 0 && (
+        {!isInitialLoading && (pagination.total > 0 || searchQuery || riskFilter !== 'all') && (
           <div className={styles.filterSection}>
             {/* ✅ Subtile Lade-Anzeige während Filter/Suche (ohne Input zu unmounten) */}
             {isLoading && (
@@ -1971,24 +1971,55 @@ export default function LegalPulse() {
           </div>
         ) : (
           <div className={styles.emptyState}>
-            <svg className={styles.emptyStateIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" strokeWidth="2"/>
-              <path d="M14 2V8H20" stroke="currentColor" strokeWidth="2"/>
-            </svg>
-            <h3>Noch keine Verträge analysiert</h3>
-            <p>Laden Sie Ihre ersten Verträge hoch, um mit der Risikoanalyse zu beginnen.</p>
-            <div className={styles.emptyStateActions}>
-              <Link to="/contracts" className={styles.primaryButton}>
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 5V19" stroke="currentColor" strokeWidth="2"/>
-                  <path d="M5 12H19" stroke="currentColor" strokeWidth="2"/>
+            {/* ✅ Unterscheidung: Keine Suchergebnisse vs. wirklich keine Verträge */}
+            {pagination.total > 0 || searchQuery || riskFilter !== 'all' ? (
+              // Keine Suchergebnisse
+              <>
+                <svg className={styles.emptyStateIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="currentColor" strokeWidth="2"/>
                 </svg>
-                Vertrag hochladen
-              </Link>
-              <Link to="/dashboard" className={styles.secondaryButton}>
-                Zum Dashboard
-              </Link>
-            </div>
+                <h3>Keine Verträge gefunden</h3>
+                <p>Für Ihre Suche "{searchQuery}" und die gewählten Filter wurden keine Ergebnisse gefunden.</p>
+                <div className={styles.emptyStateActions}>
+                  <button
+                    onClick={() => {
+                      setSearchQuery('');
+                      setRiskFilter('all');
+                      setSortBy('date');
+                    }}
+                    className={styles.primaryButton}
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12Z" stroke="currentColor" strokeWidth="2"/>
+                      <path d="M9 12L11 14L15 10" stroke="currentColor" strokeWidth="2"/>
+                    </svg>
+                    Filter zurücksetzen
+                  </button>
+                </div>
+              </>
+            ) : (
+              // Wirklich keine Verträge vorhanden
+              <>
+                <svg className={styles.emptyStateIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M14 2V8H20" stroke="currentColor" strokeWidth="2"/>
+                </svg>
+                <h3>Noch keine Verträge analysiert</h3>
+                <p>Laden Sie Ihre ersten Verträge hoch, um mit der Risikoanalyse zu beginnen.</p>
+                <div className={styles.emptyStateActions}>
+                  <Link to="/contracts" className={styles.primaryButton}>
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 5V19" stroke="currentColor" strokeWidth="2"/>
+                      <path d="M5 12H19" stroke="currentColor" strokeWidth="2"/>
+                    </svg>
+                    Vertrag hochladen
+                  </Link>
+                  <Link to="/dashboard" className={styles.secondaryButton}>
+                    Zum Dashboard
+                  </Link>
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>
