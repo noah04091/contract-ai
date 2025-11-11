@@ -1262,10 +1262,33 @@ const connectDB = async () => {
     });
 
     const PORT = process.env.PORT || 5000;
-    app.listen(PORT, () => {
+    app.listen(PORT, async () => {
       console.log(`🚀 Server läuft auf Port ${PORT}`);
       console.log(`📁 Static files serviert unter: ${API_BASE_URL}/uploads`);
       console.log(`📏 JSON-Limit: 50MB für große Verträge`);
+
+      // ✅ Initialize Legal Pulse Monitoring
+      try {
+        const LegalPulseMonitor = require("./jobs/legalPulseMonitor");
+        const legalPulseMonitor = new LegalPulseMonitor();
+        await legalPulseMonitor.init();
+
+        // Dev route for manual triggering
+        app.post("/api/legalpulse/cron-run", verifyToken, async (req, res) => {
+          try {
+            console.log(`🔧 [DEV] Manual monitoring triggered by user ${req.user.userId}`);
+            await legalPulseMonitor.runMonitoring();
+            res.json({ success: true, message: "Monitoring triggered successfully" });
+          } catch (error) {
+            console.error("❌ Manual monitoring error:", error);
+            res.status(500).json({ success: false, error: error.message });
+          }
+        });
+
+        console.log("✅ Legal Pulse Monitoring initialized");
+      } catch (error) {
+        console.error("❌ Failed to initialize Legal Pulse Monitoring:", error);
+      }
       console.log(`🎉 *** PFAD-CHAOS BEHOBEN - ALLE ROUTEN UNTER /api ***`);
       console.log(`📄 Auth-Route: /api/auth/* (FIXED!)`);
       console.log(`📧 E-Mail-Verification-Route: /api/email-verification/* (NEW!)`);
