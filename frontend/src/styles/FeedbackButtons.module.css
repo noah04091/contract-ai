@@ -1,0 +1,155 @@
+/* 📁 frontend/src/styles/FeedbackButtons.module.css */
+/* Reusable Feedback Buttons with Apple-Inspired Design */
+
+.feedbackButtons {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.compact {
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.feedbackButton {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  background: white;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.compact .feedbackButton {
+  padding: 6px 12px;
+  font-size: 0.8rem;
+}
+
+.feedbackButton:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.feedbackButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.feedbackButton.helpful {
+  color: #059669;
+  border-color: #059669;
+}
+
+.feedbackButton.helpful:hover:not(:disabled) {
+  background: #ecfdf5;
+  border-color: #10b981;
+}
+
+.feedbackButton.notHelpful {
+  color: #dc2626;
+  border-color: #dc2626;
+}
+
+.feedbackButton.notHelpful:hover:not(:disabled) {
+  background: #fef2f2;
+  border-color: #ef4444;
+}
+
+.buttonIcon {
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+}
+
+.buttonText {
+  white-space: nowrap;
+}
+
+/* Feedback Status (after feedback given) */
+
+.feedbackStatus {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border: 1.5px solid #86efac;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #166534;
+  animation: slideIn 0.3s ease-out;
+}
+
+.feedbackStatus.compact {
+  padding: 8px 12px;
+  font-size: 0.8rem;
+  margin-top: 8px;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.statusIcon {
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+}
+
+.statusText {
+  flex: 1;
+}
+
+.resetButton {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(22, 101, 52, 0.1);
+  color: #166534;
+  font-size: 1.2rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.resetButton:hover:not(:disabled) {
+  background: rgba(22, 101, 52, 0.2);
+  transform: scale(1.1);
+}
+
+.resetButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Responsive */
+
+@media (max-width: 480px) {
+  .feedbackButtons {
+    flex-direction: column;
+  }
+
+  .feedbackButton {
+    width: 100%;
+    justify-content: center;
+  }
+}

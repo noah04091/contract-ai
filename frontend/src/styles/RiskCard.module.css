@@ -1,0 +1,101 @@
+/* 📁 frontend/src/styles/RiskCard.module.css */
+/* Risk Card Component - Premium Apple-Inspired Design */
+
+.riskCard {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 16px;
+  padding: 24px;
+  transition: all 0.3s ease;
+  animation: riskCardSlide 0.4s ease-out;
+}
+
+@keyframes riskCardSlide {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.riskCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.riskHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.riskIcon {
+  font-size: 1.25rem;
+}
+
+.riskSeverity {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #dc2626;
+  background: #fee2e2;
+  padding: 4px 12px;
+  border-radius: 8px;
+}
+
+.riskDescription {
+  color: #7f1d1d;
+  font-size: 1rem;
+  line-height: 1.6;
+  margin: 0 0 20px 0;
+}
+
+.riskActions {
+  display: flex;
+  gap: 12px;
+}
+
+.riskActionButton {
+  padding: 10px 18px;
+  border: 1px solid #fca5a5;
+  background: transparent;
+  color: #dc2626;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.riskActionButton.primary {
+  background: #dc2626;
+  color: white;
+  border-color: #dc2626;
+}
+
+.riskActionButton:hover {
+  background: #fee2e2;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
+}
+
+.riskActionButton.primary:hover {
+  background: #b91c1c;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+/* Responsive */
+
+@media (max-width: 768px) {
+  .riskActions {
+    flex-direction: column;
+  }
+
+  .riskActionButton {
+    width: 100%;
+    justify-content: center;
+  }
+}

@@ -3,6 +3,11 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { Helmet } from "react-helmet";
 import styles from "./LegalPulse.module.css";
 import Notification from "../components/Notification";
+import LegalPulseSettings from "../components/LegalPulseSettings";
+import RiskCard from "../components/RiskCard";
+import RecommendationCard from "../components/RecommendationCard";
+import LegalPulseFeedWidget from "../components/LegalPulseFeedWidget";
+import ContractRiskGrid from "../components/ContractRiskGrid";
 import { useLegalPulseFeed } from "../hooks/useLegalPulseFeed";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -883,27 +888,22 @@ export default function LegalPulse() {
               </div>
               <div className={styles.risksList}>
                 {selectedContract.legalPulse?.topRisks?.map((risk, index) => (
-                  <div key={index} className={styles.riskCard}>
-                    <div className={styles.riskHeader}>
-                      <span className={styles.riskIcon}>⚠️</span>
-                      <span className={styles.riskSeverity}>Risiko {index + 1}</span>
-                    </div>
-                    <p className={styles.riskDescription}>{risk}</p>
-                    <div className={styles.riskActions}>
-                      <button 
-                        className={styles.riskActionButton}
-                        onClick={() => handleShowRiskDetails(risk)}
-                      >
-                        Details anzeigen
-                      </button>
-                      <button 
-                        className={`${styles.riskActionButton} ${styles.primary}`}
-                        onClick={() => handleShowSolution(risk)}
-                      >
-                        Lösung anzeigen
-                      </button>
-                    </div>
-                  </div>
+                  <RiskCard
+                    key={index}
+                    risk={risk}
+                    index={index}
+                    contractId={selectedContract._id}
+                    onShowDetails={handleShowRiskDetails}
+                    onShowSolution={handleShowSolution}
+                    onFeedback={(feedback) => {
+                      setNotification({
+                        message: feedback === 'helpful'
+                          ? "✓ Danke für Ihr Feedback!"
+                          : "✓ Feedback gespeichert",
+                        type: "success"
+                      });
+                    }}
+                  />
                 )) || (
                   <div className={styles.emptyState}>
                     <p>Keine Risiken identifiziert</p>
@@ -923,35 +923,23 @@ export default function LegalPulse() {
                 {selectedContract.legalPulse?.recommendations?.map((recommendation, index) => {
                   const isCompleted = completedRecommendations[`${selectedContract._id}-${index}`];
                   return (
-                    <div 
-                      key={index} 
-                      className={`${styles.recommendationCard} ${isCompleted ? styles.completed : ''}`}
-                    >
-                      <div className={styles.recommendationHeader}>
-                        <span className={styles.recommendationIcon}>
-                          {isCompleted ? '✅' : '💡'}
-                        </span>
-                        <span className={styles.recommendationPriority}>
-                          Empfehlung {index + 1}
-                          {isCompleted && <span className={styles.completedLabel}> (Erledigt)</span>}
-                        </span>
-                      </div>
-                      <p className={styles.recommendationDescription}>{recommendation}</p>
-                      <div className={styles.recommendationActions}>
-                        <button 
-                          className={`${styles.recommendationActionButton} ${isCompleted ? styles.completed : ''}`}
-                          onClick={() => handleMarkRecommendationComplete(index)}
-                        >
-                          {isCompleted ? '✓ Als erledigt markiert' : 'Als erledigt markieren'}
-                        </button>
-                        <button 
-                          className={`${styles.recommendationActionButton} ${styles.primary}`}
-                          onClick={() => handleImplementRecommendation(recommendation)}
-                        >
-                          Jetzt umsetzen
-                        </button>
-                      </div>
-                    </div>
+                    <RecommendationCard
+                      key={index}
+                      recommendation={recommendation}
+                      index={index}
+                      contractId={selectedContract._id}
+                      isCompleted={isCompleted}
+                      onMarkComplete={handleMarkRecommendationComplete}
+                      onImplement={handleImplementRecommendation}
+                      onFeedback={(feedback) => {
+                        setNotification({
+                          message: feedback === 'helpful'
+                            ? "✓ Danke für Ihr Feedback!"
+                            : "✓ Feedback gespeichert",
+                          type: "success"
+                        });
+                      }}
+                    />
                   );
                 }) || (
                   <div className={styles.emptyState}>
@@ -1014,73 +1002,11 @@ export default function LegalPulse() {
 
           {activeTab === 'feed' && (
             <div className={styles.feedTab}>
-              <div className={styles.sectionHeader}>
-                <h3>⚡ Live Feed</h3>
-                <p>Echtzeit-Benachrichtigungen zu Gesetzesänderungen und Risiken</p>
-                <div className={styles.feedStatus}>
-                  <span className={feedConnected ? styles.statusConnected : styles.statusDisconnected}>
-                    {feedConnected ? '🟢 Verbunden' : '🔴 Nicht verbunden'}
-                  </span>
-                  {feedEvents.length > 0 && (
-                    <button className={styles.clearButton} onClick={clearEvents}>
-                      Alle löschen
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              <div className={styles.feedList}>
-                {feedEvents.length > 0 ? (
-                  [...feedEvents].reverse().map((event, index) => (
-                    <div
-                      key={index}
-                      className={`${styles.feedEvent} ${styles[`type-${event.type}`]}`}
-                    >
-                      <div className={styles.feedEventHeader}>
-                        <span className={styles.feedEventType}>
-                          {event.type === 'alert' ? '⚠️' :
-                           event.type === 'connected' ? '✅' :
-                           event.type === 'test' ? '🧪' : '📢'}
-                          {' '}
-                          {event.type.toUpperCase()}
-                        </span>
-                        <span className={styles.feedEventTime}>
-                          {new Date(event.timestamp).toLocaleTimeString('de-DE')}
-                        </span>
-                      </div>
-
-                      {event.message && (
-                        <div className={styles.feedEventMessage}>{event.message}</div>
-                      )}
-
-                      {event.data && (
-                        <div className={styles.feedEventData}>
-                          <strong>{event.data.title || 'Keine Titel'}</strong>
-                          <p>{event.data.description || ''}</p>
-
-                          {event.data.actionUrl && (
-                            <button
-                              className={styles.feedActionButton}
-                              onClick={() => {
-                                if (event.data?.actionUrl) {
-                                  navigate(event.data.actionUrl);
-                                }
-                              }}
-                            >
-                              Zur Aktion
-                            </button>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  ))
-                ) : (
-                  <div className={styles.emptyState}>
-                    <p>Keine Benachrichtigungen</p>
-                    <small>Live-Benachrichtigungen erscheinen hier automatisch</small>
-                  </div>
-                )}
-              </div>
+              <LegalPulseFeedWidget
+                feedConnected={feedConnected}
+                feedEvents={feedEvents}
+                onClearEvents={clearEvents}
+              />
             </div>
           )}
 
@@ -1281,132 +1207,19 @@ export default function LegalPulse() {
           {activeTab === 'notifications' && (
             <div className={styles.notificationsTab}>
               <div className={styles.sectionHeader}>
-                <h3>📧 E-Mail-Benachrichtigungen</h3>
-                <p>Konfigurieren Sie E-Mail-Benachrichtigungen für wichtige Legal Pulse Events</p>
+                <h3>⚙️ Legal Pulse Einstellungen</h3>
+                <p>Konfigurieren Sie Ihr automatisches Monitoring-System für Gesetzesänderungen</p>
               </div>
 
-              {/* Notification Settings */}
-              <div className={styles.notificationSettings}>
-                <div className={styles.settingCard}>
-                  <div className={styles.settingHeader}>
-                    <div className={styles.settingInfo}>
-                      <h4>📧 E-Mail-Benachrichtigungen</h4>
-                      <p>Erhalten Sie E-Mails bei wichtigen Ereignissen</p>
-                    </div>
-                    <label className={styles.toggle}>
-                      <input type="checkbox" defaultChecked={true} />
-                      <span className={styles.toggleSlider}></span>
-                    </label>
-                  </div>
-                  <div className={styles.settingOptions}>
-                    <p className={styles.optionLabel}>Benachrichtigen bei:</p>
-                    <label className={styles.checkboxOption}>
-                      <input type="checkbox" defaultChecked={true} />
-                      <span>🔴 Kritische Risiken (Severity: Critical)</span>
-                    </label>
-                    <label className={styles.checkboxOption}>
-                      <input type="checkbox" defaultChecked={true} />
-                      <span>⚠️ Hohe Risiken (Severity: High)</span>
-                    </label>
-                    <label className={styles.checkboxOption}>
-                      <input type="checkbox" defaultChecked={false} />
-                      <span>⚡ Mittlere Risiken (Severity: Medium)</span>
-                    </label>
-                    <label className={styles.checkboxOption}>
-                      <input type="checkbox" defaultChecked={false} />
-                      <span>ℹ️ Niedrige Risiken (Severity: Low)</span>
-                    </label>
-                  </div>
-                </div>
-
-                <div className={styles.settingCard}>
-                  <div className={styles.settingHeader}>
-                    <div className={styles.settingInfo}>
-                      <h4>📬 Gesetzesänderungen</h4>
-                      <p>Benachrichtigungen bei relevanten rechtlichen Änderungen</p>
-                    </div>
-                    <label className={styles.toggle}>
-                      <input type="checkbox" defaultChecked={true} />
-                      <span className={styles.toggleSlider}></span>
-                    </label>
-                  </div>
-                </div>
-
-                <div className={styles.settingCard}>
-                  <div className={styles.settingHeader}>
-                    <div className={styles.settingInfo}>
-                      <h4>🤖 ML-Prognosen</h4>
-                      <p>Benachrichtigungen bei neuen Risiko-Prognosen</p>
-                    </div>
-                    <label className={styles.toggle}>
-                      <input type="checkbox" defaultChecked={true} />
-                      <span className={styles.toggleSlider}></span>
-                    </label>
-                  </div>
-                </div>
-
-                <div className={styles.settingCard}>
-                  <div className={styles.settingHeader}>
-                    <div className={styles.settingInfo}>
-                      <h4>⏰ Stille Stunden</h4>
-                      <p>Keine Benachrichtigungen in diesem Zeitraum</p>
-                    </div>
-                    <label className={styles.toggle}>
-                      <input type="checkbox" defaultChecked={false} />
-                      <span className={styles.toggleSlider}></span>
-                    </label>
-                  </div>
-                  <div className={styles.settingOptions}>
-                    <div className={styles.timeRange}>
-                      <label>
-                        <span>Von:</span>
-                        <input type="time" defaultValue="22:00" />
-                      </label>
-                      <label>
-                        <span>Bis:</span>
-                        <input type="time" defaultValue="08:00" />
-                      </label>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Test Notification Button */}
-              <div className={styles.testSection}>
-                <h4>🧪 Test-Benachrichtigung</h4>
-                <p>Senden Sie eine Test-Benachrichtigung, um die Einstellungen zu überprüfen</p>
-                <button
-                  className={styles.testButton}
-                  onClick={async () => {
-                    try {
-                      const response = await fetch('/api/legalpulse/test-alert', {
-                        method: 'POST',
-                        credentials: 'include'
-                      });
-                      const data = await response.json();
-                      if (data.success) {
-                        setNotification({ message: "Test-Alert wurde gesendet!", type: "success" });
-                      }
-                    } catch {
-                      setNotification({ message: "Fehler beim Senden", type: "error" });
-                    }
-                  }}
-                >
-                  Test-Benachrichtigung senden
-                </button>
-              </div>
-
-              {/* Info Box */}
-              <div className={styles.infoBox}>
-                <div className={styles.infoIcon}>💡</div>
-                <div className={styles.infoContent}>
-                  <h4>E-Mail-Benachrichtigungen</h4>
-                  <p>
-                    Sie erhalten E-Mails an Ihre registrierte Adresse. Prüfen Sie auch Ihren Spam-Ordner.
-                    In-App-Benachrichtigungen (Live Feed) bleiben weiterhin aktiv.
-                  </p>
-                </div>
-              </div>
+              {/* Neue Settings Komponente */}
+              <LegalPulseSettings
+                onSaveSuccess={() => {
+                  setNotification({
+                    message: "✓ Einstellungen erfolgreich gespeichert",
+                    type: "success"
+                  });
+                }}
+              />
             </div>
           )}
 
@@ -1880,111 +1693,25 @@ export default function LegalPulse() {
             <p>Lade Pulse-Analysen...</p>
           </div>
         ) : contracts.length > 0 ? (
-          <div className={styles.contractsGrid}>
-            {contracts.map((contract) => {
-              const riskLevel = getRiskLevel(contract.legalPulse?.riskScore || null);
-              return (
-                <div 
-                  key={contract._id} 
-                  className={styles.contractCard}
-                  onClick={() => handleContractCardClick(contract)}
-                  onMouseEnter={() => handleMouseEnter(contract._id)}
-                  onMouseLeave={() => handleMouseLeave(contract._id)}
-                >
-                  <div className={styles.contractCardHeader}>
-                    <div className={styles.contractInfo}>
-                      <h3 className={styles.contractName}>
-                        {contract.name}
-                        {showTooltip[contract._id] && (
-                          <div className={styles.nameTooltip}>
-                            {contract.name}
-                          </div>
-                        )}
-                      </h3>
-                      {contract.isGenerated && (
-                        <span className={styles.generatedBadge}>✨ KI</span>
-                      )}
-                    </div>
-                    <div 
-                      className={styles.riskBadge}
-                      style={{ '--risk-color': riskLevel.color } as React.CSSProperties}
-                    >
-                      <span className={styles.riskIcon}>{riskLevel.icon}</span>
-                      <span className={styles.riskScore}>
-                        {contract.legalPulse?.riskScore || '—'}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div className={styles.contractCardBody}>
-                    <div className={styles.contractMeta}>
-                      <div className={styles.metaItem}>
-                        <span className={styles.metaLabel}>Letzter Scan:</span>
-                        <span className={styles.metaValue}>
-                          {contract.legalPulse?.lastAnalysis 
-                            ? new Date(contract.legalPulse.lastAnalysis).toLocaleDateString('de-DE')
-                            : 'Noch nicht analysiert'
-                          }
-                        </span>
-                      </div>
-                      <div className={styles.metaItem}>
-                        <span className={styles.metaLabel}>Status:</span>
-                        <span 
-                          className={styles.metaValue}
-                          style={{ color: riskLevel.color }}
-                        >
-                          {riskLevel.level}
-                        </span>
-                      </div>
-                    </div>
-                    
-                    {contract.legalPulse?.lastRecommendation && (
-                      <div className={styles.lastRecommendation}>
-                        <span className={styles.recommendationLabel}>💡 Letzte Empfehlung:</span>
-                        <p className={styles.recommendationText}>
-                          {contract.legalPulse.lastRecommendation}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className={styles.contractCardFooter}>
-                    <button className={styles.detailsButton}>
-                      <span>Details ansehen</span>
-                      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M9 18L15 12L9 6" stroke="currentColor" strokeWidth="2"/>
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-
-            {/* Infinite Scroll Trigger & Load More Button */}
-            {pagination.hasMore && (
-              <div
-                ref={loadMoreRef}
-                className={styles.loadMoreContainer}
-              >
-                {isLoadingMore ? (
-                  <div className={styles.loadingMore}>
-                    <div className={styles.loadingSpinner}></div>
-                    <p>Lade weitere Verträge...</p>
-                  </div>
-                ) : (
-                  <button
-                    className={styles.loadMoreButton}
-                    onClick={loadMoreContracts}
-                  >
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                    </svg>
-                    Mehr laden ({contracts.length} von {pagination.total})
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
+          <ContractRiskGrid
+            contracts={contracts}
+            pagination={pagination}
+            isLoadingMore={isLoadingMore}
+            loadMoreRef={loadMoreRef}
+            searchQuery={searchQuery}
+            riskFilter={riskFilter}
+            showTooltip={showTooltip}
+            getRiskLevel={getRiskLevel}
+            onContractClick={handleContractCardClick}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+            onLoadMore={loadMoreContracts}
+            onResetFilters={() => {
+              setSearchQuery('');
+              setRiskFilter('all');
+              setSortBy('date');
+            }}
+          />
         ) : (
           <div className={styles.emptyState}>
             {/* ✅ Unterscheidung: Keine Suchergebnisse vs. wirklich keine Verträge */}

@@ -1869,6 +1869,11 @@
   background: #fffbeb;
 }
 
+.feedEvent.type-law-change {
+  border-left-color: #8b5cf6;
+  background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+}
+
 .feedEvent.type-connected {
   border-left-color: #10b981;
   background: #f0fdf4;
@@ -1944,6 +1949,34 @@
 .feedActionButton:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
+}
+
+/* Law Change Details */
+.lawChangeDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+.lawChangeMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+}
+
+.metaLabel {
+  font-weight: 600;
+  color: #7c3aed;
+  min-width: 100px;
+}
+
+.metaValue {
+  color: #1f2937;
+  font-weight: 500;
 }
 
 .liveDot {
