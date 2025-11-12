@@ -689,8 +689,10 @@ const connectDB = async () => {
     }
 
     try {
-      app.use("/api/chat", verifyToken, checkSubscription, require("./routes/chatWithContract"));
-      console.log("✅ Chat-Route geladen unter /api/chat");
+      // ✅ LEGAL CHAT 2.0 - MongoDB-basiert, SSE-Streaming, Anwalt-Persona
+      const chatRoutes = require("./routes/chat");
+      app.use("/api/chat", chatRoutes); // verifyToken ist bereits in der Route
+      console.log("✅ Legal Chat 2.0 geladen unter /api/chat (MongoDB, SSE, Lawyer Persona)");
     } catch (err) {
       console.error("❌ Fehler bei Chat-Route:", err);
     }
@@ -732,6 +734,15 @@ const connectDB = async () => {
       console.error("❌ Fehler bei Legal Pulse Routen:", err);
     }
 
+    // ✅ 14.0.1 LEGAL PULSE HEALTH & MONITORING
+    try {
+      const legalPulseHealthRoutes = require("./routes/legalPulseHealth")(db);
+      app.use("/api/legal-pulse", legalPulseHealthRoutes);
+      console.log("✅ Legal Pulse Health & Monitoring geladen unter /api/legal-pulse/health");
+    } catch (err) {
+      console.error("❌ Fehler bei Legal Pulse Health:", err);
+    }
+
     // ✅ 14.1 LEGAL PULSE FEED (SSE)
     try {
       const legalPulseFeedRoutes = require("./routes/legalPulseFeed");
@@ -748,6 +759,24 @@ const connectDB = async () => {
       console.log("✅ Legal Pulse Notifications geladen unter /api/pulse-notifications");
     } catch (err) {
       console.error("❌ Fehler bei Legal Pulse Notifications:", err);
+    }
+
+    // ✅ 14.2.1 ALERT FEEDBACK SYSTEM (Phase 2 - Thumbs Up/Down)
+    try {
+      const alertFeedbackRoutes = require("./routes/alertFeedback")(db);
+      app.use("/api/alert-feedback", alertFeedbackRoutes);
+      console.log("✅ Alert Feedback System geladen unter /api/alert-feedback");
+    } catch (err) {
+      console.error("❌ Fehler bei Alert Feedback:", err);
+    }
+
+    // ✅ 14.2.2 PUBLIC FEEDBACK (No Auth - Email Links)
+    try {
+      const publicFeedbackRoutes = require("./routes/publicFeedback")(db);
+      app.use("/feedback", publicFeedbackRoutes); // Public route, no /api prefix
+      console.log("✅ Public Feedback Routes geladen unter /feedback");
+    } catch (err) {
+      console.error("❌ Fehler bei Public Feedback:", err);
     }
 
     // ✅ 14.3 AUTOMATED ACTIONS (Phase 2)

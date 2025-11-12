@@ -113,4 +113,240 @@ router.get("/stats", verifyToken, async (req, res) => {
   }
 });
 
+// ===== 🎛️ USER SETTINGS API =====
+
+// Get user's Legal Pulse settings
+router.get("/settings", verifyToken, async (req, res) => {
+  try {
+    const { MongoClient } = require("mongodb");
+    const client = new MongoClient(process.env.MONGO_URI);
+    await client.connect();
+
+    const usersCollection = client.db("contract_ai").collection("users");
+    const user = await usersCollection.findOne(
+      { _id: new ObjectId(req.user.userId) },
+      { projection: { legalPulseSettings: 1 } }
+    );
+
+    await client.close();
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "Benutzer nicht gefunden"
+      });
+    }
+
+    // Default settings if not set
+    const defaultSettings = {
+      enabled: true,
+      similarityThreshold: 0.70, // 70% default
+      categories: [
+        'Arbeitsrecht',
+        'Mietrecht',
+        'Kaufrecht',
+        'Vertragsrecht',
+        'Datenschutz',
+        'Verbraucherrecht'
+      ],
+      digestMode: 'instant', // 'instant' | 'daily' | 'weekly'
+      emailNotifications: true
+    };
+
+    const settings = user.legalPulseSettings || defaultSettings;
+
+    res.json({
+      success: true,
+      settings
+    });
+
+  } catch (error) {
+    console.error("❌ Fehler beim Laden der Legal Pulse Settings:", error);
+    res.status(500).json({
+      success: false,
+      message: "Fehler beim Laden der Einstellungen",
+      error: error.message
+    });
+  }
+});
+
+// Update user's Legal Pulse settings
+router.put("/settings", verifyToken, async (req, res) => {
+  try {
+    const { enabled, similarityThreshold, categories, digestMode, emailNotifications } = req.body;
+
+    // Validation
+    const updates = {};
+
+    if (typeof enabled === 'boolean') {
+      updates['legalPulseSettings.enabled'] = enabled;
+    }
+
+    if (similarityThreshold !== undefined) {
+      const threshold = parseFloat(similarityThreshold);
+      if (isNaN(threshold) || threshold < 0.5 || threshold > 0.95) {
+        return res.status(400).json({
+          success: false,
+          message: "Similarity threshold muss zwischen 0.5 und 0.95 liegen"
+        });
+      }
+      updates['legalPulseSettings.similarityThreshold'] = threshold;
+    }
+
+    if (Array.isArray(categories)) {
+      // Validate categories
+      const validCategories = [
+        'Arbeitsrecht',
+        'Mietrecht',
+        'Kaufrecht',
+        'Vertragsrecht',
+        'Datenschutz',
+        'Verbraucherrecht',
+        'Steuerrecht',
+        'Gesellschaftsrecht',
+        'Insolvenzrecht',
+        'Handelsrecht'
+      ];
+
+      const invalidCategories = categories.filter(cat => !validCategories.includes(cat));
+      if (invalidCategories.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: `Ungültige Kategorien: ${invalidCategories.join(', ')}`,
+          validCategories
+        });
+      }
+
+      updates['legalPulseSettings.categories'] = categories;
+    }
+
+    if (digestMode && ['instant', 'daily', 'weekly'].includes(digestMode)) {
+      updates['legalPulseSettings.digestMode'] = digestMode;
+    }
+
+    if (typeof emailNotifications === 'boolean') {
+      updates['legalPulseSettings.emailNotifications'] = emailNotifications;
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Keine gültigen Updates bereitgestellt"
+      });
+    }
+
+    // Update user settings
+    const { MongoClient } = require("mongodb");
+    const client = new MongoClient(process.env.MONGO_URI);
+    await client.connect();
+
+    const usersCollection = client.db("contract_ai").collection("users");
+    const result = await usersCollection.updateOne(
+      { _id: new ObjectId(req.user.userId) },
+      {
+        $set: {
+          ...updates,
+          updatedAt: new Date()
+        }
+      }
+    );
+
+    await client.close();
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Benutzer nicht gefunden"
+      });
+    }
+
+    console.log(`✅ Legal Pulse Settings aktualisiert für User ${req.user.userId}:`, updates);
+
+    res.json({
+      success: true,
+      message: "Einstellungen erfolgreich aktualisiert",
+      updates
+    });
+
+  } catch (error) {
+    console.error("❌ Fehler beim Aktualisieren der Legal Pulse Settings:", error);
+    res.status(500).json({
+      success: false,
+      message: "Fehler beim Aktualisieren der Einstellungen",
+      error: error.message
+    });
+  }
+});
+
+// Get available legal categories
+router.get("/categories", verifyToken, async (req, res) => {
+  try {
+    const categories = [
+      {
+        id: 'Arbeitsrecht',
+        name: 'Arbeitsrecht',
+        description: 'Kündigungsfristen, Arbeitsverträge, Urlaubsansprüche'
+      },
+      {
+        id: 'Mietrecht',
+        name: 'Mietrecht',
+        description: 'Mietverträge, Kündigungsfristen, Nebenkostenabrechnung'
+      },
+      {
+        id: 'Kaufrecht',
+        name: 'Kaufrecht',
+        description: 'Kaufverträge, Gewährleistung, Rücktrittsrechte'
+      },
+      {
+        id: 'Vertragsrecht',
+        name: 'Vertragsrecht',
+        description: 'Allgemeines Vertragsrecht, AGB, Vertragsschluss'
+      },
+      {
+        id: 'Datenschutz',
+        name: 'Datenschutz',
+        description: 'DSGVO, Datenschutzerklärungen, Einwilligungen'
+      },
+      {
+        id: 'Verbraucherrecht',
+        name: 'Verbraucherrecht',
+        description: 'Widerrufsrechte, Fernabsatzverträge, Verbraucherschutz'
+      },
+      {
+        id: 'Steuerrecht',
+        name: 'Steuerrecht',
+        description: 'Steuerpflichten, Abgabenordnung, Steuererklärungen'
+      },
+      {
+        id: 'Gesellschaftsrecht',
+        name: 'Gesellschaftsrecht',
+        description: 'GmbH, AG, Gesellschaftsverträge'
+      },
+      {
+        id: 'Insolvenzrecht',
+        name: 'Insolvenzrecht',
+        description: 'Insolvenzverfahren, Gläubigerrechte'
+      },
+      {
+        id: 'Handelsrecht',
+        name: 'Handelsrecht',
+        description: 'Handelsgeschäfte, Handelsregister, Handelsbräuche'
+      }
+    ];
+
+    res.json({
+      success: true,
+      categories
+    });
+
+  } catch (error) {
+    console.error("❌ Fehler beim Laden der Kategorien:", error);
+    res.status(500).json({
+      success: false,
+      message: "Fehler beim Laden der Kategorien",
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;
