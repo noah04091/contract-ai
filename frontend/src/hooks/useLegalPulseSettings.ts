@@ -144,9 +144,12 @@ export function useLegalPulseSettings(): UseLegalPulseSettingsReturn {
 
       const data = await response.json();
 
-      if (data.success && data.settings) {
-        // Update local state with new settings
-        setSettings(data.settings);
+      if (data.success) {
+        // Update local state with merged settings
+        setSettings(prevSettings => ({
+          ...prevSettings!,
+          ...updates
+        }));
         console.log('[Legal Pulse Settings] ✓ Settings updated successfully');
         return true;
       } else {
