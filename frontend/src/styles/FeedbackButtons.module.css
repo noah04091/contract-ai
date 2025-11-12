@@ -3,32 +3,37 @@
 
 .feedbackButtons {
   display: flex;
-  gap: 8px;
-  margin-top: 12px;
+  gap: 6px;
+  margin-top: 10px;
 }
 
 .compact {
-  gap: 6px;
-  margin-top: 8px;
+  gap: 4px;
+  margin-top: 6px;
 }
 
 .feedbackButton {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 8px;
+  gap: 4px;
+  padding: 5px 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
   background: white;
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
+  opacity: 0.8;
+}
+
+.feedbackButton:hover {
+  opacity: 1;
 }
 
 .compact .feedbackButton {
-  padding: 6px 12px;
-  font-size: 0.8rem;
+  padding: 4px 8px;
+  font-size: 0.7rem;
 }
 
 .feedbackButton:hover:not(:disabled) {
@@ -76,22 +81,23 @@
 .feedbackStatus {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 12px;
-  padding: 10px 14px;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 6px 10px;
   background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-  border: 1.5px solid #86efac;
-  border-radius: 8px;
-  font-size: 0.85rem;
+  border: 1px solid #86efac;
+  border-radius: 6px;
+  font-size: 0.75rem;
   font-weight: 500;
   color: #166534;
   animation: slideIn 0.3s ease-out;
+  opacity: 0.9;
 }
 
 .feedbackStatus.compact {
-  padding: 8px 12px;
-  font-size: 0.8rem;
-  margin-top: 8px;
+  padding: 5px 8px;
+  font-size: 0.7rem;
+  margin-top: 6px;
 }
 
 @keyframes slideIn {
