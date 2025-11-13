@@ -31,6 +31,44 @@ const contractSchema = new mongoose.Schema({
   risiken: [String],
   optimierungen: [String],
 
+  // 📄 Comprehensive Content Analysis (separate from Legal Pulse risk analysis)
+  analysis: {
+    summary: String,                          // 2-3 sentence overview
+    contractType: String,                     // Detected contract type
+    parties: {
+      provider: String,                       // Contract party 1
+      customer: String                        // Contract party 2
+    },
+    keyTerms: {
+      duration: String,                       // Contract duration
+      cancellation: String,                   // Notice period
+      payment: String,                        // Payment terms
+      deliverables: String                    // Scope of services
+    },
+    positiveAspects: [{
+      title: String,                          // Positive clause/aspect
+      description: String,                    // Why it's advantageous
+      relevance: String                       // Who benefits
+    }],
+    concerningAspects: [{
+      title: String,                          // Concerning clause/aspect
+      description: String,                    // What could be problematic
+      impact: String                          // Potential consequences
+    }],
+    importantClauses: [{
+      title: String,                          // Important contract clause
+      content: String,                        // Simplified clause content
+      explanation: String,                    // Plain language explanation
+      action: String                          // What to consider/do
+    }],
+    recommendations: [String],                // Concrete action recommendations
+    missingInformation: [String],             // What's missing from contract
+    analyzedAt: Date,                         // When analysis was performed
+    aiGenerated: Boolean,                     // Whether AI analysis succeeded
+    error: String                             // Error message if analysis failed
+  },
+  analysisCompletedAt: Date,                  // Timestamp when analysis finished
+
   // Contract Metadata
   isGenerated: { type: Boolean, default: false },
   provider: mongoose.Schema.Types.Mixed, // Provider info object

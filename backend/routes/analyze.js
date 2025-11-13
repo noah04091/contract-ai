@@ -9,9 +9,13 @@ const verifyToken = require("../middleware/verifyToken");
 const { MongoClient, ObjectId } = require("mongodb");
 const path = require("path");
 const contractAnalyzer = require("../services/contractAnalyzer"); // 📋 ÄNDERUNG 1: Provider Detection Import
+const ContractContentAnalyzer = require("../services/contractContentAnalyzer"); // 📄 NEW: Comprehensive Content Analysis
 const { generateEventsForContract } = require("../services/calendarEvents"); // 🆕 CALENDAR EVENTS IMPORT
 
 const router = express.Router();
+
+// 📄 Initialize Content Analyzer
+const contentAnalyzer = new ContractContentAnalyzer();
 
 // ===== S3 INTEGRATION (AWS SDK v3) =====
 let S3Client, PutObjectCommand, HeadBucketCommand, GetObjectCommand, s3Instance;
@@ -2062,6 +2066,44 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
         } catch (eventError) {
           console.warn(`⚠️ Calendar Events konnten nicht generiert werden:`, eventError.message);
         }
+
+        // 📄 NEW: COMPREHENSIVE CONTENT ANALYSIS (Async Background Job)
+        // This runs in the background and updates the contract when done
+        (async () => {
+          try {
+            console.log(`📄 [${requestId}] Starting comprehensive content analysis in background...`);
+
+            const basicInfo = {
+              name: savedContract.name,
+              provider: savedContract.provider?.displayName || 'Unknown',
+              type: validationResult.documentType || 'Unknown',
+              laufzeit: savedContract.laufzeit,
+              kuendigung: savedContract.kuendigung
+            };
+
+            const comprehensiveAnalysis = await contentAnalyzer.analyzeWithRetry(
+              fullTextContent,
+              basicInfo,
+              3 // Max 3 retries with exponential backoff
+            );
+
+            // Update contract with comprehensive analysis
+            await contractsCollection.updateOne(
+              { _id: savedContract._id },
+              {
+                $set: {
+                  analysis: comprehensiveAnalysis,
+                  analysisCompletedAt: new Date()
+                }
+              }
+            );
+
+            console.log(`✅ [${requestId}] Comprehensive content analysis completed and saved for contract ${savedContract._id}`);
+          } catch (analysisError) {
+            console.error(`❌ [${requestId}] Comprehensive content analysis failed:`, analysisError.message);
+            // Don't throw - this is a background job
+          }
+        })();
       }
       
     } catch (saveError) {

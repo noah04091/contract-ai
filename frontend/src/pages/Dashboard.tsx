@@ -1545,16 +1545,23 @@ export default function Dashboard() {
               >
                 Abbrechen
               </button>
-              <button 
-                className={`${styles.primaryButton} ${!file ? styles.disabled : ''}`}
+              <button
+                className={`${styles.primaryButton} ${!file || isLoading ? styles.disabled : ''}`}
                 onClick={handleFileUpload}
-                disabled={!file}
+                disabled={!file || isLoading}
               >
                 {isLoading ? (
-                  <>
-                    <div className={styles.buttonSpinner}></div>
-                    <span>Wird hochgeladen...</span>
-                  </>
+                  <div className={styles.uploadingState}>
+                    <div className={styles.uploadingText}>
+                      <svg className={styles.uploadingIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                      </svg>
+                      <span>Vertrag wird analysiert...</span>
+                    </div>
+                    <div className={styles.progressBarContainer}>
+                      <div className={styles.progressBarFill}></div>
+                    </div>
+                  </div>
                 ) : (
                   <>
                     <svg className={styles.buttonIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

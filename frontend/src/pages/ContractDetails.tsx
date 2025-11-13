@@ -22,6 +22,40 @@ interface Contract {
   signature?: string;         // ✅ NEU: Für digitale Unterschrift
   isGenerated?: boolean;      // ✅ NEU: Kennzeichnung als generierter Vertrag
   createdAt?: string;         // ✅ NEU: Erstellungsdatum
+  analysis?: {
+    summary?: string;
+    contractType?: string;
+    parties?: {
+      provider?: string;
+      customer?: string;
+    };
+    keyTerms?: {
+      duration?: string;
+      cancellation?: string;
+      payment?: string;
+      deliverables?: string;
+    };
+    positiveAspects?: Array<{
+      title: string;
+      description: string;
+      relevance: string;
+    }>;
+    concerningAspects?: Array<{
+      title: string;
+      description: string;
+      impact: string;
+    }>;
+    importantClauses?: Array<{
+      title: string;
+      content: string;
+      explanation: string;
+      action: string;
+    }>;
+    recommendations?: string[];
+    missingInformation?: string[];
+    analyzedAt?: string;
+    aiGenerated?: boolean;
+  };
   legalPulse?: {
     riskScore: number | null;
     summary?: string;
@@ -384,6 +418,188 @@ export default function ContractDetails() {
 
           {/* ✅ NEU: Contract Content Viewer - Zeigt den vollständigen Vertragsinhalt */}
           <ContractContentViewer contract={contract} />
+
+          {/* 📄 Comprehensive Content Analysis Section */}
+          {contract.analysis && (
+            <div className={styles.legalPulseSection}>
+              <div className={styles.legalPulseHeader}>
+                <div className={styles.sectionIcon}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                <h3>📄 Umfassende Vertragsanalyse</h3>
+              </div>
+
+              <div className={styles.legalPulseContent}>
+                {/* Summary */}
+                {contract.analysis.summary && (
+                  <div className={styles.pulseItem}>
+                    <h4>📋 Zusammenfassung</h4>
+                    <p className={styles.pulseSummary}>{contract.analysis.summary}</p>
+                  </div>
+                )}
+
+                {/* Contract Type & Parties */}
+                {(contract.analysis.contractType || contract.analysis.parties) && (
+                  <div className={styles.pulseItem}>
+                    <h4>📑 Vertragsdetails</h4>
+                    {contract.analysis.contractType && (
+                      <p><strong>Vertragsart:</strong> {contract.analysis.contractType}</p>
+                    )}
+                    {contract.analysis.parties && (
+                      <>
+                        {contract.analysis.parties.provider && (
+                          <p><strong>Anbieter:</strong> {contract.analysis.parties.provider}</p>
+                        )}
+                        {contract.analysis.parties.customer && (
+                          <p><strong>Kunde:</strong> {contract.analysis.parties.customer}</p>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
+
+                {/* Key Terms */}
+                {contract.analysis.keyTerms && Object.values(contract.analysis.keyTerms).some(v => v) && (
+                  <div className={styles.pulseItem}>
+                    <h4>🔑 Wichtige Vertragskonditionen</h4>
+                    <ul className={styles.pulseList}>
+                      {contract.analysis.keyTerms.duration && (
+                        <li><strong>Laufzeit:</strong> {contract.analysis.keyTerms.duration}</li>
+                      )}
+                      {contract.analysis.keyTerms.cancellation && (
+                        <li><strong>Kündigung:</strong> {contract.analysis.keyTerms.cancellation}</li>
+                      )}
+                      {contract.analysis.keyTerms.payment && (
+                        <li><strong>Zahlung:</strong> {contract.analysis.keyTerms.payment}</li>
+                      )}
+                      {contract.analysis.keyTerms.deliverables && (
+                        <li><strong>Leistungsumfang:</strong> {contract.analysis.keyTerms.deliverables}</li>
+                      )}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Positive Aspects */}
+                {contract.analysis.positiveAspects && contract.analysis.positiveAspects.length > 0 && (
+                  <div className={styles.pulseItem}>
+                    <h4>✅ Positive Aspekte</h4>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      {contract.analysis.positiveAspects.map((aspect, index) => (
+                        <div key={index} style={{
+                          padding: '12px',
+                          background: '#f0fdf4',
+                          border: '1px solid #bbf7d0',
+                          borderRadius: '8px'
+                        }}>
+                          <h5 style={{ margin: '0 0 8px 0', color: '#16a34a', fontSize: '14px', fontWeight: '600' }}>
+                            {aspect.title}
+                          </h5>
+                          <p style={{ margin: '0 0 6px 0', fontSize: '13px', color: '#374151' }}>
+                            {aspect.description}
+                          </p>
+                          <p style={{ margin: 0, fontSize: '12px', color: '#6b7280', fontStyle: 'italic' }}>
+                            <strong>Relevant für:</strong> {aspect.relevance}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Concerning Aspects */}
+                {contract.analysis.concerningAspects && contract.analysis.concerningAspects.length > 0 && (
+                  <div className={styles.pulseItem}>
+                    <h4>⚠️ Bedenkliche Aspekte</h4>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      {contract.analysis.concerningAspects.map((aspect, index) => (
+                        <div key={index} style={{
+                          padding: '12px',
+                          background: '#fef3c7',
+                          border: '1px solid #fde68a',
+                          borderRadius: '8px'
+                        }}>
+                          <h5 style={{ margin: '0 0 8px 0', color: '#d97706', fontSize: '14px', fontWeight: '600' }}>
+                            {aspect.title}
+                          </h5>
+                          <p style={{ margin: '0 0 6px 0', fontSize: '13px', color: '#374151' }}>
+                            {aspect.description}
+                          </p>
+                          <p style={{ margin: 0, fontSize: '12px', color: '#6b7280', fontStyle: 'italic' }}>
+                            <strong>Auswirkungen:</strong> {aspect.impact}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Important Clauses */}
+                {contract.analysis.importantClauses && contract.analysis.importantClauses.length > 0 && (
+                  <div className={styles.pulseItem}>
+                    <h4>📝 Wichtige Klauseln</h4>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      {contract.analysis.importantClauses.map((clause, index) => (
+                        <div key={index} style={{
+                          padding: '12px',
+                          background: '#f3f4f6',
+                          border: '1px solid #d1d5db',
+                          borderRadius: '8px'
+                        }}>
+                          <h5 style={{ margin: '0 0 8px 0', color: '#1f2937', fontSize: '14px', fontWeight: '600' }}>
+                            {clause.title}
+                          </h5>
+                          <p style={{ margin: '0 0 6px 0', fontSize: '13px', color: '#4b5563' }}>
+                            <strong>Inhalt:</strong> {clause.content}
+                          </p>
+                          <p style={{ margin: '0 0 6px 0', fontSize: '13px', color: '#374151' }}>
+                            <strong>Bedeutung:</strong> {clause.explanation}
+                          </p>
+                          <p style={{ margin: 0, fontSize: '12px', color: '#6366f1', fontWeight: '500' }}>
+                            💡 {clause.action}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Recommendations */}
+                {contract.analysis.recommendations && contract.analysis.recommendations.length > 0 && (
+                  <div className={styles.pulseItem}>
+                    <h4>💡 Empfehlungen</h4>
+                    <ul className={styles.pulseList}>
+                      {contract.analysis.recommendations.map((rec, index) => (
+                        <li key={index} className={styles.recommendationItem}>{rec}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Missing Information */}
+                {contract.analysis.missingInformation && contract.analysis.missingInformation.length > 0 && (
+                  <div className={styles.pulseItem}>
+                    <h4>ℹ️ Fehlende Informationen</h4>
+                    <ul className={styles.pulseList}>
+                      {contract.analysis.missingInformation.map((info, index) => (
+                        <li key={index} style={{ color: '#6b7280' }}>{info}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {contract.analysis.analyzedAt && (
+                  <div className={styles.pulseFooter}>
+                    <span className={styles.analysisDate}>
+                      Analyse durchgeführt: {formatDate(contract.analysis.analyzedAt)}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Legal Pulse Analysis Section */}
           {contract.legalPulse && (
