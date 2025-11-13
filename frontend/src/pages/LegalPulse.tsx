@@ -90,6 +90,7 @@ export default function LegalPulse() {
   const [activeTab, setActiveTab] = useState<'overview' | 'risks' | 'recommendations' | 'history' | 'forecast'>('overview');
   const [showRiskModal, setShowRiskModal] = useState(false);
   const [selectedRisk, setSelectedRisk] = useState<RiskDetail | null>(null);
+  const [riskModalType, setRiskModalType] = useState<'details' | 'solutions'>('details');
   const [completedRecommendations, setCompletedRecommendations] = useState<RecommendationStatus>({});
   const [showTooltip, setShowTooltip] = useState<{ [key: string]: boolean }>({});
   const [showSettingsSidebar, setShowSettingsSidebar] = useState(false);
@@ -388,20 +389,15 @@ export default function LegalPulse() {
   const handleShowRiskDetails = (riskTitle: string) => {
     const riskDetail = getRiskDetails(riskTitle);
     setSelectedRisk(riskDetail);
+    setRiskModalType('details');
     setShowRiskModal(true);
   };
 
   const handleShowSolution = (riskTitle: string) => {
     const riskDetail = getRiskDetails(riskTitle);
     setSelectedRisk(riskDetail);
+    setRiskModalType('solutions');
     setShowRiskModal(true);
-    // Scroll to solution section in modal
-    setTimeout(() => {
-      const solutionElement = document.getElementById('risk-solution');
-      if (solutionElement) {
-        solutionElement.scrollIntoView({ behavior: 'smooth' });
-      }
-    }, 100);
   };
 
   const handleMarkRecommendationComplete = (recommendationIndex: number) => {
@@ -1084,7 +1080,7 @@ export default function LegalPulse() {
             <div className={styles.riskModal} onClick={(e) => e.stopPropagation()}>
               <div className={styles.modalHeader}>
                 <h2>{selectedRisk.title}</h2>
-                <button 
+                <button
                   className={styles.modalCloseButton}
                   onClick={() => setShowRiskModal(false)}
                 >
@@ -1095,42 +1091,50 @@ export default function LegalPulse() {
                 </button>
               </div>
               <div className={styles.modalBody}>
-                <div className={styles.riskDetailSection}>
-                  <h4>🔍 Beschreibung</h4>
-                  <p>{selectedRisk.description}</p>
-                </div>
-                
-                <div className={styles.riskDetailSection}>
-                  <h4>⚠️ Auswirkungen</h4>
-                  <p>{selectedRisk.impact}</p>
-                </div>
-                
-                <div className={styles.riskDetailSection} id="risk-solution">
-                  <h4>💡 Lösungsvorschlag</h4>
-                  <p>{selectedRisk.solution}</p>
-                </div>
-                
-                <div className={styles.riskDetailSection}>
-                  <h4>📋 Empfehlung</h4>
-                  <p>{selectedRisk.recommendation}</p>
-                </div>
-                
+                {riskModalType === 'details' ? (
+                  <>
+                    {/* Details View: Beschreibung + Auswirkungen */}
+                    <div className={styles.riskDetailSection}>
+                      <h4>🔍 Beschreibung</h4>
+                      <p>{selectedRisk.description}</p>
+                    </div>
+
+                    <div className={styles.riskDetailSection}>
+                      <h4>⚠️ Auswirkungen</h4>
+                      <p>{selectedRisk.impact}</p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* Solutions View: Lösungsvorschlag + Empfehlung */}
+                    <div className={styles.riskDetailSection}>
+                      <h4>💡 Lösungsvorschlag</h4>
+                      <p>{selectedRisk.solution}</p>
+                    </div>
+
+                    <div className={styles.riskDetailSection}>
+                      <h4>📋 Empfehlung</h4>
+                      <p>{selectedRisk.recommendation}</p>
+                    </div>
+                  </>
+                )}
+
                 <div className={styles.modalActions}>
-                  <button 
+                  <button
                     className={styles.secondaryButton}
                     onClick={() => setShowRiskModal(false)}
                   >
                     Schließen
                   </button>
-                  <button 
+                  <button
                     className={styles.primaryButton}
                     onClick={() => {
                       setShowRiskModal(false);
-                      navigate('/optimizer', { 
-                        state: { 
+                      navigate('/optimizer', {
+                        state: {
                           contractId: selectedContract._id,
-                          riskToFix: selectedRisk 
-                        } 
+                          riskToFix: selectedRisk
+                        }
                       });
                     }}
                   >
