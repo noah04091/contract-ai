@@ -3028,14 +3028,30 @@
   font-weight: 500;
   margin: 0;
 }
+/* ===== DASHBOARD HEADER WITH ACTIONS (ONE ROW) ===== */
+.sectionHeaderWithActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 32px;
+  max-width: 1600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
 /* ===== DASHBOARD ACTION BUTTONS ===== */
 .dashboardActions {
   display: flex;
   gap: 16px;
-  margin: 32px 0;
-  max-width: 1600px;
-  margin-left: auto;
-  margin-right: auto;
+  flex-shrink: 0;
 }
 
 .dashboardActionButton {
@@ -3181,8 +3197,15 @@
 
 /* Responsive */
 @media (max-width: 768px) {
+  .sectionHeaderWithActions {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
   .dashboardActions {
     flex-direction: column;
+    width: 100%;
   }
 
   .dashboardActionButton {

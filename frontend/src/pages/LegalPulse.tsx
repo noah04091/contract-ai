@@ -1258,15 +1258,15 @@ export default function LegalPulse() {
 
       {/* Contracts Overview */}
       <div className={styles.contractsSection}>
-        <div className={styles.sectionHeader}>
-          <h2>
+        {/* Header with Title (left) and Action Buttons (right) in ONE row */}
+        <div className={styles.sectionHeaderWithActions}>
+          <h2 className={styles.sectionTitle}>
             📋 Ihre Pulse-Analysen
             <span className={styles.contractCount}>({pagination.total} Verträge)</span>
           </h2>
-        </div>
 
-        {/* Dashboard Actions - All 4 Buttons in One Row */}
-        <div className={styles.dashboardActions}>
+          {/* Dashboard Actions - All 4 Buttons */}
+          <div className={styles.dashboardActions}>
           <button
             className={styles.dashboardActionButton}
             onClick={() => navigate('/contracts')}
@@ -1306,6 +1306,7 @@ export default function LegalPulse() {
             </svg>
             Gesetzessuche
           </button>
+          </div>
         </div>
 
         {/* Filter and Search Bar */}
