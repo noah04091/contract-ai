@@ -15,7 +15,7 @@ type ChatLite = {
 type Message = {
   role: "system" | "user" | "assistant";
   content: string;
-  meta?: any;
+  meta?: Record<string, unknown>;
 };
 
 type ChatFull = ChatLite & {
@@ -218,8 +218,11 @@ export default function Chat() {
 
       // Refresh chat list (for updated timestamp/title)
       await loadChats();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("❌ Error sending message:", error);
+
+      // Extract error message safely
+      const errorMessage = error instanceof Error ? error.message : "Nachricht konnte nicht gesendet werden.";
 
       // Show error in chat
       setActive((curr) => {
@@ -227,7 +230,7 @@ export default function Chat() {
         const msgs = [...curr.messages];
         msgs[msgs.length - 1] = {
           role: "assistant",
-          content: `**Fehler:** ${error.message || "Nachricht konnte nicht gesendet werden."}`,
+          content: `**Fehler:** ${errorMessage}`,
         };
         return { ...curr, messages: msgs };
       });
