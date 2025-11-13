@@ -69,6 +69,31 @@ interface RecommendationStatus {
   [key: string]: boolean;
 }
 
+// Type for risk objects (from RiskCard component)
+interface RiskObject {
+  title: string;
+  description?: string;
+  severity?: string;
+  impact?: string;
+  solution?: string;
+  recommendation?: string;
+  affectedClauses?: string[];
+}
+
+// Type for recommendation objects (from RecommendationCard component)
+interface RecommendationObject {
+  title: string;
+  description?: string;
+  priority?: string;
+  effort?: string;
+  impact?: string;
+  steps?: string[];
+}
+
+// Union types for backwards compatibility
+type RiskInput = string | RiskObject;
+type RecommendationInput = string | RecommendationObject;
+
 interface ExternalSearchResult {
   source: string;
   title: string;
@@ -345,8 +370,14 @@ export default function LegalPulse() {
 
   // ✅ Keine lokale Filterung mehr - Backend macht das jetzt!
 
+  // Helper to validate severity type
+  const validateSeverity = (severity?: string): 'low' | 'medium' | 'high' => {
+    if (severity === 'low' || severity === 'high') return severity;
+    return 'medium'; // default
+  };
+
   // Event Handlers
-  const handleShowRiskDetails = (risk: any) => {
+  const handleShowRiskDetails = (risk: RiskInput) => {
     // Convert to RiskDetail format (supports both string and object)
     const riskDetail: RiskDetail = typeof risk === 'string'
       ? {
@@ -362,7 +393,7 @@ export default function LegalPulse() {
           id: risk.title || 'risk',
           title: risk.title || 'Unbekanntes Risiko',
           description: risk.description || risk.title || 'Keine Beschreibung verfügbar',
-          severity: risk.severity || 'medium',
+          severity: validateSeverity(risk.severity),
           solution: risk.solution || 'Lösung wird analysiert',
           impact: risk.impact || 'Auswirkungen werden geprüft',
           recommendation: risk.recommendation || 'Empfehlung wird erstellt'
@@ -373,7 +404,7 @@ export default function LegalPulse() {
     setShowRiskModal(true);
   };
 
-  const handleShowSolution = (risk: any) => {
+  const handleShowSolution = (risk: RiskInput) => {
     // Convert to RiskDetail format (supports both string and object)
     const riskDetail: RiskDetail = typeof risk === 'string'
       ? {
@@ -389,7 +420,7 @@ export default function LegalPulse() {
           id: risk.title || 'risk',
           title: risk.title || 'Unbekanntes Risiko',
           description: risk.description || risk.title || 'Keine Beschreibung verfügbar',
-          severity: risk.severity || 'medium',
+          severity: validateSeverity(risk.severity),
           solution: risk.solution || 'Lösung wird analysiert',
           impact: risk.impact || 'Auswirkungen werden geprüft',
           recommendation: risk.recommendation || 'Empfehlung wird erstellt'
@@ -414,7 +445,7 @@ export default function LegalPulse() {
     });
   };
 
-  const handleImplementRecommendation = (recommendation: any) => {
+  const handleImplementRecommendation = (recommendation: RecommendationInput) => {
     const recText = typeof recommendation === 'string' ? recommendation : recommendation.title || recommendation.description;
     setNotification({
       message: "Weiterleitung zum Optimizer...",
