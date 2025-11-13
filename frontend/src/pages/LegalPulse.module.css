@@ -9,6 +9,7 @@
 
 /* ===== HERO SECTION ===== */
 .heroSection {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -118,6 +119,98 @@
   margin: 0;
   color: #6b7280;
   font-size: 0.95rem;
+}
+
+/* Hero Dismiss Button */
+.heroDismiss {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.9);
+  color: #6b7280;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.heroDismiss:hover {
+  background: #ffffff;
+  color: #374151;
+  transform: rotate(90deg);
+}
+
+/* Minimized Hero */
+.heroMinimized {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 40px;
+  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+  border-radius: 16px;
+  margin-bottom: 40px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  max-width: 1600px;
+  margin-left: auto;
+  margin-right: auto;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.heroMinimizedContent h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.heroMinimizedContent p {
+  margin: 4px 0 0 0;
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+.heroExpandButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.heroExpandButton:hover {
+  background: #2563eb;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.heroExpandButton svg {
+  width: 18px;
+  height: 18px;
 }
 
 /* ===== HEADER SECTION (Detail View) ===== */
