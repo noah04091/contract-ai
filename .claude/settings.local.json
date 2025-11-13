@@ -29,7 +29,19 @@
       "Bash(grep:*)",
       "Bash(netstat:*)",
       "Bash(findstr:*)",
-      "Bash(taskkill:*)"
+      "Bash(taskkill:*)",
+      "Bash(docker run:*)",
+      "Bash(.env.example)",
+      "Bash(timeout:*)",
+      "WebSearch",
+      "WebFetch(domain:www.lto.de)",
+      "WebFetch(domain:www.bundestag.de)",
+      "WebFetch(domain:www.recht.bund.de)",
+      "WebFetch(domain:www.bundesanzeiger.de)",
+      "WebFetch(domain:www.gesetze-im-internet.de)",
+      "Bash(git checkout:*)",
+      "Bash(del nul 2)",
+      "Bash(git merge feature/legal-chat-v2)"
     ],
     "deny": [],
     "ask": []

@@ -7,6 +7,7 @@ const EmbeddingService = require("../services/embeddingService");
 const VectorStore = require("../services/vectorStore");
 const sendEmailHtml = require("../utils/sendEmailHtml");
 const { broadcastToUser } = require("../routes/legalPulseFeed");
+const { getInstance: getAlertExplainer } = require("../services/alertExplainer");
 
 class LegalPulseMonitor {
   constructor() {
@@ -90,8 +91,13 @@ class LegalPulseMonitor {
         totalContractsChecked += contractsChecked;
       }
 
-      // Step 3: Summary
+      // Step 3: Summary with Cost Report
       const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+
+      // 🆕 Get cost statistics
+      const { getInstance: getCostOptimization } = require('../services/costOptimization');
+      const costOptimization = getCostOptimization();
+      const costStats = costOptimization.getStats();
 
       console.log('\n' + '='.repeat(70));
       console.log('✅ [LEGAL-PULSE] Monitoring Complete!');
@@ -101,6 +107,17 @@ class LegalPulseMonitor {
       console.log(`   Contracts checked: ${totalContractsChecked}`);
       console.log(`   Alerts sent: ${totalAlerts}`);
       console.log(`   Duration: ${duration}s`);
+
+      // 🆕 Cost Report
+      console.log(`\n💰 Cost Report:`);
+      console.log(`   Embedding requests: ${costStats.embedding.requests}`);
+      console.log(`   Embedding tokens: ${costStats.embedding.tokens.toLocaleString()}`);
+      console.log(`   Embedding cost: $${costStats.embedding.estimatedCost.toFixed(4)}`);
+      console.log(`   GPT-4 explanations: ${costStats.completion.requests}`);
+      console.log(`   GPT-4 cost: $${costStats.completion.estimatedCost.toFixed(4)}`);
+      console.log(`   Total cost: $${costStats.totalEstimatedCost.toFixed(4)}`);
+      console.log(`   Projected monthly: $${costStats.projectedMonthlyCost.toFixed(2)}`);
+
       console.log('='.repeat(70) + '\n');
 
     } catch (error) {
@@ -118,18 +135,21 @@ class LegalPulseMonitor {
     const since = new Date(Date.now() - 24 * 60 * 60 * 1000); // 24 hours ago
 
     try {
-      // For MVP, we'll create some demo law changes
-      // In production, this would call your externalLegalAPIs service
+      // STEP 1: Sync RSS feeds to MongoDB first
+      console.log('📡 [RSS] Syncing latest RSS legal feeds...');
+      await this.syncRssToMongo();
 
       const lawsCollection = this.db.collection("laws");
 
-      // Find laws updated in last 24h
+      // STEP 2: Find laws updated in last 24h (includes freshly synced RSS items)
       const recentLaws = await lawsCollection
         .find({ updatedAt: { $gte: since } })
+        .sort({ updatedAt: -1 })
         .limit(maxChanges)
         .toArray();
 
-      // If no recent laws, return empty (production would call external APIs)
+      console.log(`📜 Found ${recentLaws.length} laws updated in last 24h`);
+
       if (recentLaws.length === 0) {
         console.log('ℹ️  No recent laws found in database');
         return [];
@@ -141,13 +161,99 @@ class LegalPulseMonitor {
         description: law.summary || law.description || '',
         source: law.source || 'unknown',
         area: law.area || 'general',
-        url: law.sourceUrl || '',
+        url: law.url || law.sourceUrl || '',
         updatedAt: law.updatedAt
       }));
 
     } catch (error) {
       console.error('❌ Error fetching legal changes:', error);
       return [];
+    }
+  }
+
+  /**
+   * Sync RSS feeds to MongoDB with Fingerprinting for Deduplication
+   */
+  async syncRssToMongo() {
+    try {
+      const rssService = require('../services/rssService');
+      const { getInstance: getLawFingerprinting } = require('../services/lawFingerprinting');
+      const fingerprinting = getLawFingerprinting();
+
+      // Fetch RSS feeds (last 7 days to catch recent updates)
+      const rssItems = await rssService.fetchAllFeeds({ maxAge: 7 });
+      console.log(`   📊 Fetched ${rssItems.length} RSS items (last 7 days)`);
+
+      if (rssItems.length === 0) {
+        return { inserted: 0, updated: 0, skipped: 0, deduplicated: 0 };
+      }
+
+      // Normalize for Legal Pulse
+      const normalized = rssService.normalizeForLegalPulse(rssItems);
+
+      // Insert/Update in MongoDB with Fingerprinting
+      let inserted = 0;
+      let updated = 0;
+      let skipped = 0;
+      let deduplicated = 0;
+
+      const lawsCollection = this.db.collection("laws");
+
+      for (const item of normalized) {
+        // 🆕 Generate content fingerprint
+        const contentHash = fingerprinting.generateFingerprint(item);
+        item.contentHash = contentHash;
+
+        // 🆕 Check for duplicates by EITHER lawId OR contentHash
+        const existing = await lawsCollection.findOne({
+          $or: [
+            { lawId: item.lawId },
+            { contentHash: contentHash }
+          ]
+        });
+
+        if (existing) {
+          // Check if this is a duplicate from different source
+          const isDuplicate = existing.lawId !== item.lawId && existing.contentHash === contentHash;
+
+          if (isDuplicate) {
+            // 🆕 MERGE duplicate entries instead of creating separate ones
+            console.log(`   🔗 Duplicate detected: "${item.title.substring(0, 50)}..." from ${item.feedId}`);
+
+            const mergedLaw = fingerprinting.mergeDuplicates(existing, item);
+
+            await lawsCollection.updateOne(
+              { _id: existing._id },
+              { $set: mergedLaw }
+            );
+
+            deduplicated++;
+          } else {
+            // Regular update (same law, possibly updated content)
+            if (!existing.updatedAt || existing.updatedAt < item.updatedAt) {
+              await lawsCollection.updateOne(
+                { _id: existing._id },
+                { $set: { ...item, updatedAt: new Date() } }
+              );
+              updated++;
+            } else {
+              skipped++;
+            }
+          }
+        } else {
+          // Insert new law
+          await lawsCollection.insertOne(item);
+          inserted++;
+        }
+      }
+
+      console.log(`   ✅ RSS Sync: ${inserted} new, ${updated} updated, ${skipped} skipped, ${deduplicated} deduplicated`);
+
+      return { inserted, updated, skipped, deduplicated };
+
+    } catch (error) {
+      console.error('   ❌ Error syncing RSS feeds:', error);
+      return { inserted: 0, updated: 0, skipped: 0, deduplicated: 0 };
     }
   }
 
@@ -245,35 +351,94 @@ class LegalPulseMonitor {
         return false;
       }
 
-      // Check if user opted out
+      // 🆕 Check user's Legal Pulse settings
+      const settings = user.legalPulseSettings || {
+        enabled: true,
+        similarityThreshold: 0.70,
+        categories: ['Arbeitsrecht', 'Mietrecht', 'Kaufrecht', 'Vertragsrecht', 'Datenschutz', 'Verbraucherrecht'],
+        digestMode: 'instant',
+        emailNotifications: true
+      };
+
+      // Check if Legal Pulse is enabled for this user
+      if (settings.enabled === false) {
+        console.log(`   ⏭️  Legal Pulse disabled for user: ${user.email}`);
+        return false;
+      }
+
+      // 🆕 Check user's custom similarity threshold
+      if (contract.score < settings.similarityThreshold) {
+        console.log(`   ⏭️  Score ${(contract.score * 100).toFixed(1)}% below user threshold ${(settings.similarityThreshold * 100).toFixed(1)}% for ${user.email}`);
+        return false;
+      }
+
+      // 🆕 Check if law category matches user's selected categories
+      if (lawChange.area && Array.isArray(settings.categories) && settings.categories.length > 0) {
+        if (!settings.categories.includes(lawChange.area)) {
+          console.log(`   ⏭️  Law category "${lawChange.area}" not in user's selected categories: ${user.email}`);
+          return false;
+        }
+      }
+
+      // 🆕 Check digest mode - if not instant, queue for later
+      if (settings.digestMode !== 'instant') {
+        console.log(`   📬 Queueing alert for ${settings.digestMode} digest: ${user.email}`);
+        await this.queueDigestAlert(user._id, contract, lawChange, settings.digestMode);
+        return true; // Count as "sent" for stats
+      }
+
+      // Check if user opted out (legacy setting)
       if (user.settings?.legalPulseAuto === false) {
         console.log(`   ⏭️  User opted out of auto-alerts: ${user.email}`);
         return false;
       }
 
+      // Check email notifications preference
+      if (settings.emailNotifications === false) {
+        console.log(`   📧 Email notifications disabled for user: ${user.email}`);
+        // Still create the alert in DB, just don't send email
+        return this.createAlertWithoutEmail(contract, lawChange, user);
+      }
+
       // Calculate severity
       const severity = this.calculateSeverity(contract.score);
 
-      // Create alert object
+      // 🆕 Generate GPT-4 explanation
+      let explanation = null;
+      try {
+        const alertExplainer = getAlertExplainer();
+        explanation = await alertExplainer.explainRelevance(
+          lawChange,
+          contract,
+          contract.matchedChunk || '',
+          contract.score
+        );
+      } catch (explainerError) {
+        console.log(`   ⚠️  GPT-4 explanation failed, using fallback`);
+        explanation = `Diese Gesetzesänderung wurde als ${(contract.score * 100).toFixed(1)}% relevant für Ihren Vertrag "${contract.contractName}" eingestuft.`;
+      }
+
+      // 🆕 Log alert in database FIRST to get alert ID for feedback links
+      const alertId = await this.logAlert(contract, lawChange, explanation);
+
+      // Create alert object for SSE
       const alert = {
         contractId: contract.contractId,
         type: 'law_change',
         severity,
         title: `${lawChange.title}`,
         description: `Betrifft: ${contract.contractName}`,
+        explanation, // 🆕 Include GPT-4 explanation
         actionUrl: `/optimizer?contractId=${contract.contractId}&lawChangeId=${lawChange.id}`,
         score: contract.score,
         createdAt: new Date()
       };
 
-      // Send E-Mail
-      await this.sendAlertEmail(user, contract, lawChange, severity);
+      // 🆕 Send E-Mail with explanation AND alert ID for feedback
+      await this.sendAlertEmail(user, contract, lawChange, severity, explanation, alertId);
 
       // Send SSE notification
       broadcastToUser(contract.userId, alert);
-
-      // Log alert in database
-      await this.logAlert(contract, lawChange);
 
       console.log(`   ✅ Alert sent to ${user.email} for ${contract.contractName} (score: ${(contract.score * 100).toFixed(1)}%)`);
 
@@ -297,8 +462,9 @@ class LegalPulseMonitor {
 
   /**
    * Send alert email
+   * 🆕 Added alertId parameter for feedback buttons
    */
-  async sendAlertEmail(user, contract, lawChange, severity) {
+  async sendAlertEmail(user, contract, lawChange, severity, explanation = null, alertId = null) {
     const severityColors = {
       critical: { bg: '#dc2626', light: '#fef2f2', border: '#dc2626', text: '#991b1b' },
       high: { bg: '#ea580c', light: '#fff7ed', border: '#ea580c', text: '#9a3412' },
@@ -357,6 +523,13 @@ class LegalPulseMonitor {
         <span class="score-badge">Priorität: ${severityText} • Relevanz: ${(contract.score * 100).toFixed(1)}%</span>
       </div>
 
+      ${explanation ? `
+      <div style="background: #f0f9ff; border-left: 4px solid #0ea5e9; padding: 20px; border-radius: 8px; margin: 24px 0;">
+        <p style="margin: 0 0 8px; font-weight: 600; color: #0c4a6e; font-size: 16px;">🧠 KI-Erklärung: Warum ist das wichtig?</p>
+        <p style="margin: 0; color: #1f2937; line-height: 1.7; font-size: 15px;">${explanation}</p>
+      </div>
+      ` : ''}
+
       <div class="contract-info">
         <p style="margin: 0 0 8px 0;"><strong>📄 Betroffener Vertrag:</strong></p>
         <p style="margin: 0; color: #1f2937; font-size: 15px;">${contract.contractName}</p>
@@ -374,6 +547,23 @@ class LegalPulseMonitor {
       <p style="color: #9ca3af; font-size: 13px; margin-top: 16px;">
         Sie können diese automatischen Benachrichtigungen jederzeit in Ihren <a href="https://www.contract-ai.de/profile" style="color: #3b82f6;">Einstellungen</a> deaktivieren.
       </p>
+
+      ${alertId ? `
+      <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 24px; margin-top: 32px; text-align: center;">
+        <p style="margin: 0 0 16px; font-weight: 600; color: #374151; font-size: 15px;">War diese Benachrichtigung hilfreich?</p>
+        <div style="display: inline-flex; gap: 12px;">
+          <a href="https://www.contract-ai.de/feedback/helpful/${alertId}"
+             style="display: inline-block; padding: 12px 24px; background: #10b981; color: white; text-decoration: none; border-radius: 8px; font-weight: 500; font-size: 15px;">
+            👍 Ja, hilfreich
+          </a>
+          <a href="https://www.contract-ai.de/feedback/not-helpful/${alertId}"
+             style="display: inline-block; padding: 12px 24px; background: #ef4444; color: white; text-decoration: none; border-radius: 8px; font-weight: 500; font-size: 15px;">
+            👎 Nicht hilfreich
+          </a>
+        </div>
+        <p style="margin: 16px 0 0; color: #6b7280; font-size: 13px;">Ihr Feedback hilft uns, die Relevanz der Benachrichtigungen zu verbessern.</p>
+      </div>
+      ` : ''}
     </div>
 
     <div class="footer">
@@ -415,19 +605,90 @@ class LegalPulseMonitor {
 
   /**
    * Log alert in database
+   * 🆕 Returns the inserted alert ID for feedback tracking
    */
-  async logAlert(contract, lawChange) {
+  async logAlert(contract, lawChange, explanation = null) {
     const notificationsCollection = this.db.collection("pulse_notifications");
 
-    await notificationsCollection.insertOne({
+    const result = await notificationsCollection.insertOne({
       contractId: contract.contractId,
+      contractName: contract.contractName || 'Unbekannter Vertrag', // 🆕 Store contract name
       userId: contract.userId,
       lawId: lawChange.id,
       lawTitle: lawChange.title,
+      lawArea: lawChange.area || null, // 🆕 Store law area for feedback analytics
       score: contract.score,
       severity: this.calculateSeverity(contract.score),
+      explanation, // 🆕 Store GPT-4 explanation
       createdAt: new Date()
     });
+
+    return result.insertedId; // 🆕 Return alert ID for feedback links
+  }
+
+  /**
+   * Queue alert for digest (daily/weekly)
+   * 🆕 NEW METHOD for digest mode support
+   */
+  async queueDigestAlert(userId, contract, lawChange, digestMode) {
+    try {
+      const digestQueueCollection = this.db.collection("digest_queue");
+
+      await digestQueueCollection.insertOne({
+        userId: new ObjectId(userId),
+        contractId: contract.contractId,
+        contractName: contract.contractName,
+        lawId: lawChange.id,
+        lawTitle: lawChange.title,
+        lawDescription: lawChange.description,
+        lawArea: lawChange.area,
+        score: contract.score,
+        matchedChunk: contract.matchedChunk,
+        digestMode, // 'daily' or 'weekly'
+        queued: true,
+        sent: false,
+        queuedAt: new Date()
+      });
+
+      console.log(`   ✅ Queued ${digestMode} digest alert for user ${userId}`);
+    } catch (error) {
+      console.error(`   ❌ Error queueing digest alert:`, error);
+    }
+  }
+
+  /**
+   * Create alert in DB without sending email
+   * 🆕 NEW METHOD for users who disabled email notifications
+   */
+  async createAlertWithoutEmail(contract, lawChange, user) {
+    try {
+      const severity = this.calculateSeverity(contract.score);
+
+      // 🆕 Generate GPT-4 explanation
+      let explanation = null;
+      try {
+        const alertExplainer = getAlertExplainer();
+        explanation = await alertExplainer.explainRelevance(
+          lawChange,
+          contract,
+          contract.matchedChunk || '',
+          contract.score
+        );
+      } catch (explainerError) {
+        console.log(`   ⚠️  GPT-4 explanation failed, using fallback`);
+        explanation = `Diese Gesetzesänderung wurde als ${(contract.score * 100).toFixed(1)}% relevant für Ihren Vertrag "${contract.contractName}" eingestuft.`;
+      }
+
+      // Log alert in database
+      await this.logAlert(contract, lawChange, explanation);
+
+      console.log(`   ✅ Alert created (no email) for user ${user.email}: ${lawChange.title}`);
+      return true;
+
+    } catch (error) {
+      console.error(`   ❌ Error creating alert without email:`, error);
+      return false;
+    }
   }
 
   /**

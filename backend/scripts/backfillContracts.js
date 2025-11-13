@@ -25,12 +25,22 @@ async function backfillContracts() {
     vectorStore = new VectorStore();
     await vectorStore.init();
 
-    // Fetch all contracts
-    const contracts = await contractsCollection.find({}).toArray();
-    console.log(`📄 Found ${contracts.length} contracts to process\n`);
+    // Fetch only contracts that need indexing (incremental mode)
+    // Skip contracts where lastIndexedAt >= updatedAt (already up-to-date)
+    const contracts = await contractsCollection.find({
+      $or: [
+        { lastIndexedAt: { $exists: false } }, // Never indexed
+        { lastIndexedAt: null }, // Never indexed
+        { $expr: { $gt: ["$updatedAt", "$lastIndexedAt"] } } // Updated since last index
+      ]
+    }).toArray();
+
+    const totalContracts = await contractsCollection.countDocuments({});
+    console.log(`📄 Total contracts in database: ${totalContracts}`);
+    console.log(`📄 Contracts needing indexing: ${contracts.length}\n`);
 
     if (contracts.length === 0) {
-      console.log("⚠️  No contracts found. Exiting.");
+      console.log("✅ All contracts are up-to-date. Nothing to index.");
       return;
     }
 
@@ -52,7 +62,11 @@ async function backfillContracts() {
           let text = "";
 
           // Try different text sources in order of preference
-          if (contract.analysis?.fullText) {
+          if (contract.fullText) {
+            text = contract.fullText;
+          } else if (contract.content) {
+            text = contract.content;
+          } else if (contract.analysis?.fullText) {
             text = contract.analysis.fullText;
           } else if (contract.parsedText) {
             text = contract.parsedText;
@@ -70,8 +84,8 @@ async function backfillContracts() {
           // Pseudonymize sensitive data
           text = embeddingService.pseudonymize(text);
 
-          // Chunk the text
-          const chunks = embeddingService.chunkText(text, 800, 100);
+          // Chunk the text (now using token-safe chunking - default 7000 tokens/chunk)
+          const chunks = embeddingService.chunkText(text); // Uses safe defaults
 
           if (chunks.length === 0) {
             console.log(`   ⚠️  Skipping ${contract.name}: No chunks generated`);
@@ -99,6 +113,12 @@ async function backfillContracts() {
 
           // Upsert to vector store
           await vectorStore.upsertContracts(contractDocs);
+
+          // 🆕 Mark contract as indexed in MongoDB
+          await contractsCollection.updateOne(
+            { _id: contract._id },
+            { $set: { lastIndexedAt: new Date() } }
+          );
 
           totalChunks += chunks.length;
           processedCount++;

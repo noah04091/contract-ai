@@ -17,20 +17,19 @@ class AILegalPulse {
 
     // Legal analysis prompts
     this.prompts = {
-      riskAnalysis: `Du bist ein erfahrener Rechtsanwalt, spezialisiert auf Vertragsrecht. 
-Analysiere den folgenden Vertrag und bewerte das rechtliche Risiko auf einer Skala von 0-100:
+      riskAnalysis: `Du bist ein erfahrener Rechtsanwalt, spezialisiert auf Vertragsrecht.
+Analysiere den folgenden Vertrag INDIVIDUELL und bewerte das rechtliche Risiko auf einer Skala von 0-100:
 
 - 0-30: Geringes Risiko (gut ausbalanciert, faire Bedingungen)
 - 31-70: Mittleres Risiko (einige problematische Klauseln)
 - 71-100: Hohes Risiko (unausgewogen, problematische Bedingungen)
 
-Berücksichtige dabei:
-1. Einseitige oder unfaire Klauseln
-2. Fehlende wichtige Schutzbestimmungen  
-3. Haftungsrisiken
-4. Kündigungsregelungen
-5. Datenschutz-Compliance (DSGVO)
-6. AGB-rechtliche Probleme
+WICHTIG:
+- Analysiere NUR die TATSÄCHLICH vorhandenen Risiken in DIESEM spezifischen Vertrag
+- Wenn keine Risiken vorliegen, gib ein leeres Array zurück
+- Sei vertragstyp-spezifisch (Arbeitsvertrag ≠ Mietvertrag ≠ Kaufvertrag)
+- KEINE künstlichen Limits - liste ALLE gefundenen Risiken auf (auch wenn es 0, 3 oder 15+ sind)
+- Generiere für JEDES Risiko vollständige Details (Beschreibung, Auswirkungen, Lösung, Empfehlung)
 
 Antworte NUR mit einem JSON-Objekt in folgendem Format:
 {
@@ -38,8 +37,27 @@ Antworte NUR mit einem JSON-Objekt in folgendem Format:
   "riskLevel": "low|medium|high",
   "summary": "Kurze Zusammenfassung der Risikoeinschätzung",
   "riskFactors": ["Liste der identifizierten Risikofaktoren"],
-  "legalRisks": ["Spezifische rechtliche Risiken"],
-  "recommendations": ["Konkrete Empfehlungen zur Risikominimierung"]
+  "topRisks": [
+    {
+      "title": "Prägnanter Risiko-Titel",
+      "description": "Detaillierte Beschreibung des spezifischen Risikos in DIESEM Vertrag",
+      "severity": "low|medium|high|critical",
+      "impact": "Konkrete Auswirkungen und potenzielle Folgen für DIESEN Vertrag",
+      "solution": "Maßgeschneiderter Lösungsvorschlag zur Behebung des Risikos",
+      "recommendation": "Spezifische Handlungsempfehlung mit Priorisierung",
+      "affectedClauses": ["Betroffene Vertragsklauseln oder Paragraphen"]
+    }
+  ],
+  "recommendations": [
+    {
+      "title": "Empfehlungs-Titel",
+      "description": "Detaillierte Beschreibung der Maßnahme",
+      "priority": "low|medium|high|critical",
+      "effort": "Geschätzter Aufwand (gering/mittel/hoch)",
+      "impact": "Erwartete Verbesserung durch Umsetzung",
+      "steps": ["Konkrete Umsetzungsschritte"]
+    }
+  ]
 }`,
 
       clauseAnalysis: `Analysiere den Vertrag auf problematische Klauseln. Identifiziere:
@@ -243,15 +261,17 @@ ${this.prompts.riskAnalysis}`;
       const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         const parsed = JSON.parse(jsonMatch[0]);
-        
+
         // Validierung und Defaults
         return {
           riskScore: Math.min(100, Math.max(0, parsed.riskScore || 50)),
           riskLevel: parsed.riskLevel || 'medium',
           summary: parsed.summary || 'Keine Zusammenfassung verfügbar',
           riskFactors: Array.isArray(parsed.riskFactors) ? parsed.riskFactors : [],
-          legalRisks: Array.isArray(parsed.legalRisks) ? parsed.legalRisks : [],
-          recommendations: Array.isArray(parsed.recommendations) ? parsed.recommendations : []
+          topRisks: Array.isArray(parsed.topRisks) ? parsed.topRisks : [],
+          recommendations: Array.isArray(parsed.recommendations) ? parsed.recommendations : [],
+          // Legacy support (deprecated)
+          legalRisks: Array.isArray(parsed.legalRisks) ? parsed.legalRisks : []
         };
       }
     } catch (error) {
@@ -320,8 +340,9 @@ ${this.prompts.riskAnalysis}`;
       lawInsights: this.generateLawInsights(aiAnalysis),
       marketSuggestions: this.generateMarketSuggestions(aiAnalysis),
       riskFactors: aiAnalysis.riskFactors,
-      legalRisks: aiAnalysis.legalRisks,
-      recommendations: aiAnalysis.recommendations,
+      topRisks: aiAnalysis.topRisks || [],
+      legalRisks: aiAnalysis.legalRisks || [],
+      recommendations: aiAnalysis.recommendations || [],
       analysisDate: new Date(),
       aiGenerated: true
     };

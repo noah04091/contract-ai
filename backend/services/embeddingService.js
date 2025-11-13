@@ -7,20 +7,52 @@ class EmbeddingService {
   constructor() {
     this.openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     this.model = process.env.EMBEDDINGS_MODEL || 'text-embedding-3-small';
+
+    // 🆕 Initialize cost optimization
+    const { getInstance: getCostOptimization } = require('./costOptimization');
+    this.costOptimization = getCostOptimization();
   }
 
   /**
-   * Generate embedding for a single text
+   * Generate embedding for a single text (with caching & cost tracking)
    * @param {string} text
    * @returns {Promise<number[]>} embedding vector
    */
   async embedText(text) {
     try {
+      // 🆕 Check cache first
+      const textHash = this.costOptimization.hashText(text);
+      const cachedEmbedding = this.costOptimization.getCachedEmbedding(textHash);
+
+      if (cachedEmbedding) {
+        return cachedEmbedding;
+      }
+
+      // 🆕 Estimate tokens and check rate limit
+      const estimatedTokens = this.estimateTokens(text);
+      const rateCheck = this.costOptimization.checkRateLimit('embedding', estimatedTokens);
+
+      if (!rateCheck.allowed) {
+        console.warn(`[EMBEDDING] Rate limit reached, waiting ${rateCheck.retryAfter}s...`);
+        await this.sleep(rateCheck.retryAfter * 1000);
+      }
+
+      // Make API call
       const response = await this.openai.embeddings.create({
         model: this.model,
         input: text,
       });
-      return response.data[0].embedding;
+
+      const embedding = response.data[0].embedding;
+
+      // 🆕 Track cost (usage object contains token count)
+      const actualTokens = response.usage?.total_tokens || estimatedTokens;
+      this.costOptimization.trackEmbeddingCost(actualTokens);
+
+      // 🆕 Cache the result
+      this.costOptimization.cacheEmbedding(textHash, embedding);
+
+      return embedding;
     } catch (error) {
       console.error('[EMBEDDING] Error generating embedding:', error);
       throw error;
@@ -29,6 +61,7 @@ class EmbeddingService {
 
   /**
    * Generate embeddings for multiple texts (batched)
+   * NOW: Validates token limits and handles oversized chunks gracefully
    * @param {string[]} texts
    * @returns {Promise<number[][]>} array of embedding vectors
    */
@@ -36,17 +69,50 @@ class EmbeddingService {
     if (texts.length === 0) return [];
 
     try {
+      // 🛡️ SAFETY: Validate token limits BEFORE sending to API
+      const MAX_TOKENS_PER_INPUT = 8192;
+      const validatedTexts = [];
+
+      for (let i = 0; i < texts.length; i++) {
+        const text = texts[i];
+        const tokenCount = this.estimateTokens(text);
+
+        if (tokenCount > MAX_TOKENS_PER_INPUT) {
+          console.error(`[EMBEDDING] ⚠️ Text ${i} exceeds token limit (${tokenCount} tokens), splitting...`);
+
+          // Emergency: Split this text further (use safer 4000 token limit)
+          const subChunks = this.chunkText(text, 4000, 100);
+          console.log(`[EMBEDDING] Split into ${subChunks.length} sub-chunks`);
+          validatedTexts.push(...subChunks);
+        } else {
+          validatedTexts.push(text);
+        }
+      }
+
       // OpenAI allows up to 2048 inputs per batch
-      const batches = this.chunkArray(texts, 2048);
+      const batches = this.chunkArray(validatedTexts, 2048);
       const allEmbeddings = [];
 
       for (const batch of batches) {
+        // 🆕 Check rate limit before batch
+        const batchTokens = batch.reduce((sum, text) => sum + this.estimateTokens(text), 0);
+        const rateCheck = this.costOptimization.checkRateLimit('embedding', batchTokens);
+
+        if (!rateCheck.allowed) {
+          console.warn(`[EMBEDDING] Rate limit reached, waiting ${rateCheck.retryAfter}s...`);
+          await this.sleep(rateCheck.retryAfter * 1000);
+        }
+
         const response = await this.openai.embeddings.create({
           model: this.model,
           input: batch,
         });
 
         allEmbeddings.push(...response.data.map(d => d.embedding));
+
+        // 🆕 Track cost for this batch
+        const actualTokens = response.usage?.total_tokens || batchTokens;
+        this.costOptimization.trackEmbeddingCost(actualTokens);
 
         // Rate limiting - wait a bit between batches
         if (batches.length > 1) {
@@ -57,35 +123,70 @@ class EmbeddingService {
       return allEmbeddings;
     } catch (error) {
       console.error('[EMBEDDING] Error generating batch embeddings:', error);
+
+      // If error contains token limit info, provide helpful message
+      if (error.message && error.message.includes('maximum context length')) {
+        console.error('[EMBEDDING] 🚨 Token limit exceeded! Please check input sizes.');
+      }
+
       throw error;
     }
   }
 
   /**
-   * Chunk a text into smaller pieces for embedding
+   * Estimate token count for a text (rough approximation)
+   * Rule: ~2.5 characters = 1 token (VERY CONSERVATIVE for safety)
+   * OpenAI's actual tokenization can be MUCH HIGHER than character-based estimates,
+   * especially for special chars, numbers, punctuation, and German compound words.
    * @param {string} text
-   * @param {number} maxTokens - approximate max tokens per chunk
-   * @param {number} overlap - overlap between chunks
+   * @returns {number} estimated token count
+   */
+  estimateTokens(text) {
+    if (!text) return 0;
+    // VERY CONSERVATIVE estimate: 1 token per 2.5 characters
+    return Math.ceil(text.length / 2.5);
+  }
+
+  /**
+   * Chunk a text into smaller pieces for embedding
+   * NOW: Uses token-safe chunking to prevent exceeding OpenAI's 8192 token limit
+   * @param {string} text
+   * @param {number} maxTokens - max tokens per chunk (default: 4000 for MAXIMUM safety margin)
+   * @param {number} overlap - overlap between chunks in tokens
    * @returns {string[]} array of text chunks
    */
-  chunkText(text, maxTokens = 800, overlap = 100) {
+  chunkText(text, maxTokens = 4000, overlap = 100) {
     if (!text || text.trim().length === 0) {
       return [];
     }
 
-    // Simple word-based chunking (rough approximation of tokens)
-    const words = text.split(/\s+/);
-    const chunks = [];
+    const estimatedTokens = this.estimateTokens(text);
 
     // If text is small enough, return as single chunk
-    if (words.length <= maxTokens) {
+    if (estimatedTokens <= maxTokens) {
       return [text];
     }
 
-    for (let i = 0; i < words.length; i += (maxTokens - overlap)) {
-      const chunk = words.slice(i, i + maxTokens).join(' ');
+    // Character-based chunking (more accurate for token limits)
+    const charsPerChunk = Math.floor(maxTokens * 2.5); // ~2.5 chars per token (VERY CONSERVATIVE)
+    const overlapChars = Math.floor(overlap * 2.5);
+    const chunks = [];
+
+    for (let i = 0; i < text.length; i += (charsPerChunk - overlapChars)) {
+      const chunk = text.substring(i, i + charsPerChunk);
+
       if (chunk.trim().length > 0) {
-        chunks.push(chunk);
+        // Double-check this chunk doesn't exceed limit
+        const chunkTokens = this.estimateTokens(chunk);
+
+        if (chunkTokens > maxTokens) {
+          // Emergency: Further split oversized chunk
+          console.warn(`[EMBEDDING] Chunk exceeds ${maxTokens} tokens (${chunkTokens}), splitting further...`);
+          const subChunks = this.chunkText(chunk, Math.floor(maxTokens / 2), overlap);
+          chunks.push(...subChunks);
+        } else {
+          chunks.push(chunk);
+        }
       }
     }
 

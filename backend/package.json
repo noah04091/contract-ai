@@ -41,6 +41,7 @@
     "pdfkit": "^0.17.1",
     "puppeteer-core": "^24.24.1",
     "qrcode": "^1.5.4",
+    "rss-parser": "^3.13.0",
     "stripe": "^18.0.0",
     "xml2js": "^0.6.2"
   }

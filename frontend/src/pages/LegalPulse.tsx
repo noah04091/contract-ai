@@ -167,47 +167,7 @@ export default function LegalPulse() {
   };
 
   // Detaillierte Risiko-Daten
-  const getRiskDetails = (riskTitle: string): RiskDetail => {
-    const riskDatabase: { [key: string]: RiskDetail } = {
-      "Veraltete Datenschutzklauseln (DSGVO-Konformität)": {
-        id: "dsgvo-risk",
-        title: "Veraltete Datenschutzklauseln",
-        description: "Die aktuellen Datenschutzbestimmungen entsprechen nicht den DSGVO-Anforderungen. Dies kann zu erheblichen Bußgeldern und rechtlichen Problemen führen.",
-        severity: "high",
-        solution: "Aktualisierung der Datenschutzerklärung nach Art. 13 und 14 DSGVO mit klaren Rechtsgrundlagen, Zweckbindung und Betroffenenrechten.",
-        impact: "Bußgelder bis zu 4% des Jahresumsatzes möglich",
-        recommendation: "Sofortige Überarbeitung durch Datenschutzexperten empfohlen"
-      },
-      "Fehlende Kündigungsfristen für bestimmte Vertragsarten": {
-        id: "kuendigung-risk",
-        title: "Unklare Kündigungsregelungen",
-        description: "Die Kündigungsfristen sind nicht eindeutig definiert oder entsprechen nicht den gesetzlichen Mindestanforderungen.",
-        severity: "medium",
-        solution: "Präzisierung der Kündigungsfristen gemäß § 573c BGB mit klaren Fristen und Modalitäten.",
-        impact: "Rechtsunsicherheit und potenzielle Vertragsverlängerungen",
-        recommendation: "Überarbeitung der Kündigungsklauseln binnen 30 Tagen"
-      },
-      "Unklare Haftungsregelungen bei Leistungsstörungen": {
-        id: "haftung-risk",
-        title: "Haftungsrisiken",
-        description: "Die Haftungsregelungen sind unvollständig oder unwirksam, was zu unvorhersehbaren finanziellen Risiken führen kann.",
-        severity: "high",
-        solution: "Überarbeitung der Haftungsklauseln nach § 309 BGB mit angemessenen Haftungsbeschränkungen.",
-        impact: "Unbegrenzte Haftungsrisiken",
-        recommendation: "Rechtliche Prüfung und Anpassung erforderlich"
-      }
-    };
-
-    return riskDatabase[riskTitle] || {
-      id: "generic-risk",
-      title: riskTitle,
-      description: "Dieses Risiko wurde identifiziert und sollte näher untersucht werden.",
-      severity: "medium",
-      solution: "Eine detaillierte Analyse und entsprechende Maßnahmen sind erforderlich.",
-      impact: "Potenzielle rechtliche oder finanzielle Auswirkungen",
-      recommendation: "Konsultation eines Rechtsexperten empfohlen"
-    };
-  };
+  // ✅ getRiskDetails removed - now using backend data directly
 
   // ✅ Fetch Contracts mit Server-seitiger Filterung
   const fetchContracts = async () => {
@@ -386,15 +346,55 @@ export default function LegalPulse() {
   // ✅ Keine lokale Filterung mehr - Backend macht das jetzt!
 
   // Event Handlers
-  const handleShowRiskDetails = (riskTitle: string) => {
-    const riskDetail = getRiskDetails(riskTitle);
+  const handleShowRiskDetails = (risk: any) => {
+    // Convert to RiskDetail format (supports both string and object)
+    const riskDetail: RiskDetail = typeof risk === 'string'
+      ? {
+          id: 'legacy-risk',
+          title: risk,
+          description: risk,
+          severity: 'medium',
+          solution: 'Detaillierte Analyse erforderlich',
+          impact: 'Potenzielle rechtliche Auswirkungen',
+          recommendation: 'Rechtliche Prüfung empfohlen'
+        }
+      : {
+          id: risk.title || 'risk',
+          title: risk.title || 'Unbekanntes Risiko',
+          description: risk.description || risk.title || 'Keine Beschreibung verfügbar',
+          severity: risk.severity || 'medium',
+          solution: risk.solution || 'Lösung wird analysiert',
+          impact: risk.impact || 'Auswirkungen werden geprüft',
+          recommendation: risk.recommendation || 'Empfehlung wird erstellt'
+        };
+
     setSelectedRisk(riskDetail);
     setRiskModalType('details');
     setShowRiskModal(true);
   };
 
-  const handleShowSolution = (riskTitle: string) => {
-    const riskDetail = getRiskDetails(riskTitle);
+  const handleShowSolution = (risk: any) => {
+    // Convert to RiskDetail format (supports both string and object)
+    const riskDetail: RiskDetail = typeof risk === 'string'
+      ? {
+          id: 'legacy-risk',
+          title: risk,
+          description: risk,
+          severity: 'medium',
+          solution: 'Detaillierte Analyse erforderlich',
+          impact: 'Potenzielle rechtliche Auswirkungen',
+          recommendation: 'Rechtliche Prüfung empfohlen'
+        }
+      : {
+          id: risk.title || 'risk',
+          title: risk.title || 'Unbekanntes Risiko',
+          description: risk.description || risk.title || 'Keine Beschreibung verfügbar',
+          severity: risk.severity || 'medium',
+          solution: risk.solution || 'Lösung wird analysiert',
+          impact: risk.impact || 'Auswirkungen werden geprüft',
+          recommendation: risk.recommendation || 'Empfehlung wird erstellt'
+        };
+
     setSelectedRisk(riskDetail);
     setRiskModalType('solutions');
     setShowRiskModal(true);
@@ -414,17 +414,18 @@ export default function LegalPulse() {
     });
   };
 
-  const handleImplementRecommendation = (recommendation: string) => {
-    setNotification({ 
-      message: "Weiterleitung zum Optimizer...", 
-      type: "success" 
+  const handleImplementRecommendation = (recommendation: any) => {
+    const recText = typeof recommendation === 'string' ? recommendation : recommendation.title || recommendation.description;
+    setNotification({
+      message: "Weiterleitung zum Optimizer...",
+      type: "success"
     });
     // Navigate to optimizer with recommendation context
-    navigate('/optimizer', { 
-      state: { 
+    navigate('/optimizer', {
+      state: {
         contractId: selectedContract?._id,
-        recommendation: recommendation 
-      } 
+        recommendation: recText
+      }
     });
   };
 
