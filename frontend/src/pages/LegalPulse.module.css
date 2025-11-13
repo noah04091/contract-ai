@@ -2935,3 +2935,181 @@
   font-weight: 500;
   margin: 0;
 }
+/* ===== DASHBOARD ACTION BUTTONS ===== */
+.dashboardActions {
+  display: flex;
+  gap: 16px;
+  margin: 32px 0;
+  max-width: 1600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.dashboardActionButton {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 24px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+  position: relative;
+}
+
+.dashboardActionButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.35);
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+}
+
+.dashboardActionButton:active {
+  transform: translateY(0);
+}
+
+.dashboardActionButton svg {
+  width: 20px;
+  height: 20px;
+}
+
+.feedBadge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: #ef4444;
+  color: white;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+}
+
+/* ===== SIDEBAR OVERLAY & CONTAINER ===== */
+.sidebarOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.sidebar {
+  background: white;
+  height: 100vh;
+  width: 500px;
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  animation: slideIn 0.3s ease;
+}
+
+.wideSidebar {
+  width: 700px;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.sidebarHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 32px;
+  border-bottom: 1px solid #e5e7eb;
+  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+}
+
+.sidebarHeader h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.closeSidebar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: #f3f4f6;
+  color: #6b7280;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.closeSidebar:hover {
+  background: #e5e7eb;
+  color: #374151;
+  transform: rotate(90deg);
+}
+
+.sidebarContent {
+  flex: 1;
+  overflow-y: auto;
+  padding: 32px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .dashboardActions {
+    flex-direction: column;
+  }
+
+  .dashboardActionButton {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .sidebar {
+    width: 100%;
+  }
+
+  .wideSidebar {
+    width: 100%;
+  }
+
+  .sidebarHeader {
+    padding: 20px;
+  }
+
+  .sidebarContent {
+    padding: 20px;
+  }
+}
