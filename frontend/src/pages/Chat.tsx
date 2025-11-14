@@ -650,9 +650,9 @@ export default function Chat() {
           </div>
 
           {/* ==========================================
-              UPLOAD DROPZONE & SMART QUESTIONS
+              UPLOADED CONTRACTS & SMART QUESTIONS
               ========================================== */}
-          {active && (
+          {active && (active.attachments?.length > 0 || smartQuestions.length > 0) && (
             <div className={styles.uploadSection}>
               {/* Show uploaded contracts */}
               {active.attachments && active.attachments.length > 0 && (
@@ -695,56 +695,16 @@ export default function Chat() {
                   </div>
                 </div>
               )}
-
-              {/* Upload Dropzone */}
-              <div
-                className={`${styles.uploadDropzone} ${dragActive ? styles.dragActive : ""}`}
-                onDragEnter={handleDrag}
-                onDragLeave={handleDrag}
-                onDragOver={handleDrag}
-                onDrop={handleDrop}
-              >
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="application/pdf"
-                  onChange={handleFileSelect}
-                  style={{ display: "none" }}
-                />
-                <button
-                  className={styles.uploadButton}
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploading || loading}
-                >
-                  {uploading ? (
-                    <>
-                      <svg className={styles.spinner} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" opacity="0.25" />
-                        <path d="M12 2a10 10 0 0110 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                      </svg>
-                      Hochladen...
-                    </>
-                  ) : (
-                    <>
-                      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path
-                          d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                      PDF-Vertrag hochladen
-                    </>
-                  )}
-                </button>
-                <span className={styles.uploadHint}>oder Datei hierher ziehen</span>
-              </div>
             </div>
           )}
 
-          <div className={styles.inputBar}>
+          <div
+            className={`${styles.inputBar} ${dragActive ? styles.dragActive : ""}`}
+            onDragEnter={handleDrag}
+            onDragLeave={handleDrag}
+            onDragOver={handleDrag}
+            onDrop={handleDrop}
+          >
             <form
               className={styles.form}
               onSubmit={(e) => {
@@ -752,6 +712,44 @@ export default function Chat() {
                 sendMessage();
               }}
             >
+              {/* Hidden file input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="application/pdf"
+                onChange={handleFileSelect}
+                style={{ display: "none" }}
+              />
+
+              {/* Upload Button */}
+              {active && (
+                <button
+                  type="button"
+                  className={styles.attachButton}
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading || loading}
+                  title="PDF-Vertrag hochladen"
+                >
+                  {uploading ? (
+                    <svg className={styles.spinner} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" opacity="0.25" />
+                      <path d="M12 2a10 10 0 0110 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                    </svg>
+                  ) : (
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path
+                        d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  )}
+                </button>
+              )}
+
+              {/* Text Input */}
               <textarea
                 ref={inputRef}
                 value={input}
@@ -761,6 +759,8 @@ export default function Chat() {
                 disabled={loading || !active}
                 rows={1}
               />
+
+              {/* Send Button */}
               <button className={styles.sendButton} disabled={loading || !active || !input.trim()}>
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path
