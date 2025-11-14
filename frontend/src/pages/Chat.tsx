@@ -652,7 +652,7 @@ export default function Chat() {
           {/* ==========================================
               UPLOADED CONTRACTS & SMART QUESTIONS
               ========================================== */}
-          {active && (active.attachments?.length > 0 || smartQuestions.length > 0) && (
+          {active && ((active.attachments && active.attachments.length > 0) || smartQuestions.length > 0) && (
             <div className={styles.uploadSection}>
               {/* Show uploaded contracts */}
               {active.attachments && active.attachments.length > 0 && (
