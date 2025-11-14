@@ -8,14 +8,14 @@ const { OpenAI } = require("openai");
 const verifyToken = require("../middleware/verifyToken");
 const { MongoClient, ObjectId } = require("mongodb");
 const path = require("path");
-const contractAnalyzer = require("../services/contractAnalyzer"); // 📋 ÄNDERUNG 1: Provider Detection Import
-const ContractContentAnalyzer = require("../services/contractContentAnalyzer"); // 📄 NEW: Comprehensive Content Analysis
+const contractAnalyzer = require("../services/contractAnalyzer"); // 📋 Provider Detection Import
 const { generateEventsForContract } = require("../services/calendarEvents"); // 🆕 CALENDAR EVENTS IMPORT
+const AILegalPulse = require("../services/aiLegalPulse"); // ⚡ NEW: Legal Pulse Risk Analysis
 
 const router = express.Router();
 
-// 📄 Initialize Content Analyzer
-const contentAnalyzer = new ContractContentAnalyzer();
+// ⚡ Initialize Legal Pulse analyzer
+const aiLegalPulse = new AILegalPulse();
 
 // ===== S3 INTEGRATION (AWS SDK v3) =====
 let S3Client, PutObjectCommand, HeadBucketCommand, GetObjectCommand, s3Instance;
@@ -1951,21 +1951,13 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           substantialContent: true
         };
 
-        updateData.legalPulse = {
-          riskScore: result.contractScore || null,
-          riskSummary: Array.isArray(result.summary) ? result.summary.join(' ') : result.summary || '',
-          lastChecked: new Date(),
-          lawInsights: [],
-          marketSuggestions: []
-        };
-        
         await contractsCollection.updateOne(
           { _id: existingContract._id },
           { $set: updateData }
         );
-        
+
         console.log(`✅ [${requestId}] Existing contract updated with FIXED deep lawyer-level analysis (${fullTextContent.length} characters)`);
-        
+
         // 🆕 CALENDAR EVENTS GENERIEREN FÜR UPDATE
         try {
           const db = mongoClient.db("contract_ai");
@@ -1975,6 +1967,34 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
         } catch (eventError) {
           console.warn(`⚠️ Calendar Events konnten nicht regeneriert werden:`, eventError.message);
         }
+
+        // ⚡ NEW: LEGAL PULSE RISK ANALYSIS (Async Background Job) for existing contract
+        (async () => {
+          try {
+            console.log(`⚡ [${requestId}] Starting Legal Pulse risk analysis for existing contract in background...`);
+
+            const legalPulseAnalysis = await aiLegalPulse.analyzeLegalRisks(
+              fullTextContent,
+              existingContract
+            );
+
+            // Update contract with Legal Pulse analysis
+            await contractsCollection.updateOne(
+              { _id: existingContract._id },
+              {
+                $set: {
+                  legalPulse: legalPulseAnalysis,
+                  legalPulseLastChecked: new Date()
+                }
+              }
+            );
+
+            console.log(`✅ [${requestId}] Legal Pulse risk analysis completed for existing contract ${existingContract._id} (Risk Score: ${legalPulseAnalysis.riskScore})`);
+          } catch (analysisError) {
+            console.error(`❌ [${requestId}] Legal Pulse risk analysis failed:`, analysisError.message);
+            // Don't throw - this is a background job
+          }
+        })();
         
       } else {
         // 📋 ÄNDERUNG 4: UPDATE contractAnalysisData WITH AUTO-RENEWAL & DURATION
@@ -2067,40 +2087,31 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           console.warn(`⚠️ Calendar Events konnten nicht generiert werden:`, eventError.message);
         }
 
-        // 📄 NEW: COMPREHENSIVE CONTENT ANALYSIS (Async Background Job)
-        // This runs in the background and updates the contract when done
+        // ⚡ NEW: LEGAL PULSE RISK ANALYSIS (Async Background Job)
+        // This runs in the background and updates the contract with full risk analysis
         (async () => {
           try {
-            console.log(`📄 [${requestId}] Starting comprehensive content analysis in background...`);
+            console.log(`⚡ [${requestId}] Starting Legal Pulse risk analysis in background...`);
 
-            const basicInfo = {
-              name: savedContract.name,
-              provider: savedContract.provider?.displayName || 'Unknown',
-              type: validationResult.documentType || 'Unknown',
-              laufzeit: savedContract.laufzeit,
-              kuendigung: savedContract.kuendigung
-            };
-
-            const comprehensiveAnalysis = await contentAnalyzer.analyzeWithRetry(
+            const legalPulseAnalysis = await aiLegalPulse.analyzeLegalRisks(
               fullTextContent,
-              basicInfo,
-              3 // Max 3 retries with exponential backoff
+              savedContract
             );
 
-            // Update contract with comprehensive analysis
+            // Update contract with Legal Pulse analysis
             await contractsCollection.updateOne(
               { _id: savedContract._id },
               {
                 $set: {
-                  analysis: comprehensiveAnalysis,
-                  analysisCompletedAt: new Date()
+                  legalPulse: legalPulseAnalysis,
+                  legalPulseLastChecked: new Date()
                 }
               }
             );
 
-            console.log(`✅ [${requestId}] Comprehensive content analysis completed and saved for contract ${savedContract._id}`);
+            console.log(`✅ [${requestId}] Legal Pulse risk analysis completed for contract ${savedContract._id} (Risk Score: ${legalPulseAnalysis.riskScore})`);
           } catch (analysisError) {
-            console.error(`❌ [${requestId}] Comprehensive content analysis failed:`, analysisError.message);
+            console.error(`❌ [${requestId}] Legal Pulse risk analysis failed:`, analysisError.message);
             // Don't throw - this is a background job
           }
         })();

@@ -12,8 +12,10 @@ const { OpenAI } = require("openai");
 const { validateAttachment, generateIdempotencyKey } = require("../utils/emailImportSecurity"); // 🔒 Security Utils
 const nodemailer = require("nodemailer"); // 📧 Email Service
 const contractAnalyzer = require("../services/contractAnalyzer"); // 🤖 ULTRA-INTELLIGENT Contract Analyzer v10
+const AILegalPulse = require("../services/aiLegalPulse"); // ⚡ Legal Pulse Risk Analysis
 
 const router = express.Router();
+const aiLegalPulse = new AILegalPulse(); // ⚡ Initialize Legal Pulse analyzer
 const mongoUri = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
 const client = new MongoClient(mongoUri);
 let contractsCollection;
@@ -1758,6 +1760,42 @@ BEISPIELE (Bezahlt-Status):
     } catch (calError) {
       console.error(`❌ [${requestId}] Calendar update error:`, calError.message);
     }
+
+    // ⚡ NEW: LEGAL PULSE RISK ANALYSIS (Async Background Job)
+    (async () => {
+      try {
+        console.log(`⚡ [${requestId}] Starting Legal Pulse risk analysis for deferred analysis in background...`);
+
+        // Get full text content
+        const contract = await contractsCollection.findOne({ _id: new ObjectId(id) });
+        const fullTextContent = contract.fullText || contract.content || '';
+
+        if (fullTextContent && fullTextContent.length > 100) {
+          const legalPulseAnalysis = await aiLegalPulse.analyzeLegalRisks(
+            fullTextContent,
+            contract
+          );
+
+          // Update contract with Legal Pulse analysis
+          await contractsCollection.updateOne(
+            { _id: new ObjectId(id) },
+            {
+              $set: {
+                legalPulse: legalPulseAnalysis,
+                legalPulseLastChecked: new Date()
+              }
+            }
+          );
+
+          console.log(`✅ [${requestId}] Legal Pulse risk analysis completed for contract ${id} (Risk Score: ${legalPulseAnalysis.riskScore})`);
+        } else {
+          console.log(`⚠️ [${requestId}] Skipping Legal Pulse analysis - no text content available`);
+        }
+      } catch (analysisError) {
+        console.error(`❌ [${requestId}] Legal Pulse risk analysis failed:`, analysisError.message);
+        // Don't throw - this is a background job
+      }
+    })();
 
     res.json({
       success: true,
