@@ -497,6 +497,152 @@
 }
 
 /* ==========================================
+   UPLOAD SECTION
+   ========================================== */
+
+.uploadSection {
+  border-top: 1px solid var(--border);
+  padding: 12px 18px;
+  background: var(--panel);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+/* Uploaded Contracts */
+.uploadedContracts {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.contractChip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.contractIcon {
+  font-size: 16px;
+}
+
+.contractInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.contractName {
+  font-weight: 500;
+  color: var(--text);
+}
+
+.contractType {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* Smart Questions */
+.smartQuestions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.smartQuestionsHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.lightbulbIcon {
+  font-size: 16px;
+}
+
+.smartQuestionsTitle {
+  color: var(--muted);
+}
+
+/* Upload Dropzone */
+.uploadDropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px;
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  background: #fafafa;
+  transition: all 0.2s;
+}
+
+.uploadDropzone.dragActive {
+  border-color: var(--brand);
+  background: #eff6ff;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.uploadButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.uploadButton svg {
+  width: 18px;
+  height: 18px;
+}
+
+.uploadButton:hover:not(:disabled) {
+  background: #f9fafb;
+  border-color: var(--brand);
+  box-shadow: 0 2px 4px var(--shadow);
+}
+
+.uploadButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.uploadHint {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ==========================================
    INPUT BAR
    ========================================== */
 

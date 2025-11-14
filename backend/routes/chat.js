@@ -3,9 +3,34 @@ const express = require("express");
 const { ObjectId } = require("mongodb");
 const { OpenAI } = require("openai");
 const verifyToken = require("../middleware/verifyToken");
+const multer = require("multer");
+const pdfParse = require("pdf-parse");
+const fs = require("fs");
+const path = require("path");
 
 const router = express.Router();
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+// ✅ S3 File Storage Integration
+let s3Upload, generateSignedUrl;
+try {
+  const fileStorage = require("../services/fileStorage");
+  s3Upload = fileStorage.upload;
+  generateSignedUrl = fileStorage.generateSignedUrl;
+} catch (err) {
+  console.warn("⚠️ S3 File Storage Services nicht verfügbar:", err.message);
+  s3Upload = null;
+  generateSignedUrl = null;
+}
+
+// Fallback to local storage if S3 not available
+const localStorage = multer.diskStorage({
+  destination: "./uploads",
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
+  },
+});
+const localUpload = multer({ storage: localStorage });
 
 /**
  * MongoDB Collections:
@@ -151,6 +176,93 @@ async function incrementChatUsage(userId, usersCollection) {
     { _id: new ObjectId(userId) },
     { $inc: { "chatUsage.count": 1 } }
   );
+}
+
+// 🔧 HELPER: Analyze contract type from text
+async function analyzeContractType(text) {
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: "Analysiere den Vertragstyp. Antworte nur mit einem Wort: Mietvertrag, Arbeitsvertrag, Freelancervertrag, Kaufvertrag, Dienstleistungsvertrag, Lizenzvertrag, NDA, oder Sonstiges."
+        },
+        {
+          role: "user",
+          content: `Welcher Vertragstyp ist das?\n\n${text.substring(0, 2000)}`
+        }
+      ],
+      temperature: 0.3,
+      max_tokens: 20
+    });
+
+    return response.choices[0].message.content.trim();
+  } catch (error) {
+    console.error("Contract type analysis error:", error);
+    return "Sonstiges";
+  }
+}
+
+// 🔧 HELPER: Generate smart contract-specific questions
+async function generateSmartQuestions(contractType, contractText) {
+  const baseQuestions = {
+    "Mietvertrag": [
+      "Wie hoch ist die Kaution und ist sie angemessen?",
+      "Welche Kündigungsfristen gelten für mich als Mieter?",
+      "Sind Schönheitsreparaturen wirksam auf mich übertragen?",
+      "Gibt es problematische Kleinreparaturklauseln?",
+      "Welche Nebenkostenumlagen sind zulässig?"
+    ],
+    "Arbeitsvertrag": [
+      "Ist die Probezeit rechtens?",
+      "Wie sind Überstunden und Mehrarbeit geregelt?",
+      "Gibt es eine Konkurrenzklausel und ist sie wirksam?",
+      "Wie sind Urlaub und Krankheit geregelt?",
+      "Ist die Kündigungsfrist korrekt?"
+    ],
+    "Freelancervertrag": [
+      "Wie ist die Vergütung geregelt (Stunden-/Tagessatz)?",
+      "Gibt es eine Haftungsbeschränkung?",
+      "Wem gehören die Nutzungsrechte/IP?",
+      "Wie funktioniert die Kündigung?",
+      "Sind Vertragsstrafen vereinbart?"
+    ],
+    "Kaufvertrag": [
+      "Wann geht das Eigentum über?",
+      "Welche Gewährleistungsfristen gelten?",
+      "Gibt es einen Rücktrittsrecht?",
+      "Wie ist die Zahlung geregelt?",
+      "Wer trägt das Transportrisiko?"
+    ],
+    "Dienstleistungsvertrag": [
+      "Was genau ist der Leistungsumfang?",
+      "Wie erfolgt die Abnahme?",
+      "Gibt es Vertragsstrafen bei Verzug?",
+      "Wie ist die Haftung begrenzt?",
+      "Welche Kündigungsrechte habe ich?"
+    ],
+    "NDA": [
+      "Welche Informationen sind vertraulich?",
+      "Wie lange gilt die Geheimhaltung?",
+      "Was passiert bei Verstößen (Vertragsstrafen)?",
+      "Gibt es Ausnahmen von der Geheimhaltung?",
+      "Wann endet die Verpflichtung?"
+    ]
+  };
+
+  // Base questions for contract type
+  const questions = baseQuestions[contractType] || [
+    "Was sind die wichtigsten Punkte dieses Vertrags?",
+    "Welche Risiken birgt dieser Vertrag?",
+    "Gibt es unklare oder problematische Klauseln?",
+    "Wie kann ich aus diesem Vertrag wieder herauskommen?",
+    "Was sollte ich vor der Unterschrift noch klären?"
+  ];
+
+  // TODO: Use AI to generate additional context-specific questions
+  // For now, return base questions
+  return questions;
 }
 
 // ==========================================
@@ -301,12 +413,33 @@ router.post("/:id/message", verifyToken, async (req, res) => {
     });
 
     try {
+      // ✅ BUILD CONTEXT: Include contract text if uploaded
+      let contextMessages = [...chat.messages];
+
+      // If contract is uploaded, inject it after system prompt
+      if (chat.attachments && chat.attachments.length > 0) {
+        const latestContract = chat.attachments[chat.attachments.length - 1];
+
+        if (latestContract.extractedText) {
+          const contractContext = {
+            role: "system",
+            content: `📎 **Vertragskontext (${latestContract.contractType}): "${latestContract.name}"**\n\n${latestContract.extractedText}\n\n---\n\nBeantworte alle Fragen im Kontext dieses Vertrags. Verweise auf konkrete Klauseln und Passagen.`
+          };
+
+          // Insert after first system message
+          contextMessages.splice(1, 0, contractContext);
+        }
+      }
+
+      // Add current user message
+      contextMessages.push({ role: "user", content });
+
       // OpenAI Streaming
       const response = await openai.chat.completions.create({
         model: "gpt-4o-mini", // Cost-effective for chat
         stream: true,
         temperature: 0.2, // Conservative for legal advice
-        messages: [...chat.messages, { role: "user", content }],
+        messages: contextMessages,
       });
 
       let fullResponse = "";
@@ -421,6 +554,138 @@ router.get("/usage/stats", verifyToken, async (req, res) => {
   } catch (error) {
     console.error("❌ Error getting usage stats:", error);
     res.status(500).json({ error: "Failed to get usage stats" });
+  }
+});
+
+// ✅ POST /api/chat/:id/upload - Upload contract PDF to chat
+router.post("/:id/upload", verifyToken, (s3Upload || localUpload).single("file"), async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) return res.status(401).json({ error: "Unauthorized" });
+
+    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+
+    const chats = req.db.collection("chats");
+    const chatId = new ObjectId(req.params.id);
+
+    // Verify chat ownership
+    const chat = await chats.findOne({
+      _id: chatId,
+      userId: new ObjectId(userId),
+    });
+
+    if (!chat) return res.status(404).json({ error: "Chat not found" });
+
+    // Extract PDF text
+    let pdfText = "";
+    let buffer;
+
+    if (req.file.key) {
+      // S3 Upload
+      const AWS = require("aws-sdk");
+      const s3 = new AWS.S3({
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+        region: process.env.AWS_REGION,
+      });
+
+      const s3Object = await s3.getObject({
+        Bucket: req.file.bucket,
+        Key: req.file.key
+      }).promise();
+
+      buffer = s3Object.Body;
+    } else {
+      // Local Upload
+      buffer = fs.readFileSync(req.file.path);
+    }
+
+    const pdfData = await pdfParse(buffer);
+    pdfText = pdfData.text.substring(0, 15000); // Limit to 15k chars
+
+    // Analyze contract type
+    const contractType = await analyzeContractType(pdfText);
+
+    // Generate smart questions
+    const smartQuestions = await generateSmartQuestions(contractType, pdfText);
+
+    // Create attachment object
+    const attachment = {
+      name: req.file.originalname,
+      s3Key: req.file.key || null,
+      s3Bucket: req.file.bucket || null,
+      s3Location: req.file.location || null,
+      localPath: req.file.path || null,
+      uploadedAt: new Date(),
+      contractType: contractType,
+      extractedText: pdfText,
+      smartQuestions: smartQuestions,
+    };
+
+    // Update chat with attachment
+    await chats.updateOne(
+      { _id: chatId },
+      {
+        $push: { attachments: attachment },
+        $set: { updatedAt: new Date() },
+      }
+    );
+
+    // Add system message about upload
+    const systemMessage = {
+      role: "system",
+      content: `📎 Vertrag "${req.file.originalname}" (${contractType}) hochgeladen. Der KI-Rechtsanwalt hat nun Zugriff auf den vollständigen Vertragstext und kann spezifische Fragen dazu beantworten.`
+    };
+
+    await chats.updateOne(
+      { _id: chatId },
+      { $push: { messages: systemMessage } }
+    );
+
+    res.json({
+      success: true,
+      attachment: {
+        name: attachment.name,
+        contractType: attachment.contractType,
+        smartQuestions: attachment.smartQuestions,
+      },
+    });
+
+  } catch (error) {
+    console.error("❌ Upload error:", error);
+    res.status(500).json({ error: "Upload failed", details: error.message });
+  }
+});
+
+// ✅ GET /api/chat/:id/questions - Get smart questions for uploaded contract
+router.get("/:id/questions", verifyToken, async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) return res.status(401).json({ error: "Unauthorized" });
+
+    const chats = req.db.collection("chats");
+    const chat = await chats.findOne({
+      _id: new ObjectId(req.params.id),
+      userId: new ObjectId(userId),
+    });
+
+    if (!chat) return res.status(404).json({ error: "Chat not found" });
+
+    // Get latest attachment's smart questions
+    const latestAttachment = chat.attachments?.slice(-1)[0];
+
+    if (!latestAttachment || !latestAttachment.smartQuestions) {
+      return res.json({ questions: [] });
+    }
+
+    res.json({
+      contractType: latestAttachment.contractType,
+      questions: latestAttachment.smartQuestions,
+    });
+
+  } catch (error) {
+    console.error("❌ Error getting questions:", error);
+    res.status(500).json({ error: "Failed to get questions" });
   }
 });
 

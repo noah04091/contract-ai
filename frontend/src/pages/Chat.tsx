@@ -18,9 +18,17 @@ type Message = {
   meta?: Record<string, unknown>;
 };
 
+type Attachment = {
+  name: string;
+  s3Key?: string;
+  contractType?: string;
+  smartQuestions?: string[];
+  uploadedAt?: string;
+};
+
 type ChatFull = ChatLite & {
   messages: Message[];
-  attachments?: { name: string; url: string; s3Key?: string }[];
+  attachments?: Attachment[];
 };
 
 type UsageStats = {
@@ -28,6 +36,11 @@ type UsageStats = {
   limit: number;
   remaining: number;
   resetDate?: string;
+};
+
+type SmartQuestions = {
+  contractType: string;
+  questions: string[];
 };
 
 const API = "/api/chat";
@@ -44,9 +57,13 @@ export default function Chat() {
   const [usage, setUsage] = useState<UsageStats | null>(null);
   const [editingChatId, setEditingChatId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [smartQuestions, setSmartQuestions] = useState<string[]>([]);
+  const [dragActive, setDragActive] = useState(false);
 
   const scrollerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // ✅ Load chat list on mount
   useEffect(() => {
@@ -310,6 +327,81 @@ export default function Chat() {
     URL.revokeObjectURL(url);
   }
 
+  async function uploadContract(file: File) {
+    if (!active) return;
+
+    setUploading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch(`${API}/${active._id}/upload`, {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
+
+      if (!res.ok) throw new Error("Upload failed");
+
+      const data = await res.json();
+
+      // Refresh chat to get updated attachments
+      await openChat(active._id);
+
+      // Set smart questions
+      if (data.attachment?.smartQuestions) {
+        setSmartQuestions(data.attachment.smartQuestions);
+      }
+
+      console.log(`✅ Vertrag hochgeladen: ${data.attachment.contractType}`);
+    } catch (error) {
+      console.error("❌ Upload error:", error);
+      alert("Fehler beim Upload. Bitte versuche es erneut.");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  const handleDrag = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  }, []);
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setDragActive(false);
+
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        const file = e.dataTransfer.files[0];
+
+        if (file.type === "application/pdf") {
+          uploadContract(file);
+        } else {
+          alert("Bitte nur PDF-Dateien hochladen.");
+        }
+      }
+    },
+    [active]
+  );
+
+  const handleFileSelect = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files && e.target.files[0]) {
+        uploadContract(e.target.files[0]);
+      }
+    },
+    [active]
+  );
+
   // ==========================================
   // 🎨 UI HELPERS
   // ==========================================
@@ -561,6 +653,101 @@ export default function Chat() {
               </div>
             )}
           </div>
+
+          {/* ==========================================
+              UPLOAD DROPZONE & SMART QUESTIONS
+              ========================================== */}
+          {active && (
+            <div className={styles.uploadSection}>
+              {/* Show uploaded contracts */}
+              {active.attachments && active.attachments.length > 0 && (
+                <div className={styles.uploadedContracts}>
+                  {active.attachments.map((att, idx) => (
+                    <div key={idx} className={styles.contractChip}>
+                      <span className={styles.contractIcon}>📄</span>
+                      <div className={styles.contractInfo}>
+                        <span className={styles.contractName}>{att.name}</span>
+                        {att.contractType && (
+                          <span className={styles.contractType}>{att.contractType}</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Smart Questions */}
+              {smartQuestions.length > 0 && (
+                <div className={styles.smartQuestions}>
+                  <div className={styles.smartQuestionsHeader}>
+                    <span className={styles.lightbulbIcon}>💡</span>
+                    <span className={styles.smartQuestionsTitle}>Vertragsspezifische Fragen:</span>
+                  </div>
+                  <div className={styles.chipRow}>
+                    {smartQuestions.map((q, idx) => (
+                      <button
+                        key={idx}
+                        className={styles.chip}
+                        onClick={() => {
+                          setInput(q);
+                          inputRef.current?.focus();
+                        }}
+                        disabled={loading}
+                      >
+                        {q}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Upload Dropzone */}
+              <div
+                className={`${styles.uploadDropzone} ${dragActive ? styles.dragActive : ""}`}
+                onDragEnter={handleDrag}
+                onDragLeave={handleDrag}
+                onDragOver={handleDrag}
+                onDrop={handleDrop}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="application/pdf"
+                  onChange={handleFileSelect}
+                  style={{ display: "none" }}
+                />
+                <button
+                  className={styles.uploadButton}
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading || loading}
+                >
+                  {uploading ? (
+                    <>
+                      <svg className={styles.spinner} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" opacity="0.25" />
+                        <path d="M12 2a10 10 0 0110 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                      </svg>
+                      Hochladen...
+                    </>
+                  ) : (
+                    <>
+                      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                          d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                      PDF-Vertrag hochladen
+                    </>
+                  )}
+                </button>
+                <span className={styles.uploadHint}>oder Datei hierher ziehen</span>
+              </div>
+            </div>
+          )}
 
           <div className={styles.inputBar}>
             <form
