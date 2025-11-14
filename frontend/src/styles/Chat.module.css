@@ -1,18 +1,20 @@
-/* 🎨 ChatV2.module.css - Apple/ChatGPT-Style UI */
+/* 🎨 Chat.module.css - Apple/ChatGPT-Style UI (Light Mode) */
 
 :root {
-  --bg: #0b0c0f;
-  --panel: #111318;
-  --muted: #7e8695;
-  --border: #1d2130;
-  --text: #e9ecf1;
+  --bg: #f7f7f8;
+  --panel: #ffffff;
+  --muted: #6b7280;
+  --border: #e5e7eb;
+  --text: #1f2937;
   --brand: #3b82f6;
-  --bubble: #141722;
-  --bubbleUser: #2563eb;
-  --bubbleUserBg: #1e3a8a;
+  --bubble: #f3f4f6;
+  --bubbleUser: #3b82f6;
+  --bubbleUserBg: #eff6ff;
   --success: #10b981;
   --danger: #ef4444;
   --warning: #f59e0b;
+  --shadow: rgba(0, 0, 0, 0.05);
+  --shadowMd: rgba(0, 0, 0, 0.1);
 }
 
 /* ==========================================
@@ -48,6 +50,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  box-shadow: 2px 0 8px var(--shadow);
 }
 
 .sidebarTop {
@@ -73,8 +76,9 @@
 }
 
 .newChatButton:hover {
-  background: #0f1118;
+  background: #f9fafb;
   border-color: var(--brand);
+  box-shadow: 0 2px 4px var(--shadow);
 }
 
 .newChatButton svg {
@@ -89,7 +93,7 @@
 
 .usageBar {
   height: 6px;
-  background: #1a1d26;
+  background: #e5e7eb;
   border-radius: 3px;
   overflow: hidden;
 }
@@ -128,8 +132,12 @@
 }
 
 .history::-webkit-scrollbar-thumb {
-  background: #2a2d35;
+  background: #d1d5db;
   border-radius: 3px;
+}
+
+.history::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
 }
 
 .historyItemWrapper {
@@ -156,13 +164,15 @@
 }
 
 .historyItem:hover {
-  background: #0f1118;
+  background: #f9fafb;
   border-color: var(--border);
+  box-shadow: 0 1px 3px var(--shadow);
 }
 
 .historyItem.active {
-  background: #0f1320;
-  border-color: #253050;
+  background: #e0e7ff;
+  border-color: #c7d2fe;
+  box-shadow: 0 2px 4px var(--shadowMd);
 }
 
 .chatTitle {
@@ -206,7 +216,7 @@
 }
 
 .iconButton:hover {
-  background: #1a1d26;
+  background: #f3f4f6;
   border-color: var(--border);
 }
 
@@ -217,12 +227,13 @@
 .editInput {
   flex: 1;
   padding: 8px 10px;
-  background: #1a1d26;
+  background: #ffffff;
   border: 1px solid var(--brand);
   border-radius: 8px;
   color: var(--text);
   font-size: 14px;
   outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .emptyHistory {
@@ -252,7 +263,7 @@
 
 .sidebarBottom a:hover {
   color: var(--text);
-  background: #0f1118;
+  background: #f9fafb;
 }
 
 /* ==========================================
@@ -273,6 +284,7 @@
   border-bottom: 1px solid var(--border);
   background: var(--panel);
   flex-shrink: 0;
+  box-shadow: 0 1px 3px var(--shadow);
 }
 
 .header > div:first-child {
@@ -294,9 +306,10 @@
   margin-left: 8px;
   font-size: 12px;
   color: var(--muted);
-  background: #1a1d26;
+  background: #f3f4f6;
   padding: 4px 8px;
   border-radius: 6px;
+  border: 1px solid var(--border);
 }
 
 .actions {
@@ -323,8 +336,9 @@
 }
 
 .ghostButton:hover {
-  background: #1a1d26;
+  background: #f3f4f6;
   border-color: var(--brand);
+  box-shadow: 0 2px 4px var(--shadow);
 }
 
 /* ==========================================
@@ -335,6 +349,7 @@
   overflow-y: auto;
   overflow-x: hidden;
   padding: 24px;
+  background: var(--bg);
 }
 
 .scroller::-webkit-scrollbar {
@@ -346,8 +361,12 @@
 }
 
 .scroller::-webkit-scrollbar-thumb {
-  background: #2a2d35;
+  background: #d1d5db;
   border-radius: 4px;
+}
+
+.scroller::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
 }
 
 .thread {
@@ -383,14 +402,15 @@
   place-items: center;
   font-size: 18px;
   flex-shrink: 0;
+  box-shadow: 0 2px 4px var(--shadow);
 }
 
 .aiAvatar {
-  background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+  background: linear-gradient(135deg, #3b82f6, #60a5fa);
 }
 
 .userAvatar {
-  background: #2a2d35;
+  background: #e5e7eb;
 }
 
 .bubbleBody {
@@ -414,11 +434,12 @@
   border-radius: 14px;
   line-height: 1.6;
   word-wrap: break-word;
+  box-shadow: 0 1px 3px var(--shadow);
 }
 
 .userBubble .bubbleContent {
   background: var(--bubbleUserBg);
-  border-color: var(--bubbleUser);
+  border-color: #bfdbfe;
 }
 
 /* ==========================================
@@ -458,19 +479,21 @@
 
 .chip {
   border: 1px solid var(--border);
-  background: #0e1320;
+  background: #ffffff;
   color: var(--text);
   padding: 10px 14px;
   border-radius: 999px;
   font-size: 14px;
   cursor: pointer;
   transition: all 0.2s;
+  box-shadow: 0 1px 3px var(--shadow);
 }
 
 .chip:hover {
-  background: #1a1d26;
+  background: #f9fafb;
   border-color: var(--brand);
   transform: translateY(-2px);
+  box-shadow: 0 4px 8px var(--shadowMd);
 }
 
 /* ==========================================
@@ -482,6 +505,7 @@
   padding: 16px 18px;
   background: var(--panel);
   flex-shrink: 0;
+  box-shadow: 0 -1px 3px var(--shadow);
 }
 
 .form {
@@ -499,29 +523,32 @@
   outline: none;
   border-radius: 12px;
   border: 1px solid var(--border);
-  background: #0f1219;
+  background: #ffffff;
   color: var(--text);
   padding: 14px 16px;
   font-size: 15px;
   font-family: inherit;
   line-height: 1.5;
-  transition: border-color 0.2s;
+  transition: all 0.2s;
+  box-shadow: 0 1px 3px var(--shadow);
 }
 
 .form textarea:focus {
   border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .form textarea:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  background: #f9fafb;
 }
 
 .sendButton {
   padding: 14px 18px;
   border-radius: 12px;
   border: none;
-  background: linear-gradient(180deg, #2f63f5, #274bd2);
+  background: linear-gradient(180deg, #3b82f6, #2563eb);
   color: white;
   cursor: pointer;
   transition: all 0.2s;
@@ -529,6 +556,7 @@
   align-items: center;
   justify-content: center;
   align-self: stretch;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
 }
 
 .sendButton svg {
@@ -537,9 +565,9 @@
 }
 
 .sendButton:hover:not(:disabled) {
-  background: linear-gradient(180deg, #3b82f6, #2563eb);
+  background: linear-gradient(180deg, #2563eb, #1d4ed8);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
 }
 
 .sendButton:disabled {
@@ -598,6 +626,7 @@
   font-weight: 600;
   transition: all 0.2s;
   display: inline-block;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 .upgradeButton:hover {

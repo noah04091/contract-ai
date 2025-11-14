@@ -286,6 +286,30 @@ export default function Chat() {
     }
   }
 
+  function exportChat() {
+    if (!active) return;
+
+    const messages = active.messages
+      .filter((m) => m.role !== "system")
+      .map((m) => {
+        const role = m.role === "user" ? "Du" : "KI-Rechtsanwalt";
+        return `### ${role}\n\n${m.content}\n`;
+      })
+      .join("\n---\n\n");
+
+    const markdown = `# ${active.title}\n\nExportiert am: ${new Date().toLocaleString()}\n\n---\n\n${messages}\n\n---\n\n*Hinweis: Dieser Chat-Export ersetzt keine individuelle Rechtsberatung.*`;
+
+    const blob = new Blob([markdown], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${active.title.replace(/[^a-zA-Z0-9äöüÄÖÜß]/g, "_")}_${new Date().toISOString().split("T")[0]}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
   // ==========================================
   // 🎨 UI HELPERS
   // ==========================================
@@ -481,28 +505,45 @@ export default function Chat() {
             </div>
             <div className={styles.actions}>
               {active && (
-                <button
-                  className={styles.ghostButton}
-                  onClick={() => openChat(active._id)}
-                  title="Chat neu laden"
-                >
-                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path
-                      d="M1 4v6h6M23 20v-6h-6"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M20.49 9A9 9 0 005.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 013.51 15"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </button>
+                <>
+                  <button
+                    className={styles.ghostButton}
+                    onClick={exportChat}
+                    title="Chat exportieren"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path
+                        d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    className={styles.ghostButton}
+                    onClick={() => openChat(active._id)}
+                    title="Chat neu laden"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path
+                        d="M1 4v6h6M23 20v-6h-6"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                      <path
+                        d="M20.49 9A9 9 0 005.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 013.51 15"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </button>
+                </>
               )}
             </div>
           </header>
