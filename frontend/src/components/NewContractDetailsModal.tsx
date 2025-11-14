@@ -99,12 +99,13 @@ interface Contract {
     severity?: string;
     reasoning?: string;
   }>;
+  // ✅ Standard Analysis fields (direct on contract)
+  contractScore?: number;
+  summary?: string;
+  legalAssessment?: string;
+  suggestions?: string;
+  comparison?: string;
   analysis?: {
-    summary?: string;
-    legalAssessment?: string;
-    suggestions?: string;
-    comparison?: string;
-    contractScore?: number;
     analysisId?: string;
     lastAnalyzed?: string;
   };
@@ -112,8 +113,20 @@ interface Contract {
     riskScore: number | null;
     summary?: string;
     riskFactors?: string[];
-    legalRisks?: string[];
-    recommendations?: string[];
+    legalRisks?: string[]; // Legacy
+    topRisks?: Array<{ // New structure
+      title: string;
+      description?: string;
+      severity?: string;
+      impact?: string;
+      solution?: string;
+      recommendation?: string;
+    }>;
+    recommendations?: Array<string | { // Support both old (string[]) and new (object[]) format
+      title: string;
+      description?: string;
+      priority?: string;
+    }>;
     analysisDate?: string;
   };
   signatureStatus?: string;
@@ -610,10 +623,16 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
 
   // Render Analysis Tab
   const renderAnalysisTab = () => {
-    const analysis = contract.analysis;
+    // ✅ Read standard analysis from contract directly
+    const contractScore = contract.contractScore;
+    const summary = contract.summary;
+    const legalAssessment = contract.legalAssessment;
+    const suggestions = contract.suggestions;
+    const comparison = contract.comparison;
     const legalPulse = contract.legalPulse;
 
-    if (!analysis && !legalPulse) {
+    // Check if ANY analysis exists
+    if (!contractScore && !summary && !legalAssessment && !legalPulse) {
       return (
         <div className={styles.tabContent}>
           <div className={styles.emptyState}>
@@ -625,8 +644,8 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
       );
     }
 
-    // Get score
-    const score = analysis?.contractScore || legalPulse?.riskScore;
+    // Get score (prefer contract score, fallback to Legal Pulse risk score)
+    const score = contractScore || legalPulse?.riskScore;
     const hasScore = score !== null && score !== undefined;
 
     return (
@@ -651,62 +670,177 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
         )}
 
         {/* Summary */}
-        {(analysis?.summary || legalPulse?.summary) && (
+        {summary && (
           <div className={styles.section}>
             <h3>📝 Zusammenfassung</h3>
             <div className={styles.messageBox}>
-              <p>{analysis?.summary || legalPulse?.summary}</p>
+              <p>{summary}</p>
             </div>
           </div>
         )}
 
         {/* Legal Assessment */}
-        {analysis?.legalAssessment && (
+        {legalAssessment && (
           <div className={styles.section}>
             <h3>⚖️ Rechtliche Bewertung</h3>
             <div className={styles.messageBox}>
-              <p>{analysis.legalAssessment}</p>
+              <p>{legalAssessment}</p>
             </div>
           </div>
         )}
 
         {/* Comparison */}
-        {analysis?.comparison && (
+        {comparison && (
           <div className={styles.section}>
             <h3>🔍 Vergleich & Analyse</h3>
             <div className={styles.messageBox}>
-              <p>{analysis.comparison}</p>
-            </div>
-          </div>
-        )}
-
-        {/* Risks */}
-        {(legalPulse?.legalRisks || legalPulse?.riskFactors) && (
-          <div className={styles.section}>
-            <h3>⚠️ Risiken</h3>
-            <div className={styles.timelineDetails}>
-              {(legalPulse.legalRisks || legalPulse.riskFactors || []).map((risk, index) => (
-                <p key={index}>• {risk}</p>
-              ))}
+              <p>{comparison}</p>
             </div>
           </div>
         )}
 
         {/* Suggestions */}
-        {(analysis?.suggestions || legalPulse?.recommendations) && (
+        {suggestions && (
           <div className={styles.section}>
             <h3>💡 Empfehlungen</h3>
             <div className={styles.messageBox}>
-              {analysis?.suggestions ? (
-                <p>{analysis.suggestions}</p>
-              ) : (
-                <div className={styles.timelineDetails}>
-                  {legalPulse?.recommendations?.map((rec, index) => (
-                    <p key={index}>• {rec}</p>
-                  ))}
-                </div>
-              )}
+              <p>{suggestions}</p>
             </div>
+          </div>
+        )}
+
+        {/* ⚡ LEGAL PULSE SHORT OVERVIEW */}
+        {legalPulse && (
+          <div className={styles.section} style={{
+            marginTop: '32px',
+            padding: '24px',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            borderRadius: '12px',
+            color: 'white'
+          }}>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: '20px', fontWeight: '600' }}>
+              ⚡ Legal Pulse - Risiko-Übersicht
+            </h3>
+
+            {/* Risk Score */}
+            {legalPulse.riskScore !== null && legalPulse.riskScore !== undefined && (
+              <div style={{ marginBottom: '20px' }}>
+                <div style={{ fontSize: '14px', opacity: 0.9, marginBottom: '8px' }}>Risiko-Score</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{
+                    flex: 1,
+                    height: '8px',
+                    background: 'rgba(255, 255, 255, 0.2)',
+                    borderRadius: '4px',
+                    overflow: 'hidden'
+                  }}>
+                    <div style={{
+                      width: `${legalPulse.riskScore}%`,
+                      height: '100%',
+                      background: legalPulse.riskScore > 70 ? '#ef4444' : legalPulse.riskScore > 40 ? '#f59e0b' : '#10b981',
+                      borderRadius: '4px',
+                      transition: 'width 0.3s ease'
+                    }}></div>
+                  </div>
+                  <span style={{ fontSize: '18px', fontWeight: 'bold' }}>{legalPulse.riskScore}/100</span>
+                </div>
+              </div>
+            )}
+
+            {/* Positive & Critical Aspects */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
+              {/* What's Good */}
+              <div>
+                <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '500' }}>✅ Positiv</h4>
+                <div style={{ background: 'rgba(255, 255, 255, 0.1)', padding: '12px', borderRadius: '8px', fontSize: '14px' }}>
+                  {legalPulse.topRisks && legalPulse.topRisks.filter((r: any) => r.severity === 'low').length > 0 ? (
+                    <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                      {legalPulse.topRisks
+                        .filter((r: any) => r.severity === 'low')
+                        .slice(0, 2)
+                        .map((risk: any, index: number) => (
+                          <li key={index} style={{ marginBottom: '4px' }}>{risk.title}</li>
+                        ))}
+                    </ul>
+                  ) : legalPulse.riskScore && legalPulse.riskScore < 40 ? (
+                    <p style={{ margin: 0 }}>Vertrag zeigt geringe rechtliche Risiken</p>
+                  ) : (
+                    <p style={{ margin: 0, opacity: 0.7 }}>Keine positiven Aspekte identifiziert</p>
+                  )}
+                </div>
+              </div>
+
+              {/* What's Critical */}
+              <div>
+                <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '500' }}>⚠️ Kritisch</h4>
+                <div style={{ background: 'rgba(255, 255, 255, 0.1)', padding: '12px', borderRadius: '8px', fontSize: '14px' }}>
+                  {legalPulse.topRisks && legalPulse.topRisks.filter((r: any) => r.severity === 'high' || r.severity === 'critical').length > 0 ? (
+                    <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                      {legalPulse.topRisks
+                        .filter((r: any) => r.severity === 'high' || r.severity === 'critical')
+                        .slice(0, 2)
+                        .map((risk: any, index: number) => (
+                          <li key={index} style={{ marginBottom: '4px' }}>{risk.title}</li>
+                        ))}
+                    </ul>
+                  ) : legalPulse.legalRisks && legalPulse.legalRisks.length > 0 ? (
+                    <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                      {legalPulse.legalRisks.slice(0, 2).map((risk: string, index: number) => (
+                        <li key={index} style={{ marginBottom: '4px' }}>{risk}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p style={{ margin: 0, opacity: 0.7 }}>Keine kritischen Risiken identifiziert</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Recommendations */}
+            {legalPulse.recommendations && legalPulse.recommendations.length > 0 && (
+              <div style={{ marginBottom: '20px' }}>
+                <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '500' }}>💡 Top-Empfehlungen</h4>
+                <div style={{ background: 'rgba(255, 255, 255, 0.1)', padding: '12px', borderRadius: '8px', fontSize: '14px' }}>
+                  <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                    {legalPulse.recommendations.slice(0, 3).map((rec: any, index: number) => {
+                      const recText = typeof rec === 'string' ? rec : rec.title;
+                      return <li key={index} style={{ marginBottom: '4px' }}>{recText}</li>;
+                    })}
+                  </ul>
+                </div>
+              </div>
+            )}
+
+            {/* Button to Legal Pulse */}
+            <button
+              onClick={() => window.location.href = `/legal-pulse?contractId=${contract._id}`}
+              style={{
+                width: '100%',
+                padding: '12px 24px',
+                background: 'white',
+                color: '#667eea',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '16px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+            >
+              📊 Vollständige Risiko-Analyse in Legal Pulse anzeigen →
+            </button>
           </div>
         )}
       </div>
