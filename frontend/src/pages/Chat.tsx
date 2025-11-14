@@ -38,11 +38,6 @@ type UsageStats = {
   resetDate?: string;
 };
 
-type SmartQuestions = {
-  contractType: string;
-  questions: string[];
-};
-
 const API = "/api/chat";
 
 export default function Chat() {
