@@ -1771,9 +1771,17 @@ BEISPIELE (Bezahlt-Status):
         const fullTextContent = contract.fullText || contract.content || '';
 
         if (fullTextContent && fullTextContent.length > 100) {
-          const legalPulseAnalysis = await aiLegalPulse.analyzeLegalRisks(
+          const contractInfo = {
+            name: contract.name,
+            provider: contract.provider?.displayName || analysisResult.provider || 'Unknown',
+            type: analysisResult.contractType || 'other',
+            startDate: contract.startDate,
+            expiryDate: contract.expiryDate
+          };
+
+          const legalPulseAnalysis = await aiLegalPulse.analyzeFullContract(
             fullTextContent,
-            contract
+            contractInfo
           );
 
           // Update contract with Legal Pulse analysis

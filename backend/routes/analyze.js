@@ -1973,9 +1973,17 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           try {
             console.log(`⚡ [${requestId}] Starting Legal Pulse risk analysis for existing contract in background...`);
 
-            const legalPulseAnalysis = await aiLegalPulse.analyzeLegalRisks(
+            const contractInfo = {
+              name: existingContract.name,
+              provider: extractedProvider?.displayName || 'Unknown',
+              type: validationResult.documentType || 'other',
+              startDate: extractedStartDate,
+              expiryDate: extractedEndDate
+            };
+
+            const legalPulseAnalysis = await aiLegalPulse.analyzeFullContract(
               fullTextContent,
-              existingContract
+              contractInfo
             );
 
             // Update contract with Legal Pulse analysis
@@ -2093,9 +2101,17 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           try {
             console.log(`⚡ [${requestId}] Starting Legal Pulse risk analysis in background...`);
 
-            const legalPulseAnalysis = await aiLegalPulse.analyzeLegalRisks(
+            const contractInfo = {
+              name: savedContract.name,
+              provider: extractedProvider?.displayName || 'Unknown',
+              type: validationResult.documentType || 'other',
+              startDate: extractedStartDate,
+              expiryDate: extractedEndDate
+            };
+
+            const legalPulseAnalysis = await aiLegalPulse.analyzeFullContract(
               fullTextContent,
-              savedContract
+              contractInfo
             );
 
             // Update contract with Legal Pulse analysis
