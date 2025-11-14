@@ -35,6 +35,22 @@ interface AuditEvent {
   };
 }
 
+// Legal Pulse interfaces
+interface LegalPulseRisk {
+  title: string;
+  description?: string;
+  severity?: string;
+  impact?: string;
+  solution?: string;
+  recommendation?: string;
+}
+
+interface LegalPulseRecommendation {
+  title: string;
+  description?: string;
+  priority?: string;
+}
+
 interface ContractInfo {
   _id: string;
   name: string;
@@ -114,19 +130,8 @@ interface Contract {
     summary?: string;
     riskFactors?: string[];
     legalRisks?: string[]; // Legacy
-    topRisks?: Array<{ // New structure
-      title: string;
-      description?: string;
-      severity?: string;
-      impact?: string;
-      solution?: string;
-      recommendation?: string;
-    }>;
-    recommendations?: Array<string | { // Support both old (string[]) and new (object[]) format
-      title: string;
-      description?: string;
-      priority?: string;
-    }>;
+    topRisks?: Array<LegalPulseRisk>; // New structure
+    recommendations?: Array<string | LegalPulseRecommendation>; // Support both old (string[]) and new (object[]) format
     analysisDate?: string;
   };
   signatureStatus?: string;
@@ -753,12 +758,12 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
               <div>
                 <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '500' }}>✅ Positiv</h4>
                 <div style={{ background: 'rgba(255, 255, 255, 0.1)', padding: '12px', borderRadius: '8px', fontSize: '14px' }}>
-                  {legalPulse.topRisks && legalPulse.topRisks.filter((r: any) => r.severity === 'low').length > 0 ? (
+                  {legalPulse.topRisks && legalPulse.topRisks.filter((r: LegalPulseRisk) => r.severity === 'low').length > 0 ? (
                     <ul style={{ margin: 0, paddingLeft: '20px' }}>
                       {legalPulse.topRisks
-                        .filter((r: any) => r.severity === 'low')
+                        .filter((r: LegalPulseRisk) => r.severity === 'low')
                         .slice(0, 2)
-                        .map((risk: any, index: number) => (
+                        .map((risk: LegalPulseRisk, index: number) => (
                           <li key={index} style={{ marginBottom: '4px' }}>{risk.title}</li>
                         ))}
                     </ul>
@@ -774,12 +779,12 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
               <div>
                 <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '500' }}>⚠️ Kritisch</h4>
                 <div style={{ background: 'rgba(255, 255, 255, 0.1)', padding: '12px', borderRadius: '8px', fontSize: '14px' }}>
-                  {legalPulse.topRisks && legalPulse.topRisks.filter((r: any) => r.severity === 'high' || r.severity === 'critical').length > 0 ? (
+                  {legalPulse.topRisks && legalPulse.topRisks.filter((r: LegalPulseRisk) => r.severity === 'high' || r.severity === 'critical').length > 0 ? (
                     <ul style={{ margin: 0, paddingLeft: '20px' }}>
                       {legalPulse.topRisks
-                        .filter((r: any) => r.severity === 'high' || r.severity === 'critical')
+                        .filter((r: LegalPulseRisk) => r.severity === 'high' || r.severity === 'critical')
                         .slice(0, 2)
-                        .map((risk: any, index: number) => (
+                        .map((risk: LegalPulseRisk, index: number) => (
                           <li key={index} style={{ marginBottom: '4px' }}>{risk.title}</li>
                         ))}
                     </ul>
@@ -802,7 +807,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
                 <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '500' }}>💡 Top-Empfehlungen</h4>
                 <div style={{ background: 'rgba(255, 255, 255, 0.1)', padding: '12px', borderRadius: '8px', fontSize: '14px' }}>
                   <ul style={{ margin: 0, paddingLeft: '20px' }}>
-                    {legalPulse.recommendations.slice(0, 3).map((rec: any, index: number) => {
+                    {legalPulse.recommendations.slice(0, 3).map((rec: string | LegalPulseRecommendation, index: number) => {
                       const recText = typeof rec === 'string' ? rec : rec.title;
                       return <li key={index} style={{ marginBottom: '4px' }}>{recText}</li>;
                     })}
