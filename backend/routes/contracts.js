@@ -466,10 +466,13 @@ router.get("/", verifyToken, async (req, res) => {
 
     // 🔍 Text-Suche (name, status, kuendigung)
     if (searchQuery.trim()) {
+      // ✅ Escape special regex characters (., *, +, ?, ^, $, {, }, (, ), |, [, ], \)
+      const escapedQuery = searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
       mongoFilter.$or = [
-        { name: { $regex: searchQuery, $options: 'i' } },
-        { status: { $regex: searchQuery, $options: 'i' } },
-        { kuendigung: { $regex: searchQuery, $options: 'i' } }
+        { name: { $regex: escapedQuery, $options: 'i' } },
+        { status: { $regex: escapedQuery, $options: 'i' } },
+        { kuendigung: { $regex: escapedQuery, $options: 'i' } }
       ];
     }
 
