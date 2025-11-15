@@ -1689,7 +1689,7 @@ const makeRateLimitedGPT4Request = async (prompt, requestId, openai, maxRetries 
         ],
         response_format: { type: "json_object" }, // 🚀 V2: Force valid JSON output
         temperature: 0.1, // Low for consistency
-        max_tokens: 5000, // ✅ V3: ANWALTS-SIMULATION - Mehr Tokens für tiefe, komplexe Analysen
+        max_tokens: 4096, // ✅ V3: ANWALTS-SIMULATION - GPT-4 Turbo max limit
       });
       
       const response = completion.choices[0].message.content;
