@@ -938,29 +938,119 @@ class ContractAnalyzer {
     return isNaN(value) ? null : value;
   }
 
+  /**
+   * 🎯 INTELLIGENTE CONTRACT TYPE DETECTION - V2
+   * Erkennt Vertragstypen mit gewichteten Keywords und Kontext-Analyse
+   * Unterstützt alle 8 Haupttypen: purchase, employment, rental, telecom, insurance, loan, service, other
+   */
   detectContractType(text) {
+    const lowerText = text.toLowerCase();
+
+    // 🎯 V2: ALLE Vertragstypen mit gewichteten Keywords
+    // Format: [keyword, weight] - höheres Gewicht = wichtiger für Typ-Erkennung
     const types = {
-      insurance: ['versicherung', 'police', 'versicherer', 'deckung', 'schutzbrief', 'haftpflicht', 'krankenversicherung', 'rechtsschutz'],
-      telecom: ['mobilfunk', 'internet', 'telefon', 'dsl', 'glasfaser', 'festnetz', 'tarif', 'datenvolumen'],
-      energy: ['strom', 'gas', 'energie', 'kwh', 'grundversorgung', 'kilowattstunde', 'verbrauch'],
-      subscription: ['abo', 'abonnement', 'mitgliedschaft', 'premium', 'streaming', 'zeitschrift'],
-      finance: ['kredit', 'darlehen', 'finanzierung', 'rate', 'zinsen', 'tilgung', 'girokonto', 'depot'],
-      rental: ['miete', 'mietvertrag', 'nebenkosten', 'kaution', 'wohnung', 'mieter', 'vermieter'],
-      fitness: ['fitness', 'gym', 'training', 'mitgliedschaft', 'studio', 'wellness'],
-      mobility: ['leasing', 'carsharing', 'bahncard', 'nahverkehr', 'mobility']
+      // 🛒 KAUFVERTRAG (purchase)
+      purchase: {
+        strong: ['kaufvertrag', 'kaufpreis', 'käufer', 'verkäufer', 'verkauf', 'kfz-kaufvertrag', 'fahrzeugkauf', 'warenkauf', 'eigentumsübertragung'],
+        medium: ['übergabe', 'kaufgegenstand', 'sachmängelhaftung', 'gewährleistung', 'rücktritt', 'anzahlung'],
+        weak: ['zahlung', 'preis', 'ware']
+      },
+
+      // 👔 ARBEITSVERTRAG (employment)
+      employment: {
+        strong: ['arbeitsvertrag', 'arbeitgeber', 'arbeitnehmer', 'anstellung', 'beschäftigungsverhältnis', 'dienstvertrag'],
+        medium: ['probezeit', 'kündigungsfrist', 'gehalt', 'vergütung', 'urlaub', 'überstunden', 'arbeitszeit', 'wettbewerbsverbot'],
+        weak: ['tätigkeit', 'position', 'stelle']
+      },
+
+      // 🏠 MIETVERTRAG (rental)
+      rental: {
+        strong: ['mietvertrag', 'miete', 'mieter', 'vermieter', 'mietwohnung', 'mietgegenstand'],
+        medium: ['nebenkosten', 'kaution', 'schönheitsreparaturen', 'betriebskosten', 'kaltmiete', 'warmmiete', 'mieterhöhung'],
+        weak: ['wohnung', 'zimmer', 'quadratmeter']
+      },
+
+      // 📱 TELEKOMMUNIKATION (telecom)
+      telecom: {
+        strong: ['mobilfunkvertrag', 'internetvertrag', 'telekommunikationsvertrag', 'festnetzvertrag'],
+        medium: ['mobilfunk', 'internet', 'dsl', 'glasfaser', 'festnetz', 'tarif', 'datenvolumen', 'flatrate', 'telefonie'],
+        weak: ['gb', 'lte', '5g', 'router']
+      },
+
+      // 🛡️ VERSICHERUNG (insurance)
+      insurance: {
+        strong: ['versicherungsvertrag', 'versicherung', 'versicherer', 'versicherungsnehmer', 'police', 'versicherungspolice'],
+        medium: ['haftpflicht', 'krankenversicherung', 'rechtsschutz', 'hausrat', 'lebensversicherung', 'deckung', 'schutzbrief', 'prämie', 'versicherungssumme'],
+        weak: ['schadensfall', 'leistung']
+      },
+
+      // 💰 DARLEHEN/KREDIT (loan)
+      loan: {
+        strong: ['darlehensvertrag', 'kreditvertrag', 'kredit', 'darlehen', 'finanzierung'],
+        medium: ['zinsen', 'tilgung', 'rate', 'kreditbetrag', 'darlehenssumme', 'effektivzins', 'sollzins', 'laufzeit', 'rückzahlung'],
+        weak: ['bankkonto', 'überweisung']
+      },
+
+      // 🔧 DIENSTLEISTUNG (service)
+      service: {
+        strong: ['dienstleistungsvertrag', 'werkvertrag', 'dienstleistung', 'beauftragung', 'auftraggeber', 'auftragnehmer'],
+        medium: ['honorar', 'vergütung', 'leistungsumfang', 'werklohn', 'abnahme', 'fertigstellung'],
+        weak: ['erbringung', 'ausführung']
+      }
     };
 
-    const lowerText = text.toLowerCase();
+    // 📊 Berechne Scores mit Gewichtung
     const scores = {};
 
     for (const [type, keywords] of Object.entries(types)) {
-      scores[type] = keywords.filter(keyword => lowerText.includes(keyword)).length;
+      let score = 0;
+
+      // Strong keywords: 10 Punkte
+      if (keywords.strong) {
+        keywords.strong.forEach(kw => {
+          if (lowerText.includes(kw)) {
+            score += 10;
+            console.log(`  ✅ [${type}] Strong match: "${kw}" (+10)`);
+          }
+        });
+      }
+
+      // Medium keywords: 3 Punkte
+      if (keywords.medium) {
+        keywords.medium.forEach(kw => {
+          if (lowerText.includes(kw)) {
+            score += 3;
+          }
+        });
+      }
+
+      // Weak keywords: 1 Punkt
+      if (keywords.weak) {
+        keywords.weak.forEach(kw => {
+          if (lowerText.includes(kw)) {
+            score += 1;
+          }
+        });
+      }
+
+      scores[type] = score;
     }
 
-    const maxScore = Math.max(...Object.values(scores));
-    if (maxScore === 0) return 'other';
+    console.log('📊 Contract Type Scores:', scores);
 
-    return Object.keys(scores).find(key => scores[key] === maxScore);
+    // Finde den Typ mit höchstem Score
+    const maxScore = Math.max(...Object.values(scores));
+
+    // Mindestens 5 Punkte erforderlich (sonst "other")
+    if (maxScore < 5) {
+      console.log('❓ Kein klarer Typ erkannt (Score < 5) → other');
+      return 'other';
+    }
+
+    const detectedType = Object.keys(scores).find(key => scores[key] === maxScore);
+    console.log(`✅ Vertragstyp erkannt: ${detectedType} (Score: ${maxScore})`);
+
+    return detectedType;
   }
 
   /**

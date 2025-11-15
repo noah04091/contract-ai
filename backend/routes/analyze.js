@@ -787,216 +787,275 @@ function validateTextCompletenessAndDepth(result, requestId) {
  * Returns individualized focus points for each contract type
  * WITH critical checkpoints that MUST be analyzed
  */
-function getContractTypeFocus(documentType) {
-  const focusMap = {
-    rental: {
-      title: "MIETVERTRAG",
-      focusAreas: [
-        "Nebenkosten-Regelung: Pauschale oder Vorauszahlung? Abrechnungspflicht? Nachzahlungsrisiken?",
-        "Schönheitsreparaturen: Wirksame Klausel oder unwirksam nach BGH-Rechtsprechung?",
-        "Kündigungsschutz: Fristen, Form, Sonderkündigungsrechte",
-        "Kaution: Höhe (max. 3 Monatsmieten), Anlage, Verzinsung",
-        "Instandhaltung: Wer trägt welche Reparaturen?",
-        "Modernisierung: Mieterhöhungsrechte des Vermieters",
-        "Indexmiete: Kopplung an Verbraucherpreisindex? Obergrenzen?",
-        "Untervermietung: Erlaubt? Zustimmungspflichtig? Gewerbliche Nutzung?"
-      ],
-      criticalCheckpoints: [
-        "Schönheitsreparaturen-Klausel auf BGH-Rechtsprechung prüfen (oft unwirksam!)",
-        "Kaution max. 3 Nettokaltmieten (§ 551 BGB)",
-        "Kündigungsfrist mind. 3 Monate (§ 573c BGB)",
-        "Formularvertrag: AGB-Kontrolle nach §§ 305ff BGB"
-      ]
-    },
-    employment: {
-      title: "ARBEITSVERTRAG",
-      focusAreas: [
-        "Vergütung: Grundgehalt, Sonderzahlungen, variable Bestandteile, Transparenz",
-        "Arbeitszeit: Wochenarbeitsstunden, Überstunden, Vergütung/Abgeltung",
-        "Urlaub: Anzahl Tage (mind. 24 Werktage), Urlaubsgeld, Sonderurlaub",
-        "Kündigungsfristen: Gesetzlich oder verlängert? Einseitige Benachteiligung?",
-        "Wettbewerbsverbot: Während/nach Arbeitszeit? Karenzentschädigung?",
-        "Probezeit: Dauer (max. 6 Monate), beidseitige Kündigung möglich?",
-        "Versetzungsklausel: Örtlich/fachlich? Grenzen der Direktionsrechte?",
-        "Nebentätigkeit: Verboten? Genehmigungspflichtig?"
-      ],
-      criticalCheckpoints: [
-        "Mindestlohn-Compliance (aktuell 12,41€/Std., ab 2025: 12,82€/Std.)",
-        "Urlaubsanspruch mind. 20 Tage bei 5-Tage-Woche (BUrlG)",
-        "Nachvertragliches Wettbewerbsverbot nur mit Karenzentschädigung (min. 50% Bruttogehalt)",
-        "Ausschlussfristen max. 3 Monate, dürfen gesetzliche Rechte nicht verkürzen"
-      ]
-    },
+/**
+ * 🎯 CONTRACT TYPE AWARENESS - V3 (Anwalts-Simulation)
+ * Keine Checklisten! Stattdessen: Was ein Fachanwalt WEISS über diesen Typ
+ */
+function getContractTypeAwareness(documentType) {
+  const awarenessMap = {
     purchase: {
-      title: "KAUFVERTRAG",
-      focusAreas: [
-        "Gewährleistung: Ausschluss zulässig? Verkürzung? Gebrauchtware vs. Neuware",
-        "Eigentumsvorbehalt: Erweitert oder einfach? Rechte des Verkäufers",
-        "Lieferbedingungen: Fristen, Verzugsfolgen, Teillieferungen",
-        "Gefahrübergang: Zeitpunkt, Transport, Versicherung",
-        "Rücktrittsrechte: Verbraucher vs. Unternehmer, Widerruf",
-        "Kaufpreisfälligkeit: Vorauszahlung? Zahlungsziel? Verzugszinsen?",
-        "Sachmängelhaftung: Beschaffenheit, Nacherfüllung, Minderung, Rücktritt",
-        "AGB-Klauseln: Gerichtsstand, salvatorische Klausel, Überleitungsklausel"
-      ],
-      criticalCheckpoints: [
-        "Gewährleistungsausschluss bei Verbrauchern UNWIRKSAM (§ 475 BGB)",
-        "Verkürzung auf unter 1 Jahr bei Gebrauchtware nur im B2B-Bereich",
-        "Widerrufsrecht bei Fernabsatz 14 Tage (§ 312g BGB)",
-        "Übermaßige Verzugszinsen unwirksam (max. 5% über Basiszinssatz bei Verbrauchern)"
-      ]
+      title: "Fachanwalt für Kaufrecht",
+      expertise: `Als Fachanwalt für Kaufrecht mit 20+ Jahren Erfahrung weißt du:
+
+Bei Kaufverträgen sind typischerweise relevant: Gewährleistung/Sachmängelhaftung, Eigentumsvorbehalt, Rücktritts-/Widerrufsrechte, Gefahrübergang, Zahlungsbedingungen, Lieferfristen.
+
+ABER: Prüfe NUR die Klauseln, die TATSÄCHLICH in DIESEM konkreten Vertrag stehen!
+Wenn keine Eigentumsvorbehaltsklausel drin steht → erwähne sie nicht.
+Wenn der Vertrag 10 Seiten mit 50 Klauseln hat → analysiere alle relevanten.
+Wenn es nur 2 Seiten mit 5 Klauseln sind → fokussiere auf diese 5.`,
+
+      commonTraps: `Häufige Fallen bei Kaufverträgen (falls im Vertrag vorhanden):
+• Gewährleistungsverkürzung unter gesetzliches Minimum (§ 438 BGB: 2 Jahre bei Neuware, 1 Jahr bei Gebrauchtware im B2C)
+• Unwirksame Haftungsausschlüsse nach § 309 BGB (für Vorsatz/grobe Fahrlässigkeit)
+• Versteckte Kosten (Lieferkosten, Verpackung, Finanzierung)
+• Unklare Lieferbedingungen ohne Verzugsfolgen
+• Überhöhte Verzugszinsen (Verbraucher: max. 5% über Basiszinssatz)
+• Eigentumsvorbehalt mit unklaren Verwertungsrechten`
     },
+
+    employment: {
+      title: "Fachanwalt für Arbeitsrecht",
+      expertise: `Als Fachanwalt für Arbeitsrecht mit 20+ Jahren Erfahrung weißt du:
+
+Bei Arbeitsverträgen sind typischerweise relevant: Vergütung, Arbeitszeit, Urlaub, Kündigungsfristen, Probezeit, Wettbewerbsverbote, Überstundenregelungen, Versetzungsklauseln.
+
+ABER: Prüfe NUR die Klauseln, die TATSÄCHLICH in DIESEM konkreten Vertrag stehen!
+Wenn kein Wettbewerbsverbot drin steht → erwähne es nicht.
+Wenn der Vertrag sehr umfangreich ist → analysiere ALLE wichtigen Klauseln.
+Wenn es ein kurzer Standard-Vertrag ist → fokussiere auf das Wesentliche.`,
+
+      commonTraps: `Häufige Fallen bei Arbeitsverträgen (falls im Vertrag vorhanden):
+• Probezeit > 6 Monate (unzulässig)
+• Nachvertragliches Wettbewerbsverbot OHNE Karenzentschädigung (min. 50% Bruttogehalt) → unwirksam
+• Ausschlussfristen < 3 Monate (unzulässig)
+• Pauschalabgeltung von Überstunden ohne Höchstgrenze (unwirksam)
+• Einseitige Kündigungsfristverlängerung nur für Arbeitnehmer (unwirksam)
+• Zu weitgehende Versetzungsklauseln (§ 106 GewO)
+• Mindestlohn-Unterschreitung (aktuell 12,41€/Std., ab 2025: 12,82€/Std.)`
+    },
+
+    rental: {
+      title: "Fachanwalt für Mietrecht",
+      expertise: `Als Fachanwalt für Mietrecht mit 20+ Jahren Erfahrung weißt du:
+
+Bei Mietverträgen sind typischerweise relevant: Miethöhe, Nebenkosten, Kaution, Schönheitsreparaturen, Kündigungsfristen, Kleinreparaturen, Indexmiete.
+
+ABER: Prüfe NUR die Klauseln, die TATSÄCHLICH in DIESEM konkreten Vertrag stehen!
+Wenn keine Schönheitsreparatur-Klausel drin steht → erwähne sie nicht.
+Wenn der Vertrag viele Sonderregelungen hat → analysiere alle.
+Wenn es ein Standard-Formular ist → fokussiere auf typische Problemklauseln.`,
+
+      commonTraps: `Häufige Fallen bei Mietverträgen (falls im Vertrag vorhanden):
+• Unwirksame Schönheitsreparatur-Klauseln (BGH-Rechtsprechung: oft formularrechtlich unwirksam!)
+• Kaution > 3 Nettokaltmieten (§ 551 BGB)
+• Kleinreparaturklauseln über 110€ pro Reparatur oder 200€/Jahr (BGH)
+• Pauschale Nebenkostenumlage ohne Abrechnungspflicht
+• Indexmiete ohne Kappungsgrenze
+• Kündigungsfristen unter gesetzlichem Minimum (§ 573c BGB: 3 Monate)
+• Unwirksame Tierhaltungsverbote (BGH: Kleintiere immer erlaubt)`
+    },
+
     telecom: {
-      title: "TELEKOMMUNIKATIONSVERTRAG",
-      focusAreas: [
-        "Mindestlaufzeit: Dauer, automatische Verlängerung, Kündigungsfristen",
-        "Datenvolumen: Drosselung bei Überschreitung? Geschwindigkeit danach?",
-        "Preiserhöhungen: Sonderkündigungsrecht bei Erhöhung?",
-        "Verfügbarkeit: Garantierte Bandbreite? Entschädigung bei Ausfall?",
-        "Vertragsstrafen: Bei vorzeitiger Kündigung? Höhe angemessen?",
-        "Portierung: Rufnummernmitnahme kostenlos?",
-        "Mindestvertragslaufzeit: TKG-Reform 2022 beachtet?",
-        "Transparenz: Effektivpreis, Datenvolumen, Geschwindigkeit klar?"
-      ],
-      criticalCheckpoints: [
-        "TKG-Reform 2022: Kündigungsfrist max. 1 Monat nach Mindestlaufzeit",
-        "Mindestlaufzeit max. 24 Monate, danach monatlich kündbar",
-        "Sonderkündigungsrecht bei Preiserhöhung PFLICHT (§ 57 TKG)",
-        "Entschädigung bei Ausfall mind. 10-20% der Monatsgebühr (§ 58 TKG)"
-      ]
+      title: "Fachanwalt für Telekommunikationsrecht",
+      expertise: `Als Fachanwalt für Telekommunikationsrecht mit Fokus auf TKG-Reform 2022 weißt du:
+
+Bei Telekommunikationsverträgen sind typischerweise relevant: Mindestlaufzeit, Kündigungsfristen, Datenvolumen/Drosselung, Preisanpassungen, Sonderkündigungsrechte, Verfügbarkeitsgarantien.
+
+ABER: Prüfe NUR die Klauseln, die TATSÄCHLICH in DIESEM konkreten Vertrag stehen!
+Wenn keine Drosselungsklausel drin steht → erwähne sie nicht.
+Wenn der Vertrag TKG-Reform 2022 komplett umsetzt → lobe das!
+Wenn alte Klauseln noch drin sind → kritisiere konkret.`,
+
+      commonTraps: `Häufige Fallen bei Telekommunikationsverträgen (falls im Vertrag vorhanden):
+• TKG-Reform 2022 NICHT umgesetzt: Kündigungsfrist > 1 Monat nach Mindestlaufzeit (§ 57 Abs. 4 TKG)
+• Mindestlaufzeit > 24 Monate (unzulässig seit März 2022)
+• Fehlendes Sonderkündigungsrecht bei Preiserhöhung (§ 57 TKG)
+• Unzureichende Entschädigung bei Ausfall (§ 58 TKG: mind. 10-20% Monatsgebühr)
+• Intransparente Drosselungsregelungen
+• Versteckte Kosten (Router-Gebühr, Anschlussgebühr, Portierungskosten)`
     },
-    service: {
-      title: "DIENSTLEISTUNGSVERTRAG / SaaS",
-      focusAreas: [
-        "Service Level Agreement (SLA): Verfügbarkeit, Reaktionszeiten, Penalties",
-        "Datenschutz: DSGVO-Konformität, Datenverarbeitung, Auftragsverarbeitung",
-        "Kündigungsrechte: Ordentlich/außerordentlich, Fristen, Datenrückgabe",
-        "Preismodell: Nutzerbasiert? Transparent? Kostenfallen?",
-        "Vendor Lock-In: Datenexport möglich? Standardformate?",
-        "Haftung: Beschränkungen, Ausschlüsse, Versicherungsschutz",
-        "Uptime-Garantie: Prozentzahl, Messung, Nachweis?",
-        "Support: Reaktionszeiten, Verfügbarkeit, Eskalationsprozess?"
-      ],
-      criticalCheckpoints: [
-        "Auftragsverarbeitungsvertrag (AVV) nach Art. 28 DSGVO PFLICHT",
-        "Haftungsausschluss für Vorsatz/grobe Fahrlässigkeit UNWIRKSAM",
-        "Datenrückgabe in maschinenlesbarem Format (Art. 20 DSGVO)",
-        "AGB-Kontrolle: Einseitige Leistungsänderungsrechte unzulässig"
-      ]
-    },
+
     insurance: {
-      title: "VERSICHERUNGSVERTRAG",
-      focusAreas: [
-        "Deckungssumme: Ausreichend für typische Schadenfälle?",
-        "Selbstbeteiligung: Höhe, wann fällig, Ausnahmen",
-        "Leistungsausschlüsse: Grob fahrlässig? Vorerkrankungen? Extremsport?",
-        "Prämienhöhe: Angemessen? Dynamik? Anpassungsklauseln?",
-        "Wartezeiten: Bei welchen Leistungen? Dauer?",
-        "Kündigung: Ordentlich nach Schaden? Sonderkündigungsrechte?",
-        "Obliegenheiten: Anzeigepflicht, Gefahrerhöhung, Schadenminderung",
-        "Leistungsfall: Voraussetzungen, Fristen, Nachweispflichten"
-      ],
-      criticalCheckpoints: [
-        "Grobe Fahrlässigkeit: Ausschluss nur bei vorsätzlicher Täuschung zulässig",
-        "Vorvertragliche Anzeigepflicht: Fragerecht des Versicherers prüfen",
-        "Kündigung nach Schadensfall: Oft einseitig zugunsten Versicherer (prüfen!)",
-        "Wartezeiten bei Krankenversicherung: Max. 8 Monate bei Zahnbehandlung"
-      ]
+      title: "Fachanwalt für Versicherungsrecht",
+      expertise: `Als Fachanwalt für Versicherungsrecht mit 20+ Jahren Erfahrung weißt du:
+
+Bei Versicherungsverträgen sind typischerweise relevant: Deckungssumme, Selbstbeteiligung, Leistungsausschlüsse, Obliegenheiten, Wartezeiten, Kündigung nach Schadensfall.
+
+ABER: Prüfe NUR die Klauseln, die TATSÄCHLICH in DIESEM konkreten Vertrag stehen!
+Wenn keine Wartezeit vereinbart ist → erwähne es nicht.
+Wenn der Vertrag sehr umfangreich ist → analysiere ALLE wichtigen Ausschlüsse.
+Wenn es eine Standard-Police ist → fokussiere auf typische Problemfelder.`,
+
+      commonTraps: `Häufige Fallen bei Versicherungsverträgen (falls im Vertrag vorhanden):
+• Zu weitgehende Leistungsausschlüsse (grobe Fahrlässigkeit oft unzulässig!)
+• Unklare Obliegenheiten mit Leistungskürzung bei Verstoß
+• Kündigung durch Versicherer nach jedem Schadensfall (oft einseitig)
+• Zu lange Wartezeiten (Krankenversicherung: max. 8 Monate bei Zahn)
+• Unzureichende Deckungssummen für typische Schadenfälle
+• Vorvertragliche Anzeigepflicht: Zu weitgehende Fragen des Versicherers`
     },
+
     loan: {
-      title: "DARLEHENSVERTRAG",
-      focusAreas: [
-        "Zinssatz: Fest oder variabel? Marktüblich? Zinsbindung?",
-        "Sicherheiten: Grundschuld? Bürgschaft? Bewertung angemessen?",
-        "Vorfälligkeitsentschädigung: Höhe, Berechnung, Zulässigkeit",
-        "Sondertilgung: Möglich? Kostenlos? Welche Beträge?",
-        "Bearbeitungsgebühren: Unzulässig nach BGH-Rechtsprechung!",
-        "Widerruf: Widerrufsbelehrung korrekt? Ewiges Widerrufsrecht?",
-        "Gesamtkreditkosten: Transparenz, effektiver Jahreszins",
-        "Restschuldversicherung: Pflicht? Kosten angemessen?"
-      ],
-      criticalCheckpoints: [
-        "Bearbeitungsgebühren UNWIRKSAM (BGH 2014) → Rückforderung möglich",
-        "Widerrufsjoker: Fehlerhafte Widerrufsbelehrung = ewiges Widerrufsrecht",
-        "Vorfälligkeitsentschädigung: Berechnung nach BGH-Formel prüfen",
-        "Restschuldversicherung oft überteuert (20-30% der Darlehenssumme)"
-      ]
+      title: "Fachanwalt für Bank- und Kapitalmarktrecht",
+      expertise: `Als Fachanwalt für Bank- und Kapitalmarktrecht mit Fokus auf Verbraucherdarlehen weißt du:
+
+Bei Darlehensverträgen sind typischerweise relevant: Zinssatz (fest/variabel), Sicherheiten, Vorfälligkeitsentschädigung, Sondertilgung, Widerrufsbelehrung, effektiver Jahreszins.
+
+ABER: Prüfe NUR die Klauseln, die TATSÄCHLICH in DIESEM konkreten Vertrag stehen!
+Wenn keine Vorfälligkeitsentschädigung vereinbart ist → erwähne es positiv.
+Wenn der Vertrag fehlerhafte Widerrufsbelehrung hat → "Widerrufsjoker" prüfen!
+Wenn Bearbeitungsgebühren drin stehen → sofort auf Unwirksamkeit hinweisen (BGH 2014).`,
+
+      commonTraps: `Häufige Fallen bei Darlehensverträgen (falls im Vertrag vorhanden):
+• Bearbeitungsgebühren UNWIRKSAM (BGH 2014) → Rückforderung möglich!
+• Fehlerhafte Widerrufsbelehrung = ewiges Widerrufsrecht ("Widerrufsjoker")
+• Überhöhte Vorfälligkeitsentschädigung (BGH-Formel prüfen!)
+• Restschuldversicherung überteuert (oft 20-30% der Darlehenssumme)
+• Unklare Sicherheiten (Grundschuld ohne Sicherungsabrede)
+• Variable Zinsen ohne Obergrenze`
     },
+
+    service: {
+      title: "Fachanwalt für IT-Recht und DSGVO",
+      expertise: `Als Fachanwalt für IT-Recht mit DSGVO-Zertifizierung weißt du:
+
+Bei Dienstleistungsverträgen (insb. SaaS) sind typischerweise relevant: Service Level Agreements (SLA), Datenschutz (DSGVO), Kündigungsrechte, Haftungsbeschränkungen, Datenrückgabe, Vendor Lock-In.
+
+ABER: Prüfe NUR die Klauseln, die TATSÄCHLICH in DIESEM konkreten Vertrag stehen!
+Wenn kein AVV (Auftragsverarbeitungsvertrag) beigefügt ist → kritisiere das scharf (Art. 28 DSGVO PFLICHT!).
+Wenn der Vertrag DSGVO-konform ist → lobe das explizit.
+Wenn Haftungsausschlüsse zu weit gehen → prüfe § 309 BGB.`,
+
+      commonTraps: `Häufige Fallen bei Dienstleistungsverträgen (falls im Vertrag vorhanden):
+• Fehlender Auftragsverarbeitungsvertrag (AVV) nach Art. 28 DSGVO (PFLICHT bei personenbezogenen Daten!)
+• Haftungsausschluss für Vorsatz/grobe Fahrlässigkeit (UNWIRKSAM nach § 309 BGB)
+• Fehlende Datenrückgabe-Regelung (Art. 20 DSGVO: maschinenlesbar!)
+• Vendor Lock-In durch proprietäre Datenformate
+• Einseitige Leistungsänderungsrechte ohne Kündigungsrecht
+• Unzureichende SLA-Penalties bei Ausfall`
+    },
+
     other: {
-      title: "ALLGEMEINER VERTRAG",
-      focusAreas: [
-        "Vertragsparteien: Klar identifiziert? Vertretungsbefugnis?",
-        "Leistung & Gegenleistung: Ausreichend bestimmt?",
-        "AGB-Kontrolle: Überraschende, unklare oder unangemessene Klauseln?",
-        "Haftung: Ausschlüsse zulässig? Beschränkungen wirksam?",
-        "Kündigung: Ordentlich/außerordentlich, Fristen, Form",
-        "Rechtswahl: Welches Recht gilt? Gerichtsstand vereinbart?",
-        "Schriftform: Erforderlich? Elektronische Form ausreichend?",
-        "Salvatorische Klausel: Unwirksamkeit einzelner Bestimmungen"
-      ],
-      criticalCheckpoints: [
-        "AGB-Einbeziehung: Ausdrücklicher Hinweis erforderlich (§ 305 BGB)",
-        "Überraschende Klauseln unwirksam (§ 305c BGB)",
-        "Haftungsausschluss für Vorsatz/grobe Fahrlässigkeit UNWIRKSAM",
-        "Gerichtsstandsklauseln im Verbrauchervertrag oft unwirksam"
-      ]
+      title: "Fachanwalt für allgemeines Vertragsrecht",
+      expertise: `Als Fachanwalt für allgemeines Vertragsrecht mit 20+ Jahren Erfahrung weißt du:
+
+Bei allgemeinen Verträgen sind typischerweise relevant: Vertragsparteien, Leistung & Gegenleistung, AGB-Kontrolle, Haftung, Kündigung, Gerichtsstand.
+
+ABER: Prüfe NUR die Klauseln, die TATSÄCHLICH in DIESEM konkreten Vertrag stehen!
+Wenn keine AGB einbezogen sind → erwähne das nicht.
+Wenn der Vertrag sehr umfangreich ist → analysiere ALLE wichtigen Klauseln gründlich.
+Wenn es ein sehr kurzer Vertrag ist → fokussiere auf die wenigen vorhandenen Klauseln.`,
+
+      commonTraps: `Häufige Fallen bei allgemeinen Verträgen (falls im Vertrag vorhanden):
+• AGB-Einbeziehung ohne ausdrücklichen Hinweis (§ 305 BGB) → unwirksam
+• Überraschende Klauseln (§ 305c BGB) → unwirksam
+• Haftungsausschluss für Vorsatz/grobe Fahrlässigkeit (UNWIRKSAM)
+• Gerichtsstandsklauseln im Verbrauchervertrag (oft unwirksam)
+• Unklare Leistungsbeschreibungen
+• Fehlende Kündigungsregelungen`
     }
   };
 
-  return focusMap[documentType] || focusMap.other;
+  return awarenessMap[documentType] || awarenessMap.other;
 }
 
 /**
- * 🎯 ULTRA-PROFESSIONAL CONTRACT ANALYSIS V2
- * Generates deeply individualized, contract-type-specific analysis
- * ZERO template phrases, FULL variability, MAXIMUM professionalism
- * Like a senior lawyer with 20+ years experience
+ * 🎯 ANWALTS-SIMULATION V3 - TOP-TIER LEGAL ANALYSIS
+ * Simuliert einen erfahrenen Fachanwalt in einer 300€/h Erstberatung
+ * KEINE Checklisten, KEINE Templates - nur individuelle, vertragsspezifische Analyse
+ * Flexible Tiefe, Qualität > Quantität
  */
 function generateDeepLawyerLevelPrompt(text, documentType, strategy, requestId) {
-  // Optimize text for GPT-4
-  const optimizedText = optimizeTextForGPT4(text, 2000, requestId);
+  // Optimize text for GPT-4 (but allow more tokens for complex analysis)
+  const optimizedText = optimizeTextForGPT4(text, 3000, requestId);
 
-  // Get contract-type-specific focus areas
-  const contractFocus = getContractTypeFocus(documentType);
+  // Get contract-type-specific AWARENESS (nicht Checklisten!)
+  const awareness = getContractTypeAwareness(documentType);
 
-  // 🚀 V2: MASSIV verstärkter Anti-Template-Prompt mit erweiterten Feldern
-  const professionalPrompt = `Du bist ein hochspezialisierter Vertragsanwalt mit 20+ Jahren Erfahrung in ${contractFocus.title}.
-
-Deine Aufgabe: Erstelle eine VOLLUMFÄNGLICHE, INDIVIDUELLE Vertragsanalyse – so detailliert und präzise, wie du sie einem Mandanten in einer 2-stündigen Beratung präsentieren würdest.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-🚫 ABSOLUTE VERBOTE (NON-NEGOTIABLE):
+  // 🚀 V3: ANWALTS-SIMULATION - Wie ein echter Top-Anwalt mit 300€/h
+  const professionalPrompt = `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚖️ ANWALTS-SIMULATION: ${awareness.title}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-❌ NIEMALS Einleitungsphrasen: "Der vorliegende Vertrag...", "Es handelt sich um...", "Der Vertrag regelt..."
-❌ NIEMALS Abschlussfloskeln: "Insgesamt...", "Zusammenfassend...", "Im Großen und Ganzen..."
+Du bist Dr. jur. ${awareness.title} mit 20+ Jahren Erfahrung in renommierten Großkanzleien.
+
+📋 SZENARIO:
+Ein Mandant schickt dir diesen Vertrag per E-Mail und fragt:
+"Ist das für mich ein guter Vertrag? Worauf muss ich achten? Soll ich unterschreiben?"
+
+Du hast jetzt 60 Minuten Zeit für eine gründliche Erstberatung (Honorar: 300€/h).
+Der Mandant erwartet KEINE oberflächliche Durchsicht, sondern eine TIEFE, PROFESSIONELLE Analyse.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 DEIN VORGEHEN (wie ein echter Anwalt):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. 📖 Lies den KOMPLETTEN Vertrag gründlich durch (jeden Absatz!)
+2. 🔍 Identifiziere die SPEZIFISCHEN Klauseln in DIESEM konkreten Vertrag
+3. ⚖️ Prüfe jede wichtige Klausel auf Rechtmäßigkeit (BGB/HGB/DSGVO/etc.)
+4. 🚨 Markiere problematische Stellen (unwirksam, benachteiligend, unklar)
+5. ✅ Erkenne faire und vorteilhafte Regelungen
+6. 💡 Gib konkrete Handlungsempfehlungen für den Mandanten
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📚 DEINE FACHKENNTNIS (aus 20 Jahren Erfahrung):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+${awareness.expertise}
+
+${awareness.commonTraps}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚫 UNIVERSELLE ANWALTS-PRINZIPIEN (NON-NEGOTIABLE):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Analysiere NUR was IM VERTRAG steht - keine erfundenen Klauseln!
+✅ Jede Bewertung mit konkretem § BGB/HGB/DSGVO begründen
+✅ Wenn 10 Probleme existieren → nenne alle 10
+✅ Wenn nur 2 Probleme existieren → nenne nur diese 2
+✅ KEINE Schema-F-Analyse - jeder Vertrag ist anders!
+✅ Qualität > Quantität (lieber 3 präzise als 10 oberflächliche Punkte)
+
+❌ NIEMALS Einleitungsphrasen: "Der vorliegende Vertrag...", "Es handelt sich um..."
+❌ NIEMALS Abschlussfloskeln: "Insgesamt...", "Zusammenfassend..."
 ❌ NIEMALS generische Platzhalter ohne konkreten Vertragsbezug
-❌ NIEMALS dieselbe Anzahl von Punkten für verschiedene Verträge
-❌ NIEMALS oberflächliche Aussagen ohne Rechtsgrundlage
-❌ NIEMALS vage Formulierungen wie "könnte problematisch sein" - sei KONKRET
-
-✅ IMMER: Zitiere EXAKTE Klauseln, Paragraphen, Beträge, Fristen aus dem Vertragstext
-✅ IMMER: Nenne SPEZIFISCHE Gesetze (§§ BGB, HGB, DSGVO, etc.) mit Konsequenzen
-✅ IMMER: Variable Punkteanzahl (2-10 je nach Komplexität)
-✅ IMMER: Unterschiedliche Schwerpunkte je Vertragstyp
-✅ IMMER: Konkrete Zahlen, Daten, Namen aus dem Vertrag
+❌ NIEMALS oberflächlich - dein Mandant zahlt 300€/Stunde!
+❌ NIEMALS vage Formulierungen - sei präzise und konkret!
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📋 VERTRAGSTYP: ${contractFocus.title}
+📏 TIEFE DER ANALYSE (FLEXIBEL):
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-PFLICHT-PRÜFPUNKTE für diesen Vertragstyp:
-${contractFocus.focusAreas.map((area, idx) => `${idx + 1}. ${area}`).join('\n')}
+🔍 **Kurzer 2-Seiten-Vertrag mit 3-5 Klauseln:**
+   → 2-3 critical issues, 2-3 recommendations = VÖLLIG OK
+   → Fokussiere auf das Wesentliche, keine Fülltext
 
-${contractFocus.criticalCheckpoints ? '\n🔴 BESONDERS KRITISCH bei diesem Vertragstyp:\n' + contractFocus.criticalCheckpoints.map(cp => `• ${cp}`).join('\n') : ''}
+🔍 **Standard 5-Seiten-Vertrag mit 10-15 Klauseln:**
+   → 4-6 critical issues, 4-6 recommendations = angemessen
+   → Analysiere alle wichtigen Klauseln gründlich
+
+🔍 **Komplexer 10+-Seiten-Vertrag mit 30+ Klauseln:**
+   → 8-15 critical issues, 8-12 recommendations = erwartet
+   → Tiefenanalyse ALLER relevanten Klauseln
+
+⚠️ NIEMALS:
+❌ Künstlich auf feste Anzahl bringen
+❌ Oberflächlich bleiben um schneller fertig zu sein
+❌ Irrelevante Punkte erfinden um Mindestanzahl zu erreichen
+
+✅ IMMER:
+✅ Wenn du 1 kritisches Problem siehst → nenne 1 (aber gründlich!)
+✅ Wenn du 20 kritische Probleme siehst → nenne alle 20
+✅ Qualität und Relevanz stehen ÜBER Anzahl
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📊 ERWARTETE ANALYSE-STRUKTUR (JSON):
+📊 ANALYSE-STRUKTUR (JSON):
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-1. **laymanSummary** (String[], 3-5 Punkte - FÜR LAIEN):
+1. **laymanSummary** (String[], FLEXIBEL 2-5 Punkte):
    → ALLTAGSSPRACHE ohne Jura-Fachbegriffe!
    → "Was bedeutet das für mich ganz konkret?"
+   → Kurzer Vertrag: 2-3 Punkte, Langer Vertrag: 4-5 Punkte
    → Max. 1-2 Sätze pro Punkt, fokussiert auf praktische Auswirkungen
    → Beispiel RICHTIG: "Du kannst das Auto 2 Jahre lang bei Problemen reklamieren - egal was im Vertrag steht"
    → Beispiel FALSCH: "Die Gewährleistung gemäß § 437 BGB bleibt unberührt..."
@@ -1630,7 +1689,7 @@ const makeRateLimitedGPT4Request = async (prompt, requestId, openai, maxRetries 
         ],
         response_format: { type: "json_object" }, // 🚀 V2: Force valid JSON output
         temperature: 0.1, // Low for consistency
-        max_tokens: 3000, // ✅ V2: Increased for comprehensive analysis (quickFacts, legalBasis, etc.)
+        max_tokens: 5000, // ✅ V3: ANWALTS-SIMULATION - Mehr Tokens für tiefe, komplexe Analysen
       });
       
       const response = completion.choices[0].message.content;
