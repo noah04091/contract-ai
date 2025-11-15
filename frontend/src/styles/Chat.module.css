@@ -593,9 +593,14 @@
 
 .form {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: 1fr auto;
   gap: 12px;
   align-items: flex-end;
+}
+
+/* Form with upload button gets 3 columns */
+.form.formWithUpload {
+  grid-template-columns: auto 1fr auto;
 }
 
 /* Attach Button (Upload) */
@@ -611,6 +616,7 @@
   align-items: center;
   justify-content: center;
   align-self: stretch;
+  min-height: 56px;
 }
 
 .attachButton svg {
@@ -687,6 +693,7 @@
   justify-content: center;
   align-self: stretch;
   box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+  min-height: 56px;
 }
 
 .sendButton svg {

@@ -706,7 +706,7 @@ export default function Chat() {
             onDrop={handleDrop}
           >
             <form
-              className={styles.form}
+              className={`${styles.form} ${active ? styles.formWithUpload : ""}`}
               onSubmit={(e) => {
                 e.preventDefault();
                 sendMessage();
@@ -721,7 +721,7 @@ export default function Chat() {
                 style={{ display: "none" }}
               />
 
-              {/* Upload Button */}
+              {/* Upload Button - only show when active chat exists */}
               {active && (
                 <button
                   type="button"
