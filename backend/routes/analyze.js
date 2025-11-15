@@ -2658,4 +2658,7 @@ process.on('SIGTERM', async () => {
   }
 });
 
+// ===== EXPORT FUNCTIONS FOR OTHER ROUTES =====
 module.exports = router;
+module.exports.generateDeepLawyerLevelPrompt = generateDeepLawyerLevelPrompt;
+module.exports.getContractTypeFocus = getContractTypeFocus;
