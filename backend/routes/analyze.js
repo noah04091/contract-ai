@@ -1134,6 +1134,26 @@ ${awareness.commonTraps}
    → Max. 3-5 relevante Themen
    → Wird später mit Legal Pulse Feature verbunden
 
+12. **detailedLegalOpinion** (String - PFLICHTFELD):
+   → Ausführliches, sachliches Rechtsgutachten als Fließtext (KEIN Brief-Stil!)
+   → Fasst alle Aspekte zusammen wie ein professionelles Anwalts-Memo
+   → KEINE Anrede ("Sehr geehrter..."), KEINE direkten Anweisungen ("Unterschreiben Sie...")
+   → Stattdessen: Sachliche Bewertung ("Dieser Vertrag ist...", "Problematisch ist...", "Die Klausel X entspricht...")
+   → FLEXIBLE Länge basierend auf tatsächlicher Komplexität:
+     ✅ Einfacher Vertrag mit Standardklauseln: 300-500 Wörter ausreichend
+     ✅ Komplexer Vertrag mit problematischen Klauseln: 800-1500 Wörter
+     ✅ NIEMALS künstlich auffüllen nur für Wort-Zahl!
+     ✅ NIEMALS irrelevante Details erfinden um länger zu wirken!
+     ✅ Qualität und Relevanz ÜBER Länge!
+   → Struktur (fließend, nicht als Überschriften):
+     • Gesamteinschätzung (1-2 Absätze)
+     • Positive/unkritische Klauseln mit rechtlicher Einordnung (§§)
+     • Problematische Klauseln mit Begründung & Konsequenzen (§§)
+     • Rechtliche Zusammenhänge erklären (WARUM problematisch?)
+     • Abschließende Gesamtbewertung
+   → Beispiel Anfang: "Dieser KFZ-Kaufvertrag ist grundsätzlich rechtswirksam und entspricht der üblichen Praxis bei Gebrauchtwagenverkäufen. Die Gewährleistungsfrist von 12 Monaten ist nach § 475 BGB zulässig..."
+   → Beispiel Ende: "...Der Vertrag weist somit eine rechtlich unwirksame Klausel auf, die übrigen Regelungen sind marktüblich und rechtlich einwandfrei."
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ❌ ANTI-PATTERN BEISPIELE (So NICHT!):
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1170,7 +1190,8 @@ Antworte AUSSCHLIESSLICH mit folgendem JSON (keine Markdown-Blöcke, kein Text d
   "recommendations": [{"title": "Maßnahme (max. 8 Wörter)", "description": "Max. 2 Sätze", "priority": "urgent", "timeframe": "Sofort", "effort": "low"}],
   "contractScore": 75,
   "quickFacts": [{"label": "Kündigungsfrist", "value": "3 Monate", "rating": "bad"}],
-  "legalPulseHooks": ["Mietpreisbremse", "TKG-Reform 2022", "..."]
+  "legalPulseHooks": ["Mietpreisbremse", "TKG-Reform 2022", "..."],
+  "detailedLegalOpinion": "Ausführliches Rechtsgutachten als Fließtext: Dieser Vertrag ist grundsätzlich... [FLEXIBLE Länge je nach Komplexität: 300-1500 Wörter - KEINE feste Vorgabe! Qualität > Quantität]"
 }`;
 
   return professionalPrompt;
