@@ -14,7 +14,7 @@ const nodemailer = require("nodemailer"); // 📧 Email Service
 const contractAnalyzer = require("../services/contractAnalyzer"); // 🤖 ULTRA-INTELLIGENT Contract Analyzer v10
 const AILegalPulse = require("../services/aiLegalPulse"); // ⚡ Legal Pulse Risk Analysis
 const analyzeRoute = require("./analyze"); // 🚀 V2 Analysis Functions
-const { generateDeepLawyerLevelPrompt, getContractTypeFocus } = analyzeRoute; // 🚀 Import V2 functions
+const { generateDeepLawyerLevelPrompt, getContractTypeAwareness } = analyzeRoute; // 🚀 Import V2 functions
 
 const router = express.Router();
 const aiLegalPulse = new AILegalPulse(); // ⚡ Initialize Legal Pulse analyzer
