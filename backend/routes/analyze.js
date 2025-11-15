@@ -1677,9 +1677,9 @@ const makeRateLimitedGPT4Request = async (prompt, requestId, openai, maxRetries 
       
       console.log(`🛠️ [${requestId}] GPT-4-Turbo request (attempt ${attempt}/${maxRetries})...`);
 
-      // ✅ V2: GPT-4-Turbo with JSON mode for structured analysis
+      // ✅ V2: GPT-4o with JSON mode for structured analysis
       const completion = await openai.chat.completions.create({
-        model: "gpt-4-turbo", // ✅ GPT-4-Turbo for 128k context window
+        model: "gpt-4o", // 🚀 GPT-4o for 128k context + 16k output tokens
         messages: [
           {
             role: "system",
@@ -1689,7 +1689,7 @@ const makeRateLimitedGPT4Request = async (prompt, requestId, openai, maxRetries 
         ],
         response_format: { type: "json_object" }, // 🚀 V2: Force valid JSON output
         temperature: 0.1, // Low for consistency
-        max_tokens: 4096, // ✅ V3: ANWALTS-SIMULATION - GPT-4 Turbo max limit
+        max_tokens: 16000, // 🚀 GPT-4o: 16k tokens für tiefe Analysen (bis 100 Seiten Verträge)
       });
       
       const response = completion.choices[0].message.content;

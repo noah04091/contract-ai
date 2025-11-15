@@ -1506,7 +1506,7 @@ router.post("/:id/analyze", verifyToken, async (req, res) => {
 
     try {
       const completion = await openai.chat.completions.create({
-        model: "gpt-4-turbo",
+        model: "gpt-4o", // 🚀 GPT-4o for 128k context + 16k output tokens
         messages: [
           {
             role: "system",
@@ -1516,7 +1516,7 @@ router.post("/:id/analyze", verifyToken, async (req, res) => {
         ],
         response_format: { type: "json_object" }, // 🚀 V2: Force valid JSON output
         temperature: 0.1,
-        max_tokens: 4096 // ✅ V3: ANWALTS-SIMULATION - GPT-4 Turbo max limit
+        max_tokens: 16000 // 🚀 GPT-4o: 16k tokens für tiefe Analysen (bis 100 Seiten Verträge)
       });
 
       const responseText = completion.choices[0].message.content;
