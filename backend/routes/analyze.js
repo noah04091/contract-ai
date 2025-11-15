@@ -1136,23 +1136,27 @@ ${awareness.commonTraps}
 
 12. **detailedLegalOpinion** (String - PFLICHTFELD):
    → Ausführliches, sachliches Rechtsgutachten als Fließtext (KEIN Brief-Stil!)
-   → Fasst alle Aspekte zusammen wie ein professionelles Anwalts-Memo
+   → Fasst alle Aspekte zusammen wie ein professionelles Anwalts-Memo auf FACHANWALTSNIVEAU
    → KEINE Anrede ("Sehr geehrter..."), KEINE direkten Anweisungen ("Unterschreiben Sie...")
    → Stattdessen: Sachliche Bewertung ("Dieser Vertrag ist...", "Problematisch ist...", "Die Klausel X entspricht...")
-   → FLEXIBLE Länge basierend auf tatsächlicher Komplexität:
-     ✅ Einfacher Vertrag mit Standardklauseln: 300-500 Wörter ausreichend
-     ✅ Komplexer Vertrag mit problematischen Klauseln: 800-1500 Wörter
-     ✅ NIEMALS künstlich auffüllen nur für Wort-Zahl!
-     ✅ NIEMALS irrelevante Details erfinden um länger zu wirken!
-     ✅ Qualität und Relevanz ÜBER Länge!
+   → FLEXIBLE Länge basierend auf tatsächlicher Komplexität - WICHTIG: Sei AUSFÜHRLICH wie ein 300€/h-Anwalt!
+     ✅ Sehr einfacher Vertrag (1-2 Seiten, nur Standardklauseln): 400-600 Wörter
+     ✅ Standard-Vertrag (3-7 Seiten, typische Komplexität): 600-900 Wörter
+     ✅ Komplexer Vertrag (8+ Seiten oder viele problematische Klauseln): 900-1500 Wörter
+     ⚠️  WICHTIG: Detaillierte Erklärungen sind KEIN "Auffüllen"!
+     ✅ Erkläre JEDE wichtige Klausel ausführlich (nicht nur erwähnen!)
+     ✅ Liefere TIEFGEHENDE rechtliche Begründungen mit § BGB-Verweisen
+     ✅ Erkläre KONSEQUENZEN und Zusammenhänge zwischen Klauseln
+     ✅ Gib KONTEXT: Warum ist etwas problematisch? Was sind die Alternativen?
+     ❌ Aber: NIEMALS irrelevante Details erfinden oder vom Thema abschweifen!
    → Struktur (fließend, nicht als Überschriften):
-     • Gesamteinschätzung (1-2 Absätze)
-     • Positive/unkritische Klauseln mit rechtlicher Einordnung (§§)
-     • Problematische Klauseln mit Begründung & Konsequenzen (§§)
-     • Rechtliche Zusammenhänge erklären (WARUM problematisch?)
-     • Abschließende Gesamtbewertung
-   → Beispiel Anfang: "Dieser KFZ-Kaufvertrag ist grundsätzlich rechtswirksam und entspricht der üblichen Praxis bei Gebrauchtwagenverkäufen. Die Gewährleistungsfrist von 12 Monaten ist nach § 475 BGB zulässig..."
-   → Beispiel Ende: "...Der Vertrag weist somit eine rechtlich unwirksame Klausel auf, die übrigen Regelungen sind marktüblich und rechtlich einwandfrei."
+     • Gesamteinschätzung (2-3 Absätze - kontextreich!)
+     • Positive/unkritische Klauseln EINZELN mit rechtlicher Einordnung & § BGB-Verweisen
+     • Problematische Klauseln EINZELN mit ausführlicher Begründung, Konsequenzen & § BGB-Verweisen
+     • Rechtliche Zusammenhänge zwischen Klauseln erklären (WARUM problematisch? Was folgt daraus?)
+     • Abschließende Gesamtbewertung mit Empfehlungstendenz
+   → Beispiel Anfang: "Dieser KFZ-Kaufvertrag ist grundsätzlich rechtswirksam und entspricht der üblichen Praxis bei Gebrauchtwagenverkäufen zwischen Privatpersonen. Die Gewährleistungsfrist von 12 Monaten ist nach § 475 BGB für Verbrauchsgüterkäufe bei gewerblichen Verkäufern zulässig, jedoch ist zu prüfen, ob der Verkäufer tatsächlich als Gewerbetreibender einzustufen ist..."
+   → Beispiel Ende: "...Zusammenfassend weist der Vertrag eine rechtlich unwirksame Klausel gemäß § 309 Nr. 7 BGB auf, die im Streitfall zur Nichtigkeit dieser Regelung führen würde. Die übrigen Regelungen sind marktüblich, rechtlich einwandfrei und bieten beiden Parteien einen angemessenen Interessenausgleich."
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ❌ ANTI-PATTERN BEISPIELE (So NICHT!):
@@ -1191,7 +1195,7 @@ Antworte AUSSCHLIESSLICH mit folgendem JSON (keine Markdown-Blöcke, kein Text d
   "contractScore": 75,
   "quickFacts": [{"label": "Kündigungsfrist", "value": "3 Monate", "rating": "bad"}],
   "legalPulseHooks": ["Mietpreisbremse", "TKG-Reform 2022", "..."],
-  "detailedLegalOpinion": "Ausführliches Rechtsgutachten als Fließtext: Dieser Vertrag ist grundsätzlich... [FLEXIBLE Länge je nach Komplexität: 300-1500 Wörter - KEINE feste Vorgabe! Qualität > Quantität]"
+  "detailedLegalOpinion": "Ausführliches Rechtsgutachten als Fließtext auf Fachanwaltsniveau: Dieser Vertrag ist grundsätzlich... [FLEXIBLE Länge: 400-600 Wörter bei einfachen, 600-900 Wörter bei Standard-Verträgen, 900-1500 Wörter bei komplexen Verträgen. WICHTIG: Ausführliche Erklärungen mit § BGB-Verweisen!]"
 }`;
 
   return professionalPrompt;
