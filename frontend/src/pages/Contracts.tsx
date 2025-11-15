@@ -1286,14 +1286,14 @@ export default function Contracts() {
     }
   };
 
-  // ✅ NEU: Analyse-Aktion aus Success Modal
+  // ✅ FIXED: Analyse-Aktion aus Success Modal - NUTZT NEUE /api/analyze ROUTE!
   const handleAnalyzeFromModal = async () => {
     console.log("🔍 User chose to analyze uploaded contracts");
 
-    const contractIds = uploadSuccessModal.uploadedContracts.map(c => c._id);
+    const contractsToAnalyze = uploadSuccessModal.uploadedContracts;
     setUploadSuccessModal({ show: false, uploadedContracts: [] });
 
-    if (contractIds.length === 0) {
+    if (contractsToAnalyze.length === 0) {
       console.warn("⚠️ No contracts to analyze");
       return;
     }
@@ -1308,13 +1308,21 @@ export default function Contracts() {
     setIsAnalyzing(true);
 
     try {
-      // Analysiere jeden hochgeladenen Vertrag
-      for (let i = 0; i < contractIds.length; i++) {
-        const contractId = contractIds[i];
-        console.log(`📊 Analyzing contract ${i + 1}/${contractIds.length}: ${contractId}`);
+      // Analysiere jeden hochgeladenen Vertrag MIT DER NEUEN ROUTE!
+      for (let i = 0; i < contractsToAnalyze.length; i++) {
+        const contract = contractsToAnalyze[i];
+        console.log(`📊 Analyzing contract ${i + 1}/${contractsToAnalyze.length}: ${contract.name}`);
+
+        // Finde die entsprechende Datei im uploadFiles State
+        const uploadFileItem = uploadFiles.find(item => item.file.name === contract.name);
+
+        if (!uploadFileItem) {
+          console.error(`❌ File not found in uploadFiles for: ${contract.name}`);
+          continue;
+        }
 
         // Update progress
-        const progressPercent = Math.round(((i + 1) / contractIds.length) * 100);
+        const progressPercent = Math.round(((i + 1) / contractsToAnalyze.length) * 100);
         setUploadFiles(prev => prev.map((item, idx) =>
           item.status === 'analyzing' && idx === i
             ? { ...item, progress: progressPercent }
@@ -1322,17 +1330,19 @@ export default function Contracts() {
         ));
 
         try {
-          const data = await apiCall(`/contracts/${contractId}/analyze`, {
-            method: 'POST',
-          }) as { success: boolean; message?: string };
+          // ✅ NUTZE DIE NEUE /api/analyze ROUTE MIT forceReanalyze=true!
+          console.log(`🚀 Using NEW /api/analyze route for: ${contract.name}`);
+          const data = await uploadAndAnalyze(uploadFileItem.file, (progress) => {
+            setUploadFiles(prev => prev.map((item, idx) =>
+              item.status === 'analyzing' && idx === i
+                ? { ...item, progress }
+                : item
+            ));
+          }, true); // forceReanalyze = true!
 
-          if (data.success) {
-            console.log(`✅ Analysis completed for ${contractId}`);
-          } else {
-            console.error(`❌ Analysis failed for ${contractId}:`, data.message);
-          }
+          console.log(`✅ Analysis completed for ${contract.name} (NEW ROUTE)`);
         } catch (error) {
-          console.error(`❌ Analysis failed for ${contractId}:`, error);
+          console.error(`❌ Analysis failed for ${contract.name}:`, error);
         }
       }
 
