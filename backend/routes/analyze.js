@@ -2203,31 +2203,31 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           filePath: storageInfo.fileUrl,
           filename: req.file.filename || req.file.key,
           uploadType: storageInfo.uploadType,
-          
+
           // 📋 Provider Detection Fields WITH AUTO-RENEWAL & DURATION
           provider: extractedProvider,
           contractNumber: extractedContractNumber,
           customerNumber: extractedCustomerNumber,
           providerDetected: !!extractedProvider,
           providerConfidence: extractedProvider?.confidence || 0,
-          
+
           // Format strings for display
-          laufzeit: extractedContractDuration ? 
-            `${extractedContractDuration.value} ${extractedContractDuration.unit}` : 
+          laufzeit: extractedContractDuration ?
+            `${extractedContractDuration.value} ${extractedContractDuration.unit}` :
             null,
-          kuendigung: extractedCancellationPeriod ? 
+          kuendigung: extractedCancellationPeriod ?
             (extractedCancellationPeriod.type === 'daily' ? 'Täglich kündbar' :
              extractedCancellationPeriod.type === 'end_of_period' ? 'Zum Ende der Laufzeit' :
-             `${extractedCancellationPeriod.value} ${extractedCancellationPeriod.unit}`) : 
+             `${extractedCancellationPeriod.value} ${extractedCancellationPeriod.unit}`) :
             null,
-          
+
           // Store objects for precise data
           contractDuration: extractedContractDuration, // 🆕 CONTRACT DURATION object
           cancellationPeriod: extractedCancellationPeriod,
           startDate: extractedStartDate || null, // 🆕 START DATE
           expiryDate: extractedEndDate || null,
           isAutoRenewal: extractedIsAutoRenewal || false, // 🆕 AUTO-RENEWAL
-          
+
           // Enhanced metadata
           documentType: validationResult.documentType,
           analysisStrategy: validationResult.strategy,
@@ -2236,14 +2236,28 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
           extractionMethod: 'deep-lawyer-level-analysis-FIXED-v5',
           extractionQuality: analysisData.extractionQuality,
           analyzeCount: (existingContract.analyzeCount || 0) + 1,
-          
+
           // ✅ Deep lawyer-level flags
           deepLawyerLevelAnalysis: true,
           analysisDepth: 'deep-lawyer-level',
           structuredAnalysis: true,
           modelUsed: 'gpt-4-turbo',
           tokenOptimized: true,
-          substantialContent: true
+          substantialContent: true,
+
+          // ✅ ANALYSE-FELDER direkt im Contract speichern für Contract Detail View
+          contractScore: result.contractScore || 0,
+          laymanSummary: result.laymanSummary || [],
+          summary: result.summary || [],
+          legalAssessment: result.legalAssessment || [],
+          suggestions: result.suggestions || [],
+          comparison: result.comparison || [],
+          positiveAspects: result.positiveAspects || [],
+          criticalIssues: result.criticalIssues || [],
+          recommendations: result.recommendations || [],
+          quickFacts: result.quickFacts || [],
+          legalPulseHooks: result.legalPulseHooks || [],
+          detailedLegalOpinion: result.detailedLegalOpinion || '' // ✅ NEU: Ausführliches Rechtsgutachten
         };
 
         // Add s3Key at top level if S3 upload
@@ -2372,10 +2386,10 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
 
         await contractsCollection.updateOne(
           { _id: savedContract._id },
-          { 
+          {
             $set: {
               analysisId: inserted.insertedId,
-              
+
               // Enhanced metadata
               documentType: validationResult.documentType,
               analysisStrategy: validationResult.strategy,
@@ -2383,7 +2397,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
               qualityScore: validationResult.qualityScore,
               extractionMethod: 'deep-lawyer-level-analysis-FIXED-v5',
               extractionQuality: analysisData.extractionQuality,
-              
+
               // ✅ Deep lawyer-level flags
               deepLawyerLevelAnalysis: true,
               analysisDepth: 'deep-lawyer-level',
@@ -2391,7 +2405,21 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
               modelUsed: 'gpt-4-turbo',
               tokenOptimized: true,
               substantialContent: true,
-              
+
+              // ✅ ANALYSE-FELDER direkt im Contract speichern für Contract Detail View
+              contractScore: result.contractScore || 0,
+              laymanSummary: result.laymanSummary || [],
+              summary: result.summary || [],
+              legalAssessment: result.legalAssessment || [],
+              suggestions: result.suggestions || [],
+              comparison: result.comparison || [],
+              positiveAspects: result.positiveAspects || [],
+              criticalIssues: result.criticalIssues || [],
+              recommendations: result.recommendations || [],
+              quickFacts: result.quickFacts || [],
+              legalPulseHooks: result.legalPulseHooks || [],
+              detailedLegalOpinion: result.detailedLegalOpinion || '', // ✅ NEU: Ausführliches Rechtsgutachten
+
               'extraRefs.analysisId': inserted.insertedId,
               'extraRefs.documentType': validationResult.documentType,
               'extraRefs.analysisStrategy': validationResult.strategy,

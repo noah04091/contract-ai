@@ -121,6 +121,7 @@ interface Contract {
   legalAssessment?: string;
   suggestions?: string;
   comparison?: string;
+  detailedLegalOpinion?: string; // ✅ NEU: Ausführliches Rechtsgutachten
   analysis?: {
     analysisId?: string;
     lastAnalyzed?: string;
@@ -710,6 +711,70 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
             <h3>💡 Empfehlungen</h3>
             <div className={styles.messageBox}>
               <p>{suggestions}</p>
+            </div>
+          </div>
+        )}
+
+        {/* ✅ NEU: Ausführliches Rechtsgutachten */}
+        {contract.detailedLegalOpinion && (
+          <div className={styles.section} style={{
+            background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
+            border: '2px solid #fbbf24',
+            borderRadius: '12px',
+            padding: '0',
+            overflow: 'hidden',
+            marginTop: '24px'
+          }}>
+            <div style={{
+              background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+              color: '#ffffff',
+              padding: '16px 20px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px'
+            }}>
+              <div style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'rgba(255, 255, 255, 0.2)',
+                fontSize: '24px'
+              }}>
+                ⚖️
+              </div>
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '700', flex: 1 }}>
+                Ausführliches Rechtsgutachten
+              </h3>
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                background: 'rgba(255, 255, 255, 0.3)',
+                color: '#ffffff',
+                padding: '6px 12px',
+                borderRadius: '12px',
+                fontWeight: '600',
+                fontSize: '12px'
+              }}>
+                ⭐ Premium
+              </div>
+            </div>
+            <div style={{
+              background: '#ffffff',
+              padding: '24px 20px'
+            }}>
+              <div style={{
+                lineHeight: '1.8',
+                color: '#1f2937',
+                fontSize: '15px',
+                whiteSpace: 'pre-wrap',
+                textAlign: 'justify'
+              }}>
+                {contract.detailedLegalOpinion}
+              </div>
             </div>
           </div>
         )}
