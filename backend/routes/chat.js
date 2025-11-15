@@ -558,7 +558,8 @@ router.get("/usage/stats", verifyToken, async (req, res) => {
 });
 
 // ✅ POST /api/chat/:id/upload - Upload contract PDF to chat
-router.post("/:id/upload", verifyToken, (s3Upload || localUpload).single("file"), async (req, res) => {
+// Force local upload for chat (S3 multer-s3 incompatible with AWS SDK v3)
+router.post("/:id/upload", verifyToken, localUpload.single("file"), async (req, res) => {
   try {
     const userId = req.user?.userId;
     if (!userId) return res.status(401).json({ error: "Unauthorized" });
