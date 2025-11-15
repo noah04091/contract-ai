@@ -1554,6 +1554,7 @@ router.post("/:id/analyze", verifyToken, async (req, res) => {
       recommendations: analysisResult.recommendations || [],
       quickFacts: analysisResult.quickFacts || [],
       legalPulseHooks: analysisResult.legalPulseHooks || [],
+      detailedLegalOpinion: analysisResult.detailedLegalOpinion || '', // ✅ NEU: Ausführliches Rechtsgutachten
       // Legacy fields (for backward compatibility)
       kuendigung: analysisResult.kuendigung || 'Unbekannt',
       laufzeit: analysisResult.laufzeit || 'Unbekannt',
