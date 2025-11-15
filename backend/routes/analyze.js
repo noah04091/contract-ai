@@ -783,104 +783,336 @@ function validateTextCompletenessAndDepth(result, requestId) {
 }
 
 /**
- * 🛠️ ENHANCED: Generate TRUE LAWYER-LEVEL Analysis Prompt (Gutachten-Qualität)
- * Generates prompts that deliver actual legal expert analysis like written legal opinions
+ * 🎯 CONTRACT-TYPE SPECIFIC FOCUS AREAS V2
+ * Returns individualized focus points for each contract type
+ * WITH critical checkpoints that MUST be analyzed
  */
-function generateDeepLawyerLevelPrompt(text, documentType, strategy, requestId) {
-  // ✅ CRITICAL FIX: Apply CONSERVATIVE text optimization
-  const optimizedText = optimizeTextForGPT4(text, 2000, requestId);
-  
-  // ✅ ENHANCED: True lawyer-level prompt for written legal opinion quality
-  const professionalPrompt = `Du bist ein spezialisierter Fachanwalt für Vertragsrecht mit 15+ Jahren Erfahrung. Erstelle ein schriftliches Gutachten über den vorliegenden Vertrag, wie du es für einen wichtigen Mandanten verfassen würdest.
+function getContractTypeFocus(documentType) {
+  const focusMap = {
+    rental: {
+      title: "MIETVERTRAG",
+      focusAreas: [
+        "Nebenkosten-Regelung: Pauschale oder Vorauszahlung? Abrechnungspflicht? Nachzahlungsrisiken?",
+        "Schönheitsreparaturen: Wirksame Klausel oder unwirksam nach BGH-Rechtsprechung?",
+        "Kündigungsschutz: Fristen, Form, Sonderkündigungsrechte",
+        "Kaution: Höhe (max. 3 Monatsmieten), Anlage, Verzinsung",
+        "Instandhaltung: Wer trägt welche Reparaturen?",
+        "Modernisierung: Mieterhöhungsrechte des Vermieters",
+        "Indexmiete: Kopplung an Verbraucherpreisindex? Obergrenzen?",
+        "Untervermietung: Erlaubt? Zustimmungspflichtig? Gewerbliche Nutzung?"
+      ],
+      criticalCheckpoints: [
+        "Schönheitsreparaturen-Klausel auf BGH-Rechtsprechung prüfen (oft unwirksam!)",
+        "Kaution max. 3 Nettokaltmieten (§ 551 BGB)",
+        "Kündigungsfrist mind. 3 Monate (§ 573c BGB)",
+        "Formularvertrag: AGB-Kontrolle nach §§ 305ff BGB"
+      ]
+    },
+    employment: {
+      title: "ARBEITSVERTRAG",
+      focusAreas: [
+        "Vergütung: Grundgehalt, Sonderzahlungen, variable Bestandteile, Transparenz",
+        "Arbeitszeit: Wochenarbeitsstunden, Überstunden, Vergütung/Abgeltung",
+        "Urlaub: Anzahl Tage (mind. 24 Werktage), Urlaubsgeld, Sonderurlaub",
+        "Kündigungsfristen: Gesetzlich oder verlängert? Einseitige Benachteiligung?",
+        "Wettbewerbsverbot: Während/nach Arbeitszeit? Karenzentschädigung?",
+        "Probezeit: Dauer (max. 6 Monate), beidseitige Kündigung möglich?",
+        "Versetzungsklausel: Örtlich/fachlich? Grenzen der Direktionsrechte?",
+        "Nebentätigkeit: Verboten? Genehmigungspflichtig?"
+      ],
+      criticalCheckpoints: [
+        "Mindestlohn-Compliance (aktuell 12,41€/Std., ab 2025: 12,82€/Std.)",
+        "Urlaubsanspruch mind. 20 Tage bei 5-Tage-Woche (BUrlG)",
+        "Nachvertragliches Wettbewerbsverbot nur mit Karenzentschädigung (min. 50% Bruttogehalt)",
+        "Ausschlussfristen max. 3 Monate, dürfen gesetzliche Rechte nicht verkürzen"
+      ]
+    },
+    purchase: {
+      title: "KAUFVERTRAG",
+      focusAreas: [
+        "Gewährleistung: Ausschluss zulässig? Verkürzung? Gebrauchtware vs. Neuware",
+        "Eigentumsvorbehalt: Erweitert oder einfach? Rechte des Verkäufers",
+        "Lieferbedingungen: Fristen, Verzugsfolgen, Teillieferungen",
+        "Gefahrübergang: Zeitpunkt, Transport, Versicherung",
+        "Rücktrittsrechte: Verbraucher vs. Unternehmer, Widerruf",
+        "Kaufpreisfälligkeit: Vorauszahlung? Zahlungsziel? Verzugszinsen?",
+        "Sachmängelhaftung: Beschaffenheit, Nacherfüllung, Minderung, Rücktritt",
+        "AGB-Klauseln: Gerichtsstand, salvatorische Klausel, Überleitungsklausel"
+      ],
+      criticalCheckpoints: [
+        "Gewährleistungsausschluss bei Verbrauchern UNWIRKSAM (§ 475 BGB)",
+        "Verkürzung auf unter 1 Jahr bei Gebrauchtware nur im B2B-Bereich",
+        "Widerrufsrecht bei Fernabsatz 14 Tage (§ 312g BGB)",
+        "Übermaßige Verzugszinsen unwirksam (max. 5% über Basiszinssatz bei Verbrauchern)"
+      ]
+    },
+    telecom: {
+      title: "TELEKOMMUNIKATIONSVERTRAG",
+      focusAreas: [
+        "Mindestlaufzeit: Dauer, automatische Verlängerung, Kündigungsfristen",
+        "Datenvolumen: Drosselung bei Überschreitung? Geschwindigkeit danach?",
+        "Preiserhöhungen: Sonderkündigungsrecht bei Erhöhung?",
+        "Verfügbarkeit: Garantierte Bandbreite? Entschädigung bei Ausfall?",
+        "Vertragsstrafen: Bei vorzeitiger Kündigung? Höhe angemessen?",
+        "Portierung: Rufnummernmitnahme kostenlos?",
+        "Mindestvertragslaufzeit: TKG-Reform 2022 beachtet?",
+        "Transparenz: Effektivpreis, Datenvolumen, Geschwindigkeit klar?"
+      ],
+      criticalCheckpoints: [
+        "TKG-Reform 2022: Kündigungsfrist max. 1 Monat nach Mindestlaufzeit",
+        "Mindestlaufzeit max. 24 Monate, danach monatlich kündbar",
+        "Sonderkündigungsrecht bei Preiserhöhung PFLICHT (§ 57 TKG)",
+        "Entschädigung bei Ausfall mind. 10-20% der Monatsgebühr (§ 58 TKG)"
+      ]
+    },
+    service: {
+      title: "DIENSTLEISTUNGSVERTRAG / SaaS",
+      focusAreas: [
+        "Service Level Agreement (SLA): Verfügbarkeit, Reaktionszeiten, Penalties",
+        "Datenschutz: DSGVO-Konformität, Datenverarbeitung, Auftragsverarbeitung",
+        "Kündigungsrechte: Ordentlich/außerordentlich, Fristen, Datenrückgabe",
+        "Preismodell: Nutzerbasiert? Transparent? Kostenfallen?",
+        "Vendor Lock-In: Datenexport möglich? Standardformate?",
+        "Haftung: Beschränkungen, Ausschlüsse, Versicherungsschutz",
+        "Uptime-Garantie: Prozentzahl, Messung, Nachweis?",
+        "Support: Reaktionszeiten, Verfügbarkeit, Eskalationsprozess?"
+      ],
+      criticalCheckpoints: [
+        "Auftragsverarbeitungsvertrag (AVV) nach Art. 28 DSGVO PFLICHT",
+        "Haftungsausschluss für Vorsatz/grobe Fahrlässigkeit UNWIRKSAM",
+        "Datenrückgabe in maschinenlesbarem Format (Art. 20 DSGVO)",
+        "AGB-Kontrolle: Einseitige Leistungsänderungsrechte unzulässig"
+      ]
+    },
+    insurance: {
+      title: "VERSICHERUNGSVERTRAG",
+      focusAreas: [
+        "Deckungssumme: Ausreichend für typische Schadenfälle?",
+        "Selbstbeteiligung: Höhe, wann fällig, Ausnahmen",
+        "Leistungsausschlüsse: Grob fahrlässig? Vorerkrankungen? Extremsport?",
+        "Prämienhöhe: Angemessen? Dynamik? Anpassungsklauseln?",
+        "Wartezeiten: Bei welchen Leistungen? Dauer?",
+        "Kündigung: Ordentlich nach Schaden? Sonderkündigungsrechte?",
+        "Obliegenheiten: Anzeigepflicht, Gefahrerhöhung, Schadenminderung",
+        "Leistungsfall: Voraussetzungen, Fristen, Nachweispflichten"
+      ],
+      criticalCheckpoints: [
+        "Grobe Fahrlässigkeit: Ausschluss nur bei vorsätzlicher Täuschung zulässig",
+        "Vorvertragliche Anzeigepflicht: Fragerecht des Versicherers prüfen",
+        "Kündigung nach Schadensfall: Oft einseitig zugunsten Versicherer (prüfen!)",
+        "Wartezeiten bei Krankenversicherung: Max. 8 Monate bei Zahnbehandlung"
+      ]
+    },
+    loan: {
+      title: "DARLEHENSVERTRAG",
+      focusAreas: [
+        "Zinssatz: Fest oder variabel? Marktüblich? Zinsbindung?",
+        "Sicherheiten: Grundschuld? Bürgschaft? Bewertung angemessen?",
+        "Vorfälligkeitsentschädigung: Höhe, Berechnung, Zulässigkeit",
+        "Sondertilgung: Möglich? Kostenlos? Welche Beträge?",
+        "Bearbeitungsgebühren: Unzulässig nach BGH-Rechtsprechung!",
+        "Widerruf: Widerrufsbelehrung korrekt? Ewiges Widerrufsrecht?",
+        "Gesamtkreditkosten: Transparenz, effektiver Jahreszins",
+        "Restschuldversicherung: Pflicht? Kosten angemessen?"
+      ],
+      criticalCheckpoints: [
+        "Bearbeitungsgebühren UNWIRKSAM (BGH 2014) → Rückforderung möglich",
+        "Widerrufsjoker: Fehlerhafte Widerrufsbelehrung = ewiges Widerrufsrecht",
+        "Vorfälligkeitsentschädigung: Berechnung nach BGH-Formel prüfen",
+        "Restschuldversicherung oft überteuert (20-30% der Darlehenssumme)"
+      ]
+    },
+    other: {
+      title: "ALLGEMEINER VERTRAG",
+      focusAreas: [
+        "Vertragsparteien: Klar identifiziert? Vertretungsbefugnis?",
+        "Leistung & Gegenleistung: Ausreichend bestimmt?",
+        "AGB-Kontrolle: Überraschende, unklare oder unangemessene Klauseln?",
+        "Haftung: Ausschlüsse zulässig? Beschränkungen wirksam?",
+        "Kündigung: Ordentlich/außerordentlich, Fristen, Form",
+        "Rechtswahl: Welches Recht gilt? Gerichtsstand vereinbart?",
+        "Schriftform: Erforderlich? Elektronische Form ausreichend?",
+        "Salvatorische Klausel: Unwirksamkeit einzelner Bestimmungen"
+      ],
+      criticalCheckpoints: [
+        "AGB-Einbeziehung: Ausdrücklicher Hinweis erforderlich (§ 305 BGB)",
+        "Überraschende Klauseln unwirksam (§ 305c BGB)",
+        "Haftungsausschluss für Vorsatz/grobe Fahrlässigkeit UNWIRKSAM",
+        "Gerichtsstandsklauseln im Verbrauchervertrag oft unwirksam"
+      ]
+    }
+  };
 
-**GUTACHTEN-STANDARDS (wie ein echter Vertragsanwalt):**
-- Juristische Argumentation mit konkreten Rechtsbezügen (BGB, HGB, AGB-Recht)
-- Tiefgehende Analyse aller potentiellen Streitpunkte und versteckten Risiken
-- Begründung JEDER Risikobewertung mit rechtlicher Argumentation
-- Mindestens 2-3 substantielle Unterpunkte pro Hauptkategorie
-- Konkrete Formulierungsvorschläge statt generischer Empfehlungen
-- Prüfung auf essentialia negotii, AGB-Kontrolle, Transparenzgebot
-- Identifikation einseitiger Benachteiligungen und unwirksamer Klauseln
-- Echte Risikoabwägung mit Eintrittswahrscheinlichkeit und Folgenabschätzung
-
-**VERTRAGSRECHTLICHE TIEFENPRÜFUNG:**
-- §§ 305-310 BGB: AGB-Kontrolle auf überraschende, mehrdeutige, unangemessene Klauseln
-- Essentialia negotii: Sind Parteien, Leistung, Gegenleistung ausreichend bestimmt?
-- Transparenzgebot: Sind alle Klauseln klar und verständlich formuliert?
-- Widerrufsbedürftigkeit: Bei Verbrauchern ordnungsgemäße Widerrufsbelehrung?
-- Haftungsbeschränkungen: Zulässigkeit nach §§ 309, 444 BGB prüfen
-- Kündigung: Fristen, Form, Gründe rechtlich angemessen?
-- Leistungsstörungen: Gewährleistung, Verzug, Unmöglichkeit geregelt?
-
-**JURISTISCHE GUTACHTEN-STRUKTUR (7 PUNKTE):**
-
-1. **ZUSAMMENFASSUNG (summary):**
-   - Rechtliche Einordnung der Vertragsparteien (Unternehmer/Verbraucher/B2B)
-   - Vertragstyp und rechtliche Grundlagen (Kauf-, Dienst-, Werkvertrag etc.)
-   - Wesentliche Leistungen und Gegenleistungen mit rechtlicher Bewertung
-   - Laufzeit, Kündigungsmodalitäten und deren rechtliche Zulässigkeit
-   - Besondere Rechte und Pflichten mit Verweis auf gesetzliche Grundlagen
-   - Mindestens 3 substantielle Punkte mit juristischer Einordnung
-
-2. **RECHTSSICHERHEIT (legalAssessment):**
-   - Vollständigkeitsprüfung: Sind alle essentialia negotii vorhanden und bestimmt?
-   - AGB-Kontrolle: Prüfung nach §§ 305-310 BGB auf Überraschungsmoment, Transparenz, Angemessenheit
-   - Wirksamkeitsprüfung einzelner Klauseln mit konkreten Rechtsbezügen
-   - Identifikation unwirksamer Klauseln nach Klauselverboten (§§ 308, 309 BGB)
-   - Durchsetzbarkeit und Beweislage bei strittigen Punkten
-   - Mindestens 3 konkrete rechtliche Bewertungen mit Paragrafenbezug
-
-3. **OPTIMIERUNGSVORSCHLÄGE (suggestions):**
-   - Konkrete Umformulierungen unwirksamer oder problematischer Klauseln
-   - Ergänzung fehlender wesentlicher Regelungen (Gewährleistung, Haftung, Kündigung)
-   - Formulierungsvorschläge für mehr Rechtssicherheit und Klarheit
-   - Risikoallokation zwischen den Parteien optimieren
-   - Salvatorische Klauseln und Vertragsanpassungsklauseln ergänzen
-   - Mindestens 3 konkrete Formulierungsvorschläge mit rechtlicher Begründung
-
-4. **MARKTVERGLEICH (comparison):**
-   - Vergleich mit branchenüblichen Vertragsbedingungen und Standards
-   - Bewertung der Konditionen als über-/unter-/marktdurchschnittlich mit Begründung
-   - Verhandlungsposition und Marktmacht der Parteien analysieren
-   - Abweichungen von Standardverträgen und deren rechtliche Bedeutung
-   - Empfehlungen zur Verhandlungsstrategie basierend auf Marktposition
-   - Mindestens 2 konkrete Marktvergleiche mit rechtlicher Einordnung
-
-5. **POSITIVE ASPEKTE (positiveAspects):**
-   [{"title": "Rechtlich vorteilhafte Klausel", "description": "Konkrete rechtliche Vorteile mit Begründung nach geltendem Recht"}]
-   Mindestens 2-3 Punkte mit substantieller juristischer Begründung
-
-6. **KRITISCHE RISIKEN (criticalIssues):**
-   [{"title": "Spezifisches Rechtsrisiko", "description": "Konkrete rechtliche Folgen, Eintrittswahrscheinlichkeit, Schadenshöhe", "riskLevel": "high/medium/low"}]
-   Mindestens 3-5 Punkte mit detaillierter Risikoanalyse und Rechtsbegründung
-
-7. **EMPFEHLUNGEN (recommendations):**
-   [{"title": "Konkrete juristische Maßnahme", "description": "Spezifische Umsetzung mit Musterformulierung oder Verhandlungsstrategie", "priority": "high/medium/low"}]
-   Mindestens 3-4 Punkte mit umsetzbaren juristischen Handlungsanweisungen
-
-**GUTACHTEN-SCORE:** 1-100 mit detaillierter juristischer Begründung der Bewertung
-
-**BEISPIELE FÜR ANWALTLICHE GUTACHTEN-QUALITÄT:**
-✅ "Die Haftungsausschlussklausel in § 8.3 ist nach § 309 Nr. 7 lit. a BGB unwirksam, da sie grob fahrlässiges Verhalten ausschließt"
-✅ "Das Fehlen einer ordnungsgemäßen Widerrufsbelehrung nach Art. 246a § 1 EGBGB führt zu einer Verlängerung der Widerrufsfrist auf 12 Monate + 14 Tage"  
-✅ "Die Kündigungsfrist von 6 Monaten zum Quartalsende benachteiligt den Mieter unangemessen i.S.d. § 307 Abs. 1 BGB, da gesetzlich nur 3 Monate vorgesehen sind"
-✅ "Empfehlung: Ergänze salvatorische Klausel: 'Sollten einzelne Bestimmungen dieses Vertrages unwirksam sein, bleibt die Wirksamkeit des übrigen Vertrages unberührt'"
-✅ "Die Vergütungsregelung ist nach § 315 BGB zu unbestimmt ('angemessene Vergütung') und sollte konkretisiert werden"
-
-Antworte ausschließlich im JSON-Format:
-{
-  "summary": ["Rechtliche Einordnung der Parteien", "Vertragstyp und Rechtsgrundlagen", "Wesentliche Leistungen mit Rechtsbewertung"],
-  "legalAssessment": ["AGB-Kontrolle nach §§ 305ff BGB", "Wirksamkeitsprüfung mit Rechtsbezug", "Durchsetzbarkeitsanalyse"],
-  "suggestions": ["Konkrete Klausel-Umformulierung", "Ergänzung mit Musterformulierung", "Risikooptimierung mit Begründung"],
-  "comparison": ["Marktvergleich mit Benchmarks", "Branchenstandard-Abweichung", "Verhandlungsposition-Analyse"],
-  "positiveAspects": [{"title": "Rechtlich vorteilhafte Regelung", "description": "Konkrete Vorteile mit Rechtsbegründung"}],
-  "criticalIssues": [{"title": "Spezifisches Rechtsrisiko", "description": "Rechtliche Folgen und Eintrittswahrscheinlichkeit", "riskLevel": "medium"}],
-  "recommendations": [{"title": "Konkrete juristische Maßnahme", "description": "Umsetzung mit Musterformulierung", "priority": "high"}],
-  "contractScore": 75
+  return focusMap[documentType] || focusMap.other;
 }
 
-**ZU BEGUTACHTENDER VERTRAG:**
-${optimizedText}`;
+/**
+ * 🎯 ULTRA-PROFESSIONAL CONTRACT ANALYSIS V2
+ * Generates deeply individualized, contract-type-specific analysis
+ * ZERO template phrases, FULL variability, MAXIMUM professionalism
+ * Like a senior lawyer with 20+ years experience
+ */
+function generateDeepLawyerLevelPrompt(text, documentType, strategy, requestId) {
+  // Optimize text for GPT-4
+  const optimizedText = optimizeTextForGPT4(text, 2000, requestId);
+
+  // Get contract-type-specific focus areas
+  const contractFocus = getContractTypeFocus(documentType);
+
+  // 🚀 V2: MASSIV verstärkter Anti-Template-Prompt mit erweiterten Feldern
+  const professionalPrompt = `Du bist ein hochspezialisierter Vertragsanwalt mit 20+ Jahren Erfahrung in ${contractFocus.title}.
+
+Deine Aufgabe: Erstelle eine VOLLUMFÄNGLICHE, INDIVIDUELLE Vertragsanalyse – so detailliert und präzise, wie du sie einem Mandanten in einer 2-stündigen Beratung präsentieren würdest.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚫 ABSOLUTE VERBOTE (NON-NEGOTIABLE):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+❌ NIEMALS Einleitungsphrasen: "Der vorliegende Vertrag...", "Es handelt sich um...", "Der Vertrag regelt..."
+❌ NIEMALS Abschlussfloskeln: "Insgesamt...", "Zusammenfassend...", "Im Großen und Ganzen..."
+❌ NIEMALS generische Platzhalter ohne konkreten Vertragsbezug
+❌ NIEMALS dieselbe Anzahl von Punkten für verschiedene Verträge
+❌ NIEMALS oberflächliche Aussagen ohne Rechtsgrundlage
+❌ NIEMALS vage Formulierungen wie "könnte problematisch sein" - sei KONKRET
+
+✅ IMMER: Zitiere EXAKTE Klauseln, Paragraphen, Beträge, Fristen aus dem Vertragstext
+✅ IMMER: Nenne SPEZIFISCHE Gesetze (§§ BGB, HGB, DSGVO, etc.) mit Konsequenzen
+✅ IMMER: Variable Punkteanzahl (2-10 je nach Komplexität)
+✅ IMMER: Unterschiedliche Schwerpunkte je Vertragstyp
+✅ IMMER: Konkrete Zahlen, Daten, Namen aus dem Vertrag
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 VERTRAGSTYP: ${contractFocus.title}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PFLICHT-PRÜFPUNKTE für diesen Vertragstyp:
+${contractFocus.focusAreas.map((area, idx) => `${idx + 1}. ${area}`).join('\n')}
+
+${contractFocus.criticalCheckpoints ? '\n🔴 BESONDERS KRITISCH bei diesem Vertragstyp:\n' + contractFocus.criticalCheckpoints.map(cp => `• ${cp}`).join('\n') : ''}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 ERWARTETE ANALYSE-STRUKTUR (JSON):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. **laymanSummary** (String[], 3-5 Punkte - FÜR LAIEN):
+   → ALLTAGSSPRACHE ohne Jura-Fachbegriffe!
+   → "Was bedeutet das für mich ganz konkret?"
+   → Max. 1-2 Sätze pro Punkt, fokussiert auf praktische Auswirkungen
+   → Beispiel RICHTIG: "Du kannst das Auto 2 Jahre lang bei Problemen reklamieren - egal was im Vertrag steht"
+   → Beispiel FALSCH: "Die Gewährleistung gemäß § 437 BGB bleibt unberührt..."
+
+2. **summary** (String[], 3-6 Punkte - WEICHE GRENZE):
+   → Keine Einleitung! Starte direkt mit konkreten Vertragsinhalten
+   → KOMPAKT: Max. 2-3 Sätze pro Punkt, fokussiert auf Zahlen/Daten/Fristen
+   → Beispiel RICHTIG: "Kaufpreis 24.500€ fällig am 15.06.2024. Eigentumsvorbehalt bis Vollzahlung (§ 449 BGB)."
+   → Beispiel FALSCH: "Der Vertrag regelt den Kauf eines Fahrzeugs zwischen den Parteien"
+
+3. **legalAssessment** (String[], 3-8 Punkte - WEICHE GRENZE):
+   → Rechtliche Bewertung JEDER kritischen Klausel
+   → KOMPAKT: Max. 2 Sätze, Format: [Klausel] → [Rechtliche Einordnung] → [Konsequenz]
+   → IMMER mit Gesetzesreferenz (§§ BGB, HGB, etc.)
+   → Beispiel: "Gewährleistungsausschluss § 5 unwirksam (§ 444 BGB). Käufer kann trotz Klausel Mängelrechte geltend machen."
+
+4. **suggestions** (String[], 3-8 Punkte - WEICHE GRENZE):
+   → Konkrete Handlungsempfehlungen mit Formulierungsvorschlägen
+   → KOMPAKT: Max. 2 Sätze, direkt auf den Punkt
+   → Priorisierung: Kritische Punkte zuerst
+   → Beispiel: "Klausel § 5 streichen. Ersetzen durch: 'Gewährleistung nach §§ 433ff BGB, bei Gebrauchtware 1 Jahr'."
+
+5. **comparison** (String[], 2-4 Punkte - WEICHE GRENZE):
+   → Marktvergleich für DIESE spezifische Branche/Vertragsart
+   → KOMPAKT: Max. 2 Sätze mit konkreten Benchmarks
+   → Beispiel: "Kündigungsfrist 3 Monate über Branchenstandard. Üblich: 1 Monat bei Monatsverträgen."
+
+6. **positiveAspects** (Object[], 2-5 Objekte - WEICHE GRENZE):
+   Schema: {
+     "title": "Spezifischer Vorteil (max. 8 Wörter)",
+     "description": "KOMPAKT: Max. 2 Sätze Erklärung",
+     "impact": "high" | "medium" | "low"  // optional
+   }
+   → NUR echte Stärken! Wenn Vertrag schlecht → nur 1-2 Punkte
+   → Beispiel: {"title": "Faire Kündigungsfrist 1 Monat", "description": "Branchenstandard 3 Monate. Spart Flexibilität.", "impact": "high"}
+
+7. **criticalIssues** (Object[], 2-6 Objekte - WEICHE GRENZE):
+   Schema: {
+     "title": "Spezifisches Risiko (max. 10 Wörter)",
+     "description": "KOMPAKT: Max. 2 Sätze zu Folgen",
+     "riskLevel": "critical" | "high" | "medium" | "low",
+     "legalBasis": "§ 123 BGB" | "Art. 6 DSGVO" | etc.  // optional
+     "consequence": "KOMPAKT: 1 Satz konkrete Folge"  // optional
+   }
+   → 0 Punkte wenn Vertrag perfekt, 6+ wenn katastrophal
+   → Beispiel: {"title": "Unwirksamer Gewährleistungsausschluss", "description": "Klausel nichtig nach § 475 BGB. Käufer hat trotzdem 2 Jahre Gewährleistung.", "riskLevel": "critical", "legalBasis": "§ 475 BGB", "consequence": "Bei Motorschaden nach 6 Monaten volle Rechte"}
+
+8. **recommendations** (Object[], 3-6 Objekte - WEICHE GRENZE):
+   Schema: {
+     "title": "Konkrete Maßnahme (max. 8 Wörter)",
+     "description": "KOMPAKT: Max. 2 Sätze Umsetzung",
+     "priority": "urgent" | "high" | "medium" | "low",
+     "timeframe": "Sofort" | "Vor Vertragsschluss" | "Binnen 14 Tagen" | etc.  // optional
+     "effort": "low" | "medium" | "high"  // optional
+   }
+
+9. **contractScore** (Number, 1-100):
+   → Gesamtbewertung basierend auf Risiken vs. Vorteilen
+   → 90-100: Exzellent, kaum Risiken
+   → 70-89: Gut, kleinere Optimierungen
+   → 50-69: Akzeptabel, größere Mängel
+   → 30-49: Problematisch, kritische Risiken
+   → 1-29: Inakzeptabel, nicht unterschreiben
+
+10. **quickFacts** (Object[], 4-8 Objekte - OPTIONAL aber EMPFOHLEN):
+   Schema: {
+     "label": "Kündigungsfrist" | "Laufzeit" | "Kosten" | etc.,
+     "value": "Konkreter Wert aus Vertrag",
+     "rating": "good" | "neutral" | "bad"
+   }
+   → Für schnelle Übersicht der wichtigsten Eckdaten
+
+11. **legalPulseHooks** (String[] - OPTIONAL für Legal Pulse Integration):
+   → Markiere relevante Rechtsgebiete/Themen für Legal Pulse Radar
+   → Beispiele: "Mietpreisbremse", "TKG-Reform 2022", "DSGVO", "Mindestlohn", "Widerrufsrecht"
+   → Max. 3-5 relevante Themen
+   → Wird später mit Legal Pulse Feature verbunden
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+❌ ANTI-PATTERN BEISPIELE (So NICHT!):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+FALSCH: "Der vorliegende Kaufvertrag regelt den Erwerb eines Fahrzeugs. Die Parteien haben sich auf einen Kaufpreis geeinigt."
+RICHTIG: "Kaufpreis 15.000€ ohne Regelung zur Rückabwicklung bei Sachmängeln - kritisch bei Gebrauchtwagen (§ 437 BGB)"
+
+FALSCH: "Die Kündigungsfrist ist angemessen."
+RICHTIG: "Kündigungsfrist 6 Monate zum Quartalsende deutlich über gesetzlichem Minimum (§ 621 BGB: 4 Wochen) - Nachteil für Arbeitnehmer"
+
+FALSCH: "Es sollten Verbesserungen vorgenommen werden."
+RICHTIG: "Klausel § 12 Abs. 3 streichen: 'Bei Zahlungsverzug Verzugszinsen i.H.v. 15% p.a.' → ersetzen durch '5% über Basiszinssatz gem. § 288 BGB'"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📄 ZU ANALYSIERENDER VERTRAG:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+${optimizedText}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚡ ANTWORT-FORMAT: NUR VALIDES JSON
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Antworte AUSSCHLIESSLICH mit folgendem JSON (keine Markdown-Blöcke, kein Text davor/danach):
+
+{
+  "laymanSummary": ["Laien-Punkt 1 (Alltagssprache!)", "Laien-Punkt 2", "..."],
+  "summary": ["Punkt 1 (max. 2-3 Sätze)", "Punkt 2", "..."],
+  "legalAssessment": ["Bewertung 1 (max. 2 Sätze)", "Bewertung 2", "..."],
+  "suggestions": ["Vorschlag 1 (max. 2 Sätze)", "Vorschlag 2", "..."],
+  "comparison": ["Benchmark 1 (max. 2 Sätze)", "Benchmark 2", "..."],
+  "positiveAspects": [{"title": "Vorteil (max. 8 Wörter)", "description": "Max. 2 Sätze", "impact": "high"}],
+  "criticalIssues": [{"title": "Risiko (max. 10 Wörter)", "description": "Max. 2 Sätze", "riskLevel": "critical", "legalBasis": "§ X BGB", "consequence": "1 Satz Folge"}],
+  "recommendations": [{"title": "Maßnahme (max. 8 Wörter)", "description": "Max. 2 Sätze", "priority": "urgent", "timeframe": "Sofort", "effort": "low"}],
+  "contractScore": 75,
+  "quickFacts": [{"label": "Kündigungsfrist", "value": "3 Monate", "rating": "bad"}],
+  "legalPulseHooks": ["Mietpreisbremse", "TKG-Reform 2022", "..."]
+}`;
 
   return professionalPrompt;
 }
@@ -1385,19 +1617,20 @@ const makeRateLimitedGPT4Request = async (prompt, requestId, openai, maxRetries 
       lastGPT4Request = Date.now();
       
       console.log(`🛠️ [${requestId}] GPT-4-Turbo request (attempt ${attempt}/${maxRetries})...`);
-      
-      // ✅ CRITICAL FIX: Use GPT-4-Turbo for 128k context window
+
+      // ✅ V2: GPT-4-Turbo with JSON mode for structured analysis
       const completion = await openai.chat.completions.create({
-        model: "gpt-4-turbo", // ✅ FIXED: Changed from "gpt-4" to "gpt-4-turbo"
+        model: "gpt-4-turbo", // ✅ GPT-4-Turbo for 128k context window
         messages: [
-          { 
-            role: "system", 
-            content: "Du bist ein Rechtsanwalt mit Spezialisierung auf Vertragsrecht. Antworte vollständig in korrektem JSON-Format. Alle Sätze müssen komplett ausformuliert sein." 
+          {
+            role: "system",
+            content: "Du bist ein hochspezialisierter Vertragsanwalt mit 20+ Jahren Erfahrung. Antworte AUSSCHLIESSLICH in korrektem JSON-Format ohne Markdown-Blöcke. Alle Sätze müssen vollständig ausformuliert sein. Sei präzise, konkret und vermeide Standardphrasen."
           },
           { role: "user", content: prompt },
         ],
+        response_format: { type: "json_object" }, // 🚀 V2: Force valid JSON output
         temperature: 0.1, // Low for consistency
-        max_tokens: 2000, // ✅ FIXED: Conservative but sufficient
+        max_tokens: 3000, // ✅ V2: Increased for comprehensive analysis (quickFacts, legalBasis, etc.)
       });
       
       const response = completion.choices[0].message.content;
