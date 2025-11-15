@@ -117,10 +117,10 @@ interface Contract {
   }>;
   // ✅ Standard Analysis fields (direct on contract)
   contractScore?: number;
-  summary?: string;
-  legalAssessment?: string;
-  suggestions?: string;
-  comparison?: string;
+  summary?: string | string[]; // Can be array or string for backward compatibility
+  legalAssessment?: string | string[];
+  suggestions?: string | string[];
+  comparison?: string | string[];
   detailedLegalOpinion?: string; // ✅ NEU: Ausführliches Rechtsgutachten
   analysis?: {
     analysisId?: string;
@@ -680,7 +680,15 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
           <div className={styles.section}>
             <h3>📝 Zusammenfassung</h3>
             <div className={styles.messageBox}>
-              <p>{summary}</p>
+              {Array.isArray(summary) ? (
+                <ul style={{ margin: 0, paddingLeft: '20px', listStyle: 'disc' }}>
+                  {summary.map((item, index) => (
+                    <li key={index} style={{ marginBottom: '8px', lineHeight: '1.6' }}>{item}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p>{summary}</p>
+              )}
             </div>
           </div>
         )}
@@ -690,7 +698,15 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
           <div className={styles.section}>
             <h3>⚖️ Rechtliche Bewertung</h3>
             <div className={styles.messageBox}>
-              <p>{legalAssessment}</p>
+              {Array.isArray(legalAssessment) ? (
+                <ul style={{ margin: 0, paddingLeft: '20px', listStyle: 'disc' }}>
+                  {legalAssessment.map((item, index) => (
+                    <li key={index} style={{ marginBottom: '8px', lineHeight: '1.6' }}>{item}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p>{legalAssessment}</p>
+              )}
             </div>
           </div>
         )}
@@ -700,7 +716,15 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
           <div className={styles.section}>
             <h3>🔍 Vergleich & Analyse</h3>
             <div className={styles.messageBox}>
-              <p>{comparison}</p>
+              {Array.isArray(comparison) ? (
+                <ul style={{ margin: 0, paddingLeft: '20px', listStyle: 'disc' }}>
+                  {comparison.map((item, index) => (
+                    <li key={index} style={{ marginBottom: '8px', lineHeight: '1.6' }}>{item}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p>{comparison}</p>
+              )}
             </div>
           </div>
         )}
@@ -710,7 +734,15 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
           <div className={styles.section}>
             <h3>💡 Empfehlungen</h3>
             <div className={styles.messageBox}>
-              <p>{suggestions}</p>
+              {Array.isArray(suggestions) ? (
+                <ul style={{ margin: 0, paddingLeft: '20px', listStyle: 'disc' }}>
+                  {suggestions.map((item, index) => (
+                    <li key={index} style={{ marginBottom: '8px', lineHeight: '1.6' }}>{item}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p>{suggestions}</p>
+              )}
             </div>
           </div>
         )}
