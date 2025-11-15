@@ -1332,7 +1332,7 @@ export default function Contracts() {
         try {
           // ✅ NUTZE DIE NEUE /api/analyze ROUTE MIT forceReanalyze=true!
           console.log(`🚀 Using NEW /api/analyze route for: ${contract.name}`);
-          await uploadAndAnalyze(uploadFileItem.file, (progress) => {
+          const analysisResult = await uploadAndAnalyze(uploadFileItem.file, (progress) => {
             setUploadFiles(prev => prev.map((item, idx) =>
               item.status === 'analyzing' && idx === i
                 ? { ...item, progress }
@@ -1340,59 +1340,32 @@ export default function Contracts() {
             ));
           }, true); // forceReanalyze = true!
 
-          console.log(`✅ Analysis completed for ${contract.name} (NEW ROUTE)`);
+          console.log(`✅ Analysis completed for ${contract.name} (NEW ROUTE)`, analysisResult);
+
+          // ✅ SOFORT die Analyse-Ergebnisse in uploadFiles speichern!
+          setUploadFiles(prev => prev.map((item, idx) =>
+            idx === i
+              ? {
+                  ...item,
+                  status: 'completed' as const,
+                  progress: 100,
+                  analyzed: true,
+                  result: analysisResult as AnalysisResult // ✅ HIER werden die Ergebnisse gespeichert!
+                }
+              : item
+          ));
         } catch (error) {
           console.error(`❌ Analysis failed for ${contract.name}:`, error);
         }
       }
 
-      // Alle erfolgreich - Status auf "completed" mit analyzed: true
-      setUploadFiles(prev => prev.map(item =>
-        item.status === 'analyzing'
-          ? { ...item, status: 'completed', progress: 100, analyzed: true }
-          : item
-      ));
+      // ✅ Refresh contracts list
+      await fetchContracts();
 
-      // ✅ Refresh contracts to get updated data
-      const updatedContracts = await fetchContracts();
-
-      // ✅ Update uploadFiles with analysis results
-      const contractIds = contractsToAnalyze.map(c => c._id);
-      if (updatedContracts) {
-        setUploadFiles(prev => prev.map(item => {
-          const analyzedContract = updatedContracts.find((c: Contract) =>
-            contractIds.includes(c._id)
-          );
-
-          if (analyzedContract && item.status === 'completed') {
-            return {
-              ...item,
-              analyzed: true,
-              result: {
-                success: true,
-                contractScore: analyzedContract.contractScore,
-                summary: analyzedContract.summary,
-                legalAssessment: analyzedContract.legalAssessment,
-                suggestions: analyzedContract.suggestions,
-                analysisData: {
-                  kuendigung: analyzedContract.kuendigung,
-                  laufzeit: analyzedContract.laufzeit,
-                  status: analyzedContract.status,
-                  risiken: analyzedContract.risiken,
-                  optimierungen: analyzedContract.optimierungen
-                }
-              }
-            };
-          }
-
-          return item;
-        }));
-      }
-
-      // ✅ BLEIBE auf Upload-Seite - BatchAnalysisResults zeigt automatisch ContractAnalysis
+      // ✅ WECHSEL zur Upload-Seite - zeigt SOFORT die Analyse-Ergebnisse!
       setActiveSection('upload');
 
-      console.log(`✅ ${contractIds.length} Vertrag${contractIds.length > 1 ? 'e' : ''} erfolgreich analysiert und auf Upload-Seite angezeigt`);
+      console.log(`✅ ${contractsToAnalyze.length} Vertrag${contractsToAnalyze.length > 1 ? 'e' : ''} erfolgreich analysiert und Ergebnisse werden angezeigt!`);
 
     } catch (error) {
       console.error("❌ Error during analysis:", error);
