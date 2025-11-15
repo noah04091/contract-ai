@@ -508,3 +508,89 @@
 .content::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+
+/* ✅ NEU: Ausführliches Rechtsgutachten Section */
+.legalOpinionSection {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border: 2px solid #fbbf24;
+  border-radius: 12px;
+  padding: 0 !important;
+  overflow: hidden;
+}
+
+.legalOpinionIcon {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%) !important;
+  color: #ffffff !important;
+}
+
+.legalOpinionBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  color: #ffffff;
+  padding: 0.35rem 0.75rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.75rem;
+  box-shadow: 0 2px 6px rgba(251, 191, 36, 0.3);
+  margin-left: auto;
+}
+
+.legalOpinionSection .sectionHeader {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  color: #ffffff;
+  padding: 1rem 1.25rem;
+  margin: 0;
+  border-radius: 0;
+}
+
+.legalOpinionSection .sectionHeader h3 {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.legalOpinionSection .sectionContent {
+  background: #ffffff;
+  padding: 1.5rem 1.25rem;
+}
+
+.legalOpinionText {
+  line-height: 1.8;
+}
+
+.legalOpinionParagraph {
+  margin: 0 0 1.25rem 0;
+  color: #1f2937;
+  font-size: 1rem;
+  line-height: 1.8;
+  text-align: justify;
+}
+
+.legalOpinionParagraph:last-child {
+  margin-bottom: 0;
+}
+
+/* ✅ Responsive: Rechtsgutachten in Modal */
+@media (max-width: 768px) {
+  .legalOpinionSection .sectionHeader {
+    padding: 0.875rem 1rem;
+    flex-wrap: wrap;
+  }
+
+  .legalOpinionBadge {
+    font-size: 0.7rem;
+    padding: 0.3rem 0.6rem;
+    margin-left: 0;
+    margin-top: 0.5rem;
+  }
+
+  .legalOpinionSection .sectionContent {
+    padding: 1rem;
+  }
+
+  .legalOpinionParagraph {
+    font-size: 0.95rem;
+    text-align: left;
+  }
+}

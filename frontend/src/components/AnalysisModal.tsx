@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  X, FileText, Shield, Lightbulb, TrendingUp, Clock, 
-  Copy, AlertTriangle, BarChart3
+import {
+  X, FileText, Shield, Lightbulb, TrendingUp, Clock,
+  Copy, AlertTriangle, BarChart3, Gavel, Scale // ✅ NEU: Icons für Rechtsgutachten
 } from "lucide-react";
 import styles from "../styles/AnalysisModal.module.css";
 
@@ -17,6 +17,7 @@ interface Contract {
     contractScore?: number;
     analysisId?: string;
     lastAnalyzed?: string;
+    detailedLegalOpinion?: string; // ✅ NEU: Ausführliches Rechtsgutachten
   };
   legalPulse?: {
     riskScore: number | null;
@@ -162,6 +163,14 @@ ${contract.analysis.suggestions || 'Nicht verfügbar'}
 
 Marktvergleich:
 ${contract.analysis.comparison || 'Nicht verfügbar'}
+
+${contract.analysis.detailedLegalOpinion ? `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+AUSFÜHRLICHES RECHTSGUTACHTEN (Fachanwaltsniveau)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+${contract.analysis.detailedLegalOpinion}
+` : ''}
         `.trim();
       } else if (contract.legalPulse) {
         analysisText = `
@@ -374,6 +383,31 @@ ${contract.legalPulse.recommendations?.join('\n- ') || 'Nicht verfügbar'}
                             </li>
                           ))}
                         </ul>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ✅ NEU: Ausführliches Rechtsgutachten */}
+                  {contract.analysis!.detailedLegalOpinion && (
+                    <div className={`${styles.analysisSection} ${styles.legalOpinionSection}`}>
+                      <div className={styles.sectionHeader}>
+                        <div className={`${styles.sectionIcon} ${styles.legalOpinionIcon}`}>
+                          <Gavel size={20} />
+                        </div>
+                        <h3>📋 Ausführliches Rechtsgutachten</h3>
+                        <div className={styles.legalOpinionBadge}>
+                          <Scale size={14} />
+                          <span>Fachanwaltsniveau</span>
+                        </div>
+                      </div>
+                      <div className={styles.sectionContent}>
+                        <div className={styles.legalOpinionText}>
+                          {contract.analysis!.detailedLegalOpinion.split('\n\n').map((paragraph, index) => (
+                            <p key={index} className={styles.legalOpinionParagraph}>
+                              {paragraph}
+                            </p>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   )}

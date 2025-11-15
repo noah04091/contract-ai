@@ -46,6 +46,7 @@ interface Contract {
     contractScore?: number;
     analysisId?: string;
     lastAnalyzed?: string;
+    detailedLegalOpinion?: string; // ✅ NEU: Ausführliches Rechtsgutachten
   };
   legalPulse?: { // ✅ ALT: Für alte Verträge
     riskScore: number | null;
