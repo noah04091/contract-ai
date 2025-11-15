@@ -60,13 +60,24 @@ export default function Chat() {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // ✅ Load chat list on mount
+  // ✅ Load chat list on mount and auto-create or open latest chat
   useEffect(() => {
     if (isPremium) {
       loadChats();
       loadUsage();
     }
   }, [isPremium]);
+
+  // ✅ Auto-open latest chat or create new one if none exist
+  useEffect(() => {
+    if (chats.length > 0 && !active) {
+      // Open the most recent chat
+      openChat(chats[0]._id);
+    } else if (chats.length === 0 && !active && isPremium && !isLoading) {
+      // No chats exist, create a new one automatically
+      newChat();
+    }
+  }, [chats, active, isPremium, isLoading]);
 
   // ✅ Autoscroll on new messages
   useEffect(() => {
