@@ -44,7 +44,10 @@ interface AnalysisResult {
   analysisDepth?: string;
   structuredAnalysis?: boolean;
   completenessGuarantee?: boolean;
-  
+
+  // ✅ NEU: Ausführliches Rechtsgutachten
+  detailedLegalOpinion?: string;
+
   usage?: {
     count: number;
     limit: number;
@@ -1163,6 +1166,44 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
                 </span>
               </p>
             </div>
+          )}
+
+          {/* ✅ NEU: Ausführliches Rechtsgutachten */}
+          {(result?.detailedLegalOpinion || initialResult?.detailedLegalOpinion) && (
+            <motion.div
+              className={styles.legalOpinionSection}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              <div className={styles.legalOpinionHeader}>
+                <div className={styles.legalOpinionTitleSection}>
+                  <div className={`${styles.detailIconContainer} ${styles.goldIcon}`}>
+                    <Gavel size={24} />
+                  </div>
+                  <div>
+                    <h5 className={styles.legalOpinionTitle}>
+                      📋 Ausführliches Rechtsgutachten
+                    </h5>
+                    <p className={styles.legalOpinionSubtitle}>
+                      Professionelle anwaltliche Gesamtbewertung auf Fachanwaltsniveau
+                    </p>
+                  </div>
+                </div>
+                <div className={styles.legalOpinionBadge}>
+                  <Scale size={16} />
+                  <span>Fachanwaltsniveau</span>
+                </div>
+              </div>
+
+              <div className={styles.legalOpinionContent}>
+                {(result?.detailedLegalOpinion || initialResult?.detailedLegalOpinion)?.split('\n\n').map((paragraph, index) => (
+                  <p key={index} className={styles.legalOpinionParagraph}>
+                    {paragraph}
+                  </p>
+                ))}
+              </div>
+            </motion.div>
           )}
 
           {/* Action Buttons */}
