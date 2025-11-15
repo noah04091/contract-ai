@@ -2017,6 +2017,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
     let extractedIsAutoRenewal = null; // 🆕 AUTO-RENEWAL
     let extractedContractDuration = null; // 🆕 CONTRACT DURATION (Laufzeit)
     let extractedStartDate = null; // 🆕 START DATE
+    let extractedContractType = null; // 🆕 CONTRACT TYPE (telecom, purchase, rental, etc.)
     
     try {
       const providerAnalysis = await contractAnalyzer.analyzeContract(
@@ -2028,6 +2029,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
         extractedProvider = providerAnalysis.data.provider;
         extractedContractNumber = providerAnalysis.data.contractNumber;
         extractedCustomerNumber = providerAnalysis.data.customerNumber;
+        extractedContractType = providerAnalysis.data.contractType; // 🆕 CONTRACT TYPE
         extractedStartDate = providerAnalysis.data.startDate; // 🆕 START DATE
         extractedEndDate = providerAnalysis.data.endDate;
         extractedContractDuration = providerAnalysis.data.contractDuration; // 🆕 CONTRACT DURATION
@@ -2045,9 +2047,11 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
         });
         
         console.log(`✅ [${requestId}] Provider detected:`, extractedProvider?.displayName || 'None');
+        console.log(`📋 [${requestId}] Contract type detected:`, extractedContractType || 'None');
         console.log(`📋 [${requestId}] Contract details:`, {
           contractNumber: extractedContractNumber,
           customerNumber: extractedCustomerNumber,
+          contractType: extractedContractType,
           startDate: extractedStartDate,
           endDate: extractedEndDate,
           contractDuration: extractedContractDuration,
@@ -2315,10 +2319,12 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
             const contractInfo = {
               name: existingContract.name,
               provider: extractedProvider?.displayName || 'Unknown',
-              type: validationResult.documentType || 'other',
+              type: extractedContractType || validationResult.documentType || 'other', // ✅ FIXED: Use contract type (telecom, purchase, etc.) instead of document type
               startDate: extractedStartDate,
               expiryDate: extractedEndDate
             };
+
+            console.log(`📋 [${requestId}] Legal Pulse using contract type: "${contractInfo.type}" (extracted: ${extractedContractType || 'none'}, documentType: ${validationResult.documentType})`);
 
             const legalPulseAnalysis = await aiLegalPulse.analyzeFullContract(
               fullTextContent,
@@ -2457,10 +2463,12 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
             const contractInfo = {
               name: savedContract.name,
               provider: extractedProvider?.displayName || 'Unknown',
-              type: validationResult.documentType || 'other',
+              type: extractedContractType || validationResult.documentType || 'other', // ✅ FIXED: Use contract type (telecom, purchase, etc.) instead of document type
               startDate: extractedStartDate,
               expiryDate: extractedEndDate
             };
+
+            console.log(`📋 [${requestId}] Legal Pulse using contract type: "${contractInfo.type}" (extracted: ${extractedContractType || 'none'}, documentType: ${validationResult.documentType})`);
 
             const legalPulseAnalysis = await aiLegalPulse.analyzeFullContract(
               fullTextContent,
