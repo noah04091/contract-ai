@@ -681,9 +681,9 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
             <h3>📝 Zusammenfassung</h3>
             <div className={styles.messageBox}>
               {Array.isArray(summary) ? (
-                <ul style={{ margin: 0, paddingLeft: '20px', listStyle: 'disc' }}>
+                <ul style={{ margin: 0, paddingLeft: '20px', listStyle: 'disc', color: '#1f2937' }}>
                   {summary.map((item, index) => (
-                    <li key={index} style={{ marginBottom: '8px', lineHeight: '1.6' }}>{item}</li>
+                    <li key={index} style={{ marginBottom: '8px', lineHeight: '1.6', color: '#1f2937' }}>{item}</li>
                   ))}
                 </ul>
               ) : (
@@ -699,9 +699,9 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
             <h3>⚖️ Rechtliche Bewertung</h3>
             <div className={styles.messageBox}>
               {Array.isArray(legalAssessment) ? (
-                <ul style={{ margin: 0, paddingLeft: '20px', listStyle: 'disc' }}>
+                <ul style={{ margin: 0, paddingLeft: '20px', listStyle: 'disc', color: '#1f2937' }}>
                   {legalAssessment.map((item, index) => (
-                    <li key={index} style={{ marginBottom: '8px', lineHeight: '1.6' }}>{item}</li>
+                    <li key={index} style={{ marginBottom: '8px', lineHeight: '1.6', color: '#1f2937' }}>{item}</li>
                   ))}
                 </ul>
               ) : (
@@ -717,9 +717,9 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
             <h3>🔍 Vergleich & Analyse</h3>
             <div className={styles.messageBox}>
               {Array.isArray(comparison) ? (
-                <ul style={{ margin: 0, paddingLeft: '20px', listStyle: 'disc' }}>
+                <ul style={{ margin: 0, paddingLeft: '20px', listStyle: 'disc', color: '#1f2937' }}>
                   {comparison.map((item, index) => (
-                    <li key={index} style={{ marginBottom: '8px', lineHeight: '1.6' }}>{item}</li>
+                    <li key={index} style={{ marginBottom: '8px', lineHeight: '1.6', color: '#1f2937' }}>{item}</li>
                   ))}
                 </ul>
               ) : (
@@ -735,9 +735,9 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
             <h3>💡 Empfehlungen</h3>
             <div className={styles.messageBox}>
               {Array.isArray(suggestions) ? (
-                <ul style={{ margin: 0, paddingLeft: '20px', listStyle: 'disc' }}>
+                <ul style={{ margin: 0, paddingLeft: '20px', listStyle: 'disc', color: '#1f2937' }}>
                   {suggestions.map((item, index) => (
-                    <li key={index} style={{ marginBottom: '8px', lineHeight: '1.6' }}>{item}</li>
+                    <li key={index} style={{ marginBottom: '8px', lineHeight: '1.6', color: '#1f2937' }}>{item}</li>
                   ))}
                 </ul>
               ) : (
