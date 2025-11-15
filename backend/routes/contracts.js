@@ -1529,6 +1529,7 @@ router.post("/:id/analyze", verifyToken, async (req, res) => {
 
       analysisResult = JSON.parse(jsonText);
       console.log(`✅ [${requestId}] Analysis parsed successfully`);
+      console.log(`🔍 [${requestId}] detailedLegalOpinion length: ${analysisResult.detailedLegalOpinion?.length || 0} characters`);
 
     } catch (gptError) {
       console.error(`❌ [${requestId}] GPT-4 analysis error:`, gptError);
