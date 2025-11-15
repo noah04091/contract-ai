@@ -13,6 +13,8 @@ const { validateAttachment, generateIdempotencyKey } = require("../utils/emailIm
 const nodemailer = require("nodemailer"); // 📧 Email Service
 const contractAnalyzer = require("../services/contractAnalyzer"); // 🤖 ULTRA-INTELLIGENT Contract Analyzer v10
 const AILegalPulse = require("../services/aiLegalPulse"); // ⚡ Legal Pulse Risk Analysis
+const analyzeRoute = require("./analyze"); // 🚀 V2 Analysis Functions
+const { generateDeepLawyerLevelPrompt, getContractTypeFocus } = analyzeRoute; // 🚀 Import V2 functions
 
 const router = express.Router();
 const aiLegalPulse = new AILegalPulse(); // ⚡ Initialize Legal Pulse analyzer
@@ -1486,143 +1488,19 @@ router.post("/:id/analyze", verifyToken, async (req, res) => {
       console.error(`❌ [${requestId}] Contract Analyzer error:`, analyzerError.message);
     }
 
-    // ===== GPT-4 ANALYSIS =====
-    console.log(`🤖 [${requestId}] Starting GPT-4 analysis...`);
+    // ===== GPT-4 ANALYSIS V2 =====
+    console.log(`🤖 [${requestId}] Starting GPT-4 V2 analysis...`);
 
-    const analysisPrompt = `Du bist ein spezialisierter Rechtsanwalt für Vertragsrecht. Analysiere den folgenden Vertragstext SEHR DETAILLIERT und VOLLSTÄNDIG.
+    // 🚀 V2: Use new deep lawyer-level prompt
+    const documentType = providerAnalysis?.data?.contractType || 'other';
+    const analysisPrompt = generateDeepLawyerLevelPrompt(
+      fullTextContent,
+      documentType,
+      'deep-lawyer-level',
+      requestId
+    );
 
-VERTRAGSTEXT:
-${fullTextContent.substring(0, 50000)}
-
-Antworte in folgendem JSON-Format:
-{
-  "summary": "Ausführliche Zusammenfassung in 3-5 Sätzen",
-  "contractScore": <Zahl 0-100>,
-  "legalAssessment": "Ausführliche rechtliche Bewertung",
-  "suggestions": "Konkrete Verbesserungsvorschläge",
-  "kuendigung": "Kündigungsfrist (z.B. '3 Monate zum Vertragsende')",
-  "laufzeit": "Vertragslaufzeit (z.B. '24 Monate')",
-  "status": "Aktiv/Inaktiv/Unbekannt",
-  "risiken": ["Risiko 1", "Risiko 2"],
-  "optimierungen": ["Optimierung 1", "Optimierung 2"],
-  "contractType": "recurring|one-time|null",
-  "contractTypeConfidence": "high|medium|low",
-  "paymentAmount": <Zahl oder null>,
-  "paymentStatus": "paid|unpaid|null",
-  "paymentDueDate": "YYYY-MM-DD oder null",
-  "paymentMethod": "string oder null",
-  "paymentFrequency": "monthly|yearly|weekly|null"
-}
-
-WICHTIG - contractTypeConfidence Regeln:
-- "high" = 3+ klare Signale, sehr sicher (z.B. "Netflix Abo, monatlich, 9.99€/Monat")
-- "medium" = 2 Signale, wahrscheinlich richtig (z.B. "Mietvertrag, monatlich")
-- "low" = 1 Signal, unsicher (z.B. nur "monatlich" ohne Kontext)
-- Wenn contractType: null → contractTypeConfidence: "low"
-
-🔍 KRITISCH WICHTIG - Payment-Erkennung (lies den KOMPLETTEN Text durch!):
-
-1. contractType Erkennung (PRÄZISE & KONSERVATIV!):
-
-   WICHTIG: Lieber null zurückgeben als falsch klassifizieren!
-
-   ✅ "recurring" NUR wenn MINDESTENS 2 der folgenden Signale zutreffen:
-   - Explizite Begriffe: "Abonnement", "Abo", "Subscription", "Mitgliedschaft"
-   - Zeitliche Wiederkehr: "monatlich", "jährlich", "wöchentlich", "pro Monat"
-   - Vertragslaufzeit: "Mindestlaufzeit", "Kündigungsfrist", "automatische Verlängerung"
-   - Spezifische Vertragstypen: "Mietvertrag", "Versicherung", "Leasing"
-   - Laufende Kosten: "monatliche Rate", "wiederkehrende Zahlung", "Jahresbeitrag"
-
-   ✅ "one-time" NUR wenn SEHR SICHER:
-   - Explizite Begriffe: "einmalig", "einmalige Zahlung", "Einmalzahlung"
-   - Kaufvertrag: "Kaufvertrag", "Kaufpreis", "Verkauf von"
-   - Werkvertrag: "Werkvertrag", "Dienstleistung gegen Einmalzahlung"
-   - UND KEINE Hinweise auf Wiederholung (keine "monatlich", "jährlich", etc.)
-
-   ⚠️ null (nicht setzen) wenn:
-   - Unsicher oder mehrdeutig
-   - Nur 1 schwaches Signal vorhanden
-   - Dokument ist Rechnung (egal ob dahinter Abo oder nicht!)
-   - Widersprüchliche Signale (z.B. "monatlich" UND "einmalige Zahlung")
-
-   WICHTIG bei Rechnungen:
-   - Wenn Dokument eine Rechnung ist → contractType: null
-   - Grund: Rechnung kann von Abo ODER Einmalkauf sein
-   - Frontend entscheidet basierend auf Dateiname
-
-2. paymentAmount Erkennung (SEHR WICHTIG!):
-   Suche nach folgenden Begriffen im GESAMTEN Text:
-   - "Kaufpreis", "Gesamtpreis", "Endbetrag", "Summe", "Betrag", "Preis"
-   - "Rechnungsbetrag", "Zahlbetrag", "Kaufsumme", "Verkaufspreis"
-   - "EUR", "Euro", "€", gefolgt von einer Zahl
-   - Zahlen mit Tausendertrennern: "15.000", "15000", "1.500,00"
-
-   WICHTIG:
-   - Extrahiere NUR die Zahl (z.B. 15000 statt "15.000 EUR")
-   - Ignoriere Anzahlungen/Raten - nimm den GESAMTBETRAG
-   - Bei mehreren Beträgen: nimm den HÖCHSTEN (meist der Gesamtpreis)
-   - Konvertiere deutsche Schreibweise: "15.000,50" → 15000.50
-
-3. paymentStatus Erkennung (SEHR WICHTIG!):
-   - "paid" = wenn folgende Begriffe im Text:
-     * "bezahlt", "beglichen", "gezahlt", "überwiesen", "erfolgt"
-     * "FET", "fet", "bereits bezahlt", "Rechnung beglichen"
-     * ODER wenn eine Zahlungsmethode + Vergangenheit erwähnt wird:
-       "Lastschrift durchgeführt", "PayPal bezahlt", "Bar bezahlt",
-       "Kreditkarte belastet", "in bar beglichen", etc.
-     * ODER: "Zahlung erfolgt", "Online bezahlt", "Rechnung ausgeglichen"
-     * "abgeschlossen", "erledigt", "settled", "paid", "completed"
-   - "unpaid" = wenn "ausstehend", "offen", "fällig", "zu zahlen", "bitte überweisen" im Text
-   - null = wenn unklar
-
-4. paymentDueDate Erkennung:
-   - Suche nach "Zahlungsziel", "fällig am", "Zahlung bis", "Zahlungsfrist"
-   - Format: YYYY-MM-DD (z.B. "2025-01-15")
-
-5. paymentMethod Erkennung (NEU - UNIVERSELL!):
-   Suche nach JEDER Zahlungsmethode im Text und extrahiere sie:
-
-   Häufige Beispiele (aber nicht limitiert darauf!):
-   - "PayPal" → "PayPal"
-   - "Lastschrift", "SEPA", "Bankeinzug" → "Lastschrift"
-   - "Kreditkarte", "Visa", "Mastercard", "Amex" → "Kreditkarte"
-   - "Überweisung", "Banküberweisung" → "Überweisung"
-   - "Sofortüberweisung", "Klarna", "Stripe" → extrahiere genau wie genannt
-   - "Barzahlung", "Bar bezahlt", "Cash", "in bar" → "Barzahlung"
-   - "Scheck", "Verrechnungsscheck" → "Scheck"
-   - "PayPal", "Apple Pay", "Google Pay" → extrahiere genau
-   - "Vorkasse", "Vorauskasse" → "Vorkasse"
-
-   WICHTIG: Sei flexibel! Wenn IRGENDEINE Zahlungsmethode erwähnt wird, extrahiere sie.
-   null = nur wenn KEINE Zahlungsmethode im gesamten Text gefunden wird
-
-6. paymentFrequency Erkennung (NEU!):
-   Suche nach Zahlungsrhythmus im Text:
-   - "monatlich", "jeden Monat", "pro Monat", "monthly", "/Monat" → "monthly"
-   - "jährlich", "pro Jahr", "yearly", "annual", "/Jahr" → "yearly"
-   - "wöchentlich", "pro Woche", "weekly", "/Woche" → "weekly"
-   - null = wenn keine Frequenz gefunden
-
-WICHTIG für Automatische Bezahlt-Erkennung:
-- Wenn Text "Bezahlt mit PayPal" oder "Per Lastschrift bezahlt" enthält
-  → paymentStatus: "paid" UND paymentMethod: "PayPal"/"Lastschrift"
-- Wenn Text "Online bezahlt" oder "Zahlung erfolgt" enthält
-  → paymentStatus: "paid"
-- Sei flexibel und erkenne ALLE Varianten von "bezahlt + Methode"
-
-BEISPIELE (Betrag):
-- "Der Kaufpreis beträgt 15.000 EUR" → paymentAmount: 15000
-- "Gesamtbetrag: 1.234,56 Euro" → paymentAmount: 1234.56
-- "Summe: EUR 500,-" → paymentAmount: 500
-
-BEISPIELE (Bezahlt-Status):
-- "Bezahlt mit PayPal am 15.01.2025" → paymentStatus: "paid", paymentMethod: "PayPal"
-- "Lastschrift wurde durchgeführt" → paymentStatus: "paid", paymentMethod: "Lastschrift"
-- "In bar beglichen" → paymentStatus: "paid", paymentMethod: "Barzahlung"
-- "Bar bezahlt" → paymentStatus: "paid", paymentMethod: "Barzahlung"
-- "Bezahlt mit Klarna" → paymentStatus: "paid", paymentMethod: "Klarna"
-- "Kreditkarte belastet" → paymentStatus: "paid", paymentMethod: "Kreditkarte"
-- "Vorkasse erhalten" → paymentStatus: "paid", paymentMethod: "Vorkasse"`;
+    console.log(`📋 [${requestId}] Using V2 prompt for contract type: ${documentType}`);
 
     let analysisResult;
 
@@ -1630,11 +1508,15 @@ BEISPIELE (Bezahlt-Status):
       const completion = await openai.chat.completions.create({
         model: "gpt-4-turbo",
         messages: [
-          { role: "system", content: "Du bist ein Rechtsanwalt. Antworte NUR mit validem JSON." },
+          {
+            role: "system",
+            content: "Du bist ein hochspezialisierter Vertragsanwalt mit 20+ Jahren Erfahrung. Antworte AUSSCHLIESSLICH in korrektem JSON-Format ohne Markdown-Blöcke. Alle Sätze müssen vollständig ausformuliert sein. Sei präzise, konkret und vermeide Standardphrasen."
+          },
           { role: "user", content: analysisPrompt }
         ],
+        response_format: { type: "json_object" }, // 🚀 V2: Force valid JSON output
         temperature: 0.1,
-        max_tokens: 2000
+        max_tokens: 3000 // ✅ V2: Increased for comprehensive analysis
       });
 
       const responseText = completion.choices[0].message.content;
@@ -1657,13 +1539,22 @@ BEISPIELE (Bezahlt-Status):
     }
 
     // ===== UPDATE CONTRACT IN DATABASE =====
-    console.log(`💾 [${requestId}] Saving analysis results...`);
+    console.log(`💾 [${requestId}] Saving V2 analysis results...`);
 
     const analysisObject = {
       contractScore: analysisResult.contractScore || 0,
-      summary: analysisResult.summary || '',
-      legalAssessment: analysisResult.legalAssessment || '',
-      suggestions: analysisResult.suggestions || '',
+      // 🚀 V2: New structured fields
+      laymanSummary: analysisResult.laymanSummary || [],
+      summary: analysisResult.summary || [],
+      legalAssessment: analysisResult.legalAssessment || [],
+      suggestions: analysisResult.suggestions || [],
+      comparison: analysisResult.comparison || [],
+      positiveAspects: analysisResult.positiveAspects || [],
+      criticalIssues: analysisResult.criticalIssues || [],
+      recommendations: analysisResult.recommendations || [],
+      quickFacts: analysisResult.quickFacts || [],
+      legalPulseHooks: analysisResult.legalPulseHooks || [],
+      // Legacy fields (for backward compatibility)
       kuendigung: analysisResult.kuendigung || 'Unbekannt',
       laufzeit: analysisResult.laufzeit || 'Unbekannt',
       status: analysisResult.status || 'Unbekannt',
@@ -1676,17 +1567,25 @@ BEISPIELE (Bezahlt-Status):
     const updateData = {
       analyzed: true,
       updatedAt: new Date(),
-      // ✅ Felder direkt im Contract (für Kompatibilität)
+      // 🚀 V2: New structured fields (stored directly for easy access)
       contractScore: analysisResult.contractScore || 0,
-      summary: analysisResult.summary || '',
-      legalAssessment: analysisResult.legalAssessment || '',
-      suggestions: analysisResult.suggestions || '',
+      laymanSummary: analysisResult.laymanSummary || [],
+      summary: analysisResult.summary || [],
+      legalAssessment: analysisResult.legalAssessment || [],
+      suggestions: analysisResult.suggestions || [],
+      comparison: analysisResult.comparison || [],
+      positiveAspects: analysisResult.positiveAspects || [],
+      criticalIssues: analysisResult.criticalIssues || [],
+      recommendations: analysisResult.recommendations || [],
+      quickFacts: analysisResult.quickFacts || [],
+      legalPulseHooks: analysisResult.legalPulseHooks || [],
+      // Legacy fields (for backward compatibility)
       kuendigung: analysisResult.kuendigung || 'Unbekannt',
       laufzeit: analysisResult.laufzeit || 'Unbekannt',
       status: analysisResult.status || 'Unbekannt',
       risiken: analysisResult.risiken || [],
       optimierungen: analysisResult.optimierungen || [],
-      // 💳 NEU: Payment Tracking Fields aus KI-Analyse
+      // 💳 Payment Tracking Fields
       contractType: analysisResult.contractType || null,
       contractTypeConfidence: analysisResult.contractTypeConfidence || 'low',
       paymentAmount: analysisResult.paymentAmount || null,
