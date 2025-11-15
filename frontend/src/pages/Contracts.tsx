@@ -1332,7 +1332,7 @@ export default function Contracts() {
         try {
           // ✅ NUTZE DIE NEUE /api/analyze ROUTE MIT forceReanalyze=true!
           console.log(`🚀 Using NEW /api/analyze route for: ${contract.name}`);
-          const data = await uploadAndAnalyze(uploadFileItem.file, (progress) => {
+          await uploadAndAnalyze(uploadFileItem.file, (progress) => {
             setUploadFiles(prev => prev.map((item, idx) =>
               item.status === 'analyzing' && idx === i
                 ? { ...item, progress }
@@ -1357,6 +1357,7 @@ export default function Contracts() {
       const updatedContracts = await fetchContracts();
 
       // ✅ Update uploadFiles with analysis results
+      const contractIds = contractsToAnalyze.map(c => c._id);
       if (updatedContracts) {
         setUploadFiles(prev => prev.map(item => {
           const analyzedContract = updatedContracts.find((c: Contract) =>
