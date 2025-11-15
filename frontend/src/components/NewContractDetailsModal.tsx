@@ -714,8 +714,8 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
           </div>
         )}
 
-        {/* ⚡ LEGAL PULSE SHORT OVERVIEW */}
-        {legalPulse && (
+        {/* ⚡ LEGAL PULSE SHORT OVERVIEW or Loading */}
+        {legalPulse ? (
           <div className={styles.section} style={{
             marginTop: '32px',
             padding: '24px',
@@ -846,6 +846,38 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
             >
               📊 Vollständige Risiko-Analyse in Legal Pulse anzeigen →
             </button>
+          </div>
+        ) : (contractScore || summary || legalAssessment) && (
+          <div className={styles.section} style={{
+            marginTop: '32px',
+            padding: '32px 24px',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            borderRadius: '12px',
+            color: 'white',
+            textAlign: 'center'
+          }}>
+            <div style={{
+              display: 'inline-block',
+              width: '40px',
+              height: '40px',
+              border: '3px solid rgba(255, 255, 255, 0.3)',
+              borderTop: '3px solid white',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite',
+              marginBottom: '16px'
+            }}></div>
+            <h3 style={{ margin: '0 0 8px 0', fontSize: '18px', fontWeight: '600' }}>
+              ⚡ Legal Pulse Analyse lädt...
+            </h3>
+            <p style={{ margin: 0, opacity: 0.9, fontSize: '14px' }}>
+              Die Risiko-Analyse wird im Hintergrund durchgeführt. Bitte warten Sie einen Moment.
+            </p>
+            <style>{`
+              @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+              }
+            `}</style>
           </div>
         )}
       </div>
