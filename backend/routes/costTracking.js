@@ -4,11 +4,13 @@
 const express = require('express');
 const router = express.Router();
 const verifyToken = require('../middleware/verifyToken');
+const verifyAdmin = require('../middleware/verifyAdmin'); // 🔐 Admin-only access
 const { getInstance: getCostTrackingService } = require('../services/costTracking');
 
 // ===== GET DAILY BUDGET STATUS =====
 // GET /api/cost-tracking/budget
-router.get('/budget', verifyToken, async (req, res) => {
+// 🔐 Admin-only: Only admins can view cost tracking data
+router.get('/budget', verifyToken, verifyAdmin, async (req, res) => {
   try {
     const costTracker = getCostTrackingService();
     const budgetStatus = await costTracker.checkDailyBudget();
@@ -29,7 +31,8 @@ router.get('/budget', verifyToken, async (req, res) => {
 
 // ===== GET COST STATISTICS =====
 // GET /api/cost-tracking/stats?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD
-router.get('/stats', verifyToken, async (req, res) => {
+// 🔐 Admin-only: Only admins can view cost tracking data
+router.get('/stats', verifyToken, verifyAdmin, async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
 
@@ -60,7 +63,8 @@ router.get('/stats', verifyToken, async (req, res) => {
 
 // ===== GET DAILY COST TREND =====
 // GET /api/cost-tracking/trend?days=30
-router.get('/trend', verifyToken, async (req, res) => {
+// 🔐 Admin-only: Only admins can view cost tracking data
+router.get('/trend', verifyToken, verifyAdmin, async (req, res) => {
   try {
     const days = parseInt(req.query.days) || 30;
 
@@ -91,7 +95,8 @@ router.get('/trend', verifyToken, async (req, res) => {
 
 // ===== GET USER-SPECIFIC STATS =====
 // GET /api/cost-tracking/user-stats?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD
-router.get('/user-stats', verifyToken, async (req, res) => {
+// 🔐 Admin-only: Only admins can view cost tracking data
+router.get('/user-stats', verifyToken, verifyAdmin, async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
     const userId = req.user.userId;

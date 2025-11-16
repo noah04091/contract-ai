@@ -63,6 +63,7 @@ router.post("/register", async (req, res) => {
       password: hashed,
       verified: false, // ⭐ NEU: Double-Opt-In Status
       isPremium: false,
+      role: 'user', // 🔐 NEW: User role (user|admin) - default: user
       // ⭐ ANALYSE & OPTIMIERUNG LIMITS
       analysisCount: 0,
       optimizationCount: 0, // ⭐ NEU HINZUGEFÜGT
