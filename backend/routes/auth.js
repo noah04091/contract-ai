@@ -6,6 +6,7 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const { ObjectId } = require("mongodb");
 const verifyToken = require("../middleware/verifyToken");
+const verifyAdmin = require("../middleware/verifyAdmin"); // 🔐 Admin-only access
 const sendEmail = require("../utils/sendEmail");
 const { normalizeEmail } = require("../utils/normalizeEmail");
 require("dotenv").config();
@@ -592,6 +593,43 @@ router.post("/migrate-all-email-inboxes", async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Serverfehler bei Migration"
+    });
+  }
+});
+
+// ===== 👥 ADMIN: GET ALL USERS =====
+// GET /api/auth/users
+// 🔐 Admin-only: Only admins can view all users
+router.get("/users", verifyToken, verifyAdmin, async (req, res) => {
+  try {
+    console.log('👥 [ADMIN] Fetching all users...');
+
+    // Get all users excluding passwords
+    const users = await usersCollection.find(
+      {},
+      {
+        projection: {
+          password: 0,
+          resetToken: 0,
+          resetTokenExpires: 0
+        }
+      }
+    ).toArray();
+
+    console.log(`✅ [ADMIN] Retrieved ${users.length} users`);
+
+    res.json({
+      success: true,
+      users: users,
+      total: users.length
+    });
+
+  } catch (error) {
+    console.error('❌ [ADMIN] Error fetching users:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Fehler beim Abrufen der Benutzerliste',
+      error: error.message
     });
   }
 });
