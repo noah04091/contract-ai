@@ -152,11 +152,20 @@ export default function LegalPulse() {
   // Feed Hook
   const { events: feedEvents, isConnected: feedConnected, clearEvents } = useLegalPulseFeed();
 
-  // Enhanced Mock-Daten für Demo-Zwecke
+  // ✅ FIXED: Use real Legal Pulse data if available, only use mock data as fallback
   const enrichContractWithMockData = (contract: Contract): Contract => {
-    const riskScore = contract.legalPulse?.riskScore || Math.floor(Math.random() * 100);
+    // ✅ If contract already has Legal Pulse data, return it unchanged
+    if (contract.legalPulse && (contract.legalPulse.topRisks || contract.legalPulse.recommendations)) {
+      console.log(`✅ Using REAL Legal Pulse data for contract ${contract._id}`);
+      return contract;
+    }
+
+    // ✅ Only use mock data if NO Legal Pulse data exists
+    console.log(`⚠️ No Legal Pulse data for contract ${contract._id}, using mock data`);
+
+    const riskScore = Math.floor(Math.random() * 100);
     const lastAnalysis = new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString();
-    
+
     const mockTopRisks = [
       "Veraltete Datenschutzklauseln (DSGVO-Konformität)",
       "Fehlende Kündigungsfristen für bestimmte Vertragsarten",
@@ -164,7 +173,7 @@ export default function LegalPulse() {
       "Veraltete AGB-Verweise auf überholte Rechtsprechung",
       "Fehlende Salvatorische Klausel"
     ];
-    
+
     const mockRecommendations = [
       "Datenschutzerklärung nach DSGVO Art. 13/14 aktualisieren",
       "Kündigungsfristen gem. § 573c BGB präzisieren",
