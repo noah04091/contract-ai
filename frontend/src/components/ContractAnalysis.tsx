@@ -1,13 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  FileText, AlertCircle, CheckCircle, Loader, 
+import {
+  FileText, AlertCircle, CheckCircle, Loader,
   Download, BarChart3, RefreshCw, WifiOff, Clock,
-  Shield, TrendingUp, Lightbulb, FileSearch,
   Wrench, ArrowRight, AlertTriangle,
   Award, Target, Zap, ChevronDown, ChevronUp,
   Copy, Eye, X, // ✅ Icons für Duplikat-Modal
-  CheckSquare, XCircle, BookOpen, // ✅ NEU: Icons für 7-Punkte-Struktur (Users und MapPin entfernt)
+  CheckSquare, XCircle, // ✅ Für Risiko-Level Icons und Features
   Gavel, Scale, Star // ✅ NEU: Anwalts-Icons
 } from "lucide-react";
 import styles from "./ContractAnalysis.module.css";
@@ -982,9 +981,6 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
             {(result?.summary || initialResult?.summary) && (
               <div className={styles.detailCard}>
                 <div className={styles.detailHeader}>
-                  <div className={`${styles.detailIconContainer} ${styles.blueIcon}`}>
-                    <FileSearch size={20} />
-                  </div>
                   <h5>📄 Zusammenfassung</h5>
                 </div>
                 <div className={styles.cardContent}>
@@ -1004,9 +1000,6 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
             {(result?.legalAssessment || initialResult?.legalAssessment) && (
               <div className={styles.detailCard}>
                 <div className={styles.detailHeader}>
-                  <div className={`${styles.detailIconContainer} ${styles.greenIcon}`}>
-                    <Shield size={20} />
-                  </div>
                   <h5>🛡️ Rechtssicherheit</h5>
                 </div>
                 <div className={styles.cardContent}>
@@ -1026,9 +1019,6 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
             {(result?.suggestions || initialResult?.suggestions) && (
               <div className={styles.detailCard}>
                 <div className={styles.detailHeader}>
-                  <div className={`${styles.detailIconContainer} ${styles.yellowIcon}`}>
-                    <Lightbulb size={20} />
-                  </div>
                   <h5>💡 Optimierungsvorschläge</h5>
                 </div>
                 <div className={styles.cardContent}>
@@ -1047,9 +1037,6 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
             {/* 4. 📊 Marktvergleich */}
             <div className={styles.detailCard}>
               <div className={styles.detailHeader}>
-                <div className={`${styles.detailIconContainer} ${styles.purpleIcon}`}>
-                  <TrendingUp size={20} />
-                </div>
                 <h5>📊 Marktvergleich</h5>
               </div>
               <div className={styles.cardContent}>
@@ -1076,9 +1063,6 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
             {(result?.positiveAspects || initialResult?.positiveAspects) && (
               <div className={styles.detailCard}>
                 <div className={styles.detailHeader}>
-                  <div className={`${styles.detailIconContainer} ${styles.greenIcon}`}>
-                    <CheckSquare size={20} />
-                  </div>
                   <h5>✅ Positive Aspekte</h5>
                 </div>
                 <div className={styles.cardContent}>
@@ -1101,9 +1085,6 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
             {(result?.criticalIssues || initialResult?.criticalIssues) && (
               <div className={styles.detailCard}>
                 <div className={styles.detailHeader}>
-                  <div className={`${styles.detailIconContainer} ${styles.redIcon}`}>
-                    <XCircle size={20} />
-                  </div>
                   <h5>⚠️ Kritische Klauseln & Risiken</h5>
                 </div>
                 <div className={styles.cardContent}>
@@ -1130,9 +1111,6 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
             {(result?.recommendations || initialResult?.recommendations) && (
               <div className={styles.detailCard}>
                 <div className={styles.detailHeader}>
-                  <div className={`${styles.detailIconContainer} ${styles.blueIcon}`}>
-                    <BookOpen size={20} />
-                  </div>
                   <h5>📌 Handlungsempfehlungen</h5>
                 </div>
                 <div className={styles.cardContent}>
@@ -1237,7 +1215,22 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
 
             {/* Secondary Actions */}
             <div className={styles.secondaryActions}>
-              <button 
+              {/* Legal Pulse Button - Only show if contractId is available */}
+              {(result?.originalContractId || initialResult?.originalContractId) && (
+                <button
+                  className={`${styles.secondaryButton} ${styles.legalPulseButton}`}
+                  onClick={() => window.location.href = `/legalpulse/${result?.originalContractId || initialResult?.originalContractId}`}
+                  style={{
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    color: 'white',
+                    border: 'none'
+                  }}
+                >
+                  <BarChart3 size={18} />
+                  <span>Legal Pulse Analyse</span>
+                </button>
+              )}
+              <button
                 className={`${styles.secondaryButton} ${styles.downloadButton}`}
                 onClick={handleDownloadPdf}
                 disabled={generatingPdf}
@@ -1259,7 +1252,7 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
                   </>
                 )}
               </button>
-              <button 
+              <button
                 className={`${styles.secondaryButton} ${styles.newAnalysisButton}`}
                 onClick={handleReset}
               >

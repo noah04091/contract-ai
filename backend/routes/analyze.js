@@ -2616,6 +2616,9 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       responseData.isReanalysis = true;
       responseData.originalContractId = existingContract._id;
       responseData.message = `${validationResult.analysisMessage} auf höchstem Anwaltsniveau erfolgreich aktualisiert`;
+    } else if (savedContract) {
+      // ✅ Add contractId for new contracts (for Legal Pulse button)
+      responseData.originalContractId = savedContract._id;
     }
 
     // ✅ DIREKT responseData senden, KEIN data wrapper!

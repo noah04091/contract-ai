@@ -816,23 +816,24 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
           <div className={styles.section} style={{
             marginTop: '32px',
             padding: '24px',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            background: '#ffffff',
+            border: '1px solid #e5e7eb',
             borderRadius: '12px',
-            color: 'white'
+            color: '#000000'
           }}>
-            <h3 style={{ margin: '0 0 16px 0', fontSize: '20px', fontWeight: '600' }}>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: '20px', fontWeight: '600', color: '#000000' }}>
               ⚡ Legal Pulse - Risiko-Übersicht
             </h3>
 
             {/* Risk Score */}
             {legalPulse.riskScore !== null && legalPulse.riskScore !== undefined && (
               <div style={{ marginBottom: '20px' }}>
-                <div style={{ fontSize: '14px', opacity: 0.9, marginBottom: '8px' }}>Risiko-Score</div>
+                <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '8px' }}>Risiko-Score</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <div style={{
                     flex: 1,
                     height: '8px',
-                    background: 'rgba(255, 255, 255, 0.2)',
+                    background: '#f3f4f6',
                     borderRadius: '4px',
                     overflow: 'hidden'
                   }}>
@@ -844,7 +845,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
                       transition: 'width 0.3s ease'
                     }}></div>
                   </div>
-                  <span style={{ fontSize: '18px', fontWeight: 'bold' }}>{legalPulse.riskScore}/100</span>
+                  <span style={{ fontSize: '18px', fontWeight: 'bold', color: '#000000' }}>{legalPulse.riskScore}/100</span>
                 </div>
               </div>
             )}
@@ -853,46 +854,38 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
               {/* What's Good */}
               <div>
-                <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '500' }}>✅ Positiv</h4>
-                <div style={{ background: 'rgba(255, 255, 255, 0.1)', padding: '12px', borderRadius: '8px', fontSize: '14px' }}>
-                  {legalPulse.topRisks && legalPulse.topRisks.filter((r: LegalPulseRisk) => r.severity === 'low').length > 0 ? (
-                    <ul style={{ margin: 0, paddingLeft: '20px' }}>
-                      {legalPulse.topRisks
-                        .filter((r: LegalPulseRisk) => r.severity === 'low')
-                        .slice(0, 2)
-                        .map((risk: LegalPulseRisk, index: number) => (
-                          <li key={index} style={{ marginBottom: '4px' }}>{risk.title}</li>
-                        ))}
-                    </ul>
-                  ) : legalPulse.riskScore && legalPulse.riskScore < 40 ? (
-                    <p style={{ margin: 0 }}>Vertrag zeigt geringe rechtliche Risiken</p>
+                <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '500', color: '#000000' }}>✅ Positiv</h4>
+                <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', padding: '12px', borderRadius: '8px', fontSize: '14px' }}>
+                  {legalPulse.riskScore && legalPulse.riskScore < 40 ? (
+                    <p style={{ margin: 0, color: '#374151' }}>Vertrag zeigt geringe rechtliche Risiken</p>
+                  ) : legalPulse.riskScore && legalPulse.riskScore < 60 ? (
+                    <p style={{ margin: 0, color: '#374151' }}>Vertrag hat moderate Risiken, aber auch positive Aspekte</p>
                   ) : (
-                    <p style={{ margin: 0, opacity: 0.7 }}>Keine positiven Aspekte identifiziert</p>
+                    <p style={{ margin: 0, color: '#6b7280' }}>Keine positiven Aspekte identifiziert</p>
                   )}
                 </div>
               </div>
 
               {/* What's Critical */}
               <div>
-                <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '500' }}>⚠️ Kritisch</h4>
-                <div style={{ background: 'rgba(255, 255, 255, 0.1)', padding: '12px', borderRadius: '8px', fontSize: '14px' }}>
-                  {legalPulse.topRisks && legalPulse.topRisks.filter((r: LegalPulseRisk) => r.severity === 'high' || r.severity === 'critical').length > 0 ? (
-                    <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '500', color: '#000000' }}>⚠️ Kritisch</h4>
+                <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', padding: '12px', borderRadius: '8px', fontSize: '14px' }}>
+                  {legalPulse.topRisks && legalPulse.topRisks.filter((r: LegalPulseRisk) => r.severity === 'high' || r.severity === 'critical' || r.severity === 'medium' || r.severity === 'low').length > 0 ? (
+                    <ul style={{ margin: 0, paddingLeft: '20px', color: '#374151' }}>
                       {legalPulse.topRisks
-                        .filter((r: LegalPulseRisk) => r.severity === 'high' || r.severity === 'critical')
                         .slice(0, 2)
                         .map((risk: LegalPulseRisk, index: number) => (
                           <li key={index} style={{ marginBottom: '4px' }}>{risk.title}</li>
                         ))}
                     </ul>
                   ) : legalPulse.legalRisks && legalPulse.legalRisks.length > 0 ? (
-                    <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                    <ul style={{ margin: 0, paddingLeft: '20px', color: '#374151' }}>
                       {legalPulse.legalRisks.slice(0, 2).map((risk: string, index: number) => (
                         <li key={index} style={{ marginBottom: '4px' }}>{risk}</li>
                       ))}
                     </ul>
                   ) : (
-                    <p style={{ margin: 0, opacity: 0.7 }}>Keine kritischen Risiken identifiziert</p>
+                    <p style={{ margin: 0, color: '#6b7280' }}>Keine kritischen Risiken identifiziert</p>
                   )}
                 </div>
               </div>
@@ -901,9 +894,9 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
             {/* Recommendations */}
             {legalPulse.recommendations && legalPulse.recommendations.length > 0 && (
               <div style={{ marginBottom: '20px' }}>
-                <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '500' }}>💡 Top-Empfehlungen</h4>
-                <div style={{ background: 'rgba(255, 255, 255, 0.1)', padding: '12px', borderRadius: '8px', fontSize: '14px' }}>
-                  <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '500', color: '#000000' }}>💡 Top-Empfehlungen</h4>
+                <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', padding: '12px', borderRadius: '8px', fontSize: '14px' }}>
+                  <ul style={{ margin: 0, paddingLeft: '20px', color: '#374151' }}>
                     {legalPulse.recommendations.slice(0, 3).map((rec: string | LegalPulseRecommendation, index: number) => {
                       const recText = typeof rec === 'string' ? rec : rec.title;
                       return <li key={index} style={{ marginBottom: '4px' }}>{recText}</li>;
@@ -915,12 +908,12 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
 
             {/* Button to Legal Pulse */}
             <button
-              onClick={() => window.location.href = `/legal-pulse?contractId=${contract._id}`}
+              onClick={() => window.location.href = `/legalpulse/${contract._id}`}
               style={{
                 width: '100%',
                 padding: '12px 24px',
-                background: 'white',
-                color: '#667eea',
+                background: '#3b82f6',
+                color: 'white',
                 border: 'none',
                 borderRadius: '8px',
                 fontSize: '16px',
@@ -933,10 +926,12 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
                 gap: '8px'
               }}
               onMouseOver={(e) => {
+                e.currentTarget.style.background = '#2563eb';
                 e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.3)';
               }}
               onMouseOut={(e) => {
+                e.currentTarget.style.background = '#3b82f6';
                 e.currentTarget.style.transform = 'translateY(0)';
                 e.currentTarget.style.boxShadow = 'none';
               }}
