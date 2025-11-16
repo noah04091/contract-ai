@@ -152,53 +152,8 @@ export default function LegalPulse() {
   // Feed Hook
   const { events: feedEvents, isConnected: feedConnected, clearEvents } = useLegalPulseFeed();
 
-  // ✅ FIXED: Use real Legal Pulse data if available, only use mock data as fallback
-  const enrichContractWithMockData = (contract: Contract): Contract => {
-    // ✅ If contract already has Legal Pulse data, return it unchanged
-    if (contract.legalPulse && (contract.legalPulse.topRisks || contract.legalPulse.recommendations)) {
-      console.log(`✅ Using REAL Legal Pulse data for contract ${contract._id}`);
-      return contract;
-    }
-
-    // ✅ Only use mock data if NO Legal Pulse data exists
-    console.log(`⚠️ No Legal Pulse data for contract ${contract._id}, using mock data`);
-
-    const riskScore = Math.floor(Math.random() * 100);
-    const lastAnalysis = new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString();
-
-    const mockTopRisks = [
-      "Veraltete Datenschutzklauseln (DSGVO-Konformität)",
-      "Fehlende Kündigungsfristen für bestimmte Vertragsarten",
-      "Unklare Haftungsregelungen bei Leistungsstörungen",
-      "Veraltete AGB-Verweise auf überholte Rechtsprechung",
-      "Fehlende Salvatorische Klausel"
-    ];
-
-    const mockRecommendations = [
-      "Datenschutzerklärung nach DSGVO Art. 13/14 aktualisieren",
-      "Kündigungsfristen gem. § 573c BGB präzisieren",
-      "Haftungsbeschränkungen nach § 309 BGB überprüfen",
-      "AGB-Verweise auf aktuelle Rechtsprechung anpassen",
-      "Salvatorische Klausel zur Vertragserhaltung einfügen"
-    ];
-
-    const mockScoreHistory = Array.from({length: 12}, (_, i) => ({
-      date: new Date(Date.now() - (11-i) * 30 * 24 * 60 * 60 * 1000).toLocaleDateString('de-DE', {month: 'short'}),
-      score: Math.max(20, Math.min(90, riskScore + (Math.random() - 0.5) * 30))
-    }));
-
-    return {
-      ...contract,
-      legalPulse: {
-        riskScore,
-        lastAnalysis,
-        lastRecommendation: mockRecommendations[Math.floor(Math.random() * mockRecommendations.length)],
-        topRisks: mockTopRisks.slice(0, Math.floor(Math.random() * 3) + 2),
-        recommendations: mockRecommendations.slice(0, Math.floor(Math.random() * 3) + 2),
-        scoreHistory: mockScoreHistory
-      }
-    };
-  };
+  // ✅ REMOVED: Mock data logic - now using real data only
+  // Contracts without Legal Pulse data will show "Analysis Pending" state in UI
 
   // Detaillierte Risiko-Daten
   // ✅ getRiskDetails removed - now using backend data directly
@@ -234,12 +189,11 @@ export default function LegalPulse() {
         });
       }
 
-      // Enrich contracts with mock Legal Pulse data
-      const enrichedContracts = contractsArray.map(enrichContractWithMockData);
-      setContracts(enrichedContracts);
+      // ✅ Use real data only - no mock enrichment
+      setContracts(contractsArray);
 
       if (contractId) {
-        const contract = enrichedContracts.find((c: Contract) => c._id === contractId);
+        const contract = contractsArray.find((c: Contract) => c._id === contractId);
         if (contract) {
           setSelectedContract(contract);
         } else {
@@ -344,8 +298,8 @@ export default function LegalPulse() {
       }
 
       // Enrich and append new contracts
-      const enrichedContracts = contractsArray.map(enrichContractWithMockData);
-      setContracts(prev => [...prev, ...enrichedContracts]);
+      // ✅ Use real data only - no mock enrichment
+      setContracts(prev => [...prev, ...contractsArray]);
     } catch (err) {
       console.error("Error loading more contracts:", err);
       setNotification({ message: "Fehler beim Laden weiterer Verträge", type: "error" });

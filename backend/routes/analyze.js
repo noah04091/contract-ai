@@ -11,6 +11,7 @@ const path = require("path");
 const contractAnalyzer = require("../services/contractAnalyzer"); // 📋 Provider Detection Import
 const { generateEventsForContract } = require("../services/calendarEvents"); // 🆕 CALENDAR EVENTS IMPORT
 const AILegalPulse = require("../services/aiLegalPulse"); // ⚡ NEW: Legal Pulse Risk Analysis
+const { getInstance: getCostTrackingService } = require("../services/costTracking"); // 💰 NEW: Cost Tracking
 
 const router = express.Router();
 
@@ -2102,6 +2103,28 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
 
     console.log(`✅ [${requestId}] OpenAI deep lawyer-level response received`);
 
+    // 💰 Track API cost
+    if (completion.usage) {
+      try {
+        const costTracker = getCostTrackingService();
+        await costTracker.trackAPICall({
+          userId: req.user.userId,
+          model: 'gpt-4o',
+          inputTokens: completion.usage.prompt_tokens,
+          outputTokens: completion.usage.completion_tokens,
+          feature: 'analyze',
+          requestId,
+          metadata: {
+            documentType: validationResult.documentType,
+            strategy: validationResult.strategy,
+            fileName: req.file.originalname
+          }
+        });
+      } catch (costError) {
+        console.error(`⚠️ [${requestId}] Cost tracking failed (non-critical):`, costError.message);
+      }
+    }
+
     const aiMessage = completion.choices[0].message.content || "";
     const jsonStart = aiMessage.indexOf("{");
     const jsonEnd = aiMessage.lastIndexOf("}") + 1;
@@ -2321,7 +2344,9 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
               provider: extractedProvider?.displayName || 'Unknown',
               type: extractedContractType || validationResult.documentType || 'other', // ✅ FIXED: Use contract type (telecom, purchase, etc.) instead of document type
               startDate: extractedStartDate,
-              expiryDate: extractedEndDate
+              expiryDate: extractedEndDate,
+              userId: req.user.userId, // 💰 For cost tracking
+              contractId: existingContract._id // 💰 For cost tracking
             };
 
             console.log(`📋 [${requestId}] Legal Pulse using contract type: "${contractInfo.type}" (extracted: ${extractedContractType || 'none'}, documentType: ${validationResult.documentType})`);
@@ -2465,7 +2490,9 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
               provider: extractedProvider?.displayName || 'Unknown',
               type: extractedContractType || validationResult.documentType || 'other', // ✅ FIXED: Use contract type (telecom, purchase, etc.) instead of document type
               startDate: extractedStartDate,
-              expiryDate: extractedEndDate
+              expiryDate: extractedEndDate,
+              userId: req.user.userId, // 💰 For cost tracking
+              contractId: savedContract._id // 💰 For cost tracking
             };
 
             console.log(`📋 [${requestId}] Legal Pulse using contract type: "${contractInfo.type}" (extracted: ${extractedContractType || 'none'}, documentType: ${validationResult.documentType})`);

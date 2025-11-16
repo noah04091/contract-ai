@@ -761,6 +761,15 @@ const connectDB = async () => {
       console.error("❌ Fehler bei Legal Pulse Notifications:", err);
     }
 
+    // 💰 COST TRACKING API (OpenAI Usage & Budget Monitoring)
+    try {
+      const costTrackingRoutes = require("./routes/costTracking");
+      app.use("/api/cost-tracking", verifyToken, costTrackingRoutes);
+      console.log("✅ Cost Tracking API geladen unter /api/cost-tracking");
+    } catch (err) {
+      console.error("❌ Fehler bei Cost Tracking:", err);
+    }
+
     // ✅ 14.2.1 ALERT FEEDBACK SYSTEM (Phase 2 - Thumbs Up/Down)
     try {
       const alertFeedbackRoutes = require("./routes/alertFeedback")(db);

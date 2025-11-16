@@ -4,6 +4,7 @@ const fs = require("fs").promises;
 const pdfParse = require("pdf-parse");
 const path = require("path");
 const { getInstance: getLawEmbeddings } = require("./lawEmbeddings");
+const { getInstance: getCostTrackingService } = require("./costTracking"); // 💰 NEW: Cost Tracking
 
 class AILegalPulse {
   constructor() {
@@ -188,15 +189,36 @@ Basiere deine Analyse auf typischen Risiken für diese Art von Vertrag.`;
       const response = await this.openai.chat.completions.create({
         model: "gpt-4",
         messages: [
-          { 
-            role: "system", 
-            content: "Du bist ein Experte für deutsches Vertragsrecht und führst Legal Due Diligence durch." 
+          {
+            role: "system",
+            content: "Du bist ein Experte für deutsches Vertragsrecht und führst Legal Due Diligence durch."
           },
           { role: "user", content: prompt }
         ],
         temperature: 0.3,
         max_tokens: 2000
       });
+
+      // 💰 Track API cost
+      if (response.usage) {
+        try {
+          const costTracker = getCostTrackingService();
+          await costTracker.trackAPICall({
+            userId: contractInfo?.userId || null,
+            model: 'gpt-4',
+            inputTokens: response.usage.prompt_tokens,
+            outputTokens: response.usage.completion_tokens,
+            feature: 'legal-pulse',
+            contractId: contractInfo?._id || contractInfo?.contractId || null,
+            metadata: {
+              contractName: contractInfo?.name,
+              contractType: contractInfo?.type
+            }
+          });
+        } catch (costError) {
+          console.error(`⚠️ Legal Pulse cost tracking failed (non-critical):`, costError.message);
+        }
+      }
 
       return this.parseAIResponse(response.choices[0].message.content);
     } catch (error) {
@@ -246,6 +268,29 @@ ${this.prompts.riskAnalysis}`;
         temperature: 0.2,
         max_tokens: 3000
       });
+
+      // 💰 Track API cost
+      if (response.usage) {
+        try {
+          const costTracker = getCostTrackingService();
+          await costTracker.trackAPICall({
+            userId: contractInfo?.userId || null,
+            model: 'gpt-4',
+            inputTokens: response.usage.prompt_tokens,
+            outputTokens: response.usage.completion_tokens,
+            feature: 'legal-pulse',
+            contractId: contractInfo?._id || contractInfo?.contractId || null,
+            metadata: {
+              contractName: contractInfo?.name,
+              contractType: contractInfo?.type,
+              ragEnabled: relevantLaws.length > 0,
+              relevantLawsCount: relevantLaws.length
+            }
+          });
+        } catch (costError) {
+          console.error(`⚠️ Legal Pulse cost tracking failed (non-critical):`, costError.message);
+        }
+      }
 
       return this.parseAIResponse(response.choices[0].message.content);
     } catch (error) {
