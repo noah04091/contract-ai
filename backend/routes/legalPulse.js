@@ -141,6 +141,7 @@ router.get("/settings", verifyToken, async (req, res) => {
     const defaultSettings = {
       enabled: true,
       similarityThreshold: 0.70, // 70% default
+      digestMode: 'weekly', // Always weekly to reduce costs
       categories: [
         'Arbeitsrecht',
         'Mietrecht',
@@ -149,7 +150,6 @@ router.get("/settings", verifyToken, async (req, res) => {
         'Datenschutz',
         'Verbraucherrecht'
       ],
-      digestMode: 'instant', // 'instant' | 'daily' | 'weekly'
       emailNotifications: true
     };
 
@@ -220,8 +220,9 @@ router.put("/settings", verifyToken, async (req, res) => {
       updates['legalPulseSettings.categories'] = categories;
     }
 
-    if (digestMode && ['instant', 'daily', 'weekly'].includes(digestMode)) {
-      updates['legalPulseSettings.digestMode'] = digestMode;
+    // Force weekly digest mode to reduce costs (ignore instant/daily)
+    if (digestMode) {
+      updates['legalPulseSettings.digestMode'] = 'weekly';
     }
 
     if (typeof emailNotifications === 'boolean') {

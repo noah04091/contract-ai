@@ -356,7 +356,7 @@ class LegalPulseMonitor {
         enabled: true,
         similarityThreshold: 0.70,
         categories: ['Arbeitsrecht', 'Mietrecht', 'Kaufrecht', 'Vertragsrecht', 'Datenschutz', 'Verbraucherrecht'],
-        digestMode: 'instant',
+        digestMode: 'weekly', // Always weekly to reduce costs
         emailNotifications: true
       };
 
@@ -380,12 +380,10 @@ class LegalPulseMonitor {
         }
       }
 
-      // 🆕 Check digest mode - if not instant, queue for later
-      if (settings.digestMode !== 'instant') {
-        console.log(`   📬 Queueing alert for ${settings.digestMode} digest: ${user.email}`);
-        await this.queueDigestAlert(user._id, contract, lawChange, settings.digestMode);
-        return true; // Count as "sent" for stats
-      }
+      // 🆕 Always queue for weekly digest (cost optimization)
+      console.log(`   📬 Queueing alert for weekly digest: ${user.email}`);
+      await this.queueDigestAlert(user._id, contract, lawChange, 'weekly');
+      return true; // Count as "sent" for stats
 
       // Check if user opted out (legacy setting)
       if (user.settings?.legalPulseAuto === false) {

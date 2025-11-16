@@ -243,53 +243,27 @@ export default function LegalPulseSettings({ onSaveSuccess, compact = false }: L
             </div>
           </div>
 
-          {/* Digest Mode */}
+          {/* Benachrichtigungs-Info (Weekly only) */}
           <div className={styles.settingCard}>
             <div className={styles.settingHeader}>
               <div className={styles.settingInfo}>
-                <h4 className={styles.settingTitle}>📬 Benachrichtigungs-Modus</h4>
+                <h4 className={styles.settingTitle}>📬 Benachrichtigungen</h4>
                 <p className={styles.settingDescription}>
-                  Wie möchten Sie über Gesetzesänderungen informiert werden?
+                  Sie erhalten jeden Mittwoch eine wöchentliche Zusammenfassung aller relevanten Gesetzesänderungen per E-Mail.
                 </p>
               </div>
+              <span className={styles.modeIcon} style={{ fontSize: '1.5rem' }}>📆</span>
             </div>
 
-            <div className={styles.digestModeOptions}>
-              <button
-                className={`${styles.digestModeButton} ${settings.digestMode === 'instant' ? styles.active : ''}`}
-                onClick={() => handleUpdateDigestMode('instant')}
-                disabled={isSaving}
-              >
-                <span className={styles.modeIcon}>⚡</span>
-                <div className={styles.modeContent}>
-                  <strong>Sofort</strong>
-                  <p>E-Mail bei jeder Änderung</p>
-                </div>
-              </button>
-
-              <button
-                className={`${styles.digestModeButton} ${settings.digestMode === 'daily' ? styles.active : ''}`}
-                onClick={() => handleUpdateDigestMode('daily')}
-                disabled={isSaving}
-              >
-                <span className={styles.modeIcon}>📅</span>
-                <div className={styles.modeContent}>
-                  <strong>Täglich</strong>
-                  <p>Zusammenfassung jeden Morgen</p>
-                </div>
-              </button>
-
-              <button
-                className={`${styles.digestModeButton} ${settings.digestMode === 'weekly' ? styles.active : ''}`}
-                onClick={() => handleUpdateDigestMode('weekly')}
-                disabled={isSaving}
-              >
-                <span className={styles.modeIcon}>📆</span>
-                <div className={styles.modeContent}>
-                  <strong>Wöchentlich</strong>
-                  <p>Wochenübersicht jeden Montag</p>
-                </div>
-              </button>
+            <div className={styles.infoBanner}>
+              <span className={styles.infoIcon}>ℹ️</span>
+              <div>
+                <strong>Wöchentliche Zusammenfassung</strong>
+                <p>
+                  Alle relevanten Gesetzesänderungen werden gebündelt und jeden Mittwoch als übersichtliche Zusammenfassung per E-Mail versendet.
+                  Dies reduziert E-Mail-Überlastung und gibt Ihnen einen klaren Überblick über alle Änderungen der Woche.
+                </p>
+              </div>
             </div>
           </div>
 
