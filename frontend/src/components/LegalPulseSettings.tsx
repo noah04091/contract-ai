@@ -67,14 +67,6 @@ export default function LegalPulseSettings({ onSaveSuccess, compact = false }: L
     }
   };
 
-  const handleUpdateDigestMode = async (mode: 'instant' | 'daily' | 'weekly') => {
-    const success = await updateSettings({ digestMode: mode });
-    if (success) {
-      setShowSuccessMessage(true);
-      onSaveSuccess?.();
-    }
-  };
-
   const handleToggleEmailNotifications = async (enabled: boolean) => {
     const success = await updateSettings({ emailNotifications: enabled });
     if (success) {
