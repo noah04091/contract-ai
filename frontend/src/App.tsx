@@ -72,7 +72,6 @@ const Subscribe = lazy(() => import("./pages/Subscribe"));
 const Upgrade = lazy(() => import("./pages/Upgrade"));
 const BetterContracts = lazy(() => import("./pages/BetterContracts"));
 const LegalPulse = lazy(() => import("./pages/LegalPulse"));
-const Admin = lazy(() => import("./pages/Admin")); // 🔐 NEU: Admin Dashboard
 const Envelopes = lazy(() => import("./pages/Envelopes")); // ✉️ NEU: Digital Signature Dashboard
 const PlaceSignatureFields = lazy(() => import("./pages/PlaceSignatureFields")); // ✉️ NEU: Field Placement Editor
 
@@ -182,9 +181,6 @@ function AppWithLoader() {
             {/* 🔍 Legal Pulse - Rechtliche Risikoanalyse */}
             <Route path="/legalpulse" element={<RequireAuth><LegalPulse /></RequireAuth>} />
             <Route path="/legalpulse/:contractId" element={<RequireAuth><LegalPulse /></RequireAuth>} />
-
-            {/* 🔐 Admin Dashboard - Only for admins */}
-            <Route path="/admin" element={<RequireAuth><Admin /></RequireAuth>} />
 
             <Route path="/compare" element={<RequireAuth><Compare /></RequireAuth>} />
             <Route path="/chat" element={<RequireAuth><Chat /></RequireAuth>} />

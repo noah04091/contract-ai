@@ -14,6 +14,8 @@ import {
 } from 'recharts';
 import DashboardSkeleton from "../components/DashboardSkeleton"; // 💀 Skeleton Loader
 import UpcomingDeadlinesWidget from "../components/UpcomingDeadlinesWidget"; // 📅 Upcoming Deadlines Widget
+import AdminDashboard from "../components/AdminDashboard"; // 🔐 Admin Dashboard
+import { useAuth } from "../context/AuthContext"; // 🔐 Auth Context
 
 interface Contract {
   _id: string;
@@ -55,6 +57,7 @@ export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth(); // 🔐 Get user from Auth Context
 
   // 🎯 SMART PRIORITY LOGIK
   const calculatePriorityContracts = (allContracts: Contract[]) => {
@@ -574,10 +577,13 @@ export default function Dashboard() {
   const { pieData, monthlyData, riskData, trendData } = getAnalyticsData();
   const recentLegalPulseContracts = getRecentContractsForLegalPulse();
 
+  // 🔐 ADMIN DASHBOARD LOGIC - Show admin dashboard for admin users
+  const isAdmin = user?.role === 'admin';
+
   return (
     <div className={styles.dashboardContainer}>
       <Helmet>
-        <title>Dashboard – Deine Vertragsübersicht | Contract AI</title>
+        <title>{isAdmin ? 'Admin Dashboard' : 'Dashboard – Deine Vertragsübersicht'} | Contract AI</title>
         <meta name="description" content="Alle deine Verträge, Analysen und Optimierungen auf einen Blick. Verwalte deine Verträge zentral und behalte jederzeit volle Kontrolle mit Contract AI." />
         <meta name="keywords" content="Dashboard, Vertragsübersicht, Verträge verwalten, Vertragsanalyse, Contract AI" />
         <link rel="canonical" href="https://www.contract-ai.de/dashboard" />
@@ -593,6 +599,22 @@ export default function Dashboard() {
         <meta name="twitter:description" content="Alle Vertragsanalysen und -optimierungen an einem Ort. Contract AI macht Vertragsmanagement einfach und smart." />
         <meta name="twitter:image" content="https://contract-ai.de/og-image.jpg" />
       </Helmet>
+
+      {/* 🔐 CONDITIONAL RENDERING: Admin Dashboard vs User Dashboard */}
+      {isAdmin ? (
+        <>
+          {notification && (
+            <Notification
+              message={notification.message}
+              type={notification.type}
+              onClose={() => setNotification(null)}
+            />
+          )}
+          <AdminDashboard />
+        </>
+      ) : (
+        <>
+          {/* 👤 NORMAL USER DASHBOARD - Original Content */}
 
       <div className={styles.dashboardHeader}>
         <h1>Vertragsübersicht</h1>
@@ -1577,6 +1599,9 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+        </>
+      )}
+      {/* 🔐 END CONDITIONAL RENDERING */}
     </div>
   );
 }

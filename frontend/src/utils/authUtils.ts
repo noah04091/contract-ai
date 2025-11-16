@@ -1,30 +1,31 @@
 // 📁 frontend/src/utils/authUtils.ts
 // ✅ HYBRID VERSION - Backend-kompatible Interface + deine Helper-Funktionen
 
-// ✅ BACKEND-KOMPATIBLE UserData Interface 
+// ✅ BACKEND-KOMPATIBLE UserData Interface
 export interface UserData {
   // 🔐 Auth-Basis (aus Backend)
   email: string;
+  role?: 'user' | 'admin'; // 🔐 Admin-Role Support
   subscriptionPlan: "free" | "business" | "premium";
   subscriptionStatus: string;
   subscriptionActive: boolean;
-  
+
   // 🏷️ Plan-Booleans (aus Backend)
   isPremium: boolean;
   isBusiness: boolean;
   isFree: boolean;
-  
+
   // 📊 Limits (aus Backend)
   analysisCount: number;
   analysisLimit: number;
   optimizationCount: number;
   optimizationLimit: number;
-  
+
   // 📅 Timestamps (aus Backend)
   createdAt: string;
   emailNotifications: boolean;
   contractReminders: boolean;
-  
+
   // ✅ OPTIONAL: Falls vorhanden (für Zukunft)
   _id?: string;
   firstName?: string;

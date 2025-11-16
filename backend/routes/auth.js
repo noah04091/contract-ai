@@ -185,6 +185,7 @@ router.get("/me", verifyToken, async (req, res) => {
     const userData = {
       email: user.email,
       verified: user.verified ?? true, // ⭐ NEU: Verification Status
+      role: user.role || 'user', // 🔐 Admin-Role Support
       subscriptionPlan: plan,
       subscriptionStatus: status,
       subscriptionActive,
