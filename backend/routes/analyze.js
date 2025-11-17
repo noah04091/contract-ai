@@ -2795,7 +2795,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       
       analysisId: inserted.insertedId,
       usage: {
-        count: count + 1,
+        count: newCount,  // Already incremented earlier (line 2080)
         limit: limit,
         plan: plan
       }
