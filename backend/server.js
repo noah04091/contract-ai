@@ -405,6 +405,15 @@ const connectDB = async () => {
       console.error("❌ Fehler beim Laden der E-Mail-Verifizierungs-Routen:", err);
     }
 
+    // ✅ 2.5 ADMIN ROUTES - 🔐 Admin Statistics & Monitoring
+    try {
+      const adminRoutes = require("./routes/admin");
+      app.use("/api/admin", adminRoutes);
+      console.log("✅ Admin-Routen geladen unter /api/admin");
+    } catch (err) {
+      console.error("❌ Fehler beim Laden der Admin-Routen:", err);
+    }
+
     // ✅ 3. STRIPE ROUTES - MIT /api PREFIX  
     try {
       app.use("/api/stripe/portal", require("./routes/stripePortal"));
