@@ -79,13 +79,13 @@ export default function Chat() {
     }
   }, [chats, active, isPremium, isLoading]);
 
-  // ✅ Autoscroll on new messages
+  // ✅ Autoscroll on new messages AND during streaming
   useEffect(() => {
     scrollerRef.current?.scrollTo({
       top: scrollerRef.current.scrollHeight,
       behavior: "smooth",
     });
-  }, [active?.messages?.length]);
+  }, [active?.messages?.length, active?.messages?.[active?.messages.length - 1]?.content]);
 
   // ✅ Focus input when active chat changes
   useEffect(() => {

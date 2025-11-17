@@ -280,18 +280,15 @@ router.post("/new", verifyToken, async (req, res) => {
 
     const chatDocument = {
       userId: new ObjectId(userId),
-      title: "Neuer Chat",
+      title: initialQuestion && initialQuestion.trim() ? makeSmartTitle(initialQuestion) : "Neuer Chat",
       createdAt: new Date(),
       updatedAt: new Date(),
       messages: [{ role: "system", content: SYSTEM_PROMPT }],
       attachments: attachment ? [attachment] : [],
     };
 
-    // Add initial question if provided
-    if (initialQuestion && initialQuestion.trim()) {
-      chatDocument.messages.push({ role: "user", content: initialQuestion });
-      chatDocument.title = makeSmartTitle(initialQuestion);
-    }
+    // Note: initialQuestion is NOT added here - frontend will send it via sendMessage
+    // This prevents duplicate messages in the chat
 
     const { insertedId } = await chats.insertOne(chatDocument);
     const chat = await chats.findOne({ _id: insertedId });
