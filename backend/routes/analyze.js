@@ -2004,6 +2004,9 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
     if (plan === "business") limit = 25; // Business: 25 Analysen/Monat
     if (plan === "premium" || plan === "enterprise") limit = Infinity; // Enterprise: Unlimited (premium = legacy)
 
+    // ✅ isPremium Flag für spätere Verwendung
+    const isPremium = plan === "premium" || plan === "enterprise";
+
     console.log(`📊 [${requestId}] User Plan: ${plan}, Current count: ${user.analysisCount ?? 0}, Limit: ${limit}`);
 
     // ✅ ATOMIC UPDATE: Build query based on plan
