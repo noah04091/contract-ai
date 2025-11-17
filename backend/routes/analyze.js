@@ -2046,7 +2046,8 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
     });
 
     // Prüfen ob Update erfolgreich war
-    if (!updateResult.value) {
+    // NOTE: MongoDB native driver returns document directly, NOT in .value property!
+    if (!updateResult) {
       // Update fehlgeschlagen = Limit erreicht
       console.warn(`⚠️ [${requestId}] Analysis limit reached for user ${req.user.userId} (Plan: ${plan})`);
 
@@ -2076,7 +2077,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
     }
 
     // ✅ Counter wurde erfolgreich erhöht - fortfahren mit Analyse
-    const newCount = updateResult.value.analysisCount;
+    const newCount = updateResult.analysisCount;  // Document returned directly!
     console.log(`✅ [${requestId}] analysisCount atomar erhöht auf ${newCount}/${limit}`);
 
     // User-Referenz aktualisieren für spätere Verwendung
