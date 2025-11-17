@@ -2672,10 +2672,43 @@ const smartTruncateContract = (text, maxLength = 12000) => { // Increased for be
 /**
  * 🚀 ULTIMATIVER KI-PROMPT für Anwaltskanzlei-Niveau
  */
-const createOptimizedPrompt = (contractText, contractType, gaps, fileName, contractInfo) => {
+const createOptimizedPrompt = (contractText, contractType, gaps, fileName, contractInfo, analysisContext = null) => {
   const truncatedText = smartTruncateContract(contractText, 6000);
   const typeConfig = CONTRACT_TYPES[contractType] || CONTRACT_TYPES.sonstiges;
-  
+
+  // 🆕 Build analysis context string if available
+  let analysisContextStr = '';
+  if (analysisContext) {
+    analysisContextStr = '\n📊 ZUSÄTZLICHER ANALYSE-CONTEXT (von vorheriger Vertragsanalyse):\n';
+
+    if (analysisContext.summary) {
+      const summaryText = Array.isArray(analysisContext.summary)
+        ? analysisContext.summary.join(' ')
+        : analysisContext.summary;
+      analysisContextStr += `\n✅ Zusammenfassung:\n${summaryText}\n`;
+    }
+
+    if (analysisContext.legalAssessment) {
+      const legalText = Array.isArray(analysisContext.legalAssessment)
+        ? analysisContext.legalAssessment.join(' ')
+        : analysisContext.legalAssessment;
+      analysisContextStr += `\n⚖️ Rechtssicherheit:\n${legalText}\n`;
+    }
+
+    if (analysisContext.suggestions) {
+      const suggestionsText = Array.isArray(analysisContext.suggestions)
+        ? analysisContext.suggestions.join(' ')
+        : analysisContext.suggestions;
+      analysisContextStr += `\n💡 Optimierungsvorschläge:\n${suggestionsText}\n`;
+    }
+
+    if (analysisContext.contractScore) {
+      analysisContextStr += `\n🎯 Vertragsscore: ${analysisContext.contractScore}/100\n`;
+    }
+
+    analysisContextStr += '\n⚠️ WICHTIG: Nutze diese Analyse-Informationen als zusätzlichen Context, aber führe trotzdem deine vollständige eigene Optimierungsanalyse durch!\n';
+  }
+
   // Erstelle spezifische Instruktionen basierend auf Vertragstyp
   let typeSpecificInstructions = '';
   
@@ -2721,6 +2754,7 @@ KONTEXT:
 ${typeSpecificInstructions}
 
 ${gapSummary}
+${analysisContextStr}
 
 VERTRAG (Auszug):
 """
@@ -2921,8 +2955,25 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
     });
   }
 
+  // 🆕 Extract analysis context if provided
+  let analysisContext = null;
+  if (req.body.analysisContext) {
+    try {
+      analysisContext = JSON.parse(req.body.analysisContext);
+      console.log(`📊 [${requestId}] Analysis context received from ContractAnalysis:`, {
+        hasSummary: !!analysisContext.summary,
+        hasLegalAssessment: !!analysisContext.legalAssessment,
+        hasSuggestions: !!analysisContext.suggestions,
+        hasRecommendations: !!analysisContext.recommendations,
+        contractScore: analysisContext.contractScore
+      });
+    } catch (parseError) {
+      console.warn(`⚠️ [${requestId}] Could not parse analysisContext:`, parseError.message);
+    }
+  }
+
   let tempFilePath = null;
-  
+
   try {
     tempFilePath = req.file.path;
     
@@ -3037,7 +3088,8 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
       contractTypeInfo.type,
       gapAnalysis.gaps,
       req.file.originalname,
-      contractTypeInfo
+      contractTypeInfo,
+      analysisContext  // 🆕 Pass analysis context from ContractAnalysis
     );
 
     // 🔥 PERFECTION MODE: GPT-4o für maximale Qualität & Konsistenz
@@ -3858,7 +3910,8 @@ router.post("/stream", verifyToken, uploadLimiter, smartRateLimiter, upload.sing
       contractTypeInfo.type,
       gapAnalysis.gaps,
       req.file.originalname,
-      contractTypeInfo
+      contractTypeInfo,
+      analysisContext  // 🆕 Pass analysis context from ContractAnalysis
     );
 
     const modelToUse = "gpt-4o";
