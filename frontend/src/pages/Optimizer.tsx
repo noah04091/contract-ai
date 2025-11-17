@@ -628,6 +628,9 @@ export default function Optimizer() {
     contractScore?: number;
   } | null>(null);
 
+  // 🆕 Existing Contract ID (to update instead of create new)
+  const [existingContractId, setExistingContractId] = useState<string | null>(null);
+
   // ✅ ORIGINAL: Export & Pitch States + Portal Refs
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showPitchMenu, setShowPitchMenu] = useState(false);
@@ -698,6 +701,7 @@ export default function Optimizer() {
   // 🆕 NEW: Handle incoming state from ContractAnalysis
   useEffect(() => {
     const state = location.state as {
+      contractId?: string;
       file?: File;
       analysisContext?: {
         summary?: string | string[];
@@ -718,6 +722,12 @@ export default function Optimizer() {
 
       setFile(state.file);
       setAnalysisContext(state.analysisContext);
+
+      // 🆕 Store existing contract ID if provided
+      if (state.contractId) {
+        console.log('[ANALYZER-OPTIMIZER] Empfange ContractId:', state.contractId);
+        setExistingContractId(state.contractId);
+      }
 
       // Optional: Show toast notification
       setToast({
@@ -934,6 +944,12 @@ export default function Optimizer() {
 
     const formData = new FormData();
     formData.append("file", file);
+
+    // 🆕 Add existing contract ID if available (to update instead of create new)
+    if (existingContractId) {
+      console.log('[OPTIMIZER] Adding existing contract ID:', existingContractId);
+      formData.append("existingContractId", existingContractId);
+    }
 
     // 🆕 Add analysis context if available (from ContractAnalysis)
     if (analysisContext) {
