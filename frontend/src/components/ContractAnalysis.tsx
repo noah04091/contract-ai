@@ -1134,18 +1134,6 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
             )}
           </div>
 
-          {/* ✅ CRITICAL FIX: Usage Info - funktioniert für beide */}
-          {(result?.usage || initialResult?.usage) && (
-            <div className={styles.usageInfo}>
-              <p>
-                📊 Anwaltliche Analyse <strong>{(result?.usage || initialResult?.usage)?.count}</strong> von <strong>{(result?.usage || initialResult?.usage)?.limit === Infinity ? '∞' : (result?.usage || initialResult?.usage)?.limit}</strong>
-                <span className={styles.planBadge}>
-                  {(result?.usage || initialResult?.usage)?.plan}
-                </span>
-              </p>
-            </div>
-          )}
-
           {/* ✅ NEU: Ausführliches Rechtsgutachten */}
           {(result?.detailedLegalOpinion || initialResult?.detailedLegalOpinion) && (
             <motion.div
@@ -1220,11 +1208,6 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
                 <button
                   className={`${styles.secondaryButton} ${styles.legalPulseButton}`}
                   onClick={() => window.location.href = `/legalpulse/${result?.originalContractId || initialResult?.originalContractId}`}
-                  style={{
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    color: 'white',
-                    border: 'none'
-                  }}
                 >
                   <BarChart3 size={18} />
                   <span>Legal Pulse Analyse</span>
@@ -1312,6 +1295,18 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
                 )}
               </motion.div>
             </motion.div>
+          )}
+
+          {/* ✅ Usage Info - Kleine Randinformation ganz unten */}
+          {(result?.usage || initialResult?.usage) && (
+            <div className={styles.usageInfo}>
+              <p>
+                📊 Anwaltliche Analyse <strong>{(result?.usage || initialResult?.usage)?.count}</strong> von <strong>{(result?.usage || initialResult?.usage)?.limit === Infinity ? '∞' : (result?.usage || initialResult?.usage)?.limit}</strong>
+                <span className={styles.planBadge}>
+                  {(result?.usage || initialResult?.usage)?.plan}
+                </span>
+              </p>
+            </div>
           )}
         </motion.div>
       )}

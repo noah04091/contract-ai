@@ -1116,33 +1116,32 @@
 .yellowBullet { background: #f59e0b; }
 .purpleBullet { background: #8b5cf6; }
 
-/* ✅ OPTIMIZED: Usage Info with White Background */
+/* ✅ Usage Info - Kleine Randinformation ganz unten */
 .usageInfo {
-  background: #ffffff;
-  border: 1px solid #3b82f6;
-  border-radius: 12px;
-  padding: 1rem;
-  margin-bottom: 2rem;
-  text-align: center;
-  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  margin-top: 2rem;
+  text-align: right;
+  opacity: 0.8;
 }
 
 .usageInfo p {
   margin: 0;
-  font-size: 0.875rem;
-  color: #1e40af;
-  font-weight: 500;
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 400;
 }
 
 .planBadge {
-  background: #3b82f6;
-  color: white;
-  font-size: 0.75rem;
-  padding: 0.25rem 0.5rem;
-  border-radius: 9999px;
+  background: #e5e7eb;
+  color: #374151;
+  font-size: 0.7rem;
+  padding: 0.2rem 0.4rem;
+  border-radius: 6px;
   margin-left: 0.5rem;
-  font-weight: 600;
-  box-shadow: 0 1px 3px rgba(59, 130, 246, 0.3);
+  font-weight: 500;
 }
 
 /* ✅ OPTIMIZED: Enhanced Action Buttons */
@@ -1194,44 +1193,43 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1.25rem;
-  border: none;
+  background: #ffffff;
+  color: #374151;
+  border: 1px solid #d1d5db;
   border-radius: 12px;
   font-weight: 500;
   font-size: 0.875rem;
   cursor: pointer;
   transition: all 0.2s ease;
+  flex: 1;
+  min-width: 200px;
+  justify-content: center;
 }
 
-.downloadButton {
-  background: #ffffff;
-  color: #374151;
-  border: 1px solid #d1d5db;
-}
-
-.downloadButton:hover {
+.secondaryButton:hover {
   background: #f9fafb;
   transform: translateY(-1px);
   border-color: #9ca3af;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.downloadButton:disabled {
+.secondaryButton:disabled {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
 }
 
-.newAnalysisButton {
-  background: #ffffff;
-  color: #374151;
-  border: 1px solid #d1d5db;
+/* Alle Secondary Buttons haben jetzt den gleichen Base-Style */
+.legalPulseButton {
+  /* Erbt alle Styles von .secondaryButton */
 }
 
-.newAnalysisButton:hover {
-  background: #f9fafb;
-  border-color: #9ca3af;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+.downloadButton {
+  /* Erbt alle Styles von .secondaryButton */
+}
+
+.newAnalysisButton {
+  /* Erbt alle Styles von .secondaryButton */
 }
 
 /* ✅ OPTIMIZED: Optimization Result with White Background */
