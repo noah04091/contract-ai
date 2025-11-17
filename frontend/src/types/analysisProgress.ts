@@ -9,7 +9,7 @@ export interface AnalysisStep {
   id: StepId;
   label: string;
   status: StepStatus;
-  subtext?: string;         // e.g. "Model: gpt-4o", "~12 s"
+  subtext?: string;         // e.g. "~12 s" (optional additional info)
   durationMs?: number;       // how long this step took (for completed steps)
   warnings?: number;         // number of warnings (for warn status)
   error?: {

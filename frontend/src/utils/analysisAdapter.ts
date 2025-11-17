@@ -46,10 +46,8 @@ export function mapLegacyToProgress(legacy: LegacyProgress): AnalysisProgress {
         : index === currentStepIndex
         ? 'active'
         : 'queued',
-      // Add helpful subtext for active step
-      subtext: index === currentStepIndex && id === 'ai'
-        ? 'Model: gpt-4o'
-        : undefined
+      // No subtext needed
+      subtext: undefined
     }))
   };
 }
