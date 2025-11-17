@@ -1201,48 +1201,49 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
               )}
             </motion.button>
 
-            {/* Secondary Actions */}
-            <div className={styles.secondaryActions}>
-              {/* Legal Pulse Button - Only show if contractId is available */}
-              {(result?.originalContractId || initialResult?.originalContractId) && (
-                <button
-                  className={`${styles.secondaryButton} ${styles.legalPulseButton}`}
-                  onClick={() => window.location.href = `/legalpulse/${result?.originalContractId || initialResult?.originalContractId}`}
-                >
-                  <BarChart3 size={18} />
-                  <span>Legal Pulse Analyse</span>
-                </button>
+            {/* Legal Pulse Button - Only show if contractId is available */}
+            {(result?.originalContractId || initialResult?.originalContractId) && (
+              <button
+                className={`${styles.secondaryButton} ${styles.legalPulseButton}`}
+                onClick={() => window.location.href = `/legalpulse/${result?.originalContractId || initialResult?.originalContractId}`}
+              >
+                <BarChart3 size={18} />
+                <span>Legal Pulse Analyse</span>
+              </button>
+            )}
+
+            {/* PDF Download Button */}
+            <button
+              className={`${styles.secondaryButton} ${styles.downloadButton}`}
+              onClick={handleDownloadPdf}
+              disabled={generatingPdf}
+            >
+              {generatingPdf ? (
+                <>
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  >
+                    <Loader size={18} />
+                  </motion.div>
+                  <span>Erstelle PDF...</span>
+                </>
+              ) : (
+                <>
+                  <Download size={18} />
+                  <span>Anwalts-PDF herunterladen</span>
+                </>
               )}
-              <button
-                className={`${styles.secondaryButton} ${styles.downloadButton}`}
-                onClick={handleDownloadPdf}
-                disabled={generatingPdf}
-              >
-                {generatingPdf ? (
-                  <>
-                    <motion.div
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                    >
-                      <Loader size={18} />
-                    </motion.div>
-                    <span>Erstelle PDF...</span>
-                  </>
-                ) : (
-                  <>
-                    <Download size={18} />
-                    <span>Anwalts-PDF herunterladen</span>
-                  </>
-                )}
-              </button>
-              <button
-                className={`${styles.secondaryButton} ${styles.newAnalysisButton}`}
-                onClick={handleReset}
-              >
-                <FileText size={18} />
-                <span>Neue Analyse</span>
-              </button>
-            </div>
+            </button>
+
+            {/* New Analysis Button */}
+            <button
+              className={`${styles.secondaryButton} ${styles.newAnalysisButton}`}
+              onClick={handleReset}
+            >
+              <FileText size={18} />
+              <span>Neue Analyse</span>
+            </button>
           </div>
 
           {/* Optimization Result */}
