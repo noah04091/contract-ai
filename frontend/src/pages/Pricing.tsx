@@ -388,7 +388,7 @@ export default function Pricing() {
   ];
 
   const featureMatrix = [
-    { feature: "Analysen pro Monat", free: "3 kostenlos", business: "15", premium: "Unbegrenzt" },
+    { feature: "Analysen pro Monat", free: "3 kostenlos", business: "25", premium: "Unbegrenzt" },
     { feature: "Vertragsvergleich", free: "–", business: "✓", premium: "✓ Erweitert" },
     { feature: "KI-Vertragsoptimierung", free: "–", business: "✓", premium: "✓ Advanced" },
     { feature: "Risiko-Score & Zusammenfassung", free: "✓", business: "✓", premium: "✓" },

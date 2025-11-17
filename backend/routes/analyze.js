@@ -2000,21 +2000,21 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
     // Statt: 1) Read count, 2) Check limit, 3) Later increment
     // Jetzt: 1) Atomic increment-and-check in ONE operation
     const plan = user.subscriptionPlan || "free";
-    let limit = 0;
-    if (plan === "business") limit = 50;
-    if (plan === "premium") limit = Infinity;
+    let limit = 3; // Free: 3 Analysen
+    if (plan === "business") limit = 25; // Business: 25 Analysen/Monat
+    if (plan === "premium" || plan === "enterprise") limit = Infinity; // Enterprise: Unlimited (premium = legacy)
 
     console.log(`📊 [${requestId}] User Plan: ${plan}, Current count: ${user.analysisCount ?? 0}, Limit: ${limit}`);
 
     // ✅ ATOMIC UPDATE: Build query based on plan
-    // For premium: No limit check needed
+    // For enterprise/premium: No limit check needed
     // For others: Check if count is under limit
     const updateQuery = {
       _id: user._id  // Use the actual ObjectId from the fetched user
     };
 
-    if (plan !== 'premium') {
-      // Only add limit check for non-premium users
+    if (plan !== 'premium' && plan !== 'enterprise') {
+      // Only add limit check for non-unlimited users (free + business)
       updateQuery.analysisCount = { $lt: limit };
     }
 
@@ -2070,8 +2070,8 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
         plan: plan,
         upgradeUrl: "/pricing",
         upgradeInfo: {
-          business: "50 Analysen/Monat - 19€",
-          premium: "Unbegrenzte Analysen - 29€"
+          business: "25 Analysen/Monat",
+          enterprise: "Unbegrenzte Analysen"
         }
       });
     }
@@ -2147,8 +2147,8 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
     }
 
     // 🚨 STRIKTE SEITEN-LIMIT PRÜFUNG - Kostenkontrolle!
-    const isPremium = user.subscriptionPlan === 'premium';
-    const maxPages = isPremium ? ANALYSIS_LIMITS.PREMIUM_MAX_PDF_PAGES : ANALYSIS_LIMITS.MAX_PDF_PAGES;
+    const isUnlimited = user.subscriptionPlan === 'premium' || user.subscriptionPlan === 'enterprise';
+    const maxPages = isUnlimited ? ANALYSIS_LIMITS.PREMIUM_MAX_PDF_PAGES : ANALYSIS_LIMITS.MAX_PDF_PAGES;
 
     if (pdfData.numpages > maxPages) {
       console.warn(`⚠️ [${requestId}] PDF zu groß: ${pdfData.numpages} Seiten (Limit: ${maxPages})`);
