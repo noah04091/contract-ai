@@ -1331,16 +1331,47 @@ export default function Contracts() {
             : item
         ));
 
+        // 🎨 Smooth progress animation variables (declared outside try/catch for cleanup)
+        let currentProgress = 0;
+        let progressIntervalId: NodeJS.Timeout | null = null;
+
         try {
           // ✅ NUTZE DIE NEUE /api/analyze ROUTE MIT forceReanalyze=true!
           console.log(`🚀 Using NEW /api/analyze route for: ${contract.name}`);
+
+          // Start smooth progress animation
+          progressIntervalId = setInterval(() => {
+            setUploadFiles(prev => prev.map((item, idx) => {
+              if (item.status === 'analyzing' && idx === i) {
+                // Increment progress smoothly, but slow down as we approach thresholds
+                let increment = 1;
+
+                // Slow down near step boundaries to avoid jumping ahead
+                if (currentProgress >= 10 && currentProgress < 15) increment = 0.5;
+                else if (currentProgress >= 30 && currentProgress < 35) increment = 0.5;
+                else if (currentProgress >= 50 && currentProgress < 55) increment = 0.5;
+                else if (currentProgress >= 80 && currentProgress < 85) increment = 0.5;
+                else if (currentProgress >= 95) increment = 0.2; // Very slow near completion
+
+                currentProgress = Math.min(currentProgress + increment, 99); // Cap at 99%
+
+                return { ...item, progress: Math.round(currentProgress) };
+              }
+              return item;
+            }));
+          }, 200); // Update every 200ms for smooth animation
+
           const analysisResult = await uploadAndAnalyze(uploadFileItem.file, (progress) => {
-            setUploadFiles(prev => prev.map((item, idx) =>
-              item.status === 'analyzing' && idx === i
-                ? { ...item, progress }
-                : item
-            ));
+            // This callback may not be called by backend, but we keep it for compatibility
+            if (progress > currentProgress) {
+              currentProgress = progress;
+            }
           }, true); // forceReanalyze = true!
+
+          // Clear the progress interval
+          if (progressIntervalId) {
+            clearInterval(progressIntervalId);
+          }
 
           console.log(`✅ Analysis completed for ${contract.name} (NEW ROUTE)`, analysisResult);
 
@@ -1357,6 +1388,11 @@ export default function Contracts() {
               : item
           ));
         } catch (error) {
+          // Clear the progress interval on error
+          if (progressIntervalId) {
+            clearInterval(progressIntervalId);
+          }
+
           console.error(`❌ Analysis failed for ${contract.name}:`, error);
 
           // Extrahiere Fehler-Meldung
