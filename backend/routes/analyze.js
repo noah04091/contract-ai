@@ -1801,30 +1801,10 @@ const makeRateLimitedGPT4Request = async (prompt, requestId, openai, maxRetries 
         max_tokens: 16000, // 🚀 GPT-4o: 16k tokens für tiefe Analysen (bis 100 Seiten Verträge)
       });
 
-      // 💰 COST TRACKING - Track OpenAI API usage
+      // 💰 COST TRACKING - Note: Cost tracking is done at the higher level (line 2322-2341)
+      // Removed redundant tracking here since we don't have access to req.user.userId
       if (completion.usage) {
-        const cost = calculateCost(
-          completion.usage.prompt_tokens,
-          completion.usage.completion_tokens,
-          'gpt-4o'
-        );
-
-        // Track async (non-blocking)
-        const costTracking = getCostTrackingService();
-        costTracking.trackAPICall({
-          userId: req.user.userId,
-          contractId: null, // Wird später gesetzt
-          model: 'gpt-4o',
-          feature: 'contract_analysis',
-          promptTokens: completion.usage.prompt_tokens,
-          completionTokens: completion.usage.completion_tokens,
-          totalTokens: completion.usage.total_tokens,
-          estimatedCost: cost
-        }).catch(err => {
-          console.warn(`⚠️ [${requestId}] Cost tracking failed (non-critical):`, err.message);
-        });
-
-        console.log(`💰 [${requestId}] OpenAI Cost: ${completion.usage.total_tokens} tokens = $${cost}`);
+        console.log(`💰 [${requestId}] OpenAI Usage: ${completion.usage.total_tokens} tokens (prompt: ${completion.usage.prompt_tokens}, completion: ${completion.usage.completion_tokens})`);
       }
 
       const response = completion.choices[0].message.content;
