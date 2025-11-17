@@ -935,10 +935,16 @@ export default function Optimizer() {
     const formData = new FormData();
     formData.append("file", file);
 
-    // 🆕 Add analysis context if available
+    // 🆕 Add analysis context if available (from ContractAnalysis)
     if (analysisContext) {
       console.log('[OPTIMIZER] Adding analysis context to optimization request');
       formData.append("analysisContext", JSON.stringify(analysisContext));
+    }
+
+    // 🆕 Add Legal Pulse context if available
+    if (legalPulseContext) {
+      console.log('[OPTIMIZER] Adding Legal Pulse context to optimization request');
+      formData.append("legalPulseContext", JSON.stringify(legalPulseContext));
     }
 
     let finalResult: OptimizationResult | null = null;

@@ -2672,11 +2672,11 @@ const smartTruncateContract = (text, maxLength = 12000) => { // Increased for be
 /**
  * 🚀 ULTIMATIVER KI-PROMPT für Anwaltskanzlei-Niveau
  */
-const createOptimizedPrompt = (contractText, contractType, gaps, fileName, contractInfo, analysisContext = null) => {
+const createOptimizedPrompt = (contractText, contractType, gaps, fileName, contractInfo, analysisContext = null, legalPulseContext = null) => {
   const truncatedText = smartTruncateContract(contractText, 6000);
   const typeConfig = CONTRACT_TYPES[contractType] || CONTRACT_TYPES.sonstiges;
 
-  // 🆕 Build analysis context string if available
+  // 🆕 Build analysis context string if available (from ContractAnalysis)
   let analysisContextStr = '';
   if (analysisContext) {
     analysisContextStr = '\n📊 ZUSÄTZLICHER ANALYSE-CONTEXT (von vorheriger Vertragsanalyse):\n';
@@ -2705,8 +2705,47 @@ const createOptimizedPrompt = (contractText, contractType, gaps, fileName, contr
     if (analysisContext.contractScore) {
       analysisContextStr += `\n🎯 Vertragsscore: ${analysisContext.contractScore}/100\n`;
     }
+  }
 
-    analysisContextStr += '\n⚠️ WICHTIG: Nutze diese Analyse-Informationen als zusätzlichen Context, aber führe trotzdem deine vollständige eigene Optimierungsanalyse durch!\n';
+  // 🆕 Build Legal Pulse context string if available
+  let legalPulseContextStr = '';
+  if (legalPulseContext) {
+    legalPulseContextStr = '\n⚡ ZUSÄTZLICHER LEGAL PULSE CONTEXT:\n';
+
+    if (legalPulseContext.riskScore !== null && legalPulseContext.riskScore !== undefined) {
+      legalPulseContextStr += `\n🎯 Risiko-Score: ${legalPulseContext.riskScore}/100\n`;
+    }
+
+    if (legalPulseContext.complianceScore !== null && legalPulseContext.complianceScore !== undefined) {
+      legalPulseContextStr += `📋 Compliance-Score: ${legalPulseContext.complianceScore}/100\n`;
+    }
+
+    if (legalPulseContext.risks && legalPulseContext.risks.length > 0) {
+      legalPulseContextStr += `\n⚠️ Erkannte Risiken (${legalPulseContext.risks.length}):\n`;
+      legalPulseContext.risks.slice(0, 5).forEach((risk, i) => {
+        legalPulseContextStr += `${i + 1}. ${risk}\n`;
+      });
+      if (legalPulseContext.risks.length > 5) {
+        legalPulseContextStr += `... und ${legalPulseContext.risks.length - 5} weitere Risiken\n`;
+      }
+    }
+
+    if (legalPulseContext.recommendations && legalPulseContext.recommendations.length > 0) {
+      legalPulseContextStr += `\n💡 Legal Pulse Empfehlungen (${legalPulseContext.recommendations.length}):\n`;
+      legalPulseContext.recommendations.slice(0, 5).forEach((rec, i) => {
+        legalPulseContextStr += `${i + 1}. ${rec}\n`;
+      });
+      if (legalPulseContext.recommendations.length > 5) {
+        legalPulseContextStr += `... und ${legalPulseContext.recommendations.length - 5} weitere Empfehlungen\n`;
+      }
+    }
+  }
+
+  // Combine both contexts if available
+  let combinedContextStr = '';
+  if (analysisContextStr || legalPulseContextStr) {
+    combinedContextStr = analysisContextStr + legalPulseContextStr;
+    combinedContextStr += '\n⚠️ WICHTIG: Nutze diese Analyse-Informationen als zusätzlichen Context, aber führe trotzdem deine vollständige eigene Optimierungsanalyse durch!\n';
   }
 
   // Erstelle spezifische Instruktionen basierend auf Vertragstyp
@@ -2754,7 +2793,7 @@ KONTEXT:
 ${typeSpecificInstructions}
 
 ${gapSummary}
-${analysisContextStr}
+${combinedContextStr}
 
 VERTRAG (Auszug):
 """
@@ -2955,7 +2994,7 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
     });
   }
 
-  // 🆕 Extract analysis context if provided
+  // 🆕 Extract analysis context if provided (from ContractAnalysis)
   let analysisContext = null;
   if (req.body.analysisContext) {
     try {
@@ -2969,6 +3008,22 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
       });
     } catch (parseError) {
       console.warn(`⚠️ [${requestId}] Could not parse analysisContext:`, parseError.message);
+    }
+  }
+
+  // 🆕 Extract Legal Pulse context if provided
+  let legalPulseContext = null;
+  if (req.body.legalPulseContext) {
+    try {
+      legalPulseContext = JSON.parse(req.body.legalPulseContext);
+      console.log(`⚡ [${requestId}] Legal Pulse context received:`, {
+        hasRisks: !!legalPulseContext.risks && legalPulseContext.risks.length > 0,
+        hasRecommendations: !!legalPulseContext.recommendations && legalPulseContext.recommendations.length > 0,
+        riskScore: legalPulseContext.riskScore,
+        complianceScore: legalPulseContext.complianceScore
+      });
+    } catch (parseError) {
+      console.warn(`⚠️ [${requestId}] Could not parse legalPulseContext:`, parseError.message);
     }
   }
 
@@ -3089,7 +3144,8 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
       gapAnalysis.gaps,
       req.file.originalname,
       contractTypeInfo,
-      analysisContext  // 🆕 Pass analysis context from ContractAnalysis
+      analysisContext,      // 🆕 Pass analysis context from ContractAnalysis
+      legalPulseContext     // 🆕 Pass Legal Pulse context
     );
 
     // 🔥 PERFECTION MODE: GPT-4o für maximale Qualität & Konsistenz
@@ -3911,7 +3967,8 @@ router.post("/stream", verifyToken, uploadLimiter, smartRateLimiter, upload.sing
       gapAnalysis.gaps,
       req.file.originalname,
       contractTypeInfo,
-      analysisContext  // 🆕 Pass analysis context from ContractAnalysis
+      analysisContext,      // 🆕 Pass analysis context from ContractAnalysis
+      legalPulseContext     // 🆕 Pass Legal Pulse context
     );
 
     const modelToUse = "gpt-4o";
