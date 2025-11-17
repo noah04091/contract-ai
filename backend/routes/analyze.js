@@ -2011,6 +2011,9 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       updateQuery.analysisCount = { $lt: limit };
     }
 
+    console.log(`🔍 [${requestId}] Update Query:`, JSON.stringify(updateQuery));
+    console.log(`🔍 [${requestId}] Is Premium: ${plan === 'premium'}, Has Limit Check: ${!!updateQuery.analysisCount}`);
+
     const updateResult = await users.findOneAndUpdate(
       updateQuery,
       {
@@ -2020,6 +2023,12 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
         returnDocument: 'after' // Gibt aktualisiertes Dokument zurück
       }
     );
+
+    console.log(`🔍 [${requestId}] Update Result:`, {
+      success: !!updateResult.value,
+      newCount: updateResult.value?.analysisCount,
+      plan: updateResult.value?.subscriptionPlan
+    });
 
     // Prüfen ob Update erfolgreich war
     if (!updateResult.value) {
