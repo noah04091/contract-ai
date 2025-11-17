@@ -660,62 +660,63 @@ export default function Chat() {
             )}
           </div>
 
-          {/* ==========================================
-              UPLOADED CONTRACTS & SMART QUESTIONS
-              ========================================== */}
-          {active && ((active.attachments && active.attachments.length > 0) || smartQuestions.length > 0) && (
-            <div className={styles.uploadSection}>
-              {/* Show uploaded contracts */}
-              {active.attachments && active.attachments.length > 0 && (
-                <div className={styles.uploadedContracts}>
-                  {active.attachments.map((att, idx) => (
-                    <div key={idx} className={styles.contractChip}>
-                      <span className={styles.contractIcon}>📄</span>
-                      <div className={styles.contractInfo}>
-                        <span className={styles.contractName}>{att.name}</span>
-                        {att.contractType && (
-                          <span className={styles.contractType}>{att.contractType}</span>
-                        )}
+          <div className={styles.inputBarContainer}>
+            {/* ==========================================
+                UPLOADED CONTRACTS & SMART QUESTIONS
+                ========================================== */}
+            {active && ((active.attachments && active.attachments.length > 0) || smartQuestions.length > 0) && (
+              <div className={styles.uploadSection}>
+                {/* Show uploaded contracts */}
+                {active.attachments && active.attachments.length > 0 && (
+                  <div className={styles.uploadedContracts}>
+                    {active.attachments.map((att, idx) => (
+                      <div key={idx} className={styles.contractChip}>
+                        <span className={styles.contractIcon}>📄</span>
+                        <div className={styles.contractInfo}>
+                          <span className={styles.contractName}>{att.name}</span>
+                          {att.contractType && (
+                            <span className={styles.contractType}>{att.contractType}</span>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Smart Questions */}
-              {smartQuestions.length > 0 && (
-                <div className={styles.smartQuestions}>
-                  <div className={styles.smartQuestionsHeader}>
-                    <span className={styles.lightbulbIcon}>💡</span>
-                    <span className={styles.smartQuestionsTitle}>Vertragsspezifische Fragen:</span>
-                  </div>
-                  <div className={styles.chipRow}>
-                    {smartQuestions.map((q, idx) => (
-                      <button
-                        key={idx}
-                        className={styles.chip}
-                        onClick={() => {
-                          setInput(q);
-                          inputRef.current?.focus();
-                        }}
-                        disabled={loading}
-                      >
-                        {q}
-                      </button>
                     ))}
                   </div>
-                </div>
-              )}
-            </div>
-          )}
+                )}
 
-          <div
-            className={`${styles.inputBar} ${dragActive ? styles.dragActive : ""}`}
-            onDragEnter={handleDrag}
-            onDragLeave={handleDrag}
-            onDragOver={handleDrag}
-            onDrop={handleDrop}
-          >
+                {/* Smart Questions */}
+                {smartQuestions.length > 0 && (
+                  <div className={styles.smartQuestions}>
+                    <div className={styles.smartQuestionsHeader}>
+                      <span className={styles.lightbulbIcon}>💡</span>
+                      <span className={styles.smartQuestionsTitle}>Vertragsspezifische Fragen:</span>
+                    </div>
+                    <div className={styles.chipRow}>
+                      {smartQuestions.map((q, idx) => (
+                        <button
+                          key={idx}
+                          className={styles.chip}
+                          onClick={() => {
+                            setInput(q);
+                            inputRef.current?.focus();
+                          }}
+                          disabled={loading}
+                        >
+                          {q}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div
+              className={`${styles.inputBar} ${dragActive ? styles.dragActive : ""}`}
+              onDragEnter={handleDrag}
+              onDragLeave={handleDrag}
+              onDragOver={handleDrag}
+              onDrop={handleDrop}
+            >
             <form
               className={`${styles.form} ${active ? styles.formWithUpload : ""}`}
               onSubmit={(e) => {
@@ -788,6 +789,7 @@ export default function Chat() {
               Hinweis: Die KI ersetzt keine Rechtsberatung. Bei komplexen Fällen kontaktiere einen
               Anwalt.
             </div>
+          </div>
           </div>
         </main>
       </div>

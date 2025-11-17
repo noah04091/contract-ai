@@ -497,6 +497,16 @@
 }
 
 /* ==========================================
+   INPUT BAR CONTAINER (Upload Section + Input Bar)
+   ========================================== */
+
+.inputBarContainer {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+/* ==========================================
    UPLOAD SECTION
    ========================================== */
 
@@ -507,7 +517,6 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  flex-shrink: 0;
 }
 
 /* Uploaded Contracts */
