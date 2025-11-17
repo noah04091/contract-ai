@@ -1969,6 +1969,13 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
 
     const user = await users.findOne({ _id: new ObjectId(req.user.userId) });
 
+    console.log(`🔍 [${requestId}] User fetched:`, {
+      jwtUserId: req.user.userId,
+      dbUserId: user?._id?.toString(),
+      userExists: !!user,
+      plan: user?.subscriptionPlan
+    });
+
     if (!user) {
       console.error(`❌ [${requestId}] User not found: ${req.user.userId}`);
 
@@ -2003,7 +2010,7 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
     // For premium: No limit check needed
     // For others: Check if count is under limit
     const updateQuery = {
-      _id: new ObjectId(req.user.userId)
+      _id: user._id  // Use the actual ObjectId from the fetched user
     };
 
     if (plan !== 'premium') {
@@ -2011,7 +2018,11 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       updateQuery.analysisCount = { $lt: limit };
     }
 
-    console.log(`🔍 [${requestId}] Update Query:`, JSON.stringify(updateQuery));
+    console.log(`🔍 [${requestId}] Update Query:`, {
+      _id: updateQuery._id.toString(),
+      hasLimitCheck: !!updateQuery.analysisCount,
+      limit: updateQuery.analysisCount?.$lt
+    });
     console.log(`🔍 [${requestId}] Is Premium: ${plan === 'premium'}, Has Limit Check: ${!!updateQuery.analysisCount}`);
 
     const updateResult = await users.findOneAndUpdate(
