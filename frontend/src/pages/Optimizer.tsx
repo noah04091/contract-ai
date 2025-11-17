@@ -1,7 +1,7 @@
 // 📁 src/pages/Optimizer.tsx - APPLE DESIGN REVOLUTION ✨
 import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import ReactDOM from "react-dom";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Upload,
@@ -593,6 +593,7 @@ const isValidPdfText = (text: string | undefined): boolean => {
 export default function Optimizer() {
   // ✅ Navigation & Params
   const navigate = useNavigate();
+  const location = useLocation();
   const { contractId, jobId } = useParams<{ contractId?: string; jobId?: string }>();
 
   // ✅ ORIGINAL: Core states
@@ -613,7 +614,20 @@ export default function Optimizer() {
     riskScore: number | null;
     complianceScore: number | null;
   } | null>(null);
-  
+
+  // 🆕 Analysis Context State (from ContractAnalysis page)
+  const [analysisContext, setAnalysisContext] = useState<{
+    summary?: string | string[];
+    legalAssessment?: string | string[];
+    suggestions?: string | string[];
+    comparison?: string | string[];
+    positiveAspects?: unknown;
+    criticalIssues?: unknown;
+    recommendations?: unknown;
+    detailedLegalOpinion?: string;
+    contractScore?: number;
+  } | null>(null);
+
   // ✅ ORIGINAL: Export & Pitch States + Portal Refs
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [showPitchMenu, setShowPitchMenu] = useState(false);
@@ -680,6 +694,41 @@ export default function Optimizer() {
     };
     fetchPremiumStatus();
   }, []);
+
+  // 🆕 NEW: Handle incoming state from ContractAnalysis
+  useEffect(() => {
+    const state = location.state as {
+      file?: File;
+      analysisContext?: {
+        summary?: string | string[];
+        legalAssessment?: string | string[];
+        suggestions?: string | string[];
+        comparison?: string | string[];
+        positiveAspects?: unknown;
+        criticalIssues?: unknown;
+        recommendations?: unknown;
+        detailedLegalOpinion?: string;
+        contractScore?: number;
+      };
+    } | null;
+
+    if (state?.file && state?.analysisContext) {
+      console.log('[ANALYZER-OPTIMIZER] Empfange Analyse-Context:', state.analysisContext);
+      console.log('[ANALYZER-OPTIMIZER] Empfange File:', state.file.name);
+
+      setFile(state.file);
+      setAnalysisContext(state.analysisContext);
+
+      // Optional: Show toast notification
+      setToast({
+        message: `Vertrag "${state.file.name}" mit Analyse-Context geladen`,
+        type: 'success'
+      });
+
+      // Clear toast after 3 seconds
+      setTimeout(() => setToast(null), 3000);
+    }
+  }, [location.state]);
 
   // 🆕 NEW: Load job from Legal Pulse handoff
   useEffect(() => {
@@ -885,6 +934,12 @@ export default function Optimizer() {
 
     const formData = new FormData();
     formData.append("file", file);
+
+    // 🆕 Add analysis context if available
+    if (analysisContext) {
+      console.log('[OPTIMIZER] Adding analysis context to optimization request');
+      formData.append("analysisContext", JSON.stringify(analysisContext));
+    }
 
     let finalResult: OptimizationResult | null = null;
     let useStreamingEndpoint = true;
