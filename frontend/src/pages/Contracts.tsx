@@ -1358,6 +1358,39 @@ export default function Contracts() {
           ));
         } catch (error) {
           console.error(`❌ Analysis failed for ${contract.name}:`, error);
+
+          // Extrahiere Fehler-Meldung
+          const errorMessage = error instanceof Error ? error.message : 'Analyse fehlgeschlagen';
+          const isLimitError = errorMessage.includes('Limit erreicht') || errorMessage.includes('LIMIT_EXCEEDED');
+
+          // Markiere Datei als fehlgeschlagen
+          setUploadFiles(prev => prev.map((item, idx) =>
+            idx === i
+              ? {
+                  ...item,
+                  status: 'error' as const,
+                  progress: 0,
+                  errorMessage: errorMessage
+                }
+              : item
+          ));
+
+          // Zeige Fehler-Alert mit Upgrade-Option
+          if (isLimitError) {
+            const userConfirmed = confirm(
+              `❌ ${errorMessage}\n\n` +
+              `💡 Aktuelle Plan: ${userInfo.subscriptionPlan}\n` +
+              `📊 Analysen: ${userInfo.analysisCount}/${userInfo.analysisLimit === Infinity ? '∞' : userInfo.analysisLimit}\n\n` +
+              `🚀 Möchtest du jetzt upgraden?`
+            );
+
+            if (userConfirmed) {
+              window.location.href = '/pricing';
+              return; // Stop further processing
+            }
+          } else {
+            alert(`❌ Analyse fehlgeschlagen: ${errorMessage}`);
+          }
         }
       }
 

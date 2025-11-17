@@ -1999,15 +1999,20 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
 
     console.log(`📊 [${requestId}] User Plan: ${plan}, Current count: ${user.analysisCount ?? 0}, Limit: ${limit}`);
 
-    // ✅ ATOMIC UPDATE: Increment count nur wenn unter Limit
+    // ✅ ATOMIC UPDATE: Build query based on plan
+    // For premium: No limit check needed
+    // For others: Check if count is under limit
+    const updateQuery = {
+      _id: new ObjectId(req.user.userId)
+    };
+
+    if (plan !== 'premium') {
+      // Only add limit check for non-premium users
+      updateQuery.analysisCount = { $lt: limit };
+    }
+
     const updateResult = await users.findOneAndUpdate(
-      {
-        _id: new ObjectId(req.user.userId),
-        $or: [
-          { subscriptionPlan: 'premium' }, // Premium hat Infinity Limit (immer OK)
-          { analysisCount: { $lt: limit } } // Oder: count ist unter Limit
-        ]
-      },
+      updateQuery,
       {
         $inc: { analysisCount: 1 } // Erhöhe Counter atomar
       },
