@@ -2035,10 +2035,14 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       }
     );
 
-    console.log(`🔍 [${requestId}] Update Result:`, {
-      success: !!updateResult.value,
-      newCount: updateResult.value?.analysisCount,
-      plan: updateResult.value?.subscriptionPlan
+    console.log(`🔍 [${requestId}] RAW Update Result:`, JSON.stringify(updateResult, null, 2));
+    console.log(`🔍 [${requestId}] Update Result Keys:`, Object.keys(updateResult || {}));
+    console.log(`🔍 [${requestId}] Update Result.value:`, updateResult?.value);
+    console.log(`🔍 [${requestId}] Update Result parsed:`, {
+      success: !!updateResult?.value,
+      hasValue: 'value' in (updateResult || {}),
+      newCount: updateResult?.value?.analysisCount,
+      plan: updateResult?.value?.subscriptionPlan
     });
 
     // Prüfen ob Update erfolgreich war
