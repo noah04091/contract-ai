@@ -35,6 +35,9 @@ const createCheckSubscription = require("./middleware/checkSubscription");
 const { onContractChange } = require("./services/calendarEvents");
 const { checkAndSendNotifications } = require("./services/calendarNotifier");
 
+// 🔄 CRON JOBS - Monatlicher analysisCount Reset
+require("./cron/resetAnalysisCount");
+
 // ✅ S3 File Storage Import (unchanged)
 let s3Upload, generateSignedUrl;
 try {

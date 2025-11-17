@@ -8,12 +8,47 @@ const { OpenAI } = require("openai");
 const verifyToken = require("../middleware/verifyToken");
 const { MongoClient, ObjectId } = require("mongodb");
 const path = require("path");
+const rateLimit = require("express-rate-limit"); // 🚦 Rate Limiting
 const contractAnalyzer = require("../services/contractAnalyzer"); // 📋 Provider Detection Import
 const { generateEventsForContract } = require("../services/calendarEvents"); // 🆕 CALENDAR EVENTS IMPORT
 const AILegalPulse = require("../services/aiLegalPulse"); // ⚡ NEW: Legal Pulse Risk Analysis
 const { getInstance: getCostTrackingService } = require("../services/costTracking"); // 💰 NEW: Cost Tracking
 
 const router = express.Router();
+
+// 🚦 RATE LIMITING - Schutz vor Missbrauch und Kosten-Explosion
+const analyzeRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 Minuten Zeitfenster
+  max: 10, // Maximal 10 Analyse-Requests pro 15 Minuten pro User
+  message: {
+    success: false,
+    message: "Zu viele Analyse-Anfragen. Bitte warten Sie 15 Minuten bevor Sie weitere Verträge analysieren.",
+    error: "RATE_LIMIT_EXCEEDED",
+    retryAfter: "15 minutes",
+    tip: "Premium-User haben höhere Limits. Upgrade jetzt!"
+  },
+  standardHeaders: true, // RateLimit-* Headers senden
+  legacyHeaders: false,
+  // Rate Limit pro User-ID (aus JWT Token)
+  keyGenerator: (req) => {
+    return req.user?.userId || req.ip; // Fallback auf IP wenn kein User
+  },
+  // Handler für Rate Limit Erreicht
+  handler: (req, res) => {
+    console.warn(`⚠️ [RATE-LIMIT] User ${req.user?.userId || req.ip} hat Analyse-Limit erreicht`);
+    res.status(429).json({
+      success: false,
+      message: "Zu viele Analyse-Anfragen. Bitte warten Sie 15 Minuten.",
+      error: "RATE_LIMIT_EXCEEDED",
+      retryAfter: "15 minutes",
+      currentLimit: "10 Analysen / 15 Minuten",
+      upgradeInfo: {
+        message: "Premium-User haben höhere Limits",
+        url: "/pricing"
+      }
+    });
+  }
+});
 
 // ⚡ Initialize Legal Pulse analyzer
 const aiLegalPulse = new AILegalPulse();
@@ -323,6 +358,46 @@ const MODEL_LIMITS = {
   'gpt-4o': 128000,                // ✅ Latest version
   'gpt-3.5-turbo': 16384
 };
+
+// 🚨 STRIKTE TOKEN & DOKUMENT LIMITS - Kostenkontrolle!
+const ANALYSIS_LIMITS = {
+  MAX_PDF_PAGES: 50,           // Maximal 50 Seiten pro Analyse
+  MAX_INPUT_TOKENS: 8000,      // Max Input-Tokens für GPT-4
+  MAX_OUTPUT_TOKENS: 4000,     // Max Output-Tokens
+  MAX_TOTAL_TOKENS: 12000,     // Gesamt-Limit (Input + Output)
+  // Premium-User Limits (2x größer)
+  PREMIUM_MAX_PDF_PAGES: 100,
+  PREMIUM_MAX_INPUT_TOKENS: 16000
+};
+
+/**
+ * 📊 Token-Schätzung (grobe Approximation)
+ * 1 Token ≈ 4 Zeichen für Deutsch/Englisch Mix
+ */
+function estimateTokenCount(text) {
+  if (!text) return 0;
+  return Math.ceil(text.length / 4);
+}
+
+/**
+ * 💰 GPT-4 Turbo Kosten-Berechnung
+ */
+function calculateCost(promptTokens, completionTokens, model = 'gpt-4-turbo-preview') {
+  const PRICING = {
+    'gpt-4-turbo-preview': {
+      input: 0.01 / 1000,   // $0.01 per 1K input tokens
+      output: 0.03 / 1000   // $0.03 per 1K output tokens
+    },
+    'gpt-3.5-turbo': {
+      input: 0.0005 / 1000,
+      output: 0.0015 / 1000
+    }
+  };
+
+  const pricing = PRICING[model] || PRICING['gpt-4-turbo-preview'];
+  const cost = (promptTokens * pricing.input) + (completionTokens * pricing.output);
+  return parseFloat(cost.toFixed(4));
+}
 
 // ===== ENHANCED DEEP LAWYER-LEVEL ANALYSIS PIPELINE =====
 
@@ -1725,7 +1800,33 @@ const makeRateLimitedGPT4Request = async (prompt, requestId, openai, maxRetries 
         temperature: 0.1, // Low for consistency
         max_tokens: 16000, // 🚀 GPT-4o: 16k tokens für tiefe Analysen (bis 100 Seiten Verträge)
       });
-      
+
+      // 💰 COST TRACKING - Track OpenAI API usage
+      if (completion.usage) {
+        const cost = calculateCost(
+          completion.usage.prompt_tokens,
+          completion.usage.completion_tokens,
+          'gpt-4o'
+        );
+
+        // Track async (non-blocking)
+        const costTracking = getCostTrackingService();
+        costTracking.trackAPICall({
+          userId: req.user.userId,
+          contractId: null, // Wird später gesetzt
+          model: 'gpt-4o',
+          feature: 'contract_analysis',
+          promptTokens: completion.usage.prompt_tokens,
+          completionTokens: completion.usage.completion_tokens,
+          totalTokens: completion.usage.total_tokens,
+          estimatedCost: cost
+        }).catch(err => {
+          console.warn(`⚠️ [${requestId}] Cost tracking failed (non-critical):`, err.message);
+        });
+
+        console.log(`💰 [${requestId}] OpenAI Cost: ${completion.usage.total_tokens} tokens = $${cost}`);
+      }
+
       const response = completion.choices[0].message.content;
       
       // Basic response validation
@@ -1769,7 +1870,7 @@ const makeRateLimitedGPT4Request = async (prompt, requestId, openai, maxRetries 
 };
 
 // ===== MAIN ANALYZE ROUTE (S3 COMPATIBLE) - ENHANCED WITH DEEP LAWYER-LEVEL ANALYSIS =====
-router.post("/", verifyToken, async (req, res, next) => {
+router.post("/", verifyToken, analyzeRateLimiter, async (req, res, next) => {
   // Get upload middleware (dynamically created)
   const uploadMiddleware = createUploadMiddleware();
   
@@ -1888,17 +1989,37 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       });
     }
 
+    // 🔐 ATOMIC ANALYSIS COUNT INCREMENT - Race Condition Fix!
+    // Statt: 1) Read count, 2) Check limit, 3) Later increment
+    // Jetzt: 1) Atomic increment-and-check in ONE operation
     const plan = user.subscriptionPlan || "free";
-    const count = user.analysisCount ?? 0;
-
     let limit = 0;
     if (plan === "business") limit = 50;
     if (plan === "premium") limit = Infinity;
 
-    console.log(`📊 [${requestId}] User limits: ${count}/${limit} (Plan: ${plan})`);
+    console.log(`📊 [${requestId}] User Plan: ${plan}, Current count: ${user.analysisCount ?? 0}, Limit: ${limit}`);
 
-    if (count >= limit) {
-      console.warn(`⚠️ [${requestId}] Analysis limit reached for user ${req.user.userId}`);
+    // ✅ ATOMIC UPDATE: Increment count nur wenn unter Limit
+    const updateResult = await users.findOneAndUpdate(
+      {
+        _id: new ObjectId(req.user.userId),
+        $or: [
+          { subscriptionPlan: 'premium' }, // Premium hat Infinity Limit (immer OK)
+          { analysisCount: { $lt: limit } } // Oder: count ist unter Limit
+        ]
+      },
+      {
+        $inc: { analysisCount: 1 } // Erhöhe Counter atomar
+      },
+      {
+        returnDocument: 'after' // Gibt aktualisiertes Dokument zurück
+      }
+    );
+
+    // Prüfen ob Update erfolgreich war
+    if (!updateResult.value) {
+      // Update fehlgeschlagen = Limit erreicht
+      console.warn(`⚠️ [${requestId}] Analysis limit reached for user ${req.user.userId} (Plan: ${plan})`);
 
       // Cleanup on limit reached
       if (req.file && req.file.path && fsSync.existsSync(req.file.path)) {
@@ -1912,13 +2033,25 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
 
       return res.status(403).json({
         success: false,
-        message: "❌ Analysis limit reached. Please upgrade package.",
+        message: "❌ Monatliches Analyse-Limit erreicht. Bitte upgraden Sie Ihr Paket.",
         error: "LIMIT_EXCEEDED",
-        currentCount: count,
+        currentCount: user.analysisCount ?? 0,
         limit: limit,
-        plan: plan
+        plan: plan,
+        upgradeUrl: "/pricing",
+        upgradeInfo: {
+          business: "50 Analysen/Monat - 19€",
+          premium: "Unbegrenzte Analysen - 29€"
+        }
       });
     }
+
+    // ✅ Counter wurde erfolgreich erhöht - fortfahren mit Analyse
+    const newCount = updateResult.value.analysisCount;
+    console.log(`✅ [${requestId}] analysisCount atomar erhöht auf ${newCount}/${limit}`);
+
+    // User-Referenz aktualisieren für spätere Verwendung
+    user.analysisCount = newCount;
 
     console.log(`📄 [${requestId}] Reading uploaded file from local disk...`);
 
@@ -1982,6 +2115,55 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
         requestId
       });
     }
+
+    // 🚨 STRIKTE SEITEN-LIMIT PRÜFUNG - Kostenkontrolle!
+    const isPremium = user.subscriptionPlan === 'premium';
+    const maxPages = isPremium ? ANALYSIS_LIMITS.PREMIUM_MAX_PDF_PAGES : ANALYSIS_LIMITS.MAX_PDF_PAGES;
+
+    if (pdfData.numpages > maxPages) {
+      console.warn(`⚠️ [${requestId}] PDF zu groß: ${pdfData.numpages} Seiten (Limit: ${maxPages})`);
+      return res.status(400).json({
+        success: false,
+        message: `Dokument zu groß. Maximal ${maxPages} Seiten erlaubt.`,
+        error: "DOCUMENT_TOO_LARGE",
+        details: {
+          yourPages: pdfData.numpages,
+          maxPages: maxPages,
+          subscriptionPlan: user.subscriptionPlan
+        },
+        suggestions: isPremium
+          ? ["Teilen Sie das Dokument in kleinere Abschnitte auf"]
+          : ["Upgrade auf Premium für größere Dokumente (bis zu 100 Seiten)", "Teilen Sie das Dokument auf"],
+        upgradeUrl: isPremium ? null : "/pricing"
+      });
+    }
+
+    // 🚨 TOKEN-LIMIT PRÜFUNG - Geschätzte Tokens vor OpenAI Call
+    const estimatedInputTokens = estimateTokenCount(pdfData.text);
+    const maxInputTokens = isPremium ? ANALYSIS_LIMITS.PREMIUM_MAX_INPUT_TOKENS : ANALYSIS_LIMITS.MAX_INPUT_TOKENS;
+
+    console.log(`📊 [${requestId}] Token-Schätzung: ${estimatedInputTokens} tokens (Limit: ${maxInputTokens})`);
+
+    if (estimatedInputTokens > maxInputTokens) {
+      console.warn(`⚠️ [${requestId}] Zu viele Tokens: ${estimatedInputTokens} (Limit: ${maxInputTokens})`);
+      return res.status(400).json({
+        success: false,
+        message: `Dokument zu komplex. Bitte kürzen Sie das Dokument.`,
+        error: "TOKEN_LIMIT_EXCEEDED",
+        details: {
+          estimatedTokens: estimatedInputTokens,
+          maxTokens: maxInputTokens,
+          subscriptionPlan: user.subscriptionPlan,
+          pages: pdfData.numpages
+        },
+        suggestions: isPremium
+          ? ["Entfernen Sie unnötige Abschnitte", "Teilen Sie das Dokument auf"]
+          : ["Upgrade auf Premium für größere Dokumente", "Teilen Sie das Dokument auf"],
+        upgradeUrl: isPremium ? null : "/pricing"
+      });
+    }
+
+    console.log(`✅ [${requestId}] Dokument-Checks bestanden: ${pdfData.numpages} Seiten, ~${estimatedInputTokens} tokens`);
 
     // Smart document validation and analysis strategy
     const validationResult = await validateAndAnalyzeDocument(
@@ -2526,15 +2708,9 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
       console.warn(`⚠️ [${requestId}] FIXED Deep lawyer-level analysis was successful, but contract saving failed`);
     }
 
-    try {
-      await users.updateOne(
-        { _id: user._id },
-        { $inc: { analysisCount: 1 } }
-      );
-      console.log(`✅ [${requestId}] Analysis counter updated`);
-    } catch (updateError) {
-      console.warn(`⚠️ [${requestId}] Counter update error:`, updateError.message);
-    }
+    // ✅ Counter wurde bereits atomar am Anfang erhöht (Race Condition Fix)
+    // Kein zweites Increment mehr nötig!
+    console.log(`✅ [${requestId}] Analysis counter already updated atomically at start`);
 
     console.log(`🛠️🎉 [${requestId}] FIXED Enhanced DEEP Lawyer-Level Analysis completely successful!`);
 

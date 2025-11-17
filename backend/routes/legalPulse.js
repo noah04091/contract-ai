@@ -2,11 +2,43 @@
 const express = require("express");
 const router = express.Router();
 const { ObjectId } = require("mongodb");
+const rateLimit = require("express-rate-limit"); // 🚦 Rate Limiting
 const verifyToken = require("../middleware/verifyToken");
+const requirePremium = require("../middleware/requirePremium"); // 🔐 Premium-Check
 const runLegalPulseScan = require("../services/legalPulseScan");
 
+// 🚦 RATE LIMITING für Legal Pulse - AI-Scans sind teuer!
+const legalPulseRateLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 Stunde Zeitfenster
+  max: 5, // Maximal 5 Legal Pulse Scans pro Stunde
+  message: {
+    success: false,
+    message: "Zu viele Legal Pulse Analysen. Bitte warten Sie eine Stunde.",
+    error: "RATE_LIMIT_EXCEEDED",
+    retryAfter: "1 hour"
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    return req.user?.userId || req.ip;
+  },
+  handler: (req, res) => {
+    console.warn(`⚠️ [RATE-LIMIT] User ${req.user?.userId || req.ip} hat Legal Pulse Limit erreicht`);
+    res.status(429).json({
+      success: false,
+      message: "Zu viele Legal Pulse Analysen. Bitte warten Sie eine Stunde.",
+      error: "RATE_LIMIT_EXCEEDED",
+      retryAfter: "1 hour",
+      currentLimit: "5 AI-Scans / Stunde",
+      tip: "Legal Pulse nutzt fortschrittliche KI und ist daher limitiert"
+    });
+  }
+});
+
 // Manuelle Analyse für einzelnen Vertrag
-router.post("/analyze/:contractId", verifyToken, async (req, res) => {
+// 🔐 Nur Premium-User dürfen Legal Pulse nutzen
+// 🚦 Rate Limiting: Max 5 Scans pro Stunde
+router.post("/analyze/:contractId", verifyToken, requirePremium, legalPulseRateLimiter, async (req, res) => {
   try {
     const { contractId } = req.params;
     
@@ -40,7 +72,9 @@ router.post("/analyze/:contractId", verifyToken, async (req, res) => {
 });
 
 // Batch-Scan für alle Verträge eines Users
-router.post("/scan-all", verifyToken, async (req, res) => {
+// 🔐 Nur Premium-User dürfen Legal Pulse nutzen
+// 🚦 Rate Limiting: Max 5 Scans pro Stunde
+router.post("/scan-all", verifyToken, requirePremium, legalPulseRateLimiter, async (req, res) => {
   try {
     console.log(`🧠 Starte vollständigen AI-Scan für User: ${req.user.userId}`);
     
