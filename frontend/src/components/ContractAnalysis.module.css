@@ -903,6 +903,17 @@
   border-color: #d1d5db;
 }
 
+/* ✅ Full Width Card (für Handlungsempfehlungen) */
+.fullWidthCard {
+  margin-top: 1.5rem;
+}
+
+.fullWidthCard .structuredList {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
 .detailHeader {
   display: flex;
   align-items: center;
@@ -1147,6 +1158,7 @@
   flex-wrap: wrap;
   justify-content: center;
   align-items: stretch;
+  margin-top: 2.5rem;
 }
 
 .primaryActionButton {

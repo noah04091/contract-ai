@@ -1106,33 +1106,33 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
                 </div>
               </div>
             )}
-
-            {/* ✅ NEW: 7. 📌 Handlungsempfehlungen */}
-            {(result?.recommendations || initialResult?.recommendations) && (
-              <div className={styles.detailCard}>
-                <div className={styles.detailHeader}>
-                  <h5>📌 Handlungsempfehlungen</h5>
-                </div>
-                <div className={styles.cardContent}>
-                  <ul className={styles.structuredList}>
-                    {formatStructuredData(result?.recommendations || initialResult?.recommendations || []).map((rec, index) => (
-                      <li key={index} className={styles.structuredItem}>
-                        <div className={styles.structuredHeader}>
-                          {getPriorityIcon((rec as Recommendation).priority || 'medium')}
-                          <h6 className={styles.structuredTitle}>{rec.title}</h6>
-                          <span className={`${styles.priorityBadge} ${getPriorityColor((rec as Recommendation).priority || 'medium')}`}>
-                            {(rec as Recommendation).priority === 'high' ? 'Dringend' : 
-                             (rec as Recommendation).priority === 'low' ? 'Optional' : 'Wichtig'}
-                          </span>
-                        </div>
-                        <p className={styles.structuredDescription}>{rec.description}</p>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            )}
           </div>
+
+          {/* ✅ NEW: 7. 📌 Handlungsempfehlungen (Volle Breite) */}
+          {(result?.recommendations || initialResult?.recommendations) && (
+            <div className={`${styles.detailCard} ${styles.fullWidthCard}`}>
+              <div className={styles.detailHeader}>
+                <h5>📌 Handlungsempfehlungen</h5>
+              </div>
+              <div className={styles.cardContent}>
+                <ul className={styles.structuredList}>
+                  {formatStructuredData(result?.recommendations || initialResult?.recommendations || []).map((rec, index) => (
+                    <li key={index} className={styles.structuredItem}>
+                      <div className={styles.structuredHeader}>
+                        {getPriorityIcon((rec as Recommendation).priority || 'medium')}
+                        <h6 className={styles.structuredTitle}>{rec.title}</h6>
+                        <span className={`${styles.priorityBadge} ${getPriorityColor((rec as Recommendation).priority || 'medium')}`}>
+                          {(rec as Recommendation).priority === 'high' ? 'Dringend' :
+                           (rec as Recommendation).priority === 'low' ? 'Optional' : 'Wichtig'}
+                        </span>
+                      </div>
+                      <p className={styles.structuredDescription}>{rec.description}</p>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
 
           {/* ✅ NEU: Ausführliches Rechtsgutachten */}
           {(result?.detailedLegalOpinion || initialResult?.detailedLegalOpinion) && (
