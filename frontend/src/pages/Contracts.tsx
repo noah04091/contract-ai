@@ -25,6 +25,8 @@ import { apiCall, uploadAndAnalyze, uploadOnly } from "../utils/api"; // ✅ NEU
 import { useFolders } from "../hooks/useFolders"; // 📁 Folder Hook
 import type { FolderType } from "../components/FolderBar"; // 📁 Folder Type
 import ContractsSkeleton, { ContractsCardsSkeleton } from "../components/ContractsSkeleton"; // 💀 Skeleton Loader
+import AnalysisProgressComponent from "../components/AnalysisProgress"; // 🎨 Premium Analysis Progress
+import { mapLegacyToProgress } from "../utils/analysisAdapter"; // 🔄 Legacy Progress Adapter
 
 interface Contract {
   _id: string;
@@ -2583,10 +2585,11 @@ export default function Contracts() {
                                 </div>
 
                                 {fileItem.status === 'analyzing' && (
-                                  <div className={styles.fileItemProgress}>
-                                    <div 
-                                      className={styles.fileItemProgressBar}
-                                      style={{ width: `${fileItem.progress}%` }}
+                                  <div className={styles.analysisProgressWrapper}>
+                                    <AnalysisProgressComponent
+                                      progress={mapLegacyToProgress({
+                                        progress: fileItem.progress || 0
+                                      })}
                                     />
                                   </div>
                                 )}
