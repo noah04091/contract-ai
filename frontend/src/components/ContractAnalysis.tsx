@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import {
   FileText, AlertCircle, CheckCircle, Loader,
   Download, BarChart3, RefreshCw, WifiOff, Clock,
@@ -10,7 +11,7 @@ import {
   Gavel, Scale, Star // ✅ NEU: Anwalts-Icons
 } from "lucide-react";
 import styles from "./ContractAnalysis.module.css";
-import { uploadAndAnalyze, checkAnalyzeHealth, uploadAndOptimize } from "../utils/api";
+import { uploadAndAnalyze, checkAnalyzeHealth } from "../utils/api";
 
 interface ContractAnalysisProps {
   file: File;
@@ -94,20 +95,6 @@ interface DuplicateResponse {
   };
 }
 
-interface OptimizationResult {
-  success: boolean;
-  message?: string;
-  optimizationResult?: string;
-  optimizationId?: string;
-  requestId?: string;
-  usage?: {
-    count: number;
-    limit: number;
-    plan: string;
-  };
-  error?: string;
-}
-
 export default function ContractAnalysis({ file, onReset, onNavigateToContract, initialResult }: ContractAnalysisProps) {
   const [analyzing, setAnalyzing] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -124,7 +111,8 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
   const [duplicateInfo, setDuplicateInfo] = useState<DuplicateResponse | null>(null);
   const [showNavigationMessage, setShowNavigationMessage] = useState(false);
-  
+
+  const navigate = useNavigate();
   const analysisResultRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -311,35 +299,31 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
     onReset();
   };
 
-  const handleOptimize = async () => {
-    if (!result) return;
-    
-    setOptimizing(true);
-    try {
-      console.log("🔧 Starte Optimierung für:", file.name);
-      
-      const optimizeResponse = await uploadAndOptimize(file, 'Standardvertrag', (progress) => {
-        console.log(`🔧 Optimierung Progress: ${progress}%`);
-      }) as OptimizationResult;
-      
-      console.log("✅ Optimierung-Response:", optimizeResponse);
-      
-      if (optimizeResponse && optimizeResponse.optimizationResult) {
-        setOptimizationResult(optimizeResponse.optimizationResult);
-        setIsOptimizationExpanded(true);
-        console.log("🎉 Optimierung erfolgreich abgeschlossen");
-      } else if (optimizeResponse && optimizeResponse.message) {
-        setOptimizationResult(optimizeResponse.message);
-      } else {
-        setOptimizationResult("Optimierung wurde durchgeführt, aber Details sind nicht verfügbar.");
+  const handleOptimize = () => {
+    if (!result && !initialResult) return;
+
+    console.log("🔧 Navigiere zum Optimizer mit Analyse-Context");
+
+    // Sammle alle Analyse-Daten für zusätzlichen Context
+    const analysisData = result || initialResult;
+
+    navigate('/optimizer', {
+      state: {
+        contractId: analysisData?.originalContractId,
+        file: file,
+        analysisContext: {
+          summary: analysisData?.summary,
+          legalAssessment: analysisData?.legalAssessment,
+          suggestions: analysisData?.suggestions,
+          comparison: analysisData?.comparison,
+          positiveAspects: analysisData?.positiveAspects,
+          criticalIssues: analysisData?.criticalIssues,
+          recommendations: analysisData?.recommendations,
+          detailedLegalOpinion: analysisData?.detailedLegalOpinion,
+          contractScore: analysisData?.contractScore
+        }
       }
-    } catch (err) {
-      console.error("❌ Optimierung fehlgeschlagen:", err);
-      const errorMessage = err instanceof Error ? err.message : "Unbekannter Fehler";
-      setError(`🔧 Optimierung fehlgeschlagen: ${errorMessage}`);
-    } finally {
-      setOptimizing(false);
-    }
+    });
   };
 
   const handleDownloadPdf = async () => {
