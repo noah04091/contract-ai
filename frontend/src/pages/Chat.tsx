@@ -197,8 +197,8 @@ export default function Chat() {
 
         // Special handling for limit exceeded
         if (res.status === 403 && errorData.error === "Chat limit reached") {
-          const limitError = new Error(errorData.message);
-          (limitError as any).isLimitError = true;
+          const limitError = new Error(errorData.message) as Error & { isLimitError: boolean };
+          limitError.isLimitError = true;
           throw limitError;
         }
 
@@ -254,7 +254,7 @@ export default function Chat() {
 
       // Extract error message safely
       const errorMessage = error instanceof Error ? error.message : "Nachricht konnte nicht gesendet werden.";
-      const isLimitError = error instanceof Error && (error as any).isLimitError;
+      const isLimitError = error instanceof Error && 'isLimitError' in error && (error as Error & { isLimitError: boolean }).isLimitError;
 
       // Show error in chat
       setActive((curr) => {
