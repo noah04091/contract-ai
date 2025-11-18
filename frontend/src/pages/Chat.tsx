@@ -194,6 +194,14 @@ export default function Chat() {
 
       if (!res.ok) {
         const errorData = await res.json();
+
+        // Special handling for limit exceeded
+        if (res.status === 403 && errorData.error === "Chat limit reached") {
+          const limitError = new Error(errorData.message);
+          (limitError as any).isLimitError = true;
+          throw limitError;
+        }
+
         throw new Error(errorData.message || "Failed to send message");
       }
 
@@ -246,15 +254,27 @@ export default function Chat() {
 
       // Extract error message safely
       const errorMessage = error instanceof Error ? error.message : "Nachricht konnte nicht gesendet werden.";
+      const isLimitError = error instanceof Error && (error as any).isLimitError;
 
       // Show error in chat
       setActive((curr) => {
         if (!curr) return curr;
         const msgs = [...curr.messages];
-        msgs[msgs.length - 1] = {
-          role: "assistant",
-          content: `**Fehler:** ${errorMessage}`,
-        };
+
+        if (isLimitError) {
+          // Special limit error message with upgrade link
+          msgs[msgs.length - 1] = {
+            role: "assistant",
+            content: `⚠️ **Chat-Limit erreicht**\n\n${errorMessage}\n\n[Jetzt upgraden →](/subscribe)`,
+          };
+        } else {
+          // Generic error
+          msgs[msgs.length - 1] = {
+            role: "assistant",
+            content: `**Fehler:** ${errorMessage}`,
+          };
+        }
+
         return { ...curr, messages: msgs };
       });
     } finally {
@@ -501,15 +521,45 @@ export default function Chat() {
             {/* Usage Stats */}
             {usage && (
               <div className={styles.usageStats}>
-                <div className={styles.usageBar}>
-                  <div
-                    className={styles.usageProgress}
-                    style={{ width: `${(usage.current / usage.limit) * 100}%` }}
-                  />
-                </div>
-                <span className={styles.usageText}>
-                  {usage.remaining} von {usage.limit === Infinity ? "∞" : usage.limit} übrig
-                </span>
+                {usage.limit === Infinity ? (
+                  /* Unlimited plan display */
+                  <div className={styles.unlimitedBadge}>
+                    <span className={styles.unlimitedIcon}>✨</span>
+                    <div>
+                      <div className={styles.unlimitedTitle}>Unbegrenzte Chats</div>
+                      <div className={styles.unlimitedSubtitle}>Enterprise Plan</div>
+                    </div>
+                  </div>
+                ) : (
+                  /* Limited plan display */
+                  <>
+                    <div className={styles.usageLabel}>
+                      <span>💬 Chat-Nutzung</span>
+                      {usage.remaining < usage.limit * 0.2 && (
+                        <span className={styles.warningBadge}>Niedrig</span>
+                      )}
+                    </div>
+                    <div className={styles.usageBar}>
+                      <div
+                        className={styles.usageProgress}
+                        style={{
+                          width: `${Math.min(100, (usage.current / usage.limit) * 100)}%`,
+                          backgroundColor: usage.remaining < usage.limit * 0.2 ? '#ef4444' : '#3b82f6',
+                        }}
+                      />
+                    </div>
+                    <div className={styles.usageText}>
+                      <span className={styles.usageCount}>
+                        {usage.current} / {usage.limit} Nachrichten
+                      </span>
+                      {usage.resetDate && (
+                        <span className={styles.resetDate}>
+                          Reset: {new Date(usage.resetDate).toLocaleDateString('de-DE', { day: '2-digit', month: 'short' })}
+                        </span>
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
             )}
           </div>

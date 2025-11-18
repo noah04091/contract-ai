@@ -121,6 +121,7 @@ async function checkChatLimit(userId, usersCollection) {
 
   // Initialize chatUsage if not exists
   if (!user.chatUsage) {
+    const resetDate = getNextResetDate();
     await usersCollection.updateOne(
       { _id: user._id },
       {
@@ -128,12 +129,12 @@ async function checkChatLimit(userId, usersCollection) {
           chatUsage: {
             count: 0,
             limit: chatLimit,
-            resetDate: getNextResetDate()
+            resetDate
           }
         }
       }
     );
-    return { allowed: true, remaining: chatLimit };
+    return { allowed: true, remaining: chatLimit, current: 0, limit: chatLimit, resetDate };
   }
 
   // Check if reset needed
@@ -142,17 +143,18 @@ async function checkChatLimit(userId, usersCollection) {
 
   if (now >= resetDate) {
     // Reset usage
+    const newResetDate = getNextResetDate();
     await usersCollection.updateOne(
       { _id: user._id },
       {
         $set: {
           "chatUsage.count": 0,
           "chatUsage.limit": chatLimit,
-          "chatUsage.resetDate": getNextResetDate()
+          "chatUsage.resetDate": newResetDate
         }
       }
     );
-    return { allowed: true, remaining: chatLimit };
+    return { allowed: true, remaining: chatLimit, current: 0, limit: chatLimit, resetDate: newResetDate };
   }
 
   // Check limit
@@ -160,7 +162,7 @@ async function checkChatLimit(userId, usersCollection) {
   const allowed = currentCount < chatLimit;
   const remaining = Math.max(0, chatLimit - currentCount);
 
-  return { allowed, remaining, current: currentCount, limit: chatLimit };
+  return { allowed, remaining, current: currentCount, limit: chatLimit, resetDate: user.chatUsage.resetDate };
 }
 
 // 🔧 HELPER: Get next reset date (1st of next month)
