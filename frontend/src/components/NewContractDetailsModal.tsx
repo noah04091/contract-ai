@@ -175,6 +175,8 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
   const [contract, setContract] = useState<Contract>(initialContract);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [optimizedPdfUrl, setOptimizedPdfUrl] = useState<string | null>(null); // 🆕 Optimized PDF URL
+  const [optimizedPdfLoading, setOptimizedPdfLoading] = useState(false); // 🆕 Optimized PDF loading
   const [contentExpanded, setContentExpanded] = useState(false);
 
   // Modals
@@ -217,6 +219,13 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
     }
   }, [activeTab, contract.envelope, contract.signatureEnvelopeId]);
 
+  // 🆕 Load optimized PDF URL when optimizedPdf tab is opened
+  useEffect(() => {
+    if (activeTab === 'optimizedPdf' && contract.optimizedPdfS3Key && !optimizedPdfUrl && !optimizedPdfLoading) {
+      loadOptimizedPdfUrl();
+    }
+  }, [activeTab, contract.optimizedPdfS3Key, optimizedPdfUrl, optimizedPdfLoading]);
+
   const loadPdfUrl = async () => {
     if (!contract.s3Key || contract.needsReupload) return;
 
@@ -239,6 +248,27 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
       console.error('Error loading PDF:', error);
     } finally {
       setPdfLoading(false);
+    }
+  };
+
+  // 🆕 Load optimized PDF URL
+  const loadOptimizedPdfUrl = async () => {
+    if (!contract.optimizedPdfS3Key) return;
+
+    setOptimizedPdfLoading(true);
+    try {
+      const response = await fetch(`/api/s3/view?key=${contract.optimizedPdfS3Key}`, {
+        credentials: "include"
+      });
+
+      const data = await response.json();
+      if (data.url) {
+        setOptimizedPdfUrl(data.url);
+      }
+    } catch (error) {
+      console.error('Error loading optimized PDF:', error);
+    } finally {
+      setOptimizedPdfLoading(false);
     }
   };
 
@@ -1075,28 +1105,6 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
 
   // 🆕 Render Optimized PDF Tab
   const renderOptimizedPdfTab = () => {
-    const [optimizedPdfUrl, setOptimizedPdfUrl] = useState<string | null>(null);
-    const [loading, setLoading] = useState(false);
-
-    useEffect(() => {
-      if (contract.optimizedPdfS3Key && !optimizedPdfUrl) {
-        setLoading(true);
-        fetch(`/api/s3/view?key=${contract.optimizedPdfS3Key}`, {
-          credentials: "include"
-        })
-          .then(res => res.json())
-          .then(data => {
-            if (data.url) {
-              setOptimizedPdfUrl(data.url);
-            }
-          })
-          .catch(error => {
-            console.error('Error loading optimized PDF:', error);
-          })
-          .finally(() => setLoading(false));
-      }
-    }, [contract.optimizedPdfS3Key]);
-
     if (!contract.optimizedPdfS3Key) {
       return (
         <div className={styles.tabContent}>
@@ -1109,7 +1117,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
       );
     }
 
-    if (loading) {
+    if (optimizedPdfLoading) {
       return (
         <div className={styles.tabContent}>
           <div className={styles.loadingContainer}>
