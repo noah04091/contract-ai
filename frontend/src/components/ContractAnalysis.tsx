@@ -95,6 +95,22 @@ interface DuplicateResponse {
   };
 }
 
+// ✅ NEU: Interface für Legal Pulse Daten
+interface LegalPulseRisk {
+  title: string;
+  description: string;
+  severity?: string;
+  category?: string;
+}
+
+interface LegalPulseData {
+  riskScore: number;
+  topRisks?: LegalPulseRisk[];
+  compliance?: string[];
+  suggestions?: string[];
+  [key: string]: unknown;
+}
+
 export default function ContractAnalysis({ file, onReset, onNavigateToContract, initialResult }: ContractAnalysisProps) {
   const [analyzing, setAnalyzing] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -114,7 +130,7 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
 
   // 🆕 Legal Pulse Loading States
   const [legalPulseLoading, setLegalPulseLoading] = useState(false);
-  const [legalPulseData, setLegalPulseData] = useState<any>(null);
+  const [legalPulseData, setLegalPulseData] = useState<LegalPulseData | null>(null);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const navigate = useNavigate();
@@ -1305,7 +1321,7 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
                         Top Risiken
                       </h6>
                       <ul className={styles.riskList}>
-                        {legalPulseData.topRisks.slice(0, 3).map((risk: any, index: number) => (
+                        {legalPulseData.topRisks.slice(0, 3).map((risk: LegalPulseRisk, index: number) => (
                           <li key={index} className={styles.riskItem}>
                             <strong>{risk.title}</strong>
                             <p>{risk.description}</p>
