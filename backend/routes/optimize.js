@@ -4247,22 +4247,29 @@ router.post("/stream", verifyToken, uploadLimiter, smartRateLimiter, upload.sing
 
     sendProgress(92, `✅ Quality-Checks abgeschlossen`);
 
-    // Top-Up Pass if needed
-    const currentIssueCount = normalizedResult.categories.reduce((sum, cat) => sum + cat.issues.length, 0);
+    // Top-Up Pass if needed (safe access with optional chaining)
+    const currentIssueCount = normalizedResult.categories?.reduce((sum, cat) => sum + (cat.issues?.length || 0), 0) || 0;
 
-    if (currentIssueCount < 6) {
+    if (currentIssueCount < 10) {
       sendProgress(94, "➕ Ergänze fehlende Kategorien (Top-Up Pass)...");
-      await topUpFindingsIfNeeded(
-        normalizedResult.categories,
+      console.log(`🎯 [${requestId}] Running Top-Up Pass (current issues: ${currentIssueCount})`);
+
+      // 🔥 FIX: Pass full normalizedResult object, not just categories
+      normalizedResult = await topUpFindingsIfNeeded(
+        normalizedResult,
         contractText,
-        contractTypeInfo,
-        gapAnalysis,
-        generatedClauses,
-        requestId,
-        openai
+        contractTypeInfo.type,
+        openai,
+        requestId
       );
-      const newCount = normalizedResult.categories.reduce((sum, cat) => sum + cat.issues.length, 0);
-      sendProgress(96, `✅ ${newCount - currentIssueCount} zusätzliche Issues hinzugefügt`);
+
+      const newCount = normalizedResult.categories?.reduce((sum, cat) => sum + (cat.issues?.length || 0), 0) || 0;
+      const addedCount = newCount - currentIssueCount;
+      if (addedCount > 0) {
+        sendProgress(96, `✅ ${addedCount} zusätzliche Issues hinzugefügt`);
+      } else {
+        sendProgress(96, `✅ Top-Up Pass abgeschlossen`);
+      }
     }
 
     // Final global sanitizer
