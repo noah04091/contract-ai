@@ -113,34 +113,39 @@ module.exports = runLegalPulseScan;
 
 // Optional: Manueller Scan für einzelnen Vertrag
 async function scanSingleContract(contractId) {
+  const startTime = Date.now();
   let client;
   try {
     const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
     client = new MongoClient(MONGO_URI);
     await client.connect();
     const contractsCollection = client.db("contract_ai").collection("contracts");
-    
+
     // Vertrag laden
     const contract = await contractsCollection.findOne({ _id: new ObjectId(contractId) });
     if (!contract) {
       throw new Error(`Vertrag ${contractId} nicht gefunden`);
     }
-    
+
+    console.log(`⏱️ [LEGAL-PULSE] Start | contract=${contractId} | user=${contract.userId || 'unknown'} | name="${contract.name}"`);
+
     // AI-Analyse durchführen
     const aiLegalPulse = new AILegalPulse();
     const aiResult = await aiLegalPulse.analyzeContract(contract);
-    
+
     // In DB speichern
     await contractsCollection.updateOne(
       { _id: contract._id },
       { $set: { 'legalPulse': aiResult } }
     );
-    
-    console.log(`✅ Einzelanalyse für "${contract.name}" abgeschlossen (Score: ${aiResult.riskScore})`);
+
+    const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+    console.log(`✅ [LEGAL-PULSE] Done in ${duration}s | riskScore=${aiResult.riskScore} | topRisks=${aiResult.topRisks?.length || 0} | contract=${contractId}`);
     return aiResult;
-    
+
   } catch (error) {
-    console.error(`❌ Fehler bei Einzelanalyse für ${contractId}:`, error);
+    const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+    console.error(`❌ [LEGAL-PULSE] Error after ${duration}s | contract=${contractId} |`, error.message);
     throw error;
   } finally {
     if (client) {

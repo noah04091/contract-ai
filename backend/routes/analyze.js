@@ -1874,7 +1874,9 @@ router.post("/", verifyToken, analyzeRateLimiter, async (req, res, next) => {
 // ===== FIXED: ENHANCED DEEP LAWYER-LEVEL ANALYSIS REQUEST HANDLER WITH AUTO-RENEWAL =====
 const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
   const requestId = Date.now().toString();
-  
+  const startTime = Date.now();
+
+  console.log(`⏱️ [ANALYSIS] Start | requestId=${requestId} | user=${req.user?.userId} | file="${req.file?.originalname}"`);
   console.log(`🛠️ [${requestId}] FIXED Enhanced Deep Lawyer-Level Analysis request received:`, {
     hasFile: !!req.file,
     userId: req.user?.userId,
@@ -2727,6 +2729,11 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
 
     console.log(`🛠️🎉 [${requestId}] FIXED Enhanced DEEP Lawyer-Level Analysis completely successful!`);
 
+    const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+    const contractType = result?.vertragstyp || validationResult?.documentType || 'unknown';
+    const contractScore = result?.contractScore || 0;
+    console.log(`✅ [ANALYSIS] Done in ${duration}s | type=${contractType} | score=${contractScore} | user=${req.user?.userId} | requestId=${requestId}`);
+
     // ✅ KRITISCHER FIX: ORIGINAL RESPONSE-STRUKTUR OHNE "data" WRAPPER!
     const responseData = { 
       success: true,
@@ -2814,12 +2821,14 @@ const handleEnhancedDeepLawyerAnalysisRequest = async (req, res) => {
     res.json(responseData);
 
   } catch (error) {
+    const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+    console.error(`❌ [ANALYSIS] Error after ${duration}s | user=${req.user?.userId} | file="${req.file?.originalname}" | requestId=${requestId}`);
     console.error(`❌ [${requestId}] Error in FIXED enhanced deep lawyer-level analysis:`, {
       message: error.message,
       stack: error.stack?.substring(0, 500),
       userId: req.user?.userId,
       filename: req.file?.originalname,
-      uploadType: storageInfo.uploadType
+      uploadType: storageInfo?.uploadType
     });
 
     // Cleanup local file on error
