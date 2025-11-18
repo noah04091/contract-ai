@@ -1157,16 +1157,17 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
           <div style={{
             marginTop: '16px',
             padding: '12px',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            background: '#f9fafb',
+            border: '1px solid #e5e7eb',
             borderRadius: '8px',
-            color: 'white',
+            color: '#374151',
             fontSize: '14px',
             textAlign: 'center'
           }}>
             <FileText size={16} style={{ display: 'inline', marginRight: '8px', verticalAlign: 'middle' }} />
             Optimierter Vertrag PDF
             {contract.optimizedPdfGeneratedAt && (
-              <span style={{ marginLeft: '12px', opacity: 0.9 }}>
+              <span style={{ marginLeft: '12px', opacity: 0.7 }}>
                 • Erstellt am {new Date(contract.optimizedPdfGeneratedAt).toLocaleDateString('de-DE')}
               </span>
             )}
@@ -1558,12 +1559,6 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
                 <button
                   className={`${styles.tabButton} ${activeTab === 'optimizedPdf' ? styles.tabActive : ''}`}
                   onClick={() => setActiveTab('optimizedPdf')}
-                  style={{
-                    background: activeTab === 'optimizedPdf'
-                      ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-                      : undefined,
-                    color: activeTab === 'optimizedPdf' ? 'white' : undefined
-                  }}
                 >
                   <FileText size={18} />
                   <span>Optimierter Vertrag PDF</span>
