@@ -606,7 +606,6 @@ export default function Optimizer() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [contractScore, setContractScore] = useState<ContractHealthScore | null>(null);
   const [preloadedContractName, setPreloadedContractName] = useState<string | null>(null);
-  const [existingContractId, setExistingContractId] = useState<string | null>(null); // 🆕 Prevent duplicates
 
   // 🆕 Legal Pulse Context State
   const [legalPulseContext, setLegalPulseContext] = useState<{
