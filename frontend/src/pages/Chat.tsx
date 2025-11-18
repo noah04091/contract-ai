@@ -518,48 +518,34 @@ export default function Chat() {
               Neuer Chat
             </button>
 
-            {/* Usage Stats */}
-            {usage && (
+            {/* Usage Stats - Only show for Free and Business plans */}
+            {usage && usage.limit !== Infinity && (
               <div className={styles.usageStats}>
-                {usage.limit === Infinity ? (
-                  /* Unlimited plan display */
-                  <div className={styles.unlimitedBadge}>
-                    <span className={styles.unlimitedIcon}>✨</span>
-                    <div>
-                      <div className={styles.unlimitedTitle}>Unbegrenzte Chats</div>
-                      <div className={styles.unlimitedSubtitle}>Enterprise Plan</div>
-                    </div>
-                  </div>
-                ) : (
-                  /* Limited plan display */
-                  <>
-                    <div className={styles.usageLabel}>
-                      <span>💬 Chat-Nutzung</span>
-                      {usage.remaining < usage.limit * 0.2 && (
-                        <span className={styles.warningBadge}>Niedrig</span>
-                      )}
-                    </div>
-                    <div className={styles.usageBar}>
-                      <div
-                        className={styles.usageProgress}
-                        style={{
-                          width: `${Math.min(100, (usage.current / usage.limit) * 100)}%`,
-                          backgroundColor: usage.remaining < usage.limit * 0.2 ? '#ef4444' : '#3b82f6',
-                        }}
-                      />
-                    </div>
-                    <div className={styles.usageText}>
-                      <span className={styles.usageCount}>
-                        {usage.current} / {usage.limit} Nachrichten
-                      </span>
-                      {usage.resetDate && (
-                        <span className={styles.resetDate}>
-                          Reset: {new Date(usage.resetDate).toLocaleDateString('de-DE', { day: '2-digit', month: 'short' })}
-                        </span>
-                      )}
-                    </div>
-                  </>
-                )}
+                <div className={styles.usageLabel}>
+                  <span>💬 Chat-Nutzung</span>
+                  {usage.remaining < usage.limit * 0.2 && (
+                    <span className={styles.warningBadge}>Niedrig</span>
+                  )}
+                </div>
+                <div className={styles.usageBar}>
+                  <div
+                    className={styles.usageProgress}
+                    style={{
+                      width: `${Math.min(100, (usage.current / usage.limit) * 100)}%`,
+                      backgroundColor: usage.remaining < usage.limit * 0.2 ? '#ef4444' : '#3b82f6',
+                    }}
+                  />
+                </div>
+                <div className={styles.usageText}>
+                  <span className={styles.usageCount}>
+                    {usage.current} / {usage.limit} Nachrichten
+                  </span>
+                  {usage.resetDate && (
+                    <span className={styles.resetDate}>
+                      Reset: {new Date(usage.resetDate).toLocaleDateString('de-DE', { day: '2-digit', month: 'short' })}
+                    </span>
+                  )}
+                </div>
               </div>
             )}
           </div>
