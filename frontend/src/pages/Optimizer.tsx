@@ -609,8 +609,23 @@ export default function Optimizer() {
 
   // 🆕 Legal Pulse Context State
   const [legalPulseContext, setLegalPulseContext] = useState<{
-    risks: string[];
-    recommendations: string[];
+    risks: Array<string | {
+      title?: string;
+      description?: string;
+      severity?: string;
+      impact?: string;
+      solution?: string;
+      recommendation?: string;
+      affectedClauses?: string[];
+    }>;
+    recommendations: Array<string | {
+      title?: string;
+      description?: string;
+      priority?: string;
+      effort?: string;
+      impact?: string;
+      steps?: string[];
+    }>;
     riskScore: number | null;
     complianceScore: number | null;
   } | null>(null);
@@ -1753,21 +1768,45 @@ Konfidenz: ${opt.confidence}%\n`
                     Identifizierte Risiken ({legalPulseContext.risks.length})
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                    {legalPulseContext.risks.slice(0, 3).map((risk, index) => (
-                      <div
-                        key={index}
-                        style={{
-                          background: 'rgba(255, 255, 255, 0.1)',
-                          borderRadius: '8px',
-                          padding: '0.875rem 1rem',
-                          fontSize: '0.95rem',
-                          lineHeight: '1.5',
-                          borderLeft: '3px solid #fbbf24'
-                        }}
-                      >
-                        {risk}
-                      </div>
-                    ))}
+                    {legalPulseContext.risks.slice(0, 3).map((risk, index) => {
+                      // Handle both object and string formats
+                      const riskText = typeof risk === 'object'
+                        ? risk.title || risk.description || JSON.stringify(risk)
+                        : risk;
+
+                      return (
+                        <div
+                          key={index}
+                          style={{
+                            background: 'rgba(255, 255, 255, 0.1)',
+                            borderRadius: '8px',
+                            padding: '0.875rem 1rem',
+                            fontSize: '0.95rem',
+                            lineHeight: '1.5',
+                            borderLeft: '3px solid #fbbf24'
+                          }}
+                        >
+                          {typeof risk === 'object' && risk.title ? (
+                            <div>
+                              <div style={{ fontWeight: 600, marginBottom: '0.5rem' }}>{risk.title}</div>
+                              {risk.description && <div style={{ opacity: 0.9 }}>{risk.description}</div>}
+                              {risk.severity && (
+                                <div style={{
+                                  marginTop: '0.5rem',
+                                  fontSize: '0.85rem',
+                                  opacity: 0.8,
+                                  textTransform: 'capitalize'
+                                }}>
+                                  Schweregrad: {risk.severity}
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            riskText
+                          )}
+                        </div>
+                      );
+                    })}
                     {legalPulseContext.risks.length > 3 && (
                       <div style={{ fontSize: '0.9rem', opacity: 0.8, fontStyle: 'italic' }}>
                         +{legalPulseContext.risks.length - 3} weitere Risiken
@@ -1792,21 +1831,45 @@ Konfidenz: ${opt.confidence}%\n`
                     Empfohlene Maßnahmen ({legalPulseContext.recommendations.length})
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                    {legalPulseContext.recommendations.slice(0, 3).map((recommendation, index) => (
-                      <div
-                        key={index}
-                        style={{
-                          background: 'rgba(255, 255, 255, 0.1)',
-                          borderRadius: '8px',
-                          padding: '0.875rem 1rem',
-                          fontSize: '0.95rem',
-                          lineHeight: '1.5',
-                          borderLeft: '3px solid #10b981'
-                        }}
-                      >
-                        {recommendation}
-                      </div>
-                    ))}
+                    {legalPulseContext.recommendations.slice(0, 3).map((recommendation, index) => {
+                      // Handle both object and string formats
+                      const recommendationText = typeof recommendation === 'object'
+                        ? recommendation.title || recommendation.description || JSON.stringify(recommendation)
+                        : recommendation;
+
+                      return (
+                        <div
+                          key={index}
+                          style={{
+                            background: 'rgba(255, 255, 255, 0.1)',
+                            borderRadius: '8px',
+                            padding: '0.875rem 1rem',
+                            fontSize: '0.95rem',
+                            lineHeight: '1.5',
+                            borderLeft: '3px solid #10b981'
+                          }}
+                        >
+                          {typeof recommendation === 'object' && recommendation.title ? (
+                            <div>
+                              <div style={{ fontWeight: 600, marginBottom: '0.5rem' }}>{recommendation.title}</div>
+                              {recommendation.description && <div style={{ opacity: 0.9 }}>{recommendation.description}</div>}
+                              {recommendation.priority && (
+                                <div style={{
+                                  marginTop: '0.5rem',
+                                  fontSize: '0.85rem',
+                                  opacity: 0.8,
+                                  textTransform: 'capitalize'
+                                }}>
+                                  Priorität: {recommendation.priority}
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            recommendationText
+                          )}
+                        </div>
+                      );
+                    })}
                     {legalPulseContext.recommendations.length > 3 && (
                       <div style={{ fontSize: '0.9rem', opacity: 0.8, fontStyle: 'italic' }}>
                         +{legalPulseContext.recommendations.length - 3} weitere Empfehlungen
