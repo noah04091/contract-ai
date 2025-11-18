@@ -576,6 +576,11 @@ export default function LegalPulse() {
   if (contractId && selectedContract) {
     const riskLevel = getRiskLevel(selectedContract.legalPulse?.riskScore || null);
     const scoreHistory = selectedContract.legalPulse?.scoreHistory || [];
+
+    // Check if Legal Pulse analysis is still loading/running
+    const isAnalysisLoading = !selectedContract.legalPulse ||
+                             (selectedContract.legalPulse.riskScore === null &&
+                              !selectedContract.legalPulse.lastChecked);
     
     return (
       <div className={styles.legalPulseContainer}>
@@ -652,26 +657,53 @@ export default function LegalPulse() {
             <div className={styles.scoreHeader}>
               <h2>Risiko-Score</h2>
             </div>
-            <div className={styles.scoreDisplay}>
-              <div
-                className={styles.scoreCircle}
-                style={{ '--score-color': riskLevel.color, '--score': selectedContract.legalPulse?.riskScore || 0 } as React.CSSProperties}
-              >
-                <span className={styles.scoreNumber}>
-                  {selectedContract.legalPulse?.riskScore || '—'}
-                </span>
-                <span className={styles.scoreMax}>/100</span>
+            {isAnalysisLoading ? (
+              <div className={styles.loadingState}>
+                <div className={styles.loadingSpinner}></div>
+                <div className={styles.loadingText}>
+                  <h3>Legal Pulse Analyse läuft...</h3>
+                  <p>Die KI-Analyse wird im Hintergrund durchgeführt. Dies kann bis zu 30 Sekunden dauern.</p>
+                  <button
+                    onClick={() => window.location.reload()}
+                    className={styles.refreshButton}
+                    style={{
+                      marginTop: '1rem',
+                      padding: '0.5rem 1rem',
+                      background: '#8b5cf6',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontSize: '0.9rem',
+                      fontWeight: 500
+                    }}
+                  >
+                    🔄 Seite aktualisieren
+                  </button>
+                </div>
               </div>
-              <div className={styles.riskLevel}>
-                <span className={styles.riskIcon}>{riskLevel.icon}</span>
-                <span
-                  className={styles.riskLabel}
-                  style={{ color: riskLevel.color }}
+            ) : (
+              <div className={styles.scoreDisplay}>
+                <div
+                  className={styles.scoreCircle}
+                  style={{ '--score-color': riskLevel.color, '--score': selectedContract.legalPulse?.riskScore || 0 } as React.CSSProperties}
                 >
-                  {riskLevel.level}
-                </span>
+                  <span className={styles.scoreNumber}>
+                    {selectedContract.legalPulse?.riskScore || '—'}
+                  </span>
+                  <span className={styles.scoreMax}>/100</span>
+                </div>
+                <div className={styles.riskLevel}>
+                  <span className={styles.riskIcon}>{riskLevel.icon}</span>
+                  <span
+                    className={styles.riskLabel}
+                    style={{ color: riskLevel.color }}
+                  >
+                    {riskLevel.level}
+                  </span>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Health Score Badge */}
             {selectedContract.legalPulse?.healthScore !== undefined && (
