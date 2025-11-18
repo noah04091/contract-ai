@@ -107,6 +107,9 @@ interface Contract {
   needsReupload?: boolean;
   isOptimized?: boolean;
   sourceType?: string;
+  optimizedPdfS3Key?: string;        // 🆕 S3-Key für optimiertes PDF
+  optimizedPdfS3Location?: string;   // 🆕 S3-Location für optimiertes PDF
+  optimizedPdfGeneratedAt?: string;  // 🆕 Zeitpunkt der PDF-Generierung
   optimizations?: Array<{
     category: string;
     summary: string;
@@ -159,7 +162,7 @@ interface NewContractDetailsModalProps {
   onDelete?: (contractId: string, contractName: string) => void;
 }
 
-type TabType = 'overview' | 'pdf' | 'analysis' | 'optimizations' | 'signature';
+type TabType = 'overview' | 'pdf' | 'analysis' | 'optimizations' | 'optimizedPdf' | 'signature';
 
 const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
   contract: initialContract,
@@ -1070,6 +1073,101 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
     );
   };
 
+  // 🆕 Render Optimized PDF Tab
+  const renderOptimizedPdfTab = () => {
+    const [optimizedPdfUrl, setOptimizedPdfUrl] = useState<string | null>(null);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+      if (contract.optimizedPdfS3Key && !optimizedPdfUrl) {
+        setLoading(true);
+        fetch(`/api/s3/view?key=${contract.optimizedPdfS3Key}`, {
+          credentials: "include"
+        })
+          .then(res => res.json())
+          .then(data => {
+            if (data.url) {
+              setOptimizedPdfUrl(data.url);
+            }
+          })
+          .catch(error => {
+            console.error('Error loading optimized PDF:', error);
+          })
+          .finally(() => setLoading(false));
+      }
+    }, [contract.optimizedPdfS3Key]);
+
+    if (!contract.optimizedPdfS3Key) {
+      return (
+        <div className={styles.tabContent}>
+          <div className={styles.emptyState}>
+            <FileText size={64} />
+            <p>Kein optimiertes PDF verfügbar</p>
+            <span className={styles.hint}>Für diesen Vertrag wurde noch kein optimiertes PDF generiert.</span>
+          </div>
+        </div>
+      );
+    }
+
+    if (loading) {
+      return (
+        <div className={styles.tabContent}>
+          <div className={styles.loadingContainer}>
+            <div className={styles.spinner}></div>
+            <p>Lade optimiertes PDF...</p>
+          </div>
+        </div>
+      );
+    }
+
+    if (!optimizedPdfUrl) {
+      return (
+        <div className={styles.tabContent}>
+          <div className={styles.emptyState}>
+            <AlertCircle size={64} />
+            <p>PDF konnte nicht geladen werden</p>
+            <span className={styles.hint}>Bitte versuchen Sie es später erneut.</span>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className={styles.tabContent}>
+        <div className={styles.pdfViewer}>
+          <iframe
+            src={`${optimizedPdfUrl}#view=FitH`}
+            title="Optimierter Vertrag PDF"
+            style={{
+              width: '100%',
+              height: '600px',
+              border: 'none',
+              borderRadius: '8px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+            }}
+          />
+          <div style={{
+            marginTop: '16px',
+            padding: '12px',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            borderRadius: '8px',
+            color: 'white',
+            fontSize: '14px',
+            textAlign: 'center'
+          }}>
+            <FileText size={16} style={{ display: 'inline', marginRight: '8px', verticalAlign: 'middle' }} />
+            Optimierter Vertrag PDF
+            {contract.optimizedPdfGeneratedAt && (
+              <span style={{ marginLeft: '12px', opacity: 0.9 }}>
+                • Erstellt am {new Date(contract.optimizedPdfGeneratedAt).toLocaleDateString('de-DE')}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // Render Signature Tab - Clean scrollable sections (no sub-tabs)
   const renderSignatureTab = () => {
     if (envelopeLoading) {
@@ -1447,6 +1545,22 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
                   <span>Optimierungen</span>
                 </button>
               )}
+              {/* 🆕 Optimiertes PDF Tab */}
+              {contract.optimizedPdfS3Key && (
+                <button
+                  className={`${styles.tabButton} ${activeTab === 'optimizedPdf' ? styles.tabActive : ''}`}
+                  onClick={() => setActiveTab('optimizedPdf')}
+                  style={{
+                    background: activeTab === 'optimizedPdf'
+                      ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                      : undefined,
+                    color: activeTab === 'optimizedPdf' ? 'white' : undefined
+                  }}
+                >
+                  <FileText size={18} />
+                  <span>Optimierter Vertrag PDF</span>
+                </button>
+              )}
               {(contract.envelope || contract.signatureEnvelopeId) && (
                 <button
                   className={`${styles.tabButton} ${activeTab === 'signature' ? styles.tabActive : ''}`}
@@ -1497,6 +1611,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
             {activeTab === 'pdf' && renderPdfTab()}
             {activeTab === 'analysis' && renderAnalysisTab()}
             {activeTab === 'optimizations' && renderOptimizationsTab()}
+            {activeTab === 'optimizedPdf' && renderOptimizedPdfTab()}
             {activeTab === 'signature' && renderSignatureTab()}
           </div>
         </div>
