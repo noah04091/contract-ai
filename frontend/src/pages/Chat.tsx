@@ -519,7 +519,7 @@ export default function Chat() {
             </button>
 
             {/* Usage Stats - Only show for Free and Business plans */}
-            {usage && usage.limit !== Infinity && (
+            {usage && typeof usage.limit === 'number' && isFinite(usage.limit) && (
               <div className={styles.usageStats}>
                 <div className={styles.usageLabel}>
                   <span>💬 Chat-Nutzung</span>
