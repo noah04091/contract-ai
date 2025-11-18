@@ -106,11 +106,16 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
   const [optimizationResult, setOptimizationResult] = useState<string | null>(null);
   const [isOptimizationExpanded, setIsOptimizationExpanded] = useState(true);
   const [generatingPdf, setGeneratingPdf] = useState(false);
-  
+
   // ✅ NEU: States für bessere UX-Behandlung
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
   const [duplicateInfo, setDuplicateInfo] = useState<DuplicateResponse | null>(null);
   const [showNavigationMessage, setShowNavigationMessage] = useState(false);
+
+  // 🆕 Legal Pulse Loading States
+  const [legalPulseLoading, setLegalPulseLoading] = useState(false);
+  const [legalPulseData, setLegalPulseData] = useState<any>(null);
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const navigate = useNavigate();
   const analysisResultRef = useRef<HTMLDivElement>(null);
@@ -147,7 +152,86 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
     setShowDuplicateModal(false);
     setDuplicateInfo(null);
     setShowNavigationMessage(false);
+
+    // 🆕 Legal Pulse States reset
+    setLegalPulseLoading(false);
+    setLegalPulseData(null);
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
+    }
   };
+
+  // 🆕 Legal Pulse Polling Function
+  const startLegalPulsePolling = (contractId: string) => {
+    console.log('⚡ Starting Legal Pulse polling for contract:', contractId);
+    setLegalPulseLoading(true);
+
+    // Clear any existing interval
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+    }
+
+    let pollCount = 0;
+    const maxPolls = 40; // Max 2 Minuten (40 * 3 Sekunden)
+
+    const pollLegalPulse = async () => {
+      try {
+        pollCount++;
+        console.log(`⚡ [${pollCount}/${maxPolls}] Polling Legal Pulse status...`);
+
+        const response = await fetch(`/api/contracts/${contractId}`, {
+          credentials: 'include'
+        });
+
+        if (!response.ok) {
+          console.error('Failed to fetch contract:', response.status);
+          return;
+        }
+
+        const contractData = await response.json();
+
+        // Check if Legal Pulse data is available
+        if (contractData.legalPulse) {
+          console.log('✅ Legal Pulse data found!', contractData.legalPulse);
+          setLegalPulseData(contractData.legalPulse);
+          setLegalPulseLoading(false);
+
+          // Stop polling
+          if (pollingIntervalRef.current) {
+            clearInterval(pollingIntervalRef.current);
+            pollingIntervalRef.current = null;
+          }
+        } else if (pollCount >= maxPolls) {
+          console.warn('⚠️ Legal Pulse polling timeout - max retries reached');
+          setLegalPulseLoading(false);
+
+          // Stop polling
+          if (pollingIntervalRef.current) {
+            clearInterval(pollingIntervalRef.current);
+            pollingIntervalRef.current = null;
+          }
+        }
+      } catch (error) {
+        console.error('Error polling Legal Pulse:', error);
+      }
+    };
+
+    // Initial poll
+    pollLegalPulse();
+
+    // Set up interval
+    pollingIntervalRef.current = setInterval(pollLegalPulse, 3000); // Poll every 3 seconds
+  };
+
+  // 🆕 Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+      }
+    };
+  }, []);
 
   // ✅ FIXED: Robustes handleAnalyze mit besserem TypeScript-Handling + initialResult-Support
   const handleAnalyze = async (forceReanalyze = false) => {
@@ -206,11 +290,18 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
           setResult(analysisResult);
           setRetryCount(0);
           console.log("🎉 Analyse erfolgreich abgeschlossen");
-          
+
           // ✅ FIXED: Type-sichere Prüfung auf Re-Analyse
           if (analysisResult.isReanalysis && analysisResult.originalContractId) {
             console.log("🔄 Re-Analyse erfolgreich für Vertrag:", analysisResult.originalContractId);
           }
+
+          // 🆕 Start Legal Pulse Polling
+          if (analysisResult.originalContractId) {
+            console.log("⚡ Starte Legal Pulse Polling für Contract:", analysisResult.originalContractId);
+            startLegalPulsePolling(analysisResult.originalContractId);
+          }
+
           return;
         }
 
@@ -1153,6 +1244,89 @@ export default function ContractAnalysis({ file, onReset, onNavigateToContract, 
                   </p>
                 ))}
               </div>
+            </motion.div>
+          )}
+
+          {/* 🆕 Legal Pulse Loading / Results Section */}
+          {(legalPulseLoading || legalPulseData) && (
+            <motion.div
+              className={styles.legalPulseSection}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+            >
+              <div className={styles.sectionHeader}>
+                <div className={styles.headerLeft}>
+                  <Zap size={24} className={styles.headerIcon} style={{ color: '#f59e0b' }} />
+                  <div>
+                    <h5 className={styles.sectionTitle}>⚡ Legal Pulse Analyse</h5>
+                    <p className={styles.sectionSubtitle}>
+                      KI-gestützte Risikoanalyse & rechtliche Empfehlungen
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {legalPulseLoading && !legalPulseData && (
+                <div className={styles.legalPulseLoading}>
+                  <motion.div
+                    className={styles.loadingSpinner}
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  >
+                    <Loader size={32} color="#f59e0b" />
+                  </motion.div>
+                  <p className={styles.loadingText}>Legal Pulse Analyse läuft...</p>
+                  <p className={styles.loadingSubtext}>
+                    Wir analysieren Ihr Dokument auf rechtliche Risiken und Compliance-Anforderungen
+                  </p>
+                </div>
+              )}
+
+              {legalPulseData && (
+                <div className={styles.legalPulseResults}>
+                  <div className={styles.pulseScoreCard}>
+                    <div className={styles.scoreHeader}>
+                      <span className={styles.scoreLabel}>Risiko-Score</span>
+                      <span className={`${styles.scoreValue} ${
+                        legalPulseData.riskScore > 70 ? styles.scoreHigh :
+                        legalPulseData.riskScore > 40 ? styles.scoreMedium :
+                        styles.scoreLow
+                      }`}>
+                        {legalPulseData.riskScore}/100
+                      </span>
+                    </div>
+                  </div>
+
+                  {legalPulseData.topRisks && legalPulseData.topRisks.length > 0 && (
+                    <div className={styles.pulseRisks}>
+                      <h6 className={styles.subSectionTitle}>
+                        <AlertTriangle size={18} color="#ef4444" />
+                        Top Risiken
+                      </h6>
+                      <ul className={styles.riskList}>
+                        {legalPulseData.topRisks.slice(0, 3).map((risk: any, index: number) => (
+                          <li key={index} className={styles.riskItem}>
+                            <strong>{risk.title}</strong>
+                            <p>{risk.description}</p>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  <div className={styles.pulseActions}>
+                    <button
+                      className={styles.viewFullPulseButton}
+                      onClick={() => window.location.href = `/legalpulse/${result?.originalContractId || initialResult?.originalContractId}`}
+                    >
+                      <BarChart3 size={18} />
+                      <span>Vollständige Legal Pulse Analyse anzeigen</span>
+                      <ArrowRight size={16} />
+                    </button>
+                  </div>
+                </div>
+              )}
             </motion.div>
           )}
 

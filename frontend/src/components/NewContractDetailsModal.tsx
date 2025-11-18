@@ -1,5 +1,5 @@
 // 🎨 New Contract Details Modal - Professional contract viewer
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, FileText, BarChart3, Share2, Edit, Trash2, PenTool, Eye, Download, AlertCircle, CheckCircle, Clock, XCircle } from 'lucide-react';
 import styles from './ContractDetailModal.module.css'; // Reuse signature modal styles
 import SmartContractInfo from './SmartContractInfo';
@@ -179,6 +179,10 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
   const [optimizedPdfLoading, setOptimizedPdfLoading] = useState(false); // 🆕 Optimized PDF loading
   const [contentExpanded, setContentExpanded] = useState(false);
 
+  // 🆕 Legal Pulse Polling
+  const [legalPulsePolling, setLegalPulsePolling] = useState(false);
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
   // Modals
   const [showShareModal, setShowShareModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(openEditModalDirectly);
@@ -225,6 +229,82 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
       loadOptimizedPdfUrl();
     }
   }, [activeTab, contract.optimizedPdfS3Key, optimizedPdfUrl, optimizedPdfLoading]);
+
+  // 🆕 Poll for Legal Pulse data when analysis tab is active and Legal Pulse not yet loaded
+  useEffect(() => {
+    if (activeTab === 'analysis' && !contract.legalPulse && (contract.summary || contract.legalAssessment) && !legalPulsePolling) {
+      startLegalPulsePolling();
+    }
+
+    // Cleanup polling on unmount or tab change
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
+      }
+    };
+  }, [activeTab, contract.legalPulse, legalPulsePolling]);
+
+  const startLegalPulsePolling = () => {
+    console.log('⚡ [Modal] Starting Legal Pulse polling for contract:', contract._id);
+    setLegalPulsePolling(true);
+
+    // Clear any existing interval
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current);
+    }
+
+    let pollCount = 0;
+    const maxPolls = 40; // Max 2 minutes
+
+    const pollLegalPulse = async () => {
+      try {
+        pollCount++;
+        console.log(`⚡ [Modal][${pollCount}/${maxPolls}] Polling Legal Pulse...`);
+
+        const response = await fetch(`/api/contracts/${contract._id}`, {
+          credentials: 'include'
+        });
+
+        if (!response.ok) {
+          console.error('[Modal] Failed to fetch contract:', response.status);
+          return;
+        }
+
+        const contractData = await response.json();
+
+        // Check if Legal Pulse data is available
+        if (contractData.legalPulse) {
+          console.log('✅ [Modal] Legal Pulse data found!', contractData.legalPulse);
+          setContract(prev => ({ ...prev, legalPulse: contractData.legalPulse }));
+          setLegalPulsePolling(false);
+
+          // Stop polling
+          if (pollingIntervalRef.current) {
+            clearInterval(pollingIntervalRef.current);
+            pollingIntervalRef.current = null;
+          }
+        } else if (pollCount >= maxPolls) {
+          console.warn('⚠️ [Modal] Legal Pulse polling timeout');
+          setLegalPulsePolling(false);
+
+          // Stop polling
+          if (pollingIntervalRef.current) {
+            clearInterval(pollingIntervalRef.current);
+            pollingIntervalRef.current = null;
+          }
+        }
+      } catch (error) {
+        console.error('[Modal] Error polling Legal Pulse:', error);
+      }
+    };
+
+    // Initial poll
+    pollLegalPulse();
+
+    // Set up interval
+    pollingIntervalRef.current = setInterval(pollLegalPulse, 3000);
+  };
 
   const loadPdfUrl = async () => {
     if (!contract.s3Key || contract.needsReupload) return;
