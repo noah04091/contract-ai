@@ -1291,6 +1291,54 @@ export default function Optimizer() {
 
       // 9. Lade das generierte PDF herunter
       const blob = await pdfResponse.blob();
+
+      // 🆕 10. Speichere optimiertes PDF in S3 für spätere Ansicht
+      try {
+        console.log('📤 Uploading optimized PDF to S3...');
+        const optimizedFileName = `Optimiert_${file.name.replace('.pdf', '')}_${new Date().toISOString().split('T')[0]}.pdf`;
+        const optimizedFile = new File([blob], optimizedFileName, { type: 'application/pdf' });
+
+        // Get presigned upload URL
+        const uploadUrlResponse = await fetch('/api/s3/upload-url', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fileName: optimizedFileName,
+            fileType: 'application/pdf'
+          })
+        });
+
+        if (uploadUrlResponse.ok) {
+          const { uploadUrl, s3Key, s3Location } = await uploadUrlResponse.json();
+
+          // Upload to S3
+          await fetch(uploadUrl, {
+            method: 'PUT',
+            body: optimizedFile,
+            headers: { 'Content-Type': 'application/pdf' }
+          });
+
+          // Update contract with optimized PDF S3 key
+          await fetch(`/api/contracts/${data.contractId}`, {
+            method: 'PATCH',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              optimizedPdfS3Key: s3Key,
+              optimizedPdfS3Location: s3Location,
+              optimizedPdfGeneratedAt: new Date().toISOString()
+            })
+          });
+
+          console.log('✅ Optimized PDF saved to S3:', s3Key);
+        }
+      } catch (s3Error) {
+        console.warn('⚠️ Failed to upload optimized PDF to S3 (continuing with download):', s3Error);
+        // Continue with download even if S3 upload fails
+      }
+
+      // 11. Download starten
       const downloadUrl = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;
@@ -1300,7 +1348,7 @@ export default function Optimizer() {
       document.body.removeChild(link);
       URL.revokeObjectURL(downloadUrl);
 
-      showToast(`✅ Professioneller Vertrag erfolgreich erstellt!`, 'success');
+      showToast(`✅ Professioneller Vertrag erfolgreich erstellt & gespeichert!`, 'success');
 
     } catch (error) {
       const err = error as Error;

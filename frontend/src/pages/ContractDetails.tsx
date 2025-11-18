@@ -22,6 +22,9 @@ interface Contract {
   signature?: string;         // ✅ NEU: Für digitale Unterschrift
   isGenerated?: boolean;      // ✅ NEU: Kennzeichnung als generierter Vertrag
   createdAt?: string;         // ✅ NEU: Erstellungsdatum
+  optimizedPdfS3Key?: string;        // 🆕 S3-Key für optimiertes PDF
+  optimizedPdfS3Location?: string;   // 🆕 S3-Location für optimiertes PDF
+  optimizedPdfGeneratedAt?: string;  // 🆕 Zeitpunkt der PDF-Generierung
   analysis?: {
     summary?: string;
     contractType?: string;
@@ -810,11 +813,43 @@ export default function ContractDetails() {
                   className={styles.actionButton}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 10V16M12 16L9 13M12 16L15 13M17 21H7C5.89543 21 5 20.1046 5 19V5C5 3.89543 5.89543 3 7 3H12.5858C12.851 3 13.1054 3.10536 13.2929 3.29289L18.7071 8.70711C18.8946 8.89464 19 9.149 19 9.41421V19C19 20.1046 18.1046 21 17 21Z" 
+                    <path d="M12 10V16M12 16L9 13M12 16L15 13M17 21H7C5.89543 21 5 20.1046 5 19V5C5 3.89543 5.89543 3 7 3H12.5858C12.851 3 13.1054 3.10536 13.2929 3.29289L18.7071 8.70711C18.8946 8.89464 19 9.149 19 9.41421V19C19 20.1046 18.1046 21 17 21Z"
                       stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                   Original PDF öffnen
                 </a>
+              )}
+
+              {/* 🆕 Zeige optimiertes PDF-Button wenn vorhanden */}
+              {contract.optimizedPdfS3Key && (
+                <button
+                  onClick={async () => {
+                    try {
+                      // Get presigned URL for optimized PDF
+                      const response = await fetch(`/api/s3/view?key=${contract.optimizedPdfS3Key}`, {
+                        credentials: "include"
+                      });
+                      const data = await response.json();
+                      if (data.url) {
+                        window.open(data.url, '_blank');
+                      }
+                    } catch (error) {
+                      console.error('Error opening optimized PDF:', error);
+                      setNotification({ message: "Fehler beim Öffnen des optimierten PDFs", type: "error" });
+                    }
+                  }}
+                  className={styles.actionButton}
+                  style={{
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    color: 'white',
+                    border: 'none'
+                  }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M13 10V3L4 14h7v7l9-11h-7z" fill="currentColor"/>
+                  </svg>
+                  Optimiertes PDF öffnen
+                </button>
               )}
               
               <button
