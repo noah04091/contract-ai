@@ -606,6 +606,7 @@ export default function Optimizer() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [contractScore, setContractScore] = useState<ContractHealthScore | null>(null);
   const [preloadedContractName, setPreloadedContractName] = useState<string | null>(null);
+  const [existingContractId, setExistingContractId] = useState<string | null>(null); // 🆕 Prevent duplicates
 
   // 🆕 Legal Pulse Context State
   const [legalPulseContext, setLegalPulseContext] = useState<{
@@ -773,6 +774,12 @@ export default function Optimizer() {
 
           console.log('[LP-OPTIMIZER] Job data:', jobData);
 
+          // 🆕 Set existing contract ID to prevent duplicates
+          if (jobData.contractId) {
+            setExistingContractId(jobData.contractId);
+            console.log('[LP-OPTIMIZER] Set existingContractId:', jobData.contractId);
+          }
+
           // Set Legal Pulse context if available
           if (jobData.legalPulseContext) {
             setLegalPulseContext(jobData.legalPulseContext);
@@ -861,6 +868,10 @@ export default function Optimizer() {
           const contract = data.contract || data;
 
           setPreloadedContractName(contract.name || contract.fileName || "Unbekannter Vertrag");
+
+          // 🆕 Set existing contract ID to prevent duplicates
+          setExistingContractId(contractId);
+          console.log('[OPTIMIZER] Set existingContractId from URL param:', contractId);
 
           // Step 2: Get presigned URL to download PDF
           const viewRes = await fetch(`/api/s3/view?contractId=${contractId}`, {

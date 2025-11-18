@@ -3888,6 +3888,46 @@ router.post("/stream", verifyToken, uploadLimiter, smartRateLimiter, upload.sing
     sendProgress(5, "✅ Datei validiert - PDF erkannt");
     tempFilePath = req.file.path;
 
+    // 🆕 Extract analysis context if provided (from ContractAnalysis)
+    let analysisContext = null;
+    if (req.body.analysisContext) {
+      try {
+        analysisContext = JSON.parse(req.body.analysisContext);
+        console.log(`📊 [${requestId}] Analysis context received from ContractAnalysis:`, {
+          hasSummary: !!analysisContext.summary,
+          hasLegalAssessment: !!analysisContext.legalAssessment,
+          hasSuggestions: !!analysisContext.suggestions,
+          hasRecommendations: !!analysisContext.recommendations,
+          contractScore: analysisContext.contractScore
+        });
+      } catch (parseError) {
+        console.warn(`⚠️ [${requestId}] Could not parse analysisContext:`, parseError.message);
+      }
+    }
+
+    // 🆕 Extract Legal Pulse context if provided
+    let legalPulseContext = null;
+    if (req.body.legalPulseContext) {
+      try {
+        legalPulseContext = JSON.parse(req.body.legalPulseContext);
+        console.log(`⚡ [${requestId}] Legal Pulse context received:`, {
+          hasRisks: !!legalPulseContext.risks && legalPulseContext.risks.length > 0,
+          hasRecommendations: !!legalPulseContext.recommendations && legalPulseContext.recommendations.length > 0,
+          riskScore: legalPulseContext.riskScore,
+          complianceScore: legalPulseContext.complianceScore
+        });
+      } catch (parseError) {
+        console.warn(`⚠️ [${requestId}] Could not parse legalPulseContext:`, parseError.message);
+      }
+    }
+
+    // 🆕 Extract existing contract ID if provided (to update instead of create duplicate)
+    let existingContractId = null;
+    if (req.body.existingContractId) {
+      existingContractId = req.body.existingContractId;
+      console.log(`🔄 [${requestId}] Existing contract ID provided - will UPDATE instead of CREATE:`, existingContractId);
+    }
+
     sendProgress(8, "🔐 Prüfe Benutzer-Limits...");
 
     // Database access
@@ -4279,11 +4319,106 @@ router.post("/stream", verifyToken, uploadLimiter, smartRateLimiter, upload.sing
 
     sendProgress(99, "💾 Speichere Ergebnisse...");
 
+    // 🔥 NEU: Speichere Contract automatisch in Contracts-Verwaltung
+    let savedContractId = null;
+    if (contractsCollection && db && s3Instance) {
+      try {
+        // 🆕 Upload PDF to S3 first
+        let s3Data = null;
+        try {
+          s3Data = await uploadToS3(tempFilePath, req.file.originalname, req.user.userId);
+          console.log(`✅ [${requestId}] PDF uploaded to S3:`, s3Data.s3Key);
+        } catch (s3Error) {
+          console.error(`⚠️ [${requestId}] S3 Upload failed (continuing without PDF):`, s3Error.message);
+        }
+
+        // 🆕 Prepare optimization data
+        const optimizationData = {
+          updatedAt: new Date(),
+          isOptimized: true, // 🎯 Badge-Flag für "Optimiert"
+          // 🆕 S3 Fields (only if new upload)
+          ...(s3Data && {
+            s3Key: s3Data.s3Key,
+            s3Location: s3Data.s3Location,
+            s3Bucket: s3Data.s3Bucket
+          }),
+          analysisData: {
+            healthScore: normalizedResult.meta?.healthScore || normalizedResult.summary?.healthScore || 0,
+            totalIssues: normalizedResult.summary.totalIssues,
+            criticalRisks: normalizedResult.summary.criticalRisks || 0,
+            contractType: normalizedResult.meta?.type || "unbekannt",
+            categories: normalizedResult.categories.map(cat => ({
+              tag: cat.tag,
+              label: cat.label,
+              issueCount: cat.issues.length
+            }))
+          },
+          optimizations: normalizedResult.categories.flatMap(cat =>
+            cat.issues.map(issue => ({
+              category: cat.tag,
+              summary: issue.summary,
+              original: issue.originalText || issue.original, // ✅ Frontend-kompatibel
+              improved: issue.improvedText || issue.improved, // ✅ Frontend-kompatibel
+              severity: issue.severity,
+              reasoning: issue.reasoning
+            }))
+          )
+        };
+
+        // 🔄 Check if we should UPDATE existing contract or CREATE new one
+        if (existingContractId) {
+          // UPDATE existing contract with optimizations
+          const updateResult = await contractsCollection.updateOne(
+            { _id: new ObjectId(existingContractId) },
+            { $set: optimizationData }
+          );
+
+          savedContractId = existingContractId;
+          console.log(`🔄 [${requestId}] Contract UPDATED in Contracts-Verwaltung:`, {
+            contractId: savedContractId,
+            matched: updateResult.matchedCount,
+            modified: updateResult.modifiedCount,
+            isOptimized: true,
+            hasS3Pdf: !!s3Data
+          });
+        } else {
+          // CREATE new contract
+          const contractToSave = {
+            userId: new ObjectId(req.user.userId), // ✅ FIX: ObjectId für MongoDB-Query-Kompatibilität
+            name: req.file.originalname || "Analysierter Vertrag",
+            content: contractText,
+            kuendigung: "Unbekannt", // ✅ Basis-Felder für Contracts-Kompatibilität
+            laufzeit: "Unbekannt",
+            expiryDate: null,
+            uploadedAt: new Date(),
+            createdAt: new Date(), // ✅ FIX: Für Sortierung in GET /contracts
+            status: "Aktiv",
+            analyzed: true,
+            sourceType: "optimizer", // Wo kam es her
+            ...optimizationData
+          };
+
+          const result = await contractsCollection.insertOne(contractToSave);
+          savedContractId = result.insertedId;
+          console.log(`📁 [${requestId}] Contract CREATED in Contracts-Verwaltung:`, {
+            contractId: savedContractId,
+            name: contractToSave.name,
+            isOptimized: true,
+            hasS3Pdf: !!s3Data
+          });
+        }
+      } catch (saveError) {
+        console.error(`⚠️ [${requestId}] Fehler beim Speichern in Contracts (nicht kritisch):`, saveError.message);
+        // Nicht kritisch - Optimierung war trotzdem erfolgreich
+      }
+    }
+
     // Prepare final result
     const finalResult = {
       success: true,
       message: "✅ ULTIMATIVE Anwaltskanzlei-Niveau Vertragsoptimierung erfolgreich",
       requestId,
+      contractId: savedContractId, // 🆕 Für Frontend-Navigation
       ...normalizedResult,
       originalText: contractText.substring(0, 1500),
       usage: {
