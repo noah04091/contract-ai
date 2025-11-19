@@ -782,6 +782,15 @@ const connectDB = async () => {
       console.error("❌ Fehler bei Cost Tracking:", err);
     }
 
+    // 🤖 ASSISTANT API - Global Assistant (Sales, Product, Legal)
+    try {
+      const assistantRoutes = require("./routes/assistant");
+      app.use("/api/assistant", assistantRoutes);
+      console.log("✅ Assistant API geladen unter /api/assistant");
+    } catch (err) {
+      console.error("❌ Fehler bei Assistant API:", err);
+    }
+
     // ✅ 14.2.1 ALERT FEEDBACK SYSTEM (Phase 2 - Thumbs Up/Down)
     try {
       const alertFeedbackRoutes = require("./routes/alertFeedback")(db);

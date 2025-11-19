@@ -13,6 +13,7 @@ import { useToast } from "./context/ToastContext";
 import SkipNavigation from "./components/SkipNavigation";
 import CookieConsentBanner from "./components/CookieConsentBanner";
 import ScrollToTop from "./components/ScrollToTop";
+import AssistantWidget from "./components/AssistantWidget";
 
 // 🚀 PERFORMANCE: Lazy Loading für alle Seiten (Code Splitting)
 // Homepage, Login, Contracts und Profile werden sofort geladen (kritische Seiten)
@@ -197,6 +198,7 @@ function AppWithLoader() {
         </main>
         <CookieConsentBanner />
         <ToastContainer toasts={toasts} onRemove={removeToast} />
+        <AssistantWidget />
       </div>
     </ErrorBoundary>
   );
