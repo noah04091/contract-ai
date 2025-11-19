@@ -307,8 +307,8 @@ export default function Contracts() {
     setShowDetails(true);
     setOpenEditModalDirectly(true); // ⭐ Das ist der neue State!
 
-    // ✅ UPDATE URL für Assistant-Context (ohne Page Reload)
-    window.history.pushState(null, '', `/contracts/${contract._id}`);
+    // ✅ UPDATE URL für Assistant-Context mit Query Parameter (ohne Page Reload)
+    window.history.pushState(null, '', `/contracts?view=${contract._id}`);
   };
 
   // 🆕 Smart PDF Opener - Opens signed PDF if available, otherwise original
@@ -1522,8 +1522,8 @@ export default function Contracts() {
     setShowDetails(true);
     setDuplicateModal(null);
 
-    // ✅ UPDATE URL für Assistant-Context (ohne Page Reload)
-    window.history.pushState(null, '', `/contracts/${duplicateModal.existingContract._id}`);
+    // ✅ UPDATE URL für Assistant-Context mit Query Parameter (ohne Page Reload)
+    window.history.pushState(null, '', `/contracts?view=${duplicateModal.existingContract._id}`);
     
     // ✅ Cleanup Upload
     if (duplicateModal.fileItem) {
@@ -1823,8 +1823,8 @@ export default function Contracts() {
     setShowDetails(true);
     setOpenEditModalDirectly(false); // ✅ Normal Details öffnen, nicht Edit-Modal
 
-    // ✅ UPDATE URL für Assistant-Context (ohne Page Reload)
-    window.history.pushState(null, '', `/contracts/${contract._id}`);
+    // ✅ UPDATE URL für Assistant-Context mit Query Parameter (ohne Page Reload)
+    window.history.pushState(null, '', `/contracts?view=${contract._id}`);
   };
 
   // ✅ Verbesserte Löschfunktion

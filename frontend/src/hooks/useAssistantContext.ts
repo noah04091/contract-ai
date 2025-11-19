@@ -33,9 +33,23 @@ export function useAssistantContext(): AssistantContext {
     const userPlan = user?.subscriptionPlan || null;
     const route = location.pathname;
 
-    // Extrahiere Contract ID aus Route falls vorhanden
-    const contractIdMatch = route.match(/\/contracts\/([a-f0-9]+)/i);
-    const currentContractId = contractIdMatch ? contractIdMatch[1] : null;
+    // Extrahiere Contract ID aus Path ODER Query Parameter
+    let currentContractId: string | null = null;
+
+    // 1. Versuche aus Path zu extrahieren (/contracts/abc123 - alte Detailseite)
+    const pathMatch = route.match(/\/contracts\/([a-f0-9]+)/i);
+    if (pathMatch) {
+      currentContractId = pathMatch[1];
+    }
+
+    // 2. Falls nicht gefunden, versuche aus Query Parameter (?view=abc123 - Modal)
+    if (!currentContractId) {
+      const searchParams = new URLSearchParams(location.search);
+      const viewParam = searchParams.get('view');
+      if (viewParam && /^[a-f0-9]+$/i.test(viewParam)) {
+        currentContractId = viewParam;
+      }
+    }
 
     // ============================================
     // MODE DETECTION LOGIC
@@ -105,7 +119,7 @@ export function useAssistantContext(): AssistantContext {
       isAuthenticated: true,
       currentContractId: null,
     };
-  }, [location.pathname, user]);
+  }, [location.pathname, location.search, user]);
 
   return context;
 }
