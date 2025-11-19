@@ -278,8 +278,8 @@
   background: linear-gradient(135deg, #6366f1, #8b5cf6);
 }
 
-.stat-card-premium.critical .stat-icon-wrapper {
-  background: linear-gradient(135deg, #ef4444, #dc2626);
+.stat-card-premium.past .stat-icon-wrapper {
+  background: linear-gradient(135deg, #6b7280, #4b5563);
 }
 
 .stat-card-premium.warning .stat-icon-wrapper {

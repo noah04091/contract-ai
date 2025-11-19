@@ -691,7 +691,7 @@ export default function CalendarPage() {
   const [isTablet, setIsTablet] = useState(window.innerWidth >= 768 && window.innerWidth < 1024);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showStatsModal, setShowStatsModal] = useState(false);
-  const [selectedStatFilter, setSelectedStatFilter] = useState<"total" | "critical" | "thisMonth" | "notified">("total");
+  const [selectedStatFilter, setSelectedStatFilter] = useState<"total" | "past" | "thisMonth" | "notified">("total");
 
   const EVENTS_PER_PAGE = isMobile ? 3 : 5;
 
@@ -718,11 +718,18 @@ export default function CalendarPage() {
         return;
       }
 
+      // ✅ Load past events (last 60 days) AND future events (next 365 days)
+      const pastDate = new Date();
+      pastDate.setDate(pastDate.getDate() - 60); // 60 Tage zurück
+
+      const futureDate = new Date();
+      futureDate.setDate(futureDate.getDate() + 365); // 365 Tage voraus
+
       const response = await axios.get<ApiResponse<CalendarEvent>>("/api/calendar/events", {
         headers: { Authorization: `Bearer ${token}` },
         params: {
-          from: new Date().toISOString(),
-          to: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
+          from: pastDate.toISOString(),
+          to: futureDate.toISOString()
         }
       });
 
@@ -936,13 +943,18 @@ export default function CalendarPage() {
              eventDate.getFullYear() === now.getFullYear();
     });
 
-    const overdue = filteredEvents.filter(e => new Date(e.date) < now);
+    // ✅ Past events: Last 60 days
+    const past60Days = new Date();
+    past60Days.setDate(past60Days.getDate() - 60);
+    const pastEvents = events.filter(e => {
+      const eventDate = new Date(e.date);
+      return eventDate < now && eventDate >= past60Days;
+    });
 
     return {
       total: events.length,
-      critical: events.filter(e => e.severity === "critical").length,
+      past: pastEvents.length, // ✅ Changed from 'critical' to 'past'
       thisMonth: thisMonth.length,
-      overdue: overdue.length,
       notified: events.filter(e => e.status === "notified").length
     };
   };
@@ -950,7 +962,7 @@ export default function CalendarPage() {
   const stats = getStatistics();
 
   // Handle Stats Card Click - Open Modal with filtered events
-  const handleStatsCardClick = (filterType: "total" | "critical" | "thisMonth" | "notified") => {
+  const handleStatsCardClick = (filterType: "total" | "past" | "thisMonth" | "notified") => {
     setSelectedStatFilter(filterType);
     setShowStatsModal(true);
   };
@@ -960,8 +972,14 @@ export default function CalendarPage() {
     const now = new Date();
 
     switch (selectedStatFilter) {
-      case "critical":
-        return events.filter(e => e.severity === "critical");
+      case "past":
+        // ✅ Past events: Last 60 days
+        const past60Days = new Date();
+        past60Days.setDate(past60Days.getDate() - 60);
+        return events.filter(e => {
+          const eventDate = new Date(e.date);
+          return eventDate < now && eventDate >= past60Days;
+        });
       case "thisMonth":
         return events.filter(e => {
           const eventDate = new Date(e.date);
@@ -979,8 +997,8 @@ export default function CalendarPage() {
   // Get title for stats modal
   const getStatsModalTitle = () => {
     switch (selectedStatFilter) {
-      case "critical":
-        return "Kritische Ereignisse";
+      case "past":
+        return "Vergangene Ereignisse";
       case "thisMonth":
         return "Ereignisse diesen Monat";
       case "notified":
@@ -1164,18 +1182,18 @@ export default function CalendarPage() {
               </motion.div>
 
               <motion.div
-                className="stat-card-premium critical"
+                className="stat-card-premium past"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => handleStatsCardClick("critical")}
+                onClick={() => handleStatsCardClick("past")}
                 style={{ cursor: 'pointer' }}
               >
                 <div className="stat-icon-wrapper">
-                  <AlertCircle size={24} />
+                  <Clock size={24} />
                 </div>
                 <div className="stat-content">
-                  <div className="stat-value">{stats.critical}</div>
-                  <div className="stat-label">Kritisch</div>
+                  <div className="stat-value">{stats.past}</div>
+                  <div className="stat-label">Vergangene Ereignisse</div>
                 </div>
                 <div className="stat-card-arrow">
                   <ArrowRight size={16} />
@@ -1190,7 +1208,7 @@ export default function CalendarPage() {
                 style={{ cursor: 'pointer' }}
               >
                 <div className="stat-icon-wrapper">
-                  <Clock size={24} />
+                  <Target size={24} />
                 </div>
                 <div className="stat-content">
                   <div className="stat-value">{stats.thisMonth}</div>
