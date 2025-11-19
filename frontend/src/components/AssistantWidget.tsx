@@ -3,6 +3,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLocation } from "react-router-dom";
 import { useAssistantContext } from "../hooks/useAssistantContext";
 import styles from "../styles/AssistantWidget.module.css";
 
@@ -19,6 +20,7 @@ interface AssistantResponse {
 }
 
 export default function AssistantWidget() {
+  const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
@@ -27,6 +29,27 @@ export default function AssistantWidget() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const assistantContext = useAssistantContext();
+
+  // ============================================
+  // VISIBILITY CONTROL - Hide on specific pages
+  // ============================================
+  const hiddenRoutes = [
+    "/login",
+    "/register",
+    "/blog",
+    "/pricing",
+    "/forgot-password",
+    "/reset-password",
+  ];
+
+  const shouldShowWidget = !hiddenRoutes.some((route) =>
+    location.pathname.toLowerCase().startsWith(route.toLowerCase())
+  );
+
+  // If widget should be hidden, don't render anything
+  if (!shouldShowWidget) {
+    return null;
+  }
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
