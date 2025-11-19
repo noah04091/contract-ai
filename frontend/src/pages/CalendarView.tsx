@@ -1061,30 +1061,17 @@ function StatsDetailModal({ isOpen, onClose, title, events, onEventClick, filter
 
   if (!isOpen) return null;
 
-  // ✅ Smart sorting based on filter type
+  // ✅ Simple sorting: past = newest first, others = oldest first
   const sortedEvents = [...events].sort((a, b) => {
     const dateA = new Date(a.date).getTime();
     const dateB = new Date(b.date).getTime();
-    const now = Date.now();
 
-    // For "total": Show future events first, then past events
-    if (filterType === "total") {
-      const aIsFuture = dateA >= now;
-      const bIsFuture = dateB >= now;
-
-      if (aIsFuture && !bIsFuture) return -1; // a is future, b is past → a first
-      if (!aIsFuture && bIsFuture) return 1;  // a is past, b is future → b first
-
-      // Both future or both past: sort ascending (earliest first)
-      return dateA - dateB;
-    }
-
-    // For "past": Show newest first (descending)
+    // For "past": Show newest first (descending - today backwards)
     if (filterType === "past") {
-      return dateB - dateA; // Descending
+      return dateB - dateA;
     }
 
-    // Default: ascending (earliest first)
+    // For all others (total, cancellable, etc.): ascending (earliest first)
     return dateA - dateB;
   });
 
@@ -1936,9 +1923,12 @@ export default function CalendarPage() {
       return isFuture && isRenewalType;
     });
 
+    // ✅ Total = nur ZUKÜNFTIGE Events (ab heute)
+    const futureEvents = events.filter(e => new Date(e.date) >= now);
+
     return {
-      total: events.length,
-      past: pastEvents.length, // ✅ Changed from 'critical' to 'past'
+      total: futureEvents.length, // ✅ Nur zukünftige Events
+      past: pastEvents.length,
       cancellable: cancellable.length,
       autoRenewal: autoRenewal.length
     };
@@ -1992,6 +1982,8 @@ export default function CalendarPage() {
           return isFuture && isRenewalType;
         });
       case "total":
+        // ✅ "Ereignisse gesamt" = nur ZUKÜNFTIGE Events (ab heute)
+        return events.filter(e => new Date(e.date) >= now);
       default:
         return events;
     }
@@ -2007,6 +1999,7 @@ export default function CalendarPage() {
       case "autoRenewal":
         return "🔄 Auto-Verlängerung";
       case "total":
+        return "Kommende Ereignisse";
       default:
         return "Alle Ereignisse";
     }
@@ -2064,7 +2057,7 @@ export default function CalendarPage() {
                 </div>
                 <div className="stat-content">
                   <div className="stat-value">{stats.total}</div>
-                  <div className="stat-label">Ereignisse gesamt</div>
+                  <div className="stat-label">Kommende Ereignisse</div>
                 </div>
                 <div className="stat-card-arrow">
                   <ArrowRight size={16} />
