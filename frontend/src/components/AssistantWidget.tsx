@@ -42,6 +42,12 @@ export default function AssistantWidget() {
     }
   }, [isOpen]);
 
+  // ✅ RESET Chat wenn Contract ID wechselt (verhindert gecachten alten Context)
+  useEffect(() => {
+    // Lösche Nachrichten wenn sich die Contract ID ändert
+    setMessages([]);
+  }, [assistantContext.currentContractId]);
+
   // Send message to backend
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading) return;
