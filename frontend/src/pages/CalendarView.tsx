@@ -1047,9 +1047,10 @@ interface StatsDetailModalProps {
   title: string;
   events: CalendarEvent[];
   onEventClick: (event: CalendarEvent) => void;
+  filterType?: "total" | "past" | "cancellable" | "autoRenewal";
 }
 
-function StatsDetailModal({ isOpen, onClose, title, events, onEventClick }: StatsDetailModalProps) {
+function StatsDetailModal({ isOpen, onClose, title, events, onEventClick, filterType }: StatsDetailModalProps) {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {
@@ -1060,10 +1061,32 @@ function StatsDetailModal({ isOpen, onClose, title, events, onEventClick }: Stat
 
   if (!isOpen) return null;
 
-  // Sort events by date (ascending)
-  const sortedEvents = [...events].sort((a, b) =>
-    new Date(a.date).getTime() - new Date(b.date).getTime()
-  );
+  // ✅ Smart sorting based on filter type
+  const sortedEvents = [...events].sort((a, b) => {
+    const dateA = new Date(a.date).getTime();
+    const dateB = new Date(b.date).getTime();
+    const now = Date.now();
+
+    // For "total": Show future events first, then past events
+    if (filterType === "total") {
+      const aIsFuture = dateA >= now;
+      const bIsFuture = dateB >= now;
+
+      if (aIsFuture && !bIsFuture) return -1; // a is future, b is past → a first
+      if (!aIsFuture && bIsFuture) return 1;  // a is past, b is future → b first
+
+      // Both future or both past: sort ascending (earliest first)
+      return dateA - dateB;
+    }
+
+    // For "past": Show newest first (descending)
+    if (filterType === "past") {
+      return dateB - dateA; // Descending
+    }
+
+    // Default: ascending (earliest first)
+    return dateA - dateB;
+  });
 
   // Group events by month
   const eventsByMonth = sortedEvents.reduce((acc, event) => {
@@ -3016,6 +3039,7 @@ export default function CalendarPage() {
             setSelectedEvent(event);
             setShowQuickActions(true);
           }}
+          filterType={selectedStatFilter}
         />
       </div>
     </>
