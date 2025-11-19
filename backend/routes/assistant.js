@@ -200,7 +200,7 @@ router.post("/message", async (req, res) => {
           currentContractId,
         };
 
-        // In Phase 2: Lade Contract Details hier
+        // ✅ Phase 2: Lade vollständigen Vertrags-Context
         if (currentContractId && req.db) {
           try {
             const contractsCollection = req.db.collection("contracts");
@@ -209,12 +209,37 @@ router.post("/message", async (req, res) => {
             });
 
             if (contract) {
+              // Basis-Infos
               allowedContext.contractName = contract.name;
-              allowedContext.contractSummary = contract.analysisSummary || "";
-              allowedContext.risks = contract.risks || [];
+              allowedContext.contractStatus = contract.status;
               allowedContext.score = contract.score;
 
-              console.log(`📄 [ASSISTANT] Loaded contract: ${contract.name}`);
+              // Zusammenfassung & Analyse
+              allowedContext.analysisSummary = contract.analysisSummary || "";
+              allowedContext.summary = contract.summary || "";
+
+              // Risiken (wichtigste Info für Legal Copilot)
+              allowedContext.risks = contract.risks || [];
+              allowedContext.riskFactors = contract.riskFactors || [];
+
+              // Vertragslaufzeit
+              allowedContext.laufzeit = contract.laufzeit;
+              allowedContext.kuendigung = contract.kuendigung;
+              allowedContext.expiryDate = contract.expiryDate;
+
+              // Wichtige Klauseln (falls vorhanden)
+              if (contract.clauses && contract.clauses.length > 0) {
+                allowedContext.clauses = contract.clauses.slice(0, 5); // Nur erste 5
+              }
+
+              // Kurzer Text-Auszug (nicht der ganze Vertrag! Max 2000 Zeichen)
+              if (contract.extractedText) {
+                allowedContext.textPreview = contract.extractedText.substring(0, 2000) + "...";
+              }
+
+              console.log(`📄 [ASSISTANT] Loaded contract: ${contract.name} (${contract.risks?.length || 0} risks)`);
+            } else {
+              console.warn(`⚠️ [ASSISTANT] Contract ${currentContractId} not found`);
             }
           } catch (dbError) {
             console.warn("⚠️ [ASSISTANT] Contract load failed:", dbError.message);
