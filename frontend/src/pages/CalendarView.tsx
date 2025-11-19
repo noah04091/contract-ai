@@ -1451,7 +1451,7 @@ export default function CalendarPage() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [isTablet, setIsTablet] = useState(window.innerWidth >= 768 && window.innerWidth < 1024);
   const [showStatsModal, setShowStatsModal] = useState(false);
-  const [selectedStatFilter, setSelectedStatFilter] = useState<"total" | "critical" | "cancellable" | "autoRenewal">("total");
+  const [selectedStatFilter, setSelectedStatFilter] = useState<"total" | "past" | "cancellable" | "autoRenewal">("total");
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
   const [showSnoozeDialog, setShowSnoozeDialog] = useState(false);
@@ -1505,11 +1505,18 @@ export default function CalendarPage() {
         headers.Authorization = `Bearer ${token}`;
       }
 
+      // ✅ Load past events (last 60 days) AND future events (next 365 days)
+      const pastDate = new Date();
+      pastDate.setDate(pastDate.getDate() - 60); // 60 Tage zurück
+
+      const futureDate = new Date();
+      futureDate.setDate(futureDate.getDate() + 365); // 365 Tage voraus
+
       const response = await axios.get<ApiResponse<CalendarEvent>>("/api/calendar/events", {
         headers,
         params: {
-          from: new Date().toISOString(),
-          to: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString()
+          from: pastDate.toISOString(),
+          to: futureDate.toISOString()
         }
       });
 
@@ -1871,6 +1878,14 @@ export default function CalendarPage() {
     const futureDate = new Date();
     futureDate.setDate(futureDate.getDate() + 60); // Nächste 60 Tage
 
+    // ✅ Past events: Last 60 days
+    const past60Days = new Date();
+    past60Days.setDate(past60Days.getDate() - 60);
+    const pastEvents = events.filter(e => {
+      const eventDate = new Date(e.date);
+      return eventDate < now && eventDate >= past60Days;
+    });
+
     // Kündigbare Verträge - Events mit Kündigungsfrist in naher Zukunft
     const cancellable = events.filter(e => {
       const eventDate = new Date(e.date);
@@ -1900,7 +1915,7 @@ export default function CalendarPage() {
 
     return {
       total: events.length,
-      critical: events.filter(e => e.severity === "critical").length,
+      past: pastEvents.length, // ✅ Changed from 'critical' to 'past'
       cancellable: cancellable.length,
       autoRenewal: autoRenewal.length
     };
@@ -1909,7 +1924,7 @@ export default function CalendarPage() {
   const stats = getStatistics();
 
   // Handle Stats Card Click - Open Modal with filtered events
-  const handleStatsCardClick = (filterType: "total" | "critical" | "cancellable" | "autoRenewal") => {
+  const handleStatsCardClick = (filterType: "total" | "past" | "cancellable" | "autoRenewal") => {
     setSelectedStatFilter(filterType);
     setShowStatsModal(true);
   };
@@ -1921,8 +1936,15 @@ export default function CalendarPage() {
     futureDate.setDate(futureDate.getDate() + 60);
 
     switch (selectedStatFilter) {
-      case "critical":
-        return events.filter(e => e.severity === "critical");
+      case "past": {
+        // ✅ Past events: Last 60 days
+        const past60Days = new Date();
+        past60Days.setDate(past60Days.getDate() - 60);
+        return events.filter(e => {
+          const eventDate = new Date(e.date);
+          return eventDate < now && eventDate >= past60Days;
+        });
+      }
       case "cancellable":
         return events.filter(e => {
           const eventDate = new Date(e.date);
@@ -1955,8 +1977,8 @@ export default function CalendarPage() {
   // Get title for stats modal
   const getStatsModalTitle = () => {
     switch (selectedStatFilter) {
-      case "critical":
-        return "Kritische Ereignisse";
+      case "past":
+        return "Vergangene Ereignisse";
       case "cancellable":
         return "📅 Kündigbare Verträge";
       case "autoRenewal":
@@ -2027,18 +2049,18 @@ export default function CalendarPage() {
               </motion.div>
 
               <motion.div
-                className="stat-card-premium critical"
+                className="stat-card-premium past"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => handleStatsCardClick("critical")}
+                onClick={() => handleStatsCardClick("past")}
                 style={{ cursor: 'pointer' }}
               >
                 <div className="stat-icon-wrapper">
-                  <AlertCircle size={24} />
+                  <Clock size={24} />
                 </div>
                 <div className="stat-content">
-                  <div className="stat-value">{stats.critical}</div>
-                  <div className="stat-label">Kritisch</div>
+                  <div className="stat-value">{stats.past}</div>
+                  <div className="stat-label">Vergangene Ereignisse</div>
                 </div>
                 <div className="stat-card-arrow">
                   <ArrowRight size={16} />
