@@ -542,6 +542,26 @@
   margin-left: 2px;
 }
 
+/* Notification badge - like app notifications in top-right corner */
+.event-notification-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: #ef4444;     /* Rot - auffällig wie App-Benachrichtigung */
+  color: white;
+  font-size: 9px;
+  font-weight: 700;
+  min-width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  padding: 0 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  z-index: 10;
+}
+
 /* Past events - faded and desaturated for visual hierarchy */
 .past-event {
   opacity: 0.4;              /* 40% transparent */

@@ -1791,24 +1791,31 @@ export default function CalendarPage() {
     const hasInfo = dayEvents.some(e => e.severity === "info");
 
     return (
-      <div className={`tile-content-modern ${isPast ? 'past-event' : ''}`}>
-        {hasCritical && (
-          <div className="event-dot critical-dot">
-            <span className="dot-pulse"></span>
-          </div>
-        )}
-        {hasWarning && !hasCritical && (
-          <div className="event-dot warning-dot">
-            <span className="dot-pulse"></span>
-          </div>
-        )}
-        {hasInfo && !hasCritical && !hasWarning && (
-          <div className="event-dot info-dot"></div>
-        )}
+      <>
+        {/* Event dots at the bottom */}
+        <div className={`tile-content-modern ${isPast ? 'past-event' : ''}`}>
+          {hasCritical && (
+            <div className="event-dot critical-dot">
+              <span className="dot-pulse"></span>
+            </div>
+          )}
+          {hasWarning && !hasCritical && (
+            <div className="event-dot warning-dot">
+              <span className="dot-pulse"></span>
+            </div>
+          )}
+          {hasInfo && !hasCritical && !hasWarning && (
+            <div className="event-dot info-dot"></div>
+          )}
+        </div>
+
+        {/* Notification badge in top-right corner */}
         {dayEvents.length > 1 && (
-          <div className="event-count-badge">{dayEvents.length}</div>
+          <div className={`event-notification-badge ${isPast ? 'past-event' : ''}`}>
+            {dayEvents.length}
+          </div>
         )}
-      </div>
+      </>
     );
   };
 
