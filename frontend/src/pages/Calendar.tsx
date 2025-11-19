@@ -972,7 +972,7 @@ export default function CalendarPage() {
     const now = new Date();
 
     switch (selectedStatFilter) {
-      case "past":
+      case "past": {
         // ✅ Past events: Last 60 days
         const past60Days = new Date();
         past60Days.setDate(past60Days.getDate() - 60);
@@ -980,6 +980,7 @@ export default function CalendarPage() {
           const eventDate = new Date(e.date);
           return eventDate < now && eventDate >= past60Days;
         });
+      }
       case "thisMonth":
         return events.filter(e => {
           const eventDate = new Date(e.date);
