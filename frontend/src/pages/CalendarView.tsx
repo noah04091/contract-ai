@@ -1853,17 +1853,20 @@ export default function CalendarPage() {
   };
 
   const getUpcomingCriticalEvents = () => {
-    const now = new Date();
+    // ✅ Start of today (00:00:00) - inkludiert ALLE Events von heute!
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
     const future = new Date();
     future.setDate(future.getDate() + 30);
 
     // WICHTIG: Verwende `events` statt `filteredEvents`
     // "Dringende Ereignisse" sollen IMMER angezeigt werden, unabhängig von Filtern!
-    // Zeige ALLE Events in den nächsten 30 Tagen (critical, warning, info)
+    // Zeige ALLE Events ab HEUTE (inkl. heute) bis +30 Tage
     return events
       .filter(e => {
         const eventDate = new Date(e.date);
-        return eventDate >= now && eventDate <= future;
+        return eventDate >= startOfToday && eventDate <= future;
       })
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
       .slice(0, 10); // Maximal 10 Events anzeigen
@@ -1884,22 +1887,25 @@ export default function CalendarPage() {
 
   // Calculate statistics
   const getStatistics = () => {
-    const now = new Date();
+    // ✅ Start of today (00:00:00) - HEUTE = noch nicht vergangen!
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
     const futureDate = new Date();
     futureDate.setDate(futureDate.getDate() + 60); // Nächste 60 Tage
 
-    // ✅ Past events: Last 60 days
+    // ✅ Past events: VOR heute (gestern und früher)
     const past60Days = new Date();
     past60Days.setDate(past60Days.getDate() - 60);
     const pastEvents = events.filter(e => {
       const eventDate = new Date(e.date);
-      return eventDate < now && eventDate >= past60Days;
+      return eventDate < startOfToday && eventDate >= past60Days;
     });
 
     // Kündigbare Verträge - Events mit Kündigungsfrist in naher Zukunft
     const cancellable = events.filter(e => {
       const eventDate = new Date(e.date);
-      const isFuture = eventDate >= now && eventDate <= futureDate;
+      const isFuture = eventDate >= startOfToday && eventDate <= futureDate;
       // ✅ Backend generiert diese Event-Types für Kündigungen
       const isCancellationType = e.type === "CANCEL_WINDOW_OPEN" ||
                                   e.type === "CANCEL_REMINDER" ||
@@ -1913,7 +1919,7 @@ export default function CalendarPage() {
     // Auto-Verlängerung - Verträge die sich bald automatisch verlängern
     const autoRenewal = events.filter(e => {
       const eventDate = new Date(e.date);
-      const isFuture = eventDate >= now && eventDate <= futureDate;
+      const isFuture = eventDate >= startOfToday && eventDate <= futureDate;
       // ✅ Backend generiert AUTO_RENEWAL und CONTRACT_EXPIRY (mit isAutoRenewal)
       const isRenewalType = e.type === "AUTO_RENEWAL" ||
                             e.type === "CONTRACT_EXPIRY" ||
@@ -1923,12 +1929,12 @@ export default function CalendarPage() {
       return isFuture && isRenewalType;
     });
 
-    // ✅ Total = nur ZUKÜNFTIGE Events (ab heute)
-    const futureEvents = events.filter(e => new Date(e.date) >= now);
+    // ✅ Total = AB HEUTE (ganzer heutiger Tag + Zukunft)
+    const futureEvents = events.filter(e => new Date(e.date) >= startOfToday);
 
     return {
-      total: futureEvents.length, // ✅ Nur zukünftige Events
-      past: pastEvents.length,
+      total: futureEvents.length, // ✅ Ab heute (inkl. heute)
+      past: pastEvents.length, // ✅ Vor heute (exkl. heute)
       cancellable: cancellable.length,
       autoRenewal: autoRenewal.length
     };
@@ -1944,24 +1950,27 @@ export default function CalendarPage() {
 
   // Get filtered events for stats modal
   const getFilteredStatsEvents = () => {
-    const now = new Date();
+    // ✅ Start of today (00:00:00) - HEUTE = noch nicht vergangen!
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
     const futureDate = new Date();
     futureDate.setDate(futureDate.getDate() + 60);
 
     switch (selectedStatFilter) {
       case "past": {
-        // ✅ Past events: Last 60 days
+        // ✅ Past events: VOR heute (gestern und früher)
         const past60Days = new Date();
         past60Days.setDate(past60Days.getDate() - 60);
         return events.filter(e => {
           const eventDate = new Date(e.date);
-          return eventDate < now && eventDate >= past60Days;
+          return eventDate < startOfToday && eventDate >= past60Days;
         });
       }
       case "cancellable":
         return events.filter(e => {
           const eventDate = new Date(e.date);
-          const isFuture = eventDate >= now && eventDate <= futureDate;
+          const isFuture = eventDate >= startOfToday && eventDate <= futureDate;
           const isCancellationType = e.type === "CANCEL_WINDOW_OPEN" ||
                                       e.type === "CANCEL_REMINDER" ||
                                       e.type === "LAST_CANCEL_DAY" ||
@@ -1973,7 +1982,7 @@ export default function CalendarPage() {
       case "autoRenewal":
         return events.filter(e => {
           const eventDate = new Date(e.date);
-          const isFuture = eventDate >= now && eventDate <= futureDate;
+          const isFuture = eventDate >= startOfToday && eventDate <= futureDate;
           const isRenewalType = e.type === "AUTO_RENEWAL" ||
                                 e.type === "CONTRACT_EXPIRY" ||
                                 e.title?.toLowerCase().includes("verlängerung") ||
@@ -1982,8 +1991,8 @@ export default function CalendarPage() {
           return isFuture && isRenewalType;
         });
       case "total":
-        // ✅ "Ereignisse gesamt" = nur ZUKÜNFTIGE Events (ab heute)
-        return events.filter(e => new Date(e.date) >= now);
+        // ✅ "Kommende Ereignisse" = AB HEUTE (ganzer heutiger Tag + Zukunft)
+        return events.filter(e => new Date(e.date) >= startOfToday);
       default:
         return events;
     }
