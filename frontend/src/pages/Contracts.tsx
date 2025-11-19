@@ -306,6 +306,9 @@ export default function Contracts() {
     setSelectedContract(contract);
     setShowDetails(true);
     setOpenEditModalDirectly(true); // ⭐ Das ist der neue State!
+
+    // ✅ UPDATE URL für Assistant-Context (ohne Page Reload)
+    window.history.pushState(null, '', `/contracts/${contract._id}`);
   };
 
   // 🆕 Smart PDF Opener - Opens signed PDF if available, otherwise original
@@ -1518,6 +1521,9 @@ export default function Contracts() {
     setSelectedContract(duplicateModal.existingContract);
     setShowDetails(true);
     setDuplicateModal(null);
+
+    // ✅ UPDATE URL für Assistant-Context (ohne Page Reload)
+    window.history.pushState(null, '', `/contracts/${duplicateModal.existingContract._id}`);
     
     // ✅ Cleanup Upload
     if (duplicateModal.fileItem) {
@@ -1816,6 +1822,9 @@ export default function Contracts() {
     setSelectedContract(contract);
     setShowDetails(true);
     setOpenEditModalDirectly(false); // ✅ Normal Details öffnen, nicht Edit-Modal
+
+    // ✅ UPDATE URL für Assistant-Context (ohne Page Reload)
+    window.history.pushState(null, '', `/contracts/${contract._id}`);
   };
 
   // ✅ Verbesserte Löschfunktion
@@ -3428,6 +3437,9 @@ export default function Contracts() {
               onClose={() => {
                 setShowDetails(false);
                 setOpenEditModalDirectly(false); // ✅ Reset beim Schließen
+
+                // ✅ RESET URL zurück zur Liste (ohne Page Reload)
+                window.history.pushState(null, '', '/contracts');
               }}
               openEditModalDirectly={openEditModalDirectly} // ✅ NEU: Diese Prop wird das Edit-Modal direkt öffnen
               onEdit={async (contractId) => {
