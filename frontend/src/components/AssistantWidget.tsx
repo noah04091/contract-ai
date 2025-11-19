@@ -30,27 +30,6 @@ export default function AssistantWidget() {
 
   const assistantContext = useAssistantContext();
 
-  // ============================================
-  // VISIBILITY CONTROL - Hide on specific pages
-  // ============================================
-  const hiddenRoutes = [
-    "/login",
-    "/register",
-    "/blog",
-    "/pricing",
-    "/forgot-password",
-    "/reset-password",
-  ];
-
-  const shouldShowWidget = !hiddenRoutes.some((route) =>
-    location.pathname.toLowerCase().startsWith(route.toLowerCase())
-  );
-
-  // If widget should be hidden, don't render anything
-  if (!shouldShowWidget) {
-    return null;
-  }
-
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -145,6 +124,27 @@ export default function AssistantWidget() {
         return "🤖 Assistant";
     }
   };
+
+  // ============================================
+  // VISIBILITY CONTROL - Hide on specific pages
+  // ============================================
+  const hiddenRoutes = [
+    "/login",
+    "/register",
+    "/blog",
+    "/pricing",
+    "/forgot-password",
+    "/reset-password",
+  ];
+
+  const shouldShowWidget = !hiddenRoutes.some((route) =>
+    location.pathname.toLowerCase().startsWith(route.toLowerCase())
+  );
+
+  // If widget should be hidden, don't render anything
+  if (!shouldShowWidget) {
+    return null;
+  }
 
   return (
     <>
