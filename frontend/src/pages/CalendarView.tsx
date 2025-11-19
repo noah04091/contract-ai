@@ -1778,15 +1778,20 @@ export default function CalendarPage() {
     const dayEvents = filteredEvents.filter(e =>
       e.date && e.date.split('T')[0] === dateString
     );
-    
+
     if (dayEvents.length === 0) return null;
-    
+
+    // ✅ Check if date is in the past (before today 00:00)
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+    const isPast = date < startOfToday;
+
     const hasCritical = dayEvents.some(e => e.severity === "critical");
     const hasWarning = dayEvents.some(e => e.severity === "warning");
     const hasInfo = dayEvents.some(e => e.severity === "info");
-    
+
     return (
-      <div className="tile-content-modern">
+      <div className={`tile-content-modern ${isPast ? 'past-event' : ''}`}>
         {hasCritical && (
           <div className="event-dot critical-dot">
             <span className="dot-pulse"></span>

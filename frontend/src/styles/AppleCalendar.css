@@ -542,6 +542,12 @@
   margin-left: 2px;
 }
 
+/* Past events - faded and desaturated for visual hierarchy */
+.past-event {
+  opacity: 0.4;              /* 40% transparent */
+  filter: grayscale(50%);    /* 50% desaturated */
+}
+
 .tile-critical {
   background: rgba(239, 68, 68, 0.04) !important;
   border-color: rgba(239, 68, 68, 0.2) !important;
