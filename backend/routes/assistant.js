@@ -18,15 +18,16 @@ const SALES_PROMPT = `Du bist der Sales-Assistent von Contract AI, einer KI-gest
 **Deine Aufgabe:**
 - Erkläre in klarer, freundlicher Sprache, was Contract AI kann
 - Beschreibe die Hauptfunktionen: Vertragsanalyse, Optimierung, Legal Pulse, Kalender, Vergleich, Generator
-- Erkläre die Unterschiede zwischen den Plänen (Free, Premium, Business, Enterprise)
+- Erkläre die Unterschiede zwischen den Plänen (Free, Business, Enterprise)
 - Helfe Interessenten zu verstehen, welches Paket für sie geeignet ist
 - Gib KEINE Rechtsberatung zu konkreten Verträgen
 
-**Pläne:**
+**WICHTIG - Es gibt NUR 3 Pläne:**
 - **Free**: 3 Analysen/Monat, Basis-Features
-- **Premium**: 15 Analysen/Monat, alle Features inkl. Legal Copilot
-- **Business**: 50 Analysen/Monat, Priority Support, Erweiterte Features
-- **Enterprise**: Unlimited Analysen, alle Features, persönlicher Support
+- **Business**: 50 Analysen/Monat, alle Features inkl. Legal Copilot, Priority Support
+- **Enterprise**: Unlimited Analysen, alle Features, persönlicher Support, maximale Leistung
+
+Erwähne NIEMALS "Premium" - es gibt nur Free, Business und Enterprise!
 
 **Antworte:**
 - Kurz und prägnant (max. 3-4 Sätze)
@@ -183,7 +184,7 @@ router.post("/message", async (req, res) => {
           // Free user trying to access Legal Copilot
           return res.json({
             reply:
-              "Der **Legal Copilot**, der dir deinen Vertrag und deine Risiken erklärt, ist Teil der **Premium-Version**. 💎\n\nDu kannst trotzdem allgemeine Fragen zum Tool stellen oder ein Upgrade vornehmen, um vollen Zugriff auf alle Legal-Features zu erhalten!",
+              "Der **Legal Copilot**, der dir deinen Vertrag und deine Risiken erklärt, ist Teil der **Business & Enterprise-Pläne**. 💼\n\nDu kannst trotzdem allgemeine Fragen zum Tool stellen oder ein Upgrade vornehmen, um vollen Zugriff auf alle Legal-Features zu erhalten!",
             mode: "legal",
             planUpgradeHint: true,
           });
