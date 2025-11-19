@@ -280,10 +280,8 @@ export default function Contracts() {
         setSelectedContract(contractToOpen);
         setShowDetails(true);
 
-        // Remove the view parameter from URL to avoid reopening on refresh
-        const newUrl = new URL(window.location.href);
-        newUrl.searchParams.delete('view');
-        window.history.replaceState({}, document.title, newUrl.pathname + newUrl.search);
+        // ✅ KEEP the view parameter in URL so Assistant can see which contract is open
+        // Parameter wird erst beim Modal-Schließen entfernt (siehe onClose Handler)
       }
     }
   }, [location.search, contracts]);
