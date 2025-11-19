@@ -6,7 +6,7 @@ export interface UserData {
   // 🔐 Auth-Basis (aus Backend)
   email: string;
   role?: 'user' | 'admin'; // 🔐 Admin-Role Support
-  subscriptionPlan: "free" | "business" | "premium";
+  subscriptionPlan: "free" | "premium" | "business" | "enterprise";
   subscriptionStatus: string;
   subscriptionActive: boolean;
 
