@@ -23,6 +23,7 @@ const client = new MongoClient(mongoUri);
 let contractsCollection;
 let analysisCollection;
 let eventsCollection; // ✅ NEU: Events Collection
+let usersCollection; // ✅ NEU: Users Collection für Bulk-Ops
 
 // ===== S3 INTEGRATION (AWS SDK v3) =====
 let S3Client, GetObjectCommand, s3Instance;
@@ -336,7 +337,8 @@ function extractContractDetails(text) {
     contractsCollection = db.collection("contracts");
     analysisCollection = db.collection("analyses");
     eventsCollection = db.collection("contract_events"); // ✅ NEU
-    console.log("📦 Verbunden mit contracts, analyses UND contract_events");
+    usersCollection = db.collection("users"); // ✅ NEU: Für Bulk-Ops Enterprise-Check
+    console.log("📦 Verbunden mit contracts, analyses, contract_events UND users");
   } catch (err) {
     console.error("❌ MongoDB-Fehler (contracts.js):", err);
   }
@@ -3336,7 +3338,6 @@ router.post("/bulk-delete", verifyToken, async (req, res) => {
     }
 
     // 🔒 ENTERPRISE-CHECK: Nur Premium/Enterprise-User
-    const usersCollection = client.db("vertragsaivault").collection("users");
     const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
 
     if (!user) {
@@ -3422,7 +3423,6 @@ router.post("/bulk-move", verifyToken, async (req, res) => {
     }
 
     // 🔒 ENTERPRISE-CHECK: Nur Premium/Enterprise-User
-    const usersCollection = client.db("vertragsaivault").collection("users");
     const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
 
     if (!user) {
@@ -3448,7 +3448,7 @@ router.post("/bulk-move", verifyToken, async (req, res) => {
 
     // Optional: Folder-Existenz prüfen (wenn targetFolderId gesetzt)
     if (targetFolderId) {
-      const foldersCollection = client.db("vertragsaivault").collection("folders");
+      const foldersCollection = client.db("contract_ai").collection("folders");
       const folder = await foldersCollection.findOne({
         _id: new ObjectId(targetFolderId),
         userId: new ObjectId(userId)
