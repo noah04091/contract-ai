@@ -243,10 +243,10 @@ const Press: React.FC = () => {
           </p>
         </div>
       </section>
-    </div>
 
-    {/* Footer */}
-    <Footer />
+      {/* Footer */}
+      <Footer />
+    </div>
   );
 };
 

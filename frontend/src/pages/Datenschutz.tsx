@@ -213,10 +213,10 @@ export default function Datenschutz() {
             <p>Bei Fragen wenden Sie sich bitte an <a href="mailto:info@contract-ai.de">info@contract-ai.de</a>.</p>
           </motion.div>
         </div>
-      </div>
 
-      {/* Footer */}
-      <Footer />
+        {/* Footer */}
+        <Footer />
+      </div>
     </>
   );
 }
