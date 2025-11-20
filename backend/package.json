@@ -15,6 +15,7 @@
     "@aws-sdk/s3-request-presigner": "^3.837.0",
     "@sparticuz/chromium": "^138.0.2",
     "@tensorflow/tfjs-node": "^4.22.0",
+    "archiver": "^7.0.1",
     "aws-sdk": "^2.1692.0",
     "axios": "^1.12.2",
     "bcrypt": "^5.1.1",
@@ -43,6 +44,7 @@
     "qrcode": "^1.5.4",
     "rss-parser": "^3.13.0",
     "stripe": "^18.0.0",
+    "xlsx": "^0.18.5",
     "xml2js": "^0.6.2"
   }
 }

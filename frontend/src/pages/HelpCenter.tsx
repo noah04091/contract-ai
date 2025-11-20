@@ -724,6 +724,16 @@ const HelpCenter: React.FC = () => {
             <p className={styles.heroSubtitle}>
               Alles über Contract AI - verständlich erklärt, Schritt für Schritt
             </p>
+            <button
+              className={styles.startTourButton}
+              onClick={() => {
+                localStorage.removeItem('contractai_onboarding_completed');
+                window.location.href = '/dashboard';
+              }}
+            >
+              <Lightbulb size={18} />
+              Interaktive Tour starten
+            </button>
           </div>
         </section>
 

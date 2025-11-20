@@ -1414,6 +1414,35 @@
   cursor: not-allowed;
 }
 
+.exportButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  background: white;
+  color: #3b82f6;
+  border: 1.5px solid #3b82f6;
+  border-radius: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.exportButton:hover {
+  background: #eff6ff;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+}
+
+.exportButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f1f5f9;
+  color: #94a3b8;
+  border-color: #e2e8f0;
+}
+
 .newContractButton {
   display: flex;
   align-items: center;
@@ -2791,6 +2820,11 @@
     font-size: 0.9rem;
   }
 
+  .exportButton {
+    padding: 0.65rem 1rem;
+    font-size: 0.9rem;
+  }
+
   .refreshButton {
     width: 36px;
     height: 36px;
@@ -3080,6 +3114,7 @@
   }
 
   .newContractButton,
+  .exportButton,
   .uploadButton {
     min-height: 44px;
   }
@@ -3239,6 +3274,11 @@
 
   /* Buttons */
   .newContractButton {
+    padding: 0.625rem 0.875rem;
+    font-size: 0.85rem;
+  }
+
+  .exportButton {
     padding: 0.625rem 0.875rem;
     font-size: 0.85rem;
   }

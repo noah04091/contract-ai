@@ -14,6 +14,8 @@ import SkipNavigation from "./components/SkipNavigation";
 import CookieConsentBanner from "./components/CookieConsentBanner";
 import ScrollToTop from "./components/ScrollToTop";
 import AssistantWidget from "./components/AssistantWidget";
+import OnboardingTour from "./components/OnboardingTour";
+import { useOnboarding } from "./hooks/useOnboarding";
 
 // 🚀 PERFORMANCE: Lazy Loading für alle Seiten (Code Splitting)
 // Homepage, Login, Contracts und Profile werden sofort geladen (kritische Seiten)
@@ -80,6 +82,7 @@ function AppWithLoader() {
   const location = useLocation();
   const [loading, setLoading] = useState(false);
   const { toasts, removeToast } = useToast();
+  const { runTour, finishTour } = useOnboarding();
 
   // 🛡️ DOM Error Handler für removeChild-Fehler
   useEffect(() => {
@@ -200,6 +203,7 @@ function AppWithLoader() {
         <CookieConsentBanner />
         <ToastContainer toasts={toasts} onRemove={removeToast} />
         <AssistantWidget />
+        <OnboardingTour run={runTour} onFinish={finishTour} />
       </div>
     </ErrorBoundary>
   );

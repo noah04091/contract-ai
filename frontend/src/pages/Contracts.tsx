@@ -8,7 +8,7 @@ import {
   Plus, Calendar, Clock, Trash2, Eye, Edit,
   Search, X, Crown, Users, Loader,
   Lock, Zap, BarChart3, ExternalLink, ArrowRight, Folder,
-  CheckSquare, Square, Mail, Bell
+  CheckSquare, Square, Mail, Bell, Download
 } from "lucide-react";
 import styles from "../styles/Contracts.module.css";
 import ContractAnalysis from "../components/ContractAnalysis";
@@ -569,6 +569,118 @@ export default function Contracts() {
     } catch (err) {
       console.error('Error bulk deleting contracts:', err);
       alert('Fehler beim Löschen der Verträge');
+    }
+  };
+
+  // 📊 Excel Export Handler
+  const handleExportExcel = async () => {
+    if (contracts.length === 0) {
+      alert('Keine Verträge zum Exportieren vorhanden');
+      return;
+    }
+
+    try {
+      console.log('📊 [Excel Export] Starte Download...');
+
+      // Fetch Excel file from backend
+      const response = await fetch('/api/contracts/export-excel', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      // Get filename from response headers
+      const contentDisposition = response.headers.get('Content-Disposition');
+      let filename = 'Contract_AI_Portfolio.xlsx';
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="?(.+)"?/);
+        if (filenameMatch) {
+          filename = filenameMatch[1];
+        }
+      }
+
+      // Download file
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      console.log(`✅ [Excel Export] ${contracts.length} Verträge exportiert als ${filename}`);
+    } catch (error) {
+      console.error('❌ [Excel Export] Error:', error);
+      alert('Excel-Export fehlgeschlagen. Bitte versuche es später erneut.');
+    }
+  };
+
+  // 📦 Bulk ZIP Download Handler
+  const handleBulkDownloadZip = async () => {
+    if (selectedContracts.length === 0) {
+      alert('Keine Verträge ausgewählt');
+      return;
+    }
+
+    if (selectedContracts.length > 100) {
+      alert('Maximal 100 Verträge gleichzeitig downloadbar');
+      return;
+    }
+
+    try {
+      console.log(`📦 [Bulk Download] Starte ZIP-Download für ${selectedContracts.length} Verträge...`);
+
+      // Fetch ZIP file from backend
+      const response = await fetch('/api/contracts/bulk-download', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({ contractIds: selectedContracts })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      // Get filename from response headers
+      const contentDisposition = response.headers.get('Content-Disposition');
+      let filename = 'Contract_AI_Vertraege.zip';
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="?(.+)"?/);
+        if (filenameMatch) {
+          filename = filenameMatch[1];
+        }
+      }
+
+      // Download file
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      console.log(`✅ [Bulk Download] ${selectedContracts.length} Verträge als ZIP heruntergeladen: ${filename}`);
+
+      // Selection zurücksetzen nach erfolgreichem Download
+      setSelectedContracts([]);
+    } catch (error) {
+      console.error('❌ [Bulk Download] Error:', error);
+      alert('ZIP-Download fehlgeschlagen. Bitte versuche es später erneut.');
     }
   };
 
@@ -2802,6 +2914,18 @@ export default function Contracts() {
                       <RefreshCw size={16} />
                     </motion.button>
                     <motion.button
+                      className={styles.exportButton}
+                      onClick={handleExportExcel}
+                      aria-label="Als Excel exportieren"
+                      disabled={contracts.length === 0}
+                      whileHover={contracts.length > 0 ? { scale: 1.02 } : {}}
+                      whileTap={contracts.length > 0 ? { scale: 0.98 } : {}}
+                      title="Portfolio als Excel-Tabelle exportieren"
+                    >
+                      <Download size={16} />
+                      <span>Excel Export</span>
+                    </motion.button>
+                    <motion.button
                       className={`${styles.newContractButton} ${!canUpload ? styles.disabledButton : ''}`}
                       onClick={() => canUpload && setActiveSection('upload')}
                       whileHover={canUpload ? { scale: 1.02 } : {}}
@@ -3402,6 +3526,16 @@ export default function Contracts() {
                               </div>
                             )}
                           </div>
+
+                          {/* ZIP Download Button */}
+                          <button
+                            className={styles.bulkActionButton}
+                            onClick={handleBulkDownloadZip}
+                            title="Ausgewählte Verträge als ZIP herunterladen"
+                          >
+                            <Download size={16} />
+                            Als ZIP herunterladen
+                          </button>
 
                           {/* Delete Button */}
                           <button

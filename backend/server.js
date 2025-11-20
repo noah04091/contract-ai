@@ -529,6 +529,24 @@ const connectDB = async () => {
       });
     }
 
+    // ✅ 8.5 EXCEL EXPORT - Portfolio als Excel-Datei exportieren
+    try {
+      const exportContractsRouter = require("./routes/exportContracts");
+      app.use("/api/contracts", verifyToken, exportContractsRouter);
+      console.log("✅ Excel-Export Route geladen unter /api/contracts/export-excel");
+    } catch (err) {
+      console.error("❌ Fehler bei Excel-Export Route:", err);
+    }
+
+    // ✅ 8.6 BULK DOWNLOAD - Mehrere Verträge als ZIP herunterladen
+    try {
+      const bulkDownloadRouter = require("./routes/bulkDownload");
+      app.use("/api/contracts", verifyToken, bulkDownloadRouter);
+      console.log("✅ Bulk-Download Route geladen unter /api/contracts/bulk-download");
+    } catch (err) {
+      console.error("❌ Fehler bei Bulk-Download Route:", err);
+    }
+
     // ✅ 9. SMART CONTRACT GENERATOR - SAUBERER ROUTER MOUNT
     try {
       const optimizedContractRouter = require("./routes/optimizedContract");
