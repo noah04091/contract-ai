@@ -1,7 +1,24 @@
 const PDFDocument = require("pdfkit");
 const path = require("path");
 
-function generateInvoicePdf({ customerName, email, plan, amount, invoiceDate, invoiceNumber, customerAddress, companyName, taxId, subscriptionId }) {
+/**
+ * Generiert Invoice PDF mit optional White-Label Logo (Enterprise)
+ * @param {Object} params - Invoice Parameters
+ * @param {string} params.customLogoBase64 - Optional: Base64-encoded company logo (Enterprise)
+ */
+function generateInvoicePdf({
+  customerName,
+  email,
+  plan,
+  amount,
+  invoiceDate,
+  invoiceNumber,
+  customerAddress,
+  companyName,
+  taxId,
+  subscriptionId,
+  customLogoBase64 = null  // ✨ NEU: White-Label Logo (Enterprise)
+}) {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({
       margin: 0,
@@ -22,18 +39,26 @@ function generateInvoicePdf({ customerName, email, plan, amount, invoiceDate, in
     const lightGray = '#86868b';
     const backgroundColor = '#f5f5f7';
 
-    // Cleaner weißer Header
-    // Logo einfügen
+    // ✨ WHITE-LABEL LOGO (ENTERPRISE)
+    // Cleaner weißer Header mit Custom Logo oder Default Logo
     try {
-      const logoPath = path.join(__dirname, "../assets/logo-contractai.png");
-      doc.image(logoPath, 50, 25, { width: 180 });
+      if (customLogoBase64) {
+        // 🎨 Enterprise: Custom Company Logo
+        console.log("✨ [White-Label] Verwende Custom Logo");
+        const logoBuffer = Buffer.from(customLogoBase64.split(',')[1], 'base64');
+        doc.image(logoBuffer, 50, 25, { width: 180, height: 80, fit: [180, 80] });
+      } else {
+        // 📄 Standard: Contract AI Logo
+        const logoPath = path.join(__dirname, "../assets/logo-contractai.png");
+        doc.image(logoPath, 50, 25, { width: 180 });
+      }
     } catch (err) {
       console.warn("⚠️ Logo konnte nicht geladen werden:", err.message);
       // Fallback: Text-Logo
       doc.fillColor(darkGray)
          .fontSize(24)
          .font('Helvetica-Bold')
-         .text('CONTRACT AI', 50, 50);
+         .text(customLogoBase64 ? companyName || 'COMPANY' : 'CONTRACT AI', 50, 50);
     }
 
     // Rechnung Titel (rechts im header) - schwarze Schrift

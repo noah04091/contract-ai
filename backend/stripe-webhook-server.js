@@ -46,6 +46,8 @@ const generateEmailTemplate = require('./utils/emailTemplate');
 const generateInvoicePdf = require('./utils/generateInvoicePdf');
 // Importiere die neue Funktion
 const generateInvoiceNumber = require('./utils/generateInvoiceNumber');
+// ✨ White-Label PDF Export (Enterprise)
+const { getCompanyLogo } = require('./utils/getCompanyLogo');
 
 const MONGO_URI = process.env.MONGO_URI || "mongodb://127.0.0.1:27017";
 
@@ -471,6 +473,23 @@ async function processStripeEvent(event, usersCollection, invoicesCollection) {
       }
     }
 
+    // ✨ White-Label PDF Export (Enterprise): Company Logo holen
+    let customLogoBase64 = null;
+    try {
+      const userPlan = user?.subscriptionPlan || 'free';
+      const logoData = await getCompanyLogo(db, userId.toString(), userPlan);
+
+      if (logoData.hasLogo && logoData.logoBase64) {
+        customLogoBase64 = logoData.logoBase64;
+        console.log(`✨ [White-Label] Custom Logo für Invoice geladen (Enterprise-User)`);
+      } else if (logoData.isEnterprise) {
+        console.log(`⚠️ [White-Label] Enterprise-User hat kein Logo hochgeladen`);
+      }
+    } catch (logoError) {
+      console.warn(`⚠️ [White-Label] Fehler beim Logo-Laden (fahre mit Default fort):`, logoError.message);
+      // Fahre mit Default-Logo fort
+    }
+
     // Eigene vollständige PDF generieren mit allen Daten
     const pdfBuffer = await generateInvoicePdf({
       customerName,
@@ -482,7 +501,8 @@ async function processStripeEvent(event, usersCollection, invoicesCollection) {
       customerAddress,
       companyName,
       taxId,
-      subscriptionId: stripeSubscriptionId
+      subscriptionId: stripeSubscriptionId,
+      customLogoBase64  // ✨ White-Label Logo (Enterprise)
     });
 
     console.log(`✅ Vollständige Rechnung generiert mit:`, {
