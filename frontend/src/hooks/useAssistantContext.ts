@@ -40,6 +40,7 @@ export function useAssistantContext(): AssistantContext {
     const pathMatch = route.match(/\/contracts\/([a-f0-9]+)/i);
     if (pathMatch) {
       currentContractId = pathMatch[1];
+      console.log('🔍 [useAssistantContext] Contract ID aus PATH extrahiert:', currentContractId);
     }
 
     // 2. Falls nicht gefunden, versuche aus Query Parameter (?view=abc123 - Modal)
@@ -48,7 +49,14 @@ export function useAssistantContext(): AssistantContext {
       const viewParam = searchParams.get('view');
       if (viewParam && /^[a-f0-9]+$/i.test(viewParam)) {
         currentContractId = viewParam;
+        console.log('🔍 [useAssistantContext] Contract ID aus QUERY extrahiert:', currentContractId);
+      } else if (location.search) {
+        console.log('⚠️ [useAssistantContext] Query params vorhanden, aber kein gültiges "view":', location.search);
       }
+    }
+
+    if (!currentContractId && route === '/contracts') {
+      console.log('ℹ️ [useAssistantContext] Auf /contracts ohne Contract ID (Liste-Ansicht)');
     }
 
     // ============================================

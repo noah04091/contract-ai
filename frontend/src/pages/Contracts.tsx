@@ -1,6 +1,6 @@
 // 📁 src/pages/Contracts.tsx - JSX FIXED: Motion Button closing tag korrigiert + ANALYSE-ANZEIGE GEFIXT + RESPONSIVE + DUPLIKATSERKENNUNG + S3-INTEGRATION + BATCH-ANALYSE-ANZEIGE + PDF-SCHNELLAKTION MOBILE-FIX + EDIT-SCHNELLAKTION REPARIERT
 import { useState, useEffect, useRef } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet";
 import {
@@ -147,6 +147,7 @@ type SortOrder = 'neueste' | 'älteste' | 'name_az' | 'name_za';
 export default function Contracts() {
   // ✅ Navigation state handling
   const location = useLocation();
+  const navigate = useNavigate();
 
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [filteredContracts, setFilteredContracts] = useState<Contract[]>([]);
@@ -305,8 +306,8 @@ export default function Contracts() {
     setShowDetails(true);
     setOpenEditModalDirectly(true); // ⭐ Das ist der neue State!
 
-    // ✅ UPDATE URL für Assistant-Context mit Query Parameter (ohne Page Reload)
-    window.history.pushState(null, '', `/contracts?view=${contract._id}`);
+    // ✅ UPDATE URL für Assistant-Context mit Query Parameter (triggert useLocation Hook!)
+    navigate(`/contracts?view=${contract._id}`, { replace: true });
   };
 
   // 🆕 Smart PDF Opener - Opens signed PDF if available, otherwise original
@@ -1513,16 +1514,16 @@ export default function Contracts() {
 
   const handleViewExistingContract = () => {
     if (!duplicateModal?.existingContract) return;
-    
+
     // ✅ Wechsel zu Verträge-Tab und öffne Details
     setActiveSection('contracts');
     setSelectedContract(duplicateModal.existingContract);
     setShowDetails(true);
     setDuplicateModal(null);
 
-    // ✅ UPDATE URL für Assistant-Context mit Query Parameter (ohne Page Reload)
-    window.history.pushState(null, '', `/contracts?view=${duplicateModal.existingContract._id}`);
-    
+    // ✅ UPDATE URL für Assistant-Context mit Query Parameter (triggert useLocation Hook!)
+    navigate(`/contracts?view=${duplicateModal.existingContract._id}`, { replace: true });
+
     // ✅ Cleanup Upload
     if (duplicateModal.fileItem) {
       removeUploadFile(duplicateModal.fileItem.id);
@@ -1821,8 +1822,8 @@ export default function Contracts() {
     setShowDetails(true);
     setOpenEditModalDirectly(false); // ✅ Normal Details öffnen, nicht Edit-Modal
 
-    // ✅ UPDATE URL für Assistant-Context mit Query Parameter (ohne Page Reload)
-    window.history.pushState(null, '', `/contracts?view=${contract._id}`);
+    // ✅ UPDATE URL für Assistant-Context mit Query Parameter (triggert useLocation Hook!)
+    navigate(`/contracts?view=${contract._id}`, { replace: true });
   };
 
   // ✅ Verbesserte Löschfunktion
@@ -3436,8 +3437,8 @@ export default function Contracts() {
                 setShowDetails(false);
                 setOpenEditModalDirectly(false); // ✅ Reset beim Schließen
 
-                // ✅ RESET URL zurück zur Liste (ohne Page Reload)
-                window.history.pushState(null, '', '/contracts');
+                // ✅ RESET URL zurück zur Liste (triggert useLocation Hook!)
+                navigate('/contracts', { replace: true });
               }}
               openEditModalDirectly={openEditModalDirectly} // ✅ NEU: Diese Prop wird das Edit-Modal direkt öffnen
               onEdit={async (contractId) => {

@@ -197,6 +197,28 @@ Du wechselst **nahtlos zwischen beiden Modi** je nach Frage.
 ${SYSTEM_KNOWLEDGE}
 
 ---
+## 🔍 KONTEXT-ERKENNUNG (WICHTIG!)
+
+### Wann siehst du einen geöffneten Vertrag?
+- Wenn im Context **contractName** vorhanden ist → User hat einen Vertrag geöffnet
+- Wenn im Context **kein contractName** → User ist auf der Übersichtsseite
+
+### Was sagst du, wenn User nach "Was siehst du?" fragt:
+
+**WENN contractName vorhanden:**
+"Ich sehe deinen **[contractName]** Vertrag! 📄
+- **Score**: [score]/100
+- **Status**: [status]
+- **Risiken**: [Anzahl] erkannt
+
+Wie kann ich dir bei diesem Vertrag helfen?"
+
+**WENN kein contractName:**
+"Du bist aktuell auf der **Verträge-Übersicht**. 📋
+
+Um dir bei einem spezifischen Vertrag zu helfen, klicke auf einen Vertrag in der Liste. Dann kann ich dir Details, Risiken und Optimierungsvorschläge zeigen!"
+
+---
 ## ⚖️ DEIN LEGAL-WISSEN
 
 ### Bei Vertrags-Fragen:
@@ -419,7 +441,14 @@ router.post("/message", async (req, res) => {
 
     const { mode, userPlan, isAuthenticated, currentContractId } = context;
 
-    console.log(`🤖 [ASSISTANT] Mode: ${mode}, Plan: ${userPlan || 'none'}, Auth: ${isAuthenticated}`);
+    console.log(`📥 [ASSISTANT] Request empfangen:`, {
+      mode,
+      userPlan: userPlan || 'none',
+      isAuthenticated,
+      currentContractId: currentContractId || 'null',
+      route: context.route,
+      message: message.substring(0, 50) + '...'
+    });
 
     // ============================================
     // MODE HANDLING
