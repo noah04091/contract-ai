@@ -110,11 +110,12 @@ function AppWithLoader() {
     };
   }, []);
 
+  // ✅ FIX: Nur bei echten Seitenwechseln laden, nicht bei Query-Parameter-Änderungen
   useEffect(() => {
     setLoading(true);
     const timer = setTimeout(() => setLoading(false), 300);
     return () => clearTimeout(timer);
-  }, [location]);
+  }, [location.pathname]); // Nur pathname, nicht location.search!
 
   return (
     <ErrorBoundary>
