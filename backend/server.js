@@ -483,6 +483,15 @@ const connectDB = async () => {
       console.error("❌ Fehler beim Laden der API v1 Routes:", err);
     }
 
+    // ✅ 6.4 ORGANIZATIONS - TEAM MANAGEMENT (ENTERPRISE)
+    try {
+      const organizationsRoutes = require("./routes/organizations");
+      app.use("/api/organizations", organizationsRoutes);
+      console.log("✅ Organizations-Routen geladen unter /api/organizations (Enterprise Team-Management)");
+    } catch (err) {
+      console.error("❌ Fehler beim Laden der Organizations-Routen:", err);
+    }
+
     // ✅ 7. KI ANALYSIS & OPTIMIZATION - MIT /api PREFIX
     // ✅ NEU: Upload-Route (ohne Analyse, kein Subscription-Check nötig)
     try {
