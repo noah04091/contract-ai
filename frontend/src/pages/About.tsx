@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Helmet } from "react-helmet";
 import styles from "../styles/About.module.css";
+import Footer from "../components/Footer";
 
 const About: React.FC = () => {
   useEffect(() => {
@@ -101,6 +102,9 @@ const About: React.FC = () => {
           </div>
         </section>
       </div>
+
+      {/* Footer */}
+      <Footer />
     </>
   );
 };

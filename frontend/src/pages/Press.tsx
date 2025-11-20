@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import styles from "../styles/Press.module.css";
 import logoHeader from "../assets/logo-header.png";
 import logo from "../assets/logo.png";
+import Footer from "../components/Footer";
 
 const Press: React.FC = () => {
   useEffect(() => {
@@ -243,6 +244,9 @@ const Press: React.FC = () => {
         </div>
       </section>
     </div>
+
+    {/* Footer */}
+    <Footer />
   );
 };
 

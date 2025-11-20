@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Helmet } from "react-helmet";
 import { motion } from "framer-motion";
 import './Datenschutz.css';
+import Footer from "../components/Footer";
 
 interface SectionProps {
   title: string;
@@ -202,7 +203,7 @@ export default function Datenschutz() {
             </div>
           </Section>
           
-          <motion.div 
+          <motion.div
             className="privacy-footer"
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
@@ -213,6 +214,9 @@ export default function Datenschutz() {
           </motion.div>
         </div>
       </div>
+
+      {/* Footer */}
+      <Footer />
     </>
   );
 }
