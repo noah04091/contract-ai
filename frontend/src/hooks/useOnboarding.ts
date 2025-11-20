@@ -30,10 +30,10 @@ export function useOnboarding() {
     // Noch nie gesehen oder veraltete Version für diese Seite
     if (!tourVersion || tourVersion !== ONBOARDING_VERSION) {
       setIsFirstVisit(true);
-      // Verzögerung, damit Seite vollständig geladen ist
+      // Verzögerung, damit Seite vollständig geladen ist (inkl. API-Daten)
       const timer = setTimeout(() => {
         setRunTour(true);
-      }, 1500); // Etwas länger, damit Elemente geladen sind
+      }, 3000); // 3 Sekunden für API-Calls und DOM-Rendering
       return () => clearTimeout(timer);
     } else {
       setIsFirstVisit(false);

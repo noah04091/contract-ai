@@ -369,10 +369,23 @@ export default function OnboardingTour({ run, onFinish }: OnboardingTourProps) {
   }, [location.pathname]);
 
   const handleJoyrideCallback = (data: CallBackProps) => {
-    const { status } = data;
+    const { status, type, index } = data;
+
+    // Log für Debugging
+    if (type === 'error:target_not_found') {
+      console.warn(`⚠️ Onboarding Tour: Step ${index} - Target nicht gefunden, überspringe...`);
+      // Tour läuft trotzdem weiter zum nächsten Step
+      return;
+    }
 
     // Tour beendet oder übersprungen
     if (status === STATUS.FINISHED || status === STATUS.SKIPPED) {
+      onFinish();
+    }
+
+    // Bei Fehler auch beenden (falls alle Targets fehlen)
+    if (status === STATUS.ERROR) {
+      console.warn('⚠️ Onboarding Tour: Fehler aufgetreten, beende Tour');
       onFinish();
     }
   };
@@ -390,6 +403,13 @@ export default function OnboardingTour({ run, onFinish }: OnboardingTourProps) {
       showProgress
       showSkipButton
       scrollToFirstStep
+      disableScrolling={false}
+      spotlightClicks={false}
+      disableOverlayClose={true}
+      hideBackButton={false}
+      floaterProps={{
+        disableAnimation: false
+      }}
       callback={handleJoyrideCallback}
       styles={{
         options: {
