@@ -212,12 +212,12 @@ export default function OnboardingTour({ run, onFinish }: OnboardingTourProps) {
           placement: 'bottom'
         },
         {
-          target: 'div[class*="chatHistory"]',
+          target: 'div[class*="history"]',
           content: 'Alle deine Chats werden hier gespeichert. Du kannst jederzeit zu früheren Gesprächen zurückkehren.',
           placement: 'right'
         },
         {
-          target: 'div[class*="attachmentArea"]',
+          target: 'div[class*="uploadSection"]',
           content: 'Lade Verträge hoch, um spezifische Fragen zu ihnen zu stellen. Die KI analysiert sie automatisch.',
           placement: 'top'
         },
@@ -230,7 +230,7 @@ export default function OnboardingTour({ run, onFinish }: OnboardingTourProps) {
     }
 
     // Profile Tour
-    else if (currentPath === '/profile') {
+    else if (currentPath === '/profile' || currentPath === '/me') {
       setSteps([
         {
           target: 'body',
@@ -244,23 +244,23 @@ export default function OnboardingTour({ run, onFinish }: OnboardingTourProps) {
           disableBeacon: true
         },
         {
-          target: 'button[class*="planButton"]',
+          target: 'button[class*="upgradeButton"]',
           content: 'Hier siehst du deinen aktuellen Plan und kannst upgraden, um mehr Features freizuschalten.',
           placement: 'bottom'
         },
         {
-          target: 'div[class*="usageStats"]',
-          content: 'Überwache deine Nutzung - wie viele Analysen du diesen Monat bereits verwendet hast.',
+          target: 'button[class*="companyProfileButton"]',
+          content: 'Erstelle ein Firmenprofil für die automatische Vertragserstellung mit deinen Firmendaten.',
           placement: 'bottom'
         },
         {
-          target: 'div[class*="invoicesSection"]',
+          target: 'div[class*="invoicesContainer"]',
           content: 'Lade alle deine Rechnungen als PDF herunter - perfekt für die Buchhaltung.',
           placement: 'top'
         },
         {
-          target: 'button[class*="passwordChange"]',
-          content: 'Ändere hier dein Passwort oder aktualisiere deine E-Mail-Adresse.',
+          target: 'button[class*="passwordButton"]',
+          content: 'Ändere hier dein Passwort für mehr Sicherheit.',
           placement: 'left'
         }
       ]);
@@ -281,23 +281,23 @@ export default function OnboardingTour({ run, onFinish }: OnboardingTourProps) {
           disableBeacon: true
         },
         {
-          target: 'button[class*="createEnvelope"]',
-          content: 'Erstelle ein neues Signatur-Envelope. Lade einen Vertrag hoch und füge Unterzeichner hinzu.',
+          target: 'div[class*="headerActions"]',
+          content: 'Hier kannst du die Ansicht aktualisieren und neue Signaturanfragen erstellen.',
           placement: 'bottom'
         },
         {
-          target: 'div[class*="envelopesList"]',
-          content: 'Alle deine Signatur-Envelopes werden hier angezeigt. Sieh den Status in Echtzeit: Versendet, Signiert, Abgeschlossen.',
+          target: 'div[class*="filterTabs"]',
+          content: 'Filtere nach Status: Alle, Offen oder Abgeschlossen.',
           placement: 'bottom'
         },
         {
-          target: 'button[class*="filterButton"]',
-          content: 'Filtere nach Status: Entwürfe, Ausstehend, Abgeschlossen oder Abgelaufen.',
-          placement: 'bottom'
+          target: 'div[class*="cardsContainer"]',
+          content: 'Alle deine Signatur-Envelopes werden hier angezeigt. Sieh den Status und Fortschritt in Echtzeit.',
+          placement: 'top'
         },
         {
           target: 'div[class*="statusBadge"]',
-          content: 'Jedes Envelope zeigt seinen Status: Grün = Fertig, Gelb = In Arbeit, Rot = Problem.',
+          content: 'Jedes Envelope zeigt seinen Status: Grün = Abgeschlossen, Gelb = In Arbeit, Blau = Gesendet.',
           placement: 'left'
         }
       ]);
@@ -310,7 +310,7 @@ export default function OnboardingTour({ run, onFinish }: OnboardingTourProps) {
           target: 'body',
           content: (
             <div>
-              <h2>Firmenprofile 🏢</h2>
+              <h2>Firmenprofil 🏢</h2>
               <p>Speichere deine Firmendaten einmal und nutze sie automatisch für alle generierten Verträge.</p>
             </div>
           ),
@@ -318,24 +318,19 @@ export default function OnboardingTour({ run, onFinish }: OnboardingTourProps) {
           disableBeacon: true
         },
         {
-          target: 'button[class*="createProfile"]',
-          content: 'Erstelle ein neues Firmenprofil mit allen wichtigen Daten: Name, Adresse, USt-ID, Bankverbindung.',
-          placement: 'bottom'
-        },
-        {
-          target: 'div[class*="profilesList"]',
-          content: 'Verwalte mehrere Firmenprofile - perfekt wenn du für verschiedene Unternehmen Verträge erstellst.',
-          placement: 'bottom'
-        },
-        {
           target: 'div[class*="logoUpload"]',
           content: 'Lade dein Firmenlogo hoch. Es wird automatisch in generierte Verträge eingefügt.',
-          placement: 'left'
+          placement: 'bottom'
         },
         {
-          target: 'button[class*="setDefault"]',
-          content: 'Setze ein Profil als Standard. Dieses wird automatisch beim Vertragsgenerator vorausgewählt.',
+          target: 'div[class*="formSection"]',
+          content: 'Trage hier alle wichtigen Firmendaten ein: Name, Adresse, USt-ID, Kontaktdaten und Bankverbindung.',
           placement: 'top'
+        },
+        {
+          target: 'button[class*="saveButton"]',
+          content: 'Speichere dein Firmenprofil. Die Daten werden automatisch beim Vertragsgenerator verwendet.',
+          placement: 'left'
         }
       ]);
     }
@@ -348,31 +343,21 @@ export default function OnboardingTour({ run, onFinish }: OnboardingTourProps) {
           content: (
             <div>
               <h2>Bessere Verträge 🎯</h2>
-              <p>Lerne Best Practices für faire Vertragsgestaltung und vermeide häufige Fehler.</p>
+              <p>Finde günstigere Alternativen zu deinen bestehenden Verträgen und spare Geld!</p>
             </div>
           ),
           placement: 'center',
           disableBeacon: true
         },
         {
-          target: 'div[class*="categoryCards"]',
-          content: 'Wähle eine Vertragskategorie: Mietverträge, Arbeitsverträge, Freelancer-Verträge und mehr.',
+          target: '.contract-uploader',
+          content: 'Lade deinen aktuellen Vertrag hoch (z.B. Handy, Internet, Versicherung). Die KI extrahiert automatisch alle wichtigen Daten.',
           placement: 'bottom'
         },
         {
-          target: 'div[class*="tipsSection"]',
-          content: 'Hier findest du konkrete Tipps: Was sollte in deinem Vertrag stehen? Welche Klauseln sind wichtig?',
-          placement: 'bottom'
-        },
-        {
-          target: 'div[class*="examplesSection"]',
-          content: 'Schau dir Beispiel-Klauseln an, die du direkt in deine Verträge übernehmen kannst.',
+          target: '.contract-progress-steps',
+          content: 'Der Prozess ist in 3 Schritte unterteilt: Upload, Preis-Eingabe und Alternativen-Suche.',
           placement: 'top'
-        },
-        {
-          target: 'button[class*="generateFromTemplate"]',
-          content: 'Erstelle direkt einen Vertrag basierend auf den Best Practices - mit einem Klick zum Generator.',
-          placement: 'left'
         }
       ]);
     }
