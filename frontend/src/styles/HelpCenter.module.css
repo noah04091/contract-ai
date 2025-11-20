@@ -1,10 +1,10 @@
-/* HelpCenter.module.css */
+/* ✨ HelpCenter.module.css - Professionelles Hilfe-Center Design */
 
 .helpCenter {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   line-height: 1.6;
   color: #1a1a1a;
-  background: #fafafa;
+  background: #f8fafc;
   min-height: 100vh;
 }
 
@@ -14,73 +14,133 @@
   padding: 0 24px;
 }
 
-/* Hero Section */
+/* ========================================
+   HERO SECTION
+   ======================================== */
 .hero {
   text-align: center;
-  padding: 80px 0 60px;
+  padding: 100px 0 60px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120"><path d="M0,64L48,69.3C96,75,192,85,288,80C384,75,480,53,576,48C672,43,768,53,864,58.7C960,64,1056,64,1152,58.7L1200,56L1200,0L1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z" fill="rgba(255,255,255,0.1)"/></svg>') no-repeat bottom;
+  background-size: cover;
+  opacity: 0.3;
+}
+
+.heroIcon {
+  margin-bottom: 20px;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
+  position: relative;
+  z-index: 1;
 }
 
 .heroTitle {
-  font-size: 48px;
-  font-weight: 700;
+  font-size: 56px;
+  font-weight: 800;
   margin-bottom: 16px;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
+  position: relative;
+  z-index: 1;
 }
 
 .heroSubtitle {
-  font-size: 20px;
-  opacity: 0.9;
-  max-width: 600px;
+  font-size: 22px;
+  opacity: 0.95;
+  max-width: 700px;
   margin: 0 auto;
+  font-weight: 400;
+  position: relative;
+  z-index: 1;
 }
 
-/* Search Section */
+/* ========================================
+   SEARCH SECTION
+   ======================================== */
 .searchSection {
   background: white;
   padding: 40px 0;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .searchBar {
   position: relative;
-  max-width: 600px;
+  max-width: 700px;
   margin: 0 auto;
 }
 
 .searchInput {
   width: 100%;
-  padding: 16px 20px 16px 50px;
+  padding: 18px 60px 18px 50px;
   border: 2px solid #e5e7eb;
-  border-radius: 12px;
+  border-radius: 16px;
   font-size: 16px;
-  background: #fafafa;
-  transition: all 0.2s ease;
+  background: #f8fafc;
+  transition: all 0.3s ease;
   font-family: inherit;
 }
 
 .searchInput:focus {
   outline: none;
-  border-color: #2563eb;
+  border-color: #667eea;
   background: white;
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
 }
 
 .searchIcon {
   position: absolute;
-  left: 16px;
+  left: 18px;
   top: 50%;
   transform: translateY(-50%);
   color: #9ca3af;
   pointer-events: none;
 }
 
-/* Tab Navigation */
+.clearSearch {
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #e5e7eb;
+  border: none;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #6b7280;
+}
+
+.clearSearch:hover {
+  background: #d1d5db;
+  transform: translateY(-50%) scale(1.1);
+}
+
+/* ========================================
+   TAB NAVIGATION
+   ======================================== */
 .tabNav {
   background: white;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 2px solid #e5e7eb;
   padding: 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
 }
 
 .tabButtons {
@@ -88,25 +148,30 @@
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 24px;
+  gap: 8px;
 }
 
 .tabButton {
-  padding: 20px 24px;
+  padding: 16px 28px;
   background: none;
   border: none;
   font-size: 16px;
-  font-weight: 500;
+  font-weight: 600;
   color: #6b7280;
   cursor: pointer;
   border-bottom: 3px solid transparent;
   transition: all 0.2s ease;
   position: relative;
   font-family: inherit;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .tabButton.active {
-  color: #2563eb;
-  border-bottom-color: #2563eb;
+  color: #667eea;
+  border-bottom-color: #667eea;
+  background: linear-gradient(to bottom, rgba(102, 126, 234, 0.05), transparent);
 }
 
 .tabButton:hover:not(.active) {
@@ -114,80 +179,141 @@
   background: #f9fafb;
 }
 
-/* Content Sections */
+/* ========================================
+   CONTENT SECTIONS
+   ======================================== */
 .contentSection {
-  padding: 60px 0;
+  padding: 60px 0 80px;
   min-height: 600px;
 }
 
 .tabContent {
-  animation: fadeIn 0.3s ease;
+  animation: fadeInUp 0.4s ease;
 }
 
-@keyframes fadeIn {
-  from { 
-    opacity: 0; 
-    transform: translateY(10px); 
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
   }
-  to { 
-    opacity: 1; 
-    transform: translateY(0); 
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
 .sectionTitle {
   text-align: center;
-  margin-bottom: 20px;
-  font-size: 32px;
-  font-weight: 600;
+  margin-bottom: 12px;
+  font-size: 40px;
+  font-weight: 700;
   color: #1a1a1a;
+  letter-spacing: -0.02em;
 }
 
 .sectionSubtitle {
   text-align: center;
   color: #64748b;
-  margin-bottom: 40px;
+  margin-bottom: 48px;
   font-size: 18px;
+  font-weight: 400;
 }
 
-/* Guide Grid */
-.guideGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  gap: 24px;
-  margin-top: 40px;
+/* ========================================
+   CATEGORY FILTER
+   ======================================== */
+.categoryFilter {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 48px;
+  flex-wrap: wrap;
+}
+
+.categoryBtn {
+  padding: 12px 24px;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 100px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.categoryBtn:hover {
+  border-color: #667eea;
+  color: #667eea;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+}
+
+.categoryBtn.active {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border-color: transparent;
+  color: white;
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+}
+
+/* ========================================
+   GUIDES CONTAINER
+   ======================================== */
+.guidesContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .guideCard {
   background: white;
-  padding: 32px;
-  border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  border: 1px solid #f1f5f9;
-  transition: all 0.2s ease;
+  border-radius: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 2px solid #f1f5f9;
+  transition: all 0.3s ease;
+  overflow: hidden;
 }
 
 .guideCard:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  border-color: #e5e7eb;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.guideHeader {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 28px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.guideHeader:hover {
+  background: #f8fafc;
 }
 
 .guideIcon {
-  width: 48px;
-  height: 48px;
+  width: 56px;
+  height: 56px;
   background: linear-gradient(135deg, #667eea, #764ba2);
-  border-radius: 12px;
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 20px;
   color: white;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.guideInfo {
+  flex: 1;
 }
 
 .guideTitle {
   font-size: 20px;
-  font-weight: 600;
-  margin-bottom: 12px;
+  font-weight: 700;
+  margin-bottom: 8px;
   color: #1a1a1a;
 }
 
@@ -195,21 +321,156 @@
   color: #64748b;
   line-height: 1.6;
   margin: 0;
+  font-size: 15px;
 }
 
-/* FAQ Section */
+.premiumBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: white;
+  padding: 6px 14px;
+  border-radius: 100px;
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: 10px;
+  box-shadow: 0 2px 8px rgba(251, 191, 36, 0.3);
+}
+
+.expandIcon {
+  color: #9ca3af;
+  transition: transform 0.3s ease;
+  flex-shrink: 0;
+}
+
+.expandIcon.rotated {
+  transform: rotate(180deg);
+  color: #667eea;
+}
+
+/* ========================================
+   GUIDE STEPS
+   ======================================== */
+.guideSteps {
+  padding: 0 28px 28px;
+  animation: slideDown 0.3s ease;
+}
+
+.step {
+  background: #f8fafc;
+  padding: 24px;
+  border-radius: 16px;
+  margin-bottom: 16px;
+  border-left: 4px solid #667eea;
+}
+
+.step:last-child {
+  margin-bottom: 0;
+}
+
+.stepHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.stepNumber {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 16px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.stepTitle {
+  flex: 1;
+  font-size: 17px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 6px 0 0 0;
+}
+
+.stepDescription {
+  color: #475569;
+  line-height: 1.7;
+  margin: 0;
+  padding-left: 52px;
+  font-size: 15px;
+}
+
+/* ========================================
+   TIPS BOX
+   ======================================== */
+.stepTips {
+  margin-top: 16px;
+  padding: 16px 16px 16px 52px;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.08), rgba(118, 75, 162, 0.08));
+  border-radius: 12px;
+  border-left: 3px solid #667eea;
+}
+
+.tipsHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  color: #667eea;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.tipsList {
+  margin: 0;
+  padding-left: 20px;
+  color: #475569;
+}
+
+.tipsList li {
+  margin-bottom: 6px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.tipsList li:last-child {
+  margin-bottom: 0;
+}
+
+/* ========================================
+   FAQ SECTION
+   ======================================== */
 .faqList {
-  max-width: 800px;
-  margin: 40px auto 0;
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .faqItem {
   background: white;
-  margin-bottom: 16px;
-  border-radius: 12px;
+  border-radius: 16px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  border: 1px solid #f1f5f9;
+  border: 2px solid #f1f5f9;
   overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.faqItem:hover {
+  border-color: #e5e7eb;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+.faqItem.open {
+  border-color: #667eea;
 }
 
 .faqQuestion {
@@ -218,13 +479,14 @@
   background: none;
   border: none;
   text-align: left;
-  font-size: 16px;
-  font-weight: 500;
+  font-size: 17px;
+  font-weight: 600;
   color: #1a1a1a;
   cursor: pointer;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 16px;
   transition: background 0.2s ease;
   font-family: inherit;
 }
@@ -233,10 +495,16 @@
   background: #f8fafc;
 }
 
+.faqQuestionText {
+  flex: 1;
+}
+
 .faqAnswer {
   padding: 0 24px 24px;
-  color: #64748b;
-  animation: slideDown 0.3s ease;
+  color: #475569;
+  animation: expandAnswer 0.3s ease;
+  line-height: 1.7;
+  font-size: 15px;
 }
 
 .faqAnswer p {
@@ -244,126 +512,152 @@
 }
 
 .faqToggle {
-  transition: transform 0.2s ease;
+  transition: transform 0.3s ease, color 0.2s ease;
   flex-shrink: 0;
+  color: #9ca3af;
 }
 
 .faqToggle.rotated {
   transform: rotate(180deg);
+  color: #667eea;
 }
 
-@keyframes slideDown {
-  from { 
+@keyframes expandAnswer {
+  from {
     opacity: 0;
-    max-height: 0;
+    transform: translateY(-10px);
   }
-  to { 
+  to {
     opacity: 1;
-    max-height: 200px;
+    transform: translateY(0);
   }
 }
 
-/* Best Practices */
-.practicesGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 24px;
-  margin-top: 40px;
+/* ========================================
+   NO RESULTS
+   ======================================== */
+.noResults {
+  text-align: center;
+  padding: 80px 20px;
+  color: #94a3b8;
 }
 
-.practiceCard {
-  background: white;
-  padding: 28px;
-  border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  border: 1px solid #f1f5f9;
+.noResults svg {
+  margin-bottom: 20px;
+  opacity: 0.5;
+}
+
+.noResults h3 {
+  font-size: 24px;
+  font-weight: 600;
+  color: #64748b;
+  margin-bottom: 12px;
+}
+
+.noResults p {
+  font-size: 16px;
+  color: #94a3b8;
+}
+
+/* ========================================
+   HELP SECTION (Still Need Help?)
+   ======================================== */
+.helpSection {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 80px 0;
   position: relative;
   overflow: hidden;
-  transition: all 0.2s ease;
 }
 
-.practiceCard:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-}
-
-.practiceCard::before {
+.helpSection::before {
   content: '';
   position: absolute;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 4px;
-  background: linear-gradient(90deg, #667eea, #764ba2);
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120"><path d="M0,64L48,69.3C96,75,192,85,288,80C384,75,480,53,576,48C672,43,768,53,864,58.7C960,64,1056,64,1152,58.7L1200,56L1200,0L1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z" fill="rgba(255,255,255,0.1)"/></svg>') no-repeat top;
+  background-size: cover;
+  opacity: 0.3;
 }
 
-.practiceTitle {
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 12px;
-  color: #1a1a1a;
+.helpBox {
+  text-align: center;
+  color: white;
+  max-width: 700px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
 }
 
-.practiceDescription {
-  color: #64748b;
+.helpBox h2 {
+  font-size: 36px;
+  font-weight: 700;
   margin-bottom: 16px;
-  line-height: 1.6;
+  letter-spacing: -0.02em;
 }
 
-.readMore {
-  color: #2563eb;
-  text-decoration: none;
-  font-weight: 500;
-  font-size: 14px;
+.helpBox p {
+  font-size: 18px;
+  opacity: 0.95;
+  margin-bottom: 32px;
+}
+
+.helpActions {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.helpBtn {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  transition: gap 0.2s ease;
+  gap: 10px;
+  padding: 16px 32px;
+  background: white;
+  color: #667eea;
+  text-decoration: none;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 16px;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
 
-.readMore:hover {
-  gap: 8px;
-  text-decoration: underline;
+.helpBtn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
 }
 
-/* Responsive Design */
+/* ========================================
+   RESPONSIVE DESIGN
+   ======================================== */
 @media (max-width: 768px) {
   .heroTitle {
-    font-size: 36px;
+    font-size: 40px;
   }
 
   .heroSubtitle {
     font-size: 18px;
   }
 
+  .hero {
+    padding: 80px 0 50px;
+  }
+
   .tabButtons {
-    flex-direction: column;
-    padding: 0;
+    padding: 0 16px;
+    gap: 4px;
   }
 
   .tabButton {
-    border-bottom: none;
-    border-right: 3px solid transparent;
-    text-align: left;
-  }
-
-  .tabButton.active {
-    border-right-color: #2563eb;
-    border-bottom-color: transparent;
-    background: #f8fafc;
-  }
-
-  .guideGrid,
-  .practicesGrid {
-    grid-template-columns: 1fr;
+    padding: 14px 20px;
+    font-size: 15px;
   }
 
   .container {
     padding: 0 16px;
-  }
-
-  .hero {
-    padding: 60px 0 40px;
   }
 
   .searchSection {
@@ -371,38 +665,178 @@
   }
 
   .contentSection {
-    padding: 40px 0;
+    padding: 40px 0 60px;
   }
 
   .sectionTitle {
-    font-size: 28px;
+    font-size: 32px;
   }
 
   .sectionSubtitle {
     font-size: 16px;
   }
+
+  .categoryFilter {
+    gap: 8px;
+    margin-bottom: 32px;
+  }
+
+  .categoryBtn {
+    padding: 10px 18px;
+    font-size: 14px;
+  }
+
+  .guideHeader {
+    padding: 20px;
+    gap: 16px;
+  }
+
+  .guideIcon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .guideTitle {
+    font-size: 18px;
+  }
+
+  .guideDescription {
+    font-size: 14px;
+  }
+
+  .guideSteps {
+    padding: 0 20px 20px;
+  }
+
+  .step {
+    padding: 20px;
+  }
+
+  .stepDescription {
+    padding-left: 0;
+    margin-top: 8px;
+  }
+
+  .stepTips {
+    padding: 14px;
+    margin-top: 12px;
+  }
+
+  .faqQuestion {
+    padding: 20px;
+    font-size: 16px;
+  }
+
+  .faqAnswer {
+    padding: 0 20px 20px;
+    font-size: 14px;
+  }
+
+  .helpBox h2 {
+    font-size: 28px;
+  }
+
+  .helpBox p {
+    font-size: 16px;
+  }
+
+  .helpActions {
+    flex-direction: column;
+  }
+
+  .helpBtn {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 @media (max-width: 480px) {
   .heroTitle {
-    font-size: 28px;
+    font-size: 32px;
   }
 
   .heroSubtitle {
     font-size: 16px;
   }
 
-  .guideCard,
-  .practiceCard {
-    padding: 24px;
+  .hero {
+    padding: 60px 0 40px;
   }
 
-  .faqQuestion {
-    padding: 20px;
+  .container {
+    padding: 0 12px;
+  }
+
+  .searchInput {
+    padding: 16px 50px 16px 45px;
     font-size: 15px;
   }
 
-  .faqAnswer {
-    padding: 0 20px 20px;
+  .tabButtons {
+    flex-direction: column;
+    padding: 0;
+    gap: 0;
+  }
+
+  .tabButton {
+    border-bottom: none;
+    border-left: 3px solid transparent;
+    text-align: left;
+    padding: 16px 20px;
+  }
+
+  .tabButton.active {
+    border-left-color: #667eea;
+    border-bottom-color: transparent;
+    background: linear-gradient(to right, rgba(102, 126, 234, 0.05), transparent);
+  }
+
+  .sectionTitle {
+    font-size: 28px;
+  }
+
+  .categoryFilter {
+    gap: 6px;
+  }
+
+  .categoryBtn {
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+
+  .guideHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .guideIcon {
+    width: 44px;
+    height: 44px;
+  }
+
+  .stepHeader {
+    gap: 12px;
+  }
+
+  .stepNumber {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+
+  .stepTitle {
+    font-size: 16px;
+  }
+
+  .helpSection {
+    padding: 60px 0;
+  }
+
+  .helpBox h2 {
+    font-size: 24px;
+  }
+
+  .helpBox p {
+    font-size: 15px;
   }
 }

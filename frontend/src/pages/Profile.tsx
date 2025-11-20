@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet";
-import { User, Key, CreditCard, Trash2, AlertCircle, CheckCircle, LogOut, FileText, Download } from "lucide-react";
+import { User, Key, CreditCard, Trash2, AlertCircle, CheckCircle, LogOut, FileText, Download, MessageSquare } from "lucide-react";
 import styles from "../styles/Profile.module.css";
 import { useAuth } from "../hooks/useAuth";;
 
@@ -51,6 +51,10 @@ export default function Profile() {
   const [isPortalOpening, setIsPortalOpening] = useState(false);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [isLoadingInvoices, setIsLoadingInvoices] = useState(false);
+  const [isChatbotEnabled, setIsChatbotEnabled] = useState(() => {
+    const saved = localStorage.getItem('assistantBotEnabled');
+    return saved === null ? true : saved === 'true';
+  });
 
   useEffect(() => {
     if (user) {
@@ -109,6 +113,19 @@ export default function Profile() {
         type: "error"
       });
     }
+  };
+
+  const handleChatbotToggle = () => {
+    const newValue = !isChatbotEnabled;
+    setIsChatbotEnabled(newValue);
+    localStorage.setItem('assistantBotEnabled', String(newValue));
+    // Dispatch custom event so AssistantWidget can react immediately
+    window.dispatchEvent(new Event('assistantBotToggled'));
+
+    setNotification({
+      message: newValue ? "Chatbot aktiviert" : "Chatbot deaktiviert",
+      type: "success"
+    });
   };
 
   const handlePasswordChange = async () => {
@@ -382,7 +399,38 @@ export default function Profile() {
                 </motion.div>
               )}
 
-              <motion.div 
+              {/* Chatbot Settings Section */}
+              <motion.div
+                className={styles.section}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.55 }}
+              >
+                <div className={styles.sectionHeader}>
+                  <MessageSquare size={18} className={styles.sectionIcon} />
+                  <h2 className={styles.sectionTitle}>KI-Assistent</h2>
+                </div>
+
+                <div className={styles.settingRow}>
+                  <div className={styles.settingInfo}>
+                    <h3 className={styles.settingLabel}>Chatbot anzeigen</h3>
+                    <p className={styles.settingDescription}>
+                      Aktiviere oder deaktiviere den KI-Assistenten auf allen Seiten
+                    </p>
+                  </div>
+                  <label className={styles.toggleSwitch}>
+                    <input
+                      type="checkbox"
+                      checked={isChatbotEnabled}
+                      onChange={handleChatbotToggle}
+                      className={styles.toggleInput}
+                    />
+                    <span className={styles.toggleSlider}></span>
+                  </label>
+                </div>
+              </motion.div>
+
+              <motion.div
                 className={styles.section}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}

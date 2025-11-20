@@ -25,10 +25,32 @@ export default function AssistantWidget() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isBotEnabled, setIsBotEnabled] = useState(() => {
+    // Check localStorage for bot enabled/disabled state (default: enabled)
+    const saved = localStorage.getItem('assistantBotEnabled');
+    return saved === null ? true : saved === 'true';
+  });
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const assistantContext = useAssistantContext();
+
+  // Listen for changes to bot enabled/disabled setting
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const saved = localStorage.getItem('assistantBotEnabled');
+      setIsBotEnabled(saved === null ? true : saved === 'true');
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    // Also listen for custom event from same tab
+    window.addEventListener('assistantBotToggled', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('assistantBotToggled', handleStorageChange);
+    };
+  }, []);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -142,7 +164,7 @@ export default function AssistantWidget() {
   };
 
   // ============================================
-  // VISIBILITY CONTROL - Hide on specific pages
+  // VISIBILITY CONTROL - Hide on specific pages OR if disabled by user
   // ============================================
   const hiddenRoutes = [
     "/login",
@@ -157,8 +179,8 @@ export default function AssistantWidget() {
     location.pathname.toLowerCase().startsWith(route.toLowerCase())
   );
 
-  // If widget should be hidden, don't render anything
-  if (!shouldShowWidget) {
+  // If widget should be hidden OR bot is disabled, don't render anything
+  if (!shouldShowWidget || !isBotEnabled) {
     return null;
   }
 
