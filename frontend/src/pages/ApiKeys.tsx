@@ -66,10 +66,11 @@ export default function ApiKeys() {
       } else {
         throw new Error(data.message || "Fehler beim Laden");
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Fehler beim Laden der API-Keys:", error);
+      const message = error instanceof Error ? error.message : "Fehler beim Laden der API-Keys";
       setNotification({
-        message: error.message || "Fehler beim Laden der API-Keys",
+        message,
         type: "error"
       });
     } finally {
@@ -113,10 +114,11 @@ export default function ApiKeys() {
       } else {
         throw new Error(data.message || "Fehler beim Erstellen");
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Fehler beim Generieren:", error);
+      const message = error instanceof Error ? error.message : "Fehler beim Erstellen des API-Keys";
       setNotification({
-        message: error.message || "Fehler beim Erstellen des API-Keys",
+        message,
         type: "error"
       });
       setShowGenerateModal(false);
@@ -149,10 +151,11 @@ export default function ApiKeys() {
       } else {
         throw new Error(data.message || "Fehler beim Löschen");
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Fehler beim Löschen:", error);
+      const message = error instanceof Error ? error.message : "Fehler beim Löschen des API-Keys";
       setNotification({
-        message: error.message || "Fehler beim Löschen des API-Keys",
+        message,
         type: "error"
       });
     }
