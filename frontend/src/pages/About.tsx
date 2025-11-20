@@ -101,10 +101,10 @@ const About: React.FC = () => {
             </div>
           </div>
         </section>
-
-        {/* Footer */}
-        <Footer />
       </div>
+
+      {/* Footer */}
+      <Footer />
     </>
   );
 };

@@ -93,7 +93,8 @@ const Press: React.FC = () => {
   };
 
   return (
-    <div className={styles.pressContainer}>
+    <>
+      <div className={styles.pressContainer}>
       
       {/* Hero Section */}
       <section className={styles.heroSection}>
@@ -243,10 +244,11 @@ const Press: React.FC = () => {
           </p>
         </div>
       </section>
+      </div>
 
       {/* Footer */}
       <Footer />
-    </div>
+    </>
   );
 };
 
