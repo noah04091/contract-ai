@@ -360,6 +360,36 @@ export default function Profile() {
                 </motion.div>
               )}
 
+              {/* REST API Access Section for Enterprise users */}
+              {user?.subscriptionActive && user.subscriptionPlan === 'premium' && (
+                <motion.div
+                  className={styles.companyProfileSection}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.6 }}
+                >
+                  <div className={styles.companyProfileContent}>
+                    <Key size={24} className={styles.companyProfileIcon} />
+                    <div>
+                      <h3 className={styles.companyProfileTitle}>REST API-Zugang</h3>
+                      <p className={styles.companyProfileDescription}>
+                        Verwalte deine API-Keys für programmatischen Zugriff auf Contract AI. Automatisiere Workflows und integriere mit eigenen Systemen.
+                      </p>
+                    </div>
+                  </div>
+                  <motion.button
+                    className={styles.companyProfileButton}
+                    onClick={() => window.location.href = '/api-keys'}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                  >
+                    <span className={styles.companyProfileButtonIcon}>🔑</span>
+                    <span>API-Keys verwalten</span>
+                  </motion.button>
+                </motion.div>
+              )}
+
               {!user.subscriptionActive && (
                 <motion.div 
                   className={styles.upgradeSection}
