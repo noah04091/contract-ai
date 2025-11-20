@@ -176,7 +176,7 @@ export default function OnboardingTour({ run, onFinish }: OnboardingTourProps) {
     }
 
     // Legal Pulse Tour
-    else if (currentPath === '/legal-pulse') {
+    else if (currentPath === '/legal-pulse' || currentPath === '/legalpulse') {
       setSteps([
         {
           target: 'body',
@@ -188,6 +188,191 @@ export default function OnboardingTour({ run, onFinish }: OnboardingTourProps) {
           ),
           placement: 'center',
           disableBeacon: true
+        }
+      ]);
+    }
+
+    // Chat Tour
+    else if (currentPath === '/chat') {
+      setSteps([
+        {
+          target: 'body',
+          content: (
+            <div>
+              <h2>Legal Chat 💬</h2>
+              <p>Stelle der KI Fragen zu deinen Verträgen und erhalte sofortige Antworten.</p>
+            </div>
+          ),
+          placement: 'center',
+          disableBeacon: true
+        },
+        {
+          target: 'button[class*="newChatButton"]',
+          content: 'Starte einen neuen Chat, um Fragen zu deinen Verträgen zu stellen.',
+          placement: 'bottom'
+        },
+        {
+          target: 'div[class*="chatHistory"]',
+          content: 'Alle deine Chats werden hier gespeichert. Du kannst jederzeit zu früheren Gesprächen zurückkehren.',
+          placement: 'right'
+        },
+        {
+          target: 'div[class*="attachmentArea"]',
+          content: 'Lade Verträge hoch, um spezifische Fragen zu ihnen zu stellen. Die KI analysiert sie automatisch.',
+          placement: 'top'
+        },
+        {
+          target: 'div[class*="smartQuestions"]',
+          content: 'Die KI schlägt dir passende Fragen vor, die du zu deinen Verträgen stellen kannst.',
+          placement: 'left'
+        }
+      ]);
+    }
+
+    // Profile Tour
+    else if (currentPath === '/profile') {
+      setSteps([
+        {
+          target: 'body',
+          content: (
+            <div>
+              <h2>Dein Profil 👤</h2>
+              <p>Verwalte deine Kontoeinstellungen, Abonnement und persönlichen Daten.</p>
+            </div>
+          ),
+          placement: 'center',
+          disableBeacon: true
+        },
+        {
+          target: 'button[class*="planButton"]',
+          content: 'Hier siehst du deinen aktuellen Plan und kannst upgraden, um mehr Features freizuschalten.',
+          placement: 'bottom'
+        },
+        {
+          target: 'div[class*="usageStats"]',
+          content: 'Überwache deine Nutzung - wie viele Analysen du diesen Monat bereits verwendet hast.',
+          placement: 'bottom'
+        },
+        {
+          target: 'div[class*="invoicesSection"]',
+          content: 'Lade alle deine Rechnungen als PDF herunter - perfekt für die Buchhaltung.',
+          placement: 'top'
+        },
+        {
+          target: 'button[class*="passwordChange"]',
+          content: 'Ändere hier dein Passwort oder aktualisiere deine E-Mail-Adresse.',
+          placement: 'left'
+        }
+      ]);
+    }
+
+    // Envelopes (Digitale Signaturen) Tour
+    else if (currentPath === '/envelopes') {
+      setSteps([
+        {
+          target: 'body',
+          content: (
+            <div>
+              <h2>Digitale Signaturen ✍️</h2>
+              <p>Erstelle, versende und verfolge digital signierte Verträge - rechtssicher und einfach.</p>
+            </div>
+          ),
+          placement: 'center',
+          disableBeacon: true
+        },
+        {
+          target: 'button[class*="createEnvelope"]',
+          content: 'Erstelle ein neues Signatur-Envelope. Lade einen Vertrag hoch und füge Unterzeichner hinzu.',
+          placement: 'bottom'
+        },
+        {
+          target: 'div[class*="envelopesList"]',
+          content: 'Alle deine Signatur-Envelopes werden hier angezeigt. Sieh den Status in Echtzeit: Versendet, Signiert, Abgeschlossen.',
+          placement: 'bottom'
+        },
+        {
+          target: 'button[class*="filterButton"]',
+          content: 'Filtere nach Status: Entwürfe, Ausstehend, Abgeschlossen oder Abgelaufen.',
+          placement: 'bottom'
+        },
+        {
+          target: 'div[class*="statusBadge"]',
+          content: 'Jedes Envelope zeigt seinen Status: Grün = Fertig, Gelb = In Arbeit, Rot = Problem.',
+          placement: 'left'
+        }
+      ]);
+    }
+
+    // Company Profile Tour
+    else if (currentPath === '/company-profile') {
+      setSteps([
+        {
+          target: 'body',
+          content: (
+            <div>
+              <h2>Firmenprofile 🏢</h2>
+              <p>Speichere deine Firmendaten einmal und nutze sie automatisch für alle generierten Verträge.</p>
+            </div>
+          ),
+          placement: 'center',
+          disableBeacon: true
+        },
+        {
+          target: 'button[class*="createProfile"]',
+          content: 'Erstelle ein neues Firmenprofil mit allen wichtigen Daten: Name, Adresse, USt-ID, Bankverbindung.',
+          placement: 'bottom'
+        },
+        {
+          target: 'div[class*="profilesList"]',
+          content: 'Verwalte mehrere Firmenprofile - perfekt wenn du für verschiedene Unternehmen Verträge erstellst.',
+          placement: 'bottom'
+        },
+        {
+          target: 'div[class*="logoUpload"]',
+          content: 'Lade dein Firmenlogo hoch. Es wird automatisch in generierte Verträge eingefügt.',
+          placement: 'left'
+        },
+        {
+          target: 'button[class*="setDefault"]',
+          content: 'Setze ein Profil als Standard. Dieses wird automatisch beim Vertragsgenerator vorausgewählt.',
+          placement: 'top'
+        }
+      ]);
+    }
+
+    // Better Contracts Tour
+    else if (currentPath === '/better-contracts') {
+      setSteps([
+        {
+          target: 'body',
+          content: (
+            <div>
+              <h2>Bessere Verträge 🎯</h2>
+              <p>Lerne Best Practices für faire Vertragsgestaltung und vermeide häufige Fehler.</p>
+            </div>
+          ),
+          placement: 'center',
+          disableBeacon: true
+        },
+        {
+          target: 'div[class*="categoryCards"]',
+          content: 'Wähle eine Vertragskategorie: Mietverträge, Arbeitsverträge, Freelancer-Verträge und mehr.',
+          placement: 'bottom'
+        },
+        {
+          target: 'div[class*="tipsSection"]',
+          content: 'Hier findest du konkrete Tipps: Was sollte in deinem Vertrag stehen? Welche Klauseln sind wichtig?',
+          placement: 'bottom'
+        },
+        {
+          target: 'div[class*="examplesSection"]',
+          content: 'Schau dir Beispiel-Klauseln an, die du direkt in deine Verträge übernehmen kannst.',
+          placement: 'top'
+        },
+        {
+          target: 'button[class*="generateFromTemplate"]',
+          content: 'Erstelle direkt einen Vertrag basierend auf den Best Practices - mit einem Klick zum Generator.',
+          placement: 'left'
         }
       ]);
     }
