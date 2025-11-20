@@ -465,6 +465,24 @@ const connectDB = async () => {
       console.error("❌ Fehler beim Laden der Company-Profile-Routen:", err);
     }
 
+    // ✅ 6.2 API-KEYS ROUTES - REST API ZUGANG (ENTERPRISE)
+    try {
+      const apiKeysRoutes = require("./routes/apiKeys");
+      app.use("/api/api-keys", apiKeysRoutes);
+      console.log("✅ API-Keys-Routen geladen unter /api/api-keys (Enterprise)");
+    } catch (err) {
+      console.error("❌ Fehler beim Laden der API-Keys-Routen:", err);
+    }
+
+    // ✅ 6.3 REST API v1 ENDPOINTS - PUBLIC API (ENTERPRISE)
+    try {
+      const apiV1Routes = require("./routes/apiV1");
+      app.use("/api/v1", apiV1Routes);
+      console.log("✅ REST API v1 Endpoints geladen unter /api/v1 (Enterprise)");
+    } catch (err) {
+      console.error("❌ Fehler beim Laden der API v1 Routes:", err);
+    }
+
     // ✅ 7. KI ANALYSIS & OPTIMIZATION - MIT /api PREFIX
     // ✅ NEU: Upload-Route (ohne Analyse, kein Subscription-Check nötig)
     try {
