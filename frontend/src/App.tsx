@@ -72,6 +72,7 @@ const Chat = lazy(() => import("./pages/Chat"));
 const Generate = lazy(() => import("./pages/Generate"));
 const CompanyProfile = lazy(() => import("./pages/CompanyProfile"));
 const ApiKeys = lazy(() => import("./pages/ApiKeys")); // 🔑 REST API-Zugang (Enterprise)
+const ApiDocs = lazy(() => import("./pages/ApiDocs")); // 📚 REST API-Dokumentation
 const Subscribe = lazy(() => import("./pages/Subscribe"));
 const Upgrade = lazy(() => import("./pages/Upgrade"));
 const BetterContracts = lazy(() => import("./pages/BetterContracts"));
@@ -146,6 +147,7 @@ function AppWithLoader() {
             <Route path="/impressum" element={<Impressum />} />
             <Route path="/datenschutz" element={<Datenschutz />} />
             <Route path="/agb" element={<AGB />} />
+            <Route path="/api-docs" element={<ApiDocs />} />
             <Route path="/hilfe" element={<HelpCenter />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:slug" element={<BlogPost />} />
