@@ -3306,4 +3306,194 @@ router.post("/:id/upload-pdf", verifyToken, async (req, res) => {
   }
 });
 
+// ========================================
+// 🚀 BULK OPERATIONS (ENTERPRISE-ONLY)
+// ========================================
+
+/**
+ * POST /api/contracts/bulk-delete
+ * Löscht mehrere Verträge auf einmal (Enterprise-Feature)
+ * Body: { contractIds: ["id1", "id2", ...] }
+ */
+router.post("/bulk-delete", verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { contractIds } = req.body;
+
+    // Validierung
+    if (!contractIds || !Array.isArray(contractIds) || contractIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Keine Verträge zum Löschen ausgewählt"
+      });
+    }
+
+    if (contractIds.length > 100) {
+      return res.status(400).json({
+        success: false,
+        message: "Maximal 100 Verträge gleichzeitig löschbar"
+      });
+    }
+
+    // 🔒 ENTERPRISE-CHECK: Nur Premium/Enterprise-User
+    const usersCollection = client.db("vertragsaivault").collection("users");
+    const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "Benutzer nicht gefunden" });
+    }
+
+    const plan = user.subscriptionPlan || "free";
+    if (plan !== "premium") {
+      return res.status(403).json({
+        success: false,
+        message: "⛔ Bulk-Operationen sind nur im Enterprise-Plan verfügbar.",
+        requiresUpgrade: true,
+        feature: "bulk_operations",
+        upgradeUrl: "/pricing",
+        userPlan: plan
+      });
+    }
+
+    console.log(`🗑️ [Bulk-Delete] User ${userId} löscht ${contractIds.length} Verträge...`);
+
+    // IDs zu ObjectId konvertieren
+    const objectIds = contractIds.map(id => new ObjectId(id));
+
+    // 1️⃣ Calendar Events löschen (für alle Verträge)
+    try {
+      const eventsResult = await eventsCollection.deleteMany({
+        contractId: { $in: objectIds },
+        userId: new ObjectId(userId)
+      });
+      console.log(`📅 ${eventsResult.deletedCount} Calendar Events gelöscht`);
+    } catch (eventError) {
+      console.warn("⚠️ Calendar Events konnten nicht gelöscht werden:", eventError.message);
+    }
+
+    // 2️⃣ Verträge löschen (nur die vom User!)
+    const result = await contractsCollection.deleteMany({
+      _id: { $in: objectIds },
+      userId: new ObjectId(userId) // 🔒 Security: Nur eigene Verträge!
+    });
+
+    console.log(`✅ [Bulk-Delete] ${result.deletedCount}/${contractIds.length} Verträge gelöscht`);
+
+    res.json({
+      success: true,
+      deleted: result.deletedCount,
+      requested: contractIds.length,
+      message: `${result.deletedCount} Verträge erfolgreich gelöscht`
+    });
+
+  } catch (error) {
+    console.error("❌ [Bulk-Delete] Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Fehler beim Löschen der Verträge",
+      details: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/contracts/bulk-move
+ * Verschiebt mehrere Verträge in einen Ordner (Enterprise-Feature)
+ * Body: { contractIds: ["id1", "id2", ...], targetFolderId: "folderId" | null }
+ */
+router.post("/bulk-move", verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { contractIds, targetFolderId } = req.body;
+
+    // Validierung
+    if (!contractIds || !Array.isArray(contractIds) || contractIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Keine Verträge zum Verschieben ausgewählt"
+      });
+    }
+
+    if (contractIds.length > 100) {
+      return res.status(400).json({
+        success: false,
+        message: "Maximal 100 Verträge gleichzeitig verschiebbar"
+      });
+    }
+
+    // 🔒 ENTERPRISE-CHECK: Nur Premium/Enterprise-User
+    const usersCollection = client.db("vertragsaivault").collection("users");
+    const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "Benutzer nicht gefunden" });
+    }
+
+    const plan = user.subscriptionPlan || "free";
+    if (plan !== "premium") {
+      return res.status(403).json({
+        success: false,
+        message: "⛔ Bulk-Operationen sind nur im Enterprise-Plan verfügbar.",
+        requiresUpgrade: true,
+        feature: "bulk_operations",
+        upgradeUrl: "/pricing",
+        userPlan: plan
+      });
+    }
+
+    console.log(`📦 [Bulk-Move] User ${userId} verschiebt ${contractIds.length} Verträge → Folder ${targetFolderId || 'ROOT'}`);
+
+    // IDs zu ObjectId konvertieren
+    const objectIds = contractIds.map(id => new ObjectId(id));
+
+    // Optional: Folder-Existenz prüfen (wenn targetFolderId gesetzt)
+    if (targetFolderId) {
+      const foldersCollection = client.db("vertragsaivault").collection("folders");
+      const folder = await foldersCollection.findOne({
+        _id: new ObjectId(targetFolderId),
+        userId: new ObjectId(userId)
+      });
+
+      if (!folder) {
+        return res.status(404).json({
+          success: false,
+          message: "Ziel-Ordner nicht gefunden"
+        });
+      }
+    }
+
+    // Verträge verschieben (nur die vom User!)
+    const result = await contractsCollection.updateMany(
+      {
+        _id: { $in: objectIds },
+        userId: new ObjectId(userId) // 🔒 Security: Nur eigene Verträge!
+      },
+      {
+        $set: {
+          folderId: targetFolderId ? new ObjectId(targetFolderId) : null,
+          updatedAt: new Date()
+        }
+      }
+    );
+
+    console.log(`✅ [Bulk-Move] ${result.modifiedCount}/${contractIds.length} Verträge verschoben`);
+
+    res.json({
+      success: true,
+      moved: result.modifiedCount,
+      requested: contractIds.length,
+      message: `${result.modifiedCount} Verträge erfolgreich verschoben`,
+      targetFolder: targetFolderId || "ROOT"
+    });
+
+  } catch (error) {
+    console.error("❌ [Bulk-Move] Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Fehler beim Verschieben der Verträge",
+      details: error.message
+    });
+  }
+});
+
 module.exports = router;

@@ -556,16 +556,35 @@ export default function Contracts() {
     if (!confirmed) return;
 
     try {
-      // Delete all selected contracts
-      await Promise.all(
-        selectedContracts.map(contractId =>
-          apiCall(`/contracts/${contractId}`, { method: 'DELETE' })
-        )
-      );
+      // ✅ NEU: Bulk-Delete Endpoint (Enterprise-Feature)
+      const response = await fetch('/api/contracts/bulk-delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          contractIds: selectedContracts
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+
+        // Enterprise-Feature Check
+        if (errorData.requiresUpgrade) {
+          alert(errorData.message || '⛔ Bulk-Operationen nur für Enterprise-Plan verfügbar!');
+          return;
+        }
+
+        throw new Error(errorData.message || 'Fehler beim Löschen');
+      }
+
+      const result = await response.json();
+      console.log(`✅ ${result.deleted}/${result.requested} Verträge gelöscht`);
 
       await fetchContracts();
       setSelectedContracts([]);
-      console.log(`✅ ${selectedContracts.length} Verträge gelöscht`);
     } catch (err) {
       console.error('Error bulk deleting contracts:', err);
       alert('Fehler beim Löschen der Verträge');

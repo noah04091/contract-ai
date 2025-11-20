@@ -229,19 +229,32 @@ export function useFolders(): UseFoldersReturn {
       const token = getToken();
       if (!token) throw new Error('Nicht angemeldet');
 
-      const response = await fetch('/api/contracts/bulk/folder', {
-        method: 'PATCH',
+      // ✅ NEU: Bulk-Move Endpoint (Enterprise-Feature)
+      const response = await fetch('/api/contracts/bulk-move', {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ contractIds, folderId })
+        body: JSON.stringify({
+          contractIds,
+          targetFolderId: folderId
+        })
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Fehler beim Verschieben');
+
+        // Enterprise-Feature Check
+        if (errorData.requiresUpgrade) {
+          throw new Error(errorData.message || '⛔ Bulk-Operationen nur für Enterprise');
+        }
+
+        throw new Error(errorData.message || 'Fehler beim Verschieben');
       }
+
+      const result = await response.json();
+      console.log(`✅ ${result.moved} Verträge verschoben`);
 
       await fetchFolders(true); // ✅ Force refresh nach Bulk-Verschieben
     } catch (err) {
