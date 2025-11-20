@@ -16,6 +16,86 @@ const { apiRateLimiter } = require("../middleware/apiRateLimit");
 // Rate Limiting für alle API v1 Routes
 router.use(apiRateLimiter);
 
+// ===== S3 CONFIGURATION =====
+let s3Instance = null;
+let S3Client, PutObjectCommand;
+let S3_CONFIGURED = false;
+
+const initializeS3 = async () => {
+  try {
+    const requiredEnvVars = ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'AWS_REGION', 'S3_BUCKET_NAME'];
+    const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+
+    if (missingVars.length > 0) {
+      console.warn(`⚠️ [API v1] S3 not configured. Missing: ${missingVars.join(', ')}`);
+      return false;
+    }
+
+    const { S3Client: _S3Client, PutObjectCommand: _PutObjectCommand } = require("@aws-sdk/client-s3");
+    S3Client = _S3Client;
+    PutObjectCommand = _PutObjectCommand;
+
+    s3Instance = new S3Client({
+      region: process.env.AWS_REGION,
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      },
+    });
+
+    console.log("✅ [API v1] S3 configured successfully");
+    S3_CONFIGURED = true;
+    return true;
+  } catch (error) {
+    console.error("❌ [API v1] S3 configuration failed:", error.message);
+    S3_CONFIGURED = false;
+    return false;
+  }
+};
+
+// Initialize S3
+initializeS3();
+
+/**
+ * Upload file to S3 using AWS SDK v3
+ */
+const uploadToS3 = async (localFilePath, originalFilename, userId) => {
+  try {
+    if (!S3_CONFIGURED) {
+      throw new Error("S3 not configured");
+    }
+
+    const fileBuffer = await fs.readFile(localFilePath);
+    const s3Key = `contracts/${userId}/${Date.now()}-${originalFilename}`;
+
+    const command = new PutObjectCommand({
+      Bucket: process.env.S3_BUCKET_NAME,
+      Key: s3Key,
+      Body: fileBuffer,
+      ContentType: 'application/pdf',
+      Metadata: {
+        uploadDate: new Date().toISOString(),
+        userId: userId || 'unknown',
+      },
+    });
+
+    await s3Instance.send(command);
+
+    const s3Location = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${s3Key}`;
+
+    console.log(`✅ [API v1 S3] Uploaded: ${s3Key}`);
+
+    return {
+      s3Key,
+      s3Location,
+      s3Bucket: process.env.S3_BUCKET_NAME,
+    };
+  } catch (error) {
+    console.error(`❌ [API v1 S3] Upload failed:`, error);
+    throw error;
+  }
+};
+
 // MongoDB Connection
 const client = new MongoClient(process.env.MONGO_URI);
 let contractsCollection;
@@ -100,7 +180,9 @@ router.get("/contracts", verifyApiKey, async (req, res) => {
         contractType: c.contractType,
         createdAt: c.createdAt,
         folderId: c.folderId?.toString() || null,
-        s3Key: c.s3Key || null
+        s3Key: c.s3Key || null,
+        s3Location: c.s3Location || null,
+        storage: c.s3Key ? "s3" : "local"
       })),
       pagination: {
         total,
@@ -156,19 +238,42 @@ router.post("/contracts", verifyApiKey, upload.single("file"), async (req, res) 
       });
     }
 
+    // Upload zu S3 (falls konfiguriert)
+    let s3Data = null;
+    if (S3_CONFIGURED) {
+      try {
+        s3Data = await uploadToS3(filePath, filename, userId);
+        console.log(`✅ [API v1] S3 Upload erfolgreich: ${s3Data.s3Key}`);
+      } catch (s3Error) {
+        console.warn(`⚠️ [API v1] S3 Upload fehlgeschlagen, speichere lokal:`, s3Error.message);
+      }
+    }
+
     // Vertrag in DB speichern
     const contract = {
       userId: new ObjectId(userId),
       filename,
       folderId: folderId ? new ObjectId(folderId) : null,
       localPath: filePath,
-      s3Key: null, // TODO: S3 Upload implementieren
+      s3Key: s3Data?.s3Key || null,
+      s3Location: s3Data?.s3Location || null,
+      s3Bucket: s3Data?.s3Bucket || null,
       createdAt: new Date(),
       contractType: "unknown" // Wird bei Analyse gesetzt
     };
 
     const result = await contractsCollection.insertOne(contract);
     const contractId = result.insertedId;
+
+    // Cleanup: Lösche lokale Datei nach S3-Upload
+    if (s3Data?.s3Key) {
+      try {
+        await fs.unlink(filePath);
+        console.log(`🗑️ [API v1] Lokale Datei gelöscht nach S3-Upload: ${filename}`);
+      } catch (unlinkError) {
+        console.warn(`⚠️ [API v1] Cleanup failed:`, unlinkError.message);
+      }
+    }
 
     // Optional: Analyse durchführen
     let analysis = null;
@@ -226,7 +331,10 @@ ${text.substring(0, 15000)}`;
         id: contractId.toString(),
         filename,
         folderId: folderId || null,
-        createdAt: contract.createdAt
+        createdAt: contract.createdAt,
+        s3Key: s3Data?.s3Key || null,
+        s3Location: s3Data?.s3Location || null,
+        storage: s3Data ? "s3" : "local"
       },
       analysis: analysis ? {
         contractType: analysis.contractType,
@@ -291,7 +399,9 @@ router.get("/contracts/:id", verifyApiKey, async (req, res) => {
         contractType: contract.contractType,
         createdAt: contract.createdAt,
         folderId: contract.folderId?.toString() || null,
-        s3Key: contract.s3Key || null
+        s3Key: contract.s3Key || null,
+        s3Location: contract.s3Location || null,
+        storage: contract.s3Key ? "s3" : "local"
       }
     });
 
