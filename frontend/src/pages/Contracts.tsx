@@ -599,9 +599,10 @@ export default function Contracts() {
       const contentDisposition = response.headers.get('Content-Disposition');
       let filename = 'Contract_AI_Portfolio.xlsx';
       if (contentDisposition) {
-        const filenameMatch = contentDisposition.match(/filename="?(.+)"?/);
-        if (filenameMatch) {
-          filename = filenameMatch[1];
+        // FIX: Korrekte Regex die Quotes NICHT mit captured
+        const filenameMatch = contentDisposition.match(/filename[^;=\n]*=\s*["']?([^"';\n]+)["']?/);
+        if (filenameMatch && filenameMatch[1]) {
+          filename = filenameMatch[1].trim();
         }
       }
 
@@ -667,9 +668,10 @@ export default function Contracts() {
       const contentDisposition = response.headers.get('Content-Disposition');
       let filename = 'Contract_AI_Vertraege.zip';
       if (contentDisposition) {
-        const filenameMatch = contentDisposition.match(/filename="?(.+)"?/);
-        if (filenameMatch) {
-          filename = filenameMatch[1];
+        // FIX: Korrekte Regex die Quotes NICHT mit captured
+        const filenameMatch = contentDisposition.match(/filename[^;=\n]*=\s*["']?([^"';\n]+)["']?/);
+        if (filenameMatch && filenameMatch[1]) {
+          filename = filenameMatch[1].trim();
         }
       }
 
