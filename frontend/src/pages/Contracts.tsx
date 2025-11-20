@@ -605,16 +605,26 @@ export default function Contracts() {
         }
       }
 
-      // Download file
+      // Download file with correct MIME type
       const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
+
+      // Create blob with explicit MIME type for Excel
+      const typedBlob = new Blob([blob], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      });
+
+      const url = window.URL.createObjectURL(typedBlob);
       const a = document.createElement('a');
       a.href = url;
       a.download = filename;
       document.body.appendChild(a);
       a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+
+      // Cleanup
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      }, 100);
 
       console.log(`✅ [Excel Export] ${contracts.length} Verträge exportiert als ${filename}`);
     } catch (error) {
@@ -663,16 +673,26 @@ export default function Contracts() {
         }
       }
 
-      // Download file
+      // Download file with correct MIME type
       const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
+
+      // Create blob with explicit MIME type for ZIP
+      const typedBlob = new Blob([blob], {
+        type: 'application/zip'
+      });
+
+      const url = window.URL.createObjectURL(typedBlob);
       const a = document.createElement('a');
       a.href = url;
       a.download = filename;
       document.body.appendChild(a);
       a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+
+      // Cleanup
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      }, 100);
 
       console.log(`✅ [Bulk Download] ${selectedContracts.length} Verträge als ZIP heruntergeladen: ${filename}`);
 
@@ -2914,6 +2934,17 @@ export default function Contracts() {
                       <RefreshCw size={16} />
                     </motion.button>
                     <motion.button
+                      className={`${styles.newContractButton} ${!canUpload ? styles.disabledButton : ''}`}
+                      onClick={() => canUpload && setActiveSection('upload')}
+                      whileHover={canUpload ? { scale: 1.02 } : {}}
+                      whileTap={canUpload ? { scale: 0.98 } : {}}
+                      disabled={!canUpload}
+                    >
+                      <Plus size={16} />
+                      <span>{canUpload ? 'Neuer Vertrag' : 'Upgrade erforderlich'}</span>
+                      {!canUpload && <Lock size={14} />}
+                    </motion.button>
+                    <motion.button
                       className={styles.exportButton}
                       onClick={handleExportExcel}
                       aria-label="Als Excel exportieren"
@@ -2924,17 +2955,6 @@ export default function Contracts() {
                     >
                       <Download size={16} />
                       <span>Excel Export</span>
-                    </motion.button>
-                    <motion.button
-                      className={`${styles.newContractButton} ${!canUpload ? styles.disabledButton : ''}`}
-                      onClick={() => canUpload && setActiveSection('upload')}
-                      whileHover={canUpload ? { scale: 1.02 } : {}}
-                      whileTap={canUpload ? { scale: 0.98 } : {}}
-                      disabled={!canUpload}
-                    >
-                      <Plus size={16} />
-                      <span>{canUpload ? 'Neuer Vertrag' : 'Upgrade erforderlich'}</span>
-                      {!canUpload && <Lock size={14} />}
                     </motion.button>
                   </div>
                 </div>
