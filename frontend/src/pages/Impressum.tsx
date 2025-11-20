@@ -1,7 +1,8 @@
 import { Helmet } from "react-helmet";
 import { motion } from "framer-motion";
-import styles from "./Impressum.module.css";
+import styles from "../styles/Impressum.module.css";
 import { FileText, Mail, Phone, User, Globe, Building, CreditCard, AlertCircle } from "lucide-react";
+import Footer from "../components/Footer";
 
 export default function Impressum() {
   return (
@@ -147,9 +148,9 @@ export default function Impressum() {
                   <AlertCircle size={18} className={styles.infoIcon} />
                   <div>
                     Plattform der EU-Kommission zur Online-Streitbeilegung:{" "}
-                    <a 
-                      href="https://ec.europa.eu/consumers/odr" 
-                      target="_blank" 
+                    <a
+                      href="https://ec.europa.eu/consumers/odr"
+                      target="_blank"
                       rel="noreferrer"
                       className={styles.link}
                     >
@@ -162,6 +163,9 @@ export default function Impressum() {
           </div>
         </motion.div>
       </div>
+
+      {/* Footer */}
+      <Footer />
     </>
   );
 }
