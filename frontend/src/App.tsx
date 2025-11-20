@@ -73,6 +73,7 @@ const Generate = lazy(() => import("./pages/Generate"));
 const CompanyProfile = lazy(() => import("./pages/CompanyProfile"));
 const ApiKeys = lazy(() => import("./pages/ApiKeys")); // 🔑 REST API-Zugang (Enterprise)
 const ApiDocs = lazy(() => import("./pages/ApiDocs")); // 📚 REST API-Dokumentation
+const Team = lazy(() => import("./pages/Team")); // 👥 Team-Management (Enterprise)
 const Subscribe = lazy(() => import("./pages/Subscribe"));
 const Upgrade = lazy(() => import("./pages/Upgrade"));
 const BetterContracts = lazy(() => import("./pages/BetterContracts"));
@@ -195,6 +196,7 @@ function AppWithLoader() {
             <Route path="/Generate" element={<RequireAuth><Generate /></RequireAuth>} />
             <Route path="/company-profile" element={<RequireAuth><CompanyProfile /></RequireAuth>} />
             <Route path="/api-keys" element={<RequireAuth><ApiKeys /></RequireAuth>} />
+            <Route path="/team" element={<RequireAuth><Team /></RequireAuth>} />
             <Route path="/subscribe" element={<RequireAuth><Subscribe /></RequireAuth>} />
             <Route path="/upgrade" element={<RequireAuth><Upgrade /></RequireAuth>} />
             <Route path="/better-contracts" element={<RequireAuth><BetterContracts /></RequireAuth>} />

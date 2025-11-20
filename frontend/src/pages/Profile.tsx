@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet";
-import { User, Key, CreditCard, Trash2, AlertCircle, CheckCircle, LogOut, FileText, Download, MessageSquare } from "lucide-react";
+import { User, Key, CreditCard, Trash2, AlertCircle, CheckCircle, LogOut, FileText, Download, MessageSquare, Users } from "lucide-react";
 import styles from "../styles/Profile.module.css";
 import { useAuth } from "../hooks/useAuth";;
 
@@ -386,6 +386,36 @@ export default function Profile() {
                   >
                     <span className={styles.companyProfileButtonIcon}>🔑</span>
                     <span>API-Keys verwalten</span>
+                  </motion.button>
+                </motion.div>
+              )}
+
+              {/* Team Management Section for Enterprise users */}
+              {user?.subscriptionActive && user.subscriptionPlan === 'premium' && (
+                <motion.div
+                  className={styles.companyProfileSection}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.7 }}
+                >
+                  <div className={styles.companyProfileContent}>
+                    <Users size={24} className={styles.companyProfileIcon} />
+                    <div>
+                      <h3 className={styles.companyProfileTitle}>Team-Management</h3>
+                      <p className={styles.companyProfileDescription}>
+                        Erstelle eine Organisation, lade Team-Mitglieder ein und arbeite gemeinsam an Verträgen. Bis zu 10 User pro Team.
+                      </p>
+                    </div>
+                  </div>
+                  <motion.button
+                    className={styles.companyProfileButton}
+                    onClick={() => window.location.href = '/team'}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                  >
+                    <span className={styles.companyProfileButtonIcon}>👥</span>
+                    <span>Team verwalten</span>
                   </motion.button>
                 </motion.div>
               )}
