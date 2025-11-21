@@ -379,9 +379,7 @@ router.get('/validate-invite/:token', async (req, res) => {
     }
 
     // Check: Existiert bereits ein User mit dieser Email?
-    const db = req.app.locals.db;
-    const usersCollection = db.collection('users');
-    const existingUser = await usersCollection.findOne({
+    const existingUser = await req.usersCollection.findOne({
       email: invitation.email.toLowerCase()
     });
 
@@ -452,9 +450,7 @@ router.post('/register-with-invite/:token', async (req, res) => {
     }
 
     // Check: User existiert bereits?
-    const db = req.app.locals.db;
-    const usersCollection = db.collection('users');
-    const existingUser = await usersCollection.findOne({
+    const existingUser = await req.usersCollection.findOne({
       email: invitation.email.toLowerCase()
     });
 
@@ -494,7 +490,7 @@ router.post('/register-with-invite/:token', async (req, res) => {
       legalPulseLimit: 1
     };
 
-    const userResult = await usersCollection.insertOne(newUser);
+    const userResult = await req.usersCollection.insertOne(newUser);
     const userId = userResult.insertedId;
 
     // Erstelle Member-Record
