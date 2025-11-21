@@ -35,6 +35,14 @@ interface Member {
   joinedAt: string;
 }
 
+interface PendingInvite {
+  id: string;
+  email: string;
+  role: "admin" | "member" | "viewer";
+  createdAt: string;
+  expiresAt: string;
+}
+
 interface Notification {
   message: string;
   type: "success" | "error" | "warning";
@@ -47,6 +55,7 @@ export default function Team() {
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [membership, setMembership] = useState<Membership | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
+  const [pendingInvites, setPendingInvites] = useState<PendingInvite[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [notification, setNotification] = useState<Notification | null>(null);
 
@@ -92,6 +101,7 @@ export default function Team() {
 
         if (data.organization) {
           await fetchMembers(data.organization.id);
+          await fetchPendingInvites(data.organization.id);
         }
       } else {
         throw new Error(data.message || "Fehler beim Laden");
@@ -123,6 +133,61 @@ export default function Team() {
       }
     } catch (error: unknown) {
       console.error("Fehler beim Laden der Members:", error);
+    }
+  };
+
+  const fetchPendingInvites = async (orgId: string) => {
+    try {
+      const res = await fetch(`/api/organizations/${orgId}/invitations`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`
+        }
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        setPendingInvites(data.invitations);
+      }
+    } catch (error: unknown) {
+      console.error("Fehler beim Laden der Einladungen:", error);
+    }
+  };
+
+  const handleCancelInvite = async (inviteId: string, email: string) => {
+    if (!organization) return;
+
+    if (!confirm(`Einladung für ${email} wirklich stornieren?`)) return;
+
+    try {
+      const res = await fetch(`/api/organizations/${organization.id}/invitations/${inviteId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`
+        }
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        setNotification({
+          message: "Einladung storniert",
+          type: "success"
+        });
+        // Refresh invites
+        await fetchPendingInvites(organization.id);
+      } else {
+        setNotification({
+          message: data.message || "Fehler beim Stornieren",
+          type: "error"
+        });
+      }
+    } catch (error: unknown) {
+      console.error("Cancel invite error:", error);
+      setNotification({
+        message: "Fehler beim Stornieren der Einladung",
+        type: "error"
+      });
     }
   };
 
@@ -204,6 +269,10 @@ export default function Team() {
         setShowInviteModal(false);
         setInviteEmail("");
         setInviteRole("member");
+        // Refresh pending invites
+        if (organization) {
+          await fetchPendingInvites(organization.id);
+        }
       } else {
         throw new Error(data.message || "Fehler beim Einladen");
       }
@@ -379,6 +448,41 @@ export default function Team() {
                   )}
                 </div>
               </div>
+
+              {/* Pending Invitations */}
+              {pendingInvites.length > 0 && membership?.role === "admin" && (
+                <div className={styles.pendingInvites}>
+                  <h3>Ausstehende Einladungen ({pendingInvites.length})</h3>
+
+                  {pendingInvites.map((invite) => (
+                    <motion.div
+                      key={invite.id}
+                      className={styles.inviteCard}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                    >
+                      <div className={styles.inviteInfo}>
+                        <div className={styles.inviteEmail}>{invite.email}</div>
+                        <div className={styles.inviteMeta}>
+                          <span className={styles.inviteRole}>
+                            {invite.role === "admin" ? "Administrator" : invite.role === "member" ? "Mitglied" : "Betrachter"}
+                          </span>
+                          <span className={styles.inviteExpiry}>
+                            Läuft ab: {new Date(invite.expiresAt).toLocaleDateString("de-DE")}
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        className={styles.cancelInviteButton}
+                        onClick={() => handleCancelInvite(invite.id, invite.email)}
+                        title="Einladung stornieren"
+                      >
+                        <X size={16} />
+                      </button>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
 
               {/* Members List */}
               <div className={styles.membersList}>

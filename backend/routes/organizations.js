@@ -646,6 +646,110 @@ router.post('/accept-invite/:token', verifyToken, async (req, res) => {
 });
 
 /**
+ * GET /api/organizations/:id/invitations
+ * Listet alle ausstehenden Einladungen
+ */
+router.get('/:id/invitations', verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { id: orgId } = req.params;
+
+    // Check: User ist Member der Org
+    const membership = await OrganizationMember.findOne({
+      organizationId: new ObjectId(orgId),
+      userId: new ObjectId(userId),
+      isActive: true
+    });
+
+    if (!membership) {
+      return res.status(403).json({
+        success: false,
+        message: 'Kein Zugriff auf diese Organisation'
+      });
+    }
+
+    // Hol alle pending Einladungen
+    const invitations = await OrganizationInvitation.find({
+      organizationId: new ObjectId(orgId),
+      status: 'pending'
+    }).sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      invitations: invitations.map(inv => ({
+        id: inv._id.toString(),
+        email: inv.email,
+        role: inv.role,
+        createdAt: inv.createdAt,
+        expiresAt: inv.expiresAt
+      }))
+    });
+
+  } catch (error) {
+    console.error('❌ [ORGANIZATIONS] List Invitations Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Fehler beim Laden der Einladungen',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * DELETE /api/organizations/:id/invitations/:inviteId
+ * Löscht/Storniert eine ausstehende Einladung
+ */
+router.delete('/:id/invitations/:inviteId', verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { id: orgId, inviteId } = req.params;
+
+    // Check: User ist Admin der Org
+    const membership = await OrganizationMember.findOne({
+      organizationId: new ObjectId(orgId),
+      userId: new ObjectId(userId),
+      isActive: true
+    });
+
+    if (!membership || membership.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Nur Admins können Einladungen stornieren'
+      });
+    }
+
+    // Finde und lösche Einladung
+    const invitation = await OrganizationInvitation.findOneAndDelete({
+      _id: new ObjectId(inviteId),
+      organizationId: new ObjectId(orgId),
+      status: 'pending'
+    });
+
+    if (!invitation) {
+      return res.status(404).json({
+        success: false,
+        message: 'Einladung nicht gefunden oder bereits verwendet'
+      });
+    }
+
+    console.log(`✅ [ORGANIZATIONS] Invitation cancelled: ${invitation.email}`);
+
+    res.json({
+      success: true,
+      message: 'Einladung erfolgreich storniert'
+    });
+
+  } catch (error) {
+    console.error('❌ [ORGANIZATIONS] Cancel Invitation Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Fehler beim Stornieren der Einladung',
+      details: error.message
+    });
+  }
+});
+
+/**
  * GET /api/organizations/:id/members
  * Listet alle Members der Organisation
  */

@@ -185,6 +185,82 @@
   font-weight: 600;
 }
 
+/* Pending Invitations */
+.pendingInvites {
+  background: #fffbeb;
+  padding: 24px;
+  border-radius: 12px;
+  border: 1px solid #fbbf24;
+  margin-bottom: 24px;
+}
+
+.pendingInvites h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: #92400e;
+  margin: 0 0 16px 0;
+}
+
+.inviteCard {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: white;
+  border: 1px solid #fcd34d;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.inviteCard:last-child {
+  margin-bottom: 0;
+}
+
+.inviteInfo {
+  flex: 1;
+}
+
+.inviteEmail {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 4px;
+}
+
+.inviteMeta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  color: #666;
+}
+
+.inviteRole {
+  padding: 2px 8px;
+  background: #f3f4f6;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.inviteExpiry {
+  color: #92400e;
+}
+
+.cancelInviteButton {
+  padding: 6px;
+  background: transparent;
+  border: 1px solid #ef4444;
+  border-radius: 6px;
+  color: #ef4444;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cancelInviteButton:hover {
+  background: #ef4444;
+  color: white;
+}
+
 /* Members List */
 .membersList {
   background: white;
