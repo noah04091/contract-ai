@@ -191,6 +191,39 @@ export default function Team() {
     }
   };
 
+  const handleSyncContracts = async () => {
+    if (!organization) return;
+
+    try {
+      const res = await fetch(`/api/organizations/${organization.id}/sync-contracts`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`
+        }
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        setNotification({
+          message: data.message || "Verträge synchronisiert",
+          type: "success"
+        });
+      } else {
+        setNotification({
+          message: data.message || "Fehler beim Synchronisieren",
+          type: "error"
+        });
+      }
+    } catch (error: unknown) {
+      console.error("Sync contracts error:", error);
+      setNotification({
+        message: "Fehler beim Synchronisieren der Verträge",
+        type: "error"
+      });
+    }
+  };
+
   const handleCreateOrganization = async () => {
     if (!orgName.trim()) {
       setNotification({
@@ -401,14 +434,23 @@ export default function Team() {
               </div>
             </div>
             {organization && membership?.role === "admin" && (
-              <button
-                className={styles.inviteButton}
-                onClick={() => setShowInviteModal(true)}
-                disabled={organization.memberCount >= organization.maxMembers}
-              >
-                <Plus size={18} />
-                Mitglied einladen
-              </button>
+              <div className={styles.headerButtons}>
+                <button
+                  className={styles.syncButton}
+                  onClick={handleSyncContracts}
+                  title="Bestehende Verträge für Team freigeben"
+                >
+                  Verträge synchronisieren
+                </button>
+                <button
+                  className={styles.inviteButton}
+                  onClick={() => setShowInviteModal(true)}
+                  disabled={organization.memberCount >= organization.maxMembers}
+                >
+                  <Plus size={18} />
+                  Mitglied einladen
+                </button>
+              </div>
             )}
           </div>
 

@@ -14,6 +14,7 @@ const nodemailer = require("nodemailer"); // 📧 Email Service
 const contractAnalyzer = require("../services/contractAnalyzer"); // 🤖 ULTRA-INTELLIGENT Contract Analyzer v10
 const AILegalPulse = require("../services/aiLegalPulse"); // ⚡ Legal Pulse Risk Analysis
 const analyzeRoute = require("./analyze"); // 🚀 V2 Analysis Functions
+const OrganizationMember = require("../models/OrganizationMember"); // 👥 Team-Management
 const { generateDeepLawyerLevelPrompt, getContractTypeAwareness } = analyzeRoute; // 🚀 Import V2 functions
 
 const router = express.Router();
@@ -467,8 +468,26 @@ router.get("/", verifyToken, async (req, res) => {
     const folderId = req.query.folderId || null;
     const riskFilter = req.query.riskFilter || 'all'; // ✅ Legal Pulse: Risk Level Filter
 
+    // 👥 Team-Management: Prüfe ob User zu einer Organisation gehört
+    const membership = await OrganizationMember.findOne({
+      userId: new ObjectId(req.user.userId),
+      isActive: true
+    });
+
     // ✅ MongoDB Filter-Objekt aufbauen
-    const mongoFilter = { userId: new ObjectId(req.user.userId) };
+    let mongoFilter;
+    if (membership) {
+      // User ist in einer Organisation → zeige eigene + Org-Verträge
+      mongoFilter = {
+        $or: [
+          { userId: new ObjectId(req.user.userId) },
+          { organizationId: membership.organizationId }
+        ]
+      };
+    } else {
+      // User ist nicht in einer Organisation → nur eigene Verträge
+      mongoFilter = { userId: new ObjectId(req.user.userId) };
+    }
 
     // 🔍 Text-Suche (name, status, kuendigung)
     if (searchQuery.trim()) {
@@ -689,19 +708,26 @@ router.post("/", verifyToken, async (req, res) => {
     // ✅ NEU: Provider Detection
     let detectedProvider = provider;
     let extractedDetails = { contractNumber, customerNumber };
-    
+
     if (!provider && content) {
       // Try to detect provider from content
       detectedProvider = detectProvider(content, name);
       console.log("🔍 Provider Detection:", detectedProvider?.displayName || "Nicht erkannt");
-      
+
       // Extract contract details
       extractedDetails = extractContractDetails(content);
       console.log("📋 Extrahierte Details:", extractedDetails);
     }
 
+    // 👥 Team-Management: Prüfe ob User zu einer Organisation gehört
+    const membership = await OrganizationMember.findOne({
+      userId: new ObjectId(req.user.userId),
+      isActive: true
+    });
+
     const contractDoc = {
       userId: new ObjectId(req.user.userId),
+      organizationId: membership ? membership.organizationId : null, // 👥 Org-Zugehörigkeit
       name: name || "Unbekannter Vertrag",
       laufzeit: laufzeit || "Unbekannt",
       kuendigung: kuendigung || "Unbekannt",

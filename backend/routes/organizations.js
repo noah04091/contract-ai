@@ -89,6 +89,14 @@ router.post('/', verifyToken, async (req, res) => {
 
     await ownerMember.save();
 
+    // 👥 NEU: Alle bestehenden Verträge des Owners der Organisation zuweisen
+    const contractsCollection = req.db.collection('contracts');
+    const updateResult = await contractsCollection.updateMany(
+      { userId: new ObjectId(userId), organizationId: null },
+      { $set: { organizationId: organization._id } }
+    );
+    console.log(`📝 [ORGANIZATIONS] ${updateResult.modifiedCount} Verträge der Organisation zugewiesen`);
+
     console.log(`✅ [ORGANIZATIONS] Org created: ${organization.name} by User ${userId}`);
 
     res.status(201).json({
@@ -109,6 +117,68 @@ router.post('/', verifyToken, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Fehler beim Erstellen der Organisation',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/organizations/:id/sync-contracts
+ * Weist alle Verträge des Owners der Organisation zu (Admin-only)
+ */
+router.post('/:id/sync-contracts', verifyToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { id: orgId } = req.params;
+
+    // Check: User ist Admin der Org
+    const membership = await OrganizationMember.findOne({
+      organizationId: new ObjectId(orgId),
+      userId: new ObjectId(userId),
+      isActive: true
+    });
+
+    if (!membership || membership.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Nur Admins können Verträge synchronisieren'
+      });
+    }
+
+    // Hole alle Org-Member-IDs
+    const members = await OrganizationMember.find({
+      organizationId: new ObjectId(orgId),
+      isActive: true
+    });
+
+    const memberUserIds = members.map(m => m.userId);
+
+    // Update alle Verträge der Member ohne Org-ID
+    const contractsCollection = req.db.collection('contracts');
+    const updateResult = await contractsCollection.updateMany(
+      {
+        userId: { $in: memberUserIds },
+        $or: [
+          { organizationId: null },
+          { organizationId: { $exists: false } }
+        ]
+      },
+      { $set: { organizationId: new ObjectId(orgId) } }
+    );
+
+    console.log(`📝 [ORGANIZATIONS] Sync: ${updateResult.modifiedCount} Verträge der Organisation ${orgId} zugewiesen`);
+
+    res.json({
+      success: true,
+      message: `${updateResult.modifiedCount} Verträge wurden der Organisation zugewiesen`,
+      syncedCount: updateResult.modifiedCount
+    });
+
+  } catch (error) {
+    console.error('❌ [ORGANIZATIONS] Sync Contracts Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Fehler beim Synchronisieren der Verträge',
       details: error.message
     });
   }

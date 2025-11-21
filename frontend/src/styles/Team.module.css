@@ -45,6 +45,29 @@
   margin: 4px 0 0 0;
 }
 
+.headerButtons {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.syncButton {
+  padding: 12px 20px;
+  background: white;
+  color: #667eea;
+  border: 2px solid #667eea;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.syncButton:hover {
+  background: #667eea;
+  color: white;
+}
+
 .inviteButton {
   display: flex;
   align-items: center;
