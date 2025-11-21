@@ -4,8 +4,10 @@
 const express = require("express");
 const router = express.Router();
 const Contract = require("../models/Contract");
+const OrganizationMember = require("../models/OrganizationMember"); // Für Team-Zugriff
 const archiver = require("archiver");
 const { S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
+const { ObjectId } = require("mongodb");
 
 // S3-Client initialisieren
 const s3Client = new S3Client({
@@ -45,11 +47,40 @@ router.post("/bulk-download", requireAuth, async (req, res) => {
 
     console.log(`📦 [Bulk Download] User ${userId} lädt ${contractIds.length} Verträge herunter`);
 
-    // Verträge aus DB laden (nur die vom User)
-    const contracts = await Contract.find({
-      _id: { $in: contractIds },
-      userId: userId
-    }).lean();
+    // 🆕 Prüfe Organization-Membership für Team-Zugriff
+    let userOrgId = null;
+    try {
+      const membership = await OrganizationMember.findOne({
+        userId: new ObjectId(userId),
+        isActive: true
+      });
+      if (membership) {
+        userOrgId = membership.organizationId;
+        console.log(`👥 [Bulk Download] User belongs to organization:`, userOrgId);
+      }
+    } catch (memberErr) {
+      console.log("⚠️ Could not check organization membership:", memberErr.message);
+    }
+
+    // Query: Eigene Verträge ODER Verträge der Organisation
+    let contractQuery;
+    if (userOrgId) {
+      contractQuery = {
+        _id: { $in: contractIds },
+        $or: [
+          { userId: new ObjectId(userId) },
+          { organizationId: userOrgId }
+        ]
+      };
+    } else {
+      contractQuery = {
+        _id: { $in: contractIds },
+        userId: new ObjectId(userId)
+      };
+    }
+
+    // Verträge aus DB laden (eigene + Organisation)
+    const contracts = await Contract.find(contractQuery).lean();
 
     if (contracts.length === 0) {
       return res.status(404).json({ error: "Keine Verträge gefunden" });

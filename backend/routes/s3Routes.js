@@ -4,6 +4,8 @@ const router = express.Router();
 const { generateSignedUrl } = require("../services/fileStorage");
 const verifyToken = require("../middleware/verifyToken");
 const Contract = require("../models/Contract"); // Für refresh route
+const OrganizationMember = require("../models/OrganizationMember"); // Für Team-Zugriff
+const { ObjectId } = require("mongodb");
 
 // @route   GET /api/s3/view?file=... ODER ?contractId=... ODER ?key=... [&type=signed|original]
 // @desc    Get a signed URL to view the file from S3
@@ -56,19 +58,50 @@ router.get("/view", verifyToken, async (req, res) => {
 
     // Wenn contractId gegeben, hole s3Key aus Datenbank
     if (contractId && !file) {
-      console.log("📄 Searching for contract:", contractId, "userId:", req.user.userId || req.user.id);
+      const userId = req.user.userId || req.user.id;
+      console.log("📄 Searching for contract:", contractId, "userId:", userId);
 
-      const contract = await Contract.findOne({
-        _id: contractId,
-        userId: req.user.userId || req.user.id
-      });
+      // 🆕 Prüfe Organization-Membership für Team-Zugriff
+      let userOrgId = null;
+      try {
+        const membership = await OrganizationMember.findOne({
+          userId: new ObjectId(userId),
+          isActive: true
+        });
+        if (membership) {
+          userOrgId = membership.organizationId;
+          console.log("👥 User belongs to organization:", userOrgId);
+        }
+      } catch (memberErr) {
+        console.log("⚠️ Could not check organization membership:", memberErr.message);
+      }
+
+      // Query: Eigene Verträge ODER Verträge der Organisation
+      let contractQuery;
+      if (userOrgId) {
+        contractQuery = {
+          _id: contractId,
+          $or: [
+            { userId: new ObjectId(userId) },
+            { organizationId: userOrgId }
+          ]
+        };
+      } else {
+        contractQuery = {
+          _id: contractId,
+          userId: new ObjectId(userId)
+        };
+      }
+
+      const contract = await Contract.findOne(contractQuery);
 
       console.log("📄 Contract found:", contract ? "YES" : "NO", contract ? {
         _id: contract._id,
         name: contract.name || contract.title,
         s3Key: contract.s3Key,
         uploadType: contract.uploadType,
-        needsReupload: contract.needsReupload
+        needsReupload: contract.needsReupload,
+        organizationId: contract.organizationId
       } : null);
 
       if (!contract) {
@@ -151,19 +184,48 @@ router.get("/view", verifyToken, async (req, res) => {
 router.post("/refresh", verifyToken, async (req, res) => {
   try {
     const { s3Key, contractId } = req.body;
-    
+    const userId = req.user.userId || req.user.id;
+
     let keyToUse = s3Key;
-    
+
     if (contractId && !s3Key) {
-      const contract = await Contract.findOne({
-        _id: contractId,
-        userId: req.user.userId || req.user.id
-      });
-      
+      // 🆕 Prüfe Organization-Membership für Team-Zugriff
+      let userOrgId = null;
+      try {
+        const membership = await OrganizationMember.findOne({
+          userId: new ObjectId(userId),
+          isActive: true
+        });
+        if (membership) {
+          userOrgId = membership.organizationId;
+        }
+      } catch (memberErr) {
+        console.log("⚠️ Could not check organization membership:", memberErr.message);
+      }
+
+      // Query: Eigene Verträge ODER Verträge der Organisation
+      let contractQuery;
+      if (userOrgId) {
+        contractQuery = {
+          _id: contractId,
+          $or: [
+            { userId: new ObjectId(userId) },
+            { organizationId: userOrgId }
+          ]
+        };
+      } else {
+        contractQuery = {
+          _id: contractId,
+          userId: new ObjectId(userId)
+        };
+      }
+
+      const contract = await Contract.findOne(contractQuery);
+
       if (!contract?.s3Key) {
         return res.status(404).json({ error: "Contract or S3 key not found" });
       }
-      
+
       keyToUse = contract.s3Key;
     }
     
