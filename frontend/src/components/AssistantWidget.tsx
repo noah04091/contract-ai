@@ -173,6 +173,10 @@ export default function AssistantWidget() {
     "/pricing",
     "/forgot-password",
     "/reset-password",
+    // Signatur-Prozess - Bot würde wichtige UI-Elemente überdecken
+    "/sign/",
+    "/signature/",
+    "/envelopes/create",
   ];
 
   const shouldShowWidget = !hiddenRoutes.some((route) =>
