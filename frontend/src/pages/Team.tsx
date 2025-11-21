@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet";
-import { Users, Plus, Mail, Shield, Eye, Trash2, Crown, CheckCircle, AlertCircle, X } from "lucide-react";
+import { Users, Plus, Shield, Eye, Trash2, Crown, CheckCircle, AlertCircle, X } from "lucide-react";
 import { useAuth } from "../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import styles from "../styles/Team.module.css";
@@ -385,7 +385,7 @@ export default function Team() {
                 <h3>Team-Mitglieder ({members.length})</h3>
 
                 {members.map((member) => {
-                  const isCurrentUser = member.userId === user?.userId;
+                  const isCurrentUser = member.email === user?.email;
                   const isOwner = member.userId === organization.ownerId;
 
                   return (
