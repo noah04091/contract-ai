@@ -30,6 +30,8 @@ export default function AssistantWidget() {
     const saved = localStorage.getItem('assistantBotEnabled');
     return saved === null ? true : saved === 'true';
   });
+  const [isHiddenByUser, setIsHiddenByUser] = useState(false); // Temporär versteckt für diese Session
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -50,6 +52,16 @@ export default function AssistantWidget() {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('assistantBotToggled', handleStorageChange);
     };
+  }, []);
+
+  // Detect mobile screen size
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   // Auto-scroll to bottom when new messages arrive
@@ -183,29 +195,49 @@ export default function AssistantWidget() {
     location.pathname.toLowerCase().startsWith(route.toLowerCase())
   );
 
-  // If widget should be hidden OR bot is disabled, don't render anything
-  if (!shouldShowWidget || !isBotEnabled) {
+  // If widget should be hidden OR bot is disabled OR on mobile OR user closed it, don't render
+  if (!shouldShowWidget || !isBotEnabled || isMobile || isHiddenByUser) {
     return null;
   }
 
   return (
     <>
-      {/* Chat Bubble Button */}
+      {/* Chat Bubble Button with Close Option */}
       <AnimatePresence>
         {!isOpen && (
-          <motion.button
-            className={styles.chatBubble}
-            onClick={() => setIsOpen(true)}
+          <motion.div
+            className={styles.chatBubbleContainer}
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
             transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            aria-label="Chat öffnen"
           >
-            <span className={styles.chatBubbleIcon}>💬</span>
-          </motion.button>
+            {/* X Button to hide bot */}
+            <motion.button
+              className={styles.hideBubbleButton}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsHiddenByUser(true);
+              }}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              aria-label="Chat ausblenden"
+              title="Chat für diese Session ausblenden"
+            >
+              ✕
+            </motion.button>
+
+            {/* Main Chat Bubble */}
+            <motion.button
+              className={styles.chatBubble}
+              onClick={() => setIsOpen(true)}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+              aria-label="Chat öffnen"
+            >
+              <span className={styles.chatBubbleIcon}>💬</span>
+            </motion.button>
+          </motion.div>
         )}
       </AnimatePresence>
 

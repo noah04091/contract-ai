@@ -2,13 +2,53 @@
 /* Contract AI Assistant Widget - Professional Blue Theme */
 
 /* ============================================ */
+/* CHAT BUBBLE CONTAINER (with hide button) */
+/* ============================================ */
+
+.chatBubbleContainer {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9998;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+/* Hide/Close Button (X) */
+.hideBubbleButton {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(107, 114, 128, 0.8);
+  border: none;
+  color: white;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.chatBubbleContainer:hover .hideBubbleButton {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.hideBubbleButton:hover {
+  background: rgba(239, 68, 68, 0.9);
+}
+
+/* ============================================ */
 /* CHAT BUBBLE (Floating Button) */
 /* ============================================ */
 
 .chatBubble {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
   width: 60px;
   height: 60px;
   border-radius: 50%;
@@ -20,14 +60,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9998;
   transition: all 0.3s ease;
 }
 
 .chatBubble:hover {
   box-shadow: 0 6px 30px rgba(59, 130, 246, 0.4),
               0 12px 60px rgba(30, 64, 175, 0.25);
-  transform: scale(1.05);
 }
 
 .chatBubbleIcon {
@@ -354,10 +392,15 @@
 /* RESPONSIVE */
 /* ============================================ */
 
+/* Tablet */
 @media (max-width: 768px) {
-  .chatBubble {
+  /* Bot wird auf Handy via JS ausgeblendet - diese Styles sind nur Fallback */
+  .chatBubbleContainer {
     bottom: 16px;
     right: 16px;
+  }
+
+  .chatBubble {
     width: 56px;
     height: 56px;
   }
@@ -374,30 +417,11 @@
   }
 }
 
+/* Mobile - sollte via JS ausgeblendet sein, aber sicherheitshalber */
 @media (max-width: 480px) {
-  .chatBubble {
-    width: 52px;
-    height: 52px;
-  }
-
-  .chatBubbleIcon {
-    font-size: 24px;
-  }
-
+  .chatBubbleContainer,
+  .chatBubble,
   .chatWindow {
-    bottom: 0;
-    right: 0;
-    width: 100vw;
-    height: 100vh;
-    max-height: 100vh;
-    border-radius: 0;
-  }
-
-  .chatHeader {
-    border-radius: 0;
-  }
-
-  .inputContainer {
-    border-radius: 0;
+    display: none !important;
   }
 }
