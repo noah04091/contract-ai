@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet";
 import { useAuth } from "../hooks/useAuth";;
 import "../styles/AppleAuth.css";
@@ -17,6 +17,8 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [notification, setNotification] = useState<{ message: string; type?: "success" | "error" | "warning" | "info" } | null>(null);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectUrl = searchParams.get("redirect") || "/dashboard";
   const redirectTimeout = useRef<NodeJS.Timeout | null>(null);
   const [emailFocused, setEmailFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
@@ -181,7 +183,7 @@ export default function Login() {
       }, 500);
 
       redirectTimeout.current = setTimeout(() => {
-        navigate("/dashboard");
+        navigate(redirectUrl);
       }, 1500);
     } catch (error) {
       const err = error as Error;
@@ -204,7 +206,7 @@ export default function Login() {
           console.log("✅ Bereits eingeloggt via Cookie");
           // Verwende refetchUser anstatt setUser direkt
           await refetchUser();
-          navigate("/dashboard");
+          navigate(redirectUrl);
           return;
         }
 
@@ -230,7 +232,7 @@ export default function Login() {
               console.log("✅ Fallback-Auth erfolgreich");
               // Verwende refetchUser anstatt setUser direkt
               await refetchUser();
-              navigate("/dashboard");
+              navigate(redirectUrl);
               return;
             } else {
               localStorage.removeItem("authToken");
