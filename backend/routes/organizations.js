@@ -9,6 +9,8 @@ const OrganizationMember = require('../models/OrganizationMember');
 const OrganizationInvitation = require('../models/OrganizationInvitation');
 const verifyToken = require('../middleware/verifyToken');
 const nodemailer = require('nodemailer');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 // Email Transporter (reuse existing from auth)
 const transporter = nodemailer.createTransport({
@@ -330,8 +332,232 @@ router.post('/:id/invite', verifyToken, async (req, res) => {
 });
 
 /**
+ * GET /api/organizations/validate-invite/:token
+ * Validiert Einladungs-Token (OHNE Auth - öffentlich)
+ */
+router.get('/validate-invite/:token', async (req, res) => {
+  try {
+    const { token } = req.params;
+
+    // Finde Invitation
+    const invitation = await OrganizationInvitation.findOne({ token });
+
+    if (!invitation) {
+      return res.status(404).json({
+        success: false,
+        message: 'Einladung nicht gefunden',
+        code: 'INVITE_NOT_FOUND'
+      });
+    }
+
+    // Check: Expired?
+    if (invitation.status !== 'pending') {
+      return res.status(400).json({
+        success: false,
+        message: 'Einladung wurde bereits verwendet',
+        code: 'INVITE_USED'
+      });
+    }
+
+    if (invitation.expiresAt < new Date()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Einladung ist abgelaufen',
+        code: 'INVITE_EXPIRED'
+      });
+    }
+
+    // Hol Org-Infos
+    const organization = await Organization.findById(invitation.organizationId);
+
+    if (!organization) {
+      return res.status(404).json({
+        success: false,
+        message: 'Organisation nicht gefunden',
+        code: 'ORG_NOT_FOUND'
+      });
+    }
+
+    // Check: Existiert bereits ein User mit dieser Email?
+    const db = req.app.locals.db;
+    const usersCollection = db.collection('users');
+    const existingUser = await usersCollection.findOne({
+      email: invitation.email.toLowerCase()
+    });
+
+    res.json({
+      success: true,
+      invitation: {
+        email: invitation.email,
+        role: invitation.role,
+        expiresAt: invitation.expiresAt
+      },
+      organization: {
+        id: organization._id.toString(),
+        name: organization.name
+      },
+      userExists: !!existingUser
+    });
+
+  } catch (error) {
+    console.error('❌ [ORGANIZATIONS] Validate Invite Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Fehler beim Validieren der Einladung',
+      details: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/organizations/register-with-invite/:token
+ * Registriert neuen User UND nimmt Einladung an (OHNE Auth)
+ */
+router.post('/register-with-invite/:token', async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { firstName, lastName, password } = req.body;
+
+    // Validierung
+    if (!firstName || !lastName || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Vorname, Nachname und Passwort sind erforderlich'
+      });
+    }
+
+    if (password.length < 8) {
+      return res.status(400).json({
+        success: false,
+        message: 'Passwort muss mindestens 8 Zeichen haben'
+      });
+    }
+
+    // Finde Invitation
+    const invitation = await OrganizationInvitation.findOne({ token });
+
+    if (!invitation) {
+      return res.status(404).json({
+        success: false,
+        message: 'Einladung nicht gefunden'
+      });
+    }
+
+    // Check: Valid?
+    if (invitation.status !== 'pending' || invitation.expiresAt < new Date()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Einladung ist abgelaufen oder wurde bereits verwendet'
+      });
+    }
+
+    // Check: User existiert bereits?
+    const db = req.app.locals.db;
+    const usersCollection = db.collection('users');
+    const existingUser = await usersCollection.findOne({
+      email: invitation.email.toLowerCase()
+    });
+
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: 'Ein Account mit dieser E-Mail existiert bereits. Bitte einloggen.',
+        code: 'USER_EXISTS'
+      });
+    }
+
+    // Hash Passwort
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Erstelle User
+    const newUser = {
+      email: invitation.email.toLowerCase(),
+      password: hashedPassword,
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      isVerified: true, // Team-Invite = automatisch verifiziert
+      subscriptionPlan: 'free', // Wird durch Team-Membership überschrieben
+      subscriptionStatus: 'team_member',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      analysisCount: 0,
+      analysisLimit: 3,
+      optimizationCount: 0,
+      optimizationLimit: 1,
+      compareCount: 0,
+      compareLimit: 1,
+      chatMessageCount: 0,
+      chatMessageLimit: 5,
+      generatorCount: 0,
+      generatorLimit: 1,
+      legalPulseCount: 0,
+      legalPulseLimit: 1
+    };
+
+    const userResult = await usersCollection.insertOne(newUser);
+    const userId = userResult.insertedId;
+
+    // Erstelle Member-Record
+    const member = new OrganizationMember({
+      organizationId: invitation.organizationId,
+      userId: userId,
+      role: invitation.role,
+      invitedBy: invitation.invitedBy,
+      permissions: invitation.role === 'admin'
+        ? ['contracts.read', 'contracts.write', 'contracts.delete', 'team.manage']
+        : invitation.role === 'member'
+        ? ['contracts.read', 'contracts.write']
+        : ['contracts.read']
+    });
+
+    await member.save();
+
+    // Update Invitation
+    invitation.status = 'accepted';
+    invitation.acceptedAt = new Date();
+    await invitation.save();
+
+    // Hol Org-Infos
+    const organization = await Organization.findById(invitation.organizationId);
+
+    // Erstelle JWT Token für Auto-Login
+    const jwtToken = jwt.sign(
+      { userId: userId.toString(), email: newUser.email },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    console.log(`✅ [ORGANIZATIONS] New user ${newUser.email} registered & joined Org ${organization.name}`);
+
+    res.status(201).json({
+      success: true,
+      message: `Willkommen im Team von ${organization.name}!`,
+      token: jwtToken,
+      user: {
+        email: newUser.email,
+        firstName: newUser.firstName,
+        lastName: newUser.lastName
+      },
+      organization: {
+        id: organization._id.toString(),
+        name: organization.name,
+        role: member.role
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ [ORGANIZATIONS] Register With Invite Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Fehler bei der Registrierung',
+      details: error.message
+    });
+  }
+});
+
+/**
  * POST /api/organizations/accept-invite/:token
- * Nimmt Einladung an
+ * Nimmt Einladung an (für bereits eingeloggte User)
  */
 router.post('/accept-invite/:token', verifyToken, async (req, res) => {
   try {

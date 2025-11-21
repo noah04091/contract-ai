@@ -27,6 +27,7 @@ import Profile from "./pages/Profile"; // 🔧 FIX: Direct import verhindert CSS
 // 🔓 Öffentliche Seiten - Lazy Loading
 const Register = lazy(() => import("./pages/Register"));
 const VerifySuccess = lazy(() => import("./pages/VerifySuccess"));
+const AcceptInvite = lazy(() => import("./pages/AcceptInvite")); // 👥 Team-Einladung annehmen
 
 // Feature Flag: Enhanced Signature UI
 const useEnhancedSignUI = import.meta.env.VITE_SIGN_UI_ENHANCED !== "false"; // Default true
@@ -138,6 +139,7 @@ function AppWithLoader() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/verify-success" element={<VerifySuccess />} /> {/* ✅ NEU: E-Mail bestätigt Seite */}
+            <Route path="/accept-invite/:token" element={<AcceptInvite />} /> {/* 👥 Team-Einladung annehmen */}
             <Route path="/sign/:token" element={<SignaturePageComponent />} /> {/* ✉️ Signature Page (Feature-Flag controlled) */}
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/about" element={<About />} />
