@@ -542,7 +542,7 @@ export default function Team() {
                 <select
                   className={styles.select}
                   value={inviteRole}
-                  onChange={(e) => setInviteRole(e.target.value as any)}
+                  onChange={(e) => setInviteRole(e.target.value as "admin" | "member" | "viewer")}
                 >
                   <option value="admin">Administrator (voller Zugriff)</option>
                   <option value="member">Mitglied (arbeiten)</option>
