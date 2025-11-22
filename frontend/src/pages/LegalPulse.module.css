@@ -1,6 +1,7 @@
 /* Legal Pulse Seite - Full-Screen Design */
 .legalPulseContainer {
   min-height: 100vh;
+  min-height: 100dvh; /* iOS Safari fix */
   background: #fafafa;
   padding: 40px 60px;
   width: 100%;
@@ -1772,7 +1773,31 @@
 
 @media (max-width: 768px) {
   .legalPulseContainer {
-    padding: 20px;
+    padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+  }
+
+  .modalOverlay {
+    padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+  }
+
+  .riskModal {
+    max-height: 90vh;
+    max-height: 90dvh;
+  }
+
+  /* Touch-Targets für Mobile */
+  .heroCTA,
+  .backButton,
+  .optimizeButton,
+  .tabButton,
+  .actionButton,
+  .primaryButton,
+  .secondaryButton,
+  .addContractButton,
+  .quickFilterButton,
+  .riskActionButton,
+  .recommendationActionButton {
+    min-height: 44px;
   }
   
   .heroSection {
@@ -3160,6 +3185,7 @@
 .sidebar {
   background: white;
   height: 100vh;
+  height: 100dvh; /* iOS Safari fix */
   width: 500px;
   box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
   display: flex;
@@ -3256,5 +3282,128 @@
 
   .sidebarContent {
     padding: 20px;
+  }
+}
+
+/* 📱 EXTRA SMALL MOBILE (max-width: 375px) */
+@media (max-width: 375px) {
+  .legalPulseContainer {
+    padding: max(16px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  }
+
+  .heroSection {
+    padding: 32px 16px;
+    gap: 32px;
+  }
+
+  .heroTitle {
+    font-size: 1.75rem;
+  }
+
+  .heroSubtitle {
+    font-size: 1rem;
+  }
+
+  .heroCTA {
+    padding: 14px 24px;
+    font-size: 1rem;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .sectionHeader h2,
+  .sectionTitle {
+    font-size: 1.5rem;
+  }
+
+  .contractCard {
+    padding: 16px;
+  }
+
+  .contractName {
+    font-size: 1rem;
+    max-width: 140px;
+  }
+
+  .riskBadge {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+
+  .tabButton {
+    font-size: 0.8rem;
+    padding: 10px 12px;
+  }
+
+  .scoreCard {
+    padding: 24px 16px;
+  }
+
+  .scoreCircle {
+    width: 100px;
+    height: 100px;
+  }
+
+  .scoreCircle::before {
+    width: 70px;
+    height: 70px;
+  }
+
+  .scoreNumber {
+    font-size: 1.75rem;
+  }
+
+  .tabContent {
+    padding: 16px;
+  }
+
+  .bottomCTA {
+    padding: 32px 16px;
+  }
+
+  .ctaContent h2 {
+    font-size: 1.5rem;
+  }
+
+  .ctaContent p {
+    font-size: 1rem;
+  }
+
+  .primaryCTAButton {
+    padding: 16px 24px;
+    font-size: 1rem;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .modalHeader {
+    padding: 16px;
+  }
+
+  .modalBody {
+    padding: 16px;
+  }
+
+  .sidebarHeader {
+    padding: 16px;
+  }
+
+  .sidebarHeader h2 {
+    font-size: 1.25rem;
+  }
+
+  .sidebarContent {
+    padding: 16px;
+  }
+
+  .searchInput {
+    font-size: 16px; /* Prevents iOS zoom */
+  }
+
+  /* Touch-Targets for extra small */
+  .closeSidebar,
+  .modalCloseButton {
+    min-width: 44px;
+    min-height: 44px;
   }
 }

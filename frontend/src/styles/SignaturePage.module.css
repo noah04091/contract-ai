@@ -2,8 +2,11 @@
 
 .container {
   min-height: 100vh;
+  min-height: 100dvh; /* Dynamic viewport height für iOS Safari */
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   padding: 2rem;
+  /* Safe-Area für iPhone X+ */
+  padding: max(2rem, env(safe-area-inset-top)) max(2rem, env(safe-area-inset-right)) max(2rem, env(safe-area-inset-bottom)) max(2rem, env(safe-area-inset-left));
 }
 
 /* Split Layout - PDF left, Signature right */
@@ -278,6 +281,7 @@
 .submitBtn {
   width: 100%;
   padding: 1rem;
+  min-height: 44px; /* Touch-Target für Mobile */
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
@@ -304,6 +308,7 @@
 .declineBtn {
   width: 100%;
   padding: 0.875rem;
+  min-height: 44px; /* Touch-Target für Mobile */
   background: transparent;
   color: #ff3b30;
   border: 1.5px solid #ff3b30;
@@ -492,5 +497,123 @@
   .clearBtn {
     width: 100%;
     justify-content: center;
+    min-height: 44px;
+  }
+
+  .pdfDownloadBtn,
+  .downloadBtn {
+    min-height: 44px;
+  }
+}
+
+/* 📱 EXTRA SMALL MOBILE (max-width: 375px) - iPhone SE, Mini etc. */
+@media (max-width: 375px) {
+  .container {
+    padding: max(1rem, env(safe-area-inset-top)) max(0.75rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(0.75rem, env(safe-area-inset-left));
+  }
+
+  .signatureCard,
+  .successCard,
+  .errorCard,
+  .infoCard {
+    padding: 1.25rem;
+    border-radius: 12px;
+  }
+
+  .pdfSection {
+    max-height: 350px;
+    min-height: 300px;
+    border-radius: 12px;
+  }
+
+  .pdfHeader {
+    padding: 1rem;
+  }
+
+  .pdfHeader h2 {
+    font-size: 1rem;
+  }
+
+  .pdfViewer {
+    padding: 0.75rem;
+  }
+
+  .headerIcon {
+    width: 52px;
+    height: 52px;
+  }
+
+  .title {
+    font-size: 1.125rem;
+  }
+
+  .subtitle {
+    font-size: 0.8rem;
+  }
+
+  .message {
+    padding: 0.875rem;
+    font-size: 0.8rem;
+  }
+
+  .signerInfo {
+    padding: 0.875rem;
+  }
+
+  .infoRow {
+    font-size: 0.8rem;
+    gap: 0.5rem;
+  }
+
+  .sectionTitle {
+    font-size: 0.9rem;
+  }
+
+  .sectionSubtitle {
+    font-size: 0.8rem;
+  }
+
+  .signatureCanvas {
+    height: 130px !important;
+  }
+
+  .submitBtn {
+    padding: 0.875rem;
+    font-size: 0.9rem;
+  }
+
+  .declineBtn {
+    padding: 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  .clearBtn {
+    padding: 0.5rem 0.875rem;
+    font-size: 0.8rem;
+  }
+
+  .footerText {
+    font-size: 0.7rem;
+  }
+
+  .successCard h2,
+  .errorCard h2,
+  .infoCard h2 {
+    font-size: 1.4rem;
+  }
+
+  .successCard p,
+  .errorCard p,
+  .infoCard p {
+    font-size: 0.9rem;
+  }
+
+  .successSubtext {
+    font-size: 0.8rem;
+  }
+
+  .downloadBtn {
+    padding: 0.875rem 1.5rem;
+    font-size: 0.9rem;
   }
 }

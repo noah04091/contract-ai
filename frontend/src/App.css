@@ -80,3 +80,65 @@ body {
 :root {
   --sidebar-offset: 0px;
 }
+
+/* ============================================
+   📱 MOBILE/TABLET RESPONSIVE OPTIMIERUNGEN
+   ============================================ */
+
+/* Safe-Area Insets für iPhone X+ (Notch & Home-Indicator) */
+@supports (padding: env(safe-area-inset-top)) {
+  body {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+/* Large Tablet (max 1024px) */
+@media (max-width: 1024px) {
+  #root {
+    max-width: 100%;
+    padding: 1.5rem;
+  }
+}
+
+/* Tablet (max 768px) */
+@media (max-width: 768px) {
+  body {
+    padding-top: 56px; /* Kleinere Navbar auf Tablet */
+  }
+
+  #root {
+    padding: 1rem;
+  }
+
+  .card {
+    padding: 1.5em;
+  }
+}
+
+/* Mobile (max 480px) */
+@media (max-width: 480px) {
+  body {
+    padding-top: 52px; /* Noch kleinere Navbar auf Mobile */
+  }
+
+  #root {
+    padding: 0.75rem;
+  }
+
+  .card {
+    padding: 1em;
+  }
+
+  .logo {
+    height: 4em;
+    padding: 1em;
+  }
+}
+
+/* Extra Small (max 375px) - iPhone SE */
+@media (max-width: 375px) {
+  #root {
+    padding: 0.5rem;
+  }
+}

@@ -17,6 +17,7 @@
   font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
   background-color: var(--apple-gray-50);
   min-height: 100vh;
+  min-height: 100dvh; /* iOS Safari fix */
   display: flex;
   justify-content: center;
   color: var(--apple-gray-800);
@@ -536,15 +537,32 @@
 /* Responsive Styling */
 @media (max-width: 768px) {
   .pageContainer {
-    padding: 1.5rem;
+    padding: max(1.5rem, env(safe-area-inset-top)) max(1.5rem, env(safe-area-inset-right)) max(1.5rem, env(safe-area-inset-bottom)) max(1.5rem, env(safe-area-inset-left));
   }
-  
+
   .title {
     font-size: 1.8rem;
   }
-  
+
   .userInfo {
     grid-template-columns: 1fr;
+  }
+
+  /* Touch-Targets für Mobile */
+  .upgradeButton,
+  .passwordButton,
+  .deleteButton,
+  .logoutButton,
+  .downloadButton,
+  .companyProfileButton {
+    min-height: 44px;
+  }
+
+  .notification {
+    bottom: max(2rem, env(safe-area-inset-bottom));
+    left: max(1rem, env(safe-area-inset-left));
+    right: max(1rem, env(safe-area-inset-right));
+    transform: none;
   }
 }
 
@@ -844,5 +862,112 @@
 
   .toggleSwitch {
     align-self: flex-end;
+  }
+}
+
+/* 📱 SMALL MOBILE (max-width: 480px) */
+@media (max-width: 480px) {
+  .pageContainer {
+    padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+  }
+
+  .title {
+    font-size: 1.6rem;
+  }
+
+  .profileIcon {
+    width: 64px;
+    height: 64px;
+  }
+
+  .section,
+  .upgradeSection,
+  .dangerSection,
+  .companyProfileSection {
+    padding: 1.25rem;
+  }
+
+  .sectionTitle,
+  .upgradeTitle,
+  .dangerTitle,
+  .companyProfileTitle {
+    font-size: 1.1rem;
+  }
+
+  .upgradeButton,
+  .passwordButton,
+  .deleteButton,
+  .logoutButton,
+  .companyProfileButton {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* 📱 EXTRA SMALL MOBILE (max-width: 375px) */
+@media (max-width: 375px) {
+  .pageContainer {
+    padding: max(0.75rem, env(safe-area-inset-top)) max(0.75rem, env(safe-area-inset-right)) max(0.75rem, env(safe-area-inset-bottom)) max(0.75rem, env(safe-area-inset-left));
+  }
+
+  .title {
+    font-size: 1.4rem;
+  }
+
+  .profileIcon {
+    width: 56px;
+    height: 56px;
+    margin-bottom: 1rem;
+  }
+
+  .header {
+    margin-bottom: 1.5rem;
+  }
+
+  .content {
+    gap: 1.5rem;
+  }
+
+  .section,
+  .upgradeSection,
+  .dangerSection,
+  .companyProfileSection {
+    padding: 1rem;
+    border-radius: 12px;
+  }
+
+  .sectionTitle,
+  .upgradeTitle,
+  .dangerTitle,
+  .companyProfileTitle {
+    font-size: 1rem;
+  }
+
+  .input {
+    font-size: 16px; /* Prevents iOS zoom */
+    padding: 0.75rem;
+  }
+
+  .label {
+    font-size: 0.85rem;
+  }
+
+  .email {
+    font-size: 1rem;
+  }
+
+  .upgradeButton,
+  .passwordButton,
+  .deleteButton,
+  .logoutButton,
+  .companyProfileButton {
+    padding: 0.8rem;
+    font-size: 0.9rem;
+  }
+
+  .notification {
+    min-width: auto;
+    padding: 0.875rem 1rem;
+    font-size: 0.9rem;
   }
 }

@@ -126,3 +126,96 @@ body {
   scrollbar-width: thin;
   scrollbar-color: #cbd5e1 #f1f5f9;
 }
+
+/* ============================================
+   📱 MOBILE/TABLET RESPONSIVE OPTIMIERUNGEN
+   ============================================ */
+
+/* Large Tablet (max 1024px) */
+@media (max-width: 1024px) {
+  h1 {
+    font-size: 2.6em;
+  }
+}
+
+/* Tablet (max 768px) */
+@media (max-width: 768px) {
+  h1 {
+    font-size: 2.2em;
+  }
+
+  /* Touch-Targets: Minimum 44px für alle interaktiven Elemente */
+  button,
+  [role="button"],
+  input[type="submit"],
+  input[type="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Scrollbar auf Touch-Devices dünner */
+  .contract-content-scroll::-webkit-scrollbar,
+  .contract-modal-scroll::-webkit-scrollbar {
+    width: 6px;
+  }
+}
+
+/* Mobile (max 480px) */
+@media (max-width: 480px) {
+  h1 {
+    font-size: 1.8em;
+  }
+
+  button {
+    padding: 0.75em 1em;
+    font-size: 0.95em;
+  }
+
+  /* Links mit genug Touch-Area */
+  a {
+    padding: 0.25em 0;
+  }
+}
+
+/* Extra Small (max 375px) - iPhone SE */
+@media (max-width: 375px) {
+  h1 {
+    font-size: 1.5em;
+  }
+
+  button {
+    padding: 0.7em 0.9em;
+    font-size: 0.9em;
+  }
+}
+
+/* iOS Safari: Prevent zoom on input focus */
+@media (max-width: 768px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important; /* Verhindert Auto-Zoom auf iOS */
+  }
+}
+
+/* Reduced Motion: Deaktiviere Animationen auf Mobile für Performance */
+@media (prefers-reduced-motion: reduce), (max-width: 768px) and (prefers-reduced-motion: no-preference) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Re-enable transitions für wichtige UI-Elemente auf Mobile */
+@media (max-width: 768px) {
+  button,
+  a,
+  input,
+  .modal,
+  .sidebar {
+    transition-duration: 0.2s !important;
+  }
+}

@@ -14,6 +14,8 @@
   z-index: 9999;
   padding: 20px;
   animation: fadeIn 0.2s ease-out;
+  /* Safe-Area für iPhone X+ */
+  padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
 }
 
 @keyframes fadeIn {
@@ -32,6 +34,7 @@
   max-width: 1200px;
   width: 100%;
   max-height: 90vh;
+  max-height: 90dvh; /* Dynamic viewport height für iOS Safari */
   display: flex;
   flex-direction: column;
   animation: slideUp 0.3s ease-out;
@@ -682,11 +685,15 @@
 @media (max-width: 768px) {
   .modalOverlay {
     padding: 0;
+    /* Safe-Area für iPhone X+ */
+    padding-top: env(safe-area-inset-top, 0);
+    padding-bottom: env(safe-area-inset-bottom, 0);
   }
 
   .modal {
     max-width: 100%;
     max-height: 100vh;
+    max-height: 100dvh; /* iOS Safari Fix */
     border-radius: 0;
   }
 
@@ -698,21 +705,33 @@
     font-size: 1.25rem;
   }
 
+  /* Close-Button Touch-Target: 44px minimum */
+  .closeBtn {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 10px;
+  }
+
   .tabNav {
     padding: 0 20px;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+    /* Scroll-Snap für bessere UX */
+    scroll-snap-type: x mandatory;
   }
 
   .tabButton {
     padding: 12px 16px;
     font-size: 0.875rem;
     white-space: nowrap;
+    min-height: 44px; /* Touch-Target */
+    scroll-snap-align: start;
   }
 
   .tabActionButton {
     padding: 6px 12px;
     font-size: 0.8125rem;
+    min-height: 44px; /* Touch-Target */
   }
 
   .tabActionButton span {
@@ -731,8 +750,11 @@
     grid-template-columns: 1fr;
   }
 
+  /* PDF-Viewer responsive Höhe */
   .pdfViewerContainer {
-    height: 400px;
+    height: calc(50vh - 60px);
+    min-height: 300px;
+    max-height: 400px;
   }
 
   .timeline::before {
@@ -747,6 +769,75 @@
 
   .optimizationCard {
     padding: 16px;
+  }
+}
+
+/* Mobile (max 480px) */
+@media (max-width: 480px) {
+  .modalHeader {
+    padding: 12px 16px;
+    gap: 12px;
+  }
+
+  .headerLeft h2 {
+    font-size: 1.1rem;
+  }
+
+  .tabNav {
+    padding: 0 16px;
+  }
+
+  .tabButton {
+    padding: 10px 12px;
+    font-size: 0.8125rem;
+  }
+
+  .modalBody {
+    padding: 16px;
+  }
+
+  .section {
+    padding: 16px;
+  }
+
+  .section h3 {
+    font-size: 1rem;
+  }
+
+  .pdfViewerContainer {
+    height: calc(45vh - 40px);
+    min-height: 250px;
+  }
+
+  .downloadButton {
+    width: 100%;
+    justify-content: center;
+    padding: 14px 20px;
+  }
+}
+
+/* Extra Small (max 375px) */
+@media (max-width: 375px) {
+  .modalHeader {
+    padding: 10px 12px;
+  }
+
+  .headerLeft h2 {
+    font-size: 1rem;
+  }
+
+  .tabButton {
+    padding: 8px 10px;
+    font-size: 0.75rem;
+  }
+
+  .modalBody {
+    padding: 12px;
+  }
+
+  .section {
+    padding: 12px;
+    border-radius: 8px;
   }
 }
 

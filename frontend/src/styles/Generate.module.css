@@ -9,6 +9,7 @@
 
 .contractGenerator {
   min-height: 100vh;
+  min-height: 100dvh; /* iOS Safari fix */
   background: #F7F8FA;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
   color: #0B1324;
@@ -3378,4 +3379,233 @@
   grid-template-columns: 1fr;
   gap: 1.5rem;
   margin-top: 1.5rem;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+
+/* 📱 TABLET (max-width: 1024px) */
+@media (max-width: 1024px) {
+  .contractGenerator {
+    min-height: 100dvh;
+  }
+
+  .headerContent {
+    padding: 0 1rem;
+  }
+
+  .progressSteps {
+    max-width: 100%;
+    padding: 1rem 0;
+  }
+
+  .stepLabel {
+    font-size: 11px;
+  }
+
+  .stepCircle {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+  }
+}
+
+/* 📱 MOBILE (max-width: 768px) */
+@media (max-width: 768px) {
+  .contractGenerator {
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+
+  .generatorHeader {
+    padding: 1rem 0;
+  }
+
+  .headerContent {
+    padding: 0 1rem;
+  }
+
+  .headerText h1 {
+    font-size: 1.75rem;
+    gap: 0.5rem;
+  }
+
+  .headerText p {
+    font-size: 1rem;
+  }
+
+  .progressSteps {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 1rem 0.5rem;
+  }
+
+  .stepWrapper {
+    flex: 1;
+    min-width: 60px;
+  }
+
+  .stepCircle {
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
+  }
+
+  .stepLabel {
+    font-size: 10px;
+    white-space: normal;
+    text-align: center;
+  }
+
+  .stepLine {
+    display: none;
+  }
+
+  /* Form Sections */
+  .formGrid {
+    padding: 1.5rem;
+  }
+
+  .contractForm {
+    padding: 1.25rem;
+  }
+
+  .formFieldsGrid {
+    gap: 1rem;
+  }
+
+  /* Touch-Targets für Mobile */
+  .actionButton,
+  .generateButton,
+  .signatureButton,
+  .backButton,
+  .backToStartButton,
+  .upgradeButton,
+  .headerButton {
+    min-height: 44px;
+    padding: 12px 20px;
+  }
+
+  /* Contract Type Cards */
+  .contractTypeCard,
+  .templateCard {
+    padding: 1.25rem;
+  }
+
+  /* Signature Canvas */
+  .signatureCanvas {
+    height: 200px;
+  }
+}
+
+/* 📱 SMALL MOBILE (max-width: 480px) */
+@media (max-width: 480px) {
+  .headerText h1 {
+    font-size: 1.5rem;
+  }
+
+  .headerText p {
+    font-size: 0.9rem;
+  }
+
+  .progressSteps {
+    padding: 0.75rem 0.25rem;
+  }
+
+  .stepCircle {
+    width: 32px;
+    height: 32px;
+    font-size: 13px;
+  }
+
+  .stepLabel {
+    font-size: 9px;
+  }
+
+  .formGrid {
+    padding: 1rem;
+  }
+
+  .contractForm {
+    padding: 1rem;
+    border-radius: 8px;
+  }
+
+  .actionButton,
+  .generateButton,
+  .signatureButton {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .contractTypeCard,
+  .templateCard {
+    padding: 1rem;
+  }
+}
+
+/* 📱 EXTRA SMALL (max-width: 375px) */
+@media (max-width: 375px) {
+  .contractGenerator {
+    padding: max(0.5rem, env(safe-area-inset-top)) max(0.5rem, env(safe-area-inset-right)) max(0.5rem, env(safe-area-inset-bottom)) max(0.5rem, env(safe-area-inset-left));
+  }
+
+  .headerContent {
+    padding: 0 0.75rem;
+  }
+
+  .headerText h1 {
+    font-size: 1.25rem;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .headerText p {
+    font-size: 0.85rem;
+  }
+
+  .stepCircle {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+
+  .stepLabel {
+    font-size: 8px;
+  }
+
+  .formGrid {
+    padding: 0.75rem;
+  }
+
+  .contractForm {
+    padding: 0.75rem;
+  }
+
+  .formFieldsGrid {
+    gap: 0.75rem;
+  }
+
+  .actionButton,
+  .generateButton,
+  .signatureButton,
+  .backButton,
+  .headerButton {
+    font-size: 14px;
+    padding: 10px 16px;
+  }
+
+  .contractTypeCard,
+  .templateCard {
+    padding: 0.875rem;
+  }
+
+  .signatureCanvas {
+    height: 150px;
+  }
+
+  /* Input fields */
+  input,
+  textarea,
+  select {
+    font-size: 16px; /* Prevents iOS zoom */
+  }
 }

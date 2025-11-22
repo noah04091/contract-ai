@@ -13,6 +13,8 @@
   justify-content: center;
   z-index: 10000;
   padding: 1rem;
+  /* Safe-Area für iPhone X+ */
+  padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
 }
 
 .modal {
@@ -22,6 +24,7 @@
   max-width: 600px;
   width: 100%;
   max-height: 90vh;
+  max-height: 90dvh; /* Dynamic viewport height für iOS Safari */
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -465,5 +468,173 @@
   .sendBtn {
     width: 100%;
     justify-content: center;
+    min-height: 44px; /* Touch-Target für Mobile */
+  }
+
+  .addBtn,
+  .removeBtn,
+  .closeBtn {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* 📱 SMALL MOBILE (max-width: 480px) */
+@media (max-width: 480px) {
+  .overlay {
+    padding: max(0.5rem, env(safe-area-inset-top)) max(0.5rem, env(safe-area-inset-right)) max(0.5rem, env(safe-area-inset-bottom)) max(0.5rem, env(safe-area-inset-left));
+  }
+
+  .header {
+    padding: 0.875rem;
+  }
+
+  .headerTitle h2 {
+    font-size: 1.125rem;
+  }
+
+  .contractName {
+    font-size: 0.8rem;
+  }
+
+  .content {
+    padding: 0.875rem;
+  }
+
+  .section {
+    margin-bottom: 1.25rem;
+  }
+
+  .sectionTitle {
+    font-size: 0.8rem;
+  }
+
+  .radioOption {
+    padding: 0.875rem;
+  }
+
+  .radioTitle {
+    font-size: 0.875rem;
+  }
+
+  .radioSubtitle {
+    font-size: 0.75rem;
+  }
+
+  .signerItem {
+    padding: 0.75rem;
+  }
+
+  .signerIcon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .signerName {
+    font-size: 0.8rem;
+  }
+
+  .signerEmail {
+    font-size: 0.7rem;
+  }
+
+  .footer {
+    padding: 0.875rem;
+    gap: 0.625rem;
+  }
+
+  .cancelBtn,
+  .sendBtn {
+    padding: 0.75rem 1.25rem;
+    font-size: 0.8rem;
+  }
+}
+
+/* 📱 EXTRA SMALL MOBILE (max-width: 375px) - iPhone SE, Mini etc. */
+@media (max-width: 375px) {
+  .header {
+    padding: 0.75rem;
+  }
+
+  .headerTitle h2 {
+    font-size: 1rem;
+  }
+
+  .contractName {
+    font-size: 0.75rem;
+  }
+
+  .content {
+    padding: 0.75rem;
+  }
+
+  .section {
+    margin-bottom: 1rem;
+  }
+
+  .sectionTitle {
+    font-size: 0.75rem;
+  }
+
+  .radioOption {
+    padding: 0.75rem;
+    gap: 0.5rem;
+  }
+
+  .radioTitle {
+    font-size: 0.8rem;
+  }
+
+  .radioSubtitle {
+    font-size: 0.7rem;
+  }
+
+  .input {
+    padding: 0.625rem 0.75rem 0.625rem 2.25rem;
+    font-size: 0.8rem;
+  }
+
+  .addBtn {
+    padding: 0.625rem 1rem;
+    font-size: 0.8rem;
+  }
+
+  .signerItem {
+    padding: 0.625rem;
+    gap: 0.5rem;
+  }
+
+  .signerIcon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .signerDetails {
+    gap: 0;
+  }
+
+  .signerName {
+    font-size: 0.75rem;
+  }
+
+  .signerEmail {
+    font-size: 0.65rem;
+  }
+
+  .textarea {
+    padding: 0.75rem;
+    font-size: 0.8rem;
+  }
+
+  .footer {
+    padding: 0.75rem;
+    gap: 0.5rem;
+  }
+
+  .cancelBtn,
+  .sendBtn {
+    padding: 0.625rem 1rem;
+    font-size: 0.75rem;
+    min-height: 44px;
   }
 }

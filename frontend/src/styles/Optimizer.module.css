@@ -1157,3 +1157,47 @@ html {
   text-align: center;
   margin: 0;
 }
+
+/* ===== RESPONSIVE DESIGN ===== */
+
+/* 📱 TABLET (max-width: 1024px) */
+@media (max-width: 1024px) {
+  .optimizer {
+    min-height: 100dvh;
+  }
+}
+
+/* 📱 MOBILE (max-width: 768px) */
+@media (max-width: 768px) {
+  .optimizer {
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+}
+
+/* 📱 SMALL MOBILE (max-width: 480px) */
+@media (max-width: 480px) {
+  .ctaButton {
+    padding: 12px 20px;
+    font-size: 14px;
+    min-height: 44px;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .ctaHint {
+    font-size: 12px;
+  }
+}
+
+/* 📱 EXTRA SMALL (max-width: 375px) */
+@media (max-width: 375px) {
+  .ctaButton {
+    padding: 10px 16px;
+    font-size: 13px;
+    border-radius: 10px;
+  }
+
+  .ctaHint {
+    font-size: 11px;
+  }
+}
