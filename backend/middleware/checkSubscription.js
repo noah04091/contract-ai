@@ -29,13 +29,14 @@ module.exports = function createCheckSubscription(usersCollection) {
       const isActive = user.subscriptionActive || false;
       const isPremium = user.isPremium || false;
 
-      // ✅ WICHTIG: Nur BESTIMMTE ROUTES brauchen Premium/Business!
+      // ✅ WICHTIG: Routes die für Free-User KOMPLETT gesperrt sind
+      // HINWEIS: /api/analyze hat eigene Limit-Logik (3 für Free, 25 für Business, ∞ für Enterprise)
       const premiumRequiredRoutes = [
-        '/api/analyze',           // KI-Analyse
-        '/api/optimize',          // KI-Optimierung  
-        '/api/contracts/generate', // Vertrag generieren
-        '/api/chat',              // Chat mit Vertrag
-        '/api/compare'            // Vergleich
+        '/api/optimize',          // KI-Optimierung (Free: 0, Business: 15, Enterprise: ∞)
+        '/api/contracts/generate', // Vertrag generieren (Free: 0, Business: 10, Enterprise: ∞)
+        '/api/chat',              // Chat mit Vertrag (Free: 0, Business: 50, Enterprise: ∞)
+        '/api/compare',           // Vergleich (Free: 0, Business: 20, Enterprise: ∞)
+        '/api/envelopes'          // Digitale Signaturen (Free: 0, Business: ∞, Enterprise: ∞)
       ];
 
       const isPremiumRoute = premiumRequiredRoutes.some(route => 
@@ -100,7 +101,7 @@ module.exports = function createCheckSubscription(usersCollection) {
       console.error("❌ Fehler in checkSubscription:", err);
       
       // ✅ WICHTIG: Bei Fehlern trotzdem Basis-Features erlauben (graceful degradation)
-      const premiumRequiredRoutes = ['/api/analyze', '/api/optimize', '/api/contracts/generate', '/api/chat', '/api/compare'];
+      const premiumRequiredRoutes = ['/api/optimize', '/api/contracts/generate', '/api/chat', '/api/compare', '/api/envelopes'];
       const isPremiumRoute = premiumRequiredRoutes.some(route => req.originalUrl.startsWith(route));
       
       if (isPremiumRoute) {

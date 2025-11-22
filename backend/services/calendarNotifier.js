@@ -56,7 +56,14 @@ async function checkAndSendNotifications(db) {
         console.warn(`⚠️ Keine E-Mail für User ${event.userId}`);
         continue;
       }
-      
+
+      // 🔐 Skip free users - Email reminders are Business+ only
+      const userPlan = event.user?.subscriptionPlan || 'free';
+      if (userPlan === 'free') {
+        console.log(`⏩ Skipping free user ${event.user.email} - Email reminders require Business+`);
+        continue;
+      }
+
       try {
         // Sende spezifische Benachrichtigung je nach Event-Typ
         await sendEventNotification(event, db);

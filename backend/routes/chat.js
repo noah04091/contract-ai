@@ -115,9 +115,9 @@ async function checkChatLimit(userId, usersCollection) {
   const plan = user.subscriptionPlan || "free";
 
   // Limit per Plan
-  let chatLimit = 10; // Free
-  if (plan === "business") chatLimit = 50;
-  if (plan === "premium" || plan === "enterprise") chatLimit = Infinity;
+  let chatLimit = 0; // Free: 0 (gesperrt)
+  if (plan === "business") chatLimit = 50; // Business: 50/Monat
+  if (plan === "premium" || plan === "enterprise") chatLimit = Infinity; // Enterprise: Unbegrenzt
 
   // Initialize chatUsage if not exists
   if (!user.chatUsage) {

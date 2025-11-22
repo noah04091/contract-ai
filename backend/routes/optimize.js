@@ -3057,9 +3057,9 @@ router.post("/", verifyToken, uploadLimiter, smartRateLimiter, upload.single("fi
     const plan = user.subscriptionPlan || "free";
     const optimizationCount = user.optimizationCount ?? 0;
 
-    let limit = 0;
-    if (plan === "business") limit = 50;
-    if (plan === "premium") limit = Infinity;
+    let limit = 0; // Free: 0 (gesperrt)
+    if (plan === "business") limit = 15; // Business: 15/Monat
+    if (plan === "premium") limit = Infinity; // Enterprise: Unbegrenzt
 
     if (optimizationCount >= limit) {
       return res.status(403).json({
@@ -3943,9 +3943,9 @@ router.post("/stream", verifyToken, uploadLimiter, smartRateLimiter, upload.sing
     const plan = user.subscriptionPlan || "free";
     const optimizationCount = user.optimizationCount ?? 0;
 
-    let limit = 0;
-    if (plan === "business") limit = 50;
-    if (plan === "premium") limit = Infinity;
+    let limit = 0; // Free: 0 (gesperrt)
+    if (plan === "business") limit = 15; // Business: 15/Monat
+    if (plan === "premium") limit = Infinity; // Enterprise: Unbegrenzt
 
     if (optimizationCount >= limit) {
       return sendError(

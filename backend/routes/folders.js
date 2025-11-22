@@ -7,6 +7,28 @@ const Contract = require('../models/Contract');
 const verifyToken = require('../middleware/verifyToken');
 const OpenAI = require('openai');
 
+// 🔐 Middleware: Check subscription for folder features (Business+)
+const requireBusinessPlan = async (req, res, next) => {
+  try {
+    const user = await req.usersCollection.findOne({ _id: new ObjectId(req.userId) });
+    const plan = user?.subscriptionPlan || 'free';
+
+    if (plan === 'free') {
+      return res.status(403).json({
+        error: 'Ordner-Verwaltung ist nur für Business & Enterprise verfügbar',
+        requiresUpgrade: true,
+        feature: 'folders',
+        upgradeUrl: '/pricing',
+        userPlan: 'free'
+      });
+    }
+    next();
+  } catch (error) {
+    console.error('❌ Error checking subscription:', error);
+    next(); // Allow on error (graceful degradation)
+  }
+};
+
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
@@ -48,8 +70,8 @@ router.get('/', verifyToken, async (req, res) => {
   }
 });
 
-// ✅ POST /api/folders - Create new folder
-router.post('/', verifyToken, async (req, res) => {
+// ✅ POST /api/folders - Create new folder (Business+ only)
+router.post('/', verifyToken, requireBusinessPlan, async (req, res) => {
   try {
     const { name, color, icon } = req.body;
 
@@ -87,9 +109,9 @@ router.post('/', verifyToken, async (req, res) => {
   }
 });
 
-// ✅ PATCH /api/folders/reorder - Reorder folders (Drag & Drop)
+// ✅ PATCH /api/folders/reorder - Reorder folders (Drag & Drop) (Business+ only)
 // WICHTIG: Muss VOR /:id stehen, sonst matched Express "reorder" als ID!
-router.patch('/reorder', verifyToken, async (req, res) => {
+router.patch('/reorder', verifyToken, requireBusinessPlan, async (req, res) => {
   try {
     const { folders, unassignedOrder } = req.body; // Array of { _id, order } + unassignedOrder
 
@@ -125,8 +147,8 @@ router.patch('/reorder', verifyToken, async (req, res) => {
   }
 });
 
-// ✅ PATCH /api/folders/:id - Update folder
-router.patch('/:id', verifyToken, async (req, res) => {
+// ✅ PATCH /api/folders/:id - Update folder (Business+ only)
+router.patch('/:id', verifyToken, requireBusinessPlan, async (req, res) => {
   try {
     const { name, color, icon, order } = req.body;
 
@@ -164,8 +186,8 @@ router.patch('/:id', verifyToken, async (req, res) => {
   }
 });
 
-// ✅ DELETE /api/folders/:id - Delete folder (moves contracts to "no folder")
-router.delete('/:id', verifyToken, async (req, res) => {
+// ✅ DELETE /api/folders/:id - Delete folder (moves contracts to "no folder") (Business+ only)
+router.delete('/:id', verifyToken, requireBusinessPlan, async (req, res) => {
   try {
     const folder = await Folder.findOne({
       _id: req.params.id,
@@ -194,8 +216,8 @@ router.delete('/:id', verifyToken, async (req, res) => {
   }
 });
 
-// ✅ POST /api/folders/smart-suggest - Suggest smart folders based on contracts
-router.post('/smart-suggest', verifyToken, async (req, res) => {
+// ✅ POST /api/folders/smart-suggest - Suggest smart folders based on contracts (Business+ only)
+router.post('/smart-suggest', verifyToken, requireBusinessPlan, async (req, res) => {
   try {
     console.log('🤖 Smart Folders: Starting analysis for user', req.userId);
 
@@ -308,8 +330,8 @@ ANTWORT-FORMAT (NUR JSON, KEINE ERKLÄRUNGEN):
   }
 });
 
-// ✅ POST /api/folders/smart-create - Create smart folders and assign contracts
-router.post('/smart-create', verifyToken, async (req, res) => {
+// ✅ POST /api/folders/smart-create - Create smart folders and assign contracts (Business+ only)
+router.post('/smart-create', verifyToken, requireBusinessPlan, async (req, res) => {
   try {
     const { suggestions } = req.body; // Array of SmartFolderSuggestion
 

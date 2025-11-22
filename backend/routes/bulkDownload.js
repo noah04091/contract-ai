@@ -26,12 +26,35 @@ const requireAuth = (req, res, next) => {
   next();
 };
 
+// 🔐 Middleware: Require Enterprise plan for bulk download
+const requireEnterprisePlan = async (req, res, next) => {
+  try {
+    const usersCollection = req.db?.collection("users") || req.usersCollection;
+    const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
+    const plan = user?.subscriptionPlan || 'free';
+
+    if (plan !== 'premium' && plan !== 'enterprise') {
+      return res.status(403).json({
+        error: 'Bulk-Download ist nur für Enterprise verfügbar',
+        requiresUpgrade: true,
+        feature: 'bulk_download',
+        upgradeUrl: '/pricing',
+        userPlan: plan
+      });
+    }
+    next();
+  } catch (error) {
+    console.error('❌ Error checking subscription:', error);
+    return res.status(500).json({ error: 'Fehler bei der Abo-Überprüfung' });
+  }
+};
+
 /**
  * POST /api/contracts/bulk-download
  * Body: { contractIds: ["id1", "id2", ...] }
- * Lädt mehrere Verträge als ZIP-Datei herunter
+ * Lädt mehrere Verträge als ZIP-Datei herunter (Enterprise only)
  */
-router.post("/bulk-download", requireAuth, async (req, res) => {
+router.post("/bulk-download", requireAuth, requireEnterprisePlan, async (req, res) => {
   try {
     const userId = req.user.userId;
     const { contractIds } = req.body;

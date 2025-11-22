@@ -297,17 +297,18 @@ export default function Pricing() {
         }
       },
       icon: <Users size={22} />,
-      description: "Entdecke die Macht der KI-Vertragsanalyse",
+      description: "Zum Testen & Reinschnuppern",
       features: [
-        "3 Vertragsanalysen kostenlos",
-        "Basis-Upload & PDF-Anzeige",
-        "KI-Zusammenfassung & Risiko-Score",
+        "3 KI-Vertragsanalysen (einmalig)",
+        "Verträge hochladen & ansehen",
+        "Kalender & Fristen (nur Ansicht)",
+        "Legal Pulse Feed (nur Ansicht)",
         "Community Support",
-        "Kein Zeitlimit",
       ],
       limitations: [
         "Keine Optimierung oder Vergleich",
-        "Keine automatischen Erinnerungen",
+        "Keine digitalen Signaturen",
+        "Keine Email-Erinnerungen",
         "Keine KI-Vertragserstellung",
       ],
       color: "#0080FF",
@@ -334,14 +335,16 @@ export default function Pricing() {
         }
       },
       icon: <Zap size={22} />,
-      description: "Die goldene Mitte für Professionals & Kanzleien",
+      description: "Vollwertig mit Limits - für Freelancer",
       features: [
-        "15 Vertragsanalysen pro Monat",
-        "Vertragsvergleich & KI-Optimierung",
-        "Intelligenter KI-Chat zum Vertrag",
-        "Automatische Deadline-Erinnerungen",
-        "Priority Support (24h Response)",
-        "PDF-Export & Sharing",
+        "25 KI-Analysen pro Monat",
+        "15 Optimierungen & 20 Vergleiche",
+        "50 KI-Chat Fragen pro Monat",
+        "10 KI-Vertragserstellungen",
+        "Unbegrenzte digitale Signaturen",
+        "Email-Erinnerungen & Smart Folders",
+        "Legal Pulse mit Benachrichtigungen",
+        "Priority Support (24h)",
       ],
       color: "#2D7FF9",
       popular: true,
@@ -368,15 +371,16 @@ export default function Pricing() {
         }
       },
       icon: <Star size={22} />,
-      description: "Maximale Power für Teams & Großkanzleien",
+      description: "Unbegrenzt + Profi-Features",
       features: [
-        "Unbegrenzte Vertragsanalysen",
-        "Erweiterte Vertragsoptimierung",
-        "KI-Vertragserstellung & Templates",
+        "Unbegrenzte Analysen & Optimierungen",
+        "Unbegrenzter KI-Chat & Erstellung",
         "White-Label PDF-Export",
         "Team-Management (bis 10 User)",
-        "Dedicated Account Manager",
-        "API-Zugang für Integration",
+        "Bulk-Operationen & Excel-Export",
+        "Custom Templates & API-Zugang",
+        "Priority Processing",
+        "Persönliches Onboarding",
       ],
       color: "#0062E0",
       button: {
@@ -388,17 +392,42 @@ export default function Pricing() {
   ];
 
   const featureMatrix = [
-    { feature: "Analysen pro Monat", free: "3 kostenlos", business: "25", premium: "Unbegrenzt" },
-    { feature: "Vertragsvergleich", free: "–", business: "✓", premium: "✓ Erweitert" },
-    { feature: "KI-Vertragsoptimierung", free: "–", business: "✓", premium: "✓ Advanced" },
-    { feature: "Risiko-Score & Zusammenfassung", free: "✓", business: "✓", premium: "✓" },
-    { feature: "Automatische Erinnerungen", free: "–", business: "✓", premium: "✓" },
-    { feature: "KI-Vertragserstellung", free: "–", business: "–", premium: "✓" },
-    { feature: "Intelligenter KI-Chat", free: "–", business: "Standard", premium: "Advanced" },
-    { feature: "White-Label PDF-Export", free: "–", business: "–", premium: "✓" },
+    // KI-Analyse & Optimierung
+    { feature: "KI-Vertragsanalysen", free: "3 (einmalig)", business: "25/Monat", premium: "Unbegrenzt" },
+    { feature: "KI-Optimierung", free: "–", business: "15/Monat", premium: "Unbegrenzt" },
+    { feature: "Vertragsvergleich", free: "–", business: "20/Monat", premium: "Unbegrenzt" },
+    { feature: "KI-Chat mit Vertrag", free: "–", business: "50 Fragen/Monat", premium: "Unbegrenzt" },
+    { feature: "KI-Vertragserstellung", free: "–", business: "10/Monat", premium: "Unbegrenzt" },
+    { feature: "Priority Processing", free: "–", business: "–", premium: "✓" },
+    // Verwaltung & Organisation
+    { feature: "Verträge hochladen", free: "✓ Nur ansehen", business: "✓ Unbegrenzt", premium: "✓ Unbegrenzt" },
+    { feature: "Ordner-Organisation", free: "–", business: "✓ + KI-Vorschläge", premium: "✓ + KI-Vorschläge" },
+    { feature: "Kalender & Fristen", free: "✓ Nur ansehen", business: "✓ Vollzugriff", premium: "✓ Vollzugriff" },
+    { feature: "Email-Erinnerungen", free: "–", business: "✓", premium: "✓" },
+    { feature: "Kündigungsassistent", free: "–", business: "✓ Manuell", premium: "✓ 1-Click" },
+    { feature: "Email-to-Contract Import", free: "–", business: "✓", premium: "✓" },
+    { feature: "Bulk-Operationen", free: "–", business: "–", premium: "✓" },
+    // Legal Pulse
+    { feature: "Legal Pulse Feed", free: "✓ Nur ansehen", business: "✓ Aktiv", premium: "✓ Aktiv" },
+    { feature: "Gesetzessuche", free: "–", business: "✓ Basis", premium: "✓ Erweitert" },
+    { feature: "Legal Pulse Benachrichtigungen", free: "–", business: "✓", premium: "✓" },
+    // Digitale Signaturen
+    { feature: "Digitale Signaturen", free: "–", business: "✓ Unbegrenzt", premium: "✓ Unbegrenzt" },
+    { feature: "Multi-Signer Support", free: "–", business: "✓", premium: "✓" },
+    // Export & Dokumentation
+    { feature: "PDF-Download", free: "✓ Nur ansehen", business: "✓ + Analyse-Reports", premium: "✓ White-Label" },
+    { feature: "Firmenprofil & Logo", free: "–", business: "–", premium: "✓" },
+    { feature: "Excel-Export", free: "–", business: "–", premium: "✓" },
+    { feature: "Bulk-Download (ZIP)", free: "–", business: "–", premium: "✓" },
+    // Analytics & Insights
+    { feature: "Kostenübersicht", free: "–", business: "✓ Basis", premium: "✓ + Forecasting" },
+    { feature: "Portfolio-Analyse", free: "–", business: "✓ Basis", premium: "✓ Pro + Benchmarks" },
+    { feature: "Custom Templates", free: "–", business: "–", premium: "✓ Unbegrenzt" },
+    // Integration & API
+    { feature: "REST API-Zugang", free: "–", business: "–", premium: "✓" },
     { feature: "Team-Management", free: "–", business: "–", premium: "✓ (bis 10 User)" },
-    { feature: "API-Zugang", free: "–", business: "–", premium: "✓" },
-    { feature: "Support", free: "Community", business: "Priority (24h)", premium: "Dedicated Manager" },
+    // Support
+    { feature: "Support", free: "Community", business: "Priority (24h)", premium: "Priority + Onboarding" },
   ];
 
   // Card animation variants

@@ -1,10 +1,11 @@
 // 📁 backend/routes/exportContracts.js
-// Excel-Export für Verträge - Portfolio als Tabelle exportieren
+// Excel-Export für Verträge - Portfolio als Tabelle exportieren (Enterprise only)
 
 const express = require("express");
 const router = express.Router();
 const Contract = require("../models/Contract");
 const xlsx = require("xlsx");
+const { ObjectId } = require("mongodb");
 
 // Middleware: Require authentication
 const requireAuth = (req, res, next) => {
@@ -14,11 +15,34 @@ const requireAuth = (req, res, next) => {
   next();
 };
 
+// 🔐 Middleware: Require Enterprise plan for Excel export
+const requireEnterprisePlan = async (req, res, next) => {
+  try {
+    const usersCollection = req.db?.collection("users") || req.usersCollection;
+    const user = await usersCollection.findOne({ _id: new ObjectId(req.user.userId) });
+    const plan = user?.subscriptionPlan || 'free';
+
+    if (plan !== 'premium' && plan !== 'enterprise') {
+      return res.status(403).json({
+        error: 'Excel-Export ist nur für Enterprise verfügbar',
+        requiresUpgrade: true,
+        feature: 'excel_export',
+        upgradeUrl: '/pricing',
+        userPlan: plan
+      });
+    }
+    next();
+  } catch (error) {
+    console.error('❌ Error checking subscription:', error);
+    return res.status(500).json({ error: 'Fehler bei der Abo-Überprüfung' });
+  }
+};
+
 /**
  * GET /api/contracts/export-excel
- * Exportiert alle Verträge des Users als Excel-Datei
+ * Exportiert alle Verträge des Users als Excel-Datei (Enterprise only)
  */
-router.get("/export-excel", requireAuth, async (req, res) => {
+router.get("/export-excel", requireAuth, requireEnterprisePlan, async (req, res) => {
   try {
     const userId = req.user.userId;
 

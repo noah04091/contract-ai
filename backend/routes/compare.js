@@ -268,9 +268,9 @@ router.post("/", verifyToken, upload.fields([
     const plan = user.subscriptionPlan || "free";
     const compareCount = user.compareCount || 0;
 
-    let limit = 5;  // Default limit for free users
-    if (plan === "business") limit = 50;
-    if (plan === "premium") limit = Infinity;
+    let limit = 0; // Free: 0 (gesperrt)
+    if (plan === "business") limit = 20; // Business: 20/Monat
+    if (plan === "premium") limit = Infinity; // Enterprise: Unbegrenzt
 
     if (compareCount >= limit && plan !== "premium") {
       return res.status(403).json({

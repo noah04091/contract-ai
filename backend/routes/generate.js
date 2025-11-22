@@ -2178,9 +2178,9 @@ router.post("/", verifyToken, async (req, res) => {
     const plan = user.subscriptionPlan || "free";
     const count = user.analysisCount ?? 0;
 
-    let limit = 10;
-    if (plan === "business") limit = 50;
-    if (plan === "premium") limit = Infinity;
+    let limit = 0; // Free: 0 (gesperrt)
+    if (plan === "business") limit = 10; // Business: 10/Monat
+    if (plan === "premium") limit = Infinity; // Enterprise: Unbegrenzt
 
     if (count >= limit) {
       return res.status(403).json({
