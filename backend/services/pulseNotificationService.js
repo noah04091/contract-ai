@@ -285,12 +285,19 @@ class PulseNotificationService {
       push: false
     };
 
+    // 🔐 Check subscription plan - Free users don't get notifications
+    const userPlan = user?.subscriptionPlan || 'free';
+    if (userPlan === 'free') {
+      console.log(`[PULSE-NOTIFICATION] ⏩ Skipping free user ${user?.email} - Legal Pulse requires Business+`);
+      return results;
+    }
+
     // Browser (SSE)
     if (broadcastFunction) {
       results.browser = await this.sendViaBrowser(notification, broadcastFunction);
     }
 
-    // Email
+    // Email (only for Business+ users)
     if (user && user.email) {
       results.email = await this.sendViaEmail(notification, user);
     }

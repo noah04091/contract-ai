@@ -1,5 +1,5 @@
 // 📄 backend/routes/userTemplates.js
-// API für benutzerdefinierte Vertragsvorlagen
+// API für benutzerdefinierte Vertragsvorlagen (Business+ Feature)
 
 const express = require("express");
 const router = express.Router();
@@ -9,6 +9,42 @@ const { ObjectId } = require("mongodb");
 let userTemplatesCollection;
 let usersCollection;
 
+// 🔐 Middleware: Business+ Check - Custom Templates nur für Business & Enterprise
+const requireBusinessPlan = async (req, res, next) => {
+  try {
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Nicht autorisiert"
+      });
+    }
+
+    const user = await usersCollection.findOne({ _id: new ObjectId(userId) });
+    const plan = user?.subscriptionPlan || 'free';
+
+    // Free-User haben keinen Zugriff auf eigene Vorlagen
+    if (plan === 'free') {
+      return res.status(403).json({
+        success: false,
+        error: 'Eigene Vorlagen sind nur für Business & Enterprise verfügbar',
+        requiresUpgrade: true,
+        feature: 'custom_templates',
+        upgradeUrl: '/pricing',
+        userPlan: plan
+      });
+    }
+    next();
+  } catch (error) {
+    console.error('❌ Error checking subscription for templates:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Fehler bei der Abo-Überprüfung'
+    });
+  }
+};
+
 module.exports = (db) => {
   userTemplatesCollection = db.collection("user_contract_templates");
   usersCollection = db.collection("users");
@@ -17,10 +53,10 @@ module.exports = (db) => {
 
 /**
  * GET /api/user-templates/by-type/:contractType
- * Templates nach Vertragstyp filtern
+ * Templates nach Vertragstyp filtern (Business+ only)
  * WICHTIG: Muss VOR /:id Route stehen, da Express Routes in Reihenfolge matcht!
  */
-router.get("/by-type/:contractType", async (req, res) => {
+router.get("/by-type/:contractType", requireBusinessPlan, async (req, res) => {
   try {
     const userId = req.user.userId;
     const { contractType } = req.params;
@@ -57,9 +93,9 @@ router.get("/by-type/:contractType", async (req, res) => {
 
 /**
  * GET /api/user-templates
- * Liste aller Templates des angemeldeten Users
+ * Liste aller Templates des angemeldeten Users (Business+ only)
  */
-router.get("/", async (req, res) => {
+router.get("/", requireBusinessPlan, async (req, res) => {
   try {
     const userId = req.user.userId;
 
@@ -92,9 +128,9 @@ router.get("/", async (req, res) => {
 
 /**
  * GET /api/user-templates/:id
- * Einzelnes Template abrufen
+ * Einzelnes Template abrufen (Business+ only)
  */
-router.get("/:id", async (req, res) => {
+router.get("/:id", requireBusinessPlan, async (req, res) => {
   try {
     const userId = req.user.userId;
     const templateId = req.params.id;
@@ -142,9 +178,9 @@ router.get("/:id", async (req, res) => {
 
 /**
  * POST /api/user-templates
- * Neues Template erstellen
+ * Neues Template erstellen (Business+ only)
  */
-router.post("/", async (req, res) => {
+router.post("/", requireBusinessPlan, async (req, res) => {
   try {
     const userId = req.user.userId;
     const { name, description, contractType, defaultValues } = req.body;
@@ -237,9 +273,9 @@ router.post("/", async (req, res) => {
 
 /**
  * PUT /api/user-templates/:id
- * Template aktualisieren
+ * Template aktualisieren (Business+ only)
  */
-router.put("/:id", async (req, res) => {
+router.put("/:id", requireBusinessPlan, async (req, res) => {
   try {
     const userId = req.user.userId;
     const templateId = req.params.id;
@@ -339,9 +375,9 @@ router.put("/:id", async (req, res) => {
 
 /**
  * DELETE /api/user-templates/:id
- * Template löschen
+ * Template löschen (Business+ only)
  */
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", requireBusinessPlan, async (req, res) => {
   try {
     const userId = req.user.userId;
     const templateId = req.params.id;

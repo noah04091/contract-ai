@@ -71,20 +71,41 @@ const convertS3ToBase64 = async (url) => {
   });
 };
 
-// Middleware: Premium Check - TEMPORÄR DEAKTIVIERT für Testing
-const requirePremium = (req, res, next) => {
-  // Temporär für Testing deaktiviert
-  next();
-  
-  // Original Code:
-  // if (req.user?.subscriptionPlan === 'free') {
-  //   return res.status(403).json({
-  //     success: false,
-  //     message: "Firmenprofil ist nur für Premium-Nutzer verfügbar",
-  //     requiresUpgrade: true
-  //   });
-  // }
-  // next();
+// 🔐 Middleware: Enterprise Check - Firmenprofil nur für Enterprise
+const requireEnterprise = async (req, res, next) => {
+  try {
+    const { ObjectId } = require("mongodb");
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Nicht autorisiert"
+      });
+    }
+
+    const user = await req.db.collection("users").findOne({ _id: new ObjectId(userId) });
+    const plan = user?.subscriptionPlan || 'free';
+
+    // Nur Enterprise (premium) hat Zugriff auf Firmenprofil/White-Label
+    if (plan !== 'premium' && plan !== 'enterprise') {
+      return res.status(403).json({
+        success: false,
+        error: 'Firmenprofil & White-Label ist nur für Enterprise verfügbar',
+        requiresUpgrade: true,
+        feature: 'company_profile',
+        upgradeUrl: '/pricing',
+        userPlan: plan
+      });
+    }
+    next();
+  } catch (error) {
+    console.error('❌ Error checking subscription for company profile:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Fehler bei der Abo-Überprüfung'
+    });
+  }
 };
 
 // GET /api/company-profile/me - Firmenprofil abrufen
@@ -147,7 +168,7 @@ router.get("/me", verifyToken, async (req, res) => {
 });
 
 // POST /api/company-profile - Firmenprofil erstellen/aktualisieren
-router.post("/", verifyToken, requirePremium, async (req, res) => {
+router.post("/", verifyToken, requireEnterprise, async (req, res) => {
   try {
     const userId = new ObjectId(req.user.userId);
     const db = req.db;
@@ -217,7 +238,7 @@ router.post("/", verifyToken, requirePremium, async (req, res) => {
 });
 
 // POST /api/company-profile/logo - Logo hochladen
-router.post("/logo", verifyToken, requirePremium, logoUpload.single('logo'), async (req, res) => {
+router.post("/logo", verifyToken, requireEnterprise, logoUpload.single('logo'), async (req, res) => {
   try {
     console.log("📸 Logo-Upload gestartet für User:", req.user.userId);
     console.log("📁 File Info:", req.file);
@@ -298,7 +319,7 @@ router.post("/logo", verifyToken, requirePremium, logoUpload.single('logo'), asy
 });
 
 // DELETE /api/company-profile/logo - Logo löschen
-router.delete("/logo", verifyToken, requirePremium, async (req, res) => {
+router.delete("/logo", verifyToken, requireEnterprise, async (req, res) => {
   try {
     const userId = new ObjectId(req.user.userId);
     const db = req.db;

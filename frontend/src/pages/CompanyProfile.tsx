@@ -71,8 +71,8 @@ export default function CompanyProfile() {
   const [hasChanges, setHasChanges] = useState(false);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
-  // Premium Check - TEMPORÄR: Für Testing alle User zulassen
-  const isPremium = true; // user?.subscriptionPlan !== 'free';
+  // 🔐 Enterprise Check - Firmenprofil nur für Enterprise (premium) User
+  const isPremium = user?.subscriptionPlan === 'premium' || user?.subscriptionPlan === 'enterprise';
 
   // Load existing profile
   useEffect(() => {
