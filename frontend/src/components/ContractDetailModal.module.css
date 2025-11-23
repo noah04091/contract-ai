@@ -681,13 +681,14 @@
   background: #2563eb;
 }
 
-/* Responsive */
+/* ====================================
+   📱 RESPONSIVE - TABLET (max-width: 768px)
+   ==================================== */
 @media (max-width: 768px) {
   .modalOverlay {
     padding: 0;
     /* Safe-Area für iPhone X+ */
-    padding-top: env(safe-area-inset-top, 0);
-    padding-bottom: env(safe-area-inset-bottom, 0);
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   }
 
   .modal {
@@ -695,149 +696,794 @@
     max-height: 100vh;
     max-height: 100dvh; /* iOS Safari Fix */
     border-radius: 0;
+    width: 100%;
   }
 
   .modalHeader {
     padding: 16px 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .headerLeft {
+    flex: 1 1 auto;
+    min-width: 0;
+    gap: 12px;
   }
 
   .headerLeft h2 {
-    font-size: 1.25rem;
+    font-size: 1.125rem;
   }
 
-  /* Close-Button Touch-Target: 44px minimum */
+  .headerLeft svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .contractName {
+    font-size: 0.75rem;
+  }
+
+  /* Header Actions - Kompakt auf Tablet */
+  .headerActions {
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  /* Alle Action-Buttons Touch-Target: 44px minimum */
+  .actionBtn {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 10px;
+  }
+
   .closeBtn {
     min-width: 44px;
     min-height: 44px;
     padding: 10px;
   }
 
+  /* Tab Navigation - Horizontal Scroll */
   .tabNav {
-    padding: 0 20px;
+    padding: 0 16px;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
-    /* Scroll-Snap für bessere UX */
     scroll-snap-type: x mandatory;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE/Edge */
+  }
+
+  .tabNav::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
   }
 
   .tabButton {
-    padding: 12px 16px;
-    font-size: 0.875rem;
+    padding: 12px 14px;
+    font-size: 0.8125rem;
     white-space: nowrap;
     min-height: 44px; /* Touch-Target */
     scroll-snap-align: start;
   }
 
+  .tabButton svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .tabDisabled {
+    display: none; /* Hide "(nicht verfügbar)" text on mobile */
+  }
+
   .tabActionButton {
-    padding: 6px 12px;
-    font-size: 0.8125rem;
+    padding: 8px 12px;
+    font-size: 0.75rem;
     min-height: 44px; /* Touch-Target */
+    min-width: 44px;
   }
 
   .tabActionButton span {
-    display: none;
+    display: none; /* Only show icon on mobile */
   }
 
   .modalBody {
-    padding: 20px;
+    padding: 16px;
+  }
+
+  .tabContent {
+    gap: 20px;
+  }
+
+  .section {
+    padding: 16px;
+    border-radius: 10px;
+  }
+
+  .section h3 {
+    font-size: 1rem;
+    margin-bottom: 16px;
   }
 
   .detailsGrid {
     grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .detailItem {
+    padding: 8px 0;
+    border-bottom: 1px solid #f3f4f6;
+  }
+
+  .detailItem:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
   }
 
   .signersGrid {
     grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .signerCard {
+    padding: 14px;
   }
 
   /* PDF-Viewer responsive Höhe */
   .pdfViewerContainer {
     height: calc(50vh - 60px);
-    min-height: 300px;
+    min-height: 280px;
     max-height: 400px;
+  }
+
+  .pdfViewer {
+    border-radius: 8px;
+  }
+
+  .pdfActions {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .downloadButton {
+    width: 100%;
+    justify-content: center;
+    min-height: 44px;
+    padding: 12px 20px;
+  }
+
+  /* Timeline */
+  .timeline {
+    gap: 16px;
   }
 
   .timeline::before {
     left: 16px;
   }
 
-  .timelineIcon {
-    width: 32px;
-    height: 32px;
-    font-size: 1rem;
-  }
-
-  .optimizationCard {
-    padding: 16px;
-  }
-}
-
-/* Mobile (max 480px) */
-@media (max-width: 480px) {
-  .modalHeader {
-    padding: 12px 16px;
+  .timelineItem {
     gap: 12px;
   }
 
-  .headerLeft h2 {
-    font-size: 1.1rem;
+  .timelineIcon {
+    width: 32px;
+    height: 32px;
+    font-size: 0.875rem;
   }
 
-  .tabNav {
-    padding: 0 16px;
+  .timelineContent {
+    padding: 12px;
   }
 
-  .tabButton {
-    padding: 10px 12px;
+  .timelineHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .timelineHeader strong {
+    font-size: 0.875rem;
+  }
+
+  .timelineTimestamp {
+    font-size: 0.75rem;
+  }
+
+  /* Optimization Cards */
+  .optimizationCard {
+    padding: 16px;
+  }
+
+  .optimizationHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .optimizationSummary {
+    font-size: 0.9375rem;
+  }
+
+  /* Empty States */
+  .emptyState {
+    padding: 40px 16px;
+  }
+
+  .emptyState svg {
+    width: 48px;
+    height: 48px;
+  }
+
+  .emptyState p {
+    font-size: 1rem;
+  }
+
+  /* Loading/Error States */
+  .loadingContainer,
+  .errorContainer {
+    padding: 40px 16px;
+  }
+
+  .closeButton {
+    min-height: 44px;
+    padding: 12px 20px;
+  }
+
+  /* Progress Bar */
+  .progressBar {
+    height: 10px;
+  }
+
+  .progressStats {
     font-size: 0.8125rem;
   }
 
-  .modalBody {
-    padding: 16px;
-  }
-
-  .section {
-    padding: 16px;
-  }
-
-  .section h3 {
-    font-size: 1rem;
-  }
-
-  .pdfViewerContainer {
-    height: calc(45vh - 40px);
-    min-height: 250px;
-  }
-
-  .downloadButton {
-    width: 100%;
-    justify-content: center;
-    padding: 14px 20px;
+  /* Message Box */
+  .messageBox {
+    padding: 14px;
   }
 }
 
-/* Extra Small (max 375px) */
-@media (max-width: 375px) {
+/* ====================================
+   📱 RESPONSIVE - MOBILE (max-width: 480px)
+   ==================================== */
+@media (max-width: 480px) {
+  .modalOverlay {
+    padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;
+  }
+
   .modalHeader {
-    padding: 10px 12px;
+    padding: 12px 14px;
+    gap: 10px;
+  }
+
+  .headerLeft {
+    gap: 10px;
   }
 
   .headerLeft h2 {
     font-size: 1rem;
   }
 
+  .headerLeft svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .contractName {
+    font-size: 0.6875rem;
+    display: none; /* Hide subtitle on very small screens */
+  }
+
+  /* Header Actions - Kompakter */
+  .headerActions {
+    gap: 4px;
+  }
+
+  .actionBtn {
+    min-width: 40px;
+    min-height: 40px;
+    padding: 8px;
+  }
+
+  .actionBtn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .closeBtn {
+    min-width: 40px;
+    min-height: 40px;
+    padding: 8px;
+  }
+
+  .closeBtn svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* Tab Navigation */
+  .tabNav {
+    padding: 0 12px;
+    gap: 2px;
+  }
+
   .tabButton {
-    padding: 8px 10px;
+    padding: 10px 10px;
     font-size: 0.75rem;
+    gap: 4px;
+    min-height: 40px;
+  }
+
+  .tabButton span {
+    display: none; /* Only show icon on small mobile */
+  }
+
+  .tabButton svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .tabActionButton {
+    padding: 6px 10px;
+    min-height: 40px;
+    min-width: 40px;
   }
 
   .modalBody {
     padding: 12px;
+  }
+
+  .tabContent {
+    gap: 16px;
+  }
+
+  .section {
+    padding: 14px;
+    border-radius: 8px;
+  }
+
+  .section h3 {
+    font-size: 0.9375rem;
+    margin-bottom: 14px;
+  }
+
+  .detailsGrid {
+    gap: 10px;
+  }
+
+  .detailItem {
+    padding: 6px 0;
+  }
+
+  .label {
+    font-size: 0.8125rem;
+  }
+
+  .value {
+    font-size: 0.875rem;
+  }
+
+  /* PDF Viewer */
+  .pdfViewerContainer {
+    height: calc(45vh - 40px);
+    min-height: 220px;
+    max-height: 350px;
+  }
+
+  .downloadButton {
+    padding: 12px 16px;
+    font-size: 0.875rem;
+  }
+
+  /* Signers */
+  .signerCard {
+    padding: 12px;
+  }
+
+  .signerHeader {
+    gap: 8px;
+  }
+
+  .signerInfo strong {
+    font-size: 0.875rem;
+  }
+
+  .signerEmail {
+    font-size: 0.75rem;
+  }
+
+  .signerStatus {
+    padding: 3px 8px;
+    font-size: 0.6875rem;
+  }
+
+  .signerDetails {
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .signerRole,
+  .signerOrder {
+    padding: 3px 6px;
+    font-size: 0.75rem;
+  }
+
+  /* Timeline */
+  .timeline {
+    gap: 12px;
+  }
+
+  .timeline::before {
+    left: 14px;
+  }
+
+  .timelineItem {
+    gap: 10px;
+  }
+
+  .timelineIcon {
+    width: 28px;
+    height: 28px;
+    font-size: 0.75rem;
+  }
+
+  .timelineContent {
+    padding: 10px;
+  }
+
+  .timelineDetails {
+    font-size: 0.8125rem;
+  }
+
+  /* Optimization Cards */
+  .optimizationsList {
+    gap: 14px;
+  }
+
+  .optimizationCard {
+    padding: 14px;
+    border-radius: 10px;
+  }
+
+  .categoryBadge {
+    font-size: 0.6875rem;
+    padding: 3px 10px;
+  }
+
+  .optimizationNumber {
+    font-size: 0.8125rem;
+  }
+
+  .optimizationSummary {
+    font-size: 0.875rem;
+    margin-bottom: 12px;
+  }
+
+  .optimizationSection {
+    margin-top: 12px;
+    padding-top: 12px;
+  }
+
+  .optimizationLabel {
+    font-size: 0.8125rem;
+    gap: 6px;
+  }
+
+  .optimizationOriginal,
+  .optimizationImproved,
+  .optimizationReasoning {
+    padding: 10px;
+    font-size: 0.8125rem;
+    border-radius: 6px;
+  }
+
+  /* Status Badge */
+  .statusBadge {
+    padding: 4px 10px;
+    font-size: 0.8125rem;
+    gap: 4px;
+  }
+
+  .statusBadge svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* Progress */
+  .progressBar {
+    height: 8px;
+  }
+
+  .progressStats {
+    font-size: 0.75rem;
+  }
+
+  /* Message Box */
+  .messageBox {
+    padding: 12px;
+    font-size: 0.875rem;
+  }
+
+  .messageBox strong {
+    font-size: 0.8125rem;
+  }
+
+  /* Empty State */
+  .emptyState {
+    padding: 32px 12px;
+  }
+
+  .emptyState svg {
+    width: 40px;
+    height: 40px;
+  }
+
+  .emptyState p {
+    font-size: 0.9375rem;
+  }
+
+  .hint {
+    font-size: 0.8125rem;
+  }
+
+  /* Loading */
+  .spinner {
+    width: 32px;
+    height: 32px;
+  }
+
+  .closeButton {
+    width: 100%;
+    min-height: 44px;
+  }
+}
+
+/* ====================================
+   📱 RESPONSIVE - EXTRA SMALL (max-width: 375px)
+   ==================================== */
+@media (max-width: 375px) {
+  .modalHeader {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .headerLeft {
+    gap: 8px;
+  }
+
+  .headerLeft h2 {
+    font-size: 0.9375rem;
+  }
+
+  .headerLeft svg {
+    width: 16px;
+    height: 16px;
+    display: none; /* Hide icon on very small screens */
+  }
+
+  /* Header Actions - Noch kompakter */
+  .headerActions {
+    gap: 3px;
+  }
+
+  .actionBtn {
+    min-width: 36px;
+    min-height: 36px;
+    padding: 6px;
+    border-radius: 6px;
+  }
+
+  .closeBtn {
+    min-width: 36px;
+    min-height: 36px;
+    padding: 6px;
+    border-radius: 6px;
+  }
+
+  /* Tab Navigation */
+  .tabNav {
+    padding: 0 10px;
+  }
+
+  .tabButton {
+    padding: 8px 8px;
+    min-height: 36px;
+    border-radius: 6px;
+  }
+
+  .tabButton svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .tabActionButton {
+    min-width: 36px;
+    min-height: 36px;
+    padding: 4px 8px;
+  }
+
+  .modalBody {
+    padding: 10px;
+  }
+
+  .tabContent {
+    gap: 14px;
   }
 
   .section {
     padding: 12px;
     border-radius: 8px;
+  }
+
+  .section h3 {
+    font-size: 0.875rem;
+    margin-bottom: 12px;
+  }
+
+  .detailsGrid {
+    gap: 8px;
+  }
+
+  .detailItem {
+    padding: 4px 0;
+  }
+
+  .label {
+    font-size: 0.75rem;
+  }
+
+  .value {
+    font-size: 0.8125rem;
+  }
+
+  /* PDF Viewer */
+  .pdfViewerContainer {
+    height: calc(40vh - 30px);
+    min-height: 200px;
+    max-height: 300px;
+  }
+
+  .downloadButton {
+    padding: 10px 14px;
+    font-size: 0.8125rem;
+    border-radius: 6px;
+  }
+
+  /* Signers */
+  .signerCard {
+    padding: 10px;
+    border-radius: 8px;
+  }
+
+  .signerInfo strong {
+    font-size: 0.8125rem;
+  }
+
+  .signerEmail {
+    font-size: 0.6875rem;
+  }
+
+  .signerStatus {
+    padding: 2px 6px;
+    font-size: 0.625rem;
+  }
+
+  /* Timeline */
+  .timeline::before {
+    left: 12px;
+    width: 1px;
+  }
+
+  .timelineIcon {
+    width: 24px;
+    height: 24px;
+    font-size: 0.6875rem;
+    border-width: 1px;
+  }
+
+  .timelineContent {
+    padding: 8px;
+    border-radius: 6px;
+  }
+
+  .timelineHeader strong {
+    font-size: 0.8125rem;
+  }
+
+  .timelineTimestamp {
+    font-size: 0.6875rem;
+  }
+
+  .timelineDetails {
+    font-size: 0.75rem;
+    gap: 2px;
+  }
+
+  /* Optimization Cards */
+  .optimizationCard {
+    padding: 12px;
+    border-radius: 8px;
+  }
+
+  .categoryBadge {
+    font-size: 0.625rem;
+    padding: 2px 8px;
+  }
+
+  .optimizationSummary {
+    font-size: 0.8125rem;
+    line-height: 1.4;
+  }
+
+  .optimizationOriginal,
+  .optimizationImproved,
+  .optimizationReasoning {
+    padding: 8px;
+    font-size: 0.75rem;
+    line-height: 1.5;
+  }
+
+  /* Progress */
+  .progressContainer {
+    gap: 8px;
+  }
+
+  .progressBar {
+    height: 6px;
+    border-radius: 3px;
+  }
+
+  .progressFill {
+    border-radius: 3px;
+  }
+
+  /* Status Badge */
+  .statusBadge {
+    padding: 3px 8px;
+    font-size: 0.75rem;
+    border-radius: 4px;
+  }
+
+  .statusBadge svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  /* Message Box */
+  .messageBox {
+    padding: 10px;
+    font-size: 0.8125rem;
+    border-radius: 6px;
+    border-left-width: 3px;
+  }
+
+  /* Empty State */
+  .emptyState {
+    padding: 24px 10px;
+  }
+
+  .emptyState svg {
+    width: 36px;
+    height: 36px;
+  }
+
+  .emptyState p {
+    font-size: 0.875rem;
+  }
+
+  .hint {
+    font-size: 0.75rem;
+  }
+
+  /* Loading */
+  .loadingContainer,
+  .errorContainer {
+    padding: 24px 10px;
+  }
+
+  .spinner {
+    width: 28px;
+    height: 28px;
+    border-width: 2px;
   }
 }
 
@@ -961,4 +1607,85 @@
 
 :global(.modal-content) {
   z-index: 10001 !important;
+}
+
+/* ====================================
+   ACCESSIBILITY
+   ==================================== */
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .modal {
+    border: 2px solid #000;
+  }
+
+  .section {
+    border-width: 2px;
+  }
+
+  .signerCard,
+  .optimizationCard,
+  .timelineContent {
+    border-width: 2px;
+  }
+
+  .progressBar {
+    border: 1px solid #000;
+  }
+
+  .tabButton {
+    border-bottom-width: 3px;
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .modalOverlay,
+  .modal,
+  .actionBtn,
+  .closeBtn,
+  .tabButton,
+  .tabActionButton,
+  .signerCard,
+  .optimizationCard,
+  .downloadButton,
+  .closeButton,
+  .progressFill {
+    transition: none;
+    animation: none;
+  }
+
+  @keyframes fadeIn {
+    from, to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideUp {
+    from, to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+}
+
+/* Focus Visible */
+.actionBtn:focus-visible,
+.closeBtn:focus-visible,
+.tabButton:focus-visible,
+.tabActionButton:focus-visible,
+.downloadButton:focus-visible,
+.closeButton:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Remove outline for mouse users */
+.actionBtn:focus:not(:focus-visible),
+.closeBtn:focus:not(:focus-visible),
+.tabButton:focus:not(:focus-visible),
+.tabActionButton:focus:not(:focus-visible),
+.downloadButton:focus:not(:focus-visible),
+.closeButton:focus:not(:focus-visible) {
+  outline: none;
 }
