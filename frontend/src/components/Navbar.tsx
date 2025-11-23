@@ -28,7 +28,7 @@ export default function Navbar() {
   const isAuthPage = location.pathname === "/login" || location.pathname === "/register";
   
   // Definiere geschützte Seiten
-  const protectedRoutes = ["/dashboard", "/contracts", "/optimizer", "/premium", "/me", "/calendar", "/compare", "/better-contracts", "/Generate", "/chat"];
+  const protectedRoutes = ["/dashboard", "/contracts", "/optimizer", "/premium", "/me", "/calendar", "/compare", "/better-contracts", "/Generate", "/chat", "/envelopes", "/generate"];
   const isProtectedPage = protectedRoutes.includes(location.pathname);
   
   // Definiere nicht-geschützte Seiten (außer Homepage und Auth-Seiten)

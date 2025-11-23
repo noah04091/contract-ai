@@ -3149,6 +3149,18 @@
    19. RESPONSIVE - MOBILE
    ================================= */
 
+/* 📱 TABLET (max-width: 1024px) - 2 columns for cards */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .contractTypesGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+
+  .templateGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 @media (max-width: 768px) {
   /* Content */
   .generatorContent {
@@ -3201,15 +3213,15 @@
     width: 100%;
   }
 
-  /* Contract Types */
+  /* Contract Types - 2 columns on tablet-ish mobile, 1 on small */
   .contractTypesGrid {
-    grid-template-columns: 1fr;
-    gap: 1rem;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
   }
 
   /* Templates */
   .templateGrid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
   }
 
   /* Signature */
@@ -3506,18 +3518,41 @@
     font-size: 0.9rem;
   }
 
+  /* Progress Steps - Horizontal Scroll mit Pills */
   .progressSteps {
-    padding: 0.75rem 0.25rem;
+    padding: 0.75rem 1rem;
+    gap: 8px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    justify-content: flex-start;
+  }
+
+  .progressSteps::-webkit-scrollbar {
+    display: none;
+  }
+
+  .stepWrapper {
+    flex: 0 0 auto;
+    min-width: auto;
   }
 
   .stepCircle {
-    width: 32px;
-    height: 32px;
-    font-size: 13px;
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
   }
 
   .stepLabel {
-    font-size: 9px;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  /* Contract Type Cards - Full width on small screens */
+  .contractTypesGrid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
   }
 
   .formGrid {
@@ -3540,6 +3575,28 @@
   .templateCard {
     padding: 1rem;
   }
+
+  /* Step 3 - PDF und Text nebeneinander ist unmöglich auf Mobile */
+  .step3SplitView {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .step3LeftPanel,
+  .step3RightPanel {
+    width: 100%;
+    min-height: auto;
+  }
+
+  .step3TextEditor {
+    min-height: 300px;
+    max-height: 400px;
+  }
+
+  .step3PdfPreview {
+    height: 350px;
+    min-height: 300px;
+  }
 }
 
 /* 📱 EXTRA SMALL (max-width: 375px) */
@@ -3554,22 +3611,36 @@
 
   .headerText h1 {
     font-size: 1.25rem;
-    flex-direction: column;
-    gap: 0.25rem;
+    flex-direction: row;
+    gap: 0.5rem;
   }
 
   .headerText p {
     font-size: 0.85rem;
   }
 
+  /* Progress Steps - Kompakter aber lesbar */
+  .progressSteps {
+    padding: 0.5rem 0.75rem;
+    gap: 6px;
+  }
+
   .stepCircle {
-    width: 28px;
-    height: 28px;
-    font-size: 12px;
+    width: 32px;
+    height: 32px;
+    font-size: 13px;
   }
 
   .stepLabel {
-    font-size: 8px;
+    font-size: 10px;
+    max-width: 60px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Contract Type Cards - Kompakter */
+  .contractTypesGrid {
+    gap: 0.5rem;
   }
 
   .formGrid {
@@ -3590,7 +3661,8 @@
   .backButton,
   .headerButton {
     font-size: 14px;
-    padding: 10px 16px;
+    padding: 12px 16px;
+    min-height: 48px;
   }
 
   .contractTypeCard,
@@ -3600,6 +3672,26 @@
 
   .signatureCanvas {
     height: 150px;
+  }
+
+  /* Step 3 noch kompakter */
+  .step3TextEditor {
+    min-height: 250px;
+    max-height: 350px;
+  }
+
+  .step3PdfPreview {
+    height: 300px;
+    min-height: 250px;
+  }
+
+  .step3ActionButtons {
+    gap: 0.5rem;
+  }
+
+  .step3ActionButton {
+    padding: 0.75rem;
+    font-size: 13px;
   }
 
   /* Input fields */

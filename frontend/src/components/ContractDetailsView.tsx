@@ -3,15 +3,16 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   X, FileText, Calendar, Clock, AlertCircle, CheckCircle,
   Info, Eye, Download, Share2, Edit, Trash2, Star,
-  BarChart3, Copy, ExternalLink, PenTool
+  BarChart3, Copy, ExternalLink, PenTool, ChevronDown, ChevronUp,
+  ArrowLeft, MoreVertical, Shield, Lightbulb, Scale,
+  ZoomIn, ZoomOut, Maximize2
 } from "lucide-react";
 import styles from "../styles/ContractDetailsView.module.css";
-import SmartContractInfo from "./SmartContractInfo"; // ✅ Smart Component: Cost/Payment Tracker
-import ContractShareModal from "./ContractShareModal"; // ✅ NEU: Import Share Modal
-import ContractEditModal from "./ContractEditModal"; // ✅ NEU: Import Edit Modal
-import AnalysisModal from "./AnalysisModal"; // ✅ NEU: Import Analysis Modal
-import SignatureModal from "./SignatureModal"; // ✉️ NEU: Import Signature Modal
-// ✅ getContractFileUrl nicht mehr benötigt - Mobile-freundliche PDF-Logik verwendet direkte API-Aufrufe
+import SmartContractInfo from "./SmartContractInfo";
+import ContractShareModal from "./ContractShareModal";
+import ContractEditModal from "./ContractEditModal";
+import AnalysisModal from "./AnalysisModal";
+import SignatureModal from "./SignatureModal";
 
 interface Contract {
   _id: string;
@@ -24,8 +25,7 @@ interface Contract {
   createdAt: string;
   content?: string;
   isGenerated?: boolean;
-  notes?: string; // ✅ NEU: Für eigene Notizen
-  // Erweiterte Felder für Analyse-Daten
+  notes?: string;
   fullText?: string;
   extractedText?: string;
   fileUrl?: string;
@@ -35,9 +35,8 @@ interface Contract {
   s3Key?: string;
   s3Bucket?: string;
   s3Location?: string;
-  uploadType?: string; // ✅ NEU: Für S3 Migration
-  needsReupload?: boolean; // ✅ NEU: Für Legacy-Verträge
-  // ✅ BUG FIX 2: Beide Analyse-Strukturen unterstützen
+  uploadType?: string;
+  needsReupload?: boolean;
   analysis?: {
     summary?: string;
     legalAssessment?: string;
@@ -46,9 +45,9 @@ interface Contract {
     contractScore?: number;
     analysisId?: string;
     lastAnalyzed?: string;
-    detailedLegalOpinion?: string; // ✅ NEU: Ausführliches Rechtsgutachten
+    detailedLegalOpinion?: string;
   };
-  legalPulse?: { // ✅ ALT: Für alte Verträge
+  legalPulse?: {
     riskScore: number | null;
     summary?: string;
     riskFactors?: string[];
@@ -56,7 +55,6 @@ interface Contract {
     recommendations?: string[];
     analysisDate?: string;
   };
-  // ✉️ Signature/Envelope Felder
   signatureStatus?: string;
   signatureEnvelopeId?: string;
   envelope?: {
@@ -67,102 +65,102 @@ interface Contract {
     s3KeySealed?: string | null;
     completedAt?: string | null;
   };
+  // Smart Contract Info fields
+  monthlyCost?: number;
+  totalCost?: number;
+  savingsPotential?: number;
 }
 
-// ✅ BUG FIX 1: Interface erweitert um openEditModalDirectly Prop
 interface ContractDetailsViewProps {
   contract: Contract;
   onClose: () => void;
   show: boolean;
-  openEditModalDirectly?: boolean; // ✅ NEU: Öffnet Edit-Modal direkt
+  openEditModalDirectly?: boolean;
   onEdit?: (contractId: string) => void;
   onDelete?: (contractId: string, contractName: string) => void;
-  onOpenSignatureDetails?: (envelopeId: string) => void; // 🎨 NEU: Signaturdetails öffnen
+  onOpenSignatureDetails?: (envelopeId: string) => void;
 }
 
 export default function ContractDetailsView({
   contract: initialContract,
   onClose,
   show,
-  openEditModalDirectly = false, // ✅ BUG FIX 1: Neue Prop mit Default-Wert
+  openEditModalDirectly = false,
   onEdit,
   onDelete,
   onOpenSignatureDetails
 }: ContractDetailsViewProps) {
-  const [activeTab, setActiveTab] = useState<'overview' | 'content' | 'analysis'>('overview');
+  // Mobile detection
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
-  // ✅ NEU: State für die vier Modals
+  // Tab state - Mobile uses new 3-tab system
+  const [activeTab, setActiveTab] = useState<'overview' | 'document' | 'insights'>('overview');
+
+  // Modal states
   const [showShareModal, setShowShareModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [showAnalysisModal, setShowAnalysisModal] = useState(false); // ✅ NEU: Analysis Modal State
-  const [showSignatureModal, setShowSignatureModal] = useState(false); // ✉️ NEU: Signature Modal State
-  const [contract, setContract] = useState<Contract>(initialContract); // ✅ NEU: Lokaler Contract State für Updates
-  const [isAnalyzing, setIsAnalyzing] = useState(false); // ✅ NEU: Loading State für Analyse
-  const [isHeaderCollapsed, setIsHeaderCollapsed] = useState(false); // ✅ NEU: Für Collapsing Header auf Mobile
+  const [showAnalysisModal, setShowAnalysisModal] = useState(false);
+  const [showSignatureModal, setShowSignatureModal] = useState(false);
+  const [contract, setContract] = useState<Contract>(initialContract);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
-  // ✅ NEU: Update contract wenn sich initialContract ändert
+  // Mobile-specific states
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [expandedInsightSection, setExpandedInsightSection] = useState<string | null>('summary');
+
+  // PDF Viewer states (Mobile inline viewer)
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
+  const [pdfZoom, setPdfZoom] = useState(100);
+
+  // Resize listener
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Update contract when initialContract changes
   useEffect(() => {
     setContract(initialContract);
   }, [initialContract]);
 
-  // ✅ Mobile: Body-Scroll blockieren + Touch-Events isolieren
+  // Mobile: Body-Scroll blockieren
   useEffect(() => {
-    if (show) {
-      // Nur auf Mobile (max-width: 768px)
-      const isMobile = window.innerWidth <= 768;
-      if (isMobile) {
-        // Body komplett fixieren
-        document.body.style.overflow = 'hidden';
-        document.body.style.position = 'fixed';
-        document.body.style.width = '100%';
-        document.body.style.height = '100%';
+    if (show && isMobile) {
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+      document.body.style.height = '100%';
+      document.body.style.top = '0';
 
-        // Verhindert Touch-Scroll auf body
-        const preventScroll = (e: TouchEvent) => {
-          if (e.target === document.body) {
-            e.preventDefault();
-          }
-        };
-
-        document.body.addEventListener('touchmove', preventScroll, { passive: false });
-
-        return () => {
-          document.body.removeEventListener('touchmove', preventScroll);
-          document.body.style.overflow = '';
-          document.body.style.position = '';
-          document.body.style.width = '';
-          document.body.style.height = '';
-        };
-      }
-    } else {
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.width = '';
-      document.body.style.height = '';
+      return () => {
+        document.body.style.overflow = '';
+        document.body.style.position = '';
+        document.body.style.width = '';
+        document.body.style.height = '';
+        document.body.style.top = '';
+      };
     }
+  }, [show, isMobile]);
 
-    return () => {
-      document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.width = '';
-      document.body.style.height = '';
-    };
-  }, [show]);
-
-  // ✅ BUG FIX 1: Edit-Modal automatisch öffnen wenn openEditModalDirectly=true
+  // Auto-open edit modal if requested
   useEffect(() => {
     if (show && openEditModalDirectly) {
-      console.log('🚀 Auto-opening edit modal due to openEditModalDirectly=true');
       setShowEditModal(true);
     }
   }, [show, openEditModalDirectly]);
 
-  // ✅ Escape-Key-Handler für Accessibility (nur wenn keine Sub-Modals offen sind)
+  // Escape key handler
   useEffect(() => {
     const handleEscapeKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && show) {
-        // Prüfe ob Sub-Modals offen sind - diese haben Priorität
-        if (!showShareModal && !showEditModal && !showAnalysisModal && !showSignatureModal) {
+        if (showMobileMenu) {
+          setShowMobileMenu(false);
+        } else if (!showShareModal && !showEditModal && !showAnalysisModal && !showSignatureModal) {
           onClose();
         }
       }
@@ -171,37 +169,54 @@ export default function ContractDetailsView({
     if (show) {
       document.addEventListener('keydown', handleEscapeKey);
     }
+    return () => document.removeEventListener('keydown', handleEscapeKey);
+  }, [show, onClose, showShareModal, showEditModal, showAnalysisModal, showSignatureModal, showMobileMenu]);
 
-    return () => {
-      document.removeEventListener('keydown', handleEscapeKey);
-    };
-  }, [show, onClose, showShareModal, showEditModal, showAnalysisModal, showSignatureModal]);
-
-  // ✅ NEU: Scroll-Handler für Collapsing Header (nur auf Mobile im Content-Tab)
+  // Load PDF URL when document tab is active (Mobile)
   useEffect(() => {
-    const handleScroll = (e: Event) => {
-      const target = e.target as HTMLElement;
-      if (target && activeTab === 'content') {
-        // Collapse header wenn mehr als 50px gescrollt wurde
-        setIsHeaderCollapsed(target.scrollTop > 50);
+    if (isMobile && activeTab === 'document' && !pdfUrl && !pdfLoading && !pdfError) {
+      loadPdfUrl();
+    }
+  }, [isMobile, activeTab, pdfUrl, pdfLoading, pdfError]);
+
+  const loadPdfUrl = async () => {
+    if (contract.needsReupload || contract.uploadType === 'LOCAL_LEGACY') {
+      setPdfError('Dieser Vertrag wurde vor der Cloud-Integration hochgeladen und muss erneut hochgeladen werden.');
+      return;
+    }
+
+    setPdfLoading(true);
+    setPdfError(null);
+
+    try {
+      const token = localStorage.getItem('token');
+      let response;
+
+      if (contract.s3Key) {
+        response = await fetch(`/api/s3/view?key=${encodeURIComponent(contract.s3Key)}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+      } else {
+        response = await fetch(`/api/s3/view?contractId=${contract._id}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
       }
-    };
 
-    const contentElement = document.querySelector(`.${styles.content}`);
-    if (contentElement && activeTab === 'content') {
-      contentElement.addEventListener('scroll', handleScroll);
-      return () => contentElement.removeEventListener('scroll', handleScroll);
+      const data = await response.json();
+
+      if (response.ok && (data.url || data.fileUrl)) {
+        setPdfUrl(data.url || data.fileUrl);
+      } else {
+        setPdfError(data.error || 'PDF konnte nicht geladen werden');
+      }
+    } catch (error) {
+      setPdfError('Fehler beim Laden der PDF-Datei');
+    } finally {
+      setPdfLoading(false);
     }
-  }, [activeTab]);
+  };
 
-  // ✅ Reset collapsed state when tab changes
-  useEffect(() => {
-    if (activeTab !== 'content') {
-      setIsHeaderCollapsed(false);
-    }
-  }, [activeTab]);
-
-  // ✅ PERFORMANCE: Memoized formatDate function
+  // Format date helper
   const formatDate = useMemo(() => {
     return (dateString: string): string => {
       if (!dateString) return "Unbekannt";
@@ -210,15 +225,27 @@ export default function ContractDetailsView({
         return date.toLocaleDateString("de-DE", {
           day: "2-digit",
           month: "long",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit"
+          year: "numeric"
         });
       } catch {
         return dateString;
       }
     };
-  }, []); // ✅ No dependencies - pure function
+  }, []);
+
+  const formatDateShort = (dateString: string): string => {
+    if (!dateString) return "—";
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString("de-DE", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric"
+      });
+    } catch {
+      return dateString;
+    }
+  };
 
   const getStatusIcon = (status: string) => {
     const statusLower = status.toLowerCase();
@@ -226,22 +253,16 @@ export default function ContractDetailsView({
       return <CheckCircle size={16} className={styles.statusIconActive} />;
     } else if (statusLower === "läuft ab" || statusLower === "bald fällig") {
       return <AlertCircle size={16} className={styles.statusIconWarning} />;
-    } else {
-      return <Info size={16} className={styles.statusIconNeutral} />;
     }
+    return <Info size={16} className={styles.statusIconNeutral} />;
   };
 
   const getStatusColor = (status: string): string => {
     const statusLower = status.toLowerCase();
-    if (statusLower === "aktiv" || statusLower === "gültig") {
-      return styles.statusActive;
-    } else if (statusLower === "läuft ab" || statusLower === "bald fällig") {
-      return styles.statusWarning;
-    } else if (statusLower === "gekündigt" || statusLower === "beendet") {
-      return styles.statusCancelled;
-    } else {
-      return styles.statusNeutral;
-    }
+    if (statusLower === "aktiv" || statusLower === "gültig") return styles.statusActive;
+    if (statusLower === "läuft ab" || statusLower === "bald fällig") return styles.statusWarning;
+    if (statusLower === "gekündigt" || statusLower === "beendet") return styles.statusCancelled;
+    return styles.statusNeutral;
   };
 
   const getScoreColor = (score: number): string => {
@@ -258,273 +279,155 @@ export default function ContractDetailsView({
     return "Kritisch";
   };
 
-  // ✅ MOBILE-FIX: Neue Mobile-freundliche PDF-Öffnung
-  const handleViewContract = useCallback(async () => {
-    console.log('🔍 Opening contract with mobile-friendly approach:', {
-      contractId: contract._id,
-      contractName: contract.name,
-      hasS3Key: !!contract.s3Key,
-      uploadType: contract.uploadType,
-      needsReupload: contract.needsReupload
-    });
+  const getRiskLevel = (score: number): { label: string; color: string } => {
+    if (score >= 80) return { label: "Niedriges Risiko", color: "#34c759" };
+    if (score >= 60) return { label: "Moderates Risiko", color: "#ff9500" };
+    if (score >= 40) return { label: "Erhöhtes Risiko", color: "#ff6b35" };
+    return { label: "Hohes Risiko", color: "#ff3b30" };
+  };
 
-    // ✅ MOBILE-FIX: Temporäres Tab sofort öffnen (Popup-Blocker umgehen)
+  // Desktop PDF view (new tab)
+  const handleViewContract = useCallback(async () => {
+    if (contract.needsReupload || contract.uploadType === 'LOCAL_LEGACY') {
+      alert(`Dieser Vertrag wurde vor der Cloud-Integration hochgeladen und ist nicht mehr verfügbar.\n\nBitte laden Sie "${contract.name}" erneut hoch.`);
+      return;
+    }
+
     let tempWindow: Window | null = null;
 
     try {
       const token = localStorage.getItem('token');
-
-      // ✅ Legacy-Vertrag Check (vor Tab-Öffnung)
-      if (contract.needsReupload || contract.uploadType === 'LOCAL_LEGACY') {
-        alert(`⚠️ Dieser Vertrag wurde vor der Cloud-Integration hochgeladen und ist nicht mehr verfügbar.\n\nBitte laden Sie "${contract.name}" erneut hoch, um ihn anzuzeigen.`);
-        return;
-      }
-
-      // ✅ CRITICAL: Tab sofort öffnen (noch im User-Click-Context)
       tempWindow = window.open('', '_blank');
+
       if (tempWindow) {
         tempWindow.document.write(`
           <html>
             <head>
-              <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-              <meta name="mobile-web-app-capable" content="yes">
-              <meta name="apple-mobile-web-app-capable" content="yes">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
               <title>Lade ${contract.name}...</title>
               <style>
-                body { 
-                  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                  display: flex; 
-                  justify-content: center; 
-                  align-items: center; 
-                  height: 100vh; 
-                  margin: 0; 
-                  background: #f5f5f7;
-                  color: #1d1d1f;
-                }
-                .loader {
-                  text-align: center;
-                }
-                .spinner {
-                  width: 40px;
-                  height: 40px;
-                  border: 3px solid #e5e5e5;
-                  border-top: 3px solid #007aff;
-                  border-radius: 50%;
-                  animation: spin 1s linear infinite;
-                  margin: 0 auto 20px;
-                }
-                @keyframes spin {
-                  0% { transform: rotate(0deg); }
-                  100% { transform: rotate(360deg); }
-                }
+                body { font-family: -apple-system, system-ui, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #f5f5f7; }
+                .spinner { width: 40px; height: 40px; border: 3px solid #e5e5e5; border-top: 3px solid #007aff; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px; }
+                @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
               </style>
             </head>
-            <body>
-              <div class="loader">
-                <div class="spinner"></div>
-                <h2>PDF wird geladen...</h2>
-                <p>Bitte warten Sie einen Moment.</p>
-              </div>
-            </body>
+            <body><div><div class="spinner"></div><h2>PDF wird geladen...</h2></div></body>
           </html>
         `);
       }
 
-      // ✅ S3-Key-Route (prioritär)
+      let response;
       if (contract.s3Key) {
-        console.log('✅ S3 Contract detected, fetching signed URL with key...');
-        
-        const response = await fetch(`/api/s3/view?key=${encodeURIComponent(contract.s3Key)}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include'
+        response = await fetch(`/api/s3/view?key=${encodeURIComponent(contract.s3Key)}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
         });
-        
-        const data = await response.json();
-        
-        console.log('🔍 S3 Response data:', data);
-        
-        if (response.ok && (data.url || data.fileUrl)) {
-          const pdfUrl = data.url || data.fileUrl;
-          console.log('✅ S3 URL fetched successfully:', pdfUrl);
-          
-          if (tempWindow && !tempWindow.closed) {
-            tempWindow.location.href = pdfUrl;
-          } else {
-            // Fallback falls Tab geschlossen wurde
-            window.open(pdfUrl, '_blank', 'noopener,noreferrer');
-          }
-          return;
-        } else {
-          console.error('❌ S3 URL fetch failed:', data.error || 'No URL in response');
-          // Fallback to contractId route
-        }
+      } else {
+        response = await fetch(`/api/s3/view?contractId=${contract._id}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
       }
-      
-      // ✅ Fallback: ContractId-Route
-      console.log('🔄 Fallback: Using contractId route...');
-      
-      const response = await fetch(`/api/s3/view?contractId=${contract._id}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include'
-      });
 
       const data = await response.json();
 
-      if (response.ok && (data.fileUrl || data.url)) {
-        const pdfUrl = data.fileUrl || data.url;
-        console.log('✅ ContractId route successful:', pdfUrl);
-        
+      if (response.ok && (data.url || data.fileUrl)) {
         if (tempWindow && !tempWindow.closed) {
-          tempWindow.location.href = pdfUrl;
-        } else {
-          // Fallback falls Tab geschlossen wurde
-          window.open(pdfUrl, '_blank', 'noopener,noreferrer');
+          tempWindow.location.href = data.url || data.fileUrl;
         }
-        return;
-      } else if (data.error?.includes('before S3 integration')) {
-        console.log('⚠️ Legacy contract identified via contractId route');
-        if (tempWindow) tempWindow.close();
-        alert(`⚠️ Dieser Vertrag wurde vor der Cloud-Integration hochgeladen und ist nicht mehr verfügbar.\n\nBitte laden Sie "${contract.name}" erneut hoch, um ihn anzuzeigen.`);
-        return;
       } else {
-        throw new Error(data.error || 'Failed to get signed URL');
+        throw new Error(data.error || 'PDF konnte nicht geladen werden');
       }
-
     } catch (error) {
-      console.error('❌ Error in mobile-friendly PDF view:', error);
-      
-      // ✅ Tab schließen bei Fehler
       if (tempWindow && !tempWindow.closed) {
-        tempWindow.document.write(`
-          <html>
-            <head>
-              <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-              <meta name="mobile-web-app-capable" content="yes">
-              <meta name="apple-mobile-web-app-capable" content="yes">
-              <title>Fehler</title>
-              <style>
-                body { 
-                  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                  display: flex; 
-                  justify-content: center; 
-                  align-items: center; 
-                  height: 100vh; 
-                  margin: 0; 
-                  background: #f5f5f7;
-                  color: #1d1d1f;
-                  text-align: center;
-                }
-                .error { color: #ff3b30; }
-                button {
-                  margin-top: 20px;
-                  padding: 12px 24px;
-                  background: #007aff;
-                  color: white;
-                  border: none;
-                  border-radius: 8px;
-                  cursor: pointer;
-                  font-size: 16px;
-                }
-              </style>
-            </head>
-            <body>
-              <div>
-                <h2 class="error">❌ Fehler beim Laden</h2>
-                <p>Die PDF-Datei konnte nicht geöffnet werden.</p>
-                <button onclick="window.close()">Tab schließen</button>
-              </div>
-            </body>
-          </html>
-        `);
-        
-        // Auto-close nach 5 Sekunden
-        setTimeout(() => {
-          if (tempWindow && !tempWindow.closed) {
-            tempWindow.close();
-          }
-        }, 5000);
+        tempWindow.close();
       }
-      
-      const errorMessage = error instanceof Error 
-        ? error.message 
-        : 'Die PDF-Datei konnte nicht geladen werden.';
-      
-      alert(`❌ Fehler beim Öffnen des Vertrags:\n\n${errorMessage}`);
+      alert(`Fehler beim Öffnen des Vertrags: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`);
     }
-  }, [contract._id, contract.name, contract.s3Key, contract.uploadType, contract.needsReupload]); // ✅ PERFORMANCE: Dependencies für useCallback
+  }, [contract]);
 
-  // ✅ NEU: Share-Handler
+  // Action handlers
   const handleShare = () => {
-    console.log('🔗 Opening share modal for contract:', contract._id);
+    setShowMobileMenu(false);
     setShowShareModal(true);
   };
 
-  // ✅ NEU: Edit-Handler
   const handleEdit = () => {
-    console.log('✏️ Opening edit modal for contract:', contract._id);
+    setShowMobileMenu(false);
     setShowEditModal(true);
   };
 
-  // ✉️ NEU: Signature Handler - Zur Signatur senden
   const handleSendToSignature = () => {
-    console.log('📝 Opening signature modal for contract:', contract._id);
+    setShowMobileMenu(false);
     setShowSignatureModal(true);
   };
 
-  // ✅ NEU: Update-Handler für Edit-Modal
-  const handleContractUpdate = (updatedContract: Contract) => {
-    console.log('✅ Contract updated:', updatedContract);
-    setContract(updatedContract);
-
-    // Optional: Auch Parent Component über Update informieren
-    if (onEdit) {
-      onEdit(updatedContract._id);
-    }
+  const handleDelete = () => {
+    setShowMobileMenu(false);
+    if (onDelete) onDelete(contract._id, contract.name);
   };
 
-  // 💳 NEU: Payment Update Handler - lädt Contract neu aus DB
+  const handleContractUpdate = (updatedContract: Contract) => {
+    setContract(updatedContract);
+    if (onEdit) onEdit(updatedContract._id);
+  };
+
   const handlePaymentUpdate = async () => {
     try {
       const token = localStorage.getItem('authToken') || localStorage.getItem('token');
       if (!token) return;
 
-      console.log('🔄 Reloading contract after payment update...');
-
       const response = await fetch(`/api/contracts/${contract._id}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
 
       if (response.ok) {
         const updatedContract = await response.json();
-        console.log('✅ Contract reloaded:', updatedContract);
         setContract(updatedContract);
-
-        // Parent auch informieren
-        if (onEdit) {
-          onEdit(updatedContract._id);
-        }
+        if (onEdit) onEdit(updatedContract._id);
       }
     } catch (error) {
-      console.error('❌ Error reloading contract:', error);
+      console.error('Error reloading contract:', error);
     }
   };
 
-  const handleDelete = () => {
-    if (onDelete) onDelete(contract._id, contract.name);
+  const handleStartNewAnalysis = async () => {
+    if (isAnalyzing) return;
+    setIsAnalyzing(true);
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/contracts/${contract._id}/analyze`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.analysis) {
+          setContract(prev => ({
+            ...prev,
+            analysis: result.analysis,
+            lastAnalyzed: new Date().toISOString()
+          }));
+        }
+        if (onEdit) onEdit(contract._id);
+      } else {
+        const error = await response.json();
+        alert(`Analyse fehlgeschlagen: ${error.message || 'Unbekannter Fehler'}`);
+      }
+    } catch (error) {
+      alert('Fehler beim Starten der Analyse. Bitte versuche es erneut.');
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   const handleDownloadContent = () => {
     const content = contract.fullText || contract.content || '';
     if (!content) return;
-    
+
     const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -536,62 +439,649 @@ export default function ContractDetailsView({
     window.URL.revokeObjectURL(url);
   };
 
-  // ✅ BUG FIX 2: Neue Analyse starten Handler (nur wenn keine Analyse vorhanden)
-  const handleStartNewAnalysis = async () => {
-    if (isAnalyzing) return; // Prevent double-clicks
-    
-    console.log('🚀 Starting new analysis for contract:', contract._id);
-    setIsAnalyzing(true);
-    
-    try {
-      const token = localStorage.getItem('token');
-      
-      // API-Aufruf zum Starten einer neuen Analyse
-      const response = await fetch(`/api/contracts/${contract._id}/analyze`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include'
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        console.log('✅ Analysis started successfully:', result);
-        
-        // Contract-Daten aktualisieren
-        if (result.analysis) {
-          setContract(prev => ({
-            ...prev,
-            analysis: result.analysis,
-            lastAnalyzed: new Date().toISOString() // ✅ VERBESSERUNG: Timestamp hinzufügen
-          }));
-        }
-        
-        // Parent-Component über Update informieren
-        if (onEdit) {
-          onEdit(contract._id);
-        }
-      } else {
-        const error = await response.json();
-        console.error('❌ Analysis failed:', error);
-        alert(`Analyse fehlgeschlagen: ${error.message || 'Unbekannter Fehler'}`);
-      }
-    } catch (error) {
-      console.error('❌ Error starting analysis:', error);
-      alert('Fehler beim Starten der Analyse. Bitte versuche es erneut.');
-    } finally {
-      setIsAnalyzing(false);
-    }
+  // Toggle accordion section
+  const toggleInsightSection = (section: string) => {
+    setExpandedInsightSection(prev => prev === section ? null : section);
   };
 
   if (!show) return null;
 
-  // ✅ Mobile: Kein onClick auf Overlay (nur Desktop)
-  const isMobile = window.innerWidth <= 768;
-  const handleOverlayClick = isMobile ? undefined : onClose;
+  const score = contract.analysis?.contractScore || contract.legalPulse?.riskScore;
+  const hasAnalysis = !!(contract.analysis || contract.legalPulse);
 
+  // ============================================
+  // MOBILE LAYOUT - Completely redesigned
+  // ============================================
+  if (isMobile) {
+    return (
+      <AnimatePresence>
+        <motion.div
+          className={styles.mobileOverlay}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <motion.div
+            className={styles.mobileContainer}
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+          >
+            {/* MOBILE HEADER - App Bar Style */}
+            <div className={styles.mobileHeader}>
+              <button
+                className={styles.mobileBackBtn}
+                onClick={onClose}
+                aria-label="Zurück"
+              >
+                <ArrowLeft size={24} />
+              </button>
+
+              <div className={styles.mobileHeaderTitle}>
+                <h1>{contract.name}</h1>
+                {contract.isGenerated && (
+                  <span className={styles.mobileGeneratedBadge}>
+                    <Star size={10} /> KI
+                  </span>
+                )}
+              </div>
+
+              <button
+                className={styles.mobileMenuBtn}
+                onClick={() => setShowMobileMenu(!showMobileMenu)}
+                aria-label="Menü"
+              >
+                <MoreVertical size={24} />
+              </button>
+
+              {/* Mobile Dropdown Menu */}
+              <AnimatePresence>
+                {showMobileMenu && (
+                  <>
+                    <motion.div
+                      className={styles.mobileMenuBackdrop}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      onClick={() => setShowMobileMenu(false)}
+                    />
+                    <motion.div
+                      className={styles.mobileMenuDropdown}
+                      initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                    >
+                      <button onClick={handleShare}>
+                        <Share2 size={18} /> Teilen
+                      </button>
+                      <button onClick={handleEdit}>
+                        <Edit size={18} /> Bearbeiten
+                      </button>
+                      {contract.s3Key && !contract.needsReupload && !contract.envelope && (
+                        <button onClick={handleSendToSignature}>
+                          <PenTool size={18} /> Zur Signatur
+                        </button>
+                      )}
+                      {(contract.envelope || contract.signatureEnvelopeId) && onOpenSignatureDetails && (
+                        <button onClick={() => {
+                          setShowMobileMenu(false);
+                          const envelopeId = contract.envelope?._id || contract.signatureEnvelopeId;
+                          if (envelopeId) onOpenSignatureDetails(envelopeId);
+                        }}>
+                          <FileText size={18} /> Signaturdetails
+                        </button>
+                      )}
+                      <button onClick={handleDownloadContent} disabled={!contract.fullText && !contract.content}>
+                        <Download size={18} /> Text exportieren
+                      </button>
+                      <button className={styles.mobileMenuDeleteBtn} onClick={handleDelete}>
+                        <Trash2 size={18} /> Löschen
+                      </button>
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* MOBILE TABS - Segmented Control */}
+            <div className={styles.mobileTabNav}>
+              <button
+                className={`${styles.mobileTab} ${activeTab === 'overview' ? styles.mobileTabActive : ''}`}
+                onClick={() => setActiveTab('overview')}
+              >
+                <Info size={18} />
+                <span>Übersicht</span>
+              </button>
+              <button
+                className={`${styles.mobileTab} ${activeTab === 'document' ? styles.mobileTabActive : ''}`}
+                onClick={() => setActiveTab('document')}
+              >
+                <FileText size={18} />
+                <span>Dokument</span>
+              </button>
+              <button
+                className={`${styles.mobileTab} ${activeTab === 'insights' ? styles.mobileTabActive : ''}`}
+                onClick={() => setActiveTab('insights')}
+              >
+                <BarChart3 size={18} />
+                <span>Insights</span>
+              </button>
+            </div>
+
+            {/* MOBILE CONTENT */}
+            <div className={styles.mobileContent}>
+
+              {/* ========== TAB 1: ÜBERSICHT ========== */}
+              {activeTab === 'overview' && (
+                <motion.div
+                  className={styles.mobileOverviewTab}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                >
+                  {/* Card: Vertragsstatus */}
+                  <div className={styles.mobileCard}>
+                    <div className={styles.mobileCardHeader}>
+                      <Shield size={18} />
+                      <h3>Vertragsstatus</h3>
+                    </div>
+                    <div className={styles.mobileStatusRow}>
+                      <div className={`${styles.mobileStatusBadge} ${getStatusColor(contract.status)}`}>
+                        {getStatusIcon(contract.status)}
+                        <span>{contract.status}</span>
+                      </div>
+                      {score !== null && score !== undefined && (
+                        <div className={styles.mobileScoreIndicator}>
+                          <div
+                            className={styles.mobileScoreCircle}
+                            style={{ borderColor: getScoreColor(score) }}
+                          >
+                            <span style={{ color: getScoreColor(score) }}>{score}</span>
+                          </div>
+                          <div className={styles.mobileScoreInfo}>
+                            <span className={styles.mobileScoreLabel}>{getScoreLabel(score)}</span>
+                            <span
+                              className={styles.mobileRiskLabel}
+                              style={{ color: getRiskLevel(score).color }}
+                            >
+                              {getRiskLevel(score).label}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Card: Wichtige Daten */}
+                  <div className={styles.mobileCard}>
+                    <div className={styles.mobileCardHeader}>
+                      <Calendar size={18} />
+                      <h3>Wichtige Daten</h3>
+                    </div>
+                    <div className={styles.mobileDataGrid}>
+                      <div className={styles.mobileDataItem}>
+                        <span className={styles.mobileDataLabel}>Erstellt</span>
+                        <span className={styles.mobileDataValue}>{formatDateShort(contract.createdAt)}</span>
+                      </div>
+                      {contract.expiryDate && (
+                        <div className={styles.mobileDataItem}>
+                          <span className={styles.mobileDataLabel}>Läuft ab</span>
+                          <span className={styles.mobileDataValue}>{formatDateShort(contract.expiryDate)}</span>
+                        </div>
+                      )}
+                      <div className={styles.mobileDataItem}>
+                        <span className={styles.mobileDataLabel}>Kündigungsfrist</span>
+                        <span className={styles.mobileDataValue}>{contract.kuendigung || "—"}</span>
+                      </div>
+                      {contract.laufzeit && (
+                        <div className={styles.mobileDataItem}>
+                          <span className={styles.mobileDataLabel}>Laufzeit</span>
+                          <span className={styles.mobileDataValue}>{contract.laufzeit}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Card: Finanzen (wenn Smart Contract Info vorhanden) */}
+                  <SmartContractInfo
+                    contract={contract}
+                    onPaymentUpdate={handlePaymentUpdate}
+                  />
+
+                  {/* Card: Schnellaktionen */}
+                  <div className={styles.mobileCard}>
+                    <div className={styles.mobileCardHeader}>
+                      <Lightbulb size={18} />
+                      <h3>Aktionen</h3>
+                    </div>
+                    <div className={styles.mobileActionsGrid}>
+                      <button
+                        className={styles.mobileActionBtn}
+                        onClick={handleViewContract}
+                      >
+                        <Eye size={20} />
+                        <span>PDF anzeigen</span>
+                      </button>
+
+                      {!hasAnalysis ? (
+                        <button
+                          className={`${styles.mobileActionBtn} ${styles.mobileActionPrimary}`}
+                          onClick={handleStartNewAnalysis}
+                          disabled={isAnalyzing}
+                        >
+                          <BarChart3 size={20} />
+                          <span>{isAnalyzing ? 'Analysiere...' : 'Jetzt analysieren'}</span>
+                        </button>
+                      ) : (
+                        <button
+                          className={`${styles.mobileActionBtn} ${styles.mobileActionPrimary}`}
+                          onClick={() => setShowAnalysisModal(true)}
+                        >
+                          <BarChart3 size={20} />
+                          <span>Analyse anzeigen</span>
+                        </button>
+                      )}
+
+                      {contract.s3Key && !contract.needsReupload && !contract.envelope && (
+                        <button
+                          className={styles.mobileActionBtn}
+                          onClick={handleSendToSignature}
+                        >
+                          <PenTool size={20} />
+                          <span>Zur Signatur</span>
+                        </button>
+                      )}
+
+                      <button
+                        className={styles.mobileActionBtn}
+                        onClick={handleEdit}
+                      >
+                        <Edit size={20} />
+                        <span>Bearbeiten</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Notizen wenn vorhanden */}
+                  {contract.notes && (
+                    <div className={styles.mobileCard}>
+                      <div className={styles.mobileCardHeader}>
+                        <FileText size={18} />
+                        <h3>Eigene Notizen</h3>
+                      </div>
+                      <p className={styles.mobileNotesText}>{contract.notes}</p>
+                    </div>
+                  )}
+
+                  {/* KI-generiert Badge */}
+                  {contract.isGenerated && (
+                    <div className={styles.mobileAiNotice}>
+                      <Star size={20} />
+                      <div>
+                        <h4>KI-Generierter Vertrag</h4>
+                        <p>Bitte prüfe alle Details vor der Verwendung.</p>
+                      </div>
+                    </div>
+                  )}
+                </motion.div>
+              )}
+
+              {/* ========== TAB 2: DOKUMENT ========== */}
+              {activeTab === 'document' && (
+                <motion.div
+                  className={styles.mobileDocumentTab}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                >
+                  {/* PDF Controls */}
+                  <div className={styles.mobilePdfControls}>
+                    <button
+                      className={styles.mobilePdfControlBtn}
+                      onClick={() => setPdfZoom(prev => Math.max(50, prev - 25))}
+                      disabled={pdfZoom <= 50}
+                    >
+                      <ZoomOut size={20} />
+                    </button>
+                    <span className={styles.mobilePdfZoomLabel}>{pdfZoom}%</span>
+                    <button
+                      className={styles.mobilePdfControlBtn}
+                      onClick={() => setPdfZoom(prev => Math.min(200, prev + 25))}
+                      disabled={pdfZoom >= 200}
+                    >
+                      <ZoomIn size={20} />
+                    </button>
+                    <button
+                      className={styles.mobilePdfControlBtn}
+                      onClick={handleViewContract}
+                      title="In neuem Tab öffnen"
+                    >
+                      <Maximize2 size={20} />
+                    </button>
+                  </div>
+
+                  {/* PDF Viewer */}
+                  <div className={styles.mobilePdfContainer}>
+                    {pdfLoading && (
+                      <div className={styles.mobilePdfLoading}>
+                        <div className={styles.mobileSpinner}></div>
+                        <p>PDF wird geladen...</p>
+                      </div>
+                    )}
+
+                    {pdfError && (
+                      <div className={styles.mobilePdfError}>
+                        <AlertCircle size={48} />
+                        <h3>PDF nicht verfügbar</h3>
+                        <p>{pdfError}</p>
+                        <button onClick={loadPdfUrl} className={styles.mobileRetryBtn}>
+                          Erneut versuchen
+                        </button>
+                      </div>
+                    )}
+
+                    {pdfUrl && !pdfLoading && !pdfError && (
+                      <iframe
+                        src={pdfUrl}
+                        className={styles.mobilePdfViewer}
+                        title="Vertragsdokument"
+                        style={{ transform: `scale(${pdfZoom / 100})`, transformOrigin: 'top left' }}
+                      />
+                    )}
+                  </div>
+
+                  {/* Alternative: Text Content wenn kein PDF */}
+                  {!pdfUrl && !pdfLoading && !pdfError && (contract.fullText || contract.content) && (
+                    <div className={styles.mobileTextContent}>
+                      <div className={styles.mobileTextHeader}>
+                        <h3>Vertragstext</h3>
+                        <button onClick={handleDownloadContent} className={styles.mobileDownloadBtn}>
+                          <Download size={16} /> Export
+                        </button>
+                      </div>
+                      <div className={styles.mobileTextBody}>
+                        {contract.fullText || contract.content}
+                      </div>
+                    </div>
+                  )}
+                </motion.div>
+              )}
+
+              {/* ========== TAB 3: INSIGHTS ========== */}
+              {activeTab === 'insights' && (
+                <motion.div
+                  className={styles.mobileInsightsTab}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                >
+                  {hasAnalysis ? (
+                    <>
+                      {/* Quick Summary */}
+                      <div className={styles.mobileInsightsSummary}>
+                        {score !== null && score !== undefined && (
+                          <div className={styles.mobileInsightsScore}>
+                            <div
+                              className={styles.mobileScoreBig}
+                              style={{ background: `conic-gradient(${getScoreColor(score)} ${score * 3.6}deg, #e5e5e7 0deg)` }}
+                            >
+                              <div className={styles.mobileScoreBigInner}>
+                                <span className={styles.mobileScoreBigNumber}>{score}</span>
+                                <span className={styles.mobileScoreBigLabel}>/100</span>
+                              </div>
+                            </div>
+                            <div className={styles.mobileScoreBigInfo}>
+                              <h3 style={{ color: getScoreColor(score) }}>{getScoreLabel(score)}</h3>
+                              <p>{contract.analysis ? 'Contract Score' : 'Legal Pulse Score'}</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Accordion Sections */}
+                      <div className={styles.mobileAccordionList}>
+                        {/* Zusammenfassung */}
+                        {(contract.analysis?.summary || contract.legalPulse?.summary) && (
+                          <div className={styles.mobileAccordionItem}>
+                            <button
+                              className={`${styles.mobileAccordionHeader} ${expandedInsightSection === 'summary' ? styles.expanded : ''}`}
+                              onClick={() => toggleInsightSection('summary')}
+                            >
+                              <div className={styles.mobileAccordionTitle}>
+                                <FileText size={18} />
+                                <span>Zusammenfassung</span>
+                              </div>
+                              {expandedInsightSection === 'summary' ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                            </button>
+                            <AnimatePresence>
+                              {expandedInsightSection === 'summary' && (
+                                <motion.div
+                                  className={styles.mobileAccordionContent}
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: 'auto', opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                >
+                                  <p>{contract.analysis?.summary || contract.legalPulse?.summary}</p>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+                        )}
+
+                        {/* Rechtliche Einschätzung */}
+                        {contract.analysis?.legalAssessment && (
+                          <div className={styles.mobileAccordionItem}>
+                            <button
+                              className={`${styles.mobileAccordionHeader} ${expandedInsightSection === 'legal' ? styles.expanded : ''}`}
+                              onClick={() => toggleInsightSection('legal')}
+                            >
+                              <div className={styles.mobileAccordionTitle}>
+                                <Scale size={18} />
+                                <span>Rechtliche Einschätzung</span>
+                              </div>
+                              {expandedInsightSection === 'legal' ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                            </button>
+                            <AnimatePresence>
+                              {expandedInsightSection === 'legal' && (
+                                <motion.div
+                                  className={styles.mobileAccordionContent}
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: 'auto', opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                >
+                                  <p>{contract.analysis.legalAssessment}</p>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+                        )}
+
+                        {/* Risiken & Fallstricke */}
+                        {(contract.legalPulse?.riskFactors || contract.legalPulse?.legalRisks) && (
+                          <div className={styles.mobileAccordionItem}>
+                            <button
+                              className={`${styles.mobileAccordionHeader} ${expandedInsightSection === 'risks' ? styles.expanded : ''}`}
+                              onClick={() => toggleInsightSection('risks')}
+                            >
+                              <div className={styles.mobileAccordionTitle}>
+                                <AlertCircle size={18} />
+                                <span>Risiken & Fallstricke</span>
+                              </div>
+                              {expandedInsightSection === 'risks' ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                            </button>
+                            <AnimatePresence>
+                              {expandedInsightSection === 'risks' && (
+                                <motion.div
+                                  className={styles.mobileAccordionContent}
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: 'auto', opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                >
+                                  <ul className={styles.mobileInsightsList}>
+                                    {contract.legalPulse?.riskFactors?.map((risk, i) => (
+                                      <li key={`risk-${i}`}>{risk}</li>
+                                    ))}
+                                    {contract.legalPulse?.legalRisks?.map((risk, i) => (
+                                      <li key={`legal-${i}`}>{risk}</li>
+                                    ))}
+                                  </ul>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+                        )}
+
+                        {/* Optimierungsvorschläge */}
+                        {(contract.analysis?.suggestions || contract.legalPulse?.recommendations) && (
+                          <div className={styles.mobileAccordionItem}>
+                            <button
+                              className={`${styles.mobileAccordionHeader} ${expandedInsightSection === 'suggestions' ? styles.expanded : ''}`}
+                              onClick={() => toggleInsightSection('suggestions')}
+                            >
+                              <div className={styles.mobileAccordionTitle}>
+                                <Lightbulb size={18} />
+                                <span>Optimierungsvorschläge</span>
+                              </div>
+                              {expandedInsightSection === 'suggestions' ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                            </button>
+                            <AnimatePresence>
+                              {expandedInsightSection === 'suggestions' && (
+                                <motion.div
+                                  className={styles.mobileAccordionContent}
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: 'auto', opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                >
+                                  {contract.analysis?.suggestions ? (
+                                    <p>{contract.analysis.suggestions}</p>
+                                  ) : (
+                                    <ul className={styles.mobileInsightsList}>
+                                      {contract.legalPulse?.recommendations?.map((rec, i) => (
+                                        <li key={`rec-${i}`}>{rec}</li>
+                                      ))}
+                                    </ul>
+                                  )}
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+                        )}
+
+                        {/* Marktvergleich */}
+                        {contract.analysis?.comparison && (
+                          <div className={styles.mobileAccordionItem}>
+                            <button
+                              className={`${styles.mobileAccordionHeader} ${expandedInsightSection === 'comparison' ? styles.expanded : ''}`}
+                              onClick={() => toggleInsightSection('comparison')}
+                            >
+                              <div className={styles.mobileAccordionTitle}>
+                                <BarChart3 size={18} />
+                                <span>Marktvergleich</span>
+                              </div>
+                              {expandedInsightSection === 'comparison' ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                            </button>
+                            <AnimatePresence>
+                              {expandedInsightSection === 'comparison' && (
+                                <motion.div
+                                  className={styles.mobileAccordionContent}
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: 'auto', opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                >
+                                  <p>{contract.analysis.comparison}</p>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Full Analysis Button */}
+                      <div className={styles.mobileInsightsActions}>
+                        <button
+                          className={styles.mobileFullAnalysisBtn}
+                          onClick={() => setShowAnalysisModal(true)}
+                        >
+                          <BarChart3 size={20} />
+                          <span>Vollständige Analyse anzeigen</span>
+                        </button>
+                        <button
+                          className={styles.mobileCopyBtn}
+                          onClick={() => {
+                            const text = `Vertragsanalyse: ${contract.name}\nScore: ${score || 'N/A'}/100\n\n${contract.analysis?.summary || contract.legalPulse?.summary || ''}`;
+                            navigator.clipboard.writeText(text);
+                          }}
+                        >
+                          <Copy size={18} />
+                          <span>Kopieren</span>
+                        </button>
+                      </div>
+
+                      {/* Analysis Meta */}
+                      <div className={styles.mobileInsightsMeta}>
+                        <Clock size={14} />
+                        <span>
+                          Letzte Analyse: {
+                            contract.analysis?.lastAnalyzed
+                              ? formatDate(contract.analysis.lastAnalyzed)
+                              : contract.legalPulse?.analysisDate
+                              ? formatDate(contract.legalPulse.analysisDate)
+                              : 'Unbekannt'
+                          }
+                        </span>
+                      </div>
+                    </>
+                  ) : (
+                    /* No Analysis State */
+                    <div className={styles.mobileNoAnalysis}>
+                      <BarChart3 size={64} />
+                      <h3>Keine Analyse verfügbar</h3>
+                      <p>Für diesen Vertrag wurde noch keine KI-Analyse durchgeführt.</p>
+                      <button
+                        className={styles.mobileAnalyzeBtn}
+                        onClick={handleStartNewAnalysis}
+                        disabled={isAnalyzing}
+                      >
+                        <BarChart3 size={20} />
+                        <span>{isAnalyzing ? 'Analysiere...' : 'Jetzt analysieren'}</span>
+                      </button>
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </div>
+          </motion.div>
+
+          {/* Modals */}
+          <AnalysisModal
+            contract={contract}
+            show={showAnalysisModal}
+            onClose={() => setShowAnalysisModal(false)}
+          />
+          <ContractShareModal
+            contract={{ _id: contract._id, name: contract.name }}
+            show={showShareModal}
+            onClose={() => setShowShareModal(false)}
+          />
+          <ContractEditModal
+            contract={contract}
+            show={showEditModal}
+            onClose={() => setShowEditModal(false)}
+            onUpdate={handleContractUpdate}
+          />
+          <SignatureModal
+            show={showSignatureModal}
+            onClose={() => setShowSignatureModal(false)}
+            contractId={contract._id}
+            contractName={contract.name}
+            contractS3Key={contract.s3Key || ""}
+          />
+        </motion.div>
+      </AnimatePresence>
+    );
+  }
+
+  // ============================================
+  // DESKTOP LAYOUT - Original, unchanged
+  // ============================================
   return (
     <AnimatePresence>
       <motion.div
@@ -599,18 +1089,18 @@ export default function ContractDetailsView({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        onClick={handleOverlayClick}
+        onClick={onClose}
       >
         <motion.div
           className={styles.drawer}
-          initial={isMobile ? { y: "100%" } : { x: "100%" }}
-          animate={isMobile ? { y: 0 } : { x: 0 }}
-          exit={isMobile ? { y: "100%" } : { x: "100%" }}
+          initial={{ x: "100%" }}
+          animate={{ x: 0 }}
+          exit={{ x: "100%" }}
           transition={{ type: "spring", damping: 25, stiffness: 200 }}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className={`${styles.header} ${isHeaderCollapsed ? styles.headerCollapsed : ''}`}>
+          <div className={styles.header}>
             <div className={styles.headerTop}>
               <div className={styles.contractInfo}>
                 <div className={styles.contractIcon}>
@@ -633,63 +1123,33 @@ export default function ContractDetailsView({
               </div>
 
               <div className={styles.headerActions}>
-                {/* ✅ UPDATED: Share Button mit Funktionalität */}
-                <button 
-                  className={styles.actionBtn}
-                  onClick={handleShare}
-                  title="Teilen"
-                >
+                <button className={styles.actionBtn} onClick={handleShare} title="Teilen">
                   <Share2 size={18} />
                 </button>
-                
-                {/* ✅ UPDATED: Edit Button mit Funktionalität */}
-                <button
-                  className={styles.actionBtn}
-                  onClick={handleEdit}
-                  title="Bearbeiten"
-                >
+                <button className={styles.actionBtn} onClick={handleEdit} title="Bearbeiten">
                   <Edit size={18} />
                 </button>
-
-                {/* ✉️ NEU: Signature Button - Zur Signatur senden */}
                 {contract.s3Key && !contract.needsReupload && !contract.envelope && (
-                  <button
-                    className={styles.actionBtn}
-                    onClick={handleSendToSignature}
-                    title="Zur Signatur senden"
-                  >
+                  <button className={styles.actionBtn} onClick={handleSendToSignature} title="Zur Signatur senden">
                     <PenTool size={18} />
                   </button>
                 )}
-
-                {/* 🎨 NEU: Signaturdetails anzeigen - Nur wenn Envelope existiert */}
                 {(contract.envelope || contract.signatureEnvelopeId) && onOpenSignatureDetails && (
                   <button
                     className={`${styles.actionBtn} ${styles.signatureDetailsBtn}`}
                     onClick={() => {
                       const envelopeId = contract.envelope?._id || contract.signatureEnvelopeId;
-                      if (envelopeId) {
-                        onOpenSignatureDetails(envelopeId);
-                      }
+                      if (envelopeId) onOpenSignatureDetails(envelopeId);
                     }}
                     title="Signaturdetails anzeigen"
                   >
                     <FileText size={18} />
                   </button>
                 )}
-
-                <button
-                  className={`${styles.actionBtn} ${styles.deleteBtn}`}
-                  onClick={handleDelete}
-                  title="Löschen"
-                >
+                <button className={`${styles.actionBtn} ${styles.deleteBtn}`} onClick={handleDelete} title="Löschen">
                   <Trash2 size={18} />
                 </button>
-                <button 
-                  className={styles.closeBtn}
-                  onClick={onClose}
-                  title="Schließen"
-                >
+                <button className={styles.closeBtn} onClick={onClose} title="Schließen">
                   <X size={20} />
                 </button>
               </div>
@@ -701,7 +1161,6 @@ export default function ContractDetailsView({
                 {getStatusIcon(contract.status)}
                 <span>{contract.status}</span>
               </div>
-              
               <div className={styles.quickStats}>
                 {contract.kuendigung && (
                   <div className={styles.quickStat}>
@@ -718,25 +1177,25 @@ export default function ContractDetailsView({
               </div>
             </div>
 
-            {/* Tab Navigation */}
+            {/* Tab Navigation - Desktop uses overview/content/analysis */}
             <div className={styles.tabNav}>
-              <button 
+              <button
                 className={`${styles.tab} ${activeTab === 'overview' ? styles.activeTab : ''}`}
                 onClick={() => setActiveTab('overview')}
               >
                 <Info size={16} />
                 <span>Übersicht</span>
               </button>
-              <button 
-                className={`${styles.tab} ${activeTab === 'content' ? styles.activeTab : ''}`}
-                onClick={() => setActiveTab('content')}
+              <button
+                className={`${styles.tab} ${activeTab === 'document' ? styles.activeTab : ''}`}
+                onClick={() => setActiveTab('document')}
               >
                 <Eye size={16} />
                 <span>Inhalt</span>
               </button>
-              <button 
-                className={`${styles.tab} ${activeTab === 'analysis' ? styles.activeTab : ''}`}
-                onClick={() => setActiveTab('analysis')}
+              <button
+                className={`${styles.tab} ${activeTab === 'insights' ? styles.activeTab : ''}`}
+                onClick={() => setActiveTab('insights')}
               >
                 <BarChart3 size={16} />
                 <span>Analyse</span>
@@ -747,7 +1206,7 @@ export default function ContractDetailsView({
           {/* Content */}
           <div className={styles.content}>
             {activeTab === 'overview' && (
-              <motion.div 
+              <motion.div
                 className={styles.overviewTab}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -790,8 +1249,6 @@ export default function ContractDetailsView({
                       <label>Hochgeladen am</label>
                       <span>{formatDate(contract.createdAt)}</span>
                     </div>
-                    
-                    {/* ✅ NEU: Eigene Notizen anzeigen falls vorhanden */}
                     {contract.notes && (
                       <div className={styles.detailItem}>
                         <label>Eigene Notizen</label>
@@ -799,50 +1256,30 @@ export default function ContractDetailsView({
                       </div>
                     )}
                   </div>
-                  
-                  {/* ✅ MOBILE-FIX: Contract View Button mit Mobile-freundlicher Logik */}
+
                   <div className={styles.viewContractSection}>
                     {contract.needsReupload || contract.uploadType === 'LOCAL_LEGACY' ? (
                       <div style={{ textAlign: 'center', padding: '1rem' }}>
-                        <button 
+                        <button
                           className={styles.viewContractButton}
-                          style={{ 
-                            background: 'rgba(255, 149, 0, 0.1)', 
-                            border: '1px solid rgba(255, 149, 0, 0.3)',
-                            color: '#ff9500',
-                            cursor: 'pointer'
-                          }}
+                          style={{ background: 'rgba(255, 149, 0, 0.1)', border: '1px solid rgba(255, 149, 0, 0.3)', color: '#ff9500' }}
                           onClick={handleViewContract}
-                          title="Legacy-Vertrag - Informationen anzeigen"
                         >
-                          ⚠️ Legacy-Vertrag (Info anzeigen)
+                          Legacy-Vertrag (Info anzeigen)
                         </button>
-                        <p style={{ 
-                          fontSize: '0.875rem', 
-                          color: '#ff9500', 
-                          marginTop: '0.5rem',
-                          fontStyle: 'italic'
-                        }}>
-                          Dieser Vertrag wurde vor der Cloud-Integration hochgeladen und muss für die Anzeige erneut hochgeladen werden.
+                        <p style={{ fontSize: '0.875rem', color: '#ff9500', marginTop: '0.5rem', fontStyle: 'italic' }}>
+                          Dieser Vertrag muss erneut hochgeladen werden.
                         </p>
                       </div>
                     ) : (
-                      <button 
-                        onClick={handleViewContract}
-                        className={styles.viewContractButton}
-                        title="Original-Vertragsdatei anzeigen"
-                      >
-                        📄 Vertrag anzeigen
+                      <button onClick={handleViewContract} className={styles.viewContractButton}>
+                        Vertrag anzeigen
                       </button>
                     )}
                   </div>
                 </div>
 
-                {/* ✨ Smart Info: Cost Tracker (laufend) ODER Payment Tracker (einmalig) */}
-                <SmartContractInfo
-                  contract={contract}
-                  onPaymentUpdate={handlePaymentUpdate}
-                />
+                <SmartContractInfo contract={contract} onPaymentUpdate={handlePaymentUpdate} />
 
                 {contract.isGenerated && (
                   <div className={styles.section}>
@@ -858,29 +1295,17 @@ export default function ContractDetailsView({
               </motion.div>
             )}
 
-            {/* Content Tab - unverändert */}
-            {activeTab === 'content' && (
-              <motion.div 
+            {/* Content/Document Tab - Desktop */}
+            {activeTab === 'document' && (
+              <motion.div
                 className={styles.contentTab}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
               >
                 {(() => {
-                  console.log('🔍 Content Tab Debug:', {
-                    contractName: contract.name,
-                    hasFullText: !!contract.fullText,
-                    hasContent: !!contract.content,
-                    fullTextLength: contract.fullText ? contract.fullText.length : 0,
-                    contentLength: contract.content ? contract.content.length : 0,
-                    contractKeys: Object.keys(contract)
-                  });
-                  return null;
-                })()}
-                
-                {(() => {
                   const textContent = contract.fullText || contract.content || contract.extractedText || '';
-                  
+
                   if (textContent && textContent.trim().length > 0) {
                     return (
                       <div className={styles.contentViewer}>
@@ -888,42 +1313,27 @@ export default function ContractDetailsView({
                           <h3>Vertragsinhalt</h3>
                           <div className={styles.contentSourceInfo}>
                             <span className={styles.sourceLabel}>
-                              Quelle: {contract.fullText ? 'Volltext-Analyse' : 
-                                      contract.content ? 'Contract Content' : 
-                                      contract.extractedText ? 'Extrahierter Text' : 'Unbekannt'}
+                              Quelle: {contract.fullText ? 'Volltext-Analyse' : contract.content ? 'Contract Content' : 'Extrahierter Text'}
                             </span>
                           </div>
-                          <button 
-                            className={styles.downloadBtn}
-                            onClick={handleDownloadContent}
-                          >
+                          <button className={styles.downloadBtn} onClick={handleDownloadContent}>
                             <Download size={16} />
                             <span>Als TXT herunterladen</span>
                           </button>
                         </div>
-                        
-                        <div className={styles.contentText}>
-                          {textContent}
-                        </div>
-                        
+                        <div className={styles.contentText}>{textContent}</div>
                         <div className={styles.contentStats}>
                           <div className={styles.contentStat}>
                             <span className={styles.statLabel}>Zeichen:</span>
-                            <span className={styles.statValue}>
-                              {textContent.length.toLocaleString()}
-                            </span>
+                            <span className={styles.statValue}>{textContent.length.toLocaleString()}</span>
                           </div>
                           <div className={styles.contentStat}>
                             <span className={styles.statLabel}>Wörter:</span>
-                            <span className={styles.statValue}>
-                              {textContent.split(/\s+/).filter((w: string) => w.length > 0).length.toLocaleString()}
-                            </span>
+                            <span className={styles.statValue}>{textContent.split(/\s+/).filter((w: string) => w.length > 0).length.toLocaleString()}</span>
                           </div>
                           <div className={styles.contentStat}>
                             <span className={styles.statLabel}>Absätze:</span>
-                            <span className={styles.statValue}>
-                              {textContent.split(/\n\s*\n/).filter((p: string) => p.trim().length > 0).length.toLocaleString()}
-                            </span>
+                            <span className={styles.statValue}>{textContent.split(/\n\s*\n/).filter((p: string) => p.trim().length > 0).length.toLocaleString()}</span>
                           </div>
                         </div>
                       </div>
@@ -933,39 +1343,11 @@ export default function ContractDetailsView({
                       <div className={styles.noContent}>
                         <FileText size={48} />
                         <h3>Kein Textinhalt verfügbar</h3>
-                        <p>Der Vertragstext konnte nicht extrahiert werden oder ist nicht verfügbar. Möglicherweise handelt es sich um eine bildbasierte PDF oder ein anderes Format.</p>
-                        
-                        <div className={styles.debugInfo}>
-                          <details>
-                            <summary>Debug-Informationen</summary>
-                            <pre style={{ fontSize: '0.8rem', textAlign: 'left', background: '#f5f5f5', padding: '1rem', borderRadius: '8px', marginTop: '1rem' }}>
-                              {JSON.stringify({
-                                contractId: contract._id,
-                                contractName: contract.name,
-                                hasFullText: !!contract.fullText,
-                                hasContent: !!contract.content,
-                                hasExtractedText: !!contract.extractedText,
-                                hasAnalysis: !!contract.analysis,
-                                availableKeys: Object.keys(contract).filter(key => key.includes('text') || key.includes('content') || key === 'analysis')
-                              }, null, 2)}
-                            </pre>
-                          </details>
-                        </div>
-                        
+                        <p>Der Vertragstext konnte nicht extrahiert werden.</p>
                         <div className={styles.noContentActions}>
-                          <button 
-                            className={styles.retryBtn}
-                            onClick={() => {
-                              console.log('🔄 Retry text extraction for contract:', {
-                                id: contract._id,
-                                name: contract.name,
-                                availableFields: Object.keys(contract)
-                              });
-                              alert('Text-Extraktion wird erneut versucht...');
-                            }}
-                          >
+                          <button className={styles.retryBtn} onClick={handleViewContract}>
                             <ExternalLink size={16} />
-                            <span>Textextraktion wiederholen</span>
+                            <span>PDF anzeigen</span>
                           </button>
                         </div>
                       </div>
@@ -975,107 +1357,59 @@ export default function ContractDetailsView({
               </motion.div>
             )}
 
-            {/* ✅ REVOLUTIONÄR: Analysis Tab - Nur Score + Button für Vollbild-Modal */}
-            {activeTab === 'analysis' && (
-              <motion.div 
+            {/* Analysis/Insights Tab - Desktop */}
+            {activeTab === 'insights' && (
+              <motion.div
                 className={styles.analysisTab}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
               >
-                {(() => {
-                  console.log('🔍 Analysis Tab Debug:', {
-                    contractName: contract.name,
-                    hasAnalysis: !!contract.analysis,
-                    hasLegalPulse: !!contract.legalPulse,
-                    analysisKeys: contract.analysis ? Object.keys(contract.analysis) : [],
-                    legalPulseKeys: contract.legalPulse ? Object.keys(contract.legalPulse) : [],
-                    analysisData: contract.analysis,
-                    legalPulseData: contract.legalPulse
-                  });
-                  return null;
-                })()}
-
-                {/* ✅ EINFACH: Prüfe ob irgendeine Analyse vorhanden ist */}
-                {(contract.analysis || contract.legalPulse) ? (
+                {hasAnalysis ? (
                   <div className={styles.analysisPreview}>
                     <div className={styles.previewHeader}>
                       <div className={styles.previewIcon}>
                         <BarChart3 size={24} />
                       </div>
                       <div className={styles.previewInfo}>
-                        <h3>
-                          {contract.analysis ? '🤖 KI-Vertragsanalyse verfügbar' : '🧠 Legal Pulse Analyse verfügbar'}
-                        </h3>
+                        <h3>{contract.analysis ? 'KI-Vertragsanalyse verfügbar' : 'Legal Pulse Analyse verfügbar'}</h3>
                         <p>Vollständige Analyse in separatem Fenster anzeigen</p>
                       </div>
                     </div>
 
-                    {/* Score Preview */}
-                    {(() => {
-                      const score = contract.analysis?.contractScore || contract.legalPulse?.riskScore;
-                      if (score !== null && score !== undefined) {
-                        return (
-                          <div className={styles.scorePreview}>
-                            <div 
-                              className={styles.scoreCircleSmall}
-                              style={{ '--score-color': getScoreColor(score) } as React.CSSProperties}
-                            >
-                              <span className={styles.scoreNumberSmall}>{score}</span>
-                              <span className={styles.scoreMaxSmall}>/100</span>
-                            </div>
-                            <div className={styles.scoreInfoSmall}>
-                              <h4 style={{ color: getScoreColor(score) }}>
-                                {getScoreLabel(score)}
-                              </h4>
-                              <p>{contract.analysis ? 'Contract Score' : 'Legal Pulse Score'}</p>
-                            </div>
-                          </div>
-                        );
-                      }
-                      return null;
-                    })()}
+                    {score !== null && score !== undefined && (
+                      <div className={styles.scorePreview}>
+                        <div
+                          className={styles.scoreCircleSmall}
+                          style={{ '--score-color': getScoreColor(score) } as React.CSSProperties}
+                        >
+                          <span className={styles.scoreNumberSmall}>{score}</span>
+                          <span className={styles.scoreMaxSmall}>/100</span>
+                        </div>
+                        <div className={styles.scoreInfoSmall}>
+                          <h4 style={{ color: getScoreColor(score) }}>{getScoreLabel(score)}</h4>
+                          <p>{contract.analysis ? 'Contract Score' : 'Legal Pulse Score'}</p>
+                        </div>
+                      </div>
+                    )}
 
-                    {/* Main Action Button */}
                     <div className={styles.previewActions}>
-                      <button 
-                        className={styles.viewAnalysisButton}
-                        onClick={() => setShowAnalysisModal(true)}
-                      >
+                      <button className={styles.viewAnalysisButton} onClick={() => setShowAnalysisModal(true)}>
                         <BarChart3 size={18} />
                         <span>Vollständige Analyse anzeigen</span>
                       </button>
-                      
-                      <button 
+                      <button
                         className={styles.copyAnalysisButton}
                         onClick={() => {
-                          // Quick copy ohne Modal zu öffnen
-                          let analysisText = '';
-                          
-                          if (contract.analysis) {
-                            analysisText = `Vertragsanalyse: ${contract.name}\nScore: ${contract.analysis.contractScore || 'N/A'}/100\n\nZusammenfassung: ${contract.analysis.summary || 'Nicht verfügbar'}`;
-                          } else if (contract.legalPulse) {
-                            analysisText = `Legal Pulse: ${contract.name}\nScore: ${contract.legalPulse.riskScore || 'N/A'}/100\n\nZusammenfassung: ${contract.legalPulse.summary || 'Nicht verfügbar'}`;
-                          }
-                          
-                          navigator.clipboard.writeText(analysisText).then(() => {
-                            // Kurzes Feedback
-                            const button = document.activeElement as HTMLButtonElement;
-                            const originalText = button.textContent;
-                            button.textContent = 'Kopiert!';
-                            setTimeout(() => {
-                              button.textContent = originalText;
-                            }, 1500);
-                          });
+                          const text = `Vertragsanalyse: ${contract.name}\nScore: ${score || 'N/A'}/100\n\nZusammenfassung: ${contract.analysis?.summary || contract.legalPulse?.summary || 'Nicht verfügbar'}`;
+                          navigator.clipboard.writeText(text);
                         }}
-                        title="Schnell-Kopie der Analyse"
                       >
                         <Copy size={16} />
                         <span>Kopieren</span>
                       </button>
                     </div>
 
-                    {/* Analysis Info */}
                     <div className={styles.analysisInfo}>
                       <div className={styles.analysisInfoItem}>
                         <Clock size={14} />
@@ -1089,7 +1423,6 @@ export default function ContractDetailsView({
                           }
                         </span>
                       </div>
-                      
                       {contract.analysis?.analysisId && (
                         <div className={styles.analysisInfoItem}>
                           <FileText size={14} />
@@ -1099,18 +1432,15 @@ export default function ContractDetailsView({
                     </div>
                   </div>
                 ) : (
-                  /* Keine Analyse vorhanden */
                   <div className={styles.noAnalysis}>
                     <BarChart3 size={48} />
                     <h3>Keine Analyse verfügbar</h3>
-                    <p>Für diesen Vertrag wurde noch keine KI-Analyse durchgeführt oder die Analyse-Daten sind nicht verfügbar.</p>
-                    
+                    <p>Für diesen Vertrag wurde noch keine KI-Analyse durchgeführt.</p>
                     <div className={styles.noAnalysisActions}>
-                      <button 
+                      <button
                         className={styles.analyzeBtn}
                         onClick={handleStartNewAnalysis}
                         disabled={isAnalyzing}
-                        style={{ opacity: isAnalyzing ? 0.7 : 1, cursor: isAnalyzing ? 'not-allowed' : 'pointer' }}
                       >
                         <BarChart3 size={16} />
                         <span>{isAnalyzing ? 'Analysiere...' : 'Jetzt analysieren'}</span>
@@ -1123,37 +1453,11 @@ export default function ContractDetailsView({
           </div>
         </motion.div>
 
-        {/* ✅ NEU: Analysis Modal - Vollbild-Analyse */}
-        <AnalysisModal
-          contract={contract}
-          show={showAnalysisModal}
-          onClose={() => setShowAnalysisModal(false)}
-        />
-
-        {/* ✅ NEU: Share Modal */}
-        <ContractShareModal
-          contract={{ _id: contract._id, name: contract.name }}
-          show={showShareModal}
-          onClose={() => setShowShareModal(false)}
-        />
-
-        {/* ✅ NEU: Edit Modal */}
-        <ContractEditModal
-          contract={contract}
-          show={showEditModal}
-          onClose={() => setShowEditModal(false)}
-          onUpdate={handleContractUpdate}
-        />
-
-        {/* ✉️ NEU: Signature Modal */}
-        {/* ✉️ Signature Modal - S3 Key für Envelope */}
-        <SignatureModal
-          show={showSignatureModal}
-          onClose={() => setShowSignatureModal(false)}
-          contractId={contract._id}
-          contractName={contract.name}
-          contractS3Key={contract.s3Key || ""}
-        />
+        {/* Modals */}
+        <AnalysisModal contract={contract} show={showAnalysisModal} onClose={() => setShowAnalysisModal(false)} />
+        <ContractShareModal contract={{ _id: contract._id, name: contract.name }} show={showShareModal} onClose={() => setShowShareModal(false)} />
+        <ContractEditModal contract={contract} show={showEditModal} onClose={() => setShowEditModal(false)} onUpdate={handleContractUpdate} />
+        <SignatureModal show={showSignatureModal} onClose={() => setShowSignatureModal(false)} contractId={contract._id} contractName={contract.name} contractS3Key={contract.s3Key || ""} />
       </motion.div>
     </AnimatePresence>
   );
