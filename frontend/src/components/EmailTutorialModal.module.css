@@ -24,6 +24,7 @@
   max-width: 800px;
   width: 90%;
   max-height: 90vh;
+  max-height: 90dvh; /* iOS Safari fix */
   overflow-y: auto;
   padding: 32px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
@@ -289,9 +290,30 @@
 
 /* Responsive */
 @media (max-width: 768px) {
+  .modalWrapper {
+    /* Safe-Area für iPhone X+ */
+    padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+  }
+
   .modal {
     padding: 24px;
     width: 95%;
+    max-height: 95dvh;
+  }
+
+  /* Touch-Targets */
+  .closeButton {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .iconButton {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .gotItButton {
+    min-height: 44px;
   }
 
   .steps {
@@ -315,5 +337,187 @@
 
   .addressControls {
     justify-content: center;
+  }
+}
+
+/* 📱 SMALL MOBILE (max-width: 480px) */
+@media (max-width: 480px) {
+  .modalWrapper {
+    padding: max(0.75rem, env(safe-area-inset-top)) max(0.75rem, env(safe-area-inset-right)) max(0.75rem, env(safe-area-inset-bottom)) max(0.75rem, env(safe-area-inset-left));
+  }
+
+  .modal {
+    padding: 20px;
+    width: 100%;
+    border-radius: 12px;
+  }
+
+  .header h2 {
+    font-size: 20px;
+  }
+
+  .header p {
+    font-size: 13px;
+  }
+
+  .addressSection {
+    margin-bottom: 24px;
+  }
+
+  .addressBox {
+    padding: 14px;
+    border-radius: 10px;
+  }
+
+  .addressBox code {
+    font-size: 11px;
+  }
+
+  .step {
+    min-width: 100%;
+  }
+
+  .stepNumber {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+  }
+
+  .stepContent h3 {
+    font-size: 15px;
+  }
+
+  .stepContent p {
+    font-size: 12px;
+  }
+
+  .features {
+    padding: 16px;
+  }
+
+  .features h3 {
+    font-size: 15px;
+  }
+
+  .features li {
+    font-size: 13px;
+  }
+
+  .notes {
+    padding: 14px;
+  }
+
+  .notes h4 {
+    font-size: 13px;
+  }
+
+  .notes li {
+    font-size: 12px;
+  }
+
+  .gotItButton {
+    padding: 12px 24px;
+    font-size: 14px;
+  }
+}
+
+/* 📱 EXTRA SMALL MOBILE (max-width: 375px) */
+@media (max-width: 375px) {
+  .modalWrapper {
+    padding: max(0.5rem, env(safe-area-inset-top)) max(0.5rem, env(safe-area-inset-right)) max(0.5rem, env(safe-area-inset-bottom)) max(0.5rem, env(safe-area-inset-left));
+  }
+
+  .modal {
+    padding: 16px;
+    border-radius: 10px;
+  }
+
+  .closeButton {
+    top: 12px;
+    right: 12px;
+  }
+
+  .header {
+    margin-bottom: 20px;
+  }
+
+  .header h2 {
+    font-size: 18px;
+  }
+
+  .addressSection {
+    margin-bottom: 20px;
+  }
+
+  .addressBox {
+    padding: 12px;
+    gap: 10px;
+  }
+
+  .addressBox code {
+    font-size: 10px;
+  }
+
+  .iconButton {
+    padding: 6px;
+  }
+
+  .warning {
+    padding: 10px;
+    font-size: 12px;
+  }
+
+  .steps {
+    margin-bottom: 24px;
+    gap: 12px;
+  }
+
+  .stepNumber {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
+
+  .stepContent h3 {
+    font-size: 14px;
+    margin-bottom: 6px;
+  }
+
+  .stepContent p {
+    font-size: 11px;
+  }
+
+  .features {
+    padding: 14px;
+    margin-bottom: 16px;
+  }
+
+  .features h3 {
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
+
+  .features li {
+    font-size: 12px;
+    padding: 4px 0;
+  }
+
+  .notes {
+    padding: 12px;
+    margin-bottom: 20px;
+  }
+
+  .notes h4 {
+    font-size: 12px;
+  }
+
+  .notes li {
+    font-size: 11px;
+  }
+
+  .gotItButton {
+    padding: 10px 20px;
+    font-size: 13px;
   }
 }

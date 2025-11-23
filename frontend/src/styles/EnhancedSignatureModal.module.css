@@ -17,6 +17,8 @@
   justify-content: center;
   z-index: 1000;
   padding: 1rem;
+  /* Safe-Area für iPhone X+ */
+  padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
 }
 
 /* Modal Content */
@@ -27,6 +29,7 @@
   width: 100%;
   max-width: 1200px;
   max-height: 90vh;
+  max-height: 90dvh; /* iOS Safari fix */
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -693,10 +696,25 @@
 }
 
 @media (max-width: 768px) {
+  .modalOverlay {
+    padding: 0;
+  }
+
   .modalContent {
     max-width: 100%;
-    max-height: 100vh;
+    max-height: 100dvh;
     border-radius: 0;
+  }
+
+  /* Touch-Targets */
+  .closeButton {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .addBtn,
+  .removeBtn {
+    min-height: 44px;
   }
 
   .modalHeader {
@@ -728,6 +746,208 @@
   .nextButton,
   .sendButton {
     width: 100%;
+  }
+}
+
+/* 📱 SMALL MOBILE (max-width: 480px) */
+@media (max-width: 480px) {
+  .modalHeader {
+    padding: 1rem 1.25rem;
+  }
+
+  .headerIcon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .modalHeader h2 {
+    font-size: 16px;
+  }
+
+  .modalHeader p {
+    font-size: 13px;
+  }
+
+  .stepIndicator {
+    padding: 0.875rem 1rem;
+  }
+
+  .stepNumber {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
+  }
+
+  .stepLabel {
+    font-size: 10px;
+  }
+
+  .step1Container,
+  .step3Container {
+    padding: 1.25rem;
+  }
+
+  .sectionTitle {
+    font-size: 14px;
+  }
+
+  .radioOption {
+    padding: 0.875rem;
+  }
+
+  .radioTitle {
+    font-size: 13px;
+  }
+
+  .radioSubtitle {
+    font-size: 12px;
+  }
+
+  .input {
+    font-size: 16px; /* Prevents iOS zoom */
+  }
+
+  .inputGroup {
+    flex-direction: column;
+  }
+
+  .signerItem {
+    padding: 0.875rem;
+  }
+
+  .signerIcon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .signerName {
+    font-size: 13px;
+  }
+
+  .signerEmail {
+    font-size: 12px;
+  }
+
+  .summaryCard {
+    padding: 0.875rem;
+  }
+
+  .textarea {
+    font-size: 16px; /* Prevents iOS zoom */
+  }
+
+  .modalFooter {
+    padding: 1rem 1.25rem;
+    gap: 0.625rem;
+  }
+
+  .cancelButton,
+  .nextButton,
+  .sendButton {
+    padding: 0.75rem 1.25rem;
+    font-size: 14px;
+  }
+}
+
+/* 📱 EXTRA SMALL MOBILE (max-width: 375px) */
+@media (max-width: 375px) {
+  .modalHeader {
+    padding: 0.875rem 1rem;
+    gap: 0.75rem;
+  }
+
+  .headerIcon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .modalHeader h2 {
+    font-size: 15px;
+  }
+
+  .stepIndicator {
+    padding: 0.75rem;
+    gap: 0.25rem;
+  }
+
+  .stepNumber {
+    width: 28px;
+    height: 28px;
+    font-size: 11px;
+  }
+
+  .stepLabel {
+    font-size: 9px;
+  }
+
+  .stepLine {
+    margin: 0 0.25rem;
+  }
+
+  .step1Container,
+  .step3Container {
+    padding: 1rem;
+    gap: 1rem;
+  }
+
+  .sectionTitle {
+    font-size: 13px;
+  }
+
+  .radioOption {
+    padding: 0.75rem;
+    gap: 0.5rem;
+  }
+
+  .radioTitle {
+    font-size: 12px;
+  }
+
+  .radioSubtitle {
+    font-size: 11px;
+  }
+
+  .addBtn {
+    padding: 0.625rem 1rem;
+    font-size: 13px;
+  }
+
+  .signerItem {
+    padding: 0.75rem;
+    gap: 0.5rem;
+  }
+
+  .signerIcon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .signerName {
+    font-size: 12px;
+  }
+
+  .signerEmail {
+    font-size: 11px;
+  }
+
+  .summaryCard {
+    padding: 0.75rem;
+  }
+
+  .warningBox,
+  .successBox {
+    padding: 0.875rem;
+  }
+
+  .modalFooter {
+    padding: 0.875rem 1rem;
+  }
+
+  .cancelButton,
+  .nextButton,
+  .sendButton {
+    padding: 0.625rem 1rem;
+    font-size: 13px;
   }
 }
 

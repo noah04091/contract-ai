@@ -21,6 +21,7 @@
   width: 100%;
   max-width: 700px;
   max-height: 90vh;
+  max-height: 90dvh; /* iOS Safari fix */
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -687,8 +688,13 @@
 
 /* Responsive Design */
 @media (max-width: 640px) {
+  .overlay {
+    padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+  }
+
   .modal {
     max-width: 95vw;
+    max-height: 95dvh;
   }
 
   .header {
@@ -824,5 +830,95 @@
   .editHint {
     font-size: 12px;
     padding: 8px 10px;
+  }
+}
+
+/* 📱 EXTRA SMALL MOBILE (max-width: 375px) */
+@media (max-width: 375px) {
+  .overlay {
+    padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  }
+
+  .modal {
+    max-width: 100%;
+    border-radius: 12px;
+  }
+
+  .header {
+    padding: 0.75rem;
+  }
+
+  .headerTitle h2 {
+    font-size: 1rem;
+  }
+
+  .headerTitle p {
+    font-size: 0.75rem;
+  }
+
+  .iconWrapper {
+    width: 40px;
+    height: 40px;
+  }
+
+  .providerBadge {
+    font-size: 0.7rem;
+    padding: 4px 8px;
+  }
+
+  .content {
+    padding: 0.75rem;
+  }
+
+  .formSection {
+    padding: 0.75rem;
+  }
+
+  .formSection h3 {
+    font-size: 0.875rem;
+  }
+
+  .formGroup label {
+    font-size: 0.75rem;
+  }
+
+  .formGroup input,
+  .formGroup select,
+  .formGroup textarea {
+    font-size: 16px; /* Prevents iOS zoom */
+    padding: 8px 10px;
+  }
+
+  .radioContent {
+    padding: 10px;
+    font-size: 0.85rem;
+  }
+
+  .letterPreview {
+    padding: 0.75rem;
+    max-height: 250px;
+  }
+
+  .letterPreview pre {
+    font-size: 0.75rem;
+  }
+
+  .editablePreview {
+    font-size: 11px;
+    padding: 8px;
+    min-height: 200px;
+  }
+
+  .actions {
+    gap: 8px;
+    margin-top: 16px;
+    padding-top: 16px;
+  }
+
+  .cancelBtn,
+  .secondaryBtn,
+  .primaryBtn {
+    padding: 10px 16px;
+    font-size: 0.85rem;
   }
 }

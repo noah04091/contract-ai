@@ -13,6 +13,8 @@
   justify-content: center;
   z-index: 10000;
   padding: 20px;
+  /* Safe-Area für iPhone X+ */
+  padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
 }
 
 .modal {
@@ -21,6 +23,7 @@
   max-width: 700px;
   width: 100%;
   max-height: 90vh;
+  max-height: 90dvh; /* iOS Safari fix */
   overflow-y: auto;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   position: relative;
@@ -270,9 +273,24 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
+  .overlay {
+    padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  }
+
   .modal {
     padding: 28px 20px;
     border-radius: 20px;
+    max-height: 95dvh;
+  }
+
+  /* Touch-Targets */
+  .closeButton {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .cardButton {
+    min-height: 44px;
   }
 
   .title {
@@ -314,7 +332,7 @@
 @media (max-width: 480px) {
   .modal {
     padding: 24px 16px;
-    max-height: 95vh;
+    max-height: 95dvh;
   }
 
   .title {
@@ -342,5 +360,95 @@
 
   .footerText {
     font-size: 13px;
+  }
+}
+
+/* 📱 EXTRA SMALL MOBILE (max-width: 375px) */
+@media (max-width: 375px) {
+  .overlay {
+    padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  }
+
+  .modal {
+    padding: 20px 14px;
+    border-radius: 16px;
+  }
+
+  .closeButton {
+    top: 14px;
+    right: 14px;
+  }
+
+  .header {
+    margin-bottom: 24px;
+  }
+
+  .successIcon {
+    width: 56px;
+    height: 56px;
+    margin-bottom: 16px;
+  }
+
+  .title {
+    font-size: 18px;
+    margin-bottom: 8px;
+  }
+
+  .subtitle {
+    font-size: 13px;
+  }
+
+  .filesList {
+    padding: 12px;
+    margin-bottom: 24px;
+  }
+
+  .fileItem {
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+
+  .actionsGrid {
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .actionCard {
+    padding: 16px;
+  }
+
+  .cardIcon {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 12px;
+  }
+
+  .cardTitle {
+    font-size: 16px;
+    margin-bottom: 6px;
+  }
+
+  .cardDescription {
+    font-size: 12px;
+    margin-bottom: 12px;
+  }
+
+  .cardInfo {
+    font-size: 12px;
+    margin-bottom: 12px;
+  }
+
+  .cardButton {
+    padding: 12px 16px;
+    font-size: 13px;
+    border-radius: 10px;
+  }
+
+  .footer {
+    padding-top: 20px;
+  }
+
+  .footerText {
+    font-size: 12px;
   }
 }

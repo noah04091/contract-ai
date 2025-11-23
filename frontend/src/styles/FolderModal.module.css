@@ -20,6 +20,7 @@
   width: 100%;
   max-width: 500px;
   max-height: 90vh;
+  max-height: 90dvh; /* iOS Safari fix */
   overflow-y: auto;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
@@ -283,8 +284,14 @@
 
 /* Mobile Responsive */
 @media (max-width: 768px) {
+  .overlay {
+    padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+    align-items: flex-end;
+  }
+
   .modal {
     max-width: 100%;
+    max-height: 90dvh;
     border-radius: 12px 12px 0 0;
     margin-top: auto;
   }
@@ -297,16 +304,34 @@
     font-size: 1.125rem;
   }
 
+  .closeBtn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
   .form {
     padding: 1.25rem;
+  }
+
+  .field input {
+    font-size: 16px; /* Prevents iOS zoom */
+    min-height: 44px;
   }
 
   .iconGrid {
     grid-template-columns: repeat(6, 1fr);
   }
 
+  .iconBtn {
+    min-height: 44px;
+  }
+
   .colorGrid {
     grid-template-columns: repeat(6, 1fr);
+  }
+
+  .colorBtn {
+    min-height: 44px;
   }
 
   .preview {
@@ -316,5 +341,81 @@
 
   .previewItem {
     width: 100%;
+  }
+
+  .cancelBtn, .saveBtn {
+    min-height: 44px;
+  }
+}
+
+/* 📱 SMALL MOBILE (max-width: 480px) */
+@media (max-width: 480px) {
+  .overlay {
+    padding: max(0.5rem, env(safe-area-inset-top)) max(0.5rem, env(safe-area-inset-right)) 0 max(0.5rem, env(safe-area-inset-left));
+  }
+
+  .header {
+    padding: 1rem;
+  }
+
+  .header h3 {
+    font-size: 1rem;
+  }
+
+  .form {
+    padding: 1rem;
+    gap: 1.25rem;
+  }
+
+  .iconGrid {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.375rem;
+  }
+
+  .colorGrid {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.375rem;
+  }
+}
+
+/* 📱 EXTRA SMALL MOBILE (max-width: 375px) */
+@media (max-width: 375px) {
+  .header {
+    padding: 0.875rem;
+  }
+
+  .header h3 {
+    font-size: 0.95rem;
+  }
+
+  .form {
+    padding: 0.875rem;
+    gap: 1rem;
+  }
+
+  .field label {
+    font-size: 0.8rem;
+  }
+
+  .field input {
+    padding: 0.625rem;
+    font-size: 16px;
+  }
+
+  .iconGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .iconBtn {
+    font-size: 1.25rem;
+  }
+
+  .colorGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .cancelBtn, .saveBtn {
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
   }
 }
