@@ -209,7 +209,7 @@ export default function ContractDetailsView({
       } else {
         setPdfError(data.error || 'PDF konnte nicht geladen werden');
       }
-    } catch (error) {
+    } catch {
       setPdfError('Fehler beim Laden der PDF-Datei');
     } finally {
       setPdfLoading(false);
@@ -417,7 +417,7 @@ export default function ContractDetailsView({
         const error = await response.json();
         alert(`Analyse fehlgeschlagen: ${error.message || 'Unbekannter Fehler'}`);
       }
-    } catch (error) {
+    } catch {
       alert('Fehler beim Starten der Analyse. Bitte versuche es erneut.');
     } finally {
       setIsAnalyzing(false);
