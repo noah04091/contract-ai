@@ -940,6 +940,79 @@
   .messageBox {
     padding: 14px;
   }
+
+  /* Stats Grid - 3 columns still OK on tablet */
+  .statsGrid {
+    gap: 12px;
+    padding: 14px;
+  }
+
+  .statValue {
+    font-size: 1.125rem;
+  }
+
+  /* Legal Pulse Grid - Stack on tablet */
+  .legalPulseGrid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .legalPulseSection {
+    padding: 16px;
+  }
+
+  .legalPulseTitle {
+    font-size: 18px;
+  }
+
+  .legalPulseCardTitle {
+    font-size: 15px;
+  }
+
+  .legalPulseButton {
+    padding: 10px 20px;
+    font-size: 15px;
+  }
+
+  /* Legal Opinion */
+  .legalOpinionHeader {
+    padding: 14px 16px;
+    flex-wrap: wrap;
+  }
+
+  .legalOpinionIcon {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+  }
+
+  .legalOpinionTitle {
+    font-size: 16px;
+  }
+
+  .legalOpinionContent {
+    padding: 16px;
+  }
+
+  .legalOpinionText {
+    font-size: 14px;
+    text-align: left;
+  }
+
+  /* Content Section Header */
+  .contentSectionHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .contentSectionHeader .downloadButton {
+    width: 100%;
+  }
+
+  /* Tab Nav */
+  .tabNavRight {
+    display: none; /* Hide tab actions on tablet, show in header instead */
+  }
 }
 
 /* ====================================
@@ -1235,6 +1308,144 @@
     width: 100%;
     min-height: 44px;
   }
+
+  /* Stats Grid - Stack on mobile */
+  .statsGrid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .statItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-align: left;
+    padding: 8px 0;
+    border-bottom: 1px solid #f3f4f6;
+  }
+
+  .statItem:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .statLabel {
+    font-size: 0.8125rem;
+    margin-bottom: 0;
+  }
+
+  .statValue {
+    font-size: 1rem;
+  }
+
+  /* Legal Pulse */
+  .legalPulseSection {
+    margin-top: 20px;
+    padding: 14px;
+    border-radius: 10px;
+  }
+
+  .legalPulseTitle {
+    font-size: 16px;
+    margin-bottom: 12px;
+  }
+
+  .legalPulseScoreContainer {
+    margin-bottom: 14px;
+  }
+
+  .legalPulseScoreLabel {
+    font-size: 13px;
+  }
+
+  .legalPulseScoreValue {
+    font-size: 16px;
+  }
+
+  .legalPulseGrid {
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .legalPulseCardTitle {
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
+
+  .legalPulseCardContent {
+    padding: 10px;
+    font-size: 13px;
+    border-radius: 6px;
+  }
+
+  .legalPulseCardContent ul {
+    padding-left: 16px;
+  }
+
+  .legalPulseButton {
+    padding: 10px 16px;
+    font-size: 14px;
+    border-radius: 6px;
+  }
+
+  /* Legal Opinion */
+  .legalOpinionSection {
+    margin-top: 16px;
+    border-radius: 10px;
+  }
+
+  .legalOpinionHeader {
+    padding: 12px 14px;
+    gap: 10px;
+  }
+
+  .legalOpinionIcon {
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+    border-radius: 8px;
+  }
+
+  .legalOpinionTitle {
+    font-size: 14px;
+  }
+
+  .legalOpinionBadge {
+    padding: 4px 8px;
+    font-size: 10px;
+    border-radius: 8px;
+  }
+
+  .legalOpinionContent {
+    padding: 14px;
+  }
+
+  .legalOpinionText {
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  /* Legal Pulse Loading */
+  .legalPulseLoading {
+    margin-top: 20px;
+    padding: 24px 16px;
+    border-radius: 10px;
+  }
+
+  .legalPulseLoadingSpinner {
+    width: 32px;
+    height: 32px;
+    margin-bottom: 12px;
+  }
+
+  .legalPulseLoadingTitle {
+    font-size: 16px;
+  }
+
+  .legalPulseLoadingText {
+    font-size: 13px;
+  }
 }
 
 /* ====================================
@@ -1485,6 +1696,402 @@
     height: 28px;
     border-width: 2px;
   }
+
+  /* Stats Grid - Even more compact */
+  .statsGrid {
+    padding: 10px;
+    gap: 8px;
+  }
+
+  .statItem {
+    padding: 6px 0;
+  }
+
+  .statLabel {
+    font-size: 0.75rem;
+  }
+
+  .statValue {
+    font-size: 0.9375rem;
+  }
+
+  /* Legal Pulse */
+  .legalPulseSection {
+    margin-top: 14px;
+    padding: 12px;
+    border-radius: 8px;
+  }
+
+  .legalPulseTitle {
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
+
+  .legalPulseScoreLabel {
+    font-size: 12px;
+  }
+
+  .legalPulseScoreTrack {
+    height: 6px;
+  }
+
+  .legalPulseScoreValue {
+    font-size: 14px;
+  }
+
+  .legalPulseCardTitle {
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+
+  .legalPulseCardContent {
+    padding: 8px;
+    font-size: 12px;
+  }
+
+  .legalPulseCardContent ul {
+    padding-left: 14px;
+  }
+
+  .legalPulseButton {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  /* Legal Opinion */
+  .legalOpinionHeader {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .legalOpinionIcon {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+    border-radius: 6px;
+  }
+
+  .legalOpinionTitle {
+    font-size: 13px;
+  }
+
+  .legalOpinionBadge {
+    padding: 3px 6px;
+    font-size: 9px;
+  }
+
+  .legalOpinionContent {
+    padding: 12px;
+  }
+
+  .legalOpinionText {
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  /* Legal Pulse Loading */
+  .legalPulseLoading {
+    margin-top: 14px;
+    padding: 20px 12px;
+    border-radius: 8px;
+  }
+
+  .legalPulseLoadingSpinner {
+    width: 28px;
+    height: 28px;
+  }
+
+  .legalPulseLoadingTitle {
+    font-size: 14px;
+  }
+
+  .legalPulseLoadingText {
+    font-size: 12px;
+  }
+}
+
+/* ========================================
+   CONTENT STATISTICS GRID
+   ======================================== */
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 16px;
+  padding: 16px;
+  background: #f9fafb;
+  border-radius: 8px;
+}
+
+.statItem {
+  text-align: center;
+}
+
+.statLabel {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.statValue {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+/* ========================================
+   LEGAL PULSE STYLES
+   ======================================== */
+
+.legalPulseSection {
+  margin-top: 32px;
+  padding: 24px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  color: #000000;
+}
+
+.legalPulseTitle {
+  margin: 0 0 16px 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #000000;
+}
+
+.legalPulseScoreContainer {
+  margin-bottom: 20px;
+}
+
+.legalPulseScoreLabel {
+  font-size: 14px;
+  color: #6b7280;
+  margin-bottom: 8px;
+}
+
+.legalPulseScoreBar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.legalPulseScoreTrack {
+  flex: 1;
+  height: 8px;
+  background: #f3f4f6;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.legalPulseScoreFill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.legalPulseScoreValue {
+  font-size: 18px;
+  font-weight: bold;
+  color: #000000;
+}
+
+.legalPulseGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.legalPulseCard {
+  display: flex;
+  flex-direction: column;
+}
+
+.legalPulseCardTitle {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: #000000;
+}
+
+.legalPulseCardContent {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  flex: 1;
+}
+
+.legalPulseCardContent ul {
+  margin: 0;
+  padding-left: 20px;
+  color: #374151;
+}
+
+.legalPulseCardContent li {
+  margin-bottom: 4px;
+}
+
+.legalPulseCardContent p {
+  margin: 0;
+  color: #374151;
+}
+
+.legalPulseButton {
+  width: 100%;
+  padding: 12px 24px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.legalPulseButton:hover {
+  background: #2563eb;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* Legal Opinion Premium Section */
+.legalOpinionSection {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border: 2px solid #fbbf24;
+  border-radius: 12px;
+  padding: 0;
+  overflow: hidden;
+  margin-top: 24px;
+}
+
+.legalOpinionHeader {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  color: #ffffff;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.legalOpinionIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.2);
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.legalOpinionTitle {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  flex: 1;
+}
+
+.legalOpinionBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.legalOpinionContent {
+  background: #ffffff;
+  padding: 24px 20px;
+}
+
+.legalOpinionText {
+  line-height: 1.8;
+  color: #1f2937;
+  font-size: 15px;
+  white-space: pre-wrap;
+  text-align: justify;
+}
+
+/* Loading Section for Legal Pulse */
+.legalPulseLoading {
+  margin-top: 32px;
+  padding: 32px 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  color: white;
+  text-align: center;
+}
+
+.legalPulseLoadingSpinner {
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top: 3px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+.legalPulseLoadingTitle {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.legalPulseLoadingText {
+  margin: 0;
+  opacity: 0.9;
+  font-size: 14px;
+}
+
+/* Content Section Header */
+.contentSectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  gap: 12px;
+}
+
+.contentSectionHeader h3 {
+  margin: 0;
+}
+
+/* Tab Navigation Containers */
+.tabNavLeft {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.tabNavLeft::-webkit-scrollbar {
+  display: none;
+}
+
+.tabNavRight {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding-right: 8px;
+  flex-shrink: 0;
 }
 
 /* ========================================

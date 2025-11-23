@@ -542,12 +542,11 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
       {/* Content */}
       {(contract.extractedText || contract.fullText || contract.content) && (
         <div className={styles.section}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <div className={styles.contentSectionHeader}>
             <h3>📄 Vertragsinhalt</h3>
             <button
               className={styles.downloadButton}
               onClick={handleDownloadContent}
-              style={{ padding: '8px 16px', fontSize: '0.875rem' }}
             >
               <Download size={16} />
               <span>Als TXT herunterladen</span>
@@ -611,22 +610,22 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
           )}
 
           {/* Statistics */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginTop: '16px', padding: '16px', background: '#f9fafb', borderRadius: '8px' }}>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '4px' }}>Zeichen</div>
-              <div style={{ fontSize: '1.25rem', fontWeight: 600, color: '#111827' }}>
+          <div className={styles.statsGrid}>
+            <div className={styles.statItem}>
+              <div className={styles.statLabel}>Zeichen</div>
+              <div className={styles.statValue}>
                 {(contract.extractedText || contract.fullText || contract.content || '').length.toLocaleString()}
               </div>
             </div>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '4px' }}>Wörter</div>
-              <div style={{ fontSize: '1.25rem', fontWeight: 600, color: '#111827' }}>
+            <div className={styles.statItem}>
+              <div className={styles.statLabel}>Wörter</div>
+              <div className={styles.statValue}>
                 {(contract.extractedText || contract.fullText || contract.content || '').split(/\s+/).filter(w => w.length > 0).length.toLocaleString()}
               </div>
             </div>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '4px' }}>Absätze</div>
-              <div style={{ fontSize: '1.25rem', fontWeight: 600, color: '#111827' }}>
+            <div className={styles.statItem}>
+              <div className={styles.statLabel}>Absätze</div>
+              <div className={styles.statValue}>
                 {(contract.extractedText || contract.fullText || contract.content || '').split(/\n\s*\n/).filter(p => p.trim().length > 0).length.toLocaleString()}
               </div>
             </div>
@@ -862,62 +861,18 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
 
         {/* ✅ NEU: Ausführliches Rechtsgutachten */}
         {contract.detailedLegalOpinion && (
-          <div className={styles.section} style={{
-            background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
-            border: '2px solid #fbbf24',
-            borderRadius: '12px',
-            padding: '0',
-            overflow: 'hidden',
-            marginTop: '24px'
-          }}>
-            <div style={{
-              background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
-              color: '#ffffff',
-              padding: '16px 20px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px'
-            }}>
-              <div style={{
-                width: '48px',
-                height: '48px',
-                borderRadius: '12px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'rgba(255, 255, 255, 0.2)',
-                fontSize: '24px'
-              }}>
-                ⚖️
-              </div>
-              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '700', flex: 1 }}>
+          <div className={styles.legalOpinionSection}>
+            <div className={styles.legalOpinionHeader}>
+              <div className={styles.legalOpinionIcon}>⚖️</div>
+              <h3 className={styles.legalOpinionTitle}>
                 Ausführliches Rechtsgutachten
               </h3>
-              <div style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                background: 'rgba(255, 255, 255, 0.3)',
-                color: '#ffffff',
-                padding: '6px 12px',
-                borderRadius: '12px',
-                fontWeight: '600',
-                fontSize: '12px'
-              }}>
+              <div className={styles.legalOpinionBadge}>
                 ⭐ Premium
               </div>
             </div>
-            <div style={{
-              background: '#ffffff',
-              padding: '24px 20px'
-            }}>
-              <div style={{
-                lineHeight: '1.8',
-                color: '#1f2937',
-                fontSize: '15px',
-                whiteSpace: 'pre-wrap',
-                textAlign: 'justify'
-              }}>
+            <div className={styles.legalOpinionContent}>
+              <div className={styles.legalOpinionText}>
                 {contract.detailedLegalOpinion}
               </div>
             </div>
@@ -926,79 +881,66 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
 
         {/* ⚡ LEGAL PULSE SHORT OVERVIEW or Loading */}
         {legalPulse ? (
-          <div className={styles.section} style={{
-            marginTop: '32px',
-            padding: '24px',
-            background: '#ffffff',
-            border: '1px solid #e5e7eb',
-            borderRadius: '12px',
-            color: '#000000'
-          }}>
-            <h3 style={{ margin: '0 0 16px 0', fontSize: '20px', fontWeight: '600', color: '#000000' }}>
+          <div className={styles.legalPulseSection}>
+            <h3 className={styles.legalPulseTitle}>
               ⚡ Legal Pulse - Risiko-Übersicht
             </h3>
 
             {/* Risk Score */}
             {legalPulse.riskScore !== null && legalPulse.riskScore !== undefined && (
-              <div style={{ marginBottom: '20px' }}>
-                <div style={{ fontSize: '14px', color: '#6b7280', marginBottom: '8px' }}>Risiko-Score</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{
-                    flex: 1,
-                    height: '8px',
-                    background: '#f3f4f6',
-                    borderRadius: '4px',
-                    overflow: 'hidden'
-                  }}>
-                    <div style={{
-                      width: `${legalPulse.riskScore}%`,
-                      height: '100%',
-                      background: legalPulse.riskScore > 70 ? '#ef4444' : legalPulse.riskScore > 40 ? '#f59e0b' : '#10b981',
-                      borderRadius: '4px',
-                      transition: 'width 0.3s ease'
-                    }}></div>
+              <div className={styles.legalPulseScoreContainer}>
+                <div className={styles.legalPulseScoreLabel}>Risiko-Score</div>
+                <div className={styles.legalPulseScoreBar}>
+                  <div className={styles.legalPulseScoreTrack}>
+                    <div
+                      className={styles.legalPulseScoreFill}
+                      style={{
+                        width: `${legalPulse.riskScore}%`,
+                        background: legalPulse.riskScore > 70 ? '#ef4444' : legalPulse.riskScore > 40 ? '#f59e0b' : '#10b981'
+                      }}
+                    ></div>
                   </div>
-                  <span style={{ fontSize: '18px', fontWeight: 'bold', color: '#000000' }}>{legalPulse.riskScore}/100</span>
+                  <span className={styles.legalPulseScoreValue}>{legalPulse.riskScore}/100</span>
                 </div>
               </div>
             )}
 
             {/* Positive & Critical Aspects */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
+            <div className={styles.legalPulseGrid}>
               {/* What's Good */}
-              <div>
-                <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '500', color: '#000000' }}>✅ Positiv</h4>
-                <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', padding: '12px', borderRadius: '8px', fontSize: '14px' }}>
+              <div className={styles.legalPulseCard}>
+                <h4 className={styles.legalPulseCardTitle}>✅ Positiv</h4>
+                <div className={styles.legalPulseCardContent}>
                   {legalPulse.riskScore && legalPulse.riskScore < 40 ? (
-                    <p style={{ margin: 0, color: '#374151' }}>Vertrag zeigt geringe rechtliche Risiken</p>
+                    <p>Vertrag zeigt geringe rechtliche Risiken</p>
                   ) : legalPulse.riskScore && legalPulse.riskScore < 60 ? (
-                    <p style={{ margin: 0, color: '#374151' }}>Vertrag hat moderate Risiken, aber auch positive Aspekte</p>
+                    <p>Vertrag hat moderate Risiken, aber auch positive Aspekte</p>
                   ) : (
-                    <p style={{ margin: 0, color: '#6b7280' }}>Keine positiven Aspekte identifiziert</p>
+                    <p style={{ color: '#6b7280' }}>Keine positiven Aspekte identifiziert</p>
                   )}
                 </div>
               </div>
 
               {/* What's Critical */}
-              <div>
-                <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '500', color: '#000000' }}>⚠️ Kritisch</h4>
-                <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', padding: '12px', borderRadius: '8px', fontSize: '14px' }}>
+              <div className={styles.legalPulseCard}>
+                <h4 className={styles.legalPulseCardTitle}>⚠️ Kritisch</h4>
+                <div className={styles.legalPulseCardContent}>
                   {legalPulse.topRisks && legalPulse.topRisks.filter((r: LegalPulseRisk) => r.severity === 'high' || r.severity === 'critical' || r.severity === 'medium' || r.severity === 'low').length > 0 ? (
-                    <ul style={{ margin: 0, paddingLeft: '20px', color: '#374151' }}>
+                    <ul>
                       {legalPulse.topRisks
                         .slice(0, 2)
                         .map((risk: LegalPulseRisk, index: number) => (
-                          <li key={index} style={{ marginBottom: '4px' }}>{risk.title}</li>
+                          <li key={index}>{risk.title}</li>
                         ))}
                     </ul>
                   ) : legalPulse.legalRisks && legalPulse.legalRisks.length > 0 ? (
-                    <ul style={{ margin: 0, paddingLeft: '20px', color: '#374151' }}>
+                    <ul>
                       {legalPulse.legalRisks.slice(0, 2).map((risk: string, index: number) => (
-                        <li key={index} style={{ marginBottom: '4px' }}>{risk}</li>
+                        <li key={index}>{risk}</li>
                       ))}
                     </ul>
                   ) : (
-                    <p style={{ margin: 0, color: '#6b7280' }}>Keine kritischen Risiken identifiziert</p>
+                    <p style={{ color: '#6b7280' }}>Keine kritischen Risiken identifiziert</p>
                   )}
                 </div>
               </div>
@@ -1007,12 +949,12 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
             {/* Recommendations */}
             {legalPulse.recommendations && legalPulse.recommendations.length > 0 && (
               <div style={{ marginBottom: '20px' }}>
-                <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '500', color: '#000000' }}>💡 Top-Empfehlungen</h4>
-                <div style={{ background: '#f9fafb', border: '1px solid #e5e7eb', padding: '12px', borderRadius: '8px', fontSize: '14px' }}>
-                  <ul style={{ margin: 0, paddingLeft: '20px', color: '#374151' }}>
+                <h4 className={styles.legalPulseCardTitle}>💡 Top-Empfehlungen</h4>
+                <div className={styles.legalPulseCardContent}>
+                  <ul>
                     {legalPulse.recommendations.slice(0, 3).map((rec: string | LegalPulseRecommendation, index: number) => {
                       const recText = typeof rec === 'string' ? rec : rec.title;
-                      return <li key={index} style={{ marginBottom: '4px' }}>{recText}</li>;
+                      return <li key={index}>{recText}</li>;
                     })}
                   </ul>
                 </div>
@@ -1022,67 +964,20 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
             {/* Button to Legal Pulse */}
             <button
               onClick={() => window.location.href = `/legalpulse/${contract._id}`}
-              style={{
-                width: '100%',
-                padding: '12px 24px',
-                background: '#3b82f6',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '16px',
-                fontWeight: '600',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px'
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.background = '#2563eb';
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.3)';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.background = '#3b82f6';
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = 'none';
-              }}
+              className={styles.legalPulseButton}
             >
               📊 Vollständige Risiko-Analyse in Legal Pulse anzeigen →
             </button>
           </div>
         ) : (contractScore || summary || legalAssessment) && (
-          <div className={styles.section} style={{
-            marginTop: '32px',
-            padding: '32px 24px',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            borderRadius: '12px',
-            color: 'white',
-            textAlign: 'center'
-          }}>
-            <div style={{
-              display: 'inline-block',
-              width: '40px',
-              height: '40px',
-              border: '3px solid rgba(255, 255, 255, 0.3)',
-              borderTop: '3px solid white',
-              borderRadius: '50%',
-              animation: 'spin 1s linear infinite',
-              marginBottom: '16px'
-            }}></div>
-            <h3 style={{ margin: '0 0 8px 0', fontSize: '18px', fontWeight: '600' }}>
+          <div className={styles.legalPulseLoading}>
+            <div className={styles.legalPulseLoadingSpinner}></div>
+            <h3 className={styles.legalPulseLoadingTitle}>
               ⚡ Legal Pulse Analyse lädt...
             </h3>
-            <p style={{ margin: 0, opacity: 0.9, fontSize: '14px' }}>
+            <p className={styles.legalPulseLoadingText}>
               Die Risiko-Analyse wird im Hintergrund durchgeführt. Bitte warten Sie einen Moment.
             </p>
-            <style>{`
-              @keyframes spin {
-                0% { transform: rotate(0deg); }
-                100% { transform: rotate(360deg); }
-              }
-            `}</style>
           </div>
         )}
       </div>
@@ -1597,7 +1492,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
           {/* Tab Navigation */}
           <div className={styles.tabNav}>
             {/* Tab Buttons - Left */}
-            <div style={{ display: 'flex', gap: '4px', flex: 1 }}>
+            <div className={styles.tabNavLeft}>
               <button
                 className={`${styles.tabButton} ${activeTab === 'overview' ? styles.tabActive : ''}`}
                 onClick={() => setActiveTab('overview')}
@@ -1656,12 +1551,7 @@ const NewContractDetailsModal: React.FC<NewContractDetailsModalProps> = ({
             </div>
 
             {/* Tab Actions - Right (context-sensitive) */}
-            <div style={{
-              display: 'flex',
-              gap: '8px',
-              alignItems: 'center',
-              paddingRight: '8px'
-            }}>
+            <div className={styles.tabNavRight}>
               {/* PDF Tab Actions */}
               {activeTab === 'pdf' && pdfUrl && (
                 <button
