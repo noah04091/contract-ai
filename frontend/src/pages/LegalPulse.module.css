@@ -1846,13 +1846,15 @@
   .quickFilters {
     width: 100%;
     justify-content: space-between;
+    gap: 4px;
   }
 
   .quickFilterButton {
     flex: 1;
-    min-width: 60px;
-    font-size: 0.8rem;
-    padding: 8px 12px;
+    min-width: 50px;
+    font-size: 0.7rem;
+    padding: 8px 6px;
+    line-height: 1.2;
   }
 
   .sortBox {
@@ -3333,6 +3335,14 @@
   .tabButton {
     font-size: 0.8rem;
     padding: 10px 12px;
+  }
+
+  /* Filter-Buttons auf extra kleinen Bildschirmen */
+  .quickFilterButton {
+    font-size: 0.65rem;
+    padding: 6px 4px;
+    min-width: 45px;
+    word-break: break-word;
   }
 
   .scoreCard {

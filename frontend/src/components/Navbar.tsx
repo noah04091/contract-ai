@@ -28,7 +28,7 @@ export default function Navbar() {
   const isAuthPage = location.pathname === "/login" || location.pathname === "/register";
   
   // Definiere geschützte Seiten
-  const protectedRoutes = ["/dashboard", "/contracts", "/optimizer", "/premium", "/me", "/calendar", "/compare", "/better-contracts", "/Generate", "/chat", "/envelopes", "/generate"];
+  const protectedRoutes = ["/dashboard", "/contracts", "/optimizer", "/premium", "/me", "/calendar", "/compare", "/better-contracts", "/Generate", "/chat", "/envelopes", "/generate", "/legal-pulse"];
   const isProtectedPage = protectedRoutes.includes(location.pathname);
   
   // Definiere nicht-geschützte Seiten (außer Homepage und Auth-Seiten)
@@ -538,26 +538,24 @@ export default function Navbar() {
     );
   };
 
-  // Render Public Pages Navbar (nur Logo zentriert auf Mobile)
+  // Render Public Pages Navbar (Logo zentriert, Hamburger auf allen Geräten)
   const renderPublicPagesNavbar = () => {
     return (
       <>
         {/* Left Section */}
         <div className={styles.leftSection}>
-          {/* Desktop: Hamburger */}
-          {!isMobile && (
-            <motion.button
-              className={styles.hamburger}
-              onClick={toggleSidebar}
-              aria-label="Menü öffnen"
-              whileTap={{ scale: 0.95 }}
-              whileHover={{ scale: 1.05 }}
-              animate={{ rotate: sidebarOpen ? 90 : 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              {sidebarOpen ? "✕" : "☰"}
-            </motion.button>
-          )}
+          {/* Hamburger - auf Desktop UND Mobile */}
+          <motion.button
+            className={styles.hamburger}
+            onClick={toggleSidebar}
+            aria-label="Menü öffnen"
+            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.05 }}
+            animate={{ rotate: sidebarOpen ? 90 : 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            {sidebarOpen ? "✕" : "☰"}
+          </motion.button>
         </div>
 
         {/* Center Section - Logo always centered */}
